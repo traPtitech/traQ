@@ -1,0 +1,304 @@
+openapi: 3.0.0
+info:
+  title: traQ-R API
+  version: 0.0.1
+servers:
+  url: https://q.trap.jp/api/1.0
+paths:
+  /channel:
+    post: #チャンネルを作る
+      description:
+        チャンネルを作ります。
+      requestBody: 
+        name: 
+          type: string
+          description: チャンネル名
+        parent:
+          type: string
+          description: 親のチャンネルID
+      responses:
+        "200":
+          description: 作成されたチャンネルのチャンネルオブジェクト
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+    get:
+      description: チャンネルのリストの取得
+      responses:
+        "200":
+          content:
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/ChannelList"
+
+  /channel/{channelId}:
+    post:
+      description: 指定のチャンネルにメッセージを投稿します
+      requestBody:
+        text:
+          type: string
+          description: メッセージ本文
+      responses:
+        "300": 
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+    put: 
+      description: チャンネル名変更
+      requestBody:
+        name: 
+          type: string
+          description: チャンネル名
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+
+#TODO
+    get:
+      description: 対象チャンネルの子チャンネルの取得 or メッセージの取得
+      responses:
+
+    delete:
+      description: チャンネルの削除
+        requestBody:
+          confirm:
+            type: boolean
+            description: 確認したか
+            required: true
+      responses:
+        "204":
+          description: 削除の成功
+    
+  /channel/{channelId}/topic:
+    get: 
+      description: チャンネルの説明の取得
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ChannelTopic"
+    put: 
+      description: チャンネルの説明の変更
+      requestBody:
+        text: 
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelTopic"
+    post: 
+      description: チャンネルの説明の追加
+      requestBody:
+        required: true
+        text: 
+          type: string
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelTopic"
+
+  /channel/{chnnelId}/message:
+    get: 
+      description: チャンネルに存在するメッセージの取得
+      requestBody:
+        schema:
+          application/json:
+            schema:
+              count: 
+                description: 取得する件数 1-200
+                type: integer
+              offset:
+                description: 取得するメッセージのオフセット
+                type: integer
+      responses:
+        "200":
+          content:
+            schema:
+              $ref: "#/components/schemas/MessageList"
+              
+        
+    
+  /channel/{ChannelId}/message/{messageId}:
+    #messageとおなじになりそう
+    
+  /user:
+    get:
+      description: ユーザーリストを取得
+    
+  /user/me:
+    get:
+      description: 自分の情報を取得
+    
+  /user/me/clip:
+    get:
+      description: クリップしたメッセージリストを取得
+    post:
+      description: 新しくメッセージをクリップ
+      parameters:
+        - name: message_id
+    delete:
+      description: クリップを削除
+      parameters:
+        - name: message_id
+    
+  /user/me/star:
+    get:
+      description: お気に入りチャンネルリストを取得
+    post:
+      description: お気に入りチャンネルリストに追加
+      parameters:
+        - name: channel_id
+    delete:
+      description: お気に入りチャンネルリストから削除
+      parameters:
+        - name: channel_id
+    
+  /user/me/channel/visibility:
+    get:
+      description: 可視状態のチャンネル一覧を取得
+    
+  /user/me/channel/{channelId}/visibility:
+    get:
+      description: チャンネルの可視状態を取得
+    post:
+      description: チャンネルを可視にする
+    delete:
+      description: チャンネルを不可視にする
+  
+  /user/me/message/unread:
+    get:
+      description: 未読メッセージリストを取得
+    delete:
+      description: メッセージを既読にする
+    
+  /user/{id}:
+    get:
+      description: ユーザーの詳細を取得
+    
+  /user/{id}/tag:
+    get:
+      description: タグのリストを取得
+    post:
+      description: タグを追加
+    delete:
+      description: タグを削除
+    
+  /stamp:
+    post:
+      description: スタンプを追加
+    get:
+      description: スタンプのリストを取得
+    
+  /stamp/{id}:
+    get:
+      description: スタンプの詳細を取得
+    delete:
+      description: スタンプを削除
+
+
+  /message:
+    post: #新規メッセージ追加
+      description: 新規にメッセージを追加します
+      operationId: createMessage
+      responses:
+        "204":
+          description: 追加されました
+  /message/{id}:
+    put: #メッセージ編集
+      description: メッセージを編集します
+      operationId: editMessageById
+      paramaters:
+        - name: id
+          in: path
+          repuired: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: your editting this message was success
+    get:
+      description: メッセージを取得します
+      operationId: getMessageById
+      paramaters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: the message
+          content:
+            application/json:
+              schema:
+                $refs: '#/components/schemas/message'
+            
+         
+        
+    delete: #メッセージ削除
+  /message/{id}/stamp:
+    put: #スタンプを押す
+    delete: #スタンプを取り消す
+  /message/search:
+    get: #クエリで整形したメッセージリストを取得
+    
+    
+  
+  /notification/channel/user/:
+  /notification/channel/created:
+  /notification/channel/:
+
+  schemas:
+    Channel:
+      type: object
+      properties:
+        channelId:
+          type: string
+        name:
+          type: string
+        parent:
+          type: string
+          description: 親の階層のチャンネルId
+        children:
+          type: array
+          description: 子のチャンネルIdの配列
+
+    ChannelTopic:
+      type: object
+      properties:
+        text: 
+          type: string
+
+    ChannelList:
+      type: array
+      items: 
+        $ref: "#/components/schemas/Channel"
+
+    User:
+    UserList:
+      type: array
+      items: 
+        $ref: "#/components/schemas/User"
+
+    Message:
+      type: object
+      properties:
+        messageId:
+          type: string
+        content:
+          type: string
+    MessageList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Message"
+      
