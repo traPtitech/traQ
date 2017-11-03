@@ -1,0 +1,41 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.9
+
+    working_directory: /go/src/github.com/traPtitech/traQ
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install tools
+          command: |
+            go get -u github.com/golang/dep/cmd/dep
+            go get -u github.com/golang/lint/golint
+
+      - run:
+          name: gofmt
+          when: always
+          command: (! gofmt -s -d . | grep ^)
+      - run:
+          name: golint
+          when: always
+          command: golint -set_exit_status
+      - run:
+          name: go vet
+          when: always
+          command: go vet
+
+      - run:
+          name: go build
+          when: always
+          command: |
+            dep ensure
+            go build -o traq
+
+      - store_artifacts:
+          path: /go/src/github.com/traPtitech/traQ/traq
+          destination: traq
