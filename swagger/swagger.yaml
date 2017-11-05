@@ -495,22 +495,18 @@ paths:
                 $ref: "#/components/schemas/NoContent"
 
   /messages/{messageId}:
+    parameters:
+    - name: messageId
+      in: path
+      required: true
+      description: 操作の対象となるメッセージID
+      schema:
+        type: integer
     put:
       tags:
         - message
       description: メッセージの編集
       operationId: editMessageById
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                messageId:
-                  type: string
-                  description: 削除するメッセージのID
-            example:
-              messageId: 334
       responses:
         "200":
           description: ok
@@ -579,65 +575,47 @@ paths:
                 $ref: "#/components/schemas/NoContent"
 
   /messages/{messageId}/fixation:
-      put:
-        tags:
-          - message
-        description: "メッセージを固定する"
-        requestBody:
+    parameters:
+    - name: messageId
+      in: path
+      required: true
+      description: 操作の対象となるメッセージID
+      schema:
+        type: integer
+    put:
+      tags:
+        - message
+      description: "メッセージを固定する"
+      responses:
+        "200":
+          description: OK
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  messageId:
-                    type: integer
-                    description: ピン止めするメッセージのID
-              example:
-                messageId: 220
-        responses:
-          "200":
-            description: OK
-            content:
-              application/json:
-                schema:
-                  $ref: "#/components/schemas/Message"
-      delete:
-        tags:
-          - message
-        description: "固定したメッセージを外す"
-        requestBody:
+                $ref: "#/components/schemas/Message"
+    delete:
+      tags:
+        - message
+      description: "固定したメッセージを外す"
+      responses:
+        "200":
+          description: OK
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  messageId:
-                    type: integer
-                    description: ピン止めするメッセージのID
-              example:
-                messageId: 220
-        responses:
-          "200":
-            description: OK
-            content:
-              application/json:
-                schema:
-                  $ref: "#/components/schemas/Message"
+                $ref: "#/components/schemas/Message"
 
-  /messages/search:
+  /messages/search/{query}:
+    parameters:
+      - name: query
+        in: path
+        required: true
+        schema:
+          type: string
     get:
       tags:
         - message
       description: クエリに従った検索結果を取得
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                #クエリの処理の仕方が分からないのでとりあえずstringでもらうことに。叩いてほしい
-                query:
-                  type: string
       responses:
         "200":
           description: result
@@ -739,7 +717,8 @@ components:
         content:
           type: string
         dateTime:
-          type: string # TODO:仮置き.後で調べる
+          type: string
+          format: date-time
         stampList:
           type: array
           items:
