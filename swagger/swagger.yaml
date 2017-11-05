@@ -494,10 +494,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-
   /messages/{messageId}:
-    put: #メッセージ編集
-      description: メッセージを編集します
+    parameters:
+    - name: messageId
+      in: path
+      required: true
+      description: 操作の対象となるメッセージID
+      schema:
+        type: integer
+    put:
+      tags:
+        - message
+      description: メッセージの編集
       operationId: editMessageById
       responses:
         "200":
@@ -507,7 +515,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Message"
     get:
-      description: メッセージを取得します
+      tags:
+        - message
+      description: メッセージの取得
       operationId: getMessageById
       responses:
         "200":
@@ -516,8 +526,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
-            
     delete: 
+      tags:
+        - message
       description: メッセージの削除
       responses:
         "204":
@@ -529,6 +540,8 @@ paths:
           
   /messages/{messageId}/stamps:
     post:
+      tags:
+        - message
       description: スタンプを押す
       requestBody:
         content:
@@ -545,7 +558,9 @@ paths:
               
   /messages/{messageId}/stamps/{stampId}:
     delete:
-      description: "スタンプの削除"
+      tags:
+        - message
+      description: スタンプの削除
       requestBody:
         content:
           application/json:
@@ -558,14 +573,56 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
-      
-      
-#  /messages/search:
-#    get:
-#      paramaters:
-#      responses:
-    
-    
+
+  /messages/{messageId}/fixation:
+    parameters:
+    - name: messageId
+      in: path
+      required: true
+      description: 操作の対象となるメッセージID
+      schema:
+        type: integer
+    put:
+      tags:
+        - message
+      description: "メッセージを固定する"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+    delete:
+      tags:
+        - message
+      description: "固定したメッセージを外す"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /messages/search/{query}:
+    parameters:
+      - name: query
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - message
+      description: クエリに従った検索結果を取得
+      responses:
+        "200":
+          description: result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageList"
   
   /channels/{channelId}/notifications:
     get:
@@ -650,9 +707,18 @@ components:
       type: object
       properties:
         messageId:
-          type: string
+          type: integer
+        user:
+          type: object
+        parentChannelId:
+          type: integer
+        fixation:
+          type: boolean
         content:
           type: string
+        dateTime:
+          type: string
+          format: date-time
         stampList:
           type: array
           items:
