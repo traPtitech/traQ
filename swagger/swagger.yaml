@@ -27,7 +27,7 @@ paths:
       responses:
         "200":
           description: |+
-            正常にチャンネルが作成できたときです。
+            正常にチャンネルが作成できました。
             作成されたチャンネルのチャンネルオブジェクトを返します。
           content:
             application/json:
@@ -41,7 +41,7 @@ paths:
       responses:
         "200":
           description: |+
-            正常に取得ができたときです。
+            正常に取得ができました。
             チャンネルオブジェクトの配列を返します。
           content:
             application/json:
@@ -50,16 +50,11 @@ paths:
 
   /channels/{channelId}:
     parameters:
-      - name: channelId
-        in: path
-        required: true
-        schema:
-          type: integer
-        
+      - $ref: "#/components/parameters/channelIdInPath"
     post:
       tags:
         - channel
-      description: 指定のチャンネルにメッセージを投稿します。
+      description: チャンネルにメッセージを投稿します。
       requestBody:
         content:
           application/json:
@@ -70,18 +65,17 @@ paths:
               properties:
                 text:
                   type: string
-                  description: メッセージ本文
+                  description: Markdown形式のメッセージ本文
                   example: Raskって誰？
       responses:
         "300": 
           description: |+ 
             投稿成功したときです。
-            投稿されたメッセージのメッセージオブジェクトが返されます
+            投稿されたメッセージのメッセージオブジェクトが返されます。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
-
     put: 
       tags:
         - channel
@@ -100,7 +94,9 @@ paths:
                   example: gps
       responses:
         "200":
-          description: 正常に変更ができたときです。
+          description: |+
+            正常に変更ができました。
+            変更後のチャンネルオブジェクトを返します。
           content:
             application/json:
               schema:
@@ -111,16 +107,17 @@ paths:
       description: 対象のチャンネルの詳細情報を返します。
       responses:
         "200":
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得ができました。
+            チャンネル詳細オブジェクトを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelDetail"
-
     delete:
       tags:
         - channel
-      description: チャンネルの削除
+      description: チャンネルを削除します。
       requestBody:
         content:
           application/json:
@@ -135,36 +132,32 @@ paths:
               example: true
       responses:
         "204":
-          description: 削除に成功したときです。
+          description: 削除に成功しました。
           content: 
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
-            
-    
+
   /channels/{channelId}/topics:
     parameters:
-      - name: channelId
-        in: path
-        required: true
-        schema:
-          type: integer
+      - $ref: "#/components/parameters/channelIdInPath"
     get: 
       tags:
         - topics
-      description: チャンネルの説明の取得
+      description: チャンネルの説明を取得します。
       responses:
         "200":
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得ができました。
+            チャンネルトピックオブジェクトを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelTopic"
-
     post: 
       tags:
         - topics
-      description: チャンネルの説明の追加をします。
+      description: チャンネルの説明を追加します。
       requestBody:
         content:
           application/json:
@@ -173,10 +166,13 @@ paths:
               properties:
                 text:
                   type: string
+                  description: チャンネルの説明
                   example: なんでも良いチャンネルです。
       responses:
         "201":
-          description: 更新に成功したときです。
+          description: |+
+            更新に成功しました。
+            更新後のチャンネルトピックオブジェクトを返します。
           content:
             application/json:
               schema:
@@ -184,7 +180,7 @@ paths:
     put: 
       tags:
         - topics
-      description: チャンネルの説明の変更をします。
+      description: チャンネルの説明を変更します。
       requestBody:
         content:
           application/json:
@@ -193,26 +189,25 @@ paths:
               properties:
                 text:
                   type: string
+                  description: チャンネルの説明
                   example: なんでも良いチャンネルです!!
       responses:
         "200":
-          description: 正常に更新できた時です。
+          description: |+
+            正常に更新できました。
+            更新後のチャンネルトピックオブジェクトを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelTopic"
 
-  /channels/{chnnelId}/messages:
+  /channels/{channelId}/messages:
     parameters:
-      - name: channelId
-        in: path
-        required: true
-        schema:
-          type: integer
+      - $ref: "#/components/parameters/channelIdInPath"
     get: 
       tags:
         - message
-      description: チャンネルに存在するメッセージの取得
+      description: チャンネルに存在するメッセージを取得します。
       requestBody:
         content:
           application/json:
@@ -229,7 +224,9 @@ paths:
                   example: 150
       responses:
         "200":
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得ができました。
+            メッセージオブジェクトの配列を返します。
           content:
             application/json:
               schema:
@@ -237,18 +234,16 @@ paths:
               
   /channels/{channelId}/notifications:
     parameters:
-      - name: channelId
-        in: path
-        required: true
-        schema:
-          type: integer
+      - $ref: "#/components/parameters/channelIdInPath"
     get:
       tags:
         - channel
-      description: チャンネルの通知状況(すべてのメンバーの状況を返す)
+      description: 全ユーザーの通知状況を取得します。
       responses: 
         "200":
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得できました。
+            ユーザー通知状況オブジェクトの配列を返します。
           content:
             application/json:
               schema:
@@ -256,10 +251,12 @@ paths:
     put: 
       tags:
         - channel
-      description: チャンネルの通知状況の更新
+      description: チャンネルの通知状況を変更します。
       responses:
         "200":
-          description: 正常に更新ができたときです。
+          description: |+
+            正常に更新できました。
+            ユーザー通知状況オブジェクトの配列を返します。
           content:
             application/json:
               schema:
@@ -268,11 +265,13 @@ paths:
   /users:
     get:
       tags:
-        - me
-      description: ユーザーリストを取得
+        - user
+      description: 全ユーザーリストを取得します
       responses:
         "200": 
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得できました。
+            ユーザーリストを返します。
           content:
             application/json:
               schema:
@@ -282,10 +281,12 @@ paths:
     get:
       tags:
         - me
-      description: 自分の情報を取得します。
+      description: 自分のユーザー情報を取得します。
       responses:
         "200": 
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得できました。
+            自分のユーザーオブジェクトを返します。
           content:
             application/json:
               schema:
@@ -295,10 +296,12 @@ paths:
     get:
       tags:
         - me
-      description: クリップしたメッセージリストを取得します。
+      description: クリップしたメッセージのリストを取得します。
       responses:
         "200":
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得できました。
+            クリップしたメッセージのリストを返します。
           content:
             application/json:
               schema:
@@ -314,17 +317,18 @@ paths:
               type: object
               properties:
                 message_id:
-                  type: string
+                  type: integer
                   description: クリップするメッセージID
                   example: 114514
       responses:
         "200":
-          description: 正常にクリップできたときです。
+          description: |+ 
+            正常にクリップできました。
+            クリップしたメッセージのリストを返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MessageList"
-          
+                $ref: "#/components/schemas/MessageList"        
     delete:
       tags:
         - me
@@ -336,18 +340,22 @@ paths:
               type: object
               properties:
                 message_id:
-                  type: string
+                  type: integer
                   description: 削除するメッセージのID
                   example: 114514
       responses:
         "200":
-          description: 正常に削除ができたときです。
+          description: |+ 
+            正常に削除できました。
+            クリップしたメッセージのリストを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageList"
         "400":
-          description: 指定されたメッセージIDがクリップされていなかった時
+          description: |+ 
+            正常に削除できませんでした。
+            指定されたメッセージは既にクリップされていません。
           content:
             application/json:
               schema:
@@ -360,7 +368,9 @@ paths:
       description: お気に入りチャンネルリストを取得します。
       responses:
         "200":
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得できました。
+            お気に入りチャンネルリストを返します。
           content:
             application/json:
               schema:
@@ -368,7 +378,7 @@ paths:
     post:
       tags:
         - channel
-      description: お気に入りチャンネルリストに追加
+      description: お気に入りチャンネルリストにチャンネルを追加します。
       requestBody:
         content:
           application/json:
@@ -377,10 +387,13 @@ paths:
               properties:
                 channel_id:
                   type: string
+                  description: 追加するチャンネルのID
                   example: 25
       responses:
         "200":
-          description: 正常に追加できたときです。
+          description: |+ 
+            正常に追加できました。
+            お気に入りチャンネルリストを返します。
           content:
             application/json:
               schema:
@@ -388,24 +401,24 @@ paths:
 
   /users/me/stars/{channelId}:
     parameters:
-      - name: channelId
-        in: path
-        required: true
-        schema:
-          type: integer
+      - $ref: "#/components/parameters/channelIdInPath"
     delete:
       tags:
         - channel
-      description: お気に入りチャンネルリストから削除
+      description: お気に入りチャンネルリストから削除します。
       responses:
         "200":
-          description: OK
+          description: |+ 
+            正常に削除されました。
+            お気に入りチャンネルリストを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelList"
         "404":
-          description: お気に入りチャンネルリストになかった時
+          description: |+ 
+            正常に削除できませんでした。既に指定されたチャンネルはお気に入りチャンネルリストにありません。
+            お気に入りチャンネルリストを返します。
           content:
             application/json:
               schema:
@@ -415,10 +428,12 @@ paths:
     get:
       tags:
         - channel
-      description: チャンネル一覧の可視状態を取得
+      description: チャンネル一覧の可視状態を取得します。
       responses:
         "200":
-          description: OK
+          description: |+
+            正常に取得できました。
+            チャンネルリストを返します。
           content:
             application/json:
               schema:
@@ -426,12 +441,13 @@ paths:
     put: 
       tags:
         - channel
-      description: 可視状態の変更
+      description: チャンネルの可視状態を変更します。
       requestBody:
         content:
           application/json:
             schema:
               type: array
+              description: 可視にするチャンネルIDの配列
               items:
                 type: integer
               example:
@@ -439,7 +455,9 @@ paths:
                 - 14
       responses:
         "200":
-          description: OK
+          description: |+
+            正常に変更できました。
+            チャンネルリストを返します。
           content:
             application/json:
               schema:
@@ -449,10 +467,12 @@ paths:
     get:
       tags:
         - message
-      description: 未読メッセージリストを取得
+      description: 未読メッセージのリストを取得します。
       responses:
         "200":
-          description: ok
+          description: |+ 
+            正常に取得できました。
+            未読メッセージリストを返します。
           content:
             application/json:
               schema:
@@ -460,10 +480,11 @@ paths:
     delete:
       tags:
         - message
-      description: メッセージを既読にする
+      description: メッセージを既読にします。
       responses:
         "200":
-          description: ok
+          description: |+
+            正常にメッセージを既読にできました。
           content:
             application/json:
               schema:
@@ -471,18 +492,16 @@ paths:
     
   /users/{userId}:
     parameters:
-      - name: userId
-        in: path
-        required: true
-        schema: 
-          type: integer
+      - $ref: "#/components/parameters/userIdInPath"
     get:
       tags:
         - user
-      description: ユーザーの詳細を取得
+      description: ユーザーの詳細を取得します。
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に取得できました。
+            ユーザー情報を返します。
           content:
             application/json:
               schema:
@@ -490,18 +509,16 @@ paths:
     
   /users/{userId}/tags:
     parameters:
-      - name: userId
-        in: path
-        required: true
-        schema: 
-          type: integer
+      - $ref: "#/components/parameters/userIdInPath"
     get:
       tags:
         - userTag
-      description: タグのリストを取得
+      description: ユーザーのタグのリストを取得します。
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に取得できました。
+            タグのリストを返します。
           content:
             application/json:
               schema:
@@ -509,10 +526,11 @@ paths:
     post:
       tags:
         - userTag
-      description: タグを追加
+      description: ユーザーにタグを追加します。
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に追加できました。
           content:
             application/json:
               schema:
@@ -520,11 +538,7 @@ paths:
 
   /users/{userId}/tags/{tagId}:
     parameters:
-      - name: userId
-        in: path
-        required: true
-        schema: 
-          type: integer
+      - $ref: "#/components/parameters/userIdInPath"
       - name: tagId
         in: path
         required: true
@@ -533,10 +547,11 @@ paths:
     delete:
       tags:
         - userTag
-      description: タグを削除
+      description: ユーザーから指定したタグを削除します。
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に削除できました。
           content:
             application/json:
               schema:
@@ -546,10 +561,12 @@ paths:
     get:
       tags: 
         - stamp
-      description: スタンプのリストを取得
+      description: 全スタンプのリストを取得します。
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に取得できました。
+            スタンプのリストを返します。
           content:
             application/json:
               schema:
@@ -557,10 +574,11 @@ paths:
     post:
       tags: 
         - stamp
-      description: スタンプを追加
+      description: スタンプを新しく追加します。
       responses:
         "200":
-          description: ok
+          description: |+
+            正常にスタンプが追加されました。
           content:
             application/json:
               schema:
@@ -568,29 +586,28 @@ paths:
     
   /stamps/{stampId}:
     parameters:
-      - name: stampId
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: "#/components/parameters/stampIdInPath"
     get:
       tags: 
         - stamp
-      description: スタンプの詳細を取得
+      description: スタンプの詳細を取得します。
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に取得できました。
+            スタンプの詳細を返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
     delete:
-      description: スタンプを削除
+      description: スタンプを削除します。
       tags: 
         - stamp
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に削除できました。
           content:
             application/json:
               schema:
@@ -598,20 +615,17 @@ paths:
 
   /messages/{messageId}:
     parameters:
-    - name: messageId
-      in: path
-      required: true
-      description: 操作の対象となるメッセージID
-      schema:
-        type: integer
+      - $ref: "#/components/parameters/messageIdInPath"
     put:
       tags:
         - message
-      description: メッセージの編集
+      description: 指定したメッセージを編集します。
       operationId: editMessageById
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に編集できました。
+            編集後のメッセージオブジェクトを返します。
           content: 
             application/json:
               schema:
@@ -619,11 +633,13 @@ paths:
     get:
       tags:
         - message
-      description: メッセージの取得
+      description: 指定したメッセージを取得します。
       operationId: getMessageById
       responses:
         "200":
-          description: the message
+          description: |+
+            正常に取得できました。
+            メッセージオブジェクトを返します。
           content:
             application/json:
               schema:
@@ -631,46 +647,40 @@ paths:
     delete: 
       tags:
         - message
-      description: メッセージの削除
+      description: 指定したメッセージを削除します。
       responses:
         "204":
-          description: 削除の成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
-          
-  /messages/{messageId}/stamps:
-    post:
-      tags:
-        - stamp
-      description: スタンプを押す
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Stamp"
-      responses:
-        "204":
-          description: OK
+          description: |+
+            正常に削除できました。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
               
   /messages/{messageId}/stamps/{stampId}:
+    parameters:
+      - $ref: "#/components/parameters/messageIdInPath"
+      - $ref: "#/components/parameters/stampIdInPath"
+    post:
+      tags:
+        - stamp
+      description: 指定したメッセージに指定したスタンプを押します。
+      responses:
+        "204":
+          description: |+
+            正常にスタンプを押すことができました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
     delete:
       tags:
         - stamp
-      description: スタンプの削除
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Stamp"
+      description: 指定したメッセージから指定したスタンプを外します。
       responses:
         "204":
-          description: OK
+          description: |+
+            正常にスタンプを外すことができました。
           content:
             application/json:
               schema:
@@ -678,19 +688,16 @@ paths:
 
   /messages/{messageId}/fixation:
     parameters:
-    - name: messageId
-      in: path
-      required: true
-      description: 操作の対象となるメッセージID
-      schema:
-        type: integer
+      - $ref: "#/components/parameters/messageIdInPath"
     put:
       tags:
         - message
-      description: "メッセージを固定する"
+      description: 指定したメッセージを固定します。
       responses:
         "200":
-          description: OK
+          description: |+
+            正常にメッセージが固定できました。
+            固定されたメッセージを返します。
           content:
             application/json:
               schema:
@@ -698,40 +705,44 @@ paths:
     delete:
       tags:
         - message
-      description: "固定したメッセージを外す"
+      description: 指定したメッセージの固定を外します。
       responses:
         "200":
-          description: OK
+          description: |+
+            正常にメッセージの固定を外すことができました。
+            固定を外したメッセージを取得します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
 
-  /messages/search/{query}:
-    parameters:
-      - name: query
-        in: path
-        required: true
-        schema:
-          type: string
+  /messages/search:
     get:
       tags:
         - search
-      description: クエリに従った検索結果を取得
+      description: クエリによってメッセージを検索し、その結果を取得します。
+      parameters:
+        - name: query
+          description: 検索のクエリ文字列
+          in: query
+          required: true
+          schema:
+            type: string
       responses:
         "200":
-          description: result
+          description: |+
+            正常に検索できました。
+            検索結果に含まれたメッセージを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageList"
-  
 
   /heartbeat:
     get:
       tags:
         - heartbeat
-      description: チャンネルを見ている人・編集している人を取得
+      description: チャンネルを現在見ている人・編集している人を取得します。
       parameters:
         - name: channelId
           in: query
@@ -741,17 +752,16 @@ paths:
             type: integer
       responses:
         "200":
-          description: OK
+          description: |+
+            正常に取得できました。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/HeartbeatRes"
-              
-              
     put:
       tags:
         - heartbeat
-      description: どのチャンネルを見ているか・編集しているかを送信
+      description: どのチャンネルを見ているか・編集しているかを送信します。
       parameters:
       - name: userId
         in: query
@@ -777,13 +787,43 @@ paths:
           type: integer
       responses:
         "204":
-          description: OK
+          description: |+
+            正常に送信できました。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
 components:
+  parameters:
+    channelIdInPath:
+      name: channelId
+      description: 操作の対象となるチャンネルのID
+      in: path
+      required: true
+      schema:
+        type: integer
+    userIdInPath:
+      name: userId
+      description: 操作の対象となるユーザーID
+      in: path
+      required: true
+      schema:
+        type: integer
+    messageIdInPath:
+      name: messageId
+      in: path
+      required: true
+      description: 操作の対象となるメッセージID
+      schema:
+        type: integer
+    stampIdInPath:
+      name: stampId
+      description: 操作の対象となるスタンプID
+      in: path
+      required: true
+      schema:
+        type: string
   schemas:
     Channel:
       type: object
