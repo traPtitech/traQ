@@ -644,6 +644,62 @@ paths:
               schema:
                 $ref: "#/components/schemas/UserNotificationList"
 
+  /heartbeat:
+    get:
+      tags:
+        - heartbeat
+      description: チャンネルを見ている人・編集している人を取得
+      parameters:
+        - name: channelId
+          in: query
+          description: 現在いるチャンネルId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeartbeatRes"
+              
+              
+    put:
+      tags:
+        - heartbeat
+      description: どのチャンネルを見ているか・編集しているかを送信
+      parameters:
+      - name: userId
+        in: query
+        description: 自分のuserId
+        required: true
+        schema:
+          type: string
+      - name: status
+        in: query
+        description: editing,monitoring,noneでユーザーの状態を指定する
+        required: true
+        schema:
+          type: string
+          enum:
+            - none
+            - monitoring
+            - editing
+      - name: channelId
+        in: query
+        description: 現在いるチャンネルId
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeartbeatRes"
+
 components:
   schemas:
     Channel:
@@ -758,7 +814,30 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/UserNotification"
-      
+    
+    UserHeartbeatStatus:
+      type: object
+      properties:
+        userId:
+          type: string
+        status:
+          type: string
+          enum:
+            - none
+            - monitoring
+            - editing
+
+    HeartbeatRes:
+      type: object
+      properties:
+        userStatuses:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserHeartbeatStatus"
+        channelId:
+          type: integer
+
+
     NoContent:
       type: object
 
