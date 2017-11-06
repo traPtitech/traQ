@@ -888,6 +888,8 @@ components:
           type: string
          notification:
           type: boolean
+      example:
+        
 
     UserNotificationList:
       type: array
