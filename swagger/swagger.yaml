@@ -9,8 +9,7 @@ paths:
     post:
       tags:
         - channel
-      description:
-        チャンネルを作ります。
+      description: チャンネルを作ります。
       requestBody: 
         content:
           application/json:
@@ -20,9 +19,11 @@ paths:
                 name:
                   type: string
                   description: チャンネル名
+                  example: random
                 parent:
-                  type: string
+                  type: integer
                   description: 親のチャンネルID
+                  example: 1
       responses:
         "200":
           description: 作成されたチャンネルのチャンネルオブジェクト
@@ -33,10 +34,11 @@ paths:
     get:
       tags:
         - channel
-      description: チャンネルのリストの取得
+      description: |+
+        (すべての)チャンネルのリストの取得をします。
       responses:
         "200":
-          description: OK
+          description: 正常に取得ができたときです。
           content:
             application/json:
               schema:
@@ -59,13 +61,18 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - text
               properties:
                 text:
                   type: string
                   description: メッセージ本文
+                  example: Raskって誰？
       responses:
         "300": 
-          description: 投稿成功
+          description: |+ 
+            投稿成功したときです。
+            投稿されたメッセージのメッセージオブジェクトが返されます
           content:
             application/json:
               schema:
@@ -74,21 +81,22 @@ paths:
     put: 
       tags:
         - channel
-      description: チャンネル名変更
+      description: チャンネル名を変更します。
       requestBody:
         content:
           application/json:
             schema:
               type: object
+              required:
+                - name
               properties:
                 name:
                   type: string
                   description: チャンネル名
-            example:
-              name: random
+                  example: gps
       responses:
         "200":
-          description: OK
+          description: 正常に変更ができたときです。
           content:
             application/json:
               schema:
@@ -96,14 +104,14 @@ paths:
     get:
       tags:
         - channel
-      description: 対象チャンネルの子チャンネルの取得 or メッセージの取得
+      description: 対象のチャンネルの詳細情報を返します。
       responses:
-        "204":
-          description: ok
+        "200":
+          description: 正常に取得ができたときです。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NoContent"
+                $ref: "#/components/schemas/ChannelDetail"
 
     delete:
       tags:
@@ -114,15 +122,16 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - confirm
               properties:
                 confirm:
                   type: boolean
-                  description: 確認したか
-            example:
-              confirm: true
+                  description: 削除してもいいか確認したか
+              example: true
       responses:
         "204":
-          description: 削除の成功
+          description: 削除に成功したときです。
           content: 
             application/json:
               schema:
@@ -142,7 +151,7 @@ paths:
       description: チャンネルの説明の取得
       responses:
         "200":
-          description: ok
+          description: 正常に取得ができたときです。
           content:
             application/json:
               schema:
@@ -151,7 +160,7 @@ paths:
     post: 
       tags:
         - topics
-      description: チャンネルの説明の追加
+      description: チャンネルの説明の追加をします。
       requestBody:
         content:
           application/json:
@@ -160,11 +169,10 @@ paths:
               properties:
                 text:
                   type: string
-            example:
-              text: なんでも良いチャンネルです
+                  example: なんでも良いチャンネルです。
       responses:
         "201":
-          description: 更新成功
+          description: 更新に成功したときです。
           content:
             application/json:
               schema:
@@ -172,7 +180,7 @@ paths:
     put: 
       tags:
         - topics
-      description: チャンネルの説明の変更
+      description: チャンネルの説明の変更をします。
       requestBody:
         content:
           application/json:
@@ -181,11 +189,10 @@ paths:
               properties:
                 text:
                   type: string
-            example:
-              text: なんでも良いチャンネルです
+                  example: なんでも良いチャンネルです!!
       responses:
         "200":
-          description: OK
+          description: 正常に更新できた時です。
           content:
             application/json:
               schema:
@@ -211,15 +218,14 @@ paths:
                 count:
                   description: 取得する件数 1-200
                   type: integer
+                  example: 50
                 offset:
                   description: 取得するメッセージのオフセット
                   type: integer
-            example:
-              count: 50
-              offset: 150
+                  example: 150
       responses:
         "200":
-          description: OK
+          description: 正常に取得ができたときです。
           content:
             application/json:
               schema:
@@ -238,7 +244,7 @@ paths:
       description: チャンネルの通知状況(すべてのメンバーの状況を返す)
       responses: 
         "200":
-          description: OK
+          description: 正常に取得ができたときです。
           content:
             application/json:
               schema:
@@ -249,7 +255,7 @@ paths:
       description: チャンネルの通知状況の更新
       responses:
         "200":
-          description: OK
+          description: 正常に更新ができたときです。
           content:
             application/json:
               schema:
@@ -262,7 +268,7 @@ paths:
       description: ユーザーリストを取得
       responses:
         "200": 
-          description: OK
+          description: 正常に取得ができたときです。
           content:
             application/json:
               schema:
@@ -272,10 +278,10 @@ paths:
     get:
       tags:
         - me
-      description: 自分の情報を取得
+      description: 自分の情報を取得します。
       responses:
         "200": 
-          description: OK
+          description: 正常に取得ができたときです。
           content:
             application/json:
               schema:
@@ -285,10 +291,10 @@ paths:
     get:
       tags:
         - me
-      description: クリップしたメッセージリストを取得
+      description: クリップしたメッセージリストを取得します。
       responses:
         "200":
-          description: OK
+          description: 正常に取得ができたときです。
           content:
             application/json:
               schema:
@@ -296,7 +302,7 @@ paths:
     post:
       tags:
         - me
-      description: 新しくメッセージをクリップ
+      description: 新しくメッセージをクリップします。
       requestBody:
         content:
           application/json:
@@ -306,11 +312,10 @@ paths:
                 message_id:
                   type: string
                   description: クリップするメッセージID
-            example:
-              message_id: 114514
+                  example: 114514
       responses:
         "200":
-          description: OK
+          description: 正常にクリップできたときです。
           content:
             application/json:
               schema:
@@ -319,7 +324,7 @@ paths:
     delete:
       tags:
         - me
-      description: クリップを削除
+      description: クリップを削除します。
       requestBody:
         content:
           application/json:
@@ -329,11 +334,10 @@ paths:
                 message_id:
                   type: string
                   description: 削除するメッセージのID
-            example:
-              message_id: 114514
+                  example: 114514
       responses:
         "200":
-          description: OK
+          description: 正常に削除ができたときです。
           content:
             application/json:
               schema:
@@ -349,10 +353,10 @@ paths:
     get:
       tags:
         - channel
-      description: お気に入りチャンネルリストを取得
+      description: お気に入りチャンネルリストを取得します。
       responses:
         "200":
-          description: OK
+          description: 正常に取得ができたときです。
           content:
             application/json:
               schema:
@@ -369,11 +373,10 @@ paths:
               properties:
                 channel_id:
                   type: string
-            example:
-              channelId: 25
+                  example: 25
       responses:
         "200":
-          description: OK
+          description: 正常に追加できたときです。
           content:
             application/json:
               schema:
@@ -426,10 +429,10 @@ paths:
             schema:
               type: array
               items:
-                type: object
-            example:
-              - 12
-              - 14
+                type: integer
+              example:
+                - 12
+                - 14
       responses:
         "200":
           description: OK
