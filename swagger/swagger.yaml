@@ -9,7 +9,7 @@ paths:
     post:
       tags:
         - channel
-      description: チャンネルを作ります。
+      description: チャンネルを作成します。
       requestBody: 
         content:
           application/json:
@@ -26,7 +26,9 @@ paths:
                   example: 1
       responses:
         "200":
-          description: 作成されたチャンネルのチャンネルオブジェクト
+          description: |+
+            正常にチャンネルが作成できたときです。
+            作成されたチャンネルのチャンネルオブジェクトを返します。
           content:
             application/json:
               schema:
@@ -35,10 +37,12 @@ paths:
       tags:
         - channel
       description: |+
-        (すべての)チャンネルのリストの取得をします。
+        (すべての)チャンネルのリストを取得します。
       responses:
         "200":
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得ができたときです。
+            チャンネルオブジェクトの配列を返します。
           content:
             application/json:
               schema:
@@ -50,12 +54,12 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
         
     post:
       tags:
         - channel
-      description: 指定のチャンネルにメッセージを投稿します
+      description: 指定のチャンネルにメッセージを投稿します。
       requestBody:
         content:
           application/json:
@@ -144,7 +148,7 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
     get: 
       tags:
         - topics
@@ -204,7 +208,7 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
     get: 
       tags:
         - message
@@ -237,7 +241,7 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
     get:
       tags:
         - channel
@@ -388,7 +392,7 @@ paths:
         in: path
         required: true
         schema:
-          type: string
+          type: integer
     delete:
       tags:
         - channel
@@ -471,7 +475,7 @@ paths:
         in: path
         required: true
         schema: 
-          type: string
+          type: integer
     get:
       tags:
         - user
@@ -490,7 +494,7 @@ paths:
         in: path
         required: true
         schema: 
-          type: string
+          type: integer
     get:
       tags:
         - userTag
@@ -520,7 +524,7 @@ paths:
         in: path
         required: true
         schema: 
-          type: string
+          type: integer
       - name: tagId
         in: path
         required: true
@@ -754,7 +758,7 @@ paths:
         description: 自分のuserId
         required: true
         schema:
-          type: string
+          type: integer
       - name: status
         in: query
         description: editing,monitoring,noneでユーザーの状態を指定する
@@ -785,11 +789,11 @@ components:
       type: object
       properties:
         channelId:
-          type: string
+          type: integer
         name:
           type: string
         parent:
-          type: string
+          type: integer
           description: 親の階層のチャンネルId
         children:
           type: array
@@ -802,7 +806,7 @@ components:
       type: object
       properties:
         channelId:
-          type: string
+          type: integer
         name:
           type: string
         text:
@@ -817,7 +821,7 @@ components:
       type: object
       properties:
         userId:
-          type: string
+          type: integer
         name:
           type: string
 
@@ -825,7 +829,7 @@ components:
       type: object
       properties: 
         userId:
-          type: string
+          type: integer
         name:
           type: string
         tagList:
@@ -883,7 +887,7 @@ components:
       type: object
       properties: 
          userId:
-          type: string
+          type: integer
          name:
           type: string
          notification:
@@ -900,7 +904,7 @@ components:
       type: object
       properties:
         userId:
-          type: string
+          type: integer
         status:
           type: string
           enum:
