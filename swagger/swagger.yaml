@@ -43,6 +43,13 @@ paths:
                 $ref: "#/components/schemas/ChannelList"
 
   /channels/{channelId}:
+    parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+        
     post:
       tags:
         - channel
@@ -123,6 +130,12 @@ paths:
             
     
   /channels/{channelId}/topics:
+    parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
     get: 
       tags:
         - topics
@@ -179,6 +192,12 @@ paths:
                 $ref: "#/components/schemas/ChannelTopic"
 
   /channels/{chnnelId}/messages:
+    parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
     get: 
       tags:
         - message
@@ -207,6 +226,12 @@ paths:
                 $ref: "#/components/schemas/MessageList"
               
   /channels/{channelId}/notifications:
+    parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
     get:
       tags:
         - channel
@@ -355,6 +380,12 @@ paths:
                 $ref: "#/components/schemas/ChannelList"
 
   /users/me/stars/{channelId}:
+    parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
     delete:
       tags:
         - channel
@@ -435,6 +466,7 @@ paths:
     parameters:
       - name: userId
         in: path
+        required: true
         schema: 
           type: string
     get:
@@ -453,6 +485,7 @@ paths:
     parameters:
       - name: userId
         in: path
+        required: true
         schema: 
           type: string
     get:
