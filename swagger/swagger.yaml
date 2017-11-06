@@ -79,7 +79,6 @@ paths:
                   description: チャンネル名
             example:
               name: random
-
       responses:
         "200":
           description: OK
@@ -87,7 +86,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Channel"
-
     get:
       tags:
         - channel
@@ -127,7 +125,7 @@ paths:
   /channels/{channelId}/topics:
     get: 
       tags:
-        - channel
+        - topics
       description: チャンネルの説明の取得
       responses:
         "200":
@@ -139,7 +137,7 @@ paths:
 
     post: 
       tags:
-        - channel
+        - topics
       description: チャンネルの説明の追加
       requestBody:
         content:
@@ -160,7 +158,7 @@ paths:
                 $ref: "#/components/schemas/ChannelTopic"
     put: 
       tags:
-        - channel
+        - topics
       description: チャンネルの説明の変更
       requestBody:
         content:
@@ -208,13 +206,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/MessageList"
               
+  /channels/{channelId}/notifications:
+    get:
+      tags:
+        - channel
+      description: チャンネルの通知状況(すべてのメンバーの状況を返す)
+      responses: 
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotificationList"
+    put: 
+      tags:
+        - channel
+      description: チャンネルの通知状況の更新
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserNotificationList"
         
-    
-#  /channels/{ChannelId}/messages/{messageId}:
-    #messageとおなじになりそう
-    
   /users:
     get:
+      tags:
+        - me
       description: ユーザーリストを取得
       responses:
         "200": 
@@ -226,6 +245,8 @@ paths:
 
   /users/me:
     get:
+      tags:
+        - me
       description: 自分の情報を取得
       responses:
         "200": 
@@ -301,6 +322,8 @@ paths:
     
   /users/me/stars:
     get:
+      tags:
+        - channel
       description: お気に入りチャンネルリストを取得
       responses:
         "200":
@@ -310,6 +333,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChannelList"
     post:
+      tags:
+        - channel
       description: お気に入りチャンネルリストに追加
       requestBody:
         content:
@@ -331,6 +356,8 @@ paths:
 
   /users/me/stars/{channelId}:
     delete:
+      tags:
+        - channel
       description: お気に入りチャンネルリストから削除
       responses:
         "200":
@@ -348,7 +375,9 @@ paths:
     
   /users/me/channels/visibility:
     get:
-      description: 可視状態のチャンネル一覧を取得
+      tags:
+        - channel
+      description: チャンネル一覧の可視状態を取得
       responses:
         "200":
           description: OK
@@ -357,6 +386,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChannelList"
     put: 
+      tags:
+        - channel
       description: 可視状態の変更
       requestBody:
         content:
@@ -375,25 +406,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelList"
-    
-  /users/me/channels/{channelId}/visibility:
-    get:
-      description: チャンネルの可視状態を取得
-      responses:
-        "200":
-          description: ok
-    put:
-      description: チャンネルの可視状態を変更
-      responses:
-        "200":
-          description: ok
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
   
   /users/me/messages/unread:
     get:
+      tags:
+        - message
       description: 未読メッセージリストを取得
       responses:
         "200":
@@ -403,6 +420,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
     delete:
+      tags:
+        - message
       description: メッセージを既読にする
       responses:
         "200":
@@ -412,8 +431,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
     
-  /users/{id}:
+  /users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        schema: 
+          type: string
     get:
+      tags:
+        - user
       description: ユーザーの詳細を取得
       responses:
         "200":
@@ -423,8 +449,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
     
-  /users/{id}/tags:
+  /users/{userId}/tags:
+    parameters:
+      - name: userId
+        in: path
+        schema: 
+          type: string
     get:
+      tags:
+        - userTag
       description: タグのリストを取得
       responses:
         "200":
@@ -434,6 +467,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
     post:
+      tags:
+        - userTag
       description: タグを追加
       responses:
         "200":
@@ -444,7 +479,20 @@ paths:
                 $ref: "#/components/schemas/NoContent"
 
   /users/{userId}/tags/{tagId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: 
+          type: string
+      - name: tagId
+        in: path
+        required: true
+        schema:
+          type: string
     delete:
+      tags:
+        - userTag
       description: タグを削除
       responses:
         "200":
@@ -456,6 +504,8 @@ paths:
     
   /stamps:
     get:
+      tags: 
+        - stamp
       description: スタンプのリストを取得
       responses:
         "200":
@@ -465,6 +515,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
     post:
+      tags: 
+        - stamp
       description: スタンプを追加
       responses:
         "200":
@@ -475,7 +527,15 @@ paths:
                 $ref: "#/components/schemas/NoContent"
     
   /stamps/{stampId}:
+    parameters:
+      - name: stampId
+        in: path
+        required: true
+        schema:
+          type: string
     get:
+      tags: 
+        - stamp
       description: スタンプの詳細を取得
       responses:
         "200":
@@ -486,6 +546,8 @@ paths:
                 $ref: "#/components/schemas/NoContent"
     delete:
       description: スタンプを削除
+      tags: 
+        - stamp
       responses:
         "200":
           description: ok
@@ -541,7 +603,7 @@ paths:
   /messages/{messageId}/stamps:
     post:
       tags:
-        - message
+        - stamp
       description: スタンプを押す
       requestBody:
         content:
@@ -559,7 +621,7 @@ paths:
   /messages/{messageId}/stamps/{stampId}:
     delete:
       tags:
-        - message
+        - stamp
       description: スタンプの削除
       requestBody:
         content:
@@ -614,7 +676,7 @@ paths:
           type: string
     get:
       tags:
-        - message
+        - search
       description: クエリに従った検索結果を取得
       responses:
         "200":
@@ -624,25 +686,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/MessageList"
   
-  /channels/{channelId}/notifications:
-    get:
-      description: チャンネルの通知状況(すべてのメンバーの状況を返す)
-      responses: 
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserNotificationList"
-    put: 
-      description: チャンネルの通知状況の更新
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserNotificationList"
 
 components:
   schemas:
@@ -761,4 +804,5 @@ components:
       
     NoContent:
       type: object
+      example:
 
