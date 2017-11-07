@@ -28,7 +28,7 @@ paths:
                   description: 親のチャンネルID
                   example: 1
       responses:
-        "200":
+        "201":
           description: |+
             正常にチャンネルが作成できました。
             作成されたチャンネルを返します。
@@ -79,7 +79,7 @@ paths:
                   description: Markdown形式のメッセージ本文
                   example: Raskって誰？
       responses:
-        "200":
+        "201":
           description: |+ 
             投稿に成功しました。
             投稿されたメッセージが返されます。
@@ -410,7 +410,7 @@ paths:
                   description: クリップするメッセージID
                   example: 114514
       responses:
-        "200":
+        "201":
           description: |+ 
             正常にクリップできました。
             クリップしたメッセージのリストを返します。
@@ -485,7 +485,7 @@ paths:
                   description: 追加するチャンネルのID
                   example: 25
       responses:
-        "200":
+        "201":
           description: |+ 
             正常に追加できました。
             お気に入りチャンネルリストを返します。
