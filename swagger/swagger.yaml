@@ -28,7 +28,7 @@ paths:
         "200":
           description: |+
             正常にチャンネルが作成できました。
-            作成されたチャンネルのチャンネルオブジェクトを返します。
+            作成されたチャンネルを返します。
           content:
             application/json:
               schema:
@@ -41,8 +41,8 @@ paths:
       responses:
         "200":
           description: |+
-            正常に取得ができました。
-            チャンネルオブジェクトの配列を返します。
+            正常に取得できました。
+            チャンネルの配列を返します。
           content:
             application/json:
               schema:
@@ -70,8 +70,8 @@ paths:
       responses:
         "300": 
           description: |+ 
-            投稿成功したときです。
-            投稿されたメッセージのメッセージオブジェクトが返されます。
+            投稿に成功しました。
+            投稿されたメッセージが返されます。
           content:
             application/json:
               schema:
@@ -96,7 +96,7 @@ paths:
         "200":
           description: |+
             正常に変更ができました。
-            変更後のチャンネルオブジェクトを返します。
+            変更後のチャンネルを返します。
           content:
             application/json:
               schema:
@@ -104,16 +104,16 @@ paths:
     get:
       tags:
         - channel
-      description: 対象のチャンネルの詳細情報を返します。
+      description: チャンネルの情報を返します。
       responses:
         "200":
           description: |+
             正常に取得ができました。
-            チャンネル詳細オブジェクトを返します。
+            チャンネルを返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChannelDetail"
+                $ref: "#/components/schemas/Channel"
     delete:
       tags:
         - channel
