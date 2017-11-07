@@ -9,12 +9,15 @@ paths:
     post:
       tags:
         - channel
-      description: チャンネルを作ります。
+      description: チャンネルを作成します。
       requestBody: 
         content:
           application/json:
             schema:
               type: object
+              required:
+                - name
+                - parent
               properties:
                 name:
                   type: string
@@ -25,20 +28,32 @@ paths:
                   description: 親のチャンネルID
                   example: 1
       responses:
-        "200":
-          description: 作成されたチャンネルのチャンネルオブジェクト
+        "201":
+          description: |+
+            正常にチャンネルが作成できました。
+            作成されたチャンネルを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Channel"
+        "400":
+          description: |+
+            正常にチャンネルが作成できませんでした。
+            親チャンネルが存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
     get:
       tags:
         - channel
       description: |+
-        (すべての)チャンネルのリストの取得をします。
+        (すべての)チャンネルのリストを取得します。
       responses:
         "200":
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得できました。
+            チャンネルの配列を返します。
           content:
             application/json:
               schema:
@@ -46,16 +61,11 @@ paths:
 
   /channels/{channelId}:
     parameters:
-      - name: channelId
-        in: path
-        required: true
-        schema:
-          type: string
-        
+      - $ref: "#/components/parameters/channelIdInPath"
     post:
       tags:
         - channel
-      description: 指定のチャンネルにメッセージを投稿します
+      description: チャンネルにメッセージを投稿します。
       requestBody:
         content:
           application/json:
@@ -66,18 +76,25 @@ paths:
               properties:
                 text:
                   type: string
-                  description: メッセージ本文
+                  description: Markdown形式のメッセージ本文
                   example: Raskって誰？
       responses:
-        "300": 
+        "201":
           description: |+ 
-            投稿成功したときです。
-            投稿されたメッセージのメッセージオブジェクトが返されます
+            投稿に成功しました。
+            投稿されたメッセージが返されます。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
-
+        "404":
+          description: |+
+            投稿に失敗しました。
+            指定したチャンネルは存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
     put: 
       tags:
         - channel
@@ -96,27 +113,46 @@ paths:
                   example: gps
       responses:
         "200":
-          description: 正常に変更ができたときです。
+          description: |+
+            正常に変更ができました。
+            変更後のチャンネルを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Channel"
-    get:
-      tags:
-        - channel
-      description: 対象のチャンネルの詳細情報を返します。
-      responses:
-        "200":
-          description: 正常に取得ができたときです。
+        "404":
+          description: |+
+            変更に失敗しました。
+            指定したチャンネルは存在しません。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChannelDetail"
-
+                $ref: "#/components/schemas/NoContent"
+    get:
+      tags:
+        - channel
+      description: チャンネルの情報を返します。
+      responses:
+        "200":
+          description: |+
+            正常に取得ができました。
+            チャンネルを返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+        "404":
+          description: |+
+            取得に失敗しました。
+            指定したチャンネルは存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
     delete:
       tags:
         - channel
-      description: チャンネルの削除
+      description: チャンネルを削除します。
       requestBody:
         content:
           application/json:
@@ -131,84 +167,85 @@ paths:
               example: true
       responses:
         "204":
-          description: 削除に成功したときです。
+          description: 削除に成功しました。
           content: 
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
-            
-    
-  /channels/{channelId}/topics:
+        "404":
+          description: |+
+            削除に失敗しました。
+            指定したチャンネルは既に存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+
+  /channels/{channelId}/topic:
     parameters:
-      - name: channelId
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: "#/components/parameters/channelIdInPath"
     get: 
       tags:
-        - topics
-      description: チャンネルの説明の取得
+        - topic
+      description: チャンネルの説明を取得します。
       responses:
         "200":
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得ができました。
+            チャンネルトピックを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelTopic"
-
-    post: 
-      tags:
-        - topics
-      description: チャンネルの説明の追加をします。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                text:
-                  type: string
-                  example: なんでも良いチャンネルです。
-      responses:
-        "201":
-          description: 更新に成功したときです。
+        "404":
+          description: |+
+            取得に失敗しました。
+            指定したチャンネルは存在しません。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChannelTopic"
+                $ref: "#/components/schemas/NoContent"
     put: 
       tags:
-        - topics
-      description: チャンネルの説明の変更をします。
+        - topic
+      description: チャンネルの説明を変更します。
       requestBody:
         content:
           application/json:
             schema:
               type: object
+              required:
+                - text
               properties:
                 text:
                   type: string
+                  description: チャンネルの説明
                   example: なんでも良いチャンネルです!!
       responses:
         "200":
-          description: 正常に更新できた時です。
+          description: |+
+            正常に更新できました。
+            更新後のチャンネルトピックを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelTopic"
+        "404":
+          description: |+
+            更新に失敗しました。
+            指定したチャンネルは存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
 
-  /channels/{chnnelId}/messages:
+  /channels/{channelId}/messages:
     parameters:
-      - name: channelId
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: "#/components/parameters/channelIdInPath"
     get: 
       tags:
         - message
-      description: チャンネルに存在するメッセージの取得
+      description: チャンネルに存在するメッセージを取得します。
       requestBody:
         content:
           application/json:
@@ -225,50 +262,103 @@ paths:
                   example: 150
       responses:
         "200":
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得ができました。
+            メッセージの配列を返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageList"
-              
+        "404":
+          description: |+
+            取得に失敗しました。
+            指定したチャンネルは存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+
   /channels/{channelId}/notifications:
     parameters:
-      - name: channelId
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: "#/components/parameters/channelIdInPath"
     get:
       tags:
         - channel
-      description: チャンネルの通知状況(すべてのメンバーの状況を返す)
+      description: 全ユーザーの通知状況を取得します。
       responses: 
         "200":
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得できました。
+            ユーザー通知状況の配列を返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserNotificationList"
-    put: 
+        "404":
+          description: |+
+            取得に失敗しました。
+            指定したチャンネルは存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+    put:
       tags:
         - channel
-      description: チャンネルの通知状況の更新
+      description: |+
+        チャンネルの通知状況を変更します。
+        リクエストに含めなかったユーザーIDのユーザーの通知状況は変更しません。
+        また、存在しないユーザーのIDを指定した場合は無視されます。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                on:
+                  description: 通知をつける人のユーザーIDの配列
+                  type: array
+                  items:
+                    type: integer
+                  example:
+                    - 12
+                    - 14
+                off:
+                  description: 通知をつけない人のユーザーIDの配列
+                  type: array
+                  items:
+                    type: integer
+                  example:
+                    - 93
+                    - 13
       responses:
         "200":
-          description: 正常に更新ができたときです。
+          description: |+
+            正常に更新できました。
+            ユーザー通知状況の配列を返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserNotificationList"
-        
+        "404":
+          description: |+
+            変更に失敗しました。
+            指定したチャンネルは存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+
   /users:
     get:
       tags:
-        - me
-      description: ユーザーリストを取得
+        - user
+      description: 全ユーザーのリストを取得します。
       responses:
         "200": 
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得できました。
+            ユーザーリストを返します。
           content:
             application/json:
               schema:
@@ -278,10 +368,12 @@ paths:
     get:
       tags:
         - me
-      description: 自分の情報を取得します。
+      description: 自分のユーザー情報を取得します。
       responses:
         "200": 
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得できました。
+            自分のユーザーオブジェクトを返します。
           content:
             application/json:
               schema:
@@ -290,60 +382,73 @@ paths:
   /users/me/clips:
     get:
       tags:
-        - me
-      description: クリップしたメッセージリストを取得します。
+        - clip
+      description: クリップしたメッセージのリストを取得します。
       responses:
         "200":
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得できました。
+            クリップしたメッセージのリストを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageList"
     post:
       tags:
-        - me
+        - clip
       description: 新しくメッセージをクリップします。
       requestBody:
         content:
           application/json:
             schema:
               type: object
+              required:
+                - message_id
               properties:
                 message_id:
-                  type: string
+                  type: integer
                   description: クリップするメッセージID
                   example: 114514
       responses:
-        "200":
-          description: 正常にクリップできたときです。
+        "201":
+          description: |+ 
+            正常にクリップできました。
+            クリップしたメッセージのリストを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageList"
-          
+        "404":
+          description: |+
+            正常にクリップできませんでした。
+            指定されたメッセージは存在しないか、自分のスコープ内にありません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
     delete:
       tags:
-        - me
-      description: クリップを削除します。
+        - clip
+      description: |+
+        クリップを削除します。
+        既にクリップされていないメッセージを指定した場合は無視されます(200)。
       requestBody:
         content:
           application/json:
             schema:
               type: object
+              required:
+                - message_id
               properties:
                 message_id:
-                  type: string
+                  type: integer
                   description: 削除するメッセージのID
                   example: 114514
       responses:
         "200":
-          description: 正常に削除ができたときです。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageList"
-        "400":
-          description: 指定されたメッセージIDがクリップされていなかった時
+          description: |+ 
+            正常に削除できました。
+            クリップしたメッセージのリストを返します。
           content:
             application/json:
               schema:
@@ -352,114 +457,171 @@ paths:
   /users/me/stars:
     get:
       tags:
-        - channel
+        - star
       description: お気に入りチャンネルリストを取得します。
       responses:
         "200":
-          description: 正常に取得ができたときです。
+          description: |+
+            正常に取得できました。
+            お気に入りチャンネルリストを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelList"
     post:
       tags:
-        - channel
-      description: お気に入りチャンネルリストに追加
+        - star
+      description: お気に入りチャンネルリストにチャンネルを追加します。
       requestBody:
         content:
           application/json:
             schema:
               type: object
+              required:
+                - channel_id
               properties:
                 channel_id:
                   type: string
+                  description: 追加するチャンネルのID
                   example: 25
       responses:
-        "200":
-          description: 正常に追加できたときです。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ChannelList"
-
-  /users/me/stars/{channelId}:
-    parameters:
-      - name: channelId
-        in: path
-        required: true
-        schema:
-          type: string
-    delete:
-      tags:
-        - channel
-      description: お気に入りチャンネルリストから削除
-      responses:
-        "200":
-          description: OK
+        "201":
+          description: |+ 
+            正常に追加できました。
+            お気に入りチャンネルリストを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelList"
         "404":
-          description: お気に入りチャンネルリストになかった時
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ChannelList"
-    
-  /users/me/channels/visibility:
-    get:
-      tags:
-        - channel
-      description: チャンネル一覧の可視状態を取得
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ChannelList"
-    put: 
-      tags:
-        - channel
-      description: 可視状態の変更
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: integer
-              example:
-                - 12
-                - 14
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ChannelList"
-  
-  /users/me/messages/unread:
-    get:
-      tags:
-        - message
-      description: 未読メッセージリストを取得
-      responses:
-        "200":
-          description: ok
+          description: |+
+            正常に追加できませんでした。
+            対象のチャンネルが存在しません。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
     delete:
       tags:
-        - message
-      description: メッセージを既読にする
+        - star
+      description: |+
+        お気に入りチャンネルリストから削除します。
+        既にお気に入りチャンネルリストに無いチャンネルを指定した場合は無視されます(200)。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - channel_id
+              properties:
+                channel_id:
+                  type: string
+                  description: 削除するチャンネルのID
+                  example: 25
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に削除されました。
+            お気に入りチャンネルリストを返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelList"
+
+  /users/me/channels/visibility:
+    get:
+      tags:
+        - channel
+      description: チャンネル一覧の可視状態を取得します。
+      responses:
+        "200":
+          description: |+
+            正常に取得できました。
+            可視状態を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelVisibilities"
+    put: 
+      tags:
+        - channel
+      description: |+
+        チャンネルの可視状態を変更します。
+        リクエストで指定しなかったチャンネルの可視状態は変更されません。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                visible:
+                  type: array
+                  description: 可視にするチャンネルIDの配列
+                  items:
+                    type: integer
+                  example:
+                    - 12
+                    - 14
+                hidden:
+                  type: array
+                  description: 非表示にするチャンネルIDの配列
+                  items:
+                    type: integer
+                  example:
+                    - 12
+                    - 14
+      responses:
+        "200":
+          description: |+
+            正常に変更できました。
+            可視状態を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelVisibilities"
+        "404":
+          description: |+
+            正常に変更できませんでした。
+            存在しないチャンネルが指定されています。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+  
+  /users/me/messages/unread:
+    get:
+      tags:
+        - message
+      description: 未読メッセージのリストを取得します。
+      responses:
+        "200":
+          description: |+ 
+            正常に取得できました。
+            未読メッセージリストを返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageList"
+    delete:
+      tags:
+        - message
+      description: メッセージを既読にします。存在しないメッセージのIDを指定した場合は、無視されます。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              description: 既読にするメッセージのIDの配列
+              items:
+                type: integer
+              example:
+                - 12903
+                - 14121
+      responses:
+        "204":
+          description: |+
+            正常にメッセージを既読にできました。
           content:
             application/json:
               schema:
@@ -467,18 +629,24 @@ paths:
     
   /users/{userId}:
     parameters:
-      - name: userId
-        in: path
-        required: true
-        schema: 
-          type: string
+      - $ref: "#/components/parameters/userIdInPath"
     get:
       tags:
         - user
-      description: ユーザーの詳細を取得
+      description: ユーザーの詳細を取得します。
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に取得できました。
+            ユーザー情報を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDetail"
+        "404":
+          description: |+
+            正常に取得できませんでした。
+            指定したユーザーは存在しません。
           content:
             application/json:
               schema:
@@ -486,18 +654,24 @@ paths:
     
   /users/{userId}/tags:
     parameters:
-      - name: userId
-        in: path
-        required: true
-        schema: 
-          type: string
+      - $ref: "#/components/parameters/userIdInPath"
     get:
       tags:
         - userTag
-      description: タグのリストを取得
+      description: ユーザーのタグのリストを取得します。
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に取得できました。
+            タグのリストを返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "404":
+          description: |+
+            正常に取得できませんでした。
+            指定したユーザーは存在しません。
           content:
             application/json:
               schema:
@@ -505,58 +679,92 @@ paths:
     post:
       tags:
         - userTag
-      description: タグを追加
+      description: ユーザーにタグを追加します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tag
+              properties:
+                tag:
+                  type: string
+                  description: 追加するタグ
+                  example: 山田太郎
       responses:
-        "200":
-          description: ok
+        "204":
+          description: |+
+            正常に追加できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "404":
+          description: |+
+            正常に追加できませんでした。
+            指定したユーザーは存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+    delete:
+      tags:
+        - userTag
+      description: ユーザーから指定したタグを削除します。既に存在しないタグを削除しようとした場合は無視されます(204)。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tag
+              properties:
+                tag:
+                  type: string
+                  description: 削除するタグ
+                  example: 山田太郎
+      responses:
+        "204":
+          description: |+
+            正常に削除できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "404":
+          description: |+
+            正常に削除できませんでした。
+            指定したユーザーは存在しません。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /users/{userId}/tags/{tagId}:
-    parameters:
-      - name: userId
-        in: path
-        required: true
-        schema: 
-          type: string
-      - name: tagId
-        in: path
-        required: true
-        schema:
-          type: string
-    delete:
-      tags:
-        - userTag
-      description: タグを削除
-      responses:
-        "200":
-          description: ok
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
-    
   /stamps:
     get:
       tags: 
         - stamp
-      description: スタンプのリストを取得
+      description: 全スタンプのリストを取得します。
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に取得できました。
+            スタンプのリストを返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NoContent"
+                type: array
+                items:
+                  $ref: "#/components/schemas/StampDetail"
     post:
       tags: 
         - stamp
-      description: スタンプを追加
+      description: スタンプを新しく追加します。
       responses:
-        "200":
-          description: ok
+        "204":
+          description: |+
+            正常にスタンプが追加されました。
           content:
             application/json:
               schema:
@@ -564,29 +772,52 @@ paths:
     
   /stamps/{stampId}:
     parameters:
-      - name: stampId
-        in: path
-        required: true
-        schema:
-          type: string
+      - $ref: "#/components/parameters/stampIdInPath"
     get:
       tags: 
         - stamp
-      description: スタンプの詳細を取得
+      description: スタンプの詳細を取得します。
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に取得できました。
+            スタンプの詳細を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StampDetail"
+        "404":
+          description: |+
+            取得できませんでした。
+            指定されたスタンプは存在しません。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
     delete:
-      description: スタンプを削除
+      description: スタンプを削除します。
       tags: 
         - stamp
       responses:
-        "200":
-          description: ok
+        "204":
+          description: |+
+            正常に削除できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "403":
+          description: |+
+            削除できませんでした。
+            指定されたスタンプを削除する権限がありません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "404":
+          description: |+
+            削除できませんでした。
+            指定されたスタンプは存在しません。
           content:
             application/json:
               schema:
@@ -594,79 +825,144 @@ paths:
 
   /messages/{messageId}:
     parameters:
-    - name: messageId
-      in: path
-      required: true
-      description: 操作の対象となるメッセージID
-      schema:
-        type: integer
+      - $ref: "#/components/parameters/messageIdInPath"
     put:
       tags:
         - message
-      description: メッセージの編集
+      description: 指定したメッセージを編集します。
       operationId: editMessageById
       responses:
         "200":
-          description: ok
+          description: |+
+            正常に編集できました。
+            編集後のメッセージオブジェクトを返します。
           content: 
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
+        "403":
+          description: |+
+            編集できませんでした。
+            指定されたメッセージを編集する権限がありません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "404":
+          description: |+
+            編集できませんでした。
+            指定されたメッセージは存在しないか、自分のスコープ内にありません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
     get:
       tags:
         - message
-      description: メッセージの取得
+      description: 指定したメッセージを取得します。
       operationId: getMessageById
       responses:
         "200":
-          description: the message
+          description: |+
+            正常に取得できました。
+            メッセージオブジェクトを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
-    delete: 
-      tags:
-        - message
-      description: メッセージの削除
-      responses:
-        "204":
-          description: 削除の成功
+        "404":
+          description: |+
+            取得できませんでした。
+            指定されたメッセージは存在しないか、自分のスコープ内にありません。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
-          
-  /messages/{messageId}/stamps:
+    delete:
+      tags:
+        - message
+      description: 指定したメッセージを削除します。
+      responses:
+        "204":
+          description: |+
+            正常に削除できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "403":
+          description: |+
+            削除できませんでした。
+            指定されたメッセージを削除する権限がありません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "404":
+          description: |+
+            削除できませんでした。
+            指定されたメッセージは存在しないか、自分のスコープ内にありません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+
+  /messages/{messageId}/stamps/{stampId}:
+    parameters:
+      - $ref: "#/components/parameters/messageIdInPath"
+      - $ref: "#/components/parameters/stampIdInPath"
     post:
       tags:
         - stamp
-      description: スタンプを押す
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Stamp"
+      description: 指定したメッセージに指定したスタンプを押します。
       responses:
         "204":
-          description: OK
+          description: |+
+            正常にスタンプを押すことができました。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
-              
-  /messages/{messageId}/stamps/{stampId}:
+        "400":
+          description: |+
+            スタンプを押すことができませんでした。
+            指定されたスタンプは存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "404":
+          description: |+
+            スタンプを押すことができませんでした。
+            指定されたメッセージは存在しないか、自分のスコープ内にありません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
     delete:
       tags:
         - stamp
-      description: スタンプの削除
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Stamp"
+      description: 指定したメッセージから指定したスタンプを外します。
       responses:
         "204":
-          description: OK
+          description: |+
+            正常にスタンプを外すことができました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "400":
+          description: |+
+            スタンプを外すことができませんでした。
+            指定されたスタンプは存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "404":
+          description: |+
+            スタンプを外すことができませんでした。
+            指定されたメッセージは存在しないか、自分のスコープ内にありません。
           content:
             application/json:
               schema:
@@ -674,60 +970,78 @@ paths:
 
   /messages/{messageId}/fixation:
     parameters:
-    - name: messageId
-      in: path
-      required: true
-      description: 操作の対象となるメッセージID
-      schema:
-        type: integer
+      - $ref: "#/components/parameters/messageIdInPath"
     put:
       tags:
         - message
-      description: "メッセージを固定する"
+      description: 指定したメッセージを固定します。
       responses:
         "200":
-          description: OK
+          description: |+
+            正常にメッセージが固定できました。
+            固定されたメッセージを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
+        "404":
+          description: |+
+            正常に固定できませんでした。
+            指定されたメッセージは存在しないか、自分のスコープ内にありません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
     delete:
       tags:
         - message
-      description: "固定したメッセージを外す"
+      description: |+
+        指定したメッセージの固定を外します。
+        存在しないメッセージ、あるいは既に固定が外れているメッセージを指定した場合は無視されます(204)。
       responses:
-        "200":
-          description: OK
+        "204":
+          description: |+
+            正常にメッセージの固定を外すことができました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Message"
+                $ref: "#/components/schemas/NoContent"
 
-  /messages/search/{query}:
-    parameters:
-      - name: query
-        in: path
-        required: true
-        schema:
-          type: string
+  /messages/search:
     get:
       tags:
         - search
-      description: クエリに従った検索結果を取得
+      description: クエリによってメッセージを検索し、その結果を取得します。
+      parameters:
+        - name: query
+          description: 検索のクエリ文字列
+          in: query
+          required: true
+          schema:
+            type: string
       responses:
         "200":
-          description: result
+          description: |+
+            正常に検索できました。
+            検索結果に含まれたメッセージを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageList"
-  
+        "400":
+          description: |+
+            正常に検索できませんでした。
+            クエリが不正です。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
 
   /heartbeat:
     get:
       tags:
         - heartbeat
-      description: チャンネルを見ている人・編集している人を取得
+      description: チャンネルを現在見ている人・編集している人を取得します。
       parameters:
         - name: channelId
           in: query
@@ -737,24 +1051,23 @@ paths:
             type: integer
       responses:
         "200":
-          description: OK
+          description: |+
+            正常に取得できました。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/HeartbeatRes"
-              
-              
     put:
       tags:
         - heartbeat
-      description: どのチャンネルを見ているか・編集しているかを送信
+      description: どのチャンネルを見ているか・編集しているかを送信します。
       parameters:
       - name: userId
         in: query
         description: 自分のuserId
         required: true
         schema:
-          type: string
+          type: integer
       - name: status
         in: query
         description: editing,monitoring,noneでユーザーの状態を指定する
@@ -773,23 +1086,53 @@ paths:
           type: integer
       responses:
         "204":
-          description: OK
+          description: |+
+            正常に送信できました。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
 components:
+  parameters:
+    channelIdInPath:
+      name: channelId
+      description: 操作の対象となるチャンネルのID
+      in: path
+      required: true
+      schema:
+        type: integer
+    userIdInPath:
+      name: userId
+      description: 操作の対象となるユーザーID
+      in: path
+      required: true
+      schema:
+        type: integer
+    messageIdInPath:
+      name: messageId
+      in: path
+      required: true
+      description: 操作の対象となるメッセージID
+      schema:
+        type: integer
+    stampIdInPath:
+      name: stampId
+      description: 操作の対象となるスタンプID
+      in: path
+      required: true
+      schema:
+        type: string
   schemas:
     Channel:
       type: object
       properties:
         channelId:
-          type: string
+          type: integer
         name:
           type: string
         parent:
-          type: string
+          type: integer
           description: 親の階層のチャンネルId
         children:
           type: array
@@ -802,7 +1145,7 @@ components:
       type: object
       properties:
         channelId:
-          type: string
+          type: integer
         name:
           type: string
         text:
@@ -813,11 +1156,31 @@ components:
       items: 
         $ref: "#/components/schemas/Channel"
 
+    ChannelVisibilities:
+      type: object
+      properties:
+        visible:
+          type: array
+          description: 可視状態のチャンネルIDの配列
+          items:
+            type: integer
+          example:
+            - 12
+            - 14
+        hidden:
+          type: array
+          description: 非表示状態のチャンネルIDの配列
+          items:
+            type: integer
+          example:
+            - 12
+            - 14
+
     User:
       type: object
       properties:
         userId:
-          type: string
+          type: integer
         name:
           type: string
 
@@ -825,7 +1188,7 @@ components:
       type: object
       properties: 
         userId:
-          type: string
+          type: integer
         name:
           type: string
         tagList:
@@ -871,7 +1234,15 @@ components:
           type: integer
          count:
           type: integer
-         url:
+
+    StampDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        creator_id:
+          type: integer
+        url:
           type: string
 
     StampList:
@@ -883,7 +1254,7 @@ components:
       type: object
       properties: 
          userId:
-          type: string
+          type: integer
          name:
           type: string
          notification:
@@ -900,7 +1271,7 @@ components:
       type: object
       properties:
         userId:
-          type: string
+          type: integer
         status:
           type: string
           enum:
