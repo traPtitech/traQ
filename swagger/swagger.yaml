@@ -1278,6 +1278,9 @@ components:
             - none
             - monitoring
             - editing
+      example:
+        userId: 200
+        status: monitoring
 
     HeartbeatRes:
       type: object
@@ -1288,6 +1291,15 @@ components:
             $ref: "#/components/schemas/UserHeartbeatStatus"
         channelId:
           type: integer
+      example:
+        userStatuses: 
+          - userId: 112
+            status: none
+          - userId: 113
+            status: monitoring
+          - userId: 114
+            status: editing
+        channelId: 24
 
 
     NoContent:
