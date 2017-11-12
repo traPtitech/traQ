@@ -277,6 +277,69 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
+  /direct/{userId}/messages:
+    parameters:
+      - $ref: "#/components/parameters/userIdInPath"
+    post:
+      tags:
+        - message
+      description: DMを投稿します
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  description: Markdown形式
+                  example: Rask？
+      responses:
+        "201":
+          description: 投稿に成功しました
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "404":
+          description: 投稿に失敗しました
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+    get:
+      tags:
+        - message
+      description: DMに存在するメッセージを取得します
+      requestBody:
+        content:
+          applicatiom/json:
+            schema:
+              type: object
+              properties:
+                count:
+                  description: 取得する件数1-200
+                  type: integer
+                  example: 150
+      responses:
+        "200":
+          description: |+
+            正常に取得できました
+            メッセージ配列を返します
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageList"
+        "404":
+          description: |+
+            取得に失敗しました
+            指定したチャンネルは存在しません
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
 
   /channels/{channelId}/notifications:
     parameters:
