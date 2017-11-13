@@ -1062,12 +1062,6 @@ paths:
         - heartbeat
       description: どのチャンネルを見ているか・編集しているかを送信します。
       parameters:
-      - name: userId
-        in: query
-        description: 自分のuserId
-        required: true
-        schema:
-          type: integer
       - name: status
         in: query
         description: editing,monitoring,noneでユーザーの状態を指定する
@@ -1275,7 +1269,6 @@ components:
         status:
           type: string
           enum:
-            - none
             - monitoring
             - editing
       example:
@@ -1293,8 +1286,6 @@ components:
           type: integer
       example:
         userStatuses: 
-          - userId: 112
-            status: none
           - userId: 113
             status: monitoring
           - userId: 114
