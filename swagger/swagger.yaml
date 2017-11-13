@@ -1057,7 +1057,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HeartbeatRes"
-    put:
+    post:
       tags:
         - heartbeat
       description: どのチャンネルを見ているか・編集しているかを送信します。
