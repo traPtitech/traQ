@@ -1048,7 +1048,8 @@ paths:
           description: 現在いるチャンネルId
           required: true
           schema:
-            type: integer
+            type: string
+            format: uuid
       responses:
         "200":
           description: |+
@@ -1057,17 +1058,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HeartbeatRes"
-    put:
+    post:
       tags:
         - heartbeat
       description: どのチャンネルを見ているか・編集しているかを送信します。
       parameters:
-      - name: userId
-        in: query
-        description: 自分のuserId
-        required: true
-        schema:
-          type: integer
       - name: status
         in: query
         description: editing,monitoring,noneでユーザーの状態を指定する
@@ -1083,7 +1078,8 @@ paths:
         description: 現在いるチャンネルId
         required: true
         schema:
-          type: integer
+          type: string
+          format: uuid
       responses:
         "204":
           description: |+
@@ -1271,13 +1267,16 @@ components:
       type: object
       properties:
         userId:
-          type: integer
+          type: string
+          format: uuid
         status:
           type: string
           enum:
-            - none
             - monitoring
             - editing
+      example:
+        userId: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
+        status: monitoring
 
     HeartbeatRes:
       type: object
@@ -1287,7 +1286,15 @@ components:
           items:
             $ref: "#/components/schemas/UserHeartbeatStatus"
         channelId:
-          type: integer
+          type: string
+          format: uuid
+      example:
+        userStatuses: 
+          - userId: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
+            status: monitoring
+          - userId: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
+            status: editing
+        channelId: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
 
 
     NoContent:
