@@ -6,7 +6,7 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	beforeTest(t)
+	BeforeTest(t)
 	defer Close()
 
 	channel := new(Channels)
@@ -29,7 +29,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateChildChannel(t *testing.T) {
-	beforeTest(t)
+	BeforeTest(t)
 	defer Close()
 
 	channel := new(Channels)
@@ -64,7 +64,7 @@ func TestCreateChildChannel(t *testing.T) {
 }
 
 func TestGetChannelList(t *testing.T) {
-	beforeTest(t)
+	BeforeTest(t)
 	defer Close()
 
 	for i := 0; i < 10; i++ {
@@ -86,7 +86,7 @@ func TestGetChannelList(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	beforeTest(t)
+	BeforeTest(t)
 	defer Close()
 
 	channel := new(Channels)

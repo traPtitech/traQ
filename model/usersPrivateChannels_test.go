@@ -3,7 +3,7 @@ package model
 import "testing"
 
 func TestMakePrivateChannel(t *testing.T) {
-	beforeTest(t)
+	BeforeTest(t)
 	defer Close()
 
 	channel := new(Channels)
