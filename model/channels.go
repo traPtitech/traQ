@@ -3,32 +3,29 @@ package model
 import "fmt"
 
 type Channels struct {
-	Id        string `xorm:"char(36) primary_key"`
-	Name      string `xorm:"varchar(20) not null primary_key"`
+	Id        string `xorm:"char(36) pk"`
+	Name      string `xorm:"varchar(20) not null"`
 	ParentId  string `xorm:"char(36) not null"`
-	CreatorId string `xorm:"char(36) not null"`
 	Topic     string `xorm:"text"`
-	IsForced  bool   `xorm:"boolean not null"`
-	IsDeleted bool   `xorm:"boolean not null"`
-	IsPublic  bool   `xorm:"boolean not null"`
-	IsHidden  bool   `xorm:"boolean not null"`
+	IsForced  bool   `xorm:"bool not null"`
+	IsDeleted bool   `xorm:"bool not null"`
+	IsPublic  bool   `xorm:"bool not null"`
+	IsHidden  bool   `xorm:"bool not null"`
+	CreatorId string `xorm:"char(36) not null"`
 	CreatedAt int    `xorm:"created not null"`
 	UpdaterId string `xorm:"char(36) not null"`
 	UpdatedAt int    `xorm:"updated not null"`
 }
 
-func (self *Channel) Create() error {
+func (self *Channels) Create() error {
 	if self.Name == "" {
 		return fmt.Errorf("Name is empty")
-	}
-
-	if self.ParentId == "" {
-		return fmt.Errorf("ParentId is empty")
 	}
 
 	if self.CreatorId == "" {
 		return fmt.Errorf("CreatorId is empty")
 	}
+	self.Id = CreateUUID()
 
 	self.UpdaterId = self.CreatorId
 
@@ -38,9 +35,21 @@ func (self *Channel) Create() error {
 	return nil
 }
 
-func (self *Channel) Update() error {
+func GetChannelList(userId string) ([]*Channels, error) {
+	var channelList []*Channels
+	err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("is_public = true OR user_id = ?", userId).Find(&channelList)
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to find channels: %v", err)
+	}
+	return channelList, nil
+
+}
+
+func (self *Channels) Update() error {
 	_, err := db.Id(self.Id).Update(self)
 	if err != nil {
 		return fmt.Errorf("Failed to update channel: %v", err)
 	}
+	return nil
 }

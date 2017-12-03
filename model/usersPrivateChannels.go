@@ -3,8 +3,8 @@ package model
 import "fmt"
 
 type UsersPrivateChannels struct {
-	UserId    string `xorm:"user_id primary_key"`
-	ChannelId string `xorm:"channel_id primary_key"`
+	UserId    string `xorm:"char(36) pk"`
+	ChannelId string `xorm:"char(36) pk"`
 }
 
 func (self *UsersPrivateChannels) Create() error {
