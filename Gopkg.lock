@@ -2,6 +2,7 @@
 
 
 [[projects]]
+<<<<<<< 801dbd68dee235d0e48929cc22932b3af478a6e1
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
   revision = "dbeaa9332f19a944acb5736b4456cfcc02140e29"
@@ -14,6 +15,8 @@
   version = "v1.3"
 
 [[projects]]
+=======
+>>>>>>> wip
   branch = "master"
   name = "github.com/go-xorm/builder"
   packages = ["."]
@@ -27,6 +30,15 @@
 
 [[projects]]
   name = "github.com/go-xorm/xorm"
+<<<<<<< 801dbd68dee235d0e48929cc22932b3af478a6e1
+=======
+  packages = ["."]
+  revision = "d7f04c3cecff8d8c9321b2c39940e1992ce9f01a"
+  version = "v0.6.3"
+
+[[projects]]
+  name = "github.com/labstack/echo"
+>>>>>>> wip
   packages = ["."]
   revision = "d7f04c3cecff8d8c9321b2c39940e1992ce9f01a"
   version = "v0.6.3"
