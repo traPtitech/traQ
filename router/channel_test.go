@@ -93,15 +93,84 @@ func TestPostChannelsHandler(t *testing.T) {
 	if len(channelList) != 1 {
 		t.Fatalf("Channel List wrong: want %d, actual %d\n", 1, len(channelList))
 	}
+
+	postBody = PostChannel{
+		ChannelType: "private",
+		Name:        "test",
+		Parent:      "",
+		Member: []string{
+			testUserID,
+			model.CreateUUID(),
+		},
+	}
+	body, err = json.Marshal(postBody)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
+	request(e, t, mw(PostChannelsHandler), cookie, req)
+	channelList, err = model.GetChannelList(testUserID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(channelList) != 2 {
+		t.Fatalf("Channel List wrong: want %d, actual %d\n", 2, len(channelList))
+	}
+
+	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
+	request(e, t, mw(PostChannelsHandler), cookie, req)
+	channelList, err = model.GetChannelList(model.CreateUUID())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(channelList) != 1 {
+		t.Fatalf("Channel List wrong: want %d, actual %d\n", 1, len(channelList))
+	}
 }
 
-func TestGetChannelsByChannelIdHandler(test *testing.T) {
+func TestGetChannelsByChannelIdHandler(t *testing.T) {
+	e, cookie, mw := beforeTest(t)
+	defer model.Close()
+
+	channel, _ := makeChannel(testUserID, "test", true)
+
+	c, rec := getContext(e, t, cookie, nil)
+	c.SetPath("/:channelId")
+	c.SetParamNames("channelId")
+	c.SetParamValues(channel.Id)
+
+	requestWithContext(t, mw(GetChannelsByChannelIdHandler), c)
+
+	t.Log(rec.Body.String())
 }
 
-func TestPutChannelsByChannelIdHandler(test *testing.T) {
+func TestPutChannelsByChannelIdHandler(t *testing.T) {
 }
 
-func TestDeleteChannelsByChannelIdHandler(test *testing.T) {
+func TestDeleteChannelsByChannelIdHandler(t *testing.T) {
+}
+
+func getContext(e *echo.Echo, t *testing.T, cookie *http.Cookie, req *http.Request) (echo.Context, *httptest.ResponseRecorder) {
+	if req == nil {
+		req = httptest.NewRequest("GET", "http://test", nil)
+	}
+
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	if cookie != nil {
+		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
+	}
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	return c, rec
+}
+
+func requestWithContext(t *testing.T, handler echo.HandlerFunc, c echo.Context) {
+	err := handler(c)
+
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func request(e *echo.Echo, t *testing.T, handler echo.HandlerFunc, cookie *http.Cookie, req *http.Request) *httptest.ResponseRecorder {
@@ -132,10 +201,11 @@ func parseCookies(value string) map[string]*http.Cookie {
 	return m
 }
 
-func makeChannel(userId, name string, isPublic bool) error {
+func makeChannel(userId, name string, isPublic bool) (*model.Channels, error) {
 	channel := new(model.Channels)
 	channel.CreatorId = userId
 	channel.Name = name
 	channel.IsPublic = isPublic
-	return channel.Create()
+	err := channel.Create()
+	return channel, err
 }
