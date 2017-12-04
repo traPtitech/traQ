@@ -1,6 +1,7 @@
 package router
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -50,17 +51,41 @@ func TestGetChannelsHandler(t *testing.T) {
 		makeChannel(testUserID, "Channel-"+strconv.Itoa(i), true)
 	}
 
-	rec := request(e, t, mw(GetChannelsHandler), cookie)
+	rec := request(e, t, mw(GetChannelsHandler), cookie, nil)
 
 	var responseBody []ChannelForResponse
 	err := json.Unmarshal(rec.Body.Bytes(), &responseBody)
 	if err != nil {
 		t.Fatal("Failed to json parse ", err)
 	}
-	fmt.Println(responseBody)
 }
 
-func TestPostChannelsHandler(test *testing.T) {
+func TestPostChannelsHandler(t *testing.T) {
+	e, cookie, mw := beforeTest(t)
+	defer model.Close()
+
+	postBody := PostChannel{
+		ChannelType: "public",
+		Name:        "test",
+		Parent:      "",
+	}
+
+	body, err := json.Marshal(postBody)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
+	request(e, t, mw(PostChannelsHandler), cookie, req)
+
+	channelList, err := model.GetChannelList(testUserID)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(channelList) != 1 {
+		t.Fatalf("Channel List wrong: want %d, actual %d\n", 1, len(channelList))
+	}
 }
 
 func TestGetChannelsByChannelIdHandler(test *testing.T) {
@@ -72,8 +97,10 @@ func TestPutChannelsByChannelIdHandler(test *testing.T) {
 func TestDeleteChannelsByChannelIdHandler(test *testing.T) {
 }
 
-func request(e *echo.Echo, t *testing.T, handler echo.HandlerFunc, cookie *http.Cookie) *httptest.ResponseRecorder {
-	req := httptest.NewRequest("GET", "http://test", nil)
+func request(e *echo.Echo, t *testing.T, handler echo.HandlerFunc, cookie *http.Cookie, req *http.Request) *httptest.ResponseRecorder {
+	if req == nil {
+		req = httptest.NewRequest("GET", "http://test", nil)
+	}
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	if cookie != nil {

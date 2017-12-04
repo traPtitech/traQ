@@ -17,11 +17,11 @@ type ChannelForResponse struct {
 	Visibility bool
 }
 
-type postChannel struct {
-	channelType string   `json:"type"`
-	member      []string `json:"member"`
-	name        string   `json:"name"`
-	parent      string   `json:"parent"`
+type PostChannel struct {
+	ChannelType string   `json:"type"`
+	Member      []string `json:"member"`
+	Name        string   `json:"name"`
+	Parent      string   `json:"parent"`
 }
 
 func GetChannelsHandler(c echo.Context) error {
@@ -70,29 +70,29 @@ func PostChannelsHandler(c echo.Context) error {
 	if sess.Values["userId"] != nil {
 		userId = sess.Values["userId"].(string)
 	}
-	var requestBody postChannel
+	var requestBody PostChannel
 	c.Bind(&requestBody)
 
 	newChannel := new(model.Channels)
 	newChannel.CreatorId = userId
-	newChannel.Name = requestBody.name
+	newChannel.Name = requestBody.Name
 
-	if requestBody.channelType == "public" {
+	if requestBody.ChannelType == "public" {
 		newChannel.IsPublic = true
 	} else {
 		newChannel.IsPublic = false
 	}
 
-	err := newChannel.Create()
+	err = newChannel.Create()
 	if err != nil {
 		c.Error(err)
 		return err
 	}
 
-	if requestBody.channelType == "public" {
+	if requestBody.ChannelType == "public" {
 		// TODO:通知周りの実装
 	} else {
-		for _, user := range requestBody.member {
+		for _, user := range requestBody.Member {
 			usersPrivateChannels := new(model.UsersPrivateChannels)
 			usersPrivateChannels.ChannelId = newChannel.Id
 			usersPrivateChannels.UserId = user
@@ -104,14 +104,53 @@ func PostChannelsHandler(c echo.Context) error {
 		}
 	}
 
-	ch := model.GetChannelById(newChannel.Id)
+	ch, err := model.GetChannelById(userId, newChannel.Id)
+
+	if err != nil {
+		c.Error(err)
+		return err
+	}
 
 	c.JSON(http.StatusCreated, ch)
 	return nil
 }
 
-func GetChannelsByChannelIdHandler() {
+func GetChannelsByChannelIdHandler(c echo.Context) error {
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		c.Error(err)
+		return fmt.Errorf("Failed to get session: %v", err)
+	}
 
+	var userId string
+	if sess.Values["userId"] != nil {
+		userId = sess.Values["userId"].(string)
+	}
+
+	channelId := c.Param("channelId")
+
+	channel, err := model.GetChannelById(userId, channelId)
+	if err != nil {
+		c.Error(err)
+		return fmt.Errorf("Failed to get channel: %v", err)
+	}
+
+	childrenIdList, err := model.GetChildrenChannelIdList(userId, channel.Id)
+	if err != nil {
+		c.Error(err)
+		return fmt.Errorf("Failed to get children channel id list: %v", err)
+	}
+
+	response := ChannelForResponse{
+		ChannelId:  channel.Id,
+		Name:       channel.Name,
+		Parent:     channel.ParentId,
+		Visibility: !channel.IsHidden,
+		Children:   childrenIdList,
+	}
+
+	c.JSON(http.StatusOK, response)
+	return nil
 }
 
 func PutChannelsByChannelIdHandler() {

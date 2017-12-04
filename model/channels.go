@@ -35,6 +35,18 @@ func (self *Channels) Create() error {
 	return nil
 }
 
+func GetChannelById(userId, channelId string) (*Channels, error) {
+	channel := new(Channels)
+	channel.Id = channelId
+	_, err := db.Get(channel)
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get channel: %v", err)
+	}
+
+	return channel, nil
+}
+
 func GetChannelList(userId string) ([]*Channels, error) {
 	var channelList []*Channels
 	err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("is_public = true OR user_id = ?", userId).Find(&channelList)
