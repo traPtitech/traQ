@@ -11,15 +11,16 @@ jobs:
       - checkout
 
       - run:
-          name: Install tools
+          name: Install tools/packages
           command: |
             go get -u github.com/golang/dep/cmd/dep
             go get -u github.com/golang/lint/golint
+            dep ensure
 
       - run:
           name: gofmt
           when: always
-          command: (! gofmt -s -d . | grep ^)
+          command: (! gofmt -s -d `find . -path "./vendor" -prune -o -type f -name "*.go" -print` | grep ^)
       - run:
           name: golint
           when: always
@@ -27,14 +28,16 @@ jobs:
       - run:
           name: go vet
           when: always
-          command: go vet
+          command: go vet ./...
+      - run:
+          name: go test
+          when: always
+          command: go test ./...
 
       - run:
           name: go build
           when: always
-          command: |
-            dep ensure
-            go build -o traq
+          command: go build -o traq
 
       - store_artifacts:
           path: /go/src/github.com/traPtitech/traQ/traq
