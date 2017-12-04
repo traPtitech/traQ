@@ -15,4 +15,20 @@ type Messages struct {
 
 func (self *Messages) Create() error {
 	return nil
-} 
+}
+
+func (self *Messages) Update() error {
+	return nil
+}
+
+func GetMessagesFromChannel(channelId string) ([]*Messages, error) {
+	return nil, nil
+}
+
+func GetMessage(messageId string) (*Message, error) {
+	return nil, nil
+}
+
+func DeleteMessage(messageId string) error {
+	return nil
+}
