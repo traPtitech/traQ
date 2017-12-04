@@ -1,11 +1,20 @@
 package model
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 var (
 	testUserID    = "403807a5-cae6-453e-8a09-fc75d5b4ca91"
 	privateUserID = "8ad765ec-426b-49c1-b4ae-f8af58af9a55"
 )
+
+func TestMain(m *testing.M) {
+	os.Setenv("MARIADB_DATABASE", "traq-test-model")
+	code := m.Run()
+	os.Exit(code)
+}
 
 func TestDB(t *testing.T) {
 	err := EstablishConnection()

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"testing"
 
@@ -18,6 +19,12 @@ import (
 var (
 	testUserID = "403807a5-cae6-453e-8a09-fc75d5b4ca91"
 )
+
+func TestMain(m *testing.M) {
+	os.Setenv("MARIADB_DATABASE", "traq-test-router")
+	code := m.Run()
+	os.Exit(code)
+}
 
 func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
 	model.BeforeTest(t)
