@@ -57,13 +57,6 @@ func GetSQLDB() *sql.DB {
 }
 
 func SyncSchema() error {
-	if err := db.Sync(new(Channels)); err != nil {
-		return fmt.Errorf("Failed to sync Channels: %v", err)
-	}
-
-	if err := db.Sync(new(UsersPrivateChannels)); err != nil {
-		return fmt.Errorf("Failed to sync UsersPrivateChannels: %v", err)
-	}
 	return nil
 }
 
