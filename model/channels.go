@@ -43,7 +43,17 @@ func GetChannelList(userId string) ([]*Channels, error) {
 		return nil, fmt.Errorf("Failed to find channels: %v", err)
 	}
 	return channelList, nil
+}
 
+func GetChildrenChannelIdList(userId, channelId string) ([]string, error) {
+	var channelIdList []string
+	// err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("is_public = true OR user_id = ?", userId).Cols("id").Find(&channelIdList)
+	err := db.Table("channels").Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND parent_id = ?", userId, channelId).Cols("id").Find(&channelIdList)
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to find channels: %v", err)
+	}
+	return channelIdList, nil
 }
 
 func (self *Channels) Update() error {

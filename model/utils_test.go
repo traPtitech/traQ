@@ -3,7 +3,8 @@ package model
 import "testing"
 
 var (
-	testUserID = "403807a5-cae6-453e-8a09-fc75d5b4ca91"
+	testUserID    = "403807a5-cae6-453e-8a09-fc75d5b4ca91"
+	privateUserID = "8ad765ec-426b-49c1-b4ae-f8af58af9a55"
 )
 
 func TestDB(t *testing.T) {

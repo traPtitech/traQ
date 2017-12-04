@@ -17,6 +17,13 @@ type ChannelForResponse struct {
 	Visibility bool
 }
 
+type postChannel struct {
+	channelType string   `json:"type"`
+	member      []string `json:"member"`
+	name        string   `json:"name"`
+	parent      string   `json:"parent"`
+}
+
 func GetChannelsHandler(c echo.Context) error {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
@@ -54,10 +61,57 @@ func GetChannelsHandler(c echo.Context) error {
 }
 
 func PostChannelsHandler(c echo.Context) error {
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		return fmt.Errorf("Failed to get session: %v", err)
+	}
 
+	var userId string
+	if sess.Values["userId"] != nil {
+		userId = sess.Values["userId"].(string)
+	}
+	var requestBody postChannel
+	c.Bind(&requestBody)
+
+	newChannel := new(model.Channels)
+	newChannel.CreatorId = userId
+	newChannel.Name = requestBody.name
+
+	if requestBody.channelType == "public" {
+		newChannel.IsPublic = true
+	} else {
+		newChannel.IsPublic = false
+	}
+
+	err := newChannel.Create()
+	if err != nil {
+		c.Error(err)
+		return err
+	}
+
+	if requestBody.channelType == "public" {
+		// TODO:通知周りの実装
+	} else {
+		for _, user := range requestBody.member {
+			usersPrivateChannels := new(model.UsersPrivateChannels)
+			usersPrivateChannels.ChannelId = newChannel.Id
+			usersPrivateChannels.UserId = user
+			err := usersPrivateChannels.Create()
+			if err != nil {
+				c.Error(err)
+				return err
+			}
+		}
+	}
+
+	ch := model.GetChannelById(newChannel.Id)
+
+	c.JSON(http.StatusCreated, ch)
+	return nil
 }
 
 func GetChannelsByChannelIdHandler() {
+
 }
 
 func PutChannelsByChannelIdHandler() {
