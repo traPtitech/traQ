@@ -35,8 +35,10 @@ jobs:
           command: go vet ./...
 
       - run:
-          name: Wait for DB
-          command: dockerize -wait tcp://localhost:3306 -timeout 1m
+          name: Setup DB
+          command: |
+            dockerize -wait tcp://localhost:3306 -timeout 1m
+            go run .circleci/init.go
 
       - run:
           name: go test
