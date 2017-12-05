@@ -4,11 +4,8 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
-<<<<<<< 801dbd68dee235d0e48929cc22932b3af478a6e1
 	"github.com/labstack/echo-contrib/session"
 	"github.com/srinathgs/mysqlstore"
-=======
->>>>>>> wip
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -16,10 +13,7 @@ func main() {
 	if err := model.EstablishConnection(); err != nil {
 		panic(err)
 	}
-<<<<<<< 801dbd68dee235d0e48929cc22932b3af478a6e1
 	defer model.Close()
-=======
->>>>>>> wip
 
 	if err := model.SyncSchema(); err != nil {
 		panic(err)

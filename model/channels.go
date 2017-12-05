@@ -49,7 +49,7 @@ func GetChannelById(userId, channelId string) (*Channels, error) {
 
 func GetChannelList(userId string) ([]*Channels, error) {
 	var channelList []*Channels
-	err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("is_public = true OR user_id = ?", userId).Find(&channelList)
+	err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userId).Find(&channelList)
 
 	if err != nil {
 		return nil, fmt.Errorf("Failed to find channels: %v", err)
@@ -60,7 +60,7 @@ func GetChannelList(userId string) ([]*Channels, error) {
 func GetChildrenChannelIdList(userId, channelId string) ([]string, error) {
 	var channelIdList []string
 	// err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("is_public = true OR user_id = ?", userId).Cols("id").Find(&channelIdList)
-	err := db.Table("channels").Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND parent_id = ?", userId, channelId).Cols("id").Find(&channelIdList)
+	err := db.Table("channels").Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND parent_id = ? AND is_deleted = false", userId, channelId).Cols("id").Find(&channelIdList)
 
 	if err != nil {
 		return nil, fmt.Errorf("Failed to find channels: %v", err)
@@ -69,7 +69,7 @@ func GetChildrenChannelIdList(userId, channelId string) ([]string, error) {
 }
 
 func (self *Channels) Update() error {
-	_, err := db.Id(self.Id).Update(self)
+	_, err := db.Id(self.Id).UseBool().Update(self)
 	if err != nil {
 		return fmt.Errorf("Failed to update channel: %v", err)
 	}

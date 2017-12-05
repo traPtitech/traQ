@@ -175,6 +175,32 @@ func TestPutChannelsByChannelIdHandler(t *testing.T) {
 }
 
 func TestDeleteChannelsByChannelIdHandler(t *testing.T) {
+	e, cookie, mw := beforeTest(t)
+	defer model.Close()
+
+	channel, _ := makeChannel(model.CreateUUID(), "test", true)
+
+	req := httptest.NewRequest("DELETE", "http://test", strings.NewReader(`{"confirm": true}`))
+	c, _ := getContext(e, t, cookie, req)
+	c.SetPath("/:channelId")
+	c.SetParamNames("channelId")
+	c.SetParamValues(channel.Id)
+	requestWithContext(t, mw(DeleteChannelsByChannelIdHandler), c)
+
+	channel, err := model.GetChannelById(testUserID, channel.Id)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !channel.IsDeleted {
+		t.Fatal("Channel not deleted")
+	}
+
+	channelList, err := model.GetChannelList(testUserID)
+	if len(channelList) != 0 {
+		t.Fatal("Channel not deleted")
+	}
 }
 
 func getContext(e *echo.Echo, t *testing.T, cookie *http.Cookie, req *http.Request) (echo.Context, *httptest.ResponseRecorder) {

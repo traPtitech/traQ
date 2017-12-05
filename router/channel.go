@@ -207,7 +207,48 @@ func PutChannelsByChannelIdHandler(c echo.Context) error {
 	return nil
 }
 
-func DeleteChannelsByChannelIdHandler() {
+func DeleteChannelsByChannelIdHandler(c echo.Context) error {
+	// CHECK: 権限周り
+	// TODO: 404
+	// TODO: 必要な引数があるかチェック
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		c.Error(err)
+		return fmt.Errorf("Failed to get session: %v", err)
+	}
+
+	var userId string
+	if sess.Values["userId"] != nil {
+		userId = sess.Values["userId"].(string)
+	}
+	type confirm struct {
+		Confirm bool `json:"confirm"`
+	}
+	var requestBody confirm
+	c.Bind(&requestBody)
+
+	channelId := c.Param("channelId")
+
+	channel, err := model.GetChannelById(userId, channelId)
+	if err != nil {
+		c.Error(err)
+		return fmt.Errorf("Failed to get channel: %v", err)
+	}
+
+	if requestBody.Confirm {
+		channel.UpdaterId = userId
+		channel.IsDeleted = true
+		fmt.Println(channel)
+		err := channel.Update()
+		if err != nil {
+			c.Error(err)
+			return err
+		}
+		c.NoContent(http.StatusNoContent)
+	} else {
+		c.NoContent(http.StatusBadRequest)
+	}
+	return nil
 }
 
 func values(m map[string]*ChannelForResponse) []*ChannelForResponse {
