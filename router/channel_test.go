@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/labstack/echo"
@@ -146,6 +147,31 @@ func TestGetChannelsByChannelIdHandler(t *testing.T) {
 }
 
 func TestPutChannelsByChannelIdHandler(t *testing.T) {
+	e, cookie, mw := beforeTest(t)
+	defer model.Close()
+
+	channel, _ := makeChannel(model.CreateUUID(), "test", true)
+
+	req := httptest.NewRequest("PUT", "http://test", strings.NewReader(`{"name": "renamed"}`))
+	c, _ := getContext(e, t, cookie, req)
+	c.SetPath("/:channelId")
+	c.SetParamNames("channelId")
+	c.SetParamValues(channel.Id)
+	requestWithContext(t, mw(PutChannelsByChannelIdHandler), c)
+
+	channel, err := model.GetChannelById(testUserID, channel.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if channel.Name != "renamed" {
+		t.Fatalf("Channel name wrong: want %s, actual %s", "renamed", channel.Name)
+	}
+
+	if channel.UpdaterId != testUserID {
+		t.Fatalf("Channel UpdaterId wrong: want %s, actual %s", testUserID, channel.UpdaterId)
+	}
+
 }
 
 func TestDeleteChannelsByChannelIdHandler(t *testing.T) {

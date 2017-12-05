@@ -61,6 +61,8 @@ func GetChannelsHandler(c echo.Context) error {
 }
 
 func PostChannelsHandler(c echo.Context) error {
+	// CHECK: 同名・同階層のチャンネルは？
+	// TODO: 必要な引数があるかチェック
 	sess, err := session.Get("sessions", c)
 	if err != nil {
 		return fmt.Errorf("Failed to get session: %v", err)
@@ -116,6 +118,7 @@ func PostChannelsHandler(c echo.Context) error {
 }
 
 func GetChannelsByChannelIdHandler(c echo.Context) error {
+	// TODO: 404
 	sess, err := session.Get("sessions", c)
 	if err != nil {
 		c.Error(err)
@@ -153,7 +156,55 @@ func GetChannelsByChannelIdHandler(c echo.Context) error {
 	return nil
 }
 
-func PutChannelsByChannelIdHandler() {
+func PutChannelsByChannelIdHandler(c echo.Context) error {
+	// CHECK: 権限周り
+	// TODO: 404
+	// TODO: 必要な引数があるかチェック
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		c.Error(err)
+		return fmt.Errorf("Failed to get session: %v", err)
+	}
+
+	var userId string
+	if sess.Values["userId"] != nil {
+		userId = sess.Values["userId"].(string)
+	}
+	var requestBody PostChannel
+	c.Bind(&requestBody)
+
+	channelId := c.Param("channelId")
+
+	channel, err := model.GetChannelById(userId, channelId)
+	if err != nil {
+		c.Error(err)
+		return fmt.Errorf("Failed to get channel: %v", err)
+	}
+
+	channel.Name = requestBody.Name
+	channel.UpdaterId = userId
+
+	if err := channel.Update(); err != nil {
+		c.Error(err)
+		return err
+	}
+
+	childrenIdList, err := model.GetChildrenChannelIdList(userId, channel.Id)
+	if err != nil {
+		c.Error(err)
+		return fmt.Errorf("Failed to get children channel id list: %v", err)
+	}
+
+	response := ChannelForResponse{
+		ChannelId:  channel.Id,
+		Name:       channel.Name,
+		Parent:     channel.ParentId,
+		Visibility: !channel.IsHidden,
+		Children:   childrenIdList,
+	}
+
+	c.JSON(http.StatusOK, response)
+	return nil
 }
 
 func DeleteChannelsByChannelIdHandler() {
