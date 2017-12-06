@@ -47,7 +47,7 @@ func GetChannelById(userId, channelId string) (*Channels, error) {
 	return channel, nil
 }
 
-func Exists(channelId string) (bool, error) {
+func ExistsChannel(channelId string) (bool, error) {
 	channel := Channels{Id: channelId}
 	return db.Get(&channel)
 }

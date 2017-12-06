@@ -147,7 +147,7 @@ func TestExists(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ok, err := Exists(channel.Id)
+	ok, err := ExistsChannel(channel.Id)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,7 +156,7 @@ func TestExists(t *testing.T) {
 		t.Fatal("ok not true")
 	}
 
-	ok, err = Exists(CreateUUID())
+	ok, err = ExistsChannel(CreateUUID())
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -61,6 +61,11 @@ func TestGetChannelsHandler(t *testing.T) {
 
 	rec := request(e, t, mw(GetChannelsHandler), cookie, nil)
 
+	if rec.Code != http.StatusOK {
+		t.Log(rec.Code)
+		t.Fatal(rec.Body.String())
+	}
+
 	var responseBody []ChannelForResponse
 	err := json.Unmarshal(rec.Body.Bytes(), &responseBody)
 	if err != nil {
@@ -83,12 +88,17 @@ func TestPostChannelsHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	request(e, t, mw(PostChannelsHandler), cookie, req)
+	rec := request(e, t, mw(PostChannelsHandler), cookie, req)
 
 	channelList, err := model.GetChannelList(testUserID)
 
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	if rec.Code != http.StatusCreated {
+		t.Log(rec.Code)
+		t.Fatal(rec.Body.String())
 	}
 
 	if len(channelList) != 1 {
@@ -143,6 +153,11 @@ func TestGetChannelsByChannelIdHandler(t *testing.T) {
 
 	requestWithContext(t, mw(GetChannelsByChannelIdHandler), c)
 
+	if rec.Code != http.StatusOK {
+		t.Log(rec.Code)
+		t.Fatal(rec.Body.String())
+	}
+
 	t.Log(rec.Body.String())
 }
 
@@ -153,11 +168,16 @@ func TestPutChannelsByChannelIdHandler(t *testing.T) {
 	channel, _ := makeChannel(model.CreateUUID(), "test", true)
 
 	req := httptest.NewRequest("PUT", "http://test", strings.NewReader(`{"name": "renamed"}`))
-	c, _ := getContext(e, t, cookie, req)
+	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/:channelId")
 	c.SetParamNames("channelId")
 	c.SetParamValues(channel.Id)
 	requestWithContext(t, mw(PutChannelsByChannelIdHandler), c)
+
+	if rec.Code != http.StatusOK {
+		t.Log(rec.Code)
+		t.Fatal(rec.Body.String())
+	}
 
 	channel, err := model.GetChannelById(testUserID, channel.Id)
 	if err != nil {

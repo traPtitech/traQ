@@ -17,6 +17,10 @@ type ChannelForResponse struct {
 	Visibility bool
 }
 
+type ErrorResponse struct {
+	Message string
+}
+
 type PostChannel struct {
 	ChannelType string   `json:"type"`
 	Member      []string `json:"member"`
@@ -27,6 +31,7 @@ type PostChannel struct {
 func GetChannelsHandler(c echo.Context) error {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
+		messageResponse(c, http.StatusInternalServerError, "セッションの取得に失敗しました")
 		return fmt.Errorf("Failed to get session: %v", err)
 	}
 
@@ -36,6 +41,7 @@ func GetChannelsHandler(c echo.Context) error {
 	}
 	channelList, err := model.GetChannelList(userId)
 	if err != nil {
+		messageResponse(c, http.StatusInternalServerError, "チャンネルリストの取得中にエラーが発生しました")
 		return fmt.Errorf("Failed to get channel list: %v", err)
 	}
 
@@ -61,10 +67,10 @@ func GetChannelsHandler(c echo.Context) error {
 }
 
 func PostChannelsHandler(c echo.Context) error {
-	// CHECK: 同名・同階層のチャンネルは？
-	// TODO: 必要な引数があるかチェック
+	// TODO: 同名・同階層のチャンネルのチェック
 	sess, err := session.Get("sessions", c)
 	if err != nil {
+		messageResponse(c, http.StatusInternalServerError, "セッションの取得に失敗しました")
 		return fmt.Errorf("Failed to get session: %v", err)
 	}
 
@@ -74,6 +80,28 @@ func PostChannelsHandler(c echo.Context) error {
 	}
 	var requestBody PostChannel
 	c.Bind(&requestBody)
+
+	if requestBody.ChannelType == "" || requestBody.Name == "" {
+		messageResponse(c, http.StatusBadRequest, "channelTypeまたはnameが設定されていません")
+		return nil
+	}
+
+	if requestBody.ChannelType != "public" && requestBody.ChannelType != "private" {
+		messageResponse(c, http.StatusBadRequest, "channelTypeはpublic privateのいずれかで設定してください")
+		return nil
+	}
+
+	if requestBody.Parent != "" {
+		ok, err := model.ExistsChannel(requestBody.Parent)
+		if err != nil {
+			messageResponse(c, http.StatusInternalServerError, "親チャンネルの検証中にサーバー内でエラーが発生しました")
+			return err
+		}
+		if !ok {
+			messageResponse(c, http.StatusBadRequest, "指定された親チャンネルは存在しません")
+			return nil
+		}
+	}
 
 	newChannel := new(model.Channels)
 	newChannel.CreatorId = userId
@@ -95,6 +123,7 @@ func PostChannelsHandler(c echo.Context) error {
 		// TODO:通知周りの実装
 	} else {
 		for _, user := range requestBody.Member {
+			// TODO: メンバーが存在するか確認
 			usersPrivateChannels := new(model.UsersPrivateChannels)
 			usersPrivateChannels.ChannelId = newChannel.Id
 			usersPrivateChannels.UserId = user
@@ -118,10 +147,9 @@ func PostChannelsHandler(c echo.Context) error {
 }
 
 func GetChannelsByChannelIdHandler(c echo.Context) error {
-	// TODO: 404
 	sess, err := session.Get("sessions", c)
 	if err != nil {
-		c.Error(err)
+		messageResponse(c, http.StatusInternalServerError, "セッションの取得に失敗しました")
 		return fmt.Errorf("Failed to get session: %v", err)
 	}
 
@@ -131,6 +159,16 @@ func GetChannelsByChannelIdHandler(c echo.Context) error {
 	}
 
 	channelId := c.Param("channelId")
+
+	ok, err := model.ExistsChannel(channelId)
+	if err != nil {
+		messageResponse(c, http.StatusInternalServerError, "チャンネルの検証中にサーバー内でエラーが発生しました")
+		return err
+	}
+	if !ok {
+		messageResponse(c, http.StatusNotFound, "指定されたチャンネルは存在しません")
+		return nil
+	}
 
 	channel, err := model.GetChannelById(userId, channelId)
 	if err != nil {
@@ -158,11 +196,10 @@ func GetChannelsByChannelIdHandler(c echo.Context) error {
 
 func PutChannelsByChannelIdHandler(c echo.Context) error {
 	// CHECK: 権限周り
-	// TODO: 404
 	// TODO: 必要な引数があるかチェック
 	sess, err := session.Get("sessions", c)
 	if err != nil {
-		c.Error(err)
+		messageResponse(c, http.StatusInternalServerError, "セッションの取得に失敗しました")
 		return fmt.Errorf("Failed to get session: %v", err)
 	}
 
@@ -174,6 +211,15 @@ func PutChannelsByChannelIdHandler(c echo.Context) error {
 	c.Bind(&requestBody)
 
 	channelId := c.Param("channelId")
+	ok, err := model.ExistsChannel(channelId)
+	if err != nil {
+		messageResponse(c, http.StatusInternalServerError, "チャンネルの検証中にサーバー内でエラーが発生しました")
+		return err
+	}
+	if !ok {
+		messageResponse(c, http.StatusNotFound, "指定されたチャンネルは存在しません")
+		return nil
+	}
 
 	channel, err := model.GetChannelById(userId, channelId)
 	if err != nil {
@@ -209,11 +255,9 @@ func PutChannelsByChannelIdHandler(c echo.Context) error {
 
 func DeleteChannelsByChannelIdHandler(c echo.Context) error {
 	// CHECK: 権限周り
-	// TODO: 404
-	// TODO: 必要な引数があるかチェック
 	sess, err := session.Get("sessions", c)
 	if err != nil {
-		c.Error(err)
+		messageResponse(c, http.StatusInternalServerError, "セッションの取得に失敗しました")
 		return fmt.Errorf("Failed to get session: %v", err)
 	}
 
@@ -228,6 +272,15 @@ func DeleteChannelsByChannelIdHandler(c echo.Context) error {
 	c.Bind(&requestBody)
 
 	channelId := c.Param("channelId")
+	ok, err := model.ExistsChannel(channelId)
+	if err != nil {
+		messageResponse(c, http.StatusInternalServerError, "チャンネルの検証中にサーバー内でエラーが発生しました")
+		return err
+	}
+	if !ok {
+		messageResponse(c, http.StatusNotFound, "指定されたチャンネルは存在しません")
+		return nil
+	}
 
 	channel, err := model.GetChannelById(userId, channelId)
 	if err != nil {
@@ -246,7 +299,7 @@ func DeleteChannelsByChannelIdHandler(c echo.Context) error {
 		}
 		c.NoContent(http.StatusNoContent)
 	} else {
-		c.NoContent(http.StatusBadRequest)
+		messageResponse(c, http.StatusBadRequest, "confirmがtrueではありません")
 	}
 	return nil
 }
@@ -257,4 +310,10 @@ func values(m map[string]*ChannelForResponse) []*ChannelForResponse {
 		arr = append(arr, v)
 	}
 	return arr
+}
+
+func messageResponse(c echo.Context, code int, message string) {
+	responseBody := ErrorResponse{}
+	responseBody.Message = message
+	c.JSON(code, responseBody)
 }
