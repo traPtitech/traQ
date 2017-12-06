@@ -138,6 +138,34 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
+func TestExists(t *testing.T) {
+	BeforeTest(t)
+	defer Close()
+
+	channel, err := makeChannelDetail(testUserID, "test", "", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ok, err := Exists(channel.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !ok {
+		t.Fatal("ok not true")
+	}
+
+	ok, err = Exists(CreateUUID())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if ok {
+		t.Fatal("ok not false")
+	}
+}
+
 // 各関数のテスト<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // 関数間のテスト>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

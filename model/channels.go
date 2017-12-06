@@ -47,6 +47,11 @@ func GetChannelById(userId, channelId string) (*Channels, error) {
 	return channel, nil
 }
 
+func Exists(channelId string) (bool, error) {
+	channel := Channels{Id: channelId}
+	return db.Get(&channel)
+}
+
 func GetChannelList(userId string) ([]*Channels, error) {
 	var channelList []*Channels
 	err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userId).Find(&channelList)
