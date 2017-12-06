@@ -94,6 +94,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/sideshow/apns2"
+  packages = [".","token"]
+  revision = "a3ce9c6f95f63dab4ead29da86534dd7af95271a"
+  version = "v0.13"
+
+[[projects]]
   branch = "master"
   name = "github.com/srinathgs/mysqlstore"
   packages = ["."]
@@ -123,9 +129,21 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/net"
+  packages = ["context","context/ctxhttp","http2","http2/hpack","idna","lex/httplex"]
+  revision = "a8b9294777976932365dabb6640cf1468d95c70f"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
   revision = "83801418e1b59fb1880e363299581ee543af32ca"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/text"
+  packages = ["collate","collate/build","internal/colltab","internal/gen","internal/tag","internal/triegen","internal/ucd","language","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
+  revision = "57961680700a5336d15015c8c50686ca5ba362a4"
 
 [solve-meta]
   analyzer-name = "dep"
