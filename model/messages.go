@@ -4,11 +4,12 @@ import (
 	"fmt"
 )
 
+//Messages struct: データベースに格納するmessageの構造体
 type Messages struct {
 	Id        string `xorm:char(36) pk`
 	UserId    string `xorm:char(36) not null`
 	ChannelId string `xorm:char(36)`
-	text      string `xorm:text not null`
+	Text      string `xorm:text not null`
 	IsShared  bool   `xorm:bool not null`
 	IsDeleted bool   `xorm:bool not null`
 	CreatedAt string `xorm:created not null`
@@ -16,13 +17,13 @@ type Messages struct {
 	UpdatedAt string `xorm:updated not null`
 }
 
-// Create inserts message object.
+// Create method inserts message object to database.
 func (message *Messages) Create() error {
 	if message.UserId == "" {
 		return fmt.Errorf("UserId is empty")
 	}
 
-	if message.text == "" {
+	if message.Text == "" {
 		return fmt.Errorf("Text is empty")
 	}
 
@@ -36,33 +37,54 @@ func (message *Messages) Create() error {
 	return nil
 }
 
-func (self *Messages) Update() error {
+
+// Update method:受け取ったメッセージIDの本文を変更します
+func (message *Messages) Update() error {
+	_, err := db.ID(message.Id).UseBool().Update(message)
+	if err != nil {
+		return fmt.Errorf("Failed to update this message: %v", err)
+	}	
 	return nil
 }
 
+
+// GetMessagesFromChannel :指定されたチャンネルのメッセージを取得します
 func GetMessagesFromChannel(channelId string) ([]*Messages, error) {
-	return nil, nil
+	var messageList []*Messages
+	err := db.Where("channel_id = ?", channelId).Find(messageList)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to find messages: %v", err)
+	}
+
+	return messageList, nil
 }
 
+// GetMessage :messageIdで指定されたメッセージを取得します
 func GetMessage(messageId string) (*Messages, error) {
-	return nil, nil
-}
-
-// DeleteMessage deletes the message.
-func DeleteMessage(messageId string) error {
-	var message Messages
-	has, err := db.ID(messageId).Get(&message)
+	var message *Messages
+	has, err := db.ID(messageId).Get(message)
 
 	if err != nil {
-		return fmt.Errorf("Failed to find message: %v", err)
+		return nil, fmt.Errorf("Failed to find message: %v", err)
 	}
 	if has == false {
-		return fmt.Errorf("MessageId is wrong")
+		return nil, fmt.Errorf("This messageId is wrong")
+	}
+
+	return message, nil
+}
+
+// DeleteMessage :messageIdで指定されたメッセージのIsdeleteをtrueにします
+func DeleteMessage(messageId string) error {
+
+	message, err := GetMessage(messageId)
+	if err != nil {
+		return fmt.Errorf("Failed to get message: %v", err)
 	}
 
 	message.IsDeleted = true
 
-	if _, err := db.ID(messageId).Update(&message); err != nil {
+	if _, err := db.ID(messageId).UseBool().Update(message); err != nil {
 		return fmt.Errorf("Failed to update message: %v", err)
 	}
 
