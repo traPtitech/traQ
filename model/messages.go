@@ -37,16 +37,14 @@ func (message *Messages) Create() error {
 	return nil
 }
 
-
 // Update method:受け取ったメッセージIDの本文を変更します
 func (message *Messages) Update() error {
 	_, err := db.ID(message.Id).UseBool().Update(message)
 	if err != nil {
 		return fmt.Errorf("Failed to update this message: %v", err)
-	}	
+	}
 	return nil
 }
-
 
 // GetMessagesFromChannel :指定されたチャンネルのメッセージを取得します
 func GetMessagesFromChannel(channelId string) ([]*Messages, error) {
