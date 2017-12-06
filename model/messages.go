@@ -6,15 +6,15 @@ import (
 
 //Messages struct: データベースに格納するmessageの構造体
 type Messages struct {
-	Id        string `xorm:char(36) pk`
-	UserId    string `xorm:char(36) not null`
-	ChannelId string `xorm:char(36)`
-	Text      string `xorm:text not null`
-	IsShared  bool   `xorm:bool not null`
-	IsDeleted bool   `xorm:bool not null`
-	CreatedAt string `xorm:created not null`
-	UpdaterId string `xorm:char(36) not null`
-	UpdatedAt string `xorm:updated not null`
+	Id        string `xorm:"char(36) pk"`
+	UserId    string `xorm:"char(36) not null"`
+	ChannelId string `xorm:"char(36)"`
+	Text      string `xorm:"text not null"`
+	IsShared  bool   `xorm:"bool not null"`
+	IsDeleted bool   `xorm:"bool not null"`
+	CreatedAt string `xorm:"created not null"`
+	UpdaterId string `xorm:"char(36) not null"`
+	UpdatedAt string `xorm:"updated not null"`
 }
 
 // Create method inserts message object to database.
