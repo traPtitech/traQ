@@ -3,7 +3,11 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:latest
+      - image: circleci/mysql:latest-ram
+        environment:
+          - MYSQL_DATABASE=traq
+          - MYSQL_ROOT_PASSWORD=password
 
     working_directory: /go/src/github.com/traPtitech/traQ
 
@@ -29,11 +33,17 @@ jobs:
           name: go vet
           when: always
           command: go vet ./...
+
+      - run:
+          name: Setup DB
+          command: |
+            dockerize -wait tcp://localhost:3306 -timeout 1m
+            go run .circleci/init.go
+
       - run:
           name: go test
           when: always
           command: go test ./...
-
       - run:
           name: go build
           when: always

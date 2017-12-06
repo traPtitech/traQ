@@ -1,6 +1,6 @@
 # traQ (Project R)
 
-[![CircleCI](https://circleci.com/gh/traPtitech/traQ.svg?style=svg)](https://circleci.com/gh/traPtitech/traQ)
+[![CircleCI](https://circleci.com/gh/traPtitech/traQ.svg?style=shield)](https://circleci.com/gh/traPtitech/traQ)
 
 ## Development environment
 
