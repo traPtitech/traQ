@@ -12,7 +12,7 @@ func TestCreateMessage(t *testing.T) {
 	copy := message
 	err := message.Create()
 	if err != nil {
-		t.Fatalf("Create method returns err: %v", err)
+		t.Fatalf("Create method returns an error: %v", err)
 	}
 	
 	has, err := db.ID(message.Id).Get(&message)
@@ -39,7 +39,29 @@ func TestCreateMessage(t *testing.T) {
 }
 
 func TestUpdateMessage(t *testing.T) {
+	BeforeTest(t)
+	defer Close()
+
+	message := generateMessage()
+	if err := message.Create(); err != nil {
+		t.Fatalf("Create method returns an error: %v", err)
+	}
+
+	text := "nanachi"
 	
+	message.Text = text
+	message.IsShared = false
+
+	if err := message.Update(); err != nil {
+		t.Errorf("Update method return an error: %v", err)
+	}
+
+	if message.Text != text {
+		t.Error("message.Text is not updated")
+	}
+	if message.IsShared != false {
+		t.Error("message.isShared is not updated")
+	}
 }
 
 func TestGetMessagesFromChannel(t *testing.T) {
@@ -57,7 +79,8 @@ func TestDeleteMessage(t *testing.T) {
 func generateMessage() Messages {
 	message := new(Messages)
 	message.UserId = CreateUUID()
-	message.Text = "テスト/is/popo"
+	message.ChannelId = CreateUUID()
+	message.Text = "テスト/is/popo" // TODO: randomな文字列
 	message.IsShared = true
 	return *message
 }

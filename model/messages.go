@@ -37,7 +37,7 @@ func (message *Messages) Create() error {
 	return nil
 }
 
-// Update method:受け取ったメッセージIDの本文を変更します
+// Update method:メッセージの内容を変更します
 func (message *Messages) Update() error {
 	_, err := db.ID(message.Id).UseBool().Update(message)
 	if err != nil {
