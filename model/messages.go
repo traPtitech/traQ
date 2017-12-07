@@ -72,7 +72,7 @@ func GetMessage(messageId string) (*Messages, error) {
 	return message, nil
 }
 
-// DeleteMessage :messageIdで指定されたメッセージのIsdeleteをtrueにします
+// DeleteMessage :messageIdで指定されたメッセージのIsDeletedをtrueにします
 func DeleteMessage(messageId string) error {
 
 	message, err := GetMessage(messageId)
