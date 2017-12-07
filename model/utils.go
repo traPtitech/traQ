@@ -74,7 +74,7 @@ func BeforeTest(t *testing.T) {
 	}
 
 	db.ShowSQL(false)
-	db.DropTables("sessions", "channels", "users_private_channels")
+	db.DropTables("messages")
 
 	err = SyncSchema()
 	if err != nil {
