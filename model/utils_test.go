@@ -1,6 +1,15 @@
 package model
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
+
+func TestMain(m *testing.M) {
+	os.Setenv("MARIA_DATABASE", "traq-test-model")
+	code := m.Run()
+	os.Exit(code)
+}
 
 func TestDB(t *testing.T) {
 	err := EstablishConnection()
