@@ -7,14 +7,13 @@ import (
 func TestCreateMessage(t *testing.T) {
 	BeforeTest(t)
 	defer Close()
-	
+
 	message := generateMessage()
 	copy := message
-	err := message.Create()
-	if err != nil {
+	if err := message.Create(); err != nil {
 		t.Fatalf("Create method returns an error: %v", err)
 	}
-	
+
 	has, err := db.ID(message.Id).Get(&message)
 	if has != true {
 		t.Error("Cannot find message in database")
@@ -48,7 +47,7 @@ func TestUpdateMessage(t *testing.T) {
 	}
 
 	text := "nanachi"
-	
+
 	message.Text = text
 	message.IsShared = false
 
@@ -65,15 +64,30 @@ func TestUpdateMessage(t *testing.T) {
 }
 
 func TestGetMessagesFromChannel(t *testing.T) {
-	
 }
 
 func TestGetMessage(t *testing.T) {
-	
+	BeforeTest(t)
+	defer Close()
+
+	message := generateMessage()
+	if err := message.Create(); err != nil {
+		t.Fatalf("Create method returns an error: %v", err)
+	}
+
+	var r *Messages
+	r, err := GetMessage(message.Id)
+	if err != nil {
+		t.Errorf("GetMessage method returns an error: %v", err)
+	}
+
+	if r.Text != message.Text {
+		t.Errorf("message.Text is changed: before: %v, after: %v", message.Text, r.Text)
+	}
 }
 
 func TestDeleteMessage(t *testing.T) {
-	
+
 }
 
 func generateMessage() Messages {

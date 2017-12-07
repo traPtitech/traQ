@@ -59,14 +59,14 @@ func GetMessagesFromChannel(channelId string) ([]*Messages, error) {
 
 // GetMessage :messageIdで指定されたメッセージを取得します
 func GetMessage(messageId string) (*Messages, error) {
-	var message *Messages
+	var message = new(Messages)
 	has, err := db.ID(messageId).Get(message)
 
 	if err != nil {
 		return nil, fmt.Errorf("Failed to find message: %v", err)
 	}
 	if has == false {
-		return nil, fmt.Errorf("This messageId is wrong")
+		return nil, fmt.Errorf("This messageId is wrong: messageId = %v", messageId)
 	}
 
 	return message, nil
