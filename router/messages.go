@@ -19,7 +19,7 @@ type MessageForResponce struct {
 	//StampList /*stampのオブジェクト*/
 }
 
-type postMessage struct {
+type requestMessage struct {
 	Text string `json:"text"`
 }
 
@@ -42,8 +42,8 @@ func GetMessagesByChannelIdHandler(c echo.Context) error {
 	return nil
 }
 
-// PostMessageHandler : /channels/{cannelId}/messagesのPOSTメソッド
-func PostMessageHandler(c echo.Context) error {
+// requestMessageHandler : /channels/{cannelId}/messagesのPOSTメソッド
+func requestMessageHandler(c echo.Context) error {
 	userId, err := getUserId(c)
 	if err != nil {
 		return err
@@ -52,9 +52,7 @@ func PostMessageHandler(c echo.Context) error {
 	channelId := c.Param("ChannelId")
 	//TODO: channelIdの検証
 
-
-
-	post := new(postMessage)
+	post := new(requestMessage)
 	if err := c.Bind(post); err != nil {
 		errorMessageResponse(c, http.StatusBadRequest,"Invalid format")
 		return fmt.Errorf("Invalid format: %v", err)
@@ -71,8 +69,36 @@ func PostMessageHandler(c echo.Context) error {
 	return c.JSON(http.StatusCreated, formatMessgae(message))
 }
 
+// PutMessageByIdHandler : /messages/{messageId}のPUTメソッド.メッセージの編集
 func PutMessageByIdHandler(c echo.Context) error {
-	return nil
+	userId, err := getUserId(c)
+	if err != nil {
+		return err
+	}
+
+	//TODO: messageIdの検証
+	messageId := c.Param("messageId")
+
+	req := new(requestMessage)
+	if err := c.Bind(req); err != nil {
+		errorMessageResponse(c, http.StatusBadRequest,"Invalid format")
+		return fmt.Errorf("Request is invalid format: %v", err)
+	}
+
+	message, err := model.GetMessage(messageId)
+	if err != nil {
+		errorMessageResponse(c, http.StatusNotFound, "no message has the messageId: "+messageId)
+		return fmt.Errorf("model.GetMessage() returned an error: %v", err)
+	}
+
+	message.Text = req.Text
+	message.UpdaterId = userId
+	if err := message.Update(); err != nil {
+		errorMessageResponse(c, http.StatusInternalServerError, "Failed to update the message")
+		return fmt.Errorf("message.Update() returned an error: %v", err)
+	}
+
+	return c.JSON(http.StatusOK, message)
 }
 
 func DeleteMessageByIdHandler(c echo.Context) error {
