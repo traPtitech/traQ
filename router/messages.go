@@ -103,7 +103,7 @@ func formatMessgae(raw *model.Messages) MessageForResponce {
 		MessageId:       raw.Id,
 		UserId:          raw.UserId,
 		ParentChannelId: raw.ChannelId,
-		Pin:             false //TODO:取得するようにする
+		Pin:             false, //TODO:取得するようにする
 		Content:         raw.Text,
 		Datetime:        raw.CreatedAt,
 	}
