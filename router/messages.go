@@ -15,7 +15,7 @@ type MessageForResponce struct {
 	ParentChannelId string
 	Content         string
 	Datetime        string
-	//Pin bool
+	Pin             bool
 	//StampList /*stampのオブジェクト*/
 }
 
@@ -42,8 +42,33 @@ func GetMessagesByChannelIdHandler(c echo.Context) error {
 	return nil
 }
 
+// PostMessageHandler : /channels/{cannelId}/messagesのPOSTメソッド
 func PostMessageHandler(c echo.Context) error {
-	return nil
+	userId, err := getUserId(c)
+	if err != nil {
+		return err
+	}
+
+	channelId := c.Param("ChannelId")
+	//TODO: channelIdの検証
+
+
+
+	post := new(postMessage)
+	if err := c.Bind(post); err != nil {
+		errorMessageResponse(c, http.StatusBadRequest,"Invalid format")
+		return fmt.Errorf("Invalid format: %v", err)
+	}
+
+	message := new(model.Messages)
+	message.UserId = userId
+	message.Text = post.Text
+	message.ChannelId = channelId
+	if err := message.Create(); err != nil {
+		errorMessageResponse(c, http.StatusInternalServerError, "Failed to insert your message")
+		return fmt.Errorf("Messages.Create() returns an error: %v", err)
+	}
+	return c.JSON(http.StatusCreated, formatMessgae(message))
 }
 
 func PutMessageByIdHandler(c echo.Context) error {
@@ -78,6 +103,7 @@ func formatMessgae(raw *model.Messages) MessageForResponce {
 		MessageId:       raw.Id,
 		UserId:          raw.UserId,
 		ParentChannelId: raw.ChannelId,
+		Pin:             false //TODO:取得するようにする
 		Content:         raw.Text,
 		Datetime:        raw.CreatedAt,
 	}
