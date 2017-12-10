@@ -101,9 +101,27 @@ func PutMessageByIdHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, message)
 }
 
+// DeleteMessageByIdHandler : /message/{messageId}のDELETEメソッド.
 func DeleteMessageByIdHandler(c echo.Context) error {
+	if _, err := getUserId(c); err != nil {
+		return err
+	}
+	// TODO:Userが権限を持っているかを確認
 
-	return nil
+	messageId := c.Param("messageId")
+
+	message, err := model.GetMessage(messageId)
+	if err != nil {
+		errorMessageResponse(c, http.StatusNotFound, "no message has the messageId: "+messageId)
+		return fmt.Errorf("model.GetMessage() returned an error: %v", err)
+	}
+
+	message.IsDeleted = true
+	if err := message.Update(); err != nil {
+		errorMessageResponse(c, http.StatusInternalServerError, "Failed to update the message")
+		return fmt.Errorf("message.Update() returned an error: %v", err)
+	}
+	return c.NoContent(http.StatusNoContent)
 }
 
 // 実質user認証みたいなことに使っている
