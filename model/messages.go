@@ -71,20 +71,3 @@ func GetMessage(messageId string) (*Messages, error) {
 
 	return message, nil
 }
-
-// DeleteMessage :messageIdで指定されたメッセージのIsDeletedをtrueにします
-func DeleteMessage(messageId string) error {
-
-	message, err := GetMessage(messageId)
-	if err != nil {
-		return fmt.Errorf("Failed to get message: %v", err)
-	}
-
-	message.IsDeleted = true
-
-	if _, err := db.ID(messageId).UseBool().Update(message); err != nil {
-		return fmt.Errorf("Failed to update message: %v", err)
-	}
-
-	return nil
-}

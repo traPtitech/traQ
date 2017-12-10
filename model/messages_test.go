@@ -113,29 +113,6 @@ func TestGetMessage(t *testing.T) {
 	}
 }
 
-func TestDeleteMessage(t *testing.T) {
-	BeforeTest(t)
-	defer Close()
-
-	message := generateMessage()
-	if err := message.Create(); err != nil {
-		t.Fatalf("Create method returns an error: %v", err)
-	}
-
-	if err := DeleteMessage(message.Id); err != nil {
-		t.Errorf("DeleteMessage method returns an error: %v", err)
-	}
-
-	r, err := GetMessage(message.Id)
-	if err != nil {
-		t.Errorf("GetMessage method returns an error: %v", err)
-	}
-
-	if r.IsDeleted != true {
-		t.Error("message.IsDeleted is not updated")
-	}
-}
-
 func generateMessage() Messages {
 	message := new(Messages)
 	message.UserId = CreateUUID()
