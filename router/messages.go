@@ -1,8 +1,8 @@
 package router
 
 import (
-	"net/http"
 	"fmt"
+	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
@@ -51,7 +51,7 @@ func PutMessageByIdHandler(c echo.Context) error {
 }
 
 func DeleteMessageByIdHandler(c echo.Context) error {
-	
+
 	return nil
 }
 
@@ -62,7 +62,7 @@ func getUserId(c echo.Context) (string, error) {
 		errorMessageResponse(c, http.StatusInternalServerError, "Failed to get a session")
 		return "", fmt.Errorf("Failed to get a session: %v", err)
 	}
-	
+
 	var userId string
 	if sess.Values["userId"] != nil {
 		userId = sess.Values["userId"].(string)
@@ -73,13 +73,14 @@ func getUserId(c echo.Context) (string, error) {
 	return userId, nil
 }
 
-func formatMessgae(raw *model.Messages) *MessageForResponce {
-	res := new(MessageForResponce)
-	res.MessageId = raw.Id
-	res.UserId = raw.UserId
-	res.ParentChannelId = raw.ChannelId
-	res.Content = raw.Text
-	res.Datetime = raw.CreatedAt
+func formatMessgae(raw *model.Messages) MessageForResponce {
+	res := MessageForResponce{
+		MessageId:       raw.Id,
+		UserId:          raw.UserId,
+		ParentChannelId: raw.ChannelId,
+		Content:         raw.Text,
+		Datetime:        raw.CreatedAt,
+	}
 	//TODO: res.pin,res.stampListの取得
 	return res
 }
