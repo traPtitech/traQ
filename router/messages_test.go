@@ -70,7 +70,35 @@ func TestGetMessageByIdHandler(t *testing.T) {
 	t.Log(rec.Body.String())
 }
 
-func TestMessagesByChannelIdHandler(t *testing.T) {	
+func TestGetMessagesByChannelIdHandler(t *testing.T) {
+	e, cookie, mw := beforeTest(t)
+	defer model.Close()
+
+	for i := 0; i < 5; i++ {
+		makeMessage()
+	}
+
+	c, rec := getContext(e, t, cookie, nil)
+	c.SetPath("/channels/:channelId/messages")
+	c.SetParamNames("channelId")
+	c.SetParamValues(testChannelId)
+	requestWithContext(t, mw(GetMessagesByChannelIdHandler), c)
+
+	if rec.Code != http.StatusOK {
+		t.Log(rec.Code)
+		t.Fatal(rec.Body.String())
+	}
+
+	var responseBody []MessageForResponse
+	err := json.Unmarshal(rec.Body.Bytes(), &responseBody)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if(len(responseBody) != 5) {
+		t.Errorf("No found all messages: want %d, actual %d",5,len(responseBody))
+	}
+
 }
 
 func TestPostMessageHandler(t *testing.T) {
@@ -150,6 +178,33 @@ func TestPutMessageByIdHandler(t *testing.T) {
 }
 
 func TestDeleteMessageByIdHandler(t *testing.T) {
+	e, cookie, mw := beforeTest(t)
+	defer model.Close()
+
+	message := makeMessage()
+
+
+	req := httptest.NewRequest("DELETE", "http://test", nil)
+
+	c, rec := getContext(e, t, cookie, req)
+	c.SetPath("/messages/:messageId")
+	c.SetParamNames("messageId")
+	c.SetParamValues(message.Id)
+	requestWithContext(t, mw(DeleteMessageByIdHandler), c)
+	
+	message, err := model.GetMessage(message.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if rec.Code != http.StatusNoContent {
+		t.Log(rec.Code)
+		t.Fatal(rec.Body.String())
+	}
+
+	if message.IsDeleted != true {
+		t.Fatalf("message text is wrong: want %v, actual %v",true, message.IsDeleted)
+	}
 
 }
 
