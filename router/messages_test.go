@@ -111,6 +111,41 @@ func TestPostMessageHandler(t *testing.T) {
 }
 
 func TestPutMessageByIdHandler(t *testing.T) {
+	e, cookie, mw := beforeTest(t)
+	defer model.Close()
+
+	message := makeMessage()
+
+	post := requestMessage{
+		Text: "test message",
+	}
+	body, err := json.Marshal(post)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
+
+	c, rec := getContext(e, t, cookie, req)
+	c.SetPath("/messages/:messageId")
+	c.SetParamNames("messageId")
+	c.SetParamValues(message.Id)
+	requestWithContext(t, mw(PutMessageByIdHandler), c)
+	
+	message, err = model.GetMessage(message.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if rec.Code != http.StatusOK {
+		t.Log(rec.Code)
+		t.Fatal(rec.Body.String())
+	}
+
+	if message.Text != post.Text {
+		t.Fatalf("message text is wrong: want %v, actual %v",post.Text, message.Text)
+	}
+
 
 }
 
