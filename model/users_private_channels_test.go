@@ -3,11 +3,9 @@ package model
 import "testing"
 
 func TestMakePrivateChannel(t *testing.T) {
-	BeforeTest(t)
-	defer Close()
-
-	channel := new(Channels)
-	channel.CreatorId = testUserID
+	beforeTest(t)
+	channel := new(Channel)
+	channel.CreatorID = testUserID
 	channel.Name = "Private-Channel"
 	channel.IsPublic = false
 	if err := channel.Create(); err != nil {
@@ -17,11 +15,11 @@ func TestMakePrivateChannel(t *testing.T) {
 	po := CreateUUID()
 	privilegedUser := []string{testUserID, po}
 
-	for _, userId := range privilegedUser {
-		usersPrivateChannels := new(UsersPrivateChannels)
-		usersPrivateChannels.ChannelId = channel.Id
-		usersPrivateChannels.UserId = userId
-		usersPrivateChannels.Create()
+	for _, userID := range privilegedUser {
+		usersPrivateChannel := new(UsersPrivateChannel)
+		usersPrivateChannel.ChannelID = channel.ID
+		usersPrivateChannel.UserID = userID
+		usersPrivateChannel.Create()
 	}
 
 	channelList, err := GetChannelList(testUserID)

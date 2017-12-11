@@ -7,11 +7,9 @@ import (
 
 // 各関数のテスト>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 func TestCreate(t *testing.T) {
-	BeforeTest(t)
-	defer Close()
-
-	channel := new(Channels)
-	channel.CreatorId = testUserID
+	beforeTest(t)
+	channel := new(Channel)
+	channel.CreatorID = testUserID
 	channel.Name = "testChannel"
 	channel.IsPublic = true
 
@@ -20,19 +18,17 @@ func TestCreate(t *testing.T) {
 		t.Fatal("Failed to create channel", err)
 	}
 
-	if channel.CreatorId != testUserID {
-		t.Errorf("CreatorId: want %s, acutual %s", testUserID, channel.CreatorId)
+	if channel.CreatorID != testUserID {
+		t.Errorf("CreatorId: want %s, acutual %s", testUserID, channel.CreatorID)
 	}
 
-	if channel.UpdaterId != testUserID {
-		t.Errorf("UpdaterId: want %s, acutual %s", testUserID, channel.UpdaterId)
+	if channel.UpdaterID != testUserID {
+		t.Errorf("UpdaterId: want %s, acutual %s", testUserID, channel.UpdaterID)
 	}
 }
 
 func TestGetChannelList(t *testing.T) {
-	BeforeTest(t)
-	defer Close()
-
+	beforeTest(t)
 	for i := 0; i < 10; i++ {
 		err := makeChannel(strconv.Itoa(i))
 		if err != nil {
@@ -52,27 +48,25 @@ func TestGetChannelList(t *testing.T) {
 }
 
 func TestGetChildrenChannelIdList(t *testing.T) {
-	BeforeTest(t)
-	defer Close()
-
+	beforeTest(t)
 	parentChannel, err := makeChannelDetail(testUserID, "parent", "", true)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for i := 0; i < 10; i++ {
-		makeChannelDetail(testUserID, "child-"+strconv.Itoa(i+1), parentChannel.Id, true)
+		makeChannelDetail(testUserID, "child-"+strconv.Itoa(i+1), parentChannel.ID, true)
 	}
 
 	for i := 10; i < 20; i++ {
-		channel, _ := makeChannelDetail(privateUserID, "child-"+strconv.Itoa(i+1), parentChannel.Id, false)
-		usersPrivateChannel := new(UsersPrivateChannels)
-		usersPrivateChannel.ChannelId = channel.Id
-		usersPrivateChannel.UserId = privateUserID
+		channel, _ := makeChannelDetail(privateUserID, "child-"+strconv.Itoa(i+1), parentChannel.ID, false)
+		usersPrivateChannel := new(UsersPrivateChannel)
+		usersPrivateChannel.ChannelID = channel.ID
+		usersPrivateChannel.UserID = privateUserID
 		usersPrivateChannel.Create()
 	}
 
-	idList, err := GetChildrenChannelIdList(testUserID, parentChannel.Id)
+	idList, err := GetChildrenChannelIDList(testUserID, parentChannel.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +75,7 @@ func TestGetChildrenChannelIdList(t *testing.T) {
 		t.Fatalf("Children Id list length wrong: want %d, acutual %d\n", 10, len(idList))
 	}
 
-	idList, err = GetChildrenChannelIdList(privateUserID, parentChannel.Id)
+	idList, err = GetChildrenChannelIDList(privateUserID, parentChannel.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,30 +86,28 @@ func TestGetChildrenChannelIdList(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	BeforeTest(t)
-	defer Close()
-
-	channel := new(Channels)
-	channel.CreatorId = testUserID
+	beforeTest(t)
+	channel := new(Channel)
+	channel.CreatorID = testUserID
 	channel.Name = "Channel"
 	channel.IsPublic = true
 	if err := channel.Create(); err != nil {
 		t.Fatal(err)
 	}
 
-	parentChannel := new(Channels)
-	parentChannel.CreatorId = testUserID
+	parentChannel := new(Channel)
+	parentChannel.CreatorID = testUserID
 	parentChannel.Name = "Parent"
 	parentChannel.IsPublic = true
 	if err := parentChannel.Create(); err != nil {
 		t.Fatal("Failed to create channel", err)
 	}
 
-	updaterId := CreateUUID()
+	updaterID := CreateUUID()
 
-	channel.UpdaterId = updaterId
+	channel.UpdaterID = updaterID
 	channel.Name = "Channel-updated"
-	channel.ParentId = parentChannel.Id
+	channel.ParentID = parentChannel.ID
 
 	if err := channel.Update(); err != nil {
 		t.Fatal("Failed to update ", err)
@@ -125,29 +117,27 @@ func TestUpdate(t *testing.T) {
 		t.Errorf("Name: want %s, acutual %s\n", "Channel-updated", channel.Name)
 	}
 
-	if channel.CreatorId != testUserID {
-		t.Errorf("CreatorId: want %s, acutual %s\n", testUserID, channel.CreatorId)
+	if channel.CreatorID != testUserID {
+		t.Errorf("CreatorId: want %s, acutual %s\n", testUserID, channel.CreatorID)
 	}
 
-	if channel.UpdaterId != updaterId {
-		t.Errorf("UpdaterId: want %s, acutual %s\n", updaterId, channel.UpdaterId)
+	if channel.UpdaterID != updaterID {
+		t.Errorf("UpdaterId: want %s, acutual %s\n", updaterID, channel.UpdaterID)
 	}
 
-	if channel.ParentId != channel.ParentId {
-		t.Errorf("UpdaterId: want %s, acutual %s\n", parentChannel.Id, channel.ParentId)
+	if channel.ParentID != channel.ParentID {
+		t.Errorf("UpdaterId: want %s, acutual %s\n", parentChannel.ID, channel.ParentID)
 	}
 }
 
 func TestExists(t *testing.T) {
-	BeforeTest(t)
-	defer Close()
-
+	beforeTest(t)
 	channel, err := makeChannelDetail(testUserID, "test", "", true)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	ok, err := ExistsChannel(channel.Id)
+	ok, err := ExistsChannel(channel.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -170,11 +160,9 @@ func TestExists(t *testing.T) {
 
 // 関数間のテスト>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 func TestCreateChildChannel(t *testing.T) {
-	BeforeTest(t)
-	defer Close()
-
-	channel := new(Channels)
-	channel.CreatorId = testUserID
+	beforeTest(t)
+	channel := new(Channel)
+	channel.CreatorID = testUserID
 	channel.Name = "testChannel"
 	channel.IsPublic = true
 
@@ -182,43 +170,43 @@ func TestCreateChildChannel(t *testing.T) {
 		t.Fatal("Failed to create channel", err)
 	}
 
-	childChannel := new(Channels)
-	childChannel.CreatorId = testUserID
+	childChannel := new(Channel)
+	childChannel.CreatorID = testUserID
 	childChannel.Name = "testChannelChild"
 	childChannel.IsPublic = true
-	childChannel.ParentId = channel.Id
+	childChannel.ParentID = channel.ID
 	if err := childChannel.Create(); err != nil {
 		t.Fatal("Failed to create channel", err)
 	}
 
-	if childChannel.CreatorId != testUserID {
-		t.Errorf("CreatorId: want %s, acutual %s\n", testUserID, childChannel.CreatorId)
+	if childChannel.CreatorID != testUserID {
+		t.Errorf("CreatorId: want %s, acutual %s\n", testUserID, childChannel.CreatorID)
 	}
 
-	if childChannel.UpdaterId != testUserID {
-		t.Errorf("UpdaterId: want %s, acutual %s\n", testUserID, childChannel.UpdaterId)
+	if childChannel.UpdaterID != testUserID {
+		t.Errorf("UpdaterId: want %s, acutual %s\n", testUserID, childChannel.UpdaterID)
 	}
 
-	if childChannel.ParentId != channel.Id {
-		t.Errorf("UpdaterId: want %s, acutual %s\n", channel.Id, childChannel.Id)
+	if childChannel.ParentID != channel.ID {
+		t.Errorf("UpdaterId: want %s, acutual %s\n", channel.ID, childChannel.ID)
 	}
 }
 
 // 関数間のテスト<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 func makeChannel(tail string) error {
-	channel := new(Channels)
-	channel.CreatorId = testUserID
+	channel := new(Channel)
+	channel.CreatorID = testUserID
 	channel.Name = "Channel-" + tail
 	channel.IsPublic = true
 	return channel.Create()
 }
 
-func makeChannelDetail(creatorId, name, parentId string, isPublic bool) (*Channels, error) {
-	channel := new(Channels)
-	channel.CreatorId = creatorId
+func makeChannelDetail(creatorID, name, parentID string, isPublic bool) (*Channel, error) {
+	channel := new(Channel)
+	channel.CreatorID = creatorID
 	channel.Name = name
-	channel.ParentId = parentId
+	channel.ParentID = parentID
 	channel.IsPublic = isPublic
 	err := channel.Create()
 	return channel, err

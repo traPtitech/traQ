@@ -9,18 +9,21 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
+// ChannelForResponse レスポンス用のチャンネル構造体
 type ChannelForResponse struct {
-	ChannelId  string
+	ChannelID  string
 	Name       string
 	Parent     string
 	Children   []string
 	Visibility bool
 }
 
+// ErrorResponse エラーレスポンス用の構造体
 type ErrorResponse struct {
 	Message string
 }
 
+// PostChannel リクエストボディ用構造体
 type PostChannel struct {
 	ChannelType string   `json:"type"`
 	Member      []string `json:"member"`
@@ -28,6 +31,7 @@ type PostChannel struct {
 	Parent      string   `json:"parent"`
 }
 
+// GetChannelsHandler GET /channels のハンドラ
 func GetChannelsHandler(c echo.Context) error {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
@@ -35,11 +39,11 @@ func GetChannelsHandler(c echo.Context) error {
 		return fmt.Errorf("Failed to get session: %v", err)
 	}
 
-	var userId string
+	var userID string
 	if sess.Values["userId"] != nil {
-		userId = sess.Values["userId"].(string)
+		userID = sess.Values["userId"].(string)
 	}
-	channelList, err := model.GetChannelList(userId)
+	channelList, err := model.GetChannelList(userID)
 	if err != nil {
 		messageResponse(c, http.StatusInternalServerError, "チャンネルリストの取得中にエラーが発生しました")
 		return fmt.Errorf("Failed to get channel list: %v", err)
@@ -48,24 +52,25 @@ func GetChannelsHandler(c echo.Context) error {
 	response := make(map[string]*ChannelForResponse)
 
 	for _, ch := range channelList {
-		if response[ch.Id] == nil {
-			response[ch.Id] = new(ChannelForResponse)
+		if response[ch.ID] == nil {
+			response[ch.ID] = new(ChannelForResponse)
 		}
-		response[ch.Id].ChannelId = ch.Id
-		response[ch.Id].Name = ch.Name
-		response[ch.Id].Parent = ch.ParentId
-		response[ch.Id].Visibility = !ch.IsHidden
+		response[ch.ID].ChannelID = ch.ID
+		response[ch.ID].Name = ch.Name
+		response[ch.ID].Parent = ch.ParentID
+		response[ch.ID].Visibility = !ch.IsHidden
 
-		if response[ch.ParentId] == nil {
-			response[ch.ParentId] = new(ChannelForResponse)
+		if response[ch.ParentID] == nil {
+			response[ch.ParentID] = new(ChannelForResponse)
 		}
-		response[ch.ParentId].Children = append(response[ch.ParentId].Children, ch.Id)
+		response[ch.ParentID].Children = append(response[ch.ParentID].Children, ch.ID)
 	}
 
 	c.JSON(http.StatusOK, values(response))
 	return nil
 }
 
+// PostChannelsHandler POST /channels のハンドラ
 func PostChannelsHandler(c echo.Context) error {
 	// TODO: 同名・同階層のチャンネルのチェック
 	sess, err := session.Get("sessions", c)
@@ -74,9 +79,9 @@ func PostChannelsHandler(c echo.Context) error {
 		return fmt.Errorf("Failed to get session: %v", err)
 	}
 
-	var userId string
+	var userID string
 	if sess.Values["userId"] != nil {
-		userId = sess.Values["userId"].(string)
+		userID = sess.Values["userId"].(string)
 	}
 	var requestBody PostChannel
 	c.Bind(&requestBody)
@@ -103,8 +108,8 @@ func PostChannelsHandler(c echo.Context) error {
 		}
 	}
 
-	newChannel := new(model.Channels)
-	newChannel.CreatorId = userId
+	newChannel := new(model.Channel)
+	newChannel.CreatorID = userID
 	newChannel.Name = requestBody.Name
 
 	if requestBody.ChannelType == "public" {
@@ -124,10 +129,10 @@ func PostChannelsHandler(c echo.Context) error {
 	} else {
 		for _, user := range requestBody.Member {
 			// TODO: メンバーが存在するか確認
-			usersPrivateChannels := new(model.UsersPrivateChannels)
-			usersPrivateChannels.ChannelId = newChannel.Id
-			usersPrivateChannels.UserId = user
-			err := usersPrivateChannels.Create()
+			usersPrivateChannel := new(model.UsersPrivateChannel)
+			usersPrivateChannel.ChannelID = newChannel.ID
+			usersPrivateChannel.UserID = user
+			err := usersPrivateChannel.Create()
 			if err != nil {
 				c.Error(err)
 				return err
@@ -135,7 +140,7 @@ func PostChannelsHandler(c echo.Context) error {
 		}
 	}
 
-	ch, err := model.GetChannelById(userId, newChannel.Id)
+	ch, err := model.GetChannelByID(userID, newChannel.ID)
 
 	if err != nil {
 		c.Error(err)
@@ -146,21 +151,22 @@ func PostChannelsHandler(c echo.Context) error {
 	return nil
 }
 
-func GetChannelsByChannelIdHandler(c echo.Context) error {
+// GetChannelsByChannelIDHandler GET /channels/{channelID} のハンドラ
+func GetChannelsByChannelIDHandler(c echo.Context) error {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
 		messageResponse(c, http.StatusInternalServerError, "セッションの取得に失敗しました")
 		return fmt.Errorf("Failed to get session: %v", err)
 	}
 
-	var userId string
+	var userID string
 	if sess.Values["userId"] != nil {
-		userId = sess.Values["userId"].(string)
+		userID = sess.Values["userId"].(string)
 	}
 
-	channelId := c.Param("channelId")
+	channelID := c.Param("channelId")
 
-	ok, err := model.ExistsChannel(channelId)
+	ok, err := model.ExistsChannel(channelID)
 	if err != nil {
 		messageResponse(c, http.StatusInternalServerError, "チャンネルの検証中にサーバー内でエラーが発生しました")
 		return err
@@ -170,31 +176,32 @@ func GetChannelsByChannelIdHandler(c echo.Context) error {
 		return nil
 	}
 
-	channel, err := model.GetChannelById(userId, channelId)
+	channel, err := model.GetChannelByID(userID, channelID)
 	if err != nil {
 		c.Error(err)
 		return fmt.Errorf("Failed to get channel: %v", err)
 	}
 
-	childrenIdList, err := model.GetChildrenChannelIdList(userId, channel.Id)
+	childrenIDList, err := model.GetChildrenChannelIDList(userID, channel.ID)
 	if err != nil {
 		c.Error(err)
 		return fmt.Errorf("Failed to get children channel id list: %v", err)
 	}
 
 	response := ChannelForResponse{
-		ChannelId:  channel.Id,
+		ChannelID:  channel.ID,
 		Name:       channel.Name,
-		Parent:     channel.ParentId,
+		Parent:     channel.ParentID,
 		Visibility: !channel.IsHidden,
-		Children:   childrenIdList,
+		Children:   childrenIDList,
 	}
 
 	c.JSON(http.StatusOK, response)
 	return nil
 }
 
-func PutChannelsByChannelIdHandler(c echo.Context) error {
+// PutChannelsByChannelIDHandler PUT /channels/{channelId} のハンドラ
+func PutChannelsByChannelIDHandler(c echo.Context) error {
 	// CHECK: 権限周り
 	// TODO: 必要な引数があるかチェック
 	sess, err := session.Get("sessions", c)
@@ -203,15 +210,15 @@ func PutChannelsByChannelIdHandler(c echo.Context) error {
 		return fmt.Errorf("Failed to get session: %v", err)
 	}
 
-	var userId string
+	var userID string
 	if sess.Values["userId"] != nil {
-		userId = sess.Values["userId"].(string)
+		userID = sess.Values["userId"].(string)
 	}
 	var requestBody PostChannel
 	c.Bind(&requestBody)
 
-	channelId := c.Param("channelId")
-	ok, err := model.ExistsChannel(channelId)
+	channelID := c.Param("channelId")
+	ok, err := model.ExistsChannel(channelID)
 	if err != nil {
 		messageResponse(c, http.StatusInternalServerError, "チャンネルの検証中にサーバー内でエラーが発生しました")
 		return err
@@ -221,39 +228,40 @@ func PutChannelsByChannelIdHandler(c echo.Context) error {
 		return nil
 	}
 
-	channel, err := model.GetChannelById(userId, channelId)
+	channel, err := model.GetChannelByID(userID, channelID)
 	if err != nil {
 		c.Error(err)
 		return fmt.Errorf("Failed to get channel: %v", err)
 	}
 
 	channel.Name = requestBody.Name
-	channel.UpdaterId = userId
+	channel.UpdaterID = userID
 
 	if err := channel.Update(); err != nil {
 		c.Error(err)
 		return err
 	}
 
-	childrenIdList, err := model.GetChildrenChannelIdList(userId, channel.Id)
+	childrenIDList, err := model.GetChildrenChannelIDList(userID, channel.ID)
 	if err != nil {
 		c.Error(err)
 		return fmt.Errorf("Failed to get children channel id list: %v", err)
 	}
 
 	response := ChannelForResponse{
-		ChannelId:  channel.Id,
+		ChannelID:  channel.ID,
 		Name:       channel.Name,
-		Parent:     channel.ParentId,
+		Parent:     channel.ParentID,
 		Visibility: !channel.IsHidden,
-		Children:   childrenIdList,
+		Children:   childrenIDList,
 	}
 
 	c.JSON(http.StatusOK, response)
 	return nil
 }
 
-func DeleteChannelsByChannelIdHandler(c echo.Context) error {
+// DeleteChannelsByChannelIDHandler DELETE /channels/{channelId}のハンドラ
+func DeleteChannelsByChannelIDHandler(c echo.Context) error {
 	// CHECK: 権限周り
 	sess, err := session.Get("sessions", c)
 	if err != nil {
@@ -261,9 +269,9 @@ func DeleteChannelsByChannelIdHandler(c echo.Context) error {
 		return fmt.Errorf("Failed to get session: %v", err)
 	}
 
-	var userId string
+	var userID string
 	if sess.Values["userId"] != nil {
-		userId = sess.Values["userId"].(string)
+		userID = sess.Values["userId"].(string)
 	}
 	type confirm struct {
 		Confirm bool `json:"confirm"`
@@ -271,8 +279,8 @@ func DeleteChannelsByChannelIdHandler(c echo.Context) error {
 	var requestBody confirm
 	c.Bind(&requestBody)
 
-	channelId := c.Param("channelId")
-	ok, err := model.ExistsChannel(channelId)
+	channelID := c.Param("channelId")
+	ok, err := model.ExistsChannel(channelID)
 	if err != nil {
 		messageResponse(c, http.StatusInternalServerError, "チャンネルの検証中にサーバー内でエラーが発生しました")
 		return err
@@ -282,14 +290,14 @@ func DeleteChannelsByChannelIdHandler(c echo.Context) error {
 		return nil
 	}
 
-	channel, err := model.GetChannelById(userId, channelId)
+	channel, err := model.GetChannelByID(userID, channelID)
 	if err != nil {
 		c.Error(err)
 		return fmt.Errorf("Failed to get channel: %v", err)
 	}
 
 	if requestBody.Confirm {
-		channel.UpdaterId = userId
+		channel.UpdaterID = userID
 		channel.IsDeleted = true
 		fmt.Println(channel)
 		err := channel.Update()

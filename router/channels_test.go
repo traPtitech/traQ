@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-xorm/xorm"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/srinathgs/mysqlstore"
@@ -19,19 +21,54 @@ import (
 
 var (
 	testUserID = "403807a5-cae6-453e-8a09-fc75d5b4ca91"
+	engine     *xorm.Engine
 )
 
 func TestMain(m *testing.M) {
-	os.Setenv("MARIADB_DATABASE", "traq-test-router")
+	user := os.Getenv("MARIADB_USERNAME")
+	if user == "" {
+		user = "root"
+	}
+
+	pass := os.Getenv("MARIADB_PASSWORD")
+	if pass == "" {
+		pass = "password"
+	}
+
+	host := os.Getenv("MARIADB_HOSTNAME")
+	if host == "" {
+		host = "127.0.0.1"
+	}
+
+	dbname := "traq-test-router"
+
+	var err error
+	engine, err = xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=true", user, pass, host, dbname))
+	if err != nil {
+		panic(err)
+	}
+	defer engine.Close()
+	engine.ShowSQL(false)
+	engine.DropTables("sessions", "channels", "users_private_channels")
+	model.SetXORMEngine(engine)
+
+	err = model.SyncSchema()
+	if err != nil {
+		panic(err)
+	}
 	code := m.Run()
 	os.Exit(code)
 }
 
 func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
-	model.BeforeTest(t)
+	engine.DropTables("sessions", "channels", "users_private_channels")
+	err := model.SyncSchema()
+	if err != nil {
+		t.Fatalf("Failed to sync schema: %v", err)
+	}
 	e := echo.New()
 
-	store, err := mysqlstore.NewMySQLStoreFromConnection(model.GetSQLDB(), "sessions", "/", 60*60*24*14, []byte("secret"))
+	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
 
 	if err != nil {
 		t.Fatal(err)
@@ -53,7 +90,6 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
 
 func TestGetChannelsHandler(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-	defer model.Close()
 
 	for i := 0; i < 5; i++ {
 		makeChannel(testUserID, "Channel-"+strconv.Itoa(i), true)
@@ -75,7 +111,6 @@ func TestGetChannelsHandler(t *testing.T) {
 
 func TestPostChannelsHandler(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-	defer model.Close()
 
 	postBody := PostChannel{
 		ChannelType: "public",
@@ -140,18 +175,17 @@ func TestPostChannelsHandler(t *testing.T) {
 	}
 }
 
-func TestGetChannelsByChannelIdHandler(t *testing.T) {
+func TestGetChannelsByChannelIDHandler(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-	defer model.Close()
 
 	channel, _ := makeChannel(testUserID, "test", true)
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/:channelId")
 	c.SetParamNames("channelId")
-	c.SetParamValues(channel.Id)
+	c.SetParamValues(channel.ID)
 
-	requestWithContext(t, mw(GetChannelsByChannelIdHandler), c)
+	requestWithContext(t, mw(GetChannelsByChannelIDHandler), c)
 
 	if rec.Code != http.StatusOK {
 		t.Log(rec.Code)
@@ -161,9 +195,8 @@ func TestGetChannelsByChannelIdHandler(t *testing.T) {
 	t.Log(rec.Body.String())
 }
 
-func TestPutChannelsByChannelIdHandler(t *testing.T) {
+func TestPutChannelsByChannelIDHandler(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-	defer model.Close()
 
 	channel, _ := makeChannel(model.CreateUUID(), "test", true)
 
@@ -171,15 +204,15 @@ func TestPutChannelsByChannelIdHandler(t *testing.T) {
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/:channelId")
 	c.SetParamNames("channelId")
-	c.SetParamValues(channel.Id)
-	requestWithContext(t, mw(PutChannelsByChannelIdHandler), c)
+	c.SetParamValues(channel.ID)
+	requestWithContext(t, mw(PutChannelsByChannelIDHandler), c)
 
 	if rec.Code != http.StatusOK {
 		t.Log(rec.Code)
 		t.Fatal(rec.Body.String())
 	}
 
-	channel, err := model.GetChannelById(testUserID, channel.Id)
+	channel, err := model.GetChannelByID(testUserID, channel.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,15 +221,14 @@ func TestPutChannelsByChannelIdHandler(t *testing.T) {
 		t.Fatalf("Channel name wrong: want %s, actual %s", "renamed", channel.Name)
 	}
 
-	if channel.UpdaterId != testUserID {
-		t.Fatalf("Channel UpdaterId wrong: want %s, actual %s", testUserID, channel.UpdaterId)
+	if channel.UpdaterID != testUserID {
+		t.Fatalf("Channel UpdaterId wrong: want %s, actual %s", testUserID, channel.UpdaterID)
 	}
 
 }
 
-func TestDeleteChannelsByChannelIdHandler(t *testing.T) {
+func TestDeleteChannelsByChannelIDHandler(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-	defer model.Close()
 
 	channel, _ := makeChannel(model.CreateUUID(), "test", true)
 
@@ -204,10 +236,10 @@ func TestDeleteChannelsByChannelIdHandler(t *testing.T) {
 	c, _ := getContext(e, t, cookie, req)
 	c.SetPath("/:channelId")
 	c.SetParamNames("channelId")
-	c.SetParamValues(channel.Id)
-	requestWithContext(t, mw(DeleteChannelsByChannelIdHandler), c)
+	c.SetParamValues(channel.ID)
+	requestWithContext(t, mw(DeleteChannelsByChannelIDHandler), c)
 
-	channel, err := model.GetChannelById(testUserID, channel.Id)
+	channel, err := model.GetChannelByID(testUserID, channel.ID)
 
 	if err != nil {
 		t.Fatal(err)
@@ -273,9 +305,9 @@ func parseCookies(value string) map[string]*http.Cookie {
 	return m
 }
 
-func makeChannel(userId, name string, isPublic bool) (*model.Channels, error) {
-	channel := new(model.Channels)
-	channel.CreatorId = userId
+func makeChannel(userID, name string, isPublic bool) (*model.Channel, error) {
+	channel := new(model.Channel)
+	channel.CreatorID = userID
 	channel.Name = name
 	channel.IsPublic = isPublic
 	err := channel.Create()
