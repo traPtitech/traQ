@@ -133,7 +133,7 @@ func TestPostMessageHandler(t *testing.T) {
 	}
 
 	if message.Content != post.Text {
-		t.Fatal("message text is wrong: want %v, actual %v", post.Text, message.Content)
+		t.Errorf("message text is wrong: want %v, actual %v", post.Text, message.Content)
 	}
 
 	if rec.Code != http.StatusCreated {
