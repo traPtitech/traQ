@@ -1,7 +1,10 @@
 package router
 
 import (
+	"bytes"
 	"fmt"
+	"encoding/json"
+	"io/ioutil"
 
 	"net/http"
 	"net/http/httptest"
@@ -71,7 +74,40 @@ func TestMessagesByChannelIdHandler(t *testing.T) {
 }
 
 func TestPostMessageHandler(t *testing.T) {
+	e, cookie, mw := beforeTest(t)
+	defer model.Close()
 
+	post := requestMessage{
+		Text: "test message",
+	}
+
+	body, err := json.Marshal(post)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
+	rec := request(e, t, mw(PostMessageHandler), cookie, req)
+
+	message := &MessageForResponse{}
+	
+	result, err := ioutil.ReadAll(rec.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = json.Unmarshal(result, message)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if message.Content != post.Text {
+		t.Fatal("message text is wrong: want %v, actual %v",post.Text, message.Content)
+	}
+
+	if rec.Code != http.StatusCreated {
+		t.Log(rec.Code)
+		t.Fatal(rec.Body.String())
+	}
 }
 
 func TestPutMessageByIdHandler(t *testing.T) {
@@ -98,6 +134,26 @@ func requestWithContext(t *testing.T, handler echo.HandlerFunc, c echo.Context) 
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func request(e *echo.Echo, t *testing.T, handler echo.HandlerFunc, cookie *http.Cookie, req *http.Request) *httptest.ResponseRecorder {
+	if req == nil {
+		req = httptest.NewRequest("GET", "http://test", nil)
+	}
+	
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	if cookie != nil {
+		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
+	}
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	err := handler(c)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return rec
 }
 
 func getContext(e *echo.Echo, t *testing.T, cookie *http.Cookie, req *http.Request) (echo.Context, *httptest.ResponseRecorder) {

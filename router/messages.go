@@ -9,7 +9,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-type MessageForResponce struct {
+type MessageForResponse struct {
 	MessageId       string
 	UserId          string
 	ParentChannelId string
@@ -54,7 +54,7 @@ func GetMessagesByChannelIdHandler(c echo.Context) error {
 		return fmt.Errorf("model.GetmessagesFromChannel returned an error : %v", err)
 	}
 
-	res := make(map[string]*MessageForResponce)
+	res := make(map[string]*MessageForResponse)
 
 	for _, message := range messageList {
 		res[message.Id] = formatMessage(message)
@@ -161,16 +161,16 @@ func getUserId(c echo.Context) (string, error) {
 	return userId, nil
 }
 
-func values(m map[string]*MessageForResponce) []*MessageForResponce {
-	val := []*MessageForResponce{}
+func values(m map[string]*MessageForResponse) []*MessageForResponse {
+	val := []*MessageForResponse{}
 	for _, v := range m {
 		val = append(val, v)
 	}
 	return val
 }
 
-func formatMessage(raw *model.Messages) *MessageForResponce {
-	res := MessageForResponce{
+func formatMessage(raw *model.Messages) *MessageForResponse {
+	res := MessageForResponse{
 		MessageId:       raw.Id,
 		UserId:          raw.UserId,
 		ParentChannelId: raw.ChannelId,
