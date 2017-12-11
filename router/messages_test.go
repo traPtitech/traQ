@@ -2,12 +2,12 @@ package router
 
 import (
 	"bytes"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/labstack/echo"
@@ -17,12 +17,16 @@ import (
 )
 
 var (
-	testUserId = ""
+	testUserId    = ""
 	testChannelId = ""
-	sampleText = "popopo"
+	sampleText    = "popopo"
 )
 
-
+func TestMain(m *testing.M) {
+	os.Setenv("MARIADB_DATABASE", "traq-test-router")
+	code := m.Run()
+	os.Exit(code)
+}
 
 func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
 	testChannelId = model.CreateUUID()
@@ -38,7 +42,7 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
 	}
 	req := httptest.NewRequest(echo.GET, "/", nil)
 	rec := httptest.NewRecorder()
-	sess, err := store.New(req,"sessions")
+	sess, err := store.New(req, "sessions")
 
 	sess.Values["userId"] = testUserId
 	if err := sess.Save(req, rec); err != nil {
@@ -95,8 +99,8 @@ func TestGetMessagesByChannelIdHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if(len(responseBody) != 5) {
-		t.Errorf("No found all messages: want %d, actual %d",5,len(responseBody))
+	if len(responseBody) != 5 {
+		t.Errorf("No found all messages: want %d, actual %d", 5, len(responseBody))
 	}
 
 }
@@ -118,7 +122,7 @@ func TestPostMessageHandler(t *testing.T) {
 	rec := request(e, t, mw(PostMessageHandler), cookie, req)
 
 	message := &MessageForResponse{}
-	
+
 	result, err := ioutil.ReadAll(rec.Body)
 	if err != nil {
 		t.Fatal(err)
@@ -129,7 +133,7 @@ func TestPostMessageHandler(t *testing.T) {
 	}
 
 	if message.Content != post.Text {
-		t.Fatal("message text is wrong: want %v, actual %v",post.Text, message.Content)
+		t.Fatal("message text is wrong: want %v, actual %v", post.Text, message.Content)
 	}
 
 	if rec.Code != http.StatusCreated {
@@ -159,7 +163,7 @@ func TestPutMessageByIdHandler(t *testing.T) {
 	c.SetParamNames("messageId")
 	c.SetParamValues(message.Id)
 	requestWithContext(t, mw(PutMessageByIdHandler), c)
-	
+
 	message, err = model.GetMessage(message.Id)
 	if err != nil {
 		t.Fatal(err)
@@ -171,9 +175,8 @@ func TestPutMessageByIdHandler(t *testing.T) {
 	}
 
 	if message.Text != post.Text {
-		t.Fatalf("message text is wrong: want %v, actual %v",post.Text, message.Text)
+		t.Fatalf("message text is wrong: want %v, actual %v", post.Text, message.Text)
 	}
-
 
 }
 
@@ -183,7 +186,6 @@ func TestDeleteMessageByIdHandler(t *testing.T) {
 
 	message := makeMessage()
 
-
 	req := httptest.NewRequest("DELETE", "http://test", nil)
 
 	c, rec := getContext(e, t, cookie, req)
@@ -191,7 +193,7 @@ func TestDeleteMessageByIdHandler(t *testing.T) {
 	c.SetParamNames("messageId")
 	c.SetParamValues(message.Id)
 	requestWithContext(t, mw(DeleteMessageByIdHandler), c)
-	
+
 	message, err := model.GetMessage(message.Id)
 	if err != nil {
 		t.Fatal(err)
@@ -203,16 +205,16 @@ func TestDeleteMessageByIdHandler(t *testing.T) {
 	}
 
 	if message.IsDeleted != true {
-		t.Fatalf("message text is wrong: want %v, actual %v",true, message.IsDeleted)
+		t.Fatalf("message text is wrong: want %v, actual %v", true, message.IsDeleted)
 	}
 
 }
 
 func makeMessage() *model.Messages {
 	message := &model.Messages{
-		UserId : testUserId,
-		ChannelId : testChannelId,
-		Text : "popopo",
+		UserId:    testUserId,
+		ChannelId: testChannelId,
+		Text:      "popopo",
 	}
 	message.Create()
 	return message
@@ -230,7 +232,7 @@ func request(e *echo.Echo, t *testing.T, handler echo.HandlerFunc, cookie *http.
 	if req == nil {
 		req = httptest.NewRequest("GET", "http://test", nil)
 	}
-	
+
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	if cookie != nil {
 		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
@@ -256,11 +258,10 @@ func getContext(e *echo.Echo, t *testing.T, cookie *http.Cookie, req *http.Reque
 		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
 	}
 	rec := httptest.NewRecorder()
-	c := e.NewContext(req,rec)
+	c := e.NewContext(req, rec)
 	return c, rec
 
 }
-
 
 func parseCookies(value string) map[string]*http.Cookie {
 	m := map[string]*http.Cookie{}

@@ -74,7 +74,7 @@ func PostMessageHandler(c echo.Context) error {
 
 	post := new(requestMessage)
 	if err := c.Bind(post); err != nil {
-		errorMessageResponse(c, http.StatusBadRequest,"Invalid format")
+		errorMessageResponse(c, http.StatusBadRequest, "Invalid format")
 		return fmt.Errorf("Invalid format: %v", err)
 	}
 
@@ -100,7 +100,7 @@ func PutMessageByIdHandler(c echo.Context) error {
 
 	req := new(requestMessage)
 	if err := c.Bind(req); err != nil {
-		errorMessageResponse(c, http.StatusBadRequest,"Invalid format")
+		errorMessageResponse(c, http.StatusBadRequest, "Invalid format")
 		return fmt.Errorf("Request is invalid format: %v", err)
 	}
 
