@@ -35,12 +35,32 @@ func GetMessageByIdHandler(c echo.Context) error {
 		errorMessageResponse(c, http.StatusNotFound, "Message is not found")
 		return fmt.Errorf("model.Getmessage returned an error : %v", err)
 	}
-	res := formatMessgae(raw)
+	res := formatMessage(raw)
 	return c.JSON(http.StatusOK, res)
 }
 
+// GetMessagesByChannelIdHandler : /channels/{channelId}/messagesのGETメソッド
 func GetMessagesByChannelIdHandler(c echo.Context) error {
-	return nil
+	_, err := getUserId(c)
+	if err != nil {
+		return err
+	}
+
+	channelId := c.Param("channelId")
+
+	messageList, err := model.GetMessagesFromChannel(channelId)
+	if err != nil {
+		errorMessageResponse(c, http.StatusNotFound, "Channel is not found")
+		return fmt.Errorf("model.GetmessagesFromChannel returned an error : %v", err)
+	}
+
+	res := make(map[string]*MessageForResponce)
+
+	for _, message := range messageList {
+		res[message.Id] = formatMessage(message)
+	}
+
+	return c.JSON(http.StatusOK, values(res))
 }
 
 // PostMessageHandler : /channels/{cannelId}/messagesのPOSTメソッド
@@ -66,7 +86,7 @@ func PostMessageHandler(c echo.Context) error {
 		errorMessageResponse(c, http.StatusInternalServerError, "Failed to insert your message")
 		return fmt.Errorf("Messages.Create() returned an error: %v", err)
 	}
-	return c.JSON(http.StatusCreated, formatMessgae(message))
+	return c.JSON(http.StatusCreated, formatMessage(message))
 }
 
 // PutMessageByIdHandler : /messages/{messageId}のPUTメソッド.メッセージの編集
@@ -141,7 +161,15 @@ func getUserId(c echo.Context) (string, error) {
 	return userId, nil
 }
 
-func formatMessgae(raw *model.Messages) MessageForResponce {
+func values(m map[string]*MessageForResponce) []*MessageForResponce {
+	val := []*MessageForResponce{}
+	for _, v := range m {
+		val = append(val, v)
+	}
+	return val
+}
+
+func formatMessage(raw *model.Messages) *MessageForResponce {
 	res := MessageForResponce{
 		MessageId:       raw.Id,
 		UserId:          raw.UserId,
@@ -151,5 +179,5 @@ func formatMessgae(raw *model.Messages) MessageForResponce {
 		Datetime:        raw.CreatedAt,
 	}
 	//TODO: res.stampListの取得
-	return res
+	return &res
 }
