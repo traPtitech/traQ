@@ -23,6 +23,7 @@ type requestMessage struct {
 	Text string `json:"text"`
 }
 
+// GetMessageByIdHandler : /messages/{messageId}のGETメソッド
 func GetMessageByIdHandler(c echo.Context) error {
 	if _, err := getUserId(c); err != nil {
 		return err
@@ -32,7 +33,7 @@ func GetMessageByIdHandler(c echo.Context) error {
 	raw, err := model.GetMessage(id)
 	if err != nil {
 		errorMessageResponse(c, http.StatusNotFound, "Message is not found")
-		return fmt.Errorf("model.Getmessage returns an error : %v", err)
+		return fmt.Errorf("model.Getmessage returned an error : %v", err)
 	}
 	res := formatMessgae(raw)
 	return c.JSON(http.StatusOK, res)
@@ -42,15 +43,14 @@ func GetMessagesByChannelIdHandler(c echo.Context) error {
 	return nil
 }
 
-// requestMessageHandler : /channels/{cannelId}/messagesのPOSTメソッド
-func requestMessageHandler(c echo.Context) error {
+// PostMessageHandler : /channels/{cannelId}/messagesのPOSTメソッド
+func PostMessageHandler(c echo.Context) error {
 	userId, err := getUserId(c)
 	if err != nil {
 		return err
 	}
 
-	channelId := c.Param("ChannelId")
-	//TODO: channelIdの検証
+	channelId := c.Param("ChannelId") //TODO: channelIdの検証
 
 	post := new(requestMessage)
 	if err := c.Bind(post); err != nil {
@@ -64,7 +64,7 @@ func requestMessageHandler(c echo.Context) error {
 	message.ChannelId = channelId
 	if err := message.Create(); err != nil {
 		errorMessageResponse(c, http.StatusInternalServerError, "Failed to insert your message")
-		return fmt.Errorf("Messages.Create() returns an error: %v", err)
+		return fmt.Errorf("Messages.Create() returned an error: %v", err)
 	}
 	return c.JSON(http.StatusCreated, formatMessgae(message))
 }
@@ -76,8 +76,7 @@ func PutMessageByIdHandler(c echo.Context) error {
 		return err
 	}
 
-	//TODO: messageIdの検証
-	messageId := c.Param("messageId")
+	messageId := c.Param("messageId") //TODO: messageIdの検証
 
 	req := new(requestMessage)
 	if err := c.Bind(req); err != nil {
@@ -151,6 +150,6 @@ func formatMessgae(raw *model.Messages) MessageForResponce {
 		Content:         raw.Text,
 		Datetime:        raw.CreatedAt,
 	}
-	//TODO: res.pin,res.stampListの取得
+	//TODO: res.stampListの取得
 	return res
 }
