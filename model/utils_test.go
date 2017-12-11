@@ -6,7 +6,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	os.Setenv("MARIA_DATABASE", "traq-test-model")
+	os.Setenv("MARIADB_DATABASE", "traq-test-model")
 	code := m.Run()
 	os.Exit(code)
 }
