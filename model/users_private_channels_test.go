@@ -4,7 +4,7 @@ import "testing"
 
 func TestMakePrivateChannel(t *testing.T) {
 	beforeTest(t)
-	channel := new(Channel)
+	channel := &Channel{}
 	channel.CreatorID = testUserID
 	channel.Name = "Private-Channel"
 	channel.IsPublic = false
@@ -16,13 +16,13 @@ func TestMakePrivateChannel(t *testing.T) {
 	privilegedUser := []string{testUserID, po}
 
 	for _, userID := range privilegedUser {
-		usersPrivateChannel := new(UsersPrivateChannel)
+		usersPrivateChannel := &UsersPrivateChannel{}
 		usersPrivateChannel.ChannelID = channel.ID
 		usersPrivateChannel.UserID = userID
 		usersPrivateChannel.Create()
 	}
 
-	channelList, err := GetChannelList(testUserID)
+	channelList, err := GetChannels(testUserID)
 
 	if err != nil {
 		t.Fatal("Failed to GetChannelList ", err)
@@ -31,7 +31,7 @@ func TestMakePrivateChannel(t *testing.T) {
 		t.Errorf("ChannelList length wrong: want 1, acutual %d\n", len(channelList))
 	}
 
-	channelList, err = GetChannelList(CreateUUID())
+	channelList, err = GetChannels(CreateUUID())
 	if err != nil {
 		t.Fatal("Failed to GetChannelList ", err)
 	}

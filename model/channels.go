@@ -1,6 +1,9 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+)
 
 // Channel :チャンネルの構造体
 type Channel struct {
@@ -11,7 +14,7 @@ type Channel struct {
 	IsForced  bool   `xorm:"bool not null"`
 	IsDeleted bool   `xorm:"bool not null"`
 	IsPublic  bool   `xorm:"bool not null"`
-	IsHidden  bool   `xorm:"bool not null"`
+	IsVisible bool   `xorm:"bool not null"`
 	CreatorID string `xorm:"creator_id char(36) not null"`
 	CreatedAt int    `xorm:"created not null"`
 	UpdaterID string `xorm:"updater_id char(36) not null"`
@@ -25,8 +28,10 @@ func (channel *Channel) TableName() string {
 
 // Create : チャンネル作成を行うメソッド
 func (channel *Channel) Create() error {
-	// TODO:すでにIDが設定されていたらCreateじゃなくてUpdateなのでエラーを返す
-	// TODO:英数字とアンダースコア・ハイフンだけを許容する
+	if channel.ID != "" {
+		return fmt.Errorf("ID is not empty! You can use Update()")
+	}
+
 	if channel.Name == "" {
 		return fmt.Errorf("Name is empty")
 	}
@@ -34,7 +39,13 @@ func (channel *Channel) Create() error {
 	if channel.CreatorID == "" {
 		return fmt.Errorf("CreatorId is empty")
 	}
+
+	if err := validateChannelName(channel.Name); err != nil {
+		return err
+	}
+
 	channel.ID = CreateUUID()
+	channel.IsVisible = true
 
 	channel.UpdaterID = channel.CreatorID
 
@@ -46,25 +57,32 @@ func (channel *Channel) Create() error {
 
 // GetChannelByID : チャンネルIDによってチャンネルを取得
 func GetChannelByID(userID, channelID string) (*Channel, error) {
-	channel := new(Channel)
+	channel := &Channel{}
 	channel.ID = channelID
-	_, err := db.Get(channel)
+	has, err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userID).Get(channel)
 
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get channel: %v", err)
 	}
 
+	if !has {
+		return nil, fmt.Errorf("指定されたチャンネルは存在しないかユーザーからは見ることができません")
+	}
+
 	return channel, nil
 }
 
-// ExistsChannel : 指定したチャンネルIDが存在するかどうかを確認する
-func ExistsChannel(channelID string) (bool, error) {
-	channel := Channel{ID: channelID}
-	return db.Get(&channel)
+// Exists : 指定したチャンネルがuserIDのユーザーから見えるチャンネルかどうかを確認する
+func (channel *Channel) Exists(userID string) (bool, error) {
+	if userID != "" {
+		has, err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userID).Get(channel)
+		return has, err
+	}
+	return db.Get(channel)
 }
 
-// GetChannelList : userIDのユーザーから見えるチャンネルの一覧を取得する
-func GetChannelList(userID string) ([]*Channel, error) {
+// GetChannels : userIDのユーザーから見えるチャンネルの一覧を取得する
+func GetChannels(userID string) ([]*Channel, error) {
 	// TODO: 隠しチャンネルを表示するかどうかをクライアントと決める
 	var channelList []*Channel
 	err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userID).Find(&channelList)
@@ -75,11 +93,13 @@ func GetChannelList(userID string) ([]*Channel, error) {
 	return channelList, nil
 }
 
-// GetChildrenChannelIDList :  userIDのユーザーから見えるchannelIDの子チャンネル
-func GetChildrenChannelIDList(userID, channelID string) ([]string, error) {
+// Children :  userIDのユーザーから見えるchannelIDの子チャンネル
+func (channel *Channel) Children(userID string) ([]string, error) {
 	var channelIDList []string
-	// err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("is_public = true OR user_id = ?", userId).Cols("id").Find(&channelIdList)
-	err := db.Table("channels").Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND parent_id = ? AND is_deleted = false", userID, channelID).Cols("id").Find(&channelIDList)
+	if channel.ID == "" {
+		return nil, fmt.Errorf("Channel ID is empty")
+	}
+	err := db.Table("channels").Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND parent_id = ? AND is_deleted = false", userID, channel.ID).Cols("id").Find(&channelIDList)
 
 	if err != nil {
 		return nil, fmt.Errorf("Failed to find channels: %v", err)
@@ -92,6 +112,17 @@ func (channel *Channel) Update() error {
 	_, err := db.Id(channel.ID).UseBool().Update(channel)
 	if err != nil {
 		return fmt.Errorf("Failed to update channel: %v", err)
+	}
+	return nil
+}
+
+func validateChannelName(name string) error {
+	if !regexp.MustCompile(`^[a-zA-Z0-9-_]*$`).Match([]byte(name)) {
+		return fmt.Errorf("使用できる文字は半角英数字と-_のみです")
+	}
+
+	if len(name) > 20 {
+		return fmt.Errorf("チャンネル名は最大20文字です")
 	}
 	return nil
 }

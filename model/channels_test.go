@@ -8,7 +8,7 @@ import (
 // 各関数のテスト>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 func TestCreate(t *testing.T) {
 	beforeTest(t)
-	channel := new(Channel)
+	channel := &Channel{}
 	channel.CreatorID = testUserID
 	channel.Name = "testChannel"
 	channel.IsPublic = true
@@ -36,7 +36,7 @@ func TestGetChannelList(t *testing.T) {
 		}
 	}
 
-	channelList, err := GetChannelList(testUserID)
+	channelList, err := GetChannels(testUserID)
 
 	if err != nil {
 		t.Fatal("Failed to GetChannelList ", err)
@@ -47,7 +47,7 @@ func TestGetChannelList(t *testing.T) {
 	}
 }
 
-func TestGetChildrenChannelIdList(t *testing.T) {
+func TestChildren(t *testing.T) {
 	beforeTest(t)
 	parentChannel, err := makeChannelDetail(testUserID, "parent", "", true)
 	if err != nil {
@@ -60,13 +60,13 @@ func TestGetChildrenChannelIdList(t *testing.T) {
 
 	for i := 10; i < 20; i++ {
 		channel, _ := makeChannelDetail(privateUserID, "child-"+strconv.Itoa(i+1), parentChannel.ID, false)
-		usersPrivateChannel := new(UsersPrivateChannel)
+		usersPrivateChannel := &UsersPrivateChannel{}
 		usersPrivateChannel.ChannelID = channel.ID
 		usersPrivateChannel.UserID = privateUserID
 		usersPrivateChannel.Create()
 	}
 
-	idList, err := GetChildrenChannelIDList(testUserID, parentChannel.ID)
+	idList, err := parentChannel.Children(testUserID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +75,7 @@ func TestGetChildrenChannelIdList(t *testing.T) {
 		t.Fatalf("Children Id list length wrong: want %d, acutual %d\n", 10, len(idList))
 	}
 
-	idList, err = GetChildrenChannelIDList(privateUserID, parentChannel.ID)
+	idList, err = parentChannel.Children(privateUserID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,7 +87,7 @@ func TestGetChildrenChannelIdList(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	beforeTest(t)
-	channel := new(Channel)
+	channel := &Channel{}
 	channel.CreatorID = testUserID
 	channel.Name = "Channel"
 	channel.IsPublic = true
@@ -95,7 +95,7 @@ func TestUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	parentChannel := new(Channel)
+	parentChannel := &Channel{}
 	parentChannel.CreatorID = testUserID
 	parentChannel.Name = "Parent"
 	parentChannel.IsPublic = true
@@ -137,7 +137,8 @@ func TestExists(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ok, err := ExistsChannel(channel.ID)
+	checkChannel := &Channel{ID: channel.ID}
+	ok, err := checkChannel.Exists(testUserID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +147,8 @@ func TestExists(t *testing.T) {
 		t.Fatal("ok not true")
 	}
 
-	ok, err = ExistsChannel(CreateUUID())
+	checkChannel = &Channel{ID: CreateUUID()}
+	ok, err = checkChannel.Exists(testUserID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,12 +158,27 @@ func TestExists(t *testing.T) {
 	}
 }
 
+func TestValidateChannelName(t *testing.T) {
+	okList := []string{"unko", "asjifas", "19012", "_a_", "---asjidfa---", "1-1", "jijijijijijijijijiji"}
+	for _, name := range okList {
+		if err := validateChannelName(name); err != nil {
+			t.Fatalf("Validate channel name %s wrong: want true, actual false \n%s", name, err.Error())
+		}
+	}
+	ngList := []string{",.", "dajosd.dfjios", "うんこ", "てすｔ", "ｊｋ", "sadjfifjffojfosadjfisjdfosdjoifisdoifjsaoid"}
+	for _, name := range ngList {
+		if err := validateChannelName(name); err == nil {
+			t.Fatalf("Validate channel name %s wrong: want false, actual true", name)
+		}
+	}
+}
+
 // 各関数のテスト<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // 関数間のテスト>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 func TestCreateChildChannel(t *testing.T) {
 	beforeTest(t)
-	channel := new(Channel)
+	channel := &Channel{}
 	channel.CreatorID = testUserID
 	channel.Name = "testChannel"
 	channel.IsPublic = true
@@ -170,7 +187,7 @@ func TestCreateChildChannel(t *testing.T) {
 		t.Fatal("Failed to create channel", err)
 	}
 
-	childChannel := new(Channel)
+	childChannel := &Channel{}
 	childChannel.CreatorID = testUserID
 	childChannel.Name = "testChannelChild"
 	childChannel.IsPublic = true
@@ -195,7 +212,7 @@ func TestCreateChildChannel(t *testing.T) {
 // 関数間のテスト<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 func makeChannel(tail string) error {
-	channel := new(Channel)
+	channel := &Channel{}
 	channel.CreatorID = testUserID
 	channel.Name = "Channel-" + tail
 	channel.IsPublic = true
@@ -203,7 +220,7 @@ func makeChannel(tail string) error {
 }
 
 func makeChannelDetail(creatorID, name, parentID string, isPublic bool) (*Channel, error) {
-	channel := new(Channel)
+	channel := &Channel{}
 	channel.CreatorID = creatorID
 	channel.Name = name
 	channel.ParentID = parentID

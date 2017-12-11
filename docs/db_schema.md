@@ -50,7 +50,7 @@ user_idとtagの複合ユニーク制約
 | is_forced | BOOLEAN | NOT NULL | 強制通知チャンネルか | 
 | is_deleted | BOOLEAN | NOT NULL | 削除されているか |
 | is_public | BOOLEAN | NOT NULL | 公開チャンネルか |
-| is_hidden | BOOLEAN | NOT NULL | 非表示チャンネルか |
+| is_visible | BOOLEAN | NOT NULL | 表示チャンネルか |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
 | updater_id | CHAR(36) | NOT NULL | 更新したユーザーのID | 
 | updated_at | TIMESTAMP | NOT NULL | 更新日時 |

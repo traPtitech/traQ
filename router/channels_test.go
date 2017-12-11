@@ -95,7 +95,7 @@ func TestGetChannelsHandler(t *testing.T) {
 		makeChannel(testUserID, "Channel-"+strconv.Itoa(i), true)
 	}
 
-	rec := request(e, t, mw(GetChannelsHandler), cookie, nil)
+	rec := request(e, t, mw(GetChannels), cookie, nil)
 
 	if rec.Code != http.StatusOK {
 		t.Log(rec.Code)
@@ -123,9 +123,9 @@ func TestPostChannelsHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	rec := request(e, t, mw(PostChannelsHandler), cookie, req)
+	rec := request(e, t, mw(PostChannels), cookie, req)
 
-	channelList, err := model.GetChannelList(testUserID)
+	channelList, err := model.GetChannels(testUserID)
 
 	if err != nil {
 		t.Fatal(err)
@@ -154,8 +154,8 @@ func TestPostChannelsHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	request(e, t, mw(PostChannelsHandler), cookie, req)
-	channelList, err = model.GetChannelList(testUserID)
+	request(e, t, mw(PostChannels), cookie, req)
+	channelList, err = model.GetChannels(testUserID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -164,8 +164,8 @@ func TestPostChannelsHandler(t *testing.T) {
 	}
 
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	request(e, t, mw(PostChannelsHandler), cookie, req)
-	channelList, err = model.GetChannelList(model.CreateUUID())
+	request(e, t, mw(PostChannels), cookie, req)
+	channelList, err = model.GetChannels(model.CreateUUID())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -185,7 +185,7 @@ func TestGetChannelsByChannelIDHandler(t *testing.T) {
 	c.SetParamNames("channelId")
 	c.SetParamValues(channel.ID)
 
-	requestWithContext(t, mw(GetChannelsByChannelIDHandler), c)
+	requestWithContext(t, mw(GetChannelsByChannelID), c)
 
 	if rec.Code != http.StatusOK {
 		t.Log(rec.Code)
@@ -205,7 +205,7 @@ func TestPutChannelsByChannelIDHandler(t *testing.T) {
 	c.SetPath("/:channelId")
 	c.SetParamNames("channelId")
 	c.SetParamValues(channel.ID)
-	requestWithContext(t, mw(PutChannelsByChannelIDHandler), c)
+	requestWithContext(t, mw(PutChannelsByChannelID), c)
 
 	if rec.Code != http.StatusOK {
 		t.Log(rec.Code)
@@ -237,19 +237,17 @@ func TestDeleteChannelsByChannelIDHandler(t *testing.T) {
 	c.SetPath("/:channelId")
 	c.SetParamNames("channelId")
 	c.SetParamValues(channel.ID)
-	requestWithContext(t, mw(DeleteChannelsByChannelIDHandler), c)
+	requestWithContext(t, mw(DeleteChannelsByChannelID), c)
 
 	channel, err := model.GetChannelByID(testUserID, channel.ID)
 
-	if err != nil {
-		t.Fatal(err)
+	if err == nil {
+		t.Fatal("The channel that was supposed to be deleted is displayed to the user")
 	}
 
-	if !channel.IsDeleted {
-		t.Fatal("Channel not deleted")
-	}
+	// ""で削除されていても取得できるようにするそれでちゃんと削除されているか確認する
 
-	channelList, err := model.GetChannelList(testUserID)
+	channelList, err := model.GetChannels(testUserID)
 	if len(channelList) != 0 {
 		t.Fatal("Channel not deleted")
 	}
