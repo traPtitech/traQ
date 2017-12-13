@@ -14,7 +14,7 @@ func TestCreateMessage(t *testing.T) {
 		t.Fatalf("Create method returns an error: %v", err)
 	}
 
-	has, err := db.ID(message.Id).Get(&message)
+	has, err := db.ID(message.ID).Get(&message)
 	if has != true {
 		t.Error("Cannot find message in database")
 	}
@@ -22,8 +22,8 @@ func TestCreateMessage(t *testing.T) {
 		t.Errorf("Failed to get message inserts before: %v", err)
 	}
 
-	if message.UserId != copy.UserId {
-		t.Errorf("message.UserId is changed: before: %v, after: %v", copy.UserId, message.UserId)
+	if message.UserID != copy.UserID {
+		t.Errorf("message.UserID is changed: before: %v, after: %v", copy.UserID, message.UserID)
 	}
 	if message.Text != copy.Text {
 		t.Errorf("message.Text is changed: before: %v, after: %v", copy.Text, message.Text)
@@ -32,8 +32,8 @@ func TestCreateMessage(t *testing.T) {
 	if message.CreatedAt == "" {
 		t.Error("message.CreatedAt is not updated")
 	}
-	if message.UpdaterId == "" {
-		t.Error("message.UpdaterId is not updated")
+	if message.UpdaterID == "" {
+		t.Error("message.UpdaterID is not updated")
 	}
 }
 
@@ -67,8 +67,8 @@ func TestGetMessagesFromChannel(t *testing.T) {
 	BeforeTest(t)
 	defer Close()
 
-	channelId := CreateUUID()
-	messages := generateChannelMessages(channelId)
+	channelID := CreateUUID()
+	messages := generateChannelMessages(channelID)
 
 	for i := 0; i < 10; i++ {
 		if err := messages[i].Create(); err != nil {
@@ -76,7 +76,7 @@ func TestGetMessagesFromChannel(t *testing.T) {
 		}
 	}
 
-	r, err := GetMessagesFromChannel(channelId)
+	r, err := GetMessagesFromChannel(channelID)
 	if err != nil {
 		t.Errorf("GetMessageFromChannel method returns an error: %v", err)
 	}
@@ -86,7 +86,7 @@ func TestGetMessagesFromChannel(t *testing.T) {
 	}
 
 	for i := 0; i < 10; i++ {
-		if messages[i].Id != r[i].Id {
+		if messages[i].ID != r[i].ID {
 			t.Error("message is not ordered by createdAt")
 		}
 	}
@@ -103,7 +103,7 @@ func TestGetMessage(t *testing.T) {
 	}
 
 	var r *Messages
-	r, err := GetMessage(message.Id)
+	r, err := GetMessage(message.ID)
 	if err != nil {
 		t.Errorf("GetMessage method returns an error: %v", err)
 	}
@@ -115,20 +115,20 @@ func TestGetMessage(t *testing.T) {
 
 func generateMessage() Messages {
 	message := new(Messages)
-	message.UserId = CreateUUID()
-	message.ChannelId = CreateUUID()
+	message.UserID = CreateUUID()
+	message.ChannelID = CreateUUID()
 	message.Text = "テスト/is/popo" // TODO: randomな文字列
 	message.IsShared = true
 	return *message
 }
 
-func generateChannelMessages(channelId string) []*Messages {
+func generateChannelMessages(channelID string) []*Messages {
 	var messages [10]*Messages
 
 	for i := 0; i < 10; i++ {
 		tmp := generateMessage()
 		messages[i] = &tmp
-		messages[i].ChannelId = channelId
+		messages[i].ChannelID = channelID
 	}
 
 	return messages[:]

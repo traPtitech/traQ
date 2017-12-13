@@ -10,9 +10,9 @@ import (
 )
 
 type MessageForResponse struct {
-	MessageId       string
-	UserId          string
-	ParentChannelId string
+	MessageID       string
+	UserID          string
+	ParentChannelID string
 	Content         string
 	Datetime        string
 	Pin             bool
@@ -23,9 +23,9 @@ type requestMessage struct {
 	Text string `json:"text"`
 }
 
-// GetMessageByIdHandler : /messages/{messageId}のGETメソッド
-func GetMessageByIdHandler(c echo.Context) error {
-	if _, err := getUserId(c); err != nil {
+// GetMessageByIDHandler : /messages/{messageID}のGETメソッド
+func GetMessageByIDHandler(c echo.Context) error {
+	if _, err := getUserID(c); err != nil {
 		return err
 	}
 
@@ -39,16 +39,16 @@ func GetMessageByIdHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// GetMessagesByChannelIdHandler : /channels/{channelId}/messagesのGETメソッド
-func GetMessagesByChannelIdHandler(c echo.Context) error {
-	_, err := getUserId(c)
+// GetMessagesByChannelIDHandler : /channels/{channelID}/messagesのGETメソッド
+func GetMessagesByChannelIDHandler(c echo.Context) error {
+	_, err := getUserID(c)
 	if err != nil {
 		return err
 	}
 
-	channelId := c.Param("channelId")
+	channelID := c.Param("channelId")
 
-	messageList, err := model.GetMessagesFromChannel(channelId)
+	messageList, err := model.GetMessagesFromChannel(channelID)
 	if err != nil {
 		errorMessageResponse(c, http.StatusNotFound, "Channel is not found")
 		return fmt.Errorf("model.GetmessagesFromChannel returned an error : %v", err)
@@ -57,20 +57,20 @@ func GetMessagesByChannelIdHandler(c echo.Context) error {
 	res := make(map[string]*MessageForResponse)
 
 	for _, message := range messageList {
-		res[message.Id] = formatMessage(message)
+		res[message.ID] = formatMessage(message)
 	}
 
 	return c.JSON(http.StatusOK, values(res))
 }
 
-// PostMessageHandler : /channels/{cannelId}/messagesのPOSTメソッド
+// PostMessageHandler : /channels/{cannelID}/messagesのPOSTメソッド
 func PostMessageHandler(c echo.Context) error {
-	userId, err := getUserId(c)
+	userID, err := getUserID(c)
 	if err != nil {
 		return err
 	}
 
-	channelId := c.Param("ChannelId") //TODO: channelIdの検証
+	channelID := c.Param("ChannelId") //TODO: channelIDの検証
 
 	post := new(requestMessage)
 	if err := c.Bind(post); err != nil {
@@ -79,9 +79,9 @@ func PostMessageHandler(c echo.Context) error {
 	}
 
 	message := new(model.Messages)
-	message.UserId = userId
+	message.UserID = userID
 	message.Text = post.Text
-	message.ChannelId = channelId
+	message.ChannelID = channelID
 	if err := message.Create(); err != nil {
 		errorMessageResponse(c, http.StatusInternalServerError, "Failed to insert your message")
 		return fmt.Errorf("Messages.Create() returned an error: %v", err)
@@ -89,14 +89,14 @@ func PostMessageHandler(c echo.Context) error {
 	return c.JSON(http.StatusCreated, formatMessage(message))
 }
 
-// PutMessageByIdHandler : /messages/{messageId}のPUTメソッド.メッセージの編集
-func PutMessageByIdHandler(c echo.Context) error {
-	userId, err := getUserId(c)
+// PutMessageByIDHandler : /messages/{messageID}のPUTメソッド.メッセージの編集
+func PutMessageByIDHandler(c echo.Context) error {
+	userID, err := getUserID(c)
 	if err != nil {
 		return err
 	}
 
-	messageId := c.Param("messageId") //TODO: messageIdの検証
+	messageID := c.Param("messageId") //TODO: messageIDの検証
 
 	req := new(requestMessage)
 	if err := c.Bind(req); err != nil {
@@ -104,14 +104,14 @@ func PutMessageByIdHandler(c echo.Context) error {
 		return fmt.Errorf("Request is invalid format: %v", err)
 	}
 
-	message, err := model.GetMessage(messageId)
+	message, err := model.GetMessage(messageID)
 	if err != nil {
-		errorMessageResponse(c, http.StatusNotFound, "no message has the messageId: "+messageId)
+		errorMessageResponse(c, http.StatusNotFound, "no message has the messageID: "+messageID)
 		return fmt.Errorf("model.GetMessage() returned an error: %v", err)
 	}
 
 	message.Text = req.Text
-	message.UpdaterId = userId
+	message.UpdaterID = userID
 	if err := message.Update(); err != nil {
 		errorMessageResponse(c, http.StatusInternalServerError, "Failed to update the message")
 		return fmt.Errorf("message.Update() returned an error: %v", err)
@@ -120,18 +120,18 @@ func PutMessageByIdHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, message)
 }
 
-// DeleteMessageByIdHandler : /message/{messageId}のDELETEメソッド.
-func DeleteMessageByIdHandler(c echo.Context) error {
-	if _, err := getUserId(c); err != nil {
+// DeleteMessageByIDHandler : /message/{messageID}のDELETEメソッド.
+func DeleteMessageByIDHandler(c echo.Context) error {
+	if _, err := getUserID(c); err != nil {
 		return err
 	}
 	// TODO:Userが権限を持っているかを確認
 
-	messageId := c.Param("messageId")
+	messageID := c.Param("messageId")
 
-	message, err := model.GetMessage(messageId)
+	message, err := model.GetMessage(messageID)
 	if err != nil {
-		errorMessageResponse(c, http.StatusNotFound, "no message has the messageId: "+messageId)
+		errorMessageResponse(c, http.StatusNotFound, "no message has the messageID: "+messageID)
 		return fmt.Errorf("model.GetMessage() returned an error: %v", err)
 	}
 
@@ -144,21 +144,21 @@ func DeleteMessageByIdHandler(c echo.Context) error {
 }
 
 // 実質user認証みたいなことに使っている
-func getUserId(c echo.Context) (string, error) {
+func getUserID(c echo.Context) (string, error) {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
 		errorMessageResponse(c, http.StatusInternalServerError, "Failed to get a session")
 		return "", fmt.Errorf("Failed to get a session: %v", err)
 	}
 
-	var userId string
+	var userID string
 	if sess.Values["userId"] != nil {
-		userId = sess.Values["userId"].(string)
+		userID = sess.Values["userId"].(string)
 	} else {
-		errorMessageResponse(c, http.StatusForbidden, "Your userId doesn't exist")
+		errorMessageResponse(c, http.StatusForbidden, "Your userID doesn't exist")
 		return "", fmt.Errorf("This session doesn't have a userId")
 	}
-	return userId, nil
+	return userID, nil
 }
 
 func values(m map[string]*MessageForResponse) []*MessageForResponse {
@@ -171,9 +171,9 @@ func values(m map[string]*MessageForResponse) []*MessageForResponse {
 
 func formatMessage(raw *model.Messages) *MessageForResponse {
 	res := MessageForResponse{
-		MessageId:       raw.Id,
-		UserId:          raw.UserId,
-		ParentChannelId: raw.ChannelId,
+		MessageID:       raw.ID,
+		UserID:          raw.UserID,
+		ParentChannelID: raw.ChannelID,
 		Pin:             false, //TODO:取得するようにする
 		Content:         raw.Text,
 		Datetime:        raw.CreatedAt,
