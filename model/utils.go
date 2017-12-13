@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
 	"github.com/satori/go.uuid"
 )
@@ -39,6 +40,8 @@ func EstablishConnection() error {
 	if err != nil {
 		return fmt.Errorf("Failed to communicate with db: %v", err)
 	}
+
+	engine.SetMapper(core.GonicMapper{})
 
 	db = engine
 	return nil
