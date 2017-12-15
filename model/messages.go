@@ -4,8 +4,8 @@ import (
 	"fmt"
 )
 
-//Messages struct: データベースに格納するmessageの構造体
-type Messages struct {
+//Message :データベースに格納するmessageの構造体
+type Message struct {
 	ID        string `xorm:"char(36) pk"`
 	UserID    string `xorm:"char(36) not null"`
 	ChannelID string `xorm:"char(36)"`
@@ -17,8 +17,13 @@ type Messages struct {
 	UpdatedAt string `xorm:"updated not null"`
 }
 
+//TableName :DBの名前を指定するメソッド
+func (message *Message) TableName() string {
+	return "Messages"
+}
+
 // Create method inserts message object to database.
-func (message *Messages) Create() error {
+func (message *Message) Create() error {
 	if message.UserID == "" {
 		return fmt.Errorf("UserID is empty")
 	}
@@ -38,7 +43,7 @@ func (message *Messages) Create() error {
 }
 
 // Update method:メッセージの内容を変更します
-func (message *Messages) Update() error {
+func (message *Message) Update() error {
 	_, err := db.ID(message.ID).UseBool().Update(message)
 	if err != nil {
 		return fmt.Errorf("Failed to update this message: %v", err)
@@ -47,8 +52,8 @@ func (message *Messages) Update() error {
 }
 
 // GetMessagesFromChannel :指定されたチャンネルのメッセージを取得します
-func GetMessagesFromChannel(channelID string) ([]*Messages, error) {
-	var messageList []*Messages
+func GetMessagesFromChannel(channelID string) ([]*Message, error) {
+	var messageList []*Message
 	err := db.Where("channel_id = ?", channelID).Asc("created_at").Find(&messageList)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to find messages: %v", err)
@@ -58,8 +63,8 @@ func GetMessagesFromChannel(channelID string) ([]*Messages, error) {
 }
 
 // GetMessage :messageIDで指定されたメッセージを取得します
-func GetMessage(messageID string) (*Messages, error) {
-	var message = new(Messages)
+func GetMessage(messageID string) (*Message, error) {
+	var message = &Message{}
 	has, err := db.ID(messageID).Get(message)
 
 	if err != nil {

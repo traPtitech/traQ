@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/traPtitech/traQ/model"
 )
 
+//MessageForResponse :クライアントに返す形のメッセージオブジェクト
 type MessageForResponse struct {
 	MessageID       string
 	UserID          string
@@ -23,24 +23,24 @@ type requestMessage struct {
 	Text string `json:"text"`
 }
 
-// GetMessageByIDHandler : /messages/{messageID}のGETメソッド
-func GetMessageByIDHandler(c echo.Context) error {
+// GetMessageByID : /messages/{messageID}のGETメソッド
+func GetMessageByID(c echo.Context) error {
 	if _, err := getUserID(c); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusForbidden, "your id is not found")
 	}
 
 	id := c.Param("messageId") // TODO: idの検証
 	raw, err := model.GetMessage(id)
 	if err != nil {
-		errorMessageResponse(c, http.StatusNotFound, "Message is not found")
-		return fmt.Errorf("model.Getmessage returned an error : %v", err)
+		fmt.Errorf("model.Getmessage returned an error : %v", err)
+		return echo.NewHTTPError(http.StatusNotFound, "Message is not found")
 	}
 	res := formatMessage(raw)
 	return c.JSON(http.StatusOK, res)
 }
 
-// GetMessagesByChannelIDHandler : /channels/{channelID}/messagesのGETメソッド
-func GetMessagesByChannelIDHandler(c echo.Context) error {
+// GetMessagesByChannelID : /channels/{channelID}/messagesのGETメソッド
+func GetMessagesByChannelID(c echo.Context) error {
 	_, err := getUserID(c)
 	if err != nil {
 		return err
@@ -50,8 +50,8 @@ func GetMessagesByChannelIDHandler(c echo.Context) error {
 
 	messageList, err := model.GetMessagesFromChannel(channelID)
 	if err != nil {
-		errorMessageResponse(c, http.StatusNotFound, "Channel is not found")
-		return fmt.Errorf("model.GetmessagesFromChannel returned an error : %v", err)
+		fmt.Errorf("model.GetmessagesFromChannel returned an error : %v", err)
+		return echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
 	}
 
 	res := make(map[string]*MessageForResponse)
@@ -63,8 +63,8 @@ func GetMessagesByChannelIDHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, values(res))
 }
 
-// PostMessageHandler : /channels/{cannelID}/messagesのPOSTメソッド
-func PostMessageHandler(c echo.Context) error {
+// PostMessage : /channels/{cannelID}/messagesのPOSTメソッド
+func PostMessage(c echo.Context) error {
 	userID, err := getUserID(c)
 	if err != nil {
 		return err
@@ -72,25 +72,26 @@ func PostMessageHandler(c echo.Context) error {
 
 	channelID := c.Param("ChannelId") //TODO: channelIDの検証
 
-	post := new(requestMessage)
+	post := &requestMessage{}
 	if err := c.Bind(post); err != nil {
-		errorMessageResponse(c, http.StatusBadRequest, "Invalid format")
-		return fmt.Errorf("Invalid format: %v", err)
+		fmt.Errorf("Invalid format: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
-	message := new(model.Messages)
-	message.UserID = userID
-	message.Text = post.Text
-	message.ChannelID = channelID
+	message := &model.Message{
+		UserID:    userID,
+		Text:      post.Text,
+		ChannelID: channelID,
+	}
 	if err := message.Create(); err != nil {
-		errorMessageResponse(c, http.StatusInternalServerError, "Failed to insert your message")
-		return fmt.Errorf("Messages.Create() returned an error: %v", err)
+		fmt.Errorf("Message.Create() returned an error: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert your message")
 	}
 	return c.JSON(http.StatusCreated, formatMessage(message))
 }
 
-// PutMessageByIDHandler : /messages/{messageID}のPUTメソッド.メッセージの編集
-func PutMessageByIDHandler(c echo.Context) error {
+// PutMessageByID : /messages/{messageID}のPUTメソッド.メッセージの編集
+func PutMessageByID(c echo.Context) error {
 	userID, err := getUserID(c)
 	if err != nil {
 		return err
@@ -98,30 +99,30 @@ func PutMessageByIDHandler(c echo.Context) error {
 
 	messageID := c.Param("messageId") //TODO: messageIDの検証
 
-	req := new(requestMessage)
+	req := &requestMessage{}
 	if err := c.Bind(req); err != nil {
-		errorMessageResponse(c, http.StatusBadRequest, "Invalid format")
-		return fmt.Errorf("Request is invalid format: %v", err)
+		fmt.Errorf("Request is invalid format: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
 	message, err := model.GetMessage(messageID)
 	if err != nil {
-		errorMessageResponse(c, http.StatusNotFound, "no message has the messageID: "+messageID)
-		return fmt.Errorf("model.GetMessage() returned an error: %v", err)
+		fmt.Errorf("model.GetMessage() returned an error: %v", err)
+		return echo.NewHTTPError(http.StatusNotFound, "no message has the messageID: "+messageID)
 	}
 
 	message.Text = req.Text
 	message.UpdaterID = userID
 	if err := message.Update(); err != nil {
-		errorMessageResponse(c, http.StatusInternalServerError, "Failed to update the message")
-		return fmt.Errorf("message.Update() returned an error: %v", err)
+		fmt.Errorf("message.Update() returned an error: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update the message")
 	}
 
 	return c.JSON(http.StatusOK, message)
 }
 
-// DeleteMessageByIDHandler : /message/{messageID}のDELETEメソッド.
-func DeleteMessageByIDHandler(c echo.Context) error {
+// DeleteMessageByID : /message/{messageID}のDELETEメソッド.
+func DeleteMessageByID(c echo.Context) error {
 	if _, err := getUserID(c); err != nil {
 		return err
 	}
@@ -131,34 +132,16 @@ func DeleteMessageByIDHandler(c echo.Context) error {
 
 	message, err := model.GetMessage(messageID)
 	if err != nil {
-		errorMessageResponse(c, http.StatusNotFound, "no message has the messageID: "+messageID)
-		return fmt.Errorf("model.GetMessage() returned an error: %v", err)
+		fmt.Errorf("model.GetMessage() returned an error: %v", err)
+		return echo.NewHTTPError(http.StatusNotFound, "no message has the messageID: "+messageID)
 	}
 
 	message.IsDeleted = true
 	if err := message.Update(); err != nil {
-		errorMessageResponse(c, http.StatusInternalServerError, "Failed to update the message")
-		return fmt.Errorf("message.Update() returned an error: %v", err)
+		fmt.Errorf("message.Update() returned an error: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update the message")
 	}
 	return c.NoContent(http.StatusNoContent)
-}
-
-// 実質user認証みたいなことに使っている
-func getUserID(c echo.Context) (string, error) {
-	sess, err := session.Get("sessions", c)
-	if err != nil {
-		errorMessageResponse(c, http.StatusInternalServerError, "Failed to get a session")
-		return "", fmt.Errorf("Failed to get a session: %v", err)
-	}
-
-	var userID string
-	if sess.Values["userId"] != nil {
-		userID = sess.Values["userId"].(string)
-	} else {
-		errorMessageResponse(c, http.StatusForbidden, "Your userID doesn't exist")
-		return "", fmt.Errorf("This session doesn't have a userId")
-	}
-	return userID, nil
 }
 
 func values(m map[string]*MessageForResponse) []*MessageForResponse {
@@ -169,7 +152,7 @@ func values(m map[string]*MessageForResponse) []*MessageForResponse {
 	return val
 }
 
-func formatMessage(raw *model.Messages) *MessageForResponse {
+func formatMessage(raw *model.Message) *MessageForResponse {
 	res := MessageForResponse{
 		MessageID:       raw.ID,
 		UserID:          raw.UserID,

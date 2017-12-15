@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/srinathgs/mysqlstore"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/router"
 )
 
 func main() {
@@ -26,6 +27,7 @@ func main() {
 		panic(err)
 	}
 	e.Use(session.Middleware(store))
+	e.HTTPErrorHandler = router.CustomHTTPErrorHandler
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")

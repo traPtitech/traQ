@@ -60,8 +60,8 @@ func GetSQLDB() *sql.DB {
 }
 
 func SyncSchema() error {
-	if err := db.Sync(new(Messages)); err != nil {
-		return fmt.Errorf("Failed to sync Messages: %v", err)
+	if err := db.Sync(&Message{}); err != nil {
+		return fmt.Errorf("Failed to sync Messages Table: %v", err)
 	}
 	return nil
 }

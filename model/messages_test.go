@@ -102,7 +102,7 @@ func TestGetMessage(t *testing.T) {
 		t.Fatalf("Create method returns an error: %v", err)
 	}
 
-	var r *Messages
+	var r *Message
 	r, err := GetMessage(message.ID)
 	if err != nil {
 		t.Errorf("GetMessage method returns an error: %v", err)
@@ -113,17 +113,18 @@ func TestGetMessage(t *testing.T) {
 	}
 }
 
-func generateMessage() Messages {
-	message := new(Messages)
-	message.UserID = CreateUUID()
-	message.ChannelID = CreateUUID()
-	message.Text = "テスト/is/popo" // TODO: randomな文字列
-	message.IsShared = true
-	return *message
+func generateMessage() Message {
+	message := Message{
+		UserID:    CreateUUID(),
+		ChannelID: CreateUUID(),
+		Text:      "テスト/is/popo",
+		IsShared:  true,
+	}
+	return message
 }
 
-func generateChannelMessages(channelID string) []*Messages {
-	var messages [10]*Messages
+func generateChannelMessages(channelID string) []*Message {
+	var messages [10]*Message
 
 	for i := 0; i < 10; i++ {
 		tmp := generateMessage()

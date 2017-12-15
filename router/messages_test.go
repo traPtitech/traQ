@@ -54,7 +54,7 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
 	return e, cookie, mw
 }
 
-func TestGetMessageByIDHandler(t *testing.T) {
+func TestGetMessageByID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 	defer model.Close()
 
@@ -65,7 +65,7 @@ func TestGetMessageByIDHandler(t *testing.T) {
 	c.SetParamNames("messageId")
 	c.SetParamValues(message.ID)
 
-	requestWithContext(t, mw(GetMessageByIDHandler), c)
+	requestWithContext(t, mw(GetMessageByID), c)
 
 	if rec.Code != http.StatusOK {
 		t.Log(rec.Code)
@@ -74,7 +74,7 @@ func TestGetMessageByIDHandler(t *testing.T) {
 	t.Log(rec.Body.String())
 }
 
-func TestGetMessagesByChannelIDHandler(t *testing.T) {
+func TestGetMessagesByChannelID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 	defer model.Close()
 
@@ -86,7 +86,7 @@ func TestGetMessagesByChannelIDHandler(t *testing.T) {
 	c.SetPath("/channels/:channelId/messages")
 	c.SetParamNames("channelId")
 	c.SetParamValues(testChannelID)
-	requestWithContext(t, mw(GetMessagesByChannelIDHandler), c)
+	requestWithContext(t, mw(GetMessagesByChannelID), c)
 
 	if rec.Code != http.StatusOK {
 		t.Log(rec.Code)
@@ -105,7 +105,7 @@ func TestGetMessagesByChannelIDHandler(t *testing.T) {
 
 }
 
-func TestPostMessageHandler(t *testing.T) {
+func TestPostMessage(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 	defer model.Close()
 
@@ -119,7 +119,7 @@ func TestPostMessageHandler(t *testing.T) {
 	}
 
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	rec := request(e, t, mw(PostMessageHandler), cookie, req)
+	rec := request(e, t, mw(PostMessage), cookie, req)
 
 	message := &MessageForResponse{}
 
@@ -142,7 +142,7 @@ func TestPostMessageHandler(t *testing.T) {
 	}
 }
 
-func TestPutMessageByIDHandler(t *testing.T) {
+func TestPutMessageByID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 	defer model.Close()
 
@@ -162,7 +162,7 @@ func TestPutMessageByIDHandler(t *testing.T) {
 	c.SetPath("/messages/:messageId")
 	c.SetParamNames("messageId")
 	c.SetParamValues(message.ID)
-	requestWithContext(t, mw(PutMessageByIDHandler), c)
+	requestWithContext(t, mw(PutMessageByID), c)
 
 	message, err = model.GetMessage(message.ID)
 	if err != nil {
@@ -180,7 +180,7 @@ func TestPutMessageByIDHandler(t *testing.T) {
 
 }
 
-func TestDeleteMessageByIDHandler(t *testing.T) {
+func TestDeleteMessageByID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 	defer model.Close()
 
@@ -192,7 +192,7 @@ func TestDeleteMessageByIDHandler(t *testing.T) {
 	c.SetPath("/messages/:messageId")
 	c.SetParamNames("messageId")
 	c.SetParamValues(message.ID)
-	requestWithContext(t, mw(DeleteMessageByIDHandler), c)
+	requestWithContext(t, mw(DeleteMessageByID), c)
 
 	message, err := model.GetMessage(message.ID)
 	if err != nil {
@@ -210,8 +210,8 @@ func TestDeleteMessageByIDHandler(t *testing.T) {
 
 }
 
-func makeMessage() *model.Messages {
-	message := &model.Messages{
+func makeMessage() *model.Message {
+	message := &model.Message{
 		UserID:    testUserID,
 		ChannelID: testChannelID,
 		Text:      "popopo",
