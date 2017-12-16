@@ -1,19 +1,19 @@
 package router
 
-import(
-	"os"
+import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
-	"github.com/labstack/echo"
-	"github.com/traPtitech/traQ/model"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/xorm"
 	"github.com/go-xorm/core"
+	"github.com/go-xorm/xorm"
+	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/srinathgs/mysqlstore"
+	"github.com/traPtitech/traQ/model"
 )
 
 var (
@@ -62,7 +62,7 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
 	testChannelID = model.CreateUUID()
 	testUserID = model.CreateUUID()
 
-	engine.DropTables("sessions","messages")
+	engine.DropTables("sessions", "messages")
 	if err := model.SyncSchema(); err != nil {
 		t.Fatalf("Failed to sync schema: %v", err)
 	}

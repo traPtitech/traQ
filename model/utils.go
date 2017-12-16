@@ -1,6 +1,6 @@
 package model
 
-import (	
+import (
 	"fmt"
 	"github.com/go-xorm/xorm"
 	"github.com/satori/go.uuid"
