@@ -5,8 +5,7 @@ import (
 )
 
 func TestCreateMessage(t *testing.T) {
-	BeforeTest(t)
-	defer Close()
+	beforeTest(t)
 
 	message := generateMessage()
 	copy := message
@@ -38,8 +37,7 @@ func TestCreateMessage(t *testing.T) {
 }
 
 func TestUpdateMessage(t *testing.T) {
-	BeforeTest(t)
-	defer Close()
+	beforeTest(t)
 
 	message := generateMessage()
 	if err := message.Create(); err != nil {
@@ -64,8 +62,7 @@ func TestUpdateMessage(t *testing.T) {
 }
 
 func TestGetMessagesFromChannel(t *testing.T) {
-	BeforeTest(t)
-	defer Close()
+	beforeTest(t)
 
 	channelID := CreateUUID()
 	messages := generateChannelMessages(channelID)
@@ -94,8 +91,7 @@ func TestGetMessagesFromChannel(t *testing.T) {
 }
 
 func TestGetMessage(t *testing.T) {
-	BeforeTest(t)
-	defer Close()
+	beforeTest(t)
 
 	message := generateMessage()
 	if err := message.Create(); err != nil {

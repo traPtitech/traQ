@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -26,7 +25,7 @@ func CustomHTTPErrorHandler(err error, c echo.Context) {
 	}
 
 	if err = c.JSON(code, msg); err != nil {
-		//TODO: log出力
+		c.Echo().Logger.Errorf("an error occured while sending to JSON: %v", err)
 	}
 
 }
@@ -34,7 +33,7 @@ func CustomHTTPErrorHandler(err error, c echo.Context) {
 func getUserID(c echo.Context) (string, error) {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
-		fmt.Errorf("Failed to get a session: %v", err)
+		c.Echo().Logger.Errorf("Failed to get a session: %v", err)
 		return "", echo.NewHTTPError(http.StatusForbidden, "your id isn't found")
 
 	}
@@ -43,7 +42,7 @@ func getUserID(c echo.Context) (string, error) {
 	if sess.Values["userId"] != nil {
 		userID = sess.Values["userId"].(string)
 	} else {
-		fmt.Errorf("This session doesn't have a userId")
+		c.Echo().Logger.Errorf("This session doesn't have a userId")
 		return "", echo.NewHTTPError(http.StatusForbidden, "Your userID doesn't exist")
 	}
 	return userID, nil

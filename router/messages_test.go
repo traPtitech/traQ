@@ -7,12 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/echo-contrib/session"
-	"github.com/srinathgs/mysqlstore"
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -22,41 +19,8 @@ var (
 	sampleText    = "popopo"
 )
 
-func TestMain(m *testing.M) {
-	os.Setenv("MARIADB_DATABASE", "traq-test-router")
-	code := m.Run()
-	os.Exit(code)
-}
-
-func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
-	testChannelID = model.CreateUUID()
-	testUserID = model.CreateUUID()
-
-	model.BeforeTest(t)
-	e := echo.New()
-
-	store, err := mysqlstore.NewMySQLStoreFromConnection(model.GetSQLDB(), "sessions", "/", 60*60*24*14, []byte("secret"))
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	req := httptest.NewRequest(echo.GET, "/", nil)
-	rec := httptest.NewRecorder()
-	sess, err := store.New(req, "sessions")
-
-	sess.Values["userId"] = testUserID
-	if err := sess.Save(req, rec); err != nil {
-		t.Fatal(err)
-	}
-	cookie := parseCookies(rec.Header().Get("Set-Cookie"))["sessions"]
-	mw := session.Middleware(store)
-
-	return e, cookie, mw
-}
-
 func TestGetMessageByID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-	defer model.Close()
 
 	message := makeMessage()
 
@@ -76,7 +40,6 @@ func TestGetMessageByID(t *testing.T) {
 
 func TestGetMessagesByChannelID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-	defer model.Close()
 
 	for i := 0; i < 5; i++ {
 		makeMessage()
@@ -107,7 +70,6 @@ func TestGetMessagesByChannelID(t *testing.T) {
 
 func TestPostMessage(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-	defer model.Close()
 
 	post := requestMessage{
 		Text: "test message",
@@ -144,7 +106,6 @@ func TestPostMessage(t *testing.T) {
 
 func TestPutMessageByID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-	defer model.Close()
 
 	message := makeMessage()
 
@@ -182,7 +143,6 @@ func TestPutMessageByID(t *testing.T) {
 
 func TestDeleteMessageByID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-	defer model.Close()
 
 	message := makeMessage()
 

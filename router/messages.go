@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -32,7 +31,7 @@ func GetMessageByID(c echo.Context) error {
 	id := c.Param("messageId") // TODO: idの検証
 	raw, err := model.GetMessage(id)
 	if err != nil {
-		fmt.Errorf("model.Getmessage returned an error : %v", err)
+		c.Echo().Logger.Errorf("model.Getmessage returned an error : %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "Message is not found")
 	}
 	res := formatMessage(raw)
@@ -50,7 +49,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 
 	messageList, err := model.GetMessagesFromChannel(channelID)
 	if err != nil {
-		fmt.Errorf("model.GetmessagesFromChannel returned an error : %v", err)
+		c.Echo().Logger.Errorf("model.GetmessagesFromChannel returned an error : %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
 	}
 
@@ -74,7 +73,7 @@ func PostMessage(c echo.Context) error {
 
 	post := &requestMessage{}
 	if err := c.Bind(post); err != nil {
-		fmt.Errorf("Invalid format: %v", err)
+		c.Echo().Logger.Errorf("Invalid format: %v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
@@ -84,7 +83,7 @@ func PostMessage(c echo.Context) error {
 		ChannelID: channelID,
 	}
 	if err := message.Create(); err != nil {
-		fmt.Errorf("Message.Create() returned an error: %v", err)
+		c.Echo().Logger.Errorf("Message.Create() returned an error: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert your message")
 	}
 	return c.JSON(http.StatusCreated, formatMessage(message))
@@ -101,20 +100,20 @@ func PutMessageByID(c echo.Context) error {
 
 	req := &requestMessage{}
 	if err := c.Bind(req); err != nil {
-		fmt.Errorf("Request is invalid format: %v", err)
+		c.Echo().Logger.Errorf("Request is invalid format: %v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
 	message, err := model.GetMessage(messageID)
 	if err != nil {
-		fmt.Errorf("model.GetMessage() returned an error: %v", err)
+		c.Echo().Logger.Errorf("model.GetMessage() returned an error: %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "no message has the messageID: "+messageID)
 	}
 
 	message.Text = req.Text
 	message.UpdaterID = userID
 	if err := message.Update(); err != nil {
-		fmt.Errorf("message.Update() returned an error: %v", err)
+		c.Echo().Logger.Errorf("message.Update() returned an error: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update the message")
 	}
 
@@ -132,13 +131,13 @@ func DeleteMessageByID(c echo.Context) error {
 
 	message, err := model.GetMessage(messageID)
 	if err != nil {
-		fmt.Errorf("model.GetMessage() returned an error: %v", err)
+		c.Echo().Logger.Errorf("model.GetMessage() returned an error: %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "no message has the messageID: "+messageID)
 	}
 
 	message.IsDeleted = true
 	if err := message.Update(); err != nil {
-		fmt.Errorf("message.Update() returned an error: %v", err)
+		c.Echo().Logger.Errorf("message.Update() returned an error: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update the message")
 	}
 	return c.NoContent(http.StatusNoContent)
