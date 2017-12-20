@@ -52,9 +52,9 @@ func (message *Message) Update() error {
 }
 
 // GetMessagesFromChannel :指定されたチャンネルのメッセージを取得します
-func GetMessagesFromChannel(channelID string) ([]*Message, error) {
+func GetMessagesFromChannel(channelID string, limit, offset int) ([]*Message, error) {
 	var messageList []*Message
-	err := db.Where("channel_id = ?", channelID).Asc("created_at").Find(&messageList)
+	err := db.Where("channel_id = ?", channelID).Desc("created_at").Limit(limit, offset).Find(&messageList)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to find messages: %v", err)
 	}

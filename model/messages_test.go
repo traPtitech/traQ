@@ -73,19 +73,32 @@ func TestGetMessagesFromChannel(t *testing.T) {
 		}
 	}
 
-	r, err := GetMessagesFromChannel(channelID)
+	res, err := GetMessagesFromChannel(channelID, 0, 0)
 	if err != nil {
 		t.Errorf("GetMessageFromChannel method returns an error: %v", err)
 	}
 
-	if len(r) != len(messages) {
-		t.Errorf("Missing some of channel messages: want: %d, actual: %d", len(messages), len(r))
+	if len(res) != len(messages) {
+		t.Errorf("Missing some of channel messages: want: %d, actual: %d", len(messages), len(res))
 	}
 
 	for i := 0; i < 10; i++ {
-		if messages[i].ID != r[i].ID {
+		if messages[9-i].ID != res[i].ID {
 			t.Error("message is not ordered by createdAt")
 		}
+	}
+
+	res2, err := GetMessagesFromChannel(channelID, 3, 5)
+	if err != nil {
+		t.Errorf("GetMessageFromChannel method returns an error: %v", err)
+	}
+
+	if len(res2) != 3 {
+		t.Errorf("Missing some of channel messages: want: 3, actual: %d", len(res2))
+	}
+
+	if res2[0].ID != messages[4].ID {
+		t.Error("message is not ordered by createdAt")
 	}
 
 }
