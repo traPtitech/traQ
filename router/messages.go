@@ -22,6 +22,11 @@ type requestMessage struct {
 	Text string `json:"text"`
 }
 
+type requestCount struct {
+	Count int `json:"count"`
+	Limit int `json:"limit"`
+}
+
 // GetMessageByID : /messages/{messageID}のGETメソッド
 func GetMessageByID(c echo.Context) error {
 	if _, err := getUserID(c); err != nil {
@@ -45,9 +50,15 @@ func GetMessagesByChannelID(c echo.Context) error {
 		return err
 	}
 
+	post := &requestCount{}
+	if err := c.Bind(post); err != nil {
+		c.Echo().Logger.Errorf("Invalid format: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
+	}
+
 	channelID := c.Param("channelId")
 
-	messageList, err := model.GetMessagesFromChannel(channelID)
+	messageList, err := model.GetMessagesFromChannel(channelID, post.Limit, post.Count)
 	if err != nil {
 		c.Echo().Logger.Errorf("model.GetmessagesFromChannel returned an error : %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "Channel is not found")

@@ -45,7 +45,17 @@ func TestGetMessagesByChannelID(t *testing.T) {
 		makeMessage()
 	}
 
-	c, rec := getContext(e, t, cookie, nil)
+	post := requestCount{
+		Limit: 3,
+		Count: 1,
+	}
+	body, err := json.Marshal(post)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
+
+	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/channels/:channelId/messages")
 	c.SetParamNames("channelId")
 	c.SetParamValues(testChannelID)
@@ -57,13 +67,13 @@ func TestGetMessagesByChannelID(t *testing.T) {
 	}
 
 	var responseBody []MessageForResponse
-	err := json.Unmarshal(rec.Body.Bytes(), &responseBody)
+	err = json.Unmarshal(rec.Body.Bytes(), &responseBody)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if len(responseBody) != 5 {
-		t.Errorf("No found all messages: want %d, actual %d", 5, len(responseBody))
+	if len(responseBody) != 3 {
+		t.Errorf("No found all messages: want %d, actual %d", 3, len(responseBody))
 	}
 
 }
