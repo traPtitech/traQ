@@ -33,7 +33,7 @@ func GetMessageByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden, "your id is not found")
 	}
 
-	id := c.Param("messageId") // TODO: idの検証
+	id := c.Param("messageID") // TODO: idの検証
 	raw, err := model.GetMessage(id)
 	if err != nil {
 		c.Echo().Logger.Errorf("model.Getmessage returned an error : %v", err)
@@ -107,7 +107,7 @@ func PutMessageByID(c echo.Context) error {
 		return err
 	}
 
-	messageID := c.Param("messageId") //TODO: messageIDの検証
+	messageID := c.Param("messageID") //TODO: messageIDの検証
 
 	req := &requestMessage{}
 	if err := c.Bind(req); err != nil {
@@ -138,7 +138,7 @@ func DeleteMessageByID(c echo.Context) error {
 	}
 	// TODO:Userが権限を持っているかを確認
 
-	messageID := c.Param("messageId")
+	messageID := c.Param("messageID")
 
 	message, err := model.GetMessage(messageID)
 	if err != nil {
