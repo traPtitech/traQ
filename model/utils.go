@@ -24,6 +24,10 @@ func SyncSchema() error {
 	if err := db.Sync(new(UsersPrivateChannel)); err != nil {
 		return fmt.Errorf("Failed to sync UsersPrivateChannels: %v", err)
 	}
+
+	if err := db.Sync(&Message{}); err != nil {
+		return fmt.Errorf("Failed to sync Messages Table: %v", err)
+	}
 	return nil
 }
 

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
 )
 
@@ -41,6 +42,7 @@ func TestMain(m *testing.M) {
 	defer engine.Close()
 	engine.ShowSQL(false)
 	engine.DropTables("sessions", "channels", "users_private_channels")
+	engine.SetMapper(core.GonicMapper{})
 	SetXORMEngine(engine)
 
 	err = SyncSchema()
@@ -53,8 +55,7 @@ func TestMain(m *testing.M) {
 
 func beforeTest(t *testing.T) {
 	engine.DropTables("sessions", "channels", "users_private_channels")
-	err := SyncSchema()
-	if err != nil {
+	if err := SyncSchema(); err != nil {
 		t.Fatal(err)
 	}
 }

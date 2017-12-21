@@ -66,7 +66,7 @@ func GetChannels(c echo.Context) error {
 		response[ch.ParentID].Children = append(response[ch.ParentID].Children, ch.ID)
 	}
 
-	return c.JSON(http.StatusOK, values(response))
+	return c.JSON(http.StatusOK, valuesChannel(response))
 }
 
 // PostChannels POST /channels のハンドラ
@@ -286,7 +286,7 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func values(m map[string]*ChannelForResponse) []*ChannelForResponse {
+func valuesChannel(m map[string]*ChannelForResponse) []*ChannelForResponse {
 	arr := []*ChannelForResponse{}
 	for _, v := range m {
 		arr = append(arr, v)

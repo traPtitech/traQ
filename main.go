@@ -6,11 +6,13 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/srinathgs/mysqlstore"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/router"
 )
 
 func main() {
@@ -39,6 +41,7 @@ func main() {
 		panic(err)
 	}
 	defer engine.Close()
+	engine.SetMapper(core.GonicMapper{})
 	model.SetXORMEngine(engine)
 
 	if err := model.SyncSchema(); err != nil {
@@ -52,6 +55,7 @@ func main() {
 		panic(err)
 	}
 	e.Use(session.Middleware(store))
+	e.HTTPErrorHandler = router.CustomHTTPErrorHandler
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
