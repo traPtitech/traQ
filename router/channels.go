@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -33,16 +32,11 @@ type PostChannel struct {
 
 // GetChannels GET /channels のハンドラ
 func GetChannels(c echo.Context) error {
-	sess, err := session.Get("sessions", c)
+	userID, err := getUserID(c)
 	if err != nil {
-		messageResponse(c, http.StatusInternalServerError, "セッションの取得に失敗しました")
-		return fmt.Errorf("Failed to get session: %v", err)
+		return err
 	}
 
-	var userID string
-	if sess.Values["userId"] != nil {
-		userID = sess.Values["userId"].(string)
-	}
 	channelList, err := model.GetChannels(userID)
 	if err != nil {
 		messageResponse(c, http.StatusInternalServerError, "チャンネルリストの取得中にエラーが発生しました")
@@ -72,16 +66,11 @@ func GetChannels(c echo.Context) error {
 // PostChannels POST /channels のハンドラ
 func PostChannels(c echo.Context) error {
 	// TODO: 同名・同階層のチャンネルのチェック
-	sess, err := session.Get("sessions", c)
+	userID, err := getUserID(c)
 	if err != nil {
-		messageResponse(c, http.StatusInternalServerError, "セッションの取得に失敗しました")
-		return fmt.Errorf("Failed to get session: %v", err)
+		return err
 	}
 
-	var userID string
-	if sess.Values["userId"] != nil {
-		userID = sess.Values["userId"].(string)
-	}
 	var requestBody PostChannel
 	c.Bind(&requestBody)
 
@@ -147,15 +136,9 @@ func PostChannels(c echo.Context) error {
 
 // GetChannelsByChannelID GET /channels/{channelID} のハンドラ
 func GetChannelsByChannelID(c echo.Context) error {
-	sess, err := session.Get("sessions", c)
+	userID, err := getUserID(c)
 	if err != nil {
-		messageResponse(c, http.StatusInternalServerError, "セッションの取得に失敗しました")
-		return fmt.Errorf("Failed to get session: %v", err)
-	}
-
-	var userID string
-	if sess.Values["userId"] != nil {
-		userID = sess.Values["userId"].(string)
+		return err
 	}
 
 	channelID := c.Param("channelId")
@@ -191,16 +174,11 @@ func GetChannelsByChannelID(c echo.Context) error {
 // PutChannelsByChannelID PUT /channels/{channelId} のハンドラ
 func PutChannelsByChannelID(c echo.Context) error {
 	// CHECK: 権限周り
-	sess, err := session.Get("sessions", c)
+	userID, err := getUserID(c)
 	if err != nil {
-		messageResponse(c, http.StatusInternalServerError, "セッションの取得に失敗しました")
-		return fmt.Errorf("Failed to get session: %v", err)
+		return err
 	}
 
-	var userID string
-	if sess.Values["userId"] != nil {
-		userID = sess.Values["userId"].(string)
-	}
 	var requestBody PostChannel
 	c.Bind(&requestBody)
 
@@ -244,16 +222,11 @@ func PutChannelsByChannelID(c echo.Context) error {
 // DeleteChannelsByChannelID DELETE /channels/{channelId}のハンドラ
 func DeleteChannelsByChannelID(c echo.Context) error {
 	// CHECK: 権限周り
-	sess, err := session.Get("sessions", c)
+	userID, err := getUserID(c)
 	if err != nil {
-		messageResponse(c, http.StatusInternalServerError, "セッションの取得に失敗しました")
-		return fmt.Errorf("Failed to get session: %v", err)
+		return err
 	}
 
-	var userID string
-	if sess.Values["userId"] != nil {
-		userID = sess.Values["userId"].(string)
-	}
 	type confirm struct {
 		Confirm bool `json:"confirm"`
 	}
