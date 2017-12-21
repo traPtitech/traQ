@@ -73,7 +73,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 	return c.JSON(http.StatusOK, values(res))
 }
 
-// PostMessage : /channels/{cannelID}/messagesのPOSTメソッド
+// PostMessage : /channels/{channelID}/messagesのPOSTメソッド
 func PostMessage(c echo.Context) error {
 	userID, err := getUserID(c)
 	if err != nil {

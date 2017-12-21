@@ -57,8 +57,18 @@ func main() {
 	e.Use(session.Middleware(store))
 	e.HTTPErrorHandler = router.CustomHTTPErrorHandler
 
+	//routing
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
+
+	//Tag:messages
+	e.GET("/messages/:messageID", router.GetMessageByID)
+	e.PUT("/messages/:messageID", router.PutMessageByID)
+	e.DELETE("/messages/:messageID", router.DeleteMessageByID)
+
+	e.GET("/channels/:channelID/messages", router.GetMessagesByChannelID)
+	e.POST("/channels/:channelID/messages", router.PostMessage)
+
 	e.Logger.Fatal(e.Start(":9000"))
 }
