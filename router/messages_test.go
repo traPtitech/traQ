@@ -25,8 +25,8 @@ func TestGetMessageByID(t *testing.T) {
 	message := makeMessage()
 
 	c, rec := getContext(e, t, cookie, nil)
-	c.SetPath("/messages/:messageId")
-	c.SetParamNames("messageId")
+	c.SetPath("/messages/:messageID")
+	c.SetParamNames("messageID")
 	c.SetParamValues(message.ID)
 
 	requestWithContext(t, mw(GetMessageByID), c)
@@ -130,8 +130,8 @@ func TestPutMessageByID(t *testing.T) {
 	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 
 	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/messages/:messageId")
-	c.SetParamNames("messageId")
+	c.SetPath("/messages/:messageID")
+	c.SetParamNames("messageID")
 	c.SetParamValues(message.ID)
 	requestWithContext(t, mw(PutMessageByID), c)
 
@@ -159,8 +159,8 @@ func TestDeleteMessageByID(t *testing.T) {
 	req := httptest.NewRequest("DELETE", "http://test", nil)
 
 	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/messages/:messageId")
-	c.SetParamNames("messageId")
+	c.SetPath("/messages/:messageID")
+	c.SetParamNames("messageID")
 	c.SetParamValues(message.ID)
 	requestWithContext(t, mw(DeleteMessageByID), c)
 
