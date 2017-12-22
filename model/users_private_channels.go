@@ -4,8 +4,8 @@ import "fmt"
 
 // UsersPrivateChannel : UsersPrabateChannelsの構造体
 type UsersPrivateChannel struct {
-	UserID    string `xorm:"user_id char(36) pk"`
-	ChannelID string `xorm:"channel_id char(36) pk"`
+	UserID    string `xorm:"char(36) pk"`
+	ChannelID string `xorm:"char(36) pk"`
 }
 
 // TableName : テーブル名を指定するメソッド

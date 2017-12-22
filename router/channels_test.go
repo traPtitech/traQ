@@ -13,7 +13,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-func TestGetChannelsHandler(t *testing.T) {
+func TestGetChannels(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 
 	for i := 0; i < 5; i++ {
@@ -34,7 +34,7 @@ func TestGetChannelsHandler(t *testing.T) {
 	}
 }
 
-func TestPostChannelsHandler(t *testing.T) {
+func TestPostChannels(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 
 	postBody := PostChannel{
@@ -100,7 +100,7 @@ func TestPostChannelsHandler(t *testing.T) {
 	}
 }
 
-func TestGetChannelsByChannelIDHandler(t *testing.T) {
+func TestGetChannelsByChannelID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 
 	channel, _ := makeChannel(testUserID, "test", true)
@@ -120,7 +120,7 @@ func TestGetChannelsByChannelIDHandler(t *testing.T) {
 	t.Log(rec.Body.String())
 }
 
-func TestPutChannelsByChannelIDHandler(t *testing.T) {
+func TestPutChannelsByChannelID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 
 	channel, _ := makeChannel(model.CreateUUID(), "test", true)
@@ -152,7 +152,7 @@ func TestPutChannelsByChannelIDHandler(t *testing.T) {
 
 }
 
-func TestDeleteChannelsByChannelIDHandler(t *testing.T) {
+func TestDeleteChannelsByChannelID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 
 	channel, _ := makeChannel(model.CreateUUID(), "test", true)

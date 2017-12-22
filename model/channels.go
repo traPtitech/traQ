@@ -7,7 +7,7 @@ import (
 
 // Channel :チャンネルの構造体
 type Channel struct {
-	ID        string `xorm:"id char(36) pk"`
+	ID        string `xorm:"char(36) pk"`
 	Name      string `xorm:"varchar(20) not null"`
 	ParentID  string `xorm:"parent_id char(36) not null"`
 	Topic     string `xorm:"text"`
@@ -15,9 +15,9 @@ type Channel struct {
 	IsDeleted bool   `xorm:"bool not null"`
 	IsPublic  bool   `xorm:"bool not null"`
 	IsVisible bool   `xorm:"bool not null"`
-	CreatorID string `xorm:"creator_id char(36) not null"`
+	CreatorID string `xorm:"char(36) not null"`
 	CreatedAt int    `xorm:"created not null"`
-	UpdaterID string `xorm:"updater_id char(36) not null"`
+	UpdaterID string `xorm:"char(36) not null"`
 	UpdatedAt int    `xorm:"updated not null"`
 }
 
@@ -37,7 +37,7 @@ func (channel *Channel) Create() error {
 	}
 
 	if channel.CreatorID == "" {
-		return fmt.Errorf("CreatorId is empty")
+		return fmt.Errorf("CreatorID is empty")
 	}
 
 	if err := validateChannelName(channel.Name); err != nil {
@@ -109,7 +109,7 @@ func (channel *Channel) Children(userID string) ([]string, error) {
 
 // Update : チャンネルの情報の更新を行う
 func (channel *Channel) Update() error {
-	_, err := db.Id(channel.ID).UseBool().Update(channel)
+	_, err := db.ID(channel.ID).UseBool().Update(channel)
 	if err != nil {
 		return fmt.Errorf("Failed to update channel: %v", err)
 	}

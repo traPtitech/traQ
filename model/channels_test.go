@@ -8,12 +8,8 @@ import (
 // 各関数のテスト>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 func TestCreate(t *testing.T) {
 	beforeTest(t)
-	channel := &Channel{}
-	channel.CreatorID = testUserID
-	channel.Name = "testChannel"
-	channel.IsPublic = true
+	channel, err := makeChannelDetail(testUserID, "testChannel", "", true)
 
-	err := channel.Create()
 	if err != nil {
 		t.Fatal("Failed to create channel", err)
 	}
@@ -55,7 +51,10 @@ func TestChildren(t *testing.T) {
 	}
 
 	for i := 0; i < 10; i++ {
-		makeChannelDetail(testUserID, "child-"+strconv.Itoa(i+1), parentChannel.ID, true)
+		_, err := makeChannelDetail(testUserID, "child-"+strconv.Itoa(i+1), parentChannel.ID, true)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	for i := 10; i < 20; i++ {
@@ -87,19 +86,13 @@ func TestChildren(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	beforeTest(t)
-	channel := &Channel{}
-	channel.CreatorID = testUserID
-	channel.Name = "Channel"
-	channel.IsPublic = true
-	if err := channel.Create(); err != nil {
+	channel, err := makeChannelDetail(testUserID, "Channel", "", true)
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	parentChannel := &Channel{}
-	parentChannel.CreatorID = testUserID
-	parentChannel.Name = "Parent"
-	parentChannel.IsPublic = true
-	if err := parentChannel.Create(); err != nil {
+	parentChannel, err := makeChannelDetail(testUserID, "Parent", "", true)
+	if err != nil {
 		t.Fatal("Failed to create channel", err)
 	}
 

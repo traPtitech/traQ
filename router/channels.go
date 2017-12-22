@@ -17,11 +17,6 @@ type ChannelForResponse struct {
 	Visibility bool
 }
 
-// ErrorResponse エラーレスポンス用の構造体
-type ErrorResponse struct {
-	Message string
-}
-
 // PostChannel リクエストボディ用構造体
 type PostChannel struct {
 	ChannelType string   `json:"type"`
@@ -51,7 +46,7 @@ func GetChannels(c echo.Context) error {
 		response[ch.ID].ChannelID = ch.ID
 		response[ch.ID].Name = ch.Name
 		response[ch.ID].Parent = ch.ParentID
-		response[ch.ID].Visibility = !ch.IsVisible
+		response[ch.ID].Visibility = ch.IsVisible
 
 		if response[ch.ParentID] == nil {
 			response[ch.ParentID] = &ChannelForResponse{}
