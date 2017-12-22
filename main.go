@@ -60,5 +60,13 @@ func main() {
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
+
+	// Tag: channel
+	e.GET("/channels", router.GetChannels)
+	e.POST("/channels", router.PostChannels)
+	e.GET("/channels/:channelID", router.GetChannelsByChannelID)
+	e.PUT("/channels/:channelID", router.PutChannelsByChannelID)
+	e.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID)
+
 	e.Logger.Fatal(e.Start(":9000"))
 }
