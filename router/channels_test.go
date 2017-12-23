@@ -106,8 +106,8 @@ func TestGetChannelsByChannelID(t *testing.T) {
 	channel, _ := makeChannel(testUserID, "test", true)
 
 	c, rec := getContext(e, t, cookie, nil)
-	c.SetPath("/:channelId")
-	c.SetParamNames("channelId")
+	c.SetPath("/:channelID")
+	c.SetParamNames("channelID")
 	c.SetParamValues(channel.ID)
 
 	requestWithContext(t, mw(GetChannelsByChannelID), c)
@@ -127,8 +127,8 @@ func TestPutChannelsByChannelID(t *testing.T) {
 
 	req := httptest.NewRequest("PUT", "http://test", strings.NewReader(`{"name": "renamed"}`))
 	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/:channelId")
-	c.SetParamNames("channelId")
+	c.SetPath("/:channelID")
+	c.SetParamNames("channelID")
 	c.SetParamValues(channel.ID)
 	requestWithContext(t, mw(PutChannelsByChannelID), c)
 
@@ -159,8 +159,8 @@ func TestDeleteChannelsByChannelID(t *testing.T) {
 
 	req := httptest.NewRequest("DELETE", "http://test", strings.NewReader(`{"confirm": true}`))
 	c, _ := getContext(e, t, cookie, req)
-	c.SetPath("/:channelId")
-	c.SetParamNames("channelId")
+	c.SetPath("/:channelID")
+	c.SetParamNames("channelID")
 	c.SetParamValues(channel.ID)
 	requestWithContext(t, mw(DeleteChannelsByChannelID), c)
 
