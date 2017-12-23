@@ -35,7 +35,6 @@ func getUserID(c echo.Context) (string, error) {
 	if err != nil {
 		c.Echo().Logger.Errorf("Failed to get a session: %v", err)
 		return "", echo.NewHTTPError(http.StatusForbidden, "your id isn't found")
-
 	}
 
 	var userID string

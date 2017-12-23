@@ -62,6 +62,13 @@ func main() {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
 
+	// Tag: channel
+	e.GET("/channels", router.GetChannels)
+	e.POST("/channels", router.PostChannels)
+	e.GET("/channels/:channelID", router.GetChannelsByChannelID)
+	e.PUT("/channels/:channelID", router.PutChannelsByChannelID)
+	e.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID)
+
 	//Tag:messages
 	e.GET("/messages/:messageID", router.GetMessageByID)
 	e.PUT("/messages/:messageID", router.PutMessageByID)

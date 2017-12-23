@@ -70,7 +70,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 		res[message.ID] = formatMessage(message)
 	}
 
-	return c.JSON(http.StatusOK, values(res))
+	return c.JSON(http.StatusOK, valuesMessage(res))
 }
 
 // PostMessage : /channels/{channelID}/messagesのPOSTメソッド
@@ -154,7 +154,7 @@ func DeleteMessageByID(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func values(m map[string]*MessageForResponse) []*MessageForResponse {
+func valuesMessage(m map[string]*MessageForResponse) []*MessageForResponse {
 	val := []*MessageForResponse{}
 	for _, v := range m {
 		val = append(val, v)

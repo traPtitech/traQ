@@ -3,20 +3,16 @@ package router
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 )
 
 var (
-	testUserID    = ""
-	testChannelID = ""
-	sampleText    = "popopo"
+	sampleText = "popopo"
 )
 
 func TestGetMessageByID(t *testing.T) {
@@ -178,65 +174,4 @@ func TestDeleteMessageByID(t *testing.T) {
 		t.Fatalf("message text is wrong: want %v, actual %v", true, message.IsDeleted)
 	}
 
-}
-
-func makeMessage() *model.Message {
-	message := &model.Message{
-		UserID:    testUserID,
-		ChannelID: testChannelID,
-		Text:      "popopo",
-	}
-	message.Create()
-	return message
-}
-
-func requestWithContext(t *testing.T, handler echo.HandlerFunc, c echo.Context) {
-	err := handler(c)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func request(e *echo.Echo, t *testing.T, handler echo.HandlerFunc, cookie *http.Cookie, req *http.Request) *httptest.ResponseRecorder {
-	if req == nil {
-		req = httptest.NewRequest("GET", "http://test", nil)
-	}
-
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	if cookie != nil {
-		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
-	}
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	err := handler(c)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return rec
-}
-
-func getContext(e *echo.Echo, t *testing.T, cookie *http.Cookie, req *http.Request) (echo.Context, *httptest.ResponseRecorder) {
-	if req == nil {
-		req = httptest.NewRequest("GET", "http://test", nil)
-	}
-
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	if cookie != nil {
-		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
-	}
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	return c, rec
-
-}
-
-func parseCookies(value string) map[string]*http.Cookie {
-	m := map[string]*http.Cookie{}
-	for _, c := range (&http.Request{Header: http.Header{"Cookie": {value}}}).Cookies() {
-		m[c.Name] = c
-	}
-	return m
 }
