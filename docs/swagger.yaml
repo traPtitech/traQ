@@ -1,16 +1,19 @@
 openapi: 3.0.0
+
 info:
-  title: traQ-R API
+  title: traQ API
   version: 0.0.1
+
 servers:
-  - url: https://q.trap.jp/api/1.0
+  - url: /api/1.0
+
 paths:
   /channels:
     post:
       tags:
         - channel
       description: チャンネルを作成します。
-      requestBody: 
+      requestBody:
         content:
           application/json:
             schema:
@@ -18,10 +21,10 @@ paths:
               required:
                 - type
               properties:
-                type: 
+                type:
                   type: string
                   description: private or public
-                member: 
+                member:
                   type: array
                   items:
                     type: string
@@ -92,7 +95,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
-    put: 
+    put:
       tags:
         - channel
       description: チャンネル名を変更します。
@@ -144,7 +147,7 @@ paths:
       responses:
         "204":
           description: 削除に成功しました。
-          content: 
+          content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
@@ -160,7 +163,7 @@ paths:
   /channels/{channelId}/topic:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
-    get: 
+    get:
       tags:
         - topic
       description: チャンネルの説明を取得します。
@@ -181,7 +184,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
-    put: 
+    put:
       tags:
         - topic
       description: チャンネルの説明を変更します。
@@ -218,7 +221,7 @@ paths:
   /channels/{channelId}/messages:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
-    get: 
+    get:
       tags:
         - message
       description: チャンネルに存在するメッセージを取得します。
@@ -271,7 +274,7 @@ paths:
                   example: Raskって誰？
       responses:
         "201":
-          description: |+ 
+          description: |+
             投稿に成功しました。
             投稿されたメッセージが返されます。
           content:
@@ -291,17 +294,17 @@ paths:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
     get:
-      tags: 
+      tags:
         - pin
       description: チャンネルにピン止めされているメッセージを取得します。
-      responses: 
+      responses:
         "200":
           description: |+
             正常に取得できました。
             チャンネルにピン止めされているメッセージの配列を返します。
           content:
             application/json:
-              schema: 
+              schema:
                 $ref: "#/components/schemas/MessageList"
     put:
       tags:
@@ -310,7 +313,7 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: 
+            schema:
               type: object
               required:
                 - messageId
@@ -345,7 +348,7 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: 
+            schema:
               type: object
               required:
                 - messageId
@@ -371,7 +374,7 @@ paths:
       tags:
         - notification
       description: 全ユーザーの通知状況を取得します。
-      responses: 
+      responses:
         "200":
           description: |+
             正常に取得できました。
@@ -441,7 +444,7 @@ paths:
         - user
       description: 全ユーザーのリストを取得します。
       responses:
-        "200": 
+        "200":
           description: |+
             正常に取得できました。
             ユーザーリストを返します。
@@ -456,7 +459,7 @@ paths:
         - user
       description: 自分のユーザー情報を取得します。
       responses:
-        "200": 
+        "200":
           description: |+
             正常に取得できました。
             自分のユーザーオブジェクトを返します。
@@ -464,7 +467,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-    
+
   /users/me/clips:
     get:
       tags:
@@ -497,7 +500,7 @@ paths:
                   example: 114514
       responses:
         "201":
-          description: |+ 
+          description: |+
             正常にクリップできました。
             クリップしたメッセージのリストを返します。
           content:
@@ -532,14 +535,14 @@ paths:
                   example: 114514
       responses:
         "200":
-          description: |+ 
+          description: |+
             正常に削除できました。
             クリップしたメッセージのリストを返します。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageList"
-    
+
   /users/me/stars:
     get:
       tags:
@@ -572,7 +575,7 @@ paths:
                   example: 25
       responses:
         "201":
-          description: |+ 
+          description: |+
             正常に追加できました。
             お気に入りチャンネルリストを返します。
           content:
@@ -629,7 +632,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelVisibilities"
-    put: 
+    put:
       tags:
         - visibility
       description: |+
@@ -674,7 +677,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
-  
+
   /users/me/unread:
     get:
       tags:
@@ -682,7 +685,7 @@ paths:
       description: 未読メッセージのリストを取得します。
       responses:
         "200":
-          description: |+ 
+          description: |+
             正常に取得できました。
             未読メッセージリストを返します。
           content:
@@ -727,7 +730,7 @@ paths:
             application/json:
               schema:
                 $ref: "#components/schemas/UnreadList"
-    
+
   /users/{userId}:
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
@@ -752,7 +755,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
-    
+
   /users/{userId}/tags:
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
@@ -844,7 +847,7 @@ paths:
 
   /stamps:
     get:
-      tags: 
+      tags:
         - stamp
       description: 全スタンプのリストを取得します。
       responses:
@@ -859,7 +862,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/StampDetail"
     post:
-      tags: 
+      tags:
         - stamp
       description: スタンプを新しく追加します。
       responses:
@@ -870,12 +873,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
-    
+
   /stamps/{stampId}:
     parameters:
       - $ref: "#/components/parameters/stampIdInPath"
     get:
-      tags: 
+      tags:
         - stamp
       description: スタンプの詳細を取得します。
       responses:
@@ -897,7 +900,7 @@ paths:
                 $ref: "#/components/schemas/NoContent"
     delete:
       description: スタンプを削除します。
-      tags: 
+      tags:
         - stamp
       responses:
         "204":
@@ -949,7 +952,7 @@ paths:
           description: |+
             正常に編集できました。
             編集後のメッセージオブジェクトを返します。
-          content: 
+          content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
@@ -1025,7 +1028,7 @@ paths:
       - $ref: "#/components/parameters/messageIdInPath"
       - $ref: "#/components/parameters/stampIdInPath"
     get:
-      tags: 
+      tags:
         - stamp
       description: 指定したメッセージについているスタンプの詳細を取得します。
       responses:
@@ -1251,7 +1254,7 @@ components:
 
     ChannelList:
       type: array
-      items: 
+      items:
         $ref: "#/components/schemas/Channel"
 
     ChannelVisibilities:
@@ -1287,7 +1290,7 @@ components:
 
     UserDetail:
       type: object
-      properties: 
+      properties:
         userId:
           type: string
           format: uuid
@@ -1297,10 +1300,10 @@ components:
           type: array
           items:
             type: string
-        
+
     UserList:
       type: array
-      items: 
+      items:
         $ref: "#/components/schemas/User"
 
     Message:
@@ -1352,10 +1355,10 @@ components:
 
     StampList:
       type: array
-      items: 
+      items:
         $ref: "#/components/schemas/Stamp"
 
-    UnreadList: 
+    UnreadList:
       type: array
       items:
         type: object
@@ -1368,7 +1371,7 @@ components:
 
     UserNotification:
       type: object
-      properties: 
+      properties:
          userId:
           type: string
           format: uuid
@@ -1377,13 +1380,13 @@ components:
          notification:
           type: boolean
       example:
-        
+
 
     UserNotificationList:
       type: array
       items:
         $ref: "#/components/schemas/UserNotification"
-    
+
     UserHeartbeatStatus:
       type: object
       properties:
@@ -1410,15 +1413,13 @@ components:
           type: string
           format: uuid
       example:
-        userStatuses: 
+        userStatuses:
           - userId: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
             status: monitoring
           - userId: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
             status: editing
         channelId: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
 
-
     NoContent:
       type: object
       example:
-

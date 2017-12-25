@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -55,6 +56,13 @@ func main() {
 	e := echo.New()
 	e.Use(session.Middleware(store))
 	e.HTTPErrorHandler = router.CustomHTTPErrorHandler
+
+	// Serve documents
+	e.File("/api/swagger.yaml", "./docs/swagger.yaml")
+	e.Static("/api", "./docs/swagger-ui")
+	e.Any("/api", func(c echo.Context) error {
+		return c.Redirect(http.StatusFound, c.Path()+"/")
+	})
 
 	// Tag: channel
 	e.GET("/channels", router.GetChannels)

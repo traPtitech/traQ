@@ -1,5 +1,7 @@
 .vagrant
 vendor
 
+docs/swagger-ui/*.map
+
 traQ
 traQ.exe

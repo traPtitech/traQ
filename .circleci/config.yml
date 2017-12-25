@@ -15,11 +15,8 @@ jobs:
       - checkout
 
       - run:
-          name: Install tools/packages
-          command: |
-            go get -u github.com/golang/dep/cmd/dep
-            go get -u github.com/golang/lint/golint
-            dep ensure
+          name: Setup project
+          command: make init
 
       - run:
           name: gofmt
@@ -36,6 +33,7 @@ jobs:
 
       - run:
           name: Setup DB
+          when: always
           command: |
             dockerize -wait tcp://localhost:3306 -timeout 1m
             go run .circleci/init.go
