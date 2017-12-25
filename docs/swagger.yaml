@@ -932,6 +932,18 @@ paths:
         - message
       description: 指定したメッセージを編集します。
       operationId: editMessageById
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  description: Markdown形式のメッセージ本文
+                  example: Raskって誰？
       responses:
         "200":
           description: |+
