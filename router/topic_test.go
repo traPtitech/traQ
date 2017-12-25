@@ -70,7 +70,7 @@ func TestPutTopic(t *testing.T) {
 		Text string `json:"text"`
 	}
 
-	requestBody := putTopic{
+	requestBody := &putTopic{
 		Text: topicText,
 	}
 	body, err := json.Marshal(requestBody)
@@ -94,8 +94,8 @@ func TestPutTopic(t *testing.T) {
 	check.Exists(testUserID)
 	t.Log(check)
 
-	responseBody := TopicForResponse{}
-	if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
+	responseBody := &TopicForResponse{}
+	if err := json.Unmarshal(rec.Body.Bytes(), responseBody); err != nil {
 		t.Fatalf("Error while json unmarshal: %v", err)
 	}
 
