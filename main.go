@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -48,19 +47,14 @@ func main() {
 		panic(err)
 	}
 
-	e := echo.New()
 	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14)
-
 	if err != nil {
 		panic(err)
 	}
+
+	e := echo.New()
 	e.Use(session.Middleware(store))
 	e.HTTPErrorHandler = router.CustomHTTPErrorHandler
-
-	//routing
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	})
 
 	// Tag: channel
 	e.GET("/channels", router.GetChannels)
@@ -69,7 +63,7 @@ func main() {
 	e.PUT("/channels/:channelID", router.PutChannelsByChannelID)
 	e.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID)
 
-	//Tag:messages
+	// Tag: messages
 	e.GET("/messages/:messageID", router.GetMessageByID)
 	e.PUT("/messages/:messageID", router.PutMessageByID)
 	e.DELETE("/messages/:messageID", router.DeleteMessageByID)
@@ -77,5 +71,9 @@ func main() {
 	e.GET("/channels/:channelID/messages", router.GetMessagesByChannelID)
 	e.POST("/channels/:channelID/messages", router.PostMessage)
 
-	e.Logger.Fatal(e.Start(":9000"))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+	e.Logger.Fatal(e.Start(":" + port))
 }

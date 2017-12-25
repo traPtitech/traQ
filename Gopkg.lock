@@ -28,8 +28,8 @@
 [[projects]]
   name = "github.com/go-xorm/xorm"
   packages = ["."]
-  revision = "d7f04c3cecff8d8c9321b2c39940e1992ce9f01a"
-  version = "v0.6.3"
+  revision = "1933dd69e294c0a26c0266637067f24dbb25770c"
+  version = "v0.6.4"
 
 [[projects]]
   name = "github.com/gorilla/context"
@@ -52,8 +52,8 @@
 [[projects]]
   name = "github.com/labstack/echo"
   packages = [".","middleware"]
-  revision = "0473c51f1dbd83487effce00702571d19033a6e5"
-  version = "3.2.5"
+  revision = "b338075a0fc6e1a0683dbf03d09b4957a289e26f"
+  version = "3.2.6"
 
 [[projects]]
   name = "github.com/labstack/echo-contrib"
@@ -107,17 +107,17 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["acme","acme/autocert"]
-  revision = "94eea52f7b742c7cbe0b03b22f0c4c8631ece122"
+  revision = "d585fd2cc9195196078f516b69daff6744ef5e84"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "8b4580aae2a0dd0c231a45d3ccb8434ff533b840"
+  revision = "83801418e1b59fb1880e363299581ee543af32ca"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2e5981789186c737c5f523a16598d27a506b8ca9d3ac3f0b11afeca6d5c0c981"
+  inputs-digest = "d0167a6bacaae2c45f11ac44699353196c2a562e1a8b2a166d27d3bbbab08285"
   solver-name = "gps-cdcl"
   solver-version = 1
