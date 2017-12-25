@@ -2,12 +2,13 @@ package model
 
 import (
 	"crypto/rand"
-	"encoding/base64"
+	"crypto/sha512"
+	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
 	"io"
 
-	"golang.org/x/crypto/scrypt"
+	"golang.org/x/crypto/pbkdf2"
 )
 
 // User userの構造体
@@ -50,7 +51,7 @@ func (user *User) Create() error {
 		return fmt.Errorf("icon is empty")
 	}
 
-	user.ID = createUUID()
+	user.ID = CreateUUID()
 	user.Status = 1 // TODO: 状態確認
 
 	if _, err := db.Insert(user); err != nil {
@@ -62,19 +63,13 @@ func (user *User) Create() error {
 func (user *User) SetPassword(pass string) error {
 	b := make([]byte, 14)
 
-	_, err := io.ReadFull(rand.Reader, b)
-	if err != nil {
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
 		return fmt.Errorf("an error occurred while generating salt: %v", err)
 	}
 
-	user.Salt = base64.StdEncoding.EncodeToString(b)
+	user.Salt = hex.EncodeToString(b)
+	user.Password = hashPassword(pass, user.Salt)
 
-	converted, err := scrypt.Key([]byte(pass), []byte(salt), 16384, 8, 1, 64)
-	if err != nil {
-		return fmt.Errorf("an error occurred while generating hashed password: %v", err)
-	}
-
-	user.Password = hex.EncodeToString(converted[:])
 	return nil
 }
 
@@ -83,23 +78,23 @@ func (user *User) Authorization(pass string) (bool, error) {
 		return false, fmt.Errorf("name is empty")
 	}
 
-	has, err := db.Get(user)
+	has, err := db.Where("name = ?", user.Name).Get(user)
 	if err != nil {
 		return false, fmt.Errorf("Failed to find message: %v", err)
 	}
 	if !has {
-		return false, fmt.Errorf("user is not found")
+		user.Salt = "popopopopopo"
 	}
 
-	converted, err := scrypt.Key([]byte(pass), []byte(user.Salt), 16384, 8, 1, 64)
-	if err != nil {
-		return false, fmt.Errorf("an error occurred while checking hashed password: %v", err)
-	}
+	hashedPassword := hashPassword(pass, user.Salt)
 
-	hashedPassword := hex.EncodeToString(converted[:])
-
-	if hashedPassword != user.Password {
-		return false, fmt.Errorf("password is wrong")
+	if subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(user.Password)) != 1 {
+		return false, fmt.Errorf("password or id is wrong")
 	}
 	return true, nil
+}
+
+func hashPassword(pass, salt string) string {
+	converted := pbkdf2.Key([]byte(pass), []byte(salt), 65536, 64, sha512.New)
+	return hex.EncodeToString(converted[:])
 }

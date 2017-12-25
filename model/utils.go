@@ -28,6 +28,10 @@ func SyncSchema() error {
 	if err := db.Sync(&Message{}); err != nil {
 		return fmt.Errorf("Failed to sync Messages Table: %v", err)
 	}
+
+	if err := db.Sync(&User{}); err != nil {
+		return fmt.Errorf("Failed to sync Users Table: %v", err)
+	}
 	return nil
 }
 
