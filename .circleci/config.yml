@@ -41,11 +41,15 @@ jobs:
       - run:
           name: go test
           when: always
-          command: go test ./...
+          command: ./.circleci/go.test.sh
       - run:
           name: go build
           when: always
           command: go build -o traq
+
+      - run:
+          name: Upload coverage data
+          command: bash <(curl -s https://codecov.io/bash)
 
       - store_artifacts:
           path: /go/src/github.com/traPtitech/traQ/traq
