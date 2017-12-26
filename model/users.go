@@ -26,7 +26,7 @@ type User struct {
 
 // TableName dbの名前を指定する
 func (user *User) TableName() string {
-	return "Users"
+	return "users"
 }
 
 // Create userをDBに入れる
@@ -60,6 +60,7 @@ func (user *User) Create() error {
 	return nil
 }
 
+// SetPassword パスワードの設定を行う Createより前に実行する
 func (user *User) SetPassword(pass string) error {
 	b := make([]byte, 14)
 
@@ -73,6 +74,7 @@ func (user *User) SetPassword(pass string) error {
 	return nil
 }
 
+// Authorization 認証を行う
 func (user *User) Authorization(pass string) (bool, error) {
 	if user.Name == "" {
 		return false, fmt.Errorf("name is empty")
