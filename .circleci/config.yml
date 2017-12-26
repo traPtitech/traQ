@@ -15,7 +15,7 @@ jobs:
       - checkout
 
       - run:
-          name: Setup project
+          name: Install tools/packages
           command: make init
 
       - run:

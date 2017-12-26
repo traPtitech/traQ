@@ -1,0 +1,28 @@
+#!/bin/sh
+
+mkdir -p "$1" "$2"
+build=$(cd "$1/" && pwd)
+cache=$(cd "$2/" && pwd)
+
+echo "-----> Installing go"
+cd $cache
+wget -qO go.tar.gz https://redirector.gvt1.com/edgedl/go/go1.9.2.linux-amd64.tar.gz
+tar zxf go.tar.gz
+
+echo "-----> Setup environment"
+export GOROOT=$cache/go
+export GOPATH=$cache/gopath
+export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+
+echo "-----> Setup GOPATH"
+proj=$GOPATH/src/github.com/traPtitech
+repo=$proj/traQ
+mkdir -p $proj
+ln -sf $build $repo
+
+echo "-----> Setup project"
+cd $repo
+make init
+
+echo "-----> Build project"
+go build -v -o traq
