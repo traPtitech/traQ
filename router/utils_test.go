@@ -81,7 +81,7 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
 	rec := httptest.NewRecorder()
 	sess, err := store.New(req, "sessions")
 
-	sess.Values["userId"] = testUserID
+	sess.Values["userID"] = testUserID
 	if err := sess.Save(req, rec); err != nil {
 		t.Fatal(err)
 	}

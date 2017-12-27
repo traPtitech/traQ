@@ -24,10 +24,7 @@ func PostLogin(c echo.Context) error {
 	}
 	ok, err := user.Authorization(requestBody.Pass)
 	if !ok {
-		if err.Message == "password or id is wrong" {
-			return echo.NewHTTPError(http.StatusForbidden, err.Message)
-		}
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Message)
+		return echo.NewHTTPError(http.StatusForbidden, err)
 	}
 
 	sess, err := session.Get("sessions", c)
@@ -42,12 +39,17 @@ func PostLogin(c echo.Context) error {
 
 	sess.Values["userID"] = user.ID
 	sess.Save(c.Request(), c.Response())
-	return c.NewContext(http.StatusOK)
+	return c.NoContent(http.StatusOK)
 }
 
 // PostLogout Post /logout のハンドラ
 func PostLogout(c echo.Context) error {
+	sess, err := session.Get("sessions", c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "an error occurrerd while getting session")
+	}
+
 	sess.Values["userID"] = ""
 	sess.Save(c.Request(), c.Response())
-	return c.NewContext(http.StatusOK)
+	return c.NoContent(http.StatusOK)
 }

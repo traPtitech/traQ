@@ -64,6 +64,10 @@ func main() {
 		return c.Redirect(http.StatusFound, c.Path()+"/")
 	})
 
+	// login/logout
+	e.POST("/login", router.PostLogin)
+	e.POST("/logout", router.PostLogout)
+
 	// Tag: channel
 	e.GET("/channels", router.GetChannels)
 	e.POST("/channels", router.PostChannels)
