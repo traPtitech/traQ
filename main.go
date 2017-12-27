@@ -48,7 +48,7 @@ func main() {
 		panic(err)
 	}
 
-	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14)
+	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
 	if err != nil {
 		panic(err)
 	}

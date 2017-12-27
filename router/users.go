@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -38,6 +39,7 @@ func PostLogin(c echo.Context) error {
 	}
 
 	sess.Values["userID"] = user.ID
+	fmt.Println(sess)
 	sess.Save(c.Request(), c.Response())
 	return c.NoContent(http.StatusOK)
 }
@@ -48,8 +50,9 @@ func PostLogout(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "an error occurrerd while getting session")
 	}
+	fmt.Println(sess)
 
-	sess.Values["userID"] = ""
+	sess.Values["userID"] = nil
 	sess.Save(c.Request(), c.Response())
 	return c.NoContent(http.StatusOK)
 }

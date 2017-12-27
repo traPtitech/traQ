@@ -228,7 +228,6 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 	}
 	channel.UpdaterID = userID
 	channel.IsDeleted = true
-	fmt.Println(channel)
 
 	if err := channel.Update(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "An error occuerred when channel model update.")
