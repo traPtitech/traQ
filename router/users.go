@@ -50,7 +50,6 @@ func PostLogout(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "an error occurrerd while getting session")
 	}
-	fmt.Println(sess)
 
 	sess.Values["userID"] = nil
 	sess.Save(c.Request(), c.Response())
