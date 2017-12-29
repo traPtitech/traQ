@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/sessions"
@@ -39,7 +38,6 @@ func PostLogin(c echo.Context) error {
 	}
 
 	sess.Values["userID"] = user.ID
-	fmt.Println(sess)
 	sess.Save(c.Request(), c.Response())
 	return c.NoContent(http.StatusOK)
 }
