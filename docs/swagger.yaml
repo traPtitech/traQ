@@ -8,42 +8,6 @@ servers:
   - url: /api/1.0
 
 paths:
-  /login:
-    post:
-      tags:
-        - authorization
-      description: ログインを行います。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - name
-                - pass
-              properties:
-                name:
-                  type: string
-                  description: traQID
-                pass:
-                  type: string
-                  description: password
-      responses:
-        "200":
-          description: |+
-            正常にログインできました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
-        "403":
-          description: |+
-            ログインに失敗しました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
-
   /logout:
     post:
       tags:
