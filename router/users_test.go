@@ -41,6 +41,7 @@ func TestPostLogin(t *testing.T) {
 	}
 
 	req2 := httptest.NewRequest("POST", "http://test", bytes.NewReader(body2))
+	req2.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec2 := httptest.NewRecorder()
 	c := e.NewContext(req2, rec2)
 	err2 := mw(PostLogin)(c).(*echo.HTTPError)

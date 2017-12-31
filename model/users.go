@@ -62,41 +62,56 @@ func (user *User) Create() error {
 
 // SetPassword パスワードの設定を行う Createより前に実行する
 func (user *User) SetPassword(pass string) error {
-	b := make([]byte, 14)
-
-	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+	salt, err := generateSalt()
+	if err != nil {
 		return fmt.Errorf("an error occurred while generating salt: %v", err)
 	}
-
-	user.Salt = hex.EncodeToString(b)
+	user.Salt = salt
 	user.Password = hashPassword(pass, user.Salt)
 
 	return nil
 }
 
+func (user *User) Exists() (bool, error) {
+	return db.Get(user)
+}
+
 // Authorization 認証を行う
-func (user *User) Authorization(pass string) (bool, error) {
+func (user *User) Authorization(pass string) error {
 	if user.Name == "" {
-		return false, fmt.Errorf("name is empty")
+		return fmt.Errorf("name is empty")
 	}
 
-	has, err := db.Where("name = ?", user.Name).Get(user)
+	has, err := db.Get(user)
 	if err != nil {
-		return false, fmt.Errorf("Failed to find message: %v", err)
+		return fmt.Errorf("Failed to find message: %v", err)
 	}
 	if !has {
-		user.Salt = "popopopopopo"
+		user.Salt, err = generateSalt()
+		if err != nil {
+			return fmt.Errorf("an error occurred while generating salt: %v", err)
+		}
 	}
 
 	hashedPassword := hashPassword(pass, user.Salt)
 
 	if subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(user.Password)) != 1 {
-		return false, fmt.Errorf("password or id is wrong")
+		return fmt.Errorf("password or id is wrong")
 	}
-	return true, nil
+	return nil
 }
 
 func hashPassword(pass, salt string) string {
 	converted := pbkdf2.Key([]byte(pass), []byte(salt), 65536, 64, sha512.New)
 	return hex.EncodeToString(converted[:])
+}
+
+func generateSalt() (string, error) {
+	b := make([]byte, 14)
+
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(b), nil
 }
