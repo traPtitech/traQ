@@ -48,7 +48,7 @@ func main() {
 		panic(err)
 	}
 
-	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14)
+	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
 	if err != nil {
 		panic(err)
 	}
@@ -63,6 +63,10 @@ func main() {
 	e.Any("/api", func(c echo.Context) error {
 		return c.Redirect(http.StatusFound, c.Path()+"/")
 	})
+
+	// login/logout
+	e.POST("/login", router.PostLogin)
+	e.POST("/logout", router.PostLogout)
 
 	// Tag: channel
 	e.GET("/channels", router.GetChannels)

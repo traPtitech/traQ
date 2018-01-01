@@ -19,7 +19,7 @@ type Message struct {
 
 //TableName :DBの名前を指定するメソッド
 func (message *Message) TableName() string {
-	return "Messages"
+	return "messages"
 }
 
 // Create method inserts message object to database.

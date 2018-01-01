@@ -38,10 +38,10 @@ func getUserID(c echo.Context) (string, error) {
 	}
 
 	var userID string
-	if sess.Values["userId"] != nil {
-		userID = sess.Values["userId"].(string)
+	if sess.Values["userID"] != nil {
+		userID = sess.Values["userID"].(string)
 	} else {
-		c.Echo().Logger.Errorf("This session doesn't have a userId")
+		c.Echo().Logger.Errorf("This session doesn't have a userID")
 		return "", echo.NewHTTPError(http.StatusForbidden, "Your userID doesn't exist")
 	}
 	return userID, nil

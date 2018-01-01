@@ -7,7 +7,9 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-var db *xorm.Engine
+var (
+	db *xorm.Engine
+)
 
 // SetXORMEngine DBにxormのエンジンを設定する
 func SetXORMEngine(engine *xorm.Engine) {
@@ -28,6 +30,25 @@ func SyncSchema() error {
 	if err := db.Sync(&Message{}); err != nil {
 		return fmt.Errorf("Failed to sync Messages Table: %v", err)
 	}
+
+	if err := db.Sync(&User{}); err != nil {
+		return fmt.Errorf("Failed to sync Users Table: %v", err)
+	}
+
+	traq := &User{
+		Name:  "traq",
+		Email: "trap.titech@gmail.com",
+		Icon:  "Empty",
+	}
+	ok, err := traq.Exists()
+	if err != nil {
+		return err
+	}
+	if !ok {
+		traq.SetPassword("traq")
+		traq.Create()
+	}
+
 	return nil
 }
 
