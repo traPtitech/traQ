@@ -60,6 +60,21 @@ func (user *User) Create() error {
 	return nil
 }
 
+// GetUser IDでユーザーの構造体を取得する
+func GetUser(userID string) (*User, error) {
+	var user = &User{}
+	has, err := db.ID(userID).Get(user)
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to find user: %v", err)
+	}
+	if !has {
+		return nil, fmt.Errorf("This userID doesn't exist: userID = %v", userID)
+	}
+
+	return user, nil
+}
+
 // SetPassword パスワードの設定を行う Createより前に実行する
 func (user *User) SetPassword(pass string) error {
 	salt, err := generateSalt()
