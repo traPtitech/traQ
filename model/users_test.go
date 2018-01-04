@@ -67,8 +67,7 @@ func TestAuthorization(t *testing.T) {
 		Name: "testUser",
 	}
 
-	err = checkUser.Authorization(password)
-	if err != nil {
+	if err := checkUser.Authorization(password); err != nil {
 		t.Fatalf("login failed: %v", err)
 	}
 

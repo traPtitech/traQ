@@ -29,12 +29,8 @@ type requestCount struct {
 
 // GetMessageByID : /messages/{messageID}のGETメソッド
 func GetMessageByID(c echo.Context) error {
-	if _, err := getUserID(c); err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "your id is not found")
-	}
-
-	id := c.Param("messageID") // TODO: idの検証
-	raw, err := model.GetMessage(id)
+	ID := c.Param("messageID") // TODO: idの検証
+	raw, err := model.GetMessage(ID)
 	if err != nil {
 		c.Echo().Logger.Errorf("model.Getmessage returned an error : %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "Message is not found")
@@ -45,10 +41,6 @@ func GetMessageByID(c echo.Context) error {
 
 // GetMessagesByChannelID : /channels/{channelID}/messagesのGETメソッド
 func GetMessagesByChannelID(c echo.Context) error {
-	_, err := getUserID(c)
-	if err != nil {
-		return err
-	}
 
 	post := &requestCount{}
 	if err := c.Bind(post); err != nil {
@@ -75,11 +67,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 
 // PostMessage : /channels/{channelID}/messagesのPOSTメソッド
 func PostMessage(c echo.Context) error {
-	userID, err := getUserID(c)
-	if err != nil {
-		return err
-	}
-
+	userID := c.Get("user").(*model.User).ID
 	channelID := c.Param("ChannelId") //TODO: channelIDの検証
 
 	post := &requestMessage{}
@@ -102,11 +90,7 @@ func PostMessage(c echo.Context) error {
 
 // PutMessageByID : /messages/{messageID}のPUTメソッド.メッセージの編集
 func PutMessageByID(c echo.Context) error {
-	userID, err := getUserID(c)
-	if err != nil {
-		return err
-	}
-
+	userID := c.Get("user").(*model.User).ID
 	messageID := c.Param("messageID") //TODO: messageIDの検証
 
 	req := &requestMessage{}
@@ -133,11 +117,6 @@ func PutMessageByID(c echo.Context) error {
 
 // DeleteMessageByID : /message/{messageID}のDELETEメソッド.
 func DeleteMessageByID(c echo.Context) error {
-	if _, err := getUserID(c); err != nil {
-		return err
-	}
-	// TODO:Userが権限を持っているかを確認
-
 	messageID := c.Param("messageID")
 
 	message, err := model.GetMessage(messageID)

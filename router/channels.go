@@ -27,10 +27,7 @@ type PostChannel struct {
 
 // GetChannels GET /channels のハンドラ
 func GetChannels(c echo.Context) error {
-	userID, err := getUserID(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("An error occuerred while getUserID: %v", err))
-	}
+	userID := c.Get("user").(*model.User).ID
 
 	channelList, err := model.GetChannels(userID)
 	if err != nil {
@@ -60,10 +57,7 @@ func GetChannels(c echo.Context) error {
 // PostChannels POST /channels のハンドラ
 func PostChannels(c echo.Context) error {
 	// TODO: 同名・同階層のチャンネルのチェック
-	userID, err := getUserID(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("An error occuerred while getUserID: %v", err))
-	}
+	userID := c.Get("user").(*model.User).ID
 
 	var requestBody PostChannel
 	c.Bind(&requestBody)
@@ -123,11 +117,7 @@ func PostChannels(c echo.Context) error {
 
 // GetChannelsByChannelID GET /channels/{channelID} のハンドラ
 func GetChannelsByChannelID(c echo.Context) error {
-	userID, err := getUserID(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("An error occuerred while getUserID: %v", err))
-	}
-
+	userID := c.Get("user").(*model.User).ID
 	channelID := c.Param("channelId")
 
 	channel := &model.Channel{ID: channelID}
@@ -158,10 +148,7 @@ func GetChannelsByChannelID(c echo.Context) error {
 // PutChannelsByChannelID PUT /channels/{channelID} のハンドラ
 func PutChannelsByChannelID(c echo.Context) error {
 	// CHECK: 権限周り
-	userID, err := getUserID(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("An error occuerred while getUserID: %v", err))
-	}
+	userID := c.Get("user").(*model.User).ID
 
 	var requestBody PostChannel
 	c.Bind(&requestBody)
@@ -202,10 +189,7 @@ func PutChannelsByChannelID(c echo.Context) error {
 // DeleteChannelsByChannelID DELETE /channels/{channelID}のハンドラ
 func DeleteChannelsByChannelID(c echo.Context) error {
 	// CHECK: 権限周り
-	userID, err := getUserID(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("An error occuerred while getUserID: %v", err))
-	}
+	userID := c.Get("user").(*model.User).ID
 
 	type confirm struct {
 		Confirm bool `json:"confirm"`

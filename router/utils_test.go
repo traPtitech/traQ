@@ -17,7 +17,11 @@ import (
 )
 
 var (
-	testUserID    = ""
+	testUser = &model.User{
+		Name:  "testUser",
+		Email: "example@trap.jp",
+		Icon:  "empty",
+	}
 	testChannelID = ""
 	engine        *xorm.Engine
 )
@@ -63,9 +67,6 @@ func TestMain(m *testing.M) {
 }
 
 func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
-	testChannelID = model.CreateUUID()
-	testUserID = model.CreateUUID()
-
 	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users")
 	if err := model.SyncSchema(); err != nil {
 		t.Fatalf("Failed to sync schema: %v", err)
@@ -73,22 +74,55 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
 	e := echo.New()
 
 	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
-
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	if err := testUser.SetPassword("test"); err != nil {
+		t.Fatalf("an error occurred while setting password: %v", err)
+	}
+	if err := testUser.Create(); err != nil {
+		t.Fatalf("an error occurred while creating user: %v", err)
+	}
+	testChannelID = model.CreateUUID()
+
 	req := httptest.NewRequest(echo.GET, "/", nil)
 	rec := httptest.NewRecorder()
 	sess, err := store.New(req, "sessions")
 
-	sess.Values["userID"] = testUserID
+	sess.Values["userID"] = testUser.ID
 	if err := sess.Save(req, rec); err != nil {
 		t.Fatal(err)
 	}
 	cookie := parseCookies(rec.Header().Get("Set-Cookie"))["sessions"]
-	mw := session.Middleware(store)
+	mw := func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			return session.Middleware(store)(GetUserInfo(next))(c)
+		}
 
+	}
 	return e, cookie, mw
+}
+
+func beforeLoginTest(t *testing.T) (*echo.Echo, echo.MiddlewareFunc) {
+	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users")
+	if err := model.SyncSchema(); err != nil {
+		t.Fatalf("Failed to sync schema: %v", err)
+	}
+	e := echo.New()
+
+	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(echo.GET, "/", nil)
+	if _, err := store.New(req, "sessions"); err != nil {
+		t.Fatal(err)
+	}
+
+	mw := session.Middleware(store)
+	return e, mw
 }
 
 func parseCookies(value string) map[string]*http.Cookie {
@@ -110,7 +144,7 @@ func makeChannel(userID, name string, isPublic bool) (*model.Channel, error) {
 
 func makeMessage() *model.Message {
 	message := &model.Message{
-		UserID:    testUserID,
+		UserID:    testUser.ID,
 		ChannelID: testChannelID,
 		Text:      "popopo",
 	}
@@ -158,5 +192,4 @@ func getContext(e *echo.Echo, t *testing.T, cookie *http.Cookie, req *http.Reque
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	return c, rec
-
 }

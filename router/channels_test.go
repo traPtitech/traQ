@@ -17,7 +17,7 @@ func TestGetChannels(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 
 	for i := 0; i < 5; i++ {
-		makeChannel(testUserID, "Channel-"+strconv.Itoa(i), true)
+		makeChannel(testUser.ID, "Channel-"+strconv.Itoa(i), true)
 	}
 
 	rec := request(e, t, mw(GetChannels), cookie, nil)
@@ -50,7 +50,7 @@ func TestPostChannels(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(PostChannels), cookie, req)
 
-	channelList, err := model.GetChannels(testUserID)
+	channelList, err := model.GetChannels(testUser.ID)
 
 	if err != nil {
 		t.Fatal(err)
@@ -70,7 +70,7 @@ func TestPostChannels(t *testing.T) {
 		Name:        "test",
 		Parent:      "",
 		Member: []string{
-			testUserID,
+			testUser.ID,
 			model.CreateUUID(),
 		},
 	}
@@ -80,7 +80,7 @@ func TestPostChannels(t *testing.T) {
 	}
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	request(e, t, mw(PostChannels), cookie, req)
-	channelList, err = model.GetChannels(testUserID)
+	channelList, err = model.GetChannels(testUser.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +103,7 @@ func TestPostChannels(t *testing.T) {
 func TestGetChannelsByChannelID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 
-	channel, _ := makeChannel(testUserID, "test", true)
+	channel, _ := makeChannel(testUser.ID, "test", true)
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/:channelID")
@@ -137,7 +137,7 @@ func TestPutChannelsByChannelID(t *testing.T) {
 		t.Fatal(rec.Body.String())
 	}
 
-	channel, err := model.GetChannelByID(testUserID, channel.ID)
+	channel, err := model.GetChannelByID(testUser.ID, channel.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,8 +146,8 @@ func TestPutChannelsByChannelID(t *testing.T) {
 		t.Fatalf("Channel name wrong: want %s, actual %s", "renamed", channel.Name)
 	}
 
-	if channel.UpdaterID != testUserID {
-		t.Fatalf("Channel UpdaterId wrong: want %s, actual %s", testUserID, channel.UpdaterID)
+	if channel.UpdaterID != testUser.ID {
+		t.Fatalf("Channel UpdaterId wrong: want %s, actual %s", testUser.ID, channel.UpdaterID)
 	}
 
 }
@@ -164,7 +164,7 @@ func TestDeleteChannelsByChannelID(t *testing.T) {
 	c.SetParamValues(channel.ID)
 	requestWithContext(t, mw(DeleteChannelsByChannelID), c)
 
-	channel, err := model.GetChannelByID(testUserID, channel.ID)
+	channel, err := model.GetChannelByID(testUser.ID, channel.ID)
 
 	if err == nil {
 		t.Fatal("The channel that was supposed to be deleted is displayed to the user")
@@ -172,7 +172,7 @@ func TestDeleteChannelsByChannelID(t *testing.T) {
 
 	// ""で削除されていても取得できるようにするそれでちゃんと削除されているか確認する
 
-	channelList, err := model.GetChannels(testUserID)
+	channelList, err := model.GetChannels(testUser.ID)
 	if len(channelList) != 0 {
 		t.Fatal("Channel not deleted")
 	}
