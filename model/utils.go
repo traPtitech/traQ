@@ -19,11 +19,11 @@ func SetXORMEngine(engine *xorm.Engine) {
 // SyncSchema : テーブルと構造体を同期させる関数
 // モデルを追加したら各自ここに追加しなければいけない
 func SyncSchema() error {
-	if err := db.Sync(new(Channel)); err != nil {
+	if err := db.Sync(&Channel{}); err != nil {
 		return fmt.Errorf("Failed to sync Channels: %v", err)
 	}
 
-	if err := db.Sync(new(UsersPrivateChannel)); err != nil {
+	if err := db.Sync(&UsersPrivateChannel{}); err != nil {
 		return fmt.Errorf("Failed to sync UsersPrivateChannels: %v", err)
 	}
 
