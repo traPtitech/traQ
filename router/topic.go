@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -72,7 +71,6 @@ func PutTopic(c echo.Context) error {
 	channel.Topic = requestBody.Text
 	channel.UpdaterID = userID
 
-	fmt.Println(userID)
 	if err := channel.Update(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "An error occuerred when channel model update.")
 	}

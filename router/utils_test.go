@@ -43,7 +43,6 @@ func TestMain(m *testing.M) {
 	var err error
 	engine, err = xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=true", user, pass, host, dbname))
 	if err != nil {
-		fmt.Println(err)
 		panic(err)
 	}
 	defer engine.Close()
@@ -55,7 +54,6 @@ func TestMain(m *testing.M) {
 
 	err = model.SyncSchema()
 	if err != nil {
-		fmt.Println(err)
 		panic(err)
 	}
 	code := m.Run()
