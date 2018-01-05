@@ -9,12 +9,12 @@ import (
 
 //MessageForResponse :クライアントに返す形のメッセージオブジェクト
 type MessageForResponse struct {
-	MessageID       string
-	UserID          string
-	ParentChannelID string
-	Content         string
-	Datetime        string
-	Pin             bool
+	MessageID       string `json:"messageId"`
+	UserID          string `json:"userId"`
+	ParentChannelID string `json:"parentChannelId"`
+	Content         string `json:"content"`
+	Datetime        string `json:"datetime"`
+	Pin             bool   `json:"pin"`
 	//StampList /*stampのオブジェクト*/
 }
 

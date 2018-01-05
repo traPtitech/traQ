@@ -10,11 +10,11 @@ import (
 
 // ChannelForResponse レスポンス用のチャンネル構造体
 type ChannelForResponse struct {
-	ChannelID  string
-	Name       string
-	Parent     string
-	Children   []string
-	Visibility bool
+	ChannelID  string   `json:"channelId"`
+	Name       string   `json:"name"`
+	Parent     string   `json:"parent"`
+	Children   []string `json:"children"`
+	Visibility bool     `json:"visibility"`
 }
 
 // PostChannel リクエストボディ用構造体
