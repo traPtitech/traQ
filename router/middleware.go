@@ -14,7 +14,7 @@ func GetUserInfo(next echo.HandlerFunc) echo.HandlerFunc {
 		sess, err := session.Get("sessions", c)
 		if err != nil {
 			c.Echo().Logger.Errorf("Failed to get a session: %v", err)
-			return echo.NewHTTPError(http.StatusForbidden, "your ID isn't found")
+			return echo.NewHTTPError(http.StatusForbidden, "Your userID isn't found")
 		}
 		var userID string
 		if sess.Values["userID"] != nil {
@@ -26,7 +26,7 @@ func GetUserInfo(next echo.HandlerFunc) echo.HandlerFunc {
 
 		user, err := model.GetUser(userID)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "cannnot get your user infomation")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Cannnot get your user infomation")
 		}
 		c.Set("user", user)
 		return next(c)
