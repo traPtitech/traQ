@@ -69,19 +69,19 @@ func main() {
 	e.POST("/logout", router.PostLogout)
 
 	// Tag: channel
-	e.GET("/channels", router.GetChannels)
-	e.POST("/channels", router.PostChannels)
-	e.GET("/channels/:channelID", router.GetChannelsByChannelID)
-	e.PUT("/channels/:channelID", router.PutChannelsByChannelID)
-	e.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID)
+	e.GET("/channels", router.GetChannels, router.GetUserInfo)
+	e.POST("/channels", router.PostChannels, router.GetUserInfo)
+	e.GET("/channels/:channelID", router.GetChannelsByChannelID, router.GetUserInfo)
+	e.PUT("/channels/:channelID", router.PutChannelsByChannelID, router.GetUserInfo)
+	e.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID, router.GetUserInfo)
 
 	// Tag: messages
-	e.GET("/messages/:messageID", router.GetMessageByID)
-	e.PUT("/messages/:messageID", router.PutMessageByID)
-	e.DELETE("/messages/:messageID", router.DeleteMessageByID)
+	e.GET("/messages/:messageID", router.GetMessageByID, router.GetUserInfo)
+	e.PUT("/messages/:messageID", router.PutMessageByID, router.GetUserInfo)
+	e.DELETE("/messages/:messageID", router.DeleteMessageByID, router.GetUserInfo)
 
-	e.GET("/channels/:channelID/messages", router.GetMessagesByChannelID)
-	e.POST("/channels/:channelID/messages", router.PostMessage)
+	e.GET("/channels/:channelID/messages", router.GetMessagesByChannelID, router.GetUserInfo)
+	e.POST("/channels/:channelID/messages", router.PostMessage, router.GetUserInfo)
 
 	port := os.Getenv("PORT")
 	if port == "" {

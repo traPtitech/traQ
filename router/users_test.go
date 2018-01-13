@@ -11,7 +11,7 @@ import (
 )
 
 func TestPostLogin(t *testing.T) {
-	e, _, mw := beforeTest(t)
+	e, mw := beforeLoginTest(t)
 	createUser(t)
 
 	type requestJSON struct {
@@ -19,7 +19,7 @@ func TestPostLogin(t *testing.T) {
 		Pass string `json:"pass"`
 	}
 
-	requestBody := &requestJSON{"test", "test"}
+	requestBody := &requestJSON{"PostLogin", "test"}
 
 	body, err := json.Marshal(requestBody)
 	if err != nil {
@@ -33,7 +33,7 @@ func TestPostLogin(t *testing.T) {
 		t.Errorf("Status code wrong: want 200, actual %d", rec.Code)
 	}
 
-	requestBody2 := &requestJSON{"test", "wrong_password"}
+	requestBody2 := &requestJSON{"PostLogin", "wrong_password"}
 
 	body2, err := json.Marshal(requestBody2)
 	if err != nil {
@@ -57,7 +57,7 @@ func TestPostLogin(t *testing.T) {
 
 func createUser(t *testing.T) {
 	user := &model.User{
-		Name:  "test",
+		Name:  "PostLogin",
 		Email: "example@trap.jp",
 		Icon:  "empty",
 	}

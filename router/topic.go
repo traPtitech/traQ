@@ -16,11 +16,7 @@ type TopicForResponse struct {
 
 // GetTopic GET /channels/{channelID}/topic
 func GetTopic(c echo.Context) error {
-	userID, err := getUserID(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "your id is not found")
-	}
-
+	userID := c.Get("user").(*model.User).ID
 	channelID := c.Param("channelID")
 	channel := &model.Channel{
 		ID: channelID,
@@ -44,10 +40,7 @@ func GetTopic(c echo.Context) error {
 
 // PutTopic PUT /channels/{channelID}/topic
 func PutTopic(c echo.Context) error {
-	userID, err := getUserID(c)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "your id is not found")
-	}
+	userID := c.Get("user").(*model.User).ID
 
 	type putTopic struct {
 		Text string `json:"text"`

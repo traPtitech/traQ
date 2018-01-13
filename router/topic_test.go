@@ -15,7 +15,7 @@ func TestGetTopic(t *testing.T) {
 	topicText := "Topic test"
 	e, cookie, mw := beforeTest(t)
 
-	channel, err := makeChannel(testUserID, "putTopicTest", true)
+	channel, err := makeChannel(testUser.ID, "putTopicTest", true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +91,7 @@ func TestPutTopic(t *testing.T) {
 	check := &model.Channel{
 		ID: channel.ID,
 	}
-	check.Exists(testUserID)
+	check.Exists(testUser.ID)
 	t.Log(check)
 
 	responseBody := &TopicForResponse{}
@@ -115,7 +115,7 @@ func TestPutTopic(t *testing.T) {
 		t.Fatalf("Topic text is wrong, want %s, actual %s", topicText, channel.Topic)
 	}
 
-	if check.UpdaterID != testUserID {
-		t.Fatalf("UpdaterID is wrong, want %s, actual %s", testUserID, channel.UpdaterID)
+	if check.UpdaterID != testUser.ID {
+		t.Fatalf("UpdaterID is wrong, want %s, actual %s", testUser.ID, channel.UpdaterID)
 	}
 }
