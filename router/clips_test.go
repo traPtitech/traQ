@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/traPtitech/traQ/model"
 )
 
 func TestGetClips(t *testing.T) {
@@ -109,13 +107,4 @@ func TestDeleteClips(t *testing.T) {
 	if len(responseBody) != 0 {
 		t.Fatalf("Response messages length wrong: want 1, actual %d", len(responseBody))
 	}
-}
-
-func clipMessage(userID, messageID string) error {
-	clip := &model.Clip{
-		UserID:    userID,
-		MessageID: messageID,
-	}
-
-	return clip.Create()
 }

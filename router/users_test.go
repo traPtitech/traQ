@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/labstack/echo"
-	"github.com/traPtitech/traQ/model"
 )
 
 func TestPostLogin(t *testing.T) {
@@ -52,21 +51,5 @@ func TestPostLogin(t *testing.T) {
 
 	if err2.Code != 403 {
 		t.Errorf("Status code wrong: want 403, actual %d", err2.Code)
-	}
-}
-
-func createUser(t *testing.T) {
-	user := &model.User{
-		Name:  "PostLogin",
-		Email: "example@trap.jp",
-		Icon:  "empty",
-	}
-	err := user.SetPassword("test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = user.Create()
-	if err != nil {
-		t.Fatal(err)
 	}
 }

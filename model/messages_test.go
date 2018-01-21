@@ -7,7 +7,7 @@ import (
 func TestCreateMessage(t *testing.T) {
 	beforeTest(t)
 
-	message := generateMessage()
+	message := *makeMessage()
 	copy := message
 	if err := message.Create(); err != nil {
 		t.Fatalf("Create method returns an error: %v", err)
@@ -39,7 +39,7 @@ func TestCreateMessage(t *testing.T) {
 func TestUpdateMessage(t *testing.T) {
 	beforeTest(t)
 
-	message := generateMessage()
+	message := makeMessage()
 	if err := message.Create(); err != nil {
 		t.Fatalf("Create method returns an error: %v", err)
 	}
@@ -65,7 +65,7 @@ func TestGetMessagesFromChannel(t *testing.T) {
 	beforeTest(t)
 
 	channelID := CreateUUID()
-	messages := generateChannelMessages(channelID)
+	messages := makeChannelMessages(channelID)
 
 	for i := 0; i < 10; i++ {
 		if err := messages[i].Create(); err != nil {
@@ -106,7 +106,7 @@ func TestGetMessagesFromChannel(t *testing.T) {
 func TestGetMessage(t *testing.T) {
 	beforeTest(t)
 
-	message := generateMessage()
+	message := makeMessage()
 	if err := message.Create(); err != nil {
 		t.Fatalf("Create method returns an error: %v", err)
 	}
@@ -120,26 +120,4 @@ func TestGetMessage(t *testing.T) {
 	if r.Text != message.Text {
 		t.Errorf("message.Text is changed: before: %v, after: %v", message.Text, r.Text)
 	}
-}
-
-func generateMessage() Message {
-	message := Message{
-		UserID:    CreateUUID(),
-		ChannelID: CreateUUID(),
-		Text:      "テスト/is/popo",
-		IsShared:  true,
-	}
-	return message
-}
-
-func generateChannelMessages(channelID string) []*Message {
-	var messages [10]*Message
-
-	for i := 0; i < 10; i++ {
-		tmp := generateMessage()
-		messages[i] = &tmp
-		messages[i].ChannelID = channelID
-	}
-
-	return messages[:]
 }

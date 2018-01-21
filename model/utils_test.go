@@ -87,3 +87,57 @@ func makeMessage() *Message {
 	message.Create()
 	return message
 }
+
+func makeChannelMessages(channelID string) []*Message {
+	var messages [10]*Message
+
+	for i := 0; i < 10; i++ {
+		tmp := makeMessage()
+		messages[i] = tmp
+		messages[i].ChannelID = channelID
+	}
+
+	return messages[:]
+}
+
+func createUser(userName string) (*User, error) {
+	user := &User{
+		Name:  userName,
+		Email: "hogehoge@gmail.com",
+		Icon:  "po",
+	}
+
+	if err := user.SetPassword(password); err != nil {
+		return nil, fmt.Errorf("Failed to setPassword: %v", err)
+	}
+	if err := user.Create(); err != nil {
+		return nil, fmt.Errorf("Failed to user Create: %v", err)
+	}
+
+	return user, nil
+}
+
+func checkEmptyField(user *User) error {
+	if user.ID == "" {
+		return fmt.Errorf("ID is empty")
+	}
+	if user.Name == "" {
+		return fmt.Errorf("name is empty")
+	}
+	if user.Email == "" {
+		return fmt.Errorf("Email is empty")
+	}
+	if user.Password == "" {
+		return fmt.Errorf("Password is empty")
+	}
+	if user.Salt == "" {
+		return fmt.Errorf("Salt is empty")
+	}
+	if user.Icon == "" {
+		return fmt.Errorf("Icon is empty")
+	}
+	if user.Status == 0 {
+		return fmt.Errorf("Status is empty")
+	}
+	return nil
+}
