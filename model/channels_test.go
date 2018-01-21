@@ -203,21 +203,3 @@ func TestCreateChildChannel(t *testing.T) {
 }
 
 // 関数間のテスト<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-func makeChannel(tail string) error {
-	channel := &Channel{}
-	channel.CreatorID = testUserID
-	channel.Name = "Channel-" + tail
-	channel.IsPublic = true
-	return channel.Create()
-}
-
-func makeChannelDetail(creatorID, name, parentID string, isPublic bool) (*Channel, error) {
-	channel := &Channel{}
-	channel.CreatorID = creatorID
-	channel.Name = name
-	channel.ParentID = parentID
-	channel.IsPublic = isPublic
-	err := channel.Create()
-	return channel, err
-}

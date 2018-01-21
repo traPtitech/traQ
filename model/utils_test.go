@@ -41,7 +41,7 @@ func TestMain(m *testing.M) {
 	}
 	defer engine.Close()
 	engine.ShowSQL(false)
-	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users")
+	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips")
 	engine.SetMapper(core.GonicMapper{})
 	SetXORMEngine(engine)
 
@@ -54,8 +54,36 @@ func TestMain(m *testing.M) {
 }
 
 func beforeTest(t *testing.T) {
-	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users")
+	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips")
 	if err := SyncSchema(); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func makeChannel(tail string) error {
+	channel := &Channel{}
+	channel.CreatorID = testUserID
+	channel.Name = "Channel-" + tail
+	channel.IsPublic = true
+	return channel.Create()
+}
+
+func makeChannelDetail(creatorID, name, parentID string, isPublic bool) (*Channel, error) {
+	channel := &Channel{}
+	channel.CreatorID = creatorID
+	channel.Name = name
+	channel.ParentID = parentID
+	channel.IsPublic = isPublic
+	err := channel.Create()
+	return channel, err
+}
+
+func makeMessage() *Message {
+	message := &Message{
+		UserID:    testUserID,
+		ChannelID: CreateUUID(),
+		Text:      "popopo",
+	}
+	message.Create()
+	return message
 }
