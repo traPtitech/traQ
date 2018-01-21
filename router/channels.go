@@ -60,7 +60,9 @@ func PostChannels(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 
 	var requestBody PostChannel
-	c.Bind(&requestBody)
+	if err := c.Bind(&requestBody); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
+	}
 
 	if requestBody.ChannelType == "" || requestBody.Name == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "Not set channelType or name")
@@ -151,7 +153,9 @@ func PutChannelsByChannelID(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 
 	var requestBody PostChannel
-	c.Bind(&requestBody)
+	if err := c.Bind(&requestBody); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
+	}
 
 	channelID := c.Param("channelID")
 	channel := &model.Channel{ID: channelID}
@@ -195,7 +199,9 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 		Confirm bool `json:"confirm"`
 	}
 	var requestBody confirm
-	c.Bind(&requestBody)
+	if err := c.Bind(&requestBody); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
+	}
 
 	channelID := c.Param("channelID")
 	channel := &model.Channel{ID: channelID}
