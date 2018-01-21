@@ -11,7 +11,7 @@ var (
 
 func TestSetPassword(t *testing.T) {
 	beforeTest(t)
-	user, err := createUser("testUser")
+	user, err := makeUser("testUser")
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}
@@ -31,7 +31,7 @@ func TestSetPassword(t *testing.T) {
 func TestGetUser(t *testing.T) {
 	beforeTest(t)
 	// 正常系
-	user, err := createUser("testGetUser")
+	user, err := makeUser("testGetUser")
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}
@@ -57,7 +57,7 @@ func TestGetUser(t *testing.T) {
 
 func TestAuthorization(t *testing.T) {
 	beforeTest(t)
-	_, err := createUser("testUser")
+	_, err := makeUser("testUser")
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}

@@ -57,7 +57,7 @@ func (clip *Clip) Delete() error {
 	}
 
 	if _, err := db.Delete(clip); err != nil {
-		return err
+		return fmt.Errorf("Failed to delete clip: %v", err)
 	}
 
 	return nil

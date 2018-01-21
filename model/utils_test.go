@@ -100,7 +100,7 @@ func makeChannelMessages(channelID string) []*Message {
 	return messages[:]
 }
 
-func createUser(userName string) (*User, error) {
+func makeUser(userName string) (*User, error) {
 	user := &User{
 		Name:  userName,
 		Email: "hogehoge@gmail.com",
