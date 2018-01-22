@@ -511,9 +511,9 @@ paths:
             schema:
               type: object
               required:
-                - message_id
+                - messageId
               properties:
-                message_id:
+                messageId:
                   type: integer
                   description: クリップするメッセージID
                   example: 114514
@@ -546,9 +546,9 @@ paths:
             schema:
               type: object
               required:
-                - message_id
+                - messageId
               properties:
-                message_id:
+                messageId:
                   type: integer
                   description: 削除するメッセージのID
                   example: 114514
@@ -586,9 +586,9 @@ paths:
             schema:
               type: object
               required:
-                - channel_id
+                - channelId
               properties:
-                channel_id:
+                channelId:
                   type: string
                   description: 追加するチャンネルのID
                   example: 25
@@ -621,9 +621,9 @@ paths:
             schema:
               type: object
               required:
-                - channel_id
+                - channelId
               properties:
-                channel_id:
+                channelId:
                   type: string
                   description: 削除するチャンネルのID
                   example: 25

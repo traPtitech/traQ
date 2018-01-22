@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -12,7 +11,7 @@ var (
 
 func TestSetPassword(t *testing.T) {
 	beforeTest(t)
-	user, err := createUser("testUser")
+	user, err := makeUser("testUser")
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}
@@ -32,7 +31,7 @@ func TestSetPassword(t *testing.T) {
 func TestGetUser(t *testing.T) {
 	beforeTest(t)
 	// 正常系
-	user, err := createUser("testGetUser")
+	user, err := makeUser("testGetUser")
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}
@@ -58,7 +57,7 @@ func TestGetUser(t *testing.T) {
 
 func TestAuthorization(t *testing.T) {
 	beforeTest(t)
-	_, err := createUser("testUser")
+	_, err := makeUser("testUser")
 	if err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}
@@ -74,46 +73,4 @@ func TestAuthorization(t *testing.T) {
 	if err := checkEmptyField(checkUser); err != nil {
 		t.Fatalf("some checkUser params are empty: %v", err)
 	}
-}
-
-func createUser(userName string) (*User, error) {
-	user := &User{
-		Name:  userName,
-		Email: "hogehoge@gmail.com",
-		Icon:  "po",
-	}
-
-	if err := user.SetPassword(password); err != nil {
-		return nil, fmt.Errorf("Failed to setPassword: %v", err)
-	}
-	if err := user.Create(); err != nil {
-		return nil, fmt.Errorf("Failed to user Create: %v", err)
-	}
-
-	return user, nil
-}
-
-func checkEmptyField(user *User) error {
-	if user.ID == "" {
-		return fmt.Errorf("ID is empty")
-	}
-	if user.Name == "" {
-		return fmt.Errorf("name is empty")
-	}
-	if user.Email == "" {
-		return fmt.Errorf("Email is empty")
-	}
-	if user.Password == "" {
-		return fmt.Errorf("Password is empty")
-	}
-	if user.Salt == "" {
-		return fmt.Errorf("Salt is empty")
-	}
-	if user.Icon == "" {
-		return fmt.Errorf("Icon is empty")
-	}
-	if user.Status == 0 {
-		return fmt.Errorf("Status is empty")
-	}
-	return nil
 }

@@ -131,25 +131,6 @@ func parseCookies(value string) map[string]*http.Cookie {
 	return m
 }
 
-func makeChannel(userID, name string, isPublic bool) (*model.Channel, error) {
-	channel := new(model.Channel)
-	channel.CreatorID = userID
-	channel.Name = name
-	channel.IsPublic = isPublic
-	err := channel.Create()
-	return channel, err
-}
-
-func makeMessage() *model.Message {
-	message := &model.Message{
-		UserID:    testUser.ID,
-		ChannelID: testChannelID,
-		Text:      "popopo",
-	}
-	message.Create()
-	return message
-}
-
 func requestWithContext(t *testing.T, handler echo.HandlerFunc, c echo.Context) {
 	err := handler(c)
 
@@ -190,4 +171,48 @@ func getContext(e *echo.Echo, t *testing.T, cookie *http.Cookie, req *http.Reque
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	return c, rec
+}
+
+func makeChannel(userID, name string, isPublic bool) (*model.Channel, error) {
+	channel := new(model.Channel)
+	channel.CreatorID = userID
+	channel.Name = name
+	channel.IsPublic = isPublic
+	err := channel.Create()
+	return channel, err
+}
+
+func makeMessage() *model.Message {
+	message := &model.Message{
+		UserID:    testUser.ID,
+		ChannelID: testChannelID,
+		Text:      "popopo",
+	}
+	message.Create()
+	return message
+}
+
+func clipMessage(userID, messageID string) error {
+	clip := &model.Clip{
+		UserID:    userID,
+		MessageID: messageID,
+	}
+
+	return clip.Create()
+}
+
+func createUser(t *testing.T) {
+	user := &model.User{
+		Name:  "PostLogin",
+		Email: "example@trap.jp",
+		Icon:  "empty",
+	}
+	err := user.SetPassword("test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = user.Create()
+	if err != nil {
+		t.Fatal(err)
+	}
 }

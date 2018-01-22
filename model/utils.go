@@ -20,11 +20,11 @@ func SetXORMEngine(engine *xorm.Engine) {
 // モデルを追加したら各自ここに追加しなければいけない
 func SyncSchema() error {
 	if err := db.Sync(&Channel{}); err != nil {
-		return fmt.Errorf("Failed to sync Channels: %v", err)
+		return fmt.Errorf("Failed to sync Channels Table: %v", err)
 	}
 
 	if err := db.Sync(&UsersPrivateChannel{}); err != nil {
-		return fmt.Errorf("Failed to sync UsersPrivateChannels: %v", err)
+		return fmt.Errorf("Failed to sync UsersPrivateChannels Table: %v", err)
 	}
 
 	if err := db.Sync(&Message{}); err != nil {
@@ -33,6 +33,10 @@ func SyncSchema() error {
 
 	if err := db.Sync(&User{}); err != nil {
 		return fmt.Errorf("Failed to sync Users Table: %v", err)
+	}
+
+	if err := db.Sync(&Clip{}); err != nil {
+		return fmt.Errorf("Failed to sync Clips Table: %v", err)
 	}
 
 	traq := &User{
