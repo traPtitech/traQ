@@ -790,11 +790,48 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NoContent"
+                $ref: "#/components/schemas/UserDetail"
         "404":
           description: |+
             正常に取得できませんでした。
             指定したユーザーは存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+    put:
+      tags:
+        - userTag
+      description: タグのロック、アンロックを変更します
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tag
+                - isLocked
+              properties:
+                tag:
+                  type: string
+                  description: 追加するタグ
+                  example: 山田太郎
+                isLocked:
+                  type: boolean
+                  description: lockするときはtrue,解除するときはfalse
+                  example: true
+      responses:
+        "200":
+          description: |+
+            正常に変更できました。変更後のリストを返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDetail"
+        "404":
+          description: |+
+            正常に変更できませんでした。
+            指定したユーザー、もしくはタグは存在しません。
           content:
             application/json:
               schema:
@@ -816,13 +853,13 @@ paths:
                   description: 追加するタグ
                   example: 山田太郎
       responses:
-        "204":
+        "201":
           description: |+
-            正常に追加できました。
+            正常に追加できました。追加後のリストを返します
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NoContent"
+                $ref: "#/components/schemas/UserDetail"
         "404":
           description: |+
             正常に追加できませんでした。
