@@ -87,6 +87,7 @@ func (user *User) SetPassword(pass string) error {
 	return nil
 }
 
+// Exists 存在するuserを取得します
 func (user *User) Exists() (bool, error) {
 	return db.Get(user)
 }
