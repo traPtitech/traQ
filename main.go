@@ -83,6 +83,11 @@ func main() {
 	e.GET("/channels/:channelID/messages", router.GetMessagesByChannelID, router.GetUserInfo)
 	e.POST("/channels/:channelID/messages", router.PostMessage, router.GetUserInfo)
 
+	// Tag: clips
+	e.GET("/users/me/clips", router.GetClips, router.GetUserInfo)
+	e.POST("/users/me/clips", router.PostClips, router.GetUserInfo)
+	e.DELETE("/users/me/clips", router.DeleteClips, router.GetUserInfo)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3000"
