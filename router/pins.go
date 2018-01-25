@@ -8,7 +8,7 @@ import (
 
 )
 
-type Pin struct {
+type PinForRes struct {
 	MessageId       string
 	UserId          string
 	ParentChannelId string
@@ -58,9 +58,6 @@ func PutPinHandler(c echo.Context) error {
 	if sees.Values["userId"] != nil {
 		userId = sees.Values["userId"].(string)
 	}
-	var requestBody Pin
-	c.Bind(&requestBody)
-
 
 	channelId := c.Param("channelId")
 	pin := &model.Pins {
@@ -70,17 +67,17 @@ func PutPinHandler(c echo.Context) error {
 
 	}
 
-	if err := newChannenl.Create(); err != nil {
+	if err := pin.Create(); err != nil {
 		c.Error(err)
 		return err
 	}
-	ch, err := model.GetPin(channelId)
+	pin, err := model.GetPin(channelId, messageId)
 	if err != nil {
 		c.Error(err)
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, ch)
+	return c.JSON(http.StatusCreated, pin)
 }
 
 func DeletePinHandler(c ehco.Context) error{
@@ -91,11 +88,17 @@ func DeletePinHandler(c ehco.Context) error{
 	type messageID struct {
 		MessageID string `json:"messageId"`
 	}
+
 	var requestBody messageID
 	c.Bind(&requestBody)
 
 	channelID := c.Param("channelID")
 
+	pin, err := model.GetPin(channelID, messageID)
+
+	if err != nil {
+		return c.Error(err)
+	}
 	return error;
 
 }
