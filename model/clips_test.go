@@ -61,7 +61,7 @@ func TestGetClipedMessages(t *testing.T) {
 
 }
 
-func TestDelete(t *testing.T) {
+func TestDeleteClip(t *testing.T) {
 	beforeTest(t)
 	messageCount := 5
 	for i := 0; i < messageCount; i++ {
