@@ -33,14 +33,17 @@ func TestGetPinnedMessage(t *testing.T) {
 	if err != nil {
 		t.Fatal("Fail to create pin")
 	}
-	pinnedMessage, err := pin.GetPin("testChannelId")
+	pinnedMessage, err := pin.GetPin("testChannelId", "testMessageId")
 
 	if err != nil {
 		t.Fatal("Fail to get pinnedMessage")
 	}
 
 	if pinnedMessage.MessageId != "testMessageId" {
-		t.Error("error")
+		t.Error("fail to get messageId")
+	}
+	if pinnedMessage.ChannelId != "testChannelId" {
+		t.Error("fail to get testChannelId")
 	}
 }
 
