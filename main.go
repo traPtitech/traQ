@@ -10,6 +10,7 @@ import (
 	"github.com/go-xorm/xorm"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/middleware"
 	"github.com/srinathgs/mysqlstore"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router"
@@ -54,6 +55,10 @@ func main() {
 	}
 
 	e := echo.New()
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"http://localhost:8080"},
+		AllowCredentials: true,
+	}))
 	e.Use(session.Middleware(store))
 	e.HTTPErrorHandler = router.CustomHTTPErrorHandler
 
