@@ -17,18 +17,20 @@ type UserStatus struct {
 	LastTime time.Time `json:"-"`
 }
 
-// HeartbeatStatuses Heartbeatの状態
-type HeartbeatStatuses struct {
+// HeartbeatStatus Heartbeatの状態
+type HeartbeatStatus struct {
 	UserStatuses []*UserStatus `json:"userStatuses"`
 	ChannelID    string        `json:"channelId"`
 }
 
 var (
-	t             *time.Ticker
-	stop          chan bool
-	statusesMutex sync.RWMutex
-	statuses      = make(map[string]*HeartbeatStatuses)
-	lastUpdated   time.Time
+	ticker          *time.Ticker
+	stop            chan bool
+	tickerMutex     sync.Mutex
+	statusesMutex   sync.RWMutex
+	statuses        = make(map[string]*HeartbeatStatus)
+	timeoutDuration = -5 * time.Second
+	tickTime        = 500 * time.Millisecond
 )
 
 // PostHeartbeat POST /heartbeat のハンドラ
@@ -69,7 +71,7 @@ func updateStatuses(userID, channelID, status string) {
 	defer statusesMutex.Unlock()
 	channelStatus, ok := statuses[channelID]
 	if !ok {
-		statuses[channelID] = &HeartbeatStatuses{}
+		statuses[channelID] = &HeartbeatStatus{}
 		channelStatus, _ = statuses[channelID]
 		channelStatus.ChannelID = channelID
 	}
@@ -90,13 +92,15 @@ func updateStatuses(userID, channelID, status string) {
 }
 
 func removeTimeoutStatus() {
-	removed := make(map[string]*HeartbeatStatuses)
+	statusesMutex.Lock()
+	defer statusesMutex.Unlock()
+	removed := make(map[string]*HeartbeatStatus)
 	for channelID, channelStatus := range statuses {
-		removed[channelID] = &HeartbeatStatuses{}
+		removed[channelID] = &HeartbeatStatus{}
 		for _, userStatus := range channelStatus.UserStatuses {
-			// 最終POSTから5秒以上経ったものを削除する
-			timeout := time.Now().Add(-5 * time.Second)
-			if timeout.After(userStatus.LastTime) {
+			// 最終POSTから指定時間以上経ったものを削除する
+			timeout := time.Now().Add(timeoutDuration)
+			if timeout.Before(userStatus.LastTime) {
 				removed[channelID].UserStatuses = append(removed[channelID].UserStatuses, userStatus)
 			}
 		}
@@ -107,18 +111,20 @@ func removeTimeoutStatus() {
 // HeartbeatStart ハートビートをスタートする
 func HeartbeatStart() error {
 	stop = make(chan bool)
-	if t != nil {
+	if ticker != nil {
 		return errors.New("Heartbeat already started")
 	}
-	t = time.NewTicker(500 * time.Millisecond)
+	tickerMutex.Lock()
+	ticker = time.NewTicker(tickTime)
 	go func() {
 	loop:
 		for {
 			select {
-			case <-t.C:
+			case <-ticker.C:
 				removeTimeoutStatus()
 
 			case <-stop:
+				tickerMutex.Unlock()
 				break loop
 			}
 
@@ -132,13 +138,15 @@ func HeartbeatStop() error {
 	if stop == nil {
 		return errors.New("HeartbeatStop before Start")
 	}
-	if t == nil {
+	if ticker == nil {
 		return errors.New("HeartbeatStop before Start")
 	}
 
 	close(stop)
-	t.Stop()
+	ticker.Stop()
+	tickerMutex.Lock()
 	stop = nil
-	t = nil
+	ticker = nil
+	tickerMutex.Unlock()
 	return nil
 }
