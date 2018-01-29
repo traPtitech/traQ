@@ -2,14 +2,13 @@ package model
 
 import (
 	"fmt"
-
-	"github.com/go-xorm/core"
 )
 
 // Tag userTagの構造体
 type Tag struct {
-	UserID    string `xorm:"char(36) pk"`
-	Tag       string `xorm:"varcher(30) pk"`
+	ID        string `xorm:"char(36) pk"`
+	UserID    string `xorm:"char(36) not null"`
+	Tag       string `xorm:"varcher(30) not null"`
 	IsLocked  bool   `xorm:"bool not null"`
 	CreatedAt string `xorm:"created not null"`
 	UpdatedAt string `xorm:"updated not null"`
@@ -29,6 +28,7 @@ func (tag *Tag) Create() error {
 		return fmt.Errorf("Tag is empty")
 	}
 
+	tag.ID = CreateUUID()
 	tag.IsLocked = false
 	if _, err := db.Insert(tag); err != nil {
 		return fmt.Errorf("Failed to create message object: %v", err)
@@ -38,7 +38,7 @@ func (tag *Tag) Create() error {
 
 // Update データの更新をします
 func (tag *Tag) Update() error {
-	if _, err := db.UseBool().Update(tag, &Tag{UserID: tag.UserID, Tag: tag.Tag}); err != nil {
+	if _, err := db.ID(tag.ID).UseBool().Update(tag); err != nil {
 		return fmt.Errorf("Failed to update tag: %v", err)
 	}
 	return nil
@@ -52,8 +52,8 @@ func (tag *Tag) Delete() error {
 	return nil
 }
 
-// GetTagsByID userIDに紐づくtagのリストを返します
-func GetTagsByID(userID string) ([]*Tag, error) {
+// GetTagsByUserID userIDに紐づくtagのリストを返します
+func GetTagsByUserID(userID string) ([]*Tag, error) {
 	var tags []*Tag
 	if err := db.Where("user_id = ?", userID).Asc("created_at").Find(&tags); err != nil {
 		return nil, fmt.Errorf("Failed to find tags: %v", err)
@@ -62,14 +62,14 @@ func GetTagsByID(userID string) ([]*Tag, error) {
 }
 
 // GetTag userIDとtagで一意に定まるタグを返します
-func GetTag(userID, tagText string) (*Tag, error) {
+func GetTag(tagID string) (*Tag, error) {
 	var tag Tag
-	has, err := db.ID(core.PK{userID, tagText}).Get(&tag)
+	has, err := db.ID(tagID).Get(&tag)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to find tag: %v", err)
 	}
 	if !has {
-		return nil, fmt.Errorf("this tag doesn't exist. userID = %s, Tag = %s", userID, tagText)
+		return nil, fmt.Errorf("this tag doesn't exist. tagID = %s", tagID)
 	}
 	return &tag, nil
 }

@@ -34,8 +34,8 @@ func TestCreateTag(t *testing.T) {
 		t.Errorf("Failed to get tag: %v", err)
 	}
 
-	if tag.UserID != dbTag.UserID {
-		t.Errorf("UserID is wrong. want: %s, actual: %s", tag.UserID, dbTag.UserID)
+	if tag.ID != dbTag.ID {
+		t.Errorf("ID is wrong. want: %s, actual: %s", tag.ID, dbTag.ID)
 	}
 	if tag.Tag != dbTag.Tag {
 		t.Errorf("Tag is wrong. want: %s, actual: %s", tag.Tag, dbTag.Tag)
@@ -84,7 +84,7 @@ func TestUpdateTag(t *testing.T) {
 	}
 }
 
-func TestGetTagsByID(t *testing.T) {
+func TestGetTagsByUserID(t *testing.T) {
 	beforeTest(t)
 
 	// 正常系
@@ -99,19 +99,19 @@ func TestGetTagsByID(t *testing.T) {
 		}
 	}
 
-	gotTags, err := GetTagsByID(testUserID)
+	gotTags, err := GetTagsByUserID(testUserID)
 	if err != nil {
 		t.Errorf("Failed to get tags from userID: %v", err)
 	}
 	for i, v := range gotTags {
-		if v.Tag != tags[i].Tag {
-			t.Errorf("Tag is wrong. want: %s, actual: %s", tags[i].Tag, v.Tag)
+		if v.ID != tags[i].ID {
+			t.Errorf("ID is wrong. want: %s, actual: %s", tags[i].ID, v.ID)
 		}
 	}
 
 	// 異常系
 	notExistID := CreateUUID()
-	empty, err := GetTagsByID(notExistID)
+	empty, err := GetTagsByUserID(notExistID)
 	if err != nil {
 		t.Errorf("GetTagsByID returned an error for no exist ID request: %v", err)
 	}
@@ -133,9 +133,9 @@ func TestGetTag(t *testing.T) {
 		t.Fatalf("Failed to create tag: %v", err)
 	}
 
-	getTag, err := GetTag(testUserID, tagText)
+	getTag, err := GetTag(tag.ID)
 	if err != nil {
-		t.Fatalf("Failed to get tag by ID and Text: %v", err)
+		t.Fatalf("Failed to get tag by ID: %v", err)
 	}
 
 	if getTag.UserID != tag.UserID {
@@ -146,7 +146,8 @@ func TestGetTag(t *testing.T) {
 	}
 
 	// 異常系
-	if _, err := GetTag(testUserID, "popo"); err == nil {
+	wrongTagID := CreateUUID()
+	if _, err := GetTag(wrongTagID); err == nil {
 		t.Error("no error for bad request")
 	}
 }
