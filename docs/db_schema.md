@@ -30,13 +30,12 @@ user_idとauthority_typeの複合ユニーク制約
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
-| user_id | CHAR(36) | PRIMARY KEY | ユーザーID |
+| id | CHAR(36) | PRIMARY KEY | タグID |
+| user_id | CHAR(36) | NOT NULL | ユーザーID |
 | tag | TEXT | NOT NULL | タグ文字列 |
 | is_locked | BOOLEAN | NOT NULL | ロックされているか |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL | 更新日時 |
-
-user_idとtagの複合ユニーク制約
 
 ## channels
 
