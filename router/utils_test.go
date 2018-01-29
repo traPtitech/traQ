@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 	defer engine.Close()
 
 	engine.ShowSQL(false)
-	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users")
+	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars")
 	engine.SetMapper(core.GonicMapper{})
 	model.SetXORMEngine(engine)
 
@@ -65,7 +65,7 @@ func TestMain(m *testing.M) {
 }
 
 func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
-	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users")
+	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars")
 	if err := model.SyncSchema(); err != nil {
 		t.Fatalf("Failed to sync schema: %v", err)
 	}
@@ -103,7 +103,7 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
 }
 
 func beforeLoginTest(t *testing.T) (*echo.Echo, echo.MiddlewareFunc) {
-	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users")
+	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars")
 	if err := model.SyncSchema(); err != nil {
 		t.Fatalf("Failed to sync schema: %v", err)
 	}

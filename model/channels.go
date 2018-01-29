@@ -16,9 +16,9 @@ type Channel struct {
 	IsPublic  bool   `xorm:"bool not null"`
 	IsVisible bool   `xorm:"bool not null"`
 	CreatorID string `xorm:"char(36) not null"`
-	CreatedAt int    `xorm:"created not null"`
+	CreatedAt string `xorm:"created not null"`
 	UpdaterID string `xorm:"char(36) not null"`
-	UpdatedAt int    `xorm:"updated not null"`
+	UpdatedAt string `xorm:"updated not null"`
 }
 
 // TableName : テーブル名を指定するメソッド
