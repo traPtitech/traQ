@@ -29,8 +29,8 @@ func (pins *Pins) Create() error {
 	return nil
 }
 
-func (pins *Pins) GetPin(channelId, messageId string) (*Pins, error) {
-	pinnedMessage := &Pins{ChannelId: channelId, MessageId: messageId}
+func GetPin(channelId string) (*Pins, error) {
+	pinnedMessage := &Pins{ChannelId: channelId}
 
 	if _, err := db.Get(&pinnedMessage); err != nil {
 		return nil, fmt.Errorf("Failed to find pin: %v", err)
