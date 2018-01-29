@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/traPtitech/traQ/model"
 )
 
 func TestPostHeartbeat(t *testing.T) {
@@ -96,6 +98,33 @@ func TestGetHeartbeat(t *testing.T) {
 
 	if responseBody.UserStatuses[0].Status != "editing" {
 		t.Fatalf("ChannelID wrong: want editing, actual %s", responseBody.UserStatuses[0].Status)
+	}
+}
+
+func TestGetHeartbeatStatus(t *testing.T) {
+	statusesMutex.Lock()
+	statuses[testChannelID] = &HeartbeatStatus{
+		ChannelID: testChannelID,
+		UserStatuses: []*UserStatus{
+			{
+				UserID:   testUser.ID,
+				Status:   "editing",
+				LastTime: time.Now(),
+			},
+		},
+	}
+	statusesMutex.Unlock()
+
+	status, ok := GetHeartbeatStatus(testChannelID)
+
+	if len(status.UserStatuses) != 1 {
+		t.Fatalf("statuses length wrong: want 1, actual %d", len(status.UserStatuses))
+	}
+
+	status, ok = GetHeartbeatStatus(model.CreateUUID())
+
+	if ok {
+		t.Fatalf("ok is not false")
 	}
 }
 

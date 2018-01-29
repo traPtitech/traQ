@@ -150,3 +150,14 @@ func HeartbeatStop() error {
 	tickerMutex.Unlock()
 	return nil
 }
+
+// GetHeartbeatStatus channelIDで指定したHeartbeatStatusを取得する
+func GetHeartbeatStatus(channelID string) (HeartbeatStatus, bool) {
+	statusesMutex.RLock()
+	defer statusesMutex.RUnlock()
+	status, ok := statuses[channelID]
+	if ok {
+		return *status, ok
+	}
+	return HeartbeatStatus{}, ok
+}
