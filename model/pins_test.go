@@ -4,10 +4,8 @@ import (
 	"testing"
 )
 
-var testUserID = "403807a5-cae6-453e-8a09-fc75d5b4ca91"
-
-func TestCreate(t *testing.T) {
-	BeforeTest(t)
+func TestCreatePins(t *testing.T) {
+	beforeTest(t)
 	pin, err := makePinDetail("channelId", "messageId", testUserID)
 
 	if err != nil {
@@ -27,13 +25,9 @@ func TestCreate(t *testing.T) {
 }
 
 func TestGetPinnedMessage(t *testing.T) {
-	BeforeTest(t)
-	pin, err := makePinDetail("channelId", "messageId", testUserID)
+	beforeTest(t)
 
-	if err != nil {
-		t.Fatal("Fail to create pin")
-	}
-	pinnedMessage, err := pin.GetPin("testChannelId", "testMessageId")
+	pinnedMessage, err := GetPin("testChannelId")
 
 	if err != nil {
 		t.Fatal("Fail to get pinnedMessage")
@@ -44,6 +38,9 @@ func TestGetPinnedMessage(t *testing.T) {
 	}
 	if pinnedMessage.ChannelId != "testChannelId" {
 		t.Error("fail to get testChannelId")
+	}
+	if pinnedMessage.UserId != testUserID {
+		t.Error("fail to create testuserid")
 	}
 }
 

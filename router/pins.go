@@ -3,18 +3,18 @@ package router
 import (
 	"fmt"
 	"net/http"
-	"github.com/labstack/echo"
-	"github.com/traptitech/traQ/model"
 
+	"github.com/labstack/echo"
+	"github.com/labstack/echo-contrib/session"
 )
 
-type PinForRes struct {
-	MessageId       string
-	UserId          string
-	ParentChannelId string
-	Content         string
-	Datetime        string
-	Pin             bool
+type PinForResponse struct {
+	MessageID       string `json:"messageId"`
+	UserID          string `json:"userId"`
+	ParentChannelID string `json:"parentChannelId"`
+	Content         string `json:"content"`
+	Datetime        string `json:"datetime"`
+	Pin             bool   `json:"pin"`
 }
 
 //ピン留めされているメッセージの取得
@@ -23,26 +23,20 @@ func GetPinHandler(c echo.Context) error {
 	if err != nil {
 		return fmt.Errorf("Failed to get session: %v", err)
 	}
-	var userId string
-	if sees.Values["userId"] != nil {
-		userId = sees.Values["userId"].(string)
-	}
-
-
 	channelId := c.Param("channelId")
 
-	pinnedMessage, err := model.GetPinedMege(channelId)
+	pinnedMessage, err := model.GetPin(channelId)
 	if err != nil {
 		return fmt.Errorf("model.GetPin returned an error")
 	}
 
-	res := {
-		MessageId : pinnedMessage.MessageId,
-		UserId : pinnedMessage.UserId,
-		ParentChannelId : pinnedMessage.ChannelId,
-		Content : "text message",
-		Datetime : "date time",
-		Pin : true,
+	res := &MessageForResponse{
+		MessageId:       pinnedMessage.MessageId,
+		UserId:          pinnedMessage.UserId,
+		ParentChannelId: pinnedMessage.ChannelId,
+		Content:         "text message", //messageから呼び出す
+		Datetime:        pinnedMessage.Datetime,
+		Pin:             true,
 	}
 	c.JSON(http.StatusOK, res)
 
@@ -60,28 +54,29 @@ func PutPinHandler(c echo.Context) error {
 	}
 
 	channelId := c.Param("channelId")
-	pin := &model.Pins {
-		UserId : userId,
-		ChannelId : channelId,
-		MessageId : requestBody.MessageId,
-
+	pin := &model.Pins{
+		UserId:    userId,
+		ChannelId: channelId,
+		MessageId: requestBody.MessageId,
 	}
 
 	if err := pin.Create(); err != nil {
 		c.Error(err)
 		return err
 	}
-	pin, err := model.GetPin(channelId, messageId)
+	pin, err := model.GetPin(channelId)
 	if err != nil {
 		c.Error(err)
 		return err
 	}
 
+	res := &MessageForResponse{}
+
 	return c.JSON(http.StatusCreated, pin)
 }
 
-func DeletePinHandler(c ehco.Context) error{
-	userID , err := getUserID(c)
+func DeletePinHandler(c ehco.Context) error {
+	userID, err := getUserID(c)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("An error occurred while getUserIS: %v", err))
 	}
@@ -99,6 +94,6 @@ func DeletePinHandler(c ehco.Context) error{
 	if err != nil {
 		return c.Error(err)
 	}
-	return error;
+	return error
 
 }
