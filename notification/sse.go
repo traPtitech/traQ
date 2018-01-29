@@ -1,57 +1,37 @@
 package notification
 
 import (
-	"errors"
-	"fmt"
+	"encoding/json"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/notification/events"
 	"net/http"
 )
-
-type sseMessage []byte
 
 type sseClient struct {
 	userId       uuid.UUID
 	connectionId uuid.UUID
-	send         chan []byte
+	send         chan *events.EventData
+	close        chan struct{}
 }
 
 type sseStreamer struct {
-	isRunning  bool
-	clients    map[uuid.UUID]map[uuid.UUID]*sseClient
+	clients    map[userId]map[uuid.UUID]*sseClient
 	newConnect chan *sseClient
 	disconnect chan *sseClient
-	event      chan *sseMessage
 	stop       chan struct{}
 }
 
-func makeSSEStreamer() (s *sseStreamer) {
-	s = &sseStreamer{
-		isRunning:  false,
-		clients:    make(map[uuid.UUID]map[uuid.UUID]*sseClient, 200),
-		newConnect: make(chan *sseClient),
-		disconnect: make(chan *sseClient, 10),
-		event:      make(chan *sseMessage, 100),
-		stop:       make(chan struct{}),
-	}
-	return
-}
-
-func (s *sseStreamer) run() error {
-	if s.isRunning {
-		return errors.New("already running")
-	}
-
-	s.isRunning = true
-	defer func() {
-		s.isRunning = false
-	}()
-
-Loop:
+func (s *sseStreamer) run() {
 	for {
 		select {
 		case <-s.stop:
-			break Loop
+			for _, u := range s.clients {
+				for _, c := range u {
+					c.close <- struct{}{}
+				}
+			}
+			return
 
 		case c := <-s.newConnect:
 			arr, exists := s.clients[c.userId]
@@ -60,44 +40,47 @@ Loop:
 				s.clients[c.userId] = arr
 			}
 			arr[c.connectionId] = c
-			fmt.Println("connect")
 
 		case c := <-s.disconnect:
 			arr := s.clients[c.userId]
 			delete(arr, c.connectionId)
-			fmt.Println("disconnect")
-
-			//case event := <-s.event:
 
 		}
 	}
-
-	return nil
 }
 
-func (m *sseMessage) send(clients map[uuid.UUID]*sseClient) {
-
-}
-
-func (s *sseStreamer) Stream(userId uuid.UUID, res *echo.Response) {
+func Stream(userId uuid.UUID, res *echo.Response) {
 	client := &sseClient{
 		userId:       userId,
 		connectionId: uuid.NewV4(),
-		send:         make(chan []byte),
+		send:         make(chan *events.EventData, 10),
+		close:        make(chan struct{}),
 	}
 	rw := res.Writer
 	fl := res.Writer.(http.Flusher)
 	cn := res.CloseNotify()
 
-	s.newConnect <- client
+	rw.Write([]byte("event: CONNECTED\n\n"))
+	fl.Flush()
+
+	streamer.newConnect <- client
 	for {
 		select {
 		case <-cn:
-			s.disconnect <- client
+			streamer.disconnect <- client
+			return
+
+		case <-client.close:
+			streamer.disconnect <- client
 			return
 
 		case message := <-client.send:
-			rw.Write(message)
+			//message.payload is not unsupported type or unsupported value.
+			data, _ := json.Marshal(message.Payload)
+			rw.Write([]byte("event: " + message.EventType + "\n"))
+			rw.Write([]byte("data: "))
+			rw.Write(data)
+			rw.Write([]byte("\n\n"))
 			fl.Flush()
 		}
 	}

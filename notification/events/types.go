@@ -10,7 +10,6 @@ const (
 	CHANNEL_CREATED            EventType = "CHANNEL_CREATED"
 	CHANNEL_DELETED            EventType = "CHANNEL_DELETED"
 	CHANNEL_RENAMED            EventType = "CHANNEL_RENAMED"
-	CHANNEL_TOPIC_UPDATED      EventType = "CHANNEL_TOPIC_UPDATED"
 	CHANNEL_STARED             EventType = "CHANNEL_STARED"
 	CHANNEL_UNSTARED           EventType = "CHANNEL_UNSTARED"
 	CHANNEL_VISIBILITY_CHANGED EventType = "CHANNEL_VISIBILITY_CHANGED"
@@ -18,6 +17,7 @@ const (
 	MESSAGE_CREATED   EventType = "MESSAGE_CREATED"
 	MESSAGE_UPDATED   EventType = "MESSAGE_UPDATED"
 	MESSAGE_DELETED   EventType = "MESSAGE_DELETED"
+	MESSAGE_READ      EventType = "MESSAGE_READ"
 	MESSAGE_STAMPED   EventType = "MESSAGE_STAMPED"
 	MESSAGE_UNSTAMPED EventType = "MESSAGE_UNSTAMPED"
 	MESSAGE_PINNED    EventType = "MESSAGE_PINNED"
@@ -30,3 +30,44 @@ const (
 
 	TRAQ_UPDATED EventType = "TRAQ_UPDATED"
 )
+
+type EventData struct {
+	EventType EventType
+	Payload   interface{}
+}
+
+type UserEvent struct {
+	Id string
+}
+
+type ChannelEvent struct {
+	Id string
+}
+
+type UserStarEvent struct {
+	ChannelId string
+	UserId    string
+}
+
+type UserMessageEvent struct {
+	UserId    string
+	MessageId string
+}
+
+type MessageChannelEvent struct {
+	MessageId string
+	ChannelId string
+}
+
+type MessageEvent struct {
+	Id        string
+	ChannelId string
+}
+
+type MessageStampEvent struct {
+	Id        string
+	ChannelId string
+	UserId    string
+	StampId   string
+	Count     int
+}
