@@ -85,6 +85,7 @@ func PostChannels(c echo.Context) error {
 
 	newChannel := &model.Channel{
 		CreatorID: userID,
+		ParentID:  requestBody.Parent,
 		Name:      requestBody.Name,
 		IsPublic:  requestBody.ChannelType == "public",
 	}

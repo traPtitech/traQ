@@ -10,6 +10,7 @@ import (
 	"github.com/go-xorm/xorm"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/middleware"
 	"github.com/srinathgs/mysqlstore"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router"
@@ -54,6 +55,10 @@ func main() {
 	}
 
 	e := echo.New()
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"http://localhost:8080"},
+		AllowCredentials: true,
+	}))
 	e.Use(session.Middleware(store))
 	e.HTTPErrorHandler = router.CustomHTTPErrorHandler
 
@@ -82,6 +87,15 @@ func main() {
 
 	e.GET("/channels/:channelID/messages", router.GetMessagesByChannelID, router.GetUserInfo)
 	e.POST("/channels/:channelID/messages", router.PostMessage, router.GetUserInfo)
+
+	// Tag: clips
+	e.GET("/users/me/clips", router.GetClips, router.GetUserInfo)
+	e.POST("/users/me/clips", router.PostClips, router.GetUserInfo)
+	e.DELETE("/users/me/clips", router.DeleteClips, router.GetUserInfo)
+
+	// Tag: heartbeat
+	e.GET("/heartbeat", router.GetHeartbeat, router.GetUserInfo)
+	e.POST("/heartbeat", router.PostHeartbeat, router.GetUserInfo)
 
 	port := os.Getenv("PORT")
 	if port == "" {
