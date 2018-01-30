@@ -73,29 +73,31 @@ func main() {
 	e.POST("/login", router.PostLogin)
 	e.POST("/logout", router.PostLogout)
 
+	api := e.Group("/api/1.0")
+	api.Use(router.GetUserInfo)
 	// Tag: channel
-	e.GET("/channels", router.GetChannels, router.GetUserInfo)
-	e.POST("/channels", router.PostChannels, router.GetUserInfo)
-	e.GET("/channels/:channelID", router.GetChannelsByChannelID, router.GetUserInfo)
-	e.PUT("/channels/:channelID", router.PutChannelsByChannelID, router.GetUserInfo)
-	e.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID, router.GetUserInfo)
+	api.GET("/channels", router.GetChannels)
+	api.POST("/channels", router.PostChannels)
+	api.GET("/channels/:channelID", router.GetChannelsByChannelID)
+	api.PUT("/channels/:channelID", router.PutChannelsByChannelID)
+	api.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID)
 
 	// Tag: messages
-	e.GET("/messages/:messageID", router.GetMessageByID, router.GetUserInfo)
-	e.PUT("/messages/:messageID", router.PutMessageByID, router.GetUserInfo)
-	e.DELETE("/messages/:messageID", router.DeleteMessageByID, router.GetUserInfo)
+	api.GET("/messages/:messageID", router.GetMessageByID)
+	api.PUT("/messages/:messageID", router.PutMessageByID)
+	api.DELETE("/messages/:messageID", router.DeleteMessageByID)
 
-	e.GET("/channels/:channelID/messages", router.GetMessagesByChannelID, router.GetUserInfo)
-	e.POST("/channels/:channelID/messages", router.PostMessage, router.GetUserInfo)
+	api.GET("/channels/:channelID/messages", router.GetMessagesByChannelID)
+	api.POST("/channels/:channelID/messages", router.PostMessage)
 
 	// Tag: clips
-	e.GET("/users/me/clips", router.GetClips, router.GetUserInfo)
-	e.POST("/users/me/clips", router.PostClips, router.GetUserInfo)
-	e.DELETE("/users/me/clips", router.DeleteClips, router.GetUserInfo)
+	api.GET("/users/me/clips", router.GetClips)
+	api.POST("/users/me/clips", router.PostClips)
+	api.DELETE("/users/me/clips", router.DeleteClips)
 
 	// Tag: heartbeat
-	e.GET("/heartbeat", router.GetHeartbeat, router.GetUserInfo)
-	e.POST("/heartbeat", router.PostHeartbeat, router.GetUserInfo)
+	api.GET("/heartbeat", router.GetHeartbeat)
+	api.POST("/heartbeat", router.PostHeartbeat)
 
 	port := os.Getenv("PORT")
 	if port == "" {
