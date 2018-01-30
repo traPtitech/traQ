@@ -93,7 +93,7 @@ func TestPostChannels(t *testing.T) {
 		t.Fatalf("Channel List wrong: want %d, actual %d", 2, len(channelList))
 	}
 
-	if channelList[0].ID != channelList[1].ParentID {
+	if channelList[0].ID != channelList[1].ParentID && channelList[1].ID != channelList[0].ParentID {
 		t.Fatalf("Channel ParentID is wrong: want %s, actual %s", channelList[0].ID, channelList[1].ParentID)
 	}
 
