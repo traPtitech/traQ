@@ -93,6 +93,11 @@ func main() {
 	e.POST("/users/me/clips", router.PostClips, router.GetUserInfo)
 	e.DELETE("/users/me/clips", router.DeleteClips, router.GetUserInfo)
 
+	// Tag: star
+	e.GET("/users/me/stars", router.GetStars, router.GetUserInfo)
+	e.POST("/users/me/stars", router.PostStars, router.GetUserInfo)
+	e.DELETE("/users/me/stars", router.DeleteStars, router.GetUserInfo)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3000"

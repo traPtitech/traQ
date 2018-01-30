@@ -25,7 +25,7 @@ func (star *Star) Create() error {
 	}
 
 	if _, err := db.Insert(star); err != nil {
-		return fmt.Errorf("Failed to create message object: %v", err)
+		return fmt.Errorf("Failed to create star object: %v", err)
 	}
 	return nil
 }

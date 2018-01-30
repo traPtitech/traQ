@@ -201,6 +201,15 @@ func clipMessage(userID, messageID string) error {
 	return clip.Create()
 }
 
+func starChannel(userID, channelID string) error {
+	star := &model.Star{
+		UserID:    userID,
+		ChannelID: channelID,
+	}
+
+	return star.Create()
+}
+
 func createUser(t *testing.T) {
 	user := &model.User{
 		Name:  "PostLogin",
