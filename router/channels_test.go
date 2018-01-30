@@ -66,6 +66,38 @@ func TestPostChannels(t *testing.T) {
 	}
 
 	postBody = PostChannel{
+		ChannelType: "public",
+		Name:        "test-2",
+		Parent:      channelList[0].ID,
+	}
+
+	body, err = json.Marshal(postBody)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
+	rec = request(e, t, mw(PostChannels), cookie, req)
+
+	channelList, err = model.GetChannels(testUser.ID)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if rec.Code != http.StatusCreated {
+		t.Log(rec.Code)
+		t.Fatal(rec.Body.String())
+	}
+
+	if len(channelList) != 2 {
+		t.Fatalf("Channel List wrong: want %d, actual %d", 2, len(channelList))
+	}
+
+	if channelList[0].ID != channelList[1].ParentID {
+		t.Fatalf("Channel ParentID is wrong: want %s, actual %s", channelList[0].ID, channelList[1].ParentID)
+	}
+
+	postBody = PostChannel{
 		ChannelType: "private",
 		Name:        "test",
 		Parent:      "",
@@ -84,8 +116,8 @@ func TestPostChannels(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(channelList) != 2 {
-		t.Fatalf("Channel List wrong: want %d, actual %d\n", 2, len(channelList))
+	if len(channelList) != 3 {
+		t.Fatalf("Channel List wrong: want %d, actual %d\n", 3, len(channelList))
 	}
 
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
@@ -95,8 +127,8 @@ func TestPostChannels(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(channelList) != 1 {
-		t.Fatalf("Channel List wrong: want %d, actual %d\n", 1, len(channelList))
+	if len(channelList) != 2 {
+		t.Fatalf("Channel List wrong: want %d, actual %d\n", 2, len(channelList))
 	}
 }
 
