@@ -95,6 +95,11 @@ func main() {
 	api.POST("/users/me/clips", router.PostClips)
 	api.DELETE("/users/me/clips", router.DeleteClips)
 
+	// Tag: star
+	e.GET("/users/me/stars", router.GetStars, router.GetUserInfo)
+	e.POST("/users/me/stars", router.PostStars, router.GetUserInfo)
+	e.DELETE("/users/me/stars", router.DeleteStars, router.GetUserInfo)
+
 	// Tag: heartbeat
 	api.GET("/heartbeat", router.GetHeartbeat)
 	api.POST("/heartbeat", router.PostHeartbeat)

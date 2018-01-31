@@ -137,15 +137,9 @@ func GetChannelsByChannelID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get children channel id list: %v", err)
 	}
 
-	response := ChannelForResponse{
-		ChannelID:  channel.ID,
-		Name:       channel.Name,
-		Parent:     channel.ParentID,
-		Visibility: !channel.IsVisible,
-		Children:   childrenIDs,
-	}
-
-	return c.JSON(http.StatusOK, response)
+	responseBody := formatChannel(channel)
+	responseBody.Children = childrenIDs
+	return c.JSON(http.StatusOK, responseBody)
 }
 
 // PutChannelsByChannelID PUT /channels/{channelID} のハンドラ
@@ -232,4 +226,13 @@ func valuesChannel(m map[string]*ChannelForResponse) []*ChannelForResponse {
 		arr = append(arr, v)
 	}
 	return arr
+}
+
+func formatChannel(channel *model.Channel) *ChannelForResponse {
+	return &ChannelForResponse{
+		ChannelID:  channel.ID,
+		Name:       channel.Name,
+		Parent:     channel.ParentID,
+		Visibility: channel.IsVisible,
+	}
 }
