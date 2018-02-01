@@ -93,6 +93,12 @@ func main() {
 	e.POST("/users/me/clips", router.PostClips, router.GetUserInfo)
 	e.DELETE("/users/me/clips", router.DeleteClips, router.GetUserInfo)
 
+	// Tag: userTag
+	e.GET("/users/:userID/tags", router.GetUserTags, router.GetUserInfo)
+	e.POST("/users/:userID/tags", router.PostUserTag, router.GetUserInfo)
+	e.PUT("/users/:userID/tags/:tagID", router.PutUserTag, router.GetUserInfo)
+	e.DELETE("/users/:userID/tags/:tagID", router.DeleteUserTag, router.GetUserInfo)
+
 	// Tag: heartbeat
 	e.GET("/heartbeat", router.GetHeartbeat, router.GetUserInfo)
 	e.POST("/heartbeat", router.PostHeartbeat, router.GetUserInfo)

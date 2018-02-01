@@ -192,6 +192,15 @@ func makeMessage() *model.Message {
 	return message
 }
 
+func makeTag(userID, tagText string) (*model.Tag, error) {
+	tag := &model.Tag{
+		UserID: userID,
+		Tag:    tagText,
+	}
+	err := tag.Create()
+	return tag, err
+}
+
 func clipMessage(userID, messageID string) error {
 	clip := &model.Clip{
 		UserID:    userID,
