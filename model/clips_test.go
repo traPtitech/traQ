@@ -2,10 +2,10 @@ package model
 
 import "testing"
 
-func TestTableName(t *testing.T) {
+func TestTableNameClip(t *testing.T) {
 	clip := &Clip{}
 	if "clips" != clip.TableName() {
-		t.Fatalf("tablename is worng:want clips,actual %s", clip.TableName())
+		t.Fatalf("tablename is wrong:want clips,actual %s", clip.TableName())
 	}
 }
 
@@ -48,7 +48,7 @@ func TestGetClipedMessages(t *testing.T) {
 
 	messages, err := GetClipedMessages(testUserID)
 	if err != nil {
-		t.Fatalf("clip create failed: %v", err)
+		t.Fatalf("getting cliped messages failed: %v", err)
 	}
 
 	if len(messages) != messageCount {

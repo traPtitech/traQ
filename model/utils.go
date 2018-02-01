@@ -42,6 +42,10 @@ func SyncSchema() error {
 		return fmt.Errorf("Failed to sync users_tags Table: %v", err)
 	}
 
+	if err := db.Sync(&Star{}); err != nil {
+		return fmt.Errorf("Failed to sync Stars Table: %v", err)
+	}
+
 	traq := &User{
 		Name:  "traq",
 		Email: "trap.titech@gmail.com",
