@@ -1,6 +1,7 @@
 package model
 
 import (
+	"strconv"
 	"testing"
 )
 
@@ -19,10 +20,9 @@ func TestCreateUserTag(t *testing.T) {
 	// 正常系
 	tag := &UsersTag{
 		UserID: testUserID,
-		Tag:    "全強",
 	}
-	if err := tag.Create(); err != nil {
-		t.Fatalf("Create method returned an error: %v", err)
+	if err := tag.Create("全強"); err != nil {
+		t.Fatal(err)
 	}
 
 	var dbTag = &UsersTag{}
@@ -31,14 +31,14 @@ func TestCreateUserTag(t *testing.T) {
 		t.Error("Cannot find tag in DB")
 	}
 	if err != nil {
-		t.Errorf("Failed to get tag: %v", err)
+		t.Error(err)
 	}
 
-	if tag.ID != dbTag.ID {
-		t.Errorf("ID is wrong. want: %s, actual: %s", tag.ID, dbTag.ID)
+	if tag.TagID != dbTag.TagID {
+		t.Errorf("TagID is wrong. want: %s, actual: %s", tag.TagID, dbTag.TagID)
 	}
-	if tag.Tag != dbTag.Tag {
-		t.Errorf("Tag is wrong. want: %s, actual: %s", tag.Tag, dbTag.Tag)
+	if tag.UserID != dbTag.UserID {
+		t.Errorf("UserID is wrong. want: %s, actual: %s", tag.UserID, dbTag.UserID)
 	}
 	if dbTag.CreatedAt == "" {
 		t.Error("CreatedAt is empty")
@@ -46,7 +46,7 @@ func TestCreateUserTag(t *testing.T) {
 
 	// 異常系
 	wrongTag := &UsersTag{}
-	if err := wrongTag.Create(); err == nil {
+	if err := wrongTag.Create("po"); err == nil {
 		t.Error("no error for bad request")
 	}
 }
@@ -56,15 +56,14 @@ func TestUpdateTag(t *testing.T) {
 
 	tag := &UsersTag{
 		UserID: testUserID,
-		Tag:    "pro",
 	}
-	if err := tag.Create(); err != nil {
-		t.Fatalf("create method returned an error: %v", err)
+	if err := tag.Create("pro"); err != nil {
+		t.Fatal(err)
 	}
 
 	tag.IsLocked = true
 	if err := tag.Update(); err != nil {
-		t.Fatalf("update method returned an error: %v", err)
+		t.Fatal(err)
 	}
 
 	var dbTag = &UsersTag{}
@@ -73,7 +72,7 @@ func TestUpdateTag(t *testing.T) {
 		t.Error("Cannot find tag in DB")
 	}
 	if err != nil {
-		t.Errorf("Failed to get tag: %v", err)
+		t.Error(err)
 	}
 
 	if dbTag.IsLocked != true {
@@ -84,7 +83,7 @@ func TestUpdateTag(t *testing.T) {
 	}
 }
 
-func TestGetTagsByUserID(t *testing.T) {
+func TestGetUserTagsByUserID(t *testing.T) {
 	beforeTest(t)
 
 	// 正常系
@@ -92,31 +91,30 @@ func TestGetTagsByUserID(t *testing.T) {
 	for i := 0; i < len(tags); i++ {
 		tags[i] = &UsersTag{
 			UserID: testUserID,
-			Tag:    CreateUUID(),
 		}
-		if err := tags[i].Create(); err != nil {
-			t.Fatalf("Failed to create tag: %v", err)
+		if err := tags[i].Create(strconv.Itoa(i)); err != nil {
+			t.Fatal(err)
 		}
 	}
 
-	gotTags, err := GetTagsByUserID(testUserID)
+	gotTags, err := GetUserTagsByUserID(testUserID)
 	if err != nil {
-		t.Errorf("Failed to get tags from userID: %v", err)
+		t.Fatal(err)
 	}
 	for i, v := range gotTags {
-		if v.ID != tags[i].ID {
-			t.Errorf("ID is wrong. want: %s, actual: %s", tags[i].ID, v.ID)
+		if v.TagID != tags[i].TagID {
+			t.Errorf("ID is wrong. want: %s, actual: %s", tags[i].TagID, v.TagID)
 		}
 	}
 
 	// 異常系
 	notExistID := CreateUUID()
-	empty, err := GetTagsByUserID(notExistID)
+	empty, err := GetUserTagsByUserID(notExistID)
 	if err != nil {
-		t.Errorf("GetTagsByID returned an error for no exist ID request: %v", err)
+		t.Error(err)
 	}
 	if len(empty) != 0 {
-		t.Error("no Tags should found, but some tags found")
+		t.Error("no Tags should be found, but some tags are found")
 	}
 }
 
@@ -127,27 +125,26 @@ func TestGetTag(t *testing.T) {
 	// 正常系
 	tag := &UsersTag{
 		UserID: testUserID,
-		Tag:    tagText,
 	}
-	if err := tag.Create(); err != nil {
+	if err := tag.Create(tagText); err != nil {
 		t.Fatalf("Failed to create tag: %v", err)
 	}
 
-	getTag, err := GetTag(tag.ID)
+	getTag, err := GetTag(tag.UserID, tag.TagID)
 	if err != nil {
-		t.Fatalf("Failed to get tag by ID: %v", err)
+		t.Fatal(err)
 	}
 
 	if getTag.UserID != tag.UserID {
 		t.Errorf("UserID is wrong. want: %s, actual: %s", getTag.UserID, tag.UserID)
 	}
-	if getTag.Tag != tag.Tag {
-		t.Errorf("Tag is wrong. want: %s, actual: %s", getTag.Tag, tag.Tag)
+	if getTag.TagID != tag.TagID {
+		t.Errorf("TagID is wrong. want: %s, actual: %s", getTag.TagID, tag.TagID)
 	}
 
 	// 異常系
 	wrongTagID := CreateUUID()
-	if _, err := GetTag(wrongTagID); err == nil {
+	if _, err := GetTag(testUserID, wrongTagID); err == nil {
 		t.Error("no error for bad request")
 	}
 }

@@ -2,12 +2,11 @@ package router
 
 import (
 	"bytes"
+	"strconv"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/traPtitech/traQ/model"
 )
 
 func TestPostUserTags(t *testing.T) {
@@ -48,7 +47,7 @@ func TestPostUserTags(t *testing.T) {
 func TestGetUserTags(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 	for i := 0; i < 5; i++ {
-		tagText := model.CreateUUID()
+		tagText := strconv.Itoa(i)
 		if _, err := makeTag(testUser.ID, tagText); err != nil {
 			t.Fatal(err)
 		}
@@ -98,7 +97,7 @@ func TestPutUserTags(t *testing.T) {
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/users/:userID/tags/:tagID")
 	c.SetParamNames("userID", "tagID")
-	c.SetParamValues(testUser.ID, tag.ID)
+	c.SetParamValues(testUser.ID, tag.TagID)
 	requestWithContext(t, mw(PutUserTag), c)
 
 	var responseBody []*TagForResponse
@@ -127,7 +126,7 @@ func TestDeleteUserTags(t *testing.T) {
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/users/:userID/tags/:tagID")
 	c.SetParamNames("userID", "tagID")
-	c.SetParamValues(testUser.ID, tag.ID)
+	c.SetParamValues(testUser.ID, tag.TagID)
 	requestWithContext(t, mw(DeleteUserTag), c)
 
 	if rec.Code != http.StatusNoContent {

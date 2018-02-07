@@ -6,54 +6,63 @@ import (
 
 // UsersTag userTagの構造体
 type UsersTag struct {
-	ID        string `xorm:"char(36) pk"`
-	UserID    string `xorm:"char(36) not null"`
-	Tag       string `xorm:"varcher(30) not null"`
+	UserID    string `xorm:"char(36) pk"`
+	TagID     string `xorm:"char(36) pk"`
 	IsLocked  bool   `xorm:"bool not null"`
 	CreatedAt string `xorm:"created not null"`
 	UpdatedAt string `xorm:"updated not null"`
 }
 
 // TableName DBの名前を指定
-func (tag *UsersTag) TableName() string {
+func (userTag *UsersTag) TableName() string {
 	return "users_tags"
 }
 
 // Create DBに新規タグを追加します
-func (tag *UsersTag) Create() error {
-	if tag.UserID == "" {
+func (userTag *UsersTag) Create(name string) error {
+	if userTag.UserID == "" {
 		return fmt.Errorf("UserID is empty")
 	}
-	if tag.Tag == "" {
-		return fmt.Errorf("Tag is empty")
+
+	tag := &Tag{
+		Name: name,
+	}
+	has, err := tag.Exists()
+	if err != nil {
+		return fmt.Errorf("Failed to check whether the tag exist: %v", err)
+	}
+	if !has {
+		if err := tag.Create(); err != nil {
+			return err
+		}
 	}
 
-	tag.ID = CreateUUID()
-	tag.IsLocked = false
-	if _, err := db.Insert(tag); err != nil {
-		return fmt.Errorf("Failed to create message object: %v", err)
+	userTag.TagID = tag.ID
+	userTag.IsLocked = false
+	if _, err := db.Insert(userTag); err != nil {
+		return fmt.Errorf("Failed to create tag object: %v", err)
 	}
 	return nil
 }
 
 // Update データの更新をします
-func (tag *UsersTag) Update() error {
-	if _, err := db.ID(tag.ID).UseBool().Update(tag); err != nil {
+func (userTag *UsersTag) Update() error {
+	if _, err := db.Where("user_id = ? AND tag_id = ?", userTag.UserID, userTag.TagID).UseBool().Update(userTag); err != nil {
 		return fmt.Errorf("Failed to update tag: %v", err)
 	}
 	return nil
 }
 
 // Delete データを消去します。正しく消せた場合はレシーバはnilになります
-func (tag *UsersTag) Delete() error {
-	if _, err := db.Delete(tag); err != nil {
+func (userTag *UsersTag) Delete() error {
+	if _, err := db.Delete(userTag); err != nil {
 		return fmt.Errorf("Failed to delete tag: %v", err)
 	}
 	return nil
 }
 
-// GetTagsByUserID userIDに紐づくtagのリストを返します
-func GetTagsByUserID(userID string) ([]*UsersTag, error) {
+// GetUserTagsByUserID userIDに紐づくtagのリストを返します
+func GetUserTagsByUserID(userID string) ([]*UsersTag, error) {
 	var tags []*UsersTag
 	if err := db.Where("user_id = ?", userID).Asc("created_at").Find(&tags); err != nil {
 		return nil, fmt.Errorf("Failed to find tags: %v", err)
@@ -61,10 +70,10 @@ func GetTagsByUserID(userID string) ([]*UsersTag, error) {
 	return tags, nil
 }
 
-// GetTag userIDとtagで一意に定まるタグを返します
-func GetTag(tagID string) (*UsersTag, error) {
+// GetTag userIDとtagIDで一意に定まるタグを返します
+func GetTag(userID, tagID string) (*UsersTag, error) {
 	var tag UsersTag
-	has, err := db.ID(tagID).Get(&tag)
+	has, err := db.Where("user_id = ? AND tag_id = ?", userID, tagID).Get(&tag)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to find tag: %v", err)
 	}

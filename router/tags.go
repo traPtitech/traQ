@@ -34,11 +34,10 @@ func PostUserTag(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
-	tag := &model.Tag{
-		Tag:    reqBody.Tag,
+	tag := &model.UsersTag{
 		UserID: userID,
 	}
-	if err := tag.Create(); err != nil {
+	if err := tag.Create(reqBody.Tag); err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Failed to create tag")
 	}
 
@@ -62,7 +61,7 @@ func PutUserTag(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
-	tag, err := model.GetTag(tagID)
+	tag, err := model.GetTag(userID, tagID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Failed to get tag")
 	}
@@ -81,9 +80,10 @@ func PutUserTag(c echo.Context) error {
 
 // DeleteUserTag /users/{userID}/tags/{tagID} のDELETEメソッド
 func DeleteUserTag(c echo.Context) error {
+	userID := c.Param("userID")
 	tagID := c.Param("tagID")
 
-	tag, err := model.GetTag(tagID)
+	tag, err := model.GetTag(userID, tagID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Failed to get tag")
 	}
@@ -96,22 +96,30 @@ func DeleteUserTag(c echo.Context) error {
 }
 
 func getUserTags(ID string) ([]*TagForResponse, error) {
-	tagList, err := model.GetTagsByUserID(ID)
+	tagList, err := model.GetUserTagsByUserID(ID)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "Tags are not found")
 	}
 
 	var res []*TagForResponse
 	for _, v := range tagList {
-		res = append(res, formatTag(v))
+		t, err := formatTag(v)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, t)
 	}
 	return res, nil
 
 }
 
-func formatTag(t *model.Tag) *TagForResponse {
-	return &TagForResponse{
-		Tag:      t.Tag,
-		IsLocked: t.IsLocked,
+func formatTag(userTag *model.UsersTag) (*TagForResponse, error) {
+	tag, err := model.GetTagByID(userTag.TagID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Tag is not found")
 	}
+	return &TagForResponse{
+		Tag:      tag.Name,
+		IsLocked: userTag.IsLocked,
+	}, nil
 }
