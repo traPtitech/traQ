@@ -38,8 +38,11 @@ func SyncSchema() error {
 	if err := db.Sync(&Clip{}); err != nil {
 		return fmt.Errorf("Failed to sync Clips Table: %v", err)
 	}
-	if err := db.Sync(&Tag{}); err != nil {
+	if err := db.Sync(&UsersTag{}); err != nil {
 		return fmt.Errorf("Failed to sync users_tags Table: %v", err)
+	}
+	if err := db.Sync(&Tag{}); err != nil {
+		return fmt.Errorf("Failed to sync tags Table: %v", err)
 	}
 
 	if err := db.Sync(&Star{}); err != nil {
