@@ -14,8 +14,6 @@ type channelId = uuid.UUID
 var (
 	notificationStatusCache      map[channelId][]userId
 	notificationStatusCacheMutex = sync.RWMutex{}
-	userTagCache                 map[userId][]string
-	userTagCacheMutex            = sync.RWMutex{}
 	streamer                     *sseStreamer
 	fcm                          *FCMClient
 	isRunning                    = false
