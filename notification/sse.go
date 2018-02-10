@@ -67,7 +67,6 @@ func GetNotificationStream(c echo.Context) error {
 	return nil
 }
 
-
 func Stream(userId uuid.UUID, res *echo.Response) {
 	client := &sseClient{
 		userId:       userId,

@@ -4,6 +4,7 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/notification/events"
 	"github.com/traPtitech/traQ/router"
+	"os"
 	"sync"
 )
 
@@ -16,27 +17,22 @@ var (
 	userTagCache                 map[userId][]string
 	userTagCacheMutex            = sync.RWMutex{}
 	streamer                     *sseStreamer
+	fcm                          *FCMClient
 	isRunning                    = false
+	FirebaseServerKey            = os.Getenv("FIREBASE_SERVER_KEY")
 )
-
-func InitUsersNotificationCache() {
-	//TODO
-}
-
-func InitUsersTagsCache() {
-	//TODO
-}
 
 func Run() {
 	if !isRunning {
+		isRunning = true
 		streamer = &sseStreamer{
 			clients:    make(map[uuid.UUID]map[uuid.UUID]*sseClient, 200),
 			newConnect: make(chan *sseClient),
 			disconnect: make(chan *sseClient, 10),
 			stop:       make(chan struct{}),
 		}
+		fcm = NewFCMClient(FirebaseServerKey)
 		go streamer.run()
-		isRunning = true
 	}
 }
 
@@ -47,11 +43,16 @@ func IsRunning() bool {
 func Stop() {
 	if isRunning {
 		streamer.stop <- struct{}{}
+		fcm = nil
 		isRunning = false
 	}
 }
 
 func Send(eventType events.EventType, payload interface{}) {
+	if !isRunning {
+		return
+	}
+
 	switch eventType {
 	case events.USER_JOINED, events.USER_LEFT, events.USER_TAGS_UPDATED:
 		data, _ := payload.(events.UserEvent)
