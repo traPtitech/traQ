@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 	defer engine.Close()
 
 	engine.ShowSQL(false)
-	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars")
+	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars", "tags", "users_tags")
 	engine.SetMapper(core.GonicMapper{})
 	model.SetXORMEngine(engine)
 
@@ -65,7 +65,7 @@ func TestMain(m *testing.M) {
 }
 
 func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
-	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars")
+	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars", "tags", "users_tags")
 	if err := model.SyncSchema(); err != nil {
 		t.Fatalf("Failed to sync schema: %v", err)
 	}
@@ -190,6 +190,14 @@ func makeMessage() *model.Message {
 	}
 	message.Create()
 	return message
+}
+
+func makeTag(userID, tagText string) (*model.UsersTag, error) {
+	tag := &model.UsersTag{
+		UserID: userID,
+	}
+	err := tag.Create(tagText)
+	return tag, err
 }
 
 func clipMessage(userID, messageID string) error {

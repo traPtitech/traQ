@@ -41,7 +41,8 @@ func TestMain(m *testing.M) {
 	}
 	defer engine.Close()
 	engine.ShowSQL(false)
-	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars")
+	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags")
+
 	engine.SetMapper(core.GonicMapper{})
 	SetXORMEngine(engine)
 
@@ -54,7 +55,7 @@ func TestMain(m *testing.M) {
 }
 
 func beforeTest(t *testing.T) {
-	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars")
+	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags")
 	if err := SyncSchema(); err != nil {
 		t.Fatal(err)
 	}

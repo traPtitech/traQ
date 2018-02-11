@@ -6,7 +6,7 @@ import (
 )
 
 // 各関数のテスト>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-func TestCreate(t *testing.T) {
+func TestCreateChannel(t *testing.T) {
 	beforeTest(t)
 	channel, err := makeChannelDetail(testUserID, "testChannel", "", true)
 
