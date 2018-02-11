@@ -1353,6 +1353,9 @@ components:
     Tag:
       type: object
       properties:
+        tagId:
+          type: string
+          format: uuid
         tag:
           type: string
         isLocked:

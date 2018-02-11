@@ -42,6 +42,9 @@ func TestPostUserTags(t *testing.T) {
 	if responseBody[0].Tag != tagText {
 		t.Errorf("Tag is wrong. want: %s, actual: %s", tagText, responseBody[0].Tag)
 	}
+	if responseBody[0].ID == "" {
+		t.Errorf("Tag id is empty.")
+	}
 }
 
 func TestGetUserTags(t *testing.T) {

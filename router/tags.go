@@ -9,6 +9,7 @@ import (
 
 // TagForResponse クライアントに返す形のタグ構造体
 type TagForResponse struct {
+	ID       string `json:"tagId"`
 	Tag      string `json:"tag"`
 	IsLocked bool   `json:"isLocked"`
 }
@@ -119,6 +120,7 @@ func formatTag(userTag *model.UsersTag) (*TagForResponse, error) {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Tag is not found")
 	}
 	return &TagForResponse{
+		ID:       tag.ID,
 		Tag:      tag.Name,
 		IsLocked: userTag.IsLocked,
 	}, nil
