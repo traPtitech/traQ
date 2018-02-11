@@ -29,7 +29,7 @@ func TestDevice_Register(t *testing.T) {
 	}
 	dev = &Device{UserId: id1, Token: token2}
 	if err := dev.Register(); err == nil {
-		t.Fatalf("device register does'nt fail")
+		t.Fatalf("device register doesn't fail")
 	}
 
 	if l, _ := db.Count(&Device{}); l != 2 {
