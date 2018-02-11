@@ -89,6 +89,9 @@ func (user *User) SetPassword(pass string) error {
 
 // Exists 存在するuserを取得します
 func (user *User) Exists() (bool, error) {
+	if user.Name == "" {
+		return false, fmt.Errorf("UserName is empty")
+	}
 	return db.Get(user)
 }
 
