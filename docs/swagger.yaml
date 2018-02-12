@@ -712,21 +712,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /users/me/channels/unread:
-    get:
-      tags:
-        - unread
-      description: チャンネルごとの未読件数を取得します。
-      responses:
-        "200":
-          description: |+
-            正常に取得できました。
-            チャンネルごとの未読件数の配列を返します。
-          content:
-            application/json:
-              schema:
-                $ref: "#components/schemas/UnreadList"
-
   /users/{userID}:
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
