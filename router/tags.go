@@ -1,6 +1,8 @@
 package router
 
 import (
+	"github.com/traPtitech/traQ/notification"
+	"github.com/traPtitech/traQ/notification/events"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -47,6 +49,7 @@ func PostUserTag(c echo.Context) error {
 		return err
 	}
 
+	go notification.Send(events.UserTagsUpdated, events.UserEvent{Id: userID})
 	return c.JSON(http.StatusCreated, res)
 }
 
@@ -76,6 +79,8 @@ func PutUserTag(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+
+	go notification.Send(events.UserTagsUpdated, events.UserEvent{Id: userID})
 	return c.JSON(http.StatusOK, res)
 }
 
@@ -92,8 +97,9 @@ func DeleteUserTag(c echo.Context) error {
 	if err := tag.Delete(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete tag")
 	}
-	return c.NoContent(http.StatusNoContent)
 
+	go notification.Send(events.UserTagsUpdated, events.UserEvent{Id: userID})
+	return c.NoContent(http.StatusNoContent)
 }
 
 func getUserTags(ID string) ([]*TagForResponse, error) {

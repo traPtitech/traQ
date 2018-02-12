@@ -2,6 +2,8 @@ package router
 
 import (
 	"fmt"
+	"github.com/traPtitech/traQ/notification"
+	"github.com/traPtitech/traQ/notification/events"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -46,6 +48,7 @@ func PostStars(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get stared channels response")
 	}
 
+	go notification.Send(events.ChannelStared, events.UserChannelEvent{UserId: user.ID, ChannelId: requestBody.ChannelID})
 	return c.JSON(http.StatusCreated, responseBody)
 }
 
@@ -75,6 +78,7 @@ func DeleteStars(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get stared channels response")
 	}
 
+	go notification.Send(events.ChannelUnstared, events.UserChannelEvent{UserId: user.ID, ChannelId: requestBody.ChannelID})
 	return c.JSON(http.StatusOK, responseBody)
 }
 
