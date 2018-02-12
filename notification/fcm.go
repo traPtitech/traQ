@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	fcmEndPoint    = "https://fcm.googleapis.com/fcm/send"
-	PriorityHigh   = "high"
-	PriorityNormal = "normal"
+	fcmEndPoint            = "https://fcm.googleapis.com/fcm/send"
+	PriorityHigh           = "high"
+	PriorityNormal         = "normal"
+	MaxRegistrationIdsSize = 1000
 )
 
 type FCMClient struct {
@@ -23,14 +24,10 @@ type FCMClient struct {
 type FCMNotificationPayload struct {
 	Title       string `json:"title,omitempty"`
 	Body        string `json:"body,omitempty"`
-	Icon        string `json:"icon,omitempty"`
-	Sound       string `json:"sound,omitempty"`
-	Badge       string `json:"badge,omitempty"`
 	ClickAction string `json:"click_action,omitempty"`
 }
 
 type FCMMessage struct {
-	To               string                  `json:"to,omitempty"`
 	RegistrationIds  []string                `json:"registration_ids,omitempty"`
 	Notification     *FCMNotificationPayload `json:"notification,omitempty"`
 	Data             interface{}             `json:"data,omitempty"`
