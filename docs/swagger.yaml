@@ -722,10 +722,7 @@ paths:
               type: array
               description: 既読にするメッセージのIDの配列
               items:
-                type: integer
-              example:
-                - 12903
-                - 14121
+                type: string
       responses:
         "204":
           description: |+
