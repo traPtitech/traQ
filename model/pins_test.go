@@ -4,59 +4,104 @@ import (
 	"testing"
 )
 
+func TestTableNamePin(t *testing.T) {
+
+	pin := &Pin{}
+	if "pins" != pin.Tablename() {
+		t.Fatalf("Tablename is wrong: want pins, actual %s", pin.Tablename())
+	}
+}
+
 func TestCreatePins(t *testing.T) {
 	beforeTest(t)
-	pin, err := makePinDetail("channelId", "messageId", testUserID)
-
-	if err != nil {
-		t.Error(err)
+	message := makeMessage()
+	pin := &Pin{
+		UserID:    testUserID,
+		MessageID: message.ID,
+		ChannelID: message.ChannelID,
 	}
 
-	if pin.UserId != testUserID {
-		t.Errorf("CreatorId : want %s, actual %s", testUserID, pin.UserId)
-	}
-	if pin.MessageId != "messageId" {
-		t.Errorf("UserId : want %s, actual %s", "testPin", pin.MessageId)
-	}
-	if pin.ChannelId != "channelId" {
-		t.Errorf("ChannelId : want %s, actual %s", "channelId", pin.MessageId)
+	if err := pin.Create(); err != nil {
+		t.Fatalf("Pin create faild: %v", err)
 	}
 
 }
-
 func TestGetPinnedMessage(t *testing.T) {
 	beforeTest(t)
-
-	pinnedMessage, err := GetPin("testChannelId")
+	messageCount := 5
+	message := makeMessage()
+	pin := &Pin{
+		UserID:    testUserID,
+		MessageID: message.ID,
+		ChannelID: message.ChannelID,
+	}
+	if err := pin.Create(); err != nil {
+		t.Fatalf("pin create failed: %v", err)
+	}
+	for i := 0; i < messageCount; i++ {
+		mes := makeMessage()
+		p := &Pin{
+			UserID:    testUserID,
+			MessageID: mes.ID,
+			ChannelID: mes.ChannelID,
+		}
+		if err := p.Create(); err != nil {
+			t.Fatalf("Pin create is failed: %v", err)
+		}
+	}
+	messages, err := GetPinMesssages(pin.ChannelID)
 
 	if err != nil {
-		t.Fatal("Fail to get pinnedMessage")
+		t.Fatalf("Getting pined messages failed: %v", err)
 	}
 
-	if pinnedMessage.MessageId != "testMessageId" {
-		t.Error("fail to get messageId")
+	if len(messages) != messageCount {
+		print(messages)
+		t.Fatalf("Message count wrong: want %d, actual %d", messageCount, len(messages))
 	}
-	if pinnedMessage.ChannelId != "testChannelId" {
-		t.Error("fail to get testChannelId")
-	}
-	if pinnedMessage.UserId != testUserID {
-		t.Error("fail to create testuserid")
+
+	if messages[0].Text != message.Text {
+		t.Fatalf("Message text wrong: want %s, actual %s", message.Text, messages[0].Text)
 	}
 }
+func TestDeletePin(t *testing.T) {
+	beforeTest(t)
+	messageCount := 5
+	for i := 0; i < messageCount; i++ {
+		message := makeMessage()
+		pin := &Pin{
+			UserID:    testUserID,
+			MessageID: message.ID,
+			ChannelID: message.ChannelID,
+		}
+		if err := pin.Create(); err != nil {
+			t.Fatalf("Pin create faild: %v", err)
+		}
+	}
 
-func makePin() error {
-	pin := &Pins{}
-	pin.UserId = testUserID
-	pin.MessageId = "testMessageId"
-	pin.ChannelId = "testChannelId"
-	return pin.Create()
-}
+	message := makeMessage()
 
-func makePinDetail(channelId, messageId, userId string) (*Pins, error) {
-	pin := &Pins{}
-	pin.ChannelId = channelId
-	pin.MessageId = messageId
-	pin.UserId = userId
-	err := pin.Create()
-	return pin, err
+	messages, err := GetPinMesssages(message.ChannelID)
+
+	if err != nil {
+		t.Fatalf("Pin create fialed: %v", err)
+	}
+
+	pin := &Pin{
+		UserID:    testUserID,
+		MessageID: messages[0].ID,
+		ChannelID: messages[0].ChannelID,
+	}
+	if err := pin.DeletePin(); err != nil {
+		t.Fatalf("Pin delete failaed: %v", err)
+	}
+
+	messages, err = GetPinMesssages(messages[0].ChannelID)
+	if err != nil {
+		t.Fatalf("Pin cliate failed: %v", err)
+	}
+
+	if len(messages) != messageCount-1 {
+		t.Fatalf("Message count wrong: want %d, actual %d", messageCount-1, len(messages))
+	}
 }

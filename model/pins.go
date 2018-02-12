@@ -4,36 +4,61 @@ import (
 	"fmt"
 )
 
-type Pins struct {
-	ChannelId string `xorm:"char(36) not null"`
-	MessageId string `xorm:"char(36) not null"`
-	UserId    string `xorm:"char(36) not null"`
+type Pin struct {
+	ChannelID string `xorm:"char(36) pk"`
+	MessageID string `xorm:"char(36) pk"`
+	UserID    string `xorm:"char(36) not null"`
 	CreateAt  string `xorm:"created not null"`
 }
 
-func (pins *Pins) Create() error {
-	if pins.UserId == "" {
-		return fmt.Errorf("UserId is empty")
+func (pin *Pin) Tablename() string {
+	return "pins"
+}
+
+func (pin *Pin) Create() error {
+	if pin.UserID == "" {
+		return fmt.Errorf("UserID is empty")
 	}
-	if pins.ChannelId == "" {
-		return fmt.Errorf("ChannelId is empty")
+	if pin.ChannelID == "" {
+		return fmt.Errorf("ChannelID is empty")
 	}
-	if pins.MessageId == "" {
-		return fmt.Errorf("MessageId is empty")
+	if pin.MessageID == "" {
+		return fmt.Errorf("MessageID is empty")
 	}
 
-	if _, err := db.Insert(pins); err != nil {
+	if _, err := db.Insert(pin); err != nil {
 		return fmt.Errorf("Failed to create pin object: %v", err)
 	}
 
 	return nil
 }
 
-func GetPin(channelId string) (*Pins, error) {
-	pinnedMessage := &Pins{ChannelId: channelId}
-
-	if _, err := db.Get(&pinnedMessage); err != nil {
-		return nil, fmt.Errorf("Failed to find pin: %v", err)
+func GetPinMesssages(channelID string) ([]*Message, error) {
+	if channelID == "" {
+		return nil, fmt.Errorf("ChannelId is empty")
 	}
-	return pinnedMessage, nil
+	var messages []*Message
+
+	err := db.Table("pins").Join("LEFT", "messages", "pins.message_id = messages.id").Where("pins.channel_id = ? AND is_deleted = false", channelID).Find(&messages)
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to find pined messages: %v", err)
+	}
+
+	return messages, nil
+}
+
+func (pin *Pin) DeletePin() error {
+	if pin.ChannelID == "" {
+		return fmt.Errorf("ChannelID is empty")
+	}
+
+	if pin.MessageID == "" {
+		return fmt.Errorf("MessageID is empty")
+	}
+
+	if _, err := db.Delete(pin); err != nil {
+		return fmt.Errorf("Fail to delete pin: %v", err)
+	}
+	return nil
 }
