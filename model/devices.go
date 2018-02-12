@@ -27,7 +27,7 @@ func (device *Device) Register() error {
 	}
 
 	if _, err := db.Insert(device); err != nil {
-		return fmt.Errorf("failed to create device: %v", err)
+		return fmt.Errorf("failed to create device: %v", err) //TODO すでに登録されていた場合に除く
 	}
 
 	return nil

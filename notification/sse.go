@@ -4,34 +4,44 @@ import (
 	"encoding/json"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/notification/events"
 	"net/http"
+)
+
+var (
+	sseSeparator = []byte("\n\n")
 )
 
 type sseClient struct {
 	userId       uuid.UUID
 	connectionId uuid.UUID
 	send         chan *events.EventData
-	close        chan struct{}
+	stop         chan struct{}
 }
 
 type sseStreamer struct {
-	clients    map[userId]map[uuid.UUID]*sseClient
+	clients    map[uuid.UUID]map[uuid.UUID]*sseClient
 	newConnect chan *sseClient
 	disconnect chan *sseClient
 	stop       chan struct{}
+}
+
+func NewSseStreamer() *sseStreamer {
+	return &sseStreamer{
+		clients:    make(map[uuid.UUID]map[uuid.UUID]*sseClient, 200),
+		newConnect: make(chan *sseClient),
+		disconnect: make(chan *sseClient, 10),
+		stop:       make(chan struct{}),
+	}
 }
 
 func (s *sseStreamer) run() {
 	for {
 		select {
 		case <-s.stop:
-			for _, u := range s.clients {
-				for _, c := range u {
-					c.close <- struct{}{}
-				}
-			}
+			close(s.newConnect)
+			close(s.disconnect)
+			s.clients = nil
 			return
 
 		case c := <-s.newConnect:
@@ -45,50 +55,45 @@ func (s *sseStreamer) run() {
 		case c := <-s.disconnect:
 			arr := s.clients[c.userId]
 			delete(arr, c.connectionId)
-
 		}
 	}
-}
-
-func GetNotificationStream(c echo.Context) error {
-	userId := uuid.FromStringOrNil(c.Get("user").(*model.User).ID)
-
-	if _, ok := c.Response().Writer.(http.Flusher); !ok {
-		return echo.NewHTTPError(http.StatusNotImplemented, "Server Sent Events is not supported.")
-	}
-
-	//Set headers for SSE
-	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
-	c.Response().Header().Set("Cache-Control", "no-cache")
-	c.Response().Header().Set("Connection", "keep-alive")
-	c.Response().WriteHeader(http.StatusOK)
-
-	Stream(userId, c.Response())
-	return nil
 }
 
 func Stream(userId uuid.UUID, res *echo.Response) {
 	client := &sseClient{
 		userId:       userId,
 		connectionId: uuid.NewV4(),
-		send:         make(chan *events.EventData, 10),
-		close:        make(chan struct{}),
+		send:         make(chan *events.EventData, 50),
+		stop:         make(chan struct{}),
 	}
 	rw := res.Writer
 	fl := res.Writer.(http.Flusher)
 	cn := res.CloseNotify()
 
-	rw.Write([]byte("event: CONNECTED\n\n"))
-	fl.Flush()
+	select {
+	case <-streamer.stop:
+		rw.Write([]byte("event: CONNECTION_FAILED"))
+		rw.Write(sseSeparator)
+		fl.Flush()
+		return
 
-	streamer.newConnect <- client
+	default:
+		streamer.newConnect <- client
+		rw.Write([]byte("event: CONNECTED"))
+		rw.Write(sseSeparator)
+		fl.Flush()
+	}
+
 	for {
 		select {
-		case <-cn:
-			streamer.disconnect <- client
+		case <-streamer.stop:
+			close(client.stop)
+			close(client.send)
 			return
 
-		case <-client.close:
+		case <-cn:
+			close(client.stop)
+			close(client.send)
 			streamer.disconnect <- client
 			return
 
@@ -98,7 +103,7 @@ func Stream(userId uuid.UUID, res *echo.Response) {
 			rw.Write([]byte("event: " + message.EventType + "\n"))
 			rw.Write([]byte("data: "))
 			rw.Write(data)
-			rw.Write([]byte("\n\n"))
+			rw.Write(sseSeparator)
 			fl.Flush()
 		}
 	}

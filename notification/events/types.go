@@ -33,7 +33,9 @@ const (
 
 type EventData struct {
 	EventType EventType
+	Summary   string
 	Payload   interface{}
+	Mobile    bool
 }
 
 type UserEvent struct {
@@ -62,6 +64,7 @@ type MessageChannelEvent struct {
 type MessageEvent struct {
 	Id        string
 	ChannelId string
+	Tags      []string
 }
 
 type MessageStampEvent struct {

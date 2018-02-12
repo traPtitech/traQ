@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/go-xorm/builder"
 	"github.com/satori/go.uuid"
 )
 
@@ -85,10 +86,10 @@ func GetTag(userID, tagID string) (*UsersTag, error) {
 }
 
 // 指定したタグを持った全ユーザーのUUIDを返します
-func GetUserIdsByTag(tag string) ([]uuid.UUID, error) {
+func GetUserIdsByTags(tags []string) ([]uuid.UUID, error) {
 	var arr []string
 
-	if err := db.Table(&UsersTag{}).Join("LEFT", &Tag{}, "users_tags.tag_id = tags.id").Where("tags.name = ?", tag).Cols("user_id").Find(&arr); err != nil {
+	if err := db.Table(&UsersTag{}).Join("INNER", &Tag{}, "users_tags.tag_id = tags.id").Where(builder.In("tags.name", tags)).Cols("user_id").Find(&arr); err != nil {
 		return nil, fmt.Errorf("failed to get user ids by tag: %v", err)
 	}
 

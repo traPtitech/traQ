@@ -28,7 +28,7 @@ func TestGetHeartbeatStatus(t *testing.T) {
 	assert.Len(status.UserStatuses, 1)
 
 	status, ok = GetHeartbeatStatus(CreateUUID())
-	assert.True(ok)
+	assert.False(ok)
 }
 
 func TestHeartbeat(t *testing.T) {
