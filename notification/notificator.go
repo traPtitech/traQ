@@ -10,7 +10,7 @@ import (
 
 var (
 	streamer          *sseStreamer
-	fcm               *FCMClient
+	fcm               *fcmClient
 	isRunning         = false
 	FirebaseServerKey = os.Getenv("FIREBASE_SERVER_KEY")
 )
@@ -18,8 +18,8 @@ var (
 func Run() {
 	if !isRunning {
 		isRunning = true
-		streamer = NewSseStreamer()
-		fcm = NewFCMClient(FirebaseServerKey)
+		streamer = newSseStreamer()
+		fcm = newFCMClient(FirebaseServerKey)
 		go streamer.run()
 	}
 }
@@ -42,7 +42,7 @@ func Send(eventType events.EventType, payload interface{}) {
 	}
 
 	switch eventType {
-	case events.USER_JOINED, events.USER_LEFT, events.USER_TAGS_UPDATED:
+	case events.UserJoined, events.UserLeft, events.UserTagsUpdated:
 		data, _ := payload.(events.UserEvent)
 		broadcastToAll(&events.EventData{
 			EventType: eventType,
@@ -52,7 +52,7 @@ func Send(eventType events.EventType, payload interface{}) {
 			Mobile: false,
 		})
 
-	case events.CHANNEL_CREATED, events.CHANNEL_DELETED, events.CHANNEL_RENAMED, events.CHANNEL_VISIBILITY_CHANGED:
+	case events.ChannelCreated, events.ChannelDeleted, events.ChannelUpdated, events.ChannelVisibilityChanged:
 		data, _ := payload.(events.ChannelEvent)
 		broadcastToAll(&events.EventData{
 			EventType: eventType,
@@ -62,8 +62,8 @@ func Send(eventType events.EventType, payload interface{}) {
 			Mobile: false,
 		})
 
-	case events.CHANNEL_STARED, events.CHANNEL_UNSTARED:
-		data, _ := payload.(events.UserStarEvent)
+	case events.ChannelStared, events.ChannelUnstared:
+		data, _ := payload.(events.UserChannelEvent)
 		broadcast(uuid.FromStringOrNil(data.UserId), &events.EventData{
 			EventType: eventType,
 			Payload: struct {
@@ -72,9 +72,10 @@ func Send(eventType events.EventType, payload interface{}) {
 			Mobile: false,
 		})
 
-	case events.MESSAGE_CREATED, events.MESSAGE_UPDATED, events.MESSAGE_DELETED:
+	case events.MessageCreated, events.MessageUpdated, events.MessageDeleted:
 		data, _ := payload.(events.MessageEvent)
-		cid := uuid.FromStringOrNil(data.ChannelId)
+		cid := uuid.FromStringOrNil(data.Message.ChannelID)
+		var tags []string //TODO タグ抽出
 		done := make(map[uuid.UUID]bool)
 
 		//MEMO 通知ユーザー・ユーザータグのキャッシュを使ったほうがいいかもしれない。
@@ -85,36 +86,34 @@ func Send(eventType events.EventType, payload interface{}) {
 				done[id] = true
 				broadcast(id, &events.EventData{
 					EventType: eventType,
-					Summary:   "", //TODO
+					Summary:   "", //TODO モバイル通知に表示される文字列
 					Payload: struct {
-						//TODO
 						Id string `json:"id"`
-					}{data.Id},
+					}{data.Message.ID},
 					Mobile: true,
 				})
 			}
 		}
 
-		if s, ok := model.GetHeartbeatStatus(data.ChannelId); ok {
+		if s, ok := model.GetHeartbeatStatus(data.Message.ChannelID); ok {
 			for _, u := range s.UserStatuses {
 				id := uuid.FromStringOrNil(u.UserID)
 				if _, ok := done[id]; !ok {
 					done[id] = true
 					broadcast(id, &events.EventData{
 						EventType: eventType,
-						Summary:   "", //TODO
+						Summary:   "", //TODO モバイル通知に表示される文字列
 						Payload: struct {
-							//TODO
 							Id string `json:"id"`
-						}{data.Id},
+						}{data.Message.ID},
 						Mobile: true,
 					})
 				}
 			}
 		}
 
-		if len(data.Tags) > 0 {
-			if users, err := model.GetUserIdsByTags(data.Tags); err != nil {
+		if len(tags) > 0 {
+			if users, err := model.GetUserIdsByTags(tags); err != nil {
 				log.Error(err)
 			} else {
 				for _, id := range users {
@@ -122,11 +121,10 @@ func Send(eventType events.EventType, payload interface{}) {
 						done[id] = true
 						broadcast(id, &events.EventData{
 							EventType: eventType,
-							Summary:   "", //TODO
+							Summary:   "", //TODO モバイル通知に表示される文字列
 							Payload: struct {
-								//TODO
 								Id string `json:"id"`
-							}{data.Id},
+							}{data.Message.ID},
 							Mobile: true,
 						})
 					}
@@ -134,7 +132,7 @@ func Send(eventType events.EventType, payload interface{}) {
 			}
 		}
 
-	case events.MESSAGE_READ:
+	case events.MessageRead:
 		data, _ := payload.(events.UserMessageEvent)
 		broadcast(uuid.FromStringOrNil(data.UserId), &events.EventData{
 			EventType: eventType,
@@ -144,7 +142,7 @@ func Send(eventType events.EventType, payload interface{}) {
 			Mobile: false,
 		})
 
-	case events.MESSAGE_STAMPED, events.MESSAGE_UNSTAMPED:
+	case events.MessageStamped, events.MessageUnstamped:
 		data, _ := payload.(events.MessageStampEvent)
 		if s, ok := model.GetHeartbeatStatus(data.ChannelId); ok {
 			for _, u := range s.UserStatuses {
@@ -163,7 +161,7 @@ func Send(eventType events.EventType, payload interface{}) {
 			}
 		}
 
-	case events.MESSAGE_PINNED, events.MESSAGE_UNPINNED:
+	case events.MessagePinned, events.MessageUnpinned:
 		data, _ := payload.(events.MessageChannelEvent)
 		if s, ok := model.GetHeartbeatStatus(data.ChannelId); ok {
 			for _, u := range s.UserStatuses {
@@ -178,7 +176,7 @@ func Send(eventType events.EventType, payload interface{}) {
 			}
 		}
 
-	case events.MESSAGE_CLIPPED, events.MESSAGE_UNCLIPPED:
+	case events.MessageClipped, events.MessageUnclipped:
 		data, _ := payload.(events.UserMessageEvent)
 		broadcast(uuid.FromStringOrNil(data.UserId), &events.EventData{
 			EventType: eventType,
@@ -188,14 +186,14 @@ func Send(eventType events.EventType, payload interface{}) {
 			Mobile: false,
 		})
 
-	case events.STAMP_CREATED, events.STAMP_DELETED:
+	case events.StampCreated, events.StampDeleted:
 		broadcastToAll(&events.EventData{
 			EventType: eventType,
 			Payload:   struct{}{},
 			Mobile:    false,
 		})
 
-	case events.TRAQ_UPDATED:
+	case events.TraqUpdated:
 		broadcastToAll(&events.EventData{
 			EventType: eventType,
 			Payload:   struct{}{},
@@ -247,21 +245,21 @@ func broadcast(target uuid.UUID, data *events.EventData) {
 }
 
 func broadcastToFcm(deviceTokens []string, data *events.EventData) {
-	for arr := range split(deviceTokens, MaxRegistrationIdsSize) {
+	for arr := range split(deviceTokens, maxRegistrationIdsSize) {
 		m := createDefaultFCMMessage()
 		m.Notification.Body = data.Summary
 		m.Data = data.Payload
 		m.RegistrationIds = arr
 
-		res, err := fcm.Send(m)
+		res, err := fcm.send(m)
 		if err != nil {
 			log.Error(err)
 			continue
 		}
-		if res.IsTimeout() {
+		if res.isTimeout() {
 			//TODO Retry
 		} else if res.Failure > 0 {
-			for _, t := range res.GetInvalidRegistration() {
+			for _, t := range res.getInvalidRegistration() {
 				device := &model.Device{Token: t}
 				if err := device.Unregister(); err != nil {
 					log.Error(err)
@@ -288,17 +286,17 @@ func split(dev []string, n int) chan []string {
 	return ch
 }
 
-func createDefaultFCMMessage() *FCMMessage {
-	return &FCMMessage{
+func createDefaultFCMMessage() *fcmMessage {
+	return &fcmMessage{
 		Notification:     createDefaultFCMNotificationPayload(),
-		Priority:         PriorityHigh,
+		Priority:         priorityHigh,
 		ContentAvailable: true,
 		DryRun:           false,
 	}
 }
 
-func createDefaultFCMNotificationPayload() *FCMNotificationPayload {
-	return &FCMNotificationPayload{
+func createDefaultFCMNotificationPayload() *fcmNotificationPayload {
+	return &fcmNotificationPayload{
 		Title: "traQ",
 	}
 }

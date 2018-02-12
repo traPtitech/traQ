@@ -7,7 +7,7 @@ import (
 
 // 通知デバイスの構造体
 type Device struct {
-	Token  string `xorm:"varchar(255) pk not null"`
+	Token  string `xorm:"varchar(190) pk not null"`
 	UserId string `xorm:"char(36) not null index"`
 }
 

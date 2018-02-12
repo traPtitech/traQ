@@ -11,56 +11,56 @@ import (
 
 const (
 	fcmEndPoint            = "https://fcm.googleapis.com/fcm/send"
-	PriorityHigh           = "high"
-	PriorityNormal         = "normal"
-	MaxRegistrationIdsSize = 1000
+	priorityHigh           = "high"
+	priorityNormal         = "normal"
+	maxRegistrationIdsSize = 1000
 )
 
-type FCMClient struct {
+type fcmClient struct {
 	APIKey     string
 	HttpClient *http.Client
 }
 
-type FCMNotificationPayload struct {
+type fcmNotificationPayload struct {
 	Title       string `json:"title,omitempty"`
 	Body        string `json:"body,omitempty"`
 	ClickAction string `json:"click_action,omitempty"`
 }
 
-type FCMMessage struct {
+type fcmMessage struct {
 	RegistrationIds  []string                `json:"registration_ids,omitempty"`
-	Notification     *FCMNotificationPayload `json:"notification,omitempty"`
+	Notification     *fcmNotificationPayload `json:"notification,omitempty"`
 	Data             interface{}             `json:"data,omitempty"`
 	Priority         string                  `json:"priority,omitempty"`
 	ContentAvailable bool                    `json:"content_available,omitempty"`
 	DryRun           bool                    `json:"dry_run,omitempty"`
 }
 
-type FCMResponse struct {
+type fcmResponse struct {
 	StatusCode   int
 	RetryAfter   string
 	MulticastId  int64       `json:"multicast_id"`
 	Success      int         `json:"success"`
 	Failure      int         `json:"failure"`
 	CanonicalIds int         `json:"canonical_ids"`
-	Results      []FCMResult `json:"results"`
+	Results      []fcmResult `json:"results"`
 }
 
-type FCMResult struct {
+type fcmResult struct {
 	MessageId      string `json:"message_id"`
 	RegistrationId string `json:"registration_id"`
 	Error          string `json:"error"`
 }
 
-func NewFCMClient(apiKey string) *FCMClient {
-	return &FCMClient{
+func newFCMClient(apiKey string) *fcmClient {
+	return &fcmClient{
 		APIKey:     apiKey,
 		HttpClient: &http.Client{},
 	}
 }
 
-func (c *FCMClient) Send(message *FCMMessage) (*FCMResponse, error) {
-	data, err := message.Marshal()
+func (c *fcmClient) send(message *fcmMessage) (*fcmResponse, error) {
+	data, err := message.marshal()
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (c *FCMClient) Send(message *FCMMessage) (*FCMResponse, error) {
 		}
 	}
 
-	r := &FCMResponse{}
+	r := &fcmResponse{}
 	r.StatusCode = res.StatusCode
 	r.RetryAfter = res.Header.Get("Retry-After")
 	if err := json.NewDecoder(res.Body).Decode(r); err != nil {
@@ -96,12 +96,12 @@ func (c *FCMClient) Send(message *FCMMessage) (*FCMResponse, error) {
 	return r, nil
 }
 
-func (m *FCMMessage) Marshal() ([]byte, error) {
+func (m *fcmMessage) marshal() ([]byte, error) {
 	//TODO Validation
 	return json.Marshal(m)
 }
 
-func (r FCMResult) Unregistered() bool {
+func (r fcmResult) unregistered() bool {
 	switch r.Error {
 	case "MismatchSenderId", "NotRegistered", "InvalidRegistration", "MissingRegistration":
 		return true
@@ -110,7 +110,7 @@ func (r FCMResult) Unregistered() bool {
 	}
 }
 
-func (r *FCMResponse) IsTimeout() bool {
+func (r *fcmResponse) isTimeout() bool {
 	if r.StatusCode >= 500 {
 		return true
 	} else if r.StatusCode == 200 {
@@ -124,16 +124,16 @@ func (r *FCMResponse) IsTimeout() bool {
 	return false
 }
 
-func (r *FCMResponse) GetInvalidRegistration() []string {
+func (r *fcmResponse) getInvalidRegistration() []string {
 	var ids []string
 	for _, v := range r.Results {
-		if v.Unregistered() {
+		if v.unregistered() {
 			ids = append(ids, v.RegistrationId)
 		}
 	}
 	return ids
 }
 
-func (r *FCMResponse) GetRetryAfterTime() (time.Duration, error) {
+func (r *fcmResponse) getRetryAfterTime() (time.Duration, error) {
 	return time.ParseDuration(r.RetryAfter)
 }

@@ -1,34 +1,36 @@
 package events
 
+import "github.com/traPtitech/traQ/model"
+
 type EventType string
 
 const (
-	USER_JOINED       EventType = "USER_JOINED"
-	USER_LEFT         EventType = "USER_LEFT"
-	USER_TAGS_UPDATED EventType = "USER_TAGS_UPDATED"
+	UserJoined      EventType = "USER_JOINED"
+	UserLeft        EventType = "USER_LEFT"
+	UserTagsUpdated EventType = "USER_TAGS_UPDATED"
 
-	CHANNEL_CREATED            EventType = "CHANNEL_CREATED"
-	CHANNEL_DELETED            EventType = "CHANNEL_DELETED"
-	CHANNEL_RENAMED            EventType = "CHANNEL_RENAMED"
-	CHANNEL_STARED             EventType = "CHANNEL_STARED"
-	CHANNEL_UNSTARED           EventType = "CHANNEL_UNSTARED"
-	CHANNEL_VISIBILITY_CHANGED EventType = "CHANNEL_VISIBILITY_CHANGED"
+	ChannelCreated           EventType = "CHANNEL_CREATED"
+	ChannelDeleted           EventType = "CHANNEL_DELETED"
+	ChannelUpdated           EventType = "CHANNEL_UPDATED"
+	ChannelStared            EventType = "CHANNEL_STARED"
+	ChannelUnstared          EventType = "CHANNEL_UNSTARED"
+	ChannelVisibilityChanged EventType = "CHANNEL_VISIBILITY_CHANGED"
 
-	MESSAGE_CREATED   EventType = "MESSAGE_CREATED"
-	MESSAGE_UPDATED   EventType = "MESSAGE_UPDATED"
-	MESSAGE_DELETED   EventType = "MESSAGE_DELETED"
-	MESSAGE_READ      EventType = "MESSAGE_READ"
-	MESSAGE_STAMPED   EventType = "MESSAGE_STAMPED"
-	MESSAGE_UNSTAMPED EventType = "MESSAGE_UNSTAMPED"
-	MESSAGE_PINNED    EventType = "MESSAGE_PINNED"
-	MESSAGE_UNPINNED  EventType = "MESSAGE_UNPINNED"
-	MESSAGE_CLIPPED   EventType = "MESSAGE_CLIPPED"
-	MESSAGE_UNCLIPPED EventType = "MESSAGE_UNCLIPPED"
+	MessageCreated   EventType = "MESSAGE_CREATED"
+	MessageUpdated   EventType = "MESSAGE_UPDATED"
+	MessageDeleted   EventType = "MESSAGE_DELETED"
+	MessageRead      EventType = "MESSAGE_READ"
+	MessageStamped   EventType = "MESSAGE_STAMPED"
+	MessageUnstamped EventType = "MESSAGE_UNSTAMPED"
+	MessagePinned    EventType = "MESSAGE_PINNED"
+	MessageUnpinned  EventType = "MESSAGE_UNPINNED"
+	MessageClipped   EventType = "MESSAGE_CLIPPED"
+	MessageUnclipped EventType = "MESSAGE_UNCLIPPED"
 
-	STAMP_CREATED EventType = "STAMP_CREATED"
-	STAMP_DELETED EventType = "STAMP_DELETED"
+	StampCreated EventType = "STAMP_CREATED"
+	StampDeleted EventType = "STAMP_DELETED"
 
-	TRAQ_UPDATED EventType = "TRAQ_UPDATED"
+	TraqUpdated EventType = "TRAQ_UPDATED"
 )
 
 type EventData struct {
@@ -46,9 +48,9 @@ type ChannelEvent struct {
 	Id string
 }
 
-type UserStarEvent struct {
-	ChannelId string
+type UserChannelEvent struct {
 	UserId    string
+	ChannelId string
 }
 
 type UserMessageEvent struct {
@@ -62,9 +64,7 @@ type MessageChannelEvent struct {
 }
 
 type MessageEvent struct {
-	Id        string
-	ChannelId string
-	Tags      []string
+	Message model.Message
 }
 
 type MessageStampEvent struct {

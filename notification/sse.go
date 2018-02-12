@@ -26,7 +26,7 @@ type sseStreamer struct {
 	stop       chan struct{}
 }
 
-func NewSseStreamer() *sseStreamer {
+func newSseStreamer() *sseStreamer {
 	return &sseStreamer{
 		clients:    make(map[uuid.UUID]map[uuid.UUID]*sseClient, 200),
 		newConnect: make(chan *sseClient),
