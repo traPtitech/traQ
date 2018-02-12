@@ -68,7 +68,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 // PostMessage : /channels/{channelID}/messagesのPOSTメソッド
 func PostMessage(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("ChannelId") //TODO: channelIDの検証
+	channelID := c.Param("channelId") //TODO: channelIDの検証
 
 	post := &requestMessage{}
 	if err := c.Bind(post); err != nil {
