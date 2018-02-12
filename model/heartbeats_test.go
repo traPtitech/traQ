@@ -1,13 +1,16 @@
 package model
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
-const testChannelID = ""
+const testChannelID = "aaefc6cc-75e5-4eee-a2f3-cae63dc3ede8"
 
 func TestGetHeartbeatStatus(t *testing.T) {
+	assert := assert.New(t)
+
 	statusesMutex.Lock()
 	HeartbeatStatuses[testChannelID] = &HeartbeatStatus{
 		ChannelID: testChannelID,
@@ -22,19 +25,15 @@ func TestGetHeartbeatStatus(t *testing.T) {
 	statusesMutex.Unlock()
 
 	status, ok := GetHeartbeatStatus(testChannelID)
-
-	if len(status.UserStatuses) != 1 {
-		t.Fatalf("statuses length wrong: want 1, actual %d", len(status.UserStatuses))
-	}
+	assert.Len(status.UserStatuses, 1)
 
 	status, ok = GetHeartbeatStatus(CreateUUID())
-
-	if ok {
-		t.Fatalf("ok is not false")
-	}
+	assert.True(ok)
 }
 
 func TestHeartbeat(t *testing.T) {
+	assert := assert.New(t)
+
 	tickTime = 10 * time.Millisecond
 	timeoutDuration = -20 * time.Millisecond
 	statusesMutex.Lock()
@@ -50,9 +49,7 @@ func TestHeartbeat(t *testing.T) {
 	}
 
 	statusesMutex.Unlock()
-	if len(HeartbeatStatuses[testChannelID].UserStatuses) != 1 {
-		t.Fatalf("statuses length wrong: want 1, actual %d", len(HeartbeatStatuses[testChannelID].UserStatuses))
-	}
+	assert.Len(HeartbeatStatuses[testChannelID].UserStatuses, 1)
 
 	if err := HeartbeatStart(); err != nil {
 		t.Fatal(err)
@@ -61,13 +58,10 @@ func TestHeartbeat(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	statusesMutex.Lock()
-	if len(HeartbeatStatuses[testChannelID].UserStatuses) != 0 {
-		t.Fatalf("statuses length wrong: want 0, actual %d", len(HeartbeatStatuses[testChannelID].UserStatuses))
-	}
+	assert.Len(HeartbeatStatuses[testChannelID].UserStatuses, 0)
 	statusesMutex.Unlock()
 
 	if err := HeartbeatStop(); err != nil {
 		t.Fatal(err)
 	}
-
 }
