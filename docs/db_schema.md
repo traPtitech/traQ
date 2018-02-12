@@ -143,7 +143,7 @@ user_idとmessage_idの複合主キー
 
 user_idとchannel_idの複合主キー
 
-## users_notified_channels
+## users_subscribe_channels
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |

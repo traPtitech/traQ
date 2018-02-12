@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
+
+[[projects]]
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
   revision = "dbeaa9332f19a944acb5736b4456cfcc02140e29"
@@ -80,6 +86,12 @@
   version = "v0.0.3"
 
 [[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/satori/go.uuid"
   packages = ["."]
   revision = "879c5887cd475cd7864858769793b2ceb0d44feb"
@@ -90,6 +102,12 @@
   name = "github.com/srinathgs/mysqlstore"
   packages = ["."]
   revision = "4f803440ed5b694a6499ba6310dc14245910fc3e"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = ["assert"]
+  revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
+  version = "v1.2.1"
 
 [[projects]]
   branch = "master"
@@ -115,9 +133,15 @@
   packages = ["unix"]
   revision = "83801418e1b59fb1880e363299581ee543af32ca"
 
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/text"
+  packages = ["collate","collate/build","internal/colltab","internal/gen","internal/tag","internal/triegen","internal/ucd","language","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
+  revision = "4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "838f609b1dcd9257e055ee5728d16393167b2c8bc0553adada2927dd035c16f2"
+  inputs-digest = "bcbeca9d4d85bac3fc28a00922a7d89d5c70f643b7263917ce15c4faa3d53cdc"
   solver-name = "gps-cdcl"
   solver-version = 1
