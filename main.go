@@ -107,6 +107,10 @@ func main() {
 	api.POST("/users/me/stars", router.PostStars)
 	api.DELETE("/users/me/stars", router.DeleteStars)
 
+	// Tag: unread
+	api.GET("/users/me/unread", router.GetUnread, router.GetUserInfo)
+	api.DELETE("/users/me/unread", router.DeleteUnread, router.GetUserInfo)
+
 	// Tag: userTag
 	api.GET("/users/:userID/tags", router.GetUserTags)
 	api.POST("/users/:userID/tags", router.PostUserTag)
