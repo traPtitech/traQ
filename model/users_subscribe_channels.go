@@ -53,7 +53,7 @@ func (s *UserSubscribeChannel) Delete() error {
 // 指定したチャンネルの通知をつけているユーザーを取得
 func GetSubscribingUser(channelId uuid.UUID) ([]uuid.UUID, error) {
 	var arr []string
-	if err := db.Table((&UserSubscribeChannel{}).TableName()).Where("channel_id = ?", channelId.String()).Cols("user_id").Find(&arr); err != nil {
+	if err := db.Table(&UserSubscribeChannel{}).Where("channel_id = ?", channelId.String()).Cols("user_id").Find(&arr); err != nil {
 		return nil, fmt.Errorf("failed to get user_subscribe_channel: %v", err)
 	}
 
