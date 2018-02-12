@@ -91,3 +91,45 @@ func TestGetDevices(t *testing.T) {
 	assert.NoError(err)
 	assert.Len(devs, 1)
 }
+
+func TestGetAllDeviceIds(t *testing.T) {
+	beforeTest(t)
+	assert := assert.New(t)
+
+	id1 := testUserID
+	id2 := privateUserID
+	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
+	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
+	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
+
+	assert.NoError((&Device{UserId: id1, Token: token1}).Register())
+	assert.NoError((&Device{UserId: id2, Token: token2}).Register())
+	assert.NoError((&Device{UserId: id1, Token: token3}).Register())
+
+	devs, err := GetAllDeviceIds()
+	assert.NoError(err)
+	assert.Len(devs, 3)
+}
+
+func TestGetDeviceIds(t *testing.T) {
+	beforeTest(t)
+	assert := assert.New(t)
+
+	id1 := testUserID
+	id2 := privateUserID
+	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
+	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
+	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
+
+	assert.NoError((&Device{UserId: id1, Token: token1}).Register())
+	assert.NoError((&Device{UserId: id2, Token: token2}).Register())
+	assert.NoError((&Device{UserId: id1, Token: token3}).Register())
+
+	devs, err := GetDeviceIds(uuid.FromStringOrNil(id1))
+	assert.NoError(err)
+	assert.Len(devs, 2)
+
+	devs, err = GetDeviceIds(uuid.FromStringOrNil(id2))
+	assert.NoError(err)
+	assert.Len(devs, 1)
+}

@@ -61,5 +61,22 @@ func GetAllDevices() ([]*Device, error) {
 		return nil, fmt.Errorf("failed to get devices : %v", err)
 	}
 	return result, nil
+}
 
+// 全ユーザーの全デバイスIDを取得
+func GetAllDeviceIds() ([]string, error) {
+	var result []string
+	if err := db.Table(&Device{}).Cols("token").Find(&result); err != nil {
+		return nil, fmt.Errorf("failed to get devices : %v", err)
+	}
+	return result, nil
+}
+
+// 指定ユーザーの全デバイスIDを取得
+func GetDeviceIds(user uuid.UUID) ([]string, error) {
+	var result []string
+	if err := db.Table(&Device{}).Cols("token").Find(&result, &Device{UserId: user.String()}); err != nil {
+		return nil, fmt.Errorf("failed to get devices : %v", err)
+	}
+	return result, nil
 }
