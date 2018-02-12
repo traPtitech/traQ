@@ -32,7 +32,7 @@ func TestPostHeartbeat(t *testing.T) {
 		t.Fatalf("Response code wrong: want 200, actual %d", rec.Code)
 	}
 
-	var responseBody HeartbeatStatus
+	var responseBody model.HeartbeatStatus
 	if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
 		t.Fatalf("Response body can't unmarshal: %v", err)
 	}
@@ -57,9 +57,9 @@ func TestPostHeartbeat(t *testing.T) {
 func TestGetHeartbeat(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 
-	statuses[testChannelID] = &HeartbeatStatus{
+	model.HeartbeatStatuses[testChannelID] = &model.HeartbeatStatus{
 		ChannelID: testChannelID,
-		UserStatuses: []*UserStatus{
+		UserStatuses: []*model.UserStatus{
 			{
 				UserID:   testUser.ID,
 				Status:   "editing",
@@ -78,7 +78,7 @@ func TestGetHeartbeat(t *testing.T) {
 		t.Fatalf("Response code wrong: want 200, actual %d", rec.Code)
 	}
 
-	var responseBody HeartbeatStatus
+	var responseBody model.HeartbeatStatus
 	if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
 		t.Fatalf("Response body can't unmarshal: %v", err)
 	}
@@ -99,69 +99,4 @@ func TestGetHeartbeat(t *testing.T) {
 	if responseBody.UserStatuses[0].Status != "editing" {
 		t.Fatalf("ChannelID wrong: want editing, actual %s", responseBody.UserStatuses[0].Status)
 	}
-}
-
-func TestGetHeartbeatStatus(t *testing.T) {
-	statusesMutex.Lock()
-	statuses[testChannelID] = &HeartbeatStatus{
-		ChannelID: testChannelID,
-		UserStatuses: []*UserStatus{
-			{
-				UserID:   testUser.ID,
-				Status:   "editing",
-				LastTime: time.Now(),
-			},
-		},
-	}
-	statusesMutex.Unlock()
-
-	status, ok := GetHeartbeatStatus(testChannelID)
-
-	if len(status.UserStatuses) != 1 {
-		t.Fatalf("statuses length wrong: want 1, actual %d", len(status.UserStatuses))
-	}
-
-	status, ok = GetHeartbeatStatus(model.CreateUUID())
-
-	if ok {
-		t.Fatalf("ok is not false")
-	}
-}
-
-func TestHeartbeat(t *testing.T) {
-	tickTime = 10 * time.Millisecond
-	timeoutDuration = -20 * time.Millisecond
-	statusesMutex.Lock()
-	statuses[testChannelID] = &HeartbeatStatus{
-		ChannelID: testChannelID,
-		UserStatuses: []*UserStatus{
-			{
-				UserID:   testUser.ID,
-				Status:   "editing",
-				LastTime: time.Now(),
-			},
-		},
-	}
-
-	statusesMutex.Unlock()
-	if len(statuses[testChannelID].UserStatuses) != 1 {
-		t.Fatalf("statuses length wrong: want 1, actual %d", len(statuses[testChannelID].UserStatuses))
-	}
-
-	if err := HeartbeatStart(); err != nil {
-		t.Fatal(err)
-	}
-
-	time.Sleep(50 * time.Millisecond)
-
-	statusesMutex.Lock()
-	if len(statuses[testChannelID].UserStatuses) != 0 {
-		t.Fatalf("statuses length wrong: want 0, actual %d", len(statuses[testChannelID].UserStatuses))
-	}
-	statusesMutex.Unlock()
-
-	if err := HeartbeatStop(); err != nil {
-		t.Fatal(err)
-	}
-
 }

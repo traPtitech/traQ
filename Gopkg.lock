@@ -133,15 +133,9 @@
   packages = ["unix"]
   revision = "83801418e1b59fb1880e363299581ee543af32ca"
 
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/text"
-  packages = ["collate","collate/build","internal/colltab","internal/gen","internal/tag","internal/triegen","internal/ucd","language","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
-  revision = "4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bcbeca9d4d85bac3fc28a00922a7d89d5c70f643b7263917ce15c4faa3d53cdc"
+  inputs-digest = "080f5abb1ae47ccf295f8b45c6f4825eb19d43cebb0d6d98a45a62dde8772dfa"
   solver-name = "gps-cdcl"
   solver-version = 1
