@@ -118,7 +118,7 @@ func main() {
 	api.PUT("/channels/:channelId/notification", router.PutNotificationStatus)
 
 	// init notification
-	notification.Run()
+	notification.Start()
 
 	port := os.Getenv("PORT")
 	if port == "" {

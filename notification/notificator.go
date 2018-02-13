@@ -11,40 +11,40 @@ import (
 var (
 	streamer          *sseStreamer
 	fcm               *fcmClient
-	isRunning         = false
+	isStarted         = false
 	FirebaseServerKey = os.Getenv("FIREBASE_SERVER_KEY")
 )
 
-func Run() {
-	if !isRunning {
-		isRunning = true
+func Start() {
+	if !isStarted {
+		isStarted = true
 		streamer = newSseStreamer()
 		fcm = newFCMClient(FirebaseServerKey)
 		go streamer.run()
 	}
 }
 
-func IsRunning() bool {
-	return isRunning
+func IsStarted() bool {
+	return isStarted
 }
 
 func Stop() {
-	if isRunning {
+	if isStarted {
 		close(streamer.stop)
 		fcm = nil
-		isRunning = false
+		isStarted = false
 	}
 }
 
 func Send(eventType events.EventType, payload interface{}) {
-	if !isRunning {
+	if !isStarted {
 		return
 	}
 
 	switch eventType {
 	case events.UserJoined, events.UserLeft, events.UserTagsUpdated:
 		data, _ := payload.(events.UserEvent)
-		broadcastToAll(&events.EventData{
+		multicastToAll(&events.EventData{
 			EventType: eventType,
 			Payload: struct {
 				Id string `json:"id"`
@@ -54,7 +54,7 @@ func Send(eventType events.EventType, payload interface{}) {
 
 	case events.ChannelCreated, events.ChannelDeleted, events.ChannelUpdated, events.ChannelVisibilityChanged:
 		data, _ := payload.(events.ChannelEvent)
-		broadcastToAll(&events.EventData{
+		multicastToAll(&events.EventData{
 			EventType: eventType,
 			Payload: struct {
 				Id string `json:"id"`
@@ -64,7 +64,7 @@ func Send(eventType events.EventType, payload interface{}) {
 
 	case events.ChannelStared, events.ChannelUnstared:
 		data, _ := payload.(events.UserChannelEvent)
-		broadcast(uuid.FromStringOrNil(data.UserId), &events.EventData{
+		multicast(uuid.FromStringOrNil(data.UserId), &events.EventData{
 			EventType: eventType,
 			Payload: struct {
 				Id string `json:"id"`
@@ -84,7 +84,7 @@ func Send(eventType events.EventType, payload interface{}) {
 		} else {
 			for _, id := range users {
 				done[id] = true
-				broadcast(id, &events.EventData{
+				multicast(id, &events.EventData{
 					EventType: eventType,
 					Summary:   "", //TODO モバイル通知に表示される文字列
 					Payload: struct {
@@ -100,7 +100,7 @@ func Send(eventType events.EventType, payload interface{}) {
 				id := uuid.FromStringOrNil(u.UserID)
 				if _, ok := done[id]; !ok {
 					done[id] = true
-					broadcast(id, &events.EventData{
+					multicast(id, &events.EventData{
 						EventType: eventType,
 						Summary:   "", //TODO モバイル通知に表示される文字列
 						Payload: struct {
@@ -119,7 +119,7 @@ func Send(eventType events.EventType, payload interface{}) {
 				for _, id := range users {
 					if _, ok := done[id]; !ok {
 						done[id] = true
-						broadcast(id, &events.EventData{
+						multicast(id, &events.EventData{
 							EventType: eventType,
 							Summary:   "", //TODO モバイル通知に表示される文字列
 							Payload: struct {
@@ -134,7 +134,7 @@ func Send(eventType events.EventType, payload interface{}) {
 
 	case events.MessageRead:
 		data, _ := payload.(events.UserMessageEvent)
-		broadcast(uuid.FromStringOrNil(data.UserId), &events.EventData{
+		multicast(uuid.FromStringOrNil(data.UserId), &events.EventData{
 			EventType: eventType,
 			Payload: struct {
 				Id string `json:"id"`
@@ -147,7 +147,7 @@ func Send(eventType events.EventType, payload interface{}) {
 		if s, ok := model.GetHeartbeatStatus(data.ChannelId); ok {
 			for _, u := range s.UserStatuses {
 				id := uuid.FromStringOrNil(u.UserID)
-				broadcast(id, &events.EventData{
+				multicast(id, &events.EventData{
 					EventType: eventType,
 					Payload: struct {
 						Id        string `json:"message_id"`
@@ -165,7 +165,7 @@ func Send(eventType events.EventType, payload interface{}) {
 		data, _ := payload.(events.MessageChannelEvent)
 		if s, ok := model.GetHeartbeatStatus(data.ChannelId); ok {
 			for _, u := range s.UserStatuses {
-				broadcast(uuid.FromStringOrNil(u.UserID), &events.EventData{
+				multicast(uuid.FromStringOrNil(u.UserID), &events.EventData{
 					EventType: eventType,
 					Payload: struct {
 						MessageId string `json:"message_id"`
@@ -178,7 +178,7 @@ func Send(eventType events.EventType, payload interface{}) {
 
 	case events.MessageClipped, events.MessageUnclipped:
 		data, _ := payload.(events.UserMessageEvent)
-		broadcast(uuid.FromStringOrNil(data.UserId), &events.EventData{
+		multicast(uuid.FromStringOrNil(data.UserId), &events.EventData{
 			EventType: eventType,
 			Payload: struct {
 				Id string `json:"id"`
@@ -187,14 +187,14 @@ func Send(eventType events.EventType, payload interface{}) {
 		})
 
 	case events.StampCreated, events.StampDeleted:
-		broadcastToAll(&events.EventData{
+		multicastToAll(&events.EventData{
 			EventType: eventType,
 			Payload:   struct{}{},
 			Mobile:    false,
 		})
 
 	case events.TraqUpdated:
-		broadcastToAll(&events.EventData{
+		multicastToAll(&events.EventData{
 			EventType: eventType,
 			Payload:   struct{}{},
 			Mobile:    false,
@@ -202,7 +202,7 @@ func Send(eventType events.EventType, payload interface{}) {
 	}
 }
 
-func broadcastToAll(data *events.EventData) {
+func multicastToAll(data *events.EventData) {
 	for _, u := range streamer.clients {
 		for _, c := range u {
 			select {
@@ -220,11 +220,11 @@ func broadcastToAll(data *events.EventData) {
 			log.Error(err)
 			return
 		}
-		broadcastToFcm(devs, data)
+		sendToFcm(devs, data)
 	}
 }
 
-func broadcast(target uuid.UUID, data *events.EventData) {
+func multicast(target uuid.UUID, data *events.EventData) {
 	for _, c := range streamer.clients[target] {
 		select {
 		case <-c.stop:
@@ -240,11 +240,11 @@ func broadcast(target uuid.UUID, data *events.EventData) {
 			log.Error(err)
 			return
 		}
-		broadcastToFcm(devs, data)
+		sendToFcm(devs, data)
 	}
 }
 
-func broadcastToFcm(deviceTokens []string, data *events.EventData) {
+func sendToFcm(deviceTokens []string, data *events.EventData) {
 	for arr := range split(deviceTokens, maxRegistrationIdsSize) {
 		m := createDefaultFCMMessage()
 		m.Notification.Body = data.Summary
