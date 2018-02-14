@@ -203,7 +203,7 @@ func Send(eventType events.EventType, payload interface{}) {
 }
 
 func multicastToAll(data *events.EventData) {
-	for _, u := range streamer.clients {
+	streamer.clients.Range(func(_ uuid.UUID, u map[uuid.UUID]*sseClient) bool {
 		for _, c := range u {
 			select {
 			case <-c.stop:
@@ -212,7 +212,8 @@ func multicastToAll(data *events.EventData) {
 				c.send <- data
 			}
 		}
-	}
+		return true
+	})
 
 	if data.Mobile {
 		devs, err := model.GetAllDeviceIds()
@@ -225,12 +226,15 @@ func multicastToAll(data *events.EventData) {
 }
 
 func multicast(target uuid.UUID, data *events.EventData) {
-	for _, c := range streamer.clients[target] {
-		select {
-		case <-c.stop:
-			continue
-		default:
-			c.send <- data
+	u, ok := streamer.clients.Load(target)
+	if ok {
+		for _, c := range u {
+			select {
+			case <-c.stop:
+				continue
+			default:
+				c.send <- data
+			}
 		}
 	}
 

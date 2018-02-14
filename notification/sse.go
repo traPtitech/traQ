@@ -6,6 +6,7 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/notification/events"
 	"net/http"
+	"sync"
 )
 
 var (
@@ -20,15 +21,41 @@ type sseClient struct {
 }
 
 type sseStreamer struct {
-	clients    map[uuid.UUID]map[uuid.UUID]*sseClient
+	clients    *clientsSyncMap
 	newConnect chan *sseClient
 	disconnect chan *sseClient
 	stop       chan struct{}
 }
 
+type clientsSyncMap struct {
+	m sync.Map
+}
+
+func (s *clientsSyncMap) Load(key uuid.UUID) (map[uuid.UUID]*sseClient, bool) {
+	i, ok := s.m.Load(key)
+	if ok {
+		v, _ := i.(map[uuid.UUID]*sseClient)
+		return v, true
+	} else {
+		return nil, false
+	}
+}
+
+func (s *clientsSyncMap) Store(key uuid.UUID, value map[uuid.UUID]*sseClient) {
+	s.m.Store(key, value)
+}
+
+func (s *clientsSyncMap) Range(f func(key uuid.UUID, value map[uuid.UUID]*sseClient) bool) {
+	s.m.Range(func(k, v interface{}) bool {
+		key, _ := k.(uuid.UUID)
+		value, _ := v.(map[uuid.UUID]*sseClient)
+		return f(key, value)
+	})
+}
+
 func newSseStreamer() *sseStreamer {
 	return &sseStreamer{
-		clients:    make(map[uuid.UUID]map[uuid.UUID]*sseClient, 200),
+		clients:    &clientsSyncMap{},
 		newConnect: make(chan *sseClient),
 		disconnect: make(chan *sseClient, 10),
 		stop:       make(chan struct{}),
@@ -45,15 +72,15 @@ func (s *sseStreamer) run() {
 			return
 
 		case c := <-s.newConnect:
-			arr, exists := s.clients[c.userId]
+			arr, exists := s.clients.Load(c.userId)
 			if !exists {
 				arr = make(map[uuid.UUID]*sseClient)
-				s.clients[c.userId] = arr
+				s.clients.Store(c.userId, arr)
 			}
 			arr[c.connectionId] = c
 
 		case c := <-s.disconnect:
-			arr := s.clients[c.userId]
+			arr, _ := s.clients.Load(c.userId)
 			delete(arr, c.connectionId)
 		}
 	}
