@@ -209,7 +209,6 @@ func clipMessage(userID, messageID string) error {
 	return clip.Create()
 }
 
-<<<<<<< HEAD
 func starChannel(userID, channelID string) error {
 	star := &model.Star{
 		UserID:    userID,
@@ -217,7 +216,8 @@ func starChannel(userID, channelID string) error {
 	}
 
 	return star.Create()
-=======
+}
+
 func pinMessage(channelID, messageID, userID string) *model.Pins {
 	pin := &model.Pin{
 		ChannelID: channelID,
@@ -226,8 +226,6 @@ func pinMessage(channelID, messageID, userID string) *model.Pins {
 	}
 
 	return pin.Create()
-
->>>>>>> update
 }
 
 func createUser(t *testing.T) {
