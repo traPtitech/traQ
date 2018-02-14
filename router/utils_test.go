@@ -218,6 +218,16 @@ func starChannel(userID, channelID string) error {
 	return star.Create()
 }
 
+func pinMessage(channelID, messageID, userID string) *model.Pins {
+	pin := &model.Pin{
+		ChannelID: channelID,
+		MessageID: messageID,
+		UserID:    userID,
+	}
+
+	return pin.Create()
+}
+
 func createUser(t *testing.T) {
 	user := &model.User{
 		Name:  "PostLogin",
