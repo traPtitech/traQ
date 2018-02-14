@@ -2,16 +2,16 @@ package router
 
 import (
 	"bytes"
-	"testing"
 	"encoding/json"
 	"net/http/httptest"
+	"testing"
 )
 
 func TestGetPin(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 
 	message := makeMessage()
-	if err := pinMessage(message.ChannelID, message.ID, message.UserID); err != nil{
+	if err := pinMessage(message.ChannelID, message.ID, message.UserID); err != nil {
 		t.Fatalf("Fail to pin mesasge: %v", nil)
 	}
 	rec := request(e, t, mw(GetPin(c)), cookie, nil)
@@ -21,7 +21,7 @@ func TestGetPin(t *testing.T) {
 	}
 
 	var responseBody []MessageForResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err !=  nil {
+	if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
 		t.Fatalf("Response body can't unmarshal: %v", err)
 	}
 
@@ -29,7 +29,7 @@ func TestGetPin(t *testing.T) {
 		t.Fatalf("Response messages length wrong: want 1, actual %d", len(responseBody))
 	}
 
-	if responseBody[0].Content != "text message"{
+	if responseBody[0].Content != "text message" {
 		t.Fatalf("message texr is wrong: want %v, actual %v", "text message", responseBody[0].Context)
 	}
 }
@@ -39,7 +39,7 @@ func TestPutPin(t *testing.T) {
 	message := makeMessage()
 
 	post := struct {
-		MessageID string `josn:"messageId"`
+		MessageID string `json:"messageId"`
 	}{
 		MessageID: message.ID,
 	}
@@ -79,9 +79,9 @@ func TestDeletePin(t *testing.T) {
 	}
 
 	post := struct {
-		MessageID string `josn:"messageId"`
+		MessageID string `json:"messageId"`
 	}{
-		MessageID: message.ID
+		MessageID: message.ID,
 	}
 
 	body, err := json.Marshal(post)

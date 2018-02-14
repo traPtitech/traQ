@@ -6,6 +6,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
+	"github.com/traPtitech/traQ/model"
 )
 
 //ピン留めされているメッセージの取得
