@@ -3,6 +3,7 @@ package model
 import (
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -24,9 +25,10 @@ func TestUserSubscribeChannel_Create(t *testing.T) {
 	assert.NoError((&UserSubscribeChannel{UserId: id2, ChannelId: channel2}).Create())
 	assert.Error((&UserSubscribeChannel{UserId: id1, ChannelId: channel2}).Create())
 
-	l, _ := db.Count(&UserSubscribeChannel{})
+	l, err := db.Count(&UserSubscribeChannel{})
+	require.NoError(t, err)
 
-	assert.Equal(int64(3), l)
+	assert.EqualValues(3, l)
 }
 
 func TestUserSubscribeChannel_Delete(t *testing.T) {
@@ -43,8 +45,8 @@ func TestUserSubscribeChannel_Delete(t *testing.T) {
 	assert.NoError((&UserSubscribeChannel{UserId: id2, ChannelId: channel2}).Create())
 
 	assert.NoError((&UserSubscribeChannel{UserId: id2, ChannelId: channel2}).Delete())
-	l, _ := db.Count(&UserSubscribeChannel{})
-
+	l, err := db.Count(&UserSubscribeChannel{})
+	require.NoError(t, err)
 	assert.Equal(int64(2), l)
 
 	assert.Error((&UserSubscribeChannel{UserId: id1}).Delete())
@@ -52,10 +54,13 @@ func TestUserSubscribeChannel_Delete(t *testing.T) {
 	assert.Error((&UserSubscribeChannel{ChannelId: channel1}).Delete())
 
 	assert.NoError((&UserSubscribeChannel{UserId: id1, ChannelId: channel2}).Delete())
-	l, _ = db.Count(&UserSubscribeChannel{})
+	l, err = db.Count(&UserSubscribeChannel{})
+	require.NoError(t, err)
 	assert.Equal(int64(1), l)
+
 	assert.NoError((&UserSubscribeChannel{UserId: id1, ChannelId: channel1}).Delete())
-	l, _ = db.Count(&UserSubscribeChannel{})
+	l, err = db.Count(&UserSubscribeChannel{})
+	require.NoError(t, err)
 	assert.Equal(int64(0), l)
 
 }
@@ -74,10 +79,12 @@ func TestGetSubscribingUser(t *testing.T) {
 	assert.NoError((&UserSubscribeChannel{UserId: id2, ChannelId: channel2}).Create())
 
 	arr, err := GetSubscribingUser(uuid.FromStringOrNil(channel1))
-	assert.NoError(err)
-	assert.Len(arr, 1)
+	if assert.NoError(err) {
+		assert.Len(arr, 1)
+	}
 
 	arr, err = GetSubscribingUser(uuid.FromStringOrNil(channel2))
-	assert.NoError(err)
-	assert.Len(arr, 2)
+	if assert.NoError(err) {
+		assert.Len(arr, 2)
+	}
 }

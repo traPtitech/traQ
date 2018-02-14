@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
@@ -51,9 +52,7 @@ func TestHeartbeat(t *testing.T) {
 	statusesMutex.Unlock()
 	assert.Len(HeartbeatStatuses[testChannelID].UserStatuses, 1)
 
-	if err := HeartbeatStart(); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, HeartbeatStart())
 
 	time.Sleep(50 * time.Millisecond)
 
@@ -61,7 +60,5 @@ func TestHeartbeat(t *testing.T) {
 	assert.Len(HeartbeatStatuses[testChannelID].UserStatuses, 0)
 	statusesMutex.Unlock()
 
-	if err := HeartbeatStop(); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, HeartbeatStop())
 }

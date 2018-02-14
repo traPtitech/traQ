@@ -3,6 +3,7 @@ package model
 import (
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -23,7 +24,8 @@ func TestDevice_Register(t *testing.T) {
 	assert.NoError((&Device{UserId: id2, Token: token2}).Register())
 	assert.Error((&Device{UserId: id1, Token: token2}).Register())
 
-	l, _ := db.Count(&Device{})
+	l, err := db.Count(&Device{})
+	require.NoError(t, err)
 	assert.Equal(int64(2), l)
 }
 
@@ -42,11 +44,13 @@ func TestDevice_Unregister(t *testing.T) {
 	assert.NoError((&Device{UserId: id1, Token: token3}).Register())
 
 	assert.NoError((&Device{Token: token2}).Unregister())
-	l, _ := db.Count(&Device{})
+	l, err := db.Count(&Device{})
+	require.NoError(t, err)
 	assert.Equal(int64(2), l)
 
 	assert.NoError((&Device{UserId: id1}).Unregister())
-	l, _ = db.Count(&Device{})
+	l, err = db.Count(&Device{})
+	require.NoError(t, err)
 	assert.Equal(int64(0), l)
 }
 
@@ -65,8 +69,9 @@ func TestGetAllDevices(t *testing.T) {
 	assert.NoError((&Device{UserId: id1, Token: token3}).Register())
 
 	devs, err := GetAllDevices()
-	assert.NoError(err)
-	assert.Len(devs, 3)
+	if assert.NoError(err) {
+		assert.Len(devs, 3)
+	}
 }
 
 func TestGetDevices(t *testing.T) {
@@ -84,12 +89,14 @@ func TestGetDevices(t *testing.T) {
 	assert.NoError((&Device{UserId: id1, Token: token3}).Register())
 
 	devs, err := GetDevices(uuid.FromStringOrNil(id1))
-	assert.NoError(err)
-	assert.Len(devs, 2)
+	if assert.NoError(err) {
+		assert.Len(devs, 2)
+	}
 
 	devs, err = GetDevices(uuid.FromStringOrNil(id2))
-	assert.NoError(err)
-	assert.Len(devs, 1)
+	if assert.NoError(err) {
+		assert.Len(devs, 1)
+	}
 }
 
 func TestGetAllDeviceIds(t *testing.T) {
@@ -107,8 +114,9 @@ func TestGetAllDeviceIds(t *testing.T) {
 	assert.NoError((&Device{UserId: id1, Token: token3}).Register())
 
 	devs, err := GetAllDeviceIds()
-	assert.NoError(err)
-	assert.Len(devs, 3)
+	if assert.NoError(err) {
+		assert.Len(devs, 3)
+	}
 }
 
 func TestGetDeviceIds(t *testing.T) {
@@ -126,10 +134,12 @@ func TestGetDeviceIds(t *testing.T) {
 	assert.NoError((&Device{UserId: id1, Token: token3}).Register())
 
 	devs, err := GetDeviceIds(uuid.FromStringOrNil(id1))
-	assert.NoError(err)
-	assert.Len(devs, 2)
+	if assert.NoError(err) {
+		assert.Len(devs, 2)
+	}
 
 	devs, err = GetDeviceIds(uuid.FromStringOrNil(id2))
-	assert.NoError(err)
-	assert.Len(devs, 1)
+	if assert.NoError(err) {
+		assert.Len(devs, 1)
+	}
 }
