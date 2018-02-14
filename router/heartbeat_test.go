@@ -8,11 +8,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
+	"net/http"
 )
 
 func TestPostHeartbeat(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
+	assert := assert.New(t)
+
 	requestBody, err := json.Marshal(struct {
 		ChannelID string `json:"channelId"`
 		Status    string `json:"status"`
@@ -20,42 +25,24 @@ func TestPostHeartbeat(t *testing.T) {
 		ChannelID: testChannelID,
 		Status:    "editing",
 	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	require.NoError(t, err)
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(requestBody))
 	rec := request(e, t, mw(PostHeartbeat), cookie, req)
 
-	if rec.Code != 200 {
-		t.Fatalf("Response code wrong: want 200, actual %d", rec.Code)
-	}
-
-	var responseBody HeartbeatStatus
-	if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
-		t.Fatalf("Response body can't unmarshal: %v", err)
-	}
-
-	if responseBody.ChannelID != testChannelID {
-		t.Fatalf("ChannelID wrong: want %s, actual %s", testChannelID, responseBody.ChannelID)
-	}
-
-	if len(responseBody.UserStatuses) != 1 {
-		t.Fatalf("UserStatuses length wrong: want 1, actual %d", len(responseBody.UserStatuses))
-	}
-
-	if responseBody.UserStatuses[0].UserID != testUser.ID {
-		t.Fatalf("ChannelID wrong: want %s, actual %s", testUser.ID, responseBody.UserStatuses[0].UserID)
-	}
-
-	if responseBody.UserStatuses[0].Status != "editing" {
-		t.Fatalf("ChannelID wrong: want editing, actual %s", responseBody.UserStatuses[0].Status)
+	if assert.EqualValues(http.StatusOK, rec.Code) {
+		var responseBody HeartbeatStatus
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
+			assert.Equal(testChannelID, responseBody.ChannelID)
+			assert.Len(responseBody.UserStatuses, 1)
+			assert.Equal(testUser.ID, responseBody.UserStatuses[0].UserID)
+			assert.Equal("editing", responseBody.UserStatuses[0].Status)
+		}
 	}
 }
 
 func TestGetHeartbeat(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
+	assert := assert.New(t)
 
 	statuses[testChannelID] = &HeartbeatStatus{
 		ChannelID: testChannelID,
@@ -74,30 +61,15 @@ func TestGetHeartbeat(t *testing.T) {
 	req := httptest.NewRequest("GET", "/?"+q.Encode(), nil)
 	rec := request(e, t, mw(GetHeartbeat), cookie, req)
 
-	if rec.Code != 200 {
-		t.Fatalf("Response code wrong: want 200, actual %d", rec.Code)
-	}
-
-	var responseBody HeartbeatStatus
-	if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
-		t.Fatalf("Response body can't unmarshal: %v", err)
-	}
-	t.Log(responseBody)
-
-	if responseBody.ChannelID != testChannelID {
-		t.Fatalf("ChannelID wrong: want %s, actual %s", testChannelID, responseBody.ChannelID)
-	}
-
-	if len(responseBody.UserStatuses) != 1 {
-		t.Fatalf("UserStatuses length wrong: want 1, actual %d", len(responseBody.UserStatuses))
-	}
-
-	if responseBody.UserStatuses[0].UserID != testUser.ID {
-		t.Fatalf("ChannelID wrong: want %s, actual %s", testUser.ID, responseBody.UserStatuses[0].UserID)
-	}
-
-	if responseBody.UserStatuses[0].Status != "editing" {
-		t.Fatalf("ChannelID wrong: want editing, actual %s", responseBody.UserStatuses[0].Status)
+	if assert.EqualValues(http.StatusOK, rec.Code) {
+		var responseBody HeartbeatStatus
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
+			t.Log(responseBody)
+			assert.Equal(testChannelID, responseBody.ChannelID)
+			assert.Len(responseBody.UserStatuses, 1)
+			assert.Equal(testUser.ID, responseBody.UserStatuses[0].UserID)
+			assert.Equal("editing", responseBody.UserStatuses[0].Status)
+		}
 	}
 }
 
@@ -116,16 +88,11 @@ func TestGetHeartbeatStatus(t *testing.T) {
 	statusesMutex.Unlock()
 
 	status, ok := GetHeartbeatStatus(testChannelID)
-
-	if len(status.UserStatuses) != 1 {
-		t.Fatalf("statuses length wrong: want 1, actual %d", len(status.UserStatuses))
+	if assert.True(t, ok) {
+		assert.Len(t, status.UserStatuses, 1)
 	}
-
 	status, ok = GetHeartbeatStatus(model.CreateUUID())
-
-	if ok {
-		t.Fatalf("ok is not false")
-	}
+	assert.False(t, ok)
 }
 
 func TestHeartbeat(t *testing.T) {
@@ -144,24 +111,14 @@ func TestHeartbeat(t *testing.T) {
 	}
 
 	statusesMutex.Unlock()
-	if len(statuses[testChannelID].UserStatuses) != 1 {
-		t.Fatalf("statuses length wrong: want 1, actual %d", len(statuses[testChannelID].UserStatuses))
-	}
-
-	if err := HeartbeatStart(); err != nil {
-		t.Fatal(err)
-	}
+	require.Len(t, statuses[testChannelID].UserStatuses, 1)
+	require.NoError(t, HeartbeatStart())
 
 	time.Sleep(50 * time.Millisecond)
 
 	statusesMutex.Lock()
-	if len(statuses[testChannelID].UserStatuses) != 0 {
-		t.Fatalf("statuses length wrong: want 0, actual %d", len(statuses[testChannelID].UserStatuses))
-	}
+	assert.Len(t, statuses[testChannelID].UserStatuses, 0)
 	statusesMutex.Unlock()
 
-	if err := HeartbeatStop(); err != nil {
-		t.Fatal(err)
-	}
-
+	require.NoError(t, HeartbeatStop())
 }

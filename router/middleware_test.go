@@ -6,6 +6,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
+	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -17,10 +18,7 @@ func TestGetUserInfo(t *testing.T) {
 
 	requestWithContext(t, mw(testGetUser), c)
 
-	if rec.Code != http.StatusOK {
-		t.Log(rec.Code)
-		t.Fatal(rec.Body.String())
-	}
+	assert.EqualValues(t, http.StatusOK, rec.Code, rec.Body.String())
 }
 
 func testGetUser(c echo.Context) error {
