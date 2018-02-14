@@ -1,123 +1,84 @@
 package model
 
 import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func TestCreateMessage(t *testing.T) {
+func TestMessage_TableName(t *testing.T) {
+	assert.Equal(t, "messages", (&Message{}).TableName())
+}
+
+func TestMessage_Create(t *testing.T) {
 	beforeTest(t)
+	assert := assert.New(t)
 
-	message := *makeMessage()
-	copy := message
-	if err := message.Create(); err != nil {
-		t.Fatalf("Create method returns an error: %v", err)
-	}
+	assert.Error((&Message{}).Create())
+	assert.Error((&Message{UserID: testUserID}).Create())
 
-	has, err := db.ID(message.ID).Get(&message)
-	if has != true {
-		t.Error("Cannot find message in database")
-	}
-	if err != nil {
-		t.Errorf("Failed to get message inserts before: %v", err)
-	}
-
-	if message.UserID != copy.UserID {
-		t.Errorf("message.UserID is changed: before: %v, after: %v", copy.UserID, message.UserID)
-	}
-	if message.Text != copy.Text {
-		t.Errorf("message.Text is changed: before: %v, after: %v", copy.Text, message.Text)
-	}
-
-	if message.CreatedAt == "" {
-		t.Error("message.CreatedAt is not updated")
-	}
-	if message.UpdaterID == "" {
-		t.Error("message.UpdaterID is not updated")
+	message := &Message{UserID: testUserID, Text: "test"}
+	if assert.NoError(message.Create()) {
+		assert.NotEmpty(message.ID)
+		assert.NotEmpty(message.UpdaterID)
 	}
 }
 
-func TestUpdateMessage(t *testing.T) {
+func TestMessage_Update(t *testing.T) {
 	beforeTest(t)
+	assert := assert.New(t)
 
-	message := makeMessage()
-	if err := message.Create(); err != nil {
-		t.Fatalf("Create method returns an error: %v", err)
-	}
+	message := mustMakeMessage(t)
+	message.Text = "nanachi"
+	message.IsShared = true
 
-	text := "nanachi"
-
-	message.Text = text
-	message.IsShared = false
-
-	if err := message.Update(); err != nil {
-		t.Errorf("Update method return an error: %v", err)
-	}
-
-	if message.Text != text {
-		t.Error("message.Text is not updated")
-	}
-	if message.IsShared != false {
-		t.Error("message.isShared is not updated")
-	}
+	assert.NoError(message.Update())
 }
 
 func TestGetMessagesFromChannel(t *testing.T) {
 	beforeTest(t)
+	assert := assert.New(t)
 
 	channelID := CreateUUID()
-	messages := makeChannelMessages(channelID)
+	var messages [10]*Message
 
 	for i := 0; i < 10; i++ {
-		if err := messages[i].Create(); err != nil {
-			t.Fatalf("Create method returns an error: %v", err)
+		messages[i] = &Message{
+			UserID:    testUserID,
+			ChannelID: channelID,
+			Text:      "popopo",
 		}
+		require.NoError(t, messages[i].Create())
 	}
 
 	res, err := GetMessagesFromChannel(channelID, 0, 0)
-	if err != nil {
-		t.Errorf("GetMessageFromChannel method returns an error: %v", err)
-	}
-
-	if len(res) != len(messages) {
-		t.Errorf("Missing some of channel messages: want: %d, actual: %d", len(messages), len(res))
+	if assert.NoError(err) {
+		assert.Len(res, 10)
 	}
 
 	for i := 0; i < 10; i++ {
-		if messages[9-i].ID != res[i].ID {
-			t.Error("message is not ordered by createdAt")
-		}
+		assert.Equal(res[i].ID, messages[9-i].ID, "message is not ordered by createdAt")
 	}
 
 	res2, err := GetMessagesFromChannel(channelID, 3, 5)
-	if err != nil {
-		t.Errorf("GetMessageFromChannel method returns an error: %v", err)
+	if assert.NoError(err) {
+		assert.Len(res2, 3)
+		assert.Equal(messages[4].ID, res2[0].ID)
 	}
-
-	if len(res2) != 3 {
-		t.Errorf("Missing some of channel messages: want: 3, actual: %d", len(res2))
-	}
-
-	if res2[0].ID != messages[4].ID {
-		t.Error("message is not ordered by createdAt")
-	}
-
 }
 
 func TestGetMessage(t *testing.T) {
 	beforeTest(t)
+	assert := assert.New(t)
 
-	message := makeMessage()
-	if err := message.Create(); err != nil {
-		t.Fatalf("Create method returns an error: %v", err)
-	}
+	message := mustMakeMessage(t)
 
 	var r *Message
 	r, err := GetMessage(message.ID)
-	if err != nil {
-		t.Errorf("GetMessage method returns an error: %v", err)
+	if assert.NoError(err) {
+		assert.Equal(message.Text, r.Text)
 	}
 
-	if r.Text != message.Text {
-		t.Errorf("message.Text is changed: before: %v, after: %v", message.Text, r.Text)
-	}
+	_, err = GetMessage("wrong_id")
+	assert.Error(err)
 }
