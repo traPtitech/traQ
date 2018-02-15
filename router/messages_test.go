@@ -87,7 +87,11 @@ func TestPostMessage(t *testing.T) {
 	}
 
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	rec := request(e, t, mw(PostMessage), cookie, req)
+	c, rec := getContext(e, t, cookie, req)
+	c.SetPath("/channels/:channelID/messages")
+	c.SetParamNames("channelID")
+	c.SetParamValues(testChannelID)
+	requestWithContext(t, mw(PostMessage), c)
 
 	message := &MessageForResponse{}
 
