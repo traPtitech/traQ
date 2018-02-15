@@ -121,4 +121,3 @@ func TestHeartbeat(t *testing.T) {
 
 	require.NoError(t, HeartbeatStop())
 }
-}
