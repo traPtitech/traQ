@@ -44,6 +44,10 @@ func (unread *Unread) Delete() error {
 }
 
 func GetUnreadsByUserID(userID string) ([]*Unread, error) {
+	if userID == "" {
+		return nil, fmt.Errorf("userID is empty.")
+	}
+
 	var unreads []*Unread
 	if err := db.Where("user_id = ?", userID).Find(&unreads); err != nil {
 		return nil, fmt.Errorf("Failed to find unreads: %v", err)
