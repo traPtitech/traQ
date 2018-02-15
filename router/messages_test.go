@@ -46,8 +46,8 @@ func TestGetMessagesByChannelID(t *testing.T) {
 	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 
 	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/channels/:channelId/messages")
-	c.SetParamNames("channelId")
+	c.SetPath("/channels/:channelID/messages")
+	c.SetParamNames("channelID")
 	c.SetParamValues(testChannelID)
 	requestWithContext(t, mw(GetMessagesByChannelID), c)
 
@@ -70,7 +70,11 @@ func TestPostMessage(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	rec := request(e, t, mw(PostMessage), cookie, req)
+	c, rec := getContext(e, t, cookie, req)
+	c.SetPath("/channels/:channelID/messages")
+	c.SetParamNames("channelID")
+	c.SetParamValues(testChannelID)
+	requestWithContext(t, mw(PostMessage), c)
 
 	if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
 		message := &MessageForResponse{}

@@ -90,7 +90,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChannelList"
 
-  /channels/{channelId}:
+  /channels/{channelID}:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
     get:
@@ -179,7 +179,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /channels/{channelId}/topic:
+  /channels/{channelID}/topic:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
     get:
@@ -237,7 +237,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /channels/{channelId}/messages:
+  /channels/{channelID}/messages:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
     get:
@@ -309,7 +309,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /channels/{channelId}/pin:
+  /channels/{channelID}/pin:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
     get:
@@ -386,7 +386,7 @@ paths:
                 $ref: "#/components/schemas/NoContent"
 
 
-  /channels/{channelId}/notifications:
+  /channels/{channelID}/notifications:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
     get:
@@ -747,7 +747,7 @@ paths:
               schema:
                 $ref: "#components/schemas/UnreadList"
 
-  /users/{userId}:
+  /users/{userID}:
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
     get:
@@ -772,7 +772,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /users/{userId}/tags:
+  /users/{userID}/tags:
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
     get:
@@ -828,7 +828,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
-  /users/{userId}/tags/{tagId}:
+
+  /users/{userID}/tags/{tagID}:
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
       - $ref: "#/components/parameters/tagIdInPath"
@@ -915,7 +916,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /stamps/{stampId}:
+  /stamps/{stampID}:
     parameters:
       - $ref: "#/components/parameters/stampIdInPath"
     get:
@@ -968,7 +969,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /messages/{messageId}:
+  /messages/{messageID}:
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
     put:
@@ -1064,7 +1065,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /messages/{messageId}/stamps/{stampId}:
+  /messages/{messageID}/stamps/{stampID}:
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
       - $ref: "#/components/parameters/stampIdInPath"
@@ -1146,7 +1147,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /messages/{messageId}/pin:
+  /messages/{messageID}/pin:
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
 
@@ -1271,35 +1272,35 @@ paths:
 components:
   parameters:
     channelIdInPath:
-      name: channelId
+      name: channelID
       description: 操作の対象となるチャンネルのID
       in: path
       required: true
       schema:
         type: string
     userIdInPath:
-      name: userId
+      name: userIdD
       description: 操作の対象となるユーザーID
       in: path
       required: true
       schema:
         type: string
     messageIdInPath:
-      name: messageId
+      name: messageID
       in: path
       required: true
       description: 操作の対象となるメッセージID
       schema:
         type: string
     stampIdInPath:
-      name: stampId
+      name: stampID
       description: 操作の対象となるスタンプID
       in: path
       required: true
       schema:
         type: string
     tagIdInPath:
-      name: tagId
+      name: tagID
       description: 操作の対象となるタグID
       in: path
       required: true
@@ -1382,7 +1383,7 @@ components:
           type: string
         tagList:
           $ref: "#/components/schemas/TagList"
-                
+
     Tag:
       type: object
       properties:
@@ -1393,7 +1394,7 @@ components:
           type: string
         isLocked:
           type: boolean
-          
+
     TagList:
       type: array
       items:

@@ -11,13 +11,18 @@ import (
 
 //MessageForResponse :クライアントに返す形のメッセージオブジェクト
 type MessageForResponse struct {
-	MessageID       string `json:"messageId"`
-	UserID          string `json:"userId"`
-	ParentChannelID string `json:"parentChannelId"`
-	Content         string `json:"content"`
-	Datetime        string `json:"datetime"`
-	Pin             bool   `json:"pin"`
-	//StampList /*stampのオブジェクト*/
+	MessageID       string       `json:"messageId"`
+	UserID          string       `json:"userId"`
+	ParentChannelID string       `json:"parentChannelId"`
+	Content         string       `json:"content"`
+	Datetime        string       `json:"datetime"`
+	Pin             bool         `json:"pin"`
+	StampList       []*stampList `json:"stampList"`
+}
+
+type stampList struct {
+	StampID string `json:"stampId"`
+	Count   int    `json:"count"`
 }
 
 type requestMessage struct {
@@ -26,7 +31,7 @@ type requestMessage struct {
 
 type requestCount struct {
 	Count int `json:"count"`
-	Limit int `json:"limit"`
+	Limit int `json:"offset"`
 }
 
 // GetMessageByID : /messages/{messageID}のGETメソッド
@@ -50,7 +55,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
-	channelID := c.Param("channelId")
+	channelID := c.Param("channelID")
 
 	messageList, err := model.GetMessagesFromChannel(channelID, post.Limit, post.Count)
 	if err != nil {
@@ -70,7 +75,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 // PostMessage : /channels/{channelID}/messagesのPOSTメソッド
 func PostMessage(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("channelId") //TODO: channelIDの検証
+	channelID := c.Param("channelID") //TODO: channelIDの検証
 
 	post := &requestMessage{}
 	if err := c.Bind(post); err != nil {
@@ -149,6 +154,10 @@ func valuesMessage(m map[string]*MessageForResponse) []*MessageForResponse {
 }
 
 func formatMessage(raw *model.Message) *MessageForResponse {
+
+	stampList := []*stampList{}
+	// TODO: Stampが実装され次第取りに行くようにする
+
 	res := MessageForResponse{
 		MessageID:       raw.ID,
 		UserID:          raw.UserID,
@@ -156,7 +165,7 @@ func formatMessage(raw *model.Message) *MessageForResponse {
 		Pin:             false, //TODO:取得するようにする
 		Content:         raw.Text,
 		Datetime:        raw.CreatedAt,
+		StampList:       stampList,
 	}
-	//TODO: res.stampListの取得
 	return &res
 }
