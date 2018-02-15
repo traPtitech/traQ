@@ -2,6 +2,8 @@ package router
 
 import (
 	"fmt"
+	"github.com/traPtitech/traQ/notification"
+	"github.com/traPtitech/traQ/notification/events"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -95,7 +97,7 @@ func PostChannels(c echo.Context) error {
 	}
 
 	if newChannel.IsPublic {
-		// TODO:通知周りの実装
+		go notification.Send(events.ChannelCreated, events.ChannelEvent{ID: newChannel.ID})
 	} else {
 		for _, user := range requestBody.Member {
 			// TODO: メンバーが存在するか確認
@@ -182,6 +184,7 @@ func PutChannelsByChannelID(c echo.Context) error {
 		Children:   childrenIDs,
 	}
 
+	go notification.Send(events.ChannelUpdated, events.ChannelEvent{ID: channelID})
 	return c.JSON(http.StatusOK, response)
 }
 
@@ -217,6 +220,8 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 	if err := channel.Update(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "An error occuerred when channel model update.")
 	}
+
+	go notification.Send(events.ChannelDeleted, events.ChannelEvent{ID: channelID})
 	return c.NoContent(http.StatusNoContent)
 }
 
