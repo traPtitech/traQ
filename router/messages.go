@@ -29,7 +29,7 @@ type requestMessage struct {
 
 type requestCount struct {
 	Count int `json:"count"`
-	Limit int `json:"limit"`
+	Limit int `json:"offset"`
 }
 
 // GetMessageByID : /messages/{messageID}のGETメソッド
