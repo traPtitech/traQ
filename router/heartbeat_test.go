@@ -37,6 +37,7 @@ func TestPostHeartbeat(t *testing.T) {
 			assert.Equal(testUser.ID, responseBody.UserStatuses[0].UserID)
 			assert.Equal("editing", responseBody.UserStatuses[0].Status)
 		}
+	}
 }
 
 func TestGetHeartbeat(t *testing.T) {
