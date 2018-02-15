@@ -78,17 +78,17 @@ func main() {
 	// Tag: channel
 	api.GET("/channels", router.GetChannels)
 	api.POST("/channels", router.PostChannels)
-	api.GET("/channels/:channelId", router.GetChannelsByChannelID)
-	api.PUT("/channels/:channelId", router.PutChannelsByChannelID)
-	api.DELETE("/channels/:channelId", router.DeleteChannelsByChannelID)
+	api.GET("/channels/:channelID", router.GetChannelsByChannelID)
+	api.PUT("/channels/:channelID", router.PutChannelsByChannelID)
+	api.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID)
 
 	// Tag: messages
-	api.GET("/messages/:messageId", router.GetMessageByID)
-	api.PUT("/messages/:messageId", router.PutMessageByID)
-	api.DELETE("/messages/:messageId", router.DeleteMessageByID)
+	api.GET("/messages/:messageID", router.GetMessageByID)
+	api.PUT("/messages/:messageID", router.PutMessageByID)
+	api.DELETE("/messages/:messageID", router.DeleteMessageByID)
 
-	api.GET("/channels/:channelId/messages", router.GetMessagesByChannelID)
-	api.POST("/channels/:channelId/messages", router.PostMessage)
+	api.GET("/channels/:channelID/messages", router.GetMessagesByChannelID)
+	api.POST("/channels/:channelID/messages", router.PostMessage)
 
 	// Tag: clips
 	api.GET("/users/me/clips", router.GetClips)
@@ -101,10 +101,10 @@ func main() {
 	api.DELETE("/users/me/stars", router.DeleteStars)
 
 	// Tag: userTag
-	api.GET("/users/:userId/tags", router.GetUserTags)
-	api.POST("/users/:userId/tags", router.PostUserTag)
-	api.PUT("/users/:userId/tags/:tagId", router.PutUserTag)
-	api.DELETE("/users/:userId/tags/:tagId", router.DeleteUserTag)
+	api.GET("/users/:userID/tags", router.GetUserTags)
+	api.POST("/users/:userID/tags", router.PostUserTag)
+	api.PUT("/users/:userID/tags/:tagID", router.PutUserTag)
+	api.DELETE("/users/:userID/tags/:tagID", router.DeleteUserTag)
 
 	// Tag: heartbeat
 	api.GET("/heartbeat", router.GetHeartbeat)

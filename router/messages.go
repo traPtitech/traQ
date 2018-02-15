@@ -53,7 +53,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
-	channelID := c.Param("channelId")
+	channelID := c.Param("channelID")
 
 	messageList, err := model.GetMessagesFromChannel(channelID, post.Limit, post.Count)
 	if err != nil {
@@ -73,7 +73,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 // PostMessage : /channels/{channelID}/messagesのPOSTメソッド
 func PostMessage(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("channelId") //TODO: channelIDの検証
+	channelID := c.Param("channelID") //TODO: channelIDの検証
 
 	post := &requestMessage{}
 	if err := c.Bind(post); err != nil {
