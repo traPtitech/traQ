@@ -9,13 +9,18 @@ import (
 
 //MessageForResponse :クライアントに返す形のメッセージオブジェクト
 type MessageForResponse struct {
-	MessageID       string `json:"messageId"`
-	UserID          string `json:"userId"`
-	ParentChannelID string `json:"parentChannelId"`
-	Content         string `json:"content"`
-	Datetime        string `json:"datetime"`
-	Pin             bool   `json:"pin"`
-	//StampList /*stampのオブジェクト*/
+	MessageID       string       `json:"messageId"`
+	UserID          string       `json:"userId"`
+	ParentChannelID string       `json:"parentChannelId"`
+	Content         string       `json:"content"`
+	Datetime        string       `json:"datetime"`
+	Pin             bool         `json:"pin"`
+	StampList       []*stampList `json:"stampList"`
+}
+
+type stampList struct {
+	StampID string `json:"stampId"`
+	Count   int    `json:"count"`
 }
 
 type requestMessage struct {
@@ -142,6 +147,10 @@ func valuesMessage(m map[string]*MessageForResponse) []*MessageForResponse {
 }
 
 func formatMessage(raw *model.Message) *MessageForResponse {
+
+	stampList := []*stampList{}
+	// TODO: Stampが実装され次第取りに行くようにする
+
 	res := MessageForResponse{
 		MessageID:       raw.ID,
 		UserID:          raw.UserID,
@@ -149,7 +158,7 @@ func formatMessage(raw *model.Message) *MessageForResponse {
 		Pin:             false, //TODO:取得するようにする
 		Content:         raw.Text,
 		Datetime:        raw.CreatedAt,
+		StampList:       stampList,
 	}
-	//TODO: res.stampListの取得
 	return &res
 }

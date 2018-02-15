@@ -103,6 +103,9 @@ func TestPostMessage(t *testing.T) {
 	if message.Content != post.Text {
 		t.Errorf("message text is wrong: want %v, actual %v", post.Text, message.Content)
 	}
+	if len(message.StampList) != 0 {
+		t.Errorf("StampList length is wrong: want 0, actual %d", len(message.StampList))
+	}
 
 	if rec.Code != http.StatusCreated {
 		t.Log(rec.Code)
