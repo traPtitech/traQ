@@ -56,7 +56,7 @@ func TestMain(m *testing.M) {
 }
 
 func beforeTest(t *testing.T) {
-	require.NoError(t, engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags" "devices", "users_subscribe_channels"))
+	require.NoError(t, engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags", "devices", "users_subscribe_channels"))
 	require.NoError(t, SyncSchema())
 }
 
