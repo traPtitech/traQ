@@ -1,6 +1,8 @@
 package router
 
 import (
+	"github.com/traPtitech/traQ/notification"
+	"github.com/traPtitech/traQ/notification/events"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -73,5 +75,7 @@ func PutTopic(c echo.Context) error {
 		Name:      channel.Name,
 		Text:      channel.Topic,
 	}
+
+	go notification.Send(events.ChannelUpdated, events.ChannelEvent{ID: channelID})
 	return c.JSON(http.StatusOK, topic)
 }

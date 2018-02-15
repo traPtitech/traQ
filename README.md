@@ -11,9 +11,9 @@
 - git
 - make
 
-### Setup
+### Setup (for Linux, macOS)
 
-for Linux, macOS
+Setup [GOPATH](https://github.com/golang/go/wiki/GOPATH) first
 
 ```
 make init

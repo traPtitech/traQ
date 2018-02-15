@@ -1232,6 +1232,42 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
+  /notification:
+    get:
+      tags:
+        - notification
+      description: 通知ストリーム(Server Sent Events)に接続します。
+      responses:
+        "200":
+          description: 接続が完了しました。
+          content:
+            text/event-stream:
+
+  /notification/device:
+    post:
+      tags:
+        - notification
+      description: FCMデバイスを登録します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  description: FCMのデバイストークン
+                  example: bk3RNwTe3H0:CI2k_HHwgIpoDKCIZvvDMExUdFQ3P1
+      responses:
+        "201":
+          description: 正常に登録できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+
 components:
   parameters:
     channelIdInPath:

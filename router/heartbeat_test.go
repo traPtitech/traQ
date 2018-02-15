@@ -37,16 +37,15 @@ func TestPostHeartbeat(t *testing.T) {
 			assert.Equal(testUser.ID, responseBody.UserStatuses[0].UserID)
 			assert.Equal("editing", responseBody.UserStatuses[0].Status)
 		}
-	}
 }
 
 func TestGetHeartbeat(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 	assert := assert.New(t)
 
-	statuses[testChannelID] = &HeartbeatStatus{
+	model.HeartbeatStatuses[testChannelID] = &model.HeartbeatStatus{
 		ChannelID: testChannelID,
-		UserStatuses: []*UserStatus{
+		UserStatuses: []*model.UserStatus{
 			{
 				UserID:   testUser.ID,
 				Status:   "editing",
@@ -121,4 +120,5 @@ func TestHeartbeat(t *testing.T) {
 	statusesMutex.Unlock()
 
 	require.NoError(t, HeartbeatStop())
+}
 }
