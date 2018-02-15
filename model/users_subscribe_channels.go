@@ -8,8 +8,8 @@ import (
 
 // ユーザー・通知チャンネル対構造体
 type UserSubscribeChannel struct {
-	UserId    string    `xorm:"char(36) pk not null"`
-	ChannelId string    `xorm:"char(36) pk not null"`
+	UserID    string    `xorm:"char(36) pk not null"`
+	ChannelID string    `xorm:"char(36) pk not null"`
 	CreatedAt time.Time `xorm:"created not null"`
 }
 
@@ -20,11 +20,11 @@ func (*UserSubscribeChannel) TableName() string {
 
 // DBに登録
 func (s *UserSubscribeChannel) Create() error {
-	if s.UserId == "" {
-		return fmt.Errorf("UserId is empty")
+	if s.UserID == "" {
+		return fmt.Errorf("UserID is empty")
 	}
-	if s.ChannelId == "" {
-		return fmt.Errorf("ChannelId is empty")
+	if s.ChannelID == "" {
+		return fmt.Errorf("ChannelID is empty")
 	}
 
 	if _, err := db.Insert(s); err != nil {
@@ -36,11 +36,11 @@ func (s *UserSubscribeChannel) Create() error {
 
 // DBから削除
 func (s *UserSubscribeChannel) Delete() error {
-	if s.UserId == "" {
-		return fmt.Errorf("UserId is empty")
+	if s.UserID == "" {
+		return fmt.Errorf("UserID is empty")
 	}
-	if s.ChannelId == "" {
-		return fmt.Errorf("ChannelId is empty")
+	if s.ChannelID == "" {
+		return fmt.Errorf("ChannelID is empty")
 	}
 
 	if _, err := db.Delete(s); err != nil {

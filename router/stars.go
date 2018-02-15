@@ -48,7 +48,7 @@ func PostStars(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get stared channels response")
 	}
 
-	go notification.Send(events.ChannelStared, events.UserChannelEvent{UserId: user.ID, ChannelId: requestBody.ChannelID})
+	go notification.Send(events.ChannelStared, events.UserChannelEvent{UserID: user.ID, ChannelID: requestBody.ChannelID})
 	return c.JSON(http.StatusCreated, responseBody)
 }
 
@@ -78,7 +78,7 @@ func DeleteStars(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get stared channels response")
 	}
 
-	go notification.Send(events.ChannelUnstared, events.UserChannelEvent{UserId: user.ID, ChannelId: requestBody.ChannelID})
+	go notification.Send(events.ChannelUnstared, events.UserChannelEvent{UserID: user.ID, ChannelID: requestBody.ChannelID})
 	return c.JSON(http.StatusOK, responseBody)
 }
 

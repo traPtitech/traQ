@@ -63,7 +63,7 @@ func PostClips(c echo.Context) error {
 		responseBody = append(responseBody, formatMessage(message))
 	}
 
-	go notification.Send(events.MessageClipped, events.UserMessageEvent{UserId: user.ID, MessageId: requestBody.MessageID})
+	go notification.Send(events.MessageClipped, events.UserMessageEvent{UserID: user.ID, MessageID: requestBody.MessageID})
 	return c.JSON(http.StatusCreated, responseBody)
 }
 
@@ -98,6 +98,6 @@ func DeleteClips(c echo.Context) error {
 		responseBody = append(responseBody, formatMessage(message))
 	}
 
-	go notification.Send(events.MessageUnclipped, events.UserMessageEvent{UserId: user.ID, MessageId: requestBody.MessageID})
+	go notification.Send(events.MessageUnclipped, events.UserMessageEvent{UserID: user.ID, MessageID: requestBody.MessageID})
 	return c.JSON(http.StatusOK, responseBody)
 }

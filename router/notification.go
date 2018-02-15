@@ -12,9 +12,9 @@ import (
 
 // GET /channels/:channelId/notifications のハンドラ
 func GetNotificationStatus(c echo.Context) error {
-	channelId := c.Param("channelId") //TODO チャンネルIDの検証
+	channelID := c.Param("channelId") //TODO チャンネルIDの検証
 
-	users, err := model.GetSubscribingUser(uuid.FromStringOrNil(channelId))
+	users, err := model.GetSubscribingUser(uuid.FromStringOrNil(channelID))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to GetNotificationStatus: %v", err))
 	}
@@ -29,7 +29,7 @@ func GetNotificationStatus(c echo.Context) error {
 
 // PUT /channels/:channelId/notifications のハンドラ
 func PutNotificationStatus(c echo.Context) error {
-	channelId := c.Param("channelId") //TODO チャンネルIDの検証
+	channelID := c.Param("channelId") //TODO チャンネルIDの検証
 
 	var req struct {
 		On  []string `json:"on"`
@@ -41,20 +41,20 @@ func PutNotificationStatus(c echo.Context) error {
 
 	for _, v := range req.On {
 		m := &model.UserSubscribeChannel{
-			UserId:    v,
-			ChannelId: channelId,
+			UserID:    v,
+			ChannelID: channelID,
 		}
 		m.Create()
 	}
 	for _, v := range req.Off {
 		m := &model.UserSubscribeChannel{
-			UserId:    v,
-			ChannelId: channelId,
+			UserID:    v,
+			ChannelID: channelID,
 		}
 		m.Delete()
 	}
 
-	users, err := model.GetSubscribingUser(uuid.FromStringOrNil(channelId))
+	users, err := model.GetSubscribingUser(uuid.FromStringOrNil(channelID))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to GetNotificationStatus: %v", err))
 	}
@@ -79,7 +79,7 @@ func PostDeviceToken(c echo.Context) error {
 	}
 
 	dev := &model.Device{
-		UserId: userId,
+		UserID: userId,
 		Token:  req.Token,
 	}
 	if err := dev.Register(); err != nil {
@@ -92,7 +92,7 @@ func PostDeviceToken(c echo.Context) error {
 
 // GET /notification のハンドラ
 func GetNotificationStream(c echo.Context) error {
-	userId := uuid.FromStringOrNil(c.Get("user").(*model.User).ID)
+	userID := uuid.FromStringOrNil(c.Get("user").(*model.User).ID)
 
 	if _, ok := c.Response().Writer.(http.Flusher); !ok {
 		return echo.NewHTTPError(http.StatusNotImplemented, "Server Sent Events is not supported.")
@@ -104,6 +104,6 @@ func GetNotificationStream(c echo.Context) error {
 	c.Response().Header().Set("Connection", "keep-alive")
 	c.Response().WriteHeader(http.StatusOK)
 
-	notification.Stream(userId, c.Response())
+	notification.Stream(userID, c.Response())
 	return nil
 }

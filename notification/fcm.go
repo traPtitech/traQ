@@ -28,7 +28,7 @@ type fcmNotificationPayload struct {
 }
 
 type fcmMessage struct {
-	RegistrationIds  []string                `json:"registration_ids,omitempty"`
+	RegistrationIDs  []string                `json:"registration_ids,omitempty"`
 	Notification     *fcmNotificationPayload `json:"notification,omitempty"`
 	Data             interface{}             `json:"data,omitempty"`
 	Priority         string                  `json:"priority,omitempty"`
@@ -39,16 +39,16 @@ type fcmMessage struct {
 type fcmResponse struct {
 	StatusCode   int
 	RetryAfter   string
-	MulticastId  int64       `json:"multicast_id"`
+	MulticastID  int64       `json:"multicast_id"`
 	Success      int         `json:"success"`
 	Failure      int         `json:"failure"`
-	CanonicalIds int         `json:"canonical_ids"`
+	CanonicalIDs int         `json:"canonical_ids"`
 	Results      []fcmResult `json:"results"`
 }
 
 type fcmResult struct {
-	MessageId      string `json:"message_id"`
-	RegistrationId string `json:"registration_id"`
+	MessageID      string `json:"message_id"`
+	RegistrationID string `json:"registration_id"`
 	Error          string `json:"error"`
 }
 
@@ -128,7 +128,7 @@ func (r *fcmResponse) getInvalidRegistration() []string {
 	var ids []string
 	for _, v := range r.Results {
 		if v.unregistered() {
-			ids = append(ids, v.RegistrationId)
+			ids = append(ids, v.RegistrationID)
 		}
 	}
 	return ids

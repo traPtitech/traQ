@@ -97,7 +97,7 @@ func PostChannels(c echo.Context) error {
 	}
 
 	if newChannel.IsPublic {
-		go notification.Send(events.ChannelCreated, events.ChannelEvent{Id: newChannel.ID})
+		go notification.Send(events.ChannelCreated, events.ChannelEvent{ID: newChannel.ID})
 	} else {
 		for _, user := range requestBody.Member {
 			// TODO: メンバーが存在するか確認
@@ -184,7 +184,7 @@ func PutChannelsByChannelID(c echo.Context) error {
 		Children:   childrenIDs,
 	}
 
-	go notification.Send(events.ChannelUpdated, events.ChannelEvent{Id: channelID})
+	go notification.Send(events.ChannelUpdated, events.ChannelEvent{ID: channelID})
 	return c.JSON(http.StatusOK, response)
 }
 
@@ -221,7 +221,7 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "An error occuerred when channel model update.")
 	}
 
-	go notification.Send(events.ChannelDeleted, events.ChannelEvent{Id: channelID})
+	go notification.Send(events.ChannelDeleted, events.ChannelEvent{ID: channelID})
 	return c.NoContent(http.StatusNoContent)
 }
 

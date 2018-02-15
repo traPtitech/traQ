@@ -8,7 +8,7 @@ import (
 // 通知デバイスの構造体
 type Device struct {
 	Token  string `xorm:"varchar(190) pk not null"`
-	UserId string `xorm:"char(36) not null index"`
+	UserID string `xorm:"char(36) not null index"`
 }
 
 // Device構造体のテーブル名
@@ -18,8 +18,8 @@ func (*Device) TableName() string {
 
 // デバイスを登録
 func (device *Device) Register() error {
-	if device.UserId == "" {
-		return fmt.Errorf("UserId is empty")
+	if device.UserID == "" {
+		return fmt.Errorf("UserID is empty")
 	}
 
 	if device.Token == "" {
@@ -35,8 +35,8 @@ func (device *Device) Register() error {
 
 // デバイスの登録を解除
 func (device *Device) Unregister() error {
-	if device.UserId == "" && device.Token == "" {
-		return fmt.Errorf("both UserId and Token is empty")
+	if device.UserID == "" && device.Token == "" {
+		return fmt.Errorf("both UserID and Token are empty")
 	}
 
 	if _, err := db.Delete(device); err != nil {
@@ -48,7 +48,7 @@ func (device *Device) Unregister() error {
 // 指定ユーザーのデバイスを取得
 func GetDevices(user uuid.UUID) ([]*Device, error) {
 	var result []*Device
-	if err := db.Find(&result, &Device{UserId: user.String()}); err != nil {
+	if err := db.Find(&result, &Device{UserID: user.String()}); err != nil {
 		return nil, fmt.Errorf("failed to get devices : %v", err)
 	}
 	return result, nil
@@ -64,7 +64,7 @@ func GetAllDevices() ([]*Device, error) {
 }
 
 // 全ユーザーの全デバイスIDを取得
-func GetAllDeviceIds() ([]string, error) {
+func GetAllDeviceIDs() ([]string, error) {
 	var result []string
 	if err := db.Table(&Device{}).Cols("token").Find(&result); err != nil {
 		return nil, fmt.Errorf("failed to get devices : %v", err)
@@ -73,9 +73,9 @@ func GetAllDeviceIds() ([]string, error) {
 }
 
 // 指定ユーザーの全デバイスIDを取得
-func GetDeviceIds(user uuid.UUID) ([]string, error) {
+func GetDeviceIDs(user uuid.UUID) ([]string, error) {
 	var result []string
-	if err := db.Table(&Device{}).Cols("token").Find(&result, &Device{UserId: user.String()}); err != nil {
+	if err := db.Table(&Device{}).Cols("token").Find(&result, &Device{UserID: user.String()}); err != nil {
 		return nil, fmt.Errorf("failed to get devices : %v", err)
 	}
 	return result, nil

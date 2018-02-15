@@ -76,6 +76,6 @@ func PutTopic(c echo.Context) error {
 		Text:      channel.Topic,
 	}
 
-	go notification.Send(events.ChannelUpdated, events.ChannelEvent{Id: channelID})
+	go notification.Send(events.ChannelUpdated, events.ChannelEvent{ID: channelID})
 	return c.JSON(http.StatusOK, topic)
 }

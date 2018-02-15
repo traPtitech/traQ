@@ -47,8 +47,8 @@ func Send(eventType events.EventType, payload interface{}) {
 		multicastToAll(&events.EventData{
 			EventType: eventType,
 			Payload: struct {
-				Id string `json:"id"`
-			}{data.Id},
+				ID string `json:"id"`
+			}{data.ID},
 			Mobile: false,
 		})
 
@@ -57,18 +57,18 @@ func Send(eventType events.EventType, payload interface{}) {
 		multicastToAll(&events.EventData{
 			EventType: eventType,
 			Payload: struct {
-				Id string `json:"id"`
-			}{data.Id},
+				ID string `json:"id"`
+			}{data.ID},
 			Mobile: false,
 		})
 
 	case events.ChannelStared, events.ChannelUnstared:
 		data, _ := payload.(events.UserChannelEvent)
-		multicast(uuid.FromStringOrNil(data.UserId), &events.EventData{
+		multicast(uuid.FromStringOrNil(data.UserID), &events.EventData{
 			EventType: eventType,
 			Payload: struct {
-				Id string `json:"id"`
-			}{data.ChannelId},
+				ID string `json:"id"`
+			}{data.ChannelID},
 			Mobile: false,
 		})
 
@@ -88,7 +88,7 @@ func Send(eventType events.EventType, payload interface{}) {
 					EventType: eventType,
 					Summary:   "", //TODO モバイル通知に表示される文字列
 					Payload: struct {
-						Id string `json:"id"`
+						ID string `json:"id"`
 					}{data.Message.ID},
 					Mobile: true,
 				})
@@ -104,7 +104,7 @@ func Send(eventType events.EventType, payload interface{}) {
 						EventType: eventType,
 						Summary:   "", //TODO モバイル通知に表示される文字列
 						Payload: struct {
-							Id string `json:"id"`
+							ID string `json:"id"`
 						}{data.Message.ID},
 						Mobile: true,
 					})
@@ -123,7 +123,7 @@ func Send(eventType events.EventType, payload interface{}) {
 							EventType: eventType,
 							Summary:   "", //TODO モバイル通知に表示される文字列
 							Payload: struct {
-								Id string `json:"id"`
+								ID string `json:"id"`
 							}{data.Message.ID},
 							Mobile: true,
 						})
@@ -134,28 +134,28 @@ func Send(eventType events.EventType, payload interface{}) {
 
 	case events.MessageRead:
 		data, _ := payload.(events.UserMessageEvent)
-		multicast(uuid.FromStringOrNil(data.UserId), &events.EventData{
+		multicast(uuid.FromStringOrNil(data.UserID), &events.EventData{
 			EventType: eventType,
 			Payload: struct {
-				Id string `json:"id"`
-			}{data.MessageId},
+				ID string `json:"id"`
+			}{data.MessageID},
 			Mobile: false,
 		})
 
 	case events.MessageStamped, events.MessageUnstamped:
 		data, _ := payload.(events.MessageStampEvent)
-		if s, ok := model.GetHeartbeatStatus(data.ChannelId); ok {
+		if s, ok := model.GetHeartbeatStatus(data.ChannelID); ok {
 			for _, u := range s.UserStatuses {
 				id := uuid.FromStringOrNil(u.UserID)
 				multicast(id, &events.EventData{
 					EventType: eventType,
 					Payload: struct {
-						Id        string `json:"message_id"`
-						ChannelId string `json:"channel_id"`
-						UserId    string `json:"user_id"`
-						StampId   string `json:"stamp_id"`
+						ID        string `json:"message_id"`
+						ChannelID string `json:"channel_id"`
+						UserID    string `json:"user_id"`
+						StampID   string `json:"stamp_id"`
 						Count     int    `json:"count"`
-					}{data.Id, data.ChannelId, data.UserId, data.StampId, data.Count},
+					}{data.ID, data.ChannelID, data.UserID, data.StampID, data.Count},
 					Mobile: false,
 				})
 			}
@@ -163,14 +163,14 @@ func Send(eventType events.EventType, payload interface{}) {
 
 	case events.MessagePinned, events.MessageUnpinned:
 		data, _ := payload.(events.MessageChannelEvent)
-		if s, ok := model.GetHeartbeatStatus(data.ChannelId); ok {
+		if s, ok := model.GetHeartbeatStatus(data.ChannelID); ok {
 			for _, u := range s.UserStatuses {
 				multicast(uuid.FromStringOrNil(u.UserID), &events.EventData{
 					EventType: eventType,
 					Payload: struct {
-						MessageId string `json:"message_id"`
-						ChannelId string `json:"channel_id"`
-					}{data.MessageId, data.ChannelId},
+						MessageID string `json:"message_id"`
+						ChannelID string `json:"channel_id"`
+					}{data.MessageID, data.ChannelID},
 					Mobile: false,
 				})
 			}
@@ -178,11 +178,11 @@ func Send(eventType events.EventType, payload interface{}) {
 
 	case events.MessageClipped, events.MessageUnclipped:
 		data, _ := payload.(events.UserMessageEvent)
-		multicast(uuid.FromStringOrNil(data.UserId), &events.EventData{
+		multicast(uuid.FromStringOrNil(data.UserID), &events.EventData{
 			EventType: eventType,
 			Payload: struct {
-				Id string `json:"id"`
-			}{data.MessageId},
+				ID string `json:"id"`
+			}{data.MessageID},
 			Mobile: false,
 		})
 
@@ -216,7 +216,7 @@ func multicastToAll(data *events.EventData) {
 	})
 
 	if data.Mobile {
-		devs, err := model.GetAllDeviceIds()
+		devs, err := model.GetAllDeviceIDs()
 		if err != nil {
 			log.Error(err)
 			return
@@ -239,7 +239,7 @@ func multicast(target uuid.UUID, data *events.EventData) {
 	}
 
 	if data.Mobile {
-		devs, err := model.GetDeviceIds(target)
+		devs, err := model.GetDeviceIDs(target)
 		if err != nil {
 			log.Error(err)
 			return
@@ -253,7 +253,7 @@ func sendToFcm(deviceTokens []string, data *events.EventData) {
 		m := createDefaultFCMMessage()
 		m.Notification.Body = data.Summary
 		m.Data = data.Payload
-		m.RegistrationIds = arr
+		m.RegistrationIDs = arr
 
 		res, err := fcm.send(m)
 		if err != nil {

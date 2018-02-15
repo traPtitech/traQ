@@ -14,8 +14,8 @@ var (
 )
 
 type sseClient struct {
-	userId       uuid.UUID
-	connectionId uuid.UUID
+	userID       uuid.UUID
+	connectionID uuid.UUID
 	send         chan *events.EventData
 	stop         chan struct{}
 }
@@ -72,24 +72,24 @@ func (s *sseStreamer) run() {
 			return
 
 		case c := <-s.newConnect:
-			arr, exists := s.clients.Load(c.userId)
+			arr, exists := s.clients.Load(c.userID)
 			if !exists {
 				arr = make(map[uuid.UUID]*sseClient)
-				s.clients.Store(c.userId, arr)
+				s.clients.Store(c.userID, arr)
 			}
-			arr[c.connectionId] = c
+			arr[c.connectionID] = c
 
 		case c := <-s.disconnect:
-			arr, _ := s.clients.Load(c.userId)
-			delete(arr, c.connectionId)
+			arr, _ := s.clients.Load(c.userID)
+			delete(arr, c.connectionID)
 		}
 	}
 }
 
-func Stream(userId uuid.UUID, res *echo.Response) {
+func Stream(userID uuid.UUID, res *echo.Response) {
 	client := &sseClient{
-		userId:       userId,
-		connectionId: uuid.NewV4(),
+		userID:       userID,
+		connectionID: uuid.NewV4(),
 		send:         make(chan *events.EventData, 50),
 		stop:         make(chan struct{}),
 	}

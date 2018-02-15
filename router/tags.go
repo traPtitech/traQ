@@ -49,7 +49,7 @@ func PostUserTag(c echo.Context) error {
 		return err
 	}
 
-	go notification.Send(events.UserTagsUpdated, events.UserEvent{Id: userID})
+	go notification.Send(events.UserTagsUpdated, events.UserEvent{ID: userID})
 	return c.JSON(http.StatusCreated, res)
 }
 
@@ -80,7 +80,7 @@ func PutUserTag(c echo.Context) error {
 		return err
 	}
 
-	go notification.Send(events.UserTagsUpdated, events.UserEvent{Id: userID})
+	go notification.Send(events.UserTagsUpdated, events.UserEvent{ID: userID})
 	return c.JSON(http.StatusOK, res)
 }
 
@@ -98,7 +98,7 @@ func DeleteUserTag(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete tag")
 	}
 
-	go notification.Send(events.UserTagsUpdated, events.UserEvent{Id: userID})
+	go notification.Send(events.UserTagsUpdated, events.UserEvent{ID: userID})
 	return c.NoContent(http.StatusNoContent)
 }
 

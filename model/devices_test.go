@@ -20,9 +20,9 @@ func TestDevice_Register(t *testing.T) {
 	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 
-	assert.NoError((&Device{UserId: id1, Token: token1}).Register())
-	assert.NoError((&Device{UserId: id2, Token: token2}).Register())
-	assert.Error((&Device{UserId: id1, Token: token2}).Register())
+	assert.NoError((&Device{UserID: id1, Token: token1}).Register())
+	assert.NoError((&Device{UserID: id2, Token: token2}).Register())
+	assert.Error((&Device{UserID: id1, Token: token2}).Register())
 
 	l, err := db.Count(&Device{})
 	require.NoError(t, err)
@@ -39,16 +39,16 @@ func TestDevice_Unregister(t *testing.T) {
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
 
-	assert.NoError((&Device{UserId: id1, Token: token1}).Register())
-	assert.NoError((&Device{UserId: id2, Token: token2}).Register())
-	assert.NoError((&Device{UserId: id1, Token: token3}).Register())
+	assert.NoError((&Device{UserID: id1, Token: token1}).Register())
+	assert.NoError((&Device{UserID: id2, Token: token2}).Register())
+	assert.NoError((&Device{UserID: id1, Token: token3}).Register())
 
 	assert.NoError((&Device{Token: token2}).Unregister())
 	l, err := db.Count(&Device{})
 	require.NoError(t, err)
 	assert.Equal(int64(2), l)
 
-	assert.NoError((&Device{UserId: id1}).Unregister())
+	assert.NoError((&Device{UserID: id1}).Unregister())
 	l, err = db.Count(&Device{})
 	require.NoError(t, err)
 	assert.Equal(int64(0), l)
@@ -64,9 +64,9 @@ func TestGetAllDevices(t *testing.T) {
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
 
-	assert.NoError((&Device{UserId: id1, Token: token1}).Register())
-	assert.NoError((&Device{UserId: id2, Token: token2}).Register())
-	assert.NoError((&Device{UserId: id1, Token: token3}).Register())
+	assert.NoError((&Device{UserID: id1, Token: token1}).Register())
+	assert.NoError((&Device{UserID: id2, Token: token2}).Register())
+	assert.NoError((&Device{UserID: id1, Token: token3}).Register())
 
 	devs, err := GetAllDevices()
 	if assert.NoError(err) {
@@ -84,9 +84,9 @@ func TestGetDevices(t *testing.T) {
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
 
-	assert.NoError((&Device{UserId: id1, Token: token1}).Register())
-	assert.NoError((&Device{UserId: id2, Token: token2}).Register())
-	assert.NoError((&Device{UserId: id1, Token: token3}).Register())
+	assert.NoError((&Device{UserID: id1, Token: token1}).Register())
+	assert.NoError((&Device{UserID: id2, Token: token2}).Register())
+	assert.NoError((&Device{UserID: id1, Token: token3}).Register())
 
 	devs, err := GetDevices(uuid.FromStringOrNil(id1))
 	if assert.NoError(err) {
@@ -109,11 +109,11 @@ func TestGetAllDeviceIds(t *testing.T) {
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
 
-	assert.NoError((&Device{UserId: id1, Token: token1}).Register())
-	assert.NoError((&Device{UserId: id2, Token: token2}).Register())
-	assert.NoError((&Device{UserId: id1, Token: token3}).Register())
+	assert.NoError((&Device{UserID: id1, Token: token1}).Register())
+	assert.NoError((&Device{UserID: id2, Token: token2}).Register())
+	assert.NoError((&Device{UserID: id1, Token: token3}).Register())
 
-	devs, err := GetAllDeviceIds()
+	devs, err := GetAllDeviceIDs()
 	if assert.NoError(err) {
 		assert.Len(devs, 3)
 	}
@@ -129,16 +129,16 @@ func TestGetDeviceIds(t *testing.T) {
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
 
-	assert.NoError((&Device{UserId: id1, Token: token1}).Register())
-	assert.NoError((&Device{UserId: id2, Token: token2}).Register())
-	assert.NoError((&Device{UserId: id1, Token: token3}).Register())
+	assert.NoError((&Device{UserID: id1, Token: token1}).Register())
+	assert.NoError((&Device{UserID: id2, Token: token2}).Register())
+	assert.NoError((&Device{UserID: id1, Token: token3}).Register())
 
-	devs, err := GetDeviceIds(uuid.FromStringOrNil(id1))
+	devs, err := GetDeviceIDs(uuid.FromStringOrNil(id1))
 	if assert.NoError(err) {
 		assert.Len(devs, 2)
 	}
 
-	devs, err = GetDeviceIds(uuid.FromStringOrNil(id2))
+	devs, err = GetDeviceIDs(uuid.FromStringOrNil(id2))
 	if assert.NoError(err) {
 		assert.Len(devs, 1)
 	}

@@ -41,26 +41,26 @@ type EventData struct {
 }
 
 type UserEvent struct {
-	Id string
+	ID string
 }
 
 type ChannelEvent struct {
-	Id string
+	ID string
 }
 
 type UserChannelEvent struct {
-	UserId    string
-	ChannelId string
+	UserID    string
+	ChannelID string
 }
 
 type UserMessageEvent struct {
-	UserId    string
-	MessageId string
+	UserID    string
+	MessageID string
 }
 
 type MessageChannelEvent struct {
-	MessageId string
-	ChannelId string
+	MessageID string
+	ChannelID string
 }
 
 type MessageEvent struct {
@@ -68,9 +68,9 @@ type MessageEvent struct {
 }
 
 type MessageStampEvent struct {
-	Id        string
-	ChannelId string
-	UserId    string
-	StampId   string
+	ID        string
+	ChannelID string
+	UserID    string
+	StampID   string
 	Count     int
 }
