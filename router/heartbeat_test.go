@@ -30,7 +30,7 @@ func TestPostHeartbeat(t *testing.T) {
 	rec := request(e, t, mw(PostHeartbeat), cookie, req)
 
 	if assert.EqualValues(http.StatusOK, rec.Code) {
-		var responseBody HeartbeatStatus
+		var responseBody model.HeartbeatStatus
 		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
 			assert.Equal(testChannelID, responseBody.ChannelID)
 			assert.Len(responseBody.UserStatuses, 1)
@@ -62,7 +62,7 @@ func TestGetHeartbeat(t *testing.T) {
 	rec := request(e, t, mw(GetHeartbeat), cookie, req)
 
 	if assert.EqualValues(http.StatusOK, rec.Code) {
-		var responseBody HeartbeatStatus
+		var responseBody model.HeartbeatStatus
 		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
 			t.Log(responseBody)
 			assert.Equal(testChannelID, responseBody.ChannelID)
@@ -71,54 +71,4 @@ func TestGetHeartbeat(t *testing.T) {
 			assert.Equal("editing", responseBody.UserStatuses[0].Status)
 		}
 	}
-}
-
-func TestGetHeartbeatStatus(t *testing.T) {
-	statusesMutex.Lock()
-	statuses[testChannelID] = &HeartbeatStatus{
-		ChannelID: testChannelID,
-		UserStatuses: []*UserStatus{
-			{
-				UserID:   testUser.ID,
-				Status:   "editing",
-				LastTime: time.Now(),
-			},
-		},
-	}
-	statusesMutex.Unlock()
-
-	status, ok := GetHeartbeatStatus(testChannelID)
-	if assert.True(t, ok) {
-		assert.Len(t, status.UserStatuses, 1)
-	}
-	status, ok = GetHeartbeatStatus(model.CreateUUID())
-	assert.False(t, ok)
-}
-
-func TestHeartbeat(t *testing.T) {
-	tickTime = 10 * time.Millisecond
-	timeoutDuration = -20 * time.Millisecond
-	statusesMutex.Lock()
-	statuses[testChannelID] = &HeartbeatStatus{
-		ChannelID: testChannelID,
-		UserStatuses: []*UserStatus{
-			{
-				UserID:   testUser.ID,
-				Status:   "editing",
-				LastTime: time.Now(),
-			},
-		},
-	}
-
-	statusesMutex.Unlock()
-	require.Len(t, statuses[testChannelID].UserStatuses, 1)
-	require.NoError(t, HeartbeatStart())
-
-	time.Sleep(50 * time.Millisecond)
-
-	statusesMutex.Lock()
-	assert.Len(t, statuses[testChannelID].UserStatuses, 0)
-	statusesMutex.Unlock()
-
-	require.NoError(t, HeartbeatStop())
 }
