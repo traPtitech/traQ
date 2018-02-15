@@ -52,8 +52,8 @@ func TestGetMessagesByChannelID(t *testing.T) {
 	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 
 	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/channels/:channelId/messages")
-	c.SetParamNames("channelId")
+	c.SetPath("/channels/:channelID/messages")
+	c.SetParamNames("channelID")
 	c.SetParamValues(testChannelID)
 	requestWithContext(t, mw(GetMessagesByChannelID), c)
 
