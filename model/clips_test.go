@@ -1,100 +1,95 @@
 package model
 
-import "testing"
+import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"testing"
+)
 
-func TestTableNameClip(t *testing.T) {
-	clip := &Clip{}
-	if "clips" != clip.TableName() {
-		t.Fatalf("tablename is wrong:want clips,actual %s", clip.TableName())
-	}
+func TestClip_TableName(t *testing.T) {
+	assert.Equal(t, "clips", (&Clip{}).TableName())
 }
 
-func TestCreateClip(t *testing.T) {
+func TestClip_Create(t *testing.T) {
 	beforeTest(t)
-	message := makeMessage()
+	assert := assert.New(t)
+	m := mustMakeMessage(t)
+
+	assert.Error((&Clip{}).Create())
+	assert.Error((&Clip{UserID: testUserID}).Create())
+
+	clip := &Clip{UserID: testUserID, MessageID: m.ID}
+	assert.NoError(clip.Create())
+}
+
+func TestClip_Delete(t *testing.T) {
+	beforeTest(t)
+	assert := assert.New(t)
+
+	message := mustMakeMessage(t)
+
 	clip := &Clip{
 		UserID:    testUserID,
 		MessageID: message.ID,
 	}
+	require.NoError(t, clip.Create())
 
-	if err := clip.Create(); err != nil {
-		t.Fatalf("clip create failed: %v", err)
-	}
-}
+	assert.Error((&Clip{}).Delete())
+	assert.Error((&Clip{UserID: testUserID}).Delete())
+	assert.NoError(clip.Delete())
 
-func TestGetClipedMessages(t *testing.T) {
-	beforeTest(t)
-	messageCount := 5
-	message := makeMessage()
-	clip := &Clip{
-		UserID:    testUserID,
-		MessageID: message.ID,
-	}
-
-	if err := clip.Create(); err != nil {
-		t.Fatalf("clip create failed: %v", err)
-	}
-	for i := 1; i < messageCount; i++ {
-		mes := makeMessage()
-		c := &Clip{
-			UserID:    testUserID,
-			MessageID: mes.ID,
-		}
-
-		if err := c.Create(); err != nil {
-			t.Fatalf("clip create failed: %v", err)
-		}
-	}
-
-	messages, err := GetClipedMessages(testUserID)
-	if err != nil {
-		t.Fatalf("getting cliped messages failed: %v", err)
-	}
-
-	if len(messages) != messageCount {
-		t.Fatalf("messages count wrong: want %d, actual %d", messageCount, len(messages))
-	}
-
-	if messages[0].Text != message.Text {
-		t.Fatalf("massage text wrong: want %s, actual %s", message.Text, messages[0].Text)
-	}
-
-}
-
-func TestDeleteClip(t *testing.T) {
-	beforeTest(t)
 	messageCount := 5
 	for i := 0; i < messageCount; i++ {
-		message := makeMessage()
+		message := mustMakeMessage(t)
 		clip := &Clip{
 			UserID:    testUserID,
 			MessageID: message.ID,
 		}
-
-		if err := clip.Create(); err != nil {
-			t.Fatalf("clip create failed: %v", err)
-		}
+		require.NoError(t, clip.Create())
 	}
 
-	messages, err := GetClipedMessages(testUserID)
-	if err != nil {
-		t.Fatalf("clip create failed: %v", err)
-	}
+	messages, err := GetClippedMessages(testUserID)
+	assert.NoError(err)
 
-	clip := &Clip{
+	clip = &Clip{
 		UserID:    testUserID,
 		MessageID: messages[0].ID,
 	}
-	if err := clip.Delete(); err != nil {
-		t.Fatalf("clip delete failed: %v", err)
+	assert.NoError(clip.Delete())
+
+	messages, err = GetClippedMessages(testUserID)
+	if assert.NoError(err) {
+		assert.Len(messages, messageCount-1)
+	}
+}
+
+func TestGetClippedMessages(t *testing.T) {
+	beforeTest(t)
+	assert := assert.New(t)
+
+	messageCount := 5
+	message := mustMakeMessage(t)
+	clip := &Clip{
+		UserID:    testUserID,
+		MessageID: message.ID,
+	}
+	require.NoError(t, clip.Create())
+
+	for i := 1; i < messageCount; i++ {
+		mes := mustMakeMessage(t)
+		c := &Clip{
+			UserID:    testUserID,
+			MessageID: mes.ID,
+		}
+		require.NoError(t, c.Create())
 	}
 
-	messages, err = GetClipedMessages(testUserID)
-	if err != nil {
-		t.Fatalf("clip create failed: %v", err)
-	}
+	_, err := GetClippedMessages("")
+	assert.Error(err)
 
-	if len(messages) != messageCount-1 {
-		t.Fatalf("messages count wrong: want %d, actual %d", messageCount-1, len(messages))
+	messages, err := GetClippedMessages(testUserID)
+	if assert.NoError(err) {
+		assert.Len(messages, messageCount)
+		assert.Equal(message.Text, messages[0].Text)
 	}
 }

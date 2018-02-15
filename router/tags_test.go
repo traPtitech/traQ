@@ -3,6 +3,8 @@ package router
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -11,6 +13,7 @@ import (
 
 func TestPostUserTags(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
+	assert := assert.New(t)
 	tagText := "post test"
 
 	// 正常系
@@ -20,9 +23,7 @@ func TestPostUserTags(t *testing.T) {
 		Tag: tagText,
 	}
 	body, err := json.Marshal(post)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	c, rec := getContext(e, t, cookie, req)
@@ -31,29 +32,20 @@ func TestPostUserTags(t *testing.T) {
 	c.SetParamValues(testUser.ID)
 	requestWithContext(t, mw(PostUserTag), c)
 
-	var responseBody []*TagForResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
-		t.Fatalf("Response body can't unmarshal: %v", err)
-	}
-
-	if rec.Code != http.StatusCreated {
-		t.Fatalf("Response code wrong. want: %d, actual: %d", http.StatusCreated, rec.Code)
-	}
-	if responseBody[0].Tag != tagText {
-		t.Errorf("Tag is wrong. want: %s, actual: %s", tagText, responseBody[0].Tag)
-	}
-	if responseBody[0].ID == "" {
-		t.Errorf("Tag id is empty.")
+	if assert.EqualValues(http.StatusCreated, rec.Code) {
+		var responseBody []*TagForResponse
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
+			assert.Equal(tagText, responseBody[0].Tag)
+			assert.NotEqual("", responseBody[0].ID)
+		}
 	}
 }
 
 func TestGetUserTags(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
+	assert := assert.New(t)
 	for i := 0; i < 5; i++ {
-		tagText := strconv.Itoa(i)
-		if _, err := makeTag(testUser.ID, tagText); err != nil {
-			t.Fatal(err)
-		}
+		mustMakeTag(t, testUser.ID, "tag"+strconv.Itoa(i))
 	}
 
 	// 正常系
@@ -63,38 +55,28 @@ func TestGetUserTags(t *testing.T) {
 	c.SetParamValues(testUser.ID)
 	requestWithContext(t, mw(GetUserTags), c)
 
-	var responseBody []TagForResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
-		t.Fatalf("Response body can't unmarshal: %v", err)
-	}
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("Response code is wrong. want: %d, actual:%d", http.StatusOK, rec.Code)
-	}
-	if len(responseBody) != 5 {
-		t.Errorf("Length of response tags is wrong. want: 5, actual: %d", len(responseBody))
+	if assert.EqualValues(http.StatusOK, rec.Code) {
+		var responseBody []TagForResponse
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
+			assert.Len(responseBody, 5)
+		}
 	}
 }
 
 func TestPutUserTags(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
+	assert := assert.New(t)
 	tagText := "put test"
 
 	// 正常系
-	tag, err := makeTag(testUser.ID, tagText)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	tag := mustMakeTag(t, testUser.ID, tagText)
 	post := struct {
 		IsLocked bool `json:"isLocked"`
 	}{
 		IsLocked: true,
 	}
 	body, err := json.Marshal(post)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 	c, rec := getContext(e, t, cookie, req)
@@ -103,16 +85,11 @@ func TestPutUserTags(t *testing.T) {
 	c.SetParamValues(testUser.ID, tag.TagID)
 	requestWithContext(t, mw(PutUserTag), c)
 
-	var responseBody []*TagForResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
-		t.Fatalf("Response body can't unmarshal: %v", err)
-	}
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("Response code wrong. want: %d, actual: %d", http.StatusOK, rec.Code)
-	}
-	if responseBody[0].IsLocked != true {
-		t.Errorf("Response isLocked is wrong. want: true, actual: %v", responseBody[0].IsLocked)
+	if assert.EqualValues(http.StatusOK, rec.Code) {
+		var responseBody []*TagForResponse
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
+			assert.True(responseBody[0].IsLocked)
+		}
 	}
 }
 
@@ -121,10 +98,7 @@ func TestDeleteUserTags(t *testing.T) {
 	tagText := "Delete test"
 
 	// 正常系
-	tag, err := makeTag(testUser.ID, tagText)
-	if err != nil {
-		t.Fatal(err)
-	}
+	tag := mustMakeTag(t, testUser.ID, tagText)
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/users/:userID/tags/:tagID")
@@ -132,7 +106,5 @@ func TestDeleteUserTags(t *testing.T) {
 	c.SetParamValues(testUser.ID, tag.TagID)
 	requestWithContext(t, mw(DeleteUserTag), c)
 
-	if rec.Code != http.StatusNoContent {
-		t.Errorf("Response code wrong. want: %d, actual: %d", http.StatusNoContent, rec.Code)
-	}
+	assert.EqualValues(t, http.StatusNoContent, rec.Code)
 }

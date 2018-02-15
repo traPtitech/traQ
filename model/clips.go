@@ -30,8 +30,8 @@ func (clip *Clip) Create() error {
 	return nil
 }
 
-// GetClipedMessages userIDがクリップしているメッセージの一覧を取得する
-func GetClipedMessages(userID string) ([]*Message, error) {
+// GetClippedMessages userIDがクリップしているメッセージの一覧を取得する
+func GetClippedMessages(userID string) ([]*Message, error) {
 	if userID == "" {
 		return nil, fmt.Errorf("UserID is empty")
 	}

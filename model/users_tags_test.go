@@ -1,90 +1,51 @@
 package model
 
 import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
 )
 
-func TestUserTagTableName(t *testing.T) {
-	tag := &UsersTag{}
-	correctName := "users_tags"
-	tableName := tag.TableName()
-	if tableName != correctName {
-		t.Errorf("tag's table name is wrong. want: %s, actual: %s", correctName, tableName)
-	}
+func TestUsersTag_TableName(t *testing.T) {
+	assert.Equal(t, "users_tags", (&UsersTag{}).TableName())
 }
 
-func TestCreateUserTag(t *testing.T) {
+func TestUsersTag_Create(t *testing.T) {
 	beforeTest(t)
+	assert := assert.New(t)
 
-	// 正常系
-	tag := &UsersTag{
-		UserID: testUserID,
-	}
-	if err := tag.Create("全強"); err != nil {
-		t.Fatal(err)
-	}
-
-	var dbTag = &UsersTag{}
-	has, err := db.Get(dbTag)
-	if !has {
-		t.Error("Cannot find tag in DB")
-	}
-	if err != nil {
-		t.Error(err)
-	}
-
-	if tag.TagID != dbTag.TagID {
-		t.Errorf("TagID is wrong. want: %s, actual: %s", tag.TagID, dbTag.TagID)
-	}
-	if tag.UserID != dbTag.UserID {
-		t.Errorf("UserID is wrong. want: %s, actual: %s", tag.UserID, dbTag.UserID)
-	}
-	if dbTag.CreatedAt == "" {
-		t.Error("CreatedAt is empty")
-	}
-
-	// 異常系
-	wrongTag := &UsersTag{}
-	if err := wrongTag.Create("po"); err == nil {
-		t.Error("no error for bad request")
-	}
+	tag := &UsersTag{UserID: testUserID}
+	assert.NoError(tag.Create("全強"))
+	assert.Error((&UsersTag{}).Create(""))
+	assert.Error((&UsersTag{}).Create("aaa"))
 }
 
-func TestUpdateTag(t *testing.T) {
+func TestUsersTag_Update(t *testing.T) {
 	beforeTest(t)
+	assert := assert.New(t)
 
 	tag := &UsersTag{
 		UserID: testUserID,
 	}
-	if err := tag.Create("pro"); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, tag.Create("pro"))
 
 	tag.IsLocked = true
-	if err := tag.Update(); err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(tag.Update())
+}
 
-	var dbTag = &UsersTag{}
-	has, err := db.Get(dbTag)
-	if !has {
-		t.Error("Cannot find tag in DB")
-	}
-	if err != nil {
-		t.Error(err)
-	}
+func TestUsersTag_Delete(t *testing.T) {
+	beforeTest(t)
+	assert := assert.New(t)
 
-	if dbTag.IsLocked != true {
-		t.Error("IsLocked is not updated")
-	}
-	if dbTag.UpdatedAt == tag.UpdatedAt {
-		t.Error("updatedAt is not updated")
-	}
+	tag := &UsersTag{UserID: testUserID}
+	require.NoError(t, tag.Create("全強"))
+	assert.NoError(tag.Delete())
 }
 
 func TestGetUserTagsByUserID(t *testing.T) {
 	beforeTest(t)
+	assert := assert.New(t)
 
 	// 正常系
 	var tags [10]*UsersTag
@@ -92,59 +53,42 @@ func TestGetUserTagsByUserID(t *testing.T) {
 		tags[i] = &UsersTag{
 			UserID: testUserID,
 		}
-		if err := tags[i].Create(strconv.Itoa(i)); err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, tags[i].Create(strconv.Itoa(i)))
 	}
 
 	gotTags, err := GetUserTagsByUserID(testUserID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for i, v := range gotTags {
-		if v.TagID != tags[i].TagID {
-			t.Errorf("ID is wrong. want: %s, actual: %s", tags[i].TagID, v.TagID)
+	if assert.NoError(err) {
+		for i, v := range gotTags {
+			assert.Equal(tags[i].TagID, v.TagID)
 		}
 	}
 
 	// 異常系
 	notExistID := CreateUUID()
 	empty, err := GetUserTagsByUserID(notExistID)
-	if err != nil {
-		t.Error(err)
-	}
-	if len(empty) != 0 {
-		t.Error("no Tags should be found, but some tags are found")
+	if assert.NoError(err) {
+		assert.Len(empty, 0)
 	}
 }
 
 func TestGetTag(t *testing.T) {
 	beforeTest(t)
+	assert := assert.New(t)
 
 	tagText := "test"
 	// 正常系
 	tag := &UsersTag{
 		UserID: testUserID,
 	}
-	if err := tag.Create(tagText); err != nil {
-		t.Fatalf("Failed to create tag: %v", err)
-	}
+	require.NoError(t, tag.Create(tagText))
 
 	getTag, err := GetTag(tag.UserID, tag.TagID)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if getTag.UserID != tag.UserID {
-		t.Errorf("UserID is wrong. want: %s, actual: %s", getTag.UserID, tag.UserID)
-	}
-	if getTag.TagID != tag.TagID {
-		t.Errorf("TagID is wrong. want: %s, actual: %s", getTag.TagID, tag.TagID)
+	if assert.NoError(err) {
+		assert.Equal(tag.UserID, getTag.UserID)
+		assert.Equal(tag.TagID, getTag.TagID)
 	}
 
 	// 異常系
-	wrongTagID := CreateUUID()
-	if _, err := GetTag(testUserID, wrongTagID); err == nil {
-		t.Error("no error for bad request")
-	}
+	_, err = GetTag(testUserID, "wrong_id")
+	assert.Error(err)
 }

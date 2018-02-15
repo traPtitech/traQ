@@ -1,16 +1,24 @@
 package model
 
-import "testing"
+import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"testing"
+)
+
+func TestUsersPrivateChannel_TableName(t *testing.T) {
+	assert.Equal(t, "users_private_channels", (&UsersPrivateChannel{}).TableName())
+}
 
 func TestMakePrivateChannel(t *testing.T) {
 	beforeTest(t)
+	assert := assert.New(t)
+
 	channel := &Channel{}
 	channel.CreatorID = testUserID
 	channel.Name = "Private-Channel"
 	channel.IsPublic = false
-	if err := channel.Create(); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, channel.Create())
 
 	po := CreateUUID()
 	privilegedUser := []string{testUserID, po}
@@ -19,23 +27,16 @@ func TestMakePrivateChannel(t *testing.T) {
 		usersPrivateChannel := &UsersPrivateChannel{}
 		usersPrivateChannel.ChannelID = channel.ID
 		usersPrivateChannel.UserID = userID
-		usersPrivateChannel.Create()
+		require.NoError(t, usersPrivateChannel.Create())
 	}
 
 	channelList, err := GetChannels(testUserID)
-
-	if err != nil {
-		t.Fatal("Failed to GetChannelList ", err)
-	}
-	if len(channelList) != 1 {
-		t.Errorf("ChannelList length wrong: want 1, acutual %d\n", len(channelList))
+	if assert.NoError(err) {
+		assert.Len(channelList, 1)
 	}
 
 	channelList, err = GetChannels(CreateUUID())
-	if err != nil {
-		t.Fatal("Failed to GetChannelList ", err)
-	}
-	if len(channelList) != 0 {
-		t.Errorf("ChannelList length wrong: want 0, acutual %d\n", len(channelList))
+	if assert.NoError(err) {
+		assert.Len(channelList, 0)
 	}
 }

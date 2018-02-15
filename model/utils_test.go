@@ -8,6 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -55,67 +56,48 @@ func TestMain(m *testing.M) {
 }
 
 func beforeTest(t *testing.T) {
-	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags", "devices", "users_subscribe_channels")
-	if err := SyncSchema(); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags", "devices", "users_subscribe_channels"))
+	require.NoError(t, SyncSchema())
 }
 
-func makeChannel(tail string) error {
+func mustMakeChannel(t *testing.T, tail string) *Channel {
 	channel := &Channel{}
 	channel.CreatorID = testUserID
 	channel.Name = "Channel-" + tail
 	channel.IsPublic = true
-	return channel.Create()
+	require.NoError(t, channel.Create())
+	return channel
 }
 
-func makeChannelDetail(creatorID, name, parentID string, isPublic bool) (*Channel, error) {
+func mustMakeChannelDetail(t *testing.T, creatorID, name, parentID string, isPublic bool) *Channel {
 	channel := &Channel{}
 	channel.CreatorID = creatorID
 	channel.Name = name
 	channel.ParentID = parentID
 	channel.IsPublic = isPublic
-	err := channel.Create()
-	return channel, err
+	require.NoError(t, channel.Create())
+	return channel
 }
 
-func makeMessage() *Message {
+func mustMakeMessage(t *testing.T) *Message {
 	message := &Message{
 		UserID:    testUserID,
 		ChannelID: CreateUUID(),
 		Text:      "popopo",
 	}
-	message.Create()
+	require.NoError(t, message.Create())
 	return message
 }
 
-func makeChannelMessages(channelID string) []*Message {
-	var messages [10]*Message
-
-	for i := 0; i < 10; i++ {
-		tmp := makeMessage()
-		messages[i] = tmp
-		messages[i].ChannelID = channelID
-	}
-
-	return messages[:]
-}
-
-func makeUser(userName string) (*User, error) {
+func mustMakeUser(t *testing.T, userName string) *User {
 	user := &User{
 		Name:  userName,
 		Email: "hogehoge@gmail.com",
 		Icon:  "po",
 	}
-
-	if err := user.SetPassword(password); err != nil {
-		return nil, fmt.Errorf("Failed to setPassword: %v", err)
-	}
-	if err := user.Create(); err != nil {
-		return nil, fmt.Errorf("Failed to user Create: %v", err)
-	}
-
-	return user, nil
+	require.NoError(t, user.SetPassword(password))
+	require.NoError(t, user.Create())
+	return user
 }
 
 func checkEmptyField(user *User) error {
