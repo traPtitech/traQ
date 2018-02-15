@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/traPtitech/traQ/notification"
 	"net/http"
 	"os"
 
@@ -109,6 +110,15 @@ func main() {
 	// Tag: heartbeat
 	api.GET("/heartbeat", router.GetHeartbeat)
 	api.POST("/heartbeat", router.PostHeartbeat)
+
+	// Tag: notification
+	api.GET("/notification", router.GetNotificationStream)
+	api.POST("/notification/device", router.PostDeviceToken)
+	api.GET("/channels/:channelId/notification", router.GetNotificationStatus)
+	api.PUT("/channels/:channelId/notification", router.PutNotificationStatus)
+
+	// init notification
+	notification.Start()
 
 	port := os.Getenv("PORT")
 	if port == "" {

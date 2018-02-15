@@ -3,22 +3,19 @@ package router
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
-)
-
-var (
-	sampleText = "popopo"
 )
 
 func TestGetMessageByID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 
-	message := makeMessage()
+	message := mustMakeMessage(t)
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/messages/:messageID")
@@ -27,18 +24,17 @@ func TestGetMessageByID(t *testing.T) {
 
 	requestWithContext(t, mw(GetMessageByID), c)
 
-	if rec.Code != http.StatusOK {
-		t.Log(rec.Code)
-		t.Fatal(rec.Body.String())
+	if assert.EqualValues(t, http.StatusOK, rec.Code, rec.Body.String()) {
+		t.Log(rec.Body.String())
 	}
-	t.Log(rec.Body.String())
 }
 
 func TestGetMessagesByChannelID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
+	assert := assert.New(t)
 
 	for i := 0; i < 5; i++ {
-		makeMessage()
+		mustMakeMessage(t)
 	}
 
 	post := requestCount{
@@ -46,9 +42,7 @@ func TestGetMessagesByChannelID(t *testing.T) {
 		Count: 1,
 	}
 	body, err := json.Marshal(post)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 
 	c, rec := getContext(e, t, cookie, req)
@@ -57,34 +51,23 @@ func TestGetMessagesByChannelID(t *testing.T) {
 	c.SetParamValues(testChannelID)
 	requestWithContext(t, mw(GetMessagesByChannelID), c)
 
-	if rec.Code != http.StatusOK {
-		t.Log(rec.Code)
-		t.Fatal(rec.Body.String())
+	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
+		var responseBody []MessageForResponse
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
+			assert.Len(responseBody, 3)
+		}
 	}
-
-	var responseBody []MessageForResponse
-	err = json.Unmarshal(rec.Body.Bytes(), &responseBody)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(responseBody) != 3 {
-		t.Errorf("No found all messages: want %d, actual %d", 3, len(responseBody))
-	}
-
 }
 
 func TestPostMessage(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
+	assert := assert.New(t)
 
 	post := requestMessage{
 		Text: "test message",
 	}
-
 	body, err := json.Marshal(post)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	c, rec := getContext(e, t, cookie, req)
@@ -93,42 +76,24 @@ func TestPostMessage(t *testing.T) {
 	c.SetParamValues(testChannelID)
 	requestWithContext(t, mw(PostMessage), c)
 
-	message := &MessageForResponse{}
-
-	result, err := ioutil.ReadAll(rec.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = json.Unmarshal(result, message)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if message.Content != post.Text {
-		t.Errorf("message text is wrong: want %v, actual %v", post.Text, message.Content)
-	}
-	if len(message.StampList) != 0 {
-		t.Errorf("StampList length is wrong: want 0, actual %d", len(message.StampList))
-	}
-
-	if rec.Code != http.StatusCreated {
-		t.Log(rec.Code)
-		t.Fatal(rec.Body.String())
+	if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
+		message := &MessageForResponse{}
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), message)) {
+			assert.Equal(post.Text, message.Content)
+		}
 	}
 }
 
 func TestPutMessageByID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-
-	message := makeMessage()
+	assert := assert.New(t)
+	message := mustMakeMessage(t)
 
 	post := requestMessage{
 		Text: "test message",
 	}
 	body, err := json.Marshal(post)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 
@@ -139,25 +104,17 @@ func TestPutMessageByID(t *testing.T) {
 	requestWithContext(t, mw(PutMessageByID), c)
 
 	message, err = model.GetMessage(message.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
-	if rec.Code != http.StatusOK {
-		t.Log(rec.Code)
-		t.Fatal(rec.Body.String())
+	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
+		assert.Equal(post.Text, message.Text)
 	}
-
-	if message.Text != post.Text {
-		t.Fatalf("message text is wrong: want %v, actual %v", post.Text, message.Text)
-	}
-
 }
 
 func TestDeleteMessageByID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-
-	message := makeMessage()
+	assert := assert.New(t)
+	message := mustMakeMessage(t)
 
 	req := httptest.NewRequest("DELETE", "http://test", nil)
 
@@ -168,17 +125,9 @@ func TestDeleteMessageByID(t *testing.T) {
 	requestWithContext(t, mw(DeleteMessageByID), c)
 
 	message, err := model.GetMessage(message.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
-	if rec.Code != http.StatusNoContent {
-		t.Log(rec.Code)
-		t.Fatal(rec.Body.String())
+	if assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String()) {
+		assert.True(message.IsDeleted)
 	}
-
-	if message.IsDeleted != true {
-		t.Fatalf("message text is wrong: want %v, actual %v", true, message.IsDeleted)
-	}
-
 }

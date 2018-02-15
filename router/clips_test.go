@@ -3,43 +3,33 @@ package router
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestGetClips(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-
-	message := makeMessage()
-
-	if err := clipMessage(testUser.ID, message.ID); err != nil {
-		t.Fatalf("failed to clip message: %v", err)
-	}
+	assert := assert.New(t)
+	message := mustMakeMessage(t)
+	mustClipMessage(t, testUser.ID, message.ID)
 
 	rec := request(e, t, mw(GetClips), cookie, nil)
-
-	if rec.Code != 200 {
-		t.Fatalf("Response code wrong: want 200, actual %d", rec.Code)
-	}
-
-	var responseBody []MessageForResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
-		t.Fatalf("Response body can't unmarshal: %v", err)
-	}
-
-	if len(responseBody) != 1 {
-		t.Fatalf("Response messages length wrong: want 1, actual %d", len(responseBody))
-	}
-
-	if responseBody[0].Content != message.Text {
-		t.Fatalf("message text is wrong: want %v, actual %v", message.Text, responseBody[0].Content)
+	if assert.EqualValues(http.StatusOK, rec.Code) {
+		var responseBody []MessageForResponse
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
+			assert.Len(responseBody, 1)
+			assert.Equal(message.Text, responseBody[0].Content)
+		}
 	}
 }
 
 func TestPostClips(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-
-	message := makeMessage()
+	assert := assert.New(t)
+	message := mustMakeMessage(t)
 
 	post := struct {
 		MessageID string `json:"messageId"`
@@ -48,38 +38,24 @@ func TestPostClips(t *testing.T) {
 	}
 
 	body, err := json.Marshal(post)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	require.NoError(t, err)
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(PostClips), cookie, req)
 
-	if rec.Code != 201 {
-		t.Fatalf("Response code wrong: want 200, actual %d", rec.Code)
-	}
-
-	var responseBody []MessageForResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
-		t.Fatalf("Response body can't unmarshal: %v", err)
-	}
-
-	if len(responseBody) != 1 {
-		t.Fatalf("Response messages length wrong: want 1, actual %d", len(responseBody))
-	}
-
-	if responseBody[0].Content != message.Text {
-		t.Fatalf("message text is wrong: want %v, actual %v", message.Text, responseBody[0].Content)
+	if assert.EqualValues(http.StatusCreated, rec.Code) {
+		var responseBody []MessageForResponse
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
+			assert.Len(responseBody, 1)
+			assert.Equal(message.Text, responseBody[0].Content)
+		}
 	}
 }
 
 func TestDeleteClips(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-
-	message := makeMessage()
-	if err := clipMessage(testUser.ID, message.ID); err != nil {
-		t.Fatalf("failed to clip message: %v", err)
-	}
+	assert := assert.New(t)
+	message := mustMakeMessage(t)
+	mustClipMessage(t, testUser.ID, message.ID)
 
 	post := struct {
 		MessageID string `json:"messageId"`
@@ -88,23 +64,14 @@ func TestDeleteClips(t *testing.T) {
 	}
 
 	body, err := json.Marshal(post)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	require.NoError(t, err)
 	req := httptest.NewRequest("DELETE", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(DeleteClips), cookie, req)
 
-	if rec.Code != 200 {
-		t.Fatalf("Response code wrong: want 200, actual %d", rec.Code)
-	}
-
-	var responseBody []MessageForResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &responseBody); err != nil {
-		t.Fatalf("Response body can't unmarshal: %v", err)
-	}
-
-	if len(responseBody) != 0 {
-		t.Fatalf("Response messages length wrong: want 1, actual %d", len(responseBody))
+	if assert.EqualValues(http.StatusOK, rec.Code) {
+		var responseBody []MessageForResponse
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
+			assert.Len(responseBody, 0)
+		}
 	}
 }

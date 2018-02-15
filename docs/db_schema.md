@@ -109,10 +109,7 @@ user_idとmessage_idの複合主キー
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
 | user_id | CHAR(36) | NOT NULL | ユーザーID |
-| type | ENUM('apn', 'fcm') | NOT NULL | トークンの種類 |
-| token | TEXT | NOT NULL | デバイストークン |
-
-user_id, type, tokenの複合主キー
+| token | VARCHAR(255) | NOT NULL PRIMARY KEY | デバイストークン |
 
 ## stamps
 
@@ -146,7 +143,7 @@ user_id, type, tokenの複合主キー
 
 user_idとchannel_idの複合主キー
 
-## users_notified_channels
+## users_subscribe_channels
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |

@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -17,7 +19,7 @@ func TestGetChannels(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 
 	for i := 0; i < 5; i++ {
-		makeChannel(testUser.ID, "Channel-"+strconv.Itoa(i), true)
+		mustMakeChannel(t, testUser.ID, "Channel-"+strconv.Itoa(i), true)
 	}
 
 	rec := request(e, t, mw(GetChannels), cookie, nil)
@@ -28,14 +30,13 @@ func TestGetChannels(t *testing.T) {
 	}
 
 	var responseBody []ChannelForResponse
-	err := json.Unmarshal(rec.Body.Bytes(), &responseBody)
-	if err != nil {
-		t.Fatal("Failed to json parse ", err)
-	}
+	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &responseBody))
 }
 
 func TestPostChannels(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
+	require := require.New(t)
+	assert := assert.New(t)
 
 	postBody := PostChannel{
 		ChannelType: "public",
@@ -44,25 +45,15 @@ func TestPostChannels(t *testing.T) {
 	}
 
 	body, err := json.Marshal(postBody)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(err)
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(PostChannels), cookie, req)
 
 	channelList, err := model.GetChannels(testUser.ID)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if rec.Code != http.StatusCreated {
-		t.Log(rec.Code)
-		t.Fatal(rec.Body.String())
-	}
-
-	if len(channelList) != 1 {
-		t.Fatalf("Channel List wrong: want %d, actual %d\n", 1, len(channelList))
+	if assert.NoError(err) {
+		if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
+			assert.Len(channelList, 1)
+		}
 	}
 
 	postBody = PostChannel{
@@ -72,29 +63,16 @@ func TestPostChannels(t *testing.T) {
 	}
 
 	body, err = json.Marshal(postBody)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(err)
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	rec = request(e, t, mw(PostChannels), cookie, req)
 
 	channelList, err = model.GetChannels(testUser.ID)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if rec.Code != http.StatusCreated {
-		t.Log(rec.Code)
-		t.Fatal(rec.Body.String())
-	}
-
-	if len(channelList) != 2 {
-		t.Fatalf("Channel List wrong: want %d, actual %d", 2, len(channelList))
-	}
-
-	if channelList[0].ID != channelList[1].ParentID && channelList[1].ID != channelList[0].ParentID {
-		t.Fatalf("Channel ParentID is wrong: want %s, actual %s", channelList[0].ID, channelList[1].ParentID)
+	if assert.NoError(err) {
+		if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
+			assert.Len(channelList, 2)
+			assert.False(channelList[0].ID != channelList[1].ParentID && channelList[1].ID != channelList[0].ParentID)
+		}
 	}
 
 	postBody = PostChannel{
@@ -107,35 +85,27 @@ func TestPostChannels(t *testing.T) {
 		},
 	}
 	body, err = json.Marshal(postBody)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(err)
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	request(e, t, mw(PostChannels), cookie, req)
+
 	channelList, err = model.GetChannels(testUser.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(channelList) != 3 {
-		t.Fatalf("Channel List wrong: want %d, actual %d\n", 3, len(channelList))
+	if assert.NoError(err) {
+		assert.Len(channelList, 3)
 	}
 
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	request(e, t, mw(PostChannels), cookie, req)
 	channelList, err = model.GetChannels(model.CreateUUID())
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(channelList) != 2 {
-		t.Fatalf("Channel List wrong: want %d, actual %d\n", 2, len(channelList))
+	if assert.NoError(err) {
+		assert.Len(channelList, 2)
 	}
 }
 
 func TestGetChannelsByChannelID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 
-	channel, _ := makeChannel(testUser.ID, "test", true)
+	channel := mustMakeChannel(t, testUser.ID, "test", true)
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/:channelID")
@@ -143,19 +113,15 @@ func TestGetChannelsByChannelID(t *testing.T) {
 	c.SetParamValues(channel.ID)
 
 	requestWithContext(t, mw(GetChannelsByChannelID), c)
-
-	if rec.Code != http.StatusOK {
-		t.Log(rec.Code)
-		t.Fatal(rec.Body.String())
+	if assert.EqualValues(t, http.StatusOK, rec.Code, rec.Body.String()) {
+		t.Log(rec.Body.String())
 	}
-
-	t.Log(rec.Body.String())
 }
 
 func TestPutChannelsByChannelID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-
-	channel, _ := makeChannel(model.CreateUUID(), "test", true)
+	assert := assert.New(t)
+	channel := mustMakeChannel(t, model.CreateUUID(), "test", true)
 
 	req := httptest.NewRequest("PUT", "http://test", strings.NewReader(`{"name": "renamed"}`))
 	c, rec := getContext(e, t, cookie, req)
@@ -164,30 +130,19 @@ func TestPutChannelsByChannelID(t *testing.T) {
 	c.SetParamValues(channel.ID)
 	requestWithContext(t, mw(PutChannelsByChannelID), c)
 
-	if rec.Code != http.StatusOK {
-		t.Log(rec.Code)
-		t.Fatal(rec.Body.String())
-	}
+	require.EqualValues(t, http.StatusOK, rec.Code, rec.Body.String())
 
 	channel, err := model.GetChannelByID(testUser.ID, channel.ID)
-	if err != nil {
-		t.Fatal(err)
+	if assert.NoError(err) {
+		assert.Equal("renamed", channel.Name)
+		assert.Equal(testUser.ID, channel.UpdaterID)
 	}
-
-	if channel.Name != "renamed" {
-		t.Fatalf("Channel name wrong: want %s, actual %s", "renamed", channel.Name)
-	}
-
-	if channel.UpdaterID != testUser.ID {
-		t.Fatalf("Channel UpdaterId wrong: want %s, actual %s", testUser.ID, channel.UpdaterID)
-	}
-
 }
 
 func TestDeleteChannelsByChannelID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 
-	channel, _ := makeChannel(model.CreateUUID(), "test", true)
+	channel := mustMakeChannel(t, model.CreateUUID(), "test", true)
 
 	req := httptest.NewRequest("DELETE", "http://test", strings.NewReader(`{"confirm": true}`))
 	c, _ := getContext(e, t, cookie, req)
@@ -197,15 +152,12 @@ func TestDeleteChannelsByChannelID(t *testing.T) {
 	requestWithContext(t, mw(DeleteChannelsByChannelID), c)
 
 	channel, err := model.GetChannelByID(testUser.ID, channel.ID)
-
-	if err == nil {
-		t.Fatal("The channel that was supposed to be deleted is displayed to the user")
-	}
+	require.Error(t, err)
 
 	// ""で削除されていても取得できるようにするそれでちゃんと削除されているか確認する
 
 	channelList, err := model.GetChannels(testUser.ID)
-	if len(channelList) != 0 {
-		t.Fatal("Channel not deleted")
+	if assert.NoError(t, err) {
+		assert.Len(t, channelList, 0)
 	}
 }

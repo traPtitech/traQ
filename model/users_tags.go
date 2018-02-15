@@ -2,6 +2,8 @@ package model
 
 import (
 	"fmt"
+	"github.com/go-xorm/builder"
+	"github.com/satori/go.uuid"
 )
 
 // UsersTag userTagの構造体
@@ -81,4 +83,20 @@ func GetTag(userID, tagID string) (*UsersTag, error) {
 		return nil, fmt.Errorf("this tag doesn't exist. tagID = %s", tagID)
 	}
 	return &tag, nil
+}
+
+// 指定したタグを持った全ユーザーのUUIDを返します
+func GetUserIdsByTags(tags []string) ([]uuid.UUID, error) {
+	var arr []string
+
+	if err := db.Table(&UsersTag{}).Join("INNER", &Tag{}, "users_tags.tag_id = tags.id").Where(builder.In("tags.name", tags)).Cols("user_id").Find(&arr); err != nil {
+		return nil, fmt.Errorf("failed to get user ids by tag: %v", err)
+	}
+
+	result := make([]uuid.UUID, len(arr))
+	for i, v := range arr {
+		result[i] = uuid.FromStringOrNil(v)
+	}
+
+	return result, nil
 }

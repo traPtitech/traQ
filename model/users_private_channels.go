@@ -2,7 +2,7 @@ package model
 
 import "fmt"
 
-// UsersPrivateChannel : UsersPrabateChannelsの構造体
+// UsersPrivateChannel : UsersPrivateChannelsの構造体
 type UsersPrivateChannel struct {
 	UserID    string `xorm:"char(36) pk"`
 	ChannelID string `xorm:"char(36) pk"`

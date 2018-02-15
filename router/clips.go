@@ -2,6 +2,8 @@ package router
 
 import (
 	"fmt"
+	"github.com/traPtitech/traQ/notification"
+	"github.com/traPtitech/traQ/notification/events"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -12,7 +14,7 @@ import (
 func GetClips(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 
-	clipedMessages, err := model.GetClipedMessages(user.ID)
+	clipedMessages, err := model.GetClippedMessages(user.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get cliped messages")
 	}
@@ -51,7 +53,7 @@ func PostClips(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to create clip: %s", err.Error()))
 	}
 
-	clipedMessages, err := model.GetClipedMessages(user.ID)
+	clipedMessages, err := model.GetClippedMessages(user.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get cliped messages")
 	}
@@ -61,6 +63,7 @@ func PostClips(c echo.Context) error {
 		responseBody = append(responseBody, formatMessage(message))
 	}
 
+	go notification.Send(events.MessageClipped, events.UserMessageEvent{UserID: user.ID, MessageID: requestBody.MessageID})
 	return c.JSON(http.StatusCreated, responseBody)
 }
 
@@ -85,7 +88,7 @@ func DeleteClips(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to delete clip: %s", err.Error()))
 	}
 
-	clipedMessages, err := model.GetClipedMessages(user.ID)
+	clipedMessages, err := model.GetClippedMessages(user.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get cliped messages")
 	}
@@ -95,5 +98,6 @@ func DeleteClips(c echo.Context) error {
 		responseBody = append(responseBody, formatMessage(message))
 	}
 
+	go notification.Send(events.MessageUnclipped, events.UserMessageEvent{UserID: user.ID, MessageID: requestBody.MessageID})
 	return c.JSON(http.StatusOK, responseBody)
 }

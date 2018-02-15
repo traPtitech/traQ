@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/srinathgs/mysqlstore"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -52,7 +53,7 @@ func TestMain(m *testing.M) {
 	defer engine.Close()
 
 	engine.ShowSQL(false)
-	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars", "tags", "users_tags")
+	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars", "tags", "users_tags", "devices", "users_subscribe_channels")
 	engine.SetMapper(core.GonicMapper{})
 	model.SetXORMEngine(engine)
 
@@ -65,33 +66,27 @@ func TestMain(m *testing.M) {
 }
 
 func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
-	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars", "tags", "users_tags")
-	if err := model.SyncSchema(); err != nil {
-		t.Fatalf("Failed to sync schema: %v", err)
-	}
+	require := require.New(t)
+
+	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars", "tags", "users_tags", "devices", "users_subscribe_channels")
+	require.NoError(model.SyncSchema())
 	e := echo.New()
 
 	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(err)
 
-	if err := testUser.SetPassword("test"); err != nil {
-		t.Fatalf("an error occurred while setting password: %v", err)
-	}
-	if err := testUser.Create(); err != nil {
-		t.Fatalf("an error occurred while creating user: %v", err)
-	}
+	require.NoError(testUser.SetPassword("test"))
+	require.NoError(testUser.Create())
 	testChannelID = model.CreateUUID()
 
 	req := httptest.NewRequest(echo.GET, "/", nil)
 	rec := httptest.NewRecorder()
 	sess, err := store.New(req, "sessions")
+	require.NoError(err)
 
 	sess.Values["userID"] = testUser.ID
-	if err := sess.Save(req, rec); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(sess.Save(req, rec))
+
 	cookie := parseCookies(rec.Header().Get("Set-Cookie"))["sessions"]
 	mw := func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -103,21 +98,18 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
 }
 
 func beforeLoginTest(t *testing.T) (*echo.Echo, echo.MiddlewareFunc) {
+	require := require.New(t)
+
 	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars")
-	if err := model.SyncSchema(); err != nil {
-		t.Fatalf("Failed to sync schema: %v", err)
-	}
+	require.NoError(model.SyncSchema())
 	e := echo.New()
 
 	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(err)
 
 	req := httptest.NewRequest(echo.GET, "/", nil)
-	if _, err := store.New(req, "sessions"); err != nil {
-		t.Fatal(err)
-	}
+	_, err = store.New(req, "sessions")
+	require.NoError(err)
 
 	mw := session.Middleware(store)
 	return e, mw
@@ -173,63 +165,58 @@ func getContext(e *echo.Echo, t *testing.T, cookie *http.Cookie, req *http.Reque
 	return c, rec
 }
 
-func makeChannel(userID, name string, isPublic bool) (*model.Channel, error) {
-	channel := new(model.Channel)
-	channel.CreatorID = userID
-	channel.Name = name
-	channel.IsPublic = isPublic
-	err := channel.Create()
-	return channel, err
+func mustMakeChannel(t *testing.T, userID, name string, isPublic bool) *model.Channel {
+	channel := &model.Channel{
+		CreatorID: userID,
+		Name:      name,
+		IsPublic:  isPublic,
+	}
+	require.NoError(t, channel.Create())
+	return channel
 }
 
-func makeMessage() *model.Message {
+func mustMakeMessage(t *testing.T) *model.Message {
 	message := &model.Message{
 		UserID:    testUser.ID,
 		ChannelID: testChannelID,
 		Text:      "popopo",
 	}
-	message.Create()
+	require.NoError(t, message.Create())
 	return message
 }
 
-func makeTag(userID, tagText string) (*model.UsersTag, error) {
+func mustMakeTag(t *testing.T, userID, tagText string) *model.UsersTag {
 	tag := &model.UsersTag{
 		UserID: userID,
 	}
-	err := tag.Create(tagText)
-	return tag, err
+	require.NoError(t, tag.Create(tagText))
+	return tag
 }
 
-func clipMessage(userID, messageID string) error {
+func mustClipMessage(t *testing.T, userID, messageID string) *model.Clip {
 	clip := &model.Clip{
 		UserID:    userID,
 		MessageID: messageID,
 	}
-
-	return clip.Create()
+	require.NoError(t, clip.Create())
+	return clip
 }
 
-func starChannel(userID, channelID string) error {
+func mustStarChannel(t *testing.T, userID, channelID string) *model.Star {
 	star := &model.Star{
 		UserID:    userID,
 		ChannelID: channelID,
 	}
-
-	return star.Create()
+	require.NoError(t, star.Create())
+	return star
 }
 
-func createUser(t *testing.T) {
+func mustCreateUser(t *testing.T) {
 	user := &model.User{
 		Name:  "PostLogin",
 		Email: "example@trap.jp",
 		Icon:  "empty",
 	}
-	err := user.SetPassword("test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = user.Create()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, user.SetPassword("test"))
+	require.NoError(t, user.Create())
 }

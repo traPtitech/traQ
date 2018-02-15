@@ -1,6 +1,8 @@
 package router
 
 import (
+	"github.com/traPtitech/traQ/notification"
+	"github.com/traPtitech/traQ/notification/events"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -90,6 +92,8 @@ func PostMessage(c echo.Context) error {
 		c.Echo().Logger.Errorf("Message.Create() returned an error: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert your message")
 	}
+
+	go notification.Send(events.MessageCreated, events.MessageEvent{Message: *message})
 	return c.JSON(http.StatusCreated, formatMessage(message))
 }
 
@@ -117,6 +121,7 @@ func PutMessageByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update the message")
 	}
 
+	go notification.Send(events.MessageUpdated, events.MessageEvent{Message: *message})
 	return c.JSON(http.StatusOK, message)
 }
 
@@ -135,6 +140,8 @@ func DeleteMessageByID(c echo.Context) error {
 		c.Echo().Logger.Errorf("message.Update() returned an error: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update the message")
 	}
+
+	go notification.Send(events.MessageDeleted, events.MessageEvent{Message: *message})
 	return c.NoContent(http.StatusNoContent)
 }
 
