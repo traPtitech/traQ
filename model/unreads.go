@@ -9,7 +9,7 @@ type Unread struct {
 	MessageID string `xorm:"char(36) not null pk"`
 }
 
-func (unread *Unread) TabelName() string {
+func (unread *Unread) TableName() string {
 	return "unreads"
 }
 
