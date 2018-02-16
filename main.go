@@ -91,7 +91,7 @@ func main() {
 
 	api.GET("/channels/:channelID/messages", router.GetMessagesByChannelID)
 	api.POST("/channels/:channelID/messages", router.PostMessage)
-
+  
 	// Tag: users
 	api.GET("/users", router.GetUsers)
 	api.GET("/users/me", router.GetMe)
@@ -103,15 +103,15 @@ func main() {
 	api.DELETE("/users/me/clips", router.DeleteClips)
 
 	// Tag: star
-	api.GET("/users/me/stars", router.GetStars, router.GetUserInfo)
-	api.POST("/users/me/stars", router.PostStars, router.GetUserInfo)
-	api.DELETE("/users/me/stars", router.DeleteStars, router.GetUserInfo)
+	api.GET("/users/me/stars", router.GetStars)
+	api.POST("/users/me/stars", router.PostStars)
+	api.DELETE("/users/me/stars", router.DeleteStars)
 
 	// Tag: userTag
-	api.GET("/users/:userID/tags", router.GetUserTags, router.GetUserInfo)
-	api.POST("/users/:userID/tags", router.PostUserTag, router.GetUserInfo)
-	api.PUT("/users/:userID/tags/:tagID", router.PutUserTag, router.GetUserInfo)
-	api.DELETE("/users/:userID/tags/:tagID", router.DeleteUserTag, router.GetUserInfo)
+	api.GET("/users/:userID/tags", router.GetUserTags)
+	api.POST("/users/:userID/tags", router.PostUserTag)
+	api.PUT("/users/:userID/tags/:tagID", router.PutUserTag)
+	api.DELETE("/users/:userID/tags/:tagID", router.DeleteUserTag)
 
 	// Tag: heartbeat
 	api.GET("/heartbeat", router.GetHeartbeat)

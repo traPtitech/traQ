@@ -123,7 +123,7 @@ func PostChannels(c echo.Context) error {
 // GetChannelsByChannelID GET /channels/{channelID} のハンドラ
 func GetChannelsByChannelID(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("channelId")
+	channelID := c.Param("channelID")
 
 	channel := &model.Channel{ID: channelID}
 	ok, err := channel.Exists(userID)
