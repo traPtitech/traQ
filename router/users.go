@@ -11,6 +11,19 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
+// UserForResponse クライアントに返す形のユーザー構造体
+type UserForResponse struct {
+	UserID string `json:"userId"`
+	Name   string `json:"name"`
+}
+
+// UserDetailForResponse クライアントに返す形の詳細ユーザー構造体
+type UserDetailForResponse struct {
+	UserID  string            `json:"userId"`
+	Name    string            `json:"name"`
+	TagList []*TagForResponse `json:"tagList"`
+}
+
 type loginRequestBody struct {
 	Name string `json:"name" form:"name"`
 	Pass string `json:"pass" form:"pass"`
@@ -58,4 +71,69 @@ func PostLogout(c echo.Context) error {
 	sess.Values["userID"] = nil
 	sess.Save(c.Request(), c.Response())
 	return c.NoContent(http.StatusOK)
+}
+
+// GetUsers GET /users のハンドラ
+func GetUsers(c echo.Context) error {
+	users, err := model.GetUsers()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Can't get Users")
+	}
+
+	res := make([]*UserForResponse, 0)
+	for _, user := range users {
+		res = append(res, formatUser(user))
+	}
+	return c.JSON(http.StatusOK, res)
+}
+
+// GetMe GET /users/me のハンドラ
+func GetMe(c echo.Context) error {
+	userID := c.Get("user").(*model.User).ID
+
+	me, err := model.GetUser(userID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Can't get you")
+	}
+	return c.JSON(http.StatusOK, formatUser(me))
+}
+
+// GetUserByID /GET /users/{userID} のハンドラ
+func GetUserByID(c echo.Context) error {
+	userID := c.Param("userID")
+	user, err := model.GetUser(userID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	tagList, err := model.GetUserTagsByUserID(userID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	userDetail, err := formatUserDetail(user, tagList)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, userDetail)
+}
+
+func formatUser(user *model.User) *UserForResponse {
+	return &UserForResponse{
+		UserID: user.ID,
+		Name:   user.Name,
+	}
+}
+
+func formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailForResponse, error) {
+	userDetail := &UserDetailForResponse{
+		UserID: user.ID,
+		Name:   user.Name,
+	}
+	for _, tag := range tagList {
+		formatedTag, err := formatTag(tag)
+		if err != nil {
+			return nil, err
+		}
+		userDetail.TagList = append(userDetail.TagList, formatedTag)
+	}
+	return userDetail, nil
 }

@@ -75,6 +75,16 @@ func GetUser(userID string) (*User, error) {
 	return user, nil
 }
 
+// GetUsers ユーザーの一覧の取得
+func GetUsers() ([]*User, error) {
+	var users []*User
+	// TODO ユーザーの状態によってフィルタ
+	if err := db.Find(&users); err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 // SetPassword パスワードの設定を行う Createより前に実行する
 func (user *User) SetPassword(pass string) error {
 	salt, err := generateSalt()

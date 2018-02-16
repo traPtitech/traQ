@@ -6,10 +6,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"net/http"
+
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/http"
 )
 
 func TestPostLogin(t *testing.T) {
@@ -43,5 +44,51 @@ func TestPostLogin(t *testing.T) {
 
 	if assert.Error(t, err2) {
 		assert.EqualValues(t, http.StatusForbidden, err2.Code)
+	}
+}
+
+func TestGetUsers(t *testing.T) {
+	e, cookie, mw := beforeTest(t)
+	assert := assert.New(t)
+
+	rec := request(e, t, mw(GetUsers), cookie, nil)
+	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
+		var responseBody []UserForResponse
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
+			// testUser traq
+			assert.Len(responseBody, 2)
+		}
+	}
+}
+
+func TestGetMe(t *testing.T) {
+	e, cookie, mw := beforeTest(t)
+	assert := assert.New(t)
+
+	rec := request(e, t, mw(GetMe), cookie, nil)
+	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
+		var me UserForResponse
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &me)) {
+			assert.Equal(testUser.ID, me.UserID)
+		}
+	}
+}
+
+func TestGetUserByID(t *testing.T) {
+	e, cookie, mw := beforeTest(t)
+	assert := assert.New(t)
+
+	c, rec := getContext(e, t, cookie, nil)
+	c.SetPath("/users/:userID")
+	c.SetParamNames("userID")
+	c.SetParamValues(testUser.ID)
+
+	requestWithContext(t, mw(GetUserByID), c)
+
+	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
+		var user UserDetailForResponse
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &user)) {
+			assert.Equal(testUser.ID, user.UserID)
+		}
 	}
 }
