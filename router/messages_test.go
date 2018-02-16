@@ -14,6 +14,7 @@ import (
 
 func TestGetMessageByID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
+	assert := assert.New(t)
 
 	message := mustMakeMessage(t)
 
@@ -24,7 +25,7 @@ func TestGetMessageByID(t *testing.T) {
 
 	requestWithContext(t, mw(GetMessageByID), c)
 
-	if assert.EqualValues(t, http.StatusOK, rec.Code, rec.Body.String()) {
+	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
 		t.Log(rec.Body.String())
 	}
 }
@@ -46,8 +47,8 @@ func TestGetMessagesByChannelID(t *testing.T) {
 	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 
 	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/channels/:channelId/messages")
-	c.SetParamNames("channelId")
+	c.SetPath("/channels/:channelID/messages")
+	c.SetParamNames("channelID")
 	c.SetParamValues(testChannelID)
 	requestWithContext(t, mw(GetMessagesByChannelID), c)
 
