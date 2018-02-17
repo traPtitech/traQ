@@ -14,6 +14,7 @@ import (
 
 func TestGetMessageByID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
+	assert := assert.New(t)
 
 	message := mustMakeMessage(t)
 
@@ -24,7 +25,7 @@ func TestGetMessageByID(t *testing.T) {
 
 	requestWithContext(t, mw(GetMessageByID), c)
 
-	if assert.EqualValues(t, http.StatusOK, rec.Code, rec.Body.String()) {
+	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
 		t.Log(rec.Body.String())
 	}
 }

@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -54,6 +55,20 @@ func TestGetUser(t *testing.T) {
 	// 異常系
 	_, err = GetUser("wrong_id")
 	assert.Error(err)
+}
+
+func TestGetUsers(t *testing.T) {
+	beforeTest(t)
+	assert := assert.New(t)
+
+	for i := 0; i < 5; i++ {
+		mustMakeUser(t, "testGetUsers-"+string(i))
+	}
+	users, err := GetUsers()
+	assert.NoError(err)
+
+	// traqユーザーがいるので
+	assert.Equal(6, len(users))
 }
 
 func TestAuthorization(t *testing.T) {

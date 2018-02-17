@@ -2,17 +2,18 @@ package router
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/labstack/echo"
 	"github.com/labstack/gommon/log"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/notification"
-	"net/http"
 )
 
-// GET /channels/:channelId/notifications のハンドラ
+// GET /channels/:channelID/notifications のハンドラ
 func GetNotificationStatus(c echo.Context) error {
-	channelID := c.Param("channelId") //TODO チャンネルIDの検証
+	channelID := c.Param("channelID") //TODO チャンネルIDの検証
 
 	users, err := model.GetSubscribingUser(uuid.FromStringOrNil(channelID))
 	if err != nil {
@@ -27,9 +28,9 @@ func GetNotificationStatus(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
-// PUT /channels/:channelId/notifications のハンドラ
+// PUT /channels/:channelID/notifications のハンドラ
 func PutNotificationStatus(c echo.Context) error {
-	channelID := c.Param("channelId") //TODO チャンネルIDの検証
+	channelID := c.Param("channelID") //TODO チャンネルIDの検証
 
 	var req struct {
 		On  []string `json:"on"`

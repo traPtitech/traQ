@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/traPtitech/traQ/notification"
 	"net/http"
 	"os"
+
+	"github.com/traPtitech/traQ/notification"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -91,6 +92,11 @@ func main() {
 	api.GET("/channels/:channelID/messages", router.GetMessagesByChannelID)
 	api.POST("/channels/:channelID/messages", router.PostMessage)
 
+	// Tag: users
+	api.GET("/users", router.GetUsers)
+	api.GET("/users/me", router.GetMe)
+	api.GET("/users/:userID", router.GetUserByID)
+
 	// Tag: clips
 	api.GET("/users/me/clips", router.GetClips)
 	api.POST("/users/me/clips", router.PostClips)
@@ -114,8 +120,8 @@ func main() {
 	// Tag: notification
 	api.GET("/notification", router.GetNotificationStream)
 	api.POST("/notification/device", router.PostDeviceToken)
-	api.GET("/channels/:channelId/notification", router.GetNotificationStatus)
-	api.PUT("/channels/:channelId/notification", router.PutNotificationStatus)
+	api.GET("/channels/:channelID/notification", router.GetNotificationStatus)
+	api.PUT("/channels/:channelID/notification", router.PutNotificationStatus)
 
 	// init notification
 	notification.Start()

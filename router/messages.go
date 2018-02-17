@@ -1,9 +1,10 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
-	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
