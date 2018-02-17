@@ -11,7 +11,11 @@ import (
 	"github.com/traPtitech/traQ/notification"
 )
 
+<<<<<<< HEAD
 // GET /channels/:channelID/notifications のハンドラ
+====== =
+// GetNotificationStatus GET /channels/:channelId/notifications のハンドラ
+>>>>>>> fix: lint error
 func GetNotificationStatus(c echo.Context) error {
 	channelID := c.Param("channelID") //TODO チャンネルIDの検証
 
@@ -28,7 +32,11 @@ func GetNotificationStatus(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
+<<<<<<< HEAD
 // PUT /channels/:channelID/notifications のハンドラ
+====== =
+// PutNotificationStatus PUT /channels/:channelId/notifications のハンドラ
+>>>>>>> fix: lint error
 func PutNotificationStatus(c echo.Context) error {
 	channelID := c.Param("channelID") //TODO チャンネルIDの検証
 
@@ -68,9 +76,9 @@ func PutNotificationStatus(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
-// POST /notification/device のハンドラ
+// PostDeviceToken POST /notification/device のハンドラ
 func PostDeviceToken(c echo.Context) error {
-	userId := c.Get("user").(*model.User).ID
+	userID := c.Get("user").(*model.User).ID
 
 	var req struct {
 		Token string `json:"token"`
@@ -80,7 +88,7 @@ func PostDeviceToken(c echo.Context) error {
 	}
 
 	dev := &model.Device{
-		UserID: userId,
+		UserID: userID,
 		Token:  req.Token,
 	}
 	if err := dev.Register(); err != nil {
@@ -91,7 +99,7 @@ func PostDeviceToken(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
-// GET /notification のハンドラ
+// GetNotificationStream GET /notification のハンドラ
 func GetNotificationStream(c echo.Context) error {
 	userID := uuid.FromStringOrNil(c.Get("user").(*model.User).ID)
 

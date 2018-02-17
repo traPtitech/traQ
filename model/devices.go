@@ -2,21 +2,22 @@ package model
 
 import (
 	"fmt"
+
 	"github.com/satori/go.uuid"
 )
 
-// 通知デバイスの構造体
+//Device 通知デバイスの構造体
 type Device struct {
 	Token  string `xorm:"varchar(190) pk not null"`
 	UserID string `xorm:"char(36) not null index"`
 }
 
-// Device構造体のテーブル名
+//TableName Device構造体のテーブル名
 func (*Device) TableName() string {
 	return "devices"
 }
 
-// デバイスを登録
+//Register デバイスを登録
 func (device *Device) Register() error {
 	if device.UserID == "" {
 		return fmt.Errorf("UserID is empty")
@@ -33,7 +34,7 @@ func (device *Device) Register() error {
 	return nil
 }
 
-// デバイスの登録を解除
+// Unregister デバイスの登録を解除
 func (device *Device) Unregister() error {
 	if device.UserID == "" && device.Token == "" {
 		return fmt.Errorf("both UserID and Token are empty")
@@ -45,7 +46,7 @@ func (device *Device) Unregister() error {
 	return nil
 }
 
-// 指定ユーザーのデバイスを取得
+// GetDevices 指定ユーザーのデバイスを取得
 func GetDevices(user uuid.UUID) ([]*Device, error) {
 	var result []*Device
 	if err := db.Find(&result, &Device{UserID: user.String()}); err != nil {
@@ -54,7 +55,7 @@ func GetDevices(user uuid.UUID) ([]*Device, error) {
 	return result, nil
 }
 
-// 全ユーザーの全デバイスを取得
+// GetAllDevices 全ユーザーの全デバイスを取得
 func GetAllDevices() ([]*Device, error) {
 	var result []*Device
 	if err := db.Find(&result); err != nil {
@@ -63,7 +64,7 @@ func GetAllDevices() ([]*Device, error) {
 	return result, nil
 }
 
-// 全ユーザーの全デバイスIDを取得
+// GetAllDeviceIDs 全ユーザーの全デバイスIDを取得
 func GetAllDeviceIDs() ([]string, error) {
 	var result []string
 	if err := db.Table(&Device{}).Cols("token").Find(&result); err != nil {
@@ -72,7 +73,7 @@ func GetAllDeviceIDs() ([]string, error) {
 	return result, nil
 }
 
-// 指定ユーザーの全デバイスIDを取得
+// GetDeviceIDs 指定ユーザーの全デバイスIDを取得
 func GetDeviceIDs(user uuid.UUID) ([]string, error) {
 	var result []string
 	if err := db.Table(&Device{}).Cols("token").Find(&result, &Device{UserID: user.String()}); err != nil {
