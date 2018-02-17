@@ -91,7 +91,7 @@ func main() {
 
 	api.GET("/channels/:channelID/messages", router.GetMessagesByChannelID)
 	api.POST("/channels/:channelID/messages", router.PostMessage)
-  
+
 	// Tag: users
 	api.GET("/users", router.GetUsers)
 	api.GET("/users/me", router.GetMe)
