@@ -27,6 +27,7 @@ func SyncSchema() error {
 		&Clip{},
 		&UsersTag{},
 		&Tag{},
+		&Unread{},
 		&Star{},
 		&Device{},
 		&UserSubscribeChannel{},
