@@ -1,10 +1,11 @@
 package model
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUsersTag_TableName(t *testing.T) {
@@ -59,7 +60,7 @@ func TestGetUserTagsByUserID(t *testing.T) {
 	gotTags, err := GetUserTagsByUserID(testUserID)
 	if assert.NoError(err) {
 		for i, v := range gotTags {
-			assert.Equal(tags[i].TagID, v.TagID)
+			assert.Equal(tags[9-i].TagID, v.TagID)
 		}
 	}
 

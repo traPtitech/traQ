@@ -35,7 +35,7 @@ func TestGetMessagesByChannelID(t *testing.T) {
 	assert := assert.New(t)
 
 	for i := 0; i < 5; i++ {
-		mustMakeMessage(t)
+		append(messages, mustMakeMessage(t))
 	}
 
 	post := requestCount{

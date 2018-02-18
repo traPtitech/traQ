@@ -3,22 +3,23 @@ package model
 import (
 	"fmt"
 	"regexp"
+	"time"
 )
 
 // Channel :チャンネルの構造体
 type Channel struct {
-	ID        string `xorm:"char(36) pk"`
-	Name      string `xorm:"varchar(20) not null"`
-	ParentID  string `xorm:"parent_id char(36) not null"`
-	Topic     string `xorm:"text"`
-	IsForced  bool   `xorm:"bool not null"`
-	IsDeleted bool   `xorm:"bool not null"`
-	IsPublic  bool   `xorm:"bool not null"`
-	IsVisible bool   `xorm:"bool not null"`
-	CreatorID string `xorm:"char(36) not null"`
-	CreatedAt string `xorm:"created not null"`
-	UpdaterID string `xorm:"char(36) not null"`
-	UpdatedAt string `xorm:"updated not null"`
+	ID        string    `xorm:"char(36) pk"`
+	Name      string    `xorm:"varchar(20) not null"`
+	ParentID  string    `xorm:"parent_id char(36) not null"`
+	Topic     string    `xorm:"text"`
+	IsForced  bool      `xorm:"bool not null"`
+	IsDeleted bool      `xorm:"bool not null"`
+	IsPublic  bool      `xorm:"bool not null"`
+	IsVisible bool      `xorm:"bool not null"`
+	CreatorID string    `xorm:"char(36) not null"`
+	CreatedAt time.Time `xorm:"created not null"`
+	UpdaterID string    `xorm:"char(36) not null"`
+	UpdatedAt time.Time `xorm:"updated not null"`
 }
 
 // TableName : テーブル名を指定するメソッド

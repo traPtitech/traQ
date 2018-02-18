@@ -2,19 +2,20 @@ package model
 
 import (
 	"fmt"
+	"time"
 )
 
 //Message :データベースに格納するmessageの構造体
 type Message struct {
-	ID        string `xorm:"char(36) pk"`
-	UserID    string `xorm:"char(36) not null"`
-	ChannelID string `xorm:"char(36)"`
-	Text      string `xorm:"text not null"`
-	IsShared  bool   `xorm:"bool not null"`
-	IsDeleted bool   `xorm:"bool not null"`
-	CreatedAt string `xorm:"created not null"`
-	UpdaterID string `xorm:"char(36) not null"`
-	UpdatedAt string `xorm:"updated not null"`
+	ID        string    `xorm:"char(36) pk"`
+	UserID    string    `xorm:"char(36) not null"`
+	ChannelID string    `xorm:"char(36)"`
+	Text      string    `xorm:"text not null"`
+	IsShared  bool      `xorm:"bool not null"`
+	IsDeleted bool      `xorm:"bool not null"`
+	CreatedAt time.Time `xorm:"created not null"`
+	UpdaterID string    `xorm:"char(36) not null"`
+	UpdatedAt time.Time `xorm:"updated not null"`
 }
 
 //TableName :DBの名前を指定するメソッド
