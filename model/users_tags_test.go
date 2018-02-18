@@ -3,6 +3,7 @@ package model
 import (
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -54,13 +55,14 @@ func TestGetUserTagsByUserID(t *testing.T) {
 		tags[i] = &UsersTag{
 			UserID: testUserID,
 		}
+		time.Sleep(1500 * time.Millisecond)
 		require.NoError(t, tags[i].Create(strconv.Itoa(i)))
 	}
 
 	gotTags, err := GetUserTagsByUserID(testUserID)
 	if assert.NoError(err) {
 		for i, v := range gotTags {
-			assert.Equal(tags[9-i].TagID, v.TagID)
+			assert.Equal(tags[i].TagID, v.TagID)
 		}
 	}
 
