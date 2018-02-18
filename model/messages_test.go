@@ -1,9 +1,11 @@
 package model
 
 import (
+	"testing"
+	"time"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestMessage_TableName(t *testing.T) {
@@ -49,6 +51,7 @@ func TestGetMessagesFromChannel(t *testing.T) {
 			Text:      "popopo",
 		}
 		require.NoError(t, messages[i].Create())
+		time.Sleep(1500 * time.Millisecond)
 	}
 
 	res, err := GetMessagesFromChannel(channelID, 0, 0)

@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
@@ -16,7 +17,7 @@ type MessageForResponse struct {
 	UserID          string       `json:"userId"`
 	ParentChannelID string       `json:"parentChannelId"`
 	Content         string       `json:"content"`
-	Datetime        string       `json:"datetime"`
+	Datetime        time.Time    `json:"datetime"`
 	Pin             bool         `json:"pin"`
 	StampList       []*stampList `json:"stampList"`
 }
@@ -64,13 +65,13 @@ func GetMessagesByChannelID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
 	}
 
-	res := make(map[string]*MessageForResponse)
+	res := make([]*MessageForResponse, 0)
 
 	for _, message := range messageList {
-		res[message.ID] = formatMessage(message)
+		res = append(res, formatMessage(message))
 	}
 
-	return c.JSON(http.StatusOK, valuesMessage(res))
+	return c.JSON(http.StatusOK, res)
 }
 
 // PostMessage : /channels/{channelID}/messagesのPOSTメソッド

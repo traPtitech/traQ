@@ -2,17 +2,19 @@ package model
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/go-xorm/builder"
 	"github.com/satori/go.uuid"
 )
 
 // UsersTag userTagの構造体
 type UsersTag struct {
-	UserID    string `xorm:"char(36) pk"`
-	TagID     string `xorm:"char(36) pk"`
-	IsLocked  bool   `xorm:"bool not null"`
-	CreatedAt string `xorm:"created not null"`
-	UpdatedAt string `xorm:"updated not null"`
+	UserID    string    `xorm:"char(36) pk"`
+	TagID     string    `xorm:"char(36) pk"`
+	IsLocked  bool      `xorm:"bool not null"`
+	CreatedAt time.Time `xorm:"created not null"`
+	UpdatedAt time.Time `xorm:"updated not null"`
 }
 
 // TableName DBの名前を指定

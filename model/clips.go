@@ -1,12 +1,15 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 // Clip clipの構造体
 type Clip struct {
-	UserID    string `xorm:"char(36) pk"`
-	MessageID string `xorm:"char(36) pk"`
-	CreatedAt string `xorm:"created not null"`
+	UserID    string    `xorm:"char(36) pk"`
+	MessageID string    `xorm:"char(36) pk"`
+	CreatedAt time.Time `xorm:"created not null"`
 }
 
 // TableName dbの名前を指定する

@@ -1,10 +1,12 @@
 package model
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUsersTag_TableName(t *testing.T) {
@@ -53,6 +55,7 @@ func TestGetUserTagsByUserID(t *testing.T) {
 		tags[i] = &UsersTag{
 			UserID: testUserID,
 		}
+		time.Sleep(1500 * time.Millisecond)
 		require.NoError(t, tags[i].Create(strconv.Itoa(i)))
 	}
 

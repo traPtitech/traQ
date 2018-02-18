@@ -7,21 +7,22 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"time"
 
 	"golang.org/x/crypto/pbkdf2"
 )
 
 // User userの構造体
 type User struct {
-	ID        string `xorm:"char(36) pk"`
-	Name      string `xorm:"varchar(32) unique not null"`
-	Email     string `xorm:"text not null"`
-	Password  string `xorm:"char(128) not null"`
-	Salt      string `xorm:"char(128) not null"`
-	Icon      string `xorm:"char(36) not null"`
-	Status    int    `xorm:"tinyint not null"`
-	CreatedAt string `xorm:"created not null"`
-	UpdatedAt string `xorm:"updated not null"`
+	ID        string    `xorm:"char(36) pk"`
+	Name      string    `xorm:"varchar(32) unique not null"`
+	Email     string    `xorm:"text not null"`
+	Password  string    `xorm:"char(128) not null"`
+	Salt      string    `xorm:"char(128) not null"`
+	Icon      string    `xorm:"char(36) not null"`
+	Status    int       `xorm:"tinyint not null"`
+	CreatedAt time.Time `xorm:"created not null"`
+	UpdatedAt time.Time `xorm:"updated not null"`
 }
 
 // TableName dbの名前を指定する
