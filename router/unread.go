@@ -8,7 +8,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// GetUnread: Method Handler of "GET /users/me/unread"
+// GetUnread Method Handler of "GET /users/me/unread"
 func GetUnread(c echo.Context) error {
 	me := c.Get("user").(*model.User)
 
@@ -20,7 +20,7 @@ func GetUnread(c echo.Context) error {
 	return c.JSON(http.StatusOK, responseBody)
 }
 
-// DeleteUnread: Method Handler of "DELETE /users/me/unread"
+// DeleteUnread Method Handler of "DELETE /users/me/unread"
 func DeleteUnread(c echo.Context) error {
 	me := c.Get("user").(*model.User)
 
