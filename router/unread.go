@@ -24,15 +24,13 @@ func GetUnread(c echo.Context) error {
 func DeleteUnread(c echo.Context) error {
 	me := c.Get("user").(*model.User)
 
-	requestBody := struct {
-		MessageIDs []string
-	}{}
+	var requestBody []string
 
 	if err := c.Bind(&requestBody); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
 	}
 
-	for _, messageID := range requestBody.MessageIDs {
+	for _, messageID := range requestBody {
 		unread := &model.Unread{
 			UserID:    me.ID,
 			MessageID: messageID,
