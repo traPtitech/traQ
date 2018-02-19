@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestGetUnread(t *testing.T) {
@@ -24,7 +25,10 @@ func TestGetUnread(t *testing.T) {
 	var responseBody []MessageForResponse
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &responseBody))
 	assert.Len(t, responseBody, 1)
-	assert.Equal(t, responseBody[0], *formatMessage(testMessage))
+	correctResponse := formatMessage(testMessage)
+	correctResponse.Datetime = correctResponse.Datetime.Truncate(time.Second) // DBは秒未満を切り捨てるので
+	correctResponse.Datetime = correctResponse.Datetime.In(time.UTC)          // DBはタイムゾーン情報を保存しないので
+	assert.Equal(t, responseBody[0], *correctResponse)
 }
 
 func TestDeleteUnread(t *testing.T) {
