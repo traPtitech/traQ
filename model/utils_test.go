@@ -13,6 +13,7 @@ import (
 
 var (
 	testUserID    = "403807a5-cae6-453e-8a09-fc75d5b4ca91"
+	nobodyID      = "0ce216f1-4a0d-4011-9f55-d0f79cfb7ca1"
 	privateUserID = "8ad765ec-426b-49c1-b4ae-f8af58af9a55"
 	engine        *xorm.Engine
 )

@@ -23,6 +23,7 @@ var (
 		Email: "example@trap.jp",
 		Icon:  "empty",
 	}
+	nobodyID      = "0ce216f1-4a0d-4011-9f55-d0f79cfb7ca1"
 	testChannelID = ""
 	engine        *xorm.Engine
 )
