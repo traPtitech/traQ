@@ -194,6 +194,15 @@ func mustMakeTag(t *testing.T, userID, tagText string) *model.UsersTag {
 	return tag
 }
 
+func mustMakeUnread(t *testing.T, userID, messageID string) *model.Unread {
+	unread := &model.Unread{
+		UserID:    userID,
+		MessageID: messageID,
+	}
+	require.NoError(t, unread.Create())
+	return unread
+}
+
 func mustClipMessage(t *testing.T, userID, messageID string) *model.Clip {
 	clip := &model.Clip{
 		UserID:    userID,
