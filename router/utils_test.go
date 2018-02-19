@@ -1,6 +1,7 @@
 package router
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -54,7 +55,7 @@ func TestMain(m *testing.M) {
 	defer engine.Close()
 
 	engine.ShowSQL(false)
-	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars", "tags", "unreads", "users_tags", "devices", "users_subscribe_channels")
+	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars", "tags", "unreads", "users_tags", "devices", "users_subscribe_channels", "files")
 	engine.SetMapper(core.GonicMapper{})
 	model.SetXORMEngine(engine)
 
@@ -63,13 +64,14 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	code := m.Run()
+	os.RemoveAll("../resources")
 	os.Exit(code)
 }
 
 func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
 	require := require.New(t)
 
-	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars", "tags", "unreads", "users_tags", "devices", "users_subscribe_channels")
+	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars", "tags", "unreads", "users_tags", "devices", "users_subscribe_channels", "files")
 	require.NoError(model.SyncSchema())
 	e := echo.New()
 
@@ -229,4 +231,14 @@ func mustCreateUser(t *testing.T) {
 	}
 	require.NoError(t, user.SetPassword("test"))
 	require.NoError(t, user.Create())
+}
+
+func mustMakeFile(t *testing.T) *model.File {
+	file := &model.File{
+		Name:      "test.txt",
+		Size:      90,
+		CreatorID: testUser.ID,
+	}
+	require.NoError(t, file.Create(bytes.NewBufferString("test message")))
+	return file
 }
