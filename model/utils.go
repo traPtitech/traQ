@@ -19,44 +19,19 @@ func SetXORMEngine(engine *xorm.Engine) {
 // SyncSchema : テーブルと構造体を同期させる関数
 // モデルを追加したら各自ここに追加しなければいけない
 func SyncSchema() error {
-	if err := db.Sync(&Channel{}); err != nil {
-		return fmt.Errorf("Failed to sync Channels Table: %v", err)
-	}
-
-	if err := db.Sync(&UsersPrivateChannel{}); err != nil {
-		return fmt.Errorf("Failed to sync UsersPrivateChannels Table: %v", err)
-	}
-
-	if err := db.Sync(&Message{}); err != nil {
-		return fmt.Errorf("Failed to sync Messages Table: %v", err)
-	}
-
-	if err := db.Sync(&User{}); err != nil {
-		return fmt.Errorf("Failed to sync Users Table: %v", err)
-	}
-
-	if err := db.Sync(&Clip{}); err != nil {
-		return fmt.Errorf("Failed to sync Clips Table: %v", err)
-	}
-
-	if err := db.Sync(&UsersTag{}); err != nil {
-		return fmt.Errorf("Failed to sync users_tags Table: %v", err)
-	}
-
-	if err := db.Sync(&Tag{}); err != nil {
-		return fmt.Errorf("Failed to sync tags Table: %v", err)
-	}
-
-	if err := db.Sync(&Star{}); err != nil {
-		return fmt.Errorf("Failed to sync Stars Table: %v", err)
-	}
-
-	if err := db.Sync(&Device{}); err != nil {
-		return fmt.Errorf("failed to sync Devices Table: %v", err)
-	}
-
-	if err := db.Sync(&UserSubscribeChannel{}); err != nil {
-		return fmt.Errorf("failed to sync users_subscribe_channels Table: %v", err)
+	if err := db.Sync(
+		&Channel{},
+		&UsersPrivateChannel{},
+		&Message{},
+		&User{},
+		&Clip{},
+		&UsersTag{},
+		&Tag{},
+		&Star{},
+		&Device{},
+		&UserSubscribeChannel{},
+	); err != nil {
+		return fmt.Errorf("Failed to sync Table schema: %v", err)
 	}
 
 	traq := &User{
