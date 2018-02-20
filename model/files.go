@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"mime"
 	"os"
 	"path/filepath"
 	"time"
@@ -20,7 +20,7 @@ type FileWriter interface {
 // FileReader ファイルを読み込むインターフェース
 type FileReader interface {
 	//stringで指定された名前のファイルを取り出す
-	ReadByID(string) ([]byte, error)
+	OpenFileByID(string) (*os.File, error)
 }
 
 // File DBに格納するファイルの構造体
@@ -54,7 +54,7 @@ func (f *File) Create(src io.Reader) error {
 
 	f.ID = CreateUUID()
 	f.IsDeleted = false
-	f.Mime = filepath.Ext(f.Name)
+	f.Mime = mime.TypeByExtension(filepath.Ext(f.Name))
 
 	var writer FileWriter
 	writer = &devFileManager{} //dependent on dev environment
@@ -83,12 +83,12 @@ func (f *File) Delete() error {
 	return nil
 }
 
-// GetFileByID ファイルを取得します
-func GetFileByID(ID string) ([]byte, error) {
+// OpenFileByID ファイルを取得します
+func OpenFileByID(ID string) (*os.File, error) {
 	//TODO: テストコード
 	var reader FileReader
 	reader = &devFileManager{} //dependent on dev environment
-	return reader.ReadByID(ID)
+	return reader.OpenFileByID(ID)
 }
 
 // GetMetaFileDataByID ファイルのメタデータを取得します
@@ -124,18 +124,18 @@ var (
 type devFileManager struct{}
 
 //ReadByID ファイルを取得します
-func (fm *devFileManager) ReadByID(ID string) ([]byte, error) {
+func (fm *devFileManager) OpenFileByID(ID string) (*os.File, error) {
 	fileName := dirName + "/" + ID
 	if _, err := os.Stat(fileName); err != nil {
 		return nil, fmt.Errorf("Invalid ID: %s", ID)
 	}
 
-	b, err := ioutil.ReadFile(fileName)
+	reader, err := os.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read file: %v", err)
 	}
 
-	return b, nil
+	return reader, nil
 }
 
 // WriteByID /img/nameにデータを書き込みます

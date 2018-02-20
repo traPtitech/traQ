@@ -46,10 +46,16 @@ func TestGetFileByID(t *testing.T) {
 	beforeTest(t)
 	assert := assert.New(t)
 
-	file := mustMakeFile(t)
-	b, err := GetFileByID(file.ID)
+	f := mustMakeFile(t)
+	file, err := OpenFileByID(f.ID)
+	assert.NoError(err)
+	defer file.Close()
+
+	buf := make([]byte, 512)
+	n, err := file.Read(buf)
+
 	if assert.NoError(err) {
-		assert.Equal("test message", string(b))
+		assert.Equal("test message", string(buf[:n]))
 	}
 }
 

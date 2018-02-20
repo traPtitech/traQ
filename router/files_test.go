@@ -2,6 +2,7 @@ package router
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -18,11 +19,18 @@ func TestPostFile(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
 	assert := assert.New(t)
 
-	body := createFormFile(t)
+	body, boundary := createFormFile(t)
 
 	req := httptest.NewRequest("POST", "http://test", body)
-	req.Header.Set("Content-Type", "multipart/form-data")
-	rec := request(e, t, mw(PostFile), cookie, req)
+	req.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
+
+	if cookie != nil {
+		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
+	}
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	err := mw(PostFile)(c)
+	assert.NoError(err)
 
 	assert.Equal(http.StatusCreated, rec.Code, rec.Body.String())
 }
@@ -74,7 +82,7 @@ func TestGetMetaDataByFileID(t *testing.T) {
 	}
 }
 
-func createFormFile(t *testing.T) *bytes.Buffer {
+func createFormFile(t *testing.T) (*bytes.Buffer, string) {
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 
@@ -89,5 +97,5 @@ func createFormFile(t *testing.T) *bytes.Buffer {
 	require.NoError(t, err)
 
 	bodyWriter.Close()
-	return bodyBuf
+	return bodyBuf, bodyWriter.Boundary()
 }

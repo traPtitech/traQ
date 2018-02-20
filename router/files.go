@@ -40,20 +40,25 @@ func PostFile(c echo.Context) error {
 	if err := file.Create(src); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create file")
 	}
-	return c.NoContent(http.StatusCreated)
+	return c.JSON(http.StatusCreated, formatFile(file))
 }
 
 // GetFileByID GET /file/{fileID}
 func GetFileByID(c echo.Context) error {
 	ID := c.Param("fileID")
 
-	b, err := model.GetFileByID(ID)
+	file, err := model.OpenFileByID(ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get file")
 	}
+	defer file.Close()
 
-	// TODO: conent-typeをどうするか考える
-	return c.Blob(http.StatusOK, "application/octet-stream", b)
+	f, err := model.GetMetaFileDataByID(ID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get File")
+	}
+
+	return c.Stream(http.StatusOK, f.Mime, file)
 }
 
 // DeleteFileByID DELETE /file/{fileID}
