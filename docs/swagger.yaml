@@ -246,20 +246,19 @@ paths:
       tags:
         - message
       description: チャンネルに存在するメッセージを取得します。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                count:
-                  description: 取得する件数 1-200
-                  type: integer
-                  example: 50
-                offset:
-                  description: 取得するメッセージのオフセット
-                  type: integer
-                  example: 150
+      parameters:
+        - in: query
+          name: count
+          schema:
+            type: integer
+          description: 取得する件数 1-200
+          example: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: 取得するメッセージのオフセット
+          example: 150
       responses:
         "200":
           description: |+
