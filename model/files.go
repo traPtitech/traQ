@@ -138,10 +138,10 @@ func (fm *devFileManager) OpenFileByID(ID string) (*os.File, error) {
 	return reader, nil
 }
 
-// WriteByID /img/nameにデータを書き込みます
+// WriteByID srcの内容をIDで指定されたファイルに書き込みます
 func (fm *devFileManager) WriteByID(src io.Reader, ID string) error {
 	if _, err := os.Stat(dirName); err != nil {
-		if err = os.Mkdir(dirName, 0666); err != nil {
+		if err = os.Mkdir(dirName, 0700); err != nil {
 			return fmt.Errorf("Can't create directory: %v", err)
 		}
 	}

@@ -933,7 +933,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /file:
+  /files:
     post:
       tags:
         - file
@@ -953,7 +953,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/FileInfo"
 
-  /file/{fileID}:
+  /files/{fileID}:
     parameters:
       - $ref: "#/components/parameters/fileIdInPath"
     get:
@@ -1008,7 +1008,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /file/{fileID}/meta:
+  /files/{fileID}/meta:
     parameters:
       - $ref: "#/components/parameters/fileIdInPath"
     get:
@@ -1033,7 +1033,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /file/{fileID}/thumnail:
+  /files/{fileID}/thumnail:
     parameters:
       - $ref: "#/components/parameters/fileIdInPath"
     get:
