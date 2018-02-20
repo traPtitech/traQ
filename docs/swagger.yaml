@@ -1144,10 +1144,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /messages/{messageID}/pin:
-    parameters:
-      - $ref: "#/components/parameters/messageIdInPath"
-
   /messages/search:
     get:
       tags:
