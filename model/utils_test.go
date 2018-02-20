@@ -90,6 +90,15 @@ func mustMakeMessage(t *testing.T) *Message {
 	return message
 }
 
+func mustMakeMessageUnread(t *testing.T, userID, messageID string) *Unread {
+	unread := &Unread{
+		UserID:    userID,
+		MessageID: messageID,
+	}
+	require.NoError(t, unread.Create())
+	return unread
+}
+
 func mustMakeUser(t *testing.T, userName string) *User {
 	user := &User{
 		Name:  userName,

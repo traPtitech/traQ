@@ -59,3 +59,15 @@ func GetUnreadsByUserID(userID string) ([]*Unread, error) {
 	}
 	return unreads, nil
 }
+
+//DeleteUnreadsByMessageID 指定したメッセージIDの未読レコードを全て削除
+func DeleteUnreadsByMessageID(messageID string) error {
+	if messageID == "" {
+		return fmt.Errorf("messageID is empty")
+	}
+
+	if _, err := db.Delete(&Unread{MessageID: messageID}); err != nil {
+		return err
+	}
+	return nil
+}
