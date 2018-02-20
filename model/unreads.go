@@ -6,7 +6,7 @@ import (
 
 //Unread 未読レコード
 type Unread struct {
-	UserID    string `xrom:"char(36) not null pk"`
+	UserID    string `xorm:"char(36) not null pk"`
 	MessageID string `xorm:"char(36) not null pk"`
 }
 
@@ -58,4 +58,16 @@ func GetUnreadsByUserID(userID string) ([]*Unread, error) {
 		return nil, fmt.Errorf("Failed to find unreads: %v", err)
 	}
 	return unreads, nil
+}
+
+//DeleteUnreadsByMessageID 指定したメッセージIDの未読レコードを全て削除
+func DeleteUnreadsByMessageID(messageID string) error {
+	if messageID == "" {
+		return fmt.Errorf("messageID is empty")
+	}
+
+	if _, err := db.Delete(&Unread{MessageID: messageID}); err != nil {
+		return err
+	}
+	return nil
 }

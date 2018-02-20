@@ -143,6 +143,10 @@ func DeleteMessageByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update the message")
 	}
 
+	if err := model.DeleteUnreadsByMessageID(messageID); err != nil {
+		c.Echo().Logger.Errorf("model.DeleteUnreadsByMessageID returned an error: %v", err) //500エラーにはしない
+	}
+
 	go notification.Send(events.MessageDeleted, events.MessageEvent{Message: *message})
 	return c.NoContent(http.StatusNoContent)
 }

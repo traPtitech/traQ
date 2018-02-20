@@ -76,3 +76,31 @@ func TestGetUnreadsByUserID(t *testing.T) {
 	assert.NoError(t, nobodyErr)
 	assert.Len(t, nobodyUnreads, 0)
 }
+
+func TestDeleteUnreadsByMessageID(t *testing.T) {
+	beforeTest(t)
+	assert := assert.New(t)
+
+	testMessage := mustMakeMessage(t)
+	testMessage2 := mustMakeMessage(t)
+
+	for i := 0; i < 10; i++ {
+		mustMakeMessageUnread(t, CreateUUID(), testMessage.ID)
+		mustMakeMessageUnread(t, CreateUUID(), testMessage2.ID)
+	}
+
+	// 正常系
+	if assert.NoError(DeleteUnreadsByMessageID(testMessage.ID)) {
+		if n, err := db.Count(&Unread{}); assert.NoError(err) {
+			assert.EqualValues(10, n)
+		}
+	}
+	if assert.NoError(DeleteUnreadsByMessageID(testMessage2.ID)) {
+		if n, err := db.Count(&Unread{}); assert.NoError(err) {
+			assert.EqualValues(0, n)
+		}
+	}
+
+	// 異常系
+	assert.Error(DeleteUnreadsByMessageID(""))
+}
