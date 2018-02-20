@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -38,13 +39,10 @@ func TestGetMessagesByChannelID(t *testing.T) {
 		mustMakeMessage(t)
 	}
 
-	post := requestCount{
-		Limit: 3,
-		Count: 1,
-	}
-	body, err := json.Marshal(post)
-	require.NoError(t, err)
-	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
+	q := make(url.Values)
+	q.Set("limit", "3")
+	q.Set("count", "1")
+	req := httptest.NewRequest("GET", "/?"+q.Encode(), nil)
 
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/channels/:channelID/messages")
