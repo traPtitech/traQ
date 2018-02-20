@@ -87,7 +87,7 @@ func GetTag(userID, tagID string) (*UsersTag, error) {
 	return &tag, nil
 }
 
-// 指定したタグを持った全ユーザーのUUIDを返します
+// GetUserIdsByTags 指定したタグを持った全ユーザーのUUIDを返します
 func GetUserIdsByTags(tags []string) ([]uuid.UUID, error) {
 	var arr []string
 

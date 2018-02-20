@@ -20,15 +20,18 @@ type HeartbeatStatus struct {
 }
 
 var (
-	ticker            *time.Ticker
-	stop              chan bool
-	tickerMutex       sync.Mutex
-	statusesMutex     sync.RWMutex
+	// HeartbeatStatuses HeartbeatStatusの全チャンネルのリスト
 	HeartbeatStatuses = make(map[string]*HeartbeatStatus)
-	timeoutDuration   = -5 * time.Second
-	tickTime          = 500 * time.Millisecond
+
+	ticker          *time.Ticker
+	stop            chan bool
+	tickerMutex     sync.Mutex
+	statusesMutex   sync.RWMutex
+	timeoutDuration = -5 * time.Second
+	tickTime        = 500 * time.Millisecond
 )
 
+// UpdateHeartbeatStatuses UserIDで指定されたUserのHeartbeatの更新を行う
 func UpdateHeartbeatStatuses(userID, channelID, status string) {
 	statusesMutex.Lock()
 	defer statusesMutex.Unlock()

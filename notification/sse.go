@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/notification/events"
 	"net/http"
 	"sync"
 )
@@ -16,7 +15,7 @@ var (
 type sseClient struct {
 	userID       uuid.UUID
 	connectionID uuid.UUID
-	send         chan *events.EventData
+	send         chan *eventData
 	stop         chan struct{}
 }
 
@@ -36,9 +35,8 @@ func (s *clientsSyncMap) Load(key uuid.UUID) (map[uuid.UUID]*sseClient, bool) {
 	if ok {
 		v, _ := i.(map[uuid.UUID]*sseClient)
 		return v, true
-	} else {
-		return nil, false
 	}
+	return nil, false
 }
 
 func (s *clientsSyncMap) Store(key uuid.UUID, value map[uuid.UUID]*sseClient) {
@@ -86,11 +84,12 @@ func (s *sseStreamer) run() {
 	}
 }
 
+//Stream 指定したユーザーIDへのイベントを*echo.Responseに流します。
 func Stream(userID uuid.UUID, res *echo.Response) {
 	client := &sseClient{
 		userID:       userID,
 		connectionID: uuid.NewV4(),
-		send:         make(chan *events.EventData, 50),
+		send:         make(chan *eventData, 50),
 		stop:         make(chan struct{}),
 	}
 	rw := res.Writer

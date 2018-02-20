@@ -2,23 +2,24 @@ package model
 
 import (
 	"fmt"
-	"github.com/satori/go.uuid"
 	"time"
+
+	"github.com/satori/go.uuid"
 )
 
-// ユーザー・通知チャンネル対構造体
+// UserSubscribeChannel ユーザー・通知チャンネル対構造体
 type UserSubscribeChannel struct {
 	UserID    string    `xorm:"char(36) pk not null"`
 	ChannelID string    `xorm:"char(36) pk not null"`
 	CreatedAt time.Time `xorm:"created not null"`
 }
 
-// UserNotifiedChannel構造体のテーブル名
+// TableName UserNotifiedChannel構造体のテーブル名
 func (*UserSubscribeChannel) TableName() string {
 	return "users_subscribe_channels"
 }
 
-// DBに登録
+// Create DBに登録
 func (s *UserSubscribeChannel) Create() error {
 	if s.UserID == "" {
 		return fmt.Errorf("UserID is empty")
@@ -34,7 +35,7 @@ func (s *UserSubscribeChannel) Create() error {
 	return nil
 }
 
-// DBから削除
+// Delete DBから削除
 func (s *UserSubscribeChannel) Delete() error {
 	if s.UserID == "" {
 		return fmt.Errorf("UserID is empty")
@@ -50,10 +51,10 @@ func (s *UserSubscribeChannel) Delete() error {
 	return nil
 }
 
-// 指定したチャンネルの通知をつけているユーザーを取得
-func GetSubscribingUser(channelId uuid.UUID) ([]uuid.UUID, error) {
+// GetSubscribingUser 指定したチャンネルの通知をつけているユーザーを取得
+func GetSubscribingUser(channelID uuid.UUID) ([]uuid.UUID, error) {
 	var arr []string
-	if err := db.Table(&UserSubscribeChannel{}).Where("channel_id = ?", channelId.String()).Cols("user_id").Find(&arr); err != nil {
+	if err := db.Table(&UserSubscribeChannel{}).Where("channel_id = ?", channelID.String()).Cols("user_id").Find(&arr); err != nil {
 		return nil, fmt.Errorf("failed to get user_subscribe_channel: %v", err)
 	}
 
