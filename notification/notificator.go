@@ -83,7 +83,7 @@ func Send(eventType events.EventType, payload interface{}) {
 			Mobile: false,
 		})
 
-	case events.MessageCreated, events.MessageUpdated, events.MessageDeleted:
+	case events.MessageCreated:
 		data, _ := payload.(events.MessageEvent)
 		cid := uuid.FromStringOrNil(data.Message.ChannelID)
 		var tags []string //TODO タグ抽出
@@ -95,6 +95,12 @@ func Send(eventType events.EventType, payload interface{}) {
 		} else {
 			for _, id := range users {
 				done[id] = true
+
+				unread := &model.Unread{UserID: id.String(), MessageID: data.Message.ID}
+				if err := unread.Create(); err != nil {
+					log.Error(err)
+				}
+
 				multicast(id, &eventData{
 					EventType: eventType,
 					Summary:   "", //TODO モバイル通知に表示される文字列
@@ -111,6 +117,12 @@ func Send(eventType events.EventType, payload interface{}) {
 				id := uuid.FromStringOrNil(u.UserID)
 				if _, ok := done[id]; !ok {
 					done[id] = true
+
+					unread := &model.Unread{UserID: id.String(), MessageID: data.Message.ID}
+					if err := unread.Create(); err != nil {
+						log.Error(err)
+					}
+
 					multicast(id, &eventData{
 						EventType: eventType,
 						Summary:   "", //TODO モバイル通知に表示される文字列
@@ -130,6 +142,12 @@ func Send(eventType events.EventType, payload interface{}) {
 				for _, id := range users {
 					if _, ok := done[id]; !ok {
 						done[id] = true
+
+						unread := &model.Unread{UserID: id.String(), MessageID: data.Message.ID}
+						if err := unread.Create(); err != nil {
+							log.Error(err)
+						}
+
 						multicast(id, &eventData{
 							EventType: eventType,
 							Summary:   "", //TODO モバイル通知に表示される文字列
@@ -140,6 +158,22 @@ func Send(eventType events.EventType, payload interface{}) {
 						})
 					}
 				}
+			}
+		}
+
+	case events.MessageUpdated, events.MessageDeleted:
+		data, _ := payload.(events.MessageEvent)
+
+		if s, ok := model.GetHeartbeatStatus(data.Message.ChannelID); ok {
+			for _, u := range s.UserStatuses {
+				id := uuid.FromStringOrNil(u.UserID)
+				multicast(id, &eventData{
+					EventType: eventType,
+					Payload: struct {
+						ID string `json:"id"`
+					}{data.Message.ID},
+					Mobile: false,
+				})
 			}
 		}
 
