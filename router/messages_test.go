@@ -40,8 +40,8 @@ func TestGetMessagesByChannelID(t *testing.T) {
 	}
 
 	q := make(url.Values)
-	q.Set("offset", "3")
-	q.Set("count", "1")
+	q.Set("limit", "3")
+	q.Set("offset", "1")
 	req := httptest.NewRequest("GET", "/?"+q.Encode(), nil)
 
 	c, rec := getContext(e, t, cookie, req)

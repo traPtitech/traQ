@@ -248,7 +248,7 @@ paths:
       description: チャンネルに存在するメッセージを取得します。
       parameters:
         - in: query
-          name: count
+          name: limit
           schema:
             type: integer
           description: 取得する件数 1-200

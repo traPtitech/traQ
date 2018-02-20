@@ -32,8 +32,8 @@ type requestMessage struct {
 }
 
 type requestCount struct {
-	Count int `query:"count"`
-	Limit int `query:"offset"`
+	Limit  int `query:"limit"`
+	Offset int `query:"offset"`
 }
 
 // GetMessageByID : /messages/{messageID}のGETメソッド
@@ -59,7 +59,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 
 	channelID := c.Param("channelID")
 
-	messageList, err := model.GetMessagesFromChannel(channelID, queryParam.Limit, queryParam.Count)
+	messageList, err := model.GetMessagesFromChannel(channelID, queryParam.Limit, queryParam.Offset)
 	if err != nil {
 		c.Echo().Logger.Errorf("model.GetmessagesFromChannel returned an error : %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
