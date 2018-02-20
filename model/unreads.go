@@ -4,22 +4,25 @@ import (
 	"fmt"
 )
 
+//Unread 未読レコード
 type Unread struct {
 	UserID    string `xrom:"char(36) not null pk"`
 	MessageID string `xorm:"char(36) not null pk"`
 }
 
+//TableName テーブル名
 func (unread *Unread) TableName() string {
 	return "unreads"
 }
 
+//Create レコード作成
 func (unread *Unread) Create() error {
 	if unread.UserID == "" {
-		return fmt.Errorf("UserID is empty.")
+		return fmt.Errorf("userID is empty")
 	}
 
 	if unread.MessageID == "" {
-		return fmt.Errorf("MessageID is empty.")
+		return fmt.Errorf("messageID is empty")
 	}
 
 	if _, err := db.Insert(unread); err != nil {
@@ -28,13 +31,14 @@ func (unread *Unread) Create() error {
 	return nil
 }
 
+//Delete レコード削除
 func (unread *Unread) Delete() error {
 	if unread.UserID == "" {
-		return fmt.Errorf("UserID is empty.")
+		return fmt.Errorf("userID is empty")
 	}
 
 	if unread.MessageID == "" {
-		return fmt.Errorf("MessageID is empty.")
+		return fmt.Errorf("messageID is empty")
 	}
 
 	if _, err := db.Delete(unread); err != nil {
@@ -43,9 +47,10 @@ func (unread *Unread) Delete() error {
 	return nil
 }
 
+//GetUnreadsByUserID あるユーザーの未読レコードをすべて取得
 func GetUnreadsByUserID(userID string) ([]*Unread, error) {
 	if userID == "" {
-		return nil, fmt.Errorf("userID is empty.")
+		return nil, fmt.Errorf("userID is empty")
 	}
 
 	var unreads []*Unread
