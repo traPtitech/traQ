@@ -19,7 +19,7 @@ paths:
             schema:
               $ref: "#/components/schemas/NoContent"
       responses:
-        "200":
+        "204":
           description: |+
             正常にログアウトできました。
           content:
