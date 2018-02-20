@@ -7,21 +7,32 @@ traQ: $(SOURCES)
 fmt:
 	go fmt ./...
 
-.PHONY: lint
-lint:
-	-@go vet $$(glide novendor)
-	-@for pkg in $$(glide novendor -x); do golint -set_exit_status $$pkg; done
-
 .PHONY: test
 test:
-	gofmt -s -d $(SOURCES)
-	-@make lint
-	-go test -race ./...
-	-go build
+	-@make ci-fmt
+	-@make ci-vet
+	-@make ci-lint
+	-@make ci-test
+	-@make traQ
+
+.PHONY: ci-fmt
+ci-fmt:
+	(! gofmt -s -d `find . -path "./vendor" -prune -o -type f -name "*.go" -print` | grep ^)
+
+.PHONY: ci-vet
+ci-vet:
+	go vet ./...
+
+.PHONY: ci-lint
+ci-lint:
+	golint -set_exit_status $$(go list ./...)
+
+.PHONY: ci-test
+ci-test:
+	go test -race ./...
 
 .PHONY: init
 init:
 	go get -u github.com/golang/dep/cmd/dep
 	go get -u github.com/golang/lint/golint
-	go get -u github.com/Masterminds/glide
 	dep ensure

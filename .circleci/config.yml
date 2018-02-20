@@ -19,17 +19,17 @@ jobs:
           command: make init
 
       - run:
-          name: gofmt
+          name: fmt
           when: always
-          command: (! gofmt -s -d `find . -path "./vendor" -prune -o -type f -name "*.go" -print` | grep ^)
+          command: make ci-fmt
       - run:
-          name: golint
+          name: vet
           when: always
-          command: golint -set_exit_status
+          command: make ci-vet
       - run:
-          name: go vet
+          name: lint
           when: always
-          command: go vet ./...
+          command: make ci-lint
 
       - run:
           name: Setup DB
@@ -39,18 +39,18 @@ jobs:
             go run .circleci/init.go
 
       - run:
-          name: go test
+          name: test
           when: always
           command: ./.circleci/go.test.sh
       - run:
-          name: go build
+          name: build
           when: always
-          command: go build -o traq
+          command: make traQ
 
       - run:
           name: Upload coverage data
           command: bash <(curl -s https://codecov.io/bash)
 
       - store_artifacts:
-          path: /go/src/github.com/traPtitech/traQ/traq
-          destination: traq
+          path: /go/src/github.com/traPtitech/traQ/traQ
+          destination: traQ
