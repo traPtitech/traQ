@@ -2,6 +2,8 @@ package router
 
 import (
 	"fmt"
+	"github.com/traPtitech/traQ/notification"
+	"github.com/traPtitech/traQ/notification/events"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -41,6 +43,7 @@ func DeleteUnread(c echo.Context) error {
 		}
 	}
 
+	go notification.Send(events.MessageRead, events.ReadMessagesEvent{UserID: me.ID, MessageIDs: requestBody})
 	return c.NoContent(http.StatusNoContent)
 }
 

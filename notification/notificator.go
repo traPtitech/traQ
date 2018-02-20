@@ -144,12 +144,12 @@ func Send(eventType events.EventType, payload interface{}) {
 		}
 
 	case events.MessageRead:
-		data, _ := payload.(events.UserMessageEvent)
+		data, _ := payload.(events.ReadMessagesEvent)
 		multicast(uuid.FromStringOrNil(data.UserID), &eventData{
 			EventType: eventType,
 			Payload: struct {
-				ID string `json:"id"`
-			}{data.MessageID},
+				IDs []string `json:"ids"`
+			}{data.MessageIDs},
 			Mobile: false,
 		})
 
