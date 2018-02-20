@@ -91,7 +91,7 @@ TODO
 端末間同期目的に使用される。
 
 ### SSE
-TODO
++ `ids`: 読んだメッセージのIdの配列
 
 ## MESSAGE_STAMPED
 メッセージにスタンプが押された。

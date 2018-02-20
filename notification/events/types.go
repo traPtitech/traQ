@@ -78,6 +78,12 @@ type UserMessageEvent struct {
 	MessageID string
 }
 
+//ReadMessagesEvent メッセージの既読イベントのペイロード
+type ReadMessagesEvent struct {
+	UserID     string
+	MessageIDs []string
+}
+
 //MessageChannelEvent メッセージとチャンネルに関するイベントのペイロード
 type MessageChannelEvent struct {
 	MessageID string
