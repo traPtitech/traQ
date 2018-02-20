@@ -127,6 +127,12 @@ func main() {
 	api.GET("/channels/:channelID/notification", router.GetNotificationStatus)
 	api.PUT("/channels/:channelID/notification", router.PutNotificationStatus)
 
+	// Tag: file
+	api.POST("/files", router.PostFile)
+	api.GET("/files/:fileID", router.GetFileByID)
+	api.DELETE("/files/:fileID", router.DeleteFileByID)
+	api.GET("/files/:fileID/meta", router.GetMetaDataByFileID)
+
 	// init notification
 	notification.Start()
 
