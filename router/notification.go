@@ -11,11 +11,7 @@ import (
 	"github.com/traPtitech/traQ/notification"
 )
 
-<<<<<<< HEAD
-// GET /channels/:channelID/notifications のハンドラ
-====== =
 // GetNotificationStatus GET /channels/:channelId/notifications のハンドラ
->>>>>>> fix: lint error
 func GetNotificationStatus(c echo.Context) error {
 	channelID := c.Param("channelID") //TODO チャンネルIDの検証
 
@@ -32,11 +28,7 @@ func GetNotificationStatus(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
-<<<<<<< HEAD
-// PUT /channels/:channelID/notifications のハンドラ
-====== =
 // PutNotificationStatus PUT /channels/:channelId/notifications のハンドラ
->>>>>>> fix: lint error
 func PutNotificationStatus(c echo.Context) error {
 	channelID := c.Param("channelID") //TODO チャンネルIDの検証
 

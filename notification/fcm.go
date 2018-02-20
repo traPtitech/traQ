@@ -18,7 +18,7 @@ const (
 
 type fcmClient struct {
 	APIKey     string
-	HttpClient *http.Client
+	HTTPClient *http.Client
 }
 
 type fcmNotificationPayload struct {
@@ -55,7 +55,7 @@ type fcmResult struct {
 func newFCMClient(apiKey string) *fcmClient {
 	return &fcmClient{
 		APIKey:     apiKey,
-		HttpClient: &http.Client{},
+		HTTPClient: &http.Client{},
 	}
 }
 
@@ -72,7 +72,7 @@ func (c *fcmClient) send(message *fcmMessage) (*fcmResponse, error) {
 	req.Header.Set("Authorization", fmt.Sprintf("key=%v", c.APIKey))
 	req.Header.Set("Content-Type", "application/json")
 
-	res, err := c.HttpClient.Do(req)
+	res, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

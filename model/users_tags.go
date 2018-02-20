@@ -2,10 +2,7 @@ package model
 
 import (
 	"fmt"
-<<<<<<< HEAD
 	"time"
-=======
->>>>>>> fix: lint error
 
 	"github.com/go-xorm/builder"
 	"github.com/satori/go.uuid"
