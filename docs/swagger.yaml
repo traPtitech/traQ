@@ -327,6 +327,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageList"
+  /channels/{channelID}/pin/{messageID}:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: "#/components/parameters/messageIdInPath"
     put:
       tags:
         - pin
@@ -335,15 +339,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - messageId
-              properties:
-                messageId:
-                  type: string
-                  format: uuid
-                  description: メッセージID
-                  example: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
+              $ref: "#/components/schemas/NoContent"
       responses:
         "200":
           description: |+
@@ -367,19 +363,6 @@ paths:
       description: |+
         指定したメッセージの固定を外します。
         存在しないメッセージ、あるいは既に固定が外れているメッセージを指定した場合は無視されます(204)。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - messageId
-              properties:
-                messageId:
-                  type: string
-                  format: uuid
-                  description: メッセージID
-                  example: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
       responses:
         "204":
           description: |+
