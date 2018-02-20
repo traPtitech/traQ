@@ -6,7 +6,7 @@ import (
 
 //Unread 未読レコード
 type Unread struct {
-	UserID    string `xrom:"char(36) not null pk"`
+	UserID    string `xorm:"char(36) not null pk"`
 	MessageID string `xorm:"char(36) not null pk"`
 }
 
