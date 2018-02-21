@@ -174,12 +174,11 @@ user_idとchannel_idの複合主キー
 ## pins
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
+| id | CHAR(36) | PRIMARY KEY | ピン留めID |
 | channel_id | CHAR(36) | NOT NULL | チャンネルID |
 | message_id | CHAR(36) | NOT NULL | メッセージID |
 | user_id | CHAR(36) | NOT NULL | ピン留めしたユーザーのID |
 | created_at | TIMESTAMP | NOT NULL | ピン留めした日時 |
-
-channel_idとmessage_idの複合主キー
 
 ## tokens
 | カラム名 | 型 | 属性 | 説明など | 
