@@ -69,7 +69,7 @@ func PostLogout(c echo.Context) error {
 
 	sess.Values["userID"] = nil
 	sess.Save(c.Request(), c.Response())
-	return c.NoContent(http.StatusOK)
+	return c.NoContent(http.StatusNoContent)
 }
 
 // GetUsers GET /users のハンドラ
