@@ -933,6 +933,124 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
+  /files:
+    post:
+      tags:
+        - file
+      description: ファイルをアップロードします
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadFile"
+      responses:
+        "201":
+          description: |+
+            正常にファイルが追加されました
+            メタデータを返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileInfo"
+
+  /files/{fileID}:
+    parameters:
+      - $ref: "#/components/parameters/fileIdInPath"
+    get:
+      tags:
+        - file
+      description: 指定したファイルの中身を取得します。
+      responses:
+        "200":
+          description: |+
+            正常に取得できました。
+            fileのbinaryを返します。
+            application/octet-streamで返すことになっていますが、ファイルの形式によっては変わります。
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: |+
+            取得できませんでした。
+            指定されたスタンプは存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+    delete:
+      tags:
+        - file
+      description: 指定したメッセージを削除します。
+      responses:
+        "204":
+          description: |+
+            正常に削除できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "403":
+          description: |+
+            削除できませんでした。
+            指定されたファイルを削除する権限がありません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "404":
+          description: |+
+            削除できませんでした。
+            指定されたファイルは存在しないか、自分のスコープ内にありません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+
+  /files/{fileID}/meta:
+    parameters:
+      - $ref: "#/components/parameters/fileIdInPath"
+    get:
+      tags:
+        - file
+      description: 指定したファイルのメタデータを取得します
+      responses:
+        "200":
+          description: |+
+            正常に取得できました。
+            メタデータを返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileInfo"
+        "404":
+          description: |+
+            取得できませんでした。
+            指定されたファイルは存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+
+  /files/{fileID}/thumnail:
+    parameters:
+      - $ref: "#/components/parameters/fileIdInPath"
+    get:
+      tags:
+        - file
+      description: 指定したファイルのサムネイルを取得します
+      responses:
+        "200":
+          description: |+
+            正常に取得できました。
+            サムネイルを返します。
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+
   /messages/{messageID}:
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
@@ -1193,7 +1311,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /notification:
+ /notification:
     get:
       tags:
         - notification
@@ -1228,6 +1346,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
+
 
 components:
   parameters:
@@ -1271,6 +1390,13 @@ components:
       schema:
         type: string
         format: uuid
+    fileIdInPath:
+      name: fileID
+      description: 操作の対象となるファイルID
+      in: path
+      required: true
+      schema:
+        type: string
   schemas:
     Channel:
       type: object
@@ -1423,6 +1549,29 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Stamp"
+
+    UploadFile:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+
+    FileInfo:
+      type: object
+      properties:
+        fileId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        mime:
+          type: string
+        size:
+          type: integer
+        dateTime:
+          type: string
+          format: date-time
 
     UnreadList:
       type: array

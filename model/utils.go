@@ -35,6 +35,10 @@ func SyncSchema() error {
 		return fmt.Errorf("Failed to sync Table schema: %v", err)
 	}
 
+	if err := db.Sync(&File{}); err != nil {
+		return fmt.Errorf("failed to sync files Table: %v", err)
+	}
+
 	traq := &User{
 		Name:  "traq",
 		Email: "trap.titech@gmail.com",

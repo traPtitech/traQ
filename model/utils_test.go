@@ -1,6 +1,7 @@
 package model
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"testing"
@@ -43,7 +44,7 @@ func TestMain(m *testing.M) {
 	}
 	defer engine.Close()
 	engine.ShowSQL(false)
-	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags", "unreads", "devices", "users_subscribe_channels")
+	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags", "unreads", "devices", "users_subscribe_channels", "files")
 
 	engine.SetMapper(core.GonicMapper{})
 	SetXORMEngine(engine)
@@ -53,11 +54,12 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	code := m.Run()
+	os.RemoveAll(dirName)
 	os.Exit(code)
 }
 
 func beforeTest(t *testing.T) {
-	require.NoError(t, engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags", "unreads", "devices", "users_subscribe_channels"))
+	require.NoError(t, engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags", "unreads", "devices", "users_subscribe_channels", "files"))
 	require.NoError(t, SyncSchema())
 }
 
@@ -108,6 +110,16 @@ func mustMakeUser(t *testing.T, userName string) *User {
 	require.NoError(t, user.SetPassword(password))
 	require.NoError(t, user.Create())
 	return user
+}
+
+func mustMakeFile(t *testing.T) *File {
+	file := &File{
+		Name:      "test.txt",
+		Size:      90,
+		CreatorID: testUserID,
+	}
+	require.NoError(t, file.Create(bytes.NewBufferString("test message")))
+	return file
 }
 
 func checkEmptyField(user *User) error {
