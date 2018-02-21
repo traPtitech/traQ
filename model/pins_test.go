@@ -7,8 +7,8 @@ import (
 func TestTableNamePin(t *testing.T) {
 
 	pin := &Pin{}
-	if "pins" != pin.Tablename() {
-		t.Fatalf("Tablename is wrong: want pins, actual %s", pin.Tablename())
+	if "pins" != pin.TableName() {
+		t.Fatalf("Tablename is wrong: want pins, actual %s", pin.TableName())
 	}
 }
 
