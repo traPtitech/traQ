@@ -340,7 +340,7 @@ paths:
             schema:
               $ref: "#/components/schemas/NoContent"
       responses:
-        "200":
+        "201":
           description: |+
             正常にメッセージが固定できました。
             固定されたメッセージを返します。
