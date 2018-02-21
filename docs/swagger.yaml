@@ -371,7 +371,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-
   /channels/{channelID}/notifications:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -1311,7 +1310,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
- /notification:
+  /notification:
     get:
       tags:
         - notification
@@ -1346,7 +1345,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
-
 
 components:
   parameters:
@@ -1595,7 +1593,6 @@ components:
          notification:
           type: boolean
       example:
-
 
     UserNotificationList:
       type: array
