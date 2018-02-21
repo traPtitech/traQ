@@ -1311,7 +1311,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
- /notification:
+  /notification:
     get:
       tags:
         - notification
