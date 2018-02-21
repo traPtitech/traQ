@@ -316,61 +316,62 @@ paths:
     get:
       tags:
         - pin
-      description: チャンネルにピン止めされているメッセージを取得します。
+      description: チャンネルのピン留め一覧を取得します。
       responses:
         "200":
           description: |+
             正常に取得できました。
-            チャンネルにピン止めされているメッセージの配列を返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MessageList"
-  /channels/{channelID}/pin/{messageID}:
-    parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
-      - $ref: "#/components/parameters/messageIdInPath"
-    put:
+                $ref: "#/components/schemas/PinList"
+    post:
       tags:
         - pin
-      description: 指定したメッセージを固定します。
+      description: チャンネルにメッセージをピン留めします。
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NoContent"
+              type: object
+              required:
+                - messageId
+              properties:
+                messageId:
+                  type: string
+                  format: uuid
+                  description: ピン留めするメッセージID
       responses:
         "201":
           description: |+
-            正常にメッセージが固定できました。
-            固定されたメッセージを返します。
+            正常にピン留めできました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Message"
-        "404":
+                $ref: "#/components/schemas/Pin"
+  /pin/{pinID}:
+    parameters:
+      - $ref: "#/components/parameters/pinIdInPath"
+    get:
+      tags:
+        - pin
+      description: ピン留めを取得します。
+      responses:
+        "200":
           description: |+
-            正常に固定できませんでした。
-            指定されたメッセージは存在しないか、自分のスコープ内にありません。
+            正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NoContent"
+                $ref: "#/components/schemas/Pin"
     delete:
       tags:
         - pin
-      description: |+
-        指定したメッセージの固定を外します。
-        存在しないメッセージ、あるいは既に固定が外れているメッセージを指定した場合は無視されます(204)。
+      description: ピン留めを外します。
       responses:
         "204":
           description: |+
-            正常にメッセージの固定を外すことができました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
-
+            正常に外せました。
   /channels/{channelID}/notifications:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -1395,6 +1396,13 @@ components:
       required: true
       schema:
         type: string
+    pinIdInPath:
+      name: pinID
+      description: 操作の対象となるピン留めID
+      in: path
+      required: true
+      schema:
+        type: string
   schemas:
     Channel:
       type: object
@@ -1581,6 +1589,29 @@ components:
             format: uuid
           count:
             type: integer
+
+    Pin:
+      type: object
+      properties:
+        pinId:
+          type: string
+          format: uuid
+        channelId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        dateTime:
+          type: string
+          format: date-time
+        message:
+          $ref: "#/components/schemas/Message"
+
+    PinList:
+      type: array
+      items:
+        $ref: "#/components/schemas/Pin"
 
     UserNotification:
       type: object
