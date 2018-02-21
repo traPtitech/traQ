@@ -22,13 +22,13 @@ func TestGetUnread(t *testing.T) {
 	requestWithContext(t, mw(GetUnread), c)
 
 	assert.EqualValues(t, http.StatusOK, rec.Code)
-	var responseBody []MessageForResponse
+	var responseBody []*MessageForResponse
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &responseBody))
 	assert.Len(t, responseBody, 1)
 	correctResponse := formatMessage(testMessage)
 	correctResponse.Datetime = correctResponse.Datetime.Truncate(time.Second) // DBは秒未満を切り捨てるので
 	correctResponse.Datetime = correctResponse.Datetime.In(time.UTC)          // DBはタイムゾーン情報を保存しないので
-	assert.Equal(t, responseBody[0], *correctResponse)
+	assert.Equal(t, *responseBody[0], *correctResponse)
 }
 
 func TestDeleteUnread(t *testing.T) {
