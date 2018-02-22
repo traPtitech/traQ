@@ -46,7 +46,7 @@ func GetPin(ID string) (*Pin, error) {
 		return nil, fmt.Errorf("ID is empty")
 	}
 
-	var pin *Pin
+	pin := &Pin{}
 	if _, err := db.ID(ID).Get(pin); err != nil {
 		return nil, fmt.Errorf("Failed to get pin: %v", err)
 	}
