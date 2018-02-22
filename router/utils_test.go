@@ -223,14 +223,15 @@ func mustStarChannel(t *testing.T, userID, channelID string) *model.Star {
 	return star
 }
 
-func pinMessage(channelID, messageID, userID string) *model.Pins {
+func mustMakePin(t *testing.T, channelID, userID, messageID string) *model.Pin {
 	pin := &model.Pin{
 		ChannelID: channelID,
-		MessageID: messageID,
 		UserID:    userID,
+		MessageID: messageID,
 	}
 
-	return pin.Create()
+	require.NoError(t, pin.Create())
+	return pin
 }
 
 func mustCreateUser(t *testing.T) {
