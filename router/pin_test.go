@@ -31,9 +31,11 @@ func TestGetChannelPin(t *testing.T) {
 	correctResponse, err := formatPin(testPin)
 	require.NoError(t, err)
 
+	correctResponse.Message.Datetime = parseDateTime(correctResponse.Message.Datetime)
 	assert.Equal(t, *responseBody[0].Message, *correctResponse.Message)
 	responseBody[0].Message, correctResponse.Message = nil, nil
 
+	correctResponse.DateTime = parseDateTime(correctResponse.DateTime)
 	assert.Equal(t, *responseBody[0], *correctResponse)
 }
 
@@ -57,9 +59,11 @@ func TestGetPin(t *testing.T) {
 	correctResponse, err := formatPin(testPin)
 	require.NoError(t, err)
 
+	correctResponse.Message.Datetime = parseDateTime(correctResponse.Message.Datetime)
 	assert.Equal(t, *responseBody.Message, *correctResponse.Message)
 	responseBody.Message, correctResponse.Message = nil, nil
 
+	correctResponse.DateTime = parseDateTime(correctResponse.DateTime)
 	assert.Equal(t, *responseBody, *correctResponse)
 }
 
@@ -92,9 +96,11 @@ func TestPostPin(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, correctResponse, 1)
 
+	correctResponse[0].Message.Datetime = parseDateTime(correctResponse[0].Message.Datetime)
 	assert.Equal(t, *responseBody.Message, *correctResponse[0].Message)
 	responseBody.Message, correctResponse[0].Message = nil, nil
 
+	correctResponse[0].DateTime = parseDateTime(correctResponse[0].DateTime)
 	assert.Equal(t, *responseBody, *correctResponse[0])
 }
 
