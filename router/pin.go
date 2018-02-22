@@ -63,6 +63,7 @@ func PostPin(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to create pin: %v", err))
 	}
 
+	pin.CreatedAt = pin.CreatedAt.Truncate(time.Second) //自前で秒未満切り捨てしないと駄目
 	responseBody, formatErr := formatPin(pin)
 	if formatErr != nil {
 		pin.Delete()
