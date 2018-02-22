@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -252,4 +253,8 @@ func mustMakeFile(t *testing.T) *model.File {
 	}
 	require.NoError(t, file.Create(bytes.NewBufferString("test message")))
 	return file
+}
+
+func parseDateTime(dateTime time.Time) time.Time {
+	return dateTime.Truncate(time.Second).In(time.UTC)
 }
