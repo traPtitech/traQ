@@ -1,107 +1,69 @@
 package model
 
 import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func TestTableNamePin(t *testing.T) {
-
-	pin := &Pin{}
-	if "pins" != pin.TableName() {
-		t.Fatalf("Tablename is wrong: want pins, actual %s", pin.TableName())
+func beforePinTest(t *testing.T) *Pin {
+	testMessage := mustMakeMessage(t)
+	testChannel := mustMakeChannel(t, "pin")
+	testPin := &Pin{
+		UserID:    testUserID,
+		MessageID: testMessage.ID,
+		ChannelID: testChannel.ID,
 	}
+	return testPin
 }
 
-func TestCreatePins(t *testing.T) {
-	beforeTest(t)
-	message := makeMessage()
-	pin := &Pin{
-		UserID:    testUserID,
-		MessageID: message.ID,
-		ChannelID: message.ChannelID,
-	}
-
-	if err := pin.Create(); err != nil {
-		t.Fatalf("Pin create faild: %v", err)
-	}
-
+func TestPinTableName(t *testing.T) {
+	assert.Equal(t, "pins", (&Pin{}).TableName())
 }
-func TestGetPinnedMessage(t *testing.T) {
+
+func TestPinCreate(t *testing.T) {
 	beforeTest(t)
-	messageCount := 5
-	message := makeMessage()
-	pin := &Pin{
-		UserID:    testUserID,
-		MessageID: message.ID,
-		ChannelID: message.ChannelID,
-	}
-	if err := pin.Create(); err != nil {
-		t.Fatalf("pin create failed: %v", err)
-	}
-	for i := 0; i < messageCount; i++ {
-		mes := makeMessage()
-		p := &Pin{
-			UserID:    testUserID,
-			MessageID: mes.ID,
-			ChannelID: mes.ChannelID,
-		}
-		if err := p.Create(); err != nil {
-			t.Fatalf("Pin create is failed: %v", err)
-		}
-	}
-	messages, err := GetPinMesssages(pin.ChannelID)
+	testPin := beforePinTest(t)
 
-	if err != nil {
-		t.Fatalf("Getting pined messages failed: %v", err)
-	}
-
-	if len(messages) != messageCount {
-		print(messages)
-		t.Fatalf("Message count wrong: want %d, actual %d", messageCount, len(messages))
-	}
-
-	if messages[0].Text != message.Text {
-		t.Fatalf("Message text wrong: want %s, actual %s", message.Text, messages[0].Text)
-	}
+	//正常系
+	assert.NoError(t, testPin.Create())
+	pins, err := GetPinsByChannelID(testPin.ChannelID)
+	require.NoError(t, err)
+	assert.Len(t, pins, 1)
+	assert.Equal(t, *pins[0], *testPin)
 }
-func TestDeletePin(t *testing.T) {
+
+func TestGetPin(t *testing.T) {
 	beforeTest(t)
-	messageCount := 5
-	for i := 0; i < messageCount; i++ {
-		message := makeMessage()
-		pin := &Pin{
-			UserID:    testUserID,
-			MessageID: message.ID,
-			ChannelID: message.ChannelID,
-		}
-		if err := pin.Create(); err != nil {
-			t.Fatalf("Pin create faild: %v", err)
-		}
-	}
+	testPin := beforePinTest(t)
 
-	message := makeMessage()
+	//正常系
+	require.NoError(t, testPin.Create())
+	pin, err := GetPin(testPin.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, *pin, *testPin)
+}
 
-	messages, err := GetPinMesssages(message.ChannelID)
+func TestGetPinsByChannelID(t *testing.T) {
+	beforeTest(t)
+	testPin := beforePinTest(t)
 
-	if err != nil {
-		t.Fatalf("Pin create fialed: %v", err)
-	}
+	//正常系
+	require.NoError(t, testPin.Create())
+	pins, err := GetPinsByChannelID(testPin.ChannelID)
+	assert.NoError(t, err)
+	assert.Len(t, pins, 1)
+	assert.Equal(t, *pins[0], *testPin)
+}
 
-	pin := &Pin{
-		UserID:    testUserID,
-		MessageID: messages[0].ID,
-		ChannelID: messages[0].ChannelID,
-	}
-	if err := pin.DeletePin(); err != nil {
-		t.Fatalf("Pin delete failaed: %v", err)
-	}
+func TestPinDelete(t *testing.T) {
+	beforeTest(t)
+	testPin := beforePinTest(t)
 
-	messages, err = GetPinMesssages(messages[0].ChannelID)
-	if err != nil {
-		t.Fatalf("Pin cliate failed: %v", err)
-	}
-
-	if len(messages) != messageCount-1 {
-		t.Fatalf("Message count wrong: want %d, actual %d", messageCount-1, len(messages))
-	}
+	//正常系
+	require.NoError(t, testPin.Create())
+	assert.NoError(t, testPin.Delete())
+	pins, err := GetPinsByChannelID(testPin.ChannelID)
+	require.NoError(t, err)
+	assert.Len(t, pins, 0)
 }
