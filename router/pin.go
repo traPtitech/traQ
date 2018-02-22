@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -13,7 +14,7 @@ type PinForResponse struct {
 	PinID     string              `json:"pinId"`
 	ChannelID string              `json:"channelId"`
 	UserID    string              `json:"userId"`
-	DateTime  string              `json:"dateTime"`
+	DateTime  time.Time           `json:"dateTime"`
 	Message   *MessageForResponse `json:"message"`
 }
 

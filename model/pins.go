@@ -2,15 +2,16 @@ package model
 
 import (
 	"fmt"
+	"time"
 )
 
 //Pin ピン留めのレコード
 type Pin struct {
-	ID        string `xorm:"char(36) pk"`
-	ChannelID string `xorm:"char(36) not null"`
-	MessageID string `xorm:"char(36) not null"`
-	UserID    string `xorm:"char(36) not null"`
-	CreatedAt string `xorm:"created not null"`
+	ID        string    `xorm:"char(36) pk"`
+	ChannelID string    `xorm:"char(36) not null"`
+	MessageID string    `xorm:"char(36) not null"`
+	UserID    string    `xorm:"char(36) not null"`
+	CreatedAt time.Time `xorm:"created not null"`
 }
 
 //TableName ピン留めテーブル名
