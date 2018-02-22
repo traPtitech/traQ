@@ -133,6 +133,12 @@ func main() {
 	api.DELETE("/files/:fileID", router.DeleteFileByID)
 	api.GET("/files/:fileID/meta", router.GetMetaDataByFileID)
 
+	// Tag: pin
+	api.GET("/channels/:channelID/pin", router.GetChannelPin)
+	api.POST("/channels/:channelID/pin", router.PostPin)
+	api.GET("/pin/:pinID", router.GetPin)
+	api.DELETE("/pin/:pinID", router.DeletePin)
+
 	// init notification
 	notification.Start()
 

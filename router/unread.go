@@ -59,7 +59,8 @@ func getUnreadResponse(userID string) ([]*MessageForResponse, error) {
 		if err != nil {
 			return nil, err
 		}
-		responseBody = append(responseBody, formatMessage(message))
+		res := formatMessage(message)
+		responseBody = append(responseBody, res)
 	}
 	return responseBody, nil
 }
