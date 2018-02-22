@@ -27,8 +27,13 @@ func TestGetChannelPin(t *testing.T) {
 	var responseBody []*PinForResponse
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &responseBody))
 	assert.Len(t, responseBody, 1)
+
 	correctResponse, err := formatPin(testPin)
 	require.NoError(t, err)
+
+	assert.Equal(t, *responseBody[0].Message, *correctResponse.Message)
+	responseBody[0].Message, correctResponse.Message = nil, nil
+
 	assert.Equal(t, *responseBody[0], *correctResponse)
 }
 
@@ -46,10 +51,15 @@ func TestGetPin(t *testing.T) {
 	requestWithContext(t, mw(GetPin), c)
 
 	assert.EqualValues(t, http.StatusOK, rec.Code)
-	var responseBody *PinForResponse
+	responseBody := &PinForResponse{}
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), responseBody))
+
 	correctResponse, err := formatPin(testPin)
 	require.NoError(t, err)
+
+	assert.Equal(t, *responseBody.Message, *correctResponse.Message)
+	responseBody.Message, correctResponse.Message = nil, nil
+
 	assert.Equal(t, *responseBody, *correctResponse)
 }
 
@@ -75,11 +85,16 @@ func TestPostPin(t *testing.T) {
 	requestWithContext(t, mw(PostPin), c)
 
 	assert.EqualValues(t, http.StatusCreated, rec.Code)
-	var responseBody *MessageForResponse
+	responseBody := &PinForResponse{}
 	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), responseBody))
+
 	correctResponse, err := getChannelPinResponse(testChannel.ID)
 	require.NoError(t, err)
 	require.Len(t, correctResponse, 1)
+
+	assert.Equal(t, *responseBody.Message, *correctResponse[0].Message)
+	responseBody.Message, correctResponse[0].Message = nil, nil
+
 	assert.Equal(t, *responseBody, *correctResponse[0])
 }
 
