@@ -30,6 +30,7 @@ func TestPinCreate(t *testing.T) {
 	pins, err := GetPinsByChannelID(testPin.ChannelID)
 	require.NoError(t, err)
 	assert.Len(t, pins, 1)
+	testPin.CreatedAt = pins[0].CreatedAt
 	assert.Equal(t, *pins[0], *testPin)
 }
 
@@ -41,6 +42,7 @@ func TestGetPin(t *testing.T) {
 	require.NoError(t, testPin.Create())
 	pin, err := GetPin(testPin.ID)
 	assert.NoError(t, err)
+	testPin.CreatedAt = pin.CreatedAt
 	assert.Equal(t, *pin, *testPin)
 }
 
@@ -53,6 +55,7 @@ func TestGetPinsByChannelID(t *testing.T) {
 	pins, err := GetPinsByChannelID(testPin.ChannelID)
 	assert.NoError(t, err)
 	assert.Len(t, pins, 1)
+	testPin.CreatedAt = pins[0].CreatedAt
 	assert.Equal(t, *pins[0], *testPin)
 }
 
