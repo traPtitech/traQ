@@ -4,11 +4,23 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"github.com/labstack/echo"
+	"net/http"
 	"regexp"
 	"time"
 )
 
 var pkceStringValidator = regexp.MustCompile("^[a-zA-Z0-9~._-]{43,128}$")
+
+type authorizeRequest struct {
+	ResponseType        string `query:"response_type"`
+	ClientID            string `query:"client_id"`
+	RedirectURI         string `query:"redirect_uri"`
+	Scope               string `query:"scope"`
+	State               string `query:"state"`
+	CodeChallenge       string `query:"code_challenge"`
+	CodeChallengeMethod string `query:"code_challenge_method"`
+}
 
 // AuthorizeData : Authorization Code Grant用の認可データ構造体
 type AuthorizeData struct {
@@ -49,4 +61,17 @@ func (data *AuthorizeData) ValidatePKCE(verifier string) (bool, error) {
 	}
 
 	return false, fmt.Errorf("unknown method: %v", data.CodeChallengeMethod)
+}
+
+// AuthorizationEndpointHandler : 認可エンドポイントのハンドラ
+func AuthorizationEndpointHandler(c echo.Context) error {
+
+	req := &authorizeRequest{}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err) //普通は起こらないはず
+	}
+
+	if len(req.ClientID) == 0 {
+
+	}
 }

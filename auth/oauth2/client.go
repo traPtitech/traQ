@@ -1,15 +1,9 @@
 package oauth2
 
-import "github.com/satori/go.uuid"
-
-// AccessScope : クライアントのスコープ
-//
-// AccessScopeに使用可能な文字のASCIIコードは次の通りです。
-//
-// %x21, %x23-5B, %x5D-7E
-//
-// /と"は使えません。
-type AccessScope string
+import (
+	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/auth/scope"
+)
 
 // Client : OAuth2.0クライアント構造体
 type Client struct {
@@ -20,5 +14,5 @@ type Client struct {
 	CreatorID    uuid.UUID
 	Secret       string
 	RedirectURI  string
-	Scope        []AccessScope
+	Scope        scope.AccessScopes
 }

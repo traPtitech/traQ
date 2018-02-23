@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/traPtitech/traQ/auth/oauth2"
 	"net/http"
 	"os"
 	"time"
@@ -106,6 +107,11 @@ func main() {
 	e.File("/login", "./client/dist/index.html")
 	e.POST("/login", router.PostLogin)
 	e.POST("/logout", router.PostLogout)
+
+	// OAuth2 / OpenID Connect
+	e.GET("/authorize", oauth2.AuthorizationEndpointHandler)
+	e.POST("/authorize", oauth2.AuthorizationEndpointHandler)
+	e.POST("/token", oauth2.TokenEndpointHandler)
 
 	api := e.Group("/api/1.0")
 	api.Use(router.GetUserInfo)
