@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/auth/scope"
+	"github.com/traPtitech/traQ/model"
 	"net/http"
 	"time"
 )
@@ -56,6 +57,80 @@ func TokenEndpointHandler(c echo.Context) error {
 	case "authorization_code": // Authorization Code Grant
 
 	case "password": // Resource Owner Password Credentials Grant
+		cid, cpw, ok := c.Request().BasicAuth()
+		if !ok { // Request Body
+			if len(req.ClientID) == 0 {
+				return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidRequest})
+			}
+			cid = req.ClientID
+			cpw = req.Password
+		}
+
+		client, err := store.GetClient(cid)
+		if err != nil {
+			c.Echo().Logger.Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		} else if client == nil {
+			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidClient})
+		}
+
+		if client.Confidential {
+			if client.Secret != cpw {
+				return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidClient})
+			}
+		}
+
+		if len(req.Username) == 0 {
+			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidRequest})
+		}
+
+		user := &model.User{Name: req.Username}
+		if err := user.Authorization(req.Password); err != nil {
+			return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidGrant})
+		}
+
+		reqScopes, err := splitAndValidateScope(req.Scope)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidScope})
+		}
+
+		var validScopes scope.AccessScopes
+		if len(reqScopes) > 0 {
+			for _, s := range reqScopes {
+				if client.Scope.Contains(s) {
+					validScopes = append(validScopes, s)
+				}
+			}
+		} else {
+			validScopes = client.Scope
+		}
+
+		newToken := &Token{
+			ClientID:    cid,
+			UserID:      uuid.FromStringOrNil(user.ID),
+			RedirectURI: client.RedirectURI,
+			AccessToken: generateRandomString(),
+			CreatedAt:   time.Now(),
+			ExpiresIn:   AccessTokenExp,
+			Scope:       validScopes,
+		}
+
+		if IsRefreshEnabled {
+			newToken.RefreshToken = generateRandomString()
+		}
+
+		if err := store.SaveToken(newToken); err != nil {
+			c.Echo().Logger.Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+
+		res.TokenType = "Bearer"
+		res.AccessToken = newToken.AccessToken
+		res.RefreshToken = newToken.RefreshToken
+		res.ExpiresIn = newToken.ExpiresIn
+		if len(reqScopes) != len(validScopes) {
+			res.Scope = newToken.Scope.String()
+		}
 
 	case "client_credentials": // Client Credentials Grant
 		id, pw, ok := c.Request().BasicAuth()
