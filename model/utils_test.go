@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 	}
 	defer engine.Close()
 	engine.ShowSQL(false)
-	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags", "unreads", "devices", "users_subscribe_channels", "files")
+	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags", "unreads", "devices", "users_subscribe_channels", "files", "pins")
 
 	engine.SetMapper(core.GonicMapper{})
 	SetXORMEngine(engine)
@@ -59,7 +59,7 @@ func TestMain(m *testing.M) {
 }
 
 func beforeTest(t *testing.T) {
-	require.NoError(t, engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags", "unreads", "devices", "users_subscribe_channels", "files"))
+	require.NoError(t, engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags", "unreads", "devices", "users_subscribe_channels", "files", "pins"))
 	require.NoError(t, SyncSchema())
 }
 

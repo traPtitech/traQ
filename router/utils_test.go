@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -223,6 +224,17 @@ func mustStarChannel(t *testing.T, userID, channelID string) *model.Star {
 	return star
 }
 
+func mustMakePin(t *testing.T, channelID, userID, messageID string) *model.Pin {
+	pin := &model.Pin{
+		ChannelID: channelID,
+		UserID:    userID,
+		MessageID: messageID,
+	}
+
+	require.NoError(t, pin.Create())
+	return pin
+}
+
 func mustCreateUser(t *testing.T) {
 	user := &model.User{
 		Name:  "PostLogin",
@@ -241,4 +253,8 @@ func mustMakeFile(t *testing.T) *model.File {
 	}
 	require.NoError(t, file.Create(bytes.NewBufferString("test message")))
 	return file
+}
+
+func parseDateTime(dateTime time.Time) time.Time {
+	return dateTime.Truncate(time.Second).In(time.UTC)
 }

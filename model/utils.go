@@ -31,6 +31,7 @@ func SyncSchema() error {
 		&Star{},
 		&Device{},
 		&UserSubscribeChannel{},
+		&Pin{},
 	); err != nil {
 		return fmt.Errorf("Failed to sync Table schema: %v", err)
 	}
