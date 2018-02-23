@@ -58,6 +58,67 @@ func TokenEndpointHandler(c echo.Context) error {
 	case "password": // Resource Owner Password Credentials Grant
 
 	case "client_credentials": // Client Credentials Grant
+		id, pw, ok := c.Request().BasicAuth()
+		if !ok { // Request Body
+			if len(req.ClientID) == 0 {
+				return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidRequest})
+			}
+			id = req.ClientID
+			pw = req.Password
+		}
+
+		client, err := store.GetClient(id)
+		if err != nil {
+			c.Echo().Logger.Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		} else if client == nil {
+			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidClient})
+		}
+
+		if !client.Confidential {
+			return c.JSON(http.StatusUnauthorized, errorResponse{Error: errUnauthorizedClient})
+		}
+		if client.Secret != pw {
+			return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidClient})
+		}
+
+		reqScopes, err := splitAndValidateScope(req.Scope)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidScope})
+		}
+
+		var validScopes scope.AccessScopes
+		if len(reqScopes) > 0 {
+			for _, s := range reqScopes {
+				if client.Scope.Contains(s) {
+					validScopes = append(validScopes, s)
+				}
+			}
+		} else {
+			validScopes = client.Scope
+		}
+
+		newToken := &Token{
+			ClientID:    id,
+			UserID:      nil,
+			RedirectURI: client.RedirectURI,
+			AccessToken: generateRandomString(),
+			CreatedAt:   time.Now(),
+			ExpiresIn:   AccessTokenExp,
+			Scope:       validScopes,
+		}
+
+		if err := store.SaveToken(newToken); err != nil {
+			c.Echo().Logger.Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+
+		res.TokenType = "Bearer"
+		res.AccessToken = newToken.AccessToken
+		res.ExpiresIn = newToken.ExpiresIn
+		if len(reqScopes) != len(validScopes) {
+			res.Scope = newToken.Scope.String()
+		}
 
 	case "refresh_token": // Refreshing an Access Token
 		if len(req.RefreshToken) == 0 {
