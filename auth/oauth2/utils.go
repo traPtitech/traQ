@@ -20,13 +20,15 @@ func SetOAuth2Store(s Store) {
 
 func splitAndValidateScope(str string) (scope.AccessScopes, error) {
 	var scopes scope.AccessScopes
+	set := map[scope.AccessScope]struct{}{}
 
-	for _, v := range strings.Split(str, " ") {
+	for _, v := range strings.Fields(str) {
 		s := scope.AccessScope(v)
-		if !scope.Valid(s) {
+		if _, ok := set[s]; !scope.Valid(s) || ok {
 			return nil, errors.New(v)
 		}
 		scopes = append(scopes, s)
+		set[s] = struct{}{}
 	}
 
 	return scopes, nil

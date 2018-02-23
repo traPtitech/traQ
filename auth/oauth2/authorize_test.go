@@ -51,6 +51,9 @@ func TestAuthorizeData_ValidatePKCE(t *testing.T) {
 
 	data = &AuthorizeData{}
 	if ok, err := data.ValidatePKCE("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"); assert.NoError(err) {
+		assert.False(ok)
+	}
+	if ok, err := data.ValidatePKCE(""); assert.NoError(err) {
 		assert.True(ok)
 	}
 

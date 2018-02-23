@@ -161,7 +161,9 @@ func TokenEndpointHandler(c echo.Context) error {
 		res.AccessToken = newToken.AccessToken
 		res.RefreshToken = newToken.RefreshToken
 		res.ExpiresIn = newToken.ExpiresIn
-		res.Scope = newToken.Scope.String()
+		if len(code.OriginalScope) != len(newToken.Scope) {
+			res.Scope = newToken.Scope.String()
+		}
 
 	case "password": // Resource Owner Password Credentials Grant
 		cid, cpw, ok := c.Request().BasicAuth()

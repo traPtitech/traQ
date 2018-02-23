@@ -1,6 +1,8 @@
 package scope
 
-import "strings"
+import (
+	"strings"
+)
 
 // AccessScope : クライアントのスコープ
 //
@@ -15,15 +17,31 @@ type AccessScope string
 type AccessScopes []AccessScope
 
 const (
-	Read        AccessScope = "read"
+	// OpenID : OpenID Connect用
+	OpenID AccessScope = "openid"
+	// Profile : OpenID Connect用
+	Profile AccessScope = "profile"
+	// Email : OpenID Connect用
+	Email AccessScope = "email"
+
+	// Read : 読み込み権限
+	Read AccessScope = "read"
+	// PrivateRead : プライベートなチャンネルの読み込み権限
 	PrivateRead AccessScope = "private_read"
-	Write       AccessScope = "write"
+	// Write : 書き込み権限
+	Write AccessScope = "write"
+	// PrivateWrite : プライベートなチャンネルの書き込み権限
+	PrivateWrite AccessScope = "private_write"
 )
 
 var list = map[AccessScope]bool{
-	Read:        true,
-	PrivateRead: true,
-	Write:       true,
+	OpenID:       true,
+	Profile:      true,
+	Email:        true,
+	Read:         true,
+	PrivateRead:  true,
+	Write:        true,
+	PrivateWrite: true,
 }
 
 // Valid : 有効なスコープ文字列かどうかを返します
