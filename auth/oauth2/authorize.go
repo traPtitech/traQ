@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/labstack/echo"
+	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/auth/scope"
 	"net/http"
 	"regexp"
 	"time"
@@ -26,10 +28,11 @@ type authorizeRequest struct {
 type AuthorizeData struct {
 	Code                string
 	ClientID            string
+	UserID              uuid.UUID
 	CreatedAt           time.Time
 	ExpiresIn           int
 	RedirectURI         string
-	Scope               string
+	Scope               scope.AccessScopes
 	CodeChallenge       string
 	CodeChallengeMethod string
 }

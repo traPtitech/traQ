@@ -52,9 +52,116 @@ func TokenEndpointHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidRequest})
 	}
 
-	res := &tokenResponse{}
+	res := &tokenResponse{
+		TokenType: "Bearer",
+	}
 	switch req.GrantType {
 	case "authorization_code": // Authorization Code Grant
+		if len(req.Code) == 0 {
+			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidRequest})
+		}
+
+		code, err := store.GetAuthorize(req.Code)
+		if err != nil {
+			c.Echo().Logger.Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		} else if code == nil {
+			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidGrant})
+		}
+
+		if code.IsExpired() {
+			if err := store.DeleteAuthorize(code.Code); err != nil {
+				c.Echo().Logger.Error(err)
+			}
+			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidGrant})
+		}
+
+		client, err := store.GetClient(code.ClientID)
+		if err != nil {
+			c.Echo().Logger.Error(err)
+			if err := store.DeleteAuthorize(code.Code); err != nil {
+				c.Echo().Logger.Error(err)
+			}
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		} else if client == nil {
+			if err := store.DeleteAuthorize(code.Code); err != nil {
+				c.Echo().Logger.Error(err)
+			}
+			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidClient})
+		}
+
+		id, pw, ok := c.Request().BasicAuth()
+		if !ok { // Request Body
+			if len(req.ClientID) == 0 {
+				if err := store.DeleteAuthorize(code.Code); err != nil {
+					c.Echo().Logger.Error(err)
+				}
+				return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidClient})
+			}
+			id = req.ClientID
+			pw = req.Password
+		}
+		if client.ID != id {
+			if err := store.DeleteAuthorize(code.Code); err != nil {
+				c.Echo().Logger.Error(err)
+			}
+			return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidClient})
+		}
+		if client.Confidential {
+			if client.Secret != pw {
+				if err := store.DeleteAuthorize(code.Code); err != nil {
+					c.Echo().Logger.Error(err)
+				}
+				return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidClient})
+			}
+		}
+
+		if client.RedirectURI != req.RedirectURI {
+			if err := store.DeleteAuthorize(code.Code); err != nil {
+				c.Echo().Logger.Error(err)
+			}
+			return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidGrant})
+		}
+
+		if ok, err := code.ValidatePKCE(req.CodeVerifier); err != nil {
+			if err := store.DeleteAuthorize(code.Code); err != nil {
+				c.Echo().Logger.Error(err)
+			}
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		} else if !ok {
+			if err := store.DeleteAuthorize(code.Code); err != nil {
+				c.Echo().Logger.Error(err)
+			}
+			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidRequest})
+		}
+
+		newToken := &Token{
+			ClientID:    client.ID,
+			UserID:      code.UserID,
+			RedirectURI: client.RedirectURI,
+			AccessToken: generateRandomString(),
+			CreatedAt:   time.Now(),
+			ExpiresIn:   AccessTokenExp,
+			Scope:       code.Scope,
+		}
+
+		if IsRefreshEnabled {
+			newToken.RefreshToken = generateRandomString()
+		}
+
+		if err := store.DeleteAuthorize(code.Code); err != nil {
+			c.Echo().Logger.Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		if err := store.SaveToken(newToken); err != nil { // get validity
+			c.Echo().Logger.Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+
+		res.AccessToken = newToken.AccessToken
+		res.RefreshToken = newToken.RefreshToken
+		res.ExpiresIn = newToken.ExpiresIn
+		res.Scope = newToken.Scope.String()
 
 	case "password": // Resource Owner Password Credentials Grant
 		cid, cpw, ok := c.Request().BasicAuth()
@@ -124,7 +231,6 @@ func TokenEndpointHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
-		res.TokenType = "Bearer"
 		res.AccessToken = newToken.AccessToken
 		res.RefreshToken = newToken.RefreshToken
 		res.ExpiresIn = newToken.ExpiresIn
@@ -188,7 +294,6 @@ func TokenEndpointHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
-		res.TokenType = "Bearer"
 		res.AccessToken = newToken.AccessToken
 		res.ExpiresIn = newToken.ExpiresIn
 		if len(reqScopes) != len(validScopes) {
@@ -246,7 +351,7 @@ func TokenEndpointHandler(c echo.Context) error {
 				}
 			}
 		} else {
-			newScopes = nil
+			newScopes = token.Scope
 		}
 
 		newToken := &Token{
@@ -272,11 +377,12 @@ func TokenEndpointHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
-		res.TokenType = "Bearer"
 		res.AccessToken = newToken.AccessToken
 		res.RefreshToken = newToken.RefreshToken
-		res.Scope = newToken.Scope.String()
 		res.ExpiresIn = newToken.ExpiresIn
+		if len(token.Scope) != len(newToken.Scope) {
+			res.Scope = newToken.Scope.String()
+		}
 
 	default: // ERROR
 		return c.JSON(http.StatusBadRequest, errorResponse{Error: errUnsupportedGrantType})
