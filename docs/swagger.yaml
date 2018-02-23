@@ -942,7 +942,10 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/UploadFile"
+              properties:
+                file:
+                  type: string
+                  format: binary
       responses:
         "201":
           description: |+
@@ -960,6 +963,13 @@ paths:
       tags:
         - file
       description: 指定したファイルの中身を取得します。
+      parameters:
+        - name: dl
+          description: ファイルをダウンロードする場合に1を指定する
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
         "200":
           description: |+
@@ -1033,7 +1043,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /files/{fileID}/thumnail:
+  /files/{fileID}/thumbnail:
     parameters:
       - $ref: "#/components/parameters/fileIdInPath"
     get:
@@ -1555,13 +1565,6 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Stamp"
-
-    UploadFile:
-      type: object
-      properties:
-        file:
-          type: string
-          format: binary
 
     FileInfo:
       type: object
