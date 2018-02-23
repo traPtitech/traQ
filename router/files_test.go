@@ -10,6 +10,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/labstack/echo"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
@@ -49,6 +50,19 @@ func TestGetFileByID(t *testing.T) {
 	if assert.EqualValues(t, http.StatusOK, rec.Code) {
 		assert.Equal(t, "test message", rec.Body.String())
 	}
+
+	c, rec = getContext(e, t, cookie, nil)
+	c.SetPath("/:fileID")
+	c.SetParamNames("fileID")
+	c.SetParamValues(file.ID)
+	c.Request().URL.RawQuery = "dl=1"
+
+	requestWithContext(t, mw(GetFileByID), c)
+	if assert.EqualValues(t, http.StatusOK, rec.Code) {
+		assert.EqualValues(t, fmt.Sprintf("attachment; filename=%s", file.Name), rec.Header().Get(echo.HeaderContentDisposition))
+
+	}
+
 }
 func TestDeleteFileByID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)

@@ -46,6 +46,7 @@ func PostFile(c echo.Context) error {
 // GetFileByID GET /file/{fileID}
 func GetFileByID(c echo.Context) error {
 	ID := c.Param("fileID")
+	dl := c.QueryParam("dl")
 
 	file, err := model.OpenFileByID(ID)
 	if err != nil {
@@ -56,6 +57,10 @@ func GetFileByID(c echo.Context) error {
 	f, err := model.GetMetaFileDataByID(ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get File")
+	}
+
+	if dl == "1" {
+		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", f.Name))
 	}
 
 	return c.Stream(http.StatusOK, f.Mime, file)
