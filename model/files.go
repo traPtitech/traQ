@@ -125,6 +125,7 @@ type devFileManager struct{}
 
 //ReadByID ファイルを取得します
 func (fm *devFileManager) OpenFileByID(ID string) (*os.File, error) {
+	fm.setDir()
 	fileName := dirName + "/" + ID
 	if _, err := os.Stat(fileName); err != nil {
 		return nil, fmt.Errorf("Invalid ID: %s", ID)
@@ -140,6 +141,7 @@ func (fm *devFileManager) OpenFileByID(ID string) (*os.File, error) {
 
 // WriteByID srcの内容をIDで指定されたファイルに書き込みます
 func (fm *devFileManager) WriteByID(src io.Reader, ID string) error {
+	fm.setDir()
 	if _, err := os.Stat(dirName); err != nil {
 		if err = os.Mkdir(dirName, 0700); err != nil {
 			return fmt.Errorf("Can't create directory: %v", err)
@@ -156,4 +158,10 @@ func (fm *devFileManager) WriteByID(src io.Reader, ID string) error {
 		return fmt.Errorf("Failed to write into file %v", err)
 	}
 	return nil
+}
+
+func (fm *devFileManager) setDir() {
+	if dir := os.Getenv("TRAQ_TEMP"); dir != "" {
+		dirName = dir
+	}
 }
