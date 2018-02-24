@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/traPtitech/traQ/auth/oauth2"
+	"github.com/traPtitech/traQ/auth/openid"
 	"net/http"
 	"os"
 	"time"
@@ -112,6 +113,8 @@ func main() {
 	e.GET("/authorize", oauth2.AuthorizationEndpointHandler)
 	e.POST("/authorize", oauth2.AuthorizationEndpointHandler)
 	e.POST("/token", oauth2.TokenEndpointHandler)
+	e.GET("/.well-known/openid-configuration", openid.DiscoveryHandler)
+	e.GET("/publickeys", openid.PublicKeysHandler)
 
 	api := e.Group("/api/1.0")
 	api.Use(router.GetUserInfo)

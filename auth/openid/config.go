@@ -1,13 +1,34 @@
 package openid
 
 import (
+	"bytes"
 	"crypto/rsa"
+	"encoding/base64"
+	"encoding/binary"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/labstack/echo"
+	"net/http"
 )
 
 var (
 	privateKey *rsa.PrivateKey
 	publicKey  *rsa.PublicKey
+	issuer     = "https://" //FIXME //TODO
+	discovery  = map[string]interface{}{
+		"issuer":                                issuer,
+		"authorization_endpoint":                issuer + "/authorize",
+		"token_endpoint":                        issuer + "/token",
+		"jwks_uri":                              issuer + "/publickeys",
+		"response_types_supported":              []string{"code"},
+		"subject_types_supported":               []string{"public"},
+		"id_token_signing_alg_values_supported": []string{"RS256"},
+		"scopes_supported":                      []string{"openid", "email", "profile"},
+		"grantTypesSupported":                   []string{"authorization_code", "refresh_token", "client_credentials", "password"},
+		"token_endpoint_auth_methods_supported": []string{"client_secret_basic", "client_secret_post"},
+		"claims_supported": []string{
+			"aud", "email", "email_verified", "exp", "iat", "iss", "name", "sub",
+		},
+	}
 )
 
 // LoadKeys : OpenID Connectのjwt用のRSA秘密鍵・公開鍵を読み込みます
@@ -22,4 +43,27 @@ func LoadKeys(private, public []byte) error {
 		return err
 	}
 	return nil
+}
+
+// DiscoveryHandler returns the OpenID Connect discovery object.
+func DiscoveryHandler(c echo.Context) error {
+	return c.JSON(http.StatusOK, discovery)
+}
+
+// PublicKeysHandler publishes the public signing keys.
+func PublicKeysHandler(c echo.Context) error {
+	data := make([]byte, 8)
+	binary.BigEndian.PutUint64(data, uint64(publicKey.E))
+
+	res := map[string]interface{}{
+		"keys": map[string]interface{}{
+			"kty": "RSA",
+			"alg": "RS256",
+			"use": "sig",
+			"n":   base64.RawURLEncoding.EncodeToString(publicKey.N.Bytes()),
+			"e":   base64.RawURLEncoding.EncodeToString(bytes.TrimLeft(data, "\x00")),
+		},
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
