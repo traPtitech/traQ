@@ -47,11 +47,6 @@ func TestMain(m *testing.M) {
 
 	dbname := "traq-test-router"
 
-	dirName := os.Getenv("TRAQ_TEMP")
-	if dirName == "" {
-		dirName = "../resources"
-	}
-
 	var err error
 	engine, err = xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=true", user, pass, host, dbname))
 	if err != nil {
@@ -69,7 +64,10 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	code := m.Run()
-	os.RemoveAll(dirName)
+
+	fm := &model.DevFileManager{}
+	os.RemoveAll(fm.GetDir())
+
 	os.Exit(code)
 }
 
