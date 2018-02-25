@@ -2,9 +2,10 @@ package router
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
-	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -201,27 +202,40 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
 	}
 
-	channelID := c.Param("channelID")
-	channel := &model.Channel{ID: channelID}
-	ok, err := channel.Exists(userID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while verifying the channel.")
-	}
-	if !ok {
-		return echo.NewHTTPError(http.StatusNotFound, "The specified channel does not exist.")
-	}
-
 	if !requestBody.Confirm {
 		return echo.NewHTTPError(http.StatusBadRequest, "confirm is not true.")
 	}
-	channel.UpdaterID = userID
-	channel.IsDeleted = true
 
-	if err := channel.Update(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "An error occuerred when channel model update.")
+	deleteQue := make([]string, 1)
+	deleteQue[0] = c.Param("channelID")
+	for len(deleteQue) > 0 {
+		channelID := deleteQue[0]
+		deleteQue = deleteQue[1:]
+		fmt.Println(len(deleteQue))
+		channel := &model.Channel{ID: channelID}
+		ok, err := channel.Exists(userID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while verifying the channel.")
+		}
+		if !ok {
+			return echo.NewHTTPError(http.StatusNotFound, "The specified channel does not exist.")
+		}
+
+		children, err := channel.Children(userID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while get children channel")
+		}
+		deleteQue = append(deleteQue, children...)
+
+		channel.UpdaterID = userID
+		channel.IsDeleted = true
+
+		if err := channel.Update(); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "An error occuerred when channel model update.")
+		}
+
+		go notification.Send(events.ChannelDeleted, events.ChannelEvent{ID: channelID})
 	}
-
-	go notification.Send(events.ChannelDeleted, events.ChannelEvent{ID: channelID})
 	return c.NoContent(http.StatusNoContent)
 }
 
