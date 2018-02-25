@@ -6,6 +6,7 @@ import (
 	"github.com/satori/go.uuid"
 	"net/http"
 	"sync"
+	"time"
 )
 
 var (
@@ -95,6 +96,7 @@ func Stream(userID uuid.UUID, res *echo.Response) {
 	rw := res.Writer
 	fl := res.Writer.(http.Flusher)
 	cn := res.CloseNotify()
+	mu := sync.Mutex{}
 
 	select {
 	case <-streamer.stop:
@@ -109,6 +111,29 @@ func Stream(userID uuid.UUID, res *echo.Response) {
 		rw.Write(sseSeparator)
 		fl.Flush()
 	}
+
+	// proxyに切られる問題の対策
+	go func() {
+		defer func() {
+			recover()
+		}()
+
+		for {
+			time.Sleep(10 * time.Second)
+			select {
+			case <-streamer.stop:
+				return
+			case <-cn:
+				return
+			default:
+				mu.Lock()
+				rw.Write([]byte(":"))
+				rw.Write(sseSeparator)
+				fl.Flush()
+				mu.Unlock()
+			}
+		}
+	}()
 
 	for {
 		select {
@@ -126,11 +151,13 @@ func Stream(userID uuid.UUID, res *echo.Response) {
 		case message := <-client.send:
 			//message.payload is not unsupported type or unsupported value.
 			data, _ := json.Marshal(message.Payload)
+			mu.Lock()
 			rw.Write([]byte("event: " + message.EventType + "\n"))
 			rw.Write([]byte("data: "))
 			rw.Write(data)
 			rw.Write(sseSeparator)
 			fl.Flush()
+			mu.Unlock()
 		}
 	}
 }
