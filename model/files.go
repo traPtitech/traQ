@@ -57,7 +57,7 @@ func (f *File) Create(src io.Reader) error {
 	f.Mime = mime.TypeByExtension(filepath.Ext(f.Name))
 
 	var writer FileWriter
-	writer = &devFileManager{} //dependent on dev environment
+	writer = NewDevFileManager() //dependent on dev environment
 	if err := writer.WriteByID(src, f.ID); err != nil {
 		return fmt.Errorf("Failed to write data into file: %v", err)
 	}
@@ -87,7 +87,7 @@ func (f *File) Delete() error {
 func OpenFileByID(ID string) (*os.File, error) {
 	//TODO: テストコード
 	var reader FileReader
-	reader = &devFileManager{} //dependent on dev environment
+	reader = NewDevFileManager() //dependent on dev environment
 	return reader.OpenFileByID(ID)
 }
 
@@ -117,15 +117,14 @@ func calcMD5(src io.Reader) (string, error) {
 
 // 以下、開発環境用
 
-var (
-	dirName = "../resources"
-)
+// DevFileManager 開発用。routerの方でも使用するために公開
+type DevFileManager struct {
+	dirName string
+}
 
-type devFileManager struct{}
-
-//ReadByID ファイルを取得します
-func (fm *devFileManager) OpenFileByID(ID string) (*os.File, error) {
-	fileName := dirName + "/" + ID
+//OpenFileByID ファイルを取得します
+func (fm *DevFileManager) OpenFileByID(ID string) (*os.File, error) {
+	fileName := fm.dirName + "/" + ID
 	if _, err := os.Stat(fileName); err != nil {
 		return nil, fmt.Errorf("Invalid ID: %s", ID)
 	}
@@ -139,14 +138,14 @@ func (fm *devFileManager) OpenFileByID(ID string) (*os.File, error) {
 }
 
 // WriteByID srcの内容をIDで指定されたファイルに書き込みます
-func (fm *devFileManager) WriteByID(src io.Reader, ID string) error {
-	if _, err := os.Stat(dirName); err != nil {
-		if err = os.Mkdir(dirName, 0700); err != nil {
+func (fm *DevFileManager) WriteByID(src io.Reader, ID string) error {
+	if _, err := os.Stat(fm.dirName); err != nil {
+		if err = os.Mkdir(fm.dirName, 0700); err != nil {
 			return fmt.Errorf("Can't create directory: %v", err)
 		}
 	}
 
-	file, err := os.Create(dirName + "/" + ID)
+	file, err := os.Create(fm.dirName + "/" + ID)
 	if err != nil {
 		return fmt.Errorf("Failed to open file: %v", err)
 	}
@@ -156,4 +155,20 @@ func (fm *devFileManager) WriteByID(src io.Reader, ID string) error {
 		return fmt.Errorf("Failed to write into file %v", err)
 	}
 	return nil
+}
+
+// GetDir ファイルの保存先を取得する
+func (fm *DevFileManager) GetDir() string {
+	return fm.dirName
+}
+
+// NewDevFileManager DevFileManagerのコンストラクタ
+func NewDevFileManager() *DevFileManager {
+	fm := &DevFileManager{}
+	if dir := os.Getenv("TRAQ_TEMP"); dir != "" {
+		fm.dirName = dir
+	} else {
+		fm.dirName = "../resources"
+	}
+	return fm
 }

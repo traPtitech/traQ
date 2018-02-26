@@ -26,8 +26,10 @@ func TestFile_Create(t *testing.T) {
 		CreatorID: testUserID,
 	}
 	if assert.NoError(file.Create(writeData)) {
+		fm := NewDevFileManager()
+
 		assert.NotEmpty(file.ID)
-		_, err := os.Stat(dirName + "/" + file.ID)
+		_, err := os.Stat(fm.GetDir() + "/" + file.ID)
 		assert.NoError(err)
 	}
 }
