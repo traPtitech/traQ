@@ -55,7 +55,7 @@ func TestMain(m *testing.M) {
 	}
 	code := m.Run()
 
-	fm := &DevFileManager{}
+	fm := NewDevFileManager()
 	os.RemoveAll(fm.GetDir())
 	os.Exit(code)
 }

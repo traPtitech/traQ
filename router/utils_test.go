@@ -65,7 +65,7 @@ func TestMain(m *testing.M) {
 	}
 	code := m.Run()
 
-	fm := &model.DevFileManager{}
+	fm := model.NewDevFileManager()
 	os.RemoveAll(fm.GetDir())
 
 	os.Exit(code)

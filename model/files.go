@@ -57,7 +57,7 @@ func (f *File) Create(src io.Reader) error {
 	f.Mime = mime.TypeByExtension(filepath.Ext(f.Name))
 
 	var writer FileWriter
-	writer = &DevFileManager{} //dependent on dev environment
+	writer = NewDevFileManager() //dependent on dev environment
 	if err := writer.WriteByID(src, f.ID); err != nil {
 		return fmt.Errorf("Failed to write data into file: %v", err)
 	}
@@ -87,7 +87,7 @@ func (f *File) Delete() error {
 func OpenFileByID(ID string) (*os.File, error) {
 	//TODO: テストコード
 	var reader FileReader
-	reader = &DevFileManager{} //dependent on dev environment
+	reader = NewDevFileManager() //dependent on dev environment
 	return reader.OpenFileByID(ID)
 }
 
@@ -124,7 +124,6 @@ type DevFileManager struct {
 
 //OpenFileByID ファイルを取得します
 func (fm *DevFileManager) OpenFileByID(ID string) (*os.File, error) {
-	fm.setDir()
 	fileName := fm.dirName + "/" + ID
 	if _, err := os.Stat(fileName); err != nil {
 		return nil, fmt.Errorf("Invalid ID: %s", ID)
@@ -140,7 +139,6 @@ func (fm *DevFileManager) OpenFileByID(ID string) (*os.File, error) {
 
 // WriteByID srcの内容をIDで指定されたファイルに書き込みます
 func (fm *DevFileManager) WriteByID(src io.Reader, ID string) error {
-	fm.setDir()
 	if _, err := os.Stat(fm.dirName); err != nil {
 		if err = os.Mkdir(fm.dirName, 0700); err != nil {
 			return fmt.Errorf("Can't create directory: %v", err)
@@ -161,16 +159,16 @@ func (fm *DevFileManager) WriteByID(src io.Reader, ID string) error {
 
 // GetDir ファイルの保存先を取得する
 func (fm *DevFileManager) GetDir() string {
-	fm.setDir()
 	return fm.dirName
 }
 
-func (fm *DevFileManager) setDir() {
-	if fm.dirName == "" {
-		if dir := os.Getenv("TRAQ_TEMP"); dir != "" {
-			fm.dirName = dir
-		} else {
-			fm.dirName = "../resources"
-		}
+// NewDevFileManager DevFileManagerのコンストラクタ
+func NewDevFileManager() *DevFileManager {
+	fm := &DevFileManager{}
+	if dir := os.Getenv("TRAQ_TEMP"); dir != "" {
+		fm.dirName = dir
+	} else {
+		fm.dirName = "../resources"
 	}
+	return fm
 }
