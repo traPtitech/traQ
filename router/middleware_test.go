@@ -6,19 +6,18 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
-	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
 )
 
 func TestGetUserInfo(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/test")
 
 	requestWithContext(t, mw(testGetUser), c)
 
-	assert.EqualValues(t, http.StatusOK, rec.Code, rec.Body.String())
+	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
 }
 
 func testGetUser(c echo.Context) error {

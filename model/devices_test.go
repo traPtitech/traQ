@@ -3,20 +3,19 @@ package model
 import (
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestDevice_TableName(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, "devices", (&Device{}).TableName())
 }
 
 func TestDevice_Register(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, require, user, _ := beforeTest(t)
 
-	id1 := testUserID
-	id2 := privateUserID
+	id1 := user.ID
+	id2 := mustMakeUser(t, "test2").ID
 	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 
@@ -25,16 +24,15 @@ func TestDevice_Register(t *testing.T) {
 	assert.Error((&Device{UserID: id1, Token: token2}).Register())
 
 	l, err := db.Count(&Device{})
-	require.NoError(t, err)
-	assert.Equal(int64(2), l)
+	require.NoError(err)
+	assert.EqualValues(2, l)
 }
 
 func TestDevice_Unregister(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, require, user, _ := beforeTest(t)
 
-	id1 := testUserID
-	id2 := privateUserID
+	id1 := user.ID
+	id2 := mustMakeUser(t, "test2").ID
 	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
@@ -45,21 +43,20 @@ func TestDevice_Unregister(t *testing.T) {
 
 	assert.NoError((&Device{Token: token2}).Unregister())
 	l, err := db.Count(&Device{})
-	require.NoError(t, err)
-	assert.Equal(int64(2), l)
+	require.NoError(err)
+	assert.EqualValues(2, l)
 
 	assert.NoError((&Device{UserID: id1}).Unregister())
 	l, err = db.Count(&Device{})
-	require.NoError(t, err)
-	assert.Equal(int64(0), l)
+	require.NoError(err)
+	assert.EqualValues(0, l)
 }
 
 func TestGetAllDevices(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
-	id1 := testUserID
-	id2 := privateUserID
+	id1 := user.ID
+	id2 := mustMakeUser(t, "test2").ID
 	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
@@ -75,11 +72,10 @@ func TestGetAllDevices(t *testing.T) {
 }
 
 func TestGetDevices(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
-	id1 := testUserID
-	id2 := privateUserID
+	id1 := user.ID
+	id2 := mustMakeUser(t, "test2").ID
 	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
@@ -100,11 +96,10 @@ func TestGetDevices(t *testing.T) {
 }
 
 func TestGetAllDeviceIds(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
-	id1 := testUserID
-	id2 := privateUserID
+	id1 := user.ID
+	id2 := mustMakeUser(t, "test2").ID
 	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
@@ -120,11 +115,10 @@ func TestGetAllDeviceIds(t *testing.T) {
 }
 
 func TestGetDeviceIds(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
-	id1 := testUserID
-	id2 := privateUserID
+	id1 := user.ID
+	id2 := mustMakeUser(t, "test2").ID
 	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"

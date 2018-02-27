@@ -9,14 +9,11 @@ import (
 	"strings"
 	"testing"
 
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 )
 
 func TestGetChannels(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 
 	for i := 0; i < 5; i++ {
 		mustMakeChannel(t, testUser.ID, "Channel-"+strconv.Itoa(i), true)
@@ -24,19 +21,14 @@ func TestGetChannels(t *testing.T) {
 
 	rec := request(e, t, mw(GetChannels), cookie, nil)
 
-	if rec.Code != http.StatusOK {
-		t.Log(rec.Code)
-		t.Fatal(rec.Body.String())
+	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
+		var responseBody []ChannelForResponse
+		assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody))
 	}
-
-	var responseBody []ChannelForResponse
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &responseBody))
 }
 
 func TestPostChannels(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	require := require.New(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, require := beforeTest(t)
 
 	postBody := PostChannel{
 		ChannelType: "public",
@@ -81,7 +73,7 @@ func TestPostChannels(t *testing.T) {
 		Parent:      "",
 		Member: []string{
 			testUser.ID,
-			model.CreateUUID(),
+			mustCreateUser(t, "testPostChannels").ID,
 		},
 	}
 	body, err = json.Marshal(postBody)
@@ -103,7 +95,7 @@ func TestPostChannels(t *testing.T) {
 }
 
 func TestGetChannelsByChannelID(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 
 	channel := mustMakeChannel(t, testUser.ID, "test", true)
 
@@ -113,15 +105,12 @@ func TestGetChannelsByChannelID(t *testing.T) {
 	c.SetParamValues(channel.ID)
 
 	requestWithContext(t, mw(GetChannelsByChannelID), c)
-	if assert.EqualValues(t, http.StatusOK, rec.Code, rec.Body.String()) {
-		t.Log(rec.Body.String())
-	}
+	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
 }
 
 func TestPutChannelsByChannelID(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
-	channel := mustMakeChannel(t, model.CreateUUID(), "test", true)
+	e, cookie, mw, assert, require := beforeTest(t)
+	channel := mustMakeChannel(t, testUser.ID, "test", true)
 
 	req := httptest.NewRequest("PUT", "http://test", strings.NewReader(`{"name": "renamed"}`))
 	c, rec := getContext(e, t, cookie, req)
@@ -130,7 +119,7 @@ func TestPutChannelsByChannelID(t *testing.T) {
 	c.SetParamValues(channel.ID)
 	requestWithContext(t, mw(PutChannelsByChannelID), c)
 
-	require.EqualValues(t, http.StatusOK, rec.Code, rec.Body.String())
+	require.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
 
 	channel, err := model.GetChannelByID(testUser.ID, channel.ID)
 	if assert.NoError(err) {
@@ -140,9 +129,9 @@ func TestPutChannelsByChannelID(t *testing.T) {
 }
 
 func TestDeleteChannelsByChannelID(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
+	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannel(t, model.CreateUUID(), "test", true)
+	channel := mustMakeChannel(t, testUser.ID, "test", true)
 
 	req := httptest.NewRequest("DELETE", "http://test", strings.NewReader(`{"confirm": true}`))
 	c, _ := getContext(e, t, cookie, req)
@@ -152,12 +141,12 @@ func TestDeleteChannelsByChannelID(t *testing.T) {
 	requestWithContext(t, mw(DeleteChannelsByChannelID), c)
 
 	channel, err := model.GetChannelByID(testUser.ID, channel.ID)
-	require.Error(t, err)
+	require.Error(err)
 
 	// ""で削除されていても取得できるようにするそれでちゃんと削除されているか確認する
 
 	channelList, err := model.GetChannels(testUser.ID)
-	if assert.NoError(t, err) {
-		assert.Len(t, channelList, 0)
+	if assert.NoError(err) {
+		assert.Len(channelList, 0)
 	}
 }

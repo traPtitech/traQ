@@ -3,6 +3,7 @@ package model
 import (
 	"bytes"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 
@@ -13,10 +14,7 @@ import (
 )
 
 var (
-	testUserID    = "403807a5-cae6-453e-8a09-fc75d5b4ca91"
-	nobodyID      = "0ce216f1-4a0d-4011-9f55-d0f79cfb7ca1"
-	privateUserID = "8ad765ec-426b-49c1-b4ae-f8af58af9a55"
-	engine        *xorm.Engine
+	nobodyID = "0ce216f1-4a0d-4011-9f55-d0f79cfb7ca1"
 )
 
 func TestMain(m *testing.M) {
@@ -35,24 +33,26 @@ func TestMain(m *testing.M) {
 		host = "127.0.0.1"
 	}
 
+	port := os.Getenv("MARIADB_PORT")
+	if port == "" {
+		port = "3306"
+	}
+
 	dbname := "traq-test-model"
 
-	var err error
-	engine, err = xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=true", user, pass, host, dbname))
+	engine, err := xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, dbname))
 	if err != nil {
 		panic(err)
 	}
 	defer engine.Close()
 	engine.ShowSQL(false)
-	engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags", "unreads", "devices", "users_subscribe_channels", "files", "pins")
-
 	engine.SetMapper(core.GonicMapper{})
 	SetXORMEngine(engine)
 
-	err = SyncSchema()
-	if err != nil {
+	if err := SyncSchema(); err != nil {
 		panic(err)
 	}
+
 	code := m.Run()
 
 	fm := NewDevFileManager()
@@ -60,14 +60,19 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func beforeTest(t *testing.T) {
-	require.NoError(t, engine.DropTables("sessions", "channels", "users_private_channels", "messages", "users", "clips", "stars", "users_tags", "tags", "unreads", "devices", "users_subscribe_channels", "files", "pins"))
+// beforeTest : データーベースを初期化して、テストユーザー・テストチャンネルを作成します。
+// assert, require, テストユーザー, テストチャンネルを返します。
+func beforeTest(t *testing.T) (*assert.Assertions, *require.Assertions, *User, *Channel) {
+	require.NoError(t, DropTables())
 	require.NoError(t, SyncSchema())
+
+	user := mustMakeUser(t, "testuser")
+	return assert.New(t), require.New(t), user, mustMakeChannelDetail(t, user.ID, "testchannel", "", true)
 }
 
-func mustMakeChannel(t *testing.T, tail string) *Channel {
+func mustMakeChannel(t *testing.T, userID, tail string) *Channel {
 	channel := &Channel{}
-	channel.CreatorID = testUserID
+	channel.CreatorID = userID
 	channel.Name = "Channel-" + tail
 	channel.IsPublic = true
 	require.NoError(t, channel.Create())
@@ -84,10 +89,10 @@ func mustMakeChannelDetail(t *testing.T, creatorID, name, parentID string, isPub
 	return channel
 }
 
-func mustMakeMessage(t *testing.T) *Message {
+func mustMakeMessage(t *testing.T, userID, channelID string) *Message {
 	message := &Message{
-		UserID:    testUserID,
-		ChannelID: CreateUUID(),
+		UserID:    userID,
+		ChannelID: channelID,
 		Text:      "popopo",
 	}
 	require.NoError(t, message.Create())
@@ -114,11 +119,11 @@ func mustMakeUser(t *testing.T, userName string) *User {
 	return user
 }
 
-func mustMakeFile(t *testing.T) *File {
+func mustMakeFile(t *testing.T, userID string) *File {
 	file := &File{
 		Name:      "test.txt",
 		Size:      90,
-		CreatorID: testUserID,
+		CreatorID: userID,
 	}
 	require.NoError(t, file.Create(bytes.NewBufferString("test message")))
 	return file

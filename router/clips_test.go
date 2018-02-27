@@ -3,17 +3,15 @@ package router
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestGetClips(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
-	message := mustMakeMessage(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
+	channel := mustMakeChannel(t, testUser.ID, "test", true)
+	message := mustMakeMessage(t, testUser.ID, channel.ID)
 	mustClipMessage(t, testUser.ID, message.ID)
 
 	rec := request(e, t, mw(GetClips), cookie, nil)
@@ -27,9 +25,9 @@ func TestGetClips(t *testing.T) {
 }
 
 func TestPostClips(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
-	message := mustMakeMessage(t)
+	e, cookie, mw, assert, require := beforeTest(t)
+	channel := mustMakeChannel(t, testUser.ID, "test", true)
+	message := mustMakeMessage(t, testUser.ID, channel.ID)
 
 	post := struct {
 		MessageID string `json:"messageId"`
@@ -38,7 +36,7 @@ func TestPostClips(t *testing.T) {
 	}
 
 	body, err := json.Marshal(post)
-	require.NoError(t, err)
+	require.NoError(err)
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(PostClips), cookie, req)
 
@@ -52,9 +50,9 @@ func TestPostClips(t *testing.T) {
 }
 
 func TestDeleteClips(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
-	message := mustMakeMessage(t)
+	e, cookie, mw, assert, require := beforeTest(t)
+	channel := mustMakeChannel(t, testUser.ID, "test", true)
+	message := mustMakeMessage(t, testUser.ID, channel.ID)
 	mustClipMessage(t, testUser.ID, message.ID)
 
 	post := struct {
@@ -64,7 +62,7 @@ func TestDeleteClips(t *testing.T) {
 	}
 
 	body, err := json.Marshal(post)
-	require.NoError(t, err)
+	require.NoError(err)
 	req := httptest.NewRequest("DELETE", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(DeleteClips), cookie, req)
 

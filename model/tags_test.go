@@ -2,17 +2,16 @@ package model
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestTag_TableName(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, "tags", (&Tag{}).TableName())
 }
 
 func TestTag_Create(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, _, _ := beforeTest(t)
 
 	tag := &Tag{
 		Name: "Create test",
@@ -25,14 +24,13 @@ func TestTag_Create(t *testing.T) {
 }
 
 func TestTag_Exists(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, require, _, _ := beforeTest(t)
 
 	// 正常系
 	tag := &Tag{
 		Name: "existTag",
 	}
-	require.NoError(t, tag.Create())
+	require.NoError(tag.Create())
 
 	has, err := tag.Exists()
 	if assert.NoError(err) {
@@ -51,14 +49,13 @@ func TestTag_Exists(t *testing.T) {
 }
 
 func TestGetTagByID(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, require, _, _ := beforeTest(t)
 
 	// 正常系
 	tag := &Tag{
 		Name: "getTag",
 	}
-	require.NoError(t, tag.Create())
+	require.NoError(tag.Create())
 
 	gotTag, err := GetTagByID(tag.ID)
 	if assert.NoError(err) {

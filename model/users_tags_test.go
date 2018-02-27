@@ -10,25 +10,24 @@ import (
 )
 
 func TestUsersTag_TableName(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, "users_tags", (&UsersTag{}).TableName())
 }
 
 func TestUsersTag_Create(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
-	tag := &UsersTag{UserID: testUserID}
+	tag := &UsersTag{UserID: user.ID}
 	assert.NoError(tag.Create("全強"))
 	assert.Error((&UsersTag{}).Create(""))
 	assert.Error((&UsersTag{}).Create("aaa"))
 }
 
 func TestUsersTag_Update(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
 	tag := &UsersTag{
-		UserID: testUserID,
+		UserID: user.ID,
 	}
 	require.NoError(t, tag.Create("pro"))
 
@@ -37,29 +36,27 @@ func TestUsersTag_Update(t *testing.T) {
 }
 
 func TestUsersTag_Delete(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
-	tag := &UsersTag{UserID: testUserID}
+	tag := &UsersTag{UserID: user.ID}
 	require.NoError(t, tag.Create("全強"))
 	assert.NoError(tag.Delete())
 }
 
 func TestGetUserTagsByUserID(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
 	// 正常系
 	var tags [10]*UsersTag
 	for i := 0; i < len(tags); i++ {
 		tags[i] = &UsersTag{
-			UserID: testUserID,
+			UserID: user.ID,
 		}
 		time.Sleep(1500 * time.Millisecond)
 		require.NoError(t, tags[i].Create(strconv.Itoa(i)))
 	}
 
-	gotTags, err := GetUserTagsByUserID(testUserID)
+	gotTags, err := GetUserTagsByUserID(user.ID)
 	if assert.NoError(err) {
 		for i, v := range gotTags {
 			assert.Equal(tags[i].TagID, v.TagID)
@@ -75,13 +72,12 @@ func TestGetUserTagsByUserID(t *testing.T) {
 }
 
 func TestGetTag(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
 	tagText := "test"
 	// 正常系
 	tag := &UsersTag{
-		UserID: testUserID,
+		UserID: user.ID,
 	}
 	require.NoError(t, tag.Create(tagText))
 
@@ -92,6 +88,6 @@ func TestGetTag(t *testing.T) {
 	}
 
 	// 異常系
-	_, err = GetTag(testUserID, "wrong_id")
+	_, err = GetTag(user.ID, "wrong_id")
 	assert.Error(err)
 }

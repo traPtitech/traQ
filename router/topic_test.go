@@ -7,19 +7,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 )
 
 func TestGetTopic(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, require := beforeTest(t)
 	topicText := "Topic test"
 
 	channel := mustMakeChannel(t, testUser.ID, "putTopicTest", true)
 	channel.Topic = topicText
-	require.NoError(t, channel.Update())
+	require.NoError(channel.Update())
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/:channelID")
@@ -38,12 +35,11 @@ func TestGetTopic(t *testing.T) {
 }
 
 func TestPutTopic(t *testing.T) {
+	e, cookie, mw, assert, require := beforeTest(t)
 	topicText := "Topic test"
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
 
-	channel := mustMakeChannel(t, model.CreateUUID(), "putTopicTest", true)
-	require.Empty(t, channel.Topic)
+	channel := mustMakeChannel(t, testUser.ID, "putTopicTest", true)
+	require.Empty(channel.Topic)
 
 	type putTopic struct {
 		Text string `json:"text"`
@@ -53,7 +49,7 @@ func TestPutTopic(t *testing.T) {
 		Text: topicText,
 	}
 	body, err := json.Marshal(requestBody)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 	c, rec := getContext(e, t, cookie, req)
@@ -67,7 +63,6 @@ func TestPutTopic(t *testing.T) {
 			ID: channel.ID,
 		}
 		check.Exists(testUser.ID)
-		t.Log(check)
 
 		responseBody := &TopicForResponse{}
 		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), responseBody)) {

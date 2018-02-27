@@ -1,23 +1,19 @@
 package model
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
 
-const testChannelID = "aaefc6cc-75e5-4eee-a2f3-cae63dc3ede8"
-
 func TestGetHeartbeatStatus(t *testing.T) {
-	assert := assert.New(t)
+	assert, _, user, channel := beforeTest(t)
 
 	statusesMutex.Lock()
-	HeartbeatStatuses[testChannelID] = &HeartbeatStatus{
-		ChannelID: testChannelID,
+	HeartbeatStatuses[channel.ID] = &HeartbeatStatus{
+		ChannelID: channel.ID,
 		UserStatuses: []*UserStatus{
 			{
-				UserID:   testUserID,
+				UserID:   user.ID,
 				Status:   "editing",
 				LastTime: time.Now(),
 			},
@@ -25,7 +21,7 @@ func TestGetHeartbeatStatus(t *testing.T) {
 	}
 	statusesMutex.Unlock()
 
-	status, ok := GetHeartbeatStatus(testChannelID)
+	status, ok := GetHeartbeatStatus(channel.ID)
 	assert.Len(status.UserStatuses, 1)
 
 	status, ok = GetHeartbeatStatus(CreateUUID())
@@ -33,16 +29,16 @@ func TestGetHeartbeatStatus(t *testing.T) {
 }
 
 func TestHeartbeat(t *testing.T) {
-	assert := assert.New(t)
+	assert, require, user, channel := beforeTest(t)
 
 	tickTime = 10 * time.Millisecond
 	timeoutDuration = -20 * time.Millisecond
 	statusesMutex.Lock()
-	HeartbeatStatuses[testChannelID] = &HeartbeatStatus{
-		ChannelID: testChannelID,
+	HeartbeatStatuses[channel.ID] = &HeartbeatStatus{
+		ChannelID: channel.ID,
 		UserStatuses: []*UserStatus{
 			{
-				UserID:   testUserID,
+				UserID:   user.ID,
 				Status:   "editing",
 				LastTime: time.Now(),
 			},
@@ -50,15 +46,15 @@ func TestHeartbeat(t *testing.T) {
 	}
 
 	statusesMutex.Unlock()
-	assert.Len(HeartbeatStatuses[testChannelID].UserStatuses, 1)
+	assert.Len(HeartbeatStatuses[channel.ID].UserStatuses, 1)
 
-	require.NoError(t, HeartbeatStart())
+	require.NoError(HeartbeatStart())
 
 	time.Sleep(50 * time.Millisecond)
 
 	statusesMutex.Lock()
-	assert.Len(HeartbeatStatuses[testChannelID].UserStatuses, 0)
+	assert.Len(HeartbeatStatuses[channel.ID].UserStatuses, 0)
 	statusesMutex.Unlock()
 
-	require.NoError(t, HeartbeatStop())
+	require.NoError(HeartbeatStop())
 }

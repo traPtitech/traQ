@@ -2,24 +2,24 @@ package model
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMessage_TableName(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, "messages", (&Message{}).TableName())
 }
 
 func TestMessage_Create(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, channel := beforeTest(t)
 
 	assert.Error((&Message{}).Create())
-	assert.Error((&Message{UserID: testUserID}).Create())
+	assert.Error((&Message{UserID: user.ID}).Create())
+	assert.Error((&Message{UserID: user.ID, Text: "test"}).Create())
+	assert.Error((&Message{UserID: user.ID, ChannelID: channel.ID}).Create())
 
-	message := &Message{UserID: testUserID, Text: "test"}
+	message := &Message{UserID: user.ID, Text: "test", ChannelID: channel.ID}
 	if assert.NoError(message.Create()) {
 		assert.NotEmpty(message.ID)
 		assert.NotEmpty(message.UpdaterID)
@@ -27,10 +27,9 @@ func TestMessage_Create(t *testing.T) {
 }
 
 func TestMessage_Update(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, channel := beforeTest(t)
 
-	message := mustMakeMessage(t)
+	message := mustMakeMessage(t, user.ID, channel.ID)
 	message.Text = "nanachi"
 	message.IsShared = true
 
@@ -38,45 +37,28 @@ func TestMessage_Update(t *testing.T) {
 }
 
 func TestGetMessagesFromChannel(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
-
-	channelID := CreateUUID()
-	var messages [10]*Message
+	assert, _, user, channel := beforeTest(t)
 
 	for i := 0; i < 10; i++ {
-		messages[i] = &Message{
-			UserID:    testUserID,
-			ChannelID: channelID,
-			Text:      "popopo",
-		}
-		require.NoError(t, messages[i].Create())
-		time.Sleep(1500 * time.Millisecond)
+		mustMakeMessage(t, user.ID, channel.ID)
 	}
 
-	res, err := GetMessagesFromChannel(channelID, 0, 0)
+	res, err := GetMessagesFromChannel(channel.ID, 0, 0)
 	if assert.NoError(err) {
 		assert.Len(res, 10)
 	}
 
-	for i := 0; i < 10; i++ {
-		assert.Equal(res[i].ID, messages[9-i].ID, "message is not ordered by createdAt")
-	}
-
-	res2, err := GetMessagesFromChannel(channelID, 3, 5)
+	res2, err := GetMessagesFromChannel(channel.ID, 3, 5)
 	if assert.NoError(err) {
 		assert.Len(res2, 3)
-		assert.Equal(messages[4].ID, res2[0].ID)
 	}
 }
 
 func TestGetMessage(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, channel := beforeTest(t)
 
-	message := mustMakeMessage(t)
+	message := mustMakeMessage(t, user.ID, channel.ID)
 
-	var r *Message
 	r, err := GetMessage(message.ID)
 	if assert.NoError(err) {
 		assert.Equal(message.Text, r.Text)

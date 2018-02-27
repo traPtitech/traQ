@@ -8,16 +8,14 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 )
 
 func TestGetMessageByID(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 
-	message := mustMakeMessage(t)
+	channel := mustMakeChannel(t, testUser.ID, "test", true)
+	message := mustMakeMessage(t, testUser.ID, channel.ID)
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/messages/:messageID")
@@ -26,17 +24,15 @@ func TestGetMessageByID(t *testing.T) {
 
 	requestWithContext(t, mw(GetMessageByID), c)
 
-	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
-		t.Log(rec.Body.String())
-	}
+	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
 }
 
 func TestGetMessagesByChannelID(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 
+	channel := mustMakeChannel(t, testUser.ID, "test", true)
 	for i := 0; i < 5; i++ {
-		mustMakeMessage(t)
+		mustMakeMessage(t, testUser.ID, channel.ID)
 	}
 
 	q := make(url.Values)
@@ -47,7 +43,7 @@ func TestGetMessagesByChannelID(t *testing.T) {
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/channels/:channelID/messages")
 	c.SetParamNames("channelID")
-	c.SetParamValues(testChannelID)
+	c.SetParamValues(channel.ID)
 	requestWithContext(t, mw(GetMessagesByChannelID), c)
 
 	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
@@ -59,20 +55,21 @@ func TestGetMessagesByChannelID(t *testing.T) {
 }
 
 func TestPostMessage(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, require := beforeTest(t)
+
+	channel := mustMakeChannel(t, testUser.ID, "test", true)
 
 	post := requestMessage{
 		Text: "test message",
 	}
 	body, err := json.Marshal(post)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/channels/:channelID/messages")
 	c.SetParamNames("channelID")
-	c.SetParamValues(testChannelID)
+	c.SetParamValues(channel.ID)
 	requestWithContext(t, mw(PostMessage), c)
 
 	if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
@@ -84,15 +81,16 @@ func TestPostMessage(t *testing.T) {
 }
 
 func TestPutMessageByID(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
-	message := mustMakeMessage(t)
+	e, cookie, mw, assert, require := beforeTest(t)
+
+	channel := mustMakeChannel(t, testUser.ID, "test", true)
+	message := mustMakeMessage(t, testUser.ID, channel.ID)
 
 	post := requestMessage{
 		Text: "test message",
 	}
 	body, err := json.Marshal(post)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 
@@ -103,7 +101,7 @@ func TestPutMessageByID(t *testing.T) {
 	requestWithContext(t, mw(PutMessageByID), c)
 
 	message, err = model.GetMessage(message.ID)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
 		assert.Equal(post.Text, message.Text)
@@ -111,8 +109,10 @@ func TestPutMessageByID(t *testing.T) {
 }
 
 func TestDeleteMessageByID(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	message := mustMakeMessage(t)
+	e, cookie, mw, _, require := beforeTest(t)
+
+	channel := mustMakeChannel(t, testUser.ID, "test", true)
+	message := mustMakeMessage(t, testUser.ID, channel.ID)
 
 	req := httptest.NewRequest("DELETE", "http://test", nil)
 
@@ -123,5 +123,5 @@ func TestDeleteMessageByID(t *testing.T) {
 	requestWithContext(t, mw(DeleteMessageByID), c)
 
 	message, err := model.GetMessage(message.ID)
-	require.Error(t, err)
+	require.Error(err)
 }

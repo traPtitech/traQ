@@ -3,8 +3,6 @@ package router
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -12,8 +10,7 @@ import (
 )
 
 func TestPostUserTags(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, require := beforeTest(t)
 	tagText := "post test"
 
 	// 正常系
@@ -23,7 +20,7 @@ func TestPostUserTags(t *testing.T) {
 		Tag: tagText,
 	}
 	body, err := json.Marshal(post)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	c, rec := getContext(e, t, cookie, req)
@@ -42,8 +39,7 @@ func TestPostUserTags(t *testing.T) {
 }
 
 func TestGetUserTags(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 	for i := 0; i < 5; i++ {
 		mustMakeTag(t, testUser.ID, "tag"+strconv.Itoa(i))
 	}
@@ -64,8 +60,7 @@ func TestGetUserTags(t *testing.T) {
 }
 
 func TestPutUserTags(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, require := beforeTest(t)
 	tagText := "put test"
 
 	// 正常系
@@ -76,7 +71,7 @@ func TestPutUserTags(t *testing.T) {
 		IsLocked: true,
 	}
 	body, err := json.Marshal(post)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 	c, rec := getContext(e, t, cookie, req)
@@ -94,7 +89,7 @@ func TestPutUserTags(t *testing.T) {
 }
 
 func TestDeleteUserTags(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 	tagText := "Delete test"
 
 	// 正常系
@@ -106,5 +101,5 @@ func TestDeleteUserTags(t *testing.T) {
 	c.SetParamValues(testUser.ID, tag.TagID)
 	requestWithContext(t, mw(DeleteUserTag), c)
 
-	assert.EqualValues(t, http.StatusNoContent, rec.Code)
+	assert.EqualValues(http.StatusNoContent, rec.Code)
 }

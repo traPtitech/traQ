@@ -12,13 +12,10 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/require"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestPostFile(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 
 	body, boundary := createFormFile(t)
 
@@ -37,7 +34,7 @@ func TestPostFile(t *testing.T) {
 }
 
 func TestGetFileByID(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 
 	file := mustMakeFile(t)
 
@@ -47,8 +44,8 @@ func TestGetFileByID(t *testing.T) {
 	c.SetParamValues(file.ID)
 
 	requestWithContext(t, mw(GetFileByID), c)
-	if assert.EqualValues(t, http.StatusOK, rec.Code) {
-		assert.Equal(t, "test message", rec.Body.String())
+	if assert.EqualValues(http.StatusOK, rec.Code) {
+		assert.Equal("test message", rec.Body.String())
 	}
 
 	c, rec = getContext(e, t, cookie, nil)
@@ -58,14 +55,14 @@ func TestGetFileByID(t *testing.T) {
 	c.Request().URL.RawQuery = "dl=1"
 
 	requestWithContext(t, mw(GetFileByID), c)
-	if assert.EqualValues(t, http.StatusOK, rec.Code) {
-		assert.EqualValues(t, fmt.Sprintf("attachment; filename=%s", file.Name), rec.Header().Get(echo.HeaderContentDisposition))
+	if assert.EqualValues(http.StatusOK, rec.Code) {
+		assert.EqualValues(fmt.Sprintf("attachment; filename=%s", file.Name), rec.Header().Get(echo.HeaderContentDisposition))
 
 	}
 
 }
 func TestDeleteFileByID(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 
 	file := mustMakeFile(t)
 
@@ -75,13 +72,10 @@ func TestDeleteFileByID(t *testing.T) {
 	c.SetParamValues(file.ID)
 
 	requestWithContext(t, mw(DeleteFileByID), c)
-	if assert.EqualValues(t, http.StatusNoContent, rec.Code, rec.Body.String()) {
-		t.Log(rec.Body.String())
-	}
-
+	assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String())
 }
 func TestGetMetaDataByFileID(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 
 	file := mustMakeFile(t)
 
@@ -91,9 +85,7 @@ func TestGetMetaDataByFileID(t *testing.T) {
 	c.SetParamValues(file.ID)
 
 	requestWithContext(t, mw(GetMetaDataByFileID), c)
-	if assert.EqualValues(t, http.StatusOK, rec.Code, rec.Body.String()) {
-		t.Log(rec.Body.String())
-	}
+	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
 }
 
 func createFormFile(t *testing.T) (*bytes.Buffer, string) {

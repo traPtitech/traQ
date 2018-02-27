@@ -3,17 +3,15 @@ package router
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestGetChannelPin(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
+	e, cookie, mw, assert, require := beforeTest(t)
 	testChannel := mustMakeChannel(t, testUser.ID, "pinChannel", true)
-	testMessage := mustMakeMessage(t)
+	testMessage := mustMakeMessage(t, testUser.ID, testChannel.ID)
 
 	//正常系
 	testPin := mustMakePin(t, testChannel.ID, testUser.ID, testMessage.ID)
@@ -23,26 +21,26 @@ func TestGetChannelPin(t *testing.T) {
 	c.SetParamValues(testChannel.ID)
 	requestWithContext(t, mw(GetChannelPin), c)
 
-	assert.EqualValues(t, http.StatusOK, rec.Code)
+	assert.EqualValues(http.StatusOK, rec.Code)
 	var responseBody []*PinForResponse
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), &responseBody))
-	assert.Len(t, responseBody, 1)
+	assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody))
+	assert.Len(responseBody, 1)
 
 	correctResponse, err := formatPin(testPin)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	correctResponse.Message.Datetime = parseDateTime(correctResponse.Message.Datetime)
-	assert.Equal(t, *responseBody[0].Message, *correctResponse.Message)
+	assert.Equal(*responseBody[0].Message, *correctResponse.Message)
 	responseBody[0].Message, correctResponse.Message = nil, nil
 
 	correctResponse.DateTime = parseDateTime(correctResponse.DateTime)
-	assert.Equal(t, *responseBody[0], *correctResponse)
+	assert.Equal(*responseBody[0], *correctResponse)
 }
 
 func TestGetPin(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
+	e, cookie, mw, assert, require := beforeTest(t)
 	testChannel := mustMakeChannel(t, testUser.ID, "pinChannel", true)
-	testMessage := mustMakeMessage(t)
+	testMessage := mustMakeMessage(t, testUser.ID, testChannel.ID)
 
 	//正常系
 	testPin := mustMakePin(t, testChannel.ID, testUser.ID, testMessage.ID)
@@ -52,25 +50,25 @@ func TestGetPin(t *testing.T) {
 	c.SetParamValues(testPin.ID)
 	requestWithContext(t, mw(GetPin), c)
 
-	assert.EqualValues(t, http.StatusOK, rec.Code)
+	assert.EqualValues(http.StatusOK, rec.Code)
 	responseBody := &PinForResponse{}
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), responseBody))
+	assert.NoError(json.Unmarshal(rec.Body.Bytes(), responseBody))
 
 	correctResponse, err := formatPin(testPin)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	correctResponse.Message.Datetime = parseDateTime(correctResponse.Message.Datetime)
-	assert.Equal(t, *responseBody.Message, *correctResponse.Message)
+	assert.Equal(*responseBody.Message, *correctResponse.Message)
 	responseBody.Message, correctResponse.Message = nil, nil
 
 	correctResponse.DateTime = parseDateTime(correctResponse.DateTime)
-	assert.Equal(t, *responseBody, *correctResponse)
+	assert.Equal(*responseBody, *correctResponse)
 }
 
 func TestPostPin(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
+	e, cookie, mw, assert, require := beforeTest(t)
 	testChannel := mustMakeChannel(t, testUser.ID, "pinChannel", true)
-	testMessage := mustMakeMessage(t)
+	testMessage := mustMakeMessage(t, testUser.ID, testChannel.ID)
 
 	//正常系
 	post := struct {
@@ -79,7 +77,7 @@ func TestPostPin(t *testing.T) {
 		MessageID: testMessage.ID,
 	}
 	body, err := json.Marshal(post)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	req := httptest.NewRequest("POST", "/", bytes.NewReader(body))
 	c, rec := getContext(e, t, cookie, req)
@@ -88,26 +86,26 @@ func TestPostPin(t *testing.T) {
 	c.SetParamValues(testChannel.ID)
 	requestWithContext(t, mw(PostPin), c)
 
-	assert.EqualValues(t, http.StatusCreated, rec.Code)
+	assert.EqualValues(http.StatusCreated, rec.Code)
 	responseBody := &PinForResponse{}
-	assert.NoError(t, json.Unmarshal(rec.Body.Bytes(), responseBody))
+	assert.NoError(json.Unmarshal(rec.Body.Bytes(), responseBody))
 
 	correctResponse, err := getChannelPinResponse(testChannel.ID)
-	require.NoError(t, err)
-	require.Len(t, correctResponse, 1)
+	require.NoError(err)
+	require.Len(correctResponse, 1)
 
 	correctResponse[0].Message.Datetime = parseDateTime(correctResponse[0].Message.Datetime)
-	assert.Equal(t, *responseBody.Message, *correctResponse[0].Message)
+	assert.Equal(*responseBody.Message, *correctResponse[0].Message)
 	responseBody.Message, correctResponse[0].Message = nil, nil
 
 	correctResponse[0].DateTime = parseDateTime(correctResponse[0].DateTime)
-	assert.Equal(t, *responseBody, *correctResponse[0])
+	assert.Equal(*responseBody, *correctResponse[0])
 }
 
 func TestDeletePin(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 	testChannel := mustMakeChannel(t, testUser.ID, "pinChannel", true)
-	testMessage := mustMakeMessage(t)
+	testMessage := mustMakeMessage(t, testUser.ID, testChannel.ID)
 
 	//正常系
 	testPin := mustMakePin(t, testChannel.ID, testUser.ID, testMessage.ID)
@@ -118,5 +116,5 @@ func TestDeletePin(t *testing.T) {
 	c.SetParamValues(testPin.ID)
 	requestWithContext(t, mw(DeletePin), c)
 
-	assert.EqualValues(t, http.StatusNoContent, rec.Code)
+	assert.EqualValues(http.StatusNoContent, rec.Code)
 }
