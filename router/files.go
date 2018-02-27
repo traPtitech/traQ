@@ -10,7 +10,7 @@ import (
 
 // FileForResponse クライアントに返すファイル構造体
 type FileForResponse struct {
-	ID       string `json:"fileID"`
+	ID       string `json:"fileId"`
 	Name     string `json:"name"`
 	Mime     string `json:"mime"`
 	Size     int64  `json:"size"`
