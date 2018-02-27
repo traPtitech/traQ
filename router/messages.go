@@ -40,7 +40,7 @@ type requestCount struct {
 func GetMessageByID(c echo.Context) error {
 	ID := c.Param("messageID") // TODO: idの検証
 	raw, err := model.GetMessage(ID)
-	if err != nil || raw.IsDeleted {
+	if err != nil {
 		c.Echo().Logger.Errorf("model.Getmessage returned an error : %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "Message is not found")
 	}

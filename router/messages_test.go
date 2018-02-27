@@ -112,21 +112,16 @@ func TestPutMessageByID(t *testing.T) {
 
 func TestDeleteMessageByID(t *testing.T) {
 	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
 	message := mustMakeMessage(t)
 
 	req := httptest.NewRequest("DELETE", "http://test", nil)
 
-	c, rec := getContext(e, t, cookie, req)
+	c, _ := getContext(e, t, cookie, req)
 	c.SetPath("/messages/:messageID")
 	c.SetParamNames("messageID")
 	c.SetParamValues(message.ID)
 	requestWithContext(t, mw(DeleteMessageByID), c)
 
 	message, err := model.GetMessage(message.ID)
-	require.NoError(t, err)
-
-	if assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String()) {
-		assert.True(message.IsDeleted)
-	}
+	require.Error(t, err)
 }

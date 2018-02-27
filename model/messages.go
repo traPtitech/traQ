@@ -64,7 +64,6 @@ func GetMessagesFromChannel(channelID string, limit, offset int) ([]*Message, er
 }
 
 // GetMessage :messageIDで指定されたメッセージを取得します
-// **注意** IsDeletedがTrueのメッセージも返します
 func GetMessage(messageID string) (*Message, error) {
 	var message = &Message{}
 	has, err := db.ID(messageID).Get(message)
@@ -74,6 +73,9 @@ func GetMessage(messageID string) (*Message, error) {
 	}
 	if has == false {
 		return nil, fmt.Errorf("This messageID is wrong: messageID = %v", messageID)
+	}
+	if message.IsDeleted {
+		return nil, fmt.Errorf("this message has been deleted")
 	}
 
 	return message, nil
