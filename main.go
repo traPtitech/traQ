@@ -84,6 +84,10 @@ func main() {
 	api.PUT("/channels/:channelID", router.PutChannelsByChannelID)
 	api.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID)
 
+	// Tag: Topic
+	api.GET("/channels/:channelID/topic", router.GetTopic)
+	api.PUT("/channels/:channelID/topic", router.PutTopic)
+
 	// Tag: messages
 	api.GET("/messages/:messageID", router.GetMessageByID)
 	api.PUT("/messages/:messageID", router.PutMessageByID)
