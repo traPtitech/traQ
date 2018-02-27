@@ -30,6 +30,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	time.Local = time.UTC
+
 	user := os.Getenv("MARIADB_USERNAME")
 	if user == "" {
 		user = "root"
@@ -258,8 +260,4 @@ func mustMakeFile(t *testing.T) *model.File {
 	}
 	require.NoError(t, file.Create(bytes.NewBufferString("test message")))
 	return file
-}
-
-func parseDateTime(dateTime time.Time) time.Time {
-	return dateTime.Truncate(time.Second)
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -18,6 +19,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	time.Local = time.UTC
+
 	user := os.Getenv("MARIADB_USERNAME")
 	if user == "" {
 		user = "root"

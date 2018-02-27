@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/traPtitech/traQ/notification"
 
@@ -19,6 +20,8 @@ import (
 )
 
 func main() {
+	time.Local = time.UTC
+
 	user := os.Getenv("MARIADB_USERNAME")
 	if user == "" {
 		user = "root"

@@ -2,7 +2,6 @@ package model
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
 )
@@ -24,13 +23,21 @@ func TestChannel_Create(t *testing.T) {
 
 	c := &Channel{
 		CreatorID: user.ID,
-		Name:      "testChannel",
+		Name:      "testChannel2",
 		ParentID:  "",
 		IsPublic:  true,
 	}
 	if assert.NoError(c.Create()) {
 		assert.NotEmpty(c.ID)
 	}
+
+	c2 := &Channel{
+		CreatorID: user.ID,
+		Name:      "testChannel2",
+		ParentID:  "",
+		IsPublic:  true,
+	}
+	assert.Error(c2.Create())
 }
 
 func TestChannel_Exists(t *testing.T) {
@@ -120,13 +127,7 @@ func TestValidateChannelName(t *testing.T) {
 
 // 関数間のテスト>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 func TestCreateChildChannel(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
-
-	channel := &Channel{}
-	channel.CreatorID = user.ID
-	channel.Name = "testChannel"
-	channel.IsPublic = true
-	require.NoError(t, channel.Create())
+	assert, _, user, channel := beforeTest(t)
 
 	childChannel := &Channel{}
 	childChannel.CreatorID = user.ID

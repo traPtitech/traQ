@@ -69,7 +69,7 @@ func TestPostChannels(t *testing.T) {
 
 	postBody = PostChannel{
 		ChannelType: "private",
-		Name:        "test",
+		Name:        "testprivate",
 		Parent:      "",
 		Member: []string{
 			testUser.ID,
@@ -86,8 +86,6 @@ func TestPostChannels(t *testing.T) {
 		assert.Len(channelList, 3)
 	}
 
-	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	request(e, t, mw(PostChannels), cookie, req)
 	channelList, err = model.GetChannels(model.CreateUUID())
 	if assert.NoError(err) {
 		assert.Len(channelList, 2)

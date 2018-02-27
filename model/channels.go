@@ -9,8 +9,8 @@ import (
 // Channel :チャンネルの構造体
 type Channel struct {
 	ID        string    `xorm:"char(36) pk"`
-	Name      string    `xorm:"varchar(20) not null"`
-	ParentID  string    `xorm:"parent_id char(36) not null"`
+	Name      string    `xorm:"varchar(20) not null unique(name_parent)"`
+	ParentID  string    `xorm:"parent_id char(36) not null unique(name_parent)"`
 	Topic     string    `xorm:"text"`
 	IsForced  bool      `xorm:"bool not null"`
 	IsDeleted bool      `xorm:"bool not null"`
