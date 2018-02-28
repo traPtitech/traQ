@@ -132,19 +132,7 @@ func (channel *Channel) Update() error {
 	}
 
 	//チャンネルパスキャッシュの更新
-	if path, err := channel.GetPath(); err == nil {
-		channelPathMap.Store(uuid.FromStringOrNil(channel.ID), path)
-
-		//子チャンネルも
-		var children []*Channel
-		if err = db.Where("parent_id = ?", channel.ID).Find(&children); err == nil {
-			for _, v := range children {
-				if path, err = v.GetPath(); err == nil {
-					channelPathMap.Store(uuid.FromStringOrNil(v.ID), path)
-				}
-			}
-		}
-	}
+	updateChannelPathWithDescendants(channel)
 
 	return nil
 }
@@ -196,6 +184,29 @@ func GetChannelPath(id uuid.UUID) (string, bool) {
 	}
 
 	return v.(string), true
+}
+
+func updateChannelPathWithDescendants(channel *Channel) error {
+	path, err := channel.GetPath()
+	if err != nil {
+		return err
+	}
+
+	channelPathMap.Store(uuid.FromStringOrNil(channel.ID), path)
+
+	//子チャンネルも
+	var children []*Channel
+	if err = db.Where("parent_id = ?", channel.ID).Find(&children); err != nil {
+		return err
+	}
+
+	for _, v := range children {
+		if err := updateChannelPathWithDescendants(v); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func validateChannelName(name string) error {
