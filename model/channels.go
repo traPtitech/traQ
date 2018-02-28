@@ -155,8 +155,11 @@ func (channel *Channel) GetParent() (*Channel, error) {
 		return nil, nil
 	}
 
-	var parent *Channel
-	_, err := db.Where("id = ?", channel.ParentID).Get(&parent)
+	parent := &Channel{}
+	has, err := db.Where("id = ?", channel.ParentID).Get(parent)
+	if !has {
+		return nil, nil
+	}
 	return parent, err
 }
 
