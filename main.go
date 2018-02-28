@@ -72,6 +72,7 @@ func main() {
 	})
 
 	// login/logout
+	e.File("/login", "./client/dist/index.html")
 	e.POST("/login", router.PostLogin)
 	e.POST("/logout", router.PostLogout)
 
@@ -138,6 +139,10 @@ func main() {
 	api.POST("/channels/:channelID/pin", router.PostPin)
 	api.GET("/pin/:pinID", router.GetPin)
 	api.DELETE("/pin/:pinID", router.DeletePin)
+
+	// Serve UI
+	e.Static("/static", "./client/dist/static")
+	e.File("*", "./client/dist/index.html")
 
 	// init notification
 	notification.Start()
