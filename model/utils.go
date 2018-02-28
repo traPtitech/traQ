@@ -61,3 +61,20 @@ func SyncSchema() error {
 func CreateUUID() string {
 	return uuid.NewV4().String()
 }
+
+// InitCache : 各種キャッシュを初期化する
+func InitCache() error {
+	channels, err := GetAllChannels()
+	if err != nil {
+		return err
+	}
+	for _, v := range channels {
+		path, err := v.GetPath()
+		if err != nil {
+			return err
+		}
+		channelPathMap.Store(uuid.FromStringOrNil(v.ID), path)
+	}
+
+	return nil
+}
