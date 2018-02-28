@@ -2,6 +2,8 @@ package router
 
 import (
 	"fmt"
+	"github.com/traPtitech/traQ/notification"
+	"github.com/traPtitech/traQ/notification/events"
 	"net/http"
 	"time"
 
@@ -71,6 +73,9 @@ func PostPin(c echo.Context) error {
 	}
 
 	c.Response().Header().Set(echo.HeaderLocation, "/pin/"+pin.ID)
+	if message, err := model.GetMessage(pin.MessageID); err != nil {
+		go notification.Send(events.MessagePinned, events.PinEvent{PinID: pin.ID, Message: *message})
+	}
 	return c.JSON(http.StatusCreated, responseBody)
 }
 
@@ -78,14 +83,21 @@ func PostPin(c echo.Context) error {
 func DeletePin(c echo.Context) error {
 	pinID := c.Param("pinID")
 
-	pin := &model.Pin{
-		ID: pinID,
+	pin, err := model.GetPin(pinID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to delete pin: %v", err))
+	}
+	if pin == nil {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	if err := pin.Delete(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to delete pin: %v", err))
 	}
 
+	if message, err := model.GetMessage(pin.MessageID); err != nil {
+		go notification.Send(events.MessageUnpinned, events.PinEvent{PinID: pin.ID, Message: *message})
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 

@@ -47,8 +47,10 @@ func GetPin(ID string) (*Pin, error) {
 	}
 
 	pin := &Pin{}
-	if _, err := db.ID(ID).Get(pin); err != nil {
+	if has, err := db.ID(ID).Get(pin); err != nil {
 		return nil, fmt.Errorf("Failed to get pin: %v", err)
+	} else if !has {
+		return nil, nil
 	}
 
 	return pin, nil

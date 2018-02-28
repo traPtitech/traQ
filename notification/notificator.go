@@ -207,15 +207,14 @@ func Send(eventType events.EventType, payload interface{}) {
 		}
 
 	case events.MessagePinned, events.MessageUnpinned:
-		data, _ := payload.(events.MessageChannelEvent)
-		if s, ok := model.GetHeartbeatStatus(data.ChannelID); ok {
+		data, _ := payload.(events.PinEvent)
+		if s, ok := model.GetHeartbeatStatus(data.Message.ChannelID); ok {
 			for _, u := range s.UserStatuses {
 				multicast(uuid.FromStringOrNil(u.UserID), &eventData{
 					EventType: eventType,
 					Payload: struct {
-						MessageID string `json:"message_id"`
-						ChannelID string `json:"channel_id"`
-					}{data.MessageID, data.ChannelID},
+						ID string `json:"id"`
+					}{data.PinID},
 					Mobile: false,
 				})
 			}
