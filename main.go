@@ -111,7 +111,7 @@ func main() {
 
 	// OAuth2 / OpenID Connect
 	e.GET("/authorize", oauth2.AuthorizationEndpointHandler)
-	e.POST("/authorize", oauth2.AuthorizationEndpointHandler)
+	e.POST("/authorize", oauth2.PostAuthorizationEndpointHandler)
 	e.POST("/token", oauth2.TokenEndpointHandler)
 	e.GET("/.well-known/openid-configuration", openid.DiscoveryHandler)
 	e.GET("/publickeys", openid.PublicKeysHandler)

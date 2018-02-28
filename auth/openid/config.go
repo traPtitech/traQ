@@ -25,6 +25,10 @@ var (
 		"scopes_supported":                      []string{"openid", "email", "profile"},
 		"grantTypesSupported":                   []string{"authorization_code", "refresh_token", "client_credentials", "password"},
 		"token_endpoint_auth_methods_supported": []string{"client_secret_basic", "client_secret_post"},
+		"display_values_supported":              []string{"page"},
+		"ui_locales_supported":                  []string{"ja"},
+		"request_parameter_supported":           false,
+		"request_uri_parameter_supported":       false,
 		"claims_supported": []string{
 			"aud", "email", "email_verified", "exp", "iat", "iss", "name", "sub",
 		},
