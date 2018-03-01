@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"strconv"
 )
 
 var (
@@ -62,7 +63,7 @@ func TestGetUsers(t *testing.T) {
 	assert := assert.New(t)
 
 	for i := 0; i < 5; i++ {
-		mustMakeUser(t, "testGetUsers-"+string(i))
+		mustMakeUser(t, "testGetUsers"+strconv.Itoa(i))
 	}
 	users, err := GetUsers()
 	assert.NoError(err)
