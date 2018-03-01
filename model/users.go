@@ -62,12 +62,12 @@ func (user *User) Create() error {
 	user.ID = CreateUUID()
 	user.Status = 1 // TODO: 状態確認
 
-	if iconId, err := generateIcon(user.Name, user.ID); err != nil {
+	iconID, err := generateIcon(user.Name, user.ID)
+	if err != nil {
 		log.Error(err)
 		return err
-	} else {
-		user.Icon = iconId
 	}
+	user.Icon = iconID
 
 	if _, err := db.Insert(user); err != nil {
 		return fmt.Errorf("Failed to create user object: %v", err)
