@@ -156,6 +156,9 @@ func main() {
 	// init notification
 	notification.Start()
 
+	// init heartbeat
+	model.HeartbeatStart()
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3000"
