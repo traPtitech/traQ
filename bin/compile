@@ -26,3 +26,10 @@ make init
 
 echo "-----> Build project"
 go build -v -o traq
+
+echo "-----> Setup UI"
+cd $repo/client
+npm install
+
+echo "-----> Build UI"
+npm run build
