@@ -2,9 +2,13 @@ package model
 
 import (
 	"fmt"
+	"github.com/satori/go.uuid"
 	"regexp"
+	"sync"
 	"time"
 )
+
+var channelPathMap = &sync.Map{}
 
 // Channel :チャンネルの構造体
 type Channel struct {
@@ -53,6 +57,12 @@ func (channel *Channel) Create() error {
 	if _, err := db.Insert(channel); err != nil {
 		return fmt.Errorf("Failed to create channel: %v", err)
 	}
+
+	//チャンネルパスをキャッシュ
+	if path, err := channel.GetPath(); err == nil {
+		channelPathMap.Store(uuid.FromStringOrNil(channel.ID), path)
+	}
+
 	return nil
 }
 
@@ -94,6 +104,12 @@ func GetChannels(userID string) ([]*Channel, error) {
 	return channelList, nil
 }
 
+// GetAllChannels : 全てのチャンネルを取得する
+func GetAllChannels() (channels []*Channel, err error) {
+	err = db.Find(&channels)
+	return
+}
+
 // Children :  userIDのユーザーから見えるchannelIDの子チャンネル
 func (channel *Channel) Children(userID string) ([]string, error) {
 	var channelIDList []string
@@ -114,6 +130,82 @@ func (channel *Channel) Update() error {
 	if err != nil {
 		return fmt.Errorf("Failed to update channel: %v", err)
 	}
+
+	//チャンネルパスキャッシュの更新
+	updateChannelPathWithDescendants(channel)
+
+	return nil
+}
+
+// GetParent : 親チャンネルを取得する
+func (channel *Channel) GetParent() (*Channel, error) {
+	if len(channel.ParentID) == 0 {
+		return nil, nil
+	}
+
+	parent := &Channel{}
+	has, err := db.Where("id = ?", channel.ParentID).Get(parent)
+	if !has {
+		return nil, nil
+	}
+	return parent, err
+}
+
+// GetPath : チャンネルのパス文字列を取得する
+func (channel *Channel) GetPath() (string, error) {
+	path := channel.Name
+	current := channel
+
+	for {
+		parent, err := current.GetParent()
+		if err != nil {
+			return "", err
+		}
+		if parent == nil {
+			break
+		}
+
+		if parentPath, ok := GetChannelPath(uuid.FromStringOrNil(parent.ID)); ok {
+			return parentPath + "/" + path, nil
+		}
+
+		path = parent.Name + "/" + path
+		current = parent
+	}
+
+	return "#" + path, nil
+}
+
+// GetChannelPath : 指定したIDのチャンネルのパス文字列を取得する
+func GetChannelPath(id uuid.UUID) (string, bool) {
+	v, ok := channelPathMap.Load(id)
+	if !ok {
+		return "", false
+	}
+
+	return v.(string), true
+}
+
+func updateChannelPathWithDescendants(channel *Channel) error {
+	path, err := channel.GetPath()
+	if err != nil {
+		return err
+	}
+
+	channelPathMap.Store(uuid.FromStringOrNil(channel.ID), path)
+
+	//子チャンネルも
+	var children []*Channel
+	if err = db.Where("parent_id = ?", channel.ID).Find(&children); err != nil {
+		return err
+	}
+
+	for _, v := range children {
+		if err := updateChannelPathWithDescendants(v); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

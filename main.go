@@ -51,6 +51,10 @@ func main() {
 		panic(err)
 	}
 
+	if err := model.InitCache(); err != nil {
+		panic(err)
+	}
+
 	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
 	if err != nil {
 		panic(err)
