@@ -115,6 +115,39 @@ func GetUserByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, userDetail)
 }
 
+// PostRegisterUser Post /register のハンドラ
+// TODO 暫定的仕様
+func PostRegisterUser(c echo.Context) error {
+	user := c.Get("user").(*model.User)
+
+	if user.Name != "traq" { //TODO 権限をちゃんとする
+		return echo.NewHTTPError(http.StatusForbidden)
+	}
+
+	req := struct {
+		Name     string `json:"name"`
+		Password string `json:"password"`
+		Email    string `json:"email"`
+	}{}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	newUser := &model.User{
+		Name:  req.Name,
+		Email: req.Email,
+		Icon:  "Empty", //FIXME
+	}
+	if err := newUser.SetPassword(req.Password); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	if err := newUser.Create(); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	return c.NoContent(http.StatusCreated)
+}
+
 func formatUser(user *model.User) *UserForResponse {
 	return &UserForResponse{
 		UserID: user.ID,
