@@ -43,7 +43,6 @@ func SyncSchema() error {
 	traq := &User{
 		Name:  "traq",
 		Email: "trap.titech@gmail.com",
-		Icon:  "Empty",
 	}
 	ok, err := traq.Exists()
 	if err != nil {

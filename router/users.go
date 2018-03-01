@@ -7,19 +7,24 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/gommon/log"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/notification"
+	"github.com/traPtitech/traQ/notification/events"
 )
 
 // UserForResponse クライアントに返す形のユーザー構造体
 type UserForResponse struct {
 	UserID string `json:"userId"`
 	Name   string `json:"name"`
+	IconID string `json:"icon_file_id"`
 }
 
 // UserDetailForResponse クライアントに返す形の詳細ユーザー構造体
 type UserDetailForResponse struct {
 	UserID  string            `json:"userId"`
 	Name    string            `json:"name"`
+	IconID  string            `json:"icon_file_id"`
 	TagList []*TagForResponse `json:"tagList"`
 }
 
@@ -115,6 +120,102 @@ func GetUserByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, userDetail)
 }
 
+// GetUserIcon GET /users/{userID}/icon のハンドラ
+func GetUserIcon(c echo.Context) error {
+	userID := c.Param("userID")
+
+	user, err := model.GetUser(userID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	file, err := model.OpenFileByID(user.Icon)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	defer file.Close()
+
+	meta, err := model.GetMetaFileDataByID(user.Icon)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.Stream(http.StatusOK, meta.Mime, file)
+}
+
+// GetMyIcon GET /users/me/icon のハンドラ
+func GetMyIcon(c echo.Context) error {
+	userID := c.Get("user").(*model.User).ID
+
+	user, err := model.GetUser(userID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	file, err := model.OpenFileByID(user.Icon)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	defer file.Close()
+
+	meta, err := model.GetMetaFileDataByID(user.Icon)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.Stream(http.StatusOK, meta.Mime, file)
+}
+
+// PostMyIcon Post /users/me/icon のハンドラ
+func PostMyIcon(c echo.Context) error {
+	userID := c.Get("user").(*model.User).ID
+
+	user, err := model.GetUser(userID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	uploadedFile, err := c.FormFile("file")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to upload file: %v", err))
+	}
+
+	switch uploadedFile.Header.Get(echo.HeaderContentType) {
+	case "image/png", "image/jpeg", "image/gif", "image/svg+xml":
+		break
+	default:
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
+	}
+
+	if uploadedFile.Size > 1024*1024 {
+		return echo.NewHTTPError(http.StatusBadRequest, "too big image file")
+	}
+
+	file := &model.File{
+		Name:      uploadedFile.Filename,
+		Size:      uploadedFile.Size,
+		CreatorID: user.ID,
+	}
+
+	src, err := uploadedFile.Open()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Failed to open file")
+	}
+	defer src.Close()
+
+	if err := file.Create(src); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create file")
+	}
+
+	if err := user.UpdateIconID(file.ID); err != nil {
+		log.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	go notification.Send(events.UserIconUpdated, events.UserEvent{ID: userID})
+	return c.NoContent(http.StatusOK)
+}
+
 // PostRegisterUser Post /register のハンドラ
 // TODO 暫定的仕様
 func PostRegisterUser(c echo.Context) error {
@@ -136,7 +237,6 @@ func PostRegisterUser(c echo.Context) error {
 	newUser := &model.User{
 		Name:  req.Name,
 		Email: req.Email,
-		Icon:  "Empty", //FIXME
 	}
 	if err := newUser.SetPassword(req.Password); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -145,6 +245,7 @@ func PostRegisterUser(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
+	go notification.Send(events.UserJoined, events.UserEvent{ID: newUser.ID})
 	return c.NoContent(http.StatusCreated)
 }
 
@@ -152,6 +253,7 @@ func formatUser(user *model.User) *UserForResponse {
 	return &UserForResponse{
 		UserID: user.ID,
 		Name:   user.Name,
+		IconID: user.Icon,
 	}
 }
 
@@ -159,6 +261,7 @@ func formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailF
 	userDetail := &UserDetailForResponse{
 		UserID: user.ID,
 		Name:   user.Name,
+		IconID: user.Icon,
 	}
 	for _, tag := range tagList {
 		formatedTag, err := formatTag(tag)

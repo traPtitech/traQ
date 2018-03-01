@@ -12,6 +12,8 @@ const (
 	UserLeft EventType = "USER_LEFT"
 	//UserTagsUpdated ユーザーのタグが更新された
 	UserTagsUpdated EventType = "USER_TAGS_UPDATED"
+	//UserIconUpdated ユーザーのアイコンが更新された
+	UserIconUpdated EventType = "USER_ICON_UPDATED"
 
 	//ChannelCreated チャンネルが新規作成された
 	ChannelCreated EventType = "CHANNEL_CREATED"

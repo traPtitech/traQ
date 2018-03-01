@@ -9,8 +9,13 @@ import (
 	"io"
 	"time"
 
+	"errors"
+	"github.com/GeorgeMac/idicon/colour"
+	"github.com/GeorgeMac/idicon/icon"
+	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/pbkdf2"
 	"regexp"
+	"strings"
 )
 
 var (
@@ -54,12 +59,15 @@ func (user *User) Create() error {
 		return fmt.Errorf("salt is empty")
 	}
 
-	if user.Icon == "" {
-		return fmt.Errorf("icon is empty")
-	}
-
 	user.ID = CreateUUID()
 	user.Status = 1 // TODO: 状態確認
+
+	if iconId, err := generateIcon(user.Name, user.ID); err != nil {
+		log.Error(err)
+		return err
+	} else {
+		user.Icon = iconId
+	}
 
 	if _, err := db.Insert(user); err != nil {
 		return fmt.Errorf("Failed to create user object: %v", err)
@@ -137,6 +145,16 @@ func (user *User) Authorization(pass string) error {
 	return nil
 }
 
+// UpdateIconID ユーザーのアイコンを更新する
+func (user *User) UpdateIconID(ID string) error {
+	if len(user.ID) == 0 {
+		return errors.New("invalid user")
+	}
+	user.Icon = ID
+	_, err := db.ID(user.ID).UseBool().Update(user)
+	return err
+}
+
 func hashPassword(pass, salt string) string {
 	converted := pbkdf2.Key([]byte(pass), []byte(salt), 65536, 64, sha512.New)
 	return hex.EncodeToString(converted[:])
@@ -150,4 +168,26 @@ func generateSalt() (string, error) {
 	}
 
 	return hex.EncodeToString(b), nil
+}
+
+func generateIcon(salt, userID string) (string, error) {
+	props := icon.DefaultProps()
+	props.BaseColour = colour.NewColour(0xf2, 0xf2, 0xf2)
+
+	generator, err := icon.NewGenerator(5, 5, icon.With(props))
+	if err != nil {
+		return "", err
+	}
+	svg := strings.NewReader(generator.Generate([]byte(salt)).String())
+
+	file := &File{
+		Name:      salt + ".svg",
+		Size:      int64(svg.Len()),
+		CreatorID: userID,
+	}
+	if err := file.Create(svg); err != nil {
+		return "", err
+	}
+
+	return file.ID, nil
 }
