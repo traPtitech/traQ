@@ -100,6 +100,7 @@ func main() {
 	api.GET("/users", router.GetUsers)
 	api.GET("/users/me", router.GetMe)
 	api.GET("/users/:userID", router.GetUserByID)
+	api.POST("/register", router.PostRegisterUser)
 
 	// Tag: clips
 	api.GET("/users/me/clips", router.GetClips)

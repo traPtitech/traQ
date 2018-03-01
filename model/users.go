@@ -10,6 +10,12 @@ import (
 	"time"
 
 	"golang.org/x/crypto/pbkdf2"
+	"regexp"
+)
+
+var (
+	userNameRegex = regexp.MustCompile("^[a-zA-Z0-9_]{1,32}$")
+	emailRegex    = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 )
 
 // User userの構造体
@@ -32,12 +38,12 @@ func (user *User) TableName() string {
 
 // Create userをDBに入れる
 func (user *User) Create() error {
-	if user.Name == "" {
-		return fmt.Errorf("name is empty")
+	if !userNameRegex.MatchString(user.Name) {
+		return fmt.Errorf("invalid name")
 	}
 
-	if user.Email == "" {
-		return fmt.Errorf("email is empty")
+	if !emailRegex.MatchString(user.Email) {
+		return fmt.Errorf("invalid email")
 	}
 
 	if user.Password == "" {
@@ -56,7 +62,7 @@ func (user *User) Create() error {
 	user.Status = 1 // TODO: 状態確認
 
 	if _, err := db.Insert(user); err != nil {
-		return fmt.Errorf("Failed to create message object: %v", err)
+		return fmt.Errorf("Failed to create user object: %v", err)
 	}
 	return nil
 }
