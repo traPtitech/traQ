@@ -16,6 +16,12 @@ type TagForResponse struct {
 	IsLocked bool   `json:"isLocked"`
 }
 
+// TagListTagForResponse /tags 用の構造体
+type TagListTagForResponse struct {
+	ID  string `json:"tagId"`
+	Tag string `json:"tag"`
+}
+
 // GetUserTags /users/{userID}/tags のGETメソッド
 func GetUserTags(c echo.Context) error {
 	ID := c.Param("userID")
@@ -100,6 +106,26 @@ func DeleteUserTag(c echo.Context) error {
 
 	go notification.Send(events.UserTagsUpdated, events.UserEvent{ID: userID})
 	return c.NoContent(http.StatusNoContent)
+}
+
+// GetAllTags /tags のGETメソッド
+func GetAllTags(c echo.Context) error {
+	tags, err := model.GetAllTags()
+	if err != nil {
+		c.Echo().Logger.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	res := make([]*TagListTagForResponse, len(tags))
+
+	for i, v := range tags {
+		res[i] = &TagListTagForResponse{
+			ID:  v.ID,
+			Tag: v.Name,
+		}
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 func getUserTags(ID string) ([]*TagForResponse, error) {
