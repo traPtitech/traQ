@@ -166,8 +166,8 @@ func GetMyIcon(c echo.Context) error {
 	return c.Stream(http.StatusOK, meta.Mime, file)
 }
 
-// PostMyIcon Post /users/me/icon のハンドラ
-func PostMyIcon(c echo.Context) error {
+// PutMyIcon Post /users/me/icon のハンドラ
+func PutMyIcon(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 
 	user, err := model.GetUser(userID)

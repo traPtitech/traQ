@@ -544,7 +544,7 @@ paths:
               schema:
                 type: string
                 format: svg
-    post:
+    put:
       tags:
         - user
       description: 自分のアイコンを更新します。

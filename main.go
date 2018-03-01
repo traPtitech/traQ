@@ -100,7 +100,7 @@ func main() {
 	api.GET("/users", router.GetUsers)
 	api.GET("/users/me", router.GetMe)
 	api.GET("/users/me/icon", router.GetMyIcon)
-	api.POST("/users/me/icon", router.PostMyIcon)
+	api.PUT("/users/me/icon", router.PutMyIcon)
 	api.GET("/users/:userID", router.GetUserByID)
 	api.GET("/users/:userID/icon", router.GetUserIcon)
 	api.POST("/register", router.PostRegisterUser)
