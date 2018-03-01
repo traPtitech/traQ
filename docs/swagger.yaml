@@ -519,6 +519,61 @@ paths:
               schema:
                 $ref: "#/components/schemas/User"
 
+  /users/me/icon:
+    get:
+      tags:
+        - user
+      description: 自分のアイコン画像を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+                format: svg
+    put:
+      tags:
+        - user
+      description: 自分のアイコンを更新します。
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 1MBまでのpng, jpeg, gif, svg
+            encoding:
+              file:
+                contentType: image/png, image/jpeg, image/gif, image/svg+xml
+      responses:
+        "200":
+          description: 正常に更新できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+        "400":
+          description: 正常に更新できませんでした。不正なファイルです。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+
   /users/me/clips:
     get:
       tags:
@@ -777,6 +832,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserDetail"
+        "404":
+          description: |+
+            正常に取得できませんでした。
+            指定したユーザーは存在しません。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoContent"
+
+  /users/{userID}/icon:
+    parameters:
+      - $ref: "#/components/parameters/userIdInPath"
+    get:
+      tags:
+        - user
+      description: ユーザーのアイコン画像を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+                format: svg
         "404":
           description: |+
             正常に取得できませんでした。
@@ -1529,6 +1620,9 @@ components:
           format: uuid
         name:
           type: string
+        iconFileId:
+          type: string
+          format: uuid
 
     UserDetail:
       type: object
@@ -1538,6 +1632,9 @@ components:
           format: uuid
         name:
           type: string
+        iconFileId:
+          type: string
+          format: uuid
         tagList:
           $ref: "#/components/schemas/TagList"
 

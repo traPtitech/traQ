@@ -36,6 +36,7 @@ func PostFile(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to open file")
 	}
+	defer src.Close()
 
 	if err := file.Create(src); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create file")
