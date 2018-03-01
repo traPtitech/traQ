@@ -84,6 +84,12 @@ type ReadMessagesEvent struct {
 	MessageIDs []string
 }
 
+//PinEvent メッセージのピンイベントのペイロード
+type PinEvent struct {
+	PinID   string
+	Message model.Message
+}
+
 //MessageChannelEvent メッセージとチャンネルに関するイベントのペイロード
 type MessageChannelEvent struct {
 	MessageID string

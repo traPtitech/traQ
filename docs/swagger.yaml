@@ -372,6 +372,10 @@ paths:
         "204":
           description: |+
             正常に外せました。
+        "404":
+          description: |+
+            指定したIDのピンは存在しません。
+
   /channels/{channelID}/notifications:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
