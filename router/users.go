@@ -17,14 +17,14 @@ import (
 type UserForResponse struct {
 	UserID string `json:"userId"`
 	Name   string `json:"name"`
-	IconID string `json:"icon_file_id"`
+	IconID string `json:"iconFileId"`
 }
 
 // UserDetailForResponse クライアントに返す形の詳細ユーザー構造体
 type UserDetailForResponse struct {
 	UserID  string            `json:"userId"`
 	Name    string            `json:"name"`
-	IconID  string            `json:"icon_file_id"`
+	IconID  string            `json:"iconFileId"`
 	TagList []*TagForResponse `json:"tagList"`
 }
 

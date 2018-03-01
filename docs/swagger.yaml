@@ -1620,6 +1620,9 @@ components:
           format: uuid
         name:
           type: string
+        iconFileId:
+          type: string
+          format: uuid
 
     UserDetail:
       type: object
@@ -1629,6 +1632,9 @@ components:
           format: uuid
         name:
           type: string
+        iconFileId:
+          type: string
+          format: uuid
         tagList:
           $ref: "#/components/schemas/TagList"
 
