@@ -178,7 +178,7 @@ func generateIcon(salt, userID string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	svg := strings.NewReader(generator.Generate([]byte(salt)).String())
+	svg := strings.NewReader(strings.Replace(generator.Generate([]byte(salt)).String(), `<svg`, `<svg xmlns="http://www.w3.org/2000/svg"`, 1))
 
 	file := &File{
 		Name:      salt + ".svg",
