@@ -28,7 +28,7 @@ type File struct {
 	ID        string    `xorm:"char(36) pk"`
 	Name      string    `xorm:"text not null"`
 	Mime      string    `xorm:"text not null"`
-	Size      int64     `xomr:"bigint not null"`
+	Size      int64     `xorm:"bigint not null"`
 	CreatorID string    `xorm:"char(36) not null"`
 	IsDeleted bool      `xorm:"bool not null"`
 	Hash      string    `xorm:"char(32) not null"`

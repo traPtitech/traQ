@@ -107,7 +107,7 @@ func PostChannels(c echo.Context) error {
 			usersPrivateChannel.UserID = user
 			err := usersPrivateChannel.Create()
 			if err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while adding notificated user.")
+				return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while adding notified user.")
 			}
 		}
 	}
@@ -169,7 +169,7 @@ func PutChannelsByChannelID(c echo.Context) error {
 	channel.UpdaterID = userID
 
 	if err := channel.Update(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "An error occuerred while update channel")
+		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while update channel")
 	}
 
 	childrenIDs, err := channel.Children(userID)
@@ -231,7 +231,7 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 		channel.IsDeleted = true
 
 		if err := channel.Update(); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "An error occuerred when channel model update.")
+			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred when channel model update.")
 		}
 
 		go notification.Send(events.ChannelDeleted, events.ChannelEvent{ID: channelID})

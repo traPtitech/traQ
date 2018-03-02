@@ -24,7 +24,7 @@ func CustomHTTPErrorHandler(err error, c echo.Context) {
 	}
 
 	if err = c.JSON(code, msg); err != nil {
-		c.Echo().Logger.Errorf("an error occured while sending to JSON: %v", err)
+		c.Echo().Logger.Errorf("an error occurred while sending to JSON: %v", err)
 	}
 
 }

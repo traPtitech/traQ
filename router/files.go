@@ -94,7 +94,7 @@ func GetMetaDataByFileID(c echo.Context) error {
 }
 
 // TODO: そのうち実装
-// GetThumnailByID GET /file/{fileID}/thumnail
+// GetThumbnailByID GET /file/{fileID}/thumbnail
 
 func formatFile(f *model.File) *FileForResponse {
 	return &FileForResponse{
