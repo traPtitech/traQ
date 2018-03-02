@@ -27,6 +27,8 @@ var (
 		&Channel{},
 		&User{},
 	}
+
+	serverUser *User
 )
 
 // SetXORMEngine DBにxormのエンジンを設定する
@@ -119,8 +121,13 @@ func SyncSchema() error {
 	}
 	if !ok {
 		traq.SetPassword("traq")
-		traq.Create()
+		traq.ID = CreateUUID()
+		traq.Icon = ""
+		if _, err := db.Insert(traq); err != nil {
+			return err
+		}
 	}
+	serverUser = traq
 
 	return nil
 }
