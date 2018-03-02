@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	userNameRegex = regexp.MustCompile("^[a-zA-Z0-9_]{1,32}$")
+	userNameRegex = regexp.MustCompile("^[a-zA-Z0-9_-]{1,32}$")
 	emailRegex    = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 )
 
