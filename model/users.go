@@ -62,7 +62,7 @@ func (user *User) Create() error {
 	user.ID = CreateUUID()
 	user.Status = 1 // TODO: 状態確認
 
-	iconID, err := generateIcon(user.Name, user.ID)
+	iconID, err := generateIcon(user.Name, serverUser.ID)
 	if err != nil {
 		log.Error(err)
 		return err
