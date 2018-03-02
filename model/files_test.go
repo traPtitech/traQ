@@ -9,12 +9,13 @@ import (
 )
 
 func TestFile_TableName(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, "files", (&File{}).TableName())
 }
 
 func TestFile_Create(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
+
 	writeData := bytes.NewReader(([]byte)("test message"))
 
 	assert.Error((&File{}).Create(writeData))
@@ -23,7 +24,7 @@ func TestFile_Create(t *testing.T) {
 	file := &File{
 		Name:      "testFile.txt",
 		Size:      writeData.Size(),
-		CreatorID: testUserID,
+		CreatorID: user.ID,
 	}
 	if assert.NoError(file.Create(writeData)) {
 		fm := NewDevFileManager()
@@ -35,20 +36,18 @@ func TestFile_Create(t *testing.T) {
 }
 
 func TestFile_Delete(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
-	file := mustMakeFile(t)
+	file := mustMakeFile(t, user.ID)
 	file.IsDeleted = true
 
 	assert.NoError(file.Delete())
 }
 
 func TestGetFileByID(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
-	f := mustMakeFile(t)
+	f := mustMakeFile(t, user.ID)
 	file, err := OpenFileByID(f.ID)
 	assert.NoError(err)
 	defer file.Close()
@@ -62,10 +61,9 @@ func TestGetFileByID(t *testing.T) {
 }
 
 func TestGetMetaFileDataByID(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
-	file := mustMakeFile(t)
+	file := mustMakeFile(t, user.ID)
 	result, err := GetMetaFileDataByID(file.ID)
 	if assert.NoError(err) {
 		assert.Equal(file.ID, result.ID)

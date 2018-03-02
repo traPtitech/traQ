@@ -3,16 +3,13 @@ package router
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestGetStars(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 	channel := mustMakeChannel(t, testUser.ID, "test", true)
 	mustStarChannel(t, testUser.ID, channel.ID)
 
@@ -28,8 +25,7 @@ func TestGetStars(t *testing.T) {
 }
 
 func TestPostStars(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, require := beforeTest(t)
 	channel := mustMakeChannel(t, testUser.ID, "test", true)
 
 	post := struct {
@@ -38,7 +34,7 @@ func TestPostStars(t *testing.T) {
 		ChannelID: channel.ID,
 	}
 	body, err := json.Marshal(post)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(PostStars), cookie, req)
@@ -53,8 +49,7 @@ func TestPostStars(t *testing.T) {
 }
 
 func TestDeleteStars(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, require := beforeTest(t)
 	channel := mustMakeChannel(t, testUser.ID, "test", true)
 	mustStarChannel(t, testUser.ID, channel.ID)
 
@@ -65,7 +60,7 @@ func TestDeleteStars(t *testing.T) {
 	}
 
 	body, err := json.Marshal(post)
-	require.NoError(t, err)
+	require.NoError(err)
 
 	req := httptest.NewRequest("DELETE", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(DeleteStars), cookie, req)

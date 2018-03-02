@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/traPtitech/traQ/notification"
 
@@ -19,6 +20,8 @@ import (
 )
 
 func main() {
+	time.Local = time.UTC
+
 	user := os.Getenv("MARIADB_USERNAME")
 	if user == "" {
 		user = "root"
@@ -88,6 +91,10 @@ func main() {
 	api.GET("/channels/:channelID", router.GetChannelsByChannelID)
 	api.PUT("/channels/:channelID", router.PutChannelsByChannelID)
 	api.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID)
+
+	// Tag: Topic
+	api.GET("/channels/:channelID/topic", router.GetTopic)
+	api.PUT("/channels/:channelID/topic", router.PutTopic)
 
 	// Tag: messages
 	api.GET("/messages/:messageID", router.GetMessageByID)

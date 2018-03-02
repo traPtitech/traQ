@@ -2,41 +2,40 @@ package model
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestUsersPrivateChannel_TableName(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, "users_private_channels", (&UsersPrivateChannel{}).TableName())
 }
 
 func TestMakePrivateChannel(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, require, user, _ := beforeTest(t)
 
 	channel := &Channel{}
-	channel.CreatorID = testUserID
+	channel.CreatorID = user.ID
 	channel.Name = "Private-Channel"
 	channel.IsPublic = false
-	require.NoError(t, channel.Create())
+	require.NoError(channel.Create())
 
-	po := CreateUUID()
-	privilegedUser := []string{testUserID, po}
+	po := mustMakeUser(t, "po")
+	privilegedUser := []string{user.ID, po.ID}
 
 	for _, userID := range privilegedUser {
 		usersPrivateChannel := &UsersPrivateChannel{}
 		usersPrivateChannel.ChannelID = channel.ID
 		usersPrivateChannel.UserID = userID
-		require.NoError(t, usersPrivateChannel.Create())
+		require.NoError(usersPrivateChannel.Create())
 	}
 
-	channelList, err := GetChannels(testUserID)
+	channelList, err := GetChannels(user.ID)
 	if assert.NoError(err) {
-		assert.Len(channelList, 1)
+		assert.Len(channelList, 1+1)
 	}
 
 	channelList, err = GetChannels(CreateUUID())
 	if assert.NoError(err) {
-		assert.Len(channelList, 0)
+		assert.Len(channelList, 0+1)
 	}
 }

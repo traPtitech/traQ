@@ -2,71 +2,70 @@ package model
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func beforePinTest(t *testing.T) *Pin {
-	testMessage := mustMakeMessage(t)
-	testChannel := mustMakeChannel(t, "pin")
+func TestPinTableName(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "pins", (&Pin{}).TableName())
+}
+
+func beforePinTest(t *testing.T, userID, channelID string) *Pin {
+	testMessage := mustMakeMessage(t, userID, channelID)
 	testPin := &Pin{
-		UserID:    testUserID,
+		UserID:    userID,
 		MessageID: testMessage.ID,
-		ChannelID: testChannel.ID,
+		ChannelID: channelID,
 	}
 	return testPin
 }
 
-func TestPinTableName(t *testing.T) {
-	assert.Equal(t, "pins", (&Pin{}).TableName())
-}
-
 func TestPinCreate(t *testing.T) {
-	beforeTest(t)
-	testPin := beforePinTest(t)
+	assert, require, user, channel := beforeTest(t)
+	testPin := beforePinTest(t, user.ID, channel.ID)
 
 	//正常系
-	assert.NoError(t, testPin.Create())
+	assert.NoError(testPin.Create())
 	pins, err := GetPinsByChannelID(testPin.ChannelID)
-	require.NoError(t, err)
-	assert.Len(t, pins, 1)
+	require.NoError(err)
+	assert.Len(pins, 1)
 	testPin.CreatedAt = pins[0].CreatedAt
-	assert.Equal(t, *pins[0], *testPin)
+	assert.Equal(*pins[0], *testPin)
 }
 
 func TestGetPin(t *testing.T) {
-	beforeTest(t)
-	testPin := beforePinTest(t)
+	assert, require, user, channel := beforeTest(t)
+	testPin := beforePinTest(t, user.ID, channel.ID)
 
 	//正常系
-	require.NoError(t, testPin.Create())
+	require.NoError(testPin.Create())
 	pin, err := GetPin(testPin.ID)
-	assert.NoError(t, err)
+	assert.NoError(err)
 	testPin.CreatedAt = pin.CreatedAt
-	assert.Equal(t, *pin, *testPin)
+	assert.Equal(*pin, *testPin)
 }
 
 func TestGetPinsByChannelID(t *testing.T) {
-	beforeTest(t)
-	testPin := beforePinTest(t)
+	assert, require, user, channel := beforeTest(t)
+	testPin := beforePinTest(t, user.ID, channel.ID)
 
 	//正常系
-	require.NoError(t, testPin.Create())
+	require.NoError(testPin.Create())
 	pins, err := GetPinsByChannelID(testPin.ChannelID)
-	assert.NoError(t, err)
-	assert.Len(t, pins, 1)
+	assert.NoError(err)
+	assert.Len(pins, 1)
 	testPin.CreatedAt = pins[0].CreatedAt
-	assert.Equal(t, *pins[0], *testPin)
+	assert.Equal(*pins[0], *testPin)
 }
 
 func TestPinDelete(t *testing.T) {
-	beforeTest(t)
-	testPin := beforePinTest(t)
+	assert, require, user, channel := beforeTest(t)
+	testPin := beforePinTest(t, user.ID, channel.ID)
 
 	//正常系
-	require.NoError(t, testPin.Create())
-	assert.NoError(t, testPin.Delete())
+	require.NoError(testPin.Create())
+	assert.NoError(testPin.Delete())
 	pins, err := GetPinsByChannelID(testPin.ChannelID)
-	require.NoError(t, err)
-	assert.Len(t, pins, 0)
+	require.NoError(err)
+	assert.Len(pins, 0)
 }

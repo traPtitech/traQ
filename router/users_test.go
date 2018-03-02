@@ -15,7 +15,7 @@ import (
 
 func TestPostLogin(t *testing.T) {
 	e, mw := beforeLoginTest(t)
-	mustCreateUser(t)
+	mustCreateUser(t, "PostLogin")
 
 	type requestJSON struct {
 		Name string `json:"name"`
@@ -48,8 +48,7 @@ func TestPostLogin(t *testing.T) {
 }
 
 func TestGetUsers(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 
 	rec := request(e, t, mw(GetUsers), cookie, nil)
 	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
@@ -62,8 +61,7 @@ func TestGetUsers(t *testing.T) {
 }
 
 func TestGetMe(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 
 	rec := request(e, t, mw(GetMe), cookie, nil)
 	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
@@ -75,8 +73,7 @@ func TestGetMe(t *testing.T) {
 }
 
 func TestGetUserByID(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/users/:userID")

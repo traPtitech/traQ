@@ -12,12 +12,12 @@ var (
 )
 
 func TestUser_TableName(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, "users", (&User{}).TableName())
 }
 
 func TestUser_Create(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, _, _ := beforeTest(t)
 
 	assert.Error((&User{}).Create())
 	assert.Error((&User{Name: "test"}).Create())
@@ -29,17 +29,15 @@ func TestUser_Create(t *testing.T) {
 }
 
 func TestSetPassword(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, _, _ := beforeTest(t)
 
-	user := mustMakeUser(t, "testUser")
+	user := mustMakeUser(t, "testSetPassword")
 	assert.NoError(checkEmptyField(user))
 	assert.Equal(user.Password, hashPassword(password, user.Salt))
 }
 
 func TestGetUser(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, _, _ := beforeTest(t)
 
 	// 正常系
 	user := mustMakeUser(t, "testGetUser")
@@ -57,8 +55,7 @@ func TestGetUser(t *testing.T) {
 }
 
 func TestGetUsers(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, _, _ := beforeTest(t)
 
 	for i := 0; i < 5; i++ {
 		mustMakeUser(t, "testGetUsers"+strconv.Itoa(i))
@@ -66,15 +63,14 @@ func TestGetUsers(t *testing.T) {
 	users, err := GetUsers()
 	assert.NoError(err)
 
-	// traqユーザーがいるので
-	assert.Equal(6, len(users))
+	// traqユーザー・テストユーザーがいるので
+	assert.Len(users, 5+2)
 }
 
 func TestAuthorization(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, _, _ := beforeTest(t)
 
-	mustMakeUser(t, "testUser")
+	mustMakeUser(t, "testAuthorization")
 
 	checkUser := &User{
 		Name: "testUser",

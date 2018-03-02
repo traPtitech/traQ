@@ -2,7 +2,6 @@ package model
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
 )
@@ -10,12 +9,12 @@ import (
 // 各関数のテスト>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 func TestChannel_TableName(t *testing.T) {
+	t.Parallel()
 	assert.Equal(t, "channels", (&Channel{}).TableName())
 }
 
 func TestChannel_Create(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
 	assert.Error((&Channel{ID: "aaa"}).Create())
 	assert.Error((&Channel{}).Create())
@@ -23,72 +22,74 @@ func TestChannel_Create(t *testing.T) {
 	assert.Error((&Channel{Name: "無効な名前"}).Create())
 
 	c := &Channel{
-		CreatorID: testUserID,
-		Name:      "testChannel",
+		CreatorID: user.ID,
+		Name:      "testChannel2",
 		ParentID:  "",
 		IsPublic:  true,
 	}
 	if assert.NoError(c.Create()) {
 		assert.NotEmpty(c.ID)
 	}
+
+	c2 := &Channel{
+		CreatorID: user.ID,
+		Name:      "testChannel2",
+		ParentID:  "",
+		IsPublic:  true,
+	}
+	assert.Error(c2.Create())
 }
 
 func TestChannel_Exists(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
-
-	channel := mustMakeChannelDetail(t, testUserID, "test", "", true)
+	assert, _, user, channel := beforeTest(t)
 
 	checkChannel := &Channel{ID: channel.ID}
-	ok, err := checkChannel.Exists(testUserID)
+	ok, err := checkChannel.Exists(user.ID)
 	if assert.NoError(err) {
 		assert.True(ok)
 	}
 
 	checkChannel = &Channel{ID: CreateUUID()}
-	ok, err = checkChannel.Exists(testUserID)
+	ok, err = checkChannel.Exists(user.ID)
 	if assert.NoError(err) {
 		assert.False(ok)
 	}
 }
 
 func TestChannel_Children(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, channel := beforeTest(t)
 
-	parentChannel := mustMakeChannelDetail(t, testUserID, "parent", "", true)
+	privateUserID := mustMakeUser(t, "privateuser").ID
 
 	for i := 0; i < 10; i++ {
-		mustMakeChannelDetail(t, testUserID, "child-"+strconv.Itoa(i+1), parentChannel.ID, true)
+		mustMakeChannelDetail(t, user.ID, "child-"+strconv.Itoa(i+1), channel.ID, true)
 	}
 
 	for i := 10; i < 20; i++ {
-		channel := mustMakeChannelDetail(t, privateUserID, "child-"+strconv.Itoa(i+1), parentChannel.ID, false)
+		channel := mustMakeChannelDetail(t, user.ID, "child-"+strconv.Itoa(i+1), channel.ID, false)
 		usersPrivateChannel := &UsersPrivateChannel{}
 		usersPrivateChannel.ChannelID = channel.ID
 		usersPrivateChannel.UserID = privateUserID
 		usersPrivateChannel.Create()
 	}
 
-	idList, err := parentChannel.Children(testUserID)
+	idList, err := channel.Children(user.ID)
 	if assert.NoError(err) {
 		assert.Len(idList, 10)
 	}
 
-	idList, err = parentChannel.Children(privateUserID)
+	idList, err = channel.Children(privateUserID)
 	if assert.NoError(err) {
 		assert.Len(idList, 20)
 	}
 }
 
 func TestChannel_Update(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, channel := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, testUserID, "Channel", "", true)
-	parentChannel := mustMakeChannelDetail(t, testUserID, "Parent", "", true)
+	parentChannel := mustMakeChannelDetail(t, user.ID, "Parent", "", true)
 
-	channel.UpdaterID = CreateUUID()
+	channel.UpdaterID = user.ID
 	channel.Name = "Channel-updated"
 	channel.ParentID = parentChannel.ID
 
@@ -96,20 +97,20 @@ func TestChannel_Update(t *testing.T) {
 }
 
 func TestGetChannelList(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user, _ := beforeTest(t)
 
 	for i := 0; i < 10; i++ {
-		mustMakeChannel(t, strconv.Itoa(i))
+		mustMakeChannel(t, user.ID, strconv.Itoa(i))
 	}
 
-	channelList, err := GetChannels(testUserID)
+	channelList, err := GetChannels(user.ID)
 	if assert.NoError(err) {
-		assert.Len(channelList, 10)
+		assert.Len(channelList, 10+1)
 	}
 }
 
 func TestValidateChannelName(t *testing.T) {
+	t.Parallel()
 	assert := assert.New(t)
 
 	okList := []string{"unko", "asjifas", "19012", "_a_", "---asjidfa---", "1-1", "jijijijijijijijijiji"}
@@ -126,17 +127,10 @@ func TestValidateChannelName(t *testing.T) {
 
 // 関数間のテスト>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 func TestCreateChildChannel(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
-
-	channel := &Channel{}
-	channel.CreatorID = testUserID
-	channel.Name = "testChannel"
-	channel.IsPublic = true
-	require.NoError(t, channel.Create())
+	assert, _, user, channel := beforeTest(t)
 
 	childChannel := &Channel{}
-	childChannel.CreatorID = testUserID
+	childChannel.CreatorID = user.ID
 	childChannel.Name = "testChannelChild"
 	childChannel.IsPublic = true
 	childChannel.ParentID = channel.ID

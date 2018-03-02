@@ -55,7 +55,7 @@ func (message *Message) Update() error {
 // GetMessagesFromChannel :指定されたチャンネルのメッセージを取得します
 func GetMessagesFromChannel(channelID string, limit, offset int) ([]*Message, error) {
 	var messageList []*Message
-	err := db.Where("channel_id = ?", channelID).Desc("created_at").Limit(limit, offset).Find(&messageList)
+	err := db.Where("channel_id = ? AND is_deleted = false", channelID).Desc("created_at").Limit(limit, offset).Find(&messageList)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to find messages: %v", err)
 	}
@@ -73,6 +73,9 @@ func GetMessage(messageID string) (*Message, error) {
 	}
 	if has == false {
 		return nil, fmt.Errorf("This messageID is wrong: messageID = %v", messageID)
+	}
+	if message.IsDeleted {
+		return nil, fmt.Errorf("this message has been deleted")
 	}
 
 	return message, nil

@@ -144,7 +144,7 @@ func formatPin(raw *model.Pin) (*PinForResponse, error) {
 		PinID:     raw.ID,
 		ChannelID: raw.ChannelID,
 		UserID:    raw.UserID,
-		DateTime:  raw.CreatedAt,
+		DateTime:  raw.CreatedAt.Truncate(time.Second).UTC(),
 		Message:   message,
 	}, nil
 }

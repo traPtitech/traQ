@@ -3,7 +3,6 @@ package model
 import (
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -12,78 +11,69 @@ func TestUserSubscribeChannel_TableName(t *testing.T) {
 }
 
 func TestUserSubscribeChannel_Create(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, require, user1, channel1 := beforeTest(t)
 
-	id1 := "62e0c80d-a77a-4cee-a2c0-71eda349825b"
-	id2 := "9349b372-5f73-4297-a42f-6a98d4d25454"
-	channel1 := "aaefc6cc-75e5-4eee-a2f3-cae63dc3ede8"
-	channel2 := "55a1f654-6fe2-4d6a-b60a-c70c8d1dedba"
+	user2 := mustMakeUser(t, "user2")
+	channel2 := mustMakeChannel(t, user1.ID, "test")
 
-	assert.NoError((&UserSubscribeChannel{UserID: id1, ChannelID: channel1}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: id1, ChannelID: channel2}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: id2, ChannelID: channel2}).Create())
-	assert.Error((&UserSubscribeChannel{UserID: id1, ChannelID: channel2}).Create())
+	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel1.ID}).Create())
+	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel2.ID}).Create())
+	assert.NoError((&UserSubscribeChannel{UserID: user2.ID, ChannelID: channel2.ID}).Create())
+	assert.Error((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel2.ID}).Create())
 
 	l, err := db.Count(&UserSubscribeChannel{})
-	require.NoError(t, err)
+	require.NoError(err)
 
 	assert.EqualValues(3, l)
 }
 
 func TestUserSubscribeChannel_Delete(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, require, user1, channel1 := beforeTest(t)
 
-	id1 := "62e0c80d-a77a-4cee-a2c0-71eda349825b"
-	id2 := "9349b372-5f73-4297-a42f-6a98d4d25454"
-	channel1 := "aaefc6cc-75e5-4eee-a2f3-cae63dc3ede8"
-	channel2 := "55a1f654-6fe2-4d6a-b60a-c70c8d1dedba"
+	user2 := mustMakeUser(t, "user2")
+	channel2 := mustMakeChannel(t, user1.ID, "test")
 
-	assert.NoError((&UserSubscribeChannel{UserID: id1, ChannelID: channel1}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: id1, ChannelID: channel2}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: id2, ChannelID: channel2}).Create())
+	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel1.ID}).Create())
+	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel2.ID}).Create())
+	assert.NoError((&UserSubscribeChannel{UserID: user2.ID, ChannelID: channel2.ID}).Create())
 
-	assert.NoError((&UserSubscribeChannel{UserID: id2, ChannelID: channel2}).Delete())
+	assert.NoError((&UserSubscribeChannel{UserID: user2.ID, ChannelID: channel2.ID}).Delete())
 	l, err := db.Count(&UserSubscribeChannel{})
-	require.NoError(t, err)
-	assert.Equal(int64(2), l)
+	require.NoError(err)
+	assert.EqualValues(2, l)
 
-	assert.Error((&UserSubscribeChannel{UserID: id1}).Delete())
+	assert.Error((&UserSubscribeChannel{UserID: user1.ID}).Delete())
 	assert.Error((&UserSubscribeChannel{}).Delete())
-	assert.Error((&UserSubscribeChannel{ChannelID: channel1}).Delete())
+	assert.Error((&UserSubscribeChannel{ChannelID: channel1.ID}).Delete())
 
-	assert.NoError((&UserSubscribeChannel{UserID: id1, ChannelID: channel2}).Delete())
+	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel2.ID}).Delete())
 	l, err = db.Count(&UserSubscribeChannel{})
-	require.NoError(t, err)
-	assert.Equal(int64(1), l)
+	require.NoError(err)
+	assert.EqualValues(1, l)
 
-	assert.NoError((&UserSubscribeChannel{UserID: id1, ChannelID: channel1}).Delete())
+	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel1.ID}).Delete())
 	l, err = db.Count(&UserSubscribeChannel{})
-	require.NoError(t, err)
-	assert.Equal(int64(0), l)
+	require.NoError(err)
+	assert.EqualValues(0, l)
 
 }
 
 func TestGetSubscribingUser(t *testing.T) {
-	beforeTest(t)
-	assert := assert.New(t)
+	assert, _, user1, channel1 := beforeTest(t)
 
-	id1 := "62e0c80d-a77a-4cee-a2c0-71eda349825b"
-	id2 := "9349b372-5f73-4297-a42f-6a98d4d25454"
-	channel1 := "aaefc6cc-75e5-4eee-a2f3-cae63dc3ede8"
-	channel2 := "55a1f654-6fe2-4d6a-b60a-c70c8d1dedba"
+	user2 := mustMakeUser(t, "user2")
+	channel2 := mustMakeChannel(t, user1.ID, "test")
 
-	assert.NoError((&UserSubscribeChannel{UserID: id1, ChannelID: channel1}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: id1, ChannelID: channel2}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: id2, ChannelID: channel2}).Create())
+	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel1.ID}).Create())
+	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel2.ID}).Create())
+	assert.NoError((&UserSubscribeChannel{UserID: user2.ID, ChannelID: channel2.ID}).Create())
 
-	arr, err := GetSubscribingUser(uuid.FromStringOrNil(channel1))
+	arr, err := GetSubscribingUser(uuid.FromStringOrNil(channel1.ID))
 	if assert.NoError(err) {
 		assert.Len(arr, 1)
 	}
 
-	arr, err = GetSubscribingUser(uuid.FromStringOrNil(channel2))
+	arr, err = GetSubscribingUser(uuid.FromStringOrNil(channel2.ID))
 	if assert.NoError(err) {
 		assert.Len(arr, 2)
 	}

@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -25,12 +26,12 @@ var (
 		Email: "example@trap.jp",
 		Icon:  "empty",
 	}
-	nobodyID      = "0ce216f1-4a0d-4011-9f55-d0f79cfb7ca1"
-	testChannelID = ""
-	engine        *xorm.Engine
+	engine *xorm.Engine
 )
 
 func TestMain(m *testing.M) {
+	time.Local = time.UTC
+
 	user := os.Getenv("MARIADB_USERNAME")
 	if user == "" {
 		user = "root"
@@ -46,24 +47,27 @@ func TestMain(m *testing.M) {
 		host = "127.0.0.1"
 	}
 
+	port := os.Getenv("MARIADB_PORT")
+	if port == "" {
+		port = "3306"
+	}
+
 	dbname := "traq-test-router"
 
 	var err error
-	engine, err = xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=true", user, pass, host, dbname))
+	engine, err = xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, dbname))
 	if err != nil {
 		panic(err)
 	}
 	defer engine.Close()
-
 	engine.ShowSQL(false)
-	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars", "tags", "unreads", "users_tags", "devices", "users_subscribe_channels", "files")
 	engine.SetMapper(core.GonicMapper{})
 	model.SetXORMEngine(engine)
 
-	err = model.SyncSchema()
-	if err != nil {
+	if err := model.SyncSchema(); err != nil {
 		panic(err)
 	}
+
 	code := m.Run()
 
 	fm := model.NewDevFileManager()
@@ -72,10 +76,10 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
+func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc, *assert.Assertions, *require.Assertions) {
 	require := require.New(t)
 
-	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars", "tags", "unreads", "users_tags", "devices", "users_subscribe_channels", "files")
+	require.NoError(model.DropTables())
 	require.NoError(model.SyncSchema())
 	e := echo.New()
 
@@ -84,7 +88,6 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
 
 	require.NoError(testUser.SetPassword("test"))
 	require.NoError(testUser.Create())
-	testChannelID = model.CreateUUID()
 
 	req := httptest.NewRequest(echo.GET, "/", nil)
 	rec := httptest.NewRecorder()
@@ -101,7 +104,7 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc) {
 		}
 
 	}
-	return e, cookie, mw
+	return e, cookie, mw, assert.New(t), require
 }
 
 func beforeLoginTest(t *testing.T) (*echo.Echo, echo.MiddlewareFunc) {
@@ -182,10 +185,10 @@ func mustMakeChannel(t *testing.T, userID, name string, isPublic bool) *model.Ch
 	return channel
 }
 
-func mustMakeMessage(t *testing.T) *model.Message {
+func mustMakeMessage(t *testing.T, userID, channelID string) *model.Message {
 	message := &model.Message{
-		UserID:    testUser.ID,
-		ChannelID: testChannelID,
+		UserID:    userID,
+		ChannelID: channelID,
 		Text:      "popopo",
 	}
 	require.NoError(t, message.Create())
@@ -238,14 +241,15 @@ func mustMakePin(t *testing.T, channelID, userID, messageID string) *model.Pin {
 	return pin
 }
 
-func mustCreateUser(t *testing.T) {
+func mustCreateUser(t *testing.T, name string) *model.User {
 	user := &model.User{
-		Name:  "PostLogin",
+		Name:  name,
 		Email: "example@trap.jp",
 		Icon:  "empty",
 	}
 	require.NoError(t, user.SetPassword("test"))
 	require.NoError(t, user.Create())
+	return user
 }
 
 func mustMakeFile(t *testing.T) *model.File {
@@ -256,8 +260,4 @@ func mustMakeFile(t *testing.T) *model.File {
 	}
 	require.NoError(t, file.Create(bytes.NewBufferString("test message")))
 	return file
-}
-
-func parseDateTime(dateTime time.Time) time.Time {
-	return dateTime.Truncate(time.Second).In(time.UTC)
 }

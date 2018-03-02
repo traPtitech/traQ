@@ -8,31 +8,30 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 	"net/http"
 )
 
 func TestPostHeartbeat(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, require := beforeTest(t)
+
+	channel := mustMakeChannel(t, testUser.ID, "testChan", true)
 
 	requestBody, err := json.Marshal(struct {
 		ChannelID string `json:"channelId"`
 		Status    string `json:"status"`
 	}{
-		ChannelID: testChannelID,
+		ChannelID: channel.ID,
 		Status:    "editing",
 	})
-	require.NoError(t, err)
+	require.NoError(err)
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(requestBody))
 	rec := request(e, t, mw(PostHeartbeat), cookie, req)
 
 	if assert.EqualValues(http.StatusOK, rec.Code) {
 		var responseBody model.HeartbeatStatus
 		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.Equal(testChannelID, responseBody.ChannelID)
+			assert.Equal(channel.ID, responseBody.ChannelID)
 			assert.Len(responseBody.UserStatuses, 1)
 			assert.Equal(testUser.ID, responseBody.UserStatuses[0].UserID)
 			assert.Equal("editing", responseBody.UserStatuses[0].Status)
@@ -41,11 +40,12 @@ func TestPostHeartbeat(t *testing.T) {
 }
 
 func TestGetHeartbeat(t *testing.T) {
-	e, cookie, mw := beforeTest(t)
-	assert := assert.New(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 
-	model.HeartbeatStatuses[testChannelID] = &model.HeartbeatStatus{
-		ChannelID: testChannelID,
+	channel := mustMakeChannel(t, testUser.ID, "testChan", true)
+
+	model.HeartbeatStatuses[channel.ID] = &model.HeartbeatStatus{
+		ChannelID: channel.ID,
 		UserStatuses: []*model.UserStatus{
 			{
 				UserID:   testUser.ID,
@@ -56,7 +56,7 @@ func TestGetHeartbeat(t *testing.T) {
 	}
 
 	q := make(url.Values)
-	q.Set("channelId", testChannelID)
+	q.Set("channelId", channel.ID)
 
 	req := httptest.NewRequest("GET", "/?"+q.Encode(), nil)
 	rec := request(e, t, mw(GetHeartbeat), cookie, req)
@@ -64,8 +64,7 @@ func TestGetHeartbeat(t *testing.T) {
 	if assert.EqualValues(http.StatusOK, rec.Code) {
 		var responseBody model.HeartbeatStatus
 		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			t.Log(responseBody)
-			assert.Equal(testChannelID, responseBody.ChannelID)
+			assert.Equal(channel.ID, responseBody.ChannelID)
 			assert.Len(responseBody.UserStatuses, 1)
 			assert.Equal(testUser.ID, responseBody.UserStatuses[0].UserID)
 			assert.Equal("editing", responseBody.UserStatuses[0].Status)

@@ -170,7 +170,7 @@ func formatMessage(raw *model.Message) *MessageForResponse {
 		ParentChannelID: raw.ChannelID,
 		Pin:             false, //TODO:取得するようにする
 		Content:         raw.Text,
-		Datetime:        raw.CreatedAt,
+		Datetime:        raw.CreatedAt.Truncate(time.Second).UTC(),
 		StampList:       stampList,
 	}
 	return &res
