@@ -13,7 +13,7 @@ echo "-----> Installing node"
 cd $cache
 mkdir node
 wget -qO node.tar.xz https://nodejs.org/dist/v9.7.0/node-v9.7.0-linux-x64.tar.xz
-tar Jxfv node.tar.xz -C node --strip-components 1
+tar Jxf node.tar.xz -C node --strip-components 1
 
 echo "-----> Setup environment"
 export GOROOT=$cache/go
@@ -28,6 +28,7 @@ ln -sf $build $repo
 
 echo "-----> Setup project"
 cd $repo
+git submodule update --init
 make init
 
 echo "-----> Build project"
