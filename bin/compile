@@ -28,7 +28,7 @@ ln -sf $build $repo
 
 echo "-----> Setup project"
 cd $repo
-git submodule update --init
+git clone https://github.com/traPtitech/traQ-UI client
 make init
 
 echo "-----> Build project"
