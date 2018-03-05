@@ -110,7 +110,20 @@ func TestPutChannelsByChannelID(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 	ch := mustMakeChannel(t, testUser.ID, "test", true)
 
-	req := httptest.NewRequest("PUT", "http://test", strings.NewReader(`{"name": "renamed"}`))
+	parentID := mustMakeChannel(t, testUser.ID, "parent", true).ID
+	jsonBody := struct {
+		Name       string `json:"name"`
+		Parent     string `json:"parent"`
+		Visibility bool   `json:"visibility"`
+	}{
+		Name:       "renamed",
+		Parent:     parentID,
+		Visibility: true,
+	}
+	body, err := json.Marshal(jsonBody)
+	require.NoError(err)
+
+	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/:channelID")
 	c.SetParamNames("channelID")
@@ -119,9 +132,10 @@ func TestPutChannelsByChannelID(t *testing.T) {
 
 	require.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
 
-	ch, err := model.GetChannelByID(testUser.ID, ch.ID)
+	ch, err = model.GetChannelByID(testUser.ID, ch.ID)
 	if assert.NoError(err) {
 		assert.Equal("renamed", ch.Name)
+		assert.Equal(parentID, ch.ParentID)
 		assert.Equal(testUser.ID, ch.UpdaterID)
 	}
 }

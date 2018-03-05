@@ -151,7 +151,9 @@ func PutChannelsByChannelID(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 
 	req := struct {
-		Name string `json:"name"`
+		Name       string `json:"name"`
+		Parent     string `json:"parent"`
+		Visibility bool   `json:"visibility"`
 	}{}
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
@@ -168,6 +170,8 @@ func PutChannelsByChannelID(c echo.Context) error {
 	}
 
 	channel.Name = req.Name
+	channel.ParentID = req.Parent
+	channel.IsVisible = req.Visibility
 	channel.UpdaterID = userID
 
 	if err := channel.Update(); err != nil {
