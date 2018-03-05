@@ -26,7 +26,7 @@ func GetUserInfo(next echo.HandlerFunc) echo.HandlerFunc {
 
 		user, err := model.GetUser(userID)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Cannnot get your user infomation")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Cannot get your user information")
 		}
 		c.Set("user", user)
 		return next(c)

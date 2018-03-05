@@ -41,7 +41,7 @@ func GetMessageByID(c echo.Context) error {
 	ID := c.Param("messageID") // TODO: idの検証
 	raw, err := model.GetMessage(ID)
 	if err != nil {
-		c.Echo().Logger.Errorf("model.Getmessage returned an error : %v", err)
+		c.Echo().Logger.Errorf("model.GetMessage returned an error : %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "Message is not found")
 	}
 	res := formatMessage(raw)
@@ -61,7 +61,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 
 	messageList, err := model.GetMessagesFromChannel(channelID, queryParam.Limit, queryParam.Offset)
 	if err != nil {
-		c.Echo().Logger.Errorf("model.GetmessagesFromChannel returned an error : %v", err)
+		c.Echo().Logger.Errorf("model.GetMessagesFromChannel returned an error : %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
 	}
 

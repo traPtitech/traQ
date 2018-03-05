@@ -69,7 +69,7 @@ func PostLogin(c echo.Context) error {
 func PostLogout(c echo.Context) error {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "an error occurrerd while getting session")
+		return echo.NewHTTPError(http.StatusInternalServerError, "an error occurred while getting session")
 	}
 
 	sess.Values["userID"] = nil
@@ -264,11 +264,11 @@ func formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailF
 		IconID: user.Icon,
 	}
 	for _, tag := range tagList {
-		formatedTag, err := formatTag(tag)
+		formattedTag, err := formatTag(tag)
 		if err != nil {
 			return nil, err
 		}
-		userDetail.TagList = append(userDetail.TagList, formatedTag)
+		userDetail.TagList = append(userDetail.TagList, formattedTag)
 	}
 	return userDetail, nil
 }

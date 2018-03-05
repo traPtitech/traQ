@@ -67,7 +67,7 @@ func PutTopic(c echo.Context) error {
 	channel.UpdaterID = userID
 
 	if err := channel.Update(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "An error occuerred when channel model update.")
+		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred when channel model update.")
 	}
 
 	topic := TopicForResponse{

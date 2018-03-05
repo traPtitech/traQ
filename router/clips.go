@@ -14,13 +14,13 @@ import (
 func GetClips(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 
-	clipedMessages, err := model.GetClippedMessages(user.ID)
+	clippedMessages, err := model.GetClippedMessages(user.ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get cliped messages")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get clipped messages")
 	}
 
 	responseBody := make([]*MessageForResponse, 0)
-	for _, message := range clipedMessages {
+	for _, message := range clippedMessages {
 		responseBody = append(responseBody, formatMessage(message))
 	}
 
@@ -53,13 +53,13 @@ func PostClips(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to create clip: %s", err.Error()))
 	}
 
-	clipedMessages, err := model.GetClippedMessages(user.ID)
+	clippedMessages, err := model.GetClippedMessages(user.ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get cliped messages")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get clipped messages")
 	}
 
 	responseBody := make([]*MessageForResponse, 0)
-	for _, message := range clipedMessages {
+	for _, message := range clippedMessages {
 		responseBody = append(responseBody, formatMessage(message))
 	}
 
@@ -88,13 +88,13 @@ func DeleteClips(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to delete clip: %s", err.Error()))
 	}
 
-	clipedMessages, err := model.GetClippedMessages(user.ID)
+	clippedMessages, err := model.GetClippedMessages(user.ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get cliped messages")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get clipped messages")
 	}
 
 	responseBody := make([]*MessageForResponse, 0)
-	for _, message := range clipedMessages {
+	for _, message := range clippedMessages {
 		responseBody = append(responseBody, formatMessage(message))
 	}
 
