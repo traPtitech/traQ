@@ -155,7 +155,7 @@ func InitCache() error {
 		return err
 	}
 	for _, v := range channels {
-		path, err := v.GetPath()
+		path, err := v.Path()
 		if err != nil {
 			return err
 		}

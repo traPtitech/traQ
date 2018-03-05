@@ -29,12 +29,12 @@ func TestMakePrivateChannel(t *testing.T) {
 		require.NoError(usersPrivateChannel.Create())
 	}
 
-	channelList, err := GetChannels(user.ID)
+	channelList, err := GetChannelList(user.ID)
 	if assert.NoError(err) {
 		assert.Len(channelList, 1+1)
 	}
 
-	channelList, err = GetChannels(CreateUUID())
+	channelList, err = GetChannelList(CreateUUID())
 	if assert.NoError(err) {
 		assert.Len(channelList, 0+1)
 	}

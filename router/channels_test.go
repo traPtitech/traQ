@@ -22,8 +22,8 @@ func TestGetChannels(t *testing.T) {
 	rec := request(e, t, mw(GetChannels), cookie, nil)
 
 	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
-		var responseBody []ChannelForResponse
-		assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody))
+		var res []ChannelForResponse
+		assert.NoError(json.Unmarshal(rec.Body.Bytes(), &res))
 	}
 }
 
@@ -41,7 +41,7 @@ func TestPostChannels(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(PostChannels), cookie, req)
 
-	channelList, err := model.GetChannels(testUser.ID)
+	channelList, err := model.GetChannelList(testUser.ID)
 	if assert.NoError(err) {
 		if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
 			assert.Len(channelList, 1)
@@ -59,7 +59,7 @@ func TestPostChannels(t *testing.T) {
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	rec = request(e, t, mw(PostChannels), cookie, req)
 
-	channelList, err = model.GetChannels(testUser.ID)
+	channelList, err = model.GetChannelList(testUser.ID)
 	if assert.NoError(err) {
 		if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
 			assert.Len(channelList, 2)
@@ -81,12 +81,12 @@ func TestPostChannels(t *testing.T) {
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	request(e, t, mw(PostChannels), cookie, req)
 
-	channelList, err = model.GetChannels(testUser.ID)
+	channelList, err = model.GetChannelList(testUser.ID)
 	if assert.NoError(err) {
 		assert.Len(channelList, 3)
 	}
 
-	channelList, err = model.GetChannels(model.CreateUUID())
+	channelList, err = model.GetChannelList(model.CreateUUID())
 	if assert.NoError(err) {
 		assert.Len(channelList, 2)
 	}
@@ -108,42 +108,56 @@ func TestGetChannelsByChannelID(t *testing.T) {
 
 func TestPutChannelsByChannelID(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
+	ch := mustMakeChannel(t, testUser.ID, "test", true)
 
-	req := httptest.NewRequest("PUT", "http://test", strings.NewReader(`{"name": "renamed"}`))
+	parentID := mustMakeChannel(t, testUser.ID, "parent", true).ID
+	jsonBody := struct {
+		Name       string `json:"name"`
+		Parent     string `json:"parent"`
+		Visibility bool   `json:"visibility"`
+	}{
+		Name:       "renamed",
+		Parent:     parentID,
+		Visibility: true,
+	}
+	body, err := json.Marshal(jsonBody)
+	require.NoError(err)
+
+	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/:channelID")
 	c.SetParamNames("channelID")
-	c.SetParamValues(channel.ID)
+	c.SetParamValues(ch.ID)
 	requestWithContext(t, mw(PutChannelsByChannelID), c)
 
 	require.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
 
-	channel, err := model.GetChannelByID(testUser.ID, channel.ID)
+	ch, err = model.GetChannelByID(testUser.ID, ch.ID)
 	if assert.NoError(err) {
-		assert.Equal("renamed", channel.Name)
-		assert.Equal(testUser.ID, channel.UpdaterID)
+		assert.Equal("renamed", ch.Name)
+		assert.Equal(parentID, ch.ParentID)
+		assert.Equal(testUser.ID, ch.UpdaterID)
 	}
 }
 
 func TestDeleteChannelsByChannelID(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
+	ch := mustMakeChannel(t, testUser.ID, "test", true)
 
 	req := httptest.NewRequest("DELETE", "http://test", strings.NewReader(`{"confirm": true}`))
 	c, _ := getContext(e, t, cookie, req)
 	c.SetPath("/:channelID")
 	c.SetParamNames("channelID")
-	c.SetParamValues(channel.ID)
+	c.SetParamValues(ch.ID)
 	requestWithContext(t, mw(DeleteChannelsByChannelID), c)
 
-	channel, err := model.GetChannelByID(testUser.ID, channel.ID)
+	ch, err := model.GetChannelByID(testUser.ID, ch.ID)
 	require.Error(err)
 
 	// ""で削除されていても取得できるようにするそれでちゃんと削除されているか確認する
 
-	channelList, err := model.GetChannels(testUser.ID)
+	channelList, err := model.GetChannelList(testUser.ID)
 	if assert.NoError(err) {
 		assert.Len(channelList, 0)
 	}

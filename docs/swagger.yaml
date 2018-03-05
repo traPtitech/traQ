@@ -165,7 +165,7 @@ paths:
     put:
       tags:
         - channel
-      description: チャンネル名を変更します。
+      description: チャンネルの情報を変更します。
       requestBody:
         content:
           application/json:
@@ -178,6 +178,15 @@ paths:
                   type: string
                   description: チャンネル名
                   example: gps
+                parent:
+                  type: string
+                  format: uuid
+                  description: 変更後の親のID。
+                  example: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
+                visibility:
+                  type: boolean
+                  description: 変更後のvisibility
+                  example: true
       responses:
         "200":
           description: |+

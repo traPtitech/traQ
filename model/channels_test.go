@@ -1,9 +1,11 @@
 package model
 
 import (
-	"github.com/stretchr/testify/assert"
 	"strconv"
 	"testing"
+
+	"github.com/satori/go.uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 // 各関数のテスト>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -56,6 +58,31 @@ func TestChannel_Exists(t *testing.T) {
 	}
 }
 
+func TestChannel_Update(t *testing.T) {
+	assert, _, user, channel := beforeTest(t)
+
+	parentChannel := mustMakeChannelDetail(t, user.ID, "Parent", "", true)
+
+	channel.UpdaterID = user.ID
+	channel.Name = "Channel-updated"
+	channel.ParentID = parentChannel.ID
+
+	assert.NoError(channel.Update())
+}
+
+func TestChannel_Parent(t *testing.T) {
+	assert, _, user, channel := beforeTest(t)
+
+	childChannel := mustMakeChannelDetail(t, user.ID, "child", channel.ID, true)
+
+	parent, err := childChannel.Parent()
+	assert.NoError(err)
+	assert.Equal(parent.ID, channel.ID)
+
+	_, err = channel.Parent()
+	assert.NoError(err)
+}
+
 func TestChannel_Children(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
@@ -84,16 +111,30 @@ func TestChannel_Children(t *testing.T) {
 	}
 }
 
-func TestChannel_Update(t *testing.T) {
-	assert, _, user, channel := beforeTest(t)
+func TestChannel_Path(t *testing.T) {
+	assert, _, user, _ := beforeTest(t)
 
-	parentChannel := mustMakeChannelDetail(t, user.ID, "Parent", "", true)
+	ch1 := mustMakeChannelDetail(t, user.ID, "parent", "", true)
+	ch2 := mustMakeChannelDetail(t, user.ID, "child", ch1.ID, true)
 
-	channel.UpdaterID = user.ID
-	channel.Name = "Channel-updated"
-	channel.ParentID = parentChannel.ID
+	path, err := ch2.Path()
+	assert.NoError(err)
+	assert.Equal("#parent/child", path)
 
-	assert.NoError(channel.Update())
+	path, err = ch1.Path()
+	assert.NoError(err)
+	assert.Equal("#parent", path)
+}
+
+func TestGetChannelByID(t *testing.T) {
+	assert, _, user, _ := beforeTest(t)
+
+	ch := mustMakeChannel(t, user.ID, "getByID")
+
+	r, err := GetChannelByID(user.ID, ch.ID)
+	assert.NoError(err)
+	assert.Equal(ch.Name, r.Name)
+	// TODO: userから見えないチャンネルの取得についてのテスト
 }
 
 func TestGetChannelList(t *testing.T) {
@@ -103,21 +144,42 @@ func TestGetChannelList(t *testing.T) {
 		mustMakeChannel(t, user.ID, strconv.Itoa(i))
 	}
 
-	channelList, err := GetChannels(user.ID)
+	channelList, err := GetChannelList(user.ID)
 	if assert.NoError(err) {
 		assert.Len(channelList, 10+1)
 	}
+}
+
+func TestGetAllChannels(t *testing.T) {
+	assert, _, user, _ := beforeTest(t)
+
+	n := 10
+	for i := 0; i < n; i++ {
+		mustMakeChannel(t, user.ID, strconv.Itoa(i))
+	}
+
+	chList, err := GetAllChannels()
+	assert.NoError(err)
+	assert.Equal(n+1, len(chList)) // beforeTest(t)内で一つchannelが生成されているため+1
+}
+
+func TestGetChannelPath(t *testing.T) {
+	assert, _, _, ch := beforeTest(t)
+
+	path, ok := GetChannelPath(uuid.FromStringOrNil(ch.ID))
+	assert.True(ok)
+	assert.Equal("#"+ch.Name, path)
 }
 
 func TestValidateChannelName(t *testing.T) {
 	t.Parallel()
 	assert := assert.New(t)
 
-	okList := []string{"unko", "asjifas", "19012", "_a_", "---asjidfa---", "1-1", "jijijijijijijijijiji"}
+	okList := []string{"-_-", "correct_name", "20--characters--name"}
 	for _, name := range okList {
 		assert.NoErrorf(validateChannelName(name), "channel name validation failed: %s", name)
 	}
-	ngList := []string{",.", "dajosd.dfjios", "うんこ", "てすｔ", "ｊｋ", "sadjfifjffojfosadjfisjdfosdjoifisdoifjsaoid"}
+	ngList := []string{",.", "半角英数字以外", "ｊｋ", "over-20-characters-channel-name"}
 	for _, name := range ngList {
 		assert.Errorf(validateChannelName(name), "channel name validation failed: %s", name)
 	}
