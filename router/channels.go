@@ -32,7 +32,7 @@ type PostChannel struct {
 func GetChannels(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 
-	channelList, err := model.GetChannels(userID)
+	channelList, err := model.GetChannelList(userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to get channel list: %v", err))
 	}
@@ -62,22 +62,22 @@ func PostChannels(c echo.Context) error {
 	// TODO: 同名・同階層のチャンネルのチェック
 	userID := c.Get("user").(*model.User).ID
 
-	var requestBody PostChannel
-	if err := c.Bind(&requestBody); err != nil {
+	var req PostChannel
+	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
 	}
 
-	if requestBody.ChannelType == "" || requestBody.Name == "" {
+	if req.ChannelType == "" || req.Name == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "Not set channelType or name")
 	}
 
-	if requestBody.ChannelType != "public" && requestBody.ChannelType != "private" {
+	if req.ChannelType != "public" && req.ChannelType != "private" {
 		return echo.NewHTTPError(http.StatusBadRequest, "channelType must be public or private.")
 	}
 
-	if requestBody.Parent != "" {
-		channel := &model.Channel{ID: requestBody.Parent}
-		ok, err := channel.Exists(userID)
+	if req.Parent != "" {
+		parent := &model.Channel{ID: req.Parent}
+		ok, err := parent.Exists(userID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server during validation of the parent channel.")
 		}
@@ -88,9 +88,9 @@ func PostChannels(c echo.Context) error {
 
 	newChannel := &model.Channel{
 		CreatorID: userID,
-		ParentID:  requestBody.Parent,
-		Name:      requestBody.Name,
-		IsPublic:  requestBody.ChannelType == "public",
+		ParentID:  req.Parent,
+		Name:      req.Name,
+		IsPublic:  req.ChannelType == "public",
 	}
 
 	if err := newChannel.Create(); err != nil {
@@ -100,7 +100,7 @@ func PostChannels(c echo.Context) error {
 	if newChannel.IsPublic {
 		go notification.Send(events.ChannelCreated, events.ChannelEvent{ID: newChannel.ID})
 	} else {
-		for _, user := range requestBody.Member {
+		for _, user := range req.Member {
 			// TODO: メンバーが存在するか確認
 			usersPrivateChannel := &model.UsersPrivateChannel{}
 			usersPrivateChannel.ChannelID = newChannel.ID
@@ -113,12 +113,12 @@ func PostChannels(c echo.Context) error {
 	}
 
 	ch, err := model.GetChannelByID(userID, newChannel.ID)
-
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while getting channel.")
 	}
 
-	return c.JSON(http.StatusCreated, ch)
+	res := formatChannel(ch)
+	return c.JSON(http.StatusCreated, res)
 }
 
 // GetChannelsByChannelID GET /channels/{channelID} のハンドラ
@@ -135,14 +135,14 @@ func GetChannelsByChannelID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "The specified channel does not exist.")
 	}
 
-	childrenIDs, err := channel.Children(userID)
+	childIDs, err := channel.Children(userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get children channel id list: %v", err)
 	}
 
-	responseBody := formatChannel(channel)
-	responseBody.Children = childrenIDs
-	return c.JSON(http.StatusOK, responseBody)
+	res := formatChannel(channel)
+	res.Children = childIDs
+	return c.JSON(http.StatusOK, res)
 }
 
 // PutChannelsByChannelID PUT /channels/{channelID} のハンドラ
@@ -150,8 +150,10 @@ func PutChannelsByChannelID(c echo.Context) error {
 	// CHECK: 権限周り
 	userID := c.Get("user").(*model.User).ID
 
-	var requestBody PostChannel
-	if err := c.Bind(&requestBody); err != nil {
+	req := struct {
+		Name string `json:"name"`
+	}{}
+	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
 	}
 
@@ -165,14 +167,14 @@ func PutChannelsByChannelID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "The specified channel does not exist.")
 	}
 
-	channel.Name = requestBody.Name
+	channel.Name = req.Name
 	channel.UpdaterID = userID
 
 	if err := channel.Update(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "An error occuerred while update channel")
 	}
 
-	childrenIDs, err := channel.Children(userID)
+	childIDs, err := channel.Children(userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to get children channel id list: %v", err))
 	}
@@ -181,8 +183,8 @@ func PutChannelsByChannelID(c echo.Context) error {
 		ChannelID:  channel.ID,
 		Name:       channel.Name,
 		Parent:     channel.ParentID,
-		Visibility: !channel.IsVisible,
-		Children:   childrenIDs,
+		Visibility: channel.IsVisible,
+		Children:   childIDs,
 	}
 
 	go notification.Send(events.ChannelUpdated, events.ChannelEvent{ID: channelID})
@@ -197,12 +199,12 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 	type confirm struct {
 		Confirm bool `json:"confirm"`
 	}
-	var requestBody confirm
-	if err := c.Bind(&requestBody); err != nil {
+	var req confirm
+	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
 	}
 
-	if !requestBody.Confirm {
+	if !req.Confirm {
 		return echo.NewHTTPError(http.StatusBadRequest, "confirm is not true.")
 	}
 
