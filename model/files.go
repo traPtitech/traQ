@@ -23,6 +23,8 @@ type FileManager interface {
 	OpenFileByID(ID string) (io.ReadCloser, error)
 	// IDで指定されたファイルを削除する
 	DeleteByID(ID string) error
+	// RedirectURLが発行できる場合は取得します。出来ない場合は空文字列を返します
+	GetRedirectURL(ID string) string
 }
 
 // File DBに格納するファイルの構造体
@@ -111,6 +113,15 @@ func (f *File) Open() (io.ReadCloser, error) {
 	}
 
 	return reader.OpenFileByID(f.ID)
+}
+
+// GetRedirectURL リダイレクト先URLが存在する場合はそれを返します
+func (f *File) GetRedirectURL() string {
+	m, ok := fileManagers[f.Manager]
+	if !ok {
+		return ""
+	}
+	return m.GetRedirectURL(f.ID)
 }
 
 // OpenFileByID ファイルを取得します
@@ -206,6 +217,11 @@ func (fm *LocalFileManager) DeleteByID(ID string) error {
 		return err
 	}
 	return os.Remove(fileName)
+}
+
+// GetRedirectURL 必ず空文字列を返します
+func (*LocalFileManager) GetRedirectURL(ID string) string {
+	return ""
 }
 
 // GetDir ファイルの保存先を取得する

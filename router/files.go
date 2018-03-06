@@ -56,6 +56,11 @@ func GetFileByID(c echo.Context) error {
 		return err
 	}
 
+	url := meta.GetRedirectURL()
+	if len(url) > 0 {
+		return c.Redirect(http.StatusFound, url) //オブジェクトストレージで直接アクセス出来る場合はリダイレクトする
+	}
+
 	file, err := meta.Open()
 	if err != nil {
 		c.Echo().Logger.Error(err)

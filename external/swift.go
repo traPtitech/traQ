@@ -10,13 +10,15 @@ import (
 // SwiftFileManager OpenStack Swiftのファイルマネージャー構造体
 type SwiftFileManager struct {
 	container  string
+	redirect   bool
 	connection swift.Connection
 }
 
 // NewSwiftFileManager 引数の情報でファイルマネージャーを生成します
-func NewSwiftFileManager(container, userName, apiKey, tenant, tenantID, authURL string) (*SwiftFileManager, error) {
+func NewSwiftFileManager(container, userName, apiKey, tenant, tenantID, authURL string, redirect bool) (*SwiftFileManager, error) {
 	m := &SwiftFileManager{
 		container: container,
+		redirect:  redirect,
 		connection: swift.Connection{
 			AuthUrl:  authURL,
 			UserName: userName,
@@ -59,4 +61,13 @@ func (m *SwiftFileManager) WriteByID(src io.Reader, ID, name, contentType string
 func (m *SwiftFileManager) DeleteByID(ID string) (err error) {
 	err = m.connection.ObjectDelete(m.container, ID)
 	return
+}
+
+// GetRedirectURL オブジェクトストレージへのリダイレクト先URLを返します
+func (m *SwiftFileManager) GetRedirectURL(ID string) string {
+	if !m.redirect {
+		return ""
+	}
+
+	return "" //TODO
 }
