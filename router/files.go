@@ -17,7 +17,7 @@ type FileForResponse struct {
 	DateTime string `json:"datetime"`
 }
 
-// PostFile POST /file のハンドラ
+// PostFile POST /files のハンドラ
 func PostFile(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 
@@ -44,7 +44,7 @@ func PostFile(c echo.Context) error {
 	return c.JSON(http.StatusCreated, formatFile(file))
 }
 
-// GetFileByID GET /file/{fileID}
+// GetFileByID GET /files/{fileID}
 func GetFileByID(c echo.Context) error {
 	ID := c.Param("fileID")
 	dl := c.QueryParam("dl")
@@ -67,7 +67,7 @@ func GetFileByID(c echo.Context) error {
 	return c.Stream(http.StatusOK, meta.Mime, file)
 }
 
-// DeleteFileByID DELETE /file/{fileID}
+// DeleteFileByID DELETE /files/{fileID}
 func DeleteFileByID(c echo.Context) error {
 	ID := c.Param("fileID")
 
@@ -82,7 +82,7 @@ func DeleteFileByID(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// GetMetaDataByFileID GET /file/{fileID}/meta
+// GetMetaDataByFileID GET /files/{fileID}/meta
 func GetMetaDataByFileID(c echo.Context) error {
 	ID := c.Param("fileID")
 
@@ -94,7 +94,7 @@ func GetMetaDataByFileID(c echo.Context) error {
 }
 
 // TODO: そのうち実装
-// GetThumbnailByID GET /file/{fileID}/thumbnail
+// GetThumbnailByID GET /files/{fileID}/thumbnail
 
 func formatFile(f *model.File) *FileForResponse {
 	return &FileForResponse{
