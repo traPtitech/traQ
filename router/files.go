@@ -23,7 +23,7 @@ func PostFile(c echo.Context) error {
 
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to upload file: %v", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to upload file: %v", err))
 	}
 
 	file := &model.File{
@@ -34,12 +34,14 @@ func PostFile(c echo.Context) error {
 
 	src, err := uploadedFile.Open()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to open file")
+		c.Echo().Logger.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	defer src.Close()
 
 	if err := file.Create(src); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create file")
+		c.Echo().Logger.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusCreated, formatFile(file))
 }
@@ -54,9 +56,10 @@ func GetFileByID(c echo.Context) error {
 		return err
 	}
 
-	file, err := model.OpenFileByID(ID)
+	file, err := meta.Open()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get file")
+		c.Echo().Logger.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	defer file.Close()
 
@@ -73,12 +76,18 @@ func DeleteFileByID(c echo.Context) error {
 
 	meta, err := validateFileID(ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("fileID is wrong: %s", ID))
+		c.Echo().Logger.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	if file == nil {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	if err := meta.Delete(); err != nil {
+		c.Echo().Logger.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete data")
 	}
+
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -88,7 +97,8 @@ func GetMetaDataByFileID(c echo.Context) error {
 
 	meta, err := validateFileID(ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "fileID is wrong")
+		c.Echo().Logger.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, formatFile(meta))
 }

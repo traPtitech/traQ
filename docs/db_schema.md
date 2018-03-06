@@ -135,6 +135,7 @@ user_idとmessage_idの複合主キー
 | creator_id | CHAR(36) | NOT NULL (外部キー) | 投稿者のユーザーID |
 | is_deleted | BOOLEAN | NOT NULL | 削除されているか |
 | hash | CHAR(32) | NOT NULL | ハッシュ値 |
+| manager | VARCHAR(30) | NOT NULL DEFAULT '' | マネージャー名(空文字はローカル) |
 | created_at | TIMESTAMP | NOT NULL | 投稿日時 |
 
 ## stars

@@ -103,6 +103,12 @@
   version = "v0.0.3"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/ncw/swift"
+  packages = ["."]
+  revision = "ae9f0ea1605b9aa6434ed5c731ca35d83ba67c55"
+
+[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
@@ -160,6 +166,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3828ab5a3093918bab3dcc3fba308135a970a4c584e45b951f629c73ec7c2266"
+  inputs-digest = "c23756bcfa0a2bf7111023fd312582a4dd77768acb40d7a890620f4a8d61128a"
   solver-name = "gps-cdcl"
   solver-version = 1
