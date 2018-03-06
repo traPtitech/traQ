@@ -72,7 +72,7 @@ func TestDeleteFileByID(t *testing.T) {
 	c.SetParamValues(file.ID)
 
 	requestWithContext(t, mw(DeleteFileByID), c)
-	assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String())
+	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
 }
 func TestGetMetaDataByFileID(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
