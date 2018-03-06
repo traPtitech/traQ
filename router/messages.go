@@ -35,7 +35,7 @@ type requestCount struct {
 // GetMessageByID : /messages/{messageID}のGETメソッド
 func GetMessageByID(c echo.Context) error {
 	ID := c.Param("messageID") // TODO: idの検証
-	raw, err := model.GetMessage(ID)
+	raw, err := model.GetMessageByID(ID)
 	if err != nil {
 		c.Echo().Logger.Errorf("model.GetMessage returned an error : %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "Message is not found")
@@ -55,7 +55,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 
 	channelID := c.Param("channelID")
 
-	messageList, err := model.GetMessagesFromChannel(channelID, queryParam.Limit, queryParam.Offset)
+	messageList, err := model.GetMessagesByChannelID(channelID, queryParam.Limit, queryParam.Offset)
 	if err != nil {
 		c.Echo().Logger.Errorf("model.GetMessagesFromChannel returned an error : %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
@@ -106,7 +106,7 @@ func PutMessageByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
-	message, err := model.GetMessage(messageID)
+	message, err := model.GetMessageByID(messageID)
 	if err != nil {
 		c.Echo().Logger.Errorf("model.GetMessage() returned an error: %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "no message has the messageID: "+messageID)
@@ -127,7 +127,7 @@ func PutMessageByID(c echo.Context) error {
 func DeleteMessageByID(c echo.Context) error {
 	messageID := c.Param("messageID")
 
-	message, err := model.GetMessage(messageID)
+	message, err := model.GetMessageByID(messageID)
 	if err != nil {
 		c.Echo().Logger.Errorf("model.GetMessage() returned an error: %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "no message has the messageID: "+messageID)

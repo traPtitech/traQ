@@ -40,7 +40,7 @@ func PostClips(c echo.Context) error {
 	}
 
 	// メッセージの存在確認
-	if _, err := model.GetMessage(requestBody.MessageID); err != nil {
+	if _, err := model.GetMessageByID(requestBody.MessageID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
