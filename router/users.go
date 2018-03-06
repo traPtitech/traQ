@@ -216,9 +216,9 @@ func PutMyIcon(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-// PostRegisterUser Post /register のハンドラ
+// PostUsers Post /users のハンドラ
 // TODO 暫定的仕様
-func PostRegisterUser(c echo.Context) error {
+func PostUsers(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 
 	if user.Name != "traq" { //TODO 権限をちゃんとする
