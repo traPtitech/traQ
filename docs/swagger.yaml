@@ -1326,31 +1326,32 @@ paths:
               schema:
                 $ref: "#/components/schemas/NoContent"
 
-  /messages/{messageID}/stamps/{stampID}:
+  /messages/{messageID}/stamps:
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
-      - $ref: "#/components/parameters/stampIdInPath"
     get:
-      tags:
-        - stamp
-      description: 指定したメッセージについているスタンプの詳細を取得します。
+      tags: stamp
+      description: 指定したメッセージに押されているスタンプを全て取得します。
       responses:
         "200":
-          description: |+
-            正常に取得できました。
-            スタンプの詳細を返します。
+          description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StampDetail"
+                type: array
+                items:
+                  $ref: "#/components/schemas/MessageStamp"
         "404":
-          description: |+
-            取得できませんでした。
-            指定されたスタンプは対象のメッセージに押されていません。
+          description: 取得できませんでした。指定したメッセージは存在しないか、自分のスコープ内にありません。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/NoContent"
+
+  /messages/{messageID}/stamps/{stampID}:
+    parameters:
+      - $ref: "#/components/parameters/messageIdInPath"
+      - $ref: "#/components/parameters/stampIdInPath"
     post:
       tags:
         - stamp
@@ -1359,10 +1360,6 @@ paths:
         "204":
           description: |+
             正常にスタンプを押すことができました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "400":
           description: |+
             スタンプを押すことができませんでした。
@@ -1387,10 +1384,6 @@ paths:
         "204":
           description: |+
             正常にスタンプを外すことができました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "400":
           description: |+
             スタンプを外すことができませんでした。
@@ -1708,12 +1701,24 @@ components:
         stampList:
           type: array
           items:
-            $ref: "#/components/schemas/Stamp"
+            $ref: "#/components/schemas/MessageStamp"
 
     MessageList:
       type: array
       items:
         $ref: "#/components/schemas/Message"
+
+    MessageStamp:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        stampId:
+          type: string
+          format: uuid
+        count:
+          type: integer
 
     Stamp:
       type: object
