@@ -110,6 +110,18 @@ func SyncSchema() error {
 	if _, err := db.Exec("ALTER TABLE `clips` ADD FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
 		return err
 	}
+	if _, err := db.Exec("ALTER TABLE `messages_stamps` ADD FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `messages_stamps` ADD FOREIGN KEY (`stamp_id`) REFERENCES `stamps`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `messages_stamps` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `stamps` ADD FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
 
 	traq := &User{
 		Name:  "traq",

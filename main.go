@@ -156,6 +156,11 @@ func main() {
 	api.GET("/pin/:pinID", router.GetPin)
 	api.DELETE("/pin/:pinID", router.DeletePin)
 
+	// Tag: stamp
+	api.GET("/messages/:messageID/stamps", router.GetMessageStamps)
+	api.PUT("/messages/:messageID/stamps/:stampID", router.PutMessageStamp)
+	api.DELETE("/messages/:messageID/stamps/:stampID", router.DeleteMessageStamp)
+
 	// Serve UI
 	e.Static("/static", "./client/dist/static")
 	e.File("*", "./client/dist/index.html")

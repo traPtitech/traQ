@@ -119,6 +119,7 @@ user_idとmessage_idの複合主キー
 | id | CHAR(36) | PRIMARY KEY | スタンプID |
 | name | VARCHAR(20) | NOT NULL, UNIQUE | スタンプ表示名 |
 | creator_id | CHAR(36) | NOT NULL (外部キー) | 作成者のユーザーID |
+| file_id | CHAR(36) | NOT NULL (外部キー) | スタンプのファイルID |
 | is_deleted | BOOLEAN | NOT NULL | 削除されているか |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL | 更新日時 |
