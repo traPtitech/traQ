@@ -8,8 +8,8 @@ import (
 	"github.com/traPtitech/traQ/notification/events"
 
 	"github.com/labstack/echo"
-	"github.com/traPtitech/traQ/model"
 	"github.com/labstack/gommon/log"
+	"github.com/traPtitech/traQ/model"
 )
 
 //MessageForResponse :クライアントに返す形のメッセージオブジェクト

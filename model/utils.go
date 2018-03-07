@@ -13,6 +13,8 @@ var (
 	// モデルを追加したら各自ここに追加しなければいけない
 	// **順番注意**
 	tables = []interface{}{
+		&MessageStamp{},
+		&Stamp{},
 		&Clip{},
 		&UsersTag{},
 		&Unread{},
@@ -120,6 +122,9 @@ func SyncSchema() error {
 		return err
 	}
 	if _, err := db.Exec("ALTER TABLE `stamps` ADD FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `stamps` ADD FOREIGN KEY (`file_id`) REFERENCES `files`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
 		return err
 	}
 

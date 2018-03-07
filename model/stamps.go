@@ -1,9 +1,9 @@
 package model
 
 import (
-	"time"
-	"regexp"
 	"errors"
+	"regexp"
+	"time"
 )
 
 var (
@@ -12,6 +12,7 @@ var (
 	//ErrStampInvalidName : スタンプ名が不正です
 	ErrStampInvalidName = errors.New("invalid name")
 )
+
 // Stamp スタンプ構造体
 type Stamp struct {
 	ID        string    `xorm:"char(36) pk"                 json:"id"`
