@@ -159,6 +159,7 @@ func main() {
 	// Tag: stamp
 	api.GET("/stamps", router.GetStamps)
 	api.POST("/stamps", router.PostStamp)
+	api.GET("/stamps/:stampID", router.GetStamp)
 	api.PATCH("/stamps/:stampID", router.PatchStamp)
 	api.DELETE("/stamps/:stampID", router.DeleteStamp)
 	api.GET("/messages/:messageID/stamps", router.GetMessageStamps)

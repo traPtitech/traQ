@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"github.com/labstack/gommon/log"
+	"time"
+)
 
 // MessageStamp : メッセージスタンプ構造体
 type MessageStamp struct {
@@ -18,12 +21,17 @@ func (*MessageStamp) TableName() string {
 }
 
 // AddStampToMessage : メッセージにスタンプを押します
-func AddStampToMessage(messageID, stampID, userID string) error {
+func AddStampToMessage(messageID, stampID, userID string) (int, error) {
 	_, err := db.Exec("INSERT INTO `messages_stamps` (`message_id`, `stamp_id`, `user_id`, `count`, `created_at`, `updated_at`) VALUES (?, ?, ?, 1, now(), now()) ON DUPLICATE KEY UPDATE `count` = `count` + 1, `updated_at` = now()", messageID, stampID, userID)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	count := 0
+	if _, err := db.Table("messages_stamps").Where("message_id = ? AND stamp_id = ? AND user_id = ?", messageID, stampID, userID).Cols("count").Get(&count); err != nil {
+		log.Error(err)
+	}
+
+	return count, nil
 }
 
 // RemoveStampFromMessage : メッセージからスタンプを消します

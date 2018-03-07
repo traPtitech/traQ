@@ -51,6 +51,8 @@ const (
 
 	//StampCreated スタンプが新しく追加された
 	StampCreated EventType = "STAMP_CREATED"
+	//StampModified スタンプが修正された
+	StampModified EventType = "STAMP_MODIFIED"
 	//StampDeleted スタンプが削除された
 	StampDeleted EventType = "STAMP_DELETED"
 
@@ -110,4 +112,9 @@ type MessageStampEvent struct {
 	UserID    string
 	StampID   string
 	Count     int
+}
+
+//StampEvent スタンプに関するイベントのペイロード
+type StampEvent struct {
+	ID string
 }

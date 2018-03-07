@@ -949,6 +949,19 @@ paths:
   /stamps/{stampID}:
     parameters:
       - $ref: "#/components/parameters/stampIdInPath"
+    get:
+      description: スタンプの情報を取得します。
+      tags:
+        - stamp
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stamp"
+        "404":
+          desciption: 取得できませんでした。指定されたスタンプは存在しません。
     patch:
       description: スタンプを修正します。
       tags:

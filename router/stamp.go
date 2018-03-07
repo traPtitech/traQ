@@ -3,6 +3,8 @@ package router
 import (
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/notification"
+	"github.com/traPtitech/traQ/notification/events"
 	"net/http"
 )
 
@@ -60,7 +62,8 @@ func PostStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	if _, err := model.CreateStamp(name, file.ID, userID); err != nil {
+	s, err := model.CreateStamp(name, file.ID, userID)
+	if err != nil {
 		if err == model.ErrStampInvalidName {
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
@@ -68,7 +71,24 @@ func PostStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
+	go notification.Send(events.StampCreated, events.StampEvent{ID: s.ID})
 	return c.NoContent(http.StatusCreated)
+}
+
+// GetStamp : GET /stamps/:stampID
+func GetStamp(c echo.Context) error {
+	stampID := c.Param("stampID")
+
+	stamp, err := model.GetStamp(stampID)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	if stamp == nil {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	return c.JSON(http.StatusOK, stamp)
 }
 
 // PatchStamp : PATCH /stamps/:stampID
@@ -137,6 +157,7 @@ func PatchStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
+	go notification.Send(events.StampModified, events.StampEvent{ID: stamp.ID})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -162,6 +183,7 @@ func DeleteStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
+	go notification.Send(events.StampDeleted, events.StampEvent{ID: stamp.ID})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -185,13 +207,28 @@ func PostMessageStamp(c echo.Context) error {
 	messageID := c.Param("messageID")
 	stampID := c.Param("stampID")
 
+	message, err := model.GetMessage(messageID)
+	if err != nil {
+		c.Logger().Error(err)
+		//TODO メッセージが無いのか、DBがエラーなのかで分岐
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
 	//TODO 見れないメッセージ(プライベートチャンネル)に対して404にする
-	err := model.AddStampToMessage(messageID, stampID, userID)
+
+	count, err := model.AddStampToMessage(messageID, stampID, userID)
 	if err != nil {
 		//TODO エラーの種類で400,404,500に分岐
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
+	go notification.Send(events.MessageStamped, events.MessageStampEvent{
+		ID:        messageID,
+		ChannelID: message.ChannelID,
+		StampID:   stampID,
+		UserID:    userID,
+		Count:     count,
+	})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -201,12 +238,24 @@ func DeleteMessageStamp(c echo.Context) error {
 	messageID := c.Param("messageID")
 	stampID := c.Param("stampID")
 
-	//TODO 見れないメッセージ(プライベートチャンネル)に対して404にする
-	err := model.RemoveStampFromMessage(messageID, stampID, userID)
+	message, err := model.GetMessage(messageID)
 	if err != nil {
+		c.Logger().Error(err)
+		//TODO メッセージが無いのか、DBがエラーなのかで分岐
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	//TODO 見れないメッセージ(プライベートチャンネル)に対して404にする
+	if err := model.RemoveStampFromMessage(messageID, stampID, userID); err != nil {
 		//TODO エラーの種類で400,404,500に分岐
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
+	go notification.Send(events.MessageUnstamped, events.MessageStampEvent{
+		ID:        messageID,
+		ChannelID: message.ChannelID,
+		StampID:   stampID,
+		UserID:    userID,
+	})
 	return c.NoContent(http.StatusNoContent)
 }

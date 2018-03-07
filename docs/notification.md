@@ -133,7 +133,10 @@ TODO
 ### SSE
 対象: 投稿チャンネルにハートビートを送信しているユーザー
 
-TODO
++ `message_id`: メッセージId
++ `user_id`: スタンプを押したユーザーのId
++ `stamp_id`: スタンプのId
++ `count`: そのユーザーが押した数
 
 ## MESSAGE_UNSTAMPED
 メッセージからスタンプが外された。
@@ -141,7 +144,9 @@ TODO
 ### SSE
 対象: 投稿チャンネルにハートビートを送信しているユーザー
 
-TODO
++ `message_id`: メッセージId
++ `user_id`: スタンプを押したユーザーのId
++ `stamp_id`: スタンプのId
 
 ## MESSAGE_PINNED
 メッセージがピン留めされた。
@@ -183,7 +188,15 @@ TODO
 ### SSE
 対象: 全員
 
-TODO
++ `id`: 作成されたスタンプのId
+
+## STAMP_MODIFIED
+スタンプが修正された。
+
+### SSE
+対象: 全員
+
++ `id`: 修正されたスタンプのId
 
 ## STAMP_DELETED
 スタンプが削除された。
@@ -191,7 +204,7 @@ TODO
 ### SSE
 対象: 全員
 
-TODO
++ `id`: 削除されたスタンプのId
 
 ## TRAQ_UPDATED
 traQ-UIが更新された。
