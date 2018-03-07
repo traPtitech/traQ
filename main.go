@@ -157,8 +157,12 @@ func main() {
 	api.DELETE("/pin/:pinID", router.DeletePin)
 
 	// Tag: stamp
+	api.GET("/stamps", router.GetStamps)
+	api.POST("/stamps", router.PostStamp)
+	api.PATCH("/stamps/:stampID", router.PatchStamp)
+	api.DELETE("/stamps/:stampID", router.DeleteStamp)
 	api.GET("/messages/:messageID/stamps", router.GetMessageStamps)
-	api.PUT("/messages/:messageID/stamps/:stampID", router.PutMessageStamp)
+	api.POST("/messages/:messageID/stamps/:stampID", router.PostMessageStamp)
 	api.DELETE("/messages/:messageID/stamps/:stampID", router.DeleteMessageStamp)
 
 	// Serve UI
