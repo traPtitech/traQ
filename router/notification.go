@@ -13,7 +13,11 @@ import (
 
 // GetNotificationStatus GET /channels/:channelId/notifications のハンドラ
 func GetNotificationStatus(c echo.Context) error {
-	channelID := c.Param("channelID") //TODO チャンネルIDの検証
+	userID := c.Get("user").(*model.User).ID
+	channelID := c.Param("channelID")
+	if _, err := validateChannelID(channelID, userID); err != nil {
+		return err
+	}
 
 	users, err := model.GetSubscribingUser(uuid.FromStringOrNil(channelID))
 	if err != nil {
@@ -30,7 +34,11 @@ func GetNotificationStatus(c echo.Context) error {
 
 // PutNotificationStatus PUT /channels/:channelId/notifications のハンドラ
 func PutNotificationStatus(c echo.Context) error {
-	channelID := c.Param("channelID") //TODO チャンネルIDの検証
+	userID := c.Get("user").(*model.User).ID
+	channelID := c.Param("channelID")
+	if _, err := validateChannelID(channelID, userID); err != nil {
+		return err
+	}
 
 	var req struct {
 		On  []string `json:"on"`

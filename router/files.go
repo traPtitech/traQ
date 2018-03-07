@@ -49,34 +49,34 @@ func GetFileByID(c echo.Context) error {
 	ID := c.Param("fileID")
 	dl := c.QueryParam("dl")
 
+	meta, err := validateFileID(ID)
+	if err != nil {
+		return err
+	}
+
 	file, err := model.OpenFileByID(ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get file")
 	}
 	defer file.Close()
 
-	f, err := model.GetMetaFileDataByID(ID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get File")
-	}
-
 	if dl == "1" {
-		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", f.Name))
+		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", meta.Name))
 	}
 
-	return c.Stream(http.StatusOK, f.Mime, file)
+	return c.Stream(http.StatusOK, meta.Mime, file)
 }
 
 // DeleteFileByID DELETE /file/{fileID}
 func DeleteFileByID(c echo.Context) error {
 	ID := c.Param("fileID")
 
-	file, err := model.GetMetaFileDataByID(ID)
+	meta, err := validateFileID(ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("fileID is wrong: %s", ID))
 	}
 
-	if err := file.Delete(); err != nil {
+	if err := meta.Delete(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete data")
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -86,11 +86,11 @@ func DeleteFileByID(c echo.Context) error {
 func GetMetaDataByFileID(c echo.Context) error {
 	ID := c.Param("fileID")
 
-	file, err := model.GetMetaFileDataByID(ID)
+	meta, err := validateFileID(ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "fileID is wrong")
 	}
-	return c.JSON(http.StatusOK, formatFile(file))
+	return c.JSON(http.StatusOK, formatFile(meta))
 }
 
 // TODO: そのうち実装
@@ -104,4 +104,17 @@ func formatFile(f *model.File) *FileForResponse {
 		Size:     f.Size,
 		DateTime: f.CreatedAt.String(),
 	}
+}
+
+func validateFileID(fileID string) (*model.File, error) {
+	f := &model.File{ID: fileID}
+	ok, err := f.Exists()
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while get file")
+
+	}
+	if !ok {
+		return nil, echo.NewHTTPError(http.StatusNotFound, "The specified channel does not exist")
+	}
+	return f, nil
 }

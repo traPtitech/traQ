@@ -35,6 +35,25 @@ func TestFile_Create(t *testing.T) {
 	}
 }
 
+func TestFile_Exists(t *testing.T) {
+	assert, _, user, _ := beforeTest(t)
+
+	f := mustMakeFile(t, user.ID)
+	r := &File{ID: f.ID}
+
+	ok, err := r.Exists()
+	if assert.NoError(err) {
+		assert.True(ok)
+	}
+
+	r2 := &File{ID: CreateUUID()}
+
+	ok, err = r2.Exists()
+	if assert.NoError(err) {
+		assert.False(ok)
+	}
+}
+
 func TestFile_Delete(t *testing.T) {
 	assert, _, user, _ := beforeTest(t)
 

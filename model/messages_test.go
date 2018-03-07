@@ -26,6 +26,24 @@ func TestMessage_Create(t *testing.T) {
 	}
 }
 
+func TestMessage_Exists(t *testing.T) {
+	assert, _, user, channel := beforeTest(t)
+
+	m := mustMakeMessage(t, user.ID, channel.ID)
+
+	r := &Message{ID: m.ID}
+	ok, err := r.Exists()
+
+	if assert.True(ok) && assert.NoError(err) {
+		assert.Equal(m.Text, r.Text)
+	}
+
+	wm := &Message{ID: CreateUUID()}
+	ok, err = wm.Exists()
+	assert.False(ok)
+	assert.NoError(err)
+}
+
 func TestMessage_Update(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 

@@ -1,9 +1,10 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
-	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -71,10 +72,11 @@ func PutUserTag(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
-	tag, err := model.GetTag(userID, tagID)
+	tag, err := validateTagID(tagID, userID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Failed to get tag")
+		return err
 	}
+
 	tag.IsLocked = reqBody.IsLocked
 
 	if err := tag.Update(); err != nil {
@@ -95,9 +97,9 @@ func DeleteUserTag(c echo.Context) error {
 	userID := c.Param("userID")
 	tagID := c.Param("tagID")
 
-	tag, err := model.GetTag(userID, tagID)
+	tag, err := validateTagID(tagID, userID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Failed to get tag")
+		return err
 	}
 
 	if err := tag.Delete(); err != nil {
@@ -156,4 +158,17 @@ func formatTag(userTag *model.UsersTag) (*TagForResponse, error) {
 		Tag:      tag.Name,
 		IsLocked: userTag.IsLocked,
 	}, nil
+}
+
+func validateTagID(tagID, userID string) (*model.UsersTag, error) {
+	if _, err := model.GetTagByID(tagID); err != nil {
+		return nil, echo.NewHTTPError(http.StatusNotFound, "The specified tag does not exist")
+	}
+
+	userTag, err := model.GetTag(userID, tagID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while get tag")
+	}
+
+	return userTag, nil
 }

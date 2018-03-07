@@ -47,6 +47,14 @@ func (m *Message) Create() error {
 	return nil
 }
 
+// Exists 指定されたメッセージが存在するかを判定します
+func (m *Message) Exists() (bool, error) {
+	if m.ID == "" {
+		return false, fmt.Errorf("message ID is empty")
+	}
+	return db.Get(m)
+}
+
 // Update メッセージの内容を変更します
 func (m *Message) Update() error {
 	_, err := db.ID(m.ID).UseBool().Update(m)

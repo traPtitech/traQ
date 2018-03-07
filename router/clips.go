@@ -2,9 +2,10 @@ package router
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
-	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -77,6 +78,10 @@ func DeleteClips(c echo.Context) error {
 
 	if err := c.Bind(&requestBody); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
+	}
+
+	if _, err := validateMessageID(requestBody.MessageID); err != nil {
+		return err
 	}
 
 	clip := &model.Clip{

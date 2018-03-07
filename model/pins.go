@@ -40,6 +40,15 @@ func (pin *Pin) Create() error {
 	return nil
 }
 
+// Exists pinが存在するかどうかを判定する
+func (pin *Pin) Exists() (bool, error) {
+	if pin.ID == "" {
+		return false, fmt.Errorf("pin ID is empty")
+	}
+	return db.Get(pin)
+
+}
+
 //GetPin IDからピン留めを取得する
 func GetPin(ID string) (*Pin, error) {
 	if ID == "" {
