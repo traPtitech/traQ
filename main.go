@@ -111,7 +111,7 @@ func main() {
 	api.PUT("/users/me/icon", router.PutMyIcon)
 	api.GET("/users/:userID", router.GetUserByID)
 	api.GET("/users/:userID/icon", router.GetUserIcon)
-	api.POST("/register", router.PostRegisterUser)
+	api.POST("/users", router.PostUsers)
 
 	// Tag: clips
 	api.GET("/users/me/clips", router.GetClips)
