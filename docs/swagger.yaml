@@ -961,7 +961,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Stamp"
         "404":
-          desciption: 取得できませんでした。指定されたスタンプは存在しません。
+          description: 取得できませんでした。指定されたスタンプは存在しません。
     patch:
       description: スタンプを修正します。
       tags:
@@ -1348,6 +1348,212 @@ paths:
         "201":
           description: 正常に登録できました。
 
+  /channels/{channelID}/webhooks:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+    get:
+      tags:
+        - webhook
+      description: 指定されたチャンネルのwebhookの一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Webhook"
+        "403":
+          description: 取得できませんでした。権限がありません。
+    post:
+      tags:
+        - webhook
+      description: 指定されたチャンネルのwebhookを作成します。
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: webhookユーザーの表示名(32文字まで)
+                description:
+                  type: string
+                  description: webhookの説明
+                file:
+                  type: string
+                  format: binary
+                  description: webhookユーザーのアイコン(1MBまでのpng, jpeg, gif, svg)
+            encoding:
+              file:
+                contentType: image/png, image/jpeg, image/gif, image/svg+xml
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: webhookユーザーの表示名(32文字まで)
+                description:
+                  type: string
+                  description: webhookの説明
+      responses:
+        "201":
+          description: 正常に作成できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Webhook"
+        "400":
+          description: 作成できませんでした。リクエスト内容が不正です。
+        "403":
+          description: 作成できませんでした。権限がありません。
+        "404":
+          description: 作成できませんでした。指定したチャンネルは存在しません。
+
+  /webhooks/{webhookID}:
+    parameters:
+      - $ref: "#/components/parameters/webhookIdInPath"
+    get:
+      tags:
+        - webhook
+      description: webhookの詳細を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Webhook"
+        "403":
+          description: 取得できませんでした。権限がありません。
+        "404":
+          description: 取得できませんでした。指定したwebhookは存在しません。
+    patch:
+      tags:
+        - webhook
+      description: webhookを修正します。
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                name:
+                  type: string
+                  description: webhookユーザーの表示名(32文字まで)
+                description:
+                  type: string
+                  description: webhookの説明
+                file:
+                  type: string
+                  format: binary
+                  description: webhookユーザーのアイコン(1MBまでのpng, jpeg, gif, svg)
+            encoding:
+              file:
+                contentType: image/png, image/jpeg, image/gif, image/svg+xml
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: webhookユーザーの表示名(32文字まで)
+                description:
+                  type: string
+                  description: webhookの説明
+      responses:
+        "204":
+          description: 正常に修正できました。
+        "400":
+          description: 修正できませんでした。リクエスト内容が不正です。
+        "403":
+          description: 削除できませんでした。権限がありません。
+        "404":
+          description: 修正できませんでした。指定したwebhookは存在しません。
+    delete:
+      tags:
+        - webhook
+      description: webhookを削除します。
+      responses:
+        "204":
+          description: 正常に削除できました。
+        "403":
+          description: 削除できませんでした。権限がありません。
+        "404":
+          description: 削除できませんでした。指定したwebhookは存在しません。
+
+  /webhooks/{webhookID}/{token}:
+    parameters:
+      - $ref: "#/components/parameters/webhookIdInPath"
+      - $ref: "#/components/parameters/webhookTokenInPath"
+    post:
+      tags:
+        - webhook
+      description: webhookを送信します。
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+              description: メッセージ文字列
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  description: メッセージ文字列
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  description: メッセージ文字列
+      responses:
+        "204":
+          description: 正常に送信できました。
+        "400":
+          description: 正常に送信できませんでした。リクエスト内容が不正です。
+        "403":
+          description: 正常に送信できませんでした。トークンが不正です。
+        "404":
+          description: 正常に送信できませんでした。指定されたwebhookは存在しません。
+
+  /webhooks/{webhookID}/{token}/github:
+    parameters:
+      - $ref: "#/components/parameters/webhookIdInPath"
+      - $ref: "#/components/parameters/webhookTokenInPath"
+    post:
+      tags:
+        - webhook
+      description: Github-Compatibleなwebhookを送信します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "204":
+          description: 正常に送信できました。
+        "400":
+          description: 正常に送信できませんでした。リクエスト内容が不正です。
+        "403":
+          description: 正常に送信できませんでした。トークンが不正です。
+        "404":
+          description: 正常に送信できませんでした。指定されたwebhookは存在しません。
+
 components:
   parameters:
     channelIdInPath:
@@ -1400,6 +1606,21 @@ components:
     pinIdInPath:
       name: pinID
       description: 操作の対象となるピン留めID
+      in: path
+      required: true
+      schema:
+        type: string
+    webhookIdInPath:
+      name: webhookID
+      description: 操作の対象となるWebhookのID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    webhookTokenInPath:
+      name: token
+      description: webhookのトークン
       in: path
       required: true
       schema:
@@ -1669,3 +1890,34 @@ components:
           - userId: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
             status: editing
         channelId: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
+
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        iconFileId:
+          type: string
+          format: uuid
+        channelId:
+          type: string
+          format: uuid
+        token:
+          type: string
+        creatorId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: datetime
+        updaterId:
+          type: string
+          format: uuid
+        updatedAt:
+          type: string
+          format: datetime
