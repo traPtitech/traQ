@@ -1,12 +1,13 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
-	"net/http"
 )
 
 // GetStamps : GET /stamps
@@ -239,7 +240,7 @@ func PostMessageStamp(c echo.Context) error {
 	stampID := c.Param("stampID")
 
 	// メッセージ存在の確認
-	message, err := model.GetMessage(messageID)
+	message, err := model.GetMessageByID(messageID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound, model.ErrMessageAlreadyDeleted:
@@ -298,7 +299,7 @@ func DeleteMessageStamp(c echo.Context) error {
 	stampID := c.Param("stampID")
 
 	// メッセージ存在の確認
-	message, err := model.GetMessage(messageID)
+	message, err := model.GetMessageByID(messageID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound, model.ErrMessageAlreadyDeleted:

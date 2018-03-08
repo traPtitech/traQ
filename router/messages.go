@@ -54,13 +54,13 @@ func GetMessagesByChannelID(c echo.Context) error {
 	}
 
 	// channelIDの検証
-	cID := c.Param("channelID")
-	uID := c.Get("user").(*model.User).ID
-	if _, err := validateChannelID(cID, uID); err != nil {
+	channelID := c.Param("channelID")
+	userID := c.Get("user").(*model.User).ID
+	if _, err := validateChannelID(channelID, userID); err != nil {
 		return err
 	}
 
-	messageList, err := model.GetMessagesByChannelID(cID, queryParam.Limit, queryParam.Offset)
+	messageList, err := model.GetMessagesByChannelID(channelID, queryParam.Limit, queryParam.Offset)
 	if err != nil {
 		c.Echo().Logger.Errorf("model.GetMessagesFromChannel returned an error : %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
