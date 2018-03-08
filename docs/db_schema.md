@@ -13,6 +13,7 @@ ID系は全部UUID(string)
 | salt | CHAR(128) | NOT NULL | パスワードソルト |
 | icon | CHAR(36) | NOT NULL | アイコンのファイルID |
 | status | TINYINT | NOT NULL | アカウントの状態 |
+| bot | BOOLEAN | NOT NULL | botアカウントか |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL | 更新日時 |
 
@@ -25,6 +26,28 @@ ID系は全部UUID(string)
 | updated_at | TIMESTAMP | NOT NULL | 更新日時 |
 
 user_idとauthority_typeの複合ユニーク制約
+
+## bots
+| カラム名 | 型 | 属性 | 説明など | 
+| --- | --- | --- | --- |
+| user_id | CHAR(36) | PRIMARY KEY (外部キー) | botユーザーID |
+| type | INT | NOT NULL | 1:webhook, 2:bot |
+| display_name | VARCHAR(32) | NOT NULL | 表示名 |
+| description | TEXT | NOT NULL | 説明 |
+| is_valid | BOOLEAN | NOT NULL | 有効かどうか |
+| creator_id | CHAR(36) | NOT NULL (外部キー) | 登録者 |
+| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+| updater_id | CHAR(36) | NOT NULL (外部キー) | 更新者 | 
+| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+
+## webhooks
+
+| カラム名 | 型 | 属性 | 説明など | 
+| --- | --- | --- | --- |
+| user_id | CHAR(36) | PRIMARY KEY (外部キー) | botユーザーID |
+| token | VARCHAR(32) | NOT NULL | トークン |
+| channel_id | CHAR(36) | NOT NULL (外部キー) | 投稿先のチャンネルID |
+ 
 
 ## users_tags
 
