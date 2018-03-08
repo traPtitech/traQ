@@ -22,58 +22,66 @@ type Message struct {
 	UpdatedAt time.Time `xorm:"updated not null"`
 }
 
-//TableName :DBの名前を指定するメソッド
-func (message *Message) TableName() string {
+// TableName DBの名前を指定するメソッド
+func (m *Message) TableName() string {
 	return "messages"
 }
 
-// Create method inserts message object to database.
-func (message *Message) Create() error {
-	if message.UserID == "" {
-		return fmt.Errorf("UserID is empty")
+// Create message構造体をDBに入れます
+func (m *Message) Create() error {
+	if m.UserID == "" {
+		return fmt.Errorf("userID is empty")
 	}
 
-	if message.Text == "" {
-		return fmt.Errorf("Text is empty")
+	if m.Text == "" {
+		return fmt.Errorf("text is empty")
 	}
 
-	message.ID = CreateUUID()
-	message.IsDeleted = false
-	message.UpdaterID = message.UserID
+	m.ID = CreateUUID()
+	m.IsDeleted = false
+	m.UpdaterID = m.UserID
 
-	if _, err := db.Insert(message); err != nil {
-		return fmt.Errorf("Failed to create message object: %v", err)
+	if _, err := db.Insert(m); err != nil {
+		return fmt.Errorf("failed to create message object: %v", err)
 	}
 	return nil
 }
 
-// Update method:メッセージの内容を変更します
-func (message *Message) Update() error {
-	_, err := db.ID(message.ID).UseBool().Update(message)
+// Exists 指定されたメッセージが存在するかを判定します
+func (m *Message) Exists() (bool, error) {
+	if m.ID == "" {
+		return false, fmt.Errorf("message ID is empty")
+	}
+	return db.Get(m)
+}
+
+// Update メッセージの内容を変更します
+func (m *Message) Update() error {
+	_, err := db.ID(m.ID).UseBool().Update(m)
 	if err != nil {
-		return fmt.Errorf("Failed to update this message: %v", err)
+		return fmt.Errorf("failed to update this message: %v", err)
 	}
 	return nil
 }
 
-// GetMessagesFromChannel :指定されたチャンネルのメッセージを取得します
-func GetMessagesFromChannel(channelID string, limit, offset int) ([]*Message, error) {
+// GetMessagesByChannelID 指定されたチャンネルのメッセージを取得します
+func GetMessagesByChannelID(channelID string, limit, offset int) ([]*Message, error) {
 	var messageList []*Message
 	err := db.Where("channel_id = ? AND is_deleted = false", channelID).Desc("created_at").Limit(limit, offset).Find(&messageList)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to find messages: %v", err)
+		return nil, fmt.Errorf("failed to find messages: %v", err)
 	}
 
 	return messageList, nil
 }
 
-// GetMessage :messageIDで指定されたメッセージを取得します
-func GetMessage(messageID string) (*Message, error) {
+// GetMessageByID messageIDで指定されたメッセージを取得します
+func GetMessageByID(messageID string) (*Message, error) {
 	var message = &Message{}
 	has, err := db.ID(messageID).Get(message)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to find message: %v", err)
+		return nil, fmt.Errorf("failed to find message: %v", err)
 	}
 	if has == false {
 		return nil, ErrNotFound

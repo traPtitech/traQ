@@ -19,21 +19,39 @@ func TestMessage_Create(t *testing.T) {
 	assert.Error((&Message{UserID: user.ID, Text: "test"}).Create())
 	assert.Error((&Message{UserID: user.ID, ChannelID: channel.ID}).Create())
 
-	message := &Message{UserID: user.ID, Text: "test", ChannelID: channel.ID}
-	if assert.NoError(message.Create()) {
-		assert.NotEmpty(message.ID)
-		assert.NotEmpty(message.UpdaterID)
+	m := &Message{UserID: user.ID, Text: "test", ChannelID: channel.ID}
+	if assert.NoError(m.Create()) {
+		assert.NotEmpty(m.ID)
+		assert.NotEmpty(m.UpdaterID)
 	}
+}
+
+func TestMessage_Exists(t *testing.T) {
+	assert, _, user, channel := beforeTest(t)
+
+	m := mustMakeMessage(t, user.ID, channel.ID)
+
+	r := &Message{ID: m.ID}
+	ok, err := r.Exists()
+
+	if assert.True(ok) && assert.NoError(err) {
+		assert.Equal(m.Text, r.Text)
+	}
+
+	wm := &Message{ID: CreateUUID()}
+	ok, err = wm.Exists()
+	assert.False(ok)
+	assert.NoError(err)
 }
 
 func TestMessage_Update(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	message := mustMakeMessage(t, user.ID, channel.ID)
-	message.Text = "nanachi"
-	message.IsShared = true
+	m := mustMakeMessage(t, user.ID, channel.ID)
+	m.Text = "test message"
+	m.IsShared = true
 
-	assert.NoError(message.Update())
+	assert.NoError(m.Update())
 }
 
 func TestGetMessagesFromChannel(t *testing.T) {
@@ -43,27 +61,27 @@ func TestGetMessagesFromChannel(t *testing.T) {
 		mustMakeMessage(t, user.ID, channel.ID)
 	}
 
-	res, err := GetMessagesFromChannel(channel.ID, 0, 0)
+	r, err := GetMessagesByChannelID(channel.ID, 0, 0)
 	if assert.NoError(err) {
-		assert.Len(res, 10)
+		assert.Len(r, 10)
 	}
 
-	res2, err := GetMessagesFromChannel(channel.ID, 3, 5)
+	r, err = GetMessagesByChannelID(channel.ID, 3, 5)
 	if assert.NoError(err) {
-		assert.Len(res2, 3)
+		assert.Len(r, 3)
 	}
 }
 
 func TestGetMessage(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	message := mustMakeMessage(t, user.ID, channel.ID)
+	m := mustMakeMessage(t, user.ID, channel.ID)
 
-	r, err := GetMessage(message.ID)
+	r, err := GetMessageByID(m.ID)
 	if assert.NoError(err) {
-		assert.Equal(message.Text, r.Text)
+		assert.Equal(m.Text, r.Text)
 	}
 
-	_, err = GetMessage("wrong_id")
+	_, err = GetMessageByID("wrong_id")
 	assert.Error(err)
 }

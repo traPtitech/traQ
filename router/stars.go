@@ -2,9 +2,10 @@ package router
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
-	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -62,6 +63,10 @@ func DeleteStars(c echo.Context) error {
 
 	if err := c.Bind(&requestBody); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
+	}
+
+	if _, err := validateChannelID(requestBody.ChannelID, user.ID); err != nil {
+		return err
 	}
 
 	star := &model.Star{

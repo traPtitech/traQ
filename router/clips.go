@@ -2,9 +2,10 @@ package router
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
-	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -40,7 +41,7 @@ func PostClips(c echo.Context) error {
 	}
 
 	// メッセージの存在確認
-	if _, err := model.GetMessage(requestBody.MessageID); err != nil {
+	if _, err := model.GetMessageByID(requestBody.MessageID); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -77,6 +78,10 @@ func DeleteClips(c echo.Context) error {
 
 	if err := c.Bind(&requestBody); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
+	}
+
+	if _, err := validateMessageID(requestBody.MessageID); err != nil {
+		return err
 	}
 
 	clip := &model.Clip{

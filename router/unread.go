@@ -55,7 +55,7 @@ func getUnreadResponse(userID string) ([]*MessageForResponse, error) {
 
 	responseBody := make([]*MessageForResponse, 0)
 	for _, unread := range unreads {
-		message, err := model.GetMessage(unread.MessageID)
+		message, err := model.GetMessageByID(unread.MessageID)
 		if err != nil {
 			return nil, err
 		}

@@ -74,6 +74,14 @@ func (f *File) Create(src io.Reader) error {
 	return nil
 }
 
+// Exists ファイルが存在するかを判定します
+func (f *File) Exists() (bool, error) {
+	if f.ID == "" {
+		return false, fmt.Errorf("file ID is empty")
+	}
+	return db.Get(f)
+}
+
 // Delete file構造体をDBから消去します
 func (f *File) Delete() error {
 	f.IsDeleted = true

@@ -1,9 +1,10 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
-	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -19,23 +20,15 @@ type TopicForResponse struct {
 // GetTopic GET /channels/{channelID}/topic
 func GetTopic(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("channelID")
-	channel := &model.Channel{
-		ID: channelID,
-	}
-	has, err := channel.Exists(userID)
+	ch, err := validateChannelID(c.Param("channelID"), userID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while check channelID.")
-	}
-
-	if !has {
-		return echo.NewHTTPError(http.StatusNotFound, "Channel not found.")
+		return err
 	}
 
 	topic := TopicForResponse{
-		ChannelID: channel.ID,
-		Name:      channel.Name,
-		Text:      channel.Topic,
+		ChannelID: ch.ID,
+		Name:      ch.Name,
+		Text:      ch.Topic,
 	}
 	return c.JSON(http.StatusOK, topic)
 }
@@ -51,29 +44,22 @@ func PutTopic(c echo.Context) error {
 	c.Bind(&requestBody)
 
 	channelID := c.Param("channelID")
-	channel := &model.Channel{
-		ID: channelID,
-	}
-	has, err := channel.Exists(userID)
+	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while check channelID.")
+		return err
 	}
 
-	if !has {
-		return echo.NewHTTPError(http.StatusNotFound, "Channel not found.")
-	}
+	ch.Topic = requestBody.Text
+	ch.UpdaterID = userID
 
-	channel.Topic = requestBody.Text
-	channel.UpdaterID = userID
-
-	if err := channel.Update(); err != nil {
+	if err := ch.Update(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred when channel model update.")
 	}
 
 	topic := TopicForResponse{
-		ChannelID: channel.ID,
-		Name:      channel.Name,
-		Text:      channel.Topic,
+		ChannelID: ch.ID,
+		Name:      ch.Name,
+		Text:      ch.Topic,
 	}
 
 	go notification.Send(events.ChannelUpdated, events.ChannelEvent{ID: channelID})

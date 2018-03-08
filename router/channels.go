@@ -124,23 +124,17 @@ func PostChannels(c echo.Context) error {
 // GetChannelsByChannelID GET /channels/{channelID} のハンドラ
 func GetChannelsByChannelID(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("channelID")
-
-	channel := &model.Channel{ID: channelID}
-	ok, err := channel.Exists(userID)
+	ch, err := validateChannelID(c.Param("channelID"), userID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while verifying the channel.")
-	}
-	if !ok {
-		return echo.NewHTTPError(http.StatusNotFound, "The specified channel does not exist.")
+		return err
 	}
 
-	childIDs, err := channel.Children(userID)
+	childIDs, err := ch.Children(userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get children channel id list: %v", err)
 	}
 
-	res := formatChannel(channel)
+	res := formatChannel(ch)
 	res.Children = childIDs
 	return c.JSON(http.StatusOK, res)
 }
@@ -160,34 +154,30 @@ func PutChannelsByChannelID(c echo.Context) error {
 	}
 
 	channelID := c.Param("channelID")
-	channel := &model.Channel{ID: channelID}
-	ok, err := channel.Exists(userID)
+	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while verifying the channel.")
-	}
-	if !ok {
-		return echo.NewHTTPError(http.StatusNotFound, "The specified channel does not exist.")
+		return err
 	}
 
-	channel.Name = req.Name
-	channel.ParentID = req.Parent
-	channel.IsVisible = req.Visibility
-	channel.UpdaterID = userID
+	ch.Name = req.Name
+	ch.ParentID = req.Parent
+	ch.IsVisible = req.Visibility
+	ch.UpdaterID = userID
 
-	if err := channel.Update(); err != nil {
+	if err := ch.Update(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while update channel")
 	}
 
-	childIDs, err := channel.Children(userID)
+	childIDs, err := ch.Children(userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to get children channel id list: %v", err))
 	}
 
 	response := ChannelForResponse{
-		ChannelID:  channel.ID,
-		Name:       channel.Name,
-		Parent:     channel.ParentID,
-		Visibility: channel.IsVisible,
+		ChannelID:  ch.ID,
+		Name:       ch.Name,
+		Parent:     ch.ParentID,
+		Visibility: ch.IsVisible,
 		Children:   childIDs,
 	}
 
@@ -217,14 +207,9 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 	for len(deleteQue) > 0 {
 		channelID := deleteQue[0]
 		deleteQue = deleteQue[1:]
-		fmt.Println(len(deleteQue))
-		channel := &model.Channel{ID: channelID}
-		ok, err := channel.Exists(userID)
+		channel, err := validateChannelID(channelID, userID)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while verifying the channel.")
-		}
-		if !ok {
-			return echo.NewHTTPError(http.StatusNotFound, "The specified channel does not exist.")
+			return err
 		}
 
 		children, err := channel.Children(userID)
@@ -260,4 +245,17 @@ func formatChannel(channel *model.Channel) *ChannelForResponse {
 		Parent:     channel.ParentID,
 		Visibility: channel.IsVisible,
 	}
+}
+
+// リクエストされたチャンネルIDが指定されたuserから見えるかをチェックし、見える場合はそのチャンネルを返す
+func validateChannelID(channelID, userID string) (*model.Channel, error) {
+	ch := &model.Channel{ID: channelID}
+	ok, err := ch.Exists(userID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while get channel")
+	}
+	if !ok {
+		return nil, echo.NewHTTPError(http.StatusNotFound, "The specified channel does not exist")
+	}
+	return ch, nil
 }
