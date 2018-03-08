@@ -187,7 +187,7 @@ func Send(eventType events.EventType, payload interface{}) {
 			Mobile: false,
 		})
 
-	case events.MessageStamped, events.MessageUnstamped:
+	case events.MessageStamped:
 		data, _ := payload.(events.MessageStampEvent)
 		if s, ok := model.GetHeartbeatStatus(data.ChannelID); ok {
 			for _, u := range s.UserStatuses {
@@ -195,17 +195,32 @@ func Send(eventType events.EventType, payload interface{}) {
 				multicast(id, &eventData{
 					EventType: eventType,
 					Payload: struct {
-						ID        string `json:"message_id"`
-						ChannelID string `json:"channel_id"`
-						UserID    string `json:"user_id"`
-						StampID   string `json:"stamp_id"`
-						Count     int    `json:"count"`
-					}{data.ID, data.ChannelID, data.UserID, data.StampID, data.Count},
+						ID      string `json:"message_id"`
+						UserID  string `json:"user_id"`
+						StampID string `json:"stamp_id"`
+						Count   int    `json:"count"`
+					}{data.ID, data.UserID, data.StampID, data.Count},
 					Mobile: false,
 				})
 			}
 		}
 
+	case events.MessageUnstamped:
+		data, _ := payload.(events.MessageStampEvent)
+		if s, ok := model.GetHeartbeatStatus(data.ChannelID); ok {
+			for _, u := range s.UserStatuses {
+				id := uuid.FromStringOrNil(u.UserID)
+				multicast(id, &eventData{
+					EventType: eventType,
+					Payload: struct {
+						ID      string `json:"message_id"`
+						UserID  string `json:"user_id"`
+						StampID string `json:"stamp_id"`
+					}{data.ID, data.UserID, data.StampID},
+					Mobile: false,
+				})
+			}
+		}
 	case events.MessagePinned, events.MessageUnpinned:
 		data, _ := payload.(events.PinEvent)
 		if s, ok := model.GetHeartbeatStatus(data.Message.ChannelID); ok {
@@ -230,11 +245,14 @@ func Send(eventType events.EventType, payload interface{}) {
 			Mobile: false,
 		})
 
-	case events.StampCreated, events.StampDeleted:
+	case events.StampCreated, events.StampModified, events.StampDeleted:
+		data, _ := payload.(events.StampEvent)
 		multicastToAll(&eventData{
 			EventType: eventType,
-			Payload:   struct{}{},
-			Mobile:    false,
+			Payload: struct {
+				ID string `json:"id"`
+			}{data.ID},
+			Mobile: false,
 		})
 
 	case events.TraqUpdated:

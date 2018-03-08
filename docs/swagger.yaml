@@ -13,19 +13,10 @@ paths:
       tags:
         - authorization
       description: ログアウトを行います。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NoContent"
       responses:
         "204":
           description: |+
             正常にログアウトできました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /channels:
     post:
@@ -73,10 +64,6 @@ paths:
           description: |+
             正常にチャンネルが作成できませんでした。
             親チャンネルが存在しない又は指定されたタイプに対して適切なプロパティが存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     get:
       tags:
         - channel
@@ -112,10 +99,6 @@ paths:
           description: |+
             取得に失敗しました。
             指定したチャンネルは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     put:
       tags:
         - channel
@@ -154,10 +137,6 @@ paths:
           description: |+
             変更に失敗しました。
             指定したチャンネルは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     delete:
       tags:
         - channel
@@ -177,18 +156,10 @@ paths:
       responses:
         "204":
           description: 削除に成功しました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "404":
           description: |+
             削除に失敗しました。
             指定したチャンネルは既に存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /channels/{channelID}/topic:
     parameters:
@@ -210,10 +181,6 @@ paths:
           description: |+
             取得に失敗しました。
             指定したチャンネルは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     put:
       tags:
         - topic
@@ -243,10 +210,6 @@ paths:
           description: |+
             更新に失敗しました。
             指定したチャンネルは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /channels/{channelID}/messages:
     parameters:
@@ -281,10 +244,6 @@ paths:
           description: |+
             取得に失敗しました。
             指定したチャンネルは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     post:
       tags:
         - message
@@ -314,10 +273,6 @@ paths:
           description: |+
             投稿に失敗しました。
             指定したチャンネルは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /channels/{channelID}/pin:
     parameters:
@@ -358,6 +313,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Pin"
+
   /pin/{pinID}:
     parameters:
       - $ref: "#/components/parameters/pinIdInPath"
@@ -405,10 +361,6 @@ paths:
           description: |+
             取得に失敗しました。
             指定したチャンネルは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     put:
       tags:
         - notification
@@ -447,10 +399,6 @@ paths:
           description: |+
             変更に失敗しました。
             指定したチャンネルは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /users:
     get:
@@ -494,22 +442,10 @@ paths:
       responses:
         "201":
           description: 正常に登録できました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "400":
           description: 登録できませんでした。リクエスト内容が不正です。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "403":
           description: 登録できませんでした。権限がありません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /users/me:
     get:
@@ -570,16 +506,8 @@ paths:
       responses:
         "200":
           description: 正常に更新できました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "400":
           description: 正常に更新できませんでした。不正なファイルです。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /users/me/clips:
     get:
@@ -624,10 +552,6 @@ paths:
           description: |+
             正常にクリップできませんでした。
             指定されたメッセージは存在しないか、自分のスコープ内にありません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     delete:
       tags:
         - clip
@@ -699,10 +623,6 @@ paths:
           description: |+
             正常に追加できませんでした。
             対象のチャンネルが存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     delete:
       tags:
         - star
@@ -782,10 +702,6 @@ paths:
           description: |+
             正常に変更できませんでした。
             存在しないチャンネルが指定されています。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /users/me/unread:
     get:
@@ -818,10 +734,6 @@ paths:
         "204":
           description: |+
             正常にメッセージを既読にできました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /users/{userID}:
     parameters:
@@ -843,10 +755,6 @@ paths:
           description: |+
             正常に取得できませんでした。
             指定したユーザーは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /users/{userID}/icon:
     parameters:
@@ -879,10 +787,6 @@ paths:
           description: |+
             正常に取得できませんでした。
             指定したユーザーは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /users/{userID}/tags:
     parameters:
@@ -904,10 +808,6 @@ paths:
           description: |+
             正常に取得できませんでした。
             指定したユーザーは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     post:
       tags:
         - userTag
@@ -936,10 +836,6 @@ paths:
           description: |+
             正常に追加できませんでした。
             指定したユーザーは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /users/{userID}/tags/{tagID}:
     parameters:
@@ -974,10 +870,6 @@ paths:
           description: |+
             正常に変更できませんでした。
             指定したユーザー、もしくはタグは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     delete:
       tags:
         - userTag
@@ -986,18 +878,10 @@ paths:
         "204":
           description: |+
             正常に削除できました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "404":
           description: |+
             正常に削除できませんでした。
             指定したユーザーは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /tags:
     get:
@@ -1027,52 +911,87 @@ paths:
       description: 全スタンプのリストを取得します。
       responses:
         "200":
-          description: |+
-            正常に取得できました。
-            スタンプのリストを返します。
+          description: 正常に取得できました。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/StampDetail"
+                  $ref: "#/components/schemas/Stamp"
     post:
       tags:
         - stamp
-      description: スタンプを新しく追加します。
+      description: スタンプを新規作成します。
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+                - name
+                - file
+              properties:
+                name:
+                  type: string
+                  description: スタンプ名(半角英数字と-+_のみを含む32文字以内の文字列)
+                file:
+                  type: string
+                  format: binary
+                  description: 1MBまでのpng, jpeg, gif, svg
+            encoding:
+              file:
+                contentType: image/png, image/jpeg, image/gif, image/svg+xml
       responses:
-        "204":
-          description: |+
-            正常にスタンプが追加されました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
+        "201":
+          description: 正常にスタンプが作成されました。
+        "400":
+          description: 正常にスタンプが作成できませんでした。
 
   /stamps/{stampID}:
     parameters:
       - $ref: "#/components/parameters/stampIdInPath"
     get:
+      description: スタンプの情報を取得します。
       tags:
         - stamp
-      description: スタンプの詳細を取得します。
       responses:
         "200":
-          description: |+
-            正常に取得できました。
-            スタンプの詳細を返します。
+          description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StampDetail"
+                $ref: "#/components/schemas/Stamp"
+        "404":
+          desciption: 取得できませんでした。指定されたスタンプは存在しません。
+    patch:
+      description: スタンプを修正します。
+      tags:
+        - stamp
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                name:
+                  type: string
+                  description: スタンプ名(半角英数字と-+_のみを含む32文字以内の文字列)
+                file:
+                  type: string
+                  format: binary
+                  description: 1MBまでのpng, jpeg, gif, svg
+            encoding:
+              file:
+                contentType: image/png, image/jpeg, image/gif, image/svg+xml
+      responses:
+        "204":
+          description: 正常に修正できました。
+        "403":
+          description: |+
+            修正できませんでした。
+            指定されたスタンプを修正する権限がありません。
         "404":
           description: |+
-            取得できませんでした。
+            修正できませんでした。
             指定されたスタンプは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     delete:
       description: スタンプを削除します。
       tags:
@@ -1081,26 +1000,14 @@ paths:
         "204":
           description: |+
             正常に削除できました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "403":
           description: |+
             削除できませんでした。
             指定されたスタンプを削除する権限がありません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "404":
           description: |+
             削除できませんでした。
             指定されたスタンプは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /files:
     post:
@@ -1154,10 +1061,6 @@ paths:
           description: |+
             取得できませんでした。
             指定されたスタンプは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     delete:
       tags:
         - file
@@ -1166,26 +1069,14 @@ paths:
         "204":
           description: |+
             正常に削除できました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "403":
           description: |+
             削除できませんでした。
             指定されたファイルを削除する権限がありません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "404":
           description: |+
             削除できませんでした。
             指定されたファイルは存在しないか、自分のスコープ内にありません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /files/{fileID}/meta:
     parameters:
@@ -1207,10 +1098,6 @@ paths:
           description: |+
             取得できませんでした。
             指定されたファイルは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /files/{fileID}/thumbnail:
     parameters:
@@ -1263,18 +1150,10 @@ paths:
           description: |+
             編集できませんでした。
             指定されたメッセージを編集する権限がありません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "404":
           description: |+
             編集できませんでした。
             指定されたメッセージは存在しないか、自分のスコープ内にありません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     get:
       tags:
         - message
@@ -1293,10 +1172,6 @@ paths:
           description: |+
             取得できませんでした。
             指定されたメッセージは存在しないか、自分のスコープ内にありません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     delete:
       tags:
         - message
@@ -1305,52 +1180,38 @@ paths:
         "204":
           description: |+
             正常に削除できました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "403":
           description: |+
             削除できませんでした。
             指定されたメッセージを削除する権限がありません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "404":
           description: |+
             削除できませんでした。
             指定されたメッセージは存在しないか、自分のスコープ内にありません。
+
+  /messages/{messageID}/stamps:
+    parameters:
+      - $ref: "#/components/parameters/messageIdInPath"
+    get:
+      tags:
+        - stamp
+      description: 指定したメッセージに押されているスタンプを全て取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NoContent"
+                type: array
+                items:
+                  $ref: "#/components/schemas/MessageStamp"
+        "404":
+          description: 取得できませんでした。指定したメッセージは存在しないか、自分のスコープ内にありません。
 
   /messages/{messageID}/stamps/{stampID}:
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
       - $ref: "#/components/parameters/stampIdInPath"
-    get:
-      tags:
-        - stamp
-      description: 指定したメッセージについているスタンプの詳細を取得します。
-      responses:
-        "200":
-          description: |+
-            正常に取得できました。
-            スタンプの詳細を返します。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StampDetail"
-        "404":
-          description: |+
-            取得できませんでした。
-            指定されたスタンプは対象のメッセージに押されていません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     post:
       tags:
         - stamp
@@ -1359,26 +1220,14 @@ paths:
         "204":
           description: |+
             正常にスタンプを押すことができました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "400":
           description: |+
             スタンプを押すことができませんでした。
             指定されたスタンプは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "404":
           description: |+
             スタンプを押すことができませんでした。
             指定されたメッセージは存在しないか、自分のスコープ内にありません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
     delete:
       tags:
         - stamp
@@ -1387,26 +1236,14 @@ paths:
         "204":
           description: |+
             正常にスタンプを外すことができました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "400":
           description: |+
             スタンプを外すことができませんでした。
             指定されたスタンプは存在しません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
         "404":
           description: |+
             スタンプを外すことができませんでした。
             指定されたメッセージは存在しないか、自分のスコープ内にありません。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /messages/search:
     get:
@@ -1433,10 +1270,6 @@ paths:
           description: |+
             正常に検索できませんでした。
             クエリが不正です。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
   /heartbeat:
     get:
@@ -1483,12 +1316,7 @@ paths:
           format: uuid
       responses:
         "204":
-          description: |+
-            正常に送信できました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
+          description: 正常に送信できました。
 
   /notification:
     get:
@@ -1498,8 +1326,6 @@ paths:
       responses:
         "200":
           description: 接続が完了しました。
-          content:
-            text/event-stream:
 
   /notification/device:
     post:
@@ -1521,10 +1347,6 @@ paths:
       responses:
         "201":
           description: 正常に登録できました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NoContent"
 
 components:
   parameters:
@@ -1708,38 +1530,45 @@ components:
         stampList:
           type: array
           items:
-            $ref: "#/components/schemas/Stamp"
+            $ref: "#/components/schemas/MessageStamp"
 
     MessageList:
       type: array
       items:
         $ref: "#/components/schemas/Message"
 
-    Stamp:
+    MessageStamp:
       type: object
       properties:
-         stampId:
+        userId:
           type: string
           format: uuid
-         count:
+        stampId:
+          type: string
+          format: uuid
+        count:
           type: integer
 
-    StampDetail:
+    Stamp:
       type: object
       properties:
         id:
           type: string
           format: uuid
+        name:
+          type: string
         creatorId:
           type: string
           format: uuid
-        url:
+        fileId:
           type: string
-
-    StampList:
-      type: array
-      items:
-        $ref: "#/components/schemas/Stamp"
+          format: uuid
+        createdAt:
+          type: string
+          format: datetime
+        updatedAt:
+          type: string
+          format: datetime
 
     FileInfo:
       type: object
@@ -1840,7 +1669,3 @@ components:
           - userId: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
             status: editing
         channelId: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
-
-    NoContent:
-      type: object
-      example:

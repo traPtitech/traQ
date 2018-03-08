@@ -8,23 +8,19 @@ import (
 	"github.com/traPtitech/traQ/notification/events"
 
 	"github.com/labstack/echo"
+	"github.com/labstack/gommon/log"
 	"github.com/traPtitech/traQ/model"
 )
 
 //MessageForResponse :クライアントに返す形のメッセージオブジェクト
 type MessageForResponse struct {
-	MessageID       string       `json:"messageId"`
-	UserID          string       `json:"userId"`
-	ParentChannelID string       `json:"parentChannelId"`
-	Content         string       `json:"content"`
-	Datetime        time.Time    `json:"datetime"`
-	Pin             bool         `json:"pin"`
-	StampList       []*stampList `json:"stampList"`
-}
-
-type stampList struct {
-	StampID string `json:"stampId"`
-	Count   int    `json:"count"`
+	MessageID       string                `json:"messageId"`
+	UserID          string                `json:"userId"`
+	ParentChannelID string                `json:"parentChannelId"`
+	Content         string                `json:"content"`
+	Datetime        time.Time             `json:"datetime"`
+	Pin             bool                  `json:"pin"`
+	StampList       []*model.MessageStamp `json:"stampList"`
 }
 
 type requestMessage struct {
@@ -160,11 +156,12 @@ func valuesMessage(m map[string]*MessageForResponse) []*MessageForResponse {
 }
 
 func formatMessage(raw *model.Message) *MessageForResponse {
+	stampList, err := model.GetMessageStamps(raw.ID)
+	if err != nil {
+		log.Error(err)
+	}
 
-	stampList := []*stampList{}
-	// TODO: Stampが実装され次第取りに行くようにする
-
-	res := MessageForResponse{
+	res := &MessageForResponse{
 		MessageID:       raw.ID,
 		UserID:          raw.UserID,
 		ParentChannelID: raw.ChannelID,
@@ -173,5 +170,5 @@ func formatMessage(raw *model.Message) *MessageForResponse {
 		Datetime:        raw.CreatedAt.Truncate(time.Second).UTC(),
 		StampList:       stampList,
 	}
-	return &res
+	return res
 }
