@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/notification"
@@ -64,11 +65,13 @@ func PostStamp(c echo.Context) error {
 
 	s, err := model.CreateStamp(name, file.ID, userID)
 	if err != nil {
-		if err == model.ErrStampInvalidName {
+		switch err {
+		case model.ErrStampInvalidName:
 			return echo.NewHTTPError(http.StatusBadRequest, err)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	go notification.Send(events.StampCreated, events.StampEvent{ID: s.ID})
@@ -81,11 +84,13 @@ func GetStamp(c echo.Context) error {
 
 	stamp, err := model.GetStamp(stampID)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	if stamp == nil {
-		return echo.NewHTTPError(http.StatusNotFound)
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
 	return c.JSON(http.StatusOK, stamp)
@@ -98,11 +103,13 @@ func PatchStamp(c echo.Context) error {
 
 	stamp, err := model.GetStamp(stampID)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	if stamp == nil {
-		return echo.NewHTTPError(http.StatusNotFound)
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 	if stamp.CreatorID != userID {
 		return echo.NewHTTPError(http.StatusForbidden)
@@ -150,11 +157,13 @@ func PatchStamp(c echo.Context) error {
 	}
 
 	if err := stamp.Update(); err != nil {
-		if err == model.ErrStampInvalidName {
+		switch err {
+		case model.ErrStampInvalidName:
 			return echo.NewHTTPError(http.StatusBadRequest, err)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	go notification.Send(events.StampModified, events.StampEvent{ID: stamp.ID})
@@ -168,11 +177,13 @@ func DeleteStamp(c echo.Context) error {
 
 	stamp, err := model.GetStamp(stampID)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	if stamp == nil {
-		return echo.NewHTTPError(http.StatusNotFound)
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 	if stamp.CreatorID != userID {
 		return echo.NewHTTPError(http.StatusForbidden)
@@ -189,9 +200,29 @@ func DeleteStamp(c echo.Context) error {
 
 // GetMessageStamps : GET /messages/:messageID/stamps
 func GetMessageStamps(c echo.Context) error {
+	userID := c.Get("user").(*model.User).ID
 	messageID := c.Param("messageID")
 
-	//TODO 見れないメッセージ(プライベートチャンネル)に対して404にする
+	// Privateチャンネルの確認
+	channel, err := model.GetChannelByMessageID(messageID)
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	if !channel.IsPublic {
+		if ok, err := channel.Exists(userID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		} else if !ok {
+			return echo.NewHTTPError(http.StatusNotFound)
+		}
+	}
+
 	stamps, err := model.GetMessageStamps(messageID)
 	if err != nil {
 		c.Logger().Error(err)
@@ -207,19 +238,47 @@ func PostMessageStamp(c echo.Context) error {
 	messageID := c.Param("messageID")
 	stampID := c.Param("stampID")
 
+	// メッセージ存在の確認
 	message, err := model.GetMessage(messageID)
 	if err != nil {
-		c.Logger().Error(err)
-		//TODO メッセージが無いのか、DBがエラーなのかで分岐
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch err {
+		case model.ErrNotFound, model.ErrMessageAlreadyDeleted:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
-	//TODO 見れないメッセージ(プライベートチャンネル)に対して404にする
+	// Privateチャンネルの確認
+	channel, err := model.GetChannelByID(userID, message.ChannelID)
+	if err != nil {
+		switch err {
+		case model.ErrNotFoundOrForbidden:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	if !channel.IsPublic {
+		if ok, err := channel.Exists(userID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		} else if !ok {
+			return echo.NewHTTPError(http.StatusNotFound)
+		}
+	}
 
 	count, err := model.AddStampToMessage(messageID, stampID, userID)
 	if err != nil {
-		//TODO エラーの種類で400,404,500に分岐
-		return echo.NewHTTPError(http.StatusBadRequest)
+		if errSQL, ok := err.(*mysql.MySQLError); ok {
+			if errSQL.Number == 1452 { //外部キー制約
+				return echo.NewHTTPError(http.StatusBadRequest)
+			}
+		}
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	go notification.Send(events.MessageStamped, events.MessageStampEvent{
@@ -238,17 +297,46 @@ func DeleteMessageStamp(c echo.Context) error {
 	messageID := c.Param("messageID")
 	stampID := c.Param("stampID")
 
+	// メッセージ存在の確認
 	message, err := model.GetMessage(messageID)
 	if err != nil {
-		c.Logger().Error(err)
-		//TODO メッセージが無いのか、DBがエラーなのかで分岐
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch err {
+		case model.ErrNotFound, model.ErrMessageAlreadyDeleted:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
-	//TODO 見れないメッセージ(プライベートチャンネル)に対して404にする
+	// Privateチャンネルの確認
+	channel, err := model.GetChannelByID(userID, message.ChannelID)
+	if err != nil {
+		switch err {
+		case model.ErrNotFoundOrForbidden:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	if !channel.IsPublic {
+		if ok, err := channel.Exists(userID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		} else if !ok {
+			return echo.NewHTTPError(http.StatusNotFound)
+		}
+	}
+
 	if err := model.RemoveStampFromMessage(messageID, stampID, userID); err != nil {
-		//TODO エラーの種類で400,404,500に分岐
-		return echo.NewHTTPError(http.StatusBadRequest)
+		if errSQL, ok := err.(*mysql.MySQLError); ok {
+			if errSQL.Number == 1452 { //外部キー制約
+				return echo.NewHTTPError(http.StatusBadRequest)
+			}
+		}
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	go notification.Send(events.MessageUnstamped, events.MessageStampEvent{

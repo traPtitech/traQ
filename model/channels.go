@@ -153,7 +153,23 @@ func GetChannelByID(userID, channelID string) (*Channel, error) {
 	}
 
 	if !has {
-		return nil, fmt.Errorf("this channel is not found or forbidden")
+		return nil, ErrNotFoundOrForbidden
+	}
+
+	return channel, nil
+}
+
+// GetChannelByMessageID メッセージIDによってチャンネルを取得
+// チャンネルがis_deletedでも取得可能
+func GetChannelByMessageID(messageID string) (*Channel, error) {
+	channel := &Channel{}
+
+	has, err := db.Join("INNER", "messages", "messages.channel_id = channels.id").Where("messages.id = ?", messageID).Get(channel)
+	if err != nil {
+		return nil, err
+	}
+	if !has {
+		return nil, ErrNotFound
 	}
 
 	return channel, nil

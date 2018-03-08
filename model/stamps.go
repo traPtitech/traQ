@@ -70,7 +70,7 @@ func GetStamp(id string) (*Stamp, error) {
 		return nil, err
 	}
 	if !ok {
-		return nil, nil
+		return nil, ErrNotFound
 	}
 	return &stamp, nil
 }

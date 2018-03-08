@@ -1,9 +1,13 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"time"
 )
+
+// ErrMessageAlreadyDeleted : メッセージエラー このメッセージは既に削除されている
+var ErrMessageAlreadyDeleted = errors.New("this message has been deleted")
 
 //Message :データベースに格納するmessageの構造体
 type Message struct {
@@ -72,10 +76,10 @@ func GetMessage(messageID string) (*Message, error) {
 		return nil, fmt.Errorf("Failed to find message: %v", err)
 	}
 	if has == false {
-		return nil, fmt.Errorf("This messageID is wrong: messageID = %v", messageID)
+		return nil, ErrNotFound
 	}
 	if message.IsDeleted {
-		return nil, fmt.Errorf("this message has been deleted")
+		return nil, ErrMessageAlreadyDeleted
 	}
 
 	return message, nil

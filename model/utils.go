@@ -3,6 +3,7 @@ package model
 import (
 	"fmt"
 
+	"errors"
 	"github.com/go-xorm/xorm"
 	"github.com/satori/go.uuid"
 )
@@ -31,6 +32,11 @@ var (
 	}
 
 	serverUser *User
+
+	// ErrNotFoundOrForbidden : 汎用エラー 見つからないかスコープ外にある場合のエラー
+	ErrNotFoundOrForbidden = errors.New("not found or forbidden")
+	// ErrNotFound : 汎用エラー 見つからない場合のエラー
+	ErrNotFound = errors.New("not found")
 )
 
 // SetXORMEngine DBにxormのエンジンを設定する
