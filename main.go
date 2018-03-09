@@ -69,8 +69,8 @@ func main() {
 		os.Getenv("SWIFT_CONTAINER"),
 		os.Getenv("SWIFT_USERNAME"),
 		os.Getenv("SWIFT_APIKEY"),
-		os.Getenv("SWIFT_TENANT"),
-		os.Getenv("SWIFT_TENANTID"),
+		os.Getenv("SWIFT_TENANT"),   //v2のみ
+		os.Getenv("SWIFT_TENANTID"), //v2のみ
 		os.Getenv("SWIFT_AUTHURL"),
 	); err != nil {
 		panic(err)
@@ -197,7 +197,7 @@ func main() {
 }
 
 func setSwiftFileManagerAsDefault(container, userName, apiKey, tenant, tenantID, authURL string) error {
-	if container == "" || userName == "" || apiKey == "" || tenant == "" || tenantID == "" || authURL == "" {
+	if container == "" || userName == "" || apiKey == "" || authURL == "" {
 		return nil
 	}
 	m, err := external.NewSwiftFileManager(container, userName, apiKey, tenant, tenantID, authURL, false) //TODO リダイレクトをオンにする
