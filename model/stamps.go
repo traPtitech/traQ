@@ -84,7 +84,7 @@ func DeleteStamp(id string) error {
 	}
 	if ok {
 		stamp.IsDeleted = true
-		_, err = db.Update(&stamp)
+		_, err = db.ID(stamp.ID).Update(&stamp)
 		if err != nil {
 			return err
 		}
