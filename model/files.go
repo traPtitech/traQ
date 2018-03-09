@@ -11,16 +11,20 @@ import (
 	"time"
 )
 
-// FileWriter ファイルに書き込むインターフェース
-type FileWriter interface {
-	//*io.Readerのデータをstringで指定された名前で保存する
-	WriteByID(io.Reader, string) error
+var fileManagers = map[string]FileManager{
+	"": NewDevFileManager(),
 }
 
-// FileReader ファイルを読み込むインターフェース
-type FileReader interface {
-	//stringで指定された名前のファイルを取り出す
-	OpenFileByID(string) (*os.File, error)
+// FileManager ファイルを読み書きするマネージャーのインターフェース
+type FileManager interface {
+	// srcをIDのファイルとして保存する
+	WriteByID(src io.Reader, ID, name, contentType string) error
+	// IDで指定されたファイルを読み込む
+	OpenFileByID(ID string) (io.ReadCloser, error)
+	// IDで指定されたファイルを削除する
+	DeleteByID(ID string) error
+	// RedirectURLが発行できる場合は取得します。出来ない場合は空文字列を返します
+	GetRedirectURL(ID string) string
 }
 
 // File DBに格納するファイルの構造体
@@ -32,6 +36,7 @@ type File struct {
 	CreatorID string    `xorm:"char(36) not null"`
 	IsDeleted bool      `xorm:"bool not null"`
 	Hash      string    `xorm:"char(32) not null"`
+	Manager   string    `xorm:"varchar(30) not null default ''"`
 	CreatedAt time.Time `xorm:"created not null"`
 }
 
@@ -56,9 +61,12 @@ func (f *File) Create(src io.Reader) error {
 	f.IsDeleted = false
 	f.Mime = mime.TypeByExtension(filepath.Ext(f.Name))
 
-	var writer FileWriter
-	writer = NewDevFileManager() //dependent on dev environment
-	if err := writer.WriteByID(src, f.ID); err != nil {
+	writer, ok := fileManagers[f.Manager]
+	if !ok {
+		return fmt.Errorf("unknown file manager: %s", f.Manager)
+	}
+
+	if err := writer.WriteByID(src, f.ID, f.Name, f.Mime); err != nil {
 		return fmt.Errorf("Failed to write data into file: %v", err)
 	}
 
@@ -86,16 +94,48 @@ func (f *File) Exists() (bool, error) {
 func (f *File) Delete() error {
 	f.IsDeleted = true
 	if _, err := db.ID(f.ID).UseBool().Update(f); err != nil {
-		return fmt.Errorf("Failed to make Isdeleted true")
+		return err
 	}
+
+	m, ok := fileManagers[f.Manager]
+	if ok {
+		return m.DeleteByID(f.ID)
+	}
+
 	return nil
 }
 
+// Open fileを開きます
+func (f *File) Open() (io.ReadCloser, error) {
+	reader, ok := fileManagers[f.Manager]
+	if !ok {
+		return nil, fmt.Errorf("unknown file manager: %s", f.Manager)
+	}
+
+	return reader.OpenFileByID(f.ID)
+}
+
+// GetRedirectURL リダイレクト先URLが存在する場合はそれを返します
+func (f *File) GetRedirectURL() string {
+	m, ok := fileManagers[f.Manager]
+	if !ok {
+		return ""
+	}
+	return m.GetRedirectURL(f.ID)
+}
+
 // OpenFileByID ファイルを取得します
-func OpenFileByID(ID string) (*os.File, error) {
-	//TODO: テストコード
-	var reader FileReader
-	reader = NewDevFileManager() //dependent on dev environment
+func OpenFileByID(ID string) (io.ReadCloser, error) {
+	meta, err := GetMetaFileDataByID(ID)
+	if err != nil {
+		return nil, err
+	}
+
+	reader, ok := fileManagers[meta.Manager]
+	if !ok {
+		return nil, fmt.Errorf("unknown file manager: %s", meta.Manager)
+	}
+
 	return reader.OpenFileByID(ID)
 }
 
@@ -108,7 +148,7 @@ func GetMetaFileDataByID(FileID string) (*File, error) {
 		return nil, fmt.Errorf("Failed to find file")
 	}
 	if !has {
-		return nil, fmt.Errorf("The file doesn't exist")
+		return nil, nil
 	}
 
 	return f, nil
@@ -123,15 +163,20 @@ func calcMD5(src io.Reader) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
+// SetFileManager ファイルマネージャーリストにマネージャーをセットします
+func SetFileManager(name string, manager FileManager) {
+	fileManagers[name] = manager
+}
+
 // 以下、開発環境用
 
-// DevFileManager 開発用。routerの方でも使用するために公開
-type DevFileManager struct {
+// LocalFileManager 開発用。routerの方でも使用するために公開
+type LocalFileManager struct {
 	dirName string
 }
 
-//OpenFileByID ファイルを取得します
-func (fm *DevFileManager) OpenFileByID(ID string) (*os.File, error) {
+// OpenFileByID ファイルを取得します
+func (fm *LocalFileManager) OpenFileByID(ID string) (io.ReadCloser, error) {
 	fileName := fm.dirName + "/" + ID
 	if _, err := os.Stat(fileName); err != nil {
 		return nil, fmt.Errorf("Invalid ID: %s", ID)
@@ -146,7 +191,7 @@ func (fm *DevFileManager) OpenFileByID(ID string) (*os.File, error) {
 }
 
 // WriteByID srcの内容をIDで指定されたファイルに書き込みます
-func (fm *DevFileManager) WriteByID(src io.Reader, ID string) error {
+func (fm *LocalFileManager) WriteByID(src io.Reader, ID, name, contentType string) error {
 	if _, err := os.Stat(fm.dirName); err != nil {
 		if err = os.Mkdir(fm.dirName, 0700); err != nil {
 			return fmt.Errorf("Can't create directory: %v", err)
@@ -165,14 +210,28 @@ func (fm *DevFileManager) WriteByID(src io.Reader, ID string) error {
 	return nil
 }
 
+// DeleteByID ファイルを削除します
+func (fm *LocalFileManager) DeleteByID(ID string) error {
+	fileName := fm.dirName + "/" + ID
+	if _, err := os.Stat(fileName); err != nil {
+		return err
+	}
+	return os.Remove(fileName)
+}
+
+// GetRedirectURL 必ず空文字列を返します
+func (*LocalFileManager) GetRedirectURL(ID string) string {
+	return ""
+}
+
 // GetDir ファイルの保存先を取得する
-func (fm *DevFileManager) GetDir() string {
+func (fm *LocalFileManager) GetDir() string {
 	return fm.dirName
 }
 
 // NewDevFileManager DevFileManagerのコンストラクタ
-func NewDevFileManager() *DevFileManager {
-	fm := &DevFileManager{}
+func NewDevFileManager() *LocalFileManager {
+	fm := &LocalFileManager{}
 	if dir := os.Getenv("TRAQ_TEMP"); dir != "" {
 		fm.dirName = dir
 	} else {

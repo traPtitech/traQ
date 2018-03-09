@@ -15,6 +15,7 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/middleware"
 	"github.com/srinathgs/mysqlstore"
+	"github.com/traPtitech/traQ/external"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router"
 )
@@ -63,6 +64,18 @@ func main() {
 		panic(err)
 	}
 
+	// ObjectStorage
+	if err := setSwiftFileManagerAsDefault(
+		os.Getenv("OS_CONTAINER"),
+		os.Getenv("OS_USERNAME"),
+		os.Getenv("OS_PASSWORD"),
+		os.Getenv("OS_TENANT_NAME"), //v2のみ
+		os.Getenv("OS_TENANT_ID"),   //v2のみ
+		os.Getenv("OS_AUTH_URL"),
+	); err != nil {
+		panic(err)
+	}
+
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:8080"},
@@ -85,6 +98,7 @@ func main() {
 
 	api := e.Group("/api/1.0")
 	api.Use(router.GetUserInfo)
+
 	// Tag: channel
 	api.GET("/channels", router.GetChannels)
 	api.POST("/channels", router.PostChannels)
@@ -181,4 +195,16 @@ func main() {
 		port = "3000"
 	}
 	e.Logger.Fatal(e.Start(":" + port))
+}
+
+func setSwiftFileManagerAsDefault(container, userName, apiKey, tenant, tenantID, authURL string) error {
+	if container == "" || userName == "" || apiKey == "" || authURL == "" {
+		return nil
+	}
+	m, err := external.NewSwiftFileManager(container, userName, apiKey, tenant, tenantID, authURL, false) //TODO リダイレクトをオンにする
+	if err != nil {
+		return err
+	}
+	model.SetFileManager("", m)
+	return nil
 }

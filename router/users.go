@@ -129,18 +129,7 @@ func GetUserIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	file, err := model.OpenFileByID(user.Icon)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	defer file.Close()
-
-	meta, err := model.GetMetaFileDataByID(user.Icon)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return c.Stream(http.StatusOK, meta.Mime, file)
+	return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon)
 }
 
 // GetMyIcon GET /users/me/icon のハンドラ
@@ -152,18 +141,7 @@ func GetMyIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	file, err := model.OpenFileByID(user.Icon)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	defer file.Close()
-
-	meta, err := model.GetMetaFileDataByID(user.Icon)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return c.Stream(http.StatusOK, meta.Mime, file)
+	return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon)
 }
 
 // PutMyIcon Post /users/me/icon のハンドラ

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
+	"github.com/labstack/gommon/log"
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -17,13 +18,13 @@ type FileForResponse struct {
 	DateTime string `json:"datetime"`
 }
 
-// PostFile POST /file のハンドラ
+// PostFile POST /files のハンドラ
 func PostFile(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to upload file: %v", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to upload file: %v", err))
 	}
 
 	file := &model.File{
@@ -34,17 +35,19 @@ func PostFile(c echo.Context) error {
 
 	src, err := uploadedFile.Open()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to open file")
+		c.Echo().Logger.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	defer src.Close()
 
 	if err := file.Create(src); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create file")
+		c.Echo().Logger.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusCreated, formatFile(file))
 }
 
-// GetFileByID GET /file/{fileID}
+// GetFileByID GET /files/{fileID}
 func GetFileByID(c echo.Context) error {
 	ID := c.Param("fileID")
 	dl := c.QueryParam("dl")
@@ -54,9 +57,15 @@ func GetFileByID(c echo.Context) error {
 		return err
 	}
 
-	file, err := model.OpenFileByID(ID)
+	url := meta.GetRedirectURL()
+	if len(url) > 0 {
+		return c.Redirect(http.StatusFound, url) //オブジェクトストレージで直接アクセス出来る場合はリダイレクトする
+	}
+
+	file, err := meta.Open()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get file")
+		c.Echo().Logger.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	defer file.Close()
 
@@ -67,34 +76,36 @@ func GetFileByID(c echo.Context) error {
 	return c.Stream(http.StatusOK, meta.Mime, file)
 }
 
-// DeleteFileByID DELETE /file/{fileID}
+// DeleteFileByID DELETE /files/{fileID}
 func DeleteFileByID(c echo.Context) error {
 	ID := c.Param("fileID")
 
 	meta, err := validateFileID(ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("fileID is wrong: %s", ID))
+		return err
 	}
 
 	if err := meta.Delete(); err != nil {
+		c.Echo().Logger.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete data")
 	}
+
 	return c.NoContent(http.StatusNoContent)
 }
 
-// GetMetaDataByFileID GET /file/{fileID}/meta
+// GetMetaDataByFileID GET /files/{fileID}/meta
 func GetMetaDataByFileID(c echo.Context) error {
 	ID := c.Param("fileID")
 
 	meta, err := validateFileID(ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "fileID is wrong")
+		return err
 	}
 	return c.JSON(http.StatusOK, formatFile(meta))
 }
 
 // TODO: そのうち実装
-// GetThumbnailByID GET /file/{fileID}/thumbnail
+// GetThumbnailByID GET /files/{fileID}/thumbnail
 
 func formatFile(f *model.File) *FileForResponse {
 	return &FileForResponse{
@@ -110,11 +121,11 @@ func validateFileID(fileID string) (*model.File, error) {
 	f := &model.File{ID: fileID}
 	ok, err := f.Exists()
 	if err != nil {
+		log.Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while get file")
-
 	}
 	if !ok {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "The specified channel does not exist")
+		return nil, echo.NewHTTPError(http.StatusNotFound, "The specified file does not exist")
 	}
 	return f, nil
 }

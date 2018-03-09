@@ -88,6 +88,7 @@ func TestGetMetaFileDataByID(t *testing.T) {
 		assert.Equal(file.ID, result.ID)
 	}
 
-	_, err = GetMetaFileDataByID("wrongID")
-	assert.Error(err)
+	none, err := GetMetaFileDataByID("wrongID")
+	assert.NoError(err)
+	assert.Nil(none)
 }
