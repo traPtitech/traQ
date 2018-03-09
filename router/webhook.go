@@ -1,10 +1,13 @@
 package router
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
+	"gopkg.in/go-playground/webhooks.v3/github"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -346,7 +349,92 @@ func PostWebhookByGithub(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
-	//TODO parse JSON and post message
+	switch c.Request().Header.Get(echo.HeaderContentType) {
+	case echo.MIMEApplicationJSON, echo.MIMEApplicationJSONCharsetUTF8:
+		break
+	default:
+		return echo.NewHTTPError(http.StatusUnsupportedMediaType)
+	}
+
+	event := c.Request().Header.Get("X-GitHub-Event")
+	if len(event) == 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "missing X-GitHub-Event header")
+	}
+
+	githubEvent := github.Event(event)
+
+	//MEMO 現在はサーバー側で簡単に整形してるけど、将来的にクライアント側に表示デザイン込みで任せたいよね
+	message := &model.Message{
+		UserID:    wb.ID,
+		ChannelID: wb.ChannelID,
+	}
+
+	switch githubEvent {
+	case github.IssuesEvent: // Any time an Issue is assigned, unassigned, labeled, unlabeled, opened, edited, milestoned, demilestoned, closed, or reopened.
+		var i github.IssuesPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&i); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+
+		switch i.Action {
+		case "opened":
+			message.Text = fmt.Sprintf("## Issue Opened\n[%s](%s) - [%s](%s)", i.Repository.FullName, i.Repository.HTMLURL, i.Issue.Title, i.Issue.URL)
+		case "closed":
+			message.Text = fmt.Sprintf("## Issue Closed\n[%s](%s) - [%s](%s)", i.Repository.FullName, i.Repository.HTMLURL, i.Issue.Title, i.Issue.URL)
+		case "reopened":
+			message.Text = fmt.Sprintf("## Issue Reopened\n[%s](%s) - [%s](%s)", i.Repository.FullName, i.Repository.HTMLURL, i.Issue.Title, i.Issue.URL)
+		case "assigned", "unassigned", "labeled", "unlabeled", "edited", "milestoned", "demilestoned":
+			// Unsupported
+		}
+
+	case github.PullRequestEvent: // Any time a pull request is assigned, unassigned, labeled, unlabeled, opened, edited, closed, reopened, or synchronized (updated due to a new push in the branch that the pull request is tracking). Also any time a pull request review is requested, or a review request is removed.
+		var p github.PullRequestPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&p); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+
+		switch p.Action {
+		case "opened":
+			message.Text = fmt.Sprintf("## PullRequest Opened\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.URL)
+		case "closed":
+			if p.PullRequest.Merged {
+				message.Text = fmt.Sprintf("## PullRequest Merged\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.URL)
+			} else {
+				message.Text = fmt.Sprintf("## PullRequest Closed\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.URL)
+			}
+		case "reopened":
+			message.Text = fmt.Sprintf("## PullRequest Reopened\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.URL)
+		case "assigned", "unassigned", "labeled", "unlabeled", "edited", "review_requested", "review_request_removed":
+			// Unsupported
+		}
+
+	case github.PushEvent: // Any Git push to a Repository, including editing tags or branches. Commits via API actions that update references are also counted. This is the default event.
+		var p github.PushPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&p); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+
+		message.Text = fmt.Sprintf("## %d Commit(s) Pushed by %s\nrefs: `%s`\n, [compare](%s)\n", len(p.Commits), p.Pusher.Name, p.Ref, p.Compare)
+
+		for _, v := range p.Commits {
+			message.Text += fmt.Sprintf("+ [`%7s`](%s) - %s \n", v.ID, v.URL, v.Message)
+		}
+
+	default:
+		// Currently Unsupported:
+		// marketplace_purchase, fork, gollum, installation, installation_repositories, label, ping, member, membership,
+		// organization, org_block, page_build, public, repository, status, team, team_add, watch, create, delete, deployment,
+		// deployment_status, project_column, milestone, project_card, project, commit_comment, release, issue_comment,
+		// pull_request_review, pull_request_review_comment
+		// 上ので必要な場合は実装してプルリクを飛ばしてください
+	}
+
+	if len(message.Text) > 0 {
+		if err := message.Create(); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
 
 	return c.NoContent(http.StatusNoContent)
 }
