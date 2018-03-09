@@ -66,12 +66,12 @@ func main() {
 
 	// ObjectStorage
 	if err := setSwiftFileManagerAsDefault(
-		os.Getenv("SWIFT_CONTAINER"),
-		os.Getenv("SWIFT_USERNAME"),
-		os.Getenv("SWIFT_APIKEY"),
-		os.Getenv("SWIFT_TENANT"),   //v2のみ
-		os.Getenv("SWIFT_TENANTID"), //v2のみ
-		os.Getenv("SWIFT_AUTHURL"),
+		os.Getenv("OS_CONTAINER"),
+		os.Getenv("OS_USERNAME"),
+		os.Getenv("OS_PASSWORD"),
+		os.Getenv("OS_TENANT_NAME"), //v2のみ
+		os.Getenv("OS_TENANT_ID"),   //v2のみ
+		os.Getenv("OS_AUTH_URL"),
 	); err != nil {
 		panic(err)
 	}
@@ -98,6 +98,7 @@ func main() {
 
 	api := e.Group("/api/1.0")
 	api.Use(router.GetUserInfo)
+
 	// Tag: channel
 	api.GET("/channels", router.GetChannels)
 	api.POST("/channels", router.PostChannels)
