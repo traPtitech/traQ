@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
+	"github.com/labstack/gommon/log"
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -81,11 +82,7 @@ func DeleteFileByID(c echo.Context) error {
 
 	meta, err := validateFileID(ID)
 	if err != nil {
-		c.Echo().Logger.Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	if file == nil {
-		return echo.NewHTTPError(http.StatusNotFound)
+		return err
 	}
 
 	if err := meta.Delete(); err != nil {
@@ -102,8 +99,7 @@ func GetMetaDataByFileID(c echo.Context) error {
 
 	meta, err := validateFileID(ID)
 	if err != nil {
-		c.Echo().Logger.Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return err
 	}
 	return c.JSON(http.StatusOK, formatFile(meta))
 }
@@ -125,11 +121,11 @@ func validateFileID(fileID string) (*model.File, error) {
 	f := &model.File{ID: fileID}
 	ok, err := f.Exists()
 	if err != nil {
+		log.Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while get file")
-
 	}
 	if !ok {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "The specified channel does not exist")
+		return nil, echo.NewHTTPError(http.StatusNotFound, "The specified file does not exist")
 	}
 	return f, nil
 }
