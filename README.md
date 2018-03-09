@@ -2,12 +2,14 @@
 
 [![CircleCI](https://circleci.com/gh/traPtitech/traQ.svg?style=shield)](https://circleci.com/gh/traPtitech/traQ)
 [![codecov](https://codecov.io/gh/traPtitech/traQ/branch/master/graph/badge.svg)](https://codecov.io/gh/traPtitech/traQ)
+[![Heroku](https://heroku-badge.herokuapp.com/?app=traq-dev&svg=1)](https://traq-dev.herokuapp.com/)
 
 ## Development environment
 
 ### Requirements
 
-- go (1.9.x)
+- go
+	- tested with 1.10
 - git
 - make
 

@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:latest
+      - image: circleci/golang:1.10.0
       - image: circleci/mysql:latest-ram
         environment:
           - MYSQL_DATABASE=traq

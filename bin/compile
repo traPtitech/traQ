@@ -6,13 +6,13 @@ cache=$(cd "$2/" && pwd)
 
 echo "-----> Installing go"
 cd $cache
-wget -qO go.tar.gz https://redirector.gvt1.com/edgedl/go/go1.9.2.linux-amd64.tar.gz
+wget -qO go.tar.gz https://dl.google.com/go/go1.10.linux-amd64.tar.gz
 tar zxf go.tar.gz
 
 echo "-----> Installing node"
 cd $cache
 mkdir node
-wget -qO node.tar.xz https://nodejs.org/dist/v9.7.0/node-v9.7.0-linux-x64.tar.xz
+wget -qO node.tar.xz https://nodejs.org/dist/v9.8.0/node-v9.8.0-linux-x64.tar.xz
 tar Jxf node.tar.xz -C node --strip-components 1
 
 echo "-----> Setup environment"
@@ -26,17 +26,18 @@ repo=$proj/traQ
 mkdir -p $proj
 ln -sf $build $repo
 
-echo "-----> Setup project"
+echo "-----> Setup server project"
 cd $repo
-git clone https://github.com/traPtitech/traQ-UI client
 make init
 
-echo "-----> Build project"
-go build -v -o traq
+echo "-----> Build server"
+go build -o traq
 
-echo "-----> Setup UI"
+echo "-----> Setup client project"
+cd $repo
+git clone https://github.com/traPtitech/traQ-UI client
 cd $repo/client
 npm install
 
-echo "-----> Build UI"
+echo "-----> Build client"
 npm run build
