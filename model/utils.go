@@ -14,6 +14,8 @@ var (
 	// モデルを追加したら各自ここに追加しなければいけない
 	// **順番注意**
 	tables = []interface{}{
+		&Webhook{},
+		&Bot{},
 		&MessageStamp{},
 		&Stamp{},
 		&Clip{},
@@ -131,6 +133,21 @@ func SyncSchema() error {
 		return err
 	}
 	if _, err := db.Exec("ALTER TABLE `stamps` ADD FOREIGN KEY (`file_id`) REFERENCES `files`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `bots` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `bots` ADD FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `bots` ADD FOREIGN KEY (`updater_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `webhooks` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `webhooks` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
 		return err
 	}
 
