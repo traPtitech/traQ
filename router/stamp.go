@@ -121,9 +121,6 @@ func PatchStamp(c echo.Context) error {
 		stamp.Name = name
 	}
 	uploadedFile, err := c.FormFile("file")
-	if err != http.ErrMissingFile {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
 	if err == nil {
 		contentType := uploadedFile.Header.Get(echo.HeaderContentType)
 		switch contentType {
@@ -155,6 +152,8 @@ func PatchStamp(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 		stamp.FileID = file.ID
+	} else if err != http.ErrMissingFile {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	if err := stamp.Update(); err != nil {
