@@ -118,6 +118,7 @@ func PostChannelWebhooks(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
+	go notification.Send(events.UserJoined, events.UserEvent{ID: wb.ID})
 
 	return c.JSON(http.StatusCreated, formatWebhook(wb))
 }
@@ -216,12 +217,16 @@ func PatchWebhook(c echo.Context) error {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
+
+		go notification.Send(events.UserIconUpdated, events.UserEvent{ID: wb.ID})
 	}
 	if len(req.Name) > 0 {
 		if err := wb.UpdateDisplayName(req.Name); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
+
+		go notification.Send(events.UserUpdated, events.UserEvent{ID: wb.ID})
 	}
 	if len(req.Description) > 0 {
 		wb.Description = req.Description
@@ -434,6 +439,7 @@ func PostWebhookByGithub(c echo.Context) error {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
+		go notification.Send(events.MessageCreated, events.MessageEvent{Message: *message})
 	}
 
 	return c.NoContent(http.StatusNoContent)

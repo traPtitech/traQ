@@ -122,6 +122,7 @@ func main() {
 	// Tag: users
 	api.GET("/users", router.GetUsers)
 	api.GET("/users/me", router.GetMe)
+	api.PATCH("/users/me", router.PatchMe)
 	api.GET("/users/me/icon", router.GetMyIcon)
 	api.PUT("/users/me/icon", router.PutMyIcon)
 	api.GET("/users/:userID", router.GetUserByID)

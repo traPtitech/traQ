@@ -26,6 +26,8 @@ var (
 	ErrUserBotTryLogin = errors.New("bot user is not allowed to login")
 	// ErrUserWrongIDOrPassword : ユーザーエラー IDかパスワードが間違っています。
 	ErrUserWrongIDOrPassword = errors.New("password or id is wrong")
+	// ErrUserInvalidDisplayName : ユーザーエラー DisplayNameは0-32文字である必要があります。
+	ErrUserInvalidDisplayName = errors.New("displayName must be 0-32 characters")
 )
 
 // User userの構造体
@@ -169,6 +171,9 @@ func (user *User) UpdateIconID(ID string) error {
 
 // UpdateDisplayName ユーザーの表示名を変更する
 func (user *User) UpdateDisplayName(name string) error {
+	if len(name) > 32 {
+		return ErrUserInvalidDisplayName
+	}
 	user.DisplayName = name
 	_, err := db.MustCols().Update(user)
 	return err

@@ -461,6 +461,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+    patch:
+      tags:
+        - user
+      description: 自分のユーザー情報を変更します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName:
+                  type: string
+                  description: 新しい表示名(0-32文字)
+      responses:
+        "204":
+          description: 正常に変更できました。
+        "400":
+          description: 正常に変更できませんでした。リクエスト内容が不正です。
 
   /users/me/icon:
     get:

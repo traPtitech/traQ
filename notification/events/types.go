@@ -10,6 +10,8 @@ const (
 	UserJoined EventType = "USER_JOINED"
 	//UserLeft ユーザーが脱退した
 	UserLeft EventType = "USER_LEFT"
+	//UserUpdated ユーザーの情報が更新された
+	UserUpdated EventType = "USER_UPDATED"
 	//UserTagsUpdated ユーザーのタグが更新された
 	UserTagsUpdated EventType = "USER_TAGS_UPDATED"
 	//UserIconUpdated ユーザーのアイコンが更新された
