@@ -53,7 +53,10 @@ func (m *SwiftFileManager) OpenFileByID(ID string) (file io.ReadCloser, err erro
 
 // WriteByID srcの内容をIDで指定されたファイルに書き込みます
 func (m *SwiftFileManager) WriteByID(src io.Reader, ID, name, contentType string) (err error) {
-	_, err = m.connection.ObjectPut(m.container, ID, src, true, "", contentType, swift.Headers{echo.HeaderContentDisposition: fmt.Sprintf("attachment; filename=%s", name)})
+	_, err = m.connection.ObjectPut(m.container, ID, src, true, "", contentType, swift.Headers{
+		echo.HeaderContentDisposition: fmt.Sprintf("attachment; filename=%s", name),
+		"Cache-Control":               "private, max-age=31536000",
+	})
 	return
 }
 
