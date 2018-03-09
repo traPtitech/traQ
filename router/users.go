@@ -15,17 +15,21 @@ import (
 
 // UserForResponse クライアントに返す形のユーザー構造体
 type UserForResponse struct {
-	UserID string `json:"userId"`
-	Name   string `json:"name"`
-	IconID string `json:"iconFileId"`
+	UserID      string `json:"userId"`
+	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
+	IconID      string `json:"iconFileId"`
+	Bot         bool   `json:"bot"`
 }
 
 // UserDetailForResponse クライアントに返す形の詳細ユーザー構造体
 type UserDetailForResponse struct {
-	UserID  string            `json:"userId"`
-	Name    string            `json:"name"`
-	IconID  string            `json:"iconFileId"`
-	TagList []*TagForResponse `json:"tagList"`
+	UserID      string            `json:"userId"`
+	Name        string            `json:"name"`
+	DisplayName string            `json:"displayName"`
+	IconID      string            `json:"iconFileId"`
+	Bot         bool              `json:"bot"`
+	TagList     []*TagForResponse `json:"tagList"`
 }
 
 type loginRequestBody struct {
@@ -229,17 +233,21 @@ func PostUsers(c echo.Context) error {
 
 func formatUser(user *model.User) *UserForResponse {
 	return &UserForResponse{
-		UserID: user.ID,
-		Name:   user.Name,
-		IconID: user.Icon,
+		UserID:      user.ID,
+		Name:        user.Name,
+		DisplayName: user.DisplayName,
+		IconID:      user.Icon,
+		Bot:         user.Bot,
 	}
 }
 
 func formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailForResponse, error) {
 	userDetail := &UserDetailForResponse{
-		UserID: user.ID,
-		Name:   user.Name,
-		IconID: user.Icon,
+		UserID:      user.ID,
+		Name:        user.Name,
+		DisplayName: user.DisplayName,
+		IconID:      user.Icon,
+		Bot:         user.Bot,
 	}
 	for _, tag := range tagList {
 		formattedTag, err := formatTag(tag)

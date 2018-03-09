@@ -1691,9 +1691,13 @@ components:
           format: uuid
         name:
           type: string
+        displayName:
+          type: string
         iconFileId:
           type: string
           format: uuid
+        bot:
+          type: boolean
 
     UserDetail:
       type: object
@@ -1703,9 +1707,13 @@ components:
           format: uuid
         name:
           type: string
+        displayName:
+          type: string
         iconFileId:
           type: string
           format: uuid
+        bot:
+          type: boolean
         tagList:
           $ref: "#/components/schemas/TagList"
 
@@ -1897,7 +1905,7 @@ components:
         id:
           type: string
           format: uuid
-        name:
+        displayName:
           type: string
         description:
           type: string

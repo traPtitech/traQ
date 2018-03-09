@@ -98,6 +98,7 @@ func main() {
 
 	api := e.Group("/api/1.0")
 	api.Use(router.GetUserInfo)
+	apiNoAuth := e.Group("/api/1.0")
 
 	// Tag: channel
 	api.GET("/channels", router.GetChannels)
@@ -179,6 +180,15 @@ func main() {
 	api.GET("/messages/:messageID/stamps", router.GetMessageStamps)
 	api.POST("/messages/:messageID/stamps/:stampID", router.PostMessageStamp)
 	api.DELETE("/messages/:messageID/stamps/:stampID", router.DeleteMessageStamp)
+
+	// Tag: webhook
+	api.GET("/channels/:channelID/webhooks", router.GetChannelWebhooks)
+	api.POST("/channels/:channelID/webhooks", router.PostChannelWebhooks)
+	api.GET("/webhooks/:webhookID", router.GetWebhook)
+	api.PATCH("/webhooks/:webhookID", router.PatchWebhook)
+	api.DELETE("/webhooks/:webhookID", router.DeleteWebhook)
+	apiNoAuth.POST("/webhooks/:webhookID/:token", router.PostWebhook)
+	apiNoAuth.POST("/webhooks/:webhookID/:token/github", router.PostWebhookByGithub)
 
 	// Serve UI
 	e.Static("/static", "./client/dist/static")

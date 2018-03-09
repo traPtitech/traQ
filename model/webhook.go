@@ -66,14 +66,15 @@ func CreateWebhook(name, description, channelID, creatorID, iconFileID string) (
 
 	botUID := uuid.NewV4()
 	user := &User{
-		ID:       botUID.String(),
-		Name:     "Webhook#" + base64.RawStdEncoding.EncodeToString(botUID.Bytes()),
-		Email:    "",
-		Password: "",
-		Salt:     "",
-		Icon:     "",
-		Status:   1, //TODO
-		Bot:      true,
+		ID:          botUID.String(),
+		Name:        "Webhook#" + base64.RawStdEncoding.EncodeToString(botUID.Bytes()),
+		DisplayName: name,
+		Email:       "",
+		Password:    "",
+		Salt:        "",
+		Icon:        "",
+		Status:      1, //TODO
+		Bot:         true,
 	}
 
 	//iconがなければ生成
@@ -94,7 +95,6 @@ func CreateWebhook(name, description, channelID, creatorID, iconFileID string) (
 	bot := &Bot{
 		UserID:      user.ID,
 		Type:        BotTypeWebhook,
-		DisplayName: name,
 		Description: description,
 		IsValid:     true,
 		CreatorID:   creatorID,

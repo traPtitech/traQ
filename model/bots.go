@@ -24,7 +24,6 @@ var (
 type Bot struct {
 	UserID      string    `xorm:"char(36) not null pk"`
 	Type        int       `xorm:"int not null"`
-	DisplayName string    `xorm:"varchar(32) not null"`
 	Description string    `xorm:"text not null"`
 	IsValid     bool      `xorm:"bool not null"`
 	CreatorID   string    `xorm:"char(36) not null"`
@@ -40,10 +39,6 @@ func (*Bot) TableName() string {
 
 // Update : Botを更新します
 func (b *Bot) Update() (err error) {
-	if len(b.DisplayName) == 0 || len(b.DisplayName) > 32 {
-		return ErrBotInvalidName
-	}
-
 	_, err = db.ID(b.UserID).UseBool().Update(b)
 	return
 }

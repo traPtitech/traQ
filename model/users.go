@@ -30,16 +30,17 @@ var (
 
 // User userの構造体
 type User struct {
-	ID        string    `xorm:"char(36) pk"`
-	Name      string    `xorm:"varchar(32) unique not null"`
-	Email     string    `xorm:"text not null"`
-	Password  string    `xorm:"char(128) not null"`
-	Salt      string    `xorm:"char(128) not null"`
-	Icon      string    `xorm:"char(36) not null"`
-	Status    int       `xorm:"tinyint not null"`
-	Bot       bool      `xorm:"bool not null"`
-	CreatedAt time.Time `xorm:"created not null"`
-	UpdatedAt time.Time `xorm:"updated not null"`
+	ID          string    `xorm:"char(36) pk"`
+	Name        string    `xorm:"varchar(32) unique not null"`
+	DisplayName string    `xorm:"varchar(32) not null"`
+	Email       string    `xorm:"text not null"`
+	Password    string    `xorm:"char(128) not null"`
+	Salt        string    `xorm:"char(128) not null"`
+	Icon        string    `xorm:"char(36) not null"`
+	Status      int       `xorm:"tinyint not null"`
+	Bot         bool      `xorm:"bool not null"`
+	CreatedAt   time.Time `xorm:"created not null"`
+	UpdatedAt   time.Time `xorm:"updated not null"`
 }
 
 // TableName dbの名前を指定する
@@ -163,6 +164,13 @@ func (user *User) UpdateIconID(ID string) error {
 	}
 	user.Icon = ID
 	_, err := db.ID(user.ID).UseBool().Update(user)
+	return err
+}
+
+// UpdateDisplayName ユーザーの表示名を変更する
+func (user *User) UpdateDisplayName(name string) error {
+	user.DisplayName = name
+	_, err := db.MustCols().Update(user)
 	return err
 }
 
