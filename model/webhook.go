@@ -8,8 +8,8 @@ import (
 
 // Webhook : Webhook構造体
 type Webhook struct {
-	UserID    string `xorm:"char(36) not null pk"` //webhookIDと同義
-	Token     string `xorm:"varchar(32) not null"`
+	ID        string `xorm:"char(36) not null pk"`
+	UserID    string `xorm:"char(36) not null"`
 	ChannelID string `xorm:"char(36) not null"`
 }
 
@@ -30,6 +30,13 @@ func (*WebhookBotUser) TableName() string {
 	return "users"
 }
 
+// UpdateChannelID : デフォルトの投稿先チャンネルを変更します。
+func (w *Webhook) UpdateChannelID(channelID string) error {
+	w.ChannelID = channelID
+	_, err := db.ID(w.ID).Update(w)
+	return err
+}
+
 func getWebhookJoinedDB() *xorm.Session {
 	return db.Join("INNER", "bots", "bots.user_id = users.id").Join("INNER", "webhooks", "webhooks.user_id = users.id")
 }
@@ -38,7 +45,7 @@ func getWebhookJoinedDB() *xorm.Session {
 func GetWebhook(webhookID string) (*WebhookBotUser, error) {
 	webhook := &WebhookBotUser{}
 
-	has, err := getWebhookJoinedDB().Where("users.id = ?", webhookID).Get(webhook)
+	has, err := getWebhookJoinedDB().Where("webhooks.id = ?", webhookID).Get(webhook)
 	if err != nil {
 		return nil, err
 	}
@@ -49,9 +56,15 @@ func GetWebhook(webhookID string) (*WebhookBotUser, error) {
 	return webhook, nil
 }
 
-// GetWebhooksByChannelID : 指定したchannelにあるWebhookを全て取得します
-func GetWebhooksByChannelID(channelID string) (webhooks []*WebhookBotUser, err error) {
-	err = getWebhookJoinedDB().Where("webhooks.channel_id = ?", channelID).Find(&webhooks)
+// GetWebhooksByCreator : 指定したユーザーが作成したWebhookの一覧を取得します。
+func GetWebhooksByCreator(userID string) (webhooks []*WebhookBotUser, err error) {
+	err = getWebhookJoinedDB().Where("bots.creator_id = ?", userID).Find(&webhooks)
+	return
+}
+
+// GetAllWebhooks : 全てのWebhookの一覧を取得します。
+func GetAllWebhooks() (webhooks []*WebhookBotUser, err error) {
+	err = getWebhookJoinedDB().Find(&webhooks)
 	return
 }
 
@@ -101,9 +114,9 @@ func CreateWebhook(name, description, channelID, creatorID, iconFileID string) (
 		UpdaterID:   creatorID,
 	}
 	webhook := &Webhook{
+		ID:        CreateUUID(),
 		UserID:    user.ID,
 		ChannelID: channelID,
-		Token:     base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes()),
 	}
 
 	if _, err := db.Insert(bot, webhook); err != nil {

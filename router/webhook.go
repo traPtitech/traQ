@@ -3,6 +3,7 @@ package router
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/notification"
@@ -14,12 +15,12 @@ import (
 )
 
 type webhookForResponse struct {
-	ID          string    `json:"id"`
+	WebhookID   string    `json:"webhookID"`
+	BotUserID   string    `json:"botUserId"`
 	DisplayName string    `json:"displayName"`
 	Description string    `json:"description"`
 	IconFileID  string    `json:"iconFileId"`
 	ChannelID   string    `json:"channelId"`
-	Token       string    `json:"token"`
 	Valid       bool      `json:"valid"`
 	CreatorID   string    `json:"creatorId"`
 	CreatedAt   time.Time `json:"createdAt"`
@@ -27,17 +28,11 @@ type webhookForResponse struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
-// GetChannelWebhooks : GET /channels/:channelID/webhooks
-func GetChannelWebhooks(c echo.Context) error {
-	//TODO ユーザー権限によって403にする
+// GetWebhooks : GET /webhooks
+func GetWebhooks(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("channelID")
 
-	if _, err := validateChannelID(channelID, userID); err != nil {
-		return err
-	}
-
-	list, err := model.GetWebhooksByChannelID(channelID)
+	list, err := model.GetWebhooksByCreator(userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -51,22 +46,22 @@ func GetChannelWebhooks(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// PostChannelWebhooks : POST /channels/:channelID/webhooks
-func PostChannelWebhooks(c echo.Context) error {
+// PostWebhooks : POST /webhooks
+func PostWebhooks(c echo.Context) error {
 	//TODO ユーザー権限によって403にする
 	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("channelID")
-
-	if _, err := validateChannelID(channelID, userID); err != nil {
-		return err
-	}
 
 	req := struct {
-		Name        string `json:"name" form:"name"`
+		Name        string `json:"name"        form:"name"`
 		Description string `json:"description" form:"description"`
+		ChannelID   string `json:"channelId"   form:"channelId"`
 	}{}
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if _, err := validateChannelID(req.ChannelID, userID); err != nil {
+		return err
 	}
 
 	fileID := ""
@@ -108,7 +103,7 @@ func PostChannelWebhooks(c echo.Context) error {
 		}
 	}
 
-	wb, err := model.CreateWebhook(req.Name, req.Description, channelID, userID, fileID)
+	wb, err := model.CreateWebhook(req.Name, req.Description, req.ChannelID, userID, fileID)
 	if err != nil {
 		switch err {
 		case model.ErrBotInvalidName:
@@ -118,33 +113,13 @@ func PostChannelWebhooks(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-	go notification.Send(events.UserJoined, events.UserEvent{ID: wb.ID})
+	go notification.Send(events.UserJoined, events.UserEvent{ID: wb.User.ID})
 
 	return c.JSON(http.StatusCreated, formatWebhook(wb))
 }
 
 // GetWebhook : GET /webhooks/:webhookID
 func GetWebhook(c echo.Context) error {
-	//TODO ユーザー権限によって403にする
-	webhookID := c.Param("webhookID")
-
-	wb, err := model.GetWebhook(webhookID)
-	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
-	return c.JSON(http.StatusOK, formatWebhook(wb))
-}
-
-// PatchWebhook : PATCH /webhooks/:webhookID
-func PatchWebhook(c echo.Context) error {
-	//TODO ユーザー権限によって403にする
 	webhookID := c.Param("webhookID")
 	userID := c.Get("user").(*model.User).ID
 
@@ -158,19 +133,67 @@ func PatchWebhook(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
+	if wb.CreatorID != userID {
+		return echo.NewHTTPError(http.StatusForbidden)
+	}
+
+	return c.JSON(http.StatusOK, formatWebhook(wb))
+}
+
+// PatchWebhook : PATCH /webhooks/:webhookID
+func PatchWebhook(c echo.Context) error {
+	webhookID := c.Param("webhookID")
+	userID := c.Get("user").(*model.User).ID
+
+	wb, err := model.GetWebhook(webhookID)
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	if wb.CreatorID != userID {
+		return echo.NewHTTPError(http.StatusForbidden)
+	}
 	if !wb.IsValid {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
 	req := struct {
-		Name        string `json:"name" form:"name"`
+		Name        string `json:"name"        form:"name"`
 		Description string `json:"description" form:"description"`
+		ChannelID   string `json:"channelId"   form:"channelId"`
 	}{}
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 	if len(req.Name) > 32 {
 		return echo.NewHTTPError(http.StatusBadRequest, model.ErrBotInvalidName)
+	}
+
+	if len(req.ChannelID) > 0 {
+		ch := &model.Channel{ID: req.ChannelID}
+		ok, err := ch.Exists(userID)
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		if !ok {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid channelId")
+		}
+
+		if err := wb.UpdateChannelID(ch.ID); err != nil {
+			if errSQL, ok := err.(*mysql.MySQLError); ok {
+				if errSQL.Number == 1452 { //外部キー制約
+					return echo.NewHTTPError(http.StatusBadRequest, "invalid channelId")
+				}
+			}
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
 	fileID := ""
@@ -218,7 +241,7 @@ func PatchWebhook(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
-		go notification.Send(events.UserIconUpdated, events.UserEvent{ID: wb.ID})
+		go notification.Send(events.UserIconUpdated, events.UserEvent{ID: wb.User.ID})
 	}
 	if len(req.Name) > 0 {
 		if err := wb.UpdateDisplayName(req.Name); err != nil {
@@ -226,7 +249,7 @@ func PatchWebhook(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
-		go notification.Send(events.UserUpdated, events.UserEvent{ID: wb.ID})
+		go notification.Send(events.UserUpdated, events.UserEvent{ID: wb.User.ID})
 	}
 	if len(req.Description) > 0 {
 		wb.Description = req.Description
@@ -247,8 +270,8 @@ func PatchWebhook(c echo.Context) error {
 
 // DeleteWebhook : DELETE /webhooks/:webhookID
 func DeleteWebhook(c echo.Context) error {
-	//TODO ユーザー権限によって403にする
 	webhookID := c.Param("webhookID")
+	userID := c.Get("user").(*model.User).ID
 
 	wb, err := model.GetWebhook(webhookID)
 	if err != nil {
@@ -259,6 +282,9 @@ func DeleteWebhook(c echo.Context) error {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
+	}
+	if wb.CreatorID != userID {
+		return echo.NewHTTPError(http.StatusForbidden)
 	}
 	if !wb.IsValid {
 		return echo.NewHTTPError(http.StatusForbidden)
@@ -272,10 +298,9 @@ func DeleteWebhook(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// PostWebhook : POST /webhooks/:webhookID/:token
+// PostWebhook : POST /webhooks/:webhookID
 func PostWebhook(c echo.Context) error {
 	webhookID := c.Param("webhookID")
-	token := c.Param("token")
 
 	wb, err := model.GetWebhook(webhookID)
 	if err != nil {
@@ -290,12 +315,9 @@ func PostWebhook(c echo.Context) error {
 	if !wb.IsValid {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
-	if wb.Token != token {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
 
 	message := &model.Message{
-		UserID:    wb.ID,
+		UserID:    wb.User.ID,
 		ChannelID: wb.ChannelID,
 	}
 	switch c.Request().Header.Get(echo.HeaderContentType) {
@@ -309,13 +331,17 @@ func PostWebhook(c echo.Context) error {
 
 	case echo.MIMEApplicationJSON, echo.MIMEApplicationForm, echo.MIMEApplicationJSONCharsetUTF8:
 		req := struct {
-			Text string `json:"text" form:"text"`
+			Text      string `json:"text"      form:"text"`
+			ChannelID string `json:"channelId" form:"channelId"`
 		}{}
 		if err := c.Bind(&req); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 		if len(req.Text) == 0 {
 			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		if len(req.ChannelID) == 36 {
+			message.ChannelID = req.ChannelID
 		}
 		message.Text = req.Text
 
@@ -324,6 +350,12 @@ func PostWebhook(c echo.Context) error {
 	}
 
 	if err := message.Create(); err != nil {
+		if errSQL, ok := err.(*mysql.MySQLError); ok {
+			if errSQL.Number == 1452 { //外部キー制約
+				return echo.NewHTTPError(http.StatusBadRequest, "invalid channelId")
+			}
+		}
+
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -332,10 +364,9 @@ func PostWebhook(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// PostWebhookByGithub : POST /webhooks/:webhookID/:token/github
+// PostWebhookByGithub : POST /webhooks/:webhookID/github
 func PostWebhookByGithub(c echo.Context) error {
 	webhookID := c.Param("webhookID")
-	token := c.Param("token")
 
 	wb, err := model.GetWebhook(webhookID)
 	if err != nil {
@@ -348,9 +379,6 @@ func PostWebhookByGithub(c echo.Context) error {
 		}
 	}
 	if !wb.IsValid {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
-	if wb.Token != token {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
@@ -370,7 +398,7 @@ func PostWebhookByGithub(c echo.Context) error {
 
 	//MEMO 現在はサーバー側で簡単に整形してるけど、将来的にクライアント側に表示デザイン込みで任せたいよね
 	message := &model.Message{
-		UserID:    wb.ID,
+		UserID:    wb.User.ID,
 		ChannelID: wb.ChannelID,
 	}
 
@@ -447,12 +475,12 @@ func PostWebhookByGithub(c echo.Context) error {
 
 func formatWebhook(w *model.WebhookBotUser) *webhookForResponse {
 	return &webhookForResponse{
-		ID:          w.ID,
+		WebhookID:   w.Webhook.ID,
+		BotUserID:   w.User.ID,
 		DisplayName: w.DisplayName,
 		Description: w.Description,
 		IconFileID:  w.Icon,
 		ChannelID:   w.ChannelID,
-		Token:       w.Token,
 		Valid:       w.IsValid,
 		CreatorID:   w.Bot.CreatorID,
 		CreatedAt:   w.Bot.CreatedAt,

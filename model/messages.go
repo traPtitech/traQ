@@ -42,7 +42,7 @@ func (m *Message) Create() error {
 	m.UpdaterID = m.UserID
 
 	if _, err := db.Insert(m); err != nil {
-		return fmt.Errorf("failed to create message object: %v", err)
+		return err
 	}
 	return nil
 }

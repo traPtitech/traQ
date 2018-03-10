@@ -44,10 +44,9 @@ user_idとauthority_typeの複合ユニーク制約
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
-| user_id | CHAR(36) | PRIMARY KEY (外部キー) | botユーザーID |
-| token | VARCHAR(32) | NOT NULL | トークン |
-| channel_id | CHAR(36) | NOT NULL (外部キー) | 投稿先のチャンネルID |
- 
+| id | CHAR(36) | NOT NULL PRIMARY KEY | webhookID |
+| user_id | CHAR(36) | NOT NULL (外部キー) | botユーザーID |
+| channel_id | CHAR(36) | NOT NULL (外部キー) | 投稿先のデフォルトチャンネルID |
 
 ## users_tags
 

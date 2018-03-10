@@ -1366,13 +1366,11 @@ paths:
         "201":
           description: 正常に登録できました。
 
-  /channels/{channelID}/webhooks:
-    parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+  /webhooks:
     get:
       tags:
         - webhook
-      description: 指定されたチャンネルのwebhookの一覧を取得します。
+      description: 自分が作成したwebhookの一覧を取得します。
       responses:
         "200":
           description: 正常に取得できました。
@@ -1382,18 +1380,17 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Webhook"
-        "403":
-          description: 取得できませんでした。権限がありません。
     post:
       tags:
         - webhook
-      description: 指定されたチャンネルのwebhookを作成します。
+      description: webhookを作成します。
       requestBody:
         content:
           multipart/form-data:
             schema:
               required:
                 - name
+                - channelId
               properties:
                 name:
                   type: string
@@ -1401,6 +1398,10 @@ paths:
                 description:
                   type: string
                   description: webhookの説明
+                channelId:
+                  type: string
+                  format: uuid
+                  description: デフォルトの投稿先チャンネル
                 file:
                   type: string
                   format: binary
@@ -1413,6 +1414,7 @@ paths:
               type: object
               required:
                 - name
+                - channelId
               properties:
                 name:
                   type: string
@@ -1420,6 +1422,10 @@ paths:
                 description:
                   type: string
                   description: webhookの説明
+                channelId:
+                  type: string
+                  format: uuid
+                  description: デフォルトの投稿先チャンネル
       responses:
         "201":
           description: 正常に作成できました。
@@ -1467,6 +1473,10 @@ paths:
                 description:
                   type: string
                   description: webhookの説明
+                channelId:
+                  type: string
+                  format: uuid
+                  description: デフォルトの投稿先チャンネル
                 file:
                   type: string
                   format: binary
@@ -1486,6 +1496,10 @@ paths:
                 description:
                   type: string
                   description: webhookの説明
+                channelId:
+                  type: string
+                  format: uuid
+                  description: デフォルトの投稿先チャンネル
       responses:
         "204":
           description: 正常に修正できました。
@@ -1506,11 +1520,6 @@ paths:
           description: 削除できませんでした。権限がありません。
         "404":
           description: 削除できませんでした。指定したwebhookは存在しません。
-
-  /webhooks/{webhookID}/{token}:
-    parameters:
-      - $ref: "#/components/parameters/webhookIdInPath"
-      - $ref: "#/components/parameters/webhookTokenInPath"
     post:
       tags:
         - webhook
@@ -1530,6 +1539,10 @@ paths:
                 text:
                   type: string
                   description: メッセージ文字列
+                channelId:
+                  type: string
+                  format: uuid
+                  description: 投稿先チャンネルID(無い場合は事前登録のデフォルト値が使われます)
           application/x-www-form-urlencoded:
             schema:
               type: object
@@ -1539,20 +1552,21 @@ paths:
                 text:
                   type: string
                   description: メッセージ文字列
+                channelId:
+                  type: string
+                  format: uuid
+                  description: 投稿先チャンネルID(無い場合は事前登録のデフォルト値が使われます)
       responses:
         "204":
           description: 正常に送信できました。
         "400":
           description: 正常に送信できませんでした。リクエスト内容が不正です。
-        "403":
-          description: 正常に送信できませんでした。トークンが不正です。
         "404":
           description: 正常に送信できませんでした。指定されたwebhookは存在しません。
 
-  /webhooks/{webhookID}/{token}/github:
+  /webhooks/{webhookID}/github:
     parameters:
       - $ref: "#/components/parameters/webhookIdInPath"
-      - $ref: "#/components/parameters/webhookTokenInPath"
     post:
       tags:
         - webhook
@@ -1567,8 +1581,6 @@ paths:
           description: 正常に送信できました。
         "400":
           description: 正常に送信できませんでした。リクエスト内容が不正です。
-        "403":
-          description: 正常に送信できませんでした。トークンが不正です。
         "404":
           description: 正常に送信できませんでした。指定されたwebhookは存在しません。
 
@@ -1636,13 +1648,6 @@ components:
       schema:
         type: string
         format: uuid
-    webhookTokenInPath:
-      name: token
-      description: webhookのトークン
-      in: path
-      required: true
-      schema:
-        type: string
   schemas:
     Channel:
       type: object
@@ -1920,7 +1925,10 @@ components:
     Webhook:
       type: object
       properties:
-        id:
+        webhookId:
+          type: string
+          format: uuid
+        botUserId:
           type: string
           format: uuid
         displayName:
@@ -1933,8 +1941,6 @@ components:
         channelId:
           type: string
           format: uuid
-        token:
-          type: string
         creatorId:
           type: string
           format: uuid
