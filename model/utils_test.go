@@ -3,10 +3,11 @@ package model
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -90,6 +91,14 @@ func mustMakeChannelDetail(t *testing.T, creatorID, name, parentID string, isPub
 	channel.IsPublic = isPublic
 	require.NoError(t, channel.Create())
 	return channel
+}
+
+func mustMakeInvisibleChannel(t *testing.T, channelID, userID string) *UserInvisibleChannel {
+	i := &UserInvisibleChannel{}
+	i.UserID = userID
+	i.ChannelID = channelID
+	require.NoError(t, i.Create())
+	return i
 }
 
 func mustMakeMessage(t *testing.T, userID, channelID string) *Message {

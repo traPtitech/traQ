@@ -180,6 +180,10 @@ func main() {
 	api.POST("/messages/:messageID/stamps/:stampID", router.PostMessageStamp)
 	api.DELETE("/messages/:messageID/stamps/:stampID", router.DeleteMessageStamp)
 
+	//Tag: visibility
+	api.GET("users/me/channels/visibility", router.GetChannelsVisibility)
+	api.PUT("users/me/channels/visibility", router.PutChannelsVisibility)
+
 	// Serve UI
 	e.Static("/static", "./client/dist/static")
 	e.File("*", "./client/dist/index.html")

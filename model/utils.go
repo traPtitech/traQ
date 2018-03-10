@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"errors"
+
 	"github.com/go-xorm/xorm"
 	"github.com/satori/go.uuid"
 )
@@ -14,6 +15,7 @@ var (
 	// モデルを追加したら各自ここに追加しなければいけない
 	// **順番注意**
 	tables = []interface{}{
+		&UserInvisibleChannel{},
 		&MessageStamp{},
 		&Stamp{},
 		&Clip{},
@@ -131,6 +133,12 @@ func SyncSchema() error {
 		return err
 	}
 	if _, err := db.Exec("ALTER TABLE `stamps` ADD FOREIGN KEY (`file_id`) REFERENCES `files`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `users_invisible_channels` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `users_invisible_channels` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
 		return err
 	}
 
