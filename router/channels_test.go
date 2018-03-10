@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/traPtitech/traQ/model"
@@ -145,8 +144,7 @@ func TestDeleteChannelsByChannelID(t *testing.T) {
 
 	ch := mustMakeChannel(t, testUser.ID, "test", true)
 
-	req := httptest.NewRequest("DELETE", "http://test", strings.NewReader(`{"confirm": true}`))
-	c, _ := getContext(e, t, cookie, req)
+	c, _ := getContext(e, t, cookie, nil)
 	c.SetPath("/:channelID")
 	c.SetParamNames("channelID")
 	c.SetParamValues(ch.ID)

@@ -190,18 +190,6 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 	// CHECK: 権限周り
 	userID := c.Get("user").(*model.User).ID
 
-	type confirm struct {
-		Confirm bool `json:"confirm"`
-	}
-	var req confirm
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
-	}
-
-	if !req.Confirm {
-		return echo.NewHTTPError(http.StatusBadRequest, "confirm is not true.")
-	}
-
 	deleteQue := make([]string, 1)
 	deleteQue[0] = c.Param("channelID")
 	for len(deleteQue) > 0 {
