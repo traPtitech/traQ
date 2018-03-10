@@ -60,9 +60,9 @@ func (i *UserInvisibleChannel) Delete() error {
 func GetInvisibleChannelsByID(userID string) ([]string, error) {
 	var channelIDs []string
 	// FIXME: ここのクエリが不完全
-	err := db.Table("channels").Join("LEFT", []string{"users_private_channels", "p"}, "p.channel_id = channels.id").
-		Join("LEFT", []string{"users_invisible_channels", "i"}, "i.channel_id = channels.id").
-		Where("is_deleted = true OR i.user_id = ? OR is_public = false", userID). // 自分のprivatechannelも取得してしまう
+	err := db.Table("channels").Join("LEFT", []string{"users_private_channels", "p"}, "p.user_id = ? AND p.channel_id = channels.id", userID).
+		Join("LEFT", []string{"users_invisible_channels", "i"}, "i.user_id = ? AND i.channel_id = channels.id", userID).
+		Where("i.channel_id IS NOT NULL OR is_visible = false OR (p.channel_id IS NULL AND is_public = false) OR is_deleted = true").
 		Cols("id").Find(&channelIDs)
 	if err != nil {
 		return nil, err
@@ -73,9 +73,9 @@ func GetInvisibleChannelsByID(userID string) ([]string, error) {
 // GetVisibleChannelsByID 指定されたユーザーから見えるチャンネルのリストを取得する
 func GetVisibleChannelsByID(userID string) ([]string, error) {
 	var channelIDs []string
-	err := db.Table("channels").Join("LEFT", []string{"users_private_channels", "p"}, "p.channel_id = channels.id").
-		Join("LEFT", []string{"users_invisible_channels", "i"}, "i.channel_id = channels.id").
-		Where("(is_public = true OR p.user_id = ?) AND is_deleted = false AND i.user_id IS NULL", userID).
+	err := db.Table("channels").Join("LEFT", []string{"users_private_channels", "p"}, "p.user_id = ? AND p.channel_id = channels.id", userID).
+		Join("LEFT", []string{"users_invisible_channels", "i"}, "i.user_id = ? AND i.channel_id = channels.id", userID).
+		Where("(is_public = true OR p.channel_id IS NOT NULL) AND NOT (is_deleted = true OR is_visible = false OR i.channel_id IS NOT NULL)").
 		Cols("id").Find(&channelIDs)
 	if err != nil {
 		return nil, err

@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -69,11 +71,24 @@ func TestGetInvisibleChannelsByID(t *testing.T) {
 		mustMakeInvisibleChannel(t, c.ID, user.ID)
 	}
 
-	// TODO: privateチャンネルに関するテストを追加する
+	c := mustMakeChannelDetail(t, user.ID, "visible-private", "", false)
+	p := &UsersPrivateChannel{
+		UserID:    user.ID,
+		ChannelID: c.ID,
+	}
+	require.NoError(t, p.Create())
+
+	u := mustMakeUser(t, "invisible")
+	c = mustMakeChannelDetail(t, u.ID, "invisible-private", "", false)
+	p = &UsersPrivateChannel{
+		UserID:    u.ID,
+		ChannelID: c.ID,
+	}
+	require.NoError(t, p.Create())
 
 	list, err := GetInvisibleChannelsByID(user.ID)
 	if assert.NoError(err) {
-		assert.Equal(5, len(list))
+		assert.Equal(6, len(list))
 	}
 }
 
@@ -84,9 +99,24 @@ func TestGetVisibleChannelsByID(t *testing.T) {
 		mustMakeChannel(t, user.ID, "-"+strconv.Itoa(i))
 	}
 
+	c := mustMakeChannelDetail(t, user.ID, "visible-private", "", false)
+	p := &UsersPrivateChannel{
+		UserID:    user.ID,
+		ChannelID: c.ID,
+	}
+	require.NoError(t, p.Create())
+
+	u := mustMakeUser(t, "invisible")
+	c = mustMakeChannelDetail(t, u.ID, "invisible-private", "", false)
+	p = &UsersPrivateChannel{
+		UserID:    u.ID,
+		ChannelID: c.ID,
+	}
+	require.NoError(t, p.Create())
+
 	list, err := GetVisibleChannelsByID(user.ID)
 	if assert.NoError(err) {
-		assert.Equal(6, len(list))
+		assert.Equal(7, len(list))
 	}
 
 }
