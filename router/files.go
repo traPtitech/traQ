@@ -73,6 +73,8 @@ func GetFileByID(c echo.Context) error {
 		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", meta.Name))
 	}
 
+	c.Response().Header().Set("Cache-Control", "private, max-age=31536000") //1年間キャッシュ
+
 	return c.Stream(http.StatusOK, meta.Mime, file)
 }
 
