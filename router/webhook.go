@@ -317,7 +317,7 @@ func PostWebhook(c echo.Context) error {
 	}
 
 	message := &model.Message{
-		UserID:    wb.User.ID,
+		UserID:    wb.Webhook.UserID,
 		ChannelID: wb.ChannelID,
 	}
 	switch c.Request().Header.Get(echo.HeaderContentType) {
@@ -398,7 +398,7 @@ func PostWebhookByGithub(c echo.Context) error {
 
 	//MEMO 現在はサーバー側で簡単に整形してるけど、将来的にクライアント側に表示デザイン込みで任せたいよね
 	message := &model.Message{
-		UserID:    wb.User.ID,
+		UserID:    wb.Webhook.UserID,
 		ChannelID: wb.ChannelID,
 	}
 
