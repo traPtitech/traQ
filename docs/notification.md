@@ -22,6 +22,14 @@ TODO
 
 TODO
 
+## USER_UPDATED
+ユーザーの情報が更新された。
+
+### SSE
+対象: 全員
+
++ `id`: 情報が更新されたユーザーのId
+
 ## USER_TAGS_UPDATED
 ユーザーのタグが更新された。
 

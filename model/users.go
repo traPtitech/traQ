@@ -21,19 +21,28 @@ import (
 var (
 	userNameRegex = regexp.MustCompile("^[a-zA-Z0-9_-]{1,32}$")
 	emailRegex    = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+
+	// ErrUserBotTryLogin : ユーザーエラー botユーザーでログインを試みました。botユーザーはログインできません。
+	ErrUserBotTryLogin = errors.New("bot user is not allowed to login")
+	// ErrUserWrongIDOrPassword : ユーザーエラー IDかパスワードが間違っています。
+	ErrUserWrongIDOrPassword = errors.New("password or id is wrong")
+	// ErrUserInvalidDisplayName : ユーザーエラー DisplayNameは0-32文字である必要があります。
+	ErrUserInvalidDisplayName = errors.New("displayName must be 0-32 characters")
 )
 
 // User userの構造体
 type User struct {
-	ID        string    `xorm:"char(36) pk"`
-	Name      string    `xorm:"varchar(32) unique not null"`
-	Email     string    `xorm:"text not null"`
-	Password  string    `xorm:"char(128) not null"`
-	Salt      string    `xorm:"char(128) not null"`
-	Icon      string    `xorm:"char(36) not null"`
-	Status    int       `xorm:"tinyint not null"`
-	CreatedAt time.Time `xorm:"created not null"`
-	UpdatedAt time.Time `xorm:"updated not null"`
+	ID          string    `xorm:"char(36) pk"`
+	Name        string    `xorm:"varchar(32) unique not null"`
+	DisplayName string    `xorm:"varchar(32) not null"`
+	Email       string    `xorm:"text not null"`
+	Password    string    `xorm:"char(128) not null"`
+	Salt        string    `xorm:"char(128) not null"`
+	Icon        string    `xorm:"char(36) not null"`
+	Status      int       `xorm:"tinyint not null"`
+	Bot         bool      `xorm:"bool not null"`
+	CreatedAt   time.Time `xorm:"created not null"`
+	UpdatedAt   time.Time `xorm:"updated not null"`
 }
 
 // TableName dbの名前を指定する
@@ -81,10 +90,10 @@ func GetUser(userID string) (*User, error) {
 	has, err := db.ID(userID).Get(user)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to find user: %v", err)
+		return nil, err
 	}
 	if !has {
-		return nil, fmt.Errorf("This userID doesn't exist: userID = %v", userID)
+		return nil, ErrNotFound
 	}
 
 	return user, nil
@@ -128,7 +137,7 @@ func (user *User) Authorization(pass string) error {
 
 	has, err := db.Get(user)
 	if err != nil {
-		return fmt.Errorf("Failed to find message: %v", err)
+		return err
 	}
 	if !has {
 		user.Salt, err = generateSalt()
@@ -137,21 +146,36 @@ func (user *User) Authorization(pass string) error {
 		}
 	}
 
+	// Botはログイン不可
+	if user.Bot {
+		return ErrUserBotTryLogin
+	}
+
 	hashedPassword := hashPassword(pass, user.Salt)
 
 	if subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(user.Password)) != 1 {
-		return fmt.Errorf("password or id is wrong")
+		return ErrUserWrongIDOrPassword
 	}
 	return nil
 }
 
 // UpdateIconID ユーザーのアイコンを更新する
 func (user *User) UpdateIconID(ID string) error {
-	if len(user.ID) == 0 {
+	if len(user.ID) != 36 {
 		return errors.New("invalid user")
 	}
 	user.Icon = ID
 	_, err := db.ID(user.ID).UseBool().Update(user)
+	return err
+}
+
+// UpdateDisplayName ユーザーの表示名を変更する
+func (user *User) UpdateDisplayName(name string) error {
+	if len(name) > 32 {
+		return ErrUserInvalidDisplayName
+	}
+	user.DisplayName = name
+	_, err := db.MustCols().Update(user)
 	return err
 }
 
