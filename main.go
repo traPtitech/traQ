@@ -165,6 +165,7 @@ func main() {
 	api.GET("/files/:fileID", router.GetFileByID)
 	api.DELETE("/files/:fileID", router.DeleteFileByID)
 	api.GET("/files/:fileID/meta", router.GetMetaDataByFileID)
+	api.GET("/files/:fileID/thumbnail", router.GetThumbnailByID)
 
 	// Tag: pin
 	api.GET("/channels/:channelID/pin", router.GetChannelPin)
