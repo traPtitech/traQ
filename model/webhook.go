@@ -16,8 +16,8 @@ type Webhook struct {
 // WebhookBotUser : WebhookBotUser構造体 内部にBot, Webhook, Userを内包
 type WebhookBotUser struct {
 	*Bot     `xorm:"extends"`
-	*Webhook `xorm:"extends"`
 	*User    `xorm:"extends"`
+	*Webhook `xorm:"extends"`
 }
 
 // TableName : Webhookのテーブル名
