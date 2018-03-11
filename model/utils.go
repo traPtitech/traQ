@@ -202,5 +202,14 @@ func InitCache() error {
 		channelPathMap.Store(uuid.FromStringOrNil(v.ID), path)
 	}
 
+	// サムネイル未作成なファイルのサムネイル作成を試みる
+	var files []*File
+	if err := db.Where("is_deleted = false AND has_thumbnail = false").Find(&files); err != nil {
+		return err
+	}
+	for _, f := range files {
+		f.RegenerateThumbnail()
+	}
+
 	return nil
 }

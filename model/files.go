@@ -196,6 +196,24 @@ func (f *File) GetRedirectURL() string {
 	return m.GetRedirectURL(f.ID)
 }
 
+// RegenerateThumbnail サムネイル画像を再生成します
+func (f *File) RegenerateThumbnail() error {
+	reader, ok := fileManagers[f.Manager]
+	if !ok {
+		return ErrFileUnknownManager
+	}
+
+	//既存のものを削除
+	reader.DeleteByID(f.ID + "-thumb")
+
+	src, err := reader.OpenFileByID(f.ID)
+	if err != nil {
+		return err
+	}
+
+	return GenerateThumbnail(context.Background(), f, src)
+}
+
 // GenerateThumbnail サムネイル画像を生成します
 func GenerateThumbnail(ctx context.Context, f *File, src io.Reader) error {
 	var (
