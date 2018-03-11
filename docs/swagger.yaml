@@ -1130,10 +1130,12 @@ paths:
             正常に取得できました。
             サムネイルを返します。
           content:
-            image/png:
+            image/jpeg:
               schema:
                 type: string
                 format: binary
+        "404":
+          description: 取得できませんでした。サムネイルは存在しません。
 
   /messages/{messageID}:
     parameters:
@@ -1837,6 +1839,12 @@ components:
         dateTime:
           type: string
           format: date-time
+        hasThumb:
+          type: boolean
+        thumbWidth:
+          type: integer
+        thumbHeight:
+          type: integer
 
     UnreadList:
       type: array

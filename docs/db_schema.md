@@ -158,6 +158,9 @@ user_idとmessage_idの複合主キー
 | is_deleted | BOOLEAN | NOT NULL | 削除されているか |
 | hash | CHAR(32) | NOT NULL | ハッシュ値 |
 | manager | VARCHAR(30) | NOT NULL DEFAULT '' | マネージャー名(空文字はデフォルトマネージャー) |
+| has_thumbnail | BOOLEAN | NOT NULL | サムネイルがあるか |
+| thumbnail_width | INT | NOT NULL | サムネイルの幅 |
+| thumbnail_height | INT | NOT NULL | サムネイルの高さ |
 | created_at | TIMESTAMP | NOT NULL | 投稿日時 |
 
 ## stars
