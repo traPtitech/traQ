@@ -175,7 +175,7 @@ func (user *User) UpdateDisplayName(name string) error {
 		return ErrUserInvalidDisplayName
 	}
 	user.DisplayName = name
-	_, err := db.MustCols().Update(user)
+	_, err := db.ID(user.ID).MustCols().Update(user)
 	return err
 }
 
