@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMessage_TableName(t *testing.T) {
@@ -52,6 +53,31 @@ func TestMessage_Update(t *testing.T) {
 	m.IsShared = true
 
 	assert.NoError(m.Update())
+}
+
+func TestMessage_IsPined(t *testing.T) {
+	assert, _, user, channel := beforeTest(t)
+
+	m := mustMakeMessage(t, user.ID, channel.ID)
+
+	ok, err := m.IsPined()
+
+	if assert.NoError(err) {
+		assert.False(ok)
+	}
+
+	p := &Pin{
+		UserID:    user.ID,
+		MessageID: m.ID,
+		ChannelID: channel.ID,
+	}
+	require.NoError(t, p.Create())
+
+	ok, err = m.IsPined()
+
+	if assert.NoError(err) {
+		assert.True(ok)
+	}
 }
 
 func TestGetMessagesFromChannel(t *testing.T) {

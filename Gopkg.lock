@@ -159,6 +159,32 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/image"
+  packages = [
+    "bmp",
+    "draw",
+    "math/f64",
+    "riff",
+    "vp8",
+    "vp8l",
+    "webp"
+  ]
+  revision = "12117c17ca67ffa1ce22e9409f3b0b0a93ac08c7"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  revision = "d0aafc73d5cdc42264b0af071c261abac580695e"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sync"
+  packages = ["errgroup"]
+  revision = "fd80eb99c8f653c847d294a001bdf2a3a6f768f5"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
   revision = "83801418e1b59fb1880e363299581ee543af32ca"
@@ -175,6 +201,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cf2dcb205b624efa69106a39b3b789946e3a8afb19c55b8bcdb278cdd5f1c54f"
+  inputs-digest = "5ad4dfbec8cbccdc9e401a31359f68010a4efdac543b57c61b5a4b09f9579fc7"
   solver-name = "gps-cdcl"
   solver-version = 1

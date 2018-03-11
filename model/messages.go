@@ -64,6 +64,20 @@ func (m *Message) Update() error {
 	return nil
 }
 
+// IsPined このメッセージがpin止めされているかどうかを調べる
+func (m *Message) IsPined() (bool, error) {
+	if m.ID == "" {
+		return false, ErrNotFound
+	}
+
+	p := &Pin{
+		ChannelID: m.ChannelID,
+		MessageID: m.ID,
+	}
+
+	return db.Get(p)
+}
+
 // GetMessagesByChannelID 指定されたチャンネルのメッセージを取得します
 func GetMessagesByChannelID(channelID string, limit, offset int) ([]*Message, error) {
 	var messageList []*Message
