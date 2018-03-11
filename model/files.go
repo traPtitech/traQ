@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/labstack/gommon/log"
+	"github.com/traPtitech/traQ/utils"
 	"golang.org/x/image/bmp"
 	"golang.org/x/image/draw"
 	"golang.org/x/image/webp"
@@ -103,7 +104,7 @@ func (f *File) Create(src io.Reader) error {
 	go func() {
 		defer fileWriter.Close()
 		defer thumbWriter.Close()
-		io.Copy(io.MultiWriter(fileWriter, hash, thumbWriter), src) // 並列化してるけど、pipeじゃなくてbuffer使わないとreaderがブロックしてて意味無い疑惑
+		io.Copy(utils.MultiWriter(fileWriter, hash, thumbWriter), src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
 	}()
 
 	// fileの保存
@@ -174,6 +175,16 @@ func (f *File) Open() (io.ReadCloser, error) {
 	}
 
 	return reader.OpenFileByID(f.ID)
+}
+
+// OpenThumbnail サムネイルファイルを開きます
+func (f *File) OpenThumbnail() (io.ReadCloser, error) {
+	reader, ok := fileManagers[f.Manager]
+	if !ok {
+		return nil, ErrFileUnknownManager
+	}
+
+	return reader.OpenFileByID(f.ID + "-thumb")
 }
 
 // GetRedirectURL リダイレクト先URLが存在する場合はそれを返します
