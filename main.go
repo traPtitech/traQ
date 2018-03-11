@@ -55,10 +55,6 @@ func main() {
 		panic(err)
 	}
 
-	if err := model.InitCache(); err != nil {
-		panic(err)
-	}
-
 	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
 	if err != nil {
 		panic(err)
@@ -73,6 +69,10 @@ func main() {
 		os.Getenv("OS_TENANT_ID"),   //v2のみ
 		os.Getenv("OS_AUTH_URL"),
 	); err != nil {
+		panic(err)
+	}
+
+	if err := model.InitCache(); err != nil {
 		panic(err)
 	}
 

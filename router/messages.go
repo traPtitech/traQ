@@ -130,12 +130,16 @@ func PutMessageByID(c echo.Context) error {
 
 // DeleteMessageByID : /message/{messageID}のDELETEメソッド.
 func DeleteMessageByID(c echo.Context) error {
+	userID := c.Get("user").(*model.User).ID
 	messageID := c.Param("messageID")
 
 	message, err := model.GetMessageByID(messageID)
 	if err != nil {
 		c.Echo().Logger.Errorf("model.GetMessage() returned an error: %v", err)
 		return echo.NewHTTPError(http.StatusNotFound, "no message has the messageID: "+messageID)
+	}
+	if message.UserID != userID {
+		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
 	message.IsDeleted = true
