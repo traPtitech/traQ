@@ -192,6 +192,7 @@ func main() {
 	apiNoAuth.POST("/webhooks/:webhookID/github", router.PostWebhookByGithub)
 
 	// Serve UI
+	e.File("/sw.js", "./client/dist/sw.js")
 	e.Static("/static", "./client/dist/static")
 	e.File("*", "./client/dist/index.html")
 
