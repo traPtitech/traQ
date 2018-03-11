@@ -411,11 +411,11 @@ func PostWebhookByGithub(c echo.Context) error {
 
 		switch i.Action {
 		case "opened":
-			message.Text = fmt.Sprintf("## Issue Opened\n[%s](%s) - [%s](%s)", i.Repository.FullName, i.Repository.HTMLURL, i.Issue.Title, i.Issue.URL)
+			message.Text = fmt.Sprintf("## Issue Opened\n[%s](%s) - [%s](%s)", i.Repository.FullName, i.Repository.HTMLURL, i.Issue.Title, i.Issue.HTMLURL)
 		case "closed":
-			message.Text = fmt.Sprintf("## Issue Closed\n[%s](%s) - [%s](%s)", i.Repository.FullName, i.Repository.HTMLURL, i.Issue.Title, i.Issue.URL)
+			message.Text = fmt.Sprintf("## Issue Closed\n[%s](%s) - [%s](%s)", i.Repository.FullName, i.Repository.HTMLURL, i.Issue.Title, i.Issue.HTMLURL)
 		case "reopened":
-			message.Text = fmt.Sprintf("## Issue Reopened\n[%s](%s) - [%s](%s)", i.Repository.FullName, i.Repository.HTMLURL, i.Issue.Title, i.Issue.URL)
+			message.Text = fmt.Sprintf("## Issue Reopened\n[%s](%s) - [%s](%s)", i.Repository.FullName, i.Repository.HTMLURL, i.Issue.Title, i.Issue.HTMLURL)
 		case "assigned", "unassigned", "labeled", "unlabeled", "edited", "milestoned", "demilestoned":
 			// Unsupported
 		}
@@ -428,15 +428,15 @@ func PostWebhookByGithub(c echo.Context) error {
 
 		switch p.Action {
 		case "opened":
-			message.Text = fmt.Sprintf("## PullRequest Opened\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.URL)
+			message.Text = fmt.Sprintf("## PullRequest Opened\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.HTMLURL)
 		case "closed":
 			if p.PullRequest.Merged {
-				message.Text = fmt.Sprintf("## PullRequest Merged\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.URL)
+				message.Text = fmt.Sprintf("## PullRequest Merged\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.HTMLURL)
 			} else {
-				message.Text = fmt.Sprintf("## PullRequest Closed\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.URL)
+				message.Text = fmt.Sprintf("## PullRequest Closed\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.HTMLURL)
 			}
 		case "reopened":
-			message.Text = fmt.Sprintf("## PullRequest Reopened\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.URL)
+			message.Text = fmt.Sprintf("## PullRequest Reopened\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.HTMLURL)
 		case "assigned", "unassigned", "labeled", "unlabeled", "edited", "review_requested", "review_request_removed":
 			// Unsupported
 		}
@@ -447,7 +447,7 @@ func PostWebhookByGithub(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
 
-		message.Text = fmt.Sprintf("## %d Commit(s) Pushed by %s\nrefs: `%s`\n, [compare](%s)\n", len(p.Commits), p.Pusher.Name, p.Ref, p.Compare)
+		message.Text = fmt.Sprintf("## %d Commit(s) Pushed by %s\n[%s](%s) , refs: `%s`, [compare](%s)\n", len(p.Commits), p.Pusher.Name, p.Repository.FullName, p.Repository.HTMLURL, p.Ref, p.Compare)
 
 		for _, v := range p.Commits {
 			message.Text += fmt.Sprintf("+ [`%7s`](%s) - %s \n", v.ID, v.URL, v.Message)

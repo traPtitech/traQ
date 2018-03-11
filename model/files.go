@@ -211,7 +211,14 @@ func (f *File) RegenerateThumbnail() error {
 		return err
 	}
 
-	return GenerateThumbnail(context.Background(), f, src)
+	if err := GenerateThumbnail(context.Background(), f, src); err != nil {
+		return err
+	}
+
+	if _, err := db.ID(f.ID).UseBool().MustCols().Update(f); err != nil {
+		return err
+	}
+	return nil
 }
 
 // GenerateThumbnail サムネイル画像を生成します
