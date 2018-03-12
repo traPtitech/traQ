@@ -8,15 +8,208 @@ servers:
   - url: /api/1.0
 
 paths:
+  /login:
+    post:
+      tags:
+        - authentication
+      description: ログインを行います。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - pass
+              properties:
+                name:
+                  type: string
+                pass:
+                  type: string
+      responses:
+        "204":
+          description: 正常にログインできました。
+
   /logout:
     post:
       tags:
-        - authorization
+        - authentication
       description: ログアウトを行います。
       responses:
         "204":
           description: |+
             正常にログアウトできました。
+
+  /authorize:
+    get:
+      tags:
+        - authorization
+      description: OAuth2 認可エンドポイント
+      parameters:
+        - name: response_type
+          in: query
+          schema:
+            type: string
+        - name: client_id
+          in: query
+          schema:
+            type: string
+        - name: redirect_uri
+          in: query
+          schema:
+            type: string
+        - name: scope
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: code_challenge
+          in: query
+          schema:
+            type: string
+        - name: code_challenge_method
+          in: query
+          schema:
+            type: string
+        - name: nonce
+          in: query
+          schema:
+            type: string
+        - name: prompt
+          in: query
+          schema:
+            type: string
+
+      responses:
+        "302":
+          description: 結果に応じてリダイレクトします。
+        "400":
+          description: リクエストが不正です。
+        "403":
+          description: リクエストが許可されていません。
+    post:
+      tags:
+        - authorization
+      description: OAuth2 認可エンドポイント
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                response_type:
+                  type: string
+                client_id:
+                  type: string
+                redirect_uri:
+                  type: string
+                scope:
+                  type: string
+                state:
+                  type: string
+                code_challenge:
+                  type: string
+                code_challenge_method:
+                  type: string
+                nonce:
+                  type: string
+                prompt:
+                  type: string
+      responses:
+        "302":
+          description: 結果に応じてリダイレクトします。
+        "400":
+          description: リクエストが不正です。
+        "403":
+          description: リクエストが許可されていません。
+
+  /authorize/decide:
+    post:
+      tags:
+        - authorization
+      description: OAuth2 認可承諾
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - submit
+              properties:
+                submit:
+                  type: string
+                  description: 承諾する場合は"approve"
+      responses:
+        "302":
+          description: RedirectURIに結果をリダイレクトします。
+        "400":
+          description: リクエストが不正です。
+        "403":
+          description: リクエストが許可されていません。
+
+  /token:
+    post:
+      tags:
+        - authorization
+      description: OAuth2 トークンエンドポイント
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - grant_type
+              properties:
+                grant_type:
+                  type: string
+                code:
+                  type: string
+                redirect_uri:
+                  type: string
+                client_id:
+                  type: string
+                code_verifier:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+                scope:
+                  type: string
+                refresh_token:
+                  type: string
+                client_secret:
+                  type: string
+      responses:
+        "200":
+          description: トークンが正常に発行されました。
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - access_token
+                  - token_type
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+                  refresh_token:
+                    type: string
+                  scope:
+                    type: string
+                  id_token:
+                    type: string
+        "400":
+          description: トークン発行に失敗しました。
+        "403":
+          description: トークン発行に失敗しました。
 
   /channels:
     post:

@@ -212,7 +212,7 @@ func main() {
 	apiNoAuth.POST("/webhooks/:webhookID", router.PostWebhook)
 	apiNoAuth.POST("/webhooks/:webhookID/github", router.PostWebhookByGithub)
 
-	// OAuth2 / OpenID Connect
+	// Tag: authorization
 	apiNoAuth.GET("/authorize", oauth2.AuthorizationEndpointHandler)
 	apiNoAuth.POST("/authorize", oauth2.AuthorizationEndpointHandler)
 	api.POST("/authorize/decide", oauth2.AuthorizationDecideHandler)
