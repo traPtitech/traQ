@@ -10,7 +10,7 @@ func TestToken_GetAvailableScopes(t *testing.T) {
 	t.Parallel()
 
 	token := &Token{
-		Scope: scope.AccessScopes{
+		Scopes: scope.AccessScopes{
 			scope.Read,
 			scope.Write,
 		},

@@ -30,7 +30,7 @@ type Token struct {
 	RefreshToken string
 	CreatedAt    time.Time
 	ExpiresIn    int
-	Scope        scope.AccessScopes
+	Scopes       scope.AccessScopes
 }
 
 type tokenRequest struct {
@@ -58,7 +58,7 @@ type tokenResponse struct {
 // GetAvailableScopes : requestで与えられたスコープのうち、利用可能なものを返します
 func (t *Token) GetAvailableScopes(request scope.AccessScopes) (result scope.AccessScopes) {
 	for _, s := range request {
-		if t.Scope.Contains(s) {
+		if t.Scopes.Contains(s) {
 			result = append(result, s)
 		}
 	}
@@ -145,14 +145,14 @@ func TokenEndpointHandler(c echo.Context) error {
 		}
 
 		// トークン発行
-		newToken, err := IssueAccessToken(client, code.UserID, client.RedirectURI, code.Scope, AccessTokenExp, IsRefreshEnabled)
+		newToken, err := IssueAccessToken(client, code.UserID, client.RedirectURI, code.Scopes, AccessTokenExp, IsRefreshEnabled)
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
 		// OpenID Connect IDToken発行
-		if code.Scope.Contains(scope.OpenID) && openid.Available() {
+		if code.Scopes.Contains(scope.OpenID) && openid.Available() {
 			idToken := openid.NewIDToken(newToken.CreatedAt, int64(AccessTokenExp))
 			idToken.Audience = code.ClientID
 			idToken.Subject = code.UserID.String()
@@ -164,7 +164,7 @@ func TokenEndpointHandler(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 
-			if code.Scope.Contains(scope.Profile) {
+			if code.Scopes.Contains(scope.Profile) {
 				idToken.Name = user.Name
 			}
 
@@ -178,8 +178,8 @@ func TokenEndpointHandler(c echo.Context) error {
 		res.AccessToken = newToken.AccessToken
 		res.RefreshToken = newToken.RefreshToken
 		res.ExpiresIn = newToken.ExpiresIn
-		if len(code.OriginalScope) != len(newToken.Scope) {
-			res.Scope = newToken.Scope.String()
+		if len(code.OriginalScopes) != len(newToken.Scopes) {
+			res.Scope = newToken.Scopes.String()
 		}
 
 	case grantTypePassword:
@@ -219,7 +219,7 @@ func TokenEndpointHandler(c echo.Context) error {
 		}
 		validScopes := client.GetAvailableScopes(reqScopes)
 		if len(reqScopes) == 0 {
-			validScopes = client.Scope
+			validScopes = client.Scopes
 		} else if len(validScopes) == 0 {
 			return c.JSON(http.StatusBadRequest, ErrInvalidScope)
 		}
@@ -235,7 +235,7 @@ func TokenEndpointHandler(c echo.Context) error {
 		res.RefreshToken = newToken.RefreshToken
 		res.ExpiresIn = newToken.ExpiresIn
 		if len(reqScopes) != len(validScopes) {
-			res.Scope = newToken.Scope.String()
+			res.Scope = newToken.Scopes.String()
 		}
 
 	case grantTypeClientCredentials:
@@ -269,7 +269,7 @@ func TokenEndpointHandler(c echo.Context) error {
 		}
 		validScopes := client.GetAvailableScopes(reqScopes)
 		if len(reqScopes) == 0 {
-			validScopes = client.Scope
+			validScopes = client.Scopes
 		} else if len(validScopes) == 0 {
 			return c.JSON(http.StatusBadRequest, ErrInvalidScope)
 		}
@@ -284,7 +284,7 @@ func TokenEndpointHandler(c echo.Context) error {
 		res.AccessToken = newToken.AccessToken
 		res.ExpiresIn = newToken.ExpiresIn
 		if len(reqScopes) != len(validScopes) {
-			res.Scope = newToken.Scope.String()
+			res.Scope = newToken.Scopes.String()
 		}
 
 	case grantTypeRefreshToken:
@@ -332,7 +332,7 @@ func TokenEndpointHandler(c echo.Context) error {
 		}
 		newScopes := token.GetAvailableScopes(reqScopes)
 		if len(reqScopes) == 0 {
-			newScopes = token.Scope
+			newScopes = token.Scopes
 		} else if len(newScopes) == 0 {
 			return c.JSON(http.StatusBadRequest, ErrInvalidScope)
 		}
@@ -351,8 +351,8 @@ func TokenEndpointHandler(c echo.Context) error {
 		res.AccessToken = newToken.AccessToken
 		res.RefreshToken = newToken.RefreshToken
 		res.ExpiresIn = newToken.ExpiresIn
-		if len(token.Scope) != len(newToken.Scope) {
-			res.Scope = newToken.Scope.String()
+		if len(token.Scopes) != len(newToken.Scopes) {
+			res.Scope = newToken.Scopes.String()
 		}
 
 	default: // ERROR
@@ -371,7 +371,7 @@ func IssueAccessToken(client *Client, userID uuid.UUID, redirectURI string, scop
 		AccessToken: generateRandomString(),
 		CreatedAt:   time.Now(),
 		ExpiresIn:   expire,
-		Scope:       scope,
+		Scopes:      scope,
 	}
 
 	if refresh {

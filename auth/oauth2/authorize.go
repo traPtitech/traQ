@@ -29,8 +29,8 @@ type AuthorizeData struct {
 	CreatedAt           time.Time
 	ExpiresIn           int
 	RedirectURI         string
-	Scope               scope.AccessScopes
-	OriginalScope       scope.AccessScopes
+	Scopes              scope.AccessScopes
+	OriginalScopes      scope.AccessScopes
 	CodeChallenge       string
 	CodeChallengeMethod string
 	Nonce               string
@@ -163,7 +163,7 @@ func AuthorizationEndpointHandler(c echo.Context) error {
 	req.Scopes = reqScopes
 	req.ValidScopes = client.GetAvailableScopes(reqScopes)
 	if len(reqScopes) == 0 {
-		req.ValidScopes = client.Scope
+		req.ValidScopes = client.Scopes
 	} else if len(req.ValidScopes) == 0 {
 		q.Set("error", errInvalidScope)
 		return c.Redirect(http.StatusFound, redirectURI+q.Encode())
@@ -233,7 +233,7 @@ func AuthorizationEndpointHandler(c echo.Context) error {
 			if v.ClientID == req.ClientID {
 				all := true
 				for _, s := range req.Scopes {
-					if !v.Scope.Contains(s) {
+					if !v.Scopes.Contains(s) {
 						all = false
 						break
 					}
@@ -256,8 +256,8 @@ func AuthorizationEndpointHandler(c echo.Context) error {
 			CreatedAt:           time.Now(),
 			ExpiresIn:           AuthorizationCodeExp,
 			RedirectURI:         req.RedirectURI,
-			Scope:               req.ValidScopes,
-			OriginalScope:       req.Scopes,
+			Scopes:              req.ValidScopes,
+			OriginalScopes:      req.Scopes,
 			CodeChallenge:       req.CodeChallenge,
 			CodeChallengeMethod: req.CodeChallengeMethod,
 			Nonce:               req.Nonce,
@@ -366,8 +366,8 @@ func AuthorizationDecideHandler(c echo.Context) error {
 			CreatedAt:           time.Now(),
 			ExpiresIn:           AuthorizationCodeExp,
 			RedirectURI:         reqAuth.RedirectURI,
-			Scope:               reqAuth.ValidScopes,
-			OriginalScope:       reqAuth.Scopes,
+			Scopes:              reqAuth.ValidScopes,
+			OriginalScopes:      reqAuth.Scopes,
 			CodeChallenge:       reqAuth.CodeChallenge,
 			CodeChallengeMethod: reqAuth.CodeChallengeMethod,
 			Nonce:               reqAuth.Nonce,

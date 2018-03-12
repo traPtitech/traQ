@@ -17,6 +17,9 @@ var (
 	// モデルを追加したら各自ここに追加しなければいけない
 	// **順番注意**
 	tables = []interface{}{
+		&OAuth2Token{},
+		&OAuth2Authorize{},
+		&OAuth2Client{},
 		&UserInvisibleChannel{},
 		&RBACOverride{},
 		&Webhook{},
@@ -76,6 +79,11 @@ var (
 		"ALTER TABLE `webhooks` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
 		"ALTER TABLE `webhooks` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
 		"ALTER TABLE `rbac_overrides` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `oauth2_clients` ADD FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;",
+		"ALTER TABLE `oauth2_authorizes` ADD FOREIGN KEY (`client_id`) REFERENCES `oauth2_clients`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;",
+		"ALTER TABLE `oauth2_authorizes` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;",
+		"ALTER TABLE `oauth2_tokens` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;",
+		"ALTER TABLE `oauth2_tokens` ADD FOREIGN KEY (`client_id`) REFERENCES `oauth2_clients`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;",
 	}
 
 	serverUser *User

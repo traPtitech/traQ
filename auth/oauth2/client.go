@@ -14,13 +14,13 @@ type Client struct {
 	CreatorID    uuid.UUID
 	Secret       string
 	RedirectURI  string
-	Scope        scope.AccessScopes
+	Scopes       scope.AccessScopes
 }
 
 // GetAvailableScopes : requestで与えられたスコープのうち、利用可能なものを返します
 func (c *Client) GetAvailableScopes(request scope.AccessScopes) (result scope.AccessScopes) {
 	for _, s := range request {
-		if c.Scope.Contains(s) {
+		if c.Scopes.Contains(s) {
 			result = append(result, s)
 		}
 	}

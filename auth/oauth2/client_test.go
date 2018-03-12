@@ -10,7 +10,7 @@ func TestClient_GetAvailableScopes(t *testing.T) {
 	t.Parallel()
 
 	client := &Client{
-		Scope: scope.AccessScopes{
+		Scopes: scope.AccessScopes{
 			scope.Read,
 			scope.Write,
 		},

@@ -59,6 +59,7 @@ func main() {
 	if err := model.SyncSchema(); err != nil {
 		panic(err)
 	}
+	oauth2.SetOAuth2Store(&oauth2.DefaultStore{})
 
 	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
 	if err != nil {
