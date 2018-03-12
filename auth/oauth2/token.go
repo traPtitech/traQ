@@ -3,10 +3,22 @@ package oauth2
 import (
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/auth/openid"
 	"github.com/traPtitech/traQ/auth/scope"
 	"github.com/traPtitech/traQ/model"
 	"net/http"
 	"time"
+)
+
+const (
+	// Authorization Code Grant
+	grantTypeAuthorizationCode = "authorization_code"
+	// Resource Owner Password Credentials Grant
+	grantTypePassword = "password"
+	// Client Credentials Grant
+	grantTypeClientCredentials = "client_credentials"
+	// Refreshing an Access Token
+	grantTypeRefreshToken = "refresh_token"
 )
 
 // Token : OAuth2.0 Access Token構造体
@@ -40,6 +52,17 @@ type tokenResponse struct {
 	ExpiresIn    int    `json:"expires_in,omitempty"`
 	RefreshToken string `json:"refresh_token,omitempty"`
 	Scope        string `json:"scope,omitempty"`
+	IDToken      string `json:"id_token,omitempty"`
+}
+
+// GetAvailableScopes : requestで与えられたスコープのうち、利用可能なものを返します
+func (t *Token) GetAvailableScopes(request scope.AccessScopes) (result scope.AccessScopes) {
+	for _, s := range request {
+		if t.Scope.Contains(s) {
+			result = append(result, s)
+		}
+	}
+	return
 }
 
 // TokenEndpointHandler : トークンエンドポイントのハンドラ
@@ -49,113 +72,107 @@ func TokenEndpointHandler(c echo.Context) error {
 
 	req := &tokenRequest{}
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidRequest})
+		return c.JSON(http.StatusBadRequest, errorResponse{ErrorType: errInvalidRequest})
 	}
 
-	res := &tokenResponse{
-		TokenType: "Bearer",
-	}
-	switch req.GrantType {
-	case "authorization_code": // Authorization Code Grant
-		if len(req.Code) == 0 {
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidRequest})
-		}
-
-		code, err := store.GetAuthorize(req.Code)
-		if err != nil {
-			c.Echo().Logger.Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		} else if code == nil {
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidGrant})
-		}
-
-		if code.IsExpired() {
-			if err := store.DeleteAuthorize(code.Code); err != nil {
-				c.Echo().Logger.Error(err)
-			}
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidGrant})
-		}
-
-		client, err := store.GetClient(code.ClientID)
-		if err != nil {
-			c.Echo().Logger.Error(err)
-			if err := store.DeleteAuthorize(code.Code); err != nil {
-				c.Echo().Logger.Error(err)
-			}
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		} else if client == nil {
-			if err := store.DeleteAuthorize(code.Code); err != nil {
-				c.Echo().Logger.Error(err)
-			}
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidClient})
-		}
-
+	getCIDAndCPW := func() (id, pw string, err error) {
 		id, pw, ok := c.Request().BasicAuth()
 		if !ok { // Request Body
 			if len(req.ClientID) == 0 {
-				if err := store.DeleteAuthorize(code.Code); err != nil {
-					c.Echo().Logger.Error(err)
-				}
-				return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidClient})
+				return "", "", &errorResponse{ErrorType: errInvalidClient}
 			}
 			id = req.ClientID
 			pw = req.Password
 		}
-		if client.ID != id {
-			if err := store.DeleteAuthorize(code.Code); err != nil {
-				c.Echo().Logger.Error(err)
-			}
-			return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidClient})
-		}
-		if client.Confidential {
-			if client.Secret != pw {
-				if err := store.DeleteAuthorize(code.Code); err != nil {
-					c.Echo().Logger.Error(err)
-				}
-				return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidClient})
-			}
+		return
+	}
+	res := &tokenResponse{
+		TokenType: "Bearer",
+	}
+
+	switch req.GrantType {
+	case grantTypeAuthorizationCode:
+		if len(req.Code) == 0 {
+			return c.JSON(http.StatusBadRequest, errorResponse{ErrorType: errInvalidRequest})
 		}
 
-		if client.RedirectURI != req.RedirectURI {
-			if err := store.DeleteAuthorize(code.Code); err != nil {
-				c.Echo().Logger.Error(err)
+		// 認可コード確認
+		code, err := store.GetAuthorize(req.Code)
+		if err != nil {
+			switch err {
+			case ErrAuthorizeNotFound:
+				return c.JSON(http.StatusBadRequest, err)
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
-			return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidGrant})
 		}
-
-		if ok, err := code.ValidatePKCE(req.CodeVerifier); err != nil {
-			if err := store.DeleteAuthorize(code.Code); err != nil {
-				c.Echo().Logger.Error(err)
-			}
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		} else if !ok {
-			if err := store.DeleteAuthorize(code.Code); err != nil {
-				c.Echo().Logger.Error(err)
-			}
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidRequest})
-		}
-
-		newToken := &Token{
-			ClientID:    client.ID,
-			UserID:      code.UserID,
-			RedirectURI: client.RedirectURI,
-			AccessToken: generateRandomString(),
-			CreatedAt:   time.Now(),
-			ExpiresIn:   AccessTokenExp,
-			Scope:       code.Scope,
-		}
-
-		if IsRefreshEnabled {
-			newToken.RefreshToken = generateRandomString()
-		}
-
+		// 認可コードは２回使えない
 		if err := store.DeleteAuthorize(code.Code); err != nil {
-			c.Echo().Logger.Error(err)
+			c.Logger().Error(err)
+		}
+		if code.IsExpired() {
+			return c.JSON(http.StatusBadRequest, errorResponse{ErrorType: errInvalidGrant})
+		}
+
+		// クライアント確認
+		client, err := store.GetClient(code.ClientID)
+		if err != nil {
+			switch err {
+			case ErrClientNotFound:
+				return c.JSON(http.StatusBadRequest, err)
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+		}
+		id, pw, err := getCIDAndCPW()
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err)
+		}
+		if client.ID != id || (client.Confidential && client.Secret != pw) {
+			return c.JSON(http.StatusUnauthorized, errorResponse{ErrorType: errInvalidClient})
+		}
+
+		// リダイレクトURI確認
+		if (len(code.RedirectURI) > 0 && client.RedirectURI != req.RedirectURI) || (len(code.RedirectURI) == 0 && len(req.RedirectURI) > 0) {
+			return c.JSON(http.StatusUnauthorized, errorResponse{ErrorType: errInvalidGrant})
+		}
+
+		// PKCE確認
+		if ok, _ := code.ValidatePKCE(req.CodeVerifier); !ok {
+			return c.JSON(http.StatusBadRequest, errorResponse{ErrorType: errInvalidRequest})
+		}
+
+		// トークン発行
+		newToken, err := IssueAccessToken(client, code.UserID, client.RedirectURI, code.Scope, AccessTokenExp, IsRefreshEnabled)
+		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		if err := store.SaveToken(newToken); err != nil { // get validity
-			c.Echo().Logger.Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+
+		// OpenID Connect IDToken発行
+		if code.Scope.Contains(scope.OpenID) && openid.Available() {
+			idToken := openid.NewIDToken(newToken.CreatedAt, int64(AccessTokenExp))
+			idToken.Audience = code.ClientID
+			idToken.Subject = code.UserID.String()
+			idToken.Nonce = code.Nonce
+
+			user, err := model.GetUser(code.UserID.String())
+			if err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+
+			if code.Scope.Contains(scope.Profile) {
+				idToken.Name = user.Name
+			}
+
+			res.IDToken, err = idToken.Generate()
+			if err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
 		}
 
 		res.AccessToken = newToken.AccessToken
@@ -165,71 +182,52 @@ func TokenEndpointHandler(c echo.Context) error {
 			res.Scope = newToken.Scope.String()
 		}
 
-	case "password": // Resource Owner Password Credentials Grant
-		cid, cpw, ok := c.Request().BasicAuth()
-		if !ok { // Request Body
-			if len(req.ClientID) == 0 {
-				return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidRequest})
-			}
-			cid = req.ClientID
-			cpw = req.Password
+	case grantTypePassword:
+		cid, cpw, err := getCIDAndCPW()
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err)
 		}
 
+		// クライアント確認
 		client, err := store.GetClient(cid)
 		if err != nil {
-			c.Echo().Logger.Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		} else if client == nil {
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidClient})
-		}
-
-		if client.Confidential {
-			if client.Secret != cpw {
-				return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidClient})
+			switch err {
+			case ErrClientNotFound:
+				return c.JSON(http.StatusBadRequest, err)
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
-
-		if len(req.Username) == 0 {
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidRequest})
+		if client.Confidential && client.Secret != cpw {
+			return c.JSON(http.StatusUnauthorized, errorResponse{ErrorType: errInvalidClient})
 		}
 
+		// ユーザー確認
+		if len(req.Username) == 0 {
+			return c.JSON(http.StatusBadRequest, errorResponse{ErrorType: errInvalidRequest})
+		}
 		user := &model.User{Name: req.Username}
 		if err := user.Authorization(req.Password); err != nil {
-			return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidGrant})
+			return c.JSON(http.StatusUnauthorized, errorResponse{ErrorType: errInvalidGrant})
 		}
 
+		// 要求スコープ確認
 		reqScopes, err := splitAndValidateScope(req.Scope)
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidScope})
+			return c.JSON(http.StatusBadRequest, err)
 		}
-
-		var validScopes scope.AccessScopes
-		if len(reqScopes) > 0 {
-			for _, s := range reqScopes {
-				if client.Scope.Contains(s) {
-					validScopes = append(validScopes, s)
-				}
-			}
-		} else {
+		validScopes := client.GetAvailableScopes(reqScopes)
+		if len(reqScopes) == 0 {
 			validScopes = client.Scope
+		} else if len(validScopes) == 0 {
+			return c.JSON(http.StatusBadRequest, ErrInvalidScope)
 		}
 
-		newToken := &Token{
-			ClientID:    cid,
-			UserID:      uuid.FromStringOrNil(user.ID),
-			RedirectURI: client.RedirectURI,
-			AccessToken: generateRandomString(),
-			CreatedAt:   time.Now(),
-			ExpiresIn:   AccessTokenExp,
-			Scope:       validScopes,
-		}
-
-		if IsRefreshEnabled {
-			newToken.RefreshToken = generateRandomString()
-		}
-
-		if err := store.SaveToken(newToken); err != nil {
-			c.Echo().Logger.Error(err)
+		// トークン発行
+		newToken, err := IssueAccessToken(client, uuid.FromStringOrNil(user.ID), client.RedirectURI, validScopes, AccessTokenExp, IsRefreshEnabled)
+		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
@@ -240,59 +238,46 @@ func TokenEndpointHandler(c echo.Context) error {
 			res.Scope = newToken.Scope.String()
 		}
 
-	case "client_credentials": // Client Credentials Grant
-		id, pw, ok := c.Request().BasicAuth()
-		if !ok { // Request Body
-			if len(req.ClientID) == 0 {
-				return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidRequest})
-			}
-			id = req.ClientID
-			pw = req.Password
+	case grantTypeClientCredentials:
+		id, pw, err := getCIDAndCPW()
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, err)
 		}
 
+		// クライアント確認
 		client, err := store.GetClient(id)
 		if err != nil {
-			c.Echo().Logger.Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		} else if client == nil {
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidClient})
+			switch err {
+			case ErrClientNotFound:
+				return c.JSON(http.StatusBadRequest, err)
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
 		}
-
 		if !client.Confidential {
-			return c.JSON(http.StatusUnauthorized, errorResponse{Error: errUnauthorizedClient})
+			return c.JSON(http.StatusUnauthorized, errorResponse{ErrorType: errUnauthorizedClient})
 		}
 		if client.Secret != pw {
-			return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidClient})
+			return c.JSON(http.StatusUnauthorized, errorResponse{ErrorType: errInvalidClient})
 		}
 
+		// 要求スコープ確認
 		reqScopes, err := splitAndValidateScope(req.Scope)
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidScope})
+			return c.JSON(http.StatusBadRequest, err)
 		}
-
-		var validScopes scope.AccessScopes
-		if len(reqScopes) > 0 {
-			for _, s := range reqScopes {
-				if client.Scope.Contains(s) {
-					validScopes = append(validScopes, s)
-				}
-			}
-		} else {
+		validScopes := client.GetAvailableScopes(reqScopes)
+		if len(reqScopes) == 0 {
 			validScopes = client.Scope
+		} else if len(validScopes) == 0 {
+			return c.JSON(http.StatusBadRequest, ErrInvalidScope)
 		}
 
-		newToken := &Token{
-			ClientID:    id,
-			UserID:      nil,
-			RedirectURI: client.RedirectURI,
-			AccessToken: generateRandomString(),
-			CreatedAt:   time.Now(),
-			ExpiresIn:   AccessTokenExp,
-			Scope:       validScopes,
-		}
-
-		if err := store.SaveToken(newToken); err != nil {
-			c.Echo().Logger.Error(err)
+		// トークン発行
+		newToken, err := IssueAccessToken(client, uuid.Nil, client.RedirectURI, validScopes, AccessTokenExp, false)
+		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
@@ -302,80 +287,64 @@ func TokenEndpointHandler(c echo.Context) error {
 			res.Scope = newToken.Scope.String()
 		}
 
-	case "refresh_token": // Refreshing an Access Token
+	case grantTypeRefreshToken:
 		if len(req.RefreshToken) == 0 {
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidRequest})
+			return c.JSON(http.StatusBadRequest, errorResponse{ErrorType: errInvalidRequest})
 		}
 
+		// リフレッシュトークン確認
 		token, err := store.GetTokenByRefresh(req.RefreshToken)
 		if err != nil {
-			c.Echo().Logger.Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		} else if token == nil {
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidGrant})
+			switch err {
+			case ErrTokenNotFound:
+				return c.JSON(http.StatusBadRequest, err)
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
 		}
 
+		// クライアント確認
 		client, err := store.GetClient(token.ClientID)
 		if err != nil {
-			c.Echo().Logger.Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		} else if client == nil {
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidClient})
+			switch err {
+			case ErrClientNotFound:
+				return c.JSON(http.StatusBadRequest, err)
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
 		}
-
 		if client.Confidential { // need to authenticate client
-			id, pw, ok := c.Request().BasicAuth()
-			if !ok { // Request Body
-				if len(req.ClientID) == 0 {
-					return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidClient})
-				}
-				id = req.ClientID
-				pw = req.Password
+			id, pw, err := getCIDAndCPW()
+			if err != nil {
+				return c.JSON(http.StatusBadRequest, err)
 			}
-			if client.ID != id {
-				return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidClient})
-			}
-			if client.Secret != pw {
-				return c.JSON(http.StatusUnauthorized, errorResponse{Error: errInvalidClient})
+			if client.ID != id || client.Secret != pw {
+				return c.JSON(http.StatusUnauthorized, errorResponse{ErrorType: errInvalidClient})
 			}
 		}
 
+		// 要求スコープ確認
 		reqScopes, err := splitAndValidateScope(req.Scope)
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, errorResponse{Error: errInvalidScope})
+			return c.JSON(http.StatusBadRequest, err)
 		}
-
-		var newScopes scope.AccessScopes
-		if len(reqScopes) > 0 {
-			for _, req := range reqScopes {
-				if token.Scope.Contains(req) {
-					newScopes = append(newScopes, req)
-				}
-			}
-		} else {
+		newScopes := token.GetAvailableScopes(reqScopes)
+		if len(reqScopes) == 0 {
 			newScopes = token.Scope
+		} else if len(newScopes) == 0 {
+			return c.JSON(http.StatusBadRequest, ErrInvalidScope)
 		}
 
-		newToken := &Token{
-			ClientID:    client.ID,
-			UserID:      token.UserID,
-			RedirectURI: token.RedirectURI,
-			AccessToken: generateRandomString(),
-			CreatedAt:   time.Now(),
-			ExpiresIn:   AccessTokenExp,
-			Scope:       newScopes,
-		}
-
-		if IsRefreshEnabled {
-			newToken.RefreshToken = generateRandomString()
-		}
-
-		if err := store.DeleteTokenByRefresh(req.RefreshToken); err != nil {
-			c.Echo().Logger.Error(err)
+		// トークン発行
+		newToken, err := IssueAccessToken(client, token.UserID, token.RedirectURI, newScopes, AccessTokenExp, IsRefreshEnabled)
+		if err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		if err := store.SaveToken(newToken); err != nil { // get validity
-			c.Echo().Logger.Error(err)
+		if err := store.DeleteTokenByRefresh(req.RefreshToken); err != nil {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
@@ -387,8 +356,31 @@ func TokenEndpointHandler(c echo.Context) error {
 		}
 
 	default: // ERROR
-		return c.JSON(http.StatusBadRequest, errorResponse{Error: errUnsupportedGrantType})
+		return c.JSON(http.StatusBadRequest, errorResponse{ErrorType: errUnsupportedGrantType})
 	}
 
 	return c.JSON(http.StatusOK, res)
+}
+
+// IssueAccessToken : AccessTokenを発行します
+func IssueAccessToken(client *Client, userID uuid.UUID, redirectURI string, scope scope.AccessScopes, expire int, refresh bool) (*Token, error) {
+	newToken := &Token{
+		ClientID:    client.ID,
+		UserID:      userID,
+		RedirectURI: redirectURI,
+		AccessToken: generateRandomString(),
+		CreatedAt:   time.Now(),
+		ExpiresIn:   expire,
+		Scope:       scope,
+	}
+
+	if refresh {
+		newToken.RefreshToken = generateRandomString()
+	}
+
+	if err := store.SaveToken(newToken); err != nil {
+		return nil, err
+	}
+
+	return newToken, nil
 }

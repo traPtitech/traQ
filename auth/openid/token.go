@@ -3,6 +3,12 @@ package openid
 import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
+	"time"
+)
+
+var (
+	// ErrInvalidIDToken : OpenID Connectエラー 不正なIDトークンです
+	ErrInvalidIDToken = errors.New("invalid token")
 )
 
 // IDToken : OpenID Connect IdToken
@@ -11,10 +17,18 @@ type IDToken struct {
 
 	Nonce string `json:"nonce,omitempty"`
 
-	Email         string `json:"email,omitempty"`
-	EmailVerified *bool  `json:"email_verified,omitempty"`
-
 	Name string `json:"name,omitempty"`
+}
+
+// NewIDToken : 新しくIDTokenを生成します
+func NewIDToken(issueAt time.Time, expireIn int64) *IDToken {
+	return &IDToken{
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    issuer,
+			IssuedAt:  issueAt.Unix(),
+			ExpiresAt: issueAt.Unix() + expireIn,
+		},
+	}
 }
 
 // Generate : IDTokenからJWTを生成します
@@ -26,8 +40,7 @@ func (t *IDToken) Generate() (string, error) {
 func VerifyToken(token string) (*jwt.Token, error) {
 	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			err := errors.New("unexpected signing method")
-			return nil, err
+			return nil, ErrInvalidIDToken
 		}
 		return publicKey, nil
 	})
@@ -35,7 +48,7 @@ func VerifyToken(token string) (*jwt.Token, error) {
 		return nil, err
 	}
 	if !parsedToken.Valid {
-		return nil, errors.New("invalid token")
+		return nil, ErrInvalidIDToken
 	}
 
 	return parsedToken, nil

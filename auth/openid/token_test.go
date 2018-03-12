@@ -5,14 +5,23 @@ import (
 	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"os"
 	"strings"
 	"testing"
 	"time"
 )
 
+func TestMain(m *testing.M) {
+	err := LoadKeys(testPrivateKey, testPublicKey)
+	if err != nil {
+		panic(err)
+	}
+
+	os.Exit(m.Run())
+}
+
 func TestIDToken_Generate(t *testing.T) {
-	require.NoError(t, LoadKeys(testPrivateKey, testPublicKey))
+	t.Parallel()
 
 	idt := &IDToken{
 		StandardClaims: jwt.StandardClaims{
@@ -21,7 +30,6 @@ func TestIDToken_Generate(t *testing.T) {
 			Audience:  "test_audience",
 			ExpiresAt: 123456789,
 		},
-		Email: "example@example.com",
 	}
 
 	tokenString, err := idt.Generate()
@@ -44,24 +52,22 @@ func TestIDToken_Generate(t *testing.T) {
 	claimsBytes, err := base64.RawStdEncoding.DecodeString(encoded[1])
 	if assert.NoError(t, err) {
 		var claims struct {
-			Iss   string `json:"iss"`
-			Sub   string `json:"sub"`
-			Aud   string `json:"aud"`
-			Exp   int64  `json:"exp"`
-			Email string `json:"email"`
+			Iss string `json:"iss"`
+			Sub string `json:"sub"`
+			Aud string `json:"aud"`
+			Exp int64  `json:"exp"`
 		}
 		if assert.NoError(t, json.Unmarshal(claimsBytes, &claims)) {
 			assert.EqualValues(t, "example.com", claims.Iss)
 			assert.EqualValues(t, "test_subject", claims.Sub)
 			assert.EqualValues(t, "test_audience", claims.Aud)
 			assert.EqualValues(t, 123456789, claims.Exp)
-			assert.EqualValues(t, "example@example.com", claims.Email)
 		}
 	}
 }
 
 func TestVerifyToken(t *testing.T) {
-	require.NoError(t, LoadKeys(testPrivateKey, testPublicKey))
+	t.Parallel()
 
 	idt := &IDToken{
 		StandardClaims: jwt.StandardClaims{
@@ -70,7 +76,6 @@ func TestVerifyToken(t *testing.T) {
 			Audience:  "test_audience",
 			ExpiresAt: time.Now().Unix() - 1000,
 		},
-		Email: "example@example.com",
 	}
 	if token, err := idt.Generate(); assert.NoError(t, err) {
 		_, err := VerifyToken(token)
@@ -84,7 +89,6 @@ func TestVerifyToken(t *testing.T) {
 			Audience:  "test_audience",
 			ExpiresAt: time.Now().Unix() + 6000,
 		},
-		Email: "example@example.com",
 	}
 	if token, err := idt.Generate(); assert.NoError(t, err) {
 		parsed, err := VerifyToken(token)
@@ -94,7 +98,6 @@ func TestVerifyToken(t *testing.T) {
 			assert.EqualValues(t, idt.Subject, claims["sub"])
 			assert.EqualValues(t, idt.Audience, claims["aud"])
 			assert.EqualValues(t, idt.ExpiresAt, claims["exp"])
-			assert.EqualValues(t, idt.Email, claims["email"])
 		}
 	}
 
@@ -105,7 +108,6 @@ func TestVerifyToken(t *testing.T) {
 			Audience:  "test_audience",
 			ExpiresAt: time.Now().Unix() + 6000,
 		},
-		Email: "example@example.com",
 	}
 	if token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, idt).SignedString(testPublicKey); assert.NoError(t, err) {
 		_, err := VerifyToken(token)

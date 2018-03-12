@@ -2,18 +2,23 @@ package oauth2
 
 import (
 	"encoding/base64"
-	"errors"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/auth/scope"
 	"strings"
 )
 
-var store Store
+var (
+	store Store
+
+	// ErrInvalidScope : OAuth2エラー 不正なスコープです
+	ErrInvalidScope = &errorResponse{ErrorType: errInvalidScope}
+)
 
 func generateRandomString() string {
-	return strings.TrimRight(base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes()), "=")
+	return base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes())
 }
 
+// SetOAuth2Store : OAuth2のストアの実装をセットします
 func SetOAuth2Store(s Store) {
 	store = s
 }
@@ -25,7 +30,7 @@ func splitAndValidateScope(str string) (scope.AccessScopes, error) {
 	for _, v := range strings.Fields(str) {
 		s := scope.AccessScope(v)
 		if _, ok := set[s]; !scope.Valid(s) || ok {
-			return nil, errors.New(v)
+			return nil, ErrInvalidScope
 		}
 		scopes = append(scopes, s)
 		set[s] = struct{}{}

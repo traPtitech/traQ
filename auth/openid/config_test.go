@@ -77,7 +77,7 @@ Xms95/7E6F2DvJV2DdhpksUCAwEAAQ==
 )
 
 func TestLoadKeys(t *testing.T) {
-	assert.NoError(t, LoadKeys(testPrivateKey, testPublicKey))
 	assert.Error(t, LoadKeys(testPublicKey, testPrivateKey))
 	assert.Error(t, LoadKeys(testPrivateKey, testPrivateKey))
+	assert.NoError(t, LoadKeys(testPrivateKey, testPublicKey))
 }

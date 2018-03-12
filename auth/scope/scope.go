@@ -21,8 +21,6 @@ const (
 	OpenID AccessScope = "openid"
 	// Profile : OpenID Connect用
 	Profile AccessScope = "profile"
-	// Email : OpenID Connect用
-	Email AccessScope = "email"
 
 	// Read : 読み込み権限
 	Read AccessScope = "read"
@@ -37,7 +35,6 @@ const (
 var list = map[AccessScope]bool{
 	OpenID:       true,
 	Profile:      true,
-	Email:        true,
 	Read:         true,
 	PrivateRead:  true,
 	Write:        true,

@@ -7,6 +7,8 @@ import (
 )
 
 func TestAuthorizeData_IsExpired(t *testing.T) {
+	t.Parallel()
+
 	data := &AuthorizeData{
 		CreatedAt: time.Date(2000, 1, 1, 12, 0, 11, 0, time.UTC),
 		ExpiresIn: 10,
@@ -21,6 +23,8 @@ func TestAuthorizeData_IsExpired(t *testing.T) {
 }
 
 func TestAuthorizeData_ValidatePKCE(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	data := &AuthorizeData{

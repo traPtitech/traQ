@@ -13,16 +13,16 @@ import (
 var (
 	privateKey *rsa.PrivateKey
 	publicKey  *rsa.PublicKey
-	issuer     = "https://" //FIXME //TODO
+	issuer     = "https://traq-dev.herokuapp.com" //FIXME //TODO
 	discovery  = map[string]interface{}{
 		"issuer":                                issuer,
-		"authorization_endpoint":                issuer + "/authorize",
-		"token_endpoint":                        issuer + "/token",
+		"authorization_endpoint":                issuer + "/api/1.0/authorize",
+		"token_endpoint":                        issuer + "/api/1.0/token",
 		"jwks_uri":                              issuer + "/publickeys",
 		"response_types_supported":              []string{"code"},
 		"subject_types_supported":               []string{"public"},
 		"id_token_signing_alg_values_supported": []string{"RS256"},
-		"scopes_supported":                      []string{"openid", "email", "profile"},
+		"scopes_supported":                      []string{"openid", "profile"},
 		"grantTypesSupported":                   []string{"authorization_code", "refresh_token", "client_credentials", "password"},
 		"token_endpoint_auth_methods_supported": []string{"client_secret_basic", "client_secret_post"},
 		"display_values_supported":              []string{"page"},
@@ -30,7 +30,7 @@ var (
 		"request_parameter_supported":           false,
 		"request_uri_parameter_supported":       false,
 		"claims_supported": []string{
-			"aud", "email", "email_verified", "exp", "iat", "iss", "name", "sub",
+			"aud", "exp", "iat", "iss", "name", "sub",
 		},
 	}
 )
@@ -70,4 +70,9 @@ func PublicKeysHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, res)
+}
+
+// Available : OpenID Connectが有効かどうか
+func Available() bool {
+	return privateKey != nil && publicKey != nil
 }

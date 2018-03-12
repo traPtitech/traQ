@@ -109,13 +109,6 @@ func main() {
 	e.POST("/login", router.PostLogin)
 	e.POST("/logout", router.PostLogout)
 
-	// OAuth2 / OpenID Connect
-	e.GET("/authorize", oauth2.AuthorizationEndpointHandler)
-	e.POST("/authorize", oauth2.PostAuthorizationEndpointHandler)
-	e.POST("/token", oauth2.TokenEndpointHandler)
-	e.GET("/.well-known/openid-configuration", openid.DiscoveryHandler)
-	e.GET("/publickeys", openid.PublicKeysHandler)
-
 	api := e.Group("/api/1.0")
 	api.Use(router.GetUserInfo)
 	apiNoAuth := e.Group("/api/1.0")
@@ -217,6 +210,14 @@ func main() {
 	api.DELETE("/webhooks/:webhookID", router.DeleteWebhook, requires(permission.DeleteWebhook))
 	apiNoAuth.POST("/webhooks/:webhookID", router.PostWebhook)
 	apiNoAuth.POST("/webhooks/:webhookID/github", router.PostWebhookByGithub)
+
+	// OAuth2 / OpenID Connect
+	apiNoAuth.GET("/authorize", oauth2.AuthorizationEndpointHandler)
+	apiNoAuth.POST("/authorize", oauth2.AuthorizationEndpointHandler)
+	api.POST("/authorize/decide", oauth2.AuthorizationDecideHandler)
+	apiNoAuth.POST("/token", oauth2.TokenEndpointHandler)
+	e.GET("/.well-known/openid-configuration", openid.DiscoveryHandler)
+	e.GET("/publickeys", openid.PublicKeysHandler)
 
 	// Serve UI
 	e.File("/sw.js", "./client/dist/sw.js")

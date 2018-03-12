@@ -6,12 +6,16 @@ import (
 )
 
 func TestValid(t *testing.T) {
+	t.Parallel()
+
 	assert.True(t, Valid(Read))
 	assert.True(t, Valid(Write))
 	assert.False(t, Valid("fjeaowijfiow"))
 }
 
 func TestAccessScopes_Contains(t *testing.T) {
+	t.Parallel()
+
 	s := AccessScopes{}
 	s = append(s, Read, Write)
 
@@ -21,6 +25,8 @@ func TestAccessScopes_Contains(t *testing.T) {
 }
 
 func TestAccessScopes_String(t *testing.T) {
+	t.Parallel()
+
 	s := AccessScopes{}
 	s = append(s, Read, Write)
 

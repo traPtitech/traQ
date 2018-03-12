@@ -16,3 +16,13 @@ type Client struct {
 	RedirectURI  string
 	Scope        scope.AccessScopes
 }
+
+// GetAvailableScopes : requestで与えられたスコープのうち、利用可能なものを返します
+func (c *Client) GetAvailableScopes(request scope.AccessScopes) (result scope.AccessScopes) {
+	for _, s := range request {
+		if c.Scope.Contains(s) {
+			result = append(result, s)
+		}
+	}
+	return
+}
