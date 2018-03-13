@@ -16,8 +16,8 @@ var (
 	issuer     = "https://traq-dev.herokuapp.com" //FIXME //TODO
 	discovery  = map[string]interface{}{
 		"issuer":                                issuer,
-		"authorization_endpoint":                issuer + "/api/1.0/authorize",
-		"token_endpoint":                        issuer + "/api/1.0/token",
+		"authorization_endpoint":                issuer + "/api/1.0/oauth2/authorize",
+		"token_endpoint":                        issuer + "/api/1.0/oauth2/token",
 		"jwks_uri":                              issuer + "/publickeys",
 		"response_types_supported":              []string{"code"},
 		"subject_types_supported":               []string{"public"},
@@ -51,25 +51,32 @@ func LoadKeys(private, public []byte) error {
 
 // DiscoveryHandler returns the OpenID Connect discovery object.
 func DiscoveryHandler(c echo.Context) error {
-	return c.JSON(http.StatusOK, discovery)
+	if Available() {
+		return c.JSON(http.StatusOK, discovery)
+	}
+	return c.NoContent(http.StatusNotFound)
 }
 
 // PublicKeysHandler publishes the public signing keys.
 func PublicKeysHandler(c echo.Context) error {
-	data := make([]byte, 8)
-	binary.BigEndian.PutUint64(data, uint64(publicKey.E))
+	if Available() {
+		data := make([]byte, 8)
+		binary.BigEndian.PutUint64(data, uint64(publicKey.E))
 
-	res := map[string]interface{}{
-		"keys": map[string]interface{}{
-			"kty": "RSA",
-			"alg": "RS256",
-			"use": "sig",
-			"n":   base64.RawURLEncoding.EncodeToString(publicKey.N.Bytes()),
-			"e":   base64.RawURLEncoding.EncodeToString(bytes.TrimLeft(data, "\x00")),
-		},
+		res := map[string]interface{}{
+			"keys": map[string]interface{}{
+				"kty": "RSA",
+				"alg": "RS256",
+				"use": "sig",
+				"n":   base64.RawURLEncoding.EncodeToString(publicKey.N.Bytes()),
+				"e":   base64.RawURLEncoding.EncodeToString(bytes.TrimLeft(data, "\x00")),
+			},
+		}
+
+		return c.JSON(http.StatusOK, res)
 	}
 
-	return c.JSON(http.StatusOK, res)
+	return c.NoContent(http.StatusNotFound)
 }
 
 // Available : OpenID Connectが有効かどうか

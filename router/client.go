@@ -14,6 +14,7 @@ import (
 
 var uriRegex = regexp.MustCompile(`^([a-z0-9+.-]+):(?://(?:((?:[a-z0-9-._~!$&'()*+,;=:]|%[0-9A-F]{2})*)@)?((?:[a-z0-9-._~!$&'()*+,;=]|%[0-9A-F]{2})*)(?::(\d*))?(/(?:[a-z0-9-._~!$&'()*+,;=:@/]|%[0-9A-F]{2})*)?|(/?(?:[a-z0-9-._~!$&'()*+,;=:@]|%[0-9A-F]{2})+(?:[a-z0-9-._~!$&'()*+,;=:@/]|%[0-9A-F]{2})*)?)(?:\?((?:[a-z0-9-._~!$&'()*+,;=:/?@]|%[0-9A-F]{2})*))?(?:#((?:[a-z0-9-._~!$&'()*+,;=:/?@]|%[0-9A-F]{2})*))?$`)
 
+// ClientInfo レスポンス用クライアント情報構造体
 type ClientInfo struct {
 	ClientID    string `json:"clientId"`
 	Name        string `json:"name"`
@@ -21,6 +22,7 @@ type ClientInfo struct {
 	CreatorID   string `json:"creatorId"`
 }
 
+// OwnedClientInfo レスポンス用クライアント情報構造体
 type OwnedClientInfo struct {
 	ClientID    string             `json:"clientId"`
 	Name        string             `json:"name"`
@@ -31,6 +33,7 @@ type OwnedClientInfo struct {
 	Secret      string             `json:"secret"`
 }
 
+// AllowedClientInfo レスポンス用クライアント情報構造体
 type AllowedClientInfo struct {
 	TokenID     string             `json:"tokenId"`
 	ClientID    string             `json:"clientId"`

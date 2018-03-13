@@ -40,7 +40,7 @@ paths:
           description: |+
             正常にログアウトできました。
 
-  /authorize:
+  /oauth2/authorize:
     get:
       tags:
         - authorization
@@ -126,7 +126,7 @@ paths:
         "403":
           description: リクエストが許可されていません。
 
-  /authorize/decide:
+  /oauth2/authorize/decide:
     post:
       tags:
         - authorization
@@ -150,7 +150,7 @@ paths:
         "403":
           description: リクエストが許可されていません。
 
-  /token:
+  /oauth2/token:
     post:
       tags:
         - authorization
