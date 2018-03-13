@@ -347,7 +347,7 @@ func (*DefaultStore) GetTokensByUser(userID uuid.UUID) ([]*Token, error) {
 	return tokens, nil
 }
 
-// DeleteTokenByRefresh : 指定したユーザーのトークンを全て削除します
+// DeleteTokenByUser : 指定したユーザーのトークンを全て削除します
 func (*DefaultStore) DeleteTokenByUser(userID uuid.UUID) error {
 	ts, err := model.GetOAuth2TokenByUser(userID.String())
 	if err != nil {

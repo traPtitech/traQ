@@ -47,7 +47,7 @@ func GetOAuth2TokenByRefresh(refresh string) (ot *OAuth2Token, err error) {
 	return
 }
 
-// GetOAuth2TokenByRefresh : 指定したユーザーIDのOAuth2Tokenを全て取得します
+// GetOAuth2TokenByUser : 指定したユーザーIDのOAuth2Tokenを全て取得します
 func GetOAuth2TokenByUser(userID string) (ts []*OAuth2Token, err error) {
 	err = db.Where("user_id = ?", userID).Find(&ts)
 	return

@@ -24,6 +24,7 @@ func (*OAuth2Client) TableName() string {
 
 // Create : データベースに挿入します
 func (oc *OAuth2Client) Create() (err error) {
+	oc.ID = CreateUUID()
 	_, err = db.MustCols().UseBool().InsertOne(oc)
 	return
 }

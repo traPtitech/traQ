@@ -1779,6 +1779,152 @@ paths:
         "404":
           description: 正常に送信できませんでした。指定されたwebhookは存在しません。
 
+  /users/me/clients:
+    get:
+      tags:
+        - client
+      description: 自分が許可しているクライアントの一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AllowedClientInfo"
+        "403":
+          description: 取得できませんでした。権限がありません。
+
+  /users/me/clients/{clientID}:
+    delete:
+      tags:
+        - client
+      description: 指定したクライアントの認可を取り消します。
+      responses:
+        "204":
+          description: 正常に取り消すことができました。
+        "403":
+          description: 失敗しました。権限がありません。
+        "404":
+          description: 失敗しました。既に取り消されています。
+
+  /clients:
+    get:
+      tags:
+        - client
+      description: 自分が登録しているクライアントの一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OwnedClientInfo"
+        "403":
+          description: 取得できませんでした。権限がありません。
+    post:
+      tags:
+        - client
+      description: クライアントを登録します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - redirectUri
+                - scopes
+              properties:
+                name:
+                  type: string
+                  description: クライアント名(1-32文字)
+                description:
+                  type: string
+                  description: クライアントの説明
+                redirectUri:
+                  type: string
+                  format: uri
+                  description: リダイレクト先のURI
+                scopes:
+                  type: array
+                  description: 要求するスコープ(必ず１つ以上)
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: 正常に登録できました。クライアント情報を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnedClientInfo"
+        "400":
+          description: 登録できませんでした。リクエスト内容が不正です。
+        "403":
+          description: 登録できませんでした。権限がありません。
+
+  /clients/{clientID}:
+    parameters:
+      - $ref: "#/components/parameters/clientIdInPath"
+    get:
+      tags:
+        - client
+      description: 指定したクライアントIDのクライアントの情報を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientInfo"
+        "404":
+          description: 取得できませんでした。指定されたクライアントは存在しません。
+    patch:
+      tags:
+        - client
+      description: 指定したクライアントIDのクライアントの情報を変更します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: クライアント名(1-32文字)
+                description:
+                  type: string
+                  description: 説明
+                redirectUri:
+                  type: string
+                  format: uri
+                  description: リダイレクト先のURI
+      responses:
+        "204":
+          description: 正常に変更できました。
+        "403":
+          description: 変更できませんでした。権限がありません。
+        "404":
+          description: 変更できませんでした。指定されたクライアントは存在しません。
+    delete:
+      tags:
+        - client
+      description: |+
+        指定したクライアントIDのクライアントを削除します。
+        正常に削除された場合、このクライアントを通じての認可は全て取り消されます。
+      responses:
+        "204":
+          description: 正常に削除できました。
+        "403":
+          description: 削除できませんでした。権限がありません。
+        "404":
+          description: 削除できませんでした。指定されたクライアントは存在しません。
+
+
 components:
   parameters:
     channelIdInPath:
@@ -1843,6 +1989,15 @@ components:
       schema:
         type: string
         format: uuid
+    clientIdInPath:
+      name: clientID
+      description: 捜査の対象となるclientのID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
   schemas:
     Channel:
       type: object
@@ -2160,3 +2315,63 @@ components:
         updatedAt:
           type: string
           format: datetime
+
+    ClientInfo:
+      type: object
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        creatorId:
+          type: string
+          format: uuid
+
+    OwnedClientInfo:
+      type: object
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        creatorId:
+          type: string
+          format: uuid
+        scopes:
+          type: array
+          items:
+            type: string
+        redirectUri:
+          type: string
+          format: uri
+        secret:
+          type: string
+
+    AllowedClientInfo:
+      type: object
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        creatorId:
+          type: string
+          format: uuid
+        scopes:
+          type: array
+          items:
+            type: string
+        approvedAt:
+          type: string
+          format: datetime
+        expiresIn:
+          type: integer
