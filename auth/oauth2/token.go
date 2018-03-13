@@ -23,6 +23,7 @@ const (
 
 // Token : OAuth2.0 Access Token構造体
 type Token struct {
+	ID           string
 	ClientID     string
 	UserID       uuid.UUID
 	RedirectURI  string
@@ -213,7 +214,7 @@ func TokenEndpointHandler(c echo.Context) error {
 		}
 
 		// 要求スコープ確認
-		reqScopes, err := splitAndValidateScope(req.Scope)
+		reqScopes, err := SplitAndValidateScope(req.Scope)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)
 		}
@@ -263,7 +264,7 @@ func TokenEndpointHandler(c echo.Context) error {
 		}
 
 		// 要求スコープ確認
-		reqScopes, err := splitAndValidateScope(req.Scope)
+		reqScopes, err := SplitAndValidateScope(req.Scope)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)
 		}
@@ -326,7 +327,7 @@ func TokenEndpointHandler(c echo.Context) error {
 		}
 
 		// 要求スコープ確認
-		reqScopes, err := splitAndValidateScope(req.Scope)
+		reqScopes, err := SplitAndValidateScope(req.Scope)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)
 		}
@@ -365,6 +366,7 @@ func TokenEndpointHandler(c echo.Context) error {
 // IssueAccessToken : AccessTokenを発行します
 func IssueAccessToken(client *Client, userID uuid.UUID, redirectURI string, scope scope.AccessScopes, expire int, refresh bool) (*Token, error) {
 	newToken := &Token{
+		ID:          uuid.NewV4().String(),
 		ClientID:    client.ID,
 		UserID:      userID,
 		RedirectURI: redirectURI,

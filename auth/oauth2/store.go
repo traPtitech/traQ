@@ -27,6 +27,7 @@ type Store interface {
 	DeleteAuthorize(code string) error
 
 	SaveToken(token *Token) error
+	GetTokenByID(id uuid.UUID) (*Token, error)
 	GetTokenByAccess(access string) (*Token, error)
 	DeleteTokenByAccess(access string) error
 	GetTokenByRefresh(refresh string) (*Token, error)
@@ -51,7 +52,7 @@ func (*DefaultStore) GetClient(id string) (*Client, error) {
 		}
 	}
 
-	scope, err := splitAndValidateScope(oc.Scopes)
+	scope, err := SplitAndValidateScope(oc.Scopes)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func (*DefaultStore) GetClientsByUser(userID uuid.UUID) ([]*Client, error) {
 
 	clients := make([]*Client, len(cs))
 	for i, v := range cs {
-		scope, err := splitAndValidateScope(v.Scopes)
+		scope, err := SplitAndValidateScope(v.Scopes)
 		if err != nil {
 			return nil, err
 		}
@@ -173,11 +174,11 @@ func (*DefaultStore) GetAuthorize(code string) (*AuthorizeData, error) {
 		}
 	}
 
-	scope, err := splitAndValidateScope(oa.Scopes)
+	scope, err := SplitAndValidateScope(oa.Scopes)
 	if err != nil {
 		return nil, err
 	}
-	origScope, err := splitAndValidateScope(oa.OriginalScopes)
+	origScope, err := SplitAndValidateScope(oa.OriginalScopes)
 	if err != nil {
 		return nil, err
 	}
@@ -216,6 +217,7 @@ func (*DefaultStore) DeleteAuthorize(code string) error {
 // SaveToken : トークンを保存します
 func (*DefaultStore) SaveToken(token *Token) error {
 	ot := &model.OAuth2Token{
+		ID:           token.ID,
 		ClientID:     token.ClientID,
 		UserID:       token.UserID.String(),
 		RedirectURI:  token.RedirectURI,
@@ -226,6 +228,38 @@ func (*DefaultStore) SaveToken(token *Token) error {
 		CreatedAt:    token.CreatedAt,
 	}
 	return ot.Create()
+}
+
+// GetTokenByID : トークンIDからトークンを取得します
+func (*DefaultStore) GetTokenByID(id uuid.UUID) (*Token, error) {
+	ot, err := model.GetOAUth2TokenByID(id.String())
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return nil, ErrTokenNotFound
+		default:
+			return nil, nil
+		}
+	}
+
+	scope, err := SplitAndValidateScope(ot.Scopes)
+	if err != nil {
+		return nil, err
+	}
+
+	token := &Token{
+		ID:           ot.ID,
+		ClientID:     ot.ClientID,
+		UserID:       uuid.FromStringOrNil(ot.UserID),
+		RedirectURI:  ot.RedirectURI,
+		AccessToken:  ot.AccessToken,
+		RefreshToken: ot.RefreshToken,
+		CreatedAt:    ot.CreatedAt,
+		ExpiresIn:    ot.ExpiresIn,
+		Scopes:       scope,
+	}
+	return token, nil
+
 }
 
 // GetTokenByAccess : アクセストークンからトークンを取得します
@@ -240,12 +274,13 @@ func (*DefaultStore) GetTokenByAccess(access string) (*Token, error) {
 		}
 	}
 
-	scope, err := splitAndValidateScope(ot.Scopes)
+	scope, err := SplitAndValidateScope(ot.Scopes)
 	if err != nil {
 		return nil, err
 	}
 
 	token := &Token{
+		ID:           ot.ID,
 		ClientID:     ot.ClientID,
 		UserID:       uuid.FromStringOrNil(ot.UserID),
 		RedirectURI:  ot.RedirectURI,
@@ -285,12 +320,13 @@ func (*DefaultStore) GetTokenByRefresh(refresh string) (*Token, error) {
 		}
 	}
 
-	scope, err := splitAndValidateScope(ot.Scopes)
+	scope, err := SplitAndValidateScope(ot.Scopes)
 	if err != nil {
 		return nil, err
 	}
 
 	token := &Token{
+		ID:           ot.ID,
 		ClientID:     ot.ClientID,
 		UserID:       uuid.FromStringOrNil(ot.UserID),
 		RedirectURI:  ot.RedirectURI,
@@ -327,12 +363,13 @@ func (*DefaultStore) GetTokensByUser(userID uuid.UUID) ([]*Token, error) {
 
 	tokens := make([]*Token, len(ts))
 	for i, v := range ts {
-		scope, err := splitAndValidateScope(v.Scopes)
+		scope, err := SplitAndValidateScope(v.Scopes)
 		if err != nil {
 			return nil, err
 		}
 
 		tokens[i] = &Token{
+			ID:           v.ID,
 			ClientID:     v.ClientID,
 			UserID:       uuid.FromStringOrNil(v.UserID),
 			RedirectURI:  v.RedirectURI,

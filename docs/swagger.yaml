@@ -1779,11 +1779,11 @@ paths:
         "404":
           description: 正常に送信できませんでした。指定されたwebhookは存在しません。
 
-  /users/me/clients:
+  /users/me/tokens:
     get:
       tags:
         - client
-      description: 自分が許可しているクライアントの一覧を取得します。
+      description: 自分が許可しているクライアントの一覧とトークン情報を取得します。
       responses:
         "200":
           description: 正常に取得できました。
@@ -1796,18 +1796,20 @@ paths:
         "403":
           description: 取得できませんでした。権限がありません。
 
-  /users/me/clients/{clientID}:
+  /users/me/tokens/{oauth2TokenID}:
+    parameters:
+      - $ref: "#/components/parameters/oauth2TokenIdInPath"
     delete:
       tags:
         - client
-      description: 指定したクライアントの認可を取り消します。
+      description: 指定したトークンの認可を取り消します。
       responses:
         "204":
           description: 正常に取り消すことができました。
         "403":
           description: 失敗しました。権限がありません。
         "404":
-          description: 失敗しました。既に取り消されています。
+          description: 失敗しました。指定したトークンは存在しません。
 
   /clients:
     get:
@@ -1991,7 +1993,15 @@ components:
         format: uuid
     clientIdInPath:
       name: clientID
-      description: 捜査の対象となるclientのID
+      description: 操作の対象となるclientのID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    oauth2TokenIdInPath:
+      name: oauth2TokenID
+      description: 操作の対象となるTokenのID
       in: path
       required: true
       schema:
@@ -2356,6 +2366,9 @@ components:
     AllowedClientInfo:
       type: object
       properties:
+        tokenId:
+          type: string
+          format: uuid
         clientId:
           type: string
           format: uuid
@@ -2373,5 +2386,3 @@ components:
         approvedAt:
           type: string
           format: datetime
-        expiresIn:
-          type: integer

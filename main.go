@@ -220,6 +220,15 @@ func main() {
 	e.GET("/.well-known/openid-configuration", openid.DiscoveryHandler)
 	e.GET("/publickeys", openid.PublicKeysHandler)
 
+	// Tag: client
+	api.GET("/users/me/tokens", router.GetMyTokens)
+	api.DELETE("/users/me/tokens/:tokenID", router.DeleteMyToken)
+	api.GET("/clients", router.GetClients)
+	api.POST("/clients", router.PostClients)
+	api.GET("/clients/:clientID", router.GetClient)
+	api.PATCH("/clients/:clientID", router.PatchClient)
+	api.DELETE("/clients/:clientID", router.DeleteClient)
+
 	// Serve UI
 	e.File("/sw.js", "./client/dist/sw.js")
 	e.Static("/static", "./client/dist/static")

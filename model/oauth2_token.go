@@ -24,7 +24,6 @@ func (*OAuth2Token) TableName() string {
 
 // Create : データベースに挿入します
 func (t *OAuth2Token) Create() (err error) {
-	t.ID = CreateUUID()
 	_, err = db.MustCols().UseBool().InsertOne(t)
 	return
 }
@@ -62,6 +61,18 @@ func GetOAuth2TokenByClient(clientID string) (ts []*OAuth2Token, err error) {
 // GetOAuth2TokenByAccess : アクセストークンからOAuth2Tokenを取得します
 func GetOAuth2TokenByAccess(access string) (ot *OAuth2Token, err error) {
 	ok, err := db.Where("access_token = ?", access).Get(ot)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, ErrNotFound
+	}
+	return
+}
+
+// GetOAUth2TokenByID : トークンIDからOAuth2Tokenを取得します
+func GetOAUth2TokenByID(id string) (ot *OAuth2Token, err error) {
+	ok, err := db.ID(id).Get(ot)
 	if err != nil {
 		return nil, err
 	}

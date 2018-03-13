@@ -155,7 +155,7 @@ func AuthorizationEndpointHandler(c echo.Context) error {
 	}
 
 	// スコープ確認
-	reqScopes, err := splitAndValidateScope(req.RawScope)
+	reqScopes, err := SplitAndValidateScope(req.RawScope)
 	if err != nil {
 		q.Set("error", errInvalidScope)
 		return c.Redirect(http.StatusFound, redirectURI+q.Encode())

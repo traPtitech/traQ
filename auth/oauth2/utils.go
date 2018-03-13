@@ -23,7 +23,13 @@ func SetOAuth2Store(s Store) {
 	store = s
 }
 
-func splitAndValidateScope(str string) (scope.AccessScopes, error) {
+// GetOAuth2Store : OAuth2のストアを返します
+func GetOAuth2Store() Store {
+	return store
+}
+
+// SplitAndValidateScope : スペース区切りのスコープ文字列を分解し、検証します
+func SplitAndValidateScope(str string) (scope.AccessScopes, error) {
 	var scopes scope.AccessScopes
 	set := map[scope.AccessScope]struct{}{}
 
