@@ -56,20 +56,20 @@ func (*RBACOverrideStore) GetAllOverrides() ([]rbac.OverrideData, error) {
 // SaveOverride : オーバライドルール保存します
 func (*RBACOverrideStore) SaveOverride(userID uuid.UUID, p gorbac.Permission, validity bool) error {
 	var or RBACOverride
-	ok, err := db.Where("user_id = ? AND permission = ?", userID.String(), p.ID()).Get(&or)
+	ok, err := db.Where("user_id = ? AND permission = ?", userID, p.ID()).Get(&or)
 	if err != nil {
 		return err
 	}
 
 	if ok {
-		if _, err := db.Update(&RBACOverride{Validity: validity}, &RBACOverride{UserID: or.UserID, Permission: or.Permission}); err != nil {
+		if _, err := db.UseBool().Where("user_id = ? AND permission = ?", userID, p.ID()).Update(&RBACOverride{Validity: validity}); err != nil {
 			return err
 		}
 	} else {
 		or.UserID = userID.String()
 		or.Permission = p.ID()
 		or.Validity = validity
-		if _, err := db.InsertOne(&or); err != nil {
+		if _, err := db.UseBool().MustCols().InsertOne(&or); err != nil {
 			return err
 		}
 	}
