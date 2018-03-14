@@ -40,9 +40,17 @@ func (o *RBACOverride) GetValidity() bool {
 }
 
 // GetAllOverrides : オーバライドルールを全て取得します
-func (*RBACOverrideStore) GetAllOverrides() (res []rbac.OverrideData, err error) {
-	err = db.Find(&res)
-	return
+func (*RBACOverrideStore) GetAllOverrides() ([]rbac.OverrideData, error) {
+	var overrides []*RBACOverride
+	if err := db.Find(&overrides); err != nil {
+		return nil, err
+	}
+
+	res := make([]rbac.OverrideData, len(overrides))
+	for i, v := range overrides {
+		res[i] = v
+	}
+	return res, nil
 }
 
 // SaveOverride : オーバライドルール保存します
