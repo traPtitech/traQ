@@ -183,6 +183,10 @@ func main() {
 	api.POST("/messages/:messageID/stamps/:stampID", router.PostMessageStamp)
 	api.DELETE("/messages/:messageID/stamps/:stampID", router.DeleteMessageStamp)
 
+	//Tag: visibility
+	api.GET("users/me/channels/visibility", router.GetChannelsVisibility)
+	api.PUT("users/me/channels/visibility", router.PutChannelsVisibility)
+
 	// Tag: webhook
 	api.GET("/webhooks", router.GetWebhooks)
 	api.POST("/webhooks", router.PostWebhooks)

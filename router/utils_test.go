@@ -3,12 +3,13 @@ package router
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -183,6 +184,17 @@ func mustMakeChannel(t *testing.T, userID, name string, isPublic bool) *model.Ch
 	}
 	require.NoError(t, channel.Create())
 	return channel
+}
+
+func mustMakeInvisibleChannel(t *testing.T, userID, name string, isPublic bool) *model.UserInvisibleChannel {
+	c := mustMakeChannel(t, testUser.ID, name, isPublic)
+	i := &model.UserInvisibleChannel{
+		UserID:    userID,
+		ChannelID: c.ID,
+	}
+	require.NoError(t, i.Create())
+	return i
+
 }
 
 func mustMakeMessage(t *testing.T, userID, channelID string) *model.Message {
