@@ -98,12 +98,7 @@ func GetUsers(c echo.Context) error {
 
 // GetMe GET /users/me のハンドラ
 func GetMe(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
-
-	me, err := model.GetUser(userID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Can't get you")
-	}
+	me := c.Get("user").(*model.User)
 	return c.JSON(http.StatusOK, formatUser(me))
 }
 
@@ -139,24 +134,13 @@ func GetUserIcon(c echo.Context) error {
 
 // GetMyIcon GET /users/me/icon のハンドラ
 func GetMyIcon(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
-
-	user, err := model.GetUser(userID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
+	user := c.Get("user").(*model.User)
 	return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon)
 }
 
 // PutMyIcon Post /users/me/icon のハンドラ
 func PutMyIcon(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
-
-	user, err := model.GetUser(userID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
+	user := c.Get("user").(*model.User)
 
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
@@ -195,7 +179,7 @@ func PutMyIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.UserIconUpdated, events.UserEvent{ID: userID})
+	go notification.Send(events.UserIconUpdated, events.UserEvent{ID: user.ID})
 	return c.NoContent(http.StatusOK)
 }
 
@@ -226,14 +210,7 @@ func PatchMe(c echo.Context) error {
 }
 
 // PostUsers Post /users のハンドラ
-// TODO 暫定的仕様
 func PostUsers(c echo.Context) error {
-	user := c.Get("user").(*model.User)
-
-	if user.Name != "traq" { //TODO 権限をちゃんとする
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
-
 	req := struct {
 		Name     string `json:"name"`
 		Password string `json:"password"`

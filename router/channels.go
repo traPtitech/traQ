@@ -141,7 +141,6 @@ func GetChannelsByChannelID(c echo.Context) error {
 
 // PutChannelsByChannelID PUT /channels/{channelID} のハンドラ
 func PutChannelsByChannelID(c echo.Context) error {
-	// CHECK: 権限周り
 	userID := c.Get("user").(*model.User).ID
 
 	req := struct {
@@ -187,7 +186,6 @@ func PutChannelsByChannelID(c echo.Context) error {
 
 // DeleteChannelsByChannelID DELETE /channels/{channelID}のハンドラ
 func DeleteChannelsByChannelID(c echo.Context) error {
-	// CHECK: 権限周り
 	userID := c.Get("user").(*model.User).ID
 
 	deleteQue := make([]string, 1)
