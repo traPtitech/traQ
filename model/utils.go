@@ -159,6 +159,9 @@ func SyncSchema() error {
 	if _, err := db.Exec("ALTER TABLE `webhooks` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
 		return err
 	}
+	if _, err := db.Exec("ALTER TABLE `rbac_overrides` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
 
 	traq := &User{
 		Name:  "traq",
