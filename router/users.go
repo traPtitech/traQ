@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
+	"github.com/traPtitech/traQ/rbac/role"
 )
 
 // UserForResponse クライアントに返す形のユーザー構造体
@@ -245,6 +246,7 @@ func PostUsers(c echo.Context) error {
 	newUser := &model.User{
 		Name:  req.Name,
 		Email: req.Email,
+		Role:  role.User.ID(),
 	}
 	if err := newUser.SetPassword(req.Password); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError)

@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"errors"
-
 	"github.com/go-xorm/xorm"
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/rbac/role"
 )
 
 var (
@@ -16,6 +16,7 @@ var (
 	// **順番注意**
 	tables = []interface{}{
 		&UserInvisibleChannel{},
+		&RBACOverride{},
 		&Webhook{},
 		&Bot{},
 		&MessageStamp{},
@@ -162,6 +163,7 @@ func SyncSchema() error {
 	traq := &User{
 		Name:  "traq",
 		Email: "trap.titech@gmail.com",
+		Role:  role.Admin.ID(),
 	}
 	ok, err := traq.Exists()
 	if err != nil {

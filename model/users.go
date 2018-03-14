@@ -41,6 +41,7 @@ type User struct {
 	Icon        string    `xorm:"char(36) not null"`
 	Status      int       `xorm:"tinyint not null"`
 	Bot         bool      `xorm:"bool not null"`
+	Role        string    `xorm:"text not null"`
 	CreatedAt   time.Time `xorm:"created not null"`
 	UpdatedAt   time.Time `xorm:"updated not null"`
 }
@@ -66,6 +67,10 @@ func (user *User) Create() error {
 
 	if user.Salt == "" {
 		return fmt.Errorf("salt is empty")
+	}
+
+	if user.Role == "" {
+		return fmt.Errorf("role is empty")
 	}
 
 	user.ID = CreateUUID()

@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"github.com/go-xorm/xorm"
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/rbac/role"
 )
 
 // Webhook : Webhook構造体
@@ -88,6 +89,7 @@ func CreateWebhook(name, description, channelID, creatorID, iconFileID string) (
 		Icon:        "",
 		Status:      1, //TODO
 		Bot:         true,
+		Role:        role.Bot.ID(),
 	}
 
 	//iconがなければ生成
