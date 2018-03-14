@@ -141,8 +141,8 @@ func SyncSchema() error {
 		return err
 	}
 	if _, err := db.Exec("ALTER TABLE `users_invisible_channels` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-    return err
-  }
+		return err
+	}
 	if _, err := db.Exec("ALTER TABLE `bots` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
 		return err
 	}
