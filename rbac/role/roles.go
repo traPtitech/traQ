@@ -17,10 +17,6 @@ var (
 
 // SetRole : rbacに既定のロールをセットします
 func SetRole(rbac *rbac.RBAC) {
-	rbac.Add(Admin)
-	rbac.Add(User)
-	rbac.Add(Bot)
-
 	// 一般ユーザーのパーミッション
 	for _, p := range []gorbac.Permission{
 		permission.CreateChannels,
@@ -28,15 +24,31 @@ func SetRole(rbac *rbac.RBAC) {
 		permission.GetChannels,
 		permission.PatchChannel,
 	} {
-		User.Permit(p)
+		if err := User.Assign(p); err != nil {
+			panic(err)
+		}
 	}
 
 	// 管理者ユーザーのパーミッション
 	// ※一般ユーザーのパーミッションを全て含む
-	rbac.SetParent(Admin.ID(), User.ID())
 	for _, p := range []gorbac.Permission{
 		permission.DeleteChannel,
 	} {
-		Admin.Permit(p)
+		if err := Admin.Assign(p); err != nil {
+			panic(err)
+		}
+	}
+
+	for _, r := range []gorbac.Role{
+		Bot,
+		User,
+		Admin,
+	} {
+		if err := rbac.Add(r); err != nil {
+			panic(err)
+		}
+	}
+	if err := rbac.SetParent(Admin.ID(), User.ID()); err != nil {
+		panic(err)
 	}
 }
