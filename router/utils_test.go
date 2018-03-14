@@ -19,6 +19,7 @@ import (
 	"github.com/srinathgs/mysqlstore"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac/role"
 )
 
 var (
@@ -26,6 +27,7 @@ var (
 		Name:  "testUser",
 		Email: "example@trap.jp",
 		Icon:  "empty",
+		Role:  role.User.ID(),
 	}
 	engine *xorm.Engine
 )
@@ -258,6 +260,7 @@ func mustCreateUser(t *testing.T, name string) *model.User {
 		Name:  name,
 		Email: "example@trap.jp",
 		Icon:  "empty",
+		Role:  role.User.ID(),
 	}
 	require.NoError(t, user.SetPassword("test"))
 	require.NoError(t, user.Create())
