@@ -141,18 +141,6 @@ paths:
       tags:
         - channel
       description: チャンネルを削除します。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - confirm
-              properties:
-                confirm:
-                  type: boolean
-                  description: 削除してもいいか確認したか
-              example: true
       responses:
         "204":
           description: 削除に成功しました。
