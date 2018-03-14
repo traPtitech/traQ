@@ -12,7 +12,7 @@ func TestNew(t *testing.T) {
 	t.Parallel()
 	assert := assert.New(t)
 
-	rbac := New(nil)
+	rbac, _ := New(nil)
 	if assert.NotNil(rbac) {
 		assert.NotNil(rbac.overrides)
 	}
@@ -23,7 +23,7 @@ func TestRBAC_IsGranted(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	rbac := New(nil)
+	rbac, _ := New(nil)
 	u1 := uuid.NewV4()
 	rA := gorbac.NewStdRole("role-a")
 	rB := gorbac.NewStdRole("role-b")
@@ -56,7 +56,7 @@ func TestRBAC_Override(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 
-	rbac := New(nil)
+	rbac, _ := New(nil)
 	u1 := uuid.NewV4()
 	rA := gorbac.NewStdRole("role-a")
 	rB := gorbac.NewStdRole("role-b")

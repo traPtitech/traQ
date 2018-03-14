@@ -17,6 +17,9 @@ import (
 	"github.com/srinathgs/mysqlstore"
 	"github.com/traPtitech/traQ/external"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac"
+	"github.com/traPtitech/traQ/rbac/permission"
+	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/router"
 )
 
@@ -72,9 +75,17 @@ func main() {
 		panic(err)
 	}
 
+	// Init Caches
 	if err := model.InitCache(); err != nil {
 		panic(err)
 	}
+
+	// Init Role-Based Access Controller
+	r, err := rbac.New(&model.RBACOverrideStore{})
+	if err != nil {
+		panic(err)
+	}
+	role.SetRole(r)
 
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -101,11 +112,11 @@ func main() {
 	apiNoAuth := e.Group("/api/1.0")
 
 	// Tag: channel
-	api.GET("/channels", router.GetChannels)
-	api.POST("/channels", router.PostChannels)
-	api.GET("/channels/:channelID", router.GetChannelsByChannelID)
-	api.PUT("/channels/:channelID", router.PutChannelsByChannelID)
-	api.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID)
+	api.GET("/channels", r.HandleWithRBAC(permission.GetChannels, router.GetChannels))
+	api.POST("/channels", r.HandleWithRBAC(permission.CreateChannels, router.PostChannels))
+	api.GET("/channels/:channelID", r.HandleWithRBAC(permission.GetChannel, router.GetChannelsByChannelID))
+	api.PUT("/channels/:channelID", r.HandleWithRBAC(permission.PatchChannel, router.PutChannelsByChannelID))
+	api.DELETE("/channels/:channelID", r.HandleWithRBAC(permission.DeleteChannel, router.DeleteChannelsByChannelID))
 
 	// Tag: Topic
 	api.GET("/channels/:channelID/topic", router.GetTopic)

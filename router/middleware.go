@@ -29,6 +29,8 @@ func GetUserInfo(next echo.HandlerFunc) echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Cannot get your user information")
 		}
 		c.Set("user", user)
+		c.Set("userRole", user.Role)
+		c.Set("userID", userID)
 		return next(c)
 	}
 }

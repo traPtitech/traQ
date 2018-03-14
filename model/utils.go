@@ -163,7 +163,6 @@ func SyncSchema() error {
 	traq := &User{
 		Name:  "traq",
 		Email: "trap.titech@gmail.com",
-		Role:  role.Admin.ID(),
 	}
 	ok, err := traq.Exists()
 	if err != nil {
@@ -173,6 +172,7 @@ func SyncSchema() error {
 		traq.SetPassword("traq")
 		traq.ID = CreateUUID()
 		traq.Icon = ""
+		traq.Role = role.Admin.ID()
 		if _, err := db.Insert(traq); err != nil {
 			return err
 		}

@@ -23,7 +23,7 @@ ID系は全部UUID(string)
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
 | user_id | CHAR(36) | PRIMARY KEY | botユーザーID |
-| permission | TEXT | NOT NULL | パーミッション名 |
+| permission | VARCHAR(50) | NOT NULL | パーミッション名 |
 | validity | BOOLEAN | NOT NULL | 有効かどうか |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
 

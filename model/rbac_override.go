@@ -11,7 +11,7 @@ import (
 // RBACOverride rbac.OverrideDataインターフェイスの実装
 type RBACOverride struct {
 	UserID     string    `xorm:"char(36) not null unique(user_permission)"`
-	Permission string    `xorm:"text not null unique(user_permission)"`
+	Permission string    `xorm:"varchar(50) not null unique(user_permission)"`
 	Validity   bool      `xorm:"bool not null"`
 	CreatedAt  time.Time `xorm:"created"`
 }
