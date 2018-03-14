@@ -11,11 +11,14 @@ import (
 
 // FileForResponse クライアントに返すファイル構造体
 type FileForResponse struct {
-	ID       string `json:"fileId"`
-	Name     string `json:"name"`
-	Mime     string `json:"mime"`
-	Size     int64  `json:"size"`
-	DateTime string `json:"datetime"`
+	ID          string `json:"fileId"`
+	Name        string `json:"name"`
+	Mime        string `json:"mime"`
+	Size        int64  `json:"size"`
+	DateTime    string `json:"datetime"`
+	HasThumb    bool   `json:"hasThumb"`
+	ThumbWidth  int    `json:"thumbWidth,omitempty"`
+	ThumbHeight int    `json:"thumbHeight,omitempty"`
 }
 
 // PostFile POST /files のハンドラ
@@ -106,16 +109,39 @@ func GetMetaDataByFileID(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatFile(meta))
 }
 
-// TODO: そのうち実装
-// GetThumbnailByID GET /files/{fileID}/thumbnail
+// GetThumbnailByID : GET /files/{fileID}/thumbnail
+func GetThumbnailByID(c echo.Context) error {
+	ID := c.Param("fileID")
+
+	meta, err := validateFileID(ID)
+	if err != nil {
+		return err
+	}
+	if !meta.HasThumbnail {
+		return echo.NewHTTPError(http.StatusNotFound, "The specified file exists, but its thumbnail doesn't.")
+	}
+
+	file, err := meta.OpenThumbnail()
+	if err != nil {
+		c.Echo().Logger.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	defer file.Close()
+	c.Response().Header().Set("Cache-Control", "private, max-age=31536000") //1年間キャッシュ
+
+	return c.Stream(http.StatusOK, "image/jpeg", file)
+}
 
 func formatFile(f *model.File) *FileForResponse {
 	return &FileForResponse{
-		ID:       f.ID,
-		Name:     f.Name,
-		Mime:     f.Mime,
-		Size:     f.Size,
-		DateTime: f.CreatedAt.String(),
+		ID:          f.ID,
+		Name:        f.Name,
+		Mime:        f.Mime,
+		Size:        f.Size,
+		DateTime:    f.CreatedAt.String(),
+		HasThumb:    f.HasThumbnail,
+		ThumbWidth:  f.ThumbnailWidth,
+		ThumbHeight: f.ThumbnailHeight,
 	}
 }
 

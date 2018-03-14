@@ -15,17 +15,21 @@ import (
 
 // UserForResponse クライアントに返す形のユーザー構造体
 type UserForResponse struct {
-	UserID string `json:"userId"`
-	Name   string `json:"name"`
-	IconID string `json:"iconFileId"`
+	UserID      string `json:"userId"`
+	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
+	IconID      string `json:"iconFileId"`
+	Bot         bool   `json:"bot"`
 }
 
 // UserDetailForResponse クライアントに返す形の詳細ユーザー構造体
 type UserDetailForResponse struct {
-	UserID  string            `json:"userId"`
-	Name    string            `json:"name"`
-	IconID  string            `json:"iconFileId"`
-	TagList []*TagForResponse `json:"tagList"`
+	UserID      string            `json:"userId"`
+	Name        string            `json:"name"`
+	DisplayName string            `json:"displayName"`
+	IconID      string            `json:"iconFileId"`
+	Bot         bool              `json:"bot"`
+	TagList     []*TagForResponse `json:"tagList"`
 }
 
 type loginRequestBody struct {
@@ -194,6 +198,32 @@ func PutMyIcon(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
+// PatchMe PUT /users/me
+func PatchMe(c echo.Context) error {
+	user := c.Get("user").(*model.User)
+
+	req := struct {
+		DisplayName *string `json:"displayName"`
+	}{}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+	if req.DisplayName != nil {
+		if err := user.UpdateDisplayName(*req.DisplayName); err != nil {
+			switch err {
+			case model.ErrUserInvalidDisplayName:
+				return echo.NewHTTPError(http.StatusBadRequest, err)
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+		}
+	}
+
+	go notification.Send(events.UserUpdated, events.UserEvent{ID: user.ID})
+	return c.NoContent(http.StatusNoContent)
+}
+
 // PostUsers Post /users のハンドラ
 // TODO 暫定的仕様
 func PostUsers(c echo.Context) error {
@@ -228,19 +258,31 @@ func PostUsers(c echo.Context) error {
 }
 
 func formatUser(user *model.User) *UserForResponse {
-	return &UserForResponse{
-		UserID: user.ID,
-		Name:   user.Name,
-		IconID: user.Icon,
+	res := &UserForResponse{
+		UserID:      user.ID,
+		Name:        user.Name,
+		DisplayName: user.DisplayName,
+		IconID:      user.Icon,
+		Bot:         user.Bot,
 	}
+	if len(res.DisplayName) == 0 {
+		res.DisplayName = res.Name
+	}
+	return res
 }
 
 func formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailForResponse, error) {
 	userDetail := &UserDetailForResponse{
-		UserID: user.ID,
-		Name:   user.Name,
-		IconID: user.Icon,
+		UserID:      user.ID,
+		Name:        user.Name,
+		DisplayName: user.DisplayName,
+		IconID:      user.Icon,
+		Bot:         user.Bot,
 	}
+	if len(userDetail.DisplayName) == 0 {
+		userDetail.DisplayName = userDetail.Name
+	}
+
 	for _, tag := range tagList {
 		formattedTag, err := formatTag(tag)
 		if err != nil {

@@ -7,12 +7,14 @@ ID系は全部UUID(string)
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
 | id | CHAR(36) | PRIMARY KEY | ユーザーID |
-| name | VARCHAR(32) | NOT NULL, UNIQUE | 表示名 |
+| name | VARCHAR(32) | NOT NULL, UNIQUE | 英数字名 |
+| display_name | VARCHAR(32) | NOT NULL | 表示名 |
 | email | TEXT | NOT NULL | メールアドレス |
 | password | CHAR(128) | NOT NULL | ハッシュ化されたパスワード |
 | salt | CHAR(128) | NOT NULL | パスワードソルト |
 | icon | CHAR(36) | NOT NULL | アイコンのファイルID |
 | status | TINYINT | NOT NULL | アカウントの状態 |
+| bot | BOOLEAN | NOT NULL | botアカウントか |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL | 更新日時 |
 
@@ -25,6 +27,26 @@ ID系は全部UUID(string)
 | updated_at | TIMESTAMP | NOT NULL | 更新日時 |
 
 user_idとauthority_typeの複合ユニーク制約
+
+## bots
+| カラム名 | 型 | 属性 | 説明など | 
+| --- | --- | --- | --- |
+| user_id | CHAR(36) | PRIMARY KEY (外部キー) | botユーザーID |
+| type | INT | NOT NULL | 1:汎用bot, 2:webhook |
+| description | TEXT | NOT NULL | 説明 |
+| is_valid | BOOLEAN | NOT NULL | 有効かどうか |
+| creator_id | CHAR(36) | NOT NULL (外部キー) | 登録者 |
+| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+| updater_id | CHAR(36) | NOT NULL (外部キー) | 更新者 | 
+| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+
+## webhooks
+
+| カラム名 | 型 | 属性 | 説明など | 
+| --- | --- | --- | --- |
+| id | CHAR(36) | NOT NULL PRIMARY KEY | webhookID |
+| user_id | CHAR(36) | NOT NULL (外部キー) | botユーザーID |
+| channel_id | CHAR(36) | NOT NULL (外部キー) | 投稿先のデフォルトチャンネルID |
 
 ## users_tags
 
@@ -136,6 +158,9 @@ user_idとmessage_idの複合主キー
 | is_deleted | BOOLEAN | NOT NULL | 削除されているか |
 | hash | CHAR(32) | NOT NULL | ハッシュ値 |
 | manager | VARCHAR(30) | NOT NULL DEFAULT '' | マネージャー名(空文字はデフォルトマネージャー) |
+| has_thumbnail | BOOLEAN | NOT NULL | サムネイルがあるか |
+| thumbnail_width | INT | NOT NULL | サムネイルの幅 |
+| thumbnail_height | INT | NOT NULL | サムネイルの高さ |
 | created_at | TIMESTAMP | NOT NULL | 投稿日時 |
 
 ## stars

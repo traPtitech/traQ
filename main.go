@@ -55,10 +55,6 @@ func main() {
 		panic(err)
 	}
 
-	if err := model.InitCache(); err != nil {
-		panic(err)
-	}
-
 	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
 	if err != nil {
 		panic(err)
@@ -73,6 +69,10 @@ func main() {
 		os.Getenv("OS_TENANT_ID"),   //v2のみ
 		os.Getenv("OS_AUTH_URL"),
 	); err != nil {
+		panic(err)
+	}
+
+	if err := model.InitCache(); err != nil {
 		panic(err)
 	}
 
@@ -98,6 +98,7 @@ func main() {
 
 	api := e.Group("/api/1.0")
 	api.Use(router.GetUserInfo)
+	apiNoAuth := e.Group("/api/1.0")
 
 	// Tag: channel
 	api.GET("/channels", router.GetChannels)
@@ -121,6 +122,7 @@ func main() {
 	// Tag: users
 	api.GET("/users", router.GetUsers)
 	api.GET("/users/me", router.GetMe)
+	api.PATCH("/users/me", router.PatchMe)
 	api.GET("/users/me/icon", router.GetMyIcon)
 	api.PUT("/users/me/icon", router.PutMyIcon)
 	api.GET("/users/:userID", router.GetUserByID)
@@ -163,6 +165,7 @@ func main() {
 	api.GET("/files/:fileID", router.GetFileByID)
 	api.DELETE("/files/:fileID", router.DeleteFileByID)
 	api.GET("/files/:fileID/meta", router.GetMetaDataByFileID)
+	api.GET("/files/:fileID/thumbnail", router.GetThumbnailByID)
 
 	// Tag: pin
 	api.GET("/channels/:channelID/pin", router.GetChannelPin)
@@ -184,7 +187,17 @@ func main() {
 	api.GET("users/me/channels/visibility", router.GetChannelsVisibility)
 	api.PUT("users/me/channels/visibility", router.PutChannelsVisibility)
 
+	// Tag: webhook
+	api.GET("/webhooks", router.GetWebhooks)
+	api.POST("/webhooks", router.PostWebhooks)
+	api.GET("/webhooks/:webhookID", router.GetWebhook)
+	api.PATCH("/webhooks/:webhookID", router.PatchWebhook)
+	api.DELETE("/webhooks/:webhookID", router.DeleteWebhook)
+	apiNoAuth.POST("/webhooks/:webhookID", router.PostWebhook)
+	apiNoAuth.POST("/webhooks/:webhookID/github", router.PostWebhookByGithub)
+
 	// Serve UI
+	e.File("/sw.js", "./client/dist/sw.js")
 	e.Static("/static", "./client/dist/static")
 	e.File("*", "./client/dist/index.html")
 

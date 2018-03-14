@@ -53,7 +53,7 @@ func Send(eventType events.EventType, payload interface{}) {
 	}
 
 	switch eventType {
-	case events.UserJoined, events.UserLeft, events.UserTagsUpdated, events.UserIconUpdated:
+	case events.UserJoined, events.UserLeft, events.UserUpdated, events.UserTagsUpdated, events.UserIconUpdated:
 		data, _ := payload.(events.UserEvent)
 		multicastToAll(&eventData{
 			EventType: eventType,

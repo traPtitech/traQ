@@ -16,6 +16,8 @@ var (
 	// **順番注意**
 	tables = []interface{}{
 		&UserInvisibleChannel{},
+		&Webhook{},
+		&Bot{},
 		&MessageStamp{},
 		&Stamp{},
 		&Clip{},
@@ -139,6 +141,21 @@ func SyncSchema() error {
 		return err
 	}
 	if _, err := db.Exec("ALTER TABLE `users_invisible_channels` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+    return err
+  }
+	if _, err := db.Exec("ALTER TABLE `bots` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `bots` ADD FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `bots` ADD FOREIGN KEY (`updater_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `webhooks` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
+	if _, err := db.Exec("ALTER TABLE `webhooks` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
 		return err
 	}
 
@@ -191,6 +208,15 @@ func InitCache() error {
 			return err
 		}
 		channelPathMap.Store(uuid.FromStringOrNil(v.ID), path)
+	}
+
+	// サムネイル未作成なファイルのサムネイル作成を試みる
+	var files []*File
+	if err := db.Where("is_deleted = false AND has_thumbnail = false").Find(&files); err != nil {
+		return err
+	}
+	for _, f := range files {
+		f.RegenerateThumbnail()
 	}
 
 	return nil
