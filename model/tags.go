@@ -47,7 +47,7 @@ func GetTagByID(ID string) (*Tag, error) {
 		return nil, fmt.Errorf("Failed to get tag: %v", err)
 	}
 	if !has {
-		return nil, fmt.Errorf("tag has this ID is not found: ID = %s", ID)
+		return nil, ErrNotFound
 	}
 	return tag, nil
 }

@@ -17,10 +17,11 @@ type TagForResponse struct {
 	IsLocked bool   `json:"isLocked"`
 }
 
-// TagListTagForResponse /tags 用の構造体
-type TagListTagForResponse struct {
-	ID  string `json:"tagId"`
-	Tag string `json:"tag"`
+// TagListForResponse クライアントに返す形のタグリスト構造体
+type TagListForResponse struct {
+	ID    string             `json:"tagId"`
+	Tag   string             `json:"tag"`
+	Users []*UserForResponse `json:"users"`
 }
 
 // GetUserTags /users/{userID}/tags のGETメソッド
@@ -118,13 +119,50 @@ func GetAllTags(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	res := make([]*TagListTagForResponse, len(tags))
+	res := make([]*TagListForResponse, len(tags))
 
 	for i, v := range tags {
-		res[i] = &TagListTagForResponse{
-			ID:  v.ID,
-			Tag: v.Name,
+		var users []*UserForResponse
+		users, err := getUsersByTagName(v.Name, c)
+		if err != nil {
+			c.Logger().Errorf("failed to get users by tagID: %v", err)
+			return err
 		}
+
+		res[i] = &TagListForResponse{
+			ID:    v.ID,
+			Tag:   v.Name,
+			Users: users,
+		}
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+// GetUsersByTagID GET /tags/{tagID} のハンドラ
+func GetUsersByTagID(c echo.Context) error {
+	id := c.Param("tagID")
+
+	t, err := model.GetTagByID(id)
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "TagID doesn't exist")
+		default:
+			c.Logger().Errorf("failed to get tag: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while checking existence of tag")
+		}
+	}
+
+	users, err := getUsersByTagName(t.Name, c)
+	if err != nil {
+		return err
+	}
+
+	res := &TagListForResponse{
+		ID:    t.ID,
+		Tag:   t.Name,
+		Users: users,
 	}
 
 	return c.JSON(http.StatusOK, res)
@@ -146,6 +184,25 @@ func getUserTags(ID string) ([]*TagForResponse, error) {
 	}
 	return res, nil
 
+}
+
+func getUsersByTagName(name string, c echo.Context) ([]*UserForResponse, error) {
+	var users []*UserForResponse
+
+	userIDs, err := model.GetUserIDsByTags([]string{name})
+	if err != nil {
+		c.Logger().Errorf("failed to get users by tagID: %v", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get userList")
+	}
+	for _, userID := range userIDs {
+		u, err := model.GetUser(userID.String())
+		if err != nil {
+			c.Logger().Errorf("failed to get user infomation: %v", err)
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get users")
+		}
+		users = append(users, formatUser(u))
+	}
+	return users, nil
 }
 
 func formatTag(userTag *model.UsersTag) (*TagForResponse, error) {

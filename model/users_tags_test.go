@@ -91,3 +91,18 @@ func TestGetTag(t *testing.T) {
 	_, err = GetTag(user.ID, "wrong_id")
 	assert.Error(err)
 }
+
+func TestGetUserIDsByTags(t *testing.T) {
+	assert, _, _, _ := beforeTest(t)
+	tagText := "tagTest"
+
+	for i := 0; i < 5; i++ {
+		u := mustMakeUser(t, "tagTest-"+strconv.Itoa(i))
+		tag := &UsersTag{UserID: u.ID}
+		require.NoError(t, tag.Create(tagText))
+	}
+
+	IDs, err := GetUserIDsByTags([]string{tagText})
+	assert.NoError(err)
+	assert.Equal(5, len(IDs))
+}

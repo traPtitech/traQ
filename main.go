@@ -149,6 +149,7 @@ func main() {
 	api.PUT("/users/:userID/tags/:tagID", router.PutUserTag)
 	api.DELETE("/users/:userID/tags/:tagID", router.DeleteUserTag)
 	api.GET("/tags", router.GetAllTags)
+	api.GET("/tags/{tagID}", router.GetUsersByTagID)
 
 	// Tag: heartbeat
 	api.GET("/heartbeat", router.GetHeartbeat)

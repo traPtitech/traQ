@@ -87,11 +87,11 @@ func GetTag(userID, tagID string) (*UsersTag, error) {
 	return &tag, nil
 }
 
-// GetUserIdsByTags 指定したタグを持った全ユーザーのUUIDを返します
-func GetUserIdsByTags(tags []string) ([]uuid.UUID, error) {
+// GetUserIDsByTags 指定したタグを持った全ユーザーのUUIDを返します
+func GetUserIDsByTags(tags []string) ([]uuid.UUID, error) {
 	var arr []string
 
-	if err := db.Table(&UsersTag{}).Join("INNER", &Tag{}, "users_tags.tag_id = tags.id").Where(builder.In("tags.name", tags)).Cols("user_id").Find(&arr); err != nil {
+	if err := db.Table(&UsersTag{}).Join("INNER", "tags", "users_tags.tag_id = tags.id").Where(builder.In("tags.name", tags)).Cols("user_id").Find(&arr); err != nil {
 		return nil, fmt.Errorf("failed to get user ids by tag: %v", err)
 	}
 
