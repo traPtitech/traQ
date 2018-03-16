@@ -838,6 +838,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TagList"
+        "400":
+          description: |+
+            正常に追加できませんでした。
+            パラメータの形式が不正です。
         "404":
           description: |+
             正常に追加できませんでした。
@@ -872,6 +876,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TagList"
+        "400":
+          description: |+
+            正常に変更できませんでした。
+            パラメータの形式が不正です。
         "404":
           description: |+
             正常に変更できませんでした。
