@@ -1,12 +1,13 @@
 package model
 
 import (
-	"fmt"
-
 	"errors"
+	"fmt"
+	"regexp"
 
 	"github.com/go-xorm/xorm"
 	"github.com/satori/go.uuid"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 var (
@@ -35,12 +36,53 @@ var (
 		&User{},
 	}
 
+	// 外部キー制約
+	constraints = []string{
+		"ALTER TABLE `channels` ADD FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `channels` ADD FOREIGN KEY (`updater_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `users_private_channels` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `users_private_channels` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `messages` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `messages` ADD FOREIGN KEY (`updater_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `messages` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `users_tags` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `users_tags` ADD FOREIGN KEY (`tag_id`) REFERENCES `tags`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `unreads` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `unreads` ADD FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `devices` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `files` ADD FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `stars` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `stars` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `users_subscribe_channels` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `users_subscribe_channels` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `clips` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `clips` ADD FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `pins` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `pins` ADD FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `pins` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `clips` ADD FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `messages_stamps` ADD FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `messages_stamps` ADD FOREIGN KEY (`stamp_id`) REFERENCES `stamps`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `messages_stamps` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `stamps` ADD FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `stamps` ADD FOREIGN KEY (`file_id`) REFERENCES `files`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `users_invisible_channels` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `users_invisible_channels` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `bots` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `bots` ADD FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `bots` ADD FOREIGN KEY (`updater_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `webhooks` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `webhooks` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+	}
+
 	serverUser *User
 
 	// ErrNotFoundOrForbidden : 汎用エラー 見つからないかスコープ外にある場合のエラー
 	ErrNotFoundOrForbidden = errors.New("not found or forbidden")
 	// ErrNotFound : 汎用エラー 見つからない場合のエラー
 	ErrNotFound = errors.New("not found")
+
+	validate *validator.Validate
 )
 
 // SetXORMEngine DBにxormのエンジンを設定する
@@ -53,130 +95,21 @@ func SyncSchema() error {
 	if err := db.Sync(tables...); err != nil {
 		return fmt.Errorf("failed to sync Table schema: %v", err)
 	}
-	if _, err := db.Exec("ALTER TABLE `channels` ADD FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `channels` ADD FOREIGN KEY (`updater_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `users_private_channels` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `users_private_channels` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `messages` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `messages` ADD FOREIGN KEY (`updater_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `messages` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `users_tags` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `users_tags` ADD FOREIGN KEY (`tag_id`) REFERENCES `tags`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `unreads` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `unreads` ADD FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `devices` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `files` ADD FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `stars` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `stars` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `users_subscribe_channels` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `users_subscribe_channels` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `clips` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `clips` ADD FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `pins` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `pins` ADD FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `pins` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `clips` ADD FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `messages_stamps` ADD FOREIGN KEY (`message_id`) REFERENCES `messages`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `messages_stamps` ADD FOREIGN KEY (`stamp_id`) REFERENCES `stamps`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `messages_stamps` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `stamps` ADD FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `stamps` ADD FOREIGN KEY (`file_id`) REFERENCES `files`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `users_invisible_channels` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `users_invisible_channels` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `bots` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `bots` ADD FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `bots` ADD FOREIGN KEY (`updater_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `webhooks` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-	if _, err := db.Exec("ALTER TABLE `webhooks` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
-		return err
-	}
-
-	traq := &User{
-		Name:  "traq",
-		Email: "trap.titech@gmail.com",
-	}
-	ok, err := traq.Exists()
-	if err != nil {
-		return err
-	}
-	if !ok {
-		traq.SetPassword("traq")
-		traq.ID = CreateUUID()
-		traq.Icon = ""
-		if _, err := db.Insert(traq); err != nil {
+	for _, sql := range constraints {
+		if _, err := db.Exec(sql); err != nil {
 			return err
 		}
 	}
-	serverUser = traq
 
+	// TODO: 初回起動時にgeneralチャンネルを作りたい
+
+	serverUser = &User{Name: "traq", Email: "trap.titech@gmail.com"}
+	if ok, err := serverUser.Exists(); err != nil {
+		return err
+	} else if !ok {
+		serverUser.SetPassword("traq")
+		return serverUser.Create()
+	}
 	return nil
 }
 
@@ -220,4 +153,16 @@ func InitCache() error {
 	}
 
 	return nil
+}
+
+func validateStruct(i interface{}) error {
+	if validate == nil {
+		validate = validator.New()
+
+		name := regexp.MustCompile(`^[a-zA-Z0-9_-]{1,32}$`)
+		validate.RegisterValidation("name", func(fl validator.FieldLevel) bool {
+			return name.MatchString(fl.Field().String())
+		})
+	}
+	return validate.Struct(i)
 }
