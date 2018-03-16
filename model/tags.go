@@ -1,9 +1,5 @@
 package model
 
-import (
-	"fmt"
-)
-
 // Tag tag_idの管理をする構造体
 type Tag struct {
 	ID   string `xorm:"char(36) pk"`
@@ -11,29 +7,30 @@ type Tag struct {
 }
 
 // TableName DBの名前を指定
-func (tag *Tag) TableName() string {
+func (*Tag) TableName() string {
 	return "tags"
 }
 
 // Create DBにタグを追加
-func (tag *Tag) Create() error {
-	if tag.Name == "" {
-		return fmt.Errorf("Name is empty")
+func (t *Tag) Create() error {
+	if t.Name == "" {
+		return ErrInvalidParam
 	}
-	tag.ID = CreateUUID()
 
-	if _, err := db.Insert(tag); err != nil {
-		return fmt.Errorf("Failed to create tags object: %v", err)
+	t.ID = CreateUUID()
+
+	if _, err := db.Insert(t); err != nil {
+		return err
 	}
 	return nil
 }
 
 // Exists DBにその名前のタグが存在するかを確認
-func (tag *Tag) Exists() (bool, error) {
-	if tag.Name == "" {
-		return false, fmt.Errorf("Name is empty")
+func (t *Tag) Exists() (bool, error) {
+	if t.Name == "" {
+		return false, ErrInvalidParam
 	}
-	return db.Get(tag)
+	return db.Get(t)
 }
 
 // GetTagByID 引数のIDを持つTag構造体を返す
@@ -44,7 +41,7 @@ func GetTagByID(ID string) (*Tag, error) {
 
 	has, err := db.Get(tag)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get tag: %v", err)
+		return nil, err
 	}
 	if !has {
 		return nil, ErrNotFound
