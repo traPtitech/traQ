@@ -40,13 +40,7 @@ func TestPostClips(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(PostClips), cookie, req)
 
-	if assert.EqualValues(http.StatusCreated, rec.Code) {
-		var responseBody []MessageForResponse
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.Len(responseBody, 1)
-			assert.Equal(message.Text, responseBody[0].Content)
-		}
-	}
+	assert.EqualValues(http.StatusNoContent, rec.Code)
 }
 
 func TestDeleteClips(t *testing.T) {
@@ -66,10 +60,5 @@ func TestDeleteClips(t *testing.T) {
 	req := httptest.NewRequest("DELETE", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(DeleteClips), cookie, req)
 
-	if assert.EqualValues(http.StatusOK, rec.Code) {
-		var responseBody []MessageForResponse
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.Len(responseBody, 0)
-		}
-	}
+	assert.EqualValues(http.StatusNoContent, rec.Code)
 }
