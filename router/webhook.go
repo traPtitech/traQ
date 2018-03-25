@@ -48,7 +48,6 @@ func GetWebhooks(c echo.Context) error {
 
 // PostWebhooks : POST /webhooks
 func PostWebhooks(c echo.Context) error {
-	//TODO ユーザー権限によって403にする
 	userID := c.Get("user").(*model.User).ID
 
 	req := struct {
@@ -255,7 +254,7 @@ func PatchWebhook(c echo.Context) error {
 		wb.Description = req.Description
 	}
 
-	if err := wb.Update(); err != nil {
+	if err := wb.Bot.Update(); err != nil {
 		switch err {
 		case model.ErrBotInvalidName:
 			return echo.NewHTTPError(http.StatusBadRequest, err)

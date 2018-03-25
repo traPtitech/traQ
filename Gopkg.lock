@@ -19,8 +19,23 @@
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
-  revision = "dbeaa9332f19a944acb5736b4456cfcc02140e29"
-  version = "v3.1.0"
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
+
+[[projects]]
+  name = "github.com/go-playground/locales"
+  packages = [
+    ".",
+    "currency"
+  ]
+  revision = "f63010822830b6fe52288ee52d5a1151088ce039"
+  version = "v0.12.1"
+
+[[projects]]
+  name = "github.com/go-playground/universal-translator"
+  packages = ["."]
+  revision = "b32fa301c9fe55953584134cb6853a13c87ec0a1"
+  version = "v0.16.0"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
@@ -32,7 +47,7 @@
   branch = "master"
   name = "github.com/go-xorm/builder"
   packages = ["."]
-  revision = "a4a881a4e552fcb5473f39e8b9f7d9f3457a7fb0"
+  revision = "a9b7ffcca3f0c6445c4e3b1bf72c01578817a6c3"
 
 [[projects]]
   name = "github.com/go-xorm/core"
@@ -55,8 +70,8 @@
 [[projects]]
   name = "github.com/gorilla/securecookie"
   packages = ["."]
-  revision = "667fe4e3466a040b780561fe9b51a83a3753eefc"
-  version = "v1.1"
+  revision = "e59506cc896acb7f7bf732d4fdf5e25f7ccd8983"
+  version = "v1.1.1"
 
 [[projects]]
   name = "github.com/gorilla/sessions"
@@ -70,14 +85,14 @@
     ".",
     "middleware"
   ]
-  revision = "b338075a0fc6e1a0683dbf03d09b4957a289e26f"
-  version = "3.2.6"
+  revision = "a5d81b8d4a627f3f49dcb3164ef2bb5239682227"
+  version = "3.3.4"
 
 [[projects]]
   name = "github.com/labstack/echo-contrib"
   packages = ["session"]
-  revision = "4036746d4b33517e42af3502522b759b0c99f44c"
-  version = "0.4.0"
+  revision = "7d9d9632a4aadf9b026436e43d5f96eca2d895a6"
+  version = "0.5.2"
 
 [[projects]]
   name = "github.com/labstack/gommon"
@@ -87,8 +102,8 @@
     "log",
     "random"
   ]
-  revision = "57409ada9da0f2afad6664c49502f8c50fbd8476"
-  version = "0.2.3"
+  revision = "6fe1405d73ec4bd4cd8a4ac8e2a2b2bf95d03954"
+  version = "0.2.4"
 
 [[projects]]
   name = "github.com/mattn/go-colorable"
@@ -101,6 +116,12 @@
   packages = ["."]
   revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
   version = "v0.0.3"
+
+[[projects]]
+  name = "github.com/mikespook/gorbac"
+  packages = ["."]
+  revision = "441a1bc67dca1a1fa36fc785f43bd352362d22f8"
+  version = "v2.1.0"
 
 [[projects]]
   branch = "master"
@@ -117,8 +138,8 @@
 [[projects]]
   name = "github.com/satori/go.uuid"
   packages = ["."]
-  revision = "879c5887cd475cd7864858769793b2ceb0d44feb"
-  version = "v1.1.0"
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
@@ -155,7 +176,7 @@
     "acme/autocert",
     "pbkdf2"
   ]
-  revision = "d585fd2cc9195196078f516b69daff6744ef5e84"
+  revision = "88942b9c40a4c9d203b82b3731787b672d6e809b"
 
 [[projects]]
   branch = "master"
@@ -169,25 +190,31 @@
     "vp8l",
     "webp"
   ]
-  revision = "12117c17ca67ffa1ce22e9409f3b0b0a93ac08c7"
+  revision = "f3a9b89b59def9194717c1d0bd4c0d08fa1afa7b"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "d0aafc73d5cdc42264b0af071c261abac580695e"
+  revision = "6078986fec03a1dcc236c34816c71b0e05018fda"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sync"
   packages = ["errgroup"]
-  revision = "fd80eb99c8f653c847d294a001bdf2a3a6f768f5"
+  revision = "1d60e4601c6fd243af51cc01ddf169918a5407ca"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "83801418e1b59fb1880e363299581ee543af32ca"
+  revision = "91ee8cde435411ca3f1cd365e8f20131aed4d0a1"
+
+[[projects]]
+  name = "gopkg.in/go-playground/validator.v9"
+  packages = ["."]
+  revision = "8ce234ff024d85b3848e485decba806385d6e276"
+  version = "v9.13.0"
 
 [[projects]]
   name = "gopkg.in/go-playground/webhooks.v3"
@@ -195,12 +222,12 @@
     ".",
     "github"
   ]
-  revision = "c271ec3e322dab2e93990e8c5287fe5d5d1209ba"
-  version = "v3.8.0"
+  revision = "f2acbcde401467ded7701fbbf7eabd7a0bb6702d"
+  version = "v3.10.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5ad4dfbec8cbccdc9e401a31359f68010a4efdac543b57c61b5a4b09f9579fc7"
+  inputs-digest = "197f1f5dca00744a4aa4c6bbae6b541695d14cd71f035928a78f3fac41d1193b"
   solver-name = "gps-cdcl"
   solver-version = 1

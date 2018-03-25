@@ -546,14 +546,8 @@ paths:
                   format: uuid
                   description: クリップするメッセージID
       responses:
-        "201":
-          description: |+
-            正常にクリップできました。
-            クリップしたメッセージのリストを返します。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageList"
+        "204":
+          description: 正常にクリップできました。
         "404":
           description: |+
             正常にクリップできませんでした。
@@ -563,7 +557,7 @@ paths:
         - clip
       description: |+
         クリップを削除します。
-        既にクリップされていないメッセージを指定した場合は無視されます(200)。
+        既にクリップされていないメッセージを指定した場合は無視されます(204)。
       requestBody:
         content:
           application/json:
@@ -577,14 +571,8 @@ paths:
                   format: uuid
                   description: 削除するメッセージのID
       responses:
-        "200":
-          description: |+
-            正常に削除できました。
-            クリップしたメッセージのリストを返します。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageList"
+        "204":
+          description: 正常に削除できました。
 
   /users/me/stars:
     get:
@@ -617,14 +605,8 @@ paths:
                   format: uuid
                   description: 追加するチャンネルのID
       responses:
-        "201":
-          description: |+
-            正常に追加できました。
-            お気に入りチャンネルリストを返します。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ChannelList"
+        "204":
+          description: 正常に追加できました。
         "404":
           description: |+
             正常に追加できませんでした。
@@ -634,7 +616,7 @@ paths:
         - star
       description: |+
         お気に入りチャンネルリストから削除します。
-        既にお気に入りチャンネルリストに無いチャンネルを指定した場合は無視されます(200)。
+        既にお気に入りチャンネルリストに無いチャンネルを指定した場合は無視されます(204)。
       requestBody:
         content:
           application/json:
@@ -648,14 +630,8 @@ paths:
                   format: uuid
                   description: 削除するチャンネルのID
       responses:
-        "200":
-          description: |+
-            正常に削除されました。
-            お気に入りチャンネルリストを返します。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ChannelList"
+        "204":
+          description: 正常に削除されました。
 
   /users/me/channels/visibility:
     get:
