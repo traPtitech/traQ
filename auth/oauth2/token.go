@@ -66,6 +66,11 @@ func (t *Token) GetAvailableScopes(request scope.AccessScopes) (result scope.Acc
 	return
 }
 
+// IsExpired : 有効期限が切れているかどうか
+func (t *Token) IsExpired() bool {
+	return t.CreatedAt.Add(time.Duration(t.ExpiresIn) * time.Second).Before(time.Now())
+}
+
 // TokenEndpointHandler : トークンエンドポイントのハンドラ
 func TokenEndpointHandler(c echo.Context) error {
 	c.Response().Header().Set("Cache-Control", "no-store")
@@ -88,7 +93,7 @@ func TokenEndpointHandler(c echo.Context) error {
 		return
 	}
 	res := &tokenResponse{
-		TokenType: "Bearer",
+		TokenType: AuthScheme,
 	}
 
 	switch req.GrantType {

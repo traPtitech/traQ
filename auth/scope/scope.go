@@ -1,6 +1,8 @@
 package scope
 
 import (
+	"github.com/mikespook/gorbac"
+	"github.com/traPtitech/traQ/rbac/role"
 	"strings"
 )
 
@@ -25,20 +27,20 @@ const (
 	// Read : 読み込み権限
 	Read AccessScope = "read"
 	// PrivateRead : プライベートなチャンネルの読み込み権限
-	PrivateRead AccessScope = "private_read"
+	PrivateRead AccessScope = "private_read" //TODO
 	// Write : 書き込み権限
 	Write AccessScope = "write"
 	// PrivateWrite : プライベートなチャンネルの書き込み権限
-	PrivateWrite AccessScope = "private_write"
+	PrivateWrite AccessScope = "private_write" //TODO
 )
 
-var list = map[AccessScope]bool{
-	OpenID:       true,
-	Profile:      true,
-	Read:         true,
-	PrivateRead:  true,
-	Write:        true,
-	PrivateWrite: true,
+var list = map[AccessScope]gorbac.Role{
+	OpenID:       nil,
+	Profile:      nil,
+	Read:         role.ReadUser,
+	PrivateRead:  role.PrivateReadUser,
+	Write:        role.WriteUser,
+	PrivateWrite: role.PrivateWriteUser,
 }
 
 // Valid : 有効なスコープ文字列かどうかを返します
@@ -64,4 +66,16 @@ func (arr AccessScopes) String() string {
 		sa = append(sa, string(v))
 	}
 	return strings.Join(sa, " ")
+}
+
+// GenerateRole : スコープからroleを生成します
+func (arr AccessScopes) GenerateRole() *role.CompositeRole {
+	var roles []gorbac.Role
+	for _, v := range arr {
+		if r, ok := list[v]; ok && r != nil {
+			roles = append(roles, r)
+		}
+	}
+
+	return role.NewCompositeRole(roles...)
 }

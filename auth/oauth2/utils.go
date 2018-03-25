@@ -14,6 +14,9 @@ var (
 	ErrInvalidScope = &errorResponse{ErrorType: errInvalidScope}
 )
 
+// AuthScheme : Authorizationヘッダーのスキーム
+const AuthScheme = "Bearer"
+
 func generateRandomString() string {
 	return base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes())
 }

@@ -2,8 +2,19 @@ package scope
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/traQ/rbac/role"
+	"regexp"
 	"testing"
 )
+
+func TestScopes(t *testing.T) {
+	t.Parallel()
+
+	regex := regexp.MustCompile(`^[\x21\x23-\x5B\x5D-\x7E]+$`)
+	for k := range list {
+		assert.True(t, regex.MatchString(string(k)))
+	}
+}
 
 func TestValid(t *testing.T) {
 	t.Parallel()
@@ -32,4 +43,12 @@ func TestAccessScopes_String(t *testing.T) {
 
 	assert.EqualValues(t, "read write", s.String())
 	assert.EqualValues(t, "", AccessScopes{}.String())
+}
+
+func TestAccessScopes_GenerateRole(t *testing.T) {
+	t.Parallel()
+
+	s := AccessScopes{}
+	s = append(s, Read, Write)
+	assert.EqualValues(t, role.ReadUser.ID()+","+role.WriteUser.ID(), s.GenerateRole().ID())
 }

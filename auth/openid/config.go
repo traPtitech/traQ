@@ -13,7 +13,7 @@ import (
 var (
 	privateKey *rsa.PrivateKey
 	publicKey  *rsa.PublicKey
-	issuer     = "https://traq-dev.herokuapp.com" //FIXME //TODO
+	issuer     = "https://traq-dev.trapti.tech" //FIXME //TODO
 	discovery  = map[string]interface{}{
 		"issuer":                                issuer,
 		"authorization_endpoint":                issuer + "/api/1.0/oauth2/authorize",
