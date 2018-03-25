@@ -39,13 +39,7 @@ func TestPostStars(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(PostStars), cookie, req)
 
-	if assert.EqualValues(http.StatusCreated, rec.Code) {
-		var responseBody []ChannelForResponse
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.Len(responseBody, 1)
-			assert.Equal(channel.ID, responseBody[0].ChannelID)
-		}
-	}
+	assert.EqualValues(http.StatusNoContent, rec.Code)
 }
 
 func TestDeleteStars(t *testing.T) {
@@ -65,11 +59,5 @@ func TestDeleteStars(t *testing.T) {
 	req := httptest.NewRequest("DELETE", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(DeleteStars), cookie, req)
 
-	if assert.EqualValues(http.StatusOK, rec.Code) {
-		var responseBody []ChannelForResponse
-
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.Len(responseBody, 0)
-		}
-	}
+	assert.EqualValues(http.StatusNoContent, rec.Code)
 }

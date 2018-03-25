@@ -44,13 +44,8 @@ func PostStars(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to create star: %s", err.Error()))
 	}
 
-	responseBody, err := getStarsResponse(user.ID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get stared channels response")
-	}
-
 	go notification.Send(events.ChannelStared, events.UserChannelEvent{UserID: user.ID, ChannelID: requestBody.ChannelID})
-	return c.JSON(http.StatusCreated, responseBody)
+	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteStars /users/me/starsのDELETEメソッドハンドラ
@@ -78,13 +73,8 @@ func DeleteStars(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to delete star: %s", err.Error()))
 	}
 
-	responseBody, err := getStarsResponse(user.ID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get stared channels response")
-	}
-
 	go notification.Send(events.ChannelUnstared, events.UserChannelEvent{UserID: user.ID, ChannelID: requestBody.ChannelID})
-	return c.JSON(http.StatusOK, responseBody)
+	return c.NoContent(http.StatusNoContent)
 }
 
 func getStarsResponse(userID string) ([]*ChannelForResponse, error) {

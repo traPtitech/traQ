@@ -54,18 +54,8 @@ func PostClips(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to create clip: %s", err.Error()))
 	}
 
-	clippedMessages, err := model.GetClippedMessages(user.ID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get clipped messages")
-	}
-
-	responseBody := make([]*MessageForResponse, 0)
-	for _, message := range clippedMessages {
-		responseBody = append(responseBody, formatMessage(message))
-	}
-
 	go notification.Send(events.MessageClipped, events.UserMessageEvent{UserID: user.ID, MessageID: requestBody.MessageID})
-	return c.JSON(http.StatusCreated, responseBody)
+	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteClips /users/me/clipsのDELETEメソッドハンドラ
@@ -93,16 +83,6 @@ func DeleteClips(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to delete clip: %s", err.Error()))
 	}
 
-	clippedMessages, err := model.GetClippedMessages(user.ID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get clipped messages")
-	}
-
-	responseBody := make([]*MessageForResponse, 0)
-	for _, message := range clippedMessages {
-		responseBody = append(responseBody, formatMessage(message))
-	}
-
 	go notification.Send(events.MessageUnclipped, events.UserMessageEvent{UserID: user.ID, MessageID: requestBody.MessageID})
-	return c.JSON(http.StatusOK, responseBody)
+	return c.NoContent(http.StatusNoContent)
 }
