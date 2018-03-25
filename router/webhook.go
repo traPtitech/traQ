@@ -254,7 +254,7 @@ func PatchWebhook(c echo.Context) error {
 		wb.Description = req.Description
 	}
 
-	if err := wb.Update(); err != nil {
+	if err := wb.Bot.Update(); err != nil {
 		switch err {
 		case model.ErrBotInvalidName:
 			return echo.NewHTTPError(http.StatusBadRequest, err)

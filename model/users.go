@@ -5,23 +5,19 @@ import (
 	"crypto/sha512"
 	"crypto/subtle"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
-	"errors"
 	"github.com/GeorgeMac/idicon/colour"
 	"github.com/GeorgeMac/idicon/icon"
 	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/pbkdf2"
-	"regexp"
-	"strings"
 )
 
 var (
-	userNameRegex = regexp.MustCompile("^[a-zA-Z0-9_-]{1,32}$")
-	emailRegex    = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-
 	// ErrUserBotTryLogin : ユーザーエラー botユーザーでログインを試みました。botユーザーはログインできません。
 	ErrUserBotTryLogin = errors.New("bot user is not allowed to login")
 	// ErrUserWrongIDOrPassword : ユーザーエラー IDかパスワードが間違っています。
@@ -32,16 +28,16 @@ var (
 
 // User userの構造体
 type User struct {
-	ID          string    `xorm:"char(36) pk"`
-	Name        string    `xorm:"varchar(32) unique not null"`
-	DisplayName string    `xorm:"varchar(32) not null"`
-	Email       string    `xorm:"text not null"`
-	Password    string    `xorm:"char(128) not null"`
-	Salt        string    `xorm:"char(128) not null"`
+	ID          string    `xorm:"char(36) pk"                 validate:"required,uuid"`
+	Name        string    `xorm:"varchar(32) unique not null" validate:"required,name"`
+	DisplayName string    `xorm:"varchar(64) not null"`
+	Email       string    `xorm:"text not null"               validate:"required,email"`
+	Password    string    `xorm:"char(128) not null"          validate:"required"`
+	Salt        string    `xorm:"char(128) not null"          validate:"required"`
 	Icon        string    `xorm:"char(36) not null"`
 	Status      int       `xorm:"tinyint not null"`
 	Bot         bool      `xorm:"bool not null"`
-	Role        string    `xorm:"text not null"`
+	Role        string    `xorm:"text not null"               validate:"required"`
 	CreatedAt   time.Time `xorm:"created not null"`
 	UpdatedAt   time.Time `xorm:"updated not null"`
 }
@@ -53,28 +49,15 @@ func (user *User) TableName() string {
 
 // Create userをDBに入れる
 func (user *User) Create() error {
-	if !userNameRegex.MatchString(user.Name) {
-		return fmt.Errorf("invalid name")
-	}
-
-	if !emailRegex.MatchString(user.Email) {
-		return fmt.Errorf("invalid email")
-	}
-
-	if user.Password == "" {
-		return fmt.Errorf("password is empty")
-	}
-
-	if user.Salt == "" {
-		return fmt.Errorf("salt is empty")
-	}
-
-	if user.Role == "" {
-		return fmt.Errorf("role is empty")
-	}
-
 	user.ID = CreateUUID()
 	user.Status = 1 // TODO: 状態確認
+
+	if err := validateStruct(user); err != nil {
+		return err
+	}
+	if _, err := db.Insert(user); err != nil {
+		return fmt.Errorf("Failed to create user object: %v", err)
+	}
 
 	iconID, err := generateIcon(user.Name, serverUser.ID)
 	if err != nil {
@@ -83,21 +66,16 @@ func (user *User) Create() error {
 	}
 	user.Icon = iconID
 
-	if _, err := db.Insert(user); err != nil {
-		return fmt.Errorf("Failed to create user object: %v", err)
-	}
-	return nil
+	return user.Update()
 }
 
 // GetUser IDでユーザーの構造体を取得する
 func GetUser(userID string) (*User, error) {
-	var user = &User{}
-	has, err := db.ID(userID).Get(user)
+	user := &User{ID: userID}
 
-	if err != nil {
+	if has, err := db.Get(user); err != nil {
 		return nil, err
-	}
-	if !has {
+	} else if !has {
 		return nil, ErrNotFound
 	}
 
@@ -120,9 +98,9 @@ func (user *User) SetPassword(pass string) error {
 	if err != nil {
 		return fmt.Errorf("an error occurred while generating salt: %v", err)
 	}
-	user.Salt = salt
-	user.Password = hashPassword(pass, user.Salt)
 
+	user.Salt = hex.EncodeToString(salt)
+	user.Password = hex.EncodeToString(hashPassword(pass, salt))
 	return nil
 }
 
@@ -136,19 +114,10 @@ func (user *User) Exists() (bool, error) {
 
 // Authorization 認証を行う
 func (user *User) Authorization(pass string) error {
-	if user.Name == "" {
-		return fmt.Errorf("name is empty")
-	}
-
-	has, err := db.Get(user)
-	if err != nil {
+	if has, err := db.Get(user); err != nil {
 		return err
-	}
-	if !has {
-		user.Salt, err = generateSalt()
-		if err != nil {
-			return fmt.Errorf("an error occurred while generating salt: %v", err)
-		}
+	} else if !has {
+		return ErrUserWrongIDOrPassword
 	}
 
 	// Botはログイン不可
@@ -156,47 +125,55 @@ func (user *User) Authorization(pass string) error {
 		return ErrUserBotTryLogin
 	}
 
-	hashedPassword := hashPassword(pass, user.Salt)
+	storedPassword, err := hex.DecodeString(user.Password)
+	if err != nil {
+		return err
+	}
+	salt, err := hex.DecodeString(user.Salt)
+	if err != nil {
+		return err
+	}
 
-	if subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(user.Password)) != 1 {
+	if subtle.ConstantTimeCompare(storedPassword, hashPassword(pass, salt)) != 1 {
 		return ErrUserWrongIDOrPassword
 	}
 	return nil
 }
 
+// Update ユーザー情報をデータベースに適用
+func (user *User) Update() error {
+	if err := validateStruct(user); err != nil {
+		return err
+	}
+	if _, err := db.Id(user.ID).UseBool().Update(user); err != nil {
+		return fmt.Errorf("Failed to update user: %v", err)
+	}
+
+	return nil
+}
+
 // UpdateIconID ユーザーのアイコンを更新する
 func (user *User) UpdateIconID(ID string) error {
-	if len(user.ID) != 36 {
-		return errors.New("invalid user")
-	}
 	user.Icon = ID
-	_, err := db.ID(user.ID).UseBool().Update(user)
-	return err
+	return user.Update()
 }
 
 // UpdateDisplayName ユーザーの表示名を変更する
 func (user *User) UpdateDisplayName(name string) error {
-	if len(name) > 32 {
-		return ErrUserInvalidDisplayName
-	}
 	user.DisplayName = name
-	_, err := db.ID(user.ID).MustCols().Update(user)
-	return err
+	return user.Update()
 }
 
-func hashPassword(pass, salt string) string {
-	converted := pbkdf2.Key([]byte(pass), []byte(salt), 65536, 64, sha512.New)
-	return hex.EncodeToString(converted[:])
+func hashPassword(pass string, salt []byte) []byte {
+	return pbkdf2.Key([]byte(pass), salt, 65536, 64, sha512.New)[:]
 }
 
-func generateSalt() (string, error) {
-	b := make([]byte, 14)
-
-	if _, err := io.ReadFull(rand.Reader, b); err != nil {
-		return "", err
+func generateSalt() ([]byte, error) {
+	salt := make([]byte, 64)
+	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
+		return nil, err
 	}
-
-	return hex.EncodeToString(b), nil
+	return salt, nil
 }
 
 func generateIcon(salt, userID string) (string, error) {
