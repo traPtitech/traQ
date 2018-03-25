@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"errors"
-
 	"github.com/go-xorm/xorm"
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/rbac/role"
 )
 
 var (
@@ -16,6 +16,7 @@ var (
 	// **順番注意**
 	tables = []interface{}{
 		&UserInvisibleChannel{},
+		&RBACOverride{},
 		&Webhook{},
 		&Bot{},
 		&MessageStamp{},
@@ -158,6 +159,9 @@ func SyncSchema() error {
 	if _, err := db.Exec("ALTER TABLE `webhooks` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
 		return err
 	}
+	if _, err := db.Exec("ALTER TABLE `rbac_overrides` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;"); err != nil {
+		return err
+	}
 
 	traq := &User{
 		Name:  "traq",
@@ -171,6 +175,7 @@ func SyncSchema() error {
 		traq.SetPassword("traq")
 		traq.ID = CreateUUID()
 		traq.Icon = ""
+		traq.Role = role.Admin.ID()
 		if _, err := db.Insert(traq); err != nil {
 			return err
 		}

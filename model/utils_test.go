@@ -13,6 +13,7 @@ import (
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/traQ/rbac/role"
 )
 
 var (
@@ -125,6 +126,7 @@ func mustMakeUser(t *testing.T, userName string) *User {
 		Name:  userName,
 		Email: "hogehoge@gmail.com",
 		Icon:  "po",
+		Role:  role.User.ID(),
 	}
 	require.NoError(t, user.SetPassword(password))
 	require.NoError(t, user.Create())

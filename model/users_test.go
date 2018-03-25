@@ -22,7 +22,8 @@ func TestUser_Create(t *testing.T) {
 	assert.Error((&User{}).Create())
 	assert.Error((&User{Name: "test"}).Create())
 	assert.Error((&User{Name: "test", Email: "test@test.test"}).Create())
-	user := &User{Name: "test", Email: "test@test.test", Password: "test", Salt: "test"}
+	assert.Error((&User{Name: "test", Email: "test@test.test", Password: "test", Salt: "test"}).Create())
+	user := &User{Name: "test", Email: "test@test.test", Password: "test", Salt: "test", Role: "user"}
 	if assert.NoError(user.Create()) {
 		assert.NotEmpty(user.ID)
 	}

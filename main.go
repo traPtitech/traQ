@@ -17,6 +17,9 @@ import (
 	"github.com/srinathgs/mysqlstore"
 	"github.com/traPtitech/traQ/external"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac"
+	"github.com/traPtitech/traQ/rbac/permission"
+	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/router"
 )
 
@@ -72,9 +75,17 @@ func main() {
 		panic(err)
 	}
 
+	// Init Caches
 	if err := model.InitCache(); err != nil {
 		panic(err)
 	}
+
+	// Init Role-Based Access Controller
+	r, err := rbac.New(&model.RBACOverrideStore{})
+	if err != nil {
+		panic(err)
+	}
+	role.SetRole(r)
 
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -100,99 +111,101 @@ func main() {
 	api.Use(router.GetUserInfo)
 	apiNoAuth := e.Group("/api/1.0")
 
+	// access control middleware generator
+	requires := router.AccessControlMiddlewareGenerator(r)
+
 	// Tag: channel
-	api.GET("/channels", router.GetChannels)
-	api.POST("/channels", router.PostChannels)
-	api.GET("/channels/:channelID", router.GetChannelsByChannelID)
-	api.PUT("/channels/:channelID", router.PutChannelsByChannelID)
-	api.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID)
+	api.GET("/channels", router.GetChannels, requires(permission.GetChannel))
+	api.POST("/channels", router.PostChannels, requires(permission.CreateChannel))
+	api.GET("/channels/:channelID", router.GetChannelsByChannelID, requires(permission.GetChannel))
+	api.PUT("/channels/:channelID", router.PutChannelsByChannelID, requires(permission.EditChannel))
+	api.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID, requires(permission.DeleteChannel))
 
 	// Tag: Topic
-	api.GET("/channels/:channelID/topic", router.GetTopic)
-	api.PUT("/channels/:channelID/topic", router.PutTopic)
+	api.GET("/channels/:channelID/topic", router.GetTopic, requires(permission.GetTopic))
+	api.PUT("/channels/:channelID/topic", router.PutTopic, requires(permission.EditTopic))
 
 	// Tag: messages
-	api.GET("/messages/:messageID", router.GetMessageByID)
-	api.PUT("/messages/:messageID", router.PutMessageByID)
-	api.DELETE("/messages/:messageID", router.DeleteMessageByID)
-
-	api.GET("/channels/:channelID/messages", router.GetMessagesByChannelID)
-	api.POST("/channels/:channelID/messages", router.PostMessage)
+	api.GET("/messages/:messageID", router.GetMessageByID, requires(permission.GetMessage))
+	api.PUT("/messages/:messageID", router.PutMessageByID, requires(permission.EditMessage))
+	api.DELETE("/messages/:messageID", router.DeleteMessageByID, requires(permission.DeleteMessage))
+	api.GET("/channels/:channelID/messages", router.GetMessagesByChannelID, requires(permission.GetMessage))
+	api.POST("/channels/:channelID/messages", router.PostMessage, requires(permission.PostMessage))
 
 	// Tag: users
-	api.GET("/users", router.GetUsers)
-	api.GET("/users/me", router.GetMe)
-	api.PATCH("/users/me", router.PatchMe)
-	api.GET("/users/me/icon", router.GetMyIcon)
-	api.PUT("/users/me/icon", router.PutMyIcon)
-	api.GET("/users/:userID", router.GetUserByID)
-	api.GET("/users/:userID/icon", router.GetUserIcon)
-	api.POST("/users", router.PostUsers)
+	api.GET("/users", router.GetUsers, requires(permission.GetUser))
+	api.GET("/users/me", router.GetMe, requires(permission.GetMe))
+	api.PATCH("/users/me", router.PatchMe, requires(permission.EditMe))
+	api.GET("/users/me/icon", router.GetMyIcon, requires(permission.DownloadFile))
+	api.PUT("/users/me/icon", router.PutMyIcon, requires(permission.ChangeMyIcon))
+	api.GET("/users/:userID", router.GetUserByID, requires(permission.GetUser))
+	api.GET("/users/:userID/icon", router.GetUserIcon, requires(permission.DownloadFile))
+	api.POST("/users", router.PostUsers, requires(permission.RegisterUser))
 
 	// Tag: clips
-	api.GET("/users/me/clips", router.GetClips)
-	api.POST("/users/me/clips", router.PostClips)
-	api.DELETE("/users/me/clips", router.DeleteClips)
+	api.GET("/users/me/clips", router.GetClips, requires(permission.GetClip))
+	api.POST("/users/me/clips", router.PostClips, requires(permission.CreateClip))
+	api.DELETE("/users/me/clips", router.DeleteClips, requires(permission.DeleteClip))
 
 	// Tag: star
-	api.GET("/users/me/stars", router.GetStars)
-	api.POST("/users/me/stars", router.PostStars)
-	api.DELETE("/users/me/stars", router.DeleteStars)
+	api.GET("/users/me/stars", router.GetStars, requires(permission.GetStar))
+	api.POST("/users/me/stars", router.PostStars, requires(permission.CreateStar))
+	api.DELETE("/users/me/stars", router.DeleteStars, requires(permission.DeleteStar))
 
 	// Tag: unread
-	api.GET("/users/me/unread", router.GetUnread, router.GetUserInfo)
-	api.DELETE("/users/me/unread", router.DeleteUnread, router.GetUserInfo)
+	api.GET("/users/me/unread", router.GetUnread, requires(permission.GetUnread))
+	api.DELETE("/users/me/unread", router.DeleteUnread, requires(permission.DeleteUnread))
 
 	// Tag: userTag
-	api.GET("/users/:userID/tags", router.GetUserTags)
-	api.POST("/users/:userID/tags", router.PostUserTag)
-	api.PUT("/users/:userID/tags/:tagID", router.PutUserTag)
-	api.DELETE("/users/:userID/tags/:tagID", router.DeleteUserTag)
-	api.GET("/tags", router.GetAllTags)
+	api.GET("/users/:userID/tags", router.GetUserTags, requires(permission.GetTag))
+	api.POST("/users/:userID/tags", router.PostUserTag, requires(permission.AddTag))
+	api.PUT("/users/:userID/tags/:tagID", router.PutUserTag, requires(permission.ChangeTagLockState))
+	api.DELETE("/users/:userID/tags/:tagID", router.DeleteUserTag, requires(permission.RemoveTag))
+	api.GET("/tags", router.GetAllTags, requires(permission.GetTag))
 
 	// Tag: heartbeat
-	api.GET("/heartbeat", router.GetHeartbeat)
-	api.POST("/heartbeat", router.PostHeartbeat)
+	api.GET("/heartbeat", router.GetHeartbeat, requires(permission.GetHeartbeat))
+	api.POST("/heartbeat", router.PostHeartbeat, requires(permission.PostHeartbeat))
 
 	// Tag: notification
-	api.GET("/notification", router.GetNotificationStream)
-	api.POST("/notification/device", router.PostDeviceToken)
-	api.GET("/channels/:channelID/notification", router.GetNotificationStatus)
-	api.PUT("/channels/:channelID/notification", router.PutNotificationStatus)
+	api.GET("/notification", router.GetNotificationStream, requires(permission.ConnectNotificationStream))
+	api.POST("/notification/device", router.PostDeviceToken, requires(permission.RegisterDevice))
+	api.GET("/channels/:channelID/notification", router.GetNotificationStatus, requires(permission.GetNotificationStatus))
+	api.PUT("/channels/:channelID/notification", router.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
 
 	// Tag: file
-	api.POST("/files", router.PostFile)
-	api.GET("/files/:fileID", router.GetFileByID)
-	api.DELETE("/files/:fileID", router.DeleteFileByID)
-	api.GET("/files/:fileID/meta", router.GetMetaDataByFileID)
-	api.GET("/files/:fileID/thumbnail", router.GetThumbnailByID)
+	api.POST("/files", router.PostFile, requires(permission.UploadFile))
+	api.GET("/files/:fileID", router.GetFileByID, requires(permission.DownloadFile))
+	api.DELETE("/files/:fileID", router.DeleteFileByID, requires(permission.DeleteFile))
+	api.GET("/files/:fileID/meta", router.GetMetaDataByFileID, requires(permission.DownloadFile))
+	api.GET("/files/:fileID/thumbnail", router.GetThumbnailByID, requires(permission.DownloadFile))
 
 	// Tag: pin
-	api.GET("/channels/:channelID/pin", router.GetChannelPin)
-	api.POST("/channels/:channelID/pin", router.PostPin)
-	api.GET("/pin/:pinID", router.GetPin)
-	api.DELETE("/pin/:pinID", router.DeletePin)
+	api.GET("/channels/:channelID/pin", router.GetChannelPin, requires(permission.GetPin))
+	api.POST("/channels/:channelID/pin", router.PostPin, requires(permission.CreatePin))
+	api.GET("/pin/:pinID", router.GetPin, requires(permission.GetPin))
+	api.DELETE("/pin/:pinID", router.DeletePin, requires(permission.DeletePin))
 
 	// Tag: stamp
-	api.GET("/stamps", router.GetStamps)
-	api.POST("/stamps", router.PostStamp)
-	api.GET("/stamps/:stampID", router.GetStamp)
-	api.PATCH("/stamps/:stampID", router.PatchStamp)
-	api.DELETE("/stamps/:stampID", router.DeleteStamp)
-	api.GET("/messages/:messageID/stamps", router.GetMessageStamps)
-	api.POST("/messages/:messageID/stamps/:stampID", router.PostMessageStamp)
-	api.DELETE("/messages/:messageID/stamps/:stampID", router.DeleteMessageStamp)
+	api.GET("/stamps", router.GetStamps, requires(permission.GetStamp))
+	api.POST("/stamps", router.PostStamp, requires(permission.CreateStamp))
+	api.GET("/stamps/:stampID", router.GetStamp, requires(permission.GetStamp))
+	api.PATCH("/stamps/:stampID", router.PatchStamp, requires(permission.EditStamp))
+	api.DELETE("/stamps/:stampID", router.DeleteStamp, requires(permission.DeleteStamp))
+	api.GET("/messages/:messageID/stamps", router.GetMessageStamps, requires(permission.GetMessageStamp))
+	api.POST("/messages/:messageID/stamps/:stampID", router.PostMessageStamp, requires(permission.AddMessageStamp))
+	api.DELETE("/messages/:messageID/stamps/:stampID", router.DeleteMessageStamp, requires(permission.RemoveMessageStamp))
 
 	//Tag: visibility
-	api.GET("users/me/channels/visibility", router.GetChannelsVisibility)
-	api.PUT("users/me/channels/visibility", router.PutChannelsVisibility)
+	api.GET("users/me/channels/visibility", router.GetChannelsVisibility, requires(permission.GetChannelVisibility))
+	api.PUT("users/me/channels/visibility", router.PutChannelsVisibility, requires(permission.ChangeChannelVisibility))
 
 	// Tag: webhook
-	api.GET("/webhooks", router.GetWebhooks)
-	api.POST("/webhooks", router.PostWebhooks)
-	api.GET("/webhooks/:webhookID", router.GetWebhook)
-	api.PATCH("/webhooks/:webhookID", router.PatchWebhook)
-	api.DELETE("/webhooks/:webhookID", router.DeleteWebhook)
+	api.GET("/webhooks", router.GetWebhooks, requires(permission.GetWebhook))
+	api.POST("/webhooks", router.PostWebhooks, requires(permission.CreateWebhook))
+	api.GET("/webhooks/:webhookID", router.GetWebhook, requires(permission.GetWebhook))
+	api.PATCH("/webhooks/:webhookID", router.PatchWebhook, requires(permission.EditWebhook))
+	api.DELETE("/webhooks/:webhookID", router.DeleteWebhook, requires(permission.DeleteWebhook))
 	apiNoAuth.POST("/webhooks/:webhookID", router.PostWebhook)
 	apiNoAuth.POST("/webhooks/:webhookID/github", router.PostWebhookByGithub)
 
