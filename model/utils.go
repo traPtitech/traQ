@@ -8,6 +8,7 @@ import (
 	"github.com/go-xorm/xorm"
 	"github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
+	"github.com/traPtitech/traQ/rbac/role"
 )
 
 var (
@@ -17,6 +18,7 @@ var (
 	// **順番注意**
 	tables = []interface{}{
 		&UserInvisibleChannel{},
+		&RBACOverride{},
 		&Webhook{},
 		&Bot{},
 		&MessageStamp{},
@@ -73,6 +75,7 @@ var (
 		"ALTER TABLE `bots` ADD FOREIGN KEY (`updater_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
 		"ALTER TABLE `webhooks` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
 		"ALTER TABLE `webhooks` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+    "ALTER TABLE `rbac_overrides` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
 	}
 
 	serverUser *User
@@ -95,10 +98,10 @@ func SyncSchema() error {
 	if err := db.Sync(tables...); err != nil {
 		return fmt.Errorf("failed to sync Table schema: %v", err)
 	}
+
 	for _, sql := range constraints {
 		if _, err := db.Exec(sql); err != nil {
-			return err
-		}
+		return err
 	}
 
 	// TODO: 初回起動時にgeneralチャンネルを作りたい

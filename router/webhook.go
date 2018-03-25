@@ -48,7 +48,6 @@ func GetWebhooks(c echo.Context) error {
 
 // PostWebhooks : POST /webhooks
 func PostWebhooks(c echo.Context) error {
-	//TODO ユーザー権限によって403にする
 	userID := c.Get("user").(*model.User).ID
 
 	req := struct {

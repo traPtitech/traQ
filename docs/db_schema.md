@@ -15,18 +15,19 @@ ID系は全部UUID(string)
 | icon | CHAR(36) | NOT NULL | アイコンのファイルID |
 | status | TINYINT | NOT NULL | アカウントの状態 |
 | bot | BOOLEAN | NOT NULL | botアカウントか |
+| role | TEXT | NOT NULL | ロール |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL | 更新日時 |
 
-## users_authorities
+## rbac_overrides
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
-| user_id | CHAR(36) | PRIMARY KEY (外部キー) | ユーザーID |
-| authority_type | INT | NOT NULL | 権限の種類 |
-| is_valid | BOOLEAN | NOT NULL | 権限の有無 |
-| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+| user_id | CHAR(36) | PRIMARY KEY | ユーザーID |
+| permission | VARCHAR(50) | NOT NULL | パーミッション名 |
+| validity | BOOLEAN | NOT NULL | 有効かどうか |
+| created_at | TIMESTAMP | NOT NULL | 作成日時 |
 
-user_idとauthority_typeの複合ユニーク制約
+user_idとpermissionの複合ユニーク制約
 
 ## bots
 | カラム名 | 型 | 属性 | 説明など | 

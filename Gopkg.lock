@@ -3,10 +3,7 @@
 
 [[projects]]
   name = "github.com/GeorgeMac/idicon"
-  packages = [
-    "colour",
-    "icon"
-  ]
+  packages = ["colour","icon"]
   revision = "5df45084f875d7e82ae224f6f5825cc858b54f0d"
   version = "0.2"
 
@@ -136,6 +133,12 @@
   version = "1.0.0"
 
 [[projects]]
+  name = "github.com/mikespook/gorbac"
+  packages = ["."]
+  revision = "441a1bc67dca1a1fa36fc785f43bd352362d22f8"
+  version = "v2.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/ncw/swift"
   packages = ["."]
@@ -161,10 +164,7 @@
 
 [[projects]]
   name = "github.com/stretchr/testify"
-  packages = [
-    "assert",
-    "require"
-  ]
+  packages = ["assert","require"]
   revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
   version = "v1.2.1"
 
@@ -190,6 +190,7 @@
   ]
   revision = "b4956d363a8b14623cc81db401707679605930a3"
 
+
 [[projects]]
   branch = "master"
   name = "golang.org/x/image"
@@ -204,11 +205,13 @@
   ]
   revision = "f3a9b89b59def9194717c1d0bd4c0d08fa1afa7b"
 
+
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
   revision = "e0c57d8f86c17f0724497efcb3bc617e82834821"
+
 
 [[projects]]
   branch = "master"
@@ -230,10 +233,7 @@
 
 [[projects]]
   name = "gopkg.in/go-playground/webhooks.v3"
-  packages = [
-    ".",
-    "github"
-  ]
+  packages = [".","github"]
   revision = "c271ec3e322dab2e93990e8c5287fe5d5d1209ba"
   version = "v3.8.0"
 
