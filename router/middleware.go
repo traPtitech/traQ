@@ -13,8 +13,8 @@ import (
 	"github.com/traPtitech/traQ/rbac"
 )
 
-// GetUserInfo User情報を取得するミドルウェア
-func GetUserInfo(next echo.HandlerFunc) echo.HandlerFunc {
+// UserAuthenticate User認証するミドルウェア
+func UserAuthenticate(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ah := c.Request().Header.Get(echo.HeaderAuthorization)
 		if len(ah) > 0 {

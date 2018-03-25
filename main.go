@@ -111,7 +111,7 @@ func main() {
 	e.POST("/logout", router.PostLogout)
 
 	api := e.Group("/api/1.0")
-	api.Use(router.GetUserInfo)
+	api.Use(router.UserAuthenticate)
 	apiNoAuth := e.Group("/api/1.0")
 
 	// access control middleware generator
@@ -221,13 +221,13 @@ func main() {
 	e.GET("/publickeys", openid.PublicKeysHandler)
 
 	// Tag: client
-	api.GET("/users/me/tokens", router.GetMyTokens)
-	api.DELETE("/users/me/tokens/:tokenID", router.DeleteMyToken)
-	api.GET("/clients", router.GetClients)
-	api.POST("/clients", router.PostClients)
-	api.GET("/clients/:clientID", router.GetClient)
-	api.PATCH("/clients/:clientID", router.PatchClient)
-	api.DELETE("/clients/:clientID", router.DeleteClient)
+	api.GET("/users/me/tokens", router.GetMyTokens, requires(permission.GetMyTokens))
+	api.DELETE("/users/me/tokens/:tokenID", router.DeleteMyToken, requires(permission.RevokeMyToken))
+	api.GET("/clients", router.GetClients, requires(permission.GetClients))
+	api.POST("/clients", router.PostClients, requires(permission.CreateClient))
+	api.GET("/clients/:clientID", router.GetClient, requires(permission.GetClients))
+	api.PATCH("/clients/:clientID", router.PatchClient, requires(permission.EditMyClient))
+	api.DELETE("/clients/:clientID", router.DeleteClient, requires(permission.DeleteMyClient))
 
 	// Serve UI
 	e.File("/sw.js", "./client/dist/sw.js")

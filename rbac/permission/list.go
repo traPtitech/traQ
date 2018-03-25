@@ -70,6 +70,13 @@ var list = map[string]gorbac.Permission{
 	CreateWebhook.ID(): CreateWebhook,
 	EditWebhook.ID():   EditWebhook,
 	DeleteWebhook.ID(): DeleteWebhook,
+
+	GetMyTokens.ID():    GetMyTokens,
+	RevokeMyToken.ID():  RevokeMyToken,
+	GetClients.ID():     GetClients,
+	CreateClient.ID():   CreateClient,
+	EditMyClient.ID():   EditMyClient,
+	DeleteMyClient.ID(): DeleteMyClient,
 }
 
 // GetPermission : パーミッション名からgorbac.Permissionを取得します

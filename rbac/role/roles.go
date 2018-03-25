@@ -114,7 +114,14 @@ func SetRole(rbac *rbac.RBAC) {
 		PrivateWriteUser: {}, // TODO
 		// 一般ユーザーのパーミッション
 		// ※ReadUser, WriteUser, PrivateReadUser, PrivateWriteUserのパーミッションを全て含む
-		User: {},
+		User: {
+			permission.GetMyTokens,
+			permission.RevokeMyToken,
+			permission.GetClients,
+			permission.CreateClient,
+			permission.EditMyClient,
+			permission.DeleteMyClient,
+		},
 		// 管理者ユーザーのパーミッション
 		// ※一般ユーザーのパーミッションを全て含む
 		Admin: {
