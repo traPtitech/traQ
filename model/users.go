@@ -59,9 +59,6 @@ func (user *User) Create() error {
 		return fmt.Errorf("Failed to create user object: %v", err)
 	}
 
-	user.ID = CreateUUID()
-	user.Status = 1 // TODO: 状態確認
-
 	iconID, err := generateIcon(user.Name, serverUser.ID)
 	if err != nil {
 		log.Error(err)

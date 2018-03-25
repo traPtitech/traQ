@@ -111,7 +111,11 @@ func SyncSchema() error {
 		return err
 	} else if !ok {
 		serverUser.SetPassword("traq")
-		return serverUser.Create()
+		serverUser.ID = CreateUUID()
+		serverUser.Status = 1 // TODO: 状態確認
+		if _, err := db.Insert(serverUser); err != nil {
+			return err
+		}
 	}
 	return nil
 }
