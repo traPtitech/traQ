@@ -28,7 +28,6 @@ var (
 
 // SetRole : rbacに既定のロールをセットします
 func SetRole(rbac *rbac.RBAC) {
-
 	for r, ps := range map[*gorbac.StdRole][]gorbac.Permission{
 		// 読み取り専用ユーザーのパーミッション
 		ReadUser: {
@@ -113,6 +112,7 @@ func SetRole(rbac *rbac.RBAC) {
 		// プライベートチャンネル書き込み専用ユーザーのパーミッション
 		PrivateWriteUser: {}, // TODO
 		// 一般ユーザーのパーミッション
+		// ブラウザ(セッション)からの操作のみしか許可しない
 		// ※ReadUser, WriteUser, PrivateReadUser, PrivateWriteUserのパーミッションを全て含む
 		User: {
 			permission.GetMyTokens,
@@ -140,13 +140,9 @@ func SetRole(rbac *rbac.RBAC) {
 		Bot: {},
 	} {
 		for _, p := range ps {
-			if err := r.Assign(p); err != nil {
-				panic(err)
-			}
+			r.Assign(p)
 		}
-		if err := rbac.Add(r); err != nil {
-			panic(err)
-		}
+		rbac.Add(r)
 	}
 
 	if err := rbac.SetParents(User.ID(), []string{ReadUser.ID(), WriteUser.ID(), PrivateReadUser.ID(), PrivateWriteUser.ID()}); err != nil {

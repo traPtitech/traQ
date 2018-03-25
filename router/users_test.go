@@ -30,7 +30,7 @@ func TestPostLogin(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(PostLogin), nil, req)
 
-	assert.EqualValues(t, http.StatusOK, rec.Code)
+	assert.EqualValues(t, http.StatusNoContent, rec.Code)
 
 	requestBody2 := &requestJSON{"PostLogin", "wrong_password"}
 	body2, err := json.Marshal(requestBody2)
