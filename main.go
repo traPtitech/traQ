@@ -161,7 +161,7 @@ func main() {
 	api.PUT("/users/:userID/tags/:tagID", router.PutUserTag, requires(permission.ChangeTagLockState))
 	api.DELETE("/users/:userID/tags/:tagID", router.DeleteUserTag, requires(permission.RemoveTag))
 	api.GET("/tags", router.GetAllTags, requires(permission.GetTag))
-	api.GET("/tags/{tagID}", router.GetUsersByTagID, requires(permission.GetTag))
+	api.GET("/tags/:tagID", router.GetUsersByTagID, requires(permission.GetTag))
 
 	// Tag: heartbeat
 	api.GET("/heartbeat", router.GetHeartbeat, requires(permission.GetHeartbeat))
