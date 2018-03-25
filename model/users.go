@@ -28,16 +28,16 @@ var (
 
 // User userの構造体
 type User struct {
-	ID          string    `xorm:"char(36) pk"  validate:"required,uuid"`
+	ID          string    `xorm:"char(36) pk"                 validate:"required,uuid"`
 	Name        string    `xorm:"varchar(32) unique not null" validate:"required,name"`
 	DisplayName string    `xorm:"varchar(64) not null"`
-	Email       string    `xorm:"text not null" validate:"required,email"`
-	Password    string    `xorm:"char(128) not null" validate:"required"`
-	Salt        string    `xorm:"char(128) not null" validate:"required"`
+	Email       string    `xorm:"text not null"               validate:"required,email"`
+	Password    string    `xorm:"char(128) not null"          validate:"required"`
+	Salt        string    `xorm:"char(128) not null"          validate:"required"`
 	Icon        string    `xorm:"char(36) not null"`
 	Status      int       `xorm:"tinyint not null"`
 	Bot         bool      `xorm:"bool not null"`
-	Role        string    `xorm:"text not null"`
+	Role        string    `xorm:"text not null"               validate:"required"`
 	CreatedAt   time.Time `xorm:"created not null"`
 	UpdatedAt   time.Time `xorm:"updated not null"`
 }
@@ -57,10 +57,6 @@ func (user *User) Create() error {
 	}
 	if _, err := db.Insert(user); err != nil {
 		return fmt.Errorf("Failed to create user object: %v", err)
-	}
-
-	if user.Role == "" {
-		return fmt.Errorf("role is empty")
 	}
 
 	user.ID = CreateUUID()

@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-xorm/xorm"
 	"github.com/satori/go.uuid"
-	"gopkg.in/go-playground/validator.v9"
 	"github.com/traPtitech/traQ/rbac/role"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 var (
@@ -75,7 +75,7 @@ var (
 		"ALTER TABLE `bots` ADD FOREIGN KEY (`updater_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
 		"ALTER TABLE `webhooks` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
 		"ALTER TABLE `webhooks` ADD FOREIGN KEY (`channel_id`) REFERENCES `channels`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
-    "ALTER TABLE `rbac_overrides` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
+		"ALTER TABLE `rbac_overrides` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE",
 	}
 
 	serverUser *User
@@ -101,12 +101,12 @@ func SyncSchema() error {
 
 	for _, sql := range constraints {
 		if _, err := db.Exec(sql); err != nil {
-		return err
+			return err
+		}
 	}
-
 	// TODO: 初回起動時にgeneralチャンネルを作りたい
 
-	serverUser = &User{Name: "traq", Email: "trap.titech@gmail.com"}
+	serverUser = &User{Name: "traq", Email: "trap.titech@gmail.com", Role: role.Admin.ID()}
 	if ok, err := serverUser.Exists(); err != nil {
 		return err
 	} else if !ok {
