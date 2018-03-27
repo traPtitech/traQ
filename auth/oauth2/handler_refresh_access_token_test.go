@@ -49,7 +49,7 @@ func BeforeTestRefreshAccessToken(t *testing.T) (*assert.Assertions, *require.As
 	return assert, require, handler, client, token, e
 }
 
-func PostTestRefreshAccessToken_Success(assert *assert.Assertions, h *Handler, req *http.Request, e *echo.Echo) {
+func PostTestRefreshAccessTokenSuccess(assert *assert.Assertions, h *Handler, req *http.Request, e *echo.Echo) {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
@@ -99,7 +99,7 @@ func TestRefreshAccessToken_Success1(t *testing.T) {
 		}
 	}
 
-	PostTestRefreshAccessToken_Success(assert, h, req, e)
+	PostTestRefreshAccessTokenSuccess(assert, h, req, e)
 }
 
 // 成功パターン2
@@ -136,7 +136,7 @@ func TestRefreshAccessToken_Success2(t *testing.T) {
 		}
 	}
 
-	PostTestRefreshAccessToken_Success(assert, h, req, e)
+	PostTestRefreshAccessTokenSuccess(assert, h, req, e)
 }
 
 // 成功パターン3
@@ -173,7 +173,7 @@ func TestRefreshAccessToken_Success3(t *testing.T) {
 		}
 	}
 
-	PostTestRefreshAccessToken_Success(assert, h, req, e)
+	PostTestRefreshAccessTokenSuccess(assert, h, req, e)
 }
 
 // 成功パターン4
@@ -225,7 +225,7 @@ func TestRefreshAccessToken_Success4(t *testing.T) {
 		}
 	}
 
-	PostTestRefreshAccessToken_Success(assert, h, req, e)
+	PostTestRefreshAccessTokenSuccess(assert, h, req, e)
 }
 
 // 成功パターン5
@@ -278,7 +278,7 @@ func TestRefreshAccessToken_Success5(t *testing.T) {
 		}
 	}
 
-	PostTestRefreshAccessToken_Success(assert, h, req, e)
+	PostTestRefreshAccessTokenSuccess(assert, h, req, e)
 }
 
 // 失敗パターン1
