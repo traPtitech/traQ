@@ -11,8 +11,8 @@ type MessageStamp struct {
 	StampID   string    `xorm:"char(36) unique(message_stamp_user) not null" json:"stampId"`
 	UserID    string    `xorm:"char(36) unique(message_stamp_user) not null" json:"userId"`
 	Count     int       `xorm:"int not null"                                 json:"count"`
-	CreatedAt time.Time `xorm:"created"                                      json:"-"`
-	UpdatedAt time.Time `xorm:"updated"                                      json:"-"`
+	CreatedAt time.Time `xorm:"created"                                      json:"createdAt"`
+	UpdatedAt time.Time `xorm:"updated"                                      json:"updatedAt"`
 }
 
 // TableName : メッセージスタンプのテーブル
