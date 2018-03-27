@@ -3,6 +3,7 @@ package model
 import (
 	"bytes"
 	"fmt"
+	"github.com/traPtitech/traQ/external"
 	"os"
 	"testing"
 	"time"
@@ -54,14 +55,15 @@ func TestMain(m *testing.M) {
 	engine.SetMapper(core.GonicMapper{})
 	SetXORMEngine(engine)
 
+	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
+	SetFileManager("", external.NewInMemoryFileManager())
+
 	if err := SyncSchema(); err != nil {
 		panic(err)
 	}
 
 	code := m.Run()
 
-	fm := NewDevFileManager()
-	os.RemoveAll(fm.GetDir())
 	os.Exit(code)
 }
 

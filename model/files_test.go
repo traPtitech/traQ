@@ -2,7 +2,6 @@ package model
 
 import (
 	"bytes"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,13 +26,7 @@ func TestFile_Create(t *testing.T) {
 		Size:      writeData.Size(),
 		CreatorID: user.ID,
 	}
-	if assert.NoError(file.Create(writeData)) {
-		fm := NewDevFileManager()
-
-		assert.NotEmpty(file.ID)
-		_, err := os.Stat(fm.GetDir() + "/" + file.ID)
-		assert.NoError(err)
-	}
+	assert.NoError(file.Create(writeData))
 }
 
 func TestFile_Exists(t *testing.T) {
@@ -95,6 +88,8 @@ func TestGetMetaFileDataByID(t *testing.T) {
 }
 
 func TestCalcThumbnailSize(t *testing.T) {
+	t.Parallel()
+
 	assert := assert.New(t)
 
 	assert.EqualValues(image.Pt(100, 100), calcThumbnailSize(image.Pt(100, 100)))
