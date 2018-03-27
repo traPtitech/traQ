@@ -8,5 +8,5 @@ import (
 func TestErrorResponse_Error(t *testing.T) {
 	t.Parallel()
 
-	assert.EqualValues(t, errInvalidRequest, &errorResponse{ErrorType: errInvalidRequest})
+	assert.Equal(t, errInvalidRequest, (&errorResponse{ErrorType: errInvalidRequest}).Error())
 }
