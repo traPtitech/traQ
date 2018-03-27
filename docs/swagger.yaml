@@ -1766,6 +1766,12 @@ components:
           format: uuid
         count:
           type: integer
+        createdAt:
+          type: string
+          format: datetime
+        updatedAt:
+          type: string
+          format: datetime
 
     Stamp:
       type: object
