@@ -55,12 +55,12 @@ func TestMessage_Update(t *testing.T) {
 	assert.NoError(m.Update())
 }
 
-func TestMessage_IsPined(t *testing.T) {
+func TestMessage_IsPinned(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
 	m := mustMakeMessage(t, user.ID, channel.ID)
 
-	ok, err := m.IsPined()
+	ok, err := m.IsPinned()
 
 	if assert.NoError(err) {
 		assert.False(ok)
@@ -73,7 +73,7 @@ func TestMessage_IsPined(t *testing.T) {
 	}
 	require.NoError(t, p.Create())
 
-	ok, err = m.IsPined()
+	ok, err = m.IsPinned()
 
 	if assert.NoError(err) {
 		assert.True(ok)

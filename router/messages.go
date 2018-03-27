@@ -165,7 +165,7 @@ func valuesMessage(m map[string]*MessageForResponse) []*MessageForResponse {
 }
 
 func formatMessage(raw *model.Message) *MessageForResponse {
-	isPined, err := raw.IsPined()
+	isPinned, err := raw.IsPinned()
 	if err != nil {
 		log.Error(err)
 	}
@@ -179,7 +179,7 @@ func formatMessage(raw *model.Message) *MessageForResponse {
 		MessageID:       raw.ID,
 		UserID:          raw.UserID,
 		ParentChannelID: raw.ChannelID,
-		Pin:             isPined,
+		Pin:             isPinned,
 		Content:         raw.Text,
 		Datetime:        raw.CreatedAt.Truncate(time.Second).UTC(),
 		StampList:       stampList,

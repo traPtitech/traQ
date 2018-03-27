@@ -64,8 +64,8 @@ func (m *Message) Update() error {
 	return nil
 }
 
-// IsPined このメッセージがpin止めされているかどうかを調べる
-func (m *Message) IsPined() (bool, error) {
+// IsPinned このメッセージがpin止めされているかどうかを調べる
+func (m *Message) IsPinned() (bool, error) {
 	if m.ID == "" {
 		return false, ErrNotFound
 	}
