@@ -24,6 +24,8 @@ var (
 	ErrAuthorizeNotFound = &errorResponse{ErrorType: errInvalidGrant}
 	// ErrTokenNotFound OAuth2エラー トークンが存在しません
 	ErrTokenNotFound = &errorResponse{ErrorType: errInvalidGrant}
+	// ErrUserIDOrPasswordWrong OAuth2エラー ユーザー認証に失敗しました
+	ErrUserIDOrPasswordWrong = &errorResponse{ErrorType: errInvalidGrant}
 )
 
 type errorResponse struct {

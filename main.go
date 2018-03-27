@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/auth/oauth2"
 	"github.com/traPtitech/traQ/auth/oauth2/impl"
 	"github.com/traPtitech/traQ/auth/openid"
@@ -96,6 +97,15 @@ func main() {
 		AccessTokenExp:       60 * 60 * 24 * 365 * 100, //100年
 		AuthorizationCodeExp: 60 * 5,                   //5分
 		IsRefreshEnabled:     false,
+		UserAuthenticator: func(id, pw string) (uuid.UUID, error) {
+			user := &model.User{Name: id}
+			err := user.Authorization(pw)
+			switch err {
+			case model.ErrUserWrongIDOrPassword, model.ErrUserBotTryLogin:
+				err = oauth2.ErrUserIDOrPasswordWrong
+			}
+			return uuid.FromStringOrNil(user.ID), err
+		},
 	}
 
 	e := echo.New()

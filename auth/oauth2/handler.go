@@ -40,6 +40,9 @@ type Handler struct {
 	AuthorizationCodeExp int
 	//IsRefreshEnabled リフレッシュトークンを発行するかどうか
 	IsRefreshEnabled bool
+
+	//UserAuthenticator ユーザー認証を行う関数
+	UserAuthenticator func(id, pw string) (uuid.UUID, error)
 }
 
 type tokenRequest struct {
@@ -524,9 +527,15 @@ func (store *Handler) TokenEndpointHandler(c echo.Context) error {
 		if len(req.Username) == 0 {
 			return c.JSON(http.StatusBadRequest, errorResponse{ErrorType: errInvalidRequest})
 		}
-		user := &model.User{Name: req.Username}
-		if err := user.Authorization(req.Password); err != nil {
-			return c.JSON(http.StatusUnauthorized, errorResponse{ErrorType: errInvalidGrant})
+		uid, err := store.UserAuthenticator(req.Username, req.Password)
+		if err != nil {
+			switch err {
+			case ErrUserIDOrPasswordWrong:
+				return c.JSON(http.StatusUnauthorized, errorResponse{ErrorType: errInvalidGrant})
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
 		}
 
 		// 要求スコープ確認
@@ -542,7 +551,7 @@ func (store *Handler) TokenEndpointHandler(c echo.Context) error {
 		}
 
 		// トークン発行
-		newToken, err := store.IssueAccessToken(client, uuid.FromStringOrNil(user.ID), client.RedirectURI, validScopes, store.AccessTokenExp, store.IsRefreshEnabled)
+		newToken, err := store.IssueAccessToken(client, uid, client.RedirectURI, validScopes, store.AccessTokenExp, store.IsRefreshEnabled)
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
