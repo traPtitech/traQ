@@ -5,13 +5,14 @@ import (
 	"github.com/go-xorm/xorm"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/utils/validator"
 )
 
 // Webhook : Webhook構造体
 type Webhook struct {
-	ID        string `xorm:"char(36) not null pk"`
-	UserID    string `xorm:"char(36) not null"`
-	ChannelID string `xorm:"char(36) not null"`
+	ID        string `xorm:"char(36) not null pk" validate:"uuid,required"`
+	UserID    string `xorm:"char(36) not null"    validate:"uuid,required"`
+	ChannelID string `xorm:"char(36) not null"    validate:"uuid,required"`
 }
 
 // WebhookBotUser : WebhookBotUser構造体 内部にBot, Webhook, Userを内包
@@ -26,16 +27,25 @@ func (*Webhook) TableName() string {
 	return "webhooks"
 }
 
+// Validate 構造体を検証します
+func (w *Webhook) Validate() error {
+	return validator.ValidateStruct(w)
+}
+
 // TableName : JOIN処理用
 func (*WebhookBotUser) TableName() string {
 	return "users"
 }
 
 // UpdateChannelID : デフォルトの投稿先チャンネルを変更します。
-func (w *Webhook) UpdateChannelID(channelID string) error {
+func (w *Webhook) UpdateChannelID(channelID string) (err error) {
 	w.ChannelID = channelID
-	_, err := db.ID(w.ID).Update(w)
-	return err
+
+	if err = w.Validate(); err != nil {
+		return err
+	}
+	_, err = db.ID(w.ID).Update(w)
+	return
 }
 
 func getWebhookJoinedDB() *xorm.Session {
@@ -49,8 +59,7 @@ func GetWebhook(webhookID string) (*WebhookBotUser, error) {
 	has, err := getWebhookJoinedDB().Where("webhooks.id = ?", webhookID).Get(webhook)
 	if err != nil {
 		return nil, err
-	}
-	if !has {
+	} else if !has {
 		return nil, ErrNotFound
 	}
 

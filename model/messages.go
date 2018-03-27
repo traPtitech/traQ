@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"github.com/traPtitech/traQ/utils/validator"
 	"time"
 )
 
@@ -11,14 +12,14 @@ var ErrMessageAlreadyDeleted = errors.New("this message has been deleted")
 
 //Message :データベースに格納するmessageの構造体
 type Message struct {
-	ID        string    `xorm:"char(36) pk"`
-	UserID    string    `xorm:"char(36) not null"`
-	ChannelID string    `xorm:"char(36)"`
-	Text      string    `xorm:"text not null"`
+	ID        string    `xorm:"char(36) pk"       validate:"uuid,required"`
+	UserID    string    `xorm:"char(36) not null" validate:"uuid,required"`
+	ChannelID string    `xorm:"char(36)"          validate:"uuid,required"`
+	Text      string    `xorm:"text not null"     validate:"required"`
 	IsShared  bool      `xorm:"bool not null"`
 	IsDeleted bool      `xorm:"bool not null"`
 	CreatedAt time.Time `xorm:"created not null"`
-	UpdaterID string    `xorm:"char(36) not null"`
+	UpdaterID string    `xorm:"char(36) not null" validate:"uuid,required"`
 	UpdatedAt time.Time `xorm:"updated not null"`
 }
 
@@ -27,24 +28,23 @@ func (m *Message) TableName() string {
 	return "messages"
 }
 
+// Validate 構造体を検証します
+func (m *Message) Validate() error {
+	return validator.ValidateStruct(m)
+}
+
 // Create message構造体をDBに入れます
-func (m *Message) Create() error {
-	if m.UserID == "" {
-		return fmt.Errorf("userID is empty")
-	}
-
-	if m.Text == "" {
-		return fmt.Errorf("text is empty")
-	}
-
+func (m *Message) Create() (err error) {
 	m.ID = CreateUUID()
 	m.IsDeleted = false
 	m.UpdaterID = m.UserID
 
-	if _, err := db.Insert(m); err != nil {
-		return err
+	if err = m.Validate(); err != nil {
+		return
 	}
-	return nil
+
+	_, err = db.InsertOne(m)
+	return
 }
 
 // Exists 指定されたメッセージが存在するかを判定します
@@ -56,12 +56,13 @@ func (m *Message) Exists() (bool, error) {
 }
 
 // Update メッセージの内容を変更します
-func (m *Message) Update() error {
-	_, err := db.ID(m.ID).UseBool().Update(m)
-	if err != nil {
-		return fmt.Errorf("failed to update this message: %v", err)
+func (m *Message) Update() (err error) {
+	if err = m.Validate(); err != nil {
+		return
 	}
-	return nil
+
+	_, err = db.ID(m.ID).UseBool().Update(m)
+	return
 }
 
 // IsPinned このメッセージがpin止めされているかどうかを調べる
@@ -70,37 +71,28 @@ func (m *Message) IsPinned() (bool, error) {
 		return false, ErrNotFound
 	}
 
-	p := &Pin{
+	return db.Get(&Pin{
 		ChannelID: m.ChannelID,
 		MessageID: m.ID,
-	}
-
-	return db.Get(p)
+	})
 }
 
 // GetMessagesByChannelID 指定されたチャンネルのメッセージを取得します
-func GetMessagesByChannelID(channelID string, limit, offset int) ([]*Message, error) {
-	var messageList []*Message
-	err := db.Where("channel_id = ? AND is_deleted = false", channelID).Desc("created_at").Limit(limit, offset).Find(&messageList)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find messages: %v", err)
-	}
-
-	return messageList, nil
+func GetMessagesByChannelID(channelID string, limit, offset int) (list []*Message, err error) {
+	err = db.Where("channel_id = ? AND is_deleted = false", channelID).Desc("created_at").Limit(limit, offset).Find(&list)
+	return
 }
 
 // GetMessageByID messageIDで指定されたメッセージを取得します
 func GetMessageByID(messageID string) (*Message, error) {
 	var message = &Message{}
-	has, err := db.ID(messageID).Get(message)
 
+	has, err := db.ID(messageID).Get(message)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find message: %v", err)
-	}
-	if has == false {
+		return nil, err
+	} else if !has {
 		return nil, ErrNotFound
-	}
-	if message.IsDeleted {
+	} else if message.IsDeleted {
 		return nil, ErrMessageAlreadyDeleted
 	}
 

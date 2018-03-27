@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"regexp"
+	"github.com/traPtitech/traQ/utils/validator"
 	"sync"
 	"time"
 
@@ -13,17 +13,17 @@ var channelPathMap = &sync.Map{}
 
 // Channel :チャンネルの構造体
 type Channel struct {
-	ID        string    `xorm:"char(36) pk"`
-	Name      string    `xorm:"varchar(20) not null unique(name_parent)"`
+	ID        string    `xorm:"char(36) pk"                                     validate:"uuid,required"`
+	Name      string    `xorm:"varchar(20) not null unique(name_parent)"        validate:"channel,required"`
 	ParentID  string    `xorm:"parent_id char(36) not null unique(name_parent)"`
 	Topic     string    `xorm:"text"`
 	IsForced  bool      `xorm:"bool not null"`
 	IsDeleted bool      `xorm:"bool not null"`
 	IsPublic  bool      `xorm:"bool not null"`
 	IsVisible bool      `xorm:"bool not null"`
-	CreatorID string    `xorm:"char(36) not null"`
+	CreatorID string    `xorm:"char(36) not null"                               validate:"uuid,required"`
 	CreatedAt time.Time `xorm:"created not null"`
-	UpdaterID string    `xorm:"char(36) not null"`
+	UpdaterID string    `xorm:"char(36) not null"                               validate:"uuid,required"`
 	UpdatedAt time.Time `xorm:"updated not null"`
 }
 
@@ -32,27 +32,24 @@ func (channel *Channel) TableName() string {
 	return "channels"
 }
 
+// Validate 構造体を検証します
+func (channel *Channel) Validate() error {
+	return validator.ValidateStruct(channel)
+}
+
 // Create チャンネル作成を行うメソッド
 func (channel *Channel) Create() error {
 	if channel.ID != "" {
 		return fmt.Errorf("ID is not empty! You can use Update()")
 	}
 
-	if channel.Name == "" {
-		return fmt.Errorf("name is empty")
-	}
-
-	if channel.CreatorID == "" {
-		return fmt.Errorf("creatorID is empty")
-	}
-
-	if err := validateChannelName(channel.Name); err != nil {
-		return err
-	}
-
 	channel.ID = CreateUUID()
 	channel.IsVisible = true
 	channel.UpdaterID = channel.CreatorID
+
+	if err := channel.Validate(); err != nil {
+		return err
+	}
 
 	// ここまでで入力されない要素は初期値(""や0)で格納される
 	if _, err := db.Insert(channel); err != nil {
@@ -78,6 +75,10 @@ func (channel *Channel) Exists(userID string) (bool, error) {
 
 // Update チャンネルの情報の更新を行う
 func (channel *Channel) Update() error {
+	if err := channel.Validate(); err != nil {
+		return err
+	}
+
 	_, err := db.ID(channel.ID).UseBool().Update(channel)
 	if err != nil {
 		return fmt.Errorf("failed to update channel: %v", err)
@@ -223,16 +224,5 @@ func updateChannelPathWithDescendants(channel *Channel) error {
 		}
 	}
 
-	return nil
-}
-
-func validateChannelName(name string) error {
-	if !regexp.MustCompile(`^[a-zA-Z0-9-_]*$`).Match([]byte(name)) {
-		return fmt.Errorf("alphabet, hyphen and underscore are only allowed to use")
-	}
-
-	if len(name) > 20 {
-		return fmt.Errorf("channel name should be up to 20 characters")
-	}
 	return nil
 }

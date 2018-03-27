@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/traPtitech/traQ/utils/validator"
 	"time"
 
 	"github.com/go-xorm/builder"
@@ -10,8 +11,8 @@ import (
 
 // UsersTag userTagの構造体
 type UsersTag struct {
-	UserID    string    `xorm:"char(36) pk"`
-	TagID     string    `xorm:"char(36) pk"`
+	UserID    string    `xorm:"char(36) pk"      validate:"uuid,required"`
+	TagID     string    `xorm:"char(36) pk"      validate:"uuid,required"`
 	IsLocked  bool      `xorm:"bool not null"`
 	CreatedAt time.Time `xorm:"created not null"`
 	UpdatedAt time.Time `xorm:"updated not null"`
@@ -20,6 +21,11 @@ type UsersTag struct {
 // TableName DBの名前を指定
 func (*UsersTag) TableName() string {
 	return "users_tags"
+}
+
+// Validate 構造体を検証します
+func (ut *UsersTag) Validate() error {
+	return validator.ValidateStruct(ut)
 }
 
 // Create DBに新規タグを追加します
@@ -50,32 +56,21 @@ func (ut *UsersTag) Create(name string) error {
 }
 
 // Update データの更新をします
-func (ut *UsersTag) Update() error {
-	if _, err := db.Where("user_id = ? AND tag_id = ?", ut.UserID, ut.TagID).UseBool().Update(ut); err != nil {
-		return err
-	}
-	return nil
+func (ut *UsersTag) Update() (err error) {
+	_, err = db.Where("user_id = ? AND tag_id = ?", ut.UserID, ut.TagID).UseBool().Update(ut)
+	return
 }
 
 // Delete データを消去します。正しく消せた場合はレシーバはnilになります
-func (ut *UsersTag) Delete() error {
-	if _, err := db.Delete(ut); err != nil {
-		return err
-	}
-	return nil
+func (ut *UsersTag) Delete() (err error) {
+	_, err = db.Delete(ut)
+	return
 }
 
 // GetUserTagsByUserID userIDに紐づくtagのリストを返します
-func GetUserTagsByUserID(userID string) ([]*UsersTag, error) {
-	if _, err := GetUser(userID); err != nil {
-		return nil, err
-	}
-
-	var tags []*UsersTag
-	if err := db.Where("user_id = ?", userID).Asc("created_at").Find(&tags); err != nil {
-		return nil, err
-	}
-	return tags, nil
+func GetUserTagsByUserID(userID string) (tags []*UsersTag, err error) {
+	err = db.Where("user_id = ?", userID).Asc("created_at").Find(&tags)
+	return
 }
 
 // GetTag userIDとtagIDで一意に定まるタグを返します

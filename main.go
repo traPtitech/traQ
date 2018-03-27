@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/traPtitech/traQ/external/storage"
+	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
 	"os"
 	"time"
@@ -15,7 +17,6 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/middleware"
 	"github.com/srinathgs/mysqlstore"
-	"github.com/traPtitech/traQ/external"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
@@ -88,6 +89,7 @@ func main() {
 	role.SetRole(r)
 
 	e := echo.New()
+	e.Validator = validator.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:8080"},
 		AllowCredentials: true,
@@ -231,7 +233,7 @@ func setSwiftFileManagerAsDefault(container, userName, apiKey, tenant, tenantID,
 	if container == "" || userName == "" || apiKey == "" || authURL == "" {
 		return nil
 	}
-	m, err := external.NewSwiftFileManager(container, userName, apiKey, tenant, tenantID, authURL, false) //TODO リダイレクトをオンにする
+	m, err := storage.NewSwiftFileManager(container, userName, apiKey, tenant, tenantID, authURL, false) //TODO リダイレクトをオンにする
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/traPtitech/traQ/utils/validator"
 	"time"
 
 	"github.com/satori/go.uuid"
@@ -9,8 +10,8 @@ import (
 
 // UserSubscribeChannel ユーザー・通知チャンネル対構造体
 type UserSubscribeChannel struct {
-	UserID    string    `xorm:"char(36) pk not null"`
-	ChannelID string    `xorm:"char(36) pk not null"`
+	UserID    string    `xorm:"char(36) pk not null" validate:"uuid,required"`
+	ChannelID string    `xorm:"char(36) pk not null" validate:"uuid,required"`
 	CreatedAt time.Time `xorm:"created not null"`
 }
 
@@ -19,36 +20,29 @@ func (*UserSubscribeChannel) TableName() string {
 	return "users_subscribe_channels"
 }
 
+// Validate 構造体を検証します
+func (s *UserSubscribeChannel) Validate() error {
+	return validator.ValidateStruct(s)
+}
+
 // Create DBに登録
-func (s *UserSubscribeChannel) Create() error {
-	if s.UserID == "" {
-		return fmt.Errorf("UserID is empty")
-	}
-	if s.ChannelID == "" {
-		return fmt.Errorf("ChannelID is empty")
+func (s *UserSubscribeChannel) Create() (err error) {
+	if err = s.Validate(); err != nil {
+		return err
 	}
 
-	if _, err := db.Insert(s); err != nil {
-		return fmt.Errorf("failed to create user_notified_channel: %v", err)
-	}
-
-	return nil
+	_, err = db.Insert(s)
+	return
 }
 
 // Delete DBから削除
-func (s *UserSubscribeChannel) Delete() error {
-	if s.UserID == "" {
-		return fmt.Errorf("UserID is empty")
-	}
-	if s.ChannelID == "" {
-		return fmt.Errorf("ChannelID is empty")
+func (s *UserSubscribeChannel) Delete() (err error) {
+	if err = s.Validate(); err != nil {
+		return err
 	}
 
-	if _, err := db.Delete(s); err != nil {
-		return fmt.Errorf("failed to delete user_notified_channel: %v", err)
-	}
-
-	return nil
+	_, err = db.Delete(s)
+	return
 }
 
 // GetSubscribingUser 指定したチャンネルの通知をつけているユーザーを取得

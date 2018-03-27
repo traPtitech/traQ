@@ -7,12 +7,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/traPtitech/traQ/utils/icon"
+	"github.com/traPtitech/traQ/utils/validator"
 	"io"
 	"strings"
 	"time"
 
-	"github.com/GeorgeMac/idicon/colour"
-	"github.com/GeorgeMac/idicon/icon"
 	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -22,18 +22,18 @@ var (
 	ErrUserBotTryLogin = errors.New("bot user is not allowed to login")
 	// ErrUserWrongIDOrPassword : ユーザーエラー IDかパスワードが間違っています。
 	ErrUserWrongIDOrPassword = errors.New("password or id is wrong")
-	// ErrUserInvalidDisplayName : ユーザーエラー DisplayNameは0-32文字である必要があります。
-	ErrUserInvalidDisplayName = errors.New("displayName must be 0-32 characters")
+	// ErrUserInvalidDisplayName : ユーザーエラー DisplayNameは0-64文字である必要があります。
+	ErrUserInvalidDisplayName = errors.New("displayName must be 0-64 characters")
 )
 
 // User userの構造体
 type User struct {
 	ID          string    `xorm:"char(36) pk"                 validate:"required,uuid"`
 	Name        string    `xorm:"varchar(32) unique not null" validate:"required,name"`
-	DisplayName string    `xorm:"varchar(64) not null"`
+	DisplayName string    `xorm:"varchar(64) not null"        validate:"max=64"`
 	Email       string    `xorm:"text not null"               validate:"required,email"`
-	Password    string    `xorm:"char(128) not null"          validate:"required"`
-	Salt        string    `xorm:"char(128) not null"          validate:"required"`
+	Password    string    `xorm:"char(128) not null"          validate:"required,max=128"`
+	Salt        string    `xorm:"char(128) not null"          validate:"required,max=128"`
 	Icon        string    `xorm:"char(36) not null"`
 	Status      int       `xorm:"tinyint not null"`
 	Bot         bool      `xorm:"bool not null"`
@@ -47,12 +47,17 @@ func (user *User) TableName() string {
 	return "users"
 }
 
+// Validate 構造体を検証します
+func (user *User) Validate() error {
+	return validator.ValidateStruct(user)
+}
+
 // Create userをDBに入れる
 func (user *User) Create() error {
 	user.ID = CreateUUID()
 	user.Status = 1 // TODO: 状態確認
 
-	if err := validateStruct(user); err != nil {
+	if err := user.Validate(); err != nil {
 		return err
 	}
 	if _, err := db.Insert(user); err != nil {
@@ -142,7 +147,7 @@ func (user *User) Authorization(pass string) error {
 
 // Update ユーザー情報をデータベースに適用
 func (user *User) Update() error {
-	if err := validateStruct(user); err != nil {
+	if err := user.Validate(); err != nil {
 		return err
 	}
 	if _, err := db.Id(user.ID).UseBool().Update(user); err != nil {
@@ -177,14 +182,7 @@ func generateSalt() ([]byte, error) {
 }
 
 func generateIcon(salt, userID string) (string, error) {
-	props := icon.DefaultProps()
-	props.BaseColour = colour.NewColour(0xf2, 0xf2, 0xf2)
-
-	generator, err := icon.NewGenerator(5, 5, icon.With(props))
-	if err != nil {
-		return "", err
-	}
-	svg := strings.NewReader(strings.Replace(generator.Generate([]byte(salt)).String(), `<svg`, `<svg xmlns="http://www.w3.org/2000/svg"`, 1))
+	svg := strings.NewReader(icon.Generate(salt))
 
 	file := &File{
 		Name:      salt + ".svg",
