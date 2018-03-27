@@ -23,7 +23,7 @@ const (
 
 // Token : OAuth2.0 Access Token構造体
 type Token struct {
-	ID           string
+	ID           uuid.UUID
 	ClientID     string
 	UserID       uuid.UUID
 	RedirectURI  string
@@ -371,7 +371,7 @@ func TokenEndpointHandler(c echo.Context) error {
 // IssueAccessToken : AccessTokenを発行します
 func IssueAccessToken(client *Client, userID uuid.UUID, redirectURI string, scope scope.AccessScopes, expire int, refresh bool) (*Token, error) {
 	newToken := &Token{
-		ID:          uuid.NewV4().String(),
+		ID:          uuid.NewV4(),
 		ClientID:    client.ID,
 		UserID:      userID,
 		RedirectURI: redirectURI,

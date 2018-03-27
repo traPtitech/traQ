@@ -16,16 +16,26 @@ var (
 
 // Store : OAuth2用の各種データのストアインターフェイス
 type Store interface {
+	ClientStore
+	AuthorizeStore
+	TokenStore
+}
+
+type ClientStore interface {
 	GetClient(id string) (*Client, error)
 	GetClientsByUser(userID uuid.UUID) ([]*Client, error)
 	SaveClient(client *Client) error
 	UpdateClient(client *Client) error
 	DeleteClient(id string) error
+}
 
+type AuthorizeStore interface {
 	SaveAuthorize(data *AuthorizeData) error
 	GetAuthorize(code string) (*AuthorizeData, error)
 	DeleteAuthorize(code string) error
+}
 
+type TokenStore interface {
 	SaveToken(token *Token) error
 	GetTokenByID(id uuid.UUID) (*Token, error)
 	GetTokenByAccess(access string) (*Token, error)
@@ -217,7 +227,7 @@ func (*DefaultStore) DeleteAuthorize(code string) error {
 // SaveToken : トークンを保存します
 func (*DefaultStore) SaveToken(token *Token) error {
 	ot := &model.OAuth2Token{
-		ID:           token.ID,
+		ID:           token.ID.String(),
 		ClientID:     token.ClientID,
 		UserID:       token.UserID.String(),
 		RedirectURI:  token.RedirectURI,
@@ -248,7 +258,7 @@ func (*DefaultStore) GetTokenByID(id uuid.UUID) (*Token, error) {
 	}
 
 	token := &Token{
-		ID:           ot.ID,
+		ID:           uuid.FromStringOrNil(ot.ID),
 		ClientID:     ot.ClientID,
 		UserID:       uuid.FromStringOrNil(ot.UserID),
 		RedirectURI:  ot.RedirectURI,
@@ -280,7 +290,7 @@ func (*DefaultStore) GetTokenByAccess(access string) (*Token, error) {
 	}
 
 	token := &Token{
-		ID:           ot.ID,
+		ID:           uuid.FromStringOrNil(ot.ID),
 		ClientID:     ot.ClientID,
 		UserID:       uuid.FromStringOrNil(ot.UserID),
 		RedirectURI:  ot.RedirectURI,
@@ -326,7 +336,7 @@ func (*DefaultStore) GetTokenByRefresh(refresh string) (*Token, error) {
 	}
 
 	token := &Token{
-		ID:           ot.ID,
+		ID:           uuid.FromStringOrNil(ot.ID),
 		ClientID:     ot.ClientID,
 		UserID:       uuid.FromStringOrNil(ot.UserID),
 		RedirectURI:  ot.RedirectURI,
@@ -369,7 +379,7 @@ func (*DefaultStore) GetTokensByUser(userID uuid.UUID) ([]*Token, error) {
 		}
 
 		tokens[i] = &Token{
-			ID:           v.ID,
+			ID:           uuid.FromStringOrNil(v.ID),
 			ClientID:     v.ClientID,
 			UserID:       uuid.FromStringOrNil(v.UserID),
 			RedirectURI:  v.RedirectURI,
