@@ -145,6 +145,7 @@ TODO
 + `user_id`: スタンプを押したユーザーのId
 + `stamp_id`: スタンプのId
 + `count`: そのユーザーが押した数
++ `created_at`: そのユーザーがそのスタンプをそのメッセージに最初に押した日時
 
 ## MESSAGE_UNSTAMPED
 メッセージからスタンプが外された。

@@ -1,7 +1,6 @@
 package model
 
 import (
-	"github.com/labstack/gommon/log"
 	"time"
 )
 
@@ -21,26 +20,23 @@ func (*MessageStamp) TableName() string {
 }
 
 // AddStampToMessage : メッセージにスタンプを押します
-func AddStampToMessage(messageID, stampID, userID string) (int, error) {
+func AddStampToMessage(messageID, stampID, userID string) (*MessageStamp, error) {
 	_, err := db.Exec("INSERT INTO `messages_stamps` (`message_id`, `stamp_id`, `user_id`, `count`, `created_at`, `updated_at`) VALUES (?, ?, ?, 1, now(), now()) ON DUPLICATE KEY UPDATE `count` = `count` + 1, `updated_at` = now()", messageID, stampID, userID)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	count := 0
-	if _, err := db.Table("messages_stamps").Where("message_id = ? AND stamp_id = ? AND user_id = ?", messageID, stampID, userID).Cols("count").Get(&count); err != nil {
-		log.Error(err)
+	ms := &MessageStamp{}
+	if _, err := db.Table("messages_stamps").Where("message_id = ? AND stamp_id = ? AND user_id = ?", messageID, stampID, userID).Get(ms); err != nil {
+		return nil, err
 	}
 
-	return count, nil
+	return ms, nil
 }
 
 // RemoveStampFromMessage : メッセージからスタンプを消します
-func RemoveStampFromMessage(messageID, stampID, userID string) error {
-	_, err := db.Delete(&MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID})
-	if err != nil {
-		return err
-	}
-	return nil
+func RemoveStampFromMessage(messageID, stampID, userID string) (err error) {
+	_, err = db.Delete(&MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID})
+	return
 }
 
 // GetMessageStamps : 指定したIDのメッセージのスタンプを取得します

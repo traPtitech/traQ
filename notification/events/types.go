@@ -1,6 +1,9 @@
 package events
 
-import "github.com/traPtitech/traQ/model"
+import (
+	"github.com/traPtitech/traQ/model"
+	"time"
+)
 
 //EventType 通知イベントの種類
 type EventType string
@@ -114,6 +117,7 @@ type MessageStampEvent struct {
 	UserID    string
 	StampID   string
 	Count     int
+	CreatedAt time.Time
 }
 
 //StampEvent スタンプに関するイベントのペイロード
