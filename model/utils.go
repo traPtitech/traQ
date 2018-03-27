@@ -80,10 +80,12 @@ var (
 
 	serverUser *User
 
-	// ErrNotFoundOrForbidden : 汎用エラー 見つからないかスコープ外にある場合のエラー
+	// ErrNotFoundOrForbidden 汎用エラー: 見つからないかスコープ外にある場合のエラー
 	ErrNotFoundOrForbidden = errors.New("not found or forbidden")
-	// ErrNotFound : 汎用エラー 見つからない場合のエラー
+	// ErrNotFound 汎用エラー: 見つからない場合のエラー
 	ErrNotFound = errors.New("not found")
+	// ErrInvalidParam 汎用エラー: データが不足・間違っている場合のエラー
+	ErrInvalidParam = errors.New("invalid parameter")
 
 	validate *validator.Validate
 )

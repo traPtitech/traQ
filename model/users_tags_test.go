@@ -17,8 +17,8 @@ func TestUsersTag_TableName(t *testing.T) {
 func TestUsersTag_Create(t *testing.T) {
 	assert, _, user, _ := beforeTest(t)
 
-	tag := &UsersTag{UserID: user.ID}
-	assert.NoError(tag.Create("全強"))
+	ut := &UsersTag{UserID: user.ID}
+	assert.NoError(ut.Create("全強"))
 	assert.Error((&UsersTag{}).Create(""))
 	assert.Error((&UsersTag{}).Create("aaa"))
 }
@@ -56,9 +56,9 @@ func TestGetUserTagsByUserID(t *testing.T) {
 		require.NoError(t, tags[i].Create(strconv.Itoa(i)))
 	}
 
-	gotTags, err := GetUserTagsByUserID(user.ID)
+	r, err := GetUserTagsByUserID(user.ID)
 	if assert.NoError(err) {
-		for i, v := range gotTags {
+		for i, v := range r {
 			assert.Equal(tags[i].TagID, v.TagID)
 		}
 	}
@@ -66,28 +66,43 @@ func TestGetUserTagsByUserID(t *testing.T) {
 	// 異常系
 	notExistID := CreateUUID()
 	empty, err := GetUserTagsByUserID(notExistID)
-	if assert.NoError(err) {
-		assert.Len(empty, 0)
+	if assert.Error(err) {
+		assert.Nil(empty)
 	}
 }
 
 func TestGetTag(t *testing.T) {
 	assert, _, user, _ := beforeTest(t)
 
-	tagText := "test"
+	text := "test"
 	// 正常系
 	tag := &UsersTag{
 		UserID: user.ID,
 	}
-	require.NoError(t, tag.Create(tagText))
+	require.NoError(t, tag.Create(text))
 
-	getTag, err := GetTag(tag.UserID, tag.TagID)
+	r, err := GetTag(tag.UserID, tag.TagID)
 	if assert.NoError(err) {
-		assert.Equal(tag.UserID, getTag.UserID)
-		assert.Equal(tag.TagID, getTag.TagID)
+		assert.Equal(tag.UserID, r.UserID)
+		assert.Equal(tag.TagID, r.TagID)
 	}
 
 	// 異常系
-	_, err = GetTag(user.ID, "wrong_id")
+	_, err = GetTag(user.ID, CreateUUID())
 	assert.Error(err)
+}
+
+func TestGetUserIDsByTags(t *testing.T) {
+	assert, _, _, _ := beforeTest(t)
+	text := "tagTest"
+
+	for i := 0; i < 5; i++ {
+		u := mustMakeUser(t, "tagTest-"+strconv.Itoa(i))
+		tag := &UsersTag{UserID: u.ID}
+		require.NoError(t, tag.Create(text))
+	}
+
+	IDs, err := GetUserIDsByTags([]string{text})
+	assert.NoError(err)
+	assert.Len(IDs, 5)
 }

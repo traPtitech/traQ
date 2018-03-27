@@ -136,7 +136,7 @@ func Send(eventType events.EventType, payload interface{}) {
 		}
 
 		if len(tags) > 0 {
-			if users, err := model.GetUserIdsByTags(tags); err != nil {
+			if users, err := model.GetUserIDsByTags(tags); err != nil {
 				log.Error(err)
 			} else {
 				for _, id := range users {

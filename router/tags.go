@@ -17,73 +17,77 @@ type TagForResponse struct {
 	IsLocked bool   `json:"isLocked"`
 }
 
-// TagListTagForResponse /tags 用の構造体
-type TagListTagForResponse struct {
-	ID  string `json:"tagId"`
-	Tag string `json:"tag"`
+// FIXME: 名前が良くない気がする
+
+// TagListForResponse クライアントに返す形のタグリスト構造体
+type TagListForResponse struct {
+	ID    string             `json:"tagId"`
+	Tag   string             `json:"tag"`
+	Users []*UserForResponse `json:"users"`
 }
 
-// GetUserTags /users/{userID}/tags のGETメソッド
+// GetUserTags GET /users/{userID}/tags のハンドラ
 func GetUserTags(c echo.Context) error {
-	ID := c.Param("userID")
-	res, err := getUserTags(ID)
+	id := c.Param("userID")
+	res, err := getUserTags(id, c)
 	if err != nil {
 		return err
 	}
 	return c.JSON(http.StatusOK, res)
 }
 
-// PostUserTag /users/{userID}/tags のPOSTメソッド
+// PostUserTag POST /users/{userID}/tags のハンドラ
 func PostUserTag(c echo.Context) error {
-	userID := c.Param("userID")
+	id := c.Param("userID")
 
-	reqBody := struct {
+	body := struct {
 		Tag string `json:"tag"`
 	}{}
-	if err := c.Bind(&reqBody); err != nil {
+	if err := c.Bind(&body); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
-	tag := &model.UsersTag{
-		UserID: userID,
+	ut := &model.UsersTag{
+		UserID: id,
 	}
-	if err := tag.Create(reqBody.Tag); err != nil {
+	if err := ut.Create(body.Tag); err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Failed to create tag")
 	}
 
-	res, err := getUserTags(userID)
+	res, err := getUserTags(id, c)
 	if err != nil {
 		return err
 	}
 
-	go notification.Send(events.UserTagsUpdated, events.UserEvent{ID: userID})
+	go notification.Send(events.UserTagsUpdated, events.UserEvent{ID: id})
 	return c.JSON(http.StatusCreated, res)
 }
 
-// PutUserTag /users/{userID}/tags/{tagID} のPUTメソッド
+// PutUserTag PUT /users/{userID}/tags/{tagID} のハンドラ
 func PutUserTag(c echo.Context) error {
 	userID := c.Param("userID")
 	tagID := c.Param("tagID")
 
-	reqBody := struct {
+	body := struct {
 		IsLocked bool `json:"isLocked"`
 	}{}
-	if err := c.Bind(&reqBody); err != nil {
+	if err := c.Bind(&body); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
-	tag, err := validateTagID(tagID, userID)
+	ut, err := validateTagID(tagID, userID, c)
 	if err != nil {
 		return err
 	}
 
-	tag.IsLocked = reqBody.IsLocked
+	ut.IsLocked = body.IsLocked
 
-	if err := tag.Update(); err != nil {
+	if err := ut.Update(); err != nil {
+		c.Logger().Error("failed to update usersTag: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update tag")
 	}
 
-	res, err := getUserTags(userID)
+	res, err := getUserTags(userID, c)
 	if err != nil {
 		return err
 	}
@@ -92,17 +96,19 @@ func PutUserTag(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// DeleteUserTag /users/{userID}/tags/{tagID} のDELETEメソッド
+// DeleteUserTag DELETE /users/{userID}/tags/{tagID} のハンドラ
 func DeleteUserTag(c echo.Context) error {
 	userID := c.Param("userID")
 	tagID := c.Param("tagID")
 
-	tag, err := validateTagID(tagID, userID)
+	ut, err := validateTagID(tagID, userID, c)
 	if err != nil {
 		return err
 	}
 
-	if err := tag.Delete(); err != nil {
+	// TODO: 既に削除されている場合にもエラーが出るか確認し、そのときは204を返すようにする
+	if err := ut.Delete(); err != nil {
+		c.Logger().Error("failed to delete usersTag: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete tag")
 	}
 
@@ -110,36 +116,79 @@ func DeleteUserTag(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// GetAllTags /tags のGETメソッド
+// GetAllTags GET /tags のハンドラ
 func GetAllTags(c echo.Context) error {
 	tags, err := model.GetAllTags()
 	if err != nil {
-		c.Echo().Logger.Error(err)
+		c.Echo().Logger.Errorf("failed to get all tags: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	res := make([]*TagListTagForResponse, len(tags))
+	res := make([]*TagListForResponse, len(tags))
 
 	for i, v := range tags {
-		res[i] = &TagListTagForResponse{
-			ID:  v.ID,
-			Tag: v.Name,
+		var users []*UserForResponse
+		users, err := getUsersByTagName(v.Name, c)
+		if err != nil {
+			return err
+		}
+
+		res[i] = &TagListForResponse{
+			ID:    v.ID,
+			Tag:   v.Name,
+			Users: users,
 		}
 	}
 
 	return c.JSON(http.StatusOK, res)
 }
 
-func getUserTags(ID string) ([]*TagForResponse, error) {
+// GetUsersByTagID GET /tags/{tagID} のハンドラ
+func GetUsersByTagID(c echo.Context) error {
+	id := c.Param("tagID")
+
+	t, err := model.GetTagByID(id)
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "TagID doesn't exist")
+		default:
+			c.Logger().Errorf("failed to get tag: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while checking existence of tag")
+		}
+	}
+
+	users, err := getUsersByTagName(t.Name, c)
+	if err != nil {
+		return err
+	}
+
+	res := &TagListForResponse{
+		ID:    t.ID,
+		Tag:   t.Name,
+		Users: users,
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+func getUserTags(ID string, c echo.Context) ([]*TagForResponse, error) {
 	tagList, err := model.GetUserTagsByUserID(ID)
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "Tags are not found")
+		switch err {
+		case model.ErrNotFound:
+			return nil, echo.NewHTTPError(http.StatusNotFound, "This user doesn't exist")
+		default:
+			c.Logger().Errorf("failed to get tagList: %v", err)
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get tagList")
+		}
 	}
 
 	var res []*TagForResponse
 	for _, v := range tagList {
 		t, err := formatTag(v)
 		if err != nil {
+			c.Logger().Errorf("failed to get tag by ID: %v", err)
 			return nil, err
 		}
 		res = append(res, t)
@@ -148,26 +197,57 @@ func getUserTags(ID string) ([]*TagForResponse, error) {
 
 }
 
-func formatTag(userTag *model.UsersTag) (*TagForResponse, error) {
-	tag, err := model.GetTagByID(userTag.TagID)
+func getUsersByTagName(name string, c echo.Context) ([]*UserForResponse, error) {
+	var users []*UserForResponse
+
+	idList, err := model.GetUserIDsByTags([]string{name})
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Tag is not found")
+		c.Logger().Errorf("failed to get users by tagName: %v", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get userList")
+	}
+	for _, v := range idList {
+		u, err := model.GetUser(v.String())
+		if err != nil {
+			c.Logger().Errorf("failed to get user infomation: %v", err)
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get users")
+		}
+		users = append(users, formatUser(u))
+	}
+	return users, nil
+}
+
+func formatTag(ut *model.UsersTag) (*TagForResponse, error) {
+	tag, err := model.GetTagByID(ut.TagID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get tag infomation")
 	}
 	return &TagForResponse{
 		ID:       tag.ID,
 		Tag:      tag.Name,
-		IsLocked: userTag.IsLocked,
+		IsLocked: ut.IsLocked,
 	}, nil
 }
 
-func validateTagID(tagID, userID string) (*model.UsersTag, error) {
+func validateTagID(tagID, userID string, c echo.Context) (*model.UsersTag, error) {
 	if _, err := model.GetTagByID(tagID); err != nil {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "The specified tag does not exist")
+		switch err {
+		case model.ErrNotFound:
+			return nil, echo.NewHTTPError(http.StatusNotFound, "The specified tag does not exist")
+		default:
+			c.Logger().Errorf("failed to get tag: %v", err)
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while checking existence of tag")
+		}
 	}
 
 	userTag, err := model.GetTag(userID, tagID)
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while get tag")
+		switch err {
+		case model.ErrNotFound:
+			return nil, echo.NewHTTPError(http.StatusNotFound, "The specified tag does not exist")
+		default:
+			c.Logger().Errorf("failed to get tag: %v", err)
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while checking existence of tag")
+		}
 	}
 
 	return userTag, nil

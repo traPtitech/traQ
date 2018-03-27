@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTag_TableName(t *testing.T) {
@@ -32,13 +33,12 @@ func TestTag_Exists(t *testing.T) {
 	}
 	require.NoError(tag.Create())
 
-	has, err := tag.Exists()
+	has, err := (&Tag{Name: tag.Name}).Exists()
 	if assert.NoError(err) {
 		assert.True(has)
 	}
 
 	tag = &Tag{
-		ID:   CreateUUID(),
 		Name: "wrong tag",
 	}
 
@@ -57,9 +57,9 @@ func TestGetTagByID(t *testing.T) {
 	}
 	require.NoError(tag.Create())
 
-	gotTag, err := GetTagByID(tag.ID)
+	r, err := GetTagByID(tag.ID)
 	if assert.NoError(err) {
-		assert.Equal(tag.Name, gotTag.Name)
+		assert.Equal(tag.Name, r.Name)
 	}
 
 	_, err = GetTagByID("wrong_id")

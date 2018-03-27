@@ -3,7 +3,10 @@
 
 [[projects]]
   name = "github.com/GeorgeMac/idicon"
-  packages = ["colour","icon"]
+  packages = [
+    "colour",
+    "icon"
+  ]
   revision = "5df45084f875d7e82ae224f6f5825cc858b54f0d"
   version = "0.2"
 
@@ -25,8 +28,8 @@
     ".",
     "currency"
   ]
-  revision = "e4cbcb5d0652150d40ad0646651076b6bd2be4f6"
-  version = "v0.11.2"
+  revision = "f63010822830b6fe52288ee52d5a1151088ce039"
+  version = "v0.12.1"
 
 [[projects]]
   name = "github.com/go-playground/universal-translator"
@@ -44,7 +47,7 @@
   branch = "master"
   name = "github.com/go-xorm/builder"
   packages = ["."]
-  revision = "488224409dd8aa2ce7a5baf8d10d55764a913738"
+  revision = "a9b7ffcca3f0c6445c4e3b1bf72c01578817a6c3"
 
 [[projects]]
   name = "github.com/go-xorm/core"
@@ -77,19 +80,13 @@
   version = "v1.1"
 
 [[projects]]
-  name = "github.com/json-iterator/go"
-  packages = ["."]
-  revision = "3353055b2a1a5ae1b6a8dfde887a524e7088f3a2"
-  version = "1.1.2"
-
-[[projects]]
   name = "github.com/labstack/echo"
   packages = [
     ".",
     "middleware"
   ]
-  revision = "7f44549f0216124806cf63a3a546bb5996d21a89"
-  version = "3.3.3"
+  revision = "a5d81b8d4a627f3f49dcb3164ef2bb5239682227"
+  version = "3.3.4"
 
 [[projects]]
   name = "github.com/labstack/echo-contrib"
@@ -119,18 +116,6 @@
   packages = ["."]
   revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
   version = "v0.0.3"
-
-[[projects]]
-  name = "github.com/modern-go/concurrent"
-  packages = ["."]
-  revision = "bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94"
-  version = "1.0.3"
-
-[[projects]]
-  name = "github.com/modern-go/reflect2"
-  packages = ["."]
-  revision = "1df9eeb2bb81f327b96228865c5687bc2194af3f"
-  version = "1.0.0"
 
 [[projects]]
   name = "github.com/mikespook/gorbac"
@@ -164,7 +149,10 @@
 
 [[projects]]
   name = "github.com/stretchr/testify"
-  packages = ["assert","require"]
+  packages = [
+    "assert",
+    "require"
+  ]
   revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
   version = "v1.2.1"
 
@@ -188,8 +176,7 @@
     "acme/autocert",
     "pbkdf2"
   ]
-  revision = "b4956d363a8b14623cc81db401707679605930a3"
-
+  revision = "88942b9c40a4c9d203b82b3731787b672d6e809b"
 
 [[projects]]
   branch = "master"
@@ -205,13 +192,11 @@
   ]
   revision = "f3a9b89b59def9194717c1d0bd4c0d08fa1afa7b"
 
-
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "e0c57d8f86c17f0724497efcb3bc617e82834821"
-
+  revision = "6078986fec03a1dcc236c34816c71b0e05018fda"
 
 [[projects]]
   branch = "master"
@@ -223,23 +208,26 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "cc7307a45468e49eaf2997c890f14aa03a26917b"
+  revision = "91ee8cde435411ca3f1cd365e8f20131aed4d0a1"
 
 [[projects]]
   name = "gopkg.in/go-playground/validator.v9"
   packages = ["."]
-  revision = "1b8c8e19cd250435025214492d9a08411d760fdd"
-  version = "v9.12.0"
+  revision = "8ce234ff024d85b3848e485decba806385d6e276"
+  version = "v9.13.0"
 
 [[projects]]
   name = "gopkg.in/go-playground/webhooks.v3"
-  packages = [".","github"]
-  revision = "c271ec3e322dab2e93990e8c5287fe5d5d1209ba"
-  version = "v3.8.0"
+  packages = [
+    ".",
+    "github"
+  ]
+  revision = "f2acbcde401467ded7701fbbf7eabd7a0bb6702d"
+  version = "v3.10.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "59fe697ed2b0f708332b51d53392522f6181dce2c47abe6c0ee95afd695fb491"
+  inputs-digest = "197f1f5dca00744a4aa4c6bbae6b541695d14cd71f035928a78f3fac41d1193b"
   solver-name = "gps-cdcl"
   solver-version = 1
