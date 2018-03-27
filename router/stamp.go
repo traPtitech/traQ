@@ -270,7 +270,7 @@ func PostMessageStamp(c echo.Context) error {
 		}
 	}
 
-	count, err := model.AddStampToMessage(messageID, stampID, userID)
+	ms, err := model.AddStampToMessage(messageID, stampID, userID)
 	if err != nil {
 		if errSQL, ok := err.(*mysql.MySQLError); ok {
 			if errSQL.Number == 1452 { //外部キー制約
@@ -286,7 +286,8 @@ func PostMessageStamp(c echo.Context) error {
 		ChannelID: message.ChannelID,
 		StampID:   stampID,
 		UserID:    userID,
-		Count:     count,
+		Count:     ms.Count,
+		CreatedAt: ms.CreatedAt,
 	})
 	return c.NoContent(http.StatusNoContent)
 }

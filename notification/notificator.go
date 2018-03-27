@@ -6,6 +6,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/notification/events"
 	"os"
+	"time"
 )
 
 type eventData struct {
@@ -195,11 +196,12 @@ func Send(eventType events.EventType, payload interface{}) {
 				multicast(id, &eventData{
 					EventType: eventType,
 					Payload: struct {
-						ID      string `json:"message_id"`
-						UserID  string `json:"user_id"`
-						StampID string `json:"stamp_id"`
-						Count   int    `json:"count"`
-					}{data.ID, data.UserID, data.StampID, data.Count},
+						ID        string    `json:"message_id"`
+						UserID    string    `json:"user_id"`
+						StampID   string    `json:"stamp_id"`
+						Count     int       `json:"count"`
+						CreatedAt time.Time `json:"created_at"`
+					}{data.ID, data.UserID, data.StampID, data.Count, data.CreatedAt},
 					Mobile: false,
 				})
 			}
