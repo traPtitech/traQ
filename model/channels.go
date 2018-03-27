@@ -53,7 +53,7 @@ func (channel *Channel) Create() error {
 
 	// ここまでで入力されない要素は初期値(""や0)で格納される
 	if _, err := db.Insert(channel); err != nil {
-		return fmt.Errorf("failed to create channel: %v", err)
+		return err
 	}
 
 	//チャンネルパスをキャッシュ
@@ -81,7 +81,7 @@ func (channel *Channel) Update() error {
 
 	_, err := db.ID(channel.ID).UseBool().Update(channel)
 	if err != nil {
-		return fmt.Errorf("failed to update channel: %v", err)
+		return err
 	}
 
 	//チャンネルパスキャッシュの更新
@@ -99,7 +99,7 @@ func (channel *Channel) Parent() (*Channel, error) {
 	parent := &Channel{}
 	has, err := db.Where("id = ?", channel.ParentID).Get(parent)
 	if !has {
-		return nil, fmt.Errorf("parent channel doesn't exist")
+		return nil, ErrNotFound
 	}
 	return parent, err
 }
@@ -111,9 +111,8 @@ func (channel *Channel) Children(userID string) ([]string, error) {
 		return nil, fmt.Errorf("channelID is empty")
 	}
 	err := db.Table("channels").Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND parent_id = ? AND is_deleted = false", userID, channel.ID).Cols("id").Find(&channelIDList)
-
 	if err != nil {
-		return nil, fmt.Errorf("failed to find channels: %v", err)
+		return nil, err
 	}
 	return channelIDList, nil
 }
@@ -147,10 +146,10 @@ func (channel *Channel) Path() (string, error) {
 func GetChannelByID(userID, channelID string) (*Channel, error) {
 	channel := &Channel{}
 	channel.ID = channelID
-	has, err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userID).Get(channel)
 
+	has, err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userID).Get(channel)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get channel: %v", err)
+		return nil, err
 	}
 
 	if !has {
@@ -181,9 +180,8 @@ func GetChannelList(userID string) ([]*Channel, error) {
 	// TODO: 隠しチャンネルを表示するかどうかをクライアントと決める
 	var channelList []*Channel
 	err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userID).Find(&channelList)
-
 	if err != nil {
-		return nil, fmt.Errorf("failed to find channels: %v", err)
+		return nil, err
 	}
 	return channelList, nil
 }
