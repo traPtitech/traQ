@@ -3,32 +3,12 @@ package oauth2
 import (
 	"encoding/base64"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/auth/scope"
+	"github.com/traPtitech/traQ/auth/oauth2/scope"
 	"strings"
 )
 
-var (
-	store Store
-
-	// ErrInvalidScope : OAuth2エラー 不正なスコープです
-	ErrInvalidScope = &errorResponse{ErrorType: errInvalidScope}
-)
-
-// AuthScheme : Authorizationヘッダーのスキーム
-const AuthScheme = "Bearer"
-
 func generateRandomString() string {
 	return base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes())
-}
-
-// SetOAuth2Store : OAuth2のストアの実装をセットします
-func SetOAuth2Store(s Store) {
-	store = s
-}
-
-// GetOAuth2Store : OAuth2のストアを返します
-func GetOAuth2Store() Store {
-	return store
 }
 
 // SplitAndValidateScope : スペース区切りのスコープ文字列を分解し、検証します

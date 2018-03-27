@@ -2,7 +2,7 @@ package oauth2
 
 import (
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/auth/scope"
+	"github.com/traPtitech/traQ/auth/oauth2/scope"
 )
 
 // Client : OAuth2.0クライアント構造体

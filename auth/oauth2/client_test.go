@@ -2,7 +2,7 @@ package oauth2
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/traQ/auth/scope"
+	"github.com/traPtitech/traQ/auth/oauth2/scope"
 	"testing"
 )
 

@@ -104,7 +104,7 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc, *a
 	cookie := parseCookies(rec.Header().Get("Set-Cookie"))["sessions"]
 	mw := func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			return session.Middleware(store)(UserAuthenticate(next))(c)
+			return session.Middleware(store)(UserAuthenticate(nil)(next))(c)
 		}
 
 	}

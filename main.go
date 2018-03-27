@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/traPtitech/traQ/auth/oauth2"
+	"github.com/traPtitech/traQ/auth/oauth2/impl"
 	"github.com/traPtitech/traQ/auth/openid"
 	"net/http"
 	"os"
@@ -59,7 +60,6 @@ func main() {
 	if err := model.SyncSchema(); err != nil {
 		panic(err)
 	}
-	oauth2.SetOAuth2Store(&oauth2.DefaultStore{})
 
 	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
 	if err != nil {
@@ -90,6 +90,14 @@ func main() {
 	}
 	role.SetRole(r)
 
+	// oauth2 handler
+	oauth := &oauth2.Handler{
+		Store:                &impl.DefaultStore{},
+		AccessTokenExp:       60 * 60 * 24 * 365 * 100, //100年
+		AuthorizationCodeExp: 60 * 5,                   //5分
+		IsRefreshEnabled:     false,
+	}
+
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:8080"},
@@ -111,7 +119,7 @@ func main() {
 	e.POST("/logout", router.PostLogout)
 
 	api := e.Group("/api/1.0")
-	api.Use(router.UserAuthenticate)
+	api.Use(router.UserAuthenticate(oauth))
 	apiNoAuth := e.Group("/api/1.0")
 
 	// access control middleware generator
@@ -213,21 +221,22 @@ func main() {
 	apiNoAuth.POST("/webhooks/:webhookID/github", router.PostWebhookByGithub)
 
 	// Tag: authorization
-	apiNoAuth.GET("/oauth2/authorize", oauth2.AuthorizationEndpointHandler)
-	apiNoAuth.POST("/oauth2/authorize", oauth2.AuthorizationEndpointHandler)
-	api.POST("/oauth2/authorize/decide", oauth2.AuthorizationDecideHandler)
-	apiNoAuth.POST("/oauth2/token", oauth2.TokenEndpointHandler)
+	apiNoAuth.GET("/oauth2/authorize", oauth.AuthorizationEndpointHandler)
+	apiNoAuth.POST("/oauth2/authorize", oauth.AuthorizationEndpointHandler)
+	api.POST("/oauth2/authorize/decide", oauth.AuthorizationDecideHandler)
+	apiNoAuth.POST("/oauth2/token", oauth.TokenEndpointHandler)
 	e.GET("/.well-known/openid-configuration", openid.DiscoveryHandler)
 	e.GET("/publickeys", openid.PublicKeysHandler)
 
 	// Tag: client
-	api.GET("/users/me/tokens", router.GetMyTokens, requires(permission.GetMyTokens))
-	api.DELETE("/users/me/tokens/:tokenID", router.DeleteMyToken, requires(permission.RevokeMyToken))
-	api.GET("/clients", router.GetClients, requires(permission.GetClients))
-	api.POST("/clients", router.PostClients, requires(permission.CreateClient))
-	api.GET("/clients/:clientID", router.GetClient, requires(permission.GetClients))
-	api.PATCH("/clients/:clientID", router.PatchClient, requires(permission.EditMyClient))
-	api.DELETE("/clients/:clientID", router.DeleteClient, requires(permission.DeleteMyClient))
+	oah := &router.OAuth2APIHandler{Store: oauth}
+	api.GET("/users/me/tokens", oah.GetMyTokens, requires(permission.GetMyTokens))
+	api.DELETE("/users/me/tokens/:tokenID", oah.DeleteMyToken, requires(permission.RevokeMyToken))
+	api.GET("/clients", oah.GetClients, requires(permission.GetClients))
+	api.POST("/clients", oah.PostClients, requires(permission.CreateClient))
+	api.GET("/clients/:clientID", oah.GetClient, requires(permission.GetClients))
+	api.PATCH("/clients/:clientID", oah.PatchClient, requires(permission.EditMyClient))
+	api.DELETE("/clients/:clientID", oah.DeleteClient, requires(permission.DeleteMyClient))
 
 	// Serve UI
 	e.File("/sw.js", "./client/dist/sw.js")
