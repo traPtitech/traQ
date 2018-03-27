@@ -94,8 +94,8 @@ func main() {
 	// oauth2 handler
 	oauth := &oauth2.Handler{
 		Store:                &impl.DefaultStore{},
-		AccessTokenExp:       60 * 60 * 24 * 365 * 100, //100年
-		AuthorizationCodeExp: 60 * 5,                   //5分
+		AccessTokenExp:       60 * 60 * 24 * 365, //1年
+		AuthorizationCodeExp: 60 * 5,             //5分
 		IsRefreshEnabled:     false,
 		UserAuthenticator: func(id, pw string) (uuid.UUID, error) {
 			user := &model.User{Name: id}

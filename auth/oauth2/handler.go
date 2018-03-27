@@ -107,8 +107,7 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 
 	req := authorizeRequest{}
 	if err := c.Bind(&req); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err) //普通は起こらないはず
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 	if len(req.ClientID) == 0 {
 		return echo.NewHTTPError(http.StatusBadRequest)
