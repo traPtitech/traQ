@@ -102,7 +102,7 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
 
-	req := &authorizeRequest{}
+	req := authorizeRequest{}
 	if err := c.Bind(&req); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err) //普通は起こらないはず
@@ -274,7 +274,7 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 
 	switch {
 	case types.Code && !types.Token && !types.IDToken: // "code" 現状はcodeしかサポートしない
-		se.Values[oauth2ContextSession] = *req
+		se.Values[oauth2ContextSession] = req
 		if err := se.Save(c.Request(), c.Response()); err != nil {
 			c.Logger().Error(err)
 			q.Set("error", errServerError)
@@ -387,7 +387,7 @@ func (store *Handler) TokenEndpointHandler(c echo.Context) error {
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
 
-	req := &tokenRequest{}
+	req := tokenRequest{}
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, errorResponse{ErrorType: errInvalidRequest})
 	}
@@ -399,7 +399,7 @@ func (store *Handler) TokenEndpointHandler(c echo.Context) error {
 				return "", "", &errorResponse{ErrorType: errInvalidClient}
 			}
 			id = req.ClientID
-			pw = req.Password
+			pw = req.ClientSecret
 		}
 		return
 	}
