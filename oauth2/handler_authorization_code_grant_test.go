@@ -965,7 +965,6 @@ func TestAuthorizationCodeGrantAuthorizationDecide_Failure7(t *testing.T) {
 }
 
 // TokenEndpointHandler
-// TODO IDToken発行テスト
 
 func BeforeTestAuthorizationCodeGrantTokenEndpoint(t *testing.T) (*assert.Assertions, *require.Assertions, *Handler, *Client, *AuthorizeData, *echo.Echo) {
 	assert := assert.New(t)
