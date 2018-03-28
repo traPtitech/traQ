@@ -325,8 +325,7 @@ func (store *Handler) AuthorizationDecideHandler(c echo.Context) error {
 		Submit string `form:"submit"`
 	}{}
 	if err := c.Bind(&req); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err) //普通は起こらないはず
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	// セッション確認
@@ -335,7 +334,7 @@ func (store *Handler) AuthorizationDecideHandler(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	reqAuth, ok := se.Values[oauth2ContextSession].(authorizeRequest)
+	reqAuth, ok := se.Values[oauth2ContextSession].(*authorizeRequest)
 	if !ok {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
@@ -363,7 +362,7 @@ func (store *Handler) AuthorizationDecideHandler(c echo.Context) error {
 	if client.RedirectURI == "" { // RedirectURIが事前登録されていない
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
-	redirectURI := client.RedirectURI
+	redirectURI, _ := url.ParseRequestURI(client.RedirectURI)
 
 	q := url.Values{}
 	if len(reqAuth.State) > 0 {
@@ -371,15 +370,17 @@ func (store *Handler) AuthorizationDecideHandler(c echo.Context) error {
 	}
 
 	// タイムアウト
-	if reqAuth.AccessTime.Add(5 * time.Minute).After(time.Now()) {
+	if reqAuth.AccessTime.Add(5 * time.Minute).Before(time.Now()) {
 		q.Set("error", errAccessDenied)
 		q.Set("error_description", "timeout")
-		return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
 	// 拒否
 	if req.Submit != "approve" {
 		q.Set("error", errAccessDenied)
-		return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
 
 	switch {
@@ -400,7 +401,8 @@ func (store *Handler) AuthorizationDecideHandler(c echo.Context) error {
 		if err := store.SaveAuthorize(data); err != nil {
 			c.Logger().Error(err)
 			q.Set("error", errServerError)
-			return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 		q.Set("code", data.Code)
 
@@ -408,7 +410,8 @@ func (store *Handler) AuthorizationDecideHandler(c echo.Context) error {
 		q.Set("error", errUnsupportedResponseType)
 	}
 
-	return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+	redirectURI.RawQuery = q.Encode()
+	return c.Redirect(http.StatusFound, redirectURI.String())
 }
 
 // TokenEndpointHandler : トークンエンドポイントのハンドラ

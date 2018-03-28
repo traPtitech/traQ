@@ -199,6 +199,43 @@ func TestAuthorizationCodeGrantAuthorizationEndpoint_Success3(t *testing.T) {
 	}
 }
 
+// 成功パターン4
+// GET
+func TestAuthorizationCodeGrantAuthorizationEndpoint_Success4(t *testing.T) {
+	t.Parallel()
+
+	assert, _, h, client, e := BeforeTestAuthorizationCodeGrantAuthorizationEndpoint(t)
+
+	f := url.Values{}
+	f.Set("client_id", client.ID)
+	f.Set("response_type", "code")
+	f.Set("state", "state")
+	f.Set("nonce", "nonce")
+	f.Set("scope", "read write")
+
+	req := httptest.NewRequest(echo.GET, "/?"+f.Encode(), nil)
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	if assert.NoError(h.AuthorizationEndpointHandler(c)) {
+		assert.Equal(http.StatusFound, rec.Code)
+		assert.Equal("no-store", rec.Header().Get("Cache-Control"))
+		assert.Equal("no-cache", rec.Header().Get("Pragma"))
+		loc, err := rec.Result().Location()
+		if assert.NoError(err) {
+			assert.Equal(f.Get("state"), loc.Query().Get("state"))
+			assert.Equal(f.Get("client_id"), loc.Query().Get("client_id"))
+			assert.Equal("read", loc.Query().Get("scopes"))
+		}
+
+		s, err := h.Sessions.Get(req, "sessions")
+		if assert.NoError(err) {
+			assert.Equal(f.Get("state"), s.Values[oauth2ContextSession].(authorizeRequest).State)
+		}
+	}
+}
+
 // 失敗パターン1
 // リクエストが不正
 func TestAuthorizationCodeGrantAuthorizationEndpoint_Failure1(t *testing.T) {
@@ -470,7 +507,7 @@ func TestAuthorizationCodeGrantAuthorizationEndpoint_Failure11(t *testing.T) {
 
 	f := url.Values{}
 	f.Set("client_id", client.ID)
-	f.Set("response_type", "code none")
+	f.Set("response_type", "code token id_token none")
 
 	req := httptest.NewRequest(echo.POST, "/", strings.NewReader(f.Encode()))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
@@ -607,6 +644,321 @@ func TestAuthorizationCodeGrantAuthorizationEndpoint_Failure15(t *testing.T) {
 		loc, err := rec.Result().Location()
 		if assert.NoError(err) {
 			assert.Equal(errInvalidRequest, loc.Query().Get("error"))
+		}
+	}
+}
+
+// AuthorizationDecideHandler
+
+func BeforeTestAuthorizationCodeGrantAuthorizationDecide(t *testing.T) (*assert.Assertions, *require.Assertions, *Handler, *Client, *echo.Echo) {
+	assert := assert.New(t)
+	require := require.New(t)
+	store := NewStoreMock()
+
+	client := &Client{
+		ID:           generateRandomString(),
+		Name:         "test client",
+		Confidential: true,
+		CreatorID:    uuid.NewV4(),
+		Secret:       generateRandomString(),
+		RedirectURI:  "http://example.com",
+		Scopes: scope.AccessScopes{
+			scope.OpenID,
+			scope.Profile,
+			scope.Read,
+			scope.PrivateRead,
+		},
+	}
+	require.NoError(store.SaveClient(client))
+
+	e := echo.New()
+	handler := &Handler{
+		Store:                store,
+		AccessTokenExp:       1000,
+		AuthorizationCodeExp: 1000,
+		IsRefreshEnabled:     true,
+		Sessions:             memstore.NewMemStore([]byte("secret")),
+	}
+
+	return assert, require, handler, client, e
+}
+
+func MakeDecideSession(t *testing.T, h *Handler, uid uuid.UUID, client *Client) *http.Cookie {
+	req := httptest.NewRequest(echo.GET, "/", nil)
+	rec := httptest.NewRecorder()
+	s, err := h.Sessions.New(req, "sessions")
+	require.NoError(t, err)
+	s.Values["userID"] = uid.String()
+	s.Values[oauth2ContextSession] = authorizeRequest{
+		ResponseType: "code",
+		ClientID:     client.ID,
+		RedirectURI:  client.RedirectURI,
+		Scopes: scope.AccessScopes{
+			scope.Read,
+			scope.Write,
+		},
+		ValidScopes: scope.AccessScopes{
+			scope.Read,
+		},
+		State:      "state",
+		Types:      responseType{true, false, false, false},
+		AccessTime: time.Now(),
+	}
+	require.NoError(t, s.Save(req, rec))
+
+	return parseCookies(rec.Header().Get("Set-Cookie"))["sessions"]
+}
+
+// 成功パターン1
+func TestAuthorizationCodeGrantAuthorizationDecide_Success1(t *testing.T) {
+	t.Parallel()
+
+	assert, _, h, client, e := BeforeTestAuthorizationCodeGrantAuthorizationDecide(t)
+
+	f := url.Values{}
+	f.Set("submit", "approve")
+
+	req := httptest.NewRequest(echo.POST, "/", strings.NewReader(f.Encode()))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
+	req.AddCookie(MakeDecideSession(t, h, uuid.NewV4(), client))
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	if assert.NoError(h.AuthorizationDecideHandler(c)) {
+		assert.Equal(http.StatusFound, rec.Code)
+		assert.Equal("no-store", rec.Header().Get("Cache-Control"))
+		assert.Equal("no-cache", rec.Header().Get("Pragma"))
+		loc, err := rec.Result().Location()
+		if assert.NoError(err) {
+			assert.NotEmpty(loc.Query().Get("code"))
+			assert.Equal("state", loc.Query().Get("state"))
+		}
+
+		a, err := h.GetAuthorize(loc.Query().Get("code"))
+		if assert.NoError(err) {
+			assert.Equal(f.Get("nonce"), a.Nonce)
+		}
+	}
+}
+
+// 失敗パターン1
+// 不正なリクエストボディ
+func TestAuthorizationCodeGrantAuthorizationDecide_Failure1(t *testing.T) {
+	t.Parallel()
+
+	assert, _, h, _, e := BeforeTestAuthorizationCodeGrantAuthorizationDecide(t)
+
+	req := httptest.NewRequest(echo.POST, "/", nil)
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	if assert.Error(h.AuthorizationDecideHandler(c)) {
+		assert.Equal("no-store", rec.Header().Get("Cache-Control"))
+		assert.Equal("no-cache", rec.Header().Get("Pragma"))
+	}
+}
+
+// 失敗パターン2
+// oauth2ContextSessionがない
+func TestAuthorizationCodeGrantAuthorizationDecide_Failure2(t *testing.T) {
+	t.Parallel()
+
+	assert, _, h, _, e := BeforeTestAuthorizationCodeGrantAuthorizationDecide(t)
+
+	f := url.Values{}
+	f.Set("submit", "approve")
+
+	req := httptest.NewRequest(echo.POST, "/", strings.NewReader(f.Encode()))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	if assert.EqualError(echo.NewHTTPError(http.StatusForbidden), h.AuthorizationDecideHandler(c).Error()) {
+		assert.Equal("no-store", rec.Header().Get("Cache-Control"))
+		assert.Equal("no-cache", rec.Header().Get("Pragma"))
+	}
+}
+
+// 失敗パターン3
+// クライアントが存在しない
+func TestAuthorizationCodeGrantAuthorizationDecide_Failure3(t *testing.T) {
+	t.Parallel()
+
+	assert, require, h, client, e := BeforeTestAuthorizationCodeGrantAuthorizationDecide(t)
+	require.NoError(h.DeleteClient(client.ID))
+
+	f := url.Values{}
+	f.Set("submit", "approve")
+
+	req := httptest.NewRequest(echo.POST, "/", strings.NewReader(f.Encode()))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
+	req.AddCookie(MakeDecideSession(t, h, uuid.NewV4(), client))
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	if assert.EqualError(echo.NewHTTPError(http.StatusBadRequest), h.AuthorizationDecideHandler(c).Error()) {
+		assert.Equal("no-store", rec.Header().Get("Cache-Control"))
+		assert.Equal("no-cache", rec.Header().Get("Pragma"))
+	}
+}
+
+// 失敗パターン4
+// クライアントにRedirectURIが設定されていない
+func TestAuthorizationCodeGrantAuthorizationDecide_Failure4(t *testing.T) {
+	t.Parallel()
+
+	assert, require, h, client, e := BeforeTestAuthorizationCodeGrantAuthorizationDecide(t)
+	client.RedirectURI = ""
+	require.NoError(h.UpdateClient(client))
+
+	f := url.Values{}
+	f.Set("submit", "approve")
+
+	req := httptest.NewRequest(echo.POST, "/", strings.NewReader(f.Encode()))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
+	req.AddCookie(MakeDecideSession(t, h, uuid.NewV4(), client))
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	if assert.EqualError(echo.NewHTTPError(http.StatusForbidden), h.AuthorizationDecideHandler(c).Error()) {
+		assert.Equal("no-store", rec.Header().Get("Cache-Control"))
+		assert.Equal("no-cache", rec.Header().Get("Pragma"))
+	}
+}
+
+// 失敗パターン5
+// タイムアウト
+func TestAuthorizationCodeGrantAuthorizationDecide_Failure5(t *testing.T) {
+	t.Parallel()
+
+	assert, require, h, client, e := BeforeTestAuthorizationCodeGrantAuthorizationDecide(t)
+
+	f := url.Values{}
+	f.Set("submit", "approve")
+
+	req := httptest.NewRequest(echo.POST, "/", strings.NewReader(f.Encode()))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
+
+	{
+		reqi := httptest.NewRequest(echo.GET, "/", nil)
+		rec := httptest.NewRecorder()
+		s, err := h.Sessions.New(reqi, "sessions")
+		require.NoError(err)
+		s.Values["userID"] = uuid.NewV4().String()
+		s.Values[oauth2ContextSession] = authorizeRequest{
+			ResponseType: "code",
+			ClientID:     client.ID,
+			RedirectURI:  client.RedirectURI,
+			Scopes: scope.AccessScopes{
+				scope.Read,
+				scope.Write,
+			},
+			ValidScopes: scope.AccessScopes{
+				scope.Read,
+			},
+			State:      "state",
+			AccessTime: time.Now().Add(-6 * time.Minute),
+		}
+		require.NoError(s.Save(reqi, rec))
+
+		req.AddCookie(parseCookies(rec.Header().Get("Set-Cookie"))["sessions"])
+	}
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	if assert.NoError(h.AuthorizationDecideHandler(c)) {
+		assert.Equal(http.StatusFound, rec.Code)
+		assert.Equal("no-store", rec.Header().Get("Cache-Control"))
+		assert.Equal("no-cache", rec.Header().Get("Pragma"))
+		loc, err := rec.Result().Location()
+		if assert.NoError(err) {
+			assert.Equal(errAccessDenied, loc.Query().Get("error"))
+		}
+	}
+}
+
+// 失敗パターン6
+// 拒否
+func TestAuthorizationCodeGrantAuthorizationDecide_Failure6(t *testing.T) {
+	t.Parallel()
+
+	assert, _, h, client, e := BeforeTestAuthorizationCodeGrantAuthorizationDecide(t)
+
+	f := url.Values{}
+	f.Set("submit", "deny")
+
+	req := httptest.NewRequest(echo.POST, "/", strings.NewReader(f.Encode()))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
+	req.AddCookie(MakeDecideSession(t, h, uuid.NewV4(), client))
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	if assert.NoError(h.AuthorizationDecideHandler(c)) {
+		assert.Equal(http.StatusFound, rec.Code)
+		assert.Equal("no-store", rec.Header().Get("Cache-Control"))
+		assert.Equal("no-cache", rec.Header().Get("Pragma"))
+		loc, err := rec.Result().Location()
+		if assert.NoError(err) {
+			assert.Equal(errAccessDenied, loc.Query().Get("error"))
+		}
+	}
+}
+
+// 失敗パターン7
+// 未サポートのレスポンスタイプ
+func TestAuthorizationCodeGrantAuthorizationDecide_Failure7(t *testing.T) {
+	t.Parallel()
+
+	assert, require, h, client, e := BeforeTestAuthorizationCodeGrantAuthorizationDecide(t)
+
+	f := url.Values{}
+	f.Set("submit", "approve")
+
+	req := httptest.NewRequest(echo.POST, "/", strings.NewReader(f.Encode()))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)
+
+	{
+		reqi := httptest.NewRequest(echo.GET, "/", nil)
+		rec := httptest.NewRecorder()
+		s, err := h.Sessions.New(reqi, "sessions")
+		require.NoError(err)
+		s.Values["userID"] = uuid.NewV4().String()
+		s.Values[oauth2ContextSession] = authorizeRequest{
+			ResponseType: "code",
+			ClientID:     client.ID,
+			RedirectURI:  client.RedirectURI,
+			Scopes: scope.AccessScopes{
+				scope.Read,
+				scope.Write,
+			},
+			ValidScopes: scope.AccessScopes{
+				scope.Read,
+			},
+			State:      "state",
+			AccessTime: time.Now(),
+		}
+		require.NoError(s.Save(reqi, rec))
+
+		req.AddCookie(parseCookies(rec.Header().Get("Set-Cookie"))["sessions"])
+	}
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	if assert.NoError(h.AuthorizationDecideHandler(c)) {
+		assert.Equal(http.StatusFound, rec.Code)
+		assert.Equal("no-store", rec.Header().Get("Cache-Control"))
+		assert.Equal("no-cache", rec.Header().Get("Pragma"))
+		loc, err := rec.Result().Location()
+		if assert.NoError(err) {
+			assert.Equal(errUnsupportedResponseType, loc.Query().Get("error"))
 		}
 	}
 }
