@@ -97,6 +97,7 @@ func main() {
 		AccessTokenExp:       60 * 60 * 24 * 365, //1年
 		AuthorizationCodeExp: 60 * 5,             //5分
 		IsRefreshEnabled:     false,
+		Sessions:             store,
 		UserAuthenticator: func(id, pw string) (uuid.UUID, error) {
 			user := &model.User{Name: id}
 			err := user.Authorization(pw)
@@ -105,6 +106,13 @@ func main() {
 				err = oauth2.ErrUserIDOrPasswordWrong
 			}
 			return uuid.FromStringOrNil(user.ID), err
+		},
+		UserInfoGetter: func(uid uuid.UUID) (oauth2.UserInfo, error) {
+			u, err := model.GetUser(uid.String())
+			if err == model.ErrNotFound {
+				return nil, oauth2.ErrUserIDOrPasswordWrong
+			}
+			return u, err
 		},
 	}
 

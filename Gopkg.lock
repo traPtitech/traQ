@@ -136,6 +136,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/quasoft/memstore"
+  packages = ["."]
+  revision = "72cbde23778087efc0d9af366d6f08ceacbf4705"
+
+[[projects]]
   name = "github.com/satori/go.uuid"
   packages = ["."]
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
@@ -228,6 +234,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "197f1f5dca00744a4aa4c6bbae6b541695d14cd71f035928a78f3fac41d1193b"
+  inputs-digest = "8f71a901745cfcd69c8830ff19e9ce1b611a7252abc9d1b97448badf5789d78e"
   solver-name = "gps-cdcl"
   solver-version = 1

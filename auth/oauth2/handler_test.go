@@ -11,6 +11,38 @@ import (
 	"testing"
 )
 
+func TestResponseType_valid(t *testing.T) {
+	t.Parallel()
+
+	cases := [][5]bool{
+		{false, false, false, false, false},
+		{true, false, false, false, true},
+		{false, true, false, false, true},
+		{false, false, true, false, true},
+		{false, false, false, true, true},
+		{true, true, false, false, true},
+		{true, false, true, false, true},
+		{true, false, false, true, false},
+		{false, true, true, false, true},
+		{false, true, false, true, false},
+		{false, false, true, true, false},
+		{true, true, true, false, true},
+		{true, true, false, true, false},
+		{true, false, true, true, false},
+		{false, true, true, true, false},
+		{true, true, true, true, false},
+	}
+	for _, v := range cases {
+		rt := responseType{
+			Code:    v[0],
+			Token:   v[1],
+			IDToken: v[2],
+			None:    v[3],
+		}
+		assert.Equal(t, v[4], rt.valid())
+	}
+}
+
 func TestHandler_TokenEndpointHandler_Failure1(t *testing.T) {
 	t.Parallel()
 

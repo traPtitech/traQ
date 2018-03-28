@@ -1,18 +1,22 @@
 package oauth2
 
 import (
+	"encoding/gob"
 	"fmt"
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/auth/oauth2/scope"
 	"github.com/traPtitech/traQ/auth/openid"
-	"github.com/traPtitech/traQ/model"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 )
+
+func init() {
+	gob.Register(&authorizeRequest{})
+}
 
 const (
 	// Authorization Code Grant
@@ -26,7 +30,7 @@ const (
 
 	oauth2ContextSession = "oauth2_context"
 
-	// AuthScheme : Authorizationヘッダーのスキーム
+	// AuthScheme Authorizationヘッダーのスキーム
 	AuthScheme = "Bearer"
 )
 
@@ -40,9 +44,13 @@ type Handler struct {
 	AuthorizationCodeExp int
 	//IsRefreshEnabled リフレッシュトークンを発行するかどうか
 	IsRefreshEnabled bool
+	//Sessions セッションのストア
+	Sessions sessions.Store
 
 	//UserAuthenticator ユーザー認証を行う関数
 	UserAuthenticator func(id, pw string) (uuid.UUID, error)
+	//UserInfoGetter ユーザー情報を取得する関数
+	UserInfoGetter func(uid uuid.UUID) (UserInfo, error)
 }
 
 type tokenRequest struct {
@@ -133,9 +141,9 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	if len(req.RedirectURI) > 0 && client.RedirectURI != req.RedirectURI {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-	redirectURI := client.RedirectURI
+	redirectURI, _ := url.ParseRequestURI(client.RedirectURI)
 
-	q := url.Values{}
+	q := &url.Values{}
 	if len(req.State) > 0 {
 		q.Set("state", req.State)
 	}
@@ -144,11 +152,13 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	if len(req.CodeChallengeMethod) > 0 {
 		if req.CodeChallengeMethod != "plain" && req.CodeChallengeMethod != "S256" {
 			q.Set("error", errInvalidRequest)
-			return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 		if !pkceStringValidator.MatchString(req.CodeChallenge) {
 			q.Set("error", errInvalidRequest)
-			return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 	}
 
@@ -156,7 +166,8 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	reqScopes, err := SplitAndValidateScope(req.RawScope)
 	if err != nil {
 		q.Set("error", errInvalidScope)
-		return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
 	req.Scopes = reqScopes
 	req.ValidScopes = client.GetAvailableScopes(reqScopes)
@@ -164,7 +175,8 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 		req.ValidScopes = client.Scopes
 	} else if len(req.ValidScopes) == 0 {
 		q.Set("error", errInvalidScope)
-		return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
 
 	// ResponseType確認
@@ -181,25 +193,28 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 			types.None = true
 		default:
 			q.Set("error", errUnsupportedResponseType)
-			return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 	}
 	if !types.valid() {
 		q.Set("error", errUnsupportedResponseType)
-		return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
 	req.Types = types
 
 	// セッション確認
-	se, err := session.Get("sessions", c)
+	se, err := store.Sessions.Get(c.Request(), "sessions")
 	if err != nil {
 		c.Logger().Error(err)
 		q.Set("error", errServerError)
-		return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
-	var userID string
+	var userID uuid.UUID
 	if se.Values["userID"] != nil {
-		userID = se.Values["userID"].(string)
+		userID = uuid.FromStringOrNil(se.Values["userID"].(string))
 	}
 
 	switch req.Prompt {
@@ -207,24 +222,27 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 		break
 
 	case "none":
-		u, err := model.GetUser(userID)
+		u, err := store.UserInfoGetter(userID)
 		if err != nil {
 			switch err {
-			case model.ErrNotFound:
+			case ErrUserIDOrPasswordWrong:
 				q.Set("error", errLoginRequired)
-				return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+				redirectURI.RawQuery = q.Encode()
+				return c.Redirect(http.StatusFound, redirectURI.String())
 			default:
 				c.Logger().Error(err)
 				q.Set("error", errServerError)
-				return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+				redirectURI.RawQuery = q.Encode()
+				return c.Redirect(http.StatusFound, redirectURI.String())
 			}
 		}
 
-		tokens, err := store.GetTokensByUser(uuid.FromStringOrNil(u.ID))
+		tokens, err := store.GetTokensByUser(u.GetUID())
 		if err != nil {
 			c.Logger().Error(err)
 			q.Set("error", errServerError)
-			return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 		ok := false
 		for _, v := range tokens {
@@ -244,13 +262,14 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 		}
 		if !ok {
 			q.Set("error", errConsentRequired)
-			return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 
 		data := &AuthorizeData{
 			Code:                generateRandomString(),
 			ClientID:            req.ClientID,
-			UserID:              uuid.FromStringOrNil(userID),
+			UserID:              userID,
 			CreatedAt:           time.Now(),
 			ExpiresIn:           store.AuthorizationCodeExp,
 			RedirectURI:         req.RedirectURI,
@@ -263,15 +282,18 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 		if err := store.SaveAuthorize(data); err != nil {
 			c.Logger().Error(err)
 			q.Set("error", errServerError)
-			return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 		q.Set("code", data.Code)
-		return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
 
 	default:
 		q.Set("error", errInvalidRequest)
 		q.Set("error_description", fmt.Sprintf("prompt %s is not supported", req.Prompt))
-		return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
 
 	switch {
@@ -280,23 +302,24 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 		if err := se.Save(c.Request(), c.Response()); err != nil {
 			c.Logger().Error(err)
 			q.Set("error", errServerError)
-			return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 
 		q.Set("client_id", req.ClientID)
 		q.Set("scopes", req.ValidScopes.String())
-		return c.Redirect(http.StatusFound, "/login"+q.Encode())
+		return c.Redirect(http.StatusFound, "/login?"+q.Encode())
 	}
 
 	q.Set("error", errUnsupportedResponseType)
-	return c.Redirect(http.StatusFound, redirectURI+q.Encode())
+	redirectURI.RawQuery = q.Encode()
+	return c.Redirect(http.StatusFound, redirectURI.String())
 }
 
 // AuthorizationDecideHandler : 認可エンドポイントの確認フォームのハンドラ
 func (store *Handler) AuthorizationDecideHandler(c echo.Context) error {
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
-	userID := c.Get("user").(*model.User).ID
 
 	req := struct {
 		Submit string `form:"submit"`
@@ -307,7 +330,7 @@ func (store *Handler) AuthorizationDecideHandler(c echo.Context) error {
 	}
 
 	// セッション確認
-	se, err := session.Get("sessions", c)
+	se, err := store.Sessions.Get(c.Request(), "sessions")
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -315,6 +338,10 @@ func (store *Handler) AuthorizationDecideHandler(c echo.Context) error {
 	reqAuth, ok := se.Values[oauth2ContextSession].(authorizeRequest)
 	if !ok {
 		return echo.NewHTTPError(http.StatusForbidden)
+	}
+	var userID uuid.UUID
+	if se.Values["userID"] != nil {
+		userID = uuid.FromStringOrNil(se.Values["userID"].(string))
 	}
 	se.Values[oauth2ContextSession] = nil
 	if err := se.Save(c.Request(), c.Response()); err != nil {
@@ -360,7 +387,7 @@ func (store *Handler) AuthorizationDecideHandler(c echo.Context) error {
 		data := &AuthorizeData{
 			Code:                generateRandomString(),
 			ClientID:            reqAuth.ClientID,
-			UserID:              uuid.FromStringOrNil(userID),
+			UserID:              userID,
 			CreatedAt:           time.Now(),
 			ExpiresIn:           store.AuthorizationCodeExp,
 			RedirectURI:         reqAuth.RedirectURI,
@@ -477,14 +504,14 @@ func (store *Handler) TokenEndpointHandler(c echo.Context) error {
 			idToken.Subject = code.UserID.String()
 			idToken.Nonce = code.Nonce
 
-			user, err := model.GetUser(code.UserID.String())
+			user, err := store.UserInfoGetter(code.UserID)
 			if err != nil {
 				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 
 			if code.Scopes.Contains(scope.Profile) {
-				idToken.Name = user.Name
+				idToken.Name = user.GetName()
 			}
 
 			res.IDToken, err = idToken.Generate()
