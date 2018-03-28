@@ -116,7 +116,7 @@ func main() {
 		},
 		Issuer: os.Getenv("TRAQ_ORIGIN"),
 	}
-	if private, public := os.Getenv("TRAQ_PUBLIC_KEY_FILE"), os.Getenv("TRAQ_PRIVATE_KEY_FILE"); private != "" && public != "" {
+	if public, private := os.Getenv("TRAQ_PUBLIC_KEY_FILE"), os.Getenv("TRAQ_PRIVATE_KEY_FILE"); private != "" && public != "" {
 		err := oauth.LoadKeys(loadKeys(private, public))
 		if err != nil {
 			panic(err)
@@ -294,21 +294,11 @@ func setSwiftFileManagerAsDefault(container, userName, apiKey, tenant, tenantID,
 }
 
 func loadKeys(private, public string) ([]byte, []byte) {
-	prf, err := os.Open(private)
+	prk, err := ioutil.ReadFile(private)
 	if err != nil {
 		panic(err)
 	}
-	defer prf.Close()
-	prk, err := ioutil.ReadAll(prf)
-	if err != nil {
-		panic(err)
-	}
-	puf, err := os.Open(public)
-	if err != nil {
-		panic(err)
-	}
-	defer puf.Close()
-	puk, err := ioutil.ReadAll(puf)
+	puk, err := ioutil.ReadFile(public)
 	if err != nil {
 		panic(err)
 	}
