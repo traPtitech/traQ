@@ -225,6 +225,7 @@ func TestAuthorizationCodeGrantAuthorizationEndpoint_Failure2(t *testing.T) {
 	assert, _, h, _, e := BeforeTestAuthorizationCodeGrantAuthorizationEndpoint(t)
 
 	f := url.Values{}
+	f.Set("client_id", "")
 
 	req := httptest.NewRequest(echo.POST, "/", strings.NewReader(f.Encode()))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationForm)

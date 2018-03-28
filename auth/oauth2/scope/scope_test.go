@@ -50,5 +50,6 @@ func TestAccessScopes_GenerateRole(t *testing.T) {
 
 	s := AccessScopes{}
 	s = append(s, Read, Write)
-	assert.EqualValues(t, role.ReadUser.ID()+","+role.WriteUser.ID(), s.GenerateRole().ID())
+	assert.Contains(t, s.GenerateRole().ID(), role.ReadUser.ID())
+	assert.Contains(t, s.GenerateRole().ID(), role.WriteUser.ID())
 }
