@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/traPtitech/traQ/auth/oauth2"
+	"github.com/traPtitech/traQ/oauth2"
 	"net/http"
 
 	"fmt"

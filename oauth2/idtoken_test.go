@@ -1,27 +1,21 @@
-package openid
+package oauth2
 
 import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
-	"os"
+	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 	"time"
 )
 
-func TestMain(m *testing.M) {
-	err := LoadKeys(testPrivateKey, testPublicKey)
-	if err != nil {
-		panic(err)
-	}
-
-	os.Exit(m.Run())
-}
-
 func TestIDToken_Generate(t *testing.T) {
 	t.Parallel()
+
+	h := &Handler{}
+	require.NoError(t, h.LoadKeys(testPrivateKey, testPublicKey))
 
 	idt := &IDToken{
 		StandardClaims: jwt.StandardClaims{
@@ -32,7 +26,7 @@ func TestIDToken_Generate(t *testing.T) {
 		},
 	}
 
-	tokenString, err := idt.Generate()
+	tokenString, err := idt.Generate(h.privateKey)
 	assert.NoError(t, err)
 
 	encoded := strings.Split(tokenString, ".")
@@ -69,6 +63,9 @@ func TestIDToken_Generate(t *testing.T) {
 func TestVerifyToken(t *testing.T) {
 	t.Parallel()
 
+	h := &Handler{}
+	require.NoError(t, h.LoadKeys(testPrivateKey, testPublicKey))
+
 	idt := &IDToken{
 		StandardClaims: jwt.StandardClaims{
 			Issuer:    "example.com",
@@ -77,8 +74,8 @@ func TestVerifyToken(t *testing.T) {
 			ExpiresAt: time.Now().Unix() - 1000,
 		},
 	}
-	if token, err := idt.Generate(); assert.NoError(t, err) {
-		_, err := VerifyToken(token)
+	if token, err := idt.Generate(h.privateKey); assert.NoError(t, err) {
+		_, err := VerifyToken(token, h.publicKey)
 		assert.Error(t, err)
 	}
 
@@ -90,8 +87,8 @@ func TestVerifyToken(t *testing.T) {
 			ExpiresAt: time.Now().Unix() + 6000,
 		},
 	}
-	if token, err := idt.Generate(); assert.NoError(t, err) {
-		parsed, err := VerifyToken(token)
+	if token, err := idt.Generate(h.privateKey); assert.NoError(t, err) {
+		parsed, err := VerifyToken(token, h.publicKey)
 		if assert.NoError(t, err) {
 			claims, _ := parsed.Claims.(jwt.MapClaims)
 			assert.EqualValues(t, idt.Issuer, claims["iss"])
@@ -110,11 +107,11 @@ func TestVerifyToken(t *testing.T) {
 		},
 	}
 	if token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, idt).SignedString(testPublicKey); assert.NoError(t, err) {
-		_, err := VerifyToken(token)
+		_, err := VerifyToken(token, h.publicKey)
 		assert.Error(t, err)
 	}
 	if token, err := jwt.NewWithClaims(jwt.SigningMethodNone, idt).SigningString(); assert.NoError(t, err) {
-		_, err := VerifyToken(token)
+		_, err := VerifyToken(token, h.publicKey)
 		assert.Error(t, err)
 	}
 }

@@ -1,9 +1,9 @@
-package openid
+package oauth2
 
 import (
+	"crypto/rsa"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
-	"time"
 )
 
 var (
@@ -11,7 +11,7 @@ var (
 	ErrInvalidIDToken = errors.New("invalid token")
 )
 
-// IDToken : OpenID Connect IdToken
+// IDToken : OpenID Connect IDToken
 type IDToken struct {
 	jwt.StandardClaims
 
@@ -20,24 +20,13 @@ type IDToken struct {
 	Name string `json:"name,omitempty"`
 }
 
-// NewIDToken : 新しくIDTokenを生成します
-func NewIDToken(issueAt time.Time, expireIn int64) *IDToken {
-	return &IDToken{
-		StandardClaims: jwt.StandardClaims{
-			Issuer:    issuer,
-			IssuedAt:  issueAt.Unix(),
-			ExpiresAt: issueAt.Unix() + expireIn,
-		},
-	}
-}
-
 // Generate : IDTokenからJWTを生成します
-func (t *IDToken) Generate() (string, error) {
-	return jwt.NewWithClaims(jwt.SigningMethodRS256, t).SignedString(privateKey)
+func (t *IDToken) Generate(key *rsa.PrivateKey) (string, error) {
+	return jwt.NewWithClaims(jwt.SigningMethodRS256, t).SignedString(key)
 }
 
 // VerifyToken : 与えられたJWTが有効かどうかを確認します
-func VerifyToken(token string) (*jwt.Token, error) {
+func VerifyToken(token string, publicKey *rsa.PublicKey) (*jwt.Token, error) {
 	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, ErrInvalidIDToken

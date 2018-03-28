@@ -2,8 +2,8 @@ package impl
 
 import (
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/auth/oauth2"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/oauth2"
 )
 
 // DefaultStore : OAuth2用のデフォルトのデータストア(mysql)

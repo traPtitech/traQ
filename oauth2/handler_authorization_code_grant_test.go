@@ -1,13 +1,14 @@
 package oauth2
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"github.com/labstack/echo"
 	"github.com/quasoft/memstore"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traPtitech/traQ/auth/oauth2/scope"
+	"github.com/traPtitech/traQ/oauth2/scope"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -994,10 +995,12 @@ func BeforeTestAuthorizationCodeGrantTokenEndpoint(t *testing.T) (*assert.Assert
 		ExpiresIn:   1000,
 		RedirectURI: "http://example.com",
 		Scopes: scope.AccessScopes{
+			scope.OpenID,
 			scope.Read,
 			scope.PrivateRead,
 		},
 		OriginalScopes: scope.AccessScopes{
+			scope.OpenID,
 			scope.Read,
 			scope.PrivateRead,
 		},
@@ -1011,6 +1014,13 @@ func BeforeTestAuthorizationCodeGrantTokenEndpoint(t *testing.T) (*assert.Assert
 		AccessTokenExp:       1000,
 		AuthorizationCodeExp: 1000,
 		IsRefreshEnabled:     true,
+		UserInfoGetter: func(uid uuid.UUID) (UserInfo, error) {
+			if uid == uuid.Nil {
+				return nil, ErrUserIDOrPasswordWrong
+			}
+			return &UserInfoMock{uid: uid}, nil
+		},
+		Issuer: "http://example.com",
 	}
 
 	return assert, require, handler, client, authorize, e
@@ -1039,7 +1049,8 @@ func PostTestAuthorizationCodeGrantTokenEndpoint(assert *assert.Assertions, h *H
 func TestAuthorizationCodeGrantTokenEndpoint_Success1(t *testing.T) {
 	t.Parallel()
 
-	assert, _, h, client, authorize, e := BeforeTestAuthorizationCodeGrantTokenEndpoint(t)
+	assert, require, h, client, authorize, e := BeforeTestAuthorizationCodeGrantTokenEndpoint(t)
+	require.NoError(h.LoadKeys(testPrivateKey, testPublicKey))
 
 	f := url.Values{}
 	f.Set("grant_type", grantTypeAuthorizationCode)
@@ -1065,7 +1076,24 @@ func TestAuthorizationCodeGrantTokenEndpoint_Success1(t *testing.T) {
 			assert.Equal(1000, res.ExpiresIn)
 			assert.NotEmpty(res.RefreshToken)
 			assert.Empty(res.Scope)
-			assert.Empty(res.IDToken)
+			if assert.NotEmpty(res.IDToken) {
+				encoded := strings.Split(res.IDToken, ".")
+
+				claimsBytes, err := base64.RawStdEncoding.DecodeString(encoded[1])
+				if assert.NoError(err) {
+					var claims struct {
+						Iss   string `json:"iss"`
+						Aud   string `json:"aud"`
+						Nonce string `json:"nonce"`
+					}
+					if assert.NoError(json.Unmarshal(claimsBytes, &claims)) {
+						assert.Equal("http://example.com", claims.Iss)
+						assert.Equal("nonce", claims.Nonce)
+						assert.Equal(client.ID, claims.Aud)
+					}
+				}
+
+			}
 		}
 	}
 

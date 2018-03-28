@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/auth/oauth2"
-	"github.com/traPtitech/traQ/auth/oauth2/impl"
-	"github.com/traPtitech/traQ/auth/openid"
+	"github.com/traPtitech/traQ/oauth2"
+	"github.com/traPtitech/traQ/oauth2/impl"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -114,6 +114,13 @@ func main() {
 			}
 			return u, err
 		},
+		Issuer: os.Getenv("TRAQ_ORIGIN"),
+	}
+	if private, public := os.Getenv("TRAQ_PUBLIC_KEY_FILE"), os.Getenv("TRAQ_PRIVATE_KEY_FILE"); private != "" && public != "" {
+		err := oauth.LoadKeys(loadKeys(private, public))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	e := echo.New()
@@ -243,8 +250,8 @@ func main() {
 	apiNoAuth.POST("/oauth2/authorize", oauth.AuthorizationEndpointHandler)
 	api.POST("/oauth2/authorize/decide", oauth.AuthorizationDecideHandler)
 	apiNoAuth.POST("/oauth2/token", oauth.TokenEndpointHandler)
-	e.GET("/.well-known/openid-configuration", openid.DiscoveryHandler)
-	e.GET("/publickeys", openid.PublicKeysHandler)
+	e.GET("/.well-known/openid-configuration", oauth.DiscoveryHandler)
+	e.GET("/publickeys", oauth.PublicKeysHandler)
 
 	// Tag: client
 	oah := &router.OAuth2APIHandler{Store: oauth}
@@ -284,4 +291,26 @@ func setSwiftFileManagerAsDefault(container, userName, apiKey, tenant, tenantID,
 	}
 	model.SetFileManager("", m)
 	return nil
+}
+
+func loadKeys(private, public string) ([]byte, []byte) {
+	prf, err := os.Open(private)
+	if err != nil {
+		panic(err)
+	}
+	defer prf.Close()
+	prk, err := ioutil.ReadAll(prf)
+	if err != nil {
+		panic(err)
+	}
+	puf, err := os.Open(public)
+	if err != nil {
+		panic(err)
+	}
+	defer puf.Close()
+	puk, err := ioutil.ReadAll(puf)
+	if err != nil {
+		panic(err)
+	}
+	return prk, puk
 }

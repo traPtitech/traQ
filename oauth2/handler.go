@@ -1,13 +1,17 @@
 package oauth2
 
 import (
+	"bytes"
+	"crypto/rsa"
+	"encoding/base64"
+	"encoding/binary"
 	"encoding/gob"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/auth/oauth2/scope"
-	"github.com/traPtitech/traQ/auth/openid"
+	"github.com/traPtitech/traQ/oauth2/scope"
 	"net/http"
 	"net/url"
 	"strings"
@@ -51,6 +55,11 @@ type Handler struct {
 	UserAuthenticator func(id, pw string) (uuid.UUID, error)
 	//UserInfoGetter ユーザー情報を取得する関数
 	UserInfoGetter func(uid uuid.UUID) (UserInfo, error)
+
+	// OpenID Connect用
+	privateKey *rsa.PrivateKey
+	publicKey  *rsa.PublicKey
+	Issuer     string
 }
 
 type tokenRequest struct {
@@ -501,8 +510,8 @@ func (store *Handler) TokenEndpointHandler(c echo.Context) error {
 		}
 
 		// OpenID Connect IDToken発行
-		if code.Scopes.Contains(scope.OpenID) && openid.Available() {
-			idToken := openid.NewIDToken(newToken.CreatedAt, int64(store.AccessTokenExp))
+		if code.Scopes.Contains(scope.OpenID) && store.IsOpenIDConnectAvailable() {
+			idToken := store.NewIDToken(newToken.CreatedAt, int64(store.AccessTokenExp))
 			idToken.Audience = code.ClientID
 			idToken.Subject = code.UserID.String()
 			idToken.Nonce = code.Nonce
@@ -517,7 +526,7 @@ func (store *Handler) TokenEndpointHandler(c echo.Context) error {
 				idToken.Name = user.GetName()
 			}
 
-			res.IDToken, err = idToken.Generate()
+			res.IDToken, err = idToken.Generate(store.privateKey)
 			if err != nil {
 				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError)
@@ -739,4 +748,75 @@ func (store *Handler) IssueAccessToken(client *Client, userID uuid.UUID, redirec
 	}
 
 	return newToken, nil
+}
+
+// LoadKeys OpenID Connectのjwt用のRSA秘密鍵・公開鍵を読み込みます
+func (store *Handler) LoadKeys(private, public []byte) (err error) {
+	store.privateKey, err = jwt.ParseRSAPrivateKeyFromPEM(private)
+	store.publicKey, err = jwt.ParseRSAPublicKeyFromPEM(public)
+	return
+}
+
+// IsOpenIDConnectAvailable OpenID Connectが有効かどうかを返します
+func (store *Handler) IsOpenIDConnectAvailable() bool {
+	return store.privateKey != nil && store.publicKey != nil && store.privateKey.Validate() == nil
+}
+
+// NewIDToken IDTokenを生成します
+func (store *Handler) NewIDToken(issueAt time.Time, expireIn int64) *IDToken {
+	return &IDToken{
+		StandardClaims: jwt.StandardClaims{
+			Issuer:    store.Issuer,
+			IssuedAt:  issueAt.Unix(),
+			ExpiresAt: issueAt.Unix() + expireIn,
+		},
+	}
+}
+
+// PublicKeysHandler publishes the public signing keys.
+func (store *Handler) PublicKeysHandler(c echo.Context) error {
+	if store.IsOpenIDConnectAvailable() {
+		data := make([]byte, 8)
+		binary.BigEndian.PutUint64(data, uint64(store.publicKey.E))
+
+		res := map[string]interface{}{
+			"keys": map[string]interface{}{
+				"kty": "RSA",
+				"alg": "RS256",
+				"use": "sig",
+				"n":   base64.RawURLEncoding.EncodeToString(store.publicKey.N.Bytes()),
+				"e":   base64.RawURLEncoding.EncodeToString(bytes.TrimLeft(data, "\x00")),
+			},
+		}
+
+		return c.JSON(http.StatusOK, res)
+	}
+
+	return echo.NewHTTPError(http.StatusNotFound)
+}
+
+// DiscoveryHandler returns the OpenID Connect discovery object.
+func (store *Handler) DiscoveryHandler(c echo.Context) error {
+	if store.IsOpenIDConnectAvailable() {
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"issuer":                                store.Issuer,
+			"authorization_endpoint":                store.Issuer + "/api/1.0/oauth2/authorize",
+			"token_endpoint":                        store.Issuer + "/api/1.0/oauth2/token",
+			"jwks_uri":                              store.Issuer + "/publickeys",
+			"response_types_supported":              []string{"code"},
+			"subject_types_supported":               []string{"public"},
+			"id_token_signing_alg_values_supported": []string{"RS256"},
+			"scopes_supported":                      []string{"openid", "profile"},
+			"grantTypesSupported":                   []string{"authorization_code", "refresh_token", "client_credentials", "password"},
+			"token_endpoint_auth_methods_supported": []string{"client_secret_basic", "client_secret_post"},
+			"display_values_supported":              []string{"page"},
+			"ui_locales_supported":                  []string{"ja"},
+			"request_parameter_supported":           false,
+			"request_uri_parameter_supported":       false,
+			"claims_supported": []string{
+				"aud", "exp", "iat", "iss", "name", "sub",
+			},
+		})
+	}
+	return echo.NewHTTPError(http.StatusNotFound)
 }

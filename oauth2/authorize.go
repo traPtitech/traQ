@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/auth/oauth2/scope"
+	"github.com/traPtitech/traQ/oauth2/scope"
 	"regexp"
 	"time"
 )
