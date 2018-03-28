@@ -116,7 +116,7 @@ func main() {
 		},
 		Issuer: os.Getenv("TRAQ_ORIGIN"),
 	}
-	if public, private := os.Getenv("TRAQ_PUBLIC_KEY_FILE"), os.Getenv("TRAQ_PRIVATE_KEY_FILE"); private != "" && public != "" {
+	if public, private := os.Getenv("TRAQ_RS256_PUBLIC_KEY"), os.Getenv("TRAQ_RS256_PRIVATE_KEY"); private != "" && public != "" {
 		err := oauth.LoadKeys(loadKeys(private, public))
 		if err != nil {
 			panic(err)
