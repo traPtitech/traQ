@@ -228,6 +228,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageList"
+        "400":
+          description: |+
+            変更に失敗しました
+            不正なリクエストです
         "404":
           description: |+
             取得に失敗しました。

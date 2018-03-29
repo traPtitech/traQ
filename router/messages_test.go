@@ -59,9 +59,7 @@ func TestPostMessage(t *testing.T) {
 
 	channel := mustMakeChannel(t, testUser.ID, "test", true)
 
-	post := requestMessage{
-		Text: "test message",
-	}
+	post := struct{ Text string }{Text: "test message"}
 	body, err := json.Marshal(post)
 	require.NoError(err)
 
@@ -86,9 +84,7 @@ func TestPutMessageByID(t *testing.T) {
 	channel := mustMakeChannel(t, testUser.ID, "test", true)
 	message := mustMakeMessage(t, testUser.ID, channel.ID)
 
-	post := requestMessage{
-		Text: "test message",
-	}
+	post := struct{ Text string }{Text: "test message"}
 	body, err := json.Marshal(post)
 	require.NoError(err)
 
