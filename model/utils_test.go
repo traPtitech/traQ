@@ -3,7 +3,7 @@ package model
 import (
 	"bytes"
 	"fmt"
-	"github.com/traPtitech/traQ/external"
+	"github.com/traPtitech/traQ/external/storage"
 	"os"
 	"testing"
 	"time"
@@ -56,7 +56,7 @@ func TestMain(m *testing.M) {
 	SetXORMEngine(engine)
 
 	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
-	SetFileManager("", external.NewInMemoryFileManager())
+	SetFileManager("", storage.NewInMemoryFileManager())
 
 	if err := SyncSchema(); err != nil {
 		panic(err)

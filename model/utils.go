@@ -3,12 +3,9 @@ package model
 import (
 	"errors"
 	"fmt"
-	"regexp"
-
 	"github.com/go-xorm/xorm"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/rbac/role"
-	"gopkg.in/go-playground/validator.v9"
 )
 
 var (
@@ -94,8 +91,6 @@ var (
 	ErrNotFound = errors.New("not found")
 	// ErrInvalidParam 汎用エラー: データが不足・間違っている場合のエラー
 	ErrInvalidParam = errors.New("invalid parameter")
-
-	validate *validator.Validate
 )
 
 // SetXORMEngine DBにxormのエンジンを設定する
@@ -170,16 +165,4 @@ func InitCache() error {
 	}
 
 	return nil
-}
-
-func validateStruct(i interface{}) error {
-	if validate == nil {
-		validate = validator.New()
-
-		name := regexp.MustCompile(`^[a-zA-Z0-9_-]{1,32}$`)
-		validate.RegisterValidation("name", func(fl validator.FieldLevel) bool {
-			return name.MatchString(fl.Field().String())
-		})
-	}
-	return validate.Struct(i)
 }

@@ -8,64 +8,39 @@ import (
 	"errors"
 	"fmt"
 	"github.com/labstack/gommon/log"
+	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/utils"
-	"golang.org/x/image/bmp"
-	"golang.org/x/image/draw"
-	"golang.org/x/image/webp"
+	"github.com/traPtitech/traQ/utils/thumb"
+	"github.com/traPtitech/traQ/utils/validator"
 	"golang.org/x/sync/errgroup"
-	"image"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
 	"io"
 	"mime"
-	"os"
 	"path/filepath"
 	"time"
 )
 
-const (
-	thumbnailMaxWidth  = 360
-	thumbnailMaxHeight = 480
-	thumbnailRatio     = float64(thumbnailMaxWidth) / float64(thumbnailMaxHeight)
-)
-
 var (
-	fileManagers = map[string]FileManager{
-		"": NewDevFileManager(),
+	fileManagers = storage.FileManagers{
+		"": storage.NewLocalFileManager(),
 	}
 
 	// ErrFileThumbUnsupported : fileエラー この形式のファイルのサムネイル生成はサポートされていない
 	ErrFileThumbUnsupported = errors.New("generating a thumbnail of the file is not supported")
-	// ErrFileUnknownManager : fileエラー 不明なファイルマネージャー
-	ErrFileUnknownManager = errors.New("unknown file manager")
 )
-
-// FileManager ファイルを読み書きするマネージャーのインターフェース
-type FileManager interface {
-	// srcをIDのファイルとして保存する
-	WriteByID(src io.Reader, ID, name, contentType string) error
-	// IDで指定されたファイルを読み込む
-	OpenFileByID(ID string) (io.ReadCloser, error)
-	// IDで指定されたファイルを削除する
-	DeleteByID(ID string) error
-	// RedirectURLが発行できる場合は取得します。出来ない場合は空文字列を返します
-	GetRedirectURL(ID string) string
-}
 
 // File DBに格納するファイルの構造体
 type File struct {
-	ID              string    `xorm:"char(36) pk"`
-	Name            string    `xorm:"text not null"`
-	Mime            string    `xorm:"text not null"`
-	Size            int64     `xorm:"bigint not null"`
-	CreatorID       string    `xorm:"char(36) not null"`
+	ID              string    `xorm:"char(36) pk"                    validate:"uuid,required"`
+	Name            string    `xorm:"text not null"                  validate:"required"`
+	Mime            string    `xorm:"text not null"                  validate:"required"`
+	Size            int64     `xorm:"bigint not null"                validate:"min=0,required"`
+	CreatorID       string    `xorm:"char(36) not null"              validate:"uuid,required"`
 	IsDeleted       bool      `xorm:"bool not null"`
-	Hash            string    `xorm:"char(32) not null"`
+	Hash            string    `xorm:"char(32) not null"              validate:"max=32"`
 	Manager         string    `xorm:"varchar(30) not null default ''"`
 	HasThumbnail    bool      `xorm:"bool not null"`
-	ThumbnailWidth  int       `xorm:"int not null"`
-	ThumbnailHeight int       `xorm:"int not null"`
+	ThumbnailWidth  int       `xorm:"int not null"                   validate:"min=0"`
+	ThumbnailHeight int       `xorm:"int not null"                   validate:"min=0"`
 	CreatedAt       time.Time `xorm:"created not null"`
 }
 
@@ -74,25 +49,24 @@ func (f *File) TableName() string {
 	return "files"
 }
 
+// Validate 構造体を検証します
+func (f *File) Validate() error {
+	return validator.ValidateStruct(f)
+}
+
 // Create file構造体を作ります
 func (f *File) Create(src io.Reader) error {
-	if f.Name == "" {
-		return fmt.Errorf("file name is empty")
-	}
-	if f.Size == 0 {
-		return fmt.Errorf("file size is 0")
-	}
-	if f.CreatorID == "" {
-		return fmt.Errorf("file creatorID is empty")
-	}
-
 	f.ID = CreateUUID()
 	f.IsDeleted = false
 	f.Mime = mime.TypeByExtension(filepath.Ext(f.Name))
 
 	writer, ok := fileManagers[f.Manager]
 	if !ok {
-		return ErrFileUnknownManager
+		return storage.ErrUnknownManager
+	}
+
+	if err := f.Validate(); err != nil {
+		return err
 	}
 
 	eg, ctx := errgroup.WithContext(context.Background())
@@ -171,7 +145,7 @@ func (f *File) Delete() error {
 func (f *File) Open() (io.ReadCloser, error) {
 	reader, ok := fileManagers[f.Manager]
 	if !ok {
-		return nil, ErrFileUnknownManager
+		return nil, storage.ErrUnknownManager
 	}
 
 	return reader.OpenFileByID(f.ID)
@@ -181,7 +155,7 @@ func (f *File) Open() (io.ReadCloser, error) {
 func (f *File) OpenThumbnail() (io.ReadCloser, error) {
 	reader, ok := fileManagers[f.Manager]
 	if !ok {
-		return nil, ErrFileUnknownManager
+		return nil, storage.ErrUnknownManager
 	}
 
 	return reader.OpenFileByID(f.ID + "-thumb")
@@ -200,7 +174,7 @@ func (f *File) GetRedirectURL() string {
 func (f *File) RegenerateThumbnail() error {
 	reader, ok := fileManagers[f.Manager]
 	if !ok {
-		return ErrFileUnknownManager
+		return storage.ErrUnknownManager
 	}
 
 	//既存のものを削除
@@ -223,52 +197,23 @@ func (f *File) RegenerateThumbnail() error {
 
 // GenerateThumbnail サムネイル画像を生成します
 func GenerateThumbnail(ctx context.Context, f *File, src io.Reader) error {
-	var (
-		img       image.Image
-		err       error
-		thumbSize image.Point
-		dst       draw.Image
-		b         = &bytes.Buffer{}
-	)
-
 	writer, ok := fileManagers[f.Manager]
 	if !ok {
-		return ErrFileUnknownManager
+		return storage.ErrUnknownManager
 	}
 
-	switch f.Mime {
-	case "image/png":
-		img, err = png.Decode(src)
-	case "image/gif":
-		img, err = gif.Decode(src)
-	case "image/jpeg":
-		img, err = jpeg.Decode(src)
-	case "image/bmp":
-		img, err = bmp.Decode(src)
-	case "image/webp":
-		img, err = webp.Decode(src)
-	default: // Unsupported Type
-		return ErrFileThumbUnsupported
-	}
+	img, err := thumb.Generate(ctx, src, f.Mime)
 	if err != nil {
 		return err
 	}
 
+	b := &bytes.Buffer{}
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		thumbSize = calcThumbnailSize(img.Bounds().Size())
-		dst = image.NewRGBA(image.Rectangle{Min: image.ZP, Max: thumbSize})
-		draw.Draw(dst, dst.Bounds(), image.White, image.ZP, draw.Src)
-		draw.ApproxBiLinear.Scale(dst, dst.Bounds(), img, img.Bounds(), draw.Src, nil)
-	}
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-		if err := jpeg.Encode(b, dst, &jpeg.Options{Quality: 100}); err != nil {
+		b, err = thumb.EncodeToJPG(img)
+		if err != nil {
 			return err
 		}
 	}
@@ -283,8 +228,8 @@ func GenerateThumbnail(ctx context.Context, f *File, src io.Reader) error {
 	}
 
 	f.HasThumbnail = true
-	f.ThumbnailWidth = thumbSize.X
-	f.ThumbnailHeight = thumbSize.Y
+	f.ThumbnailWidth = img.Bounds().Size().X
+	f.ThumbnailHeight = img.Bounds().Size().Y
 
 	return nil
 }
@@ -298,7 +243,7 @@ func OpenFileByID(ID string) (io.ReadCloser, error) {
 
 	reader, ok := fileManagers[meta.Manager]
 	if !ok {
-		return nil, ErrFileUnknownManager
+		return nil, storage.ErrUnknownManager
 	}
 
 	return reader.OpenFileByID(ID)
@@ -319,94 +264,7 @@ func GetMetaFileDataByID(FileID string) (*File, error) {
 	return f, nil
 }
 
-// サムネイルのサイズを計算します
-func calcThumbnailSize(size image.Point) image.Point {
-	if size.X <= thumbnailMaxWidth && size.Y <= thumbnailMaxHeight {
-		// 元画像がサムネイル画像より小さい
-		return size
-	}
-
-	ratio := float64(size.X) / float64(size.Y)
-
-	if ratio > thumbnailRatio {
-		return image.Pt(thumbnailMaxWidth, int(thumbnailMaxWidth/ratio))
-	}
-	return image.Pt(int(thumbnailMaxHeight*ratio), thumbnailMaxHeight)
-}
-
 // SetFileManager ファイルマネージャーリストにマネージャーをセットします
-func SetFileManager(name string, manager FileManager) {
+func SetFileManager(name string, manager storage.FileManager) {
 	fileManagers[name] = manager
-}
-
-// 以下、開発環境用
-
-// LocalFileManager 開発用。routerの方でも使用するために公開
-type LocalFileManager struct {
-	dirName string
-}
-
-// OpenFileByID ファイルを取得します
-func (fm *LocalFileManager) OpenFileByID(ID string) (io.ReadCloser, error) {
-	fileName := fm.dirName + "/" + ID
-	if _, err := os.Stat(fileName); err != nil {
-		return nil, fmt.Errorf("Invalid ID: %s", ID)
-	}
-
-	reader, err := os.Open(fileName)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to read file: %v", err)
-	}
-
-	return reader, nil
-}
-
-// WriteByID srcの内容をIDで指定されたファイルに書き込みます
-func (fm *LocalFileManager) WriteByID(src io.Reader, ID, name, contentType string) error {
-	if _, err := os.Stat(fm.dirName); err != nil {
-		if err = os.Mkdir(fm.dirName, 0700); err != nil {
-			return fmt.Errorf("Can't create directory: %v", err)
-		}
-	}
-
-	file, err := os.Create(fm.dirName + "/" + ID)
-	if err != nil {
-		return fmt.Errorf("Failed to open file: %v", err)
-	}
-	defer file.Close()
-
-	if _, err := io.Copy(file, src); err != nil {
-		return fmt.Errorf("Failed to write into file %v", err)
-	}
-	return nil
-}
-
-// DeleteByID ファイルを削除します
-func (fm *LocalFileManager) DeleteByID(ID string) error {
-	fileName := fm.dirName + "/" + ID
-	if _, err := os.Stat(fileName); err != nil {
-		return err
-	}
-	return os.Remove(fileName)
-}
-
-// GetRedirectURL 必ず空文字列を返します
-func (*LocalFileManager) GetRedirectURL(ID string) string {
-	return ""
-}
-
-// GetDir ファイルの保存先を取得する
-func (fm *LocalFileManager) GetDir() string {
-	return fm.dirName
-}
-
-// NewDevFileManager DevFileManagerのコンストラクタ
-func NewDevFileManager() *LocalFileManager {
-	fm := &LocalFileManager{}
-	if dir := os.Getenv("TRAQ_TEMP"); dir != "" {
-		fm.dirName = dir
-	} else {
-		fm.dirName = "../resources"
-	}
-	return fm
 }

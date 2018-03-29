@@ -3,7 +3,8 @@ package router
 import (
 	"bytes"
 	"fmt"
-	"github.com/traPtitech/traQ/external"
+	"github.com/traPtitech/traQ/external/storage"
+	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -69,7 +70,7 @@ func TestMain(m *testing.M) {
 	model.SetXORMEngine(engine)
 
 	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
-	model.SetFileManager("", external.NewInMemoryFileManager())
+	model.SetFileManager("", storage.NewInMemoryFileManager())
 
 	if err := model.SyncSchema(); err != nil {
 		panic(err)
@@ -86,6 +87,7 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc, *a
 	require.NoError(model.DropTables())
 	require.NoError(model.SyncSchema())
 	e := echo.New()
+	e.Validator = validator.New()
 
 	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
 	require.NoError(err)

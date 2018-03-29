@@ -171,20 +171,6 @@ func TestGetChannelPath(t *testing.T) {
 	assert.Equal("#"+ch.Name, path)
 }
 
-func TestValidateChannelName(t *testing.T) {
-	t.Parallel()
-	assert := assert.New(t)
-
-	okList := []string{"-_-", "correct_name", "20--characters--name"}
-	for _, name := range okList {
-		assert.NoErrorf(validateChannelName(name), "channel name validation failed: %s", name)
-	}
-	ngList := []string{",.", "半角英数字以外", "ｊｋ", "over-20-characters-channel-name"}
-	for _, name := range ngList {
-		assert.Errorf(validateChannelName(name), "channel name validation failed: %s", name)
-	}
-}
-
 // 各関数のテスト<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 // 関数間のテスト>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

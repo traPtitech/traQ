@@ -2,15 +2,16 @@ package model
 
 import (
 	"fmt"
+	"github.com/traPtitech/traQ/utils/validator"
 	"time"
 )
 
 //Pin ピン留めのレコード
 type Pin struct {
-	ID        string    `xorm:"char(36) pk"`
-	ChannelID string    `xorm:"char(36) not null"`
-	MessageID string    `xorm:"char(36) not null"`
-	UserID    string    `xorm:"char(36) not null"`
+	ID        string    `xorm:"char(36) pk"       validate:"uuid,required"`
+	ChannelID string    `xorm:"char(36) not null" validate:"uuid,required"`
+	MessageID string    `xorm:"char(36) not null" validate:"uuid,required"`
+	UserID    string    `xorm:"char(36) not null" validate:"uuid,required"`
 	CreatedAt time.Time `xorm:"created not null"`
 }
 
@@ -19,25 +20,20 @@ func (pin *Pin) TableName() string {
 	return "pins"
 }
 
+// Validate 構造体を検証します
+func (pin *Pin) Validate() error {
+	return validator.ValidateStruct(pin)
+}
+
 //Create ピン留めレコードを追加する
-func (pin *Pin) Create() error {
-	if pin.UserID == "" {
-		return fmt.Errorf("UserID is empty")
-	}
-	if pin.ChannelID == "" {
-		return fmt.Errorf("ChannelID is empty")
-	}
-	if pin.MessageID == "" {
-		return fmt.Errorf("MessageID is empty")
-	}
-
+func (pin *Pin) Create() (err error) {
 	pin.ID = CreateUUID()
-
-	if _, err := db.Insert(pin); err != nil {
-		return fmt.Errorf("Failed to create pin: %v", err)
+	if err = pin.Validate(); err != nil {
+		return
 	}
 
-	return nil
+	_, err = db.InsertOne(pin)
+	return
 }
 
 // Exists pinが存在するかどうかを判定する
@@ -57,7 +53,7 @@ func GetPin(ID string) (*Pin, error) {
 
 	pin := &Pin{}
 	if has, err := db.ID(ID).Get(pin); err != nil {
-		return nil, fmt.Errorf("Failed to get pin: %v", err)
+		return nil, err
 	} else if !has {
 		return nil, nil
 	}
@@ -66,27 +62,21 @@ func GetPin(ID string) (*Pin, error) {
 }
 
 //GetPinsByChannelID あるチャンネルのピン留めを全部取得する
-func GetPinsByChannelID(channelID string) ([]*Pin, error) {
+func GetPinsByChannelID(channelID string) (pins []*Pin, err error) {
 	if channelID == "" {
 		return nil, fmt.Errorf("ChannelID is empty")
 	}
 
-	var pins []*Pin
-	if err := db.Where("channel_id = ?", channelID).Find(&pins); err != nil {
-		return nil, fmt.Errorf("Failed to find pins: %v", err)
-	}
-
-	return pins, nil
+	err = db.Where("channel_id = ?", channelID).Find(&pins)
+	return
 }
 
 //Delete ピン留めレコードを削除する
-func (pin *Pin) Delete() error {
+func (pin *Pin) Delete() (err error) {
 	if pin.ID == "" {
 		return fmt.Errorf("ID is empty")
 	}
 
-	if _, err := db.Delete(pin); err != nil {
-		return fmt.Errorf("Failed to delete pin: %v", err)
-	}
-	return nil
+	_, err = db.Delete(pin)
+	return
 }

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"image"
 )
 
 func TestFile_TableName(t *testing.T) {
@@ -85,16 +84,4 @@ func TestGetMetaFileDataByID(t *testing.T) {
 	none, err := GetMetaFileDataByID("wrongID")
 	assert.NoError(err)
 	assert.Nil(none)
-}
-
-func TestCalcThumbnailSize(t *testing.T) {
-	t.Parallel()
-
-	assert := assert.New(t)
-
-	assert.EqualValues(image.Pt(100, 100), calcThumbnailSize(image.Pt(100, 100)))
-	assert.EqualValues(image.Pt(360, 100), calcThumbnailSize(image.Pt(360, 100)))
-	assert.EqualValues(image.Pt(360, 50), calcThumbnailSize(image.Pt(720, 100)))
-	assert.EqualValues(image.Pt(50, 480), calcThumbnailSize(image.Pt(100, 960)))
-	assert.EqualValues(image.Pt(360, 480), calcThumbnailSize(image.Pt(720, 960)))
 }
