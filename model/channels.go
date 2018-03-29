@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"regexp"
+	"github.com/traPtitech/traQ/utils/validator"
 	"sync"
 	"time"
 
@@ -13,17 +13,17 @@ var channelPathMap = &sync.Map{}
 
 // Channel :チャンネルの構造体
 type Channel struct {
-	ID        string    `xorm:"char(36) pk"`
-	Name      string    `xorm:"varchar(20) not null unique(name_parent)"`
+	ID        string    `xorm:"char(36) pk"                                     validate:"uuid,required"`
+	Name      string    `xorm:"varchar(20) not null unique(name_parent)"        validate:"channel,required"`
 	ParentID  string    `xorm:"parent_id char(36) not null unique(name_parent)"`
 	Topic     string    `xorm:"text"`
 	IsForced  bool      `xorm:"bool not null"`
 	IsDeleted bool      `xorm:"bool not null"`
 	IsPublic  bool      `xorm:"bool not null"`
 	IsVisible bool      `xorm:"bool not null"`
-	CreatorID string    `xorm:"char(36) not null"`
+	CreatorID string    `xorm:"char(36) not null"                               validate:"uuid,required"`
 	CreatedAt time.Time `xorm:"created not null"`
-	UpdaterID string    `xorm:"char(36) not null"`
+	UpdaterID string    `xorm:"char(36) not null"                               validate:"uuid,required"`
 	UpdatedAt time.Time `xorm:"updated not null"`
 }
 
@@ -32,31 +32,28 @@ func (channel *Channel) TableName() string {
 	return "channels"
 }
 
+// Validate 構造体を検証します
+func (channel *Channel) Validate() error {
+	return validator.ValidateStruct(channel)
+}
+
 // Create チャンネル作成を行うメソッド
 func (channel *Channel) Create() error {
 	if channel.ID != "" {
 		return fmt.Errorf("ID is not empty! You can use Update()")
 	}
 
-	if channel.Name == "" {
-		return fmt.Errorf("name is empty")
-	}
-
-	if channel.CreatorID == "" {
-		return fmt.Errorf("creatorID is empty")
-	}
-
-	if err := validateChannelName(channel.Name); err != nil {
-		return err
-	}
-
 	channel.ID = CreateUUID()
 	channel.IsVisible = true
 	channel.UpdaterID = channel.CreatorID
 
+	if err := channel.Validate(); err != nil {
+		return err
+	}
+
 	// ここまでで入力されない要素は初期値(""や0)で格納される
 	if _, err := db.Insert(channel); err != nil {
-		return fmt.Errorf("failed to create channel: %v", err)
+		return err
 	}
 
 	//チャンネルパスをキャッシュ
@@ -78,9 +75,13 @@ func (channel *Channel) Exists(userID string) (bool, error) {
 
 // Update チャンネルの情報の更新を行う
 func (channel *Channel) Update() error {
+	if err := channel.Validate(); err != nil {
+		return err
+	}
+
 	_, err := db.ID(channel.ID).UseBool().Update(channel)
 	if err != nil {
-		return fmt.Errorf("failed to update channel: %v", err)
+		return err
 	}
 
 	//チャンネルパスキャッシュの更新
@@ -98,7 +99,7 @@ func (channel *Channel) Parent() (*Channel, error) {
 	parent := &Channel{}
 	has, err := db.Where("id = ?", channel.ParentID).Get(parent)
 	if !has {
-		return nil, fmt.Errorf("parent channel doesn't exist")
+		return nil, ErrNotFound
 	}
 	return parent, err
 }
@@ -110,9 +111,8 @@ func (channel *Channel) Children(userID string) ([]string, error) {
 		return nil, fmt.Errorf("channelID is empty")
 	}
 	err := db.Table("channels").Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND parent_id = ? AND is_deleted = false", userID, channel.ID).Cols("id").Find(&channelIDList)
-
 	if err != nil {
-		return nil, fmt.Errorf("failed to find channels: %v", err)
+		return nil, err
 	}
 	return channelIDList, nil
 }
@@ -146,10 +146,10 @@ func (channel *Channel) Path() (string, error) {
 func GetChannelByID(userID, channelID string) (*Channel, error) {
 	channel := &Channel{}
 	channel.ID = channelID
-	has, err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userID).Get(channel)
 
+	has, err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userID).Get(channel)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get channel: %v", err)
+		return nil, err
 	}
 
 	if !has {
@@ -180,9 +180,8 @@ func GetChannelList(userID string) ([]*Channel, error) {
 	// TODO: 隠しチャンネルを表示するかどうかをクライアントと決める
 	var channelList []*Channel
 	err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userID).Find(&channelList)
-
 	if err != nil {
-		return nil, fmt.Errorf("failed to find channels: %v", err)
+		return nil, err
 	}
 	return channelList, nil
 }
@@ -223,16 +222,5 @@ func updateChannelPathWithDescendants(channel *Channel) error {
 		}
 	}
 
-	return nil
-}
-
-func validateChannelName(name string) error {
-	if !regexp.MustCompile(`^[a-zA-Z0-9-_]*$`).Match([]byte(name)) {
-		return fmt.Errorf("alphabet, hyphen and underscore are only allowed to use")
-	}
-
-	if len(name) > 20 {
-		return fmt.Errorf("channel name should be up to 20 characters")
-	}
 	return nil
 }

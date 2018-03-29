@@ -66,7 +66,7 @@ func TestGetUserTagsByUserID(t *testing.T) {
 	// 異常系
 	notExistID := CreateUUID()
 	empty, err := GetUserTagsByUserID(notExistID)
-	if assert.Error(err) {
+	if assert.NoError(err) {
 		assert.Nil(empty)
 	}
 }
