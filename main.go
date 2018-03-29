@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/oauth2/impl"
-	"io/ioutil"
-	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/utils/validator"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
