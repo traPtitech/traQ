@@ -54,6 +54,45 @@ func TestGetMessagesByChannelID(t *testing.T) {
 	}
 }
 
+func TestGetMessagesFromPrivateChannel(t *testing.T) {
+	e, cookie, mw, assert, _ := beforeTest(t)
+
+	u := mustCreateUser(t, "reciever")
+
+	// チャンネルがない時は404を返す
+	q := make(url.Values)
+	q.Set("limit", "3")
+	q.Set("offset", "1")
+	req := httptest.NewRequest("GET", "/?"+q.Encode(), nil)
+
+	c, rec := getContext(e, t, cookie, req)
+	c.SetPath("/users/:userID/messages")
+	c.SetParamNames("userID")
+	c.SetParamValues(u.ID)
+	requestWithContext(t, mw(GetMessagesFromPrivateChannel), c)
+
+	assert.EqualValues(http.StatusNotFound, rec.Code, rec.Body.String())
+
+	channel := mustMakePrivateChannel(t, testUser.ID, u.ID, "private-test")
+	for i := 0; i < 5; i++ {
+		mustMakeMessage(t, testUser.ID, channel.ID)
+	}
+
+	c, rec = getContext(e, t, cookie, req)
+	c.SetPath("/users/:userID/messages")
+	c.SetParamNames("userID")
+	c.SetParamValues(u.ID)
+	requestWithContext(t, mw(GetMessagesFromPrivateChannel), c)
+
+	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
+		var responseBody []MessageForResponse
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
+			assert.Len(responseBody, 3)
+		}
+	}
+
+}
+
 func TestPostMessage(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 

@@ -777,6 +777,41 @@ paths:
   /users/{userID}/messages:
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
+    get:
+      tags:
+        - message
+      description: |+
+        userIDとの間にあるプライベートメッセージを取得します
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: 取得する件数 1-200
+          example: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: 取得するメッセージのオフセット
+          example: 150
+      responses:
+        "200":
+          description: |+
+            正常に取得ができました。
+            メッセージの配列を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageList"
+        "400":
+          description: |+
+            取得に失敗しました
+            不正なリクエストです
+        "404":
+          description: |+
+            取得に失敗しました。
+            指定したユーザーは存在しないか、まだプライベートメッセージのやり取りを行っていません。
     post:
       tags:
         - message

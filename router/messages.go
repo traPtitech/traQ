@@ -44,20 +44,46 @@ func GetMessagesByChannelID(c echo.Context) error {
 	}
 
 	// channelIDの検証
-	channelID := c.Param("channelID")
 	userID := c.Get("user").(*model.User).ID
-	if _, err := validateChannelID(channelID, userID); err != nil {
+	res, err := getMessages(c.Param("channelID"), userID, queryParam.Limit, queryParam.Offset)
+	if err != nil {
 		return err
 	}
 
-	messages, err := model.GetMessagesByChannelID(channelID, queryParam.Limit, queryParam.Offset)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
+	return c.JSON(http.StatusOK, res)
+}
+
+// GetMessagesFromPrivateChannel GET /users/{userID}/messages のハンドラ
+func GetMessagesFromPrivateChannel(c echo.Context) error {
+	myID := c.Get("user").(*model.User).ID
+	userID := c.Param("userID")
+	if _, err := validateUserID(userID); err != nil {
+		return err
 	}
 
-	res := make([]*MessageForResponse, 0)
-	for _, message := range messages {
-		res = append(res, formatMessage(message))
+	q := &struct {
+		Limit  int `query:"limit"`
+		Offset int `query:"offset"`
+	}{}
+	if err := c.Bind(q); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
+	}
+
+	upc, err := model.GetPrivateChannel(myID, userID)
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return c.JSON(http.StatusNotFound, "There is no message")
+		default:
+			c.Logger().Errorf("failed to get private channel: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while getting private channel")
+		}
+	}
+
+	// messagesを取得・整形
+	res, err := getMessages(upc.ChannelID, myID, q.Limit, q.Offset)
+	if err != nil {
+		return err
 	}
 
 	return c.JSON(http.StatusOK, res)
@@ -77,21 +103,14 @@ func PostMessage(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, formatMessage(m))
+	return c.JSON(http.StatusCreated, m)
 }
 
 // PostPrivateMessage POST /users/{userID}/messages のハンドラ
 func PostPrivateMessage(c echo.Context) error {
-	// userIDの検証 TODO: 関数に切り出し
 	userID := c.Param("userID")
-	if _, err := model.GetUser(userID); err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "This user dosen't exist")
-		default:
-			log.Errorf("failed to get usee: %v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user")
-		}
+	if _, err := validateUserID(userID); err != nil {
+		return err
 	}
 
 	// privateチャンネルの存在確認と作成
@@ -107,7 +126,8 @@ func PostPrivateMessage(c echo.Context) error {
 			}
 			channelID = ch.ID
 		default:
-			return err
+			c.Logger().Errorf("failed to get private channel: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while getting private channel")
 		}
 	} else {
 		channelID = upc.ChannelID
@@ -125,7 +145,7 @@ func PostPrivateMessage(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, formatMessage(m))
+	return c.JSON(http.StatusCreated, m)
 }
 
 // PutMessageByID PUT /messages/{messageID}のハンドラ
@@ -182,7 +202,7 @@ func DeleteMessageByID(c echo.Context) error {
 }
 
 // dbにデータを入れる
-func createMessage(text, userID, channelID string) (*model.Message, error) {
+func createMessage(text, userID, channelID string) (*MessageForResponse, error) {
 	m := &model.Message{
 		UserID:    userID,
 		Text:      text,
@@ -194,7 +214,25 @@ func createMessage(text, userID, channelID string) (*model.Message, error) {
 	}
 
 	go notification.Send(events.MessageCreated, events.MessageEvent{Message: *m})
-	return m, nil
+	return formatMessage(m), nil
+}
+
+// チャンネルのデータを取得する
+func getMessages(channelID, userID string, limit, offset int) ([]*MessageForResponse, error) {
+	if _, err := validateChannelID(channelID, userID); err != nil {
+		return nil, err
+	}
+
+	messages, err := model.GetMessagesByChannelID(channelID, limit, offset)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
+	}
+
+	res := make([]*MessageForResponse, 0)
+	for _, message := range messages {
+		res = append(res, formatMessage(message))
+	}
+	return res, nil
 }
 
 func formatMessage(raw *model.Message) *MessageForResponse {
