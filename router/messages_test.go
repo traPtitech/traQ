@@ -78,6 +78,30 @@ func TestPostMessage(t *testing.T) {
 	}
 }
 
+func TestPostPrivateMessage(t *testing.T) {
+	e, cookie, mw, assert, require := beforeTest(t)
+
+	u := mustCreateUser(t, "reciever")
+
+	post := struct{ Text string }{Text: "test message"}
+	body, err := json.Marshal(post)
+	require.NoError(err)
+
+	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
+	c, rec := getContext(e, t, cookie, req)
+	c.SetPath("/users/:userID/messages")
+	c.SetParamNames("userID")
+	c.SetParamValues(u.ID)
+	requestWithContext(t, mw(PostPrivateMessage), c)
+
+	if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
+		message := &MessageForResponse{}
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), message)) {
+			assert.Equal(post.Text, message.Content)
+		}
+	}
+
+}
 func TestPutMessageByID(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 

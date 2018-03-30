@@ -774,6 +774,39 @@ paths:
             正常に取得できませんでした。
             指定したユーザーは存在しません。
 
+  /users/{userID}/messages:
+    parameters:
+      - $ref: "#/components/parameters/userIdInPath"
+    post:
+      tags:
+        - message
+      description: userID宛てにプライベートメッセージを投稿します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                  description: Markdown形式のメッセージ本文
+                  example: Raskって誰？
+      responses:
+        "201":
+          description: |+
+            投稿に成功しました。
+            投稿されたメッセージが返されます。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "404":
+          description: |+
+            投稿に失敗しました。
+            指定したユーザーは存在しません。
+
   /users/{userID}/tags:
     parameters:
       - $ref: "#/components/parameters/userIdInPath"

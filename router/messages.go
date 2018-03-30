@@ -72,17 +72,59 @@ func PostMessage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
-	m := &model.Message{
-		UserID:    c.Get("user").(*model.User).ID,
-		Text:      post.Text,
-		ChannelID: c.Param("channelID"),
-	}
-	if err := m.Create(); err != nil {
-		c.Logger().Errorf("Message.Create() returned an error: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert your message")
+	m, err := createMessage(post.Text, c.Get("user").(*model.User).ID, c.Param("channelID"))
+	if err != nil {
+		return err
 	}
 
-	go notification.Send(events.MessageCreated, events.MessageEvent{Message: *m})
+	return c.JSON(http.StatusCreated, formatMessage(m))
+}
+
+// PostPrivateMessage POST /users/{userID}/messages のハンドラ
+func PostPrivateMessage(c echo.Context) error {
+	// userIDの検証 TODO: 関数に切り出し
+	userID := c.Param("userID")
+	if _, err := model.GetUser(userID); err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "This user dosen't exist")
+		default:
+			log.Errorf("failed to get usee: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user")
+		}
+	}
+
+	// privateチャンネルの存在確認と作成
+	var channelID string
+	myID := c.Get("user").(*model.User).ID
+	upc, err := model.GetPrivateChannel(myID, userID)
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			ch, err := createChannel("private", myID, "private", "", []string{myID, userID})
+			if err != nil {
+				return err
+			}
+			channelID = ch.ID
+		default:
+			return err
+		}
+	} else {
+		channelID = upc.ChannelID
+	}
+
+	post := &struct {
+		Text string `json:"text"`
+	}{}
+	if err := c.Bind(post); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
+	}
+
+	m, err := createMessage(post.Text, myID, channelID)
+	if err != nil {
+		return err
+	}
+
 	return c.JSON(http.StatusCreated, formatMessage(m))
 }
 
@@ -137,6 +179,22 @@ func DeleteMessageByID(c echo.Context) error {
 
 	go notification.Send(events.MessageDeleted, events.MessageEvent{Message: *m})
 	return c.NoContent(http.StatusNoContent)
+}
+
+// dbにデータを入れる
+func createMessage(text, userID, channelID string) (*model.Message, error) {
+	m := &model.Message{
+		UserID:    userID,
+		Text:      text,
+		ChannelID: channelID,
+	}
+	if err := m.Create(); err != nil {
+		log.Errorf("Message.Create() returned an error: %v", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert your message")
+	}
+
+	go notification.Send(events.MessageCreated, events.MessageEvent{Message: *m})
+	return m, nil
 }
 
 func formatMessage(raw *model.Message) *MessageForResponse {
