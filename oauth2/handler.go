@@ -753,6 +753,9 @@ func (store *Handler) IssueAccessToken(client *Client, userID uuid.UUID, redirec
 // LoadKeys OpenID Connectのjwt用のRSA秘密鍵・公開鍵を読み込みます
 func (store *Handler) LoadKeys(private, public []byte) (err error) {
 	store.privateKey, err = jwt.ParseRSAPrivateKeyFromPEM(private)
+	if err != nil {
+		return err
+	}
 	store.publicKey, err = jwt.ParseRSAPublicKeyFromPEM(public)
 	return
 }
