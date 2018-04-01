@@ -134,8 +134,8 @@ func main() {
 	api.DELETE("/messages/:messageID", router.DeleteMessageByID, requires(permission.DeleteMessage))
 	api.GET("/channels/:channelID/messages", router.GetMessagesByChannelID, requires(permission.GetMessage))
 	api.POST("/channels/:channelID/messages", router.PostMessage, requires(permission.PostMessage))
-	api.GET("/users/:userID/messages", router.GetMessagesFromPrivateChannel, requires(permission.GetMessage))
-	api.POST("/users/:userID/messages", router.PostPrivateMessage, requires(permission.PostMessage))
+	api.GET("/channels/:userID/messages", router.GetMessagesFromPrivateChannel, requires(permission.GetMessage))
+	api.POST("/channels/:userID/messages", router.PostPrivateMessage, requires(permission.PostMessage))
 
 	// Tag: users
 	api.GET("/users", router.GetUsers, requires(permission.GetUser))

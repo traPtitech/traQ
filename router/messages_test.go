@@ -59,7 +59,7 @@ func TestGetMessagesFromPrivateChannel(t *testing.T) {
 
 	u := mustCreateUser(t, "reciever")
 
-	// チャンネルがない時は404を返す
+	// チャンネルがない時は[]を返す
 	q := make(url.Values)
 	q.Set("limit", "3")
 	q.Set("offset", "1")
@@ -71,7 +71,12 @@ func TestGetMessagesFromPrivateChannel(t *testing.T) {
 	c.SetParamValues(u.ID)
 	requestWithContext(t, mw(GetMessagesFromPrivateChannel), c)
 
-	assert.EqualValues(http.StatusNotFound, rec.Code, rec.Body.String())
+	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
+		var responseBody []MessageForResponse
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
+			assert.Len(responseBody, 0)
+		}
+	}
 
 	channel := mustMakePrivateChannel(t, testUser.ID, u.ID, "private-test")
 	for i := 0; i < 5; i++ {

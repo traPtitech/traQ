@@ -73,7 +73,8 @@ func GetMessagesFromPrivateChannel(c echo.Context) error {
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
-			return c.JSON(http.StatusNotFound, "There is no message")
+			res := make([]*MessageForResponse, 0)
+			return c.JSON(http.StatusOK, res)
 		default:
 			c.Logger().Errorf("failed to get private channel: %v", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while getting private channel")
