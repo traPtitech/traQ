@@ -53,43 +53,6 @@ func GetMessagesByChannelID(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// GetMessagesFromPrivateChannel GET /users/{userID}/messages のハンドラ
-func GetMessagesFromPrivateChannel(c echo.Context) error {
-	myID := c.Get("user").(*model.User).ID
-	userID := c.Param("userID")
-	if _, err := validateUserID(userID); err != nil {
-		return err
-	}
-
-	q := &struct {
-		Limit  int `query:"limit"`
-		Offset int `query:"offset"`
-	}{}
-	if err := c.Bind(q); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
-	}
-
-	upc, err := model.GetPrivateChannel(myID, userID)
-	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			res := make([]*MessageForResponse, 0)
-			return c.JSON(http.StatusOK, res)
-		default:
-			c.Logger().Errorf("failed to get private channel: %v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while getting private channel")
-		}
-	}
-
-	// messagesを取得・整形
-	res, err := getMessages(upc.ChannelID, myID, q.Limit, q.Offset)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusOK, res)
-}
-
 // PostMessage POST /channels/{channelID}/messages のハンドラ
 func PostMessage(c echo.Context) error {
 	post := &struct {
@@ -100,48 +63,6 @@ func PostMessage(c echo.Context) error {
 	}
 
 	m, err := createMessage(post.Text, c.Get("user").(*model.User).ID, c.Param("channelID"))
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusCreated, m)
-}
-
-// PostPrivateMessage POST /users/{userID}/messages のハンドラ
-func PostPrivateMessage(c echo.Context) error {
-	userID := c.Param("userID")
-	if _, err := validateUserID(userID); err != nil {
-		return err
-	}
-
-	// privateチャンネルの存在確認と作成
-	var channelID string
-	myID := c.Get("user").(*model.User).ID
-	upc, err := model.GetPrivateChannel(myID, userID)
-	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			ch, err := createChannel("private", myID, "private", "", []string{myID, userID})
-			if err != nil {
-				return err
-			}
-			channelID = ch.ID
-		default:
-			c.Logger().Errorf("failed to get private channel: %v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while getting private channel")
-		}
-	} else {
-		channelID = upc.ChannelID
-	}
-
-	post := &struct {
-		Text string `json:"text"`
-	}{}
-	if err := c.Bind(post); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
-	}
-
-	m, err := createMessage(post.Text, myID, channelID)
 	if err != nil {
 		return err
 	}

@@ -54,50 +54,6 @@ func TestGetMessagesByChannelID(t *testing.T) {
 	}
 }
 
-func TestGetMessagesFromPrivateChannel(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
-
-	u := mustCreateUser(t, "reciever")
-
-	// チャンネルがない時は[]を返す
-	q := make(url.Values)
-	q.Set("limit", "3")
-	q.Set("offset", "1")
-	req := httptest.NewRequest("GET", "/?"+q.Encode(), nil)
-
-	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/users/:userID/messages")
-	c.SetParamNames("userID")
-	c.SetParamValues(u.ID)
-	requestWithContext(t, mw(GetMessagesFromPrivateChannel), c)
-
-	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
-		var responseBody []MessageForResponse
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.Len(responseBody, 0)
-		}
-	}
-
-	channel := mustMakePrivateChannel(t, testUser.ID, u.ID, "private-test")
-	for i := 0; i < 5; i++ {
-		mustMakeMessage(t, testUser.ID, channel.ID)
-	}
-
-	c, rec = getContext(e, t, cookie, req)
-	c.SetPath("/users/:userID/messages")
-	c.SetParamNames("userID")
-	c.SetParamValues(u.ID)
-	requestWithContext(t, mw(GetMessagesFromPrivateChannel), c)
-
-	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
-		var responseBody []MessageForResponse
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.Len(responseBody, 3)
-		}
-	}
-
-}
-
 func TestPostMessage(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
@@ -122,30 +78,6 @@ func TestPostMessage(t *testing.T) {
 	}
 }
 
-func TestPostPrivateMessage(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
-
-	u := mustCreateUser(t, "reciever")
-
-	post := struct{ Text string }{Text: "test message"}
-	body, err := json.Marshal(post)
-	require.NoError(err)
-
-	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/users/:userID/messages")
-	c.SetParamNames("userID")
-	c.SetParamValues(u.ID)
-	requestWithContext(t, mw(PostPrivateMessage), c)
-
-	if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
-		message := &MessageForResponse{}
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), message)) {
-			assert.Equal(post.Text, message.Content)
-		}
-	}
-
-}
 func TestPutMessageByID(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 

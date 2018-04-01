@@ -29,6 +29,11 @@ type PostChannel struct {
 	Parent      string   `json:"parent"`
 }
 
+const (
+	// privateチャンネルが親に持つID
+	privateParentChannelID = "private9-9dwb-4evo-3rks-we6dcsodkrci"
+)
+
 // GetChannels GET /channels のハンドラ
 func GetChannels(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
@@ -46,13 +51,17 @@ func GetChannels(c echo.Context) error {
 		}
 		response[ch.ID].ChannelID = ch.ID
 		response[ch.ID].Name = ch.Name
-		response[ch.ID].Parent = ch.ParentID
 		response[ch.ID].Visibility = ch.IsVisible
 
-		if response[ch.ParentID] == nil {
-			response[ch.ParentID] = &ChannelForResponse{}
+		if !ch.IsPublic {
+			response[ch.ID].Parent = privateParentChannelID
+		} else {
+			response[ch.ID].Parent = ch.ParentID
+			if response[ch.ParentID] == nil {
+				response[ch.ParentID] = &ChannelForResponse{}
+			}
+			response[ch.ParentID].Children = append(response[ch.ParentID].Children, ch.ID)
 		}
-		response[ch.ParentID].Children = append(response[ch.ParentID].Children, ch.ID)
 	}
 
 	return c.JSON(http.StatusOK, valuesChannel(response))
@@ -227,10 +236,16 @@ func valuesChannel(m map[string]*ChannelForResponse) []*ChannelForResponse {
 }
 
 func formatChannel(channel *model.Channel) *ChannelForResponse {
+	var parentID string
+	if !channel.IsPublic {
+		parentID = privateParentChannelID
+	} else {
+		parentID = channel.ParentID
+	}
 	return &ChannelForResponse{
 		ChannelID:  channel.ID,
 		Name:       channel.Name,
-		Parent:     channel.ParentID,
+		Parent:     parentID,
 		Visibility: channel.IsVisible,
 	}
 }
