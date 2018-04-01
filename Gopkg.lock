@@ -3,10 +3,7 @@
 
 [[projects]]
   name = "github.com/GeorgeMac/idicon"
-  packages = [
-    "colour",
-    "icon"
-  ]
+  packages = ["colour","icon"]
   revision = "5df45084f875d7e82ae224f6f5825cc858b54f0d"
   version = "0.2"
 
@@ -24,10 +21,7 @@
 
 [[projects]]
   name = "github.com/go-playground/locales"
-  packages = [
-    ".",
-    "currency"
-  ]
+  packages = [".","currency"]
   revision = "f63010822830b6fe52288ee52d5a1151088ce039"
   version = "v0.12.1"
 
@@ -81,10 +75,7 @@
 
 [[projects]]
   name = "github.com/labstack/echo"
-  packages = [
-    ".",
-    "middleware"
-  ]
+  packages = [".","middleware"]
   revision = "a5d81b8d4a627f3f49dcb3164ef2bb5239682227"
   version = "3.3.4"
 
@@ -96,12 +87,7 @@
 
 [[projects]]
   name = "github.com/labstack/gommon"
-  packages = [
-    "bytes",
-    "color",
-    "log",
-    "random"
-  ]
+  packages = ["bytes","color","log","random"]
   revision = "6fe1405d73ec4bd4cd8a4ac8e2a2b2bf95d03954"
   version = "0.2.4"
 
@@ -136,6 +122,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/quasoft/memstore"
+  packages = ["."]
+  revision = "72cbde23778087efc0d9af366d6f08ceacbf4705"
+
+[[projects]]
   name = "github.com/satori/go.uuid"
   packages = ["."]
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
@@ -149,10 +141,7 @@
 
 [[projects]]
   name = "github.com/stretchr/testify"
-  packages = [
-    "assert",
-    "require"
-  ]
+  packages = ["assert","require"]
   revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
   version = "v1.2.1"
 
@@ -171,25 +160,13 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = [
-    "acme",
-    "acme/autocert",
-    "pbkdf2"
-  ]
+  packages = ["acme","acme/autocert","pbkdf2"]
   revision = "88942b9c40a4c9d203b82b3731787b672d6e809b"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/image"
-  packages = [
-    "bmp",
-    "draw",
-    "math/f64",
-    "riff",
-    "vp8",
-    "vp8l",
-    "webp"
-  ]
+  packages = ["bmp","draw","math/f64","riff","tiff","tiff/lzw","vp8","vp8l","webp"]
   revision = "f3a9b89b59def9194717c1d0bd4c0d08fa1afa7b"
 
 [[projects]]
@@ -218,16 +195,13 @@
 
 [[projects]]
   name = "gopkg.in/go-playground/webhooks.v3"
-  packages = [
-    ".",
-    "github"
-  ]
+  packages = [".","github"]
   revision = "f2acbcde401467ded7701fbbf7eabd7a0bb6702d"
   version = "v3.10.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "197f1f5dca00744a4aa4c6bbae6b541695d14cd71f035928a78f3fac41d1193b"
+  inputs-digest = "63fae4b0d3f219c5c12f359a30364adcc75826485c713f1264735f95e9ae3cab"
   solver-name = "gps-cdcl"
   solver-version = 1

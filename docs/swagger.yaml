@@ -8,15 +8,208 @@ servers:
   - url: /api/1.0
 
 paths:
+  /login:
+    post:
+      tags:
+        - authentication
+      description: ログインを行います。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - pass
+              properties:
+                name:
+                  type: string
+                pass:
+                  type: string
+      responses:
+        "204":
+          description: 正常にログインできました。
+
   /logout:
     post:
       tags:
-        - authorization
+        - authentication
       description: ログアウトを行います。
       responses:
         "204":
           description: |+
             正常にログアウトできました。
+
+  /oauth2/authorize:
+    get:
+      tags:
+        - authorization
+      description: OAuth2 認可エンドポイント
+      parameters:
+        - name: response_type
+          in: query
+          schema:
+            type: string
+        - name: client_id
+          in: query
+          schema:
+            type: string
+        - name: redirect_uri
+          in: query
+          schema:
+            type: string
+        - name: scope
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: code_challenge
+          in: query
+          schema:
+            type: string
+        - name: code_challenge_method
+          in: query
+          schema:
+            type: string
+        - name: nonce
+          in: query
+          schema:
+            type: string
+        - name: prompt
+          in: query
+          schema:
+            type: string
+
+      responses:
+        "302":
+          description: 結果に応じてリダイレクトします。
+        "400":
+          description: リクエストが不正です。
+        "403":
+          description: リクエストが許可されていません。
+    post:
+      tags:
+        - authorization
+      description: OAuth2 認可エンドポイント
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                response_type:
+                  type: string
+                client_id:
+                  type: string
+                redirect_uri:
+                  type: string
+                scope:
+                  type: string
+                state:
+                  type: string
+                code_challenge:
+                  type: string
+                code_challenge_method:
+                  type: string
+                nonce:
+                  type: string
+                prompt:
+                  type: string
+      responses:
+        "302":
+          description: 結果に応じてリダイレクトします。
+        "400":
+          description: リクエストが不正です。
+        "403":
+          description: リクエストが許可されていません。
+
+  /oauth2/authorize/decide:
+    post:
+      tags:
+        - authorization
+      description: OAuth2 認可承諾
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - submit
+              properties:
+                submit:
+                  type: string
+                  description: 承諾する場合は"approve"
+      responses:
+        "302":
+          description: RedirectURIに結果をリダイレクトします。
+        "400":
+          description: リクエストが不正です。
+        "403":
+          description: リクエストが許可されていません。
+
+  /oauth2/token:
+    post:
+      tags:
+        - authorization
+      description: OAuth2 トークンエンドポイント
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - grant_type
+              properties:
+                grant_type:
+                  type: string
+                code:
+                  type: string
+                redirect_uri:
+                  type: string
+                client_id:
+                  type: string
+                code_verifier:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+                scope:
+                  type: string
+                refresh_token:
+                  type: string
+                client_secret:
+                  type: string
+      responses:
+        "200":
+          description: トークンが正常に発行されました。
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - access_token
+                  - token_type
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+                  refresh_token:
+                    type: string
+                  scope:
+                    type: string
+                  id_token:
+                    type: string
+        "400":
+          description: トークン発行に失敗しました。
+        "403":
+          description: トークン発行に失敗しました。
 
   /channels:
     post:
@@ -1586,6 +1779,154 @@ paths:
         "404":
           description: 正常に送信できませんでした。指定されたwebhookは存在しません。
 
+  /users/me/tokens:
+    get:
+      tags:
+        - client
+      description: 自分が許可しているクライアントの一覧とトークン情報を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AllowedClientInfo"
+        "403":
+          description: 取得できませんでした。権限がありません。
+
+  /users/me/tokens/{oauth2TokenID}:
+    parameters:
+      - $ref: "#/components/parameters/oauth2TokenIdInPath"
+    delete:
+      tags:
+        - client
+      description: 指定したトークンの認可を取り消します。
+      responses:
+        "204":
+          description: 正常に取り消すことができました。
+        "403":
+          description: 失敗しました。権限がありません。
+        "404":
+          description: 失敗しました。指定したトークンは存在しません。
+
+  /clients:
+    get:
+      tags:
+        - client
+      description: 自分が登録しているクライアントの一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OwnedClientInfo"
+        "403":
+          description: 取得できませんでした。権限がありません。
+    post:
+      tags:
+        - client
+      description: クライアントを登録します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - redirectUri
+                - scopes
+              properties:
+                name:
+                  type: string
+                  description: クライアント名(1-32文字)
+                description:
+                  type: string
+                  description: クライアントの説明
+                redirectUri:
+                  type: string
+                  format: uri
+                  description: リダイレクト先のURI
+                scopes:
+                  type: array
+                  description: 要求するスコープ(必ず１つ以上)
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: 正常に登録できました。クライアント情報を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnedClientInfo"
+        "400":
+          description: 登録できませんでした。リクエスト内容が不正です。
+        "403":
+          description: 登録できませんでした。権限がありません。
+
+  /clients/{clientID}:
+    parameters:
+      - $ref: "#/components/parameters/clientIdInPath"
+    get:
+      tags:
+        - client
+      description: 指定したクライアントIDのクライアントの情報を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientInfo"
+        "404":
+          description: 取得できませんでした。指定されたクライアントは存在しません。
+    patch:
+      tags:
+        - client
+      description: 指定したクライアントIDのクライアントの情報を変更します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: クライアント名(1-32文字)
+                description:
+                  type: string
+                  description: 説明
+                redirectUri:
+                  type: string
+                  format: uri
+                  description: リダイレクト先のURI
+      responses:
+        "204":
+          description: 正常に変更できました。
+        "403":
+          description: 変更できませんでした。権限がありません。
+        "404":
+          description: 変更できませんでした。指定されたクライアントは存在しません。
+    delete:
+      tags:
+        - client
+      description: |+
+        指定したクライアントIDのクライアントを削除します。
+        正常に削除された場合、このクライアントを通じての認可は全て取り消されます。
+      responses:
+        "204":
+          description: 正常に削除できました。
+        "403":
+          description: 削除できませんでした。権限がありません。
+        "404":
+          description: 削除できませんでした。指定されたクライアントは存在しません。
+
+
 components:
   parameters:
     channelIdInPath:
@@ -1650,6 +1991,23 @@ components:
       schema:
         type: string
         format: uuid
+    clientIdInPath:
+      name: clientID
+      description: 操作の対象となるclientのID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    oauth2TokenIdInPath:
+      name: oauth2TokenID
+      description: 操作の対象となるTokenのID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
   schemas:
     Channel:
       type: object
@@ -1965,5 +2323,66 @@ components:
           type: string
           format: uuid
         updatedAt:
+          type: string
+          format: datetime
+
+    ClientInfo:
+      type: object
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        creatorId:
+          type: string
+          format: uuid
+
+    OwnedClientInfo:
+      type: object
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        creatorId:
+          type: string
+          format: uuid
+        scopes:
+          type: array
+          items:
+            type: string
+        redirectUri:
+          type: string
+          format: uri
+        secret:
+          type: string
+
+    AllowedClientInfo:
+      type: object
+      properties:
+        tokenId:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        creatorId:
+          type: string
+          format: uuid
+        scopes:
+          type: array
+          items:
+            type: string
+        approvedAt:
           type: string
           format: datetime

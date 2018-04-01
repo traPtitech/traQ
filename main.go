@@ -2,8 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/external/storage"
+	"github.com/traPtitech/traQ/oauth2"
+	"github.com/traPtitech/traQ/oauth2/impl"
 	"github.com/traPtitech/traQ/utils/validator"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
@@ -88,6 +92,38 @@ func main() {
 	}
 	role.SetRole(r)
 
+	// oauth2 handler
+	oauth := &oauth2.Handler{
+		Store:                &impl.DefaultStore{},
+		AccessTokenExp:       60 * 60 * 24 * 365, //1年
+		AuthorizationCodeExp: 60 * 5,             //5分
+		IsRefreshEnabled:     false,
+		Sessions:             store,
+		UserAuthenticator: func(id, pw string) (uuid.UUID, error) {
+			user := &model.User{Name: id}
+			err := user.Authorization(pw)
+			switch err {
+			case model.ErrUserWrongIDOrPassword, model.ErrUserBotTryLogin:
+				err = oauth2.ErrUserIDOrPasswordWrong
+			}
+			return uuid.FromStringOrNil(user.ID), err
+		},
+		UserInfoGetter: func(uid uuid.UUID) (oauth2.UserInfo, error) {
+			u, err := model.GetUser(uid.String())
+			if err == model.ErrNotFound {
+				return nil, oauth2.ErrUserIDOrPasswordWrong
+			}
+			return u, err
+		},
+		Issuer: os.Getenv("TRAQ_ORIGIN"),
+	}
+	if public, private := os.Getenv("TRAQ_RS256_PUBLIC_KEY"), os.Getenv("TRAQ_RS256_PRIVATE_KEY"); private != "" && public != "" {
+		err := oauth.LoadKeys(loadKeys(private, public))
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	e := echo.New()
 	e.Validator = validator.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -110,7 +146,7 @@ func main() {
 	e.POST("/logout", router.PostLogout)
 
 	api := e.Group("/api/1.0")
-	api.Use(router.GetUserInfo)
+	api.Use(router.UserAuthenticate(oauth))
 	apiNoAuth := e.Group("/api/1.0")
 
 	// access control middleware generator
@@ -211,6 +247,24 @@ func main() {
 	apiNoAuth.POST("/webhooks/:webhookID", router.PostWebhook)
 	apiNoAuth.POST("/webhooks/:webhookID/github", router.PostWebhookByGithub)
 
+	// Tag: authorization
+	apiNoAuth.GET("/oauth2/authorize", oauth.AuthorizationEndpointHandler)
+	apiNoAuth.POST("/oauth2/authorize", oauth.AuthorizationEndpointHandler)
+	api.POST("/oauth2/authorize/decide", oauth.AuthorizationDecideHandler)
+	apiNoAuth.POST("/oauth2/token", oauth.TokenEndpointHandler)
+	e.GET("/.well-known/openid-configuration", oauth.DiscoveryHandler)
+	e.GET("/publickeys", oauth.PublicKeysHandler)
+
+	// Tag: client
+	oah := &router.OAuth2APIHandler{Store: oauth}
+	api.GET("/users/me/tokens", oah.GetMyTokens, requires(permission.GetMyTokens))
+	api.DELETE("/users/me/tokens/:tokenID", oah.DeleteMyToken, requires(permission.RevokeMyToken))
+	api.GET("/clients", oah.GetClients, requires(permission.GetClients))
+	api.POST("/clients", oah.PostClients, requires(permission.CreateClient))
+	api.GET("/clients/:clientID", oah.GetClient, requires(permission.GetClients))
+	api.PATCH("/clients/:clientID", oah.PatchClient, requires(permission.EditMyClient))
+	api.DELETE("/clients/:clientID", oah.DeleteClient, requires(permission.DeleteMyClient))
+
 	// Serve UI
 	e.File("/sw.js", "./client/dist/sw.js")
 	e.Static("/static", "./client/dist/static")
@@ -239,4 +293,16 @@ func setSwiftFileManagerAsDefault(container, userName, apiKey, tenant, tenantID,
 	}
 	model.SetFileManager("", m)
 	return nil
+}
+
+func loadKeys(private, public string) ([]byte, []byte) {
+	prk, err := ioutil.ReadFile(private)
+	if err != nil {
+		panic(err)
+	}
+	puk, err := ioutil.ReadFile(public)
+	if err != nil {
+		panic(err)
+	}
+	return prk, puk
 }

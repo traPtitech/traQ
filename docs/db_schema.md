@@ -211,10 +211,45 @@ user_idとchannel_idの複合主キー
 | user_id | CHAR(36) | NOT NULL (外部キー) | ピン留めしたユーザーのID |
 | created_at | TIMESTAMP | NOT NULL | ピン留めした日時 |
 
-## tokens
+## oauth2_tokens
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
+| id | CHAR(36) | PRIMARY KEY | トークンID |
+| client_id | CHAR(36) | NOT NULL (外部キー) | クライアントID |
 | user_id | CHAR(36) | NOT NULL (外部キー) | ユーザーID |
-| access_token | TEXT | NOT NULL | OAuthAccessToken |
-| access_token_secret | TEXT | NOT NULL | OAuthAccessTokenSecret |
+| redirect_uri | TEXT | NOT NULL | リダイレクトURI |
+| access_token | VARCHAR(36) | NOT NULL | アクセストークン |
+| refresh_token | VARCHAR(36) | NOT NULL | リフレッシュトークン |
+| scopes | TEXT | NOT NULL | 許可されたスコープ |
+| expires_in | INT | NOT NULL | 有効秒数 |
+| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+
+## oauth2_clients
+| カラム名 | 型 | 属性 | 説明など | 
+| --- | --- | --- | --- |
+| id | CHAR(36) | PRIMARY KEY | クライアントID |
+| name | VARCHAR(32) | NOT NULL | クライアント名 |
+| description | TEXT | NOT NULL | クライアント説明 |
+| confidential | BOOLEAN | NOT NULL | コンフィデンシャルクライアントかどうか |
+| creator_id | CHAR(36) | NOT NULL (外部キー) | 登録者ID |
+| secret | VARCHAR(36) | NOT NULL | クライアントシークレット |
+| redirect_uri | TEXT | NOT NULL | リダイレクトURI |
+| scopes | TEXT | NOT NULL | 許可されたスコープ |
+| is_deleted | BOOLEAN | NOT NULL | 削除されているかどうか |
+| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+
+## oauth2_authorizes
+| カラム名 | 型 | 属性 | 説明など | 
+| --- | --- | --- | --- |
+| code | VARCHAR(36) | PRIMARY KEY | 認可コード |
+| client_id | CHAR(36) | NOT NULL (外部キー) | クライアントID |
+| user_id | CHAR(36) | NOT NULL (外部キー) | ユーザーID |
+| expires_in | INT | NOT NULL | 有効秒数 |
+| redirect_uri | TEXT | NOT NULL | リダイレクトURI |
+| scopes | TEXT | NOT NULL | 有効なスコープ |
+| original_scopes | TEXT | NOT NULL | 要求されたスコープ |
+| code_challenge | VARCHAR(128) | NOT NULL | PKCE Code Challenge |
+| code_challenge_method | TEXT | NOT NULL | PKCE Code Challenge Method |
+| nonce | TEXT | NOT NULL | Nonce |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
