@@ -1,6 +1,7 @@
 package events
 
 import (
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"time"
 )
@@ -65,52 +66,140 @@ const (
 	TraqUpdated EventType = "TRAQ_UPDATED"
 )
 
-//UserEvent ユーザーに関するイベントのペイロード
+// DataPayload データペイロード型
+type DataPayload map[string]interface{}
+
+// Event イベントのインターフェイス
+type Event interface {
+	DataPayload() DataPayload
+}
+
+// UserTargetEvent 特定のユーザー宛のイベントのインターフェイス
+type UserTargetEvent interface {
+	Event
+	TargetUser() uuid.UUID
+}
+
+// ChannelUserTargetEvent 特定のチャンネルを見ているユーザー宛のイベントのインターフェイス
+type ChannelUserTargetEvent interface {
+	Event
+	TargetChannel() uuid.UUID
+}
+
+// UserEvent ユーザーに関するイベント
 type UserEvent struct {
 	ID string
 }
 
-//ChannelEvent チャンネルに関するイベントのペイロード
+// DataPayload データペイロード
+func (e UserEvent) DataPayload() DataPayload {
+	return DataPayload{
+		"id": e.ID,
+	}
+}
+
+// ChannelEvent チャンネルに関するイベント
 type ChannelEvent struct {
 	ID string
 }
 
-//UserChannelEvent ユーザーとチャンネルに関するイベントのペイロード
+// DataPayload データペイロード
+func (e ChannelEvent) DataPayload() DataPayload {
+	return DataPayload{
+		"id": e.ID,
+	}
+}
+
+// UserChannelEvent ユーザーとチャンネルに関するイベント
 type UserChannelEvent struct {
 	UserID    string
 	ChannelID string
 }
 
-//UserMessageEvent ユーザーとメッセージに関するイベントのペイロード
+// DataPayload データペイロード
+func (e UserChannelEvent) DataPayload() DataPayload {
+	return DataPayload{
+		"id": e.ChannelID,
+	}
+}
+
+// TargetUser 通知対象のユーザーID
+func (e UserChannelEvent) TargetUser() uuid.UUID {
+	return uuid.FromStringOrNil(e.UserID)
+}
+
+// UserMessageEvent ユーザーとメッセージに関するイベント
 type UserMessageEvent struct {
 	UserID    string
 	MessageID string
 }
 
-//ReadMessagesEvent メッセージの既読イベントのペイロード
+// DataPayload データペイロード
+func (e UserMessageEvent) DataPayload() DataPayload {
+	return DataPayload{
+		"id": e.MessageID,
+	}
+}
+
+// TargetUser 通知対象のユーザーID
+func (e UserMessageEvent) TargetUser() uuid.UUID {
+	return uuid.FromStringOrNil(e.UserID)
+}
+
+// ReadMessagesEvent メッセージの既読イベント
 type ReadMessagesEvent struct {
 	UserID     string
 	MessageIDs []string
 }
 
-//PinEvent メッセージのピンイベントのペイロード
+// DataPayload データペイロード
+func (e ReadMessagesEvent) DataPayload() DataPayload {
+	return DataPayload{
+		"ids": e.MessageIDs,
+	}
+}
+
+// TargetUser 通知対象のユーザーID
+func (e ReadMessagesEvent) TargetUser() uuid.UUID {
+	return uuid.FromStringOrNil(e.UserID)
+}
+
+// PinEvent メッセージのピンイベント
 type PinEvent struct {
 	PinID   string
 	Message model.Message
 }
 
-//MessageChannelEvent メッセージとチャンネルに関するイベントのペイロード
-type MessageChannelEvent struct {
-	MessageID string
-	ChannelID string
+// DataPayload データペイロード
+func (e PinEvent) DataPayload() DataPayload {
+	return DataPayload{
+		"id": e.PinID,
+	}
 }
 
-//MessageEvent メッセージに関するイベントのペイロード
+// TargetChannel 通知対象のチャンネル
+func (e PinEvent) TargetChannel() uuid.UUID {
+	return uuid.FromStringOrNil(e.Message.ChannelID)
+}
+
+// MessageEvent メッセージに関するイベント
 type MessageEvent struct {
 	Message model.Message
 }
 
-//MessageStampEvent メッセージとスタンプに関するイベントのペイロード
+// DataPayload データペイロード
+func (e MessageEvent) DataPayload() DataPayload {
+	return DataPayload{
+		"id": e.Message.ID,
+	}
+}
+
+// TargetChannel 通知対象のチャンネル
+func (e MessageEvent) TargetChannel() uuid.UUID {
+	return uuid.FromStringOrNil(e.Message.ChannelID)
+}
+
+// MessageStampEvent メッセージとスタンプに関するイベント
 type MessageStampEvent struct {
 	ID        string
 	ChannelID string
@@ -120,7 +209,37 @@ type MessageStampEvent struct {
 	CreatedAt time.Time
 }
 
-//StampEvent スタンプに関するイベントのペイロード
+// DataPayload データペイロード
+func (e MessageStampEvent) DataPayload() DataPayload {
+	if e.Count > 0 {
+		return DataPayload{
+			"message_id": e.ID,
+			"user_id":    e.UserID,
+			"stamp_id":   e.StampID,
+			"count":      e.Count,
+			"created_at": e.CreatedAt,
+		}
+	}
+	return DataPayload{
+		"message_id": e.ID,
+		"user_id":    e.UserID,
+		"stamp_id":   e.StampID,
+	}
+}
+
+// TargetChannel 通知対象のチャンネル
+func (e MessageStampEvent) TargetChannel() uuid.UUID {
+	return uuid.FromStringOrNil(e.ChannelID)
+}
+
+// StampEvent スタンプに関するイベント
 type StampEvent struct {
 	ID string
+}
+
+// DataPayload データペイロード
+func (e StampEvent) DataPayload() DataPayload {
+	return DataPayload{
+		"id": e.ID,
+	}
 }

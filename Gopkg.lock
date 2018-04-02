@@ -3,13 +3,42 @@
 
 [[projects]]
   name = "cloud.google.com/go"
-  packages = ["compute/metadata"]
+  packages = [
+    "compute/metadata",
+    "firestore",
+    "firestore/apiv1beta1",
+    "iam",
+    "internal",
+    "internal/atomiccache",
+    "internal/fields",
+    "internal/optional",
+    "internal/trace",
+    "internal/version",
+    "storage"
+  ]
   revision = "4b98a6370e36d7a85192e7bad08a4ebd82eac2a8"
   version = "v0.20.0"
 
 [[projects]]
+  name = "firebase.google.com/go"
+  packages = [
+    ".",
+    "auth",
+    "db",
+    "iid",
+    "internal",
+    "messaging",
+    "storage"
+  ]
+  revision = "c5db67b02a346bd4b8829369e1a5acd147bfb7a6"
+  version = "v2.6.1"
+
+[[projects]]
   name = "github.com/GeorgeMac/idicon"
-  packages = ["colour","icon"]
+  packages = [
+    "colour",
+    "icon"
+  ]
   revision = "5df45084f875d7e82ae224f6f5825cc858b54f0d"
   version = "0.2"
 
@@ -27,7 +56,10 @@
 
 [[projects]]
   name = "github.com/go-playground/locales"
-  packages = [".","currency"]
+  packages = [
+    ".",
+    "currency"
+  ]
   revision = "f63010822830b6fe52288ee52d5a1151088ce039"
   version = "v0.12.1"
 
@@ -63,9 +95,25 @@
 
 [[projects]]
   name = "github.com/golang/protobuf"
-  packages = ["proto"]
+  packages = [
+    "proto",
+    "protoc-gen-go/descriptor",
+    "ptypes",
+    "ptypes/any",
+    "ptypes/duration",
+    "ptypes/empty",
+    "ptypes/struct",
+    "ptypes/timestamp",
+    "ptypes/wrappers"
+  ]
   revision = "925541529c1fa6821df4e44ce2723319eb2be768"
   version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/googleapis/gax-go"
+  packages = ["."]
+  revision = "317e0006254c44a0ac427cc52a0e083ff0b9622f"
+  version = "v2.0.0"
 
 [[projects]]
   name = "github.com/gorilla/context"
@@ -87,7 +135,10 @@
 
 [[projects]]
   name = "github.com/labstack/echo"
-  packages = [".","middleware"]
+  packages = [
+    ".",
+    "middleware"
+  ]
   revision = "a5d81b8d4a627f3f49dcb3164ef2bb5239682227"
   version = "3.3.4"
 
@@ -99,7 +150,12 @@
 
 [[projects]]
   name = "github.com/labstack/gommon"
-  packages = ["bytes","color","log","random"]
+  packages = [
+    "bytes",
+    "color",
+    "log",
+    "random"
+  ]
   revision = "6fe1405d73ec4bd4cd8a4ac8e2a2b2bf95d03954"
   version = "0.2.4"
 
@@ -153,7 +209,10 @@
 
 [[projects]]
   name = "github.com/stretchr/testify"
-  packages = ["assert","require"]
+  packages = [
+    "assert",
+    "require"
+  ]
   revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
   version = "v1.2.1"
 
@@ -170,27 +229,81 @@
   revision = "dcecefd839c4193db0d35b88ec65b4c12d360ab0"
 
 [[projects]]
+  name = "go.opencensus.io"
+  packages = [
+    "exporter/stackdriver/propagation",
+    "internal",
+    "internal/tagencoding",
+    "plugin/ocgrpc",
+    "plugin/ochttp",
+    "plugin/ochttp/propagation/b3",
+    "stats",
+    "stats/internal",
+    "stats/view",
+    "tag",
+    "trace",
+    "trace/propagation"
+  ]
+  revision = "6e3f034057826b530038d93267906ec3c012183f"
+  version = "v0.6.0"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["acme","acme/autocert","pbkdf2"]
+  packages = [
+    "acme",
+    "acme/autocert",
+    "pbkdf2"
+  ]
   revision = "88942b9c40a4c9d203b82b3731787b672d6e809b"
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/exp"
+  packages = ["utf8string"]
+  revision = "8460e604b9de9da5834c9f198cadf9dca4b05cac"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/image"
-  packages = ["bmp","draw","math/f64","riff","tiff","tiff/lzw","vp8","vp8l","webp"]
+  packages = [
+    "bmp",
+    "draw",
+    "math/f64",
+    "riff",
+    "tiff",
+    "tiff/lzw",
+    "vp8",
+    "vp8l",
+    "webp"
+  ]
   revision = "f3a9b89b59def9194717c1d0bd4c0d08fa1afa7b"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context","context/ctxhttp"]
+  packages = [
+    "context",
+    "context/ctxhttp",
+    "http2",
+    "http2/hpack",
+    "idna",
+    "internal/timeseries",
+    "lex/httplex",
+    "trace"
+  ]
   revision = "6078986fec03a1dcc236c34816c71b0e05018fda"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/oauth2"
-  packages = [".","google","internal","jws","jwt"]
+  packages = [
+    ".",
+    "google",
+    "internal",
+    "jws",
+    "jwt"
+  ]
   revision = "fdc9e635145ae97e6c2cb777c48305600cf515cb"
 
 [[projects]]
@@ -206,10 +319,107 @@
   revision = "91ee8cde435411ca3f1cd365e8f20131aed4d0a1"
 
 [[projects]]
+  name = "golang.org/x/text"
+  packages = [
+    "collate",
+    "collate/build",
+    "internal/colltab",
+    "internal/gen",
+    "internal/tag",
+    "internal/triegen",
+    "internal/ucd",
+    "language",
+    "secure/bidirule",
+    "transform",
+    "unicode/bidi",
+    "unicode/cldr",
+    "unicode/norm",
+    "unicode/rangetable"
+  ]
+  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
+  version = "v0.3.0"
+
+[[projects]]
+  branch = "master"
+  name = "google.golang.org/api"
+  packages = [
+    "gensupport",
+    "googleapi",
+    "googleapi/internal/uritemplates",
+    "googleapi/transport",
+    "identitytoolkit/v3",
+    "internal",
+    "iterator",
+    "option",
+    "storage/v1",
+    "transport",
+    "transport/grpc",
+    "transport/http"
+  ]
+  revision = "3072d9cd7f79a11909b84fdb7c9c8b9e60a57fbd"
+
+[[projects]]
   name = "google.golang.org/appengine"
-  packages = [".","internal","internal/app_identity","internal/base","internal/datastore","internal/log","internal/modules","internal/remote_api","internal/urlfetch","urlfetch"]
+  packages = [
+    ".",
+    "internal",
+    "internal/app_identity",
+    "internal/base",
+    "internal/datastore",
+    "internal/log",
+    "internal/modules",
+    "internal/remote_api",
+    "internal/socket",
+    "internal/urlfetch",
+    "socket",
+    "urlfetch"
+  ]
   revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
   version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  name = "google.golang.org/genproto"
+  packages = [
+    "googleapis/api/annotations",
+    "googleapis/firestore/v1beta1",
+    "googleapis/iam/v1",
+    "googleapis/rpc/code",
+    "googleapis/rpc/status",
+    "googleapis/type/latlng"
+  ]
+  revision = "ab0870e398d5dd054b868c0db1481ab029b9a9f2"
+
+[[projects]]
+  name = "google.golang.org/grpc"
+  packages = [
+    ".",
+    "balancer",
+    "balancer/base",
+    "balancer/roundrobin",
+    "codes",
+    "connectivity",
+    "credentials",
+    "credentials/oauth",
+    "encoding",
+    "encoding/proto",
+    "grpclb/grpc_lb_v1/messages",
+    "grpclog",
+    "internal",
+    "keepalive",
+    "metadata",
+    "naming",
+    "peer",
+    "resolver",
+    "resolver/dns",
+    "resolver/passthrough",
+    "stats",
+    "status",
+    "tap",
+    "transport"
+  ]
+  revision = "1e2570b1b19ade82d8dbb31bba4e65e9f9ef5b34"
+  version = "v1.11.1"
 
 [[projects]]
   name = "gopkg.in/go-playground/validator.v9"
@@ -219,13 +429,16 @@
 
 [[projects]]
   name = "gopkg.in/go-playground/webhooks.v3"
-  packages = [".","github"]
+  packages = [
+    ".",
+    "github"
+  ]
   revision = "f2acbcde401467ded7701fbbf7eabd7a0bb6702d"
   version = "v3.10.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6d8d458bd7e203aeb3eab0fa757cf879ff43f9c6e0b14d8e8cd8e110e962a092"
+  inputs-digest = "e3f263eb2cb253e0b869dc8e2bda64f8ba599f2cba15e8b53301c1fbc82df2a6"
   solver-name = "gps-cdcl"
   solver-version = 1
