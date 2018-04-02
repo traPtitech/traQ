@@ -38,6 +38,7 @@ func (a *OAuth2Authorize) Delete() error {
 
 // GetOAuth2Authorize : 認可コードからOAuth2Authorizeを取得します
 func GetOAuth2Authorize(code string) (oa *OAuth2Authorize, err error) {
+	oa = &OAuth2Authorize{}
 	ok, err := db.Where("code = ?", code).Get(oa)
 	if err != nil {
 		return nil, err
