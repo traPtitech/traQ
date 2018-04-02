@@ -27,6 +27,7 @@ func TestGetChannels(t *testing.T) {
 		for _, v := range res {
 			if v.ChannelID == private.ID {
 				assert.Equal(privateParentChannelID, v.Parent)
+				assert.Len(v.Member, 2)
 			}
 		}
 	}
