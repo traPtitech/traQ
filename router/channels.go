@@ -31,7 +31,7 @@ type PostChannel struct {
 
 const (
 	// privateチャンネルが親に持つID
-	privateParentChannelID = "private9-9dwb-4evo-3rks-we6dcsodkrci"
+	privateParentChannelID = "02472636-d850-4808-b060-8260dd6342af"
 )
 
 // GetChannels GET /channels のハンドラ
