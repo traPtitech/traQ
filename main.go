@@ -2,17 +2,17 @@ package main
 
 import (
 	"fmt"
-	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/external/storage"
-	"github.com/traPtitech/traQ/oauth2"
-	"github.com/traPtitech/traQ/oauth2/impl"
-	"github.com/traPtitech/traQ/utils/validator"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/notification"
+	"github.com/traPtitech/traQ/oauth2"
+	"github.com/traPtitech/traQ/oauth2/impl"
+	"github.com/traPtitech/traQ/utils/validator"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -194,6 +194,7 @@ func main() {
 	api.GET("/users/me/unread", router.GetUnread, requires(permission.GetUnread))
 	api.DELETE("/users/me/unread", router.DeleteUnread, requires(permission.DeleteUnread))
 
+	// Tag: userTag
 	api.GET("/users/:userID/tags", router.GetUserTags, requires(permission.GetTag))
 	api.POST("/users/:userID/tags", router.PostUserTag, requires(permission.AddTag))
 	api.PUT("/users/:userID/tags/:tagID", router.PutUserTag, requires(permission.ChangeTagLockState))

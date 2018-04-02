@@ -3,10 +3,11 @@ package model
 import (
 	"bytes"
 	"fmt"
-	"github.com/traPtitech/traQ/external/storage"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/traPtitech/traQ/external/storage"
 
 	"github.com/stretchr/testify/assert"
 
@@ -93,6 +94,18 @@ func mustMakeChannelDetail(t *testing.T, creatorID, name, parentID string, isPub
 	channel.ParentID = parentID
 	channel.IsPublic = isPublic
 	require.NoError(t, channel.Create())
+	return channel
+}
+
+func mustMakePrivateChannel(t *testing.T, userID1, userID2, name string) *Channel {
+	channel := mustMakeChannelDetail(t, userID1, name, "", false)
+	upc := &UsersPrivateChannel{
+		UserID:    userID1,
+		ChannelID: channel.ID,
+	}
+	require.NoError(t, upc.Create())
+	upc.UserID = userID2
+	require.NoError(t, upc.Create())
 	return channel
 }
 

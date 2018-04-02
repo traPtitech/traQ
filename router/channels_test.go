@@ -17,12 +17,18 @@ func TestGetChannels(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		mustMakeChannel(t, testUser.ID, "Channel-"+strconv.Itoa(i), true)
 	}
+	private := mustMakeChannel(t, testUser.ID, "private", false)
 
 	rec := request(e, t, mw(GetChannels), cookie, nil)
 
 	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
 		var res []ChannelForResponse
 		assert.NoError(json.Unmarshal(rec.Body.Bytes(), &res))
+		for _, v := range res {
+			if v.ChannelID == private.ID {
+				assert.Equal(privateParentChannelID, v.Parent)
+			}
+		}
 	}
 }
 

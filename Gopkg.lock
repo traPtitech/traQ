@@ -113,7 +113,7 @@
   branch = "master"
   name = "github.com/ncw/swift"
   packages = ["."]
-  revision = "ae9f0ea1605b9aa6434ed5c731ca35d83ba67c55"
+  revision = "b2a7479cf26fa841ff90dd932d0221cb5c50782d"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -185,7 +185,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "91ee8cde435411ca3f1cd365e8f20131aed4d0a1"
+  revision = "378d26f46672a356c46195c28f61bdb4c0a781dd"
 
 [[projects]]
   name = "gopkg.in/go-playground/validator.v9"
@@ -202,6 +202,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "63fae4b0d3f219c5c12f359a30364adcc75826485c713f1264735f95e9ae3cab"
+  inputs-digest = "83992b8f97a03d8226a6263726db7b6a0b1e8c1b844e0aa2b527960dbea1e396"
   solver-name = "gps-cdcl"
   solver-version = 1

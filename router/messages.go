@@ -23,145 +23,138 @@ type MessageForResponse struct {
 	StampList       []*model.MessageStamp `json:"stampList"`
 }
 
-type requestMessage struct {
-	Text string `json:"text"`
-}
-
-type requestCount struct {
-	Limit  int `query:"limit"`
-	Offset int `query:"offset"`
-}
-
-// GetMessageByID : /messages/{messageID}のGETメソッド
+// GetMessageByID GET /messages/{messageID} のハンドラ
 func GetMessageByID(c echo.Context) error {
-	mID := c.Param("messageID")
-	m, err := validateMessageID(mID)
-	if err != nil {
-		return err
-	}
-
-	res := formatMessage(m)
-	return c.JSON(http.StatusOK, res)
-}
-
-// GetMessagesByChannelID : /channels/{channelID}/messagesのGETメソッド
-func GetMessagesByChannelID(c echo.Context) error {
-
-	queryParam := &requestCount{}
-	if err := c.Bind(queryParam); err != nil {
-		c.Echo().Logger.Errorf("Invalid format: %v", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
-	}
-
-	// channelIDの検証
-	channelID := c.Param("channelID")
-	userID := c.Get("user").(*model.User).ID
-	if _, err := validateChannelID(channelID, userID); err != nil {
-		return err
-	}
-
-	messageList, err := model.GetMessagesByChannelID(channelID, queryParam.Limit, queryParam.Offset)
-	if err != nil {
-		c.Echo().Logger.Errorf("model.GetMessagesFromChannel returned an error : %v", err)
-		return echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
-	}
-
-	res := make([]*MessageForResponse, 0)
-
-	for _, message := range messageList {
-		res = append(res, formatMessage(message))
-	}
-
-	return c.JSON(http.StatusOK, res)
-}
-
-// PostMessage : /channels/{channelID}/messagesのPOSTメソッド
-func PostMessage(c echo.Context) error {
-	channelID := c.Param("channelID")
-	userID := c.Get("user").(*model.User).ID
-
-	post := &requestMessage{}
-	if err := c.Bind(post); err != nil {
-		c.Echo().Logger.Errorf("Invalid format: %v", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
-	}
-
-	message := &model.Message{
-		UserID:    userID,
-		Text:      post.Text,
-		ChannelID: channelID,
-	}
-	if err := message.Create(); err != nil {
-		c.Echo().Logger.Errorf("Message.Create() returned an error: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert your message")
-	}
-
-	go notification.Send(events.MessageCreated, events.MessageEvent{Message: *message})
-	return c.JSON(http.StatusCreated, formatMessage(message))
-}
-
-// PutMessageByID : /messages/{messageID}のPUTメソッド.メッセージの編集
-func PutMessageByID(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
 	messageID := c.Param("messageID")
 	m, err := validateMessageID(messageID)
 	if err != nil {
 		return err
 	}
+	return c.JSON(http.StatusOK, formatMessage(m))
+}
 
-	req := &requestMessage{}
+// GetMessagesByChannelID GET /channels/{channelID}/messages のハンドラ
+func GetMessagesByChannelID(c echo.Context) error {
+	queryParam := &struct {
+		Limit  int `query:"limit"`
+		Offset int `query:"offset"`
+	}{}
+	if err := c.Bind(queryParam); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
+	}
+
+	// channelIDの検証
+	userID := c.Get("user").(*model.User).ID
+	res, err := getMessages(c.Param("channelID"), userID, queryParam.Limit, queryParam.Offset)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+// PostMessage POST /channels/{channelID}/messages のハンドラ
+func PostMessage(c echo.Context) error {
+	post := &struct {
+		Text string `json:"text"`
+	}{}
+	if err := c.Bind(post); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
+	}
+
+	m, err := createMessage(post.Text, c.Get("user").(*model.User).ID, c.Param("channelID"))
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusCreated, m)
+}
+
+// PutMessageByID PUT /messages/{messageID}のハンドラ
+func PutMessageByID(c echo.Context) error {
+	m, err := validateMessageID(c.Param("messageID"))
+	if err != nil {
+		return err
+	}
+
+	req := &struct {
+		Text string `json:"text"`
+	}{}
 	if err := c.Bind(req); err != nil {
-		c.Echo().Logger.Errorf("Request is invalid format: %v", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
 	m.Text = req.Text
-	m.UpdaterID = userID
+	m.UpdaterID = c.Get("user").(*model.User).ID
+
 	if err := m.Update(); err != nil {
-		c.Echo().Logger.Errorf("message.Update() returned an error: %v", err)
+		c.Logger().Errorf("message.Update() returned an error: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update the message")
 	}
 
-	res := formatMessage(m)
-
 	go notification.Send(events.MessageUpdated, events.MessageEvent{Message: *m})
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, formatMessage(m))
 }
 
-// DeleteMessageByID : /message/{messageID}のDELETEメソッド.
+// DeleteMessageByID : DELETE /message/{messageID} のハンドラ
 func DeleteMessageByID(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 	messageID := c.Param("messageID")
 
-	message, err := model.GetMessageByID(messageID)
+	m, err := validateMessageID(messageID)
 	if err != nil {
-		c.Echo().Logger.Errorf("model.GetMessage() returned an error: %v", err)
-		return echo.NewHTTPError(http.StatusNotFound, "no message has the messageID: "+messageID)
+		return err
 	}
-	if message.UserID != userID {
-		return echo.NewHTTPError(http.StatusForbidden)
+	if m.UserID != userID {
+		return echo.NewHTTPError(http.StatusForbidden, "you are not allowed to delete this message")
 	}
 
-	message.IsDeleted = true
-	if err := message.Update(); err != nil {
-		c.Echo().Logger.Errorf("message.Update() returned an error: %v", err)
+	m.IsDeleted = true
+	if err := m.Update(); err != nil {
+		c.Logger().Errorf("message.Update() returned an error: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update the message")
 	}
 
 	if err := model.DeleteUnreadsByMessageID(messageID); err != nil {
-		c.Echo().Logger.Errorf("model.DeleteUnreadsByMessageID returned an error: %v", err) //500エラーにはしない
+		c.Logger().Errorf("model.DeleteUnreadsByMessageID returned an error: %v", err) //500エラーにはしない
 	}
 
-	go notification.Send(events.MessageDeleted, events.MessageEvent{Message: *message})
+	go notification.Send(events.MessageDeleted, events.MessageEvent{Message: *m})
 	return c.NoContent(http.StatusNoContent)
 }
 
-func valuesMessage(m map[string]*MessageForResponse) []*MessageForResponse {
-	val := []*MessageForResponse{}
-	for _, v := range m {
-		val = append(val, v)
+// dbにデータを入れる
+func createMessage(text, userID, channelID string) (*MessageForResponse, error) {
+	m := &model.Message{
+		UserID:    userID,
+		Text:      text,
+		ChannelID: channelID,
 	}
-	return val
+	if err := m.Create(); err != nil {
+		log.Errorf("Message.Create() returned an error: %v", err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert your message")
+	}
+
+	go notification.Send(events.MessageCreated, events.MessageEvent{Message: *m})
+	return formatMessage(m), nil
+}
+
+// チャンネルのデータを取得する
+func getMessages(channelID, userID string, limit, offset int) ([]*MessageForResponse, error) {
+	if _, err := validateChannelID(channelID, userID); err != nil {
+		return nil, err
+	}
+
+	messages, err := model.GetMessagesByChannelID(channelID, limit, offset)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
+	}
+
+	res := make([]*MessageForResponse, 0)
+	for _, message := range messages {
+		res = append(res, formatMessage(message))
+	}
+	return res, nil
 }
 
 func formatMessage(raw *model.Message) *MessageForResponse {
@@ -192,7 +185,8 @@ func validateMessageID(messageID string) (*model.Message, error) {
 	m := &model.Message{ID: messageID}
 	ok, err := m.Exists()
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "Message is not found")
+		log.Error(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Cannot find message")
 	}
 	if !ok {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "Message is not found")

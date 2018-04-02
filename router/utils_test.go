@@ -3,13 +3,14 @@ package router
 import (
 	"bytes"
 	"fmt"
-	"github.com/traPtitech/traQ/external/storage"
-	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/traPtitech/traQ/external/storage"
+	"github.com/traPtitech/traQ/utils/validator"
 
 	"github.com/stretchr/testify/assert"
 
@@ -199,7 +200,18 @@ func mustMakeInvisibleChannel(t *testing.T, userID, name string, isPublic bool) 
 	}
 	require.NoError(t, i.Create())
 	return i
+}
 
+func mustMakePrivateChannel(t *testing.T, userID1, userID2, name string) *model.Channel {
+	channel := mustMakeChannel(t, userID1, name, false)
+	upc := &model.UsersPrivateChannel{
+		UserID:    userID1,
+		ChannelID: channel.ID,
+	}
+	require.NoError(t, upc.Create())
+	upc.UserID = userID2
+	require.NoError(t, upc.Create())
+	return channel
 }
 
 func mustMakeMessage(t *testing.T, userID, channelID string) *model.Message {

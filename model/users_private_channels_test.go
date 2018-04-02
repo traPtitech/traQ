@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUsersPrivateChannel_TableName(t *testing.T) {
@@ -38,4 +39,18 @@ func TestMakePrivateChannel(t *testing.T) {
 	if assert.NoError(err) {
 		assert.Len(channelList, 0+1)
 	}
+}
+
+func TestGetPrivateChannel(t *testing.T) {
+	assert, _, _, _ := beforeTest(t)
+
+	user1 := mustMakeUser(t, "private-1")
+	user2 := mustMakeUser(t, "private-2")
+	channel := mustMakePrivateChannel(t, user1.ID, user2.ID, "privatechannel-1")
+
+	upc, err := GetPrivateChannel(user1.ID, user2.ID)
+	if assert.NoError(err) {
+		assert.Equal(channel.ID, upc.ChannelID)
+	}
+
 }
