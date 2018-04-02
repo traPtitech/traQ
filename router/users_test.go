@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/traPtitech/traQ/model"
+
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -70,6 +72,67 @@ func TestGetMe(t *testing.T) {
 			assert.Equal(testUser.ID, me.UserID)
 		}
 	}
+}
+
+func TestPatchMe(t *testing.T) {
+	e, cookie, mw, assert, require := beforeTest(t)
+
+	type requestJSON struct {
+		ExPassword  string `json:"exPassword"`
+		DisplayName string `json:"displayName"`
+		Email       string `json:"email"`
+		Password    string `json:"password"`
+	}
+
+	// 正常系
+	post := requestJSON{
+		ExPassword:  "test",
+		DisplayName: "renamed",
+		Email:       "example@gmail.com",
+		Password:    "renamed",
+	}
+	body, err := json.Marshal(post)
+	require.NoError(err)
+
+	req := httptest.NewRequest("PATCH", "http://test", bytes.NewReader(body))
+	rec := request(e, t, mw(PatchMe), cookie, req)
+
+	if assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String()) {
+		updatedUser, err := model.GetUser(testUser.ID)
+		require.NoError(err)
+		assert.Equal(post.DisplayName, updatedUser.DisplayName)
+	}
+
+	// 正常系: displayNameのみの変更の場合
+	post = requestJSON{
+		DisplayName: "display-only",
+	}
+	body, err = json.Marshal(post)
+	require.NoError(err)
+
+	req = httptest.NewRequest("PATCH", "http://test", bytes.NewReader(body))
+	rec = request(e, t, mw(PatchMe), cookie, req)
+
+	if assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String()) {
+		updatedUser, err := model.GetUser(testUser.ID)
+		require.NoError(err)
+		assert.Equal(post.DisplayName, updatedUser.DisplayName)
+	}
+
+	// 異常系: passwordが誤っている場合
+	post = requestJSON{
+		ExPassword:  "wrong-password",
+		DisplayName: "display-only",
+		Email:       "hogehoge@yahoo.co.jp",
+		Password:    "password",
+	}
+	body, err = json.Marshal(post)
+	require.NoError(err)
+
+	req = httptest.NewRequest("PATCH", "http://test", bytes.NewReader(body))
+	rec = request(e, t, mw(PatchMe), cookie, req)
+
+	assert.EqualValues(http.StatusUnauthorized, rec.Code, rec.Body.String())
 }
 
 func TestGetUserByID(t *testing.T) {

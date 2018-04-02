@@ -649,21 +649,32 @@ paths:
     patch:
       tags:
         - user
-      description: 自分のユーザー情報を変更します。
+      description: 自分のユーザー情報を変更します。displayNameのみの変更の場合以前のpasswordは不要です
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
+                exPassword:
+                  type: string
+                  description: 変更する前のパスワード
                 displayName:
                   type: string
-                  description: 新しい表示名(0-32文字)
+                  description: 新しい表示名(0-32文字)。変更しない場合は""
+                email:
+                  type: string
+                  description: 変更後のメールアドレス。変更しない場合は""
+                password:
+                  type: string
+                  description: 変更後のパスワード。変更しない場合は""
       responses:
         "204":
           description: 正常に変更できました。
         "400":
           description: 正常に変更できませんでした。リクエスト内容が不正です。
+        "401":
+          description: 正常に変更できませんでした。パスワードが違います。
 
   /users/me/icon:
     get:
