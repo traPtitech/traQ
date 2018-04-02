@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/utils/icon"
 	"github.com/traPtitech/traQ/utils/validator"
 	"io"
@@ -40,6 +41,16 @@ type User struct {
 	Role        string    `xorm:"text not null"               validate:"required"`
 	CreatedAt   time.Time `xorm:"created not null"`
 	UpdatedAt   time.Time `xorm:"updated not null"`
+}
+
+// GetUID ユーザーIDを取得します
+func (user *User) GetUID() uuid.UUID {
+	return uuid.FromStringOrNil(user.ID)
+}
+
+// GetName ユーザー名を取得します
+func (user *User) GetName() string {
+	return user.Name
 }
 
 // TableName dbの名前を指定する

@@ -67,7 +67,7 @@ func PostLogin(c echo.Context) error {
 
 	sess.Values["userID"] = user.ID
 	sess.Save(c.Request(), c.Response())
-	return c.NoContent(http.StatusOK)
+	return c.NoContent(http.StatusNoContent)
 }
 
 // PostLogout Post /logout のハンドラ
