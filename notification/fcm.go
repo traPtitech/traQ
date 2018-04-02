@@ -2,23 +2,29 @@ package notification
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/oauth2/google"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 )
 
 const (
-	fcmEndPoint            = "https://fcm.googleapis.com/fcm/send"
+	fcmEndPointTemplate    = "https://fcm.googleapis.com/v1/projects/{PROJECT_ID}/messages:send"
+	fcmOAuth2Scope         = "https://www.googleapis.com/auth/firebase.messaging"
 	priorityHigh           = "high"
 	priorityNormal         = "normal"
 	maxRegistrationIdsSize = 1000
 )
 
 type fcmClient struct {
-	APIKey     string
-	HTTPClient *http.Client
+	credentials *google.Credentials
+	endpoint    string
+	HTTPClient  *http.Client
 }
 
 type fcmNotificationPayload struct {
@@ -52,11 +58,23 @@ type fcmResult struct {
 	Error          string `json:"error"`
 }
 
-func newFCMClient(apiKey string) *fcmClient {
-	return &fcmClient{
-		APIKey:     apiKey,
-		HTTPClient: &http.Client{},
+func newFCMClient(serviceAccountJSONFile string) *fcmClient {
+	ctx := context.Background()
+	data, err := ioutil.ReadFile(serviceAccountJSONFile)
+	if err != nil {
+		panic(err)
 	}
+	creds, err := google.CredentialsFromJSON(ctx, data, fcmOAuth2Scope)
+	if err != nil {
+		panic(err)
+	}
+
+	c := &fcmClient{
+		credentials: creds,
+		endpoint:    strings.Replace(fcmEndPointTemplate, "{PROJECT_ID}", creds.ProjectID, 1),
+		HTTPClient:  &http.Client{},
+	}
+	return c
 }
 
 func (c *fcmClient) send(message *fcmMessage) (*fcmResponse, error) {
@@ -65,11 +83,17 @@ func (c *fcmClient) send(message *fcmMessage) (*fcmResponse, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", fcmEndPoint, bytes.NewBuffer(data))
+	req, err := http.NewRequest("POST", c.endpoint, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("key=%v", c.APIKey))
+
+	token, err := c.credentials.TokenSource.Token()
+	if err != nil {
+		return nil, err
+	}
+
+	token.SetAuthHeader(req)
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := c.HTTPClient.Do(req)
