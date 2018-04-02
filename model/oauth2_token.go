@@ -36,6 +36,7 @@ func (t *OAuth2Token) Delete() (err error) {
 
 // GetOAuth2TokenByRefresh : リフレッシュトークンからOAuth2Tokenを取得します
 func GetOAuth2TokenByRefresh(refresh string) (ot *OAuth2Token, err error) {
+	ot = &OAuth2Token{}
 	ok, err := db.Where("refresh_token = ?", refresh).Get(ot)
 	if err != nil {
 		return nil, err
@@ -60,6 +61,7 @@ func GetOAuth2TokenByClient(clientID string) (ts []*OAuth2Token, err error) {
 
 // GetOAuth2TokenByAccess : アクセストークンからOAuth2Tokenを取得します
 func GetOAuth2TokenByAccess(access string) (ot *OAuth2Token, err error) {
+	ot = &OAuth2Token{}
 	ok, err := db.Where("access_token = ?", access).Get(ot)
 	if err != nil {
 		return nil, err
@@ -72,6 +74,7 @@ func GetOAuth2TokenByAccess(access string) (ot *OAuth2Token, err error) {
 
 // GetOAUth2TokenByID : トークンIDからOAuth2Tokenを取得します
 func GetOAUth2TokenByID(id string) (ot *OAuth2Token, err error) {
+	ot = &OAuth2Token{}
 	ok, err := db.ID(id).Get(ot)
 	if err != nil {
 		return nil, err
