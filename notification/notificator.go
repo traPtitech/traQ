@@ -17,10 +17,10 @@ type eventData struct {
 }
 
 var (
-	streamer          *sseStreamer
-	fcm               *fcmClient
-	isStarted         = false
-	firebaseServerKey = os.Getenv("FIREBASE_SERVER_KEY")
+	streamer                       *sseStreamer
+	fcm                            *fcmClient
+	isStarted                      = false
+	firebaseServiceAccountJsonFile = os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
 )
 
 //Start 通知機構を起動します
@@ -28,7 +28,7 @@ func Start() {
 	if !isStarted {
 		isStarted = true
 		streamer = newSseStreamer()
-		fcm = newFCMClient(firebaseServerKey)
+		fcm = newFCMClient(firebaseServiceAccountJsonFile)
 		go streamer.run()
 	}
 }
