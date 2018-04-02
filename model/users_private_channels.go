@@ -46,6 +46,6 @@ func GetPrivateChannel(userID1, userID2 string) (*UsersPrivateChannel, error) {
 
 // GetMembers DMのメンバーの配列を取得する
 func GetMembers(channelID string) (member []string, err error) {
-	err = db.Table("users_private_channels").Where("channel_id = ?", channelID).Cols("user_id").Find(member)
+	err = db.Table("users_private_channels").Where("channel_id = ?", channelID).Cols("user_id").Find(&member)
 	return
 }
