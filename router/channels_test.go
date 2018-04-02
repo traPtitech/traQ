@@ -75,7 +75,7 @@ func TestPostChannels(t *testing.T) {
 	postBody = PostChannel{
 		ChannelType: "private",
 		Name:        "testprivate",
-		Parent:      "",
+		Parent:      privateParentChannelID,
 		Member: []string{
 			testUser.ID,
 			mustCreateUser(t, "testPostChannels").ID,

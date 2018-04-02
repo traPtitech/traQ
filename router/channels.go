@@ -188,7 +188,7 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 }
 
 func createChannel(name, creatorID, channelType, parentID string, members []string) (*model.Channel, error) {
-	if parentID != "" {
+	if parentID != privateParentChannelID && parentID != "" {
 		// 自分から見えないチャンネルの子チャンネルを作成することはできない
 		_, err := validateChannelID(parentID, creatorID)
 		if err != nil {
