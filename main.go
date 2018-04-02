@@ -268,7 +268,7 @@ func main() {
 
 	// Serve UI
 	e.File("/sw.js", "./client/dist/sw.js")
-	e.File("/firebaase-messaging-sw.js", "./client/dist/firebaase-messaging-sw.js")
+	e.File("/firebase-messaging-sw.js", "./client/dist/firebase-messaging-sw.js")
 	e.Static("/static", "./client/dist/static")
 	e.File("*", "./client/dist/index.html")
 
