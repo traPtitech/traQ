@@ -55,6 +55,12 @@ func GetChannels(c echo.Context) error {
 		response[ch.ID].Visibility = ch.IsVisible
 
 		if !ch.IsPublic {
+			member, err := model.GetMembers(ch.ID)
+			if err != nil {
+				log.Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get private channel members")
+			}
+			response[ch.ID].Member = member
 			response[ch.ID].Parent = privateParentChannelID
 		} else {
 			response[ch.ID].Parent = ch.ParentID
