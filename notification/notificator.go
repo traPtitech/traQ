@@ -28,7 +28,9 @@ func Start() {
 	if !isStarted {
 		isStarted = true
 		streamer = newSseStreamer()
-		fcm = newFCMClient(firebaseServiceAccountJSONFile)
+		if len(firebaseServiceAccountJSONFile) > 0 {
+			fcm = newFCMClient(firebaseServiceAccountJSONFile)
+		}
 		go streamer.run()
 	}
 }
@@ -313,6 +315,9 @@ func multicast(target uuid.UUID, data *eventData) {
 }
 
 func sendToFcm(deviceTokens []string, data *eventData) {
+	if fcm == nil {
+		return
+	}
 	for arr := range split(deviceTokens, maxRegistrationIdsSize) {
 		m := createDefaultFCMMessage()
 		m.Notification.Body = data.Summary
