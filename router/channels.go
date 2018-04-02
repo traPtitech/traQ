@@ -18,6 +18,7 @@ type ChannelForResponse struct {
 	Name       string   `json:"name"`
 	Parent     string   `json:"parent"`
 	Children   []string `json:"children"`
+	Member     []string `json:"member"`
 	Visibility bool     `json:"visibility"`
 }
 
@@ -89,7 +90,16 @@ func PostChannels(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, formatChannel(ch))
+	member, err := model.GetMembers(ch.ID)
+	if err != nil {
+		log.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get private channel members")
+	}
+
+	res := formatChannel(ch)
+	res.Member = member
+
+	return c.JSON(http.StatusCreated, res)
 }
 
 // GetChannelsByChannelID GET /channels/{channelID} のハンドラ
@@ -105,7 +115,14 @@ func GetChannelsByChannelID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get children channel id list: %v", err)
 	}
 
+	member, err := model.GetMembers(ch.ID)
+	if err != nil {
+		log.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get private channel members")
+	}
+
 	res := formatChannel(ch)
+	res.Member = member
 	res.Children = childIDs
 	return c.JSON(http.StatusOK, res)
 }
@@ -236,18 +253,19 @@ func valuesChannel(m map[string]*ChannelForResponse) []*ChannelForResponse {
 }
 
 func formatChannel(channel *model.Channel) *ChannelForResponse {
-	var parentID string
-	if !channel.IsPublic {
-		parentID = privateParentChannelID
-	} else {
-		parentID = channel.ParentID
-	}
-	return &ChannelForResponse{
+	res := &ChannelForResponse{
 		ChannelID:  channel.ID,
 		Name:       channel.Name,
-		Parent:     parentID,
 		Visibility: channel.IsVisible,
 	}
+
+	if !channel.IsPublic {
+		res.Parent = privateParentChannelID
+	} else {
+		res.Parent = channel.ParentID
+	}
+
+	return res
 }
 
 // リクエストされたチャンネルIDが指定されたuserから見えるかをチェックし、見える場合はそのチャンネルを返す
