@@ -58,9 +58,9 @@ type fcmResult struct {
 	Error          string `json:"error"`
 }
 
-func newFCMClient(serviceAccountJsonFile string) *fcmClient {
+func newFCMClient(serviceAccountJSONFile string) *fcmClient {
 	ctx := context.Background()
-	data, err := ioutil.ReadFile(serviceAccountJsonFile)
+	data, err := ioutil.ReadFile(serviceAccountJSONFile)
 	if err != nil {
 		panic(err)
 	}

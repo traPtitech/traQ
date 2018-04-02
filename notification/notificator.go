@@ -20,7 +20,7 @@ var (
 	streamer                       *sseStreamer
 	fcm                            *fcmClient
 	isStarted                      = false
-	firebaseServiceAccountJsonFile = os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+	firebaseServiceAccountJSONFile = os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
 )
 
 //Start 通知機構を起動します
@@ -28,7 +28,7 @@ func Start() {
 	if !isStarted {
 		isStarted = true
 		streamer = newSseStreamer()
-		fcm = newFCMClient(firebaseServiceAccountJsonFile)
+		fcm = newFCMClient(firebaseServiceAccountJSONFile)
 		go streamer.run()
 	}
 }
