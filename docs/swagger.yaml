@@ -2021,6 +2021,10 @@ components:
           format: uuid
         name:
           type: string
+        member:
+          type: array
+          format: uuid
+          description: privateチャンネルの場合は参加しているメンバー、公開チャンネルの場合は空
         parent:
           type: string
           format: uuid
