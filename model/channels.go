@@ -125,7 +125,7 @@ func (channel *Channel) Path() (string, error) {
 	for {
 		parent, err := current.Parent()
 		if err != nil {
-			return "", err
+			return "#" + path, nil
 		}
 		if parent == nil {
 			break
