@@ -216,9 +216,11 @@ func PatchMe(c echo.Context) error {
 	if req.Email != "" {
 		user.Email = req.Email
 	}
-	if err := user.SetPassword(req.Password); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update password")
+	if req.Password != "" {
+		if err := user.SetPassword(req.Password); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update password")
+		}
 	}
 
 	if err := user.Update(); err != nil {
