@@ -21,7 +21,7 @@ type eventData struct {
 	Summary   string
 	Payload   events.DataPayload
 	Mobile    bool
-	IconUrl   string
+	IconURL   string
 }
 
 var (
@@ -137,7 +137,7 @@ func Send(eventType events.EventType, payload interface{}) {
 					Summary:   summary,
 					Payload:   data.DataPayload(),
 					Mobile:    true,
-					IconUrl:   fmt.Sprintf("%s/api/1.0/users/%s/icon", traqOrigin, data.Message.UserID),
+					IconURL:   fmt.Sprintf("%s/api/1.0/users/%s/icon", traqOrigin, data.Message.UserID),
 				})
 
 			} else {
@@ -202,7 +202,7 @@ func broadcast(data *eventData) {
 			log.Error(err)
 			return
 		}
-		sendToFcm(devs, data.Summary, data.Payload, data.IconUrl)
+		sendToFcm(devs, data.Summary, data.Payload, data.IconURL)
 	}
 }
 
@@ -225,11 +225,11 @@ func multicast(target uuid.UUID, data *eventData) {
 			log.Error(err)
 			return
 		}
-		sendToFcm(devs, data.Summary, data.Payload, data.IconUrl)
+		sendToFcm(devs, data.Summary, data.Payload, data.IconURL)
 	}
 }
 
-func sendToFcm(deviceTokens []string, body string, payload events.DataPayload, iconUrl string) {
+func sendToFcm(deviceTokens []string, body string, payload events.DataPayload, iconURL string) {
 	data := map[string]string{
 		"origin": traqOrigin,
 	}
@@ -252,12 +252,12 @@ func sendToFcm(deviceTokens []string, body string, payload events.DataPayload, i
 			Android: &messaging.AndroidConfig{
 				Priority: "high",
 				Notification: &messaging.AndroidNotification{
-					Icon: iconUrl,
+					Icon: iconURL,
 				},
 			},
 			Webpush: &messaging.WebpushConfig{
 				Notification: &messaging.WebpushNotification{
-					Icon: iconUrl,
+					Icon: iconURL,
 				},
 			},
 			Token: token,
