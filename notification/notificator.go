@@ -151,9 +151,8 @@ func Send(eventType events.EventType, payload interface{}) {
 		}
 
 	default:
-		switch payload.(type) {
+		switch e := payload.(type) {
 		case events.UserTargetEvent: // ユーザーマルチキャストイベント
-			e := payload.(events.UserTargetEvent)
 			multicast(e.TargetUser(), &eventData{
 				EventType: eventType,
 				Payload:   e.DataPayload(),
@@ -161,7 +160,6 @@ func Send(eventType events.EventType, payload interface{}) {
 			})
 
 		case events.ChannelUserTargetEvent: // チャンネルユーザーマルチキャストイベント
-			e := payload.(events.ChannelUserTargetEvent)
 			if s, ok := model.GetHeartbeatStatus(e.TargetChannel().String()); ok {
 				for _, u := range s.UserStatuses {
 					multicast(uuid.FromStringOrNil(u.UserID), &eventData{
@@ -173,7 +171,6 @@ func Send(eventType events.EventType, payload interface{}) {
 			}
 
 		case events.Event: // ブロードキャストイベント
-			e := payload.(events.Event)
 			broadcast(&eventData{
 				EventType: eventType,
 				Payload:   e.DataPayload(),
@@ -234,11 +231,11 @@ func sendToFcm(deviceTokens []string, body string, payload events.DataPayload, i
 		"origin": traqOrigin,
 	}
 	for k, v := range payload {
-		switch v.(type) {
+		switch t := v.(type) {
 		case fmt.Stringer:
-			data[k] = v.(fmt.Stringer).String()
+			data[k] = t.String()
 		default:
-			data[k] = fmt.Sprint(v)
+			data[k] = fmt.Sprint(t)
 		}
 	}
 
