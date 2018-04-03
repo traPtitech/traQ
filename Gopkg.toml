@@ -100,3 +100,15 @@
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  name = "firebase.google.com/go"
+  version = "2.6.1"
+
+[[constraint]]
+  branch = "master"
+  name = "google.golang.org/api"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/exp"

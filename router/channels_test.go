@@ -27,6 +27,7 @@ func TestGetChannels(t *testing.T) {
 		for _, v := range res {
 			if v.ChannelID == private.ID {
 				assert.Equal(privateParentChannelID, v.Parent)
+				assert.Len(v.Member, 2)
 			}
 		}
 	}
@@ -75,7 +76,7 @@ func TestPostChannels(t *testing.T) {
 	postBody = PostChannel{
 		ChannelType: "private",
 		Name:        "testprivate",
-		Parent:      "",
+		Parent:      privateParentChannelID,
 		Member: []string{
 			testUser.ID,
 			mustCreateUser(t, "testPostChannels").ID,

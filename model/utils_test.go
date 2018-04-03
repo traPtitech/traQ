@@ -3,11 +3,9 @@ package model
 import (
 	"bytes"
 	"fmt"
+	"github.com/traPtitech/traQ/external/storage"
 	"os"
 	"testing"
-	"time"
-
-	"github.com/traPtitech/traQ/external/storage"
 
 	"github.com/stretchr/testify/assert"
 
@@ -23,8 +21,6 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	time.Local = time.UTC
-
 	user := os.Getenv("MARIADB_USERNAME")
 	if user == "" {
 		user = "root"

@@ -1,26 +1,33 @@
 package notification
 
 import (
+	"context"
+	"firebase.google.com/go"
+	"firebase.google.com/go/messaging"
+	"fmt"
 	"github.com/labstack/gommon/log"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/notification/events"
+	"github.com/traPtitech/traQ/utils/message"
+	"golang.org/x/exp/utf8string"
+	"google.golang.org/api/option"
 	"os"
-	"time"
+	"strings"
 )
 
 type eventData struct {
 	EventType events.EventType
 	Summary   string
-	Payload   interface{}
+	Payload   events.DataPayload
 	Mobile    bool
 }
 
 var (
-	streamer          *sseStreamer
-	fcm               *fcmClient
-	isStarted         = false
-	firebaseServerKey = os.Getenv("FIREBASE_SERVER_KEY")
+	streamer                       *sseStreamer
+	isStarted                      = false
+	firebaseServiceAccountJSONFile = os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+	fcm                            *messaging.Client
 )
 
 //Start 通知機構を起動します
@@ -28,7 +35,17 @@ func Start() {
 	if !isStarted {
 		isStarted = true
 		streamer = newSseStreamer()
-		fcm = newFCMClient(firebaseServerKey)
+		if len(firebaseServiceAccountJSONFile) > 0 {
+			app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(firebaseServiceAccountJSONFile))
+			if err != nil {
+				panic(err)
+			}
+			m, err := app.Messaging(context.Background())
+			if err != nil {
+				panic(err)
+			}
+			fcm = m
+		}
 		go streamer.run()
 	}
 }
@@ -42,7 +59,6 @@ func IsStarted() bool {
 func Stop() {
 	if isStarted {
 		close(streamer.stop)
-		fcm = nil
 		isStarted = false
 	}
 }
@@ -54,219 +70,101 @@ func Send(eventType events.EventType, payload interface{}) {
 	}
 
 	switch eventType {
-	case events.UserJoined, events.UserLeft, events.UserUpdated, events.UserTagsUpdated, events.UserIconUpdated:
-		data, _ := payload.(events.UserEvent)
-		multicastToAll(&eventData{
-			EventType: eventType,
-			Payload: struct {
-				ID string `json:"id"`
-			}{data.ID},
-			Mobile: false,
-		})
-
-	case events.ChannelCreated, events.ChannelDeleted, events.ChannelUpdated, events.ChannelVisibilityChanged:
-		data, _ := payload.(events.ChannelEvent)
-		multicastToAll(&eventData{
-			EventType: eventType,
-			Payload: struct {
-				ID string `json:"id"`
-			}{data.ID},
-			Mobile: false,
-		})
-
-	case events.ChannelStared, events.ChannelUnstared:
-		data, _ := payload.(events.UserChannelEvent)
-		multicast(uuid.FromStringOrNil(data.UserID), &eventData{
-			EventType: eventType,
-			Payload: struct {
-				ID string `json:"id"`
-			}{data.ChannelID},
-			Mobile: false,
-		})
-
 	case events.MessageCreated:
 		data, _ := payload.(events.MessageEvent)
-		cid := uuid.FromStringOrNil(data.Message.ChannelID)
-		var tags []string //TODO タグ抽出
-		done := make(map[uuid.UUID]bool)
+		cid := data.TargetChannel()
+		targets := map[uuid.UUID]bool{}
+		ei, plain := message.Parse(data.Message.Text)
+		path, _ := model.GetChannelPath(cid)
+		summary := fmt.Sprintf("[%s] %s", path, plain)
+		if s := utf8string.NewString(summary); s.RuneCount() > 100 {
+			summary = s.Slice(0, 97) + "..."
+		}
 
-		//MEMO 通知ユーザー・ユーザータグのキャッシュを使ったほうがいいかもしれない。
+		// チャンネル通知ユーザー取得
 		if users, err := model.GetSubscribingUser(cid); err != nil {
 			log.Error(err)
 		} else {
-			for _, id := range users {
-				done[id] = true
+			for _, v := range users {
+				targets[v] = true
+			}
+		}
 
+		// ハートビートユーザー取得
+		if s, ok := model.GetHeartbeatStatus(cid.String()); ok {
+			for _, u := range s.UserStatuses {
+				targets[uuid.FromStringOrNil(u.UserID)] = true
+			}
+		}
+
+		// タグユーザー・メンションユーザー取得
+		for _, v := range ei {
+			switch v.Type {
+			case "user":
+				targets[uuid.FromStringOrNil(v.ID)] = true
+			case "tag":
+				if users, err := model.GetUserIDsByTagID(v.ID); err != nil {
+					log.Error(err)
+				} else {
+					for _, v := range users {
+						targets[uuid.FromStringOrNil(v)] = true
+					}
+				}
+			}
+		}
+
+		// 送信
+		for id := range targets {
+			if id.String() != data.Message.UserID {
+				// 未読リストに追加
 				unread := &model.Unread{UserID: id.String(), MessageID: data.Message.ID}
 				if err := unread.Create(); err != nil {
 					log.Error(err)
 				}
-
-				multicast(id, &eventData{
-					EventType: eventType,
-					Summary:   "", //TODO モバイル通知に表示される文字列
-					Payload: struct {
-						ID string `json:"id"`
-					}{data.Message.ID},
-					Mobile: true,
-				})
 			}
+
+			multicast(id, &eventData{
+				EventType: eventType,
+				Summary:   summary,
+				Payload:   data.DataPayload(),
+				Mobile:    true,
+			})
 		}
 
-		if s, ok := model.GetHeartbeatStatus(data.Message.ChannelID); ok {
-			for _, u := range s.UserStatuses {
-				id := uuid.FromStringOrNil(u.UserID)
-				if _, ok := done[id]; !ok {
-					done[id] = true
+	default:
+		switch payload.(type) {
+		case events.UserTargetEvent: // ユーザーマルチキャストイベント
+			e := payload.(events.UserTargetEvent)
+			multicast(e.TargetUser(), &eventData{
+				EventType: eventType,
+				Payload:   e.DataPayload(),
+				Mobile:    false,
+			})
 
-					unread := &model.Unread{UserID: id.String(), MessageID: data.Message.ID}
-					if err := unread.Create(); err != nil {
-						log.Error(err)
-					}
-
-					multicast(id, &eventData{
+		case events.ChannelUserTargetEvent: // チャンネルユーザーマルチキャストイベント
+			e := payload.(events.ChannelUserTargetEvent)
+			if s, ok := model.GetHeartbeatStatus(e.TargetChannel().String()); ok {
+				for _, u := range s.UserStatuses {
+					multicast(uuid.FromStringOrNil(u.UserID), &eventData{
 						EventType: eventType,
-						Summary:   "", //TODO モバイル通知に表示される文字列
-						Payload: struct {
-							ID string `json:"id"`
-						}{data.Message.ID},
-						Mobile: true,
+						Payload:   e.DataPayload(),
+						Mobile:    false,
 					})
 				}
 			}
+
+		case events.Event: // ブロードキャストイベント
+			e := payload.(events.Event)
+			broadcast(&eventData{
+				EventType: eventType,
+				Payload:   e.DataPayload(),
+				Mobile:    false,
+			})
 		}
-
-		if len(tags) > 0 {
-			if users, err := model.GetUserIDsByTags(tags); err != nil {
-				log.Error(err)
-			} else {
-				for _, id := range users {
-					if _, ok := done[id]; !ok {
-						done[id] = true
-
-						unread := &model.Unread{UserID: id.String(), MessageID: data.Message.ID}
-						if err := unread.Create(); err != nil {
-							log.Error(err)
-						}
-
-						multicast(id, &eventData{
-							EventType: eventType,
-							Summary:   "", //TODO モバイル通知に表示される文字列
-							Payload: struct {
-								ID string `json:"id"`
-							}{data.Message.ID},
-							Mobile: true,
-						})
-					}
-				}
-			}
-		}
-
-	case events.MessageUpdated, events.MessageDeleted:
-		data, _ := payload.(events.MessageEvent)
-
-		if s, ok := model.GetHeartbeatStatus(data.Message.ChannelID); ok {
-			for _, u := range s.UserStatuses {
-				id := uuid.FromStringOrNil(u.UserID)
-				multicast(id, &eventData{
-					EventType: eventType,
-					Payload: struct {
-						ID string `json:"id"`
-					}{data.Message.ID},
-					Mobile: false,
-				})
-			}
-		}
-
-	case events.MessageRead:
-		data, _ := payload.(events.ReadMessagesEvent)
-		multicast(uuid.FromStringOrNil(data.UserID), &eventData{
-			EventType: eventType,
-			Payload: struct {
-				IDs []string `json:"ids"`
-			}{data.MessageIDs},
-			Mobile: false,
-		})
-
-	case events.MessageStamped:
-		data, _ := payload.(events.MessageStampEvent)
-		if s, ok := model.GetHeartbeatStatus(data.ChannelID); ok {
-			for _, u := range s.UserStatuses {
-				id := uuid.FromStringOrNil(u.UserID)
-				multicast(id, &eventData{
-					EventType: eventType,
-					Payload: struct {
-						ID        string    `json:"message_id"`
-						UserID    string    `json:"user_id"`
-						StampID   string    `json:"stamp_id"`
-						Count     int       `json:"count"`
-						CreatedAt time.Time `json:"created_at"`
-					}{data.ID, data.UserID, data.StampID, data.Count, data.CreatedAt},
-					Mobile: false,
-				})
-			}
-		}
-
-	case events.MessageUnstamped:
-		data, _ := payload.(events.MessageStampEvent)
-		if s, ok := model.GetHeartbeatStatus(data.ChannelID); ok {
-			for _, u := range s.UserStatuses {
-				id := uuid.FromStringOrNil(u.UserID)
-				multicast(id, &eventData{
-					EventType: eventType,
-					Payload: struct {
-						ID      string `json:"message_id"`
-						UserID  string `json:"user_id"`
-						StampID string `json:"stamp_id"`
-					}{data.ID, data.UserID, data.StampID},
-					Mobile: false,
-				})
-			}
-		}
-	case events.MessagePinned, events.MessageUnpinned:
-		data, _ := payload.(events.PinEvent)
-		if s, ok := model.GetHeartbeatStatus(data.Message.ChannelID); ok {
-			for _, u := range s.UserStatuses {
-				multicast(uuid.FromStringOrNil(u.UserID), &eventData{
-					EventType: eventType,
-					Payload: struct {
-						ID string `json:"id"`
-					}{data.PinID},
-					Mobile: false,
-				})
-			}
-		}
-
-	case events.MessageClipped, events.MessageUnclipped:
-		data, _ := payload.(events.UserMessageEvent)
-		multicast(uuid.FromStringOrNil(data.UserID), &eventData{
-			EventType: eventType,
-			Payload: struct {
-				ID string `json:"id"`
-			}{data.MessageID},
-			Mobile: false,
-		})
-
-	case events.StampCreated, events.StampModified, events.StampDeleted:
-		data, _ := payload.(events.StampEvent)
-		multicastToAll(&eventData{
-			EventType: eventType,
-			Payload: struct {
-				ID string `json:"id"`
-			}{data.ID},
-			Mobile: false,
-		})
-
-	case events.TraqUpdated:
-		multicastToAll(&eventData{
-			EventType: eventType,
-			Payload:   struct{}{},
-			Mobile:    false,
-		})
 	}
 }
 
-func multicastToAll(data *eventData) {
+func broadcast(data *eventData) {
 	streamer.clients.Range(func(_ uuid.UUID, u map[uuid.UUID]*sseClient) bool {
 		for _, c := range u {
 			select {
@@ -285,7 +183,7 @@ func multicastToAll(data *eventData) {
 			log.Error(err)
 			return
 		}
-		sendToFcm(devs, data)
+		sendToFcm(devs, data.Summary, data.Payload)
 	}
 }
 
@@ -302,69 +200,51 @@ func multicast(target uuid.UUID, data *eventData) {
 		}
 	}
 
-	if data.Mobile {
+	if data.Mobile && fcm != nil {
 		devs, err := model.GetDeviceIDs(target)
 		if err != nil {
 			log.Error(err)
 			return
 		}
-		sendToFcm(devs, data)
+		sendToFcm(devs, data.Summary, data.Payload)
 	}
 }
 
-func sendToFcm(deviceTokens []string, data *eventData) {
-	for arr := range split(deviceTokens, maxRegistrationIdsSize) {
-		m := createDefaultFCMMessage()
-		m.Notification.Body = data.Summary
-		m.Data = data.Payload
-		m.RegistrationIDs = arr
-
-		res, err := fcm.send(m)
-		if err != nil {
-			log.Error(err)
-			continue
+func sendToFcm(deviceTokens []string, body string, payload events.DataPayload) {
+	data := map[string]string{}
+	for k, v := range payload {
+		switch v.(type) {
+		case fmt.Stringer:
+			data[k] = v.(fmt.Stringer).String()
+		default:
+			data[k] = fmt.Sprint(v)
 		}
-		if res.isTimeout() {
-			//TODO Retry
-		} else if res.Failure > 0 {
-			for _, t := range res.getInvalidRegistration() {
-				device := &model.Device{Token: t}
+	}
+
+	for _, token := range deviceTokens {
+		message := &messaging.Message{
+			Data: data,
+			Notification: &messaging.Notification{
+				Title: "traQ",
+				Body:  body,
+			},
+			Android: &messaging.AndroidConfig{
+				Priority: "high",
+			},
+			Token: token,
+		}
+
+		_, err := fcm.Send(context.Background(), message)
+		if err != nil {
+			if strings.Contains(err.Error(), "registration-token-not-registered") {
+				device := &model.Device{Token: token}
 				if err := device.Unregister(); err != nil {
 					log.Error(err)
 				}
+			} else {
+				//TODO loggingを真面目にする
+				log.Error(err)
 			}
 		}
-	}
-}
-
-func split(dev []string, n int) chan []string {
-	ch := make(chan []string)
-
-	go func() {
-		for i := 0; i < len(dev); i += n {
-			from := i
-			to := i + n
-			if to > len(dev) {
-				to = len(dev)
-			}
-			ch <- dev[from:to]
-		}
-		close(ch)
-	}()
-	return ch
-}
-
-func createDefaultFCMMessage() *fcmMessage {
-	return &fcmMessage{
-		Notification:     createDefaultFCMNotificationPayload(),
-		Priority:         priorityHigh,
-		ContentAvailable: true,
-		DryRun:           false,
-	}
-}
-
-func createDefaultFCMNotificationPayload() *fcmNotificationPayload {
-	return &fcmNotificationPayload{
-		Title: "traQ",
 	}
 }

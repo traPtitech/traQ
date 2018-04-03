@@ -109,3 +109,9 @@ func GetUserIDsByTags(tags []string) ([]uuid.UUID, error) {
 
 	return result, nil
 }
+
+// GetUserIDsByTagID 指定したタグIDのタグを持った全ユーザーのIDを返します
+func GetUserIDsByTagID(tagID string) (arr []string, err error) {
+	err = db.Table(&UsersTag{}).Join("INNER", "tags", "users_tags.tag_id = tags.id").Where("tags.id = ?", tagID).Cols("user_id").Find(&arr)
+	return
+}

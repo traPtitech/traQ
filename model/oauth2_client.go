@@ -43,6 +43,7 @@ func (oc *OAuth2Client) Delete() (err error) {
 
 // GetOAuth2ClientByClientID : クライアントIDからOAuth2Clientを取得します
 func GetOAuth2ClientByClientID(id string) (oc *OAuth2Client, err error) {
+	oc = &OAuth2Client{}
 	ok, err := db.ID(id).Where("is_deleted = false").Get(oc)
 	if err != nil {
 		return nil, err
