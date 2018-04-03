@@ -78,7 +78,14 @@ func Send(eventType events.EventType, payload interface{}) {
 
 		ei, plain := message.Parse(data.Message.Text)
 		path, _ := model.GetChannelPath(cid)
-		summary := fmt.Sprintf("[%s] %s", path, plain)
+		user, _ := model.GetUser(data.Message.UserID)
+		if user == nil {
+			user = &model.User{DisplayName: "ERROR"}
+		} else if len(user.DisplayName) == 0 {
+			user.DisplayName = user.Name
+		}
+
+		summary := fmt.Sprintf("[%s] %s: %s", path, user.DisplayName, plain)
 		if s := utf8string.NewString(summary); s.RuneCount() > 100 {
 			summary = s.Slice(0, 97) + "..."
 		}
@@ -123,14 +130,22 @@ func Send(eventType events.EventType, payload interface{}) {
 				if err := unread.Create(); err != nil {
 					log.Error(err)
 				}
-			}
 
-			multicast(id, &eventData{
-				EventType: eventType,
-				Summary:   summary,
-				Payload:   data.DataPayload(),
-				Mobile:    true,
-			})
+				multicast(id, &eventData{
+					EventType: eventType,
+					Summary:   summary,
+					Payload:   data.DataPayload(),
+					Mobile:    true,
+				})
+
+			} else {
+				multicast(id, &eventData{
+					EventType: eventType,
+					Summary:   summary,
+					Payload:   data.DataPayload(),
+					Mobile:    false,
+				})
+			}
 		}
 
 	default:
