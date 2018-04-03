@@ -3,6 +3,7 @@ package events
 import (
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
+	"strings"
 	"time"
 )
 
@@ -189,8 +190,10 @@ type MessageEvent struct {
 
 // DataPayload データペイロード
 func (e MessageEvent) DataPayload() DataPayload {
+	path, _ := model.GetChannelPath(uuid.FromStringOrNil(e.Message.ChannelID))
 	return DataPayload{
-		"id": e.Message.ID,
+		"id":           e.Message.ID,
+		"channel_path": strings.TrimLeft(path, "#"),
 	}
 }
 

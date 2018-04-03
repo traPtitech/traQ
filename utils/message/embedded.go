@@ -43,7 +43,7 @@ func Parse(m string) (res []*EmbeddedInfo, plain string) {
 					b.WriteRune('!')
 					b.Write(arr)
 				} else {
-					if len(info.Raw) == 0 || len(info.Type) == 0 || len(info.ID) == 0 {
+					if len(info.Type) == 0 || len(info.ID) == 0 {
 						b.WriteRune('!')
 						b.Write(arr)
 					} else {
@@ -70,5 +70,5 @@ func Parse(m string) (res []*EmbeddedInfo, plain string) {
 		b.Write(enclosed.Bytes())
 	}
 
-	return res, b.String()
+	return res, strings.Replace(b.String(), "\n", " ", -1)
 }

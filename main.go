@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/external/storage"
@@ -45,6 +46,10 @@ func main() {
 	dbname := os.Getenv("MARIADB_DATABASE")
 	if dbname == "" {
 		dbname = "traq"
+	}
+
+	if len(os.Getenv("TRAQ_ORIGIN")) == 0 {
+		panic(errors.New("env 'TRAQ_ORIGIN' must be set"))
 	}
 
 	engine, err := xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=true", user, pass, host, dbname))

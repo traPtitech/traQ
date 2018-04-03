@@ -12,7 +12,7 @@ FCMはFirebaseCloudMessagingで通知される情報を表す。記載されて�
 ### SSE
 対象: 全員
 
-TODO
++ `id`: 登録されたユーザーのId
 
 ## USER_LEFT
 ユーザーが脱退した。
@@ -103,9 +103,17 @@ TODO
 対象: 投稿チャンネルにハートビートを送信しているユーザー・投稿チャンネルに通知をつけているユーザー・メンションを受けたユーザー
 
 + `id`: 投稿されたメッセージのId
++ `channel_path`: チャンネルのパス
 
 ### FCM
-TODO
+
+#### Body
+チャンネルパス+メッセージ本体(100文字まで)
+
+#### data
++ `id`: 投稿されたメッセージのId
++ `origin`: traQのOrigin
++ `channel_path`: チャンネルのパス
 
 ## MESSAGE_UPDATED
 メッセージが更新された。
@@ -114,9 +122,6 @@ TODO
 対象: 投稿チャンネルにハートビートを送信しているユーザー
 
 + `id`: 更新されたメッセージのId
-
-### FCM
-TODO
 
 ## MESSAGE_DELETED
 メッセージが削除された。

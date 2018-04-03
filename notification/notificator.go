@@ -27,6 +27,7 @@ var (
 	streamer                       *sseStreamer
 	isStarted                      = false
 	firebaseServiceAccountJSONFile = os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+	traqOrigin                     = os.Getenv("TRAQ_ORIGIN")
 	fcm                            *messaging.Client
 )
 
@@ -74,6 +75,7 @@ func Send(eventType events.EventType, payload interface{}) {
 		data, _ := payload.(events.MessageEvent)
 		cid := data.TargetChannel()
 		targets := map[uuid.UUID]bool{}
+
 		ei, plain := message.Parse(data.Message.Text)
 		path, _ := model.GetChannelPath(cid)
 		summary := fmt.Sprintf("[%s] %s", path, plain)
@@ -211,7 +213,9 @@ func multicast(target uuid.UUID, data *eventData) {
 }
 
 func sendToFcm(deviceTokens []string, body string, payload events.DataPayload) {
-	data := map[string]string{}
+	data := map[string]string{
+		"origin": traqOrigin,
+	}
 	for k, v := range payload {
 		switch v.(type) {
 		case fmt.Stringer:
@@ -222,7 +226,7 @@ func sendToFcm(deviceTokens []string, body string, payload events.DataPayload) {
 	}
 
 	for _, token := range deviceTokens {
-		message := &messaging.Message{
+		m := &messaging.Message{
 			Data: data,
 			Notification: &messaging.Notification{
 				Title: "traQ",
@@ -234,14 +238,17 @@ func sendToFcm(deviceTokens []string, body string, payload events.DataPayload) {
 			Token: token,
 		}
 
-		_, err := fcm.Send(context.Background(), message)
+		_, err := fcm.Send(context.Background(), m)
 		if err != nil {
-			if strings.Contains(err.Error(), "registration-token-not-registered") {
+			switch {
+			case strings.Contains(err.Error(), "registration-token-not-registered"):
+				fallthrough
+			case strings.Contains(err.Error(), "invalid-argument"):
 				device := &model.Device{Token: token}
 				if err := device.Unregister(); err != nil {
 					log.Error(err)
 				}
-			} else {
+			default:
 				//TODO loggingを真面目にする
 				log.Error(err)
 			}
