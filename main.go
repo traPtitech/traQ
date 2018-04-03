@@ -2,17 +2,15 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"time"
-
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/oauth2/impl"
 	"github.com/traPtitech/traQ/utils/validator"
+	"io/ioutil"
+	"net/http"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
@@ -29,8 +27,6 @@ import (
 )
 
 func main() {
-	time.Local = time.UTC
-
 	user := os.Getenv("MARIADB_USERNAME")
 	if user == "" {
 		user = "root"

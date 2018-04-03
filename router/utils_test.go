@@ -3,14 +3,12 @@ package router
 import (
 	"bytes"
 	"fmt"
+	"github.com/traPtitech/traQ/external/storage"
+	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
-	"time"
-
-	"github.com/traPtitech/traQ/external/storage"
-	"github.com/traPtitech/traQ/utils/validator"
 
 	"github.com/stretchr/testify/assert"
 
@@ -36,8 +34,6 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	time.Local = time.UTC
-
 	user := os.Getenv("MARIADB_USERNAME")
 	if user == "" {
 		user = "root"
