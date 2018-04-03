@@ -73,7 +73,7 @@ func Send(eventType events.EventType, payload interface{}) {
 
 	switch eventType {
 	case events.MessageCreated:
-		data, _ := payload.(events.MessageEvent)
+		data := payload.(events.MessageEvent)
 		cid := data.TargetChannel()
 		targets := map[uuid.UUID]bool{}
 
@@ -239,26 +239,26 @@ func sendToFcm(deviceTokens []string, body string, payload events.DataPayload, i
 		}
 	}
 
+	m := &messaging.Message{
+		Data: data,
+		Notification: &messaging.Notification{
+			Title: "traQ",
+			Body:  body,
+		},
+		Android: &messaging.AndroidConfig{
+			Priority: "high",
+			Notification: &messaging.AndroidNotification{
+				Icon: iconURL,
+			},
+		},
+		Webpush: &messaging.WebpushConfig{
+			Notification: &messaging.WebpushNotification{
+				Icon: iconURL,
+			},
+		},
+	}
 	for _, token := range deviceTokens {
-		m := &messaging.Message{
-			Data: data,
-			Notification: &messaging.Notification{
-				Title: "traQ",
-				Body:  body,
-			},
-			Android: &messaging.AndroidConfig{
-				Priority: "high",
-				Notification: &messaging.AndroidNotification{
-					Icon: iconURL,
-				},
-			},
-			Webpush: &messaging.WebpushConfig{
-				Notification: &messaging.WebpushNotification{
-					Icon: iconURL,
-				},
-			},
-			Token: token,
-		}
+		m.Token = token
 
 		_, err := fcm.Send(context.Background(), m)
 		if err != nil {

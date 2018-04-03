@@ -34,8 +34,7 @@ type clientsSyncMap struct {
 func (s *clientsSyncMap) Load(key uuid.UUID) (map[uuid.UUID]*sseClient, bool) {
 	i, ok := s.m.Load(key)
 	if ok {
-		v, _ := i.(map[uuid.UUID]*sseClient)
-		return v, true
+		return i.(map[uuid.UUID]*sseClient), true
 	}
 	return nil, false
 }
@@ -46,9 +45,7 @@ func (s *clientsSyncMap) Store(key uuid.UUID, value map[uuid.UUID]*sseClient) {
 
 func (s *clientsSyncMap) Range(f func(key uuid.UUID, value map[uuid.UUID]*sseClient) bool) {
 	s.m.Range(func(k, v interface{}) bool {
-		key, _ := k.(uuid.UUID)
-		value, _ := v.(map[uuid.UUID]*sseClient)
-		return f(key, value)
+		return f(k.(uuid.UUID), v.(map[uuid.UUID]*sseClient))
 	})
 }
 
@@ -152,7 +149,9 @@ func Stream(userID uuid.UUID, res *echo.Response) {
 			//message.payload is not unsupported type or unsupported value.
 			data, _ := json.Marshal(message.Payload)
 			mu.Lock()
-			rw.Write([]byte("event: " + message.EventType + "\n"))
+			rw.Write([]byte("event: "))
+			rw.Write([]byte(message.EventType))
+			rw.Write([]byte("\n"))
 			rw.Write([]byte("data: "))
 			rw.Write(data)
 			rw.Write(sseSeparator)
