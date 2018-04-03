@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/go-sql-driver/mysql"
 	"github.com/traPtitech/traQ/utils/validator"
 
 	"github.com/satori/go.uuid"
@@ -23,13 +24,23 @@ func (device *Device) Validate() error {
 }
 
 //Register デバイスを登録
-func (device *Device) Register() (err error) {
-	if err = device.Validate(); err != nil {
-		return
+func (device *Device) Register() error {
+	if err := device.Validate(); err != nil {
+		return err
 	}
 
-	_, err = db.InsertOne(device) //TODO すでに登録されていた場合にエラーを除く
-	return
+	_, err := db.InsertOne(device)
+	if err != nil {
+		switch err.(type) {
+		case *mysql.MySQLError:
+			sqlerr := err.(*mysql.MySQLError)
+			if sqlerr.Number == 1062 { //既に入ってる
+				return nil
+			}
+		}
+		return err
+	}
+	return nil
 }
 
 // Unregister デバイスの登録を解除
