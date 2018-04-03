@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"github.com/labstack/gommon/log"
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/notification/events"
 	"github.com/traPtitech/traQ/utils/message"
 	"golang.org/x/exp/utf8string"
 	"google.golang.org/api/option"
-	"os"
 	"strings"
 )
 
@@ -24,11 +24,9 @@ type eventData struct {
 }
 
 var (
-	streamer                       *sseStreamer
-	isStarted                      = false
-	firebaseServiceAccountJSONFile = os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
-	traqOrigin                     = os.Getenv("TRAQ_ORIGIN")
-	fcm                            *messaging.Client
+	streamer  *sseStreamer
+	isStarted = false
+	fcm       *messaging.Client
 )
 
 //Start 通知機構を起動します
@@ -36,8 +34,8 @@ func Start() {
 	if !isStarted {
 		isStarted = true
 		streamer = newSseStreamer()
-		if len(firebaseServiceAccountJSONFile) > 0 {
-			app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(firebaseServiceAccountJSONFile))
+		if len(config.FirebaseServiceAccountJSONFile) > 0 {
+			app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(config.FirebaseServiceAccountJSONFile))
 			if err != nil {
 				panic(err)
 			}
@@ -229,7 +227,7 @@ func multicast(target uuid.UUID, data *eventData) {
 
 func sendToFcm(deviceTokens []string, body string, payload events.DataPayload) {
 	data := map[string]string{
-		"origin": traqOrigin,
+		"origin": config.TRAQOrigin,
 	}
 	for k, v := range payload {
 		switch v.(type) {

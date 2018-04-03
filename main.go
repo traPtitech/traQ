@@ -1,58 +1,38 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/external/storage"
-	"github.com/traPtitech/traQ/notification"
-	"github.com/traPtitech/traQ/oauth2"
-	"github.com/traPtitech/traQ/oauth2/impl"
-	"github.com/traPtitech/traQ/utils/validator"
-	"io/ioutil"
-	"net/http"
-	"os"
-
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/middleware"
+	"github.com/satori/go.uuid"
 	"github.com/srinathgs/mysqlstore"
+	"github.com/traPtitech/traQ/config"
+	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/notification"
+	"github.com/traPtitech/traQ/oauth2"
+	"github.com/traPtitech/traQ/oauth2/impl"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/router"
+	"github.com/traPtitech/traQ/utils/validator"
+	"io/ioutil"
+	"log"
+	"net/http"
 )
 
 func main() {
-	user := os.Getenv("MARIADB_USERNAME")
-	if user == "" {
-		user = "root"
+	if len(config.TRAQOrigin) == 0 {
+		log.Fatal("env 'TRAQ_ORIGIN' must be set")
 	}
 
-	pass := os.Getenv("MARIADB_PASSWORD")
-	if pass == "" {
-		pass = "password"
-	}
-
-	host := os.Getenv("MARIADB_HOSTNAME")
-	if host == "" {
-		host = "127.0.0.1"
-	}
-
-	dbname := os.Getenv("MARIADB_DATABASE")
-	if dbname == "" {
-		dbname = "traq"
-	}
-
-	if len(os.Getenv("TRAQ_ORIGIN")) == 0 {
-		panic(errors.New("env 'TRAQ_ORIGIN' must be set"))
-	}
-
-	engine, err := xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=true", user, pass, host, dbname))
+	// Database
+	engine, err := xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=true", config.DatabaseUserName, config.DatabasePassword, config.DatabaseHostName, config.DatabaseName))
 	if err != nil {
 		panic(err)
 	}
@@ -71,12 +51,12 @@ func main() {
 
 	// ObjectStorage
 	if err := setSwiftFileManagerAsDefault(
-		os.Getenv("OS_CONTAINER"),
-		os.Getenv("OS_USERNAME"),
-		os.Getenv("OS_PASSWORD"),
-		os.Getenv("OS_TENANT_NAME"), //v2のみ
-		os.Getenv("OS_TENANT_ID"),   //v2のみ
-		os.Getenv("OS_AUTH_URL"),
+		config.OSContainer,
+		config.OSUserName,
+		config.OSPassword,
+		config.OSTenantName, //v2のみ
+		config.OSTenantID,   //v2のみ
+		config.OSAuthURL,
 	); err != nil {
 		panic(err)
 	}
@@ -116,9 +96,9 @@ func main() {
 			}
 			return u, err
 		},
-		Issuer: os.Getenv("TRAQ_ORIGIN"),
+		Issuer: config.TRAQOrigin,
 	}
-	if public, private := os.Getenv("TRAQ_RS256_PUBLIC_KEY"), os.Getenv("TRAQ_RS256_PRIVATE_KEY"); private != "" && public != "" {
+	if public, private := config.RS256PublicKeyFile, config.RS256PrivateKeyFile; private != "" && public != "" {
 		err := oauth.LoadKeys(loadKeys(private, public))
 		if err != nil {
 			panic(err)
@@ -279,11 +259,7 @@ func main() {
 	// init heartbeat
 	model.HeartbeatStart()
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
-	}
-	e.Logger.Fatal(e.Start(":" + port))
+	e.Logger.Fatal(e.Start(":" + config.Port))
 }
 
 func setSwiftFileManagerAsDefault(container, userName, apiKey, tenant, tenantID, authURL string) error {
