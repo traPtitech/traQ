@@ -181,7 +181,7 @@
   branch = "master"
   name = "github.com/ncw/swift"
   packages = ["."]
-  revision = "ae9f0ea1605b9aa6434ed5c731ca35d83ba67c55"
+  revision = "b2a7479cf26fa841ff90dd932d0221cb5c50782d"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -255,7 +255,7 @@
     "acme/autocert",
     "pbkdf2"
   ]
-  revision = "88942b9c40a4c9d203b82b3731787b672d6e809b"
+  revision = "12892e8c234f4fe6f6803f052061de9057903bb2"
 
 [[projects]]
   branch = "master"
@@ -292,7 +292,7 @@
     "lex/httplex",
     "trace"
   ]
-  revision = "6078986fec03a1dcc236c34816c71b0e05018fda"
+  revision = "b68f30494add4df6bd8ef5e82803f308e7f7c59c"
 
 [[projects]]
   branch = "master"
@@ -304,7 +304,7 @@
     "jws",
     "jwt"
   ]
-  revision = "fdc9e635145ae97e6c2cb777c48305600cf515cb"
+  revision = "921ae394b9430ed4fb549668d7b087601bd60a81"
 
 [[projects]]
   branch = "master"
@@ -316,7 +316,7 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "91ee8cde435411ca3f1cd365e8f20131aed4d0a1"
+  revision = "378d26f46672a356c46195c28f61bdb4c0a781dd"
 
 [[projects]]
   name = "golang.org/x/text"

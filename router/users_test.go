@@ -119,6 +119,23 @@ func TestPatchMe(t *testing.T) {
 		assert.Equal(post.DisplayName, updatedUser.DisplayName)
 	}
 
+	// 正常系: emailのみの変更の場合
+	post = requestJSON{
+		ExPassword: "renamed",
+		Email:      "popopo@gmail.com",
+	}
+	body, err = json.Marshal(post)
+	require.NoError(err)
+
+	req = httptest.NewRequest("PATCH", "http://test", bytes.NewReader(body))
+	rec = request(e, t, mw(PatchMe), cookie, req)
+
+	if assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String()) {
+		updatedUser, err := model.GetUser(testUser.ID)
+		require.NoError(err)
+		assert.Equal(post.Email, updatedUser.Email)
+	}
+
 	// 異常系: passwordが誤っている場合
 	post = requestJSON{
 		ExPassword:  "wrong-password",
