@@ -1,7 +1,6 @@
 package model
 
 import (
-	"github.com/go-sql-driver/mysql"
 	"github.com/traPtitech/traQ/utils/validator"
 
 	"github.com/satori/go.uuid"
@@ -29,18 +28,16 @@ func (device *Device) Register() error {
 		return err
 	}
 
-	_, err := db.InsertOne(device)
-	if err != nil {
-		switch err.(type) {
-		case *mysql.MySQLError:
-			sqlerr := err.(*mysql.MySQLError)
-			if sqlerr.Number == 1062 { //既に入ってる
-				return nil
-			}
-		}
+	var userID string
+
+	if ok, err := db.Table(&Device{}).Where("token = ?", device.Token).Cols("user_id").Get(&userID); err != nil {
 		return err
+	} else if ok && userID == device.UserID {
+		return nil
 	}
-	return nil
+
+	_, err := db.InsertOne(device)
+	return err
 }
 
 // Unregister デバイスの登録を解除

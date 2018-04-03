@@ -11,15 +11,10 @@ var (
 )
 
 func init() {
-	var err error
-
 	props := icon.DefaultProps()
 	props.BaseColour = colour.NewColour(0xf2, 0xf2, 0xf2)
 
-	generator, err = icon.NewGenerator(5, 5, icon.With(props))
-	if err != nil {
-		panic(err)
-	}
+	generator, _ = icon.NewGenerator(5, 5, icon.With(props))
 }
 
 // Generate identiconを生成し、そのsvgを返します
