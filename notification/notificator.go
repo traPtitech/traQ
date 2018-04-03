@@ -21,6 +21,7 @@ type eventData struct {
 	Summary   string
 	Payload   events.DataPayload
 	Mobile    bool
+	IconURL   string
 }
 
 var (
@@ -72,7 +73,7 @@ func Send(eventType events.EventType, payload interface{}) {
 
 	switch eventType {
 	case events.MessageCreated:
-		data, _ := payload.(events.MessageEvent)
+		data := payload.(events.MessageEvent)
 		cid := data.TargetChannel()
 		targets := map[uuid.UUID]bool{}
 
@@ -136,6 +137,7 @@ func Send(eventType events.EventType, payload interface{}) {
 					Summary:   summary,
 					Payload:   data.DataPayload(),
 					Mobile:    true,
+					IconURL:   fmt.Sprintf("%s/api/1.0/users/%s/icon", traqOrigin, data.Message.UserID),
 				})
 
 			} else {
@@ -149,9 +151,8 @@ func Send(eventType events.EventType, payload interface{}) {
 		}
 
 	default:
-		switch payload.(type) {
+		switch e := payload.(type) {
 		case events.UserTargetEvent: // ユーザーマルチキャストイベント
-			e := payload.(events.UserTargetEvent)
 			multicast(e.TargetUser(), &eventData{
 				EventType: eventType,
 				Payload:   e.DataPayload(),
@@ -159,7 +160,6 @@ func Send(eventType events.EventType, payload interface{}) {
 			})
 
 		case events.ChannelUserTargetEvent: // チャンネルユーザーマルチキャストイベント
-			e := payload.(events.ChannelUserTargetEvent)
 			if s, ok := model.GetHeartbeatStatus(e.TargetChannel().String()); ok {
 				for _, u := range s.UserStatuses {
 					multicast(uuid.FromStringOrNil(u.UserID), &eventData{
@@ -171,7 +171,6 @@ func Send(eventType events.EventType, payload interface{}) {
 			}
 
 		case events.Event: // ブロードキャストイベント
-			e := payload.(events.Event)
 			broadcast(&eventData{
 				EventType: eventType,
 				Payload:   e.DataPayload(),
@@ -200,7 +199,7 @@ func broadcast(data *eventData) {
 			log.Error(err)
 			return
 		}
-		sendToFcm(devs, data.Summary, data.Payload)
+		sendToFcm(devs, data.Summary, data.Payload, data.IconURL)
 	}
 }
 
@@ -223,35 +222,43 @@ func multicast(target uuid.UUID, data *eventData) {
 			log.Error(err)
 			return
 		}
-		sendToFcm(devs, data.Summary, data.Payload)
+		sendToFcm(devs, data.Summary, data.Payload, data.IconURL)
 	}
 }
 
-func sendToFcm(deviceTokens []string, body string, payload events.DataPayload) {
+func sendToFcm(deviceTokens []string, body string, payload events.DataPayload, iconURL string) {
 	data := map[string]string{
 		"origin": traqOrigin,
 	}
 	for k, v := range payload {
-		switch v.(type) {
+		switch t := v.(type) {
 		case fmt.Stringer:
-			data[k] = v.(fmt.Stringer).String()
+			data[k] = t.String()
 		default:
-			data[k] = fmt.Sprint(v)
+			data[k] = fmt.Sprint(t)
 		}
 	}
 
+	m := &messaging.Message{
+		Data: data,
+		Notification: &messaging.Notification{
+			Title: "traQ",
+			Body:  body,
+		},
+		Android: &messaging.AndroidConfig{
+			Priority: "high",
+			Notification: &messaging.AndroidNotification{
+				Icon: iconURL,
+			},
+		},
+		Webpush: &messaging.WebpushConfig{
+			Notification: &messaging.WebpushNotification{
+				Icon: iconURL,
+			},
+		},
+	}
 	for _, token := range deviceTokens {
-		m := &messaging.Message{
-			Data: data,
-			Notification: &messaging.Notification{
-				Title: "traQ",
-				Body:  body,
-			},
-			Android: &messaging.AndroidConfig{
-				Priority: "high",
-			},
-			Token: token,
-		}
+		m.Token = token
 
 		_, err := fcm.Send(context.Background(), m)
 		if err != nil {

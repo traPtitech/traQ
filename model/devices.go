@@ -23,13 +23,21 @@ func (device *Device) Validate() error {
 }
 
 //Register デバイスを登録
-func (device *Device) Register() (err error) {
-	if err = device.Validate(); err != nil {
-		return
+func (device *Device) Register() error {
+	if err := device.Validate(); err != nil {
+		return err
 	}
 
-	_, err = db.InsertOne(device) //TODO すでに登録されていた場合にエラーを除く
-	return
+	var userID string
+
+	if ok, err := db.Table(&Device{}).Where("token = ?", device.Token).Cols("user_id").Get(&userID); err != nil {
+		return err
+	} else if ok && userID == device.UserID {
+		return nil
+	}
+
+	_, err := db.InsertOne(device)
+	return err
 }
 
 // Unregister デバイスの登録を解除
