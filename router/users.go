@@ -188,21 +188,42 @@ func PatchMe(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 
 	req := struct {
-		DisplayName *string `json:"displayName"`
+		ExPassword  string `json:"exPassword"`
+		DisplayName string `json:"displayName"`
+		Email       string `json:"email"`
+		Password    string `json:"password"`
 	}{}
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
 	}
-	if req.DisplayName != nil {
-		if err := user.UpdateDisplayName(*req.DisplayName); err != nil {
-			switch err {
-			case model.ErrUserInvalidDisplayName:
-				return echo.NewHTTPError(http.StatusBadRequest, err)
-			default:
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
+
+	if req.Email == "" && req.Password == "" {
+		user.DisplayName = req.DisplayName
+		if err := user.Update(); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user. Please check the format of displayName")
 		}
+		return c.NoContent(http.StatusNoContent)
+	}
+
+	if err := user.Authorization(req.ExPassword); err != nil {
+		return c.JSON(http.StatusUnauthorized, "Password is wrong")
+	}
+
+	if req.DisplayName != "" {
+		user.DisplayName = req.DisplayName
+	}
+	if req.Email != "" {
+		user.Email = req.Email
+	}
+	if err := user.SetPassword(req.Password); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update password")
+	}
+
+	if err := user.Update(); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user. Please check the format of email, password or displayName")
 	}
 
 	go notification.Send(events.UserUpdated, events.UserEvent{ID: user.ID})
