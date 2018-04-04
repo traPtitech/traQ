@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"github.com/traPtitech/traQ/external/imagemagick"
 	"golang.org/x/image/bmp"
 	"golang.org/x/image/draw"
 	"golang.org/x/image/tiff"
@@ -79,6 +80,20 @@ func Generate(ctx context.Context, src io.Reader, mime string) (image.Image, err
 			return nil, err
 		}
 		return imageGenerate(ctx, img)
+
+	case "image/svg+xml":
+		b, err := imagemagick.ConvertToPNG(ctx, src, ThumbnailMaxWidth, ThumbnailMaxHeight)
+		if err != nil {
+			switch err {
+			case imagemagick.ErrUnsupportedType:
+				return nil, ErrFileThumbUnsupported
+			case imagemagick.ErrUnavailable:
+				return nil, ErrFileThumbUnsupported
+			default:
+				return nil, err
+			}
+		}
+		return png.Decode(b)
 
 	case "video/mpeg", "video/mpg":
 		return nil, ErrFileThumbUnsupported
