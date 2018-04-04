@@ -42,6 +42,9 @@ var (
 
 	// FirebaseServiceAccountJSONFile FirebaseのサービスアカウントJSONファイル
 	FirebaseServiceAccountJSONFile = os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+
+	// ImageMagickConverterExec ImageMagickの実行ファイル
+	ImageMagickConverterExec = os.Getenv("IMAGEMAGICK_EXEC")
 )
 
 func init() {
