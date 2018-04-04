@@ -11,7 +11,8 @@ import (
 )
 
 // ResizeAnimationGIF Animation GIF画像をimagemagickでリサイズします
-func ResizeAnimationGIF(ctx context.Context, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, error) {
+// expandがfalseの場合、縮小は行いますが拡大は行いません
+func ResizeAnimationGIF(ctx context.Context, src io.Reader, maxWidth, maxHeight int, expand bool) (*bytes.Buffer, error) {
 	if len(config.ImageMagickConverterExec) == 0 {
 		return nil, ErrUnavailable
 	}
@@ -20,7 +21,11 @@ func ResizeAnimationGIF(ctx context.Context, src io.Reader, maxWidth, maxHeight 
 		return nil, errors.New("maxWidth or maxHeight is wrong")
 	}
 
-	cmd := exec.CommandContext(ctx, config.ImageMagickConverterExec, "-coalesce", "-resize", fmt.Sprintf("%dx%d", maxWidth, maxHeight), "-deconstruct", "-", "gif:-")
+	sizer := fmt.Sprintf("%dx%d", maxWidth, maxHeight)
+	if !expand {
+		sizer += ">"
+	}
+	cmd := exec.CommandContext(ctx, config.ImageMagickConverterExec, "-coalesce", "-resize", sizer, "-deconstruct", "-", "gif:-")
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
