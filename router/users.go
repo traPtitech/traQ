@@ -129,12 +129,19 @@ func GetUserIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
+	if _, ok := c.QueryParams()["thumb"]; ok {
+		return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon+"/thumbnail")
+	}
+
 	return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon)
 }
 
 // GetMyIcon GET /users/me/icon のハンドラ
 func GetMyIcon(c echo.Context) error {
 	user := c.Get("user").(*model.User)
+	if _, ok := c.QueryParams()["thumb"]; ok {
+		return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon+"/thumbnail")
+	}
 	return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon)
 }
 

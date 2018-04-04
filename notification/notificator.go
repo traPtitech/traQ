@@ -135,7 +135,7 @@ func Send(eventType events.EventType, payload interface{}) {
 					Summary:   summary,
 					Payload:   data.DataPayload(),
 					Mobile:    true,
-					IconURL:   fmt.Sprintf("%s/api/1.0/users/%s/icon", config.TRAQOrigin, data.Message.UserID),
+					IconURL:   fmt.Sprintf("%s/api/1.0/users/%s/icon?thumb", config.TRAQOrigin, data.Message.UserID),
 				})
 
 			} else {
