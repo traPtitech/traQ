@@ -80,7 +80,7 @@ const gopher = `<?xml version="1.0" encoding="utf-8"?>
 </svg>`
 
 // config.ImageMagickConverterExecが空の場合スキップされます
-func TestConvertSVGToPNG(t *testing.T) {
+func TestConvertToPNG(t *testing.T) {
 	t.Parallel()
 	assert := assert.New(t)
 
