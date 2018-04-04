@@ -12,9 +12,9 @@ type LocalFileManager struct {
 }
 
 // NewLocalFileManager LocalFileManagerのコンストラクタ
-func NewLocalFileManager() *LocalFileManager {
+func NewLocalFileManager(dir string) *LocalFileManager {
 	fm := &LocalFileManager{}
-	if dir := os.Getenv("TRAQ_TEMP"); dir != "" {
+	if dir != "" {
 		fm.dirName = dir
 	} else {
 		fm.dirName = "../resources"

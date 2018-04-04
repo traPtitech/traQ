@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/labstack/gommon/log"
+	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/thumb"
@@ -21,7 +22,7 @@ import (
 
 var (
 	fileManagers = storage.FileManagers{
-		"": storage.NewLocalFileManager(),
+		"": storage.NewLocalFileManager(config.LocalStorageDir),
 	}
 
 	// ErrFileThumbUnsupported : fileエラー この形式のファイルのサムネイル生成はサポートされていない
