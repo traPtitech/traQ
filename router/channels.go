@@ -132,49 +132,54 @@ func GetChannelsByChannelID(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// PutChannelsByChannelID PUT /channels/{channelID} のハンドラ
-func PutChannelsByChannelID(c echo.Context) error {
+// PatchChannelsByChannelID PATCH /channels/{channelID} のハンドラ
+func PatchChannelsByChannelID(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
+	channelID := c.Param("channelID")
 
 	req := struct {
-		Name       string `json:"name"`
-		Parent     string `json:"parent"`
-		Visibility bool   `json:"visibility"`
+		Name       *string `json:"name"`
+		Parent     *string `json:"parent"`
+		Visibility *bool   `json:"visibility"`
+		Force      *bool   `json:"force"`
 	}{}
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	channelID := c.Param("channelID")
+	// チャンネル検証
 	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
 		return err
 	}
 
-	ch.Name = req.Name
-	ch.ParentID = req.Parent
-	ch.IsVisible = req.Visibility
+	if req.Name != nil && len(*req.Name) > 0 {
+		ch.Name = *req.Name
+	}
+	if req.Parent != nil {
+		ch.ParentID = *req.Parent
+	}
+	if req.Visibility != nil {
+		ch.IsVisible = *req.Visibility
+	}
+	if req.Force != nil {
+		ch.IsForced = *req.Force
+	}
 	ch.UpdaterID = userID
 
+	// 検証
+	if err := ch.Validate(); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	// 更新
 	if err := ch.Update(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while update channel")
-	}
-
-	childIDs, err := ch.Children(userID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to get children channel id list: %v", err))
-	}
-
-	response := ChannelForResponse{
-		ChannelID:  ch.ID,
-		Name:       ch.Name,
-		Parent:     ch.ParentID,
-		Visibility: ch.IsVisible,
-		Children:   childIDs,
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	go notification.Send(events.ChannelUpdated, events.ChannelEvent{ID: channelID})
-	return c.JSON(http.StatusOK, response)
+	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteChannelsByChannelID DELETE /channels/{channelID}のハンドラ

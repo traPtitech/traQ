@@ -292,7 +292,7 @@ paths:
           description: |+
             取得に失敗しました。
             指定したチャンネルは存在しません。
-    put:
+    patch:
       tags:
         - channel
       description: チャンネルの情報を変更します。
@@ -301,8 +301,6 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - name
               properties:
                 name:
                   type: string
@@ -317,15 +315,16 @@ paths:
                   type: boolean
                   description: 変更後のvisibility
                   example: true
+                force:
+                  type: boolean
+                  description: 強制通知かどうか
       responses:
-        "200":
-          description: |+
-            正常に変更ができました。
-            変更後のチャンネルを返します。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Channel"
+        "204":
+          description: 正常に変更ができました。
+        "400":
+          description: 失敗しました。リクエスト内容が不正です。
+        "403":
+          description: 失敗しました。権限がありません。
         "404":
           description: |+
             変更に失敗しました。
@@ -1126,8 +1125,8 @@ paths:
                   users:
                     type: array
                     $ref: "#/components/schemas/UserList"
-          "404":
-            description: 正常に取得できませんでした。指定されたタグIDは存在しません
+        "404":
+          description: 正常に取得できませんでした。指定されたタグIDは存在しません
 
 
   /stamps:

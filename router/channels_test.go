@@ -141,7 +141,7 @@ func TestGetChannelsByChannelID(t *testing.T) {
 	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
 }
 
-func TestPutChannelsByChannelID(t *testing.T) {
+func TestPatchChannelsByChannelID(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 	ch := mustMakeChannel(t, testUser.ID, "test", true)
 
@@ -163,16 +163,9 @@ func TestPutChannelsByChannelID(t *testing.T) {
 	c.SetPath("/:channelID")
 	c.SetParamNames("channelID")
 	c.SetParamValues(ch.ID)
-	requestWithContext(t, mw(PutChannelsByChannelID), c)
+	requestWithContext(t, mw(PatchChannelsByChannelID), c)
 
-	require.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
-
-	ch, err = model.GetChannelByID(testUser.ID, ch.ID)
-	if assert.NoError(err) {
-		assert.Equal("renamed", ch.Name)
-		assert.Equal(parentID, ch.ParentID)
-		assert.Equal(testUser.ID, ch.UpdaterID)
-	}
+	assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String())
 }
 
 func TestDeleteChannelsByChannelID(t *testing.T) {
