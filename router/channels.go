@@ -238,6 +238,21 @@ func createChannel(name, creatorID, channelType, parentID string, members []stri
 	if ch.IsPublic {
 		go notification.Send(events.ChannelCreated, events.ChannelEvent{ID: ch.ID})
 	} else {
+		// FIXME: 複数人privateチャンネルができるとバグります
+		privateChannel, err := model.GetPrivateChannel(members[0], members[1])
+		if err != nil {
+			switch err {
+			case model.ErrNotFound:
+				break
+			default:
+				log.Error(err)
+				return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to check that private channel has already created")
+			}
+		}
+		if privateChannel != nil {
+			return nil, echo.NewHTTPError(http.StatusBadRequest, "the private channel exists now")
+		}
+
 		for _, u := range members {
 			upc := &model.UsersPrivateChannel{
 				ChannelID: ch.ID,

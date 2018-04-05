@@ -3,11 +3,13 @@ package router
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 
+	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -73,13 +75,14 @@ func TestPostChannels(t *testing.T) {
 		}
 	}
 
+	recieverID := mustCreateUser(t, "testPostChannels").ID
 	postBody = PostChannel{
 		ChannelType: "private",
 		Name:        "testprivate",
 		Parent:      privateParentChannelID,
 		Member: []string{
 			testUser.ID,
-			mustCreateUser(t, "testPostChannels").ID,
+			recieverID,
 		},
 	}
 	body, err = json.Marshal(postBody)
@@ -95,6 +98,32 @@ func TestPostChannels(t *testing.T) {
 	channelList, err = model.GetChannelList(model.CreateUUID())
 	if assert.NoError(err) {
 		assert.Len(channelList, 2)
+	}
+
+	// 異常系: 同じメンバーのプライベートチャンネルは作成できない
+	postBody = PostChannel{
+		ChannelType: "private",
+		Name:        "testprivate-error",
+		Parent:      privateParentChannelID,
+		Member: []string{
+			testUser.ID,
+			recieverID,
+		},
+	}
+	body, err = json.Marshal(postBody)
+	require.NoError(err)
+
+	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	if cookie != nil {
+		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
+	}
+	rec = httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	err = mw(PostChannels)(c)
+
+	if assert.Error(err) {
+		assert.Equal(http.StatusBadRequest, err.(*echo.HTTPError).Code)
 	}
 }
 
