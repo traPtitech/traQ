@@ -213,7 +213,7 @@ func GenerateThumbnail(ctx context.Context, f *File, src io.Reader) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		b, err = thumb.EncodeToJPG(img)
+		b, err = thumb.EncodeToPNG(img)
 		if err != nil {
 			return err
 		}
@@ -223,7 +223,7 @@ func GenerateThumbnail(ctx context.Context, f *File, src io.Reader) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		if err := writer.WriteByID(b, f.ID+"-thumb", f.ID+"-thumb.jpg", "image/jpeg"); err != nil {
+		if err := writer.WriteByID(b, f.ID+"-thumb", f.ID+"-thumb.png", "image/png"); err != nil {
 			return err
 		}
 	}

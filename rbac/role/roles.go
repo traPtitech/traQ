@@ -99,6 +99,8 @@ func SetRole(rbac *rbac.RBAC) {
 			permission.AddMessageStamp,
 			permission.RemoveMessageStamp,
 
+			permission.EditStamp,
+
 			permission.UploadFile,
 
 			permission.PostHeartbeat,
@@ -132,7 +134,8 @@ func SetRole(rbac *rbac.RBAC) {
 
 			permission.ChangeChannelVisibility,
 
-			permission.EditStamp,
+			permission.EditStampName,
+			permission.EditStampCreatedByOthers,
 			permission.DeleteStamp,
 			permission.DeleteFile,
 		},

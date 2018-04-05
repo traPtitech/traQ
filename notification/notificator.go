@@ -73,7 +73,9 @@ func Send(eventType events.EventType, payload interface{}) {
 	case events.MessageCreated:
 		data := payload.(events.MessageEvent)
 		cid := data.TargetChannel()
-		targets := map[uuid.UUID]bool{}
+		viewers := map[uuid.UUID]bool{}
+		connector := map[uuid.UUID]bool{}
+		subscribers := map[uuid.UUID]bool{}
 
 		ei, plain := message.Parse(data.Message.Text)
 		path, _ := model.GetChannelPath(cid)
@@ -89,56 +91,93 @@ func Send(eventType events.EventType, payload interface{}) {
 			summary = s.Slice(0, 97) + "..."
 		}
 
-		// チャンネル通知ユーザー取得
-		if users, err := model.GetSubscribingUser(cid); err != nil {
+		if ch, err := model.GetChannelByMessageID(data.Message.ID); err != nil {
 			log.Error(err)
-		} else {
+		} else if ch.IsForced {
+			// 強制通知
+			users, err := model.GetUsers()
+			if err != nil {
+				log.Error(err)
+			}
 			for _, v := range users {
-				targets[v] = true
+				if v.Bot {
+					continue
+				}
+				subscribers[uuid.FromStringOrNil(v.ID)] = true
+			}
+		} else {
+			// チャンネル通知ユーザー取得
+			if users, err := model.GetSubscribingUser(cid); err != nil {
+				log.Error(err)
+			} else {
+				for _, v := range users {
+					subscribers[v] = true
+				}
+			}
+
+			// タグユーザー・メンションユーザー取得
+			for _, v := range ei {
+				switch v.Type {
+				case "user":
+					subscribers[uuid.FromStringOrNil(v.ID)] = true
+				case "tag":
+					if users, err := model.GetUserIDsByTagID(v.ID); err != nil {
+						log.Error(err)
+					} else {
+						for _, v := range users {
+							subscribers[uuid.FromStringOrNil(v)] = true
+						}
+					}
+				}
 			}
 		}
 
 		// ハートビートユーザー取得
 		if s, ok := model.GetHeartbeatStatus(cid.String()); ok {
 			for _, u := range s.UserStatuses {
-				targets[uuid.FromStringOrNil(u.UserID)] = true
-			}
-		}
-
-		// タグユーザー・メンションユーザー取得
-		for _, v := range ei {
-			switch v.Type {
-			case "user":
-				targets[uuid.FromStringOrNil(v.ID)] = true
-			case "tag":
-				if users, err := model.GetUserIDsByTagID(v.ID); err != nil {
-					log.Error(err)
-				} else {
-					for _, v := range users {
-						targets[uuid.FromStringOrNil(v)] = true
-					}
+				connector[uuid.FromStringOrNil(u.UserID)] = true
+				if u.Status != "none" {
+					viewers[uuid.FromStringOrNil(u.UserID)] = true
 				}
 			}
 		}
 
 		// 送信
-		for id := range targets {
-			if id.String() != data.Message.UserID {
-				// 未読リストに追加
-				unread := &model.Unread{UserID: id.String(), MessageID: data.Message.ID}
-				if err := unread.Create(); err != nil {
-					log.Error(err)
-				}
-
+		for id := range subscribers {
+			if id.String() == data.Message.UserID {
 				multicast(id, &eventData{
 					EventType: eventType,
 					Summary:   summary,
 					Payload:   data.DataPayload(),
-					Mobile:    true,
-					IconURL:   fmt.Sprintf("%s/api/1.0/users/%s/icon", config.TRAQOrigin, data.Message.UserID),
+					Mobile:    false,
 				})
-
 			} else {
+				if viewers[id] {
+					multicast(id, &eventData{
+						EventType: eventType,
+						Summary:   summary,
+						Payload:   data.DataPayload(),
+						Mobile:    false,
+					})
+				} else {
+					// 未読リストに追加
+					unread := &model.Unread{UserID: id.String(), MessageID: data.Message.ID}
+					if err := unread.Create(); err != nil {
+						log.Error(err)
+					}
+					multicast(id, &eventData{
+						EventType: eventType,
+						Summary:   summary,
+						Payload:   data.DataPayload(),
+						Mobile:    true,
+						IconURL:   fmt.Sprintf("%s/api/1.0/users/%s/icon?thumb", config.TRAQOrigin, data.Message.UserID),
+					})
+				}
+			}
+		}
+
+		for id := range connector {
+			if !subscribers[id] {
 				multicast(id, &eventData{
 					EventType: eventType,
 					Summary:   summary,
