@@ -20,6 +20,7 @@ type ChannelForResponse struct {
 	Children   []string `json:"children"`
 	Member     []string `json:"member"`
 	Visibility bool     `json:"visibility"`
+	Force      bool     `json:"force"`
 }
 
 // PostChannel リクエストボディ用構造体
@@ -54,6 +55,7 @@ func GetChannels(c echo.Context) error {
 		response[ch.ID].Name = ch.Name
 		response[ch.ID].Visibility = ch.IsVisible
 		response[ch.ID].Parent = ch.ParentID
+		response[ch.ID].Force = ch.IsForced
 
 		if !ch.IsPublic {
 			member, err := model.GetMembers(ch.ID)
@@ -288,6 +290,7 @@ func formatChannel(channel *model.Channel) *ChannelForResponse {
 		Name:       channel.Name,
 		Visibility: channel.IsVisible,
 		Parent:     channel.ParentID,
+		Force:      channel.IsForced,
 	}
 }
 

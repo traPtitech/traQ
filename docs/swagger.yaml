@@ -2045,6 +2045,9 @@ components:
         visibility:
           type: boolean
           description: チャンネルの可視状態
+        force:
+          type: boolean
+          description: 強制通知チャンネルか
 
     ChannelTopic:
       type: object
