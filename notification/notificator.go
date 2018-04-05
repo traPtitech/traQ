@@ -74,6 +74,7 @@ func Send(eventType events.EventType, payload interface{}) {
 		data := payload.(events.MessageEvent)
 		cid := data.TargetChannel()
 		viewers := map[uuid.UUID]bool{}
+		connector := map[uuid.UUID]bool{}
 		subscribers := map[uuid.UUID]bool{}
 
 		ei, plain := message.Parse(data.Message.Text)
@@ -134,7 +135,10 @@ func Send(eventType events.EventType, payload interface{}) {
 		// ハートビートユーザー取得
 		if s, ok := model.GetHeartbeatStatus(cid.String()); ok {
 			for _, u := range s.UserStatuses {
-				viewers[uuid.FromStringOrNil(u.UserID)] = true
+				connector[uuid.FromStringOrNil(u.UserID)] = true
+				if u.Status != "none" {
+					viewers[uuid.FromStringOrNil(u.UserID)] = true
+				}
 			}
 		}
 
@@ -172,7 +176,7 @@ func Send(eventType events.EventType, payload interface{}) {
 			}
 		}
 
-		for id := range viewers {
+		for id := range connector {
 			if !subscribers[id] {
 				multicast(id, &eventData{
 					EventType: eventType,
