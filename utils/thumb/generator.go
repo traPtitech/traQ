@@ -22,18 +22,19 @@ var (
 )
 
 // CalcThumbnailSize サムネイル画像のサイズを計算します
-func CalcThumbnailSize(size image.Point) image.Point {
-	if size.X <= ThumbnailMaxWidth && size.Y <= ThumbnailMaxHeight {
+func CalcThumbnailSize(size image.Point, maxSize image.Point) image.Point {
+	if size.X <= maxSize.X && size.Y <= maxSize.Y {
 		// 元画像がサムネイル画像より小さい
 		return size
 	}
 
 	ratio := float64(size.X) / float64(size.Y)
+	boxRatio := float64(maxSize.X) / float64(maxSize.Y)
 
-	if ratio > ThumbnailRatio {
-		return image.Pt(ThumbnailMaxWidth, int(ThumbnailMaxWidth/ratio))
+	if ratio > boxRatio {
+		return image.Pt(maxSize.X, int(float64(maxSize.X)/ratio))
 	}
-	return image.Pt(int(ThumbnailMaxHeight*ratio), ThumbnailMaxHeight)
+	return image.Pt(int(float64(maxSize.Y)*ratio), maxSize.Y)
 }
 
 // Generate サムネイル画像を生成します
@@ -44,42 +45,42 @@ func Generate(ctx context.Context, src io.Reader, mime string) (image.Image, err
 		if err != nil {
 			return nil, err
 		}
-		return imageGenerate(ctx, img)
+		return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
 
 	case "image/gif":
 		img, err := gif.Decode(src)
 		if err != nil {
 			return nil, err
 		}
-		return imageGenerate(ctx, img)
+		return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
 
 	case "image/jpeg":
 		img, err := jpeg.Decode(src)
 		if err != nil {
 			return nil, err
 		}
-		return imageGenerate(ctx, img)
+		return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
 
 	case "image/bmp":
 		img, err := bmp.Decode(src)
 		if err != nil {
 			return nil, err
 		}
-		return imageGenerate(ctx, img)
+		return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
 
 	case "image/webp":
 		img, err := webp.Decode(src)
 		if err != nil {
 			return nil, err
 		}
-		return imageGenerate(ctx, img)
+		return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
 
 	case "image/tiff":
 		img, err := tiff.Decode(src)
 		if err != nil {
 			return nil, err
 		}
-		return imageGenerate(ctx, img)
+		return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
 
 	case "image/svg+xml":
 		b, err := imagemagick.ConvertToPNG(ctx, src, ThumbnailMaxWidth, ThumbnailMaxHeight)
@@ -129,14 +130,15 @@ func EncodeToJPG(img image.Image) (b *bytes.Buffer, err error) {
 	return
 }
 
-func imageGenerate(ctx context.Context, img image.Image) (image.Image, error) {
+// Resize imgをリサイズします。アスペクト比は保持されます。
+func Resize(ctx context.Context, img image.Image, maxWidth, maxHeight int) (image.Image, error) {
 	var dst draw.Image
 
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	default:
-		thumbSize := CalcThumbnailSize(img.Bounds().Size())
+		thumbSize := CalcThumbnailSize(img.Bounds().Size(), image.Pt(maxWidth, maxHeight))
 		dst = image.NewRGBA(image.Rectangle{Min: image.ZP, Max: thumbSize})
 		draw.Draw(dst, dst.Bounds(), image.White, image.ZP, draw.Src)
 		draw.ApproxBiLinear.Scale(dst, dst.Bounds(), img, img.Bounds(), draw.Src, nil)

@@ -7,8 +7,12 @@ var (
 	GetStamp = gorbac.NewStdPermission("get_stamp")
 	// CreateStamp : スタンプ作成権限
 	CreateStamp = gorbac.NewStdPermission("create_stamp")
-	// EditStamp : スタンプ編集権限
+	// EditStamp : 自スタンプ画像変更権限
 	EditStamp = gorbac.NewStdPermission("edit_stamp")
+	// EditStampName : 自スタンプ名変更権限
+	EditStampName = gorbac.NewStdPermission("edit_stamp_name")
+	// EditStampCreatedByOthers : 他ユーザー作成のスタンプの変更権限
+	EditStampCreatedByOthers = gorbac.NewStdPermission("edit_stamp_created_by_others")
 	// DeleteStamp : スタンプ削除権限
 	DeleteStamp = gorbac.NewStdPermission("delete_stamp")
 	// GetMessageStamp : メッセージスタンプ一覧取得権限

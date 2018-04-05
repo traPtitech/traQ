@@ -1,8 +1,16 @@
 package router
 
 import (
+	"bytes"
+	"context"
 	"fmt"
+	"github.com/traPtitech/traQ/external/imagemagick"
+	"github.com/traPtitech/traQ/utils/thumb"
+	"image/jpeg"
+	"image/png"
+	"io"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
@@ -12,6 +20,11 @@ import (
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
 	"github.com/traPtitech/traQ/rbac/role"
+)
+
+const (
+	iconMaxWidth  = 256
+	iconMaxHeight = 256
 )
 
 // UserForResponse クライアントに返す形のユーザー構造体
@@ -149,40 +162,130 @@ func GetMyIcon(c echo.Context) error {
 func PutMyIcon(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 
+	// file確認
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed to upload file: %v", err))
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	switch uploadedFile.Header.Get(echo.HeaderContentType) {
-	case "image/png", "image/jpeg", "image/gif", "image/svg+xml":
-		break
-	default:
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
-	}
-
+	// ファイルサイズ制限1MB
 	if uploadedFile.Size > 1024*1024 {
 		return echo.NewHTTPError(http.StatusBadRequest, "too big image file")
 	}
 
-	file := &model.File{
-		Name:      uploadedFile.Filename,
-		Size:      uploadedFile.Size,
-		CreatorID: user.ID,
-	}
-
+	// ファイルタイプ確認・必要があればリサイズ
+	b := &bytes.Buffer{}
 	src, err := uploadedFile.Open()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to open file")
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	defer src.Close()
+	switch uploadedFile.Header.Get(echo.HeaderContentType) {
+	case "image/png":
+		img, err := png.Decode(src)
+		if err != nil {
+			// 不正なpngである
+			return echo.NewHTTPError(http.StatusBadRequest, "bad png file")
+		}
+		if img.Bounds().Size().X > iconMaxWidth || img.Bounds().Size().Y > iconMaxHeight {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
+			defer cancel()
+			img, err = thumb.Resize(ctx, img, iconMaxWidth, iconMaxHeight)
+			if err != nil {
+				switch err {
+				case context.DeadlineExceeded:
+					// リサイズタイムアウト
+					return echo.NewHTTPError(http.StatusBadRequest, "bad png file (resize timeout)")
+				default:
+					// 予期しないエラー
+					c.Logger().Error(err)
+					return echo.NewHTTPError(http.StatusInternalServerError)
+				}
+			}
+		}
 
-	if err := file.Create(src); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create file")
+		// bytesに戻す
+		if b, err = thumb.EncodeToPNG(img); err != nil {
+			// 予期しないエラー
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+
+	case "image/jpeg":
+		img, err := jpeg.Decode(src)
+		if err != nil {
+			// 不正なjpgである
+			return echo.NewHTTPError(http.StatusBadRequest, "bad jpg file")
+		}
+		if img.Bounds().Size().X > iconMaxWidth || img.Bounds().Size().Y > iconMaxHeight {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
+			defer cancel()
+			img, err = thumb.Resize(ctx, img, iconMaxWidth, iconMaxHeight)
+			if err != nil {
+				switch err {
+				case context.DeadlineExceeded:
+					// リサイズタイムアウト
+					return echo.NewHTTPError(http.StatusBadRequest, "bad jpg file (resize timeout)")
+				default:
+					// 予期しないエラー
+					c.Logger().Error(err)
+					return echo.NewHTTPError(http.StatusInternalServerError)
+				}
+			}
+		}
+
+		// PNGに変換
+		if b, err = thumb.EncodeToPNG(img); err != nil {
+			// 予期しないエラー
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+
+	case "image/gif":
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
+		defer cancel()
+		b, err = imagemagick.ResizeAnimationGIF(ctx, src, iconMaxWidth, iconMaxHeight, false)
+		if err != nil {
+			switch err {
+			case imagemagick.ErrUnavailable:
+				// gifは一時的にサポートされていない
+				return echo.NewHTTPError(http.StatusBadRequest, "gif file is temporarily unsupported")
+			case imagemagick.ErrUnsupportedType:
+				// 不正なgifである
+				return echo.NewHTTPError(http.StatusBadRequest, "bad gif file")
+			case context.DeadlineExceeded:
+				// リサイズタイムアウト
+				return echo.NewHTTPError(http.StatusBadRequest, "bad gif file (resize timeout)")
+			default:
+				// 予期しないエラー
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+		}
+
+	case "image/svg+xml":
+		// TODO svgバリデーション
+		io.Copy(b, src)
+
+	default:
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
 	}
 
+	// アイコン画像保存
+	file := &model.File{
+		Name:      uploadedFile.Filename,
+		Size:      int64(b.Len()),
+		CreatorID: user.ID,
+	}
+	if err := file.Create(b); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// アイコン変更
 	if err := user.UpdateIconID(file.ID); err != nil {
-		log.Error(err)
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
