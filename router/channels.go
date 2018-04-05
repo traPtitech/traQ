@@ -53,6 +53,7 @@ func GetChannels(c echo.Context) error {
 		response[ch.ID].ChannelID = ch.ID
 		response[ch.ID].Name = ch.Name
 		response[ch.ID].Visibility = ch.IsVisible
+		response[ch.ID].Parent = ch.ParentID
 
 		if !ch.IsPublic {
 			member, err := model.GetMembers(ch.ID)
@@ -61,9 +62,7 @@ func GetChannels(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get private channel members")
 			}
 			response[ch.ID].Member = member
-			response[ch.ID].Parent = privateParentChannelID
 		} else {
-			response[ch.ID].Parent = ch.ParentID
 			if response[ch.ParentID] == nil {
 				response[ch.ParentID] = &ChannelForResponse{}
 			}
@@ -219,6 +218,11 @@ func createChannel(name, creatorID, channelType, parentID string, members []stri
 		}
 	}
 
+	// privateChannelの場合、特殊な親を設定する
+	if channelType == "private" && parentID != privateParentChannelID {
+		parentID = privateParentChannelID
+	}
+
 	ch := &model.Channel{
 		CreatorID: creatorID,
 		ParentID:  parentID,
@@ -234,6 +238,21 @@ func createChannel(name, creatorID, channelType, parentID string, members []stri
 	if ch.IsPublic {
 		go notification.Send(events.ChannelCreated, events.ChannelEvent{ID: ch.ID})
 	} else {
+		// FIXME: 複数人privateチャンネルができるとバグります
+		privateChannel, err := model.GetPrivateChannel(members[0], members[1])
+		if err != nil {
+			switch err {
+			case model.ErrNotFound:
+				break
+			default:
+				log.Error(err)
+				return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to check that private channel has already created")
+			}
+		}
+		if privateChannel != nil {
+			return nil, echo.NewHTTPError(http.StatusBadRequest, "the private channel exists now")
+		}
+
 		for _, u := range members {
 			upc := &model.UsersPrivateChannel{
 				ChannelID: ch.ID,
@@ -259,19 +278,12 @@ func valuesChannel(m map[string]*ChannelForResponse) []*ChannelForResponse {
 }
 
 func formatChannel(channel *model.Channel) *ChannelForResponse {
-	res := &ChannelForResponse{
+	return &ChannelForResponse{
 		ChannelID:  channel.ID,
 		Name:       channel.Name,
 		Visibility: channel.IsVisible,
+		Parent:     channel.ParentID,
 	}
-
-	if !channel.IsPublic {
-		res.Parent = privateParentChannelID
-	} else {
-		res.Parent = channel.ParentID
-	}
-
-	return res
 }
 
 // リクエストされたチャンネルIDが指定されたuserから見えるかをチェックし、見える場合はそのチャンネルを返す
