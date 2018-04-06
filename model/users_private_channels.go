@@ -33,7 +33,7 @@ func (upc *UsersPrivateChannel) Create() (err error) {
 // GetPrivateChannel ある二つのユーザー間のプライベートチャンネルが存在するかを調べる
 func GetPrivateChannel(userID1, userID2 string) (*UsersPrivateChannel, error) {
 	upc := &UsersPrivateChannel{}
-	has, err := db.Table(upc).Join("LEFT", []string{"users_private_channels", "p"}, "p.user_id IN(?, ?) AND users_private_channels.user_id IN(?, ?) AND p.channel_id = users_private_channels.channel_id", userID1, userID2, userID1, userID2).
+	has, err := db.Table(upc).Join("LEFT", []string{"users_private_channels", "p"}, "p.user_id = ? AND users_private_channels.user_id = ? AND p.channel_id = users_private_channels.channel_id", userID1, userID2).
 		Get(upc)
 	if err != nil {
 		return nil, err
