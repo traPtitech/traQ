@@ -61,7 +61,7 @@ func TestGetMember(t *testing.T) {
 	user2 := mustMakeUser(t, "private-2")
 	channel := mustMakePrivateChannel(t, user1.ID, user2.ID, "privatechannel-1")
 
-	member, err := GetMembers(channel.ID)
+	member, err := GetPrivateChannelMembers(channel.ID)
 	assert.NoError(err)
 	assert.Len(member, 2)
 }

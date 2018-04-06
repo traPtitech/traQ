@@ -6,10 +6,16 @@ import (
 
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
+	"github.com/traPtitech/traQ/utils/validator"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/gommon/log"
 	"github.com/traPtitech/traQ/model"
+)
+
+const (
+	// privateチャンネルが親に持つID
+	privateParentChannelID = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa"
 )
 
 // ChannelForResponse レスポンス用のチャンネル構造体
@@ -24,16 +30,62 @@ type ChannelForResponse struct {
 
 // PostChannel リクエストボディ用構造体
 type PostChannel struct {
-	ChannelType string   `json:"type"`
-	Member      []string `json:"member"`
-	Name        string   `json:"name"`
+	ChannelType string   `json:"type"    validate:"required,oneof=public private"`
+	Member      []string `json:"member"  validate:"lte=2"`
+	Name        string   `json:"name"    validate:"required"`
 	Parent      string   `json:"parent"`
 }
 
-const (
-	// privateチャンネルが親に持つID
-	privateParentChannelID = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa"
-)
+// validate 入力が正しいかどうかを検証します
+func (post *PostChannel) validate(userID string) error {
+	if err := validator.ValidateStruct(post); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "some values are wrong")
+	}
+
+	// TODO: 同名・同階層のチャンネルのチェック
+
+	// userから親チャンネルが見えないときは追加できない
+	if post.Parent != privateParentChannelID && post.Parent != "" {
+		_, err := validateChannelID(post.Parent, userID)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "this parent channel is not found")
+		}
+	}
+
+	if post.ChannelType == "private" {
+		post.Parent = privateParentChannelID
+		if len(post.Member) > 2 {
+			return echo.NewHTTPError(http.StatusBadRequest, "number of private channel members should be no more than 2")
+		}
+
+		if post.Member[0] != userID && post.Member[1] != userID {
+			return echo.NewHTTPError(http.StatusBadRequest, "you should join this private channel")
+		}
+
+		// DMが既に存在する場合はエラー
+		var users [2]string
+		switch len(post.Member) {
+		case 1:
+			users[0] = post.Member[0]
+			users[1] = post.Member[0]
+		case 2:
+			users[0] = post.Member[0]
+			users[1] = post.Member[1]
+		default:
+			return echo.NewHTTPError(http.StatusBadRequest, "number of private channel members should be no more than 2")
+		}
+
+		pc, err := model.GetPrivateChannel(users[0], users[1])
+		if err != nil && err != model.ErrNotFound {
+			log.Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check the existence of the private channel")
+		}
+		if pc != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "the private channel exists now")
+		}
+	}
+	return nil
+}
 
 // GetChannels GET /channels のハンドラ
 func GetChannels(c echo.Context) error {
@@ -56,7 +108,7 @@ func GetChannels(c echo.Context) error {
 		response[ch.ID].Parent = ch.ParentID
 
 		if !ch.IsPublic {
-			member, err := model.GetMembers(ch.ID)
+			member, err := model.GetPrivateChannelMembers(ch.ID)
 			if err != nil {
 				log.Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get private channel members")
@@ -75,7 +127,6 @@ func GetChannels(c echo.Context) error {
 
 // PostChannels POST /channels のハンドラ
 func PostChannels(c echo.Context) error {
-	// TODO: 同名・同階層のチャンネルのチェック
 	userID := c.Get("user").(*model.User).ID
 
 	req := &PostChannel{}
@@ -83,28 +134,38 @@ func PostChannels(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
 	}
 
-	if req.ChannelType == "" || req.Name == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Not set channelType or name")
-	}
-	if req.ChannelType != "public" && req.ChannelType != "private" {
-		return echo.NewHTTPError(http.StatusBadRequest, "channelType must be public or private.")
-	}
-
-	ch, err := createChannel(req.Name, userID, req.ChannelType, req.Parent, req.Member)
-	if err != nil {
+	if err := req.validate(userID); err != nil {
 		return err
 	}
 
-	member, err := model.GetMembers(ch.ID)
-	if err != nil {
-		log.Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get private channel members")
+	ch := &model.Channel{
+		CreatorID: userID,
+		ParentID:  req.Parent,
+		Name:      req.Name,
+		IsPublic:  req.ChannelType == "public",
+	}
+	if err := ch.Create(); err != nil {
+		log.Errorf("an error occurred while create new channel: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create new channel")
 	}
 
-	res := formatChannel(ch)
-	res.Member = member
+	if ch.IsPublic {
+		go notification.Send(events.ChannelCreated, events.ChannelEvent{ID: ch.ID})
+	} else {
+		for _, u := range req.Member {
+			upc := &model.UsersPrivateChannel{
+				ChannelID: ch.ID,
+				UserID:    u,
+			}
+			err := upc.Create()
+			if err != nil {
+				log.Errorf("failed to insert users_private_channel: %v", err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while adding notified user.")
+			}
+		}
+	}
 
-	return c.JSON(http.StatusCreated, res)
+	return c.JSON(http.StatusCreated, formatChannel(ch, []string{}, req.Member))
 }
 
 // GetChannelsByChannelID GET /channels/{channelID} のハンドラ
@@ -120,16 +181,13 @@ func GetChannelsByChannelID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get children channel id list: %v", err)
 	}
 
-	member, err := model.GetMembers(ch.ID)
+	members, err := model.GetPrivateChannelMembers(ch.ID)
 	if err != nil {
 		log.Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get private channel members")
 	}
 
-	res := formatChannel(ch)
-	res.Member = member
-	res.Children = childIDs
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, formatChannel(ch, childIDs, members))
 }
 
 // PutChannelsByChannelID PUT /channels/{channelID} のハンドラ
@@ -165,16 +223,14 @@ func PutChannelsByChannelID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to get children channel id list: %v", err))
 	}
 
-	response := ChannelForResponse{
-		ChannelID:  ch.ID,
-		Name:       ch.Name,
-		Parent:     ch.ParentID,
-		Visibility: ch.IsVisible,
-		Children:   childIDs,
+	members, err := model.GetPrivateChannelMembers(ch.ID)
+	if err != nil {
+		log.Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get private channel members")
 	}
 
 	go notification.Send(events.ChannelUpdated, events.ChannelEvent{ID: channelID})
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, formatChannel(ch, childIDs, members))
 }
 
 // DeleteChannelsByChannelID DELETE /channels/{channelID}のハンドラ
@@ -209,66 +265,6 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func createChannel(name, creatorID, channelType, parentID string, members []string) (*model.Channel, error) {
-	if parentID != privateParentChannelID && parentID != "" {
-		// 自分から見えないチャンネルの子チャンネルを作成することはできない
-		_, err := validateChannelID(parentID, creatorID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// privateChannelの場合、特殊な親を設定する
-	if channelType == "private" && parentID != privateParentChannelID {
-		parentID = privateParentChannelID
-	}
-
-	ch := &model.Channel{
-		CreatorID: creatorID,
-		ParentID:  parentID,
-		Name:      name,
-		IsPublic:  channelType == "public",
-	}
-
-	if err := ch.Create(); err != nil {
-		log.Errorf("an error occurred while create new channel: %v", err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to create new channel")
-	}
-
-	if ch.IsPublic {
-		go notification.Send(events.ChannelCreated, events.ChannelEvent{ID: ch.ID})
-	} else {
-		// FIXME: 複数人privateチャンネルができるとバグります
-		privateChannel, err := model.GetPrivateChannel(members[0], members[1])
-		if err != nil {
-			switch err {
-			case model.ErrNotFound:
-				break
-			default:
-				log.Error(err)
-				return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to check that private channel has already created")
-			}
-		}
-		if privateChannel != nil {
-			return nil, echo.NewHTTPError(http.StatusBadRequest, "the private channel exists now")
-		}
-
-		for _, u := range members {
-			upc := &model.UsersPrivateChannel{
-				ChannelID: ch.ID,
-				UserID:    u,
-			}
-			err := upc.Create()
-			if err != nil {
-				log.Errorf("failed to insert users_private_channel: %v", err)
-				return nil, echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while adding notified user.")
-			}
-		}
-	}
-
-	return ch, nil
-}
-
 func valuesChannel(m map[string]*ChannelForResponse) []*ChannelForResponse {
 	arr := []*ChannelForResponse{}
 	for _, v := range m {
@@ -277,12 +273,14 @@ func valuesChannel(m map[string]*ChannelForResponse) []*ChannelForResponse {
 	return arr
 }
 
-func formatChannel(channel *model.Channel) *ChannelForResponse {
+func formatChannel(channel *model.Channel, childIDs, members []string) *ChannelForResponse {
 	return &ChannelForResponse{
 		ChannelID:  channel.ID,
 		Name:       channel.Name,
 		Visibility: channel.IsVisible,
 		Parent:     channel.ParentID,
+		Member:     members,
+		Children:   childIDs,
 	}
 }
 
