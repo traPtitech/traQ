@@ -1,12 +1,18 @@
 package router
 
 import (
+	"github.com/traPtitech/traQ/bot"
 	"net/http"
 
 	"github.com/labstack/echo"
 )
 
 var errMySQLDuplicatedRecord uint16 = 1062
+
+// Handlers ハンドラ
+type Handlers struct {
+	Bot *bot.Dao
+}
 
 // CustomHTTPErrorHandler :json形式でエラーレスポンスを返す
 func CustomHTTPErrorHandler(err error, c echo.Context) {

@@ -14,6 +14,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/satori/go.uuid"
 	"github.com/srinathgs/mysqlstore"
+	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/model"
@@ -104,6 +105,15 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+	}
+
+	// handlers
+	botStore := &model.BotStoreImpl{}
+	if err := botStore.Init(); err != nil {
+		log.Fatal(err)
+	}
+	h := router.Handlers{
+		Bot: bot.NewDao(botStore),
 	}
 
 	e := echo.New()
@@ -232,13 +242,13 @@ func main() {
 	api.PUT("users/me/channels/visibility", router.PutChannelsVisibility, requires(permission.ChangeChannelVisibility))
 
 	// Tag: webhook
-	api.GET("/webhooks", router.GetWebhooks, requires(permission.GetWebhook))
-	api.POST("/webhooks", router.PostWebhooks, requires(permission.CreateWebhook))
-	api.GET("/webhooks/:webhookID", router.GetWebhook, requires(permission.GetWebhook))
-	api.PATCH("/webhooks/:webhookID", router.PatchWebhook, requires(permission.EditWebhook))
-	api.DELETE("/webhooks/:webhookID", router.DeleteWebhook, requires(permission.DeleteWebhook))
-	apiNoAuth.POST("/webhooks/:webhookID", router.PostWebhook)
-	apiNoAuth.POST("/webhooks/:webhookID/github", router.PostWebhookByGithub)
+	api.GET("/webhooks", h.GetWebhooks, requires(permission.GetWebhook))
+	api.POST("/webhooks", h.PostWebhooks, requires(permission.CreateWebhook))
+	api.GET("/webhooks/:webhookID", h.GetWebhook, requires(permission.GetWebhook))
+	api.PATCH("/webhooks/:webhookID", h.PatchWebhook, requires(permission.EditWebhook))
+	api.DELETE("/webhooks/:webhookID", h.DeleteWebhook, requires(permission.DeleteWebhook))
+	apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook)
+	apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub)
 
 	// Tag: authorization
 	apiNoAuth.GET("/oauth2/authorize", oauth.AuthorizationEndpointHandler)

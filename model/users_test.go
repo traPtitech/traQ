@@ -118,7 +118,7 @@ func TestUser_Update(t *testing.T) {
 	user := mustMakeUser(t, "testUpdate")
 	invalidUser := &User{Name: "!nvalid"}
 
-	icon, err := generateIcon(user.Name, serverUser.ID)
+	icon, err := GenerateIcon(user.Name)
 	assert.NoError(err)
 
 	assert.NoError(user.UpdateIconID(icon))

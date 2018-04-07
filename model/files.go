@@ -60,6 +60,9 @@ func (f *File) Create(src io.Reader) error {
 	f.ID = CreateUUID()
 	f.IsDeleted = false
 	f.Mime = mime.TypeByExtension(filepath.Ext(f.Name))
+	if len(f.CreatorID) == 0 {
+		f.CreatorID = serverUser.ID
+	}
 
 	writer, ok := fileManagers[f.Manager]
 	if !ok {

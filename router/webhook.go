@@ -1,6 +1,8 @@
 package router
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,10 +11,21 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
+	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/bot"
+	"github.com/traPtitech/traQ/external/imagemagick"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
+	"github.com/traPtitech/traQ/utils/thumb"
+	"gopkg.in/go-playground/validator.v9"
 	"gopkg.in/go-playground/webhooks.v3/github"
+	"image/jpeg"
+	"image/png"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"time"
 )
 
 type webhookForResponse struct {
@@ -25,31 +38,25 @@ type webhookForResponse struct {
 	Valid       bool      `json:"valid"`
 	CreatorID   string    `json:"creatorId"`
 	CreatedAt   time.Time `json:"createdAt"`
-	UpdaterID   string    `json:"updaterId"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 // GetWebhooks : GET /webhooks
-func GetWebhooks(c echo.Context) error {
+func (h *Handlers) GetWebhooks(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 
-	list, err := model.GetWebhooksByCreator(userID)
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
+	list := h.Bot.GetWebhooksByCreator(uuid.FromStringOrNil(userID))
 	res := make([]*webhookForResponse, len(list))
 	for i, v := range list {
-		res[i] = formatWebhook(v)
+		res[i] = formatWebhook(&v)
 	}
 
 	return c.JSON(http.StatusOK, res)
 }
 
 // PostWebhooks : POST /webhooks
-func PostWebhooks(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+func (h *Handlers) PostWebhooks(c echo.Context) error {
+	user := c.Get("user").(*model.User)
 
 	req := struct {
 		Name        string `json:"name"        form:"name"`
@@ -69,101 +76,173 @@ func PostWebhooks(c echo.Context) error {
 		}
 	}
 
-	fileID := ""
-
+	fileID := uuid.Nil
 	if c.Request().MultipartForm != nil {
 		if uploadedFile, err := c.FormFile("file"); err == nil {
-			contentType := uploadedFile.Header.Get(echo.HeaderContentType)
-			switch contentType {
-			case "image/png", "image/jpeg", "image/gif", "image/svg+xml":
-				break
-			default:
-				return echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
-			}
-
+			// ファイルサイズ制限1MB
 			if uploadedFile.Size > 1024*1024 {
 				return echo.NewHTTPError(http.StatusBadRequest, "too big image file")
 			}
 
-			file := &model.File{
-				Name:      uploadedFile.Filename,
-				Size:      uploadedFile.Size,
-				CreatorID: userID,
-			}
-
+			// ファイルタイプ確認・必要があればリサイズ
+			b := &bytes.Buffer{}
 			src, err := uploadedFile.Open()
 			if err != nil {
 				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 			defer src.Close()
+			switch uploadedFile.Header.Get(echo.HeaderContentType) {
+			case "image/png":
+				img, err := png.Decode(src)
+				if err != nil {
+					// 不正なpngである
+					return echo.NewHTTPError(http.StatusBadRequest, "bad png file")
+				}
+				if img.Bounds().Size().X > iconMaxWidth || img.Bounds().Size().Y > iconMaxHeight {
+					ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
+					defer cancel()
+					img, err = thumb.Resize(ctx, img, iconMaxWidth, iconMaxHeight)
+					if err != nil {
+						switch err {
+						case context.DeadlineExceeded:
+							// リサイズタイムアウト
+							return echo.NewHTTPError(http.StatusBadRequest, "bad png file (resize timeout)")
+						default:
+							// 予期しないエラー
+							c.Logger().Error(err)
+							return echo.NewHTTPError(http.StatusInternalServerError)
+						}
+					}
+				}
 
-			if err := file.Create(src); err != nil {
+				// bytesに戻す
+				if b, err = thumb.EncodeToPNG(img); err != nil {
+					// 予期しないエラー
+					c.Logger().Error(err)
+					return echo.NewHTTPError(http.StatusInternalServerError)
+				}
+
+			case "image/jpeg":
+				img, err := jpeg.Decode(src)
+				if err != nil {
+					// 不正なjpgである
+					return echo.NewHTTPError(http.StatusBadRequest, "bad jpg file")
+				}
+				if img.Bounds().Size().X > iconMaxWidth || img.Bounds().Size().Y > iconMaxHeight {
+					ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
+					defer cancel()
+					img, err = thumb.Resize(ctx, img, iconMaxWidth, iconMaxHeight)
+					if err != nil {
+						switch err {
+						case context.DeadlineExceeded:
+							// リサイズタイムアウト
+							return echo.NewHTTPError(http.StatusBadRequest, "bad jpg file (resize timeout)")
+						default:
+							// 予期しないエラー
+							c.Logger().Error(err)
+							return echo.NewHTTPError(http.StatusInternalServerError)
+						}
+					}
+				}
+
+				// PNGに変換
+				if b, err = thumb.EncodeToPNG(img); err != nil {
+					// 予期しないエラー
+					c.Logger().Error(err)
+					return echo.NewHTTPError(http.StatusInternalServerError)
+				}
+
+			case "image/gif":
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
+				defer cancel()
+				b, err = imagemagick.ResizeAnimationGIF(ctx, src, iconMaxWidth, iconMaxHeight, false)
+				if err != nil {
+					switch err {
+					case imagemagick.ErrUnavailable:
+						// gifは一時的にサポートされていない
+						return echo.NewHTTPError(http.StatusBadRequest, "gif file is temporarily unsupported")
+					case imagemagick.ErrUnsupportedType:
+						// 不正なgifである
+						return echo.NewHTTPError(http.StatusBadRequest, "bad gif file")
+					case context.DeadlineExceeded:
+						// リサイズタイムアウト
+						return echo.NewHTTPError(http.StatusBadRequest, "bad gif file (resize timeout)")
+					default:
+						// 予期しないエラー
+						c.Logger().Error(err)
+						return echo.NewHTTPError(http.StatusInternalServerError)
+					}
+				}
+
+			case "image/svg+xml":
+				// TODO svgバリデーション
+				io.Copy(b, src)
+
+			default:
+				return echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
+			}
+
+			// アイコン画像保存
+			file := &model.File{
+				Name: uploadedFile.Filename,
+				Size: int64(b.Len()),
+			}
+			if err := file.Create(b); err != nil {
 				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
-			fileID = file.ID
+
+			fileID = uuid.FromStringOrNil(file.ID)
 		} else if err != http.ErrMissingFile {
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 	}
 
-	wb, err := model.CreateWebhook(req.Name, req.Description, req.ChannelID, userID, fileID)
+	w, err := h.Bot.CreateWebhook(req.Name, req.Description, uuid.FromStringOrNil(req.ChannelID), user.GetUID(), fileID)
 	if err != nil {
-		switch err {
-		case model.ErrBotInvalidName:
+		switch err.(type) {
+		case *validator.InvalidValidationError:
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		default:
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-	go notification.Send(events.UserJoined, events.UserEvent{ID: wb.User.ID})
+	go notification.Send(events.UserJoined, events.UserEvent{ID: w.ID.String()})
 
-	return c.JSON(http.StatusCreated, formatWebhook(wb))
+	return c.JSON(http.StatusCreated, formatWebhook(&w))
 }
 
 // GetWebhook : GET /webhooks/:webhookID
-func GetWebhook(c echo.Context) error {
+func (h *Handlers) GetWebhook(c echo.Context) error {
 	webhookID := c.Param("webhookID")
 	userID := c.Get("user").(*model.User).ID
 
-	wb, err := model.GetWebhook(webhookID)
-	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	w, ok := h.Bot.GetWebhook(uuid.FromStringOrNil(webhookID))
+	if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
-	if wb.CreatorID != userID {
+	if w.CreatorID != uuid.FromStringOrNil(userID) {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
-	return c.JSON(http.StatusOK, formatWebhook(wb))
+	return c.JSON(http.StatusOK, formatWebhook(&w))
 }
 
 // PatchWebhook : PATCH /webhooks/:webhookID
-func PatchWebhook(c echo.Context) error {
+func (h *Handlers) PatchWebhook(c echo.Context) error {
 	webhookID := c.Param("webhookID")
-	userID := c.Get("user").(*model.User).ID
+	user := c.Get("user").(*model.User)
 
-	wb, err := model.GetWebhook(webhookID)
-	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	w, ok := h.Bot.GetWebhook(uuid.FromStringOrNil(webhookID))
+	if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
-	if wb.CreatorID != userID {
+	if w.CreatorID != user.GetUID() {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
-	if !wb.IsValid {
+	if !w.IsValid {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
@@ -175,127 +254,189 @@ func PatchWebhook(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	if len(req.Name) > 32 {
-		return echo.NewHTTPError(http.StatusBadRequest, model.ErrBotInvalidName)
-	}
 
-	if len(req.ChannelID) > 0 {
-		ch := &model.Channel{ID: req.ChannelID}
-		ok, err := ch.Exists(userID)
-		if err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-		if !ok {
-			return echo.NewHTTPError(http.StatusBadRequest, "invalid channelId")
-		}
-
-		if err := wb.UpdateChannelID(ch.ID); err != nil {
-			if errSQL, ok := err.(*mysql.MySQLError); ok {
-				if errSQL.Number == 1452 { //外部キー制約
-					return echo.NewHTTPError(http.StatusBadRequest, "invalid channelId")
-				}
-			}
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
-	fileID := ""
-
+	fileID := uuid.Nil
 	if c.Request().MultipartForm != nil {
 		if uploadedFile, err := c.FormFile("file"); err == nil {
-			contentType := uploadedFile.Header.Get(echo.HeaderContentType)
-			switch contentType {
-			case "image/png", "image/jpeg", "image/gif", "image/svg+xml":
-				break
-			default:
-				return echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
-			}
-
+			// ファイルサイズ制限1MB
 			if uploadedFile.Size > 1024*1024 {
 				return echo.NewHTTPError(http.StatusBadRequest, "too big image file")
 			}
 
-			file := &model.File{
-				Name:      uploadedFile.Filename,
-				Size:      uploadedFile.Size,
-				CreatorID: userID,
-			}
-
+			// ファイルタイプ確認・必要があればリサイズ
+			b := &bytes.Buffer{}
 			src, err := uploadedFile.Open()
 			if err != nil {
 				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 			defer src.Close()
+			switch uploadedFile.Header.Get(echo.HeaderContentType) {
+			case "image/png":
+				img, err := png.Decode(src)
+				if err != nil {
+					// 不正なpngである
+					return echo.NewHTTPError(http.StatusBadRequest, "bad png file")
+				}
+				if img.Bounds().Size().X > iconMaxWidth || img.Bounds().Size().Y > iconMaxHeight {
+					ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
+					defer cancel()
+					img, err = thumb.Resize(ctx, img, iconMaxWidth, iconMaxHeight)
+					if err != nil {
+						switch err {
+						case context.DeadlineExceeded:
+							// リサイズタイムアウト
+							return echo.NewHTTPError(http.StatusBadRequest, "bad png file (resize timeout)")
+						default:
+							// 予期しないエラー
+							c.Logger().Error(err)
+							return echo.NewHTTPError(http.StatusInternalServerError)
+						}
+					}
+				}
 
-			if err := file.Create(src); err != nil {
+				// bytesに戻す
+				if b, err = thumb.EncodeToPNG(img); err != nil {
+					// 予期しないエラー
+					c.Logger().Error(err)
+					return echo.NewHTTPError(http.StatusInternalServerError)
+				}
+
+			case "image/jpeg":
+				img, err := jpeg.Decode(src)
+				if err != nil {
+					// 不正なjpgである
+					return echo.NewHTTPError(http.StatusBadRequest, "bad jpg file")
+				}
+				if img.Bounds().Size().X > iconMaxWidth || img.Bounds().Size().Y > iconMaxHeight {
+					ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
+					defer cancel()
+					img, err = thumb.Resize(ctx, img, iconMaxWidth, iconMaxHeight)
+					if err != nil {
+						switch err {
+						case context.DeadlineExceeded:
+							// リサイズタイムアウト
+							return echo.NewHTTPError(http.StatusBadRequest, "bad jpg file (resize timeout)")
+						default:
+							// 予期しないエラー
+							c.Logger().Error(err)
+							return echo.NewHTTPError(http.StatusInternalServerError)
+						}
+					}
+				}
+
+				// PNGに変換
+				if b, err = thumb.EncodeToPNG(img); err != nil {
+					// 予期しないエラー
+					c.Logger().Error(err)
+					return echo.NewHTTPError(http.StatusInternalServerError)
+				}
+
+			case "image/gif":
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
+				defer cancel()
+				b, err = imagemagick.ResizeAnimationGIF(ctx, src, iconMaxWidth, iconMaxHeight, false)
+				if err != nil {
+					switch err {
+					case imagemagick.ErrUnavailable:
+						// gifは一時的にサポートされていない
+						return echo.NewHTTPError(http.StatusBadRequest, "gif file is temporarily unsupported")
+					case imagemagick.ErrUnsupportedType:
+						// 不正なgifである
+						return echo.NewHTTPError(http.StatusBadRequest, "bad gif file")
+					case context.DeadlineExceeded:
+						// リサイズタイムアウト
+						return echo.NewHTTPError(http.StatusBadRequest, "bad gif file (resize timeout)")
+					default:
+						// 予期しないエラー
+						c.Logger().Error(err)
+						return echo.NewHTTPError(http.StatusInternalServerError)
+					}
+				}
+
+			case "image/svg+xml":
+				// TODO svgバリデーション
+				io.Copy(b, src)
+
+			default:
+				return echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
+			}
+
+			// アイコン画像保存
+			file := &model.File{
+				Name: uploadedFile.Filename,
+				Size: int64(b.Len()),
+			}
+			if err := file.Create(b); err != nil {
 				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
-			fileID = file.ID
+
+			fileID = uuid.FromStringOrNil(file.ID)
 		} else if err != http.ErrMissingFile {
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
 	}
 
-	if len(fileID) == 36 {
-		if err := wb.UpdateIconID(fileID); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-
-		go notification.Send(events.UserIconUpdated, events.UserEvent{ID: wb.User.ID})
-	}
 	if len(req.Name) > 0 {
-		if err := wb.UpdateDisplayName(req.Name); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+		w.Name = req.Name
+		if err := h.Bot.UpdateWebhook(&w); err != nil {
+			switch err.(type) {
+			case *validator.InvalidValidationError:
+				return echo.NewHTTPError(http.StatusBadRequest, err)
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
 		}
 
-		go notification.Send(events.UserUpdated, events.UserEvent{ID: wb.User.ID})
+		go notification.Send(events.UserUpdated, events.UserEvent{ID: w.BotUserID.String()})
 	}
+
 	if len(req.Description) > 0 {
-		wb.Description = req.Description
+		w.Description = req.Description
+		if err := h.Bot.UpdateWebhook(&w); err != nil {
+			switch err.(type) {
+			case *validator.InvalidValidationError:
+				return echo.NewHTTPError(http.StatusBadRequest, err)
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+		}
 	}
 
-	if err := wb.Bot.Update(); err != nil {
-		switch err {
-		case model.ErrBotInvalidName:
-			return echo.NewHTTPError(http.StatusBadRequest, err)
-		default:
+	if fileID != uuid.Nil {
+		w.IconFileID = fileID
+		if err := h.Bot.UpdateWebhook(&w); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
+
+		go notification.Send(events.UserIconUpdated, events.UserEvent{ID: w.BotUserID.String()})
 	}
 
 	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteWebhook : DELETE /webhooks/:webhookID
-func DeleteWebhook(c echo.Context) error {
+func (h *Handlers) DeleteWebhook(c echo.Context) error {
 	webhookID := c.Param("webhookID")
-	userID := c.Get("user").(*model.User).ID
+	user := c.Get("user").(*model.User)
 
-	wb, err := model.GetWebhook(webhookID)
-	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	w, ok := h.Bot.GetWebhook(uuid.FromStringOrNil(webhookID))
+	if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
-	if wb.CreatorID != userID {
+	if w.CreatorID != user.GetUID() {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
-	if !wb.IsValid {
+	if !w.IsValid {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
-	if err := wb.Invalidate(); err != nil {
+	w.IsValid = false
+	if err := h.Bot.UpdateWebhook(&w); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -304,26 +445,20 @@ func DeleteWebhook(c echo.Context) error {
 }
 
 // PostWebhook : POST /webhooks/:webhookID
-func PostWebhook(c echo.Context) error {
+func (h *Handlers) PostWebhook(c echo.Context) error {
 	webhookID := c.Param("webhookID")
 
-	wb, err := model.GetWebhook(webhookID)
-	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	w, ok := h.Bot.GetWebhook(uuid.FromStringOrNil(webhookID))
+	if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
-	if !wb.IsValid {
+	if !w.IsValid {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
 	message := &model.Message{
-		UserID:    wb.Webhook.UserID,
-		ChannelID: wb.ChannelID,
+		UserID:    w.BotUserID.String(),
+		ChannelID: w.ChannelID.String(),
 	}
 	switch c.Request().Header.Get(echo.HeaderContentType) {
 	case echo.MIMETextPlain, echo.MIMETextPlainCharsetUTF8:
@@ -370,20 +505,14 @@ func PostWebhook(c echo.Context) error {
 }
 
 // PostWebhookByGithub : POST /webhooks/:webhookID/github
-func PostWebhookByGithub(c echo.Context) error {
+func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 	webhookID := c.Param("webhookID")
 
-	wb, err := model.GetWebhook(webhookID)
-	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	w, ok := h.Bot.GetWebhook(uuid.FromStringOrNil(webhookID))
+	if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
-	if !wb.IsValid {
+	if !w.IsValid {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
@@ -403,8 +532,8 @@ func PostWebhookByGithub(c echo.Context) error {
 
 	//MEMO 現在はサーバー側で簡単に整形してるけど、将来的にクライアント側に表示デザイン込みで任せたいよね
 	message := &model.Message{
-		UserID:    wb.Webhook.UserID,
-		ChannelID: wb.ChannelID,
+		UserID:    w.BotUserID.String(),
+		ChannelID: w.ChannelID.String(),
 	}
 
 	switch githubEvent {
@@ -478,18 +607,17 @@ func PostWebhookByGithub(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func formatWebhook(w *model.WebhookBotUser) *webhookForResponse {
+func formatWebhook(w *bot.Webhook) *webhookForResponse {
 	return &webhookForResponse{
-		WebhookID:   w.Webhook.ID,
-		BotUserID:   w.User.ID,
-		DisplayName: w.DisplayName,
+		WebhookID:   w.ID.String(),
+		BotUserID:   w.BotUserID.String(),
+		DisplayName: w.Name,
 		Description: w.Description,
-		IconFileID:  w.Icon,
-		ChannelID:   w.ChannelID,
+		IconFileID:  w.IconFileID.String(),
+		ChannelID:   w.ChannelID.String(),
 		Valid:       w.IsValid,
-		CreatorID:   w.Bot.CreatorID,
-		CreatedAt:   w.Bot.CreatedAt,
-		UpdaterID:   w.Bot.UpdaterID,
-		UpdatedAt:   w.Bot.UpdatedAt,
+		CreatorID:   w.CreatorID.String(),
+		CreatedAt:   w.CreatedAt,
+		UpdatedAt:   w.UpdatedAt,
 	}
 }
