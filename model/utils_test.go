@@ -3,9 +3,10 @@ package model
 import (
 	"bytes"
 	"fmt"
-	"github.com/traPtitech/traQ/external/storage"
 	"os"
 	"testing"
+
+	"github.com/traPtitech/traQ/external/storage"
 
 	"github.com/stretchr/testify/assert"
 
@@ -100,8 +101,10 @@ func mustMakePrivateChannel(t *testing.T, userID1, userID2, name string) *Channe
 		ChannelID: channel.ID,
 	}
 	require.NoError(t, upc.Create())
-	upc.UserID = userID2
-	require.NoError(t, upc.Create())
+	if userID1 != userID2 {
+		upc.UserID = userID2
+		require.NoError(t, upc.Create())
+	}
 	return channel
 }
 

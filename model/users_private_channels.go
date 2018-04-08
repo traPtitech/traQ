@@ -25,7 +25,6 @@ func (upc *UsersPrivateChannel) Create() (err error) {
 	if err = upc.Validate(); err != nil {
 		return err
 	}
-
 	_, err = db.InsertOne(upc)
 	return
 }
@@ -33,13 +32,23 @@ func (upc *UsersPrivateChannel) Create() (err error) {
 // GetPrivateChannel ある二つのユーザー間のプライベートチャンネルが存在するかを調べる
 func GetPrivateChannel(userID1, userID2 string) (*UsersPrivateChannel, error) {
 	upc := &UsersPrivateChannel{}
-	has, err := db.Table(upc).Join("LEFT", []string{"users_private_channels", "p"}, "p.user_id = ? AND users_private_channels.user_id = ? AND p.channel_id = users_private_channels.channel_id", userID1, userID2).
-		Get(upc)
-	if err != nil {
-		return nil, err
-	}
-	if !has {
-		return nil, ErrNotFound
+	if userID1 == userID2 {
+		// 自分宛てのDMのときの処理
+		// TODO: 自分のDMが既に存在するかどうかを調べるクエリを書く
+	} else {
+		// それ以外のDMの処理
+		// TODO: 指定されたユーザー間のDMが存在するかを確認するクエリを書く
+
+		// has, err := db.Table(upc).
+		// 	Join("LEFT", []string{"users_private_channels", "p"}, "p.user_id = ? AND p.channel_id = users_private_channels.channel_id", userID1).
+		// 	Where("users_private_channels.user_id = ?", userID2).
+		// 	Get(upc)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// if !has {
+		// 	return nil, ErrNotFound
+		// }
 	}
 	return upc, nil
 }
