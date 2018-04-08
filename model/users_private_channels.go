@@ -30,27 +30,29 @@ func (upc *UsersPrivateChannel) Create() (err error) {
 }
 
 // GetPrivateChannel ある二つのユーザー間のプライベートチャンネルが存在するかを調べる
-func GetPrivateChannel(userID1, userID2 string) (*UsersPrivateChannel, error) {
+func GetPrivateChannel(userID1, userID2 string) (string, error) {
+	// *string型の変数でchannelIDのみをGetしようとするとエラーを吐く
 	upc := &UsersPrivateChannel{}
 	if userID1 == userID2 {
 		// 自分宛てのDMのときの処理
-		// TODO: 自分のDMが既に存在するかどうかを調べるクエリを書く
+		has, err := db.SQL("SELECT channel_id FROM users_private_channels GROUP BY channel_id HAVING COUNT(*) = 1 AND GROUP_CONCAT(user_id) = ?", userID1).Get(upc)
+		if err != nil {
+			return "", err
+		}
+		if !has {
+			return "", ErrNotFound
+		}
 	} else {
-		// それ以外のDMの処理
-		// TODO: 指定されたユーザー間のDMが存在するかを確認するクエリを書く
-
-		// has, err := db.Table(upc).
-		// 	Join("LEFT", []string{"users_private_channels", "p"}, "p.user_id = ? AND p.channel_id = users_private_channels.channel_id", userID1).
-		// 	Where("users_private_channels.user_id = ?", userID2).
-		// 	Get(upc)
-		// if err != nil {
-		// 	return nil, err
-		// }
-		// if !has {
-		// 	return nil, ErrNotFound
-		// }
+		// HACK: よりよいクエリ文が見つかったら変える
+		has, err := db.SQL("SELECT u.channel_id FROM users_private_channels AS u INNER JOIN (SELECT channel_id FROM users_private_channels GROUP BY channel_id HAVING COUNT(*) = 2) AS ex ON ex.channel_id = u.channel_id AND u.user_id IN(?, ?) GROUP BY channel_id HAVING COUNT(*) = 2", userID1, userID2).Get(upc)
+		if err != nil {
+			return "", err
+		}
+		if !has {
+			return "", ErrNotFound
+		}
 	}
-	return upc, nil
+	return upc.ChannelID, nil
 }
 
 // GetPrivateChannelMembers DMのメンバーの配列を取得する

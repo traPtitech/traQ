@@ -75,12 +75,12 @@ func (post *PostChannel) validate(userID string) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "number of private channel members should be no more than 2")
 		}
 
-		pc, err := model.GetPrivateChannel(users[0], users[1])
+		pcID, err := model.GetPrivateChannel(users[0], users[1])
 		if err != nil && err != model.ErrNotFound {
 			log.Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check the existence of the private channel")
 		}
-		if pc != nil {
+		if pcID != "" {
 			return echo.NewHTTPError(http.StatusBadRequest, "the private channel exists now")
 		}
 	}

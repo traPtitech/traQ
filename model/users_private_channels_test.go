@@ -48,25 +48,25 @@ func TestGetPrivateChannel(t *testing.T) {
 	user2 := mustMakeUser(t, "private-2")
 	channel := mustMakePrivateChannel(t, user1.ID, user2.ID, "privatechannel-1")
 
-	upc, err := GetPrivateChannel(user1.ID, user2.ID)
+	upcID, err := GetPrivateChannel(user1.ID, user2.ID)
 	if assert.NoError(err) {
-		assert.Equal(channel.ID, upc.ChannelID)
+		assert.Equal(channel.ID, upcID)
 	}
 
 	channel = mustMakePrivateChannel(t, user1.ID, user1.ID, "self-channel")
-	upc, err = GetPrivateChannel(user1.ID, user1.ID)
+	upcID, err = GetPrivateChannel(user1.ID, user1.ID)
 	if assert.NoError(err) {
-		assert.Equal(channel.ID, upc)
+		assert.Equal(channel.ID, upcID)
 	}
 
 	// 異常系：存在しないprivateチャンネルを取得する
 	user3 := mustMakeUser(t, "private-3")
-	upc, err = GetPrivateChannel(user3.ID, user2.ID)
+	upcID, err = GetPrivateChannel(user3.ID, user2.ID)
 	if assert.Error(err) {
 		assert.Equal(ErrNotFound, err)
 	}
 
-	upc, err = GetPrivateChannel(user3.ID, user3.ID)
+	upcID, err = GetPrivateChannel(user3.ID, user3.ID)
 	if assert.Error(err) {
 		assert.Equal(ErrNotFound, err)
 	}
