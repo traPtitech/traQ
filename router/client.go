@@ -44,16 +44,11 @@ type AllowedClientInfo struct {
 	ApprovedAt  time.Time          `json:"approvedAt"`
 }
 
-// OAuth2APIHandler OAuth2のストアにアクセスするハンドラの集合
-type OAuth2APIHandler struct {
-	oauth2.Store
-}
-
 // GetMyTokens : GET /users/me/tokens
-func (h *OAuth2APIHandler) GetMyTokens(c echo.Context) error {
+func (h *Handlers) GetMyTokens(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 
-	ot, err := h.Store.GetTokensByUser(uuid.FromStringOrNil(userID))
+	ot, err := h.OAuth2.GetTokensByUser(uuid.FromStringOrNil(userID))
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -61,7 +56,7 @@ func (h *OAuth2APIHandler) GetMyTokens(c echo.Context) error {
 
 	res := make([]*AllowedClientInfo, len(ot))
 	for i, v := range ot {
-		oc, err := h.Store.GetClient(v.ClientID)
+		oc, err := h.OAuth2.GetClient(v.ClientID)
 		if err != nil {
 			switch err {
 			case oauth2.ErrClientNotFound:
@@ -86,11 +81,11 @@ func (h *OAuth2APIHandler) GetMyTokens(c echo.Context) error {
 }
 
 // DeleteMyToken : DELETE /users/me/tokens/:tokenID
-func (h *OAuth2APIHandler) DeleteMyToken(c echo.Context) error {
+func (h *Handlers) DeleteMyToken(c echo.Context) error {
 	tokenID := c.Param("tokenID")
 	userID := c.Get("user").(*model.User).ID
 
-	ot, err := h.Store.GetTokenByID(uuid.FromStringOrNil(tokenID))
+	ot, err := h.OAuth2.GetTokenByID(uuid.FromStringOrNil(tokenID))
 	if err != nil {
 		switch err {
 		case oauth2.ErrTokenNotFound:
@@ -105,7 +100,7 @@ func (h *OAuth2APIHandler) DeleteMyToken(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	if err := h.Store.DeleteTokenByAccess(ot.AccessToken); err != nil {
+	if err := h.OAuth2.DeleteTokenByAccess(ot.AccessToken); err != nil {
 		switch err {
 		case oauth2.ErrTokenNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
@@ -119,10 +114,10 @@ func (h *OAuth2APIHandler) DeleteMyToken(c echo.Context) error {
 }
 
 // GetClients : GET /clients
-func (h *OAuth2APIHandler) GetClients(c echo.Context) error {
+func (h *Handlers) GetClients(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 
-	oc, err := h.Store.GetClientsByUser(uuid.FromStringOrNil(userID))
+	oc, err := h.OAuth2.GetClientsByUser(uuid.FromStringOrNil(userID))
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -145,7 +140,7 @@ func (h *OAuth2APIHandler) GetClients(c echo.Context) error {
 }
 
 // PostClients : POST /clients
-func (h *OAuth2APIHandler) PostClients(c echo.Context) error {
+func (h *Handlers) PostClients(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 
 	req := struct {
@@ -187,7 +182,7 @@ func (h *OAuth2APIHandler) PostClients(c echo.Context) error {
 		Secret:       base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes()),
 		Scopes:       scopes,
 	}
-	if err := h.Store.SaveClient(client); err != nil {
+	if err := h.OAuth2.SaveClient(client); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -204,10 +199,10 @@ func (h *OAuth2APIHandler) PostClients(c echo.Context) error {
 }
 
 // GetClient : GET /clients/:clientID
-func (h *OAuth2APIHandler) GetClient(c echo.Context) error {
+func (h *Handlers) GetClient(c echo.Context) error {
 	clientID := c.Param("clientID")
 
-	oc, err := h.Store.GetClient(clientID)
+	oc, err := h.OAuth2.GetClient(clientID)
 	if err != nil {
 		switch err {
 		case oauth2.ErrClientNotFound:
@@ -227,11 +222,11 @@ func (h *OAuth2APIHandler) GetClient(c echo.Context) error {
 }
 
 // PatchClient : PATCH /clients/:clientID
-func (h *OAuth2APIHandler) PatchClient(c echo.Context) error {
+func (h *Handlers) PatchClient(c echo.Context) error {
 	clientID := c.Param("clientID")
 	userID := c.Get("user").(*model.User).ID
 
-	oc, err := h.Store.GetClient(clientID)
+	oc, err := h.OAuth2.GetClient(clientID)
 	if err != nil {
 		switch err {
 		case oauth2.ErrClientNotFound:
@@ -273,7 +268,7 @@ func (h *OAuth2APIHandler) PatchClient(c echo.Context) error {
 		oc.RedirectURI = req.RedirectURI
 	}
 
-	if err := h.Store.UpdateClient(oc); err != nil {
+	if err := h.OAuth2.UpdateClient(oc); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -282,11 +277,11 @@ func (h *OAuth2APIHandler) PatchClient(c echo.Context) error {
 }
 
 // DeleteClient : DELETE /clients/:clientID
-func (h *OAuth2APIHandler) DeleteClient(c echo.Context) error {
+func (h *Handlers) DeleteClient(c echo.Context) error {
 	clientID := c.Param("clientID")
 	userID := c.Get("user").(*model.User).ID
 
-	oc, err := h.Store.GetClient(clientID)
+	oc, err := h.OAuth2.GetClient(clientID)
 	if err != nil {
 		switch err {
 		case oauth2.ErrClientNotFound:
@@ -302,13 +297,13 @@ func (h *OAuth2APIHandler) DeleteClient(c echo.Context) error {
 	}
 
 	// revoke tokens
-	if err := h.Store.DeleteTokenByClient(clientID); err != nil {
+	if err := h.OAuth2.DeleteTokenByClient(clientID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	// delete client
-	if err := h.Store.DeleteClient(clientID); err != nil {
+	if err := h.OAuth2.DeleteClient(clientID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}

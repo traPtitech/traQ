@@ -730,13 +730,16 @@ func (store *Handler) TokenEndpointHandler(c echo.Context) error {
 func (store *Handler) IssueAccessToken(client *Client, userID uuid.UUID, redirectURI string, scope scope.AccessScopes, expire int, refresh bool) (*Token, error) {
 	newToken := &Token{
 		ID:          uuid.NewV4(),
-		ClientID:    client.ID,
 		UserID:      userID,
 		RedirectURI: redirectURI,
 		AccessToken: generateRandomString(),
 		CreatedAt:   time.Now(),
 		ExpiresIn:   expire,
 		Scopes:      scope,
+	}
+
+	if client != nil {
+		newToken.ClientID = client.ID
 	}
 
 	if refresh {

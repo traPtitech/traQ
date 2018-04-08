@@ -113,7 +113,8 @@ func main() {
 		log.Fatal(err)
 	}
 	h := router.Handlers{
-		Bot: bot.NewDao(botStore),
+		Bot:    bot.NewDao(botStore, oauth),
+		OAuth2: oauth,
 	}
 
 	e := echo.New()
@@ -259,14 +260,13 @@ func main() {
 	e.GET("/publickeys", oauth.PublicKeysHandler)
 
 	// Tag: client
-	oah := &router.OAuth2APIHandler{Store: oauth}
-	api.GET("/users/me/tokens", oah.GetMyTokens, requires(permission.GetMyTokens))
-	api.DELETE("/users/me/tokens/:tokenID", oah.DeleteMyToken, requires(permission.RevokeMyToken))
-	api.GET("/clients", oah.GetClients, requires(permission.GetClients))
-	api.POST("/clients", oah.PostClients, requires(permission.CreateClient))
-	api.GET("/clients/:clientID", oah.GetClient, requires(permission.GetClients))
-	api.PATCH("/clients/:clientID", oah.PatchClient, requires(permission.EditMyClient))
-	api.DELETE("/clients/:clientID", oah.DeleteClient, requires(permission.DeleteMyClient))
+	api.GET("/users/me/tokens", h.GetMyTokens, requires(permission.GetMyTokens))
+	api.DELETE("/users/me/tokens/:tokenID", h.DeleteMyToken, requires(permission.RevokeMyToken))
+	api.GET("/clients", h.GetClients, requires(permission.GetClients))
+	api.POST("/clients", h.PostClients, requires(permission.CreateClient))
+	api.GET("/clients/:clientID", h.GetClient, requires(permission.GetClients))
+	api.PATCH("/clients/:clientID", h.PatchClient, requires(permission.EditMyClient))
+	api.DELETE("/clients/:clientID", h.DeleteClient, requires(permission.DeleteMyClient))
 
 	// Serve UI
 	e.File("/sw.js", "./client/dist/sw.js")

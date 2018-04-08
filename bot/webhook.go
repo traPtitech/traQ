@@ -70,7 +70,7 @@ func (h *Dao) GetWebhooksByCreator(userID uuid.UUID) (result []Webhook) {
 	return result
 }
 
-// UpdateWebhook Webhookを更新します。ID, BotUserID, CreatorID, CreatedAtは更新されません。
+// UpdateWebhook Webhookを更新します。ID, BotUserID, CreatorID, CreatedAtは変えないでください。
 func (h *Dao) UpdateWebhook(webhook *Webhook) (err error) {
 	err = webhook.Validate()
 	if err != nil {

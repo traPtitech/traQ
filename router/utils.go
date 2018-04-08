@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/traPtitech/traQ/bot"
+	"github.com/traPtitech/traQ/oauth2"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -11,7 +12,8 @@ var errMySQLDuplicatedRecord uint16 = 1062
 
 // Handlers ハンドラ
 type Handlers struct {
-	Bot *bot.Dao
+	Bot    *bot.Dao
+	OAuth2 oauth2.Store
 }
 
 // CustomHTTPErrorHandler :json形式でエラーレスポンスを返す
