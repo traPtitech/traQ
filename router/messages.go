@@ -25,10 +25,11 @@ type MessageForResponse struct {
 
 // GetMessageByID GET /messages/{messageID} のハンドラ
 func GetMessageByID(c echo.Context) error {
+	userID := c.Get("user").(*model.User).ID
 	messageID := c.Param("messageID")
-	m, err := validateMessageID(messageID)
+	m, err := validateMessageID(messageID, userID)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusNotFound, "not found")
 	}
 	return c.JSON(http.StatusOK, formatMessage(m))
 }
@@ -80,7 +81,8 @@ func PostMessage(c echo.Context) error {
 
 // PutMessageByID PUT /messages/{messageID}のハンドラ
 func PutMessageByID(c echo.Context) error {
-	m, err := validateMessageID(c.Param("messageID"))
+	userID := c.Get("user").(*model.User).ID
+	m, err := validateMessageID(c.Param("messageID"), userID)
 	if err != nil {
 		return err
 	}
@@ -109,7 +111,7 @@ func DeleteMessageByID(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 	messageID := c.Param("messageID")
 
-	m, err := validateMessageID(messageID)
+	m, err := validateMessageID(messageID, userID)
 	if err != nil {
 		return err
 	}
@@ -189,7 +191,7 @@ func formatMessage(raw *model.Message) *MessageForResponse {
 }
 
 // リクエストで飛んできたmessageIDを検証する。存在する場合はそのメッセージを返す
-func validateMessageID(messageID string) (*model.Message, error) {
+func validateMessageID(messageID, userID string) (*model.Message, error) {
 	m := &model.Message{ID: messageID}
 	ok, err := m.Exists()
 	if err != nil {
@@ -198,6 +200,10 @@ func validateMessageID(messageID string) (*model.Message, error) {
 	}
 	if !ok {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "Message is not found")
+	}
+
+	if _, err := validateChannelID(m.ChannelID, userID); err != nil {
+		return nil, echo.NewHTTPError(http.StatusForbidden, "Message forbidden")
 	}
 	return m, nil
 }

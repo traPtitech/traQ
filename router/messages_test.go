@@ -26,6 +26,22 @@ func TestGetMessageByID(t *testing.T) {
 	requestWithContext(t, mw(GetMessageByID), c)
 
 	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
+
+	// 異常系: 自分から見えないメッセージは取得できない
+	postmanID := mustCreateUser(t, "p1").ID
+	privateID := mustMakePrivateChannel(t, postmanID, mustCreateUser(t, "p2").ID, "private").ID
+	message = mustMakeMessage(t, postmanID, privateID)
+
+	c, rec = getContext(e, t, cookie, nil)
+	c.SetPath("/messages/:messageID")
+	c.SetParamNames("messageID")
+	c.SetParamValues(message.ID)
+
+	err := mw(GetMessageByID)(c)
+
+	if assert.Error(err) {
+		assert.Equal(http.StatusNotFound, err.(*echo.HTTPError).Code)
+	}
 }
 
 func TestGetMessagesByChannelID(t *testing.T) {
