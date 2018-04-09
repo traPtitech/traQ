@@ -3,13 +3,11 @@ package router
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 
-	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -114,17 +112,9 @@ func TestPostChannels(t *testing.T) {
 	require.NoError(err)
 
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	if cookie != nil {
-		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
-	}
-	rec = httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	err = mw(PostChannels)(c)
+	rec = request(e, t, mw(PostChannels), cookie, req)
 
-	if assert.Error(err) {
-		assert.Equal(http.StatusBadRequest, err.(*echo.HTTPError).Code)
-	}
+	assert.Equal(http.StatusBadRequest, rec.Code)
 }
 
 func TestGetChannelsByChannelID(t *testing.T) {
