@@ -26,6 +26,7 @@ type ChannelForResponse struct {
 	Children   []string `json:"children"`
 	Member     []string `json:"member"`
 	Visibility bool     `json:"visibility"`
+	Force      bool     `json:"force"`
 }
 
 // PostChannel リクエストボディ用構造体
@@ -108,6 +109,7 @@ func GetChannels(c echo.Context) error {
 		response[ch.ID].Name = ch.Name
 		response[ch.ID].Visibility = ch.IsVisible
 		response[ch.ID].Parent = ch.ParentID
+		response[ch.ID].Force = ch.IsForced
 
 		if !ch.IsPublic {
 			member, err := model.GetPrivateChannelMembers(ch.ID)
@@ -192,47 +194,54 @@ func GetChannelsByChannelID(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatChannel(ch, childIDs, members))
 }
 
-// PutChannelsByChannelID PUT /channels/{channelID} のハンドラ
-func PutChannelsByChannelID(c echo.Context) error {
+// PatchChannelsByChannelID PATCH /channels/{channelID} のハンドラ
+func PatchChannelsByChannelID(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
+	channelID := c.Param("channelID")
 
 	req := struct {
-		Name       string `json:"name"`
-		Parent     string `json:"parent"`
-		Visibility bool   `json:"visibility"`
+		Name       *string `json:"name"`
+		Parent     *string `json:"parent"`
+		Visibility *bool   `json:"visibility"`
+		Force      *bool   `json:"force"`
 	}{}
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	channelID := c.Param("channelID")
+	// チャンネル検証
 	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
 		return err
 	}
 
-	ch.Name = req.Name
-	ch.ParentID = req.Parent
-	ch.IsVisible = req.Visibility
+	if req.Name != nil && len(*req.Name) > 0 {
+		ch.Name = *req.Name
+	}
+	if req.Parent != nil {
+		ch.ParentID = *req.Parent
+	}
+	if req.Visibility != nil {
+		ch.IsVisible = *req.Visibility
+	}
+	if req.Force != nil {
+		ch.IsForced = *req.Force
+	}
 	ch.UpdaterID = userID
 
+	// 検証
+	if err := ch.Validate(); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	// 更新
 	if err := ch.Update(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while update channel")
-	}
-
-	childIDs, err := ch.Children(userID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to get children channel id list: %v", err))
-	}
-
-	members, err := model.GetPrivateChannelMembers(ch.ID)
-	if err != nil {
-		log.Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get private channel members")
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	go notification.Send(events.ChannelUpdated, events.ChannelEvent{ID: channelID})
-	return c.JSON(http.StatusOK, formatChannel(ch, childIDs, members))
+	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteChannelsByChannelID DELETE /channels/{channelID}のハンドラ
@@ -283,6 +292,7 @@ func formatChannel(channel *model.Channel, childIDs, members []string) *ChannelF
 		Parent:     channel.ParentID,
 		Member:     members,
 		Children:   childIDs,
+		Force:      channel.IsForced,
 	}
 }
 
