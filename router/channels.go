@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	// privateチャンネルが親に持つID
+	// DMのチャンネルが親に持つID
 	privateParentChannelID = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa"
 )
 
@@ -30,6 +30,7 @@ type ChannelForResponse struct {
 
 // PostChannel リクエストボディ用構造体
 type PostChannel struct {
+	// TODO: DM以外のprivateチャンネルに対応する場合は修正が必要
 	ChannelType string   `json:"type"    validate:"required,oneof=public private"`
 	Member      []string `json:"member"  validate:"lte=2"`
 	Name        string   `json:"name"    validate:"required"`
@@ -53,6 +54,7 @@ func (post *PostChannel) validate(userID string) error {
 	}
 
 	if post.ChannelType == "private" {
+		// TODO: DM以外のprivateチャンネルに対応する場合は修正が必要
 		post.Parent = privateParentChannelID
 		if len(post.Member) > 2 {
 			return echo.NewHTTPError(http.StatusBadRequest, "number of private channel members should be no more than 2")
