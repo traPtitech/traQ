@@ -84,12 +84,15 @@ func getStarsResponse(userID string) ([]*ChannelForResponse, error) {
 	}
 	responseBody := make([]*ChannelForResponse, 0)
 	for _, channel := range staredChannels {
-		channelForResponse := formatChannel(channel)
-		channelForResponse.Children, err = channel.Children(userID)
+		childIDs, err := channel.Children(userID)
 		if err != nil {
 			return nil, err
 		}
-		responseBody = append(responseBody, channelForResponse)
+		members, err := model.GetPrivateChannelMembers(channel.ID)
+		if err != nil {
+			return nil, err
+		}
+		responseBody = append(responseBody, formatChannel(channel, childIDs, members))
 	}
 	return responseBody, nil
 }
