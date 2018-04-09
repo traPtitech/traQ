@@ -107,13 +107,8 @@ func main() {
 		}
 	}
 
-	// handlers
-	botStore := &model.BotStoreImpl{}
-	if err := botStore.Init(); err != nil {
-		log.Fatal(err)
-	}
 	h := router.Handlers{
-		Bot:    bot.NewDao(botStore, oauth),
+		Bot:    bot.NewDao(&model.BotStoreImpl{}, oauth),
 		OAuth2: oauth,
 	}
 

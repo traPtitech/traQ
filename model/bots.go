@@ -7,49 +7,235 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 )
 
 // BotStoreImpl Botデータ用ストアの実装
-type BotStoreImpl struct {
-	webhooks    sync.Map
-	plugins     sync.Map
-	generalBots sync.Map
-	installed   sync.Map
+type BotStoreImpl struct{}
+
+// SavePostLog Botのポストログをdbに保存
+func (s *BotStoreImpl) SavePostLog(reqID, botUserID uuid.UUID, status int, request, response, error string) error {
+	l := &BotOutgoingPostLog{
+		RequestID:  reqID.String(),
+		BotUserID:  botUserID.String(),
+		StatusCode: status,
+		Request:    request,
+		Response:   response,
+		Error:      error,
+		Timestamp:  time.Now().UnixNano(),
+	}
+
+	if _, err := db.InsertOne(l); err != nil {
+		return err
+	}
+	return nil
 }
 
-// Init BotStoreを初期化。必ず呼ぶこと
-func (s *BotStoreImpl) Init() error {
-	var webhooks []*WebhookBotUser
-	if err := db.Join("INNER", "webhook_bots", "webhook_bots.bot_user_id = users.id").Find(&webhooks); err != nil {
-		return err
+// SavePlugin Pluginをdbに保存
+func (s *BotStoreImpl) SavePlugin(bp *bot.Plugin) error {
+	u := &User{
+		ID:          bp.BotUserID.String(),
+		Name:        "Plugin#" + base64.RawStdEncoding.EncodeToString(bp.BotUserID.Bytes()),
+		DisplayName: bp.DisplayName,
+		Email:       "",
+		Password:    "",
+		Salt:        "",
+		Icon:        bp.IconFileID.String(),
+		Status:      0, //TODO
+		Bot:         true,
+		BotType:     bot.TypePlugin,
+		Role:        role.Bot.ID(), //FIXME
 	}
-	for _, v := range webhooks {
-		id := uuid.Must(uuid.FromString(v.WebhookBot.ID))
-		s.webhooks.Store(id, bot.Webhook{
-			ID:          id,
-			BotUserID:   uuid.Must(uuid.FromString(v.WebhookBot.BotUserID)),
-			Name:        v.User.DisplayName,
-			Description: v.WebhookBot.Description,
-			ChannelID:   uuid.Must(uuid.FromString(v.WebhookBot.ChannelID)),
-			IconFileID:  uuid.Must(uuid.FromString(v.User.Icon)),
-			CreatorID:   uuid.Must(uuid.FromString(v.WebhookBot.CreatorID)),
-			CreatedAt:   v.WebhookBot.CreatedAt,
-			UpdatedAt:   v.WebhookBot.UpdatedAt,
-			IsValid:     v.WebhookBot.IsValid,
-		})
+	p := &Plugin{
+		ID:                bp.ID.String(),
+		BotUserID:         bp.BotUserID.String(),
+		Description:       bp.Description,
+		Command:           bp.Command,
+		Usage:             bp.Usage,
+		VerificationToken: bp.VerificationToken,
+		AccessTokenID:     bp.AccessTokenID.String(),
+		PostURL:           bp.PostURL.String(),
+		Activated:         bp.Activated,
+		IsValid:           bp.IsValid,
+		CreatorID:         bp.CreatorID.String(),
+		CreatedAt:         bp.CreatedAt,
+		UpdatedAt:         bp.UpdatedAt,
 	}
 
-	var gbs []*GeneralBotUser
-	if err := db.Join("INNER", "general_bots", "general_bots.bot_user_id = users.id").Find(&gbs); err != nil {
+	if _, err := db.UseBool().Insert(u, p); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+// UpdatePlugin Pluginをdbに保存
+func (s *BotStoreImpl) UpdatePlugin(b *bot.Plugin) error {
+	if _, err := db.ID(b.BotUserID.String()).Update(&User{
+		DisplayName: b.DisplayName,
+		Icon:        b.IconFileID.String(),
+	}); err != nil {
+		return err
+	}
+	if _, err := db.ID(b.ID.String()).UseBool("is_valid", "activated").Update(&Plugin{
+		Description:       b.Description,
+		Usage:             b.Usage,
+		VerificationToken: b.VerificationToken,
+		AccessTokenID:     b.AccessTokenID.String(),
+		PostURL:           b.PostURL.String(),
+		Activated:         b.Activated,
+		IsValid:           b.IsValid,
+		CreatorID:         b.CreatorID.String(),
+		UpdatedAt:         b.UpdatedAt,
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetAllPlugins Pluginを全て取得
+func (s *BotStoreImpl) GetAllPlugins() (arr []bot.Plugin, err error) {
+	var ps []*PluginUser
+	if err := db.Join("INNER", "plugins", "plugins.bot_user_id = users.id").Find(&ps); err != nil {
+		return nil, err
+	}
+	for _, v := range ps {
+		postURL, _ := url.Parse(v.Plugin.PostURL)
+		arr = append(arr, bot.Plugin{
+			ID:                uuid.Must(uuid.FromString(v.Plugin.ID)),
+			BotUserID:         uuid.Must(uuid.FromString(v.Plugin.BotUserID)),
+			DisplayName:       v.User.DisplayName,
+			Description:       v.Plugin.Description,
+			Command:           v.Command,
+			Usage:             v.Usage,
+			IconFileID:        uuid.Must(uuid.FromString(v.User.Icon)),
+			VerificationToken: v.Plugin.VerificationToken,
+			AccessTokenID:     uuid.Must(uuid.FromString(v.Plugin.AccessTokenID)),
+			PostURL:           *postURL,
+			Activated:         v.Plugin.Activated,
+			IsValid:           v.Plugin.IsValid,
+			CreatorID:         uuid.Must(uuid.FromString(v.Plugin.CreatorID)),
+			CreatedAt:         v.Plugin.CreatedAt,
+			UpdatedAt:         v.Plugin.UpdatedAt,
+		})
+	}
+	return
+}
+
+// SaveGeneralBot GeneralBotをdbに保存
+func (s *BotStoreImpl) SaveGeneralBot(b *bot.GeneralBot) error {
+	u := &User{
+		ID:          b.BotUserID.String(),
+		Name:        b.Name,
+		DisplayName: b.DisplayName,
+		Email:       "",
+		Password:    "",
+		Salt:        "",
+		Icon:        b.IconFileID.String(),
+		Status:      0, //TODO
+		Bot:         true,
+		BotType:     bot.TypeGeneral,
+		Role:        role.Bot.ID(), //FIXME
+	}
+	gb := &GeneralBot{
+		ID:                b.ID.String(),
+		BotUserID:         b.BotUserID.String(),
+		Description:       b.Description,
+		VerificationToken: b.VerificationToken,
+		AccessTokenID:     b.AccessTokenID.String(),
+		PostURL:           b.PostURL.String(),
+		SubscribeEvents:   strings.Join(b.SubscribeEvents, " "),
+		Activated:         b.Activated,
+		IsValid:           b.IsValid,
+		OwnerID:           b.OwnerID.String(),
+		CreatedAt:         b.CreatedAt,
+		UpdatedAt:         b.UpdatedAt,
+	}
+
+	if _, err := db.UseBool().Insert(u, gb); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateGeneralBot GeneralBotをdbに保存
+func (s *BotStoreImpl) UpdateGeneralBot(b *bot.GeneralBot) error {
+	if _, err := db.ID(b.BotUserID.String()).Update(&User{
+		DisplayName: b.DisplayName,
+		Icon:        b.IconFileID.String(),
+	}); err != nil {
+		return err
+	}
+	if _, err := db.ID(b.ID.String()).UseBool("is_valid", "activated").Update(&GeneralBot{
+		Description:       b.Description,
+		VerificationToken: b.VerificationToken,
+		AccessTokenID:     b.AccessTokenID.String(),
+		PostURL:           b.PostURL.String(),
+		SubscribeEvents:   strings.Join(b.SubscribeEvents, " "),
+		Activated:         b.Activated,
+		IsValid:           b.IsValid,
+		OwnerID:           b.OwnerID.String(),
+		UpdatedAt:         b.UpdatedAt,
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetAllBotsInstalledChannels BotInstalledChannelを全て取得
+func (s *BotStoreImpl) GetAllBotsInstalledChannels() (arr []bot.InstalledChannel, err error) {
+	var bics []BotInstalledChannel
+	if err = db.Find(&bics); err != nil {
+		return nil, err
+	}
+	for _, v := range bics {
+		arr = append(arr, bot.InstalledChannel{
+			BotID:       uuid.Must(uuid.FromString(v.BotID)),
+			ChannelID:   uuid.Must(uuid.FromString(v.ChannelID)),
+			InstalledBy: uuid.Must(uuid.FromString(v.InstalledBy)),
+		})
+	}
+	return
+}
+
+// InstallBot GeneralBotをチャンネルにインストール(db)
+func (s *BotStoreImpl) InstallBot(botID, channelID, userID uuid.UUID) error {
+	bic := &BotInstalledChannel{
+		BotID:       botID.String(),
+		ChannelID:   channelID.String(),
+		InstalledBy: userID.String(),
+	}
+
+	if _, err := db.InsertOne(bic); err != nil {
+		return err
+	}
+	return nil
+}
+
+// UninstallBot GeneralBotをチャンネルからアンインストール(db)
+func (s *BotStoreImpl) UninstallBot(botID, channelID uuid.UUID) error {
+	bic := &BotInstalledChannel{
+		BotID:     botID.String(),
+		ChannelID: channelID.String(),
+	}
+
+	if _, err := db.Delete(bic); err != nil {
+		return err
+	}
+	return nil
+}
+
+// GetAllGeneralBots GeneralBotを全て取得
+func (s *BotStoreImpl) GetAllGeneralBots() (arr []bot.GeneralBot, err error) {
+	var gbs []*GeneralBotUser
+	if err := db.Join("INNER", "general_bots", "general_bots.bot_user_id = users.id").Find(&gbs); err != nil {
+		return nil, err
+	}
 	for _, v := range gbs {
-		id := uuid.Must(uuid.FromString(v.GeneralBot.ID))
 		postURL, _ := url.Parse(v.GeneralBot.PostURL)
-		s.generalBots.Store(id, bot.GeneralBot{
-			ID:                id,
+		arr = append(arr, bot.GeneralBot{
+			ID:                uuid.Must(uuid.FromString(v.GeneralBot.ID)),
 			BotUserID:         uuid.Must(uuid.FromString(v.GeneralBot.BotUserID)),
 			Name:              v.User.Name,
 			DisplayName:       v.User.DisplayName,
@@ -65,243 +251,83 @@ func (s *BotStoreImpl) Init() error {
 			CreatedAt:         v.GeneralBot.CreatedAt,
 			UpdatedAt:         v.GeneralBot.UpdatedAt,
 		})
-
-		var bics []BotInstalledChannel
-		if err := db.Where("bot_id = ?", v.GeneralBot.ID).Find(&bics); err != nil {
-			return err
-		}
-		for _, v := range bics {
-			s.installed.Store(bot.InstalledChannel{
-				BotID:       uuid.Must(uuid.FromString(v.BotID)),
-				ChannelID:   uuid.Must(uuid.FromString(v.ChannelID)),
-				InstalledBy: uuid.Must(uuid.FromString(v.InstalledBy)),
-			}, struct{}{})
-		}
 	}
-
-	return nil
-}
-
-func (s *BotStoreImpl) SaveGeneralBot(b *bot.GeneralBot) error {
-	_, ok := s.GetGeneralBot(b.ID)
-	if !ok {
-		u := &User{
-			ID:          b.BotUserID.String(),
-			Name:        b.Name,
-			DisplayName: b.DisplayName,
-			Email:       "",
-			Password:    "",
-			Salt:        "",
-			Icon:        b.IconFileID.String(),
-			Status:      0, //TODO
-			Bot:         true,
-			BotType:     bot.TypeGeneral,
-			Role:        role.Bot.ID(), //FIXME
-		}
-		gb := &GeneralBot{
-			ID:                b.ID.String(),
-			BotUserID:         b.BotUserID.String(),
-			Description:       b.Description,
-			VerificationToken: b.VerificationToken,
-			AccessTokenID:     b.AccessTokenID.String(),
-			PostURL:           b.PostURL.String(),
-			SubscribeEvents:   strings.Join(b.SubscribeEvents, " "),
-			Activated:         b.Activated,
-			IsValid:           b.IsValid,
-			OwnerID:           b.OwnerID.String(),
-			CreatedAt:         b.CreatedAt,
-			UpdatedAt:         b.UpdatedAt,
-		}
-
-		if _, err := db.UseBool().Insert(u, gb); err != nil {
-			return err
-		}
-		s.generalBots.Store(b.ID, *b)
-	} else {
-		if _, err := db.ID(b.BotUserID.String()).Update(&User{
-			DisplayName: b.DisplayName,
-			Icon:        b.IconFileID.String(),
-		}); err != nil {
-			return err
-		}
-		if _, err := db.ID(b.ID.String()).UseBool("is_valid", "activated").Update(&GeneralBot{
-			Description:       b.Description,
-			VerificationToken: b.VerificationToken,
-			AccessTokenID:     b.AccessTokenID.String(),
-			PostURL:           b.PostURL.String(),
-			SubscribeEvents:   strings.Join(b.SubscribeEvents, " "),
-			Activated:         b.Activated,
-			IsValid:           b.IsValid,
-			OwnerID:           b.OwnerID.String(),
-			UpdatedAt:         b.UpdatedAt,
-		}); err != nil {
-			return err
-		}
-		s.generalBots.Store(b.ID, *b)
-	}
-
-	return nil
-}
-
-func (s *BotStoreImpl) GetInstalledChannels(botID uuid.UUID) (arr []bot.InstalledChannel) {
-	s.installed.Range(func(value, _ interface{}) bool {
-		ic := value.(bot.InstalledChannel)
-		if ic.BotID == botID {
-			arr = append(arr, ic)
-		}
-		return true
-	})
 	return
-}
-
-func (s *BotStoreImpl) GetInstalledBot(channelID uuid.UUID) (arr []bot.InstalledChannel) {
-	s.installed.Range(func(value, _ interface{}) bool {
-		ic := value.(bot.InstalledChannel)
-		if ic.ChannelID == channelID {
-			arr = append(arr, ic)
-		}
-		return true
-	})
-	return
-}
-
-func (s *BotStoreImpl) InstallBot(botID, channelID, userID uuid.UUID) error {
-	bic := &BotInstalledChannel{
-		BotID:       botID.String(),
-		ChannelID:   channelID.String(),
-		InstalledBy: userID.String(),
-	}
-
-	if _, err := db.InsertOne(bic); err != nil {
-		return err
-	}
-	s.installed.Store(bot.InstalledChannel{
-		BotID:       botID,
-		ChannelID:   channelID,
-		InstalledBy: userID,
-	}, struct{}{})
-	return nil
-}
-
-func (s *BotStoreImpl) UninstallBot(botID, channelID uuid.UUID) error {
-	var uid uuid.UUID
-	s.installed.Range(func(value, _ interface{}) bool {
-		v := value.(bot.InstalledChannel)
-		if v.BotID == botID && v.ChannelID == channelID {
-			uid = v.InstalledBy
-			return false
-		}
-		return true
-	})
-
-	if uid == uuid.Nil {
-		return nil
-	}
-
-	bic := &BotInstalledChannel{
-		BotID:     botID.String(),
-		ChannelID: channelID.String(),
-	}
-
-	if _, err := db.Delete(bic); err != nil {
-		return err
-	}
-	s.installed.Delete(bot.InstalledChannel{
-		BotID:       botID,
-		ChannelID:   channelID,
-		InstalledBy: uid,
-	})
-	return nil
-}
-
-// GetAllGeneralBots GeneralBotを全て取得
-func (s *BotStoreImpl) GetAllGeneralBots() (arr []bot.GeneralBot) {
-	s.generalBots.Range(func(key, value interface{}) bool {
-		arr = append(arr, value.(bot.GeneralBot))
-		return true
-	})
-	return
-}
-
-// GetGeneralBot GeneralBotを取得
-func (s *BotStoreImpl) GetGeneralBot(id uuid.UUID) (bot.GeneralBot, bool) {
-	b, ok := s.generalBots.Load(id)
-	if !ok {
-		return bot.GeneralBot{}, false
-	}
-	return b.(bot.GeneralBot), true
 }
 
 // SaveWebhook Webhookをdbに保存
 func (s *BotStoreImpl) SaveWebhook(w *bot.Webhook) error {
-	_, ok := s.GetWebhook(w.ID)
-	if !ok {
-		u := &User{
-			ID:          w.BotUserID.String(),
-			Name:        "Webhook#" + base64.RawStdEncoding.EncodeToString(w.BotUserID.Bytes()),
-			DisplayName: w.Name,
-			Email:       "",
-			Password:    "",
-			Salt:        "",
-			Icon:        w.IconFileID.String(),
-			Status:      0, //TODO
-			Bot:         true,
-			BotType:     bot.TypeWebhook,
-			Role:        role.Bot.ID(), //FIXME
-		}
-		wb := &WebhookBot{
-			ID:          w.ID.String(),
-			BotUserID:   w.BotUserID.String(),
-			Description: w.Description,
-			ChannelID:   w.ChannelID.String(),
-			IsValid:     w.IsValid,
-			CreatorID:   w.CreatorID.String(),
-			CreatedAt:   w.CreatedAt,
-			UpdatedAt:   w.UpdatedAt,
-		}
-
-		if _, err := db.UseBool().Insert(u, wb); err != nil {
-			return err
-		}
-		s.webhooks.Store(w.ID, *w)
-	} else {
-		if _, err := db.ID(w.BotUserID.String()).Update(&User{
-			DisplayName: w.Name,
-			Icon:        w.IconFileID.String(),
-		}); err != nil {
-			return err
-		}
-		if _, err := db.ID(w.ID.String()).UseBool("is_valid").Update(&WebhookBot{
-			Description: w.Description,
-			ChannelID:   w.ChannelID.String(),
-			IsValid:     w.IsValid,
-			CreatorID:   w.CreatorID.String(),
-			UpdatedAt:   w.UpdatedAt,
-		}); err != nil {
-			return err
-		}
-		s.webhooks.Store(w.ID, *w)
+	u := &User{
+		ID:          w.BotUserID.String(),
+		Name:        "Webhook#" + base64.RawStdEncoding.EncodeToString(w.BotUserID.Bytes()),
+		DisplayName: w.Name,
+		Email:       "",
+		Password:    "",
+		Salt:        "",
+		Icon:        w.IconFileID.String(),
+		Status:      0, //TODO
+		Bot:         true,
+		BotType:     bot.TypeWebhook,
+		Role:        role.Bot.ID(), //FIXME
+	}
+	wb := &WebhookBot{
+		ID:          w.ID.String(),
+		BotUserID:   w.BotUserID.String(),
+		Description: w.Description,
+		ChannelID:   w.ChannelID.String(),
+		IsValid:     w.IsValid,
+		CreatorID:   w.CreatorID.String(),
+		CreatedAt:   w.CreatedAt,
+		UpdatedAt:   w.UpdatedAt,
 	}
 
+	if _, err := db.UseBool().Insert(u, wb); err != nil {
+		return err
+	}
+	return nil
+}
+
+// UpdateWebhook Webhookをdbに保存
+func (s *BotStoreImpl) UpdateWebhook(w *bot.Webhook) error {
+	if _, err := db.ID(w.BotUserID.String()).Update(&User{
+		DisplayName: w.Name,
+		Icon:        w.IconFileID.String(),
+	}); err != nil {
+		return err
+	}
+	if _, err := db.ID(w.ID.String()).UseBool("is_valid").Update(&WebhookBot{
+		Description: w.Description,
+		ChannelID:   w.ChannelID.String(),
+		IsValid:     w.IsValid,
+		CreatorID:   w.CreatorID.String(),
+		UpdatedAt:   w.UpdatedAt,
+	}); err != nil {
+		return err
+	}
 	return nil
 }
 
 // GetAllWebhooks Webhookを全て取得
-func (s *BotStoreImpl) GetAllWebhooks() (arr []bot.Webhook) {
-	s.webhooks.Range(func(key, value interface{}) bool {
-		arr = append(arr, value.(bot.Webhook))
-		return true
-	})
-	return
-}
-
-// GetWebhook Webhookを取得
-func (s *BotStoreImpl) GetWebhook(id uuid.UUID) (bot.Webhook, bool) {
-	w, ok := s.webhooks.Load(id)
-	if !ok {
-		return bot.Webhook{}, false
+func (s *BotStoreImpl) GetAllWebhooks() (arr []bot.Webhook, err error) {
+	var webhooks []*WebhookBotUser
+	if err = db.Join("INNER", "webhook_bots", "webhook_bots.bot_user_id = users.id").Find(&webhooks); err != nil {
+		return nil, err
 	}
-	return w.(bot.Webhook), true
+	for _, v := range webhooks {
+		arr = append(arr, bot.Webhook{
+			ID:          uuid.Must(uuid.FromString(v.WebhookBot.ID)),
+			BotUserID:   uuid.Must(uuid.FromString(v.WebhookBot.BotUserID)),
+			Name:        v.User.DisplayName,
+			Description: v.WebhookBot.Description,
+			ChannelID:   uuid.Must(uuid.FromString(v.WebhookBot.ChannelID)),
+			IconFileID:  uuid.Must(uuid.FromString(v.User.Icon)),
+			CreatorID:   uuid.Must(uuid.FromString(v.WebhookBot.CreatorID)),
+			CreatedAt:   v.WebhookBot.CreatedAt,
+			UpdatedAt:   v.WebhookBot.UpdatedAt,
+			IsValid:     v.WebhookBot.IsValid,
+		})
+	}
+	return
 }
 
 // Plugin Plugin構造体
@@ -358,11 +384,13 @@ type BotInstalledChannel struct {
 
 // BotOutgoingPostLog BotのPOST URLへのリクエストの結果のログ構造体
 type BotOutgoingPostLog struct {
-	ID         string    `xorm:"char(36) not null pk"`
-	BotUserID  string    `xorm:"char(36) not null"`
-	StatusCode int       `xorm:"int not null"`
-	Summary    string    `xorm:"text not null"`
-	DateTime   time.Time `xorm:"timestamp not null"`
+	RequestID  string `xorm:"char(36) not null pk"`
+	BotUserID  string `xorm:"char(36) not null"`
+	StatusCode int    `xorm:"int not null"`
+	Request    string `xorm:"text not null"`
+	Response   string `xorm:"text not null"`
+	Error      string `xorm:"text not null"`
+	Timestamp  int64  `xorm:"int64 not null"`
 }
 
 // TableName Pluginのテーブル名
@@ -409,5 +437,16 @@ type GeneralBotUser struct {
 
 // TableName JOIN処理用
 func (*GeneralBotUser) TableName() string {
+	return "users"
+}
+
+// PluginUser PluginUser構造体 内部にUser, Pluginを内包
+type PluginUser struct {
+	*User   `xorm:"extends"`
+	*Plugin `xorm:"extends"`
+}
+
+// TableName JOIN処理用
+func (*PluginUser) TableName() string {
 	return "users"
 }

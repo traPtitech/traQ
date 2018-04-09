@@ -47,17 +47,33 @@ func (h *Dao) CreateWebhook(name, description string, channelID, creatorID, icon
 		return Webhook{}, err
 	}
 
+	h.webhooks.Store(w.ID, *w)
 	return *w, nil
 }
 
 // GetWebhook Webhookを取得します
 func (h *Dao) GetWebhook(id uuid.UUID) (Webhook, bool) {
-	return h.store.GetWebhook(id)
+	w, ok := h.webhooks.Load(id)
+	if !ok {
+		return Webhook{}, false
+	}
+	wh := w.(Webhook)
+	if !wh.IsValid {
+		return Webhook{}, false
+	}
+	return wh, true
 }
 
 // GetAllWebhooks 全てのWebhookを取得します
-func (h *Dao) GetAllWebhooks() []Webhook {
-	return h.store.GetAllWebhooks()
+func (h *Dao) GetAllWebhooks() (arr []Webhook) {
+	h.webhooks.Range(func(key, value interface{}) bool {
+		v := value.(Webhook)
+		if v.IsValid {
+			arr = append(arr, v)
+		}
+		return true
+	})
+	return
 }
 
 // GetWebhooksByCreator 指定した登録者のWebhookを全て取得します
@@ -71,10 +87,16 @@ func (h *Dao) GetWebhooksByCreator(userID uuid.UUID) (result []Webhook) {
 }
 
 // UpdateWebhook Webhookを更新します。ID, BotUserID, CreatorID, CreatedAtは変えないでください。
-func (h *Dao) UpdateWebhook(webhook *Webhook) (err error) {
-	err = webhook.Validate()
+func (h *Dao) UpdateWebhook(w *Webhook) (err error) {
+	err = w.Validate()
 	if err != nil {
 		return err
 	}
-	return h.store.SaveWebhook(webhook)
+
+	if err := h.store.SaveWebhook(w); err != nil {
+		return err
+	}
+
+	h.webhooks.Store(w.ID, *w)
+	return nil
 }

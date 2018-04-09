@@ -228,7 +228,21 @@ func (*DefaultStore) GetTokenByID(id uuid.UUID) (*oauth2.Token, error) {
 		Scopes:       scope,
 	}
 	return token, nil
+}
 
+// DeleteTokenByID : トークンIDからトークンを削除します
+func (*DefaultStore) DeleteTokenByID(id uuid.UUID) error {
+	ot, err := model.GetOAUth2TokenByID(id.String())
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return nil
+		default:
+			return err
+		}
+	}
+
+	return ot.Delete()
 }
 
 // GetTokenByAccess : アクセストークンからトークンを取得します

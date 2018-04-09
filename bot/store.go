@@ -7,25 +7,29 @@ type Store interface {
 	WebhookStore
 	GeneralBotStore
 	PluginStore
+	SavePostLog(reqID, botUserID uuid.UUID, status int, request, response, error string) error
 }
 
 // WebhookStore Webhookデータ用ストア
 type WebhookStore interface {
 	SaveWebhook(webhook *Webhook) error
-	GetAllWebhooks() []Webhook
-	GetWebhook(id uuid.UUID) (Webhook, bool)
+	UpdateWebhook(webhook *Webhook) error
+	GetAllWebhooks() ([]Webhook, error)
 }
 
 // GeneralBotStore GeneralBotデータ用ストア
 type GeneralBotStore interface {
 	SaveGeneralBot(bot *GeneralBot) error
-	GetAllGeneralBots() []GeneralBot
-	GetGeneralBot(id uuid.UUID) (GeneralBot, bool)
-	GetInstalledChannels(botID uuid.UUID) []InstalledChannel
-	GetInstalledBot(channelID uuid.UUID) []InstalledChannel
+	UpdateGeneralBot(bot *GeneralBot) error
+	GetAllGeneralBots() ([]GeneralBot, error)
+	GetAllBotsInstalledChannels() ([]InstalledChannel, error)
 	InstallBot(botID, channelID, userID uuid.UUID) error
 	UninstallBot(botID, channelID uuid.UUID) error
 }
 
+// PluginStore Pluginデータ用ストア
 type PluginStore interface {
+	SavePlugin(plugin *Plugin) error
+	UpdatePlugin(plugin *Plugin) error
+	GetAllPlugins() ([]Plugin, error)
 }
