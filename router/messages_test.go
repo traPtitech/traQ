@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -75,6 +76,22 @@ func TestPostMessage(t *testing.T) {
 		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), message)) {
 			assert.Equal(post.Text, message.Content)
 		}
+	}
+
+	user1ID := mustCreateUser(t, "private-1").ID
+	user2ID := mustCreateUser(t, "private-2").ID
+	privateID := mustMakePrivateChannel(t, user1ID, user2ID, "poyopoyo").ID
+
+	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
+	c, rec = getContext(e, t, cookie, req)
+	c.SetPath("/channels/:channelID/messages")
+	c.SetParamNames("channelID")
+	c.SetParamValues(privateID)
+
+	err = mw(PostMessage)(c)
+
+	if assert.Error(err) {
+		assert.Equal(http.StatusNotFound, err.(*echo.HTTPError).Code)
 	}
 }
 

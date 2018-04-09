@@ -62,6 +62,14 @@ func PostMessage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
+	userID := c.Get("user").(*model.User).ID
+	channelID := c.Param("channelID")
+
+	_, err := validateChannelID(channelID, userID)
+	if err != nil {
+		return err
+	}
+
 	m, err := createMessage(post.Text, c.Get("user").(*model.User).ID, c.Param("channelID"))
 	if err != nil {
 		return err
