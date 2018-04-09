@@ -15,8 +15,15 @@ import (
 func GetNotificationStatus(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 	channelID := c.Param("channelID")
-	if _, err := validateChannelID(channelID, userID); err != nil {
+
+	ch, err := validateChannelID(channelID, userID)
+	if err != nil {
 		return err
+	}
+
+	// プライベートチャンネルの通知は取得できない。
+	if !ch.IsPublic {
+		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
 	users, err := model.GetSubscribingUser(uuid.FromStringOrNil(channelID))
@@ -36,8 +43,15 @@ func GetNotificationStatus(c echo.Context) error {
 func PutNotificationStatus(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 	channelID := c.Param("channelID")
-	if _, err := validateChannelID(channelID, userID); err != nil {
+
+	ch, err := validateChannelID(channelID, userID)
+	if err != nil {
 		return err
+	}
+
+	// プライベートチャンネルの通知は変更できない。
+	if !ch.IsPublic {
+		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
 	var req struct {
