@@ -76,6 +76,7 @@ func Send(eventType events.EventType, payload interface{}) {
 		viewers := map[uuid.UUID]bool{}
 		connector := map[uuid.UUID]bool{}
 		subscribers := map[uuid.UUID]bool{}
+		summary := ""
 
 		ei, plain := message.Parse(data.Message.Text)
 		path, _ := model.GetChannelPath(cid)
@@ -84,11 +85,6 @@ func Send(eventType events.EventType, payload interface{}) {
 			user = &model.User{DisplayName: "ERROR"}
 		} else if len(user.DisplayName) == 0 {
 			user.DisplayName = user.Name
-		}
-
-		summary := fmt.Sprintf("[%s] %s: %s", path, user.DisplayName, plain)
-		if s := utf8string.NewString(summary); s.RuneCount() > 100 {
-			summary = s.Slice(0, 97) + "..."
 		}
 
 		if ch, err := model.GetChannelByMessageID(data.Message.ID); err != nil {
@@ -105,6 +101,19 @@ func Send(eventType events.EventType, payload interface{}) {
 				}
 				subscribers[uuid.FromStringOrNil(v.ID)] = true
 			}
+
+			summary = fmt.Sprintf("[%s] %s: %s", path, user.DisplayName, plain)
+		} else if !ch.IsPublic {
+			// 強制通知(プライベートチャンネル)
+			users, err := model.GetPrivateChannelMembers(ch.ID)
+			if err != nil {
+				log.Error(err)
+			}
+			for _, v := range users {
+				subscribers[uuid.FromStringOrNil(v)] = true
+			}
+
+			summary = fmt.Sprintf("[@%s] %s", user.Name, plain)
 		} else {
 			// チャンネル通知ユーザー取得
 			if users, err := model.GetSubscribingUser(cid); err != nil {
@@ -130,6 +139,12 @@ func Send(eventType events.EventType, payload interface{}) {
 					}
 				}
 			}
+
+			summary = fmt.Sprintf("[%s] %s: %s", path, user.DisplayName, plain)
+		}
+
+		if s := utf8string.NewString(summary); s.RuneCount() > 100 {
+			summary = s.Slice(0, 97) + "..."
 		}
 
 		// ハートビートユーザー取得

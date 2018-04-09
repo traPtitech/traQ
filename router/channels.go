@@ -166,6 +166,7 @@ func PostChannels(c echo.Context) error {
 				log.Errorf("failed to insert users_private_channel: %v", err)
 				return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while adding notified user.")
 			}
+			go notification.Send(events.ChannelCreated, events.UserChannelEvent{UserID: u, ChannelID: ch.ID})
 		}
 	}
 
