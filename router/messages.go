@@ -87,6 +87,11 @@ func PutMessageByID(c echo.Context) error {
 		return err
 	}
 
+	// 他人のテキストは編集できない
+	if userID != m.UserID {
+		return echo.NewHTTPError(http.StatusForbidden, "This is not your message")
+	}
+
 	req := &struct {
 		Text string `json:"text"`
 	}{}
