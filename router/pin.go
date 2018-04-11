@@ -29,41 +29,43 @@ func GetChannelPin(c echo.Context) error {
 		return err
 	}
 
-	responseBody, err := getChannelPinResponse(channelID)
+	res, err := getChannelPinResponse(channelID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get pin: %v", err)
+		c.Logger().Errorf("an error occurred while getting pins: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get pin")
 	}
 
-	return c.JSON(http.StatusOK, responseBody)
+	return c.JSON(http.StatusOK, res)
 }
 
 //GetPin Method Handler of "GET /pin/{pinID}"
 func GetPin(c echo.Context) error {
 	pinID := c.Param("pinID")
 
-	responseBody, err := getPinResponse(pinID)
+	res, err := getPinResponse(pinID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get pin: %v", err)
+		c.Logger().Errorf("An error occurred while getting pin: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get pin")
 	}
 
-	return c.JSON(http.StatusOK, responseBody)
+	return c.JSON(http.StatusOK, res)
 }
 
 //PostPin Method Handler of "POST /channels/{channelID}/pin"
 func PostPin(c echo.Context) error {
 	channelID := c.Param("channelID")
-	me := c.Get("user").(*model.User)
+	myID := c.Get("user").(*model.User).ID
 
-	requestBody := struct {
+	req := struct {
 		MessageID string `json:"messageId"`
 	}{}
-	if err := c.Bind(&requestBody); err != nil {
+	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
 	}
 
-	m, err := model.GetMessageByID(requestBody.MessageID)
+	m, err := model.GetMessageByID(req.MessageID)
 	if err != nil {
-		c.Logger().Error(err)
+		c.Logger().Error("An error occurred while getting message: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get message you requested")
 	}
 	if m.ChannelID != channelID {
@@ -72,25 +74,25 @@ func PostPin(c echo.Context) error {
 
 	pin := &model.Pin{
 		ChannelID: channelID,
-		UserID:    me.ID,
-		MessageID: requestBody.MessageID,
+		UserID:    myID,
+		MessageID: req.MessageID,
 	}
 	if err := pin.Create(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to create pin: %v", err))
+		c.Logger().Errorf("Failed to create pin: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create pin")
 	}
 
 	pin.CreatedAt = pin.CreatedAt.Truncate(time.Second) //自前で秒未満切り捨てしないと駄目
-	responseBody, formatErr := formatPin(pin)
+	res, formatErr := formatPin(pin)
 	if formatErr != nil {
 		pin.Delete()
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to format pin: %v", formatErr)
+		c.Logger().Errorf("An error occurred while formatting pin: %v", formatErr)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to format pin")
 	}
 
 	c.Response().Header().Set(echo.HeaderLocation, "/pin/"+pin.ID)
-	if message, err := model.GetMessageByID(pin.MessageID); err != nil {
-		go notification.Send(events.MessagePinned, events.PinEvent{PinID: pin.ID, Message: *message})
-	}
-	return c.JSON(http.StatusCreated, responseBody)
+	go notification.Send(events.MessagePinned, events.PinEvent{PinID: pin.ID, Message: *m})
+	return c.JSON(http.StatusCreated, res)
 }
 
 //DeletePin Method Handler of "DELETE /pin/{pinID}"
@@ -102,11 +104,12 @@ func DeletePin(c echo.Context) error {
 	}
 
 	if err := pin.Delete(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to delete pin: %v", err))
+		c.Logger().Errorf("an error occurred while deleting pin: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete pin")
 	}
 
-	if message, err := model.GetMessageByID(pin.MessageID); err != nil {
-		go notification.Send(events.MessageUnpinned, events.PinEvent{PinID: pin.ID, Message: *message})
+	if m, err := model.GetMessageByID(pin.MessageID); err != nil {
+		go notification.Send(events.MessageUnpinned, events.PinEvent{PinID: pin.ID, Message: *m})
 	}
 	return c.NoContent(http.StatusNoContent)
 }
