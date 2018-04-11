@@ -61,6 +61,15 @@ func PostPin(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
 	}
 
+	m, err := model.GetMessageByID(requestBody.MessageID)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get message you requested")
+	}
+	if m.ChannelID != channelID {
+		return echo.NewHTTPError(http.StatusBadRequest, "This messageis not a member of this channel")
+	}
+
 	pin := &model.Pin{
 		ChannelID: channelID,
 		UserID:    me.ID,
