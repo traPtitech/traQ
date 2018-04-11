@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -25,6 +26,22 @@ func TestGetMessageByID(t *testing.T) {
 	requestWithContext(t, mw(GetMessageByID), c)
 
 	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
+
+	// 異常系: 自分から見えないメッセージは取得できない
+	postmanID := mustCreateUser(t, "p1").ID
+	privateID := mustMakePrivateChannel(t, postmanID, mustCreateUser(t, "p2").ID, "private").ID
+	message = mustMakeMessage(t, postmanID, privateID)
+
+	c, rec = getContext(e, t, cookie, nil)
+	c.SetPath("/messages/:messageID")
+	c.SetParamNames("messageID")
+	c.SetParamValues(message.ID)
+
+	err := mw(GetMessageByID)(c)
+
+	if assert.Error(err) {
+		assert.Equal(http.StatusNotFound, err.(*echo.HTTPError).Code)
+	}
 }
 
 func TestGetMessagesByChannelID(t *testing.T) {
@@ -76,6 +93,22 @@ func TestPostMessage(t *testing.T) {
 			assert.Equal(post.Text, message.Content)
 		}
 	}
+
+	user1ID := mustCreateUser(t, "private-1").ID
+	user2ID := mustCreateUser(t, "private-2").ID
+	privateID := mustMakePrivateChannel(t, user1ID, user2ID, "poyopoyo").ID
+
+	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
+	c, rec = getContext(e, t, cookie, req)
+	c.SetPath("/channels/:channelID/messages")
+	c.SetParamNames("channelID")
+	c.SetParamValues(privateID)
+
+	err = mw(PostMessage)(c)
+
+	if assert.Error(err) {
+		assert.Equal(http.StatusNotFound, err.(*echo.HTTPError).Code)
+	}
 }
 
 func TestPutMessageByID(t *testing.T) {
@@ -102,6 +135,24 @@ func TestPutMessageByID(t *testing.T) {
 	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
 		assert.Equal(post.Text, message.Text)
 	}
+
+	// 異常系：他人のメッセージは編集できない
+	creatorID := mustCreateUser(t, "creator").ID
+	message = mustMakeMessage(t, creatorID, channel.ID)
+
+	req = httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
+
+	c, rec = getContext(e, t, cookie, req)
+	c.SetPath("/messages/:messageID")
+	c.SetParamNames("messageID")
+	c.SetParamValues(message.ID)
+
+	err = mw(PutMessageByID)(c)
+
+	if assert.Error(err) {
+		assert.Equal(http.StatusForbidden, err.(*echo.HTTPError).Code)
+	}
+
 }
 
 func TestDeleteMessageByID(t *testing.T) {

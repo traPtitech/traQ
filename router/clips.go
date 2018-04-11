@@ -70,7 +70,7 @@ func DeleteClips(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
 	}
 
-	if _, err := validateMessageID(requestBody.MessageID); err != nil {
+	if _, err := validateMessageID(requestBody.MessageID, user.ID); err != nil {
 		return err
 	}
 

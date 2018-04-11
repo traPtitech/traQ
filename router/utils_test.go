@@ -3,12 +3,13 @@ package router
 import (
 	"bytes"
 	"fmt"
-	"github.com/traPtitech/traQ/external/storage"
-	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/traPtitech/traQ/external/storage"
+	"github.com/traPtitech/traQ/utils/validator"
 
 	"github.com/stretchr/testify/assert"
 
@@ -156,9 +157,8 @@ func request(e *echo.Echo, t *testing.T, handler echo.HandlerFunc, cookie *http.
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	err := handler(c)
-
 	if err != nil {
-		t.Fatal(err)
+		rec.Code = err.(*echo.HTTPError).Code
 	}
 
 	return rec
