@@ -10,7 +10,7 @@ import (
 type Pin struct {
 	ID        string    `xorm:"char(36) pk"       validate:"uuid,required"`
 	ChannelID string    `xorm:"char(36) not null" validate:"uuid,required"`
-	MessageID string    `xorm:"char(36) not null" validate:"uuid,required"`
+	MessageID string    `xorm:"char(36) not null unique" validate:"uuid,required"`
 	UserID    string    `xorm:"char(36) not null" validate:"uuid,required"`
 	CreatedAt time.Time `xorm:"created not null"`
 }
