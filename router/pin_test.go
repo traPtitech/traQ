@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/labstack/echo"
 )
 
 func TestGetChannelPin(t *testing.T) {
@@ -85,6 +87,18 @@ func TestPostPin(t *testing.T) {
 	require.Len(correctResponse, 1)
 
 	assert.EqualValues(correctResponse[0], responseBody)
+
+	// 異常系: 別のチャンネルにメッセージを張り付けることはできない
+	otherChannelID := mustMakeChannel(t, testUser.ID, "hoge", true).ID
+	c, rec = getContext(e, t, cookie, req)
+	c.SetPath("/channels/:channelID/pin")
+	c.SetParamNames("channelID")
+	c.SetParamValues(otherChannelID)
+	err = mw(PostPin)(c)
+
+	if assert.Error(err) {
+		assert.Equal(http.StatusBadRequest, err.(*echo.HTTPError).Code)
+	}
 }
 
 func TestDeletePin(t *testing.T) {
