@@ -1,9 +1,9 @@
 package model
 
 import (
-	"fmt"
-	"github.com/traPtitech/traQ/utils/validator"
 	"time"
+
+	"github.com/traPtitech/traQ/utils/validator"
 
 	"github.com/satori/go.uuid"
 )
@@ -49,7 +49,22 @@ func (s *UserSubscribeChannel) Delete() (err error) {
 func GetSubscribingUser(channelID uuid.UUID) ([]uuid.UUID, error) {
 	var arr []string
 	if err := db.Table(&UserSubscribeChannel{}).Where("channel_id = ?", channelID.String()).Cols("user_id").Find(&arr); err != nil {
-		return nil, fmt.Errorf("failed to get user_subscribe_channel: %v", err)
+		return nil, err
+	}
+
+	result := make([]uuid.UUID, len(arr))
+	for i, v := range arr {
+		result[i] = uuid.FromStringOrNil(v)
+	}
+
+	return result, nil
+}
+
+// GetSubscribedChannels ユーザーが通知を入れているチャンネルを取得する
+func GetSubscribedChannels(userID uuid.UUID) ([]uuid.UUID, error) {
+	var arr []string
+	if err := db.Table(&UserSubscribeChannel{}).Where("user_id = ?", userID.String()).Cols("channel_id").Find(&arr); err != nil {
+		return nil, err
 	}
 
 	result := make([]uuid.UUID, len(arr))

@@ -1,9 +1,10 @@
 package model
 
 import (
+	"testing"
+
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestUserSubscribeChannel_TableName(t *testing.T) {
@@ -77,4 +78,26 @@ func TestGetSubscribingUser(t *testing.T) {
 	if assert.NoError(err) {
 		assert.Len(arr, 2)
 	}
+}
+
+func TestGetSubscribedChannels(t *testing.T) {
+	assert, _, user1, channel1 := beforeTest(t)
+
+	user2 := mustMakeUser(t, "user2")
+	channel2 := mustMakeChannel(t, user1.ID, "test")
+
+	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel1.ID}).Create())
+	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel2.ID}).Create())
+	assert.NoError((&UserSubscribeChannel{UserID: user2.ID, ChannelID: channel2.ID}).Create())
+
+	arr, err := GetSubscribedChannels(uuid.FromStringOrNil(user1.ID))
+	if assert.NoError(err) {
+		assert.Len(arr, 2)
+	}
+
+	arr, err = GetSubscribedChannels(uuid.FromStringOrNil(user2.ID))
+	if assert.NoError(err) {
+		assert.Len(arr, 1)
+	}
+
 }

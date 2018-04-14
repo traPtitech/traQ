@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
@@ -21,9 +25,6 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/utils/validator"
-	"io/ioutil"
-	"log"
-	"net/http"
 )
 
 func main() {
@@ -192,6 +193,7 @@ func main() {
 	api.POST("/notification/device", router.PostDeviceToken, requires(permission.RegisterDevice))
 	api.GET("/channels/:channelID/notification", router.GetNotificationStatus, requires(permission.GetNotificationStatus))
 	api.PUT("/channels/:channelID/notification", router.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
+	api.GET("/channels/{userID}/notification", router.GetNotificationChannels, requires(permission.GetNotificationStatus))
 
 	// Tag: file
 	api.POST("/files", router.PostFile, requires(permission.UploadFile))
