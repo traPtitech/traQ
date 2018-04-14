@@ -1,10 +1,12 @@
 package router
 
 import (
-	"github.com/traPtitech/traQ/oauth2"
 	"net/http"
 
+	"github.com/traPtitech/traQ/oauth2"
+
 	"fmt"
+
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/mikespook/gorbac"
@@ -68,7 +70,6 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 					return echo.NewHTTPError(http.StatusForbidden, "You are not logged in")
 				}
 				if sess.Values["userID"] == nil {
-					c.Logger().Errorf("This session doesn't have a userID")
 					return echo.NewHTTPError(http.StatusForbidden, "You are not logged in")
 				}
 

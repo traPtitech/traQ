@@ -2181,6 +2181,9 @@ components:
         dateTime:
           type: string
           format: date-time
+        updatedAt:
+          type: string
+          format: date-time
         stampList:
           type: array
           items:

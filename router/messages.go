@@ -18,7 +18,8 @@ type MessageForResponse struct {
 	UserID          string                `json:"userId"`
 	ParentChannelID string                `json:"parentChannelId"`
 	Content         string                `json:"content"`
-	Datetime        time.Time             `json:"datetime"`
+	CreatedAt       time.Time             `json:"datetime"`
+	UpdatedAt       time.Time             `json:"updatedAt"`
 	Pin             bool                  `json:"pin"`
 	StampList       []*model.MessageStamp `json:"stampList"`
 }
@@ -194,7 +195,8 @@ func formatMessage(raw *model.Message) *MessageForResponse {
 		ParentChannelID: raw.ChannelID,
 		Pin:             isPinned,
 		Content:         raw.Text,
-		Datetime:        raw.CreatedAt.Truncate(time.Second).UTC(),
+		CreatedAt:       raw.CreatedAt.Truncate(time.Second).UTC(),
+		UpdatedAt:       raw.UpdatedAt.Truncate(time.Second).UTC(),
 		StampList:       stampList,
 	}
 	return res
