@@ -72,7 +72,7 @@ func TestChannel_Update(t *testing.T) {
 	channel.Topic = ""
 	assert.NoError(channel.Update())
 	var topic string
-	if ok, err := db.Table(channel).ID(channel.ID).Get(&topic); assert.True(ok) && assert.NoError(err) {
+	if ok, err := db.Table(channel).ID(channel.ID).Cols("topic").Get(&topic); assert.True(ok) && assert.NoError(err) {
 		assert.Empty(topic)
 	}
 }
