@@ -58,7 +58,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 // PostMessage POST /channels/{channelID}/messages のハンドラ
 func PostMessage(c echo.Context) error {
 	// 10KB制限
-	if c.Request().ContentLength > 10*1024*1024 {
+	if c.Request().ContentLength > 10*1024 {
 		return echo.NewHTTPError(http.StatusRequestEntityTooLarge, "a request must be smaller than 10KB")
 	}
 
