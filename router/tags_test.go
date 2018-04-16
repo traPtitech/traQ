@@ -78,7 +78,7 @@ func TestPutUserTags(t *testing.T) {
 	c.SetPath("/users/:userID/tags/:tagID")
 	c.SetParamNames("userID", "tagID")
 	c.SetParamValues(testUser.ID, tag.TagID)
-	requestWithContext(t, mw(PutUserTag), c)
+	requestWithContext(t, mw(PatchUserTag), c)
 
 	if assert.EqualValues(http.StatusOK, rec.Code) {
 		var responseBody []*TagForResponse

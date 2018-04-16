@@ -134,6 +134,9 @@ func SetRole(rbac *rbac.RBAC) {
 
 			permission.ChangeChannelVisibility,
 
+			permission.OperateForRestrictedTag,
+			permission.EditTag,
+
 			permission.EditStampName,
 			permission.EditStampCreatedByOthers,
 			permission.DeleteStamp,

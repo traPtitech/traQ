@@ -46,10 +46,12 @@ var list = map[string]gorbac.Permission{
 	GetUnread.ID():    GetUnread,
 	DeleteUnread.ID(): DeleteUnread,
 
-	GetTag.ID():             GetTag,
-	AddTag.ID():             AddTag,
-	RemoveTag.ID():          RemoveTag,
-	ChangeTagLockState.ID(): ChangeTagLockState,
+	GetTag.ID():                  GetTag,
+	AddTag.ID():                  AddTag,
+	RemoveTag.ID():               RemoveTag,
+	ChangeTagLockState.ID():      ChangeTagLockState,
+	OperateForRestrictedTag.ID(): OperateForRestrictedTag,
+	EditTag.ID():                 EditTag,
 
 	GetStamp.ID():                 GetStamp,
 	CreateStamp.ID():              CreateStamp,
