@@ -46,6 +46,7 @@ func SetRole(rbac *rbac.RBAC) {
 			permission.GetMe,
 
 			permission.GetClip,
+			permission.GetClipFolder,
 
 			permission.GetStar,
 
@@ -85,6 +86,9 @@ func SetRole(rbac *rbac.RBAC) {
 
 			permission.CreateClip,
 			permission.DeleteClip,
+			permission.CreateClipFolder,
+			permission.PatchClipFolder,
+			permission.DeleteClipFolder,
 
 			permission.CreateStar,
 			permission.DeleteStar,
