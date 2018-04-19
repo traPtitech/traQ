@@ -51,10 +51,19 @@ const (
 	MessagePinned EventType = "MESSAGE_PINNED"
 	//MessageUnpinned ピン留めされたメッセージのピンが外された
 	MessageUnpinned EventType = "MESSAGE_UNPINNED"
-	//MessageClipped メッセージをクリップした
-	MessageClipped EventType = "MESSAGE_CLIPPED"
-	//MessageUnclipped メッセージをアンクリップした
-	MessageUnclipped EventType = "MESSAGE_UNCLIPPED"
+
+	//ClipCreated メッセージをクリップした
+	ClipCreated EventType = "CLIP_CREATED"
+	//ClipDeleted メッセージをアンクリップした
+	ClipDeleted EventType = "CLIP_DELETED"
+	//ClipMoved クリップのフォルダが変更された
+	ClipMoved EventType = "CLIP_MOVED"
+	//ClipFolderCreated クリップフォルダが作成された
+	ClipFolderCreated EventType = "CLIP_FOLDER_CREATED"
+	//ClipFolderUpdated クリップフォルダが更新された
+	ClipFolderUpdated EventType = "CLIP_FOLDER_UPDATED"
+	//ClipFolderDeleted クリップフォルダが削除された
+	ClipFolderDeleted EventType = "CLIP_FOLDER_DELETED"
 
 	//StampCreated スタンプが新しく追加された
 	StampCreated EventType = "STAMP_CREATED"
@@ -245,4 +254,22 @@ func (e StampEvent) DataPayload() DataPayload {
 	return DataPayload{
 		"id": e.ID,
 	}
+}
+
+// ClipEvent クリップに関するイベント
+type ClipEvent struct {
+	ID     string
+	UserID string
+}
+
+// DataPayload データペイロード
+func (e ClipEvent) DataPayload() DataPayload {
+	return DataPayload{
+		"id": e.ID,
+	}
+}
+
+// TargetUser 通知対象のユーザーID
+func (e ClipEvent) TargetUser() uuid.UUID {
+	return uuid.FromStringOrNil(e.UserID)
 }
