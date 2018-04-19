@@ -179,10 +179,11 @@ func main() {
 	// Tag: userTag
 	api.GET("/users/:userID/tags", router.GetUserTags, requires(permission.GetTag))
 	api.POST("/users/:userID/tags", router.PostUserTag, requires(permission.AddTag))
-	api.PUT("/users/:userID/tags/:tagID", router.PutUserTag, requires(permission.ChangeTagLockState))
+	api.PATCH("/users/:userID/tags/:tagID", router.PatchUserTag, requires(permission.ChangeTagLockState))
 	api.DELETE("/users/:userID/tags/:tagID", router.DeleteUserTag, requires(permission.RemoveTag))
 	api.GET("/tags", router.GetAllTags, requires(permission.GetTag))
 	api.GET("/tags/:tagID", router.GetUsersByTagID, requires(permission.GetTag))
+	api.PATCH("/tags/:tagID", router.PatchTag, requires(permission.EditTag))
 
 	// Tag: heartbeat
 	api.GET("/heartbeat", router.GetHeartbeat, requires(permission.GetHeartbeat))

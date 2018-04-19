@@ -29,13 +29,7 @@ func TestPostUserTags(t *testing.T) {
 	c.SetParamValues(testUser.ID)
 	requestWithContext(t, mw(PostUserTag), c)
 
-	if assert.EqualValues(http.StatusCreated, rec.Code) {
-		var responseBody []*TagForResponse
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.Equal(tagText, responseBody[0].Tag)
-			assert.NotEqual("", responseBody[0].ID)
-		}
-	}
+	assert.EqualValues(http.StatusCreated, rec.Code)
 }
 
 func TestGetUserTags(t *testing.T) {
@@ -78,14 +72,9 @@ func TestPutUserTags(t *testing.T) {
 	c.SetPath("/users/:userID/tags/:tagID")
 	c.SetParamNames("userID", "tagID")
 	c.SetParamValues(testUser.ID, tag.TagID)
-	requestWithContext(t, mw(PutUserTag), c)
+	requestWithContext(t, mw(PatchUserTag), c)
 
-	if assert.EqualValues(http.StatusOK, rec.Code) {
-		var responseBody []*TagForResponse
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.True(responseBody[0].IsLocked)
-		}
-	}
+	assert.EqualValues(http.StatusNoContent, rec.Code)
 }
 
 func TestDeleteUserTags(t *testing.T) {

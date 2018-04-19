@@ -65,9 +65,16 @@ func TestChannel_Update(t *testing.T) {
 
 	channel.UpdaterID = user.ID
 	channel.Name = "Channel-updated"
+	channel.Topic = "aaaa"
 	channel.ParentID = parentChannel.ID
-
 	assert.NoError(channel.Update())
+
+	channel.Topic = ""
+	assert.NoError(channel.Update())
+	var topic string
+	if ok, err := db.Table(channel).ID(channel.ID).Cols("topic").Get(&topic); assert.True(ok) && assert.NoError(err) {
+		assert.Empty(topic)
+	}
 }
 
 func TestChannel_Parent(t *testing.T) {
