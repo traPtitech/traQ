@@ -237,15 +237,6 @@ func mustMakeUnread(t *testing.T, userID, messageID string) *model.Unread {
 	return unread
 }
 
-func mustClipMessage(t *testing.T, userID, messageID string) *model.Clip {
-	clip := &model.Clip{
-		UserID:    userID,
-		MessageID: messageID,
-	}
-	require.NoError(t, clip.Create())
-	return clip
-}
-
 func mustStarChannel(t *testing.T, userID, channelID string) *model.Star {
 	star := &model.Star{
 		UserID:    userID,
