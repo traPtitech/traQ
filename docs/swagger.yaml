@@ -1213,20 +1213,20 @@ paths:
               properties:
                 tag:
                   type: string
-                  description: 追加するタグ
+                  description: 追加するタグ(30文字まで)
                   example: 山田太郎
       responses:
         "201":
           description: |+
-            正常に追加できました。追加後のリストを返します
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TagList"
+            正常に追加できました。
         "400":
           description: |+
             正常に追加できませんでした。
             パラメータの形式が不正です。
+        "403":
+          description: |+
+            正常に追加できませんでした。
+            権限がありません。
         "404":
           description: |+
             正常に追加できませんでした。
@@ -1236,17 +1236,16 @@ paths:
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
       - $ref: "#/components/parameters/tagIdInPath"
-    put:
+    patch:
       tags:
         - userTag
-      description: タグのロック、アンロックを変更します
+      description: タグのロック、アンロックを変更します。
       requestBody:
         content:
           application/json:
             schema:
               type: object
               required:
-                - tag
                 - isLocked
               properties:
                 isLocked:
@@ -1254,17 +1253,17 @@ paths:
                   description: lockするときはtrue,解除するときはfalse
                   example: true
       responses:
-        "200":
+        "204":
           description: |+
-            正常に変更できました。変更後のタグのリストを返します
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TagList"
+            正常に変更できました。
         "400":
           description: |+
             正常に変更できませんでした。
             パラメータの形式が不正です。
+        "403":
+          description: |+
+            正常に変更できませんでした。
+            権限がありません。
         "404":
           description: |+
             正常に変更できませんでした。
@@ -1277,6 +1276,10 @@ paths:
         "204":
           description: |+
             正常に削除できました。
+        "403":
+          description: |+
+            正常に削除できませんでした。
+            権限がありません。
         "404":
           description: |+
             正常に削除できませんでした。
@@ -1303,7 +1306,6 @@ paths:
                     tag:
                       type: string
                     users:
-                      type: array
                       $ref: "#/components/schemas/UserList"
 
   /tags/{tagID}:
@@ -1312,7 +1314,7 @@ paths:
     get:
       tags:
         - userTag
-      description: タグIDで指定されたタグの情報を取得します。
+      description: 指定されたタグの情報を取得します。
       responses:
         "200":
           description: 正常に取得できました。
@@ -1326,12 +1328,39 @@ paths:
                     format: uuid
                   tag:
                     type: string
+                  editable:
+                    type: boolean
                   users:
-                    type: array
                     $ref: "#/components/schemas/UserList"
         "404":
           description: 正常に取得できませんでした。指定されたタグIDは存在しません
-
+    patch:
+      tags:
+        - userTag
+      description: 指定されたタグの情報を変更します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                type:
+                  type: string
+                  description: タグの種類(30文字以内)
+                restrict:
+                  type: boolean
+                  description: 操作制限付きタグにするか
+                name:
+                  type: string
+                  description: タグ名(30文字以内)
+      responses:
+        "204":
+          description: 正常に変更できました。
+        "400":
+          description: 正常に変更できませんでした。リクエストが不正です。
+        "403":
+          description: 正常に変更できませんでした。権限がありません。
+        "404":
+          description: 正常に変更できませんでした。指定されたタグは存在しません。
 
   /stamps:
     get:
@@ -2342,6 +2371,8 @@ components:
           type: string
         isLocked:
           type: boolean
+        editable:
+          type: boolean
 
     TagList:
       type: array
@@ -2444,17 +2475,6 @@ components:
           type: integer
         thumbHeight:
           type: integer
-
-    UnreadList:
-      type: array
-      items:
-        type: object
-        properties:
-          channelId:
-            type: string
-            format: uuid
-          count:
-            type: integer
 
     Pin:
       type: object

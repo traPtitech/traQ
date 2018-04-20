@@ -4,8 +4,10 @@ import "github.com/traPtitech/traQ/utils/validator"
 
 // Tag tag_idの管理をする構造体
 type Tag struct {
-	ID   string `xorm:"char(36) pk"                 validate:"uuid,required"`
-	Name string `xorm:"varchar(30) not null unique" validate:"required,max=30"`
+	ID         string `xorm:"char(36) pk"                 validate:"uuid,required"`
+	Name       string `xorm:"varchar(30) not null unique" validate:"required,max=30"`
+	Restricted bool   `xorm:"bool not null"`
+	Type       string `xorm:"varchar(30) not null"        validate:"max=30"`
 }
 
 // TableName DBの名前を指定
@@ -29,6 +31,15 @@ func (t *Tag) Create() (err error) {
 	return
 }
 
+// Update DBにタグを更新
+func (t *Tag) Update() (err error) {
+	if err := t.Validate(); err != nil {
+		return err
+	}
+	_, err = db.MustCols("type").UseBool().Update(t)
+	return
+}
+
 // Exists DBにその名前のタグが存在するかを確認
 func (t *Tag) Exists() (bool, error) {
 	if t.Name == "" {
@@ -41,6 +52,21 @@ func (t *Tag) Exists() (bool, error) {
 func GetTagByID(ID string) (*Tag, error) {
 	tag := &Tag{
 		ID: ID,
+	}
+
+	has, err := db.Get(tag)
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, ErrNotFound
+	}
+	return tag, nil
+}
+
+// GetTagByName 引数のタグのTag構造体を返す
+func GetTagByName(name string) (*Tag, error) {
+	tag := &Tag{
+		Name: name,
 	}
 
 	has, err := db.Get(tag)

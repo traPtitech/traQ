@@ -79,7 +79,7 @@ func (channel *Channel) Update() error {
 		return err
 	}
 
-	_, err := db.ID(channel.ID).UseBool().MustCols().Update(channel)
+	_, err := db.ID(channel.ID).UseBool().MustCols("topic").Update(channel)
 	if err != nil {
 		return err
 	}
