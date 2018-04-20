@@ -22,6 +22,7 @@ type eventData struct {
 	Payload   events.DataPayload
 	Mobile    bool
 	IconURL   string
+	Action    string
 }
 
 var (
@@ -80,6 +81,7 @@ func Send(eventType events.EventType, payload interface{}) {
 
 		ei, plain := message.Parse(data.Message.Text)
 		path, _ := model.GetChannelPath(cid)
+		action := fmt.Sprintf("%s/channels/%s", config.TRAQOrigin, strings.TrimPrefix(path, "#"))
 		user, _ := model.GetUser(data.Message.UserID)
 		if user == nil {
 			user = &model.User{DisplayName: "ERROR"}
@@ -113,7 +115,14 @@ func Send(eventType events.EventType, payload interface{}) {
 				subscribers[uuid.FromStringOrNil(v)] = true
 			}
 
-			summary = fmt.Sprintf("[@%s] %s", user.Name, plain)
+			if l := len(users); l == 2 || l == 1 {
+				// DM
+				action = fmt.Sprintf("%s/users/%s", config.TRAQOrigin, user.Name)
+				summary = fmt.Sprintf("[@%s] %s", user.Name, plain)
+			} else {
+				// Private Channel
+				summary = fmt.Sprintf("[%s] %s: %s", path, user.DisplayName, plain)
+			}
 		} else {
 			// チャンネル通知ユーザー取得
 			if users, err := model.GetSubscribingUser(cid); err != nil {
@@ -186,6 +195,7 @@ func Send(eventType events.EventType, payload interface{}) {
 						Payload:   data.DataPayload(),
 						Mobile:    true,
 						IconURL:   fmt.Sprintf("%s/api/1.0/users/%s/icon?thumb", config.TRAQOrigin, data.Message.UserID),
+						Action:    action,
 					})
 				}
 			}
@@ -251,7 +261,7 @@ func broadcast(data *eventData) {
 			log.Error(err)
 			return
 		}
-		sendToFcm(devs, data.Summary, data.Payload, data.IconURL)
+		sendToFcm(devs, data.Summary, data.Payload, data.IconURL, data.Action)
 	}
 }
 
@@ -274,11 +284,11 @@ func multicast(target uuid.UUID, data *eventData) {
 			log.Error(err)
 			return
 		}
-		sendToFcm(devs, data.Summary, data.Payload, data.IconURL)
+		sendToFcm(devs, data.Summary, data.Payload, data.IconURL, data.Action)
 	}
 }
 
-func sendToFcm(deviceTokens []string, body string, payload events.DataPayload, iconURL string) {
+func sendToFcm(deviceTokens []string, body string, payload events.DataPayload, iconURL, action string) {
 	data := map[string]string{
 		"origin": config.TRAQOrigin,
 	}
@@ -300,7 +310,8 @@ func sendToFcm(deviceTokens []string, body string, payload events.DataPayload, i
 		Android: &messaging.AndroidConfig{
 			Priority: "high",
 			Notification: &messaging.AndroidNotification{
-				Icon: iconURL,
+				Icon:        iconURL,
+				ClickAction: action,
 			},
 		},
 		Webpush: &messaging.WebpushConfig{
