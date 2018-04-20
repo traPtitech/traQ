@@ -40,6 +40,47 @@ func TestChannel_Create(t *testing.T) {
 		IsPublic:  true,
 	}
 	assert.Error(c2.Create())
+
+	// 層の改装制限に関するテスト
+
+	c2 = &Channel{
+		CreatorID: user.ID,
+		Name:      "Parent2",
+		ParentID:  c.ID,
+		IsPublic:  true,
+	}
+	assert.NoError(c2.Create())
+	c3 := &Channel{
+		CreatorID: user.ID,
+		Name:      "Parent3",
+		ParentID:  c2.ID,
+		IsPublic:  true,
+	}
+	assert.NoError(c3.Create())
+	c4 := &Channel{
+		CreatorID: user.ID,
+		Name:      "Parent4",
+		ParentID:  c3.ID,
+		IsPublic:  true,
+	}
+	assert.NoError(c4.Create())
+	c5 := &Channel{
+		CreatorID: user.ID,
+		Name:      "Parent5",
+		ParentID:  c4.ID,
+		IsPublic:  true,
+	}
+	assert.NoError(c5.Create())
+	c6 := &Channel{
+		CreatorID: user.ID,
+		Name:      "TooDeepChannel",
+		ParentID:  c5.ID,
+		IsPublic:  true,
+	}
+	if err := c6.Create(); err != nil {
+		assert.Equal(ErrChannelPathDepth, err)
+	}
+
 }
 
 func TestChannel_Exists(t *testing.T) {

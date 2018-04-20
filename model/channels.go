@@ -1,15 +1,21 @@
 package model
 
 import (
+	"errors"
 	"fmt"
-	"github.com/traPtitech/traQ/utils/validator"
 	"sync"
 	"time"
+
+	"github.com/traPtitech/traQ/utils/validator"
 
 	"github.com/satori/go.uuid"
 )
 
-var channelPathMap = &sync.Map{}
+var (
+	channelPathMap = &sync.Map{}
+	// ErrChannelPathDepth 作成されるチャンネルの深さが5より大きいときに返すエラー
+	ErrChannelPathDepth = errors.New("Channel depth is no more than 5")
+)
 
 // Channel :チャンネルの構造体
 type Channel struct {
@@ -49,6 +55,22 @@ func (channel *Channel) Create() error {
 
 	if err := channel.Validate(); err != nil {
 		return err
+	}
+
+	// 階層チェック
+	// 五階層までは許すけどそれ以上はダメ
+	ch, err := channel.Parent()
+	for i := 0; ; i++ {
+		if ch == nil {
+			if i >= 5 {
+				return ErrChannelPathDepth
+			}
+			break
+		}
+		if err != nil {
+			return err // NotFoundの場合はch == nil => true なのでここに到達しない
+		}
+		ch, err = ch.Parent()
 	}
 
 	// ここまでで入力されない要素は初期値(""や0)で格納される
