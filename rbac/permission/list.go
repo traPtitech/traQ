@@ -32,9 +32,13 @@ var list = map[string]gorbac.Permission{
 	EditMe.ID():       EditMe,
 	ChangeMyIcon.ID(): ChangeMyIcon,
 
-	GetClip.ID():    GetClip,
-	CreateClip.ID(): CreateClip,
-	DeleteClip.ID(): DeleteClip,
+	GetClip.ID():          GetClip,
+	CreateClip.ID():       CreateClip,
+	DeleteClip.ID():       DeleteClip,
+	GetClipFolder.ID():    GetClipFolder,
+	CreateClipFolder.ID(): CreateClipFolder,
+	PatchClipFolder.ID():  PatchClipFolder,
+	DeleteClipFolder.ID(): DeleteClipFolder,
 
 	GetStar.ID():    GetStar,
 	CreateStar.ID(): CreateStar,

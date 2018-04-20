@@ -164,8 +164,16 @@ func main() {
 
 	// Tag: clips
 	api.GET("/users/me/clips", router.GetClips, requires(permission.GetClip))
-	api.POST("/users/me/clips", router.PostClips, requires(permission.CreateClip))
-	api.DELETE("/users/me/clips", router.DeleteClips, requires(permission.DeleteClip))
+	api.POST("/users/me/clips", router.PostClip, requires(permission.CreateClip))
+	api.GET("/users/me/clips/:clipID", router.GetClip, requires(permission.GetClip))
+	api.DELETE("/users/me/clips/:clipID", router.DeleteClip, requires(permission.DeleteClip))
+	api.GET("/users/me/clips/:clipID/folder", router.GetClipsFolder, requires(permission.GetClip, permission.GetClipFolder))
+	api.PUT("/users/me/clips/:clipID/folder", router.PutClipsFolder, requires(permission.CreateClip))
+	api.GET("/users/me/clips/folders", router.GetClipFolders, requires(permission.GetClipFolder))
+	api.POST("/users/me/clips/folders", router.PostClipFolder, requires(permission.CreateClipFolder))
+	api.GET("/users/me/clips/folders/:folderID", router.GetClipFolder, requires(permission.GetClip, permission.GetClipFolder))
+	api.PATCH("/users/me/clips/folders/:folderID", router.PatchClipFolder, requires(permission.PatchClipFolder))
+	api.DELETE("/users/me/clips/folders/:folderID", router.DeleteClipFolder, requires(permission.DeleteClipFolder))
 
 	// Tag: star
 	api.GET("/users/me/stars", router.GetStars, requires(permission.GetStar))

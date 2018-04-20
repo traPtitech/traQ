@@ -726,16 +726,31 @@ paths:
     get:
       tags:
         - clip
-      description: クリップしたメッセージのリストを取得します。
+      description: 全てのクリップを取得します。
       responses:
         "200":
-          description: |+
-            正常に取得できました。
-            クリップしたメッセージのリストを返します。
+          description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MessageList"
+                type: array
+                items:
+                  type: object
+                  properties:
+                    folderId:
+                      type: string
+                      format: uuid
+                      description: フォルダID
+                    clipId:
+                      type: string
+                      format: uuid
+                      description: クリップID
+                    clippedAt:
+                      type: string
+                      format: datetime
+                      description: クリップ日時
+                    message:
+                      $ref: "#/components/schemas/Message"
     post:
       tags:
         - clip
@@ -752,34 +767,200 @@ paths:
                   type: string
                   format: uuid
                   description: クリップするメッセージID
+                folderId:
+                  type: string
+                  format: uuid
+                  description: クリップフォルダ名
       responses:
-        "204":
-          description: 正常にクリップできました。
+        "201":
+          description: 正常にクリップできました。クリップIDを返します。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: クリップID
+        "400":
+          description: 正常にクリップできませんでした。リクエスト内容が不正です。
+
+  /users/me/clips/{clipID}:
+    parameters:
+      - $ref: "#/components/parameters/clipIdInPath"
+    get:
+      tags:
+        - clip
+      description: 指定したクリップのメッセージを取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
         "404":
-          description: |+
-            正常にクリップできませんでした。
-            指定されたメッセージは存在しないか、自分のスコープ内にありません。
+          description: 正常に取得できませんでした。指定したクリップは存在しません。
     delete:
       tags:
         - clip
-      description: |+
-        クリップを削除します。
-        既にクリップされていないメッセージを指定した場合は無視されます(204)。
+      description: 指定したクリップを削除します。
+      responses:
+        "204":
+          description: 正常に削除できました。
+        "404":
+          description: 正常に削除できませんでした。指定したクリップは存在しません。
+
+  /users/me/clips/{clipID}/folder:
+    parameters:
+      - $ref: "#/components/parameters/clipIdInPath"
+    get:
+      tags:
+        - clip
+      description: 指定したクリップのフォルダ情報を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClipsFolder"
+        "404":
+          description: 正常に取得できませんでした。指定したクリップは存在しません。
+    put:
+      tags:
+        - clip
+      description: 指定したクリップのフォルダを変更します。
       requestBody:
         content:
           application/json:
             schema:
               type: object
               required:
-                - messageId
+                - folderId
               properties:
-                messageId:
+                folderId:
                   type: string
                   format: uuid
-                  description: 削除するメッセージのID
+                  description: フォルダID
+      responses:
+        "204":
+          description: 正常に変更できました。
+        "400":
+          description: 正常に変更できませんでした。指定したフォルダは存在しません。
+        "404":
+          description: 正常に変更できませんでした。指定したクリップは存在しません。
+
+  /users/me/clips/folders:
+    get:
+      tags:
+        - clip
+      description: クリップフォルダ一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClipsFolder"
+    post:
+      tags:
+        - clip
+      description: クリップフォルダを作成します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: フォルダ名(30文字以内)
+      responses:
+        "201":
+          description: 正常に作成できました。作成したフォルダ情報を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClipsFolder"
+        "400":
+          description: 作成できませんでした。リクエスト内容が不正です。
+        "409":
+          description: 作成できませんでした。既に存在します。
+
+  /users/me/clips/folders/{folderID}:
+    parameters:
+      - name: folderID
+        description: 操作の対象となるクリップフォルダのID
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - clip
+      description: フォルダ内のクリップ一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。クリップしたメッセージのリストを返します。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    clipId:
+                      type: string
+                      format: uuid
+                      description: クリップID
+                    clippedAt:
+                      type: string
+                      format: datetime
+                      description: クリップ日時
+                    message:
+                      $ref: "#/components/schemas/Message"
+        "404":
+          description: 取得できませんでした。存在しないフォルダです。
+    patch:
+      tags:
+        - clip
+      description: クリップフォルダ名を変更します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: フォルダ名(30文字以内)
+      responses:
+        "204":
+          description: 正常に変更できました。
+        "400":
+          description: 正常に変更できませんでした。リクエスト内容が不正です。
+        "404":
+          description: 正常に変更できませんでした。存在しないフォルダです。
+        "409":
+          description: 正常に変更できませんでした。既に存在するフォルダです。
+    delete:
+      tags:
+        - clip
+      description: クリップフォルダを削除します。フォルダ内のクリップは全て削除されます。
       responses:
         "204":
           description: 正常に削除できました。
+        "404":
+          description: 正常に削除できませんでした。存在しないフォルダです。
 
   /users/me/stars:
     get:
@@ -2049,6 +2230,13 @@ components:
       required: true
       schema:
         type: string
+    clipIdInPath:
+      name: clipID
+      description: 捜査の対象となるクリップのID
+      in: path
+      required: true
+      schema:
+        type: string
     webhookIdInPath:
       name: webhookID
       description: 操作の対象となるWebhookのID
@@ -2453,3 +2641,14 @@ components:
         approvedAt:
           type: string
           format: datetime
+
+    ClipsFolder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: フォルダID
+        name:
+          type: string
+          description: フォルダ名
