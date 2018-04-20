@@ -16,6 +16,16 @@ type ClipFolder struct {
 	CreatedAt time.Time `xorm:"created"`
 }
 
+// GetID IDをuuid.UUIDとして取得します
+func (f *ClipFolder) GetID() uuid.UUID {
+	return uuid.Must(uuid.FromString(f.ID))
+}
+
+// GetUID UserIDをuuid.UUIDとして取得します
+func (f *ClipFolder) GetUID() uuid.UUID {
+	return uuid.Must(uuid.FromString(f.UserID))
+}
+
 // TableName ClipFolderのテーブル名
 func (*ClipFolder) TableName() string {
 	return "clip_folders"
@@ -34,6 +44,26 @@ type Clip struct {
 	FolderID  string    `xorm:"char(36) not null"                      validate:"uuid,required"`
 	UpdatedAt time.Time `xorm:"updated"`
 	CreatedAt time.Time `xorm:"created"`
+}
+
+// GetID IDをuuid.UUIDとして取得します
+func (clip *Clip) GetID() uuid.UUID {
+	return uuid.Must(uuid.FromString(clip.ID))
+}
+
+// GetUID UserIDをuuid.UUIDとして取得します
+func (clip *Clip) GetUID() uuid.UUID {
+	return uuid.Must(uuid.FromString(clip.UserID))
+}
+
+// GetMID MessageIDをIDをuuid.UUIDとして取得します
+func (clip *Clip) GetMID() uuid.UUID {
+	return uuid.Must(uuid.FromString(clip.MessageID))
+}
+
+// GetFID FolderIDをuuid.UUIDとして取得します
+func (clip *Clip) GetFID() uuid.UUID {
+	return uuid.Must(uuid.FromString(clip.FolderID))
 }
 
 // TableName Clipのテーブル名

@@ -6,6 +6,8 @@ import (
 	"github.com/labstack/echo"
 )
 
+var errMySQLDuplicatedRecord uint16 = 1062
+
 // CustomHTTPErrorHandler :json形式でエラーレスポンスを返す
 func CustomHTTPErrorHandler(err error, c echo.Context) {
 	var (
