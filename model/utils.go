@@ -117,7 +117,7 @@ func addForeignKeyConstraint(table, key, referenceTable, referenceColumn, onDele
 		return nil
 	}
 
-	if _, err := db.Exec("ALTER TABLE ? ADD CONSTRAINT ? FOREIGN KEY ("+key+") REFERENCES ? (?) ON DELETE "+onDelete+" ON UPDATE "+onUpdate, table, constName, referenceTable, referenceColumn); err != nil {
+	if _, err := db.Exec("ALTER TABLE ? ADD CONSTRAINT ? FOREIGN KEY (?) REFERENCES ? (?) ON DELETE "+onDelete+" ON UPDATE "+onUpdate, table, constName, key, referenceTable, referenceColumn); err != nil {
 		return err
 	}
 
