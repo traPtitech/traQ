@@ -15,6 +15,8 @@ var (
 	channelPathMap = &sync.Map{}
 	// ErrChannelPathDepth 作成されるチャンネルの深さが5より大きいときに返すエラー
 	ErrChannelPathDepth = errors.New("Channel depth is no more than 5")
+	// ErrDuplicateName 作成されるチャンネルと同名のチャンネルが既に同階層に存在する場合に返すエラー
+	ErrDuplicateName = errors.New("This name channel already exists")
 )
 
 // Channel :チャンネルの構造体
@@ -73,6 +75,14 @@ func (channel *Channel) Create() error {
 		ch, err = ch.Parent()
 	}
 
+	has, err := channel.isUnique()
+	if err != nil {
+		return err
+	}
+	if !has {
+		return ErrDuplicateName
+	}
+
 	// ここまでで入力されない要素は初期値(""や0)で格納される
 	if _, err := db.Insert(channel); err != nil {
 		return err
@@ -93,6 +103,21 @@ func (channel *Channel) Exists(userID string) (bool, error) {
 		return has, err
 	}
 	return db.Get(channel)
+}
+
+// isUnique チャンネルの名前が同階層でユニークかどうかを判定する
+func (channel *Channel) isUnique() (bool, error) {
+	var childrenNames []string
+	err := db.Table(channel.TableName()).Where("parent_id = ?", channel.ParentID).Cols("name").Find(&childrenNames)
+	if err != nil {
+		return false, err
+	}
+	for _, v := range childrenNames {
+		if channel.Name == v {
+			return false, ErrDuplicateName
+		}
+	}
+	return true, nil
 }
 
 // Update チャンネルの情報の更新を行う

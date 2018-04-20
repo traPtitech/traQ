@@ -149,8 +149,13 @@ func PostChannels(c echo.Context) error {
 		IsPublic:  req.ChannelType == "public",
 	}
 	if err := ch.Create(); err != nil {
-		log.Errorf("an error occurred while create new channel: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create new channel")
+		switch err {
+		case model.ErrDuplicateName:
+			return echo.NewHTTPError(http.StatusConflict, err)
+		default:
+			log.Errorf("an error occurred while create new channel: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create new channel")
+		}
 	}
 
 	if ch.IsPublic {
