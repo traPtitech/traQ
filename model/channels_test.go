@@ -33,6 +33,16 @@ func TestChannel_Create(t *testing.T) {
 		assert.NotEmpty(c.ID)
 	}
 
+	c = &Channel{
+		CreatorID: user.ID,
+		Name:      "testChannel2",
+		ParentID:  "",
+		IsPublic:  true,
+	}
+	if err := c.Create(); err != nil {
+		assert.Equal(ErrDuplicateName, err)
+	}
+
 	c2 := &Channel{
 		CreatorID: user.ID,
 		Name:      "testChannel2",
