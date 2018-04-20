@@ -292,6 +292,9 @@ func sendToFcm(deviceTokens []string, body string, payload events.DataPayload, i
 	data := map[string]string{
 		"origin": config.TRAQOrigin,
 	}
+	if len(action) > 0 {
+		data["click_action"] = action
+	}
 	for k, v := range payload {
 		switch t := v.(type) {
 		case fmt.Stringer:
