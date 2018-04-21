@@ -157,13 +157,13 @@ func GetClipMessage(id uuid.UUID) (*ClipMessage, error) {
 
 // GetClipMessages 指定したフォルダのクリップを全て取得します
 func GetClipMessages(folderID uuid.UUID) (res []*ClipMessage, err error) {
-	err = getClipMessageJoinedSession().Where("folder_id = ?", folderID.String()).Find(&res)
+	err = getClipMessageJoinedSession().Where("clips.folder_id = ?", folderID.String()).Find(&res)
 	return
 }
 
 // GetClipMessagesByUser 指定したユーザーのクリップを全て取得します
 func GetClipMessagesByUser(userID uuid.UUID) (res []*ClipMessage, err error) {
-	err = getClipMessageJoinedSession().Where("user_id = ?", userID.String()).Find(&res)
+	err = getClipMessageJoinedSession().Where("clips.user_id = ?", userID.String()).Find(&res)
 	return
 }
 
