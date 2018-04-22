@@ -78,8 +78,8 @@ func (clip *Clip) Validate() error {
 
 // ClipMessage クリップメッセージ構造体
 type ClipMessage struct {
-	*Clip    `xorm:"extend"`
-	*Message `xorm:"extend"`
+	*Clip    `xorm:"extends"`
+	*Message `xorm:"extends"`
 }
 
 // TableName Join処理用
