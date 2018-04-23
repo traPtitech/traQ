@@ -109,7 +109,7 @@ func addForeignKeyConstraint(table, key, referenceTable, referenceColumn, onDele
 
 	constName := fmt.Sprintf("%s_ibfk_%s__%s__%s", table, key, referenceTable, referenceColumn)
 
-	c, err := db.SQL(`SELECT * FROM information_schema.table_constraints WHERE table_schema = ? AND constraint_type = 'FOREIGN KEY' AND constraint_name = ?`, config.DatabaseName, constName).Count()
+	c, err := db.SQL(`SELECT COUNT(*) FROM information_schema.table_constraints WHERE table_schema = ? AND constraint_type = 'FOREIGN KEY' AND constraint_name = ?`, config.DatabaseName, constName).Count()
 	if err != nil {
 		return err
 	}
