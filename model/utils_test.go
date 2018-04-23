@@ -3,6 +3,7 @@ package model
 import (
 	"bytes"
 	"fmt"
+	"github.com/traPtitech/traQ/config"
 	"os"
 	"testing"
 
@@ -43,6 +44,7 @@ func TestMain(m *testing.M) {
 	}
 
 	dbname := "traq-test-model"
+	config.DatabaseName = "traq-test-model"
 
 	engine, err := xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, dbname))
 	if err != nil {
