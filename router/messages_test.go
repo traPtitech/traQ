@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strconv"
 	"testing"
 
 	"github.com/labstack/echo"
@@ -194,8 +193,8 @@ func TestPostMessageReport(t *testing.T) {
 		}
 	}
 
-	for i := 1; i <= 4; i++ {
-		post := struct{ Reason string }{Reason: "ああああ" + strconv.Itoa(i)}
+	{
+		post := struct{ Reason string }{Reason: "ああああ"}
 		body, err := json.Marshal(post)
 		require.NoError(err)
 
@@ -210,19 +209,4 @@ func TestPostMessageReport(t *testing.T) {
 		_, err = model.GetMessageByID(message.ID)
 		assert.NoError(err)
 	}
-
-	post := struct{ Reason string }{Reason: "BAN"}
-	body, err := json.Marshal(post)
-	require.NoError(err)
-
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
-
-	c, _ := getContext(e, t, cookie, req)
-	c.SetPath("/messages/:messageID/report")
-	c.SetParamNames("messageID")
-	c.SetParamValues(message.ID)
-	requestWithContext(t, mw(PostMessageReport), c)
-
-	_, err = model.GetMessageByID(message.ID)
-	assert.Error(err)
 }
