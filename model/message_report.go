@@ -43,7 +43,7 @@ func CreateMessageReport(messageID, reporterID uuid.UUID, reason string) error {
 	return nil
 }
 
-// GetMessageReports メッセージ通報を取得します
+// GetMessageReportsByMessageID メッセージ通報を取得します
 func GetMessageReportsByMessageID(messageID uuid.UUID) (arr []*MessageReport, err error) {
 	err = db.Where("message_id = ?", messageID.String()).Find(&arr)
 	return
