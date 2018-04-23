@@ -48,3 +48,9 @@ func GetMessageReportsByMessageID(messageID uuid.UUID) (arr []*MessageReport, er
 	err = db.Where("message_id = ?", messageID.String()).Find(&arr)
 	return
 }
+
+// GetMessageReportsByReporterID メッセージ通報を取得します
+func GetMessageReportsByReporterID(reporterID uuid.UUID) (arr []*MessageReport, err error) {
+	err = db.Where("reporter = ?", reporterID.String()).Find(&arr)
+	return
+}

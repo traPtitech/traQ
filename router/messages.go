@@ -227,9 +227,24 @@ func getMessages(channelID, userID string, limit, offset int) ([]*MessageForResp
 		return nil, echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
 	}
 
+	reports, err := model.GetMessageReportsByReporterID(uuid.FromStringOrNil(userID))
+	if err != nil {
+		log.Error(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
 	res := make([]*MessageForResponse, 0)
 	for _, message := range messages {
-		res = append(res, formatMessage(message))
+		hidden := false
+		for _, v := range reports {
+			if message.ID == v.MessageID {
+				hidden = true
+				break
+			}
+		}
+		if !hidden {
+			res = append(res, formatMessage(message))
+		}
 	}
 	return res, nil
 }
