@@ -74,6 +74,7 @@ func SetRole(rbac *rbac.RBAC) {
 			permission.PostMessage,
 			permission.EditMessage,
 			permission.DeleteMessage,
+			permission.ReportMessage,
 
 			permission.CreatePin,
 			permission.DeletePin,

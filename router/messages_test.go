@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"testing"
 
 	"github.com/labstack/echo"
@@ -171,4 +172,57 @@ func TestDeleteMessageByID(t *testing.T) {
 
 	message, err := model.GetMessageByID(message.ID)
 	require.Error(err)
+}
+
+func TestPostMessageReport(t *testing.T) {
+	e, cookie, mw, assert, require := beforeTest(t)
+
+	channel := mustMakeChannel(t, testUser.ID, "test", true)
+	message := mustMakeMessage(t, testUser.ID, channel.ID)
+
+	{
+		req := httptest.NewRequest(http.MethodPost, "/", nil)
+		c, _ := getContext(e, t, cookie, req)
+		c.SetPath("/messages/:messageID/report")
+		c.SetParamNames("messageID")
+		c.SetParamValues(message.ID)
+
+		err := mw(PostMessageReport)(c)
+
+		if assert.Error(err) {
+			assert.Equal(http.StatusBadRequest, err.(*echo.HTTPError).Code)
+		}
+	}
+
+	for i := 1; i <= 4; i++ {
+		post := struct{ Reason string }{Reason: "ああああ" + strconv.Itoa(i)}
+		body, err := json.Marshal(post)
+		require.NoError(err)
+
+		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
+
+		c, _ := getContext(e, t, cookie, req)
+		c.SetPath("/messages/:messageID/report")
+		c.SetParamNames("messageID")
+		c.SetParamValues(message.ID)
+		requestWithContext(t, mw(PostMessageReport), c)
+
+		_, err = model.GetMessageByID(message.ID)
+		assert.NoError(err)
+	}
+
+	post := struct{ Reason string }{Reason: "BAN"}
+	body, err := json.Marshal(post)
+	require.NoError(err)
+
+	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
+
+	c, _ := getContext(e, t, cookie, req)
+	c.SetPath("/messages/:messageID/report")
+	c.SetParamNames("messageID")
+	c.SetParamValues(message.ID)
+	requestWithContext(t, mw(PostMessageReport), c)
+
+	_, err = model.GetMessageByID(message.ID)
+	assert.Error(err)
 }

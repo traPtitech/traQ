@@ -1,6 +1,9 @@
 package router
 
 import (
+	"github.com/go-sql-driver/mysql"
+	"github.com/satori/go.uuid"
+	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"time"
 
@@ -141,6 +144,59 @@ func DeleteMessageByID(c echo.Context) error {
 	}
 
 	go notification.Send(events.MessageDeleted, events.MessageEvent{Message: *m})
+	return c.NoContent(http.StatusNoContent)
+}
+
+// PostMessageReport POST /messages/{messageID}/report
+func PostMessageReport(c echo.Context) error {
+	user := c.Get("user").(*model.User)
+	messageID := c.Param("messageID")
+
+	req := &struct {
+		Reason string `json:"reason"`
+	}{}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	m, err := validateMessageID(messageID, user.ID)
+	if err != nil {
+		return err
+	}
+
+	mID := uuid.Must(uuid.FromString(messageID))
+
+	if err := model.CreateMessageReport(mID, user.GetUID(), req.Reason); err != nil {
+		switch e := err.(type) {
+		case *validator.ValidationErrors:
+			return echo.NewHTTPError(http.StatusBadRequest, err)
+		case *mysql.MySQLError:
+			if e.Number == errMySQLDuplicatedRecord {
+				return echo.NewHTTPError(http.StatusBadRequest, "already reported")
+			}
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
+	r, err := model.GetMessageReportsByMessageID(mID)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// 5人でメッセージBAN
+	if len(r) >= 5 {
+		m.IsDeleted = true
+		if err := m.Update(); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
 	return c.NoContent(http.StatusNoContent)
 }
 

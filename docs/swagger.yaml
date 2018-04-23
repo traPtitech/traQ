@@ -1649,6 +1649,30 @@ paths:
             削除できませんでした。
             指定されたメッセージは存在しないか、自分のスコープ内にありません。
 
+  /messages/{messageID}/report:
+    parameters:
+      - $ref: "#/components/parameters/messageIdInPath"
+    post:
+      tags:
+        - message
+      description: 指定したメッセージを通報します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  description: 通報理由(100文字以内)
+      responses:
+        "204":
+          description: 通報を受理しました。
+        "400":
+          description: 通報を受理できませんでした。リクエスト内容が不正です。
+
   /messages/{messageID}/stamps:
     parameters:
       - $ref: "#/components/parameters/messageIdInPath"
