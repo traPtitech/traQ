@@ -1,10 +1,10 @@
 package router
 
 import (
-	"fmt"
+	"net/http"
+
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
-	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -22,28 +22,17 @@ func GetUnread(c echo.Context) error {
 	return c.JSON(http.StatusOK, responseBody)
 }
 
-// DeleteUnread Method Handler of "DELETE /users/me/unread"
+// DeleteUnread Method Handler of "DELETE /users/me/unread/{channelID}"
 func DeleteUnread(c echo.Context) error {
 	me := c.Get("user").(*model.User)
 
-	var requestBody []string
+	channelID := c.Param("channelID")
 
-	if err := c.Bind(&requestBody); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
+	if err := model.DeleteUnreadsByChannelID(channelID, me.ID); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete unread messages")
 	}
 
-	for _, messageID := range requestBody {
-		unread := &model.Unread{
-			UserID:    me.ID,
-			MessageID: messageID,
-		}
-
-		if err := unread.Delete(); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to delete unread: %v", err))
-		}
-	}
-
-	go notification.Send(events.MessageRead, events.ReadMessagesEvent{UserID: me.ID, MessageIDs: requestBody})
+	go notification.Send(events.MessageRead, events.ReadMessagesEvent{UserID: me.ID, ChannelID: channelID})
 	return c.NoContent(http.StatusNoContent)
 }
 

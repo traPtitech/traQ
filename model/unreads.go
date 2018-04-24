@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+
 	"github.com/traPtitech/traQ/utils/validator"
 )
 
@@ -56,5 +57,15 @@ func DeleteUnreadsByMessageID(messageID string) (err error) {
 	}
 
 	_, err = db.Delete(&Unread{MessageID: messageID})
+	return
+}
+
+//DeleteUnreadsByChannelID 指定したチャンネルIDに存在する、指定したユーザーIDの未読レコードをすべて削除
+func DeleteUnreadsByChannelID(channelID, userID string) (err error) {
+	if channelID == "" || userID == "" {
+		return ErrInvalidParam
+	}
+
+	_, err = db.Query("DELETE unreads FROM unreads INNER JOIN messages ON unreads.user_id = ? AND unreads.message_id = messages.id WHERE messages.channel_id = ?", userID, channelID)
 	return
 }

@@ -48,32 +48,26 @@ func PostStars(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// DeleteStars /users/me/starsのDELETEメソッドハンドラ
+// DeleteStars DELETE /users/me/stars/{channelID} のハンドラ
 func DeleteStars(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 
-	requestBody := struct {
-		ChannelID string `json:"channelId"`
-	}{}
+	channelID := c.Param("channelID")
 
-	if err := c.Bind(&requestBody); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
-	}
-
-	if _, err := validateChannelID(requestBody.ChannelID, user.ID); err != nil {
+	if _, err := validateChannelID(channelID, user.ID); err != nil {
 		return err
 	}
 
 	star := &model.Star{
 		UserID:    user.ID,
-		ChannelID: requestBody.ChannelID,
+		ChannelID: channelID,
 	}
 
 	if err := star.Delete(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to delete star: %s", err.Error()))
 	}
 
-	go notification.Send(events.ChannelUnstared, events.UserChannelEvent{UserID: user.ID, ChannelID: requestBody.ChannelID})
+	go notification.Send(events.ChannelUnstared, events.UserChannelEvent{UserID: user.ID, ChannelID: channelID})
 	return c.NoContent(http.StatusNoContent)
 }
 

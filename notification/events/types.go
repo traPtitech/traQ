@@ -1,10 +1,11 @@
 package events
 
 import (
-	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/model"
 	"strings"
 	"time"
+
+	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/model"
 )
 
 //EventType 通知イベントの種類
@@ -158,14 +159,14 @@ func (e UserMessageEvent) TargetUser() uuid.UUID {
 
 // ReadMessagesEvent メッセージの既読イベント
 type ReadMessagesEvent struct {
-	UserID     string
-	MessageIDs []string
+	UserID    string
+	ChannelID string
 }
 
 // DataPayload データペイロード
 func (e ReadMessagesEvent) DataPayload() DataPayload {
 	return DataPayload{
-		"ids": e.MessageIDs,
+		"ids": e.ChannelID,
 	}
 }
 

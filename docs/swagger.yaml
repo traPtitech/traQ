@@ -999,27 +999,21 @@ paths:
           description: |+
             正常に追加できませんでした。
             対象のチャンネルが存在しません。
+
+  /users/me/stars/{channelID}:
     delete:
       tags:
         - star
       description: |+
         お気に入りチャンネルリストから削除します。
         既にお気に入りチャンネルリストに無いチャンネルを指定した場合は無視されます(204)。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - channelId
-              properties:
-                channelId:
-                  type: string
-                  format: uuid
-                  description: 削除するチャンネルのID
       responses:
         "204":
           description: 正常に削除されました。
+        "404":
+          description: |+
+            削除に失敗しました。
+            指定されたチャンネルは存在しません。
 
   /users/me/channels/visibility:
     get:
@@ -1087,19 +1081,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MessageList"
+
+  users/me/unread/{channelID}:
     delete:
       tags:
         - unread
-      description: メッセージを既読にします。存在しないメッセージのIDを指定した場合は、無視されます。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              description: 既読にするメッセージのIDの配列
-              items:
-                type: string
-                format: uuid
+      description: 指定されたチャンネルの未読メッセージを既読にします。存在しないチャンネルIDを指定した場合は、無視されます。
       responses:
         "204":
           description: |+
