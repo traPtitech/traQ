@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"fmt"
+	"github.com/traPtitech/traQ/config"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -56,6 +57,7 @@ func TestMain(m *testing.M) {
 	}
 
 	dbname := "traq-test-router"
+	config.DatabaseName = "traq-test-router"
 
 	var err error
 	engine, err = xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, dbname))
@@ -114,7 +116,7 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc, *a
 func beforeLoginTest(t *testing.T) (*echo.Echo, echo.MiddlewareFunc) {
 	require := require.New(t)
 
-	engine.DropTables("sessions", "messages", "users_private_channels", "channels", "users", "clips", "stars")
+	require.NoError(model.DropTables())
 	require.NoError(model.SyncSchema())
 	e := echo.New()
 
