@@ -232,17 +232,14 @@ func getMessages(channelID, userID string, limit, offset int) ([]*MessageForResp
 		log.Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
+	hidden := make(map[string]bool)
+	for _, v := range reports {
+		hidden[v.MessageID] = true
+	}
 
 	res := make([]*MessageForResponse, 0)
 	for _, message := range messages {
-		hidden := false
-		for _, v := range reports {
-			if message.ID == v.MessageID {
-				hidden = true
-				break
-			}
-		}
-		if !hidden {
+		if !hidden[message.ID] {
 			res = append(res, formatMessage(message))
 		}
 	}
