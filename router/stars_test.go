@@ -16,10 +16,10 @@ func TestGetStars(t *testing.T) {
 	rec := request(e, t, mw(GetStars), cookie, nil)
 
 	if assert.EqualValues(http.StatusOK, rec.Code) {
-		var responseBody []ChannelForResponse
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.Len(responseBody, 1)
-			assert.Equal(channel.ID, responseBody[0].ChannelID)
+		var res []ChannelForResponse
+		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &res)) {
+			assert.Len(res, 1)
+			assert.Equal(channel.ID, res[0].ChannelID)
 		}
 	}
 }
