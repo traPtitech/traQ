@@ -1,6 +1,9 @@
 package router
 
 import (
+	"github.com/go-sql-driver/mysql"
+	"github.com/satori/go.uuid"
+	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"time"
 
@@ -144,6 +147,59 @@ func DeleteMessageByID(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// PostMessageReport POST /messages/{messageID}/report
+func PostMessageReport(c echo.Context) error {
+	user := c.Get("user").(*model.User)
+	messageID := c.Param("messageID")
+
+	req := &struct {
+		Reason string `json:"reason"`
+	}{}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	m, err := validateMessageID(messageID, user.ID)
+	if err != nil {
+		return err
+	}
+
+	mID := uuid.Must(uuid.FromString(messageID))
+
+	if err := model.CreateMessageReport(mID, user.GetUID(), req.Reason); err != nil {
+		switch e := err.(type) {
+		case *validator.ValidationErrors:
+			return echo.NewHTTPError(http.StatusBadRequest, err)
+		case *mysql.MySQLError:
+			if e.Number == errMySQLDuplicatedRecord {
+				return echo.NewHTTPError(http.StatusBadRequest, "already reported")
+			}
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
+	r, err := model.GetMessageReportsByMessageID(mID)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// 5人でメッセージBAN
+	if len(r) >= 5 {
+		m.IsDeleted = true
+		if err := m.Update(); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 // dbにデータを入れる
 func createMessage(text, userID, channelID string) (*MessageForResponse, error) {
 	m := &model.Message{
@@ -171,9 +227,22 @@ func getMessages(channelID, userID string, limit, offset int) ([]*MessageForResp
 		return nil, echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
 	}
 
-	res := make([]*MessageForResponse, 0)
+	reports, err := model.GetMessageReportsByReporterID(uuid.FromStringOrNil(userID))
+	if err != nil {
+		log.Error(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	hidden := make(map[string]bool)
+	for _, v := range reports {
+		hidden[v.MessageID] = true
+	}
+
+	res := make([]*MessageForResponse, 0, limit)
+
 	for _, message := range messages {
-		res = append(res, formatMessage(message))
+		if !hidden[message.ID] {
+			res = append(res, formatMessage(message))
+		}
 	}
 	return res, nil
 }

@@ -16,6 +16,7 @@ var list = map[string]gorbac.Permission{
 	PostMessage.ID():   PostMessage,
 	EditMessage.ID():   EditMessage,
 	DeleteMessage.ID(): DeleteMessage,
+	ReportMessage.ID(): ReportMessage,
 
 	GetPin.ID():    GetPin,
 	CreatePin.ID(): CreatePin,

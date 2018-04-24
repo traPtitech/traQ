@@ -11,4 +11,6 @@ var (
 	EditMessage = gorbac.NewStdPermission("edit_message")
 	// DeleteMessage : メッセージ削除権限
 	DeleteMessage = gorbac.NewStdPermission("delete_message")
+	// ReportMessage : メッセージ通報権限
+	ReportMessage = gorbac.NewStdPermission("report_message")
 )

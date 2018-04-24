@@ -15,6 +15,7 @@ var (
 	// モデルを追加したら各自ここに追加しなければいけない
 	// **順番注意**
 	tables = []interface{}{
+		&MessageReport{},
 		&OAuth2Token{},
 		&OAuth2Authorize{},
 		&OAuth2Client{},

@@ -149,6 +149,7 @@ func main() {
 	api.GET("/messages/:messageID", router.GetMessageByID, requires(permission.GetMessage))
 	api.PUT("/messages/:messageID", router.PutMessageByID, requires(permission.EditMessage))
 	api.DELETE("/messages/:messageID", router.DeleteMessageByID, requires(permission.DeleteMessage))
+	api.POST("/messages/:messageID/report", router.PostMessageReport, requires(permission.ReportMessage))
 	api.GET("/channels/:channelID/messages", router.GetMessagesByChannelID, requires(permission.GetMessage))
 	api.POST("/channels/:channelID/messages", router.PostMessage, requires(permission.PostMessage))
 
