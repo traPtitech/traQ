@@ -976,22 +976,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelList"
+
+  /users/me/stars/{channelID}:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
     post:
       tags:
         - star
       description: お気に入りチャンネルリストにチャンネルを追加します。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - channelId
-              properties:
-                channelId:
-                  type: string
-                  format: uuid
-                  description: 追加するチャンネルのID
       responses:
         "204":
           description: 正常に追加できました。
@@ -999,8 +991,6 @@ paths:
           description: |+
             正常に追加できませんでした。
             対象のチャンネルが存在しません。
-
-  /users/me/stars/{channelID}:
     delete:
       tags:
         - star
@@ -1082,7 +1072,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/MessageList"
 
-  users/me/unread/{channelID}:
+  /users/me/unread/{channelID}:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
     delete:
       tags:
         - unread

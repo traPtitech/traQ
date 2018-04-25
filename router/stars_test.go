@@ -24,20 +24,14 @@ func TestGetStars(t *testing.T) {
 	}
 }
 
-func TestPostStars(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
+func TestPutStars(t *testing.T) {
+	e, cookie, mw, assert, _ := beforeTest(t)
+	channelID := mustMakeChannel(t, testUser.ID, "test", true).ID
 
-	post := struct {
-		ChannelID string `json:"channelId"`
-	}{
-		ChannelID: channel.ID,
-	}
-	body, err := json.Marshal(post)
-	require.NoError(err)
-
-	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	rec := request(e, t, mw(PostStars), cookie, req)
+	c, rec := getContext(e, t, cookie, nil)
+	c.SetParamNames("channelID")
+	c.SetParamValues(channelID)
+	requestWithContext(t, mw(PutStars), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code)
 }

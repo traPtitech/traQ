@@ -23,21 +23,14 @@ func GetStars(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// PostStars /users/me/starsのPOSTメソッドハンドラ
-func PostStars(c echo.Context) error {
+// PutStars PUT /users/me/stars/{channelID} のハンドラ
+func PutStars(c echo.Context) error {
 	myID := c.Get("user").(*model.User).ID
-
-	req := struct {
-		ChannelID string `json:"channelId"`
-	}{}
-
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
-	}
+	channelID := c.Param("channelID")
 
 	star := &model.Star{
 		UserID:    myID,
-		ChannelID: req.ChannelID,
+		ChannelID: channelID,
 	}
 
 	if err := star.Create(); err != nil {
@@ -45,7 +38,7 @@ func PostStars(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create star")
 	}
 
-	go notification.Send(events.ChannelStared, events.UserChannelEvent{UserID: myID, ChannelID: req.ChannelID})
+	go notification.Send(events.ChannelStared, events.UserChannelEvent{UserID: myID, ChannelID: channelID})
 	return c.NoContent(http.StatusNoContent)
 }
 
