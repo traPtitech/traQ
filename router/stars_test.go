@@ -1,10 +1,8 @@
 package router
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -37,21 +35,14 @@ func TestPutStars(t *testing.T) {
 }
 
 func TestDeleteStars(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
-	mustStarChannel(t, testUser.ID, channel.ID)
+	e, cookie, mw, assert, _ := beforeTest(t)
+	channelID := mustMakeChannel(t, testUser.ID, "star", true).ID
+	mustStarChannel(t, testUser.ID, channelID)
 
-	post := struct {
-		ChannelID string `json:"channelID"`
-	}{
-		ChannelID: channel.ID,
-	}
-
-	body, err := json.Marshal(post)
-	require.NoError(err)
-
-	req := httptest.NewRequest("DELETE", "http://test", bytes.NewReader(body))
-	rec := request(e, t, mw(DeleteStars), cookie, req)
+	c, rec := getContext(e, t, cookie, nil)
+	c.SetParamNames("channelID")
+	c.SetParamValues(channelID)
+	requestWithContext(t, mw(DeleteStars), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code)
 }
