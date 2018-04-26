@@ -667,6 +667,9 @@ paths:
                 password:
                   type: string
                   description: 変更後のパスワード。変更しない場合は""
+                twitterId:
+                  type: string
+                  description: TwitterID
       responses:
         "204":
           description: 正常に変更できました。
@@ -2368,6 +2371,8 @@ components:
           format: uuid
         bot:
           type: boolean
+        twitterId:
+          type: string
 
     UserDetail:
       type: object
@@ -2384,6 +2389,8 @@ components:
           format: uuid
         bot:
           type: boolean
+        twitterId:
+          type: string
         tagList:
           $ref: "#/components/schemas/TagList"
 

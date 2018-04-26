@@ -14,6 +14,8 @@ var (
 	ChannelRegex = regexp.MustCompile(`^[a-zA-Z0-9-_]{1,20}$`)
 	// PasswordRegex パスワード正規表現
 	PasswordRegex = regexp.MustCompile(`^[\x20-\x7E]{10,32}$`)
+	// TwitterIDRegex ツイッターIDの正規表現
+	TwitterIDRegex = regexp.MustCompile(`^[a-zA-Z0-9_]{1,15}$`)
 )
 
 // Validator echo用バリデーター
@@ -46,6 +48,14 @@ func init() {
 
 	validate.RegisterValidation("password", func(fl validator.FieldLevel) bool {
 		return PasswordRegex.MatchString(fl.Field().String())
+	})
+
+	validate.RegisterValidation("twitterid", func(fl validator.FieldLevel) bool {
+		s := fl.Field().String()
+		if len(s) > 0 {
+			return TwitterIDRegex.MatchString(s)
+		}
+		return true
 	})
 }
 

@@ -34,6 +34,7 @@ type UserForResponse struct {
 	DisplayName string `json:"displayName"`
 	IconID      string `json:"iconFileId"`
 	Bot         bool   `json:"bot"`
+	TwitterID   string `json:"twitterId"`
 }
 
 // UserDetailForResponse クライアントに返す形の詳細ユーザー構造体
@@ -43,6 +44,7 @@ type UserDetailForResponse struct {
 	DisplayName string            `json:"displayName"`
 	IconID      string            `json:"iconFileId"`
 	Bot         bool              `json:"bot"`
+	TwitterID   string            `json:"twitterId"`
 	TagList     []*TagForResponse `json:"tagList"`
 }
 
@@ -302,6 +304,7 @@ func PatchMe(c echo.Context) error {
 		DisplayName string `json:"displayName"`
 		Email       string `json:"email"`
 		Password    string `json:"password"`
+		TwitterID   string `json:"twitterId"`
 	}{}
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
@@ -309,6 +312,9 @@ func PatchMe(c echo.Context) error {
 
 	if req.Email == "" && req.Password == "" {
 		user.DisplayName = req.DisplayName
+		if req.TwitterID != "" {
+			user.TwitterID = req.TwitterID
+		}
 		if err := user.Update(); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user. Please check the format of displayName")
@@ -322,6 +328,9 @@ func PatchMe(c echo.Context) error {
 
 	if req.DisplayName != "" {
 		user.DisplayName = req.DisplayName
+	}
+	if req.TwitterID != "" {
+		user.TwitterID = req.TwitterID
 	}
 	if req.Email != "" {
 		user.Email = req.Email
@@ -376,6 +385,7 @@ func formatUser(user *model.User) *UserForResponse {
 		DisplayName: user.DisplayName,
 		IconID:      user.Icon,
 		Bot:         user.Bot,
+		TwitterID:   user.TwitterID,
 	}
 	if len(res.DisplayName) == 0 {
 		res.DisplayName = res.Name
@@ -390,6 +400,7 @@ func formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailF
 		DisplayName: user.DisplayName,
 		IconID:      user.Icon,
 		Bot:         user.Bot,
+		TwitterID:   user.TwitterID,
 	}
 	if len(userDetail.DisplayName) == 0 {
 		userDetail.DisplayName = userDetail.Name
