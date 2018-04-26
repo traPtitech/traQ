@@ -2438,6 +2438,8 @@ components:
           type: string
         pin:
           type: boolean
+        reported:
+          type: boolean
         content:
           type: string
         dateTime:
