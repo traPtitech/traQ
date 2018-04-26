@@ -34,7 +34,5 @@ ci-test:
 .PHONY: init
 init:
 	go get -u github.com/golang/dep/cmd/dep
-	[ -d $(GOPATH)/src/golang.org/x ] || mkdir -p $(GOPATH)/src/golang.org/x
-	git clone --depth=1 https://github.com/golang/lint.git $(GOPATH)/src/golang.org/x/lint
 	go get -u golang.org/x/lint/golint
 	dep ensure
