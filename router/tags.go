@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/permission"
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -14,10 +15,13 @@ import (
 
 // TagForResponse クライアントに返す形のタグ構造体
 type TagForResponse struct {
-	ID       string `json:"tagId"`
-	Tag      string `json:"tag"`
-	IsLocked bool   `json:"isLocked"`
-	Editable bool   `json:"editable"`
+	ID        string    `json:"tagId"`
+	Tag       string    `json:"tag"`
+	IsLocked  bool      `json:"isLocked"`
+	Editable  bool      `json:"editable"`
+	Type      string    `json:"type"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // TagListForResponse クライアントに返す形のタグリスト構造体
@@ -25,6 +29,7 @@ type TagListForResponse struct {
 	ID       string             `json:"tagId"`
 	Tag      string             `json:"tag"`
 	Editable bool               `json:"editable"`
+	Type     string             `json:"type"`
 	Users    []*UserForResponse `json:"users"`
 }
 
@@ -232,6 +237,7 @@ func GetAllTags(c echo.Context) error {
 			ID:       v.ID,
 			Tag:      v.Name,
 			Editable: !v.Restricted,
+			Type:     v.Type,
 			Users:    users,
 		}
 	}
@@ -263,6 +269,7 @@ func GetUsersByTagID(c echo.Context) error {
 		ID:       t.ID,
 		Tag:      t.Name,
 		Editable: !t.Restricted,
+		Type:     t.Type,
 		Users:    users,
 	}
 
@@ -326,6 +333,13 @@ func PatchTag(c echo.Context) error {
 
 	// タグタイプ変更
 	if req.Type != nil {
+		reqUser := c.Get("user").(*model.User)
+		r := c.Get("rbac").(*rbac.RBAC)
+
+		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
+			return echo.NewHTTPError(http.StatusForbidden)
+		}
+
 		t.Type = *req.Type
 	}
 
@@ -393,9 +407,12 @@ func formatTag(ut *model.UsersTag) (*TagForResponse, error) {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get tag infomation")
 	}
 	return &TagForResponse{
-		ID:       tag.ID,
-		Tag:      tag.Name,
-		IsLocked: ut.IsLocked || tag.Restricted,
-		Editable: !tag.Restricted,
+		ID:        tag.ID,
+		Tag:       tag.Name,
+		IsLocked:  ut.IsLocked || tag.Restricted,
+		Editable:  !tag.Restricted,
+		Type:      tag.Type,
+		CreatedAt: ut.CreatedAt,
+		UpdatedAt: ut.UpdatedAt,
 	}, nil
 }

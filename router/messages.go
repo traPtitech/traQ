@@ -24,6 +24,7 @@ type MessageForResponse struct {
 	CreatedAt       time.Time             `json:"datetime"`
 	UpdatedAt       time.Time             `json:"updatedAt"`
 	Pin             bool                  `json:"pin"`
+	Reported        bool                  `json:"reported"`
 	StampList       []*model.MessageStamp `json:"stampList"`
 }
 
@@ -240,9 +241,11 @@ func getMessages(channelID, userID string, limit, offset int) ([]*MessageForResp
 	res := make([]*MessageForResponse, 0, limit)
 
 	for _, message := range messages {
+		ms := formatMessage(message)
 		if !hidden[message.ID] {
-			res = append(res, formatMessage(message))
+			ms.Reported = true
 		}
+		res = append(res, ms)
 	}
 	return res, nil
 }
