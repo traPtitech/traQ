@@ -21,7 +21,7 @@ type MessageForResponse struct {
 	UserID          string                `json:"userId"`
 	ParentChannelID string                `json:"parentChannelId"`
 	Content         string                `json:"content"`
-	CreatedAt       time.Time             `json:"datetime"`
+	CreatedAt       time.Time             `json:"createdAt"`
 	UpdatedAt       time.Time             `json:"updatedAt"`
 	Pin             bool                  `json:"pin"`
 	Reported        bool                  `json:"reported"`
