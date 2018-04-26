@@ -178,7 +178,7 @@ func main() {
 
 	// Tag: star
 	api.GET("/users/me/stars", router.GetStars, requires(permission.GetStar))
-	api.POST("/users/me/stars/:ChannelID", router.PutStars, requires(permission.CreateStar))
+	api.PUT("/users/me/stars/:ChannelID", router.PutStars, requires(permission.CreateStar))
 	api.DELETE("/users/me/stars/:ChannelID", router.DeleteStars, requires(permission.DeleteStar))
 
 	// Tag: unread

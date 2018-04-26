@@ -980,7 +980,7 @@ paths:
   /users/me/stars/{channelID}:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
-    post:
+    put:
       tags:
         - star
       description: お気に入りチャンネルリストにチャンネルを追加します。
