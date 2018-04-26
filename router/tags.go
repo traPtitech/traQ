@@ -18,6 +18,7 @@ type TagForResponse struct {
 	Tag      string `json:"tag"`
 	IsLocked bool   `json:"isLocked"`
 	Editable bool   `json:"editable"`
+	Type     string `json:"type"`
 }
 
 // TagListForResponse クライアントに返す形のタグリスト構造体
@@ -25,6 +26,7 @@ type TagListForResponse struct {
 	ID       string             `json:"tagId"`
 	Tag      string             `json:"tag"`
 	Editable bool               `json:"editable"`
+	Type     string             `json:"type"`
 	Users    []*UserForResponse `json:"users"`
 }
 
@@ -232,6 +234,7 @@ func GetAllTags(c echo.Context) error {
 			ID:       v.ID,
 			Tag:      v.Name,
 			Editable: !v.Restricted,
+			Type:     v.Type,
 			Users:    users,
 		}
 	}
@@ -263,6 +266,7 @@ func GetUsersByTagID(c echo.Context) error {
 		ID:       t.ID,
 		Tag:      t.Name,
 		Editable: !t.Restricted,
+		Type:     t.Type,
 		Users:    users,
 	}
 
@@ -326,6 +330,13 @@ func PatchTag(c echo.Context) error {
 
 	// タグタイプ変更
 	if req.Type != nil {
+		reqUser := c.Get("user").(*model.User)
+		r := c.Get("rbac").(*rbac.RBAC)
+
+		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
+			return echo.NewHTTPError(http.StatusForbidden)
+		}
+
 		t.Type = *req.Type
 	}
 
@@ -397,5 +408,6 @@ func formatTag(ut *model.UsersTag) (*TagForResponse, error) {
 		Tag:      tag.Name,
 		IsLocked: ut.IsLocked || tag.Restricted,
 		Editable: !tag.Restricted,
+		Type:     tag.Type,
 	}, nil
 }
