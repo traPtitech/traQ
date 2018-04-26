@@ -114,8 +114,15 @@ func PostClip(c echo.Context) error {
 	// クリップ作成
 	clip, err := model.CreateClip(uuid.Must(uuid.FromString(req.MessageID)), uuid.Must(uuid.FromString(req.FolderID)), user.GetUID())
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch e := err.(type) {
+		case *mysql.MySQLError:
+			if e.Number == errMySQLDuplicatedRecord {
+				return echo.NewHTTPError(http.StatusBadRequest, "already clipped")
+			}
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
 	go notification.Send(events.ClipCreated, events.ClipEvent{ID: clip.ID, UserID: clip.UserID})
