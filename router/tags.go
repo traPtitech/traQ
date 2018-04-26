@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/permission"
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -14,11 +15,13 @@ import (
 
 // TagForResponse クライアントに返す形のタグ構造体
 type TagForResponse struct {
-	ID       string `json:"tagId"`
-	Tag      string `json:"tag"`
-	IsLocked bool   `json:"isLocked"`
-	Editable bool   `json:"editable"`
-	Type     string `json:"type"`
+	ID        string    `json:"tagId"`
+	Tag       string    `json:"tag"`
+	IsLocked  bool      `json:"isLocked"`
+	Editable  bool      `json:"editable"`
+	Type      string    `json:"type"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // TagListForResponse クライアントに返す形のタグリスト構造体
@@ -404,10 +407,12 @@ func formatTag(ut *model.UsersTag) (*TagForResponse, error) {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get tag infomation")
 	}
 	return &TagForResponse{
-		ID:       tag.ID,
-		Tag:      tag.Name,
-		IsLocked: ut.IsLocked || tag.Restricted,
-		Editable: !tag.Restricted,
-		Type:     tag.Type,
+		ID:        tag.ID,
+		Tag:       tag.Name,
+		IsLocked:  ut.IsLocked || tag.Restricted,
+		Editable:  !tag.Restricted,
+		Type:      tag.Type,
+		CreatedAt: ut.CreatedAt,
+		UpdatedAt: ut.UpdatedAt,
 	}, nil
 }

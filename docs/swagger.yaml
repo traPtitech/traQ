@@ -1330,6 +1330,8 @@ paths:
                     type: string
                   editable:
                     type: boolean
+                  type:
+                    type: string
                   users:
                     $ref: "#/components/schemas/UserList"
         "404":
@@ -2397,6 +2399,14 @@ components:
           type: boolean
         editable:
           type: boolean
+        type:
+          type: string
+        createdAt:
+          type: string
+          format: datetime
+        updatedAt:
+          type: string
+          format: datetime
 
     TagList:
       type: array
