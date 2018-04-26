@@ -291,6 +291,8 @@ func multicast(target uuid.UUID, data *eventData) {
 func sendToFcm(deviceTokens []string, body string, payload events.DataPayload, iconURL, action string) {
 	data := map[string]string{
 		"origin": config.TRAQOrigin,
+		"body":   body,
+		"icon":   iconURL,
 	}
 	if len(action) > 0 {
 		data["click_action"] = action
@@ -306,20 +308,13 @@ func sendToFcm(deviceTokens []string, body string, payload events.DataPayload, i
 
 	m := &messaging.Message{
 		Data: data,
-		Notification: &messaging.Notification{
-			Title: "traQ",
-			Body:  body,
-		},
 		Android: &messaging.AndroidConfig{
 			Priority: "high",
 			Notification: &messaging.AndroidNotification{
+				Title:       "traQ",
+				Body:        body,
 				Icon:        iconURL,
 				ClickAction: action,
-			},
-		},
-		Webpush: &messaging.WebpushConfig{
-			Notification: &messaging.WebpushNotification{
-				Icon: iconURL,
 			},
 		},
 	}

@@ -2442,7 +2442,7 @@ components:
           type: boolean
         content:
           type: string
-        dateTime:
+        createdAt:
           type: string
           format: date-time
         updatedAt:
