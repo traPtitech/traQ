@@ -242,7 +242,7 @@ func getMessages(channelID, userID string, limit, offset int) ([]*MessageForResp
 
 	for _, message := range messages {
 		ms := formatMessage(message)
-		if !hidden[message.ID] {
+		if hidden[message.ID] {
 			ms.Reported = true
 		}
 		res = append(res, ms)
