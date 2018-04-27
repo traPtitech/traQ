@@ -47,7 +47,11 @@ func Parse(m string) (res []*EmbeddedInfo, plain string) {
 						b.WriteRune('!')
 						b.Write(arr)
 					} else {
-						b.WriteString(info.Raw)
+						if info.Type == "file" {
+							b.WriteString("file")
+						} else {
+							b.WriteString(info.Raw)
+						}
 						res = append(res, info)
 					}
 				}
