@@ -221,7 +221,11 @@ func (e MessageEvent) GetData() map[string]string {
 	mUser, _ := model.GetUser(e.Message.UserID)
 	if l := len(users); l == 2 || l == 1 {
 		if mUser != nil {
-			d["title"] = fmt.Sprintf("@%s", mUser.Name)
+			if len(mUser.DisplayName) == 0 {
+				d["title"] = fmt.Sprintf("@%s", mUser.Name)
+			} else {
+				d["title"] = fmt.Sprintf("@%s", mUser.DisplayName)
+			}
 			d["path"] = fmt.Sprintf("/users/%s", mUser.Name)
 		} else {
 			d["title"] = fmt.Sprintf("traQ")
@@ -239,7 +243,11 @@ func (e MessageEvent) GetData() map[string]string {
 
 		body := ""
 		if mUser != nil {
-			body = fmt.Sprintf("%s: %s", mUser.Name, plain)
+			if len(mUser.DisplayName) == 0 {
+				body = fmt.Sprintf("%s: %s", mUser.Name, plain)
+			} else {
+				body = fmt.Sprintf("%s: %s", mUser.DisplayName, plain)
+			}
 		} else {
 			body = fmt.Sprintf("[ユーザー名が取得できませんでした]: %s", plain)
 		}
