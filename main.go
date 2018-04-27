@@ -262,6 +262,7 @@ func main() {
 	// Serve UI
 	e.File("/sw.js", "./client/dist/sw.js")
 	e.File("/firebase-messaging-sw.js", "./client/dist/static/firebase-messaging-sw.js")
+	e.File("/badge.png", "./static/badge.png")
 	e.Static("/static", "./client/dist/static")
 	e.File("*", "./client/dist/index.html")
 
