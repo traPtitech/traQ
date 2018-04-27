@@ -1,10 +1,8 @@
 package router
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -28,19 +26,17 @@ func TestGetUnread(t *testing.T) {
 }
 
 func TestDeleteUnread(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 	channel := mustMakeChannel(t, testUser.ID, "test", true)
 	testMessage := mustMakeMessage(t, testUser.ID, channel.ID)
 
 	// 正常系
 	mustMakeUnread(t, testUser.ID, testMessage.ID)
-	post := []string{testMessage.ID}
-	body, err := json.Marshal(post)
-	require.NoError(err)
 
-	req := httptest.NewRequest("DELETE", "http://test", bytes.NewReader(body))
-	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/users/me/unread")
+	c, rec := getContext(e, t, cookie, nil)
+	c.SetPath("/users/me/unread/:channelID")
+	c.SetParamNames("channelID")
+	c.SetParamValues(channel.ID)
 	requestWithContext(t, mw(DeleteUnread), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code)

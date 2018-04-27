@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/traPtitech/traQ/notification"
@@ -11,69 +10,59 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// GetStars /users/me/starsのGETメソッドハンドラ
+// GetStars GET /users/me/stars のハンドラ
 func GetStars(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	myID := c.Get("user").(*model.User).ID
 
-	responseBody, err := getStarsResponse(user.ID)
+	res, err := getStarsResponse(myID)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get stared channels response")
 	}
 
-	return c.JSON(http.StatusOK, responseBody)
+	return c.JSON(http.StatusOK, res)
 }
 
-// PostStars /users/me/starsのPOSTメソッドハンドラ
-func PostStars(c echo.Context) error {
-	user := c.Get("user").(*model.User)
-
-	requestBody := struct {
-		ChannelID string `json:"channelId"`
-	}{}
-
-	if err := c.Bind(&requestBody); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
-	}
+// PutStars PUT /users/me/stars/{channelID} のハンドラ
+func PutStars(c echo.Context) error {
+	myID := c.Get("user").(*model.User).ID
+	channelID := c.Param("channelID")
 
 	star := &model.Star{
-		UserID:    user.ID,
-		ChannelID: requestBody.ChannelID,
+		UserID:    myID,
+		ChannelID: channelID,
 	}
 
 	if err := star.Create(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to create star: %s", err.Error()))
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create star")
 	}
 
-	go notification.Send(events.ChannelStared, events.UserChannelEvent{UserID: user.ID, ChannelID: requestBody.ChannelID})
+	go notification.Send(events.ChannelStared, events.UserChannelEvent{UserID: myID, ChannelID: channelID})
 	return c.NoContent(http.StatusNoContent)
 }
 
-// DeleteStars /users/me/starsのDELETEメソッドハンドラ
+// DeleteStars DELETE /users/me/stars/{channelID} のハンドラ
 func DeleteStars(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	myID := c.Get("user").(*model.User).ID
 
-	requestBody := struct {
-		ChannelID string `json:"channelId"`
-	}{}
+	channelID := c.Param("channelID")
 
-	if err := c.Bind(&requestBody); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
-	}
-
-	if _, err := validateChannelID(requestBody.ChannelID, user.ID); err != nil {
+	if _, err := validateChannelID(channelID, myID); err != nil {
 		return err
 	}
 
 	star := &model.Star{
-		UserID:    user.ID,
-		ChannelID: requestBody.ChannelID,
+		UserID:    myID,
+		ChannelID: channelID,
 	}
 
 	if err := star.Delete(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to delete star: %s", err.Error()))
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete star")
 	}
 
-	go notification.Send(events.ChannelUnstared, events.UserChannelEvent{UserID: user.ID, ChannelID: requestBody.ChannelID})
+	go notification.Send(events.ChannelUnstared, events.UserChannelEvent{UserID: myID, ChannelID: channelID})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -82,17 +71,17 @@ func getStarsResponse(userID string) ([]*ChannelForResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	responseBody := make([]*ChannelForResponse, 0)
-	for _, channel := range staredChannels {
-		childIDs, err := channel.Children(userID)
+	res := make([]*ChannelForResponse, 0)
+	for _, ch := range staredChannels {
+		childIDs, err := ch.Children(userID)
 		if err != nil {
 			return nil, err
 		}
-		members, err := model.GetPrivateChannelMembers(channel.ID)
+		members, err := model.GetPrivateChannelMembers(ch.ID)
 		if err != nil {
 			return nil, err
 		}
-		responseBody = append(responseBody, formatChannel(channel, childIDs, members))
+		res = append(res, formatChannel(ch, childIDs, members))
 	}
-	return responseBody, nil
+	return res, nil
 }

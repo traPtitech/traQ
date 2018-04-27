@@ -178,12 +178,12 @@ func main() {
 
 	// Tag: star
 	api.GET("/users/me/stars", router.GetStars, requires(permission.GetStar))
-	api.POST("/users/me/stars", router.PostStars, requires(permission.CreateStar))
-	api.DELETE("/users/me/stars", router.DeleteStars, requires(permission.DeleteStar))
+	api.PUT("/users/me/stars/:ChannelID", router.PutStars, requires(permission.CreateStar))
+	api.DELETE("/users/me/stars/:ChannelID", router.DeleteStars, requires(permission.DeleteStar))
 
 	// Tag: unread
 	api.GET("/users/me/unread", router.GetUnread, requires(permission.GetUnread))
-	api.DELETE("/users/me/unread", router.DeleteUnread, requires(permission.DeleteUnread))
+	api.DELETE("/users/me/unread/:ChannelID", router.DeleteUnread, requires(permission.DeleteUnread))
 
 	// Tag: userTag
 	api.GET("/users/:userID/tags", router.GetUserTags, requires(permission.GetTag))
@@ -203,7 +203,7 @@ func main() {
 	api.POST("/notification/device", router.PostDeviceToken, requires(permission.RegisterDevice))
 	api.GET("/channels/:channelID/notification", router.GetNotificationStatus, requires(permission.GetNotificationStatus))
 	api.PUT("/channels/:channelID/notification", router.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
-	api.GET("/channels/{userID}/notification", router.GetNotificationChannels, requires(permission.GetNotificationStatus))
+	api.GET("/channels/:userID/notification", router.GetNotificationChannels, requires(permission.GetNotificationStatus))
 
 	// Tag: file
 	api.POST("/files", router.PostFile, requires(permission.UploadFile))

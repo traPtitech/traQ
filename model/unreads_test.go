@@ -1,9 +1,10 @@
 package model
 
 import (
-	"github.com/stretchr/testify/assert"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUnreadTableName(t *testing.T) {
@@ -103,4 +104,23 @@ func TestDeleteUnreadsByMessageID(t *testing.T) {
 
 	// 異常系
 	assert.Error(DeleteUnreadsByMessageID(""))
+}
+
+func TestDeleteUnreadsByChannelID(t *testing.T) {
+	assert, _, user, channel := beforeTest(t)
+
+	creatorID := mustMakeUser(t, "creator").ID
+
+	testMessage := mustMakeMessage(t, creatorID, channel.ID)
+	mustMakeMessageUnread(t, user.ID, testMessage.ID)
+
+	testChannel := mustMakeChannel(t, creatorID, "-unreads")
+	testMessage2 := mustMakeMessage(t, creatorID, testChannel.ID)
+	mustMakeMessageUnread(t, user.ID, testMessage2.ID)
+
+	if assert.NoError(DeleteUnreadsByChannelID(channel.ID, user.ID)) {
+		if n, err := db.Count(&Unread{}); assert.NoError(err) {
+			assert.EqualValues(1, n)
+		}
+	}
 }
