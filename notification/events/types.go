@@ -166,7 +166,7 @@ type ReadMessagesEvent struct {
 // DataPayload データペイロード
 func (e ReadMessagesEvent) DataPayload() DataPayload {
 	return DataPayload{
-		"ids": e.ChannelID,
+		"id": e.ChannelID,
 	}
 }
 
