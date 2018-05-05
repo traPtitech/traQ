@@ -11,22 +11,35 @@ import (
 	"github.com/traPtitech/traQ/notification"
 )
 
-// GetNotificationStatus GET /channels/:channelId/notifications のハンドラ
-func GetNotificationStatus(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("channelID")
-
-	ch, err := validateChannelID(channelID, userID)
-	if err != nil {
-		return err
+// GetNotification /channels/:ID/notificationsのpath paramがchannelIDかuserIDかを判別して正しいほうにルーティングするミドルウェア
+func GetNotification(userHandler, channelHandler echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID := c.Get("user").(*model.User).ID
+		ID := c.Param("ID")
+		// TODO: validateが返すエラーによって操作を変えられるようにする
+		// そのためにはvalidate系はそのままのエラーを返す必要がある。結構面倒な変更なので保留
+		if ch, _ := validateChannelID(ID, userID); ch != nil {
+			c.Set("channel", ch)
+			return channelHandler(c)
+		}
+		if user, _ := validateUserID(ID); user != nil {
+			c.Set("targetUserID", user.ID)
+			return userHandler(c)
+		}
+		return echo.NewHTTPError(http.StatusBadRequest, "this ID does't exist")
 	}
+}
+
+// GetNotificationStatus GET /channels/:channelID/notifications のハンドラ
+func GetNotificationStatus(c echo.Context) error {
+	ch := c.Get("channel").(*model.Channel)
 
 	// プライベートチャンネルの通知は取得できない。
 	if !ch.IsPublic {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
-	users, err := model.GetSubscribingUser(uuid.FromStringOrNil(channelID))
+	users, err := model.GetSubscribingUser(uuid.FromStringOrNil(ch.ID))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to GetNotificationStatus: %v", err))
 	}
@@ -115,7 +128,7 @@ func PostDeviceToken(c echo.Context) error {
 
 // GetNotificationChannels GET /users/{userID}/notification のハンドラ
 func GetNotificationChannels(c echo.Context) error {
-	userID := uuid.FromStringOrNil(c.Param("userID"))
+	userID := uuid.FromStringOrNil(c.Get("targetUserID").(string))
 
 	channelIDs, err := model.GetSubscribedChannels(userID)
 	if err != nil {

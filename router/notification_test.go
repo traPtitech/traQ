@@ -16,18 +16,16 @@ import (
 func TestGetNotificationStatus(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channelID := mustMakeChannel(t, testUser.ID, "subscribing", true).ID
+	channel := mustMakeChannel(t, testUser.ID, "subscribing", true)
 	userID := mustCreateUser(t, "poyo").ID
 
-	usc := model.UserSubscribeChannel{UserID: userID, ChannelID: channelID}
+	usc := model.UserSubscribeChannel{UserID: userID, ChannelID: channel.ID}
 	require.NoError(usc.Create())
-	usc = model.UserSubscribeChannel{UserID: testUser.ID, ChannelID: channelID}
+	usc = model.UserSubscribeChannel{UserID: testUser.ID, ChannelID: channel.ID}
 	require.NoError(usc.Create())
 
 	c, rec := getContext(e, t, cookie, nil)
-	c.SetPath("/:channelID")
-	c.SetParamNames("channelID")
-	c.SetParamValues(channelID)
+	c.Set("channel", channel)
 
 	requestWithContext(t, mw(GetNotificationStatus), c)
 
@@ -50,9 +48,7 @@ func TestGetNotificationChannels(t *testing.T) {
 	require.NoError(usc.Create())
 
 	c, rec := getContext(e, t, cookie, nil)
-	c.SetPath("/:userID")
-	c.SetParamNames("userID")
-	c.SetParamValues(testUser.ID)
+	c.Set("targetUserID", testUser.ID)
 
 	requestWithContext(t, mw(GetNotificationChannels), c)
 
