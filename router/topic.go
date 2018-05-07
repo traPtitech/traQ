@@ -22,7 +22,12 @@ func GetTopic(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 	ch, err := validateChannelID(c.Param("channelID"), userID)
 	if err != nil {
-		return err
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
 	}
 
 	topic := TopicForResponse{
@@ -46,7 +51,12 @@ func PutTopic(c echo.Context) error {
 	channelID := c.Param("channelID")
 	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
-		return err
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
 	}
 
 	ch.Topic = requestBody.Text

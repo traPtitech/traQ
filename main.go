@@ -201,9 +201,8 @@ func main() {
 	// Tag: notification
 	api.GET("/notification", router.GetNotificationStream, requires(permission.ConnectNotificationStream))
 	api.POST("/notification/device", router.PostDeviceToken, requires(permission.RegisterDevice))
-	api.GET("/channels/:channelID/notification", router.GetNotificationStatus, requires(permission.GetNotificationStatus))
+	api.GET("/channels/:ID/notification", router.GetNotification(router.GetNotificationChannels, router.GetNotificationStatus), requires(permission.GetNotificationStatus))
 	api.PUT("/channels/:channelID/notification", router.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
-	api.GET("/channels/:userID/notification", router.GetNotificationChannels, requires(permission.GetNotificationStatus))
 
 	// Tag: file
 	api.POST("/files", router.PostFile, requires(permission.UploadFile))

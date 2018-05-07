@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/traPtitech/traQ/external/imagemagick"
-	"github.com/traPtitech/traQ/utils/thumb"
 	"image/jpeg"
 	"image/png"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/traPtitech/traQ/external/imagemagick"
+	"github.com/traPtitech/traQ/utils/thumb"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
@@ -419,13 +420,10 @@ func formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailF
 func validateUserID(userID string) (*model.User, error) {
 	u, err := model.GetUser(userID)
 	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return nil, echo.NewHTTPError(http.StatusNotFound, "This user dosen't exist")
-		default:
-			log.Errorf("failed to get usee: %v", err)
-			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user")
+		if err != model.ErrNotFound {
+			log.Errorf("failed to get user: %v", err)
 		}
+		return nil, err
 	}
 	return u, nil
 }

@@ -11,22 +11,40 @@ import (
 	"github.com/traPtitech/traQ/notification"
 )
 
-// GetNotificationStatus GET /channels/:channelId/notifications のハンドラ
-func GetNotificationStatus(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("channelID")
+// GetNotification /channels/:ID/notificationsのpath paramがchannelIDかuserIDかを判別して正しいほうにルーティングするミドルウェア
+func GetNotification(userHandler, channelHandler echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userID := c.Get("user").(*model.User).ID
+		ID := c.Param("ID")
 
-	ch, err := validateChannelID(channelID, userID)
-	if err != nil {
-		return err
+		if ch, err := validateChannelID(ID, userID); ch != nil {
+			c.Set("channel", ch)
+			return channelHandler(c)
+		} else if err != model.ErrNotFound {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check ID")
+		}
+
+		if user, err := validateUserID(ID); user != nil {
+			c.Set("targetUserID", user.ID)
+			return userHandler(c)
+		} else if err != model.ErrNotFound {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check ID")
+		}
+
+		return echo.NewHTTPError(http.StatusBadRequest, "this ID does't exist")
 	}
+}
+
+// GetNotificationStatus GET /channels/:channelID/notifications のハンドラ
+func GetNotificationStatus(c echo.Context) error {
+	ch := c.Get("channel").(*model.Channel)
 
 	// プライベートチャンネルの通知は取得できない。
 	if !ch.IsPublic {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
-	users, err := model.GetSubscribingUser(uuid.FromStringOrNil(channelID))
+	users, err := model.GetSubscribingUser(uuid.FromStringOrNil(ch.ID))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to GetNotificationStatus: %v", err))
 	}
@@ -46,7 +64,12 @@ func PutNotificationStatus(c echo.Context) error {
 
 	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
-		return err
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
 	}
 
 	// プライベートチャンネルの通知は変更できない。
@@ -115,7 +138,7 @@ func PostDeviceToken(c echo.Context) error {
 
 // GetNotificationChannels GET /users/{userID}/notification のハンドラ
 func GetNotificationChannels(c echo.Context) error {
-	userID := uuid.FromStringOrNil(c.Param("userID"))
+	userID := uuid.FromStringOrNil(c.Get("targetUserID").(string))
 
 	channelIDs, err := model.GetSubscribedChannels(userID)
 	if err != nil {
