@@ -16,16 +16,21 @@ func GetNotification(userHandler, channelHandler echo.HandlerFunc) echo.HandlerF
 	return func(c echo.Context) error {
 		userID := c.Get("user").(*model.User).ID
 		ID := c.Param("ID")
-		// TODO: validateが返すエラーによって操作を変えられるようにする
-		// そのためにはvalidate系はそのままのエラーを返す必要がある。結構面倒な変更なので保留
-		if ch, _ := validateChannelID(ID, userID); ch != nil {
+
+		if ch, err := validateChannelID(ID, userID); ch != nil {
 			c.Set("channel", ch)
 			return channelHandler(c)
+		} else if err != model.ErrNotFound {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check ID")
 		}
-		if user, _ := validateUserID(ID); user != nil {
+
+		if user, err := validateUserID(ID); user != nil {
 			c.Set("targetUserID", user.ID)
 			return userHandler(c)
+		} else if err != model.ErrNotFound {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check ID")
 		}
+
 		return echo.NewHTTPError(http.StatusBadRequest, "this ID does't exist")
 	}
 }
@@ -59,7 +64,12 @@ func PutNotificationStatus(c echo.Context) error {
 
 	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
-		return err
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
 	}
 
 	// プライベートチャンネルの通知は変更できない。

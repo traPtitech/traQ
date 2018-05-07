@@ -26,7 +26,12 @@ func GetChannelPin(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 	channelID := c.Param("channelID")
 	if _, err := validateChannelID(channelID, userID); err != nil {
-		return err
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
 	}
 
 	res, err := getChannelPinResponse(channelID)

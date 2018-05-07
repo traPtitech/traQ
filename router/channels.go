@@ -50,7 +50,12 @@ func (post *PostChannel) validate(userID string) error {
 	if post.Parent != privateParentChannelID && post.Parent != "" {
 		_, err := validateChannelID(post.Parent, userID)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "this parent channel is not found")
+			switch err {
+			case model.ErrNotFound:
+				return echo.NewHTTPError(http.StatusBadRequest, "this parent channel is not found")
+			default:
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified parent channel")
+			}
 		}
 	}
 
@@ -183,7 +188,12 @@ func GetChannelsByChannelID(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 	ch, err := validateChannelID(c.Param("channelID"), userID)
 	if err != nil {
-		return err
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
 	}
 
 	childIDs, err := ch.Children(userID)
@@ -218,7 +228,12 @@ func PatchChannelsByChannelID(c echo.Context) error {
 	// チャンネル検証
 	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
-		return err
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusBadRequest, "this channel is not found")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
 	}
 
 	if req.Name != nil && len(*req.Name) > 0 {
@@ -261,7 +276,12 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 		deleteQue = deleteQue[1:]
 		channel, err := validateChannelID(channelID, userID)
 		if err != nil {
-			return err
+			switch err {
+			case model.ErrNotFound:
+				return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+			default:
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+			}
 		}
 
 		children, err := channel.Children(userID)
@@ -308,10 +328,10 @@ func validateChannelID(channelID, userID string) (*model.Channel, error) {
 	ok, err := ch.Exists(userID)
 	if err != nil {
 		log.Error(err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while get channel")
+		return nil, err
 	}
 	if !ok {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "The specified channel does not exist")
+		return nil, model.ErrNotFound
 	}
 	return ch, nil
 }

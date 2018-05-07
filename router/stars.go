@@ -49,7 +49,12 @@ func DeleteStars(c echo.Context) error {
 	channelID := c.Param("channelID")
 
 	if _, err := validateChannelID(channelID, myID); err != nil {
-		return err
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
 	}
 
 	star := &model.Star{

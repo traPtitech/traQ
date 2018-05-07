@@ -3,15 +3,16 @@ package router
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"time"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
 	"gopkg.in/go-playground/webhooks.v3/github"
-	"io/ioutil"
-	"net/http"
-	"time"
 )
 
 type webhookForResponse struct {
@@ -60,7 +61,12 @@ func PostWebhooks(c echo.Context) error {
 	}
 
 	if _, err := validateChannelID(req.ChannelID, userID); err != nil {
-		return err
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
 	}
 
 	fileID := ""

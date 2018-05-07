@@ -1,11 +1,12 @@
 package router
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/satori/go.uuid"
 	"gopkg.in/go-playground/validator.v9"
-	"net/http"
-	"time"
 
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
@@ -78,7 +79,12 @@ func PostMessage(c echo.Context) error {
 
 	_, err := validateChannelID(channelID, userID)
 	if err != nil {
-		return err
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
 	}
 
 	m, err := createMessage(post.Text, c.Get("user").(*model.User).ID, c.Param("channelID"))
@@ -220,7 +226,12 @@ func createMessage(text, userID, channelID string) (*MessageForResponse, error) 
 // チャンネルのデータを取得する
 func getMessages(channelID, userID string, limit, offset int) ([]*MessageForResponse, error) {
 	if _, err := validateChannelID(channelID, userID); err != nil {
-		return nil, err
+		switch err {
+		case model.ErrNotFound:
+			return nil, echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+		default:
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
 	}
 
 	messages, err := model.GetMessagesByChannelID(channelID, limit, offset)
