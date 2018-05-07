@@ -1,13 +1,14 @@
 package router
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/notification/events"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"gopkg.in/go-playground/validator.v9"
-	"net/http"
-	"time"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -61,7 +62,12 @@ func PostUserTag(c echo.Context) error {
 	// ユーザー確認
 	_, err := validateUserID(id)
 	if err != nil {
-		return err
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "This user dosen't exist")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user")
+		}
 	}
 
 	// タグの確認
