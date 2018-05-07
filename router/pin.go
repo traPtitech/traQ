@@ -108,9 +108,11 @@ func DeletePin(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete pin")
 	}
 
-	if m, err := model.GetMessageByID(pin.MessageID); err != nil {
-		go notification.Send(events.MessageUnpinned, events.PinEvent{PinID: pin.ID, Message: *m})
+	m, err := model.GetMessageByID(pin.MessageID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete pin")
 	}
+	go notification.Send(events.MessageUnpinned, events.PinEvent{PinID: pin.ID, Message: *m})
 	return c.NoContent(http.StatusNoContent)
 }
 
