@@ -27,8 +27,8 @@ func TestPutNotificationStatus(t *testing.T) {
 
 	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/channels/:channelID/notification")
-	c.SetParamNames("channelID")
+	c.SetPath("/channels/:ID/notification")
+	c.SetParamNames("ID")
 	c.SetParamValues(channel.ID)
 	requestWithContext(t, mw(PutNotificationStatus), c)
 
