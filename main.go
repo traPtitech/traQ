@@ -202,7 +202,7 @@ func main() {
 	api.GET("/notification", router.GetNotificationStream, requires(permission.ConnectNotificationStream))
 	api.POST("/notification/device", router.PostDeviceToken, requires(permission.RegisterDevice))
 	api.GET("/channels/:ID/notification", router.GetNotification(router.GetNotificationChannels, router.GetNotificationStatus), requires(permission.GetNotificationStatus))
-	api.PUT("/channels/:channelID/notification", router.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
+	api.PUT("/channels/:ID/notification", router.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
 
 	// Tag: file
 	api.POST("/files", router.PostFile, requires(permission.UploadFile))

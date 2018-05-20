@@ -60,7 +60,7 @@ func GetNotificationStatus(c echo.Context) error {
 // PutNotificationStatus PUT /channels/:channelId/notifications のハンドラ
 func PutNotificationStatus(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("channelID")
+	channelID := c.Param("ID")
 
 	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
