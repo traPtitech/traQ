@@ -3,8 +3,7 @@ package router
 import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/notification"
-	"github.com/traPtitech/traQ/notification/events"
+	"github.com/traPtitech/traQ/event"
 	"net/http"
 	"time"
 
@@ -106,7 +105,7 @@ func PostClip(c echo.Context) error {
 				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
-			go notification.Send(events.ClipFolderCreated, events.ClipEvent{ID: folder.ID, UserID: user.ID})
+			go event.Emit(event.ClipFolderCreated, event.ClipEvent{ID: folder.GetID(), UserID: user.GetUID()})
 			req.FolderID = folder.ID
 		}
 	}
@@ -125,7 +124,7 @@ func PostClip(c echo.Context) error {
 		}
 	}
 
-	go notification.Send(events.ClipCreated, events.ClipEvent{ID: clip.ID, UserID: clip.UserID})
+	go event.Emit(event.ClipCreated, event.ClipEvent{ID: clip.GetID(), UserID: clip.GetUID()})
 	return c.JSON(http.StatusCreated, struct {
 		ID string `json:"id"`
 	}{clip.ID})
@@ -182,7 +181,7 @@ func DeleteClip(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.ClipDeleted, events.ClipEvent{ID: clip.Clip.ID, UserID: clip.Clip.UserID})
+	go event.Emit(event.ClipDeleted, event.ClipEvent{ID: clip.Clip.GetID(), UserID: clip.Clip.GetUID()})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -278,7 +277,7 @@ func PutClipsFolder(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.ClipMoved, events.ClipEvent{ID: clip.Clip.ID, UserID: clip.Clip.UserID})
+	go event.Emit(event.ClipMoved, event.ClipEvent{ID: clip.Clip.GetID(), UserID: clip.Clip.GetUID()})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -331,7 +330,7 @@ func PostClipFolder(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.ClipFolderCreated, events.ClipEvent{ID: folder.ID, UserID: folder.UserID})
+	go event.Emit(event.ClipFolderCreated, event.ClipEvent{ID: folder.GetID(), UserID: folder.GetUID()})
 	return c.JSON(http.StatusCreated, formatClipFolder(folder))
 }
 
@@ -429,7 +428,7 @@ func PatchClipFolder(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.ClipFolderUpdated, events.ClipEvent{ID: folder.ID, UserID: folder.UserID})
+	go event.Emit(event.ClipFolderUpdated, event.ClipEvent{ID: folder.GetID(), UserID: folder.GetUID()})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -460,7 +459,7 @@ func DeleteClipFolder(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.ClipFolderDeleted, events.ClipEvent{ID: folder.ID, UserID: folder.UserID})
+	go event.Emit(event.ClipFolderDeleted, event.ClipEvent{ID: folder.GetID(), UserID: folder.GetUID()})
 	return c.NoContent(http.StatusNoContent)
 }
 

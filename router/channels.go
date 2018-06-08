@@ -2,10 +2,10 @@ package router
 
 import (
 	"fmt"
+	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/event"
 	"net/http"
 
-	"github.com/traPtitech/traQ/notification"
-	"github.com/traPtitech/traQ/notification/events"
 	"github.com/traPtitech/traQ/utils/validator"
 
 	"github.com/labstack/echo"
@@ -164,7 +164,7 @@ func PostChannels(c echo.Context) error {
 	}
 
 	if ch.IsPublic {
-		go notification.Send(events.ChannelCreated, events.ChannelEvent{ID: ch.ID})
+		go event.Emit(event.ChannelCreated, event.ChannelEvent{ID: ch.ID})
 	} else {
 		for _, u := range req.Member {
 			upc := &model.UsersPrivateChannel{
@@ -176,8 +176,13 @@ func PostChannels(c echo.Context) error {
 				log.Errorf("failed to insert users_private_channel: %v", err)
 				return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while adding notified user.")
 			}
-			go notification.Send(events.ChannelCreated, events.UserChannelEvent{UserID: u, ChannelID: ch.ID})
 		}
+
+		ids := make([]uuid.UUID, len(req.Member))
+		for k, v := range req.Member {
+			ids[k] = uuid.Must(uuid.FromString(v))
+		}
+		go event.Emit(event.ChannelCreated, event.PrivateChannelEvent{UserIDs: ids, ChannelID: uuid.Must(uuid.FromString(ch.ID))})
 	}
 
 	return c.JSON(http.StatusCreated, formatChannel(ch, []string{}, req.Member))
@@ -261,7 +266,19 @@ func PatchChannelsByChannelID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.ChannelUpdated, events.ChannelEvent{ID: channelID})
+	if ch.IsPublic {
+		go event.Emit(event.ChannelUpdated, event.ChannelEvent{ID: channelID})
+	} else {
+		users, err := model.GetPrivateChannelMembers(channelID)
+		if err != nil {
+			c.Logger().Error(err)
+		}
+		ids := make([]uuid.UUID, len(users))
+		for i, v := range users {
+			ids[i] = uuid.Must(uuid.FromString(v))
+		}
+		go event.Emit(event.ChannelUpdated, event.PrivateChannelEvent{UserIDs: ids, ChannelID: uuid.Must(uuid.FromString(channelID))})
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -297,7 +314,7 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred when channel model update.")
 		}
 
-		go notification.Send(events.ChannelDeleted, events.ChannelEvent{ID: channelID})
+		go event.Emit(event.ChannelDeleted, event.ChannelEvent{ID: channelID})
 	}
 	return c.NoContent(http.StatusNoContent)
 }

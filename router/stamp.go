@@ -3,6 +3,8 @@ package router
 import (
 	"bytes"
 	"context"
+	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/external/imagemagick"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
@@ -17,8 +19,6 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/notification"
-	"github.com/traPtitech/traQ/notification/events"
 )
 
 const (
@@ -180,7 +180,7 @@ func PostStamp(c echo.Context) error {
 		}
 	}
 
-	go notification.Send(events.StampCreated, events.StampEvent{ID: s.ID})
+	go event.Emit(event.StampCreated, event.StampEvent{ID: uuid.Must(uuid.FromString(s.ID))})
 	return c.NoContent(http.StatusCreated)
 }
 
@@ -373,7 +373,7 @@ func PatchStamp(c echo.Context) error {
 		}
 	}
 
-	go notification.Send(events.StampModified, events.StampEvent{ID: stamp.ID})
+	go event.Emit(event.StampModified, event.StampEvent{ID: uuid.Must(uuid.FromString(stamp.ID))})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -397,7 +397,7 @@ func DeleteStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.StampDeleted, events.StampEvent{ID: stamp.ID})
+	go event.Emit(event.StampDeleted, event.StampEvent{ID: uuid.Must(uuid.FromString(stamp.ID))})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -437,7 +437,7 @@ func GetMessageStamps(c echo.Context) error {
 
 // PostMessageStamp : POST /messages/:messageID/stamps/:stampID
 func PostMessageStamp(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+	user := c.Get("user").(*model.User)
 	messageID := c.Param("messageID")
 	stampID := c.Param("stampID")
 
@@ -454,7 +454,7 @@ func PostMessageStamp(c echo.Context) error {
 	}
 
 	// Privateチャンネルの確認
-	channel, err := model.GetChannelByID(userID, message.ChannelID)
+	channel, err := model.GetChannelByID(user.ID, message.ChannelID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFoundOrForbidden:
@@ -465,7 +465,7 @@ func PostMessageStamp(c echo.Context) error {
 		}
 	}
 	if !channel.IsPublic {
-		if ok, err := channel.Exists(userID); err != nil {
+		if ok, err := channel.Exists(user.ID); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		} else if !ok {
@@ -473,7 +473,7 @@ func PostMessageStamp(c echo.Context) error {
 		}
 	}
 
-	ms, err := model.AddStampToMessage(messageID, stampID, userID)
+	ms, err := model.AddStampToMessage(messageID, stampID, user.ID)
 	if err != nil {
 		if errSQL, ok := err.(*mysql.MySQLError); ok {
 			if errSQL.Number == 1452 { //外部キー制約
@@ -484,11 +484,11 @@ func PostMessageStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.MessageStamped, events.MessageStampEvent{
-		ID:        messageID,
-		ChannelID: message.ChannelID,
-		StampID:   stampID,
-		UserID:    userID,
+	go event.Emit(event.MessageStamped, event.MessageStampEvent{
+		ID:        uuid.Must(uuid.FromString(messageID)),
+		ChannelID: uuid.Must(uuid.FromString(message.ChannelID)),
+		StampID:   uuid.Must(uuid.FromString(stampID)),
+		UserID:    user.GetUID(),
 		Count:     ms.Count,
 		CreatedAt: ms.CreatedAt,
 	})
@@ -497,7 +497,7 @@ func PostMessageStamp(c echo.Context) error {
 
 // DeleteMessageStamp : DELETE /messages/:messageID/stamps/:stampID
 func DeleteMessageStamp(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+	user := c.Get("user").(*model.User)
 	messageID := c.Param("messageID")
 	stampID := c.Param("stampID")
 
@@ -514,7 +514,7 @@ func DeleteMessageStamp(c echo.Context) error {
 	}
 
 	// Privateチャンネルの確認
-	channel, err := model.GetChannelByID(userID, message.ChannelID)
+	channel, err := model.GetChannelByID(user.ID, message.ChannelID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFoundOrForbidden:
@@ -525,7 +525,7 @@ func DeleteMessageStamp(c echo.Context) error {
 		}
 	}
 	if !channel.IsPublic {
-		if ok, err := channel.Exists(userID); err != nil {
+		if ok, err := channel.Exists(user.ID); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		} else if !ok {
@@ -533,7 +533,7 @@ func DeleteMessageStamp(c echo.Context) error {
 		}
 	}
 
-	if err := model.RemoveStampFromMessage(messageID, stampID, userID); err != nil {
+	if err := model.RemoveStampFromMessage(messageID, stampID, user.ID); err != nil {
 		if errSQL, ok := err.(*mysql.MySQLError); ok {
 			if errSQL.Number == 1452 { //外部キー制約
 				return echo.NewHTTPError(http.StatusBadRequest)
@@ -543,11 +543,11 @@ func DeleteMessageStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.MessageUnstamped, events.MessageStampEvent{
-		ID:        messageID,
-		ChannelID: message.ChannelID,
-		StampID:   stampID,
-		UserID:    userID,
+	go event.Emit(event.MessageUnstamped, event.MessageStampEvent{
+		ID:        uuid.Must(uuid.FromString(messageID)),
+		ChannelID: uuid.Must(uuid.FromString(message.ChannelID)),
+		StampID:   uuid.Must(uuid.FromString(stampID)),
+		UserID:    user.GetUID(),
 	})
 	return c.NoContent(http.StatusNoContent)
 }

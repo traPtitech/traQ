@@ -1,11 +1,10 @@
 package router
 
 import (
+	"github.com/traPtitech/traQ/event"
 	"net/http"
 	"time"
 
-	"github.com/traPtitech/traQ/notification"
-	"github.com/traPtitech/traQ/notification/events"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"gopkg.in/go-playground/validator.v9"
@@ -108,7 +107,7 @@ func PostUserTag(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.UserTagsUpdated, events.UserEvent{ID: id})
+	go event.Emit(event.UserTagsUpdated, event.UserEvent{ID: id})
 	return c.NoContent(http.StatusCreated)
 }
 
@@ -168,7 +167,7 @@ func PatchUserTag(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.UserTagsUpdated, events.UserEvent{ID: userID})
+	go event.Emit(event.UserTagsUpdated, event.UserEvent{ID: userID})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -218,7 +217,7 @@ func DeleteUserTag(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.UserTagsUpdated, events.UserEvent{ID: userID})
+	go event.Emit(event.UserTagsUpdated, event.UserEvent{ID: userID})
 	return c.NoContent(http.StatusNoContent)
 }
 

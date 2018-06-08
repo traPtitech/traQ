@@ -2,431 +2,63 @@ package model
 
 import (
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/bot"
+	"github.com/traPtitech/traQ/oauth2"
+	"github.com/traPtitech/traQ/oauth2/scope"
 	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/utils/validator"
+	"math"
 	"net/url"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
-// BotStoreImpl Botデータ用ストアの実装
-type BotStoreImpl struct{}
-
-// SavePostLog Botのポストログをdbに保存
-func (s *BotStoreImpl) SavePostLog(reqID, botUserID uuid.UUID, status int, request, response, error string) error {
-	l := &BotOutgoingPostLog{
-		RequestID:  reqID.String(),
-		BotUserID:  botUserID.String(),
-		StatusCode: status,
-		Request:    request,
-		Response:   response,
-		Error:      error,
-		Timestamp:  time.Now().UnixNano(),
-	}
-
-	if _, err := db.InsertOne(l); err != nil {
-		return err
-	}
-	return nil
+// Bot Bot
+type Bot interface {
+	ID() uuid.UUID
+	BotUserID() uuid.UUID
+	Name() string
+	DisplayName() string
+	Description() string
+	VerificationToken() string
+	AccessTokenID() uuid.UUID
+	PostURL() *url.URL
+	SubscribeEvents() map[string]bool
+	Activated() bool
+	CreatorID() uuid.UUID
+	InstallCode() string
+	CreatedAt() time.Time
+	UpdatedAt() time.Time
 }
 
-// SavePlugin Pluginをdbに保存
-func (s *BotStoreImpl) SavePlugin(bp *bot.Plugin) error {
-	u := &User{
-		ID:          bp.BotUserID.String(),
-		Name:        "Plugin#" + base64.RawStdEncoding.EncodeToString(bp.BotUserID.Bytes()),
-		DisplayName: bp.DisplayName,
-		Email:       "",
-		Password:    "",
-		Salt:        "",
-		Icon:        bp.IconFileID.String(),
-		Status:      0, //TODO
-		Bot:         true,
-		BotType:     bot.TypePlugin,
-		Role:        role.Bot.ID(), //FIXME
-	}
-	p := &Plugin{
-		ID:                bp.ID.String(),
-		BotUserID:         bp.BotUserID.String(),
-		Description:       bp.Description,
-		Command:           bp.Command,
-		Usage:             bp.Usage,
-		VerificationToken: bp.VerificationToken,
-		AccessTokenID:     bp.AccessTokenID.String(),
-		PostURL:           bp.PostURL.String(),
-		Activated:         bp.Activated,
-		IsValid:           bp.IsValid,
-		CreatorID:         bp.CreatorID.String(),
-		CreatedAt:         bp.CreatedAt,
-		UpdatedAt:         bp.UpdatedAt,
-	}
-
-	if _, err := db.UseBool().Insert(u, p); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// UpdatePlugin Pluginをdbに保存
-func (s *BotStoreImpl) UpdatePlugin(b *bot.Plugin) error {
-	if _, err := db.ID(b.BotUserID.String()).Update(&User{
-		DisplayName: b.DisplayName,
-		Icon:        b.IconFileID.String(),
-	}); err != nil {
-		return err
-	}
-	if _, err := db.ID(b.ID.String()).UseBool("is_valid", "activated").Update(&Plugin{
-		Description:       b.Description,
-		Usage:             b.Usage,
-		VerificationToken: b.VerificationToken,
-		AccessTokenID:     b.AccessTokenID.String(),
-		PostURL:           b.PostURL.String(),
-		Activated:         b.Activated,
-		IsValid:           b.IsValid,
-		CreatorID:         b.CreatorID.String(),
-		UpdatedAt:         b.UpdatedAt,
-	}); err != nil {
-		return err
-	}
-	return nil
-}
-
-// GetAllPlugins Pluginを全て取得
-func (s *BotStoreImpl) GetAllPlugins() (arr []bot.Plugin, err error) {
-	var ps []*PluginUser
-	if err := db.Join("INNER", "plugins", "plugins.bot_user_id = users.id").Find(&ps); err != nil {
-		return nil, err
-	}
-	for _, v := range ps {
-		postURL, _ := url.Parse(v.Plugin.PostURL)
-		arr = append(arr, bot.Plugin{
-			ID:                uuid.Must(uuid.FromString(v.Plugin.ID)),
-			BotUserID:         uuid.Must(uuid.FromString(v.Plugin.BotUserID)),
-			DisplayName:       v.User.DisplayName,
-			Description:       v.Plugin.Description,
-			Command:           v.Command,
-			Usage:             v.Usage,
-			IconFileID:        uuid.Must(uuid.FromString(v.User.Icon)),
-			VerificationToken: v.Plugin.VerificationToken,
-			AccessTokenID:     uuid.Must(uuid.FromString(v.Plugin.AccessTokenID)),
-			PostURL:           *postURL,
-			Activated:         v.Plugin.Activated,
-			IsValid:           v.Plugin.IsValid,
-			CreatorID:         uuid.Must(uuid.FromString(v.Plugin.CreatorID)),
-			CreatedAt:         v.Plugin.CreatedAt,
-			UpdatedAt:         v.Plugin.UpdatedAt,
-		})
-	}
-	return
-}
-
-// SaveGeneralBot GeneralBotをdbに保存
-func (s *BotStoreImpl) SaveGeneralBot(b *bot.GeneralBot) error {
-	u := &User{
-		ID:          b.BotUserID.String(),
-		Name:        b.Name,
-		DisplayName: b.DisplayName,
-		Email:       "",
-		Password:    "",
-		Salt:        "",
-		Icon:        b.IconFileID.String(),
-		Status:      0, //TODO
-		Bot:         true,
-		BotType:     bot.TypeGeneral,
-		Role:        role.Bot.ID(), //FIXME
-	}
-	gb := &GeneralBot{
-		ID:                b.ID.String(),
-		BotUserID:         b.BotUserID.String(),
-		Description:       b.Description,
-		VerificationToken: b.VerificationToken,
-		AccessTokenID:     b.AccessTokenID.String(),
-		PostURL:           b.PostURL.String(),
-		SubscribeEvents:   strings.Join(b.SubscribeEvents, " "),
-		Activated:         b.Activated,
-		IsValid:           b.IsValid,
-		OwnerID:           b.OwnerID.String(),
-		CreatedAt:         b.CreatedAt,
-		UpdatedAt:         b.UpdatedAt,
-	}
-
-	if _, err := db.UseBool().Insert(u, gb); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// UpdateGeneralBot GeneralBotをdbに保存
-func (s *BotStoreImpl) UpdateGeneralBot(b *bot.GeneralBot) error {
-	if _, err := db.ID(b.BotUserID.String()).Update(&User{
-		DisplayName: b.DisplayName,
-		Icon:        b.IconFileID.String(),
-	}); err != nil {
-		return err
-	}
-	if _, err := db.ID(b.ID.String()).UseBool("is_valid", "activated").Update(&GeneralBot{
-		Description:       b.Description,
-		VerificationToken: b.VerificationToken,
-		AccessTokenID:     b.AccessTokenID.String(),
-		PostURL:           b.PostURL.String(),
-		SubscribeEvents:   strings.Join(b.SubscribeEvents, " "),
-		Activated:         b.Activated,
-		IsValid:           b.IsValid,
-		OwnerID:           b.OwnerID.String(),
-		UpdatedAt:         b.UpdatedAt,
-	}); err != nil {
-		return err
-	}
-	return nil
-}
-
-// GetAllBotsInstalledChannels BotInstalledChannelを全て取得
-func (s *BotStoreImpl) GetAllBotsInstalledChannels() (arr []bot.InstalledChannel, err error) {
-	var bics []BotInstalledChannel
-	if err = db.Find(&bics); err != nil {
-		return nil, err
-	}
-	for _, v := range bics {
-		arr = append(arr, bot.InstalledChannel{
-			BotID:       uuid.Must(uuid.FromString(v.BotID)),
-			ChannelID:   uuid.Must(uuid.FromString(v.ChannelID)),
-			InstalledBy: uuid.Must(uuid.FromString(v.InstalledBy)),
-		})
-	}
-	return
-}
-
-// InstallBot GeneralBotをチャンネルにインストール(db)
-func (s *BotStoreImpl) InstallBot(botID, channelID, userID uuid.UUID) error {
-	bic := &BotInstalledChannel{
-		BotID:       botID.String(),
-		ChannelID:   channelID.String(),
-		InstalledBy: userID.String(),
-	}
-
-	if _, err := db.InsertOne(bic); err != nil {
-		return err
-	}
-	return nil
-}
-
-// UninstallBot GeneralBotをチャンネルからアンインストール(db)
-func (s *BotStoreImpl) UninstallBot(botID, channelID uuid.UUID) error {
-	bic := &BotInstalledChannel{
-		BotID:     botID.String(),
-		ChannelID: channelID.String(),
-	}
-
-	if _, err := db.Delete(bic); err != nil {
-		return err
-	}
-	return nil
-}
-
-// GetAllGeneralBots GeneralBotを全て取得
-func (s *BotStoreImpl) GetAllGeneralBots() (arr []bot.GeneralBot, err error) {
-	var gbs []*GeneralBotUser
-	if err := db.Join("INNER", "general_bots", "general_bots.bot_user_id = users.id").Find(&gbs); err != nil {
-		return nil, err
-	}
-	for _, v := range gbs {
-		postURL, _ := url.Parse(v.GeneralBot.PostURL)
-		arr = append(arr, bot.GeneralBot{
-			ID:                uuid.Must(uuid.FromString(v.GeneralBot.ID)),
-			BotUserID:         uuid.Must(uuid.FromString(v.GeneralBot.BotUserID)),
-			Name:              v.User.Name,
-			DisplayName:       v.User.DisplayName,
-			Description:       v.GeneralBot.Description,
-			IconFileID:        uuid.Must(uuid.FromString(v.User.Icon)),
-			VerificationToken: v.GeneralBot.VerificationToken,
-			AccessTokenID:     uuid.Must(uuid.FromString(v.GeneralBot.AccessTokenID)),
-			PostURL:           *postURL,
-			SubscribeEvents:   strings.Fields(v.GeneralBot.SubscribeEvents),
-			Activated:         v.GeneralBot.Activated,
-			IsValid:           v.GeneralBot.IsValid,
-			OwnerID:           uuid.Must(uuid.FromString(v.GeneralBot.OwnerID)),
-			CreatedAt:         v.GeneralBot.CreatedAt,
-			UpdatedAt:         v.GeneralBot.UpdatedAt,
-		})
-	}
-	return
-}
-
-// SaveWebhook Webhookをdbに保存
-func (s *BotStoreImpl) SaveWebhook(w *bot.Webhook) error {
-	u := &User{
-		ID:          w.BotUserID.String(),
-		Name:        "Webhook#" + base64.RawStdEncoding.EncodeToString(w.BotUserID.Bytes()),
-		DisplayName: w.Name,
-		Email:       "",
-		Password:    "",
-		Salt:        "",
-		Icon:        w.IconFileID.String(),
-		Status:      0, //TODO
-		Bot:         true,
-		BotType:     bot.TypeWebhook,
-		Role:        role.Bot.ID(), //FIXME
-	}
-	wb := &WebhookBot{
-		ID:          w.ID.String(),
-		BotUserID:   w.BotUserID.String(),
-		Description: w.Description,
-		ChannelID:   w.ChannelID.String(),
-		IsValid:     w.IsValid,
-		CreatorID:   w.CreatorID.String(),
-		CreatedAt:   w.CreatedAt,
-		UpdatedAt:   w.UpdatedAt,
-	}
-
-	if _, err := db.UseBool().Insert(u, wb); err != nil {
-		return err
-	}
-	return nil
-}
-
-// UpdateWebhook Webhookをdbに保存
-func (s *BotStoreImpl) UpdateWebhook(w *bot.Webhook) error {
-	if _, err := db.ID(w.BotUserID.String()).Update(&User{
-		DisplayName: w.Name,
-		Icon:        w.IconFileID.String(),
-	}); err != nil {
-		return err
-	}
-	if _, err := db.ID(w.ID.String()).UseBool("is_valid").Update(&WebhookBot{
-		Description: w.Description,
-		ChannelID:   w.ChannelID.String(),
-		IsValid:     w.IsValid,
-		CreatorID:   w.CreatorID.String(),
-		UpdatedAt:   w.UpdatedAt,
-	}); err != nil {
-		return err
-	}
-	return nil
-}
-
-// GetAllWebhooks Webhookを全て取得
-func (s *BotStoreImpl) GetAllWebhooks() (arr []bot.Webhook, err error) {
-	var webhooks []*WebhookBotUser
-	if err = db.Join("INNER", "webhook_bots", "webhook_bots.bot_user_id = users.id").Find(&webhooks); err != nil {
-		return nil, err
-	}
-	for _, v := range webhooks {
-		arr = append(arr, bot.Webhook{
-			ID:          uuid.Must(uuid.FromString(v.WebhookBot.ID)),
-			BotUserID:   uuid.Must(uuid.FromString(v.WebhookBot.BotUserID)),
-			Name:        v.User.DisplayName,
-			Description: v.WebhookBot.Description,
-			ChannelID:   uuid.Must(uuid.FromString(v.WebhookBot.ChannelID)),
-			IconFileID:  uuid.Must(uuid.FromString(v.User.Icon)),
-			CreatorID:   uuid.Must(uuid.FromString(v.WebhookBot.CreatorID)),
-			CreatedAt:   v.WebhookBot.CreatedAt,
-			UpdatedAt:   v.WebhookBot.UpdatedAt,
-			IsValid:     v.WebhookBot.IsValid,
-		})
-	}
-	return
-}
-
-// Plugin Plugin構造体
-type Plugin struct {
-	ID                string    `xorm:"char(36) not null pk"`
-	BotUserID         string    `xorm:"char(36) not null unique"`
-	Command           string    `xorm:"char(50) not null unique"`
-	Description       string    `xorm:"text not null"`
-	Usage             string    `xorm:"text not null"`
-	VerificationToken string    `xorm:"text not null"`
-	AccessTokenID     string    `xorm:"char(36) not null"`
-	PostURL           string    `xorm:"text not null"`
-	Activated         bool      `xorm:"bool not null"`
-	IsValid           bool      `xorm:"bool not null"`
-	CreatorID         string    `xorm:"char(36) not null"`
-	CreatedAt         time.Time `xorm:"timestamp not null"`
-	UpdatedAt         time.Time `xorm:"timestamp not null"`
-}
-
-// WebhookBot WebhookBot構造体
-type WebhookBot struct {
-	ID          string    `xorm:"char(36) not null pk"`
-	BotUserID   string    `xorm:"char(36) not null unique"`
-	Description string    `xorm:"text not null"`
-	ChannelID   string    `xorm:"char(36) not null"`
-	IsValid     bool      `xorm:"bool not null"`
-	CreatorID   string    `xorm:"char(36) not null"`
-	CreatedAt   time.Time `xorm:"timestamp not null"`
-	UpdatedAt   time.Time `xorm:"timestamp not null"`
-}
-
-// GeneralBot GeneralBot構造体
+// GeneralBot Bot構造体
 type GeneralBot struct {
-	ID                string    `xorm:"char(36) not null pk"`
-	BotUserID         string    `xorm:"char(36) not null unique"`
-	Description       string    `xorm:"text not null"`
-	VerificationToken string    `xorm:"text not null"`
-	AccessTokenID     string    `xorm:"char(36) not null"`
-	PostURL           string    `xorm:"text not null"`
-	SubscribeEvents   string    `xorm:"text not null"`
-	Activated         bool      `xorm:"bool not null"`
-	IsValid           bool      `xorm:"bool not null"`
-	OwnerID           string    `xorm:"char(36) not null"`
-	CreatedAt         time.Time `xorm:"timestamp not null"`
-	UpdatedAt         time.Time `xorm:"timestamp not null"`
-}
-
-// BotInstalledChannel BotInstalledChannel構造体
-type BotInstalledChannel struct {
-	BotID       string `xorm:"char(36) not null unique(bot_channel)"`
-	ChannelID   string `xorm:"char(36) not null unique(bot_channel)"`
-	InstalledBy string `xorm:"char(36) not null"`
-}
-
-// BotOutgoingPostLog BotのPOST URLへのリクエストの結果のログ構造体
-type BotOutgoingPostLog struct {
-	RequestID  string `xorm:"char(36) not null pk"`
-	BotUserID  string `xorm:"char(36) not null"`
-	StatusCode int    `xorm:"int not null"`
-	Request    string `xorm:"text not null"`
-	Response   string `xorm:"text not null"`
-	Error      string `xorm:"text not null"`
-	Timestamp  int64  `xorm:"int64 not null"`
-}
-
-// TableName Pluginのテーブル名
-func (*Plugin) TableName() string {
-	return "plugins"
-}
-
-// TableName Webhookのテーブル名
-func (*WebhookBot) TableName() string {
-	return "webhook_bots"
+	ID                string     `xorm:"char(36) not null pk"        validate:"uuid,required"`
+	BotUserID         string     `xorm:"char(36) not null unique"    validate:"uuid,required"`
+	Description       string     `xorm:"text not null"`
+	VerificationToken string     `xorm:"text not null"               validate:"required"`
+	AccessTokenID     string     `xorm:"char(36) not null"           validate:"uuid,required"`
+	PostURL           string     `xorm:"text not null"               validate:"url,required"`
+	SubscribeEvents   string     `xorm:"text not null"`
+	Activated         bool       `xorm:"bool not null"`
+	CreatorID         string     `xorm:"char(36) not null"           validate:"uuid,required"`
+	InstallCode       string     `xorm:"varchar(30) not null unique" validate:"required"`
+	CreatedAt         time.Time  `xorm:"created not null"`
+	UpdatedAt         time.Time  `xorm:"updated not null"`
+	DeletedAt         *time.Time `xorm:"timestamp"`
 }
 
 // TableName GeneralBotのテーブル名
 func (*GeneralBot) TableName() string {
-	return "general_bots"
+	return "bots"
 }
 
-// TableName BotInstalledChannelのテーブル名
-func (*BotInstalledChannel) TableName() string {
-	return "bots_installed_channels"
-}
-
-// TableName BotOutgoingPostLogのテーブル名
-func (*BotOutgoingPostLog) TableName() string {
-	return "bot_outgoing_post_logs"
-}
-
-// WebhookBotUser WebhookBotUser構造体 内部にUser, WebhookBotを内包
-type WebhookBotUser struct {
-	*User       `xorm:"extends"`
-	*WebhookBot `xorm:"extends"`
-}
-
-// TableName JOIN処理用
-func (*WebhookBotUser) TableName() string {
-	return "users"
+// Validate 構造体を検証します
+func (b *GeneralBot) Validate() error {
+	return validator.ValidateStruct(b)
 }
 
 // GeneralBotUser GeneralBotUser構造体 内部にUser, GeneralBotを内包
@@ -440,13 +72,403 @@ func (*GeneralBotUser) TableName() string {
 	return "users"
 }
 
-// PluginUser PluginUser構造体 内部にUser, Pluginを内包
-type PluginUser struct {
-	*User   `xorm:"extends"`
-	*Plugin `xorm:"extends"`
+// ID BotID
+func (v *GeneralBotUser) ID() uuid.UUID {
+	return uuid.Must(uuid.FromString(v.GeneralBot.ID))
 }
 
-// TableName JOIN処理用
-func (*PluginUser) TableName() string {
-	return "users"
+// BotUserID BotのUserID
+func (v *GeneralBotUser) BotUserID() uuid.UUID {
+	return uuid.Must(uuid.FromString(v.GeneralBot.BotUserID))
+}
+
+// Name Bot名
+func (v *GeneralBotUser) Name() string {
+	return v.User.Name
+}
+
+// DisplayName Bot表示名
+func (v *GeneralBotUser) DisplayName() string {
+	return v.User.DisplayName
+}
+
+// Description Bot説明
+func (v *GeneralBotUser) Description() string {
+	return v.GeneralBot.Description
+}
+
+// VerificationToken Botの確認トークン
+func (v *GeneralBotUser) VerificationToken() string {
+	return v.GeneralBot.VerificationToken
+}
+
+// AccessTokenID BotのアクセストークンのID
+func (v *GeneralBotUser) AccessTokenID() uuid.UUID {
+	return uuid.Must(uuid.FromString(v.GeneralBot.AccessTokenID))
+}
+
+// PostURL BotのPOST URL
+func (v *GeneralBotUser) PostURL() *url.URL {
+	postURL, _ := url.Parse(v.GeneralBot.PostURL)
+	return postURL
+}
+
+// SubscribeEvents Botの購読イベント
+func (v *GeneralBotUser) SubscribeEvents() map[string]bool {
+	return arrayToSet(strings.Fields(v.GeneralBot.SubscribeEvents))
+}
+
+// Activated Botが活性化されているか
+func (v *GeneralBotUser) Activated() bool {
+	return v.GeneralBot.Activated
+}
+
+// CreatorID Botの作成者ID
+func (v *GeneralBotUser) CreatorID() uuid.UUID {
+	return uuid.Must(uuid.FromString(v.GeneralBot.CreatorID))
+}
+
+// InstallCode Botのインストールコード
+func (v *GeneralBotUser) InstallCode() string {
+	return v.GeneralBot.InstallCode
+}
+
+// CreatedAt Botの作成日時
+func (v *GeneralBotUser) CreatedAt() time.Time {
+	return v.GeneralBot.CreatedAt
+}
+
+// UpdatedAt Botの更新日時
+func (v *GeneralBotUser) UpdatedAt() time.Time {
+	return v.GeneralBot.UpdatedAt
+}
+
+// CreateBot Botを作成します
+func CreateBot(oauth2 *oauth2.Handler, name, displayName, description string, creatorID, iconFileID uuid.UUID, postURL *url.URL, subscribes []string) (Bot, error) {
+	uid := uuid.NewV4()
+	bid := uuid.NewV4()
+
+	u := &User{
+		ID:          uid.String(),
+		Name:        fmt.Sprintf("BOT_%s", name),
+		DisplayName: displayName,
+		Email:       "",
+		Password:    "",
+		Salt:        "",
+		Icon:        iconFileID.String(),
+		Bot:         true,
+		Role:        role.Bot.ID(),
+	}
+	if err := u.Validate(); err != nil {
+		return nil, err
+	}
+
+	t, err := oauth2.IssueAccessToken(nil, uid, "", scope.AccessScopes{}, math.MaxInt32, false)
+	if err != nil {
+		return nil, err
+	}
+
+	gb := &GeneralBot{
+		ID:                bid.String(),
+		BotUserID:         uid.String(),
+		Description:       description,
+		VerificationToken: base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes()),
+		AccessTokenID:     t.ID.String(),
+		PostURL:           postURL.String(),
+		SubscribeEvents:   strings.Join(subscribes, " "),
+		Activated:         false,
+		CreatorID:         creatorID.String(),
+		InstallCode:       base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes()),
+	}
+	if err := gb.Validate(); err != nil {
+		return nil, err
+	}
+
+	_, err = db.UseBool("activated", "bot").Insert(u, gb)
+	if err != nil {
+		return nil, err
+	}
+	return &GeneralBotUser{User: u, GeneralBot: gb}, nil
+}
+
+// UpdateBot Bot情報を更新します
+func UpdateBot(id uuid.UUID, displayName, description *string, url *url.URL, subscribes []string) error {
+	b, err := GetBot(id)
+	if err != nil {
+		return err
+	}
+	if b == nil {
+		return ErrNotFound
+	}
+
+	if displayName != nil {
+		if utf8.RuneCountInString(*displayName) > 64 {
+			return errors.New("invalid displayName")
+		}
+
+		if _, err := db.ID(b.BotUserID().String()).Update(&User{
+			DisplayName: *displayName,
+		}); err != nil {
+			return err
+		}
+	}
+
+	if description != nil {
+		if _, err := db.ID(b.ID().String()).Update(&GeneralBot{
+			Description: *description,
+		}); err != nil {
+			return err
+		}
+	}
+
+	if url != nil {
+		if _, err := db.ID(b.ID().String()).Update(&GeneralBot{
+			PostURL: b.PostURL().String(),
+		}); err != nil {
+			return err
+		}
+	}
+
+	if subscribes != nil {
+		if _, err := db.ID(b.ID().String()).Update(&GeneralBot{
+			SubscribeEvents: strings.Join(subscribes, " "),
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ActivateBot Botを活性化します
+func ActivateBot(id uuid.UUID) error {
+	b, err := GetBot(id)
+	if err != nil {
+		return err
+	}
+	if b == nil {
+		return ErrNotFound
+	}
+
+	if _, err := db.ID(b.ID().String()).UseBool("activated").Update(&GeneralBot{
+		Activated: true,
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+// DeactivateBot Botを非活性化します
+func DeactivateBot(id uuid.UUID) error {
+	b, err := GetBot(id)
+	if err != nil {
+		return err
+	}
+	if b == nil {
+		return ErrNotFound
+	}
+
+	if _, err := db.ID(b.ID().String()).UseBool("activated").Update(&GeneralBot{
+		Activated: false,
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ReissueBotTokens Botの現在のトークンを無効化し、新たに再発行します
+func ReissueBotTokens(oauth2 *oauth2.Handler, id uuid.UUID) (Bot, string, error) {
+	b, err := GetBot(id)
+	if err != nil {
+		return nil, "", err
+	}
+	if b == nil {
+		return nil, "", ErrNotFound
+	}
+
+	if err := oauth2.DeleteTokenByID(b.AccessTokenID()); err != nil {
+		return nil, "", err
+	}
+
+	t, err := oauth2.IssueAccessToken(nil, b.BotUserID(), "", scope.AccessScopes{}, math.MaxInt32, false)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if _, err := db.ID(b.ID().String()).Update(&GeneralBot{
+		VerificationToken: base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes()),
+		AccessTokenID:     t.ID.String(),
+	}); err != nil {
+		return nil, "", err
+	}
+
+	b, err = GetBot(id)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return b, t.AccessToken, nil
+}
+
+// DeleteBot Botを削除
+func DeleteBot(id uuid.UUID) (err error) {
+	_, err = db.Delete(&BotInstalledChannel{BotID: id.String()})
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	_, err = db.Update(&GeneralBot{DeletedAt: &now}, &GeneralBot{ID: id.String()})
+	return err
+}
+
+// GetBot Botを取得
+func GetBot(id uuid.UUID) (Bot, error) {
+	b := &GeneralBotUser{}
+	if ok, err := db.Join("INNER", "bots", "bots.bot_user_id = users.id").Where("bots.id = ? AND bots.deleted_at IS NULL", id.String()).Get(&b); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, nil
+	}
+
+	return b, nil
+}
+
+// GetBotsByCreator Botを取得
+func GetBotsByCreator(id uuid.UUID) (arr []Bot, err error) {
+	var gbs []*GeneralBotUser
+	if err := db.Join("INNER", "bots", "bots.bot_user_id = users.id").Where("bots.creator_id = ? AND bots.deleted_at IS NULL", id.String()).Find(&gbs); err != nil {
+		return nil, err
+	}
+	for _, v := range gbs {
+		arr = append(arr, v)
+	}
+	return
+}
+
+// GetBotByInstallCode Botを取得
+func GetBotByInstallCode(code string) (Bot, error) {
+	b := &GeneralBotUser{}
+	if ok, err := db.Join("INNER", "bots", "bots.bot_user_id = users.id").Where("bots.install_code = ? AND bots.deleted_at IS NULL", code).Get(&b); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, nil
+	}
+
+	return b, nil
+}
+
+// GetAllBots Botを全て取得
+func GetAllBots() (arr []Bot, err error) {
+	var gbs []*GeneralBotUser
+	if err := db.Join("INNER", "bots", "bots.bot_user_id = users.id").Where("bots.deleted_at IS NULL").Find(&gbs); err != nil {
+		return nil, err
+	}
+	for _, v := range gbs {
+		arr = append(arr, v)
+	}
+	return
+}
+
+// BotInstalledChannel BotInstalledChannel構造体
+type BotInstalledChannel struct {
+	BotID       string    `xorm:"char(36) not null unique(bot_channel)"`
+	ChannelID   string    `xorm:"char(36) not null unique(bot_channel)"`
+	InstalledBy string    `xorm:"char(36) not null"`
+	CreatedAt   time.Time `xorm:"created not null"`
+}
+
+// TableName BotInstalledChannelのテーブル名
+func (*BotInstalledChannel) TableName() string {
+	return "bots_installed_channels"
+}
+
+// GetBID BotIDを取得
+func (s *BotInstalledChannel) GetBID() uuid.UUID {
+	return uuid.Must(uuid.FromString(s.BotID))
+}
+
+// GetCID ChannelIDを取得
+func (s *BotInstalledChannel) GetCID() uuid.UUID {
+	return uuid.Must(uuid.FromString(s.ChannelID))
+}
+
+// GetInstallerID InstallしたユーザーのIDを取得
+func (s *BotInstalledChannel) GetInstallerID() uuid.UUID {
+	return uuid.Must(uuid.FromString(s.InstalledBy))
+}
+
+// InstallBot Botをチャンネルにインストール
+func InstallBot(botID, channelID, userID uuid.UUID) error {
+	bic := &BotInstalledChannel{
+		BotID:       botID.String(),
+		ChannelID:   channelID.String(),
+		InstalledBy: userID.String(),
+	}
+
+	_, err := db.InsertOne(bic)
+	return err
+}
+
+// UninstallBot Botをチャンネルからアンインストール
+func UninstallBot(botID, channelID uuid.UUID) error {
+	bic := &BotInstalledChannel{
+		BotID:     botID.String(),
+		ChannelID: channelID.String(),
+	}
+
+	_, err := db.Delete(bic)
+	return err
+}
+
+// GetBotInstalledChannels Botがインストールされているチャンネルを取得
+func GetBotInstalledChannels(id uuid.UUID) (arr []BotInstalledChannel, err error) {
+	err = db.Where("bot_id = ?", id.String()).Find(&arr)
+	return
+}
+
+// GetInstalledBots チャンネルにインストールされているBotを取得
+func GetInstalledBots(cid uuid.UUID) (arr []BotInstalledChannel, err error) {
+	err = db.Where("channel_id = ?", cid.String()).Find(&arr)
+	return
+}
+
+// BotOutgoingPostLog BotのPOST URLへのリクエストの結果のログ構造体
+type BotOutgoingPostLog struct {
+	RequestID  string `xorm:"char(36) not null pk"`
+	BotID      string `xorm:"char(36) not null"`
+	StatusCode int    `xorm:"int not null"`
+	Request    string `xorm:"text not null"`
+	Response   string `xorm:"text not null"`
+	Error      string `xorm:"text not null"`
+	Timestamp  int64  `xorm:"bigint not null"`
+}
+
+// TableName BotOutgoingPostLogのテーブル名
+func (*BotOutgoingPostLog) TableName() string {
+	return "bot_outgoing_post_logs"
+}
+
+// SavePostLog Botのポストログをdbに保存
+func SavePostLog(reqID, botID uuid.UUID, status int, request, response, error string) error {
+	l := &BotOutgoingPostLog{
+		RequestID:  reqID.String(),
+		BotID:      botID.String(),
+		StatusCode: status,
+		Request:    request,
+		Response:   response,
+		Error:      error,
+		Timestamp:  time.Now().UnixNano(),
+	}
+
+	_, err := db.InsertOne(l)
+	return err
+}
+
+func arrayToSet(arr []string) map[string]bool {
+	s := map[string]bool{}
+	for _, v := range arr {
+		s[v] = true
+	}
+	return s
 }

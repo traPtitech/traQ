@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/utils/validator"
 	"time"
 )
@@ -21,6 +22,21 @@ type Message struct {
 	CreatedAt time.Time `xorm:"created not null"`
 	UpdaterID string    `xorm:"char(36) not null" validate:"uuid,required"`
 	UpdatedAt time.Time `xorm:"updated not null"`
+}
+
+// GetID IDを返します
+func (m *Message) GetID() uuid.UUID {
+	return uuid.Must(uuid.FromString(m.ID))
+}
+
+// GetCID ChannelIDを返します
+func (m *Message) GetCID() uuid.UUID {
+	return uuid.Must(uuid.FromString(m.ChannelID))
+}
+
+// GetUID UserIDを返します
+func (m *Message) GetUID() uuid.UUID {
+	return uuid.Must(uuid.FromString(m.UserID))
 }
 
 // TableName DBの名前を指定するメソッド

@@ -80,6 +80,16 @@ var list = map[string]gorbac.Permission{
 	EditWebhook.ID():   EditWebhook,
 	DeleteWebhook.ID(): DeleteWebhook,
 
+	GetBot.ID():            GetBot,
+	CreateBot.ID():         CreateBot,
+	EditBot.ID():           EditBot,
+	DeleteBot.ID():         DeleteBot,
+	GetBotToken.ID():       GetBotToken,
+	ReissueBotToken.ID():   ReissueBotToken,
+	GetBotInstallCode.ID(): GetBotInstallCode,
+	InstallBot.ID():        InstallBot,
+	UninstallBot.ID():      UninstallBot,
+
 	GetMyTokens.ID():    GetMyTokens,
 	RevokeMyToken.ID():  RevokeMyToken,
 	GetClients.ID():     GetClients,

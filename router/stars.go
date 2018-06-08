@@ -1,10 +1,9 @@
 package router
 
 import (
+	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/event"
 	"net/http"
-
-	"github.com/traPtitech/traQ/notification"
-	"github.com/traPtitech/traQ/notification/events"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -25,11 +24,11 @@ func GetStars(c echo.Context) error {
 
 // PutStars PUT /users/me/stars/{channelID} のハンドラ
 func PutStars(c echo.Context) error {
-	myID := c.Get("user").(*model.User).ID
+	user := c.Get("user").(*model.User)
 	channelID := c.Param("channelID")
 
 	star := &model.Star{
-		UserID:    myID,
+		UserID:    user.ID,
 		ChannelID: channelID,
 	}
 
@@ -38,17 +37,17 @@ func PutStars(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create star")
 	}
 
-	go notification.Send(events.ChannelStared, events.UserChannelEvent{UserID: myID, ChannelID: channelID})
+	go event.Emit(event.ChannelStared, event.UserChannelEvent{UserID: user.GetUID(), ChannelID: uuid.Must(uuid.FromString(channelID))})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteStars DELETE /users/me/stars/{channelID} のハンドラ
 func DeleteStars(c echo.Context) error {
-	myID := c.Get("user").(*model.User).ID
+	user := c.Get("user").(*model.User)
 
 	channelID := c.Param("channelID")
 
-	if _, err := validateChannelID(channelID, myID); err != nil {
+	if _, err := validateChannelID(channelID, user.ID); err != nil {
 		switch err {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
@@ -58,7 +57,7 @@ func DeleteStars(c echo.Context) error {
 	}
 
 	star := &model.Star{
-		UserID:    myID,
+		UserID:    user.ID,
 		ChannelID: channelID,
 	}
 
@@ -67,7 +66,7 @@ func DeleteStars(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete star")
 	}
 
-	go notification.Send(events.ChannelUnstared, events.UserChannelEvent{UserID: myID, ChannelID: channelID})
+	go event.Emit(event.ChannelUnstared, event.UserChannelEvent{UserID: user.GetUID(), ChannelID: uuid.Must(uuid.FromString(channelID))})
 	return c.NoContent(http.StatusNoContent)
 }
 

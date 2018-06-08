@@ -61,6 +61,9 @@ func init() {
 		DatabaseName = "traq"
 	}
 
+	if len(TRAQOrigin) == 0 {
+		TRAQOrigin = "http://localhost:3000"
+	}
 	if len(Port) == 0 {
 		Port = "3000"
 	}

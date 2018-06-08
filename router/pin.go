@@ -2,11 +2,10 @@ package router
 
 import (
 	"fmt"
+	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/event"
 	"net/http"
 	"time"
-
-	"github.com/traPtitech/traQ/notification"
-	"github.com/traPtitech/traQ/notification/events"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -96,7 +95,7 @@ func PostPin(c echo.Context) error {
 	}
 
 	c.Response().Header().Set(echo.HeaderLocation, "/pin/"+pin.ID)
-	go notification.Send(events.MessagePinned, events.PinEvent{PinID: pin.ID, Message: *m})
+	go event.Emit(event.MessagePinned, event.PinEvent{PinID: uuid.Must(uuid.FromString(pin.ID)), Message: *m})
 	return c.JSON(http.StatusCreated, res)
 }
 
@@ -117,7 +116,7 @@ func DeletePin(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete pin")
 	}
-	go notification.Send(events.MessageUnpinned, events.PinEvent{PinID: pin.ID, Message: *m})
+	go event.Emit(event.MessageUnpinned, event.PinEvent{PinID: uuid.Must(uuid.FromString(pin.ID)), Message: *m})
 	return c.NoContent(http.StatusNoContent)
 }
 

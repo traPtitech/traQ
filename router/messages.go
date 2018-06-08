@@ -6,10 +6,8 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/event"
 	"gopkg.in/go-playground/validator.v9"
-
-	"github.com/traPtitech/traQ/notification"
-	"github.com/traPtitech/traQ/notification/events"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/gommon/log"
@@ -87,7 +85,7 @@ func PostMessage(c echo.Context) error {
 		}
 	}
 
-	m, err := createMessage(post.Text, c.Get("user").(*model.User).ID, c.Param("channelID"))
+	m, err := createMessage(post.Text, userID, channelID)
 	if err != nil {
 		return err
 	}
@@ -123,7 +121,7 @@ func PutMessageByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update the message")
 	}
 
-	go notification.Send(events.MessageUpdated, events.MessageEvent{Message: *m})
+	go event.Emit(event.MessageUpdated, event.MessageUpdatedEvent{Message: *m})
 	return c.JSON(http.StatusOK, formatMessage(m))
 }
 
@@ -150,7 +148,7 @@ func DeleteMessageByID(c echo.Context) error {
 		c.Logger().Errorf("model.DeleteUnreadsByMessageID returned an error: %v", err) //500エラーにはしない
 	}
 
-	go notification.Send(events.MessageDeleted, events.MessageEvent{Message: *m})
+	go event.Emit(event.MessageDeleted, event.MessageDeletedEvent{Message: *m})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -219,7 +217,7 @@ func createMessage(text, userID, channelID string) (*MessageForResponse, error) 
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to insert your message")
 	}
 
-	go notification.Send(events.MessageCreated, events.MessageEvent{Message: *m})
+	go event.Emit(event.MessageCreated, &event.MessageCreatedEvent{Message: *m})
 	return formatMessage(m), nil
 }
 

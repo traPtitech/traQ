@@ -64,6 +64,8 @@ func SetRole(rbac *rbac.RBAC) {
 			permission.GetHeartbeat,
 
 			permission.GetWebhook,
+
+			permission.GetBot,
 		},
 		// 書き込み専用ユーザーのパーミッション
 		WriteUser: {
@@ -110,9 +112,8 @@ func SetRole(rbac *rbac.RBAC) {
 
 			permission.PostHeartbeat,
 
-			permission.CreateWebhook,
-			permission.EditWebhook,
-			permission.DeleteWebhook,
+			permission.InstallBot,
+			permission.UninstallBot,
 		},
 		// プライベートチャンネル読み取り専用ユーザーのパーミッション
 		PrivateReadUser: {}, // TODO
@@ -128,6 +129,17 @@ func SetRole(rbac *rbac.RBAC) {
 			permission.CreateClient,
 			permission.EditMyClient,
 			permission.DeleteMyClient,
+
+			permission.CreateWebhook,
+			permission.EditWebhook,
+			permission.DeleteWebhook,
+
+			permission.CreateBot,
+			permission.EditBot,
+			permission.DeleteBot,
+			permission.GetBotToken,
+			permission.ReissueBotToken,
+			permission.GetBotInstallCode,
 		},
 		// 管理者ユーザーのパーミッション
 		// ※一般ユーザーのパーミッションを全て含む
@@ -148,7 +160,41 @@ func SetRole(rbac *rbac.RBAC) {
 			permission.DeleteFile,
 		},
 		// Botユーザーのパーミッション
-		Bot: {},
+		Bot: {
+			permission.GetChannel,
+
+			permission.GetTopic,
+			permission.EditTopic,
+
+			permission.GetMessage,
+			permission.PostMessage,
+			permission.EditMessage,
+			permission.DeleteMessage,
+
+			permission.GetPin,
+			permission.CreatePin,
+			permission.DeletePin,
+
+			permission.GetNotificationStatus,
+			permission.ChangeNotificationStatus,
+
+			permission.GetUser,
+			permission.GetMe,
+
+			permission.GetTag,
+			permission.AddTag,
+			permission.RemoveTag,
+			permission.ChangeTagLockState,
+
+			permission.GetStamp,
+			permission.GetMessageStamp,
+			permission.AddMessageStamp,
+			permission.RemoveMessageStamp,
+
+			permission.DownloadFile,
+
+			permission.GetHeartbeat,
+		},
 	} {
 		for _, p := range ps {
 			r.Assign(p)

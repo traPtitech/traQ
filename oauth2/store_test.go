@@ -138,6 +138,13 @@ func (s *StoreMock) DeleteTokenByAccess(access string) error {
 	return ErrTokenNotFound
 }
 
+func (s *StoreMock) DeleteTokenByID(id uuid.UUID) error {
+	s.Lock()
+	defer s.Unlock()
+	delete(s.tokens, id)
+	return nil
+}
+
 func (s *StoreMock) GetTokenByRefresh(refresh string) (*Token, error) {
 	s.RLock()
 	defer s.RUnlock()

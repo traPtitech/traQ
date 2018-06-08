@@ -36,7 +36,6 @@ type User struct {
 	Icon        string    `xorm:"char(36) not null"`
 	Status      int       `xorm:"tinyint not null"`
 	Bot         bool      `xorm:"bool not null"`
-	BotType     int       `xorm:"tinyint not null"            validate:"min=0"`
 	Role        string    `xorm:"text not null"               validate:"required"`
 	TwitterID   string    `xorm:"varchar(15) not null"        validate:"twitterid"`
 	CreatedAt   time.Time `xorm:"created not null"`

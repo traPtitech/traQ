@@ -1,26 +1,14 @@
 package router
 
 import (
-	"bytes"
-	"context"
-	"fmt"
-	"image/jpeg"
-	"image/png"
-	"io"
-	"net/http"
-	"time"
-
-	"github.com/traPtitech/traQ/external/imagemagick"
-	"github.com/traPtitech/traQ/utils/thumb"
-
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/gommon/log"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/notification"
-	"github.com/traPtitech/traQ/notification/events"
 	"github.com/traPtitech/traQ/rbac/role"
+	"net/http"
 )
 
 const (
@@ -49,30 +37,29 @@ type UserDetailForResponse struct {
 	TagList     []*TagForResponse `json:"tagList"`
 }
 
-type loginRequestBody struct {
-	Name string `json:"name" form:"name"`
-	Pass string `json:"pass" form:"pass"`
-}
-
 // PostLogin Post /login のハンドラ
 func PostLogin(c echo.Context) error {
-	requestBody := &loginRequestBody{}
-	err := c.Bind(requestBody)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprint(err))
+	requestBody := &struct {
+		Name string `json:"name" form:"name"`
+		Pass string `json:"pass" form:"pass"`
+	}{}
+
+	if err := c.Bind(requestBody); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	user := &model.User{
 		Name: requestBody.Name,
 	}
-	err = user.Authorization(requestBody.Pass)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, fmt.Sprint(err))
+
+	if err := user.Authorization(requestBody.Pass); err != nil {
+		return echo.NewHTTPError(http.StatusForbidden, err)
 	}
 
 	sess, err := session.Get("sessions", c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("an error occurrerd while getting session: %v", err))
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "an error occurrerd while getting session")
 	}
 
 	sess.Options = &sessions.Options{
@@ -161,7 +148,7 @@ func GetMyIcon(c echo.Context) error {
 	return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon)
 }
 
-// PutMyIcon Post /users/me/icon のハンドラ
+// PutMyIcon PUT /users/me/icon のハンドラ
 func PutMyIcon(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 
@@ -171,128 +158,18 @@ func PutMyIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	// ファイルサイズ制限1MB
-	if uploadedFile.Size > 1024*1024 {
-		return echo.NewHTTPError(http.StatusBadRequest, "too big image file")
-	}
-
-	// ファイルタイプ確認・必要があればリサイズ
-	b := &bytes.Buffer{}
-	src, err := uploadedFile.Open()
+	iconID, err := processMultipartFormIconUpload(c, uploadedFile)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	defer src.Close()
-	switch uploadedFile.Header.Get(echo.HeaderContentType) {
-	case "image/png":
-		img, err := png.Decode(src)
-		if err != nil {
-			// 不正なpngである
-			return echo.NewHTTPError(http.StatusBadRequest, "bad png file")
-		}
-		if img.Bounds().Size().X > iconMaxWidth || img.Bounds().Size().Y > iconMaxHeight {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
-			defer cancel()
-			img, err = thumb.Resize(ctx, img, iconMaxWidth, iconMaxHeight)
-			if err != nil {
-				switch err {
-				case context.DeadlineExceeded:
-					// リサイズタイムアウト
-					return echo.NewHTTPError(http.StatusBadRequest, "bad png file (resize timeout)")
-				default:
-					// 予期しないエラー
-					c.Logger().Error(err)
-					return echo.NewHTTPError(http.StatusInternalServerError)
-				}
-			}
-		}
-
-		// bytesに戻す
-		if b, err = thumb.EncodeToPNG(img); err != nil {
-			// 予期しないエラー
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-
-	case "image/jpeg":
-		img, err := jpeg.Decode(src)
-		if err != nil {
-			// 不正なjpgである
-			return echo.NewHTTPError(http.StatusBadRequest, "bad jpg file")
-		}
-		if img.Bounds().Size().X > iconMaxWidth || img.Bounds().Size().Y > iconMaxHeight {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
-			defer cancel()
-			img, err = thumb.Resize(ctx, img, iconMaxWidth, iconMaxHeight)
-			if err != nil {
-				switch err {
-				case context.DeadlineExceeded:
-					// リサイズタイムアウト
-					return echo.NewHTTPError(http.StatusBadRequest, "bad jpg file (resize timeout)")
-				default:
-					// 予期しないエラー
-					c.Logger().Error(err)
-					return echo.NewHTTPError(http.StatusInternalServerError)
-				}
-			}
-		}
-
-		// PNGに変換
-		if b, err = thumb.EncodeToPNG(img); err != nil {
-			// 予期しないエラー
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-
-	case "image/gif":
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
-		defer cancel()
-		b, err = imagemagick.ResizeAnimationGIF(ctx, src, iconMaxWidth, iconMaxHeight, false)
-		if err != nil {
-			switch err {
-			case imagemagick.ErrUnavailable:
-				// gifは一時的にサポートされていない
-				return echo.NewHTTPError(http.StatusBadRequest, "gif file is temporarily unsupported")
-			case imagemagick.ErrUnsupportedType:
-				// 不正なgifである
-				return echo.NewHTTPError(http.StatusBadRequest, "bad gif file")
-			case context.DeadlineExceeded:
-				// リサイズタイムアウト
-				return echo.NewHTTPError(http.StatusBadRequest, "bad gif file (resize timeout)")
-			default:
-				// 予期しないエラー
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
-		}
-
-	case "image/svg+xml":
-		// TODO svgバリデーション
-		io.Copy(b, src)
-
-	default:
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
-	}
-
-	// アイコン画像保存
-	file := &model.File{
-		Name:      uploadedFile.Filename,
-		Size:      int64(b.Len()),
-		CreatorID: user.ID,
-	}
-	if err := file.Create(b); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return err
 	}
 
 	// アイコン変更
-	if err := user.UpdateIconID(file.ID); err != nil {
+	if err := user.UpdateIconID(iconID.String()); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go notification.Send(events.UserIconUpdated, events.UserEvent{ID: user.ID})
+	go event.Emit(event.UserIconUpdated, event.UserEvent{ID: user.ID})
 	return c.NoContent(http.StatusOK)
 }
 
@@ -348,7 +225,7 @@ func PatchMe(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user. Please check the format of email, password or displayName")
 	}
 
-	go notification.Send(events.UserUpdated, events.UserEvent{ID: user.ID})
+	go event.Emit(event.UserUpdated, event.UserEvent{ID: user.ID})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -375,7 +252,7 @@ func PostUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	go notification.Send(events.UserJoined, events.UserEvent{ID: newUser.ID})
+	go event.Emit(event.UserJoined, event.UserEvent{ID: newUser.ID})
 	return c.NoContent(http.StatusCreated)
 }
 
