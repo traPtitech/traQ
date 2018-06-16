@@ -67,6 +67,7 @@ var list = map[string]gorbac.Permission{
 	GetMessageStamp.ID():          GetMessageStamp,
 	AddMessageStamp.ID():          AddMessageStamp,
 	RemoveMessageStamp.ID():       RemoveMessageStamp,
+	GetMyStampHistory.ID():        GetMyStampHistory,
 
 	UploadFile.ID():   UploadFile,
 	DownloadFile.ID(): DownloadFile,

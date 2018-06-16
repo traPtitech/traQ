@@ -238,6 +238,7 @@ func main() {
 	api.GET("/messages/:messageID/stamps", router.GetMessageStamps, requires(permission.GetMessageStamp))
 	api.POST("/messages/:messageID/stamps/:stampID", router.PostMessageStamp, requires(permission.AddMessageStamp))
 	api.DELETE("/messages/:messageID/stamps/:stampID", router.DeleteMessageStamp, requires(permission.RemoveMessageStamp))
+	api.GET("/users/me/stamp-history", router.GetMyStampHistory, requires(permission.GetMyStampHistory))
 
 	//Tag: visibility
 	api.GET("users/me/channels/visibility", router.GetChannelsVisibility, requires(permission.GetChannelVisibility))

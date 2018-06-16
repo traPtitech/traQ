@@ -21,4 +21,6 @@ var (
 	AddMessageStamp = gorbac.NewStdPermission("add_message_stamp")
 	// RemoveMessageStamp : メッセージスタンプ削除権限
 	RemoveMessageStamp = gorbac.NewStdPermission("remove_message_stamp")
+	// GetMyStampHistory 自分のスタンプ履歴取得権限
+	GetMyStampHistory = gorbac.NewStdPermission("get_my_stamp_history")
 )

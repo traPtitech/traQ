@@ -58,6 +58,7 @@ func SetRole(rbac *rbac.RBAC) {
 
 			permission.GetStamp,
 			permission.GetMessageStamp,
+			permission.GetMyStampHistory,
 
 			permission.DownloadFile,
 

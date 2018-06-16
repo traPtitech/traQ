@@ -1087,6 +1087,30 @@ paths:
           description: |+
             正常にメッセージを既読にできました。
 
+  /users/me/stamp-history:
+    get:
+      tags:
+        - stamp
+      description: 自分のスタンプ履歴を最大50件取得します。結果は降順で返されます。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    stampId:
+                      type: string
+                      format: uuid
+                      description: スタンプID
+                    datetime:
+                      type: string
+                      format: datetime
+                      description: そのスタンプが最後に押された日時
+
   /users/{userID}:
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
