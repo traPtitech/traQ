@@ -44,8 +44,8 @@ type GeneralBot struct {
 	PostURL           string     `xorm:"text not null"               validate:"url,required"`
 	SubscribeEvents   string     `xorm:"text not null"`
 	Activated         bool       `xorm:"bool not null"`
-	CreatorID         string     `xorm:"char(36) not null"           validate:"uuid,required"`
 	InstallCode       string     `xorm:"varchar(30) not null unique" validate:"required"`
+	CreatorID         string     `xorm:"char(36) not null"           validate:"uuid,required"`
 	CreatedAt         time.Time  `xorm:"created not null"`
 	UpdatedAt         time.Time  `xorm:"updated not null"`
 	DeletedAt         *time.Time `xorm:"timestamp"`
@@ -222,8 +222,9 @@ func UpdateBot(id uuid.UUID, displayName, description *string, url *url.URL, sub
 	}
 
 	if url != nil {
-		if _, err := db.ID(b.ID().String()).Update(&GeneralBot{
-			PostURL: b.PostURL().String(),
+		if _, err := db.ID(b.ID().String()).UseBool("activated").Update(&GeneralBot{
+			PostURL:   b.PostURL().String(),
+			Activated: false,
 		}); err != nil {
 			return err
 		}
@@ -295,9 +296,10 @@ func ReissueBotTokens(oauth2 *oauth2.Handler, id uuid.UUID) (Bot, string, error)
 		return nil, "", err
 	}
 
-	if _, err := db.ID(b.ID().String()).Update(&GeneralBot{
+	if _, err := db.ID(b.ID().String()).UseBool("activated").Update(&GeneralBot{
 		VerificationToken: base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes()),
 		AccessTokenID:     t.ID.String(),
+		Activated:         false,
 	}); err != nil {
 		return nil, "", err
 	}

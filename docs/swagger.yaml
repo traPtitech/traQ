@@ -1836,34 +1836,12 @@ paths:
       description: webhookを作成します。
       requestBody:
         content:
-          multipart/form-data:
-            schema:
-              required:
-                - name
-                - channelId
-              properties:
-                name:
-                  type: string
-                  description: webhookユーザーの表示名(32文字まで)
-                description:
-                  type: string
-                  description: webhookの説明
-                channelId:
-                  type: string
-                  format: uuid
-                  description: デフォルトの投稿先チャンネル
-                file:
-                  type: string
-                  format: binary
-                  description: webhookユーザーのアイコン(1MBまでのpng, jpeg, gif, svg)
-            encoding:
-              file:
-                contentType: image/png, image/jpeg, image/gif, image/svg+xml
           application/json:
             schema:
               type: object
               required:
                 - name
+                - description
                 - channelId
               properties:
                 name:
@@ -1914,26 +1892,6 @@ paths:
       description: webhookを修正します。
       requestBody:
         content:
-          multipart/form-data:
-            schema:
-              properties:
-                name:
-                  type: string
-                  description: webhookユーザーの表示名(32文字まで)
-                description:
-                  type: string
-                  description: webhookの説明
-                channelId:
-                  type: string
-                  format: uuid
-                  description: デフォルトの投稿先チャンネル
-                file:
-                  type: string
-                  format: binary
-                  description: webhookユーザーのアイコン(1MBまでのpng, jpeg, gif, svg)
-            encoding:
-              file:
-                contentType: image/png, image/jpeg, image/gif, image/svg+xml
           application/json:
             schema:
               type: object
@@ -2014,6 +1972,35 @@ paths:
         "404":
           description: 正常に送信できませんでした。指定されたwebhookは存在しません。
 
+  /webhooks/{webhookID}/icon:
+    parameters:
+      - $ref: "#/components/parameters/webhookIdInPath"
+    put:
+      tags:
+        - webhook
+      description: 指定したwebhookのアイコンを変更します。
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: webhookユーザーのアイコン(1MBまでのpng, jpeg, gif)
+            encoding:
+              file:
+                contentType: image/png, image/jpeg, image/gif
+      responses:
+        "204":
+          description: 正常に変更できました。
+        "400":
+          description: 変更できませんでした。リクエスト内容が不正です。
+        "403":
+          description: 変更できませんでした。権限がありません。
+        "404":
+          description: 修正できませんでした。指定したwebhookは存在しません。
+
   /webhooks/{webhookID}/github:
     parameters:
       - $ref: "#/components/parameters/webhookIdInPath"
@@ -2033,6 +2020,315 @@ paths:
           description: 正常に送信できませんでした。リクエスト内容が不正です。
         "404":
           description: 正常に送信できませんでした。指定されたwebhookは存在しません。
+
+  /bots:
+    get:
+      tags:
+        - bot
+      description: 自分が作成したBotの一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bot"
+    post:
+      tags:
+        - bot
+      description: Botを作成します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - displayName
+                - description
+                - postUrl
+                - subscribeEvents
+              properties:
+                name:
+                  type: string
+                  description: botユーザーID(16文字まで)。自動的に先頭に"BOT_"が付与されます
+                displayName:
+                  type: string
+                  description: botユーザーの表示名(32文字まで)
+                description:
+                  type: string
+                  description: botの説明
+                postUrl:
+                  type: string
+                  format: url
+                  description: botのPOSTエンドポイント
+                subscribeEvents:
+                  type: array
+                  description: botの購読イベント一覧(後から変更できません)
+                  items:
+                    type: string
+      responses:
+        "201":
+          description: 正常に作成できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bot"
+        "400":
+          description: 作成できませんでした。リクエスト内容が不正です。
+        "403":
+          description: 作成できませんでした。権限がありません。
+
+  /bots/{botID}:
+    parameters:
+      - $ref: "#/components/parameters/botIdInPath"
+    get:
+      tags:
+        - bot
+      description: Botの詳細を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bot"
+        "404":
+          description: 取得できませんでした。指定したBotは存在しません。
+    patch:
+      tags:
+        - bot
+      description: Botを修正します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName:
+                  type: string
+                  description: botユーザーの表示名(32文字まで)
+                description:
+                  type: string
+                  description: botの説明
+                postUrl:
+                  type: string
+                  format: url
+                  description: botのPOSTエンドポイント
+      responses:
+        "204":
+          description: 正常に修正できました。
+        "400":
+          description: 修正できませんでした。リクエスト内容が不正です。
+        "403":
+          description: 削除できませんでした。権限がありません。
+        "404":
+          description: 修正できませんでした。指定したBotは存在しません。
+    delete:
+      tags:
+        - bot
+      description: Botを削除します。
+      responses:
+        "204":
+          description: 正常に削除できました。
+        "403":
+          description: 削除できませんでした。権限がありません。
+        "404":
+          description: 削除できませんでした。指定したBotは存在しません。
+
+  /bots/{botID}/icon:
+    parameters:
+      - $ref: "#/components/parameters/botIdInPath"
+    put:
+      tags:
+        - bot
+      description: 指定したBotのアイコンを変更します。
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Botユーザーのアイコン(1MBまでのpng, jpeg, gif)
+            encoding:
+              file:
+                contentType: image/png, image/jpeg, image/gif
+      responses:
+        "204":
+          description: 正常に変更できました。
+        "400":
+          description: 変更できませんでした。リクエスト内容が不正です。
+        "403":
+          description: 変更できませんでした。権限がありません。
+        "404":
+          description: 修正できませんでした。指定したBotは存在しません。
+
+  /bots/{botID}/activation:
+    parameters:
+      - $ref: "#/components/parameters/botIdInPath"
+    post:
+      tags:
+        - bot
+      description: Botをアクティベーションします。
+      responses:
+        "204":
+          description: アクティベートされました。
+        "400":
+          description: アクティベートされませんでした。
+        "403":
+          description: アクティベートされませんでした。権限がありません。
+        "404":
+          description: アクティベートされませんでした。指定したBotは存在しません。
+
+  /bots/{botID}/token:
+    parameters:
+      - $ref: "#/components/parameters/botIdInPath"
+    get:
+      tags:
+        - bot
+      description: Botのトークンを取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verificationToken:
+                    type: string
+                    description: 確認トークン
+                  accessToken:
+                    type: string
+                    description: アクセストークン
+        "403":
+          description: 取得できませんでした。権限がありません。
+        "404":
+          description: 取得できませんでした。指定したBotは存在しません。
+    post:
+      tags:
+        - bot
+      description: Botのトークンを再発行します。
+      responses:
+        "200":
+          description: 正常に再発行できました。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verificationToken:
+                    type: string
+                    description: 確認トークン
+                  accessToken:
+                    type: string
+                    description: アクセストークン
+        "403":
+          description: 再発行できませんでした。権限がありません。
+        "404":
+          description: 再発行できませんでした。指定したBotは存在しません。
+
+  /bots/{botID}/code:
+    parameters:
+      - $ref: "#/components/parameters/botIdInPath"
+    get:
+      tags:
+        - bot
+      description: Botのインストールコードを取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  installCode:
+                    type: string
+                    description: インストールコード
+        "403":
+          description: 取得できませんでした。権限がありません。
+        "404":
+          description: 取得できませんでした。指定したBotは存在しません。
+
+  /channels/{channelID}/bots:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+    get:
+      tags:
+        - bot
+      description: チャンネルにインストールされているBot一覧を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    botId:
+                      type: string
+                      format: uuid
+                      description: BotのID
+                    installedBy:
+                      type: string
+                      format: uuid
+                      description: Botをインストールしたユーザー
+                    installedAt:
+                      type: string
+                      format: datetime
+                      description: Botがインストールされた日時
+        "404":
+          description: 取得できませんでした。指定したチャンネルは存在しません。
+    post:
+      tags:
+        - bot
+      description: チャンネルにBotをインストールします。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  description: インストールコード
+      responses:
+        "200":
+          description: 正常にインストールできました。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  botId:
+                    type: string
+                    format: uuid
+                    description: インストールされたBotのID
+        "400":
+          description: インストールできませんでした。リクエスト内容が不正です。
+        "404":
+          description: インストールできませんでした。指定したチャンネルは存在しません。
+
+  /channels/{channelID}/bots/{botID}:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: "#/components/parameters/botIdInPath"
+    delete:
+      tags:
+        - bot
+      description: Botをチャンネルからアンインストールします。
+      responses:
+        "204":
+          description: 正常にアンインストールできました。
+        "404":
+          description: アンインストールできませんでした。指定したチャンネル、またはBotは存在しません。
 
   /users/me/tokens:
     get:
@@ -2248,6 +2544,14 @@ components:
     webhookIdInPath:
       name: webhookID
       description: 操作の対象となるWebhookのID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    botIdInPath:
+      name: botID
+      description: 操作の対象となるBotのID
       in: path
       required: true
       schema:
@@ -2584,9 +2888,6 @@ components:
           type: string
         description:
           type: string
-        iconFileId:
-          type: string
-          format: uuid
         channelId:
           type: string
           format: uuid
@@ -2596,9 +2897,6 @@ components:
         createdAt:
           type: string
           format: datetime
-        updaterId:
-          type: string
-          format: uuid
         updatedAt:
           type: string
           format: datetime
@@ -2674,3 +2972,34 @@ components:
         name:
           type: string
           description: フォルダ名
+
+    Bot:
+      type: object
+      properties:
+        botId:
+          type: string
+          format: uuid
+        botUserId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        displayName:
+          type: string
+        description:
+          type: string
+        subscribeEvents:
+          type: array
+          items:
+            type: string
+        activated:
+          type: boolean
+        creatorId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: datetime
+        updatedAt:
+          type: string
+          format: datetime

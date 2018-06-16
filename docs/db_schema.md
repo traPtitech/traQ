@@ -16,6 +16,7 @@ ID系は全部UUID(string)
 | status | TINYINT | NOT NULL | アカウントの状態 |
 | bot | BOOLEAN | NOT NULL | botアカウントか |
 | role | TEXT | NOT NULL | ロール |
+| twitter_id | VARCHAR(15) | NOT NULL | ツイッターID |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
 | updated_at | TIMESTAMP | NOT NULL | 更新日時 |
 
@@ -32,22 +33,32 @@ user_idとpermissionの複合ユニーク制約
 ## bots
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
-| user_id | CHAR(36) | PRIMARY KEY (外部キー) | botユーザーID |
-| type | INT | NOT NULL | 1:汎用bot, 2:webhook |
+| id | CHAR(36) | NOT NULL PRIMARY KEY | botID |
+| bot_user_id | CHAR(36) | NOT NULL UNIQUE (外部キー) | botユーザーID |
 | description | TEXT | NOT NULL | 説明 |
-| is_valid | BOOLEAN | NOT NULL | 有効かどうか |
-| creator_id | CHAR(36) | NOT NULL (外部キー) | 登録者 |
+| verificationToken | TEXT | NOT NULL | 確認コード |
+| access_token_id | CHAR(36) | NOT NULL | アクセストークンのID |
+| post_url | TEXT | NOT NULL | botのPOSTエンドポイント |
+| subscribe_events | TEXT | NOT NULL | botの購読イベント |
+| activated | BOOLEAN | NOT NULL | 活性化されているかどうか |
+| install_code | VARCHAR(30) | NOT NULL UNIQUE | インストールコード |
+| creator_id | CHAR(36) | NOT NULL | 作成者のユーザーID |
 | created_at | TIMESTAMP | NOT NULL | 作成日時 |
-| updater_id | CHAR(36) | NOT NULL (外部キー) | 更新者 | 
 | updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+| deleted_at | TIMESTAMP | | 削除日時 |
 
-## webhooks
+## webhook_bots
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
 | id | CHAR(36) | NOT NULL PRIMARY KEY | webhookID |
-| user_id | CHAR(36) | NOT NULL (外部キー) | botユーザーID |
-| channel_id | CHAR(36) | NOT NULL (外部キー) | 投稿先のデフォルトチャンネルID |
+| bot_user_id | CHAR(36) | NOT NULL UNIQUE (外部キー) | botユーザーID |
+| description | TEXT | NOT NULL | 説明 |
+| channel_id | CHAR(36) | NOT NULL | 投稿先のデフォルトチャンネルID |
+| creator_id | CHAR(36) | NOT NULL | 作成者のユーザーID |
+| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+| deleted_at | TIMESTAMP | | 削除日時 |
 
 ## users_tags
 
