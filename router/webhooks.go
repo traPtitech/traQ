@@ -28,10 +28,11 @@ type webhookForResponse struct {
 }
 
 var (
-	webhookDefTmpls = template.Must(template.ParseGlob("static/webhook/*.tmpl"))
+	webhookDefTmpls = template.New("uninit")
 )
 
-func init() {
+func LoadWebhookTemplate(pattern string) {
+	webhookDefTmpls = template.Must(template.ParseGlob(pattern))
 	webhookDefTmpls.Funcs(template.FuncMap{
 		"replace": strings.Replace,
 	})
