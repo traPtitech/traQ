@@ -31,6 +31,7 @@ var (
 	webhookDefTmpls = template.New("uninit")
 )
 
+// LoadWebhookTemplate Webhookのテンプレートファイルを読み込みます
 func LoadWebhookTemplate(pattern string) {
 	webhookDefTmpls = template.Must(template.ParseGlob(pattern))
 	webhookDefTmpls.Funcs(template.FuncMap{
