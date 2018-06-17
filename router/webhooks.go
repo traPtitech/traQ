@@ -28,15 +28,14 @@ type webhookForResponse struct {
 }
 
 var (
-	webhookDefTmpls = template.New("uninit")
+	webhookDefTmpls = template.New("")
 )
 
 // LoadWebhookTemplate Webhookのテンプレートファイルを読み込みます
 func LoadWebhookTemplate(pattern string) {
-	webhookDefTmpls = template.Must(template.ParseGlob(pattern))
-	webhookDefTmpls.Funcs(template.FuncMap{
+	webhookDefTmpls = template.Must(template.New("").Funcs(template.FuncMap{
 		"replace": strings.Replace,
-	})
+	}).ParseGlob(pattern))
 }
 
 // GetWebhooks GET /webhooks
