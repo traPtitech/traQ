@@ -27,19 +27,20 @@ var (
 
 // User userの構造体
 type User struct {
-	ID          string    `xorm:"char(36) pk"                 validate:"required,uuid"`
-	Name        string    `xorm:"varchar(32) unique not null" validate:"required,name"`
-	DisplayName string    `xorm:"varchar(64) not null"        validate:"max=64"`
-	Email       string    `xorm:"text not null"               validate:"required,email"`
-	Password    string    `xorm:"char(128) not null"          validate:"required,max=128"`
-	Salt        string    `xorm:"char(128) not null"          validate:"required,max=128"`
-	Icon        string    `xorm:"char(36) not null"`
-	Status      int       `xorm:"tinyint not null"`
-	Bot         bool      `xorm:"bool not null"`
-	Role        string    `xorm:"text not null"               validate:"required"`
-	TwitterID   string    `xorm:"varchar(15) not null"        validate:"twitterid"`
-	CreatedAt   time.Time `xorm:"created not null"`
-	UpdatedAt   time.Time `xorm:"updated not null"`
+	ID          string     `xorm:"char(36) pk"                 validate:"required,uuid"`
+	Name        string     `xorm:"varchar(32) unique not null" validate:"required,name"`
+	DisplayName string     `xorm:"varchar(64) not null"        validate:"max=64"`
+	Email       string     `xorm:"text not null"               validate:"required,email"`
+	Password    string     `xorm:"char(128) not null"          validate:"required,max=128"`
+	Salt        string     `xorm:"char(128) not null"          validate:"required,max=128"`
+	Icon        string     `xorm:"char(36) not null"`
+	Status      int        `xorm:"tinyint not null"`
+	Bot         bool       `xorm:"bool not null"`
+	Role        string     `xorm:"text not null"               validate:"required"`
+	TwitterID   string     `xorm:"varchar(15) not null"        validate:"twitterid"`
+	LastOnline  *time.Time `xorm:"timestamp"`
+	CreatedAt   time.Time  `xorm:"created not null"`
+	UpdatedAt   time.Time  `xorm:"updated not null"`
 }
 
 // GetUID ユーザーIDを取得します
@@ -177,6 +178,29 @@ func (user *User) UpdateIconID(ID string) error {
 func (user *User) UpdateDisplayName(name string) error {
 	user.DisplayName = name
 	return user.Update()
+}
+
+// GetLastOnline ユーザーの最終オンライン日時を取得します
+func (user *User) GetLastOnline() time.Time {
+	i, ok := currentUserOnlineMap.Load(user.ID)
+	if !ok {
+		if user.LastOnline == nil {
+			return time.Time{}
+		}
+		return *user.LastOnline
+	}
+	return i.(*userOnlineStatus).getTime()
+}
+
+// IsOnline ユーザーがオンラインかどうかを返します
+func (user *User) IsOnline() bool {
+	return IsUserOnline(user.ID)
+}
+
+// UpdateUserLastOnline ユーザーの最終オンライン日時を更新します
+func UpdateUserLastOnline(id string, time time.Time) (err error) {
+	_, err = db.ID(id).Update(&User{LastOnline: &time})
+	return err
 }
 
 func hashPassword(pass string, salt []byte) []byte {

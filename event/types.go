@@ -14,6 +14,10 @@ const (
 	UserTagsUpdated Type = "USER_TAGS_UPDATED"
 	// UserIconUpdated ユーザーのアイコンが更新された
 	UserIconUpdated Type = "USER_ICON_UPDATED"
+	// UserOnline ユーザーがオンラインになった
+	UserOnline Type = "USER_ONLINE"
+	// UserOffline ユーザーがオフラインになった
+	UserOffline Type = "USER_OFFLINE"
 
 	// ChannelCreated チャンネルが新規作成された
 	ChannelCreated Type = "CHANNEL_CREATED"

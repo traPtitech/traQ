@@ -715,10 +715,10 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: 1MBまでのpng, jpeg, gif, svg
+                  description: 1MBまでのpng, jpeg, gif
             encoding:
               file:
-                contentType: image/png, image/jpeg, image/gif, image/svg+xml
+                contentType: image/png, image/jpeg, image/gif
       responses:
         "200":
           description: 正常に更新できました。
@@ -2678,8 +2678,13 @@ components:
           format: uuid
         bot:
           type: boolean
-        twitterId:
+        lastOnline:
           type: string
+          format: datetime
+          description: 最終オンライン日時(オンラインに１度もなってない場合はnull)
+        isOnline:
+          type: boolean
+          description: 現在オンラインかどうか
 
     UserDetail:
       type: object
@@ -2698,6 +2703,13 @@ components:
           type: boolean
         twitterId:
           type: string
+        lastOnline:
+          type: string
+          format: datetime
+          description: 最終オンライン日時(オンラインに１度もなってない場合はnull)
+        isOnline:
+          type: boolean
+          description: 現在オンラインかどうか
         tagList:
           $ref: "#/components/schemas/TagList"
 
@@ -2859,7 +2871,6 @@ components:
           type: string
          notification:
           type: boolean
-      example:
 
     UserNotificationList:
       type: array
