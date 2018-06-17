@@ -1,0 +1,11 @@
+{{- if eq .Action "opened" -}}
+## Issue Opened
+[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .Issue.Title }}]({{ .Issue.HTMLURL }})
+{{- else if eq .Action "closed" -}}
+## Issue Closed
+[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .Issue.Title }}]({{ .Issue.HTMLURL }})
+{{- else if eq .Action "reopened" -}}
+## Issue Reopened
+[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .Issue.Title }}]({{ .Issue.HTMLURL }})
+{{- else -}}
+{{- end -}}
