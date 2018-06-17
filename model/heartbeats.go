@@ -124,9 +124,11 @@ func removeTimeoutStatus() {
 			// 最終POSTから指定時間以上経ったものを削除する
 			if timeout.Before(userStatus.LastTime) {
 				removed[channelID].UserStatuses = append(removed[channelID].UserStatuses, userStatus)
-				s, _ := currentUserOnlineMap.Load(userStatus.UserID)
-				s.(*userOnlineStatus).dec()
-				go UpdateUserLastOnline(userStatus.UserID, s.(*userOnlineStatus).getTime()) //DBに反映するのはこの時点
+				s, ok := currentUserOnlineMap.Load(userStatus.UserID)
+				if ok {
+					s.(*userOnlineStatus).dec()
+					go UpdateUserLastOnline(userStatus.UserID, s.(*userOnlineStatus).getTime()) //DBに反映するのはこの時点
+				}
 			}
 		}
 	}
