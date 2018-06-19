@@ -551,3 +551,16 @@ func DeleteMessageStamp(c echo.Context) error {
 	})
 	return c.NoContent(http.StatusNoContent)
 }
+
+// GetMyStampHistory GET /users/me/stamp-history
+func GetMyStampHistory(c echo.Context) error {
+	userID := c.Get("user").(*model.User).ID
+
+	h, err := model.GetUserStampHistory(userID)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusOK, h)
+}
