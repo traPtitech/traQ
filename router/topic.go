@@ -72,7 +72,7 @@ func PutTopic(c echo.Context) error {
 	}
 
 	if ch.IsPublic {
-		go event.Emit(event.ChannelUpdated, event.ChannelEvent{ID: channelID})
+		go event.Emit(event.ChannelUpdated, &event.ChannelEvent{ID: channelID})
 	} else {
 		users, err := model.GetPrivateChannelMembers(channelID)
 		if err != nil {
@@ -82,7 +82,7 @@ func PutTopic(c echo.Context) error {
 		for i, v := range users {
 			ids[i] = uuid.Must(uuid.FromString(v))
 		}
-		go event.Emit(event.ChannelUpdated, event.PrivateChannelEvent{UserIDs: ids, ChannelID: uuid.Must(uuid.FromString(channelID))})
+		go event.Emit(event.ChannelUpdated, &event.PrivateChannelEvent{UserIDs: ids, ChannelID: uuid.Must(uuid.FromString(channelID))})
 	}
 
 	return c.JSON(http.StatusOK, topic)

@@ -164,7 +164,7 @@ func PostChannels(c echo.Context) error {
 	}
 
 	if ch.IsPublic {
-		go event.Emit(event.ChannelCreated, event.ChannelEvent{ID: ch.ID})
+		go event.Emit(event.ChannelCreated, &event.ChannelEvent{ID: ch.ID})
 	} else {
 		for _, u := range req.Member {
 			upc := &model.UsersPrivateChannel{
@@ -182,7 +182,7 @@ func PostChannels(c echo.Context) error {
 		for k, v := range req.Member {
 			ids[k] = uuid.Must(uuid.FromString(v))
 		}
-		go event.Emit(event.ChannelCreated, event.PrivateChannelEvent{UserIDs: ids, ChannelID: uuid.Must(uuid.FromString(ch.ID))})
+		go event.Emit(event.ChannelCreated, &event.PrivateChannelEvent{UserIDs: ids, ChannelID: uuid.Must(uuid.FromString(ch.ID))})
 	}
 
 	return c.JSON(http.StatusCreated, formatChannel(ch, []string{}, req.Member))
@@ -267,7 +267,7 @@ func PatchChannelsByChannelID(c echo.Context) error {
 	}
 
 	if ch.IsPublic {
-		go event.Emit(event.ChannelUpdated, event.ChannelEvent{ID: channelID})
+		go event.Emit(event.ChannelUpdated, &event.ChannelEvent{ID: channelID})
 	} else {
 		users, err := model.GetPrivateChannelMembers(channelID)
 		if err != nil {
@@ -277,7 +277,7 @@ func PatchChannelsByChannelID(c echo.Context) error {
 		for i, v := range users {
 			ids[i] = uuid.Must(uuid.FromString(v))
 		}
-		go event.Emit(event.ChannelUpdated, event.PrivateChannelEvent{UserIDs: ids, ChannelID: uuid.Must(uuid.FromString(channelID))})
+		go event.Emit(event.ChannelUpdated, &event.PrivateChannelEvent{UserIDs: ids, ChannelID: uuid.Must(uuid.FromString(channelID))})
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -314,7 +314,7 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred when channel model update.")
 		}
 
-		go event.Emit(event.ChannelDeleted, event.ChannelEvent{ID: channelID})
+		go event.Emit(event.ChannelDeleted, &event.ChannelEvent{ID: channelID})
 	}
 	return c.NoContent(http.StatusNoContent)
 }

@@ -31,7 +31,7 @@ func DeleteUnread(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete unread messages")
 	}
 
-	go event.Emit(event.MessageRead, event.ReadMessageEvent{UserID: me.GetUID(), ChannelID: uuid.Must(uuid.FromString(channelID))})
+	go event.Emit(event.MessageRead, &event.ReadMessageEvent{UserID: me.GetUID(), ChannelID: uuid.Must(uuid.FromString(channelID))})
 	return c.NoContent(http.StatusNoContent)
 }
 
