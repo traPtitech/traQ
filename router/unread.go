@@ -1,10 +1,9 @@
 package router
 
 import (
+	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/event"
 	"net/http"
-
-	"github.com/traPtitech/traQ/notification"
-	"github.com/traPtitech/traQ/notification/events"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -32,7 +31,7 @@ func DeleteUnread(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete unread messages")
 	}
 
-	go notification.Send(events.MessageRead, events.ReadMessagesEvent{UserID: me.ID, ChannelID: channelID})
+	go event.Emit(event.MessageRead, event.ReadMessageEvent{UserID: me.GetUID(), ChannelID: uuid.Must(uuid.FromString(channelID))})
 	return c.NoContent(http.StatusNoContent)
 }
 

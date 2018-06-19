@@ -29,6 +29,7 @@ type AuthorizeStore interface {
 type TokenStore interface {
 	SaveToken(token *Token) error
 	GetTokenByID(id uuid.UUID) (*Token, error)
+	DeleteTokenByID(id uuid.UUID) error
 	GetTokenByAccess(access string) (*Token, error)
 	DeleteTokenByAccess(access string) error
 	GetTokenByRefresh(refresh string) (*Token, error)

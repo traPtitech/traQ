@@ -16,6 +16,8 @@ var (
 	PasswordRegex = regexp.MustCompile(`^[\x20-\x7E]{10,32}$`)
 	// TwitterIDRegex ツイッターIDの正規表現
 	TwitterIDRegex = regexp.MustCompile(`^[a-zA-Z0-9_]{1,15}$`)
+	// CommandRegex コマンド名正規表現
+	CommandRegex = regexp.MustCompile(`^[a-zA-z0-9_-]{1,50}$`)
 )
 
 // Validator echo用バリデーター
@@ -56,6 +58,10 @@ func init() {
 			return TwitterIDRegex.MatchString(s)
 		}
 		return true
+	})
+
+	validate.RegisterValidation("command", func(fl validator.FieldLevel) bool {
+		return CommandRegex.MatchString(fl.Field().String())
 	})
 }
 

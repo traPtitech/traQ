@@ -32,6 +32,8 @@ const (
 	Write AccessScope = "write"
 	// PrivateWrite : プライベートなチャンネルの書き込み権限
 	PrivateWrite AccessScope = "private_write" //TODO
+	// Bot Botユーザー
+	Bot AccessScope = "bot"
 )
 
 var list = map[AccessScope]gorbac.Role{
@@ -41,6 +43,7 @@ var list = map[AccessScope]gorbac.Role{
 	PrivateRead:  role.PrivateReadUser,
 	Write:        role.WriteUser,
 	PrivateWrite: role.PrivateWriteUser,
+	Bot:          role.Bot,
 }
 
 // Valid : 有効なスコープ文字列かどうかを返します

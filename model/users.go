@@ -23,8 +23,6 @@ var (
 	ErrUserBotTryLogin = errors.New("bot user is not allowed to login")
 	// ErrUserWrongIDOrPassword : ユーザーエラー IDかパスワードが間違っています。
 	ErrUserWrongIDOrPassword = errors.New("password or id is wrong")
-	// ErrUserInvalidDisplayName : ユーザーエラー DisplayNameは0-64文字である必要があります。
-	ErrUserInvalidDisplayName = errors.New("displayName must be 0-64 characters")
 )
 
 // User userの構造体
@@ -76,7 +74,7 @@ func (user *User) Create() error {
 		return fmt.Errorf("Failed to create user object: %v", err)
 	}
 
-	iconID, err := generateIcon(user.Name, serverUser.ID)
+	iconID, err := GenerateIcon(user.Name)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -193,13 +191,14 @@ func generateSalt() ([]byte, error) {
 	return salt, nil
 }
 
-func generateIcon(salt, userID string) (string, error) {
+// GenerateIcon svgアイコンを生成してそのファイルIDを返します
+func GenerateIcon(salt string) (string, error) {
 	svg := strings.NewReader(icon.Generate(salt))
 
 	file := &File{
 		Name:      salt + ".svg",
 		Size:      int64(svg.Len()),
-		CreatorID: userID,
+		CreatorID: serverUser.ID,
 	}
 	if err := file.Create(svg); err != nil {
 		return "", err

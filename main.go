@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/external/firebase"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -17,7 +18,6 @@ import (
 	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/oauth2/impl"
 	"github.com/traPtitech/traQ/rbac"
@@ -28,10 +28,6 @@ import (
 )
 
 func main() {
-	if len(config.TRAQOrigin) == 0 {
-		log.Fatal("env 'TRAQ_ORIGIN' must be set")
-	}
-
 	// Database
 	engine, err := xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=true", config.DatabaseUserName, config.DatabasePassword, config.DatabaseHostName, config.DatabaseName))
 	if err != nil {
@@ -106,6 +102,22 @@ func main() {
 		}
 	}
 
+	// event handler
+	streamer := event.NewSSEStreamer()
+	event.AddListener(streamer)
+	if len(config.FirebaseServiceAccountJSONFile) > 0 {
+		fcm := &firebase.Manager{}
+		if err := fcm.Init(); err != nil {
+			panic(err)
+		}
+		event.AddListener(fcm)
+	}
+
+	h := router.Handlers{
+		Bot:    event.NewBotProcessor(oauth),
+		OAuth2: oauth,
+	}
+
 	e := echo.New()
 	e.Validator = validator.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -155,13 +167,13 @@ func main() {
 
 	// Tag: users
 	api.GET("/users", router.GetUsers, requires(permission.GetUser))
+	api.POST("/users", router.PostUsers, requires(permission.RegisterUser))
 	api.GET("/users/me", router.GetMe, requires(permission.GetMe))
 	api.PATCH("/users/me", router.PatchMe, requires(permission.EditMe))
 	api.GET("/users/me/icon", router.GetMyIcon, requires(permission.DownloadFile))
 	api.PUT("/users/me/icon", router.PutMyIcon, requires(permission.ChangeMyIcon))
 	api.GET("/users/:userID", router.GetUserByID, requires(permission.GetUser))
 	api.GET("/users/:userID/icon", router.GetUserIcon, requires(permission.DownloadFile))
-	api.POST("/users", router.PostUsers, requires(permission.RegisterUser))
 
 	// Tag: clips
 	api.GET("/users/me/clips", router.GetClips, requires(permission.GetClip))
@@ -199,7 +211,7 @@ func main() {
 	api.POST("/heartbeat", router.PostHeartbeat, requires(permission.PostHeartbeat))
 
 	// Tag: notification
-	api.GET("/notification", router.GetNotificationStream, requires(permission.ConnectNotificationStream))
+	api.GET("/notification", streamer.StreamHandler, requires(permission.ConnectNotificationStream))
 	api.POST("/notification/device", router.PostDeviceToken, requires(permission.RegisterDevice))
 	api.GET("/channels/:ID/notification", router.GetNotification(router.GetNotificationChannels, router.GetNotificationStatus), requires(permission.GetNotificationStatus))
 	api.PUT("/channels/:ID/notification", router.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
@@ -237,8 +249,24 @@ func main() {
 	api.GET("/webhooks/:webhookID", router.GetWebhook, requires(permission.GetWebhook))
 	api.PATCH("/webhooks/:webhookID", router.PatchWebhook, requires(permission.EditWebhook))
 	api.DELETE("/webhooks/:webhookID", router.DeleteWebhook, requires(permission.DeleteWebhook))
+	api.PUT("/webhooks/:webhookID/icon", router.PutWebhookIcon, requires(permission.EditWebhook))
 	apiNoAuth.POST("/webhooks/:webhookID", router.PostWebhook)
 	apiNoAuth.POST("/webhooks/:webhookID/github", router.PostWebhookByGithub)
+
+	// Tag: bot
+	api.GET("/bots", h.GetBots, requires(permission.GetBot))
+	api.POST("/bots", h.PostBots, requires(permission.CreateBot))
+	api.GET("/bots/:botID", h.GetBot, requires(permission.GetBot))
+	api.PATCH("/bots/:botID", h.PatchBot, requires(permission.EditBot))
+	api.DELETE("/bots/:botID", h.DeleteBot, requires(permission.DeleteBot))
+	api.PUT("/bots/:botID/icon", h.PutBotIcon, requires(permission.EditBot))
+	api.POST("/bots/:botID/activation", h.PostBotActivation, requires(permission.EditBot))
+	api.GET("/bots/:botID/token", h.GetBotToken, requires(permission.GetBotToken))
+	api.POST("/bots/:botID/token", h.PostBotToken, requires(permission.ReissueBotToken))
+	api.GET("/bots/:botID/code", h.GetBotInstallCode, requires(permission.GetBotInstallCode))
+	api.GET("/channels/:channelID/bots", h.GetInstalledBots, requires(permission.GetBot))
+	api.POST("/channels/:channelID/bots", h.PostInstalledBots, requires(permission.InstallBot))
+	api.DELETE("/channels/:channelID/bots/:botID", h.DeleteInstalledBot, requires(permission.UninstallBot))
 
 	// Tag: authorization
 	apiNoAuth.GET("/oauth2/authorize", oauth.AuthorizationEndpointHandler)
@@ -249,14 +277,13 @@ func main() {
 	e.GET("/publickeys", oauth.PublicKeysHandler)
 
 	// Tag: client
-	oah := &router.OAuth2APIHandler{Store: oauth}
-	api.GET("/users/me/tokens", oah.GetMyTokens, requires(permission.GetMyTokens))
-	api.DELETE("/users/me/tokens/:tokenID", oah.DeleteMyToken, requires(permission.RevokeMyToken))
-	api.GET("/clients", oah.GetClients, requires(permission.GetClients))
-	api.POST("/clients", oah.PostClients, requires(permission.CreateClient))
-	api.GET("/clients/:clientID", oah.GetClient, requires(permission.GetClients))
-	api.PATCH("/clients/:clientID", oah.PatchClient, requires(permission.EditMyClient))
-	api.DELETE("/clients/:clientID", oah.DeleteClient, requires(permission.DeleteMyClient))
+	api.GET("/users/me/tokens", h.GetMyTokens, requires(permission.GetMyTokens))
+	api.DELETE("/users/me/tokens/:tokenID", h.DeleteMyToken, requires(permission.RevokeMyToken))
+	api.GET("/clients", h.GetClients, requires(permission.GetClients))
+	api.POST("/clients", h.PostClients, requires(permission.CreateClient))
+	api.GET("/clients/:clientID", h.GetClient, requires(permission.GetClients))
+	api.PATCH("/clients/:clientID", h.PatchClient, requires(permission.EditMyClient))
+	api.DELETE("/clients/:clientID", h.DeleteClient, requires(permission.DeleteMyClient))
 
 	// Serve UI
 	e.File("/sw.js", "./client/dist/sw.js")
@@ -264,9 +291,6 @@ func main() {
 	e.File("/badge.png", "./static/badge.png")
 	e.Static("/static", "./client/dist/static")
 	e.File("*", "./client/dist/index.html")
-
-	// init notification
-	notification.Start()
 
 	// init heartbeat
 	model.HeartbeatStart()
