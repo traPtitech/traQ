@@ -294,6 +294,13 @@ func main() {
 	e.File("*", "./client/dist/index.html")
 
 	// init heartbeat
+	model.OnUserOnlineStateChanged = func(id string, online bool) {
+		if online {
+			go event.Emit(event.UserOnline, event.UserEvent{ID: id})
+		} else {
+			go event.Emit(event.UserOffline, event.UserEvent{ID: id})
+		}
+	}
 	model.HeartbeatStart()
 
 	e.Logger.Fatal(e.Start(":" + config.Port))

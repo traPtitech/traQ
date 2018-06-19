@@ -20,7 +20,12 @@ import (
 	"github.com/labstack/echo"
 )
 
-var errMySQLDuplicatedRecord uint16 = 1062
+const (
+	iconMaxWidth  = 256
+	iconMaxHeight = 256
+
+	errMySQLDuplicatedRecord uint16 = 1062
+)
 
 // Handlers ハンドラ
 type Handlers struct {

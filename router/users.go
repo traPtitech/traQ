@@ -9,21 +9,18 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"net/http"
-)
-
-const (
-	iconMaxWidth  = 256
-	iconMaxHeight = 256
+	"time"
 )
 
 // UserForResponse クライアントに返す形のユーザー構造体
 type UserForResponse struct {
-	UserID      string `json:"userId"`
-	Name        string `json:"name"`
-	DisplayName string `json:"displayName"`
-	IconID      string `json:"iconFileId"`
-	Bot         bool   `json:"bot"`
-	TwitterID   string `json:"twitterId"`
+	UserID      string     `json:"userId"`
+	Name        string     `json:"name"`
+	DisplayName string     `json:"displayName"`
+	IconID      string     `json:"iconFileId"`
+	Bot         bool       `json:"bot"`
+	LastOnline  *time.Time `json:"lastOnline"`
+	IsOnline    bool       `json:"isOnline"`
 }
 
 // UserDetailForResponse クライアントに返す形の詳細ユーザー構造体
@@ -34,6 +31,8 @@ type UserDetailForResponse struct {
 	IconID      string            `json:"iconFileId"`
 	Bot         bool              `json:"bot"`
 	TwitterID   string            `json:"twitterId"`
+	LastOnline  *time.Time        `json:"lastOnline"`
+	IsOnline    bool              `json:"isOnline"`
 	TagList     []*TagForResponse `json:"tagList"`
 }
 
@@ -89,12 +88,13 @@ func PostLogout(c echo.Context) error {
 func GetUsers(c echo.Context) error {
 	users, err := model.GetUsers()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Can't get Users")
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	res := make([]*UserForResponse, 0)
-	for _, user := range users {
-		res = append(res, formatUser(user))
+	res := make([]*UserForResponse, len(users))
+	for i, user := range users {
+		res[i] = formatUser(user)
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -108,18 +108,24 @@ func GetMe(c echo.Context) error {
 // GetUserByID /GET /users/{userID} のハンドラ
 func GetUserByID(c echo.Context) error {
 	userID := c.Param("userID")
+
 	user, err := model.GetUser(userID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
+
 	tagList, err := model.GetUserTagsByUserID(userID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
+
 	userDetail, err := formatUserDetail(user, tagList)
 	if err != nil {
 		return err
 	}
+
 	return c.JSON(http.StatusOK, userDetail)
 }
 
@@ -129,6 +135,7 @@ func GetUserIcon(c echo.Context) error {
 
 	user, err := model.GetUser(userID)
 	if err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -263,7 +270,10 @@ func formatUser(user *model.User) *UserForResponse {
 		DisplayName: user.DisplayName,
 		IconID:      user.Icon,
 		Bot:         user.Bot,
-		TwitterID:   user.TwitterID,
+		IsOnline:    user.IsOnline(),
+	}
+	if t := user.GetLastOnline(); !t.IsZero() {
+		res.LastOnline = &t
 	}
 	if len(res.DisplayName) == 0 {
 		res.DisplayName = res.Name
@@ -272,16 +282,20 @@ func formatUser(user *model.User) *UserForResponse {
 }
 
 func formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailForResponse, error) {
-	userDetail := &UserDetailForResponse{
+	res := &UserDetailForResponse{
 		UserID:      user.ID,
 		Name:        user.Name,
 		DisplayName: user.DisplayName,
 		IconID:      user.Icon,
 		Bot:         user.Bot,
 		TwitterID:   user.TwitterID,
+		IsOnline:    user.IsOnline(),
 	}
-	if len(userDetail.DisplayName) == 0 {
-		userDetail.DisplayName = userDetail.Name
+	if t := user.GetLastOnline(); !t.IsZero() {
+		res.LastOnline = &t
+	}
+	if len(res.DisplayName) == 0 {
+		res.DisplayName = res.Name
 	}
 
 	for _, tag := range tagList {
@@ -289,9 +303,9 @@ func formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailF
 		if err != nil {
 			return nil, err
 		}
-		userDetail.TagList = append(userDetail.TagList, formattedTag)
+		res.TagList = append(res.TagList, formattedTag)
 	}
-	return userDetail, nil
+	return res, nil
 }
 
 func validateUserID(userID string) (*model.User, error) {
