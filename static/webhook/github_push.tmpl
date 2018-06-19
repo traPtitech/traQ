@@ -1,7 +1,7 @@
 {{- if gt (len .Commits) 0 -}}
 ## {{ len .Commits }} Commit(s) Pushed by {{ .Pusher.Name }}
 [{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}), refs: `{{ .Ref }}`
-{{- range .Commits -}}
+{{ range .Commits -}}
 + [`{{ .ID }}`]({{ .URL }}) - `{{ replace .Message "\n" " " -1 }}`
-{{- end -}}
+{{ end -}}
 {{- end -}}
