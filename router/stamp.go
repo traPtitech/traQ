@@ -180,7 +180,7 @@ func PostStamp(c echo.Context) error {
 		}
 	}
 
-	go event.Emit(event.StampCreated, event.StampEvent{ID: uuid.Must(uuid.FromString(s.ID))})
+	go event.Emit(event.StampCreated, &event.StampEvent{ID: uuid.Must(uuid.FromString(s.ID))})
 	return c.NoContent(http.StatusCreated)
 }
 
@@ -373,7 +373,7 @@ func PatchStamp(c echo.Context) error {
 		}
 	}
 
-	go event.Emit(event.StampModified, event.StampEvent{ID: uuid.Must(uuid.FromString(stamp.ID))})
+	go event.Emit(event.StampModified, &event.StampEvent{ID: uuid.Must(uuid.FromString(stamp.ID))})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -397,7 +397,7 @@ func DeleteStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.StampDeleted, event.StampEvent{ID: uuid.Must(uuid.FromString(stamp.ID))})
+	go event.Emit(event.StampDeleted, &event.StampEvent{ID: uuid.Must(uuid.FromString(stamp.ID))})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -484,7 +484,7 @@ func PostMessageStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.MessageStamped, event.MessageStampEvent{
+	go event.Emit(event.MessageStamped, &event.MessageStampEvent{
 		ID:        uuid.Must(uuid.FromString(messageID)),
 		ChannelID: uuid.Must(uuid.FromString(message.ChannelID)),
 		StampID:   uuid.Must(uuid.FromString(stampID)),
@@ -543,7 +543,7 @@ func DeleteMessageStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.MessageUnstamped, event.MessageStampEvent{
+	go event.Emit(event.MessageUnstamped, &event.MessageStampEvent{
 		ID:        uuid.Must(uuid.FromString(messageID)),
 		ChannelID: uuid.Must(uuid.FromString(message.ChannelID)),
 		StampID:   uuid.Must(uuid.FromString(stampID)),

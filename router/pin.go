@@ -95,7 +95,7 @@ func PostPin(c echo.Context) error {
 	}
 
 	c.Response().Header().Set(echo.HeaderLocation, "/pin/"+pin.ID)
-	go event.Emit(event.MessagePinned, event.PinEvent{PinID: uuid.Must(uuid.FromString(pin.ID)), Message: *m})
+	go event.Emit(event.MessagePinned, &event.PinEvent{PinID: uuid.Must(uuid.FromString(pin.ID)), Message: *m})
 	return c.JSON(http.StatusCreated, res)
 }
 
@@ -116,7 +116,7 @@ func DeletePin(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete pin")
 	}
-	go event.Emit(event.MessageUnpinned, event.PinEvent{PinID: uuid.Must(uuid.FromString(pin.ID)), Message: *m})
+	go event.Emit(event.MessageUnpinned, &event.PinEvent{PinID: uuid.Must(uuid.FromString(pin.ID)), Message: *m})
 	return c.NoContent(http.StatusNoContent)
 }
 
