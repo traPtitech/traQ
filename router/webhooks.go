@@ -8,11 +8,11 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"golang.org/x/exp/utf8string"
 	"gopkg.in/go-playground/webhooks.v3/github"
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"text/template"
 	"time"
 )
 
@@ -25,6 +25,17 @@ type webhookForResponse struct {
 	CreatorID   string    `json:"creatorId"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+var (
+	webhookDefTmpls = template.New("")
+)
+
+// LoadWebhookTemplate Webhookのテンプレートファイルを読み込みます
+func LoadWebhookTemplate(pattern string) {
+	webhookDefTmpls = template.Must(template.New("").Funcs(template.FuncMap{
+		"replace": strings.Replace,
+	}).ParseGlob(pattern))
 }
 
 // GetWebhooks GET /webhooks
@@ -277,77 +288,222 @@ func PostWebhookByGithub(c echo.Context) error {
 	}
 
 	githubEvent := github.Event(ev)
-
-	//MEMO 現在はサーバー側で簡単に整形してるけど、将来的にクライアント側に表示デザイン込みで任せたいよね
-	message := &model.Message{
-		UserID:    w.BotUserID().String(),
-		ChannelID: w.ChannelID().String(),
+	tmpl := webhookDefTmpls.Lookup(fmt.Sprintf("github_%s.tmpl", githubEvent))
+	if tmpl == nil {
+		return c.NoContent(http.StatusNoContent)
 	}
 
+	var payload interface{}
 	switch githubEvent {
-	case github.IssuesEvent: // Any time an Issue is assigned, unassigned, labeled, unlabeled, opened, edited, milestoned, demilestoned, closed, or reopened.
-		var i github.IssuesPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&i); err != nil {
+	case github.CommitCommentEvent:
+		var d github.CommitCommentPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
-
-		switch i.Action {
-		case "opened":
-			message.Text = fmt.Sprintf("## Issue Opened\n[%s](%s) - [%s](%s)", i.Repository.FullName, i.Repository.HTMLURL, i.Issue.Title, i.Issue.HTMLURL)
-		case "closed":
-			message.Text = fmt.Sprintf("## Issue Closed\n[%s](%s) - [%s](%s)", i.Repository.FullName, i.Repository.HTMLURL, i.Issue.Title, i.Issue.HTMLURL)
-		case "reopened":
-			message.Text = fmt.Sprintf("## Issue Reopened\n[%s](%s) - [%s](%s)", i.Repository.FullName, i.Repository.HTMLURL, i.Issue.Title, i.Issue.HTMLURL)
-		case "assigned", "unassigned", "labeled", "unlabeled", "edited", "milestoned", "demilestoned":
-			// Unsupported
-		}
-
-	case github.PullRequestEvent: // Any time a pull request is assigned, unassigned, labeled, unlabeled, opened, edited, closed, reopened, or synchronized (updated due to a new push in the branch that the pull request is tracking). Also any time a pull request review is requested, or a review request is removed.
-		var p github.PullRequestPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&p); err != nil {
+		payload = d
+	case github.CreateEvent:
+		var d github.CreatePayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
-
-		switch p.Action {
-		case "opened":
-			message.Text = fmt.Sprintf("## PullRequest Opened\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.HTMLURL)
-		case "closed":
-			if p.PullRequest.Merged {
-				message.Text = fmt.Sprintf("## PullRequest Merged\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.HTMLURL)
-			} else {
-				message.Text = fmt.Sprintf("## PullRequest Closed\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.HTMLURL)
-			}
-		case "reopened":
-			message.Text = fmt.Sprintf("## PullRequest Reopened\n[%s](%s) - [%s](%s)", p.Repository.FullName, p.Repository.HTMLURL, p.PullRequest.Title, p.PullRequest.HTMLURL)
-		case "assigned", "unassigned", "labeled", "unlabeled", "edited", "review_requested", "review_request_removed":
-			// Unsupported
-		}
-
-	case github.PushEvent: // Any Git push to a Repository, including editing tags or branches. Commits via API actions that update references are also counted. This is the default event.
-		var p github.PushPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&p); err != nil {
+		payload = d
+	case github.DeleteEvent:
+		var d github.DeletePayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
-		if len(p.Commits) == 0 {
-			break
+		payload = d
+	case github.DeploymentEvent:
+		var d github.DeploymentPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
 		}
-
-		message.Text = fmt.Sprintf("## %d Commit(s) Pushed by %s\n[%s](%s), refs: `%s`\n", len(p.Commits), p.Pusher.Name, p.Repository.FullName, p.Repository.HTMLURL, p.Ref)
-
-		for _, v := range p.Commits {
-			message.Text += fmt.Sprintf("+ [`%s`](%s) - `%s`\n", utf8string.NewString(v.ID).Slice(0, 7), v.URL, strings.Replace(v.Message, "\n", " ", -1))
+		payload = d
+	case github.DeploymentStatusEvent:
+		var d github.DeploymentStatusPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
 		}
-
-	default:
-		// Currently Unsupported:
-		// marketplace_purchase, fork, gollum, installation, installation_repositories, label, ping, member, membership,
-		// organization, org_block, page_build, public, repository, status, team, team_add, watch, create, delete, deployment,
-		// deployment_status, project_column, milestone, project_card, project, commit_comment, release, issue_comment,
-		// pull_request_review, pull_request_review_comment
-		// 上ので必要な場合は実装してプルリクを飛ばしてください
+		payload = d
+	case github.ForkEvent:
+		var d github.ForkPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.GollumEvent:
+		var d github.GollumPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.InstallationEvent, github.IntegrationInstallationEvent:
+		var d github.InstallationPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.IssueCommentEvent:
+		var d github.IssueCommentPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.IssuesEvent:
+		var d github.IssuesPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.LabelEvent:
+		var d github.LabelPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.MemberEvent:
+		var d github.MemberPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.MembershipEvent:
+		var d github.MembershipPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.MilestoneEvent:
+		var d github.MilestonePayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.OrganizationEvent:
+		var d github.OrganizationPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.OrgBlockEvent:
+		var d github.OrgBlockPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.PageBuildEvent:
+		var d github.PageBuildPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.PingEvent:
+		var d github.PingPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.ProjectCardEvent:
+		var d github.ProjectCardPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.ProjectColumnEvent:
+		var d github.ProjectColumnPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.ProjectEvent:
+		var d github.ProjectPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.PublicEvent:
+		var d github.PublicPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.PullRequestEvent:
+		var d github.PullRequestPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.PullRequestReviewEvent:
+		var d github.PullRequestReviewPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.PullRequestReviewCommentEvent:
+		var d github.PullRequestReviewCommentPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.PushEvent:
+		var d github.PushPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.ReleaseEvent:
+		var d github.ReleasePayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.RepositoryEvent:
+		var d github.RepositoryPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.StatusEvent:
+		var d github.StatusPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.TeamEvent:
+		var d github.TeamPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.TeamAddEvent:
+		var d github.TeamAddPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
+	case github.WatchEvent:
+		var d github.WatchPayload
+		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		payload = d
 	}
 
-	if len(message.Text) > 0 {
+	if payload == nil {
+		return c.NoContent(http.StatusNoContent)
+	}
+
+	messageBuf := &strings.Builder{}
+	if err := tmpl.Execute(messageBuf, payload); err != nil {
+		messageBuf.WriteString("Webhook Template Execution Failed\n")
+		messageBuf.WriteString(err.Error())
+	}
+	if messageBuf.Len() > 0 {
+		message := &model.Message{
+			UserID:    w.BotUserID().String(),
+			ChannelID: w.ChannelID().String(),
+			Text:      messageBuf.String(),
+		}
 		if err := message.Create(); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)

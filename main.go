@@ -245,6 +245,7 @@ func main() {
 	api.PUT("users/me/channels/visibility", router.PutChannelsVisibility, requires(permission.ChangeChannelVisibility))
 
 	// Tag: webhook
+	router.LoadWebhookTemplate("static/webhook/*.tmpl")
 	api.GET("/webhooks", router.GetWebhooks, requires(permission.GetWebhook))
 	api.POST("/webhooks", router.PostWebhooks, requires(permission.CreateWebhook))
 	api.GET("/webhooks/:webhookID", router.GetWebhook, requires(permission.GetWebhook))
