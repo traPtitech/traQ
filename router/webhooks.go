@@ -91,7 +91,7 @@ func PostWebhooks(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserJoined, event.UserEvent{ID: w.ID().String()})
+	go event.Emit(event.UserJoined, &event.UserEvent{ID: w.ID().String()})
 	return c.JSON(http.StatusCreated, formatWebhook(w))
 }
 
@@ -151,7 +151,7 @@ func PatchWebhook(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
-		go event.Emit(event.UserUpdated, event.UserEvent{ID: w.BotUserID().String()})
+		go event.Emit(event.UserUpdated, &event.UserEvent{ID: w.BotUserID().String()})
 	}
 
 	if len(req.Description) > 0 {
@@ -264,7 +264,7 @@ func PutWebhookIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserIconUpdated, event.UserEvent{ID: w.BotUserID().String()})
+	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: w.BotUserID().String()})
 	return c.NoContent(http.StatusOK)
 }
 

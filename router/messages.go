@@ -121,7 +121,7 @@ func PutMessageByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update the message")
 	}
 
-	go event.Emit(event.MessageUpdated, event.MessageUpdatedEvent{Message: *m})
+	go event.Emit(event.MessageUpdated, &event.MessageUpdatedEvent{Message: *m})
 	return c.JSON(http.StatusOK, formatMessage(m))
 }
 
@@ -148,7 +148,7 @@ func DeleteMessageByID(c echo.Context) error {
 		c.Logger().Errorf("model.DeleteUnreadsByMessageID returned an error: %v", err) //500エラーにはしない
 	}
 
-	go event.Emit(event.MessageDeleted, event.MessageDeletedEvent{Message: *m})
+	go event.Emit(event.MessageDeleted, &event.MessageDeletedEvent{Message: *m})
 	return c.NoContent(http.StatusNoContent)
 }
 

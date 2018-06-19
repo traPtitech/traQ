@@ -327,7 +327,7 @@ func DeleteBot(id uuid.UUID) (err error) {
 // GetBot Botを取得
 func GetBot(id uuid.UUID) (Bot, error) {
 	b := &GeneralBotUser{}
-	if ok, err := db.Join("INNER", "bots", "bots.bot_user_id = users.id").Where("bots.id = ? AND bots.deleted_at IS NULL", id.String()).Get(&b); err != nil {
+	if ok, err := db.Join("INNER", "bots", "bots.bot_user_id = users.id").Where("bots.id = ? AND bots.deleted_at IS NULL", id.String()).Get(b); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, nil
@@ -351,7 +351,7 @@ func GetBotsByCreator(id uuid.UUID) (arr []Bot, err error) {
 // GetBotByInstallCode Botを取得
 func GetBotByInstallCode(code string) (Bot, error) {
 	b := &GeneralBotUser{}
-	if ok, err := db.Join("INNER", "bots", "bots.bot_user_id = users.id").Where("bots.install_code = ? AND bots.deleted_at IS NULL", code).Get(&b); err != nil {
+	if ok, err := db.Join("INNER", "bots", "bots.bot_user_id = users.id").Where("bots.install_code = ? AND bots.deleted_at IS NULL", code).Get(b); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, nil

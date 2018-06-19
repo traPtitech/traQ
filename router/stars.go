@@ -37,7 +37,7 @@ func PutStars(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create star")
 	}
 
-	go event.Emit(event.ChannelStared, event.UserChannelEvent{UserID: user.GetUID(), ChannelID: uuid.Must(uuid.FromString(channelID))})
+	go event.Emit(event.ChannelStared, &event.UserChannelEvent{UserID: user.GetUID(), ChannelID: uuid.Must(uuid.FromString(channelID))})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -66,7 +66,7 @@ func DeleteStars(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete star")
 	}
 
-	go event.Emit(event.ChannelUnstared, event.UserChannelEvent{UserID: user.GetUID(), ChannelID: uuid.Must(uuid.FromString(channelID))})
+	go event.Emit(event.ChannelUnstared, &event.UserChannelEvent{UserID: user.GetUID(), ChannelID: uuid.Must(uuid.FromString(channelID))})
 	return c.NoContent(http.StatusNoContent)
 }
 

@@ -167,7 +167,7 @@ func DeleteWebhook(id uuid.UUID) (err error) {
 // GetWebhook Webhookを取得
 func GetWebhook(id uuid.UUID) (Webhook, error) {
 	b := &WebhookBotUser{}
-	if ok, err := db.Join("INNER", "webhook_bots", "webhook_bots.bot_user_id = users.id").Where("webhook_bots.id = ? AND webhook_bots.deleted_at IS NULL", id.String()).Get(&b); err != nil {
+	if ok, err := db.Join("INNER", "webhook_bots", "webhook_bots.bot_user_id = users.id").Where("webhook_bots.id = ? AND webhook_bots.deleted_at IS NULL", id.String()).Get(b); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, nil

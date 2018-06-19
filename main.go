@@ -117,6 +117,7 @@ func main() {
 		Bot:    event.NewBotProcessor(oauth),
 		OAuth2: oauth,
 	}
+	event.AddListener(h.Bot)
 
 	e := echo.New()
 	e.Validator = validator.New()
@@ -297,9 +298,9 @@ func main() {
 	// init heartbeat
 	model.OnUserOnlineStateChanged = func(id string, online bool) {
 		if online {
-			go event.Emit(event.UserOnline, event.UserEvent{ID: id})
+			go event.Emit(event.UserOnline, &event.UserEvent{ID: id})
 		} else {
-			go event.Emit(event.UserOffline, event.UserEvent{ID: id})
+			go event.Emit(event.UserOffline, &event.UserEvent{ID: id})
 		}
 	}
 	model.HeartbeatStart()
