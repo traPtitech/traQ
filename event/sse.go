@@ -223,6 +223,8 @@ func (s *SSEStreamer) StreamHandler(c echo.Context) error {
 		send:         make(chan *eventData, 100),
 	}
 
+	s.connect <- client
+
 	res := c.Response()
 	rw := res.Writer
 	fl := rw.(http.Flusher)
@@ -231,6 +233,7 @@ func (s *SSEStreamer) StreamHandler(c echo.Context) error {
 	t := time.NewTicker(10 * time.Second)
 	defer t.Stop()
 
+	fl.Flush()
 StreamFor:
 	for {
 		select {
