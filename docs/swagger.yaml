@@ -750,7 +750,7 @@ paths:
                       description: クリップID
                     clippedAt:
                       type: string
-                      format: datetime
+                      format: date-time
                       description: クリップ日時
                     message:
                       $ref: "#/components/schemas/Message"
@@ -925,7 +925,7 @@ paths:
                       description: クリップID
                     clippedAt:
                       type: string
-                      format: datetime
+                      format: date-time
                       description: クリップ日時
                     message:
                       $ref: "#/components/schemas/Message"
@@ -1108,7 +1108,7 @@ paths:
                       description: スタンプID
                     datetime:
                       type: string
-                      format: datetime
+                      format: date-time
                       description: そのスタンプが最後に押された日時
 
   /users/{userID}:
@@ -2304,7 +2304,7 @@ paths:
                       description: Botをインストールしたユーザー
                     installedAt:
                       type: string
-                      format: datetime
+                      format: date-time
                       description: Botがインストールされた日時
         "404":
           description: 取得できませんでした。指定したチャンネルは存在しません。
@@ -2501,6 +2501,48 @@ paths:
         "404":
           description: 削除できませんでした。指定されたクライアントは存在しません。
 
+  /reports:
+    get:
+      tags:
+        - message
+      description: メッセージ通報を最大50件取得します。
+      parameters:
+        - name: p
+          in: query
+          description: ページ番号(ゼロオリジン)
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                      description: 通報ID
+                    messageId:
+                      type: string
+                      format: uuid
+                      description: 通報対象のメッセージID
+                    reporter:
+                      type: string
+                      format: uuid
+                      description: 通報者ID
+                    reason:
+                      type: string
+                      description: 通報内容
+                    createdAt:
+                      type: string
+                      format: date-time
+                      description: 通報日時
+        "403":
+          description: 取得できませんでした。権限がありません。
 
 components:
   parameters:
@@ -2680,7 +2722,7 @@ components:
           type: boolean
         lastOnline:
           type: string
-          format: datetime
+          format: date-time
           description: 最終オンライン日時(オンラインに１度もなってない場合はnull)
         isOnline:
           type: boolean
@@ -2705,7 +2747,7 @@ components:
           type: string
         lastOnline:
           type: string
-          format: datetime
+          format: date-time
           description: 最終オンライン日時(オンラインに１度もなってない場合はnull)
         isOnline:
           type: boolean
@@ -2729,10 +2771,10 @@ components:
           type: string
         createdAt:
           type: string
-          format: datetime
+          format: date-time
         updatedAt:
           type: string
-          format: datetime
+          format: date-time
 
     TagList:
       type: array
@@ -2790,10 +2832,10 @@ components:
           type: integer
         createdAt:
           type: string
-          format: datetime
+          format: date-time
         updatedAt:
           type: string
-          format: datetime
+          format: date-time
 
     Stamp:
       type: object
@@ -2811,10 +2853,10 @@ components:
           format: uuid
         createdAt:
           type: string
-          format: datetime
+          format: date-time
         updatedAt:
           type: string
-          format: datetime
+          format: date-time
 
     FileInfo:
       type: object
@@ -2931,10 +2973,10 @@ components:
           format: uuid
         createdAt:
           type: string
-          format: datetime
+          format: date-time
         updatedAt:
           type: string
-          format: datetime
+          format: date-time
 
     ClientInfo:
       type: object
@@ -2995,7 +3037,7 @@ components:
             type: string
         approvedAt:
           type: string
-          format: datetime
+          format: date-time
 
     ClipsFolder:
       type: object
@@ -3034,7 +3076,7 @@ components:
           format: uuid
         createdAt:
           type: string
-          format: datetime
+          format: date-time
         updatedAt:
           type: string
-          format: datetime
+          format: date-time

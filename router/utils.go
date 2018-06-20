@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"context"
+	"github.com/go-sql-driver/mysql"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/external/imagemagick"
@@ -64,6 +65,14 @@ func bindAndValidate(c echo.Context, i interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func isMySQLDuplicatedRecordErr(err error) bool {
+	merr, ok := err.(*mysql.MySQLError)
+	if !ok {
+		return false
+	}
+	return merr.Number == errMySQLDuplicatedRecord
 }
 
 func processMultipartFormIconUpload(c echo.Context, file *multipart.FileHeader) (uuid.UUID, error) {

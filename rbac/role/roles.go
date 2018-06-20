@@ -148,6 +148,8 @@ func SetRole(rbac *rbac.RBAC) {
 			permission.EditChannel,
 			permission.DeleteChannel,
 
+			permission.GetMessageReports,
+
 			permission.RegisterUser,
 
 			permission.ChangeChannelVisibility,

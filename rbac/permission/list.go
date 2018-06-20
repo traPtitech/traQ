@@ -12,11 +12,12 @@ var list = map[string]gorbac.Permission{
 	GetTopic.ID():  GetTopic,
 	EditTopic.ID(): EditTopic,
 
-	GetMessage.ID():    GetMessage,
-	PostMessage.ID():   PostMessage,
-	EditMessage.ID():   EditMessage,
-	DeleteMessage.ID(): DeleteMessage,
-	ReportMessage.ID(): ReportMessage,
+	GetMessage.ID():        GetMessage,
+	PostMessage.ID():       PostMessage,
+	EditMessage.ID():       EditMessage,
+	DeleteMessage.ID():     DeleteMessage,
+	ReportMessage.ID():     ReportMessage,
+	GetMessageReports.ID(): GetMessageReports,
 
 	GetPin.ID():    GetPin,
 	CreatePin.ID(): CreatePin,

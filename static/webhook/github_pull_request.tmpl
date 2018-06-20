@@ -2,7 +2,7 @@
 ## PullRequest Opened
 [{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .PullRequest.Title }}]({{ .PullRequest.HTMLURL }})
 {{- else if eq .Action "closed" -}}
-{{- if eq .PullRequest.Merged -}}
+{{- if .PullRequest.Merged -}}
 ## PullRequest Merged
 [{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .PullRequest.Title }}]({{ .PullRequest.HTMLURL }})
 {{- else -}}

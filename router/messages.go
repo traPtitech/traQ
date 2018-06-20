@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -157,10 +158,10 @@ func PostMessageReport(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 	messageID := c.Param("messageID")
 
-	req := &struct {
-		Reason string `json:"reason"`
+	req := struct {
+		Reason string `json:"reason" validate:"max=100,required"`
 	}{}
-	if err := c.Bind(&req); err != nil {
+	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
@@ -169,14 +170,12 @@ func PostMessageReport(c echo.Context) error {
 		return err
 	}
 
-	mID := uuid.Must(uuid.FromString(messageID))
-
-	if err := model.CreateMessageReport(mID, user.GetUID(), req.Reason); err != nil {
+	if err := model.CreateMessageReport(m.GetID(), user.GetUID(), req.Reason); err != nil {
 		switch e := err.(type) {
 		case *validator.ValidationErrors:
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		case *mysql.MySQLError:
-			if e.Number == errMySQLDuplicatedRecord {
+			if isMySQLDuplicatedRecordErr(e) {
 				return echo.NewHTTPError(http.StatusBadRequest, "already reported")
 			}
 			c.Logger().Error(err)
@@ -187,22 +186,20 @@ func PostMessageReport(c echo.Context) error {
 		}
 	}
 
-	r, err := model.GetMessageReportsByMessageID(mID)
+	return c.NoContent(http.StatusNoContent)
+}
+
+// GetMessageReports GET /reports
+func GetMessageReports(c echo.Context) error {
+	p, _ := strconv.Atoi(c.QueryParam("p"))
+
+	reports, err := model.GetMessageReports(p*50, 50)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	// 5人でメッセージBAN
-	if len(r) >= 5 {
-		m.IsDeleted = true
-		if err := m.Update(); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, reports)
 }
 
 // dbにデータを入れる
