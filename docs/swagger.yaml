@@ -2720,6 +2720,8 @@ components:
           format: uuid
         bot:
           type: boolean
+        twitterId:
+          type: string
         lastOnline:
           type: string
           format: date-time
