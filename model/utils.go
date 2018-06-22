@@ -4,13 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-xorm/xorm"
+	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/rbac/role"
 )
 
 var (
-	db *xorm.Engine
+	db *gorm.DB
 
 	// モデルを追加したら各自ここに追加しなければいけない
 	// **順番注意**

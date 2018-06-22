@@ -134,6 +134,18 @@
   version = "v1.1"
 
 [[projects]]
+  name = "github.com/jinzhu/gorm"
+  packages = ["."]
+  revision = "6ed508ec6a4ecb3531899a69cbc746ccf65a4166"
+  version = "v1.9.1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/jinzhu/inflection"
+  packages = ["."]
+  revision = "04140366298a54a039076d798123ffa108fff46c"
+
+[[projects]]
   name = "github.com/labstack/echo"
   packages = [
     ".",
@@ -246,31 +258,6 @@
   ]
   revision = "6e3f034057826b530038d93267906ec3c012183f"
   version = "v0.6.0"
-
-[[projects]]
-  name = "go.uber.org/atomic"
-  packages = ["."]
-  revision = "8474b86a5a6f79c443ce4b2992817ff32cf208b8"
-  version = "v1.3.1"
-
-[[projects]]
-  name = "go.uber.org/multierr"
-  packages = ["."]
-  revision = "3c4937480c32f4c13a875a1829af76c98ca3d40a"
-  version = "v1.1.0"
-
-[[projects]]
-  name = "go.uber.org/zap"
-  packages = [
-    ".",
-    "buffer",
-    "internal/bufferpool",
-    "internal/color",
-    "internal/exit",
-    "zapcore"
-  ]
-  revision = "35aad584952c3e7020db7b839f6b102de6271f89"
-  version = "v1.7.1"
 
 [[projects]]
   branch = "master"
@@ -464,6 +451,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9e65a987149fc9034880ae50702b7ba572020b665dfd0667e2068b4d9ec3bc9a"
+  inputs-digest = "9a17243c0226dd9067c6fab450e39bebed612fdf22b27d7a9ce15967e14e98a0"
   solver-name = "gps-cdcl"
   solver-version = 1

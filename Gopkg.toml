@@ -116,3 +116,7 @@
 [[constraint]]
   name = "go.uber.org/zap"
   version = "1.7.1"
+
+[[constraint]]
+  name = "github.com/jinzhu/gorm"
+  version = "1.9.1"
