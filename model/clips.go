@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/go-xorm/xorm"
+	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/utils/validator"
 	"time"
@@ -9,11 +9,11 @@ import (
 
 // ClipFolder クリップフォルダの構造体
 type ClipFolder struct {
-	ID        string    `xorm:"char(36) pk"                              validate:"uuid,required"`
-	UserID    string    `xorm:"char(36) not null unique(user_folder)"    validate:"uuid,required"`
-	Name      string    `xorm:"varchar(30) not null unique(user_folder)" validate:"max=30,required"`
-	UpdatedAt time.Time `xorm:"updated"`
-	CreatedAt time.Time `xorm:"created"`
+	ID        string    `gorm:"type:char(36);primary_key"              validate:"uuid,required"`
+	UserID    string    `gorm:"type:char(36);unique_index:user_folder" validate:"uuid,required"`
+	Name      string    `gorm:"size:30;unique_index:user_folder"       validate:"max=30,required"`
+	CreatedAt time.Time `gorm:"precision:6"`
+	UpdatedAt time.Time `gorm:"precision:6"`
 }
 
 // GetID IDをuuid.UUIDとして取得します
@@ -38,12 +38,13 @@ func (f *ClipFolder) Validate() error {
 
 // Clip clipの構造体
 type Clip struct {
-	ID        string    `xorm:"char(36) pk"                            validate:"uuid,required"`
-	UserID    string    `xorm:"char(36) not null unique(user_message)" validate:"uuid,required"`
-	MessageID string    `xorm:"char(36) not null unique(user_message)" validate:"uuid,required"`
-	FolderID  string    `xorm:"char(36) not null"                      validate:"uuid,required"`
-	UpdatedAt time.Time `xorm:"updated"`
-	CreatedAt time.Time `xorm:"created"`
+	ID        string `gorm:"type:char(36);primary_key"               validate:"uuid,required"`
+	UserID    string `gorm:"type:char(36);unique_index:user_message" validate:"uuid,required"`
+	MessageID string `gorm:"type:char(36);unique_index:user_message" validate:"uuid,required"`
+	Message   Message
+	FolderID  string    `gorm:"type:char(36)"                           validate:"uuid,required"`
+	UpdatedAt time.Time `gorm:"precision:6"`
+	CreatedAt time.Time `gorm:"precision:6"`
 }
 
 // GetID IDをuuid.UUIDとして取得します
@@ -76,33 +77,21 @@ func (clip *Clip) Validate() error {
 	return validator.ValidateStruct(clip)
 }
 
-// ClipMessage クリップメッセージ構造体
-type ClipMessage struct {
-	*Clip    `xorm:"extends"`
-	*Message `xorm:"extends"`
-}
-
-// TableName Join処理用
-func (*ClipMessage) TableName() string {
-	return "clips"
-}
-
 // GetClipFolder 指定したIDのクリップフォルダを取得します
 func GetClipFolder(id uuid.UUID) (*ClipFolder, error) {
 	f := &ClipFolder{}
-	ok, err := db.ID(id.String()).Get(f)
-	if err != nil {
+	if err := db.Where(ClipFolder{ID: id.String()}).Take(f).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
 		return nil, err
-	}
-	if !ok {
-		return nil, ErrNotFound
 	}
 	return f, nil
 }
 
 // GetClipFolders 指定したユーザーのクリップフォルダを全て取得します
-func GetClipFolders(userID uuid.UUID) (res []*ClipFolder, err error) {
-	err = db.Where("user_id = ?", userID.String()).Find(&res)
+func GetClipFolders(userID uuid.UUID) (res []ClipFolder, err error) {
+	err = db.Find(&res, ClipFolder{UserID: userID.String()}).Error
 	return
 }
 
@@ -116,54 +105,41 @@ func CreateClipFolder(userID uuid.UUID, name string) (*ClipFolder, error) {
 	if err := f.Validate(); err != nil {
 		return nil, err
 	}
-	_, err := db.InsertOne(f)
+	err := db.Create(f).Error
 	return f, err
 }
 
-// UpdateClipFolder クリップフォルダを更新します
-func UpdateClipFolder(f *ClipFolder) (err error) {
-	if err = f.Validate(); err != nil {
-		return err
-	}
-	_, err = db.ID(f.ID).Update(f)
-	return
+// UpdateClipFolderName クリップフォルダ名を更新します
+func UpdateClipFolderName(id uuid.UUID, name string) error {
+	return db.Where(ClipFolder{ID: id.String()}).Update("name", name).Error
 }
 
 // DeleteClipFolder クリップフォルダを削除します
-func DeleteClipFolder(id uuid.UUID) (err error) {
-	f := &ClipFolder{
-		ID: id.String(),
-	}
-	_, err = db.Delete(f)
-	return
-}
-
-func getClipMessageJoinedSession() *xorm.Session {
-	return db.Join("INNER", "messages", "clips.message_id = messages.id AND messages.is_deleted = false")
+func DeleteClipFolder(id uuid.UUID) error {
+	return db.Delete(ClipFolder{}, ClipFolder{ID: id.String()}).Error
 }
 
 // GetClipMessage 指定したIDのクリップを取得します
-func GetClipMessage(id uuid.UUID) (*ClipMessage, error) {
-	c := &ClipMessage{}
-	ok, err := getClipMessageJoinedSession().Where("clips.id = ?", id.String()).Get(c)
-	if err != nil {
+func GetClipMessage(id uuid.UUID) (*Clip, error) {
+	c := &Clip{}
+	if err := db.Preload("Message").Where(Clip{ID: id.String()}).Take(c).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
 		return nil, err
-	}
-	if !ok {
-		return nil, ErrNotFound
 	}
 	return c, nil
 }
 
 // GetClipMessages 指定したフォルダのクリップを全て取得します
-func GetClipMessages(folderID uuid.UUID) (res []*ClipMessage, err error) {
-	err = getClipMessageJoinedSession().Where("clips.folder_id = ?", folderID.String()).Find(&res)
+func GetClipMessages(folderID uuid.UUID) (res []Clip, err error) {
+	err = db.Preload("Message").Where(Clip{FolderID: folderID.String()}).Order("updated_at").Find(&res).Error
 	return
 }
 
 // GetClipMessagesByUser 指定したユーザーのクリップを全て取得します
-func GetClipMessagesByUser(userID uuid.UUID) (res []*ClipMessage, err error) {
-	err = getClipMessageJoinedSession().Where("clips.user_id = ?", userID.String()).Find(&res)
+func GetClipMessagesByUser(userID uuid.UUID) (res []Clip, err error) {
+	err = db.Preload("Message").Where(Clip{UserID: userID.String()}).Order("updated_at").Find(&res).Error
 	return
 }
 
@@ -178,24 +154,16 @@ func CreateClip(messageID, folderID, userID uuid.UUID) (*Clip, error) {
 	if err := c.Validate(); err != nil {
 		return nil, err
 	}
-	_, err := db.InsertOne(c)
+	err := db.Create(c).Error
 	return c, err
 }
 
-// UpdateClip クリップを更新します
-func UpdateClip(c *Clip) (err error) {
-	if err = c.Validate(); err != nil {
-		return err
-	}
-	_, err = db.ID(c.ID).Update(c)
-	return
+// ChangeClipFolder クリップのフォルダを変更します
+func ChangeClipFolder(clipID, folderID uuid.UUID) error {
+	return db.Where(Clip{ID: clipID.String()}).Updates(Clip{FolderID: folderID.String()}).Error
 }
 
 // DeleteClip クリップを削除します
-func DeleteClip(id uuid.UUID) (err error) {
-	c := &Clip{
-		ID: id.String(),
-	}
-	_, err = db.Delete(c)
-	return
+func DeleteClip(id uuid.UUID) error {
+	return db.Delete(Clip{}, Clip{ID: id.String()}).Error
 }

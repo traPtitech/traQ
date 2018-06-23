@@ -46,11 +46,11 @@ type GeneralBot struct {
 	PostURL           string `gorm:"type:text"                 validate:"url,required"`
 	SubscribeEvents   string `gorm:"type:text"`
 	Activated         bool
-	InstallCode       string `gorm:"size:30;unique"            validate:"required"`
-	CreatorID         string `gorm:"char(36)"                  validate:"uuid,required"`
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
-	DeletedAt         *time.Time
+	InstallCode       string     `gorm:"size:30;unique"            validate:"required"`
+	CreatorID         string     `gorm:"char(36)"                  validate:"uuid,required"`
+	CreatedAt         time.Time  `gorm:"precision:6"`
+	UpdatedAt         time.Time  `gorm:"precision:6"`
+	DeletedAt         *time.Time `gorm:"precision:6"`
 }
 
 // TableName GeneralBotのテーブル名
@@ -286,7 +286,7 @@ func GetBot(id uuid.UUID) (Bot, error) {
 
 func getBot(id uuid.UUID) (*GeneralBot, error) {
 	b := &GeneralBot{}
-	if err := db.Preload("BotUser").First(b, GeneralBot{ID: id.String()}).Error; err != nil {
+	if err := db.Preload("BotUser").Take(b, GeneralBot{ID: id.String()}).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
@@ -310,7 +310,7 @@ func GetBotsByCreator(id uuid.UUID) (arr []Bot, err error) {
 // GetBotByInstallCode Botを取得
 func GetBotByInstallCode(code string) (Bot, error) {
 	b := &GeneralBot{}
-	if err := db.Preload("BotUser").First(b, GeneralBot{InstallCode: code}).Error; err != nil {
+	if err := db.Preload("BotUser").Take(b, GeneralBot{InstallCode: code}).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
@@ -334,10 +334,10 @@ func GetAllBots() (arr []Bot, err error) {
 
 // BotInstalledChannel BotInstalledChannel構造体
 type BotInstalledChannel struct {
-	BotID       string `gorm:"type:char(36);unique_index:bot_channel"`
-	ChannelID   string `gorm:"type:char(36);unique_index:bot_channel"`
-	InstalledBy string `gorm:"type:char(36)"`
-	CreatedAt   time.Time
+	BotID       string    `gorm:"type:char(36);unique_index:bot_channel"`
+	ChannelID   string    `gorm:"type:char(36);unique_index:bot_channel"`
+	InstalledBy string    `gorm:"type:char(36)"`
+	CreatedAt   time.Time `gorm:"precision:6"`
 }
 
 // TableName BotInstalledChannelのテーブル名
@@ -398,10 +398,10 @@ type BotOutgoingPostLog struct {
 	RequestID  string `gorm:"type:char(36);primary_key"`
 	BotID      string `gorm:"type:char(36)"`
 	StatusCode int
-	Request    string `gorm:"type:text"`
-	Response   string `gorm:"type:text"`
-	Error      string `gorm:"type:text"`
-	CreatedAt  time.Time
+	Request    string    `gorm:"type:text"`
+	Response   string    `gorm:"type:text"`
+	Error      string    `gorm:"type:text"`
+	CreatedAt  time.Time `gorm:"precision:6"`
 }
 
 // TableName BotOutgoingPostLogのテーブル名
