@@ -11,59 +11,90 @@ func TestDevice_TableName(t *testing.T) {
 	assert.Equal(t, "devices", (&Device{}).TableName())
 }
 
-func TestDevice_Register(t *testing.T) {
+func TestRegisterDevice(t *testing.T) {
 	assert, require, user, _ := beforeTest(t)
 
-	id1 := user.ID
-	id2 := mustMakeUser(t, "test2").ID
+	id1 := user.GetUID()
+	id2 := mustMakeUser(t, "test2").GetUID()
 	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 
-	assert.NoError((&Device{UserID: id1, Token: token1}).Register())
-	assert.NoError((&Device{UserID: id2, Token: token2}).Register())
-	assert.Error((&Device{UserID: id1, Token: token2}).Register())
+	{
+		_, err := RegisterDevice(id1, token1)
+		assert.NoError(err)
+	}
+	{
+		_, err := RegisterDevice(id2, token2)
+		assert.NoError(err)
+	}
+	{
+		_, err := RegisterDevice(id1, token2)
+		assert.Error(err)
 
-	l, err := db.Count(&Device{})
-	require.NoError(err)
+	}
+
+	l := 0
+	require.NoError(db.Model(Device{}).Count(&l).Error)
 	assert.EqualValues(2, l)
 }
 
-func TestDevice_Unregister(t *testing.T) {
+func TestUnregisterDevice(t *testing.T) {
 	assert, require, user, _ := beforeTest(t)
 
-	id1 := user.ID
-	id2 := mustMakeUser(t, "test2").ID
+	id1 := user.GetUID()
+	id2 := mustMakeUser(t, "test2").GetUID()
 	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
 
-	assert.NoError((&Device{UserID: id1, Token: token1}).Register())
-	assert.NoError((&Device{UserID: id2, Token: token2}).Register())
-	assert.NoError((&Device{UserID: id1, Token: token3}).Register())
+	{
+		_, err := RegisterDevice(id1, token1)
+		require.NoError(err)
+	}
+	{
+		_, err := RegisterDevice(id2, token2)
+		require.NoError(err)
+	}
+	{
+		_, err := RegisterDevice(id1, token3)
+		require.NoError(err)
+	}
 
-	assert.NoError((&Device{Token: token2}).Unregister())
-	l, err := db.Count(&Device{})
-	require.NoError(err)
-	assert.EqualValues(2, l)
-
-	assert.NoError((&Device{UserID: id1}).Unregister())
-	l, err = db.Count(&Device{})
-	require.NoError(err)
-	assert.EqualValues(0, l)
+	{
+		assert.NoError(UnregisterDevice(id2, token2))
+		l := 0
+		require.NoError(db.Model(Device{}).Count(&l).Error)
+		assert.EqualValues(2, l)
+	}
+	{
+		assert.NoError(UnregisterDevice(id1, token2))
+		l := 0
+		require.NoError(db.Model(Device{}).Count(&l).Error)
+		assert.EqualValues(2, l)
+	}
 }
 
 func TestGetAllDevices(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
+	assert, require, user, _ := beforeTest(t)
 
-	id1 := user.ID
-	id2 := mustMakeUser(t, "test2").ID
+	id1 := user.GetUID()
+	id2 := mustMakeUser(t, "test2").GetUID()
 	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
 
-	assert.NoError((&Device{UserID: id1, Token: token1}).Register())
-	assert.NoError((&Device{UserID: id2, Token: token2}).Register())
-	assert.NoError((&Device{UserID: id1, Token: token3}).Register())
+	{
+		_, err := RegisterDevice(id1, token1)
+		require.NoError(err)
+	}
+	{
+		_, err := RegisterDevice(id2, token2)
+		require.NoError(err)
+	}
+	{
+		_, err := RegisterDevice(id1, token3)
+		require.NoError(err)
+	}
 
 	devs, err := GetAllDevices()
 	if assert.NoError(err) {
@@ -72,17 +103,26 @@ func TestGetAllDevices(t *testing.T) {
 }
 
 func TestGetDevices(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
+	assert, require, user, _ := beforeTest(t)
 
-	id1 := user.ID
-	id2 := mustMakeUser(t, "test2").ID
+	id1 := user.GetUID()
+	id2 := mustMakeUser(t, "test2").GetUID()
 	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
 
-	assert.NoError((&Device{UserID: id1, Token: token1}).Register())
-	assert.NoError((&Device{UserID: id2, Token: token2}).Register())
-	assert.NoError((&Device{UserID: id1, Token: token3}).Register())
+	{
+		_, err := RegisterDevice(id1, token1)
+		require.NoError(err)
+	}
+	{
+		_, err := RegisterDevice(id2, token2)
+		require.NoError(err)
+	}
+	{
+		_, err := RegisterDevice(id1, token3)
+		require.NoError(err)
+	}
 
 	devs, err := GetDevices(uuid.FromStringOrNil(id1))
 	if assert.NoError(err) {
@@ -96,17 +136,26 @@ func TestGetDevices(t *testing.T) {
 }
 
 func TestGetAllDeviceIds(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
+	assert, require, user, _ := beforeTest(t)
 
-	id1 := user.ID
-	id2 := mustMakeUser(t, "test2").ID
+	id1 := user.GetUID()
+	id2 := mustMakeUser(t, "test2").GetUID()
 	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
 
-	assert.NoError((&Device{UserID: id1, Token: token1}).Register())
-	assert.NoError((&Device{UserID: id2, Token: token2}).Register())
-	assert.NoError((&Device{UserID: id1, Token: token3}).Register())
+	{
+		_, err := RegisterDevice(id1, token1)
+		require.NoError(err)
+	}
+	{
+		_, err := RegisterDevice(id2, token2)
+		require.NoError(err)
+	}
+	{
+		_, err := RegisterDevice(id1, token3)
+		require.NoError(err)
+	}
 
 	devs, err := GetAllDeviceIDs()
 	if assert.NoError(err) {
@@ -115,17 +164,26 @@ func TestGetAllDeviceIds(t *testing.T) {
 }
 
 func TestGetDeviceIds(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
+	assert, require, user, _ := beforeTest(t)
 
-	id1 := user.ID
-	id2 := mustMakeUser(t, "test2").ID
+	id1 := user.GetUID()
+	id2 := mustMakeUser(t, "test2").GetUID()
 	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
 	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
 
-	assert.NoError((&Device{UserID: id1, Token: token1}).Register())
-	assert.NoError((&Device{UserID: id2, Token: token2}).Register())
-	assert.NoError((&Device{UserID: id1, Token: token3}).Register())
+	{
+		_, err := RegisterDevice(id1, token1)
+		require.NoError(err)
+	}
+	{
+		_, err := RegisterDevice(id2, token2)
+		require.NoError(err)
+	}
+	{
+		_, err := RegisterDevice(id1, token3)
+		require.NoError(err)
+	}
 
 	devs, err := GetDeviceIDs(uuid.FromStringOrNil(id1))
 	if assert.NoError(err) {
