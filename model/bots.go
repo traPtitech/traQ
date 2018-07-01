@@ -125,7 +125,7 @@ func CreateBot(oauth2 *oauth2.Handler, name, displayName, description string, cr
 	uid := uuid.NewV4()
 	bid := uuid.NewV4()
 
-	u := User{
+	u := &User{
 		ID:          uid.String(),
 		Name:        fmt.Sprintf("BOT_%s", name),
 		DisplayName: displayName,
@@ -145,7 +145,6 @@ func CreateBot(oauth2 *oauth2.Handler, name, displayName, description string, cr
 	gb := &GeneralBot{
 		ID:                bid.String(),
 		BotUserID:         uid.String(),
-		BotUser:           u,
 		Description:       description,
 		VerificationToken: base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes()),
 		AccessTokenID:     t.ID.String(),
@@ -159,8 +158,24 @@ func CreateBot(oauth2 *oauth2.Handler, name, displayName, description string, cr
 		return nil, err
 	}
 
-	err = db.Create(gb).Error
-	return gb, err
+	tx := db.Begin()
+	if err := tx.Error; err != nil {
+		return nil, err
+	}
+	if err := tx.Create(u).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	if err := tx.Create(gb).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	gb.BotUser = *u
+	return gb, nil
 }
 
 // UpdateBot Bot情報を更新します

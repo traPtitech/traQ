@@ -91,7 +91,7 @@ func PostWebhooks(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserJoined, &event.UserEvent{ID: w.ID().String()})
+	go event.Emit(event.UserJoined, &event.UserEvent{ID: w.GetID().String()})
 	return c.JSON(http.StatusCreated, formatWebhook(w))
 }
 
@@ -151,7 +151,7 @@ func PatchWebhook(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
-		go event.Emit(event.UserUpdated, &event.UserEvent{ID: w.BotUserID().String()})
+		go event.Emit(event.UserUpdated, &event.UserEvent{ID: w.GetBotUserID().String()})
 	}
 
 	if len(req.Description) > 0 {
@@ -171,7 +171,7 @@ func DeleteWebhook(c echo.Context) error {
 		return err
 	}
 
-	if err := model.DeleteWebhook(w.ID()); err != nil {
+	if err := model.DeleteWebhook(w.GetID()); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -187,8 +187,8 @@ func PostWebhook(c echo.Context) error {
 	}
 
 	message := &model.Message{
-		UserID:    w.BotUserID().String(),
-		ChannelID: w.ChannelID().String(),
+		UserID:    w.GetBotUserID().String(),
+		ChannelID: w.GetChannelID().String(),
 	}
 	switch c.Request().Header.Get(echo.HeaderContentType) {
 	case echo.MIMETextPlain, echo.MIMETextPlainCharsetUTF8:
@@ -241,7 +241,7 @@ func PutWebhookIcon(c echo.Context) error {
 		return err
 	}
 
-	wu, err := model.GetUser(w.BotUserID().String())
+	wu, err := model.GetUser(w.GetBotUserID().String())
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -264,7 +264,7 @@ func PutWebhookIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: w.BotUserID().String()})
+	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: w.GetBotUserID().String()})
 	return c.NoContent(http.StatusOK)
 }
 
@@ -500,8 +500,8 @@ func PostWebhookByGithub(c echo.Context) error {
 	}
 	if messageBuf.Len() > 0 {
 		message := &model.Message{
-			UserID:    w.BotUserID().String(),
-			ChannelID: w.ChannelID().String(),
+			UserID:    w.GetBotUserID().String(),
+			ChannelID: w.GetChannelID().String(),
 			Text:      messageBuf.String(),
 		}
 		if err := message.Create(); err != nil {
@@ -529,7 +529,7 @@ func getWebhook(c echo.Context, id uuid.UUID, strict bool) (model.Webhook, error
 	}
 	if strict {
 		user, ok := c.Get("user").(*model.User)
-		if !ok || w.CreatorID() != user.GetUID() {
+		if !ok || w.GetCreatorID() != user.GetUID() {
 			return nil, echo.NewHTTPError(http.StatusForbidden)
 		}
 	}
@@ -539,13 +539,13 @@ func getWebhook(c echo.Context, id uuid.UUID, strict bool) (model.Webhook, error
 
 func formatWebhook(w model.Webhook) *webhookForResponse {
 	return &webhookForResponse{
-		WebhookID:   w.ID().String(),
-		BotUserID:   w.BotUserID().String(),
-		DisplayName: w.Name(),
-		Description: w.Description(),
-		ChannelID:   w.ChannelID().String(),
-		CreatorID:   w.CreatorID().String(),
-		CreatedAt:   w.CreatedAt(),
-		UpdatedAt:   w.UpdatedAt(),
+		WebhookID:   w.GetID().String(),
+		BotUserID:   w.GetBotUserID().String(),
+		DisplayName: w.GetName(),
+		Description: w.GetDescription(),
+		ChannelID:   w.GetChannelID().String(),
+		CreatorID:   w.GetCreatorID().String(),
+		CreatedAt:   w.GetCreatedAt(),
+		UpdatedAt:   w.GetUpdatedAt(),
 	}
 }
