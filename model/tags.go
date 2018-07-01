@@ -1,13 +1,20 @@
 package model
 
-import "github.com/traPtitech/traQ/utils/validator"
+import (
+	"github.com/jinzhu/gorm"
+	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/utils/validator"
+	"time"
+)
 
 // Tag tag_idの管理をする構造体
 type Tag struct {
-	ID         string `xorm:"char(36) pk"                 validate:"uuid,required"`
-	Name       string `xorm:"varchar(30) not null unique" validate:"required,max=30"`
-	Restricted bool   `xorm:"bool not null"`
-	Type       string `xorm:"varchar(30) not null"        validate:"max=30"`
+	ID         string `gorm:"type:char(36);primary_key"`
+	Name       string `gorm:"size:30;unique"            validate:"required,max=30"`
+	Restricted bool
+	Type       string
+	CreatedAt  time.Time `gorm:"precision:6"`
+	UpdatedAt  time.Time `gorm:"precision:6"`
 }
 
 // TableName DBの名前を指定
@@ -15,71 +22,70 @@ func (*Tag) TableName() string {
 	return "tags"
 }
 
+// GetID タグのUUIDを返します
+func (t *Tag) GetID() uuid.UUID {
+	return uuid.Must(uuid.FromString(t.ID))
+}
+
+// BeforeCreate db.Create時に自動的に呼ばれます
+func (t *Tag) BeforeCreate(scope *gorm.Scope) error {
+	t.ID = CreateUUID()
+	return t.Validate()
+}
+
 // Validate 構造体を検証します
 func (t *Tag) Validate() error {
 	return validator.ValidateStruct(t)
 }
 
-// Create DBにタグを追加
-func (t *Tag) Create() (err error) {
-	t.ID = CreateUUID()
-	if err = t.Validate(); err != nil {
-		return err
+// CreateTag タグを作成します
+func CreateTag(name string, restricted bool, tagType string) (*Tag, error) {
+	t := &Tag{
+		Name:       name,
+		Restricted: restricted,
+		Type:       tagType,
 	}
-
-	_, err = db.InsertOne(t)
-	return
+	if err := db.Create(t).Error; err != nil {
+		return nil, err
+	}
+	return t, nil
 }
 
-// Update DBにタグを更新
-func (t *Tag) Update() (err error) {
-	if err := t.Validate(); err != nil {
-		return err
-	}
-	_, err = db.MustCols("type").UseBool().Update(t)
+// ChangeTagType タグの種類を変更します
+func ChangeTagType(id uuid.UUID, tagType string, restricted bool) (err error) {
+	err = db.Model(Tag{ID: id.String()}).Updates(map[string]interface{}{"restricted": restricted, "type": tagType}).Error
 	return
-}
-
-// Exists DBにその名前のタグが存在するかを確認
-func (t *Tag) Exists() (bool, error) {
-	if t.Name == "" {
-		return false, ErrInvalidParam
-	}
-	return db.Get(t)
 }
 
 // GetTagByID 引数のIDを持つTag構造体を返す
-func GetTagByID(ID string) (*Tag, error) {
-	tag := &Tag{
-		ID: ID,
-	}
-
-	has, err := db.Get(tag)
-	if err != nil {
+func GetTagByID(id uuid.UUID) (*Tag, error) {
+	tag := &Tag{}
+	if err := db.Where(Tag{ID: id.String()}).Take(tag).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
 		return nil, err
-	} else if !has {
-		return nil, ErrNotFound
 	}
 	return tag, nil
 }
 
 // GetTagByName 引数のタグのTag構造体を返す
 func GetTagByName(name string) (*Tag, error) {
-	tag := &Tag{
-		Name: name,
-	}
-
-	has, err := db.Get(tag)
-	if err != nil {
-		return nil, err
-	} else if !has {
+	if len(name) == 0 {
 		return nil, ErrNotFound
+	}
+	tag := &Tag{}
+	if err := db.Where(Tag{Name: name}).Take(tag).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
+		return nil, err
 	}
 	return tag, nil
 }
 
 // GetAllTags 全てのタグを取得する
-func GetAllTags() (result []*Tag, err error) {
-	err = db.Find(&result)
+func GetAllTags() (result []Tag, err error) {
+	err = db.Find(&result).Error
 	return
 }

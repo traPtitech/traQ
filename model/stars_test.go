@@ -22,7 +22,10 @@ func TestAddStar(t *testing.T) {
 		assert.NotEmpty(star.ID)
 		assert.Equal(channel.ID, star.ChannelID)
 		assert.Equal(user.ID, star.UserID)
-		assert.NotEmpty(star.CreatedAt)
+		assert.NotZero(star.CreatedAt)
+		count := 0
+		db.Table("stars").Count(&count)
+		assert.Equal(1, count)
 	}
 }
 
@@ -33,8 +36,6 @@ func TestRemoveStar(t *testing.T) {
 	_, err := AddStar(user.GetUID(), channel.GetCID())
 	require.NoError(err)
 	count := 0
-	db.Table("stars").Count(&count)
-	require.Equal(1, count)
 
 	if assert.NoError(RemoveStar(user.GetUID(), uuid.Nil)) {
 		db.Table("stars").Count(&count)
