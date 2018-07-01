@@ -31,6 +31,12 @@ func (*ClipFolder) TableName() string {
 	return "clip_folders"
 }
 
+// BeforeCreate db.Create時に自動的に呼ばれます
+func (f *ClipFolder) BeforeCreate(scope *gorm.Scope) error {
+	f.ID = CreateUUID()
+	return f.Validate()
+}
+
 // Validate 構造体を検証します
 func (f *ClipFolder) Validate() error {
 	return validator.ValidateStruct(f)
@@ -38,13 +44,13 @@ func (f *ClipFolder) Validate() error {
 
 // Clip clipの構造体
 type Clip struct {
-	ID        string `gorm:"type:char(36);primary_key"               validate:"uuid,required"`
-	UserID    string `gorm:"type:char(36);unique_index:user_message" validate:"uuid,required"`
-	MessageID string `gorm:"type:char(36);unique_index:user_message" validate:"uuid,required"`
-	Message   Message
+	ID        string    `gorm:"type:char(36);primary_key"               validate:"uuid,required"`
+	UserID    string    `gorm:"type:char(36);unique_index:user_message" validate:"uuid,required"`
+	MessageID string    `gorm:"type:char(36);unique_index:user_message" validate:"uuid,required"`
+	Message   Message   `gorm:"association_autoupdate:false;association_autocreate:false"`
 	FolderID  string    `gorm:"type:char(36)"                           validate:"uuid,required"`
-	UpdatedAt time.Time `gorm:"precision:6"`
 	CreatedAt time.Time `gorm:"precision:6"`
+	UpdatedAt time.Time `gorm:"precision:6"`
 }
 
 // GetID IDをuuid.UUIDとして取得します
@@ -72,6 +78,12 @@ func (clip *Clip) TableName() string {
 	return "clips"
 }
 
+// BeforeCreate db.Create時に自動的に呼ばれます
+func (clip *Clip) BeforeCreate(scope *gorm.Scope) error {
+	clip.ID = CreateUUID()
+	return clip.Validate()
+}
+
 // Validate 構造体を検証します
 func (clip *Clip) Validate() error {
 	return validator.ValidateStruct(clip)
@@ -90,23 +102,22 @@ func GetClipFolder(id uuid.UUID) (*ClipFolder, error) {
 }
 
 // GetClipFolders 指定したユーザーのクリップフォルダを全て取得します
-func GetClipFolders(userID uuid.UUID) (res []ClipFolder, err error) {
-	err = db.Find(&res, ClipFolder{UserID: userID.String()}).Error
+func GetClipFolders(userID uuid.UUID) (res []*ClipFolder, err error) {
+	err = db.Where(ClipFolder{UserID: userID.String()}).Order("name").Find(&res).Error
 	return
 }
 
 // CreateClipFolder クリップフォルダを作成します
 func CreateClipFolder(userID uuid.UUID, name string) (*ClipFolder, error) {
 	f := &ClipFolder{
-		ID:     CreateUUID(),
 		UserID: userID.String(),
 		Name:   name,
 	}
-	if err := f.Validate(); err != nil {
+	err := db.Create(f).Error
+	if err != nil {
 		return nil, err
 	}
-	err := db.Create(f).Error
-	return f, err
+	return f, nil
 }
 
 // UpdateClipFolderName クリップフォルダ名を更新します
@@ -116,7 +127,7 @@ func UpdateClipFolderName(id uuid.UUID, name string) error {
 
 // DeleteClipFolder クリップフォルダを削除します
 func DeleteClipFolder(id uuid.UUID) error {
-	return db.Delete(ClipFolder{}, ClipFolder{ID: id.String()}).Error
+	return db.Delete(ClipFolder{ID: id.String()}).Error
 }
 
 // GetClipMessage 指定したIDのクリップを取得します
@@ -132,13 +143,13 @@ func GetClipMessage(id uuid.UUID) (*Clip, error) {
 }
 
 // GetClipMessages 指定したフォルダのクリップを全て取得します
-func GetClipMessages(folderID uuid.UUID) (res []Clip, err error) {
+func GetClipMessages(folderID uuid.UUID) (res []*Clip, err error) {
 	err = db.Preload("Message").Where(Clip{FolderID: folderID.String()}).Order("updated_at").Find(&res).Error
 	return
 }
 
 // GetClipMessagesByUser 指定したユーザーのクリップを全て取得します
-func GetClipMessagesByUser(userID uuid.UUID) (res []Clip, err error) {
+func GetClipMessagesByUser(userID uuid.UUID) (res []*Clip, err error) {
 	err = db.Preload("Message").Where(Clip{UserID: userID.String()}).Order("updated_at").Find(&res).Error
 	return
 }
@@ -146,16 +157,14 @@ func GetClipMessagesByUser(userID uuid.UUID) (res []Clip, err error) {
 // CreateClip クリップを作成します
 func CreateClip(messageID, folderID, userID uuid.UUID) (*Clip, error) {
 	c := &Clip{
-		ID:        CreateUUID(),
 		UserID:    userID.String(),
 		MessageID: messageID.String(),
 		FolderID:  folderID.String(),
 	}
-	if err := c.Validate(); err != nil {
+	if err := db.Create(c).Error; err != nil {
 		return nil, err
 	}
-	err := db.Create(c).Error
-	return c, err
+	return c, nil
 }
 
 // ChangeClipFolder クリップのフォルダを変更します
@@ -165,5 +174,5 @@ func ChangeClipFolder(clipID, folderID uuid.UUID) error {
 
 // DeleteClip クリップを削除します
 func DeleteClip(id uuid.UUID) error {
-	return db.Delete(Clip{}, Clip{ID: id.String()}).Error
+	return db.Delete(Clip{ID: id.String()}).Error
 }

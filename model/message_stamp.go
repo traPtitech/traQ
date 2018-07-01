@@ -7,12 +7,12 @@ import (
 
 // MessageStamp メッセージスタンプ構造体
 type MessageStamp struct {
-	MessageID string    `gorm:"type:char(36);unique_index:message_stamp_user" json:"-"`
-	StampID   string    `gorm:"type:char(36);unique_index:message_stamp_user" json:"stampId"`
-	UserID    string    `gorm:"type:char(36);unique_index:message_stamp_user" json:"userId"`
-	Count     int       `                                                     json:"count"`
-	CreatedAt time.Time `gorm:"precision:6"                                   json:"createdAt"`
-	UpdatedAt time.Time `gorm:"precision:6"                                   json:"updatedAt"`
+	MessageID string    `gorm:"type:char(36);primary_key" json:"-"`
+	StampID   string    `gorm:"type:char(36);primary_key" json:"stampId"`
+	UserID    string    `gorm:"type:char(36);primary_key" json:"userId"`
+	Count     int       `                                 json:"count"`
+	CreatedAt time.Time `gorm:"precision:6"               json:"createdAt"`
+	UpdatedAt time.Time `gorm:"precision:6;index"         json:"updatedAt"`
 }
 
 // TableName メッセージスタンプのテーブル
@@ -45,22 +45,22 @@ func AddStampToMessage(messageID, stampID, userID string) (*MessageStamp, error)
 }
 
 // RemoveStampFromMessage メッセージからスタンプを消します
-func RemoveStampFromMessage(messageID, stampID, userID string) (err error) {
-	err = db.Where(MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID}).Delete(MessageStamp{}).Error
-	return
+func RemoveStampFromMessage(messageID, stampID, userID string) error {
+	return db.Where(MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID}).Delete(MessageStamp{}).Error
 }
 
 // GetMessageStamps 指定したIDのメッセージのスタンプを取得します
-func GetMessageStamps(messageID string) (stamps []MessageStamp, err error) {
+func GetMessageStamps(messageID string) (stamps []*MessageStamp, err error) {
 	err = db.
 		Joins("JOIN stamps ON messages_stamps.stamp_id = stamps.id AND messages_stamps.message_id = ? AND stamps.deleted_at IS NULL", messageID).
+		Order("messages_stamps.updated_at").
 		Find(&stamps).
 		Error
 	return
 }
 
 // GetUserStampHistory 指定したユーザーのスタンプ履歴を最大50件取得します。
-func GetUserStampHistory(userID uuid.UUID) (h []UserStampHistory, err error) {
+func GetUserStampHistory(userID uuid.UUID) (h []*UserStampHistory, err error) {
 	err = db.
 		Table("messages_stamps").
 		Where("user_id = ?", userID.String()).

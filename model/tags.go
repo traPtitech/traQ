@@ -85,7 +85,7 @@ func GetTagByName(name string) (*Tag, error) {
 }
 
 // GetAllTags 全てのタグを取得する
-func GetAllTags() (result []Tag, err error) {
+func GetAllTags() (result []*Tag, err error) {
 	err = db.Find(&result).Error
 	return
 }

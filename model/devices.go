@@ -55,13 +55,13 @@ func UnregisterDevice(userID uuid.UUID, token string) (err error) {
 }
 
 // GetDevices 指定ユーザーのデバイスを取得
-func GetDevices(user uuid.UUID) (result []Device, err error) {
+func GetDevices(user uuid.UUID) (result []*Device, err error) {
 	err = db.Where(Device{UserID: user.String()}).Find(&result).Error
 	return
 }
 
 // GetAllDevices 全ユーザーの全デバイスを取得
-func GetAllDevices() (result []Device, err error) {
+func GetAllDevices() (result []*Device, err error) {
 	err = db.Find(&result).Error
 	return
 }
