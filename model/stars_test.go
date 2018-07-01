@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"strconv"
 	"testing"
@@ -11,42 +12,37 @@ func TestStar_TableName(t *testing.T) {
 	assert.Equal(t, "stars", (&Star{}).TableName())
 }
 
-func TestStar_Create(t *testing.T) {
+func TestAddStar(t *testing.T) {
 	assert, _, user, _ := beforeTest(t)
 
 	channel := mustMakeChannelDetail(t, user.ID, "test", "", true)
 
-	assert.Error((&Star{}).Create())
-	assert.Error((&Star{UserID: user.ID}).Create())
-	assert.Error((&Star{ChannelID: channel.ID}).Create())
-	assert.NoError((&Star{UserID: user.ID, ChannelID: channel.ID}).Create())
+	star, err := AddStar(user.GetUID(), channel.GetCID())
+	if assert.NoError(err) {
+		assert.NotEmpty(star.ID)
+		assert.Equal(channel.ID, star.ChannelID)
+		assert.Equal(user.ID, star.UserID)
+		assert.NotEmpty(star.CreatedAt)
+	}
 }
 
-func TestStar_Delete(t *testing.T) {
+func TestRemoveStar(t *testing.T) {
 	assert, require, user, _ := beforeTest(t)
 
-	channelCount := 5
-	for i := 0; i < channelCount; i++ {
-		ch := mustMakeChannelDetail(t, user.ID, "test"+strconv.Itoa(i), "", true)
-		s := &Star{
-			UserID:    user.ID,
-			ChannelID: ch.ID,
-		}
-		require.NoError(s.Create())
+	channel := mustMakeChannelDetail(t, user.ID, "test", "", true)
+	_, err := AddStar(user.GetUID(), channel.GetCID())
+	require.NoError(err)
+	count := 0
+	db.Table("stars").Count(&count)
+	require.Equal(1, count)
+
+	if assert.NoError(RemoveStar(user.GetUID(), uuid.Nil)) {
+		db.Table("stars").Count(&count)
+		assert.Equal(1, count)
 	}
-
-	channels, err := GetStaredChannels(user.ID)
-	assert.NoError(err)
-
-	star := &Star{
-		UserID:    user.ID,
-		ChannelID: channels[0].ID,
-	}
-	assert.NoError(star.Delete())
-
-	channels, err = GetStaredChannels(user.ID)
-	if assert.NoError(err) {
-		assert.Len(channels, channelCount-1)
+	if assert.NoError(RemoveStar(user.GetUID(), channel.GetCID())) {
+		db.Table("stars").Count(&count)
+		require.Equal(0, count)
 	}
 }
 
@@ -54,28 +50,14 @@ func TestGetStaredChannels(t *testing.T) {
 	assert, require, user, _ := beforeTest(t)
 
 	channelCount := 5
-	channel := mustMakeChannelDetail(t, user.ID, "test0", "", true)
-
-	star := &Star{
-		UserID:    user.ID,
-		ChannelID: channel.ID,
-	}
-	require.NoError(star.Create())
-
-	for i := 1; i < channelCount; i++ {
+	for i := 0; i < channelCount; i++ {
 		ch := mustMakeChannelDetail(t, user.ID, "test"+strconv.Itoa(i), "", true)
-		s := &Star{
-			UserID:    user.ID,
-			ChannelID: ch.ID,
-		}
-		require.NoError(s.Create())
+		_, err := AddStar(user.GetUID(), ch.GetCID())
+		require.NoError(err)
 	}
 
-	_, err := GetStaredChannels("")
-	assert.Error(err)
-
-	channels, err := GetStaredChannels(user.ID)
-	if assert.NoError(err) {
-		assert.Len(channels, channelCount)
+	ch, err := GetStaredChannels(user.GetUID())
+	if assert.Error(err) {
+		assert.Len(ch, channelCount)
 	}
 }
