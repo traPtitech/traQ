@@ -11,24 +11,22 @@ func TestUsersPrivateChannel_TableName(t *testing.T) {
 	assert.Equal(t, "users_private_channels", (&UsersPrivateChannel{}).TableName())
 }
 
-func TestMakePrivateChannel(t *testing.T) {
+func TestAddPrivateChannelMember(t *testing.T) {
 	assert, require, user, _ := beforeTest(t)
 
-	channel := &Channel{}
-	channel.CreatorID = user.ID
-	channel.Name = "Private-Channel"
-	channel.IsPublic = false
-	require.NoError(channel.Create())
+	channel := &Channel{
+		ID:        CreateUUID(),
+		CreatorID: user.ID,
+		UpdaterID: user.ID,
+		Name:      "Private-Channel",
+		IsPublic:  false,
+	}
+	require.NoError(db.Create(channel).Error)
 
 	po := mustMakeUser(t, "po")
-	privilegedUser := []string{user.ID, po.ID}
 
-	for _, userID := range privilegedUser {
-		usersPrivateChannel := &UsersPrivateChannel{}
-		usersPrivateChannel.ChannelID = channel.ID
-		usersPrivateChannel.UserID = userID
-		require.NoError(usersPrivateChannel.Create())
-	}
+	assert.NoError(AddPrivateChannelMember(channel.GetCID(), user.GetUID()))
+	assert.NoError(AddPrivateChannelMember(channel.GetCID(), po.GetUID()))
 
 	channelList, err := GetChannelList(user.ID)
 	if assert.NoError(err) {
@@ -72,7 +70,7 @@ func TestGetPrivateChannel(t *testing.T) {
 	}
 }
 
-func TestGetPrivateMember(t *testing.T) {
+func TestGetPrivateChannelMembers(t *testing.T) {
 	assert, _, _, _ := beforeTest(t)
 
 	user1 := mustMakeUser(t, "private-1")
