@@ -47,6 +47,19 @@ func GetPin(id uuid.UUID) (p *Pin, err error) {
 	return
 }
 
+// IsPinned 指定したメッセージがピン留めされているかを取得する
+func IsPinned(messageID uuid.UUID) (bool, error) {
+	p := &Pin{}
+	err := db.Where(Pin{MessageID: messageID.String()}).Take(p).Error
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 // DeletePin ピン留めレコードを削除する
 func DeletePin(id uuid.UUID) error {
 	return db.Delete(Pin{ID: id.String()}).Error

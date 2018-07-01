@@ -48,13 +48,13 @@ func GetOAuth2TokenByRefresh(refresh string) (ot *OAuth2Token, err error) {
 }
 
 // GetOAuth2TokenByUser : 指定したユーザーIDのOAuth2Tokenを全て取得します
-func GetOAuth2TokenByUser(userID string) (ts []OAuth2Token, err error) {
+func GetOAuth2TokenByUser(userID string) (ts []*OAuth2Token, err error) {
 	err = db.Where(OAuth2Token{UserID: userID}).Find(&ts).Error
 	return
 }
 
 // GetOAuth2TokenByClient : 指定したクライアントのOAuth2Tokenを全て取得します
-func GetOAuth2TokenByClient(clientID string) (ts []OAuth2Token, err error) {
+func GetOAuth2TokenByClient(clientID string) (ts []*OAuth2Token, err error) {
 	err = db.Where(OAuth2Token{ClientID: clientID}).Find(&ts).Error
 	return
 }

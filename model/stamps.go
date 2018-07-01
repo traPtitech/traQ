@@ -86,7 +86,7 @@ func DeleteStamp(id string) error {
 }
 
 // GetAllStamps 全てのスタンプを取得します
-func GetAllStamps() (stamps []Stamp, err error) {
+func GetAllStamps() (stamps []*Stamp, err error) {
 	err = db.Find(&stamps).Error
 	return
 }

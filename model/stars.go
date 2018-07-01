@@ -36,7 +36,7 @@ func RemoveStar(userID, channelID uuid.UUID) error {
 }
 
 // GetStaredChannels userIDがお気に入りしているチャンネルの一覧を取得する
-func GetStaredChannels(userID uuid.UUID) (channels []Channel, err error) {
+func GetStaredChannels(userID uuid.UUID) (channels []*Channel, err error) {
 	err = db.Joins("INNER JOIN stars ON stars.channel_id = channels.id").Where("stars.user_id = ?", userID.String()).Find(&channels).Error
 	return
 }
