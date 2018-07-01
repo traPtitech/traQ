@@ -1,18 +1,15 @@
 package model
 
 import (
-	"time"
-
-	"github.com/traPtitech/traQ/utils/validator"
-
 	"github.com/satori/go.uuid"
+	"time"
 )
 
 // UserSubscribeChannel ユーザー・通知チャンネル対構造体
 type UserSubscribeChannel struct {
-	UserID    string    `xorm:"char(36) pk not null" validate:"uuid,required"`
-	ChannelID string    `xorm:"char(36) pk not null" validate:"uuid,required"`
-	CreatedAt time.Time `xorm:"created not null"`
+	UserID    string    `gorm:"type:char(36);primary_key"`
+	ChannelID string    `gorm:"type:char(36);primary_key"`
+	CreatedAt time.Time `gorm:"precision:6"`
 }
 
 // TableName UserNotifiedChannel構造体のテーブル名
@@ -20,57 +17,40 @@ func (*UserSubscribeChannel) TableName() string {
 	return "users_subscribe_channels"
 }
 
-// Validate 構造体を検証します
-func (s *UserSubscribeChannel) Validate() error {
-	return validator.ValidateStruct(s)
+// SubscribeChannel 指定したチャンネルを購読します
+func SubscribeChannel(userID, channelID uuid.UUID) error {
+	return db.Create(UserSubscribeChannel{UserID: userID.String(), ChannelID: channelID.String()}).Error
 }
 
-// Create DBに登録
-func (s *UserSubscribeChannel) Create() (err error) {
-	if err = s.Validate(); err != nil {
-		return err
-	}
-
-	_, err = db.Insert(s)
-	return
+// UnsubscribeChannel 指定したチャンネルの購読を解除します
+func UnsubscribeChannel(userID, channelID uuid.UUID) error {
+	return db.Where(UserSubscribeChannel{UserID: userID.String(), ChannelID: channelID.String()}).Delete(UserSubscribeChannel{}).Error
 }
 
-// Delete DBから削除
-func (s *UserSubscribeChannel) Delete() (err error) {
-	if err = s.Validate(); err != nil {
-		return err
-	}
-
-	_, err = db.Delete(s)
-	return
-}
-
-// GetSubscribingUser 指定したチャンネルの通知をつけているユーザーを取得
+// GetSubscribingUser 指定したチャンネルを購読しているユーザーを取得
 func GetSubscribingUser(channelID uuid.UUID) ([]uuid.UUID, error) {
 	var arr []string
-	if err := db.Table(&UserSubscribeChannel{}).Where("channel_id = ?", channelID.String()).Cols("user_id").Find(&arr); err != nil {
+	err := db.Where(UserSubscribeChannel{ChannelID: channelID.String()}).Pluck("user_id", &arr).Error
+	if err != nil {
 		return nil, err
 	}
-
-	result := make([]uuid.UUID, len(arr))
-	for i, v := range arr {
-		result[i] = uuid.FromStringOrNil(v)
-	}
-
-	return result, nil
+	return convertStringSliceToUUIDSlice(arr), nil
 }
 
-// GetSubscribedChannels ユーザーが通知を入れているチャンネルを取得する
+// GetSubscribedChannels ユーザーが購読しているチャンネルを取得する
 func GetSubscribedChannels(userID uuid.UUID) ([]uuid.UUID, error) {
 	var arr []string
-	if err := db.Table(&UserSubscribeChannel{}).Where("user_id = ?", userID.String()).Cols("channel_id").Find(&arr); err != nil {
+	err := db.Where(UserSubscribeChannel{UserID: userID.String()}).Pluck("channel_id", &arr).Error
+	if err != nil {
 		return nil, err
 	}
+	return convertStringSliceToUUIDSlice(arr), nil
+}
 
-	result := make([]uuid.UUID, len(arr))
+func convertStringSliceToUUIDSlice(arr []string) (result []uuid.UUID) {
+	result = make([]uuid.UUID, len(arr))
 	for i, v := range arr {
-		result[i] = uuid.FromStringOrNil(v)
+		result[i] = uuid.Must(uuid.FromString(v))
 	}
-
-	return result, nil
+	return
 }

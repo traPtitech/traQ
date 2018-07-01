@@ -11,63 +11,53 @@ func TestUserSubscribeChannel_TableName(t *testing.T) {
 	assert.Equal(t, "users_subscribe_channels", (&UserSubscribeChannel{}).TableName())
 }
 
-func TestUserSubscribeChannel_Create(t *testing.T) {
-	assert, require, user1, channel1 := beforeTest(t)
+func TestSubscribeChannel(t *testing.T) {
+	assert, _, user, channel := beforeTest(t)
 
-	user2 := mustMakeUser(t, "user2")
-	channel2 := mustMakeChannel(t, user1.ID, "test")
-
-	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel1.ID}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel2.ID}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: user2.ID, ChannelID: channel2.ID}).Create())
-	assert.Error((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel2.ID}).Create())
-
-	l, err := db.Count(&UserSubscribeChannel{})
-	require.NoError(err)
-
-	assert.EqualValues(3, l)
+	if assert.NoError(SubscribeChannel(user.GetUID(), channel.GetCID())) {
+		count := 0
+		db.Model(UserSubscribeChannel{}).Count(&count)
+		assert.Equal(1, count)
+	}
+	assert.Error(SubscribeChannel(user.GetUID(), channel.GetCID()))
 }
 
-func TestUserSubscribeChannel_Delete(t *testing.T) {
+func TestUnsubscribeChannel(t *testing.T) {
 	assert, require, user1, channel1 := beforeTest(t)
 
 	user2 := mustMakeUser(t, "user2")
 	channel2 := mustMakeChannel(t, user1.ID, "test")
 
-	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel1.ID}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel2.ID}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: user2.ID, ChannelID: channel2.ID}).Create())
+	require.NoError(SubscribeChannel(user1.GetUID(), channel1.GetCID()))
+	require.NoError(SubscribeChannel(user1.GetUID(), channel2.GetCID()))
+	require.NoError(SubscribeChannel(user2.GetUID(), channel2.GetCID()))
 
-	assert.NoError((&UserSubscribeChannel{UserID: user2.ID, ChannelID: channel2.ID}).Delete())
-	l, err := db.Count(&UserSubscribeChannel{})
-	require.NoError(err)
-	assert.EqualValues(2, l)
-
-	assert.Error((&UserSubscribeChannel{UserID: user1.ID}).Delete())
-	assert.Error((&UserSubscribeChannel{}).Delete())
-	assert.Error((&UserSubscribeChannel{ChannelID: channel1.ID}).Delete())
-
-	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel2.ID}).Delete())
-	l, err = db.Count(&UserSubscribeChannel{})
-	require.NoError(err)
-	assert.EqualValues(1, l)
-
-	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel1.ID}).Delete())
-	l, err = db.Count(&UserSubscribeChannel{})
-	require.NoError(err)
-	assert.EqualValues(0, l)
-
+	if assert.NoError(UnsubscribeChannel(user2.GetUID(), channel2.GetCID())) {
+		count := 0
+		db.Model(UserSubscribeChannel{}).Count(&count)
+		assert.Equal(2, count)
+	}
+	if assert.NoError(UnsubscribeChannel(user1.GetUID(), channel2.GetCID())) {
+		count := 0
+		db.Model(UserSubscribeChannel{}).Count(&count)
+		assert.Equal(1, count)
+	}
+	if assert.NoError(UnsubscribeChannel(user1.GetUID(), channel1.GetCID())) {
+		count := 0
+		db.Model(UserSubscribeChannel{}).Count(&count)
+		assert.Equal(0, count)
+	}
 }
 
 func TestGetSubscribingUser(t *testing.T) {
-	assert, _, user1, channel1 := beforeTest(t)
+	assert, require, user1, channel1 := beforeTest(t)
 
 	user2 := mustMakeUser(t, "user2")
 	channel2 := mustMakeChannel(t, user1.ID, "test")
 
-	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel1.ID}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel2.ID}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: user2.ID, ChannelID: channel2.ID}).Create())
+	require.NoError(SubscribeChannel(user1.GetUID(), channel1.GetCID()))
+	require.NoError(SubscribeChannel(user1.GetUID(), channel2.GetCID()))
+	require.NoError(SubscribeChannel(user2.GetUID(), channel2.GetCID()))
 
 	arr, err := GetSubscribingUser(uuid.FromStringOrNil(channel1.ID))
 	if assert.NoError(err) {
@@ -81,14 +71,14 @@ func TestGetSubscribingUser(t *testing.T) {
 }
 
 func TestGetSubscribedChannels(t *testing.T) {
-	assert, _, user1, channel1 := beforeTest(t)
+	assert, require, user1, channel1 := beforeTest(t)
 
 	user2 := mustMakeUser(t, "user2")
 	channel2 := mustMakeChannel(t, user1.ID, "test")
 
-	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel1.ID}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: user1.ID, ChannelID: channel2.ID}).Create())
-	assert.NoError((&UserSubscribeChannel{UserID: user2.ID, ChannelID: channel2.ID}).Create())
+	require.NoError(SubscribeChannel(user1.GetUID(), channel1.GetCID()))
+	require.NoError(SubscribeChannel(user1.GetUID(), channel2.GetCID()))
+	require.NoError(SubscribeChannel(user2.GetUID(), channel2.GetCID()))
 
 	arr, err := GetSubscribedChannels(uuid.FromStringOrNil(user1.ID))
 	if assert.NoError(err) {
@@ -99,5 +89,4 @@ func TestGetSubscribedChannels(t *testing.T) {
 	if assert.NoError(err) {
 		assert.Len(arr, 1)
 	}
-
 }

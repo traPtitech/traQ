@@ -1,34 +1,20 @@
 package model
 
 import (
-	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/utils/validator"
 	"time"
 )
 
 // Star starの構造体
 type Star struct {
-	ID        string    `gorm:"type:char(36);primary_key"`
-	UserID    string    `gorm:"type:char(36);unique_index:user_channel" validate:"uuid,required"`
-	ChannelID string    `gorm:"type:char(36);unique_index:user_channel" validate:"uuid,required"`
+	UserID    string    `gorm:"type:char(36);primary_key"`
+	ChannelID string    `gorm:"type:char(36);primary_key"`
 	CreatedAt time.Time `gorm:"precision:6"`
 }
 
 // TableName dbの名前を指定する
 func (star *Star) TableName() string {
 	return "stars"
-}
-
-// BeforeCreate db.Create時に自動的に呼ばれます
-func (star *Star) BeforeCreate(scope *gorm.Scope) error {
-	star.ID = CreateUUID()
-	return star.Validate()
-}
-
-// Validate 構造体を検証します
-func (star *Star) Validate() error {
-	return validator.ValidateStruct(star)
 }
 
 // AddStar チャンネルをお気に入り登録します

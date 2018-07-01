@@ -19,7 +19,6 @@ func TestAddStar(t *testing.T) {
 
 	star, err := AddStar(user.GetUID(), channel.GetCID())
 	if assert.NoError(err) {
-		assert.NotEmpty(star.ID)
 		assert.Equal(channel.ID, star.ChannelID)
 		assert.Equal(user.ID, star.UserID)
 		assert.NotZero(star.CreatedAt)
