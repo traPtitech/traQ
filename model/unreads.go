@@ -1,71 +1,39 @@
 package model
 
 import (
-	"fmt"
-
-	"github.com/traPtitech/traQ/utils/validator"
+	"github.com/satori/go.uuid"
+	"time"
 )
 
-//Unread 未読レコード
+// Unread 未読レコード
 type Unread struct {
-	UserID    string `xorm:"char(36) not null pk" validate:"uuid,required"`
-	MessageID string `xorm:"char(36) not null pk" validate:"uuid,required"`
+	UserID    string    `gorm:"type:char(36);primary_key"`
+	MessageID string    `gorm:"type:char(36);primary_key"`
+	CreatedAt time.Time `gorm:"precision:6"`
 }
 
-//TableName テーブル名
+// TableName テーブル名
 func (unread *Unread) TableName() string {
 	return "unreads"
 }
 
-// Validate 構造体を検証します
-func (unread *Unread) Validate() error {
-	return validator.ValidateStruct(unread)
+// SetMessageUnread 指定したメッセージを未読にします
+func SetMessageUnread(userID, messageID uuid.UUID) error {
+	return db.Create(&Unread{UserID: userID.String(), MessageID: messageID.String()}).Error
 }
 
-//Create レコード作成
-func (unread *Unread) Create() (err error) {
-	if err = unread.Validate(); err != nil {
-		return err
-	}
-	_, err = db.InsertOne(unread)
+// GetUnreadMessagesByUserID あるユーザーの未読メッセージをすべて取得
+func GetUnreadMessagesByUserID(userID uuid.UUID) (unreads []*Message, err error) {
+	err = db.Joins("INNER JOIN unreads ON unreads.message_id = messages.id AND unreads.user_id = ?", userID.String()).Find(&unreads).Error
 	return
 }
 
-//Delete レコード削除
-func (unread *Unread) Delete() (err error) {
-	if err = unread.Validate(); err != nil {
-		return err
-	}
-	_, err = db.Delete(unread)
-	return
+// DeleteUnreadsByMessageID 指定したメッセージIDの未読レコードを全て削除
+func DeleteUnreadsByMessageID(messageID uuid.UUID) error {
+	return db.Where(Unread{MessageID: messageID.String()}).Delete(Unread{}).Error
 }
 
-//GetUnreadsByUserID あるユーザーの未読レコードをすべて取得
-func GetUnreadsByUserID(userID string) (unreads []*Unread, err error) {
-	if userID == "" {
-		return nil, fmt.Errorf("userID is empty")
-	}
-
-	err = db.Where("user_id = ?", userID).Find(&unreads)
-	return
-}
-
-//DeleteUnreadsByMessageID 指定したメッセージIDの未読レコードを全て削除
-func DeleteUnreadsByMessageID(messageID string) (err error) {
-	if messageID == "" {
-		return fmt.Errorf("messageID is empty")
-	}
-
-	_, err = db.Delete(&Unread{MessageID: messageID})
-	return
-}
-
-//DeleteUnreadsByChannelID 指定したチャンネルIDに存在する、指定したユーザーIDの未読レコードをすべて削除
-func DeleteUnreadsByChannelID(channelID, userID string) (err error) {
-	if channelID == "" || userID == "" {
-		return ErrInvalidParam
-	}
-
-	_, err = db.Query("DELETE unreads FROM unreads INNER JOIN messages ON unreads.user_id = ? AND unreads.message_id = messages.id WHERE messages.channel_id = ?", userID, channelID)
-	return
+// DeleteUnreadsByChannelID 指定したチャンネルIDに存在する、指定したユーザーIDの未読レコードをすべて削除
+func DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error {
+	return db.Exec("DELETE unreads FROM unreads INNER JOIN messages ON unreads.user_id = ? AND unreads.message_id = messages.id WHERE messages.channel_id = ?", userID.String(), channelID.String()).Error
 }
