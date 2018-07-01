@@ -1,61 +1,68 @@
 package model
 
-import "time"
+import (
+	"github.com/jinzhu/gorm"
+	"time"
+)
 
-// OAuth2Client : OAuth2 クライアント構造体
+// OAuth2Client OAuth2 クライアント構造体
 type OAuth2Client struct {
-	ID           string    `xorm:"char(36) not null pk"`
-	Name         string    `xorm:"varchar(32) not null"`
-	Description  string    `xorm:"text not null"`
-	Confidential bool      `xorm:"bool not null"`
-	CreatorID    string    `xorm:"char(36) not null"`
-	Secret       string    `xorm:"varchar(36) not null"`
-	RedirectURI  string    `xorm:"text not null"`
-	Scopes       string    `xorm:"text not null"`
-	IsDeleted    bool      `xorm:"bool not null"`
-	CreatedAt    time.Time `xorm:"created"`
-	UpdatedAt    time.Time `xorm:"updated"`
+	ID           string `gorm:"type:char(36);primary_key"`
+	Name         string `gorm:"size:32"`
+	Description  string `gorm:"type:text"`
+	Confidential bool
+	CreatorID    string     `gorm:"type:char(36)"`
+	Secret       string     `gorm:"size:36"`
+	RedirectURI  string     `gorm:"type:text"`
+	Scopes       string     `gorm:"type:text"`
+	CreatedAt    time.Time  `gorm:"precision:6"`
+	UpdatedAt    time.Time  `gorm:"precision:6"`
+	DeletedAt    *time.Time `gorm:"precision:6"`
 }
 
-// TableName : OAuth2Clientのテーブル名
+// TableName OAuth2Clientのテーブル名
 func (*OAuth2Client) TableName() string {
 	return "oauth2_clients"
 }
 
-// Create : データベースに挿入します
-func (oc *OAuth2Client) Create() (err error) {
-	_, err = db.MustCols().UseBool().InsertOne(oc)
-	return
+// Create データベースに挿入します
+func (oc *OAuth2Client) Create() error {
+	return db.Create(oc).Error
 }
 
-// Update : データベースを更新します
-func (oc *OAuth2Client) Update() (err error) {
-	_, err = db.ID(oc.ID).MustCols().UseBool().Update(oc)
-	return
+// Update データベースを更新します
+func (oc *OAuth2Client) Update() error {
+	return db.Model(oc).Updates(map[string]interface{}{
+		"name":         oc.Name,
+		"description":  oc.Description,
+		"confidential": oc.Confidential,
+		"creator_id":   oc.CreatorID,
+		"secret":       oc.Secret,
+		"redirect_uri": oc.RedirectURI,
+		"scopes":       oc.Scopes,
+	}).Error
 }
 
-// Delete : クライアントを削除します
+// Delete クライアントを削除します
 func (oc *OAuth2Client) Delete() (err error) {
-	oc.IsDeleted = true
-	_, err = db.ID(oc.ID).MustCols().UseBool().Update(oc)
-	return
+	return db.Delete(oc).Error
 }
 
-// GetOAuth2ClientByClientID : クライアントIDからOAuth2Clientを取得します
+// GetOAuth2ClientByClientID クライアントIDからOAuth2Clientを取得します
 func GetOAuth2ClientByClientID(id string) (oc *OAuth2Client, err error) {
 	oc = &OAuth2Client{}
-	ok, err := db.ID(id).Where("is_deleted = false").Get(oc)
+	err = db.Where(OAuth2Client{ID: id}).Take(oc).Error
 	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
 		return nil, err
-	}
-	if !ok {
-		return nil, ErrNotFound
 	}
 	return
 }
 
-// GetOAuth2ClientsByUser : 指定した登録者のOAuth2Clientを全て取得します
+// GetOAuth2ClientsByUser 指定した登録者のOAuth2Clientを全て取得します
 func GetOAuth2ClientsByUser(userID string) (cs []*OAuth2Client, err error) {
-	err = db.Where("is_deleted = false AND creator_id = ?", userID).Find(&cs)
+	err = db.Where(OAuth2Client{CreatorID: userID}).Find(&cs).Error
 	return
 }

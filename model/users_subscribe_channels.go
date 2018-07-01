@@ -46,11 +46,3 @@ func GetSubscribedChannels(userID uuid.UUID) ([]uuid.UUID, error) {
 	}
 	return convertStringSliceToUUIDSlice(arr), nil
 }
-
-func convertStringSliceToUUIDSlice(arr []string) (result []uuid.UUID) {
-	result = make([]uuid.UUID, len(arr))
-	for i, v := range arr {
-		result[i] = uuid.Must(uuid.FromString(v))
-	}
-	return
-}
