@@ -8,11 +8,11 @@ import (
 
 // MessageReport メッセージレポート構造体
 type MessageReport struct {
-	ID        string    `xorm:"char(36) pk"                                validate:"uuid,required"`
-	MessageID string    `xorm:"char(36) not null unique(message_reporter)" validate:"uuid,required"`
-	Reporter  string    `xorm:"char(36) not null unique(message_reporter)" validate:"uuid,required"`
-	Reason    string    `xorm:"varchar(100) not null"                      validate:"max=100,required"`
-	CreatedAt time.Time `xorm:"created"`
+	ID        string    `xorm:"char(36) pk"                                validate:"uuid,required"    json:"id"`
+	MessageID string    `xorm:"char(36) not null unique(message_reporter)" validate:"uuid,required"    json:"messageId"`
+	Reporter  string    `xorm:"char(36) not null unique(message_reporter)" validate:"uuid,required"    json:"reporter"`
+	Reason    string    `xorm:"varchar(100) not null"                      validate:"max=100,required" json:"reason"`
+	CreatedAt time.Time `xorm:"created"                                                                json:"createdAt"`
 }
 
 // TableName MessageReport構造体のテーブル名
@@ -41,6 +41,12 @@ func CreateMessageReport(messageID, reporterID uuid.UUID, reason string) error {
 		return err
 	}
 	return nil
+}
+
+// GetMessageReports メッセージ通報を通報日時の昇順で取得します
+func GetMessageReports(offset, limit int) (arr []*MessageReport, err error) {
+	err = db.OrderBy("created_at").Limit(limit, offset).Find(&arr)
+	return
 }
 
 // GetMessageReportsByMessageID メッセージ通報を取得します

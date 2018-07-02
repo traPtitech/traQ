@@ -19,6 +19,7 @@ type UserForResponse struct {
 	DisplayName string     `json:"displayName"`
 	IconID      string     `json:"iconFileId"`
 	Bot         bool       `json:"bot"`
+	TwitterID   string     `json:"twitterId"`
 	LastOnline  *time.Time `json:"lastOnline"`
 	IsOnline    bool       `json:"isOnline"`
 }
@@ -270,6 +271,7 @@ func formatUser(user *model.User) *UserForResponse {
 		DisplayName: user.DisplayName,
 		IconID:      user.Icon,
 		Bot:         user.Bot,
+		TwitterID:   user.TwitterID,
 		IsOnline:    user.IsOnline(),
 	}
 	if t := user.GetLastOnline(); !t.IsZero() {
