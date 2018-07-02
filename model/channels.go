@@ -2,7 +2,7 @@ package model
 
 import (
 	"errors"
-	"fmt"
+	"github.com/jinzhu/gorm"
 	"sync"
 	"time"
 
@@ -12,70 +12,70 @@ import (
 )
 
 var (
-	channelPathMap = &sync.Map{}
+	channelPathMap = sync.Map{}
 	// ErrChannelPathDepth 作成されるチャンネルの深さが5より大きいときに返すエラー
-	ErrChannelPathDepth = errors.New("Channel depth is no more than 5")
+	ErrChannelPathDepth = errors.New("channel depth is no more than 5")
 	// ErrDuplicateName 作成されるチャンネルと同名のチャンネルが既に同階層に存在する場合に返すエラー
-	ErrDuplicateName = errors.New("This name channel already exists")
+	ErrDuplicateName = errors.New("this name channel already exists")
 )
 
 // Channel :チャンネルの構造体
 type Channel struct {
-	ID        string    `xorm:"char(36) pk"                                     validate:"uuid,required"`
-	Name      string    `xorm:"varchar(20) not null unique(name_parent)"        validate:"channel,required"`
-	ParentID  string    `xorm:"parent_id char(36) not null unique(name_parent)"`
-	Topic     string    `xorm:"text"`
-	IsForced  bool      `xorm:"bool not null"`
-	IsDeleted bool      `xorm:"bool not null"`
-	IsPublic  bool      `xorm:"bool not null"`
-	IsVisible bool      `xorm:"bool not null"`
-	CreatorID string    `xorm:"char(36) not null"                               validate:"uuid,required"`
-	CreatedAt time.Time `xorm:"created not null"`
-	UpdaterID string    `xorm:"char(36) not null"                               validate:"uuid,required"`
-	UpdatedAt time.Time `xorm:"updated not null"`
+	ID        string `gorm:"type:char(36);primary_key"                 validate:"uuid,required"`
+	Name      string `gorm:"type:varchar(20);unique_index:name_parent" validate:"channel,required"`
+	ParentID  string `gorm:"type:char(36);unique_index:name_parent"`
+	Topic     string `gorm:"type:text"`
+	IsForced  bool
+	IsPublic  bool
+	IsVisible bool
+	CreatorID string     `gorm:"type:char(36)"                             validate:"uuid,required"`
+	UpdaterID string     `gorm:"type:char(36)"                             validate:"uuid,required"`
+	CreatedAt time.Time  `gorm:"precision:6"`
+	UpdatedAt time.Time  `gorm:"precision:6"`
+	DeletedAt *time.Time `gorm:"precision:6"`
 }
 
 // TableName テーブル名を指定するメソッド
-func (channel *Channel) TableName() string {
+func (ch *Channel) TableName() string {
 	return "channels"
 }
 
-// Validate 構造体を検証します
-func (channel *Channel) Validate() error {
-	return validator.ValidateStruct(channel)
-}
-
-// Create チャンネル作成を行うメソッド
-func (channel *Channel) Create() error {
-	if channel.ID != "" {
-		return fmt.Errorf("ID is not empty! You can use Update()")
-	}
-
-	channel.ID = CreateUUID()
-	channel.IsVisible = true
-	channel.UpdaterID = channel.CreatorID
-
-	if err := channel.Validate(); err != nil {
+// BeforeCreate db.Create前に呼び出されます
+func (ch *Channel) BeforeCreate(tx *gorm.DB) error {
+	ch.ID = CreateUUID()
+	ch.IsVisible = true
+	ch.UpdaterID = ch.CreatorID
+	if err := ch.Validate(); err != nil {
 		return err
 	}
 
 	// 階層チェック
+	// FIXME 親チャンネルの存在を確認する
+	// FIXME プライベートチャンネルの事を考える
 	// 五階層までは許すけどそれ以上はダメ
-	ch, err := channel.Parent()
-	for i := 0; ; i++ {
-		if ch == nil {
-			if i >= 5 {
-				return ErrChannelPathDepth
+	if len(ch.ParentID) == 36 {
+		//ルートチャンネルではない
+		ch, err := GetParentChannel(uuid.FromStringOrNil(ch.ParentID))
+		if err != nil && err != ErrNotFound {
+			return err
+		}
+
+		for i := 0; ; i++ {
+			if ch == nil {
+				if i >= 4 {
+					return ErrChannelPathDepth
+				}
+				break
 			}
-			break
+			ch, err = GetParentChannel(ch.GetCID())
+			if err != nil && err != ErrNotFound {
+				return err
+			}
 		}
-		if err != nil {
-			return err // NotFoundの場合はch == nil => true なのでここに到達しない
-		}
-		ch, err = ch.Parent()
 	}
 
-	has, err := channel.isUnique()
+	// チャンネル名重複を確認
+	has, err := IsChannelNamePresent(ch.Name, ch.ParentID)
 	if err != nil {
 		return err
 	}
@@ -83,94 +83,164 @@ func (channel *Channel) Create() error {
 		return ErrDuplicateName
 	}
 
-	// ここまでで入力されない要素は初期値(""や0)で格納される
-	if _, err := db.Insert(channel); err != nil {
-		return err
-	}
-
-	//チャンネルパスをキャッシュ
-	if path, err := channel.Path(); err == nil {
-		channelPathMap.Store(uuid.FromStringOrNil(channel.ID), path)
-	}
-
 	return nil
 }
 
-// Exists 指定したチャンネルがuserIDのユーザーから見えるチャンネルかどうかを確認する
-func (channel *Channel) Exists(userID string) (bool, error) {
-	if userID != "" {
-		has, err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userID).Get(channel)
-		return has, err
-	}
-	return db.Get(channel)
+// Validate 構造体を検証します
+func (ch *Channel) Validate() error {
+	return validator.ValidateStruct(ch)
 }
 
-// isUnique チャンネルの名前が同階層でユニークかどうかを判定する
-func (channel *Channel) isUnique() (bool, error) {
-	var childrenNames []string
-	err := db.Table(channel.TableName()).Where("parent_id = ?", channel.ParentID).Cols("name").Find(&childrenNames)
+// GetCID チャンネルのUUIDを返します
+func (ch *Channel) GetCID() uuid.UUID {
+	return uuid.Must(uuid.FromString(ch.ID))
+}
+
+// CreateChannel チャンネルを作成します
+func CreateChannel(parent, name string, creatorID uuid.UUID, isPublic bool) (*Channel, error) {
+	ch := &Channel{
+		Name:      name,
+		ParentID:  parent,
+		CreatorID: creatorID.String(),
+		IsPublic:  isPublic,
+	}
+
+	if err := db.Create(ch).Error; err != nil {
+		return nil, err
+	}
+
+	// チャンネルパスをキャッシュ
+	if path, err := ch.Path(); err == nil {
+		channelPathMap.Store(uuid.FromStringOrNil(ch.ID), path)
+	}
+
+	return ch, nil
+}
+
+// UpdateChannelTopic チャンネルトピックを更新します
+func UpdateChannelTopic(channelID uuid.UUID, topic string, updaterID uuid.UUID) error {
+	return db.Model(Channel{ID: channelID.String()}).Updates(map[string]interface{}{
+		"topic":      topic,
+		"updater_id": updaterID.String(),
+	}).Error
+}
+
+// ChangeChannelName チャンネル名を変更します
+func ChangeChannelName(channelID uuid.UUID, name string, updaterID uuid.UUID) error {
+	ch, err := GetChannel(channelID)
 	if err != nil {
-		return false, err
-	}
-	for _, v := range childrenNames {
-		if channel.Name == v {
-			return false, ErrDuplicateName
-		}
-	}
-	return true, nil
-}
-
-// Update チャンネルの情報の更新を行う
-func (channel *Channel) Update() error {
-	if err := channel.Validate(); err != nil {
 		return err
 	}
 
-	_, err := db.ID(channel.ID).UseBool().MustCols("topic").Update(channel)
+	// チャンネル名重複を確認
+	has, err := IsChannelNamePresent(name, ch.ParentID)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return ErrDuplicateName
+	}
+
+	err = db.Model(Channel{ID: channelID.String()}).Updates(map[string]interface{}{
+		"name":       name,
+		"updater_id": updaterID.String(),
+	}).Error
 	if err != nil {
 		return err
 	}
 
 	//チャンネルパスキャッシュの更新
-	updateChannelPathWithDescendants(channel)
+	ch.Name = name
+	updateChannelPathWithDescendants(ch)
 
 	return nil
 }
 
-// Parent 親チャンネルを取得する
-func (channel *Channel) Parent() (*Channel, error) {
-	if len(channel.ParentID) == 0 {
-		return nil, nil
+// ChangeChannelParent チャンネルの親を変更します
+func ChangeChannelParent(channelID uuid.UUID, parent string, updaterID uuid.UUID) error {
+	ch, err := GetChannel(channelID)
+	if err != nil {
+		return err
 	}
 
-	parent := &Channel{}
-	has, err := db.Where("id = ?", channel.ParentID).Get(parent)
-	if !has {
-		return nil, ErrNotFound
+	// 階層チェック
+	// FIXME 変更するチャンネルの子の事を考えてない
+	// FIXME 循環参照を考えてない
+	// FIXME プライベートチャンネルの事を考えてない
+	// FIXME 変更先の存在を確認してない
+	// 五階層までは許すけどそれ以上はダメ
+	if len(parent) == 36 {
+		//ルートチャンネルではない
+		ch, err := GetParentChannel(uuid.FromStringOrNil(parent))
+		if err != nil && err != ErrNotFound {
+			return err
+		}
+
+		for i := 0; ; i++ {
+			if ch == nil {
+				if i >= 4 {
+					return ErrChannelPathDepth
+				}
+				break
+			}
+			ch, err = GetParentChannel(ch.GetCID())
+			if err != nil && err != ErrNotFound {
+				return err
+			}
+		}
 	}
-	return parent, err
+
+	// チャンネル名重複を確認
+	has, err := IsChannelNamePresent(ch.Name, parent)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return ErrDuplicateName
+	}
+
+	err = db.Model(Channel{ID: channelID.String()}).Updates(map[string]interface{}{
+		"parent_id":  parent,
+		"updater_id": updaterID.String(),
+	}).Error
+	if err != nil {
+		return err
+	}
+
+	//チャンネルパスキャッシュの更新
+	ch.ParentID = parent
+	updateChannelPathWithDescendants(ch)
+
+	return nil
 }
 
-// Children userIDのユーザーから見えるchannelIDの子チャンネル
-func (channel *Channel) Children(userID string) ([]string, error) {
-	var channelIDList []string
-	if channel.ID == "" {
-		return nil, fmt.Errorf("channelID is empty")
+// UpdateChannelFlag
+func UpdateChannelFlag(channelID uuid.UUID, visibility, forced *bool, updaterID uuid.UUID) error {
+	data := map[string]interface{}{
+		"updater_id": updaterID.String(),
 	}
-	err := db.Table("channels").Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND parent_id = ? AND is_deleted = false", userID, channel.ID).Cols("id").Find(&channelIDList)
-	if err != nil {
-		return nil, err
+	if visibility != nil {
+		data["is_visible"] = *visibility
 	}
-	return channelIDList, nil
+	if forced != nil {
+		data["is_forced"] = *forced
+	}
+
+	return db.Model(Channel{ID: channelID.String()}).Updates(data).Error
+}
+
+// DeleteChannel チャンネルを削除します
+func DeleteChannel(channelID uuid.UUID) error {
+	return db.Delete(Channel{ID: channelID.String()}).Error
 }
 
 // Path チャンネルのパス文字列を取得する
-func (channel *Channel) Path() (string, error) {
-	path := channel.Name
-	current := channel
+func (ch *Channel) Path() (string, error) {
+	path := ch.Name
+	current := ch
 
 	for {
-		parent, err := current.Parent()
+		parent, err := GetParentChannel(current.GetCID())
 		if err != nil {
 			return "#" + path, nil
 		}
@@ -189,53 +259,130 @@ func (channel *Channel) Path() (string, error) {
 	return "#" + path, nil
 }
 
-// GetChannelByID チャンネルIDによってチャンネルを取得
-func GetChannelByID(userID, channelID string) (*Channel, error) {
-	channel := &Channel{}
-	channel.ID = channelID
-
-	has, err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userID).Get(channel)
+// IsChannelNamePresent チャンネル名が同階層に既に存在するか
+func IsChannelNamePresent(name, parent string) (bool, error) {
+	c := 0
+	err := db.
+		Model(Channel{}).
+		Where("parent_id = ? AND name = ?", parent, name).
+		Limit(1).
+		Count(&c).
+		Error
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 
-	if !has {
-		return nil, ErrNotFoundOrForbidden
+	return c > 0, nil
+}
+
+// GetParentChannel 親のチャンネルを取得する
+func GetParentChannel(channelID uuid.UUID) (*Channel, error) {
+	p := ""
+	err := db.
+		Model(Channel{}).
+		Select("parent_id").
+		Where("id = ?", channelID.String()).
+		Scan(&p).
+		Error
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	if len(p) == 0 {
+		return nil, nil
+	}
+
+	ch := &Channel{}
+	err = db.
+		Where("id = ?", p).
+		Take(ch).
+		Error
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return ch, nil
+}
+
+// GetChildrenChannelIDsWithUserID userIDのユーザーから見えるchannelIDの子チャンネルのIDを取得する
+func GetChildrenChannelIDsWithUserID(userID uuid.UUID, channelID string) (children []string, err error) {
+	err = db.
+		Model(Channel{}).
+		Joins("LEFT JOIN users_private_channels ON users_private_channels.channel_id = channels.id").
+		Where("(channels.is_public = true OR users_private_channels.user_id = ?) AND channels.parent_id = ?", userID, channelID).
+		Pluck("channel", &children).
+		Error
+	return
+}
+
+// GetChannel チャンネルを取得する
+func GetChannel(channelID uuid.UUID) (*Channel, error) {
+	ch := &Channel{}
+	err := db.Where("id = ?", channelID.String()).Take(ch).Error
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return ch, nil
+}
+
+// GetChannelWithUserID 指定したチャンネルが指定したユーザーがアクセス可能な場合チャンネルを取得
+func GetChannelWithUserID(userID, channelID uuid.UUID) (*Channel, error) {
+	channel := &Channel{}
+
+	err := db.
+		Joins("LEFT JOIN users_private_channels ON users_private_channels.channel_id = channels.id").
+		Where("(channels.is_public = true OR users_private_channels.user_id = ?) AND channels.id = ?", userID, channelID).
+		Take(channel).
+		Error
+	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFoundOrForbidden
+		}
+		return nil, err
 	}
 
 	return channel, nil
 }
 
 // GetChannelByMessageID メッセージIDによってチャンネルを取得
-// チャンネルがis_deletedでも取得可能
-func GetChannelByMessageID(messageID string) (*Channel, error) {
+func GetChannelByMessageID(messageID uuid.UUID) (*Channel, error) {
 	channel := &Channel{}
 
-	has, err := db.Join("INNER", "messages", "messages.channel_id = channels.id").Where("messages.id = ?", messageID).Get(channel)
+	err := db.
+		Where("id = ?", db.Table("messages").Select("channel_id").Where("id = ?", messageID.String()).QueryExpr()).
+		Take(channel).
+		Error
 	if err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
 		return nil, err
-	}
-	if !has {
-		return nil, ErrNotFound
 	}
 
 	return channel, nil
 }
 
 // GetChannelList userIDのユーザーから見えるチャンネルの一覧を取得する
-func GetChannelList(userID string) ([]*Channel, error) {
+func GetChannelList(userID uuid.UUID) (channels []*Channel, err error) {
 	// TODO: 隠しチャンネルを表示するかどうかをクライアントと決める
-	var channelList []*Channel
-	err := db.Join("LEFT", "users_private_channels", "users_private_channels.channel_id = channels.id").Where("(is_public = true OR user_id = ?) AND is_deleted = false", userID).Find(&channelList)
-	if err != nil {
-		return nil, err
-	}
-	return channelList, nil
+	err = db.
+		Joins("LEFT JOIN users_private_channels ON users_private_channels.channel_id = channels.id").
+		Where("channels.is_public = true OR users_private_channels.user_id = ?", userID.String()).
+		Find(&channels).
+		Error
+	return
 }
 
 // GetAllChannels 全てのチャンネルを取得する
 func GetAllChannels() (channels []*Channel, err error) {
-	err = db.Find(&channels)
+	err = db.Find(&channels).Error
 	return
 }
 
@@ -259,7 +406,7 @@ func updateChannelPathWithDescendants(channel *Channel) error {
 
 	//子チャンネルも
 	var children []*Channel
-	if err = db.Where("parent_id = ?", channel.ID).Find(&children); err != nil {
+	if err = db.Find(&children, Channel{ParentID: channel.ID}).Error; err != nil {
 		return err
 	}
 

@@ -24,7 +24,11 @@ func SetMessageUnread(userID, messageID uuid.UUID) error {
 
 // GetUnreadMessagesByUserID あるユーザーの未読メッセージをすべて取得
 func GetUnreadMessagesByUserID(userID uuid.UUID) (unreads []*Message, err error) {
-	err = db.Joins("INNER JOIN unreads ON unreads.message_id = messages.id AND unreads.user_id = ?", userID.String()).Find(&unreads).Error
+	err = db.
+		Joins("INNER JOIN unreads ON unreads.message_id = messages.id AND unreads.user_id = ?", userID.String()).
+		Order("messages.created_at").
+		Find(&unreads).
+		Error
 	return
 }
 
