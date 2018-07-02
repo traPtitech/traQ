@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/satori/go.uuid"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,12 +29,12 @@ func TestAddPrivateChannelMember(t *testing.T) {
 	assert.NoError(AddPrivateChannelMember(channel.GetCID(), user.GetUID()))
 	assert.NoError(AddPrivateChannelMember(channel.GetCID(), po.GetUID()))
 
-	channelList, err := GetChannelList(user.ID)
+	channelList, err := GetChannelList(user.GetUID())
 	if assert.NoError(err) {
 		assert.Len(channelList, 1+1)
 	}
 
-	channelList, err = GetChannelList(CreateUUID())
+	channelList, err = GetChannelList(uuid.Nil)
 	if assert.NoError(err) {
 		assert.Len(channelList, 0+1)
 	}
@@ -44,14 +45,14 @@ func TestGetPrivateChannel(t *testing.T) {
 
 	user1 := mustMakeUser(t, "private-1")
 	user2 := mustMakeUser(t, "private-2")
-	channel := mustMakePrivateChannel(t, user1.ID, user2.ID, "privatechannel-1")
+	channel := mustMakePrivateChannel(t, user1.GetUID(), user2.GetUID(), "privatechannel-1")
 
 	upcID, err := GetPrivateChannel(user1.ID, user2.ID)
 	if assert.NoError(err) {
 		assert.Equal(channel.ID, upcID)
 	}
 
-	channel = mustMakePrivateChannel(t, user1.ID, user1.ID, "self-channel")
+	channel = mustMakePrivateChannel(t, user1.GetUID(), user1.GetUID(), "self-channel")
 	upcID, err = GetPrivateChannel(user1.ID, user1.ID)
 	if assert.NoError(err) {
 		assert.Equal(channel.ID, upcID)
@@ -75,7 +76,7 @@ func TestGetPrivateChannelMembers(t *testing.T) {
 
 	user1 := mustMakeUser(t, "private-1")
 	user2 := mustMakeUser(t, "private-2")
-	channel := mustMakePrivateChannel(t, user1.ID, user2.ID, "privatechannel-1")
+	channel := mustMakePrivateChannel(t, user1.GetUID(), user2.GetUID(), "privatechannel-1")
 
 	member, err := GetPrivateChannelMembers(channel.ID)
 	assert.NoError(err)

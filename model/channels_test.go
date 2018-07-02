@@ -70,9 +70,9 @@ func TestUpdateChannelTopic(t *testing.T) {
 func TestChangeChannelName(t *testing.T) {
 	assert, require, user, c1 := beforeTest(t)
 
-	c2 := mustMakeChannelDetail(t, user.ID, "test2", "", true)
-	c3 := mustMakeChannelDetail(t, user.ID, "test3", c2.ID, true)
-	mustMakeChannelDetail(t, user.ID, "test4", c2.ID, true)
+	c2 := mustMakeChannelDetail(t, user.GetUID(), "test2", "", true)
+	c3 := mustMakeChannelDetail(t, user.GetUID(), "test3", c2.ID, true)
+	mustMakeChannelDetail(t, user.GetUID(), "test4", c2.ID, true)
 
 	assert.Error(ChangeChannelName(c1.GetCID(), "", user.GetUID()))
 	assert.Error(ChangeChannelName(c1.GetCID(), "あああ", user.GetUID()))
@@ -94,9 +94,9 @@ func TestChangeChannelName(t *testing.T) {
 func TestChangeChannelParent(t *testing.T) {
 	assert, require, user, _ := beforeTest(t)
 
-	c2 := mustMakeChannelDetail(t, user.ID, "test2", "", true)
-	c3 := mustMakeChannelDetail(t, user.ID, "test3", c2.ID, true)
-	c4 := mustMakeChannelDetail(t, user.ID, "test2", c3.ID, true)
+	c2 := mustMakeChannelDetail(t, user.GetUID(), "test2", "", true)
+	c3 := mustMakeChannelDetail(t, user.GetUID(), "test3", c2.ID, true)
+	c4 := mustMakeChannelDetail(t, user.GetUID(), "test2", c3.ID, true)
 
 	assert.Error(ChangeChannelParent(c4.GetCID(), "", user.GetUID()))
 	assert.Error(ChangeChannelParent(c4.GetCID(), c2.ID, user.GetUID()))
@@ -132,8 +132,8 @@ func TestDeleteChannel(t *testing.T) {
 
 func TestIsChannelNamePresent(t *testing.T) {
 	assert, _, user, _ := beforeTest(t)
-	c2 := mustMakeChannelDetail(t, user.ID, "test2", "", true)
-	mustMakeChannelDetail(t, user.ID, "test3", c2.ID, true)
+	c2 := mustMakeChannelDetail(t, user.GetUID(), "test2", "", true)
+	mustMakeChannelDetail(t, user.GetUID(), "test3", c2.ID, true)
 
 	ok, err := IsChannelNamePresent("test2", "")
 	if assert.NoError(err) {
@@ -160,7 +160,7 @@ func TestIsChannelNamePresent(t *testing.T) {
 func TestGetParentChannel(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	childChannel := mustMakeChannelDetail(t, user.ID, "child", channel.ID, true)
+	childChannel := mustMakeChannelDetail(t, user.GetUID(), "child", channel.ID, true)
 
 	parent, err := GetParentChannel(childChannel.GetCID())
 	if assert.NoError(err) {
@@ -179,11 +179,11 @@ func TestGetChildrenChannelIDsWithUserID(t *testing.T) {
 	privateUser := mustMakeUser(t, "privateuser")
 
 	for i := 0; i < 10; i++ {
-		mustMakeChannelDetail(t, user.ID, "child-"+strconv.Itoa(i+1), channel.ID, true)
+		mustMakeChannelDetail(t, user.GetUID(), "child-"+strconv.Itoa(i+1), channel.ID, true)
 	}
 
 	for i := 10; i < 20; i++ {
-		channel := mustMakeChannelDetail(t, user.ID, "child-"+strconv.Itoa(i+1), channel.ID, false)
+		channel := mustMakeChannelDetail(t, user.GetUID(), "child-"+strconv.Itoa(i+1), channel.ID, false)
 		require.NoError(AddPrivateChannelMember(channel.GetCID(), privateUser.GetUID()))
 	}
 
@@ -201,8 +201,8 @@ func TestGetChildrenChannelIDsWithUserID(t *testing.T) {
 func TestChannel_Path(t *testing.T) {
 	assert, _, user, _ := beforeTest(t)
 
-	ch1 := mustMakeChannelDetail(t, user.ID, "parent", "", true)
-	ch2 := mustMakeChannelDetail(t, user.ID, "child", ch1.ID, true)
+	ch1 := mustMakeChannelDetail(t, user.GetUID(), "parent", "", true)
+	ch2 := mustMakeChannelDetail(t, user.GetUID(), "child", ch1.ID, true)
 
 	path, err := ch2.Path()
 	assert.NoError(err)
@@ -229,7 +229,7 @@ func TestGetChannel(t *testing.T) {
 func TestGetChannelWithUserID(t *testing.T) {
 	assert, _, user, _ := beforeTest(t)
 
-	ch := mustMakeChannel(t, user.ID, "getByID")
+	ch := mustMakeChannel(t, user.GetUID(), "getByID")
 
 	r, err := GetChannelWithUserID(user.GetUID(), ch.GetCID())
 	if assert.NoError(err) {
@@ -241,7 +241,7 @@ func TestGetChannelWithUserID(t *testing.T) {
 func TestGetChannelByMessageID(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	message := mustMakeMessage(t, user.ID, channel.ID)
+	message := mustMakeMessage(t, user.GetUID(), channel.GetCID())
 
 	ch, err := GetChannelByMessageID(message.GetID())
 	if assert.NoError(err) {
@@ -256,7 +256,7 @@ func TestGetChannelList(t *testing.T) {
 	assert, _, user, _ := beforeTest(t)
 
 	for i := 0; i < 10; i++ {
-		mustMakeChannel(t, user.ID, strconv.Itoa(i))
+		mustMakeChannel(t, user.GetUID(), strconv.Itoa(i))
 	}
 
 	channelList, err := GetChannelList(user.GetUID())
@@ -270,7 +270,7 @@ func TestGetAllChannels(t *testing.T) {
 
 	n := 10
 	for i := 0; i < n; i++ {
-		mustMakeChannel(t, user.ID, strconv.Itoa(i))
+		mustMakeChannel(t, user.GetUID(), strconv.Itoa(i))
 	}
 
 	chList, err := GetAllChannels()

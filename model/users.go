@@ -6,15 +6,16 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"errors"
-	"fmt"
+	"github.com/jinzhu/gorm"
+	"github.com/mikespook/gorbac"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/utils/icon"
 	"github.com/traPtitech/traQ/utils/validator"
 	"io"
 	"strings"
 	"time"
+	"unicode/utf8"
 
-	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -27,25 +28,26 @@ var (
 
 // User userの構造体
 type User struct {
-	ID          string     `xorm:"char(36) pk"                 validate:"required,uuid"`
-	Name        string     `xorm:"varchar(32) unique not null" validate:"required,name"`
-	DisplayName string     `xorm:"varchar(64) not null"        validate:"max=64"`
-	Email       string     `xorm:"text not null"               validate:"required,email"`
-	Password    string     `xorm:"char(128) not null"          validate:"required,max=128"`
-	Salt        string     `xorm:"char(128) not null"          validate:"required,max=128"`
-	Icon        string     `xorm:"char(36) not null"`
-	Status      int        `xorm:"tinyint not null"`
-	Bot         bool       `xorm:"bool not null"`
-	Role        string     `xorm:"text not null"               validate:"required"`
-	TwitterID   string     `xorm:"varchar(15) not null"        validate:"twitterid"`
-	LastOnline  *time.Time `xorm:"timestamp"`
-	CreatedAt   time.Time  `xorm:"created not null"`
-	UpdatedAt   time.Time  `xorm:"updated not null"`
+	ID          string `gorm:"type:char(36);primary_key" validate:"required,uuid"`
+	Name        string `gorm:"type:size:32;unique"       validate:"required,name"`
+	DisplayName string `gorm:"type:size:64"              validate:"max=64"`
+	Email       string `gorm:"type:text"                 validate:"required,email"`
+	Password    string `gorm:"type:char(128)"            validate:"required,max=128"`
+	Salt        string `gorm:"type:char(128)"            validate:"required,max=128"`
+	Icon        string `gorm:"type:char(36)"`
+	Status      int    `gorm:"type:tinyint"`
+	Bot         bool
+	Role        string     `gorm:"type:text"                 validate:"required"`
+	TwitterID   string     `gorm:"type:size:15"              validate:"twitterid"`
+	LastOnline  *time.Time `gorm:"precision:6"`
+	CreatedAt   time.Time  `gorm:"precision:6"`
+	UpdatedAt   time.Time  `gorm:"precision:6"`
+	DeletedAt   *time.Time `gorm:"precision:6"`
 }
 
 // GetUID ユーザーIDを取得します
 func (user *User) GetUID() uuid.UUID {
-	return uuid.FromStringOrNil(user.ID)
+	return uuid.Must(uuid.FromString(user.ID))
 }
 
 // GetName ユーザー名を取得します
@@ -61,123 +63,6 @@ func (user *User) TableName() string {
 // Validate 構造体を検証します
 func (user *User) Validate() error {
 	return validator.ValidateStruct(user)
-}
-
-// Create userをDBに入れる
-func (user *User) Create() error {
-	user.ID = CreateUUID()
-	user.Status = 1 // TODO: 状態確認
-
-	if err := user.Validate(); err != nil {
-		return err
-	}
-	if _, err := db.Insert(user); err != nil {
-		return fmt.Errorf("Failed to create user object: %v", err)
-	}
-
-	iconID, err := GenerateIcon(user.Name)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	user.Icon = iconID
-
-	return user.Update()
-}
-
-// GetUser IDでユーザーの構造体を取得する
-func GetUser(userID string) (*User, error) {
-	user := &User{ID: userID}
-
-	if has, err := db.Get(user); err != nil {
-		return nil, err
-	} else if !has {
-		return nil, ErrNotFound
-	}
-
-	return user, nil
-}
-
-// GetUsers ユーザーの一覧の取得
-func GetUsers() ([]*User, error) {
-	var users []*User
-	// TODO ユーザーの状態によってフィルタ
-	if err := db.Find(&users); err != nil {
-		return nil, err
-	}
-	return users, nil
-}
-
-// SetPassword パスワードの設定を行う Createより前に実行する
-func (user *User) SetPassword(pass string) error {
-	salt, err := generateSalt()
-	if err != nil {
-		return fmt.Errorf("an error occurred while generating salt: %v", err)
-	}
-
-	user.Salt = hex.EncodeToString(salt)
-	user.Password = hex.EncodeToString(hashPassword(pass, salt))
-	return nil
-}
-
-// Exists 存在するuserを取得します
-func (user *User) Exists() (bool, error) {
-	if user.Name == "" {
-		return false, fmt.Errorf("UserName is empty")
-	}
-	return db.Get(user)
-}
-
-// Authorization 認証を行う
-func (user *User) Authorization(pass string) error {
-	if has, err := db.Get(user); err != nil {
-		return err
-	} else if !has {
-		return ErrUserWrongIDOrPassword
-	}
-
-	// Botはログイン不可
-	if user.Bot {
-		return ErrUserBotTryLogin
-	}
-
-	storedPassword, err := hex.DecodeString(user.Password)
-	if err != nil {
-		return err
-	}
-	salt, err := hex.DecodeString(user.Salt)
-	if err != nil {
-		return err
-	}
-
-	if subtle.ConstantTimeCompare(storedPassword, hashPassword(pass, salt)) != 1 {
-		return ErrUserWrongIDOrPassword
-	}
-	return nil
-}
-
-// Update ユーザー情報をデータベースに適用
-func (user *User) Update() error {
-	if err := user.Validate(); err != nil {
-		return err
-	}
-	if _, err := db.Id(user.ID).UseBool().Update(user); err != nil {
-		return fmt.Errorf("Failed to update user: %v", err)
-	}
-
-	return nil
-}
-
-// UpdateIconID ユーザーのアイコンを更新する
-func (user *User) UpdateIconID(ID string) error {
-	user.Icon = ID
-	return user.Update()
-}
-
-// UpdateDisplayName ユーザーの表示名を変更する
-func (user *User) UpdateDisplayName(name string) error {
-	user.DisplayName = name
-	return user.Update()
 }
 
 // GetLastOnline ユーザーの最終オンライン日時を取得します
@@ -197,22 +82,138 @@ func (user *User) IsOnline() bool {
 	return IsUserOnline(user.ID)
 }
 
+// CreateUser ユーザーを作成します
+func CreateUser(name, email, password string, role gorbac.Role) (*User, error) {
+	salt := generateSalt()
+	user := &User{
+		ID:       CreateUUID(),
+		Name:     name,
+		Email:    email,
+		Password: hex.EncodeToString(hashPassword(password, salt)),
+		Salt:     hex.EncodeToString(salt),
+		Status:   1, //TODO 状態管理
+		Bot:      false,
+		Role:     role.ID(),
+	}
+
+	if err := user.Validate(); err != nil {
+		return nil, err
+	}
+
+	iconID, err := GenerateIcon(user.Name)
+	if err != nil {
+		return nil, err
+	}
+	user.Icon = iconID
+
+	if err := db.Create(user).Error; err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+// GetUser IDでユーザーの構造体を取得する
+func GetUser(userID uuid.UUID) (*User, error) {
+	user := &User{}
+	if err := db.Where(User{ID: userID.String()}).Take(user).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return user, nil
+}
+
+// GetUserByName nameでユーザーを取得します
+func GetUserByName(name string) (*User, error) {
+	if len(name) == 0 {
+		return nil, ErrNotFound
+	}
+	user := &User{}
+	if err := db.Where(User{Name: name}).Take(user).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return user, nil
+}
+
+// GetUsers ユーザーの一覧の取得
+func GetUsers() (users []*User, err error) {
+	err = db.Find(&users).Error
+	return
+}
+
+// ChangeUserPassword ユーザーのパスワードを変更します
+func ChangeUserPassword(userID uuid.UUID, password string) error {
+	salt := generateSalt()
+	return db.Model(User{ID: userID.String()}).Updates(map[string]interface{}{
+		"salt":     hex.EncodeToString(salt),
+		"password": hex.EncodeToString(hashPassword(password, salt)),
+	}).Error
+}
+
+// ChangeUserIcon ユーザーのアイコンを変更します
+func ChangeUserIcon(userID, fileID uuid.UUID) error {
+	return db.Model(User{ID: userID.String()}).Update("icon", fileID.String()).Error
+}
+
+// ChangeUserDisplayName ユーザーの表示名を変更します
+func ChangeUserDisplayName(userID uuid.UUID, displayName string) error {
+	if utf8.RuneCountInString(displayName) > 64 {
+		return errors.New("displayName must be <=64 characters")
+	}
+	return db.Model(User{ID: userID.String()}).Update("display_name", displayName).Error
+}
+
+// ChangeUserDisplayName ユーザーのTwitterIDを変更します
+func ChangeUserTwitterID(userID uuid.UUID, twitterID string) error {
+	if err := validator.ValidateVar(twitterID, "twitterid"); err != nil {
+		return err
+	}
+	return db.Model(User{ID: userID.String()}).Update("twitter_id", twitterID).Error
+}
+
 // UpdateUserLastOnline ユーザーの最終オンライン日時を更新します
 func UpdateUserLastOnline(id string, time time.Time) (err error) {
-	_, err = db.ID(id).Update(&User{LastOnline: &time})
-	return err
+	return db.Model(User{ID: id}).Update("last_online", &time).Error
+}
+
+// AuthenticateUser ユーザー構造体とパスワードを照合します
+func AuthenticateUser(user *User, password string) error {
+	if user == nil {
+		return ErrUserWrongIDOrPassword
+	}
+	// Botはログイン不可
+	if user.Bot {
+		return ErrUserBotTryLogin
+	}
+
+	storedPassword, err := hex.DecodeString(user.Password)
+	if err != nil {
+		return err
+	}
+	salt, err := hex.DecodeString(user.Salt)
+	if err != nil {
+		return err
+	}
+
+	if subtle.ConstantTimeCompare(storedPassword, hashPassword(password, salt)) != 1 {
+		return ErrUserWrongIDOrPassword
+	}
+	return nil
 }
 
 func hashPassword(pass string, salt []byte) []byte {
 	return pbkdf2.Key([]byte(pass), salt, 65536, 64, sha512.New)[:]
 }
 
-func generateSalt() ([]byte, error) {
+func generateSalt() []byte {
 	salt := make([]byte, 64)
-	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
-		return nil, err
-	}
-	return salt, nil
+	io.ReadFull(rand.Reader, salt)
+	return salt
 }
 
 // GenerateIcon svgアイコンを生成してそのファイルIDを返します

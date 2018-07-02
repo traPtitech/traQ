@@ -33,7 +33,7 @@ func TestCreateMessage(t *testing.T) {
 func TestUpdateMessage(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	m := mustMakeMessage(t, user.ID, channel.ID)
+	m := mustMakeMessage(t, user.GetUID(), channel.GetCID())
 
 	assert.Error(UpdateMessage(m.GetID(), ""))
 	assert.NoError(UpdateMessage(m.GetID(), "new message"))
@@ -47,7 +47,7 @@ func TestUpdateMessage(t *testing.T) {
 func TestDeleteMessage(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	m := mustMakeMessage(t, user.ID, channel.ID)
+	m := mustMakeMessage(t, user.GetUID(), channel.GetCID())
 
 	if assert.NoError(DeleteMessage(m.GetID())) {
 		_, err := GetMessageByID(m.GetID())
@@ -59,7 +59,7 @@ func TestGetMessagesByChannelID(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
 	for i := 0; i < 10; i++ {
-		mustMakeMessage(t, user.ID, channel.ID)
+		mustMakeMessage(t, user.GetUID(), channel.GetCID())
 	}
 
 	r, err := GetMessagesByChannelID(channel.GetCID(), 0, 0)
@@ -76,7 +76,7 @@ func TestGetMessagesByChannelID(t *testing.T) {
 func TestGetMessageByID(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	m := mustMakeMessage(t, user.ID, channel.ID)
+	m := mustMakeMessage(t, user.GetUID(), channel.GetCID())
 
 	r, err := GetMessageByID(m.GetID())
 	if assert.NoError(err) {

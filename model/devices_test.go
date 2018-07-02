@@ -1,7 +1,6 @@
 package model
 
 import (
-	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -124,12 +123,12 @@ func TestGetDevices(t *testing.T) {
 		require.NoError(err)
 	}
 
-	devs, err := GetDevices(uuid.FromStringOrNil(id1))
+	devs, err := GetDevices(id1)
 	if assert.NoError(err) {
 		assert.Len(devs, 2)
 	}
 
-	devs, err = GetDevices(uuid.FromStringOrNil(id2))
+	devs, err = GetDevices(id2)
 	if assert.NoError(err) {
 		assert.Len(devs, 1)
 	}
@@ -185,12 +184,12 @@ func TestGetDeviceIds(t *testing.T) {
 		require.NoError(err)
 	}
 
-	devs, err := GetDeviceIDs(uuid.FromStringOrNil(id1))
+	devs, err := GetDeviceIDs(id1)
 	if assert.NoError(err) {
 		assert.Len(devs, 2)
 	}
 
-	devs, err = GetDeviceIDs(uuid.FromStringOrNil(id2))
+	devs, err = GetDeviceIDs(id2)
 	if assert.NoError(err) {
 		assert.Len(devs, 1)
 	}

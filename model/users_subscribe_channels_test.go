@@ -26,7 +26,7 @@ func TestUnsubscribeChannel(t *testing.T) {
 	assert, require, user1, channel1 := beforeTest(t)
 
 	user2 := mustMakeUser(t, "user2")
-	channel2 := mustMakeChannel(t, user1.ID, "test")
+	channel2 := mustMakeChannel(t, user1.GetUID(), "test")
 
 	require.NoError(SubscribeChannel(user1.GetUID(), channel1.GetCID()))
 	require.NoError(SubscribeChannel(user1.GetUID(), channel2.GetCID()))
@@ -53,7 +53,7 @@ func TestGetSubscribingUser(t *testing.T) {
 	assert, require, user1, channel1 := beforeTest(t)
 
 	user2 := mustMakeUser(t, "user2")
-	channel2 := mustMakeChannel(t, user1.ID, "test")
+	channel2 := mustMakeChannel(t, user1.GetUID(), "test")
 
 	require.NoError(SubscribeChannel(user1.GetUID(), channel1.GetCID()))
 	require.NoError(SubscribeChannel(user1.GetUID(), channel2.GetCID()))
@@ -74,7 +74,7 @@ func TestGetSubscribedChannels(t *testing.T) {
 	assert, require, user1, channel1 := beforeTest(t)
 
 	user2 := mustMakeUser(t, "user2")
-	channel2 := mustMakeChannel(t, user1.ID, "test")
+	channel2 := mustMakeChannel(t, user1.GetUID(), "test")
 
 	require.NoError(SubscribeChannel(user1.GetUID(), channel1.GetCID()))
 	require.NoError(SubscribeChannel(user1.GetUID(), channel2.GetCID()))

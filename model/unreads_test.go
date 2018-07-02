@@ -15,7 +15,7 @@ func TestUnreadTableName(t *testing.T) {
 
 func TestSetMessageUnread(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
-	testMessage := mustMakeMessage(t, user.ID, channel.ID)
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
 
 	assert.NoError(SetMessageUnread(user.GetUID(), testMessage.GetID()))
 }
@@ -24,7 +24,7 @@ func TestGetUnreadMessagesByUserID(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
 	for i := 0; i < 10; i++ {
-		mustMakeMessageUnread(t, user.ID, mustMakeMessage(t, user.ID, channel.ID).ID)
+		mustMakeMessageUnread(t, user.GetUID(), mustMakeMessage(t, user.GetUID(), channel.GetCID()).GetID())
 	}
 
 	if unreads, err := GetUnreadMessagesByUserID(user.GetUID()); assert.NoError(err) {
@@ -38,11 +38,11 @@ func TestGetUnreadMessagesByUserID(t *testing.T) {
 func TestDeleteUnreadsByMessageID(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	testMessage := mustMakeMessage(t, user.ID, channel.ID)
-	testMessage2 := mustMakeMessage(t, user.ID, channel.ID)
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	testMessage2 := mustMakeMessage(t, user.GetUID(), channel.GetCID())
 	for i := 0; i < 10; i++ {
-		mustMakeMessageUnread(t, mustMakeUser(t, "test"+strconv.Itoa(i*2)).ID, testMessage.ID)
-		mustMakeMessageUnread(t, mustMakeUser(t, "test"+strconv.Itoa(i*2+1)).ID, testMessage2.ID)
+		mustMakeMessageUnread(t, mustMakeUser(t, "test"+strconv.Itoa(i*2)).GetUID(), testMessage.GetID())
+		mustMakeMessageUnread(t, mustMakeUser(t, "test"+strconv.Itoa(i*2+1)).GetUID(), testMessage2.GetID())
 	}
 
 	if assert.NoError(DeleteUnreadsByMessageID(testMessage.GetID())) {
@@ -60,14 +60,14 @@ func TestDeleteUnreadsByMessageID(t *testing.T) {
 func TestDeleteUnreadsByChannelID(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	creatorID := mustMakeUser(t, "creator").ID
+	creator := mustMakeUser(t, "creator")
 
-	testMessage := mustMakeMessage(t, creatorID, channel.ID)
-	mustMakeMessageUnread(t, user.ID, testMessage.ID)
+	testMessage := mustMakeMessage(t, creator.GetUID(), channel.GetCID())
+	mustMakeMessageUnread(t, user.GetUID(), testMessage.GetID())
 
-	testChannel := mustMakeChannel(t, creatorID, "-unreads")
-	testMessage2 := mustMakeMessage(t, creatorID, testChannel.ID)
-	mustMakeMessageUnread(t, user.ID, testMessage2.ID)
+	testChannel := mustMakeChannel(t, creator.GetUID(), "-unreads")
+	testMessage2 := mustMakeMessage(t, creator.GetUID(), testChannel.GetCID())
+	mustMakeMessageUnread(t, user.GetUID(), testMessage2.GetID())
 
 	if assert.NoError(DeleteUnreadsByChannelID(channel.GetCID(), user.GetUID())) {
 		count := 0
