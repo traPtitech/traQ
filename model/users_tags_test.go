@@ -1,12 +1,11 @@
 package model
 
 import (
+	"github.com/satori/go.uuid"
 	"strconv"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestUsersTag_TableName(t *testing.T) {
@@ -14,95 +13,134 @@ func TestUsersTag_TableName(t *testing.T) {
 	assert.Equal(t, "users_tags", (&UsersTag{}).TableName())
 }
 
-func TestUsersTag_Create(t *testing.T) {
+func TestAddUserTag(t *testing.T) {
 	assert, _, user, _ := beforeTest(t)
 
-	ut := &UsersTag{UserID: user.ID}
-	assert.NoError(ut.Create("全強"))
-	assert.Error((&UsersTag{}).Create(""))
-	assert.Error((&UsersTag{}).Create("aaa"))
+	tag := mustMakeTag(t, "test")
+	assert.NoError(AddUserTag(user.GetUID(), tag.GetID()))
 }
 
-func TestUsersTag_Update(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
+func TestChangeUserTagLock(t *testing.T) {
+	assert, require, user, _ := beforeTest(t)
 
-	tag := &UsersTag{
-		UserID: user.ID,
+	tag := mustMakeTag(t, "test")
+	require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
+
+	if assert.NoError(ChangeUserTagLock(user.GetUID(), tag.GetID(), true)) {
+		tag, err := GetUserTag(user.GetUID(), tag.GetID())
+		require.NoError(err)
+		assert.True(tag.IsLocked)
 	}
-	require.NoError(t, tag.Create("pro"))
 
-	tag.IsLocked = true
-	assert.NoError(tag.Update())
+	if assert.NoError(ChangeUserTagLock(user.GetUID(), tag.GetID(), false)) {
+		tag, err := GetUserTag(user.GetUID(), tag.GetID())
+		require.NoError(err)
+		assert.False(tag.IsLocked)
+	}
 }
 
-func TestUsersTag_Delete(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
+func TestDeleteUserTag(t *testing.T) {
+	assert, require, user, _ := beforeTest(t)
 
-	tag := &UsersTag{UserID: user.ID}
-	require.NoError(t, tag.Create("全強"))
-	assert.NoError(tag.Delete())
+	tag := mustMakeTag(t, "test")
+	require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
+	tag2 := mustMakeTag(t, "test2")
+	require.NoError(AddUserTag(user.GetUID(), tag2.GetID()))
+
+	if assert.NoError(DeleteUserTag(user.GetUID(), tag.GetID())) {
+		_, err := GetUserTag(user.GetUID(), tag.GetID())
+		assert.Error(err)
+	}
+
+	_, err := GetUserTag(user.GetUID(), tag2.GetID())
+	assert.NoError(err)
 }
 
 func TestGetUserTagsByUserID(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
+	assert, require, user, _ := beforeTest(t)
 
-	// 正常系
-	var tags [10]*UsersTag
-	for i := 0; i < len(tags); i++ {
-		tags[i] = &UsersTag{
-			UserID: user.ID,
-		}
-		time.Sleep(1500 * time.Millisecond)
-		require.NoError(t, tags[i].Create(strconv.Itoa(i)))
+	for i := 0; i < 10; i++ {
+		tag := mustMakeTag(t, "test"+strconv.Itoa(i))
+		require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
 	}
 
-	r, err := GetUserTagsByUserID(user.ID)
+	tags, err := GetUserTagsByUserID(user.GetUID())
 	if assert.NoError(err) {
-		for i, v := range r {
-			assert.Equal(tags[i].TagID, v.TagID)
+		for i, v := range tags {
+			if assert.NotZero(v.Tag) {
+				assert.Equal("test"+strconv.Itoa(i), v.Tag.Name)
+			}
 		}
 	}
 
-	// 異常系
-	notExistID := CreateUUID()
-	empty, err := GetUserTagsByUserID(notExistID)
+	tags, err = GetUserTagsByUserID(uuid.Nil)
 	if assert.NoError(err) {
-		assert.Nil(empty)
+		assert.Len(tags, 0)
 	}
 }
 
-func TestGetTag(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
+func TestGetUserTag(t *testing.T) {
+	assert, require, user, _ := beforeTest(t)
+	tag := mustMakeTag(t, "test")
+	require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
 
-	text := "test"
-	// 正常系
-	tag := &UsersTag{
-		UserID: user.ID,
-	}
-	require.NoError(t, tag.Create(text))
-
-	r, err := GetTag(tag.UserID, tag.TagID)
+	ut, err := GetUserTag(user.GetUID(), tag.GetID())
 	if assert.NoError(err) {
-		assert.Equal(tag.UserID, r.UserID)
-		assert.Equal(tag.TagID, r.TagID)
+		assert.Equal(user.ID, ut.UserID)
+		assert.Equal(tag.ID, ut.TagID)
+		assert.False(ut.IsLocked)
+		assert.NotZero(ut.CreatedAt)
+		assert.NotZero(ut.UpdatedAt)
+		if assert.NotZero(ut.Tag) {
+			assert.Equal("test", ut.Tag.Name)
+			assert.Equal(tag.ID, ut.Tag.ID)
+			assert.False(ut.Tag.Restricted)
+			assert.Empty(ut.Tag.Type)
+			assert.NotZero(ut.Tag.CreatedAt)
+			assert.NotZero(ut.Tag.UpdatedAt)
+		}
 	}
 
-	// 異常系
-	_, err = GetTag(user.ID, CreateUUID())
+	_, err = GetUserTag(user.GetUID(), uuid.Nil)
 	assert.Error(err)
 }
 
-func TestGetUserIDsByTags(t *testing.T) {
-	assert, _, _, _ := beforeTest(t)
-	text := "tagTest"
+func TestGetUserIDsByTag(t *testing.T) {
+	assert, require, _, _ := beforeTest(t)
 
-	for i := 0; i < 5; i++ {
-		u := mustMakeUser(t, "tagTest-"+strconv.Itoa(i))
-		tag := &UsersTag{UserID: u.ID}
-		require.NoError(t, tag.Create(text))
+	tag := mustMakeTag(t, "test")
+	for i := 0; i < 10; i++ {
+		user := mustMakeUser(t, "tagTest-"+strconv.Itoa(i))
+		require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
 	}
 
-	IDs, err := GetUserIDsByTags([]string{text})
-	assert.NoError(err)
-	assert.Len(IDs, 5)
+	ids, err := GetUserIDsByTag("test")
+	if assert.NoError(err) {
+		assert.Len(ids, 10)
+	}
+
+	ids, err = GetUserIDsByTag("nothing")
+	if assert.NoError(err) {
+		assert.Len(ids, 0)
+	}
+}
+
+func TestGetUserIDsByTagID(t *testing.T) {
+	assert, require, _, _ := beforeTest(t)
+
+	tag := mustMakeTag(t, "test")
+	for i := 0; i < 10; i++ {
+		user := mustMakeUser(t, "tagTest-"+strconv.Itoa(i))
+		require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
+	}
+
+	ids, err := GetUserIDsByTagID(tag.GetID())
+	if assert.NoError(err) {
+		assert.Len(ids, 10)
+	}
+
+	ids, err = GetUserIDsByTagID(uuid.Nil)
+	if assert.NoError(err) {
+		assert.Len(ids, 0)
+	}
 }

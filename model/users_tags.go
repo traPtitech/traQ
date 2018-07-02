@@ -1,21 +1,21 @@
 package model
 
 import (
-	"fmt"
+	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/utils/validator"
 	"time"
 
-	"github.com/go-xorm/builder"
 	"github.com/satori/go.uuid"
 )
 
 // UsersTag userTagの構造体
 type UsersTag struct {
-	UserID    string    `xorm:"char(36) pk"      validate:"uuid,required"`
-	TagID     string    `xorm:"char(36) pk"      validate:"uuid,required"`
-	IsLocked  bool      `xorm:"bool not null"`
-	CreatedAt time.Time `xorm:"created not null"`
-	UpdatedAt time.Time `xorm:"updated not null"`
+	UserID    string `gorm:"type:char(36);primary_key"      validate:"uuid,required"`
+	TagID     string `gorm:"type:char(36);primary_key"      validate:"uuid,required"`
+	Tag       Tag    `gorm:"association_autoupdate:false;association_autocreate:false"`
+	IsLocked  bool
+	CreatedAt time.Time `gorm:"precision:6;index"`
+	UpdatedAt time.Time `gorm:"precision:6"`
 }
 
 // TableName DBの名前を指定
@@ -28,90 +28,68 @@ func (ut *UsersTag) Validate() error {
 	return validator.ValidateStruct(ut)
 }
 
-// Create DBに新規タグを追加します
-func (ut *UsersTag) Create(name string) error {
-	if ut.UserID == "" {
-		return ErrInvalidParam
+// AddUserTag ユーザーにタグを付与します
+func AddUserTag(userID, tagID uuid.UUID) error {
+	ut := &UsersTag{
+		UserID: userID.String(),
+		TagID:  tagID.String(),
 	}
-
-	t := &Tag{
-		Name: name,
-	}
-	has, err := t.Exists()
-	if err != nil {
-		return err
-	}
-	if !has {
-		if err := t.Create(); err != nil {
-			return err
-		}
-	}
-
-	ut.TagID = t.ID
-	ut.IsLocked = false
-	if _, err := db.Insert(ut); err != nil {
-		return err
-	}
-	return nil
+	return db.Create(ut).Error
 }
 
-// Update データの更新をします
-func (ut *UsersTag) Update() (err error) {
-	_, err = db.Where("user_id = ? AND tag_id = ?", ut.UserID, ut.TagID).UseBool().Update(ut)
-	return
+// ChangeUserTagLock ユーザーのタグのロック状態を変更します
+func ChangeUserTagLock(userID, tagID uuid.UUID, locked bool) error {
+	return db.Where(UsersTag{UserID: userID.String(), TagID: tagID.String()}).Update("is_locked", locked).Error
 }
 
-// Delete データを消去します。正しく消せた場合はレシーバはnilになります
-func (ut *UsersTag) Delete() (err error) {
-	_, err = db.Delete(ut)
-	return
+// DeleteUserTag ユーザーからタグを削除します
+func DeleteUserTag(userID, tagID uuid.UUID) error {
+	return db.Where(UsersTag{UserID: userID.String(), TagID: tagID.String()}).Delete(UsersTag{}).Error
 }
 
 // GetUserTagsByUserID userIDに紐づくtagのリストを返します
-func GetUserTagsByUserID(userID string) (tags []*UsersTag, err error) {
-	err = db.Where("user_id = ?", userID).Asc("created_at").Find(&tags)
+func GetUserTagsByUserID(userID uuid.UUID) (tags []*UsersTag, err error) {
+	err = db.Preload("Tag").Where("user_id = ?", userID.String()).Order("created_at").Find(&tags).Error
 	return
 }
 
-// GetTag userIDとtagIDで一意に定まるタグを返します
-func GetTag(userID, tagID string) (*UsersTag, error) {
-	if _, err := GetUser(userID); err != nil {
+// GetUserTag userIDとtagIDで一意に定まるタグを返します
+func GetUserTag(userID, tagID uuid.UUID) (*UsersTag, error) {
+	ut := &UsersTag{}
+	if err := db.Preload("Tag").Where(UsersTag{UserID: userID.String(), TagID: tagID.String()}).Take(ut).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
 		return nil, err
-	}
-
-	if _, err := GetTagByID(tagID); err != nil {
-		return nil, err
-	}
-
-	var ut = &UsersTag{}
-	has, err := db.Where("user_id = ? AND tag_id = ?", userID, tagID).Get(ut)
-	if err != nil {
-		return nil, err
-	}
-	if !has {
-		return nil, ErrNotFound
 	}
 	return ut, nil
 }
 
-// GetUserIDsByTags 指定したタグを持った全ユーザーのUUIDを返します
-func GetUserIDsByTags(tags []string) ([]uuid.UUID, error) {
+// GetUserIDsByTag 指定したタグを持った全ユーザーのUUIDを返します
+func GetUserIDsByTag(tag string) ([]uuid.UUID, error) {
 	var arr []string
-
-	if err := db.Table(&UsersTag{}).Join("INNER", "tags", "users_tags.tag_id = tags.id").Where(builder.In("tags.name", tags)).Cols("user_id").Find(&arr); err != nil {
-		return nil, fmt.Errorf("failed to get user ids by tag: %v", err)
+	err := db.
+		Model(UsersTag{}).
+		Joins("INNER JOIN tags ON users_tags.tag_id = tags.id AND tags.name = ?", tag).
+		Pluck("users_tags.user_id", &arr).
+		Error
+	if err != nil {
+		return nil, err
 	}
 
-	result := make([]uuid.UUID, len(arr))
-	for i, v := range arr {
-		result[i] = uuid.FromStringOrNil(v)
-	}
-
-	return result, nil
+	return convertStringSliceToUUIDSlice(arr), nil
 }
 
 // GetUserIDsByTagID 指定したタグIDのタグを持った全ユーザーのIDを返します
-func GetUserIDsByTagID(tagID string) (arr []string, err error) {
-	err = db.Table(&UsersTag{}).Join("INNER", "tags", "users_tags.tag_id = tags.id").Where("tags.id = ?", tagID).Cols("user_id").Find(&arr)
-	return
+func GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, error) {
+	var arr []string
+	err := db.
+		Model(UsersTag{}).
+		Where("tag_id = ?", tagID.String()).
+		Pluck("user_id", &arr).
+		Error
+	if err != nil {
+		return nil, err
+	}
+	return convertStringSliceToUUIDSlice(arr), nil
 }

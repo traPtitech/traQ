@@ -89,3 +89,21 @@ func GetAllTags() (result []*Tag, err error) {
 	err = db.Find(&result).Error
 	return
 }
+
+// GetOrCreateTagByName 引数のタグを取得するか、生成したものを返します。
+func GetOrCreateTagByName(name string) (*Tag, error) {
+	if len(name) == 0 {
+		return nil, ErrNotFound
+	}
+	tag := &Tag{}
+	if err := db.Where(Tag{Name: name}).Take(tag).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			tag.Name = name
+			if err = db.Create(tag).Error; err == nil {
+				return tag, nil
+			}
+		}
+		return nil, err
+	}
+	return tag, nil
+}

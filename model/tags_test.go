@@ -113,3 +113,28 @@ func TestGetAllTags(t *testing.T) {
 		assert.Len(tags, 4)
 	}
 }
+
+func TestGetOrCreateTagByName(t *testing.T) {
+	assert, require, _, _ := beforeTest(t)
+
+	tag, err := CreateTag("tagA", false, "")
+	require.NoError(err)
+
+	r, err := GetOrCreateTagByName("tagA")
+	if assert.NoError(err) {
+		assert.Equal(tag.ID, r.ID)
+	}
+
+	r, err = GetOrCreateTagByName("tagB")
+	if assert.NoError(err) {
+		assert.NotEmpty(tag.ID)
+		assert.Equal("tagB", tag.Name)
+		assert.False(tag.Restricted)
+		assert.Empty(tag.Type)
+		assert.NotZero(tag.CreatedAt)
+		assert.NotZero(tag.UpdatedAt)
+	}
+
+	_, err = GetOrCreateTagByName("")
+	assert.Error(err)
+}
