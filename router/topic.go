@@ -9,13 +9,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// TopicForResponse レスポンス用構造体
-type TopicForResponse struct {
-	ChannelID string `json:"channelId"`
-	Name      string `json:"name"`
-	Text      string `json:"text"`
-}
-
 // GetTopic GET /channels/{channelID}/topic
 func GetTopic(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
@@ -29,26 +22,24 @@ func GetTopic(c echo.Context) error {
 		}
 	}
 
-	topic := TopicForResponse{
-		ChannelID: ch.ID,
-		Name:      ch.Name,
-		Text:      ch.Topic,
-	}
-	return c.JSON(http.StatusOK, topic)
+	return c.JSON(http.StatusOK, map[string]string{
+		"text": ch.Topic,
+	})
 }
 
 // PutTopic PUT /channels/{channelID}/topic
 func PutTopic(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+	user := c.Get("user").(*model.User)
 
-	type putTopic struct {
+	req := struct {
 		Text string `json:"text"`
+	}{}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	requestBody := putTopic{}
-	c.Bind(&requestBody)
 
 	channelID := c.Param("channelID")
-	ch, err := validateChannelID(channelID, userID)
+	ch, err := validateChannelID(channelID, user.ID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -58,23 +49,15 @@ func PutTopic(c echo.Context) error {
 		}
 	}
 
-	ch.Topic = requestBody.Text
-	ch.UpdaterID = userID
-
-	if err := ch.Update(); err != nil {
+	if err := model.UpdateChannelTopic(ch.GetCID(), req.Text, user.GetUID()); err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred when channel model update.")
 	}
 
-	topic := TopicForResponse{
-		ChannelID: ch.ID,
-		Name:      ch.Name,
-		Text:      ch.Topic,
-	}
-
 	if ch.IsPublic {
-		go event.Emit(event.ChannelUpdated, &event.ChannelEvent{ID: channelID})
+		go event.Emit(event.ChannelUpdated, &event.ChannelEvent{ID: ch.ID})
 	} else {
-		users, err := model.GetPrivateChannelMembers(channelID)
+		users, err := model.GetPrivateChannelMembers(ch.ID)
 		if err != nil {
 			c.Logger().Error(err)
 		}
@@ -82,8 +65,8 @@ func PutTopic(c echo.Context) error {
 		for i, v := range users {
 			ids[i] = uuid.Must(uuid.FromString(v))
 		}
-		go event.Emit(event.ChannelUpdated, &event.PrivateChannelEvent{UserIDs: ids, ChannelID: uuid.Must(uuid.FromString(channelID))})
+		go event.Emit(event.ChannelUpdated, &event.PrivateChannelEvent{UserIDs: ids, ChannelID: ch.GetCID()})
 	}
 
-	return c.JSON(http.StatusOK, topic)
+	return c.NoContent(http.StatusNoContent)
 }
