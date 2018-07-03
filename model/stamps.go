@@ -23,6 +23,11 @@ func (*Stamp) TableName() string {
 	return "stamps"
 }
 
+// GetID スタンプのUUIDを返します
+func (s *Stamp) GetID() uuid.UUID {
+	return uuid.Must(uuid.FromString(s.ID))
+}
+
 // BeforeCreate db.Create時に自動的に呼ばれます
 func (s *Stamp) BeforeCreate(scope *gorm.Scope) error {
 	s.ID = CreateUUID()
@@ -69,9 +74,9 @@ func CreateStamp(name, fileID, userID string) (*Stamp, error) {
 }
 
 // GetStamp 指定したIDのスタンプを取得します
-func GetStamp(id string) (*Stamp, error) {
+func GetStamp(id uuid.UUID) (*Stamp, error) {
 	s := &Stamp{}
-	if err := db.Where(Stamp{ID: id}).Take(s).Error; err != nil {
+	if err := db.Where(Stamp{ID: id.String()}).Take(s).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, ErrNotFound
 		}
@@ -81,8 +86,8 @@ func GetStamp(id string) (*Stamp, error) {
 }
 
 // DeleteStamp 指定したIDのスタンプを削除します
-func DeleteStamp(id string) error {
-	return db.Delete(Stamp{ID: id}).Error
+func DeleteStamp(id uuid.UUID) error {
+	return db.Delete(Stamp{ID: id.String()}).Error
 }
 
 // GetAllStamps 全てのスタンプを取得します

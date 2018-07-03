@@ -16,7 +16,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 )
@@ -26,7 +25,7 @@ const (
 	stampMaxHeight = 128
 )
 
-// GetStamps : GET /stamps
+// GetStamps GET /stamps
 func GetStamps(c echo.Context) error {
 	stamps, err := model.GetAllStamps()
 	if err != nil {
@@ -37,7 +36,7 @@ func GetStamps(c echo.Context) error {
 	return c.JSON(http.StatusOK, stamps)
 }
 
-// PostStamp : POST /stamps
+// PostStamp POST /stamps
 func PostStamp(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 
@@ -171,24 +170,17 @@ func PostStamp(c echo.Context) error {
 	// スタンプ作成
 	s, err := model.CreateStamp(name, file.ID, userID)
 	if err != nil {
-		switch err {
-		case model.ErrStampInvalidName: //起こらないはず
-			return echo.NewHTTPError(http.StatusBadRequest, err)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	go event.Emit(event.StampCreated, &event.StampEvent{ID: uuid.Must(uuid.FromString(s.ID))})
 	return c.NoContent(http.StatusCreated)
 }
 
-// GetStamp : GET /stamps/:stampID
+// GetStamp GET /stamps/:stampID
 func GetStamp(c echo.Context) error {
-	stampID := c.Param("stampID")
-
-	stamp, err := model.GetStamp(stampID)
+	stamp, err := model.GetStamp(uuid.FromStringOrNil(c.Param("stampID")))
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -202,14 +194,12 @@ func GetStamp(c echo.Context) error {
 	return c.JSON(http.StatusOK, stamp)
 }
 
-// PatchStamp : PATCH /stamps/:stampID
+// PatchStamp PATCH /stamps/:stampID
 func PatchStamp(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 	r := c.Get("rbac").(*rbac.RBAC)
-	stampID := c.Param("stampID")
-
 	// スタンプの存在確認
-	stamp, err := model.GetStamp(stampID)
+	stamp, err := model.GetStamp(uuid.FromStringOrNil(c.Param("stampID")))
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -225,6 +215,7 @@ func PatchStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden, "you are not permitted to edit stamp created by others")
 	}
 
+	data := model.Stamp{}
 	// 名前変更
 	name := c.FormValue("name")
 	if len(name) > 0 {
@@ -236,7 +227,7 @@ func PatchStamp(c echo.Context) error {
 		if !validator.NameRegex.MatchString(name) {
 			return echo.NewHTTPError(http.StatusBadRequest, "name must be 1-32 characters of a-zA-Z0-9_-")
 		}
-		stamp.Name = name
+		data.Name = name
 	}
 
 	// 画像変更
@@ -357,29 +348,24 @@ func PatchStamp(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
-		stamp.FileID = file.ID
+		data.FileID = file.ID
 	} else if err != http.ErrMissingFile {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	// 更新
-	if err := stamp.Update(); err != nil {
-		switch err {
-		case model.ErrStampInvalidName: //起こらないはず
-			return echo.NewHTTPError(http.StatusBadRequest, err)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if err := model.UpdateStamp(stamp.GetID(), data); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	go event.Emit(event.StampModified, &event.StampEvent{ID: uuid.Must(uuid.FromString(stamp.ID))})
 	return c.NoContent(http.StatusNoContent)
 }
 
-// DeleteStamp : DELETE /stamps/:stampID
+// DeleteStamp DELETE /stamps/:stampID
 func DeleteStamp(c echo.Context) error {
-	stampID := c.Param("stampID")
+	stampID := uuid.FromStringOrNil(c.Param("stampID"))
 
 	stamp, err := model.GetStamp(stampID)
 	if err != nil {
@@ -401,10 +387,10 @@ func DeleteStamp(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// GetMessageStamps : GET /messages/:messageID/stamps
+// GetMessageStamps GET /messages/:messageID/stamps
 func GetMessageStamps(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
-	messageID := c.Param("messageID")
+	user := c.Get("user").(*model.User)
+	messageID := uuid.FromStringOrNil(c.Param("messageID"))
 
 	// Privateチャンネルの確認
 	channel, err := model.GetChannelByMessageID(messageID)
@@ -418,10 +404,12 @@ func GetMessageStamps(c echo.Context) error {
 		}
 	}
 	if !channel.IsPublic {
-		if ok, err := channel.Exists(userID); err != nil {
+		ok, err := model.IsUserPrivateChannelMember(channel.GetCID(), user.GetUID())
+		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
-		} else if !ok {
+		}
+		if !ok {
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
 	}
@@ -435,17 +423,17 @@ func GetMessageStamps(c echo.Context) error {
 	return c.JSON(http.StatusOK, stamps)
 }
 
-// PostMessageStamp : POST /messages/:messageID/stamps/:stampID
+// PostMessageStamp POST /messages/:messageID/stamps/:stampID
 func PostMessageStamp(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 	messageID := c.Param("messageID")
 	stampID := c.Param("stampID")
 
 	// メッセージ存在の確認
-	message, err := model.GetMessageByID(messageID)
+	message, err := model.GetMessageByID(uuid.FromStringOrNil(messageID))
 	if err != nil {
 		switch err {
-		case model.ErrNotFound, model.ErrMessageAlreadyDeleted:
+		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
 			c.Logger().Error(err)
@@ -454,7 +442,7 @@ func PostMessageStamp(c echo.Context) error {
 	}
 
 	// Privateチャンネルの確認
-	channel, err := model.GetChannelByID(user.ID, message.ChannelID)
+	channel, err := model.GetChannelWithUserID(user.GetUID(), message.GetCID())
 	if err != nil {
 		switch err {
 		case model.ErrNotFoundOrForbidden:
@@ -465,21 +453,30 @@ func PostMessageStamp(c echo.Context) error {
 		}
 	}
 	if !channel.IsPublic {
-		if ok, err := channel.Exists(user.ID); err != nil {
+		ok, err := model.IsUserPrivateChannelMember(channel.GetCID(), user.GetUID())
+		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
-		} else if !ok {
+		}
+		if !ok {
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
 	}
 
-	ms, err := model.AddStampToMessage(messageID, stampID, user.ID)
+	// スタンプの存在を確認
+	stamp, err := model.GetStamp(uuid.FromStringOrNil(stampID))
 	if err != nil {
-		if errSQL, ok := err.(*mysql.MySQLError); ok {
-			if errSQL.Number == 1452 { //外部キー制約
-				return echo.NewHTTPError(http.StatusBadRequest)
-			}
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
+	}
+
+	ms, err := model.AddStampToMessage(message.GetID(), stamp.GetID(), user.GetUID())
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -495,17 +492,17 @@ func PostMessageStamp(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// DeleteMessageStamp : DELETE /messages/:messageID/stamps/:stampID
+// DeleteMessageStamp DELETE /messages/:messageID/stamps/:stampID
 func DeleteMessageStamp(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 	messageID := c.Param("messageID")
 	stampID := c.Param("stampID")
 
 	// メッセージ存在の確認
-	message, err := model.GetMessageByID(messageID)
+	message, err := model.GetMessageByID(uuid.FromStringOrNil(messageID))
 	if err != nil {
 		switch err {
-		case model.ErrNotFound, model.ErrMessageAlreadyDeleted:
+		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
 			c.Logger().Error(err)
@@ -514,7 +511,7 @@ func DeleteMessageStamp(c echo.Context) error {
 	}
 
 	// Privateチャンネルの確認
-	channel, err := model.GetChannelByID(user.ID, message.ChannelID)
+	channel, err := model.GetChannelWithUserID(user.GetUID(), message.GetCID())
 	if err != nil {
 		switch err {
 		case model.ErrNotFoundOrForbidden:
@@ -525,20 +522,29 @@ func DeleteMessageStamp(c echo.Context) error {
 		}
 	}
 	if !channel.IsPublic {
-		if ok, err := channel.Exists(user.ID); err != nil {
+		ok, err := model.IsUserPrivateChannelMember(channel.GetCID(), user.GetUID())
+		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
-		} else if !ok {
+		}
+		if !ok {
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
 	}
 
-	if err := model.RemoveStampFromMessage(messageID, stampID, user.ID); err != nil {
-		if errSQL, ok := err.(*mysql.MySQLError); ok {
-			if errSQL.Number == 1452 { //外部キー制約
-				return echo.NewHTTPError(http.StatusBadRequest)
-			}
+	// スタンプの存在を確認
+	stamp, err := model.GetStamp(uuid.FromStringOrNil(stampID))
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
+	}
+
+	if err := model.RemoveStampFromMessage(message.GetID(), stamp.GetID(), user.GetUID()); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -554,9 +560,9 @@ func DeleteMessageStamp(c echo.Context) error {
 
 // GetMyStampHistory GET /users/me/stamp-history
 func GetMyStampHistory(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+	user := c.Get("user").(*model.User)
 
-	h, err := model.GetUserStampHistory(userID)
+	h, err := model.GetUserStampHistory(user.GetUID())
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)

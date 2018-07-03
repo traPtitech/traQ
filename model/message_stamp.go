@@ -27,17 +27,17 @@ type UserStampHistory struct {
 }
 
 // AddStampToMessage メッセージにスタンプを押します
-func AddStampToMessage(messageID, stampID, userID string) (*MessageStamp, error) {
+func AddStampToMessage(messageID, stampID, userID uuid.UUID) (*MessageStamp, error) {
 	err := db.
 		Set("gorm:insert_option", "ON DUPLICATE KEY UPDATE count = count + 1, updated_at = now()").
-		Create(&MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID, Count: 1}).
+		Create(&MessageStamp{MessageID: messageID.String(), StampID: stampID.String(), UserID: userID.String(), Count: 1}).
 		Error
 	if err != nil {
 		return nil, err
 	}
 
 	ms := &MessageStamp{}
-	err = db.Where(MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID}).Take(ms).Error
+	err = db.Where(MessageStamp{MessageID: messageID.String(), StampID: stampID.String(), UserID: userID.String()}).Take(ms).Error
 	if err != nil {
 		return nil, err
 	}
@@ -45,14 +45,14 @@ func AddStampToMessage(messageID, stampID, userID string) (*MessageStamp, error)
 }
 
 // RemoveStampFromMessage メッセージからスタンプを消します
-func RemoveStampFromMessage(messageID, stampID, userID string) error {
-	return db.Where(MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID}).Delete(MessageStamp{}).Error
+func RemoveStampFromMessage(messageID, stampID, userID uuid.UUID) error {
+	return db.Where(MessageStamp{MessageID: messageID.String(), StampID: stampID.String(), UserID: userID.String()}).Delete(MessageStamp{}).Error
 }
 
 // GetMessageStamps 指定したIDのメッセージのスタンプを取得します
-func GetMessageStamps(messageID string) (stamps []*MessageStamp, err error) {
+func GetMessageStamps(messageID uuid.UUID) (stamps []*MessageStamp, err error) {
 	err = db.
-		Joins("JOIN stamps ON messages_stamps.stamp_id = stamps.id AND messages_stamps.message_id = ? AND stamps.deleted_at IS NULL", messageID).
+		Joins("JOIN stamps ON messages_stamps.stamp_id = stamps.id AND messages_stamps.message_id = ?", messageID.String()).
 		Order("messages_stamps.updated_at").
 		Find(&stamps).
 		Error

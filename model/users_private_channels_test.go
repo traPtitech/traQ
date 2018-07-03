@@ -82,3 +82,25 @@ func TestGetPrivateChannelMembers(t *testing.T) {
 	assert.NoError(err)
 	assert.Len(member, 2)
 }
+
+func TestIsUserPrivatateChannelMember(t *testing.T) {
+	assert, _, user, _ := beforeTest(t)
+
+	user1 := mustMakeUser(t, "private-1")
+	user2 := mustMakeUser(t, "private-2")
+	channel := mustMakePrivateChannel(t, user1.GetUID(), user2.GetUID(), "privatechannel-1")
+
+	ok, err := IsUserPrivateChannelMember(channel.GetCID(), user1.GetUID())
+	if assert.NoError(err) {
+		assert.True(ok)
+	}
+	ok, err = IsUserPrivateChannelMember(channel.GetCID(), user2.GetUID())
+	if assert.NoError(err) {
+		assert.True(ok)
+	}
+	ok, err = IsUserPrivateChannelMember(channel.GetCID(), user.GetUID())
+	if assert.NoError(err) {
+		assert.False(ok)
+	}
+
+}
