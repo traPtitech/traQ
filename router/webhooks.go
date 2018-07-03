@@ -3,7 +3,6 @@ package router
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
@@ -186,16 +185,14 @@ func PostWebhook(c echo.Context) error {
 		return err
 	}
 
-	message := &model.Message{
-		UserID:    w.GetBotUserID().String(),
-		ChannelID: w.GetChannelID().String(),
-	}
+	text := ""
+	channelID := w.GetChannelID()
 	switch c.Request().Header.Get(echo.HeaderContentType) {
 	case echo.MIMETextPlain, echo.MIMETextPlainCharsetUTF8:
 		if b, err := ioutil.ReadAll(c.Request().Body); err == nil {
-			message.Text = string(b)
+			text = string(b)
 		}
-		if len(message.Text) == 0 {
+		if len(text) == 0 {
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
 
@@ -211,26 +208,29 @@ func PostWebhook(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
 		if len(req.ChannelID) == 36 {
-			message.ChannelID = req.ChannelID
+			channelID, err = uuid.FromString(req.ChannelID)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest)
+			}
+			_, err := model.GetChannelWithUserID(w.GetBotUserID(), channelID)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest)
+			}
 		}
-		message.Text = req.Text
+		text = req.Text
 
 	default:
 		return echo.NewHTTPError(http.StatusUnsupportedMediaType)
 	}
 
-	if err := message.Create(); err != nil {
-		if errSQL, ok := err.(*mysql.MySQLError); ok {
-			if errSQL.Number == 1452 { //外部キー制約
-				return echo.NewHTTPError(http.StatusBadRequest, "invalid channelId")
-			}
-		}
+	m, err := model.CreateMessage(w.GetBotUserID(), channelID, text)
 
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.MessageCreated, &event.MessageCreatedEvent{Message: *message})
+	go event.Emit(event.MessageCreated, &event.MessageCreatedEvent{Message: *m})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -239,12 +239,6 @@ func PutWebhookIcon(c echo.Context) error {
 	w, err := getWebhook(c, uuid.FromStringOrNil(c.Param("webhookID")), true)
 	if err != nil {
 		return err
-	}
-
-	wu, err := model.GetUser(w.GetBotUserID().String())
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	// file確認
@@ -259,7 +253,7 @@ func PutWebhookIcon(c echo.Context) error {
 	}
 
 	// アイコン変更
-	if err := wu.UpdateIconID(iconID.String()); err != nil {
+	if err := model.ChangeUserIcon(w.GetBotUserID(), iconID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -499,16 +493,12 @@ func PostWebhookByGithub(c echo.Context) error {
 		messageBuf.WriteString(err.Error())
 	}
 	if messageBuf.Len() > 0 {
-		message := &model.Message{
-			UserID:    w.GetBotUserID().String(),
-			ChannelID: w.GetChannelID().String(),
-			Text:      messageBuf.String(),
-		}
-		if err := message.Create(); err != nil {
+		m, err := model.CreateMessage(w.GetBotUserID(), w.GetChannelID(), messageBuf.String())
+		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		go event.Emit(event.MessageCreated, &event.MessageCreatedEvent{Message: *message})
+		go event.Emit(event.MessageCreated, &event.MessageCreatedEvent{Message: *m})
 	}
 
 	return c.NoContent(http.StatusNoContent)
