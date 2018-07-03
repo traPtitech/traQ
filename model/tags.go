@@ -52,9 +52,13 @@ func CreateTag(name string, restricted bool, tagType string) (*Tag, error) {
 }
 
 // ChangeTagType タグの種類を変更します
-func ChangeTagType(id uuid.UUID, tagType string, restricted bool) (err error) {
-	err = db.Model(Tag{ID: id.String()}).Updates(map[string]interface{}{"restricted": restricted, "type": tagType}).Error
-	return
+func ChangeTagType(id uuid.UUID, tagType string) error {
+	return db.Model(Tag{ID: id.String()}).Update("type", tagType).Error
+}
+
+// ChangeTagRestrict タグの制限を変更します
+func ChangeTagRestrict(id uuid.UUID, restrict bool) error {
+	return db.Model(Tag{ID: id.String()}).Update("restricted", restrict).Error
 }
 
 // GetTagByID 引数のIDを持つTag構造体を返す

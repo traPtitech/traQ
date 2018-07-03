@@ -1,16 +1,15 @@
 package router
 
 import (
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"net/http"
 	"time"
 
-	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/rbac/permission"
-	"gopkg.in/go-playground/validator.v9"
-
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac"
+	"github.com/traPtitech/traQ/rbac/permission"
 )
 
 // TagForResponse クライアントに返す形のタグ構造体
@@ -35,8 +34,19 @@ type TagListForResponse struct {
 
 // GetUserTags GET /users/{userID}/tags のハンドラ
 func GetUserTags(c echo.Context) error {
-	id := c.Param("userID")
-	res, err := getUserTags(id, c)
+	// ユーザー確認
+	user, err := validateUserID(c.Param("userID"))
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "This user dosen't exist")
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
+	res, err := getUserTags(user.GetUID(), c)
 	if err != nil {
 		return err
 	}
@@ -45,47 +55,31 @@ func GetUserTags(c echo.Context) error {
 
 // PostUserTag POST /users/{userID}/tags のハンドラ
 func PostUserTag(c echo.Context) error {
-	id := c.Param("userID")
-
 	// リクエスト検証
 	req := struct {
 		Tag string `json:"tag" validate:"required,max=30"`
 	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-	if err := c.Validate(&req); err != nil {
+	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	// ユーザー確認
-	_, err := validateUserID(id)
+	user, err := validateUserID(c.Param("userID"))
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound, "This user dosen't exist")
 		default:
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user")
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	// タグの確認
-	t, err := model.GetTagByName(req.Tag)
+	t, err := model.GetOrCreateTagByName(req.Tag)
 	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			// 存在しないので新規作成
-			t = &model.Tag{
-				Name: req.Tag,
-			}
-			if err := t.Create(); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	// 操作制約付きタグ
@@ -99,23 +93,20 @@ func PostUserTag(c echo.Context) error {
 	}
 
 	// ユーザーにタグを付与
-	ut := &model.UsersTag{
-		UserID: id,
-	}
-	if err := ut.Create(req.Tag); err != nil {
+	if err := model.AddUserTag(user.GetUID(), t.GetID()); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserTagsUpdated, event.UserEvent{ID: id})
+	go event.Emit(event.UserTagsUpdated, event.UserEvent{ID: user.ID})
 	return c.NoContent(http.StatusCreated)
 }
 
 // PatchUserTag PATCH /users/{userID}/tags/{tagID} のハンドラ
 func PatchUserTag(c echo.Context) error {
 	reqUser := c.Get("user").(*model.User)
-	userID := c.Param("userID")
-	tagID := c.Param("tagID")
+	userID := uuid.FromStringOrNil(c.Param("userID"))
+	tagID := uuid.FromStringOrNil(c.Param("tagID"))
 
 	// リクエスト検証
 	body := struct {
@@ -126,7 +117,7 @@ func PatchUserTag(c echo.Context) error {
 	}
 
 	// タグがつけられているかを見る
-	ut, err := model.GetTag(userID, tagID)
+	ut, err := model.GetUserTag(userID, tagID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -138,46 +129,32 @@ func PatchUserTag(c echo.Context) error {
 	}
 
 	// 他人のロックは変更不可
-	if reqUser.ID != userID {
+	if reqUser.GetUID() != userID {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
-	// タグ情報取得
-	t, err := model.GetTagByID(tagID)
-	if err != nil {
-		switch err {
-		case model.ErrNotFound: // ここには来ないはず
-			c.Logger().Debug("UNEXPECTED CODE FLOW")
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
 	// 操作制約付きタグは無効
-	if t.Restricted {
+	if ut.Tag.Restricted {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
 	// 更新
-	ut.IsLocked = body.IsLocked
-	if err := ut.Update(); err != nil {
+	if err := model.ChangeUserTagLock(userID, ut.Tag.GetID(), body.IsLocked); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserTagsUpdated, event.UserEvent{ID: userID})
+	go event.Emit(event.UserTagsUpdated, event.UserEvent{ID: userID.String()})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteUserTag DELETE /users/{userID}/tags/{tagID} のハンドラ
 func DeleteUserTag(c echo.Context) error {
-	userID := c.Param("userID")
-	tagID := c.Param("tagID")
+	userID := uuid.FromStringOrNil(c.Param("userID"))
+	tagID := uuid.FromStringOrNil(c.Param("tagID"))
 
 	// タグがつけられているかを見る
-	ut, err := model.GetTag(userID, tagID)
+	ut, err := model.GetUserTag(userID, tagID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound: //既にない
@@ -188,21 +165,8 @@ func DeleteUserTag(c echo.Context) error {
 		}
 	}
 
-	// タグ情報取得
-	t, err := model.GetTagByID(tagID)
-	if err != nil {
-		switch err {
-		case model.ErrNotFound: // ここには来ないはず
-			c.Logger().Debug("UNEXPECTED CODE FLOW")
-			return c.NoContent(http.StatusNoContent)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
 	// 操作制約付きタグ
-	if t.Restricted {
+	if ut.Tag.Restricted {
 		reqUser := c.Get("user").(*model.User)
 		r := c.Get("rbac").(*rbac.RBAC)
 
@@ -212,12 +176,12 @@ func DeleteUserTag(c echo.Context) error {
 	}
 
 	// 削除
-	if err := ut.Delete(); err != nil {
+	if err := model.DeleteUserTag(userID, ut.Tag.GetID()); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserTagsUpdated, event.UserEvent{ID: userID})
+	go event.Emit(event.UserTagsUpdated, event.UserEvent{ID: userID.String()})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -252,7 +216,7 @@ func GetAllTags(c echo.Context) error {
 
 // GetUsersByTagID GET /tags/{tagID} のハンドラ
 func GetUsersByTagID(c echo.Context) error {
-	id := c.Param("tagID")
+	id := uuid.FromStringOrNil(c.Param("tagID"))
 
 	t, err := model.GetTagByID(id)
 	if err != nil {
@@ -260,8 +224,8 @@ func GetUsersByTagID(c echo.Context) error {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound, "TagID doesn't exist")
 		default:
-			c.Logger().Errorf("failed to get tag: %v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while checking existence of tag")
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
@@ -283,20 +247,8 @@ func GetUsersByTagID(c echo.Context) error {
 
 // PatchTag PATCH /tags/{tagID} のハンドラ
 func PatchTag(c echo.Context) error {
-	id := c.Param("tagID")
-
-	// リクエスト検証
-	req := struct {
-		Type     *string `json:"type"`
-		Restrict *bool   `json:"restrict"`
-		Name     *string `json:"name"`
-	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
 	// タグ存在確認
-	t, err := model.GetTagByID(id)
+	t, err := model.GetTagByID(uuid.FromStringOrNil(c.Param("tagID")))
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -307,21 +259,13 @@ func PatchTag(c echo.Context) error {
 		}
 	}
 
-	// タグ名変更
-	if req.Name != nil {
-		if _, err := model.GetTagByName(*req.Name); err != nil {
-			switch err {
-			case model.ErrNotFound:
-				//OK
-			default:
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
-		} else {
-			// 既に存在してかぶる
-			return echo.NewHTTPError(http.StatusBadRequest, "name's tag has already existed.")
-		}
-		t.Name = *req.Name
+	// リクエスト検証
+	req := struct {
+		Type     *string `json:"type"`
+		Restrict *bool   `json:"restrict"`
+	}{}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	// 制約変更
@@ -333,7 +277,9 @@ func PatchTag(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 
-		t.Restricted = *req.Restrict
+		if err := model.ChangeTagRestrict(t.GetID(), *req.Restrict); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
 	// タグタイプ変更
@@ -345,16 +291,7 @@ func PatchTag(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 
-		t.Type = *req.Type
-	}
-
-	// 更新
-	if err := t.Update(); err != nil {
-		switch err.(type) {
-		case *validator.ValidationErrors:
-			return echo.NewHTTPError(http.StatusBadRequest, err)
-		default:
-			c.Logger().Error(err)
+		if err := model.ChangeTagType(t.GetID(), *req.Type); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -362,55 +299,40 @@ func PatchTag(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func getUserTags(ID string, c echo.Context) ([]*TagForResponse, error) {
-	tagList, err := model.GetUserTagsByUserID(ID)
+func getUserTags(userID uuid.UUID, c echo.Context) ([]*TagForResponse, error) {
+	tagList, err := model.GetUserTagsByUserID(userID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
 			return nil, echo.NewHTTPError(http.StatusNotFound, "This user doesn't exist")
 		default:
-			c.Logger().Errorf("failed to get tagList: %v", err)
+			c.Logger().Error(err)
 			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get tagList")
 		}
 	}
 
-	var res []*TagForResponse
-	for _, v := range tagList {
-		t, err := formatTag(v)
-		if err != nil {
-			c.Logger().Errorf("failed to get tag by ID: %v", err)
-			return nil, err
-		}
-		res = append(res, t)
+	res := make([]*TagForResponse, len(tagList))
+	for i, v := range tagList {
+		res[i] = formatTag(v)
 	}
 	return res, nil
-
 }
 
 func getUsersByTagName(name string, c echo.Context) ([]*UserForResponse, error) {
-	var users []*UserForResponse
-
-	idList, err := model.GetUserIDsByTags([]string{name})
+	users, err := model.GetUsersByTag(name)
 	if err != nil {
-		c.Logger().Errorf("failed to get users by tagName: %v", err)
+		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get userList")
 	}
-	for _, v := range idList {
-		u, err := model.GetUser(v.String())
-		if err != nil {
-			c.Logger().Errorf("failed to get user infomation: %v", err)
-			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get users")
-		}
-		users = append(users, formatUser(u))
+	res := make([]*UserForResponse, len(users))
+	for i, v := range users {
+		res[i] = formatUser(v)
 	}
-	return users, nil
+	return res, nil
 }
 
-func formatTag(ut *model.UsersTag) (*TagForResponse, error) {
-	tag, err := model.GetTagByID(ut.TagID)
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get tag infomation")
-	}
+func formatTag(ut *model.UsersTag) *TagForResponse {
+	tag := ut.Tag
 	return &TagForResponse{
 		ID:        tag.ID,
 		Tag:       tag.Name,
@@ -419,5 +341,5 @@ func formatTag(ut *model.UsersTag) (*TagForResponse, error) {
 		Type:      tag.Type,
 		CreatedAt: ut.CreatedAt,
 		UpdatedAt: ut.UpdatedAt,
-	}, nil
+	}
 }

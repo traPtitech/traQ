@@ -53,11 +53,26 @@ func TestChangeTagType(t *testing.T) {
 	require.NoError(err)
 
 	{
-		err := ChangeTagType(tag.GetID(), "newType", true)
+		err := ChangeTagType(tag.GetID(), "newType")
 		if assert.NoError(err) {
 			t, err := GetTagByID(tag.GetID())
 			require.NoError(err)
 			assert.Equal("newType", t.Type)
+		}
+	}
+}
+
+func TestChangeTagRestrict(t *testing.T) {
+	assert, require, _, _ := beforeTest(t)
+
+	tag, err := CreateTag("tagA", false, "")
+	require.NoError(err)
+
+	{
+		err := ChangeTagRestrict(tag.GetID(), true)
+		if assert.NoError(err) {
+			t, err := GetTagByID(tag.GetID())
+			require.NoError(err)
 			assert.True(t.Restricted)
 		}
 	}

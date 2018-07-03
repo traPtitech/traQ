@@ -80,6 +80,19 @@ func GetUserIDsByTag(tag string) ([]uuid.UUID, error) {
 	return convertStringSliceToUUIDSlice(arr), nil
 }
 
+// GetUsersByTag 指定したタグを持った全ユーザーを取得します
+func GetUsersByTag(tag string) (arr []*User, err error) {
+	err = db.
+		Where("id IN ?", db.
+			Model(UsersTag{}).
+			Select("users_tags.user_id").
+			Joins("INNER JOIN tags ON users_tags.tag_id = tags.id AND tags.name = ?", tag).
+			QueryExpr()).
+		Find(&arr).
+		Error
+	return
+}
+
 // GetUserIDsByTagID 指定したタグIDのタグを持った全ユーザーのIDを返します
 func GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, error) {
 	var arr []string

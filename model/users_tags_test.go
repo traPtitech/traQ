@@ -125,6 +125,26 @@ func TestGetUserIDsByTag(t *testing.T) {
 	}
 }
 
+func TestGetUsersByTag(t *testing.T) {
+	assert, require, _, _ := beforeTest(t)
+
+	tag := mustMakeTag(t, "test")
+	for i := 0; i < 10; i++ {
+		user := mustMakeUser(t, "tagTest-"+strconv.Itoa(i))
+		require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
+	}
+
+	users, err := GetUsersByTag("test")
+	if assert.NoError(err) {
+		assert.Len(users, 10)
+	}
+
+	users, err = GetUsersByTag("nothing")
+	if assert.NoError(err) {
+		assert.Len(users, 0)
+	}
+}
+
 func TestGetUserIDsByTagID(t *testing.T) {
 	assert, require, _, _ := beforeTest(t)
 
