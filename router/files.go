@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"github.com/satori/go.uuid"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -21,13 +22,13 @@ type FileForResponse struct {
 	ThumbHeight int    `json:"thumbHeight,omitempty"`
 }
 
-// PostFile POST /files のハンドラ
+// PostFile POST /files
 func PostFile(c echo.Context) error {
 	userID := c.Get("user").(*model.User).ID
 
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed to upload file: %v", err))
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	file := &model.File{
@@ -38,19 +39,19 @@ func PostFile(c echo.Context) error {
 
 	src, err := uploadedFile.Open()
 	if err != nil {
-		c.Echo().Logger.Error(err)
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	defer src.Close()
 
 	if err := file.Create(src); err != nil {
-		c.Echo().Logger.Error(err)
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusCreated, formatFile(file))
 }
 
-// GetFileByID GET /files/{fileID}
+// GetFileByID GET /files/:fileID
 func GetFileByID(c echo.Context) error {
 	ID := c.Param("fileID")
 	dl := c.QueryParam("dl")
@@ -67,7 +68,7 @@ func GetFileByID(c echo.Context) error {
 
 	file, err := meta.Open()
 	if err != nil {
-		c.Echo().Logger.Error(err)
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	defer file.Close()
@@ -81,39 +82,33 @@ func GetFileByID(c echo.Context) error {
 	return c.Stream(http.StatusOK, meta.Mime, file)
 }
 
-// DeleteFileByID DELETE /files/{fileID}
+// DeleteFileByID DELETE /files/:fileID
 func DeleteFileByID(c echo.Context) error {
-	ID := c.Param("fileID")
-
-	meta, err := validateFileID(ID)
+	meta, err := validateFileID(c.Param("fileID"))
 	if err != nil {
 		return err
 	}
 
-	if err := meta.Delete(); err != nil {
-		c.Echo().Logger.Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete data")
+	if err := model.DeleteFile(meta.GetID()); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return c.NoContent(http.StatusNoContent)
 }
 
-// GetMetaDataByFileID GET /files/{fileID}/meta
+// GetMetaDataByFileID GET /files/:fileID/meta
 func GetMetaDataByFileID(c echo.Context) error {
-	ID := c.Param("fileID")
-
-	meta, err := validateFileID(ID)
+	meta, err := validateFileID(c.Param("fileID"))
 	if err != nil {
 		return err
 	}
 	return c.JSON(http.StatusOK, formatFile(meta))
 }
 
-// GetThumbnailByID : GET /files/{fileID}/thumbnail
+// GetThumbnailByID GET /files/:fileID/thumbnail
 func GetThumbnailByID(c echo.Context) error {
-	ID := c.Param("fileID")
-
-	meta, err := validateFileID(ID)
+	meta, err := validateFileID(c.Param("fileID"))
 	if err != nil {
 		return err
 	}
@@ -123,13 +118,13 @@ func GetThumbnailByID(c echo.Context) error {
 
 	file, err := meta.OpenThumbnail()
 	if err != nil {
-		c.Echo().Logger.Error(err)
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	defer file.Close()
 	c.Response().Header().Set("Cache-Control", "private, max-age=31536000") //1年間キャッシュ
 
-	return c.Stream(http.StatusOK, "image/jpeg", file)
+	return c.Stream(http.StatusOK, "image/png", file)
 }
 
 func formatFile(f *model.File) *FileForResponse {
@@ -146,14 +141,15 @@ func formatFile(f *model.File) *FileForResponse {
 }
 
 func validateFileID(fileID string) (*model.File, error) {
-	f := &model.File{ID: fileID}
-	ok, err := f.Exists()
+	f, err := model.GetMetaFileDataByID(uuid.FromStringOrNil(fileID))
 	if err != nil {
-		log.Error(err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while get file")
-	}
-	if !ok {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "The specified file does not exist")
+		switch err {
+		case model.ErrNotFound:
+			return nil, echo.NewHTTPError(http.StatusNotFound, "The specified file does not exist")
+		default:
+			log.Error(err)
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while get file")
+		}
 	}
 	return f, nil
 }
