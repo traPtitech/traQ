@@ -378,14 +378,8 @@ paths:
                   description: チャンネルの説明
                   example: なんでも良いチャンネルです!!
       responses:
-        "200":
-          description: |+
-            正常に更新できました。
-            更新後のチャンネルトピックを返します。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ChannelTopic"
+        "204":
+          description: 正常に更新できました。
         "404":
           description: |+
             更新に失敗しました。
@@ -2618,11 +2612,6 @@ components:
     ChannelTopic:
       type: object
       properties:
-        channelId:
-          type: string
-          format: uuid
-        name:
-          type: string
         text:
           type: string
 

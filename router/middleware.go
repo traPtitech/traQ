@@ -47,7 +47,7 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				}
 
 				// tokenの検証に成功。ユーザーを取得
-				user, err := model.GetUser(token.UserID.String())
+				user, err := model.GetUser(token.UserID)
 				if err != nil {
 					switch err {
 					case model.ErrNotFound:
@@ -59,7 +59,7 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				}
 
 				c.Set("user", user)
-				c.Set("userID", user.ID)
+				c.Set("userID", user.GetUID())
 				// 認可に基づきRole生成
 				c.Set("role", token.Scopes.GenerateRole())
 			} else {
@@ -73,7 +73,7 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 					return echo.NewHTTPError(http.StatusForbidden, "You are not logged in")
 				}
 
-				user, err := model.GetUser(sess.Values["userID"].(string))
+				user, err := model.GetUser(sess.Values["userID"].(uuid.UUID))
 				if err != nil {
 					switch err {
 					case model.ErrNotFound:
@@ -85,7 +85,7 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				}
 
 				c.Set("user", user)
-				c.Set("userID", user.ID)
+				c.Set("userID", user.GetUID())
 			}
 			return next(c)
 		}
@@ -108,9 +108,9 @@ func AccessControlMiddlewareGenerator(rbac *rbac.RBAC) func(p ...gorbac.Permissi
 				}
 
 				// ユーザー権限検証
-				user := c.Get("user").(*model.User)
+				user := c.Get("userID").(*model.User)
 				for _, v := range p {
-					if !rbac.IsGranted(uuid.FromStringOrNil(user.ID), user.Role, v) {
+					if !rbac.IsGranted(user.GetUID(), user.Role, v) {
 						// NG
 						return echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("you are not permitted to request to '%s'", c.Request().URL.Path))
 					}
