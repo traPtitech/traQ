@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/gommon/log"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 )
@@ -43,7 +42,7 @@ func GetNotificationStatus(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
-	users, err := model.GetSubscribingUser(uuid.FromStringOrNil(ch.ID))
+	users, err := model.GetSubscribingUser(ch.GetCID())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to GetNotificationStatus: %v", err))
 	}
@@ -77,58 +76,37 @@ func PutNotificationStatus(c echo.Context) error {
 	}
 
 	var req struct {
-		On  []string `json:"on"`
-		Off []string `json:"off"`
+		On  []string `json:"on"  validate:"dive,uuid"`
+		Off []string `json:"off" validate:"dive,uuid"`
 	}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
+	chID := ch.GetCID()
 	for _, v := range req.On {
-		m := &model.UserSubscribeChannel{
-			UserID:    v,
-			ChannelID: channelID,
-		}
-		m.Create()
+		model.SubscribeChannel(uuid.FromStringOrNil(v), chID)
 	}
 	for _, v := range req.Off {
-		m := &model.UserSubscribeChannel{
-			UserID:    v,
-			ChannelID: channelID,
-		}
-		m.Delete()
+		model.UnsubscribeChannel(uuid.FromStringOrNil(v), chID)
 	}
 
-	users, err := model.GetSubscribingUser(uuid.FromStringOrNil(channelID))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to GetNotificationStatus: %v", err))
-	}
-
-	result := make([]string, len(users))
-	for i, v := range users {
-		result[i] = v.String()
-	}
-
-	return c.JSON(http.StatusOK, result)
+	return c.NoContent(http.StatusNoContent)
 }
 
 // PostDeviceToken POST /notification/device のハンドラ
 func PostDeviceToken(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+	user := c.Get("user").(*model.User)
 
 	var req struct {
-		Token string `json:"token"`
+		Token string `json:"token" validate:"required"`
 	}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	dev := &model.Device{
-		UserID: userID,
-		Token:  req.Token,
-	}
-	if err := dev.Register(); err != nil {
-		log.Error(err)
+	if _, err := model.RegisterDevice(user.GetUID(), req.Token); err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -147,13 +125,13 @@ func GetNotificationChannels(c echo.Context) error {
 
 	res := make([]*ChannelForResponse, len(channelIDs))
 	for i, v := range channelIDs {
-		ch, err := model.GetChannelByID(userID.String(), v.String())
+		ch, err := model.GetChannelWithUserID(userID, v)
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get channels")
 		}
 
-		childIDs, err := ch.Children(userID.String())
+		childIDs, err := model.GetChildrenChannelIDsWithUserID(userID, ch.GetCID().String())
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get children channel id list: %v", err)

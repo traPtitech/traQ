@@ -565,14 +565,8 @@ paths:
                     type: string
                     format: uuid
       responses:
-        "200":
-          description: |+
-            正常に更新できました。
-            ユーザー通知状況の配列を返します。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserNotificationList"
+        "204":
+          description: 正常に更新できました。
         "404":
           description: |+
             変更に失敗しました。
