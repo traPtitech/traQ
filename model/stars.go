@@ -18,16 +18,11 @@ func (star *Star) TableName() string {
 }
 
 // AddStar チャンネルをお気に入り登録します
-func AddStar(userID, channelID uuid.UUID) (*Star, error) {
-	s := &Star{
+func AddStar(userID, channelID uuid.UUID) error {
+	return db.Create(&Star{
 		UserID:    userID.String(),
 		ChannelID: channelID.String(),
-	}
-
-	if err := db.Create(s).Error; err != nil {
-		return nil, err
-	}
-	return s, nil
+	}).Error
 }
 
 // RemoveStar チャンネルのお気に入りを解除します

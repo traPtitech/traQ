@@ -17,11 +17,7 @@ func TestAddStar(t *testing.T) {
 
 	channel := mustMakeChannelDetail(t, user.GetUID(), "test", "", true)
 
-	star, err := AddStar(user.GetUID(), channel.GetCID())
-	if assert.NoError(err) {
-		assert.Equal(channel.ID, star.ChannelID)
-		assert.Equal(user.ID, star.UserID)
-		assert.NotZero(star.CreatedAt)
+	if assert.NoError(AddStar(user.GetUID(), channel.GetCID())) {
 		count := 0
 		db.Table("stars").Count(&count)
 		assert.Equal(1, count)
@@ -32,8 +28,7 @@ func TestRemoveStar(t *testing.T) {
 	assert, require, user, _ := beforeTest(t)
 
 	channel := mustMakeChannelDetail(t, user.GetUID(), "test", "", true)
-	_, err := AddStar(user.GetUID(), channel.GetCID())
-	require.NoError(err)
+	require.NoError(AddStar(user.GetUID(), channel.GetCID()))
 	count := 0
 
 	if assert.NoError(RemoveStar(user.GetUID(), uuid.Nil)) {
@@ -52,8 +47,7 @@ func TestGetStaredChannels(t *testing.T) {
 	channelCount := 5
 	for i := 0; i < channelCount; i++ {
 		ch := mustMakeChannelDetail(t, user.GetUID(), "test"+strconv.Itoa(i), "", true)
-		_, err := AddStar(user.GetUID(), ch.GetCID())
-		require.NoError(err)
+		require.NoError(AddStar(user.GetUID(), ch.GetCID()))
 	}
 
 	ch, err := GetStaredChannels(user.GetUID())
