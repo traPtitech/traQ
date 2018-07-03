@@ -168,12 +168,6 @@ func (h *Handlers) PutBotIcon(c echo.Context) error {
 		return err
 	}
 
-	wu, err := model.GetUser(b.GetBotUserID().String())
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
 	// file確認
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
@@ -186,7 +180,7 @@ func (h *Handlers) PutBotIcon(c echo.Context) error {
 	}
 
 	// アイコン変更
-	if err := wu.UpdateIconID(iconID.String()); err != nil {
+	if err := model.ChangeUserIcon(b.GetBotUserID(), iconID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
