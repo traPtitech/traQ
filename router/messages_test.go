@@ -129,7 +129,7 @@ func TestPutMessageByID(t *testing.T) {
 	c.SetParamValues(message.ID)
 	requestWithContext(t, mw(PutMessageByID), c)
 
-	message, err = model.GetMessageByID(message.ID)
+	message, err = model.GetMessageByID(message.GetID())
 	require.NoError(err)
 
 	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
@@ -169,7 +169,7 @@ func TestDeleteMessageByID(t *testing.T) {
 	c.SetParamValues(message.ID)
 	requestWithContext(t, mw(DeleteMessageByID), c)
 
-	message, err := model.GetMessageByID(message.ID)
+	message, err := model.GetMessageByID(message.GetID())
 	require.Error(err)
 }
 
@@ -206,7 +206,7 @@ func TestPostMessageReport(t *testing.T) {
 		c.SetParamValues(message.ID)
 		requestWithContext(t, mw(PostMessageReport), c)
 
-		_, err = model.GetMessageByID(message.ID)
+		_, err = model.GetMessageByID(message.GetID())
 		assert.NoError(err)
 	}
 }
