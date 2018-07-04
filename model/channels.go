@@ -219,7 +219,7 @@ func ChangeChannelParent(channelID uuid.UUID, parent string, updaterID uuid.UUID
 	return nil
 }
 
-// UpdateChannelFlag
+// UpdateChannelFlag チャンネルの各種フラグを更新します
 func UpdateChannelFlag(channelID uuid.UUID, visibility, forced *bool, updaterID uuid.UUID) error {
 	data := map[string]interface{}{
 		"updater_id": updaterID.String(),

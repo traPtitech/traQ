@@ -63,59 +63,73 @@ func (b *GeneralBot) Validate() error {
 	return validator.ValidateStruct(b)
 }
 
+// GetID BotのUUIDを返します
 func (b *GeneralBot) GetID() uuid.UUID {
 	return uuid.Must(uuid.FromString(b.ID))
 }
 
+// GetBotUserID BotのBotUserのUUIDを返します
 func (b *GeneralBot) GetBotUserID() uuid.UUID {
 	return uuid.Must(uuid.FromString(b.BotUserID))
 }
 
+// GetName Botの名前を返します
 func (b *GeneralBot) GetName() string {
 	return b.BotUser.Name
 }
 
+// GetDisplayName Botの表示名を返します
 func (b *GeneralBot) GetDisplayName() string {
 	return b.BotUser.DisplayName
 }
 
+// GetDescription Botの説明を返します
 func (b *GeneralBot) GetDescription() string {
 	return b.Description
 }
 
+// GetVerificationToken Botの認証トークンを返します
 func (b *GeneralBot) GetVerificationToken() string {
 	return b.VerificationToken
 }
 
+// GetAccessTokenID BotのアクセストークンのUUIDを返します
 func (b *GeneralBot) GetAccessTokenID() uuid.UUID {
 	return uuid.Must(uuid.FromString(b.AccessTokenID))
 }
 
+// GetPostURL BotのWebhookのURLを返します
 func (b *GeneralBot) GetPostURL() *url.URL {
 	postURL, _ := url.Parse(b.PostURL)
 	return postURL
 }
 
+// GetSubscribeEvents Botの購読イベント一覧を返します
 func (b *GeneralBot) GetSubscribeEvents() map[string]bool {
 	return arrayToSet(strings.Fields(b.SubscribeEvents))
 }
 
+// GetActivated Botが活性化しているかどうかを返します
 func (b *GeneralBot) GetActivated() bool {
 	return b.Activated
 }
 
+// GetCreatorID Botの製作者のUUIDを返します
 func (b *GeneralBot) GetCreatorID() uuid.UUID {
 	return uuid.Must(uuid.FromString(b.CreatorID))
 }
 
+// GetInstallCode Botのインストールコードを返します
 func (b *GeneralBot) GetInstallCode() string {
 	return b.InstallCode
 }
 
+// GetCreatedAt Botの作成日時を返します
 func (b *GeneralBot) GetCreatedAt() time.Time {
 	return b.CreatedAt
 }
 
+// GetUpdatedAt Botの更新日時を返します
 func (b *GeneralBot) GetUpdatedAt() time.Time {
 	return b.UpdatedAt
 }

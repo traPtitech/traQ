@@ -40,7 +40,7 @@ func (s *Stamp) Validate() error {
 }
 
 // UpdateStamp スタンプを更新します
-func UpdateStamp(stampId uuid.UUID, s Stamp) error {
+func UpdateStamp(stampID uuid.UUID, s Stamp) error {
 	s.ID = ""
 	s.CreatedAt = time.Time{}
 	s.UpdatedAt = time.Time{}
@@ -55,7 +55,7 @@ func UpdateStamp(stampId uuid.UUID, s Stamp) error {
 		return err
 	}
 
-	return db.Where(Stamp{ID: stampId.String()}).Updates(&s).Error
+	return db.Where(Stamp{ID: stampID.String()}).Updates(&s).Error
 }
 
 // CreateStamp スタンプを作成します

@@ -168,7 +168,7 @@ func ChangeUserDisplayName(userID uuid.UUID, displayName string) error {
 	return db.Model(User{ID: userID.String()}).Update("display_name", displayName).Error
 }
 
-// ChangeUserDisplayName ユーザーのTwitterIDを変更します
+// ChangeUserTwitterID ユーザーのTwitterIDを変更します
 func ChangeUserTwitterID(userID uuid.UUID, twitterID string) error {
 	if err := validator.ValidateVar(twitterID, "twitterid"); err != nil {
 		return err

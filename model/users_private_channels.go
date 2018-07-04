@@ -17,10 +17,10 @@ func (upc *UsersPrivateChannel) TableName() string {
 }
 
 // AddPrivateChannelMember プライベートチャンネルにメンバーを追加します
-func AddPrivateChannelMember(channelId, userID uuid.UUID) error {
+func AddPrivateChannelMember(channelID, userID uuid.UUID) error {
 	upc := &UsersPrivateChannel{
 		UserID:    userID.String(),
-		ChannelID: channelId.String(),
+		ChannelID: channelID.String(),
 	}
 	return db.Create(&upc).Error
 }
