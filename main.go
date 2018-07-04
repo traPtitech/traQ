@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/external/firebase"
 	"io/ioutil"
 	"net/http"
 
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/core"
-	"github.com/go-xorm/xorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/middleware"
@@ -29,19 +28,18 @@ import (
 
 func main() {
 	// Database
-	engine, err := xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=true", config.DatabaseUserName, config.DatabasePassword, config.DatabaseHostName, config.DatabaseName))
+	engine, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=true", config.DatabaseUserName, config.DatabasePassword, config.DatabaseHostName, config.DatabaseName))
 	if err != nil {
 		panic(err)
 	}
 	defer engine.Close()
-	engine.SetMapper(core.GonicMapper{})
-	model.SetXORMEngine(engine)
+	model.SetGORMEngine(engine)
 
-	if err := model.SyncSchema(); err != nil {
+	if err := model.Sync(); err != nil {
 		panic(err)
 	}
 
-	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
+	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB(), "sessions", "/", 60*60*24*14, []byte("secret"))
 	if err != nil {
 		panic(err)
 	}
@@ -78,8 +76,17 @@ func main() {
 		IsRefreshEnabled:     false,
 		Sessions:             store,
 		UserAuthenticator: func(id, pw string) (uuid.UUID, error) {
-			user := &model.User{Name: id}
-			err := user.Authorization(pw)
+			user, err := model.GetUserByName(id)
+			if err != nil {
+				switch err {
+				case model.ErrNotFound:
+					return uuid.Nil, oauth2.ErrUserIDOrPasswordWrong
+				default:
+					return uuid.Nil, err
+				}
+			}
+
+			err = model.AuthenticateUser(user, pw)
 			switch err {
 			case model.ErrUserWrongIDOrPassword, model.ErrUserBotTryLogin:
 				err = oauth2.ErrUserIDOrPasswordWrong
@@ -87,7 +94,7 @@ func main() {
 			return uuid.FromStringOrNil(user.ID), err
 		},
 		UserInfoGetter: func(uid uuid.UUID) (oauth2.UserInfo, error) {
-			u, err := model.GetUser(uid.String())
+			u, err := model.GetUser(uid)
 			if err == model.ErrNotFound {
 				return nil, oauth2.ErrUserIDOrPasswordWrong
 			}
@@ -172,6 +179,7 @@ func main() {
 	api.POST("/users", router.PostUsers, requires(permission.RegisterUser))
 	api.GET("/users/me", router.GetMe, requires(permission.GetMe))
 	api.PATCH("/users/me", router.PatchMe, requires(permission.EditMe))
+	api.PUT("/users/me/password", router.PutPassword, requires(permission.ChangeMyPassword))
 	api.GET("/users/me/icon", router.GetMyIcon, requires(permission.DownloadFile))
 	api.PUT("/users/me/icon", router.PutMyIcon, requires(permission.ChangeMyIcon))
 	api.GET("/users/:userID", router.GetUserByID, requires(permission.GetUser))
@@ -241,10 +249,6 @@ func main() {
 	api.POST("/messages/:messageID/stamps/:stampID", router.PostMessageStamp, requires(permission.AddMessageStamp))
 	api.DELETE("/messages/:messageID/stamps/:stampID", router.DeleteMessageStamp, requires(permission.RemoveMessageStamp))
 	api.GET("/users/me/stamp-history", router.GetMyStampHistory, requires(permission.GetMyStampHistory))
-
-	//Tag: visibility
-	api.GET("users/me/channels/visibility", router.GetChannelsVisibility, requires(permission.GetChannelVisibility))
-	api.PUT("users/me/channels/visibility", router.PutChannelsVisibility, requires(permission.ChangeChannelVisibility))
 
 	// Tag: webhook
 	router.LoadWebhookTemplate("static/webhook/*.tmpl")

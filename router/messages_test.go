@@ -15,8 +15,8 @@ import (
 func TestGetMessageByID(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
-	message := mustMakeMessage(t, testUser.ID, channel.ID)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	message := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/messages/:messageID")
@@ -28,8 +28,8 @@ func TestGetMessageByID(t *testing.T) {
 	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
 
 	// 異常系: 自分から見えないメッセージは取得できない
-	postmanID := mustCreateUser(t, "p1").ID
-	privateID := mustMakePrivateChannel(t, postmanID, mustCreateUser(t, "p2").ID, "private").ID
+	postmanID := mustCreateUser(t, "p1").GetUID()
+	privateID := mustMakePrivateChannel(t, postmanID, mustCreateUser(t, "p2").GetUID(), "private").GetCID()
 	message = mustMakeMessage(t, postmanID, privateID)
 
 	c, rec = getContext(e, t, cookie, nil)
@@ -47,9 +47,9 @@ func TestGetMessageByID(t *testing.T) {
 func TestGetMessagesByChannelID(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
 	for i := 0; i < 5; i++ {
-		mustMakeMessage(t, testUser.ID, channel.ID)
+		mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 	}
 
 	q := make(url.Values)
@@ -74,7 +74,7 @@ func TestGetMessagesByChannelID(t *testing.T) {
 func TestPostMessage(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
 
 	post := struct{ Text string }{Text: "test message"}
 	body, err := json.Marshal(post)
@@ -94,8 +94,8 @@ func TestPostMessage(t *testing.T) {
 		}
 	}
 
-	user1ID := mustCreateUser(t, "private-1").ID
-	user2ID := mustCreateUser(t, "private-2").ID
+	user1ID := mustCreateUser(t, "private-1").GetUID()
+	user2ID := mustCreateUser(t, "private-2").GetUID()
 	privateID := mustMakePrivateChannel(t, user1ID, user2ID, "poyopoyo").ID
 
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
@@ -114,8 +114,8 @@ func TestPostMessage(t *testing.T) {
 func TestPutMessageByID(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
-	message := mustMakeMessage(t, testUser.ID, channel.ID)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	message := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	post := struct{ Text string }{Text: "test message"}
 	body, err := json.Marshal(post)
@@ -137,8 +137,8 @@ func TestPutMessageByID(t *testing.T) {
 	}
 
 	// 異常系：他人のメッセージは編集できない
-	creatorID := mustCreateUser(t, "creator").ID
-	message = mustMakeMessage(t, creatorID, channel.ID)
+	creatorID := mustCreateUser(t, "creator").GetUID()
+	message = mustMakeMessage(t, creatorID, channel.GetCID())
 
 	req = httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
 
@@ -158,8 +158,8 @@ func TestPutMessageByID(t *testing.T) {
 func TestDeleteMessageByID(t *testing.T) {
 	e, cookie, mw, _, require := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
-	message := mustMakeMessage(t, testUser.ID, channel.ID)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	message := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	req := httptest.NewRequest("DELETE", "http://test", nil)
 
@@ -176,8 +176,8 @@ func TestDeleteMessageByID(t *testing.T) {
 func TestPostMessageReport(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
-	message := mustMakeMessage(t, testUser.ID, channel.ID)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	message := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	{
 		req := httptest.NewRequest(http.MethodPost, "/", nil)

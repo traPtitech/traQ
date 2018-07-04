@@ -97,9 +97,9 @@ func (post *PostChannel) validate(userID string) error {
 
 // GetChannels GET /channels のハンドラ
 func GetChannels(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+	user := c.Get("user").(*model.User)
 
-	channelList, err := model.GetChannelList(userID)
+	channelList, err := model.GetChannelList(user.GetUID())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to get channel list: %v", err))
 	}
@@ -340,15 +340,16 @@ func formatChannel(channel *model.Channel, childIDs, members []string) *ChannelF
 }
 
 // リクエストされたチャンネルIDが指定されたuserから見えるかをチェックし、見える場合はそのチャンネルを返す
-func validateChannelID(channelID, userID string) (*model.Channel, error) {
-	ch := &model.Channel{ID: channelID}
-	ok, err := ch.Exists(userID)
+func validateChannelID(channelID, userID uuid.UUID) (*model.Channel, error) {
+	ch, err := model.GetChannelWithUserID(userID, channelID)
 	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return nil, nil
+		}
 		log.Error(err)
 		return nil, err
 	}
-	if !ok {
-		return nil, model.ErrNotFound
-	}
+
 	return ch, nil
 }

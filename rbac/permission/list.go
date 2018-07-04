@@ -28,11 +28,12 @@ var list = map[string]gorbac.Permission{
 	ConnectNotificationStream.ID(): ConnectNotificationStream,
 	RegisterDevice.ID():            RegisterDevice,
 
-	GetUser.ID():      GetUser,
-	GetMe.ID():        GetMe,
-	RegisterUser.ID(): RegisterUser,
-	EditMe.ID():       EditMe,
-	ChangeMyIcon.ID(): ChangeMyIcon,
+	GetUser.ID():          GetUser,
+	GetMe.ID():            GetMe,
+	RegisterUser.ID():     RegisterUser,
+	EditMe.ID():           EditMe,
+	ChangeMyIcon.ID():     ChangeMyIcon,
+	ChangeMyPassword.ID(): ChangeMyPassword,
 
 	GetClip.ID():          GetClip,
 	CreateClip.ID():       CreateClip,

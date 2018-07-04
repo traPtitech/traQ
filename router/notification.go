@@ -12,8 +12,8 @@ import (
 // GetNotification /channels/:ID/notificationsのpath paramがchannelIDかuserIDかを判別して正しいほうにルーティングするミドルウェア
 func GetNotification(userHandler, channelHandler echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID := c.Get("user").(*model.User).ID
-		ID := c.Param("ID")
+		userID := c.Get("user").(*model.User).GetUID()
+		ID := uuid.FromStringOrNil(c.Param("ID"))
 
 		if ch, err := validateChannelID(ID, userID); ch != nil {
 			c.Set("channel", ch)
@@ -22,7 +22,7 @@ func GetNotification(userHandler, channelHandler echo.HandlerFunc) echo.HandlerF
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check ID")
 		}
 
-		if user, err := validateUserID(ID); user != nil {
+		if user, err := model.GetUser(userID); user != nil {
 			c.Set("targetUserID", user.ID)
 			return userHandler(c)
 		} else if err != model.ErrNotFound {
@@ -57,8 +57,8 @@ func GetNotificationStatus(c echo.Context) error {
 
 // PutNotificationStatus PUT /channels/:channelId/notifications のハンドラ
 func PutNotificationStatus(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("ID")
+	userID := c.Get("user").(*model.User).GetUID()
+	channelID := uuid.FromStringOrNil(c.Param("ID"))
 
 	ch, err := validateChannelID(channelID, userID)
 	if err != nil {

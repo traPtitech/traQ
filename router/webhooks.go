@@ -68,7 +68,7 @@ func PostWebhooks(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if _, err := validateChannelID(req.ChannelID, user.ID); err != nil {
+	if _, err := validateChannelID(uuid.FromStringOrNil(req.ChannelID), user.GetUID()); err != nil {
 		switch err {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
@@ -128,7 +128,7 @@ func PatchWebhook(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid channelId")
 		}
 
-		if _, err := validateChannelID(req.ChannelID, user.ID); err != nil {
+		if _, err := validateChannelID(uuid.FromStringOrNil(req.ChannelID), user.GetUID()); err != nil {
 			switch err {
 			case model.ErrNotFound:
 				return echo.NewHTTPError(http.StatusBadRequest, "this channel is not found")

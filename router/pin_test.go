@@ -12,11 +12,11 @@ import (
 
 func TestGetChannelPin(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	testChannel := mustMakeChannel(t, testUser.ID, "pinChannel", true)
-	testMessage := mustMakeMessage(t, testUser.ID, testChannel.ID)
+	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "", true)
+	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.GetCID())
 
 	//正常系
-	testPin := mustMakePin(t, testChannel.ID, testUser.ID, testMessage.ID)
+	testPin := mustMakePin(t, testUser.GetUID(), testMessage.GetID())
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/channel/:channelID/pin")
 	c.SetParamNames("channelID")
@@ -28,37 +28,33 @@ func TestGetChannelPin(t *testing.T) {
 	assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody))
 	assert.Len(responseBody, 1)
 
-	correctResponse := formatPin(testPin)
-
-	assert.EqualValues(correctResponse, responseBody[0])
+	assert.Equal(testPin.String(), responseBody[0].PinID)
 }
 
 func TestGetPin(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	testChannel := mustMakeChannel(t, testUser.ID, "pinChannel", true)
-	testMessage := mustMakeMessage(t, testUser.ID, testChannel.ID)
+	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "", true)
+	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.GetCID())
 
 	//正常系
-	testPin := mustMakePin(t, testChannel.ID, testUser.ID, testMessage.ID)
+	testPin := mustMakePin(t, testUser.GetUID(), testMessage.GetID())
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/pin/:pinID")
 	c.SetParamNames("pinID")
-	c.SetParamValues(testPin.ID)
+	c.SetParamValues(testPin.String())
 	requestWithContext(t, mw(GetPin), c)
 
 	assert.EqualValues(http.StatusOK, rec.Code)
 	responseBody := &PinForResponse{}
 	assert.NoError(json.Unmarshal(rec.Body.Bytes(), responseBody))
 
-	correctResponse := formatPin(testPin)
-
-	assert.EqualValues(correctResponse, responseBody)
+	assert.EqualValues(testPin.String(), responseBody.PinID)
 }
 
 func TestPostPin(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
-	testChannel := mustMakeChannel(t, testUser.ID, "pinChannel", true)
-	testMessage := mustMakeMessage(t, testUser.ID, testChannel.ID)
+	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "", true)
+	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.GetCID())
 
 	//正常系
 	post := struct {
@@ -83,7 +79,7 @@ func TestPostPin(t *testing.T) {
 	require.Len(correctResponse, 1)
 
 	// 異常系: 別のチャンネルにメッセージを張り付けることはできない
-	otherChannelID := mustMakeChannel(t, testUser.ID, "hoge", true).ID
+	otherChannelID := mustMakeChannelDetail(t, testUser.GetUID(), "hoge", "", true).ID
 	c, rec = getContext(e, t, cookie, req)
 	c.SetPath("/channels/:channelID/pin")
 	c.SetParamNames("channelID")
@@ -97,16 +93,16 @@ func TestPostPin(t *testing.T) {
 
 func TestDeletePin(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	testChannel := mustMakeChannel(t, testUser.ID, "pinChannel", true)
-	testMessage := mustMakeMessage(t, testUser.ID, testChannel.ID)
+	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "", true)
+	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.GetCID())
 
 	//正常系
-	testPin := mustMakePin(t, testChannel.ID, testUser.ID, testMessage.ID)
+	testPin := mustMakePin(t, testUser.GetUID(), testMessage.GetID())
 	req := httptest.NewRequest("DELETE", "/", nil)
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/pin/:pinID")
 	c.SetParamNames("pinID")
-	c.SetParamValues(testPin.ID)
+	c.SetParamValues(testPin.String())
 	requestWithContext(t, mw(DeletePin), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code)

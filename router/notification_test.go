@@ -14,7 +14,7 @@ import (
 func TestPutNotificationStatus(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "subscribing", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "subscribing", "", true)
 	userID := mustCreateUser(t, "poyo").ID
 
 	post := struct {
@@ -40,14 +40,10 @@ func TestPutNotificationStatus(t *testing.T) {
 
 }
 
-//TODO TestPostDeviceToken
-//TODO TestDeleteDeviceToken
-//TODO TestGetNotificationStream
-
 func TestGetNotificationStatus(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "subscribing", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "subscribing", "", true)
 	user := mustCreateUser(t, "poyo")
 
 	require.NoError(model.SubscribeChannel(user.GetUID(), channel.GetCID()))
@@ -68,8 +64,8 @@ func TestGetNotificationStatus(t *testing.T) {
 func TestGetNotificationChannels(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	require.NoError(model.SubscribeChannel(testUser.GetUID(), mustMakeChannel(t, testUser.ID, "subscribing", true).GetCID()))
-	require.NoError(model.SubscribeChannel(testUser.GetUID(), mustMakeChannel(t, testUser.ID, "subscribing2", true).GetCID()))
+	require.NoError(model.SubscribeChannel(testUser.GetUID(), mustMakeChannelDetail(t, testUser.GetUID(), "subscribing", "", true).GetCID()))
+	require.NoError(model.SubscribeChannel(testUser.GetUID(), mustMakeChannelDetail(t, testUser.GetUID(), "subscribing2", "", true).GetCID()))
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.Set("targetUserID", testUser.ID)

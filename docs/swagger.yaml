@@ -640,25 +640,16 @@ paths:
     patch:
       tags:
         - user
-      description: 自分のユーザー情報を変更します。displayNameのみの変更の場合以前のpasswordは不要です
+      description: 自分のユーザー情報を変更します。
       requestBody:
         content:
           application/json:
             schema:
               type: object
               properties:
-                exPassword:
-                  type: string
-                  description: 変更する前のパスワード
                 displayName:
                   type: string
                   description: 新しい表示名(0-32文字)。変更しない場合は""
-                email:
-                  type: string
-                  description: 変更後のメールアドレス。変更しない場合は""
-                password:
-                  type: string
-                  description: 変更後のパスワード。変更しない場合は""
                 twitterId:
                   type: string
                   description: TwitterID
@@ -667,7 +658,33 @@ paths:
           description: 正常に変更できました。
         "400":
           description: 正常に変更できませんでした。リクエスト内容が不正です。
-        "401":
+
+  /users/me/password:
+    put:
+      tags:
+        - user
+      description: 自分のパスワードを変更します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+                - newPassword
+              properties:
+                password:
+                  type: string
+                  description: 現在のパスワード
+                newPassword:
+                  type: string
+                  description: 新しいパスワード
+      responses:
+        "204":
+          description: 正常に変更できました。
+        "400":
+          description: 正常に変更できませんでした。リクエスト内容が不正です
+        "403":
           description: 正常に変更できませんでした。パスワードが違います。
 
   /users/me/icon:
@@ -2595,7 +2612,9 @@ components:
           type: string
         member:
           type: array
-          format: uuid
+          items:
+            type: string
+            format: uuid
           description: privateチャンネルの場合は参加しているメンバー、公開チャンネルの場合は空
         parent:
           type: string
@@ -2603,6 +2622,9 @@ components:
           description: 親の階層のチャンネルId
         children:
           type: array
+          items:
+            type: string
+            format: uuid
           description: 子のチャンネルIdの配列
         visibility:
           type: boolean

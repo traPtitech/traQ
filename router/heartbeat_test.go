@@ -15,7 +15,7 @@ import (
 func TestPostHeartbeat(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "testChan", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "testChan", "", true)
 
 	requestBody, err := json.Marshal(struct {
 		ChannelID string `json:"channelId"`
@@ -42,7 +42,7 @@ func TestPostHeartbeat(t *testing.T) {
 func TestGetHeartbeat(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "testChan", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "testChan", "", true)
 
 	model.HeartbeatStatuses[channel.ID] = &model.HeartbeatStatus{
 		ChannelID: channel.ID,

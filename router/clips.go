@@ -57,15 +57,12 @@ func PostClip(c echo.Context) error {
 		MessageID string `json:"messageId" validate:"uuid,required"`
 		FolderID  string `json:"folderId"`
 	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-	if err := c.Validate(&req); err != nil {
+	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	// メッセージの存在と可用性を確認
-	if _, err := validateMessageID(req.MessageID, user.ID); err != nil {
+	if _, err := validateMessageID(uuid.FromStringOrNil(req.MessageID), user.GetUID()); err != nil {
 		return err
 	}
 

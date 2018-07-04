@@ -8,11 +8,11 @@ import (
 
 func TestGetUnread(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
-	testMessage := mustMakeMessage(t, testUser.ID, channel.ID)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	testMessage := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	// 正常系
-	mustMakeUnread(t, testUser.ID, testMessage.ID)
+	mustMakeUnread(t, testUser.GetUID(), testMessage.GetID())
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/users/me/unread")
 	requestWithContext(t, mw(GetUnread), c)
@@ -27,11 +27,11 @@ func TestGetUnread(t *testing.T) {
 
 func TestDeleteUnread(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
-	testMessage := mustMakeMessage(t, testUser.ID, channel.ID)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	testMessage := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	// 正常系
-	mustMakeUnread(t, testUser.ID, testMessage.ID)
+	mustMakeUnread(t, testUser.GetUID(), testMessage.GetID())
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/users/me/unread/:channelID")

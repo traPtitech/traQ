@@ -260,8 +260,8 @@ func (h *Handlers) GetBotInstallCode(c echo.Context) error {
 
 // GetInstalledBots GET /channels/:channelID/bots
 func (h *Handlers) GetInstalledBots(c echo.Context) error {
-	channelID := c.Param("channelID")
-	userID := c.Get("user").(*model.User).ID
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+	userID := c.Get("user").(*model.User).GetUID()
 
 	if _, err := validateChannelID(channelID, userID); err != nil {
 		switch err {
@@ -273,7 +273,7 @@ func (h *Handlers) GetInstalledBots(c echo.Context) error {
 		}
 	}
 
-	bots, err := model.GetInstalledBots(uuid.FromStringOrNil(channelID))
+	bots, err := model.GetInstalledBots(channelID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -293,8 +293,8 @@ func (h *Handlers) GetInstalledBots(c echo.Context) error {
 
 // PostInstalledBots POST /channels/:channelID/bots
 func (h *Handlers) PostInstalledBots(c echo.Context) error {
-	channelID := c.Param("channelID")
-	user := c.Get("user").(*model.User)
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+	userID := c.Get("user").(*model.User).GetUID()
 
 	req := struct {
 		Code string `json:"code" validate:"required"`
@@ -311,7 +311,7 @@ func (h *Handlers) PostInstalledBots(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if _, err := validateChannelID(channelID, user.ID); err != nil {
+	if _, err := validateChannelID(channelID, userID); err != nil {
 		switch err {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
@@ -321,7 +321,7 @@ func (h *Handlers) PostInstalledBots(c echo.Context) error {
 		}
 	}
 
-	if err := model.InstallBot(b.GetID(), uuid.FromStringOrNil(channelID), user.GetUID()); err != nil {
+	if err := model.InstallBot(b.GetID(), channelID, userID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -333,7 +333,7 @@ func (h *Handlers) PostInstalledBots(c echo.Context) error {
 
 // DeleteInstalledBot DELETE /channels/:channelID/bots/:botID
 func (h *Handlers) DeleteInstalledBot(c echo.Context) error {
-	channelID := c.Param("channelID")
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
 	user := c.Get("user").(*model.User)
 
 	b, err := getBot(c, uuid.FromStringOrNil(c.Param("botID")), false)
@@ -341,7 +341,7 @@ func (h *Handlers) DeleteInstalledBot(c echo.Context) error {
 		return err
 	}
 
-	if _, err := validateChannelID(channelID, user.ID); err != nil {
+	if _, err := validateChannelID(channelID, user.GetUID()); err != nil {
 		switch err {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
@@ -351,7 +351,7 @@ func (h *Handlers) DeleteInstalledBot(c echo.Context) error {
 		}
 	}
 
-	if err := model.UninstallBot(b.GetID(), uuid.FromStringOrNil(channelID)); err != nil {
+	if err := model.UninstallBot(b.GetID(), channelID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}

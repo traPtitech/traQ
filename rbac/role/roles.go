@@ -124,6 +124,8 @@ func SetRole(rbac *rbac.RBAC) {
 		// ブラウザ(セッション)からの操作のみしか許可しない
 		// ※ReadUser, WriteUser, PrivateReadUser, PrivateWriteUserのパーミッションを全て含む
 		User: {
+			permission.ChangeMyPassword,
+
 			permission.GetMyTokens,
 			permission.RevokeMyToken,
 			permission.GetClients,

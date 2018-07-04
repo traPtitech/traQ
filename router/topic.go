@@ -11,8 +11,9 @@ import (
 
 // GetTopic GET /channels/{channelID}/topic
 func GetTopic(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
-	ch, err := validateChannelID(c.Param("channelID"), userID)
+	userID := c.Get("user").(*model.User).GetUID()
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -29,17 +30,10 @@ func GetTopic(c echo.Context) error {
 
 // PutTopic PUT /channels/{channelID}/topic
 func PutTopic(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := c.Get("user").(*model.User).GetUID()
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
 
-	req := struct {
-		Text string `json:"text"`
-	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	channelID := c.Param("channelID")
-	ch, err := validateChannelID(channelID, user.ID)
+	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -49,7 +43,14 @@ func PutTopic(c echo.Context) error {
 		}
 	}
 
-	if err := model.UpdateChannelTopic(ch.GetCID(), req.Text, user.GetUID()); err != nil {
+	req := struct {
+		Text string `json:"text"`
+	}{}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if err := model.UpdateChannelTopic(channelID, req.Text, userID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred when channel model update.")
 	}
@@ -65,7 +66,7 @@ func PutTopic(c echo.Context) error {
 		for i, v := range users {
 			ids[i] = uuid.Must(uuid.FromString(v))
 		}
-		go event.Emit(event.ChannelUpdated, &event.PrivateChannelEvent{UserIDs: ids, ChannelID: ch.GetCID()})
+		go event.Emit(event.ChannelUpdated, &event.PrivateChannelEvent{UserIDs: ids, ChannelID: channelID})
 	}
 
 	return c.NoContent(http.StatusNoContent)

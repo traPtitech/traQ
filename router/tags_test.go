@@ -35,7 +35,7 @@ func TestPostUserTags(t *testing.T) {
 func TestGetUserTags(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 	for i := 0; i < 5; i++ {
-		mustMakeTag(t, testUser.ID, "tag"+strconv.Itoa(i))
+		mustMakeTag(t, testUser.GetUID(), "tag"+strconv.Itoa(i))
 	}
 
 	// 正常系
@@ -58,7 +58,7 @@ func TestPutUserTags(t *testing.T) {
 	tagText := "put test"
 
 	// 正常系
-	tag := mustMakeTag(t, testUser.ID, tagText)
+	tag := mustMakeTag(t, testUser.GetUID(), tagText)
 	post := struct {
 		IsLocked bool `json:"isLocked"`
 	}{
@@ -71,7 +71,7 @@ func TestPutUserTags(t *testing.T) {
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/users/:userID/tags/:tagID")
 	c.SetParamNames("userID", "tagID")
-	c.SetParamValues(testUser.ID, tag.TagID)
+	c.SetParamValues(testUser.ID, tag.String())
 	requestWithContext(t, mw(PatchUserTag), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code)
@@ -82,12 +82,12 @@ func TestDeleteUserTags(t *testing.T) {
 	tagText := "Delete test"
 
 	// 正常系
-	tag := mustMakeTag(t, testUser.ID, tagText)
+	tag := mustMakeTag(t, testUser.GetUID(), tagText)
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/users/:userID/tags/:tagID")
 	c.SetParamNames("userID", "tagID")
-	c.SetParamValues(testUser.ID, tag.TagID)
+	c.SetParamValues(testUser.ID, tag.String())
 	requestWithContext(t, mw(DeleteUserTag), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code)

@@ -50,8 +50,8 @@ func GetMessagesByChannelID(c echo.Context) error {
 	}
 
 	// channelIDの検証
-	userID := c.Get("user").(*model.User).ID
-	res, err := getMessages(c.Param("channelID"), userID, queryParam.Limit, queryParam.Offset)
+	userID := c.Get("user").(*model.User).GetUID()
+	res, err := getMessages(uuid.FromStringOrNil(c.Param("channelID")), userID, queryParam.Limit, queryParam.Offset)
 	if err != nil {
 		return err
 	}
@@ -61,22 +61,22 @@ func GetMessagesByChannelID(c echo.Context) error {
 
 // PostMessage POST /channels/{channelID}/messages のハンドラ
 func PostMessage(c echo.Context) error {
-	// 10KB制限
-	if c.Request().ContentLength > 10*1024 {
-		return echo.NewHTTPError(http.StatusRequestEntityTooLarge, "a request must be smaller than 10KB")
+	// 100KB制限
+	if c.Request().ContentLength > 100*1024 {
+		return echo.NewHTTPError(http.StatusRequestEntityTooLarge, "a request must be smaller than 100KB")
 	}
 
 	post := &struct {
-		Text string `json:"text"`
+		Text string `json:"text" validate:"required"`
 	}{}
-	if err := c.Bind(post); err != nil {
+	if err := bindAndValidate(c, &post); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
 	}
 
-	user := c.Get("user").(*model.User)
-	channelID := c.Param("channelID")
+	userID := c.Get("user").(*model.User).GetUID()
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
 
-	_, err := validateChannelID(channelID, user.ID)
+	_, err := validateChannelID(channelID, userID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -86,7 +86,7 @@ func PostMessage(c echo.Context) error {
 		}
 	}
 
-	m, err := createMessage(c, post.Text, user.GetUID(), uuid.FromStringOrNil(channelID))
+	m, err := createMessage(c, post.Text, userID, channelID)
 	if err != nil {
 		return err
 	}
@@ -211,7 +211,7 @@ func createMessage(c echo.Context, text string, userID, channelID uuid.UUID) (*M
 }
 
 // チャンネルのデータを取得する
-func getMessages(channelID, userID string, limit, offset int) ([]*MessageForResponse, error) {
+func getMessages(channelID, userID uuid.UUID, limit, offset int) ([]*MessageForResponse, error) {
 	if _, err := validateChannelID(channelID, userID); err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -221,12 +221,12 @@ func getMessages(channelID, userID string, limit, offset int) ([]*MessageForResp
 		}
 	}
 
-	messages, err := model.GetMessagesByChannelID(uuid.FromStringOrNil(channelID), limit, offset)
+	messages, err := model.GetMessagesByChannelID(channelID, limit, offset)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
 	}
 
-	reports, err := model.GetMessageReportsByReporterID(uuid.FromStringOrNil(userID))
+	reports, err := model.GetMessageReportsByReporterID(userID)
 	if err != nil {
 		log.Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
@@ -284,7 +284,7 @@ func validateMessageID(messageID, userID uuid.UUID) (*model.Message, error) {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Cannot find message")
 	}
 
-	if _, err := validateChannelID(m.ChannelID, userID.String()); err != nil {
+	if _, err := validateChannelID(m.GetCID(), userID); err != nil {
 		return nil, echo.NewHTTPError(http.StatusForbidden, "Message forbidden")
 	}
 	return m, nil

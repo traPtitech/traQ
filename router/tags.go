@@ -32,14 +32,16 @@ type TagListForResponse struct {
 	Users    []*UserForResponse `json:"users"`
 }
 
-// GetUserTags GET /users/{userID}/tags のハンドラ
+// GetUserTags GET /users/:userID/tags
 func GetUserTags(c echo.Context) error {
+	userID := uuid.FromStringOrNil(c.Param("userID"))
+
 	// ユーザー確認
-	user, err := validateUserID(c.Param("userID"))
+	user, err := model.GetUser(userID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "This user dosen't exist")
+			return echo.NewHTTPError(http.StatusNotFound)
 		default:
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
@@ -55,6 +57,8 @@ func GetUserTags(c echo.Context) error {
 
 // PostUserTag POST /users/{userID}/tags のハンドラ
 func PostUserTag(c echo.Context) error {
+	userID := uuid.FromStringOrNil(c.Param("userID"))
+
 	// リクエスト検証
 	req := struct {
 		Tag string `json:"tag" validate:"required,max=30"`
@@ -64,11 +68,11 @@ func PostUserTag(c echo.Context) error {
 	}
 
 	// ユーザー確認
-	user, err := validateUserID(c.Param("userID"))
+	user, err := model.GetUser(userID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "This user dosen't exist")
+			return echo.NewHTTPError(http.StatusNotFound)
 		default:
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)

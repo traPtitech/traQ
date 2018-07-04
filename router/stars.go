@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"net/http"
 
@@ -28,10 +29,10 @@ func GetStars(c echo.Context) error {
 
 // PutStars PUT /users/me/stars/:channelID
 func PutStars(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := c.Get("user").(*model.User).GetUID()
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
 
-	ch, err := validateChannelID(c.Param("channelID"), user.ID)
-	if err != nil {
+	if _, err := validateChannelID(channelID, userID); err != nil {
 		switch err {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
@@ -41,21 +42,21 @@ func PutStars(c echo.Context) error {
 		}
 	}
 
-	if err := model.AddStar(user.GetUID(), ch.GetCID()); err != nil {
+	if err := model.AddStar(userID, channelID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.ChannelStared, &event.UserChannelEvent{UserID: user.GetUID(), ChannelID: ch.GetCID()})
+	go event.Emit(event.ChannelStared, &event.UserChannelEvent{UserID: userID, ChannelID: channelID})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteStars DELETE /users/me/stars/:channelID
 func DeleteStars(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := c.Get("user").(*model.User).GetUID()
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
 
-	ch, err := validateChannelID(c.Param("channelID"), user.ID)
-	if err != nil {
+	if _, err := validateChannelID(channelID, userID); err != nil {
 		switch err {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
@@ -65,11 +66,11 @@ func DeleteStars(c echo.Context) error {
 		}
 	}
 
-	if err := model.RemoveStar(user.GetUID(), ch.GetCID()); err != nil {
+	if err := model.RemoveStar(userID, channelID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.ChannelUnstared, &event.UserChannelEvent{UserID: user.GetUID(), ChannelID: ch.GetCID()})
+	go event.Emit(event.ChannelUnstared, &event.UserChannelEvent{UserID: userID, ChannelID: channelID})
 	return c.NoContent(http.StatusNoContent)
 }

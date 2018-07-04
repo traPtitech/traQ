@@ -169,7 +169,7 @@ func TestDeleteChannelsByChannelID(t *testing.T) {
 	c.SetParamValues(ch.ID)
 	requestWithContext(t, mw(DeleteChannelsByChannelID), c)
 
-	ch, err := model.GetChannelByID(testUser.ID, ch.ID)
+	ch, err := model.GetChannelWithUserID(testUser.ID, ch.ID)
 	require.Error(err)
 
 	// ""で削除されていても取得できるようにするそれでちゃんと削除されているか確認する
