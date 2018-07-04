@@ -70,7 +70,6 @@ func TestPostChannels(t *testing.T) {
 	if assert.NoError(err) {
 		if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
 			assert.Len(channelList, 3)
-			assert.False(channelList[0].ID != channelList[1].ParentID && channelList[1].ID != channelList[0].ParentID)
 		}
 	}
 
