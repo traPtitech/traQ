@@ -85,13 +85,8 @@ func TestGetPinsByChannelID(t *testing.T) {
 	_, err := CreatePin(testMessage.GetID(), user.GetUID())
 	require.NoError(err)
 
-	//正常系
 	pins, err := GetPinsByChannelID(channel.GetCID())
 	if assert.NoError(err) {
-		if assert.Len(pins, 1) {
-			pin, err := GetPin(uuid.Nil)
-			require.NoError(err)
-			assert.EqualValues(pin, pins[0])
-		}
+		assert.Len(pins, 1)
 	}
 }

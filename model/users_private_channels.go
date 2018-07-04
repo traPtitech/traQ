@@ -61,14 +61,14 @@ func GetPrivateChannel(userID1, userID2 string) (string, error) {
 
 // GetPrivateChannelMembers DMのメンバーの配列を取得する
 func GetPrivateChannelMembers(channelID string) (member []string, err error) {
-	err = db.Model(UserSubscribeChannel{}).Where(UserSubscribeChannel{ChannelID: channelID}).Pluck("user_id", &member).Error
+	err = db.Model(UsersPrivateChannel{}).Where(UsersPrivateChannel{ChannelID: channelID}).Pluck("user_id", &member).Error
 	return
 }
 
 // IsUserPrivateChannelMember ユーザーがプライベートチャンネルのメンバーかどうかを確認します
 func IsUserPrivateChannelMember(channelID, userID uuid.UUID) (bool, error) {
-	c := &UserSubscribeChannel{}
-	err := db.Where(UserSubscribeChannel{ChannelID: channelID.String(), UserID: userID.String()}).Take(c).Error
+	c := &UsersPrivateChannel{}
+	err := db.Where(UsersPrivateChannel{ChannelID: channelID.String(), UserID: userID.String()}).Take(c).Error
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return false, nil

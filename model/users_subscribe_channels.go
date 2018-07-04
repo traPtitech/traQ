@@ -30,7 +30,7 @@ func UnsubscribeChannel(userID, channelID uuid.UUID) error {
 // GetSubscribingUser 指定したチャンネルを購読しているユーザーを取得
 func GetSubscribingUser(channelID uuid.UUID) ([]uuid.UUID, error) {
 	var arr []string
-	err := db.Where(UserSubscribeChannel{ChannelID: channelID.String()}).Pluck("user_id", &arr).Error
+	err := db.Model(UserSubscribeChannel{}).Where(UserSubscribeChannel{ChannelID: channelID.String()}).Pluck("user_id", &arr).Error
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func GetSubscribingUser(channelID uuid.UUID) ([]uuid.UUID, error) {
 // GetSubscribedChannels ユーザーが購読しているチャンネルを取得する
 func GetSubscribedChannels(userID uuid.UUID) ([]uuid.UUID, error) {
 	var arr []string
-	err := db.Where(UserSubscribeChannel{UserID: userID.String()}).Pluck("channel_id", &arr).Error
+	err := db.Model(UserSubscribeChannel{}).Where(UserSubscribeChannel{UserID: userID.String()}).Pluck("channel_id", &arr).Error
 	if err != nil {
 		return nil, err
 	}

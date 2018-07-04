@@ -365,7 +365,7 @@ func GetChannelByMessageID(messageID uuid.UUID) (*Channel, error) {
 	channel := &Channel{}
 
 	err := db.
-		Where("id = ?", db.Table("messages").Select("channel_id").Where(Message{ID: messageID.String()}).QueryExpr()).
+		Where("id IN (?)", db.Model(Message{}).Select("messages.channel_id").Where(Message{ID: messageID.String()}).QueryExpr()).
 		Take(channel).
 		Error
 	if err != nil {
