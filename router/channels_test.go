@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/satori/go.uuid"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -15,9 +16,9 @@ func TestGetChannels(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 
 	for i := 0; i < 5; i++ {
-		mustMakeChannel(t, testUser.ID, "Channel-"+strconv.Itoa(i), true)
+		mustMakeChannelDetail(t, testUser.GetUID(), "Channel-"+strconv.Itoa(i), "", true)
 	}
-	private := mustMakeChannel(t, testUser.ID, "private", false)
+	private := mustMakeChannelDetail(t, testUser.GetUID(), "private", "", false)
 
 	rec := request(e, t, mw(GetChannels), cookie, nil)
 
@@ -47,7 +48,7 @@ func TestPostChannels(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	rec := request(e, t, mw(PostChannels), cookie, req)
 
-	channelList, err := model.GetChannelList(testUser.ID)
+	channelList, err := model.GetChannelList(testUser.GetUID())
 	if assert.NoError(err) {
 		if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
 			assert.Len(channelList, 1)
@@ -65,7 +66,7 @@ func TestPostChannels(t *testing.T) {
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	rec = request(e, t, mw(PostChannels), cookie, req)
 
-	channelList, err = model.GetChannelList(testUser.ID)
+	channelList, err = model.GetChannelList(testUser.GetUID())
 	if assert.NoError(err) {
 		if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
 			assert.Len(channelList, 2)
@@ -88,12 +89,12 @@ func TestPostChannels(t *testing.T) {
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	request(e, t, mw(PostChannels), cookie, req)
 
-	channelList, err = model.GetChannelList(testUser.ID)
+	channelList, err = model.GetChannelList(testUser.GetUID())
 	if assert.NoError(err) {
 		assert.Len(channelList, 3)
 	}
 
-	channelList, err = model.GetChannelList(model.CreateUUID())
+	channelList, err = model.GetChannelList(uuid.Nil)
 	if assert.NoError(err) {
 		assert.Len(channelList, 2)
 	}
@@ -120,7 +121,7 @@ func TestPostChannels(t *testing.T) {
 func TestGetChannelsByChannelID(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/:channelID")
@@ -133,16 +134,13 @@ func TestGetChannelsByChannelID(t *testing.T) {
 
 func TestPatchChannelsByChannelID(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
-	ch := mustMakeChannel(t, testUser.ID, "test", true)
+	ch := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
 
-	parentID := mustMakeChannel(t, testUser.ID, "parent", true).ID
 	jsonBody := struct {
 		Name       string `json:"name"`
-		Parent     string `json:"parent"`
 		Visibility bool   `json:"visibility"`
 	}{
 		Name:       "renamed",
-		Parent:     parentID,
 		Visibility: true,
 	}
 	body, err := json.Marshal(jsonBody)
@@ -158,10 +156,33 @@ func TestPatchChannelsByChannelID(t *testing.T) {
 	assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String())
 }
 
+func TestPutChannelParent(t *testing.T) {
+	e, cookie, mw, assert, require := beforeTest(t)
+	ch := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+
+	parentID := mustMakeChannelDetail(t, testUser.GetUID(), "parent", "", true).ID
+	jsonBody := struct {
+		Parent string `json:"parent"`
+	}{
+		Parent: parentID,
+	}
+	body, err := json.Marshal(jsonBody)
+	require.NoError(err)
+
+	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
+	c, rec := getContext(e, t, cookie, req)
+	c.SetPath("/:channelID")
+	c.SetParamNames("channelID")
+	c.SetParamValues(ch.ID)
+	requestWithContext(t, mw(PutChannelParent), c)
+
+	assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String())
+}
+
 func TestDeleteChannelsByChannelID(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	ch := mustMakeChannel(t, testUser.ID, "test", true)
+	ch := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
 
 	c, _ := getContext(e, t, cookie, nil)
 	c.SetPath("/:channelID")
@@ -169,12 +190,12 @@ func TestDeleteChannelsByChannelID(t *testing.T) {
 	c.SetParamValues(ch.ID)
 	requestWithContext(t, mw(DeleteChannelsByChannelID), c)
 
-	ch, err := model.GetChannelWithUserID(testUser.ID, ch.ID)
+	ch, err := model.GetChannelWithUserID(testUser.GetUID(), ch.GetCID())
 	require.Error(err)
 
 	// ""で削除されていても取得できるようにするそれでちゃんと削除されているか確認する
 
-	channelList, err := model.GetChannelList(testUser.ID)
+	channelList, err := model.GetChannelList(testUser.GetUID())
 	if assert.NoError(err) {
 		assert.Len(channelList, 0)
 	}

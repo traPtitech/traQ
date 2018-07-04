@@ -149,6 +149,7 @@ func SetRole(rbac *rbac.RBAC) {
 		Admin: {
 			permission.EditChannel,
 			permission.DeleteChannel,
+			permission.ChangeParentChannel,
 
 			permission.GetMessageReports,
 

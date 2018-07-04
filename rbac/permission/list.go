@@ -4,10 +4,11 @@ import "github.com/mikespook/gorbac"
 
 // 全パーミッションのリスト。パーミッションを新たに定義した場合はここに必ず追加すること
 var list = map[string]gorbac.Permission{
-	CreateChannel.ID(): CreateChannel,
-	GetChannel.ID():    GetChannel,
-	EditChannel.ID():   EditChannel,
-	DeleteChannel.ID(): DeleteChannel,
+	CreateChannel.ID():       CreateChannel,
+	GetChannel.ID():          GetChannel,
+	EditChannel.ID():         EditChannel,
+	DeleteChannel.ID():       DeleteChannel,
+	ChangeParentChannel.ID(): ChangeParentChannel,
 
 	GetTopic.ID():  GetTopic,
 	EditTopic.ID(): EditTopic,

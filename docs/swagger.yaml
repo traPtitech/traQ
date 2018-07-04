@@ -306,11 +306,6 @@ paths:
                   type: string
                   description: チャンネル名
                   example: gps
-                parent:
-                  type: string
-                  format: uuid
-                  description: 変更後の親のID。
-                  example: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
                 visibility:
                   type: boolean
                   description: 変更後のvisibility
@@ -340,6 +335,37 @@ paths:
           description: |+
             削除に失敗しました。
             指定したチャンネルは既に存在しません。
+
+  /channels/{channelID}/parent:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+    put:
+      tags:
+        - channel
+      description: チャンネルの親チャンネルを変更します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - parent
+              properties:
+                parent:
+                  type: string
+                  format: uuid
+                  description: 変更後の親チャンネルID
+      responses:
+        "204":
+          description: 変更に成功しました。
+        "400":
+          description: 変更に失敗しました。リクエスト内容が不正です。
+        "403":
+          description: 変更に失敗しました。権限がありません。
+        "404":
+          description: 変更に失敗しました。指定されたチャンネルは存在しません。
+        "409":
+          description: 変更に失敗しました。チャンネル名が競合しています。
 
   /channels/{channelID}/topic:
     parameters:

@@ -160,6 +160,7 @@ func main() {
 	api.GET("/channels/:channelID", router.GetChannelsByChannelID, requires(permission.GetChannel))
 	api.PATCH("/channels/:channelID", router.PatchChannelsByChannelID, requires(permission.EditChannel))
 	api.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID, requires(permission.DeleteChannel))
+	api.PUT("/channels/:channelID/parent", router.PutChannelParent, requires(permission.ChangeParentChannel))
 
 	// Tag: Topic
 	api.GET("/channels/:channelID/topic", router.GetTopic, requires(permission.GetTopic))
