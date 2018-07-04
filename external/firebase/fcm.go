@@ -82,7 +82,7 @@ func (m *Manager) sendToFcm(deviceTokens []string, data map[string]string) error
 				case strings.Contains(err.Error(), "registration-token-not-registered"):
 					fallthrough
 				case strings.Contains(err.Error(), "invalid-argument"):
-					if err := (&model.Device{Token: token}).Unregister(); err != nil {
+					if err := model.UnregisterDevice(token); err != nil {
 						return err
 					}
 				case strings.Contains(err.Error(), "internal-error"): // 50x

@@ -60,16 +60,16 @@ func TestUnregisterDevice(t *testing.T) {
 	}
 
 	{
-		assert.NoError(UnregisterDevice(id2, token2))
+		assert.NoError(UnregisterDevice(token2))
 		l := 0
 		require.NoError(db.Model(Device{}).Count(&l).Error)
 		assert.EqualValues(2, l)
 	}
 	{
-		assert.NoError(UnregisterDevice(id1, token2))
+		assert.NoError(UnregisterDevice(token3))
 		l := 0
 		require.NoError(db.Model(Device{}).Count(&l).Error)
-		assert.EqualValues(2, l)
+		assert.EqualValues(1, l)
 	}
 }
 

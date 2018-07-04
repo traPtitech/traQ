@@ -49,8 +49,8 @@ func RegisterDevice(userID uuid.UUID, token string) (*Device, error) {
 }
 
 // UnregisterDevice FCMデバイスを解放
-func UnregisterDevice(userID uuid.UUID, token string) (err error) {
-	err = db.Where(Device{Token: token, UserID: userID.String()}).Delete(Device{}).Error
+func UnregisterDevice(token string) (err error) {
+	err = db.Delete(Device{Token: token}).Error
 	return
 }
 

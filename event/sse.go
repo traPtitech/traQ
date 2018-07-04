@@ -142,7 +142,7 @@ func (s *SSEStreamer) Process(t Type, time time.Time, data interface{}) error {
 		// 送信
 		for id := range subscribers {
 			if !(id.String() == me.Message.UserID || viewers[id]) {
-				if err := (&model.Unread{UserID: id.String(), MessageID: me.Message.ID}).Create(); err != nil {
+				if err := model.SetMessageUnread(id, me.Message.GetID()); err != nil {
 					log.Error(err)
 				}
 			}

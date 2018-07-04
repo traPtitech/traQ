@@ -37,7 +37,7 @@ func (e *MessageCreatedEvent) parseMessage() ([]*message.EmbeddedInfo, string) {
 // GetTargetUsers 通知対象のユーザー
 func (e *MessageCreatedEvent) GetTargetUsers() map[uuid.UUID]bool {
 	res := map[uuid.UUID]bool{}
-	ch, err := model.GetChannelByMessageID(e.Message.ID)
+	ch, err := model.GetChannelByMessageID(e.Message.GetID())
 	if err != nil {
 		log.Error(err)
 	}
@@ -86,12 +86,12 @@ func (e *MessageCreatedEvent) GetTargetUsers() map[uuid.UUID]bool {
 					res[uid] = true
 				}
 			case "tag":
-				tagged, err := model.GetUserIDsByTagID(v.ID)
+				tagged, err := model.GetUserIDsByTagID(uuid.FromStringOrNil(v.ID))
 				if err != nil {
 					log.Error(err)
 				}
 				for _, v := range tagged {
-					res[uuid.Must(uuid.FromString(v))] = true
+					res[v] = true
 				}
 			}
 		}
@@ -116,7 +116,7 @@ func (e *MessageCreatedEvent) GetFCMData() map[string]string {
 
 	ei, plain := e.parseMessage()
 	users, _ := model.GetPrivateChannelMembers(e.Message.ChannelID)
-	mUser, _ := model.GetUser(e.Message.UserID)
+	mUser, _ := model.GetUser(e.Message.GetUID())
 	if l := len(users); l == 2 || l == 1 {
 		if mUser != nil {
 			if len(mUser.DisplayName) == 0 {
@@ -158,7 +158,7 @@ func (e *MessageCreatedEvent) GetFCMData() map[string]string {
 
 	for _, v := range ei {
 		if v.Type == "file" {
-			f, _ := model.GetMetaFileDataByID(v.ID)
+			f, _ := model.GetMetaFileDataByID(uuid.FromStringOrNil(v.ID))
 			if f != nil && f.HasThumbnail {
 				d["image"] = fmt.Sprintf("%s/api/1.0/files/%s/thumbnail", config.TRAQOrigin, v.ID)
 				break
