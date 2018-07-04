@@ -81,7 +81,7 @@ var (
 		{"oauth2_tokens", "user_id", "users(id)", "CASCADE", "CASCADE"},
 	}
 
-	serverUser *User
+	serverUser = &User{}
 
 	// ErrNotFoundOrForbidden 汎用エラー: 見つからないかスコープ外にある場合のエラー
 	ErrNotFoundOrForbidden = errors.New("not found or forbidden")
@@ -109,7 +109,7 @@ func Sync() error {
 	}
 
 	// サーバーユーザーの確認
-	if err := db.Where(User{Name: "traq"}).Take(&serverUser).Error; err != nil {
+	if err := db.Where(User{Name: "traq"}).Take(serverUser).Error; err != nil {
 		if !gorm.IsRecordNotFoundError(err) {
 			return err
 		}
