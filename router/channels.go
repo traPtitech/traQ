@@ -390,10 +390,9 @@ func validateChannelID(channelID, userID uuid.UUID) (*model.Channel, error) {
 	ch, err := model.GetChannelWithUserID(userID, channelID)
 	if err != nil {
 		switch err {
-		case model.ErrNotFound:
-			return nil, nil
+		case model.ErrNotFoundOrForbidden:
+			return nil, model.ErrNotFound
 		}
-		log.Error(err)
 		return nil, err
 	}
 

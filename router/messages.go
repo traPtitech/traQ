@@ -76,13 +76,14 @@ func PostMessage(c echo.Context) error {
 	userID := c.Get("user").(*model.User).GetUID()
 	channelID := uuid.FromStringOrNil(c.Param("channelID"))
 
-	ch, err := validateChannelID(channelID, userID)
+	_, err := validateChannelID(channelID, userID)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	if ch == nil {
-		return echo.NewHTTPError(http.StatusNotFound)
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
 	}
 
 	m, err := createMessage(c, post.Text, userID, channelID)
