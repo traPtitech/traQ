@@ -292,10 +292,15 @@ func PutChannelParent(c echo.Context) error {
 	}
 
 	req := struct {
-		Parent string `json:"parent" validate:"uuid|omitempty"`
+		Parent string `json:"parent"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	if _, err := uuid.FromString(req.Parent); err != nil {
+		if len(req.Parent) != 0 {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
 	}
 
 	if err := model.ChangeChannelParent(channelID, req.Parent, userID); err != nil {
