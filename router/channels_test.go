@@ -51,7 +51,7 @@ func TestPostChannels(t *testing.T) {
 	channelList, err := model.GetChannelList(testUser.GetUID())
 	if assert.NoError(err) {
 		if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
-			assert.Len(channelList, 1)
+			assert.Len(channelList, 2)
 		}
 	}
 
@@ -69,7 +69,7 @@ func TestPostChannels(t *testing.T) {
 	channelList, err = model.GetChannelList(testUser.GetUID())
 	if assert.NoError(err) {
 		if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
-			assert.Len(channelList, 2)
+			assert.Len(channelList, 3)
 			assert.False(channelList[0].ID != channelList[1].ParentID && channelList[1].ID != channelList[0].ParentID)
 		}
 	}
@@ -91,12 +91,12 @@ func TestPostChannels(t *testing.T) {
 
 	channelList, err = model.GetChannelList(testUser.GetUID())
 	if assert.NoError(err) {
-		assert.Len(channelList, 3)
+		assert.Len(channelList, 4)
 	}
 
 	channelList, err = model.GetChannelList(uuid.Nil)
 	if assert.NoError(err) {
-		assert.Len(channelList, 2)
+		assert.Len(channelList, 3)
 	}
 
 	// 異常系: 同じメンバーのプライベートチャンネルは作成できない

@@ -4,7 +4,7 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.10.3
-      - image: circleci/mysql:5.7.22-ram
+      - image: circleci/mysql:latest-ram
         environment:
           - MYSQL_DATABASE=traq
           - MYSQL_ROOT_PASSWORD=password

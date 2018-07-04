@@ -12,7 +12,7 @@ type Tag struct {
 	ID         string `gorm:"type:char(36);primary_key"`
 	Name       string `gorm:"type:varchar(30);unique"            validate:"required,max=30"`
 	Restricted bool
-	Type       string
+	Type       string    `gorm:"type:varchar(30)"`
 	CreatedAt  time.Time `gorm:"precision:6"`
 	UpdatedAt  time.Time `gorm:"precision:6"`
 }
