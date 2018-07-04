@@ -70,20 +70,19 @@ func PostMessage(c echo.Context) error {
 		Text string `json:"text" validate:"required"`
 	}{}
 	if err := bindAndValidate(c, &post); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	userID := c.Get("user").(*model.User).GetUID()
 	channelID := uuid.FromStringOrNil(c.Param("channelID"))
 
-	_, err := validateChannelID(channelID, userID)
+	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
-		default:
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
-		}
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	if ch == nil {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	m, err := createMessage(c, post.Text, userID, channelID)
