@@ -79,7 +79,7 @@ func (ch *Channel) BeforeCreate(tx *gorm.DB) error {
 	if err != nil {
 		return err
 	}
-	if !has {
+	if has {
 		return ErrDuplicateName
 	}
 
@@ -116,7 +116,7 @@ func CreateChannel(parent, name string, creatorID uuid.UUID, isPublic bool) (*Ch
 
 	// チャンネルパスをキャッシュ
 	if path, err := ch.Path(); err == nil {
-		channelPathMap.Store(uuid.FromStringOrNil(ch.ID), path)
+		channelPathMap.Store(ch.GetCID(), path)
 	}
 
 	return ch, nil
@@ -142,7 +142,7 @@ func ChangeChannelName(channelID uuid.UUID, name string, updaterID uuid.UUID) er
 	if err != nil {
 		return err
 	}
-	if !has {
+	if has {
 		return ErrDuplicateName
 	}
 
@@ -200,7 +200,7 @@ func ChangeChannelParent(channelID uuid.UUID, parent string, updaterID uuid.UUID
 	if err != nil {
 		return err
 	}
-	if !has {
+	if has {
 		return ErrDuplicateName
 	}
 
@@ -282,12 +282,12 @@ func IsChannelNamePresent(name, parent string) (bool, error) {
 
 // GetParentChannel 親のチャンネルを取得する
 func GetParentChannel(channelID uuid.UUID) (*Channel, error) {
-	p := ""
+	p := &Channel{}
 	err := db.
 		Model(Channel{}).
 		Select("parent_id").
 		Where("id = ?", channelID.String()).
-		Scan(&p).
+		Take(p).
 		Error
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
@@ -295,13 +295,13 @@ func GetParentChannel(channelID uuid.UUID) (*Channel, error) {
 		}
 		return nil, err
 	}
-	if len(p) == 0 {
+	if len(p.ParentID) == 0 {
 		return nil, nil
 	}
 
 	ch := &Channel{}
 	err = db.
-		Where("id = ?", p).
+		Where("id = ?", p.ParentID).
 		Take(ch).
 		Error
 	if err != nil {
@@ -407,7 +407,7 @@ func updateChannelPathWithDescendants(channel *Channel) error {
 		return err
 	}
 
-	channelPathMap.Store(uuid.FromStringOrNil(channel.ID), path)
+	channelPathMap.Store(channel.GetCID(), path)
 
 	//子チャンネルも
 	var children []*Channel

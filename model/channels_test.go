@@ -17,7 +17,7 @@ func TestCreateChannel(t *testing.T) {
 	assert, _, user, _ := beforeTest(t)
 
 	c, err := CreateChannel("", "test2", user.GetUID(), true)
-	if assert.Error(err) {
+	if assert.NoError(err) {
 		assert.NotEmpty(c.ID)
 		assert.Equal("test2", c.Name)
 		assert.Equal(user.ID, c.CreatorID)
