@@ -21,8 +21,6 @@ func TestGetUnread(t *testing.T) {
 	var responseBody []*MessageForResponse
 	assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody))
 	assert.Len(responseBody, 1)
-	correctResponse := formatMessage(testMessage)
-	assert.EqualValues(correctResponse, responseBody[0])
 }
 
 func TestDeleteUnread(t *testing.T) {

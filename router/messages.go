@@ -66,7 +66,7 @@ func PostMessage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusRequestEntityTooLarge, "a request must be smaller than 100KB")
 	}
 
-	post := &struct {
+	post := struct {
 		Text string `json:"text" validate:"required"`
 	}{}
 	if err := bindAndValidate(c, &post); err != nil {
@@ -114,7 +114,7 @@ func PutMessageByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if err := model.UpdateMessage(user.GetUID(), req.Text); err != nil {
+	if err := model.UpdateMessage(m.GetID(), req.Text); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}

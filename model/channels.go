@@ -98,7 +98,7 @@ func (ch *Channel) GetCID() uuid.UUID {
 
 // GetCreatorID チャンネル作成者のUUIDを返します
 func (ch *Channel) GetCreatorID() uuid.UUID {
-	return uuid.Must(uuid.FromString(ch.ID))
+	return uuid.Must(uuid.FromString(ch.CreatorID))
 }
 
 // CreateChannel チャンネルを作成します

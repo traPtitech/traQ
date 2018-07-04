@@ -196,6 +196,6 @@ func TestDeleteChannelsByChannelID(t *testing.T) {
 
 	channelList, err := model.GetChannelList(testUser.GetUID())
 	if assert.NoError(err) {
-		assert.Len(channelList, 0)
+		assert.Len(channelList, 1)
 	}
 }

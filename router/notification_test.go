@@ -47,7 +47,7 @@ func TestGetNotificationStatus(t *testing.T) {
 	user := mustCreateUser(t, "poyo")
 
 	require.NoError(model.SubscribeChannel(user.GetUID(), channel.GetCID()))
-	require.NoError(model.SetMessageUnread(testUser.GetUID(), channel.GetCID()))
+	require.NoError(model.SubscribeChannel(testUser.GetUID(), channel.GetCID()))
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.Set("channel", channel)

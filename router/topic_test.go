@@ -15,7 +15,7 @@ func TestGetTopic(t *testing.T) {
 	topicText := "Topic test"
 
 	ch := mustMakeChannelDetail(t, testUser.GetUID(), "putTopicTest", "", true)
-	require.NoError(model.UpdateChannelTopic(ch.GetCID(), topicText, ch.GetCreatorID()))
+	require.NoError(model.UpdateChannelTopic(ch.GetCID(), topicText, testUser.GetUID()))
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/:channelID")
