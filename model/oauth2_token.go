@@ -11,8 +11,8 @@ type OAuth2Token struct {
 	ClientID     string `gorm:"type:char(36)"`
 	UserID       string `gorm:"type:char(36)"`
 	RedirectURI  string `gorm:"type:text"`
-	AccessToken  string `gorm:"size:36;unique"`
-	RefreshToken string `gorm:"size:36;unique"`
+	AccessToken  string `gorm:"type:varchar(36);unique"`
+	RefreshToken string `gorm:"type:varchar(36);unique"`
 	Scopes       string `gorm:"type:text"`
 	ExpiresIn    int
 	CreatedAt    time.Time  `gorm:"precision:6"`

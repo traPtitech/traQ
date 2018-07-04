@@ -10,7 +10,7 @@ import (
 // Tag tag_idの管理をする構造体
 type Tag struct {
 	ID         string `gorm:"type:char(36);primary_key"`
-	Name       string `gorm:"size:30;unique"            validate:"required,max=30"`
+	Name       string `gorm:"type:varchar(30);unique"            validate:"required,max=30"`
 	Restricted bool
 	Type       string
 	CreatedAt  time.Time `gorm:"precision:6"`

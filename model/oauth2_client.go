@@ -8,11 +8,11 @@ import (
 // OAuth2Client OAuth2 クライアント構造体
 type OAuth2Client struct {
 	ID           string `gorm:"type:char(36);primary_key"`
-	Name         string `gorm:"size:32"`
+	Name         string `gorm:"type:varchar(32)"`
 	Description  string `gorm:"type:text"`
 	Confidential bool
 	CreatorID    string     `gorm:"type:char(36)"`
-	Secret       string     `gorm:"size:36"`
+	Secret       string     `gorm:"type:varchar(36)"`
 	RedirectURI  string     `gorm:"type:text"`
 	Scopes       string     `gorm:"type:text"`
 	CreatedAt    time.Time  `gorm:"precision:6"`

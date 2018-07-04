@@ -46,8 +46,8 @@ type GeneralBot struct {
 	PostURL           string `gorm:"type:text"                 validate:"url,required"`
 	SubscribeEvents   string `gorm:"type:text"`
 	Activated         bool
-	InstallCode       string     `gorm:"size:30;unique"            validate:"required"`
-	CreatorID         string     `gorm:"char(36)"                  validate:"uuid,required"`
+	InstallCode       string     `gorm:"type:varchar(30);unique"   validate:"required"`
+	CreatorID         string     `gorm:"type:char(36)"             validate:"uuid,required"`
 	CreatedAt         time.Time  `gorm:"precision:6"`
 	UpdatedAt         time.Time  `gorm:"precision:6"`
 	DeletedAt         *time.Time `gorm:"precision:6"`

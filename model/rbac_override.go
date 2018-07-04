@@ -12,7 +12,7 @@ import (
 // RBACOverride rbac.OverrideDataインターフェイスの実装
 type RBACOverride struct {
 	UserID     string `gorm:"type:char(36);primary_key"`
-	Permission string `gorm:"size:50;primary_key"`
+	Permission string `gorm:"type:varchar(50);primary_key"`
 	Validity   bool
 	CreatedAt  time.Time `gorm:"precision:6"`
 	UpdatedAt  time.Time `gorm:"precision:6"`

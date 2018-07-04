@@ -38,7 +38,7 @@ type File struct {
 	Size            int64  `                                 validate:"min=0,required"`
 	CreatorID       string `gorm:"type:char(36)"             validate:"uuid,required"`
 	Hash            string `gorm:"type:char(32)"             validate:"max=32"`
-	Manager         string `gorm:"size:30"`
+	Manager         string `gorm:"type:varchar(30)"`
 	HasThumbnail    bool
 	ThumbnailWidth  int        `                                 validate:"min=0"`
 	ThumbnailHeight int        `                                 validate:"min=0"`

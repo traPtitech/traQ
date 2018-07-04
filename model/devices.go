@@ -10,7 +10,7 @@ import (
 
 //Device 通知デバイスの構造体
 type Device struct {
-	Token     string    `gorm:"size:190;primary_key"`
+	Token     string    `gorm:"type:varchar(190);primary_key"`
 	UserID    string    `gorm:"type:char(36);index"`
 	CreatedAt time.Time `gorm:"precision:6"`
 }

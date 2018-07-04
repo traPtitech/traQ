@@ -9,9 +9,9 @@ import (
 
 // ClipFolder クリップフォルダの構造体
 type ClipFolder struct {
-	ID        string    `gorm:"type:char(36);primary_key"              validate:"uuid,required"`
-	UserID    string    `gorm:"type:char(36);unique_index:user_folder" validate:"uuid,required"`
-	Name      string    `gorm:"size:30;unique_index:user_folder"       validate:"max=30,required"`
+	ID        string    `gorm:"type:char(36);primary_key"                 validate:"uuid,required"`
+	UserID    string    `gorm:"type:char(36);unique_index:user_folder"    validate:"uuid,required"`
+	Name      string    `gorm:"type:varchar(30);unique_index:user_folder" validate:"max=30,required"`
 	CreatedAt time.Time `gorm:"precision:6"`
 	UpdatedAt time.Time `gorm:"precision:6"`
 }

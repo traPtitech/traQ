@@ -7,14 +7,14 @@ import (
 
 // OAuth2Authorize OAuth2 認可データの構造体
 type OAuth2Authorize struct {
-	Code                string `gorm:"size:36;primary_key"`
+	Code                string `gorm:"type:varchar(36);primary_key"`
 	ClientID            string `gorm:"type:char(36)"`
 	UserID              string `gorm:"type:char(36)"`
 	ExpiresIn           int
 	RedirectURI         string    `gorm:"type:text"`
 	Scopes              string    `gorm:"type:text"`
 	OriginalScopes      string    `gorm:"type:text"`
-	CodeChallenge       string    `gorm:"size:128"`
+	CodeChallenge       string    `gorm:"type:varchar(128)"`
 	CodeChallengeMethod string    `gorm:"type:text"`
 	Nonce               string    `gorm:"type:text"`
 	CreatedAt           time.Time `gorm:"precision:6"`

@@ -29,8 +29,8 @@ var (
 // User userの構造体
 type User struct {
 	ID          string `gorm:"type:char(36);primary_key" validate:"required,uuid"`
-	Name        string `gorm:"type:size:32;unique"       validate:"required,name"`
-	DisplayName string `gorm:"type:size:64"              validate:"max=64"`
+	Name        string `gorm:"type:varchar(32);unique"   validate:"required,name"`
+	DisplayName string `gorm:"type:varchar(64)"          validate:"max=64"`
 	Email       string `gorm:"type:text"                 validate:"required,email"`
 	Password    string `gorm:"type:char(128)"            validate:"required,max=128"`
 	Salt        string `gorm:"type:char(128)"            validate:"required,max=128"`
@@ -38,7 +38,7 @@ type User struct {
 	Status      int    `gorm:"type:tinyint"`
 	Bot         bool
 	Role        string     `gorm:"type:text"                 validate:"required"`
-	TwitterID   string     `gorm:"type:size:15"              validate:"twitterid"`
+	TwitterID   string     `gorm:"type:varchar(15)"          validate:"twitterid"`
 	LastOnline  *time.Time `gorm:"precision:6"`
 	CreatedAt   time.Time  `gorm:"precision:6"`
 	UpdatedAt   time.Time  `gorm:"precision:6"`

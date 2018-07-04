@@ -10,7 +10,7 @@ import (
 // Stamp スタンプ構造体
 type Stamp struct {
 	ID        string     `gorm:"type:char(36);primary_key" json:"id"`
-	Name      string     `gorm:"size:32;unique"            json:"name"      validate:"name,required"`
+	Name      string     `gorm:"type:varchar(32);unique"   json:"name"      validate:"name,required"`
 	CreatorID string     `gorm:"type:char(36)"             json:"creatorId" validate:"uuid,required"`
 	FileID    string     `gorm:"type:char(36)"             json:"fileId"    validate:"uuid,required"`
 	CreatedAt time.Time  `gorm:"precision:6"               json:"createdAt"`
