@@ -132,6 +132,10 @@ func UpdateChannelTopic(channelID uuid.UUID, topic string, updaterID uuid.UUID) 
 
 // ChangeChannelName チャンネル名を変更します
 func ChangeChannelName(channelID uuid.UUID, name string, updaterID uuid.UUID) error {
+	if err := validator.ValidateVar(name, "channel,required"); err != nil {
+		return err
+	}
+
 	ch, err := GetChannel(channelID)
 	if err != nil {
 		return err
@@ -319,7 +323,7 @@ func GetChildrenChannelIDsWithUserID(userID uuid.UUID, channelID string) (childr
 		Model(Channel{}).
 		Joins("LEFT JOIN users_private_channels ON users_private_channels.channel_id = channels.id").
 		Where("(channels.is_public = true OR users_private_channels.user_id = ?) AND channels.parent_id = ?", userID, channelID).
-		Pluck("channel", &children).
+		Pluck("channels.id", &children).
 		Error
 	return
 }
@@ -361,7 +365,7 @@ func GetChannelByMessageID(messageID uuid.UUID) (*Channel, error) {
 	channel := &Channel{}
 
 	err := db.
-		Where("id = ?", db.Table("messages").Select("channel_id").Where("id = ?", messageID.String()).QueryExpr()).
+		Where("id = ?", db.Table("messages").Select("channel_id").Where(Message{ID: messageID.String()}).QueryExpr()).
 		Take(channel).
 		Error
 	if err != nil {

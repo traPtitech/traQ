@@ -19,7 +19,7 @@ func (*UserSubscribeChannel) TableName() string {
 
 // SubscribeChannel 指定したチャンネルを購読します
 func SubscribeChannel(userID, channelID uuid.UUID) error {
-	return db.Create(UserSubscribeChannel{UserID: userID.String(), ChannelID: channelID.String()}).Error
+	return db.Create(&UserSubscribeChannel{UserID: userID.String(), ChannelID: channelID.String()}).Error
 }
 
 // UnsubscribeChannel 指定したチャンネルの購読を解除します

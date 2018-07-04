@@ -145,7 +145,12 @@ func (f *File) Create(src io.Reader) error {
 
 // DeleteFile ファイルを削除します
 func DeleteFile(fileID uuid.UUID) error {
-	return db.Delete(File{ID: fileID.String()}).Error
+	f, err := GetMetaFileDataByID(fileID)
+	if err != nil {
+		return err
+	}
+
+	return db.Delete(f).Error
 }
 
 // Open fileを開きます
@@ -260,7 +265,7 @@ func OpenFileByID(fileID uuid.UUID) (io.ReadCloser, error) {
 // GetMetaFileDataByID ファイルのメタデータを取得します
 func GetMetaFileDataByID(fileID uuid.UUID) (*File, error) {
 	f := &File{}
-	if err := db.Model(File{ID: fileID.String()}).Take(f).Error; err != nil {
+	if err := db.Where(File{ID: fileID.String()}).Take(f).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, ErrNotFound
 		}

@@ -59,7 +59,7 @@ func (*RBACOverrideStore) GetAllOverrides() ([]rbac.OverrideData, error) {
 func (*RBACOverrideStore) SaveOverride(userID uuid.UUID, p gorbac.Permission, validity bool) error {
 	return db.
 		Set("gorm:insert_option", fmt.Sprintf("ON DUPLICATE KEY UPDATE validity = %v, updated_at = now()", validity)).
-		Create(RBACOverride{UserID: userID.String(), Permission: p.ID(), Validity: validity}).
+		Create(&RBACOverride{UserID: userID.String(), Permission: p.ID(), Validity: validity}).
 		Error
 }
 

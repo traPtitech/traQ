@@ -51,7 +51,7 @@ func TestGetStaredChannels(t *testing.T) {
 	}
 
 	ch, err := GetStaredChannels(user.GetUID())
-	if assert.Error(err) {
+	if assert.NoError(err) {
 		assert.Len(ch, channelCount)
 	}
 }

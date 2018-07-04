@@ -68,8 +68,7 @@ func DeletePin(id uuid.UUID) error {
 // GetPinsByChannelID あるチャンネルのピン留めを全部取得する
 func GetPinsByChannelID(channelID uuid.UUID) (pins []*Pin, err error) {
 	err = db.
-		Joins("INNER JOIN messages ON messages.id = pins.message_id").
-		Where(Message{ChannelID: channelID.String()}).
+		Joins("INNER JOIN messages ON messages.id = pins.message_id AND messages.channel_id = ?", channelID.String()).
 		Preload("Message").
 		Find(&pins).Error
 	return

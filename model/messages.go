@@ -78,13 +78,22 @@ func DeleteMessage(messageID uuid.UUID) error {
 
 // GetMessagesByChannelID 指定されたチャンネルのメッセージを取得します
 func GetMessagesByChannelID(channelID uuid.UUID, limit, offset int) (list []*Message, err error) {
-	err = db.
-		Where(Message{ChannelID: channelID.String()}).
-		Order("created_at DESC").
-		Offset(offset).
-		Limit(limit).
-		Find(&list).
-		Error
+	if limit <= 0 {
+		err = db.
+			Where(Message{ChannelID: channelID.String()}).
+			Order("created_at DESC").
+			Offset(offset).
+			Find(&list).
+			Error
+	} else {
+		err = db.
+			Where(Message{ChannelID: channelID.String()}).
+			Order("created_at DESC").
+			Offset(offset).
+			Limit(limit).
+			Find(&list).
+			Error
+	}
 	return
 }
 

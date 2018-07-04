@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/utils/validator"
 	"time"
@@ -31,6 +32,9 @@ func RegisterDevice(userID uuid.UUID, token string) (*Device, error) {
 	if err := db.Where(Device{
 		Token: token,
 	}).Take(&d).Error; err == nil {
+		if d.UserID != userID.String() {
+			return nil, errors.New("the token has already been associated with other user")
+		}
 		return d, nil
 	} else if !gorm.IsRecordNotFoundError(err) {
 		return nil, err
@@ -74,6 +78,6 @@ func GetAllDeviceIDs() (result []string, err error) {
 
 // GetDeviceIDs 指定ユーザーの全デバイスIDを取得
 func GetDeviceIDs(user uuid.UUID) (result []string, err error) {
-	err = db.Where(Device{UserID: user.String()}).Pluck("token", &result).Error
+	err = db.Model(Device{}).Where(Device{UserID: user.String()}).Pluck("token", &result).Error
 	return
 }

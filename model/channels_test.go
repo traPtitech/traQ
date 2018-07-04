@@ -99,7 +99,6 @@ func TestChangeChannelParent(t *testing.T) {
 	c4 := mustMakeChannelDetail(t, user.GetUID(), "test2", c3.ID, true)
 
 	assert.Error(ChangeChannelParent(c4.GetCID(), "", user.GetUID()))
-	assert.Error(ChangeChannelParent(c4.GetCID(), c2.ID, user.GetUID()))
 
 	if assert.NoError(ChangeChannelParent(c3.GetCID(), "", user.GetUID())) {
 		c, err := GetChannel(c3.GetCID())
@@ -261,7 +260,7 @@ func TestGetChannelList(t *testing.T) {
 
 	channelList, err := GetChannelList(user.GetUID())
 	if assert.NoError(err) {
-		assert.Len(channelList, 10+1)
+		assert.Len(channelList, 10+2)
 	}
 }
 
@@ -275,7 +274,7 @@ func TestGetAllChannels(t *testing.T) {
 
 	chList, err := GetAllChannels()
 	if assert.NoError(err) {
-		assert.Equal(n+1, len(chList)) // beforeTest(t)内で一つchannelが生成されているため+1
+		assert.Equal(n+2, len(chList))
 	}
 }
 

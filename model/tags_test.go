@@ -142,12 +142,12 @@ func TestGetOrCreateTagByName(t *testing.T) {
 
 	r, err = GetOrCreateTagByName("tagB")
 	if assert.NoError(err) {
-		assert.NotEmpty(tag.ID)
-		assert.Equal("tagB", tag.Name)
-		assert.False(tag.Restricted)
-		assert.Empty(tag.Type)
-		assert.NotZero(tag.CreatedAt)
-		assert.NotZero(tag.UpdatedAt)
+		assert.NotEmpty(r.ID)
+		assert.Equal("tagB", r.Name)
+		assert.False(r.Restricted)
+		assert.Empty(r.Type)
+		assert.NotZero(r.CreatedAt)
+		assert.NotZero(r.UpdatedAt)
 	}
 
 	_, err = GetOrCreateTagByName("")

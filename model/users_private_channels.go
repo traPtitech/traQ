@@ -28,14 +28,14 @@ func AddPrivateChannelMember(channelID, userID uuid.UUID) error {
 // GetPrivateChannel ある二つのユーザー間のプライベートチャンネルが存在するかを調べる
 func GetPrivateChannel(userID1, userID2 string) (string, error) {
 	// *string型の変数でchannelIDのみをGetしようとするとエラーを吐く
-	channelID := ""
+	channel := &UsersPrivateChannel{}
 	if userID1 == userID2 {
 		// 自分宛てのDMのときの処理
 		err := db.
 			Select("channel_id").
 			Group("channel_id").
 			Having("COUNT(*) = 1 AND GROUP_CONCAT(user_id) = ?", userID1).
-			Scan(&channelID).
+			Take(&channel).
 			Error
 		if err != nil {
 			if gorm.IsRecordNotFoundError(err) {
@@ -47,7 +47,7 @@ func GetPrivateChannel(userID1, userID2 string) (string, error) {
 		// HACK: よりよいクエリ文が見つかったら変える
 		err := db.
 			Raw("SELECT u.channel_id FROM users_private_channels AS u INNER JOIN (SELECT channel_id FROM users_private_channels GROUP BY channel_id HAVING COUNT(*) = 2) AS ex ON ex.channel_id = u.channel_id AND u.user_id IN(?, ?) GROUP BY channel_id HAVING COUNT(*) = 2", userID1, userID2).
-			Scan(&channelID).
+			Take(&channel).
 			Error
 		if err != nil {
 			if gorm.IsRecordNotFoundError(err) {
@@ -56,7 +56,7 @@ func GetPrivateChannel(userID1, userID2 string) (string, error) {
 			return "", err
 		}
 	}
-	return channelID, nil
+	return channel.ChannelID, nil
 }
 
 // GetPrivateChannelMembers DMのメンバーの配列を取得する

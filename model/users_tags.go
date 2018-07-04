@@ -39,7 +39,7 @@ func AddUserTag(userID, tagID uuid.UUID) error {
 
 // ChangeUserTagLock ユーザーのタグのロック状態を変更します
 func ChangeUserTagLock(userID, tagID uuid.UUID, locked bool) error {
-	return db.Where(UsersTag{UserID: userID.String(), TagID: tagID.String()}).Update("is_locked", locked).Error
+	return db.Model(UsersTag{}).Where(UsersTag{UserID: userID.String(), TagID: tagID.String()}).Update("is_locked", locked).Error
 }
 
 // DeleteUserTag ユーザーからタグを削除します
@@ -83,7 +83,7 @@ func GetUserIDsByTag(tag string) ([]uuid.UUID, error) {
 // GetUsersByTag 指定したタグを持った全ユーザーを取得します
 func GetUsersByTag(tag string) (arr []*User, err error) {
 	err = db.
-		Where("id IN ?", db.
+		Where("id IN (?)", db.
 			Model(UsersTag{}).
 			Select("users_tags.user_id").
 			Joins("INNER JOIN tags ON users_tags.tag_id = tags.id AND tags.name = ?", tag).

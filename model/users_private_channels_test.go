@@ -31,12 +31,12 @@ func TestAddPrivateChannelMember(t *testing.T) {
 
 	channelList, err := GetChannelList(user.GetUID())
 	if assert.NoError(err) {
-		assert.Len(channelList, 1+1)
+		assert.Len(channelList, 1+2)
 	}
 
 	channelList, err = GetChannelList(uuid.Nil)
 	if assert.NoError(err) {
-		assert.Len(channelList, 0+1)
+		assert.Len(channelList, 0+2)
 	}
 }
 
