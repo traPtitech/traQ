@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"context"
+	"encoding/gob"
 	"github.com/go-sql-driver/mysql"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
@@ -32,6 +33,10 @@ const (
 type Handlers struct {
 	Bot    *event.BotProcessor
 	OAuth2 *oauth2.Handler
+}
+
+func init() {
+	gob.Register(uuid.UUID{})
 }
 
 // CustomHTTPErrorHandler :json形式でエラーレスポンスを返す
