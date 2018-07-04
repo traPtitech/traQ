@@ -11,7 +11,7 @@ import (
 )
 
 func TestGetChannelPin(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 	testChannel := mustMakeChannel(t, testUser.ID, "pinChannel", true)
 	testMessage := mustMakeMessage(t, testUser.ID, testChannel.ID)
 
@@ -28,14 +28,13 @@ func TestGetChannelPin(t *testing.T) {
 	assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody))
 	assert.Len(responseBody, 1)
 
-	correctResponse, err := formatPin(testPin)
-	require.NoError(err)
+	correctResponse := formatPin(testPin)
 
 	assert.EqualValues(correctResponse, responseBody[0])
 }
 
 func TestGetPin(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
+	e, cookie, mw, assert, _ := beforeTest(t)
 	testChannel := mustMakeChannel(t, testUser.ID, "pinChannel", true)
 	testMessage := mustMakeMessage(t, testUser.ID, testChannel.ID)
 
@@ -51,8 +50,7 @@ func TestGetPin(t *testing.T) {
 	responseBody := &PinForResponse{}
 	assert.NoError(json.Unmarshal(rec.Body.Bytes(), responseBody))
 
-	correctResponse, err := formatPin(testPin)
-	require.NoError(err)
+	correctResponse := formatPin(testPin)
 
 	assert.EqualValues(correctResponse, responseBody)
 }
@@ -79,14 +77,10 @@ func TestPostPin(t *testing.T) {
 	requestWithContext(t, mw(PostPin), c)
 
 	assert.EqualValues(http.StatusCreated, rec.Code)
-	responseBody := &PinForResponse{}
-	assert.NoError(json.Unmarshal(rec.Body.Bytes(), responseBody))
 
-	correctResponse, err := getChannelPinResponse(testChannel.ID)
+	correctResponse, err := getChannelPinResponse(testChannel.GetCID())
 	require.NoError(err)
 	require.Len(correctResponse, 1)
-
-	assert.EqualValues(correctResponse[0], responseBody)
 
 	// 異常系: 別のチャンネルにメッセージを張り付けることはできない
 	otherChannelID := mustMakeChannel(t, testUser.ID, "hoge", true).ID

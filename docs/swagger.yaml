@@ -485,12 +485,16 @@ paths:
                   description: ピン留めするメッセージID
       responses:
         "201":
-          description: |+
-            正常にピン留めできました。
+          description: 正常にピン留めできました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pin"
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: ピンID
 
   /pin/{pinID}:
     parameters:

@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"net/http"
@@ -20,162 +19,122 @@ type PinForResponse struct {
 	Message   *MessageForResponse `json:"message"`
 }
 
-//GetChannelPin Method Handler of "GET /channels/{channelID}/pin"
+//GetChannelPin GET /channels/:channelID/pin"
 func GetChannelPin(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("channelID")
+	userID := c.Get("user").(*model.User).GetUID()
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+
 	if _, err := validateChannelID(channelID, userID); err != nil {
 		switch err {
 		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+			return echo.NewHTTPError(http.StatusNotFound, "the channel is not found")
 		default:
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	res, err := getChannelPinResponse(channelID)
 	if err != nil {
-		c.Logger().Errorf("an error occurred while getting pins: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get pin")
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return c.JSON(http.StatusOK, res)
 }
 
-//GetPin Method Handler of "GET /pin/{pinID}"
-func GetPin(c echo.Context) error {
-	pinID := c.Param("pinID")
-
-	res, err := getPinResponse(pinID)
-	if err != nil {
-		c.Logger().Errorf("An error occurred while getting pin: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get pin")
-	}
-
-	return c.JSON(http.StatusOK, res)
-}
-
-//PostPin Method Handler of "POST /channels/{channelID}/pin"
+//PostPin POST /channels/:channelID/pin
 func PostPin(c echo.Context) error {
-	channelID := c.Param("channelID")
-	myID := c.Get("user").(*model.User).ID
+	userID := c.Get("user").(*model.User).GetUID()
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
 
 	req := struct {
-		MessageID string `json:"messageId"`
+		MessageID string `json:"messageId" validate:"uuid"`
 	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	m, err := model.GetMessageByID(req.MessageID)
+	m, err := model.GetMessageByID(uuid.FromStringOrNil(req.MessageID))
 	if err != nil {
-		c.Logger().Error("An error occurred while getting message: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get message you requested")
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	if m.ChannelID != channelID {
+	if m.GetCID() != channelID {
 		return echo.NewHTTPError(http.StatusBadRequest, "This messageis not a member of this channel")
 	}
 
-	pin := &model.Pin{
-		ChannelID: channelID,
-		UserID:    myID,
-		MessageID: req.MessageID,
-	}
-	if err := pin.Create(); err != nil {
-		c.Logger().Errorf("Failed to create pin: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create pin")
+	pinID, err := model.CreatePin(m.GetID(), userID)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	pin.CreatedAt = pin.CreatedAt.Truncate(time.Second) //自前で秒未満切り捨てしないと駄目
-	res, formatErr := formatPin(pin)
-	if formatErr != nil {
-		pin.Delete()
-		c.Logger().Errorf("An error occurred while formatting pin: %v", formatErr)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to format pin")
-	}
-
-	c.Response().Header().Set(echo.HeaderLocation, "/pin/"+pin.ID)
-	go event.Emit(event.MessagePinned, &event.PinEvent{PinID: uuid.Must(uuid.FromString(pin.ID)), Message: *m})
-	return c.JSON(http.StatusCreated, res)
+	go event.Emit(event.MessagePinned, &event.PinEvent{PinID: pinID, Message: *m})
+	return c.JSON(http.StatusCreated, map[string]string{"id": pinID.String()})
 }
 
-//DeletePin Method Handler of "DELETE /pin/{pinID}"
+//GetPin GET /pin/:pinID"
+func GetPin(c echo.Context) error {
+	pinID := uuid.FromStringOrNil(c.Param("pinID"))
+
+	pin, err := model.GetPin(pinID)
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
+	return c.JSON(http.StatusOK, formatPin(pin))
+}
+
+//DeletePin DELETE /pin/:pinID
 func DeletePin(c echo.Context) error {
-	pinID := c.Param("pinID")
-	pin, err := validatePinID(pinID)
+	pinID := uuid.FromStringOrNil(c.Param("pinID"))
+
+	pin, err := model.GetPin(pinID)
 	if err != nil {
-		return err
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
-	if err := pin.Delete(); err != nil {
-		c.Logger().Errorf("an error occurred while deleting pin: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete pin")
+	if err := model.DeletePin(pinID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	m, err := model.GetMessageByID(pin.MessageID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete pin")
-	}
-	go event.Emit(event.MessageUnpinned, &event.PinEvent{PinID: uuid.Must(uuid.FromString(pin.ID)), Message: *m})
+	go event.Emit(event.MessageUnpinned, &event.PinEvent{PinID: pinID, Message: pin.Message})
 	return c.NoContent(http.StatusNoContent)
 }
 
-func getChannelPinResponse(channelID string) ([]*PinForResponse, error) {
+func getChannelPinResponse(channelID uuid.UUID) ([]*PinForResponse, error) {
 	pins, err := model.GetPinsByChannelID(channelID)
 	if err != nil {
 		return nil, err
 	}
 
-	responseBody := make([]*PinForResponse, 0)
-	for _, pin := range pins {
-		res, err := formatPin(pin)
-		if err != nil {
-			return nil, err
-		}
-		responseBody = append(responseBody, res)
+	res := make([]*PinForResponse, len(pins))
+	for i, pin := range pins {
+		res[i] = formatPin(pin)
 	}
-	return responseBody, nil
+	return res, nil
 }
 
-func getPinResponse(ID string) (*PinForResponse, error) {
-	pin, err := validatePinID(ID)
-	if err != nil {
-		return nil, err
-	}
-
-	responseBody, formatErr := formatPin(pin)
-	if err != nil {
-		return nil, formatErr
-	}
-
-	return responseBody, nil
-}
-
-func formatPin(raw *model.Pin) (*PinForResponse, error) {
-	rawMessage, err := model.GetMessageByID(raw.MessageID)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to get message: %v", err)
-	}
-
-	message := formatMessage(rawMessage)
-
+func formatPin(raw *model.Pin) *PinForResponse {
 	return &PinForResponse{
 		PinID:     raw.ID,
-		ChannelID: raw.ChannelID,
+		ChannelID: raw.Message.ChannelID,
 		UserID:    raw.UserID,
-		DateTime:  raw.CreatedAt.Truncate(time.Second).UTC(),
-		Message:   message,
-	}, nil
-}
-
-func validatePinID(pinID string) (*model.Pin, error) {
-	p := &model.Pin{ID: pinID}
-	ok, err := p.Exists()
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while get pin")
+		DateTime:  raw.CreatedAt,
+		Message:   formatMessage(&raw.Message),
 	}
-	if !ok {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "The specified pin does not exist")
-	}
-	return p, nil
 }
