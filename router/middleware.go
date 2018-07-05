@@ -108,7 +108,7 @@ func AccessControlMiddlewareGenerator(rbac *rbac.RBAC) func(p ...gorbac.Permissi
 				}
 
 				// ユーザー権限検証
-				user := c.Get("userID").(*model.User)
+				user := c.Get("user").(*model.User)
 				for _, v := range p {
 					if !rbac.IsGranted(user.GetUID(), user.Role, v) {
 						// NG

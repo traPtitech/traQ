@@ -97,7 +97,7 @@ func SetGORMEngine(engine *gorm.DB) {
 // Sync テーブルと構造体を同期させる
 func Sync() error {
 	// スキーマ同期
-	if err := db.AutoMigrate(tables...).Error; err != nil {
+	if err := db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(tables...).Error; err != nil {
 		return fmt.Errorf("failed to sync Table schema: %v", err)
 	}
 
