@@ -9,46 +9,35 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// GetUnread Method Handler of "GET /users/me/unread"
+// GetUnread GET /users/me/unread
 func GetUnread(c echo.Context) error {
 	me := c.Get("user").(*model.User)
 
-	responseBody, err := getUnreadResponse(me.ID)
+	unreads, err := model.GetUnreadMessagesByUserID(me.GetUID())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get unread.")
+		c.Logger().Error()
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	responseBody := make([]*MessageForResponse, len(unreads))
+	for i, v := range unreads {
+		responseBody[i] = formatMessage(v)
 	}
 
 	return c.JSON(http.StatusOK, responseBody)
 }
 
-// DeleteUnread Method Handler of "DELETE /users/me/unread/{channelID}"
+// DeleteUnread DELETE /users/me/unread/:channelID
 func DeleteUnread(c echo.Context) error {
 	me := c.Get("user").(*model.User)
 
-	channelID := c.Param("channelID")
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
 
-	if err := model.DeleteUnreadsByChannelID(channelID, me.ID); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to delete unread messages")
+	if err := model.DeleteUnreadsByChannelID(channelID, me.GetUID()); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.MessageRead, &event.ReadMessageEvent{UserID: me.GetUID(), ChannelID: uuid.Must(uuid.FromString(channelID))})
+	go event.Emit(event.MessageRead, &event.ReadMessageEvent{UserID: me.GetUID(), ChannelID: channelID})
 	return c.NoContent(http.StatusNoContent)
-}
-
-func getUnreadResponse(userID string) ([]*MessageForResponse, error) {
-	unreads, err := model.GetUnreadsByUserID(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	responseBody := make([]*MessageForResponse, 0)
-	for _, unread := range unreads {
-		message, err := model.GetMessageByID(unread.MessageID)
-		if err != nil {
-			return nil, err
-		}
-		res := formatMessage(message)
-		responseBody = append(responseBody, res)
-	}
-	return responseBody, nil
 }

@@ -16,8 +16,6 @@ var (
 	PasswordRegex = regexp.MustCompile(`^[\x20-\x7E]{10,32}$`)
 	// TwitterIDRegex ツイッターIDの正規表現
 	TwitterIDRegex = regexp.MustCompile(`^[a-zA-Z0-9_]{1,15}$`)
-	// CommandRegex コマンド名正規表現
-	CommandRegex = regexp.MustCompile(`^[a-zA-z0-9_-]{1,50}$`)
 )
 
 // Validator echo用バリデーター
@@ -41,7 +39,11 @@ func init() {
 	validate = validator.New()
 
 	validate.RegisterValidation("name", func(fl validator.FieldLevel) bool {
-		return NameRegex.MatchString(fl.Field().String())
+		s := fl.Field().String()
+		if len(s) > 0 {
+			return NameRegex.MatchString(s)
+		}
+		return true
 	})
 
 	validate.RegisterValidation("channel", func(fl validator.FieldLevel) bool {
@@ -59,13 +61,14 @@ func init() {
 		}
 		return true
 	})
-
-	validate.RegisterValidation("command", func(fl validator.FieldLevel) bool {
-		return CommandRegex.MatchString(fl.Field().String())
-	})
 }
 
 // ValidateStruct 構造体を検証します
 func ValidateStruct(i interface{}) error {
 	return validate.Struct(i)
+}
+
+// ValidateVar 値を検証します
+func ValidateVar(i interface{}, tag string) error {
+	return validate.Var(i, tag)
 }

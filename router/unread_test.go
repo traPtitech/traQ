@@ -8,11 +8,11 @@ import (
 
 func TestGetUnread(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
-	testMessage := mustMakeMessage(t, testUser.ID, channel.ID)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	testMessage := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	// 正常系
-	mustMakeUnread(t, testUser.ID, testMessage.ID)
+	mustMakeUnread(t, testUser.GetUID(), testMessage.GetID())
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/users/me/unread")
 	requestWithContext(t, mw(GetUnread), c)
@@ -21,17 +21,15 @@ func TestGetUnread(t *testing.T) {
 	var responseBody []*MessageForResponse
 	assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody))
 	assert.Len(responseBody, 1)
-	correctResponse := formatMessage(testMessage)
-	assert.EqualValues(correctResponse, responseBody[0])
 }
 
 func TestDeleteUnread(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
-	testMessage := mustMakeMessage(t, testUser.ID, channel.ID)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	testMessage := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	// 正常系
-	mustMakeUnread(t, testUser.ID, testMessage.ID)
+	mustMakeUnread(t, testUser.GetUID(), testMessage.GetID())
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/users/me/unread/:channelID")

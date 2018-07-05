@@ -6,8 +6,9 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
-	"fmt"
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/gommon/log"
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/utils"
@@ -31,23 +32,47 @@ var (
 
 // File DBに格納するファイルの構造体
 type File struct {
-	ID              string    `xorm:"char(36) pk"                    validate:"uuid,required"`
-	Name            string    `xorm:"text not null"                  validate:"required"`
-	Mime            string    `xorm:"text not null"                  validate:"required"`
-	Size            int64     `xorm:"bigint not null"                validate:"min=0,required"`
-	CreatorID       string    `xorm:"char(36) not null"              validate:"uuid,required"`
-	IsDeleted       bool      `xorm:"bool not null"`
-	Hash            string    `xorm:"char(32) not null"              validate:"max=32"`
-	Manager         string    `xorm:"varchar(30) not null default ''"`
-	HasThumbnail    bool      `xorm:"bool not null"`
-	ThumbnailWidth  int       `xorm:"int not null"                   validate:"min=0"`
-	ThumbnailHeight int       `xorm:"int not null"                   validate:"min=0"`
-	CreatedAt       time.Time `xorm:"created not null"`
+	ID              string `gorm:"type:char(36);primary_key" validate:"uuid,required"`
+	Name            string `gorm:"type:text"                 validate:"required"`
+	Mime            string `gorm:"type:text"                 validate:"required"`
+	Size            int64  `                                 validate:"min=0,required"`
+	CreatorID       string `gorm:"type:char(36)"             validate:"uuid,required"`
+	Hash            string `gorm:"type:char(32)"             validate:"max=32"`
+	Manager         string `gorm:"type:varchar(30)"`
+	HasThumbnail    bool
+	ThumbnailWidth  int        `                                 validate:"min=0"`
+	ThumbnailHeight int        `                                 validate:"min=0"`
+	CreatedAt       time.Time  `gorm:"precision:6"`
+	DeletedAt       *time.Time `gorm:"precision:6"`
+}
+
+// GetID FileのUUIDを返します
+func (f *File) GetID() uuid.UUID {
+	return uuid.Must(uuid.FromString(f.ID))
 }
 
 // TableName dbのtableの名前を返します
 func (f *File) TableName() string {
 	return "files"
+}
+
+// BeforeDelete db.Deleteのトランザクション内で実行されます
+func (f *File) BeforeDelete(scope *gorm.Scope) error {
+	return db.Model(File{ID: f.ID}).Take(f).Error
+}
+
+// AfterDelete db.Deleteのトランザクション内で実行されます
+func (f *File) AfterDelete(scope *gorm.Scope) error {
+	m, ok := fileManagers[f.Manager]
+	if ok {
+		if f.HasThumbnail {
+			if err := m.DeleteByID(f.ID + "-thumb"); err != nil {
+				return err
+			}
+		}
+		return m.DeleteByID(f.ID)
+	}
+	return nil
 }
 
 // Validate 構造体を検証します
@@ -58,7 +83,6 @@ func (f *File) Validate() error {
 // Create file構造体を作ります
 func (f *File) Create(src io.Reader) error {
 	f.ID = CreateUUID()
-	f.IsDeleted = false
 	f.Mime = mime.TypeByExtension(filepath.Ext(f.Name))
 	if len(f.CreatorID) == 0 {
 		f.CreatorID = serverUser.ID
@@ -89,7 +113,7 @@ func (f *File) Create(src io.Reader) error {
 	eg.Go(func() error {
 		defer fileSrc.Close()
 		if err := writer.WriteByID(fileSrc, f.ID, f.Name, f.Mime); err != nil {
-			return fmt.Errorf("Failed to write data into file: %v", err)
+			return err
 		}
 		return nil
 	})
@@ -116,33 +140,17 @@ func (f *File) Create(src io.Reader) error {
 
 	f.Hash = hex.EncodeToString(hash.Sum(nil))
 
-	if _, err := db.Insert(f); err != nil {
-		return fmt.Errorf("Failed to create file")
-	}
-	return nil
+	return db.Create(f).Error
 }
 
-// Exists ファイルが存在するかを判定します
-func (f *File) Exists() (bool, error) {
-	if f.ID == "" {
-		return false, fmt.Errorf("file ID is empty")
-	}
-	return db.Get(f)
-}
-
-// Delete file構造体をDBから消去します
-func (f *File) Delete() error {
-	f.IsDeleted = true
-	if _, err := db.ID(f.ID).UseBool().Update(f); err != nil {
+// DeleteFile ファイルを削除します
+func DeleteFile(fileID uuid.UUID) error {
+	f, err := GetMetaFileDataByID(fileID)
+	if err != nil {
 		return err
 	}
 
-	m, ok := fileManagers[f.Manager]
-	if ok {
-		return m.DeleteByID(f.ID)
-	}
-
-	return nil
+	return db.Delete(f).Error
 }
 
 // Open fileを開きます
@@ -193,10 +201,11 @@ func (f *File) RegenerateThumbnail() error {
 		return err
 	}
 
-	if _, err := db.ID(f.ID).UseBool().MustCols().Update(f); err != nil {
-		return err
-	}
-	return nil
+	return db.Model(f).Updates(map[string]interface{}{
+		"has_thumbnail":    true,
+		"thumbnail_width":  f.ThumbnailWidth,
+		"thumbnail_height": f.ThumbnailHeight,
+	}).Error
 }
 
 // GenerateThumbnail サムネイル画像を生成します
@@ -239,8 +248,8 @@ func GenerateThumbnail(ctx context.Context, f *File, src io.Reader) error {
 }
 
 // OpenFileByID ファイルを取得します
-func OpenFileByID(ID string) (io.ReadCloser, error) {
-	meta, err := GetMetaFileDataByID(ID)
+func OpenFileByID(fileID uuid.UUID) (io.ReadCloser, error) {
+	meta, err := GetMetaFileDataByID(fileID)
 	if err != nil {
 		return nil, err
 	}
@@ -250,21 +259,18 @@ func OpenFileByID(ID string) (io.ReadCloser, error) {
 		return nil, storage.ErrUnknownManager
 	}
 
-	return reader.OpenFileByID(ID)
+	return reader.OpenFileByID(fileID.String())
 }
 
 // GetMetaFileDataByID ファイルのメタデータを取得します
-func GetMetaFileDataByID(FileID string) (*File, error) {
+func GetMetaFileDataByID(fileID uuid.UUID) (*File, error) {
 	f := &File{}
-
-	has, err := db.ID(FileID).Get(f)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to find file")
+	if err := db.Where(File{ID: fileID.String()}).Take(f).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
+		return nil, err
 	}
-	if !has {
-		return nil, nil
-	}
-
 	return f, nil
 }
 

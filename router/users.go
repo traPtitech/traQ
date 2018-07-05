@@ -4,7 +4,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
-	"github.com/labstack/gommon/log"
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
@@ -37,29 +37,34 @@ type UserDetailForResponse struct {
 	TagList     []*TagForResponse `json:"tagList"`
 }
 
-// PostLogin Post /login のハンドラ
+// PostLogin POST /login
 func PostLogin(c echo.Context) error {
-	requestBody := &struct {
+	req := struct {
 		Name string `json:"name" form:"name"`
 		Pass string `json:"pass" form:"pass"`
 	}{}
-
-	if err := c.Bind(requestBody); err != nil {
+	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	user := &model.User{
-		Name: requestBody.Name,
+	user, err := model.GetUserByName(req.Name)
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusBadRequest, "name or password is wrong")
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
-
-	if err := user.Authorization(requestBody.Pass); err != nil {
+	if err := model.AuthenticateUser(user, req.Pass); err != nil {
 		return echo.NewHTTPError(http.StatusForbidden, err)
 	}
 
 	sess, err := session.Get("sessions", c)
 	if err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "an error occurrerd while getting session")
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	sess.Options = &sessions.Options{
@@ -68,24 +73,31 @@ func PostLogin(c echo.Context) error {
 		HttpOnly: true,
 	}
 
-	sess.Values["userID"] = user.ID
-	sess.Save(c.Request(), c.Response())
+	sess.Values["userID"] = user.GetUID()
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 
-// PostLogout Post /logout のハンドラ
+// PostLogout POST /logout
 func PostLogout(c echo.Context) error {
 	sess, err := session.Get("sessions", c)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "an error occurred while getting session")
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	sess.Values["userID"] = nil
-	sess.Save(c.Request(), c.Response())
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 
-// GetUsers GET /users のハンドラ
+// GetUsers GET /users
 func GetUsers(c echo.Context) error {
 	users, err := model.GetUsers()
 	if err != nil {
@@ -100,20 +112,25 @@ func GetUsers(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// GetMe GET /users/me のハンドラ
+// GetMe GET /users/me
 func GetMe(c echo.Context) error {
 	me := c.Get("user").(*model.User)
 	return c.JSON(http.StatusOK, formatUser(me))
 }
 
-// GetUserByID /GET /users/{userID} のハンドラ
+// GetUserByID GET /users/:userID
 func GetUserByID(c echo.Context) error {
-	userID := c.Param("userID")
+	userID := uuid.FromStringOrNil(c.Param("userID"))
 
 	user, err := model.GetUser(userID)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
 	tagList, err := model.GetUserTagsByUserID(userID)
@@ -130,14 +147,19 @@ func GetUserByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, userDetail)
 }
 
-// GetUserIcon GET /users/{userID}/icon のハンドラ
+// GetUserIcon GET /users/:userID/icon
 func GetUserIcon(c echo.Context) error {
-	userID := c.Param("userID")
+	userID := uuid.FromStringOrNil(c.Param("userID"))
 
 	user, err := model.GetUser(userID)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
 	if _, ok := c.QueryParams()["thumb"]; ok {
@@ -147,7 +169,7 @@ func GetUserIcon(c echo.Context) error {
 	return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon)
 }
 
-// GetMyIcon GET /users/me/icon のハンドラ
+// GetMyIcon GET /users/me/icon
 func GetMyIcon(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 	if _, ok := c.QueryParams()["thumb"]; ok {
@@ -156,7 +178,7 @@ func GetMyIcon(c echo.Context) error {
 	return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon)
 }
 
-// PutMyIcon PUT /users/me/icon のハンドラ
+// PutMyIcon PUT /users/me/icon
 func PutMyIcon(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 
@@ -172,7 +194,7 @@ func PutMyIcon(c echo.Context) error {
 	}
 
 	// アイコン変更
-	if err := user.UpdateIconID(iconID.String()); err != nil {
+	if err := model.ChangeUserIcon(user.GetUID(), iconID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -181,86 +203,86 @@ func PutMyIcon(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-// PatchMe PUT /users/me
+// PatchMe PATCH /users/me
 func PatchMe(c echo.Context) error {
 	user := c.Get("user").(*model.User)
 
 	req := struct {
-		ExPassword  string `json:"exPassword"`
-		DisplayName string `json:"displayName"`
-		Email       string `json:"email"`
-		Password    string `json:"password"`
-		TwitterID   string `json:"twitterId"`
+		DisplayName string `json:"displayName" validate:"max=32"`
+		TwitterID   string `json:"twitterId"   validate:"twitterid"`
 	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if req.Email == "" && req.Password == "" {
-		user.DisplayName = req.DisplayName
-		if req.TwitterID != "" {
-			user.TwitterID = req.TwitterID
-		}
-		if err := user.Update(); err != nil {
+	if len(req.DisplayName) > 0 {
+		if err := model.ChangeUserDisplayName(user.GetUID(), req.DisplayName); err != nil {
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user. Please check the format of displayName")
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		return c.NoContent(http.StatusNoContent)
 	}
 
-	if err := user.Authorization(req.ExPassword); err != nil {
-		return c.JSON(http.StatusUnauthorized, "Password is wrong")
-	}
-
-	if req.DisplayName != "" {
-		user.DisplayName = req.DisplayName
-	}
-	if req.TwitterID != "" {
-		user.TwitterID = req.TwitterID
-	}
-	if req.Email != "" {
-		user.Email = req.Email
-	}
-	if req.Password != "" {
-		if err := user.SetPassword(req.Password); err != nil {
+	if len(req.TwitterID) > 0 {
+		if err := model.ChangeUserTwitterID(user.GetUID(), req.TwitterID); err != nil {
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update password")
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-	}
-
-	if err := user.Update(); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to update user. Please check the format of email, password or displayName")
 	}
 
 	go event.Emit(event.UserUpdated, event.UserEvent{ID: user.ID})
 	return c.NoContent(http.StatusNoContent)
 }
 
-// PostUsers Post /users のハンドラ
-func PostUsers(c echo.Context) error {
+// PutPassword PUT /users/me/password
+func PutPassword(c echo.Context) error {
+	user := c.Get("user").(*model.User)
+
 	req := struct {
-		Name     string `json:"name"`
-		Password string `json:"password"`
-		Email    string `json:"email"`
+		Old string `json:"password"    validate:"password"`
+		New string `json:"newPassword" validate:"password"`
 	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
 	}
 
-	newUser := &model.User{
-		Name:  req.Name,
-		Email: req.Email,
-		Role:  role.User.ID(),
+	if err := model.AuthenticateUser(user, req.Old); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "password is wrong")
 	}
-	if err := newUser.SetPassword(req.Password); err != nil {
+
+	if err := model.ChangeUserPassword(user.GetUID(), req.New); err != nil {
+		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	if err := newUser.Create(); err != nil {
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// PostUsers POST /users
+func PostUsers(c echo.Context) error {
+	req := struct {
+		Name     string `json:"name"     validate:"name"`
+		Password string `json:"password" validate:"password"`
+		Email    string `json:"email"    validate:"email"`
+	}{}
+	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	go event.Emit(event.UserJoined, event.UserEvent{ID: newUser.ID})
+	if _, err := model.GetUserByName(req.Name); err != model.ErrNotFound {
+		if err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+		return echo.NewHTTPError(http.StatusBadRequest, "the name's user has already existed")
+	}
+
+	u, err := model.CreateUser(req.Name, req.Email, req.Password, role.User)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	go event.Emit(event.UserJoined, event.UserEvent{ID: u.ID})
 	return c.NoContent(http.StatusCreated)
 }
 
@@ -300,23 +322,9 @@ func formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailF
 		res.DisplayName = res.Name
 	}
 
-	for _, tag := range tagList {
-		formattedTag, err := formatTag(tag)
-		if err != nil {
-			return nil, err
-		}
-		res.TagList = append(res.TagList, formattedTag)
+	res.TagList = make([]*TagForResponse, len(tagList))
+	for i, tag := range tagList {
+		res.TagList[i] = formatTag(tag)
 	}
 	return res, nil
-}
-
-func validateUserID(userID string) (*model.User, error) {
-	u, err := model.GetUser(userID)
-	if err != nil {
-		if err != model.ErrNotFound {
-			log.Errorf("failed to get user: %v", err)
-		}
-		return nil, err
-	}
-	return u, nil
 }

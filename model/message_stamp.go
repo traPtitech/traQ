@@ -1,20 +1,21 @@
 package model
 
 import (
+	"github.com/satori/go.uuid"
 	"time"
 )
 
-// MessageStamp : メッセージスタンプ構造体
+// MessageStamp メッセージスタンプ構造体
 type MessageStamp struct {
-	MessageID string    `xorm:"char(36) unique(message_stamp_user) not null" json:"-"`
-	StampID   string    `xorm:"char(36) unique(message_stamp_user) not null" json:"stampId"`
-	UserID    string    `xorm:"char(36) unique(message_stamp_user) not null" json:"userId"`
-	Count     int       `xorm:"int not null"                                 json:"count"`
-	CreatedAt time.Time `xorm:"created"                                      json:"createdAt"`
-	UpdatedAt time.Time `xorm:"updated"                                      json:"updatedAt"`
+	MessageID string    `gorm:"type:char(36);primary_key" json:"-"`
+	StampID   string    `gorm:"type:char(36);primary_key" json:"stampId"`
+	UserID    string    `gorm:"type:char(36);primary_key" json:"userId"`
+	Count     int       `                                 json:"count"`
+	CreatedAt time.Time `gorm:"precision:6"               json:"createdAt"`
+	UpdatedAt time.Time `gorm:"precision:6;index"         json:"updatedAt"`
 }
 
-// TableName : メッセージスタンプのテーブル
+// TableName メッセージスタンプのテーブル
 func (*MessageStamp) TableName() string {
 	return "messages_stamps"
 }
@@ -25,34 +26,49 @@ type UserStampHistory struct {
 	Datetime time.Time `json:"datetime"`
 }
 
-// AddStampToMessage : メッセージにスタンプを押します
-func AddStampToMessage(messageID, stampID, userID string) (*MessageStamp, error) {
-	_, err := db.Exec("INSERT INTO `messages_stamps` (`message_id`, `stamp_id`, `user_id`, `count`, `created_at`, `updated_at`) VALUES (?, ?, ?, 1, now(), now()) ON DUPLICATE KEY UPDATE `count` = `count` + 1, `updated_at` = now()", messageID, stampID, userID)
+// AddStampToMessage メッセージにスタンプを押します
+func AddStampToMessage(messageID, stampID, userID uuid.UUID) (*MessageStamp, error) {
+	err := db.
+		Set("gorm:insert_option", "ON DUPLICATE KEY UPDATE count = count + 1, updated_at = now()").
+		Create(&MessageStamp{MessageID: messageID.String(), StampID: stampID.String(), UserID: userID.String(), Count: 1}).
+		Error
 	if err != nil {
 		return nil, err
 	}
+
 	ms := &MessageStamp{}
-	if _, err := db.Table("messages_stamps").Where("message_id = ? AND stamp_id = ? AND user_id = ?", messageID, stampID, userID).Get(ms); err != nil {
+	err = db.Where(MessageStamp{MessageID: messageID.String(), StampID: stampID.String(), UserID: userID.String()}).Take(ms).Error
+	if err != nil {
 		return nil, err
 	}
-
 	return ms, nil
 }
 
-// RemoveStampFromMessage : メッセージからスタンプを消します
-func RemoveStampFromMessage(messageID, stampID, userID string) (err error) {
-	_, err = db.Delete(&MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID})
-	return
+// RemoveStampFromMessage メッセージからスタンプを消します
+func RemoveStampFromMessage(messageID, stampID, userID uuid.UUID) error {
+	return db.Where(MessageStamp{MessageID: messageID.String(), StampID: stampID.String(), UserID: userID.String()}).Delete(MessageStamp{}).Error
 }
 
-// GetMessageStamps : 指定したIDのメッセージのスタンプを取得します
-func GetMessageStamps(messageID string) (stamps []*MessageStamp, err error) {
-	err = db.Join("INNER", "stamps", "messages_stamps.stamp_id = stamps.id").Where("messages_stamps.message_id = ? AND stamps.is_deleted = false", messageID).Find(&stamps)
+// GetMessageStamps 指定したIDのメッセージのスタンプを取得します
+func GetMessageStamps(messageID uuid.UUID) (stamps []*MessageStamp, err error) {
+	err = db.
+		Joins("JOIN stamps ON messages_stamps.stamp_id = stamps.id AND messages_stamps.message_id = ?", messageID.String()).
+		Order("messages_stamps.updated_at").
+		Find(&stamps).
+		Error
 	return
 }
 
 // GetUserStampHistory 指定したユーザーのスタンプ履歴を最大50件取得します。
-func GetUserStampHistory(userID string) (h []*UserStampHistory, err error) {
-	err = db.SQL("SELECT stamp_id, max(updated_at) AS datetime FROM messages_stamps WHERE user_id = ? GROUP BY stamp_id ORDER BY datetime DESC LIMIT 50", userID).Find(&h)
+func GetUserStampHistory(userID uuid.UUID) (h []*UserStampHistory, err error) {
+	err = db.
+		Table("messages_stamps").
+		Where("user_id = ?", userID.String()).
+		Group("stamp_id").
+		Select("stamp_id, max(updated_at) AS datetime").
+		Order("datetime DESC").
+		Limit(50).
+		Scan(&h).
+		Error
 	return
 }

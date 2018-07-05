@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -10,62 +11,82 @@ func TestPinTableName(t *testing.T) {
 	assert.Equal(t, "pins", (&Pin{}).TableName())
 }
 
-func beforePinTest(t *testing.T, userID, channelID string) *Pin {
-	testMessage := mustMakeMessage(t, userID, channelID)
-	testPin := &Pin{
-		UserID:    userID,
-		MessageID: testMessage.ID,
-		ChannelID: channelID,
+func TestCreatePin(t *testing.T) {
+	assert, _, user, channel := beforeTest(t)
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+
+	p, err := CreatePin(testMessage.GetID(), user.GetUID())
+	if assert.NoError(err) {
+		assert.NotEmpty(p)
 	}
-	return testPin
-}
 
-func TestPinCreate(t *testing.T) {
-	assert, require, user, channel := beforeTest(t)
-	testPin := beforePinTest(t, user.ID, channel.ID)
-
-	//正常系
-	assert.NoError(testPin.Create())
-	pins, err := GetPinsByChannelID(testPin.ChannelID)
-	require.NoError(err)
-	assert.Len(pins, 1)
-	testPin.CreatedAt = pins[0].CreatedAt
-	assert.Equal(*pins[0], *testPin)
+	_, err = CreatePin(testMessage.GetID(), user.GetUID())
+	assert.Error(err)
 }
 
 func TestGetPin(t *testing.T) {
 	assert, require, user, channel := beforeTest(t)
-	testPin := beforePinTest(t, user.ID, channel.ID)
 
-	//正常系
-	require.NoError(testPin.Create())
-	pin, err := GetPin(testPin.ID)
-	assert.NoError(err)
-	testPin.CreatedAt = pin.CreatedAt
-	assert.Equal(*pin, *testPin)
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	p, err := CreatePin(testMessage.GetID(), user.GetUID())
+	require.NoError(err)
+
+	pin, err := GetPin(p)
+	if assert.NoError(err) {
+		assert.Equal(p.String(), pin.ID)
+		assert.Equal(testMessage.ID, pin.MessageID)
+		assert.Equal(user.ID, pin.UserID)
+		assert.NotZero(pin.CreatedAt)
+		assert.NotZero(pin.Message)
+	}
+
+	pin, err = GetPin(uuid.Nil)
+	if assert.NoError(err) {
+		assert.Nil(pin)
+	}
+}
+
+func TestIsPinned(t *testing.T) {
+	assert, require, user, channel := beforeTest(t)
+
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	_, err := CreatePin(testMessage.GetID(), user.GetUID())
+	require.NoError(err)
+
+	ok, err := IsPinned(testMessage.GetID())
+	if assert.NoError(err) {
+		assert.True(ok)
+	}
+
+	ok, err = IsPinned(uuid.Nil)
+	if assert.NoError(err) {
+		assert.False(ok)
+	}
+}
+
+func TestDeletePin(t *testing.T) {
+	assert, require, user, channel := beforeTest(t)
+
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	p, err := CreatePin(testMessage.GetID(), user.GetUID())
+	require.NoError(err)
+
+	if assert.NoError(DeletePin(p)) {
+		pin, err := GetPin(uuid.Nil)
+		require.NoError(err)
+		assert.Nil(pin)
+	}
 }
 
 func TestGetPinsByChannelID(t *testing.T) {
 	assert, require, user, channel := beforeTest(t)
-	testPin := beforePinTest(t, user.ID, channel.ID)
 
-	//正常系
-	require.NoError(testPin.Create())
-	pins, err := GetPinsByChannelID(testPin.ChannelID)
-	assert.NoError(err)
-	assert.Len(pins, 1)
-	testPin.CreatedAt = pins[0].CreatedAt
-	assert.Equal(*pins[0], *testPin)
-}
-
-func TestPinDelete(t *testing.T) {
-	assert, require, user, channel := beforeTest(t)
-	testPin := beforePinTest(t, user.ID, channel.ID)
-
-	//正常系
-	require.NoError(testPin.Create())
-	assert.NoError(testPin.Delete())
-	pins, err := GetPinsByChannelID(testPin.ChannelID)
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	_, err := CreatePin(testMessage.GetID(), user.GetUID())
 	require.NoError(err)
-	assert.Len(pins, 0)
+
+	pins, err := GetPinsByChannelID(channel.GetCID())
+	if assert.NoError(err) {
+		assert.Len(pins, 1)
+	}
 }

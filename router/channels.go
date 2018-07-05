@@ -39,16 +39,14 @@ type PostChannel struct {
 }
 
 // validate 入力が正しいかどうかを検証します
-func (post *PostChannel) validate(userID string) error {
+func (post *PostChannel) validate(userID uuid.UUID) error {
 	if err := validator.ValidateStruct(post); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "some values are wrong")
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-
-	// TODO: 同名・同階層のチャンネルのチェック
 
 	// userから親チャンネルが見えないときは追加できない
 	if post.Parent != privateParentChannelID && post.Parent != "" {
-		_, err := validateChannelID(post.Parent, userID)
+		_, err := validateChannelID(uuid.FromStringOrNil(post.Parent), userID)
 		if err != nil {
 			switch err {
 			case model.ErrNotFound:
@@ -66,7 +64,7 @@ func (post *PostChannel) validate(userID string) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "number of private channel members should be no more than 2")
 		}
 
-		if post.Member[0] != userID && post.Member[1] != userID {
+		if post.Member[0] != userID.String() && post.Member[1] != userID.String() {
 			return echo.NewHTTPError(http.StatusBadRequest, "you should join this private channel")
 		}
 
@@ -92,14 +90,15 @@ func (post *PostChannel) validate(userID string) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "the private channel exists now")
 		}
 	}
+
 	return nil
 }
 
 // GetChannels GET /channels のハンドラ
 func GetChannels(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+	user := c.Get("user").(*model.User)
 
-	channelList, err := model.GetChannelList(userID)
+	channelList, err := model.GetChannelList(user.GetUID())
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to get channel list: %v", err))
 	}
@@ -136,30 +135,25 @@ func GetChannels(c echo.Context) error {
 
 // PostChannels POST /channels のハンドラ
 func PostChannels(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+	userID := c.Get("user").(*model.User).GetUID()
 
 	req := &PostChannel{}
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Failed to bind request body.")
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	if err := req.validate(userID); err != nil {
 		return err
 	}
 
-	ch := &model.Channel{
-		CreatorID: userID,
-		ParentID:  req.Parent,
-		Name:      req.Name,
-		IsPublic:  req.ChannelType == "public",
-	}
-	if err := ch.Create(); err != nil {
+	ch, err := model.CreateChannel(req.Parent, req.Name, userID, req.ChannelType == "public")
+	if err != nil {
 		switch err {
 		case model.ErrDuplicateName:
 			return echo.NewHTTPError(http.StatusConflict, err)
 		default:
-			log.Errorf("an error occurred while create new channel: %v", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create new channel")
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
@@ -167,14 +161,20 @@ func PostChannels(c echo.Context) error {
 		go event.Emit(event.ChannelCreated, &event.ChannelEvent{ID: ch.ID})
 	} else {
 		for _, u := range req.Member {
-			upc := &model.UsersPrivateChannel{
-				ChannelID: ch.ID,
-				UserID:    u,
-			}
-			err := upc.Create()
+			user, err := model.GetUser(uuid.FromStringOrNil(u))
 			if err != nil {
-				log.Errorf("failed to insert users_private_channel: %v", err)
-				return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred while adding notified user.")
+				switch err {
+				case model.ErrNotFound:
+					continue
+				default:
+					c.Logger().Error(err)
+					return echo.NewHTTPError(http.StatusInternalServerError)
+				}
+			}
+
+			if err := model.AddPrivateChannelMember(ch.GetCID(), user.GetUID()); err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
 
@@ -182,7 +182,7 @@ func PostChannels(c echo.Context) error {
 		for k, v := range req.Member {
 			ids[k] = uuid.Must(uuid.FromString(v))
 		}
-		go event.Emit(event.ChannelCreated, &event.PrivateChannelEvent{UserIDs: ids, ChannelID: uuid.Must(uuid.FromString(ch.ID))})
+		go event.Emit(event.ChannelCreated, &event.PrivateChannelEvent{UserIDs: ids, ChannelID: ch.GetCID()})
 	}
 
 	return c.JSON(http.StatusCreated, formatChannel(ch, []string{}, req.Member))
@@ -190,8 +190,8 @@ func PostChannels(c echo.Context) error {
 
 // GetChannelsByChannelID GET /channels/{channelID} のハンドラ
 func GetChannelsByChannelID(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
-	ch, err := validateChannelID(c.Param("channelID"), userID)
+	userID := c.Get("user").(*model.User).GetUID()
+	ch, err := validateChannelID(uuid.FromStringOrNil(c.Param("channelID")), userID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -201,7 +201,7 @@ func GetChannelsByChannelID(c echo.Context) error {
 		}
 	}
 
-	childIDs, err := ch.Children(userID)
+	childIDs, err := model.GetChildrenChannelIDsWithUserID(userID, ch.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get children channel id list: %v", err)
 	}
@@ -217,18 +217,8 @@ func GetChannelsByChannelID(c echo.Context) error {
 
 // PatchChannelsByChannelID PATCH /channels/{channelID} のハンドラ
 func PatchChannelsByChannelID(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
-	channelID := c.Param("channelID")
-
-	req := struct {
-		Name       *string `json:"name"`
-		Parent     *string `json:"parent"`
-		Visibility *bool   `json:"visibility"`
-		Force      *bool   `json:"force"`
-	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
+	userID := c.Get("user").(*model.User).GetUID()
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
 
 	// チャンネル検証
 	ch, err := validateChannelID(channelID, userID)
@@ -241,35 +231,38 @@ func PatchChannelsByChannelID(c echo.Context) error {
 		}
 	}
 
-	if req.Name != nil && len(*req.Name) > 0 {
-		ch.Name = *req.Name
-	}
-	if req.Parent != nil {
-		ch.ParentID = *req.Parent
-	}
-	if req.Visibility != nil {
-		ch.IsVisible = *req.Visibility
-	}
-	if req.Force != nil {
-		ch.IsForced = *req.Force
-	}
-	ch.UpdaterID = userID
-
-	// 検証
-	if err := ch.Validate(); err != nil {
+	req := struct {
+		Name       *string `json:"name"`
+		Visibility *bool   `json:"visibility"`
+		Force      *bool   `json:"force"`
+	}{}
+	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	// 更新
-	if err := ch.Update(); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	if req.Name != nil && len(*req.Name) > 0 {
+		if err := model.ChangeChannelName(channelID, *req.Name, userID); err != nil {
+			switch err {
+			case model.ErrDuplicateName:
+				return echo.NewHTTPError(http.StatusConflict, err)
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+		}
+	}
+
+	if req.Force != nil || req.Visibility != nil {
+		if err := model.UpdateChannelFlag(channelID, req.Visibility, req.Force, userID); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
 	if ch.IsPublic {
-		go event.Emit(event.ChannelUpdated, &event.ChannelEvent{ID: channelID})
+		go event.Emit(event.ChannelUpdated, &event.ChannelEvent{ID: ch.ID})
 	} else {
-		users, err := model.GetPrivateChannelMembers(channelID)
+		users, err := model.GetPrivateChannelMembers(ch.ID)
 		if err != nil {
 			c.Logger().Error(err)
 		}
@@ -277,19 +270,76 @@ func PatchChannelsByChannelID(c echo.Context) error {
 		for i, v := range users {
 			ids[i] = uuid.Must(uuid.FromString(v))
 		}
-		go event.Emit(event.ChannelUpdated, &event.PrivateChannelEvent{UserIDs: ids, ChannelID: uuid.Must(uuid.FromString(channelID))})
+		go event.Emit(event.ChannelUpdated, &event.PrivateChannelEvent{UserIDs: ids, ChannelID: channelID})
 	}
+	return c.NoContent(http.StatusNoContent)
+}
+
+// PutChannelParent PUT /channels/:channelID/parent
+func PutChannelParent(c echo.Context) error {
+	userID := c.Get("user").(*model.User).GetUID()
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+
+	// チャンネル検証
+	ch, err := validateChannelID(channelID, userID)
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusBadRequest, "this channel is not found")
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
+	}
+
+	req := struct {
+		Parent string `json:"parent"`
+	}{}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	if _, err := uuid.FromString(req.Parent); err != nil {
+		if len(req.Parent) != 0 {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+	}
+
+	if err := model.ChangeChannelParent(channelID, req.Parent, userID); err != nil {
+		switch err {
+		case model.ErrDuplicateName:
+			return echo.NewHTTPError(http.StatusConflict, err)
+		case model.ErrChannelPathDepth:
+			return echo.NewHTTPError(http.StatusBadRequest, err)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
+	if ch.IsPublic {
+		go event.Emit(event.ChannelUpdated, &event.ChannelEvent{ID: ch.ID})
+	} else {
+		users, err := model.GetPrivateChannelMembers(ch.ID)
+		if err != nil {
+			c.Logger().Error(err)
+		}
+		ids := make([]uuid.UUID, len(users))
+		for i, v := range users {
+			ids[i] = uuid.Must(uuid.FromString(v))
+		}
+		go event.Emit(event.ChannelUpdated, &event.PrivateChannelEvent{UserIDs: ids, ChannelID: channelID})
+	}
+
 	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteChannelsByChannelID DELETE /channels/{channelID}のハンドラ
 func DeleteChannelsByChannelID(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+	userID := c.Get("user").(*model.User).GetUID()
 
 	deleteQue := make([]string, 1)
 	deleteQue[0] = c.Param("channelID")
 	for len(deleteQue) > 0 {
-		channelID := deleteQue[0]
+		channelID := uuid.FromStringOrNil(deleteQue[0])
 		deleteQue = deleteQue[1:]
 		channel, err := validateChannelID(channelID, userID)
 		if err != nil {
@@ -301,26 +351,22 @@ func DeleteChannelsByChannelID(c echo.Context) error {
 			}
 		}
 
-		children, err := channel.Children(userID)
+		children, err := model.GetChildrenChannelIDsWithUserID(userID, channel.ID)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred in the server while get children channel")
 		}
 		deleteQue = append(deleteQue, children...)
 
-		channel.UpdaterID = userID
-		channel.IsDeleted = true
-
-		if err := channel.Update(); err != nil {
+		if err := model.DeleteChannel(channelID); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred when channel model update.")
 		}
 
-		go event.Emit(event.ChannelDeleted, &event.ChannelEvent{ID: channelID})
+		go event.Emit(event.ChannelDeleted, &event.ChannelEvent{ID: channel.ID})
 	}
 	return c.NoContent(http.StatusNoContent)
 }
 
-func valuesChannel(m map[string]*ChannelForResponse) []*ChannelForResponse {
-	arr := []*ChannelForResponse{}
+func valuesChannel(m map[string]*ChannelForResponse) (arr []*ChannelForResponse) {
 	for _, v := range m {
 		arr = append(arr, v)
 	}
@@ -340,15 +386,15 @@ func formatChannel(channel *model.Channel, childIDs, members []string) *ChannelF
 }
 
 // リクエストされたチャンネルIDが指定されたuserから見えるかをチェックし、見える場合はそのチャンネルを返す
-func validateChannelID(channelID, userID string) (*model.Channel, error) {
-	ch := &model.Channel{ID: channelID}
-	ok, err := ch.Exists(userID)
+func validateChannelID(channelID, userID uuid.UUID) (*model.Channel, error) {
+	ch, err := model.GetChannelWithUserID(userID, channelID)
 	if err != nil {
-		log.Error(err)
+		switch err {
+		case model.ErrNotFoundOrForbidden:
+			return nil, model.ErrNotFound
+		}
 		return nil, err
 	}
-	if !ok {
-		return nil, model.ErrNotFound
-	}
+
 	return ch, nil
 }

@@ -81,7 +81,7 @@ func (h *Handlers) PostBots(c echo.Context) error {
 		}
 	}
 
-	go event.Emit(event.UserJoined, &event.UserEvent{ID: b.ID().String()})
+	go event.Emit(event.UserJoined, &event.UserEvent{ID: b.GetID().String()})
 	return c.JSON(http.StatusCreated, formatBot(b))
 }
 
@@ -112,15 +112,15 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 	}
 
 	if len(req.DisplayName) > 0 {
-		if err := model.UpdateBot(b.ID(), &req.DisplayName, nil, nil, nil); err != nil {
+		if err := model.UpdateBot(b.GetID(), &req.DisplayName, nil, nil, nil); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		go event.Emit(event.UserUpdated, &event.UserEvent{ID: b.BotUserID().String()})
+		go event.Emit(event.UserUpdated, &event.UserEvent{ID: b.GetBotUserID().String()})
 	}
 
 	if len(req.Description) > 0 {
-		if err := model.UpdateBot(b.ID(), nil, &req.Description, nil, nil); err != nil {
+		if err := model.UpdateBot(b.GetID(), nil, &req.Description, nil, nil); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
@@ -132,7 +132,7 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid postUrl")
 		}
 
-		if err := model.UpdateBot(b.ID(), nil, nil, postURL, nil); err != nil {
+		if err := model.UpdateBot(b.GetID(), nil, nil, postURL, nil); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
@@ -148,12 +148,12 @@ func (h *Handlers) DeleteBot(c echo.Context) error {
 		return err
 	}
 
-	if err := h.OAuth2.DeleteTokenByID(b.AccessTokenID()); err != nil {
+	if err := h.OAuth2.DeleteTokenByID(b.GetAccessTokenID()); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	if err := model.DeleteBot(b.ID()); err != nil {
+	if err := model.DeleteBot(b.GetID()); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -168,12 +168,6 @@ func (h *Handlers) PutBotIcon(c echo.Context) error {
 		return err
 	}
 
-	wu, err := model.GetUser(b.BotUserID().String())
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
 	// file確認
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
@@ -186,12 +180,12 @@ func (h *Handlers) PutBotIcon(c echo.Context) error {
 	}
 
 	// アイコン変更
-	if err := wu.UpdateIconID(iconID.String()); err != nil {
+	if err := model.ChangeUserIcon(b.GetBotUserID(), iconID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: b.BotUserID().String()})
+	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: b.GetBotUserID().String()})
 	return c.NoContent(http.StatusOK)
 }
 
@@ -202,7 +196,7 @@ func (h *Handlers) PostBotActivation(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Bot.ActivateBot(b.ID()); err != nil {
+	if err := h.Bot.ActivateBot(b.GetID()); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
 
@@ -216,7 +210,7 @@ func (h *Handlers) GetBotToken(c echo.Context) error {
 		return err
 	}
 
-	at, err := h.OAuth2.GetTokenByID(b.AccessTokenID())
+	at, err := h.OAuth2.GetTokenByID(b.GetAccessTokenID())
 	if err != nil {
 		switch err {
 		case oauth2.ErrTokenNotFound:
@@ -228,7 +222,7 @@ func (h *Handlers) GetBotToken(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{
-		"verificationToken": b.VerificationToken(),
+		"verificationToken": b.GetVerificationToken(),
 		"accessToken":       at.AccessToken,
 	})
 }
@@ -240,14 +234,14 @@ func (h *Handlers) PostBotToken(c echo.Context) error {
 		return err
 	}
 
-	b, token, err := model.ReissueBotTokens(h.OAuth2, b.ID())
+	b, token, err := model.ReissueBotTokens(h.OAuth2, b.GetID())
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{
-		"verificationToken": b.VerificationToken(),
+		"verificationToken": b.GetVerificationToken(),
 		"accessToken":       token,
 	})
 }
@@ -260,14 +254,14 @@ func (h *Handlers) GetBotInstallCode(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{
-		"installCode": b.InstallCode(),
+		"installCode": b.GetInstallCode(),
 	})
 }
 
 // GetInstalledBots GET /channels/:channelID/bots
 func (h *Handlers) GetInstalledBots(c echo.Context) error {
-	channelID := c.Param("channelID")
-	userID := c.Get("user").(*model.User).ID
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+	userID := c.Get("user").(*model.User).GetUID()
 
 	if _, err := validateChannelID(channelID, userID); err != nil {
 		switch err {
@@ -279,7 +273,7 @@ func (h *Handlers) GetInstalledBots(c echo.Context) error {
 		}
 	}
 
-	bots, err := model.GetInstalledBots(uuid.FromStringOrNil(channelID))
+	bots, err := model.GetInstalledBots(channelID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -299,8 +293,8 @@ func (h *Handlers) GetInstalledBots(c echo.Context) error {
 
 // PostInstalledBots POST /channels/:channelID/bots
 func (h *Handlers) PostInstalledBots(c echo.Context) error {
-	channelID := c.Param("channelID")
-	user := c.Get("user").(*model.User)
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+	userID := c.Get("user").(*model.User).GetUID()
 
 	req := struct {
 		Code string `json:"code" validate:"required"`
@@ -317,7 +311,7 @@ func (h *Handlers) PostInstalledBots(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if _, err := validateChannelID(channelID, user.ID); err != nil {
+	if _, err := validateChannelID(channelID, userID); err != nil {
 		switch err {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
@@ -327,19 +321,19 @@ func (h *Handlers) PostInstalledBots(c echo.Context) error {
 		}
 	}
 
-	if err := model.InstallBot(b.ID(), uuid.FromStringOrNil(channelID), user.GetUID()); err != nil {
+	if err := model.InstallBot(b.GetID(), channelID, userID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{
-		"botId": b.ID().String(),
+		"botId": b.GetID().String(),
 	})
 }
 
 // DeleteInstalledBot DELETE /channels/:channelID/bots/:botID
 func (h *Handlers) DeleteInstalledBot(c echo.Context) error {
-	channelID := c.Param("channelID")
+	channelID := uuid.FromStringOrNil(c.Param("channelID"))
 	user := c.Get("user").(*model.User)
 
 	b, err := getBot(c, uuid.FromStringOrNil(c.Param("botID")), false)
@@ -347,7 +341,7 @@ func (h *Handlers) DeleteInstalledBot(c echo.Context) error {
 		return err
 	}
 
-	if _, err := validateChannelID(channelID, user.ID); err != nil {
+	if _, err := validateChannelID(channelID, user.GetUID()); err != nil {
 		switch err {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
@@ -357,7 +351,7 @@ func (h *Handlers) DeleteInstalledBot(c echo.Context) error {
 		}
 	}
 
-	if err := model.UninstallBot(b.ID(), uuid.FromStringOrNil(channelID)); err != nil {
+	if err := model.UninstallBot(b.GetID(), channelID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -380,7 +374,7 @@ func getBot(c echo.Context, id uuid.UUID, strict bool) (model.Bot, error) {
 	}
 	if strict {
 		user, ok := c.Get("user").(*model.User)
-		if !ok || b.CreatorID() != user.GetUID() {
+		if !ok || b.GetCreatorID() != user.GetUID() {
 			return nil, echo.NewHTTPError(http.StatusForbidden)
 		}
 	}
@@ -390,19 +384,19 @@ func getBot(c echo.Context, id uuid.UUID, strict bool) (model.Bot, error) {
 
 func formatBot(b model.Bot) *botForResponse {
 	var arr []string
-	for v := range b.SubscribeEvents() {
+	for v := range b.GetSubscribeEvents() {
 		arr = append(arr, v)
 	}
 	return &botForResponse{
-		BotID:           b.ID().String(),
-		BotUserID:       b.BotUserID().String(),
-		Name:            b.Name(),
-		DisplayName:     b.DisplayName(),
-		Description:     b.Description(),
+		BotID:           b.GetID().String(),
+		BotUserID:       b.GetBotUserID().String(),
+		Name:            b.GetName(),
+		DisplayName:     b.GetDisplayName(),
+		Description:     b.GetDescription(),
 		SubscribeEvents: arr,
-		Activated:       b.Activated(),
-		CreatorID:       b.CreatorID().String(),
-		CreatedAt:       b.CreatedAt(),
-		UpdatedAt:       b.UpdatedAt(),
+		Activated:       b.GetActivated(),
+		CreatorID:       b.GetCreatorID().String(),
+		CreatedAt:       b.GetCreatedAt(),
+		UpdatedAt:       b.GetUpdatedAt(),
 	}
 }

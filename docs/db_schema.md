@@ -1,14 +1,11 @@
 # dbスキーマ
-ID系は全部UUID(string)
 
 ## users
-部員管理システムに全てあってもいいと思うけど、OSSだから単体でも動くように
-
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
 | id | CHAR(36) | PRIMARY KEY | ユーザーID |
 | name | VARCHAR(32) | NOT NULL, UNIQUE | 英数字名 |
-| display_name | VARCHAR(32) | NOT NULL | 表示名 |
+| display_name | VARCHAR(64) | NOT NULL | 表示名 |
 | email | TEXT | NOT NULL | メールアドレス |
 | password | CHAR(128) | NOT NULL | ハッシュ化されたパスワード |
 | salt | CHAR(128) | NOT NULL | パスワードソルト |
@@ -17,24 +14,25 @@ ID系は全部UUID(string)
 | bot | BOOLEAN | NOT NULL | botアカウントか |
 | role | TEXT | NOT NULL | ロール |
 | twitter_id | VARCHAR(15) | NOT NULL | ツイッターID |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
-| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+| last_online | TIMESTAMP(6) | | 最終オンライン日時 |
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP(6) | NOT NULL | 更新日時 |
+| deleted_at | TIMESTAMP(6) | | 削除日時 |
 
 ## rbac_overrides
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
 | user_id | CHAR(36) | PRIMARY KEY | ユーザーID |
-| permission | VARCHAR(50) | NOT NULL | パーミッション名 |
+| permission | VARCHAR(50) | PRIMARY KEY | パーミッション名 |
 | validity | BOOLEAN | NOT NULL | 有効かどうか |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
-
-user_idとpermissionの複合ユニーク制約
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP(6) | NOT NULL | 更新日時 |
 
 ## bots
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
-| id | CHAR(36) | NOT NULL PRIMARY KEY | botID |
-| bot_user_id | CHAR(36) | NOT NULL UNIQUE (外部キー) | botユーザーID |
+| id | CHAR(36) | PRIMARY KEY | botID |
+| bot_user_id | CHAR(36) | NOT NULL UNIQUE | botユーザーID |
 | description | TEXT | NOT NULL | 説明 |
 | verificationToken | TEXT | NOT NULL | 確認コード |
 | access_token_id | CHAR(36) | NOT NULL | アクセストークンのID |
@@ -43,32 +41,32 @@ user_idとpermissionの複合ユニーク制約
 | activated | BOOLEAN | NOT NULL | 活性化されているかどうか |
 | install_code | VARCHAR(30) | NOT NULL UNIQUE | インストールコード |
 | creator_id | CHAR(36) | NOT NULL | 作成者のユーザーID |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
-| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
-| deleted_at | TIMESTAMP | | 削除日時 |
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP(6) | NOT NULL | 更新日時 |
+| deleted_at | TIMESTAMP(6) | | 削除日時 |
 
 ## webhook_bots
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
-| id | CHAR(36) | NOT NULL PRIMARY KEY | webhookID |
-| bot_user_id | CHAR(36) | NOT NULL UNIQUE (外部キー) | botユーザーID |
+| id | CHAR(36) | PRIMARY KEY | webhookID |
+| bot_user_id | CHAR(36) | NOT NULL UNIQUE | botユーザーID |
 | description | TEXT | NOT NULL | 説明 |
 | channel_id | CHAR(36) | NOT NULL | 投稿先のデフォルトチャンネルID |
 | creator_id | CHAR(36) | NOT NULL | 作成者のユーザーID |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
-| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
-| deleted_at | TIMESTAMP | | 削除日時 |
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP(6) | NOT NULL | 更新日時 |
+| deleted_at | TIMESTAMP(6) | | 削除日時 |
 
 ## users_tags
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
-| user_id | CHAR(36) | PRIMARY KEY (外部キー) | ユーザーID |
-| tag_id | CHAR(36) | NOT NULL (外部キー) | タグID |
+| user_id | CHAR(36) | PRIMARY KEY | ユーザーID |
+| tag_id | CHAR(36) | PRIMARY KEY | タグID |
 | is_locked | BOOLEAN | NOT NULL | ロックされているか |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
-| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP(6) | NOT NULL | 更新日時 |
 
 ## tags
 
@@ -76,6 +74,10 @@ user_idとpermissionの複合ユニーク制約
 | --- | --- | --- | --- |
 | id | CHAR(36) | PRIMARY KEY |タグID |
 | name | VARCHAR(30) | NOT NULL UNIQUE | タグ文字列 |
+| restricted | BOOLEAN | NOT NULL | 制限つきタグかどうか |
+| type | VARCHAR(30) | NOT NULL | タグの種類 |
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP(6) | NOT NULL | 更新日時 |
 
 ## channels
 
@@ -84,15 +86,15 @@ user_idとpermissionの複合ユニーク制約
 | id | CHAR(36) | PRIMARY KEY | チャンネルID |
 | name | VARCHAR(20) | NOT NULL | チャンネル名 |
 | parent_id | CHAR(36) | NOT NULL | 親チャンネルのID |
-| creator_id | CHAR(36) | NOT NULL (外部キー) | 作成者のユーザーID |
-| topic | TEXT | | チャンネルトピック |
+| topic | TEXT | NOT NULL | チャンネルトピック |
 | is_forced | BOOLEAN | NOT NULL | 強制通知チャンネルか | 
-| is_deleted | BOOLEAN | NOT NULL | 削除されているか |
 | is_public | BOOLEAN | NOT NULL | 公開チャンネルか |
 | is_visible | BOOLEAN | NOT NULL | 表示チャンネルか |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
-| updater_id | CHAR(36) | NOT NULL (外部キー) | 更新したユーザーのID | 
-| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+| creator_id | CHAR(36) | NOT NULL | 作成者のユーザーID |
+| updater_id | CHAR(36) | NOT NULL | 更新したユーザーのID | 
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP(6) | NOT NULL | 更新日時 |
+| deleted_at | TIMESTAMP(6) | | 削除日時 |
 
 parent_idとnameの複合ユニーク制約
 
@@ -100,63 +102,59 @@ parent_idとnameの複合ユニーク制約
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
-| user_id | CHAR(36) | NOT NULL (外部キー) | ユーザーID |
-| channel_id | CHAR(36) | NOT NULL (外部キー) | (プライベート)チャンネルID |
-
-user_idとchannel_idの複合主キー
+| user_id | CHAR(36) | PRIMARY KEY | ユーザーID |
+| channel_id | CHAR(36) | PRIMARY KEY | (プライベート)チャンネルID |
 
 ## messages
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
 | id | CHAR(36) | PRIMARY KEY | メッセージID |
-| user_id | CHAR(36) | NOT NULL (外部キー) | 投稿者のユーザーID |
-| channel_id | CHAR(36) | NOT NULL (外部キー) | 投稿先のチャンネルID |
+| user_id | CHAR(36) | NOT NULL | 投稿者のユーザーID |
+| channel_id | CHAR(36) | NOT NULL | 投稿先のチャンネルID |
 | text | TEXT | NOT NULL | 投稿内容 |
-| is_shared | BOOLEAN | NOT NULL | 外部共有が許可されているか |
-| is_deleted | BOOLEAN | NOT NULL | 削除されているか |
-| created_at | TIMESTAMP | NOT NULL | 投稿日時 |
-| updater_id | CHAR(36)  | NOT NULL (外部キー) | 更新したユーザーのID |
-| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP(6) | NOT NULL | 更新日時 |
+| deleted_at | TIMESTAMP(6) | | 削除日時 |
 
 ## messages_stamps
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
-| message_id | CHAR(36) | NOT NULL (外部キー) | メッセージID |
-| stamp_id | CHAR(36) | NOT NULL (外部キー) | スタンプID |
-| user_id | CHAR(36) | NOT NULL (外部キー) | スタンプを押したユーザーID |
+| message_id | CHAR(36) | PRIMARY KEY | メッセージID |
+| stamp_id | CHAR(36) | PRIMARY KEY | スタンプID |
+| user_id | CHAR(36) | PRIMARY KEY | スタンプを押したユーザーID |
 | count | INT | NOT NULL | スタンプを押した回数 |
-| created_at | TIMESTAMP | NOT NULL | 押した日時 |
-| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+| created_at | TIMESTAMP(6) | NOT NULL | 押した日時 |
+| updated_at | TIMESTAMP(6) | NOT NULL | 更新日時 |
 
 ## unreads
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
-| user_id | CHAR(36) | NOT NULL (外部キー) | ユーザーID |
-| message_id | CHAR(36) | NOT NULL (外部キー) | メッセージID |
-
-user_idとmessage_idの複合主キー
+| user_id | CHAR(36) | PRIMARY KEY | ユーザーID |
+| message_id | CHAR(36) | PRIMARY KEY | メッセージID |
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
 
 ## devices
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
-| user_id | CHAR(36) | NOT NULL (外部キー) | ユーザーID |
-| token | VARCHAR(255) | NOT NULL PRIMARY KEY | デバイストークン |
+| token | VARCHAR(190) | PRIMARY KEY | デバイストークン |
+| user_id | CHAR(36) | NOT NULL | ユーザーID |
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
 
 ## stamps
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
 | id | CHAR(36) | PRIMARY KEY | スタンプID |
-| name | VARCHAR(20) | NOT NULL, UNIQUE | スタンプ表示名 |
-| creator_id | CHAR(36) | NOT NULL (外部キー) | 作成者のユーザーID |
-| file_id | CHAR(36) | NOT NULL (外部キー) | スタンプのファイルID |
-| is_deleted | BOOLEAN | NOT NULL | 削除されているか |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
-| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+| name | VARCHAR(32) | NOT NULL, UNIQUE | スタンプ表示名 |
+| creator_id | CHAR(36) | NOT NULL | 作成者のユーザーID |
+| file_id | CHAR(36) | NOT NULL | スタンプのファイルID |
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP(6) | NOT NULL | 更新日時 |
+| deleted_at | TIMESTAMP(6) | | 削除日時 |
 
 ## files
 
@@ -166,74 +164,51 @@ user_idとmessage_idの複合主キー
 | name | TEXT | NOT NULL | ファイル名 |
 | mime | TEXT | NOT NULL | MIMEタイプ |
 | size | BIGINT | NOT NULL | ファイルサイズ |
-| creator_id | CHAR(36) | NOT NULL (外部キー) | 投稿者のユーザーID |
-| is_deleted | BOOLEAN | NOT NULL | 削除されているか |
+| creator_id | CHAR(36) | NOT NULL | 投稿者のユーザーID |
 | hash | CHAR(32) | NOT NULL | ハッシュ値 |
 | manager | VARCHAR(30) | NOT NULL DEFAULT '' | マネージャー名(空文字はデフォルトマネージャー) |
 | has_thumbnail | BOOLEAN | NOT NULL | サムネイルがあるか |
 | thumbnail_width | INT | NOT NULL | サムネイルの幅 |
 | thumbnail_height | INT | NOT NULL | サムネイルの高さ |
-| created_at | TIMESTAMP | NOT NULL | 投稿日時 |
+| created_at | TIMESTAMP(6) | NOT NULL | 投稿日時 |
+| deleted_at | TIMESTAMP(6) | | 削除日時 |
 
 ## stars
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
-| user_id | CHAR(36) | NOT NULL (外部キー) | ユーザーID |
-| channel_id | CHAR(36) | NOT NULL (外部キー) | チャンネルID |
-| created_at | TIMESTAMP | NOT NULL | スターした日時 |
-
-user_idとchannel_idの複合主キー
+| user_id | CHAR(36) | PRIMARY KEY | ユーザーID |
+| channel_id | CHAR(36) | PRIMARY KEY | チャンネルID |
+| created_at | TIMESTAMP(6) | NOT NULL | スターした日時 |
 
 ## users_subscribe_channels
 
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
-| user_id | CHAR(36) | NOT NULL (外部キー) | ユーザーID |
-| channel_id | CHAR(36) | NOT NULL (外部キー) | 通知を受け取るチャンネルID |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
-
-user_idとchannel_idの複合主キー
-
-## users_invisible_channels
-
-| カラム名 | 型 | 属性 | 説明など | 
-| --- | --- | --- | --- |
-| user_id | CHAR(36) | NOT NULL (外部キー) | ユーザーID |
-| channel_id | CHAR(36) | NOT NULL (外部キー) | 非表示にするチャンネルID |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
-
-user_idとchannel_idの複合主キー
-
-## clips
-
-| カラム名 | 型 | 属性 | 説明など | 
-| --- | --- | --- | --- |
-| user_id | CHAR(36) | NOT NULL (外部キー) | ユーザーID |
-| message_id | CHAR(36) | NOT NULL (外部キー) | メッセージID |
-| created_at | TIMESTAMP | NOT NULL | クリップした日時 |
+| user_id | CHAR(36) | PRIMARY KEY | ユーザーID |
+| channel_id | CHAR(36) | PRIMARY KEY | 通知を受け取るチャンネルID |
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
 
 ## pins
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
 | id | CHAR(36) | PRIMARY KEY | ピン留めID |
-| channel_id | CHAR(36) | NOT NULL (外部キー) | チャンネルID |
-| message_id | CHAR(36) | NOT NULL (外部キー) | メッセージID |
-| user_id | CHAR(36) | NOT NULL (外部キー) | ピン留めしたユーザーのID |
-| created_at | TIMESTAMP | NOT NULL | ピン留めした日時 |
+| message_id | CHAR(36) | NOT NULL UNIQUE | メッセージID |
+| user_id | CHAR(36) | NOT NULL | ピン留めしたユーザーのID |
+| created_at | TIMESTAMP(6) | NOT NULL | ピン留めした日時 |
 
 ## oauth2_tokens
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
 | id | CHAR(36) | PRIMARY KEY | トークンID |
-| client_id | CHAR(36) | NOT NULL (外部キー) | クライアントID |
-| user_id | CHAR(36) | NOT NULL (外部キー) | ユーザーID |
+| client_id | CHAR(36) | NOT NULL | クライアントID |
+| user_id | CHAR(36) | NOT NULL | ユーザーID |
 | redirect_uri | TEXT | NOT NULL | リダイレクトURI |
 | access_token | VARCHAR(36) | NOT NULL | アクセストークン |
 | refresh_token | VARCHAR(36) | NOT NULL | リフレッシュトークン |
 | scopes | TEXT | NOT NULL | 許可されたスコープ |
 | expires_in | INT | NOT NULL | 有効秒数 |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
 
 ## oauth2_clients
 | カラム名 | 型 | 属性 | 説明など | 
@@ -242,20 +217,20 @@ user_idとchannel_idの複合主キー
 | name | VARCHAR(32) | NOT NULL | クライアント名 |
 | description | TEXT | NOT NULL | クライアント説明 |
 | confidential | BOOLEAN | NOT NULL | コンフィデンシャルクライアントかどうか |
-| creator_id | CHAR(36) | NOT NULL (外部キー) | 登録者ID |
+| creator_id | CHAR(36) | NOT NULL | 登録者ID |
 | secret | VARCHAR(36) | NOT NULL | クライアントシークレット |
 | redirect_uri | TEXT | NOT NULL | リダイレクトURI |
 | scopes | TEXT | NOT NULL | 許可されたスコープ |
-| is_deleted | BOOLEAN | NOT NULL | 削除されているかどうか |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
-| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP(6) | NOT NULL | 更新日時 |
+| deleted_at | TIMESTAMP(6) | | 削除日時 |
 
 ## oauth2_authorizes
 | カラム名 | 型 | 属性 | 説明など | 
 | --- | --- | --- | --- |
 | code | VARCHAR(36) | PRIMARY KEY | 認可コード |
-| client_id | CHAR(36) | NOT NULL (外部キー) | クライアントID |
-| user_id | CHAR(36) | NOT NULL (外部キー) | ユーザーID |
+| client_id | CHAR(36) | NOT NULL | クライアントID |
+| user_id | CHAR(36) | NOT NULL | ユーザーID |
 | expires_in | INT | NOT NULL | 有効秒数 |
 | redirect_uri | TEXT | NOT NULL | リダイレクトURI |
 | scopes | TEXT | NOT NULL | 有効なスコープ |
@@ -263,4 +238,4 @@ user_idとchannel_idの複合主キー
 | code_challenge | VARCHAR(128) | NOT NULL | PKCE Code Challenge |
 | code_challenge_method | TEXT | NOT NULL | PKCE Code Challenge Method |
 | nonce | TEXT | NOT NULL | Nonce |
-| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+| created_at | TIMESTAMP(6) | NOT NULL | 作成日時 |

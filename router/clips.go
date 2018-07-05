@@ -38,10 +38,10 @@ func GetClips(c echo.Context) error {
 	res := make([]*clipMessageForResponse, len(clips))
 	for i, v := range clips {
 		res[i] = &clipMessageForResponse{
-			FolderID:  v.Clip.FolderID,
-			ClipID:    v.Clip.ID,
-			ClippedAt: v.Clip.CreatedAt,
-			Message:   formatMessage(v.Message),
+			FolderID:  v.FolderID,
+			ClipID:    v.ID,
+			ClippedAt: v.CreatedAt,
+			Message:   formatMessage(&v.Message),
 		}
 	}
 
@@ -57,15 +57,12 @@ func PostClip(c echo.Context) error {
 		MessageID string `json:"messageId" validate:"uuid,required"`
 		FolderID  string `json:"folderId"`
 	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-	if err := c.Validate(&req); err != nil {
+	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	// メッセージの存在と可用性を確認
-	if _, err := validateMessageID(req.MessageID, user.ID); err != nil {
+	if _, err := validateMessageID(uuid.FromStringOrNil(req.MessageID), user.GetUID()); err != nil {
 		return err
 	}
 
@@ -132,11 +129,10 @@ func PostClip(c echo.Context) error {
 
 // GetClip GET /users/me/clips/:clipID
 func GetClip(c echo.Context) error {
-	clipID := c.Param("clipID")
 	user := c.Get("user").(*model.User)
 
 	// クリップ取得
-	clip, err := model.GetClipMessage(uuid.FromStringOrNil(clipID))
+	clip, err := model.GetClipMessage(uuid.FromStringOrNil(c.Param("clipID")))
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -147,20 +143,19 @@ func GetClip(c echo.Context) error {
 		}
 	}
 	// クリップがリクエストユーザーのものかを確認
-	if clip.Clip.UserID != user.ID {
+	if clip.UserID != user.ID {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	return c.JSON(http.StatusOK, formatMessage(clip.Message))
+	return c.JSON(http.StatusOK, formatMessage(&clip.Message))
 }
 
 // DeleteClip DELETE /users/me/clips/:clipID
 func DeleteClip(c echo.Context) error {
-	clipID := c.Param("clipID")
 	user := c.Get("user").(*model.User)
 
 	// クリップ取得
-	clip, err := model.GetClipMessage(uuid.FromStringOrNil(clipID))
+	clip, err := model.GetClipMessage(uuid.FromStringOrNil(c.Param("clipID")))
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -171,27 +166,26 @@ func DeleteClip(c echo.Context) error {
 		}
 	}
 	// クリップがリクエストユーザーのものかを確認
-	if clip.Clip.UserID != user.ID {
+	if clip.UserID != user.ID {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	// クリップ削除
-	if err := model.DeleteClip(clip.Clip.GetID()); err != nil {
+	if err := model.DeleteClip(clip.GetID()); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.ClipDeleted, &event.ClipEvent{ID: clip.Clip.GetID(), UserID: clip.Clip.GetUID()})
+	go event.Emit(event.ClipDeleted, &event.ClipEvent{ID: clip.GetID(), UserID: clip.GetUID()})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // GetClipsFolder GET /users/me/clips/:clipID/folder
 func GetClipsFolder(c echo.Context) error {
-	clipID := c.Param("clipID")
 	user := c.Get("user").(*model.User)
 
 	// クリップ取得
-	clip, err := model.GetClipMessage(uuid.FromStringOrNil(clipID))
+	clip, err := model.GetClipMessage(uuid.FromStringOrNil(c.Param("clipID")))
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -202,7 +196,7 @@ func GetClipsFolder(c echo.Context) error {
 		}
 	}
 	// クリップがリクエストユーザーのものかを確認
-	if clip.Clip.UserID != user.ID {
+	if clip.UserID != user.ID {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
@@ -223,22 +217,18 @@ func GetClipsFolder(c echo.Context) error {
 
 // PutClipsFolder PUT /users/me/clips/:clipID/folder
 func PutClipsFolder(c echo.Context) error {
-	clipID := c.Param("clipID")
 	user := c.Get("user").(*model.User)
 
 	// リクエスト検証
 	req := struct {
 		FolderID string `json:"folderId" validate:"uuid,required"`
 	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-	if err := c.Validate(&req); err != nil {
+	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	// クリップ取得
-	clip, err := model.GetClipMessage(uuid.FromStringOrNil(clipID))
+	clip, err := model.GetClipMessage(uuid.FromStringOrNil(c.Param("clipID")))
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -249,7 +239,7 @@ func PutClipsFolder(c echo.Context) error {
 		}
 	}
 	// クリップがリクエストユーザーのものかを確認
-	if clip.Clip.UserID != user.ID {
+	if clip.UserID != user.ID {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
@@ -269,15 +259,13 @@ func PutClipsFolder(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "the folder is not found")
 	}
 
-	clip.Clip.FolderID = folder.ID
-
 	// クリップを更新
-	if err := model.UpdateClip(clip.Clip); err != nil {
+	if err := model.ChangeClipFolder(clip.GetID(), folder.GetID()); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.ClipMoved, &event.ClipEvent{ID: clip.Clip.GetID(), UserID: clip.Clip.GetUID()})
+	go event.Emit(event.ClipMoved, &event.ClipEvent{ID: clip.GetID(), UserID: clip.GetUID()})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -319,12 +307,9 @@ func PostClipFolder(c echo.Context) error {
 	// フォルダ作成
 	folder, err := model.CreateClipFolder(user.GetUID(), req.Name)
 	if err != nil {
-		switch e := err.(type) {
-		case *mysql.MySQLError:
-			if e.Number == errMySQLDuplicatedRecord {
-				// フォルダ名が重複
-				return echo.NewHTTPError(http.StatusConflict, "the name is duplicated")
-			}
+		if isMySQLDuplicatedRecordErr(err) {
+			// フォルダ名が重複
+			return echo.NewHTTPError(http.StatusConflict, "the name is duplicated")
 		}
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -372,9 +357,9 @@ func GetClipFolder(c echo.Context) error {
 	res := make([]*clipMessageForResponse, len(clips))
 	for i, v := range clips {
 		res[i] = &clipMessageForResponse{
-			ClipID:    v.Clip.ID,
-			ClippedAt: v.Clip.CreatedAt,
-			Message:   formatMessage(v.Message),
+			ClipID:    v.ID,
+			ClippedAt: v.CreatedAt,
+			Message:   formatMessage(&v.Message),
 		}
 	}
 
@@ -390,10 +375,7 @@ func PatchClipFolder(c echo.Context) error {
 	req := struct {
 		Name string `json:"name" validate:"required,max=30"`
 	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-	if err := c.Validate(&req); err != nil {
+	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
@@ -413,16 +395,11 @@ func PatchClipFolder(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	folder.Name = req.Name
-
 	// フォルダ更新
-	if err := model.UpdateClipFolder(folder); err != nil {
-		switch e := err.(type) {
-		case *mysql.MySQLError:
-			if e.Number == errMySQLDuplicatedRecord {
-				// フォルダ名が重複
-				return echo.NewHTTPError(http.StatusConflict, "the name is duplicated")
-			}
+	if err := model.UpdateClipFolderName(folder.GetID(), req.Name); err != nil {
+		if isMySQLDuplicatedRecordErr(err) {
+			// フォルダ名が重複
+			return echo.NewHTTPError(http.StatusConflict, "the name is duplicated")
 		}
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)

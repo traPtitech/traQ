@@ -3,6 +3,8 @@ package router
 import (
 	"bytes"
 	"fmt"
+	"github.com/jinzhu/gorm"
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
 	"net/http"
 	"net/http/httptest"
@@ -14,9 +16,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/core"
-	"github.com/go-xorm/xorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/srinathgs/mysqlstore"
@@ -26,13 +26,8 @@ import (
 )
 
 var (
-	testUser = &model.User{
-		Name:  "testUser",
-		Email: "example@trap.jp",
-		Icon:  "empty",
-		Role:  role.User.ID(),
-	}
-	engine *xorm.Engine
+	testUser *model.User
+	db       *gorm.DB
 )
 
 func TestMain(m *testing.M) {
@@ -59,48 +54,43 @@ func TestMain(m *testing.M) {
 	dbname := "traq-test-router"
 	config.DatabaseName = "traq-test-router"
 
-	var err error
-	engine, err = xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, dbname))
+	engine, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, dbname))
 	if err != nil {
 		panic(err)
 	}
 	defer engine.Close()
-	engine.ShowSQL(false)
-	engine.SetMapper(core.GonicMapper{})
-	model.SetXORMEngine(engine)
+	db = engine
+	model.SetGORMEngine(engine)
 
 	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
 	model.SetFileManager("", storage.NewInMemoryFileManager())
 
-	if err := model.SyncSchema(); err != nil {
+	if err := model.Sync(); err != nil {
 		panic(err)
 	}
 
-	code := m.Run()
-
-	os.Exit(code)
+	os.Exit(m.Run())
 }
 
 func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc, *assert.Assertions, *require.Assertions) {
 	require := require.New(t)
 
 	require.NoError(model.DropTables())
-	require.NoError(model.SyncSchema())
+	require.NoError(model.Sync())
 	e := echo.New()
 	e.Validator = validator.New()
 
-	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
+	store, err := mysqlstore.NewMySQLStoreFromConnection(db.DB(), "sessions", "/", 60*60*24*14, []byte("secret"))
 	require.NoError(err)
 
-	require.NoError(testUser.SetPassword("test"))
-	require.NoError(testUser.Create())
+	testUser = mustCreateUser(t, "testUser")
 
 	req := httptest.NewRequest(echo.GET, "/", nil)
 	rec := httptest.NewRecorder()
 	sess, err := store.New(req, "sessions")
 	require.NoError(err)
 
-	sess.Values["userID"] = testUser.ID
+	sess.Values["userID"] = testUser.GetUID()
 	require.NoError(sess.Save(req, rec))
 
 	cookie := parseCookies(rec.Header().Get("Set-Cookie"))["sessions"]
@@ -117,10 +107,10 @@ func beforeLoginTest(t *testing.T) (*echo.Echo, echo.MiddlewareFunc) {
 	require := require.New(t)
 
 	require.NoError(model.DropTables())
-	require.NoError(model.SyncSchema())
+	require.NoError(model.Sync())
 	e := echo.New()
 
-	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB().DB, "sessions", "/", 60*60*24*14, []byte("secret"))
+	store, err := mysqlstore.NewMySQLStoreFromConnection(db.DB(), "sessions", "/", 60*60*24*14, []byte("secret"))
 	require.NoError(err)
 
 	req := httptest.NewRequest(echo.GET, "/", nil)
@@ -180,95 +170,52 @@ func getContext(e *echo.Echo, t *testing.T, cookie *http.Cookie, req *http.Reque
 	return c, rec
 }
 
-func mustMakeChannel(t *testing.T, userID, name string, isPublic bool) *model.Channel {
-	channel := &model.Channel{
-		CreatorID: userID,
-		Name:      name,
-		IsPublic:  isPublic,
+func mustMakeChannelDetail(t *testing.T, userID uuid.UUID, name, parentID string, isPublic bool) *model.Channel {
+	ch, err := model.CreateChannel(parentID, name, userID, isPublic)
+	require.NoError(t, err)
+	return ch
+}
+
+func mustMakePrivateChannel(t *testing.T, userID1, userID2 uuid.UUID, name string) *model.Channel {
+	channel := mustMakeChannelDetail(t, userID1, name, "", false)
+	require.NoError(t, model.AddPrivateChannelMember(channel.GetCID(), userID1))
+	if userID1 != userID2 {
+		require.NoError(t, model.AddPrivateChannelMember(channel.GetCID(), userID2))
 	}
-	require.NoError(t, channel.Create())
 	return channel
 }
 
-func mustMakeInvisibleChannel(t *testing.T, userID, name string, isPublic bool) *model.UserInvisibleChannel {
-	c := mustMakeChannel(t, testUser.ID, name, isPublic)
-	i := &model.UserInvisibleChannel{
-		UserID:    userID,
-		ChannelID: c.ID,
-	}
-	require.NoError(t, i.Create())
-	return i
+func mustMakeMessage(t *testing.T, userID, channelID uuid.UUID) *model.Message {
+	m, err := model.CreateMessage(userID, channelID, "popopo")
+	require.NoError(t, err)
+	return m
 }
 
-func mustMakePrivateChannel(t *testing.T, userID1, userID2, name string) *model.Channel {
-	channel := mustMakeChannel(t, userID1, name, false)
-	upc := &model.UsersPrivateChannel{
-		UserID:    userID1,
-		ChannelID: channel.ID,
-	}
-	require.NoError(t, upc.Create())
-	upc.UserID = userID2
-	require.NoError(t, upc.Create())
-	return channel
+func mustMakeTag(t *testing.T, userID uuid.UUID, tagText string) uuid.UUID {
+	tag, err := model.GetOrCreateTagByName(tagText)
+	require.NoError(t, err)
+	require.NoError(t, model.AddUserTag(userID, tag.GetID()))
+	return tag.GetID()
 }
 
-func mustMakeMessage(t *testing.T, userID, channelID string) *model.Message {
-	message := &model.Message{
-		UserID:    userID,
-		ChannelID: channelID,
-		Text:      "popopo",
-	}
-	require.NoError(t, message.Create())
-	return message
+func mustMakeUnread(t *testing.T, userID, messageID uuid.UUID) {
+	require.NoError(t, model.SetMessageUnread(userID, messageID))
 }
 
-func mustMakeTag(t *testing.T, userID, tagText string) *model.UsersTag {
-	tag := &model.UsersTag{
-		UserID: userID,
-	}
-	require.NoError(t, tag.Create(tagText))
-	return tag
+func mustStarChannel(t *testing.T, userID, channelID uuid.UUID) {
+	require.NoError(t, model.AddStar(userID, channelID))
 }
 
-func mustMakeUnread(t *testing.T, userID, messageID string) *model.Unread {
-	unread := &model.Unread{
-		UserID:    userID,
-		MessageID: messageID,
-	}
-	require.NoError(t, unread.Create())
-	return unread
-}
-
-func mustStarChannel(t *testing.T, userID, channelID string) *model.Star {
-	star := &model.Star{
-		UserID:    userID,
-		ChannelID: channelID,
-	}
-	require.NoError(t, star.Create())
-	return star
-}
-
-func mustMakePin(t *testing.T, channelID, userID, messageID string) *model.Pin {
-	pin := &model.Pin{
-		ChannelID: channelID,
-		UserID:    userID,
-		MessageID: messageID,
-	}
-
-	require.NoError(t, pin.Create())
-	return pin
+func mustMakePin(t *testing.T, userID, messageID uuid.UUID) uuid.UUID {
+	id, err := model.CreatePin(messageID, userID)
+	require.NoError(t, err)
+	return id
 }
 
 func mustCreateUser(t *testing.T, name string) *model.User {
-	user := &model.User{
-		Name:  name,
-		Email: "example@trap.jp",
-		Icon:  "empty",
-		Role:  role.User.ID(),
-	}
-	require.NoError(t, user.SetPassword("test"))
-	require.NoError(t, user.Create())
-	return user
+	u, err := model.CreateUser(name, name+"@test.test", "test", role.User)
+	require.NoError(t, err)
+	return u
 }
 
 func mustMakeFile(t *testing.T) *model.File {

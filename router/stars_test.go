@@ -8,27 +8,27 @@ import (
 
 func TestGetStars(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	channel := mustMakeChannel(t, testUser.ID, "test", true)
-	mustStarChannel(t, testUser.ID, channel.ID)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	mustStarChannel(t, testUser.GetUID(), channel.GetCID())
 
 	rec := request(e, t, mw(GetStars), cookie, nil)
 
 	if assert.EqualValues(http.StatusOK, rec.Code) {
-		var res []ChannelForResponse
+		var res []string
 		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &res)) {
 			assert.Len(res, 1)
-			assert.Equal(channel.ID, res[0].ChannelID)
+			assert.Equal(channel.ID, res[0])
 		}
 	}
 }
 
 func TestPutStars(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	channelID := mustMakeChannel(t, testUser.ID, "test", true).ID
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetParamNames("channelID")
-	c.SetParamValues(channelID)
+	c.SetParamValues(channel.ID)
 	requestWithContext(t, mw(PutStars), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code)
@@ -36,12 +36,12 @@ func TestPutStars(t *testing.T) {
 
 func TestDeleteStars(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	channelID := mustMakeChannel(t, testUser.ID, "star", true).ID
-	mustStarChannel(t, testUser.ID, channelID)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	mustStarChannel(t, testUser.GetUID(), channel.GetCID())
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetParamNames("channelID")
-	c.SetParamValues(channelID)
+	c.SetParamValues(channel.ID)
 	requestWithContext(t, mw(DeleteStars), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code)

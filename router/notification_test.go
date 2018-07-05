@@ -7,14 +7,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 )
 
 func TestPutNotificationStatus(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "subscribing", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "subscribing", "", true)
 	userID := mustCreateUser(t, "poyo").ID
 
 	post := struct {
@@ -32,7 +32,7 @@ func TestPutNotificationStatus(t *testing.T) {
 	c.SetParamValues(channel.ID)
 	requestWithContext(t, mw(PutNotificationStatus), c)
 
-	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
+	if assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String()) {
 		users, err := model.GetSubscribingUser(uuid.FromStringOrNil(channel.ID))
 		require.NoError(err)
 		assert.EqualValues(users, []uuid.UUID{uuid.FromStringOrNil(userID)})
@@ -40,20 +40,14 @@ func TestPutNotificationStatus(t *testing.T) {
 
 }
 
-//TODO TestPostDeviceToken
-//TODO TestDeleteDeviceToken
-//TODO TestGetNotificationStream
-
 func TestGetNotificationStatus(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannel(t, testUser.ID, "subscribing", true)
-	userID := mustCreateUser(t, "poyo").ID
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "subscribing", "", true)
+	user := mustCreateUser(t, "poyo")
 
-	usc := model.UserSubscribeChannel{UserID: userID, ChannelID: channel.ID}
-	require.NoError(usc.Create())
-	usc = model.UserSubscribeChannel{UserID: testUser.ID, ChannelID: channel.ID}
-	require.NoError(usc.Create())
+	require.NoError(model.SubscribeChannel(user.GetUID(), channel.GetCID()))
+	require.NoError(model.SubscribeChannel(testUser.GetUID(), channel.GetCID()))
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.Set("channel", channel)
@@ -70,13 +64,8 @@ func TestGetNotificationStatus(t *testing.T) {
 func TestGetNotificationChannels(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channelID := mustMakeChannel(t, testUser.ID, "subscribing", true).ID
-	usc := model.UserSubscribeChannel{UserID: testUser.ID, ChannelID: channelID}
-	require.NoError(usc.Create())
-
-	channelID = mustMakeChannel(t, testUser.ID, "subscribing2", true).ID
-	usc = model.UserSubscribeChannel{UserID: testUser.ID, ChannelID: channelID}
-	require.NoError(usc.Create())
+	require.NoError(model.SubscribeChannel(testUser.GetUID(), mustMakeChannelDetail(t, testUser.GetUID(), "subscribing", "", true).GetCID()))
+	require.NoError(model.SubscribeChannel(testUser.GetUID(), mustMakeChannelDetail(t, testUser.GetUID(), "subscribing2", "", true).GetCID()))
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.Set("targetUserID", testUser.ID)

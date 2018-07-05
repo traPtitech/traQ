@@ -3,7 +3,6 @@ package router
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
@@ -69,7 +68,7 @@ func PostWebhooks(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if _, err := validateChannelID(req.ChannelID, user.ID); err != nil {
+	if _, err := validateChannelID(uuid.FromStringOrNil(req.ChannelID), user.GetUID()); err != nil {
 		switch err {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
@@ -91,7 +90,7 @@ func PostWebhooks(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserJoined, &event.UserEvent{ID: w.ID().String()})
+	go event.Emit(event.UserJoined, &event.UserEvent{ID: w.GetID().String()})
 	return c.JSON(http.StatusCreated, formatWebhook(w))
 }
 
@@ -129,7 +128,7 @@ func PatchWebhook(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid channelId")
 		}
 
-		if _, err := validateChannelID(req.ChannelID, user.ID); err != nil {
+		if _, err := validateChannelID(uuid.FromStringOrNil(req.ChannelID), user.GetUID()); err != nil {
 			switch err {
 			case model.ErrNotFound:
 				return echo.NewHTTPError(http.StatusBadRequest, "this channel is not found")
@@ -151,7 +150,7 @@ func PatchWebhook(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 
-		go event.Emit(event.UserUpdated, &event.UserEvent{ID: w.BotUserID().String()})
+		go event.Emit(event.UserUpdated, &event.UserEvent{ID: w.GetBotUserID().String()})
 	}
 
 	if len(req.Description) > 0 {
@@ -171,7 +170,7 @@ func DeleteWebhook(c echo.Context) error {
 		return err
 	}
 
-	if err := model.DeleteWebhook(w.ID()); err != nil {
+	if err := model.DeleteWebhook(w.GetID()); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -186,16 +185,14 @@ func PostWebhook(c echo.Context) error {
 		return err
 	}
 
-	message := &model.Message{
-		UserID:    w.BotUserID().String(),
-		ChannelID: w.ChannelID().String(),
-	}
+	text := ""
+	channelID := w.GetChannelID()
 	switch c.Request().Header.Get(echo.HeaderContentType) {
 	case echo.MIMETextPlain, echo.MIMETextPlainCharsetUTF8:
 		if b, err := ioutil.ReadAll(c.Request().Body); err == nil {
-			message.Text = string(b)
+			text = string(b)
 		}
-		if len(message.Text) == 0 {
+		if len(text) == 0 {
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
 
@@ -211,26 +208,29 @@ func PostWebhook(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
 		if len(req.ChannelID) == 36 {
-			message.ChannelID = req.ChannelID
+			channelID, err = uuid.FromString(req.ChannelID)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest)
+			}
+			_, err := model.GetChannelWithUserID(w.GetBotUserID(), channelID)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest)
+			}
 		}
-		message.Text = req.Text
+		text = req.Text
 
 	default:
 		return echo.NewHTTPError(http.StatusUnsupportedMediaType)
 	}
 
-	if err := message.Create(); err != nil {
-		if errSQL, ok := err.(*mysql.MySQLError); ok {
-			if errSQL.Number == 1452 { //外部キー制約
-				return echo.NewHTTPError(http.StatusBadRequest, "invalid channelId")
-			}
-		}
+	m, err := model.CreateMessage(w.GetBotUserID(), channelID, text)
 
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.MessageCreated, &event.MessageCreatedEvent{Message: *message})
+	go event.Emit(event.MessageCreated, &event.MessageCreatedEvent{Message: *m})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -239,12 +239,6 @@ func PutWebhookIcon(c echo.Context) error {
 	w, err := getWebhook(c, uuid.FromStringOrNil(c.Param("webhookID")), true)
 	if err != nil {
 		return err
-	}
-
-	wu, err := model.GetUser(w.BotUserID().String())
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	// file確認
@@ -259,12 +253,12 @@ func PutWebhookIcon(c echo.Context) error {
 	}
 
 	// アイコン変更
-	if err := wu.UpdateIconID(iconID.String()); err != nil {
+	if err := model.ChangeUserIcon(w.GetBotUserID(), iconID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: w.BotUserID().String()})
+	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: w.GetBotUserID().String()})
 	return c.NoContent(http.StatusOK)
 }
 
@@ -499,16 +493,12 @@ func PostWebhookByGithub(c echo.Context) error {
 		messageBuf.WriteString(err.Error())
 	}
 	if messageBuf.Len() > 0 {
-		message := &model.Message{
-			UserID:    w.BotUserID().String(),
-			ChannelID: w.ChannelID().String(),
-			Text:      messageBuf.String(),
-		}
-		if err := message.Create(); err != nil {
+		m, err := model.CreateMessage(w.GetBotUserID(), w.GetChannelID(), messageBuf.String())
+		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		go event.Emit(event.MessageCreated, &event.MessageCreatedEvent{Message: *message})
+		go event.Emit(event.MessageCreated, &event.MessageCreatedEvent{Message: *m})
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -529,7 +519,7 @@ func getWebhook(c echo.Context, id uuid.UUID, strict bool) (model.Webhook, error
 	}
 	if strict {
 		user, ok := c.Get("user").(*model.User)
-		if !ok || w.CreatorID() != user.GetUID() {
+		if !ok || w.GetCreatorID() != user.GetUID() {
 			return nil, echo.NewHTTPError(http.StatusForbidden)
 		}
 	}
@@ -539,13 +529,13 @@ func getWebhook(c echo.Context, id uuid.UUID, strict bool) (model.Webhook, error
 
 func formatWebhook(w model.Webhook) *webhookForResponse {
 	return &webhookForResponse{
-		WebhookID:   w.ID().String(),
-		BotUserID:   w.BotUserID().String(),
-		DisplayName: w.Name(),
-		Description: w.Description(),
-		ChannelID:   w.ChannelID().String(),
-		CreatorID:   w.CreatorID().String(),
-		CreatedAt:   w.CreatedAt(),
-		UpdatedAt:   w.UpdatedAt(),
+		WebhookID:   w.GetID().String(),
+		BotUserID:   w.GetBotUserID().String(),
+		DisplayName: w.GetName(),
+		Description: w.GetDescription(),
+		ChannelID:   w.GetChannelID().String(),
+		CreatorID:   w.GetCreatorID().String(),
+		CreatedAt:   w.GetCreatedAt(),
+		UpdatedAt:   w.GetUpdatedAt(),
 	}
 }

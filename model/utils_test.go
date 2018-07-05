@@ -3,6 +3,8 @@ package model
 import (
 	"bytes"
 	"fmt"
+	"github.com/jinzhu/gorm"
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
 	"os"
 	"testing"
@@ -11,15 +13,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/go-xorm/core"
-	"github.com/go-xorm/xorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/rbac/role"
-)
-
-var (
-	nobodyID = "0ce216f1-4a0d-4011-9f55-d0f79cfb7ca1"
 )
 
 func TestMain(m *testing.M) {
@@ -46,107 +42,68 @@ func TestMain(m *testing.M) {
 	dbname := "traq-test-model"
 	config.DatabaseName = "traq-test-model"
 
-	engine, err := xorm.NewEngine("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, dbname))
+	db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, dbname))
 	if err != nil {
 		panic(err)
 	}
-	defer engine.Close()
-	engine.ShowSQL(false)
-	engine.SetMapper(core.GonicMapper{})
-	SetXORMEngine(engine)
+	defer db.Close()
+	SetGORMEngine(db)
 
 	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
 	SetFileManager("", storage.NewInMemoryFileManager())
 
-	if err := SyncSchema(); err != nil {
+	if err := Sync(); err != nil {
 		panic(err)
 	}
 
-	code := m.Run()
-
-	os.Exit(code)
+	os.Exit(m.Run())
 }
 
 // beforeTest : データーベースを初期化して、テストユーザー・テストチャンネルを作成します。
 // assert, require, テストユーザー, テストチャンネルを返します。
 func beforeTest(t *testing.T) (*assert.Assertions, *require.Assertions, *User, *Channel) {
 	require.NoError(t, DropTables())
-	require.NoError(t, SyncSchema())
+	require.NoError(t, Sync())
 
 	user := mustMakeUser(t, "testuser")
-	return assert.New(t), require.New(t), user, mustMakeChannelDetail(t, user.ID, "testchannel", "", true)
+	return assert.New(t), require.New(t), user, mustMakeChannelDetail(t, user.GetUID(), "testchannel", "", true)
 }
 
-func mustMakeChannel(t *testing.T, userID, tail string) *Channel {
-	channel := &Channel{}
-	channel.CreatorID = userID
-	channel.Name = "Channel-" + tail
-	channel.IsPublic = true
-	require.NoError(t, channel.Create())
-	return channel
+func mustMakeChannel(t *testing.T, userID uuid.UUID, tail string) *Channel {
+	ch, err := CreateChannel("", "Channel-"+tail, userID, true)
+	require.NoError(t, err)
+	return ch
 }
 
-func mustMakeChannelDetail(t *testing.T, creatorID, name, parentID string, isPublic bool) *Channel {
-	channel := &Channel{}
-	channel.CreatorID = creatorID
-	channel.Name = name
-	channel.ParentID = parentID
-	channel.IsPublic = isPublic
-	require.NoError(t, channel.Create())
-	return channel
+func mustMakeChannelDetail(t *testing.T, userID uuid.UUID, name, parentID string, isPublic bool) *Channel {
+	ch, err := CreateChannel(parentID, name, userID, isPublic)
+	require.NoError(t, err)
+	return ch
 }
 
-func mustMakePrivateChannel(t *testing.T, userID1, userID2, name string) *Channel {
+func mustMakePrivateChannel(t *testing.T, userID1, userID2 uuid.UUID, name string) *Channel {
 	channel := mustMakeChannelDetail(t, userID1, name, "", false)
-	upc := &UsersPrivateChannel{
-		UserID:    userID1,
-		ChannelID: channel.ID,
-	}
-	require.NoError(t, upc.Create())
+	require.NoError(t, AddPrivateChannelMember(channel.GetCID(), userID1))
 	if userID1 != userID2 {
-		upc.UserID = userID2
-		require.NoError(t, upc.Create())
+		require.NoError(t, AddPrivateChannelMember(channel.GetCID(), userID2))
 	}
 	return channel
 }
 
-func mustMakeInvisibleChannel(t *testing.T, channelID, userID string) *UserInvisibleChannel {
-	i := &UserInvisibleChannel{}
-	i.UserID = userID
-	i.ChannelID = channelID
-	require.NoError(t, i.Create())
-	return i
+func mustMakeMessage(t *testing.T, userID, channelID uuid.UUID) *Message {
+	m, err := CreateMessage(userID, channelID, "popopo")
+	require.NoError(t, err)
+	return m
 }
 
-func mustMakeMessage(t *testing.T, userID, channelID string) *Message {
-	message := &Message{
-		UserID:    userID,
-		ChannelID: channelID,
-		Text:      "popopo",
-	}
-	require.NoError(t, message.Create())
-	return message
-}
-
-func mustMakeMessageUnread(t *testing.T, userID, messageID string) *Unread {
-	unread := &Unread{
-		UserID:    userID,
-		MessageID: messageID,
-	}
-	require.NoError(t, unread.Create())
-	return unread
+func mustMakeMessageUnread(t *testing.T, userID, messageID uuid.UUID) {
+	require.NoError(t, SetMessageUnread(userID, messageID))
 }
 
 func mustMakeUser(t *testing.T, userName string) *User {
-	user := &User{
-		Name:  userName,
-		Email: "hogehoge@gmail.com",
-		Icon:  "po",
-		Role:  role.User.ID(),
-	}
-	require.NoError(t, user.SetPassword(password))
-	require.NoError(t, user.Create())
-	return user
+	u, err := CreateUser(userName, userName+"@test.test", "test", role.User)
+	require.NoError(t, err)
+	return u
 }
 
 func mustMakeFile(t *testing.T, userID string) *File {
@@ -159,27 +116,8 @@ func mustMakeFile(t *testing.T, userID string) *File {
 	return file
 }
 
-func checkEmptyField(user *User) error {
-	if user.ID == "" {
-		return fmt.Errorf("ID is empty")
-	}
-	if user.Name == "" {
-		return fmt.Errorf("name is empty")
-	}
-	if user.Email == "" {
-		return fmt.Errorf("Email is empty")
-	}
-	if user.Password == "" {
-		return fmt.Errorf("Password is empty")
-	}
-	if user.Salt == "" {
-		return fmt.Errorf("Salt is empty")
-	}
-	if user.Icon == "" {
-		return fmt.Errorf("Icon is empty")
-	}
-	if user.Status == 0 {
-		return fmt.Errorf("Status is empty")
-	}
-	return nil
+func mustMakeTag(t *testing.T, name string) *Tag {
+	tag, err := CreateTag(name, false, "")
+	require.NoError(t, err)
+	return tag
 }

@@ -88,7 +88,7 @@ func (h *BotProcessor) Process(t Type, time time.Time, d interface{}) error {
 
 func (h *BotProcessor) checkAndSend(botID uuid.UUID, time time.Time, e string, payload interface{}) {
 	b, _ := model.GetBot(botID)
-	if b != nil && b.Activated() && b.SubscribeEvents()[e] {
+	if b != nil && b.GetActivated() && b.GetSubscribeEvents()[e] {
 		h.sendEventToBot(b, time, e, payload)
 	}
 }
@@ -98,20 +98,20 @@ func (h *BotProcessor) sendEventToBot(b model.Bot, time time.Time, e string, dat
 
 	// Jsonリクエスト構築
 	dataStr, r := makePayload(data)
-	req, _ := http.NewRequest(http.MethodPost, b.PostURL().String(), r)
+	req, _ := http.NewRequest(http.MethodPost, b.GetPostURL().String(), r)
 	if r != nil {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
 	}
 	req.Header.Set(headerTRAQBotEvent, e)
 	req.Header.Set(headerTRAQBotRequestID, reqID.String())
-	req.Header.Set(headerTRAQBotVerificationToken, b.VerificationToken())
+	req.Header.Set(headerTRAQBotVerificationToken, b.GetVerificationToken())
 	req.Header.Set(headerTRAQBotEventDateTime, time.String())
 
 	reqSum := summarizeRequest(req, dataStr)
 	res, err := h.botReqClient.Do(req) //タイムアウトは10秒
 	if err != nil {
 		// ネットワークエラー
-		model.SavePostLog(reqID, b.ID(), 0, reqSum, "", err.Error())
+		model.SavePostLog(reqID, b.GetID(), 0, reqSum, "", err.Error())
 		return reqID, err
 	}
 
@@ -123,19 +123,19 @@ func (h *BotProcessor) sendEventToBot(b model.Bot, time time.Time, e string, dat
 	res.Body.Close()
 	if err != nil {
 		// ストリームエラー
-		model.SavePostLog(reqID, b.ID(), res.StatusCode, reqSum, resSummary.String(), err.Error())
+		model.SavePostLog(reqID, b.GetID(), res.StatusCode, reqSum, resSummary.String(), err.Error())
 		return reqID, err
 	}
 
 	// レスポンスサイズ制限 (Content-Lengthヘッダを用いてはいけない(不定の場合があるため))
 	if len(resBody) > botResponseContentLimit {
-		model.SavePostLog(reqID, b.ID(), res.StatusCode, reqSum, resSummary.String(), "too big response")
+		model.SavePostLog(reqID, b.GetID(), res.StatusCode, reqSum, resSummary.String(), "too big response")
 		return reqID, errors.New("too big response")
 	}
 
 	resSummary.WriteString("\n")
 	resSummary.Write(resBody)
-	model.SavePostLog(reqID, b.ID(), res.StatusCode, reqSum, resSummary.String(), "")
+	model.SavePostLog(reqID, b.GetID(), res.StatusCode, reqSum, resSummary.String(), "")
 
 	// ステータスコードがOK以外の場合は無効
 	if res.StatusCode != http.StatusOK {
@@ -169,7 +169,7 @@ func (h *BotProcessor) ActivateBot(id uuid.UUID) error {
 		return ErrBotActivationFailed
 	}
 
-	if err := model.ActivateBot(b.ID()); err != nil {
+	if err := model.ActivateBot(b.GetID()); err != nil {
 		return err
 	}
 	return nil
