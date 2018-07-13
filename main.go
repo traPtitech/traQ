@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/event"
-	"github.com/traPtitech/traQ/external/firebase"
 	"io/ioutil"
 	"net/http"
 
@@ -113,7 +112,7 @@ func main() {
 	streamer := event.NewSSEStreamer()
 	event.AddListener(streamer)
 	if len(config.FirebaseServiceAccountJSONFile) > 0 {
-		fcm := &firebase.Manager{}
+		fcm := &event.FCMManager{}
 		if err := fcm.Init(); err != nil {
 			panic(err)
 		}
