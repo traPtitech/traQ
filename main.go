@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/event"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"os/signal"
+	"time"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo"
@@ -310,7 +314,20 @@ func main() {
 	}
 	model.HeartbeatStart()
 
-	e.Logger.Fatal(e.Start(":" + config.Port))
+	go func() {
+		if err := e.Start(":" + config.Port); err != nil {
+			e.Logger.Info("shutting down the server")
+		}
+	}()
+
+	quit := make(chan os.Signal)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := e.Shutdown(ctx); err != nil {
+		e.Logger.Fatal(err)
+	}
 }
 
 func setSwiftFileManagerAsDefault(container, userName, apiKey, tenant, tenantID, authURL string) error {
