@@ -43,6 +43,9 @@ func PutStars(c echo.Context) error {
 	}
 
 	if err := model.AddStar(userID, channelID); err != nil {
+		if isMySQLDuplicatedRecordErr(err) {
+			return c.NoContent(http.StatusNoContent)
+		}
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
