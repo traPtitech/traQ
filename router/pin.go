@@ -49,7 +49,7 @@ func PostPin(c echo.Context) error {
 	channelID := uuid.FromStringOrNil(c.Param("channelID"))
 
 	req := struct {
-		MessageID string `json:"messageId" validate:"uuid"`
+		MessageID string `json:"messageId" validate:"uuid,required"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -57,15 +57,23 @@ func PostPin(c echo.Context) error {
 
 	m, err := model.GetMessageByID(uuid.FromStringOrNil(req.MessageID))
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusBadRequest, "the message doesn't exist")
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 	if m.GetCID() != channelID {
-		return echo.NewHTTPError(http.StatusBadRequest, "This messageis not a member of this channel")
+		return echo.NewHTTPError(http.StatusBadRequest, "the channel doesn't have the message")
 	}
 
 	pinID, err := model.CreatePin(m.GetID(), userID)
 	if err != nil {
+		if isMySQLDuplicatedRecordErr(err) {
+			return echo.NewHTTPError(http.StatusBadRequest, "the message has already been pinned")
+		}
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}

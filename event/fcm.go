@@ -1,4 +1,4 @@
-package firebase
+package event
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"firebase.google.com/go/messaging"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
-	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/option"
@@ -14,8 +13,8 @@ import (
 	"time"
 )
 
-// Manager Firebaseマネージャー構造体
-type Manager struct {
+// FCMManager Firebaseマネージャー構造体
+type FCMManager struct {
 	messaging *messaging.Client
 }
 
@@ -27,7 +26,7 @@ type FCMEvent interface {
 }
 
 // Init Firebaseサービスを初期化します
-func (m *Manager) Init() (err error) {
+func (m *FCMManager) Init() (err error) {
 	app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(config.FirebaseServiceAccountJSONFile))
 	if err != nil {
 		return err
@@ -42,7 +41,7 @@ func (m *Manager) Init() (err error) {
 }
 
 // Process イベントを処理します
-func (m *Manager) Process(t event.Type, time time.Time, data interface{}) error {
+func (m *FCMManager) Process(t Type, time time.Time, data interface{}) error {
 	e, ok := data.(FCMEvent)
 	if !ok {
 		return nil
@@ -67,7 +66,7 @@ func (m *Manager) Process(t event.Type, time time.Time, data interface{}) error 
 	return g.Wait()
 }
 
-func (m *Manager) sendToFcm(deviceTokens []string, data map[string]string) error {
+func (m *FCMManager) sendToFcm(deviceTokens []string, data map[string]string) error {
 	message := &messaging.Message{
 		Data: data,
 		Android: &messaging.AndroidConfig{
