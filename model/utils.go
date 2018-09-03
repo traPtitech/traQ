@@ -4,9 +4,14 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/rbac/role"
+)
+
+const (
+	errMySQLDuplicatedRecord uint16 = 1062
 )
 
 var (
@@ -15,6 +20,7 @@ var (
 	// モデルを追加したら各自ここに追加しなければいけない
 	// **順番注意**
 	tables = []interface{}{
+		&Mute{},
 		&MessageReport{},
 		&OAuth2Token{},
 		&OAuth2Authorize{},
@@ -191,4 +197,12 @@ func convertStringSliceToUUIDSlice(arr []string) (result []uuid.UUID) {
 		result[i] = uuid.Must(uuid.FromString(v))
 	}
 	return
+}
+
+func isMySQLDuplicatedRecordErr(err error) bool {
+	merr, ok := err.(*mysql.MySQLError)
+	if !ok {
+		return false
+	}
+	return merr.Number == errMySQLDuplicatedRecord
 }
