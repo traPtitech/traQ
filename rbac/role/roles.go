@@ -54,6 +54,8 @@ func SetRole(rbac *rbac.RBAC) {
 
 			permission.GetUnread,
 
+			permission.GetMutedChannels,
+
 			permission.GetTag,
 
 			permission.GetStamp,
@@ -98,6 +100,9 @@ func SetRole(rbac *rbac.RBAC) {
 			permission.DeleteStar,
 
 			permission.DeleteUnread,
+
+			permission.MuteChannel,
+			permission.UnmuteChannel,
 
 			permission.AddTag,
 			permission.RemoveTag,

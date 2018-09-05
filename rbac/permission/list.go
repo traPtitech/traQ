@@ -54,6 +54,10 @@ var list = map[string]gorbac.Permission{
 	GetUnread.ID():    GetUnread,
 	DeleteUnread.ID(): DeleteUnread,
 
+	GetMutedChannels.ID(): GetMutedChannels,
+	MuteChannel.ID():      MuteChannel,
+	UnmuteChannel.ID():    UnmuteChannel,
+
 	GetTag.ID():                  GetTag,
 	AddTag.ID():                  AddTag,
 	RemoveTag.ID():               RemoveTag,

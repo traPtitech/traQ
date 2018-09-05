@@ -70,10 +70,9 @@ func (e *MessageCreatedEvent) GetTargetUsers() map[uuid.UUID]bool {
 			users, err := model.GetSubscribingUser(k)
 			if err != nil {
 				log.Error(err)
-			} else {
-				for _, v := range users {
-					res[v] = true
-				}
+			}
+			for _, v := range users {
+				res[v] = true
 			}
 		}
 
@@ -102,7 +101,23 @@ func (e *MessageCreatedEvent) GetTargetUsers() map[uuid.UUID]bool {
 
 // GetExcludeUsers FCMの通知対象から除外されるユーザー
 func (e *MessageCreatedEvent) GetExcludeUsers() map[uuid.UUID]bool {
-	return map[uuid.UUID]bool{e.Message.GetUID(): true}
+	ex := map[uuid.UUID]bool{e.Message.GetUID(): true}
+
+	ch, err := model.GetChannelByMessageID(e.Message.GetID())
+	if err != nil {
+		log.Error(err)
+	}
+	if !ch.IsForced {
+		muted, err := model.GetMuteUserIDs(ch.GetCID())
+		if err != nil {
+			log.Error(err)
+		}
+		for _, v := range muted {
+			ex[uuid.Must(uuid.FromString(v))] = true
+		}
+	}
+
+	return ex
 }
 
 // GetFCMData FCM用のペイロード

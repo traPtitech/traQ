@@ -211,6 +211,11 @@ func main() {
 	api.GET("/users/me/unread", router.GetUnread, requires(permission.GetUnread))
 	api.DELETE("/users/me/unread/:channelID", router.DeleteUnread, requires(permission.DeleteUnread))
 
+	// Tag: mute
+	api.GET("/users/me/mute", router.GetMutedChannelIDs, requires(permission.GetMutedChannels))
+	api.POST("/users/me/mute/:channelID", router.PostMutedChannel, requires(permission.MuteChannel))
+	api.DELETE("/users/me/mute/:channelID", router.DeleteMutedChannel, requires(permission.UnmuteChannel))
+
 	// Tag: userTag
 	api.GET("/users/:userID/tags", router.GetUserTags, requires(permission.GetTag))
 	api.POST("/users/:userID/tags", router.PostUserTag, requires(permission.AddTag))
