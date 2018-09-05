@@ -77,6 +77,14 @@ func GetMutedChannelIDs(userID uuid.UUID) (ids []string, err error) {
 	return ids, nil
 }
 
+// GetMuteUserIDs ミュートしているユーザーのIDの配列を取得します
+func GetMuteUserIDs(channelID uuid.UUID) (ids []string, err error) {
+	if err = db.Where(&Mute{ChannelID: channelID.String()}).Pluck("user_id", &ids).Error; err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
+
 // IsChannelMuted 指定したユーザーが指定したチャンネルをミュートしているかどうかを返します
 func IsChannelMuted(userID, channelID uuid.UUID) (muted bool, err error) {
 	var c int
