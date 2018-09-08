@@ -102,6 +102,13 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 	return session, nil
 }
 
+// GetByID 指定したidのセッションを取得します
+func GetByID(id string) (s *Session, err error) {
+	mutexes.Lock(id)
+	defer mutexes.Unlock(id)
+	return sessions.get(id)
+}
+
 // Destroy セッションを破棄します
 func (s *Session) Destroy(rw http.ResponseWriter, req *http.Request) error {
 	if err := sessions.delete(s.id); err != nil {
