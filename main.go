@@ -187,6 +187,11 @@ func main() {
 	api.GET("/users/:userID", router.GetUserByID, requires(permission.GetUser))
 	api.GET("/users/:userID/icon", router.GetUserIcon, requires(permission.DownloadFile))
 
+	// Tag: sessions
+	api.GET("/users/me/sessions", router.GetMySessions, requires(permission.GetMySessions))
+	api.DELETE("/users/me/sessions", router.DeleteAllMySessions, requires(permission.DeleteMySessions))
+	api.DELETE("/users/me/sessions/:referenceID", router.DeleteMySession, requires(permission.DeleteMySessions))
+
 	// Tag: clips
 	api.GET("/users/me/clips", router.GetClips, requires(permission.GetClip))
 	api.POST("/users/me/clips", router.PostClip, requires(permission.CreateClip))

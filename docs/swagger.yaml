@@ -40,6 +40,66 @@ paths:
           description: |+
             正常にログアウトできました。
 
+  /users/me/sessions:
+    get:
+      tags:
+        - sessions
+      description: 自分のログインセッションリストを取得します。
+      responses:
+        "200":
+          description: セッションリストを返します。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    lastIP:
+                      type: string
+                    lastUserAgent:
+                      type: string
+                    lastAccess:
+                      type: string
+                      format: date-time
+                    createdAt:
+                      type: string
+                      format: date-time
+        "403":
+          description: 権限がありません。
+    delete:
+      tags:
+        - sessions
+      description: 自分のログインセッションを全てログアウトします。
+      responses:
+        "204":
+          description: 成功しました。
+        "403":
+          description: 権限がありません。
+
+  /users/me/sessions/{referenceID}:
+    parameters:
+      - name: referenceID
+        description: 操作の対象となるセッションの参照ID
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      tags:
+        - sessions
+      description: 対象のセッションをログアウトします。
+      responses:
+        "204":
+          description: 成功しました。
+        "403":
+          description: 権限がありません。
+        "404":
+          description: 対象のセッションは存在しません。
+
   /oauth2/authorize:
     get:
       tags:

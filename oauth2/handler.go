@@ -19,7 +19,7 @@ import (
 )
 
 func init() {
-	gob.Register(&authorizeRequest{})
+	gob.Register(authorizeRequest{})
 }
 
 const (

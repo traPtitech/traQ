@@ -15,7 +15,8 @@ var mutexes *utils.KeyLocker
 
 // Session セッション構造体
 type Session struct {
-	id            string
+	token         string
+	referenceID   uuid.UUID
 	userID        uuid.UUID
 	created       time.Time
 	lastAccess    time.Time
@@ -35,19 +36,19 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 	userAgent := req.Header.Get("User-Agent")
 	ip := realip.FromRequest(req)
 
-	var id string
+	var token string
 	cookie, err := req.Cookie(CookieName)
 	if err == nil {
-		id = cookie.Value
+		token = cookie.Value
 	}
 
 	var session *Session
-	if len(id) > 0 {
-		mutexes.Lock(id)
-		defer mutexes.Unlock(id)
+	if len(token) > 0 {
+		mutexes.Lock(token)
+		defer mutexes.Unlock(token)
 
 		var err error
-		session, err = store.GetByID(id)
+		session, err = store.GetByToken(token)
 		if err != nil {
 			return nil, err
 		}
@@ -72,10 +73,10 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 			session = nil
 		} else {
 			session.Lock()
-			defer session.Unlock()
 			session.lastAccess = time.Now()
 			session.lastUserAgent = userAgent
 			session.lastIP = ip
+			session.Unlock()
 
 			return session, nil
 		}
@@ -86,7 +87,8 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 	}
 
 	session = &Session{
-		id:            generateRandomString() + generateRandomString(),
+		token:         generateRandomString() + generateRandomString(),
+		referenceID:   uuid.NewV4(),
 		userID:        uuid.Nil,
 		created:       time.Now(),
 		lastAccess:    time.Now(),
@@ -94,27 +96,27 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 		lastIP:        ip,
 		data:          make(map[string]interface{}),
 	}
-	if err := store.Save(session.id, session); err != nil {
+	if err := store.Save(session.token, session); err != nil {
 		return nil, err
 	}
-	setCookie(session.id, rw)
+	setCookie(session.token, rw)
 
 	return session, nil
 }
 
-// GetByID 指定したidのセッションを取得します
-func GetByID(id string) (s *Session, err error) {
-	mutexes.Lock(id)
-	defer mutexes.Unlock(id)
+// GetByToken 指定したtokenのセッションを取得します
+func GetByToken(token string) (s *Session, err error) {
+	mutexes.Lock(token)
+	defer mutexes.Unlock(token)
 
-	s, err = store.GetByID(id)
+	s, err = store.GetByToken(token)
 	if err != nil {
 		return nil, err
 	}
 
 	if s != nil {
 		if s.Expired() {
-			if err := DestroyByID(id); err != nil {
+			if err := DestroyByToken(token); err != nil {
 				return nil, err
 			}
 			s = nil
@@ -133,26 +135,60 @@ func GetByUserID(id uuid.UUID) ([]*Session, error) {
 
 	var result []*Session
 	for _, v := range sessions {
-		mutexes.Lock(v.id)
+		mutexes.Lock(v.token)
 		if v.Expired() {
-			DestroyByID(v.id)
+			DestroyByToken(v.token)
 		} else {
 			result = append(result, v)
 		}
-		mutexes.Unlock(v.id)
+		mutexes.Unlock(v.token)
 	}
 
 	return result, nil
 }
 
-// DestroyByID 指定したidのセッションを破棄します
-func DestroyByID(id string) error {
-	return store.DestroyByID(id)
+// DestroyByToken 指定したtokenのセッションを破棄します
+func DestroyByToken(token string) error {
+	return store.DestroyByToken(token)
+}
+
+// DestroyByUserID 指定したユーザーのセッションを全て破棄します
+func DestroyByUserID(id uuid.UUID) error {
+	sessions, err := store.GetByUserID(id)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range sessions {
+		mutexes.Lock(v.token)
+		if err := DestroyByToken(v.token); err != nil {
+			mutexes.Unlock(v.token)
+			return err
+		}
+		mutexes.Unlock(v.token)
+	}
+
+	return nil
+}
+
+// DestroyByReferenceID 指定したユーザーのreferenceIDのセッションを破棄します
+func DestroyByReferenceID(userID, referenceID uuid.UUID) error {
+	session, err := store.GetByReferenceID(referenceID)
+	if err != nil {
+		return err
+	}
+	if !uuid.Equal(session.userID, userID) {
+		return nil
+	}
+	mutexes.Lock(session.token)
+	defer mutexes.Unlock(session.token)
+
+	return DestroyByToken(session.token)
 }
 
 // Destroy セッションを破棄します
 func (s *Session) Destroy(rw http.ResponseWriter, req *http.Request) error {
-	if err := DestroyByID(s.id); err != nil {
+	if err := DestroyByToken(s.token); err != nil {
 		return err
 	}
 
@@ -173,10 +209,10 @@ func (s *Session) GetUserID() uuid.UUID {
 }
 
 // GetSessionInfo セッションの情報を返します
-func (s *Session) GetSessionInfo() (created, lastAccess time.Time, lastIP, lastUserAgent string) {
+func (s *Session) GetSessionInfo() (referenceID uuid.UUID, created, lastAccess time.Time, lastIP, lastUserAgent string) {
 	s.RLock()
 	defer s.RUnlock()
-	return s.created, s.lastAccess, s.lastIP, s.lastUserAgent
+	return s.referenceID, s.created, s.lastAccess, s.lastIP, s.lastUserAgent
 }
 
 // SetUser セッションにユーザーを紐づけます
@@ -184,7 +220,7 @@ func (s *Session) SetUser(userID uuid.UUID) error {
 	s.Lock()
 	s.userID = userID
 	s.Unlock()
-	return store.Save(s.id, s)
+	return store.Save(s.token, s)
 }
 
 // Get セッションから値を取り出します
@@ -203,7 +239,7 @@ func (s *Session) Set(key string, value interface{}) error {
 	s.Lock()
 	s.data[key] = value
 	s.Unlock()
-	return store.Save(s.id, s)
+	return store.Save(s.token, s)
 }
 
 // Delete セッションから値を削除します
@@ -211,7 +247,7 @@ func (s *Session) Delete(key string) error {
 	s.Lock()
 	delete(s.data, key)
 	s.Unlock()
-	return store.Save(s.id, s)
+	return store.Save(s.token, s)
 }
 
 // Expired セッションの有効期限が切れているかどうか
@@ -230,10 +266,10 @@ func deleteCookie(cookie *http.Cookie, rw http.ResponseWriter) {
 	http.SetCookie(rw, &deleted)
 }
 
-func setCookie(id string, rw http.ResponseWriter) {
+func setCookie(token string, rw http.ResponseWriter) {
 	cookie := &http.Cookie{
 		Name:     CookieName,
-		Value:    id,
+		Value:    token,
 		Expires:  time.Now().Add(time.Duration(sessionMaxAge) * time.Second),
 		MaxAge:   sessionMaxAge,
 		Path:     "/",

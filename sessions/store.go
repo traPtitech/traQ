@@ -20,10 +20,11 @@ func init() {
 
 // Store セッションストア
 type Store interface {
-	GetByID(id string) (*Session, error)
+	GetByToken(token string) (*Session, error)
 	GetByUserID(id uuid.UUID) ([]*Session, error)
-	DestroyByID(id string) error
-	Save(id string, session *Session) error
+	GetByReferenceID(id uuid.UUID) (*Session, error)
+	DestroyByToken(token string) error
+	Save(token string, session *Session) error
 }
 
 // CacheableStore キャッシュ可能なセッションストア
@@ -50,11 +51,11 @@ func NewInMemoryStore() Store {
 	}
 }
 
-// GetByID gets id's session
-func (s *InMemoryStore) GetByID(id string) (*Session, error) {
+// GetByToken gets token's session
+func (s *InMemoryStore) GetByToken(token string) (*Session, error) {
 	s.RLock()
 	defer s.RUnlock()
-	sess, _ := s.sessions[id]
+	sess, _ := s.sessions[token]
 	return sess, nil
 }
 
@@ -70,19 +71,31 @@ func (s *InMemoryStore) GetByUserID(id uuid.UUID) (result []*Session, err error)
 	return
 }
 
-// DestroyByID deletes id's session
-func (s *InMemoryStore) DestroyByID(id string) error {
+// GetByReferenceID gets id's session
+func (s *InMemoryStore) GetByReferenceID(id uuid.UUID) (*Session, error) {
+	s.RLock()
+	defer s.RUnlock()
+	for _, v := range s.sessions {
+		if uuid.Equal(v.referenceID, id) {
+			return v, nil
+		}
+	}
+	return nil, nil
+}
+
+// DestroyByToken deletes token's session
+func (s *InMemoryStore) DestroyByToken(token string) error {
 	s.Lock()
 	defer s.Unlock()
-	delete(s.sessions, id)
+	delete(s.sessions, token)
 	return nil
 }
 
-// Save saves id's session
-func (s *InMemoryStore) Save(id string, session *Session) error {
+// Save saves token's session
+func (s *InMemoryStore) Save(token string, session *Session) error {
 	s.Lock()
 	defer s.Unlock()
-	s.sessions[id] = session
+	s.sessions[token] = session
 	return nil
 }
 
@@ -93,17 +106,17 @@ type GORMStore struct {
 	cache *lru.Cache
 }
 
-// GetByID gets id's session
-func (s *GORMStore) GetByID(id string) (*Session, error) {
+// GetByToken gets token's session
+func (s *GORMStore) GetByToken(token string) (*Session, error) {
 	s.Lock()
 	defer s.Unlock()
 
-	if session, ok := s.cache.Get(id); ok {
+	if session, ok := s.cache.Get(token); ok {
 		return session.(*Session), nil
 	}
 
 	var record SessionRecord
-	if err := s.db.First(&record, &SessionRecord{ID: id}).Error; err != nil {
+	if err := s.db.First(&record, &SessionRecord{Token: token}).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
@@ -114,7 +127,7 @@ func (s *GORMStore) GetByID(id string) (*Session, error) {
 		return nil, err
 	}
 
-	s.cache.Add(id, session)
+	s.cache.Add(token, session)
 	return session, nil
 }
 
@@ -129,7 +142,7 @@ func (s *GORMStore) GetByUserID(id uuid.UUID) ([]*Session, error) {
 	s.Lock()
 	defer s.Unlock()
 	for k, v := range records {
-		if sess, ok := s.cache.Get(v.ID); ok {
+		if sess, ok := s.cache.Get(v.Token); ok {
 			result[k] = sess.(*Session)
 		} else {
 			sess, err := v.decode()
@@ -143,23 +156,41 @@ func (s *GORMStore) GetByUserID(id uuid.UUID) ([]*Session, error) {
 	return result, nil
 }
 
-// DestroyByID deletes id's session
-func (s *GORMStore) DestroyByID(id string) error {
+// GetByReferenceID gets id's session
+func (s *GORMStore) GetByReferenceID(id uuid.UUID) (*Session, error) {
+	var record SessionRecord
+	if err := s.db.First(&record, &SessionRecord{ReferenceID: id.String()}).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
 	s.Lock()
 	defer s.Unlock()
-	s.cache.Remove(id)
-	return s.db.Delete(&SessionRecord{ID: id}).Error
+	if sess, ok := s.cache.Get(record.Token); ok {
+		return sess.(*Session), nil
+	}
+	return record.decode()
 }
 
-// Save saves id's session
-func (s *GORMStore) Save(id string, session *Session) error {
+// DestroyByToken deletes token's session
+func (s *GORMStore) DestroyByToken(token string) error {
+	s.Lock()
+	defer s.Unlock()
+	s.cache.Remove(token)
+	return s.db.Delete(&SessionRecord{Token: token}).Error
+}
+
+// Save saves token's session
+func (s *GORMStore) Save(token string, session *Session) error {
 	session.Lock()
 	session.lastAccess = time.Now()
 	session.Unlock()
 
 	s.Lock()
 	defer s.Unlock()
-	s.cache.Add(id, session)
+	s.cache.Add(token, session)
 
 	sr := &SessionRecord{}
 	sr.encode(session)
@@ -178,7 +209,8 @@ func (s *GORMStore) PurgeCache() {
 
 // SessionRecord GORM用Session構造体
 type SessionRecord struct {
-	ID            string    `gorm:"type:varchar(50);primary_key"`
+	Token         string    `gorm:"type:varchar(50);primary_key"`
+	ReferenceID   string    `gorm:"type:char(36);unique"`
 	UserID        string    `gorm:"type:varchar(36);index"`
 	LastAccess    time.Time `gorm:"precision:6"`
 	LastIP        string    `gorm:"type:text"`
@@ -196,7 +228,8 @@ func (sr *SessionRecord) encode(session *Session) {
 	session.RLock()
 	defer session.RUnlock()
 
-	sr.ID = session.id
+	sr.Token = session.token
+	sr.ReferenceID = session.referenceID.String()
 	sr.UserID = session.userID.String()
 	sr.LastAccess = session.lastAccess
 	sr.LastIP = session.lastIP
@@ -212,7 +245,8 @@ func (sr *SessionRecord) encode(session *Session) {
 
 func (sr *SessionRecord) decode() (*Session, error) {
 	s := &Session{
-		id:            sr.ID,
+		token:         sr.Token,
+		referenceID:   uuid.Must(uuid.FromString(sr.ReferenceID)),
 		userID:        uuid.FromStringOrNil(sr.UserID),
 		lastAccess:    sr.LastAccess,
 		lastIP:        sr.LastIP,
