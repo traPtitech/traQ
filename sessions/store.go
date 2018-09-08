@@ -119,7 +119,7 @@ func (sr *SessionRecord) encode(session *Session) {
 	defer session.RUnlock()
 
 	sr.ID = session.id
-	sr.UserID = session.userId.String()
+	sr.UserID = session.userID.String()
 	sr.LastAccess = session.lastAccess
 	sr.LastIP = session.lastIP
 	sr.LastUserAgent = session.lastUserAgent
@@ -135,7 +135,7 @@ func (sr *SessionRecord) encode(session *Session) {
 func (sr *SessionRecord) decode() (*Session, error) {
 	s := &Session{
 		id:            sr.ID,
-		userId:        uuid.FromStringOrNil(sr.UserID),
+		userID:        uuid.FromStringOrNil(sr.UserID),
 		lastAccess:    sr.LastAccess,
 		lastIP:        sr.LastIP,
 		lastUserAgent: sr.LastUserAgent,

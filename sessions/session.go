@@ -16,7 +16,7 @@ var mutexes *utils.KeyLocker
 // Session セッション構造体
 type Session struct {
 	id            string
-	userId        uuid.UUID
+	userID        uuid.UUID
 	created       time.Time
 	lastAccess    time.Time
 	lastIP        string
@@ -87,7 +87,7 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 
 	session = &Session{
 		id:            generateRandomString() + generateRandomString(),
-		userId:        uuid.Nil,
+		userID:        uuid.Nil,
 		created:       time.Now(),
 		lastAccess:    time.Now(),
 		lastUserAgent: userAgent,
@@ -121,7 +121,7 @@ func (s *Session) Destroy(rw http.ResponseWriter, req *http.Request) error {
 func (s *Session) GetUserID() uuid.UUID {
 	s.RLock()
 	defer s.RUnlock()
-	return s.userId
+	return s.userID
 }
 
 // GetSessionInfo セッションの情報を返します
@@ -134,7 +134,7 @@ func (s *Session) GetSessionInfo() (created, lastAccess time.Time, lastIP, lastU
 // SetUser セッションにユーザーを紐づけます
 func (s *Session) SetUser(userID uuid.UUID) error {
 	s.Lock()
-	s.userId = userID
+	s.userID = userID
 	s.Unlock()
 	return store.Save(s.id, s)
 }
