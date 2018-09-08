@@ -341,7 +341,7 @@ func (store *Handler) AuthorizationDecideHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
-	reqAuth, ok := se.Get(oauth2ContextSession).(*authorizeRequest)
+	reqAuth, ok := se.Get(oauth2ContextSession).(authorizeRequest)
 	if !ok {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}

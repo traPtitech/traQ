@@ -150,7 +150,7 @@ func TestAuthorizationCodeGrantAuthorizationEndpoint_Success2(t *testing.T) {
 			assert.Equal("read", loc.Query().Get("scopes"))
 		}
 
-		s, err := sessions.Get(rec, req, false)
+		s, err := sessions.Get(c.Response(), c.Request(), false)
 		if assert.NoError(err) {
 			assert.Equal(f.Get("state"), s.Get(oauth2ContextSession).(authorizeRequest).State)
 		}
@@ -190,7 +190,7 @@ func TestAuthorizationCodeGrantAuthorizationEndpoint_Success3(t *testing.T) {
 			assert.Equal("read", loc.Query().Get("scopes"))
 		}
 
-		s, err := sessions.Get(rec, req, false)
+		s, err := sessions.Get(c.Response(), c.Request(), false)
 		if assert.NoError(err) {
 			assert.Equal(f.Get("state"), s.Get(oauth2ContextSession).(authorizeRequest).State)
 			assert.Equal(f.Get("code_challenge"), s.Get(oauth2ContextSession).(authorizeRequest).CodeChallenge)
@@ -228,7 +228,7 @@ func TestAuthorizationCodeGrantAuthorizationEndpoint_Success4(t *testing.T) {
 			assert.Equal("read", loc.Query().Get("scopes"))
 		}
 
-		s, err := sessions.Get(rec, req, false)
+		s, err := sessions.Get(c.Response(), c.Request(), false)
 		if assert.NoError(err) {
 			assert.Equal(f.Get("state"), s.Get(oauth2ContextSession).(authorizeRequest).State)
 		}

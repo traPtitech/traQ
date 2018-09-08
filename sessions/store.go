@@ -111,7 +111,7 @@ type SessionRecord struct {
 
 // TableName SessionRecordのテーブル名
 func (*SessionRecord) TableName() string {
-	return "r_sessions"
+	return tableName
 }
 
 func (sr *SessionRecord) encode(session *Session) {
