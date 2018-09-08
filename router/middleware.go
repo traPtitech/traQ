@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/traPtitech/traQ/sessions"
 	"net/http"
 
 	"github.com/traPtitech/traQ/oauth2"
@@ -8,7 +9,6 @@ import (
 	"fmt"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/mikespook/gorbac"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
@@ -64,16 +64,16 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				c.Set("role", token.Scopes.GenerateRole())
 			} else {
 				// Authorizationヘッダーがないためセッションを確認する
-				sess, err := session.Get("sessions", c)
+				sess, err := sessions.Get(c.Response(), c.Request(), false)
 				if err != nil {
 					c.Logger().Errorf("Failed to get a session: %v", err)
-					return echo.NewHTTPError(http.StatusForbidden, "You are not logged in")
+					return echo.NewHTTPError(http.StatusInternalServerError)
 				}
-				if sess.Values["userID"] == nil {
+				if sess == nil || sess.GetUserID() == uuid.Nil {
 					return echo.NewHTTPError(http.StatusForbidden, "You are not logged in")
 				}
 
-				user, err := model.GetUser(sess.Values["userID"].(uuid.UUID))
+				user, err := model.GetUser(sess.GetUserID())
 				if err != nil {
 					switch err {
 					case model.ErrNotFound:

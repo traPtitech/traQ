@@ -1,13 +1,12 @@
 package router
 
 import (
-	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/sessions"
 	"net/http"
 	"time"
 )
@@ -61,20 +60,13 @@ func PostLogin(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden, err)
 	}
 
-	sess, err := session.Get("sessions", c)
+	sess, err := sessions.Get(c.Response(), c.Request(), true)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	sess.Options = &sessions.Options{
-		Path:     "/",
-		MaxAge:   86400 * 14,
-		HttpOnly: true,
-	}
-
-	sess.Values["userID"] = user.GetUID()
-	if err := sess.Save(c.Request(), c.Response()); err != nil {
+	if err := sess.SetUser(user.GetUID()); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -83,17 +75,18 @@ func PostLogin(c echo.Context) error {
 
 // PostLogout POST /logout
 func PostLogout(c echo.Context) error {
-	sess, err := session.Get("sessions", c)
+	sess, err := sessions.Get(c.Response(), c.Request(), false)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-
-	sess.Values["userID"] = nil
-	if err := sess.Save(c.Request(), c.Response()); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	if sess != nil {
+		if err := sess.Destroy(c.Response(), c.Request()); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
+
 	return c.NoContent(http.StatusNoContent)
 }
 
