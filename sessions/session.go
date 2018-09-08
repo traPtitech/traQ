@@ -47,7 +47,7 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 		defer mutexes.Unlock(id)
 
 		var err error
-		session, err = sessions.get(id)
+		session, err = store.GetByID(id)
 		if err != nil {
 			return nil, err
 		}
@@ -94,7 +94,7 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 		lastIP:        ip,
 		data:          make(map[string]interface{}),
 	}
-	if err := sessions.set(session); err != nil {
+	if err := store.Save(session.id, session); err != nil {
 		return nil, err
 	}
 	setCookie(session.id, rw)
@@ -106,12 +106,53 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 func GetByID(id string) (s *Session, err error) {
 	mutexes.Lock(id)
 	defer mutexes.Unlock(id)
-	return sessions.get(id)
+
+	s, err = store.GetByID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if s != nil {
+		if s.Expired() {
+			if err := DestroyByID(id); err != nil {
+				return nil, err
+			}
+			s = nil
+		}
+	}
+
+	return s, nil
+}
+
+// GetByUserID 指定したユーザーのセッションを全て取得します
+func GetByUserID(id uuid.UUID) ([]*Session, error) {
+	sessions, err := store.GetByUserID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*Session
+	for _, v := range sessions {
+		mutexes.Lock(v.id)
+		if v.Expired() {
+			DestroyByID(v.id)
+		} else {
+			result = append(result, v)
+		}
+		mutexes.Unlock(v.id)
+	}
+
+	return result, nil
+}
+
+// DestroyByID 指定したidのセッションを破棄します
+func DestroyByID(id string) error {
+	return store.DestroyByID(id)
 }
 
 // Destroy セッションを破棄します
 func (s *Session) Destroy(rw http.ResponseWriter, req *http.Request) error {
-	if err := sessions.delete(s.id); err != nil {
+	if err := DestroyByID(s.id); err != nil {
 		return err
 	}
 
@@ -173,6 +214,14 @@ func (s *Session) Delete(key string) error {
 	return store.Save(s.id, s)
 }
 
+// Expired セッションの有効期限が切れているかどうか
+func (s *Session) Expired() bool {
+	s.RLock()
+	age := time.Since(s.created)
+	s.RUnlock()
+	return age > time.Duration(sessionMaxAge)*time.Second
+}
+
 func deleteCookie(cookie *http.Cookie, rw http.ResponseWriter) {
 	deleted := *cookie
 	deleted.Value = ""
@@ -199,5 +248,7 @@ func generateRandomString() string {
 
 // PurgeCache キャッシュを全て解放し、その内容を永続化します
 func PurgeCache() {
-	sessions.purge()
+	if s, ok := store.(CacheableStore); ok {
+		s.PurgeCache()
+	}
 }
