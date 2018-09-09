@@ -217,7 +217,7 @@ func generateSalt() []byte {
 	return salt
 }
 
-// GenerateIcon svgアイコンを生成してそのファイルIDを返します
+// GenerateIcon pngアイコンを生成してそのファイルIDを返します
 func GenerateIcon(salt string) (string, error) {
 	img := utils.GenerateIcon(salt)
 	b := &bytes.Buffer{}
