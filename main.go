@@ -6,7 +6,9 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/event"
 	"io/ioutil"
+	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"time"
@@ -30,6 +32,13 @@ import (
 )
 
 func main() {
+	// enable pprof http handler
+	if len(config.PprofEnabled) > 0 {
+		go func() {
+			log.Println(http.ListenAndServe("localhost:6060", nil))
+		}()
+	}
+
 	// Database
 	engine, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=true", config.DatabaseUserName, config.DatabasePassword, config.DatabaseHostName, config.DatabaseName))
 	if err != nil {

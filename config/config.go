@@ -45,6 +45,9 @@ var (
 
 	// ImageMagickConverterExec ImageMagickの実行ファイル
 	ImageMagickConverterExec = os.Getenv("IMAGEMAGICK_EXEC")
+
+	// PprofEnabled 空文字でない場合net/http/pprofがserveされます
+	PprofEnabled = os.Getenv("PPROF_ENABLED")
 )
 
 func init() {
