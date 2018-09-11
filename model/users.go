@@ -1,6 +1,7 @@
 package model
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/sha512"
 	"crypto/subtle"
@@ -9,10 +10,10 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/mikespook/gorbac"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/utils/icon"
+	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
+	"image/png"
 	"io"
-	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -216,16 +217,20 @@ func generateSalt() []byte {
 	return salt
 }
 
-// GenerateIcon svgアイコンを生成してそのファイルIDを返します
+// GenerateIcon pngアイコンを生成してそのファイルIDを返します
 func GenerateIcon(salt string) (string, error) {
-	svg := strings.NewReader(icon.Generate(salt))
+	img := utils.GenerateIcon(salt)
+	b := &bytes.Buffer{}
+	if err := png.Encode(b, img); err != nil {
+		return "", err
+	}
 
 	file := &File{
-		Name:      salt + ".svg",
-		Size:      int64(svg.Len()),
+		Name:      salt + ".png",
+		Size:      int64(b.Len()),
 		CreatorID: serverUser.ID,
 	}
-	if err := file.Create(svg); err != nil {
+	if err := file.Create(b); err != nil {
 		return "", err
 	}
 

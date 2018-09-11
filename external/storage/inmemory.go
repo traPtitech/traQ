@@ -5,10 +5,12 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"sync"
 )
 
 // InMemoryFileManager インメモリファイルマネージャー
 type InMemoryFileManager struct {
+	sync.RWMutex
 	fileMap map[string][]byte
 }
 
@@ -25,13 +27,17 @@ func (m *InMemoryFileManager) WriteByID(src io.Reader, ID, name, contentType str
 	if err != nil {
 		return err
 	}
+	m.Lock()
 	m.fileMap[ID] = b
+	m.Unlock()
 	return nil
 }
 
 // OpenFileByID ファイルを取得します
 func (m *InMemoryFileManager) OpenFileByID(ID string) (io.ReadCloser, error) {
+	m.RLock()
 	f, ok := m.fileMap[ID]
+	m.RUnlock()
 	if !ok {
 		return nil, errors.New("not found")
 	}
@@ -40,7 +46,9 @@ func (m *InMemoryFileManager) OpenFileByID(ID string) (io.ReadCloser, error) {
 
 // DeleteByID ファイルを削除します
 func (m *InMemoryFileManager) DeleteByID(ID string) error {
+	m.Lock()
 	delete(m.fileMap, ID)
+	m.Unlock()
 	return nil
 }
 

@@ -24,11 +24,6 @@
 #   go-tests = true
 #   unused-packages = true
 
-
-[[constraint]]
-  name = "github.com/GeorgeMac/idicon"
-  version = "0.2.0"
-
 [[constraint]]
   name = "github.com/go-sql-driver/mysql"
   version = "1.4.0"
@@ -100,3 +95,7 @@
 [[constraint]]
   name = "github.com/hashicorp/golang-lru"
   version = "0.5.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/jakobvarmose/go-qidenticon"

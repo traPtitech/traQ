@@ -39,17 +39,6 @@
   version = "v2.7.0"
 
 [[projects]]
-  digest = "1:fed7dade606f5c323675b2f2c1b945aab2308d3c0bae042bd78423176513eea6"
-  name = "github.com/GeorgeMac/idicon"
-  packages = [
-    "colour",
-    "icon",
-  ]
-  pruneopts = "UT"
-  revision = "5df45084f875d7e82ae224f6f5825cc858b54f0d"
-  version = "0.2"
-
-[[projects]]
   digest = "1:a2c1d0e43bd3baaa071d1b9ed72c27d78169b2b269f71c105ac4ba34b1be4a39"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -64,6 +53,14 @@
   pruneopts = "UT"
   revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
   version = "v3.2.0"
+
+[[projects]]
+  digest = "1:1758e788ff491eac33104f164d720408fdd0c294c639c883350463c4435af316"
+  name = "github.com/fogleman/gg"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a9ff18eccd6d57b3c8576a71a91a04868f62078c"
+  version = "v1.1.0"
 
 [[projects]]
   digest = "1:e1ff887e232b2d8f4f7c7db15a5fac7be418025afc4dda53c59c765dbb5aa6b4"
@@ -91,6 +88,17 @@
   pruneopts = "UT"
   revision = "d523deb1b23d913de5bdada721a6071e71283618"
   version = "v1.4.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:62c57507df491b657e9ae2645f30958d9964c8eeb380600469eedc951ebb3a0e"
+  name = "github.com/golang/freetype"
+  packages = [
+    "raster",
+    "truetype",
+  ]
+  pruneopts = "UT"
+  revision = "e2365dfdc4a05e4b8299a783240d4a7d5a65d4e4"
 
 [[projects]]
   digest = "1:0db8755cf5a9f477eaa1a1548c6a8730dcbfc2286fbdec399286ebc4042e3763"
@@ -128,6 +136,14 @@
   pruneopts = "UT"
   revision = "20f1fb78b0740ba8c3cb143a61e86ba5c8669768"
   version = "v0.5.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:82759cb021b18ea9f243741da650f0f8042f7da8a4f99c1f01a20e71d5ef46d0"
+  name = "github.com/jakobvarmose/go-qidenticon"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "5c327fb4e74a797388267ff72353ab965e8c187d"
 
 [[projects]]
   digest = "1:b6f4477f09f11785097a121811f3a90d8d26cab73c1aa71abda859bdf6ad2334"
@@ -300,12 +316,16 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:228dcca9f34e4fe0e7fd44a4110fa336e4787331bbd2a9649c2e6caa9d489c05"
+  digest = "1:64a035bf83fc3fb076d5969fd13e47c38814b535337148350dcb6994fa9b3919"
   name = "golang.org/x/image"
   packages = [
     "bmp",
     "draw",
+    "font",
+    "font/basicfont",
+    "font/plan9font",
     "math/f64",
+    "math/fixed",
     "riff",
     "tiff",
     "tiff/lzw",
@@ -504,11 +524,10 @@
   input-imports = [
     "firebase.google.com/go",
     "firebase.google.com/go/messaging",
-    "github.com/GeorgeMac/idicon/colour",
-    "github.com/GeorgeMac/idicon/icon",
     "github.com/dgrijalva/jwt-go",
     "github.com/go-sql-driver/mysql",
     "github.com/hashicorp/golang-lru",
+    "github.com/jakobvarmose/go-qidenticon",
     "github.com/jinzhu/gorm",
     "github.com/jinzhu/gorm/dialects/mysql",
     "github.com/labstack/echo",
