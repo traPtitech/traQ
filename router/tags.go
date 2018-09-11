@@ -36,7 +36,7 @@ func GetUserTags(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 
 	// ユーザー確認
-	if ok, err := model.IsUserExists(userID); err != nil {
+	if ok, err := model.UserExists(userID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
@@ -63,7 +63,7 @@ func PostUserTag(c echo.Context) error {
 	}
 
 	// ユーザー確認
-	if ok, err := model.IsUserExists(userID); err != nil {
+	if ok, err := model.UserExists(userID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {

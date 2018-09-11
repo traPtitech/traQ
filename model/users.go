@@ -126,8 +126,8 @@ func GetUser(userID uuid.UUID) (*User, error) {
 	return user, nil
 }
 
-// IsUserExists 指定したIDのユーザーが存在するかどうか
-func IsUserExists(userID uuid.UUID) (bool, error) {
+// UserExists 指定したIDのユーザーが存在するかどうか
+func UserExists(userID uuid.UUID) (bool, error) {
 	c := 0
 	if err := db.Model(User{}).Where(&User{ID: userID.String()}).Count(&c).Error; err != nil {
 		return false, err

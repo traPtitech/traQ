@@ -24,8 +24,13 @@ import (
 )
 
 const (
-	iconMaxWidth  = 256
-	iconMaxHeight = 256
+	iconMaxWidth    = 256
+	iconMaxHeight   = 256
+	iconFileMaxSize = 2 << 20
+
+	stampMaxWidth    = 128
+	stampMaxHeight   = 128
+	stampFileMaxSize = 2 << 20
 
 	errMySQLDuplicatedRecord uint16 = 1062
 
@@ -33,6 +38,8 @@ const (
 	paramPinID     = "pinID"
 	paramUserID    = "userID"
 	paramTagID     = "tagID"
+	paramStampID   = "stampID"
+	paramMessageID = "messageID"
 )
 
 // Handlers ハンドラ
@@ -45,7 +52,7 @@ func init() {
 	gob.Register(uuid.UUID{})
 }
 
-// CustomHTTPErrorHandler :json形式でエラーレスポンスを返す
+// CustomHTTPErrorHandler json形式でエラーレスポンスを返す
 func CustomHTTPErrorHandler(err error, c echo.Context) {
 	var (
 		code = http.StatusInternalServerError
@@ -87,8 +94,8 @@ func isMySQLDuplicatedRecordErr(err error) bool {
 }
 
 func processMultipartFormIconUpload(c echo.Context, file *multipart.FileHeader) (uuid.UUID, error) {
-	// ファイルサイズ制限1MB
-	if file.Size > 1024*1024 {
+	// ファイルサイズ制限
+	if file.Size > iconFileMaxSize {
 		return uuid.Nil, echo.NewHTTPError(http.StatusBadRequest, "too large image file (1MB limit)")
 	}
 
@@ -114,38 +121,66 @@ func processMultipartFormIconUpload(c echo.Context, file *multipart.FileHeader) 
 	return fileID, nil
 }
 
-func saveFile(name string, src *bytes.Buffer) (uuid.UUID, error) {
-	file := &model.File{
-		Name: name,
-		Size: int64(src.Len()),
-	}
-	if err := file.Create(src); err != nil {
-		return uuid.Nil, err
-	}
-
-	return uuid.Must(uuid.FromString(file.ID)), nil
-}
-
 func processIcon(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, error) {
 	switch mime {
 	case "image/png", "image/jpeg":
-		return processStillIconImage(c, src)
+		return processStillImage(c, src, iconMaxWidth, iconMaxHeight)
 	case "image/gif":
-		return processGifIconImage(c, src)
+		return processGifImage(c, src, iconMaxWidth, iconMaxHeight)
 	}
 	return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
 }
 
-func processStillIconImage(c echo.Context, src io.Reader) (*bytes.Buffer, error) {
+func processMultipartFormStampUpload(c echo.Context, file *multipart.FileHeader) (uuid.UUID, error) {
+	// ファイルサイズ制限
+	if file.Size > stampFileMaxSize {
+		return uuid.Nil, echo.NewHTTPError(http.StatusBadRequest, "too large image file (1MB limit)")
+	}
+
+	// ファイルタイプ確認・必要があればリサイズ
+	src, err := file.Open()
+	if err != nil {
+		c.Logger().Error(err)
+		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	b, err := processStamp(c, file.Header.Get(echo.HeaderContentType), src)
+	src.Close()
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	// スタンプ画像保存
+	fileID, err := saveFile(file.Filename, b)
+	if err != nil {
+		c.Logger().Error(err)
+		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return fileID, nil
+}
+
+func processStamp(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, error) {
+	switch mime {
+	case "image/png", "image/jpeg":
+		return processStillImage(c, src, stampMaxWidth, stampMaxHeight)
+	case "image/gif":
+		return processGifImage(c, src, stampMaxWidth, stampMaxHeight)
+	case "image/svg+xml":
+		return processSVGImage(c, src)
+	}
+	return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
+}
+
+func processStillImage(c echo.Context, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, error) {
 	img, _, err := image.Decode(src)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "bad image file")
 	}
 
-	if img.Bounds().Size().X > iconMaxWidth || img.Bounds().Size().Y > iconMaxHeight {
+	if img.Bounds().Size().X > maxWidth || img.Bounds().Size().Y > maxHeight {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
 		defer cancel()
-		img, err = thumb.Resize(ctx, img, iconMaxWidth, iconMaxHeight)
+		img, err = thumb.Resize(ctx, img, maxWidth, maxHeight)
 		if err != nil {
 			switch err {
 			case context.DeadlineExceeded:
@@ -170,11 +205,11 @@ func processStillIconImage(c echo.Context, src io.Reader) (*bytes.Buffer, error)
 	return b, nil
 }
 
-func processGifIconImage(c echo.Context, src io.Reader) (*bytes.Buffer, error) {
+func processGifImage(c echo.Context, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
 	defer cancel()
 
-	b, err := imagemagick.ResizeAnimationGIF(ctx, src, iconMaxWidth, iconMaxHeight, false)
+	b, err := imagemagick.ResizeAnimationGIF(ctx, src, maxWidth, maxHeight, false)
 	if err != nil {
 		switch err {
 		case imagemagick.ErrUnavailable:
@@ -194,6 +229,29 @@ func processGifIconImage(c echo.Context, src io.Reader) (*bytes.Buffer, error) {
 	}
 
 	return b, nil
+}
+
+func processSVGImage(c echo.Context, src io.Reader) (*bytes.Buffer, error) {
+	// TODO svg検証
+	b := &bytes.Buffer{}
+	_, err := io.Copy(b, src)
+	if err != nil {
+		c.Logger().Error(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	return b, nil
+}
+
+func saveFile(name string, src *bytes.Buffer) (uuid.UUID, error) {
+	file := &model.File{
+		Name: name,
+		Size: int64(src.Len()),
+	}
+	if err := file.Create(src); err != nil {
+		return uuid.Nil, err
+	}
+
+	return file.GetID(), nil
 }
 
 func getRequestUser(c echo.Context) *model.User {

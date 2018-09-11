@@ -15,7 +15,7 @@ type Stamp struct {
 	FileID    string     `gorm:"type:char(36)"             json:"fileId"    validate:"uuid,required"`
 	CreatedAt time.Time  `gorm:"precision:6"               json:"createdAt"`
 	UpdatedAt time.Time  `gorm:"precision:6"               json:"updatedAt"`
-	DeletedAt *time.Time `gorm:"precision:6"`
+	DeletedAt *time.Time `gorm:"precision:6"               json:"-"`
 }
 
 // TableName スタンプテーブル名を取得します
@@ -55,7 +55,7 @@ func UpdateStamp(stampID uuid.UUID, s Stamp) error {
 		return err
 	}
 
-	return db.Where(Stamp{ID: stampID.String()}).Updates(&s).Error
+	return db.Where(&Stamp{ID: stampID.String()}).Updates(&s).Error
 }
 
 // CreateStamp スタンプを作成します
@@ -76,7 +76,7 @@ func CreateStamp(name, fileID, userID string) (*Stamp, error) {
 // GetStamp 指定したIDのスタンプを取得します
 func GetStamp(id uuid.UUID) (*Stamp, error) {
 	s := &Stamp{}
-	if err := db.Where(Stamp{ID: id.String()}).Take(s).Error; err != nil {
+	if err := db.Where(&Stamp{ID: id.String()}).Take(s).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, ErrNotFound
 		}
@@ -87,11 +87,20 @@ func GetStamp(id uuid.UUID) (*Stamp, error) {
 
 // DeleteStamp 指定したIDのスタンプを削除します
 func DeleteStamp(id uuid.UUID) error {
-	return db.Delete(Stamp{ID: id.String()}).Error
+	return db.Delete(&Stamp{ID: id.String()}).Error
 }
 
 // GetAllStamps 全てのスタンプを取得します
 func GetAllStamps() (stamps []*Stamp, err error) {
 	err = db.Find(&stamps).Error
 	return
+}
+
+// StampExists 指定したIDのスタンプが存在するかどうか
+func StampExists(id uuid.UUID) (bool, error) {
+	c := 0
+	if err := db.Model(Stamp{}).Where(&Stamp{ID: id.String()}).Count(&c).Error; err != nil {
+		return false, err
+	}
+	return c > 0, nil
 }
