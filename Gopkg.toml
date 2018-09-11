@@ -34,16 +34,8 @@
   version = "1.4.0"
 
 [[constraint]]
-  name = "github.com/gorilla/sessions"
-  version = "1.1.0"
-
-[[constraint]]
   name = "github.com/labstack/echo"
   version = "3.3.3"
-
-[[constraint]]
-  name = "github.com/labstack/echo-contrib"
-  version = "0.5.2"
 
 [[constraint]]
   name = "github.com/labstack/gommon"
@@ -56,10 +48,6 @@
 [[constraint]]
   name = "github.com/satori/go.uuid"
   version = "1.2.0"
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/srinathgs/mysqlstore"
 
 [[constraint]]
   name = "github.com/stretchr/testify"
@@ -104,3 +92,11 @@
 [[constraint]]
   name = "github.com/jinzhu/gorm"
   version = "1.9.1"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/tomasen/realip"
+
+[[constraint]]
+  name = "github.com/hashicorp/golang-lru"
+  version = "0.5.0"

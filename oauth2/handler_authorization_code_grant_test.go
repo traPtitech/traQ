@@ -4,11 +4,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/labstack/echo"
-	"github.com/quasoft/memstore"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/oauth2/scope"
+	"github.com/traPtitech/traQ/sessions"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -48,7 +48,6 @@ func BeforeTestAuthorizationCodeGrantAuthorizationEndpoint(t *testing.T) (*asser
 		AccessTokenExp:       1000,
 		AuthorizationCodeExp: 1000,
 		IsRefreshEnabled:     true,
-		Sessions:             memstore.NewMemStore([]byte("secret")),
 		UserInfoGetter: func(uid uuid.UUID) (UserInfo, error) {
 			if uid == uuid.Nil {
 				return nil, ErrUserIDOrPasswordWrong
@@ -60,15 +59,14 @@ func BeforeTestAuthorizationCodeGrantAuthorizationEndpoint(t *testing.T) (*asser
 	return assert, require, handler, client, e
 }
 
-func MakeSession(t *testing.T, h *Handler, uid uuid.UUID) *http.Cookie {
+func MakeSession(t *testing.T, _ *Handler, uid uuid.UUID) *http.Cookie {
 	req := httptest.NewRequest(echo.GET, "/", nil)
 	rec := httptest.NewRecorder()
-	s, err := h.Sessions.New(req, "sessions")
+	s, err := sessions.Get(rec, req, true)
 	require.NoError(t, err)
-	s.Values["userID"] = uid.String()
-	require.NoError(t, s.Save(req, rec))
+	require.NoError(t, s.SetUser(uid))
 
-	return parseCookies(rec.Header().Get("Set-Cookie"))["sessions"]
+	return parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName]
 }
 
 func parseCookies(value string) map[string]*http.Cookie {
@@ -152,9 +150,9 @@ func TestAuthorizationCodeGrantAuthorizationEndpoint_Success2(t *testing.T) {
 			assert.Equal("read", loc.Query().Get("scopes"))
 		}
 
-		s, err := h.Sessions.Get(req, "sessions")
+		s, err := sessions.GetByToken(parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName].Value)
 		if assert.NoError(err) {
-			assert.Equal(f.Get("state"), s.Values[oauth2ContextSession].(authorizeRequest).State)
+			assert.Equal(f.Get("state"), s.Get(oauth2ContextSession).(authorizeRequest).State)
 		}
 	}
 }
@@ -192,10 +190,10 @@ func TestAuthorizationCodeGrantAuthorizationEndpoint_Success3(t *testing.T) {
 			assert.Equal("read", loc.Query().Get("scopes"))
 		}
 
-		s, err := h.Sessions.Get(req, "sessions")
+		s, err := sessions.GetByToken(parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName].Value)
 		if assert.NoError(err) {
-			assert.Equal(f.Get("state"), s.Values[oauth2ContextSession].(authorizeRequest).State)
-			assert.Equal(f.Get("code_challenge"), s.Values[oauth2ContextSession].(authorizeRequest).CodeChallenge)
+			assert.Equal(f.Get("state"), s.Get(oauth2ContextSession).(authorizeRequest).State)
+			assert.Equal(f.Get("code_challenge"), s.Get(oauth2ContextSession).(authorizeRequest).CodeChallenge)
 		}
 	}
 }
@@ -230,9 +228,9 @@ func TestAuthorizationCodeGrantAuthorizationEndpoint_Success4(t *testing.T) {
 			assert.Equal("read", loc.Query().Get("scopes"))
 		}
 
-		s, err := h.Sessions.Get(req, "sessions")
+		s, err := sessions.GetByToken(parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName].Value)
 		if assert.NoError(err) {
-			assert.Equal(f.Get("state"), s.Values[oauth2ContextSession].(authorizeRequest).State)
+			assert.Equal(f.Get("state"), s.Get(oauth2ContextSession).(authorizeRequest).State)
 		}
 	}
 }
@@ -678,19 +676,18 @@ func BeforeTestAuthorizationCodeGrantAuthorizationDecide(t *testing.T) (*assert.
 		AccessTokenExp:       1000,
 		AuthorizationCodeExp: 1000,
 		IsRefreshEnabled:     true,
-		Sessions:             memstore.NewMemStore([]byte("secret")),
 	}
 
 	return assert, require, handler, client, e
 }
 
-func MakeDecideSession(t *testing.T, h *Handler, uid uuid.UUID, client *Client) *http.Cookie {
+func MakeDecideSession(t *testing.T, _ *Handler, uid uuid.UUID, client *Client) *http.Cookie {
 	req := httptest.NewRequest(echo.GET, "/", nil)
 	rec := httptest.NewRecorder()
-	s, err := h.Sessions.New(req, "sessions")
+	s, err := sessions.Get(rec, req, true)
 	require.NoError(t, err)
-	s.Values["userID"] = uid.String()
-	s.Values[oauth2ContextSession] = authorizeRequest{
+	require.NoError(t, s.SetUser(uid))
+	require.NoError(t, s.Set(oauth2ContextSession, authorizeRequest{
 		ResponseType: "code",
 		ClientID:     client.ID,
 		RedirectURI:  client.RedirectURI,
@@ -704,10 +701,9 @@ func MakeDecideSession(t *testing.T, h *Handler, uid uuid.UUID, client *Client) 
 		State:      "state",
 		Types:      responseType{true, false, false, false},
 		AccessTime: time.Now(),
-	}
-	require.NoError(t, s.Save(req, rec))
+	}))
 
-	return parseCookies(rec.Header().Get("Set-Cookie"))["sessions"]
+	return parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName]
 }
 
 // 成功パターン1
@@ -848,10 +844,10 @@ func TestAuthorizationCodeGrantAuthorizationDecide_Failure5(t *testing.T) {
 	{
 		reqi := httptest.NewRequest(echo.GET, "/", nil)
 		rec := httptest.NewRecorder()
-		s, err := h.Sessions.New(reqi, "sessions")
+		s, err := sessions.Get(rec, reqi, true)
 		require.NoError(err)
-		s.Values["userID"] = uuid.NewV4().String()
-		s.Values[oauth2ContextSession] = authorizeRequest{
+		require.NoError(s.SetUser(uuid.NewV4()))
+		require.NoError(s.Set(oauth2ContextSession, authorizeRequest{
 			ResponseType: "code",
 			ClientID:     client.ID,
 			RedirectURI:  client.RedirectURI,
@@ -864,10 +860,9 @@ func TestAuthorizationCodeGrantAuthorizationDecide_Failure5(t *testing.T) {
 			},
 			State:      "state",
 			AccessTime: time.Now().Add(-6 * time.Minute),
-		}
-		require.NoError(s.Save(reqi, rec))
+		}))
 
-		req.AddCookie(parseCookies(rec.Header().Get("Set-Cookie"))["sessions"])
+		req.AddCookie(parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName])
 	}
 
 	rec := httptest.NewRecorder()
@@ -928,10 +923,10 @@ func TestAuthorizationCodeGrantAuthorizationDecide_Failure7(t *testing.T) {
 	{
 		reqi := httptest.NewRequest(echo.GET, "/", nil)
 		rec := httptest.NewRecorder()
-		s, err := h.Sessions.New(reqi, "sessions")
+		s, err := sessions.Get(rec, reqi, true)
 		require.NoError(err)
-		s.Values["userID"] = uuid.NewV4().String()
-		s.Values[oauth2ContextSession] = authorizeRequest{
+		require.NoError(s.SetUser(uuid.NewV4()))
+		require.NoError(s.Set(oauth2ContextSession, authorizeRequest{
 			ResponseType: "code",
 			ClientID:     client.ID,
 			RedirectURI:  client.RedirectURI,
@@ -944,10 +939,9 @@ func TestAuthorizationCodeGrantAuthorizationDecide_Failure7(t *testing.T) {
 			},
 			State:      "state",
 			AccessTime: time.Now(),
-		}
-		require.NoError(s.Save(reqi, rec))
+		}))
 
-		req.AddCookie(parseCookies(rec.Header().Get("Set-Cookie"))["sessions"])
+		req.AddCookie(parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName])
 	}
 
 	rec := httptest.NewRecorder()

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/sessions"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,10 +16,8 @@ import (
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/middleware"
 	"github.com/satori/go.uuid"
-	"github.com/srinathgs/mysqlstore"
 	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/model"
@@ -51,10 +50,11 @@ func main() {
 		panic(err)
 	}
 
-	store, err := mysqlstore.NewMySQLStoreFromConnection(engine.DB(), "sessions", "/", 60*60*24*14, []byte("secret"))
+	sessionStore, err := sessions.NewGORMStore(engine)
 	if err != nil {
 		panic(err)
 	}
+	sessions.SetStore(sessionStore)
 
 	// ObjectStorage
 	if err := setSwiftFileManagerAsDefault(
@@ -86,7 +86,6 @@ func main() {
 		AccessTokenExp:       60 * 60 * 24 * 365, //1年
 		AuthorizationCodeExp: 60 * 5,             //5分
 		IsRefreshEnabled:     false,
-		Sessions:             store,
 		UserAuthenticator: func(id, pw string) (uuid.UUID, error) {
 			user, err := model.GetUserByName(id)
 			if err != nil {
@@ -140,12 +139,11 @@ func main() {
 
 	e := echo.New()
 	e.Validator = validator.New()
+	e.HTTPErrorHandler = router.CustomHTTPErrorHandler
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:8080"},
 		AllowCredentials: true,
 	}))
-	e.Use(session.Middleware(store))
-	e.HTTPErrorHandler = router.CustomHTTPErrorHandler
 
 	// Serve documents
 	e.File("/api/swagger.yaml", "./docs/swagger.yaml")
@@ -197,6 +195,11 @@ func main() {
 	api.PUT("/users/me/icon", router.PutMyIcon, requires(permission.ChangeMyIcon))
 	api.GET("/users/:userID", router.GetUserByID, requires(permission.GetUser))
 	api.GET("/users/:userID/icon", router.GetUserIcon, requires(permission.DownloadFile))
+
+	// Tag: sessions
+	api.GET("/users/me/sessions", router.GetMySessions, requires(permission.GetMySessions))
+	api.DELETE("/users/me/sessions", router.DeleteAllMySessions, requires(permission.DeleteMySessions))
+	api.DELETE("/users/me/sessions/:referenceID", router.DeleteMySession, requires(permission.DeleteMySessions))
 
 	// Tag: clips
 	api.GET("/users/me/clips", router.GetClips, requires(permission.GetClip))
@@ -340,8 +343,9 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := e.Shutdown(ctx); err != nil {
-		e.Logger.Fatal(err)
+		e.Logger.Error(err)
 	}
+	sessions.PurgeCache()
 }
 
 func setSwiftFileManagerAsDefault(container, userName, apiKey, tenant, tenantID, authURL string) error {

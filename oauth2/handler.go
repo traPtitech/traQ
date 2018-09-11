@@ -8,10 +8,10 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/oauth2/scope"
+	"github.com/traPtitech/traQ/sessions"
 	"net/http"
 	"net/url"
 	"strings"
@@ -19,7 +19,7 @@ import (
 )
 
 func init() {
-	gob.Register(&authorizeRequest{})
+	gob.Register(authorizeRequest{})
 }
 
 const (
@@ -48,8 +48,6 @@ type Handler struct {
 	AuthorizationCodeExp int
 	//IsRefreshEnabled リフレッシュトークンを発行するかどうか
 	IsRefreshEnabled bool
-	//Sessions セッションのストア
-	Sessions sessions.Store
 
 	//UserAuthenticator ユーザー認証を行う関数
 	UserAuthenticator func(id, pw string) (uuid.UUID, error)
@@ -214,17 +212,14 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	req.Types = types
 
 	// セッション確認
-	se, err := store.Sessions.Get(c.Request(), "sessions")
+	se, err := sessions.Get(c.Response(), c.Request(), true)
 	if err != nil {
 		c.Logger().Error(err)
 		q.Set("error", errServerError)
 		redirectURI.RawQuery = q.Encode()
 		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
-	var userID uuid.UUID
-	if se.Values["userID"] != nil {
-		userID = uuid.FromStringOrNil(se.Values["userID"].(string))
-	}
+	userID := se.GetUserID()
 
 	switch req.Prompt {
 	case "":
@@ -307,8 +302,7 @@ func (store *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 
 	switch {
 	case types.Code && !types.Token && !types.IDToken: // "code" 現状はcodeしかサポートしない
-		se.Values[oauth2ContextSession] = req
-		if err := se.Save(c.Request(), c.Response()); err != nil {
+		if err := se.Set(oauth2ContextSession, req); err != nil {
 			c.Logger().Error(err)
 			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()
@@ -338,21 +332,21 @@ func (store *Handler) AuthorizationDecideHandler(c echo.Context) error {
 	}
 
 	// セッション確認
-	se, err := store.Sessions.Get(c.Request(), "sessions")
+	se, err := sessions.Get(c.Response(), c.Request(), false)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	reqAuth, ok := se.Values[oauth2ContextSession].(*authorizeRequest)
+	if se == nil {
+		return echo.NewHTTPError(http.StatusForbidden)
+	}
+
+	reqAuth, ok := se.Get(oauth2ContextSession).(authorizeRequest)
 	if !ok {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
-	var userID uuid.UUID
-	if se.Values["userID"] != nil {
-		userID = uuid.FromStringOrNil(se.Values["userID"].(string))
-	}
-	se.Values[oauth2ContextSession] = nil
-	if err := se.Save(c.Request(), c.Response()); err != nil {
+	userID := se.GetUserID()
+	if err := se.Delete(oauth2ContextSession); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
