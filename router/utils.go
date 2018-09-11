@@ -27,6 +27,8 @@ const (
 	iconMaxHeight = 256
 
 	errMySQLDuplicatedRecord uint16 = 1062
+
+	paramChannelID = "channelID"
 )
 
 // Handlers ハンドラ
@@ -188,4 +190,16 @@ func processGifIconImage(c echo.Context, src io.Reader) (*bytes.Buffer, error) {
 	}
 
 	return b, nil
+}
+
+func getRequestUser(c echo.Context) *model.User {
+	return c.Get("user").(*model.User)
+}
+
+func getRequestUserID(c echo.Context) uuid.UUID {
+	return getRequestUser(c).GetUID()
+}
+
+func getRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
+	return uuid.FromStringOrNil(c.Param(name))
 }
