@@ -360,6 +360,22 @@ func GetChannelWithUserID(userID, channelID uuid.UUID) (*Channel, error) {
 	return channel, nil
 }
 
+// IsChannelAccessibleToUser 指定したチャンネルが指定したユーザーからアクセス可能かどうか
+func IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error) {
+	c := 0
+	err := db.
+		Model(Channel{}).
+		Joins("LEFT JOIN users_private_channels ON users_private_channels.channel_id = channels.id").
+		Where("(channels.is_public = true OR users_private_channels.user_id = ?) AND channels.id = ?", userID, channelID).
+		Count(&c).
+		Error
+	if err != nil {
+		return false, err
+	}
+
+	return c > 0, nil
+}
+
 // GetChannelByMessageID メッセージIDによってチャンネルを取得
 func GetChannelByMessageID(messageID uuid.UUID) (*Channel, error) {
 	channel := &Channel{}
