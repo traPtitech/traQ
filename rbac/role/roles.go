@@ -131,6 +131,9 @@ func SetRole(rbac *rbac.RBAC) {
 		User: {
 			permission.ChangeMyPassword,
 
+			permission.GetMySessions,
+			permission.DeleteMySessions,
+
 			permission.GetMyTokens,
 			permission.RevokeMyToken,
 			permission.GetClients,

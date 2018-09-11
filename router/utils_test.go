@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
+	"github.com/traPtitech/traQ/sessions"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -18,17 +19,12 @@ import (
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo-contrib/session"
-	"github.com/srinathgs/mysqlstore"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 )
 
-var (
-	testUser *model.User
-	db       *gorm.DB
-)
+var testUser *model.User
 
 func TestMain(m *testing.M) {
 	user := os.Getenv("MARIADB_USERNAME")
@@ -59,7 +55,6 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	defer engine.Close()
-	db = engine
 	model.SetGORMEngine(engine)
 
 	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
@@ -80,45 +75,33 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc, *a
 	e := echo.New()
 	e.Validator = validator.New()
 
-	store, err := mysqlstore.NewMySQLStoreFromConnection(db.DB(), "sessions", "/", 60*60*24*14, []byte("secret"))
-	require.NoError(err)
-
 	testUser = mustCreateUser(t, "testUser")
 
 	req := httptest.NewRequest(echo.GET, "/", nil)
 	rec := httptest.NewRecorder()
-	sess, err := store.New(req, "sessions")
+
+	sess, err := sessions.Get(rec, req, true)
 	require.NoError(err)
+	require.NoError(sess.SetUser(testUser.GetUID()))
 
-	sess.Values["userID"] = testUser.GetUID()
-	require.NoError(sess.Save(req, rec))
-
-	cookie := parseCookies(rec.Header().Get("Set-Cookie"))["sessions"]
+	cookie := parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName]
 	mw := func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			return session.Middleware(store)(UserAuthenticate(nil)(next))(c)
+			return UserAuthenticate(nil)(next)(c)
 		}
 
 	}
 	return e, cookie, mw, assert.New(t), require
 }
 
-func beforeLoginTest(t *testing.T) (*echo.Echo, echo.MiddlewareFunc) {
+func beforeLoginTest(t *testing.T) *echo.Echo {
 	require := require.New(t)
 
 	require.NoError(model.DropTables())
 	require.NoError(model.Sync())
 	e := echo.New()
 
-	store, err := mysqlstore.NewMySQLStoreFromConnection(db.DB(), "sessions", "/", 60*60*24*14, []byte("secret"))
-	require.NoError(err)
-
-	req := httptest.NewRequest(echo.GET, "/", nil)
-	_, err = store.New(req, "sessions")
-	require.NoError(err)
-
-	mw := session.Middleware(store)
-	return e, mw
+	return e
 }
 
 func parseCookies(value string) map[string]*http.Cookie {
@@ -137,7 +120,7 @@ func requestWithContext(t *testing.T, handler echo.HandlerFunc, c echo.Context) 
 	}
 }
 
-func request(e *echo.Echo, t *testing.T, handler echo.HandlerFunc, cookie *http.Cookie, req *http.Request) *httptest.ResponseRecorder {
+func request(e *echo.Echo, _ *testing.T, handler echo.HandlerFunc, cookie *http.Cookie, req *http.Request) *httptest.ResponseRecorder {
 	if req == nil {
 		req = httptest.NewRequest("GET", "http://test", nil)
 	}
@@ -156,7 +139,7 @@ func request(e *echo.Echo, t *testing.T, handler echo.HandlerFunc, cookie *http.
 	return rec
 }
 
-func getContext(e *echo.Echo, t *testing.T, cookie *http.Cookie, req *http.Request) (echo.Context, *httptest.ResponseRecorder) {
+func getContext(e *echo.Echo, _ *testing.T, cookie *http.Cookie, req *http.Request) (echo.Context, *httptest.ResponseRecorder) {
 	if req == nil {
 		req = httptest.NewRequest("GET", "http://test", nil)
 	}

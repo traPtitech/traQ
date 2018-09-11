@@ -16,7 +16,7 @@ import (
 )
 
 func TestPostLogin(t *testing.T) {
-	e, mw := beforeLoginTest(t)
+	e := beforeLoginTest(t)
 	mustCreateUser(t, "PostLogin")
 
 	type requestJSON struct {
@@ -30,7 +30,7 @@ func TestPostLogin(t *testing.T) {
 	require.NoError(t, err)
 
 	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	rec := request(e, t, mw(PostLogin), nil, req)
+	rec := request(e, t, PostLogin, nil, req)
 
 	assert.EqualValues(t, http.StatusNoContent, rec.Code)
 
@@ -42,7 +42,7 @@ func TestPostLogin(t *testing.T) {
 	req2.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec2 := httptest.NewRecorder()
 	c := e.NewContext(req2, rec2)
-	err2 := mw(PostLogin)(c).(*echo.HTTPError)
+	err2 := PostLogin(c).(*echo.HTTPError)
 
 	if assert.Error(t, err2) {
 		assert.EqualValues(t, http.StatusForbidden, err2.Code)
