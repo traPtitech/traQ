@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/external/imagemagick"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/oauth2"
+	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/utils/thumb"
 	"image"
 	_ "image/jpeg" // image.Decode用
@@ -30,6 +31,8 @@ const (
 
 	paramChannelID = "channelID"
 	paramPinID     = "pinID"
+	paramUserID    = "userID"
+	paramTagID     = "tagID"
 )
 
 // Handlers ハンドラ
@@ -203,4 +206,8 @@ func getRequestUserID(c echo.Context) uuid.UUID {
 
 func getRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
 	return uuid.FromStringOrNil(c.Param(name))
+}
+
+func getRBAC(c echo.Context) *rbac.RBAC {
+	return c.Get("rbac").(*rbac.RBAC)
 }

@@ -117,13 +117,22 @@ func CreateUser(name, email, password string, role gorbac.Role) (*User, error) {
 // GetUser IDでユーザーの構造体を取得する
 func GetUser(userID uuid.UUID) (*User, error) {
 	user := &User{}
-	if err := db.Where(User{ID: userID.String()}).Take(user).Error; err != nil {
+	if err := db.Where(&User{ID: userID.String()}).Take(user).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, ErrNotFound
 		}
 		return nil, err
 	}
 	return user, nil
+}
+
+// IsUserExists 指定したIDのユーザーが存在するかどうか
+func IsUserExists(userID uuid.UUID) (bool, error) {
+	c := 0
+	if err := db.Model(User{}).Where(&User{ID: userID.String()}).Count(&c).Error; err != nil {
+		return false, err
+	}
+	return c > 0, nil
 }
 
 // GetUserByName nameでユーザーを取得します
