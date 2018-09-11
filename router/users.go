@@ -2,7 +2,6 @@ package router
 
 import (
 	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
@@ -39,11 +38,11 @@ type UserDetailForResponse struct {
 // PostLogin POST /login
 func PostLogin(c echo.Context) error {
 	req := struct {
-		Name string `json:"name" form:"name"`
-		Pass string `json:"pass" form:"pass"`
+		Name string `json:"name" form:"name" validate:"required"`
+		Pass string `json:"pass" form:"pass" validate:"required"`
 	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
 	}
 
 	user, err := model.GetUserByName(req.Name)
@@ -107,13 +106,13 @@ func GetUsers(c echo.Context) error {
 
 // GetMe GET /users/me
 func GetMe(c echo.Context) error {
-	me := c.Get("user").(*model.User)
+	me := getRequestUser(c)
 	return c.JSON(http.StatusOK, formatUser(me))
 }
 
 // GetUserByID GET /users/:userID
 func GetUserByID(c echo.Context) error {
-	userID := uuid.FromStringOrNil(c.Param("userID"))
+	userID := getRequestParamAsUUID(c, paramUserID)
 
 	user, err := model.GetUser(userID)
 	if err != nil {
@@ -142,7 +141,7 @@ func GetUserByID(c echo.Context) error {
 
 // GetUserIcon GET /users/:userID/icon
 func GetUserIcon(c echo.Context) error {
-	userID := uuid.FromStringOrNil(c.Param("userID"))
+	userID := getRequestParamAsUUID(c, paramUserID)
 
 	user, err := model.GetUser(userID)
 	if err != nil {
@@ -164,7 +163,7 @@ func GetUserIcon(c echo.Context) error {
 
 // GetMyIcon GET /users/me/icon
 func GetMyIcon(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	user := getRequestUser(c)
 	if _, ok := c.QueryParams()["thumb"]; ok {
 		return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon+"/thumbnail")
 	}
@@ -173,7 +172,7 @@ func GetMyIcon(c echo.Context) error {
 
 // PutMyIcon PUT /users/me/icon
 func PutMyIcon(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
 
 	// file確認
 	uploadedFile, err := c.FormFile("file")
@@ -187,18 +186,18 @@ func PutMyIcon(c echo.Context) error {
 	}
 
 	// アイコン変更
-	if err := model.ChangeUserIcon(user.GetUID(), iconID); err != nil {
+	if err := model.ChangeUserIcon(userID, iconID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserIconUpdated, event.UserEvent{ID: user.ID})
+	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: userID.String()})
 	return c.NoContent(http.StatusOK)
 }
 
 // PatchMe PATCH /users/me
 func PatchMe(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
 
 	req := struct {
 		DisplayName string `json:"displayName" validate:"max=32"`
@@ -209,33 +208,33 @@ func PatchMe(c echo.Context) error {
 	}
 
 	if len(req.DisplayName) > 0 {
-		if err := model.ChangeUserDisplayName(user.GetUID(), req.DisplayName); err != nil {
+		if err := model.ChangeUserDisplayName(userID, req.DisplayName); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	if len(req.TwitterID) > 0 {
-		if err := model.ChangeUserTwitterID(user.GetUID(), req.TwitterID); err != nil {
+		if err := model.ChangeUserTwitterID(userID, req.TwitterID); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
-	go event.Emit(event.UserUpdated, event.UserEvent{ID: user.ID})
+	go event.Emit(event.UserUpdated, &event.UserEvent{ID: userID.String()})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // PutPassword PUT /users/me/password
 func PutPassword(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	user := getRequestUser(c)
 
 	req := struct {
 		Old string `json:"password"    validate:"password"`
 		New string `json:"newPassword" validate:"password"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	if err := model.AuthenticateUser(user, req.Old); err != nil {
@@ -258,7 +257,7 @@ func PostUsers(c echo.Context) error {
 		Email    string `json:"email"    validate:"email"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	if _, err := model.GetUserByName(req.Name); err != model.ErrNotFound {
@@ -275,7 +274,7 @@ func PostUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserJoined, event.UserEvent{ID: u.ID})
+	go event.Emit(event.UserJoined, &event.UserEvent{ID: u.ID})
 	return c.NoContent(http.StatusCreated)
 }
 
