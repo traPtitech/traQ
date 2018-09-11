@@ -34,12 +34,13 @@ const (
 
 	errMySQLDuplicatedRecord uint16 = 1062
 
-	paramChannelID = "channelID"
-	paramPinID     = "pinID"
-	paramUserID    = "userID"
-	paramTagID     = "tagID"
-	paramStampID   = "stampID"
-	paramMessageID = "messageID"
+	paramChannelID   = "channelID"
+	paramPinID       = "pinID"
+	paramUserID      = "userID"
+	paramTagID       = "tagID"
+	paramStampID     = "stampID"
+	paramMessageID   = "messageID"
+	paramReferenceID = "referenceID"
 )
 
 // Handlers ハンドラ
