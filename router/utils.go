@@ -29,6 +29,7 @@ const (
 	errMySQLDuplicatedRecord uint16 = 1062
 
 	paramChannelID = "channelID"
+	paramPinID     = "pinID"
 )
 
 // Handlers ハンドラ
