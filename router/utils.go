@@ -41,6 +41,14 @@ const (
 	paramStampID     = "stampID"
 	paramMessageID   = "messageID"
 	paramReferenceID = "referenceID"
+	paramFileID      = "fileID"
+
+	mimeImagePNG  = "image/png"
+	mimeImageJPEG = "image/jpeg"
+	mimeImageGIF  = "image/gif"
+	mimeImageSVG  = "image/svg+xml"
+
+	headerCacheControl = "Cache-Control"
 )
 
 // Handlers ハンドラ
@@ -124,9 +132,9 @@ func processMultipartFormIconUpload(c echo.Context, file *multipart.FileHeader) 
 
 func processIcon(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, error) {
 	switch mime {
-	case "image/png", "image/jpeg":
+	case mimeImagePNG, mimeImageJPEG:
 		return processStillImage(c, src, iconMaxWidth, iconMaxHeight)
-	case "image/gif":
+	case mimeImageGIF:
 		return processGifImage(c, src, iconMaxWidth, iconMaxHeight)
 	}
 	return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
@@ -162,11 +170,11 @@ func processMultipartFormStampUpload(c echo.Context, file *multipart.FileHeader)
 
 func processStamp(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, error) {
 	switch mime {
-	case "image/png", "image/jpeg":
+	case mimeImagePNG, mimeImageJPEG:
 		return processStillImage(c, src, stampMaxWidth, stampMaxHeight)
-	case "image/gif":
+	case mimeImageGIF:
 		return processGifImage(c, src, stampMaxWidth, stampMaxHeight)
-	case "image/svg+xml":
+	case mimeImageSVG:
 		return processSVGImage(c, src)
 	}
 	return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
