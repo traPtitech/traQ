@@ -167,9 +167,9 @@ func main() {
 	// Tag: channel
 	api.GET("/channels", router.GetChannels, requires(permission.GetChannel))
 	api.POST("/channels", router.PostChannels, requires(permission.CreateChannel))
-	api.GET("/channels/:channelID", router.GetChannelsByChannelID, requires(permission.GetChannel))
-	api.PATCH("/channels/:channelID", router.PatchChannelsByChannelID, requires(permission.EditChannel))
-	api.DELETE("/channels/:channelID", router.DeleteChannelsByChannelID, requires(permission.DeleteChannel))
+	api.GET("/channels/:channelID", router.GetChannelByChannelID, requires(permission.GetChannel))
+	api.PATCH("/channels/:channelID", router.PatchChannelByChannelID, requires(permission.EditChannel))
+	api.DELETE("/channels/:channelID", router.DeleteChannelByChannelID, requires(permission.DeleteChannel))
 	api.PUT("/channels/:channelID/parent", router.PutChannelParent, requires(permission.ChangeParentChannel))
 
 	// Tag: Topic

@@ -127,7 +127,7 @@ func TestGetChannelsByChannelID(t *testing.T) {
 	c.SetParamNames("channelID")
 	c.SetParamValues(channel.ID)
 
-	requestWithContext(t, mw(GetChannelsByChannelID), c)
+	requestWithContext(t, mw(GetChannelByChannelID), c)
 	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
 }
 
@@ -150,7 +150,7 @@ func TestPatchChannelsByChannelID(t *testing.T) {
 	c.SetPath("/:channelID")
 	c.SetParamNames("channelID")
 	c.SetParamValues(ch.ID)
-	requestWithContext(t, mw(PatchChannelsByChannelID), c)
+	requestWithContext(t, mw(PatchChannelByChannelID), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String())
 }
@@ -187,7 +187,7 @@ func TestDeleteChannelsByChannelID(t *testing.T) {
 	c.SetPath("/:channelID")
 	c.SetParamNames("channelID")
 	c.SetParamValues(ch.ID)
-	requestWithContext(t, mw(DeleteChannelsByChannelID), c)
+	requestWithContext(t, mw(DeleteChannelByChannelID), c)
 
 	ch, err := model.GetChannelWithUserID(testUser.GetUID(), ch.GetCID())
 	require.Error(err)
