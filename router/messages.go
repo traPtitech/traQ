@@ -5,17 +5,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
-	"gopkg.in/go-playground/validator.v9"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/gommon/log"
 	"github.com/traPtitech/traQ/model"
 )
 
-//MessageForResponse :クライアントに返す形のメッセージオブジェクト
+// MessageForResponse クライアントに返す形のメッセージオブジェクト
 type MessageForResponse struct {
 	MessageID       string                `json:"messageId"`
 	UserID          string                `json:"userId"`
@@ -28,38 +26,67 @@ type MessageForResponse struct {
 	StampList       []*model.MessageStamp `json:"stampList"`
 }
 
-// GetMessageByID GET /messages/{messageID} のハンドラ
+// GetMessageByID GET /messages/:messageID
 func GetMessageByID(c echo.Context) error {
-	user := c.Get("user").(*model.User)
-	messageID := c.Param("messageID")
-	m, err := validateMessageID(uuid.FromStringOrNil(messageID), user.GetUID())
+	userID := getRequestUserID(c)
+	messageID := getRequestParamAsUUID(c, paramMessageID)
+
+	m, err := validateMessageID(c, messageID, userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 	return c.JSON(http.StatusOK, formatMessage(m))
 }
 
-// GetMessagesByChannelID GET /channels/{channelID}/messages のハンドラ
+// GetMessagesByChannelID GET /channels/:channelID/messages
 func GetMessagesByChannelID(c echo.Context) error {
-	queryParam := &struct {
-		Limit  int `query:"limit"`
-		Offset int `query:"offset"`
+	req := struct {
+		Limit  int `query:"limit"  validate:"min=0"`
+		Offset int `query:"offset" validate:"min=0"`
 	}{}
-	if err := c.Bind(queryParam); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format")
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	// channelIDの検証
-	userID := c.Get("user").(*model.User).GetUID()
-	res, err := getMessages(uuid.FromStringOrNil(c.Param("channelID")), userID, queryParam.Limit, queryParam.Offset)
+	userID := getRequestUserID(c)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+
+	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	messages, err := model.GetMessagesByChannelID(channelID, req.Limit, req.Offset)
 	if err != nil {
-		return err
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	reports, err := model.GetMessageReportsByReporterID(userID)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	hidden := make(map[string]bool)
+	for _, v := range reports {
+		hidden[v.MessageID] = true
+	}
+
+	res := make([]*MessageForResponse, 0, req.Limit)
+	for _, message := range messages {
+		ms := formatMessage(message)
+		if hidden[message.ID] {
+			ms.Reported = true
+		}
+		res = append(res, ms)
 	}
 
 	return c.JSON(http.StatusOK, res)
 }
 
-// PostMessage POST /channels/{channelID}/messages のハンドラ
+// PostMessage POST /channels/:channelID/messages
 func PostMessage(c echo.Context) error {
 	// 100KB制限
 	if c.Request().ContentLength > 100*1024 {
@@ -73,17 +100,14 @@ func PostMessage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	userID := c.Get("user").(*model.User).GetUID()
-	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+	userID := getRequestUserID(c)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	_, err := validateChannelID(channelID, userID)
-	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
-		default:
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
-		}
+	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	m, err := createMessage(c, post.Text, userID, channelID)
@@ -94,16 +118,17 @@ func PostMessage(c echo.Context) error {
 	return c.JSON(http.StatusCreated, m)
 }
 
-// PutMessageByID PUT /messages/{messageID}のハンドラ
+// PutMessageByID PUT /messages/:messageID
 func PutMessageByID(c echo.Context) error {
-	user := c.Get("user").(*model.User)
-	m, err := validateMessageID(uuid.FromStringOrNil(c.Param("messageID")), user.GetUID())
+	userID := getRequestUserID(c)
+	messageID := getRequestParamAsUUID(c, paramMessageID)
+
+	m, err := validateMessageID(c, messageID, userID)
 	if err != nil {
 		return err
 	}
-
 	// 他人のテキストは編集できない
-	if user.ID != m.UserID {
+	if userID != m.GetUID() {
 		return echo.NewHTTPError(http.StatusForbidden, "This is not your message")
 	}
 
@@ -111,10 +136,10 @@ func PutMessageByID(c echo.Context) error {
 		Text string `json:"text" validate:"required"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if err := model.UpdateMessage(m.GetID(), req.Text); err != nil {
+	if err := model.UpdateMessage(messageID, req.Text); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -123,25 +148,25 @@ func PutMessageByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatMessage(m))
 }
 
-// DeleteMessageByID : DELETE /message/{messageID} のハンドラ
+// DeleteMessageByID DELETE /message/:messageID
 func DeleteMessageByID(c echo.Context) error {
-	user := c.Get("user").(*model.User)
-	messageID := uuid.FromStringOrNil(c.Param("messageID"))
+	userID := getRequestUserID(c)
+	messageID := getRequestParamAsUUID(c, paramMessageID)
 
-	m, err := validateMessageID(messageID, user.GetUID())
+	m, err := validateMessageID(c, messageID, userID)
 	if err != nil {
 		return err
 	}
-	if m.UserID != user.ID {
+	if m.GetUID() != userID {
 		return echo.NewHTTPError(http.StatusForbidden, "you are not allowed to delete this message")
 	}
 
-	if err := model.DeleteMessage(m.GetID()); err != nil {
+	if err := model.DeleteMessage(messageID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	if err := model.DeleteUnreadsByMessageID(m.GetID()); err != nil {
+	if err := model.DeleteUnreadsByMessageID(messageID); err != nil {
 		c.Logger().Error(err) //500エラーにはしない
 	}
 
@@ -149,10 +174,10 @@ func DeleteMessageByID(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// PostMessageReport POST /messages/{messageID}/report
+// PostMessageReport POST /messages/:messageID/report
 func PostMessageReport(c echo.Context) error {
-	user := c.Get("user").(*model.User)
-	messageID := uuid.FromStringOrNil(c.Param("messageID"))
+	userID := getRequestUserID(c)
+	messageID := getRequestParamAsUUID(c, paramMessageID)
 
 	req := struct {
 		Reason string `json:"reason" validate:"max=100,required"`
@@ -161,25 +186,17 @@ func PostMessageReport(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	m, err := validateMessageID(messageID, user.GetUID())
+	_, err := validateMessageID(c, messageID, userID)
 	if err != nil {
 		return err
 	}
 
-	if err := model.CreateMessageReport(m.GetID(), user.GetUID(), req.Reason); err != nil {
-		switch e := err.(type) {
-		case *validator.ValidationErrors:
-			return echo.NewHTTPError(http.StatusBadRequest, err)
-		case *mysql.MySQLError:
-			if isMySQLDuplicatedRecordErr(e) {
-				return echo.NewHTTPError(http.StatusBadRequest, "already reported")
-			}
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+	if err := model.CreateMessageReport(messageID, userID, req.Reason); err != nil {
+		if isMySQLDuplicatedRecordErr(err) {
+			return echo.NewHTTPError(http.StatusBadRequest, "already reported")
 		}
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -210,44 +227,6 @@ func createMessage(c echo.Context, text string, userID, channelID uuid.UUID) (*M
 	return formatMessage(m), nil
 }
 
-// チャンネルのデータを取得する
-func getMessages(channelID, userID uuid.UUID, limit, offset int) ([]*MessageForResponse, error) {
-	if _, err := validateChannelID(channelID, userID); err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return nil, echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
-		default:
-			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
-		}
-	}
-
-	messages, err := model.GetMessagesByChannelID(channelID, limit, offset)
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "Channel is not found")
-	}
-
-	reports, err := model.GetMessageReportsByReporterID(userID)
-	if err != nil {
-		log.Error(err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	hidden := make(map[string]bool)
-	for _, v := range reports {
-		hidden[v.MessageID] = true
-	}
-
-	res := make([]*MessageForResponse, 0, limit)
-
-	for _, message := range messages {
-		ms := formatMessage(message)
-		if hidden[message.ID] {
-			ms.Reported = true
-		}
-		res = append(res, ms)
-	}
-	return res, nil
-}
-
 func formatMessage(raw *model.Message) *MessageForResponse {
 	isPinned, err := model.IsPinned(raw.GetID())
 	if err != nil {
@@ -273,19 +252,24 @@ func formatMessage(raw *model.Message) *MessageForResponse {
 }
 
 // リクエストで飛んできたmessageIDを検証する。存在する場合はそのメッセージを返す
-func validateMessageID(messageID, userID uuid.UUID) (*model.Message, error) {
+func validateMessageID(c echo.Context, messageID, userID uuid.UUID) (*model.Message, error) {
 	m, err := model.GetMessageByID(messageID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
 			return nil, echo.NewHTTPError(http.StatusNotFound, "Message is not found")
+		default:
+			c.Logger().Error(err)
+			return nil, echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		log.Error(err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Cannot find message")
 	}
 
-	if _, err := validateChannelID(m.GetCID(), userID); err != nil {
-		return nil, echo.NewHTTPError(http.StatusForbidden, "Message forbidden")
+	if ok, err := model.IsChannelAccessibleToUser(userID, m.GetCID()); err != nil {
+		c.Logger().Error(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
+
 	return m, nil
 }

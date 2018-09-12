@@ -56,7 +56,7 @@ func PostClip(c echo.Context) error {
 	}
 
 	// メッセージの存在と可用性を確認
-	if _, err := validateMessageID(uuid.FromStringOrNil(req.MessageID), userID); err != nil {
+	if _, err := validateMessageID(c, uuid.FromStringOrNil(req.MessageID), userID); err != nil {
 		return err
 	}
 
