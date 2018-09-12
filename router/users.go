@@ -38,8 +38,8 @@ type UserDetailForResponse struct {
 // PostLogin POST /login
 func PostLogin(c echo.Context) error {
 	req := struct {
-		Name string `json:"name" form:"name"`
-		Pass string `json:"pass" form:"pass"`
+		Name string `json:"name" form:"name" validate:"required"`
+		Pass string `json:"pass" form:"pass" validate:"required"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
