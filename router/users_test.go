@@ -10,7 +10,6 @@ import (
 
 	"net/http"
 
-	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,14 +37,9 @@ func TestPostLogin(t *testing.T) {
 	require.NoError(t, err)
 
 	req2 := httptest.NewRequest("POST", "http://test", bytes.NewReader(body2))
-	req2.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec2 := httptest.NewRecorder()
-	c := e.NewContext(req2, rec2)
-	err2 := PostLogin(c).(*echo.HTTPError)
+	rec2 := request(e, t, PostLogin, nil, req2)
 
-	if assert.Error(t, err2) {
-		assert.EqualValues(t, http.StatusForbidden, err2.Code)
-	}
+	assert.EqualValues(t, http.StatusForbidden, rec2.Code)
 }
 
 func TestGetUsers(t *testing.T) {
