@@ -25,7 +25,6 @@ func TestPostLogin(t *testing.T) {
 	}
 
 	requestBody := &requestJSON{"PostLogin", "test"}
-
 	body, err := json.Marshal(requestBody)
 	require.NoError(t, err)
 

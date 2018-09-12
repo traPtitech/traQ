@@ -42,7 +42,7 @@ func PostLogin(c echo.Context) error {
 		Pass string `json:"pass" form:"pass" validate:"required"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	user, err := model.GetUserByName(req.Name)

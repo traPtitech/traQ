@@ -126,7 +126,7 @@ func GetChannels(c echo.Context) error {
 func PostChannels(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	req := &PostChannel{}
+	req := PostChannel{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
