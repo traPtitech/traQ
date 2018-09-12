@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -12,13 +11,14 @@ import (
 // GetNotification /channels/:ID/notificationsのpath paramがchannelIDかuserIDかを判別して正しいほうにルーティングするミドルウェア
 func GetNotification(userHandler, channelHandler echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userID := c.Get("user").(*model.User).GetUID()
+		userID := getRequestUserID(c)
 		ID := uuid.FromStringOrNil(c.Param("ID"))
 
 		if ch, err := validateChannelID(ID, userID); ch != nil {
 			c.Set("channel", ch)
 			return channelHandler(c)
 		} else if err != model.ErrNotFound {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check ID")
 		}
 
@@ -26,6 +26,7 @@ func GetNotification(userHandler, channelHandler echo.HandlerFunc) echo.HandlerF
 			c.Set("targetUserID", user.ID)
 			return userHandler(c)
 		} else if err != model.ErrNotFound {
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check ID")
 		}
 
@@ -44,7 +45,8 @@ func GetNotificationStatus(c echo.Context) error {
 
 	users, err := model.GetSubscribingUser(ch.GetCID())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("failed to GetNotificationStatus: %v", err))
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	result := make([]string, len(users))
@@ -57,7 +59,7 @@ func GetNotificationStatus(c echo.Context) error {
 
 // PutNotificationStatus PUT /channels/:channelId/notifications のハンドラ
 func PutNotificationStatus(c echo.Context) error {
-	userID := c.Get("user").(*model.User).GetUID()
+	userID := getRequestUserID(c)
 	channelID := uuid.FromStringOrNil(c.Param("ID"))
 
 	ch, err := validateChannelID(channelID, userID)
@@ -66,6 +68,7 @@ func PutNotificationStatus(c echo.Context) error {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
 		default:
+			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
 		}
 	}
@@ -96,7 +99,7 @@ func PutNotificationStatus(c echo.Context) error {
 
 // PostDeviceToken POST /notification/device のハンドラ
 func PostDeviceToken(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
 
 	var req struct {
 		Token string `json:"token" validate:"required"`
@@ -105,7 +108,7 @@ func PostDeviceToken(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if _, err := model.RegisterDevice(user.GetUID(), req.Token); err != nil {
+	if _, err := model.RegisterDevice(userID, req.Token); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
