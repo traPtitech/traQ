@@ -45,6 +45,7 @@ const (
 	paramWebhookID   = "webhookID"
 	paramClipID      = "clipID"
 	paramFolderID    = "folderID"
+	paramTokenID     = "tokenID"
 
 	mimeImagePNG  = "image/png"
 	mimeImageJPEG = "image/jpeg"
