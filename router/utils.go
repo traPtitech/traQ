@@ -42,6 +42,7 @@ const (
 	paramMessageID   = "messageID"
 	paramReferenceID = "referenceID"
 	paramFileID      = "fileID"
+	paramWebhookID   = "webhookID"
 
 	mimeImagePNG  = "image/png"
 	mimeImageJPEG = "image/jpeg"
