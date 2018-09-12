@@ -9,11 +9,11 @@ import (
 
 // ClipFolder クリップフォルダの構造体
 type ClipFolder struct {
-	ID        string    `gorm:"type:char(36);primary_key"                 validate:"uuid,required"`
-	UserID    string    `gorm:"type:char(36);unique_index:user_folder"    validate:"uuid,required"`
-	Name      string    `gorm:"type:varchar(30);unique_index:user_folder" validate:"max=30,required"`
-	CreatedAt time.Time `gorm:"precision:6"`
-	UpdatedAt time.Time `gorm:"precision:6"`
+	ID        string    `gorm:"type:char(36);primary_key"                 validate:"uuid,required"   json:"id"`
+	UserID    string    `gorm:"type:char(36);unique_index:user_folder"    validate:"uuid,required"   json:"-"`
+	Name      string    `gorm:"type:varchar(30);unique_index:user_folder" validate:"max=30,required" json:"name"`
+	CreatedAt time.Time `gorm:"precision:6"                                                          json:"createdAt"`
+	UpdatedAt time.Time `gorm:"precision:6"                                                          json:"-"`
 }
 
 // GetID IDをuuid.UUIDとして取得します
@@ -92,7 +92,7 @@ func (clip *Clip) Validate() error {
 // GetClipFolder 指定したIDのクリップフォルダを取得します
 func GetClipFolder(id uuid.UUID) (*ClipFolder, error) {
 	f := &ClipFolder{}
-	if err := db.Where(ClipFolder{ID: id.String()}).Take(f).Error; err != nil {
+	if err := db.Where(&ClipFolder{ID: id.String()}).Take(f).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, ErrNotFound
 		}
@@ -103,7 +103,8 @@ func GetClipFolder(id uuid.UUID) (*ClipFolder, error) {
 
 // GetClipFolders 指定したユーザーのクリップフォルダを全て取得します
 func GetClipFolders(userID uuid.UUID) (res []*ClipFolder, err error) {
-	err = db.Where(ClipFolder{UserID: userID.String()}).Order("name").Find(&res).Error
+	res = make([]*ClipFolder, 0)
+	err = db.Where(&ClipFolder{UserID: userID.String()}).Order("name").Find(&res).Error
 	return
 }
 
@@ -113,8 +114,7 @@ func CreateClipFolder(userID uuid.UUID, name string) (*ClipFolder, error) {
 		UserID: userID.String(),
 		Name:   name,
 	}
-	err := db.Create(f).Error
-	if err != nil {
+	if err := db.Create(f).Error; err != nil {
 		return nil, err
 	}
 	return f, nil
@@ -122,18 +122,18 @@ func CreateClipFolder(userID uuid.UUID, name string) (*ClipFolder, error) {
 
 // UpdateClipFolderName クリップフォルダ名を更新します
 func UpdateClipFolderName(id uuid.UUID, name string) error {
-	return db.Where(ClipFolder{ID: id.String()}).Update("name", name).Error
+	return db.Where(&ClipFolder{ID: id.String()}).Update("name", name).Error
 }
 
 // DeleteClipFolder クリップフォルダを削除します
 func DeleteClipFolder(id uuid.UUID) error {
-	return db.Delete(ClipFolder{ID: id.String()}).Error
+	return db.Delete(&ClipFolder{ID: id.String()}).Error
 }
 
 // GetClipMessage 指定したIDのクリップを取得します
 func GetClipMessage(id uuid.UUID) (*Clip, error) {
 	c := &Clip{}
-	if err := db.Preload("Message").Where(Clip{ID: id.String()}).Take(c).Error; err != nil {
+	if err := db.Preload("Message").Where(&Clip{ID: id.String()}).Take(c).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, ErrNotFound
 		}
@@ -144,13 +144,15 @@ func GetClipMessage(id uuid.UUID) (*Clip, error) {
 
 // GetClipMessages 指定したフォルダのクリップを全て取得します
 func GetClipMessages(folderID uuid.UUID) (res []*Clip, err error) {
-	err = db.Preload("Message").Where(Clip{FolderID: folderID.String()}).Order("updated_at").Find(&res).Error
+	res = make([]*Clip, 0)
+	err = db.Preload("Message").Where(&Clip{FolderID: folderID.String()}).Order("updated_at").Find(&res).Error
 	return
 }
 
 // GetClipMessagesByUser 指定したユーザーのクリップを全て取得します
 func GetClipMessagesByUser(userID uuid.UUID) (res []*Clip, err error) {
-	err = db.Preload("Message").Where(Clip{UserID: userID.String()}).Order("updated_at").Find(&res).Error
+	res = make([]*Clip, 0)
+	err = db.Preload("Message").Where(&Clip{UserID: userID.String()}).Order("updated_at").Find(&res).Error
 	return
 }
 
@@ -169,10 +171,10 @@ func CreateClip(messageID, folderID, userID uuid.UUID) (*Clip, error) {
 
 // ChangeClipFolder クリップのフォルダを変更します
 func ChangeClipFolder(clipID, folderID uuid.UUID) error {
-	return db.Where(Clip{ID: clipID.String()}).Updates(Clip{FolderID: folderID.String()}).Error
+	return db.Where(&Clip{ID: clipID.String()}).Updates(&Clip{FolderID: folderID.String()}).Error
 }
 
 // DeleteClip クリップを削除します
 func DeleteClip(id uuid.UUID) error {
-	return db.Delete(Clip{ID: id.String()}).Error
+	return db.Delete(&Clip{ID: id.String()}).Error
 }

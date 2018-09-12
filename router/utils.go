@@ -43,6 +43,8 @@ const (
 	paramReferenceID = "referenceID"
 	paramFileID      = "fileID"
 	paramWebhookID   = "webhookID"
+	paramClipID      = "clipID"
+	paramFolderID    = "folderID"
 
 	mimeImagePNG  = "image/png"
 	mimeImageJPEG = "image/jpeg"
