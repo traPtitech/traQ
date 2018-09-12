@@ -46,6 +46,7 @@ const (
 	paramClipID      = "clipID"
 	paramFolderID    = "folderID"
 	paramTokenID     = "tokenID"
+	paramBotID       = "botID"
 
 	mimeImagePNG  = "image/png"
 	mimeImageJPEG = "image/jpeg"
