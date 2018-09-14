@@ -29,7 +29,7 @@ func (l *KeyLocker) Unlock(key interface{}) {
 	m.lock.Unlock()
 	atomic.AddInt64(&m.counter, -1)
 	if m.counter <= 0 {
-		l.pool.Put(m)
+		l.pool.Put(m.lock)
 		l.inUse.Delete(key)
 	}
 }
