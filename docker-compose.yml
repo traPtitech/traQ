@@ -51,8 +51,11 @@ services:
       - adminNet
 
   adminer:
-    image: adminer
+    image: adminer:4.6.3
     restart: always
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+      ADMINER_DESIGN: nette
     ports:
       - "3001:8080"
     networks:
