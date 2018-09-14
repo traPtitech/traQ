@@ -145,6 +145,17 @@ func Sync() error {
 			return err
 		}
 	}
+	// randomチャンネル確認
+	c = 0
+	if err := db.Unscoped().Model(Channel{}).Where("name = 'random' AND parent_id = ''").Count(&c).Error; err != nil {
+		return err
+	}
+	if c == 0 {
+		_, err := CreateChannel("", "random", serverUser.GetUID(), true)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

@@ -1,0 +1,73 @@
+version: '3'
+
+services:
+  traq-backend:
+    build: ./
+    restart: always
+    environment:
+      TRAQ_PORT: 3000
+      TRAQ_ORIGIN: http://localhost:3000
+      MARIADB_USERNAME: root
+      MARIADB_PASSWORD: password
+      MARIADB_DATABASE: traq
+      MARIADB_HOSTNAME: mysql
+      PPROF_ENABLED: 1
+    entrypoint: dockerize -timeout 60s -wait tcp://mysql:3306
+    command: ./traQ
+    depends_on:
+      - mysql
+    networks:
+      - traQnet
+
+  traq-frontend:
+    build: https://github.com/traPtitech/traQ-UI.git
+    restart: always
+    networks:
+      - traQnet
+
+  reverse-proxy:
+    image: nginx:1.15.3-alpine
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - traq-backend
+      - traq-frontend
+      - swagger-ui
+    networks:
+      - traQnet
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+
+  mysql:
+    image: mariadb:10.3.9
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: traq
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    networks:
+      - traQnet
+      - adminNet
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "3001:8080"
+    networks:
+      - adminNet
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui:3.18.2
+    restart: always
+    volumes:
+      - ./docs/swagger.yaml:/usr/share/nginx/html/traQ-R.yaml
+    environment:
+      API_URL: traQ-R.yaml
+    networks:
+      - traQnet
+
+networks:
+  traQnet:
+  adminNet:
