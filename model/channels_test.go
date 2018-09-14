@@ -260,7 +260,7 @@ func TestGetChannelList(t *testing.T) {
 
 	channelList, err := GetChannelList(user.GetUID())
 	if assert.NoError(err) {
-		assert.Len(channelList, 10+2)
+		assert.Len(channelList, 10+3)
 	}
 }
 
@@ -274,7 +274,7 @@ func TestGetAllChannels(t *testing.T) {
 
 	chList, err := GetAllChannels()
 	if assert.NoError(err) {
-		assert.Equal(n+2, len(chList))
+		assert.Equal(n+3, len(chList))
 	}
 }
 
