@@ -5,7 +5,6 @@ services:
     build: ./
     restart: always
     environment:
-      TRAQ_PORT: 3000
       TRAQ_ORIGIN: http://localhost:3000
       MARIADB_USERNAME: root
       MARIADB_PASSWORD: password
@@ -14,6 +13,8 @@ services:
       PPROF_ENABLED: 1
     entrypoint: dockerize -timeout 60s -wait tcp://mysql:3306
     command: ./traQ
+    expose:
+      - "80"
     depends_on:
       - mysql
     networks:
@@ -22,12 +23,16 @@ services:
   traq-frontend:
     build: https://github.com/traPtitech/traQ-UI.git
     restart: always
+    expose:
+      - "80"
     networks:
       - traQnet
 
   reverse-proxy:
     image: nginx:1.15.3-alpine
     restart: always
+    expose:
+      - "80"
     ports:
       - "3000:80"
     depends_on:
@@ -46,6 +51,8 @@ services:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: traq
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    expose:
+      - "3306"
     networks:
       - traQnet
       - adminNet
@@ -56,6 +63,8 @@ services:
     environment:
       ADMINER_DEFAULT_SERVER: mysql
       ADMINER_DESIGN: nette
+    expose:
+      - "8080"
     ports:
       - "3001:8080"
     networks:
@@ -68,6 +77,8 @@ services:
       - ./docs/swagger.yaml:/usr/share/nginx/html/traQ-R.yaml
     environment:
       API_URL: traQ-R.yaml
+    expose:
+      - "8080"
     networks:
       - traQnet
 
