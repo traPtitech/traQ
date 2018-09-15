@@ -145,17 +145,8 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	// Serve documents
-	e.File("/api/swagger.yaml", "./docs/swagger.yaml")
-	e.Static("/api", "./docs/swagger-ui")
-	e.Any("/api", func(c echo.Context) error {
-		return c.Redirect(http.StatusFound, c.Path()+"/")
-	})
-
-	// login/logout
-	e.File("/login", "./client/dist/index.html")
-	e.POST("/login", router.PostLogin)
-	e.POST("/logout", router.PostLogout)
+	e.POST("/login", router.PostLogin)   //TODO 後で消す
+	e.POST("/logout", router.PostLogout) //TODO 後で消す
 
 	api := e.Group("/api/1.0")
 	api.Use(router.UserAuthenticate(oauth))
@@ -163,6 +154,10 @@ func main() {
 
 	// access control middleware generator
 	requires := router.AccessControlMiddlewareGenerator(r)
+
+	// login/logout
+	apiNoAuth.POST("/login", router.PostLogin)
+	apiNoAuth.POST("/logout", router.PostLogout)
 
 	// Tag: channel
 	api.GET("/channels", router.GetChannels, requires(permission.GetChannel))
@@ -313,13 +308,6 @@ func main() {
 	api.GET("/clients/:clientID", h.GetClient, requires(permission.GetClients))
 	api.PATCH("/clients/:clientID", h.PatchClient, requires(permission.EditMyClient))
 	api.DELETE("/clients/:clientID", h.DeleteClient, requires(permission.DeleteMyClient))
-
-	// Serve UI
-	e.File("/sw.js", "./client/dist/sw.js")
-	e.File("/firebase-messaging-sw.js", "./client/dist/static/firebase-messaging-sw.js")
-	e.File("/badge.png", "./static/badge.png")
-	e.Static("/static", "./client/dist/static")
-	e.File("*", "./client/dist/index.html")
 
 	// init heartbeat
 	model.OnUserOnlineStateChanged = func(id string, online bool) {

@@ -126,7 +126,7 @@ func (e *MessageCreatedEvent) GetFCMData() map[string]string {
 		"icon":      fmt.Sprintf("%s/api/1.0/users/%s/icon?thumb", config.TRAQOrigin, e.Message.UserID),
 		"vibration": "[1000, 1000, 1000]",
 		"tag":       fmt.Sprintf("c:%s", e.Message.ChannelID),
-		"badge":     fmt.Sprintf("%s/badge.png", config.TRAQOrigin),
+		"badge":     fmt.Sprintf("%s/static/badge.png", config.TRAQOrigin),
 	}
 
 	ei, plain := e.parseMessage()
