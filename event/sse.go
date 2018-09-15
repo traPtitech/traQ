@@ -215,6 +215,7 @@ func (s *SSEStreamer) StreamHandler(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
 	c.Response().Header().Set("Cache-Control", "no-cache")
 	c.Response().Header().Set("Connection", "keep-alive")
+	c.Response().Header().Set("X-Accel-Buffering", "no") // for nginx
 	c.Response().WriteHeader(http.StatusOK)
 
 	client := &sseClient{
