@@ -1,4 +1,0 @@
-#!/bin/sh
-
-echo "traQ"
-exit 0

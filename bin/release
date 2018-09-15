@@ -1,7 +1,0 @@
-#!/bin/sh
-
-cat << EOF
----
-default_process_types:
-  web: ./traq
-EOF
