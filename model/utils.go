@@ -132,11 +132,11 @@ func Sync() error {
 		if err := db.Create(serverUser).Error; err != nil {
 			return err
 		}
-		fileId, err := GenerateIcon(uuid.NewV4().String())
+		fileID, err := GenerateIcon(uuid.NewV4().String())
 		if err != nil {
 			return err
 		}
-		if err := ChangeUserIcon(serverUser.GetUID(), uuid.Must(uuid.FromString(fileId))); err != nil {
+		if err := ChangeUserIcon(serverUser.GetUID(), uuid.Must(uuid.FromString(fileID))); err != nil {
 			return err
 		}
 	}
