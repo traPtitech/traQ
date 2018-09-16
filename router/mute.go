@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"net/http"
 )
@@ -37,6 +38,7 @@ func PostMutedChannel(c echo.Context) error {
 		}
 	}
 
+	go event.Emit(event.ChannelMuted, &event.UserChannelEvent{UserID: uid, ChannelID: cid})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -57,5 +59,6 @@ func DeleteMutedChannel(c echo.Context) error {
 		}
 	}
 
+	go event.Emit(event.ChannelUnmuted, &event.UserChannelEvent{UserID: uid, ChannelID: cid})
 	return c.NoContent(http.StatusNoContent)
 }

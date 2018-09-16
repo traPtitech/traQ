@@ -31,6 +31,10 @@ const (
 	ChannelUnstared Type = "CHANNEL_UNSTARED"
 	// ChannelVisibilityChanged チャンネルの可視状態が変更された
 	ChannelVisibilityChanged Type = "CHANNEL_VISIBILITY_CHANGED"
+	// ChannelMuted チャンネルをミュートした
+	ChannelMuted Type = "CHANNEL_MUTED"
+	// ChannelUnmuted チャンネルをアンミュートした
+	ChannelUnmuted Type = "CHANNEL_UNMUTED"
 
 	// MessageCreated メッセージが投稿された
 	MessageCreated Type = "MESSAGE_CREATED"
