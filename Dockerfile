@@ -1,4 +1,5 @@
 FROM golang:1.11.0-alpine AS build
+ENV GO111MODULE=on
 RUN apk add --update --no-cache git
 WORKDIR /go/src/github.com/traPtitech/traQ
 COPY ./go.* ./
