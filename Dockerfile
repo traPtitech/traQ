@@ -5,7 +5,7 @@ WORKDIR /go/src/github.com/traPtitech/traQ
 COPY ./go.* ./
 RUN go mod download
 COPY . .
-RUN go build -o /traQ
+RUN CGO_ENABLED=0 go build -o /traQ
 
 
 FROM alpine:3.8
