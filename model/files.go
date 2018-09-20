@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"github.com/jinzhu/gorm"
+	"github.com/labstack/echo"
 	"github.com/labstack/gommon/log"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
@@ -86,6 +87,9 @@ func (f *File) Create(src io.Reader) error {
 	f.Mime = mime.TypeByExtension(filepath.Ext(f.Name))
 	if len(f.CreatorID) == 0 {
 		f.CreatorID = serverUser.ID
+	}
+	if len(f.Mime) == 0 {
+		f.Mime = echo.MIMEOctetStream
 	}
 
 	writer, ok := fileManagers[f.Manager]
