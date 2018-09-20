@@ -3,23 +3,23 @@ version: 2
 jobs:
   build:
     docker:
-    - image: circleci/golang:1.11.0
+      - image: circleci/golang:1.11.0
       - image: circleci/mysql:latest-ram
         environment:
-        - MYSQL_DATABASE: "traq"
-        - MYSQL_ROOT_PASSWORD: "password"
-        - GO111MODULE: "on"
-        - GOCACHE: "/tmp/go/cache"
+          - MYSQL_DATABASE: "traq"
+          - MYSQL_ROOT_PASSWORD: "password"
+          - GO111MODULE: "on"
+          - GOCACHE: "/tmp/go/cache"
     working_directory: /go/src/github.com/traPtitech/traQ
     steps:
       - checkout
 
       - restore_cache:
           keys:
-          - gomod-{{ checksum "go.mod" }}
+            - gomod-{{ checksum "go.mod" }}
       - restore_cache:
           keys:
-          - golint
+            - golint
       - run:
           name: Download go modules and golint
           when: always
@@ -32,12 +32,12 @@ jobs:
           key: gomod-{{ checksum "go.mod" }}
           when: always
           paths:
-          - /go/pkg/mod/cache
+            - /go/pkg/mod/cache
       - save_cache:
           key: golint
           when: always
           paths:
-          - /go/bin/golint
+            - /go/bin/golint
 
       - run:
           name: gofmt
@@ -61,8 +61,8 @@ jobs:
 
       - restore_cache:
           keys:
-          - build-cache-{{ .Branch }}--
-          - build-cache-master--
+            - build-cache-{{ .Branch }}--
+            - build-cache-master--
       - run:
           name: build
           when: always
@@ -77,7 +77,7 @@ jobs:
           key: build-cache-{{ .Branch }}--{{ .Revision }}
           when: always
           paths:
-          - /tmp/go/cache
+            - /tmp/go/cache
 
       - run:
           name: Upload coverage data
