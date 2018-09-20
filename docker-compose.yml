@@ -15,6 +15,9 @@ services:
     command: ./traQ
     expose:
       - "80"
+      - "6060"
+    ports:
+      - "6060:6060"
     depends_on:
       - mysql
     networks:
