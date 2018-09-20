@@ -63,7 +63,7 @@ jobs:
       - run:
           name: test
           when: always
-          command: go test ./... -covermode=atomic -coverprofile=coverage.txt -race
+          command: go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
       - save_cache:
           key: build-cache-{{ .Branch }}--{{ .Revision }}
           when: always
