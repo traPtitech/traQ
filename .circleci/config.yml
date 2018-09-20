@@ -4,12 +4,13 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.11.0
+        environment:
+          - GO111MODULE: "on"
+          - GOCACHE: "/tmp/go/cache"
       - image: circleci/mysql:latest-ram
         environment:
           - MYSQL_DATABASE: "traq"
           - MYSQL_ROOT_PASSWORD: "password"
-          - GO111MODULE: "on"
-          - GOCACHE: "/tmp/go/cache"
     working_directory: /go/src/github.com/traPtitech/traQ
     steps:
       - checkout
@@ -17,27 +18,17 @@ jobs:
       - restore_cache:
           keys:
             - gomod-{{ checksum "go.mod" }}
-      - restore_cache:
-          keys:
-            - golint
       - run:
           name: Download go modules and golint
           when: always
           command: |
-            if ! type golint > /dev/null 2>&1; then
-              go get -u golang.org/x/lint/golint
-            fi
             go mod download
+            go install golang.org/x/lint/golint
       - save_cache:
           key: gomod-{{ checksum "go.mod" }}
           when: always
           paths:
             - /go/pkg/mod/cache
-      - save_cache:
-          key: golint
-          when: always
-          paths:
-            - /go/bin/golint
 
       - run:
           name: gofmt

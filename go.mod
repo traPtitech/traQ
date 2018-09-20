@@ -41,11 +41,13 @@ require (
 	golang.org/x/crypto v0.0.0-20180621125126-a49355c7e3f8
 	golang.org/x/exp v0.0.0-20180625033341-f9fa0fefb1e1
 	golang.org/x/image v0.0.0-20180628062038-cc896f830ced
+	golang.org/x/lint v0.0.0-20180702182130-06c8688daad7 // indirect
 	golang.org/x/net v0.0.0-20180702212446-ed29d75add3d // indirect
 	golang.org/x/oauth2 v0.0.0-20180620175406-ef147856a6dd // indirect
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f
 	golang.org/x/sys v0.0.0-20180627142611-7138fd3d9dc8 // indirect
 	golang.org/x/text v0.3.0 // indirect
+	golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e // indirect
 	google.golang.org/api v0.0.0-20180702000508-e0f3bfad2532
 	google.golang.org/appengine v1.1.0 // indirect
 	google.golang.org/genproto v0.0.0-20180627194029-ff3583edef7d // indirect

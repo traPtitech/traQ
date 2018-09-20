@@ -85,6 +85,8 @@ golang.org/x/exp v0.0.0-20180625033341-f9fa0fefb1e1 h1:J/7DjYGFflVIjSdlaBdFuaorA
 golang.org/x/exp v0.0.0-20180625033341-f9fa0fefb1e1/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/image v0.0.0-20180628062038-cc896f830ced h1:2QsAEqOy4Mp+V4HL2Wr1iBNpZWaL72EvTO4oj5bmr5w=
 golang.org/x/image v0.0.0-20180628062038-cc896f830ced/go.mod h1:ux5Hcp/YLpHSI86hEcLt0YII63i6oz57MZXIpbrjZUs=
+golang.org/x/lint v0.0.0-20180702182130-06c8688daad7 h1:00BeQWmeaGazuOrq8Q5K5d3/cHaGuFrZzpaHBXfrsUA=
+golang.org/x/lint v0.0.0-20180702182130-06c8688daad7/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
 golang.org/x/net v0.0.0-20180702212446-ed29d75add3d h1:B2RL9y12DFXBWEdHqZW1ts6ymJLN0FdBwL2mOY5zbCs=
 golang.org/x/net v0.0.0-20180702212446-ed29d75add3d/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/oauth2 v0.0.0-20180620175406-ef147856a6dd h1:QQhib242ErYDSMitlBm8V7wYCm/1a25hV8qMadIKLPA=
@@ -95,6 +97,8 @@ golang.org/x/sys v0.0.0-20180627142611-7138fd3d9dc8 h1:RI4LLZfYDSosZMJ7FzhhEQbwo
 golang.org/x/sys v0.0.0-20180627142611-7138fd3d9dc8/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e h1:FDhOuMEY4JVRztM/gsbk+IKUQ8kj74bxZrgw87eMMVc=
+golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
 google.golang.org/api v0.0.0-20180702000508-e0f3bfad2532 h1:HyNvwUYLnk+I2LJQ6kSjG75L7pQhI8LNuNWZb4NjJY0=
 google.golang.org/api v0.0.0-20180702000508-e0f3bfad2532/go.mod h1:4mhQ8q/RsB7i+udVvVy5NUi08OU8ZlA0gRVgrF7VFY0=
 google.golang.org/appengine v1.1.0 h1:igQkv0AAhEIvTEpD5LIpAfav2eeVO9HBTjvKHVJPRSs=
