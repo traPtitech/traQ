@@ -1,9 +1,8 @@
 FROM golang:1.11.0-alpine AS build
 RUN apk add --update --no-cache git
-RUN go get -u github.com/golang/dep/cmd/dep
 WORKDIR /go/src/github.com/traPtitech/traQ
-COPY ./Gopkg.* ./
-RUN dep ensure --vendor-only=true
+COPY ./go.* ./
+RUN go mod download
 COPY . .
 RUN go build -o /traQ
 

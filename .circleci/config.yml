@@ -3,29 +3,54 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.10.3
+    - image: circleci/golang:1.11.0
       - image: circleci/mysql:latest-ram
         environment:
-          - MYSQL_DATABASE=traq
-          - MYSQL_ROOT_PASSWORD=password
-
+        - MYSQL_DATABASE: "traq"
+        - MYSQL_ROOT_PASSWORD: "password"
+        - GO111MODULE: "on"
+        - GOCACHE: "/tmp/go/cache"
     working_directory: /go/src/github.com/traPtitech/traQ
-
     steps:
       - checkout
 
+      - restore_cache:
+          keys:
+          - gomod-{{ checksum "go.mod" }}
+      - restore_cache:
+          keys:
+          - golint
       - run:
-          name: Install tools/packages
-          command: make init
+          name: Download go modules and golint
+          when: always
+          command: |
+            if ! type golint > /dev/null 2>&1; then
+              go get -u golang.org/x/lint/golint
+            fi
+            go mod download
+      - save_cache:
+          key: gomod-{{ checksum "go.mod" }}
+          when: always
+          paths:
+          - /go/pkg/mod/cache
+      - save_cache:
+          key: golint
+          when: always
+          paths:
+          - /go/bin/golint
 
       - run:
-          name: fmt
+          name: gofmt
           when: always
           command: make ci-fmt
       - run:
-          name: lint
+          name: golint
           when: always
           command: make ci-lint
+      - run:
+          name: go vet
+          when: always
+          command: make ci-vet
 
       - run:
           name: Setup DB
@@ -34,19 +59,29 @@ jobs:
             dockerize -wait tcp://localhost:3306 -timeout 1m
             go run .circleci/init.go
 
+      - restore_cache:
+          keys:
+          - build-cache-{{ .Branch }}--
+          - build-cache-master--
+      - run:
+          name: build
+          when: always
+          command: |
+            mkdir -p $GOCACHE
+            go build -v
       - run:
           name: test
           when: always
           command: ./.circleci/go.test.sh
-      - run:
-          name: build
+      - save_cache:
+          key: build-cache-{{ .Branch }}--{{ .Revision }}
           when: always
-          command: make traQ
+          paths:
+          - /tmp/go/cache
 
       - run:
           name: Upload coverage data
           command: bash <(curl -s https://codecov.io/bash)
-
       - store_artifacts:
           path: /go/src/github.com/traPtitech/traQ/traQ
           destination: traQ
