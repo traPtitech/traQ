@@ -32,5 +32,5 @@ ci-test:
 
 .PHONY: init
 init:
-	go get -u golang.org/x/lint/golint
 	go mod download
+	go install golang.org/x/lint/golint
