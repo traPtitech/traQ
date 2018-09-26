@@ -100,6 +100,7 @@ func beforeLoginTest(t *testing.T) *echo.Echo {
 	require.NoError(model.DropTables())
 	require.NoError(model.Sync())
 	e := echo.New()
+	e.Validator = validator.New()
 
 	return e
 }

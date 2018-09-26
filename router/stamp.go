@@ -1,28 +1,12 @@
 package router
 
 import (
-	"bytes"
-	"context"
-	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/event"
-	"github.com/traPtitech/traQ/external/imagemagick"
-	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/rbac/permission"
-	"github.com/traPtitech/traQ/utils/thumb"
-	"github.com/traPtitech/traQ/utils/validator"
-	"image/jpeg"
-	"image/png"
-	"io"
-	"net/http"
-	"time"
-
 	"github.com/labstack/echo"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-)
-
-const (
-	stampMaxWidth  = 128
-	stampMaxHeight = 128
+	"github.com/traPtitech/traQ/rbac/permission"
+	"github.com/traPtitech/traQ/utils/validator"
+	"net/http"
 )
 
 // GetStamps GET /stamps
@@ -38,7 +22,7 @@ func GetStamps(c echo.Context) error {
 
 // PostStamp POST /stamps
 func PostStamp(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+	userID := getRequestUserID(c)
 
 	// name確認
 	name := c.FormValue("name")
@@ -52,135 +36,28 @@ func PostStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	// ファイルサイズ制限1MB
-	if uploadedFile.Size > 1024*1024 {
-		return echo.NewHTTPError(http.StatusBadRequest, "too big image file")
-	}
-
-	// ファイルタイプ確認・必要があればリサイズ
-	b := &bytes.Buffer{}
-	src, err := uploadedFile.Open()
+	// file処理
+	fileID, err := processMultipartFormIconUpload(c, uploadedFile)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	defer src.Close()
-	switch uploadedFile.Header.Get(echo.HeaderContentType) {
-	case "image/png":
-		img, err := png.Decode(src)
-		if err != nil {
-			// 不正なpngである
-			return echo.NewHTTPError(http.StatusBadRequest, "bad png file")
-		}
-		if img.Bounds().Size().X > stampMaxWidth || img.Bounds().Size().Y > stampMaxHeight {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
-			defer cancel()
-			img, err = thumb.Resize(ctx, img, stampMaxWidth, stampMaxHeight)
-			if err != nil {
-				switch err {
-				case context.DeadlineExceeded:
-					// リサイズタイムアウト
-					return echo.NewHTTPError(http.StatusBadRequest, "bad png file (resize timeout)")
-				default:
-					// 予期しないエラー
-					c.Logger().Error(err)
-					return echo.NewHTTPError(http.StatusInternalServerError)
-				}
-			}
-		}
-
-		// bytesに戻す
-		if b, err = thumb.EncodeToPNG(img); err != nil {
-			// 予期しないエラー
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-
-	case "image/jpeg":
-		img, err := jpeg.Decode(src)
-		if err != nil {
-			// 不正なjpgである
-			return echo.NewHTTPError(http.StatusBadRequest, "bad jpg file")
-		}
-		if img.Bounds().Size().X > stampMaxWidth || img.Bounds().Size().Y > stampMaxHeight {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
-			defer cancel()
-			img, err = thumb.Resize(ctx, img, stampMaxWidth, stampMaxHeight)
-			if err != nil {
-				switch err {
-				case context.DeadlineExceeded:
-					// リサイズタイムアウト
-					return echo.NewHTTPError(http.StatusBadRequest, "bad jpg file (resize timeout)")
-				default:
-					// 予期しないエラー
-					c.Logger().Error(err)
-					return echo.NewHTTPError(http.StatusInternalServerError)
-				}
-			}
-		}
-
-		// PNGに変換
-		if b, err = thumb.EncodeToPNG(img); err != nil {
-			// 予期しないエラー
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-
-	case "image/gif":
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
-		defer cancel()
-		b, err = imagemagick.ResizeAnimationGIF(ctx, src, stampMaxWidth, stampMaxHeight, false)
-		if err != nil {
-			switch err {
-			case imagemagick.ErrUnavailable:
-				// gifは一時的にサポートされていない
-				return echo.NewHTTPError(http.StatusBadRequest, "gif file is temporarily unsupported")
-			case imagemagick.ErrUnsupportedType:
-				// 不正なgifである
-				return echo.NewHTTPError(http.StatusBadRequest, "bad gif file")
-			case context.DeadlineExceeded:
-				// リサイズタイムアウト
-				return echo.NewHTTPError(http.StatusBadRequest, "bad gif file (resize timeout)")
-			default:
-				// 予期しないエラー
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
-		}
-
-	case "image/svg+xml":
-		// TODO svgバリデーション
-		io.Copy(b, src)
-
-	default:
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
-	}
-
-	// スタンプ画像保存
-	file := &model.File{
-		Name:      uploadedFile.Filename,
-		Size:      int64(b.Len()),
-		CreatorID: userID,
-	}
-	if err := file.Create(b); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return err
 	}
 
 	// スタンプ作成
-	s, err := model.CreateStamp(name, file.ID, userID)
+	s, err := model.CreateStamp(name, fileID.String(), userID.String())
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.StampCreated, &event.StampEvent{ID: uuid.Must(uuid.FromString(s.ID))})
+	go event.Emit(event.StampCreated, &event.StampEvent{ID: s.GetID()})
 	return c.NoContent(http.StatusCreated)
 }
 
 // GetStamp GET /stamps/:stampID
 func GetStamp(c echo.Context) error {
-	stamp, err := model.GetStamp(uuid.FromStringOrNil(c.Param("stampID")))
+	stampID := getRequestParamAsUUID(c, paramStampID)
+
+	stamp, err := model.GetStamp(stampID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -196,10 +73,12 @@ func GetStamp(c echo.Context) error {
 
 // PatchStamp PATCH /stamps/:stampID
 func PatchStamp(c echo.Context) error {
-	user := c.Get("user").(*model.User)
-	r := c.Get("rbac").(*rbac.RBAC)
+	user := getRequestUser(c)
+	stampID := getRequestParamAsUUID(c, paramStampID)
+	r := getRBAC(c)
+
 	// スタンプの存在確認
-	stamp, err := model.GetStamp(uuid.FromStringOrNil(c.Param("stampID")))
+	stamp, err := model.GetStamp(stampID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -233,139 +112,28 @@ func PatchStamp(c echo.Context) error {
 	// 画像変更
 	uploadedFile, err := c.FormFile("file")
 	if err == nil {
-		// ファイルサイズ制限1MB
-		if uploadedFile.Size > 1024*1024 {
-			return echo.NewHTTPError(http.StatusBadRequest, "too big image file")
-		}
-
-		// ファイルタイプ確認・必要があればリサイズ
-		b := &bytes.Buffer{}
-		src, err := uploadedFile.Open()
+		fileID, err := processMultipartFormStampUpload(c, uploadedFile)
 		if err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return err
 		}
-		defer src.Close()
-		switch uploadedFile.Header.Get(echo.HeaderContentType) {
-		case "image/png":
-			img, err := png.Decode(src)
-			if err != nil {
-				// 不正なpngである
-				return echo.NewHTTPError(http.StatusBadRequest, "bad png file")
-			}
-			if img.Bounds().Size().X > stampMaxWidth || img.Bounds().Size().Y > stampMaxHeight {
-				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
-				defer cancel()
-				img, err = thumb.Resize(ctx, img, stampMaxWidth, stampMaxHeight)
-				if err != nil {
-					switch err {
-					case context.DeadlineExceeded:
-						// リサイズタイムアウト
-						return echo.NewHTTPError(http.StatusBadRequest, "bad png file (resize timeout)")
-					default:
-						// 予期しないエラー
-						c.Logger().Error(err)
-						return echo.NewHTTPError(http.StatusInternalServerError)
-					}
-				}
-			}
-
-			// bytesに戻す
-			if b, err = thumb.EncodeToPNG(img); err != nil {
-				// 予期しないエラー
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
-
-		case "image/jpeg":
-			img, err := jpeg.Decode(src)
-			if err != nil {
-				// 不正なjpgである
-				return echo.NewHTTPError(http.StatusBadRequest, "bad jpg file")
-			}
-			if img.Bounds().Size().X > stampMaxWidth || img.Bounds().Size().Y > stampMaxHeight {
-				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
-				defer cancel()
-				img, err = thumb.Resize(ctx, img, stampMaxWidth, stampMaxHeight)
-				if err != nil {
-					switch err {
-					case context.DeadlineExceeded:
-						// リサイズタイムアウト
-						return echo.NewHTTPError(http.StatusBadRequest, "bad jpg file (resize timeout)")
-					default:
-						// 予期しないエラー
-						c.Logger().Error(err)
-						return echo.NewHTTPError(http.StatusInternalServerError)
-					}
-				}
-			}
-
-			// PNGに変換
-			if b, err = thumb.EncodeToPNG(img); err != nil {
-				// 予期しないエラー
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
-
-		case "image/gif":
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
-			defer cancel()
-			b, err = imagemagick.ResizeAnimationGIF(ctx, src, stampMaxWidth, stampMaxHeight, false)
-			if err != nil {
-				switch err {
-				case imagemagick.ErrUnavailable:
-					// gifは一時的にサポートされていない
-					return echo.NewHTTPError(http.StatusBadRequest, "gif file is temporarily unsupported")
-				case imagemagick.ErrUnsupportedType:
-					// 不正なgifである
-					return echo.NewHTTPError(http.StatusBadRequest, "bad gif file")
-				case context.DeadlineExceeded:
-					// リサイズタイムアウト
-					return echo.NewHTTPError(http.StatusBadRequest, "bad gif file (resize timeout)")
-				default:
-					// 予期しないエラー
-					c.Logger().Error(err)
-					return echo.NewHTTPError(http.StatusInternalServerError)
-				}
-			}
-
-		case "image/svg+xml":
-			// TODO svgバリデーション
-			io.Copy(b, src)
-
-		default:
-			return echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
-		}
-
-		// スタンプ画像保存
-		file := &model.File{
-			Name:      uploadedFile.Filename,
-			Size:      int64(b.Len()),
-			CreatorID: user.ID,
-		}
-		if err := file.Create(b); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-
-		data.FileID = file.ID
+		data.FileID = fileID.String()
 	} else if err != http.ErrMissingFile {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	// 更新
-	if err := model.UpdateStamp(stamp.GetID(), data); err != nil {
+	if err := model.UpdateStamp(stampID, data); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.StampModified, &event.StampEvent{ID: uuid.Must(uuid.FromString(stamp.ID))})
+	go event.Emit(event.StampModified, &event.StampEvent{ID: stampID})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteStamp DELETE /stamps/:stampID
 func DeleteStamp(c echo.Context) error {
-	stampID := uuid.FromStringOrNil(c.Param("stampID"))
+	stampID := getRequestParamAsUUID(c, paramStampID)
 
 	stamp, err := model.GetStamp(stampID)
 	if err != nil {
@@ -383,17 +151,17 @@ func DeleteStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.StampDeleted, &event.StampEvent{ID: uuid.Must(uuid.FromString(stamp.ID))})
+	go event.Emit(event.StampDeleted, &event.StampEvent{ID: stamp.GetID()})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // GetMessageStamps GET /messages/:messageID/stamps
 func GetMessageStamps(c echo.Context) error {
-	user := c.Get("user").(*model.User)
-	messageID := uuid.FromStringOrNil(c.Param("messageID"))
+	userID := getRequestUserID(c)
+	messageID := getRequestParamAsUUID(c, paramMessageID)
 
-	// Privateチャンネルの確認
-	channel, err := model.GetChannelByMessageID(messageID)
+	// メッセージ存在の確認
+	message, err := model.GetMessageByID(messageID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -403,15 +171,14 @@ func GetMessageStamps(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-	if !channel.IsPublic {
-		ok, err := model.IsUserPrivateChannelMember(channel.GetCID(), user.GetUID())
-		if err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-		if !ok {
-			return echo.NewHTTPError(http.StatusNotFound)
-		}
+	channelID := message.GetCID()
+
+	// ユーザーからアクセス可能なチャンネルかどうか
+	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	stamps, err := model.GetMessageStamps(messageID)
@@ -425,12 +192,12 @@ func GetMessageStamps(c echo.Context) error {
 
 // PostMessageStamp POST /messages/:messageID/stamps/:stampID
 func PostMessageStamp(c echo.Context) error {
-	user := c.Get("user").(*model.User)
-	messageID := c.Param("messageID")
-	stampID := c.Param("stampID")
+	userID := getRequestUserID(c)
+	messageID := getRequestParamAsUUID(c, paramMessageID)
+	stampID := getRequestParamAsUUID(c, paramStampID)
 
 	// メッセージ存在の確認
-	message, err := model.GetMessageByID(uuid.FromStringOrNil(messageID))
+	message, err := model.GetMessageByID(messageID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -440,52 +207,36 @@ func PostMessageStamp(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
+	channelID := message.GetCID()
 
-	// Privateチャンネルの確認
-	channel, err := model.GetChannelWithUserID(user.GetUID(), message.GetCID())
-	if err != nil {
-		switch err {
-		case model.ErrNotFoundOrForbidden:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-	if !channel.IsPublic {
-		ok, err := model.IsUserPrivateChannelMember(channel.GetCID(), user.GetUID())
-		if err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-		if !ok {
-			return echo.NewHTTPError(http.StatusNotFound)
-		}
+	// ユーザーからアクセス可能なチャンネルかどうか
+	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	// スタンプの存在を確認
-	stamp, err := model.GetStamp(uuid.FromStringOrNil(stampID))
-	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if ok, err := model.StampExists(stampID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	ms, err := model.AddStampToMessage(message.GetID(), stamp.GetID(), user.GetUID())
+	// スタンプをメッセージに押す
+	ms, err := model.AddStampToMessage(messageID, stampID, userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	go event.Emit(event.MessageStamped, &event.MessageStampEvent{
-		ID:        uuid.Must(uuid.FromString(messageID)),
-		ChannelID: uuid.Must(uuid.FromString(message.ChannelID)),
-		StampID:   uuid.Must(uuid.FromString(stampID)),
-		UserID:    user.GetUID(),
+		ID:        messageID,
+		ChannelID: channelID,
+		StampID:   stampID,
+		UserID:    userID,
 		Count:     ms.Count,
 		CreatedAt: ms.CreatedAt,
 	})
@@ -494,12 +245,12 @@ func PostMessageStamp(c echo.Context) error {
 
 // DeleteMessageStamp DELETE /messages/:messageID/stamps/:stampID
 func DeleteMessageStamp(c echo.Context) error {
-	user := c.Get("user").(*model.User)
-	messageID := c.Param("messageID")
-	stampID := c.Param("stampID")
+	userID := getRequestUserID(c)
+	messageID := getRequestParamAsUUID(c, paramMessageID)
+	stampID := getRequestParamAsUUID(c, paramStampID)
 
 	// メッセージ存在の確認
-	message, err := model.GetMessageByID(uuid.FromStringOrNil(messageID))
+	message, err := model.GetMessageByID(messageID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -509,60 +260,44 @@ func DeleteMessageStamp(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
+	channelID := message.GetCID()
 
-	// Privateチャンネルの確認
-	channel, err := model.GetChannelWithUserID(user.GetUID(), message.GetCID())
-	if err != nil {
-		switch err {
-		case model.ErrNotFoundOrForbidden:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-	if !channel.IsPublic {
-		ok, err := model.IsUserPrivateChannelMember(channel.GetCID(), user.GetUID())
-		if err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-		if !ok {
-			return echo.NewHTTPError(http.StatusNotFound)
-		}
+	// ユーザーからアクセス可能なチャンネルかどうか
+	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	// スタンプの存在を確認
-	stamp, err := model.GetStamp(uuid.FromStringOrNil(stampID))
-	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if ok, err := model.StampExists(stampID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	if err := model.RemoveStampFromMessage(message.GetID(), stamp.GetID(), user.GetUID()); err != nil {
+	// スタンプをメッセージから削除
+	if err := model.RemoveStampFromMessage(messageID, stampID, userID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	go event.Emit(event.MessageUnstamped, &event.MessageStampEvent{
-		ID:        uuid.Must(uuid.FromString(messageID)),
-		ChannelID: uuid.Must(uuid.FromString(message.ChannelID)),
-		StampID:   uuid.Must(uuid.FromString(stampID)),
-		UserID:    user.GetUID(),
+		ID:        messageID,
+		ChannelID: channelID,
+		StampID:   stampID,
+		UserID:    userID,
 	})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // GetMyStampHistory GET /users/me/stamp-history
 func GetMyStampHistory(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
 
-	h, err := model.GetUserStampHistory(user.GetUID())
+	h, err := model.GetUserStampHistory(userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)

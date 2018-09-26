@@ -39,12 +39,12 @@ func GetMessageReports(offset, limit int) (arr []*MessageReport, err error) {
 
 // GetMessageReportsByMessageID メッセージ通報を取得します
 func GetMessageReportsByMessageID(messageID uuid.UUID) (arr []*MessageReport, err error) {
-	err = db.Where(MessageReport{MessageID: messageID.String()}).Order("created_at").Find(&arr).Error
+	err = db.Where(&MessageReport{MessageID: messageID.String()}).Order("created_at").Find(&arr).Error
 	return
 }
 
 // GetMessageReportsByReporterID メッセージ通報を取得します
 func GetMessageReportsByReporterID(reporterID uuid.UUID) (arr []*MessageReport, err error) {
-	err = db.Where(MessageReport{Reporter: reporterID.String()}).Order("created_at").Find(&arr).Error
+	err = db.Where(&MessageReport{Reporter: reporterID.String()}).Order("created_at").Find(&arr).Error
 	return
 }

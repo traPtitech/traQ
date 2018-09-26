@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"github.com/mikespook/gorbac"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/rbac"
@@ -58,12 +57,12 @@ func (*RBACOverrideStore) GetAllOverrides() ([]rbac.OverrideData, error) {
 // SaveOverride オーバライドルール保存します
 func (*RBACOverrideStore) SaveOverride(userID uuid.UUID, p gorbac.Permission, validity bool) error {
 	return db.
-		Set("gorm:insert_option", fmt.Sprintf("ON DUPLICATE KEY UPDATE validity = %v, updated_at = now()", validity)).
+		Set("gorm:insert_option", "ON DUPLICATE KEY UPDATE validity = VALUES(validity), updated_at = now()").
 		Create(&RBACOverride{UserID: userID.String(), Permission: p.ID(), Validity: validity}).
 		Error
 }
 
 // DeleteOverride オーバライドルールを削除します
 func (*RBACOverrideStore) DeleteOverride(userID uuid.UUID, p gorbac.Permission) error {
-	return db.Where(RBACOverride{UserID: userID.String(), Permission: p.ID()}).Delete(RBACOverride{}).Error
+	return db.Where(&RBACOverride{UserID: userID.String(), Permission: p.ID()}).Delete(RBACOverride{}).Error
 }

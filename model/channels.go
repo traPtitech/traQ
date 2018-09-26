@@ -328,6 +328,12 @@ func GetChildrenChannelIDsWithUserID(userID uuid.UUID, channelID string) (childr
 	return
 }
 
+// GetChildrenChannelIDs 子チャンネルのIDを取得する
+func GetChildrenChannelIDs(channelID uuid.UUID) (children []string, err error) {
+	err = db.Model(Channel{}).Where(&Channel{ParentID: channelID.String()}).Pluck("id", &children).Error
+	return
+}
+
 // GetChannel チャンネルを取得する
 func GetChannel(channelID uuid.UUID) (*Channel, error) {
 	ch := &Channel{}
@@ -360,6 +366,22 @@ func GetChannelWithUserID(userID, channelID uuid.UUID) (*Channel, error) {
 	return channel, nil
 }
 
+// IsChannelAccessibleToUser 指定したチャンネルが指定したユーザーからアクセス可能かどうか
+func IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error) {
+	c := 0
+	err := db.
+		Model(Channel{}).
+		Joins("LEFT JOIN users_private_channels ON users_private_channels.channel_id = channels.id").
+		Where("(channels.is_public = true OR users_private_channels.user_id = ?) AND channels.id = ?", userID, channelID).
+		Count(&c).
+		Error
+	if err != nil {
+		return false, err
+	}
+
+	return c > 0, nil
+}
+
 // GetChannelByMessageID メッセージIDによってチャンネルを取得
 func GetChannelByMessageID(messageID uuid.UUID) (*Channel, error) {
 	channel := &Channel{}
@@ -380,7 +402,6 @@ func GetChannelByMessageID(messageID uuid.UUID) (*Channel, error) {
 
 // GetChannelList userIDのユーザーから見えるチャンネルの一覧を取得する
 func GetChannelList(userID uuid.UUID) (channels []*Channel, err error) {
-	// TODO: 隠しチャンネルを表示するかどうかをクライアントと決める
 	err = db.
 		Joins("LEFT JOIN users_private_channels ON users_private_channels.channel_id = channels.id").
 		Where("channels.is_public = true OR users_private_channels.user_id = ?", userID.String()).

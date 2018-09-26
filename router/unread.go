@@ -1,7 +1,6 @@
 package router
 
 import (
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"net/http"
 
@@ -11,9 +10,9 @@ import (
 
 // GetUnread GET /users/me/unread
 func GetUnread(c echo.Context) error {
-	me := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
 
-	unreads, err := model.GetUnreadMessagesByUserID(me.GetUID())
+	unreads, err := model.GetUnreadMessagesByUserID(userID)
 	if err != nil {
 		c.Logger().Error()
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -29,15 +28,14 @@ func GetUnread(c echo.Context) error {
 
 // DeleteUnread DELETE /users/me/unread/:channelID
 func DeleteUnread(c echo.Context) error {
-	me := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	channelID := uuid.FromStringOrNil(c.Param("channelID"))
-
-	if err := model.DeleteUnreadsByChannelID(channelID, me.GetUID()); err != nil {
+	if err := model.DeleteUnreadsByChannelID(channelID, userID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.MessageRead, &event.ReadMessageEvent{UserID: me.GetUID(), ChannelID: channelID})
+	go event.Emit(event.MessageRead, &event.ReadMessageEvent{UserID: userID, ChannelID: channelID})
 	return c.NoContent(http.StatusNoContent)
 }

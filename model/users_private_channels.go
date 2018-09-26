@@ -18,11 +18,13 @@ func (upc *UsersPrivateChannel) TableName() string {
 
 // AddPrivateChannelMember プライベートチャンネルにメンバーを追加します
 func AddPrivateChannelMember(channelID, userID uuid.UUID) error {
-	upc := &UsersPrivateChannel{
-		UserID:    userID.String(),
-		ChannelID: channelID.String(),
+	if err := db.Create(&UsersPrivateChannel{UserID: userID.String(), ChannelID: channelID.String()}).Error; err != nil {
+		if isMySQLDuplicatedRecordErr(err) {
+			return nil
+		}
+		return err
 	}
-	return db.Create(&upc).Error
+	return nil
 }
 
 // GetPrivateChannel ある二つのユーザー間のプライベートチャンネルが存在するかを調べる
@@ -61,19 +63,17 @@ func GetPrivateChannel(userID1, userID2 string) (string, error) {
 
 // GetPrivateChannelMembers DMのメンバーの配列を取得する
 func GetPrivateChannelMembers(channelID string) (member []string, err error) {
-	err = db.Model(UsersPrivateChannel{}).Where(UsersPrivateChannel{ChannelID: channelID}).Pluck("user_id", &member).Error
+	member = make([]string, 0)
+	err = db.Model(UsersPrivateChannel{}).Where(&UsersPrivateChannel{ChannelID: channelID}).Pluck("user_id", &member).Error
 	return
 }
 
 // IsUserPrivateChannelMember ユーザーがプライベートチャンネルのメンバーかどうかを確認します
 func IsUserPrivateChannelMember(channelID, userID uuid.UUID) (bool, error) {
-	c := &UsersPrivateChannel{}
-	err := db.Where(UsersPrivateChannel{ChannelID: channelID.String(), UserID: userID.String()}).Take(c).Error
+	c := 0
+	err := db.Model(UsersPrivateChannel{}).Where(&UsersPrivateChannel{ChannelID: channelID.String(), UserID: userID.String()}).Count(&c).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return false, nil
-		}
 		return false, err
 	}
-	return true, nil
+	return c > 0, nil
 }

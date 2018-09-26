@@ -6,9 +6,9 @@ import (
 	"net/http"
 )
 
-// PostHeartbeat POST /heartbeat のハンドラ
+// PostHeartbeat POST /heartbeat
 func PostHeartbeat(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	user := getRequestUser(c)
 
 	req := struct {
 		ChannelID string `json:"channelId" validate:"uuid"`
@@ -24,7 +24,7 @@ func PostHeartbeat(c echo.Context) error {
 	return c.JSON(http.StatusOK, status)
 }
 
-// GetHeartbeat GET /heartbeat のハンドラ
+// GetHeartbeat GET /heartbeat
 func GetHeartbeat(c echo.Context) error {
 	req := struct {
 		ChannelID string `query:"channelId" validate:"uuid"`

@@ -1,7 +1,6 @@
 package router
 
 import (
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"net/http"
 
@@ -11,43 +10,30 @@ import (
 
 // GetStars GET /users/me/stars
 func GetStars(c echo.Context) error {
-	me := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
 
-	stars, err := model.GetStaredChannels(me.GetUID())
+	stars, err := model.GetStaredChannels(userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	res := make([]string, len(stars))
-	for i, v := range stars {
-		res[i] = v.ID
-	}
-
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, stars)
 }
 
 // PutStars PUT /users/me/stars/:channelID
 func PutStars(c echo.Context) error {
-	userID := c.Get("user").(*model.User).GetUID()
-	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+	userID := getRequestUserID(c)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	if _, err := validateChannelID(channelID, userID); err != nil {
+	if err := model.AddStar(userID, channelID); err != nil {
 		switch err {
-		case model.ErrNotFound:
+		case model.ErrNotFoundOrForbidden:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-	}
-
-	if err := model.AddStar(userID, channelID); err != nil {
-		if isMySQLDuplicatedRecordErr(err) {
-			return c.NoContent(http.StatusNoContent)
-		}
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	go event.Emit(event.ChannelStared, &event.UserChannelEvent{UserID: userID, ChannelID: channelID})
@@ -56,8 +42,8 @@ func PutStars(c echo.Context) error {
 
 // DeleteStars DELETE /users/me/stars/:channelID
 func DeleteStars(c echo.Context) error {
-	userID := c.Get("user").(*model.User).GetUID()
-	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+	userID := getRequestUserID(c)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
 
 	if _, err := validateChannelID(channelID, userID); err != nil {
 		switch err {
