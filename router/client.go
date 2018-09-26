@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/oauth2/scope"
 	"net/http"
@@ -44,11 +43,11 @@ type AllowedClientInfo struct {
 	ApprovedAt  time.Time          `json:"approvedAt"`
 }
 
-// GetMyTokens : GET /users/me/tokens
+// GetMyTokens GET /users/me/tokens
 func (h *Handlers) GetMyTokens(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+	userID := getRequestUserID(c)
 
-	ot, err := h.OAuth2.GetTokensByUser(uuid.FromStringOrNil(userID))
+	ot, err := h.OAuth2.GetTokensByUser(userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -80,12 +79,12 @@ func (h *Handlers) GetMyTokens(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// DeleteMyToken : DELETE /users/me/tokens/:tokenID
+// DeleteMyToken DELETE /users/me/tokens/:tokenID
 func (h *Handlers) DeleteMyToken(c echo.Context) error {
-	tokenID := c.Param("tokenID")
-	userID := c.Get("user").(*model.User).ID
+	tokenID := getRequestParamAsUUID(c, paramTokenID)
+	userID := getRequestUserID(c)
 
-	ot, err := h.OAuth2.GetTokenByID(uuid.FromStringOrNil(tokenID))
+	ot, err := h.OAuth2.GetTokenByID(tokenID)
 	if err != nil {
 		switch err {
 		case oauth2.ErrTokenNotFound:
@@ -95,8 +94,7 @@ func (h *Handlers) DeleteMyToken(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-
-	if ot.UserID.String() != userID {
+	if ot.UserID != userID {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
@@ -113,11 +111,11 @@ func (h *Handlers) DeleteMyToken(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// GetClients : GET /clients
+// GetClients GET /clients
 func (h *Handlers) GetClients(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+	userID := getRequestUserID(c)
 
-	oc, err := h.OAuth2.GetClientsByUser(uuid.FromStringOrNil(userID))
+	oc, err := h.OAuth2.GetClientsByUser(userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -139,28 +137,18 @@ func (h *Handlers) GetClients(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// PostClients : POST /clients
+// PostClients POST /clients
 func (h *Handlers) PostClients(c echo.Context) error {
-	userID := c.Get("user").(*model.User).ID
+	userID := getRequestUserID(c)
 
 	req := struct {
-		Name        string   `json:"name"`
-		Description string   `json:"description"`
-		RedirectURI string   `json:"redirectUri"`
-		Scopes      []string `json:"scopes"`
+		Name        string   `json:"name"        validate:"required,max=32"`
+		Description string   `json:"description" validate:"required"`
+		RedirectURI string   `json:"redirectUri" validate:"uri,required"`
+		Scopes      []string `json:"scopes"      validate:"unique,dive,required"`
 	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
-
-	if len(req.Name) == 0 || len(req.Name) > 32 {
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
-	if len(req.Description) == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
-	if !uriRegex.MatchString(req.RedirectURI) {
-		return echo.NewHTTPError(http.StatusBadRequest)
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	scopes := scope.AccessScopes{}
@@ -177,7 +165,7 @@ func (h *Handlers) PostClients(c echo.Context) error {
 		Name:         req.Name,
 		Description:  req.Description,
 		Confidential: false,
-		CreatorID:    uuid.FromStringOrNil(userID),
+		CreatorID:    userID,
 		RedirectURI:  req.RedirectURI,
 		Secret:       base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes()),
 		Scopes:       scopes,
@@ -198,7 +186,7 @@ func (h *Handlers) PostClients(c echo.Context) error {
 	})
 }
 
-// GetClient : GET /clients/:clientID
+// GetClient GET /clients/:clientID
 func (h *Handlers) GetClient(c echo.Context) error {
 	clientID := c.Param("clientID")
 
@@ -221,10 +209,10 @@ func (h *Handlers) GetClient(c echo.Context) error {
 	})
 }
 
-// PatchClient : PATCH /clients/:clientID
+// PatchClient PATCH /clients/:clientID
 func (h *Handlers) PatchClient(c echo.Context) error {
 	clientID := c.Param("clientID")
-	userID := c.Get("user").(*model.User).ID
+	userID := getRequestUserID(c)
 
 	oc, err := h.OAuth2.GetClient(clientID)
 	if err != nil {
@@ -236,8 +224,7 @@ func (h *Handlers) PatchClient(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-
-	if oc.CreatorID.String() != userID {
+	if oc.CreatorID != userID {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
@@ -276,10 +263,10 @@ func (h *Handlers) PatchClient(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// DeleteClient : DELETE /clients/:clientID
+// DeleteClient DELETE /clients/:clientID
 func (h *Handlers) DeleteClient(c echo.Context) error {
 	clientID := c.Param("clientID")
-	userID := c.Get("user").(*model.User).ID
+	userID := getRequestUserID(c)
 
 	oc, err := h.OAuth2.GetClient(clientID)
 	if err != nil {
@@ -291,8 +278,7 @@ func (h *Handlers) DeleteClient(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-
-	if oc.CreatorID.String() != userID {
+	if oc.CreatorID != userID {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 

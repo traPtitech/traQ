@@ -32,18 +32,18 @@ var (
 
 // File DBに格納するファイルの構造体
 type File struct {
-	ID              string `gorm:"type:char(36);primary_key" validate:"uuid,required"`
-	Name            string `gorm:"type:text"                 validate:"required"`
-	Mime            string `gorm:"type:text"                 validate:"required"`
-	Size            int64  `                                 validate:"min=0,required"`
-	CreatorID       string `gorm:"type:char(36)"             validate:"uuid,required"`
-	Hash            string `gorm:"type:char(32)"             validate:"max=32"`
-	Manager         string `gorm:"type:varchar(30)"`
-	HasThumbnail    bool
-	ThumbnailWidth  int        `                                 validate:"min=0"`
-	ThumbnailHeight int        `                                 validate:"min=0"`
-	CreatedAt       time.Time  `gorm:"precision:6"`
-	DeletedAt       *time.Time `gorm:"precision:6"`
+	ID              string     `gorm:"type:char(36);primary_key" json:"fileId"   validate:"uuid,required"`
+	Name            string     `gorm:"type:text"                 json:"name"     validate:"required"`
+	Mime            string     `gorm:"type:text"                 json:"mime"     validate:"required"`
+	Size            int64      `                                 json:"size"     validate:"min=0,required"`
+	CreatorID       string     `gorm:"type:char(36)"             json:"-"        validate:"uuid,required"`
+	Hash            string     `gorm:"type:char(32)"             json:"md5"      validate:"max=32"`
+	Manager         string     `gorm:"type:varchar(30)"          json:"-"`
+	HasThumbnail    bool       `                                 json:"hasThumb"`
+	ThumbnailWidth  int        `                                 json:"thumbWidth,omitempty"  validate:"min=0"`
+	ThumbnailHeight int        `                                 json:"thumbHeight,omitempty" validate:"min=0"`
+	CreatedAt       time.Time  `gorm:"precision:6"               json:"datetime"`
+	DeletedAt       *time.Time `gorm:"precision:6"               json:"-"`
 }
 
 // GetID FileのUUIDを返します
@@ -58,7 +58,7 @@ func (f *File) TableName() string {
 
 // BeforeDelete db.Deleteのトランザクション内で実行されます
 func (f *File) BeforeDelete(scope *gorm.Scope) error {
-	return db.Model(File{ID: f.ID}).Take(f).Error
+	return db.Model(&File{ID: f.ID}).Take(f).Error
 }
 
 // AfterDelete db.Deleteのトランザクション内で実行されます
@@ -265,7 +265,7 @@ func OpenFileByID(fileID uuid.UUID) (io.ReadCloser, error) {
 // GetMetaFileDataByID ファイルのメタデータを取得します
 func GetMetaFileDataByID(fileID uuid.UUID) (*File, error) {
 	f := &File{}
-	if err := db.Where(File{ID: fileID.String()}).Take(f).Error; err != nil {
+	if err := db.Where(&File{ID: fileID.String()}).Take(f).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, ErrNotFound
 		}

@@ -117,7 +117,7 @@ func CreateUser(name, email, password string, role gorbac.Role) (*User, error) {
 // GetUser IDでユーザーの構造体を取得する
 func GetUser(userID uuid.UUID) (*User, error) {
 	user := &User{}
-	if err := db.Where(User{ID: userID.String()}).Take(user).Error; err != nil {
+	if err := db.Where(&User{ID: userID.String()}).Take(user).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, ErrNotFound
 		}
@@ -126,13 +126,22 @@ func GetUser(userID uuid.UUID) (*User, error) {
 	return user, nil
 }
 
+// UserExists 指定したIDのユーザーが存在するかどうか
+func UserExists(userID uuid.UUID) (bool, error) {
+	c := 0
+	if err := db.Model(User{}).Where(&User{ID: userID.String()}).Count(&c).Error; err != nil {
+		return false, err
+	}
+	return c > 0, nil
+}
+
 // GetUserByName nameでユーザーを取得します
 func GetUserByName(name string) (*User, error) {
 	if len(name) == 0 {
 		return nil, ErrNotFound
 	}
 	user := &User{}
-	if err := db.Where(User{Name: name}).Take(user).Error; err != nil {
+	if err := db.Where(&User{Name: name}).Take(user).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, ErrNotFound
 		}
@@ -150,7 +159,7 @@ func GetUsers() (users []*User, err error) {
 // ChangeUserPassword ユーザーのパスワードを変更します
 func ChangeUserPassword(userID uuid.UUID, password string) error {
 	salt := generateSalt()
-	return db.Model(User{ID: userID.String()}).Updates(map[string]interface{}{
+	return db.Model(&User{ID: userID.String()}).Updates(map[string]interface{}{
 		"salt":     hex.EncodeToString(salt),
 		"password": hex.EncodeToString(hashPassword(password, salt)),
 	}).Error
@@ -158,7 +167,7 @@ func ChangeUserPassword(userID uuid.UUID, password string) error {
 
 // ChangeUserIcon ユーザーのアイコンを変更します
 func ChangeUserIcon(userID, fileID uuid.UUID) error {
-	return db.Model(User{ID: userID.String()}).Update("icon", fileID.String()).Error
+	return db.Model(&User{ID: userID.String()}).Update("icon", fileID.String()).Error
 }
 
 // ChangeUserDisplayName ユーザーの表示名を変更します
@@ -166,7 +175,7 @@ func ChangeUserDisplayName(userID uuid.UUID, displayName string) error {
 	if utf8.RuneCountInString(displayName) > 64 {
 		return errors.New("displayName must be <=64 characters")
 	}
-	return db.Model(User{ID: userID.String()}).Update("display_name", displayName).Error
+	return db.Model(&User{ID: userID.String()}).Update("display_name", displayName).Error
 }
 
 // ChangeUserTwitterID ユーザーのTwitterIDを変更します
@@ -174,12 +183,12 @@ func ChangeUserTwitterID(userID uuid.UUID, twitterID string) error {
 	if err := validator.ValidateVar(twitterID, "twitterid"); err != nil {
 		return err
 	}
-	return db.Model(User{ID: userID.String()}).Update("twitter_id", twitterID).Error
+	return db.Model(&User{ID: userID.String()}).Update("twitter_id", twitterID).Error
 }
 
 // UpdateUserLastOnline ユーザーの最終オンライン日時を更新します
 func UpdateUserLastOnline(id string, time time.Time) (err error) {
-	return db.Model(User{ID: id}).Update("last_online", &time).Error
+	return db.Model(&User{ID: id}).Update("last_online", &time).Error
 }
 
 // AuthenticateUser ユーザー構造体とパスワードを照合します

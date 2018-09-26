@@ -9,17 +9,19 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// GetTopic GET /channels/{channelID}/topic
+// GetTopic GET /channels/:channelID/topic
 func GetTopic(c echo.Context) error {
-	userID := c.Get("user").(*model.User).GetUID()
-	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+	userID := getRequestUserID(c)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+
 	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
 		default:
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
@@ -28,10 +30,10 @@ func GetTopic(c echo.Context) error {
 	})
 }
 
-// PutTopic PUT /channels/{channelID}/topic
+// PutTopic PUT /channels/:channelID/topic
 func PutTopic(c echo.Context) error {
-	userID := c.Get("user").(*model.User).GetUID()
-	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+	userID := getRequestUserID(c)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
 
 	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
@@ -39,7 +41,8 @@ func PutTopic(c echo.Context) error {
 		case model.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
 		default:
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
@@ -52,7 +55,7 @@ func PutTopic(c echo.Context) error {
 
 	if err := model.UpdateChannelTopic(channelID, req.Text, userID); err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "An error occurred when channel model update.")
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	if ch.IsPublic {

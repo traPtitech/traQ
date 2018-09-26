@@ -8,7 +8,6 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
 )
 
@@ -34,30 +33,26 @@ type TagListForResponse struct {
 
 // GetUserTags GET /users/:userID/tags
 func GetUserTags(c echo.Context) error {
-	userID := uuid.FromStringOrNil(c.Param("userID"))
+	userID := getRequestParamAsUUID(c, paramUserID)
 
 	// ユーザー確認
-	user, err := model.GetUser(userID)
-	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if ok, err := model.UserExists(userID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	res, err := getUserTags(user.GetUID(), c)
+	res, err := getUserTags(userID, c)
 	if err != nil {
 		return err
 	}
 	return c.JSON(http.StatusOK, res)
 }
 
-// PostUserTag POST /users/{userID}/tags のハンドラ
+// PostUserTag POST /users/:userID/tags
 func PostUserTag(c echo.Context) error {
-	userID := uuid.FromStringOrNil(c.Param("userID"))
+	userID := getRequestParamAsUUID(c, paramUserID)
 
 	// リクエスト検証
 	req := struct {
@@ -68,15 +63,11 @@ func PostUserTag(c echo.Context) error {
 	}
 
 	// ユーザー確認
-	user, err := model.GetUser(userID)
-	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if ok, err := model.UserExists(userID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	// タグの確認
@@ -88,8 +79,8 @@ func PostUserTag(c echo.Context) error {
 
 	// 操作制約付きタグ
 	if t.Restricted {
-		reqUser := c.Get("user").(*model.User)
-		r := c.Get("rbac").(*rbac.RBAC)
+		reqUser := getRequestUser(c)
+		r := getRBAC(c)
 
 		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
@@ -97,20 +88,25 @@ func PostUserTag(c echo.Context) error {
 	}
 
 	// ユーザーにタグを付与
-	if err := model.AddUserTag(user.GetUID(), t.GetID()); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	if err := model.AddUserTag(userID, t.GetID()); err != nil {
+		switch err {
+		case model.ErrUserAlreadyHasTag:
+			return c.NoContent(http.StatusNoContent)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 
-	go event.Emit(event.UserTagsUpdated, event.UserEvent{ID: user.ID})
+	go event.Emit(event.UserTagsUpdated, &event.UserEvent{ID: userID.String()})
 	return c.NoContent(http.StatusCreated)
 }
 
-// PatchUserTag PATCH /users/{userID}/tags/{tagID} のハンドラ
+// PatchUserTag PATCH /users/:userID/tags/:tagID
 func PatchUserTag(c echo.Context) error {
-	reqUser := c.Get("user").(*model.User)
-	userID := uuid.FromStringOrNil(c.Param("userID"))
-	tagID := uuid.FromStringOrNil(c.Param("tagID"))
+	me := getRequestUserID(c)
+	userID := getRequestParamAsUUID(c, paramUserID)
+	tagID := getRequestParamAsUUID(c, paramTagID)
 
 	// リクエスト検証
 	body := struct {
@@ -133,7 +129,7 @@ func PatchUserTag(c echo.Context) error {
 	}
 
 	// 他人のロックは変更不可
-	if reqUser.GetUID() != userID {
+	if me != userID {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
@@ -148,14 +144,14 @@ func PatchUserTag(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserTagsUpdated, event.UserEvent{ID: userID.String()})
+	go event.Emit(event.UserTagsUpdated, &event.UserEvent{ID: userID.String()})
 	return c.NoContent(http.StatusNoContent)
 }
 
-// DeleteUserTag DELETE /users/{userID}/tags/{tagID} のハンドラ
+// DeleteUserTag DELETE /users/:userID/tags/:tagID
 func DeleteUserTag(c echo.Context) error {
-	userID := uuid.FromStringOrNil(c.Param("userID"))
-	tagID := uuid.FromStringOrNil(c.Param("tagID"))
+	userID := getRequestParamAsUUID(c, paramUserID)
+	tagID := getRequestParamAsUUID(c, paramTagID)
 
 	// タグがつけられているかを見る
 	ut, err := model.GetUserTag(userID, tagID)
@@ -171,8 +167,8 @@ func DeleteUserTag(c echo.Context) error {
 
 	// 操作制約付きタグ
 	if ut.Tag.Restricted {
-		reqUser := c.Get("user").(*model.User)
-		r := c.Get("rbac").(*rbac.RBAC)
+		reqUser := getRequestUser(c)
+		r := getRBAC(c)
 
 		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
@@ -185,11 +181,11 @@ func DeleteUserTag(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserTagsUpdated, event.UserEvent{ID: userID.String()})
+	go event.Emit(event.UserTagsUpdated, &event.UserEvent{ID: userID.String()})
 	return c.NoContent(http.StatusNoContent)
 }
 
-// GetAllTags GET /tags のハンドラ
+// GetAllTags GET /tags
 func GetAllTags(c echo.Context) error {
 	tags, err := model.GetAllTags()
 	if err != nil {
@@ -218,11 +214,11 @@ func GetAllTags(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// GetUsersByTagID GET /tags/{tagID} のハンドラ
+// GetUsersByTagID GET /tags/:tagID
 func GetUsersByTagID(c echo.Context) error {
-	id := uuid.FromStringOrNil(c.Param("tagID"))
+	tagID := getRequestParamAsUUID(c, paramTagID)
 
-	t, err := model.GetTagByID(id)
+	t, err := model.GetTagByID(tagID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -249,10 +245,12 @@ func GetUsersByTagID(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// PatchTag PATCH /tags/{tagID} のハンドラ
+// PatchTag PATCH /tags/:tagID
 func PatchTag(c echo.Context) error {
+	tagID := getRequestParamAsUUID(c, paramTagID)
+
 	// タグ存在確認
-	t, err := model.GetTagByID(uuid.FromStringOrNil(c.Param("tagID")))
+	_, err := model.GetTagByID(tagID)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:
@@ -274,28 +272,28 @@ func PatchTag(c echo.Context) error {
 
 	// 制約変更
 	if req.Restrict != nil {
-		reqUser := c.Get("user").(*model.User)
-		r := c.Get("rbac").(*rbac.RBAC)
+		reqUser := getRequestUser(c)
+		r := getRBAC(c)
 
 		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 
-		if err := model.ChangeTagRestrict(t.GetID(), *req.Restrict); err != nil {
+		if err := model.ChangeTagRestrict(tagID, *req.Restrict); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	// タグタイプ変更
 	if req.Type != nil {
-		reqUser := c.Get("user").(*model.User)
-		r := c.Get("rbac").(*rbac.RBAC)
+		reqUser := getRequestUser(c)
+		r := getRBAC(c)
 
 		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 
-		if err := model.ChangeTagType(t.GetID(), *req.Type); err != nil {
+		if err := model.ChangeTagType(tagID, *req.Type); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}

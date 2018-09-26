@@ -24,7 +24,7 @@ func TestGetChannelPin(t *testing.T) {
 	requestWithContext(t, mw(GetChannelPin), c)
 
 	assert.EqualValues(http.StatusOK, rec.Code)
-	var responseBody []*PinForResponse
+	var responseBody []*pinForResponse
 	assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody))
 	assert.Len(responseBody, 1)
 
@@ -45,7 +45,7 @@ func TestGetPin(t *testing.T) {
 	requestWithContext(t, mw(GetPin), c)
 
 	assert.EqualValues(http.StatusOK, rec.Code)
-	responseBody := &PinForResponse{}
+	responseBody := &pinForResponse{}
 	assert.NoError(json.Unmarshal(rec.Body.Bytes(), responseBody))
 
 	assert.EqualValues(testPin.String(), responseBody.PinID)

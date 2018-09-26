@@ -37,7 +37,7 @@ func CreatePin(messageID, userID uuid.UUID) (uuid.UUID, error) {
 // GetPin IDからピン留めを取得する
 func GetPin(id uuid.UUID) (p *Pin, err error) {
 	p = &Pin{}
-	err = db.Preload("Message").Where(Pin{ID: id.String()}).Take(p).Error
+	err = db.Preload("Message").Where(&Pin{ID: id.String()}).Take(p).Error
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
@@ -50,7 +50,7 @@ func GetPin(id uuid.UUID) (p *Pin, err error) {
 // IsPinned 指定したメッセージがピン留めされているかを取得する
 func IsPinned(messageID uuid.UUID) (bool, error) {
 	p := &Pin{}
-	err := db.Where(Pin{MessageID: messageID.String()}).Take(p).Error
+	err := db.Where(&Pin{MessageID: messageID.String()}).Take(p).Error
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return false, nil
@@ -62,7 +62,7 @@ func IsPinned(messageID uuid.UUID) (bool, error) {
 
 // DeletePin ピン留めレコードを削除する
 func DeletePin(id uuid.UUID) error {
-	return db.Delete(Pin{ID: id.String()}).Error
+	return db.Delete(&Pin{ID: id.String()}).Error
 }
 
 // GetPinsByChannelID あるチャンネルのピン留めを全部取得する

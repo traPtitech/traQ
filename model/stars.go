@@ -19,19 +19,32 @@ func (star *Star) TableName() string {
 
 // AddStar チャンネルをお気に入り登録します
 func AddStar(userID, channelID uuid.UUID) error {
-	return db.Create(&Star{
-		UserID:    userID.String(),
-		ChannelID: channelID.String(),
-	}).Error
+	// ユーザーからチャンネルが見えるかどうか
+	ok, err := IsChannelAccessibleToUser(userID, channelID)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return ErrNotFoundOrForbidden
+	}
+
+	if err := db.Create(&Star{UserID: userID.String(), ChannelID: channelID.String()}).Error; err != nil {
+		if isMySQLDuplicatedRecordErr(err) {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 // RemoveStar チャンネルのお気に入りを解除します
 func RemoveStar(userID, channelID uuid.UUID) error {
-	return db.Where(Star{UserID: userID.String(), ChannelID: channelID.String()}).Delete(Star{}).Error
+	return db.Where(&Star{UserID: userID.String(), ChannelID: channelID.String()}).Delete(Star{}).Error
 }
 
-// GetStaredChannels userIDがお気に入りしているチャンネルの一覧を取得する
-func GetStaredChannels(userID uuid.UUID) (channels []*Channel, err error) {
-	err = db.Joins("INNER JOIN stars ON stars.channel_id = channels.id").Where("stars.user_id = ?", userID.String()).Find(&channels).Error
+// GetStaredChannels userIDがお気に入りしているチャンネルIDを取得する
+func GetStaredChannels(userID uuid.UUID) (channels []string, err error) {
+	channels = make([]string, 0)
+	err = db.Model(Star{}).Where(&Star{UserID: userID.String()}).Pluck("channel_id", &channels).Error
 	return
 }
