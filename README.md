@@ -12,7 +12,7 @@
 - git
 - make
 
-### Recommended Setup (requires docker and docker-compose)
+### Setup with docker and docker-compose (Recommended)
 
 #### First Up (or entirely rebuild)
 `docker-compose up -d --build`
@@ -21,6 +21,10 @@ Now you can access to
 + `http://localhost:3000` for traQ
 + `http://localhost:3001` for Adminer(Browser Database Management Tool)
 + `http://localhost:6060` for traQ pprof web interface
++ `3002/tcp` for traQ MariaDB
+    + username: `root`
+    + password: `password`
+    + database: `traq`
 
 #### Rebuild traQ
 `docker-compose up -d --no-deps --build traq-backend`
@@ -32,7 +36,8 @@ Now you can access to
 
 Setup [GOPATH](https://github.com/golang/go/wiki/GOPATH) first
 
-Set Environment Variable 'GO111MODULE' to 'on' (`export GO111MODULE=on`)
+Set Environment Variable 'GO111MODULE' to 'on'.
+We recommend using [direnv](https://github.com/direnv/direnv) for setting up it.
 
 ```
 make init
