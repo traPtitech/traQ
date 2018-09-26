@@ -145,9 +145,6 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	e.POST("/login", router.PostLogin)   //TODO 後で消す
-	e.POST("/logout", router.PostLogout) //TODO 後で消す
-
 	api := e.Group("/api/1.0")
 	api.Use(router.UserAuthenticate(oauth))
 	apiNoAuth := e.Group("/api/1.0")
