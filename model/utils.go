@@ -132,6 +132,13 @@ func Sync() error {
 		if err := db.Create(serverUser).Error; err != nil {
 			return err
 		}
+		fileID, err := GenerateIcon(uuid.NewV4().String())
+		if err != nil {
+			return err
+		}
+		if err := ChangeUserIcon(serverUser.GetUID(), uuid.Must(uuid.FromString(fileID))); err != nil {
+			return err
+		}
 	}
 
 	// generalチャンネル確認
