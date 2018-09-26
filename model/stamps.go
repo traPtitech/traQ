@@ -65,6 +65,9 @@ func CreateStamp(name, fileID, userID string) (*Stamp, error) {
 		CreatorID: userID,
 		FileID:    fileID,
 	}
+	if len(userID) == 0 {
+		stamp.CreatorID = serverUser.ID
+	}
 
 	if err := db.Create(stamp).Error; err != nil {
 		return nil, err

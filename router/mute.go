@@ -2,7 +2,6 @@ package router
 
 import (
 	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"net/http"
