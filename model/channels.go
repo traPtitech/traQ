@@ -183,6 +183,18 @@ func (upc *UsersPrivateChannel) TableName() string {
 	return "users_private_channels"
 }
 
+// UserSubscribeChannel ユーザー・通知チャンネル対構造体
+type UserSubscribeChannel struct {
+	UserID    uuid.UUID `gorm:"type:char(36);primary_key"`
+	ChannelID uuid.UUID `gorm:"type:char(36);primary_key"`
+	CreatedAt time.Time `gorm:"precision:6"`
+}
+
+// TableName UserNotifiedChannel構造体のテーブル名
+func (*UserSubscribeChannel) TableName() string {
+	return "users_subscribe_channels"
+}
+
 // CreatePublicChannel パブリックチャンネルを作成します
 func CreatePublicChannel(parent, name string, creatorID uuid.UUID) (*Channel, error) {
 	ch := &Channel{
@@ -682,6 +694,28 @@ func IsUserPrivateChannelMember(channelID, userID uuid.UUID) (bool, error) {
 		return false, err
 	}
 	return c > 0, nil
+}
+
+// SubscribeChannel 指定したチャンネルを購読します
+func SubscribeChannel(userID, channelID uuid.UUID) error {
+	return db.Create(&UserSubscribeChannel{UserID: userID, ChannelID: channelID}).Error
+}
+
+// UnsubscribeChannel 指定したチャンネルの購読を解除します
+func UnsubscribeChannel(userID, channelID uuid.UUID) error {
+	return db.Where(&UserSubscribeChannel{UserID: userID, ChannelID: channelID}).Delete(UserSubscribeChannel{}).Error
+}
+
+// GetSubscribingUser 指定したチャンネルを購読しているユーザーを取得
+func GetSubscribingUser(channelID uuid.UUID) (users []uuid.UUID, err error) {
+	err = db.Model(UserSubscribeChannel{}).Where(&UserSubscribeChannel{ChannelID: channelID}).Pluck("user_id", &users).Error
+	return
+}
+
+// GetSubscribedChannels ユーザーが購読しているチャンネルを取得する
+func GetSubscribedChannels(userID uuid.UUID) (channels []uuid.UUID, err error) {
+	err = db.Model(UserSubscribeChannel{}).Where(&UserSubscribeChannel{UserID: userID}).Pluck("channel_id", &channels).Error
+	return
 }
 
 func updateChannelPathWithDescendants(channel *Channel) error {
