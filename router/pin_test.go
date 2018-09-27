@@ -12,7 +12,7 @@ import (
 
 func TestGetChannelPin(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "", true)
+	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "")
 	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.GetCID())
 
 	//正常系
@@ -33,7 +33,7 @@ func TestGetChannelPin(t *testing.T) {
 
 func TestGetPin(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "", true)
+	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "")
 	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.GetCID())
 
 	//正常系
@@ -53,7 +53,7 @@ func TestGetPin(t *testing.T) {
 
 func TestPostPin(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
-	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "", true)
+	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "")
 	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.GetCID())
 
 	//正常系
@@ -79,7 +79,7 @@ func TestPostPin(t *testing.T) {
 	require.Len(correctResponse, 1)
 
 	// 異常系: 別のチャンネルにメッセージを張り付けることはできない
-	otherChannelID := mustMakeChannelDetail(t, testUser.GetUID(), "hoge", "", true).ID
+	otherChannelID := mustMakeChannelDetail(t, testUser.GetUID(), "hoge", "").ID
 	c, rec = getContext(e, t, cookie, req)
 	c.SetPath("/channels/:channelID/pin")
 	c.SetParamNames("channelID")
@@ -93,7 +93,7 @@ func TestPostPin(t *testing.T) {
 
 func TestDeletePin(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "", true)
+	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "")
 	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.GetCID())
 
 	//正常系

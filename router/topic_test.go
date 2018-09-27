@@ -14,7 +14,7 @@ func TestGetTopic(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 	topicText := "Topic test"
 
-	ch := mustMakeChannelDetail(t, testUser.GetUID(), "putTopicTest", "", true)
+	ch := mustMakeChannelDetail(t, testUser.GetUID(), "putTopicTest", "")
 	require.NoError(model.UpdateChannelTopic(ch.GetCID(), topicText, testUser.GetUID()))
 
 	c, rec := getContext(e, t, cookie, nil)
@@ -37,7 +37,7 @@ func TestPutTopic(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 	topicText := "Topic test"
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "putTopicTest", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "putTopicTest", "")
 	require.Empty(channel.Topic)
 
 	type putTopic struct {

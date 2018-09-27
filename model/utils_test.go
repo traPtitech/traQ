@@ -66,28 +66,25 @@ func beforeTest(t *testing.T) (*assert.Assertions, *require.Assertions, *User, *
 	require.NoError(t, Sync())
 
 	user := mustMakeUser(t, "testuser")
-	return assert.New(t), require.New(t), user, mustMakeChannelDetail(t, user.GetUID(), "testchannel", "", true)
+	return assert.New(t), require.New(t), user, mustMakeChannelDetail(t, user.GetUID(), "testchannel", "")
 }
 
 func mustMakeChannel(t *testing.T, userID uuid.UUID, tail string) *Channel {
-	ch, err := CreateChannel("", "Channel-"+tail, userID, true)
+	ch, err := CreatePublicChannel("", "Channel-"+tail, userID)
 	require.NoError(t, err)
 	return ch
 }
 
-func mustMakeChannelDetail(t *testing.T, userID uuid.UUID, name, parentID string, isPublic bool) *Channel {
-	ch, err := CreateChannel(parentID, name, userID, isPublic)
+func mustMakeChannelDetail(t *testing.T, userID uuid.UUID, name, parentID string) *Channel {
+	ch, err := CreatePublicChannel(parentID, name, userID)
 	require.NoError(t, err)
 	return ch
 }
 
-func mustMakePrivateChannel(t *testing.T, userID1, userID2 uuid.UUID, name string) *Channel {
-	channel := mustMakeChannelDetail(t, userID1, name, "", false)
-	require.NoError(t, AddPrivateChannelMember(channel.GetCID(), userID1))
-	if userID1 != userID2 {
-		require.NoError(t, AddPrivateChannelMember(channel.GetCID(), userID2))
-	}
-	return channel
+func mustMakePrivateChannel(t *testing.T, name string, members []uuid.UUID) *Channel {
+	ch, err := CreatePrivateChannel("", name, members[0], members)
+	require.NoError(t, err)
+	return ch
 }
 
 func mustMakeMessage(t *testing.T, userID, channelID uuid.UUID) *Message {

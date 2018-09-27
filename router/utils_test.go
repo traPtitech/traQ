@@ -154,19 +154,16 @@ func getContext(e *echo.Echo, _ *testing.T, cookie *http.Cookie, req *http.Reque
 	return c, rec
 }
 
-func mustMakeChannelDetail(t *testing.T, userID uuid.UUID, name, parentID string, isPublic bool) *model.Channel {
-	ch, err := model.CreateChannel(parentID, name, userID, isPublic)
+func mustMakeChannelDetail(t *testing.T, userID uuid.UUID, name, parentID string) *model.Channel {
+	ch, err := model.CreatePublicChannel(parentID, name, userID)
 	require.NoError(t, err)
 	return ch
 }
 
-func mustMakePrivateChannel(t *testing.T, userID1, userID2 uuid.UUID, name string) *model.Channel {
-	channel := mustMakeChannelDetail(t, userID1, name, "", false)
-	require.NoError(t, model.AddPrivateChannelMember(channel.GetCID(), userID1))
-	if userID1 != userID2 {
-		require.NoError(t, model.AddPrivateChannelMember(channel.GetCID(), userID2))
-	}
-	return channel
+func mustMakePrivateChannel(t *testing.T, name string, members []uuid.UUID) *model.Channel {
+	ch, err := model.CreatePrivateChannel("", name, members[0], members)
+	require.NoError(t, err)
+	return ch
 }
 
 func mustMakeMessage(t *testing.T, userID, channelID uuid.UUID) *model.Message {

@@ -134,22 +134,11 @@ func GetNotificationChannels(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get channels")
 		}
 
-		childIDs, err := model.GetChildrenChannelIDsWithUserID(userID, ch.GetCID().String())
+		res[i], err = formatChannel(ch)
 		if err != nil {
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get children channel id list: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-
-		var members []string
-		if !ch.IsPublic {
-			members, err = model.GetPrivateChannelMembers(ch.ID)
-			if err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get private channel members")
-			}
-		}
-
-		res[i] = formatChannel(ch, childIDs, members)
 	}
 	return c.JSON(http.StatusOK, res)
 }

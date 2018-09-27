@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/satori/go.uuid"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -15,7 +16,7 @@ import (
 func TestGetMessageByID(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
 	message := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	c, rec := getContext(e, t, cookie, nil)
@@ -29,7 +30,7 @@ func TestGetMessageByID(t *testing.T) {
 
 	// 異常系: 自分から見えないメッセージは取得できない
 	postmanID := mustCreateUser(t, "p1").GetUID()
-	privateID := mustMakePrivateChannel(t, postmanID, mustCreateUser(t, "p2").GetUID(), "private").GetCID()
+	privateID := mustMakePrivateChannel(t, "private", []uuid.UUID{postmanID, mustCreateUser(t, "p2").GetUID()}).GetCID()
 	message = mustMakeMessage(t, postmanID, privateID)
 
 	c, rec = getContext(e, t, cookie, nil)
@@ -47,7 +48,7 @@ func TestGetMessageByID(t *testing.T) {
 func TestGetMessagesByChannelID(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
 	for i := 0; i < 5; i++ {
 		mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 	}
@@ -74,7 +75,7 @@ func TestGetMessagesByChannelID(t *testing.T) {
 func TestPostMessage(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
 
 	post := struct{ Text string }{Text: "test message"}
 	body, err := json.Marshal(post)
@@ -96,7 +97,7 @@ func TestPostMessage(t *testing.T) {
 
 	user1ID := mustCreateUser(t, "private-1").GetUID()
 	user2ID := mustCreateUser(t, "private-2").GetUID()
-	privateID := mustMakePrivateChannel(t, user1ID, user2ID, "poyopoyo").ID
+	privateID := mustMakePrivateChannel(t, "poyopoyo", []uuid.UUID{user1ID, user2ID}).ID
 
 	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
 	c, rec = getContext(e, t, cookie, req)
@@ -114,7 +115,7 @@ func TestPostMessage(t *testing.T) {
 func TestPutMessageByID(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
 	message := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	post := struct{ Text string }{Text: "test message"}
@@ -158,7 +159,7 @@ func TestPutMessageByID(t *testing.T) {
 func TestDeleteMessageByID(t *testing.T) {
 	e, cookie, mw, _, require := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
 	message := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	req := httptest.NewRequest("DELETE", "http://test", nil)
@@ -176,7 +177,7 @@ func TestDeleteMessageByID(t *testing.T) {
 func TestPostMessageReport(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
 	message := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	{

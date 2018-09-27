@@ -284,25 +284,23 @@ paths:
               required:
                 - type
               properties:
-                type:
-                  type: string
-                  description: private or public
+                private:
+                  type: boolean
+                  description: プライベートチャンネルかどうか
                 member:
                   type: array
                   items:
                     type: string
                     format: uuid
-                    description: |+
-                      チャンネルに参加させるuserのuserId
-                      publicの場合は初期状態の通知ONのユーザーとなります
+                    description: チャンネルに参加させるuserのuserId
                 name:
                   type: string
-                  description: チャンネル名 privateの場合は無視されます
+                  description: チャンネル名
                   example: random
                 parent:
                   type: string
                   format: uuid
-                  description: 親のチャンネルID privateの場合は無視されます
+                  description: 親のチャンネルID
                   example: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
       responses:
         "201":
@@ -2759,6 +2757,12 @@ components:
         force:
           type: boolean
           description: 強制通知チャンネルか
+        private:
+          type: boolean
+          description: プライベートチャンネルか
+        dm:
+          type: boolean
+          description: ダイレクトメッセージチャンネルか
 
     ChannelTopic:
       type: object

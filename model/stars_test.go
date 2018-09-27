@@ -15,7 +15,7 @@ func TestStar_TableName(t *testing.T) {
 func TestAddStar(t *testing.T) {
 	assert, _, user, _ := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, user.GetUID(), "test", "", true)
+	channel := mustMakeChannelDetail(t, user.GetUID(), "test", "")
 
 	if assert.NoError(AddStar(user.GetUID(), channel.GetCID())) {
 		count := 0
@@ -27,7 +27,7 @@ func TestAddStar(t *testing.T) {
 func TestRemoveStar(t *testing.T) {
 	assert, require, user, _ := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, user.GetUID(), "test", "", true)
+	channel := mustMakeChannelDetail(t, user.GetUID(), "test", "")
 	require.NoError(AddStar(user.GetUID(), channel.GetCID()))
 	count := 0
 
@@ -46,7 +46,7 @@ func TestGetStaredChannels(t *testing.T) {
 
 	channelCount := 5
 	for i := 0; i < channelCount; i++ {
-		ch := mustMakeChannelDetail(t, user.GetUID(), "test"+strconv.Itoa(i), "", true)
+		ch := mustMakeChannelDetail(t, user.GetUID(), "test"+strconv.Itoa(i), "")
 		require.NoError(AddStar(user.GetUID(), ch.GetCID()))
 	}
 

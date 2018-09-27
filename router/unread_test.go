@@ -8,7 +8,7 @@ import (
 
 func TestGetUnread(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
 	testMessage := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	// 正常系
@@ -25,7 +25,7 @@ func TestGetUnread(t *testing.T) {
 
 func TestDeleteUnread(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
 	testMessage := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
 
 	// 正常系
