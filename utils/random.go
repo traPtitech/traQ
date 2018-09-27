@@ -2,10 +2,15 @@ package utils
 
 import (
 	"math/rand"
+	"sync"
 	"time"
 )
 
-var randSrc = rand.NewSource(time.Now().UnixNano())
+var randSrcPool = sync.Pool{
+	New: func() interface{} {
+		return rand.NewSource(time.Now().UnixNano())
+	},
+}
 
 const (
 	rs6Letters       = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
@@ -17,6 +22,7 @@ const (
 // RandAlphabetAndNumberString 指定した文字数のランダム英数字文字列を生成します
 func RandAlphabetAndNumberString(n int) string {
 	b := make([]byte, n)
+	randSrc := randSrcPool.Get().(rand.Source)
 	cache, remain := randSrc.Int63(), rs6LetterIdxMax
 	for i := n - 1; i >= 0; {
 		if remain == 0 {
@@ -30,5 +36,6 @@ func RandAlphabetAndNumberString(n int) string {
 		cache >>= rs6LetterIdxBits
 		remain--
 	}
+	randSrcPool.Put(randSrc)
 	return string(b)
 }
