@@ -3,7 +3,6 @@ package model
 import (
 	"errors"
 	"github.com/jinzhu/gorm"
-	"github.com/traPtitech/traQ/utils/validator"
 	"time"
 
 	"github.com/satori/go.uuid"
@@ -12,7 +11,7 @@ import (
 //Device 通知デバイスの構造体
 type Device struct {
 	Token     string    `gorm:"type:varchar(190);primary_key"`
-	UserID    string    `gorm:"type:char(36);index"`
+	UserID    uuid.UUID `gorm:"type:char(36);index"`
 	CreatedAt time.Time `gorm:"precision:6"`
 }
 
@@ -21,18 +20,13 @@ func (*Device) TableName() string {
 	return "devices"
 }
 
-// Validate 構造体を検証します
-func (d *Device) Validate() error {
-	return validator.ValidateStruct(d)
-}
-
 // RegisterDevice FCMデバイスを登録
 func RegisterDevice(userID uuid.UUID, token string) (*Device, error) {
 	d := &Device{}
-	if err := db.Where(Device{
+	if err := db.Where(&Device{
 		Token: token,
 	}).Take(&d).Error; err == nil {
-		if d.UserID != userID.String() {
+		if d.UserID != userID {
 			return nil, errors.New("the token has already been associated with other user")
 		}
 		return d, nil
@@ -42,7 +36,7 @@ func RegisterDevice(userID uuid.UUID, token string) (*Device, error) {
 
 	d = &Device{
 		Token:  token,
-		UserID: userID.String(),
+		UserID: userID,
 	}
 
 	err := db.Create(d).Error
@@ -54,13 +48,13 @@ func RegisterDevice(userID uuid.UUID, token string) (*Device, error) {
 
 // UnregisterDevice FCMデバイスを解放
 func UnregisterDevice(token string) (err error) {
-	err = db.Delete(Device{Token: token}).Error
+	err = db.Delete(&Device{Token: token}).Error
 	return
 }
 
 // GetDevices 指定ユーザーのデバイスを取得
 func GetDevices(user uuid.UUID) (result []*Device, err error) {
-	err = db.Where(Device{UserID: user.String()}).Find(&result).Error
+	err = db.Where(&Device{UserID: user}).Find(&result).Error
 	return
 }
 
@@ -78,6 +72,6 @@ func GetAllDeviceIDs() (result []string, err error) {
 
 // GetDeviceIDs 指定ユーザーの全デバイスIDを取得
 func GetDeviceIDs(user uuid.UUID) (result []string, err error) {
-	err = db.Model(Device{}).Where(Device{UserID: user.String()}).Pluck("token", &result).Error
+	err = db.Model(Device{}).Where(&Device{UserID: user}).Pluck("token", &result).Error
 	return
 }

@@ -675,7 +675,7 @@ func TestParallelGroup1(t *testing.T) {
 	})
 }
 
-// TestSeriesGroup 直列テストグループ1
+// TestSeriesGroup1 直列テストグループ1
 func TestSeriesGroup1(t *testing.T) {
 	assert, require, user, _ := beforeTest(t)
 

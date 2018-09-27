@@ -1,7 +1,9 @@
 package model
 
 import (
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/traQ/utils"
 	"testing"
 )
 
@@ -10,187 +12,188 @@ func TestDevice_TableName(t *testing.T) {
 	assert.Equal(t, "devices", (&Device{}).TableName())
 }
 
-func TestRegisterDevice(t *testing.T) {
-	assert, require, user, _ := beforeTest(t)
+// TestParallelGroup3 並列テストグループ3 競合がないようなサブテストにすること
+func TestParallelGroup3(t *testing.T) {
+	assert, require, _, _ := beforeTest(t)
 
-	id1 := user.GetUID()
-	id2 := mustMakeUser(t, "test2").GetUID()
-	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
-	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
+	// RegisterDevice
+	t.Run("TestRegisterDevice", func(t *testing.T) {
+		t.Parallel()
 
-	{
-		_, err := RegisterDevice(id1, token1)
-		assert.NoError(err)
-	}
-	{
-		_, err := RegisterDevice(id2, token2)
-		assert.NoError(err)
-	}
-	{
-		_, err := RegisterDevice(id1, token2)
-		assert.Error(err)
+		id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		token1 := utils.RandAlphabetAndNumberString(20)
+		token2 := utils.RandAlphabetAndNumberString(20)
 
-	}
+		cases := []struct {
+			user  uuid.UUID
+			token string
+			error bool
+		}{
+			{id1, token1, false},
+			{id2, token2, false},
+			{id1, token2, true},
+		}
 
-	l := 0
-	require.NoError(db.Model(Device{}).Count(&l).Error)
-	assert.EqualValues(2, l)
-}
+		for _, v := range cases {
+			_, err := RegisterDevice(v.user, v.token)
+			if v.error {
+				assert.Error(err)
+			} else {
+				assert.NoError(err)
+			}
+		}
 
-func TestUnregisterDevice(t *testing.T) {
-	assert, require, user, _ := beforeTest(t)
-
-	id1 := user.GetUID()
-	id2 := mustMakeUser(t, "test2").GetUID()
-	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
-	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
-	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
-
-	{
-		_, err := RegisterDevice(id1, token1)
-		require.NoError(err)
-	}
-	{
-		_, err := RegisterDevice(id2, token2)
-		require.NoError(err)
-	}
-	{
-		_, err := RegisterDevice(id1, token3)
-		require.NoError(err)
-	}
-
-	{
-		assert.NoError(UnregisterDevice(token2))
 		l := 0
-		require.NoError(db.Model(Device{}).Count(&l).Error)
+		require.NoError(db.Model(Device{}).Where("user_id IN (?, ?)", id1, id2).Count(&l).Error)
 		assert.EqualValues(2, l)
-	}
-	{
-		assert.NoError(UnregisterDevice(token3))
-		l := 0
-		require.NoError(db.Model(Device{}).Count(&l).Error)
-		assert.EqualValues(1, l)
-	}
-}
+	})
 
-func TestGetAllDevices(t *testing.T) {
-	assert, require, user, _ := beforeTest(t)
+	// UnregisterDevice
+	t.Run("TestUnregisterDevice", func(t *testing.T) {
+		t.Parallel()
 
-	id1 := user.GetUID()
-	id2 := mustMakeUser(t, "test2").GetUID()
-	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
-	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
-	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
+		id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		token1 := utils.RandAlphabetAndNumberString(20)
+		token2 := utils.RandAlphabetAndNumberString(20)
+		token3 := utils.RandAlphabetAndNumberString(20)
 
-	{
 		_, err := RegisterDevice(id1, token1)
 		require.NoError(err)
-	}
-	{
-		_, err := RegisterDevice(id2, token2)
+		_, err = RegisterDevice(id2, token2)
 		require.NoError(err)
-	}
-	{
-		_, err := RegisterDevice(id1, token3)
+		_, err = RegisterDevice(id1, token3)
 		require.NoError(err)
-	}
 
-	devs, err := GetAllDevices()
-	if assert.NoError(err) {
-		assert.Len(devs, 3)
-	}
-}
+		cases := []struct {
+			token  string
+			expect int
+		}{
+			{token2, 2},
+			{token3, 1},
+		}
+		for _, v := range cases {
+			assert.NoError(UnregisterDevice(v.token))
+			l := 0
+			require.NoError(db.Model(Device{}).Where("user_id IN (?, ?)", id1, id2).Count(&l).Error)
+			assert.EqualValues(v.expect, l)
+		}
+	})
 
-func TestGetDevices(t *testing.T) {
-	assert, require, user, _ := beforeTest(t)
+	// GetDevices
+	t.Run("TestGetDevices", func(t *testing.T) {
+		t.Parallel()
 
-	id1 := user.GetUID()
-	id2 := mustMakeUser(t, "test2").GetUID()
-	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
-	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
-	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
+		id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		token1 := utils.RandAlphabetAndNumberString(20)
+		token2 := utils.RandAlphabetAndNumberString(20)
+		token3 := utils.RandAlphabetAndNumberString(20)
 
-	{
 		_, err := RegisterDevice(id1, token1)
 		require.NoError(err)
-	}
-	{
-		_, err := RegisterDevice(id2, token2)
+		_, err = RegisterDevice(id2, token2)
 		require.NoError(err)
-	}
-	{
-		_, err := RegisterDevice(id1, token3)
+		_, err = RegisterDevice(id1, token3)
 		require.NoError(err)
-	}
 
-	devs, err := GetDevices(id1)
-	if assert.NoError(err) {
-		assert.Len(devs, 2)
-	}
+		cases := []struct {
+			name   string
+			user   uuid.UUID
+			expect int
+		}{
+			{"id1", id1, 2},
+			{"id2", id2, 1},
+		}
 
-	devs, err = GetDevices(id2)
-	if assert.NoError(err) {
-		assert.Len(devs, 1)
-	}
-}
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
 
-func TestGetAllDeviceIds(t *testing.T) {
-	assert, require, user, _ := beforeTest(t)
+				devs, err := GetDevices(v.user)
+				if assert.NoError(err) {
+					assert.Len(devs, v.expect)
+				}
+			})
+		}
+	})
 
-	id1 := user.GetUID()
-	id2 := mustMakeUser(t, "test2").GetUID()
-	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
-	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
-	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
+	// GetDeviceIds
+	t.Run("TestGetDeviceIds", func(t *testing.T) {
+		t.Parallel()
 
-	{
+		id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		token1 := utils.RandAlphabetAndNumberString(20)
+		token2 := utils.RandAlphabetAndNumberString(20)
+		token3 := utils.RandAlphabetAndNumberString(20)
+
 		_, err := RegisterDevice(id1, token1)
 		require.NoError(err)
-	}
-	{
-		_, err := RegisterDevice(id2, token2)
+		_, err = RegisterDevice(id2, token2)
 		require.NoError(err)
-	}
-	{
-		_, err := RegisterDevice(id1, token3)
+		_, err = RegisterDevice(id1, token3)
 		require.NoError(err)
-	}
 
-	devs, err := GetAllDeviceIDs()
-	if assert.NoError(err) {
-		assert.Len(devs, 3)
-	}
+		cases := []struct {
+			name   string
+			user   uuid.UUID
+			expect int
+		}{
+			{"id1", id1, 2},
+			{"id2", id2, 1},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				devs, err := GetDeviceIDs(v.user)
+				if assert.NoError(err) {
+					assert.Len(devs, v.expect)
+				}
+			})
+		}
+	})
 }
 
-func TestGetDeviceIds(t *testing.T) {
-	assert, require, user, _ := beforeTest(t)
+// TestParallelGroup4 並列テストグループ4 競合がないようなサブテストにすること
+func TestParallelGroup4(t *testing.T) {
+	assert, require, _, _ := beforeTest(t)
 
-	id1 := user.GetUID()
-	id2 := mustMakeUser(t, "test2").GetUID()
-	token1 := "ajopejiajgopnavdnva8y48fhaerudsyf8uf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
-	token2 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvlfjxhgyru83iqodwjkdvlznfjbxdefpuw90jiosdv"
-	token3 := "ajopejiajgopnavdnva8y48ffwefwefewfwf39ifoewkvfawfefwfwe3iqodwjkdvlznfjbxdefpuw90jiosdv"
+	id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+	id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+	token1 := utils.RandAlphabetAndNumberString(20)
+	token2 := utils.RandAlphabetAndNumberString(20)
+	token3 := utils.RandAlphabetAndNumberString(20)
 
-	{
-		_, err := RegisterDevice(id1, token1)
-		require.NoError(err)
-	}
-	{
-		_, err := RegisterDevice(id2, token2)
-		require.NoError(err)
-	}
-	{
-		_, err := RegisterDevice(id1, token3)
-		require.NoError(err)
-	}
+	_, err := RegisterDevice(id1, token1)
+	require.NoError(err)
+	_, err = RegisterDevice(id2, token2)
+	require.NoError(err)
+	_, err = RegisterDevice(id1, token3)
+	require.NoError(err)
 
-	devs, err := GetDeviceIDs(id1)
-	if assert.NoError(err) {
-		assert.Len(devs, 2)
-	}
+	// GetAllDevices
+	t.Run("TestGetAllDevices", func(t *testing.T) {
+		t.Parallel()
 
-	devs, err = GetDeviceIDs(id2)
-	if assert.NoError(err) {
-		assert.Len(devs, 1)
-	}
+		devs, err := GetAllDevices()
+		if assert.NoError(err) {
+			assert.Len(devs, 3)
+		}
+	})
+
+	// GetAllDeviceIDs
+	t.Run("TestGetAllDeviceIds", func(t *testing.T) {
+		t.Parallel()
+
+		devs, err := GetAllDeviceIDs()
+		if assert.NoError(err) {
+			assert.Len(devs, 3)
+		}
+	})
 }
