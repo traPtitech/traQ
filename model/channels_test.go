@@ -15,6 +15,11 @@ func TestChannel_TableName(t *testing.T) {
 	assert.Equal(t, "channels", (&Channel{}).TableName())
 }
 
+func TestUsersPrivateChannel_TableName(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "users_private_channels", (&UsersPrivateChannel{}).TableName())
+}
+
 // TestParallelGroup1 並列テストグループ1 競合がないようなサブテストにすること
 func TestParallelGroup1(t *testing.T) {
 	assert, require, user, channel := beforeTest(t)
@@ -501,11 +506,55 @@ func TestParallelGroup1(t *testing.T) {
 		}
 	})
 
+	// GetPrivateChannelMembers
+	t.Run("TestGetPrivateChannelMembers", func(t *testing.T) {
+		t.Parallel()
+
+		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		user2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		channel := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{user1.GetUID(), user2.GetUID()})
+
+		member, err := GetPrivateChannelMembers(channel.ID)
+		if assert.NoError(err) {
+			assert.Len(member, 2)
+		}
+	})
+
+	// IsUserPrivateChannelMember
+	t.Run("TestIsUserPrivateChannelMember", func(t *testing.T) {
+		t.Parallel()
+
+		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		user2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		channel := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{user1.GetUID(), user2.GetUID()})
+
+		cases := []struct {
+			name   string
+			user   uuid.UUID
+			expect bool
+		}{
+			{"user1", user1.GetUID(), true},
+			{"user2", user2.GetUID(), true},
+			{"user", user.GetUID(), false},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				ok, err := IsUserPrivateChannelMember(channel.ID, v.user)
+				if assert.NoError(err) {
+					assert.Equal(v.expect, ok)
+				}
+			})
+		}
+	})
 }
 
 // TestSeriesGroup 直列テストグループ1
 func TestSeriesGroup1(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
+	assert, require, user, _ := beforeTest(t)
 
 	// CreatePublicChannel
 	t.Run("TestCreatePublicChannel", func(t *testing.T) {
@@ -563,5 +612,31 @@ func TestSeriesGroup1(t *testing.T) {
 		}
 
 		// TODO プライベートチャンネル
+	})
+
+	// AddPrivateChannelMember
+	t.Run("TestAddPrivateChannelMember", func(t *testing.T) {
+		channel := &Channel{
+			CreatorID: user.GetUID(),
+			UpdaterID: user.GetUID(),
+			Name:      utils.RandAlphabetAndNumberString(20),
+			IsPublic:  false,
+		}
+		require.NoError(db.Create(channel).Error)
+
+		po := mustMakeUser(t, "po")
+
+		assert.NoError(AddPrivateChannelMember(channel.ID, user.GetUID()))
+		assert.NoError(AddPrivateChannelMember(channel.ID, po.GetUID()))
+
+		channelList, err := GetChannelList(user.GetUID())
+		if assert.NoError(err) {
+			assert.Len(channelList, 8+1)
+		}
+
+		channelList, err = GetChannelList(uuid.Nil)
+		if assert.NoError(err) {
+			assert.Len(channelList, 8)
+		}
 	})
 }

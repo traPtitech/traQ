@@ -172,6 +172,17 @@ func (ch *Channel) Path() (string, error) {
 	return "#" + path, nil
 }
 
+// UsersPrivateChannel UsersPrivateChannelsの構造体
+type UsersPrivateChannel struct {
+	UserID    uuid.UUID `gorm:"type:char(36);primary_key"`
+	ChannelID uuid.UUID `gorm:"type:char(36);primary_key"`
+}
+
+// TableName テーブル名を指定するメソッド
+func (upc *UsersPrivateChannel) TableName() string {
+	return "users_private_channels"
+}
+
 // CreatePublicChannel パブリックチャンネルを作成します
 func CreatePublicChannel(parent, name string, creatorID uuid.UUID) (*Channel, error) {
 	ch := &Channel{
@@ -469,7 +480,9 @@ func GetParentChannel(channelID uuid.UUID) (*Channel, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(p) == 0 || len(p[0]) == 0 {
+	if len(p) == 0 {
+		return nil, ErrNotFound
+	} else if len(p[0]) == 0 {
 		return nil, nil
 	}
 
@@ -500,6 +513,7 @@ func GetDescendantChannelIDs(channelID uuid.UUID) (descendants []uuid.UUID, err 
 	if err != nil {
 		return nil, err
 	}
+	descendants = append(descendants, children...)
 	for _, v := range children {
 		sub, err := GetDescendantChannelIDs(v)
 		if err != nil {
@@ -640,6 +654,34 @@ func GetChannelDepth(id uuid.UUID) (int, error) {
 		}
 	}
 	return max + 1, nil
+}
+
+// AddPrivateChannelMember プライベートチャンネルにメンバーを追加します
+func AddPrivateChannelMember(channelID, userID uuid.UUID) error {
+	if err := db.Create(&UsersPrivateChannel{UserID: userID, ChannelID: channelID}).Error; err != nil {
+		if isMySQLDuplicatedRecordErr(err) {
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+// GetPrivateChannelMembers プライベートチャンネルのメンバーの配列を取得する
+func GetPrivateChannelMembers(channelID uuid.UUID) (member []uuid.UUID, err error) {
+	member = []uuid.UUID{}
+	err = db.Model(UsersPrivateChannel{}).Where(&UsersPrivateChannel{ChannelID: channelID}).Pluck("user_id", &member).Error
+	return
+}
+
+// IsUserPrivateChannelMember ユーザーがプライベートチャンネルのメンバーかどうかを確認します
+func IsUserPrivateChannelMember(channelID, userID uuid.UUID) (bool, error) {
+	c := 0
+	err := db.Model(UsersPrivateChannel{}).Where(&UsersPrivateChannel{ChannelID: channelID, UserID: userID}).Count(&c).Error
+	if err != nil {
+		return false, err
+	}
+	return c > 0, nil
 }
 
 func updateChannelPathWithDescendants(channel *Channel) error {
