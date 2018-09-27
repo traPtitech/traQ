@@ -495,6 +495,7 @@ func GetChildrenChannelIDs(channelID uuid.UUID) (children []uuid.UUID, err error
 
 // GetDescendantChannelIDs 子孫チャンネルのIDを取得する
 func GetDescendantChannelIDs(channelID uuid.UUID) (descendants []uuid.UUID, err error) {
+	descendants = []uuid.UUID{}
 	children, err := GetChildrenChannelIDs(channelID)
 	if err != nil {
 		return nil, err
@@ -511,6 +512,7 @@ func GetDescendantChannelIDs(channelID uuid.UUID) (descendants []uuid.UUID, err 
 
 // GetAscendantChannelIDs 祖先チャンネルのIDを取得する
 func GetAscendantChannelIDs(channelID uuid.UUID) (ascendants []uuid.UUID, err error) {
+	ascendants = []uuid.UUID{}
 	parent, err := GetParentChannel(channelID)
 	if err != nil {
 		if err == ErrNotFound {
