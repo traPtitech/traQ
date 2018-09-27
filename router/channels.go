@@ -40,12 +40,12 @@ func GetChannels(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	chMap := make(map[uuid.UUID]*ChannelForResponse, len(channelList))
+	chMap := make(map[string]*ChannelForResponse, len(channelList))
 	for _, ch := range channelList {
-		entry, ok := chMap[ch.ID]
+		entry, ok := chMap[ch.ID.String()]
 		if !ok {
 			entry = &ChannelForResponse{}
-			chMap[ch.ID] = entry
+			chMap[ch.ID.String()] = entry
 		}
 
 		entry.ChannelID = ch.ID
@@ -66,15 +66,12 @@ func GetChannels(c echo.Context) error {
 			entry.Member = member
 		}
 
-		if len(ch.ParentID) > 0 {
-			pID := uuid.Must(uuid.FromString(ch.ParentID))
-			parent, ok := chMap[pID]
-			if !ok {
-				parent = &ChannelForResponse{}
-				chMap[pID] = parent
-			}
-			parent.Children = append(parent.Children, ch.ID)
+		parent, ok := chMap[ch.ParentID]
+		if !ok {
+			parent = &ChannelForResponse{}
+			chMap[ch.ParentID] = parent
 		}
+		parent.Children = append(parent.Children, ch.ID)
 	}
 
 	res := make([]*ChannelForResponse, 0, len(chMap))
