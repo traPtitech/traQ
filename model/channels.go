@@ -262,6 +262,8 @@ func CreatePrivateChannel(parent, name string, creatorID uuid.UUID, members []uu
 func GetOrCreateDirectMessageChannel(user1, user2 uuid.UUID) (*Channel, error) {
 	var channel Channel
 
+	// ユーザーが存在するかどうかの判定はusers_private_channelsテーブルに外部キー制約が貼ってあるのでそれで対応する
+
 	// チャンネル存在確認
 	if user1 == user2 {
 		// 自分宛DM

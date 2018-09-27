@@ -38,86 +38,6 @@ func GetMessageByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatMessage(m))
 }
 
-// GetMessagesByChannelID GET /channels/:channelID/messages
-func GetMessagesByChannelID(c echo.Context) error {
-	req := struct {
-		Limit  int `query:"limit"  validate:"min=0"`
-		Offset int `query:"offset" validate:"min=0"`
-	}{}
-	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	userID := getRequestUserID(c)
-	channelID := getRequestParamAsUUID(c, paramChannelID)
-
-	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
-	messages, err := model.GetMessagesByChannelID(channelID, req.Limit, req.Offset)
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	reports, err := model.GetMessageReportsByReporterID(userID)
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	hidden := make(map[string]bool)
-	for _, v := range reports {
-		hidden[v.MessageID] = true
-	}
-
-	res := make([]*MessageForResponse, 0, req.Limit)
-	for _, message := range messages {
-		ms := formatMessage(message)
-		if hidden[message.ID] {
-			ms.Reported = true
-		}
-		res = append(res, ms)
-	}
-
-	return c.JSON(http.StatusOK, res)
-}
-
-// PostMessage POST /channels/:channelID/messages
-func PostMessage(c echo.Context) error {
-	// 100KB制限
-	if c.Request().ContentLength > 100*1024 {
-		return echo.NewHTTPError(http.StatusRequestEntityTooLarge, "a request must be smaller than 100KB")
-	}
-
-	post := struct {
-		Text string `json:"text" validate:"required"`
-	}{}
-	if err := bindAndValidate(c, &post); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	userID := getRequestUserID(c)
-	channelID := getRequestParamAsUUID(c, paramChannelID)
-
-	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
-	m, err := createMessage(c, post.Text, userID, channelID)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusCreated, m)
-}
-
 // PutMessageByID PUT /messages/:messageID
 func PutMessageByID(c echo.Context) error {
 	userID := getRequestUserID(c)
@@ -172,6 +92,161 @@ func DeleteMessageByID(c echo.Context) error {
 
 	go event.Emit(event.MessageDeleted, &event.MessageDeletedEvent{Message: *m})
 	return c.NoContent(http.StatusNoContent)
+}
+
+// GetMessagesByChannelID GET /channels/:channelID/messages
+func GetMessagesByChannelID(c echo.Context) error {
+	req := struct {
+		Limit  int `query:"limit"  validate:"min=0"`
+		Offset int `query:"offset" validate:"min=0"`
+	}{}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	userID := getRequestUserID(c)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+
+	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	messages, err := model.GetMessagesByChannelID(channelID, req.Limit, req.Offset)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	reports, err := model.GetMessageReportsByReporterID(userID)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	hidden := make(map[string]bool)
+	for _, v := range reports {
+		hidden[v.MessageID] = true
+	}
+
+	res := make([]*MessageForResponse, 0, req.Limit)
+	for _, message := range messages {
+		ms := formatMessage(message)
+		if hidden[message.ID] {
+			ms.Reported = true
+		}
+		res = append(res, ms)
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+// PostMessage POST /channels/:channelID/messages
+func PostMessage(c echo.Context) error {
+	post := struct {
+		Text string `json:"text" validate:"required"`
+	}{}
+	if err := bindAndValidate(c, &post); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	userID := getRequestUserID(c)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+
+	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	m, err := createMessage(c, post.Text, userID, channelID)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusCreated, m)
+}
+
+// GetDirectMessages GET /users/:userId/messages
+func GetDirectMessages(c echo.Context) error {
+	req := struct {
+		Limit  int `query:"limit"  validate:"min=0"`
+		Offset int `query:"offset" validate:"min=0"`
+	}{}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	myID := getRequestUserID(c)
+	targetId := getRequestParamAsUUID(c, paramUserID)
+
+	// ユーザー確認
+	if ok, err := model.UserExists(targetId); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	// DMチャンネルを取得
+	ch, err := model.GetOrCreateDirectMessageChannel(myID, targetId)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// メッセージ取得
+	messages, err := model.GetMessagesByChannelID(ch.GetCID(), req.Limit, req.Offset)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// 整形
+	res := make([]*MessageForResponse, 0, req.Limit)
+	for _, message := range messages {
+		res = append(res, formatMessage(message))
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+// PostDirectMessage POST /users/:userId/messages
+func PostDirectMessage(c echo.Context) error {
+	req := struct {
+		Text string `json:"text" validate:"required"`
+	}{}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	myID := getRequestUserID(c)
+	targetId := getRequestParamAsUUID(c, paramUserID)
+
+	// ユーザー確認
+	if ok, err := model.UserExists(targetId); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
+
+	// DMチャンネルを取得
+	ch, err := model.GetOrCreateDirectMessageChannel(myID, targetId)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// 投稿
+	m, err := createMessage(c, req.Text, myID, ch.GetCID())
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusCreated, m)
 }
 
 // PostMessageReport POST /messages/:messageID/report
