@@ -467,12 +467,9 @@ func GetParentChannel(channelID uuid.UUID) (*Channel, error) {
 		Pluck("parent_id", &p).
 		Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
 		return nil, err
 	}
-	if len(p[0]) == 0 {
+	if len(p) == 0 || len(p[0]) == 0 {
 		return nil, nil
 	}
 
