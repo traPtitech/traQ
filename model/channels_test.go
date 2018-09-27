@@ -599,7 +599,7 @@ func TestParallelGroup1(t *testing.T) {
 			t.Run(v.name, func(t *testing.T) {
 				if assert.NoError(UnsubscribeChannel(v.user, v.ch)) {
 					count := 0
-					db.Model(UserSubscribeChannel{}).Where("user_id IN (?, ?)", user1, user2).Count(&count)
+					db.Model(UserSubscribeChannel{}).Where("user_id IN (?, ?)", user1.ID, user2.ID).Count(&count)
 					assert.Equal(v.expect, count)
 				}
 			})
