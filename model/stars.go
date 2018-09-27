@@ -7,8 +7,8 @@ import (
 
 // Star starの構造体
 type Star struct {
-	UserID    string    `gorm:"type:char(36);primary_key"`
-	ChannelID string    `gorm:"type:char(36);primary_key"`
+	UserID    uuid.UUID `gorm:"type:char(36);primary_key"`
+	ChannelID uuid.UUID `gorm:"type:char(36);primary_key"`
 	CreatedAt time.Time `gorm:"precision:6"`
 }
 
@@ -28,7 +28,7 @@ func AddStar(userID, channelID uuid.UUID) error {
 		return ErrNotFoundOrForbidden
 	}
 
-	if err := db.Create(&Star{UserID: userID.String(), ChannelID: channelID.String()}).Error; err != nil {
+	if err := db.Create(&Star{UserID: userID, ChannelID: channelID}).Error; err != nil {
 		if isMySQLDuplicatedRecordErr(err) {
 			return nil
 		}
@@ -39,12 +39,12 @@ func AddStar(userID, channelID uuid.UUID) error {
 
 // RemoveStar チャンネルのお気に入りを解除します
 func RemoveStar(userID, channelID uuid.UUID) error {
-	return db.Where(&Star{UserID: userID.String(), ChannelID: channelID.String()}).Delete(Star{}).Error
+	return db.Where(&Star{UserID: userID, ChannelID: channelID}).Delete(Star{}).Error
 }
 
 // GetStaredChannels userIDがお気に入りしているチャンネルIDを取得する
 func GetStaredChannels(userID uuid.UUID) (channels []string, err error) {
 	channels = make([]string, 0)
-	err = db.Model(Star{}).Where(&Star{UserID: userID.String()}).Pluck("channel_id", &channels).Error
+	err = db.Model(Star{}).Where(&Star{UserID: userID}).Pluck("channel_id", &channels).Error
 	return
 }

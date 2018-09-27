@@ -597,8 +597,6 @@ func TestParallelGroup1(t *testing.T) {
 		for _, v := range cases {
 			v := v
 			t.Run(v.name, func(t *testing.T) {
-				t.Parallel()
-
 				if assert.NoError(UnsubscribeChannel(v.user, v.ch)) {
 					count := 0
 					db.Model(UserSubscribeChannel{}).Count(&count)
