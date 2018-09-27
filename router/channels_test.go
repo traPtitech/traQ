@@ -25,7 +25,7 @@ func TestGetChannels(t *testing.T) {
 	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
 		var res []ChannelForResponse
 		assert.NoError(json.Unmarshal(rec.Body.Bytes(), &res))
-		assert.Len(res, 6+2)
+		assert.Len(res, 6+3)
 	}
 }
 
