@@ -180,10 +180,10 @@ func GetDirectMessages(c echo.Context) error {
 	}
 
 	myID := getRequestUserID(c)
-	targetId := getRequestParamAsUUID(c, paramUserID)
+	targetID := getRequestParamAsUUID(c, paramUserID)
 
 	// ユーザー確認
-	if ok, err := model.UserExists(targetId); err != nil {
+	if ok, err := model.UserExists(targetID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
@@ -191,7 +191,7 @@ func GetDirectMessages(c echo.Context) error {
 	}
 
 	// DMチャンネルを取得
-	ch, err := model.GetOrCreateDirectMessageChannel(myID, targetId)
+	ch, err := model.GetOrCreateDirectMessageChannel(myID, targetID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -223,10 +223,10 @@ func PostDirectMessage(c echo.Context) error {
 	}
 
 	myID := getRequestUserID(c)
-	targetId := getRequestParamAsUUID(c, paramUserID)
+	targetID := getRequestParamAsUUID(c, paramUserID)
 
 	// ユーザー確認
-	if ok, err := model.UserExists(targetId); err != nil {
+	if ok, err := model.UserExists(targetID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
@@ -234,7 +234,7 @@ func PostDirectMessage(c echo.Context) error {
 	}
 
 	// DMチャンネルを取得
-	ch, err := model.GetOrCreateDirectMessageChannel(myID, targetId)
+	ch, err := model.GetOrCreateDirectMessageChannel(myID, targetID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
