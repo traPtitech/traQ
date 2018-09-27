@@ -39,11 +39,17 @@ func AddStar(userID, channelID uuid.UUID) error {
 
 // RemoveStar チャンネルのお気に入りを解除します
 func RemoveStar(userID, channelID uuid.UUID) error {
+	if userID == uuid.Nil || channelID == uuid.Nil {
+		return nil
+	}
 	return db.Where(&Star{UserID: userID, ChannelID: channelID}).Delete(Star{}).Error
 }
 
 // GetStaredChannels userIDがお気に入りしているチャンネルIDを取得する
 func GetStaredChannels(userID uuid.UUID) (channels []string, err error) {
+	if userID == uuid.Nil {
+		return
+	}
 	channels = make([]string, 0)
 	err = db.Model(Star{}).Where(&Star{UserID: userID}).Pluck("channel_id", &channels).Error
 	return

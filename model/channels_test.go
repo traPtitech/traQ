@@ -565,7 +565,7 @@ func TestParallelGroup1(t *testing.T) {
 		ch := mustMakeChannelDetail(t, user1.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		if assert.NoError(SubscribeChannel(user1.GetUID(), ch.ID)) {
 			count := 0
-			db.Model(UserSubscribeChannel{}).Count(&count)
+			db.Model(UserSubscribeChannel{}).Where(&UserSubscribeChannel{UserID: user1.GetUID()}).Count(&count)
 			assert.Equal(1, count)
 		}
 		assert.Error(SubscribeChannel(user1.GetUID(), ch.ID))
@@ -599,7 +599,7 @@ func TestParallelGroup1(t *testing.T) {
 			t.Run(v.name, func(t *testing.T) {
 				if assert.NoError(UnsubscribeChannel(v.user, v.ch)) {
 					count := 0
-					db.Model(UserSubscribeChannel{}).Count(&count)
+					db.Model(UserSubscribeChannel{}).Where("user_id IN (?, ?)", user1, user2).Count(&count)
 					assert.Equal(v.expect, count)
 				}
 			})

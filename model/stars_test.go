@@ -25,7 +25,7 @@ func TestParallelGroup2(t *testing.T) {
 
 		if assert.NoError(AddStar(user1.GetUID(), ch.ID)) {
 			count := 0
-			db.Table("stars").Where("user_id = ?", user1.ID).Count(&count)
+			db.Model(Star{}).Where("user_id = ?", user1.ID).Count(&count)
 			assert.Equal(1, count)
 		}
 	})
@@ -40,11 +40,11 @@ func TestParallelGroup2(t *testing.T) {
 
 		count := 0
 		if assert.NoError(RemoveStar(user1.GetUID(), uuid.Nil)) {
-			db.Table("stars").Where("user_id = ?", user1.ID).Count(&count)
+			db.Model(Star{}).Where("user_id = ?", user1.ID).Count(&count)
 			assert.Equal(1, count)
 		}
 		if assert.NoError(RemoveStar(user1.GetUID(), ch.ID)) {
-			db.Table("stars").Where("user_id = ?", user1.ID).Count(&count)
+			db.Model(Star{}).Where("user_id = ?", user1.ID).Count(&count)
 			assert.Equal(0, count)
 		}
 	})

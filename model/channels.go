@@ -349,6 +349,9 @@ func GetOrCreateDirectMessageChannel(user1, user2 uuid.UUID) (*Channel, error) {
 
 // UpdateChannelTopic チャンネルトピックを更新します
 func UpdateChannelTopic(channelID uuid.UUID, topic string, updaterID uuid.UUID) error {
+	if channelID == uuid.Nil {
+		return ErrNotFound
+	}
 	return db.Model(&Channel{ID: channelID}).Updates(map[string]interface{}{
 		"topic":      topic,
 		"updater_id": updaterID,
@@ -357,6 +360,10 @@ func UpdateChannelTopic(channelID uuid.UUID, topic string, updaterID uuid.UUID) 
 
 // ChangeChannelName チャンネル名を変更します
 func ChangeChannelName(channelID uuid.UUID, name string, updaterID uuid.UUID) error {
+	if channelID == uuid.Nil {
+		return ErrNotFound
+	}
+
 	// チャンネル名検証
 	if err := validator.ValidateVar(name, "channel,required"); err != nil {
 		return err
@@ -400,6 +407,10 @@ func ChangeChannelName(channelID uuid.UUID, name string, updaterID uuid.UUID) er
 
 // ChangeChannelParent チャンネルの親を変更します
 func ChangeChannelParent(channelID uuid.UUID, parent string, updaterID uuid.UUID) error {
+	if channelID == uuid.Nil {
+		return ErrNotFound
+	}
+
 	ch, err := GetChannel(channelID)
 	if err != nil {
 		return err
@@ -431,6 +442,10 @@ func ChangeChannelParent(channelID uuid.UUID, parent string, updaterID uuid.UUID
 
 // UpdateChannelFlag チャンネルの各種フラグを更新します
 func UpdateChannelFlag(channelID uuid.UUID, visibility, forced *bool, updaterID uuid.UUID) error {
+	if channelID == uuid.Nil {
+		return ErrNotFound
+	}
+
 	data := map[string]interface{}{
 		"updater_id": updaterID,
 	}
@@ -446,6 +461,10 @@ func UpdateChannelFlag(channelID uuid.UUID, visibility, forced *bool, updaterID 
 
 // DeleteChannel 子孫チャンネルを含めてチャンネルを削除します
 func DeleteChannel(channelID uuid.UUID) error {
+	if channelID == uuid.Nil {
+		return ErrNotFound
+	}
+
 	desc, err := GetDescendantChannelIDs(channelID)
 	if err != nil {
 		return err
@@ -483,10 +502,14 @@ func IsChannelNamePresent(name, parent string) (bool, error) {
 
 // GetParentChannel 親のチャンネルを取得する
 func GetParentChannel(channelID uuid.UUID) (*Channel, error) {
+	if channelID == uuid.Nil {
+		return nil, ErrNotFound
+	}
+
 	var p []string
 	err := db.
 		Model(Channel{}).
-		Where("id = ?", channelID).
+		Where(&Channel{ID: channelID}).
 		Pluck("parent_id", &p).
 		Error
 	if err != nil {
@@ -559,9 +582,12 @@ func GetAscendantChannelIDs(channelID uuid.UUID) (ascendants []uuid.UUID, err er
 
 // GetChannel チャンネルを取得する
 func GetChannel(channelID uuid.UUID) (*Channel, error) {
+	if channelID == uuid.Nil {
+		return nil, ErrNotFound
+	}
+
 	ch := &Channel{}
-	err := db.Where("id = ?", channelID).Take(ch).Error
-	if err != nil {
+	if err := db.Where(&Channel{ID: channelID}).Take(ch).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, ErrNotFound
 		}
@@ -688,6 +714,10 @@ func GetPrivateChannelMembers(channelID uuid.UUID) (member []uuid.UUID, err erro
 
 // IsUserPrivateChannelMember ユーザーがプライベートチャンネルのメンバーかどうかを確認します
 func IsUserPrivateChannelMember(channelID, userID uuid.UUID) (bool, error) {
+	if userID == uuid.Nil || channelID == uuid.Nil {
+		return false, nil
+	}
+
 	c := 0
 	err := db.Model(UsersPrivateChannel{}).Where(&UsersPrivateChannel{ChannelID: channelID, UserID: userID}).Count(&c).Error
 	if err != nil {
@@ -698,22 +728,34 @@ func IsUserPrivateChannelMember(channelID, userID uuid.UUID) (bool, error) {
 
 // SubscribeChannel 指定したチャンネルを購読します
 func SubscribeChannel(userID, channelID uuid.UUID) error {
+	if userID == uuid.Nil || channelID == uuid.Nil {
+		return ErrNotFound
+	}
 	return db.Create(&UserSubscribeChannel{UserID: userID, ChannelID: channelID}).Error
 }
 
 // UnsubscribeChannel 指定したチャンネルの購読を解除します
 func UnsubscribeChannel(userID, channelID uuid.UUID) error {
+	if userID == uuid.Nil || channelID == uuid.Nil {
+		return nil
+	}
 	return db.Where(&UserSubscribeChannel{UserID: userID, ChannelID: channelID}).Delete(UserSubscribeChannel{}).Error
 }
 
 // GetSubscribingUser 指定したチャンネルを購読しているユーザーを取得
 func GetSubscribingUser(channelID uuid.UUID) (users []uuid.UUID, err error) {
+	if channelID == uuid.Nil {
+		return
+	}
 	err = db.Model(UserSubscribeChannel{}).Where(&UserSubscribeChannel{ChannelID: channelID}).Pluck("user_id", &users).Error
 	return
 }
 
 // GetSubscribedChannels ユーザーが購読しているチャンネルを取得する
 func GetSubscribedChannels(userID uuid.UUID) (channels []uuid.UUID, err error) {
+	if userID == uuid.Nil {
+		return
+	}
 	err = db.Model(UserSubscribeChannel{}).Where(&UserSubscribeChannel{UserID: userID}).Pluck("channel_id", &channels).Error
 	return
 }

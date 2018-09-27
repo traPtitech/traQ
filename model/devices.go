@@ -48,12 +48,18 @@ func RegisterDevice(userID uuid.UUID, token string) (*Device, error) {
 
 // UnregisterDevice FCMデバイスを解放
 func UnregisterDevice(token string) (err error) {
+	if len(token) == 0 {
+		return nil
+	}
 	err = db.Delete(&Device{Token: token}).Error
 	return
 }
 
 // GetDevices 指定ユーザーのデバイスを取得
 func GetDevices(user uuid.UUID) (result []*Device, err error) {
+	if user == uuid.Nil {
+		return
+	}
 	err = db.Where(&Device{UserID: user}).Find(&result).Error
 	return
 }
@@ -72,6 +78,9 @@ func GetAllDeviceIDs() (result []string, err error) {
 
 // GetDeviceIDs 指定ユーザーの全デバイスIDを取得
 func GetDeviceIDs(user uuid.UUID) (result []string, err error) {
+	if user == uuid.Nil {
+		return
+	}
 	err = db.Model(Device{}).Where(&Device{UserID: user}).Pluck("token", &result).Error
 	return
 }
