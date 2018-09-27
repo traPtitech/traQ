@@ -519,6 +519,8 @@ func GetAscendantChannelIDs(channelID uuid.UUID) (ascendants []uuid.UUID, err er
 			return nil, nil
 		}
 		return nil, err
+	} else if parent == nil {
+		return []uuid.UUID{}, nil
 	}
 	ascendants = append(ascendants, parent.ID)
 	sub, err := GetAscendantChannelIDs(parent.ID)
