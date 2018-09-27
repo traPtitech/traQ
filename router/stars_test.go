@@ -9,7 +9,7 @@ import (
 func TestGetStars(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
-	mustStarChannel(t, testUser.GetUID(), channel.GetCID())
+	mustStarChannel(t, testUser.GetUID(), channel.ID)
 
 	rec := request(e, t, mw(GetStars), cookie, nil)
 
@@ -28,7 +28,7 @@ func TestPutStars(t *testing.T) {
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetParamNames("channelID")
-	c.SetParamValues(channel.ID)
+	c.SetParamValues(channel.ID.String())
 	requestWithContext(t, mw(PutStars), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code)
@@ -37,11 +37,11 @@ func TestPutStars(t *testing.T) {
 func TestDeleteStars(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
-	mustStarChannel(t, testUser.GetUID(), channel.GetCID())
+	mustStarChannel(t, testUser.GetUID(), channel.ID)
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetParamNames("channelID")
-	c.SetParamValues(channel.ID)
+	c.SetParamValues(channel.ID.String())
 	requestWithContext(t, mw(DeleteStars), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code)

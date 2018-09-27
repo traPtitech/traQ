@@ -13,14 +13,14 @@ import (
 func TestGetChannelPin(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "")
-	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.GetCID())
+	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.ID)
 
 	//正常系
 	testPin := mustMakePin(t, testUser.GetUID(), testMessage.GetID())
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/channel/:channelID/pin")
 	c.SetParamNames("channelID")
-	c.SetParamValues(testChannel.ID)
+	c.SetParamValues(testChannel.ID.String())
 	requestWithContext(t, mw(GetChannelPin), c)
 
 	assert.EqualValues(http.StatusOK, rec.Code)
@@ -34,7 +34,7 @@ func TestGetChannelPin(t *testing.T) {
 func TestGetPin(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "")
-	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.GetCID())
+	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.ID)
 
 	//正常系
 	testPin := mustMakePin(t, testUser.GetUID(), testMessage.GetID())
@@ -54,7 +54,7 @@ func TestGetPin(t *testing.T) {
 func TestPostPin(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "")
-	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.GetCID())
+	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.ID)
 
 	//正常系
 	post := struct {
@@ -69,12 +69,12 @@ func TestPostPin(t *testing.T) {
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/channels/:channelID/pin")
 	c.SetParamNames("channelID")
-	c.SetParamValues(testChannel.ID)
+	c.SetParamValues(testChannel.ID.String())
 	requestWithContext(t, mw(PostPin), c)
 
 	assert.EqualValues(http.StatusCreated, rec.Code)
 
-	correctResponse, err := getChannelPinResponse(testChannel.GetCID())
+	correctResponse, err := getChannelPinResponse(testChannel.ID)
 	require.NoError(err)
 	require.Len(correctResponse, 1)
 
@@ -83,7 +83,7 @@ func TestPostPin(t *testing.T) {
 	c, rec = getContext(e, t, cookie, req)
 	c.SetPath("/channels/:channelID/pin")
 	c.SetParamNames("channelID")
-	c.SetParamValues(otherChannelID)
+	c.SetParamValues(otherChannelID.String())
 	err = mw(PostPin)(c)
 
 	if assert.Error(err) {
@@ -94,7 +94,7 @@ func TestPostPin(t *testing.T) {
 func TestDeletePin(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 	testChannel := mustMakeChannelDetail(t, testUser.GetUID(), "pinChannel", "")
-	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.GetCID())
+	testMessage := mustMakeMessage(t, testUser.GetUID(), testChannel.ID)
 
 	//正常系
 	testPin := mustMakePin(t, testUser.GetUID(), testMessage.GetID())

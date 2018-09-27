@@ -187,8 +187,8 @@ func ChangeUserTwitterID(userID uuid.UUID, twitterID string) error {
 }
 
 // UpdateUserLastOnline ユーザーの最終オンライン日時を更新します
-func UpdateUserLastOnline(id string, time time.Time) (err error) {
-	return db.Model(&User{ID: id}).Update("last_online", &time).Error
+func UpdateUserLastOnline(id uuid.UUID, time time.Time) (err error) {
+	return db.Model(&User{ID: id.String()}).Update("last_online", &time).Error
 }
 
 // AuthenticateUser ユーザー構造体とパスワードを照合します

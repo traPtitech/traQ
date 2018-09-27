@@ -15,10 +15,10 @@ func TestMessage_TableName(t *testing.T) {
 func TestCreateMessage(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	_, err := CreateMessage(user.GetUID(), channel.GetCID(), "")
+	_, err := CreateMessage(user.GetUID(), channel.ID, "")
 	assert.Error(err)
 
-	m, err := CreateMessage(user.GetUID(), channel.GetCID(), "test")
+	m, err := CreateMessage(user.GetUID(), channel.ID, "test")
 	if assert.NoError(err) {
 		assert.NotEmpty(m.ID)
 		assert.Equal(user.ID, m.UserID)
@@ -33,7 +33,7 @@ func TestCreateMessage(t *testing.T) {
 func TestUpdateMessage(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	m := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	m := mustMakeMessage(t, user.GetUID(), channel.ID)
 
 	assert.Error(UpdateMessage(m.GetID(), ""))
 	assert.NoError(UpdateMessage(m.GetID(), "new message"))
@@ -47,7 +47,7 @@ func TestUpdateMessage(t *testing.T) {
 func TestDeleteMessage(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	m := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	m := mustMakeMessage(t, user.GetUID(), channel.ID)
 
 	if assert.NoError(DeleteMessage(m.GetID())) {
 		_, err := GetMessageByID(m.GetID())
@@ -59,15 +59,15 @@ func TestGetMessagesByChannelID(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
 	for i := 0; i < 10; i++ {
-		mustMakeMessage(t, user.GetUID(), channel.GetCID())
+		mustMakeMessage(t, user.GetUID(), channel.ID)
 	}
 
-	r, err := GetMessagesByChannelID(channel.GetCID(), 0, 0)
+	r, err := GetMessagesByChannelID(channel.ID, 0, 0)
 	if assert.NoError(err) {
 		assert.Len(r, 10)
 	}
 
-	r, err = GetMessagesByChannelID(channel.GetCID(), 3, 5)
+	r, err = GetMessagesByChannelID(channel.ID, 3, 5)
 	if assert.NoError(err) {
 		assert.Len(r, 3)
 	}
@@ -76,7 +76,7 @@ func TestGetMessagesByChannelID(t *testing.T) {
 func TestGetMessageByID(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	m := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	m := mustMakeMessage(t, user.GetUID(), channel.ID)
 
 	r, err := GetMessageByID(m.GetID())
 	if assert.NoError(err) {

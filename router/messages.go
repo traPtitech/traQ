@@ -198,7 +198,7 @@ func GetDirectMessages(c echo.Context) error {
 	}
 
 	// メッセージ取得
-	messages, err := model.GetMessagesByChannelID(ch.GetCID(), req.Limit, req.Offset)
+	messages, err := model.GetMessagesByChannelID(ch.ID, req.Limit, req.Offset)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -241,7 +241,7 @@ func PostDirectMessage(c echo.Context) error {
 	}
 
 	// 投稿
-	m, err := createMessage(c, req.Text, myID, ch.GetCID())
+	m, err := createMessage(c, req.Text, myID, ch.ID)
 	if err != nil {
 		return err
 	}

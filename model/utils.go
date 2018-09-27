@@ -194,7 +194,7 @@ func InitCache() error {
 		if err != nil {
 			return err
 		}
-		channelPathMap.Store(v.GetCID(), path)
+		channelPathMap.Store(v.ID, path)
 	}
 
 	// サムネイル未作成なファイルのサムネイル作成を試みる

@@ -16,9 +16,8 @@ func TestAddPrivateChannelMember(t *testing.T) {
 	assert, require, user, _ := beforeTest(t)
 
 	channel := &Channel{
-		ID:        CreateUUID(),
-		CreatorID: user.ID,
-		UpdaterID: user.ID,
+		CreatorID: user.GetUID(),
+		UpdaterID: user.GetUID(),
 		Name:      "Private-Channel",
 		IsPublic:  false,
 	}
@@ -26,8 +25,8 @@ func TestAddPrivateChannelMember(t *testing.T) {
 
 	po := mustMakeUser(t, "po")
 
-	assert.NoError(AddPrivateChannelMember(channel.GetCID(), user.GetUID()))
-	assert.NoError(AddPrivateChannelMember(channel.GetCID(), po.GetUID()))
+	assert.NoError(AddPrivateChannelMember(channel.ID, user.GetUID()))
+	assert.NoError(AddPrivateChannelMember(channel.ID, po.GetUID()))
 
 	channelList, err := GetChannelList(user.GetUID())
 	if assert.NoError(err) {
@@ -47,7 +46,7 @@ func TestGetPrivateChannelMembers(t *testing.T) {
 	user2 := mustMakeUser(t, "private-2")
 	channel := mustMakePrivateChannel(t, "privatechannel-1", []uuid.UUID{user1.GetUID(), user2.GetUID()})
 
-	member, err := GetPrivateChannelMembers(channel.GetCID())
+	member, err := GetPrivateChannelMembers(channel.ID)
 	assert.NoError(err)
 	assert.Len(member, 2)
 }
@@ -59,15 +58,15 @@ func TestIsUserPrivatateChannelMember(t *testing.T) {
 	user2 := mustMakeUser(t, "private-2")
 	channel := mustMakePrivateChannel(t, "privatechannel-1", []uuid.UUID{user1.GetUID(), user2.GetUID()})
 
-	ok, err := IsUserPrivateChannelMember(channel.GetCID(), user1.GetUID())
+	ok, err := IsUserPrivateChannelMember(channel.ID, user1.GetUID())
 	if assert.NoError(err) {
 		assert.True(ok)
 	}
-	ok, err = IsUserPrivateChannelMember(channel.GetCID(), user2.GetUID())
+	ok, err = IsUserPrivateChannelMember(channel.ID, user2.GetUID())
 	if assert.NoError(err) {
 		assert.True(ok)
 	}
-	ok, err = IsUserPrivateChannelMember(channel.GetCID(), user.GetUID())
+	ok, err = IsUserPrivateChannelMember(channel.ID, user.GetUID())
 	if assert.NoError(err) {
 		assert.False(ok)
 	}

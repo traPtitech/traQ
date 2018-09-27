@@ -51,7 +51,7 @@ func TestPostChannels(t *testing.T) {
 
 	postBody = PostChannel{
 		Name:   "test-2",
-		Parent: channelList[0].ID,
+		Parent: channelList[0].ID.String(),
 	}
 
 	body, err = json.Marshal(postBody)
@@ -100,7 +100,7 @@ func TestGetChannelsByChannelID(t *testing.T) {
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/:channelID")
 	c.SetParamNames("channelID")
-	c.SetParamValues(channel.ID)
+	c.SetParamValues(channel.ID.String())
 
 	requestWithContext(t, mw(GetChannelByChannelID), c)
 	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
@@ -124,7 +124,7 @@ func TestPatchChannelsByChannelID(t *testing.T) {
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/:channelID")
 	c.SetParamNames("channelID")
-	c.SetParamValues(ch.ID)
+	c.SetParamValues(ch.ID.String())
 	requestWithContext(t, mw(PatchChannelByChannelID), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String())
@@ -138,7 +138,7 @@ func TestPutChannelParent(t *testing.T) {
 	jsonBody := struct {
 		Parent string `json:"parent"`
 	}{
-		Parent: parentID,
+		Parent: parentID.String(),
 	}
 	body, err := json.Marshal(jsonBody)
 	require.NoError(err)
@@ -147,7 +147,7 @@ func TestPutChannelParent(t *testing.T) {
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/:channelID")
 	c.SetParamNames("channelID")
-	c.SetParamValues(ch.ID)
+	c.SetParamValues(ch.ID.String())
 	requestWithContext(t, mw(PutChannelParent), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String())
@@ -161,10 +161,10 @@ func TestDeleteChannelsByChannelID(t *testing.T) {
 	c, _ := getContext(e, t, cookie, nil)
 	c.SetPath("/:channelID")
 	c.SetParamNames("channelID")
-	c.SetParamValues(ch.ID)
+	c.SetParamValues(ch.ID.String())
 	requestWithContext(t, mw(DeleteChannelByChannelID), c)
 
-	ch, err := model.GetChannelWithUserID(testUser.GetUID(), ch.GetCID())
+	ch, err := model.GetChannelWithUserID(testUser.GetUID(), ch.ID)
 	require.Error(err)
 
 	// ""で削除されていても取得できるようにするそれでちゃんと削除されているか確認する

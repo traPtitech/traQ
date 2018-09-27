@@ -21,7 +21,7 @@ func TestPostHeartbeat(t *testing.T) {
 		ChannelID string `json:"channelId"`
 		Status    string `json:"status"`
 	}{
-		ChannelID: channel.ID,
+		ChannelID: channel.ID.String(),
 		Status:    "editing",
 	})
 	require.NoError(err)
@@ -48,7 +48,7 @@ func TestGetHeartbeat(t *testing.T) {
 		ChannelID: channel.ID,
 		UserStatuses: []*model.UserStatus{
 			{
-				UserID:   testUser.ID,
+				UserID:   testUser.GetUID(),
 				Status:   "editing",
 				LastTime: time.Now(),
 			},
@@ -56,7 +56,7 @@ func TestGetHeartbeat(t *testing.T) {
 	}
 
 	q := make(url.Values)
-	q.Set("channelId", channel.ID)
+	q.Set("channelId", channel.ID.String())
 
 	req := httptest.NewRequest("GET", "/?"+q.Encode(), nil)
 	rec := request(e, t, mw(GetHeartbeat), cookie, req)

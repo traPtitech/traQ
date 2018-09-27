@@ -13,7 +13,7 @@ func TestPinTableName(t *testing.T) {
 
 func TestCreatePin(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
-	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
 
 	p, err := CreatePin(testMessage.GetID(), user.GetUID())
 	if assert.NoError(err) {
@@ -27,7 +27,7 @@ func TestCreatePin(t *testing.T) {
 func TestGetPin(t *testing.T) {
 	assert, require, user, channel := beforeTest(t)
 
-	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
 	p, err := CreatePin(testMessage.GetID(), user.GetUID())
 	require.NoError(err)
 
@@ -49,7 +49,7 @@ func TestGetPin(t *testing.T) {
 func TestIsPinned(t *testing.T) {
 	assert, require, user, channel := beforeTest(t)
 
-	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
 	_, err := CreatePin(testMessage.GetID(), user.GetUID())
 	require.NoError(err)
 
@@ -67,7 +67,7 @@ func TestIsPinned(t *testing.T) {
 func TestDeletePin(t *testing.T) {
 	assert, require, user, channel := beforeTest(t)
 
-	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
 	p, err := CreatePin(testMessage.GetID(), user.GetUID())
 	require.NoError(err)
 
@@ -81,11 +81,11 @@ func TestDeletePin(t *testing.T) {
 func TestGetPinsByChannelID(t *testing.T) {
 	assert, require, user, channel := beforeTest(t)
 
-	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
 	_, err := CreatePin(testMessage.GetID(), user.GetUID())
 	require.NoError(err)
 
-	pins, err := GetPinsByChannelID(channel.GetCID())
+	pins, err := GetPinsByChannelID(channel.ID)
 	if assert.NoError(err) {
 		assert.Len(pins, 1)
 	}

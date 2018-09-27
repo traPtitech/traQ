@@ -11,7 +11,7 @@ import (
 
 // ChannelForResponse レスポンス用のチャンネル構造体
 type ChannelForResponse struct {
-	ChannelID  string      `json:"channelId"`
+	ChannelID  uuid.UUID   `json:"channelId"`
 	Name       string      `json:"name"`
 	Parent     string      `json:"parent"`
 	Children   []uuid.UUID `json:"children"`
@@ -40,7 +40,7 @@ func GetChannels(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	chMap := make(map[string]*ChannelForResponse, len(channelList))
+	chMap := make(map[uuid.UUID]*ChannelForResponse, len(channelList))
 	for _, ch := range channelList {
 		entry, ok := chMap[ch.ID]
 		if !ok {
@@ -58,7 +58,7 @@ func GetChannels(c echo.Context) error {
 
 		if !ch.IsPublic {
 			// プライベートチャンネルのメンバー取得
-			member, err := model.GetPrivateChannelMembers(ch.GetCID())
+			member, err := model.GetPrivateChannelMembers(ch.ID)
 			if err != nil {
 				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError)
@@ -66,12 +66,15 @@ func GetChannels(c echo.Context) error {
 			entry.Member = member
 		}
 
-		parent, ok := chMap[ch.ParentID]
-		if !ok {
-			parent = &ChannelForResponse{}
-			chMap[ch.ParentID] = parent
+		if len(ch.ParentID) > 0 {
+			pID := uuid.Must(uuid.FromString(ch.ParentID))
+			parent, ok := chMap[pID]
+			if !ok {
+				parent = &ChannelForResponse{}
+				chMap[pID] = parent
+			}
+			parent.Children = append(parent.Children, ch.ID)
 		}
-		parent.Children = append(parent.Children, ch.GetCID())
 	}
 
 	res := make([]*ChannelForResponse, 0, len(chMap))
@@ -137,7 +140,7 @@ func PostChannels(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
-		go event.Emit(event.ChannelCreated, &event.PrivateChannelEvent{ChannelID: ch.GetCID()})
+		go event.Emit(event.ChannelCreated, &event.PrivateChannelEvent{ChannelID: ch.ID})
 	}
 
 	formatted, err := formatChannel(ch)
@@ -324,13 +327,13 @@ func formatChannel(channel *model.Channel) (response *ChannelForResponse, err er
 		Private:    !channel.IsPublic,
 		DM:         channel.IsDMChannel(),
 	}
-	response.Children, err = model.GetChildrenChannelIDs(channel.GetCID())
+	response.Children, err = model.GetChildrenChannelIDs(channel.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	if response.Private {
-		response.Member, err = model.GetPrivateChannelMembers(channel.GetCID())
+		response.Member, err = model.GetPrivateChannelMembers(channel.ID)
 		if err != nil {
 			return nil, err
 		}

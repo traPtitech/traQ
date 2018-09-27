@@ -34,15 +34,15 @@ var (
 
 // Channel チャンネルの構造体
 type Channel struct {
-	ID        string `gorm:"type:char(36);primary_key"                 validate:"uuid,required"`
-	Name      string `gorm:"type:varchar(20);unique_index:name_parent" validate:"channel,required"`
-	ParentID  string `gorm:"type:char(36);unique_index:name_parent"`
-	Topic     string `gorm:"type:text"`
+	ID        uuid.UUID `gorm:"type:char(36);primary_key"`
+	Name      string    `gorm:"type:varchar(20);unique_index:name_parent" validate:"channel,required"`
+	ParentID  string    `gorm:"type:char(36);unique_index:name_parent"`
+	Topic     string    `gorm:"type:text"`
 	IsForced  bool
 	IsPublic  bool
 	IsVisible bool
-	CreatorID string     `gorm:"type:char(36)"                             validate:"uuid,required"`
-	UpdaterID string     `gorm:"type:char(36)"                             validate:"uuid,required"`
+	CreatorID uuid.UUID  `gorm:"type:char(36)"`
+	UpdaterID uuid.UUID  `gorm:"type:char(36)"`
 	CreatedAt time.Time  `gorm:"precision:6"`
 	UpdatedAt time.Time  `gorm:"precision:6"`
 	DeletedAt *time.Time `gorm:"precision:6"`
@@ -55,10 +55,10 @@ func (ch *Channel) TableName() string {
 
 // BeforeCreate db.Create前に呼び出されます
 func (ch *Channel) BeforeCreate(tx *gorm.DB) error {
-	if len(ch.ID) != 36 {
-		ch.ID = CreateUUID()
+	if ch.ID == uuid.Nil {
+		ch.ID = uuid.NewV4()
 	}
-	if len(ch.UpdaterID) != 36 {
+	if ch.UpdaterID == uuid.Nil {
 		ch.UpdaterID = ch.CreatorID
 	}
 	ch.IsVisible = true
@@ -97,12 +97,13 @@ func (ch *Channel) CheckConsistency() error {
 		}
 
 		// 深さを検証
-		depth := 1
-		for { // 祖先
+		depth := 1 // ↑で見た親
+		for {      // 祖先
 			if len(parentCh.ParentID) == 0 {
+				// ルート
 				break
 			}
-			if ch.GetCID() == parentCh.GetCID() {
+			if ch.ID == parentCh.ID {
 				// ループ検出
 				return ErrChannelDepthLimitation
 			}
@@ -115,11 +116,11 @@ func (ch *Channel) CheckConsistency() error {
 				return err
 			}
 			depth++
-			if depth > maxChannelDepth {
+			if depth >= maxChannelDepth {
 				break
 			}
 		}
-		bottom, err := GetChannelDepth(ch.GetCID()) // 子孫
+		bottom, err := GetChannelDepth(ch.ID) // 子孫 (自分を含む)
 		if err != nil {
 			return err
 		}
@@ -141,16 +142,6 @@ func (ch *Channel) CheckConsistency() error {
 	return nil
 }
 
-// GetCID チャンネルのUUIDを返します
-func (ch *Channel) GetCID() uuid.UUID {
-	return uuid.Must(uuid.FromString(ch.ID))
-}
-
-// GetCreatorID チャンネル作成者のUUIDを返します
-func (ch *Channel) GetCreatorID() uuid.UUID {
-	return uuid.Must(uuid.FromString(ch.CreatorID))
-}
-
 // IsDMChannel ダイレクトメッセージ用チャンネルかどうかを返します
 func (ch *Channel) IsDMChannel() bool {
 	return ch.ParentID == directMessageChannelRootID
@@ -162,7 +153,7 @@ func (ch *Channel) Path() (string, error) {
 	current := ch
 
 	for {
-		parent, err := GetParentChannel(current.GetCID())
+		parent, err := GetParentChannel(current.ID)
 		if err != nil {
 			return "#" + path, nil
 		}
@@ -170,7 +161,7 @@ func (ch *Channel) Path() (string, error) {
 			break
 		}
 
-		if parentPath, ok := GetChannelPath(uuid.FromStringOrNil(parent.ID)); ok {
+		if parentPath, ok := GetChannelPath(parent.ID); ok {
 			return parentPath + "/" + path, nil
 		}
 
@@ -186,7 +177,7 @@ func CreatePublicChannel(parent, name string, creatorID uuid.UUID) (*Channel, er
 	ch := &Channel{
 		Name:      name,
 		ParentID:  parent,
-		CreatorID: creatorID.String(),
+		CreatorID: creatorID,
 		IsPublic:  true,
 	}
 
@@ -196,7 +187,7 @@ func CreatePublicChannel(parent, name string, creatorID uuid.UUID) (*Channel, er
 
 	// チャンネルパスをキャッシュ
 	if path, err := ch.Path(); err == nil {
-		channelPathMap.Store(ch.GetCID(), path)
+		channelPathMap.Store(ch.ID, path)
 	}
 
 	return ch, nil
@@ -225,7 +216,7 @@ func CreatePrivateChannel(parent, name string, creatorID uuid.UUID, members []uu
 	ch := &Channel{
 		Name:      name,
 		ParentID:  parent,
-		CreatorID: creatorID.String(),
+		CreatorID: creatorID,
 		IsPublic:  false,
 		IsForced:  false,
 		IsVisible: true,
@@ -240,7 +231,7 @@ func CreatePrivateChannel(parent, name string, creatorID uuid.UUID, members []uu
 
 		// メンバーに追加
 		for _, v := range validMember {
-			if err := tx.Create(&UsersPrivateChannel{UserID: v, ChannelID: ch.GetCID()}).Error; err != nil {
+			if err := tx.Create(&UsersPrivateChannel{UserID: v, ChannelID: ch.ID}).Error; err != nil {
 				return err
 			}
 		}
@@ -252,7 +243,7 @@ func CreatePrivateChannel(parent, name string, creatorID uuid.UUID, members []uu
 
 	// チャンネルパスをキャッシュ
 	if path, err := ch.Path(); err == nil {
-		channelPathMap.Store(ch.GetCID(), path)
+		channelPathMap.Store(ch.ID, path)
 	}
 
 	return ch, nil
@@ -303,7 +294,7 @@ func GetOrCreateDirectMessageChannel(user1, user2 uuid.UUID) (*Channel, error) {
 	channel = Channel{
 		Name:      "dm_" + utils.RandAlphabetAndNumberString(17),
 		ParentID:  directMessageChannelRootID,
-		CreatorID: serverUser.ID,
+		CreatorID: serverUser.GetUID(),
 		IsPublic:  false,
 		IsVisible: true,
 		IsForced:  false,
@@ -315,11 +306,11 @@ func GetOrCreateDirectMessageChannel(user1, user2 uuid.UUID) (*Channel, error) {
 		}
 
 		// メンバーに追加
-		if err := tx.Create(&UsersPrivateChannel{UserID: user1, ChannelID: channel.GetCID()}).Error; err != nil {
+		if err := tx.Create(&UsersPrivateChannel{UserID: user1, ChannelID: channel.ID}).Error; err != nil {
 			return err
 		}
 		if user1 != user2 {
-			if err := tx.Create(&UsersPrivateChannel{UserID: user2, ChannelID: channel.GetCID()}).Error; err != nil {
+			if err := tx.Create(&UsersPrivateChannel{UserID: user2, ChannelID: channel.ID}).Error; err != nil {
 				return err
 			}
 		}
@@ -335,7 +326,7 @@ func GetOrCreateDirectMessageChannel(user1, user2 uuid.UUID) (*Channel, error) {
 
 // UpdateChannelTopic チャンネルトピックを更新します
 func UpdateChannelTopic(channelID uuid.UUID, topic string, updaterID uuid.UUID) error {
-	return db.Model(&Channel{ID: channelID.String()}).Updates(map[string]interface{}{
+	return db.Model(&Channel{ID: channelID}).Updates(map[string]interface{}{
 		"topic":      topic,
 		"updater_id": updaterID,
 	}).Error
@@ -369,7 +360,7 @@ func ChangeChannelName(channelID uuid.UUID, name string, updaterID uuid.UUID) er
 	}
 
 	// 更新
-	err = db.Model(&Channel{ID: channelID.String()}).Updates(map[string]interface{}{
+	err = db.Model(&Channel{ID: channelID}).Updates(map[string]interface{}{
 		"name":       name,
 		"updater_id": updaterID,
 	}).Error
@@ -401,7 +392,7 @@ func ChangeChannelParent(channelID uuid.UUID, parent string, updaterID uuid.UUID
 		return err
 	}
 
-	err = db.Model(&Channel{ID: channelID.String()}).Updates(map[string]interface{}{
+	err = db.Model(&Channel{ID: channelID}).Updates(map[string]interface{}{
 		"parent_id":  parent,
 		"updater_id": updaterID,
 	}).Error
@@ -427,7 +418,7 @@ func UpdateChannelFlag(channelID uuid.UUID, visibility, forced *bool, updaterID 
 		data["is_forced"] = *forced
 	}
 
-	return db.Model(&Channel{ID: channelID.String()}).Updates(data).Error
+	return db.Model(&Channel{ID: channelID}).Updates(data).Error
 }
 
 // DeleteChannel 子孫チャンネルを含めてチャンネルを削除します
@@ -440,7 +431,7 @@ func DeleteChannel(channelID uuid.UUID) error {
 
 	err = transact(func(tx *gorm.DB) error {
 		for _, v := range desc {
-			if err := tx.Delete(&Channel{ID: v.String()}).Error; err != nil {
+			if err := tx.Delete(&Channel{ID: v}).Error; err != nil {
 				return err
 			}
 		}
@@ -469,7 +460,7 @@ func IsChannelNamePresent(name, parent string) (bool, error) {
 
 // GetParentChannel 親のチャンネルを取得する
 func GetParentChannel(channelID uuid.UUID) (*Channel, error) {
-	p := ""
+	var p []string
 	err := db.
 		Model(Channel{}).
 		Where("id = ?", channelID).
@@ -481,13 +472,13 @@ func GetParentChannel(channelID uuid.UUID) (*Channel, error) {
 		}
 		return nil, err
 	}
-	if len(p) == 0 {
+	if len(p[0]) == 0 {
 		return nil, nil
 	}
 
 	ch := &Channel{}
 	err = db.
-		Where("id = ?", p).
+		Where("id = ?", p[0]).
 		Take(ch).
 		Error
 	if err != nil {
@@ -530,8 +521,8 @@ func GetAscendantChannelIDs(channelID uuid.UUID) (ascendants []uuid.UUID, err er
 		}
 		return nil, err
 	}
-	ascendants = append(ascendants, parent.GetCID())
-	sub, err := GetAscendantChannelIDs(parent.GetCID())
+	ascendants = append(ascendants, parent.ID)
+	sub, err := GetAscendantChannelIDs(parent.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -656,11 +647,11 @@ func updateChannelPathWithDescendants(channel *Channel) error {
 		return err
 	}
 
-	channelPathMap.Store(channel.GetCID(), path)
+	channelPathMap.Store(channel.ID, path)
 
 	//子チャンネルも
 	var children []*Channel
-	if err = db.Find(&children, &Channel{ParentID: channel.ID}).Error; err != nil {
+	if err = db.Find(&children, &Channel{ParentID: channel.ID.String()}).Error; err != nil {
 		return err
 	}
 

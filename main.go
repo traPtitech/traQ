@@ -314,7 +314,7 @@ func main() {
 	})
 
 	// init heartbeat
-	model.OnUserOnlineStateChanged = func(id string, online bool) {
+	model.OnUserOnlineStateChanged = func(id uuid.UUID, online bool) {
 		if online {
 			go event.Emit(event.UserOnline, &event.UserEvent{ID: id})
 		} else {

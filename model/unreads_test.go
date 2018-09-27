@@ -15,7 +15,7 @@ func TestUnreadTableName(t *testing.T) {
 
 func TestSetMessageUnread(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
-	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
 
 	assert.NoError(SetMessageUnread(user.GetUID(), testMessage.GetID()))
 }
@@ -24,7 +24,7 @@ func TestGetUnreadMessagesByUserID(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
 	for i := 0; i < 10; i++ {
-		mustMakeMessageUnread(t, user.GetUID(), mustMakeMessage(t, user.GetUID(), channel.GetCID()).GetID())
+		mustMakeMessageUnread(t, user.GetUID(), mustMakeMessage(t, user.GetUID(), channel.ID).GetID())
 	}
 
 	if unreads, err := GetUnreadMessagesByUserID(user.GetUID()); assert.NoError(err) {
@@ -38,8 +38,8 @@ func TestGetUnreadMessagesByUserID(t *testing.T) {
 func TestDeleteUnreadsByMessageID(t *testing.T) {
 	assert, _, user, channel := beforeTest(t)
 
-	testMessage := mustMakeMessage(t, user.GetUID(), channel.GetCID())
-	testMessage2 := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+	testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
+	testMessage2 := mustMakeMessage(t, user.GetUID(), channel.ID)
 	for i := 0; i < 10; i++ {
 		mustMakeMessageUnread(t, mustMakeUser(t, "test"+strconv.Itoa(i*2)).GetUID(), testMessage.GetID())
 		mustMakeMessageUnread(t, mustMakeUser(t, "test"+strconv.Itoa(i*2+1)).GetUID(), testMessage2.GetID())
@@ -62,14 +62,14 @@ func TestDeleteUnreadsByChannelID(t *testing.T) {
 
 	creator := mustMakeUser(t, "creator")
 
-	testMessage := mustMakeMessage(t, creator.GetUID(), channel.GetCID())
+	testMessage := mustMakeMessage(t, creator.GetUID(), channel.ID)
 	mustMakeMessageUnread(t, user.GetUID(), testMessage.GetID())
 
 	testChannel := mustMakeChannel(t, creator.GetUID(), "-unreads")
-	testMessage2 := mustMakeMessage(t, creator.GetUID(), testChannel.GetCID())
+	testMessage2 := mustMakeMessage(t, creator.GetUID(), testChannel.ID)
 	mustMakeMessageUnread(t, user.GetUID(), testMessage2.GetID())
 
-	if assert.NoError(DeleteUnreadsByChannelID(channel.GetCID(), user.GetUID())) {
+	if assert.NoError(DeleteUnreadsByChannelID(channel.ID, user.GetUID())) {
 		count := 0
 		db.Model(Unread{}).Count(&count)
 		assert.Equal(1, count)
