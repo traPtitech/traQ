@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/utils"
 	"strconv"
 	"testing"
@@ -9,15 +10,14 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+func TestChannel_TableName(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "channels", (&Channel{}).TableName())
+}
+
 // TestParallelGroup1 並列テストグループ1 競合がないようなサブテストにすること
 func TestParallelGroup1(t *testing.T) {
 	assert, require, user, channel := beforeTest(t)
-
-	// Channel.TableName
-	t.Run("TestChannel_TableName", func(t *testing.T) {
-		t.Parallel()
-		assert.Equal("channels", (&Channel{}).TableName())
-	})
 
 	// UpdateChannelTopic
 	t.Run("TestUpdateChannelTopic", func(t *testing.T) {
@@ -362,6 +362,145 @@ func TestParallelGroup1(t *testing.T) {
 		}
 		// TODO: userから見えないチャンネルの取得についてのテスト
 	})
+
+	// GetChildrenChannelIDs
+	t.Run("TestGetChildrenChannelIDs", func(t *testing.T) {
+		t.Parallel()
+
+		c1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		c2 := mustMakeChannelDetail(t, user.GetUID(), "child1", c1.ID.String())
+		c3 := mustMakeChannelDetail(t, user.GetUID(), "child2", c2.ID.String())
+		c4 := mustMakeChannelDetail(t, user.GetUID(), "child3", c2.ID.String())
+
+		cases := []struct {
+			name   string
+			ch     uuid.UUID
+			expect []uuid.UUID
+		}{
+			{"c1", c1.ID, []uuid.UUID{c2.ID}},
+			{"c2", c2.ID, []uuid.UUID{c3.ID, c4.ID}},
+			{"c3", c3.ID, []uuid.UUID{}},
+			{"c4", c4.ID, []uuid.UUID{}},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				ids, err := GetChildrenChannelIDs(v.ch)
+				if assert.NoError(err) {
+					assert.ElementsMatch(ids, v.expect)
+				}
+			})
+		}
+	})
+
+	// GetDescendantChannelIDs
+	t.Run("TestGetDescendantChannelIDs", func(t *testing.T) {
+		t.Parallel()
+
+		c1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		c2 := mustMakeChannelDetail(t, user.GetUID(), "child1", c1.ID.String())
+		c3 := mustMakeChannelDetail(t, user.GetUID(), "child2", c2.ID.String())
+		c4 := mustMakeChannelDetail(t, user.GetUID(), "child3", c2.ID.String())
+		c5 := mustMakeChannelDetail(t, user.GetUID(), "child4", c3.ID.String())
+
+		cases := []struct {
+			name   string
+			ch     uuid.UUID
+			expect []uuid.UUID
+		}{
+			{"c1", c1.ID, []uuid.UUID{c2.ID, c3.ID, c4.ID, c5.ID}},
+			{"c2", c2.ID, []uuid.UUID{c3.ID, c4.ID, c5.ID}},
+			{"c3", c3.ID, []uuid.UUID{c5.ID}},
+			{"c4", c4.ID, []uuid.UUID{}},
+			{"c5", c5.ID, []uuid.UUID{}},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				ids, err := GetDescendantChannelIDs(v.ch)
+				if assert.NoError(err) {
+					assert.ElementsMatch(ids, v.expect)
+				}
+			})
+		}
+	})
+
+	// GetAscendantChannelIDs
+	t.Run("TestGetAscendantChannelIDs", func(t *testing.T) {
+		t.Parallel()
+
+		c1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		c2 := mustMakeChannelDetail(t, user.GetUID(), "child1", c1.ID.String())
+		c3 := mustMakeChannelDetail(t, user.GetUID(), "child2", c2.ID.String())
+		c4 := mustMakeChannelDetail(t, user.GetUID(), "child3", c2.ID.String())
+		c5 := mustMakeChannelDetail(t, user.GetUID(), "child4", c3.ID.String())
+
+		cases := []struct {
+			name   string
+			ch     uuid.UUID
+			expect []uuid.UUID
+		}{
+			{"c1", c1.ID, []uuid.UUID{}},
+			{"c2", c2.ID, []uuid.UUID{c1.ID}},
+			{"c3", c3.ID, []uuid.UUID{c1.ID, c2.ID}},
+			{"c4", c4.ID, []uuid.UUID{c1.ID, c2.ID}},
+			{"c5", c5.ID, []uuid.UUID{c1.ID, c2.ID, c3.ID}},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				ids, err := GetAscendantChannelIDs(v.ch)
+				if assert.NoError(err) {
+					assert.ElementsMatch(ids, v.expect)
+				}
+			})
+		}
+	})
+
+	// GetChannelDepth
+	t.Run("TestGetChannelDepth", func(t *testing.T) {
+		t.Parallel()
+
+		c1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		c2 := mustMakeChannelDetail(t, user.GetUID(), "child1", c1.ID.String())
+		c3 := mustMakeChannelDetail(t, user.GetUID(), "child2", c2.ID.String())
+		c4 := mustMakeChannelDetail(t, user.GetUID(), "child3", c2.ID.String())
+		c5 := mustMakeChannelDetail(t, user.GetUID(), "child4", c3.ID.String())
+
+		cases := []struct {
+			name string
+			ch   uuid.UUID
+			num  int
+		}{
+			{"c1", c1.ID, 4},
+			{"c2", c2.ID, 3},
+			{"c3", c3.ID, 2},
+			{"c4", c4.ID, 1},
+			{"c5", c5.ID, 1},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				d, err := GetChannelDepth(v.ch)
+				if assert.NoError(err) {
+					assert.Equal(v.num, d)
+				}
+			})
+		}
+	})
+
 }
 
 // TestSeriesGroup 直列テストグループ1
@@ -406,13 +545,13 @@ func TestSeriesGroup1(t *testing.T) {
 		assert.Equal(ErrChannelDepthLimitation, err)
 	})
 
-	// チャンネル数ここまでpublic:7+2, private:0
+	// チャンネル数ここまでpublic:6+2, private:0
 
 	// GetAllChannels
 	t.Run("TestGetAllChannels", func(t *testing.T) {
 		chList, err := GetAllChannels()
 		if assert.NoError(err) {
-			assert.Equal(7+2, len(chList))
+			assert.Equal(6+2, len(chList))
 		}
 	})
 
@@ -420,7 +559,7 @@ func TestSeriesGroup1(t *testing.T) {
 	t.Run("TestGetChannelList", func(t *testing.T) {
 		channelList, err := GetChannelList(user.GetUID())
 		if assert.NoError(err) {
-			assert.Len(channelList, 7+2)
+			assert.Len(channelList, 6+2)
 		}
 
 		// TODO プライベートチャンネル
