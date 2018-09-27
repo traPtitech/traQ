@@ -22,7 +22,7 @@ func TestCreateMessage(t *testing.T) {
 	if assert.NoError(err) {
 		assert.NotEmpty(m.ID)
 		assert.Equal(user.ID, m.UserID)
-		assert.Equal(channel.ID, m.ChannelID)
+		assert.Equal(channel.ID, m.GetCID())
 		assert.Equal("test", m.Text)
 		assert.NotZero(m.CreatedAt)
 		assert.NotZero(m.UpdatedAt)

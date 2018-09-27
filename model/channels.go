@@ -628,7 +628,7 @@ func GetChannelDepth(id uuid.UUID) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	max := -1
+	max := 0
 	for _, v := range children {
 		d, err := GetChannelDepth(v)
 		if err != nil {
