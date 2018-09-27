@@ -28,12 +28,12 @@ func PostHeartbeat(c echo.Context) error {
 // GetHeartbeat GET /heartbeat
 func GetHeartbeat(c echo.Context) error {
 	req := struct {
-		ChannelID uuid.UUID `query:"channelId"`
+		ChannelID string `query:"channelId" validate:"uuid"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	status, _ := model.GetHeartbeatStatus(req.ChannelID)
+	status, _ := model.GetHeartbeatStatus(uuid.FromStringOrNil(req.ChannelID))
 	return c.JSON(http.StatusOK, status)
 }

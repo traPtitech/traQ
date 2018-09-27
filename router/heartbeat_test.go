@@ -34,7 +34,7 @@ func TestPostHeartbeat(t *testing.T) {
 		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
 			assert.Equal(channel.ID, responseBody.ChannelID)
 			assert.Len(responseBody.UserStatuses, 1)
-			assert.Equal(testUser.ID, responseBody.UserStatuses[0].UserID)
+			assert.Equal(testUser.GetUID(), responseBody.UserStatuses[0].UserID)
 			assert.Equal("editing", responseBody.UserStatuses[0].Status)
 		}
 	}
