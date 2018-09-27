@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"github.com/satori/go.uuid"
 	"net/http"
 	"testing"
 )
@@ -14,7 +15,7 @@ func TestGetStars(t *testing.T) {
 	rec := request(e, t, mw(GetStars), cookie, nil)
 
 	if assert.EqualValues(http.StatusOK, rec.Code) {
-		var res []string
+		var res []uuid.UUID
 		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &res)) {
 			assert.Len(res, 1)
 			assert.Equal(channel.ID, res[0])

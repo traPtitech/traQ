@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/satori/go.uuid"
 	"net/http/httptest"
 	"net/url"
 	"testing"
@@ -18,10 +19,10 @@ func TestPostHeartbeat(t *testing.T) {
 	channel := mustMakeChannelDetail(t, testUser.GetUID(), "testChan", "")
 
 	requestBody, err := json.Marshal(struct {
-		ChannelID string `json:"channelId"`
-		Status    string `json:"status"`
+		ChannelID uuid.UUID `json:"channelId"`
+		Status    string    `json:"status"`
 	}{
-		ChannelID: channel.ID.String(),
+		ChannelID: channel.ID,
 		Status:    "editing",
 	})
 	require.NoError(err)
