@@ -34,6 +34,8 @@ github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a h1:1aXp
 github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a/go.mod h1:cIqB8dNGjC0JqO6+FjMW4PgslFy+aF9qbVKjU4EO1ms=
 github.com/jinzhu/gorm v1.9.1 h1:lDSDtsCt5AGGSKTs8AHlSDbbgif4G4+CKJ8ETBDVHTA=
 github.com/jinzhu/gorm v1.9.1/go.mod h1:Vla75njaFJ8clLU1W44h34PjIkijhjHIYnZxMqCdxqo=
+github.com/jinzhu/gorm v1.9.2-0.20180922115911-f6260a008529 h1:mnIZLpi9zRhHzw7li2w0SjBXFq/Itr+9Cjk/rYpnQJo=
+github.com/jinzhu/gorm v1.9.2-0.20180922115911-f6260a008529/go.mod h1:Vla75njaFJ8clLU1W44h34PjIkijhjHIYnZxMqCdxqo=
 github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a h1:eeaG9XMUvRBYXJi4pg1ZKM7nxc5AfXfojeLLW7O5J3k=
 github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a/go.mod h1:h+uFLlag+Qp1Va5pdKtLDYj+kHp5pxUVkryuEj+Srlc=
 github.com/jinzhu/now v0.0.0-20180511015916-ed742868f2ae h1:8bBMcboXYVuo0WYH+rPe5mB8obO89a993hdTZ3phTjc=
