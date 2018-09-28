@@ -23,6 +23,7 @@ file "/home/vagrant/.bashrc" do
 		export EDITOR=nano #
 		export GOPATH=#{goPath} #
 		export PATH=$PATH:$GOPATH/bin #
+		export GO111MODULE=on #
 		cd #{projectDir}/traQ #
 	EOS
 end

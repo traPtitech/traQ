@@ -3,29 +3,45 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.10.3
+      - image: circleci/golang:1.11.0
+        environment:
+          - GO111MODULE: "on"
+          - GOCACHE: "/tmp/go/cache"
       - image: circleci/mysql:latest-ram
         environment:
-          - MYSQL_DATABASE=traq
-          - MYSQL_ROOT_PASSWORD=password
-
+          - MYSQL_DATABASE: "traq"
+          - MYSQL_ROOT_PASSWORD: "password"
     working_directory: /go/src/github.com/traPtitech/traQ
-
     steps:
       - checkout
 
+      - restore_cache:
+          keys:
+            - gomod-{{ checksum "go.mod" }}
       - run:
-          name: Install tools/packages
-          command: make init
+          name: Download go modules and golint
+          when: always
+          command: |
+            go mod download
+            go install golang.org/x/lint/golint
+      - save_cache:
+          key: gomod-{{ checksum "go.mod" }}
+          when: always
+          paths:
+            - /go/pkg/mod/cache
 
       - run:
-          name: fmt
+          name: gofmt
           when: always
           command: make ci-fmt
       - run:
-          name: lint
+          name: golint
           when: always
           command: make ci-lint
+      - run:
+          name: go vet
+          when: always
+          command: make ci-vet
 
       - run:
           name: Setup DB
@@ -34,19 +50,29 @@ jobs:
             dockerize -wait tcp://localhost:3306 -timeout 1m
             go run .circleci/init.go
 
-      - run:
-          name: test
-          when: always
-          command: ./.circleci/go.test.sh
+      - restore_cache:
+          keys:
+            - build-cache-{{ .Branch }}--
+            - build-cache-master--
       - run:
           name: build
           when: always
-          command: make traQ
+          command: |
+            mkdir -p $GOCACHE
+            go build -v
+      - run:
+          name: test
+          when: always
+          command: go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
+      - save_cache:
+          key: build-cache-{{ .Branch }}--{{ .Revision }}
+          when: always
+          paths:
+            - /tmp/go/cache
 
       - run:
           name: Upload coverage data
           command: bash <(curl -s https://codecov.io/bash)
-
       - store_artifacts:
           path: /go/src/github.com/traPtitech/traQ/traQ
           destination: traQ

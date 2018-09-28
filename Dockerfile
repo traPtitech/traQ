@@ -1,11 +1,11 @@
 FROM golang:1.11.0-alpine AS build
+ENV GO111MODULE=on
 RUN apk add --update --no-cache git
-RUN go get -u github.com/golang/dep/cmd/dep
 WORKDIR /go/src/github.com/traPtitech/traQ
-COPY ./Gopkg.* ./
-RUN dep ensure --vendor-only=true
+COPY ./go.* ./
+RUN go mod download
 COPY . .
-RUN go build -o /traQ
+RUN CGO_ENABLED=0 go build -o /traQ
 
 
 FROM alpine:3.8
