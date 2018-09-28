@@ -13,57 +13,66 @@ func TestFile_TableName(t *testing.T) {
 	assert.Equal(t, "files", (&File{}).TableName())
 }
 
-func TestFile_Create(t *testing.T) {
+// TestParallelGroup10 並列テストグループ10 競合がないようなサブテストにすること
+func TestParallelGroup10(t *testing.T) {
 	assert, _, user, _ := beforeTest(t)
 
-	writeData := bytes.NewReader(([]byte)("test message"))
+	// File.Create
+	t.Run("TestFile_Create", func(t *testing.T) {
+		t.Parallel()
 
-	assert.Error((&File{}).Create(writeData))
-	assert.Error((&File{ID: CreateUUID()}).Create(writeData))
+		writeData := bytes.NewReader(([]byte)("test message"))
 
-	file := &File{
-		Name:      "testFile.txt",
-		Size:      writeData.Size(),
-		CreatorID: user.ID,
-	}
-	assert.NoError(file.Create(writeData))
-}
+		assert.Error((&File{}).Create(writeData))
+		assert.Error((&File{ID: CreateUUID()}).Create(writeData))
 
-func TestDeleteFile(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
-
-	file := mustMakeFile(t, user.ID)
-
-	assert.NoError(DeleteFile(file.GetID()))
-	_, err := fileManagers[""].OpenFileByID(file.ID)
-	assert.Error(err)
-}
-
-func TestOpenFileByID(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
-
-	f := mustMakeFile(t, user.ID)
-	file, err := OpenFileByID(f.GetID())
-	if assert.NoError(err) {
-		defer file.Close()
-
-		buf := make([]byte, 512)
-		n, err := file.Read(buf)
-		if assert.NoError(err) {
-			assert.Equal("test message", string(buf[:n]))
+		file := &File{
+			Name:      "testFile.txt",
+			Size:      writeData.Size(),
+			CreatorID: user.ID,
 		}
-	}
-}
+		assert.NoError(file.Create(writeData))
+	})
 
-func TestGetMetaFileDataByID(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
+	// DeleteFile
+	t.Run("TestDeleteFile", func(t *testing.T) {
+		t.Parallel()
 
-	file := mustMakeFile(t, user.ID)
-	result, err := GetMetaFileDataByID(file.GetID())
-	if assert.NoError(err) {
-		assert.Equal(file.ID, result.ID)
-	}
+		file := mustMakeFile(t, user.ID)
 
-	_, err = GetMetaFileDataByID(uuid.Nil)
-	assert.Error(err)
+		assert.NoError(DeleteFile(file.GetID()))
+		_, err := fileManagers[""].OpenFileByID(file.ID)
+		assert.Error(err)
+	})
+
+	// OpenFileByID
+	t.Run("TestOpenFileByID", func(t *testing.T) {
+		t.Parallel()
+
+		f := mustMakeFile(t, user.ID)
+		file, err := OpenFileByID(f.GetID())
+		if assert.NoError(err) {
+			defer file.Close()
+
+			buf := make([]byte, 512)
+			n, err := file.Read(buf)
+			if assert.NoError(err) {
+				assert.Equal("test message", string(buf[:n]))
+			}
+		}
+	})
+
+	// GetMetaFileDataByID
+	t.Run("TestGetMetaFileDataByID", func(t *testing.T) {
+		t.Parallel()
+
+		file := mustMakeFile(t, user.ID)
+		result, err := GetMetaFileDataByID(file.GetID())
+		if assert.NoError(err) {
+			assert.Equal(file.ID, result.ID)
+		}
+
+		_, err = GetMetaFileDataByID(uuid.Nil)
+		assert.Error(err)
+	})
 }
