@@ -18,7 +18,7 @@ require (
 	github.com/googleapis/gax-go v2.0.0+incompatible // indirect
 	github.com/hashicorp/golang-lru v0.5.0
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
-		github.com/jinzhu/gorm v1.9.2-0.20180922115911-f6260a008529
+	github.com/jinzhu/gorm v1.9.2-0.20180922115911-f6260a008529
 	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
 	github.com/jinzhu/now v0.0.0-20180511015916-ed742868f2ae // indirect
 	github.com/kr/pretty v0.1.0 // indirect
