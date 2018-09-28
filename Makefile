@@ -13,7 +13,6 @@ test:
 	-@make ci-vet
 	-@make ci-lint
 	-@make ci-test
-	-@make traQ
 
 .PHONY: ci-fmt
 ci-fmt:
@@ -33,6 +32,5 @@ ci-test:
 
 .PHONY: init
 init:
-	go get -u github.com/golang/dep/cmd/dep
-	go get -u golang.org/x/lint/golint
-	dep ensure
+	go mod download
+	go install golang.org/x/lint/golint

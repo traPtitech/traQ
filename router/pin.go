@@ -10,8 +10,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-//PinForResponse ピン留めのJSON
-type PinForResponse struct {
+type pinForResponse struct {
 	PinID     string              `json:"pinId"`
 	ChannelID string              `json:"channelId"`
 	UserID    string              `json:"userId"`
@@ -19,19 +18,17 @@ type PinForResponse struct {
 	Message   *MessageForResponse `json:"message"`
 }
 
-//GetChannelPin GET /channels/:channelID/pin"
+// GetChannelPin GET /channels/:channelID/pin"
 func GetChannelPin(c echo.Context) error {
-	userID := c.Get("user").(*model.User).GetUID()
-	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+	userID := getRequestUserID(c)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	if _, err := validateChannelID(channelID, userID); err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "the channel is not found")
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	// ユーザーからアクセス可能なチャンネルかどうか
+	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	res, err := getChannelPinResponse(channelID)
@@ -43,10 +40,18 @@ func GetChannelPin(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-//PostPin POST /channels/:channelID/pin
+// PostPin POST /channels/:channelID/pin
 func PostPin(c echo.Context) error {
-	userID := c.Get("user").(*model.User).GetUID()
-	channelID := uuid.FromStringOrNil(c.Param("channelID"))
+	userID := getRequestUserID(c)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+
+	// ユーザーからアクセス可能なチャンネルかどうか
+	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
 
 	req := struct {
 		MessageID string `json:"messageId" validate:"uuid,required"`
@@ -82,9 +87,10 @@ func PostPin(c echo.Context) error {
 	return c.JSON(http.StatusCreated, map[string]string{"id": pinID.String()})
 }
 
-//GetPin GET /pin/:pinID"
+// GetPin GET /pin/:pinID"
 func GetPin(c echo.Context) error {
-	pinID := uuid.FromStringOrNil(c.Param("pinID"))
+	userID := getRequestUserID(c)
+	pinID := getRequestParamAsUUID(c, paramPinID)
 
 	pin, err := model.GetPin(pinID)
 	if err != nil {
@@ -97,12 +103,21 @@ func GetPin(c echo.Context) error {
 		}
 	}
 
+	// ユーザーからアクセス可能なチャンネルかどうか
+	if ok, err := model.IsChannelAccessibleToUser(userID, pin.Message.GetCID()); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
+
 	return c.JSON(http.StatusOK, formatPin(pin))
 }
 
-//DeletePin DELETE /pin/:pinID
+// DeletePin DELETE /pin/:pinID
 func DeletePin(c echo.Context) error {
-	pinID := uuid.FromStringOrNil(c.Param("pinID"))
+	userID := getRequestUserID(c)
+	pinID := getRequestParamAsUUID(c, paramPinID)
 
 	pin, err := model.GetPin(pinID)
 	if err != nil {
@@ -113,6 +128,14 @@ func DeletePin(c echo.Context) error {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
+	}
+
+	// ユーザーからアクセス可能なチャンネルかどうか
+	if ok, err := model.IsChannelAccessibleToUser(userID, pin.Message.GetCID()); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	if err := model.DeletePin(pinID); err != nil {
@@ -124,21 +147,21 @@ func DeletePin(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func getChannelPinResponse(channelID uuid.UUID) ([]*PinForResponse, error) {
+func getChannelPinResponse(channelID uuid.UUID) ([]*pinForResponse, error) {
 	pins, err := model.GetPinsByChannelID(channelID)
 	if err != nil {
 		return nil, err
 	}
 
-	res := make([]*PinForResponse, len(pins))
+	res := make([]*pinForResponse, len(pins))
 	for i, pin := range pins {
 		res[i] = formatPin(pin)
 	}
 	return res, nil
 }
 
-func formatPin(raw *model.Pin) *PinForResponse {
-	return &PinForResponse{
+func formatPin(raw *model.Pin) *pinForResponse {
+	return &pinForResponse{
 		PinID:     raw.ID,
 		ChannelID: raw.Message.ChannelID,
 		UserID:    raw.UserID,

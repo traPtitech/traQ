@@ -39,9 +39,9 @@ func LoadWebhookTemplate(pattern string) {
 
 // GetWebhooks GET /webhooks
 func GetWebhooks(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
 
-	list, err := model.GetWebhooksByCreator(user.GetUID())
+	list, err := model.GetWebhooksByCreator(userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -57,7 +57,7 @@ func GetWebhooks(c echo.Context) error {
 
 // PostWebhooks POST /webhooks
 func PostWebhooks(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
 
 	req := struct {
 		Name        string `json:"name"        validate:"max=32,required"`
@@ -67,15 +67,13 @@ func PostWebhooks(c echo.Context) error {
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
+	channelID := uuid.FromStringOrNil(req.ChannelID)
 
-	if _, err := validateChannelID(uuid.FromStringOrNil(req.ChannelID), user.GetUID()); err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
-		}
+	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	iconID, err := model.GenerateIcon(req.Name)
@@ -84,7 +82,7 @@ func PostWebhooks(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	w, err := model.CreateWebhook(req.Name, req.Description, uuid.Must(uuid.FromString(req.ChannelID)), user.GetUID(), uuid.Must(uuid.FromString(iconID)))
+	w, err := model.CreateWebhook(req.Name, req.Description, channelID, userID, uuid.Must(uuid.FromString(iconID)))
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -96,19 +94,20 @@ func PostWebhooks(c echo.Context) error {
 
 // GetWebhook GET /webhooks/:webhookID
 func GetWebhook(c echo.Context) error {
-	w, err := getWebhook(c, uuid.FromStringOrNil(c.Param("webhookID")), true)
+	webhookID := getRequestParamAsUUID(c, paramWebhookID)
+	w, err := getWebhook(c, webhookID, true)
 	if err != nil {
 		return err
 	}
-
 	return c.JSON(http.StatusOK, formatWebhook(w))
 }
 
 // PatchWebhook PATCH /webhooks/:webhookID
 func PatchWebhook(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
+	webhookID := getRequestParamAsUUID(c, paramWebhookID)
 
-	w, err := getWebhook(c, uuid.FromStringOrNil(c.Param("webhookID")), true)
+	w, err := getWebhook(c, webhookID, true)
 	if err != nil {
 		return err
 	}
@@ -128,14 +127,11 @@ func PatchWebhook(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid channelId")
 		}
 
-		if _, err := validateChannelID(uuid.FromStringOrNil(req.ChannelID), user.GetUID()); err != nil {
-			switch err {
-			case model.ErrNotFound:
-				return echo.NewHTTPError(http.StatusBadRequest, "this channel is not found")
-			default:
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
-			}
+		if ok, err := model.IsChannelAccessibleToUser(userID, cid); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		} else if !ok {
+			return echo.NewHTTPError(http.StatusNotFound)
 		}
 
 		if err := model.UpdateWebhook(w, nil, nil, cid); err != nil {
@@ -165,7 +161,8 @@ func PatchWebhook(c echo.Context) error {
 
 // DeleteWebhook DELETE /webhooks/:webhookID
 func DeleteWebhook(c echo.Context) error {
-	w, err := getWebhook(c, uuid.FromStringOrNil(c.Param("webhookID")), true)
+	webhookID := getRequestParamAsUUID(c, paramWebhookID)
+	w, err := getWebhook(c, webhookID, true)
 	if err != nil {
 		return err
 	}
@@ -180,7 +177,9 @@ func DeleteWebhook(c echo.Context) error {
 
 // PostWebhook POST /webhooks/:webhookID
 func PostWebhook(c echo.Context) error {
-	w, err := getWebhook(c, uuid.FromStringOrNil(c.Param("webhookID")), false)
+	webhookID := getRequestParamAsUUID(c, paramWebhookID)
+
+	w, err := getWebhook(c, webhookID, false)
 	if err != nil {
 		return err
 	}
@@ -198,22 +197,18 @@ func PostWebhook(c echo.Context) error {
 
 	case echo.MIMEApplicationJSON, echo.MIMEApplicationForm, echo.MIMEApplicationJSONCharsetUTF8:
 		req := struct {
-			Text      string `json:"text"      form:"text"`
+			Text      string `json:"text"      form:"text"      validate:"required"`
 			ChannelID string `json:"channelId" form:"channelId"`
 		}{}
-		if err := c.Bind(&req); err != nil {
+		if err := bindAndValidate(c, &req); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		}
-		if len(req.Text) == 0 {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
 		if len(req.ChannelID) == 36 {
-			channelID, err = uuid.FromString(req.ChannelID)
-			if err != nil {
-				return echo.NewHTTPError(http.StatusBadRequest)
-			}
-			_, err := model.GetChannelWithUserID(w.GetBotUserID(), channelID)
-			if err != nil {
+			channelID = uuid.FromStringOrNil(req.ChannelID)
+			if ok, err := model.IsChannelAccessibleToUser(w.GetBotUserID(), channelID); err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			} else if !ok {
 				return echo.NewHTTPError(http.StatusBadRequest)
 			}
 		}
@@ -224,7 +219,6 @@ func PostWebhook(c echo.Context) error {
 	}
 
 	m, err := model.CreateMessage(w.GetBotUserID(), channelID, text)
-
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -236,7 +230,9 @@ func PostWebhook(c echo.Context) error {
 
 // PutWebhookIcon PUT /webhooks/:webhookID/icon
 func PutWebhookIcon(c echo.Context) error {
-	w, err := getWebhook(c, uuid.FromStringOrNil(c.Param("webhookID")), true)
+	webhookID := getRequestParamAsUUID(c, paramWebhookID)
+
+	w, err := getWebhook(c, webhookID, true)
 	if err != nil {
 		return err
 	}
@@ -264,7 +260,9 @@ func PutWebhookIcon(c echo.Context) error {
 
 // PostWebhookByGithub POST /webhooks/:webhookID/github
 func PostWebhookByGithub(c echo.Context) error {
-	w, err := getWebhook(c, uuid.FromStringOrNil(c.Param("webhookID")), false)
+	webhookID := getRequestParamAsUUID(c, paramWebhookID)
+
+	w, err := getWebhook(c, webhookID, false)
 	if err != nil {
 		return err
 	}

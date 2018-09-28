@@ -2,8 +2,6 @@ package router
 
 import (
 	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/sessions"
 	"net/http"
 	"time"
@@ -11,9 +9,9 @@ import (
 
 // GetMySessions GET /users/me/sessions
 func GetMySessions(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
 
-	ses, err := sessions.GetByUserID(user.GetUID())
+	ses, err := sessions.GetByUserID(userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -44,9 +42,9 @@ func GetMySessions(c echo.Context) error {
 
 // DeleteAllMySessions DELETE /users/me/sessions
 func DeleteAllMySessions(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
 
-	err := sessions.DestroyByUserID(user.GetUID())
+	err := sessions.DestroyByUserID(userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -57,9 +55,10 @@ func DeleteAllMySessions(c echo.Context) error {
 
 // DeleteMySession DELETE /users/me/sessions/:referenceID
 func DeleteMySession(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
+	referenceID := getRequestParamAsUUID(c, paramReferenceID)
 
-	err := sessions.DestroyByReferenceID(user.GetUID(), uuid.FromStringOrNil(c.Param("referenceID")))
+	err := sessions.DestroyByReferenceID(userID, referenceID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)

@@ -1,11 +1,17 @@
 package model
 
 import (
+	"errors"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/utils/validator"
 	"time"
 
 	"github.com/satori/go.uuid"
+)
+
+var (
+	// ErrUserAlreadyHasTag 対象のユーザーは既に対象のタグを持っています
+	ErrUserAlreadyHasTag = errors.New("the user already has the tag")
 )
 
 // UsersTag userTagの構造体
@@ -34,7 +40,13 @@ func AddUserTag(userID, tagID uuid.UUID) error {
 		UserID: userID.String(),
 		TagID:  tagID.String(),
 	}
-	return db.Create(ut).Error
+	if err := db.Create(ut).Error; err != nil {
+		if isMySQLDuplicatedRecordErr(err) {
+			return ErrUserAlreadyHasTag
+		}
+		return err
+	}
+	return nil
 }
 
 // ChangeUserTagLock ユーザーのタグのロック状態を変更します

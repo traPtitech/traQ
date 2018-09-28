@@ -1,7 +1,7 @@
 .vagrant
-vendor
-
-docs/swagger-ui/*.map
+.envrc
+.idea/
+/vendor/
 
 traQ
 traQ.exe

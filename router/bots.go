@@ -34,7 +34,7 @@ type installedBotForResponse struct {
 
 // GetBots GET /bots
 func (h *Handlers) GetBots(c echo.Context) error {
-	list, err := model.GetBotsByCreator(c.Get("user").(*model.User).GetUID())
+	list, err := model.GetBotsByCreator(getRequestUserID(c))
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -50,7 +50,7 @@ func (h *Handlers) GetBots(c echo.Context) error {
 
 // PostBots POST /bots
 func (h *Handlers) PostBots(c echo.Context) error {
-	user := c.Get("user").(*model.User)
+	userID := getRequestUserID(c)
 
 	req := struct {
 		Name            string   `json:"name"            validate:"name,max=16,required"`
@@ -70,7 +70,7 @@ func (h *Handlers) PostBots(c echo.Context) error {
 	}
 
 	postURL, _ := url.Parse(req.PostURL)
-	b, err := model.CreateBot(h.OAuth2, req.Name, req.DisplayName, req.Description, user.GetUID(), uuid.Must(uuid.FromString(iconID)), postURL, req.SubscribeEvents)
+	b, err := model.CreateBot(h.OAuth2, req.Name, req.DisplayName, req.Description, userID, uuid.Must(uuid.FromString(iconID)), postURL, req.SubscribeEvents)
 	if err != nil {
 		switch err.(type) {
 		case *validator.InvalidValidationError:
@@ -87,7 +87,7 @@ func (h *Handlers) PostBots(c echo.Context) error {
 
 // GetBot GET /bots/:botID
 func (h *Handlers) GetBot(c echo.Context) error {
-	b, err := getBot(c, uuid.FromStringOrNil(c.Param("botID")), false)
+	b, err := getBot(c, getRequestParamAsUUID(c, paramBotID), false)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	b, err := getBot(c, uuid.FromStringOrNil(c.Param("botID")), true)
+	b, err := getBot(c, getRequestParamAsUUID(c, paramBotID), true)
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 
 // DeleteBot DELETE /bots/:botID
 func (h *Handlers) DeleteBot(c echo.Context) error {
-	b, err := getBot(c, uuid.FromStringOrNil(c.Param("botID")), true)
+	b, err := getBot(c, getRequestParamAsUUID(c, paramBotID), true)
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func (h *Handlers) DeleteBot(c echo.Context) error {
 
 // PutBotIcon PUT /bots/:botID/icon
 func (h *Handlers) PutBotIcon(c echo.Context) error {
-	b, err := getBot(c, uuid.FromStringOrNil(c.Param("botID")), true)
+	b, err := getBot(c, getRequestParamAsUUID(c, paramBotID), true)
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func (h *Handlers) PutBotIcon(c echo.Context) error {
 
 // PostBotActivation POST /bots/:botID/activation
 func (h *Handlers) PostBotActivation(c echo.Context) error {
-	b, err := getBot(c, uuid.FromStringOrNil(c.Param("botID")), true)
+	b, err := getBot(c, getRequestParamAsUUID(c, paramBotID), true)
 	if err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func (h *Handlers) PostBotActivation(c echo.Context) error {
 
 // GetBotToken GET /bots/:botID/token
 func (h *Handlers) GetBotToken(c echo.Context) error {
-	b, err := getBot(c, uuid.FromStringOrNil(c.Param("botID")), true)
+	b, err := getBot(c, getRequestParamAsUUID(c, paramBotID), true)
 	if err != nil {
 		return err
 	}
@@ -229,7 +229,7 @@ func (h *Handlers) GetBotToken(c echo.Context) error {
 
 // PostBotToken POST /bots/:botID/token
 func (h *Handlers) PostBotToken(c echo.Context) error {
-	b, err := getBot(c, uuid.FromStringOrNil(c.Param("botID")), true)
+	b, err := getBot(c, getRequestParamAsUUID(c, paramBotID), true)
 	if err != nil {
 		return err
 	}
@@ -248,7 +248,7 @@ func (h *Handlers) PostBotToken(c echo.Context) error {
 
 // GetBotInstallCode GET /bots/:botID/code
 func (h *Handlers) GetBotInstallCode(c echo.Context) error {
-	b, err := getBot(c, uuid.FromStringOrNil(c.Param("botID")), true)
+	b, err := getBot(c, getRequestParamAsUUID(c, paramBotID), true)
 	if err != nil {
 		return err
 	}
@@ -260,17 +260,14 @@ func (h *Handlers) GetBotInstallCode(c echo.Context) error {
 
 // GetInstalledBots GET /channels/:channelID/bots
 func (h *Handlers) GetInstalledBots(c echo.Context) error {
-	channelID := uuid.FromStringOrNil(c.Param("channelID"))
-	userID := c.Get("user").(*model.User).GetUID()
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+	userID := getRequestUserID(c)
 
-	if _, err := validateChannelID(channelID, userID); err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	bots, err := model.GetInstalledBots(channelID)
@@ -293,8 +290,8 @@ func (h *Handlers) GetInstalledBots(c echo.Context) error {
 
 // PostInstalledBots POST /channels/:channelID/bots
 func (h *Handlers) PostInstalledBots(c echo.Context) error {
-	channelID := uuid.FromStringOrNil(c.Param("channelID"))
-	userID := c.Get("user").(*model.User).GetUID()
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+	userID := getRequestUserID(c)
 
 	req := struct {
 		Code string `json:"code" validate:"required"`
@@ -311,14 +308,11 @@ func (h *Handlers) PostInstalledBots(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	if _, err := validateChannelID(channelID, userID); err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	if err := model.InstallBot(b.GetID(), channelID, userID); err != nil {
@@ -333,22 +327,19 @@ func (h *Handlers) PostInstalledBots(c echo.Context) error {
 
 // DeleteInstalledBot DELETE /channels/:channelID/bots/:botID
 func (h *Handlers) DeleteInstalledBot(c echo.Context) error {
-	channelID := uuid.FromStringOrNil(c.Param("channelID"))
-	user := c.Get("user").(*model.User)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+	userID := getRequestUserID(c)
 
-	b, err := getBot(c, uuid.FromStringOrNil(c.Param("botID")), false)
+	b, err := getBot(c, getRequestParamAsUUID(c, paramBotID), false)
 	if err != nil {
 		return err
 	}
 
-	if _, err := validateChannelID(channelID, user.GetUID()); err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	if err := model.UninstallBot(b.GetID(), channelID); err != nil {
@@ -359,7 +350,7 @@ func (h *Handlers) DeleteInstalledBot(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func getBot(c echo.Context, id uuid.UUID, strict bool) (model.Bot, error) {
+func getBot(c echo.Context, id uuid.UUID, restrict bool) (model.Bot, error) {
 	if id == uuid.Nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
@@ -372,7 +363,7 @@ func getBot(c echo.Context, id uuid.UUID, strict bool) (model.Bot, error) {
 	if b == nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
-	if strict {
+	if restrict {
 		user, ok := c.Get("user").(*model.User)
 		if !ok || b.GetCreatorID() != user.GetUID() {
 			return nil, echo.NewHTTPError(http.StatusForbidden)
