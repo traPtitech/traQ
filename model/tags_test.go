@@ -125,7 +125,7 @@ func TestParallelGroup5(t *testing.T) {
 				assert.NotZero(ut.CreatedAt)
 				assert.NotZero(ut.UpdatedAt)
 				if assert.NotZero(ut.Tag) {
-					assert.Equal("test", ut.Tag.Name)
+					assert.Equal(tag.Name, ut.Tag.Name)
 					assert.Equal(tag.ID, ut.Tag.ID)
 					assert.False(ut.Tag.Restricted)
 					assert.Empty(ut.Tag.Type)
