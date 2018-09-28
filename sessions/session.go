@@ -3,15 +3,15 @@ package sessions
 import (
 	"encoding/base64"
 	"encoding/gob"
+	"github.com/neverlee/keymutex"
 	"github.com/satori/go.uuid"
 	"github.com/tomasen/realip"
-	"github.com/traPtitech/traQ/utils"
 	"net/http"
 	"sync"
 	"time"
 )
 
-var mutexes *utils.KeyLocker
+var mutexes *keymutex.KeyMutex
 
 // Session セッション構造体
 type Session struct {
@@ -28,7 +28,7 @@ type Session struct {
 
 func init() {
 	gob.Register(map[string]interface{}{})
-	mutexes = utils.NewKeyLocker()
+	mutexes = keymutex.New(mutexSize)
 }
 
 // Get セッションを取得します
