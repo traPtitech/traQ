@@ -30,6 +30,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.9.0 // indirect
 	github.com/mikespook/gorbac v2.1.0+incompatible
 	github.com/ncw/swift v1.0.41
+	github.com/neverlee/keymutex v0.0.0-20171121013845-f593aa834bf9 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/objx v0.1.1 // indirect
