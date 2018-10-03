@@ -1,0 +1,1207 @@
+tags:
+  everyone:
+    restricted: true
+    type: reserved
+  traP:
+    restricted: true
+    type: reserved
+  00B:
+    restricted: true
+    type: grade
+  01B:
+    restricted: true
+    type: grade
+  02B:
+    restricted: true
+    type: grade
+  03B:
+    restricted: true
+    type: grade
+  04B:
+    restricted: true
+    type: grade
+  05B:
+    restricted: true
+    type: grade
+  06B:
+    restricted: true
+    type: grade
+  07B:
+    restricted: true
+    type: grade
+  08B:
+    restricted: true
+    type: grade
+  09B:
+    restricted: true
+    type: grade
+  10B:
+    restricted: true
+    type: grade
+  11B:
+    restricted: true
+    type: grade
+  12B:
+    restricted: true
+    type: grade
+  13B:
+    restricted: true
+    type: grade
+  14B:
+    restricted: true
+    type: grade
+  15B:
+    restricted: true
+    type: grade
+  16B:
+    restricted: true
+    type: grade
+  17B:
+    restricted: true
+    type: grade
+  18B:
+    restricted: true
+    type: grade
+  19B:
+    restricted: true
+    type: grade
+  20B:
+    restricted: true
+    type: grade
+  21B:
+    restricted: true
+    type: grade
+  22B:
+    restricted: true
+    type: grade
+  23B:
+    restricted: true
+    type: grade
+  24B:
+    restricted: true
+    type: grade
+  25B:
+    restricted: true
+    type: grade
+  26B:
+    restricted: true
+    type: grade
+  27B:
+    restricted: true
+    type: grade
+  28B:
+    restricted: true
+    type: grade
+  29B:
+    restricted: true
+    type: grade
+  30B:
+    restricted: true
+    type: grade
+  31B:
+    restricted: true
+    type: grade
+  32B:
+    restricted: true
+    type: grade
+  33B:
+    restricted: true
+    type: grade
+  34B:
+    restricted: true
+    type: grade
+  35B:
+    restricted: true
+    type: grade
+  36B:
+    restricted: true
+    type: grade
+  37B:
+    restricted: true
+    type: grade
+  38B:
+    restricted: true
+    type: grade
+  39B:
+    restricted: true
+    type: grade
+  40B:
+    restricted: true
+    type: grade
+  41B:
+    restricted: true
+    type: grade
+  42B:
+    restricted: true
+    type: grade
+  43B:
+    restricted: true
+    type: grade
+  44B:
+    restricted: true
+    type: grade
+  45B:
+    restricted: true
+    type: grade
+  46B:
+    restricted: true
+    type: grade
+  47B:
+    restricted: true
+    type: grade
+  48B:
+    restricted: true
+    type: grade
+  49B:
+    restricted: true
+    type: grade
+  50B:
+    restricted: true
+    type: grade
+  51B:
+    restricted: true
+    type: grade
+  52B:
+    restricted: true
+    type: grade
+  53B:
+    restricted: true
+    type: grade
+  54B:
+    restricted: true
+    type: grade
+  55B:
+    restricted: true
+    type: grade
+  56B:
+    restricted: true
+    type: grade
+  57B:
+    restricted: true
+    type: grade
+  58B:
+    restricted: true
+    type: grade
+  59B:
+    restricted: true
+    type: grade
+  60B:
+    restricted: true
+    type: grade
+  61B:
+    restricted: true
+    type: grade
+  62B:
+    restricted: true
+    type: grade
+  63B:
+    restricted: true
+    type: grade
+  64B:
+    restricted: true
+    type: grade
+  65B:
+    restricted: true
+    type: grade
+  66B:
+    restricted: true
+    type: grade
+  67B:
+    restricted: true
+    type: grade
+  68B:
+    restricted: true
+    type: grade
+  69B:
+    restricted: true
+    type: grade
+  70B:
+    restricted: true
+    type: grade
+  71B:
+    restricted: true
+    type: grade
+  72B:
+    restricted: true
+    type: grade
+  73B:
+    restricted: true
+    type: grade
+  74B:
+    restricted: true
+    type: grade
+  75B:
+    restricted: true
+    type: grade
+  76B:
+    restricted: true
+    type: grade
+  77B:
+    restricted: true
+    type: grade
+  78B:
+    restricted: true
+    type: grade
+  79B:
+    restricted: true
+    type: grade
+  80B:
+    restricted: true
+    type: grade
+  81B:
+    restricted: true
+    type: grade
+  82B:
+    restricted: true
+    type: grade
+  83B:
+    restricted: true
+    type: grade
+  84B:
+    restricted: true
+    type: grade
+  85B:
+    restricted: true
+    type: grade
+  86B:
+    restricted: true
+    type: grade
+  87B:
+    restricted: true
+    type: grade
+  88B:
+    restricted: true
+    type: grade
+  89B:
+    restricted: true
+    type: grade
+  90B:
+    restricted: true
+    type: grade
+  91B:
+    restricted: true
+    type: grade
+  92B:
+    restricted: true
+    type: grade
+  93B:
+    restricted: true
+    type: grade
+  94B:
+    restricted: true
+    type: grade
+  95B:
+    restricted: true
+    type: grade
+  96B:
+    restricted: true
+    type: grade
+  97B:
+    restricted: true
+    type: grade
+  98B:
+    restricted: true
+    type: grade
+  99B:
+    restricted: true
+    type: grade
+  00M:
+    restricted: true
+    type: grade
+  01M:
+    restricted: true
+    type: grade
+  02M:
+    restricted: true
+    type: grade
+  03M:
+    restricted: true
+    type: grade
+  04M:
+    restricted: true
+    type: grade
+  05M:
+    restricted: true
+    type: grade
+  06M:
+    restricted: true
+    type: grade
+  07M:
+    restricted: true
+    type: grade
+  08M:
+    restricted: true
+    type: grade
+  09M:
+    restricted: true
+    type: grade
+  10M:
+    restricted: true
+    type: grade
+  11M:
+    restricted: true
+    type: grade
+  12M:
+    restricted: true
+    type: grade
+  13M:
+    restricted: true
+    type: grade
+  14M:
+    restricted: true
+    type: grade
+  15M:
+    restricted: true
+    type: grade
+  16M:
+    restricted: true
+    type: grade
+  17M:
+    restricted: true
+    type: grade
+  18M:
+    restricted: true
+    type: grade
+  19M:
+    restricted: true
+    type: grade
+  20M:
+    restricted: true
+    type: grade
+  21M:
+    restricted: true
+    type: grade
+  22M:
+    restricted: true
+    type: grade
+  23M:
+    restricted: true
+    type: grade
+  24M:
+    restricted: true
+    type: grade
+  25M:
+    restricted: true
+    type: grade
+  26M:
+    restricted: true
+    type: grade
+  27M:
+    restricted: true
+    type: grade
+  28M:
+    restricted: true
+    type: grade
+  29M:
+    restricted: true
+    type: grade
+  30M:
+    restricted: true
+    type: grade
+  31M:
+    restricted: true
+    type: grade
+  32M:
+    restricted: true
+    type: grade
+  33M:
+    restricted: true
+    type: grade
+  34M:
+    restricted: true
+    type: grade
+  35M:
+    restricted: true
+    type: grade
+  36M:
+    restricted: true
+    type: grade
+  37M:
+    restricted: true
+    type: grade
+  38M:
+    restricted: true
+    type: grade
+  39M:
+    restricted: true
+    type: grade
+  40M:
+    restricted: true
+    type: grade
+  41M:
+    restricted: true
+    type: grade
+  42M:
+    restricted: true
+    type: grade
+  43M:
+    restricted: true
+    type: grade
+  44M:
+    restricted: true
+    type: grade
+  45M:
+    restricted: true
+    type: grade
+  46M:
+    restricted: true
+    type: grade
+  47M:
+    restricted: true
+    type: grade
+  48M:
+    restricted: true
+    type: grade
+  49M:
+    restricted: true
+    type: grade
+  50M:
+    restricted: true
+    type: grade
+  51M:
+    restricted: true
+    type: grade
+  52M:
+    restricted: true
+    type: grade
+  53M:
+    restricted: true
+    type: grade
+  54M:
+    restricted: true
+    type: grade
+  55M:
+    restricted: true
+    type: grade
+  56M:
+    restricted: true
+    type: grade
+  57M:
+    restricted: true
+    type: grade
+  58M:
+    restricted: true
+    type: grade
+  59M:
+    restricted: true
+    type: grade
+  60M:
+    restricted: true
+    type: grade
+  61M:
+    restricted: true
+    type: grade
+  62M:
+    restricted: true
+    type: grade
+  63M:
+    restricted: true
+    type: grade
+  64M:
+    restricted: true
+    type: grade
+  65M:
+    restricted: true
+    type: grade
+  66M:
+    restricted: true
+    type: grade
+  67M:
+    restricted: true
+    type: grade
+  68M:
+    restricted: true
+    type: grade
+  69M:
+    restricted: true
+    type: grade
+  70M:
+    restricted: true
+    type: grade
+  71M:
+    restricted: true
+    type: grade
+  72M:
+    restricted: true
+    type: grade
+  73M:
+    restricted: true
+    type: grade
+  74M:
+    restricted: true
+    type: grade
+  75M:
+    restricted: true
+    type: grade
+  76M:
+    restricted: true
+    type: grade
+  77M:
+    restricted: true
+    type: grade
+  78M:
+    restricted: true
+    type: grade
+  79M:
+    restricted: true
+    type: grade
+  80M:
+    restricted: true
+    type: grade
+  81M:
+    restricted: true
+    type: grade
+  82M:
+    restricted: true
+    type: grade
+  83M:
+    restricted: true
+    type: grade
+  84M:
+    restricted: true
+    type: grade
+  85M:
+    restricted: true
+    type: grade
+  86M:
+    restricted: true
+    type: grade
+  87M:
+    restricted: true
+    type: grade
+  88M:
+    restricted: true
+    type: grade
+  89M:
+    restricted: true
+    type: grade
+  90M:
+    restricted: true
+    type: grade
+  91M:
+    restricted: true
+    type: grade
+  92M:
+    restricted: true
+    type: grade
+  93M:
+    restricted: true
+    type: grade
+  94M:
+    restricted: true
+    type: grade
+  95M:
+    restricted: true
+    type: grade
+  96M:
+    restricted: true
+    type: grade
+  97M:
+    restricted: true
+    type: grade
+  98M:
+    restricted: true
+    type: grade
+  99M:
+    restricted: true
+    type: grade
+  00D:
+    restricted: true
+    type: grade
+  01D:
+    restricted: true
+    type: grade
+  02D:
+    restricted: true
+    type: grade
+  03D:
+    restricted: true
+    type: grade
+  04D:
+    restricted: true
+    type: grade
+  05D:
+    restricted: true
+    type: grade
+  06D:
+    restricted: true
+    type: grade
+  07D:
+    restricted: true
+    type: grade
+  08D:
+    restricted: true
+    type: grade
+  09D:
+    restricted: true
+    type: grade
+  10D:
+    restricted: true
+    type: grade
+  11D:
+    restricted: true
+    type: grade
+  12D:
+    restricted: true
+    type: grade
+  13D:
+    restricted: true
+    type: grade
+  14D:
+    restricted: true
+    type: grade
+  15D:
+    restricted: true
+    type: grade
+  16D:
+    restricted: true
+    type: grade
+  17D:
+    restricted: true
+    type: grade
+  18D:
+    restricted: true
+    type: grade
+  19D:
+    restricted: true
+    type: grade
+  20D:
+    restricted: true
+    type: grade
+  21D:
+    restricted: true
+    type: grade
+  22D:
+    restricted: true
+    type: grade
+  23D:
+    restricted: true
+    type: grade
+  24D:
+    restricted: true
+    type: grade
+  25D:
+    restricted: true
+    type: grade
+  26D:
+    restricted: true
+    type: grade
+  27D:
+    restricted: true
+    type: grade
+  28D:
+    restricted: true
+    type: grade
+  29D:
+    restricted: true
+    type: grade
+  30D:
+    restricted: true
+    type: grade
+  31D:
+    restricted: true
+    type: grade
+  32D:
+    restricted: true
+    type: grade
+  33D:
+    restricted: true
+    type: grade
+  34D:
+    restricted: true
+    type: grade
+  35D:
+    restricted: true
+    type: grade
+  36D:
+    restricted: true
+    type: grade
+  37D:
+    restricted: true
+    type: grade
+  38D:
+    restricted: true
+    type: grade
+  39D:
+    restricted: true
+    type: grade
+  40D:
+    restricted: true
+    type: grade
+  41D:
+    restricted: true
+    type: grade
+  42D:
+    restricted: true
+    type: grade
+  43D:
+    restricted: true
+    type: grade
+  44D:
+    restricted: true
+    type: grade
+  45D:
+    restricted: true
+    type: grade
+  46D:
+    restricted: true
+    type: grade
+  47D:
+    restricted: true
+    type: grade
+  48D:
+    restricted: true
+    type: grade
+  49D:
+    restricted: true
+    type: grade
+  50D:
+    restricted: true
+    type: grade
+  51D:
+    restricted: true
+    type: grade
+  52D:
+    restricted: true
+    type: grade
+  53D:
+    restricted: true
+    type: grade
+  54D:
+    restricted: true
+    type: grade
+  55D:
+    restricted: true
+    type: grade
+  56D:
+    restricted: true
+    type: grade
+  57D:
+    restricted: true
+    type: grade
+  58D:
+    restricted: true
+    type: grade
+  59D:
+    restricted: true
+    type: grade
+  60D:
+    restricted: true
+    type: grade
+  61D:
+    restricted: true
+    type: grade
+  62D:
+    restricted: true
+    type: grade
+  63D:
+    restricted: true
+    type: grade
+  64D:
+    restricted: true
+    type: grade
+  65D:
+    restricted: true
+    type: grade
+  66D:
+    restricted: true
+    type: grade
+  67D:
+    restricted: true
+    type: grade
+  68D:
+    restricted: true
+    type: grade
+  69D:
+    restricted: true
+    type: grade
+  70D:
+    restricted: true
+    type: grade
+  71D:
+    restricted: true
+    type: grade
+  72D:
+    restricted: true
+    type: grade
+  73D:
+    restricted: true
+    type: grade
+  74D:
+    restricted: true
+    type: grade
+  75D:
+    restricted: true
+    type: grade
+  76D:
+    restricted: true
+    type: grade
+  77D:
+    restricted: true
+    type: grade
+  78D:
+    restricted: true
+    type: grade
+  79D:
+    restricted: true
+    type: grade
+  80D:
+    restricted: true
+    type: grade
+  81D:
+    restricted: true
+    type: grade
+  82D:
+    restricted: true
+    type: grade
+  83D:
+    restricted: true
+    type: grade
+  84D:
+    restricted: true
+    type: grade
+  85D:
+    restricted: true
+    type: grade
+  86D:
+    restricted: true
+    type: grade
+  87D:
+    restricted: true
+    type: grade
+  88D:
+    restricted: true
+    type: grade
+  89D:
+    restricted: true
+    type: grade
+  90D:
+    restricted: true
+    type: grade
+  91D:
+    restricted: true
+    type: grade
+  92D:
+    restricted: true
+    type: grade
+  93D:
+    restricted: true
+    type: grade
+  94D:
+    restricted: true
+    type: grade
+  95D:
+    restricted: true
+    type: grade
+  96D:
+    restricted: true
+    type: grade
+  97D:
+    restricted: true
+    type: grade
+  98D:
+    restricted: true
+    type: grade
+  99D:
+    restricted: true
+    type: grade
+  00R:
+    restricted: true
+    type: grade
+  01R:
+    restricted: true
+    type: grade
+  02R:
+    restricted: true
+    type: grade
+  03R:
+    restricted: true
+    type: grade
+  04R:
+    restricted: true
+    type: grade
+  05R:
+    restricted: true
+    type: grade
+  06R:
+    restricted: true
+    type: grade
+  07R:
+    restricted: true
+    type: grade
+  08R:
+    restricted: true
+    type: grade
+  09R:
+    restricted: true
+    type: grade
+  10R:
+    restricted: true
+    type: grade
+  11R:
+    restricted: true
+    type: grade
+  12R:
+    restricted: true
+    type: grade
+  13R:
+    restricted: true
+    type: grade
+  14R:
+    restricted: true
+    type: grade
+  15R:
+    restricted: true
+    type: grade
+  16R:
+    restricted: true
+    type: grade
+  17R:
+    restricted: true
+    type: grade
+  18R:
+    restricted: true
+    type: grade
+  19R:
+    restricted: true
+    type: grade
+  20R:
+    restricted: true
+    type: grade
+  21R:
+    restricted: true
+    type: grade
+  22R:
+    restricted: true
+    type: grade
+  23R:
+    restricted: true
+    type: grade
+  24R:
+    restricted: true
+    type: grade
+  25R:
+    restricted: true
+    type: grade
+  26R:
+    restricted: true
+    type: grade
+  27R:
+    restricted: true
+    type: grade
+  28R:
+    restricted: true
+    type: grade
+  29R:
+    restricted: true
+    type: grade
+  30R:
+    restricted: true
+    type: grade
+  31R:
+    restricted: true
+    type: grade
+  32R:
+    restricted: true
+    type: grade
+  33R:
+    restricted: true
+    type: grade
+  34R:
+    restricted: true
+    type: grade
+  35R:
+    restricted: true
+    type: grade
+  36R:
+    restricted: true
+    type: grade
+  37R:
+    restricted: true
+    type: grade
+  38R:
+    restricted: true
+    type: grade
+  39R:
+    restricted: true
+    type: grade
+  40R:
+    restricted: true
+    type: grade
+  41R:
+    restricted: true
+    type: grade
+  42R:
+    restricted: true
+    type: grade
+  43R:
+    restricted: true
+    type: grade
+  44R:
+    restricted: true
+    type: grade
+  45R:
+    restricted: true
+    type: grade
+  46R:
+    restricted: true
+    type: grade
+  47R:
+    restricted: true
+    type: grade
+  48R:
+    restricted: true
+    type: grade
+  49R:
+    restricted: true
+    type: grade
+  50R:
+    restricted: true
+    type: grade
+  51R:
+    restricted: true
+    type: grade
+  52R:
+    restricted: true
+    type: grade
+  53R:
+    restricted: true
+    type: grade
+  54R:
+    restricted: true
+    type: grade
+  55R:
+    restricted: true
+    type: grade
+  56R:
+    restricted: true
+    type: grade
+  57R:
+    restricted: true
+    type: grade
+  58R:
+    restricted: true
+    type: grade
+  59R:
+    restricted: true
+    type: grade
+  60R:
+    restricted: true
+    type: grade
+  61R:
+    restricted: true
+    type: grade
+  62R:
+    restricted: true
+    type: grade
+  63R:
+    restricted: true
+    type: grade
+  64R:
+    restricted: true
+    type: grade
+  65R:
+    restricted: true
+    type: grade
+  66R:
+    restricted: true
+    type: grade
+  67R:
+    restricted: true
+    type: grade
+  68R:
+    restricted: true
+    type: grade
+  69R:
+    restricted: true
+    type: grade
+  70R:
+    restricted: true
+    type: grade
+  71R:
+    restricted: true
+    type: grade
+  72R:
+    restricted: true
+    type: grade
+  73R:
+    restricted: true
+    type: grade
+  74R:
+    restricted: true
+    type: grade
+  75R:
+    restricted: true
+    type: grade
+  76R:
+    restricted: true
+    type: grade
+  77R:
+    restricted: true
+    type: grade
+  78R:
+    restricted: true
+    type: grade
+  79R:
+    restricted: true
+    type: grade
+  80R:
+    restricted: true
+    type: grade
+  81R:
+    restricted: true
+    type: grade
+  82R:
+    restricted: true
+    type: grade
+  83R:
+    restricted: true
+    type: grade
+  84R:
+    restricted: true
+    type: grade
+  85R:
+    restricted: true
+    type: grade
+  86R:
+    restricted: true
+    type: grade
+  87R:
+    restricted: true
+    type: grade
+  88R:
+    restricted: true
+    type: grade
+  89R:
+    restricted: true
+    type: grade
+  90R:
+    restricted: true
+    type: grade
+  91R:
+    restricted: true
+    type: grade
+  92R:
+    restricted: true
+    type: grade
+  93R:
+    restricted: true
+    type: grade
+  94R:
+    restricted: true
+    type: grade
+  95R:
+    restricted: true
+    type: grade
+  96R:
+    restricted: true
+    type: grade
+  97R:
+    restricted: true
+    type: grade
+  98R:
+    restricted: true
+    type: grade
+  99R:
+    restricted: true
+    type: grade

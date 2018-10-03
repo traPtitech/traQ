@@ -1,5 +1,6 @@
 /.circleci/
 /docs/
+/data/
 /docker/
 /client/
 /vendor/
