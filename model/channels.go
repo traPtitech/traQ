@@ -216,20 +216,29 @@ func CreatePublicChannel(parent, name string, creatorID uuid.UUID) (*Channel, er
 	return ch, nil
 }
 
-// CreatePrivateChannel プライベートチャンネルを作成します
+// CreatePrivateChannel プライベートチャンネルを作成します parentが指定されている場合はmembersは無効です
 func CreatePrivateChannel(parent, name string, creatorID uuid.UUID, members []uuid.UUID) (*Channel, error) {
 	if parent == directMessageChannelRootID {
 		return nil, ErrForbidden // GetOrCreateDirectMessageChannelを使え
 	}
 
 	validMember := make([]uuid.UUID, 0, len(members))
-	for _, v := range members {
-		ok, err := UserExists(v)
+	if len(parent) != 0 {
+		// 親チャンネルとメンバーは同じ
+		ids, err := GetPrivateChannelMembers(uuid.FromStringOrNil(parent))
 		if err != nil {
 			return nil, err
 		}
-		if ok {
-			validMember = append(validMember, v)
+		validMember = append(validMember, ids...)
+	} else {
+		for _, v := range members {
+			ok, err := UserExists(v)
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				validMember = append(validMember, v)
+			}
 		}
 	}
 	if err := validator.ValidateVar(validMember, "min=1"); err != nil {
@@ -244,8 +253,6 @@ func CreatePrivateChannel(parent, name string, creatorID uuid.UUID, members []uu
 		IsForced:  false,
 		IsVisible: true,
 	}
-
-	// TODO 親チャンネルのメンバーと比較検証
 
 	err := transact(func(tx *gorm.DB) error {
 		if err := db.Create(ch).Error; err != nil {
