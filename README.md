@@ -58,3 +58,8 @@ vagrant ssh
 make init
 make
 ```
+
+## License
+Code licensed under [the MIT License](https://github.com/traPtitech/traQ/blob/master/LICENSE).
+
+[twemoji](https://twemoji.twitter.com) (svg files in `/data/twemoji`) by 2018 Twitter, Inc and other contributors is licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). 

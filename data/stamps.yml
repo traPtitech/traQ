@@ -1,0 +1,3227 @@
+stamps:
+  mahjong:
+    file: twemoji/1f004.svg
+  black_joker:
+    file: twemoji/1f0cf.svg
+  a:
+    file: twemoji/1f170.svg
+  b:
+    file: twemoji/1f171.svg
+  o2:
+    file: twemoji/1f17e.svg
+  parking:
+    file: twemoji/1f17f.svg
+  ab:
+    file: twemoji/1f18e.svg
+  cl:
+    file: twemoji/1f191.svg
+  cool:
+    file: twemoji/1f192.svg
+  free:
+    file: twemoji/1f193.svg
+  id:
+    file: twemoji/1f194.svg
+  new:
+    file: twemoji/1f195.svg
+  ng:
+    file: twemoji/1f196.svg
+  ok:
+    file: twemoji/1f197.svg
+  sos:
+    file: twemoji/1f198.svg
+  up:
+    file: twemoji/1f199.svg
+  vs:
+    file: twemoji/1f19a.svg
+  flag_ac:
+    file: twemoji/1f1e6-1f1e8.svg
+  flag_ad:
+    file: twemoji/1f1e6-1f1e9.svg
+  flag_ae:
+    file: twemoji/1f1e6-1f1ea.svg
+  flag_af:
+    file: twemoji/1f1e6-1f1eb.svg
+  flag_ag:
+    file: twemoji/1f1e6-1f1ec.svg
+  flag_ai:
+    file: twemoji/1f1e6-1f1ee.svg
+  flag_al:
+    file: twemoji/1f1e6-1f1f1.svg
+  flag_am:
+    file: twemoji/1f1e6-1f1f2.svg
+  flag_ao:
+    file: twemoji/1f1e6-1f1f4.svg
+  flag_aq:
+    file: twemoji/1f1e6-1f1f6.svg
+  flag_ar:
+    file: twemoji/1f1e6-1f1f7.svg
+  flag_as:
+    file: twemoji/1f1e6-1f1f8.svg
+  flag_at:
+    file: twemoji/1f1e6-1f1f9.svg
+  flag_au:
+    file: twemoji/1f1e6-1f1fa.svg
+  flag_aw:
+    file: twemoji/1f1e6-1f1fc.svg
+  flag_ax:
+    file: twemoji/1f1e6-1f1fd.svg
+  flag_az:
+    file: twemoji/1f1e6-1f1ff.svg
+  regional_indicator_a:
+    file: twemoji/1f1e6.svg
+  flag_ba:
+    file: twemoji/1f1e7-1f1e6.svg
+  flag_bb:
+    file: twemoji/1f1e7-1f1e7.svg
+  flag_bd:
+    file: twemoji/1f1e7-1f1e9.svg
+  flag_be:
+    file: twemoji/1f1e7-1f1ea.svg
+  flag_bf:
+    file: twemoji/1f1e7-1f1eb.svg
+  flag_bg:
+    file: twemoji/1f1e7-1f1ec.svg
+  flag_bh:
+    file: twemoji/1f1e7-1f1ed.svg
+  flag_bi:
+    file: twemoji/1f1e7-1f1ee.svg
+  flag_bj:
+    file: twemoji/1f1e7-1f1ef.svg
+  flag_bl:
+    file: twemoji/1f1e7-1f1f1.svg
+  flag_bm:
+    file: twemoji/1f1e7-1f1f2.svg
+  flag_bn:
+    file: twemoji/1f1e7-1f1f3.svg
+  flag_bo:
+    file: twemoji/1f1e7-1f1f4.svg
+  flag_bq:
+    file: twemoji/1f1e7-1f1f6.svg
+  flag_br:
+    file: twemoji/1f1e7-1f1f7.svg
+  flag_bs:
+    file: twemoji/1f1e7-1f1f8.svg
+  flag_bt:
+    file: twemoji/1f1e7-1f1f9.svg
+  flag_bv:
+    file: twemoji/1f1e7-1f1fb.svg
+  flag_bw:
+    file: twemoji/1f1e7-1f1fc.svg
+  flag_by:
+    file: twemoji/1f1e7-1f1fe.svg
+  flag_bz:
+    file: twemoji/1f1e7-1f1ff.svg
+  regional_indicator_b:
+    file: twemoji/1f1e7.svg
+  flag_ca:
+    file: twemoji/1f1e8-1f1e6.svg
+  flag_cc:
+    file: twemoji/1f1e8-1f1e8.svg
+  flag_cd:
+    file: twemoji/1f1e8-1f1e9.svg
+  flag_cf:
+    file: twemoji/1f1e8-1f1eb.svg
+  flag_cg:
+    file: twemoji/1f1e8-1f1ec.svg
+  flag_ch:
+    file: twemoji/1f1e8-1f1ed.svg
+  flag_ci:
+    file: twemoji/1f1e8-1f1ee.svg
+  flag_ck:
+    file: twemoji/1f1e8-1f1f0.svg
+  flag_cl:
+    file: twemoji/1f1e8-1f1f1.svg
+  flag_cm:
+    file: twemoji/1f1e8-1f1f2.svg
+  flag_cn:
+    file: twemoji/1f1e8-1f1f3.svg
+  flag_co:
+    file: twemoji/1f1e8-1f1f4.svg
+  flag_cp:
+    file: twemoji/1f1e8-1f1f5.svg
+  flag_cr:
+    file: twemoji/1f1e8-1f1f7.svg
+  flag_cu:
+    file: twemoji/1f1e8-1f1fa.svg
+  flag_cv:
+    file: twemoji/1f1e8-1f1fb.svg
+  flag_cw:
+    file: twemoji/1f1e8-1f1fc.svg
+  flag_cx:
+    file: twemoji/1f1e8-1f1fd.svg
+  flag_cy:
+    file: twemoji/1f1e8-1f1fe.svg
+  flag_cz:
+    file: twemoji/1f1e8-1f1ff.svg
+  regional_indicator_c:
+    file: twemoji/1f1e8.svg
+  flag_de:
+    file: twemoji/1f1e9-1f1ea.svg
+  flag_dg:
+    file: twemoji/1f1e9-1f1ec.svg
+  flag_dj:
+    file: twemoji/1f1e9-1f1ef.svg
+  flag_dk:
+    file: twemoji/1f1e9-1f1f0.svg
+  flag_dm:
+    file: twemoji/1f1e9-1f1f2.svg
+  flag_do:
+    file: twemoji/1f1e9-1f1f4.svg
+  flag_dz:
+    file: twemoji/1f1e9-1f1ff.svg
+  regional_indicator_d:
+    file: twemoji/1f1e9.svg
+  flag_ea:
+    file: twemoji/1f1ea-1f1e6.svg
+  flag_ec:
+    file: twemoji/1f1ea-1f1e8.svg
+  flag_ee:
+    file: twemoji/1f1ea-1f1ea.svg
+  flag_eg:
+    file: twemoji/1f1ea-1f1ec.svg
+  flag_eh:
+    file: twemoji/1f1ea-1f1ed.svg
+  flag_er:
+    file: twemoji/1f1ea-1f1f7.svg
+  flag_es:
+    file: twemoji/1f1ea-1f1f8.svg
+  flag_et:
+    file: twemoji/1f1ea-1f1f9.svg
+  flag_eu:
+    file: twemoji/1f1ea-1f1fa.svg
+  regional_indicator_e:
+    file: twemoji/1f1ea.svg
+  flag_fi:
+    file: twemoji/1f1eb-1f1ee.svg
+  flag_fj:
+    file: twemoji/1f1eb-1f1ef.svg
+  flag_fk:
+    file: twemoji/1f1eb-1f1f0.svg
+  flag_fm:
+    file: twemoji/1f1eb-1f1f2.svg
+  flag_fo:
+    file: twemoji/1f1eb-1f1f4.svg
+  flag_fr:
+    file: twemoji/1f1eb-1f1f7.svg
+  regional_indicator_f:
+    file: twemoji/1f1eb.svg
+  flag_ga:
+    file: twemoji/1f1ec-1f1e6.svg
+  flag_gb:
+    file: twemoji/1f1ec-1f1e7.svg
+  flag_gd:
+    file: twemoji/1f1ec-1f1e9.svg
+  flag_ge:
+    file: twemoji/1f1ec-1f1ea.svg
+  flag_gf:
+    file: twemoji/1f1ec-1f1eb.svg
+  flag_gg:
+    file: twemoji/1f1ec-1f1ec.svg
+  flag_gh:
+    file: twemoji/1f1ec-1f1ed.svg
+  flag_gi:
+    file: twemoji/1f1ec-1f1ee.svg
+  flag_gl:
+    file: twemoji/1f1ec-1f1f1.svg
+  flag_gm:
+    file: twemoji/1f1ec-1f1f2.svg
+  flag_gn:
+    file: twemoji/1f1ec-1f1f3.svg
+  flag_gp:
+    file: twemoji/1f1ec-1f1f5.svg
+  flag_gq:
+    file: twemoji/1f1ec-1f1f6.svg
+  flag_gr:
+    file: twemoji/1f1ec-1f1f7.svg
+  flag_gs:
+    file: twemoji/1f1ec-1f1f8.svg
+  flag_gt:
+    file: twemoji/1f1ec-1f1f9.svg
+  flag_gu:
+    file: twemoji/1f1ec-1f1fa.svg
+  flag_gw:
+    file: twemoji/1f1ec-1f1fc.svg
+  flag_gy:
+    file: twemoji/1f1ec-1f1fe.svg
+  regional_indicator_g:
+    file: twemoji/1f1ec.svg
+  flag_hk:
+    file: twemoji/1f1ed-1f1f0.svg
+  flag_hm:
+    file: twemoji/1f1ed-1f1f2.svg
+  flag_hn:
+    file: twemoji/1f1ed-1f1f3.svg
+  flag_hr:
+    file: twemoji/1f1ed-1f1f7.svg
+  flag_ht:
+    file: twemoji/1f1ed-1f1f9.svg
+  flag_hu:
+    file: twemoji/1f1ed-1f1fa.svg
+  regional_indicator_h:
+    file: twemoji/1f1ed.svg
+  flag_ic:
+    file: twemoji/1f1ee-1f1e8.svg
+  flag_id:
+    file: twemoji/1f1ee-1f1e9.svg
+  flag_ie:
+    file: twemoji/1f1ee-1f1ea.svg
+  flag_il:
+    file: twemoji/1f1ee-1f1f1.svg
+  flag_im:
+    file: twemoji/1f1ee-1f1f2.svg
+  flag_in:
+    file: twemoji/1f1ee-1f1f3.svg
+  flag_io:
+    file: twemoji/1f1ee-1f1f4.svg
+  flag_iq:
+    file: twemoji/1f1ee-1f1f6.svg
+  flag_ir:
+    file: twemoji/1f1ee-1f1f7.svg
+  flag_is:
+    file: twemoji/1f1ee-1f1f8.svg
+  flag_it:
+    file: twemoji/1f1ee-1f1f9.svg
+  regional_indicator_i:
+    file: twemoji/1f1ee.svg
+  flag_je:
+    file: twemoji/1f1ef-1f1ea.svg
+  flag_jm:
+    file: twemoji/1f1ef-1f1f2.svg
+  flag_jo:
+    file: twemoji/1f1ef-1f1f4.svg
+  flag_jp:
+    file: twemoji/1f1ef-1f1f5.svg
+  regional_indicator_j:
+    file: twemoji/1f1ef.svg
+  flag_ke:
+    file: twemoji/1f1f0-1f1ea.svg
+  flag_kg:
+    file: twemoji/1f1f0-1f1ec.svg
+  flag_kh:
+    file: twemoji/1f1f0-1f1ed.svg
+  flag_ki:
+    file: twemoji/1f1f0-1f1ee.svg
+  flag_km:
+    file: twemoji/1f1f0-1f1f2.svg
+  flag_kn:
+    file: twemoji/1f1f0-1f1f3.svg
+  flag_kp:
+    file: twemoji/1f1f0-1f1f5.svg
+  flag_kr:
+    file: twemoji/1f1f0-1f1f7.svg
+  flag_kw:
+    file: twemoji/1f1f0-1f1fc.svg
+  flag_ky:
+    file: twemoji/1f1f0-1f1fe.svg
+  flag_kz:
+    file: twemoji/1f1f0-1f1ff.svg
+  regional_indicator_k:
+    file: twemoji/1f1f0.svg
+  flag_la:
+    file: twemoji/1f1f1-1f1e6.svg
+  flag_lb:
+    file: twemoji/1f1f1-1f1e7.svg
+  flag_lc:
+    file: twemoji/1f1f1-1f1e8.svg
+  flag_li:
+    file: twemoji/1f1f1-1f1ee.svg
+  flag_lk:
+    file: twemoji/1f1f1-1f1f0.svg
+  flag_lr:
+    file: twemoji/1f1f1-1f1f7.svg
+  flag_ls:
+    file: twemoji/1f1f1-1f1f8.svg
+  flag_lt:
+    file: twemoji/1f1f1-1f1f9.svg
+  flag_lu:
+    file: twemoji/1f1f1-1f1fa.svg
+  flag_lv:
+    file: twemoji/1f1f1-1f1fb.svg
+  flag_ly:
+    file: twemoji/1f1f1-1f1fe.svg
+  regional_indicator_l:
+    file: twemoji/1f1f1.svg
+  flag_ma:
+    file: twemoji/1f1f2-1f1e6.svg
+  flag_mc:
+    file: twemoji/1f1f2-1f1e8.svg
+  flag_md:
+    file: twemoji/1f1f2-1f1e9.svg
+  flag_me:
+    file: twemoji/1f1f2-1f1ea.svg
+  flag_mf:
+    file: twemoji/1f1f2-1f1eb.svg
+  flag_mg:
+    file: twemoji/1f1f2-1f1ec.svg
+  flag_mh:
+    file: twemoji/1f1f2-1f1ed.svg
+  flag_mk:
+    file: twemoji/1f1f2-1f1f0.svg
+  flag_ml:
+    file: twemoji/1f1f2-1f1f1.svg
+  flag_mm:
+    file: twemoji/1f1f2-1f1f2.svg
+  flag_mn:
+    file: twemoji/1f1f2-1f1f3.svg
+  flag_mo:
+    file: twemoji/1f1f2-1f1f4.svg
+  flag_mp:
+    file: twemoji/1f1f2-1f1f5.svg
+  flag_mq:
+    file: twemoji/1f1f2-1f1f6.svg
+  flag_mr:
+    file: twemoji/1f1f2-1f1f7.svg
+  flag_ms:
+    file: twemoji/1f1f2-1f1f8.svg
+  flag_mt:
+    file: twemoji/1f1f2-1f1f9.svg
+  flag_mu:
+    file: twemoji/1f1f2-1f1fa.svg
+  flag_mv:
+    file: twemoji/1f1f2-1f1fb.svg
+  flag_mw:
+    file: twemoji/1f1f2-1f1fc.svg
+  flag_mx:
+    file: twemoji/1f1f2-1f1fd.svg
+  flag_my:
+    file: twemoji/1f1f2-1f1fe.svg
+  flag_mz:
+    file: twemoji/1f1f2-1f1ff.svg
+  regional_indicator_m:
+    file: twemoji/1f1f2.svg
+  flag_na:
+    file: twemoji/1f1f3-1f1e6.svg
+  flag_nc:
+    file: twemoji/1f1f3-1f1e8.svg
+  flag_ne:
+    file: twemoji/1f1f3-1f1ea.svg
+  flag_nf:
+    file: twemoji/1f1f3-1f1eb.svg
+  flag_ng:
+    file: twemoji/1f1f3-1f1ec.svg
+  flag_ni:
+    file: twemoji/1f1f3-1f1ee.svg
+  flag_nl:
+    file: twemoji/1f1f3-1f1f1.svg
+  flag_no:
+    file: twemoji/1f1f3-1f1f4.svg
+  flag_np:
+    file: twemoji/1f1f3-1f1f5.svg
+  flag_nr:
+    file: twemoji/1f1f3-1f1f7.svg
+  flag_nu:
+    file: twemoji/1f1f3-1f1fa.svg
+  flag_nz:
+    file: twemoji/1f1f3-1f1ff.svg
+  regional_indicator_n:
+    file: twemoji/1f1f3.svg
+  flag_om:
+    file: twemoji/1f1f4-1f1f2.svg
+  regional_indicator_o:
+    file: twemoji/1f1f4.svg
+  flag_pa:
+    file: twemoji/1f1f5-1f1e6.svg
+  flag_pe:
+    file: twemoji/1f1f5-1f1ea.svg
+  flag_pf:
+    file: twemoji/1f1f5-1f1eb.svg
+  flag_pg:
+    file: twemoji/1f1f5-1f1ec.svg
+  flag_ph:
+    file: twemoji/1f1f5-1f1ed.svg
+  flag_pk:
+    file: twemoji/1f1f5-1f1f0.svg
+  flag_pl:
+    file: twemoji/1f1f5-1f1f1.svg
+  flag_pm:
+    file: twemoji/1f1f5-1f1f2.svg
+  flag_pn:
+    file: twemoji/1f1f5-1f1f3.svg
+  flag_pr:
+    file: twemoji/1f1f5-1f1f7.svg
+  flag_ps:
+    file: twemoji/1f1f5-1f1f8.svg
+  flag_pt:
+    file: twemoji/1f1f5-1f1f9.svg
+  flag_pw:
+    file: twemoji/1f1f5-1f1fc.svg
+  flag_py:
+    file: twemoji/1f1f5-1f1fe.svg
+  regional_indicator_p:
+    file: twemoji/1f1f5.svg
+  flag_qa:
+    file: twemoji/1f1f6-1f1e6.svg
+  regional_indicator_q:
+    file: twemoji/1f1f6.svg
+  flag_re:
+    file: twemoji/1f1f7-1f1ea.svg
+  flag_ro:
+    file: twemoji/1f1f7-1f1f4.svg
+  flag_rs:
+    file: twemoji/1f1f7-1f1f8.svg
+  flag_ru:
+    file: twemoji/1f1f7-1f1fa.svg
+  flag_rw:
+    file: twemoji/1f1f7-1f1fc.svg
+  regional_indicator_r:
+    file: twemoji/1f1f7.svg
+  flag_sa:
+    file: twemoji/1f1f8-1f1e6.svg
+  flag_sb:
+    file: twemoji/1f1f8-1f1e7.svg
+  flag_sc:
+    file: twemoji/1f1f8-1f1e8.svg
+  flag_sd:
+    file: twemoji/1f1f8-1f1e9.svg
+  flag_se:
+    file: twemoji/1f1f8-1f1ea.svg
+  flag_sg:
+    file: twemoji/1f1f8-1f1ec.svg
+  flag_sh:
+    file: twemoji/1f1f8-1f1ed.svg
+  flag_si:
+    file: twemoji/1f1f8-1f1ee.svg
+  flag_sj:
+    file: twemoji/1f1f8-1f1ef.svg
+  flag_sk:
+    file: twemoji/1f1f8-1f1f0.svg
+  flag_sl:
+    file: twemoji/1f1f8-1f1f1.svg
+  flag_sm:
+    file: twemoji/1f1f8-1f1f2.svg
+  flag_sn:
+    file: twemoji/1f1f8-1f1f3.svg
+  flag_so:
+    file: twemoji/1f1f8-1f1f4.svg
+  flag_sr:
+    file: twemoji/1f1f8-1f1f7.svg
+  flag_ss:
+    file: twemoji/1f1f8-1f1f8.svg
+  flag_st:
+    file: twemoji/1f1f8-1f1f9.svg
+  flag_sv:
+    file: twemoji/1f1f8-1f1fb.svg
+  flag_sx:
+    file: twemoji/1f1f8-1f1fd.svg
+  flag_sy:
+    file: twemoji/1f1f8-1f1fe.svg
+  flag_sz:
+    file: twemoji/1f1f8-1f1ff.svg
+  regional_indicator_s:
+    file: twemoji/1f1f8.svg
+  flag_ta:
+    file: twemoji/1f1f9-1f1e6.svg
+  flag_tc:
+    file: twemoji/1f1f9-1f1e8.svg
+  flag_td:
+    file: twemoji/1f1f9-1f1e9.svg
+  flag_tf:
+    file: twemoji/1f1f9-1f1eb.svg
+  flag_tg:
+    file: twemoji/1f1f9-1f1ec.svg
+  flag_th:
+    file: twemoji/1f1f9-1f1ed.svg
+  flag_tj:
+    file: twemoji/1f1f9-1f1ef.svg
+  flag_tk:
+    file: twemoji/1f1f9-1f1f0.svg
+  flag_tl:
+    file: twemoji/1f1f9-1f1f1.svg
+  flag_tm:
+    file: twemoji/1f1f9-1f1f2.svg
+  flag_tn:
+    file: twemoji/1f1f9-1f1f3.svg
+  flag_to:
+    file: twemoji/1f1f9-1f1f4.svg
+  flag_tr:
+    file: twemoji/1f1f9-1f1f7.svg
+  flag_tt:
+    file: twemoji/1f1f9-1f1f9.svg
+  flag_tv:
+    file: twemoji/1f1f9-1f1fb.svg
+  flag_tw:
+    file: twemoji/1f1f9-1f1fc.svg
+  flag_tz:
+    file: twemoji/1f1f9-1f1ff.svg
+  regional_indicator_t:
+    file: twemoji/1f1f9.svg
+  flag_ua:
+    file: twemoji/1f1fa-1f1e6.svg
+  flag_ug:
+    file: twemoji/1f1fa-1f1ec.svg
+  flag_um:
+    file: twemoji/1f1fa-1f1f2.svg
+  united_nations:
+    file: twemoji/1f1fa-1f1f3.svg
+  flag_us:
+    file: twemoji/1f1fa-1f1f8.svg
+  flag_uy:
+    file: twemoji/1f1fa-1f1fe.svg
+  flag_uz:
+    file: twemoji/1f1fa-1f1ff.svg
+  regional_indicator_u:
+    file: twemoji/1f1fa.svg
+  flag_va:
+    file: twemoji/1f1fb-1f1e6.svg
+  flag_vc:
+    file: twemoji/1f1fb-1f1e8.svg
+  flag_ve:
+    file: twemoji/1f1fb-1f1ea.svg
+  flag_vg:
+    file: twemoji/1f1fb-1f1ec.svg
+  flag_vi:
+    file: twemoji/1f1fb-1f1ee.svg
+  flag_vn:
+    file: twemoji/1f1fb-1f1f3.svg
+  flag_vu:
+    file: twemoji/1f1fb-1f1fa.svg
+  regional_indicator_v:
+    file: twemoji/1f1fb.svg
+  flag_wf:
+    file: twemoji/1f1fc-1f1eb.svg
+  flag_ws:
+    file: twemoji/1f1fc-1f1f8.svg
+  regional_indicator_w:
+    file: twemoji/1f1fc.svg
+  flag_xk:
+    file: twemoji/1f1fd-1f1f0.svg
+  regional_indicator_x:
+    file: twemoji/1f1fd.svg
+  flag_ye:
+    file: twemoji/1f1fe-1f1ea.svg
+  flag_yt:
+    file: twemoji/1f1fe-1f1f9.svg
+  regional_indicator_y:
+    file: twemoji/1f1fe.svg
+  flag_za:
+    file: twemoji/1f1ff-1f1e6.svg
+  flag_zm:
+    file: twemoji/1f1ff-1f1f2.svg
+  flag_zw:
+    file: twemoji/1f1ff-1f1fc.svg
+  regional_indicator_z:
+    file: twemoji/1f1ff.svg
+  koko:
+    file: twemoji/1f201.svg
+  sa:
+    file: twemoji/1f202.svg
+  u7121:
+    file: twemoji/1f21a.svg
+  u6307:
+    file: twemoji/1f22f.svg
+  u7981:
+    file: twemoji/1f232.svg
+  u7a7a:
+    file: twemoji/1f233.svg
+  u5408:
+    file: twemoji/1f234.svg
+  u6e80:
+    file: twemoji/1f235.svg
+  u6709:
+    file: twemoji/1f236.svg
+  u6708:
+    file: twemoji/1f237.svg
+  u7533:
+    file: twemoji/1f238.svg
+  u5272:
+    file: twemoji/1f239.svg
+  u55b6:
+    file: twemoji/1f23a.svg
+  ideograph_advantage:
+    file: twemoji/1f250.svg
+  accept:
+    file: twemoji/1f251.svg
+  cyclone:
+    file: twemoji/1f300.svg
+  foggy:
+    file: twemoji/1f301.svg
+  closed_umbrella:
+    file: twemoji/1f302.svg
+  night_with_stars:
+    file: twemoji/1f303.svg
+  sunrise_over_mountains:
+    file: twemoji/1f304.svg
+  sunrise:
+    file: twemoji/1f305.svg
+  city_dusk:
+    file: twemoji/1f306.svg
+  city_sunset:
+    file: twemoji/1f307.svg
+  rainbow:
+    file: twemoji/1f308.svg
+  bridge_at_night:
+    file: twemoji/1f309.svg
+  ocean:
+    file: twemoji/1f30a.svg
+  volcano:
+    file: twemoji/1f30b.svg
+  milky_way:
+    file: twemoji/1f30c.svg
+  earth_africa:
+    file: twemoji/1f30d.svg
+  earth_americas:
+    file: twemoji/1f30e.svg
+  earth_asia:
+    file: twemoji/1f30f.svg
+  globe_with_meridians:
+    file: twemoji/1f310.svg
+  new_moon:
+    file: twemoji/1f311.svg
+  waxing_crescent_moon:
+    file: twemoji/1f312.svg
+  first_quarter_moon:
+    file: twemoji/1f313.svg
+  waxing_gibbous_moon:
+    file: twemoji/1f314.svg
+  full_moon:
+    file: twemoji/1f315.svg
+  waning_gibbous_moon:
+    file: twemoji/1f316.svg
+  last_quarter_moon:
+    file: twemoji/1f317.svg
+  waning_crescent_moon:
+    file: twemoji/1f318.svg
+  crescent_moon:
+    file: twemoji/1f319.svg
+  new_moon_with_face:
+    file: twemoji/1f31a.svg
+  first_quarter_moon_with_face:
+    file: twemoji/1f31b.svg
+  last_quarter_moon_with_face:
+    file: twemoji/1f31c.svg
+  full_moon_with_face:
+    file: twemoji/1f31d.svg
+  sun_with_face:
+    file: twemoji/1f31e.svg
+  star2:
+    file: twemoji/1f31f.svg
+  stars:
+    file: twemoji/1f320.svg
+  thermometer:
+    file: twemoji/1f321.svg
+  white_sun_small_cloud:
+    file: twemoji/1f324.svg
+  white_sun_cloud:
+    file: twemoji/1f325.svg
+  white_sun_rain_cloud:
+    file: twemoji/1f326.svg
+  cloud_rain:
+    file: twemoji/1f327.svg
+  cloud_snow:
+    file: twemoji/1f328.svg
+  cloud_lightning:
+    file: twemoji/1f329.svg
+  cloud_tornado:
+    file: twemoji/1f32a.svg
+  fog:
+    file: twemoji/1f32b.svg
+  wind_blowing_face:
+    file: twemoji/1f32c.svg
+  hotdog:
+    file: twemoji/1f32d.svg
+  taco:
+    file: twemoji/1f32e.svg
+  burrito:
+    file: twemoji/1f32f.svg
+  chestnut:
+    file: twemoji/1f330.svg
+  seedling:
+    file: twemoji/1f331.svg
+  evergreen_tree:
+    file: twemoji/1f332.svg
+  deciduous_tree:
+    file: twemoji/1f333.svg
+  palm_tree:
+    file: twemoji/1f334.svg
+  cactus:
+    file: twemoji/1f335.svg
+  hot_pepper:
+    file: twemoji/1f336.svg
+  tulip:
+    file: twemoji/1f337.svg
+  cherry_blossom:
+    file: twemoji/1f338.svg
+  rose:
+    file: twemoji/1f339.svg
+  hibiscus:
+    file: twemoji/1f33a.svg
+  sunflower:
+    file: twemoji/1f33b.svg
+  blossom:
+    file: twemoji/1f33c.svg
+  corn:
+    file: twemoji/1f33d.svg
+  ear_of_rice:
+    file: twemoji/1f33e.svg
+  herb:
+    file: twemoji/1f33f.svg
+  four_leaf_clover:
+    file: twemoji/1f340.svg
+  maple_leaf:
+    file: twemoji/1f341.svg
+  fallen_leaf:
+    file: twemoji/1f342.svg
+  leaves:
+    file: twemoji/1f343.svg
+  mushroom:
+    file: twemoji/1f344.svg
+  tomato:
+    file: twemoji/1f345.svg
+  eggplant:
+    file: twemoji/1f346.svg
+  grapes:
+    file: twemoji/1f347.svg
+  melon:
+    file: twemoji/1f348.svg
+  watermelon:
+    file: twemoji/1f349.svg
+  tangerine:
+    file: twemoji/1f34a.svg
+  lemon:
+    file: twemoji/1f34b.svg
+  banana:
+    file: twemoji/1f34c.svg
+  pineapple:
+    file: twemoji/1f34d.svg
+  apple:
+    file: twemoji/1f34e.svg
+  green_apple:
+    file: twemoji/1f34f.svg
+  pear:
+    file: twemoji/1f350.svg
+  peach:
+    file: twemoji/1f351.svg
+  cherries:
+    file: twemoji/1f352.svg
+  strawberry:
+    file: twemoji/1f353.svg
+  hamburger:
+    file: twemoji/1f354.svg
+  pizza:
+    file: twemoji/1f355.svg
+  meat_on_bone:
+    file: twemoji/1f356.svg
+  poultry_leg:
+    file: twemoji/1f357.svg
+  rice_cracker:
+    file: twemoji/1f358.svg
+  rice_ball:
+    file: twemoji/1f359.svg
+  rice:
+    file: twemoji/1f35a.svg
+  curry:
+    file: twemoji/1f35b.svg
+  ramen:
+    file: twemoji/1f35c.svg
+  spaghetti:
+    file: twemoji/1f35d.svg
+  bread:
+    file: twemoji/1f35e.svg
+  fries:
+    file: twemoji/1f35f.svg
+  sweet_potato:
+    file: twemoji/1f360.svg
+  dango:
+    file: twemoji/1f361.svg
+  oden:
+    file: twemoji/1f362.svg
+  sushi:
+    file: twemoji/1f363.svg
+  fried_shrimp:
+    file: twemoji/1f364.svg
+  fish_cake:
+    file: twemoji/1f365.svg
+  icecream:
+    file: twemoji/1f366.svg
+  shaved_ice:
+    file: twemoji/1f367.svg
+  ice_cream:
+    file: twemoji/1f368.svg
+  doughnut:
+    file: twemoji/1f369.svg
+  cookie:
+    file: twemoji/1f36a.svg
+  chocolate_bar:
+    file: twemoji/1f36b.svg
+  candy:
+    file: twemoji/1f36c.svg
+  lollipop:
+    file: twemoji/1f36d.svg
+  custard:
+    file: twemoji/1f36e.svg
+  honey_pot:
+    file: twemoji/1f36f.svg
+  cake:
+    file: twemoji/1f370.svg
+  bento:
+    file: twemoji/1f371.svg
+  stew:
+    file: twemoji/1f372.svg
+  cooking:
+    file: twemoji/1f373.svg
+  fork_and_knife:
+    file: twemoji/1f374.svg
+  tea:
+    file: twemoji/1f375.svg
+  sake:
+    file: twemoji/1f376.svg
+  wine_glass:
+    file: twemoji/1f377.svg
+  cocktail:
+    file: twemoji/1f378.svg
+  tropical_drink:
+    file: twemoji/1f379.svg
+  beer:
+    file: twemoji/1f37a.svg
+  beers:
+    file: twemoji/1f37b.svg
+  baby_bottle:
+    file: twemoji/1f37c.svg
+  fork_knife_plate:
+    file: twemoji/1f37d.svg
+  champagne:
+    file: twemoji/1f37e.svg
+  popcorn:
+    file: twemoji/1f37f.svg
+  ribbon:
+    file: twemoji/1f380.svg
+  gift:
+    file: twemoji/1f381.svg
+  birthday:
+    file: twemoji/1f382.svg
+  jack_o_lantern:
+    file: twemoji/1f383.svg
+  christmas_tree:
+    file: twemoji/1f384.svg
+  santa:
+    file: twemoji/1f385.svg
+  fireworks:
+    file: twemoji/1f386.svg
+  sparkler:
+    file: twemoji/1f387.svg
+  balloon:
+    file: twemoji/1f388.svg
+  tada:
+    file: twemoji/1f389.svg
+  confetti_ball:
+    file: twemoji/1f38a.svg
+  tanabata_tree:
+    file: twemoji/1f38b.svg
+  crossed_flags:
+    file: twemoji/1f38c.svg
+  bamboo:
+    file: twemoji/1f38d.svg
+  dolls:
+    file: twemoji/1f38e.svg
+  flags:
+    file: twemoji/1f38f.svg
+  wind_chime:
+    file: twemoji/1f390.svg
+  rice_scene:
+    file: twemoji/1f391.svg
+  school_satchel:
+    file: twemoji/1f392.svg
+  mortar_board:
+    file: twemoji/1f393.svg
+  military_medal:
+    file: twemoji/1f396.svg
+  reminder_ribbon:
+    file: twemoji/1f397.svg
+  microphone2:
+    file: twemoji/1f399.svg
+  level_slider:
+    file: twemoji/1f39a.svg
+  control_knobs:
+    file: twemoji/1f39b.svg
+  film_frames:
+    file: twemoji/1f39e.svg
+  tickets:
+    file: twemoji/1f39f.svg
+  carousel_horse:
+    file: twemoji/1f3a0.svg
+  ferris_wheel:
+    file: twemoji/1f3a1.svg
+  roller_coaster:
+    file: twemoji/1f3a2.svg
+  fishing_pole_and_fish:
+    file: twemoji/1f3a3.svg
+  microphone:
+    file: twemoji/1f3a4.svg
+  movie_camera:
+    file: twemoji/1f3a5.svg
+  cinema:
+    file: twemoji/1f3a6.svg
+  headphones:
+    file: twemoji/1f3a7.svg
+  art:
+    file: twemoji/1f3a8.svg
+  tophat:
+    file: twemoji/1f3a9.svg
+  circus_tent:
+    file: twemoji/1f3aa.svg
+  ticket:
+    file: twemoji/1f3ab.svg
+  clapper:
+    file: twemoji/1f3ac.svg
+  performing_arts:
+    file: twemoji/1f3ad.svg
+  video_game:
+    file: twemoji/1f3ae.svg
+  dart:
+    file: twemoji/1f3af.svg
+  slot_machine:
+    file: twemoji/1f3b0.svg
+  8ball:
+    file: twemoji/1f3b1.svg
+  game_die:
+    file: twemoji/1f3b2.svg
+  bowling:
+    file: twemoji/1f3b3.svg
+  flower_playing_cards:
+    file: twemoji/1f3b4.svg
+  musical_note:
+    file: twemoji/1f3b5.svg
+  notes:
+    file: twemoji/1f3b6.svg
+  saxophone:
+    file: twemoji/1f3b7.svg
+  guitar:
+    file: twemoji/1f3b8.svg
+  musical_keyboard:
+    file: twemoji/1f3b9.svg
+  trumpet:
+    file: twemoji/1f3ba.svg
+  violin:
+    file: twemoji/1f3bb.svg
+  musical_score:
+    file: twemoji/1f3bc.svg
+  running_shirt_with_sash:
+    file: twemoji/1f3bd.svg
+  tennis:
+    file: twemoji/1f3be.svg
+  ski:
+    file: twemoji/1f3bf.svg
+  basketball:
+    file: twemoji/1f3c0.svg
+  checkered_flag:
+    file: twemoji/1f3c1.svg
+  snowboarder:
+    file: twemoji/1f3c2.svg
+  woman_running:
+    file: twemoji/1f3c3-200d-2640-fe0f.svg
+  man_running:
+    file: twemoji/1f3c3-200d-2642-fe0f.svg
+  person_running:
+    file: twemoji/1f3c3.svg
+  woman_surfing:
+    file: twemoji/1f3c4-200d-2640-fe0f.svg
+  man_surfing:
+    file: twemoji/1f3c4-200d-2642-fe0f.svg
+  person_surfing:
+    file: twemoji/1f3c4.svg
+  medal:
+    file: twemoji/1f3c5.svg
+  trophy:
+    file: twemoji/1f3c6.svg
+  horse_racing:
+    file: twemoji/1f3c7.svg
+  football:
+    file: twemoji/1f3c8.svg
+  rugby_football:
+    file: twemoji/1f3c9.svg
+  woman_swimming:
+    file: twemoji/1f3ca-200d-2640-fe0f.svg
+  man_swimming:
+    file: twemoji/1f3ca-200d-2642-fe0f.svg
+  person_swimming:
+    file: twemoji/1f3ca.svg
+  woman_lifting_weights:
+    file: twemoji/1f3cb-fe0f-200d-2640-fe0f.svg
+  man_lifting_weights:
+    file: twemoji/1f3cb-fe0f-200d-2642-fe0f.svg
+  person_lifting_weights:
+    file: twemoji/1f3cb.svg
+  woman_golfing:
+    file: twemoji/1f3cc-fe0f-200d-2640-fe0f.svg
+  man_golfing:
+    file: twemoji/1f3cc-fe0f-200d-2642-fe0f.svg
+  person_golfing:
+    file: twemoji/1f3cc.svg
+  motorcycle:
+    file: twemoji/1f3cd.svg
+  race_car:
+    file: twemoji/1f3ce.svg
+  cricket_game:
+    file: twemoji/1f3cf.svg
+  volleyball:
+    file: twemoji/1f3d0.svg
+  field_hockey:
+    file: twemoji/1f3d1.svg
+  hockey:
+    file: twemoji/1f3d2.svg
+  ping_pong:
+    file: twemoji/1f3d3.svg
+  mountain_snow:
+    file: twemoji/1f3d4.svg
+  camping:
+    file: twemoji/1f3d5.svg
+  beach:
+    file: twemoji/1f3d6.svg
+  construction_site:
+    file: twemoji/1f3d7.svg
+  homes:
+    file: twemoji/1f3d8.svg
+  cityscape:
+    file: twemoji/1f3d9.svg
+  house_abandoned:
+    file: twemoji/1f3da.svg
+  classical_building:
+    file: twemoji/1f3db.svg
+  desert:
+    file: twemoji/1f3dc.svg
+  island:
+    file: twemoji/1f3dd.svg
+  park:
+    file: twemoji/1f3de.svg
+  stadium:
+    file: twemoji/1f3df.svg
+  house:
+    file: twemoji/1f3e0.svg
+  house_with_garden:
+    file: twemoji/1f3e1.svg
+  office:
+    file: twemoji/1f3e2.svg
+  post_office:
+    file: twemoji/1f3e3.svg
+  european_post_office:
+    file: twemoji/1f3e4.svg
+  hospital:
+    file: twemoji/1f3e5.svg
+  bank:
+    file: twemoji/1f3e6.svg
+  atm:
+    file: twemoji/1f3e7.svg
+  hotel:
+    file: twemoji/1f3e8.svg
+  love_hotel:
+    file: twemoji/1f3e9.svg
+  convenience_store:
+    file: twemoji/1f3ea.svg
+  school:
+    file: twemoji/1f3eb.svg
+  department_store:
+    file: twemoji/1f3ec.svg
+  factory:
+    file: twemoji/1f3ed.svg
+  izakaya_lantern:
+    file: twemoji/1f3ee.svg
+  japanese_castle:
+    file: twemoji/1f3ef.svg
+  european_castle:
+    file: twemoji/1f3f0.svg
+  rainbow_flag:
+    file: twemoji/1f3f3-fe0f-200d-1f308.svg
+  flag_white:
+    file: twemoji/1f3f3.svg
+  pirate_flag:
+    file: twemoji/1f3f4-200d-2620-fe0f.svg
+  england:
+    file: twemoji/1f3f4-e0067-e0062-e0065-e006e-e0067-e007f.svg
+  scotland:
+    file: twemoji/1f3f4-e0067-e0062-e0073-e0063-e0074-e007f.svg
+  wales:
+    file: twemoji/1f3f4-e0067-e0062-e0077-e006c-e0073-e007f.svg
+  flag_black:
+    file: twemoji/1f3f4.svg
+  rosette:
+    file: twemoji/1f3f5.svg
+  label:
+    file: twemoji/1f3f7.svg
+  badminton:
+    file: twemoji/1f3f8.svg
+  bow_and_arrow:
+    file: twemoji/1f3f9.svg
+  amphora:
+    file: twemoji/1f3fa.svg
+  rat:
+    file: twemoji/1f400.svg
+  mouse2:
+    file: twemoji/1f401.svg
+  ox:
+    file: twemoji/1f402.svg
+  water_buffalo:
+    file: twemoji/1f403.svg
+  cow2:
+    file: twemoji/1f404.svg
+  tiger2:
+    file: twemoji/1f405.svg
+  leopard:
+    file: twemoji/1f406.svg
+  rabbit2:
+    file: twemoji/1f407.svg
+  cat2:
+    file: twemoji/1f408.svg
+  dragon:
+    file: twemoji/1f409.svg
+  crocodile:
+    file: twemoji/1f40a.svg
+  whale2:
+    file: twemoji/1f40b.svg
+  snail:
+    file: twemoji/1f40c.svg
+  snake:
+    file: twemoji/1f40d.svg
+  racehorse:
+    file: twemoji/1f40e.svg
+  ram:
+    file: twemoji/1f40f.svg
+  goat:
+    file: twemoji/1f410.svg
+  sheep:
+    file: twemoji/1f411.svg
+  monkey:
+    file: twemoji/1f412.svg
+  rooster:
+    file: twemoji/1f413.svg
+  chicken:
+    file: twemoji/1f414.svg
+  dog2:
+    file: twemoji/1f415.svg
+  pig2:
+    file: twemoji/1f416.svg
+  boar:
+    file: twemoji/1f417.svg
+  elephant:
+    file: twemoji/1f418.svg
+  octopus:
+    file: twemoji/1f419.svg
+  shell:
+    file: twemoji/1f41a.svg
+  bug:
+    file: twemoji/1f41b.svg
+  ant:
+    file: twemoji/1f41c.svg
+  bee:
+    file: twemoji/1f41d.svg
+  beetle:
+    file: twemoji/1f41e.svg
+  fish:
+    file: twemoji/1f41f.svg
+  tropical_fish:
+    file: twemoji/1f420.svg
+  blowfish:
+    file: twemoji/1f421.svg
+  turtle:
+    file: twemoji/1f422.svg
+  hatching_chick:
+    file: twemoji/1f423.svg
+  baby_chick:
+    file: twemoji/1f424.svg
+  hatched_chick:
+    file: twemoji/1f425.svg
+  bird:
+    file: twemoji/1f426.svg
+  penguin:
+    file: twemoji/1f427.svg
+  koala:
+    file: twemoji/1f428.svg
+  poodle:
+    file: twemoji/1f429.svg
+  dromedary_camel:
+    file: twemoji/1f42a.svg
+  camel:
+    file: twemoji/1f42b.svg
+  dolphin:
+    file: twemoji/1f42c.svg
+  mouse:
+    file: twemoji/1f42d.svg
+  cow:
+    file: twemoji/1f42e.svg
+  tiger:
+    file: twemoji/1f42f.svg
+  rabbit:
+    file: twemoji/1f430.svg
+  cat:
+    file: twemoji/1f431.svg
+  dragon_face:
+    file: twemoji/1f432.svg
+  whale:
+    file: twemoji/1f433.svg
+  horse:
+    file: twemoji/1f434.svg
+  monkey_face:
+    file: twemoji/1f435.svg
+  dog:
+    file: twemoji/1f436.svg
+  pig:
+    file: twemoji/1f437.svg
+  frog:
+    file: twemoji/1f438.svg
+  hamster:
+    file: twemoji/1f439.svg
+  wolf:
+    file: twemoji/1f43a.svg
+  bear:
+    file: twemoji/1f43b.svg
+  panda_face:
+    file: twemoji/1f43c.svg
+  pig_nose:
+    file: twemoji/1f43d.svg
+  feet:
+    file: twemoji/1f43e.svg
+  chipmunk:
+    file: twemoji/1f43f.svg
+  eyes:
+    file: twemoji/1f440.svg
+  eye_in_speech_bubble:
+    file: twemoji/1f441-200d-1f5e8.svg
+  eye:
+    file: twemoji/1f441.svg
+  ear:
+    file: twemoji/1f442.svg
+  nose:
+    file: twemoji/1f443.svg
+  lips:
+    file: twemoji/1f444.svg
+  tongue:
+    file: twemoji/1f445.svg
+  point_up_2:
+    file: twemoji/1f446.svg
+  point_down:
+    file: twemoji/1f447.svg
+  point_left:
+    file: twemoji/1f448.svg
+  point_right:
+    file: twemoji/1f449.svg
+  punch:
+    file: twemoji/1f44a.svg
+  wave:
+    file: twemoji/1f44b.svg
+  ok_hand:
+    file: twemoji/1f44c.svg
+  thumbsup:
+    file: twemoji/1f44d.svg
+  thumbsdown:
+    file: twemoji/1f44e.svg
+  clap:
+    file: twemoji/1f44f.svg
+  open_hands:
+    file: twemoji/1f450.svg
+  crown:
+    file: twemoji/1f451.svg
+  womans_hat:
+    file: twemoji/1f452.svg
+  eyeglasses:
+    file: twemoji/1f453.svg
+  necktie:
+    file: twemoji/1f454.svg
+  shirt:
+    file: twemoji/1f455.svg
+  jeans:
+    file: twemoji/1f456.svg
+  dress:
+    file: twemoji/1f457.svg
+  kimono:
+    file: twemoji/1f458.svg
+  bikini:
+    file: twemoji/1f459.svg
+  womans_clothes:
+    file: twemoji/1f45a.svg
+  purse:
+    file: twemoji/1f45b.svg
+  handbag:
+    file: twemoji/1f45c.svg
+  pouch:
+    file: twemoji/1f45d.svg
+  mans_shoe:
+    file: twemoji/1f45e.svg
+  athletic_shoe:
+    file: twemoji/1f45f.svg
+  high_heel:
+    file: twemoji/1f460.svg
+  sandal:
+    file: twemoji/1f461.svg
+  boot:
+    file: twemoji/1f462.svg
+  footprints:
+    file: twemoji/1f463.svg
+  bust_in_silhouette:
+    file: twemoji/1f464.svg
+  busts_in_silhouette:
+    file: twemoji/1f465.svg
+  boy:
+    file: twemoji/1f466.svg
+  girl:
+    file: twemoji/1f467.svg
+  man_farmer:
+    file: twemoji/1f468-200d-1f33e.svg
+  man_cook:
+    file: twemoji/1f468-200d-1f373.svg
+  man_student:
+    file: twemoji/1f468-200d-1f393.svg
+  man_singer:
+    file: twemoji/1f468-200d-1f3a4.svg
+  man_artist:
+    file: twemoji/1f468-200d-1f3a8.svg
+  man_teacher:
+    file: twemoji/1f468-200d-1f3eb.svg
+  man_factory_worker:
+    file: twemoji/1f468-200d-1f3ed.svg
+  family_man_boy_boy:
+    file: twemoji/1f468-200d-1f466-200d-1f466.svg
+  family_man_boy:
+    file: twemoji/1f468-200d-1f466.svg
+  family_man_girl_boy:
+    file: twemoji/1f468-200d-1f467-200d-1f466.svg
+  family_man_girl_girl:
+    file: twemoji/1f468-200d-1f467-200d-1f467.svg
+  family_man_girl:
+    file: twemoji/1f468-200d-1f467.svg
+  family_mmbb:
+    file: twemoji/1f468-200d-1f468-200d-1f466-200d-1f466.svg
+  family_mmb:
+    file: twemoji/1f468-200d-1f468-200d-1f466.svg
+  family_mmgb:
+    file: twemoji/1f468-200d-1f468-200d-1f467-200d-1f466.svg
+  family_mmgg:
+    file: twemoji/1f468-200d-1f468-200d-1f467-200d-1f467.svg
+  family_mmg:
+    file: twemoji/1f468-200d-1f468-200d-1f467.svg
+  family_mwbb:
+    file: twemoji/1f468-200d-1f469-200d-1f466-200d-1f466.svg
+  family_man_woman_boy:
+    file: twemoji/1f468-200d-1f469-200d-1f466.svg
+  family_mwgb:
+    file: twemoji/1f468-200d-1f469-200d-1f467-200d-1f466.svg
+  family_mwgg:
+    file: twemoji/1f468-200d-1f469-200d-1f467-200d-1f467.svg
+  family_mwg:
+    file: twemoji/1f468-200d-1f469-200d-1f467.svg
+  man_technologist:
+    file: twemoji/1f468-200d-1f4bb.svg
+  man_office_worker:
+    file: twemoji/1f468-200d-1f4bc.svg
+  man_mechanic:
+    file: twemoji/1f468-200d-1f527.svg
+  man_scientist:
+    file: twemoji/1f468-200d-1f52c.svg
+  man_astronaut:
+    file: twemoji/1f468-200d-1f680.svg
+  man_firefighter:
+    file: twemoji/1f468-200d-1f692.svg
+  man_red_haired:
+    file: twemoji/1f468-200d-1f9b0.svg
+  man_curly_haired:
+    file: twemoji/1f468-200d-1f9b1.svg
+  man_bald:
+    file: twemoji/1f468-200d-1f9b2.svg
+  man_white_haired:
+    file: twemoji/1f468-200d-1f9b3.svg
+  man_health_worker:
+    file: twemoji/1f468-200d-2695-fe0f.svg
+  man_judge:
+    file: twemoji/1f468-200d-2696-fe0f.svg
+  man_pilot:
+    file: twemoji/1f468-200d-2708-fe0f.svg
+  couple_mm:
+    file: twemoji/1f468-200d-2764-fe0f-200d-1f468.svg
+  kiss_mm:
+    file: twemoji/1f468-200d-2764-fe0f-200d-1f48b-200d-1f468.svg
+  man:
+    file: twemoji/1f468.svg
+  woman_farmer:
+    file: twemoji/1f469-200d-1f33e.svg
+  woman_cook:
+    file: twemoji/1f469-200d-1f373.svg
+  woman_student:
+    file: twemoji/1f469-200d-1f393.svg
+  woman_singer:
+    file: twemoji/1f469-200d-1f3a4.svg
+  woman_artist:
+    file: twemoji/1f469-200d-1f3a8.svg
+  woman_teacher:
+    file: twemoji/1f469-200d-1f3eb.svg
+  woman_factory_worker:
+    file: twemoji/1f469-200d-1f3ed.svg
+  family_woman_boy_boy:
+    file: twemoji/1f469-200d-1f466-200d-1f466.svg
+  family_woman_boy:
+    file: twemoji/1f469-200d-1f466.svg
+  family_woman_girl_boy:
+    file: twemoji/1f469-200d-1f467-200d-1f466.svg
+  family_woman_girl_girl:
+    file: twemoji/1f469-200d-1f467-200d-1f467.svg
+  family_woman_girl:
+    file: twemoji/1f469-200d-1f467.svg
+  family_wwbb:
+    file: twemoji/1f469-200d-1f469-200d-1f466-200d-1f466.svg
+  family_wwb:
+    file: twemoji/1f469-200d-1f469-200d-1f466.svg
+  family_wwgb:
+    file: twemoji/1f469-200d-1f469-200d-1f467-200d-1f466.svg
+  family_wwgg:
+    file: twemoji/1f469-200d-1f469-200d-1f467-200d-1f467.svg
+  family_wwg:
+    file: twemoji/1f469-200d-1f469-200d-1f467.svg
+  woman_technologist:
+    file: twemoji/1f469-200d-1f4bb.svg
+  woman_office_worker:
+    file: twemoji/1f469-200d-1f4bc.svg
+  woman_mechanic:
+    file: twemoji/1f469-200d-1f527.svg
+  woman_scientist:
+    file: twemoji/1f469-200d-1f52c.svg
+  woman_astronaut:
+    file: twemoji/1f469-200d-1f680.svg
+  woman_firefighter:
+    file: twemoji/1f469-200d-1f692.svg
+  woman_red_haired:
+    file: twemoji/1f469-200d-1f9b0.svg
+  woman_curly_haired:
+    file: twemoji/1f469-200d-1f9b1.svg
+  woman_bald:
+    file: twemoji/1f469-200d-1f9b2.svg
+  woman_white_haired:
+    file: twemoji/1f469-200d-1f9b3.svg
+  woman_health_worker:
+    file: twemoji/1f469-200d-2695-fe0f.svg
+  woman_judge:
+    file: twemoji/1f469-200d-2696-fe0f.svg
+  woman_pilot:
+    file: twemoji/1f469-200d-2708-fe0f.svg
+  couple_with_heart_woman_man:
+    file: twemoji/1f469-200d-2764-fe0f-200d-1f468.svg
+  couple_ww:
+    file: twemoji/1f469-200d-2764-fe0f-200d-1f469.svg
+  kiss_woman_man:
+    file: twemoji/1f469-200d-2764-fe0f-200d-1f48b-200d-1f468.svg
+  kiss_ww:
+    file: twemoji/1f469-200d-2764-fe0f-200d-1f48b-200d-1f469.svg
+  woman:
+    file: twemoji/1f469.svg
+  family:
+    file: twemoji/1f46a.svg
+  couple:
+    file: twemoji/1f46b.svg
+  two_men_holding_hands:
+    file: twemoji/1f46c.svg
+  two_women_holding_hands:
+    file: twemoji/1f46d.svg
+  woman_police_officer:
+    file: twemoji/1f46e-200d-2640-fe0f.svg
+  man_police_officer:
+    file: twemoji/1f46e-200d-2642-fe0f.svg
+  police_officer:
+    file: twemoji/1f46e.svg
+  women_with_bunny_ears_partying:
+    file: twemoji/1f46f-200d-2640-fe0f.svg
+  men_with_bunny_ears_partying:
+    file: twemoji/1f46f-200d-2642-fe0f.svg
+  people_with_bunny_ears_partying:
+    file: twemoji/1f46f.svg
+  bride_with_veil:
+    file: twemoji/1f470.svg
+  blond-haired_woman:
+    file: twemoji/1f471-200d-2640-fe0f.svg
+  blond-haired_man:
+    file: twemoji/1f471-200d-2642-fe0f.svg
+  blond_haired_person:
+    file: twemoji/1f471.svg
+  man_with_chinese_cap:
+    file: twemoji/1f472.svg
+  woman_wearing_turban:
+    file: twemoji/1f473-200d-2640-fe0f.svg
+  man_wearing_turban:
+    file: twemoji/1f473-200d-2642-fe0f.svg
+  person_wearing_turban:
+    file: twemoji/1f473.svg
+  older_man:
+    file: twemoji/1f474.svg
+  older_woman:
+    file: twemoji/1f475.svg
+  baby:
+    file: twemoji/1f476.svg
+  woman_construction_worker:
+    file: twemoji/1f477-200d-2640-fe0f.svg
+  man_construction_worker:
+    file: twemoji/1f477-200d-2642-fe0f.svg
+  construction_worker:
+    file: twemoji/1f477.svg
+  princess:
+    file: twemoji/1f478.svg
+  japanese_ogre:
+    file: twemoji/1f479.svg
+  japanese_goblin:
+    file: twemoji/1f47a.svg
+  ghost:
+    file: twemoji/1f47b.svg
+  angel:
+    file: twemoji/1f47c.svg
+  alien:
+    file: twemoji/1f47d.svg
+  space_invader:
+    file: twemoji/1f47e.svg
+  imp:
+    file: twemoji/1f47f.svg
+  skull:
+    file: twemoji/1f480.svg
+  woman_tipping_hand:
+    file: twemoji/1f481-200d-2640-fe0f.svg
+  man_tipping_hand:
+    file: twemoji/1f481-200d-2642-fe0f.svg
+  person_tipping_hand:
+    file: twemoji/1f481.svg
+  woman_guard:
+    file: twemoji/1f482-200d-2640-fe0f.svg
+  man_guard:
+    file: twemoji/1f482-200d-2642-fe0f.svg
+  guard:
+    file: twemoji/1f482.svg
+  dancer:
+    file: twemoji/1f483.svg
+  lipstick:
+    file: twemoji/1f484.svg
+  nail_care:
+    file: twemoji/1f485.svg
+  woman_getting_face_massage:
+    file: twemoji/1f486-200d-2640-fe0f.svg
+  man_getting_face_massage:
+    file: twemoji/1f486-200d-2642-fe0f.svg
+  person_getting_massage:
+    file: twemoji/1f486.svg
+  woman_getting_haircut:
+    file: twemoji/1f487-200d-2640-fe0f.svg
+  man_getting_haircut:
+    file: twemoji/1f487-200d-2642-fe0f.svg
+  person_getting_haircut:
+    file: twemoji/1f487.svg
+  barber:
+    file: twemoji/1f488.svg
+  syringe:
+    file: twemoji/1f489.svg
+  pill:
+    file: twemoji/1f48a.svg
+  kiss:
+    file: twemoji/1f48b.svg
+  love_letter:
+    file: twemoji/1f48c.svg
+  ring:
+    file: twemoji/1f48d.svg
+  gem:
+    file: twemoji/1f48e.svg
+  couplekiss:
+    file: twemoji/1f48f.svg
+  bouquet:
+    file: twemoji/1f490.svg
+  couple_with_heart:
+    file: twemoji/1f491.svg
+  wedding:
+    file: twemoji/1f492.svg
+  heartbeat:
+    file: twemoji/1f493.svg
+  broken_heart:
+    file: twemoji/1f494.svg
+  two_hearts:
+    file: twemoji/1f495.svg
+  sparkling_heart:
+    file: twemoji/1f496.svg
+  heartpulse:
+    file: twemoji/1f497.svg
+  cupid:
+    file: twemoji/1f498.svg
+  blue_heart:
+    file: twemoji/1f499.svg
+  green_heart:
+    file: twemoji/1f49a.svg
+  yellow_heart:
+    file: twemoji/1f49b.svg
+  purple_heart:
+    file: twemoji/1f49c.svg
+  gift_heart:
+    file: twemoji/1f49d.svg
+  revolving_hearts:
+    file: twemoji/1f49e.svg
+  heart_decoration:
+    file: twemoji/1f49f.svg
+  diamond_shape_with_a_dot_inside:
+    file: twemoji/1f4a0.svg
+  bulb:
+    file: twemoji/1f4a1.svg
+  anger:
+    file: twemoji/1f4a2.svg
+  bomb:
+    file: twemoji/1f4a3.svg
+  zzz:
+    file: twemoji/1f4a4.svg
+  boom:
+    file: twemoji/1f4a5.svg
+  sweat_drops:
+    file: twemoji/1f4a6.svg
+  droplet:
+    file: twemoji/1f4a7.svg
+  dash:
+    file: twemoji/1f4a8.svg
+  poop:
+    file: twemoji/1f4a9.svg
+  muscle:
+    file: twemoji/1f4aa.svg
+  dizzy:
+    file: twemoji/1f4ab.svg
+  speech_balloon:
+    file: twemoji/1f4ac.svg
+  thought_balloon:
+    file: twemoji/1f4ad.svg
+  white_flower:
+    file: twemoji/1f4ae.svg
+  100:
+    file: twemoji/1f4af.svg
+  moneybag:
+    file: twemoji/1f4b0.svg
+  currency_exchange:
+    file: twemoji/1f4b1.svg
+  heavy_dollar_sign:
+    file: twemoji/1f4b2.svg
+  credit_card:
+    file: twemoji/1f4b3.svg
+  yen:
+    file: twemoji/1f4b4.svg
+  dollar:
+    file: twemoji/1f4b5.svg
+  euro:
+    file: twemoji/1f4b6.svg
+  pound:
+    file: twemoji/1f4b7.svg
+  money_with_wings:
+    file: twemoji/1f4b8.svg
+  chart:
+    file: twemoji/1f4b9.svg
+  seat:
+    file: twemoji/1f4ba.svg
+  computer:
+    file: twemoji/1f4bb.svg
+  briefcase:
+    file: twemoji/1f4bc.svg
+  minidisc:
+    file: twemoji/1f4bd.svg
+  floppy_disk:
+    file: twemoji/1f4be.svg
+  cd:
+    file: twemoji/1f4bf.svg
+  dvd:
+    file: twemoji/1f4c0.svg
+  file_folder:
+    file: twemoji/1f4c1.svg
+  open_file_folder:
+    file: twemoji/1f4c2.svg
+  page_with_curl:
+    file: twemoji/1f4c3.svg
+  page_facing_up:
+    file: twemoji/1f4c4.svg
+  date:
+    file: twemoji/1f4c5.svg
+  calendar:
+    file: twemoji/1f4c6.svg
+  card_index:
+    file: twemoji/1f4c7.svg
+  chart_with_upwards_trend:
+    file: twemoji/1f4c8.svg
+  chart_with_downwards_trend:
+    file: twemoji/1f4c9.svg
+  bar_chart:
+    file: twemoji/1f4ca.svg
+  clipboard:
+    file: twemoji/1f4cb.svg
+  pushpin:
+    file: twemoji/1f4cc.svg
+  round_pushpin:
+    file: twemoji/1f4cd.svg
+  paperclip:
+    file: twemoji/1f4ce.svg
+  straight_ruler:
+    file: twemoji/1f4cf.svg
+  triangular_ruler:
+    file: twemoji/1f4d0.svg
+  bookmark_tabs:
+    file: twemoji/1f4d1.svg
+  ledger:
+    file: twemoji/1f4d2.svg
+  notebook:
+    file: twemoji/1f4d3.svg
+  notebook_with_decorative_cover:
+    file: twemoji/1f4d4.svg
+  closed_book:
+    file: twemoji/1f4d5.svg
+  book:
+    file: twemoji/1f4d6.svg
+  green_book:
+    file: twemoji/1f4d7.svg
+  blue_book:
+    file: twemoji/1f4d8.svg
+  orange_book:
+    file: twemoji/1f4d9.svg
+  books:
+    file: twemoji/1f4da.svg
+  name_badge:
+    file: twemoji/1f4db.svg
+  scroll:
+    file: twemoji/1f4dc.svg
+  pencil:
+    file: twemoji/1f4dd.svg
+  telephone_receiver:
+    file: twemoji/1f4de.svg
+  pager:
+    file: twemoji/1f4df.svg
+  fax:
+    file: twemoji/1f4e0.svg
+  satellite:
+    file: twemoji/1f4e1.svg
+  loudspeaker:
+    file: twemoji/1f4e2.svg
+  mega:
+    file: twemoji/1f4e3.svg
+  outbox_tray:
+    file: twemoji/1f4e4.svg
+  inbox_tray:
+    file: twemoji/1f4e5.svg
+  package:
+    file: twemoji/1f4e6.svg
+  e-mail:
+    file: twemoji/1f4e7.svg
+  incoming_envelope:
+    file: twemoji/1f4e8.svg
+  envelope_with_arrow:
+    file: twemoji/1f4e9.svg
+  mailbox_closed:
+    file: twemoji/1f4ea.svg
+  mailbox:
+    file: twemoji/1f4eb.svg
+  mailbox_with_mail:
+    file: twemoji/1f4ec.svg
+  mailbox_with_no_mail:
+    file: twemoji/1f4ed.svg
+  postbox:
+    file: twemoji/1f4ee.svg
+  postal_horn:
+    file: twemoji/1f4ef.svg
+  newspaper:
+    file: twemoji/1f4f0.svg
+  iphone:
+    file: twemoji/1f4f1.svg
+  calling:
+    file: twemoji/1f4f2.svg
+  vibration_mode:
+    file: twemoji/1f4f3.svg
+  mobile_phone_off:
+    file: twemoji/1f4f4.svg
+  no_mobile_phones:
+    file: twemoji/1f4f5.svg
+  signal_strength:
+    file: twemoji/1f4f6.svg
+  camera:
+    file: twemoji/1f4f7.svg
+  camera_with_flash:
+    file: twemoji/1f4f8.svg
+  video_camera:
+    file: twemoji/1f4f9.svg
+  tv:
+    file: twemoji/1f4fa.svg
+  radio:
+    file: twemoji/1f4fb.svg
+  vhs:
+    file: twemoji/1f4fc.svg
+  projector:
+    file: twemoji/1f4fd.svg
+  prayer_beads:
+    file: twemoji/1f4ff.svg
+  twisted_rightwards_arrows:
+    file: twemoji/1f500.svg
+  repeat:
+    file: twemoji/1f501.svg
+  repeat_one:
+    file: twemoji/1f502.svg
+  arrows_clockwise:
+    file: twemoji/1f503.svg
+  arrows_counterclockwise:
+    file: twemoji/1f504.svg
+  low_brightness:
+    file: twemoji/1f505.svg
+  high_brightness:
+    file: twemoji/1f506.svg
+  mute:
+    file: twemoji/1f507.svg
+  speaker:
+    file: twemoji/1f508.svg
+  sound:
+    file: twemoji/1f509.svg
+  loud_sound:
+    file: twemoji/1f50a.svg
+  battery:
+    file: twemoji/1f50b.svg
+  electric_plug:
+    file: twemoji/1f50c.svg
+  mag:
+    file: twemoji/1f50d.svg
+  mag_right:
+    file: twemoji/1f50e.svg
+  lock_with_ink_pen:
+    file: twemoji/1f50f.svg
+  closed_lock_with_key:
+    file: twemoji/1f510.svg
+  key:
+    file: twemoji/1f511.svg
+  lock:
+    file: twemoji/1f512.svg
+  unlock:
+    file: twemoji/1f513.svg
+  bell:
+    file: twemoji/1f514.svg
+  no_bell:
+    file: twemoji/1f515.svg
+  bookmark:
+    file: twemoji/1f516.svg
+  link:
+    file: twemoji/1f517.svg
+  radio_button:
+    file: twemoji/1f518.svg
+  back:
+    file: twemoji/1f519.svg
+  end:
+    file: twemoji/1f51a.svg
+  on:
+    file: twemoji/1f51b.svg
+  soon:
+    file: twemoji/1f51c.svg
+  top:
+    file: twemoji/1f51d.svg
+  underage:
+    file: twemoji/1f51e.svg
+  keycap_ten:
+    file: twemoji/1f51f.svg
+  capital_abcd:
+    file: twemoji/1f520.svg
+  abcd:
+    file: twemoji/1f521.svg
+  1234:
+    file: twemoji/1f522.svg
+  symbols:
+    file: twemoji/1f523.svg
+  abc:
+    file: twemoji/1f524.svg
+  fire:
+    file: twemoji/1f525.svg
+  flashlight:
+    file: twemoji/1f526.svg
+  wrench:
+    file: twemoji/1f527.svg
+  hammer:
+    file: twemoji/1f528.svg
+  nut_and_bolt:
+    file: twemoji/1f529.svg
+  knife:
+    file: twemoji/1f52a.svg
+  gun:
+    file: twemoji/1f52b.svg
+  microscope:
+    file: twemoji/1f52c.svg
+  telescope:
+    file: twemoji/1f52d.svg
+  crystal_ball:
+    file: twemoji/1f52e.svg
+  six_pointed_star:
+    file: twemoji/1f52f.svg
+  beginner:
+    file: twemoji/1f530.svg
+  trident:
+    file: twemoji/1f531.svg
+  black_square_button:
+    file: twemoji/1f532.svg
+  white_square_button:
+    file: twemoji/1f533.svg
+  red_circle:
+    file: twemoji/1f534.svg
+  blue_circle:
+    file: twemoji/1f535.svg
+  large_orange_diamond:
+    file: twemoji/1f536.svg
+  large_blue_diamond:
+    file: twemoji/1f537.svg
+  small_orange_diamond:
+    file: twemoji/1f538.svg
+  small_blue_diamond:
+    file: twemoji/1f539.svg
+  small_red_triangle:
+    file: twemoji/1f53a.svg
+  small_red_triangle_down:
+    file: twemoji/1f53b.svg
+  arrow_up_small:
+    file: twemoji/1f53c.svg
+  arrow_down_small:
+    file: twemoji/1f53d.svg
+  dove:
+    file: twemoji/1f54a.svg
+  kaaba:
+    file: twemoji/1f54b.svg
+  mosque:
+    file: twemoji/1f54c.svg
+  synagogue:
+    file: twemoji/1f54d.svg
+  menorah:
+    file: twemoji/1f54e.svg
+  clock1:
+    file: twemoji/1f550.svg
+  clock2:
+    file: twemoji/1f551.svg
+  clock3:
+    file: twemoji/1f552.svg
+  clock4:
+    file: twemoji/1f553.svg
+  clock5:
+    file: twemoji/1f554.svg
+  clock6:
+    file: twemoji/1f555.svg
+  clock7:
+    file: twemoji/1f556.svg
+  clock8:
+    file: twemoji/1f557.svg
+  clock9:
+    file: twemoji/1f558.svg
+  clock10:
+    file: twemoji/1f559.svg
+  clock11:
+    file: twemoji/1f55a.svg
+  clock12:
+    file: twemoji/1f55b.svg
+  clock130:
+    file: twemoji/1f55c.svg
+  clock230:
+    file: twemoji/1f55d.svg
+  clock330:
+    file: twemoji/1f55e.svg
+  clock430:
+    file: twemoji/1f55f.svg
+  clock530:
+    file: twemoji/1f560.svg
+  clock630:
+    file: twemoji/1f561.svg
+  clock730:
+    file: twemoji/1f562.svg
+  clock830:
+    file: twemoji/1f563.svg
+  clock930:
+    file: twemoji/1f564.svg
+  clock1030:
+    file: twemoji/1f565.svg
+  clock1130:
+    file: twemoji/1f566.svg
+  clock1230:
+    file: twemoji/1f567.svg
+  candle:
+    file: twemoji/1f56f.svg
+  clock:
+    file: twemoji/1f570.svg
+  hole:
+    file: twemoji/1f573.svg
+  levitate:
+    file: twemoji/1f574.svg
+  woman_detective:
+    file: twemoji/1f575-fe0f-200d-2640-fe0f.svg
+  man_detective:
+    file: twemoji/1f575-fe0f-200d-2642-fe0f.svg
+  detective:
+    file: twemoji/1f575.svg
+  dark_sunglasses:
+    file: twemoji/1f576.svg
+  spider:
+    file: twemoji/1f577.svg
+  spider_web:
+    file: twemoji/1f578.svg
+  joystick:
+    file: twemoji/1f579.svg
+  man_dancing:
+    file: twemoji/1f57a.svg
+  paperclips:
+    file: twemoji/1f587.svg
+  pen_ballpoint:
+    file: twemoji/1f58a.svg
+  pen_fountain:
+    file: twemoji/1f58b.svg
+  paintbrush:
+    file: twemoji/1f58c.svg
+  crayon:
+    file: twemoji/1f58d.svg
+  hand_splayed:
+    file: twemoji/1f590.svg
+  middle_finger:
+    file: twemoji/1f595.svg
+  vulcan:
+    file: twemoji/1f596.svg
+  black_heart:
+    file: twemoji/1f5a4.svg
+  desktop:
+    file: twemoji/1f5a5.svg
+  printer:
+    file: twemoji/1f5a8.svg
+  mouse_three_button:
+    file: twemoji/1f5b1.svg
+  trackball:
+    file: twemoji/1f5b2.svg
+  frame_photo:
+    file: twemoji/1f5bc.svg
+  dividers:
+    file: twemoji/1f5c2.svg
+  card_box:
+    file: twemoji/1f5c3.svg
+  file_cabinet:
+    file: twemoji/1f5c4.svg
+  wastebasket:
+    file: twemoji/1f5d1.svg
+  notepad_spiral:
+    file: twemoji/1f5d2.svg
+  calendar_spiral:
+    file: twemoji/1f5d3.svg
+  compression:
+    file: twemoji/1f5dc.svg
+  newspaper2:
+    file: twemoji/1f5de.svg
+  dagger:
+    file: twemoji/1f5e1.svg
+  speaking_head:
+    file: twemoji/1f5e3.svg
+  speech_left:
+    file: twemoji/1f5e8.svg
+  anger_right:
+    file: twemoji/1f5ef.svg
+  ballot_box:
+    file: twemoji/1f5f3.svg
+  map:
+    file: twemoji/1f5fa.svg
+  mount_fuji:
+    file: twemoji/1f5fb.svg
+  tokyo_tower:
+    file: twemoji/1f5fc.svg
+  statue_of_liberty:
+    file: twemoji/1f5fd.svg
+  japan:
+    file: twemoji/1f5fe.svg
+  moyai:
+    file: twemoji/1f5ff.svg
+  grinning:
+    file: twemoji/1f600.svg
+  grin:
+    file: twemoji/1f601.svg
+  joy:
+    file: twemoji/1f602.svg
+  smiley:
+    file: twemoji/1f603.svg
+  smile:
+    file: twemoji/1f604.svg
+  sweat_smile:
+    file: twemoji/1f605.svg
+  laughing:
+    file: twemoji/1f606.svg
+  innocent:
+    file: twemoji/1f607.svg
+  smiling_imp:
+    file: twemoji/1f608.svg
+  wink:
+    file: twemoji/1f609.svg
+  blush:
+    file: twemoji/1f60a.svg
+  yum:
+    file: twemoji/1f60b.svg
+  relieved:
+    file: twemoji/1f60c.svg
+  heart_eyes:
+    file: twemoji/1f60d.svg
+  sunglasses:
+    file: twemoji/1f60e.svg
+  smirk:
+    file: twemoji/1f60f.svg
+  neutral_face:
+    file: twemoji/1f610.svg
+  expressionless:
+    file: twemoji/1f611.svg
+  unamused:
+    file: twemoji/1f612.svg
+  sweat:
+    file: twemoji/1f613.svg
+  pensive:
+    file: twemoji/1f614.svg
+  confused:
+    file: twemoji/1f615.svg
+  confounded:
+    file: twemoji/1f616.svg
+  kissing:
+    file: twemoji/1f617.svg
+  kissing_heart:
+    file: twemoji/1f618.svg
+  kissing_smiling_eyes:
+    file: twemoji/1f619.svg
+  kissing_closed_eyes:
+    file: twemoji/1f61a.svg
+  stuck_out_tongue:
+    file: twemoji/1f61b.svg
+  stuck_out_tongue_winking_eye:
+    file: twemoji/1f61c.svg
+  stuck_out_tongue_closed_eyes:
+    file: twemoji/1f61d.svg
+  disappointed:
+    file: twemoji/1f61e.svg
+  worried:
+    file: twemoji/1f61f.svg
+  angry:
+    file: twemoji/1f620.svg
+  rage:
+    file: twemoji/1f621.svg
+  cry:
+    file: twemoji/1f622.svg
+  persevere:
+    file: twemoji/1f623.svg
+  triumph:
+    file: twemoji/1f624.svg
+  disappointed_relieved:
+    file: twemoji/1f625.svg
+  frowning:
+    file: twemoji/1f626.svg
+  anguished:
+    file: twemoji/1f627.svg
+  fearful:
+    file: twemoji/1f628.svg
+  weary:
+    file: twemoji/1f629.svg
+  sleepy:
+    file: twemoji/1f62a.svg
+  tired_face:
+    file: twemoji/1f62b.svg
+  grimacing:
+    file: twemoji/1f62c.svg
+  sob:
+    file: twemoji/1f62d.svg
+  open_mouth:
+    file: twemoji/1f62e.svg
+  hushed:
+    file: twemoji/1f62f.svg
+  cold_sweat:
+    file: twemoji/1f630.svg
+  scream:
+    file: twemoji/1f631.svg
+  astonished:
+    file: twemoji/1f632.svg
+  flushed:
+    file: twemoji/1f633.svg
+  sleeping:
+    file: twemoji/1f634.svg
+  dizzy_face:
+    file: twemoji/1f635.svg
+  no_mouth:
+    file: twemoji/1f636.svg
+  mask:
+    file: twemoji/1f637.svg
+  smile_cat:
+    file: twemoji/1f638.svg
+  joy_cat:
+    file: twemoji/1f639.svg
+  smiley_cat:
+    file: twemoji/1f63a.svg
+  heart_eyes_cat:
+    file: twemoji/1f63b.svg
+  smirk_cat:
+    file: twemoji/1f63c.svg
+  kissing_cat:
+    file: twemoji/1f63d.svg
+  pouting_cat:
+    file: twemoji/1f63e.svg
+  crying_cat_face:
+    file: twemoji/1f63f.svg
+  scream_cat:
+    file: twemoji/1f640.svg
+  slight_frown:
+    file: twemoji/1f641.svg
+  slight_smile:
+    file: twemoji/1f642.svg
+  upside_down:
+    file: twemoji/1f643.svg
+  rolling_eyes:
+    file: twemoji/1f644.svg
+  woman_gesturing_no:
+    file: twemoji/1f645-200d-2640-fe0f.svg
+  man_gesturing_no:
+    file: twemoji/1f645-200d-2642-fe0f.svg
+  person_gesturing_no:
+    file: twemoji/1f645.svg
+  woman_gesturing_ok:
+    file: twemoji/1f646-200d-2640-fe0f.svg
+  man_gesturing_ok:
+    file: twemoji/1f646-200d-2642-fe0f.svg
+  person_gesturing_ok:
+    file: twemoji/1f646.svg
+  woman_bowing:
+    file: twemoji/1f647-200d-2640-fe0f.svg
+  man_bowing:
+    file: twemoji/1f647-200d-2642-fe0f.svg
+  person_bowing:
+    file: twemoji/1f647.svg
+  see_no_evil:
+    file: twemoji/1f648.svg
+  hear_no_evil:
+    file: twemoji/1f649.svg
+  speak_no_evil:
+    file: twemoji/1f64a.svg
+  woman_raising_hand:
+    file: twemoji/1f64b-200d-2640-fe0f.svg
+  man_raising_hand:
+    file: twemoji/1f64b-200d-2642-fe0f.svg
+  person_raising_hand:
+    file: twemoji/1f64b.svg
+  raised_hands:
+    file: twemoji/1f64c.svg
+  woman_frowning:
+    file: twemoji/1f64d-200d-2640-fe0f.svg
+  man_frowning:
+    file: twemoji/1f64d-200d-2642-fe0f.svg
+  person_frowning:
+    file: twemoji/1f64d.svg
+  woman_pouting:
+    file: twemoji/1f64e-200d-2640-fe0f.svg
+  man_pouting:
+    file: twemoji/1f64e-200d-2642-fe0f.svg
+  person_pouting:
+    file: twemoji/1f64e.svg
+  pray:
+    file: twemoji/1f64f.svg
+  rocket:
+    file: twemoji/1f680.svg
+  helicopter:
+    file: twemoji/1f681.svg
+  steam_locomotive:
+    file: twemoji/1f682.svg
+  railway_car:
+    file: twemoji/1f683.svg
+  bullettrain_side:
+    file: twemoji/1f684.svg
+  bullettrain_front:
+    file: twemoji/1f685.svg
+  train2:
+    file: twemoji/1f686.svg
+  metro:
+    file: twemoji/1f687.svg
+  light_rail:
+    file: twemoji/1f688.svg
+  station:
+    file: twemoji/1f689.svg
+  tram:
+    file: twemoji/1f68a.svg
+  train:
+    file: twemoji/1f68b.svg
+  bus:
+    file: twemoji/1f68c.svg
+  oncoming_bus:
+    file: twemoji/1f68d.svg
+  trolleybus:
+    file: twemoji/1f68e.svg
+  busstop:
+    file: twemoji/1f68f.svg
+  minibus:
+    file: twemoji/1f690.svg
+  ambulance:
+    file: twemoji/1f691.svg
+  fire_engine:
+    file: twemoji/1f692.svg
+  police_car:
+    file: twemoji/1f693.svg
+  oncoming_police_car:
+    file: twemoji/1f694.svg
+  taxi:
+    file: twemoji/1f695.svg
+  oncoming_taxi:
+    file: twemoji/1f696.svg
+  red_car:
+    file: twemoji/1f697.svg
+  oncoming_automobile:
+    file: twemoji/1f698.svg
+  blue_car:
+    file: twemoji/1f699.svg
+  truck:
+    file: twemoji/1f69a.svg
+  articulated_lorry:
+    file: twemoji/1f69b.svg
+  tractor:
+    file: twemoji/1f69c.svg
+  monorail:
+    file: twemoji/1f69d.svg
+  mountain_railway:
+    file: twemoji/1f69e.svg
+  suspension_railway:
+    file: twemoji/1f69f.svg
+  mountain_cableway:
+    file: twemoji/1f6a0.svg
+  aerial_tramway:
+    file: twemoji/1f6a1.svg
+  ship:
+    file: twemoji/1f6a2.svg
+  woman_rowing_boat:
+    file: twemoji/1f6a3-200d-2640-fe0f.svg
+  man_rowing_boat:
+    file: twemoji/1f6a3-200d-2642-fe0f.svg
+  person_rowing_boat:
+    file: twemoji/1f6a3.svg
+  speedboat:
+    file: twemoji/1f6a4.svg
+  traffic_light:
+    file: twemoji/1f6a5.svg
+  vertical_traffic_light:
+    file: twemoji/1f6a6.svg
+  construction:
+    file: twemoji/1f6a7.svg
+  rotating_light:
+    file: twemoji/1f6a8.svg
+  triangular_flag_on_post:
+    file: twemoji/1f6a9.svg
+  door:
+    file: twemoji/1f6aa.svg
+  no_entry_sign:
+    file: twemoji/1f6ab.svg
+  smoking:
+    file: twemoji/1f6ac.svg
+  no_smoking:
+    file: twemoji/1f6ad.svg
+  put_litter_in_its_place:
+    file: twemoji/1f6ae.svg
+  do_not_litter:
+    file: twemoji/1f6af.svg
+  potable_water:
+    file: twemoji/1f6b0.svg
+  non-potable_water:
+    file: twemoji/1f6b1.svg
+  bike:
+    file: twemoji/1f6b2.svg
+  no_bicycles:
+    file: twemoji/1f6b3.svg
+  woman_biking:
+    file: twemoji/1f6b4-200d-2640-fe0f.svg
+  man_biking:
+    file: twemoji/1f6b4-200d-2642-fe0f.svg
+  person_biking:
+    file: twemoji/1f6b4.svg
+  woman_mountain_biking:
+    file: twemoji/1f6b5-200d-2640-fe0f.svg
+  man_mountain_biking:
+    file: twemoji/1f6b5-200d-2642-fe0f.svg
+  person_mountain_biking:
+    file: twemoji/1f6b5.svg
+  woman_walking:
+    file: twemoji/1f6b6-200d-2640-fe0f.svg
+  man_walking:
+    file: twemoji/1f6b6-200d-2642-fe0f.svg
+  person_walking:
+    file: twemoji/1f6b6.svg
+  no_pedestrians:
+    file: twemoji/1f6b7.svg
+  children_crossing:
+    file: twemoji/1f6b8.svg
+  mens:
+    file: twemoji/1f6b9.svg
+  womens:
+    file: twemoji/1f6ba.svg
+  restroom:
+    file: twemoji/1f6bb.svg
+  baby_symbol:
+    file: twemoji/1f6bc.svg
+  toilet:
+    file: twemoji/1f6bd.svg
+  wc:
+    file: twemoji/1f6be.svg
+  shower:
+    file: twemoji/1f6bf.svg
+  bath:
+    file: twemoji/1f6c0.svg
+  bathtub:
+    file: twemoji/1f6c1.svg
+  passport_control:
+    file: twemoji/1f6c2.svg
+  customs:
+    file: twemoji/1f6c3.svg
+  baggage_claim:
+    file: twemoji/1f6c4.svg
+  left_luggage:
+    file: twemoji/1f6c5.svg
+  couch:
+    file: twemoji/1f6cb.svg
+  sleeping_accommodation:
+    file: twemoji/1f6cc.svg
+  shopping_bags:
+    file: twemoji/1f6cd.svg
+  bellhop:
+    file: twemoji/1f6ce.svg
+  bed:
+    file: twemoji/1f6cf.svg
+  place_of_worship:
+    file: twemoji/1f6d0.svg
+  octagonal_sign:
+    file: twemoji/1f6d1.svg
+  shopping_cart:
+    file: twemoji/1f6d2.svg
+  tools:
+    file: twemoji/1f6e0.svg
+  shield:
+    file: twemoji/1f6e1.svg
+  oil:
+    file: twemoji/1f6e2.svg
+  motorway:
+    file: twemoji/1f6e3.svg
+  railway_track:
+    file: twemoji/1f6e4.svg
+  motorboat:
+    file: twemoji/1f6e5.svg
+  airplane_small:
+    file: twemoji/1f6e9.svg
+  airplane_departure:
+    file: twemoji/1f6eb.svg
+  airplane_arriving:
+    file: twemoji/1f6ec.svg
+  satellite_orbital:
+    file: twemoji/1f6f0.svg
+  cruise_ship:
+    file: twemoji/1f6f3.svg
+  scooter:
+    file: twemoji/1f6f4.svg
+  motor_scooter:
+    file: twemoji/1f6f5.svg
+  canoe:
+    file: twemoji/1f6f6.svg
+  sled:
+    file: twemoji/1f6f7.svg
+  flying_saucer:
+    file: twemoji/1f6f8.svg
+  skateboard:
+    file: twemoji/1f6f9.svg
+  zipper_mouth:
+    file: twemoji/1f910.svg
+  money_mouth:
+    file: twemoji/1f911.svg
+  thermometer_face:
+    file: twemoji/1f912.svg
+  nerd:
+    file: twemoji/1f913.svg
+  thinking:
+    file: twemoji/1f914.svg
+  head_bandage:
+    file: twemoji/1f915.svg
+  robot:
+    file: twemoji/1f916.svg
+  hugging:
+    file: twemoji/1f917.svg
+  metal:
+    file: twemoji/1f918.svg
+  call_me:
+    file: twemoji/1f919.svg
+  raised_back_of_hand:
+    file: twemoji/1f91a.svg
+  left_facing_fist:
+    file: twemoji/1f91b.svg
+  right_facing_fist:
+    file: twemoji/1f91c.svg
+  handshake:
+    file: twemoji/1f91d.svg
+  fingers_crossed:
+    file: twemoji/1f91e.svg
+  love_you_gesture:
+    file: twemoji/1f91f.svg
+  cowboy:
+    file: twemoji/1f920.svg
+  clown:
+    file: twemoji/1f921.svg
+  nauseated_face:
+    file: twemoji/1f922.svg
+  rofl:
+    file: twemoji/1f923.svg
+  drooling_face:
+    file: twemoji/1f924.svg
+  lying_face:
+    file: twemoji/1f925.svg
+  woman_facepalming:
+    file: twemoji/1f926-200d-2640-fe0f.svg
+  man_facepalming:
+    file: twemoji/1f926-200d-2642-fe0f.svg
+  person_facepalming:
+    file: twemoji/1f926.svg
+  sneezing_face:
+    file: twemoji/1f927.svg
+  face_with_raised_eyebrow:
+    file: twemoji/1f928.svg
+  star_struck:
+    file: twemoji/1f929.svg
+  zany_face:
+    file: twemoji/1f92a.svg
+  shushing_face:
+    file: twemoji/1f92b.svg
+  face_with_symbols_over_mouth:
+    file: twemoji/1f92c.svg
+  face_with_hand_over_mouth:
+    file: twemoji/1f92d.svg
+  face_vomiting:
+    file: twemoji/1f92e.svg
+  exploding_head:
+    file: twemoji/1f92f.svg
+  pregnant_woman:
+    file: twemoji/1f930.svg
+  breast_feeding:
+    file: twemoji/1f931.svg
+  palms_up_together:
+    file: twemoji/1f932.svg
+  selfie:
+    file: twemoji/1f933.svg
+  prince:
+    file: twemoji/1f934.svg
+  man_in_tuxedo:
+    file: twemoji/1f935.svg
+  mrs_claus:
+    file: twemoji/1f936.svg
+  woman_shrugging:
+    file: twemoji/1f937-200d-2640-fe0f.svg
+  man_shrugging:
+    file: twemoji/1f937-200d-2642-fe0f.svg
+  person_shrugging:
+    file: twemoji/1f937.svg
+  woman_cartwheeling:
+    file: twemoji/1f938-200d-2640-fe0f.svg
+  man_cartwheeling:
+    file: twemoji/1f938-200d-2642-fe0f.svg
+  person_doing_cartwheel:
+    file: twemoji/1f938.svg
+  woman_juggling:
+    file: twemoji/1f939-200d-2640-fe0f.svg
+  man_juggling:
+    file: twemoji/1f939-200d-2642-fe0f.svg
+  person_juggling:
+    file: twemoji/1f939.svg
+  person_fencing:
+    file: twemoji/1f93a.svg
+  women_wrestling:
+    file: twemoji/1f93c-200d-2640-fe0f.svg
+  men_wrestling:
+    file: twemoji/1f93c-200d-2642-fe0f.svg
+  people_wrestling:
+    file: twemoji/1f93c.svg
+  woman_playing_water_polo:
+    file: twemoji/1f93d-200d-2640-fe0f.svg
+  man_playing_water_polo:
+    file: twemoji/1f93d-200d-2642-fe0f.svg
+  person_playing_water_polo:
+    file: twemoji/1f93d.svg
+  woman_playing_handball:
+    file: twemoji/1f93e-200d-2640-fe0f.svg
+  man_playing_handball:
+    file: twemoji/1f93e-200d-2642-fe0f.svg
+  person_playing_handball:
+    file: twemoji/1f93e.svg
+  wilted_rose:
+    file: twemoji/1f940.svg
+  drum:
+    file: twemoji/1f941.svg
+  champagne_glass:
+    file: twemoji/1f942.svg
+  tumbler_glass:
+    file: twemoji/1f943.svg
+  spoon:
+    file: twemoji/1f944.svg
+  goal:
+    file: twemoji/1f945.svg
+  first_place:
+    file: twemoji/1f947.svg
+  second_place:
+    file: twemoji/1f948.svg
+  third_place:
+    file: twemoji/1f949.svg
+  boxing_glove:
+    file: twemoji/1f94a.svg
+  martial_arts_uniform:
+    file: twemoji/1f94b.svg
+  curling_stone:
+    file: twemoji/1f94c.svg
+  lacrosse:
+    file: twemoji/1f94d.svg
+  softball:
+    file: twemoji/1f94e.svg
+  flying_disc:
+    file: twemoji/1f94f.svg
+  croissant:
+    file: twemoji/1f950.svg
+  avocado:
+    file: twemoji/1f951.svg
+  cucumber:
+    file: twemoji/1f952.svg
+  bacon:
+    file: twemoji/1f953.svg
+  potato:
+    file: twemoji/1f954.svg
+  carrot:
+    file: twemoji/1f955.svg
+  french_bread:
+    file: twemoji/1f956.svg
+  salad:
+    file: twemoji/1f957.svg
+  shallow_pan_of_food:
+    file: twemoji/1f958.svg
+  stuffed_flatbread:
+    file: twemoji/1f959.svg
+  egg:
+    file: twemoji/1f95a.svg
+  milk:
+    file: twemoji/1f95b.svg
+  peanuts:
+    file: twemoji/1f95c.svg
+  kiwi:
+    file: twemoji/1f95d.svg
+  pancakes:
+    file: twemoji/1f95e.svg
+  dumpling:
+    file: twemoji/1f95f.svg
+  fortune_cookie:
+    file: twemoji/1f960.svg
+  takeout_box:
+    file: twemoji/1f961.svg
+  chopsticks:
+    file: twemoji/1f962.svg
+  bowl_with_spoon:
+    file: twemoji/1f963.svg
+  cup_with_straw:
+    file: twemoji/1f964.svg
+  coconut:
+    file: twemoji/1f965.svg
+  broccoli:
+    file: twemoji/1f966.svg
+  pie:
+    file: twemoji/1f967.svg
+  pretzel:
+    file: twemoji/1f968.svg
+  cut_of_meat:
+    file: twemoji/1f969.svg
+  sandwich:
+    file: twemoji/1f96a.svg
+  canned_food:
+    file: twemoji/1f96b.svg
+  leafy_green:
+    file: twemoji/1f96c.svg
+  mango:
+    file: twemoji/1f96d.svg
+  moon_cake:
+    file: twemoji/1f96e.svg
+  bagel:
+    file: twemoji/1f96f.svg
+  smiling_face_with_3_hearts:
+    file: twemoji/1f970.svg
+  partying_face:
+    file: twemoji/1f973.svg
+  woozy_face:
+    file: twemoji/1f974.svg
+  hot_face:
+    file: twemoji/1f975.svg
+  cold_face:
+    file: twemoji/1f976.svg
+  pleading_face:
+    file: twemoji/1f97a.svg
+  lab_coat:
+    file: twemoji/1f97c.svg
+  goggles:
+    file: twemoji/1f97d.svg
+  hiking_boot:
+    file: twemoji/1f97e.svg
+  womans_flat_shoe:
+    file: twemoji/1f97f.svg
+  crab:
+    file: twemoji/1f980.svg
+  lion_face:
+    file: twemoji/1f981.svg
+  scorpion:
+    file: twemoji/1f982.svg
+  turkey:
+    file: twemoji/1f983.svg
+  unicorn:
+    file: twemoji/1f984.svg
+  eagle:
+    file: twemoji/1f985.svg
+  duck:
+    file: twemoji/1f986.svg
+  bat:
+    file: twemoji/1f987.svg
+  shark:
+    file: twemoji/1f988.svg
+  owl:
+    file: twemoji/1f989.svg
+  fox:
+    file: twemoji/1f98a.svg
+  butterfly:
+    file: twemoji/1f98b.svg
+  deer:
+    file: twemoji/1f98c.svg
+  gorilla:
+    file: twemoji/1f98d.svg
+  lizard:
+    file: twemoji/1f98e.svg
+  rhino:
+    file: twemoji/1f98f.svg
+  shrimp:
+    file: twemoji/1f990.svg
+  squid:
+    file: twemoji/1f991.svg
+  giraffe:
+    file: twemoji/1f992.svg
+  zebra:
+    file: twemoji/1f993.svg
+  hedgehog:
+    file: twemoji/1f994.svg
+  sauropod:
+    file: twemoji/1f995.svg
+  t_rex:
+    file: twemoji/1f996.svg
+  cricket:
+    file: twemoji/1f997.svg
+  kangaroo:
+    file: twemoji/1f998.svg
+  llama:
+    file: twemoji/1f999.svg
+  peacock:
+    file: twemoji/1f99a.svg
+  hippopotamus:
+    file: twemoji/1f99b.svg
+  parrot:
+    file: twemoji/1f99c.svg
+  raccoon:
+    file: twemoji/1f99d.svg
+  lobster:
+    file: twemoji/1f99e.svg
+  mosquito:
+    file: twemoji/1f99f.svg
+  microbe:
+    file: twemoji/1f9a0.svg
+  badger:
+    file: twemoji/1f9a1.svg
+  swan:
+    file: twemoji/1f9a2.svg
+  bone:
+    file: twemoji/1f9b4.svg
+  leg:
+    file: twemoji/1f9b5.svg
+  foot:
+    file: twemoji/1f9b6.svg
+  tooth:
+    file: twemoji/1f9b7.svg
+  woman_superhero:
+    file: twemoji/1f9b8-200d-2640-fe0f.svg
+  man_superhero:
+    file: twemoji/1f9b8-200d-2642-fe0f.svg
+  superhero:
+    file: twemoji/1f9b8.svg
+  woman_supervillain:
+    file: twemoji/1f9b9-200d-2640-fe0f.svg
+  man_supervillain:
+    file: twemoji/1f9b9-200d-2642-fe0f.svg
+  supervillain:
+    file: twemoji/1f9b9.svg
+  cheese:
+    file: twemoji/1f9c0.svg
+  cupcake:
+    file: twemoji/1f9c1.svg
+  salt:
+    file: twemoji/1f9c2.svg
+  face_with_monocle:
+    file: twemoji/1f9d0.svg
+  adult:
+    file: twemoji/1f9d1.svg
+  child:
+    file: twemoji/1f9d2.svg
+  older_adult:
+    file: twemoji/1f9d3.svg
+  bearded_person:
+    file: twemoji/1f9d4.svg
+  woman_with_headscarf:
+    file: twemoji/1f9d5.svg
+  woman_in_steamy_room:
+    file: twemoji/1f9d6-200d-2640-fe0f.svg
+  man_in_steamy_room:
+    file: twemoji/1f9d6-200d-2642-fe0f.svg
+  person_in_steamy_room:
+    file: twemoji/1f9d6.svg
+  woman_climbing:
+    file: twemoji/1f9d7-200d-2640-fe0f.svg
+  man_climbing:
+    file: twemoji/1f9d7-200d-2642-fe0f.svg
+  person_climbing:
+    file: twemoji/1f9d7.svg
+  woman_in_lotus_position:
+    file: twemoji/1f9d8-200d-2640-fe0f.svg
+  man_in_lotus_position:
+    file: twemoji/1f9d8-200d-2642-fe0f.svg
+  person_in_lotus_position:
+    file: twemoji/1f9d8.svg
+  woman_mage:
+    file: twemoji/1f9d9-200d-2640-fe0f.svg
+  man_mage:
+    file: twemoji/1f9d9-200d-2642-fe0f.svg
+  mage:
+    file: twemoji/1f9d9.svg
+  woman_fairy:
+    file: twemoji/1f9da-200d-2640-fe0f.svg
+  man_fairy:
+    file: twemoji/1f9da-200d-2642-fe0f.svg
+  fairy:
+    file: twemoji/1f9da.svg
+  woman_vampire:
+    file: twemoji/1f9db-200d-2640-fe0f.svg
+  man_vampire:
+    file: twemoji/1f9db-200d-2642-fe0f.svg
+  vampire:
+    file: twemoji/1f9db.svg
+  mermaid:
+    file: twemoji/1f9dc-200d-2640-fe0f.svg
+  merman:
+    file: twemoji/1f9dc-200d-2642-fe0f.svg
+  merperson:
+    file: twemoji/1f9dc.svg
+  woman_elf:
+    file: twemoji/1f9dd-200d-2640-fe0f.svg
+  man_elf:
+    file: twemoji/1f9dd-200d-2642-fe0f.svg
+  elf:
+    file: twemoji/1f9dd.svg
+  woman_genie:
+    file: twemoji/1f9de-200d-2640-fe0f.svg
+  man_genie:
+    file: twemoji/1f9de-200d-2642-fe0f.svg
+  genie:
+    file: twemoji/1f9de.svg
+  woman_zombie:
+    file: twemoji/1f9df-200d-2640-fe0f.svg
+  man_zombie:
+    file: twemoji/1f9df-200d-2642-fe0f.svg
+  zombie:
+    file: twemoji/1f9df.svg
+  brain:
+    file: twemoji/1f9e0.svg
+  orange_heart:
+    file: twemoji/1f9e1.svg
+  billed_cap:
+    file: twemoji/1f9e2.svg
+  scarf:
+    file: twemoji/1f9e3.svg
+  gloves:
+    file: twemoji/1f9e4.svg
+  coat:
+    file: twemoji/1f9e5.svg
+  socks:
+    file: twemoji/1f9e6.svg
+  red_envelope:
+    file: twemoji/1f9e7.svg
+  firecracker:
+    file: twemoji/1f9e8.svg
+  jigsaw:
+    file: twemoji/1f9e9.svg
+  test_tube:
+    file: twemoji/1f9ea.svg
+  petri_dish:
+    file: twemoji/1f9eb.svg
+  dna:
+    file: twemoji/1f9ec.svg
+  compass:
+    file: twemoji/1f9ed.svg
+  abacus:
+    file: twemoji/1f9ee.svg
+  fire_extinguisher:
+    file: twemoji/1f9ef.svg
+  toolbox:
+    file: twemoji/1f9f0.svg
+  bricks:
+    file: twemoji/1f9f1.svg
+  magnet:
+    file: twemoji/1f9f2.svg
+  luggage:
+    file: twemoji/1f9f3.svg
+  squeeze_bottle:
+    file: twemoji/1f9f4.svg
+  thread:
+    file: twemoji/1f9f5.svg
+  yarn:
+    file: twemoji/1f9f6.svg
+  safety_pin:
+    file: twemoji/1f9f7.svg
+  teddy_bear:
+    file: twemoji/1f9f8.svg
+  broom:
+    file: twemoji/1f9f9.svg
+  basket:
+    file: twemoji/1f9fa.svg
+  roll_of_paper:
+    file: twemoji/1f9fb.svg
+  soap:
+    file: twemoji/1f9fc.svg
+  sponge:
+    file: twemoji/1f9fd.svg
+  receipt:
+    file: twemoji/1f9fe.svg
+  nazar_amulet:
+    file: twemoji/1f9ff.svg
+  hash:
+    file: twemoji/23-20e3.svg
+  watch:
+    file: twemoji/231a.svg
+  hourglass:
+    file: twemoji/231b.svg
+  keyboard:
+    file: twemoji/2328.svg
+  fast_forward:
+    file: twemoji/23e9.svg
+  rewind:
+    file: twemoji/23ea.svg
+  arrow_double_up:
+    file: twemoji/23eb.svg
+  arrow_double_down:
+    file: twemoji/23ec.svg
+  alarm_clock:
+    file: twemoji/23f0.svg
+  stopwatch:
+    file: twemoji/23f1.svg
+  timer:
+    file: twemoji/23f2.svg
+  hourglass_flowing_sand:
+    file: twemoji/23f3.svg
+  m:
+    file: twemoji/24c2.svg
+  white_medium_small_square:
+    file: twemoji/25fd.svg
+  black_medium_small_square:
+    file: twemoji/25fe.svg
+  sunny:
+    file: twemoji/2600.svg
+  cloud:
+    file: twemoji/2601.svg
+  umbrella2:
+    file: twemoji/2602.svg
+  snowman2:
+    file: twemoji/2603.svg
+  comet:
+    file: twemoji/2604.svg
+  telephone:
+    file: twemoji/260e.svg
+  umbrella:
+    file: twemoji/2614.svg
+  coffee:
+    file: twemoji/2615.svg
+  shamrock:
+    file: twemoji/2618.svg
+  point_up:
+    file: twemoji/261d.svg
+  skull_crossbones:
+    file: twemoji/2620.svg
+  frowning2:
+    file: twemoji/2639.svg
+  relaxed:
+    file: twemoji/263a.svg
+  aries:
+    file: twemoji/2648.svg
+  taurus:
+    file: twemoji/2649.svg
+  gemini:
+    file: twemoji/264a.svg
+  cancer:
+    file: twemoji/264b.svg
+  leo:
+    file: twemoji/264c.svg
+  virgo:
+    file: twemoji/264d.svg
+  libra:
+    file: twemoji/264e.svg
+  scorpius:
+    file: twemoji/264f.svg
+  sagittarius:
+    file: twemoji/2650.svg
+  capricorn:
+    file: twemoji/2651.svg
+  aquarius:
+    file: twemoji/2652.svg
+  pisces:
+    file: twemoji/2653.svg
+  chess_pawn:
+    file: twemoji/265f.svg
+  spades:
+    file: twemoji/2660.svg
+  clubs:
+    file: twemoji/2663.svg
+  hearts:
+    file: twemoji/2665.svg
+  diamonds:
+    file: twemoji/2666.svg
+  hotsprings:
+    file: twemoji/2668.svg
+  recycle:
+    file: twemoji/267b.svg
+  infinity:
+    file: twemoji/267e.svg
+  wheelchair:
+    file: twemoji/267f.svg
+  hammer_pick:
+    file: twemoji/2692.svg
+  anchor:
+    file: twemoji/2693.svg
+  crossed_swords:
+    file: twemoji/2694.svg
+  scales:
+    file: twemoji/2696.svg
+  alembic:
+    file: twemoji/2697.svg
+  gear:
+    file: twemoji/2699.svg
+  fleur-de-lis:
+    file: twemoji/269c.svg
+  zap:
+    file: twemoji/26a1.svg
+  white_circle:
+    file: twemoji/26aa.svg
+  black_circle:
+    file: twemoji/26ab.svg
+  coffin:
+    file: twemoji/26b0.svg
+  urn:
+    file: twemoji/26b1.svg
+  soccer:
+    file: twemoji/26bd.svg
+  baseball:
+    file: twemoji/26be.svg
+  snowman:
+    file: twemoji/26c4.svg
+  partly_sunny:
+    file: twemoji/26c5.svg
+  thunder_cloud_rain:
+    file: twemoji/26c8.svg
+  ophiuchus:
+    file: twemoji/26ce.svg
+  pick:
+    file: twemoji/26cf.svg
+  helmet_with_cross:
+    file: twemoji/26d1.svg
+  chains:
+    file: twemoji/26d3.svg
+  no_entry:
+    file: twemoji/26d4.svg
+  shinto_shrine:
+    file: twemoji/26e9.svg
+  church:
+    file: twemoji/26ea.svg
+  mountain:
+    file: twemoji/26f0.svg
+  beach_umbrella:
+    file: twemoji/26f1.svg
+  fountain:
+    file: twemoji/26f2.svg
+  golf:
+    file: twemoji/26f3.svg
+  ferry:
+    file: twemoji/26f4.svg
+  sailboat:
+    file: twemoji/26f5.svg
+  skier:
+    file: twemoji/26f7.svg
+  ice_skate:
+    file: twemoji/26f8.svg
+  woman_bouncing_ball:
+    file: twemoji/26f9-fe0f-200d-2640-fe0f.svg
+  man_bouncing_ball:
+    file: twemoji/26f9-fe0f-200d-2642-fe0f.svg
+  person_bouncing_ball:
+    file: twemoji/26f9.svg
+  tent:
+    file: twemoji/26fa.svg
+  fuelpump:
+    file: twemoji/26fd.svg
+  scissors:
+    file: twemoji/2702.svg
+  white_check_mark:
+    file: twemoji/2705.svg
+  airplane:
+    file: twemoji/2708.svg
+  envelope:
+    file: twemoji/2709.svg
+  fist:
+    file: twemoji/270a.svg
+  raised_hand:
+    file: twemoji/270b.svg
+  v:
+    file: twemoji/270c.svg
+  writing_hand:
+    file: twemoji/270d.svg
+  pencil2:
+    file: twemoji/270f.svg
+  black_nib:
+    file: twemoji/2712.svg
+  sparkles:
+    file: twemoji/2728.svg
+  eight_spoked_asterisk:
+    file: twemoji/2733.svg
+  eight_pointed_black_star:
+    file: twemoji/2734.svg
+  snowflake:
+    file: twemoji/2744.svg
+  sparkle:
+    file: twemoji/2747.svg
+  x:
+    file: twemoji/274c.svg
+  negative_squared_cross_mark:
+    file: twemoji/274e.svg
+  question:
+    file: twemoji/2753.svg
+  grey_question:
+    file: twemoji/2754.svg
+  grey_exclamation:
+    file: twemoji/2755.svg
+  exclamation:
+    file: twemoji/2757.svg
+  heart_exclamation:
+    file: twemoji/2763.svg
+  heart:
+    file: twemoji/2764.svg
+  heavy_plus_sign:
+    file: twemoji/2795.svg
+  heavy_minus_sign:
+    file: twemoji/2796.svg
+  heavy_division_sign:
+    file: twemoji/2797.svg
+  curly_loop:
+    file: twemoji/27b0.svg
+  loop:
+    file: twemoji/27bf.svg
+  asterisk:
+    file: twemoji/2a-20e3.svg
+  black_large_square:
+    file: twemoji/2b1b.svg
+  white_large_square:
+    file: twemoji/2b1c.svg
+  star:
+    file: twemoji/2b50.svg
+  o:
+    file: twemoji/2b55.svg
+  zero:
+    file: twemoji/30-20e3.svg
+  part_alternation_mark:
+    file: twemoji/303d.svg
+  one:
+    file: twemoji/31-20e3.svg
+  two:
+    file: twemoji/32-20e3.svg
+  congratulations:
+    file: twemoji/3297.svg
+  secret:
+    file: twemoji/3299.svg
+  three:
+    file: twemoji/33-20e3.svg
+  four:
+    file: twemoji/34-20e3.svg
+  five:
+    file: twemoji/35-20e3.svg
+  six:
+    file: twemoji/36-20e3.svg
+  seven:
+    file: twemoji/37-20e3.svg
+  eight:
+    file: twemoji/38-20e3.svg
+  nine:
+    file: twemoji/39-20e3.svg
