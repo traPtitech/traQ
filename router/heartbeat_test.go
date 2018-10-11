@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/satori/go.uuid"
 	"net/http/httptest"
 	"net/url"
 	"testing"
@@ -15,11 +16,11 @@ import (
 func TestPostHeartbeat(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "testChan", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "testChan", "")
 
 	requestBody, err := json.Marshal(struct {
-		ChannelID string `json:"channelId"`
-		Status    string `json:"status"`
+		ChannelID uuid.UUID `json:"channelId"`
+		Status    string    `json:"status"`
 	}{
 		ChannelID: channel.ID,
 		Status:    "editing",
@@ -33,7 +34,7 @@ func TestPostHeartbeat(t *testing.T) {
 		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
 			assert.Equal(channel.ID, responseBody.ChannelID)
 			assert.Len(responseBody.UserStatuses, 1)
-			assert.Equal(testUser.ID, responseBody.UserStatuses[0].UserID)
+			assert.Equal(testUser.GetUID(), responseBody.UserStatuses[0].UserID)
 			assert.Equal("editing", responseBody.UserStatuses[0].Status)
 		}
 	}
@@ -42,13 +43,13 @@ func TestPostHeartbeat(t *testing.T) {
 func TestGetHeartbeat(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "testChan", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "testChan", "")
 
 	model.HeartbeatStatuses[channel.ID] = &model.HeartbeatStatus{
 		ChannelID: channel.ID,
 		UserStatuses: []*model.UserStatus{
 			{
-				UserID:   testUser.ID,
+				UserID:   testUser.GetUID(),
 				Status:   "editing",
 				LastTime: time.Now(),
 			},
@@ -56,7 +57,7 @@ func TestGetHeartbeat(t *testing.T) {
 	}
 
 	q := make(url.Values)
-	q.Set("channelId", channel.ID)
+	q.Set("channelId", channel.ID.String())
 
 	req := httptest.NewRequest("GET", "/?"+q.Encode(), nil)
 	rec := request(e, t, mw(GetHeartbeat), cookie, req)
@@ -66,7 +67,7 @@ func TestGetHeartbeat(t *testing.T) {
 		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
 			assert.Equal(channel.ID, responseBody.ChannelID)
 			assert.Len(responseBody.UserStatuses, 1)
-			assert.Equal(testUser.ID, responseBody.UserStatuses[0].UserID)
+			assert.Equal(testUser.GetUID(), responseBody.UserStatuses[0].UserID)
 			assert.Equal("editing", responseBody.UserStatuses[0].Status)
 		}
 	}

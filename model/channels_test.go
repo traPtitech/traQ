@@ -1,11 +1,13 @@
 package model
 
 import (
+	"fmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/traQ/utils"
 	"strconv"
 	"testing"
 
 	"github.com/satori/go.uuid"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestChannel_TableName(t *testing.T) {
@@ -13,275 +15,751 @@ func TestChannel_TableName(t *testing.T) {
 	assert.Equal(t, "channels", (&Channel{}).TableName())
 }
 
-func TestCreateChannel(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
-
-	c, err := CreateChannel("", "test2", user.GetUID(), true)
-	if assert.NoError(err) {
-		assert.NotEmpty(c.ID)
-		assert.Equal("test2", c.Name)
-		assert.Equal(user.ID, c.CreatorID)
-		assert.Empty(c.ParentID)
-		assert.True(c.IsPublic)
-		assert.True(c.IsVisible)
-		assert.False(c.IsForced)
-		assert.Equal(user.ID, c.UpdaterID)
-		assert.Empty(c.Topic)
-		assert.NotZero(c.CreatedAt)
-		assert.NotZero(c.UpdatedAt)
-		assert.Nil(c.DeletedAt)
-	}
-
-	_, err = CreateChannel("", "test2", user.GetUID(), true)
-	assert.Equal(ErrDuplicateName, err)
-
-	_, err = CreateChannel("", "ああああ", user.GetUID(), true)
-	assert.Error(err)
-
-	c2, err := CreateChannel(c.ID, "Parent2", user.GetUID(), true)
-	assert.NoError(err)
-	c3, err := CreateChannel(c2.ID, "Parent3", user.GetUID(), true)
-	assert.NoError(err)
-	c4, err := CreateChannel(c3.ID, "Parent4", user.GetUID(), true)
-	assert.NoError(err)
-	_, err = CreateChannel(c3.ID, "Parent4", user.GetUID(), true)
-	assert.Equal(ErrDuplicateName, err)
-	c5, err := CreateChannel(c4.ID, "Parent5", user.GetUID(), true)
-	assert.NoError(err)
-	_, err = CreateChannel(c5.ID, "Parent6", user.GetUID(), true)
-	assert.Equal(ErrChannelPathDepth, err)
+func TestUsersPrivateChannel_TableName(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "users_private_channels", (&UsersPrivateChannel{}).TableName())
 }
 
-func TestUpdateChannelTopic(t *testing.T) {
+func TestUserSubscribeChannel_TableName(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "users_subscribe_channels", (&UserSubscribeChannel{}).TableName())
+}
+
+// TestParallelGroup1 並列テストグループ1 競合がないようなサブテストにすること
+func TestParallelGroup1(t *testing.T) {
 	assert, require, user, channel := beforeTest(t)
 
-	if assert.NoError(UpdateChannelTopic(channel.GetCID(), "test", user.GetUID())) {
-		ch, err := GetChannel(channel.GetCID())
-		require.NoError(err)
-		assert.Equal("test", ch.Topic)
-	}
-	if assert.NoError(UpdateChannelTopic(channel.GetCID(), "", user.GetUID())) {
-		ch, err := GetChannel(channel.GetCID())
-		require.NoError(err)
-		assert.Equal("", ch.Topic)
-	}
+	// UpdateChannelTopic
+	t.Run("TestUpdateChannelTopic", func(t *testing.T) {
+		t.Parallel()
+		cases := []struct {
+			topic string
+		}{
+			{"test"},
+			{""},
+		}
+
+		for i, v := range cases {
+			v := v
+			i := i
+			t.Run(strconv.Itoa(i), func(t *testing.T) {
+				t.Parallel()
+				ch := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+				if assert.NoError(UpdateChannelTopic(ch.ID, v.topic, user.GetUID())) {
+					ch, err := GetChannel(ch.ID)
+					require.NoError(err)
+					assert.Equal(v.topic, ch.Topic)
+				}
+			})
+		}
+	})
+
+	// UpdateChannelFlag
+	t.Run("TestUpdateChannelFlag", func(t *testing.T) {
+		t.Parallel()
+		cases := []struct {
+			flag1 bool
+			flag2 bool
+		}{
+			{true, true},
+			{true, false},
+			{false, true},
+			{false, false},
+		}
+
+		for i, v := range cases {
+			v := v
+			i := i
+			t.Run(strconv.Itoa(i), func(t *testing.T) {
+				t.Parallel()
+				ch := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+				if assert.NoError(UpdateChannelFlag(ch.ID, &v.flag1, &v.flag2, user.GetUID())) {
+					c, err := GetChannel(ch.ID)
+					require.NoError(err)
+					assert.Equal(v.flag1, c.IsVisible)
+					assert.Equal(v.flag2, c.IsForced)
+				}
+			})
+		}
+	})
+
+	// GetChannelByMessageID
+	t.Run("TestGetChannelByMessageID", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Exists", func(t *testing.T) {
+			t.Parallel()
+
+			ch := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+			message := mustMakeMessage(t, user.GetUID(), ch.ID)
+			ch, err := GetChannelByMessageID(message.GetID())
+			if assert.NoError(err) {
+				assert.Equal(ch.ID, ch.ID)
+			}
+		})
+
+		t.Run("NotExists", func(t *testing.T) {
+			t.Parallel()
+
+			_, err := GetChannelByMessageID(uuid.Nil)
+			assert.Error(err)
+		})
+	})
+
+	// GetChannel
+	t.Run("TestGetChannel", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("Exists", func(t *testing.T) {
+			t.Parallel()
+			ch, err := GetChannel(channel.ID)
+			if assert.NoError(err) {
+				assert.Equal(channel.ID, ch.ID)
+				assert.Equal(channel.Name, ch.Name)
+			}
+		})
+
+		t.Run("NotExists", func(t *testing.T) {
+			_, err := GetChannel(uuid.Nil)
+			assert.Error(err)
+		})
+	})
+
+	// Channel.Path
+	t.Run("TestChannel_Path", func(t *testing.T) {
+		t.Parallel()
+
+		ch1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		ch2 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), ch1.ID.String())
+		ch3 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), ch2.ID.String())
+
+		t.Run("ch1", func(t *testing.T) {
+			t.Parallel()
+
+			path, err := ch1.Path()
+			assert.NoError(err)
+			assert.Equal(fmt.Sprintf("#%s", ch1.Name), path)
+		})
+
+		t.Run("ch2", func(t *testing.T) {
+			t.Parallel()
+
+			path, err := ch2.Path()
+			assert.NoError(err)
+			assert.Equal(fmt.Sprintf("#%s/%s", ch1.Name, ch2.Name), path)
+		})
+
+		t.Run("ch3", func(t *testing.T) {
+			t.Parallel()
+
+			path, err := ch3.Path()
+			assert.NoError(err)
+			assert.Equal(fmt.Sprintf("#%s/%s/%s", ch1.Name, ch2.Name, ch3.Name), path)
+		})
+	})
+
+	// GetChannelPath
+	t.Run("TestGetChannelPath", func(t *testing.T) {
+		t.Parallel()
+
+		ch1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		ch2 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), ch1.ID.String())
+		ch3 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), ch2.ID.String())
+
+		t.Run("ch1", func(t *testing.T) {
+			t.Parallel()
+
+			path, ok := GetChannelPath(ch1.ID)
+			assert.True(ok)
+			assert.Equal(fmt.Sprintf("#%s", ch1.Name), path)
+		})
+
+		t.Run("ch2", func(t *testing.T) {
+			t.Parallel()
+
+			path, ok := GetChannelPath(ch2.ID)
+			assert.True(ok)
+			assert.Equal(fmt.Sprintf("#%s/%s", ch1.Name, ch2.Name), path)
+		})
+
+		t.Run("ch3", func(t *testing.T) {
+			t.Parallel()
+
+			path, ok := GetChannelPath(ch3.ID)
+			assert.True(ok)
+			assert.Equal(fmt.Sprintf("#%s/%s/%s", ch1.Name, ch2.Name, ch3.Name), path)
+		})
+
+		t.Run("NotExists", func(t *testing.T) {
+			t.Parallel()
+
+			_, ok := GetChannelPath(uuid.Nil)
+			assert.False(ok)
+		})
+	})
+
+	// GetParentChannel
+	t.Run("TestGetParentChannel", func(t *testing.T) {
+		t.Parallel()
+		parentChannel := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		childChannel := mustMakeChannelDetail(t, user.GetUID(), "child", parentChannel.ID.String())
+
+		t.Run("child", func(t *testing.T) {
+			t.Parallel()
+
+			parent, err := GetParentChannel(childChannel.ID)
+			if assert.NoError(err) {
+				assert.Equal(parent.ID, parentChannel.ID)
+			}
+		})
+
+		t.Run("parent", func(t *testing.T) {
+			t.Parallel()
+
+			parent, err := GetParentChannel(parentChannel.ID)
+			if assert.NoError(err) {
+				assert.Nil(parent)
+			}
+		})
+
+		t.Run("NotExists", func(t *testing.T) {
+			t.Parallel()
+
+			_, err := GetParentChannel(uuid.Nil)
+			assert.Error(err)
+		})
+	})
+
+	// IsChannelNamePresent
+	t.Run("TestIsChannelNamePresent", func(t *testing.T) {
+		t.Parallel()
+
+		parent := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		c2 := mustMakeChannelDetail(t, user.GetUID(), "test2", parent.ID.String())
+		mustMakeChannelDetail(t, user.GetUID(), "test3", c2.ID.String())
+
+		cases := []struct {
+			parentID uuid.UUID
+			name     string
+			expect   bool
+		}{
+			{parent.ID, "test2", true},
+			{parent.ID, "test3", false},
+			{c2.ID, "test3", true},
+			{c2.ID, "test4", false},
+		}
+
+		for i, v := range cases {
+			v := v
+			i := i
+			t.Run(strconv.Itoa(i), func(t *testing.T) {
+				t.Parallel()
+
+				ok, err := IsChannelNamePresent(v.name, v.parentID.String())
+				if assert.NoError(err) {
+					assert.Equal(v.expect, ok)
+				}
+			})
+		}
+	})
+
+	// ChangeChannelName
+	t.Run("TestChangeChannelName", func(t *testing.T) {
+		t.Parallel()
+
+		parent := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		c2 := mustMakeChannelDetail(t, user.GetUID(), "test2", parent.ID.String())
+		c3 := mustMakeChannelDetail(t, user.GetUID(), "test3", c2.ID.String())
+		mustMakeChannelDetail(t, user.GetUID(), "test4", c2.ID.String())
+
+		t.Run("fail", func(t *testing.T) {
+			t.Parallel()
+
+			assert.Error(ChangeChannelName(channel.ID, "", user.GetUID()))
+			assert.Error(ChangeChannelName(channel.ID, "あああ", user.GetUID()))
+			assert.Error(ChangeChannelName(channel.ID, "test2???", user.GetUID()))
+		})
+
+		t.Run("c2", func(t *testing.T) {
+			t.Parallel()
+
+			if assert.NoError(ChangeChannelName(c2.ID, "aiueo", user.GetUID())) {
+				c, err := GetChannel(c2.ID)
+				require.NoError(err)
+				assert.Equal("aiueo", c.Name)
+			}
+		})
+
+		t.Run("c3", func(t *testing.T) {
+			t.Parallel()
+
+			assert.Error(ChangeChannelName(c3.ID, "test4", user.GetUID()))
+			if assert.NoError(ChangeChannelName(c3.ID, "test2", user.GetUID())) {
+				c, err := GetChannel(c3.ID)
+				require.NoError(err)
+				assert.Equal("test2", c.Name)
+			}
+		})
+	})
+
+	// ChangeChannelParent
+	t.Run("TestChangeChannelParent", func(t *testing.T) {
+		t.Parallel()
+
+		chName := utils.RandAlphabetAndNumberString(20)
+		c2 := mustMakeChannelDetail(t, user.GetUID(), chName, "")
+		c3 := mustMakeChannelDetail(t, user.GetUID(), "test3", c2.ID.String())
+		c4 := mustMakeChannelDetail(t, user.GetUID(), chName, c3.ID.String())
+
+		t.Run("fail", func(t *testing.T) {
+			t.Parallel()
+
+			assert.Error(ChangeChannelParent(c4.ID, "", user.GetUID()))
+		})
+
+		t.Run("success", func(t *testing.T) {
+			t.Parallel()
+
+			if assert.NoError(ChangeChannelParent(c3.ID, "", user.GetUID())) {
+				c, err := GetChannel(c3.ID)
+				require.NoError(err)
+				assert.Equal("", c.ParentID)
+			}
+		})
+	})
+
+	// DeleteChannel
+	t.Run("TestDeleteChannel", func(t *testing.T) {
+		t.Parallel()
+
+		c1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		c2 := mustMakeChannelDetail(t, user.GetUID(), "test2", c1.ID.String())
+		c3 := mustMakeChannelDetail(t, user.GetUID(), "test3", c2.ID.String())
+		c4 := mustMakeChannelDetail(t, user.GetUID(), "test4", c3.ID.String())
+
+		if assert.NoError(DeleteChannel(c1.ID)) {
+			t.Run("c1", func(t *testing.T) {
+				t.Parallel()
+				_, err := GetChannel(c1.ID)
+				assert.Error(err)
+			})
+			t.Run("c2", func(t *testing.T) {
+				t.Parallel()
+				_, err := GetChannel(c2.ID)
+				assert.Error(err)
+			})
+			t.Run("c3", func(t *testing.T) {
+				t.Parallel()
+				_, err := GetChannel(c3.ID)
+				assert.Error(err)
+			})
+			t.Run("c4", func(t *testing.T) {
+				t.Parallel()
+				_, err := GetChannel(c4.ID)
+				assert.Error(err)
+			})
+		}
+	})
+
+	// GetChannelWithUserID
+	t.Run("TestGetChannelWithUserID", func(t *testing.T) {
+		t.Parallel()
+
+		ch := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		r, err := GetChannelWithUserID(user.GetUID(), ch.ID)
+		if assert.NoError(err) {
+			assert.Equal(ch.Name, r.Name)
+		}
+		// TODO: userから見えないチャンネルの取得についてのテスト
+	})
+
+	// GetChildrenChannelIDs
+	t.Run("TestGetChildrenChannelIDs", func(t *testing.T) {
+		t.Parallel()
+
+		c1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		c2 := mustMakeChannelDetail(t, user.GetUID(), "child1", c1.ID.String())
+		c3 := mustMakeChannelDetail(t, user.GetUID(), "child2", c2.ID.String())
+		c4 := mustMakeChannelDetail(t, user.GetUID(), "child3", c2.ID.String())
+
+		cases := []struct {
+			name   string
+			ch     uuid.UUID
+			expect []uuid.UUID
+		}{
+			{"c1", c1.ID, []uuid.UUID{c2.ID}},
+			{"c2", c2.ID, []uuid.UUID{c3.ID, c4.ID}},
+			{"c3", c3.ID, []uuid.UUID{}},
+			{"c4", c4.ID, []uuid.UUID{}},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				ids, err := GetChildrenChannelIDs(v.ch)
+				if assert.NoError(err) {
+					assert.ElementsMatch(ids, v.expect)
+				}
+			})
+		}
+	})
+
+	// GetDescendantChannelIDs
+	t.Run("TestGetDescendantChannelIDs", func(t *testing.T) {
+		t.Parallel()
+
+		c1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		c2 := mustMakeChannelDetail(t, user.GetUID(), "child1", c1.ID.String())
+		c3 := mustMakeChannelDetail(t, user.GetUID(), "child2", c2.ID.String())
+		c4 := mustMakeChannelDetail(t, user.GetUID(), "child3", c2.ID.String())
+		c5 := mustMakeChannelDetail(t, user.GetUID(), "child4", c3.ID.String())
+
+		cases := []struct {
+			name   string
+			ch     uuid.UUID
+			expect []uuid.UUID
+		}{
+			{"c1", c1.ID, []uuid.UUID{c2.ID, c3.ID, c4.ID, c5.ID}},
+			{"c2", c2.ID, []uuid.UUID{c3.ID, c4.ID, c5.ID}},
+			{"c3", c3.ID, []uuid.UUID{c5.ID}},
+			{"c4", c4.ID, []uuid.UUID{}},
+			{"c5", c5.ID, []uuid.UUID{}},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				ids, err := GetDescendantChannelIDs(v.ch)
+				if assert.NoError(err) {
+					assert.ElementsMatch(ids, v.expect)
+				}
+			})
+		}
+	})
+
+	// GetAscendantChannelIDs
+	t.Run("TestGetAscendantChannelIDs", func(t *testing.T) {
+		t.Parallel()
+
+		c1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		c2 := mustMakeChannelDetail(t, user.GetUID(), "child1", c1.ID.String())
+		c3 := mustMakeChannelDetail(t, user.GetUID(), "child2", c2.ID.String())
+		c4 := mustMakeChannelDetail(t, user.GetUID(), "child3", c2.ID.String())
+		c5 := mustMakeChannelDetail(t, user.GetUID(), "child4", c3.ID.String())
+
+		cases := []struct {
+			name   string
+			ch     uuid.UUID
+			expect []uuid.UUID
+		}{
+			{"c1", c1.ID, []uuid.UUID{}},
+			{"c2", c2.ID, []uuid.UUID{c1.ID}},
+			{"c3", c3.ID, []uuid.UUID{c1.ID, c2.ID}},
+			{"c4", c4.ID, []uuid.UUID{c1.ID, c2.ID}},
+			{"c5", c5.ID, []uuid.UUID{c1.ID, c2.ID, c3.ID}},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				ids, err := GetAscendantChannelIDs(v.ch)
+				if assert.NoError(err) {
+					assert.ElementsMatch(ids, v.expect)
+				}
+			})
+		}
+	})
+
+	// GetChannelDepth
+	t.Run("TestGetChannelDepth", func(t *testing.T) {
+		t.Parallel()
+
+		c1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		c2 := mustMakeChannelDetail(t, user.GetUID(), "child1", c1.ID.String())
+		c3 := mustMakeChannelDetail(t, user.GetUID(), "child2", c2.ID.String())
+		c4 := mustMakeChannelDetail(t, user.GetUID(), "child3", c2.ID.String())
+		c5 := mustMakeChannelDetail(t, user.GetUID(), "child4", c3.ID.String())
+
+		cases := []struct {
+			name string
+			ch   uuid.UUID
+			num  int
+		}{
+			{"c1", c1.ID, 4},
+			{"c2", c2.ID, 3},
+			{"c3", c3.ID, 2},
+			{"c4", c4.ID, 1},
+			{"c5", c5.ID, 1},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				d, err := GetChannelDepth(v.ch)
+				if assert.NoError(err) {
+					assert.Equal(v.num, d)
+				}
+			})
+		}
+	})
+
+	// GetPrivateChannelMembers
+	t.Run("TestGetPrivateChannelMembers", func(t *testing.T) {
+		t.Parallel()
+
+		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		user2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		ch := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{user1.GetUID(), user2.GetUID()})
+
+		member, err := GetPrivateChannelMembers(ch.ID)
+		if assert.NoError(err) {
+			assert.Len(member, 2)
+		}
+	})
+
+	// IsUserPrivateChannelMember
+	t.Run("TestIsUserPrivateChannelMember", func(t *testing.T) {
+		t.Parallel()
+
+		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		user2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		ch := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{user1.GetUID(), user2.GetUID()})
+
+		cases := []struct {
+			name   string
+			user   uuid.UUID
+			expect bool
+		}{
+			{"user1", user1.GetUID(), true},
+			{"user2", user2.GetUID(), true},
+			{"user", user.GetUID(), false},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				ok, err := IsUserPrivateChannelMember(ch.ID, v.user)
+				if assert.NoError(err) {
+					assert.Equal(v.expect, ok)
+				}
+			})
+		}
+	})
+
+	// SubscribeChannel
+	t.Run("TestSubscribeChannel", func(t *testing.T) {
+		t.Parallel()
+
+		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		ch := mustMakeChannelDetail(t, user1.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		if assert.NoError(SubscribeChannel(user1.GetUID(), ch.ID)) {
+			count := 0
+			db.Model(UserSubscribeChannel{}).Where(&UserSubscribeChannel{UserID: user1.GetUID()}).Count(&count)
+			assert.Equal(1, count)
+		}
+		assert.Error(SubscribeChannel(user1.GetUID(), ch.ID))
+	})
+
+	// UnsubscribeChannel
+	t.Run("TestUnsubscribeChannel", func(t *testing.T) {
+		t.Parallel()
+
+		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		user2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		ch1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		ch2 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		require.NoError(SubscribeChannel(user1.GetUID(), ch1.ID))
+		require.NoError(SubscribeChannel(user1.GetUID(), ch2.ID))
+		require.NoError(SubscribeChannel(user2.GetUID(), ch2.ID))
+
+		cases := []struct {
+			name   string
+			user   uuid.UUID
+			ch     uuid.UUID
+			expect int
+		}{
+			{"user2-channel2", user2.GetUID(), ch2.ID, 2},
+			{"user1-channel2", user1.GetUID(), ch2.ID, 1},
+			{"user1-channel1", user1.GetUID(), ch1.ID, 0},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				if assert.NoError(UnsubscribeChannel(v.user, v.ch)) {
+					count := 0
+					db.Model(UserSubscribeChannel{}).Where("user_id IN (?, ?)", user1.ID, user2.ID).Count(&count)
+					assert.Equal(v.expect, count)
+				}
+			})
+		}
+	})
+
+	// GetSubscribingUser
+	t.Run("TestGetSubscribingUser", func(t *testing.T) {
+		t.Parallel()
+
+		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		user2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		ch1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		ch2 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		require.NoError(SubscribeChannel(user1.GetUID(), ch1.ID))
+		require.NoError(SubscribeChannel(user1.GetUID(), ch2.ID))
+		require.NoError(SubscribeChannel(user2.GetUID(), ch2.ID))
+
+		cases := []struct {
+			name   string
+			ch     uuid.UUID
+			expect int
+		}{
+			{"ch1", ch1.ID, 1},
+			{"ch2", ch2.ID, 2},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				arr, err := GetSubscribingUser(v.ch)
+				if assert.NoError(err) {
+					assert.Len(arr, v.expect)
+				}
+			})
+		}
+	})
+
+	// GetSubscribedChannels
+	t.Run("TestGetSubscribedChannels", func(t *testing.T) {
+		t.Parallel()
+
+		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		user2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		ch1 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		ch2 := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		require.NoError(SubscribeChannel(user1.GetUID(), ch1.ID))
+		require.NoError(SubscribeChannel(user1.GetUID(), ch2.ID))
+		require.NoError(SubscribeChannel(user2.GetUID(), ch2.ID))
+
+		cases := []struct {
+			name   string
+			user   uuid.UUID
+			expect int
+		}{
+			{"user1", user1.GetUID(), 2},
+			{"user2", user2.GetUID(), 1},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				arr, err := GetSubscribedChannels(v.user)
+				if assert.NoError(err) {
+					assert.Len(arr, v.expect)
+				}
+			})
+		}
+	})
 }
 
-func TestChangeChannelName(t *testing.T) {
-	assert, require, user, c1 := beforeTest(t)
-
-	c2 := mustMakeChannelDetail(t, user.GetUID(), "test2", "", true)
-	c3 := mustMakeChannelDetail(t, user.GetUID(), "test3", c2.ID, true)
-	mustMakeChannelDetail(t, user.GetUID(), "test4", c2.ID, true)
-
-	assert.Error(ChangeChannelName(c1.GetCID(), "", user.GetUID()))
-	assert.Error(ChangeChannelName(c1.GetCID(), "あああ", user.GetUID()))
-	assert.Error(ChangeChannelName(c1.GetCID(), "test2", user.GetUID()))
-	if assert.NoError(ChangeChannelName(c1.GetCID(), "aiueo", user.GetUID())) {
-		c, err := GetChannel(c1.GetCID())
-		require.NoError(err)
-		assert.Equal("aiueo", c.Name)
-	}
-
-	assert.Error(ChangeChannelName(c3.GetCID(), "test4", user.GetUID()))
-	if assert.NoError(ChangeChannelName(c3.GetCID(), "test2", user.GetUID())) {
-		c, err := GetChannel(c3.GetCID())
-		require.NoError(err)
-		assert.Equal("test2", c.Name)
-	}
-}
-
-func TestChangeChannelParent(t *testing.T) {
+// TestSeriesGroup1 直列テストグループ1
+func TestSeriesGroup1(t *testing.T) {
 	assert, require, user, _ := beforeTest(t)
 
-	c2 := mustMakeChannelDetail(t, user.GetUID(), "test2", "", true)
-	c3 := mustMakeChannelDetail(t, user.GetUID(), "test3", c2.ID, true)
-	c4 := mustMakeChannelDetail(t, user.GetUID(), "test2", c3.ID, true)
+	// CreatePublicChannel
+	t.Run("TestCreatePublicChannel", func(t *testing.T) {
+		c, err := CreatePublicChannel("", "test2", user.GetUID())
+		if assert.NoError(err) {
+			assert.NotEmpty(c.ID)
+			assert.Equal("test2", c.Name)
+			assert.Equal(user.GetUID(), c.CreatorID)
+			assert.Empty(c.ParentID)
+			assert.True(c.IsPublic)
+			assert.True(c.IsVisible)
+			assert.False(c.IsForced)
+			assert.Equal(user.GetUID(), c.UpdaterID)
+			assert.Empty(c.Topic)
+			assert.NotZero(c.CreatedAt)
+			assert.NotZero(c.UpdatedAt)
+			assert.Nil(c.DeletedAt)
+		}
 
-	assert.Error(ChangeChannelParent(c4.GetCID(), "", user.GetUID()))
+		_, err = CreatePublicChannel("", "test2", user.GetUID())
+		assert.Equal(ErrDuplicateName, err)
 
-	if assert.NoError(ChangeChannelParent(c3.GetCID(), "", user.GetUID())) {
-		c, err := GetChannel(c3.GetCID())
-		require.NoError(err)
-		assert.Equal("", c.ParentID)
-	}
-}
-
-func TestUpdateChannelFlag(t *testing.T) {
-	assert, require, user, c1 := beforeTest(t)
-
-	flag1 := true
-	flag2 := false
-	if assert.NoError(UpdateChannelFlag(c1.GetCID(), &flag2, &flag1, user.GetUID())) {
-		c, err := GetChannel(c1.GetCID())
-		require.NoError(err)
-		assert.True(c.IsForced)
-		assert.False(c.IsVisible)
-	}
-}
-
-func TestDeleteChannel(t *testing.T) {
-	assert, _, _, c1 := beforeTest(t)
-
-	if assert.NoError(DeleteChannel(c1.GetCID())) {
-		_, err := GetChannel(c1.GetCID())
+		_, err = CreatePublicChannel("", "ああああ", user.GetUID())
 		assert.Error(err)
-	}
-}
 
-func TestIsChannelNamePresent(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
-	c2 := mustMakeChannelDetail(t, user.GetUID(), "test2", "", true)
-	mustMakeChannelDetail(t, user.GetUID(), "test3", c2.ID, true)
+		c2, err := CreatePublicChannel(c.ID.String(), "Parent2", user.GetUID())
+		assert.NoError(err)
+		c3, err := CreatePublicChannel(c2.ID.String(), "Parent3", user.GetUID())
+		assert.NoError(err)
+		c4, err := CreatePublicChannel(c3.ID.String(), "Parent4", user.GetUID())
+		assert.NoError(err)
+		_, err = CreatePublicChannel(c3.ID.String(), "Parent4", user.GetUID())
+		assert.Equal(ErrDuplicateName, err)
+		c5, err := CreatePublicChannel(c4.ID.String(), "Parent5", user.GetUID())
+		assert.NoError(err)
+		_, err = CreatePublicChannel(c5.ID.String(), "Parent6", user.GetUID())
+		assert.Equal(ErrChannelDepthLimitation, err)
+	})
 
-	ok, err := IsChannelNamePresent("test2", "")
-	if assert.NoError(err) {
-		assert.True(ok)
-	}
+	// チャンネル数ここまでpublic:6+2, private:0
 
-	ok, err = IsChannelNamePresent("test3", "")
-	if assert.NoError(err) {
-		assert.False(ok)
-	}
+	// GetAllChannels
+	t.Run("TestGetAllChannels", func(t *testing.T) {
+		chList, err := GetAllChannels()
+		if assert.NoError(err) {
+			assert.Equal(6+2, len(chList))
+		}
+	})
 
-	ok, err = IsChannelNamePresent("test3", c2.ID)
-	if assert.NoError(err) {
-		assert.True(ok)
-	}
+	// GetChannelList
+	t.Run("TestGetChannelList", func(t *testing.T) {
+		channelList, err := GetChannelList(user.GetUID())
+		if assert.NoError(err) {
+			assert.Len(channelList, 6+2)
+		}
 
-	ok, err = IsChannelNamePresent("test4", c2.ID)
-	if assert.NoError(err) {
-		assert.False(ok)
-	}
+		// TODO プライベートチャンネル
+	})
 
-}
+	// AddPrivateChannelMember
+	t.Run("TestAddPrivateChannelMember", func(t *testing.T) {
+		channel := &Channel{
+			CreatorID: user.GetUID(),
+			UpdaterID: user.GetUID(),
+			Name:      utils.RandAlphabetAndNumberString(20),
+			IsPublic:  false,
+		}
+		require.NoError(db.Create(channel).Error)
 
-func TestGetParentChannel(t *testing.T) {
-	assert, _, user, channel := beforeTest(t)
+		po := mustMakeUser(t, "po")
 
-	childChannel := mustMakeChannelDetail(t, user.GetUID(), "child", channel.ID, true)
+		assert.NoError(AddPrivateChannelMember(channel.ID, user.GetUID()))
+		assert.NoError(AddPrivateChannelMember(channel.ID, po.GetUID()))
 
-	parent, err := GetParentChannel(childChannel.GetCID())
-	if assert.NoError(err) {
-		assert.Equal(parent.ID, channel.ID)
-	}
+		channelList, err := GetChannelList(user.GetUID())
+		if assert.NoError(err) {
+			assert.Len(channelList, 8+1)
+		}
 
-	parent, err = GetParentChannel(channel.GetCID())
-	if assert.NoError(err) {
-		assert.Nil(parent)
-	}
-}
-
-func TestGetChildrenChannelIDsWithUserID(t *testing.T) {
-	assert, require, user, channel := beforeTest(t)
-
-	privateUser := mustMakeUser(t, "privateuser")
-
-	for i := 0; i < 10; i++ {
-		mustMakeChannelDetail(t, user.GetUID(), "child-"+strconv.Itoa(i+1), channel.ID, true)
-	}
-
-	for i := 10; i < 20; i++ {
-		channel := mustMakeChannelDetail(t, user.GetUID(), "child-"+strconv.Itoa(i+1), channel.ID, false)
-		require.NoError(AddPrivateChannelMember(channel.GetCID(), privateUser.GetUID()))
-	}
-
-	idList, err := GetChildrenChannelIDsWithUserID(user.GetUID(), channel.ID)
-	if assert.NoError(err) {
-		assert.Len(idList, 10)
-	}
-
-	idList, err = GetChildrenChannelIDsWithUserID(privateUser.GetUID(), channel.ID)
-	if assert.NoError(err) {
-		assert.Len(idList, 20)
-	}
-}
-
-func TestChannel_Path(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
-
-	ch1 := mustMakeChannelDetail(t, user.GetUID(), "parent", "", true)
-	ch2 := mustMakeChannelDetail(t, user.GetUID(), "child", ch1.ID, true)
-
-	path, err := ch2.Path()
-	assert.NoError(err)
-	assert.Equal("#parent/child", path)
-
-	path, err = ch1.Path()
-	assert.NoError(err)
-	assert.Equal("#parent", path)
-}
-
-func TestGetChannel(t *testing.T) {
-	assert, _, _, channel := beforeTest(t)
-
-	ch, err := GetChannel(channel.GetCID())
-	if assert.NoError(err) {
-		assert.Equal(channel.ID, ch.ID)
-		assert.Equal(channel.Name, ch.Name)
-	}
-
-	_, err = GetChannel(uuid.Nil)
-	assert.Error(err)
-}
-
-func TestGetChannelWithUserID(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
-
-	ch := mustMakeChannel(t, user.GetUID(), "getByID")
-
-	r, err := GetChannelWithUserID(user.GetUID(), ch.GetCID())
-	if assert.NoError(err) {
-		assert.Equal(ch.Name, r.Name)
-	}
-	// TODO: userから見えないチャンネルの取得についてのテスト
-}
-
-func TestGetChannelByMessageID(t *testing.T) {
-	assert, _, user, channel := beforeTest(t)
-
-	message := mustMakeMessage(t, user.GetUID(), channel.GetCID())
-
-	ch, err := GetChannelByMessageID(message.GetID())
-	if assert.NoError(err) {
-		assert.Equal(channel.ID, ch.ID)
-	}
-
-	_, err = GetChannelByMessageID(uuid.Nil)
-	assert.Error(err)
-}
-
-func TestGetChannelList(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
-
-	for i := 0; i < 10; i++ {
-		mustMakeChannel(t, user.GetUID(), strconv.Itoa(i))
-	}
-
-	channelList, err := GetChannelList(user.GetUID())
-	if assert.NoError(err) {
-		assert.Len(channelList, 10+3)
-	}
-}
-
-func TestGetAllChannels(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
-
-	n := 10
-	for i := 0; i < n; i++ {
-		mustMakeChannel(t, user.GetUID(), strconv.Itoa(i))
-	}
-
-	chList, err := GetAllChannels()
-	if assert.NoError(err) {
-		assert.Equal(n+3, len(chList))
-	}
-}
-
-func TestGetChannelPath(t *testing.T) {
-	assert, _, _, ch := beforeTest(t)
-
-	path, ok := GetChannelPath(ch.GetCID())
-	assert.True(ok)
-	assert.Equal("#"+ch.Name, path)
+		channelList, err = GetChannelList(uuid.Nil)
+		if assert.NoError(err) {
+			assert.Len(channelList, 8)
+		}
+	})
 }

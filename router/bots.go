@@ -81,7 +81,7 @@ func (h *Handlers) PostBots(c echo.Context) error {
 		}
 	}
 
-	go event.Emit(event.UserJoined, &event.UserEvent{ID: b.GetID().String()})
+	go event.Emit(event.UserJoined, &event.UserEvent{ID: b.GetID()})
 	return c.JSON(http.StatusCreated, formatBot(b))
 }
 
@@ -116,7 +116,7 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		go event.Emit(event.UserUpdated, &event.UserEvent{ID: b.GetBotUserID().String()})
+		go event.Emit(event.UserUpdated, &event.UserEvent{ID: b.GetBotUserID()})
 	}
 
 	if len(req.Description) > 0 {
@@ -185,7 +185,7 @@ func (h *Handlers) PutBotIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: b.GetBotUserID().String()})
+	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: b.GetBotUserID()})
 	return c.NoContent(http.StatusOK)
 }
 

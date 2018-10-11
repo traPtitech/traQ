@@ -14,13 +14,13 @@ func TestGetTopic(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 	topicText := "Topic test"
 
-	ch := mustMakeChannelDetail(t, testUser.GetUID(), "putTopicTest", "", true)
-	require.NoError(model.UpdateChannelTopic(ch.GetCID(), topicText, testUser.GetUID()))
+	ch := mustMakeChannelDetail(t, testUser.GetUID(), "putTopicTest", "")
+	require.NoError(model.UpdateChannelTopic(ch.ID, topicText, testUser.GetUID()))
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/:channelID")
 	c.SetParamNames("channelID")
-	c.SetParamValues(ch.ID)
+	c.SetParamValues(ch.ID.String())
 	requestWithContext(t, mw(GetTopic), c)
 
 	if assert.EqualValues(http.StatusOK, rec.Code) {
@@ -37,7 +37,7 @@ func TestPutTopic(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 	topicText := "Topic test"
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "putTopicTest", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "putTopicTest", "")
 	require.Empty(channel.Topic)
 
 	type putTopic struct {
@@ -54,11 +54,11 @@ func TestPutTopic(t *testing.T) {
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/:channelID")
 	c.SetParamNames("channelID")
-	c.SetParamValues(channel.ID)
+	c.SetParamValues(channel.ID.String())
 	requestWithContext(t, mw(PutTopic), c)
 
 	if assert.EqualValues(http.StatusNoContent, rec.Code) {
-		ch, err := model.GetChannel(channel.GetCID())
+		ch, err := model.GetChannel(channel.ID)
 		require.NoError(err)
 		assert.Equal(topicText, ch.Topic)
 	}

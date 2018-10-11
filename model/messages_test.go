@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,77 +13,101 @@ func TestMessage_TableName(t *testing.T) {
 	assert.Equal(t, "messages", (&Message{}).TableName())
 }
 
-func TestCreateMessage(t *testing.T) {
-	assert, _, user, channel := beforeTest(t)
+// TestParallelGroup7 並列テストグループ7 競合がないようなサブテストにすること
+func TestParallelGroup7(t *testing.T) {
+	assert, _, user, _ := beforeTest(t)
 
-	_, err := CreateMessage(user.GetUID(), channel.GetCID(), "")
-	assert.Error(err)
+	// CreateMessage
+	t.Run("TestCreateMessage", func(t *testing.T) {
+		t.Parallel()
 
-	m, err := CreateMessage(user.GetUID(), channel.GetCID(), "test")
-	if assert.NoError(err) {
-		assert.NotEmpty(m.ID)
-		assert.Equal(user.ID, m.UserID)
-		assert.Equal(channel.ID, m.ChannelID)
-		assert.Equal("test", m.Text)
-		assert.NotZero(m.CreatedAt)
-		assert.NotZero(m.UpdatedAt)
-		assert.Nil(m.DeletedAt)
-	}
-}
+		channel := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 
-func TestUpdateMessage(t *testing.T) {
-	assert, _, user, channel := beforeTest(t)
+		t.Run("fail", func(t *testing.T) {
+			t.Parallel()
 
-	m := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+			_, err := CreateMessage(user.GetUID(), channel.ID, "")
+			assert.Error(err)
+		})
 
-	assert.Error(UpdateMessage(m.GetID(), ""))
-	assert.NoError(UpdateMessage(m.GetID(), "new message"))
+		t.Run("success", func(t *testing.T) {
+			t.Parallel()
 
-	m, err := GetMessageByID(m.GetID())
-	if assert.NoError(err) {
-		assert.Equal("new message", m.Text)
-	}
-}
+			m, err := CreateMessage(user.GetUID(), channel.ID, "test")
+			if assert.NoError(err) {
+				assert.NotEmpty(m.ID)
+				assert.Equal(user.ID, m.UserID)
+				assert.Equal(channel.ID, m.GetCID())
+				assert.Equal("test", m.Text)
+				assert.NotZero(m.CreatedAt)
+				assert.NotZero(m.UpdatedAt)
+				assert.Nil(m.DeletedAt)
+			}
+		})
+	})
 
-func TestDeleteMessage(t *testing.T) {
-	assert, _, user, channel := beforeTest(t)
+	// UpdateMessage
+	t.Run("TestUpdateMessage", func(t *testing.T) {
+		t.Parallel()
 
-	m := mustMakeMessage(t, user.GetUID(), channel.GetCID())
+		channel := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		m := mustMakeMessage(t, user.GetUID(), channel.ID)
 
-	if assert.NoError(DeleteMessage(m.GetID())) {
-		_, err := GetMessageByID(m.GetID())
+		assert.Error(UpdateMessage(m.GetID(), ""))
+		assert.NoError(UpdateMessage(m.GetID(), "new message"))
+
+		m, err := GetMessageByID(m.GetID())
+		if assert.NoError(err) {
+			assert.Equal("new message", m.Text)
+		}
+	})
+
+	// DeleteMessage
+	t.Run("TestDeleteMessage", func(t *testing.T) {
+		t.Parallel()
+
+		channel := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		m := mustMakeMessage(t, user.GetUID(), channel.ID)
+
+		if assert.NoError(DeleteMessage(m.GetID())) {
+			_, err := GetMessageByID(m.GetID())
+			assert.Error(err)
+		}
+	})
+
+	// GetMessagesByChannelID
+	t.Run("TestGetMessagesByChannelID", func(t *testing.T) {
+		t.Parallel()
+
+		channel := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		for i := 0; i < 10; i++ {
+			mustMakeMessage(t, user.GetUID(), channel.ID)
+		}
+
+		r, err := GetMessagesByChannelID(channel.ID, 0, 0)
+		if assert.NoError(err) {
+			assert.Len(r, 10)
+		}
+
+		r, err = GetMessagesByChannelID(channel.ID, 3, 5)
+		if assert.NoError(err) {
+			assert.Len(r, 3)
+		}
+	})
+
+	//GetMessageByID
+	t.Run("TestGetMessageByID", func(t *testing.T) {
+		t.Parallel()
+
+		channel := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		m := mustMakeMessage(t, user.GetUID(), channel.ID)
+
+		r, err := GetMessageByID(m.GetID())
+		if assert.NoError(err) {
+			assert.Equal(m.Text, r.Text)
+		}
+
+		_, err = GetMessageByID(uuid.Nil)
 		assert.Error(err)
-	}
-}
-
-func TestGetMessagesByChannelID(t *testing.T) {
-	assert, _, user, channel := beforeTest(t)
-
-	for i := 0; i < 10; i++ {
-		mustMakeMessage(t, user.GetUID(), channel.GetCID())
-	}
-
-	r, err := GetMessagesByChannelID(channel.GetCID(), 0, 0)
-	if assert.NoError(err) {
-		assert.Len(r, 10)
-	}
-
-	r, err = GetMessagesByChannelID(channel.GetCID(), 3, 5)
-	if assert.NoError(err) {
-		assert.Len(r, 3)
-	}
-}
-
-func TestGetMessageByID(t *testing.T) {
-	assert, _, user, channel := beforeTest(t)
-
-	m := mustMakeMessage(t, user.GetUID(), channel.GetCID())
-
-	r, err := GetMessageByID(m.GetID())
-	if assert.NoError(err) {
-		assert.Equal(m.Text, r.Text)
-	}
-
-	_, err = GetMessageByID(uuid.Nil)
-	assert.Error(err)
+	})
 }

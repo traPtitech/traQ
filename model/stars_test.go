@@ -3,7 +3,7 @@ package model
 import (
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
-	"strconv"
+	"github.com/traPtitech/traQ/utils"
 	"testing"
 )
 
@@ -12,46 +12,57 @@ func TestStar_TableName(t *testing.T) {
 	assert.Equal(t, "stars", (&Star{}).TableName())
 }
 
-func TestAddStar(t *testing.T) {
-	assert, _, user, _ := beforeTest(t)
+// TestParallelGroup2 並列テストグループ2 競合がないようなサブテストにすること
+func TestParallelGroup2(t *testing.T) {
+	assert, require, user, _ := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, user.GetUID(), "test", "", true)
+	// AddStar
+	t.Run("TestAddStar", func(t *testing.T) {
+		t.Parallel()
 
-	if assert.NoError(AddStar(user.GetUID(), channel.GetCID())) {
+		ch := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+
+		if assert.NoError(AddStar(user1.GetUID(), ch.ID)) {
+			count := 0
+			db.Model(Star{}).Where("user_id = ?", user1.ID).Count(&count)
+			assert.Equal(1, count)
+		}
+	})
+
+	// RemoveStar
+	t.Run("TestRemoveStar", func(t *testing.T) {
+		t.Parallel()
+
+		ch := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		require.NoError(AddStar(user1.GetUID(), ch.ID))
+
 		count := 0
-		db.Table("stars").Count(&count)
-		assert.Equal(1, count)
-	}
-}
+		if assert.NoError(RemoveStar(user1.GetUID(), uuid.Nil)) {
+			db.Model(Star{}).Where("user_id = ?", user1.ID).Count(&count)
+			assert.Equal(1, count)
+		}
+		if assert.NoError(RemoveStar(user1.GetUID(), ch.ID)) {
+			db.Model(Star{}).Where("user_id = ?", user1.ID).Count(&count)
+			assert.Equal(0, count)
+		}
+	})
 
-func TestRemoveStar(t *testing.T) {
-	assert, require, user, _ := beforeTest(t)
+	// GetStaredChannels
+	t.Run("TestGetStaredChannels", func(t *testing.T) {
+		t.Parallel()
 
-	channel := mustMakeChannelDetail(t, user.GetUID(), "test", "", true)
-	require.NoError(AddStar(user.GetUID(), channel.GetCID()))
-	count := 0
+		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		channelCount := 5
+		for i := 0; i < channelCount; i++ {
+			ch := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+			require.NoError(AddStar(user1.GetUID(), ch.ID))
+		}
 
-	if assert.NoError(RemoveStar(user.GetUID(), uuid.Nil)) {
-		db.Table("stars").Count(&count)
-		assert.Equal(1, count)
-	}
-	if assert.NoError(RemoveStar(user.GetUID(), channel.GetCID())) {
-		db.Table("stars").Count(&count)
-		require.Equal(0, count)
-	}
-}
-
-func TestGetStaredChannels(t *testing.T) {
-	assert, require, user, _ := beforeTest(t)
-
-	channelCount := 5
-	for i := 0; i < channelCount; i++ {
-		ch := mustMakeChannelDetail(t, user.GetUID(), "test"+strconv.Itoa(i), "", true)
-		require.NoError(AddStar(user.GetUID(), ch.GetCID()))
-	}
-
-	ch, err := GetStaredChannels(user.GetUID())
-	if assert.NoError(err) {
-		assert.Len(ch, channelCount)
-	}
+		ch, err := GetStaredChannels(user1.GetUID())
+		if assert.NoError(err) {
+			assert.Len(ch, channelCount)
+		}
+	})
 }

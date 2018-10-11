@@ -61,7 +61,7 @@ func (e *MessageCreatedEvent) GetTargetUsers() map[uuid.UUID]bool {
 			log.Error(err)
 		}
 		for _, v := range users {
-			res[uuid.Must(uuid.FromString(v))] = true
+			res[v] = true
 		}
 
 	default: // 通常チャンネルメッセージ
@@ -108,7 +108,7 @@ func (e *MessageCreatedEvent) GetExcludeUsers() map[uuid.UUID]bool {
 		log.Error(err)
 	}
 	if !ch.IsForced {
-		muted, err := model.GetMuteUserIDs(ch.GetCID())
+		muted, err := model.GetMuteUserIDs(ch.ID)
 		if err != nil {
 			log.Error(err)
 		}
@@ -130,7 +130,7 @@ func (e *MessageCreatedEvent) GetFCMData() map[string]string {
 	}
 
 	ei, plain := e.parseMessage()
-	users, _ := model.GetPrivateChannelMembers(e.Message.ChannelID)
+	users, _ := model.GetPrivateChannelMembers(e.Message.GetCID())
 	mUser, _ := model.GetUser(e.Message.GetUID())
 	if l := len(users); l == 2 || l == 1 {
 		if mUser != nil {
@@ -264,7 +264,7 @@ func (e *MessageDeletedEvent) GetTargetChannels() map[uuid.UUID]bool {
 
 // UserEvent ユーザーイベント
 type UserEvent struct {
-	ID string
+	ID uuid.UUID
 }
 
 // GetData SSE用のペイロード
@@ -276,7 +276,7 @@ func (e *UserEvent) GetData() Payload {
 
 // ChannelEvent チャンネルイベント
 type ChannelEvent struct {
-	ID string
+	ID uuid.UUID
 }
 
 // GetData SSE用のペイロード
@@ -286,16 +286,19 @@ func (e *ChannelEvent) GetData() Payload {
 	}
 }
 
-// PrivateChannelEvent ユーザーとプライベートチャンネルに関するイベント
+// PrivateChannelEvent プライベートチャンネルに関するイベント
 type PrivateChannelEvent struct {
-	UserIDs   []uuid.UUID
 	ChannelID uuid.UUID
 }
 
 // GetTargetUsers 通知対象のユーザー
 func (e *PrivateChannelEvent) GetTargetUsers() map[uuid.UUID]bool {
+	members, err := model.GetPrivateChannelMembers(e.ChannelID)
+	if err != nil {
+		log.Error(err)
+	}
 	res := map[uuid.UUID]bool{}
-	for _, v := range e.UserIDs {
+	for _, v := range members {
 		res[v] = true
 	}
 	return res

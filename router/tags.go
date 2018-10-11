@@ -98,7 +98,7 @@ func PostUserTag(c echo.Context) error {
 		}
 	}
 
-	go event.Emit(event.UserTagsUpdated, &event.UserEvent{ID: userID.String()})
+	go event.Emit(event.UserTagsUpdated, &event.UserEvent{ID: userID})
 	return c.NoContent(http.StatusCreated)
 }
 
@@ -144,7 +144,7 @@ func PatchUserTag(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserTagsUpdated, &event.UserEvent{ID: userID.String()})
+	go event.Emit(event.UserTagsUpdated, &event.UserEvent{ID: userID})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -181,7 +181,7 @@ func DeleteUserTag(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserTagsUpdated, &event.UserEvent{ID: userID.String()})
+	go event.Emit(event.UserTagsUpdated, &event.UserEvent{ID: userID})
 	return c.NoContent(http.StatusNoContent)
 }
 

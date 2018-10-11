@@ -191,7 +191,7 @@ func PutMyIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: userID.String()})
+	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: userID})
 	return c.NoContent(http.StatusOK)
 }
 
@@ -221,7 +221,7 @@ func PatchMe(c echo.Context) error {
 		}
 	}
 
-	go event.Emit(event.UserUpdated, &event.UserEvent{ID: userID.String()})
+	go event.Emit(event.UserUpdated, &event.UserEvent{ID: userID})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -274,7 +274,7 @@ func PostUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserJoined, &event.UserEvent{ID: u.ID})
+	go event.Emit(event.UserJoined, &event.UserEvent{ID: u.GetUID()})
 	return c.NoContent(http.StatusCreated)
 }
 

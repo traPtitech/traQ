@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,103 +13,355 @@ func TestTag_TableName(t *testing.T) {
 	assert.Equal(t, "tags", (&Tag{}).TableName())
 }
 
-func TestCreateTag(t *testing.T) {
-	assert, _, _, _ := beforeTest(t)
-
-	{
-		tag, err := CreateTag("tagA", false, "")
-		if assert.NoError(err) {
-			assert.NotEmpty(tag.ID)
-			assert.Equal("tagA", tag.Name)
-			assert.False(tag.Restricted)
-			assert.Empty(tag.Type)
-			assert.NotZero(tag.CreatedAt)
-			assert.NotZero(tag.UpdatedAt)
-			count := 0
-			db.Table("tags").Count(&count)
-			assert.Equal(1, count)
-		}
-
-	}
-	{
-		tag, err := CreateTag("tagB", true, "aaaa")
-		if assert.NoError(err) {
-			assert.NotEmpty(tag.ID)
-			assert.Equal("tagB", tag.Name)
-			assert.True(tag.Restricted)
-			assert.Equal("aaaa", tag.Type)
-			assert.NotZero(tag.CreatedAt)
-			assert.NotZero(tag.UpdatedAt)
-			count := 0
-			db.Table("tags").Count(&count)
-			assert.Equal(2, count)
-		}
-	}
+func TestUsersTag_TableName(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "users_tags", (&UsersTag{}).TableName())
 }
 
-func TestChangeTagType(t *testing.T) {
+// TestParallelGroup5 並列テストグループ5 競合がないようなサブテストにすること
+func TestParallelGroup5(t *testing.T) {
 	assert, require, _, _ := beforeTest(t)
 
-	tag, err := CreateTag("tagA", false, "")
-	require.NoError(err)
+	// AddUserTag
+	t.Run("TestAddUserTag", func(t *testing.T) {
+		t.Parallel()
 
-	{
+		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
+		assert.NoError(AddUserTag(user.GetUID(), tag.GetID()))
+	})
+
+	// ChangeUserTagLock
+	t.Run("TestChangeUserTagLock", func(t *testing.T) {
+		t.Parallel()
+
+		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
+		require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
+
+		if assert.NoError(ChangeUserTagLock(user.GetUID(), tag.GetID(), true)) {
+			tag, err := GetUserTag(user.GetUID(), tag.GetID())
+			require.NoError(err)
+			assert.True(tag.IsLocked)
+		}
+
+		if assert.NoError(ChangeUserTagLock(user.GetUID(), tag.GetID(), false)) {
+			tag, err := GetUserTag(user.GetUID(), tag.GetID())
+			require.NoError(err)
+			assert.False(tag.IsLocked)
+		}
+	})
+
+	// DeleteUserTag
+	t.Run("TestDeleteUserTag", func(t *testing.T) {
+		t.Parallel()
+
+		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
+		require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
+		tag2 := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
+		require.NoError(AddUserTag(user.GetUID(), tag2.GetID()))
+
+		if assert.NoError(DeleteUserTag(user.GetUID(), tag.GetID())) {
+			_, err := GetUserTag(user.GetUID(), tag.GetID())
+			assert.Error(err)
+		}
+
+		_, err := GetUserTag(user.GetUID(), tag2.GetID())
+		assert.NoError(err)
+	})
+
+	// GetUserTagsByUserID
+	t.Run("TestGetUserTagsByUserID", func(t *testing.T) {
+		t.Parallel()
+
+		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		var createdTags []string
+		for i := 0; i < 10; i++ {
+			tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
+			require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
+			createdTags = append(createdTags, tag.Name)
+		}
+
+		t.Run("has", func(t *testing.T) {
+			t.Parallel()
+
+			tags, err := GetUserTagsByUserID(user.GetUID())
+			if assert.NoError(err) {
+				temp := make([]string, len(tags))
+				for i, v := range tags {
+					temp[i] = v.Tag.Name
+				}
+				assert.ElementsMatch(temp, createdTags)
+			}
+		})
+
+		t.Run("hasno", func(t *testing.T) {
+			t.Parallel()
+
+			tags, err := GetUserTagsByUserID(uuid.Nil)
+			if assert.NoError(err) {
+				assert.Empty(tags)
+			}
+		})
+	})
+
+	// GetUserTag
+	t.Run("TestGetUserTag", func(t *testing.T) {
+		t.Parallel()
+
+		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+		tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
+		require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
+
+		t.Run("found", func(t *testing.T) {
+			t.Parallel()
+
+			ut, err := GetUserTag(user.GetUID(), tag.GetID())
+			if assert.NoError(err) {
+				assert.Equal(user.ID, ut.UserID)
+				assert.Equal(tag.ID, ut.TagID)
+				assert.False(ut.IsLocked)
+				assert.NotZero(ut.CreatedAt)
+				assert.NotZero(ut.UpdatedAt)
+				if assert.NotZero(ut.Tag) {
+					assert.Equal(tag.Name, ut.Tag.Name)
+					assert.Equal(tag.ID, ut.Tag.ID)
+					assert.False(ut.Tag.Restricted)
+					assert.Empty(ut.Tag.Type)
+					assert.NotZero(ut.Tag.CreatedAt)
+					assert.NotZero(ut.Tag.UpdatedAt)
+				}
+			}
+		})
+
+		t.Run("notfound", func(t *testing.T) {
+			t.Parallel()
+
+			_, err := GetUserTag(user.GetUID(), uuid.Nil)
+			assert.Error(err)
+		})
+	})
+
+	// GetUserIDsByTag
+	t.Run("TestGetUserIDsByTag", func(t *testing.T) {
+		t.Parallel()
+
+		s := utils.RandAlphabetAndNumberString(20)
+		tag := mustMakeTag(t, s)
+		for i := 0; i < 10; i++ {
+			user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+			require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
+		}
+
+		t.Run("found", func(t *testing.T) {
+			t.Parallel()
+
+			ids, err := GetUserIDsByTag(s)
+			if assert.NoError(err) {
+				assert.Len(ids, 10)
+			}
+		})
+
+		t.Run("notfound", func(t *testing.T) {
+			t.Parallel()
+
+			ids, err := GetUserIDsByTag(utils.RandAlphabetAndNumberString(20))
+			if assert.NoError(err) {
+				assert.Len(ids, 0)
+			}
+		})
+	})
+
+	// GetUsersByTag
+	t.Run("TestGetUsersByTag", func(t *testing.T) {
+		t.Parallel()
+
+		s := utils.RandAlphabetAndNumberString(20)
+		tag := mustMakeTag(t, s)
+		for i := 0; i < 10; i++ {
+			user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+			require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
+		}
+
+		t.Run("found", func(t *testing.T) {
+			t.Parallel()
+
+			ids, err := GetUsersByTag(s)
+			if assert.NoError(err) {
+				assert.Len(ids, 10)
+			}
+		})
+
+		t.Run("notfound", func(t *testing.T) {
+			t.Parallel()
+
+			ids, err := GetUsersByTag(utils.RandAlphabetAndNumberString(20))
+			if assert.NoError(err) {
+				assert.Len(ids, 0)
+			}
+		})
+	})
+
+	// GetUserIDsByTagID
+	t.Run("TestGetUserIDsByTagID", func(t *testing.T) {
+		t.Parallel()
+
+		tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
+		for i := 0; i < 10; i++ {
+			user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
+			require.NoError(AddUserTag(user.GetUID(), tag.GetID()))
+		}
+
+		t.Run("found", func(t *testing.T) {
+			t.Parallel()
+
+			ids, err := GetUserIDsByTagID(tag.GetID())
+			if assert.NoError(err) {
+				assert.Len(ids, 10)
+			}
+		})
+
+		t.Run("notfound", func(t *testing.T) {
+			t.Parallel()
+
+			ids, err := GetUserIDsByTagID(uuid.Nil)
+			if assert.NoError(err) {
+				assert.Len(ids, 0)
+			}
+		})
+	})
+
+	// CreateTag
+	t.Run("TestCreateTag", func(t *testing.T) {
+		t.Parallel()
+
+		cases := []struct {
+			name       string
+			restricted bool
+			tagType    string
+		}{
+			{"tagA_" + utils.RandAlphabetAndNumberString(20), false, ""},
+			{"tagB_" + utils.RandAlphabetAndNumberString(20), true, "aaaa"},
+		}
+
+		for _, v := range cases {
+			v := v
+			t.Run(v.name, func(t *testing.T) {
+				t.Parallel()
+
+				tag, err := CreateTag(v.name, v.restricted, v.tagType)
+				if assert.NoError(err) {
+					assert.NotEmpty(tag.ID)
+					assert.Equal(v.name, tag.Name)
+					assert.Equal(v.restricted, tag.Restricted)
+					assert.Equal(v.tagType, tag.Type)
+					assert.NotZero(tag.CreatedAt)
+					assert.NotZero(tag.UpdatedAt)
+					count := 0
+					db.Model(Tag{}).Where(&Tag{ID: tag.ID}).Count(&count)
+					assert.Equal(1, count)
+				}
+			})
+		}
+	})
+
+	// ChangeTagType
+	t.Run("TestChangeTagType", func(t *testing.T) {
+		t.Parallel()
+
+		tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
+
 		err := ChangeTagType(tag.GetID(), "newType")
 		if assert.NoError(err) {
 			t, err := GetTagByID(tag.GetID())
 			require.NoError(err)
 			assert.Equal("newType", t.Type)
 		}
-	}
-}
+	})
 
-func TestChangeTagRestrict(t *testing.T) {
-	assert, require, _, _ := beforeTest(t)
+	// ChangeTagRestrict
+	t.Run("TestChangeTagRestrict", func(t *testing.T) {
+		t.Parallel()
 
-	tag, err := CreateTag("tagA", false, "")
-	require.NoError(err)
+		tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
 
-	{
 		err := ChangeTagRestrict(tag.GetID(), true)
 		if assert.NoError(err) {
 			t, err := GetTagByID(tag.GetID())
 			require.NoError(err)
 			assert.True(t.Restricted)
 		}
-	}
-}
 
-func TestGetTagByID(t *testing.T) {
-	assert, require, _, _ := beforeTest(t)
+		err = ChangeTagRestrict(tag.GetID(), false)
+		if assert.NoError(err) {
+			t, err := GetTagByID(tag.GetID())
+			require.NoError(err)
+			assert.False(t.Restricted)
+		}
+	})
 
-	tag, err := CreateTag("tagA", false, "")
-	require.NoError(err)
+	// GetTagByID
+	t.Run("TestGetTagByID", func(t *testing.T) {
+		t.Parallel()
 
-	r, err := GetTagByID(tag.GetID())
-	if assert.NoError(err) {
-		assert.Equal(tag.Name, r.Name)
-	}
+		tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
 
-	_, err = GetTagByID(uuid.NewV4())
-	assert.Error(err)
-}
+		r, err := GetTagByID(tag.GetID())
+		if assert.NoError(err) {
+			assert.Equal(tag.Name, r.Name)
+		}
 
-func TestGetTagByName(t *testing.T) {
-	assert, require, _, _ := beforeTest(t)
+		_, err = GetTagByID(uuid.NewV4())
+		assert.Error(err)
+	})
 
-	tag, err := CreateTag("tagA", false, "")
-	require.NoError(err)
+	// GetTagByName
+	t.Run("TestGetTagByName", func(t *testing.T) {
+		t.Parallel()
 
-	r, err := GetTagByName("tagA")
-	if assert.NoError(err) {
-		assert.Equal(tag.ID, r.ID)
-	}
+		s := utils.RandAlphabetAndNumberString(20)
+		tag := mustMakeTag(t, s)
 
-	_, err = GetTagByName("nothing")
-	assert.Error(err)
+		r, err := GetTagByName(s)
+		if assert.NoError(err) {
+			assert.Equal(tag.ID, r.ID)
+		}
 
-	_, err = GetTagByName("")
-	assert.Error(err)
+		_, err = GetTagByName(utils.RandAlphabetAndNumberString(20))
+		assert.Error(err)
+
+		_, err = GetTagByName("")
+		assert.Error(err)
+	})
+
+	// GetOrCreateTagByName
+	t.Run("TestGetOrCreateTagByName", func(t *testing.T) {
+		t.Parallel()
+
+		s := utils.RandAlphabetAndNumberString(20)
+		tag := mustMakeTag(t, s)
+
+		r, err := GetOrCreateTagByName(s)
+		if assert.NoError(err) {
+			assert.Equal(tag.ID, r.ID)
+		}
+
+		b := utils.RandAlphabetAndNumberString(20)
+		r, err = GetOrCreateTagByName(b)
+		if assert.NoError(err) {
+			assert.NotEmpty(r.ID)
+			assert.Equal(b, r.Name)
+			assert.False(r.Restricted)
+			assert.Empty(r.Type)
+			assert.NotZero(r.CreatedAt)
+			assert.NotZero(r.UpdatedAt)
+		}
+
+		_, err = GetOrCreateTagByName("")
+		assert.Error(err)
+	})
+
 }
 
 func TestGetAllTags(t *testing.T) {
@@ -127,29 +380,4 @@ func TestGetAllTags(t *testing.T) {
 	if assert.NoError(err) {
 		assert.Len(tags, 4)
 	}
-}
-
-func TestGetOrCreateTagByName(t *testing.T) {
-	assert, require, _, _ := beforeTest(t)
-
-	tag, err := CreateTag("tagA", false, "")
-	require.NoError(err)
-
-	r, err := GetOrCreateTagByName("tagA")
-	if assert.NoError(err) {
-		assert.Equal(tag.ID, r.ID)
-	}
-
-	r, err = GetOrCreateTagByName("tagB")
-	if assert.NoError(err) {
-		assert.NotEmpty(r.ID)
-		assert.Equal("tagB", r.Name)
-		assert.False(r.Restricted)
-		assert.Empty(r.Type)
-		assert.NotZero(r.CreatedAt)
-		assert.NotZero(r.UpdatedAt)
-	}
-
-	_, err = GetOrCreateTagByName("")
-	assert.Error(err)
 }

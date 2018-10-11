@@ -2,13 +2,14 @@ package model
 
 import (
 	"errors"
+	"github.com/satori/go.uuid"
 	"sync"
 	"time"
 )
 
 // UserStatus userの状態
 type UserStatus struct {
-	UserID   string    `json:"userId"`
+	UserID   uuid.UUID `json:"userId"`
 	Status   string    `json:"status"`
 	LastTime time.Time `json:"-"`
 }
@@ -16,12 +17,12 @@ type UserStatus struct {
 // HeartbeatStatus Heartbeatの状態
 type HeartbeatStatus struct {
 	UserStatuses []*UserStatus `json:"userStatuses"`
-	ChannelID    string        `json:"channelId"`
+	ChannelID    uuid.UUID     `json:"channelId"`
 }
 
 type userOnlineStatus struct {
 	sync.RWMutex
-	id      string
+	id      uuid.UUID
 	counter int
 	time    time.Time
 }
@@ -68,7 +69,7 @@ func (s *userOnlineStatus) getTime() (t time.Time) {
 
 var (
 	// HeartbeatStatuses HeartbeatStatusの全チャンネルのリスト
-	HeartbeatStatuses = make(map[string]*HeartbeatStatus)
+	HeartbeatStatuses = make(map[uuid.UUID]*HeartbeatStatus)
 
 	ticker          *time.Ticker
 	stop            chan bool
@@ -80,11 +81,11 @@ var (
 	currentUserOnlineMap sync.Map
 
 	// OnUserOnlineStateChanged ユーザーのオンライン状況が変化した時のイベントハンドラ
-	OnUserOnlineStateChanged func(id string, online bool)
+	OnUserOnlineStateChanged func(id uuid.UUID, online bool)
 )
 
 // UpdateHeartbeatStatuses UserIDで指定されたUserのHeartbeatの更新を行う
-func UpdateHeartbeatStatuses(userID, channelID, status string) {
+func UpdateHeartbeatStatuses(userID, channelID uuid.UUID, status string) {
 	statusesMutex.Lock()
 	defer statusesMutex.Unlock()
 	channelStatus, ok := HeartbeatStatuses[channelID]
@@ -116,7 +117,7 @@ func UpdateHeartbeatStatuses(userID, channelID, status string) {
 func removeTimeoutStatus() {
 	statusesMutex.Lock()
 	defer statusesMutex.Unlock()
-	removed := make(map[string]*HeartbeatStatus)
+	removed := make(map[uuid.UUID]*HeartbeatStatus)
 	timeout := time.Now().Add(timeoutDuration)
 	for channelID, channelStatus := range HeartbeatStatuses {
 		removed[channelID] = &HeartbeatStatus{}
@@ -180,7 +181,7 @@ func HeartbeatStop() error {
 }
 
 // GetHeartbeatStatus channelIDで指定したHeartbeatStatusを取得する
-func GetHeartbeatStatus(channelID string) (HeartbeatStatus, bool) {
+func GetHeartbeatStatus(channelID uuid.UUID) (HeartbeatStatus, bool) {
 	statusesMutex.RLock()
 	defer statusesMutex.RUnlock()
 	status, ok := HeartbeatStatuses[channelID]

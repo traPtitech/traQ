@@ -130,11 +130,11 @@ func (s *SSEStreamer) Process(t Type, time time.Time, data interface{}) error {
 		subscribers := me.GetTargetUsers()
 
 		// ハートビートユーザー取得
-		if s, ok := model.GetHeartbeatStatus(cid.String()); ok {
+		if s, ok := model.GetHeartbeatStatus(cid); ok {
 			for _, u := range s.UserStatuses {
-				connector[uuid.Must(uuid.FromString(u.UserID))] = true
+				connector[u.UserID] = true
 				if u.Status != "none" {
-					viewers[uuid.Must(uuid.FromString(u.UserID))] = true
+					viewers[u.UserID] = true
 				}
 			}
 		}
@@ -163,9 +163,9 @@ func (s *SSEStreamer) Process(t Type, time time.Time, data interface{}) error {
 
 		case ChannelViewersTargetEvent: // チャンネルユーザーマルチキャストイベント
 			for c := range e.GetTargetChannels() {
-				if status, ok := model.GetHeartbeatStatus(c.String()); ok {
+				if status, ok := model.GetHeartbeatStatus(c); ok {
 					for _, u := range status.UserStatuses {
-						go s.multicast(uuid.Must(uuid.FromString(u.UserID)), ed)
+						go s.multicast(u.UserID, ed)
 					}
 				}
 			}

@@ -1,7 +1,6 @@
 package router
 
 import (
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"net/http"
 
@@ -61,15 +60,7 @@ func PutTopic(c echo.Context) error {
 	if ch.IsPublic {
 		go event.Emit(event.ChannelUpdated, &event.ChannelEvent{ID: ch.ID})
 	} else {
-		users, err := model.GetPrivateChannelMembers(ch.ID)
-		if err != nil {
-			c.Logger().Error(err)
-		}
-		ids := make([]uuid.UUID, len(users))
-		for i, v := range users {
-			ids[i] = uuid.Must(uuid.FromString(v))
-		}
-		go event.Emit(event.ChannelUpdated, &event.PrivateChannelEvent{UserIDs: ids, ChannelID: channelID})
+		go event.Emit(event.ChannelUpdated, &event.PrivateChannelEvent{ChannelID: channelID})
 	}
 
 	return c.NoContent(http.StatusNoContent)

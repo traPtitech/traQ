@@ -149,8 +149,9 @@ func main() {
 	api.Use(router.UserAuthenticate(oauth))
 	apiNoAuth := e.Group("/api/1.0")
 
-	// access control middleware generator
+	// middleware preparation
 	requires := router.AccessControlMiddlewareGenerator(r)
+	bodyLimit := router.RequestBodyLengthLimit
 
 	// login/logout
 	apiNoAuth.POST("/login", router.PostLogin)
@@ -170,12 +171,14 @@ func main() {
 
 	// Tag: messages
 	api.GET("/messages/:messageID", router.GetMessageByID, requires(permission.GetMessage))
-	api.PUT("/messages/:messageID", router.PutMessageByID, requires(permission.EditMessage))
+	api.PUT("/messages/:messageID", router.PutMessageByID, bodyLimit(100), requires(permission.EditMessage))
 	api.DELETE("/messages/:messageID", router.DeleteMessageByID, requires(permission.DeleteMessage))
 	api.POST("/messages/:messageID/report", router.PostMessageReport, requires(permission.ReportMessage))
 	api.GET("/reports", router.GetMessageReports, requires(permission.GetMessageReports))
 	api.GET("/channels/:channelID/messages", router.GetMessagesByChannelID, requires(permission.GetMessage))
-	api.POST("/channels/:channelID/messages", router.PostMessage, requires(permission.PostMessage))
+	api.POST("/channels/:channelID/messages", router.PostMessage, bodyLimit(100), requires(permission.PostMessage))
+	api.GET("/users/:userID/messages", router.GetDirectMessages, requires(permission.GetMessage))
+	api.POST("/users/:userID/messages", router.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
 
 	// Tag: users
 	api.GET("/users", router.GetUsers, requires(permission.GetUser))
@@ -306,8 +309,12 @@ func main() {
 	api.PATCH("/clients/:clientID", h.PatchClient, requires(permission.EditMyClient))
 	api.DELETE("/clients/:clientID", h.DeleteClient, requires(permission.DeleteMyClient))
 
+	apiNoAuth.GET("/teapot", func(c echo.Context) error {
+		return echo.NewHTTPError(http.StatusTeapot, "I'm a teapot")
+	})
+
 	// init heartbeat
-	model.OnUserOnlineStateChanged = func(id string, online bool) {
+	model.OnUserOnlineStateChanged = func(id uuid.UUID, online bool) {
 		if online {
 			go event.Emit(event.UserOnline, &event.UserEvent{ID: id})
 		} else {

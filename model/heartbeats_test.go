@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/satori/go.uuid"
 	"testing"
 	"time"
 )
@@ -13,7 +14,7 @@ func TestGetHeartbeatStatus(t *testing.T) {
 		ChannelID: channel.ID,
 		UserStatuses: []*UserStatus{
 			{
-				UserID:   user.ID,
+				UserID:   user.GetUID(),
 				Status:   "editing",
 				LastTime: time.Now(),
 			},
@@ -24,7 +25,7 @@ func TestGetHeartbeatStatus(t *testing.T) {
 	status, ok := GetHeartbeatStatus(channel.ID)
 	assert.Len(status.UserStatuses, 1)
 
-	status, ok = GetHeartbeatStatus(CreateUUID())
+	status, ok = GetHeartbeatStatus(uuid.NewV4())
 	assert.False(ok)
 }
 
@@ -38,7 +39,7 @@ func TestHeartbeat(t *testing.T) {
 		ChannelID: channel.ID,
 		UserStatuses: []*UserStatus{
 			{
-				UserID:   user.ID,
+				UserID:   user.GetUID(),
 				Status:   "editing",
 				LastTime: time.Now(),
 			},

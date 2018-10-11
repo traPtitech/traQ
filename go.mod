@@ -18,7 +18,7 @@ require (
 	github.com/googleapis/gax-go v2.0.0+incompatible // indirect
 	github.com/hashicorp/golang-lru v0.5.0
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
-	github.com/jinzhu/gorm v1.9.1
+	github.com/jinzhu/gorm v1.9.2-0.20180922115911-f6260a008529
 	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
 	github.com/jinzhu/now v0.0.0-20180511015916-ed742868f2ae // indirect
 	github.com/kr/pretty v0.1.0 // indirect
@@ -33,7 +33,6 @@ require (
 	github.com/neverlee/keymutex v0.0.0-20171121013845-f593aa834bf9 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/satori/go.uuid v1.2.0
-	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.2.2
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -42,13 +41,11 @@ require (
 	golang.org/x/crypto v0.0.0-20180621125126-a49355c7e3f8
 	golang.org/x/exp v0.0.0-20180625033341-f9fa0fefb1e1
 	golang.org/x/image v0.0.0-20180628062038-cc896f830ced
-	golang.org/x/lint v0.0.0-20180702182130-06c8688daad7 // indirect
 	golang.org/x/net v0.0.0-20180702212446-ed29d75add3d // indirect
 	golang.org/x/oauth2 v0.0.0-20180620175406-ef147856a6dd // indirect
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f
 	golang.org/x/sys v0.0.0-20180627142611-7138fd3d9dc8 // indirect
 	golang.org/x/text v0.3.0 // indirect
-	golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e // indirect
 	google.golang.org/api v0.0.0-20180702000508-e0f3bfad2532
 	google.golang.org/appengine v1.1.0 // indirect
 	google.golang.org/genproto v0.0.0-20180627194029-ff3583edef7d // indirect
@@ -57,4 +54,5 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.21.0
 	gopkg.in/go-playground/webhooks.v3 v3.13.0
+	gopkg.in/yaml.v2 v2.2.1
 )

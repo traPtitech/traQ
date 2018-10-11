@@ -14,7 +14,7 @@ import (
 func TestPutNotificationStatus(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "subscribing", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "subscribing", "")
 	userID := mustCreateUser(t, "poyo").ID
 
 	post := struct {
@@ -29,11 +29,11 @@ func TestPutNotificationStatus(t *testing.T) {
 	c, rec := getContext(e, t, cookie, req)
 	c.SetPath("/channels/:ID/notification")
 	c.SetParamNames("ID")
-	c.SetParamValues(channel.ID)
+	c.SetParamValues(channel.ID.String())
 	requestWithContext(t, mw(PutNotificationStatus), c)
 
 	if assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String()) {
-		users, err := model.GetSubscribingUser(uuid.FromStringOrNil(channel.ID))
+		users, err := model.GetSubscribingUser(channel.ID)
 		require.NoError(err)
 		assert.EqualValues(users, []uuid.UUID{uuid.FromStringOrNil(userID)})
 	}
@@ -43,11 +43,11 @@ func TestPutNotificationStatus(t *testing.T) {
 func TestGetNotificationStatus(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "subscribing", "", true)
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "subscribing", "")
 	user := mustCreateUser(t, "poyo")
 
-	require.NoError(model.SubscribeChannel(user.GetUID(), channel.GetCID()))
-	require.NoError(model.SubscribeChannel(testUser.GetUID(), channel.GetCID()))
+	require.NoError(model.SubscribeChannel(user.GetUID(), channel.ID))
+	require.NoError(model.SubscribeChannel(testUser.GetUID(), channel.ID))
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.Set("channel", channel)
@@ -64,8 +64,8 @@ func TestGetNotificationStatus(t *testing.T) {
 func TestGetNotificationChannels(t *testing.T) {
 	e, cookie, mw, assert, require := beforeTest(t)
 
-	require.NoError(model.SubscribeChannel(testUser.GetUID(), mustMakeChannelDetail(t, testUser.GetUID(), "subscribing", "", true).GetCID()))
-	require.NoError(model.SubscribeChannel(testUser.GetUID(), mustMakeChannelDetail(t, testUser.GetUID(), "subscribing2", "", true).GetCID()))
+	require.NoError(model.SubscribeChannel(testUser.GetUID(), mustMakeChannelDetail(t, testUser.GetUID(), "subscribing", "").ID))
+	require.NoError(model.SubscribeChannel(testUser.GetUID(), mustMakeChannelDetail(t, testUser.GetUID(), "subscribing2", "").ID))
 
 	c, rec := getContext(e, t, cookie, nil)
 	c.Set("targetUserID", testUser.ID)

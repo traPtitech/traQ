@@ -147,7 +147,7 @@ func Sync() error {
 		return err
 	}
 	if c == 0 {
-		_, err := CreateChannel("", "general", serverUser.GetUID(), true)
+		_, err := CreatePublicChannel("", "general", serverUser.GetUID())
 		if err != nil {
 			return err
 		}
@@ -158,7 +158,7 @@ func Sync() error {
 		return err
 	}
 	if c == 0 {
-		_, err := CreateChannel("", "random", serverUser.GetUID(), true)
+		_, err := CreatePublicChannel("", "random", serverUser.GetUID())
 		if err != nil {
 			return err
 		}
@@ -194,7 +194,7 @@ func InitCache() error {
 		if err != nil {
 			return err
 		}
-		channelPathMap.Store(v.GetCID(), path)
+		channelPathMap.Store(v.ID, path)
 	}
 
 	// サムネイル未作成なファイルのサムネイル作成を試みる
@@ -223,4 +223,23 @@ func isMySQLDuplicatedRecordErr(err error) bool {
 		return false
 	}
 	return merr.Number == errMySQLDuplicatedRecord
+}
+
+func transact(txFunc func(tx *gorm.DB) error) (err error) {
+	tx := db.Begin()
+	if err := tx.Error; err != nil {
+		return err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // re-throw panic after Rollback
+		} else if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit().Error
+		}
+	}()
+	err = txFunc(tx)
+	return err
 }

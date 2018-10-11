@@ -8,8 +8,8 @@ import (
 
 func TestGetUnread(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
-	testMessage := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
+	testMessage := mustMakeMessage(t, testUser.GetUID(), channel.ID)
 
 	// 正常系
 	mustMakeUnread(t, testUser.GetUID(), testMessage.GetID())
@@ -25,8 +25,8 @@ func TestGetUnread(t *testing.T) {
 
 func TestDeleteUnread(t *testing.T) {
 	e, cookie, mw, assert, _ := beforeTest(t)
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "", true)
-	testMessage := mustMakeMessage(t, testUser.GetUID(), channel.GetCID())
+	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
+	testMessage := mustMakeMessage(t, testUser.GetUID(), channel.ID)
 
 	// 正常系
 	mustMakeUnread(t, testUser.GetUID(), testMessage.GetID())
@@ -34,7 +34,7 @@ func TestDeleteUnread(t *testing.T) {
 	c, rec := getContext(e, t, cookie, nil)
 	c.SetPath("/users/me/unread/:channelID")
 	c.SetParamNames("channelID")
-	c.SetParamValues(channel.ID)
+	c.SetParamValues(channel.ID.String())
 	requestWithContext(t, mw(DeleteUnread), c)
 
 	assert.EqualValues(http.StatusNoContent, rec.Code)

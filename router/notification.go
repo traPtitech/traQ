@@ -43,7 +43,7 @@ func GetNotificationStatus(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
-	users, err := model.GetSubscribingUser(ch.GetCID())
+	users, err := model.GetSubscribingUser(ch.ID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -86,12 +86,11 @@ func PutNotificationStatus(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	chID := ch.GetCID()
 	for _, v := range req.On {
-		model.SubscribeChannel(uuid.FromStringOrNil(v), chID)
+		model.SubscribeChannel(uuid.FromStringOrNil(v), ch.ID)
 	}
 	for _, v := range req.Off {
-		model.UnsubscribeChannel(uuid.FromStringOrNil(v), chID)
+		model.UnsubscribeChannel(uuid.FromStringOrNil(v), ch.ID)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -134,22 +133,11 @@ func GetNotificationChannels(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get channels")
 		}
 
-		childIDs, err := model.GetChildrenChannelIDsWithUserID(userID, ch.GetCID().String())
+		res[i], err = formatChannel(ch)
 		if err != nil {
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get children channel id list: %v", err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-
-		var members []string
-		if !ch.IsPublic {
-			members, err = model.GetPrivateChannelMembers(ch.ID)
-			if err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get private channel members")
-			}
-		}
-
-		res[i] = formatChannel(ch, childIDs, members)
 	}
 	return c.JSON(http.StatusOK, res)
 }
