@@ -1,0 +1,12 @@
+channels:
+  general:
+    topic: Generalチャンネルです
+    force: true
+  random:
+    topic: Randomチャンネルです
+    force: true
+  gps:
+    topic: gpsチャンネルです
+    children:
+      yamada:
+        topic: "#gps/yamada"

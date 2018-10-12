@@ -140,30 +140,6 @@ func Sync() error {
 			return err
 		}
 	}
-
-	// generalチャンネル確認
-	c := 0
-	if err := db.Unscoped().Model(Channel{}).Where("name = 'general' AND parent_id = ''").Count(&c).Error; err != nil {
-		return err
-	}
-	if c == 0 {
-		_, err := CreatePublicChannel("", "general", serverUser.GetUID())
-		if err != nil {
-			return err
-		}
-	}
-	// randomチャンネル確認
-	c = 0
-	if err := db.Unscoped().Model(Channel{}).Where("name = 'random' AND parent_id = ''").Count(&c).Error; err != nil {
-		return err
-	}
-	if c == 0 {
-		_, err := CreatePublicChannel("", "random", serverUser.GetUID())
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -242,4 +218,8 @@ func transact(txFunc func(tx *gorm.DB) error) (err error) {
 	}()
 	err = txFunc(tx)
 	return err
+}
+
+func ServerUser() *User {
+	return serverUser
 }
