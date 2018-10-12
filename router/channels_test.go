@@ -25,7 +25,7 @@ func TestGetChannels(t *testing.T) {
 	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
 		var res []ChannelForResponse
 		assert.NoError(json.Unmarshal(rec.Body.Bytes(), &res))
-		assert.Len(res, 6+3)
+		assert.Len(res, 6+1)
 	}
 }
 
@@ -45,7 +45,7 @@ func TestPostChannels(t *testing.T) {
 	channelList, err := model.GetChannelList(testUser.GetUID())
 	if assert.NoError(err) {
 		if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
-			assert.Len(channelList, 3)
+			assert.Len(channelList, 1)
 		}
 	}
 
@@ -62,7 +62,7 @@ func TestPostChannels(t *testing.T) {
 	channelList, err = model.GetChannelList(testUser.GetUID())
 	if assert.NoError(err) {
 		if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
-			assert.Len(channelList, 4)
+			assert.Len(channelList, 2)
 		}
 	}
 
@@ -83,12 +83,12 @@ func TestPostChannels(t *testing.T) {
 
 	channelList, err = model.GetChannelList(testUser.GetUID())
 	if assert.NoError(err) {
-		assert.Len(channelList, 5)
+		assert.Len(channelList, 3)
 	}
 
 	channelList, err = model.GetChannelList(uuid.Nil)
 	if assert.NoError(err) {
-		assert.Len(channelList, 4)
+		assert.Len(channelList, 2)
 	}
 }
 
@@ -171,6 +171,6 @@ func TestDeleteChannelsByChannelID(t *testing.T) {
 
 	channelList, err := model.GetChannelList(testUser.GetUID())
 	if assert.NoError(err) {
-		assert.Len(channelList, 2)
+		assert.Len(channelList, 0)
 	}
 }
