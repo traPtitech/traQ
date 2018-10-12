@@ -16,7 +16,7 @@ import (
 /*
 	twemoji Copyright 2018 Twitter, Inc and other contributors
 	Graphics licensed under CC-BY 4.0: https://creativecommons.org/licenses/by/4.0/
- */
+*/
 const (
 	emojiZip     = "https://github.com/twitter/twemoji/archive/v11.1.0.zip"
 	emojiExt     = "svg"

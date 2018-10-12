@@ -222,6 +222,7 @@ func transact(txFunc func(tx *gorm.DB) error) (err error) {
 	return err
 }
 
+// ServerUser サーバーユーザーを返します
 func ServerUser() *User {
 	return serverUser
 }
