@@ -11,7 +11,7 @@ import (
 
 // ChannelForResponse レスポンス用のチャンネル構造体
 type ChannelForResponse struct {
-	ChannelID  uuid.UUID   `json:"channelId"`
+	ChannelID  string      `json:"channelId"`
 	Name       string      `json:"name"`
 	Parent     string      `json:"parent"`
 	Children   []uuid.UUID `json:"children"`
@@ -48,7 +48,7 @@ func GetChannels(c echo.Context) error {
 			chMap[ch.ID.String()] = entry
 		}
 
-		entry.ChannelID = ch.ID
+		entry.ChannelID = ch.ID.String()
 		entry.Name = ch.Name
 		entry.Visibility = ch.IsVisible
 		entry.Parent = ch.ParentID
@@ -316,7 +316,7 @@ func validateChannelID(channelID, userID uuid.UUID) (*model.Channel, error) {
 
 func formatChannel(channel *model.Channel) (response *ChannelForResponse, err error) {
 	response = &ChannelForResponse{
-		ChannelID:  channel.ID,
+		ChannelID:  channel.ID.String(),
 		Name:       channel.Name,
 		Visibility: channel.IsVisible,
 		Parent:     channel.ParentID,
