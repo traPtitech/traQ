@@ -101,23 +101,23 @@ func SetGORMEngine(engine *gorm.DB) {
 }
 
 // Sync テーブルと構造体を同期させる
-func Sync() error {
+func Sync() (bool, error) {
 	// スキーマ同期
 	if err := db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(tables...).Error; err != nil {
-		return fmt.Errorf("failed to sync Table schema: %v", err)
+		return false, fmt.Errorf("failed to sync Table schema: %v", err)
 	}
 
 	// 外部キー制約同期
 	for _, c := range constraints {
 		if err := db.Table(c[0]).AddForeignKey(c[1], c[2], c[3], c[4]).Error; err != nil {
-			return err
+			return false, err
 		}
 	}
 
 	// サーバーユーザーの確認
 	if err := db.Where(User{Name: "traq"}).Take(serverUser).Error; err != nil {
 		if !gorm.IsRecordNotFoundError(err) {
-			return err
+			return false, err
 		}
 
 		// サーバーユーザーが存在しない場合は作成
@@ -130,17 +130,19 @@ func Sync() error {
 			Role:     role.Admin.ID(),
 		}
 		if err := db.Create(serverUser).Error; err != nil {
-			return err
+			return false, err
 		}
 		fileID, err := GenerateIcon(uuid.NewV4().String())
 		if err != nil {
-			return err
+			return false, err
 		}
 		if err := ChangeUserIcon(serverUser.GetUID(), uuid.Must(uuid.FromString(fileID))); err != nil {
-			return err
+			return false, err
 		}
+
+		return true, nil
 	}
-	return nil
+	return false, nil
 }
 
 // DropTables 全てのテーブルを削除する

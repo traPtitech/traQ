@@ -52,7 +52,7 @@ func TestMain(m *testing.M) {
 	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
 	SetFileManager("", storage.NewInMemoryFileManager())
 
-	if err := Sync(); err != nil {
+	if _, err := Sync(); err != nil {
 		panic(err)
 	}
 
@@ -63,7 +63,8 @@ func TestMain(m *testing.M) {
 // assert, require, テストユーザー, テストチャンネルを返します。
 func beforeTest(t *testing.T) (*assert.Assertions, *require.Assertions, *User, *Channel) {
 	require.NoError(t, DropTables())
-	require.NoError(t, Sync())
+	_, err := Sync()
+	require.NoError(t, err)
 
 	user := mustMakeUser(t, "testuser")
 	return assert.New(t), require.New(t), user, mustMakeChannelDetail(t, user.GetUID(), "testchannel", "")
