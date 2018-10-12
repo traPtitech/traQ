@@ -48,6 +48,9 @@ var (
 
 	// PprofEnabled 空文字でない場合net/http/pprofがserveされます
 	PprofEnabled = os.Getenv("PPROF_ENABLED")
+
+	// InitDataDirectory 初期化データディレクトリ
+	InitDataDirectory = os.Getenv("INIT_DATA_DIRECTORY")
 )
 
 func init() {

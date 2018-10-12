@@ -46,8 +46,12 @@ func main() {
 	defer engine.Close()
 	model.SetGORMEngine(engine)
 
-	if err := model.Sync(); err != nil {
+	if init, err := model.Sync(); err != nil {
 		panic(err)
+	} else if init { // 初期化
+		if err := initData(); err != nil {
+			panic(err)
+		}
 	}
 
 	sessionStore, err := sessions.NewGORMStore(engine)

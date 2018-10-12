@@ -60,7 +60,7 @@ func TestMain(m *testing.M) {
 	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
 	model.SetFileManager("", storage.NewInMemoryFileManager())
 
-	if err := model.Sync(); err != nil {
+	if _, err := model.Sync(); err != nil {
 		panic(err)
 	}
 
@@ -71,7 +71,8 @@ func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc, *a
 	require := require.New(t)
 
 	require.NoError(model.DropTables())
-	require.NoError(model.Sync())
+	_, err := model.Sync()
+	require.NoError(err)
 	e := echo.New()
 	e.Validator = validator.New()
 
@@ -98,7 +99,8 @@ func beforeLoginTest(t *testing.T) *echo.Echo {
 	require := require.New(t)
 
 	require.NoError(model.DropTables())
-	require.NoError(model.Sync())
+	_, err := model.Sync()
+	require.NoError(err)
 	e := echo.New()
 	e.Validator = validator.New()
 

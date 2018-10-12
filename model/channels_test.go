@@ -717,13 +717,13 @@ func TestSeriesGroup1(t *testing.T) {
 		assert.Equal(ErrChannelDepthLimitation, err)
 	})
 
-	// チャンネル数ここまでpublic:6+2, private:0
+	// チャンネル数ここまでpublic:1+5, private:0
 
 	// GetAllChannels
 	t.Run("TestGetAllChannels", func(t *testing.T) {
 		chList, err := GetAllChannels()
 		if assert.NoError(err) {
-			assert.Equal(6+2, len(chList))
+			assert.Equal(6, len(chList))
 		}
 	})
 
@@ -731,7 +731,7 @@ func TestSeriesGroup1(t *testing.T) {
 	t.Run("TestGetChannelList", func(t *testing.T) {
 		channelList, err := GetChannelList(user.GetUID())
 		if assert.NoError(err) {
-			assert.Len(channelList, 6+2)
+			assert.Len(channelList, 6)
 		}
 
 		// TODO プライベートチャンネル
@@ -754,12 +754,12 @@ func TestSeriesGroup1(t *testing.T) {
 
 		channelList, err := GetChannelList(user.GetUID())
 		if assert.NoError(err) {
-			assert.Len(channelList, 8+1)
+			assert.Len(channelList, 6+1)
 		}
 
 		channelList, err = GetChannelList(uuid.Nil)
 		if assert.NoError(err) {
-			assert.Len(channelList, 8)
+			assert.Len(channelList, 6)
 		}
 	})
 }
