@@ -293,7 +293,7 @@ func GetOrCreateDirectMessageChannel(user1, user2 uuid.UUID) (*Channel, error) {
 				Select("channel_id").
 				Group("channel_id").
 				Having("COUNT(*) = 1 AND GROUP_CONCAT(user_id) = ?", user1).
-				Limit(1).SubQuery()).
+				SubQuery()).
 			Take(&channel).
 			Error
 		if err != nil {
@@ -307,7 +307,7 @@ func GetOrCreateDirectMessageChannel(user1, user2 uuid.UUID) (*Channel, error) {
 		// 他人宛DM
 		err := db.
 			Where("parent_id = ? AND id IN ?", directMessageChannelRootID, db.
-				Raw("SELECT u.channel_id FROM users_private_channels AS u INNER JOIN (SELECT channel_id FROM users_private_channels GROUP BY channel_id HAVING COUNT(*) = 2) AS ex ON ex.channel_id = u.channel_id AND u.user_id IN (?, ?) GROUP BY channel_id HAVING COUNT(*) = 2 LIMIT 1", user1, user2).
+				Raw("SELECT u.channel_id FROM users_private_channels AS u INNER JOIN (SELECT channel_id FROM users_private_channels GROUP BY channel_id HAVING COUNT(*) = 2) AS ex ON ex.channel_id = u.channel_id AND u.user_id IN (?, ?) GROUP BY channel_id HAVING COUNT(*) = 2", user1, user2).
 				SubQuery()).
 			Take(&channel).
 			Error
