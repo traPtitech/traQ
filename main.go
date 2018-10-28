@@ -16,7 +16,6 @@ import (
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/external/storage"
@@ -24,10 +23,8 @@ import (
 	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/oauth2/impl"
 	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/router"
-	"github.com/traPtitech/traQ/utils/validator"
 )
 
 func main() {
@@ -125,8 +122,6 @@ func main() {
 	}
 
 	// event handler
-	streamer := event.NewSSEStreamer()
-	event.AddListener(streamer)
 	if len(config.FirebaseServiceAccountJSONFile) > 0 {
 		fcm := &event.FCMManager{}
 		if err := fcm.Init(); err != nil {
@@ -135,187 +130,14 @@ func main() {
 		event.AddListener(fcm)
 	}
 
-	h := router.Handlers{
+	h := &router.Handlers{
 		Bot:    event.NewBotProcessor(oauth),
 		OAuth2: oauth,
 	}
 	event.AddListener(h.Bot)
 
 	e := echo.New()
-	e.Validator = validator.New()
-	e.HTTPErrorHandler = router.CustomHTTPErrorHandler
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:8080"},
-		AllowCredentials: true,
-	}))
-
-	api := e.Group("/api/1.0")
-	api.Use(router.UserAuthenticate(oauth))
-	apiNoAuth := e.Group("/api/1.0")
-
-	// middleware preparation
-	requires := router.AccessControlMiddlewareGenerator(r)
-	bodyLimit := router.RequestBodyLengthLimit
-
-	// login/logout
-	apiNoAuth.POST("/login", router.PostLogin)
-	apiNoAuth.POST("/logout", router.PostLogout)
-
-	// Tag: channel
-	api.GET("/channels", router.GetChannels, requires(permission.GetChannel))
-	api.POST("/channels", router.PostChannels, requires(permission.CreateChannel))
-	api.GET("/channels/:channelID", router.GetChannelByChannelID, requires(permission.GetChannel))
-	api.PATCH("/channels/:channelID", router.PatchChannelByChannelID, requires(permission.EditChannel))
-	api.DELETE("/channels/:channelID", router.DeleteChannelByChannelID, requires(permission.DeleteChannel))
-	api.PUT("/channels/:channelID/parent", router.PutChannelParent, requires(permission.ChangeParentChannel))
-
-	// Tag: Topic
-	api.GET("/channels/:channelID/topic", router.GetTopic, requires(permission.GetTopic))
-	api.PUT("/channels/:channelID/topic", router.PutTopic, requires(permission.EditTopic))
-
-	// Tag: messages
-	api.GET("/messages/:messageID", router.GetMessageByID, requires(permission.GetMessage))
-	api.PUT("/messages/:messageID", router.PutMessageByID, bodyLimit(100), requires(permission.EditMessage))
-	api.DELETE("/messages/:messageID", router.DeleteMessageByID, requires(permission.DeleteMessage))
-	api.POST("/messages/:messageID/report", router.PostMessageReport, requires(permission.ReportMessage))
-	api.GET("/reports", router.GetMessageReports, requires(permission.GetMessageReports))
-	api.GET("/channels/:channelID/messages", router.GetMessagesByChannelID, requires(permission.GetMessage))
-	api.POST("/channels/:channelID/messages", router.PostMessage, bodyLimit(100), requires(permission.PostMessage))
-	api.GET("/users/:userID/messages", router.GetDirectMessages, requires(permission.GetMessage))
-	api.POST("/users/:userID/messages", router.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
-
-	// Tag: users
-	api.GET("/users", router.GetUsers, requires(permission.GetUser))
-	api.POST("/users", router.PostUsers, requires(permission.RegisterUser))
-	api.GET("/users/me", router.GetMe, requires(permission.GetMe))
-	api.PATCH("/users/me", router.PatchMe, requires(permission.EditMe))
-	api.PUT("/users/me/password", router.PutPassword, requires(permission.ChangeMyPassword))
-	api.GET("/users/me/icon", router.GetMyIcon, requires(permission.DownloadFile))
-	api.PUT("/users/me/icon", router.PutMyIcon, requires(permission.ChangeMyIcon))
-	api.GET("/users/:userID", router.GetUserByID, requires(permission.GetUser))
-	api.GET("/users/:userID/icon", router.GetUserIcon, requires(permission.DownloadFile))
-
-	// Tag: sessions
-	api.GET("/users/me/sessions", router.GetMySessions, requires(permission.GetMySessions))
-	api.DELETE("/users/me/sessions", router.DeleteAllMySessions, requires(permission.DeleteMySessions))
-	api.DELETE("/users/me/sessions/:referenceID", router.DeleteMySession, requires(permission.DeleteMySessions))
-
-	// Tag: clips
-	api.GET("/users/me/clips", router.GetClips, requires(permission.GetClip))
-	api.POST("/users/me/clips", router.PostClip, requires(permission.CreateClip))
-	api.GET("/users/me/clips/:clipID", router.GetClip, requires(permission.GetClip))
-	api.DELETE("/users/me/clips/:clipID", router.DeleteClip, requires(permission.DeleteClip))
-	api.GET("/users/me/clips/:clipID/folder", router.GetClipsFolder, requires(permission.GetClip, permission.GetClipFolder))
-	api.PUT("/users/me/clips/:clipID/folder", router.PutClipsFolder, requires(permission.CreateClip))
-	api.GET("/users/me/clips/folders", router.GetClipFolders, requires(permission.GetClipFolder))
-	api.POST("/users/me/clips/folders", router.PostClipFolder, requires(permission.CreateClipFolder))
-	api.GET("/users/me/clips/folders/:folderID", router.GetClipFolder, requires(permission.GetClip, permission.GetClipFolder))
-	api.PATCH("/users/me/clips/folders/:folderID", router.PatchClipFolder, requires(permission.PatchClipFolder))
-	api.DELETE("/users/me/clips/folders/:folderID", router.DeleteClipFolder, requires(permission.DeleteClipFolder))
-
-	// Tag: star
-	api.GET("/users/me/stars", router.GetStars, requires(permission.GetStar))
-	api.PUT("/users/me/stars/:channelID", router.PutStars, requires(permission.CreateStar))
-	api.DELETE("/users/me/stars/:channelID", router.DeleteStars, requires(permission.DeleteStar))
-
-	// Tag: unread
-	api.GET("/users/me/unread", router.GetUnread, requires(permission.GetUnread))
-	api.DELETE("/users/me/unread/:channelID", router.DeleteUnread, requires(permission.DeleteUnread))
-
-	// Tag: mute
-	api.GET("/users/me/mute", router.GetMutedChannelIDs, requires(permission.GetMutedChannels))
-	api.POST("/users/me/mute/:channelID", router.PostMutedChannel, requires(permission.MuteChannel))
-	api.DELETE("/users/me/mute/:channelID", router.DeleteMutedChannel, requires(permission.UnmuteChannel))
-
-	// Tag: userTag
-	api.GET("/users/:userID/tags", router.GetUserTags, requires(permission.GetTag))
-	api.POST("/users/:userID/tags", router.PostUserTag, requires(permission.AddTag))
-	api.PATCH("/users/:userID/tags/:tagID", router.PatchUserTag, requires(permission.ChangeTagLockState))
-	api.DELETE("/users/:userID/tags/:tagID", router.DeleteUserTag, requires(permission.RemoveTag))
-	api.GET("/tags", router.GetAllTags, requires(permission.GetTag))
-	api.GET("/tags/:tagID", router.GetUsersByTagID, requires(permission.GetTag))
-	api.PATCH("/tags/:tagID", router.PatchTag, requires(permission.EditTag))
-
-	// Tag: heartbeat
-	api.GET("/heartbeat", router.GetHeartbeat, requires(permission.GetHeartbeat))
-	api.POST("/heartbeat", router.PostHeartbeat, requires(permission.PostHeartbeat))
-
-	// Tag: notification
-	api.GET("/notification", streamer.StreamHandler, requires(permission.ConnectNotificationStream))
-	api.POST("/notification/device", router.PostDeviceToken, requires(permission.RegisterDevice))
-	api.GET("/channels/:ID/notification", router.GetNotification(router.GetNotificationChannels, router.GetNotificationStatus), requires(permission.GetNotificationStatus))
-	api.PUT("/channels/:ID/notification", router.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
-
-	// Tag: file
-	api.POST("/files", router.PostFile, requires(permission.UploadFile))
-	api.GET("/files/:fileID", router.GetFileByID, requires(permission.DownloadFile))
-	api.DELETE("/files/:fileID", router.DeleteFileByID, requires(permission.DeleteFile))
-	api.GET("/files/:fileID/meta", router.GetMetaDataByFileID, requires(permission.DownloadFile))
-	api.GET("/files/:fileID/thumbnail", router.GetThumbnailByID, requires(permission.DownloadFile))
-
-	// Tag: pin
-	api.GET("/channels/:channelID/pin", router.GetChannelPin, requires(permission.GetPin))
-	api.POST("/channels/:channelID/pin", router.PostPin, requires(permission.CreatePin))
-	api.GET("/pin/:pinID", router.GetPin, requires(permission.GetPin))
-	api.DELETE("/pin/:pinID", router.DeletePin, requires(permission.DeletePin))
-
-	// Tag: stamp
-	api.GET("/stamps", router.GetStamps, requires(permission.GetStamp))
-	api.POST("/stamps", router.PostStamp, requires(permission.CreateStamp))
-	api.GET("/stamps/:stampID", router.GetStamp, requires(permission.GetStamp))
-	api.PATCH("/stamps/:stampID", router.PatchStamp, requires(permission.EditStamp))
-	api.DELETE("/stamps/:stampID", router.DeleteStamp, requires(permission.DeleteStamp))
-	api.GET("/messages/:messageID/stamps", router.GetMessageStamps, requires(permission.GetMessageStamp))
-	api.POST("/messages/:messageID/stamps/:stampID", router.PostMessageStamp, requires(permission.AddMessageStamp))
-	api.DELETE("/messages/:messageID/stamps/:stampID", router.DeleteMessageStamp, requires(permission.RemoveMessageStamp))
-	api.GET("/users/me/stamp-history", router.GetMyStampHistory, requires(permission.GetMyStampHistory))
-
-	// Tag: webhook
-	router.LoadWebhookTemplate("static/webhook/*.tmpl")
-	api.GET("/webhooks", router.GetWebhooks, requires(permission.GetWebhook))
-	api.POST("/webhooks", router.PostWebhooks, requires(permission.CreateWebhook))
-	api.GET("/webhooks/:webhookID", router.GetWebhook, requires(permission.GetWebhook))
-	api.PATCH("/webhooks/:webhookID", router.PatchWebhook, requires(permission.EditWebhook))
-	api.DELETE("/webhooks/:webhookID", router.DeleteWebhook, requires(permission.DeleteWebhook))
-	api.PUT("/webhooks/:webhookID/icon", router.PutWebhookIcon, requires(permission.EditWebhook))
-	apiNoAuth.POST("/webhooks/:webhookID", router.PostWebhook)
-	apiNoAuth.POST("/webhooks/:webhookID/github", router.PostWebhookByGithub)
-
-	// Tag: bot
-	api.GET("/bots", h.GetBots, requires(permission.GetBot))
-	api.POST("/bots", h.PostBots, requires(permission.CreateBot))
-	api.GET("/bots/:botID", h.GetBot, requires(permission.GetBot))
-	api.PATCH("/bots/:botID", h.PatchBot, requires(permission.EditBot))
-	api.DELETE("/bots/:botID", h.DeleteBot, requires(permission.DeleteBot))
-	api.PUT("/bots/:botID/icon", h.PutBotIcon, requires(permission.EditBot))
-	api.POST("/bots/:botID/activation", h.PostBotActivation, requires(permission.EditBot))
-	api.GET("/bots/:botID/token", h.GetBotToken, requires(permission.GetBotToken))
-	api.POST("/bots/:botID/token", h.PostBotToken, requires(permission.ReissueBotToken))
-	api.GET("/bots/:botID/code", h.GetBotInstallCode, requires(permission.GetBotInstallCode))
-	api.GET("/channels/:channelID/bots", h.GetInstalledBots, requires(permission.GetBot))
-	api.POST("/channels/:channelID/bots", h.PostInstalledBots, requires(permission.InstallBot))
-	api.DELETE("/channels/:channelID/bots/:botID", h.DeleteInstalledBot, requires(permission.UninstallBot))
-
-	// Tag: authorization
-	apiNoAuth.GET("/oauth2/authorize", oauth.AuthorizationEndpointHandler)
-	apiNoAuth.POST("/oauth2/authorize", oauth.AuthorizationEndpointHandler)
-	api.POST("/oauth2/authorize/decide", oauth.AuthorizationDecideHandler)
-	apiNoAuth.POST("/oauth2/token", oauth.TokenEndpointHandler)
-	e.GET("/.well-known/openid-configuration", oauth.DiscoveryHandler)
-	e.GET("/publickeys", oauth.PublicKeysHandler)
-
-	// Tag: client
-	api.GET("/users/me/tokens", h.GetMyTokens, requires(permission.GetMyTokens))
-	api.DELETE("/users/me/tokens/:tokenID", h.DeleteMyToken, requires(permission.RevokeMyToken))
-	api.GET("/clients", h.GetClients, requires(permission.GetClients))
-	api.POST("/clients", h.PostClients, requires(permission.CreateClient))
-	api.GET("/clients/:clientID", h.GetClient, requires(permission.GetClients))
-	api.PATCH("/clients/:clientID", h.PatchClient, requires(permission.EditMyClient))
-	api.DELETE("/clients/:clientID", h.DeleteClient, requires(permission.DeleteMyClient))
-
-	apiNoAuth.GET("/teapot", func(c echo.Context) error {
-		return echo.NewHTTPError(http.StatusTeapot, "I'm a teapot")
-	})
+	router.SetupRouting(e, h)
 
 	// init heartbeat
 	model.OnUserOnlineStateChanged = func(id uuid.UUID, online bool) {

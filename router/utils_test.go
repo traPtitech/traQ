@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"fmt"
+	"github.com/gavv/httpexpect"
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
@@ -11,6 +12,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -24,7 +26,10 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 )
 
-var testUser *model.User
+var (
+	testUser *model.User
+	server *httptest.Server
+)
 
 func TestMain(m *testing.M) {
 	user := os.Getenv("MARIADB_USERNAME")
@@ -64,7 +69,31 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
+	// setup server
+	e := echo.New()
+	SetupRouting(e, &Handlers{})
+	server = httptest.NewServer(e)
+	defer server.Close()
+
 	os.Exit(m.Run())
+}
+
+func beforeTest(t *testing.T) (*assert.Assertions, *require.Assertions, *httpexpect.Expect) {
+	require := require.New(t)
+	assert := assert.New(t)
+
+	ex := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  server.URL,
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCurlPrinter(t),
+			httpexpect.NewDebugPrinter(t, true),
+		},
+		Client: &http.Client{
+			Jar:     httpexpect.NewJar(),
+			Timeout: time.Second * 30,
+		},
+	})
 }
 
 func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc, *assert.Assertions, *require.Assertions) {

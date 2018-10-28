@@ -60,6 +60,7 @@ const (
 type Handlers struct {
 	Bot    *event.BotProcessor
 	OAuth2 *oauth2.Handler
+	RBAC   *rbac.RBAC
 }
 
 func init() {
