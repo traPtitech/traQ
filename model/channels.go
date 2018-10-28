@@ -290,6 +290,7 @@ func GetOrCreateDirectMessageChannel(user1, user2 uuid.UUID) (*Channel, error) {
 		// 自分宛DM
 		err := db.
 			Where("parent_id = ? AND id IN ?", directMessageChannelRootID, db.
+				Table("users_private_channels").
 				Select("channel_id").
 				Group("channel_id").
 				Having("COUNT(*) = 1 AND GROUP_CONCAT(user_id) = ?", user1).
