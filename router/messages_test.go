@@ -383,4 +383,58 @@ func TestGroup_Messages(t *testing.T) {
 				Status(http.StatusBadRequest)
 		})
 	})
+
+	t.Run("TestGetUnread", func(t *testing.T) {
+		t.Parallel()
+
+		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+		mustMakeUnread(t, testUser.GetUID(), message.GetID())
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/users/me/unread").
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/users/me/unread").
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Array().
+				Length().
+				Equal(1)
+		})
+	})
+
+	t.Run("TestDeleteUnread", func(t *testing.T) {
+		t.Parallel()
+
+		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+		mustMakeUnread(t, testUser.GetUID(), message.GetID())
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/users/me/unread/{channelID}", channel.ID.String()).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/users/me/unread/{channelID}", channel.ID.String()).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusNoContent)
+		})
+	})
 }

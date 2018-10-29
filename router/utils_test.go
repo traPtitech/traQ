@@ -14,10 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/traPtitech/traQ/external/storage"
-	"github.com/traPtitech/traQ/utils/validator"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/traQ/external/storage"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo"
@@ -115,65 +113,12 @@ func makeExp(t *testing.T) *httpexpect.Expect {
 	})
 }
 
-func beforeLoginTest(t *testing.T) *echo.Echo {
-	require := require.New(t)
-
-	require.NoError(model.DropTables())
-	_, err := model.Sync()
-	require.NoError(err)
-	e := echo.New()
-	e.Validator = validator.New()
-
-	return e
-}
-
 func parseCookies(value string) map[string]*http.Cookie {
 	m := map[string]*http.Cookie{}
 	for _, c := range (&http.Request{Header: http.Header{"Cookie": {value}}}).Cookies() {
 		m[c.Name] = c
 	}
 	return m
-}
-
-func requestWithContext(t *testing.T, handler echo.HandlerFunc, c echo.Context) {
-	err := handler(c)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func request(e *echo.Echo, _ *testing.T, handler echo.HandlerFunc, cookie *http.Cookie, req *http.Request) *httptest.ResponseRecorder {
-	if req == nil {
-		req = httptest.NewRequest("GET", "http://test", nil)
-	}
-
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	if cookie != nil {
-		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
-	}
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	err := handler(c)
-	if err != nil {
-		rec.Code = err.(*echo.HTTPError).Code
-	}
-
-	return rec
-}
-
-func getContext(e *echo.Echo, _ *testing.T, cookie *http.Cookie, req *http.Request) (echo.Context, *httptest.ResponseRecorder) {
-	if req == nil {
-		req = httptest.NewRequest("GET", "http://test", nil)
-	}
-
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	if cookie != nil {
-		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
-	}
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	return c, rec
 }
 
 func mustMakeChannelDetail(t *testing.T, userID uuid.UUID, name, parentID string) *model.Channel {
