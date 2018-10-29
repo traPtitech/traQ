@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+// SetupRouting APIルーティングを行います
 func SetupRouting(e *echo.Echo, h *Handlers) {
 	oauth := h.OAuth2
 

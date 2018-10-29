@@ -1,20 +1,15 @@
 package router
 
 import (
-	"bytes"
-	"encoding/json"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
 	"net/http"
-	"net/http/httptest"
 	"testing"
-
-	"github.com/labstack/echo"
 )
 
 func TestGroup_Pin(t *testing.T) {
-	assert, require, session, adminSession := beforeTest(t)
+	assert, require, session, _ := beforeTest(t)
 
 	t.Run("TestPostPin", func(t *testing.T) {
 		t.Parallel()
