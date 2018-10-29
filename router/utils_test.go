@@ -60,6 +60,10 @@ func TestMain(m *testing.M) {
 	defer engine.Close()
 	model.SetGORMEngine(engine)
 
+	if _, err := model.Sync(); err != nil {
+		panic(err)
+	}
+
 	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
 	model.SetFileManager("", storage.NewInMemoryFileManager())
 
