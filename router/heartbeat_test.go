@@ -47,7 +47,7 @@ func TestGroup_Heartbeat(t *testing.T) {
 		t.Parallel()
 
 		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		model.UpdateHeartbeatStatuses(testUser.GetUID(),channel.ID, "editing")
+		model.UpdateHeartbeatStatuses(testUser.GetUID(), channel.ID, "editing")
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
