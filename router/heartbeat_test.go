@@ -1,13 +1,11 @@
 package router
 
 import (
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
-	"testing"
-	"time"
-
-	"github.com/traPtitech/traQ/model"
 	"net/http"
+	"testing"
 )
 
 func TestGroup_Heartbeat(t *testing.T) {
@@ -49,16 +47,7 @@ func TestGroup_Heartbeat(t *testing.T) {
 		t.Parallel()
 
 		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		model.HeartbeatStatuses[channel.ID] = &model.HeartbeatStatus{
-			ChannelID: channel.ID,
-			UserStatuses: []*model.UserStatus{
-				{
-					UserID:   testUser.GetUID(),
-					Status:   "editing",
-					LastTime: time.Now(),
-				},
-			},
-		}
+		model.UpdateHeartbeatStatuses(testUser.GetUID(),channel.ID, "editing")
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
