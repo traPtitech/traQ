@@ -1,113 +1,157 @@
 package router
 
 import (
-	"bytes"
-	"encoding/json"
-	"net/http/httptest"
+	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/utils"
 	"testing"
 
 	"github.com/traPtitech/traQ/model"
 
 	"net/http"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestPostLogin(t *testing.T) {
-	e := beforeLoginTest(t)
-	mustCreateUser(t, "PostLogin")
+func TestGroup_Users(t *testing.T) {
+	assert, require, session, _ := beforeTest(t)
 
-	type requestJSON struct {
-		Name string `json:"name"`
-		Pass string `json:"pass"`
-	}
+	t.Run("TestGetUsers", func(t *testing.T) {
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/users").
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	requestBody := &requestJSON{"PostLogin", "test"}
-	body, err := json.Marshal(requestBody)
-	require.NoError(t, err)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/users").
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Array().
+				Length().
+				Equal(2)
+		})
+	})
 
-	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	rec := request(e, t, PostLogin, nil, req)
+	// ここから並列テスト
 
-	assert.EqualValues(t, http.StatusNoContent, rec.Code)
+	t.Run("TestGetMe", func(t *testing.T) {
+		t.Parallel()
 
-	requestBody2 := &requestJSON{"PostLogin", "wrong_password"}
-	body2, err := json.Marshal(requestBody2)
-	require.NoError(t, err)
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/users/me").
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	req2 := httptest.NewRequest("POST", "http://test", bytes.NewReader(body2))
-	rec2 := request(e, t, PostLogin, nil, req2)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/users/me").
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Object().
+				Value("userId").
+				String().
+				Equal(testUser.ID)
+		})
+	})
 
-	assert.EqualValues(t, http.StatusForbidden, rec2.Code)
-}
+	t.Run("TestGetUserByID", func(t *testing.T) {
+		t.Parallel()
 
-func TestGetUsers(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/users/{userID}", testUser.ID).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	rec := request(e, t, mw(GetUsers), cookie, nil)
-	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
-		var responseBody []UserForResponse
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			// testUser traq
-			assert.Len(responseBody, 2)
-		}
-	}
-}
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/users/{userID}", testUser.ID).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Object().
+				Value("userId").
+				String().
+				Equal(testUser.ID)
+		})
+	})
 
-func TestGetMe(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
+	t.Run("TestPatchMe", func(t *testing.T) {
+		t.Parallel()
 
-	rec := request(e, t, mw(GetMe), cookie, nil)
-	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
-		var me UserForResponse
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &me)) {
-			assert.Equal(testUser.ID, me.UserID)
-		}
-	}
-}
+		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
 
-func TestPatchMe(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PATCH("/api/1.0/users/{userID}", user.ID).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	type requestJSON struct {
-		DisplayName string `json:"displayName"`
-		TwitterID   string `json:"twitterId"`
-	}
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			newDisp := "renamed"
+			newTwitter := "test"
+			e.PATCH("/api/1.0/users/{userID}", user.ID).
+				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
+				WithJSON(map[string]string{"displayName": newDisp, "twitterId": newTwitter}).
+				Expect().
+				Status(http.StatusNoContent)
 
-	// 正常系
-	post := requestJSON{
-		DisplayName: "renamed",
-		TwitterID:   "test",
-	}
-	body, err := json.Marshal(post)
-	require.NoError(err)
+			u, err := model.GetUser(user.GetUID())
+			require.NoError(err)
+			assert.Equal(newDisp, u.DisplayName)
+			assert.Equal(newTwitter, u.TwitterID)
+		})
 
-	req := httptest.NewRequest("PATCH", "http://test", bytes.NewReader(body))
-	rec := request(e, t, mw(PatchMe), cookie, req)
+		t.Run("Failure1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PATCH("/api/1.0/users/{userID}", user.ID).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]string{"displayName": "a", "twitterId": "a"}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+	})
 
-	if assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String()) {
-		updatedUser, err := model.GetUser(testUser.GetUID())
-		require.NoError(err)
-		assert.Equal(post.DisplayName, updatedUser.DisplayName)
-		assert.Equal(post.TwitterID, updatedUser.TwitterID)
-	}
-}
+	t.Run("TestPostLogin", func(t *testing.T) {
+		t.Parallel()
 
-func TestGetUserByID(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
+		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
 
-	c, rec := getContext(e, t, cookie, nil)
-	c.SetPath("/users/:userID")
-	c.SetParamNames("userID")
-	c.SetParamValues(testUser.ID)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.POST("/api/1.0/login").
+				WithJSON(map[string]string{"name": user.Name, "pass": "test"}).
+				Expect().
+				Status(http.StatusNoContent)
+		})
 
-	requestWithContext(t, mw(GetUserByID), c)
-
-	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
-		var user UserDetailForResponse
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &user)) {
-			assert.Equal(testUser.ID, user.UserID)
-		}
-	}
+		t.Run("Failure1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.POST("/api/1.0/login").
+				WithJSON(map[string]string{"name": user.Name, "pass": "wrong_password"}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+	})
 }
