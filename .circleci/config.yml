@@ -23,7 +23,7 @@ jobs:
           when: always
           command: |
             go mod download
-            GO111MODULE=off go install golang.org/x/lint/golint
+            GO111MODULE=off go get -u golang.org/x/lint/golint
       - save_cache:
           key: gomod-{{ checksum "go.mod" }}
           when: always
