@@ -1,107 +1,156 @@
 package router
 
 import (
-	"bytes"
 	"fmt"
-	"io"
-	"mime/multipart"
+	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/sessions"
 	"net/http"
-	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/labstack/echo"
-	"github.com/stretchr/testify/require"
 )
 
-func TestPostFile(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
+func TestGroup_Files(t *testing.T) {
+	_, require, session, adminSession := beforeTest(t)
 
-	body, boundary := createFormFile(t)
+	t.Run("TestPostFile", func(t *testing.T) {
+		t.Parallel()
 
-	req := httptest.NewRequest("POST", "http://test", body)
-	req.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.POST("/api/1.0/files").
+				WithFileBytes("file", "test.txt", []byte("aaa")).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	if cookie != nil {
-		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
-	}
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	err := mw(PostFile)(c)
-	assert.NoError(err)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			file := []byte("test file")
+			obj := e.POST("/api/1.0/files").
+				WithCookie(sessions.CookieName, session).
+				WithFileBytes("file", "test.txt", file).
+				Expect().
+				Status(http.StatusCreated).
+				JSON().
+				Object()
 
-	assert.Equal(http.StatusCreated, rec.Code, rec.Body.String())
-}
+			obj.Value("id").String().NotEmpty()
+			obj.Value("name").String().Equal("test.txt")
+			obj.Value("size").Number().Equal(len(file))
+			obj.Value("creatorId").String().Equal(testUser.ID)
 
-func TestGetFileByID(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
+			_, err := model.GetMetaFileDataByID(uuid.FromStringOrNil(obj.Value("id").String().Raw()))
+			require.NoError(err)
+		})
+	})
 
-	file := mustMakeFile(t)
+	t.Run("TestGetFileByID", func(t *testing.T) {
+		t.Parallel()
 
-	c, rec := getContext(e, t, cookie, nil)
-	c.SetPath("/:fileID")
-	c.SetParamNames("fileID")
-	c.SetParamValues(file.ID)
+		file := mustMakeFile(t)
 
-	requestWithContext(t, mw(GetFileByID), c)
-	if assert.EqualValues(http.StatusOK, rec.Code) {
-		assert.Equal("test message", rec.Body.String())
-	}
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/files/{fileID}", file.ID).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	c, rec = getContext(e, t, cookie, nil)
-	c.SetPath("/:fileID")
-	c.SetParamNames("fileID")
-	c.SetParamValues(file.ID)
-	c.Request().URL.RawQuery = "dl=1"
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/files/{fileID}", file.ID).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				Body().
+				Equal("test message")
+		})
 
-	requestWithContext(t, mw(GetFileByID), c)
-	if assert.EqualValues(http.StatusOK, rec.Code) {
-		assert.EqualValues(fmt.Sprintf("attachment; filename=%s", file.Name), rec.Header().Get(echo.HeaderContentDisposition))
+		t.Run("Successful2", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			res := e.GET("/api/1.0/files/{fileID}", file.ID).
+				WithCookie(sessions.CookieName, session).
+				WithQuery("dl", 1).
+				Expect().
+				Status(http.StatusOK)
+			res.Header(echo.HeaderContentDisposition).Equal(fmt.Sprintf("attachment; filename=%s", file.Name))
+			res.Header(headerCacheControl).Equal("private, max-age=31536000")
+			res.Body().Equal("test message")
+		})
+	})
 
-	}
+	t.Run("TestDeleteFileByID", func(t *testing.T) {
+		t.Parallel()
 
-}
-func TestDeleteFileByID(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
+		file := mustMakeFile(t)
 
-	file := mustMakeFile(t)
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/files/{fileID}", file.ID).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	c, rec := getContext(e, t, cookie, nil)
-	c.SetPath("/:fileID")
-	c.SetParamNames("fileID")
-	c.SetParamValues(file.ID)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/files/{fileID}", file.ID).
+				WithCookie(sessions.CookieName, adminSession).
+				Expect().
+				Status(http.StatusNoContent)
 
-	requestWithContext(t, mw(DeleteFileByID), c)
-	assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String())
-}
-func TestGetMetaDataByFileID(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
+			_, err := model.GetMetaFileDataByID(file.GetID())
+			require.Equal(model.ErrNotFound, err)
+		})
 
-	file := mustMakeFile(t)
+		t.Run("Failure1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			file := mustMakeFile(t)
+			e.DELETE("/api/1.0/files/{fileID}", file.ID).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+	})
 
-	c, rec := getContext(e, t, cookie, nil)
-	c.SetPath("/:fileID")
-	c.SetParamNames("fileID")
-	c.SetParamValues(file.ID)
+	t.Run("TestGetMetaDataByFileID", func(t *testing.T) {
+		t.Parallel()
 
-	requestWithContext(t, mw(GetMetaDataByFileID), c)
-	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
-}
+		file := mustMakeFile(t)
 
-func createFormFile(t *testing.T) (*bytes.Buffer, string) {
-	bodyBuf := &bytes.Buffer{}
-	bodyWriter := multipart.NewWriter(bodyBuf)
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/files/{fileID}/meta", file.ID).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	fileWriter, err := bodyWriter.CreateFormFile("file", "test.txt")
-	require.NoError(t, err)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			obj := e.GET("/api/1.0/files/{fileID}/meta", file.ID).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Object()
 
-	fh, err := os.Open("../LICENSE")
-	require.NoError(t, err)
-	defer fh.Close()
-
-	_, err = io.Copy(fileWriter, fh)
-	require.NoError(t, err)
-
-	bodyWriter.Close()
-	return bodyBuf, bodyWriter.Boundary()
+			obj.Value("fileId").String().Equal(file.ID)
+			obj.Value("name").String().Equal(file.Name)
+			obj.Value("mime").String().Equal(file.Mime)
+			obj.Value("size").Number().Equal(file.Size)
+			obj.Value("md5").String().Equal(file.Hash)
+			obj.Value("hasThumb").Boolean().Equal(file.HasThumbnail)
+		})
+	})
 }
