@@ -54,6 +54,8 @@ func TestChannelGroup1(t *testing.T) {
 		})
 	})
 
+	// ここから並列テスト
+
 	t.Run("TestPostChannels", func(t *testing.T) {
 		t.Parallel()
 
@@ -323,6 +325,68 @@ func TestChannelGroup1(t *testing.T) {
 				WithJSON(map[string]string{"parent": pCh.ID.String()}).
 				Expect().
 				Status(http.StatusForbidden)
+		})
+	})
+
+	t.Run("TestGetTopic", func(t *testing.T) {
+		t.Parallel()
+
+		pubCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		topicText := "Topic test"
+		require.NoError(model.UpdateChannelTopic(pubCh.ID, topicText, testUser.GetUID()))
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Object().
+				Value("text").
+				String().
+				Equal(topicText)
+		})
+	})
+
+	t.Run("TestPutTopic", func(t *testing.T) {
+		t.Parallel()
+
+		pubCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		topicText := "Topic test"
+		require.NoError(model.UpdateChannelTopic(pubCh.ID, topicText, testUser.GetUID()))
+		newTopic := "new Topic"
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PUT("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
+				WithJSON(map[string]string{"text": newTopic}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PUT("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]string{"text": newTopic}).
+				Expect().
+				Status(http.StatusNoContent)
+
+			ch, err := model.GetChannel(pubCh.ID)
+			require.NoError(err)
+			assert.Equal(newTopic, ch.Topic)
 		})
 	})
 }
