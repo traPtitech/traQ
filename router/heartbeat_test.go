@@ -1,11 +1,8 @@
 package router
 
 import (
-	"bytes"
-	"encoding/json"
-	"github.com/satori/go.uuid"
-	"net/http/httptest"
-	"net/url"
+	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/utils"
 	"testing"
 	"time"
 
@@ -13,62 +10,80 @@ import (
 	"net/http"
 )
 
-func TestPostHeartbeat(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
+func TestGroup_Heartbeat(t *testing.T) {
+	_, _, session, _ := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "testChan", "")
+	t.Run("TestPostHeartbeat", func(t *testing.T) {
+		t.Parallel()
 
-	requestBody, err := json.Marshal(struct {
-		ChannelID uuid.UUID `json:"channelId"`
-		Status    string    `json:"status"`
-	}{
-		ChannelID: channel.ID,
-		Status:    "editing",
+		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.POST("/api/1.0/heartbeat").
+				WithJSON(map[string]string{"channelId": channel.ID.String(), "status": "editing"}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			obj := e.POST("/api/1.0/heartbeat").
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]string{"channelId": channel.ID.String(), "status": "editing"}).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Object()
+
+			obj.Value("channelId").String().Equal(channel.ID.String())
+			obj.Value("userStatuses").Array().Length().Equal(1)
+			obj.Value("userStatuses").Array().First().Object().Value("userId").Equal(testUser.ID)
+			obj.Value("userStatuses").Array().First().Object().Value("status").Equal("editing")
+		})
 	})
-	require.NoError(err)
-	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(requestBody))
-	rec := request(e, t, mw(PostHeartbeat), cookie, req)
 
-	if assert.EqualValues(http.StatusOK, rec.Code) {
-		var responseBody model.HeartbeatStatus
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.Equal(channel.ID, responseBody.ChannelID)
-			assert.Len(responseBody.UserStatuses, 1)
-			assert.Equal(testUser.GetUID(), responseBody.UserStatuses[0].UserID)
-			assert.Equal("editing", responseBody.UserStatuses[0].Status)
-		}
-	}
-}
+	t.Run("TestGetHeartbeat", func(t *testing.T) {
+		t.Parallel()
 
-func TestGetHeartbeat(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
-
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "testChan", "")
-
-	model.HeartbeatStatuses[channel.ID] = &model.HeartbeatStatus{
-		ChannelID: channel.ID,
-		UserStatuses: []*model.UserStatus{
-			{
-				UserID:   testUser.GetUID(),
-				Status:   "editing",
-				LastTime: time.Now(),
+		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		model.HeartbeatStatuses[channel.ID] = &model.HeartbeatStatus{
+			ChannelID: channel.ID,
+			UserStatuses: []*model.UserStatus{
+				{
+					UserID:   testUser.GetUID(),
+					Status:   "editing",
+					LastTime: time.Now(),
+				},
 			},
-		},
-	}
-
-	q := make(url.Values)
-	q.Set("channelId", channel.ID.String())
-
-	req := httptest.NewRequest("GET", "/?"+q.Encode(), nil)
-	rec := request(e, t, mw(GetHeartbeat), cookie, req)
-
-	if assert.EqualValues(http.StatusOK, rec.Code) {
-		var responseBody model.HeartbeatStatus
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.Equal(channel.ID, responseBody.ChannelID)
-			assert.Len(responseBody.UserStatuses, 1)
-			assert.Equal(testUser.GetUID(), responseBody.UserStatuses[0].UserID)
-			assert.Equal("editing", responseBody.UserStatuses[0].Status)
 		}
-	}
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/heartbeat").
+				WithQuery("channelId", channel.ID.String()).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			obj := e.POST("/api/1.0/heartbeat").
+				WithCookie(sessions.CookieName, session).
+				WithQuery("channelId", channel.ID.String()).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Object()
+
+			obj.Value("channelId").String().Equal(channel.ID.String())
+			obj.Value("userStatuses").Array().Length().Equal(1)
+			obj.Value("userStatuses").Array().First().Object().Value("userId").Equal(testUser.ID)
+			obj.Value("userStatuses").Array().First().Object().Value("status").Equal("editing")
+		})
+	})
 }
