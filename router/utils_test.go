@@ -7,6 +7,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
+	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/sessions"
 	"net/http"
 	"net/http/httptest"
@@ -68,8 +69,14 @@ func TestMain(m *testing.M) {
 	model.SetFileManager("", storage.NewInMemoryFileManager())
 
 	// setup server
+	r, err := rbac.New(&model.RBACOverrideStore{})
+	if err != nil {
+		panic(err)
+	}
+	role.SetRole(r)
+
 	e := echo.New()
-	SetupRouting(e, &Handlers{})
+	SetupRouting(e, &Handlers{RBAC: r})
 	server = httptest.NewServer(e)
 	defer server.Close()
 
