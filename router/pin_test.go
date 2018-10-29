@@ -109,7 +109,7 @@ func TestGroup_Pin(t *testing.T) {
 
 		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		pin := mustMakePin(t, testUser.GetUID(), message.GetID())
+		mustMakePin(t, testUser.GetUID(), message.GetID())
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
