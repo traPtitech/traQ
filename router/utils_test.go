@@ -28,7 +28,7 @@ import (
 
 var (
 	testUser *model.User
-	server *httptest.Server
+	server   *httptest.Server
 )
 
 func TestMain(m *testing.M) {
@@ -78,11 +78,34 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func beforeTest(t *testing.T) (*assert.Assertions, *require.Assertions, *httpexpect.Expect) {
+func beforeTest(t *testing.T) (*assert.Assertions, *require.Assertions, string, string) {
 	require := require.New(t)
 	assert := assert.New(t)
 
-	ex := httpexpect.WithConfig(httpexpect.Config{
+	require.NoError(model.DropTables())
+	_, err := model.Sync()
+	require.NoError(err)
+
+	testUser = mustCreateUser(t, "testUser")
+
+	return assert, require, generateSession(t, testUser.GetUID()), generateSession(t, model.ServerUser().GetUID())
+}
+
+func generateSession(t *testing.T, userID uuid.UUID) string {
+	require := require.New(t)
+	req := httptest.NewRequest(echo.GET, "/", nil)
+	rec := httptest.NewRecorder()
+
+	sess, err := sessions.Get(rec, req, true)
+	require.NoError(err)
+	require.NoError(sess.SetUser(userID))
+	cookie := parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName]
+
+	return cookie.Value
+}
+
+func makeExp(t *testing.T) *httpexpect.Expect {
+	return httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  server.URL,
 		Reporter: httpexpect.NewAssertReporter(t),
 		Printers: []httpexpect.Printer{
@@ -90,38 +113,10 @@ func beforeTest(t *testing.T) (*assert.Assertions, *require.Assertions, *httpexp
 			httpexpect.NewDebugPrinter(t, true),
 		},
 		Client: &http.Client{
-			Jar:     httpexpect.NewJar(),
+			Jar:     nil, // クッキーは保持しない
 			Timeout: time.Second * 30,
 		},
 	})
-}
-
-func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc, *assert.Assertions, *require.Assertions) {
-	require := require.New(t)
-
-	require.NoError(model.DropTables())
-	_, err := model.Sync()
-	require.NoError(err)
-	e := echo.New()
-	e.Validator = validator.New()
-
-	testUser = mustCreateUser(t, "testUser")
-
-	req := httptest.NewRequest(echo.GET, "/", nil)
-	rec := httptest.NewRecorder()
-
-	sess, err := sessions.Get(rec, req, true)
-	require.NoError(err)
-	require.NoError(sess.SetUser(testUser.GetUID()))
-
-	cookie := parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName]
-	mw := func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			return UserAuthenticate(nil)(next)(c)
-		}
-
-	}
-	return e, cookie, mw, assert.New(t), require
 }
 
 func beforeLoginTest(t *testing.T) *echo.Echo {

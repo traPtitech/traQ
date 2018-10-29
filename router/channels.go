@@ -323,6 +323,7 @@ func formatChannel(channel *model.Channel) (response *ChannelForResponse, err er
 		Force:      channel.IsForced,
 		Private:    !channel.IsPublic,
 		DM:         channel.IsDMChannel(),
+		Member:     make([]uuid.UUID, 0),
 	}
 	response.Children, err = model.GetChildrenChannelIDs(channel.ID)
 	if err != nil {
