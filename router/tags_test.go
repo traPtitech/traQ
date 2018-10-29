@@ -1,94 +1,140 @@
 package router
 
 import (
-	"bytes"
-	"encoding/json"
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/utils"
 	"net/http"
-	"net/http/httptest"
-	"strconv"
 	"testing"
 )
 
-func TestPostUserTags(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
-	tagText := "post test"
+func TestGroup_Tags(t *testing.T) {
+	assert, require, session, _ := beforeTest(t)
 
-	// 正常系
-	post := struct {
-		Tag string `json:"tag"`
-	}{
-		Tag: tagText,
-	}
-	body, err := json.Marshal(post)
-	require.NoError(err)
+	t.Run("TestPostUserTag", func(t *testing.T) {
+		t.Parallel()
 
-	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/users/:userID/tags")
-	c.SetParamNames("userID")
-	c.SetParamValues(testUser.ID)
-	requestWithContext(t, mw(PostUserTag), c)
+		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
 
-	assert.EqualValues(http.StatusCreated, rec.Code)
-}
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.POST("/api/1.0/users/{userID}/tags", user.ID).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-func TestGetUserTags(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
-	for i := 0; i < 5; i++ {
-		mustMakeTag(t, testUser.GetUID(), "tag"+strconv.Itoa(i))
-	}
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			tag := utils.RandAlphabetAndNumberString(20)
+			e.POST("/api/1.0/users/{userID}/tags", user.ID).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]string{"tag": tag}).
+				Expect().
+				Status(http.StatusCreated)
 
-	// 正常系
-	c, rec := getContext(e, t, cookie, nil)
-	c.SetPath("/users/:userID/tags/")
-	c.SetParamNames("userID")
-	c.SetParamValues(testUser.ID)
-	requestWithContext(t, mw(GetUserTags), c)
+			a, err := model.GetUserIDsByTag(tag)
+			require.NoError(err)
+			assert.Len(a, 1)
+			assert.Contains(a, user.GetUID())
+		})
+	})
 
-	if assert.EqualValues(http.StatusOK, rec.Code) {
-		var responseBody []TagForResponse
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.Len(responseBody, 5)
+	t.Run("TestGetUserTags", func(t *testing.T) {
+		t.Parallel()
+
+		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
+		for i := 0; i < 5; i++ {
+			mustMakeTag(t, user.GetUID(), utils.RandAlphabetAndNumberString(20))
 		}
-	}
-}
 
-func TestPutUserTags(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
-	tagText := "put test"
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/users/{userID}/tags", user.ID).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	// 正常系
-	tag := mustMakeTag(t, testUser.GetUID(), tagText)
-	post := struct {
-		IsLocked bool `json:"isLocked"`
-	}{
-		IsLocked: true,
-	}
-	body, err := json.Marshal(post)
-	require.NoError(err)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/users/{userID}/tags", user.ID).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Array().
+				Length().
+				Equal(5)
+		})
+	})
 
-	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
-	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/users/:userID/tags/:tagID")
-	c.SetParamNames("userID", "tagID")
-	c.SetParamValues(testUser.ID, tag.String())
-	requestWithContext(t, mw(PatchUserTag), c)
+	t.Run("TestPatchUserTag", func(t *testing.T) {
+		t.Parallel()
 
-	assert.EqualValues(http.StatusNoContent, rec.Code)
-}
+		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
+		tag := mustMakeTag(t, user.GetUID(), utils.RandAlphabetAndNumberString(20))
 
-func TestDeleteUserTags(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
-	tagText := "Delete test"
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.ID, tag.String()).
+				WithJSON(map[string]bool{"isLocked": true}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	// 正常系
-	tag := mustMakeTag(t, testUser.GetUID(), tagText)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.ID, tag.String()).
+				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
+				WithJSON(map[string]bool{"isLocked": true}).
+				Expect().
+				Status(http.StatusNoContent)
 
-	c, rec := getContext(e, t, cookie, nil)
-	c.SetPath("/users/:userID/tags/:tagID")
-	c.SetParamNames("userID", "tagID")
-	c.SetParamValues(testUser.ID, tag.String())
-	requestWithContext(t, mw(DeleteUserTag), c)
+			ut, err := model.GetUserTag(user.GetUID(), tag)
+			require.NoError(err)
+			assert.True(ut.IsLocked)
+		})
 
-	assert.EqualValues(http.StatusNoContent, rec.Code)
+		t.Run("Failure1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.ID, tag.String()).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]bool{"isLocked": true}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+	})
+
+	t.Run("TestDeleteUserTag", func(t *testing.T) {
+		t.Parallel()
+
+		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
+		tag := mustMakeTag(t, user.GetUID(), utils.RandAlphabetAndNumberString(20))
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/users/{userID}/tags/{tagID}", user.ID, tag.String()).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/users/{userID}/tags/{tagID}", user.ID, tag.String()).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusNoContent)
+
+			_, err := model.GetUserTag(user.GetUID(), tag)
+			require.Equal(model.ErrNotFound, err)
+		})
+	})
 }
