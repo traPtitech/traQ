@@ -117,8 +117,9 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	// Tag: notification
 	api.GET("/notification", streamer.StreamHandler, requires(permission.ConnectNotificationStream))
 	api.POST("/notification/device", PostDeviceToken, requires(permission.RegisterDevice))
-	api.GET("/channels/:ID/notification", GetNotification(GetNotificationChannels, GetNotificationStatus), requires(permission.GetNotificationStatus))
-	api.PUT("/channels/:ID/notification", PutNotificationStatus, requires(permission.ChangeNotificationStatus))
+	api.GET("/channels/:channelID/notification", GetNotificationStatus, requires(permission.GetNotificationStatus))
+	api.PUT("/channels/:channelID/notification", PutNotificationStatus, requires(permission.ChangeNotificationStatus))
+	api.GET("/users/:userID/notification", GetNotificationChannels, requires(permission.GetNotificationStatus))
 
 	// Tag: file
 	api.POST("/files", PostFile, requires(permission.UploadFile))

@@ -119,16 +119,6 @@ func TestGroup_Users(t *testing.T) {
 			assert.Equal(newDisp, u.DisplayName)
 			assert.Equal(newTwitter, u.TwitterID)
 		})
-
-		t.Run("Failure1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.PATCH("/api/1.0/users/me").
-				WithCookie(sessions.CookieName, session).
-				WithJSON(map[string]string{"displayName": "a", "twitterId": "a"}).
-				Expect().
-				Status(http.StatusForbidden)
-		})
 	})
 
 	t.Run("TestPostLogin", func(t *testing.T) {

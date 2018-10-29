@@ -40,12 +40,12 @@ func TestGroup_Files(t *testing.T) {
 				JSON().
 				Object()
 
-			obj.Value("id").String().NotEmpty()
+			obj.Value("fileId").String().NotEmpty()
 			obj.Value("name").String().Equal("test.txt")
 			obj.Value("size").Number().Equal(len(file))
 			obj.Value("creatorId").String().Equal(testUser.ID)
 
-			_, err := model.GetMetaFileDataByID(uuid.FromStringOrNil(obj.Value("id").String().Raw()))
+			_, err := model.GetMetaFileDataByID(uuid.FromStringOrNil(obj.Value("fileId").String().Raw()))
 			require.NoError(err)
 		})
 	})

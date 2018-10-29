@@ -8,35 +8,21 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// GetNotification /channels/:ID/notificationのpath paramがchannelIDかuserIDかを判別して正しいほうにルーティングするミドルウェア
-func GetNotification(userHandler, channelHandler echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		userID := getRequestUserID(c)
-		ID := uuid.FromStringOrNil(c.Param("ID"))
-
-		if ch, err := validateChannelID(ID, userID); ch != nil {
-			c.Set("channel", ch)
-			return channelHandler(c)
-		} else if err != model.ErrNotFound {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check ID")
-		}
-
-		if user, err := model.GetUser(userID); user != nil {
-			c.Set("targetUserID", user.ID)
-			return userHandler(c)
-		} else if err != model.ErrNotFound {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to check ID")
-		}
-
-		return echo.NewHTTPError(http.StatusBadRequest, "this ID does't exist")
-	}
-}
-
 // GetNotificationStatus GET /channels/:channelID/notification
 func GetNotificationStatus(c echo.Context) error {
-	ch := c.Get("channel").(*model.Channel)
+	userID := getRequestUserID(c)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+
+	ch, err := validateChannelID(channelID, userID)
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
+		}
+	}
 
 	// プライベートチャンネルの通知は取得できない。
 	if !ch.IsPublic {
@@ -57,10 +43,10 @@ func GetNotificationStatus(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
-// PutNotificationStatus PUT /channels/:channelId/notification
+// PutNotificationStatus PUT /channels/:channelID/notification
 func PutNotificationStatus(c echo.Context) error {
 	userID := getRequestUserID(c)
-	channelID := uuid.FromStringOrNil(c.Param("ID"))
+	channelID := getRequestParamAsUUID(c, paramChannelID)
 
 	ch, err := validateChannelID(channelID, userID)
 	if err != nil {
@@ -96,7 +82,7 @@ func PutNotificationStatus(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// PostDeviceToken POST /notification/device のハンドラ
+// PostDeviceToken POST /notification/device
 func PostDeviceToken(c echo.Context) error {
 	userID := getRequestUserID(c)
 
@@ -115,9 +101,16 @@ func PostDeviceToken(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
-// GetNotificationChannels GET /users/{userID}/notification
+// GetNotificationChannels GET /users/:userID/notification
 func GetNotificationChannels(c echo.Context) error {
-	userID := uuid.FromStringOrNil(c.Get("targetUserID").(string))
+	userID := getRequestParamAsUUID(c, paramUserID)
+
+	if ok, err := model.UserExists(userID); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
+	}
 
 	channelIDs, err := model.GetSubscribedChannels(userID)
 	if err != nil {
