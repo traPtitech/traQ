@@ -128,7 +128,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	api.GET("/files/:fileID/thumbnail", GetThumbnailByID, requires(permission.DownloadFile))
 
 	// Tag: pin
-	api.GET("/channels/:channelID/pin", GetChannelPin, requires(permission.GetPin))
+	api.GET("/channels/:channelID/pins", GetChannelPin, requires(permission.GetPin))
 	api.POST("/pins", PostPin, requires(permission.CreatePin))
 	api.GET("/pins/:pinID", GetPin, requires(permission.GetPin))
 	api.DELETE("/pins/:pinID", DeletePin, requires(permission.DeletePin))

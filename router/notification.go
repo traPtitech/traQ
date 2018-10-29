@@ -8,7 +8,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// GetNotification /channels/:ID/notificationsのpath paramがchannelIDかuserIDかを判別して正しいほうにルーティングするミドルウェア
+// GetNotification /channels/:ID/notificationのpath paramがchannelIDかuserIDかを判別して正しいほうにルーティングするミドルウェア
 func GetNotification(userHandler, channelHandler echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		userID := getRequestUserID(c)
@@ -34,7 +34,7 @@ func GetNotification(userHandler, channelHandler echo.HandlerFunc) echo.HandlerF
 	}
 }
 
-// GetNotificationStatus GET /channels/:channelID/notifications のハンドラ
+// GetNotificationStatus GET /channels/:channelID/notification
 func GetNotificationStatus(c echo.Context) error {
 	ch := c.Get("channel").(*model.Channel)
 
@@ -57,7 +57,7 @@ func GetNotificationStatus(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
-// PutNotificationStatus PUT /channels/:channelId/notifications のハンドラ
+// PutNotificationStatus PUT /channels/:channelId/notification
 func PutNotificationStatus(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := uuid.FromStringOrNil(c.Param("ID"))
@@ -115,7 +115,7 @@ func PostDeviceToken(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
-// GetNotificationChannels GET /users/{userID}/notification のハンドラ
+// GetNotificationChannels GET /users/{userID}/notification
 func GetNotificationChannels(c echo.Context) error {
 	userID := uuid.FromStringOrNil(c.Get("targetUserID").(string))
 

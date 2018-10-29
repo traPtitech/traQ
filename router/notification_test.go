@@ -22,7 +22,7 @@ func TestGroup_Notification(t *testing.T) {
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.PUT("/api/1.0/channels/{channelID}/notifications", channel.ID.String()).
+			e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
 				Expect().
 				Status(http.StatusForbidden)
 		})
@@ -30,7 +30,7 @@ func TestGroup_Notification(t *testing.T) {
 		t.Run("Successful1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.PUT("/api/1.0/channels/{channelID}/notifications", channel.ID.String()).
+			e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
 				WithCookie(sessions.CookieName, session).
 				WithJSON(map[string][]string{"on": {user.ID}}).
 				Expect().
@@ -38,7 +38,7 @@ func TestGroup_Notification(t *testing.T) {
 
 			users, err := model.GetSubscribingUser(channel.ID)
 			require.NoError(err)
-			assert.EqualValues(users, []uuid.UUID{user.GetUID()})
+			assert.EqualValues([]uuid.UUID{user.GetUID()}, users)
 		})
 	})
 
@@ -53,7 +53,7 @@ func TestGroup_Notification(t *testing.T) {
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.GET("/api/1.0/channels/{channelID}/notifications", channel.ID.String()).
+			e.GET("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
 				Expect().
 				Status(http.StatusForbidden)
 		})
@@ -61,7 +61,7 @@ func TestGroup_Notification(t *testing.T) {
 		t.Run("Successful1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.GET("/api/1.0/channels/{channelID}/notifications", channel.ID.String()).
+			e.GET("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
 				WithCookie(sessions.CookieName, session).
 				Expect().
 				Status(http.StatusOK).

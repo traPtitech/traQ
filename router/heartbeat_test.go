@@ -72,7 +72,7 @@ func TestGroup_Heartbeat(t *testing.T) {
 		t.Run("Successful1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			obj := e.POST("/api/1.0/heartbeat").
+			obj := e.GET("/api/1.0/heartbeat").
 				WithCookie(sessions.CookieName, session).
 				WithQuery("channelId", channel.ID.String()).
 				Expect().

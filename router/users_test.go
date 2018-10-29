@@ -98,7 +98,7 @@ func TestGroup_Users(t *testing.T) {
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.PATCH("/api/1.0/users/{userID}", user.ID).
+			e.PATCH("/api/1.0/users/me").
 				Expect().
 				Status(http.StatusForbidden)
 		})
@@ -108,7 +108,7 @@ func TestGroup_Users(t *testing.T) {
 			e := makeExp(t)
 			newDisp := "renamed"
 			newTwitter := "test"
-			e.PATCH("/api/1.0/users/{userID}", user.ID).
+			e.PATCH("/api/1.0/users/me").
 				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
 				WithJSON(map[string]string{"displayName": newDisp, "twitterId": newTwitter}).
 				Expect().
@@ -123,7 +123,7 @@ func TestGroup_Users(t *testing.T) {
 		t.Run("Failure1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.PATCH("/api/1.0/users/{userID}", user.ID).
+			e.PATCH("/api/1.0/users/me").
 				WithCookie(sessions.CookieName, session).
 				WithJSON(map[string]string{"displayName": "a", "twitterId": "a"}).
 				Expect().

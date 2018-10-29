@@ -55,7 +55,7 @@ func TestGroup_Messages(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 
-			obj := e.GET("/api/1.0/messages/{messageID}", message.ID).
+			obj := e.GET("/api/1.0/messages/{messageID}", message2.ID).
 				WithCookie(sessions.CookieName, generateSession(t, postmanID)).
 				Expect().
 				Status(http.StatusOK).
@@ -253,23 +253,11 @@ func TestGroup_Messages(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 			text := "new message"
-			obj := e.PUT("/api/1.0/messages/{messageID}", message.ID).
+			e.PUT("/api/1.0/messages/{messageID}", message.ID).
 				WithCookie(sessions.CookieName, session).
 				WithJSON(map[string]string{"text": text}).
 				Expect().
-				Status(http.StatusOK).
-				JSON().
-				Object()
-
-			obj.Value("messageId").String().Equal(message.ID)
-			obj.Value("userId").String().Equal(testUser.ID)
-			obj.Value("parentChannelId").String().Equal(channel.ID.String())
-			obj.Value("pin").Boolean().False()
-			obj.Value("content").String().Equal(text)
-			obj.Value("reported").Boolean().False()
-			obj.Value("createdAt").String().NotEmpty()
-			obj.Value("updatedAt").String().NotEmpty()
-			obj.Value("stampList").Array().Empty()
+				Status(http.StatusNoContent)
 
 			m, err := model.GetMessageByID(message.GetID())
 			require.NoError(err)
@@ -389,7 +377,8 @@ func TestGroup_Messages(t *testing.T) {
 
 		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		mustMakeUnread(t, testUser.GetUID(), message.GetID())
+		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
+		mustMakeUnread(t, user.GetUID(), message.GetID())
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -403,7 +392,7 @@ func TestGroup_Messages(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 			e.GET("/api/1.0/users/me/unread").
-				WithCookie(sessions.CookieName, session).
+				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
 				Expect().
 				Status(http.StatusOK).
 				JSON().

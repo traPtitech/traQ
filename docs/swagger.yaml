@@ -1761,14 +1761,8 @@ paths:
                   description: Markdown形式のメッセージ本文
                   example: Raskって誰？
       responses:
-        "200":
-          description: |+
-            正常に編集できました。
-            編集後のメッセージオブジェクトを返します。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Message"
+        "204":
+          description: 正常に編集できました。
         "403":
           description: |+
             編集できませんでした。

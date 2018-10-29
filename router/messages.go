@@ -65,7 +65,7 @@ func PutMessageByID(c echo.Context) error {
 	}
 
 	go event.Emit(event.MessageUpdated, &event.MessageUpdatedEvent{Message: *m})
-	return c.JSON(http.StatusOK, formatMessage(m))
+	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteMessageByID DELETE /message/:messageID

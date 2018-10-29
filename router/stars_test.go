@@ -86,7 +86,7 @@ func TestGroup_Stars(t *testing.T) {
 		t.Run("Successful1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.DELETE("/api/1.0/users/me/stars").
+			e.DELETE("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
 				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
 				Expect().
 				Status(http.StatusNoContent)

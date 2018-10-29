@@ -21,6 +21,7 @@ func TestGroup_Files(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 			e.POST("/api/1.0/files").
+				WithMultipart().
 				WithFileBytes("file", "test.txt", []byte("aaa")).
 				Expect().
 				Status(http.StatusForbidden)
@@ -32,6 +33,7 @@ func TestGroup_Files(t *testing.T) {
 			file := []byte("test file")
 			obj := e.POST("/api/1.0/files").
 				WithCookie(sessions.CookieName, session).
+				WithMultipart().
 				WithFileBytes("file", "test.txt", file).
 				Expect().
 				Status(http.StatusCreated).

@@ -90,7 +90,7 @@ func TestGroup_Channels(t *testing.T) {
 			obj.Value("dm").Boolean().False()
 			obj.Value("member").Array().Empty()
 
-			c1, err := model.GetChannel(uuid.FromStringOrNil(obj.Value("channelID").String().Raw()))
+			c1, err := model.GetChannel(uuid.FromStringOrNil(obj.Value("channelId").String().Raw()))
 			require.NoError(err)
 
 			cname2 := utils.RandAlphabetAndNumberString(20)
