@@ -145,7 +145,6 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	api.GET("/users/me/stamp-history", GetMyStampHistory, requires(permission.GetMyStampHistory))
 
 	// Tag: webhook
-	LoadWebhookTemplate("static/webhook/*.tmpl")
 	api.GET("/webhooks", GetWebhooks, requires(permission.GetWebhook))
 	api.POST("/webhooks", PostWebhooks, requires(permission.CreateWebhook))
 	api.GET("/webhooks/:webhookID", GetWebhook, requires(permission.GetWebhook))

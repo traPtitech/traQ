@@ -138,6 +138,7 @@ func main() {
 
 	e := echo.New()
 	router.SetupRouting(e, h)
+	router.LoadWebhookTemplate("static/webhook/*.tmpl")
 
 	// init heartbeat
 	model.OnUserOnlineStateChanged = func(id uuid.UUID, online bool) {
