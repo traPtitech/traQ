@@ -1,213 +1,386 @@
 package router
 
 import (
-	"bytes"
-	"encoding/json"
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/utils"
 	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"testing"
 
-	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 )
 
-func TestGetMessageByID(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
+func TestGroup_Messages(t *testing.T) {
+	assert, require, session, _ := beforeTest(t)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
-	message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+	t.Run("TestGetMessageByID", func(t *testing.T) {
+		t.Parallel()
 
-	c, rec := getContext(e, t, cookie, nil)
-	c.SetPath("/messages/:messageID")
-	c.SetParamNames("messageID")
-	c.SetParamValues(message.ID)
+		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		privateID := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{postmanID}).ID
+		message2 := mustMakeMessage(t, postmanID, privateID)
 
-	requestWithContext(t, mw(GetMessageByID), c)
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/messages/{messageID}", message.ID).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			obj := e.GET("/api/1.0/messages/{messageID}", message.ID).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Object()
 
-	// 異常系: 自分から見えないメッセージは取得できない
-	postmanID := mustCreateUser(t, "p1").GetUID()
-	privateID := mustMakePrivateChannel(t, "private", []uuid.UUID{postmanID, mustCreateUser(t, "p2").GetUID()}).ID
-	message = mustMakeMessage(t, postmanID, privateID)
+			obj.Value("messageId").String().Equal(message.ID)
+			obj.Value("userId").String().Equal(testUser.ID)
+			obj.Value("parentChannelId").String().Equal(channel.ID.String())
+			obj.Value("pin").Boolean().False()
+			obj.Value("content").String().Equal(message.Text)
+			obj.Value("reported").Boolean().False()
+			obj.Value("createdAt").String().NotEmpty()
+			obj.Value("updatedAt").String().NotEmpty()
+			obj.Value("stampList").Array().Empty()
+		})
 
-	c, rec = getContext(e, t, cookie, nil)
-	c.SetPath("/messages/:messageID")
-	c.SetParamNames("messageID")
-	c.SetParamValues(message.ID)
+		t.Run("Successful2", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
 
-	err := mw(GetMessageByID)(c)
+			obj := e.GET("/api/1.0/messages/{messageID}", message.ID).
+				WithCookie(sessions.CookieName, generateSession(t, postmanID)).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Object()
 
-	if assert.Error(err) {
-		assert.Equal(http.StatusNotFound, err.(*echo.HTTPError).Code)
-	}
-}
+			obj.Value("messageId").String().Equal(message2.ID)
+			obj.Value("userId").String().Equal(postmanID.String())
+			obj.Value("parentChannelId").String().Equal(privateID.String())
+			obj.Value("pin").Boolean().False()
+			obj.Value("content").String().Equal(message2.Text)
+			obj.Value("reported").Boolean().False()
+			obj.Value("createdAt").String().NotEmpty()
+			obj.Value("updatedAt").String().NotEmpty()
+			obj.Value("stampList").Array().Empty()
+		})
 
-func TestGetMessagesByChannelID(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
+		t.Run("Failure1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/messages/{messageID}", message2.ID).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusNotFound)
+		})
+	})
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
-	for i := 0; i < 5; i++ {
-		mustMakeMessage(t, testUser.GetUID(), channel.ID)
-	}
+	t.Run("TestPostMessage", func(t *testing.T) {
+		t.Parallel()
 
-	q := make(url.Values)
-	q.Set("limit", "3")
-	q.Set("offset", "1")
-	req := httptest.NewRequest("GET", "/?"+q.Encode(), nil)
+		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		privateID := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{postmanID}).ID
 
-	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/channels/:channelID/messages")
-	c.SetParamNames("channelID")
-	c.SetParamValues(channel.ID.String())
-	requestWithContext(t, mw(GetMessagesByChannelID), c)
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.POST("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
+				WithJSON(map[string]string{"text": "test message"}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
-		var responseBody []MessageForResponse
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &responseBody)) {
-			assert.Len(responseBody, 3)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			message := "test message"
+
+			obj := e.POST("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]string{"text": message}).
+				Expect().
+				Status(http.StatusCreated).
+				JSON().
+				Object()
+
+			obj.Value("messageId").String().NotEmpty()
+			obj.Value("userId").String().Equal(testUser.ID)
+			obj.Value("parentChannelId").String().Equal(channel.ID.String())
+			obj.Value("pin").Boolean().False()
+			obj.Value("content").String().Equal(message)
+			obj.Value("reported").Boolean().False()
+			obj.Value("createdAt").String().NotEmpty()
+			obj.Value("updatedAt").String().NotEmpty()
+			obj.Value("stampList").Array().Empty()
+
+			_, err := model.GetMessageByID(uuid.FromStringOrNil(obj.Value("messageId").String().Raw()))
+			require.NoError(err)
+		})
+
+		t.Run("Successful2", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			message := "test message"
+
+			obj := e.POST("/api/1.0/channels/{channelID}/messages", privateID).
+				WithCookie(sessions.CookieName, generateSession(t, postmanID)).
+				WithJSON(map[string]string{"text": message}).
+				Expect().
+				Status(http.StatusCreated).
+				JSON().
+				Object()
+
+			obj.Value("messageId").String().NotEmpty()
+			obj.Value("userId").String().Equal(postmanID.String())
+			obj.Value("parentChannelId").String().Equal(privateID.String())
+			obj.Value("pin").Boolean().False()
+			obj.Value("content").String().Equal(message)
+			obj.Value("reported").Boolean().False()
+			obj.Value("createdAt").String().NotEmpty()
+			obj.Value("updatedAt").String().NotEmpty()
+			obj.Value("stampList").Array().Empty()
+
+			_, err := model.GetMessageByID(uuid.FromStringOrNil(obj.Value("messageId").String().Raw()))
+			require.NoError(err)
+		})
+
+		t.Run("Failure1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.POST("/api/1.0/channels/{channelID}/messages", privateID.String()).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]string{"text": "test message"}).
+				Expect().
+				Status(http.StatusNotFound)
+		})
+
+		t.Run("Failure2", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.POST("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]string{"not_text_field": "not_text_field"}).
+				Expect().
+				Status(http.StatusBadRequest)
+		})
+	})
+
+	t.Run("TestGetMessagesByChannelID", func(t *testing.T) {
+		t.Parallel()
+
+		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		privateID := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{postmanID}).ID
+
+		for i := 0; i < 5; i++ {
+			mustMakeMessage(t, testUser.GetUID(), channel.ID)
 		}
-	}
-}
 
-func TestPostMessage(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Array().
+				Length().
+				Equal(5)
+		})
 
-	post := struct{ Text string }{Text: "test message"}
-	body, err := json.Marshal(post)
-	require.NoError(err)
+		t.Run("Successful2", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
+				WithQuery("limit", 3).
+				WithQuery("offset", 1).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Array().
+				Length().
+				Equal(3)
+		})
 
-	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/channels/:channelID/messages")
-	c.SetParamNames("channelID")
-	c.SetParamValues(channel.ID.String())
-	requestWithContext(t, mw(PostMessage), c)
+		t.Run("Failure1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/channels/{channelID}/messages", privateID.String()).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusNotFound)
+		})
+	})
 
-	if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
-		message := &MessageForResponse{}
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), message)) {
-			assert.Equal(post.Text, message.Content)
-		}
-	}
+	t.Run("TestPutMessageByID", func(t *testing.T) {
+		t.Parallel()
 
-	user1ID := mustCreateUser(t, "private-1").GetUID()
-	user2ID := mustCreateUser(t, "private-2").GetUID()
-	privateID := mustMakePrivateChannel(t, "poyopoyo", []uuid.UUID{user1ID, user2ID}).ID
+		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		privateID := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{postmanID}).ID
+		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+		message2 := mustMakeMessage(t, postmanID, privateID)
 
-	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	c, rec = getContext(e, t, cookie, req)
-	c.SetPath("/channels/:channelID/messages")
-	c.SetParamNames("channelID")
-	c.SetParamValues(privateID.String())
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PUT("/api/1.0/messages/{messageID}", message.ID).
+				WithJSON(map[string]string{"text": "new message"}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	err = mw(PostMessage)(c)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			text := "new message"
+			obj := e.PUT("/api/1.0/messages/{messageID}", message.ID).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]string{"text": text}).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Object()
 
-	if assert.Error(err) {
-		assert.Equal(http.StatusNotFound, err.(*echo.HTTPError).Code)
-	}
-}
+			obj.Value("messageId").String().Equal(message.ID)
+			obj.Value("userId").String().Equal(testUser.ID)
+			obj.Value("parentChannelId").String().Equal(channel.ID.String())
+			obj.Value("pin").Boolean().False()
+			obj.Value("content").String().Equal(text)
+			obj.Value("reported").Boolean().False()
+			obj.Value("createdAt").String().NotEmpty()
+			obj.Value("updatedAt").String().NotEmpty()
+			obj.Value("stampList").Array().Empty()
 
-func TestPutMessageByID(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
+			m, err := model.GetMessageByID(message.GetID())
+			require.NoError(err)
+			assert.Equal(text, m.Text)
+		})
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
-	message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+		t.Run("Failure1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PUT("/api/1.0/messages/{messageID}", message2.ID).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusNotFound)
+		})
 
-	post := struct{ Text string }{Text: "test message"}
-	body, err := json.Marshal(post)
-	require.NoError(err)
+		t.Run("Failure2", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PUT("/api/1.0/messages/{messageID}", message.ID).
+				WithCookie(sessions.CookieName, generateSession(t, postmanID)).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+	})
 
-	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
+	t.Run("TestDeleteMessageByID", func(t *testing.T) {
+		t.Parallel()
 
-	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/messages/:messageID")
-	c.SetParamNames("messageID")
-	c.SetParamValues(message.ID)
-	requestWithContext(t, mw(PutMessageByID), c)
+		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		privateID := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{postmanID}).ID
+		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+		message2 := mustMakeMessage(t, postmanID, privateID)
 
-	message, err = model.GetMessageByID(message.GetID())
-	require.NoError(err)
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/messages/{messageID}", message.ID).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
-		assert.Equal(post.Text, message.Text)
-	}
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/messages/{messageID}", message.ID).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusNoContent)
 
-	// 異常系：他人のメッセージは編集できない
-	creatorID := mustCreateUser(t, "creator").GetUID()
-	message = mustMakeMessage(t, creatorID, channel.ID)
+			_, err := model.GetMessageByID(message.GetID())
+			require.Equal(model.ErrNotFound, err)
+		})
 
-	req = httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
+		t.Run("Failure1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/messages/{messageID}", message2.ID).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusNotFound)
+		})
 
-	c, rec = getContext(e, t, cookie, req)
-	c.SetPath("/messages/:messageID")
-	c.SetParamNames("messageID")
-	c.SetParamValues(message.ID)
+		t.Run("Failure2", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+			e.DELETE("/api/1.0/messages/{messageID}", message.ID).
+				WithCookie(sessions.CookieName, generateSession(t, postmanID)).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+	})
 
-	err = mw(PutMessageByID)(c)
+	t.Run("TestPostMessageReport", func(t *testing.T) {
+		t.Parallel()
 
-	if assert.Error(err) {
-		assert.Equal(http.StatusForbidden, err.(*echo.HTTPError).Code)
-	}
+		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
 
-}
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.POST("/api/1.0/messages/{messageID}/report", message.ID).
+				WithJSON(map[string]string{"reason": "aaaa"}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-func TestDeleteMessageByID(t *testing.T) {
-	e, cookie, mw, _, require := beforeTest(t)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.POST("/api/1.0/messages/{messageID}/report", message.ID).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]string{"reason": "aaaa"}).
+				Expect().
+				Status(http.StatusNoContent)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
-	message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+			r, err := model.GetMessageReportsByMessageID(message.GetID())
+			require.NoError(err)
+			assert.Len(r, 1)
+		})
 
-	req := httptest.NewRequest("DELETE", "http://test", nil)
-
-	c, _ := getContext(e, t, cookie, req)
-	c.SetPath("/messages/:messageID")
-	c.SetParamNames("messageID")
-	c.SetParamValues(message.ID)
-	requestWithContext(t, mw(DeleteMessageByID), c)
-
-	message, err := model.GetMessageByID(message.GetID())
-	require.Error(err)
-}
-
-func TestPostMessageReport(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
-
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
-	message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-
-	{
-		req := httptest.NewRequest(http.MethodPost, "/", nil)
-		c, _ := getContext(e, t, cookie, req)
-		c.SetPath("/messages/:messageID/report")
-		c.SetParamNames("messageID")
-		c.SetParamValues(message.ID)
-
-		err := mw(PostMessageReport)(c)
-
-		if assert.Error(err) {
-			assert.Equal(http.StatusBadRequest, err.(*echo.HTTPError).Code)
-		}
-	}
-
-	{
-		post := struct{ Reason string }{Reason: "ああああ"}
-		body, err := json.Marshal(post)
-		require.NoError(err)
-
-		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
-
-		c, _ := getContext(e, t, cookie, req)
-		c.SetPath("/messages/:messageID/report")
-		c.SetParamNames("messageID")
-		c.SetParamValues(message.ID)
-		requestWithContext(t, mw(PostMessageReport), c)
-
-		_, err = model.GetMessageByID(message.GetID())
-		assert.NoError(err)
-	}
+		t.Run("Failure1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.POST("/api/1.0/messages/{messageID}/report", message.ID).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]string{"not_reason": "aaaa"}).
+				Expect().
+				Status(http.StatusBadRequest)
+		})
+	})
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-func TestChannelGroup1(t *testing.T) {
+func TestGroup_Channels(t *testing.T) {
 	assert, require, session, adminSession := beforeTest(t)
 
 	t.Run("TestGetChannels", func(t *testing.T) {
