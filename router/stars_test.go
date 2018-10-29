@@ -1,49 +1,98 @@
 package router
 
 import (
-	"encoding/json"
-	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/utils"
 	"net/http"
 	"testing"
 )
 
-func TestGetStars(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
-	mustStarChannel(t, testUser.GetUID(), channel.ID)
+func TestGroup_Stars(t *testing.T) {
+	assert, require, _, _ := beforeTest(t)
 
-	rec := request(e, t, mw(GetStars), cookie, nil)
+	t.Run("TestGetStars", func(t *testing.T) {
+		t.Parallel()
 
-	if assert.EqualValues(http.StatusOK, rec.Code) {
-		var res []uuid.UUID
-		if assert.NoError(json.Unmarshal(rec.Body.Bytes(), &res)) {
-			assert.Len(res, 1)
-			assert.Equal(channel.ID, res[0])
-		}
-	}
-}
+		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
+		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		mustStarChannel(t, user.GetUID(), channel.ID)
 
-func TestPutStars(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/users/me/stars").
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	c, rec := getContext(e, t, cookie, nil)
-	c.SetParamNames("channelID")
-	c.SetParamValues(channel.ID.String())
-	requestWithContext(t, mw(PutStars), c)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/users/me/stars").
+				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Array().
+				ContainsOnly(channel.ID.String())
+		})
+	})
 
-	assert.EqualValues(http.StatusNoContent, rec.Code)
-}
+	t.Run("TestPutStars", func(t *testing.T) {
+		t.Parallel()
 
-func TestDeleteStars(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
-	mustStarChannel(t, testUser.GetUID(), channel.ID)
+		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
+		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 
-	c, rec := getContext(e, t, cookie, nil)
-	c.SetParamNames("channelID")
-	c.SetParamValues(channel.ID.String())
-	requestWithContext(t, mw(DeleteStars), c)
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PUT("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	assert.EqualValues(http.StatusNoContent, rec.Code)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PUT("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
+				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
+				Expect().
+				Status(http.StatusNoContent)
+
+			a, err := model.GetStaredChannels(user.GetUID())
+			require.NoError(err)
+			assert.Len(a, 1)
+			assert.Contains(a, channel.ID.String())
+		})
+	})
+
+	t.Run("TestDeleteStars", func(t *testing.T) {
+		t.Parallel()
+
+		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
+		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		mustStarChannel(t, user.GetUID(), channel.ID)
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/users/me/stars").
+				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
+				Expect().
+				Status(http.StatusNoContent)
+			a, err := model.GetStaredChannels(user.GetUID())
+			require.NoError(err)
+			assert.Empty(a)
+		})
+	})
 }
