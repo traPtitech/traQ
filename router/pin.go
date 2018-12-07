@@ -18,7 +18,7 @@ type pinForResponse struct {
 	Message   *MessageForResponse `json:"message"`
 }
 
-// GetChannelPin GET /channels/:channelID/pin"
+// GetChannelPin GET /channels/:channelID/pins
 func GetChannelPin(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
@@ -40,18 +40,9 @@ func GetChannelPin(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// PostPin POST /channels/:channelID/pin
+// PostPin POST /pins
 func PostPin(c echo.Context) error {
 	userID := getRequestUserID(c)
-	channelID := getRequestParamAsUUID(c, paramChannelID)
-
-	// ユーザーからアクセス可能なチャンネルかどうか
-	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
 
 	req := struct {
 		MessageID string `json:"messageId" validate:"uuid,required"`
@@ -70,8 +61,13 @@ func PostPin(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-	if m.GetCID() != channelID {
-		return echo.NewHTTPError(http.StatusBadRequest, "the channel doesn't have the message")
+
+	// ユーザーからアクセス可能なチャンネルかどうか
+	if ok, err := model.IsChannelAccessibleToUser(userID, m.GetCID()); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest, "the message doesn't exist")
 	}
 
 	pinID, err := model.CreatePin(m.GetID(), userID)
@@ -87,7 +83,7 @@ func PostPin(c echo.Context) error {
 	return c.JSON(http.StatusCreated, map[string]string{"id": pinID.String()})
 }
 
-// GetPin GET /pin/:pinID"
+// GetPin GET /pins/:pinID"
 func GetPin(c echo.Context) error {
 	userID := getRequestUserID(c)
 	pinID := getRequestParamAsUUID(c, paramPinID)
@@ -114,7 +110,7 @@ func GetPin(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatPin(pin))
 }
 
-// DeletePin DELETE /pin/:pinID
+// DeletePin DELETE /pins/:pinID
 func DeletePin(c echo.Context) error {
 	userID := getRequestUserID(c)
 	pinID := getRequestParamAsUUID(c, paramPinID)

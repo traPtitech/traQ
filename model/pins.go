@@ -40,7 +40,7 @@ func GetPin(id uuid.UUID) (p *Pin, err error) {
 	err = db.Preload("Message").Where(&Pin{ID: id.String()}).Take(p).Error
 	if err != nil {
 		if gorm.IsRecordNotFoundError(err) {
-			return nil, nil
+			return nil, ErrNotFound
 		}
 		return nil, err
 	}

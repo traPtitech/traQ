@@ -1,176 +1,392 @@
 package router
 
 import (
-	"bytes"
-	"encoding/json"
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/utils"
 	"net/http"
-	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	"github.com/traPtitech/traQ/model"
 )
 
-func TestGetChannels(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
+func TestGroup_Channels(t *testing.T) {
+	assert, require, session, adminSession := beforeTest(t)
 
-	for i := 0; i < 5; i++ {
-		mustMakeChannelDetail(t, testUser.GetUID(), "Channel-"+strconv.Itoa(i), "")
-	}
-	mustMakePrivateChannel(t, "private", []uuid.UUID{testUser.GetUID()})
+	t.Run("TestGetChannels", func(t *testing.T) {
+		// パラレルにしない
 
-	rec := request(e, t, mw(GetChannels), cookie, nil)
-
-	if assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String()) {
-		var res []ChannelForResponse
-		assert.NoError(json.Unmarshal(rec.Body.Bytes(), &res))
-		assert.Len(res, 6+1)
-	}
-}
-
-func TestPostChannels(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
-
-	postBody := PostChannel{
-		Name:   "test",
-		Parent: "",
-	}
-
-	body, err := json.Marshal(postBody)
-	require.NoError(err)
-	req := httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	rec := request(e, t, mw(PostChannels), cookie, req)
-
-	channelList, err := model.GetChannelList(testUser.GetUID())
-	if assert.NoError(err) {
-		if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
-			assert.Len(channelList, 1)
+		for i := 0; i < 5; i++ {
+			mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		}
-	}
+		mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{testUser.GetUID()})
 
-	postBody = PostChannel{
-		Name:   "test-2",
-		Parent: channelList[0].ID.String(),
-	}
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/channels").
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	body, err = json.Marshal(postBody)
-	require.NoError(err)
-	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	rec = request(e, t, mw(PostChannels), cookie, req)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			arr := e.GET("/api/1.0/channels").
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Array()
+			arr.Length().Equal(6 + 1)
+		})
 
-	channelList, err = model.GetChannelList(testUser.GetUID())
-	if assert.NoError(err) {
-		if assert.EqualValues(http.StatusCreated, rec.Code, rec.Body.String()) {
-			assert.Len(channelList, 2)
-		}
-	}
+		t.Run("Successful2", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			arr := e.GET("/api/1.0/channels").
+				WithCookie(sessions.CookieName, adminSession).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Array()
+			arr.Length().Equal(5 + 1)
+		})
+	})
 
-	recieverID := mustCreateUser(t, "testPostChannels").GetUID()
-	postBody = PostChannel{
-		Private: true,
-		Name:    "testprivate",
-		Parent:  "",
-		Members: []uuid.UUID{
-			testUser.GetUID(),
-			recieverID,
-		},
-	}
-	body, err = json.Marshal(postBody)
-	require.NoError(err)
-	req = httptest.NewRequest("POST", "http://test", bytes.NewReader(body))
-	request(e, t, mw(PostChannels), cookie, req)
+	// ここから並列テスト
 
-	channelList, err = model.GetChannelList(testUser.GetUID())
-	if assert.NoError(err) {
-		assert.Len(channelList, 3)
-	}
+	t.Run("TestPostChannels", func(t *testing.T) {
+		t.Parallel()
 
-	channelList, err = model.GetChannelList(uuid.Nil)
-	if assert.NoError(err) {
-		assert.Len(channelList, 2)
-	}
-}
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.POST("/api/1.0/channels").
+				WithJSON(&PostChannel{Name: "forbidden", Parent: ""}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-func TestGetChannelsByChannelID(t *testing.T) {
-	e, cookie, mw, assert, _ := beforeTest(t)
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
 
-	channel := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
+			cname1 := utils.RandAlphabetAndNumberString(20)
+			obj := e.POST("/api/1.0/channels").
+				WithCookie(sessions.CookieName, session).
+				WithJSON(&PostChannel{Name: cname1, Parent: ""}).
+				Expect().
+				Status(http.StatusCreated).
+				JSON().
+				Object()
 
-	c, rec := getContext(e, t, cookie, nil)
-	c.SetPath("/:channelID")
-	c.SetParamNames("channelID")
-	c.SetParamValues(channel.ID.String())
+			obj.Value("channelId").String().NotEmpty()
+			obj.Value("name").String().Equal(cname1)
+			obj.Value("visibility").Boolean().True()
+			obj.Value("parent").String().Empty()
+			obj.Value("force").Boolean().False()
+			obj.Value("private").Boolean().False()
+			obj.Value("dm").Boolean().False()
+			obj.Value("member").Array().Empty()
 
-	requestWithContext(t, mw(GetChannelByChannelID), c)
-	assert.EqualValues(http.StatusOK, rec.Code, rec.Body.String())
-}
+			c1, err := model.GetChannel(uuid.FromStringOrNil(obj.Value("channelId").String().Raw()))
+			require.NoError(err)
 
-func TestPatchChannelsByChannelID(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
-	ch := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
+			cname2 := utils.RandAlphabetAndNumberString(20)
+			obj = e.POST("/api/1.0/channels").
+				WithCookie(sessions.CookieName, session).
+				WithJSON(&PostChannel{Name: cname2, Parent: c1.ID.String()}).
+				Expect().
+				Status(http.StatusCreated).
+				JSON().
+				Object()
 
-	jsonBody := struct {
-		Name       string `json:"name"`
-		Visibility bool   `json:"visibility"`
-	}{
-		Name:       "renamed",
-		Visibility: true,
-	}
-	body, err := json.Marshal(jsonBody)
-	require.NoError(err)
+			obj.Value("channelId").String().NotEmpty()
+			obj.Value("name").String().Equal(cname2)
+			obj.Value("visibility").Boolean().True()
+			obj.Value("parent").String().Equal(c1.ID.String())
+			obj.Value("force").Boolean().False()
+			obj.Value("private").Boolean().False()
+			obj.Value("dm").Boolean().False()
+			obj.Value("member").Array().Empty()
 
-	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
-	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/:channelID")
-	c.SetParamNames("channelID")
-	c.SetParamValues(ch.ID.String())
-	requestWithContext(t, mw(PatchChannelByChannelID), c)
+			_, err = model.GetChannel(uuid.FromStringOrNil(obj.Value("channelId").String().Raw()))
+			require.NoError(err)
+		})
 
-	assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String())
-}
+		t.Run("Successful2", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
 
-func TestPutChannelParent(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
-	ch := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
+			user2 := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+			cname := utils.RandAlphabetAndNumberString(20)
+			obj := e.POST("/api/1.0/channels").
+				WithCookie(sessions.CookieName, session).
+				WithJSON(&PostChannel{
+					Private: true,
+					Name:    cname,
+					Parent:  "",
+					Members: []uuid.UUID{
+						testUser.GetUID(),
+						user2,
+					},
+				}).
+				Expect().
+				Status(http.StatusCreated).
+				JSON().
+				Object()
 
-	parentID := mustMakeChannelDetail(t, testUser.GetUID(), "parent", "").ID
-	jsonBody := struct {
-		Parent string `json:"parent"`
-	}{
-		Parent: parentID.String(),
-	}
-	body, err := json.Marshal(jsonBody)
-	require.NoError(err)
+			obj.Value("channelId").String().NotEmpty()
+			obj.Value("name").String().Equal(cname)
+			obj.Value("visibility").Boolean().True()
+			obj.Value("parent").String().Empty()
+			obj.Value("force").Boolean().False()
+			obj.Value("private").Boolean().True()
+			obj.Value("dm").Boolean().False()
+			obj.Value("member").Array().ContainsOnly(testUser.GetUID(), user2)
 
-	req := httptest.NewRequest("PUT", "http://test", bytes.NewReader(body))
-	c, rec := getContext(e, t, cookie, req)
-	c.SetPath("/:channelID")
-	c.SetParamNames("channelID")
-	c.SetParamValues(ch.ID.String())
-	requestWithContext(t, mw(PutChannelParent), c)
+			c, err := model.GetChannel(uuid.FromStringOrNil(obj.Value("channelId").String().Raw()))
+			require.NoError(err)
 
-	assert.EqualValues(http.StatusNoContent, rec.Code, rec.Body.String())
-}
+			ok, err := model.IsChannelAccessibleToUser(testUser.GetUID(), c.ID)
+			require.NoError(err)
+			assert.True(ok)
 
-func TestDeleteChannelsByChannelID(t *testing.T) {
-	e, cookie, mw, assert, require := beforeTest(t)
+			ok, err = model.IsChannelAccessibleToUser(user2, c.ID)
+			require.NoError(err)
+			assert.True(ok)
 
-	ch := mustMakeChannelDetail(t, testUser.GetUID(), "test", "")
+			ok, err = model.IsChannelAccessibleToUser(uuid.NewV4(), c.ID)
+			require.NoError(err)
+			assert.False(ok)
+		})
+	})
 
-	c, _ := getContext(e, t, cookie, nil)
-	c.SetPath("/:channelID")
-	c.SetParamNames("channelID")
-	c.SetParamValues(ch.ID.String())
-	requestWithContext(t, mw(DeleteChannelByChannelID), c)
+	t.Run("TestGetChannelsByChannelID", func(t *testing.T) {
+		t.Parallel()
 
-	ch, err := model.GetChannelWithUserID(testUser.GetUID(), ch.ID)
-	require.Error(err)
+		pubCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 
-	// ""で削除されていても取得できるようにするそれでちゃんと削除されているか確認する
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/channels/{channelID}", pubCh.ID.String()).
+				Expect().
+				Status(http.StatusForbidden)
+		})
 
-	channelList, err := model.GetChannelList(testUser.GetUID())
-	if assert.NoError(err) {
-		assert.Len(channelList, 0)
-	}
+		t.Run("NotFound", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/channels/{channelID}", uuid.NewV4().String()).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusNotFound)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			obj := e.GET("/api/1.0/channels/{channelID}", pubCh.ID.String()).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Object()
+
+			obj.Value("channelId").String().Equal(pubCh.ID.String())
+			obj.Value("name").String().Equal(pubCh.Name)
+			obj.Value("visibility").Boolean().Equal(pubCh.IsVisible)
+			obj.Value("parent").String().Equal(pubCh.ParentID)
+			obj.Value("force").Boolean().Equal(pubCh.IsForced)
+			obj.Value("private").Boolean().Equal(!pubCh.IsPublic)
+			obj.Value("dm").Boolean().Equal(pubCh.IsDMChannel())
+			obj.Value("member").Array().Empty()
+		})
+	})
+
+	t.Run("TestPatchChannelsByChannelID", func(t *testing.T) {
+		t.Parallel()
+
+		pubCh := mustMakeChannelDetail(t, model.ServerUser().GetUID(), utils.RandAlphabetAndNumberString(20), "")
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PATCH("/api/1.0/channels/{channelID}", pubCh.ID.String()).
+				WithJSON(map[string]interface{}{"name": "renamed", "visibility": true}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+
+			newName := utils.RandAlphabetAndNumberString(20)
+			e.PATCH("/api/1.0/channels/{channelID}", pubCh.ID.String()).
+				WithCookie(sessions.CookieName, adminSession).
+				WithJSON(map[string]interface{}{"name": newName, "visibility": false, "force": true}).
+				Expect().
+				Status(http.StatusNoContent)
+
+			ch, err := model.GetChannel(pubCh.ID)
+			require.NoError(err)
+			assert.Equal(newName, ch.Name)
+			assert.False(ch.IsVisible)
+			assert.True(ch.IsForced)
+		})
+
+		// 権限がない
+		t.Run("Failure1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+
+			newName := utils.RandAlphabetAndNumberString(20)
+			e.PATCH("/api/1.0/channels/{channelID}", pubCh.ID.String()).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]interface{}{"name": newName, "visibility": false, "force": true}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+	})
+
+	t.Run("TestDeleteChannelsByChannelID", func(t *testing.T) {
+		t.Parallel()
+
+		pubCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/channels/{channelID}", pubCh.ID.String()).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/channels/{channelID}", pubCh.ID.String()).
+				WithCookie(sessions.CookieName, adminSession).
+				Expect().
+				Status(http.StatusNoContent)
+
+			_, err := model.GetChannel(pubCh.ID)
+			assert.Equal(err, model.ErrNotFound)
+		})
+
+		// 権限がない
+		t.Run("Failure1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.DELETE("/api/1.0/channels/{channelID}", pubCh.ID.String()).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+	})
+
+	t.Run("TestPutChannelParent", func(t *testing.T) {
+		t.Parallel()
+
+		pCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		cCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PUT("/api/1.0/channels/{channelID}/parent", cCh.ID.String()).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PUT("/api/1.0/channels/{channelID}/parent", cCh.ID.String()).
+				WithCookie(sessions.CookieName, adminSession).
+				WithJSON(map[string]string{"parent": pCh.ID.String()}).
+				Expect().
+				Status(http.StatusNoContent)
+
+			ch, err := model.GetChannel(cCh.ID)
+			require.NoError(err)
+			assert.Equal(ch.ParentID, pCh.ID.String())
+		})
+
+		// 権限がない
+		t.Run("Failure1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PUT("/api/1.0/channels/{channelID}/parent", cCh.ID.String()).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]string{"parent": pCh.ID.String()}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+	})
+
+	t.Run("TestGetTopic", func(t *testing.T) {
+		t.Parallel()
+
+		pubCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		topicText := "Topic test"
+		require.NoError(model.UpdateChannelTopic(pubCh.ID, topicText, testUser.GetUID()))
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.GET("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
+				WithCookie(sessions.CookieName, session).
+				Expect().
+				Status(http.StatusOK).
+				JSON().
+				Object().
+				Value("text").
+				String().
+				Equal(topicText)
+		})
+	})
+
+	t.Run("TestPutTopic", func(t *testing.T) {
+		t.Parallel()
+
+		pubCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		topicText := "Topic test"
+		require.NoError(model.UpdateChannelTopic(pubCh.ID, topicText, testUser.GetUID()))
+		newTopic := "new Topic"
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PUT("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
+				WithJSON(map[string]string{"text": newTopic}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.PUT("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]string{"text": newTopic}).
+				Expect().
+				Status(http.StatusNoContent)
+
+			ch, err := model.GetChannel(pubCh.ID)
+			require.NoError(err)
+			assert.Equal(newTopic, ch.Topic)
+		})
+	})
 }

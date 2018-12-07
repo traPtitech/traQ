@@ -49,9 +49,7 @@ func TestParallelGroup8(t *testing.T) {
 		}
 
 		pin, err = GetPin(uuid.Nil)
-		if assert.NoError(err) {
-			assert.Nil(pin)
-		}
+		assert.Equal(ErrNotFound, err)
 	})
 
 	// IsPinned
@@ -82,9 +80,8 @@ func TestParallelGroup8(t *testing.T) {
 		require.NoError(err)
 
 		if assert.NoError(DeletePin(p)) {
-			pin, err := GetPin(uuid.Nil)
-			require.NoError(err)
-			assert.Nil(pin)
+			_, err := GetPin(uuid.Nil)
+			assert.Equal(ErrNotFound, err)
 		}
 	})
 

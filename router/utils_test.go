@@ -3,19 +3,20 @@ package router
 import (
 	"bytes"
 	"fmt"
+	"github.com/gavv/httpexpect"
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
+	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/sessions"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
-
-	"github.com/traPtitech/traQ/external/storage"
-	"github.com/traPtitech/traQ/utils/validator"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/traQ/external/storage"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo"
@@ -24,7 +25,10 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 )
 
-var testUser *model.User
+var (
+	testUser *model.User
+	server   *httptest.Server
+)
 
 func TestMain(m *testing.M) {
 	user := os.Getenv("MARIADB_USERNAME")
@@ -57,54 +61,67 @@ func TestMain(m *testing.M) {
 	defer engine.Close()
 	model.SetGORMEngine(engine)
 
-	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
-	model.SetFileManager("", storage.NewInMemoryFileManager())
-
 	if _, err := model.Sync(); err != nil {
 		panic(err)
 	}
 
+	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
+	model.SetFileManager("", storage.NewInMemoryFileManager())
+
+	// setup server
+	r, err := rbac.New(&model.RBACOverrideStore{})
+	if err != nil {
+		panic(err)
+	}
+	role.SetRole(r)
+
+	e := echo.New()
+	SetupRouting(e, &Handlers{RBAC: r})
+	server = httptest.NewServer(e)
+	defer server.Close()
+
 	os.Exit(m.Run())
 }
 
-func beforeTest(t *testing.T) (*echo.Echo, *http.Cookie, echo.MiddlewareFunc, *assert.Assertions, *require.Assertions) {
+func beforeTest(t *testing.T) (*assert.Assertions, *require.Assertions, string, string) {
 	require := require.New(t)
+	assert := assert.New(t)
 
 	require.NoError(model.DropTables())
 	_, err := model.Sync()
 	require.NoError(err)
-	e := echo.New()
-	e.Validator = validator.New()
 
 	testUser = mustCreateUser(t, "testUser")
 
+	return assert, require, generateSession(t, testUser.GetUID()), generateSession(t, model.ServerUser().GetUID())
+}
+
+func generateSession(t *testing.T, userID uuid.UUID) string {
+	require := require.New(t)
 	req := httptest.NewRequest(echo.GET, "/", nil)
 	rec := httptest.NewRecorder()
 
 	sess, err := sessions.Get(rec, req, true)
 	require.NoError(err)
-	require.NoError(sess.SetUser(testUser.GetUID()))
-
+	require.NoError(sess.SetUser(userID))
 	cookie := parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName]
-	mw := func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			return UserAuthenticate(nil)(next)(c)
-		}
 
-	}
-	return e, cookie, mw, assert.New(t), require
+	return cookie.Value
 }
 
-func beforeLoginTest(t *testing.T) *echo.Echo {
-	require := require.New(t)
-
-	require.NoError(model.DropTables())
-	_, err := model.Sync()
-	require.NoError(err)
-	e := echo.New()
-	e.Validator = validator.New()
-
-	return e
+func makeExp(t *testing.T) *httpexpect.Expect {
+	return httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  server.URL,
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCurlPrinter(t),
+			httpexpect.NewDebugPrinter(t, true),
+		},
+		Client: &http.Client{
+			Jar:     nil, // クッキーは保持しない
+			Timeout: time.Second * 30,
+		},
+	})
 }
 
 func parseCookies(value string) map[string]*http.Cookie {
@@ -113,47 +130,6 @@ func parseCookies(value string) map[string]*http.Cookie {
 		m[c.Name] = c
 	}
 	return m
-}
-
-func requestWithContext(t *testing.T, handler echo.HandlerFunc, c echo.Context) {
-	err := handler(c)
-
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func request(e *echo.Echo, _ *testing.T, handler echo.HandlerFunc, cookie *http.Cookie, req *http.Request) *httptest.ResponseRecorder {
-	if req == nil {
-		req = httptest.NewRequest("GET", "http://test", nil)
-	}
-
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	if cookie != nil {
-		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
-	}
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	err := handler(c)
-	if err != nil {
-		rec.Code = err.(*echo.HTTPError).Code
-	}
-
-	return rec
-}
-
-func getContext(e *echo.Echo, _ *testing.T, cookie *http.Cookie, req *http.Request) (echo.Context, *httptest.ResponseRecorder) {
-	if req == nil {
-		req = httptest.NewRequest("GET", "http://test", nil)
-	}
-
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	if cookie != nil {
-		req.Header.Add("Cookie", fmt.Sprintf("%s=%s", cookie.Name, cookie.Value))
-	}
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	return c, rec
 }
 
 func mustMakeChannelDetail(t *testing.T, userID uuid.UUID, name, parentID string) *model.Channel {
