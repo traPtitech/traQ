@@ -133,7 +133,7 @@ func main() {
 	h := &router.Handlers{
 		Bot:    event.NewBotProcessor(oauth),
 		OAuth2: oauth,
-		RBAC: r,
+		RBAC:   r,
 	}
 	event.AddListener(h.Bot)
 
