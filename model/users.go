@@ -80,7 +80,7 @@ func (user *User) GetLastOnline() time.Time {
 
 // IsOnline ユーザーがオンラインかどうかを返します
 func (user *User) IsOnline() bool {
-	return IsUserOnline(user.ID)
+	return IsUserOnline(user.GetUID())
 }
 
 // CreateUser ユーザーを作成します

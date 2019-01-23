@@ -192,7 +192,7 @@ func GetHeartbeatStatus(channelID uuid.UUID) (HeartbeatStatus, bool) {
 }
 
 // IsUserOnline ユーザーがオンラインかどうかを返します。
-func IsUserOnline(userID string) bool {
+func IsUserOnline(userID uuid.UUID) bool {
 	s, ok := currentUserOnlineMap.Load(userID)
 	if !ok {
 		return false
