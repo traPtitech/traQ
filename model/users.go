@@ -101,11 +101,11 @@ func CreateUser(name, email, password string, role gorbac.Role) (*User, error) {
 		return nil, err
 	}
 
-	iconID, err := GenerateIcon(user.Name)
+	iconID, err := GenerateIconFile(user.Name)
 	if err != nil {
 		return nil, err
 	}
-	user.Icon = iconID
+	user.Icon = iconID.String()
 
 	if err := db.Create(user).Error; err != nil {
 		return nil, err
@@ -226,22 +226,9 @@ func generateSalt() []byte {
 	return salt
 }
 
-// GenerateIcon pngアイコンを生成してそのファイルIDを返します
-func GenerateIcon(salt string) (string, error) {
-	img := utils.GenerateIcon(salt)
-	b := &bytes.Buffer{}
-	if err := png.Encode(b, img); err != nil {
-		return "", err
-	}
-
-	file := &File{
-		Name:      salt + ".png",
-		Size:      int64(b.Len()),
-		CreatorID: serverUser.ID,
-	}
-	if err := file.Create(b); err != nil {
-		return "", err
-	}
-
-	return file.ID, nil
+// GenerateIconFile pngアイコンを生成してそのファイルIDを返します
+func GenerateIconFile(salt string) (uuid.UUID, error) {
+	img := &bytes.Buffer{}
+	_ = png.Encode(img, utils.GenerateIcon(salt))
+	return SaveFile(salt+".png", img, int64(img.Len()), "image/png", FileTypeIcon)
 }

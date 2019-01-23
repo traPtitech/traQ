@@ -63,14 +63,14 @@ func (h *Handlers) PostBots(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	iconID, err := model.GenerateIcon(req.Name)
+	iconID, err := model.GenerateIconFile(req.Name)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	postURL, _ := url.Parse(req.PostURL)
-	b, err := model.CreateBot(h.OAuth2, req.Name, req.DisplayName, req.Description, userID, uuid.Must(uuid.FromString(iconID)), postURL, req.SubscribeEvents)
+	b, err := model.CreateBot(h.OAuth2, req.Name, req.DisplayName, req.Description, userID, iconID, postURL, req.SubscribeEvents)
 	if err != nil {
 		switch err.(type) {
 		case *validator.InvalidValidationError:

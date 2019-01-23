@@ -108,7 +108,7 @@ func TestGroup_Files(t *testing.T) {
 				Expect().
 				Status(http.StatusNoContent)
 
-			_, err := model.GetMetaFileDataByID(file.GetID())
+			_, err := model.GetMetaFileDataByID(file.ID)
 			require.Equal(model.ErrNotFound, err)
 		})
 
@@ -146,7 +146,7 @@ func TestGroup_Files(t *testing.T) {
 				JSON().
 				Object()
 
-			obj.Value("fileId").String().Equal(file.ID)
+			obj.Value("fileId").String().Equal(file.ID.String())
 			obj.Value("name").String().Equal(file.Name)
 			obj.Value("mime").String().Equal(file.Mime)
 			obj.Value("size").Number().Equal(file.Size)

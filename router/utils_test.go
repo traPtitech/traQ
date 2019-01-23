@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/utils/storage"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,7 +17,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/traQ/external/storage"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo"
@@ -66,7 +66,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
-	model.SetFileManager("", storage.NewInMemoryFileManager())
+	model.SetFileStorage(storage.NewInMemoryFileStorage())
 
 	// setup server
 	r, err := rbac.New(&model.RBACOverrideStore{})
@@ -181,7 +181,7 @@ func mustMakeFile(t *testing.T) *model.File {
 	file := &model.File{
 		Name:      "test.txt",
 		Size:      90,
-		CreatorID: testUser.ID,
+		CreatorID: testUser.GetUID(),
 	}
 	require.NoError(t, file.Create(bytes.NewBufferString("test message")))
 	return file

@@ -6,10 +6,9 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
+	"github.com/traPtitech/traQ/utils/storage"
 	"os"
 	"testing"
-
-	"github.com/traPtitech/traQ/external/storage"
 
 	"github.com/stretchr/testify/assert"
 
@@ -50,7 +49,7 @@ func TestMain(m *testing.M) {
 	SetGORMEngine(db)
 
 	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
-	SetFileManager("", storage.NewInMemoryFileManager())
+	SetFileStorage(storage.NewInMemoryFileStorage())
 
 	if _, err := Sync(); err != nil {
 		panic(err)
@@ -104,7 +103,7 @@ func mustMakeUser(t *testing.T, userName string) *User {
 	return u
 }
 
-func mustMakeFile(t *testing.T, userID string) *File {
+func mustMakeFile(t *testing.T, userID uuid.UUID) *File {
 	file := &File{
 		Name:      "test.txt",
 		Size:      90,

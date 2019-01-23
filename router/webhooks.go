@@ -76,13 +76,13 @@ func PostWebhooks(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	iconID, err := model.GenerateIcon(req.Name)
+	iconID, err := model.GenerateIconFile(req.Name)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	w, err := model.CreateWebhook(req.Name, req.Description, channelID, userID, uuid.Must(uuid.FromString(iconID)))
+	w, err := model.CreateWebhook(req.Name, req.Description, channelID, userID, iconID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)

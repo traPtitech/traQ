@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -77,7 +76,7 @@ func createStamps(stamps map[string]*dataStamp) error {
 			return err
 		}
 		stat, _ := f.Stat()
-		id, err := saveFile(filename, f, stat.Size())
+		id, err := model.SaveFile(filename, f, stat.Size(), "", model.FileTypeStamp)
 		f.Close()
 		if err != nil {
 			return err
@@ -133,18 +132,6 @@ func channelTreeTraverse(name string, node *dataChannel, parent *model.Channel) 
 	}
 
 	return ch, nil
-}
-
-func saveFile(name string, src io.Reader, size int64) (uuid.UUID, error) {
-	file := &model.File{
-		Name: name,
-		Size: size,
-	}
-	if err := file.Create(src); err != nil {
-		return uuid.Nil, err
-	}
-
-	return uuid.Must(uuid.FromString(file.ID)), nil
 }
 
 func unmarshalInitData(r io.Reader) (*dataRoot, error) {
