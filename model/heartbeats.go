@@ -75,7 +75,7 @@ var (
 	stop            chan bool
 	tickerMutex     sync.Mutex
 	statusesMutex   sync.RWMutex
-	timeoutDuration = -5 * time.Second
+	timeoutDuration = 5 * time.Second
 	tickTime        = 500 * time.Millisecond
 
 	currentUserOnlineMap sync.Map
@@ -116,15 +116,15 @@ func UpdateHeartbeatStatuses(userID, channelID uuid.UUID, status string) {
 func removeTimeoutStatus() {
 	statusesMutex.Lock()
 	defer statusesMutex.Unlock()
-	removed := make(map[uuid.UUID]*HeartbeatStatus)
-	timeout := time.Now().Add(timeoutDuration)
-	for channelID, channelStatus := range HeartbeatStatuses {
-		removed[channelID] = &HeartbeatStatus{}
+	timeout := time.Now().Add(-1 * timeoutDuration)
+	updated := make(map[uuid.UUID]*HeartbeatStatus, 0)
+	for cid, channelStatus := range HeartbeatStatuses {
+		arr := make([]*UserStatus, 0)
 		for _, userStatus := range channelStatus.UserStatuses {
-			// 最終POSTから指定時間以上経ったものを削除する
-			if timeout.Before(userStatus.LastTime) {
-				removed[channelID].UserStatuses = append(removed[channelID].UserStatuses, userStatus)
+			if timeout.After(userStatus.LastTime) {
+				arr = append(arr, userStatus)
 			} else {
+				// 最終POSTから指定時間以上経ったものを削除する
 				s, ok := currentUserOnlineMap.Load(userStatus.UserID)
 				if ok {
 					s.(*userOnlineStatus).dec()
@@ -132,8 +132,12 @@ func removeTimeoutStatus() {
 				}
 			}
 		}
+		if len(arr) > 0 {
+			channelStatus.UserStatuses = arr
+			updated[cid] = channelStatus
+		}
 	}
-	HeartbeatStatuses = removed
+	HeartbeatStatuses = updated
 }
 
 // HeartbeatStart ハートビートをスタートする

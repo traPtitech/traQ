@@ -33,7 +33,7 @@ func TestHeartbeat(t *testing.T) {
 	assert, require, user, channel := beforeTest(t)
 
 	tickTime = 10 * time.Millisecond
-	timeoutDuration = -20 * time.Millisecond
+	timeoutDuration = 20 * time.Millisecond
 	statusesMutex.Lock()
 	HeartbeatStatuses[channel.ID] = &HeartbeatStatus{
 		ChannelID: channel.ID,
