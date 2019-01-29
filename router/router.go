@@ -35,6 +35,9 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	apiNoAuth.POST("/login", PostLogin)
 	apiNoAuth.POST("/logout", PostLogout)
 
+	// Tag: public
+	apiNoAuth.GET("/public/icon/:username", GetPublicUserIcon)
+
 	// Tag: channel
 	api.GET("/channels", GetChannels, requires(permission.GetChannel))
 	api.POST("/channels", PostChannels, requires(permission.CreateChannel))
