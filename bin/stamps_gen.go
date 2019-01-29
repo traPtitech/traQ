@@ -15,17 +15,17 @@ import (
 	"strings"
 )
 
-/*
-	twemoji Copyright 2018 Twitter, Inc and other contributors
-	Graphics licensed under CC-BY 4.0: https://creativecommons.org/licenses/by/4.0/
-*/
 const (
+	/*
+		twemoji Copyright 2018 Twitter, Inc and other contributors
+		Graphics licensed under CC-BY 4.0: https://creativecommons.org/licenses/by/4.0/
+	*/
 	emojiZip     = "https://github.com/twitter/twemoji/archive/v11.1.0.zip"
 	emojiExt     = "svg"
 	emojiSrcDir  = "twemoji-11.1.0/2/svg/"
 	emojiData    = "https://raw.githubusercontent.com/emojione/emojione/master/emoji.json"
-	emojiDestDir = "./twemoji"
-	stampsYAML   = "./stamps.yml"
+	emojiDestDir = "../data/twemoji"
+	stampsYAML   = "../data/stamps.yml"
 )
 
 type emoji struct {

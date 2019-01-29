@@ -1,8 +1,9 @@
 /.circleci/
-/docs/
+/.idea/
+/bin/
 /data/
 /docker/
-/client/
+/docs/
 /vendor/
 codecov.yml
 LICENSE
@@ -13,5 +14,5 @@ VagrantProvision.rb
 Dockerfile
 docker-compose.yml
 .dockerignore
-.gitmodules
+.envrc
 .gitignore
