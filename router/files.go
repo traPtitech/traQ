@@ -56,11 +56,17 @@ func GetFileByID(c echo.Context) error {
 	}
 	defer file.Close()
 
+	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") //1年間キャッシュ
+	c.Response().Header().Set(headerFileMetaType, meta.Type)
+
+	switch meta.Type {
+	case model.FileTypeStamp, model.FileTypeIcon:
+		c.Response().Header().Set(headerCacheFile, "true")
+	}
+
 	if dl == "1" {
 		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", meta.Name))
 	}
-
-	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") //1年間キャッシュ
 
 	return c.Stream(http.StatusOK, meta.Mime, file)
 }

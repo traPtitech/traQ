@@ -90,9 +90,8 @@ func UpdateHeartbeatStatuses(userID, channelID uuid.UUID, status string) {
 	defer statusesMutex.Unlock()
 	channelStatus, ok := HeartbeatStatuses[channelID]
 	if !ok {
-		HeartbeatStatuses[channelID] = &HeartbeatStatus{}
-		channelStatus, _ = HeartbeatStatuses[channelID]
-		channelStatus.ChannelID = channelID
+		channelStatus = &HeartbeatStatus{ChannelID: channelID}
+		HeartbeatStatuses[channelID] = channelStatus
 	}
 
 	t := time.Now()

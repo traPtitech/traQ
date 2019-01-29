@@ -54,6 +54,7 @@ func GetPublicUserIcon(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 		defer r.Close()
+		c.Response().Header().Set(headerCacheControl, "public, max-age=3600") //1時間キャッシュ
 		return c.Stream(http.StatusOK, mimeImagePNG, r)
 	}
 
@@ -63,5 +64,6 @@ func GetPublicUserIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	defer r.Close()
+	c.Response().Header().Set(headerCacheControl, "public, max-age=3600") //1時間キャッシュ
 	return c.Stream(http.StatusOK, f.Mime, r)
 }
