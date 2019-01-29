@@ -202,6 +202,7 @@ func CreatePublicChannel(parent, name string, creatorID uuid.UUID) (*Channel, er
 		ParentID:  parent,
 		CreatorID: creatorID,
 		IsPublic:  true,
+		IsVisible: true,
 	}
 
 	if err := db.Create(ch).Error; err != nil {
@@ -269,6 +270,76 @@ func CreatePrivateChannel(parent, name string, creatorID uuid.UUID, members []uu
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	// チャンネルパスをキャッシュ
+	if path, err := ch.Path(); err == nil {
+		channelPathMap.Store(ch.ID, path)
+	}
+
+	return ch, nil
+}
+
+// CreateChildChannel 子チャンネルを作成します
+func CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*Channel, error) {
+	// ダイレクトメッセージルートの子チャンネルは作れない
+	if parentID.String() == directMessageChannelRootID {
+		return nil, ErrForbidden
+	}
+
+	// 親チャンネル検証
+	pCh, err := GetChannel(parentID)
+	if err != nil {
+		return nil, err
+	}
+
+	// ダイレクトメッセージの子チャンネルは作れない
+	if pCh.IsDMChannel() {
+		return nil, ErrForbidden
+	}
+
+	ch := &Channel{
+		Name:      name,
+		ParentID:  pCh.ID.String(),
+		CreatorID: creatorID,
+	}
+
+	if pCh.IsPublic {
+		// 公開チャンネル
+		ch.IsPublic = true
+		ch.IsForced = false
+		ch.IsVisible = true
+		if err := db.Create(ch).Error; err != nil {
+			return nil, err
+		}
+	} else {
+		// 非公開チャンネル
+		ch.IsPublic = false
+		ch.IsForced = false
+		ch.IsVisible = true
+
+		// 親チャンネルとメンバーは同じ
+		ids, err := GetPrivateChannelMembers(pCh.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		err = transact(func(tx *gorm.DB) error {
+			if err := db.Create(ch).Error; err != nil {
+				return err
+			}
+
+			// メンバーに追加
+			for _, v := range ids {
+				if err := tx.Create(&UsersPrivateChannel{UserID: v, ChannelID: ch.ID}).Error; err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// チャンネルパスをキャッシュ

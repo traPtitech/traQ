@@ -45,6 +45,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	api.PATCH("/channels/:channelID", PatchChannelByChannelID, requires(permission.EditChannel))
 	api.DELETE("/channels/:channelID", DeleteChannelByChannelID, requires(permission.DeleteChannel))
 	api.PUT("/channels/:channelID/parent", PutChannelParent, requires(permission.ChangeParentChannel))
+	api.POST("/channels/:channelID/children", PostChannelChildren, requires(permission.CreateChannel))
 
 	// Tag: Topic
 	api.GET("/channels/:channelID/topic", GetTopic, requires(permission.GetTopic))

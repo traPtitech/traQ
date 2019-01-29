@@ -454,6 +454,41 @@ paths:
         "409":
           description: 変更に失敗しました。チャンネル名が競合しています。
 
+  /channels/{channelID}/children:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+    post:
+      tags:
+        - channel
+      description: 子チャンネルを作成します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: チャンネル名
+                  example: random
+      responses:
+        "201":
+          description: 正常にチャンネルが作成できました。作成されたチャンネルを返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Channel"
+        "400":
+          description: チャンネルが作成できませんでした。リクエスト内容が不正です。
+        "403":
+          description: チャンネルが作成できませんでした。権限がありません。
+        "404":
+          description: チャンネルが作成できませんでした。指定したチャンネルは存在しません。
+        "409":
+          description: チャンネルが作成できませんでした。指定したチャンネル名のチャンネルは既に存在します。
+
   /channels/{channelID}/topic:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"

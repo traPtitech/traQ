@@ -120,7 +120,7 @@ func PostChannels(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
-		go event.Emit(event.ChannelCreated, &event.ChannelEvent{ID: ch.ID})
+		go event.Emit(event.ChannelCreated, &event.PrivateChannelEvent{ChannelID: ch.ID})
 	} else {
 		// 公開チャンネル
 		ch, err = model.CreatePublicChannel(req.Parent, req.Name, userID)
@@ -137,7 +137,7 @@ func PostChannels(c echo.Context) error {
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
-		go event.Emit(event.ChannelCreated, &event.PrivateChannelEvent{ChannelID: ch.ID})
+		go event.Emit(event.ChannelCreated, &event.ChannelEvent{ID: ch.ID})
 	}
 
 	formatted, err := formatChannel(ch)
@@ -227,6 +227,62 @@ func PatchChannelByChannelID(c echo.Context) error {
 		go event.Emit(event.ChannelUpdated, &event.PrivateChannelEvent{ChannelID: channelID})
 	}
 	return c.NoContent(http.StatusNoContent)
+}
+
+// PostChannelChildren POST /channels/:channelID/children
+func PostChannelChildren(c echo.Context) error {
+	userID := getRequestUserID(c)
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+
+	var req struct {
+		Name string `json:"name" validate:"channel,required"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	// チャンネル検証
+	parentCh, err := validateChannelID(channelID, userID)
+	if err != nil {
+		switch err {
+		case model.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
+	// 子チャンネル作成
+	ch, err := model.CreateChildChannel(req.Name, parentCh.ID, userID)
+	if err != nil {
+		switch err {
+		case model.ErrDuplicateName:
+			return echo.NewHTTPError(http.StatusConflict, err)
+		case model.ErrParentChannelDifferentOpenStatus:
+			return echo.NewHTTPError(http.StatusForbidden)
+		case model.ErrChannelDepthLimitation:
+			return echo.NewHTTPError(http.StatusBadRequest, err)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	if ch.IsPublic {
+		// 公開チャンネル
+		go event.Emit(event.ChannelCreated, &event.ChannelEvent{ID: ch.ID})
+	} else {
+		// 非公開チャンネル
+		go event.Emit(event.ChannelCreated, &event.PrivateChannelEvent{ChannelID: ch.ID})
+	}
+
+	formatted, err := formatChannel(ch)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusCreated, formatted)
 }
 
 // PutChannelParent PUT /channels/:channelID/parent
