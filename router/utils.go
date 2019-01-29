@@ -54,6 +54,8 @@ const (
 	mimeImageSVG  = "image/svg+xml"
 
 	headerCacheControl = "Cache-Control"
+	headerFileMetaType = "X-TRAQ-FILE-TYPE"
+	headerCacheFile    = "X-TRAQ-FILE-CACHE"
 )
 
 // Handlers ハンドラ
