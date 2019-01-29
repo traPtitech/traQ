@@ -214,6 +214,10 @@ func OpenFileByID(fileID uuid.UUID) (io.ReadCloser, error) {
 
 // GetMetaFileDataByID ファイルのメタデータを取得します
 func GetMetaFileDataByID(fileID uuid.UUID) (*File, error) {
+	if fileID == uuid.Nil {
+		return nil, ErrNotFound
+	}
+
 	f := &File{}
 	if err := db.Where(&File{ID: fileID}).Take(f).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
