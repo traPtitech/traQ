@@ -163,6 +163,47 @@ func TestGroup_Channels(t *testing.T) {
 		})
 	})
 
+	t.Run("PostChannelChildren", func(t *testing.T) {
+		t.Parallel()
+
+		pubCh := mustMakeChannelDetail(t, model.ServerUser().GetUID(), utils.RandAlphabetAndNumberString(20), "")
+
+		t.Run("NotLoggedIn", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+			e.POST("/api/1.0/channels/{channelID}/children", pubCh.ID.String()).
+				WithJSON(map[string]string{"name": "forbidden"}).
+				Expect().
+				Status(http.StatusForbidden)
+		})
+
+		t.Run("Successful1", func(t *testing.T) {
+			t.Parallel()
+			e := makeExp(t)
+
+			cname1 := utils.RandAlphabetAndNumberString(20)
+			obj := e.POST("/api/1.0/channels/{channelID}/children", pubCh.ID.String()).
+				WithCookie(sessions.CookieName, session).
+				WithJSON(map[string]string{"name": cname1}).
+				Expect().
+				Status(http.StatusCreated).
+				JSON().
+				Object()
+
+			obj.Value("channelId").String().NotEmpty()
+			obj.Value("name").String().Equal(cname1)
+			obj.Value("visibility").Boolean().True()
+			obj.Value("parent").String().Equal(pubCh.ID.String())
+			obj.Value("force").Boolean().False()
+			obj.Value("private").Boolean().False()
+			obj.Value("dm").Boolean().False()
+			obj.Value("member").Array().Empty()
+
+			_, err := model.GetChannel(uuid.FromStringOrNil(obj.Value("channelId").String().Raw()))
+			require.NoError(err)
+		})
+	})
+
 	t.Run("TestGetChannelsByChannelID", func(t *testing.T) {
 		t.Parallel()
 
