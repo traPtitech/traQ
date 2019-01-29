@@ -203,7 +203,7 @@ func DeleteFile(fileID uuid.UUID) error {
 	return db.Delete(f).Error
 }
 
-// OpenFileByKey ファイルを取得します
+// OpenFileByID ファイルを取得します
 func OpenFileByID(fileID uuid.UUID) (io.ReadCloser, error) {
 	meta, err := GetMetaFileDataByID(fileID)
 	if err != nil {
