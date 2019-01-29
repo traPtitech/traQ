@@ -30,6 +30,14 @@ func PostStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "name must be 1-32 characters of a-zA-Z0-9_-")
 	}
 
+	// スタンプ名の重複を確認
+	if dup, err := model.IsStampNameDuplicate(name); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if dup {
+		return echo.NewHTTPError(http.StatusConflict, "this name has already been used")
+	}
+
 	// file確認
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
@@ -37,7 +45,7 @@ func PostStamp(c echo.Context) error {
 	}
 
 	// file処理
-	fileID, err := processMultipartFormIconUpload(c, uploadedFile)
+	fileID, err := processMultipartFormStampUpload(c, uploadedFile)
 	if err != nil {
 		return err
 	}
@@ -105,6 +113,13 @@ func PatchStamp(c echo.Context) error {
 		// 名前を検証
 		if !validator.NameRegex.MatchString(name) {
 			return echo.NewHTTPError(http.StatusBadRequest, "name must be 1-32 characters of a-zA-Z0-9_-")
+		}
+		// スタンプ名の重複を確認
+		if dup, err := model.IsStampNameDuplicate(name); err != nil {
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		} else if dup {
+			return echo.NewHTTPError(http.StatusConflict, "this name has already been used")
 		}
 		data.Name = name
 	}

@@ -40,6 +40,35 @@ paths:
           description: |+
             正常にログアウトできました。
 
+
+  /public/icon/{username}:
+    get:
+      tags:
+        - public
+      description: 指定したユーザーのアイコン画像を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+                format: svg
+        "404":
+          description: 取得できませんでした。指定したユーザーは存在しません。
+
   /users/me/sessions:
     get:
       tags:

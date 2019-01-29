@@ -28,7 +28,9 @@ func PostFile(c echo.Context) error {
 	file := &model.File{
 		Name:      uploadedFile.Filename,
 		Size:      uploadedFile.Size,
-		CreatorID: userID.String(),
+		Mime:      uploadedFile.Header.Get(echo.HeaderContentType),
+		Type:      model.FileTypeUserFile,
+		CreatorID: userID,
 	}
 	if err := file.Create(src); err != nil {
 		c.Logger().Error(err)
@@ -45,11 +47,6 @@ func GetFileByID(c echo.Context) error {
 	meta, err := validateFileID(c, fileID)
 	if err != nil {
 		return err
-	}
-
-	url := meta.GetRedirectURL()
-	if len(url) > 0 {
-		return c.Redirect(http.StatusFound, url) //オブジェクトストレージで直接アクセス出来る場合はリダイレクトする
 	}
 
 	file, err := meta.Open()

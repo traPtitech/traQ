@@ -62,7 +62,6 @@ var (
 		{"unreads", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"unreads", "message_id", "messages(id)", "CASCADE", "CASCADE"},
 		{"devices", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"files", "creator_id", "users(id)", "CASCADE", "CASCADE"},
 		{"stars", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"stars", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 		{"users_subscribe_channels", "user_id", "users(id)", "CASCADE", "CASCADE"},
@@ -132,11 +131,11 @@ func Sync() (bool, error) {
 		if err := db.Create(serverUser).Error; err != nil {
 			return false, err
 		}
-		fileID, err := GenerateIcon(uuid.NewV4().String())
+		fileID, err := GenerateIconFile(uuid.NewV4().String())
 		if err != nil {
 			return false, err
 		}
-		if err := ChangeUserIcon(serverUser.GetUID(), uuid.Must(uuid.FromString(fileID))); err != nil {
+		if err := ChangeUserIcon(serverUser.GetUID(), fileID); err != nil {
 			return false, err
 		}
 

@@ -24,12 +24,12 @@ func TestParallelGroup10(t *testing.T) {
 		writeData := bytes.NewReader(([]byte)("test message"))
 
 		assert.Error((&File{}).Create(writeData))
-		assert.Error((&File{ID: CreateUUID()}).Create(writeData))
+		assert.Error((&File{ID: uuid.NewV4()}).Create(writeData))
 
 		file := &File{
 			Name:      "testFile.txt",
 			Size:      writeData.Size(),
-			CreatorID: user.ID,
+			CreatorID: user.GetUID(),
 		}
 		assert.NoError(file.Create(writeData))
 	})
@@ -38,19 +38,19 @@ func TestParallelGroup10(t *testing.T) {
 	t.Run("TestDeleteFile", func(t *testing.T) {
 		t.Parallel()
 
-		file := mustMakeFile(t, user.ID)
+		file := mustMakeFile(t, user.GetUID())
 
-		assert.NoError(DeleteFile(file.GetID()))
-		_, err := fileManagers[""].OpenFileByID(file.ID)
+		assert.NoError(DeleteFile(file.ID))
+		_, err := fs.OpenFileByKey(file.getKey())
 		assert.Error(err)
 	})
 
-	// OpenFileByID
+	// OpenFileByKey
 	t.Run("TestOpenFileByID", func(t *testing.T) {
 		t.Parallel()
 
-		f := mustMakeFile(t, user.ID)
-		file, err := OpenFileByID(f.GetID())
+		f := mustMakeFile(t, user.GetUID())
+		file, err := OpenFileByID(f.ID)
 		if assert.NoError(err) {
 			defer file.Close()
 
@@ -66,8 +66,8 @@ func TestParallelGroup10(t *testing.T) {
 	t.Run("TestGetMetaFileDataByID", func(t *testing.T) {
 		t.Parallel()
 
-		file := mustMakeFile(t, user.ID)
-		result, err := GetMetaFileDataByID(file.GetID())
+		file := mustMakeFile(t, user.GetUID())
+		result, err := GetMetaFileDataByID(file.ID)
 		if assert.NoError(err) {
 			assert.Equal(file.ID, result.ID)
 		}

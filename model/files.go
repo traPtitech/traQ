@@ -11,8 +11,8 @@ import (
 	"github.com/labstack/gommon/log"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
-	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/storage"
 	"github.com/traPtitech/traQ/utils/thumb"
 	"github.com/traPtitech/traQ/utils/validator"
 	"golang.org/x/sync/errgroup"
@@ -22,34 +22,36 @@ import (
 	"time"
 )
 
-var (
-	fileManagers = storage.FileManagers{
-		"": storage.NewLocalFileManager(config.LocalStorageDir),
-	}
+const (
+	// FileTypeUserFile ユーザーアップロードファイルタイプ
+	FileTypeUserFile = ""
+	// FileTypeIcon ユーザーアイコンファイルタイプ
+	FileTypeIcon = "icon"
+	// FileTypeStamp スタンプファイルタイプ
+	FileTypeStamp = "stamp"
+)
 
-	// ErrFileThumbUnsupported : fileエラー この形式のファイルのサムネイル生成はサポートされていない
+var (
+	fs storage.FileStorage = storage.NewLocalFileStorage(config.LocalStorageDir)
+
+	// ErrFileThumbUnsupported この形式のファイルのサムネイル生成はサポートされていない
 	ErrFileThumbUnsupported = errors.New("generating a thumbnail of the file is not supported")
 )
 
 // File DBに格納するファイルの構造体
 type File struct {
-	ID              string     `gorm:"type:char(36);primary_key" json:"fileId"   validate:"uuid,required"`
+	ID              uuid.UUID  `gorm:"type:char(36);primary_key" json:"fileId"`
 	Name            string     `gorm:"type:text"                 json:"name"     validate:"required"`
 	Mime            string     `gorm:"type:text"                 json:"mime"     validate:"required"`
 	Size            int64      `                                 json:"size"     validate:"min=0,required"`
-	CreatorID       string     `gorm:"type:char(36)"             json:"-"        validate:"uuid,required"`
+	CreatorID       uuid.UUID  `gorm:"type:char(36)"             json:"-"`
 	Hash            string     `gorm:"type:char(32)"             json:"md5"      validate:"max=32"`
-	Manager         string     `gorm:"type:varchar(30)"          json:"-"`
+	Type            string     `gorm:"type:varchar(30)"          json:"-"`
 	HasThumbnail    bool       `                                 json:"hasThumb"`
 	ThumbnailWidth  int        `                                 json:"thumbWidth,omitempty"  validate:"min=0"`
 	ThumbnailHeight int        `                                 json:"thumbHeight,omitempty" validate:"min=0"`
 	CreatedAt       time.Time  `gorm:"precision:6"               json:"datetime"`
 	DeletedAt       *time.Time `gorm:"precision:6"               json:"-"`
-}
-
-// GetID FileのUUIDを返します
-func (f *File) GetID() uuid.UUID {
-	return uuid.Must(uuid.FromString(f.ID))
 }
 
 // TableName dbのtableの名前を返します
@@ -64,16 +66,12 @@ func (f *File) BeforeDelete(scope *gorm.Scope) error {
 
 // AfterDelete db.Deleteのトランザクション内で実行されます
 func (f *File) AfterDelete(scope *gorm.Scope) error {
-	m, ok := fileManagers[f.Manager]
-	if ok {
-		if f.HasThumbnail {
-			if err := m.DeleteByID(f.ID + "-thumb"); err != nil {
-				return err
-			}
+	if f.HasThumbnail {
+		if err := fs.DeleteByKey(f.getThumbKey()); err != nil {
+			return err
 		}
-		return m.DeleteByID(f.ID)
 	}
-	return nil
+	return fs.DeleteByKey(f.getKey())
 }
 
 // Validate 構造体を検証します
@@ -83,18 +81,10 @@ func (f *File) Validate() error {
 
 // Create file構造体を作ります
 func (f *File) Create(src io.Reader) error {
-	f.ID = CreateUUID()
+	f.ID = uuid.NewV4()
 	f.Mime = mime.TypeByExtension(filepath.Ext(f.Name))
-	if len(f.CreatorID) == 0 {
-		f.CreatorID = serverUser.ID
-	}
 	if len(f.Mime) == 0 {
 		f.Mime = echo.MIMEOctetStream
-	}
-
-	writer, ok := fileManagers[f.Manager]
-	if !ok {
-		return storage.ErrUnknownManager
 	}
 
 	if err := f.Validate(); err != nil {
@@ -116,7 +106,7 @@ func (f *File) Create(src io.Reader) error {
 	// fileの保存
 	eg.Go(func() error {
 		defer fileSrc.Close()
-		if err := writer.WriteByID(fileSrc, f.ID, f.Name, f.Mime); err != nil {
+		if err := fs.SaveByKey(fileSrc, f.getKey(), f.Name, f.Mime); err != nil {
 			return err
 		}
 		return nil
@@ -127,7 +117,7 @@ func (f *File) Create(src io.Reader) error {
 		// アップロードされたファイルの拡張子が間違えてたり、変なの送ってきた場合
 		// サムネイルを生成しないだけで全体のエラーにはしない
 		defer thumbSrc.Close()
-		if err := GenerateThumbnail(ctx, f, thumbSrc); err != nil {
+		if err := generateThumbnail(ctx, f, thumbSrc); err != nil {
 			switch err {
 			case ErrFileThumbUnsupported:
 				return nil
@@ -147,61 +137,27 @@ func (f *File) Create(src io.Reader) error {
 	return db.Create(f).Error
 }
 
-// DeleteFile ファイルを削除します
-func DeleteFile(fileID uuid.UUID) error {
-	f, err := GetMetaFileDataByID(fileID)
-	if err != nil {
-		return err
-	}
-
-	return db.Delete(f).Error
-}
-
 // Open fileを開きます
 func (f *File) Open() (io.ReadCloser, error) {
-	reader, ok := fileManagers[f.Manager]
-	if !ok {
-		return nil, storage.ErrUnknownManager
-	}
-
-	return reader.OpenFileByID(f.ID)
+	return fs.OpenFileByKey(f.getKey())
 }
 
 // OpenThumbnail サムネイルファイルを開きます
 func (f *File) OpenThumbnail() (io.ReadCloser, error) {
-	reader, ok := fileManagers[f.Manager]
-	if !ok {
-		return nil, storage.ErrUnknownManager
-	}
-
-	return reader.OpenFileByID(f.ID + "-thumb")
-}
-
-// GetRedirectURL リダイレクト先URLが存在する場合はそれを返します
-func (f *File) GetRedirectURL() string {
-	m, ok := fileManagers[f.Manager]
-	if !ok {
-		return ""
-	}
-	return m.GetRedirectURL(f.ID)
+	return fs.OpenFileByKey(f.getThumbKey())
 }
 
 // RegenerateThumbnail サムネイル画像を再生成します
 func (f *File) RegenerateThumbnail() error {
-	reader, ok := fileManagers[f.Manager]
-	if !ok {
-		return storage.ErrUnknownManager
-	}
-
 	//既存のものを削除
-	reader.DeleteByID(f.ID + "-thumb")
+	_ = fs.DeleteByKey(f.getThumbKey())
 
-	src, err := reader.OpenFileByID(f.ID)
+	src, err := fs.OpenFileByKey(f.getKey())
 	if err != nil {
 		return err
 	}
 
-	if err := GenerateThumbnail(context.Background(), f, src); err != nil {
+	if err := generateThumbnail(context.Background(), f, src); err != nil {
 		return err
 	}
 
@@ -212,13 +168,73 @@ func (f *File) RegenerateThumbnail() error {
 	}).Error
 }
 
-// GenerateThumbnail サムネイル画像を生成します
-func GenerateThumbnail(ctx context.Context, f *File, src io.Reader) error {
-	writer, ok := fileManagers[f.Manager]
-	if !ok {
-		return storage.ErrUnknownManager
+// getKey ファイルのストレージに対するキーを返す
+func (f *File) getKey() string {
+	return f.ID.String()
+}
+
+// getThumbKey ファイルのサムネイルのストレージに対するキーを返す
+func (f *File) getThumbKey() string {
+	return f.ID.String() + "-thumb"
+}
+
+// SaveFile ファイルを保存します。mimeが指定されていない場合はnameの拡張子によって決まります
+func SaveFile(name string, src io.Reader, size int64, mime string, fType string) (uuid.UUID, error) {
+	file := &File{
+		Name: name,
+		Size: size,
+		Mime: mime,
+		Type: fType,
+	}
+	if err := file.Create(src); err != nil {
+		return uuid.Nil, err
 	}
 
+	return file.ID, nil
+}
+
+// DeleteFile ファイルを削除します
+func DeleteFile(fileID uuid.UUID) error {
+	f, err := GetMetaFileDataByID(fileID)
+	if err != nil {
+		return err
+	}
+
+	return db.Delete(f).Error
+}
+
+// OpenFileByID ファイルを取得します
+func OpenFileByID(fileID uuid.UUID) (io.ReadCloser, error) {
+	meta, err := GetMetaFileDataByID(fileID)
+	if err != nil {
+		return nil, err
+	}
+	return fs.OpenFileByKey(meta.getKey())
+}
+
+// GetMetaFileDataByID ファイルのメタデータを取得します
+func GetMetaFileDataByID(fileID uuid.UUID) (*File, error) {
+	if fileID == uuid.Nil {
+		return nil, ErrNotFound
+	}
+
+	f := &File{}
+	if err := db.Where(&File{ID: fileID}).Take(f).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return f, nil
+}
+
+// SetFileStorage ファイルストレージをセットします
+func SetFileStorage(s storage.FileStorage) {
+	fs = s
+}
+
+// generateThumbnail サムネイル画像を生成します
+func generateThumbnail(ctx context.Context, f *File, src io.Reader) error {
 	img, err := thumb.Generate(ctx, src, f.Mime)
 	if err != nil {
 		return err
@@ -239,7 +255,7 @@ func GenerateThumbnail(ctx context.Context, f *File, src io.Reader) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		if err := writer.WriteByID(b, f.ID+"-thumb", f.ID+"-thumb.png", "image/png"); err != nil {
+		if err := fs.SaveByKey(b, f.getThumbKey(), f.getThumbKey()+".png", "image/png"); err != nil {
 			return err
 		}
 	}
@@ -249,36 +265,4 @@ func GenerateThumbnail(ctx context.Context, f *File, src io.Reader) error {
 	f.ThumbnailHeight = img.Bounds().Size().Y
 
 	return nil
-}
-
-// OpenFileByID ファイルを取得します
-func OpenFileByID(fileID uuid.UUID) (io.ReadCloser, error) {
-	meta, err := GetMetaFileDataByID(fileID)
-	if err != nil {
-		return nil, err
-	}
-
-	reader, ok := fileManagers[meta.Manager]
-	if !ok {
-		return nil, storage.ErrUnknownManager
-	}
-
-	return reader.OpenFileByID(fileID.String())
-}
-
-// GetMetaFileDataByID ファイルのメタデータを取得します
-func GetMetaFileDataByID(fileID uuid.UUID) (*File, error) {
-	f := &File{}
-	if err := db.Where(&File{ID: fileID.String()}).Take(f).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
-	}
-	return f, nil
-}
-
-// SetFileManager ファイルマネージャーリストにマネージャーをセットします
-func SetFileManager(name string, manager storage.FileManager) {
-	fileManagers[name] = manager
 }

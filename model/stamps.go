@@ -107,3 +107,12 @@ func StampExists(id uuid.UUID) (bool, error) {
 	}
 	return c > 0, nil
 }
+
+// IsStampNameDuplicate 指定した名前のスタンプが存在するかどうか
+func IsStampNameDuplicate(name string) (bool, error) {
+	c := 0
+	if err := db.Model(Stamp{}).Where(&Stamp{Name: name}).Count(&c).Error; err != nil {
+		return false, err
+	}
+	return c > 0, nil
+}

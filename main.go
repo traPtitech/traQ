@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/utils/storage"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -18,7 +19,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
-	"github.com/traPtitech/traQ/external/storage"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/oauth2/impl"
@@ -172,11 +172,11 @@ func setSwiftFileManagerAsDefault(container, userName, apiKey, tenant, tenantID,
 	if container == "" || userName == "" || apiKey == "" || authURL == "" {
 		return nil
 	}
-	m, err := storage.NewSwiftFileManager(container, userName, apiKey, tenant, tenantID, authURL, false) //TODO リダイレクトをオンにする
+	s, err := storage.NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL)
 	if err != nil {
 		return err
 	}
-	model.SetFileManager("", m)
+	model.SetFileStorage(s)
 	return nil
 }
 
