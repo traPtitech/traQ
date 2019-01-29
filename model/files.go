@@ -40,11 +40,11 @@ var (
 
 // File DBに格納するファイルの構造体
 type File struct {
-	ID              uuid.UUID  `gorm:"type:char(36);primary_key" json:"fileId"   validate:"uuid,required"`
+	ID              uuid.UUID  `gorm:"type:char(36);primary_key" json:"fileId"`
 	Name            string     `gorm:"type:text"                 json:"name"     validate:"required"`
 	Mime            string     `gorm:"type:text"                 json:"mime"     validate:"required"`
 	Size            int64      `                                 json:"size"     validate:"min=0,required"`
-	CreatorID       uuid.UUID  `gorm:"type:char(36)"             json:"-"        validate:"uuid,required"`
+	CreatorID       uuid.UUID  `gorm:"type:char(36)"             json:"-"`
 	Hash            string     `gorm:"type:char(32)"             json:"md5"      validate:"max=32"`
 	Type            string     `gorm:"type:varchar(30)"          json:"-"`
 	HasThumbnail    bool       `                                 json:"hasThumb"`
