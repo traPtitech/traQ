@@ -62,7 +62,6 @@ var (
 		{"unreads", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"unreads", "message_id", "messages(id)", "CASCADE", "CASCADE"},
 		{"devices", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"files", "creator_id", "users(id)", "CASCADE", "CASCADE"},
 		{"stars", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"stars", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 		{"users_subscribe_channels", "user_id", "users(id)", "CASCADE", "CASCADE"},
