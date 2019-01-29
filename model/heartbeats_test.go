@@ -54,7 +54,7 @@ func TestHeartbeat(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	statusesMutex.Lock()
-	assert.Len(HeartbeatStatuses[channel.ID].UserStatuses, 0)
+	assert.Nil(HeartbeatStatuses[channel.ID])
 	statusesMutex.Unlock()
 
 	require.NoError(HeartbeatStop())
