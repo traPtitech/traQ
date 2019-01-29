@@ -61,12 +61,12 @@ func TestMain(m *testing.M) {
 	defer engine.Close()
 	model.SetGORMEngine(engine)
 
+	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
+	model.SetFileStorage(storage.NewInMemoryFileStorage())
+
 	if _, err := model.Sync(); err != nil {
 		panic(err)
 	}
-
-	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
-	model.SetFileStorage(storage.NewInMemoryFileStorage())
 
 	// setup server
 	r, err := rbac.New(&model.RBACOverrideStore{})
