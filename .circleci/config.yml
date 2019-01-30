@@ -1,7 +1,77 @@
-version: 2
+version: 2.1
+
+executors:
+  default:
+    docker:
+      - image: circleci/golang:1.11.5
+        environment:
+          - GO111MODULE: "on"
+          - GOCACHE: "/tmp/go/cache"
+    working_directory: ~/workspace
+
+commands:
+  restore_mod:
+    steps:
+      - restore_cache:
+          keys:
+            - gomod-{{ checksum "go.mod" }}
+  restore_build_cache:
+    steps:
+      - restore_cache:
+          keys:
+            - build-cache-{{ .Branch }}--
+            - build-cache-master--
+
+orbs:
+  codecov: codecov/codecov@1.0.3
 
 jobs:
+  gomod:
+    executor: default
+    steps:
+      - checkout
+      - restore_mod
+      - run:
+          when: always
+          command: go mod download
+      - save_cache:
+          key: gomod-{{ checksum "go.mod" }}
+          when: always
+          paths:
+            - /go/pkg/mod/cache
+
+  lint:
+    executor: default
+    steps:
+      - checkout
+      - restore_mod
+      - run:
+          name: Install golangci-lint v1.13.2
+          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.13.2
+      - run: golangci-lint run
+
   build:
+    executor: default
+    steps:
+      - checkout
+      - restore_mod
+      - restore_build_cache
+      - run:
+          name: build
+          when: always
+          command: |
+            mkdir -p $GOCACHE
+            go build -v
+      - save_cache:
+          key: build-cache-{{ .Branch }}--{{ .Revision }}
+          when: always
+          paths:
+            - /tmp/go/cache
+      - store_artifacts:
+          path: ~/workspace/traQ
+          destination: traQ
+
+  test:
     docker:
       - image: circleci/golang:1.11.5
         environment:
@@ -11,50 +81,11 @@ jobs:
         environment:
           - MYSQL_DATABASE: "traq"
           - MYSQL_ROOT_PASSWORD: "password"
-    working_directory: /go/src/github.com/traPtitech/traQ
+    working_directory: ~/workspace
     steps:
       - checkout
-
-      - restore_cache:
-          keys:
-            - gomod-{{ checksum "go.mod" }}
-      - run:
-          name: Download go modules and golint
-          when: always
-          command: |
-            go mod download
-            GO111MODULE=off go get -u golang.org/x/lint/golint
-      - save_cache:
-          key: gomod-{{ checksum "go.mod" }}
-          when: always
-          paths:
-            - /go/pkg/mod/cache
-
-      - restore_cache:
-          keys:
-            - build-cache-{{ .Branch }}--
-            - build-cache-master--
-
-      - run:
-          name: gofmt
-          when: always
-          command: make ci-fmt
-      - run:
-          name: golint
-          when: always
-          command: make ci-lint
-      - run:
-          name: go vet
-          when: always
-          command: make ci-vet
-
-      - run:
-          name: build
-          when: always
-          command: |
-            mkdir -p $GOCACHE
-            go build -v
-
+      - restore_mod
+      - restore_build_cache
       - run:
           name: Setup DB
           when: always
@@ -65,16 +96,19 @@ jobs:
           name: test
           when: always
           command: go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
+      - codecov/upload
 
-      - save_cache:
-          key: build-cache-{{ .Branch }}--{{ .Revision }}
-          when: always
-          paths:
-            - /tmp/go/cache
-
-      - run:
-          name: Upload coverage data
-          command: bash <(curl -s https://codecov.io/bash)
-      - store_artifacts:
-          path: /go/src/github.com/traPtitech/traQ/traQ
-          destination: traQ
+workflows:
+  version: 2
+  main:
+    jobs:
+      - gomod
+      - lint:
+          requires:
+            - gomod
+      - build:
+          requires:
+            - gomod
+      - test:
+          requires:
+            - build
