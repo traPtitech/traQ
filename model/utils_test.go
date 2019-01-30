@@ -69,12 +69,6 @@ func beforeTest(t *testing.T) (*assert.Assertions, *require.Assertions, *User, *
 	return assert.New(t), require.New(t), user, mustMakeChannelDetail(t, user.GetUID(), "testchannel", "")
 }
 
-func mustMakeChannel(t *testing.T, userID uuid.UUID, tail string) *Channel {
-	ch, err := CreatePublicChannel("", "Channel-"+tail, userID)
-	require.NoError(t, err)
-	return ch
-}
-
 func mustMakeChannelDetail(t *testing.T, userID uuid.UUID, name, parentID string) *Channel {
 	ch, err := CreatePublicChannel(parentID, name, userID)
 	require.NoError(t, err)

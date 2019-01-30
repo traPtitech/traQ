@@ -73,10 +73,28 @@ func PutNotificationStatus(c echo.Context) error {
 	}
 
 	for _, v := range req.On {
-		model.SubscribeChannel(uuid.FromStringOrNil(v), ch.ID)
+		err := model.SubscribeChannel(uuid.FromStringOrNil(v), ch.ID)
+		if err != nil {
+			switch err {
+			case model.ErrNotFound:
+				break
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+		}
 	}
 	for _, v := range req.Off {
-		model.UnsubscribeChannel(uuid.FromStringOrNil(v), ch.ID)
+		err := model.UnsubscribeChannel(uuid.FromStringOrNil(v), ch.ID)
+		if err != nil {
+			switch err {
+			case model.ErrNotFound:
+				break
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)

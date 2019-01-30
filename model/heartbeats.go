@@ -117,7 +117,7 @@ func removeTimeoutStatus() {
 	statusesMutex.Lock()
 	defer statusesMutex.Unlock()
 	timeout := time.Now().Add(-1 * timeoutDuration)
-	updated := make(map[uuid.UUID]*HeartbeatStatus, 0)
+	updated := make(map[uuid.UUID]*HeartbeatStatus)
 	for cid, channelStatus := range HeartbeatStatuses {
 		arr := make([]*UserStatus, 0)
 		for _, userStatus := range channelStatus.UserStatuses {
@@ -128,7 +128,7 @@ func removeTimeoutStatus() {
 				s, ok := currentUserOnlineMap.Load(userStatus.UserID)
 				if ok {
 					s.(*userOnlineStatus).dec()
-					go UpdateUserLastOnline(userStatus.UserID, s.(*userOnlineStatus).getTime()) //DBに反映するのはこの時点
+					go UpdateUserLastOnline(userStatus.UserID, s.(*userOnlineStatus).getTime()) //nolint:errcheck
 				}
 			}
 		}

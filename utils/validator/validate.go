@@ -38,29 +38,29 @@ func New() *Validator {
 func init() {
 	validate = validator.New()
 
-	validate.RegisterValidation("name", func(fl validator.FieldLevel) bool {
+	must(validate.RegisterValidation("name", func(fl validator.FieldLevel) bool {
 		s := fl.Field().String()
 		if len(s) > 0 {
 			return NameRegex.MatchString(s)
 		}
 		return true
-	})
+	}))
 
-	validate.RegisterValidation("channel", func(fl validator.FieldLevel) bool {
+	must(validate.RegisterValidation("channel", func(fl validator.FieldLevel) bool {
 		return ChannelRegex.MatchString(fl.Field().String())
-	})
+	}))
 
-	validate.RegisterValidation("password", func(fl validator.FieldLevel) bool {
+	must(validate.RegisterValidation("password", func(fl validator.FieldLevel) bool {
 		return PasswordRegex.MatchString(fl.Field().String())
-	})
+	}))
 
-	validate.RegisterValidation("twitterid", func(fl validator.FieldLevel) bool {
+	must(validate.RegisterValidation("twitterid", func(fl validator.FieldLevel) bool {
 		s := fl.Field().String()
 		if len(s) > 0 {
 			return TwitterIDRegex.MatchString(s)
 		}
 		return true
-	})
+	}))
 }
 
 // ValidateStruct 構造体を検証します
@@ -71,4 +71,10 @@ func ValidateStruct(i interface{}) error {
 // ValidateVar 値を検証します
 func ValidateVar(i interface{}, tag string) error {
 	return validate.Var(i, tag)
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

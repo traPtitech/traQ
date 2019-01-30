@@ -22,10 +22,10 @@ func TestGetHeartbeatStatus(t *testing.T) {
 	}
 	statusesMutex.Unlock()
 
-	status, ok := GetHeartbeatStatus(channel.ID)
+	status, _ := GetHeartbeatStatus(channel.ID)
 	assert.Len(status.UserStatuses, 1)
 
-	status, ok = GetHeartbeatStatus(uuid.NewV4())
+	_, ok := GetHeartbeatStatus(uuid.NewV4())
 	assert.False(ok)
 }
 

@@ -149,7 +149,9 @@ func main() {
 			go event.Emit(event.UserOffline, &event.UserEvent{ID: id})
 		}
 	}
-	model.HeartbeatStart()
+	if err := model.HeartbeatStart(); err != nil {
+		panic(err)
+	}
 
 	go func() {
 		if err := e.Start(":" + config.Port); err != nil {
@@ -157,7 +159,7 @@ func main() {
 		}
 	}()
 
-	quit := make(chan os.Signal)
+	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

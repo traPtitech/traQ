@@ -479,7 +479,7 @@ func ChangeChannelName(channelID uuid.UUID, name string, updaterID uuid.UUID) er
 
 	// チャンネルパスキャッシュの更新
 	ch.Name = name
-	updateChannelPathWithDescendants(ch)
+	_ = updateChannelPathWithDescendants(ch)
 
 	return nil
 }
@@ -514,7 +514,7 @@ func ChangeChannelParent(channelID uuid.UUID, parent string, updaterID uuid.UUID
 	}
 
 	//チャンネルパスキャッシュの更新
-	updateChannelPathWithDescendants(ch)
+	_ = updateChannelPathWithDescendants(ch)
 
 	return nil
 }

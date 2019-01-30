@@ -240,7 +240,7 @@ func generateThumbnail(ctx context.Context, f *File, src io.Reader) error {
 		return err
 	}
 
-	b := &bytes.Buffer{}
+	var b *bytes.Buffer
 	select {
 	case <-ctx.Done():
 		return ctx.Err()

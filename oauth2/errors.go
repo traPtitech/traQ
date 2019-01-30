@@ -7,7 +7,6 @@ const (
 	errUnsupportedResponseType = "unsupported_response_type"
 	errInvalidScope            = "invalid_scope"
 	errServerError             = "server_error"
-	errTemporarilyUnavailable  = "temporarily_unavailable"
 	errInvalidClient           = "invalid_client"
 	errInvalidGrant            = "invalid_grant"
 	errUnsupportedGrantType    = "unsupported_grant_type"

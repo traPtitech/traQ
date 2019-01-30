@@ -180,7 +180,7 @@ func InitCache() error {
 		return err
 	}
 	for _, f := range files {
-		f.RegenerateThumbnail()
+		_ = f.RegenerateThumbnail()
 	}
 
 	return nil

@@ -89,7 +89,7 @@ func (h *BotProcessor) Process(t Type, time time.Time, d interface{}) error {
 func (h *BotProcessor) checkAndSend(botID uuid.UUID, time time.Time, e string, payload interface{}) {
 	b, _ := model.GetBot(botID)
 	if b != nil && b.GetActivated() && b.GetSubscribeEvents()[e] {
-		h.sendEventToBot(b, time, e, payload)
+		_, _ = h.sendEventToBot(b, time, e, payload)
 	}
 }
 
@@ -111,7 +111,7 @@ func (h *BotProcessor) sendEventToBot(b model.Bot, time time.Time, e string, dat
 	res, err := h.botReqClient.Do(req) //タイムアウトは10秒
 	if err != nil {
 		// ネットワークエラー
-		model.SavePostLog(reqID, b.GetID(), 0, reqSum, "", err.Error())
+		_ = model.SavePostLog(reqID, b.GetID(), 0, reqSum, "", err.Error())
 		return reqID, err
 	}
 
@@ -123,19 +123,19 @@ func (h *BotProcessor) sendEventToBot(b model.Bot, time time.Time, e string, dat
 	res.Body.Close()
 	if err != nil {
 		// ストリームエラー
-		model.SavePostLog(reqID, b.GetID(), res.StatusCode, reqSum, resSummary.String(), err.Error())
+		_ = model.SavePostLog(reqID, b.GetID(), res.StatusCode, reqSum, resSummary.String(), err.Error())
 		return reqID, err
 	}
 
 	// レスポンスサイズ制限 (Content-Lengthヘッダを用いてはいけない(不定の場合があるため))
 	if len(resBody) > botResponseContentLimit {
-		model.SavePostLog(reqID, b.GetID(), res.StatusCode, reqSum, resSummary.String(), "too big response")
+		_ = model.SavePostLog(reqID, b.GetID(), res.StatusCode, reqSum, resSummary.String(), "too big response")
 		return reqID, errors.New("too big response")
 	}
 
 	resSummary.WriteString("\n")
 	resSummary.Write(resBody)
-	model.SavePostLog(reqID, b.GetID(), res.StatusCode, reqSum, resSummary.String(), "")
+	_ = model.SavePostLog(reqID, b.GetID(), res.StatusCode, reqSum, resSummary.String(), "")
 
 	// ステータスコードがOK以外の場合は無効
 	if res.StatusCode != http.StatusOK {
@@ -143,9 +143,9 @@ func (h *BotProcessor) sendEventToBot(b model.Bot, time time.Time, e string, dat
 	}
 
 	// レスポンスに内容が含まれているか
-	if len(resBody) > 0 {
-		// TODO 直接メッセージ投稿などが出来る様にする
-	}
+	// if len(resBody) > 0 {
+	// TODO 直接メッセージ投稿などが出来る様にする
+	// }
 
 	return reqID, nil
 }
