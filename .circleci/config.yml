@@ -88,13 +88,11 @@ jobs:
       - restore_build_cache
       - run:
           name: Setup DB
-          when: always
           command: |
             dockerize -wait tcp://localhost:3306 -timeout 1m
             go run .circleci/init.go
       - run:
           name: test
-          when: always
           command: go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
       - codecov/upload
 
