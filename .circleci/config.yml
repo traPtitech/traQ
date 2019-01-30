@@ -22,9 +22,6 @@ commands:
             - build-cache-{{ .Branch }}--
             - build-cache-master--
 
-orbs:
-  codecov: codecov/codecov@1.0.3
-
 jobs:
   gomod:
     executor: default
@@ -47,8 +44,8 @@ jobs:
       - restore_mod
       - run:
           name: Install golangci-lint v1.13.2
-          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.13.2
-      - run: golangci-lint run
+          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.13.2
+      - run: ./bin/golangci-lint run
 
   build:
     executor: default
@@ -94,7 +91,9 @@ jobs:
       - run:
           name: test
           command: go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
-      - codecov/upload
+      - run:
+          name: Upload coverage data
+          command: bash <(curl -s https://codecov.io/bash)
 
 workflows:
   version: 2
