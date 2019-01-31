@@ -16,3 +16,4 @@ docker-compose.yml
 .dockerignore
 .envrc
 .gitignore
+.golangci.yml

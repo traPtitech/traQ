@@ -48,7 +48,7 @@ func TestParallelGroup8(t *testing.T) {
 			assert.NotZero(pin.Message)
 		}
 
-		pin, err = GetPin(uuid.Nil)
+		_, err = GetPin(uuid.Nil)
 		assert.Equal(ErrNotFound, err)
 	})
 

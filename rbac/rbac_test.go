@@ -38,8 +38,8 @@ func TestRBAC_IsGranted(t *testing.T) {
 	require.NoError(rbac.Add(rA))
 	require.NoError(rbac.Add(rB))
 
-	rbac.SetOverride(u1, pB, true)
-	rbac.SetOverride(u1, pC, false)
+	require.NoError(rbac.SetOverride(u1, pB, true))
+	require.NoError(rbac.SetOverride(u1, pC, false))
 
 	assert.True(rbac.IsGranted(uuid.Nil, "role-a", pA))
 	assert.True(rbac.IsGranted(u1, "role-a", pB))
@@ -71,8 +71,8 @@ func TestRBAC_Override(t *testing.T) {
 	require.NoError(rbac.Add(rA))
 	require.NoError(rbac.Add(rB))
 
-	rbac.SetOverride(u1, pB, true)
-	rbac.SetOverride(u1, pC, false)
+	assert.NoError(rbac.SetOverride(u1, pB, true))
+	assert.NoError(rbac.SetOverride(u1, pC, false))
 
 	assert.Len(rbac.GetOverride(uuid.Nil), 0)
 	if or := rbac.GetOverride(u1); assert.Len(or, 2) {
@@ -80,11 +80,11 @@ func TestRBAC_Override(t *testing.T) {
 		assert.False(or[pC])
 	}
 
-	rbac.DeleteOverride(u1, pC)
+	assert.NoError(rbac.DeleteOverride(u1, pC))
 	if or := rbac.GetOverride(u1); assert.Len(or, 1) {
 		assert.True(or[pB])
 	}
 
-	rbac.DeleteOverride(u1, pB)
+	assert.NoError(rbac.DeleteOverride(u1, pB))
 	assert.Len(rbac.GetOverride(u1), 0)
 }

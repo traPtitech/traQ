@@ -88,14 +88,18 @@ func TestConvertToPNG(t *testing.T) {
 		t.SkipNow()
 	}
 
-	{
-		nonsvg := `<?xml version="1.0" enc`
-		_, err := ConvertToPNG(context.TODO(), bytes.NewBufferString(nonsvg), 100, 200)
-		assert.Error(err)
-	}
+	t.Run("Broken svg", func(t *testing.T) {
+		t.Parallel()
 
-	{
+		broken := `<?xml version="1.0" enc`
+		_, err := ConvertToPNG(context.TODO(), bytes.NewBufferString(broken), 100, 200)
+		assert.Error(err)
+	})
+
+	t.Run("Valid svg", func(t *testing.T) {
+		t.Parallel()
+
 		_, err := ConvertToPNG(context.TODO(), bytes.NewBufferString(gopher), 100, 100)
 		assert.NoError(err)
-	}
+	})
 }

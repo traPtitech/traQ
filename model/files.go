@@ -100,7 +100,7 @@ func (f *File) Create(src io.Reader) error {
 	go func() {
 		defer fileWriter.Close()
 		defer thumbWriter.Close()
-		io.Copy(utils.MultiWriter(fileWriter, hash, thumbWriter), src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
+		_, _ = io.Copy(utils.MultiWriter(fileWriter, hash, thumbWriter), src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
 	}()
 
 	// fileの保存
@@ -240,7 +240,7 @@ func generateThumbnail(ctx context.Context, f *File, src io.Reader) error {
 		return err
 	}
 
-	b := &bytes.Buffer{}
+	var b *bytes.Buffer
 	select {
 	case <-ctx.Done():
 		return ctx.Err()

@@ -1,80 +1,131 @@
-version: 2
+version: 2.1
 
-jobs:
-  build:
+executors:
+  default:
     docker:
       - image: circleci/golang:1.11.5
         environment:
           - GO111MODULE: "on"
           - GOCACHE: "/tmp/go/cache"
-      - image: circleci/mysql:latest-ram
-        environment:
-          - MYSQL_DATABASE: "traq"
-          - MYSQL_ROOT_PASSWORD: "password"
-    working_directory: /go/src/github.com/traPtitech/traQ
-    steps:
-      - checkout
+    working_directory: ~/workspace
 
+commands:
+  restore_mod:
+    steps:
       - restore_cache:
           keys:
             - gomod-{{ checksum "go.mod" }}
+  restore_build_cache:
+    steps:
+      - restore_cache:
+          keys:
+            - build-cache-{{ .Branch }}--
+            - build-cache-master--
+
+jobs:
+  gomod:
+    executor: default
+    steps:
+      - checkout
+      - restore_mod
       - run:
-          name: Download go modules and golint
           when: always
-          command: |
-            go mod download
-            GO111MODULE=off go get -u golang.org/x/lint/golint
+          command: go mod download
       - save_cache:
           key: gomod-{{ checksum "go.mod" }}
           when: always
           paths:
             - /go/pkg/mod/cache
 
-      - restore_cache:
-          keys:
-            - build-cache-{{ .Branch }}--
-            - build-cache-master--
+  lint:
+    executor: default
+    steps:
+      - checkout
+      - restore_mod
+      - run:
+          name: Install golangci-lint v1.13.2
+          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.13.2
+      - run: ./bin/golangci-lint run
 
-      - run:
-          name: gofmt
-          when: always
-          command: make ci-fmt
-      - run:
-          name: golint
-          when: always
-          command: make ci-lint
-      - run:
-          name: go vet
-          when: always
-          command: make ci-vet
-
+  build:
+    executor: default
+    steps:
+      - checkout
+      - restore_mod
+      - restore_build_cache
       - run:
           name: build
           when: always
           command: |
             mkdir -p $GOCACHE
             go build -v
-
-      - run:
-          name: Setup DB
-          when: always
-          command: |
-            dockerize -wait tcp://localhost:3306 -timeout 1m
-            go run .circleci/init.go
-      - run:
-          name: test
-          when: always
-          command: go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
-
       - save_cache:
           key: build-cache-{{ .Branch }}--{{ .Revision }}
           when: always
           paths:
             - /tmp/go/cache
+      - store_artifacts:
+          path: ~/workspace/traQ
+          destination: traQ
 
+  test:
+    docker:
+      - image: circleci/golang:1.11.5
+        environment:
+          - GO111MODULE: "on"
+          - GOCACHE: "/tmp/go/cache"
+          - IMAGEMAGICK_EXEC: "/usr/bin/convert"
+      - image: circleci/mysql:latest-ram
+        environment:
+          - MYSQL_DATABASE: "traq"
+          - MYSQL_ROOT_PASSWORD: "password"
+    working_directory: ~/workspace
+    steps:
+      - run:
+          name: install imagemagick
+          command: sudo apt-get update && sudo apt-get install -y imagemagick
+      - checkout
+      - restore_mod
+      - restore_build_cache
+      - run:
+          name: Setup DB
+          command: |
+            dockerize -wait tcp://localhost:3306 -timeout 1m
+            go run .circleci/init.go
+      - run:
+          name: test
+          command: go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
       - run:
           name: Upload coverage data
           command: bash <(curl -s https://codecov.io/bash)
-      - store_artifacts:
-          path: /go/src/github.com/traPtitech/traQ/traQ
-          destination: traQ
+
+  deploy-staging:
+    executor: default
+    steps:
+      - checkout
+      - run:
+          name: deploy staging environment
+          command: go run .circleci/deploy_staging.go
+
+workflows:
+  version: 2
+  main:
+    jobs:
+      - gomod
+      - lint:
+          requires:
+            - gomod
+      - build:
+          requires:
+            - gomod
+      - test:
+          requires:
+            - build
+      - deploy-staging:
+          requires:
+            - test
+            - lint
+          filters:
+            branches:
+              only: master
+

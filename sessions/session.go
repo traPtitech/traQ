@@ -137,7 +137,7 @@ func GetByUserID(id uuid.UUID) ([]*Session, error) {
 	for _, v := range sessions {
 		mutexes.Lock(v.token)
 		if v.Expired() {
-			DestroyByToken(v.token)
+			_ = DestroyByToken(v.token)
 		} else {
 			result = append(result, v)
 		}

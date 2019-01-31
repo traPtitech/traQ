@@ -42,7 +42,7 @@ func ConvertToPNG(ctx context.Context, src io.Reader, maxWidth, maxHeight int) (
 
 	go func() {
 		defer stdin.Close()
-		io.Copy(stdin, src)
+		_, _ = io.Copy(stdin, src)
 	}()
 
 	if err := cmd.Start(); err != nil {
@@ -50,7 +50,7 @@ func ConvertToPNG(ctx context.Context, src io.Reader, maxWidth, maxHeight int) (
 	}
 
 	b := &bytes.Buffer{}
-	io.Copy(b, stdout)
+	_, _ = io.Copy(b, stdout)
 
 	if err := cmd.Wait(); err != nil {
 		switch err.(type) {

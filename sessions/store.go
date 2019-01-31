@@ -55,8 +55,7 @@ func NewInMemoryStore() Store {
 func (s *InMemoryStore) GetByToken(token string) (*Session, error) {
 	s.RLock()
 	defer s.RUnlock()
-	sess, _ := s.sessions[token]
-	return sess, nil
+	return s.sessions[token], nil
 }
 
 // GetByUserID gets the user's sessions

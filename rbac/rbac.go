@@ -28,7 +28,7 @@ func New(store Store) (*RBAC, error) {
 			return nil, err
 		}
 		for _, v := range overrides {
-			rbac.SetOverride(v.GetUserID(), v.GetPermission(), v.GetValidity())
+			_ = rbac.SetOverride(v.GetUserID(), v.GetPermission(), v.GetValidity())
 		}
 
 		rbac.store = store

@@ -211,9 +211,9 @@ func SetRole(rbac *rbac.RBAC) {
 		},
 	} {
 		for _, p := range ps {
-			r.Assign(p)
+			_ = r.Assign(p)
 		}
-		rbac.Add(r)
+		_ = rbac.Add(r)
 	}
 
 	if err := rbac.SetParents(User.ID(), []string{ReadUser.ID(), WriteUser.ID(), PrivateReadUser.ID(), PrivateWriteUser.ID()}); err != nil {

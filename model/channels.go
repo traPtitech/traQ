@@ -479,7 +479,7 @@ func ChangeChannelName(channelID uuid.UUID, name string, updaterID uuid.UUID) er
 
 	// チャンネルパスキャッシュの更新
 	ch.Name = name
-	updateChannelPathWithDescendants(ch)
+	_ = updateChannelPathWithDescendants(ch)
 
 	return nil
 }
@@ -514,7 +514,7 @@ func ChangeChannelParent(channelID uuid.UUID, parent string, updaterID uuid.UUID
 	}
 
 	//チャンネルパスキャッシュの更新
-	updateChannelPathWithDescendants(ch)
+	_ = updateChannelPathWithDescendants(ch)
 
 	return nil
 }
@@ -808,6 +808,11 @@ func IsUserPrivateChannelMember(channelID, userID uuid.UUID) (bool, error) {
 // SubscribeChannel 指定したチャンネルを購読します
 func SubscribeChannel(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
+		return ErrNotFound
+	}
+	if ok, err := UserExists(userID); err != nil {
+		return err
+	} else if !ok {
 		return ErrNotFound
 	}
 	return db.Create(&UserSubscribeChannel{UserID: userID, ChannelID: channelID}).Error

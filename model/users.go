@@ -222,7 +222,7 @@ func hashPassword(pass string, salt []byte) []byte {
 
 func generateSalt() []byte {
 	salt := make([]byte, 64)
-	io.ReadFull(rand.Reader, salt)
+	_, _ = io.ReadFull(rand.Reader, salt)
 	return salt
 }
 

@@ -38,7 +38,7 @@ func ResizeAnimationGIF(ctx context.Context, src io.Reader, maxWidth, maxHeight 
 
 	go func() {
 		defer stdin.Close()
-		io.Copy(stdin, src)
+		_, _ = io.Copy(stdin, src)
 	}()
 
 	if err := cmd.Start(); err != nil {
@@ -46,7 +46,7 @@ func ResizeAnimationGIF(ctx context.Context, src io.Reader, maxWidth, maxHeight 
 	}
 
 	b := &bytes.Buffer{}
-	io.Copy(b, stdout)
+	_, _ = io.Copy(b, stdout)
 
 	if err := cmd.Wait(); err != nil {
 		switch err.(type) {

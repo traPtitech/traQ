@@ -249,17 +249,17 @@ StreamFor:
 
 		case message := <-client.send: // イベントを送信
 			data, _ := json.Marshal(message.Payload)
-			rw.Write([]byte("event: "))
-			rw.Write([]byte(message.EventType))
-			rw.Write([]byte("\n"))
-			rw.Write([]byte("data: "))
-			rw.Write(data)
-			rw.Write(sseSeparator)
+			_, _ = rw.Write([]byte("event: "))
+			_, _ = rw.Write([]byte(message.EventType))
+			_, _ = rw.Write([]byte("\n"))
+			_, _ = rw.Write([]byte("data: "))
+			_, _ = rw.Write(data)
+			_, _ = rw.Write(sseSeparator)
 			fl.Flush()
 
 		case <-t.C: // タイムアウト対策で10秒おきにコメント行を送信する
-			rw.Write([]byte(":"))
-			rw.Write(sseSeparator)
+			_, _ = rw.Write([]byte(":"))
+			_, _ = rw.Write(sseSeparator)
 			fl.Flush()
 		}
 	}
