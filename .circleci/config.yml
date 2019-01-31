@@ -95,6 +95,14 @@ jobs:
           name: Upload coverage data
           command: bash <(curl -s https://codecov.io/bash)
 
+  deploy-staging:
+    executor: default
+    steps:
+      - checkout
+      - run:
+          name: deploy staging environment
+          command: go run .circleci/deploy_staging.go
+
 workflows:
   version: 2
   main:
@@ -109,3 +117,11 @@ workflows:
       - test:
           requires:
             - build
+      - deploy-staging:
+          requires:
+            - test
+            - lint
+          filters:
+            branches:
+              only: master
+
