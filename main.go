@@ -41,6 +41,7 @@ func main() {
 		panic(err)
 	}
 	defer engine.Close()
+	engine.DB().SetMaxOpenConns(75)
 	model.SetGORMEngine(engine)
 
 	if init, err := model.Sync(); err != nil {
