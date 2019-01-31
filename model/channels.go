@@ -810,6 +810,11 @@ func SubscribeChannel(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNotFound
 	}
+	if ok, err := UserExists(userID); err != nil {
+		return err
+	} else if !ok {
+		return ErrNotFound
+	}
 	return db.Create(&UserSubscribeChannel{UserID: userID, ChannelID: channelID}).Error
 }
 
