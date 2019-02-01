@@ -5,6 +5,7 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"net/http"
+	"strconv"
 )
 
 // GetPublicUserIcon GET /public/icon/{username}
@@ -64,6 +65,7 @@ func GetPublicUserIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	defer r.Close()
+	c.Response().Header().Set(echo.HeaderContentLength, strconv.FormatInt(f.Size, 10))
 	c.Response().Header().Set(headerCacheControl, "public, max-age=3600") //1時間キャッシュ
 	return c.Stream(http.StatusOK, f.Mime, r)
 }
