@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/satori/go.uuid"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -56,6 +57,7 @@ func GetFileByID(c echo.Context) error {
 	}
 	defer file.Close()
 
+	c.Response().Header().Set(echo.HeaderContentLength, strconv.FormatInt(meta.Size, 10))
 	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") //1年間キャッシュ
 	c.Response().Header().Set(headerFileMetaType, meta.Type)
 
