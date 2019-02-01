@@ -42,6 +42,8 @@ func main() {
 	}
 	defer engine.Close()
 	engine.DB().SetMaxOpenConns(75)
+	engine.DB().SetMaxIdleConns(100)
+	engine.DB().SetConnMaxLifetime(75)
 	model.SetGORMEngine(engine)
 
 	if init, err := model.Sync(); err != nil {
