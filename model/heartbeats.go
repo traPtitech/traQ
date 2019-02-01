@@ -121,7 +121,7 @@ func removeTimeoutStatus() {
 	for cid, channelStatus := range HeartbeatStatuses {
 		arr := make([]*UserStatus, 0)
 		for _, userStatus := range channelStatus.UserStatuses {
-			if timeout.After(userStatus.LastTime) {
+			if timeout.Before(userStatus.LastTime) {
 				arr = append(arr, userStatus)
 			} else {
 				// 最終POSTから指定時間以上経ったものを削除する
