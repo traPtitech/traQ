@@ -145,7 +145,7 @@ func (s *GORMStore) GetByUserID(id uuid.UUID) ([]*Session, error) {
 			result[k] = sess.(*Session)
 		} else {
 			sess, err := v.decode()
-			if err != nil {
+			if err == nil {
 				result[k] = sess
 			} else {
 				return nil, err
