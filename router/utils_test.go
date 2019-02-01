@@ -180,7 +180,7 @@ func mustCreateUser(t *testing.T, name string) *model.User {
 func mustMakeFile(t *testing.T) *model.File {
 	file := &model.File{
 		Name:      "test.txt",
-		Size:      90,
+		Size:      12,
 		CreatorID: testUser.GetUID(),
 	}
 	require.NoError(t, file.Create(bytes.NewBufferString("test message")))
