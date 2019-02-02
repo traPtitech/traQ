@@ -2,9 +2,11 @@ package model
 
 import (
 	"errors"
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/utils/validator"
+	"strings"
 	"time"
 )
 
@@ -144,4 +146,54 @@ func DeleteUnreadsByMessageID(messageID uuid.UUID) error {
 // DeleteUnreadsByChannelID 指定したチャンネルIDに存在する、指定したユーザーIDの未読レコードをすべて削除
 func DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error {
 	return db.Exec("DELETE unreads FROM unreads INNER JOIN messages ON unreads.user_id = ? AND unreads.message_id = messages.id WHERE messages.channel_id = ?", userID.String(), channelID.String()).Error
+}
+
+// GetChannelLatestMessagesByUserID 指定したユーザーが閲覧可能な全てのチャンネルの最新のメッセージの一覧を取得します
+func GetChannelLatestMessagesByUserID(userID uuid.UUID, limit int, subscribeOnly bool) ([]*Message, error) {
+	var query string
+	switch {
+	case subscribeOnly:
+		query = `
+SELECT m.id, m.user_id, m.channel_id, m.text, m.created_at, m.updated_at, m.deleted_at
+FROM (
+       SELECT ROW_NUMBER() OVER(PARTITION BY m.channel_id ORDER BY m.created_at DESC) AS r,
+              m.*
+       FROM messages m
+       WHERE m.deleted_at IS NULL
+     ) m
+       INNER JOIN channels c ON m.channel_id = c.id
+       INNER JOIN (SELECT channel_id
+                   FROM users_subscribe_channels
+                   WHERE user_id = 'USER_ID'
+                   UNION
+                   SELECT channel_id
+                   FROM users_private_channels
+                   WHERE user_id = 'USER_ID') s ON s.channel_id = m.channel_id
+WHERE m.r = 1 AND c.deleted_at IS NULL
+ORDER BY m.created_at DESC
+`
+	default:
+		query = `
+SELECT m.id, m.user_id, m.channel_id, m.text, m.created_at, m.updated_at, m.deleted_at
+FROM (
+       SELECT ROW_NUMBER() OVER(PARTITION BY m.channel_id ORDER BY m.created_at DESC) AS r,
+              m.*
+       FROM messages m
+       WHERE m.deleted_at IS NULL
+     ) m
+       INNER JOIN channels c ON m.channel_id = c.id
+       LEFT JOIN users_private_channels upc ON upc.channel_id = m.channel_id
+WHERE m.r = 1 AND c.deleted_at IS NULL AND (c.is_public = true OR upc.user_id = 'USER_ID')
+ORDER BY m.created_at DESC
+`
+	}
+
+	query = strings.Replace(query, "USER_ID", userID.String(), -1)
+	if limit > 0 {
+		query += fmt.Sprintf(" LIMIT %d", limit)
+	}
+
+	result := make([]*Message, 0)
+	err := db.Raw(query).Scan(&result).Error
+	return result, err
 }

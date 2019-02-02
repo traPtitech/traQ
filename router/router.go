@@ -159,6 +159,9 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	apiNoAuth.POST("/webhooks/:webhookID", PostWebhook)
 	apiNoAuth.POST("/webhooks/:webhookID/github", PostWebhookByGithub)
 
+	// Tag: activity
+	api.GET("/activity/latest-messages", GetActivityLatestMessages, requires(permission.GetMessage))
+
 	if oauth != nil {
 		// Tag: bot
 		api.GET("/bots", h.GetBots, requires(permission.GetBot))
