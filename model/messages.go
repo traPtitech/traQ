@@ -194,6 +194,6 @@ ORDER BY m.created_at DESC
 	}
 
 	result := make([]*Message, 0)
-	err := db.Raw(query).Find(&result).Error
+	err := db.Raw(query).Scan(&result).Error
 	return result, err
 }
