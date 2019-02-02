@@ -196,7 +196,7 @@ func TestGetChannelLatestMessagesByUserID(t *testing.T) {
 	assert, require, user, _ := beforeTest(t)
 
 	// TODO プライベートチャンネルを考慮する
-	var latests []Message
+	var latests []uuid.UUID
 	for j := 0; j < 10; j++ {
 		ch := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		if j < 5 {
@@ -205,16 +205,16 @@ func TestGetChannelLatestMessagesByUserID(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			mustMakeMessage(t, user.GetUID(), ch.ID)
 		}
-		latests = append(latests, *mustMakeMessage(t, user.GetUID(), ch.ID))
+		latests = append(latests, mustMakeMessage(t, user.GetUID(), ch.ID).GetID())
 	}
 
 	t.Run("SubTest1", func(t *testing.T) {
 		t.Parallel()
 
 		arr, err := GetChannelLatestMessagesByUserID(user.GetUID(), -1, false)
-		derefs := make([]Message, len(arr))
+		derefs := make([]uuid.UUID, len(arr))
 		for i := range arr {
-			derefs[i] = *arr[i]
+			derefs[i] = arr[i].GetID()
 		}
 		if assert.NoError(err) {
 			assert.ElementsMatch(derefs, latests)
@@ -225,9 +225,9 @@ func TestGetChannelLatestMessagesByUserID(t *testing.T) {
 		t.Parallel()
 
 		arr, err := GetChannelLatestMessagesByUserID(user.GetUID(), -1, true)
-		derefs := make([]Message, len(arr))
+		derefs := make([]uuid.UUID, len(arr))
 		for i := range arr {
-			derefs[i] = *arr[i]
+			derefs[i] = arr[i].GetID()
 		}
 		if assert.NoError(err) {
 			assert.ElementsMatch(derefs, latests[:5])
@@ -238,9 +238,9 @@ func TestGetChannelLatestMessagesByUserID(t *testing.T) {
 		t.Parallel()
 
 		arr, err := GetChannelLatestMessagesByUserID(user.GetUID(), 5, false)
-		derefs := make([]Message, len(arr))
+		derefs := make([]uuid.UUID, len(arr))
 		for i := range arr {
-			derefs[i] = *arr[i]
+			derefs[i] = arr[i].GetID()
 		}
 		if assert.NoError(err) {
 			assert.ElementsMatch(derefs, latests[5:])
