@@ -3,6 +3,7 @@ package imagemagick
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/config"
 	"testing"
@@ -79,7 +80,9 @@ const gopher = `<?xml version="1.0" encoding="utf-8"?>
 </g>
 </svg>`
 
-// config.ImageMagickConverterExecが空の場合スキップされます
+// from https://gifer.com/en/N9v8
+const base64gif = `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`
+
 func TestConvertToPNG(t *testing.T) {
 	t.Parallel()
 	assert := assert.New(t)
@@ -101,5 +104,44 @@ func TestConvertToPNG(t *testing.T) {
 
 		_, err := ConvertToPNG(context.TODO(), bytes.NewBufferString(gopher), 100, 100)
 		assert.NoError(err)
+	})
+
+	t.Run("invalid args", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := ConvertToPNG(context.TODO(), bytes.NewBufferString(gopher), -100, 100)
+		assert.Error(err)
+	})
+}
+
+func TestResizeAnimationGIF(t *testing.T) {
+	t.Parallel()
+	assert := assert.New(t)
+
+	if len(config.ImageMagickConverterExec) == 0 {
+		t.SkipNow()
+	}
+
+	gif, _ := base64.RawStdEncoding.DecodeString(base64gif)
+
+	t.Run("valid gif", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := ResizeAnimationGIF(context.TODO(), bytes.NewReader(gif), 50, 50, false)
+		assert.NoError(err)
+	})
+
+	t.Run("not gif", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := ResizeAnimationGIF(context.TODO(), bytes.NewBufferString(gopher), 100, 100, true)
+		assert.Error(err)
+	})
+
+	t.Run("invalid args", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := ResizeAnimationGIF(context.TODO(), bytes.NewBufferString(gopher), -100, 100, false)
+		assert.Error(err)
 	})
 }

@@ -7,10 +7,10 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
-	"github.com/traPtitech/traQ/external/imagemagick"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/rbac"
+	"github.com/traPtitech/traQ/utils/imagemagick"
 	"github.com/traPtitech/traQ/utils/thumb"
 	"image"
 	_ "image/jpeg" // image.Decode用
