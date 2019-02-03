@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/config"
+	"io"
 	"testing"
 )
 
@@ -134,7 +135,7 @@ func TestResizeAnimationGIF(t *testing.T) {
 	t.Run("not gif", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := ResizeAnimationGIF(context.TODO(), bytes.NewBufferString(gopher), 100, 100, true)
+		_, err := ResizeAnimationGIF(context.TODO(), io.LimitReader(bytes.NewReader(gif), 10), 100, 100, true)
 		assert.Error(err)
 	})
 
