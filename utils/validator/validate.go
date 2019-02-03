@@ -5,7 +5,7 @@ import (
 	"regexp"
 )
 
-var validate *validator.Validate
+var validate = validator.New()
 
 var (
 	// NameRegex 名前正規表現
@@ -36,8 +36,6 @@ func New() *Validator {
 }
 
 func init() {
-	validate = validator.New()
-
 	must(validate.RegisterValidation("name", func(fl validator.FieldLevel) bool {
 		s := fl.Field().String()
 		if len(s) > 0 {
@@ -45,15 +43,12 @@ func init() {
 		}
 		return true
 	}))
-
 	must(validate.RegisterValidation("channel", func(fl validator.FieldLevel) bool {
 		return ChannelRegex.MatchString(fl.Field().String())
 	}))
-
 	must(validate.RegisterValidation("password", func(fl validator.FieldLevel) bool {
 		return PasswordRegex.MatchString(fl.Field().String())
 	}))
-
 	must(validate.RegisterValidation("twitterid", func(fl validator.FieldLevel) bool {
 		s := fl.Field().String()
 		if len(s) > 0 {

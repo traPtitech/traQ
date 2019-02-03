@@ -15,6 +15,13 @@ import (
 	"io"
 )
 
+const (
+	// ThumbnailMaxWidth サムネイルの最大幅
+	ThumbnailMaxWidth = 360
+	// ThumbnailMaxHeight サムネイルの最大高さ
+	ThumbnailMaxHeight = 480
+)
+
 var (
 	// ErrFileThumbUnsupported この形式のファイルのサムネイル生成はサポートされていない
 	ErrFileThumbUnsupported = errors.New("generating a thumbnail of the file is not supported")
@@ -38,65 +45,35 @@ func CalcThumbnailSize(size image.Point, maxSize image.Point) image.Point {
 
 // Generate サムネイル画像を生成します
 func Generate(ctx context.Context, src io.Reader, mime string) (image.Image, error) {
+	var f func(io.Reader) (image.Image, error)
 	switch mime {
 	case "image/png":
-		img, err := png.Decode(src)
-		if err != nil {
-			return nil, err
-		}
-		return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
-
+		f = png.Decode
 	case "image/gif":
-		img, err := gif.Decode(src)
-		if err != nil {
-			return nil, err
-		}
-		return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
-
+		f = gif.Decode
 	case "image/jpeg":
-		img, err := jpeg.Decode(src)
-		if err != nil {
-			return nil, err
-		}
-		return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
-
+		f = jpeg.Decode
 	case "image/bmp":
-		img, err := bmp.Decode(src)
-		if err != nil {
-			return nil, err
-		}
-		return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
-
+		f = bmp.Decode
 	case "image/webp":
-		img, err := webp.Decode(src)
-		if err != nil {
-			return nil, err
-		}
-		return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
-
+		f = webp.Decode
 	case "image/tiff":
-		img, err := tiff.Decode(src)
-		if err != nil {
-			return nil, err
-		}
-		return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
-
+		f = tiff.Decode
 	default: // Unsupported Type
 		return nil, ErrFileThumbUnsupported
 	}
+
+	img, err := f(src)
+	if err != nil {
+		return nil, err
+	}
+	return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
 }
 
 // EncodeToPNG image.Imageをpngのバイトバッファにエンコードします
 func EncodeToPNG(img image.Image) (b *bytes.Buffer, err error) {
 	b = &bytes.Buffer{}
 	err = png.Encode(b, img)
-	return
-}
-
-// EncodeToJPG image.Imageをjpgのバイトバッファにエンコードします
-func EncodeToJPG(img image.Image) (b *bytes.Buffer, err error) {
-	b = &bytes.Buffer{}
-	err = jpeg.Encode(b, img, &jpeg.Options{Quality: 100})
 	return
 }
 
