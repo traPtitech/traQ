@@ -22,12 +22,12 @@ func TestParallelGroup8(t *testing.T) {
 
 		testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
 
-		p, err := CreatePin(testMessage.GetID(), user.GetUID())
+		p, err := CreatePin(testMessage.ID, user.GetUID())
 		if assert.NoError(err) {
 			assert.NotEmpty(p)
 		}
 
-		_, err = CreatePin(testMessage.GetID(), user.GetUID())
+		_, err = CreatePin(testMessage.ID, user.GetUID())
 		assert.Error(err)
 	})
 
@@ -36,13 +36,13 @@ func TestParallelGroup8(t *testing.T) {
 		t.Parallel()
 
 		testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
-		p, err := CreatePin(testMessage.GetID(), user.GetUID())
+		p, err := CreatePin(testMessage.ID, user.GetUID())
 		require.NoError(err)
 
 		pin, err := GetPin(p)
 		if assert.NoError(err) {
 			assert.Equal(p.String(), pin.ID)
-			assert.Equal(testMessage.ID, pin.MessageID)
+			assert.Equal(testMessage.ID.String(), pin.MessageID)
 			assert.Equal(user.ID, pin.UserID)
 			assert.NotZero(pin.CreatedAt)
 			assert.NotZero(pin.Message)
@@ -57,10 +57,10 @@ func TestParallelGroup8(t *testing.T) {
 		t.Parallel()
 
 		testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
-		_, err := CreatePin(testMessage.GetID(), user.GetUID())
+		_, err := CreatePin(testMessage.ID, user.GetUID())
 		require.NoError(err)
 
-		ok, err := IsPinned(testMessage.GetID())
+		ok, err := IsPinned(testMessage.ID)
 		if assert.NoError(err) {
 			assert.True(ok)
 		}
@@ -76,7 +76,7 @@ func TestParallelGroup8(t *testing.T) {
 		t.Parallel()
 
 		testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
-		p, err := CreatePin(testMessage.GetID(), user.GetUID())
+		p, err := CreatePin(testMessage.ID, user.GetUID())
 		require.NoError(err)
 
 		if assert.NoError(DeletePin(p)) {
@@ -91,7 +91,7 @@ func TestParallelGroup8(t *testing.T) {
 
 		channel := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
-		_, err := CreatePin(testMessage.GetID(), user.GetUID())
+		_, err := CreatePin(testMessage.ID, user.GetUID())
 		require.NoError(err)
 
 		pins, err := GetPinsByChannelID(channel.ID)

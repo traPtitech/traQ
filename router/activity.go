@@ -40,7 +40,7 @@ func GetActivityLatestMessages(c echo.Context) error {
 	res := make([]*MessageForResponse, 0, len(messages))
 	for _, message := range messages {
 		ms := formatMessage(message)
-		if hidden[message.ID] {
+		if hidden[message.ID.String()] {
 			ms.Reported = true
 		}
 		res = append(res, ms)

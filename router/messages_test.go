@@ -25,7 +25,7 @@ func TestGroup_Messages(t *testing.T) {
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.GET("/api/1.0/messages/{messageID}", message.ID).
+			e.GET("/api/1.0/messages/{messageID}", message.ID.String()).
 				Expect().
 				Status(http.StatusForbidden)
 		})
@@ -33,14 +33,14 @@ func TestGroup_Messages(t *testing.T) {
 		t.Run("Successful1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			obj := e.GET("/api/1.0/messages/{messageID}", message.ID).
+			obj := e.GET("/api/1.0/messages/{messageID}", message.ID.String()).
 				WithCookie(sessions.CookieName, session).
 				Expect().
 				Status(http.StatusOK).
 				JSON().
 				Object()
 
-			obj.Value("messageId").String().Equal(message.ID)
+			obj.Value("messageId").String().Equal(message.ID.String())
 			obj.Value("userId").String().Equal(testUser.ID)
 			obj.Value("parentChannelId").String().Equal(channel.ID.String())
 			obj.Value("pin").Boolean().False()
@@ -55,14 +55,14 @@ func TestGroup_Messages(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 
-			obj := e.GET("/api/1.0/messages/{messageID}", message2.ID).
+			obj := e.GET("/api/1.0/messages/{messageID}", message2.ID.String()).
 				WithCookie(sessions.CookieName, generateSession(t, postmanID)).
 				Expect().
 				Status(http.StatusOK).
 				JSON().
 				Object()
 
-			obj.Value("messageId").String().Equal(message2.ID)
+			obj.Value("messageId").String().Equal(message2.ID.String())
 			obj.Value("userId").String().Equal(postmanID.String())
 			obj.Value("parentChannelId").String().Equal(privateID.String())
 			obj.Value("pin").Boolean().False()
@@ -76,7 +76,7 @@ func TestGroup_Messages(t *testing.T) {
 		t.Run("Failure1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.GET("/api/1.0/messages/{messageID}", message2.ID).
+			e.GET("/api/1.0/messages/{messageID}", message2.ID.String()).
 				WithCookie(sessions.CookieName, session).
 				Expect().
 				Status(http.StatusNotFound)
@@ -243,7 +243,7 @@ func TestGroup_Messages(t *testing.T) {
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.PUT("/api/1.0/messages/{messageID}", message.ID).
+			e.PUT("/api/1.0/messages/{messageID}", message.ID.String()).
 				WithJSON(map[string]string{"text": "new message"}).
 				Expect().
 				Status(http.StatusForbidden)
@@ -253,13 +253,13 @@ func TestGroup_Messages(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 			text := "new message"
-			e.PUT("/api/1.0/messages/{messageID}", message.ID).
+			e.PUT("/api/1.0/messages/{messageID}", message.ID.String()).
 				WithCookie(sessions.CookieName, session).
 				WithJSON(map[string]string{"text": text}).
 				Expect().
 				Status(http.StatusNoContent)
 
-			m, err := model.GetMessageByID(message.GetID())
+			m, err := model.GetMessageByID(message.ID)
 			require.NoError(err)
 			assert.Equal(text, m.Text)
 		})
@@ -267,7 +267,7 @@ func TestGroup_Messages(t *testing.T) {
 		t.Run("Failure1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.PUT("/api/1.0/messages/{messageID}", message2.ID).
+			e.PUT("/api/1.0/messages/{messageID}", message2.ID.String()).
 				WithCookie(sessions.CookieName, session).
 				Expect().
 				Status(http.StatusNotFound)
@@ -276,7 +276,7 @@ func TestGroup_Messages(t *testing.T) {
 		t.Run("Failure2", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.PUT("/api/1.0/messages/{messageID}", message.ID).
+			e.PUT("/api/1.0/messages/{messageID}", message.ID.String()).
 				WithCookie(sessions.CookieName, generateSession(t, postmanID)).
 				Expect().
 				Status(http.StatusForbidden)
@@ -295,7 +295,7 @@ func TestGroup_Messages(t *testing.T) {
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.DELETE("/api/1.0/messages/{messageID}", message.ID).
+			e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
 				Expect().
 				Status(http.StatusForbidden)
 		})
@@ -303,19 +303,19 @@ func TestGroup_Messages(t *testing.T) {
 		t.Run("Successful1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.DELETE("/api/1.0/messages/{messageID}", message.ID).
+			e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
 				WithCookie(sessions.CookieName, session).
 				Expect().
 				Status(http.StatusNoContent)
 
-			_, err := model.GetMessageByID(message.GetID())
+			_, err := model.GetMessageByID(message.ID)
 			require.Equal(model.ErrNotFound, err)
 		})
 
 		t.Run("Failure1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.DELETE("/api/1.0/messages/{messageID}", message2.ID).
+			e.DELETE("/api/1.0/messages/{messageID}", message2.ID.String()).
 				WithCookie(sessions.CookieName, session).
 				Expect().
 				Status(http.StatusNotFound)
@@ -325,7 +325,7 @@ func TestGroup_Messages(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 			message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-			e.DELETE("/api/1.0/messages/{messageID}", message.ID).
+			e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
 				WithCookie(sessions.CookieName, generateSession(t, postmanID)).
 				Expect().
 				Status(http.StatusForbidden)
@@ -341,7 +341,7 @@ func TestGroup_Messages(t *testing.T) {
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.POST("/api/1.0/messages/{messageID}/report", message.ID).
+			e.POST("/api/1.0/messages/{messageID}/report", message.ID.String()).
 				WithJSON(map[string]string{"reason": "aaaa"}).
 				Expect().
 				Status(http.StatusForbidden)
@@ -350,13 +350,13 @@ func TestGroup_Messages(t *testing.T) {
 		t.Run("Successful1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.POST("/api/1.0/messages/{messageID}/report", message.ID).
+			e.POST("/api/1.0/messages/{messageID}/report", message.ID.String()).
 				WithCookie(sessions.CookieName, session).
 				WithJSON(map[string]string{"reason": "aaaa"}).
 				Expect().
 				Status(http.StatusNoContent)
 
-			r, err := model.GetMessageReportsByMessageID(message.GetID())
+			r, err := model.GetMessageReportsByMessageID(message.ID)
 			require.NoError(err)
 			assert.Len(r, 1)
 		})
@@ -364,7 +364,7 @@ func TestGroup_Messages(t *testing.T) {
 		t.Run("Failure1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.POST("/api/1.0/messages/{messageID}/report", message.ID).
+			e.POST("/api/1.0/messages/{messageID}/report", message.ID.String()).
 				WithCookie(sessions.CookieName, session).
 				WithJSON(map[string]string{"not_reason": "aaaa"}).
 				Expect().
@@ -378,7 +378,7 @@ func TestGroup_Messages(t *testing.T) {
 		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
 		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
-		mustMakeUnread(t, user.GetUID(), message.GetID())
+		mustMakeUnread(t, user.GetUID(), message.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -407,7 +407,7 @@ func TestGroup_Messages(t *testing.T) {
 
 		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		mustMakeUnread(t, testUser.GetUID(), message.GetID())
+		mustMakeUnread(t, testUser.GetUID(), message.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()

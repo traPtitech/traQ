@@ -186,7 +186,7 @@ func GetMessageStamps(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-	channelID := message.GetCID()
+	channelID := message.ChannelID
 
 	// ユーザーからアクセス可能なチャンネルかどうか
 	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
@@ -222,7 +222,7 @@ func PostMessageStamp(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-	channelID := message.GetCID()
+	channelID := message.ChannelID
 
 	// ユーザーからアクセス可能なチャンネルかどうか
 	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
@@ -275,7 +275,7 @@ func DeleteMessageStamp(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
-	channelID := message.GetCID()
+	channelID := message.ChannelID
 
 	// ユーザーからアクセス可能なチャンネルかどうか
 	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {

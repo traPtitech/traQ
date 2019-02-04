@@ -186,14 +186,6 @@ func InitCache() error {
 	return nil
 }
 
-func convertStringSliceToUUIDSlice(arr []string) (result []uuid.UUID) {
-	result = make([]uuid.UUID, len(arr))
-	for i, v := range arr {
-		result[i] = uuid.Must(uuid.FromString(v))
-	}
-	return
-}
-
 func isMySQLDuplicatedRecordErr(err error) bool {
 	merr, ok := err.(*mysql.MySQLError)
 	if !ok {
@@ -219,6 +211,18 @@ func transact(txFunc func(tx *gorm.DB) error) (err error) {
 	}()
 	err = txFunc(tx)
 	return err
+}
+
+func LimitAndOffset(limit, offset int) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		if offset > 0 {
+			db = db.Offset(offset)
+		}
+		if limit > 0 {
+			db = db.Limit(limit)
+		}
+		return db
+	}
 }
 
 // ServerUser サーバーユーザーを返します

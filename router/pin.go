@@ -12,7 +12,7 @@ import (
 
 type pinForResponse struct {
 	PinID     string              `json:"pinId"`
-	ChannelID string              `json:"channelId"`
+	ChannelID uuid.UUID           `json:"channelId"`
 	UserID    string              `json:"userId"`
 	DateTime  time.Time           `json:"dateTime"`
 	Message   *MessageForResponse `json:"message"`
@@ -63,14 +63,14 @@ func PostPin(c echo.Context) error {
 	}
 
 	// ユーザーからアクセス可能なチャンネルかどうか
-	if ok, err := model.IsChannelAccessibleToUser(userID, m.GetCID()); err != nil {
+	if ok, err := model.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, "the message doesn't exist")
 	}
 
-	pinID, err := model.CreatePin(m.GetID(), userID)
+	pinID, err := model.CreatePin(m.ID, userID)
 	if err != nil {
 		if isMySQLDuplicatedRecordErr(err) {
 			return echo.NewHTTPError(http.StatusBadRequest, "the message has already been pinned")
@@ -100,7 +100,7 @@ func GetPin(c echo.Context) error {
 	}
 
 	// ユーザーからアクセス可能なチャンネルかどうか
-	if ok, err := model.IsChannelAccessibleToUser(userID, pin.Message.GetCID()); err != nil {
+	if ok, err := model.IsChannelAccessibleToUser(userID, pin.Message.ChannelID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
@@ -127,7 +127,7 @@ func DeletePin(c echo.Context) error {
 	}
 
 	// ユーザーからアクセス可能なチャンネルかどうか
-	if ok, err := model.IsChannelAccessibleToUser(userID, pin.Message.GetCID()); err != nil {
+	if ok, err := model.IsChannelAccessibleToUser(userID, pin.Message.ChannelID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {

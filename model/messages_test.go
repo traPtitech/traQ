@@ -40,9 +40,9 @@ func TestParallelGroup7(t *testing.T) {
 
 			m, err := CreateMessage(user.GetUID(), channel.ID, "test")
 			if assert.NoError(err) {
-				assert.NotEmpty(m.ID)
-				assert.Equal(user.ID, m.UserID)
-				assert.Equal(channel.ID, m.GetCID())
+				assert.NotZero(m.ID)
+				assert.Equal(user.ID, m.UserID.String())
+				assert.Equal(channel.ID, m.ChannelID)
 				assert.Equal("test", m.Text)
 				assert.NotZero(m.CreatedAt)
 				assert.NotZero(m.UpdatedAt)
@@ -58,10 +58,10 @@ func TestParallelGroup7(t *testing.T) {
 		channel := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		m := mustMakeMessage(t, user.GetUID(), channel.ID)
 
-		assert.Error(UpdateMessage(m.GetID(), ""))
-		assert.NoError(UpdateMessage(m.GetID(), "new message"))
+		assert.Error(UpdateMessage(m.ID, ""))
+		assert.NoError(UpdateMessage(m.ID, "new message"))
 
-		m, err := GetMessageByID(m.GetID())
+		m, err := GetMessageByID(m.ID)
 		if assert.NoError(err) {
 			assert.Equal("new message", m.Text)
 		}
@@ -74,8 +74,8 @@ func TestParallelGroup7(t *testing.T) {
 		channel := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		m := mustMakeMessage(t, user.GetUID(), channel.ID)
 
-		if assert.NoError(DeleteMessage(m.GetID())) {
-			_, err := GetMessageByID(m.GetID())
+		if assert.NoError(DeleteMessage(m.ID)) {
+			_, err := GetMessageByID(m.ID)
 			assert.Error(err)
 		}
 	})
@@ -107,7 +107,7 @@ func TestParallelGroup7(t *testing.T) {
 		channel := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		m := mustMakeMessage(t, user.GetUID(), channel.ID)
 
-		r, err := GetMessageByID(m.GetID())
+		r, err := GetMessageByID(m.ID)
 		if assert.NoError(err) {
 			assert.Equal(m.Text, r.Text)
 		}
@@ -124,7 +124,7 @@ func TestParallelGroup7(t *testing.T) {
 		channel := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
 
-		assert.NoError(SetMessageUnread(user.GetUID(), testMessage.GetID()))
+		assert.NoError(SetMessageUnread(user.GetUID(), testMessage.ID))
 	})
 
 	// GetUnreadMessagesByUserID
@@ -134,7 +134,7 @@ func TestParallelGroup7(t *testing.T) {
 		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
 		channel := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		for i := 0; i < 10; i++ {
-			mustMakeMessageUnread(t, user.GetUID(), mustMakeMessage(t, user.GetUID(), channel.ID).GetID())
+			mustMakeMessageUnread(t, user.GetUID(), mustMakeMessage(t, user.GetUID(), channel.ID).ID)
 		}
 
 		if unreads, err := GetUnreadMessagesByUserID(user.GetUID()); assert.NoError(err) {
@@ -154,18 +154,18 @@ func TestParallelGroup7(t *testing.T) {
 		testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
 		testMessage2 := mustMakeMessage(t, user.GetUID(), channel.ID)
 		for i := 0; i < 10; i++ {
-			mustMakeMessageUnread(t, mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID(), testMessage.GetID())
-			mustMakeMessageUnread(t, mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID(), testMessage2.GetID())
+			mustMakeMessageUnread(t, mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID(), testMessage.ID)
+			mustMakeMessageUnread(t, mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID(), testMessage2.ID)
 		}
 
-		if assert.NoError(DeleteUnreadsByMessageID(testMessage.GetID())) {
+		if assert.NoError(DeleteUnreadsByMessageID(testMessage.ID)) {
 			count := -1
-			db.Model(Unread{}).Where(&Unread{MessageID: testMessage.ID}).Count(&count)
+			db.Model(Unread{}).Where(&Unread{MessageID: testMessage.ID.String()}).Count(&count)
 			assert.Equal(0, count)
 		}
-		if assert.NoError(DeleteUnreadsByMessageID(testMessage2.GetID())) {
+		if assert.NoError(DeleteUnreadsByMessageID(testMessage2.ID)) {
 			count := -1
-			db.Model(Unread{}).Where(&Unread{MessageID: testMessage2.ID}).Count(&count)
+			db.Model(Unread{}).Where(&Unread{MessageID: testMessage2.ID.String()}).Count(&count)
 			assert.Equal(0, count)
 		}
 	})
@@ -181,8 +181,8 @@ func TestParallelGroup7(t *testing.T) {
 		testMessage := mustMakeMessage(t, creator.GetUID(), channel.ID)
 		testMessage2 := mustMakeMessage(t, creator.GetUID(), channel2.ID)
 
-		mustMakeMessageUnread(t, user.GetUID(), testMessage.GetID())
-		mustMakeMessageUnread(t, user.GetUID(), testMessage2.GetID())
+		mustMakeMessageUnread(t, user.GetUID(), testMessage.ID)
+		mustMakeMessageUnread(t, user.GetUID(), testMessage2.ID)
 
 		if assert.NoError(DeleteUnreadsByChannelID(channel.ID, user.GetUID())) {
 			count := 0
@@ -205,7 +205,7 @@ func TestGetChannelLatestMessagesByUserID(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			mustMakeMessage(t, user.GetUID(), ch.ID)
 		}
-		latests = append(latests, mustMakeMessage(t, user.GetUID(), ch.ID).GetID())
+		latests = append(latests, mustMakeMessage(t, user.GetUID(), ch.ID).ID)
 	}
 
 	t.Run("SubTest1", func(t *testing.T) {
@@ -214,7 +214,7 @@ func TestGetChannelLatestMessagesByUserID(t *testing.T) {
 		arr, err := GetChannelLatestMessagesByUserID(user.GetUID(), -1, false)
 		derefs := make([]uuid.UUID, len(arr))
 		for i := range arr {
-			derefs[i] = arr[i].GetID()
+			derefs[i] = arr[i].ID
 		}
 		if assert.NoError(err) {
 			assert.ElementsMatch(derefs, latests)
@@ -227,7 +227,7 @@ func TestGetChannelLatestMessagesByUserID(t *testing.T) {
 		arr, err := GetChannelLatestMessagesByUserID(user.GetUID(), -1, true)
 		derefs := make([]uuid.UUID, len(arr))
 		for i := range arr {
-			derefs[i] = arr[i].GetID()
+			derefs[i] = arr[i].ID
 		}
 		if assert.NoError(err) {
 			assert.ElementsMatch(derefs, latests[:5])
@@ -240,7 +240,7 @@ func TestGetChannelLatestMessagesByUserID(t *testing.T) {
 		arr, err := GetChannelLatestMessagesByUserID(user.GetUID(), 5, false)
 		derefs := make([]uuid.UUID, len(arr))
 		for i := range arr {
-			derefs[i] = arr[i].GetID()
+			derefs[i] = arr[i].ID
 		}
 		if assert.NoError(err) {
 			assert.ElementsMatch(derefs, latests[5:])

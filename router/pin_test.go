@@ -21,7 +21,7 @@ func TestGroup_Pin(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 			e.POST("/api/1.0/pins").
-				WithJSON(map[string]string{"messageId": message.ID}).
+				WithJSON(map[string]string{"messageId": message.ID.String()}).
 				Expect().
 				Status(http.StatusForbidden)
 		})
@@ -31,7 +31,7 @@ func TestGroup_Pin(t *testing.T) {
 			e := makeExp(t)
 			e.POST("/api/1.0/pins").
 				WithCookie(sessions.CookieName, session).
-				WithJSON(map[string]string{"messageId": message.ID}).
+				WithJSON(map[string]string{"messageId": message.ID.String()}).
 				Expect().
 				Status(http.StatusCreated).
 				JSON().
@@ -51,7 +51,7 @@ func TestGroup_Pin(t *testing.T) {
 
 		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		pin := mustMakePin(t, testUser.GetUID(), message.GetID())
+		pin := mustMakePin(t, testUser.GetUID(), message.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -81,7 +81,7 @@ func TestGroup_Pin(t *testing.T) {
 
 		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		pin := mustMakePin(t, testUser.GetUID(), message.GetID())
+		pin := mustMakePin(t, testUser.GetUID(), message.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -109,7 +109,7 @@ func TestGroup_Pin(t *testing.T) {
 
 		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		mustMakePin(t, testUser.GetUID(), message.GetID())
+		mustMakePin(t, testUser.GetUID(), message.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()

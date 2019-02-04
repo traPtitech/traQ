@@ -182,18 +182,13 @@ func GetUserTag(userID, tagID uuid.UUID) (*UsersTag, error) {
 }
 
 // GetUserIDsByTag 指定したタグを持った全ユーザーのUUIDを返します
-func GetUserIDsByTag(tag string) ([]uuid.UUID, error) {
-	var arr []string
-	err := db.
+func GetUserIDsByTag(tag string) (arr []uuid.UUID, err error) {
+	err = db.
 		Model(UsersTag{}).
 		Joins("INNER JOIN tags ON users_tags.tag_id = tags.id AND tags.name = ?", tag).
 		Pluck("users_tags.user_id", &arr).
 		Error
-	if err != nil {
-		return nil, err
-	}
-
-	return convertStringSliceToUUIDSlice(arr), nil
+	return arr, err
 }
 
 // GetUsersByTag 指定したタグを持った全ユーザーを取得します
@@ -210,15 +205,11 @@ func GetUsersByTag(tag string) (arr []*User, err error) {
 }
 
 // GetUserIDsByTagID 指定したタグIDのタグを持った全ユーザーのIDを返します
-func GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, error) {
-	var arr []string
-	err := db.
+func GetUserIDsByTagID(tagID uuid.UUID) (arr []uuid.UUID, err error) {
+	err = db.
 		Model(UsersTag{}).
 		Where("tag_id = ?", tagID.String()).
 		Pluck("user_id", &arr).
 		Error
-	if err != nil {
-		return nil, err
-	}
-	return convertStringSliceToUUIDSlice(arr), nil
+	return arr, err
 }

@@ -93,7 +93,7 @@ func TestParallelGroup1(t *testing.T) {
 
 			ch := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
 			message := mustMakeMessage(t, user.GetUID(), ch.ID)
-			ch, err := GetChannelByMessageID(message.GetID())
+			ch, err := GetChannelByMessageID(message.ID)
 			if assert.NoError(err) {
 				assert.Equal(ch.ID, ch.ID)
 			}

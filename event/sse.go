@@ -122,7 +122,7 @@ func (s *SSEStreamer) Process(t Type, time time.Time, data interface{}) error {
 	switch t {
 	case MessageCreated:
 		me := data.(*MessageCreatedEvent)
-		cid := uuid.Must(uuid.FromString(me.Message.ChannelID))
+		cid := me.Message.ChannelID
 		viewers := map[uuid.UUID]bool{}
 		connector := map[uuid.UUID]bool{}
 
@@ -141,8 +141,8 @@ func (s *SSEStreamer) Process(t Type, time time.Time, data interface{}) error {
 
 		// 送信
 		for id := range subscribers {
-			if !(id.String() == me.Message.UserID || viewers[id]) {
-				if err := model.SetMessageUnread(id, me.Message.GetID()); err != nil {
+			if !(id == me.Message.UserID || viewers[id]) {
+				if err := model.SetMessageUnread(id, me.Message.ID); err != nil {
 					log.Error(err)
 				}
 			}

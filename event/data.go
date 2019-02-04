@@ -37,7 +37,7 @@ func (e *MessageCreatedEvent) parseMessage() ([]*message.EmbeddedInfo, string) {
 // GetTargetUsers 通知対象のユーザー
 func (e *MessageCreatedEvent) GetTargetUsers() map[uuid.UUID]bool {
 	res := map[uuid.UUID]bool{}
-	ch, err := model.GetChannelByMessageID(e.Message.GetID())
+	ch, err := model.GetChannelByMessageID(e.Message.ID)
 	if err != nil {
 		log.Error(err)
 	}
@@ -101,9 +101,9 @@ func (e *MessageCreatedEvent) GetTargetUsers() map[uuid.UUID]bool {
 
 // GetExcludeUsers FCMの通知対象から除外されるユーザー
 func (e *MessageCreatedEvent) GetExcludeUsers() map[uuid.UUID]bool {
-	ex := map[uuid.UUID]bool{e.Message.GetUID(): true}
+	ex := map[uuid.UUID]bool{e.Message.UserID: true}
 
-	ch, err := model.GetChannelByMessageID(e.Message.GetID())
+	ch, err := model.GetChannelByMessageID(e.Message.ID)
 	if err != nil {
 		log.Error(err)
 	}
@@ -130,8 +130,8 @@ func (e *MessageCreatedEvent) GetFCMData() map[string]string {
 	}
 
 	ei, plain := e.parseMessage()
-	users, _ := model.GetPrivateChannelMembers(e.Message.GetCID())
-	mUser, _ := model.GetUser(e.Message.GetUID())
+	users, _ := model.GetPrivateChannelMembers(e.Message.ChannelID)
+	mUser, _ := model.GetUser(e.Message.UserID)
 	if l := len(users); l == 2 || l == 1 {
 		if mUser != nil {
 			if len(mUser.DisplayName) == 0 {
@@ -150,7 +150,7 @@ func (e *MessageCreatedEvent) GetFCMData() map[string]string {
 			d["body"] = plain
 		}
 	} else {
-		path, _ := model.GetChannelPath(e.Message.GetCID())
+		path, _ := model.GetChannelPath(e.Message.ChannelID)
 		d["title"] = path
 		d["path"] = fmt.Sprintf("/channels/%s", strings.TrimLeft(path, "#"))
 
@@ -186,7 +186,7 @@ func (e *MessageCreatedEvent) GetFCMData() map[string]string {
 
 // GetTargetChannels 通知対象のチャンネル
 func (e *MessageCreatedEvent) GetTargetChannels() map[uuid.UUID]bool {
-	return map[uuid.UUID]bool{e.Message.GetCID(): true}
+	return map[uuid.UUID]bool{e.Message.ChannelID: true}
 }
 
 // GetData SSE用のペイロード
@@ -215,7 +215,7 @@ type MessageUpdatedEvent struct {
 
 // GetTargetChannels 通知対象のチャンネル
 func (e *MessageUpdatedEvent) GetTargetChannels() map[uuid.UUID]bool {
-	return map[uuid.UUID]bool{e.Message.GetCID(): true}
+	return map[uuid.UUID]bool{e.Message.ChannelID: true}
 }
 
 // GetData SSE用のペイロード
@@ -259,7 +259,7 @@ func (e *MessageDeletedEvent) GetData() Payload {
 
 // GetTargetChannels 通知対象のチャンネル
 func (e *MessageDeletedEvent) GetTargetChannels() map[uuid.UUID]bool {
-	return map[uuid.UUID]bool{e.Message.GetCID(): true}
+	return map[uuid.UUID]bool{e.Message.ChannelID: true}
 }
 
 // UserEvent ユーザーイベント
@@ -407,7 +407,7 @@ func (e *PinEvent) GetData() Payload {
 
 // GetTargetChannels 通知対象のチャンネル
 func (e *PinEvent) GetTargetChannels() map[uuid.UUID]bool {
-	return map[uuid.UUID]bool{uuid.Must(uuid.FromString(e.Message.ChannelID)): true}
+	return map[uuid.UUID]bool{e.Message.ChannelID: true}
 }
 
 // ClipEvent クリップに関するイベント

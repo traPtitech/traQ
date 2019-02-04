@@ -15,9 +15,9 @@ import (
 
 // MessageForResponse クライアントに返す形のメッセージオブジェクト
 type MessageForResponse struct {
-	MessageID       string                `json:"messageId"`
-	UserID          string                `json:"userId"`
-	ParentChannelID string                `json:"parentChannelId"`
+	MessageID       uuid.UUID             `json:"messageId"`
+	UserID          uuid.UUID             `json:"userId"`
+	ParentChannelID uuid.UUID             `json:"parentChannelId"`
 	Content         string                `json:"content"`
 	CreatedAt       time.Time             `json:"createdAt"`
 	UpdatedAt       time.Time             `json:"updatedAt"`
@@ -48,7 +48,7 @@ func PutMessageByID(c echo.Context) error {
 		return err
 	}
 	// 他人のテキストは編集できない
-	if userID != m.GetUID() {
+	if userID != m.UserID {
 		return echo.NewHTTPError(http.StatusForbidden, "This is not your message")
 	}
 
@@ -77,7 +77,7 @@ func DeleteMessageByID(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	if m.GetUID() != userID {
+	if m.UserID != userID {
 		return echo.NewHTTPError(http.StatusForbidden, "you are not allowed to delete this message")
 	}
 
@@ -133,7 +133,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 	res := make([]*MessageForResponse, 0, req.Limit)
 	for _, message := range messages {
 		ms := formatMessage(message)
-		if hidden[message.ID] {
+		if hidden[message.ID.String()] {
 			ms.Reported = true
 		}
 		res = append(res, ms)
@@ -335,12 +335,12 @@ func createMessage(c echo.Context, text string, userID, channelID uuid.UUID) (*M
 }
 
 func formatMessage(raw *model.Message) *MessageForResponse {
-	isPinned, err := model.IsPinned(raw.GetID())
+	isPinned, err := model.IsPinned(raw.ID)
 	if err != nil {
 		log.Error(err)
 	}
 
-	stampList, err := model.GetMessageStamps(raw.GetID())
+	stampList, err := model.GetMessageStamps(raw.ID)
 	if err != nil {
 		log.Error(err)
 	}
@@ -371,7 +371,7 @@ func validateMessageID(c echo.Context, messageID, userID uuid.UUID) (*model.Mess
 		}
 	}
 
-	if ok, err := model.IsChannelAccessibleToUser(userID, m.GetCID()); err != nil {
+	if ok, err := model.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {

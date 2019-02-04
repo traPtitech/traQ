@@ -31,28 +31,8 @@ func ConvertToPNG(ctx context.Context, src io.Reader, maxWidth, maxHeight int) (
 	defer cancel()
 	cmd := exec.CommandContext(c, config.ImageMagickConverterExec, "-resize", fmt.Sprintf("%dx%d", maxWidth, maxHeight), "-background", "none", "-", "png:-")
 
-	stdin, err := cmd.StdinPipe()
+	b, err := cmdPipe(cmd, src)
 	if err != nil {
-		return nil, err
-	}
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		defer stdin.Close()
-		_, _ = io.Copy(stdin, src)
-	}()
-
-	if err := cmd.Start(); err != nil {
-		return nil, err
-	}
-
-	b := &bytes.Buffer{}
-	_, _ = io.Copy(b, stdout)
-
-	if err := cmd.Wait(); err != nil {
 		switch err.(type) {
 		case *exec.ExitError:
 			return nil, ErrUnsupportedType
@@ -81,6 +61,20 @@ func ResizeAnimationGIF(ctx context.Context, src io.Reader, maxWidth, maxHeight 
 	}
 	cmd := exec.CommandContext(ctx, config.ImageMagickConverterExec, "-coalesce", "-resize", sizer, "-deconstruct", "-", "gif:-")
 
+	b, err := cmdPipe(cmd, src)
+	if err != nil {
+		switch err.(type) {
+		case *exec.ExitError:
+			return nil, ErrUnsupportedType
+		default:
+			return nil, err
+		}
+	}
+
+	return b, nil
+}
+
+func cmdPipe(cmd *exec.Cmd, input io.Reader) (output *bytes.Buffer, err error) {
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, err
@@ -92,7 +86,7 @@ func ResizeAnimationGIF(ctx context.Context, src io.Reader, maxWidth, maxHeight 
 
 	go func() {
 		defer stdin.Close()
-		_, _ = io.Copy(stdin, src)
+		_, _ = io.Copy(stdin, input)
 	}()
 
 	if err := cmd.Start(); err != nil {
@@ -102,14 +96,5 @@ func ResizeAnimationGIF(ctx context.Context, src io.Reader, maxWidth, maxHeight 
 	b := &bytes.Buffer{}
 	_, _ = io.Copy(b, stdout)
 
-	if err := cmd.Wait(); err != nil {
-		switch err.(type) {
-		case *exec.ExitError:
-			return nil, ErrUnsupportedType
-		default:
-			return nil, err
-		}
-	}
-
-	return b, nil
+	return b, cmd.Wait()
 }
