@@ -173,21 +173,8 @@ func processStillImage(c echo.Context, src io.Reader, maxWidth, maxHeight int) (
 		return nil, "", echo.NewHTTPError(http.StatusBadRequest, "bad image file")
 	}
 
-	if img.Bounds().Size().X > maxWidth || img.Bounds().Size().Y > maxHeight {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
-		defer cancel()
-		img, err = thumb.Resize(ctx, img, maxWidth, maxHeight)
-		if err != nil {
-			switch err {
-			case context.DeadlineExceeded:
-				// リサイズタイムアウト
-				return nil, "", echo.NewHTTPError(http.StatusBadRequest, "bad image file (resize timeout)")
-			default:
-				// 予期しないエラー
-				c.Logger().Error(err)
-				return nil, "", echo.NewHTTPError(http.StatusInternalServerError)
-			}
-		}
+	if size := img.Bounds().Size(); size.X > maxWidth || size.Y > maxHeight {
+		img = thumb.Resize(img, maxWidth, maxHeight)
 	}
 
 	// bytesに戻す

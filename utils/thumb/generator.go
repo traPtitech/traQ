@@ -67,7 +67,7 @@ func Generate(ctx context.Context, src io.Reader, mime string) (image.Image, err
 	if err != nil {
 		return nil, err
 	}
-	return Resize(ctx, img, ThumbnailMaxWidth, ThumbnailMaxHeight)
+	return Resize(img, ThumbnailMaxWidth, ThumbnailMaxHeight), nil
 }
 
 // EncodeToPNG image.Imageをpngのバイトバッファにエンコードします
@@ -78,18 +78,9 @@ func EncodeToPNG(img image.Image) (b *bytes.Buffer, err error) {
 }
 
 // Resize imgをリサイズします。アスペクト比は保持されます。
-func Resize(ctx context.Context, img image.Image, maxWidth, maxHeight int) (image.Image, error) {
-	var dst draw.Image
-
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
-		thumbSize := CalcThumbnailSize(img.Bounds().Size(), image.Pt(maxWidth, maxHeight))
-		dst = image.NewRGBA(image.Rectangle{Min: image.ZP, Max: thumbSize})
-		draw.Draw(dst, dst.Bounds(), image.White, image.ZP, draw.Src)
-		draw.ApproxBiLinear.Scale(dst, dst.Bounds(), img, img.Bounds(), draw.Src, nil)
-	}
-
-	return dst.(image.Image), nil
+func Resize(img image.Image, maxWidth, maxHeight int) image.Image {
+	var dst draw.Image = image.NewRGBA(image.Rectangle{Min: image.ZP, Max: CalcThumbnailSize(img.Bounds().Size(), image.Pt(maxWidth, maxHeight))})
+	draw.Draw(dst, dst.Bounds(), image.White, image.ZP, draw.Src)
+	draw.ApproxBiLinear.Scale(dst, dst.Bounds(), img, img.Bounds(), draw.Src, nil)
+	return dst.(image.Image)
 }
