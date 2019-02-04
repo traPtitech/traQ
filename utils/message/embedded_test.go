@@ -16,13 +16,18 @@ func TestParse(t *testing.T) {
 
 	cases := []Case{
 		{
-			"test message",
-			"test message",
+			"test message !{aaa",
+			"test message !{aaa",
 			[]EmbeddedInfo{},
 		},
 		{
 			`{"test": "test"}!!{}`,
 			`{"test": "test"}!!{}`,
+			[]EmbeddedInfo{},
+		},
+		{
+			`!{aiueo::::aaaaaaa}`,
+			`!{aiueo::::aaaaaaa}`,
 			[]EmbeddedInfo{},
 		},
 		{
