@@ -92,6 +92,8 @@ var (
 	ErrNotFoundOrForbidden = errors.New("not found or forbidden")
 	// ErrNotFound 汎用エラー: 見つからない場合のエラー
 	ErrNotFound = errors.New("not found")
+	// ErrNilID 汎用エラー: 引数のIDがNilです
+	ErrNilID = errors.New("nil id")
 )
 
 // SetGORMEngine DBにgormのエンジンを設定する
@@ -213,7 +215,7 @@ func transact(txFunc func(tx *gorm.DB) error) (err error) {
 	return err
 }
 
-func LimitAndOffset(limit, offset int) func(db *gorm.DB) *gorm.DB {
+func limitAndOffset(limit, offset int) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		if offset > 0 {
 			db = db.Offset(offset)

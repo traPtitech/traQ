@@ -64,27 +64,33 @@ func CreateMessage(userID, channelID uuid.UUID, text string) (*Message, error) {
 
 // UpdateMessage メッセージを更新します
 func UpdateMessage(messageID uuid.UUID, text string) error {
+	if messageID == uuid.Nil {
+		return ErrNilID
+	}
 	if len(text) == 0 {
 		return errors.New("text is empty")
 	}
-	return db.Model(Message{ID: messageID}).Update("text", text).Error
+	return db.Model(&Message{ID: messageID}).Update("text", text).Error
 }
 
 // DeleteMessage メッセージを削除します
 func DeleteMessage(messageID uuid.UUID) error {
-	return db.Delete(Message{ID: messageID}).Error
+	if messageID == uuid.Nil {
+		return ErrNilID
+	}
+	return db.Delete(&Message{ID: messageID}).Error
 }
 
 // GetMessagesByChannelID 指定されたチャンネルのメッセージを取得します
 func GetMessagesByChannelID(channelID uuid.UUID, limit, offset int) (arr []*Message, err error) {
-	arr = make([]*Message, 0)
 	if channelID == uuid.Nil {
-		return arr, nil
+		return nil, ErrNilID
 	}
+	arr = make([]*Message, 0)
 	err = db.
 		Where(&Message{ChannelID: channelID}).
 		Order("created_at DESC").
-		Scopes(LimitAndOffset(limit, offset)).
+		Scopes(limitAndOffset(limit, offset)).
 		Find(&arr).
 		Error
 	return arr, err
@@ -92,8 +98,11 @@ func GetMessagesByChannelID(channelID uuid.UUID, limit, offset int) (arr []*Mess
 
 // GetMessageByID messageIDで指定されたメッセージを取得します
 func GetMessageByID(messageID uuid.UUID) (*Message, error) {
+	if messageID == uuid.Nil {
+		return nil, ErrNilID
+	}
 	message := &Message{}
-	if err := db.Where(Message{ID: messageID}).Take(message).Error; err != nil {
+	if err := db.Where(&Message{ID: messageID}).Take(message).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, ErrNotFound
 		}
@@ -104,6 +113,9 @@ func GetMessageByID(messageID uuid.UUID) (*Message, error) {
 
 // SetMessageUnread 指定したメッセージを未読にします
 func SetMessageUnread(userID, messageID uuid.UUID) error {
+	if userID == uuid.Nil || messageID == uuid.Nil {
+		return ErrNilID
+	}
 	return db.Create(&Unread{UserID: userID, MessageID: messageID}).Error
 }
 
@@ -120,9 +132,9 @@ func GetUnreadMessagesByUserID(userID uuid.UUID) (unreads []*Message, err error)
 // DeleteUnreadsByMessageID 指定したメッセージIDの未読レコードを全て削除
 func DeleteUnreadsByMessageID(messageID uuid.UUID) error {
 	if messageID == uuid.Nil {
-		return nil
+		return ErrNilID
 	}
-	return db.Where(Unread{MessageID: messageID}).Delete(Unread{}).Error
+	return db.Where(&Unread{MessageID: messageID}).Delete(Unread{}).Error
 }
 
 // DeleteUnreadsByChannelID 指定したチャンネルIDに存在する、指定したユーザーIDの未読レコードをすべて削除
