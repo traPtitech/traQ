@@ -39,8 +39,8 @@ func (m *Message) Validate() error {
 
 // Unread 未読レコード
 type Unread struct {
-	UserID    string    `gorm:"type:char(36);primary_key"`
-	MessageID string    `gorm:"type:char(36);primary_key"`
+	UserID    uuid.UUID `gorm:"type:char(36);primary_key"`
+	MessageID uuid.UUID `gorm:"type:char(36);primary_key"`
 	CreatedAt time.Time `gorm:"precision:6"`
 }
 
@@ -104,7 +104,7 @@ func GetMessageByID(messageID uuid.UUID) (*Message, error) {
 
 // SetMessageUnread 指定したメッセージを未読にします
 func SetMessageUnread(userID, messageID uuid.UUID) error {
-	return db.Create(&Unread{UserID: userID.String(), MessageID: messageID.String()}).Error
+	return db.Create(&Unread{UserID: userID, MessageID: messageID}).Error
 }
 
 // GetUnreadMessagesByUserID あるユーザーの未読メッセージをすべて取得
@@ -119,7 +119,10 @@ func GetUnreadMessagesByUserID(userID uuid.UUID) (unreads []*Message, err error)
 
 // DeleteUnreadsByMessageID 指定したメッセージIDの未読レコードを全て削除
 func DeleteUnreadsByMessageID(messageID uuid.UUID) error {
-	return db.Where(Unread{MessageID: messageID.String()}).Delete(Unread{}).Error
+	if messageID == uuid.Nil {
+		return nil
+	}
+	return db.Where(Unread{MessageID: messageID}).Delete(Unread{}).Error
 }
 
 // DeleteUnreadsByChannelID 指定したチャンネルIDに存在する、指定したユーザーIDの未読レコードをすべて削除

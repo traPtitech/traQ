@@ -160,12 +160,12 @@ func TestParallelGroup7(t *testing.T) {
 
 		if assert.NoError(DeleteUnreadsByMessageID(testMessage.ID)) {
 			count := -1
-			db.Model(Unread{}).Where(&Unread{MessageID: testMessage.ID.String()}).Count(&count)
+			db.Model(Unread{}).Where(&Unread{MessageID: testMessage.ID}).Count(&count)
 			assert.Equal(0, count)
 		}
 		if assert.NoError(DeleteUnreadsByMessageID(testMessage2.ID)) {
 			count := -1
-			db.Model(Unread{}).Where(&Unread{MessageID: testMessage2.ID.String()}).Count(&count)
+			db.Model(Unread{}).Where(&Unread{MessageID: testMessage2.ID}).Count(&count)
 			assert.Equal(0, count)
 		}
 	})
@@ -186,7 +186,7 @@ func TestParallelGroup7(t *testing.T) {
 
 		if assert.NoError(DeleteUnreadsByChannelID(channel.ID, user.GetUID())) {
 			count := 0
-			db.Model(Unread{}).Where(&Unread{UserID: user.ID}).Count(&count)
+			db.Model(Unread{}).Where(&Unread{UserID: user.GetUID()}).Count(&count)
 			assert.Equal(1, count)
 		}
 	})
