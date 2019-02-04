@@ -77,6 +77,13 @@ func EncodeToPNG(img image.Image) (b *bytes.Buffer, err error) {
 	return
 }
 
+// EncodeToJPG image.Imageをjpgのバイトバッファにエンコードします
+func EncodeToJPG(img image.Image) (b *bytes.Buffer, err error) {
+	b = &bytes.Buffer{}
+	err = jpeg.Encode(b, img, &jpeg.Options{Quality: 100})
+	return
+}
+
 // Resize imgをリサイズします。アスペクト比は保持されます。
 func Resize(img image.Image, maxWidth, maxHeight int) image.Image {
 	var dst draw.Image = image.NewRGBA(image.Rectangle{Min: image.ZP, Max: CalcThumbnailSize(img.Bounds().Size(), image.Pt(maxWidth, maxHeight))})

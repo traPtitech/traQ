@@ -5,7 +5,11 @@ import (
 	"context"
 	"github.com/jakobvarmose/go-qidenticon"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/image/bmp"
+	"golang.org/x/image/tiff"
 	"image"
+	"image/gif"
+	"image/jpeg"
 	"testing"
 )
 
@@ -49,6 +53,22 @@ func TestEncodeToPNG(t *testing.T) {
 	}
 }
 
+func TestEncodeToJPG(t *testing.T) {
+	t.Parallel()
+
+	assert := assert.New(t)
+
+	jpeg, err := EncodeToJPG(img)
+	if assert.NoError(err) {
+		c, f, err := image.DecodeConfig(jpeg)
+		if assert.NoError(err) {
+			assert.Equal(img.Bounds().Size().X, c.Width)
+			assert.Equal(img.Bounds().Size().Y, c.Height)
+			assert.Equal("jpeg", f)
+		}
+	}
+}
+
 func TestGenerate(t *testing.T) {
 	t.Parallel()
 
@@ -69,6 +89,54 @@ func TestGenerate(t *testing.T) {
 
 		_, err := Generate(context.Background(), nil, "application/json")
 		assert.EqualError(t, err, ErrFileThumbUnsupported.Error())
+	})
+
+	t.Run("Success3", func(t *testing.T) {
+		t.Parallel()
+
+		b := &bytes.Buffer{}
+		_ = jpeg.Encode(b, img, nil)
+
+		thumb, err := Generate(context.Background(), b, "image/jpeg")
+		if assert.NoError(t, err) {
+			assert.NotNil(t, thumb)
+		}
+	})
+
+	t.Run("Success4", func(t *testing.T) {
+		t.Parallel()
+
+		b := &bytes.Buffer{}
+		_ = bmp.Encode(b, img)
+
+		thumb, err := Generate(context.Background(), b, "image/bmp")
+		if assert.NoError(t, err) {
+			assert.NotNil(t, thumb)
+		}
+	})
+
+	t.Run("Success5", func(t *testing.T) {
+		t.Parallel()
+
+		b := &bytes.Buffer{}
+		_ = tiff.Encode(b, img, nil)
+
+		thumb, err := Generate(context.Background(), b, "image/tiff")
+		if assert.NoError(t, err) {
+			assert.NotNil(t, thumb)
+		}
+	})
+
+	t.Run("Success6", func(t *testing.T) {
+		t.Parallel()
+
+		b := &bytes.Buffer{}
+		_ = gif.Encode(b, img, nil)
+
+		thumb, err := Generate(context.Background(), b, "image/gif")
+		if assert.NoError(t, err) {
+			assert.NotNil(t, thumb)
+		}
 	})
 
 	t.Run("Failure1", func(t *testing.T) {
