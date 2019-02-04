@@ -86,7 +86,6 @@ const base64gif = `R0lGODlhXgFdAfYAAGtaIcacMc6lUufGc97OlP///86lSufWtb1SKb1jSs4hC
 
 func TestConvertToPNG(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
 
 	if len(config.ImageMagickConverterExec) == 0 {
 		t.SkipNow()
@@ -97,27 +96,26 @@ func TestConvertToPNG(t *testing.T) {
 
 		broken := `<?xml version="1.0" enc`
 		_, err := ConvertToPNG(context.TODO(), bytes.NewBufferString(broken), 100, 200)
-		assert.Error(err)
+		assert.Error(t, err)
 	})
 
 	t.Run("Valid svg", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := ConvertToPNG(context.TODO(), bytes.NewBufferString(gopher), 100, 100)
-		assert.NoError(err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("invalid args", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := ConvertToPNG(context.TODO(), bytes.NewBufferString(gopher), -100, 100)
-		assert.Error(err)
+		assert.Error(t, err)
 	})
 }
 
 func TestResizeAnimationGIF(t *testing.T) {
 	t.Parallel()
-	assert := assert.New(t)
 
 	if len(config.ImageMagickConverterExec) == 0 {
 		t.SkipNow()
@@ -129,20 +127,20 @@ func TestResizeAnimationGIF(t *testing.T) {
 		t.Parallel()
 
 		_, err := ResizeAnimationGIF(context.TODO(), bytes.NewReader(gif), 50, 50, false)
-		assert.NoError(err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("not gif", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := ResizeAnimationGIF(context.TODO(), io.LimitReader(bytes.NewReader(gif), 10), 100, 100, true)
-		assert.Error(err)
+		assert.Error(t, err)
 	})
 
 	t.Run("invalid args", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := ResizeAnimationGIF(context.TODO(), bytes.NewBufferString(gopher), -100, 100, false)
-		assert.Error(err)
+		assert.Error(t, err)
 	})
 }

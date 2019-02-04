@@ -52,8 +52,6 @@ func TestEncodeToPNG(t *testing.T) {
 func TestGenerate(t *testing.T) {
 	t.Parallel()
 
-	assert := assert.New(t)
-
 	png, _ := EncodeToPNG(img)
 	b := png.Bytes()
 
@@ -61,8 +59,8 @@ func TestGenerate(t *testing.T) {
 		t.Parallel()
 
 		thumb, err := Generate(context.Background(), bytes.NewReader(b), "image/png")
-		if assert.NoError(err) {
-			assert.NotNil(thumb)
+		if assert.NoError(t, err) {
+			assert.NotNil(t, thumb)
 		}
 	})
 
@@ -70,13 +68,13 @@ func TestGenerate(t *testing.T) {
 		t.Parallel()
 
 		_, err := Generate(context.Background(), nil, "application/json")
-		assert.EqualError(err, ErrFileThumbUnsupported.Error())
+		assert.EqualError(t, err, ErrFileThumbUnsupported.Error())
 	})
 
 	t.Run("Failure1", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := Generate(context.Background(), bytes.NewReader(b), "image/bmp")
-		assert.Error(err)
+		assert.Error(t, err)
 	})
 }
