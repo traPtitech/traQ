@@ -13,8 +13,8 @@ import (
 // GetClips GET /users/me/clips
 func GetClips(c echo.Context) error {
 	type clipMessageForResponse struct {
-		FolderID  string              `json:"folderId"`
-		ClipID    string              `json:"clipId"`
+		FolderID  uuid.UUID           `json:"folderId"`
+		ClipID    uuid.UUID           `json:"clipId"`
 		ClippedAt time.Time           `json:"clippedAt"`
 		Message   *MessageForResponse `json:"message"`
 	}
@@ -73,7 +73,7 @@ func PostClip(c echo.Context) error {
 			}
 		}
 		// フォルダがリクエストユーザーのものかを確認
-		if folder.GetUID() != userID {
+		if folder.UserID != userID {
 			return echo.NewHTTPError(http.StatusBadRequest, "the folder is not found")
 		}
 	} else {
@@ -85,7 +85,7 @@ func PostClip(c echo.Context) error {
 		}
 		for _, v := range folders {
 			if v.Name == "Default" {
-				req.FolderID = v.ID
+				req.FolderID = v.ID.String()
 				break
 			}
 		}
@@ -96,8 +96,8 @@ func PostClip(c echo.Context) error {
 				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
-			go event.Emit(event.ClipFolderCreated, &event.ClipEvent{ID: folder.GetID(), UserID: userID})
-			req.FolderID = folder.ID
+			go event.Emit(event.ClipFolderCreated, &event.ClipEvent{ID: folder.ID, UserID: userID})
+			req.FolderID = folder.ID.String()
 		}
 	}
 
@@ -111,9 +111,9 @@ func PostClip(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.ClipCreated, &event.ClipEvent{ID: clip.GetID(), UserID: clip.GetUID()})
+	go event.Emit(event.ClipCreated, &event.ClipEvent{ID: clip.ID, UserID: clip.UserID})
 	return c.JSON(http.StatusCreated, struct {
-		ID string `json:"id"`
+		ID uuid.UUID `json:"id"`
 	}{clip.ID})
 }
 
@@ -146,7 +146,7 @@ func DeleteClip(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.ClipDeleted, &event.ClipEvent{ID: clipID, UserID: clip.GetUID()})
+	go event.Emit(event.ClipDeleted, &event.ClipEvent{ID: clipID, UserID: clip.UserID})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -161,7 +161,7 @@ func GetClipsFolder(c echo.Context) error {
 	}
 
 	// クリップのフォルダを取得
-	folder, err := getClipFolder(c, clip.GetFID(), false)
+	folder, err := getClipFolder(c, clip.FolderID, false)
 	if err != nil {
 		return err
 	}
@@ -200,17 +200,17 @@ func PutClipsFolder(c echo.Context) error {
 		}
 	}
 	// フォルダがリクエストユーザーのものかを確認
-	if folder.GetUID() != userID {
+	if folder.UserID != userID {
 		return echo.NewHTTPError(http.StatusBadRequest, "the folder is not found")
 	}
 
 	// クリップを更新
-	if err := model.ChangeClipFolder(clipID, folder.GetID()); err != nil {
+	if err := model.ChangeClipFolder(clipID, folder.ID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.ClipMoved, &event.ClipEvent{ID: clipID, UserID: clip.GetUID()})
+	go event.Emit(event.ClipMoved, &event.ClipEvent{ID: clipID, UserID: clip.UserID})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -251,14 +251,14 @@ func PostClipFolder(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.ClipFolderCreated, &event.ClipEvent{ID: folder.GetID(), UserID: folder.GetUID()})
+	go event.Emit(event.ClipFolderCreated, &event.ClipEvent{ID: folder.ID, UserID: folder.UserID})
 	return c.JSON(http.StatusCreated, folder)
 }
 
 // GetClipFolder GET /users/me/clips/folders/:folderID
 func GetClipFolder(c echo.Context) error {
 	type clipMessageForResponse struct {
-		ClipID    string              `json:"clipId"`
+		ClipID    uuid.UUID           `json:"clipId"`
 		ClippedAt time.Time           `json:"clippedAt"`
 		Message   *MessageForResponse `json:"message"`
 	}
@@ -272,7 +272,7 @@ func GetClipFolder(c echo.Context) error {
 	}
 
 	// クリップ取得
-	clips, err := model.GetClipMessages(folder.GetID())
+	clips, err := model.GetClipMessages(folder.ID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -319,7 +319,7 @@ func PatchClipFolder(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.ClipFolderUpdated, &event.ClipEvent{ID: folderID, UserID: folder.GetUID()})
+	go event.Emit(event.ClipFolderUpdated, &event.ClipEvent{ID: folderID, UserID: folder.UserID})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -339,7 +339,7 @@ func DeleteClipFolder(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.ClipFolderDeleted, &event.ClipEvent{ID: folderID, UserID: folder.GetUID()})
+	go event.Emit(event.ClipFolderDeleted, &event.ClipEvent{ID: folderID, UserID: folder.UserID})
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -357,7 +357,7 @@ func getClip(c echo.Context, clipID uuid.UUID, restrict bool) (*model.Clip, erro
 		}
 	}
 	// クリップがリクエストユーザーのものかを確認
-	if restrict && clip.GetUID() != userID {
+	if restrict && clip.UserID != userID {
 		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
 	return clip, nil
@@ -377,7 +377,7 @@ func getClipFolder(c echo.Context, folderID uuid.UUID, restrict bool) (*model.Cl
 		}
 	}
 	// フォルダがリクエストユーザーのものかを確認
-	if restrict && folder.GetUID() != userID {
+	if restrict && folder.UserID != userID {
 		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
 	return folder, nil
