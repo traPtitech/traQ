@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/labstack/echo"
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"net/http"
 )
@@ -32,7 +33,7 @@ func GetActivityLatestMessages(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	hidden := make(map[string]bool)
+	hidden := make(map[uuid.UUID]bool)
 	for _, v := range reports {
 		hidden[v.MessageID] = true
 	}
@@ -40,7 +41,7 @@ func GetActivityLatestMessages(c echo.Context) error {
 	res := make([]*MessageForResponse, 0, len(messages))
 	for _, message := range messages {
 		ms := formatMessage(message)
-		if hidden[message.ID.String()] {
+		if hidden[message.ID] {
 			ms.Reported = true
 		}
 		res = append(res, ms)

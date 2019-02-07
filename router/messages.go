@@ -125,7 +125,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	hidden := make(map[string]bool)
+	hidden := make(map[uuid.UUID]bool)
 	for _, v := range reports {
 		hidden[v.MessageID] = true
 	}
@@ -133,7 +133,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 	res := make([]*MessageForResponse, 0, req.Limit)
 	for _, message := range messages {
 		ms := formatMessage(message)
-		if hidden[message.ID.String()] {
+		if hidden[message.ID] {
 			ms.Reported = true
 		}
 		res = append(res, ms)
