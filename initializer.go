@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -81,7 +82,7 @@ func createStamps(stamps map[string]*dataStamp) error {
 		if err != nil {
 			return err
 		}
-		if _, err := model.CreateStamp(name, id.String(), ""); err != nil {
+		if _, err := model.CreateStamp(name, id, uuid.Nil); err != nil {
 			return err
 		}
 	}

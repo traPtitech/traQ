@@ -51,13 +51,13 @@ func PostStamp(c echo.Context) error {
 	}
 
 	// スタンプ作成
-	s, err := model.CreateStamp(name, fileID.String(), userID.String())
+	s, err := model.CreateStamp(name, fileID, userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.StampCreated, &event.StampEvent{ID: s.GetID()})
+	go event.Emit(event.StampCreated, &event.StampEvent{ID: s.ID})
 	return c.NoContent(http.StatusCreated)
 }
 
@@ -98,7 +98,7 @@ func PatchStamp(c echo.Context) error {
 	}
 
 	// ユーザー確認
-	if stamp.CreatorID != user.ID && !r.IsGranted(user.GetUID(), user.Role, permission.EditStampCreatedByOthers) {
+	if stamp.CreatorID != user.GetUID() && !r.IsGranted(user.GetUID(), user.Role, permission.EditStampCreatedByOthers) {
 		return echo.NewHTTPError(http.StatusForbidden, "you are not permitted to edit stamp created by others")
 	}
 
@@ -131,7 +131,7 @@ func PatchStamp(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		data.FileID = fileID.String()
+		data.FileID = fileID
 	} else if err != http.ErrMissingFile {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
@@ -166,7 +166,7 @@ func DeleteStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.StampDeleted, &event.StampEvent{ID: stamp.GetID()})
+	go event.Emit(event.StampDeleted, &event.StampEvent{ID: stamp.ID})
 	return c.NoContent(http.StatusNoContent)
 }
 
