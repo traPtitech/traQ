@@ -2,6 +2,9 @@ package event
 
 import (
 	"context"
+	"strings"
+	"time"
+
 	"firebase.google.com/go"
 	"firebase.google.com/go/messaging"
 	"github.com/satori/go.uuid"
@@ -9,8 +12,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/option"
-	"strings"
-	"time"
 )
 
 // FCMManager Firebaseマネージャー構造体
@@ -71,6 +72,19 @@ func (m *FCMManager) sendToFcm(deviceTokens []string, data map[string]string) er
 		Data: data,
 		Android: &messaging.AndroidConfig{
 			Priority: "high",
+		},
+		APNS: &messaging.APNSConfig{
+			Payload: &messaging.APNSPayload{
+				Aps: &messaging.Aps{
+					Alert: &messaging.ApsAlert{
+						Title:       data["title"],
+						Body:        data["body"],
+						LaunchImage: data["icon"],
+					},
+					Sound:    "default",
+					ThreadID: data["tag"],
+				},
+			},
 		},
 	}
 	for _, token := range deviceTokens {
