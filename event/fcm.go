@@ -77,9 +77,8 @@ func (m *FCMManager) sendToFcm(deviceTokens []string, data map[string]string) er
 			Payload: &messaging.APNSPayload{
 				Aps: &messaging.Aps{
 					Alert: &messaging.ApsAlert{
-						Title:       data["title"],
-						Body:        data["body"],
-						LaunchImage: data["icon"],
+						Title: data["title"],
+						Body:  data["body"],
 					},
 					Sound:    "default",
 					ThreadID: data["tag"],
