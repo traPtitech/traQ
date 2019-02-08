@@ -153,8 +153,8 @@ func mustMakeMessage(t *testing.T, userID, channelID uuid.UUID) *model.Message {
 func mustMakeTag(t *testing.T, userID uuid.UUID, tagText string) uuid.UUID {
 	tag, err := model.GetOrCreateTagByName(tagText)
 	require.NoError(t, err)
-	require.NoError(t, model.AddUserTag(userID, tag.GetID()))
-	return tag.GetID()
+	require.NoError(t, model.AddUserTag(userID, tag.ID))
+	return tag.ID
 }
 
 func mustMakeUnread(t *testing.T, userID, messageID uuid.UUID) {

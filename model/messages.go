@@ -26,12 +26,6 @@ func (m *Message) TableName() string {
 	return "messages"
 }
 
-// BeforeCreate db.Create時に自動的に呼ばれます
-func (m *Message) BeforeCreate(scope *gorm.Scope) error {
-	m.ID = uuid.NewV4()
-	return m.Validate()
-}
-
 // Validate 構造体を検証します
 func (m *Message) Validate() error {
 	return validator.ValidateStruct(m)
@@ -52,14 +46,15 @@ func (unread *Unread) TableName() string {
 // CreateMessage メッセージを作成します
 func CreateMessage(userID, channelID uuid.UUID, text string) (*Message, error) {
 	m := &Message{
+		ID:        uuid.NewV4(),
 		UserID:    userID,
 		ChannelID: channelID,
 		Text:      text,
 	}
-	if err := db.Create(m).Error; err != nil {
+	if err := m.Validate(); err != nil {
 		return nil, err
 	}
-	return m, nil
+	return m, db.Create(m).Error
 }
 
 // UpdateMessage メッセージを更新します

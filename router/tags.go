@@ -13,7 +13,7 @@ import (
 
 // TagForResponse クライアントに返す形のタグ構造体
 type TagForResponse struct {
-	ID        string    `json:"tagId"`
+	ID        uuid.UUID `json:"tagId"`
 	Tag       string    `json:"tag"`
 	IsLocked  bool      `json:"isLocked"`
 	Editable  bool      `json:"editable"`
@@ -24,7 +24,7 @@ type TagForResponse struct {
 
 // TagListForResponse クライアントに返す形のタグリスト構造体
 type TagListForResponse struct {
-	ID       string             `json:"tagId"`
+	ID       uuid.UUID          `json:"tagId"`
 	Tag      string             `json:"tag"`
 	Editable bool               `json:"editable"`
 	Type     string             `json:"type"`
@@ -88,7 +88,7 @@ func PostUserTag(c echo.Context) error {
 	}
 
 	// ユーザーにタグを付与
-	if err := model.AddUserTag(userID, t.GetID()); err != nil {
+	if err := model.AddUserTag(userID, t.ID); err != nil {
 		switch err {
 		case model.ErrUserAlreadyHasTag:
 			return c.NoContent(http.StatusNoContent)
@@ -139,7 +139,7 @@ func PatchUserTag(c echo.Context) error {
 	}
 
 	// 更新
-	if err := model.ChangeUserTagLock(userID, ut.Tag.GetID(), body.IsLocked); err != nil {
+	if err := model.ChangeUserTagLock(userID, ut.Tag.ID, body.IsLocked); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -176,7 +176,7 @@ func DeleteUserTag(c echo.Context) error {
 	}
 
 	// 削除
-	if err := model.DeleteUserTag(userID, ut.Tag.GetID()); err != nil {
+	if err := model.DeleteUserTag(userID, ut.Tag.ID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}

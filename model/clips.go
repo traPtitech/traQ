@@ -21,12 +21,6 @@ func (*ClipFolder) TableName() string {
 	return "clip_folders"
 }
 
-// BeforeCreate db.Create時に自動的に呼ばれます
-func (f *ClipFolder) BeforeCreate(scope *gorm.Scope) error {
-	f.ID = uuid.NewV4()
-	return f.Validate()
-}
-
 // Validate 構造体を検証します
 func (f *ClipFolder) Validate() error {
 	return validator.ValidateStruct(f)
@@ -46,12 +40,6 @@ type Clip struct {
 // TableName Clipのテーブル名
 func (clip *Clip) TableName() string {
 	return "clips"
-}
-
-// BeforeCreate db.Create時に自動的に呼ばれます
-func (clip *Clip) BeforeCreate(scope *gorm.Scope) error {
-	clip.ID = uuid.NewV4()
-	return nil
 }
 
 // GetClipFolder 指定したIDのクリップフォルダを取得します
@@ -82,8 +70,12 @@ func GetClipFolders(userID uuid.UUID) (res []*ClipFolder, err error) {
 // CreateClipFolder クリップフォルダを作成します
 func CreateClipFolder(userID uuid.UUID, name string) (*ClipFolder, error) {
 	f := &ClipFolder{
+		ID:     uuid.NewV4(),
 		UserID: userID,
 		Name:   name,
+	}
+	if err := f.Validate(); err != nil {
+		return nil, err
 	}
 	if err := db.Create(f).Error; err != nil {
 		return nil, err
@@ -145,6 +137,7 @@ func GetClipMessagesByUser(userID uuid.UUID) (res []*Clip, err error) {
 // CreateClip クリップを作成します
 func CreateClip(messageID, folderID, userID uuid.UUID) (*Clip, error) {
 	c := &Clip{
+		ID:        uuid.NewV4(),
 		UserID:    userID,
 		MessageID: messageID,
 		FolderID:  folderID,

@@ -15,8 +15,8 @@ var (
 
 // Tag tag_idの管理をする構造体
 type Tag struct {
-	ID         string `gorm:"type:char(36);primary_key"`
-	Name       string `gorm:"type:varchar(30);unique"            validate:"required,max=30"`
+	ID         uuid.UUID `gorm:"type:char(36);primary_key"`
+	Name       string    `gorm:"type:varchar(30);unique"   validate:"required,max=30"`
 	Restricted bool
 	Type       string    `gorm:"type:varchar(30)"`
 	CreatedAt  time.Time `gorm:"precision:6"`
@@ -28,17 +28,6 @@ func (*Tag) TableName() string {
 	return "tags"
 }
 
-// GetID タグのUUIDを返します
-func (t *Tag) GetID() uuid.UUID {
-	return uuid.Must(uuid.FromString(t.ID))
-}
-
-// BeforeCreate db.Create時に自動的に呼ばれます
-func (t *Tag) BeforeCreate(scope *gorm.Scope) error {
-	t.ID = CreateUUID()
-	return t.Validate()
-}
-
 // Validate 構造体を検証します
 func (t *Tag) Validate() error {
 	return validator.ValidateStruct(t)
@@ -46,9 +35,9 @@ func (t *Tag) Validate() error {
 
 // UsersTag userTagの構造体
 type UsersTag struct {
-	UserID    string `gorm:"type:char(36);primary_key"      validate:"uuid,required"`
-	TagID     string `gorm:"type:char(36);primary_key"      validate:"uuid,required"`
-	Tag       Tag    `gorm:"association_autoupdate:false;association_autocreate:false"`
+	UserID    uuid.UUID `gorm:"type:char(36);primary_key"`
+	TagID     uuid.UUID `gorm:"type:char(36);primary_key"`
+	Tag       Tag       `gorm:"association_autoupdate:false;association_autocreate:false"`
 	IsLocked  bool
 	CreatedAt time.Time `gorm:"precision:6;index"`
 	UpdatedAt time.Time `gorm:"precision:6"`
@@ -67,30 +56,31 @@ func (ut *UsersTag) Validate() error {
 // CreateTag タグを作成します
 func CreateTag(name string, restricted bool, tagType string) (*Tag, error) {
 	t := &Tag{
+		ID:         uuid.NewV4(),
 		Name:       name,
 		Restricted: restricted,
 		Type:       tagType,
 	}
-	if err := db.Create(t).Error; err != nil {
+	if err := t.Validate(); err != nil {
 		return nil, err
 	}
-	return t, nil
+	return t, db.Create(t).Error
 }
 
 // ChangeTagType タグの種類を変更します
 func ChangeTagType(id uuid.UUID, tagType string) error {
-	return db.Model(Tag{ID: id.String()}).Update("type", tagType).Error
+	return db.Model(Tag{ID: id}).Update("type", tagType).Error
 }
 
 // ChangeTagRestrict タグの制限を変更します
 func ChangeTagRestrict(id uuid.UUID, restrict bool) error {
-	return db.Model(Tag{ID: id.String()}).Update("restricted", restrict).Error
+	return db.Model(Tag{ID: id}).Update("restricted", restrict).Error
 }
 
 // GetTagByID 引数のIDを持つTag構造体を返す
 func GetTagByID(id uuid.UUID) (*Tag, error) {
 	tag := &Tag{}
-	if err := db.Where(Tag{ID: id.String()}).Take(tag).Error; err != nil {
+	if err := db.Where(Tag{ID: id}).Take(tag).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, ErrNotFound
 		}
@@ -141,8 +131,8 @@ func GetOrCreateTagByName(name string) (*Tag, error) {
 // AddUserTag ユーザーにタグを付与します
 func AddUserTag(userID, tagID uuid.UUID) error {
 	ut := &UsersTag{
-		UserID: userID.String(),
-		TagID:  tagID.String(),
+		UserID: userID,
+		TagID:  tagID,
 	}
 	if err := db.Create(ut).Error; err != nil {
 		if isMySQLDuplicatedRecordErr(err) {
@@ -155,12 +145,12 @@ func AddUserTag(userID, tagID uuid.UUID) error {
 
 // ChangeUserTagLock ユーザーのタグのロック状態を変更します
 func ChangeUserTagLock(userID, tagID uuid.UUID, locked bool) error {
-	return db.Model(UsersTag{}).Where(UsersTag{UserID: userID.String(), TagID: tagID.String()}).Update("is_locked", locked).Error
+	return db.Model(UsersTag{}).Where(UsersTag{UserID: userID, TagID: tagID}).Update("is_locked", locked).Error
 }
 
 // DeleteUserTag ユーザーからタグを削除します
 func DeleteUserTag(userID, tagID uuid.UUID) error {
-	return db.Where(UsersTag{UserID: userID.String(), TagID: tagID.String()}).Delete(UsersTag{}).Error
+	return db.Where(UsersTag{UserID: userID, TagID: tagID}).Delete(UsersTag{}).Error
 }
 
 // GetUserTagsByUserID userIDに紐づくtagのリストを返します
@@ -172,7 +162,7 @@ func GetUserTagsByUserID(userID uuid.UUID) (tags []*UsersTag, err error) {
 // GetUserTag userIDとtagIDで一意に定まるタグを返します
 func GetUserTag(userID, tagID uuid.UUID) (*UsersTag, error) {
 	ut := &UsersTag{}
-	if err := db.Preload("Tag").Where(UsersTag{UserID: userID.String(), TagID: tagID.String()}).Take(ut).Error; err != nil {
+	if err := db.Preload("Tag").Where(UsersTag{UserID: userID, TagID: tagID}).Take(ut).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, ErrNotFound
 		}
