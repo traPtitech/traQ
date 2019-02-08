@@ -24,12 +24,12 @@ type Webhook interface {
 
 // WebhookBot DB用WebhookBot構造体
 type WebhookBot struct {
-	ID          string     `gorm:"type:char(36);primary_key"`
-	BotUserID   string     `gorm:"type:char(36);unique"`
+	ID          uuid.UUID  `gorm:"type:char(36);primary_key"`
+	BotUserID   uuid.UUID  `gorm:"type:char(36);unique"`
 	BotUser     User       `gorm:"foreignkey:BotUserID"`
 	Description string     `gorm:"type:text"`
-	ChannelID   string     `gorm:"type:char(36)"`
-	CreatorID   string     `gorm:"type:char(36)"`
+	ChannelID   uuid.UUID  `gorm:"type:char(36)"`
+	CreatorID   uuid.UUID  `gorm:"type:char(36)"`
 	CreatedAt   time.Time  `gorm:"precision:6"`
 	UpdatedAt   time.Time  `gorm:"precision:6"`
 	DeletedAt   *time.Time `gorm:"precision:6"`
@@ -42,12 +42,12 @@ func (*WebhookBot) TableName() string {
 
 // GetID WebhookIDを返します
 func (w *WebhookBot) GetID() uuid.UUID {
-	return uuid.Must(uuid.FromString(w.ID))
+	return w.ID
 }
 
 // GetBotUserID WebhookUserのIDを返します
 func (w *WebhookBot) GetBotUserID() uuid.UUID {
-	return uuid.Must(uuid.FromString(w.BotUserID))
+	return w.BotUserID
 }
 
 // GetName Webhookの名前を返します
@@ -62,12 +62,12 @@ func (w *WebhookBot) GetDescription() string {
 
 // GetChannelID Webhookのデフォルト投稿チャンネルのIDを返します
 func (w *WebhookBot) GetChannelID() uuid.UUID {
-	return uuid.Must(uuid.FromString(w.ChannelID))
+	return w.ChannelID
 }
 
 // GetCreatorID Webhookの製作者IDを返します
 func (w *WebhookBot) GetCreatorID() uuid.UUID {
-	return uuid.Must(uuid.FromString(w.CreatorID))
+	return w.CreatorID
 }
 
 // GetCreatedAt Webhookの作成日時を返します
@@ -100,26 +100,23 @@ func CreateWebhook(name, description string, channelID, creatorID, iconFileID uu
 		Role:        role.Bot.ID(),
 	}
 	wb := &WebhookBot{
-		ID:          bid.String(),
-		BotUserID:   uid.String(),
+		ID:          bid,
+		BotUserID:   uid,
 		Description: description,
-		ChannelID:   channelID.String(),
-		CreatorID:   creatorID.String(),
+		ChannelID:   channelID,
+		CreatorID:   creatorID,
 	}
 
-	tx := db.Begin()
-	if err := tx.Error; err != nil {
-		return nil, err
-	}
-	if err := tx.Create(u).Error; err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-	if err := tx.Create(wb).Error; err != nil {
-		tx.Rollback()
-		return nil, err
-	}
-	if err := tx.Commit().Error; err != nil {
+	err := transact(func(tx *gorm.DB) error {
+		if err := tx.Create(u).Error; err != nil {
+			return err
+		}
+		if err := tx.Create(wb).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 
@@ -143,12 +140,12 @@ func UpdateWebhook(w Webhook, name, description *string, channelID uuid.UUID) er
 			return errors.New("description is required")
 		}
 
-		if err := db.Model(WebhookBot{ID: w.GetID().String()}).Update("description", *description).Error; err != nil {
+		if err := db.Model(WebhookBot{ID: w.GetID()}).Update("description", *description).Error; err != nil {
 			return err
 		}
 	}
 	if channelID != uuid.Nil && w.GetChannelID() != channelID {
-		if err := db.Model(WebhookBot{ID: w.GetID().String()}).Update("channel_id", channelID.String()).Error; err != nil {
+		if err := db.Model(WebhookBot{ID: w.GetID()}).Update("channel_id", channelID.String()).Error; err != nil {
 			return err
 		}
 	}
@@ -157,13 +154,13 @@ func UpdateWebhook(w Webhook, name, description *string, channelID uuid.UUID) er
 
 // DeleteWebhook Webhookをdbから削除
 func DeleteWebhook(id uuid.UUID) (err error) {
-	return db.Delete(WebhookBot{ID: id.String()}).Error
+	return db.Delete(WebhookBot{ID: id}).Error
 }
 
 // GetWebhook Webhookを取得
 func GetWebhook(id uuid.UUID) (Webhook, error) {
 	b := &WebhookBot{}
-	if err := db.Where(WebhookBot{ID: id.String()}).Take(b).Error; err != nil {
+	if err := db.Where(WebhookBot{ID: id}).Take(b).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
