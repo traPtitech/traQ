@@ -12,8 +12,8 @@ var (
 
 // Mute ミュートチャンネルのレコード
 type Mute struct {
-	UserID    string `gorm:"type:char(36);primary_key"`
-	ChannelID string `gorm:"type:char(36);primary_key"`
+	UserID    uuid.UUID `gorm:"type:char(36);primary_key"`
+	ChannelID uuid.UUID `gorm:"type:char(36);primary_key"`
 }
 
 // TableName Mute構造体のテーブル名
@@ -40,7 +40,7 @@ func MuteChannel(userID, channelID uuid.UUID) error {
 	if muted, err := IsChannelMuted(userID, channelID); err != nil {
 		return err
 	} else if !muted {
-		if err := db.Create(&Mute{UserID: userID.String(), ChannelID: channelID.String()}).Error; err != nil {
+		if err := db.Create(&Mute{UserID: userID, ChannelID: channelID}).Error; err != nil {
 			if isMySQLDuplicatedRecordErr(err) {
 				return nil
 			}
@@ -62,7 +62,7 @@ func UnmuteChannel(userID, channelID uuid.UUID) error {
 		return err
 	}
 
-	if err := db.Delete(&Mute{UserID: userID.String(), ChannelID: channelID.String()}).Error; err != nil {
+	if err := db.Delete(&Mute{UserID: userID, ChannelID: channelID}).Error; err != nil {
 		return err
 	}
 
@@ -72,7 +72,7 @@ func UnmuteChannel(userID, channelID uuid.UUID) error {
 // GetMutedChannelIDs ミュートしているチャンネルのIDの配列を取得します
 func GetMutedChannelIDs(userID uuid.UUID) (ids []string, err error) {
 	ids = make([]string, 0)
-	if err = db.Model(Mute{}).Where(&Mute{UserID: userID.String()}).Pluck("channel_id", &ids).Error; err != nil {
+	if err = db.Model(Mute{}).Where(&Mute{UserID: userID}).Pluck("channel_id", &ids).Error; err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -81,7 +81,7 @@ func GetMutedChannelIDs(userID uuid.UUID) (ids []string, err error) {
 // GetMuteUserIDs ミュートしているユーザーのIDの配列を取得します
 func GetMuteUserIDs(channelID uuid.UUID) (ids []string, err error) {
 	ids = make([]string, 0)
-	if err = db.Model(Mute{}).Where(&Mute{ChannelID: channelID.String()}).Pluck("user_id", &ids).Error; err != nil {
+	if err = db.Model(Mute{}).Where(&Mute{ChannelID: channelID}).Pluck("user_id", &ids).Error; err != nil {
 		return nil, err
 	}
 	return ids, nil
@@ -90,7 +90,7 @@ func GetMuteUserIDs(channelID uuid.UUID) (ids []string, err error) {
 // IsChannelMuted 指定したユーザーが指定したチャンネルをミュートしているかどうかを返します
 func IsChannelMuted(userID, channelID uuid.UUID) (muted bool, err error) {
 	c := 0
-	if err := db.Model(Mute{}).Where(&Mute{UserID: userID.String(), ChannelID: channelID.String()}).Count(&c).Error; err != nil {
+	if err := db.Model(Mute{}).Where(&Mute{UserID: userID, ChannelID: channelID}).Count(&c).Error; err != nil {
 		return false, err
 	}
 	return c == 1, nil

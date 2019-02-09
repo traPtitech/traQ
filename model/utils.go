@@ -51,8 +51,6 @@ var (
 	// 外部キー制約
 	constraints = [][5]string{
 		// Table, Key, Reference, OnDelete, OnUpdate
-		{"channels", "creator_id", "users(id)", "CASCADE", "CASCADE"},
-		{"channels", "updater_id", "users(id)", "CASCADE", "CASCADE"},
 		{"users_private_channels", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"users_private_channels", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 		{"messages", "user_id", "users(id)", "CASCADE", "CASCADE"},

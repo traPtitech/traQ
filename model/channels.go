@@ -14,14 +14,16 @@ import (
 )
 
 const (
-	directMessageChannelRootID = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa"
-	maxChannelDepth            = 5
+	// DirectMessageChannelRootID ダイレクトメッセージチャンネルの親チャンネルID
+	DirectMessageChannelRootID = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa"
+	// MaxChannelDepth チャンネルの深さの最大
+	MaxChannelDepth = 5
 )
 
 var (
 	channelPathMap = sync.Map{}
 	// ErrChannelDepthLimitation チャンネルの深さが5より大きくなる
-	ErrChannelDepthLimitation = fmt.Errorf("channel depth　must be <= %d", maxChannelDepth)
+	ErrChannelDepthLimitation = fmt.Errorf("channel depth　must be <= %d", MaxChannelDepth)
 	// ErrDuplicateName 作成されるチャンネルと同名のチャンネルが既に同階層に存在する
 	ErrDuplicateName = errors.New("this name's channel already exists")
 	// ErrParentChannelDifferentOpenStatus 作成されるチャンネルが親チャンネルの公開状況と異なる
@@ -74,7 +76,7 @@ func (ch *Channel) CheckConsistency() error {
 	switch ch.ParentID {
 	case "": // ルート
 
-	case directMessageChannelRootID: // DMルート
+	case DirectMessageChannelRootID: // DMルート
 		if ch.IsPublic {
 			return ErrDirectMessageChannelIsOpen
 		}
@@ -116,7 +118,7 @@ func (ch *Channel) CheckConsistency() error {
 				return err
 			}
 			depth++
-			if depth >= maxChannelDepth {
+			if depth >= MaxChannelDepth {
 				break
 			}
 		}
@@ -125,7 +127,7 @@ func (ch *Channel) CheckConsistency() error {
 			return err
 		}
 		depth += bottom
-		if depth > maxChannelDepth {
+		if depth > MaxChannelDepth {
 			return ErrChannelDepthLimitation
 		}
 	}
@@ -144,7 +146,7 @@ func (ch *Channel) CheckConsistency() error {
 
 // IsDMChannel ダイレクトメッセージ用チャンネルかどうかを返します
 func (ch *Channel) IsDMChannel() bool {
-	return ch.ParentID == directMessageChannelRootID
+	return ch.ParentID == DirectMessageChannelRootID
 }
 
 // Path チャンネルのパス文字列を取得する
@@ -219,7 +221,7 @@ func CreatePublicChannel(parent, name string, creatorID uuid.UUID) (*Channel, er
 
 // CreatePrivateChannel プライベートチャンネルを作成します parentが指定されている場合はmembersは無効です
 func CreatePrivateChannel(parent, name string, creatorID uuid.UUID, members []uuid.UUID) (*Channel, error) {
-	if parent == directMessageChannelRootID {
+	if parent == DirectMessageChannelRootID {
 		return nil, ErrForbidden // GetOrCreateDirectMessageChannelを使え
 	}
 
@@ -256,7 +258,7 @@ func CreatePrivateChannel(parent, name string, creatorID uuid.UUID, members []uu
 	}
 
 	err := transact(func(tx *gorm.DB) error {
-		if err := db.Create(ch).Error; err != nil {
+		if err := tx.Create(ch).Error; err != nil {
 			return err
 		}
 
@@ -283,7 +285,7 @@ func CreatePrivateChannel(parent, name string, creatorID uuid.UUID, members []uu
 // CreateChildChannel 子チャンネルを作成します
 func CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*Channel, error) {
 	// ダイレクトメッセージルートの子チャンネルは作れない
-	if parentID.String() == directMessageChannelRootID {
+	if parentID.String() == DirectMessageChannelRootID {
 		return nil, ErrForbidden
 	}
 
@@ -325,7 +327,7 @@ func CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*Channel, e
 		}
 
 		err = transact(func(tx *gorm.DB) error {
-			if err := db.Create(ch).Error; err != nil {
+			if err := tx.Create(ch).Error; err != nil {
 				return err
 			}
 
@@ -360,7 +362,7 @@ func GetOrCreateDirectMessageChannel(user1, user2 uuid.UUID) (*Channel, error) {
 	if user1 == user2 {
 		// 自分宛DM
 		err := db.
-			Where("parent_id = ? AND id IN ?", directMessageChannelRootID, db.
+			Where("parent_id = ? AND id IN ?", DirectMessageChannelRootID, db.
 				Table("users_private_channels").
 				Select("channel_id").
 				Group("channel_id").
@@ -378,7 +380,7 @@ func GetOrCreateDirectMessageChannel(user1, user2 uuid.UUID) (*Channel, error) {
 	} else {
 		// 他人宛DM
 		err := db.
-			Where("parent_id = ? AND id IN ?", directMessageChannelRootID, db.
+			Where("parent_id = ? AND id IN ?", DirectMessageChannelRootID, db.
 				Raw("SELECT u.channel_id FROM users_private_channels AS u INNER JOIN (SELECT channel_id FROM users_private_channels GROUP BY channel_id HAVING COUNT(*) = 2) AS ex ON ex.channel_id = u.channel_id AND u.user_id IN (?, ?) GROUP BY channel_id HAVING COUNT(*) = 2", user1, user2).
 				SubQuery()).
 			Take(&channel).
@@ -395,7 +397,7 @@ func GetOrCreateDirectMessageChannel(user1, user2 uuid.UUID) (*Channel, error) {
 	// 存在しなかったので作成
 	channel = Channel{
 		Name:      "dm_" + utils.RandAlphabetAndNumberString(17),
-		ParentID:  directMessageChannelRootID,
+		ParentID:  DirectMessageChannelRootID,
 		CreatorID: serverUser.GetUID(),
 		IsPublic:  false,
 		IsVisible: true,
