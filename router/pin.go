@@ -11,9 +11,9 @@ import (
 )
 
 type pinForResponse struct {
-	PinID     string              `json:"pinId"`
+	PinID     uuid.UUID           `json:"pinId"`
 	ChannelID uuid.UUID           `json:"channelId"`
-	UserID    string              `json:"userId"`
+	UserID    uuid.UUID           `json:"userId"`
 	DateTime  time.Time           `json:"dateTime"`
 	Message   *MessageForResponse `json:"message"`
 }

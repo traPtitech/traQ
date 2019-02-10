@@ -41,9 +41,9 @@ func TestParallelGroup8(t *testing.T) {
 
 		pin, err := GetPin(p)
 		if assert.NoError(err) {
-			assert.Equal(p.String(), pin.ID)
-			assert.Equal(testMessage.ID.String(), pin.MessageID)
-			assert.Equal(user.ID, pin.UserID)
+			assert.Equal(p, pin.ID)
+			assert.Equal(testMessage.ID, pin.MessageID)
+			assert.Equal(user.GetUID(), pin.UserID)
 			assert.NotZero(pin.CreatedAt)
 			assert.NotZero(pin.Message)
 		}
