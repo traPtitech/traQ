@@ -60,7 +60,7 @@ func TestGroup_Users(t *testing.T) {
 				Object().
 				Value("userId").
 				String().
-				Equal(testUser.ID)
+				Equal(testUser.ID.String())
 		})
 	})
 
@@ -70,7 +70,7 @@ func TestGroup_Users(t *testing.T) {
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.GET("/api/1.0/users/{userID}", testUser.ID).
+			e.GET("/api/1.0/users/{userID}", testUser.ID.String()).
 				Expect().
 				Status(http.StatusForbidden)
 		})
@@ -78,7 +78,7 @@ func TestGroup_Users(t *testing.T) {
 		t.Run("Successful1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.GET("/api/1.0/users/{userID}", testUser.ID).
+			e.GET("/api/1.0/users/{userID}", testUser.ID.String()).
 				WithCookie(sessions.CookieName, session).
 				Expect().
 				Status(http.StatusOK).
@@ -86,7 +86,7 @@ func TestGroup_Users(t *testing.T) {
 				Object().
 				Value("userId").
 				String().
-				Equal(testUser.ID)
+				Equal(testUser.ID.String())
 		})
 	})
 
@@ -109,12 +109,12 @@ func TestGroup_Users(t *testing.T) {
 			newDisp := "renamed"
 			newTwitter := "test"
 			e.PATCH("/api/1.0/users/me").
-				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
+				WithCookie(sessions.CookieName, generateSession(t, user.ID)).
 				WithJSON(map[string]string{"displayName": newDisp, "twitterId": newTwitter}).
 				Expect().
 				Status(http.StatusNoContent)
 
-			u, err := model.GetUser(user.GetUID())
+			u, err := model.GetUser(user.ID)
 			require.NoError(err)
 			assert.Equal(newDisp, u.DisplayName)
 			assert.Equal(newTwitter, u.TwitterID)

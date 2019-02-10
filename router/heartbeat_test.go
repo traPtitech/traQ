@@ -14,7 +14,7 @@ func TestGroup_Heartbeat(t *testing.T) {
 	t.Run("TestPostHeartbeat", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -38,7 +38,7 @@ func TestGroup_Heartbeat(t *testing.T) {
 
 			obj.Value("channelId").String().Equal(channel.ID.String())
 			obj.Value("userStatuses").Array().Length().Equal(1)
-			obj.Value("userStatuses").Array().First().Object().Value("userId").Equal(testUser.ID)
+			obj.Value("userStatuses").Array().First().Object().Value("userId").Equal(testUser.ID.String())
 			obj.Value("userStatuses").Array().First().Object().Value("status").Equal("editing")
 		})
 	})
@@ -46,8 +46,8 @@ func TestGroup_Heartbeat(t *testing.T) {
 	t.Run("TestGetHeartbeat", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		model.UpdateHeartbeatStatuses(testUser.GetUID(), channel.ID, "editing")
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		model.UpdateHeartbeatStatuses(testUser.ID, channel.ID, "editing")
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -71,7 +71,7 @@ func TestGroup_Heartbeat(t *testing.T) {
 
 			obj.Value("channelId").String().Equal(channel.ID.String())
 			obj.Value("userStatuses").Array().Length().Equal(1)
-			obj.Value("userStatuses").Array().First().Object().Value("userId").Equal(testUser.ID)
+			obj.Value("userStatuses").Array().First().Object().Value("userId").Equal(testUser.ID.String())
 			obj.Value("userStatuses").Array().First().Object().Value("status").Equal("editing")
 		})
 	})

@@ -59,7 +59,7 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				}
 
 				c.Set("user", user)
-				c.Set("userID", user.GetUID())
+				c.Set("userID", user.ID)
 				// 認可に基づきRole生成
 				c.Set("role", token.Scopes.GenerateRole())
 			} else {
@@ -85,7 +85,7 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				}
 
 				c.Set("user", user)
-				c.Set("userID", user.GetUID())
+				c.Set("userID", user.ID)
 			}
 			return next(c)
 		}
@@ -110,7 +110,7 @@ func AccessControlMiddlewareGenerator(rbac *rbac.RBAC) func(p ...gorbac.Permissi
 				// ユーザー権限検証
 				user := c.Get("user").(*model.User)
 				for _, v := range p {
-					if !rbac.IsGranted(user.GetUID(), user.Role, v) {
+					if !rbac.IsGranted(user.ID, user.Role, v) {
 						// NG
 						return echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("you are not permitted to request to '%s'", c.Request().URL.Path))
 					}

@@ -219,7 +219,7 @@ func (s *SSEStreamer) StreamHandler(c echo.Context) error {
 	c.Response().WriteHeader(http.StatusOK)
 
 	client := &sseClient{
-		userID:       c.Get("user").(*model.User).GetUID(),
+		userID:       c.Get("user").(*model.User).ID,
 		connectionID: uuid.NewV4(),
 		send:         make(chan *eventData, 100),
 	}

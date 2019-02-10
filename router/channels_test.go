@@ -17,9 +17,9 @@ func TestGroup_Channels(t *testing.T) {
 		// パラレルにしない
 
 		for i := 0; i < 5; i++ {
-			mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+			mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
 		}
-		mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{testUser.GetUID()})
+		mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{testUser.ID})
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -119,7 +119,7 @@ func TestGroup_Channels(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 
-			user2 := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+			user2 := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).ID
 			cname := utils.RandAlphabetAndNumberString(20)
 			obj := e.POST("/api/1.0/channels").
 				WithCookie(sessions.CookieName, session).
@@ -128,7 +128,7 @@ func TestGroup_Channels(t *testing.T) {
 					Name:    cname,
 					Parent:  "",
 					Members: []uuid.UUID{
-						testUser.GetUID(),
+						testUser.ID,
 						user2,
 					},
 				}).
@@ -144,12 +144,12 @@ func TestGroup_Channels(t *testing.T) {
 			obj.Value("force").Boolean().False()
 			obj.Value("private").Boolean().True()
 			obj.Value("dm").Boolean().False()
-			obj.Value("member").Array().ContainsOnly(testUser.GetUID(), user2)
+			obj.Value("member").Array().ContainsOnly(testUser.ID, user2)
 
 			c, err := model.GetChannel(uuid.FromStringOrNil(obj.Value("channelId").String().Raw()))
 			require.NoError(err)
 
-			ok, err := model.IsChannelAccessibleToUser(testUser.GetUID(), c.ID)
+			ok, err := model.IsChannelAccessibleToUser(testUser.ID, c.ID)
 			require.NoError(err)
 			assert.True(ok)
 
@@ -166,7 +166,7 @@ func TestGroup_Channels(t *testing.T) {
 	t.Run("PostChannelChildren", func(t *testing.T) {
 		t.Parallel()
 
-		pubCh := mustMakeChannelDetail(t, model.ServerUser().GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		pubCh := mustMakeChannelDetail(t, model.ServerUser().ID, utils.RandAlphabetAndNumberString(20), "")
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -207,7 +207,7 @@ func TestGroup_Channels(t *testing.T) {
 	t.Run("TestGetChannelsByChannelID", func(t *testing.T) {
 		t.Parallel()
 
-		pubCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		pubCh := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -250,7 +250,7 @@ func TestGroup_Channels(t *testing.T) {
 	t.Run("TestPatchChannelsByChannelID", func(t *testing.T) {
 		t.Parallel()
 
-		pubCh := mustMakeChannelDetail(t, model.ServerUser().GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		pubCh := mustMakeChannelDetail(t, model.ServerUser().ID, utils.RandAlphabetAndNumberString(20), "")
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -296,7 +296,7 @@ func TestGroup_Channels(t *testing.T) {
 	t.Run("TestDeleteChannelsByChannelID", func(t *testing.T) {
 		t.Parallel()
 
-		pubCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		pubCh := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -332,8 +332,8 @@ func TestGroup_Channels(t *testing.T) {
 	t.Run("TestPutChannelParent", func(t *testing.T) {
 		t.Parallel()
 
-		pCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		cCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		pCh := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		cCh := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -372,9 +372,9 @@ func TestGroup_Channels(t *testing.T) {
 	t.Run("TestGetTopic", func(t *testing.T) {
 		t.Parallel()
 
-		pubCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		pubCh := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
 		topicText := "Topic test"
-		require.NoError(model.UpdateChannelTopic(pubCh.ID, topicText, testUser.GetUID()))
+		require.NoError(model.UpdateChannelTopic(pubCh.ID, topicText, testUser.ID))
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -402,9 +402,9 @@ func TestGroup_Channels(t *testing.T) {
 	t.Run("TestPutTopic", func(t *testing.T) {
 		t.Parallel()
 
-		pubCh := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		pubCh := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
 		topicText := "Topic test"
-		require.NoError(model.UpdateChannelTopic(pubCh.ID, topicText, testUser.GetUID()))
+		require.NoError(model.UpdateChannelTopic(pubCh.ID, topicText, testUser.ID))
 		newTopic := "new Topic"
 
 		t.Run("NotLoggedIn", func(t *testing.T) {

@@ -82,7 +82,7 @@ func PostUserTag(c echo.Context) error {
 		reqUser := getRequestUser(c)
 		r := getRBAC(c)
 
-		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
+		if !r.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 	}
@@ -170,7 +170,7 @@ func DeleteUserTag(c echo.Context) error {
 		reqUser := getRequestUser(c)
 		r := getRBAC(c)
 
-		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
+		if !r.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 	}
@@ -275,7 +275,7 @@ func PatchTag(c echo.Context) error {
 		reqUser := getRequestUser(c)
 		r := getRBAC(c)
 
-		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
+		if !r.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 
@@ -289,7 +289,7 @@ func PatchTag(c echo.Context) error {
 		reqUser := getRequestUser(c)
 		r := getRBAC(c)
 
-		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
+		if !r.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 

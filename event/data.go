@@ -52,7 +52,7 @@ func (e *MessageCreatedEvent) GetTargetUsers() map[uuid.UUID]bool {
 			if v.Bot {
 				continue
 			}
-			res[v.GetUID()] = true
+			res[v.ID] = true
 		}
 
 	case !ch.IsPublic: // プライベートチャンネル

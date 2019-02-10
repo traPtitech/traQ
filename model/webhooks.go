@@ -92,10 +92,10 @@ func CreateWebhook(name, description string, channelID, creatorID, iconFileID uu
 	bid := uuid.NewV4()
 
 	u := &User{
-		ID:          uid.String(),
+		ID:          uid,
 		Name:        "Webhook#" + base64.RawStdEncoding.EncodeToString(uid.Bytes()),
 		DisplayName: name,
-		Icon:        iconFileID.String(),
+		Icon:        iconFileID,
 		Bot:         true,
 		Role:        role.Bot.ID(),
 	}
@@ -131,7 +131,7 @@ func UpdateWebhook(w Webhook, name, description *string, channelID uuid.UUID) er
 			return errors.New("invalid name")
 		}
 
-		if err := db.Model(User{ID: w.GetBotUserID().String()}).Update("display_name", *name).Error; err != nil {
+		if err := db.Model(User{ID: w.GetBotUserID()}).Update("display_name", *name).Error; err != nil {
 			return err
 		}
 	}

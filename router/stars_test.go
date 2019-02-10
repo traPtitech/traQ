@@ -15,8 +15,8 @@ func TestGroup_Stars(t *testing.T) {
 		t.Parallel()
 
 		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		mustStarChannel(t, user.GetUID(), channel.ID)
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		mustStarChannel(t, user.ID, channel.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -30,7 +30,7 @@ func TestGroup_Stars(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 			e.GET("/api/1.0/users/me/stars").
-				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
+				WithCookie(sessions.CookieName, generateSession(t, user.ID)).
 				Expect().
 				Status(http.StatusOK).
 				JSON().
@@ -43,7 +43,7 @@ func TestGroup_Stars(t *testing.T) {
 		t.Parallel()
 
 		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -57,11 +57,11 @@ func TestGroup_Stars(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 			e.PUT("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
-				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
+				WithCookie(sessions.CookieName, generateSession(t, user.ID)).
 				Expect().
 				Status(http.StatusNoContent)
 
-			a, err := model.GetStaredChannels(user.GetUID())
+			a, err := model.GetStaredChannels(user.ID)
 			require.NoError(err)
 			assert.Len(a, 1)
 			assert.Contains(a, channel.ID.String())
@@ -72,8 +72,8 @@ func TestGroup_Stars(t *testing.T) {
 		t.Parallel()
 
 		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		mustStarChannel(t, user.GetUID(), channel.ID)
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		mustStarChannel(t, user.ID, channel.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -87,10 +87,10 @@ func TestGroup_Stars(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 			e.DELETE("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
-				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
+				WithCookie(sessions.CookieName, generateSession(t, user.ID)).
 				Expect().
 				Status(http.StatusNoContent)
-			a, err := model.GetStaredChannels(user.GetUID())
+			a, err := model.GetStaredChannels(user.ID)
 			require.NoError(err)
 			assert.Empty(a)
 		})

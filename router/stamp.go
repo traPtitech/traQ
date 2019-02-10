@@ -98,7 +98,7 @@ func PatchStamp(c echo.Context) error {
 	}
 
 	// ユーザー確認
-	if stamp.CreatorID != user.GetUID() && !r.IsGranted(user.GetUID(), user.Role, permission.EditStampCreatedByOthers) {
+	if stamp.CreatorID != user.ID && !r.IsGranted(user.ID, user.Role, permission.EditStampCreatedByOthers) {
 		return echo.NewHTTPError(http.StatusForbidden, "you are not permitted to edit stamp created by others")
 	}
 
@@ -107,7 +107,7 @@ func PatchStamp(c echo.Context) error {
 	name := c.FormValue("name")
 	if len(name) > 0 {
 		// 権限確認
-		if !r.IsGranted(user.GetUID(), user.Role, permission.EditStampName) {
+		if !r.IsGranted(user.ID, user.Role, permission.EditStampName) {
 			return echo.NewHTTPError(http.StatusForbidden, "you are not permitted to change stamp name")
 		}
 		// 名前を検証

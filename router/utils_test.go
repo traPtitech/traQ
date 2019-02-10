@@ -93,7 +93,7 @@ func beforeTest(t *testing.T) (*assert.Assertions, *require.Assertions, string, 
 
 	testUser = mustCreateUser(t, "testUser")
 
-	return assert, require, generateSession(t, testUser.GetUID()), generateSession(t, model.ServerUser().GetUID())
+	return assert, require, generateSession(t, testUser.ID), generateSession(t, model.ServerUser().ID)
 }
 
 func generateSession(t *testing.T, userID uuid.UUID) string {
@@ -181,7 +181,7 @@ func mustMakeFile(t *testing.T) *model.File {
 	file := &model.File{
 		Name:      "test.txt",
 		Size:      12,
-		CreatorID: testUser.GetUID(),
+		CreatorID: testUser.ID,
 	}
 	require.NoError(t, file.Create(bytes.NewBufferString("test message")))
 	return file

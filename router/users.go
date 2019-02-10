@@ -1,7 +1,9 @@
 package router
 
 import (
+	"fmt"
 	"github.com/labstack/echo"
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
@@ -12,10 +14,10 @@ import (
 
 // UserForResponse クライアントに返す形のユーザー構造体
 type UserForResponse struct {
-	UserID      string     `json:"userId"`
+	UserID      uuid.UUID  `json:"userId"`
 	Name        string     `json:"name"`
 	DisplayName string     `json:"displayName"`
-	IconID      string     `json:"iconFileId"`
+	IconID      uuid.UUID  `json:"iconFileId"`
 	Bot         bool       `json:"bot"`
 	TwitterID   string     `json:"twitterId"`
 	LastOnline  *time.Time `json:"lastOnline"`
@@ -24,10 +26,10 @@ type UserForResponse struct {
 
 // UserDetailForResponse クライアントに返す形の詳細ユーザー構造体
 type UserDetailForResponse struct {
-	UserID      string            `json:"userId"`
+	UserID      uuid.UUID         `json:"userId"`
 	Name        string            `json:"name"`
 	DisplayName string            `json:"displayName"`
-	IconID      string            `json:"iconFileId"`
+	IconID      uuid.UUID         `json:"iconFileId"`
 	Bot         bool              `json:"bot"`
 	TwitterID   string            `json:"twitterId"`
 	LastOnline  *time.Time        `json:"lastOnline"`
@@ -65,7 +67,7 @@ func PostLogin(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	if err := sess.SetUser(user.GetUID()); err != nil {
+	if err := sess.SetUser(user.ID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -155,19 +157,19 @@ func GetUserIcon(c echo.Context) error {
 	}
 
 	if _, ok := c.QueryParams()["thumb"]; ok {
-		return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon+"/thumbnail")
+		return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s/thumbnail", user.Icon))
 	}
 
-	return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon)
+	return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s", user.Icon))
 }
 
 // GetMyIcon GET /users/me/icon
 func GetMyIcon(c echo.Context) error {
 	user := getRequestUser(c)
 	if _, ok := c.QueryParams()["thumb"]; ok {
-		return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon+"/thumbnail")
+		return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s/thumbnail", user.Icon))
 	}
-	return c.Redirect(http.StatusFound, "/api/1.0/files/"+user.Icon)
+	return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s", user.Icon))
 }
 
 // PutMyIcon PUT /users/me/icon
@@ -241,7 +243,7 @@ func PutPassword(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "password is wrong")
 	}
 
-	if err := model.ChangeUserPassword(user.GetUID(), req.New); err != nil {
+	if err := model.ChangeUserPassword(user.ID, req.New); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -274,7 +276,7 @@ func PostUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserJoined, &event.UserEvent{ID: u.GetUID()})
+	go event.Emit(event.UserJoined, &event.UserEvent{ID: u.ID})
 	return c.NoContent(http.StatusCreated)
 }
 

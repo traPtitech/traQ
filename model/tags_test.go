@@ -28,7 +28,7 @@ func TestParallelGroup5(t *testing.T) {
 
 		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
 		tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
-		assert.NoError(AddUserTag(user.GetUID(), tag.ID))
+		assert.NoError(AddUserTag(user.ID, tag.ID))
 	})
 
 	// ChangeUserTagLock
@@ -37,16 +37,16 @@ func TestParallelGroup5(t *testing.T) {
 
 		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
 		tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
-		require.NoError(AddUserTag(user.GetUID(), tag.ID))
+		require.NoError(AddUserTag(user.ID, tag.ID))
 
-		if assert.NoError(ChangeUserTagLock(user.GetUID(), tag.ID, true)) {
-			tag, err := GetUserTag(user.GetUID(), tag.ID)
+		if assert.NoError(ChangeUserTagLock(user.ID, tag.ID, true)) {
+			tag, err := GetUserTag(user.ID, tag.ID)
 			require.NoError(err)
 			assert.True(tag.IsLocked)
 		}
 
-		if assert.NoError(ChangeUserTagLock(user.GetUID(), tag.ID, false)) {
-			tag, err := GetUserTag(user.GetUID(), tag.ID)
+		if assert.NoError(ChangeUserTagLock(user.ID, tag.ID, false)) {
+			tag, err := GetUserTag(user.ID, tag.ID)
 			require.NoError(err)
 			assert.False(tag.IsLocked)
 		}
@@ -58,16 +58,16 @@ func TestParallelGroup5(t *testing.T) {
 
 		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
 		tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
-		require.NoError(AddUserTag(user.GetUID(), tag.ID))
+		require.NoError(AddUserTag(user.ID, tag.ID))
 		tag2 := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
-		require.NoError(AddUserTag(user.GetUID(), tag2.ID))
+		require.NoError(AddUserTag(user.ID, tag2.ID))
 
-		if assert.NoError(DeleteUserTag(user.GetUID(), tag.ID)) {
-			_, err := GetUserTag(user.GetUID(), tag.ID)
+		if assert.NoError(DeleteUserTag(user.ID, tag.ID)) {
+			_, err := GetUserTag(user.ID, tag.ID)
 			assert.Error(err)
 		}
 
-		_, err := GetUserTag(user.GetUID(), tag2.ID)
+		_, err := GetUserTag(user.ID, tag2.ID)
 		assert.NoError(err)
 	})
 
@@ -79,14 +79,14 @@ func TestParallelGroup5(t *testing.T) {
 		var createdTags []string
 		for i := 0; i < 10; i++ {
 			tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
-			require.NoError(AddUserTag(user.GetUID(), tag.ID))
+			require.NoError(AddUserTag(user.ID, tag.ID))
 			createdTags = append(createdTags, tag.Name)
 		}
 
 		t.Run("has", func(t *testing.T) {
 			t.Parallel()
 
-			tags, err := GetUserTagsByUserID(user.GetUID())
+			tags, err := GetUserTagsByUserID(user.ID)
 			if assert.NoError(err) {
 				temp := make([]string, len(tags))
 				for i, v := range tags {
@@ -112,14 +112,14 @@ func TestParallelGroup5(t *testing.T) {
 
 		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
 		tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
-		require.NoError(AddUserTag(user.GetUID(), tag.ID))
+		require.NoError(AddUserTag(user.ID, tag.ID))
 
 		t.Run("found", func(t *testing.T) {
 			t.Parallel()
 
-			ut, err := GetUserTag(user.GetUID(), tag.ID)
+			ut, err := GetUserTag(user.ID, tag.ID)
 			if assert.NoError(err) {
-				assert.Equal(user.ID, ut.UserID.String())
+				assert.Equal(user.ID, ut.UserID)
 				assert.Equal(tag.ID, ut.TagID)
 				assert.False(ut.IsLocked)
 				assert.NotZero(ut.CreatedAt)
@@ -138,7 +138,7 @@ func TestParallelGroup5(t *testing.T) {
 		t.Run("notfound", func(t *testing.T) {
 			t.Parallel()
 
-			_, err := GetUserTag(user.GetUID(), uuid.Nil)
+			_, err := GetUserTag(user.ID, uuid.Nil)
 			assert.Error(err)
 		})
 	})
@@ -151,7 +151,7 @@ func TestParallelGroup5(t *testing.T) {
 		tag := mustMakeTag(t, s)
 		for i := 0; i < 10; i++ {
 			user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
-			require.NoError(AddUserTag(user.GetUID(), tag.ID))
+			require.NoError(AddUserTag(user.ID, tag.ID))
 		}
 
 		t.Run("found", func(t *testing.T) {
@@ -181,7 +181,7 @@ func TestParallelGroup5(t *testing.T) {
 		tag := mustMakeTag(t, s)
 		for i := 0; i < 10; i++ {
 			user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
-			require.NoError(AddUserTag(user.GetUID(), tag.ID))
+			require.NoError(AddUserTag(user.ID, tag.ID))
 		}
 
 		t.Run("found", func(t *testing.T) {
@@ -210,7 +210,7 @@ func TestParallelGroup5(t *testing.T) {
 		tag := mustMakeTag(t, utils.RandAlphabetAndNumberString(20))
 		for i := 0; i < 10; i++ {
 			user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
-			require.NoError(AddUserTag(user.GetUID(), tag.ID))
+			require.NoError(AddUserTag(user.ID, tag.ID))
 		}
 
 		t.Run("found", func(t *testing.T) {

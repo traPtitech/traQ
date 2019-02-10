@@ -365,7 +365,7 @@ func getBot(c echo.Context, id uuid.UUID, restrict bool) (model.Bot, error) {
 	}
 	if restrict {
 		user, ok := c.Get("user").(*model.User)
-		if !ok || b.GetCreatorID() != user.GetUID() {
+		if !ok || b.GetCreatorID() != user.ID {
 			return nil, echo.NewHTTPError(http.StatusForbidden)
 		}
 	}

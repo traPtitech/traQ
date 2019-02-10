@@ -140,10 +140,10 @@ func CreateBot(oauth2 *oauth2.Handler, name, displayName, description string, cr
 	bid := uuid.NewV4()
 
 	u := &User{
-		ID:          uid.String(),
+		ID:          uid,
 		Name:        fmt.Sprintf("BOT_%s", name),
 		DisplayName: displayName,
-		Icon:        iconFileID.String(),
+		Icon:        iconFileID,
 		Bot:         true,
 		Role:        role.Bot.ID(),
 	}

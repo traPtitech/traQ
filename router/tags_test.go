@@ -19,7 +19,7 @@ func TestGroup_Tags(t *testing.T) {
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.POST("/api/1.0/users/{userID}/tags", user.ID).
+			e.POST("/api/1.0/users/{userID}/tags", user.ID.String()).
 				Expect().
 				Status(http.StatusForbidden)
 		})
@@ -28,7 +28,7 @@ func TestGroup_Tags(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 			tag := utils.RandAlphabetAndNumberString(20)
-			e.POST("/api/1.0/users/{userID}/tags", user.ID).
+			e.POST("/api/1.0/users/{userID}/tags", user.ID.String()).
 				WithCookie(sessions.CookieName, session).
 				WithJSON(map[string]string{"tag": tag}).
 				Expect().
@@ -37,7 +37,7 @@ func TestGroup_Tags(t *testing.T) {
 			a, err := model.GetUserIDsByTag(tag)
 			require.NoError(err)
 			assert.Len(a, 1)
-			assert.Contains(a, user.GetUID())
+			assert.Contains(a, user.ID)
 		})
 	})
 
@@ -46,13 +46,13 @@ func TestGroup_Tags(t *testing.T) {
 
 		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
 		for i := 0; i < 5; i++ {
-			mustMakeTag(t, user.GetUID(), utils.RandAlphabetAndNumberString(20))
+			mustMakeTag(t, user.ID, utils.RandAlphabetAndNumberString(20))
 		}
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.GET("/api/1.0/users/{userID}/tags", user.ID).
+			e.GET("/api/1.0/users/{userID}/tags", user.ID.String()).
 				Expect().
 				Status(http.StatusForbidden)
 		})
@@ -60,7 +60,7 @@ func TestGroup_Tags(t *testing.T) {
 		t.Run("Successful1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.GET("/api/1.0/users/{userID}/tags", user.ID).
+			e.GET("/api/1.0/users/{userID}/tags", user.ID.String()).
 				WithCookie(sessions.CookieName, session).
 				Expect().
 				Status(http.StatusOK).
@@ -75,12 +75,12 @@ func TestGroup_Tags(t *testing.T) {
 		t.Parallel()
 
 		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
-		tag := mustMakeTag(t, user.GetUID(), utils.RandAlphabetAndNumberString(20))
+		tag := mustMakeTag(t, user.ID, utils.RandAlphabetAndNumberString(20))
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.ID, tag.String()).
+			e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.ID.String(), tag.String()).
 				WithJSON(map[string]bool{"isLocked": true}).
 				Expect().
 				Status(http.StatusForbidden)
@@ -89,13 +89,13 @@ func TestGroup_Tags(t *testing.T) {
 		t.Run("Successful1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.ID, tag.String()).
-				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
+			e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.ID.String(), tag.String()).
+				WithCookie(sessions.CookieName, generateSession(t, user.ID)).
 				WithJSON(map[string]bool{"isLocked": true}).
 				Expect().
 				Status(http.StatusNoContent)
 
-			ut, err := model.GetUserTag(user.GetUID(), tag)
+			ut, err := model.GetUserTag(user.ID, tag)
 			require.NoError(err)
 			assert.True(ut.IsLocked)
 		})
@@ -103,7 +103,7 @@ func TestGroup_Tags(t *testing.T) {
 		t.Run("Failure1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.ID, tag.String()).
+			e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.ID.String(), tag.String()).
 				WithCookie(sessions.CookieName, session).
 				WithJSON(map[string]bool{"isLocked": true}).
 				Expect().
@@ -115,12 +115,12 @@ func TestGroup_Tags(t *testing.T) {
 		t.Parallel()
 
 		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
-		tag := mustMakeTag(t, user.GetUID(), utils.RandAlphabetAndNumberString(20))
+		tag := mustMakeTag(t, user.ID, utils.RandAlphabetAndNumberString(20))
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.DELETE("/api/1.0/users/{userID}/tags/{tagID}", user.ID, tag.String()).
+			e.DELETE("/api/1.0/users/{userID}/tags/{tagID}", user.ID.String(), tag.String()).
 				Expect().
 				Status(http.StatusForbidden)
 		})
@@ -128,12 +128,12 @@ func TestGroup_Tags(t *testing.T) {
 		t.Run("Successful1", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			e.DELETE("/api/1.0/users/{userID}/tags/{tagID}", user.ID, tag.String()).
+			e.DELETE("/api/1.0/users/{userID}/tags/{tagID}", user.ID.String(), tag.String()).
 				WithCookie(sessions.CookieName, session).
 				Expect().
 				Status(http.StatusNoContent)
 
-			_, err := model.GetUserTag(user.GetUID(), tag)
+			_, err := model.GetUserTag(user.ID, tag)
 			require.Equal(model.ErrNotFound, err)
 		})
 	})

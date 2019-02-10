@@ -2,7 +2,6 @@ package router
 
 import (
 	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"net/http"
 	"strconv"
@@ -27,13 +26,8 @@ func GetPublicUserIcon(c echo.Context) error {
 		}
 	}
 
-	// ユーザーアイコンが設定されているかどうか
-	if len(user.Icon) != 36 {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
 	// ファイルメタ取得
-	f, err := model.GetMetaFileDataByID(uuid.Must(uuid.FromString(user.Icon)))
+	f, err := model.GetMetaFileDataByID(user.Icon)
 	if err != nil {
 		switch err {
 		case model.ErrNotFound:

@@ -52,7 +52,7 @@ func TestParallelGroup6(t *testing.T) {
 		_, err := GetUser(uuid.Nil)
 		assert.Error(err)
 
-		u, err := GetUser(user.GetUID())
+		u, err := GetUser(user.ID)
 		if assert.NoError(err) {
 			assert.Equal(user.ID, u.ID)
 			assert.Equal(user.Name, u.Name)
@@ -80,8 +80,8 @@ func TestParallelGroup6(t *testing.T) {
 		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
 		newPass := "aiueo123"
 
-		if assert.NoError(ChangeUserPassword(user.GetUID(), newPass)) {
-			u, err := GetUser(user.GetUID())
+		if assert.NoError(ChangeUserPassword(user.ID, newPass)) {
+			u, err := GetUser(user.ID)
 			require.NoError(err)
 
 			salt, err := hex.DecodeString(u.Salt)
@@ -96,10 +96,10 @@ func TestParallelGroup6(t *testing.T) {
 
 		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
 		newIcon := uuid.NewV4()
-		if assert.NoError(ChangeUserIcon(user.GetUID(), newIcon)) {
-			u, err := GetUser(user.GetUID())
+		if assert.NoError(ChangeUserIcon(user.ID, newIcon)) {
+			u, err := GetUser(user.ID)
 			require.NoError(err)
-			assert.Equal(newIcon.String(), u.Icon)
+			assert.Equal(newIcon, u.Icon)
 		}
 	})
 
@@ -110,13 +110,13 @@ func TestParallelGroup6(t *testing.T) {
 		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
 		newDN := uuid.NewV4().String()
 
-		if assert.NoError(ChangeUserDisplayName(user.GetUID(), newDN)) {
-			u, err := GetUser(user.GetUID())
+		if assert.NoError(ChangeUserDisplayName(user.ID, newDN)) {
+			u, err := GetUser(user.ID)
 			require.NoError(err)
 			assert.Equal(newDN, u.DisplayName)
 		}
 
-		assert.Error(ChangeUserDisplayName(user.GetUID(), strings.Repeat("a", 100)))
+		assert.Error(ChangeUserDisplayName(user.ID, strings.Repeat("a", 100)))
 	})
 
 	// ChangeUserTwitterID
@@ -126,13 +126,13 @@ func TestParallelGroup6(t *testing.T) {
 		user := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
 		newTwitter := "aiueo"
 
-		if assert.NoError(ChangeUserTwitterID(user.GetUID(), newTwitter)) {
-			u, err := GetUser(user.GetUID())
+		if assert.NoError(ChangeUserTwitterID(user.ID, newTwitter)) {
+			u, err := GetUser(user.ID)
 			require.NoError(err)
 			assert.Equal(newTwitter, u.TwitterID)
 		}
 
-		assert.Error(ChangeUserTwitterID(user.GetUID(), "あああああ"))
+		assert.Error(ChangeUserTwitterID(user.ID, "あああああ"))
 	})
 
 	// AuthenticateUser

@@ -16,9 +16,9 @@ func TestGroup_Messages(t *testing.T) {
 	t.Run("TestGetMessageByID", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		message := mustMakeMessage(t, testUser.ID, channel.ID)
+		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).ID
 		privateID := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{postmanID}).ID
 		message2 := mustMakeMessage(t, postmanID, privateID)
 
@@ -41,7 +41,7 @@ func TestGroup_Messages(t *testing.T) {
 				Object()
 
 			obj.Value("messageId").String().Equal(message.ID.String())
-			obj.Value("userId").String().Equal(testUser.ID)
+			obj.Value("userId").String().Equal(testUser.ID.String())
 			obj.Value("parentChannelId").String().Equal(channel.ID.String())
 			obj.Value("pin").Boolean().False()
 			obj.Value("content").String().Equal(message.Text)
@@ -86,8 +86,8 @@ func TestGroup_Messages(t *testing.T) {
 	t.Run("TestPostMessage", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).ID
 		privateID := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{postmanID}).ID
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
@@ -113,7 +113,7 @@ func TestGroup_Messages(t *testing.T) {
 				Object()
 
 			obj.Value("messageId").String().NotEmpty()
-			obj.Value("userId").String().Equal(testUser.ID)
+			obj.Value("userId").String().Equal(testUser.ID.String())
 			obj.Value("parentChannelId").String().Equal(channel.ID.String())
 			obj.Value("pin").Boolean().False()
 			obj.Value("content").String().Equal(message)
@@ -177,12 +177,12 @@ func TestGroup_Messages(t *testing.T) {
 	t.Run("TestGetMessagesByChannelID", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).ID
 		privateID := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{postmanID}).ID
 
 		for i := 0; i < 5; i++ {
-			mustMakeMessage(t, testUser.GetUID(), channel.ID)
+			mustMakeMessage(t, testUser.ID, channel.ID)
 		}
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
@@ -234,10 +234,10 @@ func TestGroup_Messages(t *testing.T) {
 	t.Run("TestPutMessageByID", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).ID
 		privateID := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{postmanID}).ID
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+		message := mustMakeMessage(t, testUser.ID, channel.ID)
 		message2 := mustMakeMessage(t, postmanID, privateID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
@@ -286,10 +286,10 @@ func TestGroup_Messages(t *testing.T) {
 	t.Run("TestDeleteMessageByID", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		postmanID := mustCreateUser(t, utils.RandAlphabetAndNumberString(20)).ID
 		privateID := mustMakePrivateChannel(t, utils.RandAlphabetAndNumberString(20), []uuid.UUID{postmanID}).ID
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+		message := mustMakeMessage(t, testUser.ID, channel.ID)
 		message2 := mustMakeMessage(t, postmanID, privateID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
@@ -324,7 +324,7 @@ func TestGroup_Messages(t *testing.T) {
 		t.Run("Failure2", func(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
-			message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+			message := mustMakeMessage(t, testUser.ID, channel.ID)
 			e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
 				WithCookie(sessions.CookieName, generateSession(t, postmanID)).
 				Expect().
@@ -335,8 +335,8 @@ func TestGroup_Messages(t *testing.T) {
 	t.Run("TestPostMessageReport", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		message := mustMakeMessage(t, testUser.ID, channel.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -375,10 +375,10 @@ func TestGroup_Messages(t *testing.T) {
 	t.Run("TestGetUnread", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		message := mustMakeMessage(t, testUser.ID, channel.ID)
 		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
-		mustMakeUnread(t, user.GetUID(), message.ID)
+		mustMakeUnread(t, user.ID, message.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -392,7 +392,7 @@ func TestGroup_Messages(t *testing.T) {
 			t.Parallel()
 			e := makeExp(t)
 			e.GET("/api/1.0/users/me/unread").
-				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
+				WithCookie(sessions.CookieName, generateSession(t, user.ID)).
 				Expect().
 				Status(http.StatusOK).
 				JSON().
@@ -405,9 +405,9 @@ func TestGroup_Messages(t *testing.T) {
 	t.Run("TestDeleteUnread", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		mustMakeUnread(t, testUser.GetUID(), message.ID)
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		message := mustMakeMessage(t, testUser.ID, channel.ID)
+		mustMakeUnread(t, testUser.ID, message.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()

@@ -66,7 +66,7 @@ func beforeTest(t *testing.T) (*assert.Assertions, *require.Assertions, *User, *
 	require.NoError(t, err)
 
 	user := mustMakeUser(t, "testuser")
-	return assert.New(t), require.New(t), user, mustMakeChannelDetail(t, user.GetUID(), "testchannel", "")
+	return assert.New(t), require.New(t), user, mustMakeChannelDetail(t, user.ID, "testchannel", "")
 }
 
 func mustMakeChannelDetail(t *testing.T, userID uuid.UUID, name, parentID string) *Channel {

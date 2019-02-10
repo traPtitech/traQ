@@ -121,7 +121,7 @@ func Sync() (bool, error) {
 		// サーバーユーザーが存在しない場合は作成
 		salt := generateSalt()
 		serverUser = &User{
-			ID:       CreateUUID(),
+			ID:       uuid.NewV4(),
 			Name:     "traq",
 			Password: hex.EncodeToString(hashPassword("traq", salt)),
 			Salt:     hex.EncodeToString(salt),
@@ -134,7 +134,7 @@ func Sync() (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		if err := ChangeUserIcon(serverUser.GetUID(), fileID); err != nil {
+		if err := ChangeUserIcon(serverUser.ID, fileID); err != nil {
 			return false, err
 		}
 

@@ -398,7 +398,7 @@ func GetOrCreateDirectMessageChannel(user1, user2 uuid.UUID) (*Channel, error) {
 	channel = Channel{
 		Name:      "dm_" + utils.RandAlphabetAndNumberString(17),
 		ParentID:  DirectMessageChannelRootID,
-		CreatorID: serverUser.GetUID(),
+		CreatorID: serverUser.ID,
 		IsPublic:  false,
 		IsVisible: true,
 		IsForced:  false,

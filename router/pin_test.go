@@ -14,8 +14,8 @@ func TestGroup_Pin(t *testing.T) {
 	t.Run("TestPostPin", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		message := mustMakeMessage(t, testUser.ID, channel.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -49,9 +49,9 @@ func TestGroup_Pin(t *testing.T) {
 	t.Run("TestGetPin", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		pin := mustMakePin(t, testUser.GetUID(), message.ID)
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		message := mustMakeMessage(t, testUser.ID, channel.ID)
+		pin := mustMakePin(t, testUser.ID, message.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -79,9 +79,9 @@ func TestGroup_Pin(t *testing.T) {
 	t.Run("TestDeletePin", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		pin := mustMakePin(t, testUser.GetUID(), message.ID)
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		message := mustMakeMessage(t, testUser.ID, channel.ID)
+		pin := mustMakePin(t, testUser.ID, message.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()
@@ -107,9 +107,9 @@ func TestGroup_Pin(t *testing.T) {
 	t.Run("TestGetChannelPin", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		mustMakePin(t, testUser.GetUID(), message.ID)
+		channel := mustMakeChannelDetail(t, testUser.ID, utils.RandAlphabetAndNumberString(20), "")
+		message := mustMakeMessage(t, testUser.ID, channel.ID)
+		mustMakePin(t, testUser.ID, message.ID)
 
 		t.Run("NotLoggedIn", func(t *testing.T) {
 			t.Parallel()

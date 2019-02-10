@@ -45,7 +45,7 @@ func TestRBACOverrideStore(t *testing.T) {
 
 	s := &RBACOverrideStore{}
 	user := mustMakeUser(t, "testRBACOverrideStore")
-	userID := uuid.FromStringOrNil(user.ID)
+	userID := user.ID
 
 	if assert.NoError(s.SaveOverride(userID, permission.GetChannel, true)) {
 		arr, err := s.GetAllOverrides()

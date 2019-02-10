@@ -104,7 +104,7 @@ func main() {
 			case model.ErrUserWrongIDOrPassword, model.ErrUserBotTryLogin:
 				err = oauth2.ErrUserIDOrPasswordWrong
 			}
-			return uuid.FromStringOrNil(user.ID), err
+			return user.ID, err
 		},
 		UserInfoGetter: func(uid uuid.UUID) (oauth2.UserInfo, error) {
 			u, err := model.GetUser(uid)

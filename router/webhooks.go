@@ -517,7 +517,7 @@ func getWebhook(c echo.Context, id uuid.UUID, strict bool) (model.Webhook, error
 	}
 	if strict {
 		user, ok := c.Get("user").(*model.User)
-		if !ok || w.GetCreatorID() != user.GetUID() {
+		if !ok || w.GetCreatorID() != user.ID {
 			return nil, echo.NewHTTPError(http.StatusForbidden)
 		}
 	}

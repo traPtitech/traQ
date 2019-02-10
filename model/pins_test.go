@@ -20,14 +20,14 @@ func TestParallelGroup8(t *testing.T) {
 	t.Run("TestCreatePin", func(t *testing.T) {
 		t.Parallel()
 
-		testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
+		testMessage := mustMakeMessage(t, user.ID, channel.ID)
 
-		p, err := CreatePin(testMessage.ID, user.GetUID())
+		p, err := CreatePin(testMessage.ID, user.ID)
 		if assert.NoError(err) {
 			assert.NotEmpty(p)
 		}
 
-		_, err = CreatePin(testMessage.ID, user.GetUID())
+		_, err = CreatePin(testMessage.ID, user.ID)
 		assert.Error(err)
 	})
 
@@ -35,15 +35,15 @@ func TestParallelGroup8(t *testing.T) {
 	t.Run("TestGetPin", func(t *testing.T) {
 		t.Parallel()
 
-		testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
-		p, err := CreatePin(testMessage.ID, user.GetUID())
+		testMessage := mustMakeMessage(t, user.ID, channel.ID)
+		p, err := CreatePin(testMessage.ID, user.ID)
 		require.NoError(err)
 
 		pin, err := GetPin(p)
 		if assert.NoError(err) {
 			assert.Equal(p, pin.ID)
 			assert.Equal(testMessage.ID, pin.MessageID)
-			assert.Equal(user.GetUID(), pin.UserID)
+			assert.Equal(user.ID, pin.UserID)
 			assert.NotZero(pin.CreatedAt)
 			assert.NotZero(pin.Message)
 		}
@@ -56,8 +56,8 @@ func TestParallelGroup8(t *testing.T) {
 	t.Run("TestIsPinned", func(t *testing.T) {
 		t.Parallel()
 
-		testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
-		_, err := CreatePin(testMessage.ID, user.GetUID())
+		testMessage := mustMakeMessage(t, user.ID, channel.ID)
+		_, err := CreatePin(testMessage.ID, user.ID)
 		require.NoError(err)
 
 		ok, err := IsPinned(testMessage.ID)
@@ -75,8 +75,8 @@ func TestParallelGroup8(t *testing.T) {
 	t.Run("TestDeletePin", func(t *testing.T) {
 		t.Parallel()
 
-		testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
-		p, err := CreatePin(testMessage.ID, user.GetUID())
+		testMessage := mustMakeMessage(t, user.ID, channel.ID)
+		p, err := CreatePin(testMessage.ID, user.ID)
 		require.NoError(err)
 
 		if assert.NoError(DeletePin(p)) {
@@ -89,9 +89,9 @@ func TestParallelGroup8(t *testing.T) {
 	t.Run("TestGetPinsByChannelID", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		testMessage := mustMakeMessage(t, user.GetUID(), channel.ID)
-		_, err := CreatePin(testMessage.ID, user.GetUID())
+		channel := mustMakeChannelDetail(t, user.ID, utils.RandAlphabetAndNumberString(20), "")
+		testMessage := mustMakeMessage(t, user.ID, channel.ID)
+		_, err := CreatePin(testMessage.ID, user.ID)
 		require.NoError(err)
 
 		pins, err := GetPinsByChannelID(channel.ID)

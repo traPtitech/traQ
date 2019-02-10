@@ -14,7 +14,7 @@ func TestGetHeartbeatStatus(t *testing.T) {
 		ChannelID: channel.ID,
 		UserStatuses: []*UserStatus{
 			{
-				UserID:   user.GetUID(),
+				UserID:   user.ID,
 				Status:   "editing",
 				LastTime: time.Now(),
 			},
@@ -39,7 +39,7 @@ func TestHeartbeat(t *testing.T) {
 		ChannelID: channel.ID,
 		UserStatuses: []*UserStatus{
 			{
-				UserID:   user.GetUID(),
+				UserID:   user.ID,
 				Status:   "editing",
 				LastTime: time.Now(),
 			},

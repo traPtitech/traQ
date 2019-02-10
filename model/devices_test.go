@@ -20,8 +20,8 @@ func TestParallelGroup3(t *testing.T) {
 	t.Run("TestRegisterDevice", func(t *testing.T) {
 		t.Parallel()
 
-		id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
-		id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).ID
+		id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).ID
 		token1 := utils.RandAlphabetAndNumberString(20)
 		token2 := utils.RandAlphabetAndNumberString(20)
 
@@ -53,8 +53,8 @@ func TestParallelGroup3(t *testing.T) {
 	t.Run("TestUnregisterDevice", func(t *testing.T) {
 		t.Parallel()
 
-		id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
-		id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).ID
+		id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).ID
 		token1 := utils.RandAlphabetAndNumberString(20)
 		token2 := utils.RandAlphabetAndNumberString(20)
 		token3 := utils.RandAlphabetAndNumberString(20)
@@ -85,8 +85,8 @@ func TestParallelGroup3(t *testing.T) {
 	t.Run("TestGetDevices", func(t *testing.T) {
 		t.Parallel()
 
-		id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
-		id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).ID
+		id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).ID
 		token1 := utils.RandAlphabetAndNumberString(20)
 		token2 := utils.RandAlphabetAndNumberString(20)
 		token3 := utils.RandAlphabetAndNumberString(20)
@@ -124,8 +124,8 @@ func TestParallelGroup3(t *testing.T) {
 	t.Run("TestGetDeviceIds", func(t *testing.T) {
 		t.Parallel()
 
-		id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
-		id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+		id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).ID
+		id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).ID
 		token1 := utils.RandAlphabetAndNumberString(20)
 		token2 := utils.RandAlphabetAndNumberString(20)
 		token3 := utils.RandAlphabetAndNumberString(20)
@@ -164,8 +164,8 @@ func TestParallelGroup3(t *testing.T) {
 func TestParallelGroup4(t *testing.T) {
 	assert, require, _, _ := beforeTest(t)
 
-	id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
-	id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).GetUID()
+	id1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).ID
+	id2 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20)).ID
 	token1 := utils.RandAlphabetAndNumberString(20)
 	token2 := utils.RandAlphabetAndNumberString(20)
 	token3 := utils.RandAlphabetAndNumberString(20)

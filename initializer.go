@@ -111,15 +111,15 @@ func channelTreeTraverse(name string, node *dataChannel, parent *model.Channel) 
 	if parent != nil {
 		parentID = parent.ID.String()
 	}
-	ch, err := model.CreatePublicChannel(parentID, name, model.ServerUser().GetUID())
+	ch, err := model.CreatePublicChannel(parentID, name, model.ServerUser().ID)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := model.UpdateChannelTopic(ch.ID, node.Topic, model.ServerUser().GetUID()); err != nil {
+	if err := model.UpdateChannelTopic(ch.ID, node.Topic, model.ServerUser().ID); err != nil {
 		return nil, err
 	}
-	if err := model.UpdateChannelFlag(ch.ID, nil, &node.Force, model.ServerUser().GetUID()); err != nil {
+	if err := model.UpdateChannelFlag(ch.ID, nil, &node.Force, model.ServerUser().ID); err != nil {
 		return nil, err
 	}
 

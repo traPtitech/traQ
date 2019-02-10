@@ -20,10 +20,10 @@ func TestParallelGroup2(t *testing.T) {
 	t.Run("TestAddStar", func(t *testing.T) {
 		t.Parallel()
 
-		ch := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		ch := mustMakeChannelDetail(t, user.ID, utils.RandAlphabetAndNumberString(20), "")
 		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
 
-		if assert.NoError(AddStar(user1.GetUID(), ch.ID)) {
+		if assert.NoError(AddStar(user1.ID, ch.ID)) {
 			count := 0
 			db.Model(Star{}).Where("user_id = ?", user1.ID).Count(&count)
 			assert.Equal(1, count)
@@ -34,16 +34,16 @@ func TestParallelGroup2(t *testing.T) {
 	t.Run("TestRemoveStar", func(t *testing.T) {
 		t.Parallel()
 
-		ch := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+		ch := mustMakeChannelDetail(t, user.ID, utils.RandAlphabetAndNumberString(20), "")
 		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
-		require.NoError(AddStar(user1.GetUID(), ch.ID))
+		require.NoError(AddStar(user1.ID, ch.ID))
 
 		count := 0
-		if assert.NoError(RemoveStar(user1.GetUID(), uuid.Nil)) {
+		if assert.NoError(RemoveStar(user1.ID, uuid.Nil)) {
 			db.Model(Star{}).Where("user_id = ?", user1.ID).Count(&count)
 			assert.Equal(1, count)
 		}
-		if assert.NoError(RemoveStar(user1.GetUID(), ch.ID)) {
+		if assert.NoError(RemoveStar(user1.ID, ch.ID)) {
 			db.Model(Star{}).Where("user_id = ?", user1.ID).Count(&count)
 			assert.Equal(0, count)
 		}
@@ -56,11 +56,11 @@ func TestParallelGroup2(t *testing.T) {
 		user1 := mustMakeUser(t, utils.RandAlphabetAndNumberString(20))
 		channelCount := 5
 		for i := 0; i < channelCount; i++ {
-			ch := mustMakeChannelDetail(t, user.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-			require.NoError(AddStar(user1.GetUID(), ch.ID))
+			ch := mustMakeChannelDetail(t, user.ID, utils.RandAlphabetAndNumberString(20), "")
+			require.NoError(AddStar(user1.ID, ch.ID))
 		}
 
-		ch, err := GetStaredChannels(user1.GetUID())
+		ch, err := GetStaredChannels(user1.ID)
 		if assert.NoError(err) {
 			assert.Len(ch, channelCount)
 		}
