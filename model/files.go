@@ -67,11 +67,11 @@ func (f *File) BeforeDelete(scope *gorm.Scope) error {
 // AfterDelete db.Deleteのトランザクション内で実行されます
 func (f *File) AfterDelete(scope *gorm.Scope) error {
 	if f.HasThumbnail {
-		if err := fs.DeleteByKey(f.getThumbKey()); err != nil {
+		if err := fs.DeleteByKey(f.GetThumbKey()); err != nil {
 			return err
 		}
 	}
-	return fs.DeleteByKey(f.getKey())
+	return fs.DeleteByKey(f.GetKey())
 }
 
 // Validate 構造体を検証します
@@ -106,7 +106,7 @@ func (f *File) Create(src io.Reader) error {
 	// fileの保存
 	eg.Go(func() error {
 		defer fileSrc.Close()
-		if err := fs.SaveByKey(fileSrc, f.getKey(), f.Name, f.Mime); err != nil {
+		if err := fs.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime); err != nil {
 			return err
 		}
 		return nil
@@ -139,20 +139,20 @@ func (f *File) Create(src io.Reader) error {
 
 // Open fileを開きます
 func (f *File) Open() (io.ReadCloser, error) {
-	return fs.OpenFileByKey(f.getKey())
+	return fs.OpenFileByKey(f.GetKey())
 }
 
 // OpenThumbnail サムネイルファイルを開きます
 func (f *File) OpenThumbnail() (io.ReadCloser, error) {
-	return fs.OpenFileByKey(f.getThumbKey())
+	return fs.OpenFileByKey(f.GetThumbKey())
 }
 
 // RegenerateThumbnail サムネイル画像を再生成します
 func (f *File) RegenerateThumbnail() error {
 	//既存のものを削除
-	_ = fs.DeleteByKey(f.getThumbKey())
+	_ = fs.DeleteByKey(f.GetThumbKey())
 
-	src, err := fs.OpenFileByKey(f.getKey())
+	src, err := fs.OpenFileByKey(f.GetKey())
 	if err != nil {
 		return err
 	}
@@ -168,13 +168,13 @@ func (f *File) RegenerateThumbnail() error {
 	}).Error
 }
 
-// getKey ファイルのストレージに対するキーを返す
-func (f *File) getKey() string {
+// GetKey ファイルのストレージに対するキーを返す
+func (f *File) GetKey() string {
 	return f.ID.String()
 }
 
-// getThumbKey ファイルのサムネイルのストレージに対するキーを返す
-func (f *File) getThumbKey() string {
+// GetThumbKey ファイルのサムネイルのストレージに対するキーを返す
+func (f *File) GetThumbKey() string {
 	return f.ID.String() + "-thumb"
 }
 
@@ -209,7 +209,7 @@ func OpenFileByID(fileID uuid.UUID) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	return fs.OpenFileByKey(meta.getKey())
+	return fs.OpenFileByKey(meta.GetKey())
 }
 
 // GetMetaFileDataByID ファイルのメタデータを取得します
@@ -255,7 +255,7 @@ func generateThumbnail(ctx context.Context, f *File, src io.Reader) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		if err := fs.SaveByKey(b, f.getThumbKey(), f.getThumbKey()+".png", "image/png"); err != nil {
+		if err := fs.SaveByKey(b, f.GetThumbKey(), f.GetThumbKey()+".png", "image/png"); err != nil {
 			return err
 		}
 	}

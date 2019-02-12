@@ -41,7 +41,7 @@ func TestParallelGroup10(t *testing.T) {
 		file := mustMakeFile(t, user.ID)
 
 		assert.NoError(DeleteFile(file.ID))
-		_, err := fs.OpenFileByKey(file.getKey())
+		_, err := fs.OpenFileByKey(file.GetKey())
 		assert.Error(err)
 	})
 
