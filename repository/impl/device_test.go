@@ -111,8 +111,6 @@ func TestRepositoryImpl_GetDeviceTokensByUserID(t *testing.T) {
 	t.Parallel()
 	repo, _, require := setup(t, common)
 
-	t.Parallel()
-
 	id1 := mustMakeUser(t, repo, random).ID
 	id2 := mustMakeUser(t, repo, random).ID
 	token1 := utils.RandAlphabetAndNumberString(20)
