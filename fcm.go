@@ -5,6 +5,7 @@ import (
 	"firebase.google.com/go"
 	"firebase.google.com/go/messaging"
 	"fmt"
+	"github.com/labstack/gommon/log"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
@@ -181,8 +182,10 @@ func (m *FCMManager) sendToFcm(deviceTokens []string, data map[string]string) er
 	}
 	for _, token := range deviceTokens {
 		payload.Token = token
+		log.Info(payload) // TODO Remove it
 		for i := 0; i < 5; i++ {
 			if _, err := m.messaging.Send(context.Background(), payload); err != nil {
+				log.Error(err) // TODO Remove it
 				switch {
 				case strings.Contains(err.Error(), "registration-token-not-registered"):
 					fallthrough
