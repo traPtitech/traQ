@@ -314,6 +314,9 @@ func (repo *RepositoryImpl) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
 			}
 			return time.Time{}, err
 		}
+		if u.LastOnline == nil {
+			return time.Time{}, nil
+		}
 		return *u.LastOnline, nil
 	}
 	return i.(*userOnlineStatus).getTime(), nil
