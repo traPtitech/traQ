@@ -19,19 +19,14 @@ type EmbeddedInfo struct {
 func Parse(m string) (res []*EmbeddedInfo, plain string) {
 	tmp := embRegex.ReplaceAllStringFunc(m, func(s string) string {
 		info := &EmbeddedInfo{}
-		if err := json.Unmarshal([]byte(s[1:]), info); err != nil {
+		if err := json.Unmarshal([]byte(s[1:]), info); err != nil || len(info.Type) == 0 || len(info.ID) == 0 {
 			return s
 		}
-		if len(info.Type) == 0 || len(info.ID) == 0 {
-			return s
-		} else {
-			res = append(res, info)
-			if info.Type == "file" {
-				return "file"
-			} else {
-				return info.Raw
-			}
+		res = append(res, info)
+		if info.Type == "file" {
+			return "file"
 		}
+		return info.Raw
 	})
 	return res, strings.Replace(tmp, "\n", " ", -1)
 }

@@ -73,6 +73,16 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
+		{
+			`!{ test message !{"raw": 1,"type":"user","id":"test_id"}`,
+			`!{ test message !{"raw": 1,"type":"user","id":"test_id"}`,
+			[]EmbeddedInfo{},
+		},
+		{
+			`!{ test message !{"raw": 1,"type":"","id":"test_id"}`,
+			`!{ test message !{"raw": 1,"type":"","id":"test_id"}`,
+			[]EmbeddedInfo{},
+		},
 	}
 
 	for _, v := range cases {
