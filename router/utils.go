@@ -5,11 +5,12 @@ import (
 	"context"
 	"encoding/gob"
 	"github.com/go-sql-driver/mysql"
+	"github.com/leandro-lugaresi/hub"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/rbac"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/imagemagick"
 	"github.com/traPtitech/traQ/utils/thumb"
 	"image"
@@ -46,7 +47,6 @@ const (
 	paramClipID      = "clipID"
 	paramFolderID    = "folderID"
 	paramTokenID     = "tokenID"
-	paramBotID       = "botID"
 
 	mimeImagePNG  = "image/png"
 	mimeImageJPEG = "image/jpeg"
@@ -60,9 +60,23 @@ const (
 
 // Handlers ハンドラ
 type Handlers struct {
-	Bot    *event.BotProcessor
 	OAuth2 *oauth2.Handler
 	RBAC   *rbac.RBAC
+	Repo   repository.Repository
+	SSE    *SSEStreamer
+	Hub    *hub.Hub
+}
+
+// NewHandlers ハンドラを生成します
+func NewHandlers(oauth2 *oauth2.Handler, rbac *rbac.RBAC, repo repository.Repository, hub *hub.Hub) *Handlers {
+	h := &Handlers{
+		OAuth2: oauth2,
+		RBAC:   rbac,
+		Repo:   repo,
+		SSE:    NewSSEStreamer(hub, repo),
+		Hub:    hub,
+	}
+	return h
 }
 
 func init() {
@@ -110,12 +124,12 @@ func isMySQLDuplicatedRecordErr(err error) bool {
 	return merr.Number == errMySQLDuplicatedRecord
 }
 
-func processMultipartFormIconUpload(c echo.Context, file *multipart.FileHeader) (uuid.UUID, error) {
+func (h *Handlers) processMultipartFormIconUpload(c echo.Context, file *multipart.FileHeader) (uuid.UUID, error) {
 	// ファイルサイズ制限
 	if file.Size > iconFileMaxSize {
 		return uuid.Nil, echo.NewHTTPError(http.StatusBadRequest, "too large image file (limit exceeded)")
 	}
-	return processMultipartForm(c, file, model.FileTypeIcon, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
+	return h.processMultipartForm(c, file, model.FileTypeIcon, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
 		switch mime {
 		case mimeImagePNG, mimeImageJPEG:
 			return processStillImage(c, src, iconMaxWidth, iconMaxHeight)
@@ -126,12 +140,12 @@ func processMultipartFormIconUpload(c echo.Context, file *multipart.FileHeader) 
 	})
 }
 
-func processMultipartFormStampUpload(c echo.Context, file *multipart.FileHeader) (uuid.UUID, error) {
+func (h *Handlers) processMultipartFormStampUpload(c echo.Context, file *multipart.FileHeader) (uuid.UUID, error) {
 	// ファイルサイズ制限
 	if file.Size > stampFileMaxSize {
 		return uuid.Nil, echo.NewHTTPError(http.StatusBadRequest, "too large image file (limit exceeded)")
 	}
-	return processMultipartForm(c, file, model.FileTypeStamp, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
+	return h.processMultipartForm(c, file, model.FileTypeStamp, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
 		switch mime {
 		case mimeImagePNG, mimeImageJPEG:
 			return processStillImage(c, src, stampMaxWidth, stampMaxHeight)
@@ -144,7 +158,7 @@ func processMultipartFormStampUpload(c echo.Context, file *multipart.FileHeader)
 	})
 }
 
-func processMultipartForm(c echo.Context, file *multipart.FileHeader, fType string, process func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error)) (uuid.UUID, error) {
+func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHeader, fType string, process func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error)) (uuid.UUID, error) {
 	// ファイルタイプ確認・必要があればリサイズ
 	src, err := file.Open()
 	if err != nil {
@@ -158,13 +172,13 @@ func processMultipartForm(c echo.Context, file *multipart.FileHeader, fType stri
 	}
 
 	// ファイル保存
-	fileID, err := model.SaveFile(file.Filename, b, int64(b.Len()), mime, fType)
+	f, err := h.Repo.SaveFile(file.Filename, b, int64(b.Len()), mime, fType, uuid.Nil)
 	if err != nil {
 		c.Logger().Error(err)
 		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	return fileID, nil
+	return f.ID, nil
 }
 
 func processStillImage(c echo.Context, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, string, error) {

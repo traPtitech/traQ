@@ -1,23 +1,13 @@
 package model
 
 import (
-	"bytes"
-	"crypto/rand"
-	"crypto/sha512"
 	"crypto/subtle"
 	"encoding/hex"
 	"errors"
-	"github.com/jinzhu/gorm"
-	"github.com/mikespook/gorbac"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
-	"image/png"
-	"io"
 	"time"
-	"unicode/utf8"
-
-	"golang.org/x/crypto/pbkdf2"
 )
 
 var (
@@ -66,131 +56,6 @@ func (user *User) Validate() error {
 	return validator.ValidateStruct(user)
 }
 
-// GetLastOnline ユーザーの最終オンライン日時を取得します
-func (user *User) GetLastOnline() time.Time {
-	i, ok := currentUserOnlineMap.Load(user.ID)
-	if !ok {
-		if user.LastOnline == nil {
-			return time.Time{}
-		}
-		return *user.LastOnline
-	}
-	return i.(*userOnlineStatus).getTime()
-}
-
-// IsOnline ユーザーがオンラインかどうかを返します
-func (user *User) IsOnline() bool {
-	return IsUserOnline(user.ID)
-}
-
-// CreateUser ユーザーを作成します
-func CreateUser(name, email, password string, role gorbac.Role) (*User, error) {
-	salt := generateSalt()
-	user := &User{
-		ID:       uuid.NewV4(),
-		Name:     name,
-		Email:    email,
-		Password: hex.EncodeToString(hashPassword(password, salt)),
-		Salt:     hex.EncodeToString(salt),
-		Status:   1, //TODO 状態管理
-		Bot:      false,
-		Role:     role.ID(),
-	}
-
-	if err := user.Validate(); err != nil {
-		return nil, err
-	}
-
-	iconID, err := GenerateIconFile(user.Name)
-	if err != nil {
-		return nil, err
-	}
-	user.Icon = iconID
-
-	if err := db.Create(user).Error; err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-// GetUser IDでユーザーの構造体を取得する
-func GetUser(userID uuid.UUID) (*User, error) {
-	user := &User{}
-	if err := db.Where(&User{ID: userID}).Take(user).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
-	}
-	return user, nil
-}
-
-// UserExists 指定したIDのユーザーが存在するかどうか
-func UserExists(userID uuid.UUID) (bool, error) {
-	c := 0
-	if err := db.Model(User{}).Where(&User{ID: userID}).Count(&c).Error; err != nil {
-		return false, err
-	}
-	return c > 0, nil
-}
-
-// GetUserByName nameでユーザーを取得します
-func GetUserByName(name string) (*User, error) {
-	if len(name) == 0 {
-		return nil, ErrNotFound
-	}
-	user := &User{}
-	if err := db.Where(&User{Name: name}).Take(user).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
-	}
-	return user, nil
-}
-
-// GetUsers ユーザーの一覧の取得
-func GetUsers() (users []*User, err error) {
-	err = db.Find(&users).Error
-	return
-}
-
-// ChangeUserPassword ユーザーのパスワードを変更します
-func ChangeUserPassword(userID uuid.UUID, password string) error {
-	salt := generateSalt()
-	return db.Model(&User{ID: userID}).Updates(map[string]interface{}{
-		"salt":     hex.EncodeToString(salt),
-		"password": hex.EncodeToString(hashPassword(password, salt)),
-	}).Error
-}
-
-// ChangeUserIcon ユーザーのアイコンを変更します
-func ChangeUserIcon(userID, fileID uuid.UUID) error {
-	return db.Model(&User{ID: userID}).Update("icon", fileID.String()).Error
-}
-
-// ChangeUserDisplayName ユーザーの表示名を変更します
-func ChangeUserDisplayName(userID uuid.UUID, displayName string) error {
-	if utf8.RuneCountInString(displayName) > 64 {
-		return errors.New("displayName must be <=64 characters")
-	}
-	return db.Model(&User{ID: userID}).Update("display_name", displayName).Error
-}
-
-// ChangeUserTwitterID ユーザーのTwitterIDを変更します
-func ChangeUserTwitterID(userID uuid.UUID, twitterID string) error {
-	if err := validator.ValidateVar(twitterID, "twitterid"); err != nil {
-		return err
-	}
-	return db.Model(&User{ID: userID}).Update("twitter_id", twitterID).Error
-}
-
-// UpdateUserLastOnline ユーザーの最終オンライン日時を更新します
-func UpdateUserLastOnline(id uuid.UUID, time time.Time) (err error) {
-	return db.Model(&User{ID: id}).Update("last_online", &time).Error
-}
-
 // AuthenticateUser ユーザー構造体とパスワードを照合します
 func AuthenticateUser(user *User, password string) error {
 	if user == nil {
@@ -210,25 +75,8 @@ func AuthenticateUser(user *User, password string) error {
 		return err
 	}
 
-	if subtle.ConstantTimeCompare(storedPassword, hashPassword(password, salt)) != 1 {
+	if subtle.ConstantTimeCompare(storedPassword, utils.HashPassword(password, salt)) != 1 {
 		return ErrUserWrongIDOrPassword
 	}
 	return nil
-}
-
-func hashPassword(pass string, salt []byte) []byte {
-	return pbkdf2.Key([]byte(pass), salt, 65536, 64, sha512.New)[:]
-}
-
-func generateSalt() []byte {
-	salt := make([]byte, 64)
-	_, _ = io.ReadFull(rand.Reader, salt)
-	return salt
-}
-
-// GenerateIconFile pngアイコンを生成してそのファイルIDを返します
-func GenerateIconFile(salt string) (uuid.UUID, error) {
-	img := &bytes.Buffer{}
-	_ = png.Encode(img, utils.GenerateIcon(salt))
-	return SaveFile(salt+".png", img, int64(img.Len()), "image/png", FileTypeIcon)
 }

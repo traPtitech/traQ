@@ -3,12 +3,11 @@ package router
 import (
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/model"
 	"net/http"
 )
 
 // GET /activity/latest-messages
-func GetActivityLatestMessages(c echo.Context) error {
+func (h *Handlers) GetActivityLatestMessages(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	req := struct {
@@ -22,13 +21,13 @@ func GetActivityLatestMessages(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	messages, err := model.GetChannelLatestMessagesByUserID(userID, req.Limit, req.SubscribeOnly)
+	messages, err := h.Repo.GetChannelLatestMessagesByUserID(userID, req.Limit, req.SubscribeOnly)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	reports, err := model.GetMessageReportsByReporterID(userID)
+	reports, err := h.Repo.GetMessageReportsByReporterID(userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -40,7 +39,7 @@ func GetActivityLatestMessages(c echo.Context) error {
 
 	res := make([]*MessageForResponse, 0, len(messages))
 	for _, message := range messages {
-		ms := formatMessage(message)
+		ms := h.formatMessage(message)
 		if hidden[message.ID] {
 			ms.Reported = true
 		}

@@ -1,147 +1,143 @@
 package router
 
 import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/sessions"
-	"github.com/traPtitech/traQ/utils"
 	"testing"
-
-	"github.com/traPtitech/traQ/model"
 
 	"net/http"
 )
 
-func TestGroup_Users(t *testing.T) {
-	assert, require, session, _ := beforeTest(t)
+func TestHandlers_GetUsers(t *testing.T) {
+	t.Parallel()
+	_, server, _, _, session, _ := setup(t, s2)
 
-	t.Run("TestGetUsers", func(t *testing.T) {
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/users").
-				Expect().
-				Status(http.StatusForbidden)
-		})
-
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/users").
-				WithCookie(sessions.CookieName, session).
-				Expect().
-				Status(http.StatusOK).
-				JSON().
-				Array().
-				Length().
-				Equal(2)
-		})
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/users").
+			Expect().
+			Status(http.StatusForbidden)
 	})
 
-	// ここから並列テスト
-
-	t.Run("TestGetMe", func(t *testing.T) {
+	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/users").
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array().
+			Length().
+			Equal(2)
+	})
+}
 
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/users/me").
-				Expect().
-				Status(http.StatusForbidden)
-		})
+func TestHandlers_GetMe(t *testing.T) {
+	t.Parallel()
+	_, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
 
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/users/me").
-				WithCookie(sessions.CookieName, session).
-				Expect().
-				Status(http.StatusOK).
-				JSON().
-				Object().
-				Value("userId").
-				String().
-				Equal(testUser.ID.String())
-		})
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/users/me").
+			Expect().
+			Status(http.StatusForbidden)
 	})
 
-	t.Run("TestGetUserByID", func(t *testing.T) {
+	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/users/me").
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object().
+			Value("userId").
+			String().
+			Equal(testUser.ID.String())
+	})
+}
 
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/users/{userID}", testUser.ID.String()).
-				Expect().
-				Status(http.StatusForbidden)
-		})
+func TestHandlers_GetUserByID(t *testing.T) {
+	t.Parallel()
+	_, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
 
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/users/{userID}", testUser.ID.String()).
-				WithCookie(sessions.CookieName, session).
-				Expect().
-				Status(http.StatusOK).
-				JSON().
-				Object().
-				Value("userId").
-				String().
-				Equal(testUser.ID.String())
-		})
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/users/{userID}", testUser.ID.String()).
+			Expect().
+			Status(http.StatusForbidden)
 	})
 
-	t.Run("TestPatchMe", func(t *testing.T) {
+	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/users/{userID}", testUser.ID.String()).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object().
+			Value("userId").
+			String().
+			Equal(testUser.ID.String())
+	})
+}
 
-		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
+func TestHandlers_PatchMe(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common)
 
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.PATCH("/api/1.0/users/me").
-				Expect().
-				Status(http.StatusForbidden)
-		})
-
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			newDisp := "renamed"
-			newTwitter := "test"
-			e.PATCH("/api/1.0/users/me").
-				WithCookie(sessions.CookieName, generateSession(t, user.ID)).
-				WithJSON(map[string]string{"displayName": newDisp, "twitterId": newTwitter}).
-				Expect().
-				Status(http.StatusNoContent)
-
-			u, err := model.GetUser(user.ID)
-			require.NoError(err)
-			assert.Equal(newDisp, u.DisplayName)
-			assert.Equal(newTwitter, u.TwitterID)
-		})
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PATCH("/api/1.0/users/me").
+			Expect().
+			Status(http.StatusForbidden)
 	})
 
-	t.Run("TestPostLogin", func(t *testing.T) {
+	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
+		e := makeExp(t, server)
+		newDisp := "renamed"
+		newTwitter := "test"
+		e.PATCH("/api/1.0/users/me").
+			WithCookie(sessions.CookieName, session).
+			WithJSON(map[string]string{"displayName": newDisp, "twitterId": newTwitter}).
+			Expect().
+			Status(http.StatusNoContent)
 
-		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
+		u, err := repo.GetUser(user.ID)
+		require.NoError(t, err)
+		assert.Equal(t, newDisp, u.DisplayName)
+		assert.Equal(t, newTwitter, u.TwitterID)
+	})
+}
 
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.POST("/api/1.0/login").
-				WithJSON(map[string]string{"name": user.Name, "pass": "test"}).
-				Expect().
-				Status(http.StatusNoContent)
-		})
+func TestHandlers_PostLogin(t *testing.T) {
+	t.Parallel()
+	_, server, _, _, _, _, user, _ := setupWithUsers(t, common)
 
-		t.Run("Failure1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.POST("/api/1.0/login").
-				WithJSON(map[string]string{"name": user.Name, "pass": "wrong_password"}).
-				Expect().
-				Status(http.StatusForbidden)
-		})
+	t.Run("Successful1", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.POST("/api/1.0/login").
+			WithJSON(map[string]string{"name": user.Name, "pass": "test"}).
+			Expect().
+			Status(http.StatusNoContent)
+	})
+
+	t.Run("Failure1", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.POST("/api/1.0/login").
+			WithJSON(map[string]string{"name": user.Name, "pass": "wrong_password"}).
+			Expect().
+			Status(http.StatusForbidden)
 	})
 }

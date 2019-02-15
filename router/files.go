@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/repository"
 	"net/http"
 	"strconv"
 
@@ -11,7 +12,7 @@ import (
 )
 
 // PostFile POST /files
-func PostFile(c echo.Context) error {
+func (h *Handlers) PostFile(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	uploadedFile, err := c.FormFile("file")
@@ -26,14 +27,8 @@ func PostFile(c echo.Context) error {
 	}
 	defer src.Close()
 
-	file := &model.File{
-		Name:      uploadedFile.Filename,
-		Size:      uploadedFile.Size,
-		Mime:      uploadedFile.Header.Get(echo.HeaderContentType),
-		Type:      model.FileTypeUserFile,
-		CreatorID: userID,
-	}
-	if err := file.Create(src); err != nil {
+	file, err := h.Repo.SaveFile(uploadedFile.Filename, src, uploadedFile.Size, uploadedFile.Header.Get(echo.HeaderContentType), model.FileTypeUserFile, userID)
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -41,19 +36,19 @@ func PostFile(c echo.Context) error {
 }
 
 // GetFileByID GET /files/:fileID
-func GetFileByID(c echo.Context) error {
+func (h *Handlers) GetFileByID(c echo.Context) error {
 	fileID := getRequestParamAsUUID(c, paramFileID)
 	dl := c.QueryParam("dl")
 
-	meta, err := validateFileID(c, fileID)
+	meta, file, err := h.Repo.OpenFile(fileID)
 	if err != nil {
-		return err
-	}
-
-	file, err := meta.Open()
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch err {
+		case repository.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 	defer file.Close()
 
@@ -74,14 +69,14 @@ func GetFileByID(c echo.Context) error {
 }
 
 // DeleteFileByID DELETE /files/:fileID
-func DeleteFileByID(c echo.Context) error {
+func (h *Handlers) DeleteFileByID(c echo.Context) error {
 	fileID := getRequestParamAsUUID(c, paramFileID)
-	_, err := validateFileID(c, fileID)
+	_, err := h.validateFileID(c, fileID)
 	if err != nil {
 		return err
 	}
 
-	if err := model.DeleteFile(fileID); err != nil {
+	if err := h.Repo.DeleteFile(fileID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -90,9 +85,9 @@ func DeleteFileByID(c echo.Context) error {
 }
 
 // GetMetaDataByFileID GET /files/:fileID/meta
-func GetMetaDataByFileID(c echo.Context) error {
+func (h *Handlers) GetMetaDataByFileID(c echo.Context) error {
 	fileID := getRequestParamAsUUID(c, paramFileID)
-	meta, err := validateFileID(c, fileID)
+	meta, err := h.validateFileID(c, fileID)
 	if err != nil {
 		return err
 	}
@@ -100,32 +95,29 @@ func GetMetaDataByFileID(c echo.Context) error {
 }
 
 // GetThumbnailByID GET /files/:fileID/thumbnail
-func GetThumbnailByID(c echo.Context) error {
+func (h *Handlers) GetThumbnailByID(c echo.Context) error {
 	fileID := getRequestParamAsUUID(c, paramFileID)
-	meta, err := validateFileID(c, fileID)
-	if err != nil {
-		return err
-	}
-	if !meta.HasThumbnail {
-		return echo.NewHTTPError(http.StatusNotFound, "The specified file exists, but its thumbnail doesn't.")
-	}
 
-	file, err := meta.OpenThumbnail()
+	_, file, err := h.Repo.OpenThumbnailFile(fileID)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch err {
+		case repository.ErrNotFound:
+			return echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 	defer file.Close()
 	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") //1年間キャッシュ
-
 	return c.Stream(http.StatusOK, mimeImagePNG, file)
 }
 
-func validateFileID(c echo.Context, fileID uuid.UUID) (*model.File, error) {
-	f, err := model.GetMetaFileDataByID(fileID)
+func (h *Handlers) validateFileID(c echo.Context, fileID uuid.UUID) (*model.File, error) {
+	f, err := h.Repo.GetFileMeta(fileID)
 	if err != nil {
 		switch err {
-		case model.ErrNotFound:
+		case repository.ErrNotFound:
 			return nil, echo.NewHTTPError(http.StatusNotFound, "The specified file does not exist")
 		default:
 			c.Logger().Error(err)

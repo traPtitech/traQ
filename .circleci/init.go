@@ -16,7 +16,12 @@ func main() {
 	}
 	defer conn.Close()
 
-	for _, name := range []string{"traq-test-model", "traq-test-router"} {
+	dbs := []string{
+		"traq-test-repo-common",
+		"traq-test-repo-ex1",
+		"traq-test-repo-ex2",
+	}
+	for _, name := range dbs {
 		if _, err = conn.Exec("CREATE DATABASE `" + name + "` CHARACTER SET = utf8mb4"); err != nil {
 			panic(err)
 		}

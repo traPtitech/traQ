@@ -2,14 +2,12 @@ package router
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/gavv/httpexpect"
-	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/rbac"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
-	"github.com/traPtitech/traQ/utils/storage"
+	"github.com/traPtitech/traQ/utils"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -25,78 +23,82 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 )
 
+const (
+	random = "random"
+	common = "common"
+	s1     = "s1"
+	s2     = "s2"
+)
+
 var (
-	testUser *model.User
-	server   *httptest.Server
+	servers      = map[string]*httptest.Server{}
+	repositories = map[string]*TestRepository{}
 )
 
 func TestMain(m *testing.M) {
-	user := os.Getenv("MARIADB_USERNAME")
-	if user == "" {
-		user = "root"
-	}
-
-	pass := os.Getenv("MARIADB_PASSWORD")
-	if pass == "" {
-		pass = "password"
-	}
-
-	host := os.Getenv("MARIADB_HOSTNAME")
-	if host == "" {
-		host = "127.0.0.1"
-	}
-
-	port := os.Getenv("MARIADB_PORT")
-	if port == "" {
-		port = "3306"
-	}
-
-	dbname := "traq-test-router"
-	config.DatabaseName = "traq-test-router"
-
-	engine, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, dbname))
-	if err != nil {
-		panic(err)
-	}
-	defer engine.Close()
-	model.SetGORMEngine(engine)
-
-	// テストで作成されたfileは全てメモリ上に乗ります。容量注意
-	model.SetFileStorage(storage.NewInMemoryFileStorage())
-
-	if _, err := model.Sync(); err != nil {
-		panic(err)
-	}
-
 	// setup server
-	r, err := rbac.New(&model.RBACOverrideStore{})
-	if err != nil {
-		panic(err)
+	repos := []string{
+		common,
+		s1,
+		s2,
 	}
-	role.SetRole(r)
+	for _, key := range repos {
+		r, err := rbac.New(nil)
+		if err != nil {
+			panic(err)
+		}
+		role.SetRole(r)
 
-	e := echo.New()
-	SetupRouting(e, &Handlers{RBAC: r})
-	server = httptest.NewServer(e)
-	defer server.Close()
+		e := echo.New()
+		repo := NewTestRepository()
+		SetupRouting(e, &Handlers{RBAC: r, Repo: repo})
+		servers[key] = httptest.NewServer(e)
+		repositories[key] = repo
+	}
 
-	os.Exit(m.Run())
+	code := m.Run()
+
+	for _, v := range servers {
+		v.Close()
+	}
+
+	os.Exit(code)
 }
 
-func beforeTest(t *testing.T) (*assert.Assertions, *require.Assertions, string, string) {
-	require := require.New(t)
-	assert := assert.New(t)
-
-	require.NoError(model.DropTables())
-	_, err := model.Sync()
+func setup(t *testing.T, server string) (repository.Repository, *httptest.Server, *assert.Assertions, *require.Assertions, string, string) {
+	t.Helper()
+	s, ok := servers[server]
+	if !ok {
+		t.FailNow()
+	}
+	assert, require := assertAndRequire(t)
+	repo := repositories[server]
+	testUser := mustMakeUser(t, repo, random)
+	adminUser, err := repo.GetUserByName("traq")
 	require.NoError(err)
+	return repo, s, assert, require, generateSession(t, testUser.ID), generateSession(t, adminUser.ID)
+}
 
-	testUser = mustCreateUser(t, "testUser")
+func setupWithUsers(t *testing.T, server string) (repository.Repository, *httptest.Server, *assert.Assertions, *require.Assertions, string, string, *model.User, *model.User) {
+	t.Helper()
+	s, ok := servers[server]
+	if !ok {
+		t.FailNow()
+	}
+	assert, require := assertAndRequire(t)
+	repo := repositories[server]
+	testUser := mustMakeUser(t, repo, random)
+	adminUser, err := repo.GetUserByName("traq")
+	require.NoError(err)
+	return repo, s, assert, require, generateSession(t, testUser.ID), generateSession(t, adminUser.ID), testUser, adminUser
+}
 
-	return assert, require, generateSession(t, testUser.ID), generateSession(t, model.ServerUser().ID)
+func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {
+	return assert.New(t), require.New(t)
 }
 
 func generateSession(t *testing.T, userID uuid.UUID) string {
+	t.Helper()
 	require := require.New(t)
 	req := httptest.NewRequest(echo.GET, "/", nil)
 	rec := httptest.NewRecorder()
@@ -109,7 +111,8 @@ func generateSession(t *testing.T, userID uuid.UUID) string {
 	return cookie.Value
 }
 
-func makeExp(t *testing.T) *httpexpect.Expect {
+func makeExp(t *testing.T, server *httptest.Server) *httpexpect.Expect {
+	t.Helper()
 	return httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  server.URL,
 		Reporter: httpexpect.NewAssertReporter(t),
@@ -132,57 +135,85 @@ func parseCookies(value string) map[string]*http.Cookie {
 	return m
 }
 
-func mustMakeChannelDetail(t *testing.T, userID uuid.UUID, name, parentID string) *model.Channel {
-	ch, err := model.CreatePublicChannel(parentID, name, userID)
+func mustMakeChannel(t *testing.T, repo repository.Repository, name string) *model.Channel {
+	t.Helper()
+	if name == random {
+		name = utils.RandAlphabetAndNumberString(20)
+	}
+	ch, err := repo.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
 	require.NoError(t, err)
 	return ch
 }
 
-func mustMakePrivateChannel(t *testing.T, name string, members []uuid.UUID) *model.Channel {
-	ch, err := model.CreatePrivateChannel("", name, members[0], members)
+func mustMakeChannelDetail(t *testing.T, repo repository.Repository, userID uuid.UUID, name string, parentID uuid.UUID) *model.Channel {
+	t.Helper()
+	if name == random {
+		name = utils.RandAlphabetAndNumberString(20)
+	}
+	ch, err := repo.CreatePublicChannel(name, parentID, userID)
 	require.NoError(t, err)
 	return ch
 }
 
-func mustMakeMessage(t *testing.T, userID, channelID uuid.UUID) *model.Message {
-	m, err := model.CreateMessage(userID, channelID, "popopo")
+func mustMakePrivateChannel(t *testing.T, repo repository.Repository, name string, members []uuid.UUID) *model.Channel {
+	t.Helper()
+	if name == random {
+		name = utils.RandAlphabetAndNumberString(20)
+	}
+	ch, err := repo.CreatePrivateChannel(name, members[0], members)
+	require.NoError(t, err)
+	return ch
+}
+
+func mustMakeMessage(t *testing.T, repo repository.Repository, userID, channelID uuid.UUID) *model.Message {
+	t.Helper()
+	m, err := repo.CreateMessage(userID, channelID, "popopo")
 	require.NoError(t, err)
 	return m
 }
 
-func mustMakeTag(t *testing.T, userID uuid.UUID, tagText string) uuid.UUID {
-	tag, err := model.GetOrCreateTagByName(tagText)
-	require.NoError(t, err)
-	require.NoError(t, model.AddUserTag(userID, tag.ID))
-	return tag.ID
+func mustMakeMessageUnread(t *testing.T, repo repository.Repository, userID, messageID uuid.UUID) {
+	t.Helper()
+	require.NoError(t, repo.SetMessageUnread(userID, messageID))
 }
 
-func mustMakeUnread(t *testing.T, userID, messageID uuid.UUID) {
-	require.NoError(t, model.SetMessageUnread(userID, messageID))
-}
-
-func mustStarChannel(t *testing.T, userID, channelID uuid.UUID) {
-	require.NoError(t, model.AddStar(userID, channelID))
-}
-
-func mustMakePin(t *testing.T, userID, messageID uuid.UUID) uuid.UUID {
-	id, err := model.CreatePin(messageID, userID)
-	require.NoError(t, err)
-	return id
-}
-
-func mustCreateUser(t *testing.T, name string) *model.User {
-	u, err := model.CreateUser(name, name+"@test.test", "test", role.User)
+func mustMakeUser(t *testing.T, repo repository.Repository, userName string) *model.User {
+	t.Helper()
+	if userName == random {
+		userName = utils.RandAlphabetAndNumberString(32)
+	}
+	u, err := repo.CreateUser(userName, userName+"@test.test", "test", role.User)
 	require.NoError(t, err)
 	return u
 }
 
-func mustMakeFile(t *testing.T) *model.File {
-	file := &model.File{
-		Name:      "test.txt",
-		Size:      12,
-		CreatorID: testUser.ID,
+func mustMakeFile(t *testing.T, repo repository.Repository, userID uuid.UUID) *model.File {
+	t.Helper()
+	buf := bytes.NewBufferString("test message")
+	f, err := repo.SaveFile("test.txt", buf, int64(buf.Len()), "", model.FileTypeUserFile, userID)
+	require.NoError(t, err)
+	return f
+}
+
+func mustMakePin(t *testing.T, repo repository.Repository, messageID, userID uuid.UUID) uuid.UUID {
+	t.Helper()
+	p, err := repo.CreatePin(messageID, userID)
+	require.NoError(t, err)
+	return p
+}
+
+func mustMakeTag(t *testing.T, repo repository.Repository, userID uuid.UUID, tagText string) uuid.UUID {
+	t.Helper()
+	if tagText == random {
+		tagText = utils.RandAlphabetAndNumberString(20)
 	}
-	require.NoError(t, file.Create(bytes.NewBufferString("test message")))
-	return file
+	tag, err := repo.GetOrCreateTagByName(tagText)
+	require.NoError(t, err)
+	require.NoError(t, repo.AddUserTag(userID, tag.ID))
+	return tag.ID
+}
+
+func mustStarChannel(t *testing.T, repo repository.Repository, userID, channelID uuid.UUID) {
+	t.Helper()
+	require.NoError(t, repo.AddStar(userID, channelID))
 }

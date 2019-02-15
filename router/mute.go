@@ -2,16 +2,14 @@ package router
 
 import (
 	"github.com/labstack/echo"
-	"github.com/traPtitech/traQ/event"
-	"github.com/traPtitech/traQ/model"
 	"net/http"
 )
 
 // GetMutedChannelIDs GET /users/me/mute
-func GetMutedChannelIDs(c echo.Context) error {
+func (h *Handlers) GetMutedChannelIDs(c echo.Context) error {
 	uid := getRequestUserID(c)
 
-	ids, err := model.GetMutedChannelIDs(uid)
+	ids, err := h.Repo.GetMutedChannelIDs(uid)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -21,43 +19,43 @@ func GetMutedChannelIDs(c echo.Context) error {
 }
 
 // PostMutedChannel POST /users/me/mute/:channelID
-func PostMutedChannel(c echo.Context) error {
+func (h *Handlers) PostMutedChannel(c echo.Context) error {
 	uid := getRequestUserID(c)
 	cid := getRequestParamAsUUID(c, paramChannelID)
 
-	if err := model.MuteChannel(uid, cid); err != nil {
-		switch err {
-		case model.ErrNotFound: // 存在しないチャンネルか、見えないチャンネル
-			return echo.NewHTTPError(http.StatusNotFound)
-		case model.ErrForbidden: // 強制通知チャンネルはミュート不可能
-			return echo.NewHTTPError(http.StatusForbidden)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	// ユーザーからチャンネルが見えるかどうか
+	if ok, err := h.Repo.IsChannelAccessibleToUser(uid, cid); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	go event.Emit(event.ChannelMuted, &event.UserChannelEvent{UserID: uid, ChannelID: cid})
+	// 強制通知チャンネルを確認
+	if ch, err := h.Repo.GetChannel(cid); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if ch.IsForced {
+		return echo.NewHTTPError(http.StatusForbidden)
+	}
+
+	if err := h.Repo.MuteChannel(uid, cid); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
 	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteMutedChannel DELETE /users/me/mute/:channelID
-func DeleteMutedChannel(c echo.Context) error {
+func (h *Handlers) DeleteMutedChannel(c echo.Context) error {
 	uid := getRequestUserID(c)
 	cid := getRequestParamAsUUID(c, paramChannelID)
 
-	if err := model.UnmuteChannel(uid, cid); err != nil {
-		switch err {
-		case model.ErrNotFound: // 存在しないチャンネルか、見えないチャンネル
-			return echo.NewHTTPError(http.StatusNotFound)
-		case model.ErrForbidden: // 強制通知チャンネルはミュート不可能
-			return echo.NewHTTPError(http.StatusForbidden)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if err := h.Repo.UnmuteChannel(uid, cid); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.ChannelUnmuted, &event.UserChannelEvent{UserID: uid, ChannelID: cid})
 	return c.NoContent(http.StatusNoContent)
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/yaml.v2"
 	"io"
@@ -33,20 +34,20 @@ type dataChannel struct {
 	Children map[string]*dataChannel `yaml:"children"`
 }
 
-func insertInitialData(data *dataRoot) error {
-	if err := createTags(data.Tags); err != nil {
+func insertInitialData(repo repository.Repository, data *dataRoot) error {
+	if err := createTags(repo, data.Tags); err != nil {
 		return err
 	}
-	if err := createStamps(data.Stamps); err != nil {
+	if err := createStamps(repo, data.Stamps); err != nil {
 		return err
 	}
-	if err := createChannels(data.Channels); err != nil {
+	if err := createChannels(repo, data.Channels); err != nil {
 		return err
 	}
 	return nil
 }
 
-func createTags(tags map[string]*dataTag) error {
+func createTags(repo repository.Repository, tags map[string]*dataTag) error {
 	for name, options := range tags {
 		if err := validator.ValidateVar(name, "max=30"); err != nil {
 			return err
@@ -54,14 +55,14 @@ func createTags(tags map[string]*dataTag) error {
 		if err := validator.ValidateStruct(options); err != nil {
 			return err
 		}
-		if _, err := model.CreateTag(name, options.Restricted, options.Type); err != nil {
+		if _, err := repo.CreateTag(name, options.Restricted, options.Type); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func createStamps(stamps map[string]*dataStamp) error {
+func createStamps(repo repository.Repository, stamps map[string]*dataStamp) error {
 	for name, data := range stamps {
 		if err := validator.ValidateVar(name, "name"); err != nil {
 			return err
@@ -77,21 +78,21 @@ func createStamps(stamps map[string]*dataStamp) error {
 			return err
 		}
 		stat, _ := f.Stat()
-		id, err := model.SaveFile(filename, f, stat.Size(), "", model.FileTypeStamp)
+		meta, err := repo.SaveFile(filename, f, stat.Size(), "", model.FileTypeStamp, uuid.Nil)
 		f.Close()
 		if err != nil {
 			return err
 		}
-		if _, err := model.CreateStamp(name, id, uuid.Nil); err != nil {
+		if _, err := repo.CreateStamp(name, meta.ID, uuid.Nil); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func createChannels(channels map[string]*dataChannel) error {
+func createChannels(repo repository.Repository, channels map[string]*dataChannel) error {
 	for name, data := range channels {
-		_, err := channelTreeTraverse(name, data, nil)
+		_, err := channelTreeTraverse(repo, name, data, nil)
 		if err != nil {
 			return err
 		}
@@ -99,7 +100,7 @@ func createChannels(channels map[string]*dataChannel) error {
 	return nil
 }
 
-func channelTreeTraverse(name string, node *dataChannel, parent *model.Channel) (*model.Channel, error) {
+func channelTreeTraverse(repo repository.Repository, name string, node *dataChannel, parent *model.Channel) (*model.Channel, error) {
 	if err := validator.ValidateVar(name, "name"); err != nil {
 		return nil, err
 	}
@@ -107,25 +108,25 @@ func channelTreeTraverse(name string, node *dataChannel, parent *model.Channel) 
 		return nil, err
 	}
 
-	parentID := ""
+	parentID := uuid.Nil
 	if parent != nil {
-		parentID = parent.ID.String()
+		parentID = parent.ID
 	}
-	ch, err := model.CreatePublicChannel(parentID, name, model.ServerUser().ID)
+	ch, err := repo.CreatePublicChannel(name, parentID, uuid.Nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := model.UpdateChannelTopic(ch.ID, node.Topic, model.ServerUser().ID); err != nil {
+	if err := repo.UpdateChannelTopic(ch.ID, node.Topic, uuid.Nil); err != nil {
 		return nil, err
 	}
-	if err := model.UpdateChannelFlag(ch.ID, nil, &node.Force, model.ServerUser().ID); err != nil {
+	if err := repo.UpdateChannelAttributes(ch.ID, nil, &node.Force); err != nil {
 		return nil, err
 	}
 
 	for k, v := range node.Children {
 		if v != nil {
-			_, err := channelTreeTraverse(k, v, ch)
+			_, err := channelTreeTraverse(repo, k, v, ch)
 			if err != nil {
 				return nil, err
 			}
@@ -143,7 +144,7 @@ func unmarshalInitData(r io.Reader) (*dataRoot, error) {
 	return &data, nil
 }
 
-func initData() error {
+func initData(repo repository.Repository) error {
 	if stat, err := os.Stat(config.InitDataDirectory); err != nil {
 		return nil
 	} else if !stat.IsDir() {
@@ -166,7 +167,7 @@ func initData() error {
 				return err
 			}
 
-			if err := insertInitialData(data); err != nil {
+			if err := insertInitialData(repo, data); err != nil {
 				return err
 			}
 		}

@@ -30,6 +30,7 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.2.8
+	github.com/leandro-lugaresi/hub v1.1.0
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/lib/pq v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"net/http"
 	"time"
@@ -38,7 +38,7 @@ type UserDetailForResponse struct {
 }
 
 // PostLogin POST /login
-func PostLogin(c echo.Context) error {
+func (h *Handlers) PostLogin(c echo.Context) error {
 	req := struct {
 		Name string `json:"name" form:"name" validate:"required"`
 		Pass string `json:"pass" form:"pass" validate:"required"`
@@ -47,10 +47,10 @@ func PostLogin(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	user, err := model.GetUserByName(req.Name)
+	user, err := h.Repo.GetUserByName(req.Name)
 	if err != nil {
 		switch err {
-		case model.ErrNotFound:
+		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusBadRequest, "name or password is wrong")
 		default:
 			c.Logger().Error(err)
@@ -92,8 +92,8 @@ func PostLogout(c echo.Context) error {
 }
 
 // GetUsers GET /users
-func GetUsers(c echo.Context) error {
-	users, err := model.GetUsers()
+func (h *Handlers) GetUsers(c echo.Context) error {
+	users, err := h.Repo.GetUsers()
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -101,25 +101,25 @@ func GetUsers(c echo.Context) error {
 
 	res := make([]*UserForResponse, len(users))
 	for i, user := range users {
-		res[i] = formatUser(user)
+		res[i] = h.formatUser(user)
 	}
 	return c.JSON(http.StatusOK, res)
 }
 
 // GetMe GET /users/me
-func GetMe(c echo.Context) error {
+func (h *Handlers) GetMe(c echo.Context) error {
 	me := getRequestUser(c)
-	return c.JSON(http.StatusOK, formatUser(me))
+	return c.JSON(http.StatusOK, h.formatUser(me))
 }
 
 // GetUserByID GET /users/:userID
-func GetUserByID(c echo.Context) error {
+func (h *Handlers) GetUserByID(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 
-	user, err := model.GetUser(userID)
+	user, err := h.Repo.GetUser(userID)
 	if err != nil {
 		switch err {
-		case model.ErrNotFound:
+		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
 			c.Logger().Error(err)
@@ -127,13 +127,13 @@ func GetUserByID(c echo.Context) error {
 		}
 	}
 
-	tagList, err := model.GetUserTagsByUserID(userID)
+	tagList, err := h.Repo.GetUserTagsByUserID(userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	userDetail, err := formatUserDetail(user, tagList)
+	userDetail, err := h.formatUserDetail(user, tagList)
 	if err != nil {
 		return err
 	}
@@ -142,13 +142,13 @@ func GetUserByID(c echo.Context) error {
 }
 
 // GetUserIcon GET /users/:userID/icon
-func GetUserIcon(c echo.Context) error {
+func (h *Handlers) GetUserIcon(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 
-	user, err := model.GetUser(userID)
+	user, err := h.Repo.GetUser(userID)
 	if err != nil {
 		switch err {
-		case model.ErrNotFound:
+		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
 			c.Logger().Error(err)
@@ -164,7 +164,7 @@ func GetUserIcon(c echo.Context) error {
 }
 
 // GetMyIcon GET /users/me/icon
-func GetMyIcon(c echo.Context) error {
+func (h *Handlers) GetMyIcon(c echo.Context) error {
 	user := getRequestUser(c)
 	if _, ok := c.QueryParams()["thumb"]; ok {
 		return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s/thumbnail", user.Icon))
@@ -173,7 +173,7 @@ func GetMyIcon(c echo.Context) error {
 }
 
 // PutMyIcon PUT /users/me/icon
-func PutMyIcon(c echo.Context) error {
+func (h *Handlers) PutMyIcon(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	// file確認
@@ -182,23 +182,22 @@ func PutMyIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	iconID, err := processMultipartFormIconUpload(c, uploadedFile)
+	iconID, err := h.processMultipartFormIconUpload(c, uploadedFile)
 	if err != nil {
 		return err
 	}
 
 	// アイコン変更
-	if err := model.ChangeUserIcon(userID, iconID); err != nil {
+	if err := h.Repo.ChangeUserIcon(userID, iconID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: userID})
 	return c.NoContent(http.StatusOK)
 }
 
 // PatchMe PATCH /users/me
-func PatchMe(c echo.Context) error {
+func (h *Handlers) PatchMe(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	req := struct {
@@ -210,25 +209,24 @@ func PatchMe(c echo.Context) error {
 	}
 
 	if len(req.DisplayName) > 0 {
-		if err := model.ChangeUserDisplayName(userID, req.DisplayName); err != nil {
+		if err := h.Repo.ChangeUserDisplayName(userID, req.DisplayName); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	if len(req.TwitterID) > 0 {
-		if err := model.ChangeUserTwitterID(userID, req.TwitterID); err != nil {
+		if err := h.Repo.ChangeUserTwitterID(userID, req.TwitterID); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
-	go event.Emit(event.UserUpdated, &event.UserEvent{ID: userID})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // PutPassword PUT /users/me/password
-func PutPassword(c echo.Context) error {
+func (h *Handlers) PutPassword(c echo.Context) error {
 	user := getRequestUser(c)
 
 	req := struct {
@@ -243,7 +241,7 @@ func PutPassword(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "password is wrong")
 	}
 
-	if err := model.ChangeUserPassword(user.ID, req.New); err != nil {
+	if err := h.Repo.ChangeUserPassword(user.ID, req.New); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -252,7 +250,7 @@ func PutPassword(c echo.Context) error {
 }
 
 // PostUsers POST /users
-func PostUsers(c echo.Context) error {
+func (h *Handlers) PostUsers(c echo.Context) error {
 	req := struct {
 		Name     string `json:"name"     validate:"name"`
 		Password string `json:"password" validate:"password"`
@@ -262,7 +260,7 @@ func PostUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if _, err := model.GetUserByName(req.Name); err != model.ErrNotFound {
+	if _, err := h.Repo.GetUserByName(req.Name); err != repository.ErrNotFound {
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
@@ -270,17 +268,15 @@ func PostUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "the name's user has already existed")
 	}
 
-	u, err := model.CreateUser(req.Name, req.Email, req.Password, role.User)
-	if err != nil {
+	if _, err := h.Repo.CreateUser(req.Name, req.Email, req.Password, role.User); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserJoined, &event.UserEvent{ID: u.ID})
 	return c.NoContent(http.StatusCreated)
 }
 
-func formatUser(user *model.User) *UserForResponse {
+func (h *Handlers) formatUser(user *model.User) *UserForResponse {
 	res := &UserForResponse{
 		UserID:      user.ID,
 		Name:        user.Name,
@@ -288,9 +284,9 @@ func formatUser(user *model.User) *UserForResponse {
 		IconID:      user.Icon,
 		Bot:         user.Bot,
 		TwitterID:   user.TwitterID,
-		IsOnline:    user.IsOnline(),
+		IsOnline:    h.Repo.IsUserOnline(user.ID),
 	}
-	if t := user.GetLastOnline(); !t.IsZero() {
+	if t, err := h.Repo.GetUserLastOnline(user.ID); err != nil && !t.IsZero() {
 		res.LastOnline = &t
 	}
 	if len(res.DisplayName) == 0 {
@@ -299,7 +295,7 @@ func formatUser(user *model.User) *UserForResponse {
 	return res
 }
 
-func formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailForResponse, error) {
+func (h *Handlers) formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailForResponse, error) {
 	res := &UserDetailForResponse{
 		UserID:      user.ID,
 		Name:        user.Name,
@@ -307,9 +303,9 @@ func formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailF
 		IconID:      user.Icon,
 		Bot:         user.Bot,
 		TwitterID:   user.TwitterID,
-		IsOnline:    user.IsOnline(),
+		IsOnline:    h.Repo.IsUserOnline(user.ID),
 	}
-	if t := user.GetLastOnline(); !t.IsZero() {
+	if t, err := h.Repo.GetUserLastOnline(user.ID); err != nil && !t.IsZero() {
 		res.LastOnline = &t
 	}
 	if len(res.DisplayName) == 0 {

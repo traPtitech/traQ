@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"gopkg.in/go-playground/webhooks.v3/github"
 	"io/ioutil"
 	"net/http"
@@ -38,10 +38,10 @@ func LoadWebhookTemplate(pattern string) {
 }
 
 // GetWebhooks GET /webhooks
-func GetWebhooks(c echo.Context) error {
+func (h *Handlers) GetWebhooks(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	list, err := model.GetWebhooksByCreator(userID)
+	list, err := h.Repo.GetWebhooksByCreator(userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -56,7 +56,7 @@ func GetWebhooks(c echo.Context) error {
 }
 
 // PostWebhooks POST /webhooks
-func PostWebhooks(c echo.Context) error {
+func (h *Handlers) PostWebhooks(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	req := struct {
@@ -69,33 +69,32 @@ func PostWebhooks(c echo.Context) error {
 	}
 	channelID := uuid.FromStringOrNil(req.ChannelID)
 
-	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	iconID, err := model.GenerateIconFile(req.Name)
+	iconID, err := h.Repo.GenerateIconFile(req.Name)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	w, err := model.CreateWebhook(req.Name, req.Description, channelID, userID, iconID)
+	w, err := h.Repo.CreateWebhook(req.Name, req.Description, channelID, userID, iconID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserJoined, &event.UserEvent{ID: w.GetID()})
 	return c.JSON(http.StatusCreated, formatWebhook(w))
 }
 
 // GetWebhook GET /webhooks/:webhookID
-func GetWebhook(c echo.Context) error {
+func (h *Handlers) GetWebhook(c echo.Context) error {
 	webhookID := getRequestParamAsUUID(c, paramWebhookID)
-	w, err := getWebhook(c, webhookID, true)
+	w, err := h.getWebhook(c, webhookID, true)
 	if err != nil {
 		return err
 	}
@@ -103,11 +102,11 @@ func GetWebhook(c echo.Context) error {
 }
 
 // PatchWebhook PATCH /webhooks/:webhookID
-func PatchWebhook(c echo.Context) error {
+func (h *Handlers) PatchWebhook(c echo.Context) error {
 	userID := getRequestUserID(c)
 	webhookID := getRequestParamAsUUID(c, paramWebhookID)
 
-	w, err := getWebhook(c, webhookID, true)
+	w, err := h.getWebhook(c, webhookID, true)
 	if err != nil {
 		return err
 	}
@@ -127,30 +126,28 @@ func PatchWebhook(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid channelId")
 		}
 
-		if ok, err := model.IsChannelAccessibleToUser(userID, cid); err != nil {
+		if ok, err := h.Repo.IsChannelAccessibleToUser(userID, cid); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		} else if !ok {
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
 
-		if err := model.UpdateWebhook(w, nil, nil, cid); err != nil {
+		if err := h.Repo.UpdateWebhook(w.GetID(), nil, nil, cid); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	if len(req.Name) > 0 {
-		if err := model.UpdateWebhook(w, &req.Name, nil, uuid.Nil); err != nil {
+		if err := h.Repo.UpdateWebhook(w.GetID(), &req.Name, nil, uuid.Nil); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-
-		go event.Emit(event.UserUpdated, &event.UserEvent{ID: w.GetBotUserID()})
 	}
 
 	if len(req.Description) > 0 {
-		if err := model.UpdateWebhook(w, nil, &req.Description, uuid.Nil); err != nil {
+		if err := h.Repo.UpdateWebhook(w.GetID(), nil, &req.Description, uuid.Nil); err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
@@ -160,14 +157,14 @@ func PatchWebhook(c echo.Context) error {
 }
 
 // DeleteWebhook DELETE /webhooks/:webhookID
-func DeleteWebhook(c echo.Context) error {
+func (h *Handlers) DeleteWebhook(c echo.Context) error {
 	webhookID := getRequestParamAsUUID(c, paramWebhookID)
-	w, err := getWebhook(c, webhookID, true)
+	w, err := h.getWebhook(c, webhookID, true)
 	if err != nil {
 		return err
 	}
 
-	if err := model.DeleteWebhook(w.GetID()); err != nil {
+	if err := h.Repo.DeleteWebhook(w.GetID()); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -176,10 +173,10 @@ func DeleteWebhook(c echo.Context) error {
 }
 
 // PostWebhook POST /webhooks/:webhookID
-func PostWebhook(c echo.Context) error {
+func (h *Handlers) PostWebhook(c echo.Context) error {
 	webhookID := getRequestParamAsUUID(c, paramWebhookID)
 
-	w, err := getWebhook(c, webhookID, false)
+	w, err := h.getWebhook(c, webhookID, false)
 	if err != nil {
 		return err
 	}
@@ -205,7 +202,7 @@ func PostWebhook(c echo.Context) error {
 		}
 		if len(req.ChannelID) == 36 {
 			channelID = uuid.FromStringOrNil(req.ChannelID)
-			if ok, err := model.IsChannelAccessibleToUser(w.GetBotUserID(), channelID); err != nil {
+			if ok, err := h.Repo.IsChannelAccessibleToUser(w.GetBotUserID(), channelID); err != nil {
 				c.Logger().Error(err)
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			} else if !ok {
@@ -218,21 +215,19 @@ func PostWebhook(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnsupportedMediaType)
 	}
 
-	m, err := model.CreateMessage(w.GetBotUserID(), channelID, text)
-	if err != nil {
+	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), channelID, text); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.MessageCreated, &event.MessageCreatedEvent{Message: *m})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // PutWebhookIcon PUT /webhooks/:webhookID/icon
-func PutWebhookIcon(c echo.Context) error {
+func (h *Handlers) PutWebhookIcon(c echo.Context) error {
 	webhookID := getRequestParamAsUUID(c, paramWebhookID)
 
-	w, err := getWebhook(c, webhookID, true)
+	w, err := h.getWebhook(c, webhookID, true)
 	if err != nil {
 		return err
 	}
@@ -243,26 +238,25 @@ func PutWebhookIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	iconID, err := processMultipartFormIconUpload(c, uploadedFile)
+	iconID, err := h.processMultipartFormIconUpload(c, uploadedFile)
 	if err != nil {
 		return err
 	}
 
 	// アイコン変更
-	if err := model.ChangeUserIcon(w.GetBotUserID(), iconID); err != nil {
+	if err := h.Repo.ChangeUserIcon(w.GetBotUserID(), iconID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserIconUpdated, &event.UserEvent{ID: w.GetBotUserID()})
 	return c.NoContent(http.StatusOK)
 }
 
 // PostWebhookByGithub POST /webhooks/:webhookID/github
-func PostWebhookByGithub(c echo.Context) error {
+func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 	webhookID := getRequestParamAsUUID(c, paramWebhookID)
 
-	w, err := getWebhook(c, webhookID, false)
+	w, err := h.getWebhook(c, webhookID, false)
 	if err != nil {
 		return err
 	}
@@ -491,30 +485,32 @@ func PostWebhookByGithub(c echo.Context) error {
 		messageBuf.WriteString(err.Error())
 	}
 	if messageBuf.Len() > 0 {
-		m, err := model.CreateMessage(w.GetBotUserID(), w.GetChannelID(), messageBuf.String())
+		_, err := h.Repo.CreateMessage(w.GetBotUserID(), w.GetChannelID(), messageBuf.String())
 		if err != nil {
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		go event.Emit(event.MessageCreated, &event.MessageCreatedEvent{Message: *m})
 	}
 
 	return c.NoContent(http.StatusNoContent)
 }
 
-func getWebhook(c echo.Context, id uuid.UUID, strict bool) (model.Webhook, error) {
+func (h *Handlers) getWebhook(c echo.Context, id uuid.UUID, strict bool) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	w, err := model.GetWebhook(id)
+	w, err := h.Repo.GetWebhook(id)
 	if err != nil {
-		c.Logger().Error(err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
+		switch err {
+		case repository.ErrNotFound:
+			return nil, echo.NewHTTPError(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return nil, echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
-	if w == nil {
-		return nil, echo.NewHTTPError(http.StatusNotFound)
-	}
+
 	if strict {
 		user, ok := c.Get("user").(*model.User)
 		if !ok || w.GetCreatorID() != user.ID {

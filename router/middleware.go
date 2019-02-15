@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"net/http"
 
@@ -16,7 +17,7 @@ import (
 )
 
 // UserAuthenticate User認証するミドルウェア
-func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
+func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			ah := c.Request().Header.Get(echo.HeaderAuthorization)
@@ -47,10 +48,10 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				}
 
 				// tokenの検証に成功。ユーザーを取得
-				user, err := model.GetUser(token.UserID)
+				user, err := h.Repo.GetUser(token.UserID)
 				if err != nil {
 					switch err {
-					case model.ErrNotFound:
+					case repository.ErrNotFound:
 						return echo.NewHTTPError(http.StatusForbidden, "the user is not found")
 					default:
 						c.Logger().Error(err)
@@ -73,10 +74,10 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 					return echo.NewHTTPError(http.StatusForbidden, "You are not logged in")
 				}
 
-				user, err := model.GetUser(sess.GetUserID())
+				user, err := h.Repo.GetUser(sess.GetUserID())
 				if err != nil {
 					switch err {
-					case model.ErrNotFound:
+					case repository.ErrNotFound:
 						return echo.NewHTTPError(http.StatusForbidden, "the user is not found")
 					default:
 						c.Logger().Error(err)
