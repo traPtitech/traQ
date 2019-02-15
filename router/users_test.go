@@ -37,7 +37,7 @@ func TestHandlers_GetUsers(t *testing.T) {
 
 func TestHandlers_GetMe(t *testing.T) {
 	t.Parallel()
-	_, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	_, server, _, _, session, _, testUser, _ := setupWithUsers(t, common4)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -64,7 +64,7 @@ func TestHandlers_GetMe(t *testing.T) {
 
 func TestHandlers_GetUserByID(t *testing.T) {
 	t.Parallel()
-	_, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	_, server, _, _, session, _, testUser, _ := setupWithUsers(t, common4)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -91,7 +91,7 @@ func TestHandlers_GetUserByID(t *testing.T) {
 
 func TestHandlers_PatchMe(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common4)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -121,7 +121,7 @@ func TestHandlers_PatchMe(t *testing.T) {
 
 func TestHandlers_PostLogin(t *testing.T) {
 	t.Parallel()
-	_, server, _, _, _, _, user, _ := setupWithUsers(t, common)
+	_, server, _, _, _, _, user, _ := setupWithUsers(t, common4)
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()

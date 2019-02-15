@@ -14,7 +14,7 @@ import (
 
 func TestHandlers_PostFile(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common)
+	repo, server, _, _, session, _ := setup(t, common1)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -50,7 +50,7 @@ func TestHandlers_PostFile(t *testing.T) {
 
 func TestHandlers_GetFileByID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common)
+	repo, server, _, _, session, _ := setup(t, common1)
 
 	file := mustMakeFile(t, repo, uuid.Nil)
 
@@ -89,7 +89,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 
 func TestHandlers_DeleteFileByID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, adminSession := setup(t, common)
+	repo, server, _, _, session, adminSession := setup(t, common1)
 
 	file := mustMakeFile(t, repo, uuid.Nil)
 
@@ -126,7 +126,7 @@ func TestHandlers_DeleteFileByID(t *testing.T) {
 
 func TestHandlers_GetMetaDataByFileID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common)
+	repo, server, _, _, session, _ := setup(t, common1)
 
 	file := mustMakeFile(t, repo, uuid.Nil)
 

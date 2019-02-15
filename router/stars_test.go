@@ -10,7 +10,7 @@ import (
 
 func TestHandlers_GetStars(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
 	channel := mustMakeChannel(t, repo, random)
 	mustStarChannel(t, repo, testUser.ID, channel.ID)
@@ -38,7 +38,7 @@ func TestHandlers_GetStars(t *testing.T) {
 
 func TestHandlers_PutStars(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
 	channel := mustMakeChannel(t, repo, random)
 
@@ -67,7 +67,7 @@ func TestHandlers_PutStars(t *testing.T) {
 
 func TestHandlers_DeleteStars(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
 	channel := mustMakeChannel(t, repo, random)
 	mustStarChannel(t, repo, testUser.ID, channel.ID)

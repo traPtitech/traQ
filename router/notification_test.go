@@ -12,7 +12,7 @@ import (
 
 func TestHandlers_PutNotificationStatus(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common)
+	repo, server, _, _, session, _ := setup(t, common2)
 
 	user := mustMakeUser(t, repo, random)
 
@@ -82,7 +82,7 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 
 func TestHandlers_GetNotificationStatus(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common)
+	repo, server, _, _, session, _ := setup(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
 	user := mustMakeUser(t, repo, random)
@@ -113,7 +113,7 @@ func TestHandlers_GetNotificationStatus(t *testing.T) {
 
 func TestHandlers_GetNotificationChannels(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common)
+	repo, server, _, _, session, _ := setup(t, common2)
 
 	user := mustMakeUser(t, repo, random)
 	require.NoError(t, repo.SubscribeChannel(user.ID, mustMakeChannel(t, repo, random).ID))

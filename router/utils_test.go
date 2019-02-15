@@ -24,10 +24,13 @@ import (
 )
 
 const (
-	random = "random"
-	common = "common"
-	s1     = "s1"
-	s2     = "s2"
+	random  = "random"
+	common1 = "common1"
+	common2 = "common2"
+	common3 = "common3"
+	common4 = "common4"
+	s1      = "s1"
+	s2      = "s2"
 )
 
 var (
@@ -38,7 +41,10 @@ var (
 func TestMain(m *testing.M) {
 	// setup server
 	repos := []string{
-		common,
+		common1,
+		common2,
+		common3,
+		common4,
 		s1,
 		s2,
 	}

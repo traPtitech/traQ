@@ -55,7 +55,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 
 func TestHandlers_PostChannels(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common1)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -164,7 +164,7 @@ func TestHandlers_PostChannels(t *testing.T) {
 
 func TestHandlers_PostChannelChildren(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common)
+	repo, server, _, _, session, _ := setup(t, common1)
 
 	pubCh := mustMakeChannel(t, repo, random)
 
@@ -206,7 +206,7 @@ func TestHandlers_PostChannelChildren(t *testing.T) {
 
 func TestHandlers_GetChannelByChannelID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common)
+	repo, server, _, _, session, _ := setup(t, common1)
 
 	pubCh := mustMakeChannel(t, repo, random)
 
@@ -250,7 +250,7 @@ func TestHandlers_GetChannelByChannelID(t *testing.T) {
 
 func TestHandlers_PatchChannelByChannelID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, adminSession := setup(t, common)
+	repo, server, _, _, session, adminSession := setup(t, common1)
 
 	pubCh := mustMakeChannel(t, repo, random)
 
@@ -298,7 +298,7 @@ func TestHandlers_PatchChannelByChannelID(t *testing.T) {
 
 func TestHandlers_DeleteChannelByChannelID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, adminSession := setup(t, common)
+	repo, server, _, _, session, adminSession := setup(t, common1)
 
 	pubCh := mustMakeChannel(t, repo, random)
 
@@ -335,7 +335,7 @@ func TestHandlers_DeleteChannelByChannelID(t *testing.T) {
 
 func TestHandlers_PutChannelParent(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, adminSession := setup(t, common)
+	repo, server, _, _, session, adminSession := setup(t, common1)
 
 	pCh := mustMakeChannel(t, repo, random)
 	cCh := mustMakeChannel(t, repo, random)
@@ -376,7 +376,7 @@ func TestHandlers_PutChannelParent(t *testing.T) {
 
 func TestHandlers_GetTopic(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common1)
 
 	pubCh := mustMakeChannel(t, repo, random)
 	topicText := "Topic test"
@@ -407,7 +407,7 @@ func TestHandlers_GetTopic(t *testing.T) {
 
 func TestHandlers_PutTopic(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common1)
 
 	pubCh := mustMakeChannel(t, repo, random)
 	topicText := "Topic test"

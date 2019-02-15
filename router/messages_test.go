@@ -11,7 +11,7 @@ import (
 
 func TestHandlers_GetMessageByID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
 	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
@@ -82,7 +82,7 @@ func TestHandlers_GetMessageByID(t *testing.T) {
 
 func TestHandlers_PostMessage(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
 	postmanID := mustMakeUser(t, repo, random).ID
@@ -174,7 +174,7 @@ func TestHandlers_PostMessage(t *testing.T) {
 
 func TestHandlers_GetMessagesByChannelID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
 	postmanID := mustMakeUser(t, repo, random).ID
@@ -232,7 +232,7 @@ func TestHandlers_GetMessagesByChannelID(t *testing.T) {
 
 func TestHandlers_PutMessageByID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
 	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
@@ -285,7 +285,7 @@ func TestHandlers_PutMessageByID(t *testing.T) {
 
 func TestHandlers_DeleteMessageByID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
 	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
@@ -335,7 +335,7 @@ func TestHandlers_DeleteMessageByID(t *testing.T) {
 
 func TestHandlers_PostMessageReport(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
 	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
@@ -376,7 +376,7 @@ func TestHandlers_PostMessageReport(t *testing.T) {
 
 func TestHandlers_GetUnread(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, _, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, _, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
 	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
@@ -407,7 +407,7 @@ func TestHandlers_GetUnread(t *testing.T) {
 
 func TestHandlers_DeleteUnread(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
 	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)

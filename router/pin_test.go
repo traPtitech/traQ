@@ -11,7 +11,7 @@ import (
 
 func TestHandlers_PostPin(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
 	channel := mustMakeChannel(t, repo, random)
 	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
@@ -47,7 +47,7 @@ func TestHandlers_PostPin(t *testing.T) {
 
 func TestHandlers_GetPin(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
 	channel := mustMakeChannel(t, repo, random)
 	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
@@ -78,7 +78,7 @@ func TestHandlers_GetPin(t *testing.T) {
 
 func TestHandlers_DeletePin(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
 	channel := mustMakeChannel(t, repo, random)
 	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
@@ -107,7 +107,7 @@ func TestHandlers_DeletePin(t *testing.T) {
 
 func TestHandlers_GetChannelPin(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common)
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
 	channel := mustMakeChannel(t, repo, random)
 	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
