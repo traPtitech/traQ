@@ -213,7 +213,7 @@ func (repo *RepositoryImpl) DeleteUnreadsByChannelID(channelID, userID uuid.UUID
 	repo.hub.Publish(hub.Message{
 		Name: event.ChannelRead,
 		Fields: hub.Fields{
-			"message_id": channelID,
+			"channel_id": channelID,
 			"user_id":    userID,
 		},
 	})
