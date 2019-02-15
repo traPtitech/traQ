@@ -442,7 +442,7 @@ func (r *TestRepository) GetUserTag(userID, tagID uuid.UUID) (*model.UsersTag, e
 		return nil, repository.ErrNotFound
 	}
 	r.TagsLock.RLock()
-	ut.Tag, _ = r.Tags[ut.TagID]
+	ut.Tag = r.Tags[ut.TagID]
 	r.TagsLock.RUnlock()
 	return &ut, nil
 }
@@ -453,7 +453,7 @@ func (r *TestRepository) GetUserTagsByUserID(userID uuid.UUID) ([]*model.UsersTa
 	for tid, ut := range r.UserTags[userID] {
 		ut := ut
 		r.TagsLock.RLock()
-		ut.Tag, _ = r.Tags[tid]
+		ut.Tag = r.Tags[tid]
 		r.TagsLock.RUnlock()
 		tags = append(tags, &ut)
 	}
@@ -1603,7 +1603,7 @@ func (r *TestRepository) GetPin(id uuid.UUID) (*model.Pin, error) {
 		return nil, repository.ErrNotFound
 	}
 	r.MessagesLock.RLock()
-	pin.Message, _ = r.Messages[pin.MessageID]
+	pin.Message = r.Messages[pin.MessageID]
 	r.MessagesLock.RUnlock()
 	return &pin, nil
 }

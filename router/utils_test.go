@@ -145,16 +145,6 @@ func mustMakeChannel(t *testing.T, repo repository.Repository, name string) *mod
 	return ch
 }
 
-func mustMakeChannelDetail(t *testing.T, repo repository.Repository, userID uuid.UUID, name string, parentID uuid.UUID) *model.Channel {
-	t.Helper()
-	if name == random {
-		name = utils.RandAlphabetAndNumberString(20)
-	}
-	ch, err := repo.CreatePublicChannel(name, parentID, userID)
-	require.NoError(t, err)
-	return ch
-}
-
 func mustMakePrivateChannel(t *testing.T, repo repository.Repository, name string, members []uuid.UUID) *model.Channel {
 	t.Helper()
 	if name == random {
