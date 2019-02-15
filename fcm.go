@@ -156,6 +156,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 
 	// send
 	for u := range targets {
+		log.Infof("send fcm to user(%s)", u) // TODO Remove it
 		devs, _ := m.repo.GetDeviceTokensByUserID(u)
 		_ = m.sendToFcm(devs, payload)
 	}
