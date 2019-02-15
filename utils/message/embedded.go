@@ -1,10 +1,12 @@
 package message
 
 import (
-	"bytes"
 	"encoding/json"
+	"regexp"
 	"strings"
 )
+
+var embRegex = regexp.MustCompile(`(?m)!({(?:[ \t\n]*"(?:[^"]|\\.)*"[ \t\n]*:[ \t\n]*"(?:[^"]|\\.)*",)*(?:[ \t\n]*"(?:[^"]|\\.)*"[ \t\n]*:[ \t\n]*"(?:[^"]|\\.)*")})`)
 
 // EmbeddedInfo メッセージの埋め込み情報
 type EmbeddedInfo struct {
@@ -14,66 +16,17 @@ type EmbeddedInfo struct {
 }
 
 // Parse メッセージの埋め込み情報を抽出したものと、平文化したメッセージを返します
-// FIXME ""に囲われていない'}'を探すようにする
 func Parse(m string) (res []*EmbeddedInfo, plain string) {
-	b := strings.Builder{}
-	b.Grow(len(m))
-
-	state := 0
-	enclosed := bytes.Buffer{}
-	for _, r := range m {
-		switch state {
-		case '!':
-			switch r {
-			case '{':
-				state = '{'
-				enclosed.WriteRune(r)
-			default:
-				state = 0
-				b.WriteRune('!')
-				b.WriteRune(r)
-			}
-		case '{':
-			switch r {
-			case '}':
-				enclosed.WriteRune(r)
-				info := &EmbeddedInfo{}
-				arr := enclosed.Bytes()
-				if err := json.Unmarshal(arr, info); err != nil {
-					b.WriteRune('!')
-					b.Write(arr)
-				} else {
-					if len(info.Type) == 0 || len(info.ID) == 0 {
-						b.WriteRune('!')
-						b.Write(arr)
-					} else {
-						if info.Type == "file" {
-							b.WriteString("file")
-						} else {
-							b.WriteString(info.Raw)
-						}
-						res = append(res, info)
-					}
-				}
-				enclosed.Reset()
-				state = 0
-			default:
-				enclosed.WriteRune(r)
-			}
-		default:
-			switch r {
-			case '!':
-				state = '!'
-			default:
-				b.WriteRune(r)
-			}
+	tmp := embRegex.ReplaceAllStringFunc(m, func(s string) string {
+		info := &EmbeddedInfo{}
+		if err := json.Unmarshal([]byte(s[1:]), info); err != nil || len(info.Type) == 0 || len(info.ID) == 0 {
+			return s
 		}
-	}
-
-	if enclosed.Len() > 0 {
-		b.WriteRune('!')
-		b.Write(enclosed.Bytes())
-	}
-
-	return res, strings.Replace(b.String(), "\n", " ", -1)
+		res = append(res, info)
+		if info.Type == "file" {
+			return "file"
+		}
+		return info.Raw
+	})
+	return res, strings.Replace(tmp, "\n", " ", -1)
 }

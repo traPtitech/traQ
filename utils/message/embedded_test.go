@@ -62,7 +62,6 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
-		/* FIXME this issue
 		{
 			`!{ test message !{"raw": "@test","type":"user","id":"test_id"}`,
 			`!{ test message @test`,
@@ -74,8 +73,16 @@ func TestParse(t *testing.T) {
 				},
 			},
 		},
-		*/
-		// TODO Add more tests
+		{
+			`!{ test message !{"raw": 1,"type":"user","id":"test_id"}`,
+			`!{ test message !{"raw": 1,"type":"user","id":"test_id"}`,
+			[]EmbeddedInfo{},
+		},
+		{
+			`!{ test message !{"raw": 1,"type":"","id":"test_id"}`,
+			`!{ test message !{"raw": 1,"type":"","id":"test_id"}`,
+			[]EmbeddedInfo{},
+		},
 	}
 
 	for _, v := range cases {
