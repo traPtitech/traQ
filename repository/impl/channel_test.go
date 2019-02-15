@@ -344,7 +344,7 @@ func TestRepositoryImpl_GetChildrenChannelIDs(t *testing.T) {
 
 	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c1.ID)
 	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
-	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c3.ID)
+	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
 
 	cases := []struct {
 		name   string

@@ -55,6 +55,6 @@ func TestRepositoryImpl_SaveFile(t *testing.T) {
 	buf := bytes.NewBufferString("test message")
 	f, err := repo.SaveFile("test.txt", buf, int64(buf.Len()), "", model.FileTypeUserFile, uuid.Nil)
 	if assert.NoError(err) {
-		assert.Equal("text/plain", f.Mime)
+		assert.Equal("text/plain; charset=utf-8", f.Mime)
 	}
 }

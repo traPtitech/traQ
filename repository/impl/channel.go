@@ -470,7 +470,7 @@ func (repo *RepositoryImpl) ChangeChannelParent(channelID uuid.UUID, parent uuid
 	}
 
 	// チャンネル名検証
-	if has, err := repo.IsChannelPresent(ch.Name, ch.ParentID); err != nil {
+	if has, err := repo.IsChannelPresent(ch.Name, parent); err != nil {
 		return err
 	} else if has {
 		return repository.ErrAlreadyExists
@@ -728,7 +728,7 @@ func (repo *RepositoryImpl) GetParentChannel(channelID uuid.UUID) (*model.Channe
 		return nil, repository.ErrNotFound
 	}
 
-	var p []string
+	var p []uuid.UUID
 	err := repo.db.
 		Model(&model.Channel{}).
 		Where(&model.Channel{ID: channelID}).
@@ -739,13 +739,13 @@ func (repo *RepositoryImpl) GetParentChannel(channelID uuid.UUID) (*model.Channe
 	}
 	if len(p) == 0 {
 		return nil, repository.ErrNotFound
-	} else if len(p[0]) == 0 {
+	} else if p[0] == uuid.Nil {
 		return nil, nil
 	}
 
 	ch := &model.Channel{}
 	err = repo.db.
-		Where("id = ?", p[0]).
+		Where(&model.Channel{ID: p[0]}).
 		Take(ch).
 		Error
 	if err != nil {
