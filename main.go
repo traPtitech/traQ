@@ -4,7 +4,19 @@ import (
 	"context"
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"github.com/traPtitech/traQ/event"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/labstack/echo"
+	"github.com/leandro-lugaresi/hub"
+	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/config"
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/oauth2"
+	"github.com/traPtitech/traQ/oauth2/impl"
+	"github.com/traPtitech/traQ/rbac"
+	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/repository"
+	repoimpl "github.com/traPtitech/traQ/repository/impl"
+	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils/storage"
 	"io/ioutil"
@@ -14,17 +26,6 @@ import (
 	"os"
 	"os/signal"
 	"time"
-
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/config"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/oauth2"
-	"github.com/traPtitech/traQ/oauth2/impl"
-	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/rbac/role"
-	"github.com/traPtitech/traQ/router"
 )
 
 func main() {
@@ -35,6 +36,9 @@ func main() {
 		}()
 	}
 
+	// Message Hub
+	hub := hub.New()
+
 	// Database
 	engine, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=true", config.DatabaseUserName, config.DatabasePassword, config.DatabaseHostName, config.DatabaseName))
 	if err != nil {
@@ -42,57 +46,59 @@ func main() {
 	}
 	defer engine.Close()
 	engine.DB().SetMaxOpenConns(75)
-	model.SetGORMEngine(engine)
 
-	if init, err := model.Sync(); err != nil {
+	// FileStorage
+	fs, err := getFileStorage()
+	if err != nil {
+		panic(err)
+	}
+
+	// Repository
+	repo, err := repoimpl.NewRepositoryImpl(engine, fs, hub)
+	if err != nil {
+		panic(err)
+	}
+	if init, err := repo.Sync(); err != nil {
 		panic(err)
 	} else if init { // 初期化
-		if err := initData(); err != nil {
+		if err := initData(repo); err != nil {
 			panic(err)
 		}
 	}
 
+	// SessionStore
 	sessionStore, err := sessions.NewGORMStore(engine)
 	if err != nil {
 		panic(err)
 	}
 	sessions.SetStore(sessionStore)
 
-	// ObjectStorage
-	if err := setSwiftFileManagerAsDefault(
-		config.OSContainer,
-		config.OSUserName,
-		config.OSPassword,
-		config.OSTenantName, //v2のみ
-		config.OSTenantID,   //v2のみ
-		config.OSAuthURL,
-	); err != nil {
-		panic(err)
-	}
-
-	// Init Caches
-	if err := model.InitCache(); err != nil {
-		panic(err)
-	}
-
 	// Init Role-Based Access Controller
-	r, err := rbac.New(&model.RBACOverrideStore{})
+	rbacStore, err := rbac.NewDefaultStore(engine)
+	if err != nil {
+		panic(err)
+	}
+	r, err := rbac.New(rbacStore)
 	if err != nil {
 		panic(err)
 	}
 	role.SetRole(r)
 
 	// oauth2 handler
+	oauth2Store, err := impl.NewDefaultStore(engine)
+	if err != nil {
+		panic(err)
+	}
 	oauth := &oauth2.Handler{
-		Store:                &impl.DefaultStore{},
+		Store:                oauth2Store,
 		AccessTokenExp:       60 * 60 * 24 * 365, //1年
 		AuthorizationCodeExp: 60 * 5,             //5分
 		IsRefreshEnabled:     false,
 		UserAuthenticator: func(id, pw string) (uuid.UUID, error) {
-			user, err := model.GetUserByName(id)
+			user, err := repo.GetUserByName(id)
 			if err != nil {
 				switch err {
-				case model.ErrNotFound:
+				case repository.ErrNotFound:
 					return uuid.Nil, oauth2.ErrUserIDOrPasswordWrong
 				default:
 					return uuid.Nil, err
@@ -104,11 +110,11 @@ func main() {
 			case model.ErrUserWrongIDOrPassword, model.ErrUserBotTryLogin:
 				err = oauth2.ErrUserIDOrPasswordWrong
 			}
-			return uuid.FromStringOrNil(user.ID), err
+			return user.ID, err
 		},
 		UserInfoGetter: func(uid uuid.UUID) (oauth2.UserInfo, error) {
-			u, err := model.GetUser(uid)
-			if err == model.ErrNotFound {
+			u, err := repo.GetUser(uid)
+			if err == repository.ErrNotFound {
 				return nil, oauth2.ErrUserIDOrPasswordWrong
 			}
 			return u, err
@@ -122,37 +128,18 @@ func main() {
 		}
 	}
 
-	// event handler
+	// Firebase
 	if len(config.FirebaseServiceAccountJSONFile) > 0 {
-		fcm := &event.FCMManager{}
-		if err := fcm.Init(); err != nil {
+		if _, err := NewFCMManager(repo, hub); err != nil {
 			panic(err)
 		}
-		event.AddListener(fcm)
 	}
 
-	h := &router.Handlers{
-		Bot:    event.NewBotProcessor(oauth),
-		OAuth2: oauth,
-		RBAC:   r,
-	}
-	event.AddListener(h.Bot)
-
+	// Routing
+	h := router.NewHandlers(oauth, r, repo, hub)
 	e := echo.New()
 	router.SetupRouting(e, h)
 	router.LoadWebhookTemplate("static/webhook/*.tmpl")
-
-	// init heartbeat
-	model.OnUserOnlineStateChanged = func(id uuid.UUID, online bool) {
-		if online {
-			go event.Emit(event.UserOnline, &event.UserEvent{ID: id})
-		} else {
-			go event.Emit(event.UserOffline, &event.UserEvent{ID: id})
-		}
-	}
-	if err := model.HeartbeatStart(); err != nil {
-		panic(err)
-	}
 
 	go func() {
 		if err := e.Start(":" + config.Port); err != nil {
@@ -171,16 +158,11 @@ func main() {
 	sessions.PurgeCache()
 }
 
-func setSwiftFileManagerAsDefault(container, userName, apiKey, tenant, tenantID, authURL string) error {
-	if container == "" || userName == "" || apiKey == "" || authURL == "" {
-		return nil
+func getFileStorage() (storage.FileStorage, error) {
+	if config.OSContainer == "" || config.OSUserName == "" || config.OSPassword == "" || config.OSAuthURL == "" {
+		return storage.NewLocalFileStorage(config.LocalStorageDir), nil
 	}
-	s, err := storage.NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL)
-	if err != nil {
-		return err
-	}
-	model.SetFileStorage(s)
-	return nil
+	return storage.NewSwiftFileStorage(config.OSContainer, config.OSUserName, config.OSPassword, config.OSTenantName, config.OSTenantID, config.OSAuthURL)
 }
 
 func loadKeys(private, public string) ([]byte, []byte) {

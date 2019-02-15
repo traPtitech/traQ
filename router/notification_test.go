@@ -1,144 +1,142 @@
 package router
 
 import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/sessions"
-	"github.com/traPtitech/traQ/utils"
 	"net/http"
 	"testing"
 
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/model"
 )
 
-func TestGroup_Notification(t *testing.T) {
-	assert, require, session, _ := beforeTest(t)
+func TestHandlers_PutNotificationStatus(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, _ := setup(t, common2)
 
-	t.Run("TestPutNotificationStatus", func(t *testing.T) {
+	user := mustMakeUser(t, repo, random)
+
+	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 
-		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
+		channel := mustMakeChannel(t, repo, random)
 
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-
-			channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-
-			e := makeExp(t)
-			e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
-				Expect().
-				Status(http.StatusForbidden)
-		})
-
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-
-			channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-
-			e := makeExp(t)
-			e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
-				WithCookie(sessions.CookieName, session).
-				WithJSON(map[string][]string{"on": {user.ID}}).
-				Expect().
-				Status(http.StatusNoContent)
-
-			users, err := model.GetSubscribingUser(channel.ID)
-			require.NoError(err)
-			assert.EqualValues([]uuid.UUID{user.GetUID()}, users)
-		})
-
-		t.Run("Successful2", func(t *testing.T) {
-			t.Parallel()
-
-			channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-
-			e := makeExp(t)
-			e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
-				WithCookie(sessions.CookieName, session).
-				WithJSON(map[string][]string{"on": {uuid.NewV4().String(), user.ID, uuid.NewV4().String()}, "off": {uuid.NewV4().String()}}).
-				Expect().
-				Status(http.StatusNoContent)
-
-			users, err := model.GetSubscribingUser(channel.ID)
-			require.NoError(err)
-			assert.EqualValues([]uuid.UUID{user.GetUID()}, users)
-		})
-
-		t.Run("Successful3", func(t *testing.T) {
-			t.Parallel()
-
-			channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-			require.NoError(model.SubscribeChannel(user.GetUID(), channel.ID))
-
-			e := makeExp(t)
-			e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
-				WithCookie(sessions.CookieName, session).
-				WithJSON(map[string][]string{"off": {user.ID}}).
-				Expect().
-				Status(http.StatusNoContent)
-
-			users, err := model.GetSubscribingUser(channel.ID)
-			require.NoError(err)
-			assert.Len(users, 0)
-		})
-
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
+			Expect().
+			Status(http.StatusForbidden)
 	})
 
-	t.Run("TestGetNotificationStatus", func(t *testing.T) {
+	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
+		channel := mustMakeChannel(t, repo, random)
 
-		require.NoError(model.SubscribeChannel(user.GetUID(), channel.ID))
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
+			WithCookie(sessions.CookieName, session).
+			WithJSON(map[string][]string{"on": {user.ID.String()}}).
+			Expect().
+			Status(http.StatusNoContent)
 
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
-				Expect().
-				Status(http.StatusForbidden)
-		})
-
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
-				WithCookie(sessions.CookieName, session).
-				Expect().
-				Status(http.StatusOK).
-				JSON().
-				Array().
-				Length().
-				Equal(1)
-		})
+		users, err := repo.GetSubscribingUserIDs(channel.ID)
+		require.NoError(t, err)
+		assert.EqualValues(t, []uuid.UUID{user.ID}, users)
 	})
 
-	t.Run("TestGetNotificationChannels", func(t *testing.T) {
+	t.Run("Successful2", func(t *testing.T) {
 		t.Parallel()
 
-		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
-		require.NoError(model.SubscribeChannel(user.GetUID(), mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "").ID))
-		require.NoError(model.SubscribeChannel(user.GetUID(), mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "").ID))
+		channel := mustMakeChannel(t, repo, random)
 
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/users/{userID}/notification", user.ID).
-				Expect().
-				Status(http.StatusForbidden)
-		})
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
+			WithCookie(sessions.CookieName, session).
+			WithJSON(map[string][]string{"on": {uuid.NewV4().String(), user.ID.String(), uuid.NewV4().String()}, "off": {uuid.NewV4().String()}}).
+			Expect().
+			Status(http.StatusNoContent)
 
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/users/{userID}/notification", user.ID).
-				WithCookie(sessions.CookieName, session).
-				Expect().
-				Status(http.StatusOK).
-				JSON().
-				Array().
-				Length().
-				Equal(2)
-		})
+		users, err := repo.GetSubscribingUserIDs(channel.ID)
+		require.NoError(t, err)
+		assert.EqualValues(t, []uuid.UUID{user.ID}, users)
+	})
+
+	t.Run("Successful3", func(t *testing.T) {
+		t.Parallel()
+
+		channel := mustMakeChannel(t, repo, random)
+		require.NoError(t, repo.SubscribeChannel(user.ID, channel.ID))
+
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
+			WithCookie(sessions.CookieName, session).
+			WithJSON(map[string][]string{"off": {user.ID.String()}}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		users, err := repo.GetSubscribingUserIDs(channel.ID)
+		require.NoError(t, err)
+		assert.Len(t, users, 0)
+	})
+}
+
+func TestHandlers_GetNotificationStatus(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, _ := setup(t, common2)
+
+	channel := mustMakeChannel(t, repo, random)
+	user := mustMakeUser(t, repo, random)
+
+	require.NoError(t, repo.SubscribeChannel(user.ID, channel.ID))
+
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("Successful1", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array().
+			Length().
+			Equal(1)
+	})
+}
+
+func TestHandlers_GetNotificationChannels(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, _ := setup(t, common2)
+
+	user := mustMakeUser(t, repo, random)
+	require.NoError(t, repo.SubscribeChannel(user.ID, mustMakeChannel(t, repo, random).ID))
+	require.NoError(t, repo.SubscribeChannel(user.ID, mustMakeChannel(t, repo, random).ID))
+
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/users/{userID}/notification", user.ID.String()).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("Successful1", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/users/{userID}/notification", user.ID.String()).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array().
+			Length().
+			Equal(2)
 	})
 }

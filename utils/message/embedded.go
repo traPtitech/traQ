@@ -71,6 +71,7 @@ func Parse(m string) (res []*EmbeddedInfo, plain string) {
 	}
 
 	if enclosed.Len() > 0 {
+		b.WriteRune('!')
 		b.Write(enclosed.Bytes())
 	}
 

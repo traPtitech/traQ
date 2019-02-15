@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"net/http"
 
@@ -16,7 +17,7 @@ import (
 )
 
 // UserAuthenticate User認証するミドルウェア
-func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
+func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			ah := c.Request().Header.Get(echo.HeaderAuthorization)
@@ -47,10 +48,10 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				}
 
 				// tokenの検証に成功。ユーザーを取得
-				user, err := model.GetUser(token.UserID)
+				user, err := h.Repo.GetUser(token.UserID)
 				if err != nil {
 					switch err {
-					case model.ErrNotFound:
+					case repository.ErrNotFound:
 						return echo.NewHTTPError(http.StatusForbidden, "the user is not found")
 					default:
 						c.Logger().Error(err)
@@ -59,7 +60,7 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				}
 
 				c.Set("user", user)
-				c.Set("userID", user.GetUID())
+				c.Set("userID", user.ID)
 				// 認可に基づきRole生成
 				c.Set("role", token.Scopes.GenerateRole())
 			} else {
@@ -73,10 +74,10 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 					return echo.NewHTTPError(http.StatusForbidden, "You are not logged in")
 				}
 
-				user, err := model.GetUser(sess.GetUserID())
+				user, err := h.Repo.GetUser(sess.GetUserID())
 				if err != nil {
 					switch err {
-					case model.ErrNotFound:
+					case repository.ErrNotFound:
 						return echo.NewHTTPError(http.StatusForbidden, "the user is not found")
 					default:
 						c.Logger().Error(err)
@@ -85,7 +86,7 @@ func UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				}
 
 				c.Set("user", user)
-				c.Set("userID", user.GetUID())
+				c.Set("userID", user.ID)
 			}
 			return next(c)
 		}
@@ -110,7 +111,7 @@ func AccessControlMiddlewareGenerator(rbac *rbac.RBAC) func(p ...gorbac.Permissi
 				// ユーザー権限検証
 				user := c.Get("user").(*model.User)
 				for _, v := range p {
-					if !rbac.IsGranted(user.GetUID(), user.Role, v) {
+					if !rbac.IsGranted(user.ID, user.Role, v) {
 						// NG
 						return echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("you are not permitted to request to '%s'", c.Request().URL.Path))
 					}

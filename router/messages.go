@@ -1,23 +1,22 @@
 package router
 
 import (
+	"github.com/labstack/gommon/log"
+	"github.com/traPtitech/traQ/repository"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/event"
-
 	"github.com/labstack/echo"
-	"github.com/labstack/gommon/log"
+	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 )
 
 // MessageForResponse クライアントに返す形のメッセージオブジェクト
 type MessageForResponse struct {
-	MessageID       string                `json:"messageId"`
-	UserID          string                `json:"userId"`
-	ParentChannelID string                `json:"parentChannelId"`
+	MessageID       uuid.UUID             `json:"messageId"`
+	UserID          uuid.UUID             `json:"userId"`
+	ParentChannelID uuid.UUID             `json:"parentChannelId"`
 	Content         string                `json:"content"`
 	CreatedAt       time.Time             `json:"createdAt"`
 	UpdatedAt       time.Time             `json:"updatedAt"`
@@ -27,28 +26,28 @@ type MessageForResponse struct {
 }
 
 // GetMessageByID GET /messages/:messageID
-func GetMessageByID(c echo.Context) error {
+func (h *Handlers) GetMessageByID(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getRequestParamAsUUID(c, paramMessageID)
 
-	m, err := validateMessageID(c, messageID, userID)
+	m, err := h.validateMessageID(c, messageID, userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
-	return c.JSON(http.StatusOK, formatMessage(m))
+	return c.JSON(http.StatusOK, h.formatMessage(m))
 }
 
 // PutMessageByID PUT /messages/:messageID
-func PutMessageByID(c echo.Context) error {
+func (h *Handlers) PutMessageByID(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getRequestParamAsUUID(c, paramMessageID)
 
-	m, err := validateMessageID(c, messageID, userID)
+	m, err := h.validateMessageID(c, messageID, userID)
 	if err != nil {
 		return err
 	}
 	// 他人のテキストは編集できない
-	if userID != m.GetUID() {
+	if userID != m.UserID {
 		return echo.NewHTTPError(http.StatusForbidden, "This is not your message")
 	}
 
@@ -59,43 +58,37 @@ func PutMessageByID(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if err := model.UpdateMessage(messageID, req.Text); err != nil {
+	if err := h.Repo.UpdateMessage(messageID, req.Text); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.MessageUpdated, &event.MessageUpdatedEvent{Message: *m})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteMessageByID DELETE /message/:messageID
-func DeleteMessageByID(c echo.Context) error {
+func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getRequestParamAsUUID(c, paramMessageID)
 
-	m, err := validateMessageID(c, messageID, userID)
+	m, err := h.validateMessageID(c, messageID, userID)
 	if err != nil {
 		return err
 	}
-	if m.GetUID() != userID {
+	if m.UserID != userID {
 		return echo.NewHTTPError(http.StatusForbidden, "you are not allowed to delete this message")
 	}
 
-	if err := model.DeleteMessage(messageID); err != nil {
+	if err := h.Repo.DeleteMessage(messageID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	if err := model.DeleteUnreadsByMessageID(messageID); err != nil {
-		c.Logger().Error(err) //500エラーにはしない
-	}
-
-	go event.Emit(event.MessageDeleted, &event.MessageDeletedEvent{Message: *m})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // GetMessagesByChannelID GET /channels/:channelID/messages
-func GetMessagesByChannelID(c echo.Context) error {
+func (h *Handlers) GetMessagesByChannelID(c echo.Context) error {
 	req := struct {
 		Limit  int `query:"limit"  validate:"min=0"`
 		Offset int `query:"offset" validate:"min=0"`
@@ -107,32 +100,32 @@ func GetMessagesByChannelID(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	messages, err := model.GetMessagesByChannelID(channelID, req.Limit, req.Offset)
+	messages, err := h.Repo.GetMessagesByChannelID(channelID, req.Limit, req.Offset)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	reports, err := model.GetMessageReportsByReporterID(userID)
+	reports, err := h.Repo.GetMessageReportsByReporterID(userID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	hidden := make(map[string]bool)
+	hidden := make(map[uuid.UUID]bool)
 	for _, v := range reports {
 		hidden[v.MessageID] = true
 	}
 
 	res := make([]*MessageForResponse, 0, req.Limit)
 	for _, message := range messages {
-		ms := formatMessage(message)
+		ms := h.formatMessage(message)
 		if hidden[message.ID] {
 			ms.Reported = true
 		}
@@ -143,7 +136,7 @@ func GetMessagesByChannelID(c echo.Context) error {
 }
 
 // PostMessage POST /channels/:channelID/messages
-func PostMessage(c echo.Context) error {
+func (h *Handlers) PostMessage(c echo.Context) error {
 	post := struct {
 		Text string `json:"text" validate:"required"`
 	}{}
@@ -154,14 +147,14 @@ func PostMessage(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	if ok, err := model.IsChannelAccessibleToUser(userID, channelID); err != nil {
+	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	m, err := createMessage(c, post.Text, userID, channelID)
+	m, err := h.createMessage(c, post.Text, userID, channelID)
 	if err != nil {
 		return err
 	}
@@ -170,7 +163,7 @@ func PostMessage(c echo.Context) error {
 }
 
 // GetDirectMessages GET /users/:userId/messages
-func GetDirectMessages(c echo.Context) error {
+func (h *Handlers) GetDirectMessages(c echo.Context) error {
 	req := struct {
 		Limit  int `query:"limit"  validate:"min=0"`
 		Offset int `query:"offset" validate:"min=0"`
@@ -183,7 +176,7 @@ func GetDirectMessages(c echo.Context) error {
 	targetID := getRequestParamAsUUID(c, paramUserID)
 
 	// ユーザー確認
-	if ok, err := model.UserExists(targetID); err != nil {
+	if ok, err := h.Repo.UserExists(targetID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
@@ -191,14 +184,14 @@ func GetDirectMessages(c echo.Context) error {
 	}
 
 	// DMチャンネルを取得
-	ch, err := model.GetOrCreateDirectMessageChannel(myID, targetID)
+	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	// メッセージ取得
-	messages, err := model.GetMessagesByChannelID(ch.ID, req.Limit, req.Offset)
+	messages, err := h.Repo.GetMessagesByChannelID(ch.ID, req.Limit, req.Offset)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -207,14 +200,14 @@ func GetDirectMessages(c echo.Context) error {
 	// 整形
 	res := make([]*MessageForResponse, 0, req.Limit)
 	for _, message := range messages {
-		res = append(res, formatMessage(message))
+		res = append(res, h.formatMessage(message))
 	}
 
 	return c.JSON(http.StatusOK, res)
 }
 
 // PostDirectMessage POST /users/:userId/messages
-func PostDirectMessage(c echo.Context) error {
+func (h *Handlers) PostDirectMessage(c echo.Context) error {
 	req := struct {
 		Text string `json:"text" validate:"required"`
 	}{}
@@ -226,7 +219,7 @@ func PostDirectMessage(c echo.Context) error {
 	targetID := getRequestParamAsUUID(c, paramUserID)
 
 	// ユーザー確認
-	if ok, err := model.UserExists(targetID); err != nil {
+	if ok, err := h.Repo.UserExists(targetID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
@@ -234,14 +227,14 @@ func PostDirectMessage(c echo.Context) error {
 	}
 
 	// DMチャンネルを取得
-	ch, err := model.GetOrCreateDirectMessageChannel(myID, targetID)
+	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	// 投稿
-	m, err := createMessage(c, req.Text, myID, ch.ID)
+	m, err := h.createMessage(c, req.Text, myID, ch.ID)
 	if err != nil {
 		return err
 	}
@@ -250,7 +243,7 @@ func PostDirectMessage(c echo.Context) error {
 }
 
 // PostMessageReport POST /messages/:messageID/report
-func PostMessageReport(c echo.Context) error {
+func (h *Handlers) PostMessageReport(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getRequestParamAsUUID(c, paramMessageID)
 
@@ -261,12 +254,12 @@ func PostMessageReport(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	_, err := validateMessageID(c, messageID, userID)
+	_, err := h.validateMessageID(c, messageID, userID)
 	if err != nil {
 		return err
 	}
 
-	if err := model.CreateMessageReport(messageID, userID, req.Reason); err != nil {
+	if err := h.Repo.CreateMessageReport(messageID, userID, req.Reason); err != nil {
 		if isMySQLDuplicatedRecordErr(err) {
 			return echo.NewHTTPError(http.StatusBadRequest, "already reported")
 		}
@@ -278,10 +271,10 @@ func PostMessageReport(c echo.Context) error {
 }
 
 // GetMessageReports GET /reports
-func GetMessageReports(c echo.Context) error {
+func (h *Handlers) GetMessageReports(c echo.Context) error {
 	p, _ := strconv.Atoi(c.QueryParam("p"))
 
-	reports, err := model.GetMessageReports(p*50, 50)
+	reports, err := h.Repo.GetMessageReports(p*50, 50)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -291,10 +284,10 @@ func GetMessageReports(c echo.Context) error {
 }
 
 // GetUnread GET /users/me/unread
-func GetUnread(c echo.Context) error {
+func (h *Handlers) GetUnread(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	unreads, err := model.GetUnreadMessagesByUserID(userID)
+	unreads, err := h.Repo.GetUnreadMessagesByUserID(userID)
 	if err != nil {
 		c.Logger().Error()
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -302,45 +295,42 @@ func GetUnread(c echo.Context) error {
 
 	responseBody := make([]*MessageForResponse, len(unreads))
 	for i, v := range unreads {
-		responseBody[i] = formatMessage(v)
+		responseBody[i] = h.formatMessage(v)
 	}
 
 	return c.JSON(http.StatusOK, responseBody)
 }
 
 // DeleteUnread DELETE /users/me/unread/:channelID
-func DeleteUnread(c echo.Context) error {
+func (h *Handlers) DeleteUnread(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	if err := model.DeleteUnreadsByChannelID(channelID, userID); err != nil {
+	if err := h.Repo.DeleteUnreadsByChannelID(channelID, userID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.MessageRead, &event.ReadMessageEvent{UserID: userID, ChannelID: channelID})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // dbにデータを入れる
-func createMessage(c echo.Context, text string, userID, channelID uuid.UUID) (*MessageForResponse, error) {
-	m, err := model.CreateMessage(userID, channelID, text)
+func (h *Handlers) createMessage(c echo.Context, text string, userID, channelID uuid.UUID) (*MessageForResponse, error) {
+	m, err := h.Repo.CreateMessage(userID, channelID, text)
 	if err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
-
-	go event.Emit(event.MessageCreated, &event.MessageCreatedEvent{Message: *m})
-	return formatMessage(m), nil
+	return h.formatMessage(m), nil
 }
 
-func formatMessage(raw *model.Message) *MessageForResponse {
-	isPinned, err := model.IsPinned(raw.GetID())
+func (h *Handlers) formatMessage(raw *model.Message) *MessageForResponse {
+	isPinned, err := h.Repo.IsPinned(raw.ID)
 	if err != nil {
 		log.Error(err)
 	}
 
-	stampList, err := model.GetMessageStamps(raw.GetID())
+	stampList, err := h.Repo.GetMessageStamps(raw.ID)
 	if err != nil {
 		log.Error(err)
 	}
@@ -359,11 +349,11 @@ func formatMessage(raw *model.Message) *MessageForResponse {
 }
 
 // リクエストで飛んできたmessageIDを検証する。存在する場合はそのメッセージを返す
-func validateMessageID(c echo.Context, messageID, userID uuid.UUID) (*model.Message, error) {
-	m, err := model.GetMessageByID(messageID)
+func (h *Handlers) validateMessageID(c echo.Context, messageID, userID uuid.UUID) (*model.Message, error) {
+	m, err := h.Repo.GetMessageByID(messageID)
 	if err != nil {
 		switch err {
-		case model.ErrNotFound:
+		case repository.ErrNotFound:
 			return nil, echo.NewHTTPError(http.StatusNotFound, "Message is not found")
 		default:
 			c.Logger().Error(err)
@@ -371,7 +361,7 @@ func validateMessageID(c echo.Context, messageID, userID uuid.UUID) (*model.Mess
 		}
 	}
 
-	if ok, err := model.IsChannelAccessibleToUser(userID, m.GetCID()); err != nil {
+	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {

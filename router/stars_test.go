@@ -1,98 +1,94 @@
 package router
 
 import (
-	"github.com/traPtitech/traQ/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/sessions"
-	"github.com/traPtitech/traQ/utils"
 	"net/http"
 	"testing"
 )
 
-func TestGroup_Stars(t *testing.T) {
-	assert, require, _, _ := beforeTest(t)
+func TestHandlers_GetStars(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-	t.Run("TestGetStars", func(t *testing.T) {
+	channel := mustMakeChannel(t, repo, random)
+	mustStarChannel(t, repo, testUser.ID, channel.ID)
+
+	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-
-		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		mustStarChannel(t, user.GetUID(), channel.ID)
-
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/users/me/stars").
-				Expect().
-				Status(http.StatusForbidden)
-		})
-
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/users/me/stars").
-				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
-				Expect().
-				Status(http.StatusOK).
-				JSON().
-				Array().
-				ContainsOnly(channel.ID.String())
-		})
+		e := makeExp(t, server)
+		e.GET("/api/1.0/users/me/stars").
+			Expect().
+			Status(http.StatusForbidden)
 	})
 
-	t.Run("TestPutStars", func(t *testing.T) {
+	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/users/me/stars").
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array().
+			ContainsOnly(channel.ID.String())
+	})
+}
 
-		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
+func TestHandlers_PutStars(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.PUT("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
-				Expect().
-				Status(http.StatusForbidden)
-		})
+	channel := mustMakeChannel(t, repo, random)
 
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.PUT("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
-				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
-				Expect().
-				Status(http.StatusNoContent)
-
-			a, err := model.GetStaredChannels(user.GetUID())
-			require.NoError(err)
-			assert.Len(a, 1)
-			assert.Contains(a, channel.ID.String())
-		})
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
+			Expect().
+			Status(http.StatusForbidden)
 	})
 
-	t.Run("TestDeleteStars", func(t *testing.T) {
+	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusNoContent)
 
-		user := mustCreateUser(t, utils.RandAlphabetAndNumberString(20))
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		mustStarChannel(t, user.GetUID(), channel.ID)
+		a, err := repo.GetStaredChannels(testUser.ID)
+		require.NoError(t, err)
+		assert.Len(t, a, 1)
+		assert.Contains(t, a, channel.ID)
+	})
+}
 
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.DELETE("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
-				Expect().
-				Status(http.StatusForbidden)
-		})
+func TestHandlers_DeleteStars(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.DELETE("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
-				WithCookie(sessions.CookieName, generateSession(t, user.GetUID())).
-				Expect().
-				Status(http.StatusNoContent)
-			a, err := model.GetStaredChannels(user.GetUID())
-			require.NoError(err)
-			assert.Empty(a)
-		})
+	channel := mustMakeChannel(t, repo, random)
+	mustStarChannel(t, repo, testUser.ID, channel.ID)
+
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.DELETE("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("Successful1", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.DELETE("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusNoContent)
+		a, err := repo.GetStaredChannels(testUser.ID)
+		require.NoError(t, err)
+		assert.Empty(t, a)
 	})
 }

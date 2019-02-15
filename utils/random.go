@@ -1,6 +1,8 @@
 package utils
 
 import (
+	crand "crypto/rand"
+	"io"
 	"math/rand"
 	"sync"
 	"time"
@@ -38,4 +40,11 @@ func RandAlphabetAndNumberString(n int) string {
 	}
 	randSrcPool.Put(randSrc)
 	return string(b)
+}
+
+// GenerateSalt 64bytesソルトを生成します
+func GenerateSalt() []byte {
+	salt := make([]byte, 64)
+	_, _ = io.ReadFull(crand.Reader, salt)
+	return salt
 }

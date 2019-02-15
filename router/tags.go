@@ -2,7 +2,7 @@ package router
 
 import (
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/repository"
 	"net/http"
 	"time"
 
@@ -13,7 +13,7 @@ import (
 
 // TagForResponse クライアントに返す形のタグ構造体
 type TagForResponse struct {
-	ID        string    `json:"tagId"`
+	ID        uuid.UUID `json:"tagId"`
 	Tag       string    `json:"tag"`
 	IsLocked  bool      `json:"isLocked"`
 	Editable  bool      `json:"editable"`
@@ -24,7 +24,7 @@ type TagForResponse struct {
 
 // TagListForResponse クライアントに返す形のタグリスト構造体
 type TagListForResponse struct {
-	ID       string             `json:"tagId"`
+	ID       uuid.UUID          `json:"tagId"`
 	Tag      string             `json:"tag"`
 	Editable bool               `json:"editable"`
 	Type     string             `json:"type"`
@@ -32,18 +32,18 @@ type TagListForResponse struct {
 }
 
 // GetUserTags GET /users/:userID/tags
-func GetUserTags(c echo.Context) error {
+func (h *Handlers) GetUserTags(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 
 	// ユーザー確認
-	if ok, err := model.UserExists(userID); err != nil {
+	if ok, err := h.Repo.UserExists(userID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
-	res, err := getUserTags(userID, c)
+	res, err := h.getUserTags(userID, c)
 	if err != nil {
 		return err
 	}
@@ -51,7 +51,7 @@ func GetUserTags(c echo.Context) error {
 }
 
 // PostUserTag POST /users/:userID/tags
-func PostUserTag(c echo.Context) error {
+func (h *Handlers) PostUserTag(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 
 	// リクエスト検証
@@ -63,7 +63,7 @@ func PostUserTag(c echo.Context) error {
 	}
 
 	// ユーザー確認
-	if ok, err := model.UserExists(userID); err != nil {
+	if ok, err := h.Repo.UserExists(userID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
@@ -71,7 +71,7 @@ func PostUserTag(c echo.Context) error {
 	}
 
 	// タグの確認
-	t, err := model.GetOrCreateTagByName(req.Tag)
+	t, err := h.Repo.GetOrCreateTagByName(req.Tag)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -82,15 +82,15 @@ func PostUserTag(c echo.Context) error {
 		reqUser := getRequestUser(c)
 		r := getRBAC(c)
 
-		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
+		if !r.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 	}
 
 	// ユーザーにタグを付与
-	if err := model.AddUserTag(userID, t.GetID()); err != nil {
+	if err := h.Repo.AddUserTag(userID, t.ID); err != nil {
 		switch err {
-		case model.ErrUserAlreadyHasTag:
+		case repository.ErrAlreadyExists:
 			return c.NoContent(http.StatusNoContent)
 		default:
 			c.Logger().Error(err)
@@ -98,12 +98,11 @@ func PostUserTag(c echo.Context) error {
 		}
 	}
 
-	go event.Emit(event.UserTagsUpdated, &event.UserEvent{ID: userID})
 	return c.NoContent(http.StatusCreated)
 }
 
 // PatchUserTag PATCH /users/:userID/tags/:tagID
-func PatchUserTag(c echo.Context) error {
+func (h *Handlers) PatchUserTag(c echo.Context) error {
 	me := getRequestUserID(c)
 	userID := getRequestParamAsUUID(c, paramUserID)
 	tagID := getRequestParamAsUUID(c, paramTagID)
@@ -117,10 +116,10 @@ func PatchUserTag(c echo.Context) error {
 	}
 
 	// タグがつけられているかを見る
-	ut, err := model.GetUserTag(userID, tagID)
+	ut, err := h.Repo.GetUserTag(userID, tagID)
 	if err != nil {
 		switch err {
-		case model.ErrNotFound:
+		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
 			c.Logger().Error(err)
@@ -139,25 +138,24 @@ func PatchUserTag(c echo.Context) error {
 	}
 
 	// 更新
-	if err := model.ChangeUserTagLock(userID, ut.Tag.GetID(), body.IsLocked); err != nil {
+	if err := h.Repo.ChangeUserTagLock(userID, ut.Tag.ID, body.IsLocked); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserTagsUpdated, &event.UserEvent{ID: userID})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteUserTag DELETE /users/:userID/tags/:tagID
-func DeleteUserTag(c echo.Context) error {
+func (h *Handlers) DeleteUserTag(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 	tagID := getRequestParamAsUUID(c, paramTagID)
 
 	// タグがつけられているかを見る
-	ut, err := model.GetUserTag(userID, tagID)
+	ut, err := h.Repo.GetUserTag(userID, tagID)
 	if err != nil {
 		switch err {
-		case model.ErrNotFound: //既にない
+		case repository.ErrNotFound: //既にない
 			return c.NoContent(http.StatusNoContent)
 		default:
 			c.Logger().Error(err)
@@ -170,24 +168,23 @@ func DeleteUserTag(c echo.Context) error {
 		reqUser := getRequestUser(c)
 		r := getRBAC(c)
 
-		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
+		if !r.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 	}
 
 	// 削除
-	if err := model.DeleteUserTag(userID, ut.Tag.GetID()); err != nil {
+	if err := h.Repo.DeleteUserTag(userID, ut.Tag.ID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	go event.Emit(event.UserTagsUpdated, &event.UserEvent{ID: userID})
 	return c.NoContent(http.StatusNoContent)
 }
 
 // GetAllTags GET /tags
-func GetAllTags(c echo.Context) error {
-	tags, err := model.GetAllTags()
+func (h *Handlers) GetAllTags(c echo.Context) error {
+	tags, err := h.Repo.GetAllTags()
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -197,7 +194,7 @@ func GetAllTags(c echo.Context) error {
 
 	for i, v := range tags {
 		var users []*UserForResponse
-		users, err := getUsersByTagName(v.Name, c)
+		users, err := h.getUsersByTagName(v.Name, c)
 		if err != nil {
 			return err
 		}
@@ -215,13 +212,13 @@ func GetAllTags(c echo.Context) error {
 }
 
 // GetUsersByTagID GET /tags/:tagID
-func GetUsersByTagID(c echo.Context) error {
+func (h *Handlers) GetUsersByTagID(c echo.Context) error {
 	tagID := getRequestParamAsUUID(c, paramTagID)
 
-	t, err := model.GetTagByID(tagID)
+	t, err := h.Repo.GetTagByID(tagID)
 	if err != nil {
 		switch err {
-		case model.ErrNotFound:
+		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound, "TagID doesn't exist")
 		default:
 			c.Logger().Error(err)
@@ -229,7 +226,7 @@ func GetUsersByTagID(c echo.Context) error {
 		}
 	}
 
-	users, err := getUsersByTagName(t.Name, c)
+	users, err := h.getUsersByTagName(t.Name, c)
 	if err != nil {
 		return err
 	}
@@ -246,14 +243,14 @@ func GetUsersByTagID(c echo.Context) error {
 }
 
 // PatchTag PATCH /tags/:tagID
-func PatchTag(c echo.Context) error {
+func (h *Handlers) PatchTag(c echo.Context) error {
 	tagID := getRequestParamAsUUID(c, paramTagID)
 
 	// タグ存在確認
-	_, err := model.GetTagByID(tagID)
+	_, err := h.Repo.GetTagByID(tagID)
 	if err != nil {
 		switch err {
-		case model.ErrNotFound:
+		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
 			c.Logger().Error(err)
@@ -275,11 +272,11 @@ func PatchTag(c echo.Context) error {
 		reqUser := getRequestUser(c)
 		r := getRBAC(c)
 
-		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
+		if !r.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 
-		if err := model.ChangeTagRestrict(tagID, *req.Restrict); err != nil {
+		if err := h.Repo.ChangeTagRestrict(tagID, *req.Restrict); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -289,11 +286,11 @@ func PatchTag(c echo.Context) error {
 		reqUser := getRequestUser(c)
 		r := getRBAC(c)
 
-		if !r.IsGranted(reqUser.GetUID(), reqUser.Role, permission.OperateForRestrictedTag) {
+		if !r.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 
-		if err := model.ChangeTagType(tagID, *req.Type); err != nil {
+		if err := h.Repo.ChangeTagType(tagID, *req.Type); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -301,16 +298,11 @@ func PatchTag(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func getUserTags(userID uuid.UUID, c echo.Context) ([]*TagForResponse, error) {
-	tagList, err := model.GetUserTagsByUserID(userID)
+func (h *Handlers) getUserTags(userID uuid.UUID, c echo.Context) ([]*TagForResponse, error) {
+	tagList, err := h.Repo.GetUserTagsByUserID(userID)
 	if err != nil {
-		switch err {
-		case model.ErrNotFound:
-			return nil, echo.NewHTTPError(http.StatusNotFound, "This user doesn't exist")
-		default:
-			c.Logger().Error(err)
-			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get tagList")
-		}
+		c.Logger().Error(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get tagList")
 	}
 
 	res := make([]*TagForResponse, len(tagList))
@@ -320,15 +312,15 @@ func getUserTags(userID uuid.UUID, c echo.Context) ([]*TagForResponse, error) {
 	return res, nil
 }
 
-func getUsersByTagName(name string, c echo.Context) ([]*UserForResponse, error) {
-	users, err := model.GetUsersByTag(name)
+func (h *Handlers) getUsersByTagName(name string, c echo.Context) ([]*UserForResponse, error) {
+	users, err := h.Repo.GetUsersByTag(name)
 	if err != nil {
 		c.Logger().Error(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get userList")
 	}
 	res := make([]*UserForResponse, len(users))
 	for i, v := range users {
-		res[i] = formatUser(v)
+		res[i] = h.formatUser(v)
 	}
 	return res, nil
 }

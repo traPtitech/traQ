@@ -1,135 +1,136 @@
 package router
 
 import (
-	"github.com/traPtitech/traQ/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
-	"github.com/traPtitech/traQ/utils"
 	"net/http"
 	"testing"
 )
 
-func TestGroup_Pin(t *testing.T) {
-	assert, require, session, _ := beforeTest(t)
+func TestHandlers_PostPin(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-	t.Run("TestPostPin", func(t *testing.T) {
+	channel := mustMakeChannel(t, repo, random)
+	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
+
+	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.POST("/api/1.0/pins").
-				WithJSON(map[string]string{"messageId": message.ID}).
-				Expect().
-				Status(http.StatusForbidden)
-		})
-
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.POST("/api/1.0/pins").
-				WithCookie(sessions.CookieName, session).
-				WithJSON(map[string]string{"messageId": message.ID}).
-				Expect().
-				Status(http.StatusCreated).
-				JSON().
-				Object().
-				Value("id").
-				String().
-				NotEmpty()
-
-			p, err := model.GetPinsByChannelID(channel.ID)
-			require.NoError(err)
-			assert.Len(p, 1)
-		})
+		e := makeExp(t, server)
+		e.POST("/api/1.0/pins").
+			WithJSON(map[string]string{"messageId": message.ID.String()}).
+			Expect().
+			Status(http.StatusForbidden)
 	})
 
-	t.Run("TestGetPin", func(t *testing.T) {
+	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
+		e := makeExp(t, server)
+		e.POST("/api/1.0/pins").
+			WithCookie(sessions.CookieName, session).
+			WithJSON(map[string]string{"messageId": message.ID.String()}).
+			Expect().
+			Status(http.StatusCreated).
+			JSON().
+			Object().
+			Value("id").
+			String().
+			NotEmpty()
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		pin := mustMakePin(t, testUser.GetUID(), message.GetID())
+		p, err := repo.GetPinsByChannelID(channel.ID)
+		require.NoError(t, err)
+		assert.Len(t, p, 1)
+	})
+}
 
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/pins/{pinID}", pin.String()).
-				Expect().
-				Status(http.StatusForbidden)
-		})
+func TestHandlers_GetPin(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/pins/{pinID}", pin.String()).
-				WithCookie(sessions.CookieName, session).
-				Expect().
-				Status(http.StatusOK).
-				JSON().
-				Object().
-				Value("pinId").
-				String().
-				Equal(pin.String())
-		})
+	channel := mustMakeChannel(t, repo, random)
+	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
+	pin := mustMakePin(t, repo, message.ID, testUser.ID)
+
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/pins/{pinID}", pin.String()).
+			Expect().
+			Status(http.StatusForbidden)
 	})
 
-	t.Run("TestDeletePin", func(t *testing.T) {
+	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/pins/{pinID}", pin.String()).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object().
+			Value("pinId").
+			String().
+			Equal(pin.String())
+	})
+}
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		pin := mustMakePin(t, testUser.GetUID(), message.GetID())
+func TestHandlers_DeletePin(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.DELETE("/api/1.0/pins/{pinID}", pin.String()).
-				Expect().
-				Status(http.StatusForbidden)
-		})
+	channel := mustMakeChannel(t, repo, random)
+	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
+	pin := mustMakePin(t, repo, message.ID, testUser.ID)
 
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.DELETE("/api/1.0/pins/{pinID}", pin.String()).
-				WithCookie(sessions.CookieName, session).
-				Expect().
-				Status(http.StatusNoContent)
-
-			_, err := model.GetPin(pin)
-			assert.Equal(model.ErrNotFound, err)
-		})
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.DELETE("/api/1.0/pins/{pinID}", pin.String()).
+			Expect().
+			Status(http.StatusForbidden)
 	})
 
-	t.Run("TestGetChannelPin", func(t *testing.T) {
+	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
+		e := makeExp(t, server)
+		e.DELETE("/api/1.0/pins/{pinID}", pin.String()).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusNoContent)
 
-		channel := mustMakeChannelDetail(t, testUser.GetUID(), utils.RandAlphabetAndNumberString(20), "")
-		message := mustMakeMessage(t, testUser.GetUID(), channel.ID)
-		mustMakePin(t, testUser.GetUID(), message.GetID())
+		_, err := repo.GetPin(pin)
+		assert.Equal(t, repository.ErrNotFound, err)
+	})
+}
 
-		t.Run("NotLoggedIn", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/channels/{channelID}/pins", channel.ID.String()).
-				Expect().
-				Status(http.StatusForbidden)
-		})
+func TestHandlers_GetChannelPin(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-		t.Run("Successful1", func(t *testing.T) {
-			t.Parallel()
-			e := makeExp(t)
-			e.GET("/api/1.0/channels/{channelID}/pins", channel.ID.String()).
-				WithCookie(sessions.CookieName, session).
-				Expect().
-				Status(http.StatusOK).
-				JSON().
-				Array().
-				Length().
-				Equal(1)
-		})
+	channel := mustMakeChannel(t, repo, random)
+	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
+	mustMakePin(t, repo, message.ID, testUser.ID)
+
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/channels/{channelID}/pins", channel.ID.String()).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("Successful1", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/channels/{channelID}/pins", channel.ID.String()).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array().
+			Length().
+			Equal(1)
 	})
 }
