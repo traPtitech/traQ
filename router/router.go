@@ -122,7 +122,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	api.GET("/users/:userID/notification", h.GetNotificationChannels, requires(permission.GetNotificationStatus))
 
 	// Tag: file
-	api.POST("/files", h.PostFile, requires(permission.UploadFile))
+	api.POST("/files", h.PostFile, bodyLimit(30<<10), requires(permission.UploadFile))
 	api.GET("/files/:fileID", h.GetFileByID, requires(permission.DownloadFile))
 	api.DELETE("/files/:fileID", h.DeleteFileByID, requires(permission.DeleteFile))
 	api.GET("/files/:fileID/meta", h.GetMetaDataByFileID, requires(permission.DownloadFile))
