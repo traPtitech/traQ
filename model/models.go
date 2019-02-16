@@ -21,6 +21,7 @@ var (
 		&UsersPrivateChannel{},
 		&UserSubscribeChannel{},
 		&Tag{},
+		&ArchivedMessage{},
 		&Message{},
 		&Channel{},
 		&User{},

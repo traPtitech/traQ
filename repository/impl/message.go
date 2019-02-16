@@ -65,20 +65,24 @@ func (repo *RepositoryImpl) UpdateMessage(messageID uuid.UUID, text string) erro
 			return err
 		}
 
-		result := tx.Model(&old).Update("text", text)
-		if result.Error != nil {
-			return result.Error
+		// update
+		if err := tx.Model(&old).Update("text", text).Error; err != nil {
+			return err
 		}
-		if result.RowsAffected > 0 {
-			if err := tx.Where(&model.Message{ID: messageID}).First(&new).Error; err != nil {
-				if gorm.IsRecordNotFoundError(err) {
-					return nil
-				}
-				return err
-			}
-			ok = true
+
+		// archiving
+		if err := tx.Create(&model.ArchivedMessage{
+			ID:        uuid.NewV4(),
+			MessageID: old.ID,
+			UserID:    old.UserID,
+			Text:      old.Text,
+			DateTime:  old.UpdatedAt,
+		}).Error; err != nil {
+			return err
 		}
-		return nil
+
+		ok = true
+		return tx.Where(&model.Message{ID: messageID}).First(&new).Error
 	})
 	if err != nil {
 		return err
@@ -114,16 +118,13 @@ func (repo *RepositoryImpl) DeleteMessage(messageID uuid.UUID) error {
 			return err
 		}
 
-		result := tx.Delete(&m)
-		if result.Error != nil {
-			return result.Error
+		if err := tx.Delete(&m).Error; err != nil {
+			return err
 		}
-		if result.RowsAffected > 0 {
-			if err := tx.Where(&model.Unread{MessageID: messageID}).Delete(model.Unread{}).Error; err != nil {
-				return err
-			}
-			ok = true
+		if err := tx.Where(&model.Unread{MessageID: messageID}).Delete(model.Unread{}).Error; err != nil {
+			return err
 		}
+		ok = true
 		return nil
 	})
 	if err != nil {

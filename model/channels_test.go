@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -8,6 +9,12 @@ import (
 func TestChannel_TableName(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "channels", (&Channel{}).TableName())
+}
+
+func TestChannel_IsDMChannel(t *testing.T) {
+	t.Parallel()
+	assert.False(t, (&Channel{ParentID: uuid.Nil}).IsDMChannel())
+	assert.True(t, (&Channel{ParentID: dmChannelRootUUID}).IsDMChannel())
 }
 
 func TestUsersPrivateChannel_TableName(t *testing.T) {
