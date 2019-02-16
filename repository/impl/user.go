@@ -305,10 +305,8 @@ func (repo *RepositoryImpl) UpdateUserLastOnline(id uuid.UUID, time time.Time) (
 func (repo *RepositoryImpl) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
 	i, ok := repo.CurrentUserOnlineMap.Load(id)
 	if !ok {
-		var u struct {
-			LastOnline *time.Time
-		}
-		if err := repo.db.Model(&model.User{ID: id}).Select("last_online").Scan(&u).Error; err != nil {
+		var u model.User
+		if err := repo.db.Model(&model.User{ID: id}).Select("last_online").Take(&u).Error; err != nil {
 			if gorm.IsRecordNotFoundError(err) {
 				return time.Time{}, repository.ErrNotFound
 			}
