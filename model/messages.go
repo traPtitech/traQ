@@ -38,3 +38,17 @@ type Unread struct {
 func (unread *Unread) TableName() string {
 	return "unreads"
 }
+
+// ArchivedMessage 編集前のアーカイブ化されたメッセージの構造体
+type ArchivedMessage struct {
+	ID        uuid.UUID `gorm:"type:char(36);primary_key"`
+	MessageID uuid.UUID `gorm:"type:char(36);index"`
+	UserID    uuid.UUID `gorm:"type:char(36)"`
+	Text      string    `gorm:"type:text"`
+	DateTime  time.Time `gorm:"precision:6"`
+}
+
+// TableName ArchivedMessage構造体のテーブル名
+func (am *ArchivedMessage) TableName() string {
+	return "archived_messages"
+}
