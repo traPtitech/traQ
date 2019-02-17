@@ -25,17 +25,18 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	aclRead := repository.ACL{uuid.Nil: true}
 	if s := c.FormValue("acl_readable"); len(s) != 0 && s != "all" {
 		for _, v := range strings.Split(s, ",") {
-			if uid, err := uuid.FromString(v); err != nil || uid == uuid.Nil {
+			uid, err := uuid.FromString(v)
+			if err != nil || uid == uuid.Nil {
 				return echo.NewHTTPError(http.StatusBadRequest, err)
-			} else {
-				if ok, err := h.Repo.UserExists(uid); err != nil {
-					c.Logger().Error(err)
-					return echo.NewHTTPError(http.StatusInternalServerError)
-				} else if !ok {
-					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("unknown acl user id: %s", uid))
-				}
-				aclRead[uid] = true
 			}
+
+			if ok, err := h.Repo.UserExists(uid); err != nil {
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			} else if !ok {
+				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("unknown acl user id: %s", uid))
+			}
+			aclRead[uid] = true
 		}
 	}
 
