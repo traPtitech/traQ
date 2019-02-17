@@ -50,3 +50,15 @@ func (f *File) GetKey() string {
 func (f *File) GetThumbKey() string {
 	return f.ID.String() + "-thumb"
 }
+
+// FileACLEntry ファイルアクセスコントロールリストエントリー構造体
+type FileACLEntry struct {
+	FileID uuid.UUID `gorm:"type:char(36);primary_key"`
+	UserID uuid.UUID `gorm:"type:char(36);primary_key"`
+	Allow  bool
+}
+
+// TableName FileACLEntry構造体のテーブル名
+func (f *FileACLEntry) TableName() string {
+	return "files_acl"
+}

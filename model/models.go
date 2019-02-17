@@ -17,6 +17,7 @@ var (
 		&Star{},
 		&Device{},
 		&Pin{},
+		&FileACLEntry{},
 		&File{},
 		&UsersPrivateChannel{},
 		&UserSubscribeChannel{},

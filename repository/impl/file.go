@@ -33,6 +33,11 @@ func (repo *RepositoryImpl) GenerateIconFile(salt string) (uuid.UUID, error) {
 
 // SaveFile ファイルを保存します。mimeが指定されていない場合はnameの拡張子によって決まります
 func (repo *RepositoryImpl) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID) (*model.File, error) {
+	return repo.SaveFileWithACL(name, src, size, mimeType, fType, creatorID, repository.ACL{uuid.Nil: true})
+}
+
+// SaveFileWithACL ファイルを保存します。mimeが指定されていない場合はnameの拡張子によって決まります
+func (repo *RepositoryImpl) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID, read repository.ACL) (*model.File, error) {
 	f := &model.File{
 		ID:        uuid.NewV4(),
 		Name:      name,
@@ -49,6 +54,10 @@ func (repo *RepositoryImpl) SaveFile(name string, src io.Reader, size int64, mim
 	}
 	if err := f.Validate(); err != nil {
 		return nil, err
+	}
+
+	if read != nil {
+		read[creatorID] = true
 	}
 
 	eg, ctx := errgroup.WithContext(context.Background())
@@ -91,7 +100,21 @@ func (repo *RepositoryImpl) SaveFile(name string, src io.Reader, size int64, mim
 	}
 
 	f.Hash = hex.EncodeToString(hash.Sum(nil))
-	if err := repo.db.Create(f).Error; err != nil {
+
+	err := repo.transact(func(tx *gorm.DB) error {
+		if err := tx.Create(f).Error; err != nil {
+			return err
+		}
+
+		for uid, allow := range read {
+			if err := tx.Create(&model.FileACLEntry{FileID: f.ID, UserID: uid, Allow: allow}).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 	return f, nil
@@ -189,6 +212,27 @@ func (repo *RepositoryImpl) RegenerateThumbnail(fileID uuid.UUID) (bool, error) 
 		"thumbnail_width":  meta.ThumbnailWidth,
 		"thumbnail_height": meta.ThumbnailHeight,
 	}).Error
+}
+
+// IsFileAccessible ユーザーがファイルにアクセス可能かどうか
+func (repo *RepositoryImpl) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
+	if fileID == uuid.Nil {
+		return false, repository.ErrNilID
+	}
+	var result struct {
+		Allow int
+		Deny  int
+	}
+	err := repo.db.
+		Model(&model.FileACLEntry{}).
+		Select("COUNT(allow = TRUE OR NULL) AS Allow, COUNT(allow = FALSE OR NULL) AS Deny").
+		Where("file_id = ? AND user_id IN (?,?)", fileID, userID, uuid.Nil).
+		Scan(&result).
+		Error
+	if err != nil {
+		return false, err
+	}
+	return result.Allow > 0 && result.Deny == 0, nil
 }
 
 // generateThumbnail サムネイル画像を生成します
