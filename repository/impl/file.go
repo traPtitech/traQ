@@ -234,7 +234,7 @@ func (repo *RepositoryImpl) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 	err := repo.db.
 		Model(&model.FileACLEntry{}).
 		Select("COUNT(allow = TRUE OR NULL) AS Allow, COUNT(allow = FALSE OR NULL) AS Deny").
-		Where("file_id = ? AND user_id IN (?,?)", fileID, userID, uuid.Nil).
+		Where("file_id = ? AND user_id IN (?)", fileID, []uuid.UUID{userID, uuid.Nil}).
 		Scan(&result).
 		Error
 	if err != nil {
