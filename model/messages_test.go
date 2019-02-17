@@ -22,3 +22,8 @@ func TestMessage_Validate(t *testing.T) {
 	assert.Error(t, (&Message{Text: ""}).Validate())
 	assert.NoError(t, (&Message{Text: "test"}).Validate())
 }
+
+func TestArchivedMessage_TableName(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "archived_messages", (&ArchivedMessage{}).TableName())
+}

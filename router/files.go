@@ -22,7 +22,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	}
 
 	// アクセスコントロールリスト作成
-	aclRead := repository.ACL{uuid.Nil: true}
+	aclRead := repository.ACL{}
 	if s := c.FormValue("acl_readable"); len(s) != 0 && s != "all" {
 		for _, v := range strings.Split(s, ",") {
 			uid, err := uuid.FromString(v)
@@ -38,6 +38,8 @@ func (h *Handlers) PostFile(c echo.Context) error {
 			}
 			aclRead[uid] = true
 		}
+	} else {
+		aclRead[uuid.Nil] = true
 	}
 
 	src, err := uploadedFile.Open()
