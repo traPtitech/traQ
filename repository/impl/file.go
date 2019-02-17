@@ -27,8 +27,11 @@ type fileImpl struct {
 // GenerateIconFile アイコンファイルを生成します
 func (repo *RepositoryImpl) GenerateIconFile(salt string) (uuid.UUID, error) {
 	img, _ := thumb.EncodeToPNG(utils.GenerateIcon(salt))
-	file, e := repo.SaveFile(fmt.Sprintf("%s.png", salt), img, int64(img.Len()), "image/png", model.FileTypeIcon, uuid.Nil)
-	return file.ID, e
+	file, err := repo.SaveFile(fmt.Sprintf("%s.png", salt), img, int64(img.Len()), "image/png", model.FileTypeIcon, uuid.Nil)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return file.ID, nil
 }
 
 // SaveFile ファイルを保存します。mimeが指定されていない場合はnameの拡張子によって決まります

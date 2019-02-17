@@ -53,9 +53,9 @@ func (f *File) GetThumbKey() string {
 
 // FileACLEntry ファイルアクセスコントロールリストエントリー構造体
 type FileACLEntry struct {
-	FileID uuid.UUID `gorm:"type:char(36);primary_key"`
-	UserID uuid.UUID `gorm:"type:char(36);primary_key"`
-	Allow  bool
+	FileID uuid.UUID `gorm:"type:char(36);primary_key;not null"`
+	UserID uuid.UUID `gorm:"type:char(36);primary_key;not null"`
+	Allow  bool      `gorm:"not null"`
 }
 
 // TableName FileACLEntry構造体のテーブル名
