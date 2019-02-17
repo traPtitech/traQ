@@ -51,6 +51,6 @@ func TestAuthenticateUser(t *testing.T) {
 			return AuthenticateUser(&User{Password: hex.EncodeToString(hashed), Salt: hex.EncodeToString(salt)}, pass) == nil
 		}
 
-		assert.NoError(quick.Check(tester, nil))
+		assert.NoError(quick.Check(tester, &quick.Config{MaxCount: 10}))
 	})
 }

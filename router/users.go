@@ -286,7 +286,7 @@ func (h *Handlers) formatUser(user *model.User) *UserForResponse {
 		TwitterID:   user.TwitterID,
 		IsOnline:    h.Repo.IsUserOnline(user.ID),
 	}
-	if t, err := h.Repo.GetUserLastOnline(user.ID); err != nil && !t.IsZero() {
+	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
 		res.LastOnline = &t
 	}
 	if len(res.DisplayName) == 0 {
@@ -305,7 +305,7 @@ func (h *Handlers) formatUserDetail(user *model.User, tagList []*model.UsersTag)
 		TwitterID:   user.TwitterID,
 		IsOnline:    h.Repo.IsUserOnline(user.ID),
 	}
-	if t, err := h.Repo.GetUserLastOnline(user.ID); err != nil && !t.IsZero() {
+	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
 		res.LastOnline = &t
 	}
 	if len(res.DisplayName) == 0 {

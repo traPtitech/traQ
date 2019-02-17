@@ -1703,19 +1703,30 @@ paths:
         content:
           multipart/form-data:
             schema:
+              required:
+                - file
               properties:
                 file:
                   type: string
+                  description: ファイル本体
                   format: binary
+                acl_readable:
+                  type: string
+                  default: all
+                  description: ファイルにアクセスすることが可能なユーザーのUUIDの文字列表現をカンマ区切りで連結した文字列、または'all'(デフォルト)
       responses:
         "201":
-          description: |+
-            正常にファイルが追加されました
-            メタデータを返します。
+          description: 正常にファイルがアップロードされました。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/FileInfo"
+        "403":
+          description: ファイルがアップロード出来ませんでした。リクエスト内容が不正です。
+        "411":
+          description: ファイルがアップロード出来ませんでした。Content-Lengthヘッダーを送信してください。
+        "413":
+          description: ファイルがアップロード出来ませんでした。ファイルサイズが大きすぎます。
 
   /files/{fileID}:
     parameters:
@@ -1742,10 +1753,10 @@ paths:
               schema:
                 type: string
                 format: binary
+        "403":
+          description: 取得できませんでした。指定されたファイルにアクセスする権限がありません。
         "404":
-          description: |+
-            取得できませんでした。
-            指定されたスタンプは存在しません。
+          description: 取得できませんでした。指定されたファイルは存在しません。
     delete:
       tags:
         - file
@@ -1772,17 +1783,15 @@ paths:
       description: 指定したファイルのメタデータを取得します
       responses:
         "200":
-          description: |+
-            正常に取得できました。
-            メタデータを返します。
+          description: 正常に取得できました。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/FileInfo"
+        "403":
+          description: 取得できませんでした。指定されたファイルにアクセスする権限がありません。
         "404":
-          description: |+
-            取得できませんでした。
-            指定されたファイルは存在しません。
+          description: 取得できませんでした。指定されたファイルは存在しません。
 
   /files/{fileID}/thumbnail:
     parameters:
@@ -1793,16 +1802,16 @@ paths:
       description: 指定したファイルのサムネイルを取得します
       responses:
         "200":
-          description: |+
-            正常に取得できました。
-            サムネイルを返します。
+          description: 正常に取得できました。
           content:
-            image/jpeg:
+            image/png:
               schema:
                 type: string
                 format: binary
+        "403":
+          description: 取得できませんでした。指定されたファイルのサムネイルにアクセスする権限がありません。
         "404":
-          description: 取得できませんでした。サムネイルは存在しません。
+          description: 取得できませんでした。指定されたファイルのサムネイルは存在しません。
 
   /messages/{messageID}:
     parameters:

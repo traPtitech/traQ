@@ -57,6 +57,8 @@ type TestRepository struct {
 	StarsLock                 sync.RWMutex
 	Files                     map[uuid.UUID]model.File
 	FilesLock                 sync.RWMutex
+	FilesACL                  map[uuid.UUID]map[uuid.UUID]bool
+	FilesACLLock              sync.RWMutex
 }
 
 func NewTestRepository() *TestRepository {
@@ -74,6 +76,7 @@ func NewTestRepository() *TestRepository {
 		Pins:                  make(map[uuid.UUID]model.Pin),
 		Stars:                 make(map[uuid.UUID]map[uuid.UUID]bool),
 		Files:                 make(map[uuid.UUID]model.File),
+		FilesACL:              make(map[uuid.UUID]map[uuid.UUID]bool),
 	}
 	_, _ = r.CreateUser("traq", "example@example.com", "traq", role.Admin)
 	return r
@@ -1725,6 +1728,10 @@ func (r *TestRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
 }
 
 func (r *TestRepository) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID) (*model.File, error) {
+	return r.SaveFileWithACL(name, src, size, mimeType, fType, creatorID, repository.ACL{uuid.Nil: true})
+}
+
+func (r *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID, read repository.ACL) (*model.File, error) {
 	f := &model.File{
 		ID:        uuid.NewV4(),
 		Name:      name,
@@ -1742,6 +1749,10 @@ func (r *TestRepository) SaveFile(name string, src io.Reader, size int64, mimeTy
 	}
 	if err := f.Validate(); err != nil {
 		return nil, err
+	}
+
+	if read != nil {
+		read[creatorID] = true
 	}
 
 	eg := errgroup.Group{}
@@ -1768,14 +1779,35 @@ func (r *TestRepository) SaveFile(name string, src io.Reader, size int64, mimeTy
 
 	f.Hash = hex.EncodeToString(hash.Sum(nil))
 	r.FilesLock.Lock()
+	r.FilesACLLock.Lock()
 	r.Files[f.ID] = *f
+	r.FilesACL[f.ID] = read
+	r.FilesACLLock.Unlock()
 	r.FilesLock.Unlock()
 	return f, nil
-
 }
 
 func (r *TestRepository) RegenerateThumbnail(fileID uuid.UUID) (bool, error) {
 	return false, nil
+}
+
+func (r *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
+	if fileID == uuid.Nil {
+		return false, repository.ErrNilID
+	}
+	var allow bool
+	r.FilesACLLock.RLock()
+	defer r.FilesACLLock.RUnlock()
+	for uid, a := range r.FilesACL[fileID] {
+		if uid == uuid.Nil || uid == userID {
+			if a {
+				allow = true
+			} else {
+				return false, nil
+			}
+		}
+	}
+	return allow, nil
 }
 
 func (r *TestRepository) CreateWebhook(name, description string, channelID, creatorID, iconFileID uuid.UUID) (model.Webhook, error) {

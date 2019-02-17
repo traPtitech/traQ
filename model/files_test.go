@@ -24,3 +24,8 @@ func TestFile_GetThumbKey(t *testing.T) {
 	id := uuid.NewV4()
 	assert.EqualValues(t, fmt.Sprintf("%s-thumb", id.String()), (&File{ID: id}).GetThumbKey())
 }
+
+func TestFileACLEntry_TableName(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "files_acl", (&FileACLEntry{}).TableName())
+}

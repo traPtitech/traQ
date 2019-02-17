@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/utils/validator"
 	"time"
@@ -49,4 +50,16 @@ func (f *File) GetKey() string {
 // GetThumbKey ファイルのサムネイルのストレージに対するキーを返す
 func (f *File) GetThumbKey() string {
 	return f.ID.String() + "-thumb"
+}
+
+// FileACLEntry ファイルアクセスコントロールリストエントリー構造体
+type FileACLEntry struct {
+	FileID uuid.UUID     `gorm:"type:char(36);primary_key;not null"`
+	UserID uuid.NullUUID `gorm:"type:char(36);primary_key;not null"`
+	Allow  sql.NullBool  `gorm:"not null"`
+}
+
+// TableName FileACLEntry構造体のテーブル名
+func (f *FileACLEntry) TableName() string {
+	return "files_acl"
 }
