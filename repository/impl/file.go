@@ -3,6 +3,7 @@ package impl
 import (
 	"context"
 	"crypto/md5"
+	"database/sql"
 	"encoding/hex"
 	"fmt"
 	"github.com/jinzhu/gorm"
@@ -110,7 +111,11 @@ func (repo *RepositoryImpl) SaveFileWithACL(name string, src io.Reader, size int
 		}
 
 		for uid, allow := range read {
-			if err := tx.Create(&model.FileACLEntry{FileID: f.ID, UserID: uid, Allow: allow}).Error; err != nil {
+			if err := tx.Create(&model.FileACLEntry{
+				FileID: f.ID,
+				UserID: uuid.NullUUID{UUID: uid, Valid: true},
+				Allow:  sql.NullBool{Bool: allow, Valid: true},
+			}).Error; err != nil {
 				return err
 			}
 		}

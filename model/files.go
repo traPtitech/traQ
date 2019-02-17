@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/utils/validator"
 	"time"
@@ -53,9 +54,9 @@ func (f *File) GetThumbKey() string {
 
 // FileACLEntry ファイルアクセスコントロールリストエントリー構造体
 type FileACLEntry struct {
-	FileID uuid.UUID `gorm:"type:char(36);primary_key;not null"`
-	UserID uuid.UUID `gorm:"type:char(36);primary_key;not null"`
-	Allow  bool      `gorm:"not null"`
+	FileID uuid.UUID     `gorm:"type:char(36);primary_key;not null"`
+	UserID uuid.NullUUID `gorm:"type:char(36);primary_key;not null"`
+	Allow  sql.NullBool  `gorm:"not null"`
 }
 
 // TableName FileACLEntry構造体のテーブル名
