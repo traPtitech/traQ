@@ -273,6 +273,46 @@ func (r *TestRepository) UpdateHeartbeatStatus(userID, channelID uuid.UUID, stat
 	panic("implement me")
 }
 
+func (r *TestRepository) CreateUserGroup(name, description string, adminID uuid.UUID) (*model.UserGroup, error) {
+	panic("implement me")
+}
+
+func (r *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.UpdateUserGroupNameArgs) error {
+	panic("implement me")
+}
+
+func (r *TestRepository) DeleteUserGroup(id uuid.UUID) error {
+	panic("implement me")
+}
+
+func (r *TestRepository) GetUserGroup(id uuid.UUID) (*model.UserGroup, error) {
+	panic("implement me")
+}
+
+func (r *TestRepository) GetUserGroupByName(name string) (*model.UserGroup, error) {
+	panic("implement me")
+}
+
+func (r *TestRepository) GetUserBelongingGroups(userID uuid.UUID) ([]*model.UserGroup, error) {
+	panic("implement me")
+}
+
+func (r *TestRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
+	panic("implement me")
+}
+
+func (r *TestRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
+	panic("implement me")
+}
+
+func (r *TestRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
+	panic("implement me")
+}
+
+func (r *TestRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUID, error) {
+	panic("implement me")
+}
+
 func (r *TestRepository) CreateTag(name string, restricted bool, tagType string) (*model.Tag, error) {
 	r.TagsLock.Lock()
 	defer r.TagsLock.Unlock()

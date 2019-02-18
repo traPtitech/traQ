@@ -41,6 +41,26 @@ const (
 	// 		tag_id: uuid.UUID
 	UserTagRemoved = "user_tag.deleted"
 
+	// UserGroupCreated ユーザーグループが作成された
+	// 	Fields:
+	// 		group_id: uuid.UUID
+	// 		group: *model.UserGroup
+	UserGroupCreated = "user_group.created"
+	// UserGroupDeleted ユーザーグループが削除された
+	// 	Fields:
+	// 		group_id: uuid.UUID
+	UserGroupDeleted = "user_group.deleted"
+	// UserGroupMemberAdded ユーザーがグループに追加された
+	// 	Fields:
+	// 		group_id: uuid.UUID
+	// 		user_id: uuid.UUID
+	UserGroupMemberAdded = "user_group.member.added"
+	// UserGroupMemberRemoved ユーザーがグループから削除された
+	// 	Fields:
+	// 		group_id: uuid.UUID
+	// 		user_id: uuid.UUID
+	UserGroupMemberRemoved = "user_group.member.removed"
+
 	// MessageCreated メッセージが作成された
 	// 	Fields:
 	// 		message_id: uuid.UUID

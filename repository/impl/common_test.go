@@ -200,6 +200,21 @@ func mustMakePin(t *testing.T, repo repository.Repository, messageID, userID uui
 	return p
 }
 
+func mustMakeUserGroup(t *testing.T, repo repository.Repository, name string, adminID uuid.UUID) *model.UserGroup {
+	t.Helper()
+	if name == random {
+		name = utils.RandAlphabetAndNumberString(20)
+	}
+	g, err := repo.CreateUserGroup(name, "", adminID)
+	require.NoError(t, err)
+	return g
+}
+
+func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupID uuid.UUID) {
+	t.Helper()
+	require.NoError(t, repo.AddUserToGroup(userID, groupID))
+}
+
 func count(t *testing.T, where *gorm.DB) int {
 	t.Helper()
 	c := 0
