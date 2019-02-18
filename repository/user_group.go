@@ -20,7 +20,7 @@ type UserGroupRepository interface {
 	DeleteUserGroup(id uuid.UUID) error
 	GetUserGroup(id uuid.UUID) (*model.UserGroup, error)
 	GetUserGroupByName(name string) (*model.UserGroup, error)
-	GetUserBelongingGroups(userID uuid.UUID) ([]*model.UserGroup, error)
+	GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.UUID, error)
 	GetAllUserGroups() ([]*model.UserGroup, error)
 	AddUserToGroup(userID, groupID uuid.UUID) error
 	RemoveUserFromGroup(userID, groupID uuid.UUID) error

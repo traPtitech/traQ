@@ -75,6 +75,13 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 
 		assert.EqualError(t, repo.UpdateUserGroup(g.ID, repository.UpdateUserGroupNameArgs{Name: a}), repository.ErrAlreadyExists.Error())
 	})
+
+	t.Run("too long name", func(t *testing.T) {
+		t.Parallel()
+		g := mustMakeUserGroup(t, repo, random, uuid.Nil)
+
+		assert.Error(t, repo.UpdateUserGroup(g.ID, repository.UpdateUserGroupNameArgs{Name: strings.Repeat("a", 31)}))
+	})
 }
 
 func TestRepositoryImpl_DeleteUserGroup(t *testing.T) {
@@ -183,7 +190,7 @@ func TestRepositoryImpl_GetUserBelongingGroups(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		gs, err := repo.GetUserBelongingGroups(uuid.Nil)
+		gs, err := repo.GetUserBelongingGroupIDs(uuid.Nil)
 		if assert.NoError(t, err) {
 			assert.Empty(t, gs)
 		}
@@ -192,18 +199,18 @@ func TestRepositoryImpl_GetUserBelongingGroups(t *testing.T) {
 	t.Run("success1", func(t *testing.T) {
 		t.Parallel()
 
-		gs, err := repo.GetUserBelongingGroups(user.ID)
+		gs, err := repo.GetUserBelongingGroupIDs(user.ID)
 		if assert.NoError(t, err) {
-			assert.Len(t, gs, 2)
+			assert.ElementsMatch(t, gs, []uuid.UUID{g1.ID, g2.ID})
 		}
 	})
 
 	t.Run("success2", func(t *testing.T) {
 		t.Parallel()
 
-		gs, err := repo.GetUserBelongingGroups(user2.ID)
+		gs, err := repo.GetUserBelongingGroupIDs(user2.ID)
 		if assert.NoError(t, err) {
-			assert.Len(t, gs, 1)
+			assert.ElementsMatch(t, gs, []uuid.UUID{g1.ID})
 		}
 	})
 }
@@ -279,10 +286,15 @@ func TestRepositoryImpl_GetUserGroupMemberIDs(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		ids, err := repo.GetUserGroupMemberIDs(uuid.Nil)
-		if assert.NoError(t, err) {
-			assert.Empty(t, ids)
-		}
+		_, err := repo.GetUserGroupMemberIDs(uuid.Nil)
+		assert.Error(t, err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.GetUserGroupMemberIDs(uuid.NewV4())
+		assert.Error(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("success1", func(t *testing.T) {

@@ -2796,6 +2796,197 @@ paths:
         "400":
           description: リクエスト内容が不正です
 
+  /groups:
+    get:
+      tags:
+        - user group
+      description: 全てのユーザーグループを取得します
+      responses:
+        "200":
+          description: 正常に取得できました
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserGroup"
+    post:
+      tags:
+        - user group
+      description: ユーザーグループを作成します
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  description: グループ名(30文字以内)
+                description:
+                  type: string
+                  description: 説明
+      responses:
+        "201":
+          description: 正常に作成できました
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserGroup"
+        "400":
+          description: 正常に作成できませんでした。リクエスト内容が不正です
+        "409":
+          description: 正常に作成できませんでした。既に存在するグループ名です
+
+  /groups/{groupID}:
+    parameters:
+      - $ref: "#/components/parameters/groupIdInPath"
+    get:
+      tags:
+        - user group
+      description: ユーザーグループを取得します
+      responses:
+        "200":
+          description: 正常に取得できました
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserGroup"
+        "404":
+          description: 正常に取得できませんでした。指定したグループは存在しません。
+    patch:
+      tags:
+        - user group
+      description: ユーザーグループの情報を変更します
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: グループ名(30文字以内)
+                description:
+                  type: string
+                  description: 説明
+                adminUserId:
+                  type: string
+                  format: uuid
+                  description: 管理ユーザー
+      responses:
+        "204":
+          description: 正常に変更できました
+        "400":
+          description: 正常に変更できませんでした。リクエスト内容が不正です
+        "403":
+          description: 正常に変更できませんでした。権限がありません。
+        "404":
+          description: 正常に変更できませんでした。指定したグループは存在しません。
+        "409":
+          description: 正常に変更できませんでした。既に存在するグループ名です
+    delete:
+      tags:
+        - user group
+      description: ユーザーグループを削除します
+      responses:
+        "204":
+          description: 正常に削除できました
+        "403":
+          description: 正常に削除できませんでした。権限がありません。
+        "404":
+          description: 正常に削除できませんでした。指定したグループは存在しません。
+
+  /groups/{groupID}/members:
+    parameters:
+      - $ref: "#/components/parameters/groupIdInPath"
+    get:
+      tags:
+        - user group
+      description: ユーザーグループのメンバーのIDを取得します
+      responses:
+        "200":
+          description: 正常に取得できました
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UUIDs"
+        "404":
+          description: 正常に取得できませんでした。指定したグループは存在しません。
+    post:
+      tags:
+        - user group
+      description: ユーザーグループにメンバーを追加します
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                  description: 追加するユーザーのID
+      responses:
+        "204":
+          description: 正常に追加できました
+        "400":
+          description: 正常に追加できませんでした。リクエスト内容が不正です
+        "403":
+          description: 正常に追加できませんでした。権限がありません。
+        "404":
+          description: 正常に追加できませんでした。指定したグループは存在しません。
+
+  /groups/{groupID}/members/{userID}:
+    parameters:
+      - $ref: "#/components/parameters/groupIdInPath"
+      - $ref: "#/components/parameters/userIdInPath"
+    delete:
+      tags:
+        - user group
+      description: ユーザーグループからメンバーを削除します
+      responses:
+        "204":
+          description: 正常に削除できました
+        "400":
+          description: 正常に追加できませんでした。リクエスト内容が不正です
+        "403":
+          description: 正常に削除できませんでした。権限がありません。
+        "404":
+          description: 正常に削除できませんでした。指定したグループは存在しません。
+
+  /users/me/groups:
+    get:
+      tags:
+        - user group
+      description: 所属するユーザーグループのIDを取得します
+      responses:
+        "200":
+          description: 正常に取得できました
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UUIDs"
+
+  /users/{userID}/groups:
+    get:
+      tags:
+        - user group
+      description: 所属するユーザーグループのIDを取得します
+      responses:
+        "200":
+          description: 正常に取得できました
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UUIDs"
+        "404":
+          description: 正常に取得できませんでした。指定したユーザーは存在しません。
+
 components:
   parameters:
     channelIdInPath:
@@ -2809,6 +3000,14 @@ components:
     userIdInPath:
       name: userID
       description: 操作の対象となるユーザーID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    groupIdInPath:
+      name: groupID
+      description: 操作の対象となるユーザーグループID
       in: path
       required: true
       schema:
@@ -2893,6 +3092,12 @@ components:
         format: uuid
 
   schemas:
+    UUIDs:
+      type: array
+      items:
+        type: string
+        format: uuid
+
     Channel:
       type: object
       properties:
@@ -2992,6 +3197,22 @@ components:
           description: 現在オンラインかどうか
         tagList:
           $ref: "#/components/schemas/TagList"
+
+    UserGroup:
+      type: object
+      properties:
+        groupId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        adminUserId:
+          type: string
+          format: uuid
+        members:
+          $ref: "#/components/schemas/UUIDs"
 
     Tag:
       type: object

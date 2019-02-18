@@ -158,6 +158,18 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	// Tag: activity
 	api.GET("/activity/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
 
+	// Tag: user group
+	api.GET("/groups", h.GetUserGroups)
+	api.POST("/groups", h.PostUserGroups)
+	api.GET("/groups/:groupID", h.GetUserGroup)
+	api.PATCH("/groups/:groupID", h.PatchUserGroup)
+	api.DELETE("/groups/:groupID", h.DeleteUserGroup)
+	api.GET("/groups/:groupID/members", h.GetUserGroupMembers)
+	api.POST("/groups/:groupID/members", h.PostUserGroupMembers)
+	api.DELETE("/groups/:groupID/members/:userID", h.DeleteUserGroupMembers)
+	api.GET("/users/me/groups", h.GetMyBelongingGroup)
+	api.GET("/users/:userID/groups", h.GetUserBelongingGroup)
+
 	if oauth != nil {
 		// Tag: bot
 		api.GET("/bots", notImplemented, requires(permission.GetBot))

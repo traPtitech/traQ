@@ -35,6 +35,10 @@ type TestRepository struct {
 	FS                        storage.FileStorage
 	Users                     map[uuid.UUID]model.User
 	UsersLock                 sync.RWMutex
+	UserGroups                map[uuid.UUID]model.UserGroup
+	UserGroupsLock            sync.RWMutex
+	UserGroupMembers          map[uuid.UUID]map[uuid.UUID]bool
+	UserGroupMembersLock      sync.RWMutex
 	Tags                      map[uuid.UUID]model.Tag
 	TagsLock                  sync.RWMutex
 	UserTags                  map[uuid.UUID]map[uuid.UUID]model.UsersTag
@@ -65,6 +69,8 @@ func NewTestRepository() *TestRepository {
 	r := &TestRepository{
 		FS:                    storage.NewInMemoryFileStorage(),
 		Users:                 make(map[uuid.UUID]model.User),
+		UserGroups:            make(map[uuid.UUID]model.UserGroup),
+		UserGroupMembers:      make(map[uuid.UUID]map[uuid.UUID]bool),
 		Tags:                  make(map[uuid.UUID]model.Tag),
 		UserTags:              make(map[uuid.UUID]map[uuid.UUID]model.UsersTag),
 		Channels:              make(map[uuid.UUID]model.Channel),
@@ -274,43 +280,178 @@ func (r *TestRepository) UpdateHeartbeatStatus(userID, channelID uuid.UUID, stat
 }
 
 func (r *TestRepository) CreateUserGroup(name, description string, adminID uuid.UUID) (*model.UserGroup, error) {
-	panic("implement me")
+	g := model.UserGroup{
+		ID:          uuid.NewV4(),
+		Name:        name,
+		Description: description,
+		AdminUserID: adminID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	if err := g.Validate(); err != nil {
+		return nil, err
+	}
+
+	r.UserGroupsLock.Lock()
+	defer r.UserGroupsLock.Unlock()
+	for _, v := range r.UserGroups {
+		if v.Name == name {
+			return nil, repository.ErrAlreadyExists
+		}
+	}
+	r.UserGroups[g.ID] = g
+	return &g, nil
 }
 
 func (r *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.UpdateUserGroupNameArgs) error {
-	panic("implement me")
+	if id == uuid.Nil {
+		return repository.ErrNilID
+	}
+
+	r.UserGroupsLock.Lock()
+	defer r.UserGroupsLock.Unlock()
+	g, ok := r.UserGroups[id]
+	if !ok {
+		return repository.ErrNotFound
+	}
+	if len(args.Name) > 0 {
+		for _, v := range r.UserGroups {
+			if v.Name == args.Name {
+				return repository.ErrAlreadyExists
+			}
+		}
+		g.Name = args.Name
+	}
+	if args.Description.Valid {
+		g.Description = args.Description.String
+	}
+	if args.AdminUserID.Valid {
+		g.AdminUserID = args.AdminUserID.UUID
+	}
+	if err := g.Validate(); err != nil {
+		return err
+	}
+	r.UserGroups[id] = g
+	return nil
 }
 
 func (r *TestRepository) DeleteUserGroup(id uuid.UUID) error {
-	panic("implement me")
+	if id == uuid.Nil {
+		return repository.ErrNilID
+	}
+	r.UserGroupsLock.Lock()
+	defer r.UserGroupsLock.Unlock()
+	r.UserGroupMembersLock.Lock()
+	defer r.UserGroupMembersLock.Unlock()
+	if _, ok := r.UserGroups[id]; !ok {
+		return repository.ErrNotFound
+	}
+	delete(r.UserGroups, id)
+	delete(r.UserGroupMembers, id)
+	return nil
 }
 
 func (r *TestRepository) GetUserGroup(id uuid.UUID) (*model.UserGroup, error) {
-	panic("implement me")
+	if id == uuid.Nil {
+		return nil, repository.ErrNotFound
+	}
+	r.UserGroupsLock.RLock()
+	g, ok := r.UserGroups[id]
+	r.UserGroupsLock.RUnlock()
+	if !ok {
+		return nil, repository.ErrNotFound
+	}
+	return &g, nil
 }
 
 func (r *TestRepository) GetUserGroupByName(name string) (*model.UserGroup, error) {
-	panic("implement me")
+	if len(name) == 0 {
+		return nil, repository.ErrNotFound
+	}
+	r.UserGroupsLock.RLock()
+	defer r.UserGroupsLock.RUnlock()
+	for _, v := range r.UserGroups {
+		if v.Name == name {
+			return &v, nil
+		}
+	}
+	return nil, repository.ErrNotFound
 }
 
-func (r *TestRepository) GetUserBelongingGroups(userID uuid.UUID) ([]*model.UserGroup, error) {
-	panic("implement me")
+func (r *TestRepository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.UUID, error) {
+	groups := make([]uuid.UUID, 0)
+	if userID == uuid.Nil {
+		return groups, nil
+	}
+	r.UserGroupMembersLock.RLock()
+	for gid, users := range r.UserGroupMembers {
+		for uid := range users {
+			if uid == userID {
+				groups = append(groups, gid)
+				break
+			}
+		}
+	}
+	r.UserGroupMembersLock.RUnlock()
+	return groups, nil
 }
 
 func (r *TestRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
-	panic("implement me")
+	groups := make([]*model.UserGroup, 0)
+	r.UserGroupsLock.RLock()
+	for _, v := range r.UserGroups {
+		v := v
+		groups = append(groups, &v)
+	}
+	r.UserGroupsLock.RUnlock()
+	return groups, nil
 }
 
 func (r *TestRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
-	panic("implement me")
+	if userID == uuid.Nil || groupID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	r.UserGroupMembersLock.Lock()
+	users, ok := r.UserGroupMembers[groupID]
+	if !ok {
+		users = make(map[uuid.UUID]bool)
+		r.UserGroupMembers[groupID] = users
+	}
+	users[userID] = true
+	r.UserGroupMembersLock.Unlock()
+	return nil
 }
 
 func (r *TestRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
-	panic("implement me")
+	if userID == uuid.Nil || groupID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	r.UserGroupMembersLock.Lock()
+	users, ok := r.UserGroupMembers[groupID]
+	if ok {
+		delete(users, userID)
+	}
+	r.UserGroupMembersLock.Unlock()
+	return nil
 }
 
 func (r *TestRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUID, error) {
-	panic("implement me")
+	ids := make([]uuid.UUID, 0)
+	if groupID == uuid.Nil {
+		return ids, repository.ErrNotFound
+	}
+	r.UserGroupsLock.RLock()
+	_, ok := r.UserGroups[groupID]
+	r.UserGroupsLock.RUnlock()
+	if !ok {
+		return ids, repository.ErrNotFound
+	}
+	r.UserGroupMembersLock.RLock()
+	for uid := range r.UserGroupMembers[groupID] {
+		ids = append(ids, uid)
+	}
+	r.UserGroupMembersLock.RUnlock()
+	return ids, nil
 }
 
 func (r *TestRepository) CreateTag(name string, restricted bool, tagType string) (*model.Tag, error) {

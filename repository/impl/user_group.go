@@ -17,6 +17,9 @@ func (repo *RepositoryImpl) CreateUserGroup(name, description string, adminID uu
 		Description: description,
 		AdminUserID: adminID,
 	}
+	if err := g.Validate(); err != nil {
+		return nil, err
+	}
 	err := repo.transact(func(tx *gorm.DB) error {
 		err := tx.Create(g).Error
 		if isMySQLDuplicatedRecordErr(err) {
@@ -58,6 +61,10 @@ func (repo *RepositoryImpl) UpdateUserGroup(id uuid.UUID, args repository.Update
 		}
 		if args.AdminUserID.Valid {
 			g.AdminUserID = args.AdminUserID.UUID
+		}
+
+		if err := g.Validate(); err != nil {
+			return err
 		}
 
 		err := tx.Save(&g).Error
@@ -129,19 +136,16 @@ func (repo *RepositoryImpl) GetUserGroupByName(name string) (*model.UserGroup, e
 	return &g, nil
 }
 
-// GetUserBelongingGroups ユーザーが所属しているグループを取得します
-func (repo *RepositoryImpl) GetUserBelongingGroups(userID uuid.UUID) ([]*model.UserGroup, error) {
-	groups := make([]*model.UserGroup, 0)
+// GetUserBelongingGroupIDs ユーザーが所属しているグループのUUIDを取得します
+func (repo *RepositoryImpl) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.UUID, error) {
+	groups := make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
 		return groups, nil
 	}
 	err := repo.db.
-		Where("id IN (?)", repo.db.
-			Model(&model.UserGroupMember{}).
-			Select("group_id").
-			Where(&model.UserGroupMember{UserID: userID}).
-			QueryExpr()).
-		Find(&groups).
+		Model(&model.UserGroupMember{}).
+		Where(&model.UserGroupMember{UserID: userID}).
+		Pluck("group_id", &groups).
 		Error
 	return groups, err
 }
@@ -197,12 +201,21 @@ func (repo *RepositoryImpl) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 func (repo *RepositoryImpl) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUID, error) {
 	ids := make([]uuid.UUID, 0)
 	if groupID == uuid.Nil {
-		return ids, nil
+		return ids, repository.ErrNotFound
 	}
-	err := repo.db.
-		Model(&model.UserGroupMember{}).
-		Where(&model.UserGroupMember{GroupID: groupID}).
-		Pluck("user_id", &ids).
-		Error
+	err := repo.transact(func(tx *gorm.DB) error {
+		c := 0
+		if err := tx.Model(&model.UserGroup{ID: groupID}).Limit(1).Count(&c).Error; err != nil {
+			return err
+		}
+		if c == 0 {
+			return repository.ErrNotFound
+		}
+		return tx.
+			Model(&model.UserGroupMember{}).
+			Where(&model.UserGroupMember{GroupID: groupID}).
+			Pluck("user_id", &ids).
+			Error
+	})
 	return ids, err
 }
