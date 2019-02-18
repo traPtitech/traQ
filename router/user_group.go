@@ -12,7 +12,7 @@ type userGroupResponse struct {
 	GroupID     uuid.UUID   `json:"groupId"`
 	Name        string      `json:"name"`
 	Description string      `json:"description"`
-	AdminUserId uuid.UUID   `json:"adminUserId"`
+	AdminUserID uuid.UUID   `json:"adminUserId"`
 	Members     []uuid.UUID `json:"members"`
 }
 
@@ -323,7 +323,7 @@ func (h *Handlers) formatUserGroup(g *model.UserGroup) (r *userGroupResponse, er
 		GroupID:     g.ID,
 		Name:        g.Name,
 		Description: g.Description,
-		AdminUserId: g.AdminUserID,
+		AdminUserID: g.AdminUserID,
 	}
 	r.Members, err = h.Repo.GetUserGroupMemberIDs(g.ID)
 	return
