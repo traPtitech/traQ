@@ -230,9 +230,7 @@ func TestHandlers_DeleteUserGroup(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common5)
 
-	user2 := mustMakeUser(t, repo, random)
 	g := mustMakeUserGroup(t, repo, random, user.ID)
-	mustAddUserToGroup(t, repo, user.ID, g.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -253,6 +251,7 @@ func TestHandlers_DeleteUserGroup(t *testing.T) {
 
 	t.Run("forbidden", func(t *testing.T) {
 		t.Parallel()
+		user2 := mustMakeUser(t, repo, random)
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/groups/{groupID}", g.ID.String()).
 			WithCookie(sessions.CookieName, generateSession(t, user2.ID)).
@@ -262,6 +261,7 @@ func TestHandlers_DeleteUserGroup(t *testing.T) {
 
 	t.Run("ok", func(t *testing.T) {
 		t.Parallel()
+		g := mustMakeUserGroup(t, repo, random, user.ID)
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/groups/{groupID}", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
