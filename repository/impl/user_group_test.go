@@ -64,7 +64,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NoError(t, repo.UpdateUserGroup(uuid.NewV4(), repository.UpdateUserGroupNameArgs{}))
+		assert.EqualError(t, repo.UpdateUserGroup(uuid.NewV4(), repository.UpdateUserGroupNameArgs{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("duplicate", func(t *testing.T) {
