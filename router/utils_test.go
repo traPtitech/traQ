@@ -29,6 +29,7 @@ const (
 	common2 = "common2"
 	common3 = "common3"
 	common4 = "common4"
+	common5 = "common5"
 	s1      = "s1"
 	s2      = "s2"
 )
@@ -45,6 +46,7 @@ func TestMain(m *testing.M) {
 		common2,
 		common3,
 		common4,
+		common5,
 		s1,
 		s2,
 	}
@@ -212,4 +214,19 @@ func mustMakeTag(t *testing.T, repo repository.Repository, userID uuid.UUID, tag
 func mustStarChannel(t *testing.T, repo repository.Repository, userID, channelID uuid.UUID) {
 	t.Helper()
 	require.NoError(t, repo.AddStar(userID, channelID))
+}
+
+func mustMakeUserGroup(t *testing.T, repo repository.Repository, name string, adminID uuid.UUID) *model.UserGroup {
+	t.Helper()
+	if name == random {
+		name = utils.RandAlphabetAndNumberString(20)
+	}
+	g, err := repo.CreateUserGroup(name, "", adminID)
+	require.NoError(t, err)
+	return g
+}
+
+func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupID uuid.UUID) {
+	t.Helper()
+	require.NoError(t, repo.AddUserToGroup(userID, groupID))
 }

@@ -212,6 +212,10 @@ func (s *SSEStreamer) setupSubscriber(h *hub.Hub) {
 		event.UserTagAdded,
 		event.UserTagUpdated,
 		event.UserTagRemoved,
+		event.UserGroupCreated,
+		event.UserGroupDeleted,
+		event.UserGroupMemberAdded,
+		event.UserGroupMemberRemoved,
 		event.StampCreated,
 		event.StampUpdated,
 		event.StampDeleted,
@@ -576,6 +580,36 @@ func (s *SSEStreamer) processBroadcastEvent(ev hub.Message) {
 			EventType: "USER_TAGS_UPDATED",
 			Payload: Payload{
 				"id": ev.Fields["user_id"].(uuid.UUID),
+			},
+		}
+	case event.UserGroupCreated:
+		ed = &eventData{
+			EventType: "USER_GROUP_CREATED",
+			Payload: Payload{
+				"id": ev.Fields["group_id"].(uuid.UUID),
+			},
+		}
+	case event.UserGroupDeleted:
+		ed = &eventData{
+			EventType: "USER_GROUP_DELETED",
+			Payload: Payload{
+				"id": ev.Fields["group_id"].(uuid.UUID),
+			},
+		}
+	case event.UserGroupMemberAdded:
+		ed = &eventData{
+			EventType: "USER_GROUP_MEMBER_ADDED",
+			Payload: Payload{
+				"id":      ev.Fields["group_id"].(uuid.UUID),
+				"user_id": ev.Fields["user_id"].(uuid.UUID),
+			},
+		}
+	case event.UserGroupMemberRemoved:
+		ed = &eventData{
+			EventType: "USER_GROUP_MEMBER_REMOVED",
+			Payload: Payload{
+				"id":      ev.Fields["group_id"].(uuid.UUID),
+				"user_id": ev.Fields["user_id"].(uuid.UUID),
 			},
 		}
 	case event.StampCreated:

@@ -38,6 +38,7 @@ const (
 	paramChannelID   = "channelID"
 	paramPinID       = "pinID"
 	paramUserID      = "userID"
+	paramGroupID     = "groupID"
 	paramTagID       = "tagID"
 	paramStampID     = "stampID"
 	paramMessageID   = "messageID"

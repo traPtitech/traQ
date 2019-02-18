@@ -4,6 +4,7 @@ package repository
 type Repository interface {
 	Sync() (bool, error)
 	UserRepository
+	UserGroupRepository
 	TagRepository
 	ChannelRepository
 	MessageRepository

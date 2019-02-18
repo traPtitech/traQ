@@ -25,6 +25,8 @@ var (
 		&ArchivedMessage{},
 		&Message{},
 		&Channel{},
+		&UserGroupMember{},
+		&UserGroup{},
 		&User{},
 	}
 
