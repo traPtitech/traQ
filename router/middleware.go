@@ -141,22 +141,201 @@ func RequestBodyLengthLimit(kb int64) echo.MiddlewareFunc {
 }
 
 // ValidateGroupID 'groupID'パラメータのグループを検証するミドルウェア
-func (h *Handlers) ValidateGroupID(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		groupID := getRequestParamAsUUID(c, paramGroupID)
+func (h *Handlers) ValidateGroupID() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			groupID := getRequestParamAsUUID(c, paramGroupID)
 
-		g, err := h.Repo.GetUserGroup(groupID)
-		if err != nil {
-			switch err {
-			case repository.ErrNotFound:
-				return c.NoContent(http.StatusNotFound)
-			default:
+			g, err := h.Repo.GetUserGroup(groupID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return c.NoContent(http.StatusNotFound)
+				default:
+					c.Logger().Error(err)
+					return c.NoContent(http.StatusInternalServerError)
+				}
+			}
+
+			c.Set("paramGroup", g)
+			return next(c)
+		}
+	}
+}
+
+func getGroupFromContext(c echo.Context) *model.UserGroup {
+	return c.Get("paramGroup").(*model.UserGroup)
+}
+
+// ValidateStampID 'stampID'パラメータのスタンプを検証するミドルウェア
+func (h *Handlers) ValidateStampID(existenceCheckOnly bool) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			stampID := getRequestParamAsUUID(c, paramStampID)
+
+			if existenceCheckOnly {
+				if ok, err := h.Repo.StampExists(stampID); err != nil {
+					c.Logger().Error(err)
+					return c.NoContent(http.StatusInternalServerError)
+				} else if !ok {
+					return c.NoContent(http.StatusNotFound)
+				}
+				return next(c)
+			}
+
+			s, err := h.Repo.GetStamp(stampID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return c.NoContent(http.StatusNotFound)
+				default:
+					c.Logger().Error(err)
+					return c.NoContent(http.StatusInternalServerError)
+				}
+			}
+
+			c.Set("paramStamp", s)
+			return next(c)
+		}
+	}
+}
+
+func getStampFromContext(c echo.Context) *model.Stamp {
+	return c.Get("paramStamp").(*model.Stamp)
+}
+
+// ValidateMessageID 'messageID'パラメータのメッセージを検証するミドルウェア
+func (h *Handlers) ValidateMessageID() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			messageID := getRequestParamAsUUID(c, paramMessageID)
+			userID := getRequestUserID(c)
+
+			m, err := h.Repo.GetMessageByID(messageID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return c.NoContent(http.StatusNotFound)
+				default:
+					c.Logger().Error(err)
+					return c.NoContent(http.StatusInternalServerError)
+				}
+			}
+
+			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
 				c.Logger().Error(err)
 				return c.NoContent(http.StatusInternalServerError)
+			} else if !ok {
+				return c.NoContent(http.StatusNotFound)
 			}
-		}
-		c.Set("paramGroup", g)
 
-		return next(c)
+			c.Set("paramMessage", m)
+			return next(c)
+		}
 	}
+}
+
+func getMessageFromContext(c echo.Context) *model.Message {
+	return c.Get("paramMessage").(*model.Message)
+}
+
+// ValidatePinID 'pinID'パラメータのピンを検証するミドルウェア
+func (h *Handlers) ValidatePinID() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			userID := getRequestUserID(c)
+			pinID := getRequestParamAsUUID(c, paramPinID)
+
+			pin, err := h.Repo.GetPin(pinID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return c.NoContent(http.StatusNotFound)
+				default:
+					c.Logger().Error(err)
+					return c.NoContent(http.StatusInternalServerError)
+				}
+			}
+
+			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, pin.Message.ChannelID); err != nil {
+				c.Logger().Error(err)
+				return c.NoContent(http.StatusInternalServerError)
+			} else if !ok {
+				return c.NoContent(http.StatusNotFound)
+			}
+
+			c.Set("paramPin", pin)
+			return next(c)
+		}
+	}
+}
+
+func getPinFromContext(c echo.Context) *model.Pin {
+	return c.Get("paramPin").(*model.Pin)
+}
+
+// ValidateClipID 'clipID'パラメータのクリップを検証するミドルウェア
+func (h *Handlers) ValidateClipID() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			userID := getRequestUserID(c)
+			clipID := getRequestParamAsUUID(c, paramClipID)
+
+			clip, err := h.Repo.GetClipMessage(clipID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return c.NoContent(http.StatusNotFound)
+				default:
+					c.Logger().Error(err)
+					return c.NoContent(http.StatusInternalServerError)
+				}
+			}
+
+			// クリップがリクエストユーザーのものかを確認
+			if clip.UserID != userID {
+				return c.NoContent(http.StatusNotFound)
+			}
+
+			c.Set("paramClip", clip)
+			return next(c)
+		}
+	}
+}
+
+func getClipFromContext(c echo.Context) *model.Clip {
+	return c.Get("paramClip").(*model.Clip)
+}
+
+// ValidateClipFolderID 'folderID'パラメータのクリップフォルダを検証するミドルウェア
+func (h *Handlers) ValidateClipFolderID() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			userID := getRequestUserID(c)
+			folderID := getRequestParamAsUUID(c, paramFolderID)
+
+			folder, err := h.Repo.GetClipFolder(folderID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return c.NoContent(http.StatusNotFound)
+				default:
+					c.Logger().Error(err)
+					return c.NoContent(http.StatusInternalServerError)
+				}
+			}
+
+			// フォルダがリクエストユーザーのものかを確認
+			if folder.UserID != userID {
+				return c.NoContent(http.StatusNotFound)
+			}
+
+			c.Set("paramClipFolder", folder)
+			return next(c)
+		}
+	}
+}
+
+func getClipFolderFromContext(c echo.Context) *model.ClipFolder {
+	return c.Get("paramClipFolder").(*model.ClipFolder)
 }

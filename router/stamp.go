@@ -4,7 +4,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/permission"
-	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
 )
@@ -60,19 +59,7 @@ func (h *Handlers) PostStamp(c echo.Context) error {
 
 // GetStamp GET /stamps/:stampID
 func (h *Handlers) GetStamp(c echo.Context) error {
-	stampID := getRequestParamAsUUID(c, paramStampID)
-
-	stamp, err := h.Repo.GetStamp(stampID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
+	stamp := getStampFromContext(c)
 	return c.JSON(http.StatusOK, stamp)
 }
 
@@ -80,19 +67,8 @@ func (h *Handlers) GetStamp(c echo.Context) error {
 func (h *Handlers) PatchStamp(c echo.Context) error {
 	user := getRequestUser(c)
 	stampID := getRequestParamAsUUID(c, paramStampID)
+	stamp := getStampFromContext(c)
 	r := getRBAC(c)
-
-	// スタンプの存在確認
-	stamp, err := h.Repo.GetStamp(stampID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
 
 	// ユーザー確認
 	if stamp.CreatorID != user.ID && !r.IsGranted(user.ID, user.Role, permission.EditStampCreatedByOthers) {
@@ -146,16 +122,6 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 func (h *Handlers) DeleteStamp(c echo.Context) error {
 	stampID := getRequestParamAsUUID(c, paramStampID)
 
-	if _, err := h.Repo.GetStamp(stampID); err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
 	if err := h.Repo.DeleteStamp(stampID); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -166,28 +132,7 @@ func (h *Handlers) DeleteStamp(c echo.Context) error {
 
 // GetMessageStamps GET /messages/:messageID/stamps
 func (h *Handlers) GetMessageStamps(c echo.Context) error {
-	userID := getRequestUserID(c)
 	messageID := getRequestParamAsUUID(c, paramMessageID)
-
-	// メッセージ存在の確認
-	message, err := h.Repo.GetMessageByID(messageID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
-	// ユーザーからアクセス可能なチャンネルかどうか
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, message.ChannelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
 
 	stamps, err := h.Repo.GetMessageStamps(messageID)
 	if err != nil {
@@ -204,35 +149,6 @@ func (h *Handlers) PostMessageStamp(c echo.Context) error {
 	messageID := getRequestParamAsUUID(c, paramMessageID)
 	stampID := getRequestParamAsUUID(c, paramStampID)
 
-	// メッセージ存在の確認
-	message, err := h.Repo.GetMessageByID(messageID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-	channelID := message.ChannelID
-
-	// ユーザーからアクセス可能なチャンネルかどうか
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
-	// スタンプの存在を確認
-	if ok, err := h.Repo.StampExists(stampID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
 	// スタンプをメッセージに押す
 	if _, err := h.Repo.AddStampToMessage(messageID, stampID, userID); err != nil {
 		c.Logger().Error(err)
@@ -247,35 +163,6 @@ func (h *Handlers) DeleteMessageStamp(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getRequestParamAsUUID(c, paramMessageID)
 	stampID := getRequestParamAsUUID(c, paramStampID)
-
-	// メッセージ存在の確認
-	message, err := h.Repo.GetMessageByID(messageID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-	channelID := message.ChannelID
-
-	// ユーザーからアクセス可能なチャンネルかどうか
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
-	// スタンプの存在を確認
-	if ok, err := h.Repo.StampExists(stampID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
 
 	// スタンプをメッセージから削除
 	if err := h.Repo.RemoveStampFromMessage(messageID, stampID, userID); err != nil {

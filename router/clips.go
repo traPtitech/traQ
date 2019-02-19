@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
-	"github.com/traPtitech/traQ/model"
 )
 
 // GetClips GET /users/me/clips
@@ -117,25 +116,13 @@ func (h *Handlers) PostClip(c echo.Context) error {
 
 // GetClip GET /users/me/clips/:clipID
 func (h *Handlers) GetClip(c echo.Context) error {
-	clipID := getRequestParamAsUUID(c, paramClipID)
-
-	// クリップ取得
-	clip, err := h.getClip(c, clipID, true)
-	if err != nil {
-		return err
-	}
-
+	clip := getClipFromContext(c)
 	return c.JSON(http.StatusOK, h.formatMessage(&clip.Message))
 }
 
 // DeleteClip DELETE /users/me/clips/:clipID
 func (h *Handlers) DeleteClip(c echo.Context) error {
 	clipID := getRequestParamAsUUID(c, paramClipID)
-
-	// クリップ取得
-	if _, err := h.getClip(c, clipID, true); err != nil {
-		return err
-	}
 
 	// クリップ削除
 	if err := h.Repo.DeleteClip(clipID); err != nil {
@@ -148,18 +135,18 @@ func (h *Handlers) DeleteClip(c echo.Context) error {
 
 // GetClipsFolder GET /users/me/clips/:clipID/folder
 func (h *Handlers) GetClipsFolder(c echo.Context) error {
-	clipID := getRequestParamAsUUID(c, paramClipID)
+	clip := getClipFromContext(c)
 
-	// クリップ取得
-	clip, err := h.getClip(c, clipID, true)
+	// フォルダ取得
+	folder, err := h.Repo.GetClipFolder(clip.FolderID)
 	if err != nil {
-		return err
-	}
-
-	// クリップのフォルダを取得
-	folder, err := h.getClipFolder(c, clip.FolderID, false)
-	if err != nil {
-		return err
+		switch err {
+		case repository.ErrNotFound:
+			return c.NoContent(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
 	}
 
 	return c.JSON(http.StatusOK, folder)
@@ -176,11 +163,6 @@ func (h *Handlers) PutClipsFolder(c echo.Context) error {
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	// クリップ取得
-	if _, err := h.getClip(c, clipID, true); err != nil {
-		return err
 	}
 
 	// 変更先のクリップのフォルダを取得
@@ -250,18 +232,12 @@ func (h *Handlers) PostClipFolder(c echo.Context) error {
 
 // GetClipFolder GET /users/me/clips/folders/:folderID
 func (h *Handlers) GetClipFolder(c echo.Context) error {
+	folder := getClipFolderFromContext(c)
+
 	type clipMessageForResponse struct {
 		ClipID    uuid.UUID           `json:"clipId"`
 		ClippedAt time.Time           `json:"clippedAt"`
 		Message   *MessageForResponse `json:"message"`
-	}
-
-	folderID := getRequestParamAsUUID(c, paramFolderID)
-
-	// フォルダ取得
-	folder, err := h.getClipFolder(c, folderID, true)
-	if err != nil {
-		return err
 	}
 
 	// クリップ取得
@@ -296,11 +272,6 @@ func (h *Handlers) PatchClipFolder(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	// フォルダ取得
-	if _, err := h.getClipFolder(c, folderID, true); err != nil {
-		return err
-	}
-
 	// フォルダ更新
 	if err := h.Repo.UpdateClipFolderName(folderID, req.Name); err != nil {
 		if isMySQLDuplicatedRecordErr(err) {
@@ -318,11 +289,6 @@ func (h *Handlers) PatchClipFolder(c echo.Context) error {
 func (h *Handlers) DeleteClipFolder(c echo.Context) error {
 	folderID := getRequestParamAsUUID(c, paramFolderID)
 
-	// フォルダ取得
-	if _, err := h.getClipFolder(c, folderID, true); err != nil {
-		return err
-	}
-
 	// フォルダ削除
 	if err := h.Repo.DeleteClipFolder(folderID); err != nil {
 		c.Logger().Error(err)
@@ -330,44 +296,4 @@ func (h *Handlers) DeleteClipFolder(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
-}
-
-func (h *Handlers) getClip(c echo.Context, clipID uuid.UUID, restrict bool) (*model.Clip, error) {
-	userID := getRequestUserID(c)
-	// クリップ取得
-	clip, err := h.Repo.GetClipMessage(clipID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return nil, echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return nil, echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-	// クリップがリクエストユーザーのものかを確認
-	if restrict && clip.UserID != userID {
-		return nil, echo.NewHTTPError(http.StatusNotFound)
-	}
-	return clip, nil
-}
-
-func (h *Handlers) getClipFolder(c echo.Context, folderID uuid.UUID, restrict bool) (*model.ClipFolder, error) {
-	userID := getRequestUserID(c)
-	// フォルダ取得
-	folder, err := h.Repo.GetClipFolder(folderID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return nil, echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return nil, echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-	// フォルダがリクエストユーザーのものかを確認
-	if restrict && folder.UserID != userID {
-		return nil, echo.NewHTTPError(http.StatusNotFound)
-	}
-	return folder, nil
 }

@@ -19,167 +19,228 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		AllowCredentials: true,
 	}))
 
-	api := e.Group("/api/1.0")
-	api.Use(h.UserAuthenticate(oauth))
-	apiNoAuth := e.Group("/api/1.0")
-
 	// middleware preparation
 	requires := AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := RequestBodyLengthLimit
 
-	// login/logout
-	apiNoAuth.POST("/login", h.PostLogin)
-	apiNoAuth.POST("/logout", PostLogout)
-
-	// Tag: public
-	apiNoAuth.GET("/public/icon/:username", h.GetPublicUserIcon)
-
-	// Tag: channel
-	api.GET("/channels", h.GetChannels, requires(permission.GetChannel))
-	api.POST("/channels", h.PostChannels, requires(permission.CreateChannel))
-	api.GET("/channels/:channelID", h.GetChannelByChannelID, requires(permission.GetChannel))
-	api.PATCH("/channels/:channelID", h.PatchChannelByChannelID, requires(permission.EditChannel))
-	api.DELETE("/channels/:channelID", h.DeleteChannelByChannelID, requires(permission.DeleteChannel))
-	api.PUT("/channels/:channelID/parent", h.PutChannelParent, requires(permission.ChangeParentChannel))
-	api.POST("/channels/:channelID/children", h.PostChannelChildren, requires(permission.CreateChannel))
-
-	// Tag: Topic
-	api.GET("/channels/:channelID/topic", h.GetTopic, requires(permission.GetTopic))
-	api.PUT("/channels/:channelID/topic", h.PutTopic, requires(permission.EditTopic))
-
-	// Tag: messages
-	api.GET("/messages/:messageID", h.GetMessageByID, requires(permission.GetMessage))
-	api.PUT("/messages/:messageID", h.PutMessageByID, bodyLimit(100), requires(permission.EditMessage))
-	api.DELETE("/messages/:messageID", h.DeleteMessageByID, requires(permission.DeleteMessage))
-	api.POST("/messages/:messageID/report", h.PostMessageReport, requires(permission.ReportMessage))
-	api.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports))
-	api.GET("/channels/:channelID/messages", h.GetMessagesByChannelID, requires(permission.GetMessage))
-	api.POST("/channels/:channelID/messages", h.PostMessage, bodyLimit(100), requires(permission.PostMessage))
-	api.GET("/users/:userID/messages", h.GetDirectMessages, requires(permission.GetMessage))
-	api.POST("/users/:userID/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
-
-	// Tag: users
-	api.GET("/users", h.GetUsers, requires(permission.GetUser))
-	api.POST("/users", h.PostUsers, requires(permission.RegisterUser))
-	api.GET("/users/me", h.GetMe, requires(permission.GetMe))
-	api.PATCH("/users/me", h.PatchMe, requires(permission.EditMe))
-	api.PUT("/users/me/password", h.PutPassword, requires(permission.ChangeMyPassword))
-	api.GET("/users/me/icon", h.GetMyIcon, requires(permission.DownloadFile))
-	api.PUT("/users/me/icon", h.PutMyIcon, requires(permission.ChangeMyIcon))
-	api.GET("/users/:userID", h.GetUserByID, requires(permission.GetUser))
-	api.GET("/users/:userID/icon", h.GetUserIcon, requires(permission.DownloadFile))
-
-	// Tag: sessions
-	api.GET("/users/me/sessions", GetMySessions, requires(permission.GetMySessions))
-	api.DELETE("/users/me/sessions", DeleteAllMySessions, requires(permission.DeleteMySessions))
-	api.DELETE("/users/me/sessions/:referenceID", DeleteMySession, requires(permission.DeleteMySessions))
-
-	// Tag: clips
-	api.GET("/users/me/clips", h.GetClips, requires(permission.GetClip))
-	api.POST("/users/me/clips", h.PostClip, requires(permission.CreateClip))
-	api.GET("/users/me/clips/:clipID", h.GetClip, requires(permission.GetClip))
-	api.DELETE("/users/me/clips/:clipID", h.DeleteClip, requires(permission.DeleteClip))
-	api.GET("/users/me/clips/:clipID/folder", h.GetClipsFolder, requires(permission.GetClip, permission.GetClipFolder))
-	api.PUT("/users/me/clips/:clipID/folder", h.PutClipsFolder, requires(permission.CreateClip))
-	api.GET("/users/me/clips/folders", h.GetClipFolders, requires(permission.GetClipFolder))
-	api.POST("/users/me/clips/folders", h.PostClipFolder, requires(permission.CreateClipFolder))
-	api.GET("/users/me/clips/folders/:folderID", h.GetClipFolder, requires(permission.GetClip, permission.GetClipFolder))
-	api.PATCH("/users/me/clips/folders/:folderID", h.PatchClipFolder, requires(permission.PatchClipFolder))
-	api.DELETE("/users/me/clips/folders/:folderID", h.DeleteClipFolder, requires(permission.DeleteClipFolder))
-
-	// Tag: star
-	api.GET("/users/me/stars", h.GetStars, requires(permission.GetStar))
-	api.PUT("/users/me/stars/:channelID", h.PutStars, requires(permission.CreateStar))
-	api.DELETE("/users/me/stars/:channelID", h.DeleteStars, requires(permission.DeleteStar))
-
-	// Tag: unread
-	api.GET("/users/me/unread", h.GetUnread, requires(permission.GetUnread))
-	api.DELETE("/users/me/unread/:channelID", h.DeleteUnread, requires(permission.DeleteUnread))
-
-	// Tag: mute
-	api.GET("/users/me/mute", h.GetMutedChannelIDs, requires(permission.GetMutedChannels))
-	api.POST("/users/me/mute/:channelID", h.PostMutedChannel, requires(permission.MuteChannel))
-	api.DELETE("/users/me/mute/:channelID", h.DeleteMutedChannel, requires(permission.UnmuteChannel))
-
-	// Tag: userTag
-	api.GET("/users/:userID/tags", h.GetUserTags, requires(permission.GetTag))
-	api.POST("/users/:userID/tags", h.PostUserTag, requires(permission.AddTag))
-	api.PATCH("/users/:userID/tags/:tagID", h.PatchUserTag, requires(permission.ChangeTagLockState))
-	api.DELETE("/users/:userID/tags/:tagID", h.DeleteUserTag, requires(permission.RemoveTag))
-	api.GET("/tags", h.GetAllTags, requires(permission.GetTag))
-	api.GET("/tags/:tagID", h.GetUsersByTagID, requires(permission.GetTag))
-	api.PATCH("/tags/:tagID", h.PatchTag, requires(permission.EditTag))
-
-	// Tag: heartbeat
-	api.GET("/heartbeat", h.GetHeartbeat, requires(permission.GetHeartbeat))
-	api.POST("/heartbeat", h.PostHeartbeat, requires(permission.PostHeartbeat))
-
-	// Tag: notification
-	api.GET("/notification", h.NotificationStream, requires(permission.ConnectNotificationStream))
-	api.POST("/notification/device", h.PostDeviceToken, requires(permission.RegisterDevice))
-	api.GET("/channels/:channelID/notification", h.GetNotificationStatus, requires(permission.GetNotificationStatus))
-	api.PUT("/channels/:channelID/notification", h.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
-	api.GET("/users/:userID/notification", h.GetNotificationChannels, requires(permission.GetNotificationStatus))
-
-	// Tag: file
-	api.POST("/files", h.PostFile, bodyLimit(30<<10), requires(permission.UploadFile))
-	api.GET("/files/:fileID", h.GetFileByID, requires(permission.DownloadFile))
-	api.DELETE("/files/:fileID", h.DeleteFileByID, requires(permission.DeleteFile))
-	api.GET("/files/:fileID/meta", h.GetMetaDataByFileID, requires(permission.DownloadFile))
-	api.GET("/files/:fileID/thumbnail", h.GetThumbnailByID, requires(permission.DownloadFile))
-
-	// Tag: pin
-	api.GET("/channels/:channelID/pins", h.GetChannelPin, requires(permission.GetPin))
-	api.POST("/pins", h.PostPin, requires(permission.CreatePin))
-	api.GET("/pins/:pinID", h.GetPin, requires(permission.GetPin))
-	api.DELETE("/pins/:pinID", h.DeletePin, requires(permission.DeletePin))
-
-	// Tag: stamp
-	api.GET("/stamps", h.GetStamps, requires(permission.GetStamp))
-	api.POST("/stamps", h.PostStamp, requires(permission.CreateStamp))
-	api.GET("/stamps/:stampID", h.GetStamp, requires(permission.GetStamp))
-	api.PATCH("/stamps/:stampID", h.PatchStamp, requires(permission.EditStamp))
-	api.DELETE("/stamps/:stampID", h.DeleteStamp, requires(permission.DeleteStamp))
-	api.GET("/messages/:messageID/stamps", h.GetMessageStamps, requires(permission.GetMessageStamp))
-	api.POST("/messages/:messageID/stamps/:stampID", h.PostMessageStamp, requires(permission.AddMessageStamp))
-	api.DELETE("/messages/:messageID/stamps/:stampID", h.DeleteMessageStamp, requires(permission.RemoveMessageStamp))
-	api.GET("/users/me/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
-
-	// Tag: webhook
-	api.GET("/webhooks", h.GetWebhooks, requires(permission.GetWebhook))
-	api.POST("/webhooks", h.PostWebhooks, requires(permission.CreateWebhook))
-	api.GET("/webhooks/:webhookID", h.GetWebhook, requires(permission.GetWebhook))
-	api.PATCH("/webhooks/:webhookID", h.PatchWebhook, requires(permission.EditWebhook))
-	api.DELETE("/webhooks/:webhookID", h.DeleteWebhook, requires(permission.DeleteWebhook))
-	api.PUT("/webhooks/:webhookID/icon", h.PutWebhookIcon, requires(permission.EditWebhook))
-	apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook)
-	apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub)
-
-	// Tag: activity
-	api.GET("/activity/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
-
-	// Tag: user group
-	apiGroups := api.Group("/groups")
+	apiNoAuth := e.Group("/api/1.0")
 	{
-		apiGroups.GET("", h.GetUserGroups)
-		apiGroups.POST("", h.PostUserGroups)
+		apiNoAuth.POST("/login", h.PostLogin)
+		apiNoAuth.POST("/logout", PostLogout)
+		apiNoAuth.GET("/public/icon/:username", h.GetPublicUserIcon)
+		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook)
+		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub)
+		apiNoAuth.GET("/teapot", func(c echo.Context) error {
+			return echo.NewHTTPError(http.StatusTeapot, "I'm a teapot")
+		})
+	}
 
-		apiGroupsGid := api.Group("/:groupID", h.ValidateGroupID)
+	api := e.Group("/api/1.0", h.UserAuthenticate(oauth))
+	{
+		apiUsers := api.Group("/users")
 		{
-			apiGroupsGid.GET("", h.GetUserGroup)
-			apiGroupsGid.PATCH("", h.PatchUserGroup)
-			apiGroupsGid.DELETE("", h.DeleteUserGroup)
-
-			apiGroupsGidMembers := api.Group("/members")
+			apiUsers.GET("", h.GetUsers, requires(permission.GetUser))
+			apiUsers.POST("", h.PostUsers, requires(permission.RegisterUser))
+			apiUsersMe := apiUsers.Group("/me")
 			{
-				apiGroupsGidMembers.GET("", h.GetUserGroupMembers)
-				apiGroupsGidMembers.POST("", h.PostUserGroupMembers)
-				apiGroupsGidMembers.DELETE("/:userID", h.DeleteUserGroupMembers)
+				apiUsersMe.GET("", h.GetMe, requires(permission.GetMe))
+				apiUsersMe.PATCH("", h.PatchMe, requires(permission.EditMe))
+				apiUsersMe.PUT("/password", h.PutPassword, requires(permission.ChangeMyPassword))
+				apiUsersMe.GET("/icon", h.GetMyIcon, requires(permission.DownloadFile))
+				apiUsersMe.PUT("/icon", h.PutMyIcon, requires(permission.ChangeMyIcon))
+				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
+				apiUsersMe.GET("/groups", h.GetMyBelongingGroup)
+				apiUsersMeSessions := apiUsersMe.Group("/sessions")
+				{
+					apiUsersMeSessions.GET("", GetMySessions, requires(permission.GetMySessions))
+					apiUsersMeSessions.DELETE("", DeleteAllMySessions, requires(permission.DeleteMySessions))
+					apiUsersMeSessions.DELETE("/:referenceID", DeleteMySession, requires(permission.DeleteMySessions))
+				}
+				apiUsersMeClips := apiUsersMe.Group("/clips")
+				{
+					apiUsersMeClips.GET("", h.GetClips, requires(permission.GetClip))
+					apiUsersMeClips.POST("", h.PostClip, requires(permission.CreateClip))
+					apiUsersMeClipsCid := apiUsersMeClips.Group("/:clipID", h.ValidateClipID())
+					{
+						apiUsersMeClipsCid.GET("", h.GetClip, requires(permission.GetClip))
+						apiUsersMeClipsCid.DELETE("", h.DeleteClip, requires(permission.DeleteClip))
+						apiUsersMeClipsCid.GET("/folder", h.GetClipsFolder, requires(permission.GetClip, permission.GetClipFolder))
+						apiUsersMeClipsCid.PUT("/folder", h.PutClipsFolder, requires(permission.CreateClip))
+					}
+					apiUsersMeClipsFolders := apiUsersMeClips.Group("/folders")
+					{
+						apiUsersMeClipsFolders.GET("", h.GetClipFolders, requires(permission.GetClipFolder))
+						apiUsersMeClipsFolders.POST("", h.PostClipFolder, requires(permission.CreateClipFolder))
+						apiUsersMeClipsFoldersFid := apiUsersMeClipsFolders.Group("/:folderID", h.ValidateClipFolderID())
+						{
+							apiUsersMeClipsFoldersFid.GET("", h.GetClipFolder, requires(permission.GetClip, permission.GetClipFolder))
+							apiUsersMeClipsFoldersFid.PATCH("", h.PatchClipFolder, requires(permission.PatchClipFolder))
+							apiUsersMeClipsFoldersFid.DELETE("", h.DeleteClipFolder, requires(permission.DeleteClipFolder))
+						}
+					}
+				}
+				apiUsersMeStars := apiUsersMe.Group("/stars")
+				{
+					apiUsersMeStars.GET("", h.GetStars, requires(permission.GetStar))
+					apiUsersMeStarsCid := apiUsersMeStars.Group("/:channelID")
+					{
+						apiUsersMeStarsCid.PUT("", h.PutStars, requires(permission.CreateStar))
+						apiUsersMeStarsCid.DELETE("", h.DeleteStars, requires(permission.DeleteStar))
+					}
+				}
+				apiUsersMeUnread := apiUsersMe.Group("/unread")
+				{
+					apiUsersMeUnread.GET("", h.GetUnread, requires(permission.GetUnread))
+					apiUsersMeUnread.DELETE("/:channelID", h.DeleteUnread, requires(permission.DeleteUnread))
+				}
+				apiUsersMeMute := apiUsersMe.Group("/mute")
+				{
+					apiUsersMeMute.GET("", h.GetMutedChannelIDs, requires(permission.GetMutedChannels))
+					apiUsersMeMuteCid := apiUsersMeMute.Group("/:channelID")
+					{
+						apiUsersMeMuteCid.POST("", h.PostMutedChannel, requires(permission.MuteChannel))
+						apiUsersMeMuteCid.DELETE("", h.DeleteMutedChannel, requires(permission.UnmuteChannel))
+					}
+				}
+			}
+			apiUsersUid := apiUsers.Group("/:userID")
+			{
+				apiUsersUid.GET("", h.GetUserByID, requires(permission.GetUser))
+				apiUsersUid.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage))
+				apiUsersUid.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
+				apiUsersUid.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
+				apiUsersUid.GET("/notification", h.GetNotificationChannels, requires(permission.GetNotificationStatus))
+				apiUsersUid.GET("/groups", h.GetUserBelongingGroup)
+				apiUsersUidTags := apiUsersUid.Group("/tags")
+				{
+					apiUsersUidTags.GET("", h.GetUserTags, requires(permission.GetTag))
+					apiUsersUidTags.POST("", h.PostUserTag, requires(permission.AddTag))
+					apiUsersUidTagsTid := apiUsersUidTags.Group("/:tagID")
+					{
+						apiUsersUidTagsTid.PATCH("", h.PatchUserTag, requires(permission.ChangeTagLockState))
+						apiUsersUidTagsTid.DELETE("", h.DeleteUserTag, requires(permission.RemoveTag))
+					}
+				}
 			}
 		}
+		apiHeartBeat := api.Group("/heartbeat")
+		{
+			apiHeartBeat.GET("", h.GetHeartbeat, requires(permission.GetHeartbeat))
+			apiHeartBeat.POST("", h.PostHeartbeat, requires(permission.PostHeartbeat))
+		}
+		apiChannels := api.Group("/channels")
+		{
+			apiChannels.GET("", h.GetChannels, requires(permission.GetChannel))
+			apiChannels.POST("", h.PostChannels, requires(permission.CreateChannel))
+			apiChannelsCid := apiChannels.Group("/:channelID")
+			{
+				apiChannelsCid.GET("", h.GetChannelByChannelID, requires(permission.GetChannel))
+				apiChannelsCid.PATCH("", h.PatchChannelByChannelID, requires(permission.EditChannel))
+				apiChannelsCid.DELETE("", h.DeleteChannelByChannelID, requires(permission.DeleteChannel))
+				apiChannelsCid.PUT("/parent", h.PutChannelParent, requires(permission.ChangeParentChannel))
+				apiChannelsCid.POST("/children", h.PostChannelChildren, requires(permission.CreateChannel))
+				apiChannelsCid.GET("/topic", h.GetTopic, requires(permission.GetTopic))
+				apiChannelsCid.PUT("/topic", h.PutTopic, requires(permission.EditTopic))
+				apiChannelsCid.GET("/messages", h.GetMessagesByChannelID, requires(permission.GetMessage))
+				apiChannelsCid.POST("/messages", h.PostMessage, bodyLimit(100), requires(permission.PostMessage))
+				apiChannelsCid.GET("/notification", h.GetNotificationStatus, requires(permission.GetNotificationStatus))
+				apiChannelsCid.PUT("/notification", h.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
+				apiChannelsCid.GET("/pins", h.GetChannelPin, requires(permission.GetPin))
+			}
+		}
+		apiNotification := api.Group("/notification")
+		{
+			apiNotification.GET("", h.NotificationStream, requires(permission.ConnectNotificationStream))
+			apiNotification.POST("/device", h.PostDeviceToken, requires(permission.RegisterDevice))
+		}
+		apiMessages := api.Group("/messages")
+		{
+			apiMessagesMid := apiMessages.Group("/:messageID", h.ValidateMessageID())
+			{
+				apiMessagesMid.GET("", h.GetMessageByID, requires(permission.GetMessage))
+				apiMessagesMid.PUT("", h.PutMessageByID, bodyLimit(100), requires(permission.EditMessage))
+				apiMessagesMid.DELETE("", h.DeleteMessageByID, requires(permission.DeleteMessage))
+				apiMessagesMid.POST("/report", h.PostMessageReport, requires(permission.ReportMessage))
+				apiMessagesMid.GET("/stamps", h.GetMessageStamps, requires(permission.GetMessageStamp))
+				apiMessagesMidStampsSid := apiMessagesMid.Group("/stamps/:stampID", h.ValidateStampID(true))
+				{
+					apiMessagesMidStampsSid.POST("", h.PostMessageStamp, requires(permission.AddMessageStamp))
+					apiMessagesMidStampsSid.DELETE("", h.DeleteMessageStamp, requires(permission.RemoveMessageStamp))
+				}
+			}
+		}
+		apiTags := api.Group("/tags")
+		{
+			apiTags.GET("", h.GetAllTags, requires(permission.GetTag))
+			apiTagsTid := api.Group("/:tagID")
+			{
+				apiTagsTid.GET("", h.GetUsersByTagID, requires(permission.GetTag))
+				apiTagsTid.PATCH("", h.PatchTag, requires(permission.EditTag))
+			}
+		}
+		apiFiles := api.Group("/files")
+		{
+			apiFiles.POST("", h.PostFile, bodyLimit(30<<10), requires(permission.UploadFile))
+			apiFilesFid := apiFiles.Group("/:fileID")
+			{
+				apiFilesFid.GET("", h.GetFileByID, requires(permission.DownloadFile))
+				apiFilesFid.DELETE("", h.DeleteFileByID, requires(permission.DeleteFile))
+				apiFilesFid.GET("/meta", h.GetMetaDataByFileID, requires(permission.DownloadFile))
+				apiFilesFid.GET("/thumbnail", h.GetThumbnailByID, requires(permission.DownloadFile))
+			}
+		}
+		apiPins := api.Group("/pins")
+		{
+			apiPins.POST("", h.PostPin, requires(permission.CreatePin))
+			apiPinsPid := apiPins.Group("/:pinID", h.ValidatePinID())
+			{
+				apiPinsPid.GET("", h.GetPin, requires(permission.GetPin))
+				apiPinsPid.DELETE("", h.DeletePin, requires(permission.DeletePin))
+			}
+		}
+		apiStamps := api.Group("/stamps")
+		{
+			apiStamps.GET("", h.GetStamps, requires(permission.GetStamp))
+			apiStamps.POST("", h.PostStamp, requires(permission.CreateStamp))
+			apiStampsSid := apiStamps.Group("/:stampID", h.ValidateStampID(false))
+			{
+				apiStampsSid.GET("", h.GetStamp, requires(permission.GetStamp))
+				apiStampsSid.PATCH("", h.PatchStamp, requires(permission.EditStamp))
+				apiStampsSid.DELETE("", h.DeleteStamp, requires(permission.DeleteStamp))
+			}
+		}
+		apiWebhooks := api.Group("/webhooks")
+		{
+			apiWebhooks.GET("", h.GetWebhooks, requires(permission.GetWebhook))
+			apiWebhooks.POST("", h.PostWebhooks, requires(permission.CreateWebhook))
+			apiWebhooksWid := apiWebhooks.Group("/:webhookID")
+			{
+				apiWebhooksWid.GET("", h.GetWebhook, requires(permission.GetWebhook))
+				apiWebhooksWid.PATCH("", h.PatchWebhook, requires(permission.EditWebhook))
+				apiWebhooksWid.DELETE("", h.DeleteWebhook, requires(permission.DeleteWebhook))
+				apiWebhooksWid.PUT("/icon", h.PutWebhookIcon, requires(permission.EditWebhook))
+			}
+		}
+		apiGroups := api.Group("/groups")
+		{
+			apiGroups.GET("", h.GetUserGroups)
+			apiGroups.POST("", h.PostUserGroups)
+			apiGroupsGid := apiGroups.Group("/:groupID", h.ValidateGroupID())
+			{
+				apiGroupsGid.GET("", h.GetUserGroup)
+				apiGroupsGid.PATCH("", h.PatchUserGroup)
+				apiGroupsGid.DELETE("", h.DeleteUserGroup)
+				apiGroupsGidMembers := apiGroupsGid.Group("/members")
+				{
+					apiGroupsGidMembers.GET("", h.GetUserGroupMembers)
+					apiGroupsGidMembers.POST("", h.PostUserGroupMembers)
+					apiGroupsGidMembers.DELETE("/:userID", h.DeleteUserGroupMembers)
+				}
+			}
+		}
+		api.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports))
+		api.GET("/activity/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
 	}
-	api.GET("/users/me/groups", h.GetMyBelongingGroup)
-	api.GET("/users/:userID/groups", h.GetUserBelongingGroup)
 
 	if oauth != nil {
 		// Tag: bot
@@ -214,12 +275,8 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		api.PATCH("/clients/:clientID", h.PatchClient, requires(permission.EditMyClient))
 		api.DELETE("/clients/:clientID", h.DeleteClient, requires(permission.DeleteMyClient))
 	}
-
-	apiNoAuth.GET("/teapot", func(c echo.Context) error {
-		return echo.NewHTTPError(http.StatusTeapot, "I'm a teapot")
-	})
 }
 
 func notImplemented(c echo.Context) error {
-	return echo.NewHTTPError(http.StatusNotImplemented)
+	return c.NoContent(http.StatusNotImplemented)
 }

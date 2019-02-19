@@ -284,7 +284,3 @@ func (h *Handlers) formatUserGroups(gs []*model.UserGroup) ([]*userGroupResponse
 	}
 	return arr, nil
 }
-
-func getGroupFromContext(c echo.Context) *model.UserGroup {
-	return c.Get("paramGroup").(*model.UserGroup)
-}

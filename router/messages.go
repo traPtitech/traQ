@@ -27,13 +27,7 @@ type MessageForResponse struct {
 
 // GetMessageByID GET /messages/:messageID
 func (h *Handlers) GetMessageByID(c echo.Context) error {
-	userID := getRequestUserID(c)
-	messageID := getRequestParamAsUUID(c, paramMessageID)
-
-	m, err := h.validateMessageID(c, messageID, userID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
+	m := getMessageFromContext(c)
 	return c.JSON(http.StatusOK, h.formatMessage(m))
 }
 
@@ -41,11 +35,8 @@ func (h *Handlers) GetMessageByID(c echo.Context) error {
 func (h *Handlers) PutMessageByID(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getRequestParamAsUUID(c, paramMessageID)
+	m := getMessageFromContext(c)
 
-	m, err := h.validateMessageID(c, messageID, userID)
-	if err != nil {
-		return err
-	}
 	// 他人のテキストは編集できない
 	if userID != m.UserID {
 		return echo.NewHTTPError(http.StatusForbidden, "This is not your message")
@@ -70,11 +61,8 @@ func (h *Handlers) PutMessageByID(c echo.Context) error {
 func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getRequestParamAsUUID(c, paramMessageID)
+	m := getMessageFromContext(c)
 
-	m, err := h.validateMessageID(c, messageID, userID)
-	if err != nil {
-		return err
-	}
 	if m.UserID != userID {
 		return echo.NewHTTPError(http.StatusForbidden, "you are not allowed to delete this message")
 	}
@@ -252,11 +240,6 @@ func (h *Handlers) PostMessageReport(c echo.Context) error {
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	_, err := h.validateMessageID(c, messageID, userID)
-	if err != nil {
-		return err
 	}
 
 	if err := h.Repo.CreateMessageReport(messageID, userID, req.Reason); err != nil {
