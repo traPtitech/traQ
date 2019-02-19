@@ -244,13 +244,13 @@ func (h *Handlers) PutChannelParent(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
 	req := struct {
-		Parent string `json:"parent" validate:"uuid,required"`
+		Parent uuid.UUID `json:"parent"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if err := h.Repo.ChangeChannelParent(channelID, uuid.FromStringOrNil(req.Parent)); err != nil {
+	if err := h.Repo.ChangeChannelParent(channelID, req.Parent); err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
 			return echo.NewHTTPError(http.StatusConflict, err)
