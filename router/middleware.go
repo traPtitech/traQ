@@ -139,3 +139,24 @@ func RequestBodyLengthLimit(kb int64) echo.MiddlewareFunc {
 		}
 	}
 }
+
+// ValidateGroupID 'groupID'パラメータのグループを検証するミドルウェア
+func (h *Handlers) ValidateGroupID(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		groupID := getRequestParamAsUUID(c, paramGroupID)
+
+		g, err := h.Repo.GetUserGroup(groupID)
+		if err != nil {
+			switch err {
+			case repository.ErrNotFound:
+				return c.NoContent(http.StatusNotFound)
+			default:
+				c.Logger().Error(err)
+				return c.NoContent(http.StatusInternalServerError)
+			}
+		}
+		c.Set("paramGroup", g)
+
+		return next(c)
+	}
+}

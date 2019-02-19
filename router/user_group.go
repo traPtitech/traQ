@@ -67,18 +67,7 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 
 // GetUserGroup GET /groups/:groupID
 func (h *Handlers) GetUserGroup(c echo.Context) error {
-	groupID := getRequestParamAsUUID(c, paramGroupID)
-
-	g, err := h.Repo.GetUserGroup(groupID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return c.NoContent(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
-	}
+	g := getGroupFromContext(c)
 
 	res, err := h.formatUserGroup(g)
 	if err != nil {
@@ -93,6 +82,7 @@ func (h *Handlers) GetUserGroup(c echo.Context) error {
 func (h *Handlers) PatchUserGroup(c echo.Context) error {
 	groupID := getRequestParamAsUUID(c, paramGroupID)
 	reqUserID := getRequestUserID(c)
+	g := getGroupFromContext(c)
 
 	var req struct {
 		Name        string     `json:"name" validate:"max=30"`
@@ -101,17 +91,6 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	g, err := h.Repo.GetUserGroup(groupID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return c.NoContent(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
 	}
 
 	// 管理者ユーザーかどうか
@@ -156,17 +135,7 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 func (h *Handlers) DeleteUserGroup(c echo.Context) error {
 	groupID := getRequestParamAsUUID(c, paramGroupID)
 	userID := getRequestUserID(c)
-
-	g, err := h.Repo.GetUserGroup(groupID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return c.NoContent(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
-	}
+	g := getGroupFromContext(c)
 
 	// 管理者ユーザーかどうか
 	if g.AdminUserID != userID {
@@ -187,13 +156,8 @@ func (h *Handlers) GetUserGroupMembers(c echo.Context) error {
 
 	res, err := h.Repo.GetUserGroupMemberIDs(groupID)
 	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return c.NoContent(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
+		c.Logger().Error(err)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	return c.JSON(http.StatusOK, res)
@@ -203,23 +167,13 @@ func (h *Handlers) GetUserGroupMembers(c echo.Context) error {
 func (h *Handlers) PostUserGroupMembers(c echo.Context) error {
 	groupID := getRequestParamAsUUID(c, paramGroupID)
 	reqUserID := getRequestUserID(c)
+	g := getGroupFromContext(c)
 
 	var req struct {
 		UserID uuid.UUID `json:"userId"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	g, err := h.Repo.GetUserGroup(groupID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return c.NoContent(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
 	}
 
 	// 管理者ユーザーかどうか
@@ -249,17 +203,7 @@ func (h *Handlers) DeleteUserGroupMembers(c echo.Context) error {
 	groupID := getRequestParamAsUUID(c, paramGroupID)
 	userID := getRequestParamAsUUID(c, paramUserID)
 	reqUserID := getRequestUserID(c)
-
-	g, err := h.Repo.GetUserGroup(groupID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return c.NoContent(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
-	}
+	g := getGroupFromContext(c)
 
 	// 管理者ユーザーかどうか
 	if g.AdminUserID != reqUserID {
@@ -339,4 +283,8 @@ func (h *Handlers) formatUserGroups(gs []*model.UserGroup) ([]*userGroupResponse
 		arr[i] = r
 	}
 	return arr, nil
+}
+
+func getGroupFromContext(c echo.Context) *model.UserGroup {
+	return c.Get("paramGroup").(*model.UserGroup)
 }

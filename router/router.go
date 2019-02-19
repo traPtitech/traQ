@@ -159,14 +159,25 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	api.GET("/activity/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
 
 	// Tag: user group
-	api.GET("/groups", h.GetUserGroups)
-	api.POST("/groups", h.PostUserGroups)
-	api.GET("/groups/:groupID", h.GetUserGroup)
-	api.PATCH("/groups/:groupID", h.PatchUserGroup)
-	api.DELETE("/groups/:groupID", h.DeleteUserGroup)
-	api.GET("/groups/:groupID/members", h.GetUserGroupMembers)
-	api.POST("/groups/:groupID/members", h.PostUserGroupMembers)
-	api.DELETE("/groups/:groupID/members/:userID", h.DeleteUserGroupMembers)
+	apiGroups := api.Group("/groups")
+	{
+		apiGroups.GET("", h.GetUserGroups)
+		apiGroups.POST("", h.PostUserGroups)
+
+		apiGroupsGid := api.Group("/:groupID", h.ValidateGroupID)
+		{
+			apiGroupsGid.GET("", h.GetUserGroup)
+			apiGroupsGid.PATCH("", h.PatchUserGroup)
+			apiGroupsGid.DELETE("", h.DeleteUserGroup)
+
+			apiGroupsGidMembers := api.Group("/members")
+			{
+				apiGroupsGidMembers.GET("", h.GetUserGroupMembers)
+				apiGroupsGidMembers.POST("", h.PostUserGroupMembers)
+				apiGroupsGidMembers.DELETE("/:userID", h.DeleteUserGroupMembers)
+			}
+		}
+	}
 	api.GET("/users/me/groups", h.GetMyBelongingGroup)
 	api.GET("/users/:userID/groups", h.GetUserBelongingGroup)
 
