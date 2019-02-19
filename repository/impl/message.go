@@ -60,7 +60,7 @@ func (repo *RepositoryImpl) UpdateMessage(messageID uuid.UUID, text string) erro
 	err := repo.transact(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.Message{ID: messageID}).First(&old).Error; err != nil {
 			if gorm.IsRecordNotFoundError(err) {
-				return nil
+				return repository.ErrNotFound
 			}
 			return err
 		}
@@ -113,7 +113,7 @@ func (repo *RepositoryImpl) DeleteMessage(messageID uuid.UUID) error {
 	err := repo.transact(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.Message{ID: messageID}).First(&m).Error; err != nil {
 			if gorm.IsRecordNotFoundError(err) {
-				return nil
+				return repository.ErrNotFound
 			}
 			return err
 		}

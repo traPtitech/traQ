@@ -1393,13 +1393,14 @@ func (r *TestRepository) UpdateMessage(messageID uuid.UUID, text string) error {
 	}
 
 	r.MessagesLock.Lock()
+	defer r.MessagesLock.Unlock()
 	m, ok := r.Messages[messageID]
-	if ok {
-		m.Text = text
-		m.UpdatedAt = time.Now()
-		r.Messages[messageID] = m
+	if !ok {
+		return repository.ErrNotFound
 	}
-	r.MessagesLock.Unlock()
+	m.Text = text
+	m.UpdatedAt = time.Now()
+	r.Messages[messageID] = m
 	return nil
 }
 
@@ -1409,8 +1410,11 @@ func (r *TestRepository) DeleteMessage(messageID uuid.UUID) error {
 	}
 
 	r.MessagesLock.Lock()
+	defer r.MessagesLock.Unlock()
+	if _, ok := r.Messages[messageID]; !ok {
+		return repository.ErrNotFound
+	}
 	delete(r.Messages, messageID)
-	r.MessagesLock.Unlock()
 	return nil
 }
 
