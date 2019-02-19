@@ -157,19 +157,7 @@ func (h *Handlers) PostChannels(c echo.Context) error {
 
 // GetChannelByChannelID GET /channels/:channelID
 func (h *Handlers) GetChannelByChannelID(c echo.Context) error {
-	userID := getRequestUserID(c)
-	channelID := getRequestParamAsUUID(c, paramChannelID)
-
-	ch, err := h.validateChannelID(channelID, userID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
+	ch := getChannelFromContext(c)
 
 	formatted, err := h.formatChannel(ch)
 	if err != nil {
@@ -181,16 +169,7 @@ func (h *Handlers) GetChannelByChannelID(c echo.Context) error {
 
 // PatchChannelByChannelID PATCH /channels/:channelID
 func (h *Handlers) PatchChannelByChannelID(c echo.Context) error {
-	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
-
-	// チャンネル検証
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
 
 	req := struct {
 		Name       *string `json:"name"`
@@ -227,25 +206,13 @@ func (h *Handlers) PatchChannelByChannelID(c echo.Context) error {
 // PostChannelChildren POST /channels/:channelID/children
 func (h *Handlers) PostChannelChildren(c echo.Context) error {
 	userID := getRequestUserID(c)
-	channelID := getRequestParamAsUUID(c, paramChannelID)
+	parentCh := getChannelFromContext(c)
 
 	var req struct {
 		Name string `json:"name" validate:"channel,required"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	// チャンネル検証
-	parentCh, err := h.validateChannelID(channelID, userID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
 	}
 
 	// 子チャンネル作成
@@ -274,16 +241,7 @@ func (h *Handlers) PostChannelChildren(c echo.Context) error {
 
 // PutChannelParent PUT /channels/:channelID/parent
 func (h *Handlers) PutChannelParent(c echo.Context) error {
-	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
-
-	// チャンネル検証
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
 
 	req := struct {
 		Parent string `json:"parent" validate:"uuid,required"`
@@ -311,15 +269,7 @@ func (h *Handlers) PutChannelParent(c echo.Context) error {
 
 // DeleteChannelByChannelID DELETE /channels/:channelID
 func (h *Handlers) DeleteChannelByChannelID(c echo.Context) error {
-	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
-
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
 
 	if err := h.Repo.DeleteChannel(channelID); err != nil {
 		c.Logger().Error(err)
@@ -331,20 +281,7 @@ func (h *Handlers) DeleteChannelByChannelID(c echo.Context) error {
 
 // GetTopic GET /channels/:channelID/topic
 func (h *Handlers) GetTopic(c echo.Context) error {
-	userID := getRequestUserID(c)
-	channelID := getRequestParamAsUUID(c, paramChannelID)
-
-	ch, err := h.validateChannelID(channelID, userID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
+	ch := getChannelFromContext(c)
 	return c.JSON(http.StatusOK, map[string]string{
 		"text": ch.Topic,
 	})
@@ -354,13 +291,6 @@ func (h *Handlers) GetTopic(c echo.Context) error {
 func (h *Handlers) PutTopic(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
-
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
 
 	req := struct {
 		Text string `json:"text"`
@@ -375,18 +305,6 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
-}
-
-// リクエストされたチャンネルIDが指定されたuserから見えるかをチェックし、見える場合はそのチャンネルを返す
-func (h *Handlers) validateChannelID(channelID, userID uuid.UUID) (*model.Channel, error) {
-	ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID)
-	if err != nil {
-		return nil, err
-	} else if !ok {
-		return nil, repository.ErrNotFound
-	}
-
-	return h.Repo.GetChannel(channelID)
 }
 
 func (h *Handlers) formatChannel(channel *model.Channel) (response *ChannelForResponse, err error) {

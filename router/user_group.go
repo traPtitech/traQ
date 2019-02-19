@@ -244,15 +244,6 @@ func (h *Handlers) GetMyBelongingGroup(c echo.Context) error {
 func (h *Handlers) GetUserBelongingGroup(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 
-	// ユーザーが存在するか
-	if ok, err := h.Repo.UserExists(userID); err != nil {
-		c.Logger().Error(err)
-		return c.NoContent(http.StatusInternalServerError)
-	} else if !ok {
-		c.Logger().Error(err)
-		return c.NoContent(http.StatusNotFound)
-	}
-
 	ids, err := h.Repo.GetUserBelongingGroupIDs(userID)
 	if err != nil {
 		c.Logger().Error(err)

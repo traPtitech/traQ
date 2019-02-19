@@ -82,7 +82,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiUsersMeStars := apiUsersMe.Group("/stars")
 				{
 					apiUsersMeStars.GET("", h.GetStars, requires(permission.GetStar))
-					apiUsersMeStarsCid := apiUsersMeStars.Group("/:channelID")
+					apiUsersMeStarsCid := apiUsersMeStars.Group("/:channelID", h.ValidateChannelID(true))
 					{
 						apiUsersMeStarsCid.PUT("", h.PutStars, requires(permission.CreateStar))
 						apiUsersMeStarsCid.DELETE("", h.DeleteStars, requires(permission.DeleteStar))
@@ -96,29 +96,29 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiUsersMeMute := apiUsersMe.Group("/mute")
 				{
 					apiUsersMeMute.GET("", h.GetMutedChannelIDs, requires(permission.GetMutedChannels))
-					apiUsersMeMuteCid := apiUsersMeMute.Group("/:channelID")
+					apiUsersMeMuteCid := apiUsersMeMute.Group("/:channelID", h.ValidateChannelID(false))
 					{
 						apiUsersMeMuteCid.POST("", h.PostMutedChannel, requires(permission.MuteChannel))
 						apiUsersMeMuteCid.DELETE("", h.DeleteMutedChannel, requires(permission.UnmuteChannel))
 					}
 				}
 			}
-			apiUsersUid := apiUsers.Group("/:userID")
+			apiUsersUID := apiUsers.Group("/:userID", h.ValidateUserID(false))
 			{
-				apiUsersUid.GET("", h.GetUserByID, requires(permission.GetUser))
-				apiUsersUid.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage))
-				apiUsersUid.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
-				apiUsersUid.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
-				apiUsersUid.GET("/notification", h.GetNotificationChannels, requires(permission.GetNotificationStatus))
-				apiUsersUid.GET("/groups", h.GetUserBelongingGroup)
-				apiUsersUidTags := apiUsersUid.Group("/tags")
+				apiUsersUID.GET("", h.GetUserByID, requires(permission.GetUser))
+				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage))
+				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
+				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
+				apiUsersUID.GET("/notification", h.GetNotificationChannels, requires(permission.GetNotificationStatus))
+				apiUsersUID.GET("/groups", h.GetUserBelongingGroup)
+				apiUsersUIDTags := apiUsersUID.Group("/tags")
 				{
-					apiUsersUidTags.GET("", h.GetUserTags, requires(permission.GetTag))
-					apiUsersUidTags.POST("", h.PostUserTag, requires(permission.AddTag))
-					apiUsersUidTagsTid := apiUsersUidTags.Group("/:tagID")
+					apiUsersUIDTags.GET("", h.GetUserTags, requires(permission.GetTag))
+					apiUsersUIDTags.POST("", h.PostUserTag, requires(permission.AddTag))
+					apiUsersUIDTagsTid := apiUsersUIDTags.Group("/:tagID")
 					{
-						apiUsersUidTagsTid.PATCH("", h.PatchUserTag, requires(permission.ChangeTagLockState))
-						apiUsersUidTagsTid.DELETE("", h.DeleteUserTag, requires(permission.RemoveTag))
+						apiUsersUIDTagsTid.PATCH("", h.PatchUserTag, requires(permission.ChangeTagLockState))
+						apiUsersUIDTagsTid.DELETE("", h.DeleteUserTag, requires(permission.RemoveTag))
 					}
 				}
 			}
@@ -132,7 +132,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		{
 			apiChannels.GET("", h.GetChannels, requires(permission.GetChannel))
 			apiChannels.POST("", h.PostChannels, requires(permission.CreateChannel))
-			apiChannelsCid := apiChannels.Group("/:channelID")
+			apiChannelsCid := apiChannels.Group("/:channelID", h.ValidateChannelID(false))
 			{
 				apiChannelsCid.GET("", h.GetChannelByChannelID, requires(permission.GetChannel))
 				apiChannelsCid.PATCH("", h.PatchChannelByChannelID, requires(permission.EditChannel))

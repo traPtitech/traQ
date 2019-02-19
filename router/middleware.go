@@ -339,3 +339,74 @@ func (h *Handlers) ValidateClipFolderID() echo.MiddlewareFunc {
 func getClipFolderFromContext(c echo.Context) *model.ClipFolder {
 	return c.Get("paramClipFolder").(*model.ClipFolder)
 }
+
+// ValidateChannelID 'channelID'パラメータのチャンネルを検証するミドルウェア
+func (h *Handlers) ValidateChannelID(availabilityCheckOnly bool) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			userID := getRequestUserID(c)
+			channelID := getRequestParamAsUUID(c, paramChannelID)
+
+			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
+				c.Logger().Error(err)
+				return c.NoContent(http.StatusInternalServerError)
+			} else if !ok {
+				return c.NoContent(http.StatusNotFound)
+			}
+
+			if availabilityCheckOnly {
+				return next(c)
+			}
+
+			ch, err := h.Repo.GetChannel(channelID)
+			if err != nil {
+				c.Logger().Error(err)
+				return c.NoContent(http.StatusInternalServerError)
+			}
+
+			c.Set("paramChannel", ch)
+			return next(c)
+		}
+	}
+}
+
+func getChannelFromContext(c echo.Context) *model.Channel {
+	return c.Get("paramChannel").(*model.Channel)
+}
+
+// ValidateUserID 'userID'パラメータのユーザーを検証するミドルウェア
+func (h *Handlers) ValidateUserID(existenceCheckOnly bool) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			userID := getRequestParamAsUUID(c, paramUserID)
+
+			if existenceCheckOnly {
+				if ok, err := h.Repo.UserExists(userID); err != nil {
+					c.Logger().Error(err)
+					return c.NoContent(http.StatusInternalServerError)
+				} else if !ok {
+					return c.NoContent(http.StatusNotFound)
+				}
+				return next(c)
+			}
+
+			user, err := h.Repo.GetUser(userID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return c.NoContent(http.StatusNotFound)
+				default:
+					c.Logger().Error(err)
+					return c.NoContent(http.StatusInternalServerError)
+				}
+			}
+
+			c.Set("paramUser", user)
+			return next(c)
+		}
+	}
+}
+
+func getUserFromContext(c echo.Context) *model.User {
+	return c.Get("paramUser").(*model.User)
+}

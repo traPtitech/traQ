@@ -20,16 +20,7 @@ type pinForResponse struct {
 
 // GetChannelPin GET /channels/:channelID/pins
 func (h *Handlers) GetChannelPin(c echo.Context) error {
-	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
-
-	// ユーザーからアクセス可能なチャンネルかどうか
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
 
 	res, err := h.getChannelPinResponse(channelID)
 	if err != nil {

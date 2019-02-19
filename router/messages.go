@@ -88,13 +88,6 @@ func (h *Handlers) GetMessagesByChannelID(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
 	messages, err := h.Repo.GetMessagesByChannelID(channelID, req.Limit, req.Offset)
 	if err != nil {
 		c.Logger().Error(err)
@@ -135,13 +128,6 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
 	m, err := h.createMessage(c, post.Text, userID, channelID)
 	if err != nil {
 		return err
@@ -162,14 +148,6 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 
 	myID := getRequestUserID(c)
 	targetID := getRequestParamAsUUID(c, paramUserID)
-
-	// ユーザー確認
-	if ok, err := h.Repo.UserExists(targetID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
 
 	// DMチャンネルを取得
 	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
@@ -205,14 +183,6 @@ func (h *Handlers) PostDirectMessage(c echo.Context) error {
 
 	myID := getRequestUserID(c)
 	targetID := getRequestParamAsUUID(c, paramUserID)
-
-	// ユーザー確認
-	if ok, err := h.Repo.UserExists(targetID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
 
 	// DMチャンネルを取得
 	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)

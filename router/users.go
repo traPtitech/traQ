@@ -115,17 +115,7 @@ func (h *Handlers) GetMe(c echo.Context) error {
 // GetUserByID GET /users/:userID
 func (h *Handlers) GetUserByID(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
-
-	user, err := h.Repo.GetUser(userID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
+	user := getUserFromContext(c)
 
 	tagList, err := h.Repo.GetUserTagsByUserID(userID)
 	if err != nil {
@@ -143,18 +133,7 @@ func (h *Handlers) GetUserByID(c echo.Context) error {
 
 // GetUserIcon GET /users/:userID/icon
 func (h *Handlers) GetUserIcon(c echo.Context) error {
-	userID := getRequestParamAsUUID(c, paramUserID)
-
-	user, err := h.Repo.GetUser(userID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
+	user := getUserFromContext(c)
 
 	if _, ok := c.QueryParams()["thumb"]; ok {
 		return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s/thumbnail", user.Icon))
