@@ -579,6 +579,7 @@ func TestRepositoryImpl_GetSubscribingUserIDs(t *testing.T) {
 	}{
 		{"ch1", ch1.ID, 1},
 		{"ch2", ch2.ID, 2},
+		{"nil ch", uuid.Nil, 0},
 	}
 
 	for _, v := range cases {
@@ -613,6 +614,7 @@ func TestRepositoryImpl_GetSubscribedChannelIDs(t *testing.T) {
 	}{
 		{"user1", user1.ID, 2},
 		{"user2", user2.ID, 1},
+		{"nil user", uuid.Nil, 0},
 	}
 
 	for _, v := range cases {

@@ -24,6 +24,7 @@ func TestRepositoryImpl_RegisterDevice(t *testing.T) {
 	}{
 		{id1, token1, false},
 		{id2, token2, false},
+		{id2, token2, false},
 		{id1, token2, true},
 	}
 
@@ -61,6 +62,7 @@ func TestRepositoryImpl_UnregisterDevice(t *testing.T) {
 		expect int
 	}{
 		{token2, 2},
+		{"", 2},
 		{token3, 1},
 	}
 	for _, v := range cases {
@@ -93,6 +95,7 @@ func TestRepositoryImpl_GetDevicesByUserID(t *testing.T) {
 	}{
 		{"id1", id1, 2},
 		{"id2", id2, 1},
+		{"nil id", uuid.Nil, 0},
 	}
 
 	for _, v := range cases {
@@ -131,6 +134,7 @@ func TestRepositoryImpl_GetDeviceTokensByUserID(t *testing.T) {
 	}{
 		{"id1", id1, 2},
 		{"id2", id2, 1},
+		{"nil id", uuid.Nil, 0},
 	}
 
 	for _, v := range cases {

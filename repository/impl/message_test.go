@@ -4,6 +4,7 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"testing"
 )
 
@@ -47,8 +48,9 @@ func TestRepositoryImpl_UpdateMessage(t *testing.T) {
 
 	m := mustMakeMessage(t, repo, user.ID, channel.ID)
 
-	assert.Error(repo.UpdateMessage(m.ID, ""))
-	assert.Error(repo.UpdateMessage(uuid.Nil, "new message"))
+	assert.EqualError(repo.UpdateMessage(m.ID, ""), "text is empty")
+	assert.EqualError(repo.UpdateMessage(uuid.NewV4(), "new message"), repository.ErrNotFound.Error())
+	assert.EqualError(repo.UpdateMessage(uuid.Nil, "new message"), repository.ErrNilID.Error())
 	assert.NoError(repo.UpdateMessage(m.ID, "new message"))
 
 	m, err := repo.GetMessageByID(m.ID)
@@ -63,12 +65,13 @@ func TestRepositoryImpl_DeleteMessage(t *testing.T) {
 
 	m := mustMakeMessage(t, repo, user.ID, channel.ID)
 
-	assert.Error(repo.DeleteMessage(uuid.Nil))
+	assert.EqualError(repo.DeleteMessage(uuid.Nil), repository.ErrNilID.Error())
 
 	if assert.NoError(repo.DeleteMessage(m.ID)) {
 		_, err := repo.GetMessageByID(m.ID)
-		assert.Error(err)
+		assert.EqualError(err, repository.ErrNotFound.Error())
 	}
+	assert.EqualError(repo.DeleteMessage(m.ID), repository.ErrNotFound.Error())
 }
 
 func TestRepositoryImpl_GetMessagesByChannelID(t *testing.T) {
@@ -145,7 +148,7 @@ func TestRepositoryImpl_GetUnreadMessagesByUserID(t *testing.T) {
 
 func TestRepositoryImpl_DeleteUnreadsByMessageID(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
 
 	testMessage := mustMakeMessage(t, repo, user.ID, channel.ID)
 	testMessage2 := mustMakeMessage(t, repo, user.ID, channel.ID)
@@ -154,17 +157,28 @@ func TestRepositoryImpl_DeleteUnreadsByMessageID(t *testing.T) {
 		mustMakeMessageUnread(t, repo, mustMakeUser(t, repo, random).ID, testMessage2.ID)
 	}
 
-	if assert.NoError(repo.DeleteUnreadsByMessageID(testMessage.ID)) {
-		assert.Equal(0, count(t, getDB(repo).Model(model.Unread{}).Where(&model.Unread{MessageID: testMessage.ID})))
-	}
-	if assert.NoError(repo.DeleteUnreadsByMessageID(testMessage2.ID)) {
-		assert.Equal(0, count(t, getDB(repo).Model(model.Unread{}).Where(&model.Unread{MessageID: testMessage2.ID})))
-	}
+	t.Run("nil id", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.DeleteUnreadsByMessageID(uuid.Nil), repository.ErrNilID.Error())
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		if assert.NoError(repo.DeleteUnreadsByMessageID(testMessage.ID)) {
+			assert.Equal(0, count(t, getDB(repo).Model(model.Unread{}).Where(&model.Unread{MessageID: testMessage.ID})))
+		}
+		if assert.NoError(repo.DeleteUnreadsByMessageID(testMessage2.ID)) {
+			assert.Equal(0, count(t, getDB(repo).Model(model.Unread{}).Where(&model.Unread{MessageID: testMessage2.ID})))
+		}
+	})
 }
 
 func TestRepositoryImpl_DeleteUnreadsByChannelID(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
 
 	creator := mustMakeUser(t, repo, random)
 	channel2 := mustMakeChannel(t, repo, random)
@@ -173,9 +187,20 @@ func TestRepositoryImpl_DeleteUnreadsByChannelID(t *testing.T) {
 	mustMakeMessageUnread(t, repo, user.ID, testMessage.ID)
 	mustMakeMessageUnread(t, repo, user.ID, testMessage2.ID)
 
-	if assert.NoError(repo.DeleteUnreadsByChannelID(channel.ID, user.ID)) {
-		assert.Equal(1, count(t, getDB(repo).Model(model.Unread{}).Where(&model.Unread{UserID: user.ID})))
-	}
+	t.Run("nil id", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.DeleteUnreadsByChannelID(channel.ID, uuid.Nil), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.DeleteUnreadsByChannelID(uuid.Nil, user.ID), repository.ErrNilID.Error())
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+		if assert.NoError(repo.DeleteUnreadsByChannelID(channel.ID, user.ID)) {
+			assert.Equal(1, count(t, getDB(repo).Model(model.Unread{}).Where(&model.Unread{UserID: user.ID})))
+		}
+	})
 }
 
 func TestRepositoryImpl_GetChannelLatestMessagesByUserID(t *testing.T) {
