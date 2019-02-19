@@ -263,9 +263,9 @@ func (s *SSEStreamer) processMessageCreated(message *model.Message, plain string
 				if uid, err := uuid.FromString(v.ID); err != nil {
 					subscribers[uid] = true
 				}
-			case "tag":
-				tagged, _ := s.repo.GetUserIDsByTagID(uuid.FromStringOrNil(v.ID))
-				for _, v := range tagged {
+			case "group":
+				gs, _ := s.repo.GetUserGroupMemberIDs(uuid.FromStringOrNil(v.ID))
+				for _, v := range gs {
 					subscribers[v] = true
 				}
 			}
