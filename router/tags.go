@@ -35,14 +35,6 @@ type TagListForResponse struct {
 func (h *Handlers) GetUserTags(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 
-	// ユーザー確認
-	if ok, err := h.Repo.UserExists(userID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
 	res, err := h.getUserTags(userID, c)
 	if err != nil {
 		return err
@@ -60,14 +52,6 @@ func (h *Handlers) PostUserTag(c echo.Context) error {
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	// ユーザー確認
-	if ok, err := h.Repo.UserExists(userID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	// タグの確認

@@ -12,7 +12,7 @@ func (h *Handlers) GetMutedChannelIDs(c echo.Context) error {
 	ids, err := h.Repo.GetMutedChannelIDs(uid)
 	if err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	return c.JSON(http.StatusOK, ids)
@@ -22,26 +22,16 @@ func (h *Handlers) GetMutedChannelIDs(c echo.Context) error {
 func (h *Handlers) PostMutedChannel(c echo.Context) error {
 	uid := getRequestUserID(c)
 	cid := getRequestParamAsUUID(c, paramChannelID)
-
-	// ユーザーからチャンネルが見えるかどうか
-	if ok, err := h.Repo.IsChannelAccessibleToUser(uid, cid); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
+	ch := getChannelFromContext(c)
 
 	// 強制通知チャンネルを確認
-	if ch, err := h.Repo.GetChannel(cid); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if ch.IsForced {
-		return echo.NewHTTPError(http.StatusForbidden)
+	if ch.IsForced {
+		return c.NoContent(http.StatusForbidden)
 	}
 
 	if err := h.Repo.MuteChannel(uid, cid); err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -54,7 +44,7 @@ func (h *Handlers) DeleteMutedChannel(c echo.Context) error {
 
 	if err := h.Repo.UnmuteChannel(uid, cid); err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	return c.NoContent(http.StatusNoContent)

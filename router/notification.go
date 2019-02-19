@@ -1,7 +1,6 @@
 package router
 
 import (
-	"github.com/traPtitech/traQ/repository"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -10,79 +9,54 @@ import (
 
 // GetNotificationStatus GET /channels/:channelID/notification
 func (h *Handlers) GetNotificationStatus(c echo.Context) error {
-	userID := getRequestUserID(c)
-	channelID := getRequestParamAsUUID(c, paramChannelID)
-
-	ch, err := h.validateChannelID(channelID, userID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
-		}
-	}
+	ch := getChannelFromContext(c)
 
 	// プライベートチャンネルの通知は取得できない。
 	if !ch.IsPublic {
-		return echo.NewHTTPError(http.StatusForbidden)
+		return c.NoContent(http.StatusForbidden)
 	}
 
 	users, err := h.Repo.GetSubscribingUserIDs(ch.ID)
 	if err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, users)
 }
 
 // PutNotificationStatus PUT /channels/:channelID/notification
 func (h *Handlers) PutNotificationStatus(c echo.Context) error {
-	userID := getRequestUserID(c)
-	channelID := getRequestParamAsUUID(c, paramChannelID)
-
-	ch, err := h.validateChannelID(channelID, userID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "this channel is not found")
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to find the specified channel")
-		}
-	}
+	ch := getChannelFromContext(c)
 
 	// プライベートチャンネルの通知は変更できない。
 	if !ch.IsPublic {
-		return echo.NewHTTPError(http.StatusForbidden)
+		return c.NoContent(http.StatusForbidden)
 	}
 
 	var req struct {
-		On  []string `json:"on"  validate:"dive,uuid"`
-		Off []string `json:"off" validate:"dive,uuid"`
+		On  []uuid.UUID `json:"on"`
+		Off []uuid.UUID `json:"off"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	for _, v := range req.On {
-		id := uuid.FromStringOrNil(v)
+	for _, id := range req.On {
 		if ok, err := h.Repo.UserExists(id); err != nil {
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return c.NoContent(http.StatusInternalServerError)
 		} else if ok {
 			if err := h.Repo.SubscribeChannel(id, ch.ID); err != nil {
 				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
+				return c.NoContent(http.StatusInternalServerError)
 			}
 		}
 	}
-	for _, v := range req.Off {
-		err := h.Repo.UnsubscribeChannel(uuid.FromStringOrNil(v), ch.ID)
+	for _, id := range req.Off {
+		err := h.Repo.UnsubscribeChannel(id, ch.ID)
 		if err != nil {
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
 
@@ -102,7 +76,7 @@ func (h *Handlers) PostDeviceToken(c echo.Context) error {
 
 	if _, err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	return c.NoContent(http.StatusCreated)
@@ -112,17 +86,10 @@ func (h *Handlers) PostDeviceToken(c echo.Context) error {
 func (h *Handlers) GetNotificationChannels(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 
-	if ok, err := h.Repo.UserExists(userID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
 	channelIDs, err := h.Repo.GetSubscribedChannelIDs(userID)
 	if err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get subscribing channels")
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	res := make([]*ChannelForResponse, len(channelIDs))
@@ -130,13 +97,13 @@ func (h *Handlers) GetNotificationChannels(c echo.Context) error {
 		ch, err := h.Repo.GetChannel(v)
 		if err != nil {
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get channels")
+			return c.NoContent(http.StatusInternalServerError)
 		}
 
 		res[i], err = h.formatChannel(ch)
 		if err != nil {
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
 	return c.JSON(http.StatusOK, res)

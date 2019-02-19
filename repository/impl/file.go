@@ -227,6 +227,14 @@ func (repo *RepositoryImpl) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 	if fileID == uuid.Nil {
 		return false, repository.ErrNilID
 	}
+
+	c := 0
+	if err := repo.db.Model(&model.File{ID: fileID}).Limit(1).Count(&c).Error; err != nil {
+		return false, err
+	} else if c == 0 {
+		return false, repository.ErrNotFound
+	}
+
 	var result struct {
 		Allow int
 		Deny  int

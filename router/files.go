@@ -32,7 +32,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 
 			if ok, err := h.Repo.UserExists(uid); err != nil {
 				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
+				return c.NoContent(http.StatusInternalServerError)
 			} else if !ok {
 				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("unknown acl user id: %s", uid))
 			}
@@ -45,43 +45,29 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	src, err := uploadedFile.Open()
 	if err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 	defer src.Close()
 
 	file, err := h.Repo.SaveFileWithACL(uploadedFile.Filename, src, uploadedFile.Size, uploadedFile.Header.Get(echo.HeaderContentType), model.FileTypeUserFile, userID, aclRead)
 	if err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusCreated, file)
 }
 
 // GetFileByID GET /files/:fileID
 func (h *Handlers) GetFileByID(c echo.Context) error {
-	userID := getRequestUserID(c)
 	fileID := getRequestParamAsUUID(c, paramFileID)
 	dl := c.QueryParam("dl")
 
 	meta, file, err := h.Repo.OpenFile(fileID)
 	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+		c.Logger().Error(err)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 	defer file.Close()
-
-	// アクセス権確認
-	if ok, err := h.Repo.IsFileAccessible(fileID, userID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
 
 	c.Response().Header().Set(echo.HeaderContentLength, strconv.FormatInt(meta.Size, 10))
 	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") //1年間キャッシュ
@@ -103,20 +89,9 @@ func (h *Handlers) GetFileByID(c echo.Context) error {
 func (h *Handlers) DeleteFileByID(c echo.Context) error {
 	fileID := getRequestParamAsUUID(c, paramFileID)
 
-	_, err := h.Repo.GetFileMeta(fileID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
 	if err := h.Repo.DeleteFile(fileID); err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -124,26 +99,12 @@ func (h *Handlers) DeleteFileByID(c echo.Context) error {
 
 // GetMetaDataByFileID GET /files/:fileID/meta
 func (h *Handlers) GetMetaDataByFileID(c echo.Context) error {
-	userID := getRequestUserID(c)
 	fileID := getRequestParamAsUUID(c, paramFileID)
 
 	meta, err := h.Repo.GetFileMeta(fileID)
 	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
-	// アクセス権確認
-	if ok, err := h.Repo.IsFileAccessible(fileID, userID); err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusForbidden)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	return c.JSON(http.StatusOK, meta)
@@ -151,28 +112,14 @@ func (h *Handlers) GetMetaDataByFileID(c echo.Context) error {
 
 // GetThumbnailByID GET /files/:fileID/thumbnail
 func (h *Handlers) GetThumbnailByID(c echo.Context) error {
-	userID := getRequestUserID(c)
 	fileID := getRequestParamAsUUID(c, paramFileID)
 
 	_, file, err := h.Repo.OpenThumbnailFile(fileID)
 	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+		c.Logger().Error(err)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 	defer file.Close()
-
-	// アクセス権確認
-	if ok, err := h.Repo.IsFileAccessible(fileID, userID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
 
 	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") //1年間キャッシュ
 	return c.Stream(http.StatusOK, mimeImagePNG, file)

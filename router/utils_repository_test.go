@@ -1980,6 +1980,13 @@ func (r *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error
 	if fileID == uuid.Nil {
 		return false, repository.ErrNilID
 	}
+	r.FilesLock.RLock()
+	_, ok := r.Files[fileID]
+	r.FilesLock.RUnlock()
+	if !ok {
+		return false, repository.ErrNotFound
+	}
+
 	var allow bool
 	r.FilesACLLock.RLock()
 	defer r.FilesACLLock.RUnlock()

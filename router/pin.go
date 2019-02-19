@@ -20,16 +20,7 @@ type pinForResponse struct {
 
 // GetChannelPin GET /channels/:channelID/pins
 func (h *Handlers) GetChannelPin(c echo.Context) error {
-	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
-
-	// ユーザーからアクセス可能なチャンネルかどうか
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
 
 	res, err := h.getChannelPinResponse(channelID)
 	if err != nil {
@@ -45,13 +36,13 @@ func (h *Handlers) PostPin(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	req := struct {
-		MessageID string `json:"messageId" validate:"uuid,required"`
+		MessageID uuid.UUID `json:"messageId"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	m, err := h.Repo.GetMessageByID(uuid.FromStringOrNil(req.MessageID))
+	m, err := h.Repo.GetMessageByID(req.MessageID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -79,56 +70,15 @@ func (h *Handlers) PostPin(c echo.Context) error {
 	return c.JSON(http.StatusCreated, map[string]string{"id": pinID.String()})
 }
 
-// GetPin GET /pins/:pinID"
+// GetPin GET /pins/:pinID
 func (h *Handlers) GetPin(c echo.Context) error {
-	userID := getRequestUserID(c)
-	pinID := getRequestParamAsUUID(c, paramPinID)
-
-	pin, err := h.Repo.GetPin(pinID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
-	// ユーザーからアクセス可能なチャンネルかどうか
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, pin.Message.ChannelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
+	pin := getPinFromContext(c)
 	return c.JSON(http.StatusOK, h.formatPin(pin))
 }
 
 // DeletePin DELETE /pins/:pinID
 func (h *Handlers) DeletePin(c echo.Context) error {
-	userID := getRequestUserID(c)
 	pinID := getRequestParamAsUUID(c, paramPinID)
-
-	pin, err := h.Repo.GetPin(pinID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
-	// ユーザーからアクセス可能なチャンネルかどうか
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, pin.Message.ChannelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
 
 	if err := h.Repo.DeletePin(pinID); err != nil {
 		c.Logger().Error(err)

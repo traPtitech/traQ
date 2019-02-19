@@ -13,10 +13,12 @@ import (
 
 func TestHandlers_GetChannels(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, adminSession, testUser, _ := setupWithUsers(t, s1)
+	repo, server, _, require, session, adminSession, testUser, _ := setupWithUsers(t, s1)
 
 	for i := 0; i < 5; i++ {
-		mustMakeChannel(t, repo, random)
+		c := mustMakeChannel(t, repo, random)
+		_, err := repo.CreateChildChannel(utils.RandAlphabetAndNumberString(20), c.ID, uuid.Nil)
+		require.NoError(err)
 	}
 	mustMakePrivateChannel(t, repo, random, []uuid.UUID{testUser.ID})
 
@@ -37,7 +39,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Status(http.StatusOK).
 			JSON().
 			Array()
-		arr.Length().Equal(6 + 1)
+		arr.Length().Equal(11 + 1)
 	})
 
 	t.Run("Successful2", func(t *testing.T) {
@@ -49,7 +51,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Status(http.StatusOK).
 			JSON().
 			Array()
-		arr.Length().Equal(5 + 1)
+		arr.Length().Equal(10 + 1)
 	})
 }
 
@@ -64,6 +66,15 @@ func TestHandlers_PostChannels(t *testing.T) {
 			WithJSON(&PostChannel{Name: "forbidden", Parent: uuid.Nil}).
 			Expect().
 			Status(http.StatusForbidden)
+	})
+
+	t.Run("bad request", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.POST("/api/1.0/channels").
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusBadRequest)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -177,6 +188,16 @@ func TestHandlers_PostChannelChildren(t *testing.T) {
 			Status(http.StatusForbidden)
 	})
 
+	t.Run("bad request", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.POST("/api/1.0/channels/{channelID}/children", pubCh.ID.String()).
+			WithCookie(sessions.CookieName, session).
+			WithJSON(map[string]interface{}{"name": "アイウエオ"}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
@@ -263,6 +284,16 @@ func TestHandlers_PatchChannelByChannelID(t *testing.T) {
 			Status(http.StatusForbidden)
 	})
 
+	t.Run("bad request", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PATCH("/api/1.0/channels/{channelID}", pubCh.ID.String()).
+			WithCookie(sessions.CookieName, adminSession).
+			WithJSON(map[string]interface{}{"name": true, "visibility": false, "force": true}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
@@ -325,6 +356,7 @@ func TestHandlers_DeleteChannelByChannelID(t *testing.T) {
 	// 権限がない
 	t.Run("Failure1", func(t *testing.T) {
 		t.Parallel()
+		pubCh := mustMakeChannel(t, repo, random)
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/channels/{channelID}", pubCh.ID.String()).
 			WithCookie(sessions.CookieName, session).
@@ -421,6 +453,16 @@ func TestHandlers_PutTopic(t *testing.T) {
 			WithJSON(map[string]string{"text": newTopic}).
 			Expect().
 			Status(http.StatusForbidden)
+	})
+
+	t.Run("bad request", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
+			WithCookie(sessions.CookieName, session).
+			WithJSON(map[string]interface{}{"text": true}).
+			Expect().
+			Status(http.StatusBadRequest)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
