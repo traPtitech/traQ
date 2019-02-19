@@ -23,18 +23,6 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	requires := AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := RequestBodyLengthLimit
 
-	apiNoAuth := e.Group("/api/1.0")
-	{
-		apiNoAuth.POST("/login", h.PostLogin)
-		apiNoAuth.POST("/logout", PostLogout)
-		apiNoAuth.GET("/public/icon/:username", h.GetPublicUserIcon)
-		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, h.ValidateWebhookID(false))
-		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, h.ValidateWebhookID(false))
-		apiNoAuth.GET("/teapot", func(c echo.Context) error {
-			return echo.NewHTTPError(http.StatusTeapot, "I'm a teapot")
-		})
-	}
-
 	api := e.Group("/api/1.0", h.UserAuthenticate(oauth))
 	{
 		apiUsers := api.Group("/users")
@@ -240,6 +228,18 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		}
 		api.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports))
 		api.GET("/activity/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
+	}
+
+	apiNoAuth := e.Group("/api/1.0")
+	{
+		apiNoAuth.POST("/login", h.PostLogin)
+		apiNoAuth.POST("/logout", PostLogout)
+		apiNoAuth.GET("/public/icon/:username", h.GetPublicUserIcon)
+		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, h.ValidateWebhookID(false))
+		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, h.ValidateWebhookID(false))
+		apiNoAuth.GET("/teapot", func(c echo.Context) error {
+			return echo.NewHTTPError(http.StatusTeapot, "I'm a teapot")
+		})
 	}
 
 	if oauth != nil {
