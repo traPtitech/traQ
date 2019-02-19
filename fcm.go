@@ -5,7 +5,6 @@ import (
 	"firebase.google.com/go"
 	"firebase.google.com/go/messaging"
 	"fmt"
-	"github.com/labstack/gommon/log"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/config"
@@ -63,10 +62,10 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 		"tag":       fmt.Sprintf("c:%s", message.ChannelID),
 		"badge":     fmt.Sprintf("%s/static/badge.png", config.TRAQOrigin),
 	}
-	pUsers, _ := m.repo.GetPrivateChannelMemberIDs(message.ChannelID)
+	ch, _ := m.repo.GetChannel(message.ChannelID)
 	mUser, _ := m.repo.GetUser(message.UserID)
 	body := ""
-	if l := len(pUsers); l == 2 || l == 1 {
+	if ch.IsDMChannel() {
 		if mUser != nil {
 			if len(mUser.DisplayName) == 0 {
 				payload["title"] = fmt.Sprintf("@%s", mUser.Name)
@@ -92,10 +91,9 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 		}
 	}
 	if s := utf8string.NewString(body); s.RuneCount() > 100 {
-		payload["body"] = s.Slice(0, 97) + "..."
-	} else {
-		payload["body"] = body
+		body = s.Slice(0, 97) + "..."
 	}
+	payload["body"] = body
 	for _, v := range embedded {
 		if v.Type == "file" {
 			f, _ := m.repo.GetFileMeta(uuid.FromStringOrNil(v.ID))
@@ -108,7 +106,6 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 
 	// calculate targets
 	targets := map[uuid.UUID]bool{}
-	ch, _ := m.repo.GetChannel(message.ChannelID)
 	switch {
 	case ch.IsForced: // 強制通知チャンネル
 		users, _ := m.repo.GetUsers()
@@ -120,43 +117,37 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 		}
 
 	case !ch.IsPublic: // プライベートチャンネル
-		for _, v := range pUsers {
-			targets[v] = true
-		}
+		pUsers, _ := m.repo.GetPrivateChannelMemberIDs(message.ChannelID)
+		addIDsToSet(targets, pUsers)
 
 	default: // 通常チャンネルメッセージ
 		// チャンネル通知ユーザー取得
 		users, _ := m.repo.GetSubscribingUserIDs(message.ChannelID)
-		for _, v := range users {
-			targets[v] = true
-		}
+		addIDsToSet(targets, users)
 
-		// タグユーザー・メンションユーザー取得
+		// ユーザーグループ・メンションユーザー取得
 		for _, v := range embedded {
 			switch v.Type {
 			case "user":
 				if uid, err := uuid.FromString(v.ID); err != nil {
-					targets[uid] = true
+					addIDsToSet(targets, []uuid.UUID{uid})
 				}
-			case "tag":
-				tagged, _ := m.repo.GetUserIDsByTagID(uuid.FromStringOrNil(v.ID))
-				for _, v := range tagged {
-					targets[v] = true
-				}
+			case "group":
+				gs, _ := m.repo.GetUserGroupMemberIDs(uuid.FromStringOrNil(v.ID))
+				addIDsToSet(targets, gs)
 			}
 		}
-	}
-	delete(targets, message.UserID)
-	if !ch.IsForced {
+
+		// ミュート除外
 		muted, _ := m.repo.GetMuteUserIDs(ch.ID)
-		for _, v := range muted {
-			delete(targets, v)
-		}
+		deleteIDsFromSet(targets, muted)
 	}
+
+	// 自分を除外
+	delete(targets, message.UserID)
 
 	// send
 	for u := range targets {
-		log.Infof("send fcm to user(%s)", u) // TODO Remove it
 		devs, _ := m.repo.GetDeviceTokensByUserID(u)
 		_ = m.sendToFcm(devs, payload)
 	}
@@ -183,10 +174,8 @@ func (m *FCMManager) sendToFcm(deviceTokens []string, data map[string]string) er
 	}
 	for _, token := range deviceTokens {
 		payload.Token = token
-		log.Info(payload) // TODO Remove it
 		for i := 0; i < 5; i++ {
 			if _, err := m.messaging.Send(context.Background(), payload); err != nil {
-				log.Error(err) // TODO Remove it
 				switch {
 				case strings.Contains(err.Error(), "registration-token-not-registered"):
 					fallthrough
@@ -207,4 +196,16 @@ func (m *FCMManager) sendToFcm(deviceTokens []string, data map[string]string) er
 		}
 	}
 	return nil
+}
+
+func addIDsToSet(set map[uuid.UUID]bool, ids []uuid.UUID) {
+	for _, v := range ids {
+		set[v] = true
+	}
+}
+
+func deleteIDsFromSet(set map[uuid.UUID]bool, ids []uuid.UUID) {
+	for _, v := range ids {
+		delete(set, v)
+	}
 }
