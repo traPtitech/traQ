@@ -356,6 +356,7 @@ func TestHandlers_DeleteChannelByChannelID(t *testing.T) {
 	// 権限がない
 	t.Run("Failure1", func(t *testing.T) {
 		t.Parallel()
+		pubCh := mustMakeChannel(t, repo, random)
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/channels/{channelID}", pubCh.ID.String()).
 			WithCookie(sessions.CookieName, session).
