@@ -70,7 +70,14 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.IsFileAccessible(uuid.Nil, uuid.Nil)
-		assert.Error(t, err)
+		assert.EqualError(t, err, repository.ErrNilID.Error())
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.IsFileAccessible(uuid.NewV4(), user.ID)
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Allow all", func(t *testing.T) {

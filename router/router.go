@@ -28,8 +28,8 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		apiNoAuth.POST("/login", h.PostLogin)
 		apiNoAuth.POST("/logout", PostLogout)
 		apiNoAuth.GET("/public/icon/:username", h.GetPublicUserIcon)
-		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook)
-		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub)
+		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, h.ValidateWebhookID(false))
+		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, h.ValidateWebhookID(false))
 		apiNoAuth.GET("/teapot", func(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusTeapot, "I'm a teapot")
 		})
@@ -181,7 +181,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		apiFiles := api.Group("/files")
 		{
 			apiFiles.POST("", h.PostFile, bodyLimit(30<<10), requires(permission.UploadFile))
-			apiFilesFid := apiFiles.Group("/:fileID")
+			apiFilesFid := apiFiles.Group("/:fileID", h.ValidateFileID())
 			{
 				apiFilesFid.GET("", h.GetFileByID, requires(permission.DownloadFile))
 				apiFilesFid.DELETE("", h.DeleteFileByID, requires(permission.DeleteFile))
@@ -213,7 +213,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		{
 			apiWebhooks.GET("", h.GetWebhooks, requires(permission.GetWebhook))
 			apiWebhooks.POST("", h.PostWebhooks, requires(permission.CreateWebhook))
-			apiWebhooksWid := apiWebhooks.Group("/:webhookID")
+			apiWebhooksWid := apiWebhooks.Group("/:webhookID", h.ValidateWebhookID(true))
 			{
 				apiWebhooksWid.GET("", h.GetWebhook, requires(permission.GetWebhook))
 				apiWebhooksWid.PATCH("", h.PatchWebhook, requires(permission.EditWebhook))

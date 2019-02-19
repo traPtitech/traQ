@@ -410,3 +410,66 @@ func (h *Handlers) ValidateUserID(existenceCheckOnly bool) echo.MiddlewareFunc {
 func getUserFromContext(c echo.Context) *model.User {
 	return c.Get("paramUser").(*model.User)
 }
+
+// ValidateWebhookID 'webhookID'パラメータのWebhookを検証するミドルウェア
+func (h *Handlers) ValidateWebhookID(requestUserCheck bool) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			webhookID := getRequestParamAsUUID(c, paramWebhookID)
+
+			if webhookID == uuid.Nil {
+				return c.NoContent(http.StatusNotFound)
+			}
+
+			w, err := h.Repo.GetWebhook(webhookID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return c.NoContent(http.StatusNotFound)
+				default:
+					c.Logger().Error(err)
+					return c.NoContent(http.StatusInternalServerError)
+				}
+			}
+
+			if requestUserCheck {
+				user, ok := c.Get("user").(*model.User)
+				if !ok || w.GetCreatorID() != user.ID {
+					return c.NoContent(http.StatusForbidden)
+				}
+			}
+
+			c.Set("paramWebhook", w)
+			return next(c)
+		}
+	}
+}
+
+func getWebhookFromContext(c echo.Context) model.Webhook {
+	return c.Get("paramWebhook").(model.Webhook)
+}
+
+// ValidateFileID 'fileID'パラメータのファイルを検証するミドルウェア
+func (h *Handlers) ValidateFileID() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			userID := getRequestUserID(c)
+			fileID := getRequestParamAsUUID(c, paramFileID)
+
+			// アクセス権確認
+			if ok, err := h.Repo.IsFileAccessible(fileID, userID); err != nil {
+				switch err {
+				case repository.ErrNilID, repository.ErrNotFound:
+					return c.NoContent(http.StatusNotFound)
+				default:
+					c.Logger().Error(err)
+					return c.NoContent(http.StatusInternalServerError)
+				}
+			} else if !ok {
+				return c.NoContent(http.StatusForbidden)
+			}
+
+			return next(c)
+		}
+	}
+}

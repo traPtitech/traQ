@@ -6,7 +6,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/repository"
 	"gopkg.in/go-playground/webhooks.v3/github"
 	"io/ioutil"
 	"net/http"
@@ -93,23 +92,14 @@ func (h *Handlers) PostWebhooks(c echo.Context) error {
 
 // GetWebhook GET /webhooks/:webhookID
 func (h *Handlers) GetWebhook(c echo.Context) error {
-	webhookID := getRequestParamAsUUID(c, paramWebhookID)
-	w, err := h.getWebhook(c, webhookID, true)
-	if err != nil {
-		return err
-	}
+	w := getWebhookFromContext(c)
 	return c.JSON(http.StatusOK, formatWebhook(w))
 }
 
 // PatchWebhook PATCH /webhooks/:webhookID
 func (h *Handlers) PatchWebhook(c echo.Context) error {
 	userID := getRequestUserID(c)
-	webhookID := getRequestParamAsUUID(c, paramWebhookID)
-
-	w, err := h.getWebhook(c, webhookID, true)
-	if err != nil {
-		return err
-	}
+	w := getWebhookFromContext(c)
 
 	req := struct {
 		Name        string `json:"name"        validate:"max=32"`
@@ -158,11 +148,7 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 
 // DeleteWebhook DELETE /webhooks/:webhookID
 func (h *Handlers) DeleteWebhook(c echo.Context) error {
-	webhookID := getRequestParamAsUUID(c, paramWebhookID)
-	w, err := h.getWebhook(c, webhookID, true)
-	if err != nil {
-		return err
-	}
+	w := getWebhookFromContext(c)
 
 	if err := h.Repo.DeleteWebhook(w.GetID()); err != nil {
 		c.Logger().Error(err)
@@ -174,12 +160,7 @@ func (h *Handlers) DeleteWebhook(c echo.Context) error {
 
 // PostWebhook POST /webhooks/:webhookID
 func (h *Handlers) PostWebhook(c echo.Context) error {
-	webhookID := getRequestParamAsUUID(c, paramWebhookID)
-
-	w, err := h.getWebhook(c, webhookID, false)
-	if err != nil {
-		return err
-	}
+	w := getWebhookFromContext(c)
 
 	text := ""
 	channelID := w.GetChannelID()
@@ -225,12 +206,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 
 // PutWebhookIcon PUT /webhooks/:webhookID/icon
 func (h *Handlers) PutWebhookIcon(c echo.Context) error {
-	webhookID := getRequestParamAsUUID(c, paramWebhookID)
-
-	w, err := h.getWebhook(c, webhookID, true)
-	if err != nil {
-		return err
-	}
+	w := getWebhookFromContext(c)
 
 	// file確認
 	uploadedFile, err := c.FormFile("file")
@@ -254,12 +230,7 @@ func (h *Handlers) PutWebhookIcon(c echo.Context) error {
 
 // PostWebhookByGithub POST /webhooks/:webhookID/github
 func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
-	webhookID := getRequestParamAsUUID(c, paramWebhookID)
-
-	w, err := h.getWebhook(c, webhookID, false)
-	if err != nil {
-		return err
-	}
+	w := getWebhookFromContext(c)
 
 	switch c.Request().Header.Get(echo.HeaderContentType) {
 	case echo.MIMEApplicationJSON, echo.MIMEApplicationJSONCharsetUTF8:
@@ -493,32 +464,6 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
-}
-
-func (h *Handlers) getWebhook(c echo.Context, id uuid.UUID, strict bool) (model.Webhook, error) {
-	if id == uuid.Nil {
-		return nil, echo.NewHTTPError(http.StatusNotFound)
-	}
-
-	w, err := h.Repo.GetWebhook(id)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return nil, echo.NewHTTPError(http.StatusNotFound)
-		default:
-			c.Logger().Error(err)
-			return nil, echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
-	if strict {
-		user, ok := c.Get("user").(*model.User)
-		if !ok || w.GetCreatorID() != user.ID {
-			return nil, echo.NewHTTPError(http.StatusForbidden)
-		}
-	}
-
-	return w, nil
 }
 
 func formatWebhook(w model.Webhook) *webhookForResponse {
