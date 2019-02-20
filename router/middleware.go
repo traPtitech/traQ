@@ -20,6 +20,7 @@ import (
 func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			var user *model.User
 			ah := c.Request().Header.Get(echo.HeaderAuthorization)
 			if len(ah) > 0 {
 				// AuthorizationヘッダーがあるためOAuth2で検証
@@ -27,7 +28,7 @@ func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				// Authorizationスキーム検証
 				l := len(oauth2.AuthScheme)
 				if !(len(ah) > l+1 && ah[:l] == oauth2.AuthScheme) {
-					return echo.NewHTTPError(http.StatusForbidden, "the Authorization Header's scheme is invalid")
+					return echo.NewHTTPError(http.StatusUnauthorized, "the Authorization Header's scheme is invalid")
 				}
 
 				// OAuth2 Token検証
@@ -35,7 +36,7 @@ func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				if err != nil {
 					switch err {
 					case oauth2.ErrTokenNotFound:
-						return echo.NewHTTPError(http.StatusForbidden, "the token is invalid")
+						return echo.NewHTTPError(http.StatusUnauthorized, "the token is invalid")
 					default:
 						c.Logger().Error(err)
 						return echo.NewHTTPError(http.StatusInternalServerError)
@@ -44,23 +45,21 @@ func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 
 				// tokenの有効期限の検証
 				if token.IsExpired() {
-					return echo.NewHTTPError(http.StatusForbidden, "the token is expired")
+					return echo.NewHTTPError(http.StatusUnauthorized, "the token is expired")
 				}
 
 				// tokenの検証に成功。ユーザーを取得
-				user, err := h.Repo.GetUser(token.UserID)
+				user, err = h.Repo.GetUser(token.UserID)
 				if err != nil {
 					switch err {
 					case repository.ErrNotFound:
-						return echo.NewHTTPError(http.StatusForbidden, "the user is not found")
+						return echo.NewHTTPError(http.StatusUnauthorized, "the user is not found")
 					default:
 						c.Logger().Error(err)
 						return echo.NewHTTPError(http.StatusInternalServerError)
 					}
 				}
 
-				c.Set("user", user)
-				c.Set("userID", user.ID)
 				// 認可に基づきRole生成
 				c.Set("role", token.Scopes.GenerateRole())
 			} else {
@@ -71,23 +70,31 @@ func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 					return echo.NewHTTPError(http.StatusInternalServerError)
 				}
 				if sess == nil || sess.GetUserID() == uuid.Nil {
-					return echo.NewHTTPError(http.StatusForbidden, "You are not logged in")
+					return echo.NewHTTPError(http.StatusUnauthorized, "You are not logged in")
 				}
 
-				user, err := h.Repo.GetUser(sess.GetUserID())
+				user, err = h.Repo.GetUser(sess.GetUserID())
 				if err != nil {
 					switch err {
 					case repository.ErrNotFound:
-						return echo.NewHTTPError(http.StatusForbidden, "the user is not found")
+						return echo.NewHTTPError(http.StatusUnauthorized, "the user is not found")
 					default:
 						c.Logger().Error(err)
 						return echo.NewHTTPError(http.StatusInternalServerError)
 					}
 				}
-
-				c.Set("user", user)
-				c.Set("userID", user.ID)
 			}
+
+			// ユーザーアカウント状態を確認
+			switch user.Status {
+			case model.UserAccountStatusSuspended:
+				return echo.NewHTTPError(http.StatusForbidden, "this account is currently suspended")
+			case model.UserAccountStatusValid:
+				break
+			}
+
+			c.Set("user", user)
+			c.Set("userID", user.ID)
 			return next(c)
 		}
 	}

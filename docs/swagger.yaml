@@ -29,6 +29,12 @@ paths:
       responses:
         "204":
           description: 正常にログインできました。
+        "400":
+          description: ログインできませんでした。リクエスト内容が不正です
+        "401":
+          description: ログインできませんでした。認証情報が間違っています
+        "403":
+          description: ログインできませんでした。アカウントに問題があります
 
   /logout:
     post:
@@ -1959,32 +1965,6 @@ paths:
             スタンプを外すことができませんでした。
             指定されたメッセージは存在しないか、自分のスコープ内にありません。
 
-  /messages/search:
-    get:
-      tags:
-        - search
-      description: クエリによってメッセージを検索し、その結果を取得します。
-      parameters:
-        - name: query
-          description: 検索のクエリ文字列
-          in: query
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: |+
-            正常に検索できました。
-            検索結果に含まれたメッセージを返します。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageList"
-        "400":
-          description: |+
-            正常に検索できませんでした。
-            クエリが不正です。
-
   /heartbeat:
     get:
       tags:
@@ -3170,6 +3150,9 @@ components:
         isOnline:
           type: boolean
           description: 現在オンラインかどうか
+        suspended:
+          type: boolean
+          description: アカウントが停止中かどうか
 
     UserDetail:
       type: object
@@ -3195,6 +3178,9 @@ components:
         isOnline:
           type: boolean
           description: 現在オンラインかどうか
+        suspended:
+          type: boolean
+          description: アカウントが停止中かどうか
         tagList:
           $ref: "#/components/schemas/TagList"
 

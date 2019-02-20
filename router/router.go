@@ -233,7 +233,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	apiNoAuth := e.Group("/api/1.0")
 	{
 		apiNoAuth.POST("/login", h.PostLogin)
-		apiNoAuth.POST("/logout", PostLogout)
+		apiNoAuth.POST("/logout", h.PostLogout)
 		apiNoAuth.GET("/public/icon/:username", h.GetPublicUserIcon)
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, h.ValidateWebhookID(false))
 		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, h.ValidateWebhookID(false))

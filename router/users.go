@@ -22,6 +22,7 @@ type UserForResponse struct {
 	TwitterID   string     `json:"twitterId"`
 	LastOnline  *time.Time `json:"lastOnline"`
 	IsOnline    bool       `json:"isOnline"`
+	Suspended   bool       `json:"suspended"`
 }
 
 // UserDetailForResponse クライアントに返す形の詳細ユーザー構造体
@@ -34,6 +35,7 @@ type UserDetailForResponse struct {
 	TwitterID   string            `json:"twitterId"`
 	LastOnline  *time.Time        `json:"lastOnline"`
 	IsOnline    bool              `json:"isOnline"`
+	Suspended   bool              `json:"suspended"`
 	TagList     []*TagForResponse `json:"tagList"`
 }
 
@@ -51,31 +53,40 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusBadRequest, "name or password is wrong")
+			return c.NoContent(http.StatusUnauthorized)
 		default:
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
 	if err := model.AuthenticateUser(user, req.Pass); err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, err)
+		return echo.NewHTTPError(http.StatusUnauthorized, err)
+	}
+
+	// ユーザーのアカウント状態の確認
+	switch user.Status {
+	case model.UserAccountStatusSuspended:
+		return echo.NewHTTPError(http.StatusForbidden, "this account is currently suspended")
+	case model.UserAccountStatusValid:
+		break
 	}
 
 	sess, err := sessions.Get(c.Response(), c.Request(), true)
 	if err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	if err := sess.SetUser(user.ID); err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return c.NoContent(http.StatusInternalServerError)
 	}
+
 	return c.NoContent(http.StatusNoContent)
 }
 
 // PostLogout POST /logout
-func PostLogout(c echo.Context) error {
+func (h *Handlers) PostLogout(c echo.Context) error {
 	sess, err := sessions.Get(c.Response(), c.Request(), false)
 	if err != nil {
 		c.Logger().Error(err)
@@ -264,6 +275,7 @@ func (h *Handlers) formatUser(user *model.User) *UserForResponse {
 		Bot:         user.Bot,
 		TwitterID:   user.TwitterID,
 		IsOnline:    h.Repo.IsUserOnline(user.ID),
+		Suspended:   user.Status != model.UserAccountStatusValid,
 	}
 	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
 		res.LastOnline = &t
@@ -283,6 +295,7 @@ func (h *Handlers) formatUserDetail(user *model.User, tagList []*model.UsersTag)
 		Bot:         user.Bot,
 		TwitterID:   user.TwitterID,
 		IsOnline:    h.Repo.IsUserOnline(user.ID),
+		Suspended:   user.Status != model.UserAccountStatusValid,
 	}
 	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
 		res.LastOnline = &t

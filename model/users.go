@@ -21,8 +21,8 @@ var (
 type UserAccountStatus int
 
 const (
-	// UserAccountStatusBanned ユーザーアカウント状態: 凍結
-	UserAccountStatusBanned UserAccountStatus = 0
+	// UserAccountStatusSuspended ユーザーアカウント状態: 停止
+	UserAccountStatusSuspended UserAccountStatus = 0
 	// UserAccountStatusValid ユーザーアカウント状態: 有効
 	UserAccountStatusValid UserAccountStatus = 1
 )
