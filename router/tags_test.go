@@ -19,7 +19,7 @@ func TestHandlers_PostUserTag(t *testing.T) {
 		e := makeExp(t, server)
 		e.POST("/api/1.0/users/{userID}/tags", user.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -52,7 +52,7 @@ func TestHandlers_GetUserTags(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/users/{userID}/tags", user.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -82,7 +82,7 @@ func TestHandlers_PatchUserTag(t *testing.T) {
 		e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.ID.String(), tag.String()).
 			WithJSON(map[string]bool{"isLocked": true}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -121,7 +121,7 @@ func TestHandlers_DeleteUserTag(t *testing.T) {
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/users/{userID}/tags/{tagID}", user.ID.String(), tag.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {

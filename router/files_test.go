@@ -23,7 +23,7 @@ func TestHandlers_PostFile(t *testing.T) {
 			WithMultipart().
 			WithFileBytes("file", "test.txt", []byte("aaa")).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/files/{fileID}", file.ID).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -98,7 +98,7 @@ func TestHandlers_DeleteFileByID(t *testing.T) {
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/files/{fileID}", file.ID).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -135,7 +135,7 @@ func TestHandlers_GetMetaDataByFileID(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/files/{fileID}/meta", file.ID).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {

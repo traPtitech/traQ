@@ -137,7 +137,7 @@ func (repo *RepositoryImpl) CreateUser(name, email, password string, role gorbac
 		Email:    email,
 		Password: hex.EncodeToString(utils.HashPassword(password, salt)),
 		Salt:     hex.EncodeToString(salt),
-		Status:   1, //TODO 状態管理
+		Status:   model.UserAccountStatusValid,
 		Bot:      false,
 		Role:     role.ID(),
 	}
@@ -291,6 +291,28 @@ func (repo *RepositoryImpl) ChangeUserTwitterID(id uuid.UUID, twitterID string) 
 		return err
 	}
 	return repo.db.Model(&model.User{ID: id}).Update("twitter_id", twitterID).Error
+}
+
+// ChangeUserAccountStatus ユーザーのアカウント状態を変更します
+func (repo *RepositoryImpl) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
+	if id == uuid.Nil {
+		return repository.ErrNilID
+	}
+	result := repo.db.Model(&model.User{ID: id}).Update("status", status)
+	if err := result.Error; err != nil {
+		return err
+	}
+	if result.RowsAffected == 0 {
+		return repository.ErrNotFound
+	}
+	repo.hub.Publish(hub.Message{
+		Name: event.UserAccountStatusUpdated,
+		Fields: hub.Fields{
+			"user_id": id,
+			"status":  status,
+		},
+	})
+	return nil
 }
 
 // UpdateUserLastOnline ユーザーの最終オンライン日時を更新します

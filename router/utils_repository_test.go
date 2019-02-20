@@ -109,7 +109,7 @@ func (r *TestRepository) CreateUser(name, email, password string, role gorbac.Ro
 		Email:     email,
 		Password:  hex.EncodeToString(utils.HashPassword(password, salt)),
 		Salt:      hex.EncodeToString(salt),
-		Status:    1,
+		Status:    model.UserAccountStatusValid,
 		Bot:       false,
 		Role:      role.ID(),
 		CreatedAt: time.Now(),
@@ -236,6 +236,22 @@ func (r *TestRepository) ChangeUserTwitterID(id uuid.UUID, twitterID string) err
 		r.Users[id] = u
 	}
 	r.UsersLock.Unlock()
+	return nil
+}
+
+func (r *TestRepository) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
+	if id == uuid.Nil {
+		return repository.ErrNilID
+	}
+	r.UsersLock.Lock()
+	defer r.UsersLock.Unlock()
+	u, ok := r.Users[id]
+	if !ok {
+		return repository.ErrNotFound
+	}
+	u.Status = status
+	u.UpdatedAt = time.Now()
+	r.Users[id] = u
 	return nil
 }
 

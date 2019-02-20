@@ -10,6 +10,11 @@ const (
 	// 	Fields:
 	//      user_id: uuid.UUID
 	UserUpdated = "user.updated"
+	// UserAccountStatusUpdated ユーザーのアカウント状態が更新された
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	// 		status: model.UserAccountStatus
+	UserAccountStatusUpdated = "user.account_status.updated"
 	// UserIconUpdated ユーザーのアイコンが更新された
 	// 	Fields:
 	// 		user_id: uuid.UUID

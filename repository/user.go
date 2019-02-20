@@ -18,6 +18,7 @@ type UserRepository interface {
 	ChangeUserPassword(id uuid.UUID, password string) error
 	ChangeUserIcon(id, fileID uuid.UUID) error
 	ChangeUserTwitterID(id uuid.UUID, twitterID string) error
+	ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error
 	UpdateUserLastOnline(id uuid.UUID, time time.Time) (err error)
 	IsUserOnline(id uuid.UUID) bool
 	GetUserLastOnline(id uuid.UUID) (time.Time, error)

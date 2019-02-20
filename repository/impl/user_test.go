@@ -3,7 +3,11 @@ package impl
 import (
 	"encoding/hex"
 	"github.com/satori/go.uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
 	"strings"
 	"testing"
@@ -131,4 +135,31 @@ func TestRepositoryImpl_ChangeUserTwitterID(t *testing.T) {
 	}
 
 	assert.Error(repo.ChangeUserTwitterID(user.ID, "あああああ"))
+}
+
+func TestRepositoryImpl_ChangeUserAccountStatus(t *testing.T) {
+	t.Parallel()
+	repo, _, _, user := setupWithUser(t, common)
+
+	t.Run("nil id", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.ChangeUserAccountStatus(uuid.Nil, model.UserAccountStatusSuspended), repository.ErrNilID.Error())
+	})
+
+	t.Run("unknown user", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.ChangeUserAccountStatus(uuid.NewV4(), model.UserAccountStatusSuspended), repository.ErrNotFound.Error())
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		if assert.NoError(t, repo.ChangeUserAccountStatus(user.ID, model.UserAccountStatusSuspended)) {
+			u, err := repo.GetUser(user.ID)
+			require.NoError(t, err)
+			assert.Equal(t, u.Status, model.UserAccountStatusSuspended)
+		}
+	})
 }
