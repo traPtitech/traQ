@@ -160,7 +160,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		apiTags := api.Group("/tags")
 		{
 			apiTags.GET("", h.GetAllTags, requires(permission.GetTag))
-			apiTagsTid := api.Group("/:tagID")
+			apiTagsTid := apiTags.Group("/:tagID")
 			{
 				apiTagsTid.GET("", h.GetUsersByTagID, requires(permission.GetTag))
 				apiTagsTid.PATCH("", h.PatchTag, requires(permission.EditTag))
