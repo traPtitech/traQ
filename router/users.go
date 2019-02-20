@@ -244,7 +244,6 @@ func (h *Handlers) PostUsers(c echo.Context) error {
 	req := struct {
 		Name     string `json:"name"     validate:"name"`
 		Password string `json:"password" validate:"password"`
-		Email    string `json:"email"    validate:"email"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -258,7 +257,7 @@ func (h *Handlers) PostUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "the name's user has already existed")
 	}
 
-	if _, err := h.Repo.CreateUser(req.Name, req.Email, req.Password, role.User); err != nil {
+	if _, err := h.Repo.CreateUser(req.Name, req.Password, role.User); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}

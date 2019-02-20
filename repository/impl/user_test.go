@@ -31,23 +31,20 @@ func TestRepositoryImpl_CreateUser(t *testing.T) {
 	t.Parallel()
 	repo, assert, _ := setup(t, common)
 
-	_, err := repo.CreateUser("あああ", "test@test.test", "test", role.User)
-	assert.Error(err)
-	_, err = repo.CreateUser("aaa", "アイウエオ", "test", role.User)
+	_, err := repo.CreateUser("あああ", "test", role.User)
 	assert.Error(err)
 
 	s := utils.RandAlphabetAndNumberString(10)
-	user, err := repo.CreateUser(s, "test@test.test", "test", role.User)
+	user, err := repo.CreateUser(s, "test", role.User)
 	if assert.NoError(err) {
 		assert.NotEmpty(user.ID)
 		assert.Equal(s, user.Name)
 		assert.NotEmpty(user.Salt)
 		assert.NotEmpty(user.Password)
-		assert.Equal("test@test.test", user.Email)
 		assert.Equal(role.User.ID(), user.Role)
 	}
 
-	_, err = repo.CreateUser(s, "test@test.test", "test", role.User)
+	_, err = repo.CreateUser(s, "test", role.User)
 	assert.Error(err)
 }
 

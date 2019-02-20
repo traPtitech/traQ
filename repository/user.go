@@ -9,7 +9,7 @@ import (
 
 // UserRepository ユーザーリポジトリ
 type UserRepository interface {
-	CreateUser(name, email, password string, role gorbac.Role) (*model.User, error)
+	CreateUser(name, password string, role gorbac.Role) (*model.User, error)
 	GetUser(id uuid.UUID) (*model.User, error)
 	GetUserByName(name string) (*model.User, error)
 	GetUsers() ([]*model.User, error)

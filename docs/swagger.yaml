@@ -824,16 +824,11 @@ paths:
               type: object
               required:
                 - name
-                - email
                 - password
               properties:
                 name:
                   type: string
                   description: ユーザー名(半角英数字とアンダーバー(_)の1文字以上32文字以下)
-                email:
-                  type: string
-                  format: email
-                  description: メールアドレス
                 password:
                   type: string
                   format: password
