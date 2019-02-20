@@ -84,7 +84,7 @@ func NewTestRepository() *TestRepository {
 		Files:                 make(map[uuid.UUID]model.File),
 		FilesACL:              make(map[uuid.UUID]map[uuid.UUID]bool),
 	}
-	_, _ = r.CreateUser("traq", "example@example.com", "traq", role.Admin)
+	_, _ = r.CreateUser("traq", "traq", role.Admin)
 	return r
 }
 
@@ -92,7 +92,7 @@ func (r *TestRepository) Sync() (bool, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) CreateUser(name, email, password string, role gorbac.Role) (*model.User, error) {
+func (r *TestRepository) CreateUser(name, password string, role gorbac.Role) (*model.User, error) {
 	r.UsersLock.Lock()
 	defer r.UsersLock.Unlock()
 
@@ -106,7 +106,6 @@ func (r *TestRepository) CreateUser(name, email, password string, role gorbac.Ro
 	user := model.User{
 		ID:        uuid.NewV4(),
 		Name:      name,
-		Email:     email,
 		Password:  hex.EncodeToString(utils.HashPassword(password, salt)),
 		Salt:      hex.EncodeToString(salt),
 		Status:    model.UserAccountStatusValid,

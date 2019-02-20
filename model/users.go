@@ -32,7 +32,6 @@ type User struct {
 	ID          uuid.UUID         `gorm:"type:char(36);primary_key"`
 	Name        string            `gorm:"type:varchar(32);unique"   validate:"required,name"`
 	DisplayName string            `gorm:"type:varchar(64)"          validate:"max=64"`
-	Email       string            `gorm:"type:text"                 validate:"required,email"`
 	Password    string            `gorm:"type:char(128)"            validate:"required,max=128"`
 	Salt        string            `gorm:"type:char(128)"            validate:"required,max=128"`
 	Icon        uuid.UUID         `gorm:"type:char(36)"`

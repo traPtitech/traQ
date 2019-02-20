@@ -129,12 +129,11 @@ func (s *userOnlineStatus) getTime() (t time.Time) {
 }
 
 // CreateUser ユーザーを作成します
-func (repo *RepositoryImpl) CreateUser(name, email, password string, role gorbac.Role) (*model.User, error) {
+func (repo *RepositoryImpl) CreateUser(name, password string, role gorbac.Role) (*model.User, error) {
 	salt := utils.GenerateSalt()
 	user := &model.User{
 		ID:       uuid.NewV4(),
 		Name:     name,
-		Email:    email,
 		Password: hex.EncodeToString(utils.HashPassword(password, salt)),
 		Salt:     hex.EncodeToString(salt),
 		Status:   model.UserAccountStatusValid,

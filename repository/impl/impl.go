@@ -43,7 +43,7 @@ func (repo *RepositoryImpl) Sync() (bool, error) {
 		return false, err
 	}
 	if c == 0 {
-		_, err := repo.CreateUser("traq", "example@example.com", "traq", role.Admin)
+		_, err := repo.CreateUser("traq", "traq", role.Admin)
 		if err != nil {
 			return false, err
 		}
