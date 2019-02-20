@@ -20,7 +20,7 @@ func TestHandlers_GetStars(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/users/me/stars").
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -47,7 +47,7 @@ func TestHandlers_PutStars(t *testing.T) {
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -77,7 +77,7 @@ func TestHandlers_DeleteStars(t *testing.T) {
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {

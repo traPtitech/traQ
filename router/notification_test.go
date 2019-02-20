@@ -24,7 +24,7 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -94,7 +94,7 @@ func TestHandlers_GetNotificationStatus(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -124,7 +124,7 @@ func TestHandlers_GetNotificationChannels(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/users/{userID}/notification", user.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {

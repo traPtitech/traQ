@@ -24,7 +24,7 @@ func TestHandlers_GetMessageByID(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/messages/{messageID}", message.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -94,7 +94,7 @@ func TestHandlers_PostMessage(t *testing.T) {
 		e.POST("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
 			WithJSON(map[string]string{"text": "test message"}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -189,7 +189,7 @@ func TestHandlers_GetMessagesByChannelID(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -246,7 +246,7 @@ func TestHandlers_PutMessageByID(t *testing.T) {
 		e.PUT("/api/1.0/messages/{messageID}", message.ID.String()).
 			WithJSON(map[string]string{"text": "new message"}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -298,7 +298,7 @@ func TestHandlers_DeleteMessageByID(t *testing.T) {
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -346,7 +346,7 @@ func TestHandlers_PostMessageReport(t *testing.T) {
 		e.POST("/api/1.0/messages/{messageID}/report", message.ID.String()).
 			WithJSON(map[string]string{"reason": "aaaa"}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -388,7 +388,7 @@ func TestHandlers_GetUnread(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/users/me/unread").
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -418,7 +418,7 @@ func TestHandlers_DeleteUnread(t *testing.T) {
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/users/me/unread/{channelID}", channel.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {

@@ -27,7 +27,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/channels").
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -65,7 +65,7 @@ func TestHandlers_PostChannels(t *testing.T) {
 		e.POST("/api/1.0/channels").
 			WithJSON(&PostChannel{Name: "forbidden", Parent: uuid.Nil}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("bad request", func(t *testing.T) {
@@ -185,7 +185,7 @@ func TestHandlers_PostChannelChildren(t *testing.T) {
 		e.POST("/api/1.0/channels/{channelID}/children", pubCh.ID.String()).
 			WithJSON(map[string]string{"name": "forbidden"}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("bad request", func(t *testing.T) {
@@ -236,7 +236,7 @@ func TestHandlers_GetChannelByChannelID(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/channels/{channelID}", pubCh.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("NotFound", func(t *testing.T) {
@@ -281,7 +281,7 @@ func TestHandlers_PatchChannelByChannelID(t *testing.T) {
 		e.PATCH("/api/1.0/channels/{channelID}", pubCh.ID.String()).
 			WithJSON(map[string]interface{}{"name": "renamed", "visibility": true}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("bad request", func(t *testing.T) {
@@ -338,7 +338,7 @@ func TestHandlers_DeleteChannelByChannelID(t *testing.T) {
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/channels/{channelID}", pubCh.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -377,7 +377,7 @@ func TestHandlers_PutChannelParent(t *testing.T) {
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/channels/{channelID}/parent", cCh.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -419,7 +419,7 @@ func TestHandlers_GetTopic(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -452,7 +452,7 @@ func TestHandlers_PutTopic(t *testing.T) {
 		e.PUT("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
 			WithJSON(map[string]string{"text": newTopic}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("bad request", func(t *testing.T) {

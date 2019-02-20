@@ -18,7 +18,7 @@ func TestHandlers_GetUsers(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/users").
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -44,7 +44,7 @@ func TestHandlers_GetMe(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/users/me").
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestHandlers_GetUserByID(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/users/{userID}", testUser.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -98,7 +98,7 @@ func TestHandlers_PatchMe(t *testing.T) {
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/users/me").
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -138,6 +138,6 @@ func TestHandlers_PostLogin(t *testing.T) {
 		e.POST("/api/1.0/login").
 			WithJSON(map[string]string{"name": user.Name, "pass": "wrong_password"}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 }

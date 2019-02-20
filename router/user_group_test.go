@@ -23,7 +23,7 @@ func TestHandlers_GetUserGroups(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/groups").
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("ok", func(t *testing.T) {
@@ -51,7 +51,7 @@ func TestHandlers_PostUserGroups(t *testing.T) {
 		e.POST("/api/1.0/groups").
 			WithJSON(map[string]interface{}{"name": name, "description": name}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("bad request", func(t *testing.T) {
@@ -108,7 +108,7 @@ func TestHandlers_GetUserGroup(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/groups/{groupID}", g.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("not found", func(t *testing.T) {
@@ -150,7 +150,7 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/groups/{groupID}", g.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("not found", func(t *testing.T) {
@@ -237,7 +237,7 @@ func TestHandlers_DeleteUserGroup(t *testing.T) {
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/groups/{groupID}", g.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("not found", func(t *testing.T) {
@@ -285,7 +285,7 @@ func TestHandlers_GetUserGroupMembers(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/groups/{groupID}/members", g.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("not found", func(t *testing.T) {
@@ -322,7 +322,7 @@ func TestHandlers_PostUserGroupMembers(t *testing.T) {
 		e.POST("/api/1.0/groups/{groupID}/members", g.ID.String()).
 			WithJSON(map[string]interface{}{"userId": user.ID}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("not found", func(t *testing.T) {
@@ -393,7 +393,7 @@ func TestHandlers_DeleteUserGroupMembers(t *testing.T) {
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", g.ID.String(), user.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("not found", func(t *testing.T) {
@@ -452,7 +452,7 @@ func TestHandlers_GetMyBelongingGroup(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/users/me/groups").
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("ok", func(t *testing.T) {
@@ -483,7 +483,7 @@ func TestHandlers_GetUserBelongingGroup(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/users/{userID}/groups", user.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("unknown user", func(t *testing.T) {

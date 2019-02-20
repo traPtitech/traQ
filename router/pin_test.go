@@ -22,7 +22,7 @@ func TestHandlers_PostPin(t *testing.T) {
 		e.POST("/api/1.0/pins").
 			WithJSON(map[string]string{"messageId": message.ID.String()}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -58,7 +58,7 @@ func TestHandlers_GetPin(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/pins/{pinID}", pin.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -89,7 +89,7 @@ func TestHandlers_DeletePin(t *testing.T) {
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/pins/{pinID}", pin.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
@@ -118,7 +118,7 @@ func TestHandlers_GetChannelPin(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/channels/{channelID}/pins", channel.ID.String()).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusUnauthorized)
 	})
 
 	t.Run("Successful1", func(t *testing.T) {
