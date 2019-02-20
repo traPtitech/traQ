@@ -239,6 +239,22 @@ func (r *TestRepository) ChangeUserTwitterID(id uuid.UUID, twitterID string) err
 	return nil
 }
 
+func (r *TestRepository) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
+	if id == uuid.Nil {
+		return repository.ErrNilID
+	}
+	r.UsersLock.Lock()
+	defer r.UsersLock.Unlock()
+	u, ok := r.Users[id]
+	if !ok {
+		return repository.ErrNotFound
+	}
+	u.Status = status
+	u.UpdatedAt = time.Now()
+	r.Users[id] = u
+	return nil
+}
+
 func (r *TestRepository) UpdateUserLastOnline(id uuid.UUID, t time.Time) (err error) {
 	if id == uuid.Nil {
 		return repository.ErrNilID

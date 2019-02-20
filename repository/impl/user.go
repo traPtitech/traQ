@@ -293,6 +293,28 @@ func (repo *RepositoryImpl) ChangeUserTwitterID(id uuid.UUID, twitterID string) 
 	return repo.db.Model(&model.User{ID: id}).Update("twitter_id", twitterID).Error
 }
 
+// ChangeUserAccountStatus ユーザーのアカウント状態を変更します
+func (repo *RepositoryImpl) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
+	if id == uuid.Nil {
+		return repository.ErrNilID
+	}
+	result := repo.db.Model(&model.User{ID: id}).Update("status", status)
+	if err := result.Error; err != nil {
+		return err
+	}
+	if result.RowsAffected == 0 {
+		return repository.ErrNotFound
+	}
+	repo.hub.Publish(hub.Message{
+		Name: event.UserAccountStatusUpdated,
+		Fields: hub.Fields{
+			"user_id": id,
+			"status":  status,
+		},
+	})
+	return nil
+}
+
 // UpdateUserLastOnline ユーザーの最終オンライン日時を更新します
 func (repo *RepositoryImpl) UpdateUserLastOnline(id uuid.UUID, time time.Time) (err error) {
 	if id == uuid.Nil {
