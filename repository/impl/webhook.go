@@ -89,6 +89,7 @@ func (repo *RepositoryImpl) CreateWebhook(name, description string, channelID, c
 		DisplayName: name,
 		Icon:        iconFileID,
 		Bot:         true,
+		Status:      model.UserAccountStatusValid,
 		Role:        role.Bot.ID(),
 	}
 	wb := &WebhookBot{

@@ -17,16 +17,26 @@ var (
 	ErrUserWrongIDOrPassword = errors.New("password or id is wrong")
 )
 
+// UserAccountStatus ユーザーアカウント状態
+type UserAccountStatus int
+
+const (
+	// UserAccountStatusBanned ユーザーアカウント状態: 凍結
+	UserAccountStatusBanned UserAccountStatus = 0
+	// UserAccountStatusValid ユーザーアカウント状態: 有効
+	UserAccountStatusValid UserAccountStatus = 1
+)
+
 // User userの構造体
 type User struct {
-	ID          uuid.UUID `gorm:"type:char(36);primary_key"`
-	Name        string    `gorm:"type:varchar(32);unique"   validate:"required,name"`
-	DisplayName string    `gorm:"type:varchar(64)"          validate:"max=64"`
-	Email       string    `gorm:"type:text"                 validate:"required,email"`
-	Password    string    `gorm:"type:char(128)"            validate:"required,max=128"`
-	Salt        string    `gorm:"type:char(128)"            validate:"required,max=128"`
-	Icon        uuid.UUID `gorm:"type:char(36)"`
-	Status      int       `gorm:"type:tinyint"`
+	ID          uuid.UUID         `gorm:"type:char(36);primary_key"`
+	Name        string            `gorm:"type:varchar(32);unique"   validate:"required,name"`
+	DisplayName string            `gorm:"type:varchar(64)"          validate:"max=64"`
+	Email       string            `gorm:"type:text"                 validate:"required,email"`
+	Password    string            `gorm:"type:char(128)"            validate:"required,max=128"`
+	Salt        string            `gorm:"type:char(128)"            validate:"required,max=128"`
+	Icon        uuid.UUID         `gorm:"type:char(36)"`
+	Status      UserAccountStatus `gorm:"type:tinyint"`
 	Bot         bool
 	Role        string     `gorm:"type:text"                 validate:"required"`
 	TwitterID   string     `gorm:"type:varchar(15)"          validate:"twitterid"`
