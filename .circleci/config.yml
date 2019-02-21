@@ -103,6 +103,16 @@ jobs:
     machine: true
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - docker-cache--{{ checksum ".circleci/config.yml" }}-{{ checksum "Dockerfile" }}
+          paths: ~/caches/images.tar
+      - run:
+          name: docker load cache
+          command: |
+            if [ -f ~/caches/images.tar ]; then
+              docker load -i ~/caches/images.tar
+            fi
       - run:
           name: docker login
           command: docker login -u $DOCKER_USER -p $DOCKER_PASS
@@ -117,6 +127,14 @@ jobs:
               IMAGE_TAG="$CIRCLE_BRANCH"
             fi
             docker build -t trap/traq:$IMAGE_TAG .
+      - run:
+          name: docker save cache
+          command: |
+            mkdir -p ~/caches
+            docker save $(docker images | awk 'NR>=2 && ! /^<none>/{print $1}') -o ~/caches/images.tar
+      - save_cache:
+          key: docker-cache--{{ checksum ".circleci/config.yml" }}-{{ checksum "Dockerfile" }}
+          paths: ~/caches/images.tar
 
   deploy-staging:
     executor: default
