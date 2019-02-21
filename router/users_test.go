@@ -199,7 +199,6 @@ func TestHandlers_PutPassword(t *testing.T) {
 		require.NoError(t, err)
 		assert.NoError(t, model.AuthenticateUser(u, new))
 	})
-
 }
 
 func TestHandlers_PostLogin(t *testing.T) {
