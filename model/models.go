@@ -55,7 +55,6 @@ var (
 		{"messages_stamps", "message_id", "messages(id)", "CASCADE", "CASCADE"},
 		{"messages_stamps", "stamp_id", "stamps(id)", "CASCADE", "CASCADE"},
 		{"messages_stamps", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"stamps", "file_id", "files(id)", "CASCADE", "CASCADE"},
 		{"webhook_bots", "bot_user_id", "users(id)", "CASCADE", "CASCADE"},
 	}
 )

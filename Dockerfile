@@ -8,7 +8,7 @@ COPY . .
 RUN CGO_ENABLED=0 go build -o /traQ
 
 
-FROM alpine:3.8
+FROM alpine:3.9
 WORKDIR /app
 
 RUN apk add --update ca-certificates imagemagick openssl && \
