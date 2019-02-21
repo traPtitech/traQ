@@ -220,7 +220,7 @@ func (h *Handlers) PutPassword(c echo.Context) error {
 	user := getRequestUser(c)
 
 	req := struct {
-		Old string `json:"password"    validate:"password"`
+		Old string `json:"password"    validate:"required"`
 		New string `json:"newPassword" validate:"password"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
@@ -228,12 +228,12 @@ func (h *Handlers) PutPassword(c echo.Context) error {
 	}
 
 	if err := model.AuthenticateUser(user, req.Old); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "password is wrong")
+		return c.NoContent(http.StatusUnauthorized)
 	}
 
 	if err := h.Repo.ChangeUserPassword(user.ID, req.New); err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	return c.NoContent(http.StatusNoContent)

@@ -3,7 +3,9 @@ package router
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/sessions"
+	"strings"
 	"testing"
 
 	"net/http"
@@ -117,6 +119,87 @@ func TestHandlers_PatchMe(t *testing.T) {
 		assert.Equal(t, newDisp, u.DisplayName)
 		assert.Equal(t, newTwitter, u.TwitterID)
 	})
+}
+
+func TestHandlers_PutPassword(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, _ := setup(t, common4)
+
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/me/password").
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("invalid body", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/me/password").
+			WithCookie(sessions.CookieName, session).
+			WithJSON(map[string]interface{}{"password": 111, "newPassword": false}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("invalid password1", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/me/password").
+			WithCookie(sessions.CookieName, session).
+			WithJSON(map[string]string{"password": "test", "newPassword": "a"}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("invalid password2", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/me/password").
+			WithCookie(sessions.CookieName, session).
+			WithJSON(map[string]string{"password": "test", "newPassword": "アイウエオ"}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("invalid password3", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/me/password").
+			WithCookie(sessions.CookieName, session).
+			WithJSON(map[string]string{"password": "test", "newPassword": strings.Repeat("a", 33)}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("wrong password", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/me/password").
+			WithCookie(sessions.CookieName, session).
+			WithJSON(map[string]string{"password": "wrong password", "newPassword": strings.Repeat("a", 20)}).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		user := mustMakeUser(t, repo, random)
+
+		e := makeExp(t, server)
+		new := strings.Repeat("a", 20)
+		e.PUT("/api/1.0/users/me/password").
+			WithCookie(sessions.CookieName, generateSession(t, user.ID)).
+			WithJSON(map[string]string{"password": "test", "newPassword": new}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		u, err := repo.GetUser(user.ID)
+		require.NoError(t, err)
+		assert.NoError(t, model.AuthenticateUser(u, new))
+	})
+
 }
 
 func TestHandlers_PostLogin(t *testing.T) {
