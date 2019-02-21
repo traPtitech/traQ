@@ -105,13 +105,16 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - docker-cache--{{ checksum ".circleci/config.yml" }}-{{ checksum "Dockerfile" }}
-          paths: ~/caches/images.tar
+            - docker-cache--{{ checksum "Dockerfile" }}-{{ checksum "go.mod" }}
+            - docker-cache--{{ checksum "Dockerfile" }}
+          paths: ~/caches/images.tar.gz
       - run:
           name: docker load cache
           command: |
-            if [ -f ~/caches/images.tar ]; then
-              docker load -i ~/caches/images.tar
+            set +o pipefail
+            if [ -f ~/caches/images.tar.gz ]; then
+              gunzip -c ~/caches/images.tar.gz | docker load
+              docker images
             fi
       - run:
           name: docker login
@@ -131,10 +134,14 @@ jobs:
           name: docker save cache
           command: |
             mkdir -p ~/caches
-            docker save $(docker images | awk 'NR>=2 && ! /^<none>/{print $1}') -o ~/caches/images.tar
+            docker build -t trap/traq:$IMAGE_TAG . \
+              | grep '\-\-\->' \
+              | grep -v 'Using cache' \
+              | sed -e 's/[ >-]//g' > /tmp/layers.txt
+            docker save $(cat /tmp/layers.txt) | gzip > ~/caches/images.tar.gz
       - save_cache:
-          key: docker-cache--{{ checksum ".circleci/config.yml" }}-{{ checksum "Dockerfile" }}
-          paths: ~/caches/images.tar
+          key: docker-cache--{{ checksum "Dockerfile" }}-{{ checksum "go.mod" }}
+          paths: ~/caches/images.tar.gz
 
   deploy-staging:
     executor: default
