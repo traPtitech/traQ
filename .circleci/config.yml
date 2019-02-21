@@ -134,7 +134,7 @@ jobs:
           name: docker save cache
           command: |
             mkdir -p ~/caches
-            docker build -t trap/traq:$IMAGE_TAG . \
+            docker build -t trap/traq . \
               | grep '\-\-\->' \
               | grep -v 'Using cache' \
               | sed -e 's/[ >-]//g' > /tmp/layers.txt
