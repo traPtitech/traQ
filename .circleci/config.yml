@@ -104,6 +104,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: docker login
+          command: docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - run:
           name: docker build
           command: |
             if [ -n "$CIRCLE_TAG" ]; then
