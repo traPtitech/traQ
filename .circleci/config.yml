@@ -103,19 +103,6 @@ jobs:
     machine: true
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - docker-cache--{{ checksum "Dockerfile" }}-{{ checksum "go.mod" }}
-            - docker-cache--{{ checksum "Dockerfile" }}
-          paths: ~/caches/images.tar.gz
-      - run:
-          name: docker load cache
-          command: |
-            set +o pipefail
-            if [ -f ~/caches/images.tar.gz ]; then
-              gunzip -c ~/caches/images.tar.gz | docker load
-              docker images
-            fi
       - run:
           name: docker login
           command: docker login -u $DOCKER_USER -p $DOCKER_PASS
@@ -130,18 +117,6 @@ jobs:
               IMAGE_TAG="$CIRCLE_BRANCH"
             fi
             docker build -t trap/traq:$IMAGE_TAG .
-      - run:
-          name: docker save cache
-          command: |
-            mkdir -p ~/caches
-            docker build -t trap/traq . \
-              | grep '\-\-\->' \
-              | grep -v 'Using cache' \
-              | sed -e 's/[ >-]//g' > /tmp/layers.txt
-            docker save $(cat /tmp/layers.txt) | gzip > ~/caches/images.tar.gz
-      - save_cache:
-          key: docker-cache--{{ checksum "Dockerfile" }}-{{ checksum "go.mod" }}
-          paths: ~/caches/images.tar.gz
 
   deploy-staging:
     executor: default
