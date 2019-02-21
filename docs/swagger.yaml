@@ -896,14 +896,14 @@ paths:
                   description: 現在のパスワード
                 newPassword:
                   type: string
-                  description: 新しいパスワード
+                  description: 新しいパスワード(10文字以上32文字以下のアスキー文字)
       responses:
         "204":
           description: 正常に変更できました。
         "400":
           description: 正常に変更できませんでした。リクエスト内容が不正です
-        "403":
-          description: 正常に変更できませんでした。パスワードが違います。
+        "401":
+          description: 正常に変更できませんでした。現在のパスワードが違います。
 
   /users/me/icon:
     get:
