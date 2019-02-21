@@ -99,6 +99,22 @@ jobs:
           name: Upload coverage data
           command: bash <(curl -s https://codecov.io/bash)
 
+  build-image:
+    machine: true
+    steps:
+      - checkout
+      - run:
+          name: docker build
+          command: |
+            if [ -n "$CIRCLE_TAG" ]; then
+              IMAGE_TAG="$CIRCLE_TAG"
+            elif [ "$CIRCLE_BRANCH" = "master" ]; then
+              IMAGE_TAG="latest"
+            else
+              IMAGE_TAG="$CIRCLE_BRANCH"
+            fi
+            docker build -t trap/traq:$IMAGE_TAG .
+
   deploy-staging:
     executor: default
     steps:
@@ -128,4 +144,4 @@ workflows:
           filters:
             branches:
               only: master
-
+      - build-image
