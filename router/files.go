@@ -74,7 +74,7 @@ func (h *Handlers) GetFileByID(c echo.Context) error {
 		return c.Redirect(http.StatusTemporaryRedirect, url)
 	}
 
-	_, file, err := h.Repo.OpenFile(fileID)
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
 	if err != nil {
 		c.Logger().Error(err)
 		return c.NoContent(http.StatusInternalServerError)
