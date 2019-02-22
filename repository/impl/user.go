@@ -136,7 +136,7 @@ func (repo *RepositoryImpl) CreateUser(name, password string, role gorbac.Role) 
 		Name:     name,
 		Password: hex.EncodeToString(utils.HashPassword(password, salt)),
 		Salt:     hex.EncodeToString(salt),
-		Status:   model.UserAccountStatusValid,
+		Status:   model.UserAccountStatusActive,
 		Bot:      false,
 		Role:     role.ID(),
 	}
