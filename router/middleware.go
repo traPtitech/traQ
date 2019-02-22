@@ -87,7 +87,7 @@ func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 
 			// ユーザーアカウント状態を確認
 			switch user.Status {
-			case model.UserAccountStatusDeactivated:
+			case model.UserAccountStatusDeactivated, model.UserAccountStatusSuspended:
 				return echo.NewHTTPError(http.StatusForbidden, "this account is currently suspended")
 			case model.UserAccountStatusActive:
 				break

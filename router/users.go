@@ -67,7 +67,7 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 
 	// ユーザーのアカウント状態の確認
 	switch user.Status {
-	case model.UserAccountStatusDeactivated:
+	case model.UserAccountStatusDeactivated, model.UserAccountStatusSuspended:
 		return echo.NewHTTPError(http.StatusForbidden, "this account is currently suspended")
 	case model.UserAccountStatusActive:
 		break
@@ -84,6 +84,9 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
+	if redirect := c.QueryParam("redirect"); len(redirect) > 0 {
+		return c.Redirect(http.StatusFound, redirect)
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -92,15 +95,18 @@ func (h *Handlers) PostLogout(c echo.Context) error {
 	sess, err := sessions.Get(c.Response(), c.Request(), false)
 	if err != nil {
 		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 	if sess != nil {
 		if err := sess.Destroy(c.Response(), c.Request()); err != nil {
 			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
 
+	if redirect := c.QueryParam("redirect"); len(redirect) > 0 {
+		return c.Redirect(http.StatusFound, redirect)
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 

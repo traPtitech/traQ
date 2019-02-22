@@ -71,7 +71,7 @@ func (h *Handlers) GetFileByID(c echo.Context) error {
 	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
 	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetKey())
 	if len(url) > 0 {
-		return c.Redirect(http.StatusTemporaryRedirect, url)
+		return c.Redirect(http.StatusFound, url)
 	}
 
 	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
