@@ -7,34 +7,106 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"io/ioutil"
 	"testing"
 )
 
+func TestRepositoryImpl_GenerateIconFile(t *testing.T) {
+	t.Parallel()
+	repo, assert, require := setup(t, common)
+
+	id, err := repo.GenerateIconFile("salt")
+	if assert.NoError(err) {
+		meta, err := repo.GetFileMeta(id)
+		require.NoError(err)
+		assert.Equal(model.FileTypeIcon, meta.Type)
+	}
+}
+
 func TestRepositoryImpl_DeleteFile(t *testing.T) {
 	t.Parallel()
-	repo, assert, _ := setup(t, common)
+	repo, _, _ := setup(t, common)
 
-	file := mustMakeFile(t, repo, uuid.Nil)
-	if assert.NoError(repo.DeleteFile(file.ID)) {
-		_, err := repo.GetFileMeta(file.ID)
-		assert.Error(err)
-	}
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		id, err := repo.GenerateIconFile("test")
+		require.NoError(t, err)
+
+		if assert.NoError(t, repo.DeleteFile(id)) {
+			_, err := repo.GetFileMeta(id)
+			assert.EqualError(t, err, repository.ErrNotFound.Error())
+		}
+	})
+
+	t.Run("nil id", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.DeleteFile(uuid.Nil), repository.ErrNilID.Error())
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.DeleteFile(uuid.NewV4()), repository.ErrNotFound.Error())
+	})
 }
 
 func TestRepositoryImpl_OpenFile(t *testing.T) {
 	t.Parallel()
-	repo, assert, _ := setup(t, common)
+	repo, _, _ := setup(t, common)
 
-	f := mustMakeFile(t, repo, uuid.Nil)
-	_, file, err := repo.OpenFile(f.ID)
-	if assert.NoError(err) {
-		buf := make([]byte, 512)
-		n, err := file.Read(buf)
-		_ = file.Close()
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		f := mustMakeFile(t, repo, uuid.Nil)
+		_, file, err := repo.OpenFile(f.ID)
 		if assert.NoError(err) {
-			assert.Equal("test message", string(buf[:n]))
+			defer file.Close()
+			b, _ := ioutil.ReadAll(file)
+			assert.Equal("test message", string(b))
 		}
-	}
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+
+		_, _, err := repo.OpenFile(uuid.NewV4())
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
+}
+
+func TestRepositoryImpl_OpenThumbnailFile(t *testing.T) {
+	t.Parallel()
+	repo, _, _ := setup(t, common)
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		assert, require := assertAndRequire(t)
+
+		id, err := repo.GenerateIconFile("test")
+		require.NoError(err)
+
+		_, _, err = repo.OpenThumbnailFile(id)
+		assert.NoError(err)
+	})
+
+	t.Run("no thumb", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		f := mustMakeFile(t, repo, uuid.Nil)
+		_, _, err := repo.OpenThumbnailFile(f.ID)
+		assert.EqualError(err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+
+		_, _, err := repo.OpenThumbnailFile(uuid.NewV4())
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
 }
 
 func TestRepositoryImpl_GetFileMeta(t *testing.T) {

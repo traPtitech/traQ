@@ -79,7 +79,7 @@ func (repo *RepositoryImpl) SaveFileWithACL(name string, src io.Reader, size int
 	// fileの保存
 	eg.Go(func() error {
 		defer fileSrc.Close()
-		if err := repo.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime); err != nil {
+		if err := repo.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime, f.Type); err != nil {
 			return err
 		}
 		return nil
@@ -258,7 +258,7 @@ func (repo *RepositoryImpl) generateThumbnail(ctx context.Context, f *model.File
 		return image.ZR, err
 	}
 	b, _ := thumb.EncodeToPNG(img)
-	if err := repo.FS.SaveByKey(b, f.GetThumbKey(), f.GetThumbKey()+".png", "image/png"); err != nil {
+	if err := repo.FS.SaveByKey(b, f.GetThumbKey(), f.GetThumbKey()+".png", "image/png", model.FileTypeThumbnail); err != nil {
 		return image.ZR, err
 	}
 	return img.Bounds(), nil

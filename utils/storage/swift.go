@@ -2,21 +2,24 @@ package storage
 
 import (
 	"fmt"
-	"github.com/labstack/echo"
 	"github.com/ncw/swift"
+	"github.com/traPtitech/traQ/utils"
 	"io"
+	"time"
 )
 
 // SwiftFileStorage OpenStack Swiftストレージ
 type SwiftFileStorage struct {
-	container  string
-	connection swift.Connection
+	container     string
+	tempURLSecret string
+	connection    swift.Connection
 }
 
 // NewSwiftFileStorage 引数の情報でOpenStack Swiftストレージを生成します
 func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL string) (*SwiftFileStorage, error) {
 	m := &SwiftFileStorage{
-		container: container,
+		container:     container,
+		tempURLSecret: utils.RandAlphabetAndNumberString(20),
 		connection: swift.Connection{
 			AuthUrl:  authURL,
 			UserName: userName,
@@ -53,10 +56,10 @@ func (fs *SwiftFileStorage) OpenFileByKey(key string) (file io.ReadCloser, err e
 }
 
 // SaveByKey srcの内容をkeyで指定されたファイルに書き込みます
-func (fs *SwiftFileStorage) SaveByKey(src io.Reader, key, name, contentType string) (err error) {
+func (fs *SwiftFileStorage) SaveByKey(src io.Reader, key, name, contentType, fileType string) (err error) {
 	_, err = fs.connection.ObjectPut(fs.container, key, src, true, "", contentType, swift.Headers{
-		echo.HeaderContentDisposition: fmt.Sprintf("attachment; filename=%s", name),
-		"Cache-Control":               "private, max-age=31536000",
+		"Content-Disposition": fmt.Sprintf("attachment; filename=%s", name),
+		"Cache-Control":       "private, max-age=31536000",
 	})
 	return
 }
@@ -68,4 +71,9 @@ func (fs *SwiftFileStorage) DeleteByKey(key string) (err error) {
 		return ErrFileNotFound
 	}
 	return err
+}
+
+// GenerateAccessURL keyで指定されたファイルの直接アクセスURLを発行する。
+func (fs *SwiftFileStorage) GenerateAccessURL(key string) (string, error) {
+	return fs.connection.ObjectTempUrl(fs.container, key, fs.tempURLSecret, "GET", time.Now().Add(5*time.Minute)), nil
 }

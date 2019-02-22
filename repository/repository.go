@@ -1,8 +1,11 @@
 package repository
 
+import "github.com/traPtitech/traQ/utils/storage"
+
 // Repository データリポジトリ
 type Repository interface {
 	Sync() (bool, error)
+	GetFS() storage.FileStorage
 	UserRepository
 	UserGroupRepository
 	TagRepository

@@ -32,7 +32,7 @@ func (fs *LocalFileStorage) OpenFileByKey(key string) (io.ReadCloser, error) {
 }
 
 // SaveByKey srcの内容をkeyで指定されたファイルに書き込みます
-func (fs *LocalFileStorage) SaveByKey(src io.Reader, key, name, contentType string) error {
+func (fs *LocalFileStorage) SaveByKey(src io.Reader, key, name, contentType, fileType string) error {
 	file, err := os.Create(fs.getFilePath(key))
 	if err != nil {
 		return err
@@ -52,6 +52,11 @@ func (fs *LocalFileStorage) DeleteByKey(key string) error {
 		return ErrFileNotFound
 	}
 	return os.Remove(fileName)
+}
+
+// GenerateAccessURL "",nilを返します
+func (fs *LocalFileStorage) GenerateAccessURL(key string) (string, error) {
+	return "", nil
 }
 
 // GetDir ファイルの保存先を取得する

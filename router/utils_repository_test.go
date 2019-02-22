@@ -92,6 +92,10 @@ func (r *TestRepository) Sync() (bool, error) {
 	panic("implement me")
 }
 
+func (r *TestRepository) GetFS() storage.FileStorage {
+	return r.FS
+}
+
 func (r *TestRepository) CreateUser(name, password string, role gorbac.Role) (*model.User, error) {
 	r.UsersLock.Lock()
 	defer r.UsersLock.Unlock()
@@ -1967,7 +1971,7 @@ func (r *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64,
 	// fileの保存
 	eg.Go(func() error {
 		defer fileSrc.Close()
-		if err := r.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime); err != nil {
+		if err := r.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime, f.Type); err != nil {
 			return err
 		}
 		return nil

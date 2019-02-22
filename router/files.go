@@ -62,7 +62,19 @@ func (h *Handlers) GetFileByID(c echo.Context) error {
 	fileID := getRequestParamAsUUID(c, paramFileID)
 	dl := c.QueryParam("dl")
 
-	meta, file, err := h.Repo.OpenFile(fileID)
+	meta, err := h.Repo.GetFileMeta(fileID)
+	if err != nil {
+		c.Logger().Error()
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
+	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetKey())
+	if len(url) > 0 {
+		return c.Redirect(http.StatusTemporaryRedirect, url)
+	}
+
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
 	if err != nil {
 		c.Logger().Error(err)
 		return c.NoContent(http.StatusInternalServerError)

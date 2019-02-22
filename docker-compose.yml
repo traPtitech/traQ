@@ -27,7 +27,7 @@ services:
       - ./data:/initdata:ro
 
   traq-frontend:
-    build: https://github.com/traPtitech/traQ-UI.git
+    image: trap/traq-ui
     restart: always
     expose:
       - "80"
