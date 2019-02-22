@@ -162,7 +162,7 @@ func getFileStorage() (storage.FileStorage, error) {
 	if config.OSContainer == "" || config.OSUserName == "" || config.OSPassword == "" || config.OSAuthURL == "" {
 		return storage.NewLocalFileStorage(config.LocalStorageDir), nil
 	}
-	return storage.NewSwiftFileStorage(config.OSContainer, config.OSUserName, config.OSPassword, config.OSTenantName, config.OSTenantID, config.OSAuthURL)
+	return storage.NewCompositeFileStorage(config.LocalStorageDir, config.OSContainer, config.OSUserName, config.OSPassword, config.OSTenantName, config.OSTenantID, config.OSAuthURL)
 }
 
 func loadKeys(private, public string) ([]byte, []byte) {
