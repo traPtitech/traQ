@@ -21,7 +21,7 @@ func NewInMemoryFileStorage() *InMemoryFileStorage {
 }
 
 // SaveByKey srcの内容をkeyで指定されたファイルに書き込みます
-func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, name, contentType string) error {
+func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, name, contentType, fileType string) error {
 	b, err := ioutil.ReadAll(src)
 	if err != nil {
 		return err
@@ -49,6 +49,11 @@ func (fs *InMemoryFileStorage) DeleteByKey(key string) error {
 	delete(fs.fileMap, key)
 	fs.Unlock()
 	return nil
+}
+
+// GenerateAccessURL "",nilを返します
+func (fs *InMemoryFileStorage) GenerateAccessURL(key string) (string, error) {
+	return "", nil
 }
 
 type closableByteReader struct {

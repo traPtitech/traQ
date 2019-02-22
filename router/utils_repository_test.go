@@ -1967,7 +1967,7 @@ func (r *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64,
 	// fileの保存
 	eg.Go(func() error {
 		defer fileSrc.Close()
-		if err := r.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime); err != nil {
+		if err := r.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime, f.Type); err != nil {
 			return err
 		}
 		return nil

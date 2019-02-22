@@ -14,6 +14,8 @@ const (
 	FileTypeIcon = "icon"
 	// FileTypeStamp スタンプファイルタイプ
 	FileTypeStamp = "stamp"
+	// FileTypeThumbnail サムネイルファイルタイプ
+	FileTypeThumbnail = "thumbnail"
 )
 
 // File DBに格納するファイルの構造体
