@@ -23,6 +23,7 @@ type UserForResponse struct {
 	LastOnline  *time.Time `json:"lastOnline"`
 	IsOnline    bool       `json:"isOnline"`
 	Suspended   bool       `json:"suspended"`
+	Status      int        `json:"accountStatus"`
 }
 
 // UserDetailForResponse クライアントに返す形の詳細ユーザー構造体
@@ -36,6 +37,7 @@ type UserDetailForResponse struct {
 	LastOnline  *time.Time        `json:"lastOnline"`
 	IsOnline    bool              `json:"isOnline"`
 	Suspended   bool              `json:"suspended"`
+	Status      int               `json:"accountStatus"`
 	TagList     []*TagForResponse `json:"tagList"`
 }
 
@@ -65,9 +67,9 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 
 	// ユーザーのアカウント状態の確認
 	switch user.Status {
-	case model.UserAccountStatusSuspended:
+	case model.UserAccountStatusDeactivated:
 		return echo.NewHTTPError(http.StatusForbidden, "this account is currently suspended")
-	case model.UserAccountStatusValid:
+	case model.UserAccountStatusActive:
 		break
 	}
 
@@ -274,7 +276,8 @@ func (h *Handlers) formatUser(user *model.User) *UserForResponse {
 		Bot:         user.Bot,
 		TwitterID:   user.TwitterID,
 		IsOnline:    h.Repo.IsUserOnline(user.ID),
-		Suspended:   user.Status != model.UserAccountStatusValid,
+		Suspended:   user.Status != model.UserAccountStatusActive,
+		Status:      int(user.Status),
 	}
 	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
 		res.LastOnline = &t
@@ -294,7 +297,8 @@ func (h *Handlers) formatUserDetail(user *model.User, tagList []*model.UsersTag)
 		Bot:         user.Bot,
 		TwitterID:   user.TwitterID,
 		IsOnline:    h.Repo.IsUserOnline(user.ID),
-		Suspended:   user.Status != model.UserAccountStatusValid,
+		Suspended:   user.Status != model.UserAccountStatusActive,
+		Status:      int(user.Status),
 	}
 	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
 		res.LastOnline = &t

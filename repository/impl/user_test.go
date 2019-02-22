@@ -141,22 +141,22 @@ func TestRepositoryImpl_ChangeUserAccountStatus(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.ChangeUserAccountStatus(uuid.Nil, model.UserAccountStatusSuspended), repository.ErrNilID.Error())
+		assert.EqualError(t, repo.ChangeUserAccountStatus(uuid.Nil, model.UserAccountStatusDeactivated), repository.ErrNilID.Error())
 	})
 
 	t.Run("unknown user", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.ChangeUserAccountStatus(uuid.NewV4(), model.UserAccountStatusSuspended), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.ChangeUserAccountStatus(uuid.NewV4(), model.UserAccountStatusDeactivated), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		if assert.NoError(t, repo.ChangeUserAccountStatus(user.ID, model.UserAccountStatusSuspended)) {
+		if assert.NoError(t, repo.ChangeUserAccountStatus(user.ID, model.UserAccountStatusDeactivated)) {
 			u, err := repo.GetUser(user.ID)
 			require.NoError(t, err)
-			assert.Equal(t, u.Status, model.UserAccountStatusSuspended)
+			assert.Equal(t, u.Status, model.UserAccountStatusDeactivated)
 		}
 	})
 }

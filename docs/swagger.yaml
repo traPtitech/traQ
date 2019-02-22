@@ -3148,6 +3148,9 @@ components:
         suspended:
           type: boolean
           description: アカウントが停止中かどうか
+        accountStatus:
+          type: integer
+          description: アカウントの状態 (0:停止,1:有効,2:一時停止)
 
     UserDetail:
       type: object
@@ -3176,6 +3179,9 @@ components:
         suspended:
           type: boolean
           description: アカウントが停止中かどうか
+        accountStatus:
+          type: integer
+          description: アカウントの状態 (0:停止,1:有効,2:一時停止)
         tagList:
           $ref: "#/components/schemas/TagList"
 

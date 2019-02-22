@@ -112,7 +112,7 @@ func (r *TestRepository) CreateUser(name, password string, role gorbac.Role) (*m
 		Name:      name,
 		Password:  hex.EncodeToString(utils.HashPassword(password, salt)),
 		Salt:      hex.EncodeToString(salt),
-		Status:    model.UserAccountStatusValid,
+		Status:    model.UserAccountStatusActive,
 		Bot:       false,
 		Role:      role.ID(),
 		CreatedAt: time.Now(),

@@ -21,10 +21,12 @@ var (
 type UserAccountStatus int
 
 const (
-	// UserAccountStatusSuspended ユーザーアカウント状態: 停止
-	UserAccountStatusSuspended UserAccountStatus = 0
-	// UserAccountStatusValid ユーザーアカウント状態: 有効
-	UserAccountStatusValid UserAccountStatus = 1
+	// UserAccountStatusDeactivated ユーザーアカウント状態: 凍結
+	UserAccountStatusDeactivated UserAccountStatus = 0
+	// UserAccountStatusActive ユーザーアカウント状態: 有効
+	UserAccountStatusActive UserAccountStatus = 1
+	// UserAccountStatusSuspended ユーザーアカウント状態: 一時停止
+	UserAccountStatusSuspended UserAccountStatus = 2
 )
 
 // User userの構造体
