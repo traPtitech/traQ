@@ -92,6 +92,10 @@ func (r *TestRepository) Sync() (bool, error) {
 	panic("implement me")
 }
 
+func (r *TestRepository) GetFS() storage.FileStorage {
+	return r.FS
+}
+
 func (r *TestRepository) CreateUser(name, password string, role gorbac.Role) (*model.User, error) {
 	r.UsersLock.Lock()
 	defer r.UsersLock.Unlock()

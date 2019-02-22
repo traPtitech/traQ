@@ -52,6 +52,11 @@ func (repo *RepositoryImpl) Sync() (bool, error) {
 	return false, nil
 }
 
+// GetFS ファイルストレージを取得します
+func (repo *RepositoryImpl) GetFS() storage.FileStorage {
+	return repo.FS
+}
+
 // NewRepositoryImpl リポジトリ実装を初期化して生成します
 func NewRepositoryImpl(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub) (repository.Repository, error) {
 	repo := &RepositoryImpl{
