@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/repository"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -84,16 +85,20 @@ func (h *Handlers) GetFileByID(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderContentLength, strconv.FormatInt(meta.Size, 10))
 	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") //1年間キャッシュ
 	c.Response().Header().Set(headerFileMetaType, meta.Type)
-
 	switch meta.Type {
 	case model.FileTypeStamp, model.FileTypeIcon:
 		c.Response().Header().Set(headerCacheFile, "true")
 	}
-
 	if dl == "1" {
 		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", meta.Name))
 	}
 
+	if seekable, ok := file.(io.ReadSeeker); ok {
+		// HTTP Range リクエストが対応している場合
+		c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
+		http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, seekable)
+		return nil
+	}
 	return c.Stream(http.StatusOK, meta.Mime, file)
 }
 
