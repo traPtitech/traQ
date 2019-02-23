@@ -11,6 +11,7 @@ type UserGroup struct {
 	ID          uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	Name        string    `gorm:"type:varchar(30);not null;unique"   validate:"max=30,required"`
 	Description string    `gorm:"type:text;not null"`
+	Type        string    `gorm:"type:varchar(30);not null;default:''"`
 	AdminUserID uuid.UUID `gorm:"type:char(36);not null"`
 	CreatedAt   time.Time `gorm:"precision:6;not null"`
 	UpdatedAt   time.Time `gorm:"precision:6;not null"`
