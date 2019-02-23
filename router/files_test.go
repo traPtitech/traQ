@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/labstack/echo"
@@ -50,9 +52,13 @@ func TestHandlers_PostFile(t *testing.T) {
 
 func TestHandlers_GetFileByID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common1)
+	repo, server, _, require, session, _ := setup(t, common1)
 
 	file := mustMakeFile(t, repo, uuid.Nil)
+	grantedUser := mustMakeUser(t, repo, random)
+	secureContent := "secure"
+	secureFile, err := repo.SaveFileWithACL("secure", strings.NewReader(secureContent), int64(len(secureContent)), "text/plain", model.FileTypeUserFile, grantedUser.ID, repository.ACL{})
+	require.NoError(err)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -62,7 +68,25 @@ func TestHandlers_GetFileByID(t *testing.T) {
 			Status(http.StatusUnauthorized)
 	})
 
-	t.Run("Successful1", func(t *testing.T) {
+	t.Run("Not Found", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/files/{fileID}", uuid.NewV4()).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("Not Accessible", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/files/{fileID}", secureFile.ID).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		e.GET("/api/1.0/files/{fileID}", file.ID).
@@ -73,7 +97,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 			Equal("test message")
 	})
 
-	t.Run("Successful2", func(t *testing.T) {
+	t.Run("Success with dl param", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		res := e.GET("/api/1.0/files/{fileID}", file.ID).
@@ -84,6 +108,34 @@ func TestHandlers_GetFileByID(t *testing.T) {
 		res.Header(echo.HeaderContentDisposition).Equal(fmt.Sprintf("attachment; filename=%s", file.Name))
 		res.Header(headerCacheControl).Equal("private, max-age=31536000")
 		res.Body().Equal("test message")
+	})
+
+	t.Run("Success with icon file", func(t *testing.T) {
+		t.Parallel()
+		iconFileID, err := repo.GenerateIconFile("test")
+		require.NoError(err)
+		iconFile, err := repo.GetFileMeta(iconFileID)
+		require.NoError(err)
+
+		e := makeExp(t, server)
+		res := e.GET("/api/1.0/files/{fileID}", iconFile.ID).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusOK)
+		res.ContentType(iconFile.Mime)
+		res.Header(headerCacheFile).Equal("true")
+		res.Header(headerFileMetaType).Equal("icon")
+	})
+
+	t.Run("Success With secure file", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/files/{fileID}", secureFile.ID).
+			WithCookie(sessions.CookieName, generateSession(t, grantedUser.ID)).
+			Expect().
+			Status(http.StatusOK).
+			Body().
+			Equal(secureContent)
 	})
 }
 
