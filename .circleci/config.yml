@@ -130,7 +130,7 @@ jobs:
           command: ssh-keyscan ${STAGING_DEPLOY_HOST} >> ~/.ssh/known_hosts
       - run:
           name: deploy staging environment
-          command: ssh -t ${STAGING_DEPLOY_USER}@${STAGING_DEPLOY_HOST} "/srv/traQ-dev-server/update_core-backend"
+          command: ssh -o LogLevel=QUIET -t ${STAGING_DEPLOY_USER}@${STAGING_DEPLOY_HOST} "/srv/traQ-dev-server/update_core-backend"
 
   deploy-prod:
     machine: true
@@ -143,7 +143,7 @@ jobs:
           command: ssh-keyscan ${PROD_DEPLOY_HOST} >> ~/.ssh/known_hosts
       - run:
           name: deploy production environment
-          command: ssh -t ${PROD_DEPLOY_USER}@${PROD_DEPLOY_HOST} "~/deploy-traq.sh"
+          command: ssh -o LogLevel=QUIET -t ${PROD_DEPLOY_USER}@${PROD_DEPLOY_HOST} "~/deploy-traq.sh"
 
 workflows:
   version: 2
