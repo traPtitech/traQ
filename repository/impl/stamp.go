@@ -26,6 +26,9 @@ func (repo *RepositoryImpl) CreateStamp(name string, fileID, userID uuid.UUID) (
 		return nil, err
 	}
 	if err := repo.db.Create(stamp).Error; err != nil {
+		if isMySQLDuplicatedRecordErr(err) {
+			return nil, repository.ErrAlreadyExists
+		}
 		return nil, err
 	}
 	repo.hub.Publish(hub.Message{
@@ -51,11 +54,14 @@ func (repo *RepositoryImpl) UpdateStamp(id uuid.UUID, name string, fileID uuid.U
 		}
 		data["name"] = name
 	}
-	if fileID == uuid.Nil {
+	if fileID != uuid.Nil {
 		data["file_id"] = fileID.String()
 	}
+	if len(data) == 0 {
+		return repository.ErrInvalidArgs
+	}
 
-	result := repo.db.Where(&model.Stamp{ID: id}).Updates(data)
+	result := repo.db.Model(&model.Stamp{}).Where(&model.Stamp{ID: id}).Updates(data)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -66,8 +72,9 @@ func (repo *RepositoryImpl) UpdateStamp(id uuid.UUID, name string, fileID uuid.U
 				"stamp_id": id,
 			},
 		})
+		return nil
 	}
-	return nil
+	return repository.ErrNotFound
 }
 
 // GetStamp 指定したIDのスタンプを取得します
@@ -90,7 +97,6 @@ func (repo *RepositoryImpl) DeleteStamp(id uuid.UUID) (err error) {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-
 	result := repo.db.Delete(&model.Stamp{ID: id})
 	if result.Error != nil {
 		return result.Error
@@ -102,8 +108,9 @@ func (repo *RepositoryImpl) DeleteStamp(id uuid.UUID) (err error) {
 				"stamp_id": id,
 			},
 		})
+		return nil
 	}
-	return nil
+	return repository.ErrNotFound
 }
 
 // GetAllStamps 全てのスタンプを取得します

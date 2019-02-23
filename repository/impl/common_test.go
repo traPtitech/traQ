@@ -215,6 +215,18 @@ func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupI
 	require.NoError(t, repo.AddUserToGroup(userID, groupID))
 }
 
+func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID uuid.UUID) *model.Stamp {
+	t.Helper()
+	if name == random {
+		name = utils.RandAlphabetAndNumberString(20)
+	}
+	fid, err := repo.GenerateIconFile(name)
+	require.NoError(t, err)
+	s, err := repo.CreateStamp(name, fid, userID)
+	require.NoError(t, err)
+	return s
+}
+
 func count(t *testing.T, where *gorm.DB) int {
 	t.Helper()
 	c := 0

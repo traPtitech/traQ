@@ -5,6 +5,7 @@
 /docker/
 /docs/
 /vendor/
+/.git/
 codecov.yml
 LICENSE
 README.md
@@ -17,3 +18,4 @@ docker-compose.yml
 .envrc
 .gitignore
 .golangci.yml
+.DS_Store
