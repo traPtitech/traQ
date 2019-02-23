@@ -476,7 +476,18 @@ func (h *Handlers) ValidateFileID() echo.MiddlewareFunc {
 				return c.NoContent(http.StatusForbidden)
 			}
 
+			meta, err := h.Repo.GetFileMeta(fileID)
+			if err != nil {
+				c.Logger().Error()
+				return c.NoContent(http.StatusInternalServerError)
+			}
+
+			c.Set("paramFile", meta)
 			return next(c)
 		}
 	}
+}
+
+func getFileFromContext(c echo.Context) *model.File {
+	return c.Get("paramFile").(*model.File)
 }

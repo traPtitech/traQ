@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"github.com/satori/go.uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -16,7 +17,7 @@ import (
 
 func TestHandlers_PostFile(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common1)
+	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common1)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -28,7 +29,41 @@ func TestHandlers_PostFile(t *testing.T) {
 			Status(http.StatusUnauthorized)
 	})
 
-	t.Run("Successful1", func(t *testing.T) {
+	t.Run("Bad Request (No file)", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.POST("/api/1.0/files").
+			WithCookie(sessions.CookieName, session).
+			WithMultipart().
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("Bad Request (Wrong ACL)", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.POST("/api/1.0/files").
+			WithCookie(sessions.CookieName, session).
+			WithMultipart().
+			WithFileBytes("file", "test.txt", []byte("aaa")).
+			WithFormField("acl_readable", "bad acl").
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("Bad Request (Unknown User ACL Entry)", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.POST("/api/1.0/files").
+			WithCookie(sessions.CookieName, session).
+			WithMultipart().
+			WithFileBytes("file", "test.txt", []byte("aaa")).
+			WithFormField("acl_readable", uuid.NewV4()).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("Success with No ACL", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		file := []byte("test file")
@@ -47,6 +82,43 @@ func TestHandlers_PostFile(t *testing.T) {
 
 		_, err := repo.GetFileMeta(uuid.FromStringOrNil(obj.Value("fileId").String().Raw()))
 		require.NoError(t, err)
+	})
+
+	t.Run("Success with ACL", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		file := []byte("test file")
+		obj := e.POST("/api/1.0/files").
+			WithCookie(sessions.CookieName, session).
+			WithMultipart().
+			WithFileBytes("file", "test.txt", file).
+			WithFormField("acl_readable", user.ID).
+			Expect().
+			Status(http.StatusCreated).
+			JSON().
+			Object()
+
+		obj.Value("fileId").String().NotEmpty()
+		obj.Value("name").String().Equal("test.txt")
+		obj.Value("size").Number().Equal(len(file))
+
+		f, err := repo.GetFileMeta(uuid.FromStringOrNil(obj.Value("fileId").String().Raw()))
+		require.NoError(t, err)
+
+		t.Run("granted user", func(t *testing.T) {
+			t.Parallel()
+			ok, err := repo.IsFileAccessible(f.ID, user.ID)
+			require.NoError(t, err)
+			assert.True(t, ok)
+		})
+
+		t.Run("not granted user", func(t *testing.T) {
+			t.Parallel()
+			user := mustMakeUser(t, repo, random)
+			ok, err := repo.IsFileAccessible(f.ID, user.ID)
+			require.NoError(t, err)
+			assert.False(t, ok)
+		})
 	})
 }
 
@@ -206,5 +278,65 @@ func TestHandlers_GetMetaDataByFileID(t *testing.T) {
 		obj.Value("size").Number().Equal(file.Size)
 		obj.Value("md5").String().Equal(file.Hash)
 		obj.Value("hasThumb").Boolean().Equal(file.HasThumbnail)
+	})
+}
+
+func TestHandlers_GetThumbnailByID(t *testing.T) {
+	t.Parallel()
+	repo, server, _, require, session, _ := setup(t, common1)
+
+	file := mustMakeFile(t, repo, uuid.Nil)
+	grantedUser := mustMakeUser(t, repo, random)
+	secureContent := "secure"
+	secureFile, err := repo.SaveFileWithACL("secure", strings.NewReader(secureContent), int64(len(secureContent)), "text/plain", model.FileTypeUserFile, grantedUser.ID, repository.ACL{})
+	require.NoError(err)
+
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/files/{fileID}/thumbnail", file.ID).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/files/{fileID}/thumbnail", uuid.NewV4()).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("Not Accessible", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/files/{fileID}/thumbnail", secureFile.ID).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("No Thumbnail", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/files/{fileID}/thumbnail", file.ID).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		iconFileID, err := repo.GenerateIconFile("test")
+		require.NoError(err)
+
+		e := makeExp(t, server)
+		res := e.GET("/api/1.0/files/{fileID}/thumbnail", iconFileID).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusOK)
+		res.Header(headerCacheControl).Equal("private, max-age=31536000")
+		res.ContentType(mimeImagePNG)
 	})
 }

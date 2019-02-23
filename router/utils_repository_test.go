@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
@@ -16,6 +17,7 @@ import (
 	"github.com/traPtitech/traQ/utils/thumb"
 	"github.com/traPtitech/traQ/utils/validator"
 	"golang.org/x/sync/errgroup"
+	"image"
 	"io"
 	"math"
 	"mime"
@@ -1959,13 +1961,16 @@ func (r *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64,
 		read[creatorID] = true
 	}
 
-	eg := errgroup.Group{}
+	eg, ctx := errgroup.WithContext(context.Background())
+
 	fileSrc, fileWriter := io.Pipe()
+	thumbSrc, thumbWriter := io.Pipe()
 	hash := md5.New()
 
 	go func() {
 		defer fileWriter.Close()
-		_, _ = io.Copy(utils.MultiWriter(fileWriter, hash), src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
+		defer thumbWriter.Close()
+		_, _ = io.Copy(utils.MultiWriter(fileWriter, hash, thumbWriter), src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
 	}()
 
 	// fileの保存
@@ -1973,6 +1978,20 @@ func (r *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64,
 		defer fileSrc.Close()
 		if err := r.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime, f.Type); err != nil {
 			return err
+		}
+		return nil
+	})
+
+	// サムネイルの生成
+	eg.Go(func() error {
+		// アップロードされたファイルの拡張子が間違えてたり、変なの送ってきた場合
+		// サムネイルを生成しないだけで全体のエラーにはしない
+		defer thumbSrc.Close()
+		size, _ := r.generateThumbnail(ctx, f, thumbSrc)
+		if !size.Empty() {
+			f.HasThumbnail = true
+			f.ThumbnailWidth = size.Size().X
+			f.ThumbnailHeight = size.Size().Y
 		}
 		return nil
 	})
@@ -2019,6 +2038,18 @@ func (r *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error
 		}
 	}
 	return allow, nil
+}
+
+func (r *TestRepository) generateThumbnail(ctx context.Context, f *model.File, src io.Reader) (image.Rectangle, error) {
+	img, err := thumb.Generate(ctx, src, f.Mime)
+	if err != nil {
+		return image.ZR, err
+	}
+	b, _ := thumb.EncodeToPNG(img)
+	if err := r.FS.SaveByKey(b, f.GetThumbKey(), f.GetThumbKey()+".png", "image/png", model.FileTypeThumbnail); err != nil {
+		return image.ZR, err
+	}
+	return img.Bounds(), nil
 }
 
 func (r *TestRepository) CreateWebhook(name, description string, channelID, creatorID, iconFileID uuid.UUID) (model.Webhook, error) {

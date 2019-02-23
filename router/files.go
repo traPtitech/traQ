@@ -60,14 +60,8 @@ func (h *Handlers) PostFile(c echo.Context) error {
 
 // GetFileByID GET /files/:fileID
 func (h *Handlers) GetFileByID(c echo.Context) error {
-	fileID := getRequestParamAsUUID(c, paramFileID)
+	meta := getFileFromContext(c)
 	dl := c.QueryParam("dl")
-
-	meta, err := h.Repo.GetFileMeta(fileID)
-	if err != nil {
-		c.Logger().Error()
-		return c.NoContent(http.StatusInternalServerError)
-	}
 
 	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
 	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetKey())
@@ -116,22 +110,19 @@ func (h *Handlers) DeleteFileByID(c echo.Context) error {
 
 // GetMetaDataByFileID GET /files/:fileID/meta
 func (h *Handlers) GetMetaDataByFileID(c echo.Context) error {
-	fileID := getRequestParamAsUUID(c, paramFileID)
-
-	meta, err := h.Repo.GetFileMeta(fileID)
-	if err != nil {
-		c.Logger().Error(err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
+	meta := getFileFromContext(c)
 	return c.JSON(http.StatusOK, meta)
 }
 
 // GetThumbnailByID GET /files/:fileID/thumbnail
 func (h *Handlers) GetThumbnailByID(c echo.Context) error {
-	fileID := getRequestParamAsUUID(c, paramFileID)
+	meta := getFileFromContext(c)
 
-	_, file, err := h.Repo.OpenThumbnailFile(fileID)
+	if !meta.HasThumbnail {
+		return echo.NewHTTPError(http.StatusNotFound, "file is found, but thumbnail is not found")
+	}
+
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetThumbKey())
 	if err != nil {
 		c.Logger().Error(err)
 		return c.NoContent(http.StatusInternalServerError)
