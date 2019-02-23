@@ -127,9 +127,6 @@ func TestRepositoryImpl_GetStamp(t *testing.T) {
 			assert.Equal(a.Name, s.Name)
 			assert.Equal(a.FileID, s.FileID)
 			assert.Equal(a.CreatorID, s.CreatorID)
-			assert.Equal(a.CreatedAt, s.CreatedAt)
-			assert.Equal(a.UpdatedAt, s.UpdatedAt)
-			assert.Equal(a.DeletedAt, s.DeletedAt)
 		}
 	})
 }
