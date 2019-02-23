@@ -12,7 +12,13 @@ paths:
     post:
       tags:
         - authentication
-      description: ログインを行います。
+      description: ログインを行います。リダイレクトパラメーターが存在する場合はログイン後にリダイレクトします
+      parameters:
+        - in: query
+          name: redirect
+          schema:
+            type: string
+          description: リダイレクト先
       requestBody:
         content:
           application/json:
@@ -29,6 +35,8 @@ paths:
       responses:
         "204":
           description: 正常にログインできました。
+        "302":
+          description: 正常にログインできました。リダイレクトします。
         "400":
           description: ログインできませんでした。リクエスト内容が不正です
         "401":
@@ -40,12 +48,18 @@ paths:
     post:
       tags:
         - authentication
-      description: ログアウトを行います。
+      description: ログアウトを行います。リダイレクトパラメーターが存在する場合はログアウト後にリダイレクトします
+      parameters:
+        - in: query
+          name: redirect
+          schema:
+            type: string
+          description: リダイレクト先
       responses:
         "204":
-          description: |+
-            正常にログアウトできました。
-
+          description: 正常にログアウトできました。
+        "302":
+          description: 正常にログアウトできました。リダイレクトします。
 
   /public/icon/{username}:
     get:

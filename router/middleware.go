@@ -87,7 +87,7 @@ func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 
 			// ユーザーアカウント状態を確認
 			switch user.Status {
-			case model.UserAccountStatusDeactivated:
+			case model.UserAccountStatusDeactivated, model.UserAccountStatusSuspended:
 				return echo.NewHTTPError(http.StatusForbidden, "this account is currently suspended")
 			case model.UserAccountStatusActive:
 				break
@@ -476,7 +476,18 @@ func (h *Handlers) ValidateFileID() echo.MiddlewareFunc {
 				return c.NoContent(http.StatusForbidden)
 			}
 
+			meta, err := h.Repo.GetFileMeta(fileID)
+			if err != nil {
+				c.Logger().Error()
+				return c.NoContent(http.StatusInternalServerError)
+			}
+
+			c.Set("paramFile", meta)
 			return next(c)
 		}
 	}
+}
+
+func getFileFromContext(c echo.Context) *model.File {
+	return c.Get("paramFile").(*model.File)
 }

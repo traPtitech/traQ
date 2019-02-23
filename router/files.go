@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/repository"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -59,19 +60,13 @@ func (h *Handlers) PostFile(c echo.Context) error {
 
 // GetFileByID GET /files/:fileID
 func (h *Handlers) GetFileByID(c echo.Context) error {
-	fileID := getRequestParamAsUUID(c, paramFileID)
+	meta := getFileFromContext(c)
 	dl := c.QueryParam("dl")
-
-	meta, err := h.Repo.GetFileMeta(fileID)
-	if err != nil {
-		c.Logger().Error()
-		return c.NoContent(http.StatusInternalServerError)
-	}
 
 	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
 	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetKey())
 	if len(url) > 0 {
-		return c.Redirect(http.StatusTemporaryRedirect, url)
+		return c.Redirect(http.StatusFound, url)
 	}
 
 	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
@@ -84,16 +79,20 @@ func (h *Handlers) GetFileByID(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderContentLength, strconv.FormatInt(meta.Size, 10))
 	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") //1年間キャッシュ
 	c.Response().Header().Set(headerFileMetaType, meta.Type)
-
 	switch meta.Type {
 	case model.FileTypeStamp, model.FileTypeIcon:
 		c.Response().Header().Set(headerCacheFile, "true")
 	}
-
 	if dl == "1" {
 		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", meta.Name))
 	}
 
+	if seekable, ok := file.(io.ReadSeeker); ok {
+		// HTTP Range リクエストが対応している場合
+		c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
+		http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, seekable)
+		return nil
+	}
 	return c.Stream(http.StatusOK, meta.Mime, file)
 }
 
@@ -111,22 +110,19 @@ func (h *Handlers) DeleteFileByID(c echo.Context) error {
 
 // GetMetaDataByFileID GET /files/:fileID/meta
 func (h *Handlers) GetMetaDataByFileID(c echo.Context) error {
-	fileID := getRequestParamAsUUID(c, paramFileID)
-
-	meta, err := h.Repo.GetFileMeta(fileID)
-	if err != nil {
-		c.Logger().Error(err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
+	meta := getFileFromContext(c)
 	return c.JSON(http.StatusOK, meta)
 }
 
 // GetThumbnailByID GET /files/:fileID/thumbnail
 func (h *Handlers) GetThumbnailByID(c echo.Context) error {
-	fileID := getRequestParamAsUUID(c, paramFileID)
+	meta := getFileFromContext(c)
 
-	_, file, err := h.Repo.OpenThumbnailFile(fileID)
+	if !meta.HasThumbnail {
+		return echo.NewHTTPError(http.StatusNotFound, "file is found, but thumbnail is not found")
+	}
+
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetThumbKey())
 	if err != nil {
 		c.Logger().Error(err)
 		return c.NoContent(http.StatusInternalServerError)

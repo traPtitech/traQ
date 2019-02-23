@@ -214,7 +214,7 @@ func TestHandlers_PostLogin(t *testing.T) {
 			Status(http.StatusNoContent)
 	})
 
-	t.Run("Failure1", func(t *testing.T) {
+	t.Run("wrong password", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		e.POST("/api/1.0/login").
