@@ -120,12 +120,24 @@ jobs:
             docker push trap/traq:$IMAGE_TAG
 
   deploy-staging:
-    executor: default
+    machine: true
     steps:
-      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "cd:2f:d4:8c:86:98:63:5e:07:37:78:65:f8:2a:a2:cc"
       - run:
           name: deploy staging environment
-          command: GO111MODULE=off go run .circleci/deploy_staging.go
+          command: ssh -t ${STAGING_DEPLOY_USER}@${STAGING_DEPLOY_HOST} "/srv/traQ-dev-server/update_core-backend"
+
+  deploy-prod:
+    machine: true
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "cd:2f:d4:8c:86:98:63:5e:07:37:78:65:f8:2a:a2:cc"
+      - run:
+          name: deploy production environment
+          command: ssh -t ${PROD_DEPLOY_USER}@${PROD_DEPLOY_HOST} "~/deploy-traq.sh"
 
 workflows:
   version: 2
@@ -175,5 +187,22 @@ workflows:
           filters:
             branches:
               only: master
+            tags:
+              only: /^v[0-9]+(\.[0-9]+){2}.*/
+      - pending-approval:
+          type: approval
+          requires:
+            - build-image
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[0-9]+(\.[0-9]+){2}.*/
+      - deploy-prod:
+          requires:
+            - pending-approval
+          filters:
+            branches:
+              ignore: /.*/
             tags:
               only: /^v[0-9]+(\.[0-9]+){2}.*/
