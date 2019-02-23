@@ -43,6 +43,15 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL 
 		}
 	}
 
+	resp, _, err := m.connection.Call(m.connection.StorageUrl, swift.RequestOpts{
+		Operation: "POST",
+		Headers:   map[string]string{"X-Account-Meta-Temp-URL-Key": m.tempURLSecret},
+	})
+	if err != nil {
+		return nil, err
+	}
+	_ = resp.Body.Close()
+
 	return nil, fmt.Errorf("container %s is not found", container)
 }
 
