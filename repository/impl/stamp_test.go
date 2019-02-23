@@ -26,7 +26,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.CreateStamp("あ", fid, user.ID)
-		assert.EqualError(t, err, repository.ErrNilID.Error())
+		assert.Error(t, err)
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -77,7 +77,7 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.UpdateStamp(uuid.Nil, "a", uuid.Nil), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.UpdateStamp(uuid.NewV4(), "a", uuid.Nil), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -121,7 +121,7 @@ func TestRepositoryImpl_GetStamp(t *testing.T) {
 		assert, _ := assertAndRequire(t)
 		a := mustMakeStamp(t, repo, random, uuid.Nil)
 
-		s, err := repo.GetStamp(uuid.NewV4())
+		s, err := repo.GetStamp(a.ID)
 		if assert.NoError(err) {
 			assert.Equal(a.ID, s.ID)
 			assert.Equal(a.Name, s.Name)
