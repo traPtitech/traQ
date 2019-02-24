@@ -74,7 +74,6 @@ jobs:
         environment:
           - GO111MODULE: "on"
           - GOCACHE: "/tmp/go/cache"
-          - IMAGEMAGICK_EXEC: "/usr/bin/convert"
       - image: circleci/mysql:latest-ram
         environment:
           - MYSQL_DATABASE: "traq"
@@ -94,7 +93,9 @@ jobs:
             go run .circleci/init.go
       - run:
           name: test
-          command: go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
+          command: |
+            export TRAQ_IMAGEMAGICK_PATH=`which convert`
+            go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
       - run:
           name: Upload coverage data
           command: bash <(curl -s https://codecov.io/bash)

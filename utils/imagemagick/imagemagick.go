@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/traPtitech/traQ/config"
 	"io"
 	"os/exec"
 	"time"
@@ -18,8 +17,8 @@ var ErrUnsupportedType = errors.New("unsupported file type")
 var ErrUnavailable = errors.New("imagemagick is unavailable")
 
 // ConvertToPNG srcをimagemagickでPNGに変換します。5秒以内に変換できなかった場合はエラーとなります
-func ConvertToPNG(ctx context.Context, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, error) {
-	if len(config.ImageMagickConverterExec) == 0 {
+func ConvertToPNG(ctx context.Context, execPath string, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, error) {
+	if len(execPath) == 0 {
 		return nil, ErrUnavailable
 	}
 
@@ -29,7 +28,7 @@ func ConvertToPNG(ctx context.Context, src io.Reader, maxWidth, maxHeight int) (
 
 	c, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(c, config.ImageMagickConverterExec, "-resize", fmt.Sprintf("%dx%d", maxWidth, maxHeight), "-background", "none", "-", "png:-")
+	cmd := exec.CommandContext(c, execPath, "-resize", fmt.Sprintf("%dx%d", maxWidth, maxHeight), "-background", "none", "-", "png:-")
 
 	b, err := cmdPipe(cmd, src)
 	if err != nil {
@@ -46,8 +45,8 @@ func ConvertToPNG(ctx context.Context, src io.Reader, maxWidth, maxHeight int) (
 
 // ResizeAnimationGIF Animation GIF画像をimagemagickでリサイズします
 // expandがfalseの場合、縮小は行いますが拡大は行いません
-func ResizeAnimationGIF(ctx context.Context, src io.Reader, maxWidth, maxHeight int, expand bool) (*bytes.Buffer, error) {
-	if len(config.ImageMagickConverterExec) == 0 {
+func ResizeAnimationGIF(ctx context.Context, execPath string, src io.Reader, maxWidth, maxHeight int, expand bool) (*bytes.Buffer, error) {
+	if len(execPath) == 0 {
 		return nil, ErrUnavailable
 	}
 
@@ -59,7 +58,7 @@ func ResizeAnimationGIF(ctx context.Context, src io.Reader, maxWidth, maxHeight 
 	if !expand {
 		sizer += ">"
 	}
-	cmd := exec.CommandContext(ctx, config.ImageMagickConverterExec, "-coalesce", "-resize", sizer, "-deconstruct", "-", "gif:-")
+	cmd := exec.CommandContext(ctx, execPath, "-coalesce", "-resize", sizer, "-deconstruct", "-", "gif:-")
 
 	b, err := cmdPipe(cmd, src)
 	if err != nil {

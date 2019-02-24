@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -34,11 +33,11 @@ type dataChannel struct {
 	Children map[string]*dataChannel `yaml:"children"`
 }
 
-func insertInitialData(repo repository.Repository, data *dataRoot) error {
+func insertInitialData(repo repository.Repository, initDataDir string, data *dataRoot) error {
 	if err := createTags(repo, data.Tags); err != nil {
 		return err
 	}
-	if err := createStamps(repo, data.Stamps); err != nil {
+	if err := createStamps(repo, initDataDir, data.Stamps); err != nil {
 		return err
 	}
 	if err := createChannels(repo, data.Channels); err != nil {
@@ -62,7 +61,7 @@ func createTags(repo repository.Repository, tags map[string]*dataTag) error {
 	return nil
 }
 
-func createStamps(repo repository.Repository, stamps map[string]*dataStamp) error {
+func createStamps(repo repository.Repository, initDataDir string, stamps map[string]*dataStamp) error {
 	for name, data := range stamps {
 		if err := validator.ValidateVar(name, "name"); err != nil {
 			return err
@@ -71,7 +70,7 @@ func createStamps(repo repository.Repository, stamps map[string]*dataStamp) erro
 			return err
 		}
 
-		filepath := path.Join(config.InitDataDirectory, data.File)
+		filepath := path.Join(initDataDir, data.File)
 		_, filename := path.Split(filepath)
 		f, err := os.Open(filepath)
 		if err != nil {
@@ -144,20 +143,20 @@ func unmarshalInitData(r io.Reader) (*dataRoot, error) {
 	return &data, nil
 }
 
-func initData(repo repository.Repository) error {
-	if stat, err := os.Stat(config.InitDataDirectory); err != nil {
+func initData(repo repository.Repository, initDataDir string) error {
+	if stat, err := os.Stat(initDataDir); err != nil {
 		return nil
 	} else if !stat.IsDir() {
 		return nil
 	}
 
-	files, err := ioutil.ReadDir(config.InitDataDirectory)
+	files, err := ioutil.ReadDir(initDataDir)
 	if err != nil {
 		return err
 	}
 	for _, f := range files {
 		if f.Mode().IsRegular() && path.Ext(f.Name()) == ".yml" {
-			is, err := os.Open(path.Join(config.InitDataDirectory, f.Name()))
+			is, err := os.Open(path.Join(initDataDir, f.Name()))
 			if err != nil {
 				return err
 			}
@@ -167,7 +166,7 @@ func initData(repo repository.Repository) error {
 				return err
 			}
 
-			if err := insertInitialData(repo, data); err != nil {
+			if err := insertInitialData(repo, initDataDir, data); err != nil {
 				return err
 			}
 		}

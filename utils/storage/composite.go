@@ -13,9 +13,9 @@ type CompositeFileStorage struct {
 }
 
 // NewCompositeFileStorage 引数の情報で複合型ファイルストレージを生成します
-func NewCompositeFileStorage(localDir, container, userName, apiKey, tenant, tenantID, authURL string) (*CompositeFileStorage, error) {
+func NewCompositeFileStorage(localDir, container, userName, apiKey, tenant, tenantID, authURL, tempURLKey string) (*CompositeFileStorage, error) {
 	l := NewLocalFileStorage(localDir)
-	s, err := NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL)
+	s, err := NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL, tempURLKey)
 	if err != nil {
 		return nil, err
 	}

@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/base64"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/traQ/config"
 	"io"
+	"os"
 	"testing"
 )
 
@@ -87,29 +87,37 @@ const base64gif = `R0lGODlhXgFdAfYAAGtaIcacMc6lUufGc97OlP///86lSufWtb1SKb1jSs4hC
 func TestConvertToPNG(t *testing.T) {
 	t.Parallel()
 
-	if len(config.ImageMagickConverterExec) == 0 {
+	im := os.Getenv("TRAQ_IMAGEMAGICK_PATH")
+	if len(im) == 0 {
 		t.SkipNow()
 	}
+
+	t.Run("unavailable", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := ConvertToPNG(context.TODO(), "", bytes.NewBufferString(""), 100, 200)
+		assert.Error(t, err)
+	})
 
 	t.Run("Broken svg", func(t *testing.T) {
 		t.Parallel()
 
 		broken := `<?xml version="1.0" enc`
-		_, err := ConvertToPNG(context.TODO(), bytes.NewBufferString(broken), 100, 200)
+		_, err := ConvertToPNG(context.TODO(), im, bytes.NewBufferString(broken), 100, 200)
 		assert.Error(t, err)
 	})
 
 	t.Run("Valid svg", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := ConvertToPNG(context.TODO(), bytes.NewBufferString(gopher), 100, 100)
+		_, err := ConvertToPNG(context.TODO(), im, bytes.NewBufferString(gopher), 100, 100)
 		assert.NoError(t, err)
 	})
 
 	t.Run("invalid args", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := ConvertToPNG(context.TODO(), bytes.NewBufferString(gopher), -100, 100)
+		_, err := ConvertToPNG(context.TODO(), im, bytes.NewBufferString(gopher), -100, 100)
 		assert.Error(t, err)
 	})
 }
@@ -117,30 +125,38 @@ func TestConvertToPNG(t *testing.T) {
 func TestResizeAnimationGIF(t *testing.T) {
 	t.Parallel()
 
-	if len(config.ImageMagickConverterExec) == 0 {
+	im := os.Getenv("TRAQ_IMAGEMAGICK_PATH")
+	if len(im) == 0 {
 		t.SkipNow()
 	}
 
 	gif, _ := base64.RawStdEncoding.DecodeString(base64gif)
 
+	t.Run("unavailable", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := ResizeAnimationGIF(context.TODO(), "", bytes.NewBufferString(""), 100, 200, false)
+		assert.Error(t, err)
+	})
+
 	t.Run("valid gif", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := ResizeAnimationGIF(context.TODO(), bytes.NewReader(gif), 50, 50, false)
+		_, err := ResizeAnimationGIF(context.TODO(), im, bytes.NewReader(gif), 50, 50, false)
 		assert.NoError(t, err)
 	})
 
 	t.Run("not gif", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := ResizeAnimationGIF(context.TODO(), io.LimitReader(bytes.NewReader(gif), 10), 100, 100, true)
+		_, err := ResizeAnimationGIF(context.TODO(), im, io.LimitReader(bytes.NewReader(gif), 10), 100, 100, true)
 		assert.Error(t, err)
 	})
 
 	t.Run("invalid args", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := ResizeAnimationGIF(context.TODO(), bytes.NewBufferString(gopher), -100, 100, false)
+		_, err := ResizeAnimationGIF(context.TODO(), im, bytes.NewBufferString(gopher), -100, 100, false)
 		assert.Error(t, err)
 	})
 }

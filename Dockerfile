@@ -23,8 +23,8 @@ VOLUME /localstorage
 EXPOSE 80
 ENV TRAQ_PORT=80 \
     TRAQ_ORIGIN=http://localhost \
-    IMAGEMAGICK_EXEC=/usr/bin/convert \
-    TRAQ_LOCAL_STORAGE=/localstorage
+    TRAQ_IMAGEMAGICK_PATH=/usr/bin/convert \
+    TRAQ_STORAGE_LOCAL_DIR=/localstorage
 
 COPY ./static ./static/
 COPY --from=build /traQ ./

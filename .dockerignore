@@ -7,6 +7,8 @@
 /vendor/
 /.git/
 codecov.yml
+config.example.yml
+config.yml
 LICENSE
 README.md
 Makefile
