@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/config"
+	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/oauth2/impl"
@@ -25,12 +25,43 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 )
 
 func main() {
+	// set default config values
+	viper.SetDefault("origin", "http://localhost:3000")
+	viper.SetDefault("port", 3000)
+
+	viper.SetDefault("pprof", false)
+
+	viper.SetDefault("mariadb.host", "127.0.0.1")
+	viper.SetDefault("mariadb.port", 3306)
+	viper.SetDefault("mariadb.username", "root")
+	viper.SetDefault("mariadb.password", "password")
+	viper.SetDefault("mariadb.database", "traq")
+	viper.SetDefault("mariadb.connection.maxOpen", 0)
+	viper.SetDefault("mariadb.connection.maxIdle", 2)
+	viper.SetDefault("mariadb.connection.lifetime", 0)
+
+	viper.SetDefault("storage.type", "local")
+	viper.SetDefault("storage.local.dir", "./storage")
+
+	// read config
+	viper.AddConfigPath(".")
+	viper.SetConfigName("config")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.SetEnvPrefix("TRAQ")
+	viper.AutomaticEnv()
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			log.Fatal(err)
+		}
+	}
+
 	// enable pprof http handler
-	if len(config.PprofEnabled) > 0 {
+	if viper.GetBool("pprof") {
 		go func() {
 			log.Println(http.ListenAndServe("localhost:6060", nil))
 		}()
@@ -40,12 +71,11 @@ func main() {
 	hub := hub.New()
 
 	// Database
-	engine, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=true", config.DatabaseUserName, config.DatabasePassword, config.DatabaseHostName, config.DatabaseName))
+	engine, err := getDatabase()
 	if err != nil {
 		panic(err)
 	}
 	defer engine.Close()
-	engine.DB().SetMaxOpenConns(75)
 
 	// FileStorage
 	fs, err := getFileStorage()
@@ -61,8 +91,10 @@ func main() {
 	if init, err := repo.Sync(); err != nil {
 		panic(err)
 	} else if init { // 初期化
-		if err := initData(repo); err != nil {
-			panic(err)
+		if dir := viper.GetString("initDataDir"); len(dir) > 0 {
+			if err := initData(repo, dir); err != nil {
+				panic(err)
+			}
 		}
 	}
 
@@ -119,30 +151,30 @@ func main() {
 			}
 			return u, err
 		},
-		Issuer: config.TRAQOrigin,
+		Issuer: viper.GetString("origin"),
 	}
-	if public, private := config.RS256PublicKeyFile, config.RS256PrivateKeyFile; private != "" && public != "" {
-		err := oauth.LoadKeys(loadKeys(private, public))
+	if viper.IsSet("key.rs256Public") && viper.IsSet("key.rs256Private") {
+		err := oauth.LoadKeys(loadKeys(viper.GetString("key.rs256Private"), viper.GetString("key.rs256Public")))
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	// Firebase
-	if len(config.FirebaseServiceAccountJSONFile) > 0 {
-		if _, err := NewFCMManager(repo, hub); err != nil {
+	if f := viper.GetString("firebase.serviceAccount.file"); len(f) > 0 {
+		if _, err := NewFCMManager(repo, hub, f, viper.GetString("origin")); err != nil {
 			panic(err)
 		}
 	}
 
 	// Routing
-	h := router.NewHandlers(oauth, r, repo, hub)
+	h := router.NewHandlers(oauth, r, repo, hub, viper.GetString("imagemagick.path"))
 	e := echo.New()
 	router.SetupRouting(e, h)
 	router.LoadWebhookTemplate("static/webhook/*.tmpl")
 
 	go func() {
-		if err := e.Start(":" + config.Port); err != nil {
+		if err := e.Start(fmt.Sprintf(":%d", viper.GetInt("port"))); err != nil {
 			e.Logger.Info("shutting down the server")
 		}
 	}()
@@ -158,11 +190,52 @@ func main() {
 	sessions.PurgeCache()
 }
 
-func getFileStorage() (storage.FileStorage, error) {
-	if config.OSContainer == "" || config.OSUserName == "" || config.OSPassword == "" || config.OSAuthURL == "" {
-		return storage.NewLocalFileStorage(config.LocalStorageDir), nil
+func getDatabase() (*gorm.DB, error) {
+	engine, err := gorm.Open("mysql", fmt.Sprintf(
+		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=true",
+		viper.GetString("mariadb.username"),
+		viper.GetString("mariadb.password"),
+		viper.GetString("mariadb.host"),
+		viper.GetInt("mariadb.port"),
+		viper.GetString("mariadb.database"),
+	))
+	if err != nil {
+		return nil, err
 	}
-	return storage.NewCompositeFileStorage(config.LocalStorageDir, config.OSContainer, config.OSUserName, config.OSPassword, config.OSTenantName, config.OSTenantID, config.OSAuthURL)
+	engine.DB().SetMaxOpenConns(viper.GetInt("mariadb.connection.maxOpen"))
+	engine.DB().SetMaxIdleConns(viper.GetInt("mariadb.connection.maxIdle"))
+	engine.DB().SetConnMaxLifetime(time.Duration(viper.GetInt("mariadb.connection.lifetime")) * time.Second)
+	return engine, nil
+}
+
+func getFileStorage() (storage.FileStorage, error) {
+	switch viper.GetString("storage.type") {
+	case "swift":
+		return storage.NewSwiftFileStorage(
+			viper.GetString("storage.swift.container"),
+			viper.GetString("storage.swift.username"),
+			viper.GetString("storage.swift.apiKey"),
+			viper.GetString("storage.swift.tenantName"),
+			viper.GetString("storage.swift.tenantId"),
+			viper.GetString("storage.swift.authUrl"),
+			viper.GetString("storage.swift.tempUrlKey"),
+		)
+	case "composite":
+		return storage.NewCompositeFileStorage(
+			viper.GetString("storage.local.dir"),
+			viper.GetString("storage.swift.container"),
+			viper.GetString("storage.swift.username"),
+			viper.GetString("storage.swift.apiKey"),
+			viper.GetString("storage.swift.tenantName"),
+			viper.GetString("storage.swift.tenantId"),
+			viper.GetString("storage.swift.authUrl"),
+			viper.GetString("storage.swift.tempUrlKey"),
+		)
+	case "memory":
+		return storage.NewInMemoryFileStorage(), nil
+	default:
+		return storage.NewLocalFileStorage(viper.GetString("storage.local.dir")), nil
+	}
 }
 
 func loadKeys(private, public string) ([]byte, []byte) {

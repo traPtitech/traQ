@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/satori/go.uuid"
-	"github.com/traPtitech/traQ/config"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -22,16 +21,18 @@ type FCMManager struct {
 	messaging *messaging.Client
 	repo      repository.Repository
 	hub       *hub.Hub
+	origin    string
 }
 
 // NewFCMManager FCMManagerを生成します
-func NewFCMManager(repo repository.Repository, hub *hub.Hub) (*FCMManager, error) {
+func NewFCMManager(repo repository.Repository, hub *hub.Hub, serviceAccountFile, origin string) (*FCMManager, error) {
 	manager := &FCMManager{
-		repo: repo,
-		hub:  hub,
+		repo:   repo,
+		hub:    hub,
+		origin: origin,
 	}
 
-	app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(config.FirebaseServiceAccountJSONFile))
+	app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsFile(serviceAccountFile))
 	if err != nil {
 		return nil, err
 	}
@@ -57,10 +58,10 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 	// make payload
 	payload := map[string]string{
 		"title":     "traQ",
-		"icon":      fmt.Sprintf("%s/api/1.0/users/%s/icon?thumb", config.TRAQOrigin, message.UserID),
+		"icon":      fmt.Sprintf("%s/api/1.0/users/%s/icon?thumb", m.origin, message.UserID),
 		"vibration": "[1000, 1000, 1000]",
 		"tag":       fmt.Sprintf("c:%s", message.ChannelID),
-		"badge":     fmt.Sprintf("%s/static/badge.png", config.TRAQOrigin),
+		"badge":     fmt.Sprintf("%s/static/badge.png", m.origin),
 	}
 	ch, _ := m.repo.GetChannel(message.ChannelID)
 	mUser, _ := m.repo.GetUser(message.UserID)
@@ -98,7 +99,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 		if v.Type == "file" {
 			f, _ := m.repo.GetFileMeta(uuid.FromStringOrNil(v.ID))
 			if f != nil && f.HasThumbnail {
-				payload["image"] = fmt.Sprintf("%s/api/1.0/files/%s/thumbnail", config.TRAQOrigin, v.ID)
+				payload["image"] = fmt.Sprintf("%s/api/1.0/files/%s/thumbnail", m.origin, v.ID)
 				break
 			}
 		}

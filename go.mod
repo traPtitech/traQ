@@ -2,6 +2,7 @@ module github.com/traPtitech/traQ
 
 require (
 	firebase.google.com/go v3.6.0+incompatible
+	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/ajg/form v0.0.0-20160822230020-523a5da1a92f // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20180901172138-1eb28afdf9b6 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -45,6 +46,8 @@ require (
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/smartystreets/goconvey v0.0.0-20180222194500-ef6db91d284a // indirect
+	github.com/spf13/afero v1.2.1 // indirect
+	github.com/spf13/viper v1.3.1
 	github.com/stretchr/testify v1.3.0
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	github.com/valyala/fasthttp v1.0.0 // indirect
@@ -56,10 +59,11 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	github.com/yudai/pp v2.0.1+incompatible // indirect
-	golang.org/x/crypto v0.0.0-20190131182504-b8fe1690c613
+	golang.org/x/crypto v0.0.0-20190222235706-ffb98f73852f
 	golang.org/x/exp v0.0.0-20190125153040-c74c464bbbf2
 	golang.org/x/image v0.0.0-20190118043309-183bebdce1b2
 	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4
+	golang.org/x/sys v0.0.0-20190222171317-cd391775e71e // indirect
 	google.golang.org/api v0.1.0
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect

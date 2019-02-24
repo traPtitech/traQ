@@ -1,0 +1,44 @@
+# traQ-R Configuration File
+# commented-out keys below are set by default values
+
+#origin: http://localhost:3000
+#port: 3000
+
+#pprof: false
+
+#initDataDir:
+
+#imagemagick:
+#  path: ''
+
+#firebase:
+#  serviceAccount:
+#    file: ''
+
+#mariadb:
+#  host: 127.0.0.1
+#  port: 3306
+#  username: root
+#  password: password
+#  database: traq
+#  connection:
+#    maxOpen: 0
+#    maxIdle: 2
+#    lifetime: 0
+
+#storage:
+#  type: local
+#  local:
+#    dir: ./storage
+#  swift:
+#    username: ''
+#    apiKey: ''
+#    tenantName: ''
+#    tenantId: ''
+#    container: ''
+#    authUrl: ''
+#    tempUrlKey: ''
+
+#key:
+#  rs256Public: ''
+#  rs256Private: ''

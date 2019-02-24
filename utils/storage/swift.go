@@ -3,23 +3,22 @@ package storage
 import (
 	"fmt"
 	"github.com/ncw/swift"
-	"github.com/traPtitech/traQ/utils"
 	"io"
 	"time"
 )
 
 // SwiftFileStorage OpenStack Swiftストレージ
 type SwiftFileStorage struct {
-	container     string
-	tempURLSecret string
-	connection    swift.Connection
+	container  string
+	tempURLKey string
+	connection swift.Connection
 }
 
 // NewSwiftFileStorage 引数の情報でOpenStack Swiftストレージを生成します
-func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL string) (*SwiftFileStorage, error) {
+func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL, tempURLKey string) (*SwiftFileStorage, error) {
 	m := &SwiftFileStorage{
-		container:     container,
-		tempURLSecret: utils.RandAlphabetAndNumberString(20),
+		container:  container,
+		tempURLKey: tempURLKey,
 		connection: swift.Connection{
 			AuthUrl:  authURL,
 			UserName: userName,
@@ -43,14 +42,16 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL 
 		}
 	}
 
-	resp, _, err := m.connection.Call(m.connection.StorageUrl, swift.RequestOpts{
-		Operation: "POST",
-		Headers:   map[string]string{"X-Account-Meta-Temp-URL-Key": m.tempURLSecret},
-	})
-	if err != nil {
-		return nil, err
+	if len(tempURLKey) > 0 {
+		resp, _, err := m.connection.Call(m.connection.StorageUrl, swift.RequestOpts{
+			Operation: "POST",
+			Headers:   map[string]string{"X-Account-Meta-Temp-URL-Key": m.tempURLKey},
+		})
+		if err != nil {
+			return nil, err
+		}
+		_ = resp.Body.Close()
 	}
-	_ = resp.Body.Close()
 
 	return nil, fmt.Errorf("container %s is not found", container)
 }
@@ -84,5 +85,8 @@ func (fs *SwiftFileStorage) DeleteByKey(key string) (err error) {
 
 // GenerateAccessURL keyで指定されたファイルの直接アクセスURLを発行する。
 func (fs *SwiftFileStorage) GenerateAccessURL(key string) (string, error) {
-	return fs.connection.ObjectTempUrl(fs.container, key, fs.tempURLSecret, "GET", time.Now().Add(5*time.Minute)), nil
+	if len(fs.tempURLKey) > 0 {
+		return fs.connection.ObjectTempUrl(fs.container, key, fs.tempURLKey, "GET", time.Now().Add(5*time.Minute)), nil
+	}
+	return "", nil
 }

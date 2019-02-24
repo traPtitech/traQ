@@ -6,12 +6,9 @@ services:
     restart: always
     environment:
       TRAQ_ORIGIN: http://localhost:3000
-      MARIADB_USERNAME: root
-      MARIADB_PASSWORD: password
-      MARIADB_DATABASE: traq
-      MARIADB_HOSTNAME: mysql
-      PPROF_ENABLED: 1
-      INIT_DATA_DIRECTORY: /initdata
+      TRAQ_MARIADB_HOST: mysql
+      TRAQ_PPROF: "true"
+      TRAQ_INITDATADIR: /initdata
     entrypoint: dockerize -timeout 60s -wait tcp://mysql:3306
     command: ./traQ
     expose:

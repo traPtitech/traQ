@@ -61,21 +61,23 @@ const (
 
 // Handlers ハンドラ
 type Handlers struct {
-	OAuth2 *oauth2.Handler
-	RBAC   *rbac.RBAC
-	Repo   repository.Repository
-	SSE    *SSEStreamer
-	Hub    *hub.Hub
+	OAuth2          *oauth2.Handler
+	RBAC            *rbac.RBAC
+	Repo            repository.Repository
+	SSE             *SSEStreamer
+	Hub             *hub.Hub
+	ImageMagickPath string
 }
 
 // NewHandlers ハンドラを生成します
-func NewHandlers(oauth2 *oauth2.Handler, rbac *rbac.RBAC, repo repository.Repository, hub *hub.Hub) *Handlers {
+func NewHandlers(oauth2 *oauth2.Handler, rbac *rbac.RBAC, repo repository.Repository, hub *hub.Hub, imageMagickPath string) *Handlers {
 	h := &Handlers{
-		OAuth2: oauth2,
-		RBAC:   rbac,
-		Repo:   repo,
-		SSE:    NewSSEStreamer(hub, repo),
-		Hub:    hub,
+		OAuth2:          oauth2,
+		RBAC:            rbac,
+		Repo:            repo,
+		SSE:             NewSSEStreamer(hub, repo),
+		Hub:             hub,
+		ImageMagickPath: imageMagickPath,
 	}
 	return h
 }
@@ -135,7 +137,7 @@ func (h *Handlers) processMultipartFormIconUpload(c echo.Context, file *multipar
 		case mimeImagePNG, mimeImageJPEG:
 			return processStillImage(c, src, iconMaxWidth, iconMaxHeight)
 		case mimeImageGIF:
-			return processGifImage(c, src, iconMaxWidth, iconMaxHeight)
+			return processGifImage(c, h.ImageMagickPath, src, iconMaxWidth, iconMaxHeight)
 		}
 		return nil, "", echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
 	})
@@ -151,7 +153,7 @@ func (h *Handlers) processMultipartFormStampUpload(c echo.Context, file *multipa
 		case mimeImagePNG, mimeImageJPEG:
 			return processStillImage(c, src, stampMaxWidth, stampMaxHeight)
 		case mimeImageGIF:
-			return processGifImage(c, src, stampMaxWidth, stampMaxHeight)
+			return processGifImage(c, h.ImageMagickPath, src, stampMaxWidth, stampMaxHeight)
 		case mimeImageSVG:
 			return processSVGImage(c, src)
 		}
@@ -203,11 +205,11 @@ func processStillImage(c echo.Context, src io.Reader, maxWidth, maxHeight int) (
 	return b, mimeImagePNG, nil
 }
 
-func processGifImage(c echo.Context, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, string, error) {
+func processGifImage(c echo.Context, imagemagickPath string, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
 	defer cancel()
 
-	b, err := imagemagick.ResizeAnimationGIF(ctx, src, maxWidth, maxHeight, false)
+	b, err := imagemagick.ResizeAnimationGIF(ctx, imagemagickPath, src, maxWidth, maxHeight, false)
 	if err != nil {
 		switch err {
 		case imagemagick.ErrUnavailable:
