@@ -22,15 +22,6 @@ type TagForResponse struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-// TagListForResponse クライアントに返す形のタグリスト構造体
-type TagListForResponse struct {
-	ID       uuid.UUID          `json:"tagId"`
-	Tag      string             `json:"tag"`
-	Editable bool               `json:"editable"`
-	Type     string             `json:"type"`
-	Users    []*UserForResponse `json:"users"`
-}
-
 // GetUserTags GET /users/:userID/tags
 func (h *Handlers) GetUserTags(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
@@ -168,33 +159,40 @@ func (h *Handlers) DeleteUserTag(c echo.Context) error {
 
 // GetUsersByTagID GET /tags/:tagID
 func (h *Handlers) GetUsersByTagID(c echo.Context) error {
+	type response struct {
+		ID       uuid.UUID   `json:"tagId"`
+		Tag      string      `json:"tag"`
+		Editable bool        `json:"editable"`
+		Type     string      `json:"type"`
+		Users    []uuid.UUID `json:"users"`
+	}
+
 	tagID := getRequestParamAsUUID(c, paramTagID)
 
 	t, err := h.Repo.GetTagByID(tagID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound, "TagID doesn't exist")
+			return echo.NewHTTPError(http.StatusNotFound)
 		default:
 			c.Logger().Error(err)
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
-	users, err := h.getUsersByTagName(t.Name, c)
+	users, err := h.Repo.GetUserIDsByTagID(t.ID)
 	if err != nil {
-		return err
+		c.Logger().Error(err)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	res := &TagListForResponse{
+	return c.JSON(http.StatusOK, &response{
 		ID:       t.ID,
 		Tag:      t.Name,
 		Editable: !t.Restricted,
 		Type:     t.Type,
 		Users:    users,
-	}
-
-	return c.JSON(http.StatusOK, res)
+	})
 }
 
 // PatchTag PATCH /tags/:tagID
@@ -263,19 +261,6 @@ func (h *Handlers) getUserTags(userID uuid.UUID, c echo.Context) ([]*TagForRespo
 	res := make([]*TagForResponse, len(tagList))
 	for i, v := range tagList {
 		res[i] = formatTag(v)
-	}
-	return res, nil
-}
-
-func (h *Handlers) getUsersByTagName(name string, c echo.Context) ([]*UserForResponse, error) {
-	users, err := h.Repo.GetUsersByTag(name)
-	if err != nil {
-		c.Logger().Error(err)
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get userList")
-	}
-	res := make([]*UserForResponse, len(users))
-	for i, v := range users {
-		res[i] = h.formatUser(v)
 	}
 	return res, nil
 }

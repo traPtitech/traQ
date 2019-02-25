@@ -1559,7 +1559,7 @@ paths:
                   type:
                     type: string
                   users:
-                    $ref: "#/components/schemas/UserList"
+                    $ref: "#/components/schemas/UUIDs"
         "404":
           description: 正常に取得できませんでした。指定されたタグIDは存在しません
     patch:
