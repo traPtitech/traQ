@@ -1534,29 +1534,6 @@ paths:
             正常に削除できませんでした。
             指定したユーザーは存在しません。
 
-  /tags:
-    get:
-      tags:
-        - userTag
-      description: 全タグリストを取得します。
-      responses:
-        "200":
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    tagId:
-                      type: string
-                      format: uuid
-                    tag:
-                      type: string
-                    users:
-                      $ref: "#/components/schemas/UserList"
-
   /tags/{tagID}:
     parameters:
       - $ref: "#/components/parameters/tagIdInPath"

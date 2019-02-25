@@ -166,35 +166,6 @@ func (h *Handlers) DeleteUserTag(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// GetAllTags GET /tags
-func (h *Handlers) GetAllTags(c echo.Context) error {
-	tags, err := h.Repo.GetAllTags()
-	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	res := make([]*TagListForResponse, len(tags))
-
-	for i, v := range tags {
-		var users []*UserForResponse
-		users, err := h.getUsersByTagName(v.Name, c)
-		if err != nil {
-			return err
-		}
-
-		res[i] = &TagListForResponse{
-			ID:       v.ID,
-			Tag:      v.Name,
-			Editable: !v.Restricted,
-			Type:     v.Type,
-			Users:    users,
-		}
-	}
-
-	return c.JSON(http.StatusOK, res)
-}
-
 // GetUsersByTagID GET /tags/:tagID
 func (h *Handlers) GetUsersByTagID(c echo.Context) error {
 	tagID := getRequestParamAsUUID(c, paramTagID)
