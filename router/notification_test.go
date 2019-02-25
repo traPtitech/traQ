@@ -122,7 +122,7 @@ func TestHandlers_GetNotificationChannels(t *testing.T) {
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/users/{userID}/notification", user.ID.String()).
+		e.GET("/api/1.0/users/{userID}/notification", user.ID).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -130,7 +130,7 @@ func TestHandlers_GetNotificationChannels(t *testing.T) {
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/users/{userID}/notification", user.ID.String()).
+		e.GET("/api/1.0/users/{userID}/notification", user.ID).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusOK).

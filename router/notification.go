@@ -92,19 +92,5 @@ func (h *Handlers) GetNotificationChannels(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	res := make([]*ChannelForResponse, len(channelIDs))
-	for i, v := range channelIDs {
-		ch, err := h.Repo.GetChannel(v)
-		if err != nil {
-			c.Logger().Error(err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
-
-		res[i], err = h.formatChannel(ch)
-		if err != nil {
-			c.Logger().Error(err)
-			return c.NoContent(http.StatusInternalServerError)
-		}
-	}
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, channelIDs)
 }
