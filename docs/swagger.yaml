@@ -1375,17 +1375,26 @@ paths:
       description: ユーザーが通知を入れているチャンネルのリストを取得します
       responses:
         "200":
-          description: |+
-            正常に取得できました。
-            ユーザー通知状況の配列を返します。
+          description: 正常に取得できました。チャンネルIDの配列を返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChannelList"
+                $ref: "#/components/schemas/UUIDs"
         "404":
-          description: |+
-            取得に失敗しました。
-            指定したユーザーは存在しません。
+          description: 取得に失敗しました。指定したユーザーは存在しません。
+
+  /users/me/notification:
+    get:
+      tags:
+        - notification
+      description: 自分が通知を入れているチャンネルのリストを取得します
+      responses:
+        "200":
+          description: 正常に取得できました。チャンネルIDの配列を返します。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UUIDs"
 
   /users/{userID}/icon:
     parameters:
@@ -1525,29 +1534,6 @@ paths:
             正常に削除できませんでした。
             指定したユーザーは存在しません。
 
-  /tags:
-    get:
-      tags:
-        - userTag
-      description: 全タグリストを取得します。
-      responses:
-        "200":
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    tagId:
-                      type: string
-                      format: uuid
-                    tag:
-                      type: string
-                    users:
-                      $ref: "#/components/schemas/UserList"
-
   /tags/{tagID}:
     parameters:
       - $ref: "#/components/parameters/tagIdInPath"
@@ -1573,7 +1559,7 @@ paths:
                   type:
                     type: string
                   users:
-                    $ref: "#/components/schemas/UserList"
+                    $ref: "#/components/schemas/UUIDs"
         "404":
           description: 正常に取得できませんでした。指定されたタグIDは存在しません
     patch:
