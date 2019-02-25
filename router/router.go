@@ -38,6 +38,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiUsersMe.PUT("/icon", h.PutMyIcon, requires(permission.ChangeMyIcon))
 				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
 				apiUsersMe.GET("/groups", h.GetMyBelongingGroup)
+				apiUsersMe.GET("/notification", h.GetMyNotificationChannels, requires(permission.GetNotificationStatus))
 				apiUsersMeSessions := apiUsersMe.Group("/sessions")
 				{
 					apiUsersMeSessions.GET("", GetMySessions, requires(permission.GetMySessions))

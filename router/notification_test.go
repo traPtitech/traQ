@@ -140,3 +140,32 @@ func TestHandlers_GetNotificationChannels(t *testing.T) {
 			Equal(2)
 	})
 }
+
+func TestHandlers_GetMyNotificationChannels(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common2)
+
+	require.NoError(t, repo.SubscribeChannel(user.ID, mustMakeChannel(t, repo, random).ID))
+	require.NoError(t, repo.SubscribeChannel(user.ID, mustMakeChannel(t, repo, random).ID))
+
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/users/me/notification").
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("Successful1", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/users/me/notification").
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array().
+			Length().
+			Equal(2)
+	})
+}

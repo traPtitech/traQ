@@ -94,3 +94,16 @@ func (h *Handlers) GetNotificationChannels(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, channelIDs)
 }
+
+// GetMyNotificationChannels GET /users/me/notification
+func (h *Handlers) GetMyNotificationChannels(c echo.Context) error {
+	userID := getRequestUserID(c)
+
+	channelIDs, err := h.Repo.GetSubscribedChannelIDs(userID)
+	if err != nil {
+		c.Logger().Error(err)
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusOK, channelIDs)
+}
