@@ -19,12 +19,9 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
     && tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
     && rm dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
-VOLUME /localstorage
-EXPOSE 80
-ENV TRAQ_PORT=80 \
-    TRAQ_ORIGIN=http://localhost \
-    TRAQ_IMAGEMAGICK_PATH=/usr/bin/convert \
-    TRAQ_STORAGE_LOCAL_DIR=/localstorage
+VOLUME /app/storage
+EXPOSE 3000
+ENV TRAQ_IMAGEMAGICK_PATH=/usr/bin/convert
 
 COPY ./static ./static/
 COPY --from=build /traQ ./
