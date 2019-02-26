@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"github.com/ncw/swift"
+	"github.com/traPtitech/traQ/model"
 	"io"
 	"time"
 )
@@ -56,10 +57,18 @@ func (fs *SwiftFileStorage) OpenFileByKey(key string) (file io.ReadCloser, err e
 
 // SaveByKey srcの内容をkeyで指定されたファイルに書き込みます
 func (fs *SwiftFileStorage) SaveByKey(src io.Reader, key, name, contentType, fileType string) (err error) {
-	_, err = fs.connection.ObjectPut(fs.container, key, src, true, "", contentType, swift.Headers{
+	headers := swift.Headers{
 		"Content-Disposition": fmt.Sprintf("attachment; filename=%s", name),
 		"Cache-Control":       "private, max-age=31536000",
-	})
+		"X-TRAQ-FILE-TYPE":    fileType,
+	}
+	switch fileType {
+	case model.FileTypeStamp, model.FileTypeIcon, model.FileTypeThumbnail:
+		headers["X-TRAQ-FILE-CACHE"] = "true"
+	default:
+		break
+	}
+	_, err = fs.connection.ObjectPut(fs.container, key, src, true, "", contentType, headers)
 	return
 }
 

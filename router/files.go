@@ -118,6 +118,12 @@ func (h *Handlers) GetMetaDataByFileID(c echo.Context) error {
 func (h *Handlers) GetThumbnailByID(c echo.Context) error {
 	meta := getFileFromContext(c)
 
+	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
+	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetKey())
+	if len(url) > 0 {
+		return c.Redirect(http.StatusFound, url)
+	}
+
 	if !meta.HasThumbnail {
 		return echo.NewHTTPError(http.StatusNotFound, "file is found, but thumbnail is not found")
 	}
@@ -129,6 +135,8 @@ func (h *Handlers) GetThumbnailByID(c echo.Context) error {
 	}
 	defer file.Close()
 
+	c.Response().Header().Set(headerFileMetaType, meta.Type)
+	c.Response().Header().Set(headerCacheFile, "true")
 	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") //1年間キャッシュ
 	return c.Stream(http.StatusOK, mimeImagePNG, file)
 }
