@@ -3,7 +3,6 @@ package storage
 import (
 	"fmt"
 	"github.com/ncw/swift"
-	"github.com/traPtitech/traQ/model"
 	"io"
 	"time"
 )
@@ -47,7 +46,7 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL,
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *SwiftFileStorage) OpenFileByKey(key string) (file io.ReadCloser, err error) {
+func (fs *SwiftFileStorage) OpenFileByKey(key string) (file ReadSeekCloser, err error) {
 	file, _, err = fs.connection.ObjectOpen(fs.container, key, true, nil)
 	if err == swift.ObjectNotFound {
 		return nil, ErrFileNotFound
@@ -57,18 +56,9 @@ func (fs *SwiftFileStorage) OpenFileByKey(key string) (file io.ReadCloser, err e
 
 // SaveByKey srcの内容をkeyで指定されたファイルに書き込みます
 func (fs *SwiftFileStorage) SaveByKey(src io.Reader, key, name, contentType, fileType string) (err error) {
-	headers := swift.Headers{
+	_, err = fs.connection.ObjectPut(fs.container, key, src, true, "", contentType, swift.Headers{
 		"Content-Disposition": fmt.Sprintf("attachment; filename=%s", name),
-		"Cache-Control":       "private, max-age=31536000",
-		"X-TRAQ-FILE-TYPE":    fileType,
-	}
-	switch fileType {
-	case model.FileTypeStamp, model.FileTypeIcon, model.FileTypeThumbnail:
-		headers["X-TRAQ-FILE-CACHE"] = "true"
-	default:
-		break
-	}
-	_, err = fs.connection.ObjectPut(fs.container, key, src, true, "", contentType, headers)
+	})
 	return
 }
 
