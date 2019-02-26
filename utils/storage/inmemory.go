@@ -33,7 +33,7 @@ func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, name, contentType, 
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *InMemoryFileStorage) OpenFileByKey(key string) (io.ReadCloser, error) {
+func (fs *InMemoryFileStorage) OpenFileByKey(key string) (ReadSeekCloser, error) {
 	fs.RLock()
 	f, ok := fs.fileMap[key]
 	fs.RUnlock()

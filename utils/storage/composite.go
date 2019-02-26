@@ -36,7 +36,7 @@ func (fs *CompositeFileStorage) SaveByKey(src io.Reader, key, name, contentType,
 }
 
 // OpenFileByKey keyで指定されたファイルを読み込む
-func (fs *CompositeFileStorage) OpenFileByKey(key string) (io.ReadCloser, error) {
+func (fs *CompositeFileStorage) OpenFileByKey(key string) (ReadSeekCloser, error) {
 	if _, err := os.Stat(fs.local.getFilePath(key)); os.IsNotExist(err) {
 		return fs.swift.OpenFileByKey(key)
 	}

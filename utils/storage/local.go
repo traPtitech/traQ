@@ -22,7 +22,7 @@ func NewLocalFileStorage(dir string) *LocalFileStorage {
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *LocalFileStorage) OpenFileByKey(key string) (io.ReadCloser, error) {
+func (fs *LocalFileStorage) OpenFileByKey(key string) (ReadSeekCloser, error) {
 	fileName := fs.getFilePath(key)
 	reader, err := os.Open(fileName)
 	if err != nil {
