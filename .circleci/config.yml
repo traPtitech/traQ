@@ -105,13 +105,20 @@ jobs:
     steps:
       - checkout
       - run:
+          name: install utils
+          command: curl -Ls https://raw.github.com/rikby/semversort/master/download | bash
+      - run:
           name: docker login
           command: docker login -u $DOCKER_USER -p $DOCKER_PASS
       - run:
           name: docker build and push
           command: |
             if [ -n "$CIRCLE_TAG" ]; then
-              IMAGE_TAG="$CIRCLE_TAG"
+              IMAGE_TAG="${CIRCLE_TAG:1}"
+              latest=`cat <(curl -Ls https://registry.hub.docker.com/v1/repositories/trap/traq/tags | jq -r '.[].name' | grep -E '^[0-9]+(\.[0-9]+){2}.*') <(echo $IMAGE_TAG) | semversort | tail -n 1`
+              if [ "$IMAGE_TAG" = "$latest" ]; then
+                NEW_RELEASE=1
+              fi
             elif [ "$CIRCLE_BRANCH" = "master" ]; then
               IMAGE_TAG="latest"
             else
@@ -119,6 +126,11 @@ jobs:
             fi
             docker build -t trap/traq:$IMAGE_TAG .
             docker push trap/traq:$IMAGE_TAG
+
+            if [ "$NEW_RELEASE" = "1" ]; then
+              docker tag trap/traq:$IMAGE_TAG trap/traq:release
+              docker push trap/traq:release
+            fi
 
   deploy-staging:
     machine: true
