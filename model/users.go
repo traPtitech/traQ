@@ -39,7 +39,7 @@ type User struct {
 	Icon        uuid.UUID         `gorm:"type:char(36);not null"`
 	Status      UserAccountStatus `gorm:"type:tinyint;not null;default:0"`
 	Bot         bool              `gorm:"type:boolean;not null;default:false"`
-	Role        string            `gorm:"type:text;not null;default:'user'"    validate:"required"`
+	Role        string            `gorm:"type:varchar(30);not null;default:'user'"    validate:"required"`
 	TwitterID   string            `gorm:"type:varchar(15);not null;default:''" validate:"twitterid"`
 	LastOnline  *time.Time        `gorm:"precision:6"`
 	CreatedAt   time.Time         `gorm:"precision:6;not null"`
