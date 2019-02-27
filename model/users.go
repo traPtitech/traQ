@@ -42,8 +42,8 @@ type User struct {
 	Role        string            `gorm:"type:varchar(30);not null;default:'user'"    validate:"required"`
 	TwitterID   string            `gorm:"type:varchar(15);not null;default:''" validate:"twitterid"`
 	LastOnline  *time.Time        `gorm:"precision:6"`
-	CreatedAt   time.Time         `gorm:"precision:6;not null"`
-	UpdatedAt   time.Time         `gorm:"precision:6;not null"`
+	CreatedAt   time.Time         `gorm:"precision:6"`
+	UpdatedAt   time.Time         `gorm:"precision:6"`
 	DeletedAt   *time.Time        `gorm:"precision:6"`
 }
 

@@ -30,7 +30,7 @@ type File struct {
 	HasThumbnail    bool       `gorm:"type:boolean;not null;default:false"  json:"hasThumb"`
 	ThumbnailWidth  int        `gorm:"type:int;not null;default:0"          json:"thumbWidth,omitempty"  validate:"min=0"`
 	ThumbnailHeight int        `gorm:"type:int;not null;default:0"          json:"thumbHeight,omitempty" validate:"min=0"`
-	CreatedAt       time.Time  `gorm:"precision:6;not null"                 json:"datetime"`
+	CreatedAt       time.Time  `gorm:"precision:6"                          json:"datetime"`
 	DeletedAt       *time.Time `gorm:"precision:6"                          json:"-"`
 }
 

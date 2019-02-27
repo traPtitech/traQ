@@ -21,13 +21,13 @@ type Channel struct {
 	Name      string     `gorm:"type:varchar(20);not null;unique_index:name_parent" validate:"channel,required"`
 	ParentID  uuid.UUID  `gorm:"type:char(36);not null;unique_index:name_parent"`
 	Topic     string     `gorm:"type:text;not null"`
-	IsForced  bool       `gorm:"type:boolean;not null"`
-	IsPublic  bool       `gorm:"type:boolean;not null"`
-	IsVisible bool       `gorm:"type:boolean;not null"`
+	IsForced  bool       `gorm:"type:boolean;not null;default:false"`
+	IsPublic  bool       `gorm:"type:boolean;not null;default:false"`
+	IsVisible bool       `gorm:"type:boolean;not null;default:false"`
 	CreatorID uuid.UUID  `gorm:"type:char(36);not null"`
 	UpdaterID uuid.UUID  `gorm:"type:char(36);not null"`
-	CreatedAt time.Time  `gorm:"precision:6;not null"`
-	UpdatedAt time.Time  `gorm:"precision:6;not null"`
+	CreatedAt time.Time  `gorm:"precision:6"`
+	UpdatedAt time.Time  `gorm:"precision:6"`
 	DeletedAt *time.Time `gorm:"precision:6"`
 }
 
@@ -56,7 +56,6 @@ func (upc *UsersPrivateChannel) TableName() string {
 type UserSubscribeChannel struct {
 	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	ChannelID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	CreatedAt time.Time `gorm:"precision:6;not null"`
 }
 
 // TableName UserNotifiedChannel構造体のテーブル名

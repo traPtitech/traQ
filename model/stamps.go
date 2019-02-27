@@ -12,8 +12,8 @@ type Stamp struct {
 	Name      string     `gorm:"type:varchar(32);not null;unique"   json:"name"      validate:"name,required"`
 	CreatorID uuid.UUID  `gorm:"type:char(36);not null"             json:"creatorId"`
 	FileID    uuid.UUID  `gorm:"type:char(36);not null"             json:"fileId"`
-	CreatedAt time.Time  `gorm:"precision:6;not null"               json:"createdAt"`
-	UpdatedAt time.Time  `gorm:"precision:6;not null"               json:"updatedAt"`
+	CreatedAt time.Time  `gorm:"precision:6"                        json:"createdAt"`
+	UpdatedAt time.Time  `gorm:"precision:6"                        json:"updatedAt"`
 	DeletedAt *time.Time `gorm:"precision:6"                        json:"-"`
 }
 

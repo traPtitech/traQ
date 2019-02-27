@@ -12,8 +12,8 @@ type Message struct {
 	UserID    uuid.UUID  `gorm:"type:char(36);not null;"`
 	ChannelID uuid.UUID  `gorm:"type:char(36);not null;index"`
 	Text      string     `gorm:"type:text;not null"                 validate:"required"`
-	CreatedAt time.Time  `gorm:"precision:6;not null;index"`
-	UpdatedAt time.Time  `gorm:"precision:6;not null"`
+	CreatedAt time.Time  `gorm:"precision:6;index"`
+	UpdatedAt time.Time  `gorm:"precision:6"`
 	DeletedAt *time.Time `gorm:"precision:6;index"`
 }
 
@@ -31,7 +31,7 @@ func (m *Message) Validate() error {
 type Unread struct {
 	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	MessageID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	CreatedAt time.Time `gorm:"precision:6;not null"`
+	CreatedAt time.Time `gorm:"precision:6"`
 }
 
 // TableName テーブル名
@@ -45,7 +45,7 @@ type ArchivedMessage struct {
 	MessageID uuid.UUID `gorm:"type:char(36);not null;index"`
 	UserID    uuid.UUID `gorm:"type:char(36);not null"`
 	Text      string    `gorm:"type:text;not null"`
-	DateTime  time.Time `gorm:"precision:6;not null"`
+	DateTime  time.Time `gorm:"precision:6"`
 }
 
 // TableName ArchivedMessage構造体のテーブル名

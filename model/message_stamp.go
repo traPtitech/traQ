@@ -11,8 +11,8 @@ type MessageStamp struct {
 	StampID   uuid.UUID `gorm:"type:char(36);not null;primary_key"       json:"stampId"`
 	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key"       json:"userId"`
 	Count     int       `gorm:"type:int;not null"                        json:"count"`
-	CreatedAt time.Time `gorm:"precision:6;not null"                     json:"createdAt"`
-	UpdatedAt time.Time `gorm:"precision:6;not null;index"               json:"updatedAt"`
+	CreatedAt time.Time `gorm:"precision:6"                              json:"createdAt"`
+	UpdatedAt time.Time `gorm:"precision:6;index"                        json:"updatedAt"`
 }
 
 // TableName メッセージスタンプのテーブル
