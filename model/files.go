@@ -20,18 +20,18 @@ const (
 
 // File DBに格納するファイルの構造体
 type File struct {
-	ID              uuid.UUID  `gorm:"type:char(36);primary_key" json:"fileId"`
-	Name            string     `gorm:"type:text"                 json:"name"     validate:"required"`
-	Mime            string     `gorm:"type:text"                 json:"mime"     validate:"required"`
-	Size            int64      `                                 json:"size"     validate:"min=0,required"`
-	CreatorID       uuid.UUID  `gorm:"type:char(36)"             json:"-"`
-	Hash            string     `gorm:"type:char(32)"             json:"md5"      validate:"max=32"`
-	Type            string     `gorm:"type:varchar(30)"          json:"-"`
-	HasThumbnail    bool       `                                 json:"hasThumb"`
-	ThumbnailWidth  int        `                                 json:"thumbWidth,omitempty"  validate:"min=0"`
-	ThumbnailHeight int        `                                 json:"thumbHeight,omitempty" validate:"min=0"`
-	CreatedAt       time.Time  `gorm:"precision:6"               json:"datetime"`
-	DeletedAt       *time.Time `gorm:"precision:6"               json:"-"`
+	ID              uuid.UUID  `gorm:"type:char(36);not null;primary_key"   json:"fileId"`
+	Name            string     `gorm:"type:text;not null"                   json:"name"                  validate:"required"`
+	Mime            string     `gorm:"type:text;not null"                   json:"mime"                  validate:"required"`
+	Size            int64      `gorm:"type:bigint;not null"                 json:"size"                  validate:"min=0,required"`
+	CreatorID       uuid.UUID  `gorm:"type:char(36);not null"               json:"-"`
+	Hash            string     `gorm:"type:char(32);not null"               json:"md5"                   validate:"max=32"`
+	Type            string     `gorm:"type:varchar(30);not null;default:''" json:"-"`
+	HasThumbnail    bool       `gorm:"type:boolean;not null;default:false"  json:"hasThumb"`
+	ThumbnailWidth  int        `gorm:"type:int;not null;default:0"          json:"thumbWidth,omitempty"  validate:"min=0"`
+	ThumbnailHeight int        `gorm:"type:int;not null;default:0"          json:"thumbHeight,omitempty" validate:"min=0"`
+	CreatedAt       time.Time  `gorm:"precision:6;not null"                 json:"datetime"`
+	DeletedAt       *time.Time `gorm:"precision:6"                          json:"-"`
 }
 
 // TableName dbのtableの名前を返します

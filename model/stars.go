@@ -7,9 +7,9 @@ import (
 
 // Star starの構造体
 type Star struct {
-	UserID    uuid.UUID `gorm:"type:char(36);primary_key"`
-	ChannelID uuid.UUID `gorm:"type:char(36);primary_key"`
-	CreatedAt time.Time `gorm:"precision:6"`
+	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	ChannelID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	CreatedAt time.Time `gorm:"precision:6;not null"`
 }
 
 // TableName dbの名前を指定する

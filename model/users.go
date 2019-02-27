@@ -31,20 +31,20 @@ const (
 
 // User userの構造体
 type User struct {
-	ID          uuid.UUID         `gorm:"type:char(36);primary_key"`
-	Name        string            `gorm:"type:varchar(32);unique"   validate:"required,name"`
-	DisplayName string            `gorm:"type:varchar(64)"          validate:"max=64"`
-	Password    string            `gorm:"type:char(128)"            validate:"required,max=128"`
-	Salt        string            `gorm:"type:char(128)"            validate:"required,max=128"`
-	Icon        uuid.UUID         `gorm:"type:char(36)"`
-	Status      UserAccountStatus `gorm:"type:tinyint"`
-	Bot         bool
-	Role        string     `gorm:"type:text"                 validate:"required"`
-	TwitterID   string     `gorm:"type:varchar(15)"          validate:"twitterid"`
-	LastOnline  *time.Time `gorm:"precision:6"`
-	CreatedAt   time.Time  `gorm:"precision:6"`
-	UpdatedAt   time.Time  `gorm:"precision:6"`
-	DeletedAt   *time.Time `gorm:"precision:6"`
+	ID          uuid.UUID         `gorm:"type:char(36);not null;primary_key"`
+	Name        string            `gorm:"type:varchar(32);not null;unique"     validate:"required,name"`
+	DisplayName string            `gorm:"type:varchar(64);not null;default:''" validate:"max=64"`
+	Password    string            `gorm:"type:char(128);not null;default:''"   validate:"required,max=128"`
+	Salt        string            `gorm:"type:char(128);not null;default:''"   validate:"required,max=128"`
+	Icon        uuid.UUID         `gorm:"type:char(36);not null"`
+	Status      UserAccountStatus `gorm:"type:tinyint;not null;default:0"`
+	Bot         bool              `gorm:"type:boolean;not null;default:false"`
+	Role        string            `gorm:"type:text;not null;default:'user'"    validate:"required"`
+	TwitterID   string            `gorm:"type:varchar(15);not null;default:''" validate:"twitterid"`
+	LastOnline  *time.Time        `gorm:"precision:6"`
+	CreatedAt   time.Time         `gorm:"precision:6;not null"`
+	UpdatedAt   time.Time         `gorm:"precision:6;not null"`
+	DeletedAt   *time.Time        `gorm:"precision:6"`
 }
 
 // GetUID ユーザーIDを取得します

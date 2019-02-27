@@ -8,11 +8,11 @@ import (
 
 // ClipFolder クリップフォルダの構造体
 type ClipFolder struct {
-	ID        uuid.UUID `gorm:"type:char(36);primary_key"                                            json:"id"`
-	UserID    uuid.UUID `gorm:"type:char(36);unique_index:user_folder"                               json:"-"`
-	Name      string    `gorm:"type:varchar(30);unique_index:user_folder" validate:"max=30,required" json:"name"`
-	CreatedAt time.Time `gorm:"precision:6"                                                          json:"createdAt"`
-	UpdatedAt time.Time `gorm:"precision:6"                                                          json:"-"`
+	ID        uuid.UUID `gorm:"type:char(36);not null;primary_key"                                            json:"id"`
+	UserID    uuid.UUID `gorm:"type:char(36);not null;unique_index:user_folder"                               json:"-"`
+	Name      string    `gorm:"type:varchar(30);not null;unique_index:user_folder" validate:"max=30,required" json:"name"`
+	CreatedAt time.Time `gorm:"precision:6;not null"                                                          json:"createdAt"`
+	UpdatedAt time.Time `gorm:"precision:6;not null"                                                          json:"-"`
 }
 
 // TableName ClipFolderのテーブル名
@@ -27,13 +27,13 @@ func (f *ClipFolder) Validate() error {
 
 // Clip clipの構造体
 type Clip struct {
-	ID        uuid.UUID `gorm:"type:char(36);primary_key"`
-	UserID    uuid.UUID `gorm:"type:char(36);unique_index:user_message"`
-	MessageID uuid.UUID `gorm:"type:char(36);unique_index:user_message"`
+	ID        uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	UserID    uuid.UUID `gorm:"type:char(36);not null;unique_index:user_message"`
+	MessageID uuid.UUID `gorm:"type:char(36);not null;unique_index:user_message"`
 	Message   Message   `gorm:"association_autoupdate:false;association_autocreate:false"`
-	FolderID  uuid.UUID `gorm:"type:char(36)"`
-	CreatedAt time.Time `gorm:"precision:6"`
-	UpdatedAt time.Time `gorm:"precision:6"`
+	FolderID  uuid.UUID `gorm:"type:char(36);not null"`
+	CreatedAt time.Time `gorm:"precision:6;not null"`
+	UpdatedAt time.Time `gorm:"precision:6;not null"`
 }
 
 // TableName Clipのテーブル名
