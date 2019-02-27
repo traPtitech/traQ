@@ -1,11 +1,12 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/utils/validator"
-	"net/http"
 )
 
 // SetupRouting APIルーティングを行います
@@ -235,6 +236,9 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		apiNoAuth.POST("/login", h.PostLogin)
 		apiNoAuth.POST("/logout", h.PostLogout)
 		apiNoAuth.GET("/public/icon/:username", h.GetPublicUserIcon)
+		apiNoAuth.GET("/public/emoji.json", h.GetPublicEmojiJson)
+		apiNoAuth.GET("/public/emoji.css", h.GetPublicEmojiCss)
+		apiNoAuth.GET("/public/emoji/:fileID", h.GetPublicEmojiImage)
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, h.ValidateWebhookID(false))
 		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, h.ValidateWebhookID(false))
 		apiNoAuth.GET("/teapot", func(c echo.Context) error {
