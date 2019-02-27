@@ -63,8 +63,8 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	return c.Stream(http.StatusOK, f.Mime, r)
 }
 
-// GetPublicEmojiJson GET /public/emoji.json
-func (h *Handlers) GetPublicEmojiJson(c echo.Context) error {
+// GetPublicEmojiJSON GET /public/emoji.json
+func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 	stamps, err := h.Repo.GetAllStamps()
 	if err != nil {
 		c.Logger().Error(err)
@@ -78,8 +78,8 @@ func (h *Handlers) GetPublicEmojiJson(c echo.Context) error {
 	return c.JSON(http.StatusOK, resData)
 }
 
-// GetPublicEmojiCss GET /public/emoji.css
-func (h *Handlers) GetPublicEmojiCss(c echo.Context) error {
+// GetPublicEmojiCSS GET /public/emoji.css
+func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 	stamps, err := h.Repo.GetAllStamps()
 	if err != nil {
 		c.Logger().Error(err)
