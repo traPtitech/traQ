@@ -156,7 +156,7 @@ jobs:
           command: ssh-keyscan ${PROD_DEPLOY_HOST} >> ~/.ssh/known_hosts 2>/dev/null
       - run:
           name: deploy production environment
-          command: ssh -o LogLevel=QUIET -t ${PROD_DEPLOY_USER}@${PROD_DEPLOY_HOST} "/srv/traq-r/deploy.sh traq-backend"
+          command: ssh -o LogLevel=QUIET -t ${PROD_DEPLOY_USER}@${PROD_DEPLOY_HOST} "~/deploy.sh traq-backend"
 
 workflows:
   version: 2
