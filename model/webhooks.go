@@ -19,12 +19,12 @@ type Webhook interface {
 
 // WebhookBot DB用WebhookBot構造体
 type WebhookBot struct {
-	ID          uuid.UUID  `gorm:"type:char(36);primary_key"`
-	BotUserID   uuid.UUID  `gorm:"type:char(36);unique"`
+	ID          uuid.UUID  `gorm:"type:char(36);not null;primary_key"`
+	BotUserID   uuid.UUID  `gorm:"type:char(36);not null;unique"`
 	BotUser     User       `gorm:"foreignkey:BotUserID"`
-	Description string     `gorm:"type:text"`
-	ChannelID   uuid.UUID  `gorm:"type:char(36)"`
-	CreatorID   uuid.UUID  `gorm:"type:char(36)"`
+	Description string     `gorm:"type:text;not null"`
+	ChannelID   uuid.UUID  `gorm:"type:char(36);not null"`
+	CreatorID   uuid.UUID  `gorm:"type:char(36);not null"`
 	CreatedAt   time.Time  `gorm:"precision:6"`
 	UpdatedAt   time.Time  `gorm:"precision:6"`
 	DeletedAt   *time.Time `gorm:"precision:6"`

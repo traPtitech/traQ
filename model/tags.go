@@ -8,10 +8,10 @@ import (
 
 // Tag tag_idの管理をする構造体
 type Tag struct {
-	ID         uuid.UUID `gorm:"type:char(36);primary_key"`
-	Name       string    `gorm:"type:varchar(30);unique"   validate:"required,max=30"`
-	Restricted bool
-	Type       string    `gorm:"type:varchar(30)"`
+	ID         uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	Name       string    `gorm:"type:varchar(30);not null;unique"   validate:"required,max=30"`
+	Restricted bool      `gorm:"type:boolean;not null;default:false"`
+	Type       string    `gorm:"type:varchar(30);not null;default:''"`
 	CreatedAt  time.Time `gorm:"precision:6"`
 	UpdatedAt  time.Time `gorm:"precision:6"`
 }
@@ -28,10 +28,10 @@ func (t *Tag) Validate() error {
 
 // UsersTag userTagの構造体
 type UsersTag struct {
-	UserID    uuid.UUID `gorm:"type:char(36);primary_key"`
-	TagID     uuid.UUID `gorm:"type:char(36);primary_key"`
+	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	TagID     uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	Tag       Tag       `gorm:"association_autoupdate:false;association_autocreate:false"`
-	IsLocked  bool
+	IsLocked  bool      `gorm:"type:boolean;not null;default:false"`
 	CreatedAt time.Time `gorm:"precision:6;index"`
 	UpdatedAt time.Time `gorm:"precision:6"`
 }
