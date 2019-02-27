@@ -36,6 +36,8 @@ func main() {
 
 	viper.SetDefault("pprof", false)
 
+	viper.SetDefault("generateThumbnailOnStartUp", false)
+
 	viper.SetDefault("mariadb.host", "127.0.0.1")
 	viper.SetDefault("mariadb.port", 3306)
 	viper.SetDefault("mariadb.username", "root")
@@ -95,6 +97,16 @@ func main() {
 			if err := initData(repo, dir); err != nil {
 				panic(err)
 			}
+		}
+	}
+
+	if viper.GetBool("generateThumbnailOnStartUp") {
+		var files []uuid.UUID
+		if err := engine.Model(&model.File{}).Where("has_thumbnail = false").Pluck("id", &files).Error; err != nil {
+			panic(err)
+		}
+		for _, v := range files {
+			_, _ = repo.RegenerateThumbnail(v)
 		}
 	}
 

@@ -16,12 +16,12 @@ import (
 
 // WebhookBot DB用WebhookBot構造体
 type WebhookBot struct {
-	ID          uuid.UUID  `gorm:"type:char(36);primary_key"`
-	BotUserID   uuid.UUID  `gorm:"type:char(36);unique"`
+	ID          uuid.UUID  `gorm:"type:char(36);not null;primary_key"`
+	BotUserID   uuid.UUID  `gorm:"type:char(36);not null;unique"`
 	BotUser     model.User `gorm:"foreignkey:BotUserID"`
-	Description string     `gorm:"type:text"`
-	ChannelID   uuid.UUID  `gorm:"type:char(36)"`
-	CreatorID   uuid.UUID  `gorm:"type:char(36)"`
+	Description string     `gorm:"type:text;not null"`
+	ChannelID   uuid.UUID  `gorm:"type:char(36);not null"`
+	CreatorID   uuid.UUID  `gorm:"type:char(36);not null"`
 	CreatedAt   time.Time  `gorm:"precision:6"`
 	UpdatedAt   time.Time  `gorm:"precision:6"`
 	DeletedAt   *time.Time `gorm:"precision:6"`
@@ -181,7 +181,21 @@ func (repo *RepositoryImpl) DeleteWebhook(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	return repo.db.Delete(&WebhookBot{ID: id}).Error
+	err := repo.transact(func(tx *gorm.DB) error {
+		var b WebhookBot
+		if err := tx.Where(&WebhookBot{ID: id}).Take(b).Error; err != nil {
+			if gorm.IsRecordNotFoundError(err) {
+				return repository.ErrNotFound
+			}
+			return err
+		}
+
+		if err := tx.Delete(&WebhookBot{ID: id}).Error; err != nil {
+			return err
+		}
+		return tx.Model(&model.User{}).Where(&model.User{ID: b.BotUserID}).Update("status", model.UserAccountStatusDeactivated).Error
+	})
+	return err
 }
 
 // GetWebhook Webhookを取得

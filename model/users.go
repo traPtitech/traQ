@@ -44,7 +44,6 @@ type User struct {
 	LastOnline  *time.Time        `gorm:"precision:6"`
 	CreatedAt   time.Time         `gorm:"precision:6"`
 	UpdatedAt   time.Time         `gorm:"precision:6"`
-	DeletedAt   *time.Time        `gorm:"precision:6"`
 }
 
 // GetUID ユーザーIDを取得します

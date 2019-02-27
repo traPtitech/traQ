@@ -8,6 +8,8 @@
 
 #initDataDir:
 
+#generateThumbnailOnStartUp: false
+
 #imagemagick:
 #  path: ''
 
