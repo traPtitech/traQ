@@ -13,6 +13,8 @@ import (
 // GetPublicUserIcon GET /public/icon/{username}
 func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	username := c.Param("username")
+	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
+	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
 	if len(username) == 0 {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
@@ -65,6 +67,8 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 // GetPublicEmojiJSON GET /public/emoji.json
 func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 	stamps, err := h.Repo.GetAllStamps()
+	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
+	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -80,6 +84,8 @@ func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 // GetPublicEmojiCSS GET /public/emoji.css
 func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 	stamps, err := h.Repo.GetAllStamps()
+	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
+	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -87,7 +93,7 @@ func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 	res := bytes.Buffer{}
 
 	for _, stamp := range stamps {
-		res.WriteString(fmt.Sprintf(".emoji.%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.ID))
+		res.WriteString(fmt.Sprintf(".emoji.e_%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.ID))
 	}
 	return c.Blob(http.StatusOK, "text/css", res.Bytes())
 }
@@ -95,6 +101,8 @@ func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 // GetPublicEmojiImage GET /public/emoji/{stampID}
 func (h *Handlers) GetPublicEmojiImage(c echo.Context) error {
 	stampID := getRequestParamAsUUID(c, paramStampID)
+	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
+	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
 
 	s, err := h.Repo.GetStamp(stampID)
 	if err != nil {
