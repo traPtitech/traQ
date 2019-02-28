@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo"
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 )
 
@@ -88,25 +87,33 @@ func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 	res := bytes.Buffer{}
 
 	for _, stamp := range stamps {
-		res.WriteString(fmt.Sprintf(".emoji.%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.FileID))
+		res.WriteString(fmt.Sprintf(".emoji.%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.ID))
 	}
 	return c.Blob(http.StatusOK, "text/css", res.Bytes())
 }
 
-// GetPublicEmojiImage GET /public/emoji/{fileID}
+// GetPublicEmojiImage GET /public/emoji/{stampID}
 func (h *Handlers) GetPublicEmojiImage(c echo.Context) error {
-	fileID := getRequestParamAsUUID(c, paramFileID)
-	meta, err := h.Repo.GetFileMeta(fileID)
+	stampID := getRequestParamAsUUID(c, paramStampID)
+
+	s, err := h.Repo.GetStamp(stampID)
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return c.NoContent(http.StatusNotFound)
+		default:
+			c.Logger().Error(err)
+			return c.NoContent(http.StatusInternalServerError)
+		}
+	}
+
+	meta, err := h.Repo.GetFileMeta(s.FileID)
 	if err != nil {
 		c.Logger().Error(err)
-		return c.NoContent(http.StatusBadRequest)
+		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	c.Response().Header().Set(headerFileMetaType, meta.Type)
-	if meta.Type != model.FileTypeStamp {
-		return c.NoContent(http.StatusForbidden)
-	}
-
 	c.Response().Header().Set(headerCacheFile, "true")
 
 	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
