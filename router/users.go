@@ -51,18 +51,19 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
+	redirect := c.QueryParam("redirect")
 	user, err := h.Repo.GetUserByName(req.Name)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
-			return c.NoContent(http.StatusUnauthorized)
+			return c.Redirect(http.StatusUnauthorized, fmt.Sprintf("/?%s", redirect))
 		default:
 			c.Logger().Error(err)
 			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
 	if err := model.AuthenticateUser(user, req.Pass); err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, err)
+		return c.Redirect(http.StatusUnauthorized, fmt.Sprintf("/?%s", redirect))
 	}
 
 	// ユーザーのアカウント状態の確認
@@ -84,7 +85,7 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	if redirect := c.QueryParam("redirect"); len(redirect) > 0 {
+	if len(redirect) > 0 {
 		return c.Redirect(http.StatusFound, redirect)
 	}
 	return c.NoContent(http.StatusNoContent)
