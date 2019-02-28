@@ -67,8 +67,8 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 // GetPublicEmojiJSON GET /public/emoji.json
 func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 	stamps, err := h.Repo.GetAllStamps()
-	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
-	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
+	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, c.Request().RemoteAddr)
+	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "true")
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -84,7 +84,7 @@ func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 // GetPublicEmojiCSS GET /public/emoji.css
 func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 	stamps, err := h.Repo.GetAllStamps()
-	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
+	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, c.Request().RemoteAddr)
 	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
 	if err != nil {
 		c.Logger().Error(err)
@@ -92,6 +92,7 @@ func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 	}
 	res := bytes.Buffer{}
 
+	res.WriteString(".emoji {display: inline-block; text-indent: 999%; white-space: nowrap; overflow: hidden; color: rgba(0, 0, 0, 0); background-size: contain}")
 	for _, stamp := range stamps {
 		res.WriteString(fmt.Sprintf(".emoji.e_%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.ID))
 	}
