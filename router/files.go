@@ -122,7 +122,7 @@ func (h *Handlers) GetThumbnailByID(c echo.Context) error {
 	c.Response().Header().Set(headerCacheFile, "true")
 
 	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
-	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetKey())
+	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetThumbKey())
 	if len(url) > 0 {
 		return c.Redirect(http.StatusFound, url)
 	}
