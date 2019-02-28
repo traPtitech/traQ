@@ -4,9 +4,13 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"errors"
+	"github.com/labstack/gommon/log"
 	"github.com/satori/go.uuid"
+	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
+	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -76,17 +80,36 @@ func AuthenticateUser(user *User, password string) error {
 		return ErrUserBotTryLogin
 	}
 
-	storedPassword, err := hex.DecodeString(user.Password)
-	if err != nil {
-		return err
-	}
-	salt, err := hex.DecodeString(user.Salt)
-	if err != nil {
-		return err
-	}
+	if viper.GetBool("externalAuthentication.enabled") {
+		values := url.Values{}
+		values.Set(viper.GetString("externalAuthentication.authPost.formUserNameKey"), user.Name)
+		values.Set(viper.GetString("externalAuthentication.authPost.formPasswordKey"), password)
+		resp, err := http.PostForm(viper.GetString("externalAuthentication.authPost.url"), values)
+		if err != nil {
+			log.Error(err)
+			return ErrUserWrongIDOrPassword
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != viper.GetInt("externalAuthentication.authPost.successfulCode") {
+			return ErrUserWrongIDOrPassword
+		}
+	} else {
+		if len(user.Password) == 0 || len(user.Salt) == 0 {
+			return ErrUserWrongIDOrPassword
+		}
 
-	if subtle.ConstantTimeCompare(storedPassword, utils.HashPassword(password, salt)) != 1 {
-		return ErrUserWrongIDOrPassword
+		storedPassword, err := hex.DecodeString(user.Password)
+		if err != nil {
+			return ErrUserWrongIDOrPassword
+		}
+		salt, err := hex.DecodeString(user.Salt)
+		if err != nil {
+			return ErrUserWrongIDOrPassword
+		}
+
+		if subtle.ConstantTimeCompare(storedPassword, utils.HashPassword(password, salt)) != 1 {
+			return ErrUserWrongIDOrPassword
+		}
 	}
 	return nil
 }

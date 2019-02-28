@@ -37,9 +37,9 @@ func TestAuthenticateUser(t *testing.T) {
 		assert.Error(AuthenticateUser(nil, "test"))
 		assert.Error(AuthenticateUser(&User{Bot: true}, "test"))
 		assert.Error(AuthenticateUser(&User{}, "test"))
-		assert.Error(AuthenticateUser(&User{Password: hex.EncodeToString(uuid.NewV4().Bytes())}, "test"))
 		assert.Error(AuthenticateUser(&User{Password: hex.EncodeToString(uuid.NewV4().Bytes()), Salt: "アイウエオ"}, "test"))
 		assert.Error(AuthenticateUser(&User{Salt: hex.EncodeToString(uuid.NewV4().Bytes()), Password: "アイウエオ"}, "test"))
+		assert.Error(AuthenticateUser(&User{Salt: hex.EncodeToString(uuid.NewV4().Bytes()), Password: hex.EncodeToString(uuid.NewV4().Bytes())}, "test"))
 	})
 
 	t.Run("successes", func(t *testing.T) {
