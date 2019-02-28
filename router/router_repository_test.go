@@ -61,6 +61,8 @@ type TestRepository struct {
 	PinsLock                  sync.RWMutex
 	Stars                     map[uuid.UUID]map[uuid.UUID]bool
 	StarsLock                 sync.RWMutex
+	Stamps                    map[uuid.UUID]model.Stamp
+	StampsLock                sync.RWMutex
 	Files                     map[uuid.UUID]model.File
 	FilesLock                 sync.RWMutex
 	FilesACL                  map[uuid.UUID]map[uuid.UUID]bool
@@ -83,6 +85,7 @@ func NewTestRepository() *TestRepository {
 		MessageReports:        make([]model.MessageReport, 0),
 		Pins:                  make(map[uuid.UUID]model.Pin),
 		Stars:                 make(map[uuid.UUID]map[uuid.UUID]bool),
+		Stamps:                make(map[uuid.UUID]model.Stamp),
 		Files:                 make(map[uuid.UUID]model.File),
 		FilesACL:              make(map[uuid.UUID]map[uuid.UUID]bool),
 	}
@@ -1650,31 +1653,120 @@ func (r *TestRepository) GetUserStampHistory(userID uuid.UUID) (h []*model.UserS
 }
 
 func (r *TestRepository) CreateStamp(name string, fileID, userID uuid.UUID) (s *model.Stamp, err error) {
-	panic("implement me")
+	if fileID == uuid.Nil {
+		return nil, repository.ErrNilID
+	}
+
+	stamp := &model.Stamp{
+		ID:        uuid.NewV4(),
+		Name:      name,
+		CreatorID: userID,
+		FileID:    fileID,
+	}
+	if err := stamp.Validate(); err != nil {
+		return nil, err
+	}
+	r.StampsLock.Lock()
+	defer r.StampsLock.Unlock()
+	for _, v := range r.Stamps {
+		if v.Name == name {
+			return nil, repository.ErrAlreadyExists
+		}
+	}
+	r.Stamps[stamp.ID] = *stamp
+	return stamp, nil
 }
 
 func (r *TestRepository) UpdateStamp(id uuid.UUID, name string, fileID uuid.UUID) error {
-	panic("implement me")
+	if id == uuid.Nil {
+		return repository.ErrNilID
+	}
+
+	r.StampsLock.Lock()
+	defer r.StampsLock.Unlock()
+	s, ok := r.Stamps[id]
+
+	data := map[string]string{}
+	if len(name) > 0 {
+		if err := validator.ValidateVar(name, "name"); err != nil {
+			return err
+		}
+		s.Name = name
+	}
+	if fileID != uuid.Nil {
+		s.FileID = fileID
+	}
+	if len(data) == 0 {
+		return repository.ErrInvalidArgs
+	}
+
+	if !ok {
+		return repository.ErrNotFound
+	}
+
+	s.UpdatedAt = time.Now()
+	r.Stamps[id] = s
+	return nil
 }
 
-func (r *TestRepository) GetStamp(id uuid.UUID) (s *model.Stamp, err error) {
-	panic("implement me")
+func (r *TestRepository) GetStamp(id uuid.UUID) (*model.Stamp, error) {
+	if id == uuid.Nil {
+		return nil, repository.ErrNotFound
+	}
+	r.StampsLock.RLock()
+	s, ok := r.Stamps[id]
+	r.StampsLock.RUnlock()
+	if !ok {
+		return nil, repository.ErrNotFound
+	}
+	return &s, nil
 }
 
 func (r *TestRepository) DeleteStamp(id uuid.UUID) (err error) {
-	panic("implement me")
+	if id == uuid.Nil {
+		return repository.ErrNilID
+	}
+	r.StampsLock.Lock()
+	defer r.StampsLock.Unlock()
+	if _, ok := r.Stamps[id]; !ok {
+		return repository.ErrNotFound
+	}
+	delete(r.Stamps, id)
+	return nil
 }
 
 func (r *TestRepository) GetAllStamps() (stamps []*model.Stamp, err error) {
-	panic("implement me")
+	r.StampsLock.RLock()
+	for _, v := range r.Stamps {
+		v := v
+		stamps = append(stamps, &v)
+	}
+	r.StampsLock.RUnlock()
+	return
 }
 
 func (r *TestRepository) StampExists(id uuid.UUID) (bool, error) {
-	panic("implement me")
+	if id == uuid.Nil {
+		return false, nil
+	}
+	r.StampsLock.RLock()
+	_, ok := r.Stamps[id]
+	r.StampsLock.RUnlock()
+	return ok, nil
 }
 
 func (r *TestRepository) IsStampNameDuplicate(name string) (bool, error) {
-	panic("implement me")
+	if len(name) == 0 {
+		return false, nil
+	}
+	r.StampsLock.RUnlock()
+	defer r.StampsLock.RUnlock()
+	for _, v := range r.Stamps {
+		if v.Name == name {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (r *TestRepository) GetClipFolder(id uuid.UUID) (*model.ClipFolder, error) {

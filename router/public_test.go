@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/labstack/echo"
+	"github.com/satori/go.uuid"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -50,6 +51,67 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 		e := makeExp(t, server)
 		e.GET("/api/1.0/public/icon/{username}", testUser.Name).
 			WithQuery("thumb", "").
+			Expect().
+			Status(http.StatusOK)
+	})
+}
+
+func TestHandlers_GetPublicEmojiJSON(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, _, _ := setup(t, s3)
+
+	var stamps []interface{}
+	for i := 0; i < 10; i++ {
+		s := mustMakeStamp(t, repo, random, uuid.Nil)
+		stamps = append(stamps, s.Name)
+	}
+
+	e := makeExp(t, server)
+	e.GET("/api/1.0/public/emoji.json").
+		Expect().
+		Status(http.StatusOK).
+		JSON().
+		Object().
+		Value("all").
+		Array().
+		ContainsOnly(stamps...)
+}
+
+func TestHandlers_GetPublicEmojiCSS(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, _, _ := setup(t, s4)
+
+	var stamps []interface{}
+	for i := 0; i < 10; i++ {
+		s := mustMakeStamp(t, repo, random, uuid.Nil)
+		stamps = append(stamps, s.Name)
+	}
+
+	e := makeExp(t, server)
+	e.GET("/api/1.0/public/emoji.css").
+		Expect().
+		Status(http.StatusOK).
+		ContentType("text/css")
+}
+
+func TestHandlers_GetPublicEmojiImage(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, _, _ := setup(t, common5)
+
+	s := mustMakeStamp(t, repo, random, uuid.Nil)
+
+	t.Run("Not Found", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/public/emoji/{stampID}", uuid.NewV4()).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/public/emoji/{stampID}", s.ID).
 			Expect().
 			Status(http.StatusOK)
 	})

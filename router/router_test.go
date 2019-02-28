@@ -32,6 +32,8 @@ const (
 	common5 = "common5"
 	s1      = "s1"
 	s2      = "s2"
+	s3      = "s3"
+	s4      = "s4"
 )
 
 var (
@@ -49,6 +51,8 @@ func TestMain(m *testing.M) {
 		common5,
 		s1,
 		s2,
+		s3,
+		s4,
 	}
 	for _, key := range repos {
 		r, err := rbac.New(nil)
@@ -229,4 +233,16 @@ func mustMakeUserGroup(t *testing.T, repo repository.Repository, name string, ad
 func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupID uuid.UUID) {
 	t.Helper()
 	require.NoError(t, repo.AddUserToGroup(userID, groupID))
+}
+
+func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID uuid.UUID) *model.Stamp {
+	t.Helper()
+	if name == random {
+		name = utils.RandAlphabetAndNumberString(20)
+	}
+	fileID, err := repo.GenerateIconFile(name)
+	require.NoError(t, err)
+	s, err := repo.CreateStamp(name, fileID, userID)
+	require.NoError(t, err)
+	return s
 }
