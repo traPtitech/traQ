@@ -67,7 +67,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 // GetPublicEmojiJSON GET /public/emoji.json
 func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 	stamps, err := h.Repo.GetAllStamps()
-	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, c.Request().RemoteAddr)
+	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, c.Request().Header.Get("Origin"))
 	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "true")
 	if err != nil {
 		c.Logger().Error(err)
@@ -84,7 +84,7 @@ func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 // GetPublicEmojiCSS GET /public/emoji.css
 func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 	stamps, err := h.Repo.GetAllStamps()
-	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, c.Request().RemoteAddr)
+	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, c.Request().Header.Get("Origin"))
 	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
 	if err != nil {
 		c.Logger().Error(err)
