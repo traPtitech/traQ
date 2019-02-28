@@ -81,10 +81,8 @@ func TestHandlers_GetPublicEmojiCSS(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, _, _ := setup(t, s4)
 
-	var stamps []interface{}
 	for i := 0; i < 10; i++ {
-		s := mustMakeStamp(t, repo, random, uuid.Nil)
-		stamps = append(stamps, s.Name)
+		mustMakeStamp(t, repo, random, uuid.Nil)
 	}
 
 	e := makeExp(t, server)
