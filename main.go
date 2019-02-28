@@ -38,6 +38,8 @@ func main() {
 
 	viper.SetDefault("generateThumbnailOnStartUp", false)
 
+	viper.SetDefault("externalAuthentication.enabled", false)
+
 	viper.SetDefault("mariadb.host", "127.0.0.1")
 	viper.SetDefault("mariadb.port", 3306)
 	viper.SetDefault("mariadb.username", "root")

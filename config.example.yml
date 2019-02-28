@@ -10,6 +10,14 @@
 
 #generateThumbnailOnStartUp: false
 
+#externalAuthentication:
+#  enabled: false
+#  authPost:
+#    url:
+#    successfulCode:
+#    formUserNameKey:
+#    formPasswordKey:
+
 #imagemagick:
 #  path: ''
 
