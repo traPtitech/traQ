@@ -13,8 +13,8 @@ type UserGroup struct {
 	Description string    `gorm:"type:text;not null"`
 	Type        string    `gorm:"type:varchar(30);not null;default:''"`
 	AdminUserID uuid.UUID `gorm:"type:char(36);not null"`
-	CreatedAt   time.Time `gorm:"precision:6;not null"`
-	UpdatedAt   time.Time `gorm:"precision:6;not null"`
+	CreatedAt   time.Time `gorm:"precision:6"`
+	UpdatedAt   time.Time `gorm:"precision:6"`
 }
 
 // TableName UserGroup構造体のテーブル名

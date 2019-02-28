@@ -7,10 +7,10 @@ import (
 
 // Pin ピン留めのレコード
 type Pin struct {
-	ID        uuid.UUID `gorm:"type:char(36);primary_key"`
-	MessageID uuid.UUID `gorm:"type:char(36);unique"`
+	ID        uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	MessageID uuid.UUID `gorm:"type:char(36);not null;unique"`
 	Message   Message   `gorm:"association_autoupdate:false;association_autocreate:false"`
-	UserID    uuid.UUID `gorm:"type:char(36)"`
+	UserID    uuid.UUID `gorm:"type:char(36);not null"`
 	CreatedAt time.Time `gorm:"precision:6"`
 }
 

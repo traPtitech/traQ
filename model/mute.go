@@ -6,8 +6,8 @@ import (
 
 // Mute ミュートチャンネルのレコード
 type Mute struct {
-	UserID    uuid.UUID `gorm:"type:char(36);primary_key"`
-	ChannelID uuid.UUID `gorm:"type:char(36);primary_key"`
+	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	ChannelID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 }
 
 // TableName Mute構造体のテーブル名
