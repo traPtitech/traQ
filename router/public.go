@@ -70,6 +70,8 @@ func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
+	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
+	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
 	resData := make(map[string][]string)
 	resData["all"] = make([]string, 0, len(stamps))
 	for _, stamp := range stamps {
@@ -85,10 +87,13 @@ func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
+
+	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
+	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
 	res := bytes.Buffer{}
 
 	for _, stamp := range stamps {
-		res.WriteString(fmt.Sprintf(".emoji.%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.FileID))
+		res.WriteString(fmt.Sprintf(".emoji.e_%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.FileID))
 	}
 	return c.Blob(http.StatusOK, "text/css", res.Bytes())
 }
@@ -102,11 +107,13 @@ func (h *Handlers) GetPublicEmojiImage(c echo.Context) error {
 		return c.NoContent(http.StatusBadRequest)
 	}
 
-	c.Response().Header().Set(headerFileMetaType, meta.Type)
 	if meta.Type != model.FileTypeStamp {
 		return c.NoContent(http.StatusForbidden)
 	}
 
+	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
+	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
+	c.Response().Header().Set(headerFileMetaType, meta.Type)
 	c.Response().Header().Set(headerCacheFile, "true")
 
 	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
