@@ -260,7 +260,7 @@ func (s *SSEStreamer) processMessageCreated(message *model.Message, plain string
 		for _, v := range embedded {
 			switch v.Type {
 			case "user":
-				if uid, err := uuid.FromString(v.ID); err != nil {
+				if uid, err := uuid.FromString(v.ID); err == nil {
 					subscribers[uid] = true
 				}
 			case "group":
