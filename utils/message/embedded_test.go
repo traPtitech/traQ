@@ -48,7 +48,7 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`!{"raw": "","type":"file","id":"aaaa"}test message !{"raw": "@test","type":"user","id":"test_id"}`,
-			`filetest message @test`,
+			`[添付ファイル]test message @test`,
 			[]EmbeddedInfo{
 				{
 					Raw:  "@test",

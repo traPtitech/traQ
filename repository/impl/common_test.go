@@ -227,6 +227,12 @@ func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID
 	return s
 }
 
+func mustAddMessageStamp(t *testing.T, repo repository.Repository, messageID, stampID, userID uuid.UUID) {
+	t.Helper()
+	_, err := repo.AddStampToMessage(messageID, stampID, userID)
+	require.NoError(t, err)
+}
+
 func count(t *testing.T, where *gorm.DB) int {
 	t.Helper()
 	c := 0

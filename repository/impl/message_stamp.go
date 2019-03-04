@@ -63,10 +63,10 @@ func (repo *RepositoryImpl) RemoveStampFromMessage(messageID, stampID, userID uu
 
 // GetMessageStamps メッセージのスタンプを取得します
 func (repo *RepositoryImpl) GetMessageStamps(messageID uuid.UUID) (stamps []*model.MessageStamp, err error) {
-	if messageID == uuid.Nil {
-		return nil, repository.ErrNilID
-	}
 	stamps = make([]*model.MessageStamp, 0)
+	if messageID == uuid.Nil {
+		return
+	}
 	err = repo.db.
 		Joins("JOIN stamps ON messages_stamps.stamp_id = stamps.id AND messages_stamps.message_id = ?", messageID.String()).
 		Order("messages_stamps.updated_at").
@@ -77,10 +77,10 @@ func (repo *RepositoryImpl) GetMessageStamps(messageID uuid.UUID) (stamps []*mod
 
 // GetUserStampHistory ユーザーのスタンプ履歴を最大50件取得します。
 func (repo *RepositoryImpl) GetUserStampHistory(userID uuid.UUID) (h []*model.UserStampHistory, err error) {
-	if userID == uuid.Nil {
-		return nil, repository.ErrNilID
-	}
 	h = make([]*model.UserStampHistory, 0)
+	if userID == uuid.Nil {
+		return
+	}
 	err = repo.db.
 		Table("messages_stamps").
 		Where("user_id = ?", userID.String()).

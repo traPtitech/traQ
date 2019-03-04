@@ -24,7 +24,7 @@ func Parse(m string) (res []*EmbeddedInfo, plain string) {
 		}
 		res = append(res, info)
 		if info.Type == "file" {
-			return "file"
+			return "[添付ファイル]"
 		}
 		return info.Raw
 	})
