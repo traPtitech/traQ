@@ -125,7 +125,7 @@ func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		ms, err := repo.GetUserStampHistory(message.ID)
+		ms, err := repo.GetUserStampHistory(user.ID)
 		if assert.NoError(t, err) && assert.Len(t, ms, 3) {
 			assert.Equal(t, ms[0].StampID, stamp2.ID)
 			assert.Equal(t, ms[1].StampID, stamp3.ID)
