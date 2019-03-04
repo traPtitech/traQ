@@ -264,6 +264,10 @@ func (h *Handlers) ValidatePinID() echo.MiddlewareFunc {
 				}
 			}
 
+			if pin.Message.ID == uuid.Nil {
+				return c.NoContent(http.StatusNotFound)
+			}
+
 			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, pin.Message.ChannelID); err != nil {
 				c.Logger().Error(err)
 				return c.NoContent(http.StatusInternalServerError)

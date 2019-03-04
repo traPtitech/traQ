@@ -73,9 +73,6 @@ func (h *Handlers) PostPin(c echo.Context) error {
 // GetPin GET /pins/:pinID
 func (h *Handlers) GetPin(c echo.Context) error {
 	pin := getPinFromContext(c)
-	if pin.Message.ID == uuid.Nil {
-		return c.NoContent(http.StatusNotFound)
-	}
 	return c.JSON(http.StatusOK, h.formatPin(pin))
 }
 
