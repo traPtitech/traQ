@@ -97,8 +97,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 	payload["body"] = body
 	for _, v := range embedded {
 		if v.Type == "file" {
-			f, _ := m.repo.GetFileMeta(uuid.FromStringOrNil(v.ID))
-			if f != nil && f.HasThumbnail {
+			if f, _ := m.repo.GetFileMeta(uuid.FromStringOrNil(v.ID)); f != nil && f.HasThumbnail {
 				payload["image"] = fmt.Sprintf("%s/api/1.0/files/%s/thumbnail", m.origin, v.ID)
 				break
 			}

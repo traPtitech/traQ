@@ -13,14 +13,8 @@ import (
 )
 
 type dataRoot struct {
-	Tags     map[string]*dataTag     `yaml:"tags"`
 	Channels map[string]*dataChannel `yaml:"channels"`
 	Stamps   map[string]*dataStamp   `yaml:"stamps"`
-}
-
-type dataTag struct {
-	Restricted bool   `yaml:"restricted"`
-	Type       string `yaml:"type"       validate:"max=30"`
 }
 
 type dataStamp struct {
@@ -34,29 +28,11 @@ type dataChannel struct {
 }
 
 func insertInitialData(repo repository.Repository, initDataDir string, data *dataRoot) error {
-	if err := createTags(repo, data.Tags); err != nil {
-		return err
-	}
 	if err := createStamps(repo, initDataDir, data.Stamps); err != nil {
 		return err
 	}
 	if err := createChannels(repo, data.Channels); err != nil {
 		return err
-	}
-	return nil
-}
-
-func createTags(repo repository.Repository, tags map[string]*dataTag) error {
-	for name, options := range tags {
-		if err := validator.ValidateVar(name, "max=30"); err != nil {
-			return err
-		}
-		if err := validator.ValidateStruct(options); err != nil {
-			return err
-		}
-		if _, err := repo.CreateTag(name, options.Restricted, options.Type); err != nil {
-			return err
-		}
 	}
 	return nil
 }
