@@ -73,7 +73,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 			} else {
 				payload["title"] = fmt.Sprintf("@%s", mUser.DisplayName)
 			}
-			payload["path"] = "/users" + mUser.Name
+			payload["path"] = "/users/" + mUser.Name
 		}
 		body = plain
 	} else {
