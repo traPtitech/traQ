@@ -58,7 +58,7 @@ func ResizeAnimationGIF(ctx context.Context, execPath string, src io.Reader, max
 	if !expand {
 		sizer += ">"
 	}
-	cmd := exec.CommandContext(ctx, execPath, "-coalesce", "-resize", sizer, "-deconstruct", "-", "gif:-")
+	cmd := exec.CommandContext(ctx, execPath, "-", "-coalesce", "-repage", "0x0", "-resize", sizer, "-layers", "Optimize", "gif:-")
 
 	b, err := cmdPipe(cmd, src)
 	if err != nil {
