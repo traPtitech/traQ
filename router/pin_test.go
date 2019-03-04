@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/repository"
@@ -61,6 +62,29 @@ func TestHandlers_GetPin(t *testing.T) {
 			Status(http.StatusUnauthorized)
 	})
 
+	t.Run("Not found", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/pins/{pinID}", uuid.NewV4()).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("Not found (deleted message)", func(t *testing.T) {
+		t.Parallel()
+
+		message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
+		pin := mustMakePin(t, repo, message.ID, testUser.ID)
+		require.NoError(t, repo.DeleteMessage(message.ID))
+
+		e := makeExp(t, server)
+		e.GET("/api/1.0/pins/{pinID}", pin).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
@@ -74,6 +98,7 @@ func TestHandlers_GetPin(t *testing.T) {
 			String().
 			Equal(pin.String())
 	})
+
 }
 
 func TestHandlers_DeletePin(t *testing.T) {
