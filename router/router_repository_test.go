@@ -61,6 +61,8 @@ type TestRepository struct {
 	PinsLock                  sync.RWMutex
 	Stars                     map[uuid.UUID]map[uuid.UUID]bool
 	StarsLock                 sync.RWMutex
+	Mute                      map[uuid.UUID]map[uuid.UUID]bool
+	MuteLock                  sync.RWMutex
 	Stamps                    map[uuid.UUID]model.Stamp
 	StampsLock                sync.RWMutex
 	Files                     map[uuid.UUID]model.File
@@ -85,6 +87,7 @@ func NewTestRepository() *TestRepository {
 		MessageReports:        make([]model.MessageReport, 0),
 		Pins:                  make(map[uuid.UUID]model.Pin),
 		Stars:                 make(map[uuid.UUID]map[uuid.UUID]bool),
+		Mute:                  make(map[uuid.UUID]map[uuid.UUID]bool),
 		Stamps:                make(map[uuid.UUID]model.Stamp),
 		Files:                 make(map[uuid.UUID]model.File),
 		FilesACL:              make(map[uuid.UUID]map[uuid.UUID]bool),
@@ -1814,23 +1817,70 @@ func (r *TestRepository) DeleteClip(id uuid.UUID) error {
 }
 
 func (r *TestRepository) MuteChannel(userID, channelID uuid.UUID) error {
-	panic("implement me")
+	if userID == uuid.Nil || channelID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	r.MuteLock.Lock()
+	chMap, ok := r.Mute[userID]
+	if !ok {
+		chMap = make(map[uuid.UUID]bool)
+	}
+	chMap[channelID] = true
+	r.Mute[userID] = chMap
+	r.MuteLock.Unlock()
+	return nil
 }
 
 func (r *TestRepository) UnmuteChannel(userID, channelID uuid.UUID) error {
-	panic("implement me")
+	if userID == uuid.Nil || channelID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	r.MuteLock.Lock()
+	chMap, ok := r.Mute[userID]
+	if ok {
+		delete(chMap, channelID)
+		r.Stars[userID] = chMap
+	}
+	r.MuteLock.Unlock()
+	return nil
 }
 
 func (r *TestRepository) GetMutedChannelIDs(userID uuid.UUID) ([]uuid.UUID, error) {
-	panic("implement me")
+	ids := make([]uuid.UUID, 0)
+	r.MuteLock.RLock()
+	chMap, ok := r.Mute[userID]
+	if ok {
+		for id := range chMap {
+			ids = append(ids, id)
+		}
+	}
+	r.MuteLock.RUnlock()
+	return ids, nil
 }
 
 func (r *TestRepository) GetMuteUserIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
-	panic("implement me")
+	ids := make([]uuid.UUID, 0)
+	r.MuteLock.RLock()
+	for uid, chMap := range r.Mute {
+		if chMap[channelID] {
+			ids = append(ids, uid)
+		}
+	}
+	r.MuteLock.RUnlock()
+	return ids, nil
 }
 
 func (r *TestRepository) IsChannelMuted(userID, channelID uuid.UUID) (bool, error) {
-	panic("implement me")
+	if userID == uuid.Nil || channelID == uuid.Nil {
+		return false, nil
+	}
+	r.MuteLock.RLock()
+	defer r.MuteLock.RUnlock()
+	chMap, ok := r.Mute[userID]
+	if !ok {
+		return false, nil
+	}
+	return chMap[channelID], nil
 }
 
 func (r *TestRepository) AddStar(userID, channelID uuid.UUID) error {
