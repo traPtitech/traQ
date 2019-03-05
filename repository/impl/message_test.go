@@ -298,7 +298,7 @@ func TestRepositoryImpl_GetArchivedMessagesByID(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		r, err := repo.GetArchivedMessagesByID(uuid.Nil)
+		r, err := repo.GetArchivedMessagesByID(m.ID)
 		if assert.NoError(err) && assert.Len(r, 5) {
 			for i, v := range r {
 				assert.Equal(cases[i], v.Text)
