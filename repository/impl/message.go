@@ -270,3 +270,17 @@ ORDER BY m.created_at DESC
 	err := repo.db.Raw(query).Scan(&result).Error
 	return result, err
 }
+
+// GetArchivedMessagesByID アーカイブメッセージを取得します
+func (repo *RepositoryImpl) GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error) {
+	r := make([]*model.ArchivedMessage, 0)
+	if messageID == uuid.Nil {
+		return r, nil
+	}
+	err := repo.db.
+		Where(&model.ArchivedMessage{MessageID: messageID}).
+		Order("date_time").
+		Find(&r).
+		Error
+	return r, err
+}

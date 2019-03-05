@@ -17,4 +17,5 @@ type MessageRepository interface {
 	DeleteUnreadsByMessageID(messageID uuid.UUID) error
 	DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error
 	GetChannelLatestMessagesByUserID(userID uuid.UUID, limit int, subscribeOnly bool) ([]*model.Message, error)
+	GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error)
 }
