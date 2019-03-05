@@ -56,6 +56,7 @@ func TestRepositoryImpl_UpdateMessage(t *testing.T) {
 	m, err := repo.GetMessageByID(m.ID)
 	if assert.NoError(err) {
 		assert.Equal("new message", m.Text)
+		assert.Equal(1, count(t, getDB(repo).Model(&model.ArchivedMessage{}).Where(&model.ArchivedMessage{MessageID: m.ID, Text: m.Text})))
 	}
 }
 
