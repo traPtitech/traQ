@@ -47,6 +47,7 @@ func TestRepositoryImpl_UpdateMessage(t *testing.T) {
 	repo, assert, _, user, channel := setupWithUserAndChannel(t, common)
 
 	m := mustMakeMessage(t, repo, user.ID, channel.ID)
+	originalText := m.Text
 
 	assert.EqualError(repo.UpdateMessage(m.ID, ""), "text is empty")
 	assert.EqualError(repo.UpdateMessage(uuid.NewV4(), "new message"), repository.ErrNotFound.Error())
@@ -56,6 +57,7 @@ func TestRepositoryImpl_UpdateMessage(t *testing.T) {
 	m, err := repo.GetMessageByID(m.ID)
 	if assert.NoError(err) {
 		assert.Equal("new message", m.Text)
+		assert.Equal(1, count(t, getDB(repo).Model(&model.ArchivedMessage{}).Where(&model.ArchivedMessage{MessageID: m.ID, Text: originalText})))
 	}
 }
 
@@ -259,6 +261,48 @@ func TestRepositoryImpl_GetChannelLatestMessagesByUserID(t *testing.T) {
 		}
 		if assert.NoError(err) {
 			assert.ElementsMatch(derefs, latests[5:])
+		}
+	})
+}
+
+func TestRepositoryImpl_GetArchivedMessagesByID(t *testing.T) {
+	t.Parallel()
+	repo, _, require, user, channel := setupWithUserAndChannel(t, common)
+
+	cases := []string{
+		"v0",
+		"v1",
+		"v2",
+		"v3",
+		"v4",
+		"v5",
+	}
+
+	m, err := repo.CreateMessage(user.ID, channel.ID, cases[0])
+	require.NoError(err)
+	for i := 1; i < len(cases); i++ {
+		require.NoError(repo.UpdateMessage(m.ID, cases[i]))
+	}
+
+	t.Run("Nil id", func(t *testing.T) {
+		t.Parallel()
+		assert, _ := assertAndRequire(t)
+
+		r, err := repo.GetArchivedMessagesByID(uuid.Nil)
+		if assert.NoError(err) {
+			assert.Len(r, 0)
+		}
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		assert, _ := assertAndRequire(t)
+
+		r, err := repo.GetArchivedMessagesByID(m.ID)
+		if assert.NoError(err) && assert.Len(r, 5) {
+			for i, v := range r {
+				assert.Equal(cases[i], v.Text)
+			}
 		}
 	})
 }

@@ -1481,6 +1481,10 @@ func (r *TestRepository) GetMessagesByChannelID(channelID uuid.UUID, limit, offs
 	return result, nil
 }
 
+func (r *TestRepository) GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error) {
+	panic("implement me")
+}
+
 func (r *TestRepository) SetMessageUnread(userID, messageID uuid.UUID) error {
 	if userID == uuid.Nil || messageID == uuid.Nil {
 		return repository.ErrNilID
