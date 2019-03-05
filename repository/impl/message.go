@@ -65,11 +65,6 @@ func (repo *RepositoryImpl) UpdateMessage(messageID uuid.UUID, text string) erro
 			return err
 		}
 
-		// update
-		if err := tx.Model(&old).Update("text", text).Error; err != nil {
-			return err
-		}
-
 		// archiving
 		if err := tx.Create(&model.ArchivedMessage{
 			ID:        uuid.NewV4(),
@@ -78,6 +73,11 @@ func (repo *RepositoryImpl) UpdateMessage(messageID uuid.UUID, text string) erro
 			Text:      old.Text,
 			DateTime:  old.UpdatedAt,
 		}).Error; err != nil {
+			return err
+		}
+
+		// update
+		if err := tx.Model(&old).Update("text", text).Error; err != nil {
 			return err
 		}
 
