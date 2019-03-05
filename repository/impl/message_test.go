@@ -47,6 +47,7 @@ func TestRepositoryImpl_UpdateMessage(t *testing.T) {
 	repo, assert, _, user, channel := setupWithUserAndChannel(t, common)
 
 	m := mustMakeMessage(t, repo, user.ID, channel.ID)
+	originalText := m.Text
 
 	assert.EqualError(repo.UpdateMessage(m.ID, ""), "text is empty")
 	assert.EqualError(repo.UpdateMessage(uuid.NewV4(), "new message"), repository.ErrNotFound.Error())
@@ -56,7 +57,7 @@ func TestRepositoryImpl_UpdateMessage(t *testing.T) {
 	m, err := repo.GetMessageByID(m.ID)
 	if assert.NoError(err) {
 		assert.Equal("new message", m.Text)
-		assert.Equal(1, count(t, getDB(repo).Model(&model.ArchivedMessage{}).Where(&model.ArchivedMessage{MessageID: m.ID, Text: m.Text})))
+		assert.Equal(1, count(t, getDB(repo).Model(&model.ArchivedMessage{}).Where(&model.ArchivedMessage{MessageID: m.ID, Text: originalText})))
 	}
 }
 
