@@ -14,7 +14,6 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	oauth := h.OAuth2
 
 	e.Validator = validator.New()
-	e.HTTPErrorHandler = CustomHTTPErrorHandler
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:8080"},
 		AllowCredentials: true,
