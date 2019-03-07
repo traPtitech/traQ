@@ -15,6 +15,6 @@ func HashPassword(pass string, salt []byte) []byte {
 // CalcHMACSHA1 HMAC-SHA-1を計算します
 func CalcHMACSHA1(data []byte, secret string) []byte {
 	mac := hmac.New(sha1.New, []byte(secret))
-	mac.Write(data)
+	_, _ = mac.Write(data)
 	return mac.Sum(nil)
 }

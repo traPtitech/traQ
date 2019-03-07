@@ -55,6 +55,7 @@ func (repo *RepositoryImpl) CreateWebhook(name, description string, channelID, c
 	if err != nil {
 		return nil, err
 	}
+	wb.BotUser = *u
 	repo.hub.Publish(hub.Message{
 		Name: event.UserCreated,
 		Fields: hub.Fields{
@@ -62,7 +63,13 @@ func (repo *RepositoryImpl) CreateWebhook(name, description string, channelID, c
 			"user":    u,
 		},
 	})
-	wb.BotUser = *u
+	repo.hub.Publish(hub.Message{
+		Name: event.WebhookCreated,
+		Fields: hub.Fields{
+			"webhook_id": wb.ID,
+			"webhook":    wb,
+		},
+	})
 	return wb, nil
 }
 
@@ -71,7 +78,11 @@ func (repo *RepositoryImpl) UpdateWebhook(id uuid.UUID, args repository.UpdateWe
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	var w model.WebhookBot
+	var (
+		w           model.WebhookBot
+		updated     bool
+		userUpdated bool
+	)
 	err := repo.transact(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.WebhookBot{ID: id}).First(&w).Error; err != nil {
 			if gorm.IsRecordNotFoundError(err) {
@@ -94,6 +105,7 @@ func (repo *RepositoryImpl) UpdateWebhook(id uuid.UUID, args repository.UpdateWe
 			if err := tx.Model(&model.WebhookBot{ID: id}).Updates(changes).Error; err != nil {
 				return err
 			}
+			updated = true
 		}
 
 		if args.Name.Valid {
@@ -104,18 +116,29 @@ func (repo *RepositoryImpl) UpdateWebhook(id uuid.UUID, args repository.UpdateWe
 			if err := tx.Model(&model.User{ID: w.BotUserID}).Update("display_name", args.Name.String).Error; err != nil {
 				return err
 			}
+			userUpdated = true
 		}
 		return nil
 	})
 	if err != nil {
 		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.UserUpdated,
-		Fields: hub.Fields{
-			"user_id": w.BotUserID,
-		},
-	})
+	if userUpdated {
+		repo.hub.Publish(hub.Message{
+			Name: event.UserUpdated,
+			Fields: hub.Fields{
+				"user_id": w.BotUserID,
+			},
+		})
+	}
+	if updated || userUpdated {
+		repo.hub.Publish(hub.Message{
+			Name: event.WebhookUpdated,
+			Fields: hub.Fields{
+				"webhook_id": w.ID,
+			},
+		})
+	}
 	return nil
 }
 
@@ -138,7 +161,16 @@ func (repo *RepositoryImpl) DeleteWebhook(id uuid.UUID) error {
 		}
 		return tx.Model(&model.User{}).Where(&model.User{ID: b.BotUserID}).Update("status", model.UserAccountStatusDeactivated).Error
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	repo.hub.Publish(hub.Message{
+		Name: event.WebhookDeleted,
+		Fields: hub.Fields{
+			"webhook_id": id,
+		},
+	})
+	return nil
 }
 
 // GetWebhook Webhookを取得
