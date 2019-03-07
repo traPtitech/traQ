@@ -2198,11 +2198,11 @@ func (r *TestRepository) generateThumbnail(ctx context.Context, f *model.File, s
 	return img.Bounds(), nil
 }
 
-func (r *TestRepository) CreateWebhook(name, description string, channelID, creatorID, iconFileID uuid.UUID) (model.Webhook, error) {
+func (r *TestRepository) CreateWebhook(name, description string, channelID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) UpdateWebhook(id uuid.UUID, name, description *string, channelID uuid.UUID) error {
+func (r *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhookArgs) error {
 	panic("implement me")
 }
 
