@@ -28,6 +28,7 @@ func main() {
 		"traq-test-repo-common",
 		"traq-test-repo-ex1",
 		"traq-test-repo-ex2",
+		"traq-test-repo-ex3",
 	}
 	for _, name := range dbs {
 		if _, err = conn.Exec("CREATE DATABASE `" + name + "` CHARACTER SET = utf8mb4"); err != nil {
