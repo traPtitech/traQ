@@ -66,7 +66,7 @@ func (h *Handlers) PostWebhooks(c echo.Context) error {
 		Name        string    `json:"name"        validate:"max=32,required"`
 		Description string    `json:"description" validate:"required"`
 		ChannelID   uuid.UUID `json:"channelId"`
-		Secret      string    `json:"secret"      validate:"max=50"`
+		Secret      string    `json:"secret"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -109,7 +109,7 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 		Name        string    `json:"name"        validate:"max=32"`
 		Description string    `json:"description"`
 		ChannelID   uuid.UUID `json:"channelId"`
-		Secret      *string   `json:"secret"      validate:"max=50"`
+		Secret      *string   `json:"secret"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)

@@ -247,6 +247,7 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/webhooks/{webhookId}", wb.GetID()).
+			WithJSON(map[string]string{"name": ""}).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusBadRequest)

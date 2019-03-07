@@ -42,6 +42,12 @@ func TestWebhookBot_GetDescription(t *testing.T) {
 	assert.Equal(t, desc, (&WebhookBot{Description: desc}).GetDescription())
 }
 
+func TestWebhookBot_GetSecret(t *testing.T) {
+	t.Parallel()
+	secret := "secret"
+	assert.Equal(t, secret, (&WebhookBot{Secret: secret}).GetSecret())
+}
+
 func TestWebhookBot_GetName(t *testing.T) {
 	t.Parallel()
 	name := "test"
