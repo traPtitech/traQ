@@ -2074,7 +2074,10 @@ paths:
                 channelId:
                   type: string
                   format: uuid
-                  description: デフォルトの投稿先チャンネル
+                  description: デフォルトの投稿先チャンネル(パブリックチャンネルのみ)
+                secret:
+                  type: string
+                  description: webhookシークレット
       responses:
         "201":
           description: 正常に作成できました。
@@ -2086,8 +2089,6 @@ paths:
           description: 作成できませんでした。リクエスト内容が不正です。
         "403":
           description: 作成できませんでした。権限がありません。
-        "404":
-          description: 作成できませんでした。指定したチャンネルは存在しません。
 
   /webhooks/{webhookID}:
     parameters:
@@ -2116,8 +2117,6 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - name
               properties:
                 name:
                   type: string
@@ -2128,7 +2127,10 @@ paths:
                 channelId:
                   type: string
                   format: uuid
-                  description: デフォルトの投稿先チャンネル
+                  description: デフォルトの投稿先チャンネル(パブリックチャンネルのみ)
+                secret:
+                  type: string
+                  description: webhookシークレット
       responses:
         "204":
           description: 正常に修正できました。
@@ -2153,38 +2155,24 @@ paths:
       tags:
         - webhook
       description: webhookを送信します。
+      parameters:
+        - in: header
+          name: X-TRAQ-Channel-Id
+          schema:
+            type: string
+            format: uuid
+          description: 投稿先のチャンネルID(変更する場合)
+        - in: header
+          name: X-TRAQ-Signature
+          schema:
+            type: string
+          description: リクエストボディシグネチャ。Secretが設定されている場合は必須
       requestBody:
         content:
           text/plain:
             schema:
               type: string
               description: メッセージ文字列
-          application/json:
-            schema:
-              type: object
-              required:
-                - text
-              properties:
-                text:
-                  type: string
-                  description: メッセージ文字列
-                channelId:
-                  type: string
-                  format: uuid
-                  description: 投稿先チャンネルID(無い場合は事前登録のデフォルト値が使われます)
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              required:
-                - text
-              properties:
-                text:
-                  type: string
-                  description: メッセージ文字列
-                channelId:
-                  type: string
-                  format: uuid
-                  description: 投稿先チャンネルID(無い場合は事前登録のデフォルト値が使われます)
       responses:
         "204":
           description: 正常に送信できました。

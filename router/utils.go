@@ -57,6 +57,8 @@ const (
 	headerCacheControl = "Cache-Control"
 	headerFileMetaType = "X-TRAQ-FILE-TYPE"
 	headerCacheFile    = "X-TRAQ-FILE-CACHE"
+	headerSignature    = "X-TRAQ-Signature"
+	headerChannelID    = "X-TRAQ-Channel-Id"
 )
 
 // Handlers ハンドラ

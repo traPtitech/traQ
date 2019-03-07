@@ -428,10 +428,6 @@ func (h *Handlers) ValidateWebhookID(requestUserCheck bool) echo.MiddlewareFunc 
 		return func(c echo.Context) error {
 			webhookID := getRequestParamAsUUID(c, paramWebhookID)
 
-			if webhookID == uuid.Nil {
-				return c.NoContent(http.StatusNotFound)
-			}
-
 			w, err := h.Repo.GetWebhook(webhookID)
 			if err != nil {
 				switch err {

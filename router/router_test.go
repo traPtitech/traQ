@@ -30,6 +30,7 @@ const (
 	common3 = "common3"
 	common4 = "common4"
 	common5 = "common5"
+	common6 = "common6"
 	s1      = "s1"
 	s2      = "s2"
 	s3      = "s3"
@@ -49,6 +50,7 @@ func TestMain(m *testing.M) {
 		common3,
 		common4,
 		common5,
+		common6,
 		s1,
 		s2,
 		s3,
@@ -235,6 +237,16 @@ func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupI
 	require.NoError(t, repo.AddUserToGroup(userID, groupID))
 }
 
+func mustMakeWebhook(t *testing.T, repo repository.Repository, name string, channelID, creatorID uuid.UUID, secret string) model.Webhook {
+	t.Helper()
+	if name == random {
+		name = utils.RandAlphabetAndNumberString(20)
+	}
+	w, err := repo.CreateWebhook(name, "", channelID, creatorID, secret)
+	require.NoError(t, err)
+	return w
+}
+
 func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID uuid.UUID) *model.Stamp {
 	t.Helper()
 	if name == random {
@@ -246,3 +258,15 @@ func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID
 	require.NoError(t, err)
 	return s
 }
+
+/*
+func genPNG(salt string) []byte {
+	if salt == random {
+		salt = utils.RandAlphabetAndNumberString(20)
+	}
+	img := utils.GenerateIcon(salt)
+	b := &bytes.Buffer{}
+	_ = png.Encode(b, img)
+	return b.Bytes()
+}
+*/

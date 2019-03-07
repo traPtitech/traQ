@@ -21,6 +21,7 @@ const (
 	common = "common"
 	ex1    = "ex1"
 	ex2    = "ex2"
+	ex3    = "ex3"
 	random = "random"
 )
 
@@ -37,6 +38,7 @@ func TestMain(m *testing.M) {
 		common,
 		ex1,
 		ex2,
+		ex3,
 	}
 
 	for _, key := range dbs {
@@ -231,6 +233,16 @@ func mustAddMessageStamp(t *testing.T, repo repository.Repository, messageID, st
 	t.Helper()
 	_, err := repo.AddStampToMessage(messageID, stampID, userID)
 	require.NoError(t, err)
+}
+
+func mustMakeWebhook(t *testing.T, repo repository.Repository, name string, channelID, creatorID uuid.UUID, secret string) model.Webhook {
+	t.Helper()
+	if name == random {
+		name = utils.RandAlphabetAndNumberString(20)
+	}
+	w, err := repo.CreateWebhook(name, "", channelID, creatorID, secret)
+	require.NoError(t, err)
+	return w
 }
 
 func count(t *testing.T, where *gorm.DB) int {

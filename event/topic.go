@@ -194,4 +194,18 @@ const (
 	//		user_id: uuid.UUID
 	// 		folder_id: uuid.UUID
 	ClipFolderDeleted = "clip_folder.deleted"
+
+	// WebhookCreated Webhookが作成された
+	// 	Fields:
+	// 		webhook_id: uuid.UUID
+	// 		webhook: Webhook
+	WebhookCreated = "webhook.created"
+	// WebhookUpdated Webhookが更新された
+	// 	Fields:
+	// 		webhook_id: uuid.UUID
+	WebhookUpdated = "webhook.updated"
+	// WebhookDeleted Webhookが削除された
+	// 	Fields:
+	// 		webhook_id: uuid.UUID
+	WebhookDeleted = "webhook.deleted"
 )
