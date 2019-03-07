@@ -149,7 +149,7 @@ func (repo *RepositoryImpl) DeleteWebhook(id uuid.UUID) error {
 	}
 	err := repo.transact(func(tx *gorm.DB) error {
 		var b model.WebhookBot
-		if err := tx.Where(&model.WebhookBot{ID: id}).Take(b).Error; err != nil {
+		if err := tx.Where(&model.WebhookBot{ID: id}).Take(&b).Error; err != nil {
 			if gorm.IsRecordNotFoundError(err) {
 				return repository.ErrNotFound
 			}
@@ -179,7 +179,7 @@ func (repo *RepositoryImpl) GetWebhook(id uuid.UUID) (model.Webhook, error) {
 		return nil, repository.ErrNotFound
 	}
 	b := &model.WebhookBot{}
-	if err := repo.db.Where(&model.WebhookBot{ID: id}).Take(b).Error; err != nil {
+	if err := repo.db.Preload("BotUser").Where(&model.WebhookBot{ID: id}).Take(b).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, repository.ErrNotFound
 		}

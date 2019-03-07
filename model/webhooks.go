@@ -49,7 +49,7 @@ func (w *WebhookBot) GetBotUserID() uuid.UUID {
 
 // GetName Webhookの名前を返します
 func (w *WebhookBot) GetName() string {
-	return w.BotUser.Name
+	return w.BotUser.DisplayName
 }
 
 // GetDescription Webhookの説明を返します
