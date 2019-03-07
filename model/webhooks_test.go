@@ -45,7 +45,7 @@ func TestWebhookBot_GetDescription(t *testing.T) {
 func TestWebhookBot_GetName(t *testing.T) {
 	t.Parallel()
 	name := "test"
-	assert.Equal(t, name, (&WebhookBot{BotUser: User{Name: name}}).GetName())
+	assert.Equal(t, name, (&WebhookBot{BotUser: User{DisplayName: name}}).GetName())
 }
 
 func TestWebhookBot_GetCreatedAt(t *testing.T) {
