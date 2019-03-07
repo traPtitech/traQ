@@ -180,8 +180,8 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	w := getWebhookFromContext(c)
 	channelID := w.GetChannelID()
 
-	switch c.Request().Header.Get(echo.HeaderContentType) {
-	case echo.MIMETextPlain, echo.MIMETextPlainCharsetUTF8:
+	switch strings.ToLower(c.Request().Header.Get(echo.HeaderContentType)) {
+	case echo.MIMETextPlain, strings.ToLower(echo.MIMETextPlainCharsetUTF8):
 		break
 	default:
 		return echo.NewHTTPError(http.StatusUnsupportedMediaType)
@@ -256,7 +256,7 @@ func (h *Handlers) PutWebhookIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.NoContent(http.StatusNoContent)
 }
 
 // PostWebhookByGithub POST /webhooks/:webhookID/github
