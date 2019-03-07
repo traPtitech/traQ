@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -69,6 +70,8 @@ type TestRepository struct {
 	FilesLock                 sync.RWMutex
 	FilesACL                  map[uuid.UUID]map[uuid.UUID]bool
 	FilesACLLock              sync.RWMutex
+	Webhooks                  map[uuid.UUID]model.WebhookBot
+	WebhooksLock              sync.RWMutex
 }
 
 func NewTestRepository() *TestRepository {
@@ -91,6 +94,7 @@ func NewTestRepository() *TestRepository {
 		Stamps:                make(map[uuid.UUID]model.Stamp),
 		Files:                 make(map[uuid.UUID]model.File),
 		FilesACL:              make(map[uuid.UUID]map[uuid.UUID]bool),
+		Webhooks:              make(map[uuid.UUID]model.WebhookBot),
 	}
 	_, _ = r.CreateUser("traq", "traq", role.Admin)
 	return r
@@ -2199,25 +2203,154 @@ func (r *TestRepository) generateThumbnail(ctx context.Context, f *model.File, s
 }
 
 func (r *TestRepository) CreateWebhook(name, description string, channelID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
-	panic("implement me")
+	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
+		return nil, errors.New("invalid name")
+	}
+	uid := uuid.NewV4()
+	bid := uuid.NewV4()
+	iconID, err := r.GenerateIconFile(name)
+	if err != nil {
+		return nil, err
+	}
+
+	u := model.User{
+		ID:          uid,
+		Name:        "Webhook#" + base64.RawStdEncoding.EncodeToString(uid.Bytes()),
+		DisplayName: name,
+		Icon:        iconID,
+		Bot:         true,
+		Status:      model.UserAccountStatusActive,
+		Role:        role.Bot.ID(),
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	wb := model.WebhookBot{
+		ID:          bid,
+		BotUserID:   uid,
+		Description: description,
+		Secret:      secret,
+		ChannelID:   channelID,
+		CreatorID:   creatorID,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	r.WebhooksLock.Lock()
+	r.UsersLock.Lock()
+	r.Users[uid] = u
+	r.Webhooks[bid] = wb
+	r.UsersLock.Unlock()
+	r.WebhooksLock.Unlock()
+
+	wb.BotUser = u
+	return &wb, nil
 }
 
 func (r *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhookArgs) error {
-	panic("implement me")
+	if id == uuid.Nil {
+		return repository.ErrNilID
+	}
+
+	r.WebhooksLock.Lock()
+	r.UsersLock.Lock()
+	defer r.WebhooksLock.Unlock()
+	defer r.UsersLock.Unlock()
+	wb, ok := r.Webhooks[id]
+	if !ok {
+		return repository.ErrNotFound
+	}
+	u := r.Users[wb.GetBotUserID()]
+
+	if args.Description.Valid {
+		wb.Description = args.Description.String
+		wb.UpdatedAt = time.Now()
+	}
+	if args.ChannelID.Valid {
+		wb.ChannelID = args.ChannelID.UUID
+		wb.UpdatedAt = time.Now()
+	}
+	if args.Secret.Valid {
+		wb.Secret = args.Secret.String
+		wb.UpdatedAt = time.Now()
+	}
+	if args.Name.Valid {
+		if len(args.Name.String) == 0 || utf8.RuneCountInString(args.Name.String) > 32 {
+			return errors.New("invalid name")
+		}
+		u.DisplayName = args.Name.String
+		u.UpdatedAt = time.Now()
+	}
+
+	r.Webhooks[id] = wb
+	r.Users[u.ID] = u
+	return nil
 }
 
 func (r *TestRepository) DeleteWebhook(id uuid.UUID) error {
-	panic("implement me")
+	if id == uuid.Nil {
+		return repository.ErrNilID
+	}
+	r.WebhooksLock.Lock()
+	r.UsersLock.Lock()
+	defer r.WebhooksLock.Unlock()
+	defer r.UsersLock.Unlock()
+	wb, ok := r.Webhooks[id]
+	if !ok {
+		return repository.ErrNotFound
+	}
+	delete(r.Webhooks, id)
+	u := r.Users[wb.BotUserID]
+	u.Status = model.UserAccountStatusDeactivated
+	u.UpdatedAt = time.Now()
+	r.Users[wb.BotUserID] = u
+	return nil
 }
 
 func (r *TestRepository) GetWebhook(id uuid.UUID) (model.Webhook, error) {
-	panic("implement me")
+	if id == uuid.Nil {
+		return nil, repository.ErrNotFound
+	}
+	r.WebhooksLock.RLock()
+	r.UsersLock.RLock()
+	defer r.WebhooksLock.RUnlock()
+	defer r.UsersLock.RUnlock()
+	w, ok := r.Webhooks[id]
+	if !ok {
+		return nil, repository.ErrNotFound
+	}
+	w.BotUser = r.Users[w.BotUserID]
+	return &w, nil
 }
 
 func (r *TestRepository) GetAllWebhooks() ([]model.Webhook, error) {
-	panic("implement me")
+	arr := make([]model.Webhook, 0)
+	r.WebhooksLock.RLock()
+	r.UsersLock.RLock()
+	for _, v := range r.Webhooks {
+		v := v
+		v.BotUser = r.Users[v.BotUserID]
+		arr = append(arr, &v)
+	}
+	r.UsersLock.RUnlock()
+	r.WebhooksLock.RUnlock()
+	return arr, nil
 }
 
 func (r *TestRepository) GetWebhooksByCreator(creatorID uuid.UUID) ([]model.Webhook, error) {
-	panic("implement me")
+	arr := make([]model.Webhook, 0)
+	if creatorID == uuid.Nil {
+		return arr, nil
+	}
+	r.WebhooksLock.RLock()
+	r.UsersLock.RLock()
+	for _, v := range r.Webhooks {
+		if v.CreatorID == creatorID {
+			v := v
+			v.BotUser = r.Users[v.BotUserID]
+			arr = append(arr, &v)
+		}
+	}
+	r.UsersLock.RUnlock()
+	r.WebhooksLock.RUnlock()
+	return arr, nil
 }
