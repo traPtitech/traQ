@@ -8,7 +8,6 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
-	"image/png"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -260,6 +259,7 @@ func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID
 	return s
 }
 
+/*
 func genPNG(salt string) []byte {
 	if salt == random {
 		salt = utils.RandAlphabetAndNumberString(20)
@@ -269,3 +269,4 @@ func genPNG(salt string) []byte {
 	_ = png.Encode(b, img)
 	return b.Bytes()
 }
+*/
