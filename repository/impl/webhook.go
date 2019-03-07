@@ -10,97 +10,40 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
-	"time"
 	"unicode/utf8"
 )
 
-// WebhookBot DB用WebhookBot構造体
-type WebhookBot struct {
-	ID          uuid.UUID  `gorm:"type:char(36);not null;primary_key"`
-	BotUserID   uuid.UUID  `gorm:"type:char(36);not null;unique"`
-	BotUser     model.User `gorm:"foreignkey:BotUserID"`
-	Description string     `gorm:"type:text;not null"`
-	ChannelID   uuid.UUID  `gorm:"type:char(36);not null"`
-	CreatorID   uuid.UUID  `gorm:"type:char(36);not null"`
-	CreatedAt   time.Time  `gorm:"precision:6"`
-	UpdatedAt   time.Time  `gorm:"precision:6"`
-	DeletedAt   *time.Time `gorm:"precision:6"`
-}
-
-// TableName Webhookのテーブル名
-func (*WebhookBot) TableName() string {
-	return "webhook_bots"
-}
-
-// GetID WebhookIDを返します
-func (w *WebhookBot) GetID() uuid.UUID {
-	return w.ID
-}
-
-// GetBotUserID WebhookUserのIDを返します
-func (w *WebhookBot) GetBotUserID() uuid.UUID {
-	return w.BotUserID
-}
-
-// GetName Webhookの名前を返します
-func (w *WebhookBot) GetName() string {
-	return w.BotUser.Name
-}
-
-// GetDescription Webhookの説明を返します
-func (w *WebhookBot) GetDescription() string {
-	return w.Description
-}
-
-// GetChannelID Webhookのデフォルト投稿チャンネルのIDを返します
-func (w *WebhookBot) GetChannelID() uuid.UUID {
-	return w.ChannelID
-}
-
-// GetCreatorID Webhookの製作者IDを返します
-func (w *WebhookBot) GetCreatorID() uuid.UUID {
-	return w.CreatorID
-}
-
-// GetCreatedAt Webhookの作成日時を返します
-func (w *WebhookBot) GetCreatedAt() time.Time {
-	return w.CreatedAt
-}
-
-// GetUpdatedAt Webhookの更新日時を返します
-func (w *WebhookBot) GetUpdatedAt() time.Time {
-	return w.UpdatedAt
-}
-
 // CreateWebhook Webhookを作成します
-func (repo *RepositoryImpl) CreateWebhook(name, description string, channelID, creatorID, iconFileID uuid.UUID) (model.Webhook, error) {
+func (repo *RepositoryImpl) CreateWebhook(name, description string, channelID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
 		return nil, errors.New("invalid name")
 	}
-	if len(description) == 0 {
-		return nil, errors.New("description is required")
-	}
 	uid := uuid.NewV4()
 	bid := uuid.NewV4()
+	iconID, err := repo.GenerateIconFile(name)
+	if err != nil {
+		return nil, err
+	}
 
 	u := &model.User{
 		ID:          uid,
 		Name:        "Webhook#" + base64.RawStdEncoding.EncodeToString(uid.Bytes()),
 		DisplayName: name,
-		Icon:        iconFileID,
+		Icon:        iconID,
 		Bot:         true,
 		Status:      model.UserAccountStatusActive,
 		Role:        role.Bot.ID(),
 	}
-	wb := &WebhookBot{
+	wb := &model.WebhookBot{
 		ID:          bid,
 		BotUserID:   uid,
 		Description: description,
+		Secret:      secret,
 		ChannelID:   channelID,
 		CreatorID:   creatorID,
 	}
 
-	err := repo.transact(func(tx *gorm.DB) error {
+	err = repo.transact(func(tx *gorm.DB) error {
 		if err := tx.Create(u).Error; err != nil {
 			return err
 		}
@@ -124,41 +67,41 @@ func (repo *RepositoryImpl) CreateWebhook(name, description string, channelID, c
 }
 
 // UpdateWebhook Webhookを更新します
-func (repo *RepositoryImpl) UpdateWebhook(id uuid.UUID, name, description *string, channelID uuid.UUID) error {
+func (repo *RepositoryImpl) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhookArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	var w WebhookBot
+	var w model.WebhookBot
 	err := repo.transact(func(tx *gorm.DB) error {
-		if err := tx.Where(&WebhookBot{ID: id}).First(&w).Error; err != nil {
+		if err := tx.Where(&model.WebhookBot{ID: id}).First(&w).Error; err != nil {
 			if gorm.IsRecordNotFoundError(err) {
 				return repository.ErrNotFound
 			}
 			return err
 		}
 
-		changes := map[string]string{}
-		if description != nil {
-			if len(*description) == 0 {
-				return errors.New("description is required")
-			}
-			changes["description"] = *description
+		changes := map[string]interface{}{}
+		if args.Description.Valid {
+			changes["description"] = args.Description.String
 		}
-		if channelID != uuid.Nil {
-			changes["channel_id"] = channelID.String()
+		if args.ChannelID.Valid {
+			changes["channel_id"] = args.ChannelID.UUID
+		}
+		if args.Secret.Valid {
+			changes["secret"] = args.Secret.String
 		}
 		if len(changes) > 0 {
-			if err := tx.Model(&WebhookBot{ID: id}).Updates(changes).Error; err != nil {
+			if err := tx.Model(&model.WebhookBot{ID: id}).Updates(changes).Error; err != nil {
 				return err
 			}
 		}
 
-		if name != nil {
-			if len(*name) == 0 || utf8.RuneCountInString(*name) > 32 {
+		if args.Name.Valid {
+			if len(args.Name.String) == 0 || utf8.RuneCountInString(args.Name.String) > 32 {
 				return errors.New("invalid name")
 			}
 
-			if err := tx.Model(&model.User{ID: w.BotUserID}).Update("display_name", *name).Error; err != nil {
+			if err := tx.Model(&model.User{ID: w.BotUserID}).Update("display_name", args.Name.String).Error; err != nil {
 				return err
 			}
 		}
@@ -182,15 +125,15 @@ func (repo *RepositoryImpl) DeleteWebhook(id uuid.UUID) error {
 		return repository.ErrNilID
 	}
 	err := repo.transact(func(tx *gorm.DB) error {
-		var b WebhookBot
-		if err := tx.Where(&WebhookBot{ID: id}).Take(b).Error; err != nil {
+		var b model.WebhookBot
+		if err := tx.Where(&model.WebhookBot{ID: id}).Take(b).Error; err != nil {
 			if gorm.IsRecordNotFoundError(err) {
 				return repository.ErrNotFound
 			}
 			return err
 		}
 
-		if err := tx.Delete(&WebhookBot{ID: id}).Error; err != nil {
+		if err := tx.Delete(&model.WebhookBot{ID: id}).Error; err != nil {
 			return err
 		}
 		return tx.Model(&model.User{}).Where(&model.User{ID: b.BotUserID}).Update("status", model.UserAccountStatusDeactivated).Error
@@ -203,8 +146,8 @@ func (repo *RepositoryImpl) GetWebhook(id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
-	b := &WebhookBot{}
-	if err := repo.db.Where(&WebhookBot{ID: id}).Take(b).Error; err != nil {
+	b := &model.WebhookBot{}
+	if err := repo.db.Where(&model.WebhookBot{ID: id}).Take(b).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, repository.ErrNotFound
 		}
@@ -215,7 +158,7 @@ func (repo *RepositoryImpl) GetWebhook(id uuid.UUID) (model.Webhook, error) {
 
 // GetAllWebhooks Webhookを全て取得
 func (repo *RepositoryImpl) GetAllWebhooks() (arr []model.Webhook, err error) {
-	var webhooks []*WebhookBot
+	var webhooks []*model.WebhookBot
 	err = repo.db.Preload("BotUser").Find(&webhooks).Error
 	if err != nil {
 		return nil, err
@@ -234,8 +177,8 @@ func (repo *RepositoryImpl) GetWebhooksByCreator(creatorID uuid.UUID) (arr []mod
 		return arr, nil
 	}
 
-	var webhooks []*WebhookBot
-	err = repo.db.Preload("BotUser").Where(&WebhookBot{CreatorID: creatorID}).Find(&webhooks).Error
+	var webhooks []*model.WebhookBot
+	err = repo.db.Preload("BotUser").Where(&model.WebhookBot{CreatorID: creatorID}).Find(&webhooks).Error
 	if err != nil {
 		return nil, err
 	}

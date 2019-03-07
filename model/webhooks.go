@@ -11,6 +11,7 @@ type Webhook interface {
 	GetBotUserID() uuid.UUID
 	GetName() string
 	GetDescription() string
+	GetSecret() string
 	GetChannelID() uuid.UUID
 	GetCreatorID() uuid.UUID
 	GetCreatedAt() time.Time
@@ -23,6 +24,7 @@ type WebhookBot struct {
 	BotUserID   uuid.UUID  `gorm:"type:char(36);not null;unique"`
 	BotUser     User       `gorm:"foreignkey:BotUserID"`
 	Description string     `gorm:"type:text;not null"`
+	Secret      string     `gorm:"type:text;not null"`
 	ChannelID   uuid.UUID  `gorm:"type:char(36);not null"`
 	CreatorID   uuid.UUID  `gorm:"type:char(36);not null"`
 	CreatedAt   time.Time  `gorm:"precision:6"`
@@ -53,6 +55,11 @@ func (w *WebhookBot) GetName() string {
 // GetDescription Webhookの説明を返します
 func (w *WebhookBot) GetDescription() string {
 	return w.Description
+}
+
+// GetSecret Webhook Secretを返します
+func (w *WebhookBot) GetSecret() string {
+	return w.Secret
 }
 
 // GetChannelID Webhookのデフォルト投稿チャンネルのIDを返します

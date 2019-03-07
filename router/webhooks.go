@@ -1,11 +1,15 @@
 package router
 
 import (
+	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/utils"
 	"gopkg.in/go-playground/webhooks.v3/github"
 	"io/ioutil"
 	"net/http"
@@ -59,29 +63,30 @@ func (h *Handlers) PostWebhooks(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	req := struct {
-		Name        string `json:"name"        validate:"max=32,required"`
-		Description string `json:"description" validate:"required"`
-		ChannelID   string `json:"channelId"   validate:"uuid,required"`
+		Name        string    `json:"name"        validate:"max=32,required"`
+		Description string    `json:"description" validate:"required"`
+		ChannelID   uuid.UUID `json:"channelId"`
+		Secret      string    `json:"secret"      validate:"max=50"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
-	channelID := uuid.FromStringOrNil(req.ChannelID)
 
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return echo.NewHTTPError(http.StatusNotFound)
-	}
-
-	iconID, err := h.Repo.GenerateIconFile(req.Name)
+	ch, err := h.Repo.GetChannel(req.ChannelID)
 	if err != nil {
-		c.Logger().Error(err)
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch err {
+		case repository.ErrNotFound:
+			return echo.NewHTTPError(http.StatusBadRequest)
+		default:
+			c.Logger().Error(err)
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+	if !ch.IsPublic {
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	w, err := h.Repo.CreateWebhook(req.Name, req.Description, channelID, userID, iconID)
+	w, err := h.Repo.CreateWebhook(req.Name, req.Description, req.ChannelID, userID, req.Secret)
 	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -98,51 +103,63 @@ func (h *Handlers) GetWebhook(c echo.Context) error {
 
 // PatchWebhook PATCH /webhooks/:webhookID
 func (h *Handlers) PatchWebhook(c echo.Context) error {
-	userID := getRequestUserID(c)
 	w := getWebhookFromContext(c)
 
 	req := struct {
-		Name        string `json:"name"        validate:"max=32"`
-		Description string `json:"description"`
-		ChannelID   string `json:"channelId"`
+		Name        string    `json:"name"        validate:"max=32"`
+		Description string    `json:"description"`
+		ChannelID   uuid.UUID `json:"channelId"`
+		Secret      *string   `json:"secret"      validate:"max=50"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if len(req.ChannelID) == 36 {
-		cid := uuid.FromStringOrNil(req.ChannelID)
-		if cid == uuid.Nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "invalid channelId")
-		}
-
-		if ok, err := h.Repo.IsChannelAccessibleToUser(userID, cid); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		} else if !ok {
-			return echo.NewHTTPError(http.StatusNotFound)
-		}
-
-		if err := h.Repo.UpdateWebhook(w.GetID(), nil, nil, cid); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
+	a := repository.UpdateWebhookArgs{}
+	change := false
 
 	if len(req.Name) > 0 {
-		if err := h.Repo.UpdateWebhook(w.GetID(), &req.Name, nil, uuid.Nil); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+		a.Name.String = req.Name
+		a.Name.Valid = true
+		change = true
 	}
-
 	if len(req.Description) > 0 {
-		if err := h.Repo.UpdateWebhook(w.GetID(), nil, &req.Description, uuid.Nil); err != nil {
-			c.Logger().Error(err)
-			return echo.NewHTTPError(http.StatusInternalServerError)
+		a.Description.String = req.Description
+		a.Description.Valid = true
+		change = true
+	}
+	if req.Secret != nil {
+		a.Secret.String = *req.Secret
+		a.Secret.Valid = true
+		change = true
+	}
+	if req.ChannelID != uuid.Nil {
+		ch, err := h.Repo.GetChannel(req.ChannelID)
+		if err != nil {
+			switch err {
+			case repository.ErrNotFound:
+				return echo.NewHTTPError(http.StatusBadRequest)
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
 		}
+		if !ch.IsPublic {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		a.ChannelID.UUID = req.ChannelID
+		a.ChannelID.Valid = true
+		change = true
 	}
 
+	if !change {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	if err := h.Repo.UpdateWebhook(w.GetID(), a); err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -161,42 +178,56 @@ func (h *Handlers) DeleteWebhook(c echo.Context) error {
 // PostWebhook POST /webhooks/:webhookID
 func (h *Handlers) PostWebhook(c echo.Context) error {
 	w := getWebhookFromContext(c)
-
-	text := ""
 	channelID := w.GetChannelID()
+
 	switch c.Request().Header.Get(echo.HeaderContentType) {
 	case echo.MIMETextPlain, echo.MIMETextPlainCharsetUTF8:
-		if b, err := ioutil.ReadAll(c.Request().Body); err == nil {
-			text = string(b)
-		}
-		if len(text) == 0 {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
-
-	case echo.MIMEApplicationJSON, echo.MIMEApplicationForm, echo.MIMEApplicationJSONCharsetUTF8:
-		req := struct {
-			Text      string `json:"text"      form:"text"      validate:"required"`
-			ChannelID string `json:"channelId" form:"channelId"`
-		}{}
-		if err := bindAndValidate(c, &req); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err)
-		}
-		if len(req.ChannelID) == 36 {
-			channelID = uuid.FromStringOrNil(req.ChannelID)
-			if ok, err := h.Repo.IsChannelAccessibleToUser(w.GetBotUserID(), channelID); err != nil {
-				c.Logger().Error(err)
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			} else if !ok {
-				return echo.NewHTTPError(http.StatusBadRequest)
-			}
-		}
-		text = req.Text
-
+		break
 	default:
 		return echo.NewHTTPError(http.StatusUnsupportedMediaType)
 	}
 
-	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), channelID, text); err != nil {
+	body, err := ioutil.ReadAll(c.Request().Body)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+	if len(body) == 0 {
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	if len(w.GetSecret()) > 0 {
+		sig, _ := hex.DecodeString(c.Request().Header.Get(headerSignature))
+		if len(sig) == 0 {
+			return echo.NewHTTPError(http.StatusBadRequest, "missing X-TRAQ-Signature header")
+		}
+		if subtle.ConstantTimeCompare(utils.CalcHMACSHA1(body, w.GetSecret()), sig) != 1 {
+			return echo.NewHTTPError(http.StatusUnauthorized)
+		}
+	}
+
+	if cid := c.Request().Header.Get(headerChannelID); len(cid) > 0 {
+		id := uuid.FromStringOrNil(cid)
+		if id == uuid.Nil {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		ch, err := h.Repo.GetChannel(id)
+		if err != nil {
+			switch err {
+			case repository.ErrNotFound:
+				return echo.NewHTTPError(http.StatusBadRequest)
+			default:
+				c.Logger().Error(err)
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+		}
+		if !ch.IsPublic {
+			return echo.NewHTTPError(http.StatusBadRequest)
+		}
+		channelID = id
+	}
+
+	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), channelID, string(body)); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -244,206 +275,161 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "missing X-GitHub-Event header")
 	}
 
-	githubEvent := github.Event(ev)
-	tmpl := webhookDefTmpls.Lookup(fmt.Sprintf("github_%s.tmpl", githubEvent))
+	body, err := ioutil.ReadAll(c.Request().Body)
+	if err != nil {
+		c.Logger().Error(err)
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	if len(w.GetSecret()) > 0 {
+		sig, _ := hex.DecodeString(strings.TrimPrefix(c.Request().Header.Get("X-Hub-Signature"), "sha1="))
+		if len(sig) == 0 {
+			return echo.NewHTTPError(http.StatusBadRequest, "missing X-Hub-Signature header")
+		}
+		if subtle.ConstantTimeCompare(utils.CalcHMACSHA1(body, w.GetSecret()), sig) != 1 {
+			return echo.NewHTTPError(http.StatusUnauthorized)
+		}
+	}
+
+	tmpl := webhookDefTmpls.Lookup(fmt.Sprintf("github_%s.tmpl", github.Event(ev)))
 	if tmpl == nil {
 		return c.NoContent(http.StatusNoContent)
 	}
 
 	var payload interface{}
-	switch githubEvent {
+	switch github.Event(ev) {
 	case github.CommitCommentEvent:
 		var d github.CommitCommentPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.CreateEvent:
 		var d github.CreatePayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.DeleteEvent:
 		var d github.DeletePayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.DeploymentEvent:
 		var d github.DeploymentPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.DeploymentStatusEvent:
 		var d github.DeploymentStatusPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.ForkEvent:
 		var d github.ForkPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.GollumEvent:
 		var d github.GollumPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.InstallationEvent, github.IntegrationInstallationEvent:
 		var d github.InstallationPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.IssueCommentEvent:
 		var d github.IssueCommentPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.IssuesEvent:
 		var d github.IssuesPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.LabelEvent:
 		var d github.LabelPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.MemberEvent:
 		var d github.MemberPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.MembershipEvent:
 		var d github.MembershipPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.MilestoneEvent:
 		var d github.MilestonePayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.OrganizationEvent:
 		var d github.OrganizationPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.OrgBlockEvent:
 		var d github.OrgBlockPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.PageBuildEvent:
 		var d github.PageBuildPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.PingEvent:
 		var d github.PingPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.ProjectCardEvent:
 		var d github.ProjectCardPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.ProjectColumnEvent:
 		var d github.ProjectColumnPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.ProjectEvent:
 		var d github.ProjectPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.PublicEvent:
 		var d github.PublicPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.PullRequestEvent:
 		var d github.PullRequestPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.PullRequestReviewEvent:
 		var d github.PullRequestReviewPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.PullRequestReviewCommentEvent:
 		var d github.PullRequestReviewCommentPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.PushEvent:
 		var d github.PushPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.ReleaseEvent:
 		var d github.ReleasePayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.RepositoryEvent:
 		var d github.RepositoryPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.StatusEvent:
 		var d github.StatusPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.TeamEvent:
 		var d github.TeamPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.TeamAddEvent:
 		var d github.TeamAddPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
 	case github.WatchEvent:
 		var d github.WatchPayload
-		if err := json.NewDecoder(c.Request().Body).Decode(&d); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
+		err = json.Unmarshal(body, &d)
 		payload = d
+	}
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	if payload == nil {
