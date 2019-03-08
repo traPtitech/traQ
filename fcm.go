@@ -182,7 +182,9 @@ func (m *FCMManager) sendToFcm(deviceTokens []string, data map[string]string) er
 			if _, err := m.messaging.Send(context.Background(), payload); err != nil {
 				switch {
 				case messaging.IsRegistrationTokenNotRegistered(err):
-					return backoff.Permanent(m.repo.UnregisterDevice(token))
+					if err := m.repo.UnregisterDevice(token); err != nil {
+						return backoff.Permanent(err)
+					}
 				case messaging.IsInvalidArgument(err):
 					return backoff.Permanent(err)
 				case messaging.IsServerUnavailable(err):
