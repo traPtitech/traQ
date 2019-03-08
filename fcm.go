@@ -5,6 +5,8 @@ import (
 	"firebase.google.com/go"
 	"firebase.google.com/go/messaging"
 	"fmt"
+	"github.com/cenkalti/backoff"
+	"github.com/labstack/gommon/log"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
@@ -13,7 +15,6 @@ import (
 	"github.com/traPtitech/traQ/utils/message"
 	"golang.org/x/exp/utf8string"
 	"google.golang.org/api/option"
-	"strings"
 )
 
 // FCMManager Firebaseマネージャー構造体
@@ -148,8 +149,11 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 
 	// send
 	for u := range targets {
-		devs, _ := m.repo.GetDeviceTokensByUserID(u)
-		_ = m.sendToFcm(devs, payload)
+		u := u
+		go func() {
+			devs, _ := m.repo.GetDeviceTokensByUserID(u)
+			_ = m.sendToFcm(devs, payload)
+		}()
 	}
 }
 
@@ -174,25 +178,31 @@ func (m *FCMManager) sendToFcm(deviceTokens []string, data map[string]string) er
 	}
 	for _, token := range deviceTokens {
 		payload.Token = token
-		for i := 0; i < 5; i++ {
+		err := backoff.Retry(func() error {
 			if _, err := m.messaging.Send(context.Background(), payload); err != nil {
 				switch {
-				case strings.Contains(err.Error(), "registration-token-not-registered"):
-					fallthrough
-				case strings.Contains(err.Error(), "invalid-argument"):
+				case messaging.IsRegistrationTokenNotRegistered(err):
 					if err := m.repo.UnregisterDevice(token); err != nil {
-						return err
+						return backoff.Permanent(err)
 					}
-				case strings.Contains(err.Error(), "internal-error"): // 50x
-					if i == 4 {
-						return err
-					}
-					continue // リトライ
-				default: // 未知のエラー
+				case messaging.IsInvalidArgument(err):
+					return backoff.Permanent(err)
+				case messaging.IsServerUnavailable(err):
+					fallthrough
+				case messaging.IsInternal(err):
+					fallthrough
+				case messaging.IsMessageRateExceeded(err):
+					fallthrough
+				case messaging.IsUnknown(err):
+					return err
+				default:
 					return err
 				}
 			}
-			break
+			return nil
+		}, backoff.NewExponentialBackOff())
+		if err != nil {
+			log.Error(err)
 		}
 	}
 	return nil
