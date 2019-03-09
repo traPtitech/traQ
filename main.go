@@ -78,7 +78,7 @@ func main() {
 	// Stackdriver Profiler
 	if viper.GetBool("gcp.stackdriver.profiler.enabled") {
 		err := profiler.Start(profiler.Config{
-			Service:   "traQ",
+			Service:   "traq",
 			ProjectID: viper.GetString("gcp.stackdriver.serviceAccount.projectId"),
 		}, option.WithCredentialsFile(viper.GetString("gcp.stackdriver.serviceAccount.file")))
 		if err != nil {
