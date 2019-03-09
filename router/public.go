@@ -93,6 +93,8 @@ func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 	res := bytes.Buffer{}
 
 	res.WriteString(".emoji {display: inline-block; text-indent: 999%; white-space: nowrap; overflow: hidden; color: rgba(0, 0, 0, 0); background-size: contain}")
+	res.WriteString(".s24{width: 24px; height: 24px}")
+	res.WriteString(".s32{width: 32px; height: 32px}")
 	for _, stamp := range stamps {
 		res.WriteString(fmt.Sprintf(".emoji.e_%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.ID))
 	}
