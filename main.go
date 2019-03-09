@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cloud.google.com/go/profiler"
 	"context"
 	"fmt"
 	"github.com/jinzhu/gorm"
@@ -19,6 +20,7 @@ import (
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils/storage"
+	"google.golang.org/api/option"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -52,6 +54,8 @@ func main() {
 	viper.SetDefault("storage.type", "local")
 	viper.SetDefault("storage.local.dir", "./storage")
 
+	viper.SetDefault("gcp.stackdriver.profiler.enabled", false)
+
 	// read config
 	viper.AddConfigPath(".")
 	viper.SetConfigName("config")
@@ -69,6 +73,17 @@ func main() {
 		go func() {
 			log.Println(http.ListenAndServe("localhost:6060", nil))
 		}()
+	}
+
+	// Stackdriver Profiler
+	if viper.GetBool("gcp.stackdriver.profiler.enabled") {
+		err := profiler.Start(profiler.Config{
+			Service:   "traQ",
+			ProjectID: viper.GetString("gcp.stackdriver.serviceAccount.projectId"),
+		}, option.WithCredentialsFile(viper.GetString("gcp.stackdriver.serviceAccount.file")))
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// Message Hub
