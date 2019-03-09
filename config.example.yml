@@ -25,6 +25,14 @@
 #  serviceAccount:
 #    file: ''
 
+#gcp:
+#  serviceAccount:
+#    projectId: ''
+#    file: ''
+#  stackdriver:
+#    profiler:
+#      enabled: false
+
 #mariadb:
 #  host: 127.0.0.1
 #  port: 3306

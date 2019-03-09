@@ -1,10 +1,10 @@
 module github.com/traPtitech/traQ
 
 require (
+	cloud.google.com/go v0.36.0
 	firebase.google.com/go v3.6.0+incompatible
-	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/ajg/form v0.0.0-20160822230020-523a5da1a92f // indirect
-	github.com/cenkalti/backoff v2.1.1+incompatible // indirect
+	github.com/cenkalti/backoff v2.1.1+incompatible
 	github.com/denisenkom/go-mssqldb v0.0.0-20180901172138-1eb28afdf9b6 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 // indirect
@@ -17,10 +17,6 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	github.com/google/go-querystring v1.0.0 // indirect
-	github.com/google/martian v2.1.0+incompatible // indirect
-	github.com/googleapis/gax-go v2.0.0+incompatible // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
 	github.com/hashicorp/golang-lru v0.5.0
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
@@ -29,7 +25,6 @@ require (
 	github.com/jinzhu/now v0.0.0-20180511015916-ed742868f2ae // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
-	github.com/kr/pretty v0.1.0 // indirect
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.2.8
 	github.com/leandro-lugaresi/hub v1.1.0
@@ -44,7 +39,6 @@ require (
 	github.com/neverlee/keymutex v0.0.0-20171121013845-f593aa834bf9
 	github.com/onsi/gomega v1.4.2 // indirect
 	github.com/satori/go.uuid v1.2.0
-	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/smartystreets/goconvey v0.0.0-20180222194500-ef6db91d284a // indirect
 	github.com/spf13/afero v1.2.1 // indirect
