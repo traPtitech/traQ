@@ -1,10 +1,10 @@
 module github.com/traPtitech/traQ
 
 require (
-	cloud.google.com/go v0.36.0 // indirect
+	cloud.google.com/go v0.36.0
 	firebase.google.com/go v3.6.0+incompatible
 	github.com/ajg/form v0.0.0-20160822230020-523a5da1a92f // indirect
-	github.com/cenkalti/backoff v2.1.1+incompatible // indirect
+	github.com/cenkalti/backoff v2.1.1+incompatible
 	github.com/denisenkom/go-mssqldb v0.0.0-20180901172138-1eb28afdf9b6 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 // indirect
