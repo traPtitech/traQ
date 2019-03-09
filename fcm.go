@@ -6,13 +6,13 @@ import (
 	"firebase.google.com/go/messaging"
 	"fmt"
 	"github.com/cenkalti/backoff"
-	"github.com/labstack/gommon/log"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
+	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"
 	"google.golang.org/api/option"
 )
@@ -22,14 +22,16 @@ type FCMManager struct {
 	messaging *messaging.Client
 	repo      repository.Repository
 	hub       *hub.Hub
+	logger    *zap.Logger
 	origin    string
 }
 
 // NewFCMManager FCMManagerを生成します
-func NewFCMManager(repo repository.Repository, hub *hub.Hub, serviceAccountFile, origin string) (*FCMManager, error) {
+func NewFCMManager(repo repository.Repository, hub *hub.Hub, logger *zap.Logger, serviceAccountFile, origin string) (*FCMManager, error) {
 	manager := &FCMManager{
 		repo:   repo,
 		hub:    hub,
+		logger: logger,
 		origin: origin,
 	}
 
@@ -56,60 +58,81 @@ func NewFCMManager(repo repository.Repository, hub *hub.Hub, serviceAccountFile,
 }
 
 func (m *FCMManager) processMessageCreated(message *model.Message, plain string, embedded []*message.EmbeddedInfo) {
-	// make payload
-	payload := map[string]string{
+	logger := m.logger.With(zap.Stringer("messageId", message.ID))
+
+	// チャンネル情報を取得
+	ch, err := m.repo.GetChannel(message.ChannelID)
+	if err != nil {
+		logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("channelId", message.ChannelID)) // 失敗
+		return
+	}
+
+	// 投稿ユーザー情報を取得
+	mUser, err := m.repo.GetUser(message.UserID)
+	if err != nil {
+		logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", message.UserID)) // 失敗
+		return
+	}
+
+	// データ初期化
+	data := map[string]string{
 		"title":     "traQ",
 		"icon":      fmt.Sprintf("%s/api/1.0/users/%s/icon?thumb", m.origin, message.UserID),
 		"vibration": "[1000, 1000, 1000]",
 		"tag":       fmt.Sprintf("c:%s", message.ChannelID),
 		"badge":     fmt.Sprintf("%s/static/badge.png", m.origin),
 	}
-	ch, _ := m.repo.GetChannel(message.ChannelID)
-	mUser, _ := m.repo.GetUser(message.UserID)
+
+	// メッセージボディ作成
 	body := ""
 	if ch.IsDMChannel() {
-		if mUser != nil {
-			if len(mUser.DisplayName) == 0 {
-				payload["title"] = fmt.Sprintf("@%s", mUser.Name)
-			} else {
-				payload["title"] = fmt.Sprintf("@%s", mUser.DisplayName)
-			}
-			payload["path"] = "/users/" + mUser.Name
+		if len(mUser.DisplayName) == 0 {
+			data["title"] = "@" + mUser.Name
+		} else {
+			data["title"] = "@" + mUser.DisplayName
 		}
+		data["path"] = "/users/" + mUser.Name
 		body = plain
 	} else {
-		path, _ := m.repo.GetChannelPath(message.ChannelID)
-		payload["title"] = "#" + path
-		payload["path"] = "/channels/" + path
+		path, err := m.repo.GetChannelPath(message.ChannelID)
+		if err != nil {
+			logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("channelId", message.ChannelID))
+			return
+		}
 
-		if mUser != nil {
-			if len(mUser.DisplayName) == 0 {
-				body = fmt.Sprintf("%s: %s", mUser.Name, plain)
-			} else {
-				body = fmt.Sprintf("%s: %s", mUser.DisplayName, plain)
-			}
+		data["title"] = "#" + path
+		data["path"] = "/channels/" + path
+
+		if len(mUser.DisplayName) == 0 {
+			body = fmt.Sprintf("%s: %s", mUser.Name, plain)
 		} else {
-			body = fmt.Sprintf("[ユーザー名が取得できませんでした]: %s", plain)
+			body = fmt.Sprintf("%s: %s", mUser.DisplayName, plain)
 		}
 	}
+
 	if s := utf8string.NewString(body); s.RuneCount() > 100 {
 		body = s.Slice(0, 97) + "..."
 	}
-	payload["body"] = body
+	data["body"] = body
+
 	for _, v := range embedded {
 		if v.Type == "file" {
 			if f, _ := m.repo.GetFileMeta(uuid.FromStringOrNil(v.ID)); f != nil && f.HasThumbnail {
-				payload["image"] = fmt.Sprintf("%s/api/1.0/files/%s/thumbnail", m.origin, v.ID)
+				data["image"] = fmt.Sprintf("%s/api/1.0/files/%s/thumbnail", m.origin, v.ID)
 				break
 			}
 		}
 	}
 
-	// calculate targets
+	// 対象者計算
 	targets := map[uuid.UUID]bool{}
 	switch {
 	case ch.IsForced: // 強制通知チャンネル
-		users, _ := m.repo.GetUsers()
+		users, err := m.repo.GetUsers()
+		if err != nil {
+			logger.Error("failed to GetUsers", zap.Error(err)) // 失敗
+			return
+		}
 		for _, v := range users {
 			if v.Bot {
 				continue
@@ -118,12 +141,19 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 		}
 
 	case !ch.IsPublic: // プライベートチャンネル
-		pUsers, _ := m.repo.GetPrivateChannelMemberIDs(message.ChannelID)
+		pUsers, err := m.repo.GetPrivateChannelMemberIDs(message.ChannelID)
+		if err != nil {
+			logger.Error("failed to GetPrivateChannelMemberIDs", zap.Error(err), zap.Stringer("channelId", message.ChannelID)) // 失敗
+			return
+		}
 		addIDsToSet(targets, pUsers)
 
 	default: // 通常チャンネルメッセージ
-		// チャンネル通知ユーザー取得
-		users, _ := m.repo.GetSubscribingUserIDs(message.ChannelID)
+		users, err := m.repo.GetSubscribingUserIDs(message.ChannelID)
+		if err != nil {
+			logger.Error("failed to GetSubscribingUserIDs", zap.Error(err), zap.Stringer("channelId", message.ChannelID)) // 失敗
+			return
+		}
 		addIDsToSet(targets, users)
 
 		// ユーザーグループ・メンションユーザー取得
@@ -134,78 +164,83 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 					addIDsToSet(targets, []uuid.UUID{uid})
 				}
 			case "group":
-				gs, _ := m.repo.GetUserGroupMemberIDs(uuid.FromStringOrNil(v.ID))
+				gs, err := m.repo.GetUserGroupMemberIDs(uuid.FromStringOrNil(v.ID))
+				if err != nil {
+					logger.Error("failed to GetUserGroupMemberIDs", zap.Error(err), zap.String("groupId", v.ID)) // 失敗
+					return
+				}
 				addIDsToSet(targets, gs)
 			}
 		}
 
 		// ミュート除外
-		muted, _ := m.repo.GetMuteUserIDs(ch.ID)
+		muted, err := m.repo.GetMuteUserIDs(message.ChannelID)
+		if err != nil {
+			logger.Error("failed to GetMuteUserIDs", zap.Error(err), zap.Stringer("channelId", message.ChannelID)) // 失敗
+			return
+		}
 		deleteIDsFromSet(targets, muted)
 	}
+	delete(targets, message.UserID) // 自分を除外
 
-	// 自分を除外
-	delete(targets, message.UserID)
-
-	// send
+	// 送信
 	for u := range targets {
-		u := u
-		go func() {
-			devs, _ := m.repo.GetDeviceTokensByUserID(u)
-			_ = m.sendToFcm(devs, payload)
-		}()
-	}
-}
+		go func(u uuid.UUID) {
+			devs, err := m.repo.GetDeviceTokensByUserID(u)
+			if err != nil {
+				logger.Error("failed to GetDeviceTokensByUserID", zap.Error(err), zap.Stringer("userId", u)) // 失敗
+				return
+			}
 
-func (m *FCMManager) sendToFcm(deviceTokens []string, data map[string]string) error {
-	payload := &messaging.Message{
-		Data: data,
-		Android: &messaging.AndroidConfig{
-			Priority: "high",
-		},
-		APNS: &messaging.APNSConfig{
-			Payload: &messaging.APNSPayload{
-				Aps: &messaging.Aps{
-					Alert: &messaging.ApsAlert{
-						Title: data["title"],
-						Body:  data["body"],
-					},
-					Sound:    "default",
-					ThreadID: data["tag"],
+			payload := &messaging.Message{
+				Data: data,
+				Android: &messaging.AndroidConfig{
+					Priority: "high",
 				},
-			},
-		},
-	}
-	for _, token := range deviceTokens {
-		payload.Token = token
-		err := backoff.Retry(func() error {
-			if _, err := m.messaging.Send(context.Background(), payload); err != nil {
-				switch {
-				case messaging.IsRegistrationTokenNotRegistered(err):
-					if err := m.repo.UnregisterDevice(token); err != nil {
-						return backoff.Permanent(err)
+				APNS: &messaging.APNSConfig{
+					Payload: &messaging.APNSPayload{
+						Aps: &messaging.Aps{
+							Alert: &messaging.ApsAlert{
+								Title: data["title"],
+								Body:  data["body"],
+							},
+							Sound:    "default",
+							ThreadID: data["tag"],
+						},
+					},
+				},
+			}
+			for _, token := range devs {
+				payload.Token = token
+				err := backoff.Retry(func() error {
+					if _, err := m.messaging.Send(context.Background(), payload); err != nil {
+						switch {
+						case messaging.IsRegistrationTokenNotRegistered(err):
+							if err := m.repo.UnregisterDevice(token); err != nil {
+								return backoff.Permanent(err)
+							}
+						case messaging.IsInvalidArgument(err):
+							return backoff.Permanent(err)
+						case messaging.IsServerUnavailable(err):
+							fallthrough
+						case messaging.IsInternal(err):
+							fallthrough
+						case messaging.IsMessageRateExceeded(err):
+							fallthrough
+						case messaging.IsUnknown(err):
+							return err
+						default:
+							return err
+						}
 					}
-				case messaging.IsInvalidArgument(err):
-					return backoff.Permanent(err)
-				case messaging.IsServerUnavailable(err):
-					fallthrough
-				case messaging.IsInternal(err):
-					fallthrough
-				case messaging.IsMessageRateExceeded(err):
-					fallthrough
-				case messaging.IsUnknown(err):
-					return err
-				default:
-					return err
+					return nil
+				}, backoff.NewExponentialBackOff())
+				if err != nil {
+					logger.Error("an error occurred in sending fcm", zap.Error(err), zap.String("deviceToken", token))
 				}
 			}
-			return nil
-		}, backoff.NewExponentialBackOff())
-		if err != nil {
-			log.Error(err)
-		}
+		}(u)
 	}
-	return nil
 }
 
 func addIDsToSet(set map[uuid.UUID]bool, ids []uuid.UUID) {

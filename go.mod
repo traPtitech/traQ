@@ -39,6 +39,7 @@ require (
 	github.com/ncw/swift v1.0.44
 	github.com/neverlee/keymutex v0.0.0-20171121013845-f593aa834bf9
 	github.com/onsi/gomega v1.4.2 // indirect
+	github.com/pkg/errors v0.8.1 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/smartystreets/goconvey v0.0.0-20180222194500-ef6db91d284a // indirect
@@ -46,6 +47,7 @@ require (
 	github.com/spf13/viper v1.3.1
 	github.com/stretchr/testify v1.3.0
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
+	github.com/tommy351/zap-stackdriver v0.1.3
 	github.com/valyala/fasthttp v1.0.0 // indirect
 	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
@@ -55,6 +57,9 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	github.com/yudai/pp v2.0.1+incompatible // indirect
+	go.uber.org/atomic v1.3.2 // indirect
+	go.uber.org/multierr v1.1.0 // indirect
+	go.uber.org/zap v1.9.1
 	golang.org/x/crypto v0.0.0-20190222235706-ffb98f73852f
 	golang.org/x/exp v0.0.0-20190125153040-c74c464bbbf2
 	golang.org/x/image v0.0.0-20190227222117-0694c2d4d067 // indirect

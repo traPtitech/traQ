@@ -10,6 +10,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/viper"
+	"github.com/tommy351/zap-stackdriver"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/oauth2/impl"
@@ -20,9 +21,10 @@ import (
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils/storage"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/api/option"
 	"io/ioutil"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -37,8 +39,26 @@ var (
 )
 
 func main() {
+	versionAndRevision := fmt.Sprintf("%s.%s", version, revision)
+
 	// set default config values
 	setDefaultConfigs()
+
+	// Logger
+	zc := &zap.Config{
+		Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
+		Encoding:         "json",
+		EncoderConfig:    stackdriver.EncoderConfig,
+		OutputPaths:      []string{"stdout"},
+		ErrorOutputPaths: []string{"stderr"},
+	}
+	logger, err := zc.Build(zap.WrapCore(func(core zapcore.Core) zapcore.Core {
+		return &stackdriver.Core{Core: core}
+	}), zap.Fields(stackdriver.LogServiceContext(&stackdriver.ServiceContext{Service: "traq", Version: versionAndRevision})))
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync()
 
 	// read config
 	viper.AddConfigPath(".")
@@ -48,26 +68,24 @@ func main() {
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			log.Fatal(err)
+			logger.Fatal("failed to read config file", zap.Error(err))
 		}
 	}
 
 	// enable pprof http handler
 	if viper.GetBool("pprof") {
-		go func() {
-			log.Println(http.ListenAndServe("localhost:6060", nil))
-		}()
+		go func() { _ = http.ListenAndServe("localhost:6060", nil) }()
 	}
 
 	// Stackdriver Profiler
 	if viper.GetBool("gcp.stackdriver.profiler.enabled") {
 		err := profiler.Start(profiler.Config{
 			Service:        "traq",
-			ServiceVersion: fmt.Sprintf("%s.%s", version, revision),
+			ServiceVersion: versionAndRevision,
 			ProjectID:      viper.GetString("gcp.serviceAccount.projectId"),
 		}, option.WithCredentialsFile(viper.GetString("gcp.serviceAccount.file")))
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal("failed to setup Stackdriver Profiler", zap.Error(err))
 		}
 	}
 
@@ -77,27 +95,27 @@ func main() {
 	// Database
 	engine, err := getDatabase()
 	if err != nil {
-		panic(err)
+		logger.Fatal("failed to connect database", zap.Error(err))
 	}
 	defer engine.Close()
 
 	// FileStorage
 	fs, err := getFileStorage()
 	if err != nil {
-		panic(err)
+		logger.Fatal("failed to setup file storage", zap.Error(err))
 	}
 
 	// Repository
 	repo, err := repoimpl.NewRepositoryImpl(engine, fs, hub)
 	if err != nil {
-		panic(err)
+		logger.Fatal("failed to initialize repository", zap.Error(err))
 	}
 	if init, err := repo.Sync(); err != nil {
-		panic(err)
+		logger.Fatal("failed to sync repository", zap.Error(err))
 	} else if init { // 初期化
 		if dir := viper.GetString("initDataDir"); len(dir) > 0 {
 			if err := initData(repo, dir); err != nil {
-				panic(err)
+				logger.Fatal("failed to init data", zap.Error(err))
 			}
 		}
 	}
@@ -105,7 +123,7 @@ func main() {
 	if viper.GetBool("generateThumbnailOnStartUp") {
 		var files []uuid.UUID
 		if err := engine.Model(&model.File{}).Where("has_thumbnail = false").Pluck("id", &files).Error; err != nil {
-			panic(err)
+			logger.Warn("failed to fetch no thumbnail files", zap.Error(err))
 		}
 		for _, v := range files {
 			_, _ = repo.RegenerateThumbnail(v)
@@ -115,25 +133,25 @@ func main() {
 	// SessionStore
 	sessionStore, err := sessions.NewGORMStore(engine)
 	if err != nil {
-		panic(err)
+		logger.Fatal("failed to setup session store", zap.Error(err))
 	}
 	sessions.SetStore(sessionStore)
 
 	// Init Role-Based Access Controller
 	rbacStore, err := rbac.NewDefaultStore(engine)
 	if err != nil {
-		panic(err)
+		logger.Fatal("failed to setup rbac store", zap.Error(err))
 	}
 	r, err := rbac.New(rbacStore)
 	if err != nil {
-		panic(err)
+		logger.Fatal("failed to init rbac", zap.Error(err))
 	}
 	role.SetRole(r)
 
 	// oauth2 handler
 	oauth2Store, err := impl.NewDefaultStore(engine)
 	if err != nil {
-		panic(err)
+		logger.Fatal("failed to setup oauth2 store", zap.Error(err))
 	}
 	oauth := &oauth2.Handler{
 		Store:                oauth2Store,
@@ -170,21 +188,21 @@ func main() {
 	if viper.IsSet("key.rs256Public") && viper.IsSet("key.rs256Private") {
 		err := oauth.LoadKeys(loadKeys(viper.GetString("key.rs256Private"), viper.GetString("key.rs256Public")))
 		if err != nil {
-			panic(err)
+			logger.Fatal("failed to load oauth2 keys", zap.Error(err))
 		}
 	}
 
 	// Firebase
 	if f := viper.GetString("firebase.serviceAccount.file"); len(f) > 0 {
-		if _, err := NewFCMManager(repo, hub, f, viper.GetString("origin")); err != nil {
-			panic(err)
+		if _, err := NewFCMManager(repo, hub, logger.Named("firebase"), f, viper.GetString("origin")); err != nil {
+			logger.Fatal("failed to setup firebase", zap.Error(err))
 		}
 	}
 
 	// Routing
 	h := router.NewHandlers(oauth, r, repo, hub, viper.GetString("imagemagick.path"))
 	e := echo.New()
-	e.Use(router.AddHeadersMiddleware(map[string]string{"X-TRAQ-VERSION": fmt.Sprintf("%s.%s", version, revision)}))
+	e.Use(router.AddHeadersMiddleware(map[string]string{"X-TRAQ-VERSION": versionAndRevision}))
 	e.HideBanner = true
 	e.HidePort = true
 	router.SetupRouting(e, h)
@@ -192,9 +210,11 @@ func main() {
 
 	go func() {
 		if err := e.Start(fmt.Sprintf(":%d", viper.GetInt("port"))); err != nil {
-			e.Logger.Info("shutting down the server")
+			logger.Info("shutting down the server")
 		}
 	}()
+
+	logger.Info("traQ started", zap.String("version", versionAndRevision))
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
@@ -202,7 +222,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := e.Shutdown(ctx); err != nil {
-		e.Logger.Error(err)
+		logger.Warn("abnormal shutdown", zap.Error(err))
 	}
 	sessions.PurgeCache()
 }
