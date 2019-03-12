@@ -2,6 +2,7 @@ package router
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -66,39 +67,91 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 
 // GetPublicEmojiJSON GET /public/emoji.json
 func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
-	stamps, err := h.Repo.GetAllStamps()
 	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, c.Request().Header.Get("Origin"))
 	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "true")
-	if err != nil {
+
+	// キャッシュ確認
+	h.emojiJSONCacheLock.RLock()
+	if h.emojiJSONCache.Len() > 0 {
+		defer h.emojiJSONCacheLock.RUnlock()
+		return c.JSONBlob(http.StatusOK, h.emojiJSONCache.Bytes())
+	}
+	h.emojiJSONCacheLock.RUnlock()
+
+	// 生成
+	h.emojiJSONCacheLock.Lock()
+	defer h.emojiJSONCacheLock.Unlock()
+
+	if h.emojiJSONCache.Len() > 0 { // リロード
+		return c.JSONBlob(http.StatusOK, h.emojiJSONCache.Bytes())
+	}
+
+	if err := generateEmojiJSON(h.Repo, &h.emojiJSONCache); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	resData := make(map[string][]string)
-	resData["all"] = make([]string, 0, len(stamps))
-	for _, stamp := range stamps {
-		resData["all"] = append(resData["all"], stamp.Name)
+	return c.JSONBlob(http.StatusOK, h.emojiJSONCache.Bytes())
+}
+
+func generateEmojiJSON(repo repository.StampRepository, buf *bytes.Buffer) error {
+	stamps, err := repo.GetAllStamps()
+	if err != nil {
+		return err
 	}
-	return c.JSON(http.StatusOK, resData)
+
+	resData := make(map[string][]string)
+	arr := make([]string, len(stamps))
+	for i, stamp := range stamps {
+		arr[i] = stamp.Name
+	}
+	resData["all"] = arr
+
+	buf.Reset()
+	return json.NewEncoder(buf).Encode(resData)
 }
 
 // GetPublicEmojiCSS GET /public/emoji.css
 func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
-	stamps, err := h.Repo.GetAllStamps()
 	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, c.Request().Header.Get("Origin"))
 	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
-	if err != nil {
+
+	// キャッシュ確認
+	h.emojiCSSCacheLock.RLock()
+	if h.emojiCSSCache.Len() > 0 {
+		defer h.emojiCSSCacheLock.RUnlock()
+		return c.Blob(http.StatusOK, "text/css", h.emojiCSSCache.Bytes())
+	}
+	h.emojiCSSCacheLock.RUnlock()
+
+	// 生成
+	h.emojiCSSCacheLock.Lock()
+	defer h.emojiCSSCacheLock.Unlock()
+
+	if h.emojiCSSCache.Len() > 0 { // リロード
+		return c.Blob(http.StatusOK, "text/css", h.emojiCSSCache.Bytes())
+	}
+
+	if err := generateEmojiCSS(h.Repo, &h.emojiCSSCache); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	res := bytes.Buffer{}
+	return c.Blob(http.StatusOK, "text/css", h.emojiCSSCache.Bytes())
+}
 
-	res.WriteString(".emoji {display: inline-block; text-indent: 999%; white-space: nowrap; overflow: hidden; color: rgba(0, 0, 0, 0); background-size: contain}")
-	res.WriteString(".s24{width: 24px; height: 24px}")
-	res.WriteString(".s32{width: 32px; height: 32px}")
-	for _, stamp := range stamps {
-		res.WriteString(fmt.Sprintf(".emoji.e_%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.ID))
+func generateEmojiCSS(repo repository.StampRepository, buf *bytes.Buffer) error {
+	stamps, err := repo.GetAllStamps()
+	if err != nil {
+		return err
 	}
-	return c.Blob(http.StatusOK, "text/css", res.Bytes())
+
+	buf.Reset()
+	buf.WriteString(".emoji {display: inline-block; text-indent: 999%; white-space: nowrap; overflow: hidden; color: rgba(0, 0, 0, 0); background-size: contain}")
+	buf.WriteString(".s24{width: 24px; height: 24px}")
+	buf.WriteString(".s32{width: 32px; height: 32px}")
+	for _, stamp := range stamps {
+		buf.WriteString(fmt.Sprintf(".emoji.e_%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.ID))
+	}
+	return nil
 }
 
 // GetPublicEmojiImage GET /public/emoji/{stampID}
