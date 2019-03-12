@@ -866,13 +866,8 @@ func (repo *RepositoryImpl) AddPrivateChannelMember(channelID, userID uuid.UUID)
 	if channelID == uuid.Nil || userID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	if err := repo.db.Create(&model.UsersPrivateChannel{UserID: userID, ChannelID: channelID}).Error; err != nil {
-		if isMySQLDuplicatedRecordErr(err) {
-			return nil
-		}
-		return err
-	}
-	return nil
+	var s model.UsersPrivateChannel
+	return repo.db.FirstOrCreate(&s, &model.UsersPrivateChannel{UserID: userID, ChannelID: channelID}).Error
 }
 
 // GetPrivateChannelMemberIDs プライベートチャンネルのメンバーの配列を取得する
