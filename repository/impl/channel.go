@@ -913,8 +913,8 @@ func (repo *RepositoryImpl) SubscribeChannel(userID, channelID uuid.UUID) error 
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	return repo.db.Create(&model.UserSubscribeChannel{UserID: userID, ChannelID: channelID}).Error
-
+	var s model.UserSubscribeChannel
+	return repo.db.FirstOrCreate(&s, &model.UserSubscribeChannel{UserID: userID, ChannelID: channelID}).Error
 }
 
 // UnsubscribeChannel 指定したチャンネルの購読を解除します

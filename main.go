@@ -33,28 +33,7 @@ import (
 
 func main() {
 	// set default config values
-	viper.SetDefault("origin", "http://localhost:3000")
-	viper.SetDefault("port", 3000)
-
-	viper.SetDefault("pprof", false)
-
-	viper.SetDefault("generateThumbnailOnStartUp", false)
-
-	viper.SetDefault("externalAuthentication.enabled", false)
-
-	viper.SetDefault("mariadb.host", "127.0.0.1")
-	viper.SetDefault("mariadb.port", 3306)
-	viper.SetDefault("mariadb.username", "root")
-	viper.SetDefault("mariadb.password", "password")
-	viper.SetDefault("mariadb.database", "traq")
-	viper.SetDefault("mariadb.connection.maxOpen", 0)
-	viper.SetDefault("mariadb.connection.maxIdle", 2)
-	viper.SetDefault("mariadb.connection.lifetime", 0)
-
-	viper.SetDefault("storage.type", "local")
-	viper.SetDefault("storage.local.dir", "./storage")
-
-	viper.SetDefault("gcp.stackdriver.profiler.enabled", false)
+	setDefaultConfigs()
 
 	// read config
 	viper.AddConfigPath(".")
@@ -199,6 +178,8 @@ func main() {
 	// Routing
 	h := router.NewHandlers(oauth, r, repo, hub, viper.GetString("imagemagick.path"))
 	e := echo.New()
+	e.HideBanner = true
+	e.HidePort = true
 	router.SetupRouting(e, h)
 	router.LoadWebhookTemplate("static/webhook/*.tmpl")
 
@@ -219,6 +200,31 @@ func main() {
 	sessions.PurgeCache()
 }
 
+func setDefaultConfigs() {
+	viper.SetDefault("origin", "http://localhost:3000")
+	viper.SetDefault("port", 3000)
+
+	viper.SetDefault("pprof", false)
+
+	viper.SetDefault("generateThumbnailOnStartUp", false)
+
+	viper.SetDefault("externalAuthentication.enabled", false)
+
+	viper.SetDefault("mariadb.host", "127.0.0.1")
+	viper.SetDefault("mariadb.port", 3306)
+	viper.SetDefault("mariadb.username", "root")
+	viper.SetDefault("mariadb.password", "password")
+	viper.SetDefault("mariadb.database", "traq")
+	viper.SetDefault("mariadb.connection.maxOpen", 0)
+	viper.SetDefault("mariadb.connection.maxIdle", 2)
+	viper.SetDefault("mariadb.connection.lifetime", 0)
+
+	viper.SetDefault("storage.type", "local")
+	viper.SetDefault("storage.local.dir", "./storage")
+
+	viper.SetDefault("gcp.stackdriver.profiler.enabled", false)
+}
+
 func getDatabase() (*gorm.DB, error) {
 	engine, err := gorm.Open("mysql", fmt.Sprintf(
 		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=true",
@@ -234,6 +240,7 @@ func getDatabase() (*gorm.DB, error) {
 	engine.DB().SetMaxOpenConns(viper.GetInt("mariadb.connection.maxOpen"))
 	engine.DB().SetMaxIdleConns(viper.GetInt("mariadb.connection.maxIdle"))
 	engine.DB().SetConnMaxLifetime(time.Duration(viper.GetInt("mariadb.connection.lifetime")) * time.Second)
+	engine.LogMode(false)
 	return engine, nil
 }
 
