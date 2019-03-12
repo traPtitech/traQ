@@ -76,8 +76,8 @@ type Handlers struct {
 	Hub             *hub.Hub
 	ImageMagickPath string
 
-	emojiJsonCache     bytes.Buffer
-	emojiJsonCacheLock sync.RWMutex
+	emojiJSONCache     bytes.Buffer
+	emojiJSONCacheLock sync.RWMutex
 	emojiCSSCache      bytes.Buffer
 	emojiCSSCacheLock  sync.RWMutex
 }
@@ -98,9 +98,9 @@ func NewHandlers(oauth2 *oauth2.Handler, rbac *rbac.RBAC, repo repository.Reposi
 
 func (h *Handlers) stampEventSubscriber(sub hub.Subscription) {
 	for range sub.Receiver {
-		h.emojiJsonCacheLock.Lock()
-		h.emojiJsonCache.Reset()
-		h.emojiJsonCacheLock.Unlock()
+		h.emojiJSONCacheLock.Lock()
+		h.emojiJSONCache.Reset()
+		h.emojiJSONCacheLock.Unlock()
 
 		h.emojiCSSCacheLock.Lock()
 		h.emojiCSSCache.Reset()

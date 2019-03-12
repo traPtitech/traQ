@@ -71,29 +71,29 @@ func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "true")
 
 	// キャッシュ確認
-	h.emojiJsonCacheLock.RLock()
-	if h.emojiJsonCache.Len() > 0 {
-		defer h.emojiJsonCacheLock.RUnlock()
-		return c.JSONBlob(http.StatusOK, h.emojiJsonCache.Bytes())
+	h.emojiJSONCacheLock.RLock()
+	if h.emojiJSONCache.Len() > 0 {
+		defer h.emojiJSONCacheLock.RUnlock()
+		return c.JSONBlob(http.StatusOK, h.emojiJSONCache.Bytes())
 	}
-	h.emojiJsonCacheLock.RUnlock()
+	h.emojiJSONCacheLock.RUnlock()
 
 	// 生成
-	h.emojiJsonCacheLock.Lock()
-	defer h.emojiJsonCacheLock.Unlock()
+	h.emojiJSONCacheLock.Lock()
+	defer h.emojiJSONCacheLock.Unlock()
 
-	if h.emojiJsonCache.Len() > 0 { // リロード
-		return c.JSONBlob(http.StatusOK, h.emojiJsonCache.Bytes())
+	if h.emojiJSONCache.Len() > 0 { // リロード
+		return c.JSONBlob(http.StatusOK, h.emojiJSONCache.Bytes())
 	}
 
-	if err := generateEmojiJson(h.Repo, &h.emojiJsonCache); err != nil {
+	if err := generateEmojiJSON(h.Repo, &h.emojiJSONCache); err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	return c.JSONBlob(http.StatusOK, h.emojiJsonCache.Bytes())
+	return c.JSONBlob(http.StatusOK, h.emojiJSONCache.Bytes())
 }
 
-func generateEmojiJson(repo repository.StampRepository, buf *bytes.Buffer) error {
+func generateEmojiJSON(repo repository.StampRepository, buf *bytes.Buffer) error {
 	stamps, err := repo.GetAllStamps()
 	if err != nil {
 		return err
