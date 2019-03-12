@@ -7,6 +7,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/satori/go.uuid"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/rbac"
@@ -19,6 +20,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/labstack/echo"
@@ -61,6 +63,10 @@ const (
 	headerChannelID    = "X-TRAQ-Channel-Id"
 )
 
+func init() {
+	gob.Register(uuid.UUID{})
+}
+
 // Handlers ハンドラ
 type Handlers struct {
 	OAuth2          *oauth2.Handler
@@ -69,6 +75,11 @@ type Handlers struct {
 	SSE             *SSEStreamer
 	Hub             *hub.Hub
 	ImageMagickPath string
+
+	emojiJsonCache     bytes.Buffer
+	emojiJsonCacheLock sync.RWMutex
+	emojiCSSCache      bytes.Buffer
+	emojiCSSCacheLock  sync.RWMutex
 }
 
 // NewHandlers ハンドラを生成します
@@ -81,11 +92,20 @@ func NewHandlers(oauth2 *oauth2.Handler, rbac *rbac.RBAC, repo repository.Reposi
 		Hub:             hub,
 		ImageMagickPath: imageMagickPath,
 	}
+	go h.stampEventSubscriber(hub.Subscribe(10, event.StampCreated, event.StampUpdated, event.StampDeleted))
 	return h
 }
 
-func init() {
-	gob.Register(uuid.UUID{})
+func (h *Handlers) stampEventSubscriber(sub hub.Subscription) {
+	for range sub.Receiver {
+		h.emojiJsonCacheLock.Lock()
+		h.emojiJsonCache.Reset()
+		h.emojiJsonCacheLock.Unlock()
+
+		h.emojiCSSCacheLock.Lock()
+		h.emojiCSSCache.Reset()
+		h.emojiCSSCacheLock.Unlock()
+	}
 }
 
 func bindAndValidate(c echo.Context, i interface{}) error {
