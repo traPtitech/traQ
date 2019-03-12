@@ -524,7 +524,7 @@ func TestRepositoryImpl_SubscribeChannel(t *testing.T) {
 	if assert.NoError(repo.SubscribeChannel(user1.ID, ch.ID)) {
 		assert.Equal(1, count(t, getDB(repo).Model(model.UserSubscribeChannel{}).Where(&model.UserSubscribeChannel{UserID: user1.ID})))
 	}
-	assert.Error(repo.SubscribeChannel(user1.ID, ch.ID))
+	assert.NoError(repo.SubscribeChannel(user1.ID, ch.ID))
 }
 
 func TestRepositoryImpl_UnsubscribeChannel(t *testing.T) {
