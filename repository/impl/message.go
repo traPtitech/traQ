@@ -208,16 +208,19 @@ func (repo *RepositoryImpl) DeleteUnreadsByChannelID(channelID, userID uuid.UUID
 	if channelID == uuid.Nil || userID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	if err := repo.db.Exec("DELETE unreads FROM unreads INNER JOIN messages ON unreads.user_id = ? AND unreads.message_id = messages.id WHERE messages.channel_id = ?", userID.String(), channelID.String()).Error; err != nil {
-		return err
+	result := repo.db.Exec("DELETE unreads FROM unreads INNER JOIN messages ON unreads.user_id = ? AND unreads.message_id = messages.id WHERE messages.channel_id = ?", userID.String(), channelID.String())
+	if result.Error != nil {
+		return result.Error
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.ChannelRead,
-		Fields: hub.Fields{
-			"channel_id": channelID,
-			"user_id":    userID,
-		},
-	})
+	if result.RowsAffected > 0 {
+		repo.hub.Publish(hub.Message{
+			Name: event.ChannelRead,
+			Fields: hub.Fields{
+				"channel_id": channelID,
+				"user_id":    userID,
+			},
+		})
+	}
 	return nil
 }
 
