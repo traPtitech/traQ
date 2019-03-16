@@ -237,7 +237,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		apiNoAuth.GET("/public/icon/:username", h.GetPublicUserIcon, AddHeadersMiddleware(map[string]string{echo.HeaderAccessControlAllowOrigin: "*", echo.HeaderAccessControlAllowCredentials: "false"}))
 		apiNoAuth.GET("/public/emoji.json", h.GetPublicEmojiJSON)
 		apiNoAuth.GET("/public/emoji.css", h.GetPublicEmojiCSS)
-		apiNoAuth.GET("/public/emoji/:stampID", h.GetPublicEmojiImage, AddHeadersMiddleware(map[string]string{echo.HeaderAccessControlAllowOrigin: "*", echo.HeaderAccessControlAllowCredentials: "false"}))
+		apiNoAuth.GET("/public/emoji/:stampID", h.GetPublicEmojiImage, AddHeadersMiddleware(map[string]string{echo.HeaderAccessControlAllowOrigin: "*", echo.HeaderAccessControlAllowCredentials: "false"}), h.ValidateStampID(false))
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, h.ValidateWebhookID(false))
 		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, h.ValidateWebhookID(false))
 		apiNoAuth.GET("/teapot", func(c echo.Context) error {

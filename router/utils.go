@@ -56,6 +56,7 @@ const (
 	mimeImageSVG  = "image/svg+xml"
 
 	headerCacheControl = "Cache-Control"
+	headerETag         = "ETag"
 	headerFileMetaType = "X-TRAQ-FILE-TYPE"
 	headerCacheFile    = "X-TRAQ-FILE-CACHE"
 	headerSignature    = "X-TRAQ-Signature"

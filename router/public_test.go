@@ -46,13 +46,18 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 			Equal(strconv.Itoa(len(i)))
 	})
 
-	t.Run("Success with thumbnail", func(t *testing.T) {
+	t.Run("Success With 304", func(t *testing.T) {
 		t.Parallel()
+		_, require := assertAndRequire(t)
+
+		meta, err := repo.GetFileMeta(testUser.Icon)
+		require.NoError(err)
+
 		e := makeExp(t, server)
 		e.GET("/api/1.0/public/icon/{username}", testUser.Name).
-			WithQuery("thumb", "").
+			WithHeader("If-None-Match", strconv.Quote(meta.Hash)).
 			Expect().
-			Status(http.StatusOK)
+			Status(http.StatusNotModified)
 	})
 }
 
@@ -112,5 +117,19 @@ func TestHandlers_GetPublicEmojiImage(t *testing.T) {
 		e.GET("/api/1.0/public/emoji/{stampID}", s.ID).
 			Expect().
 			Status(http.StatusOK)
+	})
+
+	t.Run("Success With 304", func(t *testing.T) {
+		t.Parallel()
+		_, require := assertAndRequire(t)
+
+		meta, err := repo.GetFileMeta(s.FileID)
+		require.NoError(err)
+
+		e := makeExp(t, server)
+		e.GET("/api/1.0/public/emoji/{stampID}", s.ID).
+			WithHeader("If-None-Match", strconv.Quote(meta.Hash)).
+			Expect().
+			Status(http.StatusNotModified)
 	})
 }
