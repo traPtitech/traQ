@@ -14,8 +14,6 @@ import (
 // GetPublicUserIcon GET /public/icon/{username}
 func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	username := c.Param("username")
-	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
-	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
 	if len(username) == 0 {
 		return echo.NewHTTPError(http.StatusNotFound)
 	}
@@ -157,8 +155,6 @@ func generateEmojiCSS(repo repository.StampRepository, buf *bytes.Buffer) error 
 // GetPublicEmojiImage GET /public/emoji/{stampID}
 func (h *Handlers) GetPublicEmojiImage(c echo.Context) error {
 	stampID := getRequestParamAsUUID(c, paramStampID)
-	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, "*")
-	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
 
 	s, err := h.Repo.GetStamp(stampID)
 	if err != nil {

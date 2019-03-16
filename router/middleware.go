@@ -147,6 +147,18 @@ func RequestBodyLengthLimit(kb int64) echo.MiddlewareFunc {
 	}
 }
 
+// AddHeadersMiddleware レスポンスヘッダーを追加するミドルウェア
+func AddHeadersMiddleware(headers map[string]string) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			for k, v := range headers {
+				c.Response().Header().Set(k, v)
+			}
+			return next(c)
+		}
+	}
+}
+
 // ValidateGroupID 'groupID'パラメータのグループを検証するミドルウェア
 func (h *Handlers) ValidateGroupID() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

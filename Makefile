@@ -1,7 +1,7 @@
 SOURCES ?= $(shell find . -path "./vendor" -prune -o -type f -name "*.go" -print)
 
 traQ: $(SOURCES)
-	go build
+	go build -ldflags "-X main.version=$$(git describe --tags --abbrev=0) -X main.revision=$$(git rev-parse --short HEAD)"
 
 .PHONY: fmt
 fmt:
