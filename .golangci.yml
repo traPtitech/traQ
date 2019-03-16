@@ -1,7 +1,7 @@
 linters:
   enable:
     - govet
-    #    - errcheck
+    - errcheck
     - staticcheck
     - unused
     - gosimple
@@ -12,3 +12,7 @@ linters:
     - typecheck
     - golint
     - gofmt
+
+linters-settings:
+  errcheck:
+    exclude: .circleci/errcheck-exclude.txt
