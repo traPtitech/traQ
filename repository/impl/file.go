@@ -1,11 +1,13 @@
 package impl
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"github.com/disintegration/imaging"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
@@ -13,8 +15,8 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/storage"
-	"github.com/traPtitech/traQ/utils/thumb"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/semaphore"
 	"image"
 	"io"
 	"mime"
@@ -27,12 +29,10 @@ type fileImpl struct {
 
 // GenerateIconFile アイコンファイルを生成します
 func (repo *RepositoryImpl) GenerateIconFile(salt string) (uuid.UUID, error) {
-	img, _ := thumb.EncodeToPNG(utils.GenerateIcon(salt))
-	file, err := repo.SaveFile(fmt.Sprintf("%s.png", salt), img, int64(img.Len()), "image/png", model.FileTypeIcon, uuid.Nil)
-	if err != nil {
-		return uuid.Nil, err
-	}
-	return file.ID, nil
+	var img bytes.Buffer
+	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
+	file, err := repo.SaveFile(fmt.Sprintf("%s.png", salt), &img, int64(img.Len()), "image/png", model.FileTypeIcon, uuid.Nil)
+	return file.ID, err
 }
 
 // SaveFile ファイルを保存します。mimeが指定されていない場合はnameの拡張子によって決まります
@@ -79,10 +79,7 @@ func (repo *RepositoryImpl) SaveFileWithACL(name string, src io.Reader, size int
 	// fileの保存
 	eg.Go(func() error {
 		defer fileSrc.Close()
-		if err := repo.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime, f.Type); err != nil {
-			return err
-		}
-		return nil
+		return repo.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime, f.Type)
 	})
 
 	// サムネイルの生成
@@ -251,14 +248,29 @@ func (repo *RepositoryImpl) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 	return result.Allow > 0 && result.Deny == 0, nil
 }
 
+var generateThumbnailS = semaphore.NewWeighted(5) // サムネイル生成並列数
+
 // generateThumbnail サムネイル画像を生成します
 func (repo *RepositoryImpl) generateThumbnail(ctx context.Context, f *model.File, src io.Reader) (image.Rectangle, error) {
-	img, err := thumb.Generate(ctx, src, f.Mime)
+	if err := generateThumbnailS.Acquire(ctx, 1); err != nil {
+		return image.ZR, err
+	}
+	defer generateThumbnailS.Release(1)
+
+	orig, err := imaging.Decode(src, imaging.AutoOrientation(true))
 	if err != nil {
 		return image.ZR, err
 	}
-	b, _ := thumb.EncodeToPNG(img)
-	if err := repo.FS.SaveByKey(b, f.GetThumbKey(), f.GetThumbKey()+".png", "image/png", model.FileTypeThumbnail); err != nil {
+
+	img := imaging.Fit(orig, 360, 480, imaging.Linear)
+
+	r, w := io.Pipe()
+	go func() {
+		_ = imaging.Encode(w, img, imaging.PNG)
+		_ = w.Close()
+	}()
+
+	if err := repo.FS.SaveByKey(r, f.GetThumbKey(), f.GetThumbKey()+".png", "image/png", model.FileTypeThumbnail); err != nil {
 		return image.ZR, err
 	}
 	return img.Bounds(), nil
