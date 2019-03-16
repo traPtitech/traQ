@@ -31,6 +31,11 @@ import (
 	"time"
 )
 
+var (
+	version  = "UNKNOWN"
+	revision = "UNKNOWN"
+)
+
 func main() {
 	// set default config values
 	setDefaultConfigs()
@@ -57,8 +62,9 @@ func main() {
 	// Stackdriver Profiler
 	if viper.GetBool("gcp.stackdriver.profiler.enabled") {
 		err := profiler.Start(profiler.Config{
-			Service:   "traq",
-			ProjectID: viper.GetString("gcp.serviceAccount.projectId"),
+			Service:        "traq",
+			ServiceVersion: fmt.Sprintf("%s.%s", version, revision),
+			ProjectID:      viper.GetString("gcp.serviceAccount.projectId"),
 		}, option.WithCredentialsFile(viper.GetString("gcp.serviceAccount.file")))
 		if err != nil {
 			log.Fatal(err)
@@ -178,6 +184,7 @@ func main() {
 	// Routing
 	h := router.NewHandlers(oauth, r, repo, hub, viper.GetString("imagemagick.path"))
 	e := echo.New()
+	e.Use(router.AddHeadersMiddleware(map[string]string{"X-TRAQ-VERSION": fmt.Sprintf("%s.%s", version, revision)}))
 	e.HideBanner = true
 	e.HidePort = true
 	router.SetupRouting(e, h)

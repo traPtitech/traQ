@@ -5,7 +5,7 @@ WORKDIR /go/src/github.com/traPtitech/traQ
 COPY ./go.* ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -o /traQ
+RUN CGO_ENABLED=0 go build -o /traQ -ldflags "-X main.version=$(git describe --tags --abbrev=0) -X main.revision=$(git rev-parse --short HEAD)"
 
 
 FROM alpine:3.9
