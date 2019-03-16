@@ -12,3 +12,7 @@ linters:
     - typecheck
     - golint
     - gofmt
+
+linters-settings:
+  errcheck:
+    exclude: .circleci/errcheck-exclude.txt

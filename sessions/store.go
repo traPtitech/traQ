@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/golang-lru"
 	"github.com/jinzhu/gorm"
 	"github.com/satori/go.uuid"
-	"log"
 	"sync"
 	"time"
 )
@@ -237,7 +236,7 @@ func (sr *SessionRecord) encode(session *Session) {
 
 	buffer := bytes.Buffer{}
 	if err := gob.NewEncoder(&buffer).Encode(session.data); err != nil {
-		log.Fatal(err) // gobにdataの中身の構造体が登録されていない
+		panic(err) // gobにdataの中身の構造体が登録されていない
 	}
 	sr.Data = buffer.Bytes()
 }
