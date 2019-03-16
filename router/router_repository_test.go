@@ -1,12 +1,14 @@
 package router
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/disintegration/imaging"
 	"github.com/labstack/echo"
 	"github.com/mikespook/gorbac"
 	"github.com/satori/go.uuid"
@@ -15,7 +17,6 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/storage"
-	"github.com/traPtitech/traQ/utils/thumb"
 	"github.com/traPtitech/traQ/utils/validator"
 	"golang.org/x/sync/errgroup"
 	"image"
@@ -100,19 +101,19 @@ func NewTestRepository() *TestRepository {
 	return r
 }
 
-func (r *TestRepository) Sync() (bool, error) {
+func (repo *TestRepository) Sync() (bool, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) GetFS() storage.FileStorage {
-	return r.FS
+func (repo *TestRepository) GetFS() storage.FileStorage {
+	return repo.FS
 }
 
-func (r *TestRepository) CreateUser(name, password string, role gorbac.Role) (*model.User, error) {
-	r.UsersLock.Lock()
-	defer r.UsersLock.Unlock()
+func (repo *TestRepository) CreateUser(name, password string, role gorbac.Role) (*model.User, error) {
+	repo.UsersLock.Lock()
+	defer repo.UsersLock.Unlock()
 
-	for _, v := range r.Users {
+	for _, v := range repo.Users {
 		if v.Name == name {
 			return nil, repository.ErrAlreadyExists
 		}
@@ -135,30 +136,30 @@ func (r *TestRepository) CreateUser(name, password string, role gorbac.Role) (*m
 		return nil, err
 	}
 
-	iconID, err := r.GenerateIconFile(user.Name)
+	iconID, err := repo.GenerateIconFile(user.Name)
 	if err != nil {
 		return nil, err
 	}
 	user.Icon = iconID
 
-	r.Users[user.ID] = user
+	repo.Users[user.ID] = user
 	return &user, nil
 }
 
-func (r *TestRepository) GetUser(id uuid.UUID) (*model.User, error) {
-	r.UsersLock.RLock()
-	u, ok := r.Users[id]
-	r.UsersLock.RUnlock()
+func (repo *TestRepository) GetUser(id uuid.UUID) (*model.User, error) {
+	repo.UsersLock.RLock()
+	u, ok := repo.Users[id]
+	repo.UsersLock.RUnlock()
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
 	return &u, nil
 }
 
-func (r *TestRepository) GetUserByName(name string) (*model.User, error) {
-	r.UsersLock.RLock()
-	defer r.UsersLock.RUnlock()
-	for _, u := range r.Users {
+func (repo *TestRepository) GetUserByName(name string) (*model.User, error) {
+	repo.UsersLock.RLock()
+	defer repo.UsersLock.RUnlock()
+	for _, u := range repo.Users {
 		u := u
 		if u.Name == name {
 			return &u, nil
@@ -167,132 +168,132 @@ func (r *TestRepository) GetUserByName(name string) (*model.User, error) {
 	return nil, repository.ErrNotFound
 }
 
-func (r *TestRepository) GetUsers() ([]*model.User, error) {
-	r.UsersLock.RLock()
-	result := make([]*model.User, 0, len(r.Users))
-	for _, u := range r.Users {
+func (repo *TestRepository) GetUsers() ([]*model.User, error) {
+	repo.UsersLock.RLock()
+	result := make([]*model.User, 0, len(repo.Users))
+	for _, u := range repo.Users {
 		u := u
 		result = append(result, &u)
 	}
-	r.UsersLock.RUnlock()
+	repo.UsersLock.RUnlock()
 	return result, nil
 }
 
-func (r *TestRepository) UserExists(id uuid.UUID) (bool, error) {
-	r.UsersLock.RLock()
-	_, ok := r.Users[id]
-	r.UsersLock.RUnlock()
+func (repo *TestRepository) UserExists(id uuid.UUID) (bool, error) {
+	repo.UsersLock.RLock()
+	_, ok := repo.Users[id]
+	repo.UsersLock.RUnlock()
 	return ok, nil
 }
 
-func (r *TestRepository) ChangeUserDisplayName(id uuid.UUID, displayName string) error {
+func (repo *TestRepository) ChangeUserDisplayName(id uuid.UUID, displayName string) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
 	if utf8.RuneCountInString(displayName) > 64 {
 		return errors.New("displayName must be <=64 characters")
 	}
-	r.UsersLock.Lock()
-	u, ok := r.Users[id]
+	repo.UsersLock.Lock()
+	u, ok := repo.Users[id]
 	if ok {
 		u.DisplayName = displayName
 		u.UpdatedAt = time.Now()
-		r.Users[id] = u
+		repo.Users[id] = u
 	}
-	r.UsersLock.Unlock()
+	repo.UsersLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) ChangeUserPassword(id uuid.UUID, password string) error {
+func (repo *TestRepository) ChangeUserPassword(id uuid.UUID, password string) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
 	salt := utils.GenerateSalt()
 	hashed := utils.HashPassword(password, salt)
-	r.UsersLock.Lock()
-	u, ok := r.Users[id]
+	repo.UsersLock.Lock()
+	u, ok := repo.Users[id]
 	if ok {
 		u.Salt = hex.EncodeToString(salt)
 		u.Password = hex.EncodeToString(hashed)
 		u.UpdatedAt = time.Now()
-		r.Users[id] = u
+		repo.Users[id] = u
 	}
-	r.UsersLock.Unlock()
+	repo.UsersLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
+func (repo *TestRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
 	if id == uuid.Nil || fileID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.UsersLock.Lock()
-	u, ok := r.Users[id]
+	repo.UsersLock.Lock()
+	u, ok := repo.Users[id]
 	if ok {
 		u.Icon = fileID
 		u.UpdatedAt = time.Now()
-		r.Users[id] = u
+		repo.Users[id] = u
 	}
-	r.UsersLock.Unlock()
+	repo.UsersLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) ChangeUserTwitterID(id uuid.UUID, twitterID string) error {
+func (repo *TestRepository) ChangeUserTwitterID(id uuid.UUID, twitterID string) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
 	if err := validator.ValidateVar(twitterID, "twitterid"); err != nil {
 		return err
 	}
-	r.UsersLock.Lock()
-	u, ok := r.Users[id]
+	repo.UsersLock.Lock()
+	u, ok := repo.Users[id]
 	if ok {
 		u.TwitterID = twitterID
 		u.UpdatedAt = time.Now()
-		r.Users[id] = u
+		repo.Users[id] = u
 	}
-	r.UsersLock.Unlock()
+	repo.UsersLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
+func (repo *TestRepository) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.UsersLock.Lock()
-	defer r.UsersLock.Unlock()
-	u, ok := r.Users[id]
+	repo.UsersLock.Lock()
+	defer repo.UsersLock.Unlock()
+	u, ok := repo.Users[id]
 	if !ok {
 		return repository.ErrNotFound
 	}
 	u.Status = status
 	u.UpdatedAt = time.Now()
-	r.Users[id] = u
+	repo.Users[id] = u
 	return nil
 }
 
-func (r *TestRepository) UpdateUserLastOnline(id uuid.UUID, t time.Time) (err error) {
+func (repo *TestRepository) UpdateUserLastOnline(id uuid.UUID, t time.Time) (err error) {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.UsersLock.Lock()
-	u, ok := r.Users[id]
+	repo.UsersLock.Lock()
+	u, ok := repo.Users[id]
 	if ok {
 		u.LastOnline = &t
 		u.UpdatedAt = time.Now()
-		r.Users[id] = u
+		repo.Users[id] = u
 	}
-	r.UsersLock.Unlock()
+	repo.UsersLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) IsUserOnline(id uuid.UUID) bool {
+func (repo *TestRepository) IsUserOnline(id uuid.UUID) bool {
 	return false
 }
 
-func (r *TestRepository) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
-	r.UsersLock.RLock()
-	u, ok := r.Users[id]
-	r.UsersLock.RUnlock()
+func (repo *TestRepository) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
+	repo.UsersLock.RLock()
+	u, ok := repo.Users[id]
+	repo.UsersLock.RUnlock()
 	if !ok {
 		return time.Time{}, repository.ErrNotFound
 	}
@@ -302,15 +303,15 @@ func (r *TestRepository) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
 	return time.Time{}, nil
 }
 
-func (r *TestRepository) GetHeartbeatStatus(channelID uuid.UUID) (model.HeartbeatStatus, bool) {
+func (repo *TestRepository) GetHeartbeatStatus(channelID uuid.UUID) (model.HeartbeatStatus, bool) {
 	panic("implement me")
 }
 
-func (r *TestRepository) UpdateHeartbeatStatus(userID, channelID uuid.UUID, status string) {
+func (repo *TestRepository) UpdateHeartbeatStatus(userID, channelID uuid.UUID, status string) {
 	panic("implement me")
 }
 
-func (r *TestRepository) CreateUserGroup(name, description string, adminID uuid.UUID) (*model.UserGroup, error) {
+func (repo *TestRepository) CreateUserGroup(name, description string, adminID uuid.UUID) (*model.UserGroup, error) {
 	g := model.UserGroup{
 		ID:          uuid.NewV4(),
 		Name:        name,
@@ -323,30 +324,30 @@ func (r *TestRepository) CreateUserGroup(name, description string, adminID uuid.
 		return nil, err
 	}
 
-	r.UserGroupsLock.Lock()
-	defer r.UserGroupsLock.Unlock()
-	for _, v := range r.UserGroups {
+	repo.UserGroupsLock.Lock()
+	defer repo.UserGroupsLock.Unlock()
+	for _, v := range repo.UserGroups {
 		if v.Name == name {
 			return nil, repository.ErrAlreadyExists
 		}
 	}
-	r.UserGroups[g.ID] = g
+	repo.UserGroups[g.ID] = g
 	return &g, nil
 }
 
-func (r *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.UpdateUserGroupNameArgs) error {
+func (repo *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.UpdateUserGroupNameArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
 
-	r.UserGroupsLock.Lock()
-	defer r.UserGroupsLock.Unlock()
-	g, ok := r.UserGroups[id]
+	repo.UserGroupsLock.Lock()
+	defer repo.UserGroupsLock.Unlock()
+	g, ok := repo.UserGroups[id]
 	if !ok {
 		return repository.ErrNotFound
 	}
 	if len(args.Name) > 0 {
-		for _, v := range r.UserGroups {
+		for _, v := range repo.UserGroups {
 			if v.Name == args.Name {
 				return repository.ErrAlreadyExists
 			}
@@ -362,46 +363,46 @@ func (r *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.UpdateUse
 	if err := g.Validate(); err != nil {
 		return err
 	}
-	r.UserGroups[id] = g
+	repo.UserGroups[id] = g
 	return nil
 }
 
-func (r *TestRepository) DeleteUserGroup(id uuid.UUID) error {
+func (repo *TestRepository) DeleteUserGroup(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.UserGroupsLock.Lock()
-	defer r.UserGroupsLock.Unlock()
-	r.UserGroupMembersLock.Lock()
-	defer r.UserGroupMembersLock.Unlock()
-	if _, ok := r.UserGroups[id]; !ok {
+	repo.UserGroupsLock.Lock()
+	defer repo.UserGroupsLock.Unlock()
+	repo.UserGroupMembersLock.Lock()
+	defer repo.UserGroupMembersLock.Unlock()
+	if _, ok := repo.UserGroups[id]; !ok {
 		return repository.ErrNotFound
 	}
-	delete(r.UserGroups, id)
-	delete(r.UserGroupMembers, id)
+	delete(repo.UserGroups, id)
+	delete(repo.UserGroupMembers, id)
 	return nil
 }
 
-func (r *TestRepository) GetUserGroup(id uuid.UUID) (*model.UserGroup, error) {
+func (repo *TestRepository) GetUserGroup(id uuid.UUID) (*model.UserGroup, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
-	r.UserGroupsLock.RLock()
-	g, ok := r.UserGroups[id]
-	r.UserGroupsLock.RUnlock()
+	repo.UserGroupsLock.RLock()
+	g, ok := repo.UserGroups[id]
+	repo.UserGroupsLock.RUnlock()
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
 	return &g, nil
 }
 
-func (r *TestRepository) GetUserGroupByName(name string) (*model.UserGroup, error) {
+func (repo *TestRepository) GetUserGroupByName(name string) (*model.UserGroup, error) {
 	if len(name) == 0 {
 		return nil, repository.ErrNotFound
 	}
-	r.UserGroupsLock.RLock()
-	defer r.UserGroupsLock.RUnlock()
-	for _, v := range r.UserGroups {
+	repo.UserGroupsLock.RLock()
+	defer repo.UserGroupsLock.RUnlock()
+	for _, v := range repo.UserGroups {
 		if v.Name == name {
 			return &v, nil
 		}
@@ -409,13 +410,13 @@ func (r *TestRepository) GetUserGroupByName(name string) (*model.UserGroup, erro
 	return nil, repository.ErrNotFound
 }
 
-func (r *TestRepository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.UUID, error) {
 	groups := make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
 		return groups, nil
 	}
-	r.UserGroupMembersLock.RLock()
-	for gid, users := range r.UserGroupMembers {
+	repo.UserGroupMembersLock.RLock()
+	for gid, users := range repo.UserGroupMembers {
 		for uid := range users {
 			if uid == userID {
 				groups = append(groups, gid)
@@ -423,72 +424,72 @@ func (r *TestRepository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.UUID
 			}
 		}
 	}
-	r.UserGroupMembersLock.RUnlock()
+	repo.UserGroupMembersLock.RUnlock()
 	return groups, nil
 }
 
-func (r *TestRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
+func (repo *TestRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
 	groups := make([]*model.UserGroup, 0)
-	r.UserGroupsLock.RLock()
-	for _, v := range r.UserGroups {
+	repo.UserGroupsLock.RLock()
+	for _, v := range repo.UserGroups {
 		v := v
 		groups = append(groups, &v)
 	}
-	r.UserGroupsLock.RUnlock()
+	repo.UserGroupsLock.RUnlock()
 	return groups, nil
 }
 
-func (r *TestRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
+func (repo *TestRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.UserGroupMembersLock.Lock()
-	users, ok := r.UserGroupMembers[groupID]
+	repo.UserGroupMembersLock.Lock()
+	users, ok := repo.UserGroupMembers[groupID]
 	if !ok {
 		users = make(map[uuid.UUID]bool)
-		r.UserGroupMembers[groupID] = users
+		repo.UserGroupMembers[groupID] = users
 	}
 	users[userID] = true
-	r.UserGroupMembersLock.Unlock()
+	repo.UserGroupMembersLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
+func (repo *TestRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.UserGroupMembersLock.Lock()
-	users, ok := r.UserGroupMembers[groupID]
+	repo.UserGroupMembersLock.Lock()
+	users, ok := repo.UserGroupMembers[groupID]
 	if ok {
 		delete(users, userID)
 	}
-	r.UserGroupMembersLock.Unlock()
+	repo.UserGroupMembersLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUID, error) {
 	ids := make([]uuid.UUID, 0)
 	if groupID == uuid.Nil {
 		return ids, repository.ErrNotFound
 	}
-	r.UserGroupsLock.RLock()
-	_, ok := r.UserGroups[groupID]
-	r.UserGroupsLock.RUnlock()
+	repo.UserGroupsLock.RLock()
+	_, ok := repo.UserGroups[groupID]
+	repo.UserGroupsLock.RUnlock()
 	if !ok {
 		return ids, repository.ErrNotFound
 	}
-	r.UserGroupMembersLock.RLock()
-	for uid := range r.UserGroupMembers[groupID] {
+	repo.UserGroupMembersLock.RLock()
+	for uid := range repo.UserGroupMembers[groupID] {
 		ids = append(ids, uid)
 	}
-	r.UserGroupMembersLock.RUnlock()
+	repo.UserGroupMembersLock.RUnlock()
 	return ids, nil
 }
 
-func (r *TestRepository) CreateTag(name string, restricted bool, tagType string) (*model.Tag, error) {
-	r.TagsLock.Lock()
-	defer r.TagsLock.Unlock()
-	for _, t := range r.Tags {
+func (repo *TestRepository) CreateTag(name string, restricted bool, tagType string) (*model.Tag, error) {
+	repo.TagsLock.Lock()
+	defer repo.TagsLock.Unlock()
+	for _, t := range repo.Tags {
 		if t.Name == name {
 			return nil, repository.ErrAlreadyExists
 		}
@@ -504,65 +505,65 @@ func (r *TestRepository) CreateTag(name string, restricted bool, tagType string)
 	if err := t.Validate(); err != nil {
 		return nil, err
 	}
-	r.Tags[t.ID] = t
+	repo.Tags[t.ID] = t
 	return &t, nil
 }
 
-func (r *TestRepository) ChangeTagType(id uuid.UUID, tagType string) error {
+func (repo *TestRepository) ChangeTagType(id uuid.UUID, tagType string) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.TagsLock.Lock()
-	t, ok := r.Tags[id]
+	repo.TagsLock.Lock()
+	t, ok := repo.Tags[id]
 	if ok {
 		t.Type = tagType
 		t.UpdatedAt = time.Now()
-		r.Tags[id] = t
+		repo.Tags[id] = t
 	}
-	r.TagsLock.Unlock()
+	repo.TagsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) ChangeTagRestrict(id uuid.UUID, restrict bool) error {
+func (repo *TestRepository) ChangeTagRestrict(id uuid.UUID, restrict bool) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.TagsLock.Lock()
-	t, ok := r.Tags[id]
+	repo.TagsLock.Lock()
+	t, ok := repo.Tags[id]
 	if ok {
 		t.Restricted = restrict
 		t.UpdatedAt = time.Now()
-		r.Tags[id] = t
+		repo.Tags[id] = t
 	}
-	r.TagsLock.Unlock()
+	repo.TagsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) GetAllTags() ([]*model.Tag, error) {
+func (repo *TestRepository) GetAllTags() ([]*model.Tag, error) {
 	result := make([]*model.Tag, 0)
-	r.TagsLock.RLock()
-	for _, v := range r.Tags {
+	repo.TagsLock.RLock()
+	for _, v := range repo.Tags {
 		v := v
 		result = append(result, &v)
 	}
-	r.TagsLock.RUnlock()
+	repo.TagsLock.RUnlock()
 	return result, nil
 }
 
-func (r *TestRepository) GetTagByID(id uuid.UUID) (*model.Tag, error) {
-	r.TagsLock.RLock()
-	t, ok := r.Tags[id]
-	r.TagsLock.RUnlock()
+func (repo *TestRepository) GetTagByID(id uuid.UUID) (*model.Tag, error) {
+	repo.TagsLock.RLock()
+	t, ok := repo.Tags[id]
+	repo.TagsLock.RUnlock()
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
 	return &t, nil
 }
 
-func (r *TestRepository) GetTagByName(name string) (*model.Tag, error) {
-	r.TagsLock.RLock()
-	defer r.TagsLock.RUnlock()
-	for _, t := range r.Tags {
+func (repo *TestRepository) GetTagByName(name string) (*model.Tag, error) {
+	repo.TagsLock.RLock()
+	defer repo.TagsLock.RUnlock()
+	for _, t := range repo.Tags {
 		if t.Name == name {
 			return &t, nil
 		}
@@ -570,13 +571,13 @@ func (r *TestRepository) GetTagByName(name string) (*model.Tag, error) {
 	return nil, repository.ErrNotFound
 }
 
-func (r *TestRepository) GetOrCreateTagByName(name string) (*model.Tag, error) {
+func (repo *TestRepository) GetOrCreateTagByName(name string) (*model.Tag, error) {
 	if len(name) == 0 {
 		return nil, repository.ErrNotFound
 	}
-	r.TagsLock.Lock()
-	defer r.TagsLock.Unlock()
-	for _, t := range r.Tags {
+	repo.TagsLock.Lock()
+	defer repo.TagsLock.Unlock()
+	for _, t := range repo.Tags {
 		if t.Name == name {
 			return &t, nil
 		}
@@ -587,11 +588,11 @@ func (r *TestRepository) GetOrCreateTagByName(name string) (*model.Tag, error) {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	r.Tags[t.ID] = t
+	repo.Tags[t.ID] = t
 	return &t, nil
 }
 
-func (r *TestRepository) AddUserTag(userID, tagID uuid.UUID) error {
+func (repo *TestRepository) AddUserTag(userID, tagID uuid.UUID) error {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -601,54 +602,54 @@ func (r *TestRepository) AddUserTag(userID, tagID uuid.UUID) error {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	r.UserTagsLock.Lock()
-	tags, ok := r.UserTags[userID]
+	repo.UserTagsLock.Lock()
+	tags, ok := repo.UserTags[userID]
 	if !ok {
 		tags = make(map[uuid.UUID]model.UsersTag)
-		r.UserTags[userID] = tags
+		repo.UserTags[userID] = tags
 	}
 	if _, ok := tags[tagID]; ok {
 		return repository.ErrAlreadyExists
 	}
 	tags[tagID] = ut
-	r.UserTagsLock.Unlock()
+	repo.UserTagsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) ChangeUserTagLock(userID, tagID uuid.UUID, locked bool) error {
+func (repo *TestRepository) ChangeUserTagLock(userID, tagID uuid.UUID, locked bool) error {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.UserTagsLock.Lock()
-	defer r.UserTagsLock.Unlock()
-	for id, tag := range r.UserTags[userID] {
+	repo.UserTagsLock.Lock()
+	defer repo.UserTagsLock.Unlock()
+	for id, tag := range repo.UserTags[userID] {
 		if id == tagID {
 			tag.IsLocked = locked
 			tag.UpdatedAt = time.Now()
-			r.UserTags[userID][tagID] = tag
+			repo.UserTags[userID][tagID] = tag
 			return nil
 		}
 	}
 	return nil
 }
 
-func (r *TestRepository) DeleteUserTag(userID, tagID uuid.UUID) error {
+func (repo *TestRepository) DeleteUserTag(userID, tagID uuid.UUID) error {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.UserTagsLock.Lock()
-	tags, ok := r.UserTags[userID]
+	repo.UserTagsLock.Lock()
+	tags, ok := repo.UserTags[userID]
 	if ok {
 		delete(tags, tagID)
 	}
-	r.UserTagsLock.Unlock()
+	repo.UserTagsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) GetUserTag(userID, tagID uuid.UUID) (*model.UsersTag, error) {
-	r.UserTagsLock.RLock()
-	defer r.UserTagsLock.RUnlock()
-	tags, ok := r.UserTags[userID]
+func (repo *TestRepository) GetUserTag(userID, tagID uuid.UUID) (*model.UsersTag, error) {
+	repo.UserTagsLock.RLock()
+	defer repo.UserTagsLock.RUnlock()
+	tags, ok := repo.UserTags[userID]
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
@@ -656,95 +657,95 @@ func (r *TestRepository) GetUserTag(userID, tagID uuid.UUID) (*model.UsersTag, e
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
-	r.TagsLock.RLock()
-	ut.Tag = r.Tags[ut.TagID]
-	r.TagsLock.RUnlock()
+	repo.TagsLock.RLock()
+	ut.Tag = repo.Tags[ut.TagID]
+	repo.TagsLock.RUnlock()
 	return &ut, nil
 }
 
-func (r *TestRepository) GetUserTagsByUserID(userID uuid.UUID) ([]*model.UsersTag, error) {
+func (repo *TestRepository) GetUserTagsByUserID(userID uuid.UUID) ([]*model.UsersTag, error) {
 	tags := make([]*model.UsersTag, 0)
-	r.UserTagsLock.RLock()
-	for tid, ut := range r.UserTags[userID] {
+	repo.UserTagsLock.RLock()
+	for tid, ut := range repo.UserTags[userID] {
 		ut := ut
-		r.TagsLock.RLock()
-		ut.Tag = r.Tags[tid]
-		r.TagsLock.RUnlock()
+		repo.TagsLock.RLock()
+		ut.Tag = repo.Tags[tid]
+		repo.TagsLock.RUnlock()
 		tags = append(tags, &ut)
 	}
-	r.UserTagsLock.RUnlock()
+	repo.UserTagsLock.RUnlock()
 	return tags, nil
 }
 
-func (r *TestRepository) GetUsersByTag(tag string) ([]*model.User, error) {
+func (repo *TestRepository) GetUsersByTag(tag string) ([]*model.User, error) {
 	users := make([]*model.User, 0)
-	r.TagsLock.RLock()
+	repo.TagsLock.RLock()
 	tid := uuid.Nil
-	for _, t := range r.Tags {
+	for _, t := range repo.Tags {
 		if t.Name == tag {
 			tid = t.ID
 		}
 	}
-	r.TagsLock.RUnlock()
+	repo.TagsLock.RUnlock()
 	if tid == uuid.Nil {
 		return users, nil
 	}
-	r.UserTagsLock.RLock()
-	for uid, tags := range r.UserTags {
+	repo.UserTagsLock.RLock()
+	for uid, tags := range repo.UserTags {
 		if _, ok := tags[tid]; ok {
-			r.UsersLock.RLock()
-			u, ok := r.Users[uid]
-			r.UsersLock.RUnlock()
+			repo.UsersLock.RLock()
+			u, ok := repo.Users[uid]
+			repo.UsersLock.RUnlock()
 			if ok {
 				users = append(users, &u)
 			}
 		}
 	}
-	r.UserTagsLock.RUnlock()
+	repo.UserTagsLock.RUnlock()
 	return users, nil
 }
 
-func (r *TestRepository) GetUserIDsByTag(tag string) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetUserIDsByTag(tag string) ([]uuid.UUID, error) {
 	users := make([]uuid.UUID, 0)
-	r.TagsLock.RLock()
+	repo.TagsLock.RLock()
 	tid := uuid.Nil
-	for _, t := range r.Tags {
+	for _, t := range repo.Tags {
 		if t.Name == tag {
 			tid = t.ID
 		}
 	}
-	r.TagsLock.RUnlock()
+	repo.TagsLock.RUnlock()
 	if tid == uuid.Nil {
 		return users, nil
 	}
-	r.UserTagsLock.RLock()
-	for uid, tags := range r.UserTags {
+	repo.UserTagsLock.RLock()
+	for uid, tags := range repo.UserTags {
 		if _, ok := tags[tid]; ok {
 			users = append(users, uid)
 		}
 	}
-	r.UserTagsLock.RUnlock()
+	repo.UserTagsLock.RUnlock()
 	return users, nil
 }
 
-func (r *TestRepository) GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, error) {
 	users := make([]uuid.UUID, 0)
-	r.UserTagsLock.RLock()
-	for uid, tags := range r.UserTags {
+	repo.UserTagsLock.RLock()
+	for uid, tags := range repo.UserTags {
 		if _, ok := tags[tagID]; ok {
 			users = append(users, uid)
 		}
 	}
-	r.UserTagsLock.RUnlock()
+	repo.UserTagsLock.RUnlock()
 	return users, nil
 }
 
-func (r *TestRepository) CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
+func (repo *TestRepository) CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
 	// チャンネル名検証
 	if err := validator.ValidateVar(name, "channel,required"); err != nil {
 		return nil, err
 	}
-	if has, err := r.IsChannelPresent(name, parent); err != nil {
+	if has, err := repo.IsChannelPresent(name, parent); err != nil {
 		return nil, err
 	} else if has {
 		return nil, repository.ErrAlreadyExists
@@ -756,7 +757,7 @@ func (r *TestRepository) CreatePublicChannel(name string, parent, creatorID uuid
 	case dmChannelRootUUID: // DMルート
 		return nil, repository.ErrForbidden
 	default: // ルート以外
-		pCh, err := r.GetChannel(parent)
+		pCh, err := repo.GetChannel(parent)
 		if err != nil {
 			return nil, err
 		}
@@ -778,7 +779,7 @@ func (r *TestRepository) CreatePublicChannel(name string, parent, creatorID uuid
 				break
 			}
 
-			parent, err = r.GetChannel(parent.ParentID)
+			parent, err = repo.GetChannel(parent.ParentID)
 			if err != nil {
 				if err == repository.ErrNotFound {
 					break
@@ -804,16 +805,16 @@ func (r *TestRepository) CreatePublicChannel(name string, parent, creatorID uuid
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	r.ChannelsLock.Lock()
-	r.Channels[ch.ID] = ch
-	r.ChannelsLock.Unlock()
+	repo.ChannelsLock.Lock()
+	repo.Channels[ch.ID] = ch
+	repo.ChannelsLock.Unlock()
 	return &ch, nil
 }
 
-func (r *TestRepository) CreatePrivateChannel(name string, creatorID uuid.UUID, members []uuid.UUID) (*model.Channel, error) {
+func (repo *TestRepository) CreatePrivateChannel(name string, creatorID uuid.UUID, members []uuid.UUID) (*model.Channel, error) {
 	validMember := make([]uuid.UUID, 0, len(members))
 	for _, v := range members {
-		ok, err := r.UserExists(v)
+		ok, err := repo.UserExists(v)
 		if err != nil {
 			return nil, err
 		}
@@ -829,7 +830,7 @@ func (r *TestRepository) CreatePrivateChannel(name string, creatorID uuid.UUID, 
 	if err := validator.ValidateVar(name, "channel,required"); err != nil {
 		return nil, err
 	}
-	if has, err := r.IsChannelPresent(name, uuid.Nil); err != nil {
+	if has, err := repo.IsChannelPresent(name, uuid.Nil); err != nil {
 		return nil, err
 	} else if has {
 		return nil, repository.ErrAlreadyExists
@@ -846,23 +847,23 @@ func (r *TestRepository) CreatePrivateChannel(name string, creatorID uuid.UUID, 
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	r.ChannelsLock.Lock()
-	r.Channels[ch.ID] = ch
+	repo.ChannelsLock.Lock()
+	repo.Channels[ch.ID] = ch
 	for _, v := range validMember {
-		_ = r.AddPrivateChannelMember(ch.ID, v)
+		_ = repo.AddPrivateChannelMember(ch.ID, v)
 	}
-	r.ChannelsLock.Unlock()
+	repo.ChannelsLock.Unlock()
 	return &ch, nil
 }
 
-func (r *TestRepository) CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*model.Channel, error) {
+func (repo *TestRepository) CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*model.Channel, error) {
 	// ダイレクトメッセージルートの子チャンネルは作れない
 	if parentID == dmChannelRootUUID {
 		return nil, repository.ErrForbidden
 	}
 
 	// 親チャンネル検証
-	pCh, err := r.GetChannel(parentID)
+	pCh, err := repo.GetChannel(parentID)
 	if err != nil {
 		return nil, err
 	}
@@ -876,7 +877,7 @@ func (r *TestRepository) CreateChildChannel(name string, parentID, creatorID uui
 	if err := validator.ValidateVar(name, "channel,required"); err != nil {
 		return nil, err
 	}
-	if has, err := r.IsChannelPresent(name, pCh.ID); err != nil {
+	if has, err := repo.IsChannelPresent(name, pCh.ID); err != nil {
 		return nil, err
 	} else if has {
 		return nil, repository.ErrAlreadyExists
@@ -889,7 +890,7 @@ func (r *TestRepository) CreateChildChannel(name string, parentID, creatorID uui
 			break
 		}
 
-		parent, err = r.GetChannel(parent.ParentID)
+		parent, err = repo.GetChannel(parent.ParentID)
 		if err != nil {
 			if err == repository.ErrNotFound {
 				break
@@ -917,35 +918,35 @@ func (r *TestRepository) CreateChildChannel(name string, parentID, creatorID uui
 	if pCh.IsPublic {
 		// 公開チャンネル
 		ch.IsPublic = true
-		r.ChannelsLock.Lock()
-		r.Channels[ch.ID] = ch
-		r.ChannelsLock.Unlock()
+		repo.ChannelsLock.Lock()
+		repo.Channels[ch.ID] = ch
+		repo.ChannelsLock.Unlock()
 	} else {
 		// 非公開チャンネル
 		ch.IsPublic = false
 
 		// 親チャンネルとメンバーは同じ
-		ids, err := r.GetPrivateChannelMemberIDs(pCh.ID)
+		ids, err := repo.GetPrivateChannelMemberIDs(pCh.ID)
 		if err != nil {
 			return nil, err
 		}
 
-		r.ChannelsLock.Lock()
-		r.Channels[ch.ID] = ch
+		repo.ChannelsLock.Lock()
+		repo.Channels[ch.ID] = ch
 		for _, v := range ids {
-			_ = r.AddPrivateChannelMember(ch.ID, v)
+			_ = repo.AddPrivateChannelMember(ch.ID, v)
 		}
-		r.ChannelsLock.Unlock()
+		repo.ChannelsLock.Unlock()
 	}
 	return &ch, nil
 }
 
-func (r *TestRepository) UpdateChannelAttributes(channelID uuid.UUID, visibility, forced *bool) error {
+func (repo *TestRepository) UpdateChannelAttributes(channelID uuid.UUID, visibility, forced *bool) error {
 	if channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.ChannelsLock.Lock()
-	ch, ok := r.Channels[channelID]
+	repo.ChannelsLock.Lock()
+	ch, ok := repo.Channels[channelID]
 	if ok {
 		if visibility != nil {
 			ch.IsVisible = *visibility
@@ -954,28 +955,28 @@ func (r *TestRepository) UpdateChannelAttributes(channelID uuid.UUID, visibility
 			ch.IsForced = *forced
 		}
 		ch.UpdatedAt = time.Now()
-		r.Channels[channelID] = ch
+		repo.Channels[channelID] = ch
 	}
-	r.ChannelsLock.Unlock()
+	repo.ChannelsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) UpdateChannelTopic(channelID uuid.UUID, topic string, updaterID uuid.UUID) error {
+func (repo *TestRepository) UpdateChannelTopic(channelID uuid.UUID, topic string, updaterID uuid.UUID) error {
 	if channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.ChannelsLock.Lock()
-	ch, ok := r.Channels[channelID]
+	repo.ChannelsLock.Lock()
+	ch, ok := repo.Channels[channelID]
 	if ok {
 		ch.Topic = topic
 		ch.UpdatedAt = time.Now()
-		r.Channels[channelID] = ch
+		repo.Channels[channelID] = ch
 	}
-	r.ChannelsLock.Unlock()
+	repo.ChannelsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) ChangeChannelName(channelID uuid.UUID, name string) error {
+func (repo *TestRepository) ChangeChannelName(channelID uuid.UUID, name string) error {
 	if channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -986,7 +987,7 @@ func (r *TestRepository) ChangeChannelName(channelID uuid.UUID, name string) err
 	}
 
 	// チャンネル取得
-	ch, err := r.GetChannel(channelID)
+	ch, err := repo.GetChannel(channelID)
 	if err != nil {
 		return err
 	}
@@ -997,31 +998,31 @@ func (r *TestRepository) ChangeChannelName(channelID uuid.UUID, name string) err
 	}
 
 	// チャンネル名重複を確認
-	if has, err := r.IsChannelPresent(name, ch.ParentID); err != nil {
+	if has, err := repo.IsChannelPresent(name, ch.ParentID); err != nil {
 		return err
 	} else if has {
 		return repository.ErrAlreadyExists
 	}
 
 	// 更新
-	r.ChannelsLock.Lock()
-	nch, ok := r.Channels[channelID]
+	repo.ChannelsLock.Lock()
+	nch, ok := repo.Channels[channelID]
 	if ok {
 		nch.Name = name
 		nch.UpdatedAt = time.Now()
-		r.Channels[channelID] = nch
+		repo.Channels[channelID] = nch
 	}
-	r.ChannelsLock.Unlock()
+	repo.ChannelsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) ChangeChannelParent(channelID, parent uuid.UUID) error {
+func (repo *TestRepository) ChangeChannelParent(channelID, parent uuid.UUID) error {
 	if channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
 
 	// チャンネル取得
-	ch, err := r.GetChannel(channelID)
+	ch, err := repo.GetChannel(channelID)
 	if err != nil {
 		return err
 	}
@@ -1039,7 +1040,7 @@ func (r *TestRepository) ChangeChannelParent(channelID, parent uuid.UUID) error 
 		// DMチャンネルには出来ない
 		return repository.ErrForbidden
 	default:
-		pCh, err := r.GetChannel(parent)
+		pCh, err := repo.GetChannel(parent)
 		if err != nil {
 			return err
 		}
@@ -1066,7 +1067,7 @@ func (r *TestRepository) ChangeChannelParent(channelID, parent uuid.UUID) error 
 				return repository.ErrChannelDepthLimitation
 			}
 
-			pCh, err = r.GetChannel(pCh.ParentID)
+			pCh, err = repo.GetChannel(pCh.ParentID)
 			if err != nil {
 				if err == repository.ErrNotFound {
 					break
@@ -1078,7 +1079,7 @@ func (r *TestRepository) ChangeChannelParent(channelID, parent uuid.UUID) error 
 				return repository.ErrChannelDepthLimitation
 			}
 		}
-		bottom, err := r.GetChannelDepth(ch.ID) // 子孫 (自分を含む)
+		bottom, err := repo.GetChannelDepth(ch.ID) // 子孫 (自分を含む)
 		if err != nil {
 			return err
 		}
@@ -1089,104 +1090,104 @@ func (r *TestRepository) ChangeChannelParent(channelID, parent uuid.UUID) error 
 	}
 
 	// チャンネル名検証
-	if has, err := r.IsChannelPresent(ch.Name, parent); err != nil {
+	if has, err := repo.IsChannelPresent(ch.Name, parent); err != nil {
 		return err
 	} else if has {
 		return repository.ErrAlreadyExists
 	}
 
 	// 更新
-	r.ChannelsLock.Lock()
-	nch, ok := r.Channels[channelID]
+	repo.ChannelsLock.Lock()
+	nch, ok := repo.Channels[channelID]
 	if ok {
 		nch.ParentID = parent
 		nch.UpdatedAt = time.Now()
-		r.Channels[channelID] = nch
+		repo.Channels[channelID] = nch
 	}
-	r.ChannelsLock.Unlock()
+	repo.ChannelsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) DeleteChannel(channelID uuid.UUID) error {
+func (repo *TestRepository) DeleteChannel(channelID uuid.UUID) error {
 	if channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
 
-	desc, err := r.GetDescendantChannelIDs(channelID)
+	desc, err := repo.GetDescendantChannelIDs(channelID)
 	if err != nil {
 		return err
 	}
-	r.ChannelsLock.Lock()
+	repo.ChannelsLock.Lock()
 	for _, id := range append(desc, channelID) {
-		delete(r.Channels, id)
+		delete(repo.Channels, id)
 	}
-	r.ChannelsLock.Unlock()
+	repo.ChannelsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) GetChannel(channelID uuid.UUID) (*model.Channel, error) {
-	r.ChannelsLock.RLock()
-	ch, ok := r.Channels[channelID]
-	r.ChannelsLock.RUnlock()
+func (repo *TestRepository) GetChannel(channelID uuid.UUID) (*model.Channel, error) {
+	repo.ChannelsLock.RLock()
+	ch, ok := repo.Channels[channelID]
+	repo.ChannelsLock.RUnlock()
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
 	return &ch, nil
 }
 
-func (r *TestRepository) GetChannelByMessageID(messageID uuid.UUID) (*model.Channel, error) {
-	r.MessagesLock.RLock()
-	m, ok := r.Messages[messageID]
-	r.MessagesLock.RUnlock()
+func (repo *TestRepository) GetChannelByMessageID(messageID uuid.UUID) (*model.Channel, error) {
+	repo.MessagesLock.RLock()
+	m, ok := repo.Messages[messageID]
+	repo.MessagesLock.RUnlock()
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
-	r.ChannelsLock.RLock()
-	ch, ok := r.Channels[m.ChannelID]
-	r.ChannelsLock.RUnlock()
+	repo.ChannelsLock.RLock()
+	ch, ok := repo.Channels[m.ChannelID]
+	repo.ChannelsLock.RUnlock()
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
 	return &ch, nil
 }
 
-func (r *TestRepository) GetChannelsByUserID(userID uuid.UUID) ([]*model.Channel, error) {
+func (repo *TestRepository) GetChannelsByUserID(userID uuid.UUID) ([]*model.Channel, error) {
 	result := make([]*model.Channel, 0)
-	r.ChannelsLock.RLock()
-	for _, ch := range r.Channels {
+	repo.ChannelsLock.RLock()
+	for _, ch := range repo.Channels {
 		ch := ch
 		if ch.IsPublic {
 			result = append(result, &ch)
 		} else if userID != uuid.Nil {
-			ok, _ := r.IsUserPrivateChannelMember(ch.ID, userID)
+			ok, _ := repo.IsUserPrivateChannelMember(ch.ID, userID)
 			if ok {
 				result = append(result, &ch)
 			}
 		}
 	}
-	r.ChannelsLock.RUnlock()
+	repo.ChannelsLock.RUnlock()
 	return result, nil
 }
 
-func (r *TestRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.Channel, error) {
+func (repo *TestRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.Channel, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) GetAllChannels() ([]*model.Channel, error) {
-	r.ChannelsLock.RLock()
-	result := make([]*model.Channel, 0, len(r.Channels))
-	for _, c := range r.Channels {
+func (repo *TestRepository) GetAllChannels() ([]*model.Channel, error) {
+	repo.ChannelsLock.RLock()
+	result := make([]*model.Channel, 0, len(repo.Channels))
+	for _, c := range repo.Channels {
 		c := c
 		result = append(result, &c)
 	}
-	r.ChannelsLock.RUnlock()
+	repo.ChannelsLock.RUnlock()
 	return result, nil
 }
 
-func (r *TestRepository) IsChannelPresent(name string, parent uuid.UUID) (bool, error) {
-	r.ChannelsLock.RLock()
-	defer r.ChannelsLock.RUnlock()
-	for _, ch := range r.Channels {
+func (repo *TestRepository) IsChannelPresent(name string, parent uuid.UUID) (bool, error) {
+	repo.ChannelsLock.RLock()
+	defer repo.ChannelsLock.RUnlock()
+	for _, ch := range repo.Channels {
 		if ch.Name == name && ch.ParentID == parent {
 			return true, nil
 		}
@@ -1194,60 +1195,60 @@ func (r *TestRepository) IsChannelPresent(name string, parent uuid.UUID) (bool, 
 	return false, nil
 }
 
-func (r *TestRepository) IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error) {
+func (repo *TestRepository) IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return false, nil
 	}
-	r.ChannelsLock.RLock()
-	ch, ok := r.Channels[channelID]
-	r.ChannelsLock.RUnlock()
+	repo.ChannelsLock.RLock()
+	ch, ok := repo.Channels[channelID]
+	repo.ChannelsLock.RUnlock()
 	if !ok {
 		return false, nil
 	}
 	if ch.IsPublic {
 		return true, nil
 	}
-	return r.IsUserPrivateChannelMember(channelID, userID)
+	return repo.IsUserPrivateChannelMember(channelID, userID)
 }
 
-func (r *TestRepository) GetParentChannel(channelID uuid.UUID) (*model.Channel, error) {
-	r.ChannelsLock.RLock()
-	defer r.ChannelsLock.RUnlock()
-	ch, ok := r.Channels[channelID]
+func (repo *TestRepository) GetParentChannel(channelID uuid.UUID) (*model.Channel, error) {
+	repo.ChannelsLock.RLock()
+	defer repo.ChannelsLock.RUnlock()
+	ch, ok := repo.Channels[channelID]
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
 	if ch.ParentID == uuid.Nil {
 		return nil, nil
 	}
-	pCh, ok := r.Channels[ch.ParentID]
+	pCh, ok := repo.Channels[ch.ParentID]
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
 	return &pCh, nil
 }
 
-func (r *TestRepository) GetChildrenChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetChildrenChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
 	result := make([]uuid.UUID, 0)
-	r.ChannelsLock.RLock()
-	for cid, ch := range r.Channels {
+	repo.ChannelsLock.RLock()
+	for cid, ch := range repo.Channels {
 		if ch.ParentID == channelID {
 			result = append(result, cid)
 		}
 	}
-	r.ChannelsLock.RUnlock()
+	repo.ChannelsLock.RUnlock()
 	return result, nil
 }
 
-func (r *TestRepository) GetDescendantChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetDescendantChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
 	var descendants []uuid.UUID
-	children, err := r.GetChildrenChannelIDs(channelID)
+	children, err := repo.GetChildrenChannelIDs(channelID)
 	if err != nil {
 		return nil, err
 	}
 	descendants = append(descendants, children...)
 	for _, v := range children {
-		sub, err := r.GetDescendantChannelIDs(v)
+		sub, err := repo.GetDescendantChannelIDs(v)
 		if err != nil {
 			return nil, err
 		}
@@ -1256,9 +1257,9 @@ func (r *TestRepository) GetDescendantChannelIDs(channelID uuid.UUID) ([]uuid.UU
 	return descendants, nil
 }
 
-func (r *TestRepository) GetAscendantChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetAscendantChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
 	var ascendants []uuid.UUID
-	parent, err := r.GetParentChannel(channelID)
+	parent, err := repo.GetParentChannel(channelID)
 	if err != nil {
 		if err == repository.ErrNotFound {
 			return nil, nil
@@ -1268,7 +1269,7 @@ func (r *TestRepository) GetAscendantChannelIDs(channelID uuid.UUID) ([]uuid.UUI
 		return []uuid.UUID{}, nil
 	}
 	ascendants = append(ascendants, parent.ID)
-	sub, err := r.GetAscendantChannelIDs(parent.ID)
+	sub, err := repo.GetAscendantChannelIDs(parent.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -1276,18 +1277,18 @@ func (r *TestRepository) GetAscendantChannelIDs(channelID uuid.UUID) ([]uuid.UUI
 	return ascendants, nil
 }
 
-func (r *TestRepository) GetChannelPath(id uuid.UUID) (string, error) {
+func (repo *TestRepository) GetChannelPath(id uuid.UUID) (string, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) GetChannelDepth(id uuid.UUID) (int, error) {
-	children, err := r.GetChildrenChannelIDs(id)
+func (repo *TestRepository) GetChannelDepth(id uuid.UUID) (int, error) {
+	children, err := repo.GetChildrenChannelIDs(id)
 	if err != nil {
 		return 0, err
 	}
 	max := 0
 	for _, v := range children {
-		d, err := r.GetChannelDepth(v)
+		d, err := repo.GetChannelDepth(v)
 		if err != nil {
 			return 0, err
 		}
@@ -1298,35 +1299,35 @@ func (r *TestRepository) GetChannelDepth(id uuid.UUID) (int, error) {
 	return max + 1, nil
 }
 
-func (r *TestRepository) AddPrivateChannelMember(channelID, userID uuid.UUID) error {
+func (repo *TestRepository) AddPrivateChannelMember(channelID, userID uuid.UUID) error {
 	if channelID == uuid.Nil || userID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.PrivateChannelMembersLock.Lock()
-	uids, ok := r.PrivateChannelMembers[channelID]
+	repo.PrivateChannelMembersLock.Lock()
+	uids, ok := repo.PrivateChannelMembers[channelID]
 	if !ok {
 		uids = make(map[uuid.UUID]bool)
 	}
 	uids[userID] = true
-	r.PrivateChannelMembers[channelID] = uids
-	r.PrivateChannelMembersLock.Unlock()
+	repo.PrivateChannelMembers[channelID] = uids
+	repo.PrivateChannelMembersLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
 	result := make([]uuid.UUID, 0)
-	r.PrivateChannelMembersLock.RLock()
-	for uid := range r.PrivateChannelMembers[channelID] {
+	repo.PrivateChannelMembersLock.RLock()
+	for uid := range repo.PrivateChannelMembers[channelID] {
 		result = append(result, uid)
 	}
-	r.PrivateChannelMembersLock.RUnlock()
+	repo.PrivateChannelMembersLock.RUnlock()
 	return result, nil
 }
 
-func (r *TestRepository) IsUserPrivateChannelMember(channelID, userID uuid.UUID) (bool, error) {
-	r.PrivateChannelMembersLock.RLock()
-	defer r.PrivateChannelMembersLock.RUnlock()
-	uids, ok := r.PrivateChannelMembers[channelID]
+func (repo *TestRepository) IsUserPrivateChannelMember(channelID, userID uuid.UUID) (bool, error) {
+	repo.PrivateChannelMembersLock.RLock()
+	defer repo.PrivateChannelMembersLock.RUnlock()
+	uids, ok := repo.PrivateChannelMembers[channelID]
 	if !ok {
 		return false, nil
 	}
@@ -1338,63 +1339,63 @@ func (r *TestRepository) IsUserPrivateChannelMember(channelID, userID uuid.UUID)
 	return false, nil
 }
 
-func (r *TestRepository) SubscribeChannel(userID, channelID uuid.UUID) error {
+func (repo *TestRepository) SubscribeChannel(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.ChannelSubscribesLock.Lock()
-	chMap, ok := r.ChannelSubscribes[userID]
+	repo.ChannelSubscribesLock.Lock()
+	chMap, ok := repo.ChannelSubscribes[userID]
 	if !ok {
 		chMap = make(map[uuid.UUID]bool)
 	}
 	chMap[channelID] = true
-	r.ChannelSubscribes[userID] = chMap
-	r.ChannelSubscribesLock.Unlock()
+	repo.ChannelSubscribes[userID] = chMap
+	repo.ChannelSubscribesLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) UnsubscribeChannel(userID, channelID uuid.UUID) error {
+func (repo *TestRepository) UnsubscribeChannel(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.ChannelSubscribesLock.Lock()
-	chMap, ok := r.ChannelSubscribes[userID]
+	repo.ChannelSubscribesLock.Lock()
+	chMap, ok := repo.ChannelSubscribes[userID]
 	if ok {
 		delete(chMap, channelID)
-		r.ChannelSubscribes[userID] = chMap
+		repo.ChannelSubscribes[userID] = chMap
 	}
-	r.ChannelSubscribesLock.Unlock()
+	repo.ChannelSubscribesLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) GetSubscribingUserIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
-	r.ChannelSubscribesLock.RLock()
+func (repo *TestRepository) GetSubscribingUserIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
+	repo.ChannelSubscribesLock.RLock()
 	result := make([]uuid.UUID, 0)
-	for uid, chMap := range r.ChannelSubscribes {
+	for uid, chMap := range repo.ChannelSubscribes {
 		for cid := range chMap {
 			if cid == channelID {
 				result = append(result, uid)
 			}
 		}
 	}
-	r.ChannelSubscribesLock.RUnlock()
+	repo.ChannelSubscribesLock.RUnlock()
 	return result, nil
 }
 
-func (r *TestRepository) GetSubscribedChannelIDs(userID uuid.UUID) ([]uuid.UUID, error) {
-	r.ChannelSubscribesLock.RLock()
+func (repo *TestRepository) GetSubscribedChannelIDs(userID uuid.UUID) ([]uuid.UUID, error) {
+	repo.ChannelSubscribesLock.RLock()
 	result := make([]uuid.UUID, 0)
-	chMap, ok := r.ChannelSubscribes[userID]
+	chMap, ok := repo.ChannelSubscribes[userID]
 	if ok {
 		for id := range chMap {
 			result = append(result, id)
 		}
 	}
-	r.ChannelSubscribesLock.RUnlock()
+	repo.ChannelSubscribesLock.RUnlock()
 	return result, nil
 }
 
-func (r *TestRepository) CreateMessage(userID, channelID uuid.UUID, text string) (*model.Message, error) {
+func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text string) (*model.Message, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
@@ -1409,13 +1410,13 @@ func (r *TestRepository) CreateMessage(userID, channelID uuid.UUID, text string)
 	if err := m.Validate(); err != nil {
 		return nil, err
 	}
-	r.MessagesLock.Lock()
-	r.Messages[m.ID] = *m
-	r.MessagesLock.Unlock()
+	repo.MessagesLock.Lock()
+	repo.Messages[m.ID] = *m
+	repo.MessagesLock.Unlock()
 	return m, nil
 }
 
-func (r *TestRepository) UpdateMessage(messageID uuid.UUID, text string) error {
+func (repo *TestRepository) UpdateMessage(messageID uuid.UUID, text string) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1423,52 +1424,52 @@ func (r *TestRepository) UpdateMessage(messageID uuid.UUID, text string) error {
 		return errors.New("text is empty")
 	}
 
-	r.MessagesLock.Lock()
-	defer r.MessagesLock.Unlock()
-	m, ok := r.Messages[messageID]
+	repo.MessagesLock.Lock()
+	defer repo.MessagesLock.Unlock()
+	m, ok := repo.Messages[messageID]
 	if !ok {
 		return repository.ErrNotFound
 	}
 	m.Text = text
 	m.UpdatedAt = time.Now()
-	r.Messages[messageID] = m
+	repo.Messages[messageID] = m
 	return nil
 }
 
-func (r *TestRepository) DeleteMessage(messageID uuid.UUID) error {
+func (repo *TestRepository) DeleteMessage(messageID uuid.UUID) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
 
-	r.MessagesLock.Lock()
-	defer r.MessagesLock.Unlock()
-	if _, ok := r.Messages[messageID]; !ok {
+	repo.MessagesLock.Lock()
+	defer repo.MessagesLock.Unlock()
+	if _, ok := repo.Messages[messageID]; !ok {
 		return repository.ErrNotFound
 	}
-	delete(r.Messages, messageID)
+	delete(repo.Messages, messageID)
 	return nil
 }
 
-func (r *TestRepository) GetMessageByID(messageID uuid.UUID) (*model.Message, error) {
-	r.MessagesLock.RLock()
-	m, ok := r.Messages[messageID]
-	r.MessagesLock.RUnlock()
+func (repo *TestRepository) GetMessageByID(messageID uuid.UUID) (*model.Message, error) {
+	repo.MessagesLock.RLock()
+	m, ok := repo.Messages[messageID]
+	repo.MessagesLock.RUnlock()
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
 	return &m, nil
 }
 
-func (r *TestRepository) GetMessagesByChannelID(channelID uuid.UUID, limit, offset int) ([]*model.Message, error) {
+func (repo *TestRepository) GetMessagesByChannelID(channelID uuid.UUID, limit, offset int) ([]*model.Message, error) {
 	tmp := make([]*model.Message, 0)
-	r.MessagesLock.RLock()
-	for _, v := range r.Messages {
+	repo.MessagesLock.RLock()
+	for _, v := range repo.Messages {
 		if v.ChannelID == channelID {
 			v := v
 			tmp = append(tmp, &v)
 		}
 	}
-	r.MessagesLock.RUnlock()
+	repo.MessagesLock.RUnlock()
 	sort.Slice(tmp, func(i, j int) bool {
 		return tmp[i].CreatedAt.After(tmp[j].CreatedAt)
 	})
@@ -1485,54 +1486,54 @@ func (r *TestRepository) GetMessagesByChannelID(channelID uuid.UUID, limit, offs
 	return result, nil
 }
 
-func (r *TestRepository) GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error) {
+func (repo *TestRepository) GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) SetMessageUnread(userID, messageID uuid.UUID) error {
+func (repo *TestRepository) SetMessageUnread(userID, messageID uuid.UUID) error {
 	if userID == uuid.Nil || messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.MessageUnreadsLock.Lock()
-	mMap, ok := r.MessageUnreads[userID]
+	repo.MessageUnreadsLock.Lock()
+	mMap, ok := repo.MessageUnreads[userID]
 	if !ok {
 		mMap = make(map[uuid.UUID]bool)
 	}
 	mMap[messageID] = true
-	r.MessageUnreads[userID] = mMap
-	r.MessageUnreadsLock.Unlock()
+	repo.MessageUnreads[userID] = mMap
+	repo.MessageUnreadsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) GetUnreadMessagesByUserID(userID uuid.UUID) ([]*model.Message, error) {
+func (repo *TestRepository) GetUnreadMessagesByUserID(userID uuid.UUID) ([]*model.Message, error) {
 	result := make([]*model.Message, 0)
-	r.MessageUnreadsLock.RLock()
-	r.MessagesLock.RLock()
-	for uid, mMap := range r.MessageUnreads {
+	repo.MessageUnreadsLock.RLock()
+	repo.MessagesLock.RLock()
+	for uid, mMap := range repo.MessageUnreads {
 		if uid != userID {
 			continue
 		}
 		for mid := range mMap {
-			m, ok := r.Messages[mid]
+			m, ok := repo.Messages[mid]
 			if ok {
 				result = append(result, &m)
 			}
 		}
 	}
-	r.MessagesLock.RUnlock()
-	r.MessageUnreadsLock.RUnlock()
+	repo.MessagesLock.RUnlock()
+	repo.MessageUnreadsLock.RUnlock()
 	sort.Slice(result, func(i, j int) bool {
 		return result[j].CreatedAt.After(result[i].CreatedAt)
 	})
 	return result, nil
 }
 
-func (r *TestRepository) DeleteUnreadsByMessageID(messageID uuid.UUID) error {
+func (repo *TestRepository) DeleteUnreadsByMessageID(messageID uuid.UUID) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.MessageUnreadsLock.Lock()
-	for _, mMap := range r.MessageUnreads {
+	repo.MessageUnreadsLock.Lock()
+	for _, mMap := range repo.MessageUnreads {
 		var deleted []uuid.UUID
 		for mid := range mMap {
 			if mid == messageID {
@@ -1543,23 +1544,23 @@ func (r *TestRepository) DeleteUnreadsByMessageID(messageID uuid.UUID) error {
 			delete(mMap, v)
 		}
 	}
-	r.MessageUnreadsLock.Unlock()
+	repo.MessageUnreadsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error {
+func (repo *TestRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error {
 	if channelID == uuid.Nil || userID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.MessageUnreadsLock.Lock()
-	r.MessagesLock.RLock()
-	for uid, mMap := range r.MessageUnreads {
+	repo.MessageUnreadsLock.Lock()
+	repo.MessagesLock.RLock()
+	for uid, mMap := range repo.MessageUnreads {
 		if uid != userID {
 			continue
 		}
 		var deleted []uuid.UUID
 		for mid := range mMap {
-			m, ok := r.Messages[mid]
+			m, ok := repo.Messages[mid]
 			if ok {
 				if m.ChannelID == channelID {
 					deleted = append(deleted, mid)
@@ -1570,16 +1571,16 @@ func (r *TestRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) e
 			delete(mMap, v)
 		}
 	}
-	r.MessagesLock.RUnlock()
-	r.MessageUnreadsLock.Unlock()
+	repo.MessagesLock.RUnlock()
+	repo.MessageUnreadsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) GetChannelLatestMessagesByUserID(userID uuid.UUID, limit int, subscribeOnly bool) ([]*model.Message, error) {
+func (repo *TestRepository) GetChannelLatestMessagesByUserID(userID uuid.UUID, limit int, subscribeOnly bool) ([]*model.Message, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) CreateMessageReport(messageID, reporterID uuid.UUID, reason string) error {
+func (repo *TestRepository) CreateMessageReport(messageID, reporterID uuid.UUID, reason string) error {
 	if messageID == uuid.Nil || reporterID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1592,20 +1593,20 @@ func (r *TestRepository) CreateMessageReport(messageID, reporterID uuid.UUID, re
 		Reason:    reason,
 		CreatedAt: time.Now(),
 	}
-	r.MessageReportsLock.Lock()
-	defer r.MessageReportsLock.Unlock()
-	for _, v := range r.MessageReports {
+	repo.MessageReportsLock.Lock()
+	defer repo.MessageReportsLock.Unlock()
+	for _, v := range repo.MessageReports {
 		if v.MessageID == messageID && v.Reporter == reporterID {
 			return repository.ErrAlreadyExists
 		}
 	}
-	r.MessageReports = append(r.MessageReports, report)
+	repo.MessageReports = append(repo.MessageReports, report)
 	return nil
 }
 
-func (r *TestRepository) GetMessageReports(offset, limit int) ([]*model.MessageReport, error) {
-	r.MessageReportsLock.RLock()
-	l := len(r.MessageReports)
+func (repo *TestRepository) GetMessageReports(offset, limit int) ([]*model.MessageReport, error) {
+	repo.MessageReportsLock.RLock()
+	l := len(repo.MessageReports)
 	if offset < 0 {
 		offset = 0
 	}
@@ -1614,56 +1615,56 @@ func (r *TestRepository) GetMessageReports(offset, limit int) ([]*model.MessageR
 	}
 	result := make([]*model.MessageReport, 0)
 	for i := offset; i < l && i < offset+limit; i++ {
-		re := r.MessageReports[i]
+		re := repo.MessageReports[i]
 		result = append(result, &re)
 	}
-	r.MessageReportsLock.RUnlock()
+	repo.MessageReportsLock.RUnlock()
 	return result, nil
 }
 
-func (r *TestRepository) GetMessageReportsByMessageID(messageID uuid.UUID) ([]*model.MessageReport, error) {
-	r.MessageReportsLock.RLock()
+func (repo *TestRepository) GetMessageReportsByMessageID(messageID uuid.UUID) ([]*model.MessageReport, error) {
+	repo.MessageReportsLock.RLock()
 	result := make([]*model.MessageReport, 0)
-	for _, v := range r.MessageReports {
+	for _, v := range repo.MessageReports {
 		if v.MessageID == messageID {
 			v := v
 			result = append(result, &v)
 		}
 	}
-	r.MessageReportsLock.RUnlock()
+	repo.MessageReportsLock.RUnlock()
 	return result, nil
 }
 
-func (r *TestRepository) GetMessageReportsByReporterID(reporterID uuid.UUID) ([]*model.MessageReport, error) {
-	r.MessageReportsLock.RLock()
+func (repo *TestRepository) GetMessageReportsByReporterID(reporterID uuid.UUID) ([]*model.MessageReport, error) {
+	repo.MessageReportsLock.RLock()
 	result := make([]*model.MessageReport, 0)
-	for _, v := range r.MessageReports {
+	for _, v := range repo.MessageReports {
 		if v.Reporter == reporterID {
 			v := v
 			result = append(result, &v)
 		}
 	}
-	r.MessageReportsLock.RUnlock()
+	repo.MessageReportsLock.RUnlock()
 	return result, nil
 }
 
-func (r *TestRepository) AddStampToMessage(messageID, stampID, userID uuid.UUID) (ms *model.MessageStamp, err error) {
+func (repo *TestRepository) AddStampToMessage(messageID, stampID, userID uuid.UUID) (ms *model.MessageStamp, err error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) RemoveStampFromMessage(messageID, stampID, userID uuid.UUID) (err error) {
+func (repo *TestRepository) RemoveStampFromMessage(messageID, stampID, userID uuid.UUID) (err error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) GetMessageStamps(messageID uuid.UUID) (stamps []*model.MessageStamp, err error) {
+func (repo *TestRepository) GetMessageStamps(messageID uuid.UUID) (stamps []*model.MessageStamp, err error) {
 	return []*model.MessageStamp{}, nil
 }
 
-func (r *TestRepository) GetUserStampHistory(userID uuid.UUID) (h []*model.UserStampHistory, err error) {
+func (repo *TestRepository) GetUserStampHistory(userID uuid.UUID) (h []*model.UserStampHistory, err error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) CreateStamp(name string, fileID, userID uuid.UUID) (s *model.Stamp, err error) {
+func (repo *TestRepository) CreateStamp(name string, fileID, userID uuid.UUID) (s *model.Stamp, err error) {
 	if fileID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
@@ -1677,25 +1678,25 @@ func (r *TestRepository) CreateStamp(name string, fileID, userID uuid.UUID) (s *
 	if err := stamp.Validate(); err != nil {
 		return nil, err
 	}
-	r.StampsLock.Lock()
-	defer r.StampsLock.Unlock()
-	for _, v := range r.Stamps {
+	repo.StampsLock.Lock()
+	defer repo.StampsLock.Unlock()
+	for _, v := range repo.Stamps {
 		if v.Name == name {
 			return nil, repository.ErrAlreadyExists
 		}
 	}
-	r.Stamps[stamp.ID] = *stamp
+	repo.Stamps[stamp.ID] = *stamp
 	return stamp, nil
 }
 
-func (r *TestRepository) UpdateStamp(id uuid.UUID, name string, fileID uuid.UUID) error {
+func (repo *TestRepository) UpdateStamp(id uuid.UUID, name string, fileID uuid.UUID) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
 
-	r.StampsLock.Lock()
-	defer r.StampsLock.Unlock()
-	s, ok := r.Stamps[id]
+	repo.StampsLock.Lock()
+	defer repo.StampsLock.Unlock()
+	s, ok := repo.Stamps[id]
 
 	data := map[string]string{}
 	if len(name) > 0 {
@@ -1716,63 +1717,63 @@ func (r *TestRepository) UpdateStamp(id uuid.UUID, name string, fileID uuid.UUID
 	}
 
 	s.UpdatedAt = time.Now()
-	r.Stamps[id] = s
+	repo.Stamps[id] = s
 	return nil
 }
 
-func (r *TestRepository) GetStamp(id uuid.UUID) (*model.Stamp, error) {
+func (repo *TestRepository) GetStamp(id uuid.UUID) (*model.Stamp, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
-	r.StampsLock.RLock()
-	s, ok := r.Stamps[id]
-	r.StampsLock.RUnlock()
+	repo.StampsLock.RLock()
+	s, ok := repo.Stamps[id]
+	repo.StampsLock.RUnlock()
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
 	return &s, nil
 }
 
-func (r *TestRepository) DeleteStamp(id uuid.UUID) (err error) {
+func (repo *TestRepository) DeleteStamp(id uuid.UUID) (err error) {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.StampsLock.Lock()
-	defer r.StampsLock.Unlock()
-	if _, ok := r.Stamps[id]; !ok {
+	repo.StampsLock.Lock()
+	defer repo.StampsLock.Unlock()
+	if _, ok := repo.Stamps[id]; !ok {
 		return repository.ErrNotFound
 	}
-	delete(r.Stamps, id)
+	delete(repo.Stamps, id)
 	return nil
 }
 
-func (r *TestRepository) GetAllStamps() (stamps []*model.Stamp, err error) {
-	r.StampsLock.RLock()
-	for _, v := range r.Stamps {
+func (repo *TestRepository) GetAllStamps() (stamps []*model.Stamp, err error) {
+	repo.StampsLock.RLock()
+	for _, v := range repo.Stamps {
 		v := v
 		stamps = append(stamps, &v)
 	}
-	r.StampsLock.RUnlock()
+	repo.StampsLock.RUnlock()
 	return
 }
 
-func (r *TestRepository) StampExists(id uuid.UUID) (bool, error) {
+func (repo *TestRepository) StampExists(id uuid.UUID) (bool, error) {
 	if id == uuid.Nil {
 		return false, nil
 	}
-	r.StampsLock.RLock()
-	_, ok := r.Stamps[id]
-	r.StampsLock.RUnlock()
+	repo.StampsLock.RLock()
+	_, ok := repo.Stamps[id]
+	repo.StampsLock.RUnlock()
 	return ok, nil
 }
 
-func (r *TestRepository) IsStampNameDuplicate(name string) (bool, error) {
+func (repo *TestRepository) IsStampNameDuplicate(name string) (bool, error) {
 	if len(name) == 0 {
 		return false, nil
 	}
-	r.StampsLock.RUnlock()
-	defer r.StampsLock.RUnlock()
-	for _, v := range r.Stamps {
+	repo.StampsLock.RUnlock()
+	defer repo.StampsLock.RUnlock()
+	for _, v := range repo.Stamps {
 		if v.Name == name {
 			return true, nil
 		}
@@ -1780,166 +1781,166 @@ func (r *TestRepository) IsStampNameDuplicate(name string) (bool, error) {
 	return false, nil
 }
 
-func (r *TestRepository) GetClipFolder(id uuid.UUID) (*model.ClipFolder, error) {
+func (repo *TestRepository) GetClipFolder(id uuid.UUID) (*model.ClipFolder, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) GetClipFolders(userID uuid.UUID) ([]*model.ClipFolder, error) {
+func (repo *TestRepository) GetClipFolders(userID uuid.UUID) ([]*model.ClipFolder, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) CreateClipFolder(userID uuid.UUID, name string) (*model.ClipFolder, error) {
+func (repo *TestRepository) CreateClipFolder(userID uuid.UUID, name string) (*model.ClipFolder, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) UpdateClipFolderName(id uuid.UUID, name string) error {
+func (repo *TestRepository) UpdateClipFolderName(id uuid.UUID, name string) error {
 	panic("implement me")
 }
 
-func (r *TestRepository) DeleteClipFolder(id uuid.UUID) error {
+func (repo *TestRepository) DeleteClipFolder(id uuid.UUID) error {
 	panic("implement me")
 }
 
-func (r *TestRepository) GetClipMessage(id uuid.UUID) (*model.Clip, error) {
+func (repo *TestRepository) GetClipMessage(id uuid.UUID) (*model.Clip, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) GetClipMessages(folderID uuid.UUID) ([]*model.Clip, error) {
+func (repo *TestRepository) GetClipMessages(folderID uuid.UUID) ([]*model.Clip, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) GetClipMessagesByUser(userID uuid.UUID) ([]*model.Clip, error) {
+func (repo *TestRepository) GetClipMessagesByUser(userID uuid.UUID) ([]*model.Clip, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) CreateClip(messageID, folderID, userID uuid.UUID) (*model.Clip, error) {
+func (repo *TestRepository) CreateClip(messageID, folderID, userID uuid.UUID) (*model.Clip, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) ChangeClipFolder(clipID, folderID uuid.UUID) error {
+func (repo *TestRepository) ChangeClipFolder(clipID, folderID uuid.UUID) error {
 	panic("implement me")
 }
 
-func (r *TestRepository) DeleteClip(id uuid.UUID) error {
+func (repo *TestRepository) DeleteClip(id uuid.UUID) error {
 	panic("implement me")
 }
 
-func (r *TestRepository) MuteChannel(userID, channelID uuid.UUID) error {
+func (repo *TestRepository) MuteChannel(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.MuteLock.Lock()
-	chMap, ok := r.Mute[userID]
+	repo.MuteLock.Lock()
+	chMap, ok := repo.Mute[userID]
 	if !ok {
 		chMap = make(map[uuid.UUID]bool)
 	}
 	chMap[channelID] = true
-	r.Mute[userID] = chMap
-	r.MuteLock.Unlock()
+	repo.Mute[userID] = chMap
+	repo.MuteLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) UnmuteChannel(userID, channelID uuid.UUID) error {
+func (repo *TestRepository) UnmuteChannel(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.MuteLock.Lock()
-	chMap, ok := r.Mute[userID]
+	repo.MuteLock.Lock()
+	chMap, ok := repo.Mute[userID]
 	if ok {
 		delete(chMap, channelID)
-		r.Stars[userID] = chMap
+		repo.Stars[userID] = chMap
 	}
-	r.MuteLock.Unlock()
+	repo.MuteLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) GetMutedChannelIDs(userID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetMutedChannelIDs(userID uuid.UUID) ([]uuid.UUID, error) {
 	ids := make([]uuid.UUID, 0)
-	r.MuteLock.RLock()
-	chMap, ok := r.Mute[userID]
+	repo.MuteLock.RLock()
+	chMap, ok := repo.Mute[userID]
 	if ok {
 		for id := range chMap {
 			ids = append(ids, id)
 		}
 	}
-	r.MuteLock.RUnlock()
+	repo.MuteLock.RUnlock()
 	return ids, nil
 }
 
-func (r *TestRepository) GetMuteUserIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) GetMuteUserIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
 	ids := make([]uuid.UUID, 0)
-	r.MuteLock.RLock()
-	for uid, chMap := range r.Mute {
+	repo.MuteLock.RLock()
+	for uid, chMap := range repo.Mute {
 		if chMap[channelID] {
 			ids = append(ids, uid)
 		}
 	}
-	r.MuteLock.RUnlock()
+	repo.MuteLock.RUnlock()
 	return ids, nil
 }
 
-func (r *TestRepository) IsChannelMuted(userID, channelID uuid.UUID) (bool, error) {
+func (repo *TestRepository) IsChannelMuted(userID, channelID uuid.UUID) (bool, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return false, nil
 	}
-	r.MuteLock.RLock()
-	defer r.MuteLock.RUnlock()
-	chMap, ok := r.Mute[userID]
+	repo.MuteLock.RLock()
+	defer repo.MuteLock.RUnlock()
+	chMap, ok := repo.Mute[userID]
 	if !ok {
 		return false, nil
 	}
 	return chMap[channelID], nil
 }
 
-func (r *TestRepository) AddStar(userID, channelID uuid.UUID) error {
+func (repo *TestRepository) AddStar(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.StarsLock.Lock()
-	chMap, ok := r.Stars[userID]
+	repo.StarsLock.Lock()
+	chMap, ok := repo.Stars[userID]
 	if !ok {
 		chMap = make(map[uuid.UUID]bool)
 	}
 	chMap[channelID] = true
-	r.Stars[userID] = chMap
-	r.StarsLock.Unlock()
+	repo.Stars[userID] = chMap
+	repo.StarsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) RemoveStar(userID, channelID uuid.UUID) error {
+func (repo *TestRepository) RemoveStar(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.StarsLock.Lock()
-	chMap, ok := r.Stars[userID]
+	repo.StarsLock.Lock()
+	chMap, ok := repo.Stars[userID]
 	if ok {
 		delete(chMap, channelID)
-		r.Stars[userID] = chMap
+		repo.Stars[userID] = chMap
 	}
-	r.StarsLock.Unlock()
+	repo.StarsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) GetStaredChannels(userID uuid.UUID) ([]uuid.UUID, error) {
-	r.StarsLock.RLock()
+func (repo *TestRepository) GetStaredChannels(userID uuid.UUID) ([]uuid.UUID, error) {
+	repo.StarsLock.RLock()
 	result := make([]uuid.UUID, 0)
-	chMap, ok := r.Stars[userID]
+	chMap, ok := repo.Stars[userID]
 	if ok {
 		for id := range chMap {
 			result = append(result, id)
 		}
 	}
-	r.StarsLock.RUnlock()
+	repo.StarsLock.RUnlock()
 	return result, nil
 }
 
-func (r *TestRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, error) {
+func (repo *TestRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, error) {
 	if messageID == uuid.Nil || userID == uuid.Nil {
 		return uuid.Nil, repository.ErrNilID
 	}
-	r.PinsLock.Lock()
-	defer r.PinsLock.Unlock()
-	for _, pin := range r.Pins {
+	repo.PinsLock.Lock()
+	defer repo.PinsLock.Unlock()
+	for _, pin := range repo.Pins {
 		if pin.MessageID == messageID {
 			return pin.ID, nil
 		}
@@ -1950,27 +1951,27 @@ func (r *TestRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, erro
 		UserID:    userID,
 		CreatedAt: time.Now(),
 	}
-	r.Pins[p.ID] = p
+	repo.Pins[p.ID] = p
 	return p.ID, nil
 }
 
-func (r *TestRepository) GetPin(id uuid.UUID) (*model.Pin, error) {
-	r.PinsLock.RLock()
-	pin, ok := r.Pins[id]
-	r.PinsLock.RUnlock()
+func (repo *TestRepository) GetPin(id uuid.UUID) (*model.Pin, error) {
+	repo.PinsLock.RLock()
+	pin, ok := repo.Pins[id]
+	repo.PinsLock.RUnlock()
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
-	r.MessagesLock.RLock()
-	pin.Message = r.Messages[pin.MessageID]
-	r.MessagesLock.RUnlock()
+	repo.MessagesLock.RLock()
+	pin.Message = repo.Messages[pin.MessageID]
+	repo.MessagesLock.RUnlock()
 	return &pin, nil
 }
 
-func (r *TestRepository) IsPinned(messageID uuid.UUID) (bool, error) {
-	r.PinsLock.RLock()
-	defer r.PinsLock.RUnlock()
-	for _, p := range r.Pins {
+func (repo *TestRepository) IsPinned(messageID uuid.UUID) (bool, error) {
+	repo.PinsLock.RLock()
+	defer repo.PinsLock.RUnlock()
+	for _, p := range repo.Pins {
 		if p.MessageID == messageID {
 			return true, nil
 		}
@@ -1978,116 +1979,117 @@ func (r *TestRepository) IsPinned(messageID uuid.UUID) (bool, error) {
 	return false, nil
 }
 
-func (r *TestRepository) DeletePin(id uuid.UUID) error {
+func (repo *TestRepository) DeletePin(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.PinsLock.Lock()
-	delete(r.Pins, id)
-	r.PinsLock.Unlock()
+	repo.PinsLock.Lock()
+	delete(repo.Pins, id)
+	repo.PinsLock.Unlock()
 	return nil
 }
 
-func (r *TestRepository) GetPinsByChannelID(channelID uuid.UUID) ([]*model.Pin, error) {
+func (repo *TestRepository) GetPinsByChannelID(channelID uuid.UUID) ([]*model.Pin, error) {
 	result := make([]*model.Pin, 0)
-	r.PinsLock.RLock()
-	r.MessagesLock.RLock()
-	for _, p := range r.Pins {
-		m, ok := r.Messages[p.MessageID]
+	repo.PinsLock.RLock()
+	repo.MessagesLock.RLock()
+	for _, p := range repo.Pins {
+		m, ok := repo.Messages[p.MessageID]
 		if ok && m.ChannelID == channelID {
 			p := p
 			p.Message = m
 			result = append(result, &p)
 		}
 	}
-	r.MessagesLock.RUnlock()
-	r.PinsLock.RUnlock()
+	repo.MessagesLock.RUnlock()
+	repo.PinsLock.RUnlock()
 	return result, nil
 }
 
-func (r *TestRepository) RegisterDevice(userID uuid.UUID, token string) (*model.Device, error) {
+func (repo *TestRepository) RegisterDevice(userID uuid.UUID, token string) (*model.Device, error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) UnregisterDevice(token string) (err error) {
+func (repo *TestRepository) UnregisterDevice(token string) (err error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) GetDevicesByUserID(user uuid.UUID) (result []*model.Device, err error) {
+func (repo *TestRepository) GetDevicesByUserID(user uuid.UUID) (result []*model.Device, err error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) GetDeviceTokensByUserID(user uuid.UUID) (result []string, err error) {
+func (repo *TestRepository) GetDeviceTokensByUserID(user uuid.UUID) (result []string, err error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) GetAllDevices() (result []*model.Device, err error) {
+func (repo *TestRepository) GetAllDevices() (result []*model.Device, err error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) GetAllDeviceTokens() (result []string, err error) {
+func (repo *TestRepository) GetAllDeviceTokens() (result []string, err error) {
 	panic("implement me")
 }
 
-func (r *TestRepository) OpenFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
-	meta, err := r.GetFileMeta(fileID)
+func (repo *TestRepository) OpenFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
+	meta, err := repo.GetFileMeta(fileID)
 	if err != nil {
 		return nil, nil, err
 	}
-	rc, err := r.FS.OpenFileByKey(meta.GetKey())
+	rc, err := repo.FS.OpenFileByKey(meta.GetKey())
 	return meta, rc, err
 }
 
-func (r *TestRepository) OpenThumbnailFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
-	meta, err := r.GetFileMeta(fileID)
+func (repo *TestRepository) OpenThumbnailFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
+	meta, err := repo.GetFileMeta(fileID)
 	if err != nil {
 		return nil, nil, err
 	}
 	if meta.HasThumbnail {
-		rc, err := r.FS.OpenFileByKey(meta.GetThumbKey())
+		rc, err := repo.FS.OpenFileByKey(meta.GetThumbKey())
 		return meta, rc, err
 	}
 	return meta, nil, repository.ErrNotFound
 }
 
-func (r *TestRepository) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
+func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
 	if fileID == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
-	r.FilesLock.RLock()
-	meta, ok := r.Files[fileID]
-	r.FilesLock.RUnlock()
+	repo.FilesLock.RLock()
+	meta, ok := repo.Files[fileID]
+	repo.FilesLock.RUnlock()
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
 	return &meta, nil
 }
 
-func (r *TestRepository) DeleteFile(fileID uuid.UUID) error {
+func (repo *TestRepository) DeleteFile(fileID uuid.UUID) error {
 	if fileID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.FilesLock.Lock()
-	defer r.FilesLock.Unlock()
-	meta, ok := r.Files[fileID]
+	repo.FilesLock.Lock()
+	defer repo.FilesLock.Unlock()
+	meta, ok := repo.Files[fileID]
 	if !ok {
 		return repository.ErrNotFound
 	}
-	delete(r.Files, fileID)
-	return r.FS.DeleteByKey(meta.GetKey())
+	delete(repo.Files, fileID)
+	return repo.FS.DeleteByKey(meta.GetKey())
 }
 
-func (r *TestRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
-	img, _ := thumb.EncodeToPNG(utils.GenerateIcon(salt))
-	file, e := r.SaveFile(fmt.Sprintf("%s.png", salt), img, int64(img.Len()), "image/png", model.FileTypeIcon, uuid.Nil)
-	return file.ID, e
+func (repo *TestRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
+	var img bytes.Buffer
+	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
+	file, err := repo.SaveFile(fmt.Sprintf("%s.png", salt), &img, int64(img.Len()), "image/png", model.FileTypeIcon, uuid.Nil)
+	return file.ID, err
 }
 
-func (r *TestRepository) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID) (*model.File, error) {
-	return r.SaveFileWithACL(name, src, size, mimeType, fType, creatorID, repository.ACL{uuid.Nil: true})
+func (repo *TestRepository) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID) (*model.File, error) {
+	return repo.SaveFileWithACL(name, src, size, mimeType, fType, creatorID, repository.ACL{uuid.Nil: true})
 }
 
-func (r *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID, read repository.ACL) (*model.File, error) {
+func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID, read repository.ACL) (*model.File, error) {
 	f := &model.File{
 		ID:        uuid.NewV4(),
 		Name:      name,
@@ -2126,7 +2128,7 @@ func (r *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64,
 	// fileの保存
 	eg.Go(func() error {
 		defer fileSrc.Close()
-		if err := r.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime, f.Type); err != nil {
+		if err := repo.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime, f.Type); err != nil {
 			return err
 		}
 		return nil
@@ -2137,7 +2139,7 @@ func (r *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64,
 		// アップロードされたファイルの拡張子が間違えてたり、変なの送ってきた場合
 		// サムネイルを生成しないだけで全体のエラーにはしない
 		defer thumbSrc.Close()
-		size, _ := r.generateThumbnail(ctx, f, thumbSrc)
+		size, _ := repo.generateThumbnail(ctx, f, thumbSrc)
 		if !size.Empty() {
 			f.HasThumbnail = true
 			f.ThumbnailWidth = size.Size().X
@@ -2151,34 +2153,34 @@ func (r *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64,
 	}
 
 	f.Hash = hex.EncodeToString(hash.Sum(nil))
-	r.FilesLock.Lock()
-	r.FilesACLLock.Lock()
-	r.Files[f.ID] = *f
-	r.FilesACL[f.ID] = read
-	r.FilesACLLock.Unlock()
-	r.FilesLock.Unlock()
+	repo.FilesLock.Lock()
+	repo.FilesACLLock.Lock()
+	repo.Files[f.ID] = *f
+	repo.FilesACL[f.ID] = read
+	repo.FilesACLLock.Unlock()
+	repo.FilesLock.Unlock()
 	return f, nil
 }
 
-func (r *TestRepository) RegenerateThumbnail(fileID uuid.UUID) (bool, error) {
+func (repo *TestRepository) RegenerateThumbnail(fileID uuid.UUID) (bool, error) {
 	return false, nil
 }
 
-func (r *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
+func (repo *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
 	if fileID == uuid.Nil {
 		return false, repository.ErrNilID
 	}
-	r.FilesLock.RLock()
-	_, ok := r.Files[fileID]
-	r.FilesLock.RUnlock()
+	repo.FilesLock.RLock()
+	_, ok := repo.Files[fileID]
+	repo.FilesLock.RUnlock()
 	if !ok {
 		return false, repository.ErrNotFound
 	}
 
 	var allow bool
-	r.FilesACLLock.RLock()
-	defer r.FilesACLLock.RUnlock()
-	for uid, a := range r.FilesACL[fileID] {
+	repo.FilesACLLock.RLock()
+	defer repo.FilesACLLock.RUnlock()
+	for uid, a := range repo.FilesACL[fileID] {
 		if uid == uuid.Nil || uid == userID {
 			if a {
 				allow = true
@@ -2190,25 +2192,33 @@ func (r *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error
 	return allow, nil
 }
 
-func (r *TestRepository) generateThumbnail(ctx context.Context, f *model.File, src io.Reader) (image.Rectangle, error) {
-	img, err := thumb.Generate(ctx, src, f.Mime)
+func (repo *TestRepository) generateThumbnail(ctx context.Context, f *model.File, src io.Reader) (image.Rectangle, error) {
+	orig, err := imaging.Decode(src, imaging.AutoOrientation(true))
 	if err != nil {
 		return image.ZR, err
 	}
-	b, _ := thumb.EncodeToPNG(img)
-	if err := r.FS.SaveByKey(b, f.GetThumbKey(), f.GetThumbKey()+".png", "image/png", model.FileTypeThumbnail); err != nil {
+
+	img := imaging.Fit(orig, 360, 480, imaging.Linear)
+
+	r, w := io.Pipe()
+	go func() {
+		_ = imaging.Encode(w, img, imaging.PNG)
+		_ = w.Close()
+	}()
+
+	if err := repo.FS.SaveByKey(r, f.GetThumbKey(), f.GetThumbKey()+".png", "image/png", model.FileTypeThumbnail); err != nil {
 		return image.ZR, err
 	}
 	return img.Bounds(), nil
 }
 
-func (r *TestRepository) CreateWebhook(name, description string, channelID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
+func (repo *TestRepository) CreateWebhook(name, description string, channelID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
 		return nil, errors.New("invalid name")
 	}
 	uid := uuid.NewV4()
 	bid := uuid.NewV4()
-	iconID, err := r.GenerateIconFile(name)
+	iconID, err := repo.GenerateIconFile(name)
 	if err != nil {
 		return nil, err
 	}
@@ -2235,31 +2245,31 @@ func (r *TestRepository) CreateWebhook(name, description string, channelID, crea
 		UpdatedAt:   time.Now(),
 	}
 
-	r.WebhooksLock.Lock()
-	r.UsersLock.Lock()
-	r.Users[uid] = u
-	r.Webhooks[bid] = wb
-	r.UsersLock.Unlock()
-	r.WebhooksLock.Unlock()
+	repo.WebhooksLock.Lock()
+	repo.UsersLock.Lock()
+	repo.Users[uid] = u
+	repo.Webhooks[bid] = wb
+	repo.UsersLock.Unlock()
+	repo.WebhooksLock.Unlock()
 
 	wb.BotUser = u
 	return &wb, nil
 }
 
-func (r *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhookArgs) error {
+func (repo *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebhookArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
 
-	r.WebhooksLock.Lock()
-	r.UsersLock.Lock()
-	defer r.WebhooksLock.Unlock()
-	defer r.UsersLock.Unlock()
-	wb, ok := r.Webhooks[id]
+	repo.WebhooksLock.Lock()
+	repo.UsersLock.Lock()
+	defer repo.WebhooksLock.Unlock()
+	defer repo.UsersLock.Unlock()
+	wb, ok := repo.Webhooks[id]
 	if !ok {
 		return repository.ErrNotFound
 	}
-	u := r.Users[wb.GetBotUserID()]
+	u := repo.Users[wb.GetBotUserID()]
 
 	if args.Description.Valid {
 		wb.Description = args.Description.String
@@ -2281,76 +2291,76 @@ func (r *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWebho
 		u.UpdatedAt = time.Now()
 	}
 
-	r.Webhooks[id] = wb
-	r.Users[u.ID] = u
+	repo.Webhooks[id] = wb
+	repo.Users[u.ID] = u
 	return nil
 }
 
-func (r *TestRepository) DeleteWebhook(id uuid.UUID) error {
+func (repo *TestRepository) DeleteWebhook(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	r.WebhooksLock.Lock()
-	r.UsersLock.Lock()
-	defer r.WebhooksLock.Unlock()
-	defer r.UsersLock.Unlock()
-	wb, ok := r.Webhooks[id]
+	repo.WebhooksLock.Lock()
+	repo.UsersLock.Lock()
+	defer repo.WebhooksLock.Unlock()
+	defer repo.UsersLock.Unlock()
+	wb, ok := repo.Webhooks[id]
 	if !ok {
 		return repository.ErrNotFound
 	}
-	delete(r.Webhooks, id)
-	u := r.Users[wb.BotUserID]
+	delete(repo.Webhooks, id)
+	u := repo.Users[wb.BotUserID]
 	u.Status = model.UserAccountStatusDeactivated
 	u.UpdatedAt = time.Now()
-	r.Users[wb.BotUserID] = u
+	repo.Users[wb.BotUserID] = u
 	return nil
 }
 
-func (r *TestRepository) GetWebhook(id uuid.UUID) (model.Webhook, error) {
+func (repo *TestRepository) GetWebhook(id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
-	r.WebhooksLock.RLock()
-	r.UsersLock.RLock()
-	defer r.WebhooksLock.RUnlock()
-	defer r.UsersLock.RUnlock()
-	w, ok := r.Webhooks[id]
+	repo.WebhooksLock.RLock()
+	repo.UsersLock.RLock()
+	defer repo.WebhooksLock.RUnlock()
+	defer repo.UsersLock.RUnlock()
+	w, ok := repo.Webhooks[id]
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
-	w.BotUser = r.Users[w.BotUserID]
+	w.BotUser = repo.Users[w.BotUserID]
 	return &w, nil
 }
 
-func (r *TestRepository) GetAllWebhooks() ([]model.Webhook, error) {
+func (repo *TestRepository) GetAllWebhooks() ([]model.Webhook, error) {
 	arr := make([]model.Webhook, 0)
-	r.WebhooksLock.RLock()
-	r.UsersLock.RLock()
-	for _, v := range r.Webhooks {
+	repo.WebhooksLock.RLock()
+	repo.UsersLock.RLock()
+	for _, v := range repo.Webhooks {
 		v := v
-		v.BotUser = r.Users[v.BotUserID]
+		v.BotUser = repo.Users[v.BotUserID]
 		arr = append(arr, &v)
 	}
-	r.UsersLock.RUnlock()
-	r.WebhooksLock.RUnlock()
+	repo.UsersLock.RUnlock()
+	repo.WebhooksLock.RUnlock()
 	return arr, nil
 }
 
-func (r *TestRepository) GetWebhooksByCreator(creatorID uuid.UUID) ([]model.Webhook, error) {
+func (repo *TestRepository) GetWebhooksByCreator(creatorID uuid.UUID) ([]model.Webhook, error) {
 	arr := make([]model.Webhook, 0)
 	if creatorID == uuid.Nil {
 		return arr, nil
 	}
-	r.WebhooksLock.RLock()
-	r.UsersLock.RLock()
-	for _, v := range r.Webhooks {
+	repo.WebhooksLock.RLock()
+	repo.UsersLock.RLock()
+	for _, v := range repo.Webhooks {
 		if v.CreatorID == creatorID {
 			v := v
-			v.BotUser = r.Users[v.BotUserID]
+			v.BotUser = repo.Users[v.BotUserID]
 			arr = append(arr, &v)
 		}
 	}
-	r.UsersLock.RUnlock()
-	r.WebhooksLock.RUnlock()
+	repo.UsersLock.RUnlock()
+	repo.WebhooksLock.RUnlock()
 	return arr, nil
 }

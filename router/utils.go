@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"github.com/disintegration/imaging"
 	"github.com/go-sql-driver/mysql"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/satori/go.uuid"
@@ -13,8 +14,6 @@ import (
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/imagemagick"
-	"github.com/traPtitech/traQ/utils/thumb"
-	"image"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
 	"io"
@@ -184,24 +183,19 @@ func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHead
 }
 
 func processStillImage(c echo.Context, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, string, error) {
-	img, _, err := image.Decode(src)
+	img, err := imaging.Decode(src, imaging.AutoOrientation(true))
 	if err != nil {
 		return nil, "", echo.NewHTTPError(http.StatusBadRequest, "bad image file")
 	}
 
 	if size := img.Bounds().Size(); size.X > maxWidth || size.Y > maxHeight {
-		img = thumb.Resize(img, maxWidth, maxHeight)
+		img = imaging.Fit(img, maxWidth, maxHeight, imaging.Linear)
 	}
 
 	// bytesに戻す
-	b, err := thumb.EncodeToPNG(img)
-	if err != nil {
-		// 予期しないエラー
-		c.Logger().Error(err)
-		return nil, "", echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return b, mimeImagePNG, nil
+	var b bytes.Buffer
+	_ = imaging.Encode(&b, img, imaging.PNG)
+	return &b, mimeImagePNG, nil
 }
 
 func processGifImage(c echo.Context, imagemagickPath string, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, string, error) {
