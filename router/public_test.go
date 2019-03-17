@@ -46,13 +46,18 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 			Equal(strconv.Itoa(len(i)))
 	})
 
-	t.Run("Success with thumbnail", func(t *testing.T) {
+	t.Run("Success With 304", func(t *testing.T) {
 		t.Parallel()
+		_, require := assertAndRequire(t)
+
+		meta, err := repo.GetFileMeta(testUser.Icon)
+		require.NoError(err)
+
 		e := makeExp(t, server)
 		e.GET("/api/1.0/public/icon/{username}", testUser.Name).
-			WithQuery("thumb", "").
+			WithHeader("If-None-Match", strconv.Quote(meta.Hash)).
 			Expect().
-			Status(http.StatusOK)
+			Status(http.StatusNotModified)
 	})
 }
 
@@ -67,14 +72,35 @@ func TestHandlers_GetPublicEmojiJSON(t *testing.T) {
 	}
 
 	e := makeExp(t, server)
-	e.GET("/api/1.0/public/emoji.json").
+	res := e.GET("/api/1.0/public/emoji.json").
 		Expect().
-		Status(http.StatusOK).
-		JSON().
+		Status(http.StatusOK)
+
+	res.JSON().
 		Object().
 		Value("all").
 		Array().
 		ContainsOnly(stamps...)
+
+	res.Header(echo.HeaderLastModified).
+		NotEmpty()
+
+	t.Run("304", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/public/emoji.json").
+			WithHeader(headerIfModifiedSince, res.Header(echo.HeaderLastModified).Raw()).
+			Expect().
+			Status(http.StatusNotModified)
+	})
+
+	t.Run("Return cache", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/public/emoji.json").
+			Expect().
+			Status(http.StatusOK)
+	})
 }
 
 func TestHandlers_GetPublicEmojiCSS(t *testing.T) {
@@ -86,10 +112,29 @@ func TestHandlers_GetPublicEmojiCSS(t *testing.T) {
 	}
 
 	e := makeExp(t, server)
-	e.GET("/api/1.0/public/emoji.css").
+	res := e.GET("/api/1.0/public/emoji.css").
 		Expect().
-		Status(http.StatusOK).
-		ContentType("text/css")
+		Status(http.StatusOK)
+
+	res.ContentType("text/css")
+	res.Header(echo.HeaderLastModified).NotEmpty()
+
+	t.Run("304", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/public/emoji.css").
+			WithHeader(headerIfModifiedSince, res.Header(echo.HeaderLastModified).Raw()).
+			Expect().
+			Status(http.StatusNotModified)
+	})
+
+	t.Run("Return cache", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/public/emoji.css").
+			Expect().
+			Status(http.StatusOK)
+	})
 }
 
 func TestHandlers_GetPublicEmojiImage(t *testing.T) {
@@ -112,5 +157,19 @@ func TestHandlers_GetPublicEmojiImage(t *testing.T) {
 		e.GET("/api/1.0/public/emoji/{stampID}", s.ID).
 			Expect().
 			Status(http.StatusOK)
+	})
+
+	t.Run("Success With 304", func(t *testing.T) {
+		t.Parallel()
+		_, require := assertAndRequire(t)
+
+		meta, err := repo.GetFileMeta(s.FileID)
+		require.NoError(err)
+
+		e := makeExp(t, server)
+		e.GET("/api/1.0/public/emoji/{stampID}", s.ID).
+			WithHeader("If-None-Match", strconv.Quote(meta.Hash)).
+			Expect().
+			Status(http.StatusNotModified)
 	})
 }
