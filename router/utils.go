@@ -55,12 +55,16 @@ const (
 	mimeImageGIF  = "image/gif"
 	mimeImageSVG  = "image/svg+xml"
 
-	headerCacheControl = "Cache-Control"
-	headerETag         = "ETag"
-	headerFileMetaType = "X-TRAQ-FILE-TYPE"
-	headerCacheFile    = "X-TRAQ-FILE-CACHE"
-	headerSignature    = "X-TRAQ-Signature"
-	headerChannelID    = "X-TRAQ-Channel-Id"
+	headerCacheControl      = "Cache-Control"
+	headerETag              = "ETag"
+	headerIfMatch           = "If-Match"
+	headerIfNoneMatch       = "If-None-Match"
+	headerIfModifiedSince   = "If-Modified-Since"
+	headerIfUnmodifiedSince = "If-Unmodified-Since"
+	headerFileMetaType      = "X-TRAQ-FILE-TYPE"
+	headerCacheFile         = "X-TRAQ-FILE-CACHE"
+	headerSignature         = "X-TRAQ-Signature"
+	headerChannelID         = "X-TRAQ-Channel-Id"
 )
 
 func init() {
@@ -77,8 +81,10 @@ type Handlers struct {
 	ImageMagickPath string
 
 	emojiJSONCache     bytes.Buffer
+	emojiJSONTime      time.Time
 	emojiJSONCacheLock sync.RWMutex
 	emojiCSSCache      bytes.Buffer
+	emojiCSSTime       time.Time
 	emojiCSSCacheLock  sync.RWMutex
 }
 

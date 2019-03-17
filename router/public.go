@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // GetPublicUserIcon GET /public/icon/{username}
@@ -58,6 +59,10 @@ func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, c.Request().Header.Get("Origin"))
 	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "true")
 
+	if done, _ := checkPreconditions(c, h.emojiJSONTime); done {
+		return nil
+	}
+
 	// キャッシュ確認
 	h.emojiJSONCacheLock.RLock()
 	if h.emojiJSONCache.Len() > 0 {
@@ -78,6 +83,8 @@ func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
+	h.emojiJSONTime = time.Now()
+	setLastModified(c, h.emojiJSONTime)
 	return c.JSONBlob(http.StatusOK, h.emojiJSONCache.Bytes())
 }
 
@@ -103,6 +110,10 @@ func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, c.Request().Header.Get("Origin"))
 	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
 
+	if done, _ := checkPreconditions(c, h.emojiCSSTime); done {
+		return nil
+	}
+
 	// キャッシュ確認
 	h.emojiCSSCacheLock.RLock()
 	if h.emojiCSSCache.Len() > 0 {
@@ -123,6 +134,8 @@ func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
+	h.emojiCSSTime = time.Now()
+	setLastModified(c, h.emojiCSSTime)
 	return c.Blob(http.StatusOK, "text/css", h.emojiCSSCache.Bytes())
 }
 

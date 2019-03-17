@@ -82,7 +82,7 @@ func (h *Handlers) GetFileByID(c echo.Context) error {
 	defer file.Close()
 
 	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
-	c.Response().Header().Set(echo.HeaderContentLength, strconv.FormatInt(meta.Size, 10))
+	c.Response().Header().Set(headerETag, strconv.Quote(meta.Hash))
 	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") //1年間キャッシュ
 	if dl == "1" {
 		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", meta.Name))
