@@ -223,7 +223,7 @@ func main() {
 					RequestURL:    req.URL.String(),
 					RequestSize:   req.Header.Get(echo.HeaderContentLength),
 					ResponseSize:  strconv.FormatInt(res.Size, 10),
-					Latency:       strconv.FormatInt(int64(stop.Sub(start)), 10),
+					Latency:       strconv.FormatFloat(stop.Sub(start).Seconds(), 'f', 9, 64) + "s",
 				}))
 				return nil
 			}

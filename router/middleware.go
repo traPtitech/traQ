@@ -68,7 +68,7 @@ func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				// Authorizationヘッダーがないためセッションを確認する
 				sess, err := sessions.Get(c.Response(), c.Request(), false)
 				if err != nil {
-					c.Logger().Errorf("Failed to get a session: %v", err)
+					h.Logger.Error("failed to get a session", zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 					return echo.NewHTTPError(http.StatusInternalServerError)
 				}
 				if sess == nil || sess.GetUserID() == uuid.Nil {
