@@ -443,14 +443,24 @@ func (repo *TestRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
+	repo.UserGroupsLock.Lock()
+	defer repo.UserGroupsLock.Unlock()
 	repo.UserGroupMembersLock.Lock()
+	defer repo.UserGroupMembersLock.Unlock()
+	g, ok := repo.UserGroups[groupID]
+	if !ok {
+		return nil
+	}
 	users, ok := repo.UserGroupMembers[groupID]
 	if !ok {
 		users = make(map[uuid.UUID]bool)
 		repo.UserGroupMembers[groupID] = users
 	}
-	users[userID] = true
-	repo.UserGroupMembersLock.Unlock()
+	if !users[userID] {
+		users[userID] = true
+		g.UpdatedAt = time.Now()
+		repo.UserGroups[groupID] = g
+	}
 	return nil
 }
 
@@ -458,12 +468,21 @@ func (repo *TestRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
+	repo.UserGroupsLock.Lock()
+	defer repo.UserGroupsLock.Unlock()
 	repo.UserGroupMembersLock.Lock()
-	users, ok := repo.UserGroupMembers[groupID]
-	if ok {
-		delete(users, userID)
+	defer repo.UserGroupMembersLock.Unlock()
+	g, ok := repo.UserGroups[groupID]
+	if !ok {
+		return nil
 	}
-	repo.UserGroupMembersLock.Unlock()
+
+	users, ok := repo.UserGroupMembers[groupID]
+	if ok && users[userID] {
+		delete(users, userID)
+		g.UpdatedAt = time.Now()
+		repo.UserGroups[groupID] = g
+	}
 	return nil
 }
 

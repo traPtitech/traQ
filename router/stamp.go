@@ -49,12 +49,13 @@ func (h *Handlers) PostStamp(c echo.Context) error {
 	}
 
 	// スタンプ作成
-	if _, err := h.Repo.CreateStamp(name, fileID, userID); err != nil {
+	s, err := h.Repo.CreateStamp(name, fileID, userID)
+	if err != nil {
 		c.Logger().Error(err)
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	return c.NoContent(http.StatusCreated)
+	return c.JSON(http.StatusCreated, s)
 }
 
 // GetStamp GET /stamps/:stampID

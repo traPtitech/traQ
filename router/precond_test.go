@@ -17,6 +17,7 @@ func TestCheckPreconditions(t *testing.T) {
 	e := echo.New()
 	e.Any("/", func(c echo.Context) error {
 		c.Response().Header().Set(headerETag, eTag)
+		setLastModified(c, modTime)
 		if ok, err := checkPreconditions(c, modTime); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err)
 		} else if ok {

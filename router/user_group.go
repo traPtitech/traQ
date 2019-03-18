@@ -6,6 +6,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"net/http"
+	"time"
 )
 
 type userGroupResponse struct {
@@ -15,6 +16,8 @@ type userGroupResponse struct {
 	Type        string      `json:"type"`
 	AdminUserID uuid.UUID   `json:"adminUserId"`
 	Members     []uuid.UUID `json:"members"`
+	CreatedAt   time.Time   `json:"createdAt"`
+	UpdatedAt   time.Time   `json:"updatedAt"`
 }
 
 // GetUserGroups GET /groups
@@ -57,12 +60,7 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 		}
 	}
 
-	res, err := h.formatUserGroup(g)
-	if err != nil {
-		c.Logger().Error(err)
-		return c.NoContent(http.StatusInternalServerError)
-	}
-
+	res, _ := h.formatUserGroup(g)
 	return c.JSON(http.StatusCreated, res)
 }
 
@@ -261,6 +259,8 @@ func (h *Handlers) formatUserGroup(g *model.UserGroup) (r *userGroupResponse, er
 		Description: g.Description,
 		Type:        g.Type,
 		AdminUserID: g.AdminUserID,
+		CreatedAt:   g.CreatedAt,
+		UpdatedAt:   g.UpdatedAt,
 	}
 	r.Members, err = h.Repo.GetUserGroupMemberIDs(g.ID)
 	return
