@@ -1,7 +1,6 @@
 package router
 
 import (
-	"github.com/karixtech/zapdriver"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/sessions"
 	"go.uber.org/zap"
@@ -15,7 +14,7 @@ func (h *Handlers) GetMySessions(c echo.Context) error {
 
 	ses, err := sessions.GetByUserID(userID)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
+		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -48,7 +47,7 @@ func (h *Handlers) DeleteAllMySessions(c echo.Context) error {
 
 	err := sessions.DestroyByUserID(userID)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
+		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -62,7 +61,7 @@ func (h *Handlers) DeleteMySession(c echo.Context) error {
 
 	err := sessions.DestroyByReferenceID(userID, referenceID)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
+		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
