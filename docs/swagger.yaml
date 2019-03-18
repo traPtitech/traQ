@@ -82,10 +82,6 @@ paths:
               schema:
                 type: string
                 format: binary
-            image/svg+xml:
-              schema:
-                type: string
-                format: svg
         "404":
           description: 取得できませんでした。指定したユーザーは存在しません。
 
@@ -514,11 +510,11 @@ paths:
       - $ref: "#/components/parameters/channelIdInPath"
     get:
       tags:
-        - topic
+        - channel
       description: チャンネルの説明を取得します。
       responses:
         "200":
-          description: |+
+          description: +|
             正常に取得ができました。
             チャンネルトピックを返します。
           content:
@@ -526,12 +522,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChannelTopic"
         "404":
-          description: |+
+          description: +|
             取得に失敗しました。
             指定したチャンネルは存在しません。
     put:
       tags:
-        - topic
+        - channel
       description: チャンネルの説明を変更します。
       requestBody:
         content:
@@ -549,7 +545,7 @@ paths:
         "204":
           description: 正常に更新できました。
         "404":
-          description: |+
+          description: +|
             更新に失敗しました。
             指定したチャンネルは存在しません。
 
@@ -766,20 +762,16 @@ paths:
     get:
       tags:
         - notification
-      description: 全ユーザーの通知状況を取得します。
+      description: 通知を点けているユーザーのIDの配列を取得します。
       responses:
         "200":
-          description: |+
-            正常に取得できました。
-            ユーザー通知状況の配列を返します。
+          description: 正常に取得できました
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserNotificationList"
+                $ref: "#/components/schemas/UUIDs"
         "404":
-          description: |+
-            取得に失敗しました。
-            指定したチャンネルは存在しません。
+          description: 取得に失敗しました。指定したチャンネルは存在しません。
     put:
       tags:
         - notification
@@ -940,10 +932,6 @@ paths:
               schema:
                 type: string
                 format: binary
-            image/svg+xml:
-              schema:
-                type: string
-                format: svg
     put:
       tags:
         - user
@@ -1213,17 +1201,11 @@ paths:
       description: お気に入りチャンネルリストを取得します。
       responses:
         "200":
-          description: |+
-            正常に取得できました。
-            お気に入りチャンネルのIDの配列を返します。
+          description: 正常に取得できました。お気に入りチャンネルのIDの配列を返します。
           content:
             application/json:
               schema:
-                type: array
-                description: お気に入りチャンネルID
-                items:
-                  type: string
-                  format: uuid
+                $ref: "#/components/schemas/UUIDs"
 
   /users/me/stars/{channelID}:
     parameters:
@@ -1236,22 +1218,18 @@ paths:
         "204":
           description: 正常に追加できました。
         "404":
-          description: |+
-            正常に追加できませんでした。
-            対象のチャンネルが存在しません。
+          description: 正常に追加できませんでした。対象のチャンネルが存在しません。
     delete:
       tags:
         - star
-      description: |+
+      description: +|
         お気に入りチャンネルリストから削除します。
         既にお気に入りチャンネルリストに無いチャンネルを指定した場合は無視されます(204)。
       responses:
         "204":
           description: 正常に削除されました。
         "404":
-          description: |+
-            削除に失敗しました。
-            指定されたチャンネルは存在しません。
+          description: 削除に失敗しました。指定されたチャンネルは存在しません。
 
   /users/me/unread:
     get:
@@ -1284,18 +1262,14 @@ paths:
     get:
       tags:
         - mute
-      description: ミュートしているチャンネルの一覧を返します。
+      description: ミュートしているチャンネルのIDの配列を返します。
       responses:
         "200":
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                type: array
-                description: ミュートしているチャンネルのIDの配列
-                items:
-                  type: string
-                  format: uuid
+                $ref: "#/components/schemas/UUIDs"
 
   /users/me/mute/{channelID}:
     parameters:
@@ -1419,14 +1393,8 @@ paths:
               schema:
                 type: string
                 format: binary
-            image/svg+xml:
-              schema:
-                type: string
-                format: svg
         "404":
-          description: |+
-            正常に取得できませんでした。
-            指定したユーザーは存在しません。
+          description: 正常に取得できませんでした。指定したユーザーは存在しません。
 
   /users/{userID}/tags:
     parameters:
@@ -1629,6 +1597,10 @@ paths:
       responses:
         "201":
           description: 正常にスタンプが作成されました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stamp"
         "400":
           description: 正常にスタンプが作成できませんでした。
 
@@ -1671,29 +1643,20 @@ paths:
         "204":
           description: 正常に修正できました。
         "403":
-          description: |+
-            修正できませんでした。
-            指定されたスタンプを修正する権限がありません。
+          description: 修正できませんでした。指定されたスタンプを修正する権限がありません。
         "404":
-          description: |+
-            修正できませんでした。
-            指定されたスタンプは存在しません。
+          description: 修正できませんでした。指定されたスタンプは存在しません。
     delete:
       description: スタンプを削除します。
       tags:
         - stamp
       responses:
         "204":
-          description: |+
-            正常に削除できました。
+          description: 正常に削除できました。
         "403":
-          description: |+
-            削除できませんでした。
-            指定されたスタンプを削除する権限がありません。
+          description: 削除できませんでした。指定されたスタンプを削除する権限がありません。
         "404":
-          description: |+
-            削除できませんでした。
-            指定されたスタンプは存在しません。
+          description: 削除できませんでした。指定されたスタンプは存在しません。
 
   /files:
     post:
@@ -1761,19 +1724,14 @@ paths:
     delete:
       tags:
         - file
-      description: 指定したメッセージを削除します。
+      description: 指定したファイルを削除します。
       responses:
-        "200":
-          description: |+
-            正常に削除できました。
+        "204":
+          description: 正常に削除できました。
         "403":
-          description: |+
-            削除できませんでした。
-            指定されたファイルを削除する権限がありません。
+          description: 削除できませんでした。指定されたファイルを削除する権限がありません。
         "404":
-          description: |+
-            削除できませんでした。
-            指定されたファイルは存在しないか、自分のスコープ内にありません。
+          description: 削除できませんでした。指定されたファイルは存在しません。
 
   /files/{fileID}/meta:
     parameters:
@@ -1838,13 +1796,9 @@ paths:
         "204":
           description: 正常に編集できました。
         "403":
-          description: |+
-            編集できませんでした。
-            指定されたメッセージを編集する権限がありません。
+          description: 編集できませんでした。指定されたメッセージを編集する権限がありません。
         "404":
-          description: |+
-            編集できませんでした。
-            指定されたメッセージは存在しないか、自分のスコープ内にありません。
+          description: 編集できませんでした。指定されたメッセージは存在しません。
     get:
       tags:
         - message
@@ -1852,33 +1806,24 @@ paths:
       operationId: getMessageById
       responses:
         "200":
-          description: |+
-            正常に取得できました。
-            メッセージオブジェクトを返します。
+          description: 正常に取得できました。
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
         "404":
-          description: |+
-            取得できませんでした。
-            指定されたメッセージは存在しないか、自分のスコープ内にありません。
+          description: 取得できませんでした。指定されたメッセージは存在しません。
     delete:
       tags:
         - message
       description: 指定したメッセージを削除します。
       responses:
         "204":
-          description: |+
-            正常に削除できました。
+          description: 正常に削除できました。
         "403":
-          description: |+
-            削除できませんでした。
-            指定されたメッセージを削除する権限がありません。
+          description: 削除できませんでした。指定されたメッセージを削除する権限がありません。
         "404":
-          description: |+
-            削除できませんでした。
-            指定されたメッセージは存在しないか、自分のスコープ内にありません。
+          description: 削除できませんでした。指定されたメッセージは存在しません。
 
   /messages/{messageID}/report:
     parameters:
@@ -1903,6 +1848,8 @@ paths:
           description: 通報を受理しました。
         "400":
           description: 通報を受理できませんでした。リクエスト内容が不正です。
+        "404":
+          description: 通報を受理できませんでした。指定されたメッセージは存在しません。
 
   /messages/{messageID}/stamps:
     parameters:
@@ -1921,7 +1868,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/MessageStamp"
         "404":
-          description: 取得できませんでした。指定したメッセージは存在しないか、自分のスコープ内にありません。
+          description: 取得できませんでした。指定したメッセージは存在しません。
 
   /messages/{messageID}/stamps/{stampID}:
     parameters:
@@ -1933,32 +1880,18 @@ paths:
       description: 指定したメッセージに指定したスタンプを押します。
       responses:
         "204":
-          description: |+
-            正常にスタンプを押すことができました。
-        "400":
-          description: |+
-            スタンプを押すことができませんでした。
-            指定されたスタンプは存在しません。
+          description: 正常にスタンプを押すことができました。
         "404":
-          description: |+
-            スタンプを押すことができませんでした。
-            指定されたメッセージは存在しないか、自分のスコープ内にありません。
+          description: スタンプを押すことができませんでした。指定されたスタンプまたはメッセージは存在しません。
     delete:
       tags:
         - stamp
       description: 指定したメッセージから指定したスタンプを外します。
       responses:
         "204":
-          description: |+
-            正常にスタンプを外すことができました。
-        "400":
-          description: |+
-            スタンプを外すことができませんでした。
-            指定されたスタンプは存在しません。
+          description: 正常にスタンプを外すことができました。
         "404":
-          description: |+
-            スタンプを外すことができませんでした。
-            指定されたメッセージは存在しないか、自分のスコープ内にありません。
+          description: スタンプを外すことができませんでした。指定されたスタンプまたはメッセージは存在しません。
 
   /heartbeat:
     get:
@@ -3188,6 +3121,12 @@ components:
           format: uuid
         members:
           $ref: "#/components/schemas/UUIDs"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
 
     Tag:
       type: object
@@ -3336,22 +3275,6 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Pin"
-
-    UserNotification:
-      type: object
-      properties:
-        userId:
-          type: string
-          format: uuid
-        name:
-          type: string
-        notification:
-          type: boolean
-
-    UserNotificationList:
-      type: array
-      items:
-        $ref: "#/components/schemas/UserNotification"
 
     UserHeartbeatStatus:
       type: object
