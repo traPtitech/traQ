@@ -201,10 +201,15 @@ func main() {
 	// Routing
 	h := router.NewHandlers(oauth, r, repo, hub, logger.Named("router"), viper.GetString("imagemagick.path"))
 	e := echo.New()
-	if viper.GetBool("access_log.enabled") {
+	if viper.GetBool("accessLog.enabled") {
 		alog := logger.Named("access_log")
+		exHeartbeat := viper.GetBool("accessLog.excludesHeartbeat")
 		e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 			return func(c echo.Context) error {
+				if exHeartbeat && strings.HasPrefix(c.Path(), "/api/1.0/heartbeat") {
+					return next(c)
+				}
+
 				start := time.Now()
 				if err := next(c); err != nil {
 					c.Error(err)
@@ -257,7 +262,8 @@ func main() {
 func setDefaultConfigs() {
 	viper.SetDefault("origin", "http://localhost:3000")
 	viper.SetDefault("port", 3000)
-	viper.SetDefault("access_log.enabled", true)
+	viper.SetDefault("accessLog.enabled", true)
+	viper.SetDefault("accessLog.excludesHeartbeat", true)
 
 	viper.SetDefault("pprof", false)
 
