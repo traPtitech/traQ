@@ -1,7 +1,6 @@
 package router
 
 import (
-	"github.com/karixtech/zapdriver"
 	"go.uber.org/zap"
 	"net/http"
 
@@ -14,7 +13,7 @@ func (h *Handlers) GetStars(c echo.Context) error {
 
 	stars, err := h.Repo.GetStaredChannels(userID)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
+		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -27,7 +26,7 @@ func (h *Handlers) PutStars(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
 	if err := h.Repo.AddStar(userID, channelID); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
+		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -40,7 +39,7 @@ func (h *Handlers) DeleteStars(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
 	if err := h.Repo.RemoveStar(userID, channelID); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
+		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 

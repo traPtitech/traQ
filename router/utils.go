@@ -176,7 +176,7 @@ func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHead
 	// ファイルタイプ確認・必要があればリサイズ
 	src, err := file.Open()
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
+		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	b, mime, err := process(c, file.Header.Get(echo.HeaderContentType), src)
@@ -188,7 +188,7 @@ func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHead
 	// ファイル保存
 	f, err := h.Repo.SaveFile(file.Filename, b, int64(b.Len()), mime, fType, uuid.Nil)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
+		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -229,7 +229,7 @@ func (h *Handlers) processGifImage(c echo.Context, imagemagickPath string, src i
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "bad image file (resize timeout)")
 		default:
 			// 予期しないエラー
-			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
+			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return nil, "", echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -242,7 +242,7 @@ func (h *Handlers) processSVGImage(c echo.Context, src io.Reader) (*bytes.Buffer
 	b := &bytes.Buffer{}
 	_, err := io.Copy(b, src)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
+		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return nil, "", echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return b, mimeImageSVG, nil
@@ -262,4 +262,17 @@ func getRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
 
 func getRBAC(c echo.Context) *rbac.RBAC {
 	return c.Get("rbac").(*rbac.RBAC)
+}
+
+func zapHTTP(c echo.Context) zap.Field {
+	req := c.Request()
+	return zapdriver.HTTP(&zapdriver.HTTPPayload{
+		RequestMethod: req.Method,
+		UserAgent:     req.UserAgent(),
+		RemoteIP:      c.RealIP(),
+		Referer:       req.Referer(),
+		Protocol:      req.Proto,
+		RequestURL:    req.URL.String(),
+		RequestSize:   req.Header.Get(echo.HeaderContentLength),
+	})
 }
