@@ -29,6 +29,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -200,6 +201,34 @@ func main() {
 	// Routing
 	h := router.NewHandlers(oauth, r, repo, hub, logger.Named("router"), viper.GetString("imagemagick.path"))
 	e := echo.New()
+	if viper.GetBool("access_log.enabled") {
+		alog := logger.Named("access_log")
+		e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+			return func(c echo.Context) error {
+				start := time.Now()
+				if err := next(c); err != nil {
+					c.Error(err)
+				}
+				stop := time.Now()
+
+				req := c.Request()
+				res := c.Response()
+				alog.Info("", zapdriver.HTTP(&zapdriver.HTTPPayload{
+					RequestMethod: req.Method,
+					Status:        res.Status,
+					UserAgent:     req.UserAgent(),
+					RemoteIP:      c.RealIP(),
+					Referer:       req.Referer(),
+					Protocol:      req.Proto,
+					RequestURL:    req.URL.String(),
+					RequestSize:   req.Header.Get(echo.HeaderContentLength),
+					ResponseSize:  strconv.FormatInt(res.Size, 10),
+					Latency:       strconv.FormatInt(int64(stop.Sub(start)), 10),
+				}))
+				return nil
+			}
+		})
+	}
 	e.Use(router.AddHeadersMiddleware(map[string]string{"X-TRAQ-VERSION": versionAndRevision}))
 	e.HideBanner = true
 	e.HidePort = true
@@ -228,6 +257,7 @@ func main() {
 func setDefaultConfigs() {
 	viper.SetDefault("origin", "http://localhost:3000")
 	viper.SetDefault("port", 3000)
+	viper.SetDefault("access_log.enabled", true)
 
 	viper.SetDefault("pprof", false)
 
