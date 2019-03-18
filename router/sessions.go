@@ -1,19 +1,21 @@
 package router
 
 import (
+	"github.com/karixtech/zapdriver"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/sessions"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
 
 // GetMySessions GET /users/me/sessions
-func GetMySessions(c echo.Context) error {
+func (h *Handlers) GetMySessions(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	ses, err := sessions.GetByUserID(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -41,12 +43,12 @@ func GetMySessions(c echo.Context) error {
 }
 
 // DeleteAllMySessions DELETE /users/me/sessions
-func DeleteAllMySessions(c echo.Context) error {
+func (h *Handlers) DeleteAllMySessions(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	err := sessions.DestroyByUserID(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -54,13 +56,13 @@ func DeleteAllMySessions(c echo.Context) error {
 }
 
 // DeleteMySession DELETE /users/me/sessions/:referenceID
-func DeleteMySession(c echo.Context) error {
+func (h *Handlers) DeleteMySession(c echo.Context) error {
 	userID := getRequestUserID(c)
 	referenceID := getRequestParamAsUUID(c, paramReferenceID)
 
 	err := sessions.DestroyByReferenceID(userID, referenceID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 

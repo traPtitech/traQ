@@ -1,8 +1,10 @@
 package router
 
 import (
+	"github.com/karixtech/zapdriver"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/repository"
+	"go.uber.org/zap"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -36,7 +38,7 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 
 	channelList, err := h.Repo.GetChannelsByUserID(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -59,7 +61,7 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 			// プライベートチャンネルのメンバー取得
 			member, err := h.Repo.GetPrivateChannelMemberIDs(ch.ID)
 			if err != nil {
-				c.Logger().Error(err)
+				h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 			entry.Member = member
@@ -125,7 +127,7 @@ func (h *Handlers) PostChannels(c echo.Context) error {
 			case repository.ErrChannelDepthLimitation:
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			default:
-				c.Logger().Error(err)
+				h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
@@ -141,7 +143,7 @@ func (h *Handlers) PostChannels(c echo.Context) error {
 			case repository.ErrChannelDepthLimitation:
 				return echo.NewHTTPError(http.StatusBadRequest, err)
 			default:
-				c.Logger().Error(err)
+				h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
@@ -149,7 +151,7 @@ func (h *Handlers) PostChannels(c echo.Context) error {
 
 	formatted, err := h.formatChannel(ch)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusCreated, formatted)
@@ -161,7 +163,7 @@ func (h *Handlers) GetChannelByChannelID(c echo.Context) error {
 
 	formatted, err := h.formatChannel(ch)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, formatted)
@@ -188,7 +190,7 @@ func (h *Handlers) PatchChannelByChannelID(c echo.Context) error {
 			case repository.ErrForbidden:
 				return echo.NewHTTPError(http.StatusForbidden)
 			default:
-				c.Logger().Error(err)
+				h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
@@ -196,7 +198,7 @@ func (h *Handlers) PatchChannelByChannelID(c echo.Context) error {
 
 	if req.Force != nil || req.Visibility != nil {
 		if err := h.Repo.UpdateChannelAttributes(channelID, req.Visibility, req.Force); err != nil {
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -226,14 +228,14 @@ func (h *Handlers) PostChannelChildren(c echo.Context) error {
 		case repository.ErrChannelDepthLimitation:
 			return echo.NewHTTPError(http.StatusBadRequest, err)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	formatted, err := h.formatChannel(ch)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusCreated, formatted)
@@ -259,7 +261,7 @@ func (h *Handlers) PutChannelParent(c echo.Context) error {
 		case repository.ErrForbidden:
 			return echo.NewHTTPError(http.StatusForbidden)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -272,7 +274,7 @@ func (h *Handlers) DeleteChannelByChannelID(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
 	if err := h.Repo.DeleteChannel(channelID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -300,7 +302,7 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 	}
 
 	if err := h.Repo.UpdateChannelTopic(channelID, req.Text, userID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 

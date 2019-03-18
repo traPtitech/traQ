@@ -1,8 +1,10 @@
 package router
 
 import (
+	"github.com/blendle/zapdriver"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -23,13 +25,13 @@ func (h *Handlers) GetActivityLatestMessages(c echo.Context) error {
 
 	messages, err := h.Repo.GetChannelLatestMessagesByUserID(userID, req.Limit, req.SubscribeOnly)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	reports, err := h.Repo.GetMessageReportsByReporterID(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	hidden := make(map[uuid.UUID]bool)

@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/karixtech/zapdriver"
 	"github.com/labstack/echo"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/satori/go.uuid"
 	"github.com/spf13/viper"
-	"github.com/tommy351/zap-stackdriver"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/oauth2/impl"
@@ -48,13 +48,11 @@ func main() {
 	zc := &zap.Config{
 		Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
 		Encoding:         "json",
-		EncoderConfig:    stackdriver.EncoderConfig,
+		EncoderConfig:    zapdriver.NewProductionEncoderConfig(),
 		OutputPaths:      []string{"stdout"},
 		ErrorOutputPaths: []string{"stderr"},
 	}
-	logger, err := zc.Build(zap.WrapCore(func(core zapcore.Core) zapcore.Core {
-		return &stackdriver.Core{Core: core}
-	}), zap.Fields(stackdriver.LogServiceContext(&stackdriver.ServiceContext{Service: "traq", Version: versionAndRevision})))
+	logger, err := zc.Build(zapdriver.WrapCoreWithConfig(zapdriver.DriverConfig{ReportAllErrors: true, ServiceName: "traq"}))
 	if err != nil {
 		panic(err)
 	}
@@ -200,7 +198,7 @@ func main() {
 	}
 
 	// Routing
-	h := router.NewHandlers(oauth, r, repo, hub, viper.GetString("imagemagick.path"))
+	h := router.NewHandlers(oauth, r, repo, hub, logger.Named("router"), viper.GetString("imagemagick.path"))
 	e := echo.New()
 	e.Use(router.AddHeadersMiddleware(map[string]string{"X-TRAQ-VERSION": versionAndRevision}))
 	e.HideBanner = true

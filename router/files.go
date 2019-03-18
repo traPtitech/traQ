@@ -2,8 +2,10 @@ package router
 
 import (
 	"fmt"
+	"github.com/karixtech/zapdriver"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/repository"
+	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 	"strings"
@@ -31,7 +33,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 			}
 
 			if ok, err := h.Repo.UserExists(uid); err != nil {
-				c.Logger().Error(err)
+				h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 				return c.NoContent(http.StatusInternalServerError)
 			} else if !ok {
 				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("unknown acl user id: %s", uid))
@@ -44,14 +46,14 @@ func (h *Handlers) PostFile(c echo.Context) error {
 
 	src, err := uploadedFile.Open()
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	defer src.Close()
 
 	file, err := h.Repo.SaveFileWithACL(uploadedFile.Filename, src, uploadedFile.Size, uploadedFile.Header.Get(echo.HeaderContentType), model.FileTypeUserFile, userID, aclRead)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusCreated, file)
@@ -76,7 +78,7 @@ func (h *Handlers) GetFileByID(c echo.Context) error {
 
 	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	defer file.Close()
@@ -97,7 +99,7 @@ func (h *Handlers) DeleteFileByID(c echo.Context) error {
 	fileID := getRequestParamAsUUID(c, paramFileID)
 
 	if err := h.Repo.DeleteFile(fileID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -129,7 +131,7 @@ func (h *Handlers) GetThumbnailByID(c echo.Context) error {
 
 	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetThumbKey())
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	defer file.Close()
