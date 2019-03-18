@@ -202,6 +202,7 @@ func main() {
 	h := router.NewHandlers(oauth, r, repo, hub, logger.Named("router"), viper.GetString("imagemagick.path"))
 	e := echo.New()
 	if viper.GetBool("access_log.enabled") {
+		alog := logger.Named("access_log")
 		e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 			return func(c echo.Context) error {
 				start := time.Now()
@@ -212,7 +213,7 @@ func main() {
 
 				req := c.Request()
 				res := c.Response()
-				logger.Named("access_log").Info("", zapdriver.HTTP(&zapdriver.HTTPPayload{
+				alog.Info("", zapdriver.HTTP(&zapdriver.HTTPPayload{
 					RequestMethod: req.Method,
 					Status:        res.Status,
 					UserAgent:     req.UserAgent(),
