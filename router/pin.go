@@ -1,8 +1,10 @@
 package router
 
 import (
+	"github.com/karixtech/zapdriver"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/repository"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 
@@ -24,7 +26,7 @@ func (h *Handlers) GetChannelPin(c echo.Context) error {
 
 	res, err := h.getChannelPinResponse(channelID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -48,14 +50,14 @@ func (h *Handlers) PostPin(c echo.Context) error {
 		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusBadRequest, "the message doesn't exist")
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	// ユーザーからアクセス可能なチャンネルかどうか
 	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, "the message doesn't exist")
@@ -63,7 +65,7 @@ func (h *Handlers) PostPin(c echo.Context) error {
 
 	pinID, err := h.Repo.CreatePin(m.ID, userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -81,7 +83,7 @@ func (h *Handlers) DeletePin(c echo.Context) error {
 	pinID := getRequestParamAsUUID(c, paramPinID)
 
 	if err := h.Repo.DeletePin(pinID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 

@@ -1,8 +1,10 @@
 package router
 
 import (
+	"github.com/karixtech/zapdriver"
 	"github.com/labstack/gommon/log"
 	"github.com/traPtitech/traQ/repository"
+	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 	"time"
@@ -50,7 +52,7 @@ func (h *Handlers) PutMessageByID(c echo.Context) error {
 	}
 
 	if err := h.Repo.UpdateMessage(messageID, req.Text); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -68,7 +70,7 @@ func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 	}
 
 	if err := h.Repo.DeleteMessage(messageID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -90,13 +92,13 @@ func (h *Handlers) GetMessagesByChannelID(c echo.Context) error {
 
 	messages, err := h.Repo.GetMessagesByChannelID(channelID, req.Limit, req.Offset)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	reports, err := h.Repo.GetMessageReportsByReporterID(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	hidden := make(map[uuid.UUID]bool)
@@ -152,14 +154,14 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 	// DMチャンネルを取得
 	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	// メッセージ取得
 	messages, err := h.Repo.GetMessagesByChannelID(ch.ID, req.Limit, req.Offset)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -187,7 +189,7 @@ func (h *Handlers) PostDirectMessage(c echo.Context) error {
 	// DMチャンネルを取得
 	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -216,7 +218,7 @@ func (h *Handlers) PostMessageReport(c echo.Context) error {
 		if isMySQLDuplicatedRecordErr(err) {
 			return echo.NewHTTPError(http.StatusBadRequest, "already reported")
 		}
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -229,7 +231,7 @@ func (h *Handlers) GetMessageReports(c echo.Context) error {
 
 	reports, err := h.Repo.GetMessageReports(p*50, 50)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -260,7 +262,7 @@ func (h *Handlers) DeleteUnread(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
 	if err := h.Repo.DeleteUnreadsByChannelID(channelID, userID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -271,7 +273,7 @@ func (h *Handlers) DeleteUnread(c echo.Context) error {
 func (h *Handlers) createMessage(c echo.Context, text string, userID, channelID uuid.UUID) (*MessageForResponse, error) {
 	m, err := h.Repo.CreateMessage(userID, channelID, text)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return h.formatMessage(m), nil
@@ -309,13 +311,13 @@ func (h *Handlers) validateMessageID(c echo.Context, messageID, userID uuid.UUID
 		case repository.ErrNotFound:
 			return nil, echo.NewHTTPError(http.StatusNotFound, "Message is not found")
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return nil, echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return nil, echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
 		return nil, echo.NewHTTPError(http.StatusNotFound)

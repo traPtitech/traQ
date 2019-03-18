@@ -1,10 +1,12 @@
 package router
 
 import (
+	"github.com/karixtech/zapdriver"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
@@ -24,13 +26,13 @@ type userGroupResponse struct {
 func (h *Handlers) GetUserGroups(c echo.Context) error {
 	gs, err := h.Repo.GetAllUserGroups()
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	res, err := h.formatUserGroups(gs)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -55,7 +57,7 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 		case repository.ErrAlreadyExists:
 			return c.NoContent(http.StatusConflict)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
@@ -70,7 +72,7 @@ func (h *Handlers) GetUserGroup(c echo.Context) error {
 
 	res, err := h.formatUserGroup(g)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -107,10 +109,10 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 	if req.AdminUserID != nil {
 		// ユーザーが存在するか
 		if ok, err := h.Repo.UserExists(*req.AdminUserID); err != nil {
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return c.NoContent(http.StatusInternalServerError)
 		} else if !ok {
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return c.NoContent(http.StatusBadRequest)
 		}
 		args.AdminUserID.Valid = true
@@ -122,7 +124,7 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 		case repository.ErrAlreadyExists:
 			return c.NoContent(http.StatusConflict)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
@@ -142,7 +144,7 @@ func (h *Handlers) DeleteUserGroup(c echo.Context) error {
 	}
 
 	if err := h.Repo.DeleteUserGroup(groupID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -155,7 +157,7 @@ func (h *Handlers) GetUserGroupMembers(c echo.Context) error {
 
 	res, err := h.Repo.GetUserGroupMemberIDs(groupID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -182,15 +184,15 @@ func (h *Handlers) PostUserGroupMembers(c echo.Context) error {
 
 	// ユーザーが存在するか
 	if ok, err := h.Repo.UserExists(req.UserID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	} else if !ok {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusBadRequest)
 	}
 
 	if err := h.Repo.AddUserToGroup(req.UserID, groupID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -211,15 +213,15 @@ func (h *Handlers) DeleteUserGroupMembers(c echo.Context) error {
 
 	// ユーザーが存在するか
 	if ok, err := h.Repo.UserExists(userID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	} else if !ok {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusBadRequest)
 	}
 
 	if err := h.Repo.RemoveUserFromGroup(userID, groupID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -232,7 +234,7 @@ func (h *Handlers) GetMyBelongingGroup(c echo.Context) error {
 
 	ids, err := h.Repo.GetUserBelongingGroupIDs(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -245,7 +247,7 @@ func (h *Handlers) GetUserBelongingGroup(c echo.Context) error {
 
 	ids, err := h.Repo.GetUserBelongingGroupIDs(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 

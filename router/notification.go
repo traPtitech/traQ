@@ -1,6 +1,8 @@
 package router
 
 import (
+	"github.com/karixtech/zapdriver"
+	"go.uber.org/zap"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -18,7 +20,7 @@ func (h *Handlers) GetNotificationStatus(c echo.Context) error {
 
 	users, err := h.Repo.GetSubscribingUserIDs(ch.ID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, users)
@@ -43,11 +45,11 @@ func (h *Handlers) PutNotificationStatus(c echo.Context) error {
 
 	for _, id := range req.On {
 		if ok, err := h.Repo.UserExists(id); err != nil {
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return c.NoContent(http.StatusInternalServerError)
 		} else if ok {
 			if err := h.Repo.SubscribeChannel(id, ch.ID); err != nil {
-				c.Logger().Error(err)
+				h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 				return c.NoContent(http.StatusInternalServerError)
 			}
 		}
@@ -55,7 +57,7 @@ func (h *Handlers) PutNotificationStatus(c echo.Context) error {
 	for _, id := range req.Off {
 		err := h.Repo.UnsubscribeChannel(id, ch.ID)
 		if err != nil {
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
@@ -75,7 +77,7 @@ func (h *Handlers) PostDeviceToken(c echo.Context) error {
 	}
 
 	if _, err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -88,7 +90,7 @@ func (h *Handlers) GetNotificationChannels(c echo.Context) error {
 
 	channelIDs, err := h.Repo.GetSubscribedChannelIDs(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -101,7 +103,7 @@ func (h *Handlers) GetMyNotificationChannels(c echo.Context) error {
 
 	channelIDs, err := h.Repo.GetSubscribedChannelIDs(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 

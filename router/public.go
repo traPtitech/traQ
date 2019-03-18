@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/karixtech/zapdriver"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/repository"
+	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 	"time"
@@ -22,7 +24,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -34,7 +36,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -42,7 +44,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	// ファイルオープン
 	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	defer file.Close()
@@ -81,7 +83,7 @@ func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 	}
 
 	if err := generateEmojiJSON(h.Repo, &h.emojiJSONCache); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	h.emojiJSONTime = time.Now()
@@ -133,7 +135,7 @@ func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 	}
 
 	if err := generateEmojiCSS(h.Repo, &h.emojiCSSCache); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	h.emojiCSSTime = time.Now()
@@ -163,13 +165,13 @@ func (h *Handlers) GetPublicEmojiImage(c echo.Context) error {
 
 	meta, err := h.Repo.GetFileMeta(s.FileID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	defer file.Close()

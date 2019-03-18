@@ -41,9 +41,9 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiUsersMe.GET("/notification", h.GetMyNotificationChannels, requires(permission.GetNotificationStatus))
 				apiUsersMeSessions := apiUsersMe.Group("/sessions")
 				{
-					apiUsersMeSessions.GET("", GetMySessions, requires(permission.GetMySessions))
-					apiUsersMeSessions.DELETE("", DeleteAllMySessions, requires(permission.DeleteMySessions))
-					apiUsersMeSessions.DELETE("/:referenceID", DeleteMySession, requires(permission.DeleteMySessions))
+					apiUsersMeSessions.GET("", h.GetMySessions, requires(permission.GetMySessions))
+					apiUsersMeSessions.DELETE("", h.DeleteAllMySessions, requires(permission.DeleteMySessions))
+					apiUsersMeSessions.DELETE("/:referenceID", h.DeleteMySession, requires(permission.DeleteMySessions))
 				}
 				apiUsersMeClips := apiUsersMe.Group("/clips")
 				{

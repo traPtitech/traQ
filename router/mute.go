@@ -1,7 +1,9 @@
 package router
 
 import (
+	"github.com/karixtech/zapdriver"
 	"github.com/labstack/echo"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -11,7 +13,7 @@ func (h *Handlers) GetMutedChannelIDs(c echo.Context) error {
 
 	ids, err := h.Repo.GetMutedChannelIDs(uid)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -30,7 +32,7 @@ func (h *Handlers) PostMutedChannel(c echo.Context) error {
 	}
 
 	if err := h.Repo.MuteChannel(uid, cid); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -43,7 +45,7 @@ func (h *Handlers) DeleteMutedChannel(c echo.Context) error {
 	cid := getRequestParamAsUUID(c, paramChannelID)
 
 	if err := h.Repo.UnmuteChannel(uid, cid); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 

@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"github.com/disintegration/imaging"
 	"github.com/go-sql-driver/mysql"
+	"github.com/karixtech/zapdriver"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
@@ -14,6 +15,7 @@ import (
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/imagemagick"
+	"go.uber.org/zap"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
 	"io"
@@ -65,6 +67,8 @@ const (
 	headerCacheFile         = "X-TRAQ-FILE-CACHE"
 	headerSignature         = "X-TRAQ-Signature"
 	headerChannelID         = "X-TRAQ-Channel-Id"
+
+	unexpectedError = "unexpected error"
 )
 
 func init() {
@@ -78,6 +82,7 @@ type Handlers struct {
 	Repo            repository.Repository
 	SSE             *SSEStreamer
 	Hub             *hub.Hub
+	Logger          *zap.Logger
 	ImageMagickPath string
 
 	emojiJSONCache     bytes.Buffer
@@ -89,13 +94,14 @@ type Handlers struct {
 }
 
 // NewHandlers ハンドラを生成します
-func NewHandlers(oauth2 *oauth2.Handler, rbac *rbac.RBAC, repo repository.Repository, hub *hub.Hub, imageMagickPath string) *Handlers {
+func NewHandlers(oauth2 *oauth2.Handler, rbac *rbac.RBAC, repo repository.Repository, hub *hub.Hub, logger *zap.Logger, imageMagickPath string) *Handlers {
 	h := &Handlers{
 		OAuth2:          oauth2,
 		RBAC:            rbac,
 		Repo:            repo,
 		SSE:             NewSSEStreamer(hub, repo),
 		Hub:             hub,
+		Logger:          logger,
 		ImageMagickPath: imageMagickPath,
 	}
 	go h.stampEventSubscriber(hub.Subscribe(10, event.StampCreated, event.StampUpdated, event.StampDeleted))
@@ -140,9 +146,9 @@ func (h *Handlers) processMultipartFormIconUpload(c echo.Context, file *multipar
 	return h.processMultipartForm(c, file, model.FileTypeIcon, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
 		switch mime {
 		case mimeImagePNG, mimeImageJPEG:
-			return processStillImage(c, src, iconMaxWidth, iconMaxHeight)
+			return h.processStillImage(c, src, iconMaxWidth, iconMaxHeight)
 		case mimeImageGIF:
-			return processGifImage(c, h.ImageMagickPath, src, iconMaxWidth, iconMaxHeight)
+			return h.processGifImage(c, h.ImageMagickPath, src, iconMaxWidth, iconMaxHeight)
 		}
 		return nil, "", echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
 	})
@@ -156,11 +162,11 @@ func (h *Handlers) processMultipartFormStampUpload(c echo.Context, file *multipa
 	return h.processMultipartForm(c, file, model.FileTypeStamp, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
 		switch mime {
 		case mimeImagePNG, mimeImageJPEG:
-			return processStillImage(c, src, stampMaxWidth, stampMaxHeight)
+			return h.processStillImage(c, src, stampMaxWidth, stampMaxHeight)
 		case mimeImageGIF:
-			return processGifImage(c, h.ImageMagickPath, src, stampMaxWidth, stampMaxHeight)
+			return h.processGifImage(c, h.ImageMagickPath, src, stampMaxWidth, stampMaxHeight)
 		case mimeImageSVG:
-			return processSVGImage(c, src)
+			return h.processSVGImage(c, src)
 		}
 		return nil, "", echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
 	})
@@ -170,7 +176,7 @@ func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHead
 	// ファイルタイプ確認・必要があればリサイズ
 	src, err := file.Open()
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	b, mime, err := process(c, file.Header.Get(echo.HeaderContentType), src)
@@ -182,14 +188,14 @@ func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHead
 	// ファイル保存
 	f, err := h.Repo.SaveFile(file.Filename, b, int64(b.Len()), mime, fType, uuid.Nil)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return f.ID, nil
 }
 
-func processStillImage(c echo.Context, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, string, error) {
+func (h *Handlers) processStillImage(c echo.Context, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, string, error) {
 	img, err := imaging.Decode(src, imaging.AutoOrientation(true))
 	if err != nil {
 		return nil, "", echo.NewHTTPError(http.StatusBadRequest, "bad image file")
@@ -205,7 +211,7 @@ func processStillImage(c echo.Context, src io.Reader, maxWidth, maxHeight int) (
 	return &b, mimeImagePNG, nil
 }
 
-func processGifImage(c echo.Context, imagemagickPath string, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, string, error) {
+func (h *Handlers) processGifImage(c echo.Context, imagemagickPath string, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
 	defer cancel()
 
@@ -223,7 +229,7 @@ func processGifImage(c echo.Context, imagemagickPath string, src io.Reader, maxW
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "bad image file (resize timeout)")
 		default:
 			// 予期しないエラー
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return nil, "", echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -231,12 +237,12 @@ func processGifImage(c echo.Context, imagemagickPath string, src io.Reader, maxW
 	return b, mimeImageGIF, nil
 }
 
-func processSVGImage(c echo.Context, src io.Reader) (*bytes.Buffer, string, error) {
+func (h *Handlers) processSVGImage(c echo.Context, src io.Reader) (*bytes.Buffer, string, error) {
 	// TODO svg検証
 	b := &bytes.Buffer{}
 	_, err := io.Copy(b, src)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return nil, "", echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return b, mimeImageSVG, nil

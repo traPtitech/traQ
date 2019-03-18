@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
+	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -65,7 +66,7 @@ func TestMain(m *testing.M) {
 
 		e := echo.New()
 		repo := NewTestRepository()
-		SetupRouting(e, &Handlers{RBAC: r, Repo: repo})
+		SetupRouting(e, &Handlers{RBAC: r, Repo: repo, Logger: zap.NewNop()})
 		servers[key] = httptest.NewServer(e)
 		repositories[key] = repo
 	}

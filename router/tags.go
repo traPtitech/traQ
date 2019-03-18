@@ -1,8 +1,10 @@
 package router
 
 import (
+	"github.com/karixtech/zapdriver"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/repository"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 
@@ -48,7 +50,7 @@ func (h *Handlers) PostUserTag(c echo.Context) error {
 	// タグの確認
 	t, err := h.Repo.GetOrCreateTagByName(req.Tag)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -68,7 +70,7 @@ func (h *Handlers) PostUserTag(c echo.Context) error {
 		case repository.ErrAlreadyExists:
 			return c.NoContent(http.StatusNoContent)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -97,7 +99,7 @@ func (h *Handlers) PatchUserTag(c echo.Context) error {
 		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -114,7 +116,7 @@ func (h *Handlers) PatchUserTag(c echo.Context) error {
 
 	// 更新
 	if err := h.Repo.ChangeUserTagLock(userID, ut.Tag.ID, body.IsLocked); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -133,7 +135,7 @@ func (h *Handlers) DeleteUserTag(c echo.Context) error {
 		case repository.ErrNotFound: //既にない
 			return c.NoContent(http.StatusNoContent)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -150,7 +152,7 @@ func (h *Handlers) DeleteUserTag(c echo.Context) error {
 
 	// 削除
 	if err := h.Repo.DeleteUserTag(userID, ut.Tag.ID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -175,14 +177,14 @@ func (h *Handlers) GetUsersByTagID(c echo.Context) error {
 		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	users, err := h.Repo.GetUserIDsByTagID(t.ID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -206,7 +208,7 @@ func (h *Handlers) PatchTag(c echo.Context) error {
 		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -254,7 +256,7 @@ func (h *Handlers) PatchTag(c echo.Context) error {
 func (h *Handlers) getUserTags(userID uuid.UUID, c echo.Context) ([]*TagForResponse, error) {
 	tagList, err := h.Repo.GetUserTagsByUserID(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get tagList")
 	}
 

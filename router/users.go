@@ -2,12 +2,14 @@ package router
 
 import (
 	"fmt"
+	"github.com/karixtech/zapdriver"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
@@ -57,7 +59,7 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 		case repository.ErrNotFound:
 			return c.NoContent(http.StatusUnauthorized)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
@@ -75,12 +77,12 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 
 	sess, err := sessions.Get(c.Response(), c.Request(), true)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	if err := sess.SetUser(user.ID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -94,12 +96,12 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 func (h *Handlers) PostLogout(c echo.Context) error {
 	sess, err := sessions.Get(c.Response(), c.Request(), false)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	if sess != nil {
 		if err := sess.Destroy(c.Response(), c.Request()); err != nil {
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
@@ -114,7 +116,7 @@ func (h *Handlers) PostLogout(c echo.Context) error {
 func (h *Handlers) GetUsers(c echo.Context) error {
 	users, err := h.Repo.GetUsers()
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -138,7 +140,7 @@ func (h *Handlers) GetUserByID(c echo.Context) error {
 
 	tagList, err := h.Repo.GetUserTagsByUserID(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -187,7 +189,7 @@ func (h *Handlers) PutMyIcon(c echo.Context) error {
 
 	// アイコン変更
 	if err := h.Repo.ChangeUserIcon(userID, iconID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -208,14 +210,14 @@ func (h *Handlers) PatchMe(c echo.Context) error {
 
 	if len(req.DisplayName) > 0 {
 		if err := h.Repo.ChangeUserDisplayName(userID, req.DisplayName); err != nil {
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	if len(req.TwitterID) > 0 {
 		if err := h.Repo.ChangeUserTwitterID(userID, req.TwitterID); err != nil {
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -240,7 +242,7 @@ func (h *Handlers) PutPassword(c echo.Context) error {
 	}
 
 	if err := h.Repo.ChangeUserPassword(user.ID, req.New); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -259,14 +261,14 @@ func (h *Handlers) PostUsers(c echo.Context) error {
 
 	if _, err := h.Repo.GetUserByName(req.Name); err != repository.ErrNotFound {
 		if err != nil {
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 		return echo.NewHTTPError(http.StatusBadRequest, "the name's user has already existed")
 	}
 
 	if _, err := h.Repo.CreateUser(req.Name, req.Password, role.User); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 

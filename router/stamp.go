@@ -1,10 +1,12 @@
 package router
 
 import (
+	"github.com/karixtech/zapdriver"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/utils/validator"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -12,7 +14,7 @@ import (
 func (h *Handlers) GetStamps(c echo.Context) error {
 	stamps, err := h.Repo.GetAllStamps()
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.JSON(http.StatusOK, stamps)
@@ -30,7 +32,7 @@ func (h *Handlers) PostStamp(c echo.Context) error {
 
 	// スタンプ名の重複を確認
 	if dup, err := h.Repo.IsStampNameDuplicate(name); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if dup {
 		return echo.NewHTTPError(http.StatusConflict, "this name has already been used")
@@ -51,7 +53,7 @@ func (h *Handlers) PostStamp(c echo.Context) error {
 	// スタンプ作成
 	s, err := h.Repo.CreateStamp(name, fileID, userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -90,7 +92,7 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 		}
 		// スタンプ名の重複を確認
 		if dup, err := h.Repo.IsStampNameDuplicate(name); err != nil {
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		} else if dup {
 			return echo.NewHTTPError(http.StatusConflict, "this name has already been used")
@@ -112,7 +114,7 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 
 	// 更新
 	if err := h.Repo.UpdateStamp(stampID, data.Name, data.FileID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -124,7 +126,7 @@ func (h *Handlers) DeleteStamp(c echo.Context) error {
 	stampID := getRequestParamAsUUID(c, paramStampID)
 
 	if err := h.Repo.DeleteStamp(stampID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -137,7 +139,7 @@ func (h *Handlers) GetMessageStamps(c echo.Context) error {
 
 	stamps, err := h.Repo.GetMessageStamps(messageID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -152,7 +154,7 @@ func (h *Handlers) PostMessageStamp(c echo.Context) error {
 
 	// スタンプをメッセージに押す
 	if _, err := h.Repo.AddStampToMessage(messageID, stampID, userID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -167,7 +169,7 @@ func (h *Handlers) DeleteMessageStamp(c echo.Context) error {
 
 	// スタンプをメッセージから削除
 	if err := h.Repo.RemoveStampFromMessage(messageID, stampID, userID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -180,7 +182,7 @@ func (h *Handlers) GetMyStampHistory(c echo.Context) error {
 
 	history, err := h.Repo.GetUserStampHistory(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 

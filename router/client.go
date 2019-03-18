@@ -2,10 +2,12 @@ package router
 
 import (
 	"encoding/base64"
+	"github.com/karixtech/zapdriver"
 	"github.com/labstack/echo"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/oauth2/scope"
+	"go.uber.org/zap"
 	"net/http"
 	"regexp"
 	"time"
@@ -49,7 +51,7 @@ func (h *Handlers) GetMyTokens(c echo.Context) error {
 
 	ot, err := h.OAuth2.GetTokensByUser(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -61,7 +63,7 @@ func (h *Handlers) GetMyTokens(c echo.Context) error {
 			case oauth2.ErrClientNotFound:
 				continue
 			default:
-				c.Logger().Error(err)
+				h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
@@ -90,7 +92,7 @@ func (h *Handlers) DeleteMyToken(c echo.Context) error {
 		case oauth2.ErrTokenNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -103,7 +105,7 @@ func (h *Handlers) DeleteMyToken(c echo.Context) error {
 		case oauth2.ErrTokenNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -117,7 +119,7 @@ func (h *Handlers) GetClients(c echo.Context) error {
 
 	oc, err := h.OAuth2.GetClientsByUser(userID)
 	if err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -171,7 +173,7 @@ func (h *Handlers) PostClients(c echo.Context) error {
 		Scopes:       scopes,
 	}
 	if err := h.OAuth2.SaveClient(client); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -196,7 +198,7 @@ func (h *Handlers) GetClient(c echo.Context) error {
 		case oauth2.ErrClientNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -220,7 +222,7 @@ func (h *Handlers) PatchClient(c echo.Context) error {
 		case oauth2.ErrClientNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -256,7 +258,7 @@ func (h *Handlers) PatchClient(c echo.Context) error {
 	}
 
 	if err := h.OAuth2.UpdateClient(oc); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -274,7 +276,7 @@ func (h *Handlers) DeleteClient(c echo.Context) error {
 		case oauth2.ErrClientNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			c.Logger().Error(err)
+			h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -284,13 +286,13 @@ func (h *Handlers) DeleteClient(c echo.Context) error {
 
 	// revoke tokens
 	if err := h.OAuth2.DeleteTokenByClient(clientID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	// delete client
 	if err := h.OAuth2.DeleteClient(clientID); err != nil {
-		c.Logger().Error(err)
+		h.Logger.Error(unexpectedError, zap.Error(err), zapdriver.HTTP(zapdriver.NewHTTP(c.Request(), nil)))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
