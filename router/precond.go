@@ -157,7 +157,6 @@ func writeNotModified(c echo.Context) error {
 }
 
 func checkPreconditions(c echo.Context, modtime time.Time) (done bool, err error) {
-	setLastModified(c, modtime)
 	ch := checkIfMatch(c)
 	if ch == condNone {
 		ch = checkIfUnmodifiedSince(c, modtime)
