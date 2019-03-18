@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"time"
 )
 
 // CreateUserGroup ユーザーグループを作成します
@@ -162,20 +163,29 @@ func (repo *RepositoryImpl) AddUserToGroup(userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	err := repo.db.Create(&model.UserGroupMember{UserID: userID, GroupID: groupID}).Error
-	if err != nil {
-		if isMySQLDuplicatedRecordErr(err) {
-			return nil
+	var changed bool
+	err := repo.transact(func(tx *gorm.DB) error {
+		if err := tx.Create(&model.UserGroupMember{UserID: userID, GroupID: groupID}).Error; err != nil {
+			if isMySQLDuplicatedRecordErr(err) {
+				return nil
+			}
+			return err
 		}
+		changed = true
+		return tx.Model(&model.UserGroup{ID: groupID}).UpdateColumn("updated_at", time.Now()).Error
+	})
+	if err != nil {
 		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.UserGroupMemberAdded,
-		Fields: hub.Fields{
-			"group_id": groupID,
-			"user_id":  userID,
-		},
-	})
+	if changed {
+		repo.hub.Publish(hub.Message{
+			Name: event.UserGroupMemberAdded,
+			Fields: hub.Fields{
+				"group_id": groupID,
+				"user_id":  userID,
+			},
+		})
+	}
 	return nil
 }
 
@@ -184,8 +194,22 @@ func (repo *RepositoryImpl) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
-	result := repo.db.Where(&model.UserGroupMember{UserID: userID, GroupID: groupID}).Delete(&model.UserGroupMember{})
-	if result.RowsAffected > 0 {
+	var changed bool
+	err := repo.transact(func(tx *gorm.DB) error {
+		result := tx.Delete(&model.UserGroupMember{UserID: userID, GroupID: groupID})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected > 0 {
+			changed = true
+			return tx.Model(&model.UserGroup{ID: groupID}).UpdateColumn("updated_at", time.Now()).Error
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	if changed {
 		repo.hub.Publish(hub.Message{
 			Name: event.UserGroupMemberRemoved,
 			Fields: hub.Fields{
@@ -194,7 +218,7 @@ func (repo *RepositoryImpl) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 			},
 		})
 	}
-	return result.Error
+	return nil
 }
 
 // GetUserGroupMemberIDs グループのメンバーのUUIDを取得します
