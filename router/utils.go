@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/go-sql-driver/mysql"
-	"github.com/karixtech/zapdriver"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
@@ -180,7 +179,7 @@ func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHead
 	// ファイルタイプ確認・必要があればリサイズ
 	src, err := file.Open()
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	b, mime, err := process(c, file.Header.Get(echo.HeaderContentType), src)
@@ -192,7 +191,7 @@ func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHead
 	// ファイル保存
 	f, err := h.Repo.SaveFile(file.Filename, b, int64(b.Len()), mime, fType, uuid.Nil)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -233,7 +232,7 @@ func (h *Handlers) processGifImage(c echo.Context, imagemagickPath string, src i
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "bad image file (resize timeout)")
 		default:
 			// 予期しないエラー
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return nil, "", echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -246,7 +245,7 @@ func (h *Handlers) processSVGImage(c echo.Context, src io.Reader) (*bytes.Buffer
 	b := &bytes.Buffer{}
 	_, err := io.Copy(b, src)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return nil, "", echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return b, mimeImageSVG, nil
@@ -287,17 +286,4 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	l = h.Logger.With(zap.String("logging.googleapis.com/trace", GetTraceID(c)))
 	c.Set(loggerKey, l)
 	return l
-}
-
-func zapHTTP(c echo.Context) zap.Field {
-	req := c.Request()
-	return zapdriver.HTTP(&zapdriver.HTTPPayload{
-		RequestMethod: req.Method,
-		UserAgent:     req.UserAgent(),
-		RemoteIP:      c.RealIP(),
-		Referer:       req.Referer(),
-		Protocol:      req.Proto,
-		RequestURL:    req.URL.String(),
-		RequestSize:   req.Header.Get(echo.HeaderContentLength),
-	})
 }

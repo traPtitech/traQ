@@ -23,7 +23,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -35,7 +35,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -43,7 +43,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	// ファイルオープン
 	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	defer file.Close()
@@ -82,7 +82,7 @@ func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 	}
 
 	if err := generateEmojiJSON(h.Repo, &h.emojiJSONCache); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	h.emojiJSONTime = time.Now()
@@ -134,7 +134,7 @@ func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 	}
 
 	if err := generateEmojiCSS(h.Repo, &h.emojiCSSCache); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	h.emojiCSSTime = time.Now()
@@ -164,13 +164,13 @@ func (h *Handlers) GetPublicEmojiImage(c echo.Context) error {
 
 	meta, err := h.Repo.GetFileMeta(s.FileID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	defer file.Close()

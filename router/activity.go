@@ -24,13 +24,13 @@ func (h *Handlers) GetActivityLatestMessages(c echo.Context) error {
 
 	messages, err := h.Repo.GetChannelLatestMessagesByUserID(userID, req.Limit, req.SubscribeOnly)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	reports, err := h.Repo.GetMessageReportsByReporterID(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	hidden := make(map[uuid.UUID]bool)

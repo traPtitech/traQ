@@ -24,7 +24,7 @@ func (h *Handlers) GetClips(c echo.Context) error {
 	// クリップ取得
 	clips, err := h.Repo.GetClipMessagesByUser(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -68,7 +68,7 @@ func (h *Handlers) PostClip(c echo.Context) error {
 			case repository.ErrNotFound:
 				return echo.NewHTTPError(http.StatusBadRequest, "the folder is not found")
 			default:
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
@@ -80,7 +80,7 @@ func (h *Handlers) PostClip(c echo.Context) error {
 		// 指定されていない場合はデフォルトフォルダを探す
 		folders, err := h.Repo.GetClipFolders(userID)
 		if err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 		for _, v := range folders {
@@ -93,7 +93,7 @@ func (h *Handlers) PostClip(c echo.Context) error {
 			// 存在しなかったのでデフォルトフォルダを作る
 			folder, err := h.Repo.CreateClipFolder(userID, "Default")
 			if err != nil {
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 			req.FolderID = folder.ID.String()
@@ -106,7 +106,7 @@ func (h *Handlers) PostClip(c echo.Context) error {
 		if isMySQLDuplicatedRecordErr(err) {
 			return echo.NewHTTPError(http.StatusBadRequest, "already clipped")
 		}
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -127,7 +127,7 @@ func (h *Handlers) DeleteClip(c echo.Context) error {
 
 	// クリップ削除
 	if err := h.Repo.DeleteClip(clipID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -145,7 +145,7 @@ func (h *Handlers) GetClipsFolder(c echo.Context) error {
 		case repository.ErrNotFound:
 			return c.NoContent(http.StatusNotFound)
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
@@ -173,7 +173,7 @@ func (h *Handlers) PutClipsFolder(c echo.Context) error {
 		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusBadRequest, "the folder is not found")
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -184,7 +184,7 @@ func (h *Handlers) PutClipsFolder(c echo.Context) error {
 
 	// クリップを更新
 	if err := h.Repo.ChangeClipFolder(clipID, folder.ID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -198,7 +198,7 @@ func (h *Handlers) GetClipFolders(c echo.Context) error {
 	// フォルダ取得
 	folders, err := h.Repo.GetClipFolders(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -224,7 +224,7 @@ func (h *Handlers) PostClipFolder(c echo.Context) error {
 			// フォルダ名が重複
 			return echo.NewHTTPError(http.StatusConflict, "the name is duplicated")
 		}
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -244,7 +244,7 @@ func (h *Handlers) GetClipFolder(c echo.Context) error {
 	// クリップ取得
 	clips, err := h.Repo.GetClipMessages(folder.ID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -279,7 +279,7 @@ func (h *Handlers) PatchClipFolder(c echo.Context) error {
 			// フォルダ名が重複
 			return echo.NewHTTPError(http.StatusConflict, "the name is duplicated")
 		}
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -292,7 +292,7 @@ func (h *Handlers) DeleteClipFolder(c echo.Context) error {
 
 	// フォルダ削除
 	if err := h.Repo.DeleteClipFolder(folderID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
