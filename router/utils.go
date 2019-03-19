@@ -54,7 +54,7 @@ const (
 	paramTokenID     = "tokenID"
 
 	loggerKey  = "logger"
-	traceIdKey = "traceId"
+	traceIDKey = "traceId"
 
 	mimeImagePNG  = "image/png"
 	mimeImageJPEG = "image/jpeg"
@@ -268,14 +268,14 @@ func getRBAC(c echo.Context) *rbac.RBAC {
 	return c.Get("rbac").(*rbac.RBAC)
 }
 
-// GetTraceId トレースIDを返します
-func GetTraceId(c echo.Context) string {
-	v, ok := c.Get(traceIdKey).(string)
+// GetTraceID トレースIDを返します
+func GetTraceID(c echo.Context) string {
+	v, ok := c.Get(traceIDKey).(string)
 	if ok {
 		return v
 	}
 	v = fmt.Sprintf("%02x", uuid.NewV4().Bytes())
-	c.Set(traceIdKey, v)
+	c.Set(traceIDKey, v)
 	return v
 }
 
@@ -284,7 +284,7 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	if ok {
 		return l
 	}
-	l = h.Logger.With(zap.String("logging.googleapis.com/trace", GetTraceId(c)))
+	l = h.Logger.With(zap.String("logging.googleapis.com/trace", GetTraceID(c)))
 	c.Set(loggerKey, l)
 	return l
 }
