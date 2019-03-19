@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/go-sql-driver/mysql"
 	"github.com/karixtech/zapdriver"
@@ -51,6 +52,9 @@ const (
 	paramClipID      = "clipID"
 	paramFolderID    = "folderID"
 	paramTokenID     = "tokenID"
+
+	loggerKey  = "logger"
+	traceIDKey = "traceId"
 
 	mimeImagePNG  = "image/png"
 	mimeImageJPEG = "image/jpeg"
@@ -176,7 +180,7 @@ func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHead
 	// ファイルタイプ確認・必要があればリサイズ
 	src, err := file.Open()
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	b, mime, err := process(c, file.Header.Get(echo.HeaderContentType), src)
@@ -188,7 +192,7 @@ func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHead
 	// ファイル保存
 	f, err := h.Repo.SaveFile(file.Filename, b, int64(b.Len()), mime, fType, uuid.Nil)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -229,7 +233,7 @@ func (h *Handlers) processGifImage(c echo.Context, imagemagickPath string, src i
 			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "bad image file (resize timeout)")
 		default:
 			// 予期しないエラー
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return nil, "", echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -242,7 +246,7 @@ func (h *Handlers) processSVGImage(c echo.Context, src io.Reader) (*bytes.Buffer
 	b := &bytes.Buffer{}
 	_, err := io.Copy(b, src)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return nil, "", echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return b, mimeImageSVG, nil
@@ -262,6 +266,27 @@ func getRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
 
 func getRBAC(c echo.Context) *rbac.RBAC {
 	return c.Get("rbac").(*rbac.RBAC)
+}
+
+// GetTraceID トレースIDを返します
+func GetTraceID(c echo.Context) string {
+	v, ok := c.Get(traceIDKey).(string)
+	if ok {
+		return v
+	}
+	v = fmt.Sprintf("%02x", uuid.NewV4().Bytes())
+	c.Set(traceIDKey, v)
+	return v
+}
+
+func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
+	l, ok := c.Get(loggerKey).(*zap.Logger)
+	if ok {
+		return l
+	}
+	l = h.Logger.With(zap.String("logging.googleapis.com/trace", GetTraceID(c)))
+	c.Set(loggerKey, l)
+	return l
 }
 
 func zapHTTP(c echo.Context) zap.Field {

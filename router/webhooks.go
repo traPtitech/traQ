@@ -47,7 +47,7 @@ func (h *Handlers) GetWebhooks(c echo.Context) error {
 
 	list, err := h.Repo.GetWebhooksByCreator(userID)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -79,7 +79,7 @@ func (h *Handlers) PostWebhooks(c echo.Context) error {
 		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusBadRequest)
 		default:
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -89,7 +89,7 @@ func (h *Handlers) PostWebhooks(c echo.Context) error {
 
 	w, err := h.Repo.CreateWebhook(req.Name, req.Description, req.ChannelID, userID, req.Secret)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -141,7 +141,7 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 			case repository.ErrNotFound:
 				return echo.NewHTTPError(http.StatusBadRequest)
 			default:
-				h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
@@ -158,7 +158,7 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 	}
 
 	if err := h.Repo.UpdateWebhook(w.GetID(), a); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -169,7 +169,7 @@ func (h *Handlers) DeleteWebhook(c echo.Context) error {
 	w := getWebhookFromContext(c)
 
 	if err := h.Repo.DeleteWebhook(w.GetID()); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -190,7 +190,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 	if len(body) == 0 {
@@ -218,7 +218,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 			case repository.ErrNotFound:
 				return echo.NewHTTPError(http.StatusBadRequest)
 			default:
-				h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
@@ -229,7 +229,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), channelID, string(body)); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -253,7 +253,7 @@ func (h *Handlers) PutWebhookIcon(c echo.Context) error {
 
 	// アイコン変更
 	if err := h.Repo.ChangeUserIcon(w.GetBotUserID(), iconID); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -278,7 +278,7 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
@@ -445,7 +445,7 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 	if messageBuf.Len() > 0 {
 		_, err := h.Repo.CreateMessage(w.GetBotUserID(), w.GetChannelID(), messageBuf.String())
 		if err != nil {
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}

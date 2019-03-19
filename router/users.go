@@ -58,7 +58,7 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 		case repository.ErrNotFound:
 			return c.NoContent(http.StatusUnauthorized)
 		default:
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
@@ -76,12 +76,12 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 
 	sess, err := sessions.Get(c.Response(), c.Request(), true)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
 	if err := sess.SetUser(user.ID); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -95,12 +95,12 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 func (h *Handlers) PostLogout(c echo.Context) error {
 	sess, err := sessions.Get(c.Response(), c.Request(), false)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 	if sess != nil {
 		if err := sess.Destroy(c.Response(), c.Request()); err != nil {
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return c.NoContent(http.StatusInternalServerError)
 		}
 	}
@@ -115,7 +115,7 @@ func (h *Handlers) PostLogout(c echo.Context) error {
 func (h *Handlers) GetUsers(c echo.Context) error {
 	users, err := h.Repo.GetUsers()
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -139,7 +139,7 @@ func (h *Handlers) GetUserByID(c echo.Context) error {
 
 	tagList, err := h.Repo.GetUserTagsByUserID(userID)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -188,7 +188,7 @@ func (h *Handlers) PutMyIcon(c echo.Context) error {
 
 	// アイコン変更
 	if err := h.Repo.ChangeUserIcon(userID, iconID); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -209,14 +209,14 @@ func (h *Handlers) PatchMe(c echo.Context) error {
 
 	if len(req.DisplayName) > 0 {
 		if err := h.Repo.ChangeUserDisplayName(userID, req.DisplayName); err != nil {
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	if len(req.TwitterID) > 0 {
 		if err := h.Repo.ChangeUserTwitterID(userID, req.TwitterID); err != nil {
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -241,7 +241,7 @@ func (h *Handlers) PutPassword(c echo.Context) error {
 	}
 
 	if err := h.Repo.ChangeUserPassword(user.ID, req.New); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -260,14 +260,14 @@ func (h *Handlers) PostUsers(c echo.Context) error {
 
 	if _, err := h.Repo.GetUserByName(req.Name); err != repository.ErrNotFound {
 		if err != nil {
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 		return echo.NewHTTPError(http.StatusBadRequest, "the name's user has already existed")
 	}
 
 	if _, err := h.Repo.CreateUser(req.Name, req.Password, role.User); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
