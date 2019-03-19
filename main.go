@@ -218,7 +218,7 @@ func main() {
 
 				req := c.Request()
 				res := c.Response()
-				alog.Info("", zapdriver.HTTP(&zapdriver.HTTPPayload{
+				alog.Info("", zap.String("logging.googleapis.com/trace", router.GetTraceId(c)), zapdriver.HTTP(&zapdriver.HTTPPayload{
 					RequestMethod: req.Method,
 					Status:        res.Status,
 					UserAgent:     req.UserAgent(),

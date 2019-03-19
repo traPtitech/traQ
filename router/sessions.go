@@ -14,7 +14,7 @@ func (h *Handlers) GetMySessions(c echo.Context) error {
 
 	ses, err := sessions.GetByUserID(userID)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -47,7 +47,7 @@ func (h *Handlers) DeleteAllMySessions(c echo.Context) error {
 
 	err := sessions.DestroyByUserID(userID)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -61,7 +61,7 @@ func (h *Handlers) DeleteMySession(c echo.Context) error {
 
 	err := sessions.DestroyByReferenceID(userID, referenceID)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 

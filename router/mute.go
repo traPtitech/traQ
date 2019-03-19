@@ -12,7 +12,7 @@ func (h *Handlers) GetMutedChannelIDs(c echo.Context) error {
 
 	ids, err := h.Repo.GetMutedChannelIDs(uid)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -31,7 +31,7 @@ func (h *Handlers) PostMutedChannel(c echo.Context) error {
 	}
 
 	if err := h.Repo.MuteChannel(uid, cid); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
@@ -44,7 +44,7 @@ func (h *Handlers) DeleteMutedChannel(c echo.Context) error {
 	cid := getRequestParamAsUUID(c, paramChannelID)
 
 	if err := h.Repo.UnmuteChannel(uid, cid); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return c.NoContent(http.StatusInternalServerError)
 	}
 

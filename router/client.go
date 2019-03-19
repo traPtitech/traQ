@@ -50,7 +50,7 @@ func (h *Handlers) GetMyTokens(c echo.Context) error {
 
 	ot, err := h.OAuth2.GetTokensByUser(userID)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -62,7 +62,7 @@ func (h *Handlers) GetMyTokens(c echo.Context) error {
 			case oauth2.ErrClientNotFound:
 				continue
 			default:
-				h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 				return echo.NewHTTPError(http.StatusInternalServerError)
 			}
 		}
@@ -91,7 +91,7 @@ func (h *Handlers) DeleteMyToken(c echo.Context) error {
 		case oauth2.ErrTokenNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -104,7 +104,7 @@ func (h *Handlers) DeleteMyToken(c echo.Context) error {
 		case oauth2.ErrTokenNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -118,7 +118,7 @@ func (h *Handlers) GetClients(c echo.Context) error {
 
 	oc, err := h.OAuth2.GetClientsByUser(userID)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -172,7 +172,7 @@ func (h *Handlers) PostClients(c echo.Context) error {
 		Scopes:       scopes,
 	}
 	if err := h.OAuth2.SaveClient(client); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -197,7 +197,7 @@ func (h *Handlers) GetClient(c echo.Context) error {
 		case oauth2.ErrClientNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -221,7 +221,7 @@ func (h *Handlers) PatchClient(c echo.Context) error {
 		case oauth2.ErrClientNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -257,7 +257,7 @@ func (h *Handlers) PatchClient(c echo.Context) error {
 	}
 
 	if err := h.OAuth2.UpdateClient(oc); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -275,7 +275,7 @@ func (h *Handlers) DeleteClient(c echo.Context) error {
 		case oauth2.ErrClientNotFound:
 			return echo.NewHTTPError(http.StatusNotFound)
 		default:
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
@@ -285,13 +285,13 @@ func (h *Handlers) DeleteClient(c echo.Context) error {
 
 	// revoke tokens
 	if err := h.OAuth2.DeleteTokenByClient(clientID); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	// delete client
 	if err := h.OAuth2.DeleteClient(clientID); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 

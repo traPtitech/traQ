@@ -25,7 +25,7 @@ func (h *Handlers) GetChannelPin(c echo.Context) error {
 
 	res, err := h.getChannelPinResponse(channelID)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -49,14 +49,14 @@ func (h *Handlers) PostPin(c echo.Context) error {
 		case repository.ErrNotFound:
 			return echo.NewHTTPError(http.StatusBadRequest, "the message doesn't exist")
 		default:
-			h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
 	}
 
 	// ユーザーからアクセス可能なチャンネルかどうか
 	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	} else if !ok {
 		return echo.NewHTTPError(http.StatusBadRequest, "the message doesn't exist")
@@ -64,7 +64,7 @@ func (h *Handlers) PostPin(c echo.Context) error {
 
 	pinID, err := h.Repo.CreatePin(m.ID, userID)
 	if err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
@@ -82,7 +82,7 @@ func (h *Handlers) DeletePin(c echo.Context) error {
 	pinID := getRequestParamAsUUID(c, paramPinID)
 
 	if err := h.Repo.DeletePin(pinID); err != nil {
-		h.Logger.Error(unexpectedError, zap.Error(err), zapHTTP(c))
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
