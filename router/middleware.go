@@ -39,7 +39,7 @@ func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 					case oauth2.ErrTokenNotFound:
 						return echo.NewHTTPError(http.StatusUnauthorized, "the token is invalid")
 					default:
-						h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+						h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 						return echo.NewHTTPError(http.StatusInternalServerError)
 					}
 				}
@@ -56,7 +56,7 @@ func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 					case repository.ErrNotFound:
 						return echo.NewHTTPError(http.StatusUnauthorized, "the user is not found")
 					default:
-						h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+						h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 						return echo.NewHTTPError(http.StatusInternalServerError)
 					}
 				}
@@ -67,7 +67,7 @@ func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				// Authorizationヘッダーがないためセッションを確認する
 				sess, err := sessions.Get(c.Response(), c.Request(), false)
 				if err != nil {
-					h.requestContextLogger(c).Error("failed to get a session", zap.Error(err), zapHTTP(c))
+					h.requestContextLogger(c).Error("failed to get a session", zap.Error(err))
 					return echo.NewHTTPError(http.StatusInternalServerError)
 				}
 				if sess == nil || sess.GetUserID() == uuid.Nil {
@@ -80,7 +80,7 @@ func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 					case repository.ErrNotFound:
 						return echo.NewHTTPError(http.StatusUnauthorized, "the user is not found")
 					default:
-						h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+						h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 						return echo.NewHTTPError(http.StatusInternalServerError)
 					}
 				}
@@ -172,7 +172,7 @@ func (h *Handlers) ValidateGroupID() echo.MiddlewareFunc {
 				case repository.ErrNotFound:
 					return c.NoContent(http.StatusNotFound)
 				default:
-					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 					return c.NoContent(http.StatusInternalServerError)
 				}
 			}
@@ -195,7 +195,7 @@ func (h *Handlers) ValidateStampID(existenceCheckOnly bool) echo.MiddlewareFunc 
 
 			if existenceCheckOnly {
 				if ok, err := h.Repo.StampExists(stampID); err != nil {
-					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 					return c.NoContent(http.StatusInternalServerError)
 				} else if !ok {
 					return c.NoContent(http.StatusNotFound)
@@ -209,7 +209,7 @@ func (h *Handlers) ValidateStampID(existenceCheckOnly bool) echo.MiddlewareFunc 
 				case repository.ErrNotFound:
 					return c.NoContent(http.StatusNotFound)
 				default:
-					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 					return c.NoContent(http.StatusInternalServerError)
 				}
 			}
@@ -237,13 +237,13 @@ func (h *Handlers) ValidateMessageID() echo.MiddlewareFunc {
 				case repository.ErrNotFound:
 					return c.NoContent(http.StatusNotFound)
 				default:
-					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 					return c.NoContent(http.StatusInternalServerError)
 				}
 			}
 
 			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 				return c.NoContent(http.StatusInternalServerError)
 			} else if !ok {
 				return c.NoContent(http.StatusNotFound)
@@ -272,7 +272,7 @@ func (h *Handlers) ValidatePinID() echo.MiddlewareFunc {
 				case repository.ErrNotFound:
 					return c.NoContent(http.StatusNotFound)
 				default:
-					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 					return c.NoContent(http.StatusInternalServerError)
 				}
 			}
@@ -282,7 +282,7 @@ func (h *Handlers) ValidatePinID() echo.MiddlewareFunc {
 			}
 
 			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, pin.Message.ChannelID); err != nil {
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 				return c.NoContent(http.StatusInternalServerError)
 			} else if !ok {
 				return c.NoContent(http.StatusNotFound)
@@ -311,7 +311,7 @@ func (h *Handlers) ValidateClipID() echo.MiddlewareFunc {
 				case repository.ErrNotFound:
 					return c.NoContent(http.StatusNotFound)
 				default:
-					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 					return c.NoContent(http.StatusInternalServerError)
 				}
 			}
@@ -344,7 +344,7 @@ func (h *Handlers) ValidateClipFolderID() echo.MiddlewareFunc {
 				case repository.ErrNotFound:
 					return c.NoContent(http.StatusNotFound)
 				default:
-					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 					return c.NoContent(http.StatusInternalServerError)
 				}
 			}
@@ -372,7 +372,7 @@ func (h *Handlers) ValidateChannelID(availabilityCheckOnly bool) echo.Middleware
 			channelID := getRequestParamAsUUID(c, paramChannelID)
 
 			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 				return c.NoContent(http.StatusInternalServerError)
 			} else if !ok {
 				return c.NoContent(http.StatusNotFound)
@@ -384,7 +384,7 @@ func (h *Handlers) ValidateChannelID(availabilityCheckOnly bool) echo.Middleware
 
 			ch, err := h.Repo.GetChannel(channelID)
 			if err != nil {
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 				return c.NoContent(http.StatusInternalServerError)
 			}
 
@@ -406,7 +406,7 @@ func (h *Handlers) ValidateUserID(existenceCheckOnly bool) echo.MiddlewareFunc {
 
 			if existenceCheckOnly {
 				if ok, err := h.Repo.UserExists(userID); err != nil {
-					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 					return c.NoContent(http.StatusInternalServerError)
 				} else if !ok {
 					return c.NoContent(http.StatusNotFound)
@@ -420,7 +420,7 @@ func (h *Handlers) ValidateUserID(existenceCheckOnly bool) echo.MiddlewareFunc {
 				case repository.ErrNotFound:
 					return c.NoContent(http.StatusNotFound)
 				default:
-					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 					return c.NoContent(http.StatusInternalServerError)
 				}
 			}
@@ -447,7 +447,7 @@ func (h *Handlers) ValidateWebhookID(requestUserCheck bool) echo.MiddlewareFunc 
 				case repository.ErrNotFound:
 					return c.NoContent(http.StatusNotFound)
 				default:
-					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 					return c.NoContent(http.StatusInternalServerError)
 				}
 			}
@@ -482,7 +482,7 @@ func (h *Handlers) ValidateFileID() echo.MiddlewareFunc {
 				case repository.ErrNilID, repository.ErrNotFound:
 					return c.NoContent(http.StatusNotFound)
 				default:
-					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err), zapHTTP(c))
+					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 					return c.NoContent(http.StatusInternalServerError)
 				}
 			} else if !ok {
