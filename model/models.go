@@ -5,6 +5,9 @@ var (
 	// モデルを追加したら各自ここに追加しなければいけない
 	// **順番注意**
 	Tables = []interface{}{
+		&OAuth2Client{},
+		&OAuth2Authorize{},
+		&OAuth2Token{},
 		&Mute{},
 		&MessageReport{},
 		&WebhookBot{},

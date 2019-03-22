@@ -50,16 +50,6 @@ type User struct {
 	UpdatedAt   time.Time         `gorm:"precision:6"`
 }
 
-// GetUID ユーザーIDを取得します
-func (user *User) GetUID() uuid.UUID {
-	return user.ID
-}
-
-// GetName ユーザー名を取得します
-func (user *User) GetName() string {
-	return user.Name
-}
-
 // TableName dbの名前を指定する
 func (user *User) TableName() string {
 	return "users"

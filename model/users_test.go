@@ -15,18 +15,6 @@ func TestUser_TableName(t *testing.T) {
 	assert.Equal(t, "users", (&User{}).TableName())
 }
 
-func TestUser_GetUID(t *testing.T) {
-	t.Parallel()
-	id := uuid.NewV4()
-	assert.Equal(t, id, (&User{ID: id}).GetUID())
-}
-
-func TestUser_GetName(t *testing.T) {
-	t.Parallel()
-	name := "test"
-	assert.Equal(t, name, (&User{Name: name}).GetName())
-}
-
 func TestAuthenticateUser(t *testing.T) {
 	t.Parallel()
 

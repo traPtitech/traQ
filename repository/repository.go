@@ -21,4 +21,5 @@ type Repository interface {
 	DeviceRepository
 	FileRepository
 	WebhookRepository
+	OAuth2Repository
 }
