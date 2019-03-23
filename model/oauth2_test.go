@@ -150,7 +150,6 @@ func TestOAuth2Client_GetAvailableScopes(t *testing.T) {
 	client := &OAuth2Client{
 		Scopes: AccessScopes{
 			"read",
-			"write",
 		},
 	}
 	assert.EqualValues(t, AccessScopes{"read"}, client.GetAvailableScopes(AccessScopes{"read", "write"}))
@@ -162,7 +161,6 @@ func TestOAuth2Token_GetAvailableScopes(t *testing.T) {
 	token := &OAuth2Token{
 		Scopes: AccessScopes{
 			"read",
-			"write",
 		},
 	}
 	assert.EqualValues(t, AccessScopes{"read"}, token.GetAvailableScopes(AccessScopes{"read", "write"}))
