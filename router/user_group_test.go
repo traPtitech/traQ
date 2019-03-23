@@ -360,7 +360,7 @@ func TestHandlers_PostUserGroupMembers(t *testing.T) {
 		e := makeExp(t, server)
 		e.POST("/api/1.0/groups/{groupID}/members", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
-			WithJSON(map[string]interface{}{"userId": uuid.NewV4()}).
+			WithJSON(map[string]uuid.UUID{"userId": uuid.Must(uuid.NewV4())}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
