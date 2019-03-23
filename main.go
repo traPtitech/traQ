@@ -12,11 +12,8 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/oauth2"
-	"github.com/traPtitech/traQ/oauth2/impl"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/role"
-	"github.com/traPtitech/traQ/repository"
 	repoimpl "github.com/traPtitech/traQ/repository/impl"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/sessions"
@@ -24,7 +21,6 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/api/option"
-	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -147,50 +143,6 @@ func main() {
 	}
 	role.SetRole(r)
 
-	// oauth2 handler
-	oauth2Store, err := impl.NewDefaultStore(engine)
-	if err != nil {
-		logger.Fatal("failed to setup oauth2 store", zap.Error(err))
-	}
-	oauth := &oauth2.Handler{
-		Store:                oauth2Store,
-		AccessTokenExp:       60 * 60 * 24 * 365, //1年
-		AuthorizationCodeExp: 60 * 5,             //5分
-		IsRefreshEnabled:     false,
-		UserAuthenticator: func(id, pw string) (uuid.UUID, error) {
-			user, err := repo.GetUserByName(id)
-			if err != nil {
-				switch err {
-				case repository.ErrNotFound:
-					return uuid.Nil, oauth2.ErrUserIDOrPasswordWrong
-				default:
-					return uuid.Nil, err
-				}
-			}
-
-			err = model.AuthenticateUser(user, pw)
-			switch err {
-			case model.ErrUserWrongIDOrPassword, model.ErrUserBotTryLogin:
-				err = oauth2.ErrUserIDOrPasswordWrong
-			}
-			return user.ID, err
-		},
-		UserInfoGetter: func(uid uuid.UUID) (oauth2.UserInfo, error) {
-			u, err := repo.GetUser(uid)
-			if err == repository.ErrNotFound {
-				return nil, oauth2.ErrUserIDOrPasswordWrong
-			}
-			return u, err
-		},
-		Issuer: viper.GetString("origin"),
-	}
-	if viper.IsSet("key.rs256Public") && viper.IsSet("key.rs256Private") {
-		err := oauth.LoadKeys(loadKeys(viper.GetString("key.rs256Private"), viper.GetString("key.rs256Public")))
-		if err != nil {
-			logger.Fatal("failed to load oauth2 keys", zap.Error(err))
-		}
-	}
-
 	// Firebase
 	if f := viper.GetString("firebase.serviceAccount.file"); len(f) > 0 {
 		if _, err := NewFCMManager(repo, hub, logger.Named("firebase"), f, viper.GetString("origin")); err != nil {
@@ -199,7 +151,11 @@ func main() {
 	}
 
 	// Routing
-	h := router.NewHandlers(oauth, r, repo, hub, logger.Named("router"), viper.GetString("imagemagick.path"))
+	h := router.NewHandlers(r, repo, hub, logger.Named("router"), router.HandlerConfig{
+		ImageMagickPath:  viper.GetString("imagemagick.path"),
+		AccessTokenExp:   viper.GetInt("oauth2.accessTokenExp"),
+		IsRefreshEnabled: viper.GetBool("oauth2.isRefreshEnabled"),
+	})
 	e := echo.New()
 	if viper.GetBool("accessLog.enabled") {
 		alog := logger.Named("access_log")
@@ -284,6 +240,9 @@ func setDefaultConfigs() {
 	viper.SetDefault("storage.local.dir", "./storage")
 
 	viper.SetDefault("gcp.stackdriver.profiler.enabled", false)
+
+	viper.SetDefault("oauth2.isRefreshEnabled", false)
+	viper.SetDefault("oauth2.accessTokenExp", 60*60*24*365)
 }
 
 func getDatabase() (*gorm.DB, error) {
@@ -333,16 +292,4 @@ func getFileStorage() (storage.FileStorage, error) {
 	default:
 		return storage.NewLocalFileStorage(viper.GetString("storage.local.dir")), nil
 	}
-}
-
-func loadKeys(private, public string) ([]byte, []byte) {
-	prk, err := ioutil.ReadFile(private)
-	if err != nil {
-		panic(err)
-	}
-	puk, err := ioutil.ReadFile(public)
-	if err != nil {
-		panic(err)
-	}
-	return prk, puk
 }

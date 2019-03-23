@@ -73,29 +73,38 @@ type TestRepository struct {
 	FilesACLLock              sync.RWMutex
 	Webhooks                  map[uuid.UUID]model.WebhookBot
 	WebhooksLock              sync.RWMutex
+	OAuth2Clients             map[string]model.OAuth2Client
+	OAuth2ClientsLock         sync.RWMutex
+	OAuth2Authorizes          map[string]model.OAuth2Authorize
+	OAuth2AuthorizesLock      sync.RWMutex
+	OAuth2Tokens              map[uuid.UUID]model.OAuth2Token
+	OAuth2TokensLock          sync.RWMutex
 }
 
 func NewTestRepository() *TestRepository {
 	r := &TestRepository{
 		FS:                    storage.NewInMemoryFileStorage(),
-		Users:                 make(map[uuid.UUID]model.User),
-		UserGroups:            make(map[uuid.UUID]model.UserGroup),
-		UserGroupMembers:      make(map[uuid.UUID]map[uuid.UUID]bool),
-		Tags:                  make(map[uuid.UUID]model.Tag),
-		UserTags:              make(map[uuid.UUID]map[uuid.UUID]model.UsersTag),
-		Channels:              make(map[uuid.UUID]model.Channel),
-		ChannelSubscribes:     make(map[uuid.UUID]map[uuid.UUID]bool),
-		PrivateChannelMembers: make(map[uuid.UUID]map[uuid.UUID]bool),
-		Messages:              make(map[uuid.UUID]model.Message),
-		MessageUnreads:        make(map[uuid.UUID]map[uuid.UUID]bool),
-		MessageReports:        make([]model.MessageReport, 0),
-		Pins:                  make(map[uuid.UUID]model.Pin),
-		Stars:                 make(map[uuid.UUID]map[uuid.UUID]bool),
-		Mute:                  make(map[uuid.UUID]map[uuid.UUID]bool),
-		Stamps:                make(map[uuid.UUID]model.Stamp),
-		Files:                 make(map[uuid.UUID]model.File),
-		FilesACL:              make(map[uuid.UUID]map[uuid.UUID]bool),
-		Webhooks:              make(map[uuid.UUID]model.WebhookBot),
+		Users:                 map[uuid.UUID]model.User{},
+		UserGroups:            map[uuid.UUID]model.UserGroup{},
+		UserGroupMembers:      map[uuid.UUID]map[uuid.UUID]bool{},
+		Tags:                  map[uuid.UUID]model.Tag{},
+		UserTags:              map[uuid.UUID]map[uuid.UUID]model.UsersTag{},
+		Channels:              map[uuid.UUID]model.Channel{},
+		ChannelSubscribes:     map[uuid.UUID]map[uuid.UUID]bool{},
+		PrivateChannelMembers: map[uuid.UUID]map[uuid.UUID]bool{},
+		Messages:              map[uuid.UUID]model.Message{},
+		MessageUnreads:        map[uuid.UUID]map[uuid.UUID]bool{},
+		MessageReports:        []model.MessageReport{},
+		Pins:                  map[uuid.UUID]model.Pin{},
+		Stars:                 map[uuid.UUID]map[uuid.UUID]bool{},
+		Mute:                  map[uuid.UUID]map[uuid.UUID]bool{},
+		Stamps:                map[uuid.UUID]model.Stamp{},
+		Files:                 map[uuid.UUID]model.File{},
+		FilesACL:              map[uuid.UUID]map[uuid.UUID]bool{},
+		Webhooks:              map[uuid.UUID]model.WebhookBot{},
+		OAuth2Clients:         map[string]model.OAuth2Client{},
+		OAuth2Authorizes:      map[string]model.OAuth2Authorize{},
+		OAuth2Tokens:          map[uuid.UUID]model.OAuth2Token{},
 	}
 	_, _ = r.CreateUser("traq", "traq", role.Admin)
 	return r
@@ -2382,4 +2391,284 @@ func (repo *TestRepository) GetWebhooksByCreator(creatorID uuid.UUID) ([]model.W
 	repo.UsersLock.RUnlock()
 	repo.WebhooksLock.RUnlock()
 	return arr, nil
+}
+
+func (repo *TestRepository) GetClient(id string) (*model.OAuth2Client, error) {
+	if len(id) == 0 {
+		return nil, repository.ErrNotFound
+	}
+	repo.OAuth2ClientsLock.RLock()
+	c, ok := repo.OAuth2Clients[id]
+	repo.OAuth2ClientsLock.RUnlock()
+	if !ok {
+		return nil, repository.ErrNotFound
+	}
+	return &c, nil
+}
+
+func (repo *TestRepository) GetClientsByUser(userID uuid.UUID) ([]*model.OAuth2Client, error) {
+	cs := make([]*model.OAuth2Client, 0)
+	if userID == uuid.Nil {
+		return cs, nil
+	}
+	repo.OAuth2ClientsLock.RLock()
+	for _, v := range repo.OAuth2Clients {
+		v := v
+		if v.CreatorID == userID {
+			cs = append(cs, &v)
+		}
+	}
+	repo.OAuth2ClientsLock.RUnlock()
+	return cs, nil
+}
+
+func (repo *TestRepository) SaveClient(client *model.OAuth2Client) error {
+	repo.OAuth2ClientsLock.Lock()
+	client.CreatedAt = time.Now()
+	client.UpdatedAt = time.Now()
+	repo.OAuth2Clients[client.ID] = *client
+	repo.OAuth2ClientsLock.Unlock()
+	return nil
+}
+
+func (repo *TestRepository) UpdateClient(client *model.OAuth2Client) error {
+	if len(client.ID) == 0 {
+		return repository.ErrNilID
+	}
+	repo.OAuth2ClientsLock.Lock()
+	defer repo.OAuth2ClientsLock.Unlock()
+	c, ok := repo.OAuth2Clients[client.ID]
+	if ok {
+		c.UpdatedAt = time.Now()
+		c.Name = client.Name
+		c.Description = client.Description
+		c.Confidential = client.Confidential
+		c.CreatorID = client.CreatorID
+		c.Secret = client.Secret
+		c.RedirectURI = client.RedirectURI
+		c.Scopes = client.Scopes
+		repo.OAuth2Clients[client.ID] = c
+	}
+	return nil
+}
+
+func (repo *TestRepository) DeleteClient(id string) error {
+	if len(id) == 0 {
+		return nil
+	}
+	repo.OAuth2ClientsLock.Lock()
+	repo.OAuth2AuthorizesLock.Lock()
+	repo.OAuth2TokensLock.Lock()
+	targetT := make([]uuid.UUID, 0)
+	for k, v := range repo.OAuth2Tokens {
+		if v.ClientID == id {
+			targetT = append(targetT, k)
+		}
+	}
+	for _, v := range targetT {
+		delete(repo.OAuth2Tokens, v)
+	}
+	targetA := make([]string, 0)
+	for k, v := range repo.OAuth2Authorizes {
+		if v.ClientID == id {
+			targetA = append(targetA, k)
+		}
+	}
+	for _, v := range targetA {
+		delete(repo.OAuth2Authorizes, v)
+	}
+	delete(repo.OAuth2Clients, id)
+	repo.OAuth2TokensLock.Unlock()
+	repo.OAuth2AuthorizesLock.Unlock()
+	repo.OAuth2ClientsLock.Unlock()
+	return nil
+}
+
+func (repo *TestRepository) SaveAuthorize(data *model.OAuth2Authorize) error {
+	repo.OAuth2AuthorizesLock.Lock()
+	data.CreatedAt = time.Now()
+	repo.OAuth2Authorizes[data.Code] = *data
+	repo.OAuth2AuthorizesLock.Unlock()
+	return nil
+}
+
+func (repo *TestRepository) GetAuthorize(code string) (*model.OAuth2Authorize, error) {
+	if len(code) == 0 {
+		return nil, repository.ErrNotFound
+	}
+	repo.OAuth2AuthorizesLock.RLock()
+	a, ok := repo.OAuth2Authorizes[code]
+	repo.OAuth2AuthorizesLock.RUnlock()
+	if !ok {
+		return nil, repository.ErrNotFound
+	}
+	return &a, nil
+}
+
+func (repo *TestRepository) DeleteAuthorize(code string) error {
+	if len(code) == 0 {
+		return nil
+	}
+	repo.OAuth2AuthorizesLock.Lock()
+	delete(repo.OAuth2Authorizes, code)
+	repo.OAuth2AuthorizesLock.Unlock()
+	return nil
+}
+
+func (repo *TestRepository) IssueToken(client *model.OAuth2Client, userID uuid.UUID, redirectURI string, scope model.AccessScopes, expire int, refresh bool) (*model.OAuth2Token, error) {
+	newToken := &model.OAuth2Token{
+		ID:          uuid.NewV4(),
+		UserID:      userID,
+		RedirectURI: redirectURI,
+		AccessToken: utils.RandAlphabetAndNumberString(36),
+		CreatedAt:   time.Now(),
+		ExpiresIn:   expire,
+		Scopes:      scope,
+	}
+
+	if client != nil {
+		newToken.ClientID = client.ID
+	}
+
+	if refresh {
+		newToken.RefreshToken = utils.RandAlphabetAndNumberString(36)
+	}
+
+	repo.OAuth2TokensLock.Lock()
+	repo.OAuth2Tokens[newToken.ID] = *newToken
+	repo.OAuth2TokensLock.Unlock()
+	return newToken, nil
+}
+
+func (repo *TestRepository) GetTokenByID(id uuid.UUID) (*model.OAuth2Token, error) {
+	if id == uuid.Nil {
+		return nil, repository.ErrNotFound
+	}
+	repo.OAuth2TokensLock.RLock()
+	t, ok := repo.OAuth2Tokens[id]
+	repo.OAuth2TokensLock.RUnlock()
+	if !ok {
+		return nil, repository.ErrNotFound
+	}
+	return &t, nil
+}
+
+func (repo *TestRepository) DeleteTokenByID(id uuid.UUID) error {
+	if id == uuid.Nil {
+		return nil
+	}
+	repo.OAuth2TokensLock.Lock()
+	delete(repo.OAuth2Tokens, id)
+	repo.OAuth2TokensLock.Unlock()
+	return nil
+}
+
+func (repo *TestRepository) GetTokenByAccess(access string) (*model.OAuth2Token, error) {
+	if len(access) == 0 {
+		return nil, repository.ErrNotFound
+	}
+	repo.OAuth2TokensLock.RLock()
+	defer repo.OAuth2TokensLock.RUnlock()
+	for _, v := range repo.OAuth2Tokens {
+		if v.AccessToken == access {
+			return &v, nil
+		}
+	}
+	return nil, repository.ErrNotFound
+}
+
+func (repo *TestRepository) DeleteTokenByAccess(access string) error {
+	if len(access) == 0 {
+		return nil
+	}
+	repo.OAuth2TokensLock.Lock()
+	defer repo.OAuth2TokensLock.Unlock()
+	for k, v := range repo.OAuth2Tokens {
+		if v.AccessToken == access {
+			delete(repo.OAuth2Tokens, k)
+			return nil
+		}
+	}
+	return nil
+}
+
+func (repo *TestRepository) GetTokenByRefresh(refresh string) (*model.OAuth2Token, error) {
+	if len(refresh) == 0 {
+		return nil, repository.ErrNotFound
+	}
+	repo.OAuth2TokensLock.RLock()
+	defer repo.OAuth2TokensLock.RUnlock()
+	for _, v := range repo.OAuth2Tokens {
+		if v.RefreshToken == refresh {
+			return &v, nil
+		}
+	}
+	return nil, repository.ErrNotFound
+}
+
+func (repo *TestRepository) DeleteTokenByRefresh(refresh string) error {
+	if len(refresh) == 0 {
+		return nil
+	}
+	repo.OAuth2TokensLock.Lock()
+	defer repo.OAuth2TokensLock.Unlock()
+	for k, v := range repo.OAuth2Tokens {
+		if v.RefreshToken == refresh {
+			delete(repo.OAuth2Tokens, k)
+			return nil
+		}
+	}
+	return nil
+}
+
+func (repo *TestRepository) GetTokensByUser(userID uuid.UUID) ([]*model.OAuth2Token, error) {
+	ts := make([]*model.OAuth2Token, 0)
+	if userID == uuid.Nil {
+		return ts, nil
+	}
+	repo.OAuth2TokensLock.RLock()
+	for _, v := range repo.OAuth2Tokens {
+		v := v
+		if v.UserID == userID {
+			ts = append(ts, &v)
+		}
+	}
+	repo.OAuth2TokensLock.RUnlock()
+	return ts, nil
+}
+
+func (repo *TestRepository) DeleteTokenByUser(userID uuid.UUID) error {
+	if userID == uuid.Nil {
+		return nil
+	}
+	repo.OAuth2TokensLock.Lock()
+	target := make([]uuid.UUID, 0)
+	for k, v := range repo.OAuth2Tokens {
+		if v.UserID == userID {
+			target = append(target, k)
+		}
+	}
+	for _, v := range target {
+		delete(repo.OAuth2Tokens, v)
+	}
+	repo.OAuth2TokensLock.Unlock()
+	return nil
+}
+
+func (repo *TestRepository) DeleteTokenByClient(clientID string) error {
+	if len(clientID) == 0 {
+		return nil
+	}
+	repo.OAuth2TokensLock.Lock()
+	target := make([]uuid.UUID, 0)
+	for k, v := range repo.OAuth2Tokens {
+		if v.ClientID == clientID {
+			target = append(target, k)
+		}
+	}
+	for _, v := range target {
+		delete(repo.OAuth2Tokens, v)
+	}
+	repo.OAuth2TokensLock.Unlock()
+	return nil
 }

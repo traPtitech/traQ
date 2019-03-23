@@ -11,7 +11,6 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/oauth2"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/imagemagick"
@@ -80,13 +79,12 @@ func init() {
 
 // Handlers ハンドラ
 type Handlers struct {
-	OAuth2          *oauth2.Handler
-	RBAC            *rbac.RBAC
-	Repo            repository.Repository
-	SSE             *SSEStreamer
-	Hub             *hub.Hub
-	Logger          *zap.Logger
-	ImageMagickPath string
+	RBAC   *rbac.RBAC
+	Repo   repository.Repository
+	SSE    *SSEStreamer
+	Hub    *hub.Hub
+	Logger *zap.Logger
+	HandlerConfig
 
 	emojiJSONCache     bytes.Buffer
 	emojiJSONTime      time.Time
@@ -96,16 +94,25 @@ type Handlers struct {
 	emojiCSSCacheLock  sync.RWMutex
 }
 
+// HandlerConfig ハンドラ設定
+type HandlerConfig struct {
+	// ImageMagickPath ImageMagickの実行パス
+	ImageMagickPath string
+	//AccessTokenExp アクセストークンの有効時間(秒)
+	AccessTokenExp int
+	//IsRefreshEnabled リフレッシュトークンを発行するかどうか
+	IsRefreshEnabled bool
+}
+
 // NewHandlers ハンドラを生成します
-func NewHandlers(oauth2 *oauth2.Handler, rbac *rbac.RBAC, repo repository.Repository, hub *hub.Hub, logger *zap.Logger, imageMagickPath string) *Handlers {
+func NewHandlers(rbac *rbac.RBAC, repo repository.Repository, hub *hub.Hub, logger *zap.Logger, config HandlerConfig) *Handlers {
 	h := &Handlers{
-		OAuth2:          oauth2,
-		RBAC:            rbac,
-		Repo:            repo,
-		SSE:             NewSSEStreamer(hub, repo),
-		Hub:             hub,
-		Logger:          logger,
-		ImageMagickPath: imageMagickPath,
+		RBAC:          rbac,
+		Repo:          repo,
+		SSE:           NewSSEStreamer(hub, repo),
+		Hub:           hub,
+		Logger:        logger,
+		HandlerConfig: config,
 	}
 	go h.stampEventSubscriber(hub.Subscribe(10, event.StampCreated, event.StampUpdated, event.StampDeleted))
 	return h

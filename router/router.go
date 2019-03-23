@@ -11,8 +11,6 @@ import (
 
 // SetupRouting APIルーティングを行います
 func SetupRouting(e *echo.Echo, h *Handlers) {
-	oauth := h.OAuth2
-
 	e.Validator = validator.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"http://localhost:8080"},
@@ -23,7 +21,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	requires := AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := RequestBodyLengthLimit
 
-	api := e.Group("/api/1.0", h.UserAuthenticate(oauth))
+	api := e.Group("/api/1.0", h.UserAuthenticate())
 	{
 		apiUsers := api.Group("/users")
 		{
@@ -39,6 +37,8 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
 				apiUsersMe.GET("/groups", h.GetMyBelongingGroup)
 				apiUsersMe.GET("/notification", h.GetMyNotificationChannels, requires(permission.GetNotificationStatus))
+				apiUsersMe.GET("/tokens", h.GetMyTokens, requires(permission.GetMyTokens))
+				apiUsersMe.DELETE("/tokens/:tokenID", h.DeleteMyToken, requires(permission.RevokeMyToken))
 				apiUsersMeSessions := apiUsersMe.Group("/sessions")
 				{
 					apiUsersMeSessions.GET("", h.GetMySessions, requires(permission.GetMySessions))
@@ -226,6 +226,17 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				}
 			}
 		}
+		apiClients := api.Group("/clients")
+		{
+			apiClients.GET("", h.GetClients, requires(permission.GetClients))
+			apiClients.POST("", h.PostClients, requires(permission.CreateClient))
+			apiClientCid := apiClients.Group("/:clientID")
+			{
+				apiClientCid.GET("", h.GetClient, requires(permission.GetClients))
+				apiClientCid.PATCH("", h.PatchClient, requires(permission.EditMyClient))
+				apiClientCid.DELETE("", h.DeleteClient, requires(permission.DeleteMyClient))
+			}
+		}
 		api.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports))
 		api.GET("/activity/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
 	}
@@ -234,10 +245,13 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	{
 		apiNoAuth.POST("/login", h.PostLogin)
 		apiNoAuth.POST("/logout", h.PostLogout)
-		apiNoAuth.GET("/public/icon/:username", h.GetPublicUserIcon, AddHeadersMiddleware(map[string]string{echo.HeaderAccessControlAllowOrigin: "*", echo.HeaderAccessControlAllowCredentials: "false"}))
-		apiNoAuth.GET("/public/emoji.json", h.GetPublicEmojiJSON)
-		apiNoAuth.GET("/public/emoji.css", h.GetPublicEmojiCSS)
-		apiNoAuth.GET("/public/emoji/:stampID", h.GetPublicEmojiImage, AddHeadersMiddleware(map[string]string{echo.HeaderAccessControlAllowOrigin: "*", echo.HeaderAccessControlAllowCredentials: "false"}), h.ValidateStampID(false))
+		apiPublic := apiNoAuth.Group("/public")
+		{
+			apiPublic.GET("/icon/:username", h.GetPublicUserIcon, AddHeadersMiddleware(map[string]string{echo.HeaderAccessControlAllowOrigin: "*", echo.HeaderAccessControlAllowCredentials: "false"}))
+			apiPublic.GET("/emoji.json", h.GetPublicEmojiJSON)
+			apiPublic.GET("/emoji.css", h.GetPublicEmojiCSS)
+			apiPublic.GET("/emoji/:stampID", h.GetPublicEmojiImage, AddHeadersMiddleware(map[string]string{echo.HeaderAccessControlAllowOrigin: "*", echo.HeaderAccessControlAllowCredentials: "false"}), h.ValidateStampID(false))
+		}
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, h.ValidateWebhookID(false))
 		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, h.ValidateWebhookID(false))
 		apiNoAuth.GET("/teapot", func(c echo.Context) error {
@@ -245,39 +259,24 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		})
 	}
 
-	if oauth != nil {
-		// Tag: bot
-		api.GET("/bots", notImplemented, requires(permission.GetBot))
-		api.POST("/bots", notImplemented, requires(permission.CreateBot))
-		api.GET("/bots/:botID", notImplemented, requires(permission.GetBot))
-		api.PATCH("/bots/:botID", notImplemented, requires(permission.EditBot))
-		api.DELETE("/bots/:botID", notImplemented, requires(permission.DeleteBot))
-		api.PUT("/bots/:botID/icon", notImplemented, requires(permission.EditBot))
-		api.POST("/bots/:botID/activation", notImplemented, requires(permission.EditBot))
-		api.GET("/bots/:botID/token", notImplemented, requires(permission.GetBotToken))
-		api.POST("/bots/:botID/token", notImplemented, requires(permission.ReissueBotToken))
-		api.GET("/bots/:botID/code", notImplemented, requires(permission.GetBotInstallCode))
-		api.GET("/channels/:channelID/bots", notImplemented, requires(permission.GetBot))
-		api.POST("/channels/:channelID/bots", notImplemented, requires(permission.InstallBot))
-		api.DELETE("/channels/:channelID/bots/:botID", notImplemented, requires(permission.UninstallBot))
+	apiNoAuth.GET("/oauth2/authorize", h.AuthorizationEndpointHandler)
+	apiNoAuth.POST("/oauth2/authorize", h.AuthorizationEndpointHandler)
+	api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler)
+	apiNoAuth.POST("/oauth2/token", h.TokenEndpointHandler)
 
-		// Tag: authorization
-		apiNoAuth.GET("/oauth2/authorize", oauth.AuthorizationEndpointHandler)
-		apiNoAuth.POST("/oauth2/authorize", oauth.AuthorizationEndpointHandler)
-		api.POST("/oauth2/authorize/decide", oauth.AuthorizationDecideHandler)
-		apiNoAuth.POST("/oauth2/token", oauth.TokenEndpointHandler)
-		e.GET("/.well-known/openid-configuration", oauth.DiscoveryHandler)
-		e.GET("/publickeys", oauth.PublicKeysHandler)
-
-		// Tag: client
-		api.GET("/users/me/tokens", h.GetMyTokens, requires(permission.GetMyTokens))
-		api.DELETE("/users/me/tokens/:tokenID", h.DeleteMyToken, requires(permission.RevokeMyToken))
-		api.GET("/clients", h.GetClients, requires(permission.GetClients))
-		api.POST("/clients", h.PostClients, requires(permission.CreateClient))
-		api.GET("/clients/:clientID", h.GetClient, requires(permission.GetClients))
-		api.PATCH("/clients/:clientID", h.PatchClient, requires(permission.EditMyClient))
-		api.DELETE("/clients/:clientID", h.DeleteClient, requires(permission.DeleteMyClient))
-	}
+	api.GET("/bots", notImplemented, requires(permission.GetBot))
+	api.POST("/bots", notImplemented, requires(permission.CreateBot))
+	api.GET("/bots/:botID", notImplemented, requires(permission.GetBot))
+	api.PATCH("/bots/:botID", notImplemented, requires(permission.EditBot))
+	api.DELETE("/bots/:botID", notImplemented, requires(permission.DeleteBot))
+	api.PUT("/bots/:botID/icon", notImplemented, requires(permission.EditBot))
+	api.POST("/bots/:botID/activation", notImplemented, requires(permission.EditBot))
+	api.GET("/bots/:botID/token", notImplemented, requires(permission.GetBotToken))
+	api.POST("/bots/:botID/token", notImplemented, requires(permission.ReissueBotToken))
+	api.GET("/bots/:botID/code", notImplemented, requires(permission.GetBotInstallCode))
+	api.GET("/channels/:channelID/bots", notImplemented, requires(permission.GetBot))
+	api.POST("/channels/:channelID/bots", notImplemented, requires(permission.InstallBot))
+	api.DELETE("/channels/:channelID/bots/:botID", notImplemented, requires(permission.UninstallBot))
 }
 
 func notImplemented(c echo.Context) error {

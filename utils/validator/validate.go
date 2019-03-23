@@ -16,6 +16,8 @@ var (
 	PasswordRegex = regexp.MustCompile(`^[\x20-\x7E]{10,32}$`)
 	// TwitterIDRegex ツイッターIDの正規表現
 	TwitterIDRegex = regexp.MustCompile(`^[a-zA-Z0-9_]{1,15}$`)
+	// PKCERegex PKCE文字列の正規表現
+	PKCERegex = regexp.MustCompile("^[a-zA-Z0-9~._-]{43,128}$")
 )
 
 // Validator echo用バリデーター

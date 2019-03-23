@@ -60,6 +60,6 @@
 #    authUrl: ''
 #    tempUrlKey: ''
 
-#key:
-#  rs256Public: ''
-#  rs256Private: ''
+#oauth2:
+#  isRefreshEnabled: false
+#  accessTokenExp: 31536000

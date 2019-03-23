@@ -32,6 +32,7 @@ const (
 	common4 = "common4"
 	common5 = "common5"
 	common6 = "common6"
+	common7 = "common7"
 	s1      = "s1"
 	s2      = "s2"
 	s3      = "s3"
@@ -52,6 +53,7 @@ func TestMain(m *testing.M) {
 		common4,
 		common5,
 		common6,
+		common7,
 		s1,
 		s2,
 		s3,
@@ -66,7 +68,15 @@ func TestMain(m *testing.M) {
 
 		e := echo.New()
 		repo := NewTestRepository()
-		SetupRouting(e, &Handlers{RBAC: r, Repo: repo, Logger: zap.NewNop()})
+		SetupRouting(e, &Handlers{
+			RBAC:   r,
+			Repo:   repo,
+			Logger: zap.NewNop(),
+			HandlerConfig: HandlerConfig{
+				AccessTokenExp:   1000,
+				IsRefreshEnabled: true,
+			},
+		})
 		servers[key] = httptest.NewServer(e)
 		repositories[key] = repo
 	}
@@ -138,6 +148,9 @@ func makeExp(t *testing.T, server *httptest.Server) *httpexpect.Expect {
 		Client: &http.Client{
 			Jar:     nil, // クッキーは保持しない
 			Timeout: time.Second * 30,
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse // リダイレクトを自動処理しない
+			},
 		},
 	})
 }
@@ -258,6 +271,36 @@ func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID
 	s, err := repo.CreateStamp(name, fileID, userID)
 	require.NoError(t, err)
 	return s
+}
+
+func mustIssueToken(t *testing.T, repo repository.Repository, client *model.OAuth2Client, userID uuid.UUID, refresh bool) *model.OAuth2Token {
+	t.Helper()
+	token, err := repo.IssueToken(client, userID, client.RedirectURI, client.Scopes, 1000, refresh)
+	require.NoError(t, err)
+	return token
+}
+
+func mustMakeAuthorizeData(t *testing.T, repo repository.Repository, clientID string, userID uuid.UUID) *model.OAuth2Authorize {
+	t.Helper()
+	authorize := &model.OAuth2Authorize{
+		Code:        utils.RandAlphabetAndNumberString(36),
+		ClientID:    clientID,
+		UserID:      userID,
+		CreatedAt:   time.Now(),
+		ExpiresIn:   1000,
+		RedirectURI: "http://example.com",
+		Scopes: model.AccessScopes{
+			"read",
+			"private_read",
+		},
+		OriginalScopes: model.AccessScopes{
+			"read",
+			"private_read",
+		},
+		Nonce: "nonce",
+	}
+	require.NoError(t, repo.SaveAuthorize(authorize))
+	return authorize
 }
 
 /*

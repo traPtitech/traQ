@@ -1,14 +1,12 @@
 package router
 
 import (
+	"fmt"
+	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"go.uber.org/zap"
 	"net/http"
-
-	"github.com/traPtitech/traQ/oauth2"
-
-	"fmt"
 
 	"github.com/labstack/echo"
 	"github.com/mikespook/gorbac"
@@ -18,7 +16,7 @@ import (
 )
 
 // UserAuthenticate User認証するミドルウェア
-func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
+func (h *Handlers) UserAuthenticate() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			var user *model.User
@@ -27,16 +25,16 @@ func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				// AuthorizationヘッダーがあるためOAuth2で検証
 
 				// Authorizationスキーム検証
-				l := len(oauth2.AuthScheme)
-				if !(len(ah) > l+1 && ah[:l] == oauth2.AuthScheme) {
+				l := len(authScheme)
+				if !(len(ah) > l+1 && ah[:l] == authScheme) {
 					return echo.NewHTTPError(http.StatusUnauthorized, "the Authorization Header's scheme is invalid")
 				}
 
 				// OAuth2 Token検証
-				token, err := oh.GetTokenByAccess(ah[l+1:])
+				token, err := h.Repo.GetTokenByAccess(ah[l+1:])
 				if err != nil {
 					switch err {
-					case oauth2.ErrTokenNotFound:
+					case repository.ErrNotFound:
 						return echo.NewHTTPError(http.StatusUnauthorized, "the token is invalid")
 					default:
 						h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
@@ -62,7 +60,13 @@ func (h *Handlers) UserAuthenticate(oh *oauth2.Handler) echo.MiddlewareFunc {
 				}
 
 				// 認可に基づきRole生成
-				c.Set("role", token.Scopes.GenerateRole())
+				var roles []gorbac.Role
+				for _, v := range token.Scopes {
+					if r, ok := list[v]; ok && r != nil {
+						roles = append(roles, r)
+					}
+				}
+				c.Set("role", role.NewCompositeRole(roles...))
 			} else {
 				// Authorizationヘッダーがないためセッションを確認する
 				sess, err := sessions.Get(c.Response(), c.Request(), false)
@@ -159,6 +163,26 @@ func AddHeadersMiddleware(headers map[string]string) echo.MiddlewareFunc {
 		}
 	}
 }
+
+/*
+func CheckModTimePreconditionMiddleware(modTimeFunc func(c echo.Context) time.Time, preFunc ...echo.HandlerFunc) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if len(preFunc) > 0 {
+				if err := preFunc[0](c); err != nil {
+					return err
+				}
+			}
+			modTime := modTimeFunc(c)
+			setLastModified(c, modTime)
+			if ok, _ := checkPreconditions(c, modTime); ok {
+				return nil
+			}
+			return next(c)
+		}
+	}
+}
+*/
 
 // ValidateGroupID 'groupID'パラメータのグループを検証するミドルウェア
 func (h *Handlers) ValidateGroupID() echo.MiddlewareFunc {
