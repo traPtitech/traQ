@@ -309,7 +309,7 @@ func (h *Handlers) AuthorizationEndpointHandler(c echo.Context) error {
 
 		q.Set("client_id", req.ClientID)
 		q.Set("scopes", req.ValidScopes.String())
-		return c.Redirect(http.StatusFound, "/login?"+q.Encode())
+		return c.Redirect(http.StatusFound, "/consent?"+q.Encode())
 	default:
 		q.Set("error", errUnsupportedResponseType)
 		redirectURI.RawQuery = q.Encode()
