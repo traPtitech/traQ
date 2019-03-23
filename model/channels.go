@@ -1,9 +1,8 @@
 package model
 
 import (
+	"github.com/gofrs/uuid"
 	"time"
-
-	"github.com/satori/go.uuid"
 )
 
 const (

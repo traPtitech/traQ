@@ -1,11 +1,11 @@
 package sessions
 
 import (
-	"encoding/base64"
 	"encoding/gob"
+	"github.com/gofrs/uuid"
 	"github.com/neverlee/keymutex"
-	"github.com/satori/go.uuid"
 	"github.com/tomasen/realip"
+	"github.com/traPtitech/traQ/utils"
 	"net/http"
 	"sync"
 	"time"
@@ -87,8 +87,8 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 	}
 
 	session = &Session{
-		token:         generateRandomString() + generateRandomString(),
-		referenceID:   uuid.NewV4(),
+		token:         utils.RandAlphabetAndNumberString(50),
+		referenceID:   uuid.Must(uuid.NewV4()),
 		userID:        uuid.Nil,
 		created:       time.Now(),
 		lastAccess:    time.Now(),
@@ -177,7 +177,7 @@ func DestroyByReferenceID(userID, referenceID uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if !uuid.Equal(session.userID, userID) {
+	if session.userID != userID {
 		return nil
 	}
 	mutexes.Lock(session.token)
@@ -276,10 +276,6 @@ func setCookie(token string, rw http.ResponseWriter) {
 		HttpOnly: true,
 	}
 	http.SetCookie(rw, cookie)
-}
-
-func generateRandomString() string {
-	return base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes())
 }
 
 // PurgeCache キャッシュを全て解放し、その内容を永続化します

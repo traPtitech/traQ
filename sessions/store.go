@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"github.com/gofrs/uuid"
 	"github.com/hashicorp/golang-lru"
 	"github.com/jinzhu/gorm"
-	"github.com/satori/go.uuid"
 	"sync"
 	"time"
 )
@@ -62,7 +62,7 @@ func (s *InMemoryStore) GetByUserID(id uuid.UUID) (result []*Session, err error)
 	s.RLock()
 	defer s.RUnlock()
 	for _, v := range s.sessions {
-		if uuid.Equal(v.userID, id) {
+		if v.userID == id {
 			result = append(result, v)
 		}
 	}
@@ -74,7 +74,7 @@ func (s *InMemoryStore) GetByReferenceID(id uuid.UUID) (*Session, error) {
 	s.RLock()
 	defer s.RUnlock()
 	for _, v := range s.sessions {
-		if uuid.Equal(v.referenceID, id) {
+		if v.referenceID == id {
 			return v, nil
 		}
 	}

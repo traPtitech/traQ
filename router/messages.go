@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/labstack/gommon/log"
 	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
@@ -9,7 +10,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 )
 

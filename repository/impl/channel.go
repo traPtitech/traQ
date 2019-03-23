@@ -1,9 +1,9 @@
 package impl
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -76,7 +76,7 @@ func (repo *RepositoryImpl) CreatePublicChannel(name string, parent, creatorID u
 	}
 
 	ch := &model.Channel{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
 		ParentID:  parent,
 		CreatorID: creatorID,
@@ -126,7 +126,7 @@ func (repo *RepositoryImpl) CreatePrivateChannel(name string, creatorID uuid.UUI
 	}
 
 	ch := &model.Channel{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
 		CreatorID: creatorID,
 		UpdaterID: creatorID,
@@ -211,7 +211,7 @@ func (repo *RepositoryImpl) CreateChildChannel(name string, parentID, creatorID 
 	}
 
 	ch := &model.Channel{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
 		ParentID:  pCh.ID,
 		CreatorID: creatorID,
@@ -643,7 +643,7 @@ func (repo *RepositoryImpl) GetDirectMessageChannel(user1, user2 uuid.UUID) (*mo
 
 	// 存在しなかったので作成
 	channel = model.Channel{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		Name:      "dm_" + utils.RandAlphabetAndNumberString(17),
 		ParentID:  dmChannelRootUUID,
 		IsPublic:  false,

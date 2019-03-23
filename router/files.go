@@ -2,7 +2,7 @@ package router
 
 import (
 	"fmt"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
 	"net/http"

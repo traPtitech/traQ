@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/repository"
@@ -65,7 +65,7 @@ func TestHandlers_GetPin(t *testing.T) {
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/pins/{pinID}", uuid.NewV4()).
+		e.GET("/api/1.0/pins/{pinID}", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)

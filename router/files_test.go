@@ -2,7 +2,7 @@ package router
 
 import (
 	"fmt"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
@@ -58,7 +58,7 @@ func TestHandlers_PostFile(t *testing.T) {
 			WithCookie(sessions.CookieName, session).
 			WithMultipart().
 			WithFileBytes("file", "test.txt", []byte("aaa")).
-			WithFormField("acl_readable", uuid.NewV4()).
+			WithFormField("acl_readable", uuid.Must(uuid.NewV4())).
 			Expect().
 			Status(http.StatusBadRequest)
 	})

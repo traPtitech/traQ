@@ -1,7 +1,7 @@
 package impl
 
 import (
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 )
@@ -15,7 +15,7 @@ func (repo *RepositoryImpl) CreateMessageReport(messageID, reporterID uuid.UUID,
 
 	// make report
 	r := &model.MessageReport{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		MessageID: messageID,
 		Reporter:  reporterID,
 		Reason:    reason,

@@ -1,7 +1,7 @@
 package impl
 
 import (
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
@@ -302,7 +302,7 @@ func TestRepositoryImpl_GetTagByID(t *testing.T) {
 		assert.Equal(tag.Name, r.Name)
 	}
 
-	_, err = repo.GetTagByID(uuid.NewV4())
+	_, err = repo.GetTagByID(uuid.Must(uuid.NewV4()))
 	assert.Error(err)
 }
 

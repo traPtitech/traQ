@@ -1,9 +1,9 @@
 package impl
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -12,7 +12,7 @@ import (
 // CreateTag タグを作成します
 func (repo *RepositoryImpl) CreateTag(name string, restricted bool, tagType string) (*model.Tag, error) {
 	t := &model.Tag{
-		ID:         uuid.NewV4(),
+		ID:         uuid.Must(uuid.NewV4()),
 		Name:       name,
 		Restricted: restricted,
 		Type:       tagType,
@@ -83,7 +83,7 @@ func (repo *RepositoryImpl) GetOrCreateTagByName(name string) (*model.Tag, error
 	tag := &model.Tag{}
 	err := repo.db.
 		Where(&model.Tag{Name: name}).
-		Attrs(&model.Tag{ID: uuid.NewV4()}).
+		Attrs(&model.Tag{ID: uuid.Must(uuid.NewV4())}).
 		FirstOrCreate(tag).
 		Error
 	return tag, err

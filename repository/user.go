@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/mikespook/gorbac"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"time"
 )

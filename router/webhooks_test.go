@@ -2,7 +2,7 @@ package router
 
 import (
 	"encoding/hex"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
@@ -237,7 +237,7 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/webhooks/{webhookId}", wb.GetID()).
-			WithJSON(map[string]string{"channelId": uuid.NewV4().String()}).
+			WithJSON(map[string]uuid.UUID{"channelId": uuid.Must(uuid.NewV4())}).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -472,7 +472,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText(body).
 			WithHeader(headerSignature, hex.EncodeToString(utils.CalcHMACSHA1([]byte(body), wb.GetSecret()))).
-			WithHeader(headerChannelID, uuid.NewV4().String()).
+			WithHeader(headerChannelID, uuid.Must(uuid.NewV4()).String()).
 			Expect().
 			Status(http.StatusBadRequest)
 	})

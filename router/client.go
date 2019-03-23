@@ -1,11 +1,11 @@
 package router
 
 import (
-	"encoding/base64"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/utils"
 	"go.uber.org/zap"
 	"net/http"
 	"regexp"
@@ -162,13 +162,13 @@ func (h *Handlers) PostClients(c echo.Context) error {
 	}
 
 	client := &model.OAuth2Client{
-		ID:           uuid.NewV4().String(),
+		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         req.Name,
 		Description:  req.Description,
 		Confidential: false,
 		CreatorID:    userID,
 		RedirectURI:  req.RedirectURI,
-		Secret:       base64.RawURLEncoding.EncodeToString(uuid.NewV4().Bytes()),
+		Secret:       utils.RandAlphabetAndNumberString(36),
 		Scopes:       scopes,
 	}
 	if err := h.Repo.SaveClient(client); err != nil {

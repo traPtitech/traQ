@@ -8,9 +8,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/disintegration/imaging"
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
@@ -43,7 +43,7 @@ func (repo *RepositoryImpl) SaveFile(name string, src io.Reader, size int64, mim
 // SaveFileWithACL ファイルを保存します。mimeが指定されていない場合はnameの拡張子によって決まります
 func (repo *RepositoryImpl) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID, read repository.ACL) (*model.File, error) {
 	f := &model.File{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
 		Size:      size,
 		Mime:      mimeType,

@@ -2,9 +2,9 @@ package rbac
 
 import (
 	"fmt"
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/mikespook/gorbac"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"time"
 )

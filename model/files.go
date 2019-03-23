@@ -2,7 +2,7 @@ package model
 
 import (
 	"database/sql"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/utils/validator"
 	"time"
 )

@@ -3,9 +3,9 @@ package impl
 import (
 	"encoding/base64"
 	"errors"
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
@@ -18,8 +18,8 @@ func (repo *RepositoryImpl) CreateWebhook(name, description string, channelID, c
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
 		return nil, errors.New("invalid name")
 	}
-	uid := uuid.NewV4()
-	bid := uuid.NewV4()
+	uid := uuid.Must(uuid.NewV4())
+	bid := uuid.Must(uuid.NewV4())
 	iconID, err := repo.GenerateIconFile(name)
 	if err != nil {
 		return nil, err

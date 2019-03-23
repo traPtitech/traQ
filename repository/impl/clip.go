@@ -1,9 +1,9 @@
 package impl
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -40,7 +40,7 @@ func (repo *RepositoryImpl) CreateClipFolder(userID uuid.UUID, name string) (*mo
 		return nil, repository.ErrNilID
 	}
 	f := &model.ClipFolder{
-		ID:     uuid.NewV4(),
+		ID:     uuid.Must(uuid.NewV4()),
 		UserID: userID,
 		Name:   name,
 	}
@@ -169,7 +169,7 @@ func (repo *RepositoryImpl) CreateClip(messageID, folderID, userID uuid.UUID) (*
 		return nil, repository.ErrNilID
 	}
 	c := &model.Clip{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		UserID:    userID,
 		MessageID: messageID,
 		FolderID:  folderID,

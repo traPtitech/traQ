@@ -1,7 +1,7 @@
 package impl
 
 import (
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/repository"
 	"testing"
 )
@@ -48,7 +48,7 @@ func TestRepositoryImpl_GetPin(t *testing.T) {
 	_, err = repo.GetPin(uuid.Nil)
 	assert.Equal(repository.ErrNotFound, err)
 
-	_, err = repo.GetPin(uuid.NewV4())
+	_, err = repo.GetPin(uuid.Must(uuid.NewV4()))
 	assert.Equal(repository.ErrNotFound, err)
 }
 
@@ -69,7 +69,7 @@ func TestRepositoryImpl_IsPinned(t *testing.T) {
 		assert.False(ok)
 	}
 
-	ok, err = repo.IsPinned(uuid.NewV4())
+	ok, err = repo.IsPinned(uuid.Must(uuid.NewV4()))
 	if assert.NoError(err) {
 		assert.False(ok)
 	}
@@ -89,7 +89,7 @@ func TestRepositoryImpl_DeletePin(t *testing.T) {
 		assert.Equal(repository.ErrNotFound, err)
 	}
 
-	assert.NoError(repo.DeletePin(uuid.NewV4()))
+	assert.NoError(repo.DeletePin(uuid.Must(uuid.NewV4())))
 }
 
 func TestRepositoryImpl_GetPinsByChannelID(t *testing.T) {

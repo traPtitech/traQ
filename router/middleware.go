@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/mikespook/gorbac"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 )

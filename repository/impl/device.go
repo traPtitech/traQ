@@ -2,8 +2,8 @@ package impl
 
 import (
 	"errors"
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 )
 

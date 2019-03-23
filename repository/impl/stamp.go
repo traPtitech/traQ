@@ -1,9 +1,9 @@
 package impl
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -17,7 +17,7 @@ func (repo *RepositoryImpl) CreateStamp(name string, fileID, userID uuid.UUID) (
 	}
 
 	stamp := &model.Stamp{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
 		CreatorID: userID,
 		FileID:    fileID,

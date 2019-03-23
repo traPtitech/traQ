@@ -2,7 +2,7 @@ package impl
 
 import (
 	"encoding/hex"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
@@ -96,7 +96,7 @@ func TestRepositoryImpl_ChangeUserIcon(t *testing.T) {
 	t.Parallel()
 	repo, assert, require, user := setupWithUser(t, common)
 
-	newIcon := uuid.NewV4()
+	newIcon := uuid.Must(uuid.NewV4())
 	if assert.NoError(repo.ChangeUserIcon(user.ID, newIcon)) {
 		u, err := repo.GetUser(user.ID)
 		require.NoError(err)
@@ -108,7 +108,7 @@ func TestRepositoryImpl_ChangeUserDisplayName(t *testing.T) {
 	t.Parallel()
 	repo, assert, require, user := setupWithUser(t, common)
 
-	newDN := uuid.NewV4().String()
+	newDN := uuid.Must(uuid.NewV4()).String()
 
 	if assert.NoError(repo.ChangeUserDisplayName(user.ID, newDN)) {
 		u, err := repo.GetUser(user.ID)
@@ -147,7 +147,7 @@ func TestRepositoryImpl_ChangeUserAccountStatus(t *testing.T) {
 	t.Run("unknown user", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.ChangeUserAccountStatus(uuid.NewV4(), model.UserAccountStatusDeactivated), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.ChangeUserAccountStatus(uuid.Must(uuid.NewV4()), model.UserAccountStatusDeactivated), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {

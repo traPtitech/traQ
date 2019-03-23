@@ -2,7 +2,7 @@ package impl
 
 import (
 	"fmt"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
@@ -160,7 +160,7 @@ func TestRepositoryImpl_GetChannelPath(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		_, err := repo.GetChannelPath(uuid.NewV4())
+		_, err := repo.GetChannelPath(uuid.Must(uuid.NewV4()))
 		assert.Error(err)
 	})
 }
@@ -202,7 +202,7 @@ func TestRepositoryImpl_GetParentChannel(t *testing.T) {
 	t.Run("NotExists2", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetParentChannel(uuid.NewV4())
+		_, err := repo.GetParentChannel(uuid.Must(uuid.NewV4()))
 		assert.Error(t, err)
 	})
 }

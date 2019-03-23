@@ -1,8 +1,8 @@
 package router
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
@@ -78,7 +78,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
 		Confidential: false,
-		CreatorID:    uuid.NewV4(),
+		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
@@ -422,7 +422,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			ID:           utils.RandAlphabetAndNumberString(36),
 			Name:         "test client",
 			Confidential: false,
-			CreatorID:    uuid.NewV4(),
+			CreatorID:    uuid.Must(uuid.NewV4()),
 			Secret:       utils.RandAlphabetAndNumberString(36),
 			Scopes: model.AccessScopes{
 				"read",
@@ -449,7 +449,7 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
 		Confidential: true,
-		CreatorID:    uuid.NewV4(),
+		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
@@ -553,7 +553,7 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			ID:           utils.RandAlphabetAndNumberString(36),
 			Name:         "test client",
 			Confidential: true,
-			CreatorID:    uuid.NewV4(),
+			CreatorID:    uuid.Must(uuid.NewV4()),
 			Secret:       utils.RandAlphabetAndNumberString(36),
 			Scopes: model.AccessScopes{
 				"read",
@@ -693,7 +693,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
 		Confidential: true,
-		CreatorID:    uuid.NewV4(),
+		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
@@ -829,7 +829,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			ID:           utils.RandAlphabetAndNumberString(36),
 			Name:         "test client",
 			Confidential: false,
-			CreatorID:    uuid.NewV4(),
+			CreatorID:    uuid.Must(uuid.NewV4()),
 			Secret:       utils.RandAlphabetAndNumberString(36),
 			RedirectURI:  "http://example.com",
 			Scopes: model.AccessScopes{
@@ -889,7 +889,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
 		Confidential: true,
-		CreatorID:    uuid.NewV4(),
+		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
@@ -992,7 +992,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			ID:           utils.RandAlphabetAndNumberString(36),
 			Name:         "test client",
 			Confidential: false,
-			CreatorID:    uuid.NewV4(),
+			CreatorID:    uuid.Must(uuid.NewV4()),
 			Secret:       utils.RandAlphabetAndNumberString(36),
 			RedirectURI:  "http://example.com",
 			Scopes: model.AccessScopes{
@@ -1140,7 +1140,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
 		Confidential: false,
-		CreatorID:    uuid.NewV4(),
+		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
@@ -1154,7 +1154,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
 		Confidential: true,
-		CreatorID:    uuid.NewV4(),
+		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
@@ -1383,7 +1383,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
 		Confidential: false,
-		CreatorID:    uuid.NewV4(),
+		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
@@ -1397,7 +1397,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
 		Confidential: true,
-		CreatorID:    uuid.NewV4(),
+		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{

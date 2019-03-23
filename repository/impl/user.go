@@ -3,10 +3,10 @@ package impl
 import (
 	"encoding/hex"
 	"errors"
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/mikespook/gorbac"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -132,7 +132,7 @@ func (s *userOnlineStatus) getTime() (t time.Time) {
 func (repo *RepositoryImpl) CreateUser(name, password string, role gorbac.Role) (*model.User, error) {
 	salt := utils.GenerateSalt()
 	user := &model.User{
-		ID:       uuid.NewV4(),
+		ID:       uuid.Must(uuid.NewV4()),
 		Name:     name,
 		Password: hex.EncodeToString(utils.HashPassword(password, salt)),
 		Salt:     hex.EncodeToString(salt),

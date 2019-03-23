@@ -2,7 +2,7 @@ package impl
 
 import (
 	"database/sql"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
@@ -56,7 +56,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
-		assert.EqualError(t, repo.UpdateWebhook(uuid.NewV4(), repository.UpdateWebhookArgs{}), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.UpdateWebhook(uuid.Must(uuid.NewV4()), repository.UpdateWebhookArgs{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("Invalid name", func(t *testing.T) {
@@ -124,7 +124,7 @@ func TestRepositoryImpl_DeleteWebhook(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
-		assert.EqualError(t, repo.DeleteWebhook(uuid.NewV4()), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.DeleteWebhook(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("Success", func(t *testing.T) {
@@ -152,7 +152,7 @@ func TestRepositoryImpl_GetWebhook(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
-		_, err := repo.GetWebhook(uuid.NewV4())
+		_, err := repo.GetWebhook(uuid.Must(uuid.NewV4()))
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
