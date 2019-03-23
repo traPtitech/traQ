@@ -411,7 +411,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.POST("/api/1.0/webhooks/{webhookId}", uuid.NewV4()).
+		e.POST("/api/1.0/webhooks/{webhookId}", uuid.Must(uuid.NewV4())).
 			Expect().
 			Status(http.StatusNotFound)
 	})

@@ -29,7 +29,7 @@ require (
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/karixtech/zapdriver v1.1.7-0.20181228101910-f31008bce221
 	github.com/labstack/echo v3.3.10+incompatible
-	github.com/labstack/gommon v0.2.8
+	github.com/labstack/gommon v0.2.8 // indirect
 	github.com/leandro-lugaresi/hub v1.1.0
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/lib/pq v1.0.0 // indirect

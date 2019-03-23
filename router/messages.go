@@ -2,7 +2,6 @@ package router
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/labstack/gommon/log"
 	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
 	"net/http"
@@ -281,12 +280,12 @@ func (h *Handlers) createMessage(c echo.Context, text string, userID, channelID 
 func (h *Handlers) formatMessage(raw *model.Message) *MessageForResponse {
 	isPinned, err := h.Repo.IsPinned(raw.ID)
 	if err != nil {
-		log.Error(err)
+		h.Logger.Error("failed to IsPinned", zap.Error(err))
 	}
 
 	stampList, err := h.Repo.GetMessageStamps(raw.ID)
 	if err != nil {
-		log.Error(err)
+		h.Logger.Error("failed to GetMessageStamps", zap.Error(err))
 	}
 
 	res := &MessageForResponse{
