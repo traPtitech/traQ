@@ -2,8 +2,8 @@ package router
 
 import (
 	"fmt"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"

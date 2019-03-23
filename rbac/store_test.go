@@ -1,7 +1,7 @@
 package rbac
 
 import (
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"testing"
@@ -15,7 +15,7 @@ func TestRBACOverride_TableName(t *testing.T) {
 func TestRBACOverride_GetUserID(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.NewV4()
+	id := uuid.Must(uuid.NewV4())
 	r := &Override{
 		UserID: id,
 	}

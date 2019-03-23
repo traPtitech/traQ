@@ -2,7 +2,7 @@ package impl
 
 import (
 	"bytes"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
@@ -48,7 +48,7 @@ func TestRepositoryImpl_DeleteFile(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.DeleteFile(uuid.NewV4()), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.DeleteFile(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
 	})
 }
 
@@ -72,7 +72,7 @@ func TestRepositoryImpl_OpenFile(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, err := repo.OpenFile(uuid.NewV4())
+		_, _, err := repo.OpenFile(uuid.Must(uuid.NewV4()))
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 }
@@ -104,7 +104,7 @@ func TestRepositoryImpl_OpenThumbnailFile(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, _, err := repo.OpenThumbnailFile(uuid.NewV4())
+		_, _, err := repo.OpenThumbnailFile(uuid.Must(uuid.NewV4()))
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 }
@@ -148,7 +148,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.IsFileAccessible(uuid.NewV4(), user.ID)
+		_, err := repo.IsFileAccessible(uuid.Must(uuid.NewV4()), user.ID)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 

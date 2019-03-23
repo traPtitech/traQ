@@ -3,7 +3,7 @@ package router
 import (
 	"bytes"
 	"github.com/gavv/httpexpect"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"

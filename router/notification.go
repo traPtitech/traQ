@@ -1,11 +1,11 @@
 package router
 
 import (
+	"github.com/gofrs/uuid"
 	"go.uber.org/zap"
 	"net/http"
 
 	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
 )
 
 // GetNotificationStatus GET /channels/:channelID/notification

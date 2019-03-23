@@ -2,7 +2,7 @@ package repository
 
 import (
 	"database/sql"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 )
 

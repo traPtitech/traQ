@@ -1,7 +1,7 @@
 package impl
 
 import (
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -50,7 +50,7 @@ func TestRepositoryImpl_UpdateMessage(t *testing.T) {
 	originalText := m.Text
 
 	assert.EqualError(repo.UpdateMessage(m.ID, ""), "text is empty")
-	assert.EqualError(repo.UpdateMessage(uuid.NewV4(), "new message"), repository.ErrNotFound.Error())
+	assert.EqualError(repo.UpdateMessage(uuid.Must(uuid.NewV4()), "new message"), repository.ErrNotFound.Error())
 	assert.EqualError(repo.UpdateMessage(uuid.Nil, "new message"), repository.ErrNilID.Error())
 	assert.NoError(repo.UpdateMessage(m.ID, "new message"))
 
@@ -114,7 +114,7 @@ func TestRepositoryImpl_GetMessageByID(t *testing.T) {
 	_, err = repo.GetMessageByID(uuid.Nil)
 	assert.Error(err)
 
-	_, err = repo.GetMessageByID(uuid.NewV4())
+	_, err = repo.GetMessageByID(uuid.Must(uuid.NewV4()))
 	assert.Error(err)
 }
 

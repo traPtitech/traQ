@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/go-sql-driver/mysql"
+	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
@@ -280,7 +280,7 @@ func GetTraceID(c echo.Context) string {
 	if ok {
 		return v
 	}
-	v = fmt.Sprintf("%02x", uuid.NewV4().Bytes())
+	v = fmt.Sprintf("%02x", uuid.Must(uuid.NewV4()).Bytes())
 	c.Set(traceIDKey, v)
 	return v
 }

@@ -4,9 +4,9 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/mikespook/gorbac"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
@@ -441,7 +441,6 @@ func (h *Handlers) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
 		ClientID     string `form:"client_id"`
 		ClientSecret string `form:"client_secret"`
 		CodeVerifier string `form:"code_verifier"`
-		Scope        string `form:"scope"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidRequest})

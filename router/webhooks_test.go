@@ -2,7 +2,7 @@ package router
 
 import (
 	"encoding/hex"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
@@ -143,7 +143,7 @@ func TestHandlers_GetWebhook(t *testing.T) {
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/webhooks/{webhookID}", uuid.NewV4()).
+		e.GET("/api/1.0/webhooks/{webhookID}", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)
@@ -194,7 +194,7 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.PATCH("/api/1.0/webhooks/{webhookId}", uuid.NewV4()).
+		e.PATCH("/api/1.0/webhooks/{webhookId}", uuid.Must(uuid.NewV4())).
 			WithJSON(map[string]string{"name": strings.Repeat("a", 30)}).
 			WithCookie(sessions.CookieName, session).
 			Expect().
@@ -237,7 +237,7 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/webhooks/{webhookId}", wb.GetID()).
-			WithJSON(map[string]string{"channelId": uuid.NewV4().String()}).
+			WithJSON(map[string]uuid.UUID{"channelId": uuid.Must(uuid.NewV4())}).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -293,7 +293,7 @@ func TestHandlers_DeleteWebhook(t *testing.T) {
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/webhooks/{webhookId}", uuid.NewV4()).
+		e.DELETE("/api/1.0/webhooks/{webhookId}", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)
@@ -340,7 +340,7 @@ func TestHandlers_PutWebhookIcon(t *testing.T) {
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.PUT("/api/1.0/webhooks/{webhookId}/icon", uuid.NewV4()).
+		e.PUT("/api/1.0/webhooks/{webhookId}/icon", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)
@@ -411,7 +411,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.POST("/api/1.0/webhooks/{webhookId}", uuid.NewV4()).
+		e.POST("/api/1.0/webhooks/{webhookId}", uuid.Must(uuid.NewV4())).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -472,7 +472,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText(body).
 			WithHeader(headerSignature, hex.EncodeToString(utils.CalcHMACSHA1([]byte(body), wb.GetSecret()))).
-			WithHeader(headerChannelID, uuid.NewV4().String()).
+			WithHeader(headerChannelID, uuid.Must(uuid.NewV4()).String()).
 			Expect().
 			Status(http.StatusBadRequest)
 	})

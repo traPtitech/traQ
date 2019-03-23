@@ -2,7 +2,7 @@ package model
 
 import (
 	"encoding/hex"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/utils"
 	"testing"
 	"testing/quick"
@@ -25,9 +25,9 @@ func TestAuthenticateUser(t *testing.T) {
 		assert.Error(AuthenticateUser(nil, "test"))
 		assert.Error(AuthenticateUser(&User{Bot: true}, "test"))
 		assert.Error(AuthenticateUser(&User{}, "test"))
-		assert.Error(AuthenticateUser(&User{Password: hex.EncodeToString(uuid.NewV4().Bytes()), Salt: "アイウエオ"}, "test"))
-		assert.Error(AuthenticateUser(&User{Salt: hex.EncodeToString(uuid.NewV4().Bytes()), Password: "アイウエオ"}, "test"))
-		assert.Error(AuthenticateUser(&User{Salt: hex.EncodeToString(uuid.NewV4().Bytes()), Password: hex.EncodeToString(uuid.NewV4().Bytes())}, "test"))
+		assert.Error(AuthenticateUser(&User{Password: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes()), Salt: "アイウエオ"}, "test"))
+		assert.Error(AuthenticateUser(&User{Salt: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes()), Password: "アイウエオ"}, "test"))
+		assert.Error(AuthenticateUser(&User{Salt: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes()), Password: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes())}, "test"))
 	})
 
 	t.Run("successes", func(t *testing.T) {

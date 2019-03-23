@@ -1,9 +1,9 @@
 package impl
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -13,7 +13,7 @@ import (
 // CreateUserGroup ユーザーグループを作成します
 func (repo *RepositoryImpl) CreateUserGroup(name, description string, adminID uuid.UUID) (*model.UserGroup, error) {
 	g := &model.UserGroup{
-		ID:          uuid.NewV4(),
+		ID:          uuid.Must(uuid.NewV4()),
 		Name:        name,
 		Description: description,
 		AdminUserID: adminID,

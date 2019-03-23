@@ -1,6 +1,6 @@
 package repository
 
-import "github.com/satori/go.uuid"
+import "github.com/gofrs/uuid"
 
 // StarRepository チャンネルスターリポジトリ
 type StarRepository interface {

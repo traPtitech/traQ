@@ -4,8 +4,7 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"errors"
-	"github.com/labstack/gommon/log"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -76,7 +75,6 @@ func AuthenticateUser(user *User, password string) error {
 		values.Set(viper.GetString("externalAuthentication.authPost.formPasswordKey"), password)
 		resp, err := http.PostForm(viper.GetString("externalAuthentication.authPost.url"), values)
 		if err != nil {
-			log.Error(err)
 			return ErrUserWrongIDOrPassword
 		}
 		defer resp.Body.Close()

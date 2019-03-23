@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
@@ -114,7 +114,7 @@ func TestHandlers_GetUserGroup(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/groups/{groupID}", uuid.NewV4().String()).
+		e.GET("/api/1.0/groups/{groupID}", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)
@@ -156,7 +156,7 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.PATCH("/api/1.0/groups/{groupID}", uuid.NewV4().String()).
+		e.PATCH("/api/1.0/groups/{groupID}", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]interface{}{"description": "aaa"}).
 			Expect().
@@ -243,7 +243,7 @@ func TestHandlers_DeleteUserGroup(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/groups/{groupID}", uuid.NewV4().String()).
+		e.DELETE("/api/1.0/groups/{groupID}", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)
@@ -291,7 +291,7 @@ func TestHandlers_GetUserGroupMembers(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/groups/{groupID}/members", uuid.NewV4().String()).
+		e.GET("/api/1.0/groups/{groupID}/members", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)
@@ -328,7 +328,7 @@ func TestHandlers_PostUserGroupMembers(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.POST("/api/1.0/groups/{groupID}/members", uuid.NewV4().String()).
+		e.POST("/api/1.0/groups/{groupID}/members", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]interface{}{"userId": user.ID}).
 			Expect().
@@ -360,7 +360,7 @@ func TestHandlers_PostUserGroupMembers(t *testing.T) {
 		e := makeExp(t, server)
 		e.POST("/api/1.0/groups/{groupID}/members", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
-			WithJSON(map[string]interface{}{"userId": uuid.NewV4()}).
+			WithJSON(map[string]uuid.UUID{"userId": uuid.Must(uuid.NewV4())}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -399,7 +399,7 @@ func TestHandlers_DeleteUserGroupMembers(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", uuid.NewV4().String(), user.ID.String()).
+		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", uuid.Must(uuid.NewV4()), user.ID.String()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)
@@ -408,7 +408,7 @@ func TestHandlers_DeleteUserGroupMembers(t *testing.T) {
 	t.Run("bad request", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", g.ID.String(), uuid.NewV4().String()).
+		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", g.ID.String(), uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -489,7 +489,7 @@ func TestHandlers_GetUserBelongingGroup(t *testing.T) {
 	t.Run("unknown user", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/users/{userID}/groups", uuid.NewV4()).
+		e.GET("/api/1.0/users/{userID}/groups", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)

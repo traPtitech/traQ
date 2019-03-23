@@ -3,9 +3,9 @@ package impl
 import (
 	"errors"
 	"fmt"
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -19,7 +19,7 @@ func (repo *RepositoryImpl) CreateMessage(userID, channelID uuid.UUID, text stri
 		return nil, repository.ErrNilID
 	}
 	m := &model.Message{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		UserID:    userID,
 		ChannelID: channelID,
 		Text:      text,
@@ -67,7 +67,7 @@ func (repo *RepositoryImpl) UpdateMessage(messageID uuid.UUID, text string) erro
 
 		// archiving
 		if err := tx.Create(&model.ArchivedMessage{
-			ID:        uuid.NewV4(),
+			ID:        uuid.Must(uuid.NewV4()),
 			MessageID: old.ID,
 			UserID:    old.UserID,
 			Text:      old.Text,

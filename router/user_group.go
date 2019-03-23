@@ -1,8 +1,8 @@
 package router
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"

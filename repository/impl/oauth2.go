@@ -1,8 +1,8 @@
 package impl
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
@@ -103,7 +103,7 @@ func (repo *RepositoryImpl) DeleteAuthorize(code string) error {
 // SaveToken トークンを発行します
 func (repo *RepositoryImpl) IssueToken(client *model.OAuth2Client, userID uuid.UUID, redirectURI string, scope model.AccessScopes, expire int, refresh bool) (*model.OAuth2Token, error) {
 	newToken := &model.OAuth2Token{
-		ID:          uuid.NewV4(),
+		ID:          uuid.Must(uuid.NewV4()),
 		UserID:      userID,
 		RedirectURI: redirectURI,
 		AccessToken: utils.RandAlphabetAndNumberString(36),

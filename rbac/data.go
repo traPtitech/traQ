@@ -1,8 +1,8 @@
 package rbac
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/mikespook/gorbac"
-	"github.com/satori/go.uuid"
 )
 
 // OverrideData : RBACのオーバライドルールのインターフェイス

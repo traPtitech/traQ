@@ -2,7 +2,7 @@ package impl
 
 import (
 	"database/sql"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
@@ -64,7 +64,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.UpdateUserGroup(uuid.NewV4(), repository.UpdateUserGroupNameArgs{}), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.UpdateUserGroup(uuid.Must(uuid.NewV4()), repository.UpdateUserGroupNameArgs{}), repository.ErrNotFound.Error())
 	})
 
 	t.Run("duplicate", func(t *testing.T) {
@@ -97,7 +97,7 @@ func TestRepositoryImpl_DeleteUserGroup(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.DeleteUserGroup(uuid.NewV4()), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.DeleteUserGroup(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -122,7 +122,7 @@ func TestRepositoryImpl_GetUserGroup(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserGroup(uuid.NewV4())
+		_, err := repo.GetUserGroup(uuid.Must(uuid.NewV4()))
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -293,7 +293,7 @@ func TestRepositoryImpl_GetUserGroupMemberIDs(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserGroupMemberIDs(uuid.NewV4())
+		_, err := repo.GetUserGroupMemberIDs(uuid.Must(uuid.NewV4()))
 		assert.Error(t, err, repository.ErrNotFound.Error())
 	})
 

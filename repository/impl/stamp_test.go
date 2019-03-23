@@ -1,7 +1,7 @@
 package impl
 
 import (
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
@@ -71,13 +71,13 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 	t.Run("invalid args", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.UpdateStamp(uuid.NewV4(), "", uuid.Nil), repository.ErrInvalidArgs.Error())
+		assert.EqualError(t, repo.UpdateStamp(uuid.Must(uuid.NewV4()), "", uuid.Nil), repository.ErrInvalidArgs.Error())
 	})
 
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.UpdateStamp(uuid.NewV4(), "a", uuid.Nil), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.UpdateStamp(uuid.Must(uuid.NewV4()), "a", uuid.Nil), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -112,7 +112,7 @@ func TestRepositoryImpl_GetStamp(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetStamp(uuid.NewV4())
+		_, err := repo.GetStamp(uuid.Must(uuid.NewV4()))
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -144,7 +144,7 @@ func TestRepositoryImpl_DeleteStamp(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.DeleteStamp(uuid.NewV4()), repository.ErrNotFound.Error())
+		assert.EqualError(t, repo.DeleteStamp(uuid.Must(uuid.NewV4())), repository.ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -192,7 +192,7 @@ func TestRepositoryImpl_StampExists(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		ok, err := repo.StampExists(uuid.NewV4())
+		ok, err := repo.StampExists(uuid.Must(uuid.NewV4()))
 		if assert.NoError(t, err) {
 			assert.False(t, ok)
 		}

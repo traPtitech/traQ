@@ -1,8 +1,8 @@
 package router
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
-	"github.com/satori/go.uuid"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -146,7 +146,7 @@ func TestHandlers_GetPublicEmojiImage(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/public/emoji/{stampID}", uuid.NewV4()).
+		e.GET("/api/1.0/public/emoji/{stampID}", uuid.Must(uuid.NewV4())).
 			Expect().
 			Status(http.StatusNotFound)
 	})

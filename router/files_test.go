@@ -2,7 +2,7 @@ package router
 
 import (
 	"fmt"
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
@@ -58,7 +58,7 @@ func TestHandlers_PostFile(t *testing.T) {
 			WithCookie(sessions.CookieName, session).
 			WithMultipart().
 			WithFileBytes("file", "test.txt", []byte("aaa")).
-			WithFormField("acl_readable", uuid.NewV4()).
+			WithFormField("acl_readable", uuid.Must(uuid.NewV4())).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -143,7 +143,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/files/{fileID}", uuid.NewV4()).
+		e.GET("/api/1.0/files/{fileID}", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)
@@ -302,7 +302,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/files/{fileID}/thumbnail", uuid.NewV4()).
+		e.GET("/api/1.0/files/{fileID}/thumbnail", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)

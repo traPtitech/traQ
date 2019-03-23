@@ -1,9 +1,9 @@
 package impl
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -17,7 +17,7 @@ func (repo *RepositoryImpl) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, e
 	var p model.Pin
 	err := repo.db.
 		Where(&model.Pin{MessageID: messageID}).
-		Attrs(&model.Pin{ID: uuid.NewV4(), UserID: userID}).
+		Attrs(&model.Pin{ID: uuid.Must(uuid.NewV4()), UserID: userID}).
 		FirstOrCreate(&p).
 		Error
 	if err != nil {

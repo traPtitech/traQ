@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 )
 

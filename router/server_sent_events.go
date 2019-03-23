@@ -2,9 +2,9 @@ package router
 
 import (
 	"encoding/json"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -652,7 +652,7 @@ func (h *Handlers) NotificationStream(c echo.Context) error {
 
 	client := &sseClient{
 		userID:       c.Get("user").(*model.User).ID,
-		connectionID: uuid.NewV4(),
+		connectionID: uuid.Must(uuid.NewV4()),
 		send:         make(chan *eventData, 100),
 	}
 	h.SSE.connect <- client

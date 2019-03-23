@@ -9,9 +9,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/disintegration/imaging"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/mikespook/gorbac"
-	"github.com/satori/go.uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
@@ -130,7 +130,7 @@ func (repo *TestRepository) CreateUser(name, password string, role gorbac.Role) 
 
 	salt := utils.GenerateSalt()
 	user := model.User{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
 		Password:  hex.EncodeToString(utils.HashPassword(password, salt)),
 		Salt:      hex.EncodeToString(salt),
@@ -322,7 +322,7 @@ func (repo *TestRepository) UpdateHeartbeatStatus(userID, channelID uuid.UUID, s
 
 func (repo *TestRepository) CreateUserGroup(name, description string, adminID uuid.UUID) (*model.UserGroup, error) {
 	g := model.UserGroup{
-		ID:          uuid.NewV4(),
+		ID:          uuid.Must(uuid.NewV4()),
 		Name:        name,
 		Description: description,
 		AdminUserID: adminID,
@@ -523,7 +523,7 @@ func (repo *TestRepository) CreateTag(name string, restricted bool, tagType stri
 		}
 	}
 	t := model.Tag{
-		ID:         uuid.NewV4(),
+		ID:         uuid.Must(uuid.NewV4()),
 		Name:       name,
 		Restricted: restricted,
 		Type:       tagType,
@@ -611,7 +611,7 @@ func (repo *TestRepository) GetOrCreateTagByName(name string) (*model.Tag, error
 		}
 	}
 	t := model.Tag{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -822,7 +822,7 @@ func (repo *TestRepository) CreatePublicChannel(name string, parent, creatorID u
 	}
 
 	ch := model.Channel{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
 		ParentID:  parent,
 		CreatorID: creatorID,
@@ -865,7 +865,7 @@ func (repo *TestRepository) CreatePrivateChannel(name string, creatorID uuid.UUI
 	}
 
 	ch := model.Channel{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
 		CreatorID: creatorID,
 		UpdaterID: creatorID,
@@ -932,7 +932,7 @@ func (repo *TestRepository) CreateChildChannel(name string, parentID, creatorID 
 	}
 
 	ch := model.Channel{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
 		ParentID:  pCh.ID,
 		CreatorID: creatorID,
@@ -1428,7 +1428,7 @@ func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 		return nil, repository.ErrNilID
 	}
 	m := &model.Message{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		UserID:    userID,
 		ChannelID: channelID,
 		Text:      text,
@@ -1615,7 +1615,7 @@ func (repo *TestRepository) CreateMessageReport(messageID, reporterID uuid.UUID,
 
 	// make report
 	report := model.MessageReport{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		MessageID: messageID,
 		Reporter:  reporterID,
 		Reason:    reason,
@@ -1698,7 +1698,7 @@ func (repo *TestRepository) CreateStamp(name string, fileID, userID uuid.UUID) (
 	}
 
 	stamp := &model.Stamp{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
 		CreatorID: userID,
 		FileID:    fileID,
@@ -1974,7 +1974,7 @@ func (repo *TestRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, e
 		}
 	}
 	p := model.Pin{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		MessageID: messageID,
 		UserID:    userID,
 		CreatedAt: time.Now(),
@@ -2119,7 +2119,7 @@ func (repo *TestRepository) SaveFile(name string, src io.Reader, size int64, mim
 
 func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID, read repository.ACL) (*model.File, error) {
 	f := &model.File{
-		ID:        uuid.NewV4(),
+		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
 		Size:      size,
 		Mime:      mimeType,
@@ -2244,8 +2244,8 @@ func (repo *TestRepository) CreateWebhook(name, description string, channelID, c
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
 		return nil, errors.New("invalid name")
 	}
-	uid := uuid.NewV4()
-	bid := uuid.NewV4()
+	uid := uuid.Must(uuid.NewV4())
+	bid := uuid.Must(uuid.NewV4())
 	iconID, err := repo.GenerateIconFile(name)
 	if err != nil {
 		return nil, err
@@ -2517,7 +2517,7 @@ func (repo *TestRepository) DeleteAuthorize(code string) error {
 
 func (repo *TestRepository) IssueToken(client *model.OAuth2Client, userID uuid.UUID, redirectURI string, scope model.AccessScopes, expire int, refresh bool) (*model.OAuth2Token, error) {
 	newToken := &model.OAuth2Token{
-		ID:          uuid.NewV4(),
+		ID:          uuid.Must(uuid.NewV4()),
 		UserID:      userID,
 		RedirectURI: redirectURI,
 		AccessToken: utils.RandAlphabetAndNumberString(36),

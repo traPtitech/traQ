@@ -1,13 +1,12 @@
 package router
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/sessions"
 	"net/http"
 	"testing"
-
-	"github.com/satori/go.uuid"
 )
 
 func TestHandlers_PutNotificationStatus(t *testing.T) {
@@ -52,7 +51,7 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
 			WithCookie(sessions.CookieName, session).
-			WithJSON(map[string][]string{"on": {uuid.NewV4().String(), user.ID.String(), uuid.NewV4().String()}, "off": {uuid.NewV4().String()}}).
+			WithJSON(map[string][]uuid.UUID{"on": {uuid.Must(uuid.NewV4()), user.ID, uuid.Must(uuid.NewV4())}, "off": {uuid.Must(uuid.NewV4())}}).
 			Expect().
 			Status(http.StatusNoContent)
 

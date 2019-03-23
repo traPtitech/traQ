@@ -1,8 +1,8 @@
 package rbac
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/mikespook/gorbac"
-	"github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -24,7 +24,7 @@ func TestRBAC_IsGranted(t *testing.T) {
 	require := require.New(t)
 
 	rbac, _ := New(nil)
-	u1 := uuid.NewV4()
+	u1 := uuid.Must(uuid.NewV4())
 	rA := gorbac.NewStdRole("role-a")
 	rB := gorbac.NewStdRole("role-b")
 	pA := gorbac.NewStdPermission("permission-a")
@@ -57,7 +57,7 @@ func TestRBAC_Override(t *testing.T) {
 	require := require.New(t)
 
 	rbac, _ := New(nil)
-	u1 := uuid.NewV4()
+	u1 := uuid.Must(uuid.NewV4())
 	rA := gorbac.NewStdRole("role-a")
 	rB := gorbac.NewStdRole("role-b")
 	pA := gorbac.NewStdPermission("permission-a")
