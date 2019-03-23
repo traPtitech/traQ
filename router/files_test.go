@@ -143,7 +143,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/files/{fileID}", uuid.NewV4()).
+		e.GET("/api/1.0/files/{fileID}", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)
@@ -302,7 +302,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 	t.Run("Not Found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/files/{fileID}/thumbnail", uuid.NewV4()).
+		e.GET("/api/1.0/files/{fileID}/thumbnail", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)
