@@ -19,7 +19,7 @@ require (
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	github.com/hashicorp/golang-lru v0.5.0
+	github.com/hashicorp/golang-lru v0.5.1
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
 	github.com/jinzhu/gorm v1.9.3-0.20190102133208-9f1a7f535111
@@ -38,14 +38,15 @@ require (
 	github.com/mattn/go-sqlite3 v1.9.0 // indirect
 	github.com/mikespook/gorbac v2.1.0+incompatible
 	github.com/moul/http2curl v0.0.0-20170919181001-9ac6cf4d929b // indirect
-	github.com/ncw/swift v1.0.44
+	github.com/ncw/swift v1.0.47
 	github.com/neverlee/keymutex v0.0.0-20171121013845-f593aa834bf9
 	github.com/onsi/gomega v1.4.2 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/smartystreets/goconvey v0.0.0-20180222194500-ef6db91d284a // indirect
 	github.com/spf13/afero v1.2.1 // indirect
-	github.com/spf13/viper v1.3.1
+	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.3.0
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	github.com/valyala/fasthttp v1.0.0 // indirect
@@ -60,15 +61,16 @@ require (
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.9.1
-	golang.org/x/crypto v0.0.0-20190222235706-ffb98f73852f
-	golang.org/x/exp v0.0.0-20190125153040-c74c464bbbf2
-	golang.org/x/image v0.0.0-20190227222117-0694c2d4d067 // indirect
-	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4
-	golang.org/x/sys v0.0.0-20190222171317-cd391775e71e // indirect
+	golang.org/x/crypto v0.0.0-20190320223903-b7391e95e576
+	golang.org/x/exp v0.0.0-20190321205749-f0864edee7f3
+	golang.org/x/image v0.0.0-20190321063152-3fc05d484e9f // indirect
+	golang.org/x/net v0.0.0-20190322120337-addf6b3196f6 // indirect
+	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6
+	golang.org/x/sys v0.0.0-20190322080309-f49334f85ddc // indirect
 	google.golang.org/api v0.1.0
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
-	gopkg.in/go-playground/validator.v9 v9.26.0
+	gopkg.in/go-playground/validator.v9 v9.27.0
 	gopkg.in/go-playground/webhooks.v3 v3.13.0
 	gopkg.in/yaml.v2 v2.2.2
 )
