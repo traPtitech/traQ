@@ -479,6 +479,7 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			State:      "state",
 			Types:      responseType{true, false, false},
 			AccessTime: time.Now(),
+			Nonce:      "nonce",
 		}))
 
 		return parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName].Value
@@ -515,7 +516,7 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			WithCookie(sessions.CookieName, MakeDecideSession(t, user.ID, client)).
 			Expect()
 
-		res.Status(http.StatusFound)
+		res.Status(http.StatusBadRequest)
 		res.Header("Cache-Control").Equal("no-store")
 		res.Header("Pragma").Equal("no-cache")
 	})
@@ -802,7 +803,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			WithBasicAuth(client.ID, "wrong password").
 			Expect()
 
-		res.Status(http.StatusBadRequest)
+		res.Status(http.StatusUnauthorized)
 		res.Header("Cache-Control").Equal("no-store")
 		res.Header("Pragma").Equal("no-cache")
 		res.JSON().Object().Value("error").String().Equal(errInvalidClient)
@@ -1090,7 +1091,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			WithBasicAuth("wrong client", "wrong password").
 			Expect()
 
-		res.Status(http.StatusUnauthorized)
+		res.Status(http.StatusBadRequest)
 		res.Header("Cache-Control").Equal("no-store")
 		res.Header("Pragma").Equal("no-cache")
 		res.JSON().Object().Value("error").String().Equal(errInvalidClient)
