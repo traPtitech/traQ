@@ -43,6 +43,13 @@ func (arr *AccessScopes) Scan(src interface{}) error {
 			}
 			*arr = as
 			return nil
+		} else if v, ok := sv.([]byte); ok {
+			as := AccessScopes{}
+			for _, v := range strings.Split(string(v), " ") {
+				as = append(as, AccessScope(v))
+			}
+			*arr = as
+			return nil
 		}
 	}
 	return errors.New("failed to scan AccessScopes")
