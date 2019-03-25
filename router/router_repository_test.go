@@ -2672,3 +2672,47 @@ func (repo *TestRepository) DeleteTokenByClient(clientID string) error {
 	repo.OAuth2TokensLock.Unlock()
 	return nil
 }
+
+func (repo *TestRepository) CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) SetSubscribeEventsToBot(botID uuid.UUID, events model.BotEvents) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetBotByID(id uuid.UUID) (*model.Bot, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetBotByCode(code string) (*model.Bot, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetBotsByCreator(userID uuid.UUID) ([]*model.Bot, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetBotsByChannel(channelID uuid.UUID) ([]*model.Bot, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) ChangeBotStatus(id uuid.UUID, status model.BotStatus) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) DeleteBot(id uuid.UUID) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) AddBotToChannel(botID, channelID uuid.UUID) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) RemoveBotFromChannel(botID, channelID uuid.UUID) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid.UUID, error) {
+	panic("implement me")
+}

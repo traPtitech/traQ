@@ -11,6 +11,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/viper"
+	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/role"
@@ -149,6 +150,9 @@ func main() {
 			logger.Fatal("failed to setup firebase", zap.Error(err))
 		}
 	}
+
+	// Bot Processor
+	bot.NewProcessor(repo, hub, logger.Named("bot_processor"))
 
 	// Routing
 	h := router.NewHandlers(r, repo, hub, logger.Named("router"), router.HandlerConfig{

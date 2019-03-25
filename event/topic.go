@@ -208,4 +208,38 @@ const (
 	// 	Fields:
 	// 		webhook_id: uuid.UUID
 	WebhookDeleted = "webhook.deleted"
+
+	// BotCreated Botが作成された
+	// 	Fields:
+	// 		bot_id: uuid.UUID
+	// 		bot: *model.Bot
+	BotCreated = "bot.created"
+	// BotDeleted Botが削除された
+	// 	Fields:
+	// 		bot_id: uuid.UUID
+	BotDeleted = "bot.deleted"
+	// BotSubscribeEventsChanged Botの購読イベントが変更された
+	// 	Fields:
+	// 		bot_id: uuid.UUID
+	// 		events: model.BotEvents
+	BotSubscribeEventsChanged = "bot.subscribe_events_changed"
+	// BotStatusChanged Botの状態が変化した
+	// 	Fields:
+	// 		bot_id: uuid.UUID
+	// 		status: model.BotStatus
+	BotStatusChanged = "bot.status_changed"
+	// BotPingRequest BotのPingがリクエストされた
+	// 	Fields:
+	// 		bot_id: uuid.UUID
+	BotPingRequest = "bot.ping"
+	// BotJoined Botがチャンネルに参加した
+	// 	Fields:
+	// 		bot_id: uuid.UUID
+	// 		channel_id: uuid.UUID
+	BotJoined = "bot.joined"
+	// BotLeft Botがチャンネルから退出した
+	// 	Fields:
+	// 		bot_id: uuid.UUID
+	// 		channel_id: uuid.UUID
+	BotLeft = "bot.left"
 )
