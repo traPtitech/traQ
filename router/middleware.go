@@ -493,6 +493,40 @@ func getWebhookFromContext(c echo.Context) model.Webhook {
 	return c.Get("paramWebhook").(model.Webhook)
 }
 
+// ValidateBotID 'botID'パラメータのBotを検証するミドルウェア
+func (h *Handlers) ValidateBotID(requestUserCheck bool) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			botID := getRequestParamAsUUID(c, paramBotID)
+
+			b, err := h.Repo.GetBotByID(botID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return c.NoContent(http.StatusNotFound)
+				default:
+					h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+					return c.NoContent(http.StatusInternalServerError)
+				}
+			}
+
+			if requestUserCheck {
+				user, ok := c.Get("user").(*model.User)
+				if !ok || b.CreatorID != user.ID {
+					return c.NoContent(http.StatusForbidden)
+				}
+			}
+
+			c.Set("paramBot", b)
+			return next(c)
+		}
+	}
+}
+
+func getBotFromContext(c echo.Context) *model.Bot {
+	return c.Get("paramBot").(*model.Bot)
+}
+
 // ValidateFileID 'fileID'パラメータのファイルを検証するミドルウェア
 func (h *Handlers) ValidateFileID() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

@@ -22,4 +22,5 @@ type Repository interface {
 	FileRepository
 	WebhookRepository
 	OAuth2Repository
+	BotRepository
 }

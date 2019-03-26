@@ -59,6 +59,8 @@ const (
 	PrivateWrite model.AccessScope = "private_write" //TODO
 	// Bot Botユーザー
 	Bot model.AccessScope = "bot"
+	// ManageBot Botの管理権限
+	ManageBot model.AccessScope = "manage_bot"
 )
 
 var list = map[model.AccessScope]gorbac.Role{
@@ -67,6 +69,7 @@ var list = map[model.AccessScope]gorbac.Role{
 	Write:        role.WriteUser,
 	PrivateWrite: role.PrivateWriteUser,
 	Bot:          role.Bot,
+	ManageBot:    role.ManageBot,
 }
 
 func validScope(s model.AccessScope) bool {

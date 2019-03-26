@@ -24,6 +24,8 @@ var (
 	PrivateReadUser = gorbac.NewStdRole("private_read")
 	// PrivateWriteUser : プライベートチャンネル書き込み専用ユーザーロール
 	PrivateWriteUser = gorbac.NewStdRole("private_write")
+	// ManageBot Botの管理権限
+	ManageBot = gorbac.NewStdRole("manage_bot")
 )
 
 // SetRole : rbacに既定のロールをセットします
@@ -148,9 +150,7 @@ func SetRole(rbac *rbac.RBAC) {
 			permission.CreateBot,
 			permission.EditBot,
 			permission.DeleteBot,
-			permission.GetBotToken,
 			permission.ReissueBotToken,
-			permission.GetBotInstallCode,
 		},
 		// 管理者ユーザーのパーミッション
 		// ※一般ユーザーのパーミッションを全て含む
@@ -208,6 +208,24 @@ func SetRole(rbac *rbac.RBAC) {
 			permission.DownloadFile,
 
 			permission.GetHeartbeat,
+		},
+		ManageBot: {
+			permission.GetChannel,
+			permission.GetUser,
+			permission.GetMe,
+
+			permission.GetWebhook,
+			permission.CreateWebhook,
+			permission.EditWebhook,
+			permission.DeleteWebhook,
+
+			permission.GetBot,
+			permission.CreateBot,
+			permission.EditBot,
+			permission.DeleteBot,
+			permission.ReissueBotToken,
+			permission.InstallBot,
+			permission.UninstallBot,
 		},
 	} {
 		for _, p := range ps {
