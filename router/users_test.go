@@ -127,7 +127,7 @@ func TestHandlers_PatchMe(t *testing.T) {
 
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/users/me").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(sessions.CookieName, generateSession(t, user.ID)).
 			WithJSON(map[string]string{"displayName": ""}).
 			Expect().
 			Status(http.StatusNoContent)
