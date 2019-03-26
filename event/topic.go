@@ -223,11 +223,11 @@ const (
 	// 		bot_id: uuid.UUID
 	// 		events: model.BotEvents
 	BotSubscribeEventsChanged = "bot.subscribe_events_changed"
-	// BotStatusChanged Botの状態が変化した
+	// BotStateChanged Botの状態が変化した
 	// 	Fields:
 	// 		bot_id: uuid.UUID
-	// 		status: model.BotStatus
-	BotStatusChanged = "bot.status_changed"
+	// 		state: model.BotState
+	BotStateChanged = "bot.state_changed"
 	// BotPingRequest BotのPingがリクエストされた
 	// 	Fields:
 	// 		bot_id: uuid.UUID

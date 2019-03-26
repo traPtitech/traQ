@@ -135,6 +135,9 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiChannelsCid.GET("/notification", h.GetNotificationStatus, requires(permission.GetNotificationStatus))
 				apiChannelsCid.PUT("/notification", h.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
 				apiChannelsCid.GET("/pins", h.GetChannelPin, requires(permission.GetPin))
+				apiChannelsCid.GET("/bots", h.GetChannelBots, requires(permission.GetBot))
+				apiChannelsCid.POST("/bots", h.PostChannelBots, requires(permission.InstallBot))
+				apiChannelsCid.DELETE("/bots/:botID", h.DeleteChannelBot, requires(permission.UninstallBot), h.ValidateBotID(false))
 			}
 		}
 		apiNotification := api.Group("/notification")
@@ -237,6 +240,20 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiClientCid.DELETE("", h.DeleteClient, requires(permission.DeleteMyClient))
 			}
 		}
+		apiBots := api.Group("/bots")
+		{
+			apiBots.GET("", h.GetBots, requires(permission.GetBot))
+			apiBots.POST("", h.PostBots, requires(permission.CreateBot))
+			apiBotsBid := apiBots.Group("/:botID", h.ValidateBotID(false))
+			{
+				apiBotsBid.GET("", h.GetBot, requires(permission.GetBot))
+				apiBotsBid.DELETE("", h.DeleteBot, requires(permission.DeleteBot))
+				apiBotsBid.GET("/detail", h.GetBotDetail, requires(permission.GetBot))
+				apiBotsBid.PUT("/events", h.PutBotEvents, requires(permission.EditBot))
+				apiBotsBid.PUT("/icon", h.PutBotIcon, requires(permission.EditBot))
+				apiBotsBid.PUT("/state", h.PutBotState, requires(permission.EditBot))
+			}
+		}
 		api.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports))
 		api.GET("/activity/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
 	}
@@ -263,22 +280,4 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	apiNoAuth.POST("/oauth2/authorize", h.AuthorizationEndpointHandler)
 	api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler)
 	apiNoAuth.POST("/oauth2/token", h.TokenEndpointHandler)
-
-	api.GET("/bots", notImplemented, requires(permission.GetBot))
-	api.POST("/bots", notImplemented, requires(permission.CreateBot))
-	api.GET("/bots/:botID", notImplemented, requires(permission.GetBot))
-	api.PATCH("/bots/:botID", notImplemented, requires(permission.EditBot))
-	api.DELETE("/bots/:botID", notImplemented, requires(permission.DeleteBot))
-	api.PUT("/bots/:botID/icon", notImplemented, requires(permission.EditBot))
-	api.POST("/bots/:botID/activation", notImplemented, requires(permission.EditBot))
-	api.GET("/bots/:botID/token", notImplemented, requires(permission.GetBotToken))
-	api.POST("/bots/:botID/token", notImplemented, requires(permission.ReissueBotToken))
-	api.GET("/bots/:botID/code", notImplemented, requires(permission.GetBotInstallCode))
-	api.GET("/channels/:channelID/bots", notImplemented, requires(permission.GetBot))
-	api.POST("/channels/:channelID/bots", notImplemented, requires(permission.InstallBot))
-	api.DELETE("/channels/:channelID/bots/:botID", notImplemented, requires(permission.UninstallBot))
-}
-
-func notImplemented(c echo.Context) error {
-	return c.NoContent(http.StatusNotImplemented)
 }

@@ -29,13 +29,13 @@ func (p *Processor) pingHandler(bot *model.Bot) {
 
 	if p.sendEvent(bot, Ping, buf.Bytes()) {
 		// OK
-		if err := p.repo.ChangeBotStatus(bot.ID, model.BotActive); err != nil {
-			p.logger.Error("failed to ChangeBotStatus", zap.Error(err))
+		if err := p.repo.ChangeBotState(bot.ID, model.BotActive); err != nil {
+			p.logger.Error("failed to ChangeBotState", zap.Error(err))
 		}
 	} else {
 		// NG
-		if err := p.repo.ChangeBotStatus(bot.ID, model.BotPaused); err != nil {
-			p.logger.Error("failed to ChangeBotStatus", zap.Error(err))
+		if err := p.repo.ChangeBotState(bot.ID, model.BotPaused); err != nil {
+			p.logger.Error("failed to ChangeBotState", zap.Error(err))
 		}
 	}
 }
@@ -88,7 +88,7 @@ func (p *Processor) createMessageHandler(message *model.Message, embedded []*mes
 func filterBots(bots []*model.Bot, event model.BotEvent) []*model.Bot {
 	result := make([]*model.Bot, 0, len(bots))
 	for _, bot := range bots {
-		if bot.Status != model.BotActive {
+		if bot.State != model.BotActive {
 			continue
 		}
 		if !bot.SubscribeEvents.Contains(event) {

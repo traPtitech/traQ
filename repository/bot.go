@@ -13,7 +13,7 @@ type BotRepository interface {
 	GetBotByCode(code string) (*model.Bot, error)
 	GetBotsByCreator(userID uuid.UUID) ([]*model.Bot, error)
 	GetBotsByChannel(channelID uuid.UUID) ([]*model.Bot, error)
-	ChangeBotStatus(id uuid.UUID, status model.BotStatus) error
+	ChangeBotState(id uuid.UUID, state model.BotState) error
 	DeleteBot(id uuid.UUID) error
 	AddBotToChannel(botID, channelID uuid.UUID) error
 	RemoveBotFromChannel(botID, channelID uuid.UUID) error

@@ -50,6 +50,7 @@ const (
 	paramClipID      = "clipID"
 	paramFolderID    = "folderID"
 	paramTokenID     = "tokenID"
+	paramBotID       = "botID"
 
 	loggerKey  = "logger"
 	traceIDKey = "traceId"

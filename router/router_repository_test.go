@@ -2697,7 +2697,7 @@ func (repo *TestRepository) GetBotsByChannel(channelID uuid.UUID) ([]*model.Bot,
 	panic("implement me")
 }
 
-func (repo *TestRepository) ChangeBotStatus(id uuid.UUID, status model.BotStatus) error {
+func (repo *TestRepository) ChangeBotState(id uuid.UUID, state model.BotState) error {
 	panic("implement me")
 }
 

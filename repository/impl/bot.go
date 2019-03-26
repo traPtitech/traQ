@@ -62,7 +62,7 @@ func (repo *RepositoryImpl) CreateBot(name, displayName, description string, cre
 		AccessTokenID:     tid,
 		SubscribeEvents:   model.BotEvents{},
 		Privileged:        false,
-		Status:            model.BotInactive,
+		State:             model.BotInactive,
 		BotCode:           utils.RandAlphabetAndNumberString(30),
 		CreatorID:         creatorID,
 	}
@@ -185,8 +185,8 @@ func (repo *RepositoryImpl) GetBotsByChannel(channelID uuid.UUID) ([]*model.Bot,
 		Error
 }
 
-// ChangeBotStatus Botの状態を変更します
-func (repo *RepositoryImpl) ChangeBotStatus(id uuid.UUID, status model.BotStatus) error {
+// ChangeBotState Botの状態を変更します
+func (repo *RepositoryImpl) ChangeBotState(id uuid.UUID, state model.BotState) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -199,21 +199,21 @@ func (repo *RepositoryImpl) ChangeBotStatus(id uuid.UUID, status model.BotStatus
 			}
 			return err
 		}
-		if b.Status == status {
+		if b.State == state {
 			return nil
 		}
 		changed = true
-		return tx.Model(&b).Update("status", status).Error
+		return tx.Model(&b).Update("state", state).Error
 	})
 	if err != nil {
 		return err
 	}
 	if changed {
 		repo.hub.Publish(hub.Message{
-			Name: event.BotStatusChanged,
+			Name: event.BotStateChanged,
 			Fields: hub.Fields{
 				"bot_id": id,
-				"status": status,
+				"state":  state,
 			},
 		})
 	}
