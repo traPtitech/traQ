@@ -119,6 +119,23 @@ func TestHandlers_PatchMe(t *testing.T) {
 		assert.Equal(t, newDisp, u.DisplayName)
 		assert.Equal(t, newTwitter, u.TwitterID)
 	})
+
+	t.Run("Successful2", func(t *testing.T) {
+		t.Parallel()
+		user := mustMakeUser(t, repo, random)
+		require.NoError(t, repo.ChangeUserDisplayName(user.ID, "test"))
+
+		e := makeExp(t, server)
+		e.PATCH("/api/1.0/users/me").
+			WithCookie(sessions.CookieName, generateSession(t, user.ID)).
+			WithJSON(map[string]string{"displayName": ""}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		u, err := repo.GetUser(user.ID)
+		require.NoError(t, err)
+		assert.Equal(t, "", u.DisplayName)
+	})
 }
 
 func TestHandlers_PutPassword(t *testing.T) {
