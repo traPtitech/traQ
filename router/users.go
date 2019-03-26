@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/utils/validator"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
@@ -200,15 +201,18 @@ func (h *Handlers) PatchMe(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	req := struct {
-		DisplayName string `json:"displayName" validate:"max=32"`
-		TwitterID   string `json:"twitterId"   validate:"twitterid"`
+		DisplayName *string `json:"displayName"`
+		TwitterID   string  `json:"twitterId"   validate:"twitterid"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if len(req.DisplayName) > 0 {
-		if err := h.Repo.ChangeUserDisplayName(userID, req.DisplayName); err != nil {
+	if req.DisplayName != nil {
+		if err := validator.ValidateVar(*req.DisplayName, "max=32"); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err)
+		}
+		if err := h.Repo.ChangeUserDisplayName(userID, *req.DisplayName); err != nil {
 			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
