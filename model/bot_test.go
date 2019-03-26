@@ -26,13 +26,13 @@ func TestBotEvents_Value(t *testing.T) {
 	es := BotEvents{"PING": true, "PONG": true}
 	v, err := es.Value()
 	assert.NoError(t, err)
-	assert.EqualValues(t, es.String(), v)
+	assert.ElementsMatch(t, []string{"PING", "PONG"}, strings.Split(v.(string), " "))
 }
 
 func TestBotEvents_String(t *testing.T) {
 	t.Parallel()
 	es := BotEvents{"PING": true, "PONG": true}
-	assert.Equal(t, "PING PONG", es.String())
+	assert.ElementsMatch(t, []string{"PING", "PONG"}, strings.Split(es.String(), " "))
 }
 
 func TestBotEvents_Contains(t *testing.T) {
