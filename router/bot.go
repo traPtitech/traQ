@@ -69,8 +69,8 @@ func (h *Handlers) GetBots(c echo.Context) error {
 // PostBots POST /bots
 func (h *Handlers) PostBots(c echo.Context) error {
 	var req struct {
-		Name        string `json:"name" validate:"required,name,max=20"`
-		DisplayName string `json:"displayName" validate:"max=64"`
+		Name        string `json:"name" validate:"required,name,max=16"`
+		DisplayName string `json:"displayName" validate:"max=32"`
 		Description string `json:"description" validate:"required"`
 		WebhookURL  string `json:"webhookUrl" validate:"required,url"`
 	}
@@ -263,7 +263,7 @@ func (h *Handlers) PutBotState(c echo.Context) error {
 			},
 		})
 		return c.NoContent(http.StatusAccepted)
-	case "deactive":
+	case "inactive":
 		if err := h.Repo.ChangeBotState(b.ID, model.BotInactive); err != nil {
 			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return echo.NewHTTPError(http.StatusInternalServerError)
@@ -284,9 +284,16 @@ func (h *Handlers) GetChannelBots(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	res := make([]uuid.UUID, len(bots))
+	type response struct {
+		BotID     uuid.UUID `json:"botId"`
+		BotUserID uuid.UUID `json:"botUserId"`
+	}
+	res := make([]response, len(bots))
 	for i, v := range bots {
-		res[i] = v.ID
+		res[i] = response{
+			BotID:     v.ID,
+			BotUserID: v.BotUserID,
+		}
 	}
 
 	return c.JSON(http.StatusOK, res)
@@ -319,7 +326,7 @@ func (h *Handlers) PostChannelBots(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	return c.NoContent(http.StatusNoContent)
+	return c.JSON(http.StatusOK, map[string]uuid.UUID{"botId": b.ID})
 }
 
 // DeleteChannelBot DELETE /channels/:channelID/bots/:botID

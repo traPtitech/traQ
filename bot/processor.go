@@ -82,9 +82,5 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 		return false
 	}
 	_ = res.Body.Close()
-
-	if res.StatusCode != http.StatusNoContent {
-		return false
-	}
-	return true
+	return res.StatusCode == http.StatusNoContent
 }
