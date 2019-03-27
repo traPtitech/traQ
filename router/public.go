@@ -57,9 +57,6 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 
 // GetPublicEmojiJSON GET /public/emoji.json
 func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
-	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, c.Request().Header.Get("Origin"))
-	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "true")
-
 	setLastModified(c, h.emojiJSONTime)
 	if done, _ := checkPreconditions(c, h.emojiJSONTime); done {
 		return nil
@@ -109,9 +106,6 @@ func generateEmojiJSON(repo repository.StampRepository, buf *bytes.Buffer) error
 
 // GetPublicEmojiCSS GET /public/emoji.css
 func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
-	c.Response().Header().Set(echo.HeaderAccessControlAllowOrigin, c.Request().Header.Get("Origin"))
-	c.Response().Header().Set(echo.HeaderAccessControlAllowCredentials, "false")
-
 	setLastModified(c, h.emojiCSSTime)
 	if done, _ := checkPreconditions(c, h.emojiCSSTime); done {
 		return nil

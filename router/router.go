@@ -1,8 +1,6 @@
 package router
 
 import (
-	"net/http"
-
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/traPtitech/traQ/rbac/permission"
@@ -12,16 +10,15 @@ import (
 // SetupRouting APIルーティングを行います
 func SetupRouting(e *echo.Echo, h *Handlers) {
 	e.Validator = validator.New()
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:8080"},
-		AllowCredentials: true,
-	}))
 
 	// middleware preparation
 	requires := AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := RequestBodyLengthLimit
 
-	api := e.Group("/api/1.0", h.UserAuthenticate())
+	api := e.Group("/api/1.0", middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"http://localhost:8080"},
+		AllowCredentials: true,
+	}), h.UserAuthenticate())
 	{
 		apiUsers := api.Group("/users")
 		{
@@ -262,18 +259,15 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	{
 		apiNoAuth.POST("/login", h.PostLogin)
 		apiNoAuth.POST("/logout", h.PostLogout)
-		apiPublic := apiNoAuth.Group("/public")
+		apiPublic := apiNoAuth.Group("/public", middleware.CORS())
 		{
-			apiPublic.GET("/icon/:username", h.GetPublicUserIcon, AddHeadersMiddleware(map[string]string{echo.HeaderAccessControlAllowOrigin: "*", echo.HeaderAccessControlAllowCredentials: "false"}))
+			apiPublic.GET("/icon/:username", h.GetPublicUserIcon)
 			apiPublic.GET("/emoji.json", h.GetPublicEmojiJSON)
 			apiPublic.GET("/emoji.css", h.GetPublicEmojiCSS)
-			apiPublic.GET("/emoji/:stampID", h.GetPublicEmojiImage, AddHeadersMiddleware(map[string]string{echo.HeaderAccessControlAllowOrigin: "*", echo.HeaderAccessControlAllowCredentials: "false"}), h.ValidateStampID(false))
+			apiPublic.GET("/emoji/:stampID", h.GetPublicEmojiImage, h.ValidateStampID(false))
 		}
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, h.ValidateWebhookID(false))
 		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, h.ValidateWebhookID(false))
-		apiNoAuth.GET("/teapot", func(c echo.Context) error {
-			return echo.NewHTTPError(http.StatusTeapot, "I'm a teapot")
-		})
 	}
 
 	apiNoAuth.GET("/oauth2/authorize", h.AuthorizationEndpointHandler)
