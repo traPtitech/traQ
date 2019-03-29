@@ -16,8 +16,8 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	bodyLimit := RequestBodyLengthLimit
 
 	api := e.Group("/api/1.0", middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:8080"},
-		AllowCredentials: true,
+		ExposeHeaders: []string{"X-TRAQ-VERSION"},
+		AllowHeaders:  []string{"Authorization"},
 	}), h.UserAuthenticate())
 	{
 		apiUsers := api.Group("/users")
