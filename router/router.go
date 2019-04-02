@@ -270,8 +270,11 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, h.ValidateWebhookID(false))
 	}
 
-	apiNoAuth.GET("/oauth2/authorize", h.AuthorizationEndpointHandler)
-	apiNoAuth.POST("/oauth2/authorize", h.AuthorizationEndpointHandler)
+	apiOAuth := apiNoAuth.Group("/oauth2", middleware.CORS())
+	{
+		apiOAuth.GET("/authorize", h.AuthorizationEndpointHandler)
+		apiOAuth.POST("/authorize", h.AuthorizationEndpointHandler)
+		apiOAuth.POST("/token", h.TokenEndpointHandler)
+	}
 	api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler)
-	apiNoAuth.POST("/oauth2/token", h.TokenEndpointHandler)
 }
