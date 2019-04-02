@@ -67,12 +67,14 @@ func (repo *RepositoryImpl) CreateBot(name, displayName, description string, cre
 		CreatorID:         creatorID,
 	}
 	t := &model.OAuth2Token{
-		ID:          tid,
-		UserID:      uid,
-		AccessToken: utils.RandAlphabetAndNumberString(36),
-		CreatedAt:   time.Now(),
-		ExpiresIn:   math.MaxInt32,
-		Scopes:      model.AccessScopes{"bot"},
+		ID:             tid,
+		UserID:         uid,
+		AccessToken:    utils.RandAlphabetAndNumberString(36),
+		RefreshToken:   utils.RandAlphabetAndNumberString(36),
+		RefreshEnabled: false,
+		CreatedAt:      time.Now(),
+		ExpiresIn:      math.MaxInt32,
+		Scopes:         model.AccessScopes{"bot"},
 	}
 
 	err = repo.transact(func(tx *gorm.DB) error {
