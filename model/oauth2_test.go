@@ -187,3 +187,10 @@ func TestOAuth2Token_IsExpired(t *testing.T) {
 		assert.False(t, data.IsExpired())
 	})
 }
+
+func TestOAuth2Token_IsRefreshEnabled(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, (&OAuth2Token{RefreshToken: "test"}).IsRefreshEnabled())
+	assert.True(t, (&OAuth2Token{RefreshToken: "test", RefreshEnabled: true}).IsRefreshEnabled())
+}

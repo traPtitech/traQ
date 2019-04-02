@@ -510,13 +510,15 @@ func (h *Handlers) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
 	}
 
 	res := &tokenResponse{
-		TokenType:    authScheme,
-		AccessToken:  newToken.AccessToken,
-		RefreshToken: newToken.RefreshToken,
-		ExpiresIn:    newToken.ExpiresIn,
+		TokenType:   authScheme,
+		AccessToken: newToken.AccessToken,
+		ExpiresIn:   newToken.ExpiresIn,
 	}
 	if len(code.OriginalScopes) != len(newToken.Scopes) {
 		res.Scope = newToken.Scopes.String()
+	}
+	if newToken.IsRefreshEnabled() {
+		res.RefreshToken = newToken.RefreshToken
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -592,13 +594,15 @@ func (h *Handlers) tokenEndpointPasswordHandler(c echo.Context) error {
 	}
 
 	res := &tokenResponse{
-		TokenType:    authScheme,
-		AccessToken:  newToken.AccessToken,
-		RefreshToken: newToken.RefreshToken,
-		ExpiresIn:    newToken.ExpiresIn,
+		TokenType:   authScheme,
+		AccessToken: newToken.AccessToken,
+		ExpiresIn:   newToken.ExpiresIn,
 	}
 	if len(reqScopes) != len(validScopes) {
 		res.Scope = newToken.Scopes.String()
+	}
+	if newToken.IsRefreshEnabled() {
+		res.RefreshToken = newToken.RefreshToken
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -742,13 +746,15 @@ func (h *Handlers) tokenEndpointRefreshTokenHandler(c echo.Context) error {
 	}
 
 	res := &tokenResponse{
-		TokenType:    authScheme,
-		AccessToken:  newToken.AccessToken,
-		RefreshToken: newToken.RefreshToken,
-		ExpiresIn:    newToken.ExpiresIn,
+		TokenType:   authScheme,
+		AccessToken: newToken.AccessToken,
+		ExpiresIn:   newToken.ExpiresIn,
 	}
 	if len(token.Scopes) != len(newToken.Scopes) {
 		res.Scope = newToken.Scopes.String()
+	}
+	if newToken.IsRefreshEnabled() {
+		res.RefreshToken = newToken.RefreshToken
 	}
 	return c.JSON(http.StatusOK, res)
 }

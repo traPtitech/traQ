@@ -103,21 +103,19 @@ func (repo *RepositoryImpl) DeleteAuthorize(code string) error {
 // SaveToken トークンを発行します
 func (repo *RepositoryImpl) IssueToken(client *model.OAuth2Client, userID uuid.UUID, redirectURI string, scope model.AccessScopes, expire int, refresh bool) (*model.OAuth2Token, error) {
 	newToken := &model.OAuth2Token{
-		ID:          uuid.Must(uuid.NewV4()),
-		UserID:      userID,
-		RedirectURI: redirectURI,
-		AccessToken: utils.RandAlphabetAndNumberString(36),
-		CreatedAt:   time.Now(),
-		ExpiresIn:   expire,
-		Scopes:      scope,
+		ID:             uuid.Must(uuid.NewV4()),
+		UserID:         userID,
+		RedirectURI:    redirectURI,
+		AccessToken:    utils.RandAlphabetAndNumberString(36),
+		RefreshToken:   utils.RandAlphabetAndNumberString(36),
+		RefreshEnabled: refresh,
+		CreatedAt:      time.Now(),
+		ExpiresIn:      expire,
+		Scopes:         scope,
 	}
 
 	if client != nil {
 		newToken.ClientID = client.ID
-	}
-
-	if refresh {
-		newToken.RefreshToken = utils.RandAlphabetAndNumberString(36)
 	}
 
 	return newToken, repo.db.Create(newToken).Error
@@ -175,7 +173,7 @@ func (repo *RepositoryImpl) GetTokenByRefresh(refresh string) (*model.OAuth2Toke
 		return nil, repository.ErrNotFound
 	}
 	ot := &model.OAuth2Token{}
-	if err := repo.db.Where(&model.OAuth2Token{RefreshToken: refresh}).Take(ot).Error; err != nil {
+	if err := repo.db.Where(&model.OAuth2Token{RefreshToken: refresh, RefreshEnabled: true}).Take(ot).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, repository.ErrNotFound
 		}
@@ -189,7 +187,7 @@ func (repo *RepositoryImpl) DeleteTokenByRefresh(refresh string) error {
 	if len(refresh) == 0 {
 		return nil
 	}
-	return repo.db.Where(&model.OAuth2Token{RefreshToken: refresh}).Delete(&model.OAuth2Token{}).Error
+	return repo.db.Where(&model.OAuth2Token{RefreshToken: refresh, RefreshEnabled: true}).Delete(&model.OAuth2Token{}).Error
 }
 
 // GetTokensByUser 指定したユーザーのトークンを全て取得します

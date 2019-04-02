@@ -155,16 +155,17 @@ func (c *OAuth2Client) GetAvailableScopes(request AccessScopes) (result AccessSc
 
 // OAuth2Token OAuth2 トークンの構造体
 type OAuth2Token struct {
-	ID           uuid.UUID    `gorm:"type:char(36);primary_key"`
-	ClientID     string       `gorm:"type:char(36)"`
-	UserID       uuid.UUID    `gorm:"type:char(36)"`
-	RedirectURI  string       `gorm:"type:text"`
-	AccessToken  string       `gorm:"type:varchar(36);unique"`
-	RefreshToken string       `gorm:"type:varchar(36);unique"`
-	Scopes       AccessScopes `gorm:"type:text"`
-	ExpiresIn    int
-	CreatedAt    time.Time  `gorm:"precision:6"`
-	DeletedAt    *time.Time `gorm:"precision:6"`
+	ID             uuid.UUID    `gorm:"type:char(36);primary_key"`
+	ClientID       string       `gorm:"type:char(36)"`
+	UserID         uuid.UUID    `gorm:"type:char(36)"`
+	RedirectURI    string       `gorm:"type:text"`
+	AccessToken    string       `gorm:"type:varchar(36);unique"`
+	RefreshToken   string       `gorm:"type:varchar(36);unique"`
+	RefreshEnabled bool         `gorm:"type:boolean;default:false"`
+	Scopes         AccessScopes `gorm:"type:text"`
+	ExpiresIn      int
+	CreatedAt      time.Time  `gorm:"precision:6"`
+	DeletedAt      *time.Time `gorm:"precision:6"`
 }
 
 // TableName OAuth2Tokenのテーブル名
@@ -185,4 +186,9 @@ func (t *OAuth2Token) GetAvailableScopes(request AccessScopes) (result AccessSco
 // IsExpired 有効期限が切れているかどうか
 func (t *OAuth2Token) IsExpired() bool {
 	return t.CreatedAt.Add(time.Duration(t.ExpiresIn) * time.Second).Before(time.Now())
+}
+
+// IsRefreshEnabled リフレッシュトークンが有効かどうか
+func (t *OAuth2Token) IsRefreshEnabled() bool {
+	return t.RefreshEnabled && len(t.RefreshToken) != 0
 }
