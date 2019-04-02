@@ -2517,21 +2517,19 @@ func (repo *TestRepository) DeleteAuthorize(code string) error {
 
 func (repo *TestRepository) IssueToken(client *model.OAuth2Client, userID uuid.UUID, redirectURI string, scope model.AccessScopes, expire int, refresh bool) (*model.OAuth2Token, error) {
 	newToken := &model.OAuth2Token{
-		ID:          uuid.Must(uuid.NewV4()),
-		UserID:      userID,
-		RedirectURI: redirectURI,
-		AccessToken: utils.RandAlphabetAndNumberString(36),
-		CreatedAt:   time.Now(),
-		ExpiresIn:   expire,
-		Scopes:      scope,
+		ID:             uuid.Must(uuid.NewV4()),
+		UserID:         userID,
+		RedirectURI:    redirectURI,
+		AccessToken:    utils.RandAlphabetAndNumberString(36),
+		RefreshToken:   utils.RandAlphabetAndNumberString(36),
+		RefreshEnabled: refresh,
+		CreatedAt:      time.Now(),
+		ExpiresIn:      expire,
+		Scopes:         scope,
 	}
 
 	if client != nil {
 		newToken.ClientID = client.ID
-	}
-
-	if refresh {
-		newToken.RefreshToken = utils.RandAlphabetAndNumberString(36)
 	}
 
 	repo.OAuth2TokensLock.Lock()
@@ -2599,7 +2597,7 @@ func (repo *TestRepository) GetTokenByRefresh(refresh string) (*model.OAuth2Toke
 	repo.OAuth2TokensLock.RLock()
 	defer repo.OAuth2TokensLock.RUnlock()
 	for _, v := range repo.OAuth2Tokens {
-		if v.RefreshToken == refresh {
+		if v.RefreshEnabled && v.RefreshToken == refresh {
 			return &v, nil
 		}
 	}
@@ -2613,7 +2611,7 @@ func (repo *TestRepository) DeleteTokenByRefresh(refresh string) error {
 	repo.OAuth2TokensLock.Lock()
 	defer repo.OAuth2TokensLock.Unlock()
 	for k, v := range repo.OAuth2Tokens {
-		if v.RefreshToken == refresh {
+		if v.RefreshEnabled && v.RefreshToken == refresh {
 			delete(repo.OAuth2Tokens, k)
 			return nil
 		}
