@@ -27,7 +27,7 @@ func (repo *RepositoryImpl) CreateWebhook(name, description string, channelID, c
 
 	u := &model.User{
 		ID:          uid,
-		Name:        "Webhook#" + base64.RawStdEncoding.EncodeToString(uid.Bytes()),
+		Name:        "Webhook#" + base64.RawURLEncoding.EncodeToString(uid.Bytes()),
 		DisplayName: name,
 		Icon:        iconID,
 		Bot:         true,
