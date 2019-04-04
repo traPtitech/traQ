@@ -16,7 +16,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	bodyLimit := RequestBodyLengthLimit
 
 	api := e.Group("/api/1.0", middleware.CORSWithConfig(middleware.CORSConfig{
-		ExposeHeaders: []string{"X-TRAQ-VERSION"},
+		ExposeHeaders: []string{"X-TRAQ-VERSION", headerCacheFile, headerFileMetaType},
 		AllowHeaders:  []string{"Authorization", "Content-Type"},
 	}), h.UserAuthenticate())
 	{
@@ -255,7 +255,9 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		api.GET("/activity/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
 	}
 
-	apiNoAuth := e.Group("/api/1.0", middleware.CORS())
+	apiNoAuth := e.Group("/api/1.0", middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowHeaders: []string{headerSignature, "Content-Type"},
+	}))
 	{
 		apiNoAuth.POST("/login", h.PostLogin)
 		apiNoAuth.POST("/logout", h.PostLogout)
