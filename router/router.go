@@ -10,15 +10,16 @@ import (
 // SetupRouting APIルーティングを行います
 func SetupRouting(e *echo.Echo, h *Handlers) {
 	e.Validator = validator.New()
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		ExposeHeaders: []string{"X-TRAQ-VERSION", headerCacheFile, headerFileMetaType},
+		AllowHeaders:  []string{echo.HeaderContentType, echo.HeaderAuthorization, headerSignature},
+	}))
 
 	// middleware preparation
 	requires := AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := RequestBodyLengthLimit
 
-	api := e.Group("/api/1.0", middleware.CORSWithConfig(middleware.CORSConfig{
-		ExposeHeaders: []string{"X-TRAQ-VERSION", headerCacheFile, headerFileMetaType},
-		AllowHeaders:  []string{"Authorization", "Content-Type"},
-	}), h.UserAuthenticate())
+	api := e.Group("/api/1.0", h.UserAuthenticate())
 	{
 		apiUsers := api.Group("/users")
 		{
@@ -255,9 +256,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		api.GET("/activity/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
 	}
 
-	apiNoAuth := e.Group("/api/1.0", middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowHeaders: []string{headerSignature, "Content-Type"},
-	}))
+	apiNoAuth := e.Group("/api/1.0")
 	{
 		apiNoAuth.POST("/login", h.PostLogin)
 		apiNoAuth.POST("/logout", h.PostLogout)
