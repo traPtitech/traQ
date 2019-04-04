@@ -255,11 +255,11 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		api.GET("/activity/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
 	}
 
-	apiNoAuth := e.Group("/api/1.0")
+	apiNoAuth := e.Group("/api/1.0", middleware.CORS())
 	{
 		apiNoAuth.POST("/login", h.PostLogin)
 		apiNoAuth.POST("/logout", h.PostLogout)
-		apiPublic := apiNoAuth.Group("/public", middleware.CORS())
+		apiPublic := apiNoAuth.Group("/public")
 		{
 			apiPublic.GET("/icon/:username", h.GetPublicUserIcon)
 			apiPublic.GET("/emoji.json", h.GetPublicEmojiJSON)
@@ -268,13 +268,13 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		}
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, h.ValidateWebhookID(false))
 		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, h.ValidateWebhookID(false))
+		apiOAuth := apiNoAuth.Group("/oauth2")
+		{
+			apiOAuth.GET("/authorize", h.AuthorizationEndpointHandler)
+			apiOAuth.POST("/authorize", h.AuthorizationEndpointHandler)
+			apiOAuth.POST("/token", h.TokenEndpointHandler)
+		}
 	}
 
-	apiOAuth := apiNoAuth.Group("/oauth2", middleware.CORS())
-	{
-		apiOAuth.GET("/authorize", h.AuthorizationEndpointHandler)
-		apiOAuth.POST("/authorize", h.AuthorizationEndpointHandler)
-		apiOAuth.POST("/token", h.TokenEndpointHandler)
-	}
 	api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler)
 }
