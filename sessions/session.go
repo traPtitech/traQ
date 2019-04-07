@@ -3,10 +3,12 @@ package sessions
 import (
 	"encoding/gob"
 	"github.com/gofrs/uuid"
+	"github.com/labstack/echo"
 	"github.com/neverlee/keymutex"
-	"github.com/tomasen/realip"
 	"github.com/traPtitech/traQ/utils"
+	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -34,7 +36,7 @@ func init() {
 // Get セッションを取得します
 func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Session, error) {
 	userAgent := req.Header.Get("User-Agent")
-	ip := realip.FromRequest(req)
+	ip := realIP(req)
 
 	var token string
 	cookie, err := req.Cookie(CookieName)
@@ -283,4 +285,15 @@ func PurgeCache() {
 	if s, ok := store.(CacheableStore); ok {
 		s.PurgeCache()
 	}
+}
+
+func realIP(req *http.Request) string {
+	if ip := req.Header.Get(echo.HeaderXForwardedFor); ip != "" {
+		return strings.Split(ip, ", ")[0]
+	}
+	if ip := req.Header.Get(echo.HeaderXRealIP); ip != "" {
+		return ip
+	}
+	ra, _, _ := net.SplitHostPort(req.RemoteAddr)
+	return ra
 }
