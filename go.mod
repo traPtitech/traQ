@@ -2,7 +2,7 @@ module github.com/traPtitech/traQ
 
 require (
 	cloud.google.com/go v0.36.0
-	firebase.google.com/go v3.6.0+incompatible
+	firebase.google.com/go v3.7.0+incompatible
 	github.com/ajg/form v0.0.0-20160822230020-523a5da1a92f // indirect
 	github.com/cenkalti/backoff v2.1.1+incompatible
 	github.com/denisenkom/go-mssqldb v0.0.0-20180901172138-1eb28afdf9b6 // indirect
@@ -39,10 +39,11 @@ require (
 	github.com/ncw/swift v1.0.47
 	github.com/neverlee/keymutex v0.0.0-20171121013845-f593aa834bf9
 	github.com/onsi/gomega v1.4.2 // indirect
+	github.com/pelletier/go-toml v1.3.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
 	github.com/smartystreets/goconvey v0.0.0-20180222194500-ef6db91d284a // indirect
-	github.com/spf13/afero v1.2.1 // indirect
+	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.3.2
 	github.com/stretchr/testify v1.3.0
@@ -58,16 +59,16 @@ require (
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.9.1
-	golang.org/x/crypto v0.0.0-20190320223903-b7391e95e576
+	golang.org/x/crypto v0.0.0-20190404164418-38d8ce5564a5
 	golang.org/x/exp v0.0.0-20190321205749-f0864edee7f3
 	golang.org/x/image v0.0.0-20190321063152-3fc05d484e9f // indirect
 	golang.org/x/net v0.0.0-20190322120337-addf6b3196f6 // indirect
 	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6
-	golang.org/x/sys v0.0.0-20190322080309-f49334f85ddc // indirect
+	golang.org/x/sys v0.0.0-20190405154228-4b34438f7a67 // indirect
 	google.golang.org/api v0.1.0
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
-	gopkg.in/go-playground/validator.v9 v9.27.0
+	gopkg.in/go-playground/validator.v9 v9.28.0
 	gopkg.in/go-playground/webhooks.v3 v3.13.0
 	gopkg.in/yaml.v2 v2.2.2
 )
