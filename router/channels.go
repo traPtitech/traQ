@@ -70,7 +70,9 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 			entry.Parent = ch.ParentID.String()
 			parent, ok := chMap[ch.ParentID.String()]
 			if !ok {
-				parent = &ChannelForResponse{}
+				parent = &ChannelForResponse{
+					ChannelID: ch.ParentID.String(),
+				}
 				chMap[ch.ParentID.String()] = parent
 			}
 			parent.Children = append(parent.Children, ch.ID)
