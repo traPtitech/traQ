@@ -4,7 +4,6 @@ require (
 	cloud.google.com/go v0.36.0
 	firebase.google.com/go v3.6.0+incompatible
 	github.com/ajg/form v0.0.0-20160822230020-523a5da1a92f // indirect
-	github.com/blendle/zapdriver v1.1.6 // indirect
 	github.com/cenkalti/backoff v2.1.1+incompatible
 	github.com/denisenkom/go-mssqldb v0.0.0-20180901172138-1eb28afdf9b6 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
@@ -27,7 +26,6 @@ require (
 	github.com/jinzhu/now v0.0.0-20180511015916-ed742868f2ae // indirect
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
-	github.com/karixtech/zapdriver v1.1.7-0.20181228101910-f31008bce221
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.2.8 // indirect
 	github.com/leandro-lugaresi/hub v1.1.0

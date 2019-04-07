@@ -7,11 +7,11 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/karixtech/zapdriver"
 	"github.com/labstack/echo"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/bot"
+	"github.com/traPtitech/traQ/logging"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/role"
@@ -20,7 +20,6 @@ import (
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"google.golang.org/api/option"
 	"net/http"
 	_ "net/http/pprof"
@@ -43,14 +42,7 @@ func main() {
 	setDefaultConfigs()
 
 	// Logger
-	zc := &zap.Config{
-		Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
-		Encoding:         "json",
-		EncoderConfig:    zapdriver.NewProductionEncoderConfig(),
-		OutputPaths:      []string{"stdout"},
-		ErrorOutputPaths: []string{"stderr"},
-	}
-	logger, err := zc.Build(zapdriver.WrapCoreWithConfig(zapdriver.DriverConfig{ReportAllErrors: true, ServiceName: "traq"}))
+	logger, err := logging.CreateNewLogger("traq", versionAndRevision)
 	if err != nil {
 		panic(err)
 	}
@@ -178,7 +170,7 @@ func main() {
 
 				req := c.Request()
 				res := c.Response()
-				alog.Info("", zap.String("logging.googleapis.com/trace", router.GetTraceID(c)), zapdriver.HTTP(&zapdriver.HTTPPayload{
+				alog.Info("", zap.String("logging.googleapis.com/trace", router.GetTraceID(c)), logging.HTTPRequest(&logging.HTTPPayload{
 					RequestMethod: req.Method,
 					Status:        res.Status,
 					UserAgent:     req.UserAgent(),
