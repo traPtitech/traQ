@@ -86,10 +86,11 @@ var list = map[string]gorbac.Permission{
 	GetHeartbeat.ID():  GetHeartbeat,
 	PostHeartbeat.ID(): PostHeartbeat,
 
-	GetWebhook.ID():    GetWebhook,
-	CreateWebhook.ID(): CreateWebhook,
-	EditWebhook.ID():   EditWebhook,
-	DeleteWebhook.ID(): DeleteWebhook,
+	GetWebhook.ID():          GetWebhook,
+	CreateWebhook.ID():       CreateWebhook,
+	EditWebhook.ID():         EditWebhook,
+	DeleteWebhook.ID():       DeleteWebhook,
+	AccessOthersWebhook.ID(): AccessOthersWebhook,
 
 	GetBot.ID():          GetBot,
 	CreateBot.ID():       CreateBot,

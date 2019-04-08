@@ -56,9 +56,8 @@ func (h *Handlers) PostUserTag(c echo.Context) error {
 	// 操作制約付きタグ
 	if t.Restricted {
 		reqUser := getRequestUser(c)
-		r := getRBAC(c)
 
-		if !r.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
+		if !h.RBAC.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 	}
@@ -142,9 +141,7 @@ func (h *Handlers) DeleteUserTag(c echo.Context) error {
 	// 操作制約付きタグ
 	if ut.Tag.Restricted {
 		reqUser := getRequestUser(c)
-		r := getRBAC(c)
-
-		if !r.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
+		if !h.RBAC.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 	}
@@ -224,9 +221,8 @@ func (h *Handlers) PatchTag(c echo.Context) error {
 	// 制約変更
 	if req.Restrict != nil {
 		reqUser := getRequestUser(c)
-		r := getRBAC(c)
 
-		if !r.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
+		if !h.RBAC.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 
@@ -238,9 +234,8 @@ func (h *Handlers) PatchTag(c echo.Context) error {
 	// タグタイプ変更
 	if req.Type != nil {
 		reqUser := getRequestUser(c)
-		r := getRBAC(c)
 
-		if !r.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
+		if !h.RBAC.IsGranted(reqUser.ID, reqUser.Role, permission.OperateForRestrictedTag) {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
 

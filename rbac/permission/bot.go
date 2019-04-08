@@ -11,6 +11,8 @@ var (
 	EditWebhook = gorbac.NewStdPermission("edit_webhook")
 	// DeleteWebhook Webhook削除権限
 	DeleteWebhook = gorbac.NewStdPermission("delete_webhook")
+	// AccessOthersWebhook 他人のWebhookのアクセス権限
+	AccessOthersWebhook = gorbac.NewStdPermission("access_others_webhook")
 
 	// GetBot Bot情報取得権限
 	GetBot = gorbac.NewStdPermission("get_bot")

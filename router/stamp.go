@@ -70,10 +70,9 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 	user := getRequestUser(c)
 	stampID := getRequestParamAsUUID(c, paramStampID)
 	stamp := getStampFromContext(c)
-	r := getRBAC(c)
 
 	// ユーザー確認
-	if stamp.CreatorID != user.ID && !r.IsGranted(user.ID, user.Role, permission.EditStampCreatedByOthers) {
+	if stamp.CreatorID != user.ID && !h.RBAC.IsGranted(user.ID, user.Role, permission.EditStampCreatedByOthers) {
 		return echo.NewHTTPError(http.StatusForbidden, "you are not permitted to edit stamp created by others")
 	}
 
@@ -82,7 +81,7 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 	name := c.FormValue("name")
 	if len(name) > 0 {
 		// 権限確認
-		if !r.IsGranted(user.ID, user.Role, permission.EditStampName) {
+		if !h.RBAC.IsGranted(user.ID, user.Role, permission.EditStampName) {
 			return echo.NewHTTPError(http.StatusForbidden, "you are not permitted to change stamp name")
 		}
 		// 名前を検証

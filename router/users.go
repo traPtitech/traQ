@@ -156,7 +156,7 @@ func (h *Handlers) GetUserByID(c echo.Context) error {
 func (h *Handlers) GetUserIcon(c echo.Context) error {
 	user := getUserFromContext(c)
 
-	if _, ok := c.QueryParams()["thumb"]; ok {
+	if hasQuery(c, "thumb") {
 		return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s/thumbnail", user.Icon))
 	}
 
@@ -166,7 +166,7 @@ func (h *Handlers) GetUserIcon(c echo.Context) error {
 // GetMyIcon GET /users/me/icon
 func (h *Handlers) GetMyIcon(c echo.Context) error {
 	user := getRequestUser(c)
-	if _, ok := c.QueryParams()["thumb"]; ok {
+	if hasQuery(c, "thumb") {
 		return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s/thumbnail", user.Icon))
 	}
 	return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s", user.Icon))

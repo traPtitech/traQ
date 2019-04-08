@@ -271,10 +271,6 @@ func getRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
 	return uuid.FromStringOrNil(c.Param(name))
 }
 
-func getRBAC(c echo.Context) *rbac.RBAC {
-	return c.Get("rbac").(*rbac.RBAC)
-}
-
 // GetTraceID トレースIDを返します
 func GetTraceID(c echo.Context) string {
 	v, ok := c.Get(traceIDKey).(string)
@@ -294,4 +290,9 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	l = h.Logger.With(zap.String("logging.googleapis.com/trace", GetTraceID(c)))
 	c.Set(loggerKey, l)
 	return l
+}
+
+func hasQuery(c echo.Context, query string) bool {
+	_, ok := c.QueryParams()[query]
+	return ok
 }

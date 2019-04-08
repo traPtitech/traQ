@@ -8,6 +8,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
 	"go.uber.org/zap"
@@ -24,6 +25,7 @@ type webhookForResponse struct {
 	BotUserID   string    `json:"botUserId"`
 	DisplayName string    `json:"displayName"`
 	Description string    `json:"description"`
+	Secure      bool      `json:"secure"`
 	ChannelID   string    `json:"channelId"`
 	CreatorID   string    `json:"creatorId"`
 	CreatedAt   time.Time `json:"createdAt"`
@@ -43,9 +45,17 @@ func LoadWebhookTemplate(pattern string) {
 
 // GetWebhooks GET /webhooks
 func (h *Handlers) GetWebhooks(c echo.Context) error {
-	userID := getRequestUserID(c)
+	user := getRequestUser(c)
 
-	list, err := h.Repo.GetWebhooksByCreator(userID)
+	var (
+		list []model.Webhook
+		err  error
+	)
+	if c.QueryParam("all") == "1" && h.RBAC.IsGranted(user.ID, user.Role, permission.AccessOthersWebhook) {
+		list, err = h.Repo.GetAllWebhooks()
+	} else {
+		list, err = h.Repo.GetWebhooksByCreator(user.ID)
+	}
 	if err != nil {
 		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
@@ -459,6 +469,7 @@ func formatWebhook(w model.Webhook) *webhookForResponse {
 		BotUserID:   w.GetBotUserID().String(),
 		DisplayName: w.GetName(),
 		Description: w.GetDescription(),
+		Secure:      len(w.GetSecret()) > 0,
 		ChannelID:   w.GetChannelID().String(),
 		CreatorID:   w.GetCreatorID().String(),
 		CreatedAt:   w.GetCreatedAt(),

@@ -168,6 +168,8 @@ func SetRole(rbac *rbac.RBAC) {
 			permission.OperateForRestrictedTag,
 			permission.EditTag,
 
+			permission.AccessOthersWebhook,
+
 			permission.EditStampName,
 			permission.EditStampCreatedByOthers,
 			permission.DeleteStamp,
