@@ -271,10 +271,6 @@ func getRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
 	return uuid.FromStringOrNil(c.Param(name))
 }
 
-func getRBAC(c echo.Context) *rbac.RBAC {
-	return c.Get("rbac").(*rbac.RBAC)
-}
-
 // GetTraceID トレースIDを返します
 func GetTraceID(c echo.Context) string {
 	v, ok := c.Get(traceIDKey).(string)

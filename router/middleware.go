@@ -479,7 +479,7 @@ func (h *Handlers) ValidateWebhookID(requestUserCheck bool) echo.MiddlewareFunc 
 
 			if requestUserCheck {
 				user, ok := c.Get("user").(*model.User)
-				if !ok || (!getRBAC(c).IsGranted(user.ID, user.Role, permission.AccessOthersWebhook) && w.GetCreatorID() != user.ID) {
+				if !ok || (!h.RBAC.IsGranted(user.ID, user.Role, permission.AccessOthersWebhook) && w.GetCreatorID() != user.ID) {
 					return c.NoContent(http.StatusForbidden)
 				}
 			}
