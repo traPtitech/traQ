@@ -24,6 +24,7 @@ type webhookForResponse struct {
 	BotUserID   string    `json:"botUserId"`
 	DisplayName string    `json:"displayName"`
 	Description string    `json:"description"`
+	Secure      bool      `json:"secure"`
 	ChannelID   string    `json:"channelId"`
 	CreatorID   string    `json:"creatorId"`
 	CreatedAt   time.Time `json:"createdAt"`
@@ -459,6 +460,7 @@ func formatWebhook(w model.Webhook) *webhookForResponse {
 		BotUserID:   w.GetBotUserID().String(),
 		DisplayName: w.GetName(),
 		Description: w.GetDescription(),
+		Secure:      len(w.GetSecret()) > 0,
 		ChannelID:   w.GetChannelID().String(),
 		CreatorID:   w.GetCreatorID().String(),
 		CreatedAt:   w.GetCreatedAt(),

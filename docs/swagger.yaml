@@ -3278,6 +3278,8 @@ components:
           type: string
         description:
           type: string
+        secure:
+          type: boolean
         channelId:
           type: string
           format: uuid
