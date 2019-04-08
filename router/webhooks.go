@@ -8,6 +8,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
 	"go.uber.org/zap"
@@ -44,9 +45,17 @@ func LoadWebhookTemplate(pattern string) {
 
 // GetWebhooks GET /webhooks
 func (h *Handlers) GetWebhooks(c echo.Context) error {
-	userID := getRequestUserID(c)
+	user := getRequestUser(c)
 
-	list, err := h.Repo.GetWebhooksByCreator(userID)
+	var (
+		list []model.Webhook
+		err  error
+	)
+	if c.QueryParam("all") == "1" && getRBAC(c).IsGranted(user.ID, user.Role, permission.AccessOthersWebhook) {
+		list, err = h.Repo.GetAllWebhooks()
+	} else {
+		list, err = h.Repo.GetWebhooksByCreator(user.ID)
+	}
 	if err != nil {
 		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)

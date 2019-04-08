@@ -295,3 +295,8 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	c.Set(loggerKey, l)
 	return l
 }
+
+func hasQuery(c echo.Context, query string) bool {
+	_, ok := c.QueryParams()[query]
+	return ok
+}

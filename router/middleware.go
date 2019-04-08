@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
@@ -478,7 +479,7 @@ func (h *Handlers) ValidateWebhookID(requestUserCheck bool) echo.MiddlewareFunc 
 
 			if requestUserCheck {
 				user, ok := c.Get("user").(*model.User)
-				if !ok || w.GetCreatorID() != user.ID {
+				if !ok || (!getRBAC(c).IsGranted(user.ID, user.Role, permission.AccessOthersWebhook) && w.GetCreatorID() != user.ID) {
 					return c.NoContent(http.StatusForbidden)
 				}
 			}
