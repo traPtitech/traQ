@@ -31,15 +31,19 @@ func TestKeyMutex_LockAndUnlock(t *testing.T) {
 		"12345",
 		"foo",
 		"bar",
+		"a",
+		"b",
+		"1111",
+		"eeee",
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(1000)
 	for i := 0; i < 1000; i++ {
+		wg.Add(1)
 		go func(i int) {
-			j := i % 6
+			j := i % 10
 			km.Lock(keys[j])
-			counter[i%10]++
+			counter[j]++
 			km.Unlock(keys[j])
 			wg.Done()
 		}(i)
