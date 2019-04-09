@@ -37,7 +37,6 @@ require (
 	github.com/mikespook/gorbac v2.1.0+incompatible
 	github.com/moul/http2curl v0.0.0-20170919181001-9ac6cf4d929b // indirect
 	github.com/ncw/swift v1.0.47
-	github.com/neverlee/keymutex v0.0.0-20171121013845-f593aa834bf9
 	github.com/onsi/gomega v1.4.2 // indirect
 	github.com/pelletier/go-toml v1.3.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
@@ -69,6 +68,6 @@ require (
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.28.0
-	gopkg.in/go-playground/webhooks.v3 v3.13.0
+	gopkg.in/go-playground/webhooks.v5 v5.7.0
 	gopkg.in/yaml.v2 v2.2.2
 )
