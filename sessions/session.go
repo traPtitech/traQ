@@ -4,7 +4,6 @@ import (
 	"encoding/gob"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
-	"github.com/neverlee/keymutex"
 	"github.com/traPtitech/traQ/utils"
 	"net"
 	"net/http"
@@ -13,7 +12,7 @@ import (
 	"time"
 )
 
-var mutexes *keymutex.KeyMutex
+var mutexes *utils.KeyMutex
 
 // Session セッション構造体
 type Session struct {
@@ -30,7 +29,7 @@ type Session struct {
 
 func init() {
 	gob.Register(map[string]interface{}{})
-	mutexes = keymutex.New(mutexSize)
+	mutexes = utils.NewKeyMutex(mutexSize)
 }
 
 // Get セッションを取得します
