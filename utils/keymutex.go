@@ -12,7 +12,7 @@ type KeyMutex struct {
 func NewKeyMutex(count uint) *KeyMutex {
 	return &KeyMutex{
 		count: count,
-		locks: make([]sync.Mutex, count, count),
+		locks: make([]sync.Mutex, count),
 	}
 }
 
