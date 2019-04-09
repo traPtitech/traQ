@@ -12,7 +12,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
 	"go.uber.org/zap"
-	"gopkg.in/go-playground/webhooks.v3/github"
+	"gopkg.in/go-playground/webhooks.v5/github"
 	"io/ioutil"
 	"net/http"
 	"strings"

@@ -68,6 +68,6 @@ require (
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.28.0
-	gopkg.in/go-playground/webhooks.v3 v3.13.0
+	gopkg.in/go-playground/webhooks.v5 v5.7.0
 	gopkg.in/yaml.v2 v2.2.2
 )
