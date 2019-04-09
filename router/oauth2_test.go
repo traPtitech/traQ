@@ -1935,3 +1935,47 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 }
+
+func TestHandlers_RevokeTokenEndpointHandler(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, _, _, user, _ := setupWithUsers(t, common6)
+
+	t.Run("NoToken", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.POST("/api/1.0/oauth2/revoke").
+			WithFormField("token", "").
+			Expect().
+			Status(http.StatusOK)
+	})
+
+	t.Run("AccessToken", func(t *testing.T) {
+		t.Parallel()
+		token, err := repo.IssueToken(nil, user.ID, "", model.AccessScopes{}, 10000, false)
+		require.NoError(t, err)
+
+		e := makeExp(t, server)
+		e.POST("/api/1.0/oauth2/revoke").
+			WithFormField("token", token.AccessToken).
+			Expect().
+			Status(http.StatusOK)
+
+		_, err = repo.GetTokenByID(token.ID)
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("RefreshToken", func(t *testing.T) {
+		t.Parallel()
+		token, err := repo.IssueToken(nil, user.ID, "", model.AccessScopes{}, 10000, true)
+		require.NoError(t, err)
+
+		e := makeExp(t, server)
+		e.POST("/api/1.0/oauth2/revoke").
+			WithFormField("token", token.RefreshToken).
+			Expect().
+			Status(http.StatusOK)
+
+		_, err = repo.GetTokenByID(token.ID)
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
+}

@@ -274,6 +274,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			apiOAuth.GET("/authorize", h.AuthorizationEndpointHandler)
 			apiOAuth.POST("/authorize", h.AuthorizationEndpointHandler)
 			apiOAuth.POST("/token", h.TokenEndpointHandler)
+			apiOAuth.POST("/revoke", h.RevokeTokenEndpointHandler)
 		}
 	}
 

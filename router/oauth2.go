@@ -759,6 +759,31 @@ func (h *Handlers) tokenEndpointRefreshTokenHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+// RevokeTokenEndpointHandler トークン無効化エンドポイントのハンドラ
+func (h *Handlers) RevokeTokenEndpointHandler(c echo.Context) error {
+	var req struct {
+		Token string `form:"token"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if len(req.Token) == 0 {
+		return c.NoContent(http.StatusOK)
+	}
+
+	if err := h.Repo.DeleteTokenByAccess(req.Token); err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+	if err := h.Repo.DeleteTokenByRefresh(req.Token); err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusOK)
+}
+
 // SplitAndValidateScope スペース区切りのスコープ文字列を分解し、検証します
 func SplitAndValidateScope(str string) (model.AccessScopes, error) {
 	var scopes model.AccessScopes
