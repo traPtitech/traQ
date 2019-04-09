@@ -12,7 +12,7 @@ func TestNewKeyMutex(t *testing.T) {
 
 	km := NewKeyMutex(10)
 	if assert.NotNil(km) {
-		assert.Equal(10, km.count)
+		assert.EqualValues(10, km.count)
 		assert.Len(km.locks, 10)
 	}
 }
@@ -38,7 +38,7 @@ func TestKeyMutex_LockAndUnlock(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100000; i++ {
 		wg.Add(1)
 		go func(i int) {
 			j := i % 10
@@ -51,6 +51,6 @@ func TestKeyMutex_LockAndUnlock(t *testing.T) {
 	wg.Wait()
 
 	for i := 0; i < 10; i++ {
-		assert.Equal(100, counter[i])
+		assert.Equal(10000, counter[i])
 	}
 }

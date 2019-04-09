@@ -254,6 +254,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		}
 		api.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports))
 		api.GET("/activity/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
+		api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler)
 	}
 
 	apiNoAuth := e.Group("/api/1.0")
@@ -277,6 +278,4 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			apiOAuth.POST("/revoke", h.RevokeTokenEndpointHandler)
 		}
 	}
-
-	api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler)
 }
