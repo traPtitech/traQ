@@ -2360,7 +2360,7 @@ func (repo *TestRepository) GetWebhook(id uuid.UUID) (model.Webhook, error) {
 	return &w, nil
 }
 
-func (repo *TestRepository) GetWebhookByBotUserId(id uuid.UUID) (model.Webhook, error) {
+func (repo *TestRepository) GetWebhookByBotUserID(id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}

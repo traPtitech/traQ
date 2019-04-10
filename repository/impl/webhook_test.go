@@ -180,13 +180,13 @@ func TestRepositoryImpl_GetWebhookByBotUserId(t *testing.T) {
 
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()
-		_, err := repo.GetWebhookByBotUserId(uuid.Nil)
+		_, err := repo.GetWebhookByBotUserID(uuid.Nil)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
-		_, err := repo.GetWebhookByBotUserId(uuid.Must(uuid.NewV4()))
+		_, err := repo.GetWebhookByBotUserID(uuid.Must(uuid.NewV4()))
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -195,7 +195,7 @@ func TestRepositoryImpl_GetWebhookByBotUserId(t *testing.T) {
 		assert, _ := assertAndRequire(t)
 		wb := mustMakeWebhook(t, repo, random, channel.ID, user.ID, "test")
 
-		w, err := repo.GetWebhookByBotUserId(wb.GetBotUserID())
+		w, err := repo.GetWebhookByBotUserID(wb.GetBotUserID())
 		if assert.NoError(err) {
 			assert.Equal(wb.GetID(), w.GetID())
 			assert.Equal(wb.GetName(), w.GetName())

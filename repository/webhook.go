@@ -20,7 +20,7 @@ type WebhookRepository interface {
 	UpdateWebhook(id uuid.UUID, args UpdateWebhookArgs) error
 	DeleteWebhook(id uuid.UUID) error
 	GetWebhook(id uuid.UUID) (model.Webhook, error)
-	GetWebhookByBotUserId(id uuid.UUID) (model.Webhook, error)
+	GetWebhookByBotUserID(id uuid.UUID) (model.Webhook, error)
 	GetAllWebhooks() ([]model.Webhook, error)
 	GetWebhooksByCreator(creatorID uuid.UUID) ([]model.Webhook, error)
 }

@@ -75,7 +75,7 @@ func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 		}
 
 		// Webhookのメッセージの削除権限の確認
-		wh, err := h.Repo.GetWebhookByBotUserId(mUser.ID)
+		wh, err := h.Repo.GetWebhookByBotUserID(mUser.ID)
 		if err != nil {
 			switch err {
 			case repository.ErrNotFound:

@@ -188,8 +188,8 @@ func (repo *RepositoryImpl) GetWebhook(id uuid.UUID) (model.Webhook, error) {
 	return b, nil
 }
 
-// GetWebhookByBotUserId Webhookを取得
-func (repo *RepositoryImpl) GetWebhookByBotUserId(id uuid.UUID) (model.Webhook, error) {
+// GetWebhookByBotUserID Webhookを取得
+func (repo *RepositoryImpl) GetWebhookByBotUserID(id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
