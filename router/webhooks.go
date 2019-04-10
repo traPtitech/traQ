@@ -463,6 +463,32 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// GetWebhookMessages GET /webhooks/:webhookID/messages
+func (h *Handlers) GetWebhookMessages(c echo.Context) error {
+	w := getWebhookFromContext(c)
+
+	req := struct {
+		Limit  int `query:"limit"  validate:"min=0"`
+		Offset int `query:"offset" validate:"min=0"`
+	}{}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	messages, err := h.Repo.GetMessagesByUserID(w.GetBotUserID(), req.Limit, req.Offset)
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	res := make([]*MessageForResponse, 0, req.Limit)
+	for _, message := range messages {
+		res = append(res, h.formatMessage(message))
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
 func formatWebhook(w model.Webhook) *webhookForResponse {
 	return &webhookForResponse{
 		WebhookID:   w.GetID().String(),
