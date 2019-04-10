@@ -2360,6 +2360,32 @@ func (repo *TestRepository) GetWebhook(id uuid.UUID) (model.Webhook, error) {
 	return &w, nil
 }
 
+func (repo *TestRepository) GetWebhookByBotUserId(id uuid.UUID) (model.Webhook, error) {
+	if id == uuid.Nil {
+		return nil, repository.ErrNotFound
+	}
+	repo.WebhooksLock.RLock()
+	repo.UsersLock.RLock()
+	defer repo.WebhooksLock.RUnlock()
+	defer repo.UsersLock.RUnlock()
+	var (
+		w  model.WebhookBot
+		ok bool
+	)
+	for _, v := range repo.Webhooks {
+		if v.BotUserID == id {
+			w = v
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return nil, repository.ErrNotFound
+	}
+	w.BotUser = repo.Users[w.BotUserID]
+	return &w, nil
+}
+
 func (repo *TestRepository) GetAllWebhooks() ([]model.Webhook, error) {
 	arr := make([]model.Webhook, 0)
 	repo.WebhooksLock.RLock()
