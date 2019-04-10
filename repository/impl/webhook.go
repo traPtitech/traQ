@@ -188,6 +188,21 @@ func (repo *RepositoryImpl) GetWebhook(id uuid.UUID) (model.Webhook, error) {
 	return b, nil
 }
 
+// GetWebhookByBotUserID Webhookを取得
+func (repo *RepositoryImpl) GetWebhookByBotUserID(id uuid.UUID) (model.Webhook, error) {
+	if id == uuid.Nil {
+		return nil, repository.ErrNotFound
+	}
+	b := &model.WebhookBot{}
+	if err := repo.db.Preload("BotUser").Where(&model.WebhookBot{BotUserID: id}).Take(b).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, repository.ErrNotFound
+		}
+		return nil, err
+	}
+	return b, nil
+}
+
 // GetAllWebhooks Webhookを全て取得
 func (repo *RepositoryImpl) GetAllWebhooks() (arr []model.Webhook, err error) {
 	var webhooks []*model.WebhookBot

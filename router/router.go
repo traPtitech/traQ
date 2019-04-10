@@ -208,6 +208,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiWebhooksWid.PATCH("", h.PatchWebhook, requires(permission.EditWebhook))
 				apiWebhooksWid.DELETE("", h.DeleteWebhook, requires(permission.DeleteWebhook))
 				apiWebhooksWid.PUT("/icon", h.PutWebhookIcon, requires(permission.EditWebhook))
+				apiWebhooksWid.GET("/messages", h.GetWebhookMessages)
 			}
 		}
 		apiGroups := api.Group("/groups")

@@ -1514,6 +1514,32 @@ func (repo *TestRepository) GetMessagesByChannelID(channelID uuid.UUID, limit, o
 	return result, nil
 }
 
+func (repo *TestRepository) GetMessagesByUserID(userID uuid.UUID, limit, offset int) ([]*model.Message, error) {
+	tmp := make([]*model.Message, 0)
+	repo.MessagesLock.RLock()
+	for _, v := range repo.Messages {
+		if v.UserID == userID {
+			v := v
+			tmp = append(tmp, &v)
+		}
+	}
+	repo.MessagesLock.RUnlock()
+	sort.Slice(tmp, func(i, j int) bool {
+		return tmp[i].CreatedAt.After(tmp[j].CreatedAt)
+	})
+	if offset < 0 {
+		offset = 0
+	}
+	if limit <= 0 {
+		limit = math.MaxInt32
+	}
+	result := make([]*model.Message, 0)
+	for i := offset; i < len(tmp) && i < offset+limit; i++ {
+		result = append(result, tmp[i])
+	}
+	return result, nil
+}
+
 func (repo *TestRepository) GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error) {
 	panic("implement me")
 }
@@ -2353,6 +2379,32 @@ func (repo *TestRepository) GetWebhook(id uuid.UUID) (model.Webhook, error) {
 	defer repo.WebhooksLock.RUnlock()
 	defer repo.UsersLock.RUnlock()
 	w, ok := repo.Webhooks[id]
+	if !ok {
+		return nil, repository.ErrNotFound
+	}
+	w.BotUser = repo.Users[w.BotUserID]
+	return &w, nil
+}
+
+func (repo *TestRepository) GetWebhookByBotUserID(id uuid.UUID) (model.Webhook, error) {
+	if id == uuid.Nil {
+		return nil, repository.ErrNotFound
+	}
+	repo.WebhooksLock.RLock()
+	repo.UsersLock.RLock()
+	defer repo.WebhooksLock.RUnlock()
+	defer repo.UsersLock.RUnlock()
+	var (
+		w  model.WebhookBot
+		ok bool
+	)
+	for _, v := range repo.Webhooks {
+		if v.BotUserID == id {
+			w = v
+			ok = true
+			break
+		}
+	}
 	if !ok {
 		return nil, repository.ErrNotFound
 	}

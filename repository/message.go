@@ -12,6 +12,7 @@ type MessageRepository interface {
 	DeleteMessage(messageID uuid.UUID) error
 	GetMessageByID(messageID uuid.UUID) (*model.Message, error)
 	GetMessagesByChannelID(channelID uuid.UUID, limit, offset int) ([]*model.Message, error)
+	GetMessagesByUserID(userID uuid.UUID, limit, offset int) ([]*model.Message, error)
 	SetMessageUnread(userID, messageID uuid.UUID) error
 	GetUnreadMessagesByUserID(userID uuid.UUID) ([]*model.Message, error)
 	DeleteUnreadsByMessageID(messageID uuid.UUID) error

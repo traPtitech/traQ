@@ -174,6 +174,40 @@ func TestRepositoryImpl_GetWebhook(t *testing.T) {
 	})
 }
 
+func TestRepositoryImpl_GetWebhookByBotUserId(t *testing.T) {
+	t.Parallel()
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+
+	t.Run("Nil id", func(t *testing.T) {
+		t.Parallel()
+		_, err := repo.GetWebhookByBotUserID(uuid.Nil)
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("Not found", func(t *testing.T) {
+		t.Parallel()
+		_, err := repo.GetWebhookByBotUserID(uuid.Must(uuid.NewV4()))
+		assert.EqualError(t, err, repository.ErrNotFound.Error())
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		assert, _ := assertAndRequire(t)
+		wb := mustMakeWebhook(t, repo, random, channel.ID, user.ID, "test")
+
+		w, err := repo.GetWebhookByBotUserID(wb.GetBotUserID())
+		if assert.NoError(err) {
+			assert.Equal(wb.GetID(), w.GetID())
+			assert.Equal(wb.GetName(), w.GetName())
+			assert.Equal(wb.GetChannelID(), w.GetChannelID())
+			assert.Equal(wb.GetSecret(), w.GetSecret())
+			assert.Equal(wb.GetDescription(), w.GetDescription())
+			assert.Equal(wb.GetCreatorID(), w.GetCreatorID())
+			assert.Equal(wb.GetBotUserID(), w.GetBotUserID())
+		}
+	})
+}
+
 func TestRepositoryImpl_GetAllWebhooks(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user, channel := setupWithUserAndChannel(t, ex3)
