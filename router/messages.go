@@ -64,7 +64,7 @@ func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 	m := getMessageFromContext(c)
 
 	if m.UserID != userID {
-		mUser, err := h.Repo.GetUser(m.ID)
+		mUser, err := h.Repo.GetUser(m.UserID)
 		if err != nil {
 			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return echo.NewHTTPError(http.StatusInternalServerError)
