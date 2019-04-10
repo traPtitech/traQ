@@ -64,7 +64,31 @@ func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 	m := getMessageFromContext(c)
 
 	if m.UserID != userID {
-		return echo.NewHTTPError(http.StatusForbidden, "you are not allowed to delete this message")
+		mUser, err := h.Repo.GetUser(m.ID)
+		if err != nil {
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+
+		if !mUser.Bot {
+			return echo.NewHTTPError(http.StatusForbidden, "you are not allowed to delete this message")
+		}
+
+		// Webhookのメッセージの削除権限の確認
+		wh, err := h.Repo.GetWebhookByBotUserId(mUser.ID)
+		if err != nil {
+			switch err {
+			case repository.ErrNotFound:
+				return echo.NewHTTPError(http.StatusForbidden, "you are not allowed to delete this message")
+			default:
+				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+				return echo.NewHTTPError(http.StatusInternalServerError)
+			}
+		}
+
+		if wh.GetCreatorID() != userID {
+			return echo.NewHTTPError(http.StatusForbidden, "you are not allowed to delete this message")
+		}
 	}
 
 	if err := h.Repo.DeleteMessage(messageID); err != nil {

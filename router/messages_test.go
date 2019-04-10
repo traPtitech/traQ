@@ -313,7 +313,22 @@ func TestHandlers_DeleteMessageByID(t *testing.T) {
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
 
-	t.Run("Failure1", func(t *testing.T) {
+	t.Run("Webhook Message", func(t *testing.T) {
+		t.Parallel()
+		wb := mustMakeWebhook(t, repo, random, channel.ID, testUser.ID, "")
+		message := mustMakeMessage(t, repo, wb.GetBotUserID(), channel.ID)
+
+		e := makeExp(t, server)
+		e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusNoContent)
+
+		_, err := repo.GetMessageByID(message.ID)
+		assert.Equal(t, repository.ErrNotFound, err)
+	})
+
+	t.Run("Not Found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/messages/{messageID}", message2.ID.String()).
@@ -322,10 +337,22 @@ func TestHandlers_DeleteMessageByID(t *testing.T) {
 			Status(http.StatusNotFound)
 	})
 
-	t.Run("Failure2", func(t *testing.T) {
+	t.Run("Forbidden (other's message)", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
+		e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
+			WithCookie(sessions.CookieName, generateSession(t, postmanID)).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("Forbidden (other's webhook message)", func(t *testing.T) {
+		t.Parallel()
+		wb := mustMakeWebhook(t, repo, random, channel.ID, testUser.ID, "")
+		message := mustMakeMessage(t, repo, wb.GetBotUserID(), channel.ID)
+
+		e := makeExp(t, server)
 		e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
 			WithCookie(sessions.CookieName, generateSession(t, postmanID)).
 			Expect().
