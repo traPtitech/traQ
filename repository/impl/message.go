@@ -172,6 +172,21 @@ func (repo *RepositoryImpl) GetMessagesByChannelID(channelID uuid.UUID, limit, o
 	return arr, err
 }
 
+// GetMessagesByChannelID 指定されたユーザーのメッセージを取得します
+func (repo *RepositoryImpl) GetMessagesByUserID(userID uuid.UUID, limit, offset int) (arr []*model.Message, err error) {
+	arr = make([]*model.Message, 0)
+	if userID == uuid.Nil {
+		return arr, nil
+	}
+	err = repo.db.
+		Where(&model.Message{UserID: userID}).
+		Order("created_at DESC").
+		Scopes(limitAndOffset(limit, offset)).
+		Find(&arr).
+		Error
+	return arr, err
+}
+
 // SetMessageUnread 指定したメッセージを未読にします
 func (repo *RepositoryImpl) SetMessageUnread(userID, messageID uuid.UUID) error {
 	if userID == uuid.Nil || messageID == uuid.Nil {
