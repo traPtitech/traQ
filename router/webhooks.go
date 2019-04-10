@@ -474,6 +474,9 @@ func (h *Handlers) GetWebhookMessages(c echo.Context) error {
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
+	if req.Limit > 50 || req.Limit == 0 {
+		req.Limit = 50
+	}
 
 	messages, err := h.Repo.GetMessagesByUserID(w.GetBotUserID(), req.Limit, req.Offset)
 	if err != nil {

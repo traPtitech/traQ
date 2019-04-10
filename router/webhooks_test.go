@@ -537,7 +537,7 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 	ch := mustMakeChannel(t, repo, random)
 	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.ID, "")
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 60; i++ {
 		mustMakeMessage(t, repo, wb.GetBotUserID(), ch.ID)
 	}
 
@@ -559,7 +559,7 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 			JSON().
 			Array().
 			Length().
-			Equal(5)
+			Equal(50)
 	})
 
 	t.Run("Successful2", func(t *testing.T) {
@@ -575,6 +575,20 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 			Array().
 			Length().
 			Equal(3)
+	})
+
+	t.Run("Successful3", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.GET("/api/1.0/webhooks/{webhookID}/messages", wb.GetID()).
+			WithQuery("limit", 51).
+			WithCookie(sessions.CookieName, session).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array().
+			Length().
+			Equal(50)
 	})
 
 	t.Run("Not Found", func(t *testing.T) {
