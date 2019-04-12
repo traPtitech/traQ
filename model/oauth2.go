@@ -39,14 +39,18 @@ func (arr *AccessScopes) Scan(src interface{}) error {
 		if v, ok := sv.(string); ok {
 			as := AccessScopes{}
 			for _, v := range strings.Split(v, " ") {
-				as = append(as, AccessScope(v))
+				if len(v) > 0 {
+					as = append(as, AccessScope(v))
+				}
 			}
 			*arr = as
 			return nil
 		} else if v, ok := sv.([]byte); ok {
 			as := AccessScopes{}
 			for _, v := range strings.Split(string(v), " ") {
-				as = append(as, AccessScope(v))
+				if len(v) > 0 {
+					as = append(as, AccessScope(v))
+				}
 			}
 			*arr = as
 			return nil
