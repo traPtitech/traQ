@@ -13,6 +13,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		ExposeHeaders: []string{"X-TRAQ-VERSION", headerCacheFile, headerFileMetaType},
 		AllowHeaders:  []string{echo.HeaderContentType, echo.HeaderAuthorization, headerSignature},
+		MaxAge:        3600,
 	}))
 
 	// middleware preparation
