@@ -35,14 +35,18 @@ func (set *BotEvents) Scan(src interface{}) error {
 		if v, ok := sv.(string); ok {
 			as := BotEvents{}
 			for _, v := range strings.Split(v, " ") {
-				as[BotEvent(v)] = true
+				if len(v) > 0 {
+					as[BotEvent(v)] = true
+				}
 			}
 			*set = as
 			return nil
 		} else if v, ok := sv.([]byte); ok {
 			as := BotEvents{}
 			for _, v := range strings.Split(string(v), " ") {
-				as[BotEvent(v)] = true
+				if len(v) > 0 {
+					as[BotEvent(v)] = true
+				}
 			}
 			*set = as
 			return nil
