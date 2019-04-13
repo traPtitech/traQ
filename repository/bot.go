@@ -14,6 +14,7 @@ type BotRepository interface {
 	GetBotsByCreator(userID uuid.UUID) ([]*model.Bot, error)
 	GetBotsByChannel(channelID uuid.UUID) ([]*model.Bot, error)
 	ChangeBotState(id uuid.UUID, state model.BotState) error
+	ReissueBotTokens(id uuid.UUID) (*model.Bot, error)
 	DeleteBot(id uuid.UUID) error
 	AddBotToChannel(botID, channelID uuid.UUID) error
 	RemoveBotFromChannel(botID, channelID uuid.UUID) error

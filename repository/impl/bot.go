@@ -222,6 +222,60 @@ func (repo *RepositoryImpl) ChangeBotState(id uuid.UUID, state model.BotState) e
 	return nil
 }
 
+// ReissueBotTokens Botの各種トークンを再発行します
+func (repo *RepositoryImpl) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
+	if id == uuid.Nil {
+		return nil, repository.ErrNilID
+	}
+	var bot *model.Bot
+	err := repo.transact(func(tx *gorm.DB) error {
+		if err := tx.Take(&bot, &model.Bot{ID: id}).Error; err != nil {
+			if gorm.IsRecordNotFoundError(err) {
+				return repository.ErrNotFound
+			}
+			return err
+		}
+
+		bot.State = model.BotPaused
+		bot.BotCode = utils.RandAlphabetAndNumberString(30)
+		bot.VerificationToken = utils.RandAlphabetAndNumberString(30)
+
+		if err := tx.Delete(&model.OAuth2Token{ID: bot.AccessTokenID}).Error; err != nil {
+			return err
+		}
+
+		tid := uuid.Must(uuid.NewV4())
+		t := &model.OAuth2Token{
+			ID:             tid,
+			UserID:         bot.BotUserID,
+			AccessToken:    utils.RandAlphabetAndNumberString(36),
+			RefreshToken:   utils.RandAlphabetAndNumberString(36),
+			RefreshEnabled: false,
+			CreatedAt:      time.Now(),
+			ExpiresIn:      math.MaxInt32,
+			Scopes:         model.AccessScopes{"bot"},
+		}
+		bot.AccessTokenID = tid
+
+		errs := tx.Create(t).Save(bot).GetErrors()
+		if len(errs) > 0 {
+			return errs[0]
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	repo.hub.Publish(hub.Message{
+		Name: event.BotStateChanged,
+		Fields: hub.Fields{
+			"bot_id": id,
+			"state":  bot.State,
+		},
+	})
+	return bot, nil
+}
+
 // DeleteBot Botを削除します
 func (repo *RepositoryImpl) DeleteBot(id uuid.UUID) error {
 	if id == uuid.Nil {

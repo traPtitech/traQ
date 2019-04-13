@@ -274,6 +274,33 @@ func (h *Handlers) PutBotState(c echo.Context) error {
 	}
 }
 
+// PostBotReissueTokens POST /bots/:botID/reissue
+func (h *Handlers) PostBotReissueTokens(c echo.Context) error {
+	b := getBotFromContext(c)
+
+	if b.CreatorID != getRequestUserID(c) {
+		return echo.NewHTTPError(http.StatusForbidden)
+	}
+
+	b, err := h.Repo.ReissueBotTokens(b.ID)
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	t, err := h.Repo.GetTokenByID(b.AccessTokenID)
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"verificationCode": b.VerificationToken,
+		"accessToken":      t.AccessToken,
+		"botCode":          b.BotCode,
+	})
+}
+
 // GetChannelBots GET /channels/:channelID/bots
 func (h *Handlers) GetChannelBots(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)

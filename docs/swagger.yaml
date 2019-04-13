@@ -2325,6 +2325,31 @@ paths:
         "404":
           description: 指定したBotは存在しません。
 
+  /bots/{botID}/reissue:
+    parameters:
+      - $ref: "#/components/parameters/botIdInPath"
+    post:
+      tags:
+        - bot
+      description: Botの各種トークンを再発行します。
+      responses:
+        "200":
+          description: 再発行しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verificationToken:
+                    type: string
+                    description: Verification Token
+                  accessToken:
+                    type: string
+                    description: BOTアクセストークン
+                  botCode:
+                    type: string
+                    description: BOTインストールコード
+
   /bots/{botID}/events:
     parameters:
       - $ref: "#/components/parameters/botIdInPath"
