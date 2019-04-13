@@ -252,6 +252,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiBotsBid.PUT("/events", h.PutBotEvents, requires(permission.EditBot))
 				apiBotsBid.PUT("/icon", h.PutBotIcon, requires(permission.EditBot))
 				apiBotsBid.PUT("/state", h.PutBotState, requires(permission.EditBot))
+				apiBotsBid.POST("/reissue", h.PostBotReissueTokens, requires(permission.EditBot))
 			}
 		}
 		api.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports))
