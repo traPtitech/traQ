@@ -2349,6 +2349,29 @@ paths:
                   botCode:
                     type: string
                     description: BOTインストールコード
+        "403":
+          description: 権限がありません。
+        "404":
+          description: 指定したBotは存在しません。
+
+  /bots/{botID}/channels:
+    parameters:
+      - $ref: "#/components/parameters/botIdInPath"
+    get:
+      tags:
+        - bot
+      description: Botが参加しているチャンネルのUUIDの配列を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UUIDs"
+        "403":
+          description: 権限がありません。
+        "404":
+          description: 指定したBotは存在しません。
 
   /bots/{botID}/events:
     parameters:
