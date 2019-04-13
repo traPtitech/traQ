@@ -301,6 +301,23 @@ func (h *Handlers) PostBotReissueTokens(c echo.Context) error {
 	})
 }
 
+// GetBotJoinChannels GET /bots/:botID/channels
+func (h *Handlers) GetBotJoinChannels(c echo.Context) error {
+	b := getBotFromContext(c)
+
+	if b.CreatorID != getRequestUserID(c) {
+		return echo.NewHTTPError(http.StatusForbidden)
+	}
+
+	ids, err := h.Repo.GetParticipatingChannelIDsByBot(b.ID)
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusOK, ids)
+}
+
 // GetChannelBots GET /channels/:channelID/bots
 func (h *Handlers) GetChannelBots(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
