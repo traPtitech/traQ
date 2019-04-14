@@ -131,7 +131,7 @@ func (repo *RepositoryImpl) GetTokenByID(id uuid.UUID) (*model.OAuth2Token, erro
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, repository.ErrNotFound
 		}
-		return nil, nil
+		return nil, err
 	}
 	return ot, nil
 }
@@ -154,7 +154,7 @@ func (repo *RepositoryImpl) GetTokenByAccess(access string) (*model.OAuth2Token,
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, repository.ErrNotFound
 		}
-		return nil, nil
+		return nil, err
 	}
 	return ot, nil
 }
@@ -177,7 +177,7 @@ func (repo *RepositoryImpl) GetTokenByRefresh(refresh string) (*model.OAuth2Toke
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, repository.ErrNotFound
 		}
-		return nil, nil
+		return nil, err
 	}
 	return ot, nil
 }
