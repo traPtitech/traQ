@@ -15,6 +15,9 @@ const (
 
 	// ChannelCreated チャンネル作成イベント
 	ChannelCreated model.BotEvent = "CHANNEL_CREATED"
+
+	// UserCreated ユーザー作成イベント
+	UserCreated model.BotEvent = "USER_CREATED"
 )
 
 var eventSet = map[model.BotEvent]bool{
@@ -23,6 +26,7 @@ var eventSet = map[model.BotEvent]bool{
 	Left:           true,
 	MessageCreated: true,
 	ChannelCreated: true,
+	UserCreated:    true,
 }
 
 // IsEvent 引数の文字列がボットイベントかどうか

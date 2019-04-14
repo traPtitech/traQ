@@ -2,6 +2,7 @@ package bot
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/message"
 	"time"
 )
@@ -27,6 +28,19 @@ type messagePayload struct {
 	UpdatedAt time.Time               `json:"updatedAt"`
 }
 
+func makeMessagePayload(message *model.Message, embedded []*message.EmbeddedInfo, plain string) messagePayload {
+	return messagePayload{
+		ID:        message.ID,
+		UserID:    message.UserID,
+		ChannelID: message.ChannelID,
+		Text:      message.Text,
+		PlainText: plain,
+		Embedded:  embedded,
+		CreatedAt: message.CreatedAt,
+		UpdatedAt: message.UpdatedAt,
+	}
+}
+
 type channelPayload struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
@@ -35,6 +49,24 @@ type channelPayload struct {
 	CreatorID uuid.UUID `json:"creatorId"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type userPayload struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	DisplayName string    `json:"displayName"`
+	IconID      uuid.UUID `json:"iconId"`
+	Bot         bool      `json:"bot"`
+}
+
+func makeUserPayload(user *model.User) userPayload {
+	return userPayload{
+		ID:          user.ID,
+		Name:        user.Name,
+		DisplayName: user.DisplayName,
+		IconID:      user.Icon,
+		Bot:         user.Bot,
+	}
 }
 
 type messageCreatedPayload struct {
@@ -54,4 +86,9 @@ type joinAndLeftPayload struct {
 type channelCreatedPayload struct {
 	basePayload
 	Channel channelPayload `json:"channel"`
+}
+
+type userCreatedPayload struct {
+	basePayload
+	User userPayload `json:"user"`
 }

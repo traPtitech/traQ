@@ -71,16 +71,7 @@ func (p *Processor) createMessageHandler(message *Message, embedded []*message.E
 
 	payload := messageCreatedPayload{
 		basePayload: makeBasePayload(),
-		Message: messagePayload{
-			ID:        message.ID,
-			UserID:    message.UserID,
-			ChannelID: message.ChannelID,
-			Text:      message.Text,
-			PlainText: plain,
-			Embedded:  embedded,
-			CreatedAt: message.CreatedAt,
-			UpdatedAt: message.UpdatedAt,
-		},
+		Message:     makeMessagePayload(message, embedded, plain),
 	}
 
 	multicast(p, MessageCreated, &payload, bots)
@@ -124,6 +115,25 @@ func (p *Processor) channelCreatedHandler(chID uuid.UUID, private bool) {
 
 		multicast(p, ChannelCreated, &payload, bots)
 	}
+}
+
+func (p *Processor) userCreatedHandler(user *User) {
+	bots, err := p.repo.GetAllBots()
+	if err != nil {
+		p.logger.Error("failed to GetAllBots", zap.Error(err))
+		return
+	}
+	bots = filterBots(p, bots, privilegedFilter(), stateFilter(BotActive), eventFilter(UserCreated))
+	if len(bots) == 0 {
+		return
+	}
+
+	payload := userCreatedPayload{
+		basePayload: makeBasePayload(),
+		User:        makeUserPayload(user),
+	}
+
+	multicast(p, UserCreated, &payload, bots)
 }
 
 func multicast(p *Processor, ev BotEvent, payload interface{}, targets []*Bot) {
