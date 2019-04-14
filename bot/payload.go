@@ -80,7 +80,7 @@ type pingPayload struct {
 
 type joinAndLeftPayload struct {
 	basePayload
-	ChannelId uuid.UUID `json:"channelId"`
+	ChannelID uuid.UUID `json:"channelId"`
 }
 
 type channelCreatedPayload struct {

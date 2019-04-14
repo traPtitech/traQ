@@ -2,12 +2,12 @@ package bot
 
 import (
 	"github.com/gofrs/uuid"
-	. "github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
 )
 
-func (p *Processor) pingHandler(bot *Bot) {
+func (p *Processor) pingHandler(bot *model.Bot) {
 	payload := pingPayload{
 		basePayload: makeBasePayload(),
 	}
@@ -21,31 +21,31 @@ func (p *Processor) pingHandler(bot *Bot) {
 
 	if p.sendEvent(bot, Ping, buf) {
 		// OK
-		if err := p.repo.ChangeBotState(bot.ID, BotActive); err != nil {
+		if err := p.repo.ChangeBotState(bot.ID, model.BotActive); err != nil {
 			p.logger.Error("failed to ChangeBotState", zap.Error(err))
 		}
 	} else {
 		// NG
-		if err := p.repo.ChangeBotState(bot.ID, BotPaused); err != nil {
+		if err := p.repo.ChangeBotState(bot.ID, model.BotPaused); err != nil {
 			p.logger.Error("failed to ChangeBotState", zap.Error(err))
 		}
 	}
 }
 
-func (p *Processor) joinedAndLeftHandler(botID, channelID uuid.UUID, ev BotEvent) {
+func (p *Processor) joinedAndLeftHandler(botID, channelID uuid.UUID, ev model.BotEvent) {
 	bot, err := p.repo.GetBotByID(botID)
 	if err != nil {
 		p.logger.Error("failed to GetBotByID", zap.Error(err), zap.Stringer("id", botID))
 		return
 	}
 
-	if filterBot(p, bot, stateFilter(BotActive)) {
+	if filterBot(p, bot, stateFilter(model.BotActive)) {
 		return
 	}
 
 	payload := joinAndLeftPayload{
 		basePayload: makeBasePayload(),
-		ChannelId:   channelID,
+		ChannelID:   channelID,
 	}
 
 	buf, release, err := p.makePayloadJSON(&payload)
@@ -58,13 +58,13 @@ func (p *Processor) joinedAndLeftHandler(botID, channelID uuid.UUID, ev BotEvent
 	p.sendEvent(bot, ev, buf)
 }
 
-func (p *Processor) createMessageHandler(message *Message, embedded []*message.EmbeddedInfo, plain string) {
+func (p *Processor) createMessageHandler(message *model.Message, embedded []*message.EmbeddedInfo, plain string) {
 	bots, err := p.repo.GetBotsByChannel(message.ChannelID)
 	if err != nil {
 		p.logger.Error("failed to GetBotsByChannel", zap.Error(err))
 		return
 	}
-	bots = filterBots(p, bots, stateFilter(BotActive), eventFilter(MessageCreated), botUserIDNotEqualsFilter(message.UserID))
+	bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(MessageCreated), botUserIDNotEqualsFilter(message.UserID))
 	if len(bots) == 0 {
 		return
 	}
@@ -84,7 +84,7 @@ func (p *Processor) channelCreatedHandler(chID uuid.UUID, private bool) {
 		return
 	}
 	if !private {
-		bots = filterBots(p, bots, privilegedFilter(), stateFilter(BotActive), eventFilter(ChannelCreated))
+		bots = filterBots(p, bots, privilegedFilter(), stateFilter(model.BotActive), eventFilter(ChannelCreated))
 		if len(bots) == 0 {
 			return
 		}
@@ -117,13 +117,13 @@ func (p *Processor) channelCreatedHandler(chID uuid.UUID, private bool) {
 	}
 }
 
-func (p *Processor) userCreatedHandler(user *User) {
+func (p *Processor) userCreatedHandler(user *model.User) {
 	bots, err := p.repo.GetAllBots()
 	if err != nil {
 		p.logger.Error("failed to GetAllBots", zap.Error(err))
 		return
 	}
-	bots = filterBots(p, bots, privilegedFilter(), stateFilter(BotActive), eventFilter(UserCreated))
+	bots = filterBots(p, bots, privilegedFilter(), stateFilter(model.BotActive), eventFilter(UserCreated))
 	if len(bots) == 0 {
 		return
 	}
@@ -136,7 +136,7 @@ func (p *Processor) userCreatedHandler(user *User) {
 	multicast(p, UserCreated, &payload, bots)
 }
 
-func multicast(p *Processor, ev BotEvent, payload interface{}, targets []*Bot) {
+func multicast(p *Processor, ev model.BotEvent, payload interface{}, targets []*model.Bot) {
 	buf, release, err := p.makePayloadJSON(&payload)
 	if err != nil {
 		p.logger.Error("unexpected json encode error", zap.Error(err))
