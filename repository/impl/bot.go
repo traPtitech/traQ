@@ -132,6 +132,12 @@ func (repo *RepositoryImpl) SetSubscribeEventsToBot(botID uuid.UUID, events mode
 	return nil
 }
 
+// GetAllBots 全てのBotを取得します
+func (repo *RepositoryImpl) GetAllBots() ([]*model.Bot, error) {
+	bots := make([]*model.Bot, 0)
+	return bots, repo.db.Find(&bots).Error
+}
+
 // GetBotByID Botを取得します
 func (repo *RepositoryImpl) GetBotByID(id uuid.UUID) (*model.Bot, error) {
 	if id == uuid.Nil {
