@@ -27,6 +27,16 @@ type messagePayload struct {
 	UpdatedAt time.Time               `json:"updatedAt"`
 }
 
+type channelPayload struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Path      string    `json:"path"`
+	ParentID  uuid.UUID `json:"parentId"`
+	CreatorID uuid.UUID `json:"creatorId"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
 type messageCreatedPayload struct {
 	basePayload
 	Message messagePayload `json:"message"`
@@ -39,4 +49,9 @@ type pingPayload struct {
 type joinAndLeftPayload struct {
 	basePayload
 	ChannelId uuid.UUID `json:"channelId"`
+}
+
+type channelCreatedPayload struct {
+	basePayload
+	Channel channelPayload `json:"channel"`
 }

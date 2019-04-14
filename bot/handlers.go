@@ -83,6 +83,50 @@ func (p *Processor) createMessageHandler(message *Message, embedded []*message.E
 		},
 	}
 
+	multicast(p, MessageCreated, &payload, bots)
+}
+
+func (p *Processor) channelCreatedHandler(chID uuid.UUID, private bool) {
+	bots, err := p.repo.GetAllBots()
+	if err != nil {
+		p.logger.Error("failed to GetAllBots", zap.Error(err))
+		return
+	}
+	if !private {
+		bots = filterBots(p, bots, privilegedFilter(), stateFilter(BotActive), eventFilter(ChannelCreated))
+		if len(bots) == 0 {
+			return
+		}
+
+		ch, err := p.repo.GetChannel(chID)
+		if err != nil {
+			p.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("id", chID))
+			return
+		}
+		path, err := p.repo.GetChannelPath(chID)
+		if err != nil {
+			p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", chID))
+			return
+		}
+
+		payload := channelCreatedPayload{
+			basePayload: makeBasePayload(),
+			Channel: channelPayload{
+				ID:        chID,
+				Name:      ch.Name,
+				Path:      "#" + path,
+				ParentID:  ch.ParentID,
+				CreatorID: ch.CreatorID,
+				CreatedAt: ch.CreatedAt,
+				UpdatedAt: ch.UpdatedAt,
+			},
+		}
+
+		multicast(p, ChannelCreated, &payload, bots)
+	}
+}
+
+func multicast(p *Processor, ev BotEvent, payload interface{}, targets []*Bot) {
 	buf, release, err := p.makePayloadJSON(&payload)
 	if err != nil {
 		p.logger.Error("unexpected json encode error", zap.Error(err))
@@ -90,7 +134,7 @@ func (p *Processor) createMessageHandler(message *Message, embedded []*message.E
 	}
 	defer release()
 
-	for _, bot := range bots {
-		p.sendEvent(bot, MessageCreated, buf)
+	for _, bot := range targets {
+		p.sendEvent(bot, ev, buf)
 	}
 }

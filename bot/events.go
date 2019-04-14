@@ -9,8 +9,12 @@ const (
 	Joined model.BotEvent = "JOINED"
 	// Left チャンネル退出イベント
 	Left model.BotEvent = "LEFT"
+
 	// MessageCreated メッセージ作成イベント
 	MessageCreated model.BotEvent = "MESSAGE_CREATED"
+
+	// ChannelCreated チャンネル作成イベント
+	ChannelCreated model.BotEvent = "CHANNEL_CREATED"
 )
 
 var eventSet = map[model.BotEvent]bool{
@@ -18,6 +22,7 @@ var eventSet = map[model.BotEvent]bool{
 	Joined:         true,
 	Left:           true,
 	MessageCreated: true,
+	ChannelCreated: true,
 }
 
 // IsEvent 引数の文字列がボットイベントかどうか

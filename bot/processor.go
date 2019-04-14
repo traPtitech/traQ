@@ -79,6 +79,17 @@ func NewProcessor(repo repository.Repository, hub *hub.Hub, logger *zap.Logger) 
 			}
 		}
 	}()
+	go func() {
+		sub := hub.Subscribe(100,
+			event.ChannelCreated,
+		)
+		for ev := range sub.Receiver {
+			switch ev.Name {
+			case event.ChannelCreated:
+				go p.channelCreatedHandler(ev.Fields["channel_id"].(uuid.UUID), ev.Fields["private"].(bool))
+			}
+		}
+	}()
 	return p
 }
 
