@@ -345,7 +345,10 @@ func (h *Handlers) GetChannelBots(c echo.Context) error {
 
 // PostChannelBots POST /channels/:channelID/bots
 func (h *Handlers) PostChannelBots(c echo.Context) error {
-	channelID := getRequestParamAsUUID(c, paramChannelID)
+	ch := getChannelFromContext(c)
+	if !ch.IsPublic {
+		return echo.NewHTTPError(http.StatusForbidden)
+	}
 
 	var req struct {
 		Code string `json:"code" validate:"required"`
@@ -365,7 +368,7 @@ func (h *Handlers) PostChannelBots(c echo.Context) error {
 		}
 	}
 
-	if err := h.Repo.AddBotToChannel(b.ID, channelID); err != nil {
+	if err := h.Repo.AddBotToChannel(b.ID, ch.ID); err != nil {
 		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
