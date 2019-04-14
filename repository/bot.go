@@ -9,6 +9,7 @@ import (
 type BotRepository interface {
 	CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error)
 	SetSubscribeEventsToBot(botID uuid.UUID, events model.BotEvents) error
+	GetAllBots() ([]*model.Bot, error)
 	GetBotByID(id uuid.UUID) (*model.Bot, error)
 	GetBotByCode(code string) (*model.Bot, error)
 	GetBotsByCreator(userID uuid.UUID) ([]*model.Bot, error)

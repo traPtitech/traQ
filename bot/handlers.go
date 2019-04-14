@@ -1,33 +1,25 @@
 package bot
 
 import (
-	"bytes"
-	"encoding/json"
+	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
-	"time"
 )
 
 func (p *Processor) pingHandler(bot *model.Bot) {
 	payload := pingPayload{
-		basePayload: basePayload{
-			EventTime: time.Now(),
-		},
+		basePayload: makeBasePayload(),
 	}
 
-	buf := p.bufPool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		p.bufPool.Put(buf)
-	}()
-
-	if err := json.NewEncoder(buf).Encode(&payload); err != nil {
+	buf, release, err := p.makePayloadJSON(&payload)
+	if err != nil {
 		p.logger.Error("unexpected json encode error", zap.Error(err))
 		return
 	}
+	defer release()
 
-	if p.sendEvent(bot, Ping, buf.Bytes()) {
+	if p.sendEvent(bot, Ping, buf) {
 		// OK
 		if err := p.repo.ChangeBotState(bot.ID, model.BotActive); err != nil {
 			p.logger.Error("failed to ChangeBotState", zap.Error(err))
@@ -40,61 +32,119 @@ func (p *Processor) pingHandler(bot *model.Bot) {
 	}
 }
 
+func (p *Processor) joinedAndLeftHandler(botID, channelID uuid.UUID, ev model.BotEvent) {
+	bot, err := p.repo.GetBotByID(botID)
+	if err != nil {
+		p.logger.Error("failed to GetBotByID", zap.Error(err), zap.Stringer("id", botID))
+		return
+	}
+
+	if filterBot(p, bot, stateFilter(model.BotActive)) {
+		return
+	}
+
+	payload := joinAndLeftPayload{
+		basePayload: makeBasePayload(),
+		ChannelID:   channelID,
+	}
+
+	buf, release, err := p.makePayloadJSON(&payload)
+	if err != nil {
+		p.logger.Error("unexpected json encode error", zap.Error(err))
+		return
+	}
+	defer release()
+
+	p.sendEvent(bot, ev, buf)
+}
+
 func (p *Processor) createMessageHandler(message *model.Message, embedded []*message.EmbeddedInfo, plain string) {
 	bots, err := p.repo.GetBotsByChannel(message.ChannelID)
 	if err != nil {
 		p.logger.Error("failed to GetBotsByChannel", zap.Error(err))
 		return
 	}
-	bots = filterBots(bots, MessageCreated)
+	bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(MessageCreated), botUserIDNotEqualsFilter(message.UserID))
 	if len(bots) == 0 {
 		return
 	}
 
 	payload := messageCreatedPayload{
-		basePayload: basePayload{
-			EventTime: time.Now(),
-		},
-		Message: messagePayload{
-			ID:        message.ID,
-			UserID:    message.UserID,
-			ChannelID: message.ChannelID,
-			Text:      message.Text,
-			PlainText: plain,
-			Embedded:  embedded,
-			CreatedAt: message.CreatedAt,
-			UpdatedAt: message.UpdatedAt,
-		},
+		basePayload: makeBasePayload(),
+		Message:     makeMessagePayload(message, embedded, plain),
 	}
 
-	buf := p.bufPool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		p.bufPool.Put(buf)
-	}()
+	multicast(p, MessageCreated, &payload, bots)
+}
 
-	if err := json.NewEncoder(buf).Encode(&payload); err != nil {
-		p.logger.Error("unexpected json encode error", zap.Error(err))
+func (p *Processor) channelCreatedHandler(chID uuid.UUID, private bool) {
+	bots, err := p.repo.GetAllBots()
+	if err != nil {
+		p.logger.Error("failed to GetAllBots", zap.Error(err))
 		return
 	}
-	for _, bot := range bots {
-		if message.UserID == bot.BotUserID {
-			continue // Bot自身の発言はスキップ
+	if !private {
+		bots = filterBots(p, bots, privilegedFilter(), stateFilter(model.BotActive), eventFilter(ChannelCreated))
+		if len(bots) == 0 {
+			return
 		}
-		p.sendEvent(bot, MessageCreated, buf.Bytes())
+
+		ch, err := p.repo.GetChannel(chID)
+		if err != nil {
+			p.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("id", chID))
+			return
+		}
+		path, err := p.repo.GetChannelPath(chID)
+		if err != nil {
+			p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", chID))
+			return
+		}
+
+		payload := channelCreatedPayload{
+			basePayload: makeBasePayload(),
+			Channel: channelPayload{
+				ID:        chID,
+				Name:      ch.Name,
+				Path:      "#" + path,
+				ParentID:  ch.ParentID,
+				CreatorID: ch.CreatorID,
+				CreatedAt: ch.CreatedAt,
+				UpdatedAt: ch.UpdatedAt,
+			},
+		}
+
+		multicast(p, ChannelCreated, &payload, bots)
 	}
 }
 
-func filterBots(bots []*model.Bot, event model.BotEvent) []*model.Bot {
-	result := make([]*model.Bot, 0, len(bots))
-	for _, bot := range bots {
-		if bot.State != model.BotActive {
-			continue
-		}
-		if !bot.SubscribeEvents.Contains(event) {
-			continue
-		}
-		result = append(result, bot)
+func (p *Processor) userCreatedHandler(user *model.User) {
+	bots, err := p.repo.GetAllBots()
+	if err != nil {
+		p.logger.Error("failed to GetAllBots", zap.Error(err))
+		return
 	}
-	return result
+	bots = filterBots(p, bots, privilegedFilter(), stateFilter(model.BotActive), eventFilter(UserCreated))
+	if len(bots) == 0 {
+		return
+	}
+
+	payload := userCreatedPayload{
+		basePayload: makeBasePayload(),
+		User:        makeUserPayload(user),
+	}
+
+	multicast(p, UserCreated, &payload, bots)
+}
+
+func multicast(p *Processor, ev model.BotEvent, payload interface{}, targets []*model.Bot) {
+	buf, release, err := p.makePayloadJSON(&payload)
+	if err != nil {
+		p.logger.Error("unexpected json encode error", zap.Error(err))
+		return
+	}
+	defer release()
+
+	for _, bot := range targets {
+		p.sendEvent(bot, ev, buf)
+	}
 }
