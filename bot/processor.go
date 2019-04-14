@@ -2,6 +2,7 @@ package bot
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/leandro-lugaresi/hub"
@@ -65,6 +66,19 @@ func NewProcessor(repo repository.Repository, hub *hub.Hub, logger *zap.Logger) 
 			p.pingHandler(bot)
 		}
 	}()
+	go func() {
+		sub := hub.Subscribe(10, event.BotJoined, event.BotLeft)
+		for ev := range sub.Receiver {
+			botID := ev.Fields["bot_id"].(uuid.UUID)
+			chId := ev.Fields["channel_id"].(uuid.UUID)
+			switch ev.Name {
+			case event.BotJoined:
+				go p.joinedAndLeftHandler(botID, chId, Joined)
+			case event.BotLeft:
+				go p.joinedAndLeftHandler(botID, chId, Left)
+			}
+		}
+	}()
 	return p
 }
 
@@ -83,4 +97,19 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 	}
 	_ = res.Body.Close()
 	return res.StatusCode == http.StatusNoContent
+}
+
+func (p *Processor) makePayloadJSON(payload interface{}) (b []byte, releaseFunc func(), err error) {
+	buf := p.bufPool.Get().(*bytes.Buffer)
+	releaseFunc = func() {
+		buf.Reset()
+		p.bufPool.Put(buf)
+	}
+
+	if err := json.NewEncoder(buf).Encode(&payload); err != nil {
+		releaseFunc()
+		return nil, nil, err
+	}
+
+	return buf.Bytes(), releaseFunc, nil
 }

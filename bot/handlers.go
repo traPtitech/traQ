@@ -1,33 +1,25 @@
 package bot
 
 import (
-	"bytes"
-	"encoding/json"
+	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
-	"time"
 )
 
 func (p *Processor) pingHandler(bot *model.Bot) {
 	payload := pingPayload{
-		basePayload: basePayload{
-			EventTime: time.Now(),
-		},
+		basePayload: makeBasePayload(),
 	}
 
-	buf := p.bufPool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		p.bufPool.Put(buf)
-	}()
-
-	if err := json.NewEncoder(buf).Encode(&payload); err != nil {
+	buf, release, err := p.makePayloadJSON(&payload)
+	if err != nil {
 		p.logger.Error("unexpected json encode error", zap.Error(err))
 		return
 	}
+	defer release()
 
-	if p.sendEvent(bot, Ping, buf.Bytes()) {
+	if p.sendEvent(bot, Ping, buf) {
 		// OK
 		if err := p.repo.ChangeBotState(bot.ID, model.BotActive); err != nil {
 			p.logger.Error("failed to ChangeBotState", zap.Error(err))
@@ -38,6 +30,31 @@ func (p *Processor) pingHandler(bot *model.Bot) {
 			p.logger.Error("failed to ChangeBotState", zap.Error(err))
 		}
 	}
+}
+
+func (p *Processor) joinedAndLeftHandler(botId, channelId uuid.UUID, ev model.BotEvent) {
+	bot, err := p.repo.GetBotByID(botId)
+	if err != nil {
+		p.logger.Error("failed to GetBotByID", zap.Error(err), zap.Stringer("id", botId))
+		return
+	}
+	if bot.State != model.BotActive {
+		return
+	}
+
+	payload := joinAndLeftPayload{
+		basePayload: makeBasePayload(),
+		ChannelId:   channelId,
+	}
+
+	buf, release, err := p.makePayloadJSON(&payload)
+	if err != nil {
+		p.logger.Error("unexpected json encode error", zap.Error(err))
+		return
+	}
+	defer release()
+
+	p.sendEvent(bot, ev, buf)
 }
 
 func (p *Processor) createMessageHandler(message *model.Message, embedded []*message.EmbeddedInfo, plain string) {
@@ -52,9 +69,7 @@ func (p *Processor) createMessageHandler(message *model.Message, embedded []*mes
 	}
 
 	payload := messageCreatedPayload{
-		basePayload: basePayload{
-			EventTime: time.Now(),
-		},
+		basePayload: makeBasePayload(),
 		Message: messagePayload{
 			ID:        message.ID,
 			UserID:    message.UserID,
@@ -67,21 +82,18 @@ func (p *Processor) createMessageHandler(message *model.Message, embedded []*mes
 		},
 	}
 
-	buf := p.bufPool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		p.bufPool.Put(buf)
-	}()
-
-	if err := json.NewEncoder(buf).Encode(&payload); err != nil {
+	buf, release, err := p.makePayloadJSON(&payload)
+	if err != nil {
 		p.logger.Error("unexpected json encode error", zap.Error(err))
 		return
 	}
+	defer release()
+
 	for _, bot := range bots {
 		if message.UserID == bot.BotUserID {
 			continue // Bot自身の発言はスキップ
 		}
-		p.sendEvent(bot, MessageCreated, buf.Bytes())
+		p.sendEvent(bot, MessageCreated, buf)
 	}
 }
 

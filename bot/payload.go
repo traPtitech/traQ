@@ -10,6 +10,12 @@ type basePayload struct {
 	EventTime time.Time `json:"eventTime"`
 }
 
+func makeBasePayload() basePayload {
+	return basePayload{
+		EventTime: time.Now(),
+	}
+}
+
 type messagePayload struct {
 	ID        uuid.UUID               `json:"id"`
 	UserID    uuid.UUID               `json:"userId"`
@@ -28,4 +34,9 @@ type messageCreatedPayload struct {
 
 type pingPayload struct {
 	basePayload
+}
+
+type joinAndLeftPayload struct {
+	basePayload
+	ChannelId uuid.UUID `json:"channelId"`
 }
