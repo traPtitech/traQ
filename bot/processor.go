@@ -70,12 +70,12 @@ func NewProcessor(repo repository.Repository, hub *hub.Hub, logger *zap.Logger) 
 		sub := hub.Subscribe(10, event.BotJoined, event.BotLeft)
 		for ev := range sub.Receiver {
 			botID := ev.Fields["bot_id"].(uuid.UUID)
-			chId := ev.Fields["channel_id"].(uuid.UUID)
+			chID := ev.Fields["channel_id"].(uuid.UUID)
 			switch ev.Name {
 			case event.BotJoined:
-				go p.joinedAndLeftHandler(botID, chId, Joined)
+				go p.joinedAndLeftHandler(botID, chID, Joined)
 			case event.BotLeft:
-				go p.joinedAndLeftHandler(botID, chId, Left)
+				go p.joinedAndLeftHandler(botID, chID, Left)
 			}
 		}
 	}()

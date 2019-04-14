@@ -2,12 +2,12 @@ package bot
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/model"
+	. "github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
 )
 
-func (p *Processor) pingHandler(bot *model.Bot) {
+func (p *Processor) pingHandler(bot *Bot) {
 	payload := pingPayload{
 		basePayload: makeBasePayload(),
 	}
@@ -21,30 +21,31 @@ func (p *Processor) pingHandler(bot *model.Bot) {
 
 	if p.sendEvent(bot, Ping, buf) {
 		// OK
-		if err := p.repo.ChangeBotState(bot.ID, model.BotActive); err != nil {
+		if err := p.repo.ChangeBotState(bot.ID, BotActive); err != nil {
 			p.logger.Error("failed to ChangeBotState", zap.Error(err))
 		}
 	} else {
 		// NG
-		if err := p.repo.ChangeBotState(bot.ID, model.BotPaused); err != nil {
+		if err := p.repo.ChangeBotState(bot.ID, BotPaused); err != nil {
 			p.logger.Error("failed to ChangeBotState", zap.Error(err))
 		}
 	}
 }
 
-func (p *Processor) joinedAndLeftHandler(botId, channelId uuid.UUID, ev model.BotEvent) {
-	bot, err := p.repo.GetBotByID(botId)
+func (p *Processor) joinedAndLeftHandler(botID, channelID uuid.UUID, ev BotEvent) {
+	bot, err := p.repo.GetBotByID(botID)
 	if err != nil {
-		p.logger.Error("failed to GetBotByID", zap.Error(err), zap.Stringer("id", botId))
+		p.logger.Error("failed to GetBotByID", zap.Error(err), zap.Stringer("id", botID))
 		return
 	}
-	if bot.State != model.BotActive {
+
+	if filterBot(p, bot, stateFilter(BotActive)) {
 		return
 	}
 
 	payload := joinAndLeftPayload{
 		basePayload: makeBasePayload(),
-		ChannelId:   channelId,
+		ChannelId:   channelID,
 	}
 
 	buf, release, err := p.makePayloadJSON(&payload)
@@ -57,13 +58,13 @@ func (p *Processor) joinedAndLeftHandler(botId, channelId uuid.UUID, ev model.Bo
 	p.sendEvent(bot, ev, buf)
 }
 
-func (p *Processor) createMessageHandler(message *model.Message, embedded []*message.EmbeddedInfo, plain string) {
+func (p *Processor) createMessageHandler(message *Message, embedded []*message.EmbeddedInfo, plain string) {
 	bots, err := p.repo.GetBotsByChannel(message.ChannelID)
 	if err != nil {
 		p.logger.Error("failed to GetBotsByChannel", zap.Error(err))
 		return
 	}
-	bots = filterBots(bots, MessageCreated)
+	bots = filterBots(p, bots, stateFilter(BotActive), eventFilter(MessageCreated), botUserIDNotEqualsFilter(message.UserID))
 	if len(bots) == 0 {
 		return
 	}
@@ -90,23 +91,6 @@ func (p *Processor) createMessageHandler(message *model.Message, embedded []*mes
 	defer release()
 
 	for _, bot := range bots {
-		if message.UserID == bot.BotUserID {
-			continue // Bot自身の発言はスキップ
-		}
 		p.sendEvent(bot, MessageCreated, buf)
 	}
-}
-
-func filterBots(bots []*model.Bot, event model.BotEvent) []*model.Bot {
-	result := make([]*model.Bot, 0, len(bots))
-	for _, bot := range bots {
-		if bot.State != model.BotActive {
-			continue
-		}
-		if !bot.SubscribeEvents.Contains(event) {
-			continue
-		}
-		result = append(result, bot)
-	}
-	return result
 }
