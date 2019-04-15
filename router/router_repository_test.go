@@ -81,6 +81,10 @@ type TestRepository struct {
 	OAuth2TokensLock          sync.RWMutex
 }
 
+func (repo *TestRepository) GetBotEventLogs(botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error) {
+	panic("implement me")
+}
+
 func (repo *TestRepository) WriteBotEventLog(log *model.BotEventLog) error {
 	panic("implement me")
 }

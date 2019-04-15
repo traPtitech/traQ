@@ -379,3 +379,16 @@ func (repo *RepositoryImpl) WriteBotEventLog(log *model.BotEventLog) error {
 	}
 	return repo.db.Create(log).Error
 }
+
+// GetBotEventLogs Botイベントログを取得します
+func (repo *RepositoryImpl) GetBotEventLogs(botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error) {
+	logs := make([]*model.BotEventLog, 0)
+	if botID == uuid.Nil {
+		return logs, nil
+	}
+	return logs, repo.db.Where(&model.BotEventLog{BotId: botID}).
+		Order("date_time DESC").
+		Scopes(limitAndOffset(limit, offset)).
+		Find(&logs).
+		Error
+}
