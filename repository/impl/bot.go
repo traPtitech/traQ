@@ -371,3 +371,11 @@ func (repo *RepositoryImpl) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]
 		Pluck("channel_id", &channels).
 		Error
 }
+
+// WriteBotEventLog Botイベントログを書き込みます
+func (repo *RepositoryImpl) WriteBotEventLog(log *model.BotEventLog) error {
+	if log == nil || log.RequestID == uuid.Nil {
+		return nil
+	}
+	return repo.db.Create(log).Error
+}
