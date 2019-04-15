@@ -110,7 +110,7 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 		p.logger.Error("failed to send bot event. network error", zap.Error(err))
 		if err := p.repo.WriteBotEventLog(&model.BotEventLog{
 			RequestID: reqID,
-			BotId:     b.ID,
+			BotID:     b.ID,
 			Event:     event,
 			Code:      -1,
 			DateTime:  time.Now(),
@@ -123,7 +123,7 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 
 	if err := p.repo.WriteBotEventLog(&model.BotEventLog{
 		RequestID: reqID,
-		BotId:     b.ID,
+		BotID:     b.ID,
 		Event:     event,
 		Code:      res.StatusCode,
 		DateTime:  time.Now(),

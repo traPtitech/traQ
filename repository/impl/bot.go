@@ -386,7 +386,7 @@ func (repo *RepositoryImpl) GetBotEventLogs(botID uuid.UUID, limit, offset int) 
 	if botID == uuid.Nil {
 		return logs, nil
 	}
-	return logs, repo.db.Where(&model.BotEventLog{BotId: botID}).
+	return logs, repo.db.Where(&model.BotEventLog{BotID: botID}).
 		Order("date_time DESC").
 		Scopes(limitAndOffset(limit, offset)).
 		Find(&logs).
