@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
 	"math"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -26,6 +27,9 @@ func (repo *RepositoryImpl) CreateBot(name, displayName, description string, cre
 	}
 	if err := validator.ValidateVar(webhookURL, "required,url"); err != nil || !strings.HasPrefix(webhookURL, "http") {
 		return nil, errors.New("invalid webhookURL")
+	}
+	if u, _ := url.Parse(webhookURL); utils.IsPrivateHost(u.Hostname()) {
+		return nil, errors.New("prohibited webhook host")
 	}
 	if creatorID == uuid.Nil {
 		return nil, errors.New("creatorID is nil")
