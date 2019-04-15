@@ -20,4 +20,6 @@ type BotRepository interface {
 	AddBotToChannel(botID, channelID uuid.UUID) error
 	RemoveBotFromChannel(botID, channelID uuid.UUID) error
 	GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid.UUID, error)
+	WriteBotEventLog(log *model.BotEventLog) error
+	GetBotEventLogs(botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error)
 }

@@ -318,6 +318,34 @@ func (h *Handlers) GetBotJoinChannels(c echo.Context) error {
 	return c.JSON(http.StatusOK, ids)
 }
 
+// GetBotEventLogs GET /bots/:botID/events/logs
+func (h *Handlers) GetBotEventLogs(c echo.Context) error {
+	b := getBotFromContext(c)
+
+	req := struct {
+		Limit  int `query:"limit"  validate:"min=0,max=50"`
+		Offset int `query:"offset" validate:"min=0"`
+	}{
+		Limit:  50,
+		Offset: 0,
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if b.CreatorID != getRequestUserID(c) {
+		return echo.NewHTTPError(http.StatusForbidden)
+	}
+
+	logs, err := h.Repo.GetBotEventLogs(b.ID, req.Limit, req.Offset)
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusOK, logs)
+}
+
 // GetChannelBots GET /channels/:channelID/bots
 func (h *Handlers) GetChannelBots(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)

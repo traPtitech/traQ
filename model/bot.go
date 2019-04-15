@@ -123,3 +123,17 @@ type BotJoinChannel struct {
 func (*BotJoinChannel) TableName() string {
 	return "bot_join_channels"
 }
+
+// BotEventLog Botイベントログ
+type BotEventLog struct {
+	RequestID uuid.UUID `gorm:"type:char(36);not null;primary_key"                json:"requestId"`
+	BotID     uuid.UUID `gorm:"type:char(36);not null;index:bot_id_date_time_idx" json:"botId"`
+	Event     BotEvent  `gorm:"type:varchar(30);not null"                         json:"event"`
+	Code      int       `gorm:"not null;default:0"                                json:"code"`
+	DateTime  time.Time `gorm:"precision:6;index:bot_id_date_time_idx"            json:"dateTime"`
+}
+
+// TableName BotEventLogのテーブル名
+func (*BotEventLog) TableName() string {
+	return "bot_event_logs"
+}

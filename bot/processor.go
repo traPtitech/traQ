@@ -107,9 +107,30 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 
 	res, err := p.client.Do(req)
 	if err != nil {
+		p.logger.Error("failed to send bot event. network error", zap.Error(err))
+		if err := p.repo.WriteBotEventLog(&model.BotEventLog{
+			RequestID: reqID,
+			BotID:     b.ID,
+			Event:     event,
+			Code:      -1,
+			DateTime:  time.Now(),
+		}); err != nil {
+			p.logger.Error("failed to WriteBotEventLog", zap.Error(err), zap.Stringer("requestId", reqID))
+		}
 		return false
 	}
 	_ = res.Body.Close()
+
+	if err := p.repo.WriteBotEventLog(&model.BotEventLog{
+		RequestID: reqID,
+		BotID:     b.ID,
+		Event:     event,
+		Code:      res.StatusCode,
+		DateTime:  time.Now(),
+	}); err != nil {
+		p.logger.Error("failed to WriteBotEventLog", zap.Error(err), zap.Stringer("requestId", reqID))
+	}
+
 	return res.StatusCode == http.StatusNoContent
 }
 

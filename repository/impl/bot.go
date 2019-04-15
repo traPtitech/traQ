@@ -371,3 +371,24 @@ func (repo *RepositoryImpl) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]
 		Pluck("channel_id", &channels).
 		Error
 }
+
+// WriteBotEventLog Botイベントログを書き込みます
+func (repo *RepositoryImpl) WriteBotEventLog(log *model.BotEventLog) error {
+	if log == nil || log.RequestID == uuid.Nil {
+		return nil
+	}
+	return repo.db.Create(log).Error
+}
+
+// GetBotEventLogs Botイベントログを取得します
+func (repo *RepositoryImpl) GetBotEventLogs(botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error) {
+	logs := make([]*model.BotEventLog, 0)
+	if botID == uuid.Nil {
+		return logs, nil
+	}
+	return logs, repo.db.Where(&model.BotEventLog{BotID: botID}).
+		Order("date_time DESC").
+		Scopes(limitAndOffset(limit, offset)).
+		Find(&logs).
+		Error
+}
