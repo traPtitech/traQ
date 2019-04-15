@@ -322,15 +322,16 @@ func (h *Handlers) GetBotJoinChannels(c echo.Context) error {
 func (h *Handlers) GetBotEventLogs(c echo.Context) error {
 	b := getBotFromContext(c)
 
-	req := struct {
+	var req struct {
 		Limit  int `query:"limit"  validate:"min=0,max=50"`
 		Offset int `query:"offset" validate:"min=0"`
-	}{
-		Limit:  50,
-		Offset: 0,
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if req.Limit == 0 {
+		req.Limit = 50
 	}
 
 	if b.CreatorID != getRequestUserID(c) {
