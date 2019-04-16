@@ -208,8 +208,9 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiWebhooksWid.GET("", h.GetWebhook, requires(permission.GetWebhook))
 				apiWebhooksWid.PATCH("", h.PatchWebhook, requires(permission.EditWebhook))
 				apiWebhooksWid.DELETE("", h.DeleteWebhook, requires(permission.DeleteWebhook))
+				apiWebhooksWid.GET("/icon", h.GetWebhookIcon, requires(permission.GetWebhook))
 				apiWebhooksWid.PUT("/icon", h.PutWebhookIcon, requires(permission.EditWebhook))
-				apiWebhooksWid.GET("/messages", h.GetWebhookMessages)
+				apiWebhooksWid.GET("/messages", h.GetWebhookMessages, requires(permission.GetWebhook))
 			}
 		}
 		apiGroups := api.Group("/groups")
@@ -247,10 +248,12 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			apiBotsBid := apiBots.Group("/:botID", h.ValidateBotID(false))
 			{
 				apiBotsBid.GET("", h.GetBot, requires(permission.GetBot))
+				apiBotsBid.PATCH("", h.PatchBot, requires(permission.EditBot))
 				apiBotsBid.DELETE("", h.DeleteBot, requires(permission.DeleteBot))
 				apiBotsBid.GET("/detail", h.GetBotDetail, requires(permission.GetBot))
 				apiBotsBid.PUT("/events", h.PutBotEvents, requires(permission.EditBot))
 				apiBotsBid.GET(`/events/logs`, h.GetBotEventLogs, requires(permission.GetBot))
+				apiBotsBid.GET("/icon", h.GetBotIcon, requires(permission.GetBot))
 				apiBotsBid.PUT("/icon", h.PutBotIcon, requires(permission.EditBot))
 				apiBotsBid.PUT("/state", h.PutBotState, requires(permission.EditBot))
 				apiBotsBid.POST("/reissue", h.PostBotReissueTokens, requires(permission.EditBot))

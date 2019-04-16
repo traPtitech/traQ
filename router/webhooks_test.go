@@ -243,16 +243,6 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 			Status(http.StatusBadRequest)
 	})
 
-	t.Run("Bad Request (No changes)", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.PATCH("/api/1.0/webhooks/{webhookId}", wb.GetID()).
-			WithJSON(map[string]string{"name": ""}).
-			WithCookie(sessions.CookieName, session).
-			Expect().
-			Status(http.StatusBadRequest)
-	})
-
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 		assert, require := assertAndRequire(t)

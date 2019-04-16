@@ -13,8 +13,10 @@ import (
 	"github.com/traPtitech/traQ/utils"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/webhooks.v5/github"
+	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -117,35 +119,21 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 	w := getWebhookFromContext(c)
 
 	req := struct {
-		Name        string    `json:"name"        validate:"max=32"`
-		Description string    `json:"description"`
-		ChannelID   uuid.UUID `json:"channelId"`
-		Secret      *string   `json:"secret"`
+		Name        null.String   `json:"name"        validate:"max=32"`
+		Description null.String   `json:"description"`
+		ChannelID   uuid.NullUUID `json:"channelId"`
+		Secret      null.String   `json:"secret"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	a := repository.UpdateWebhookArgs{}
-	change := false
+	if req.Name.Valid && len(req.Name.String) == 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "name is empty")
+	}
 
-	if len(req.Name) > 0 {
-		a.Name.String = req.Name
-		a.Name.Valid = true
-		change = true
-	}
-	if len(req.Description) > 0 {
-		a.Description.String = req.Description
-		a.Description.Valid = true
-		change = true
-	}
-	if req.Secret != nil {
-		a.Secret.String = *req.Secret
-		a.Secret.Valid = true
-		change = true
-	}
-	if req.ChannelID != uuid.Nil {
-		ch, err := h.Repo.GetChannel(req.ChannelID)
+	if req.ChannelID.Valid {
+		ch, err := h.Repo.GetChannel(req.ChannelID.UUID)
 		if err != nil {
 			switch err {
 			case repository.ErrNotFound:
@@ -158,16 +146,16 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 		if !ch.IsPublic {
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
-		a.ChannelID.UUID = req.ChannelID
-		a.ChannelID.Valid = true
-		change = true
 	}
 
-	if !change {
-		return echo.NewHTTPError(http.StatusBadRequest)
+	args := repository.UpdateWebhookArgs{
+		Name:        req.Name,
+		Description: req.Description,
+		ChannelID:   req.ChannelID,
+		Secret:      req.Secret,
 	}
 
-	if err := h.Repo.UpdateWebhook(w.GetID(), a); err != nil {
+	if err := h.Repo.UpdateWebhook(w.GetID(), args); err != nil {
 		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
@@ -244,6 +232,38 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+// GetWebhookIcon GET /webhooks/:webhookID/icon
+func (h *Handlers) GetWebhookIcon(c echo.Context) error {
+	w := getWebhookFromContext(c)
+
+	// ユーザー取得
+	user, err := h.Repo.GetUser(w.GetBotUserID())
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// ファイルメタ取得
+	meta, err := h.Repo.GetFileMeta(user.Icon)
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// ファイルオープン
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	defer file.Close()
+
+	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
+	c.Response().Header().Set(headerETag, strconv.Quote(meta.Hash))
+	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
+	return nil
 }
 
 // PutWebhookIcon PUT /webhooks/:webhookID/icon

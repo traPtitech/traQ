@@ -3,11 +3,21 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"gopkg.in/guregu/null.v3"
 )
+
+// UpdateBotArgs Bot情報更新引数
+type UpdateBotArgs struct {
+	DisplayName null.String
+	Description null.String
+	WebhookURL  null.String
+	Privileged  null.Bool
+}
 
 // BotRepository Botリポジトリ
 type BotRepository interface {
 	CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error)
+	UpdateBot(id uuid.UUID, args UpdateBotArgs) error
 	SetSubscribeEventsToBot(botID uuid.UUID, events model.BotEvents) error
 	GetAllBots() ([]*model.Bot, error)
 	GetBotByID(id uuid.UUID) (*model.Bot, error)
