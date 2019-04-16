@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/utils"
 	"go.uber.org/zap"
 	"gopkg.in/go-playground/webhooks.v5/github"
+	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -117,35 +118,23 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 	w := getWebhookFromContext(c)
 
 	req := struct {
-		Name        string    `json:"name"        validate:"max=32"`
-		Description string    `json:"description"`
-		ChannelID   uuid.UUID `json:"channelId"`
-		Secret      *string   `json:"secret"`
+		Name        null.String   `json:"name"        validate:"max=32"`
+		Description null.String   `json:"description"`
+		ChannelID   uuid.NullUUID `json:"channelId"`
+		Secret      null.String   `json:"secret"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	a := repository.UpdateWebhookArgs{}
-	change := false
+	a := repository.UpdateWebhookArgs{
+		Name:        req.Name,
+		Description: req.Description,
+		Secret:      req.Secret,
+	}
 
-	if len(req.Name) > 0 {
-		a.Name.String = req.Name
-		a.Name.Valid = true
-		change = true
-	}
-	if len(req.Description) > 0 {
-		a.Description.String = req.Description
-		a.Description.Valid = true
-		change = true
-	}
-	if req.Secret != nil {
-		a.Secret.String = *req.Secret
-		a.Secret.Valid = true
-		change = true
-	}
-	if req.ChannelID != uuid.Nil {
-		ch, err := h.Repo.GetChannel(req.ChannelID)
+	if req.ChannelID.Valid {
+		ch, err := h.Repo.GetChannel(req.ChannelID.UUID)
 		if err != nil {
 			switch err {
 			case repository.ErrNotFound:
@@ -158,13 +147,7 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 		if !ch.IsPublic {
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
-		a.ChannelID.UUID = req.ChannelID
-		a.ChannelID.Valid = true
-		change = true
-	}
-
-	if !change {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		a.ChannelID = req.ChannelID
 	}
 
 	if err := h.Repo.UpdateWebhook(w.GetID(), a); err != nil {

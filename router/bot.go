@@ -8,8 +8,10 @@ import (
 	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"time"
 )
@@ -125,6 +127,42 @@ func (h *Handlers) GetBot(c echo.Context) error {
 		CreatedAt:       b.CreatedAt,
 		UpdatedAt:       b.UpdatedAt,
 	})
+}
+
+// PatchBot PATCH /bots/:botID
+func (h *Handlers) PatchBot(c echo.Context) error {
+	b := getBotFromContext(c)
+
+	if b.CreatorID != getRequestUserID(c) {
+		return echo.NewHTTPError(http.StatusForbidden)
+	}
+
+	var req struct {
+		DisplayName null.String `json:"displayName" validate:"max=32"`
+		Description null.String `json:"description"`
+		Privileged  null.Bool   `json:"privileged"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	args := repository.UpdateBotArgs{
+		DisplayName: req.DisplayName,
+		Description: req.Description,
+	}
+	if req.Privileged.Valid {
+		if getRequestUser(c).Role != role.Admin.ID() {
+			return echo.NewHTTPError(http.StatusForbidden)
+		}
+		args.Privileged = req.Privileged
+	}
+
+	if err := h.Repo.UpdateBot(b.ID, args); err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }
 
 // DeleteBot DELETE /bots/:botID

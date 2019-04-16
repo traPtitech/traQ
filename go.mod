@@ -69,5 +69,6 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.28.0
 	gopkg.in/go-playground/webhooks.v5 v5.7.0
+	gopkg.in/guregu/null.v3 v3.4.0
 	gopkg.in/yaml.v2 v2.2.2
 )

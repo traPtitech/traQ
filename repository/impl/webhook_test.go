@@ -1,12 +1,12 @@
 package impl
 
 import (
-	"database/sql"
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
+	"gopkg.in/guregu/null.v3"
 	"strings"
 	"testing"
 )
@@ -63,10 +63,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		t.Parallel()
 		wb := mustMakeWebhook(t, repo, random, channel.ID, user.ID, "test")
 		err := repo.UpdateWebhook(wb.GetID(), repository.UpdateWebhookArgs{
-			Name: sql.NullString{
-				Valid:  true,
-				String: strings.Repeat("a", 40),
-			},
+			Name: null.StringFrom(strings.Repeat("a", 40)),
 		})
 		assert.Error(t, err)
 	})
@@ -85,18 +82,9 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		assert, require := assertAndRequire(t)
 
 		err := repo.UpdateWebhook(wb.GetID(), repository.UpdateWebhookArgs{
-			Description: sql.NullString{
-				Valid:  true,
-				String: "new description",
-			},
-			Name: sql.NullString{
-				Valid:  true,
-				String: "new name",
-			},
-			Secret: sql.NullString{
-				Valid:  true,
-				String: "new secret",
-			},
+			Description: null.StringFrom("new description"),
+			Name:        null.StringFrom("new name"),
+			Secret:      null.StringFrom("new secret"),
 			ChannelID: uuid.NullUUID{
 				Valid: true,
 				UUID:  ch.ID,

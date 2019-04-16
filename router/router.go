@@ -247,6 +247,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			apiBotsBid := apiBots.Group("/:botID", h.ValidateBotID(false))
 			{
 				apiBotsBid.GET("", h.GetBot, requires(permission.GetBot))
+				apiBotsBid.PATCH("", h.PatchBot, requires(permission.EditBot))
 				apiBotsBid.DELETE("", h.DeleteBot, requires(permission.DeleteBot))
 				apiBotsBid.GET("/detail", h.GetBotDetail, requires(permission.GetBot))
 				apiBotsBid.PUT("/events", h.PutBotEvents, requires(permission.EditBot))

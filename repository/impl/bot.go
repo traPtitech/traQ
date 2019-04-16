@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // CreateBot Botを作成します
@@ -106,6 +107,74 @@ func (repo *RepositoryImpl) CreateBot(name, displayName, description string, cre
 		},
 	})
 	return b, nil
+}
+
+// UpdateBot Botを更新します
+func (repo *RepositoryImpl) UpdateBot(id uuid.UUID, args repository.UpdateBotArgs) error {
+	if id == uuid.Nil {
+		return repository.ErrNilID
+	}
+	var (
+		b           model.Bot
+		updated     bool
+		userUpdated bool
+	)
+	err := repo.transact(func(tx *gorm.DB) error {
+		if err := tx.Where(&model.Bot{ID: id}).First(&b).Error; err != nil {
+			if gorm.IsRecordNotFoundError(err) {
+				return repository.ErrNotFound
+			}
+			return err
+		}
+
+		changes := map[string]interface{}{}
+		if args.Description.Valid {
+			changes["description"] = args.Description.String
+		}
+		if args.Privileged.Valid {
+			changes["privileged"] = args.Privileged.Bool
+		}
+
+		if len(changes) > 0 {
+			if err := tx.Model(&b).Updates(changes).Error; err != nil {
+				return err
+			}
+			updated = true
+		}
+
+		if args.DisplayName.Valid {
+			if len(args.DisplayName.String) == 0 || utf8.RuneCountInString(args.DisplayName.String) > 32 {
+				return errors.New("invalid name")
+			}
+
+			if err := tx.Model(&model.User{ID: b.BotUserID}).Update("display_name", args.DisplayName.String).Error; err != nil {
+				return err
+			}
+			userUpdated = true
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	if userUpdated {
+		repo.hub.Publish(hub.Message{
+			Name: event.UserUpdated,
+			Fields: hub.Fields{
+				"user_id": b.BotUserID,
+			},
+		})
+	}
+	if updated || userUpdated {
+		repo.hub.Publish(hub.Message{
+			Name: event.BotUpdated,
+			Fields: hub.Fields{
+				"bot_id": b.ID,
+			},
+		})
+	}
+	return nil
 }
 
 // SetSubscribeEventsToBot Botの購読イベントを変更します

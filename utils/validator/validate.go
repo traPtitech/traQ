@@ -2,6 +2,8 @@ package validator
 
 import (
 	"gopkg.in/go-playground/validator.v9"
+	"gopkg.in/guregu/null.v3"
+	"reflect"
 	"regexp"
 )
 
@@ -58,6 +60,21 @@ func init() {
 		}
 		return true
 	}))
+	validate.RegisterCustomTypeFunc(func(fl reflect.Value) interface{} {
+		switch v := fl.Interface().(type) {
+		case null.String:
+			return v.ValueOrZero()
+		case null.Bool:
+			return v.ValueOrZero()
+		case null.Float:
+			return v.ValueOrZero()
+		case null.Int:
+			return v.ValueOrZero()
+		case null.Time:
+			return v.ValueOrZero()
+		}
+		return nil
+	}, null.String{}, null.Bool{}, null.Float{}, null.Time{}, null.Int{})
 }
 
 // ValidateStruct 構造体を検証します

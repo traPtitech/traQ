@@ -1,17 +1,17 @@
 package repository
 
 import (
-	"database/sql"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"gopkg.in/guregu/null.v3"
 )
 
 // UpdateWebhookArgs Webhook情報更新引数
 type UpdateWebhookArgs struct {
-	Name        sql.NullString
-	Description sql.NullString
+	Name        null.String
+	Description null.String
 	ChannelID   uuid.NullUUID
-	Secret      sql.NullString
+	Secret      null.String
 }
 
 // WebhookRepository Webhookボットリポジトリ

@@ -214,6 +214,10 @@ const (
 	// 		bot_id: uuid.UUID
 	// 		bot: *model.Bot
 	BotCreated = "bot.created"
+	// BotUpdated Botが更新された
+	// 	Fields:
+	// 		bot_id: uuid.UUID
+	BotUpdated = "bot.updated"
 	// BotDeleted Botが削除された
 	// 	Fields:
 	// 		bot_id: uuid.UUID
