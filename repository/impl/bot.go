@@ -134,6 +134,18 @@ func (repo *RepositoryImpl) UpdateBot(id uuid.UUID, args repository.UpdateBotArg
 		if args.Privileged.Valid {
 			changes["privileged"] = args.Privileged.Bool
 		}
+		if args.WebhookURL.Valid {
+			w := args.WebhookURL.String
+			if err := validator.ValidateVar(w, "required,url"); err != nil || !strings.HasPrefix(w, "http") {
+				return errors.New("invalid webhookURL")
+			}
+			if u, _ := url.Parse(w); utils.IsPrivateHost(u.Hostname()) {
+				return errors.New("prohibited webhook host")
+			}
+
+			changes["post_url"] = w
+			changes["state"] = model.BotPaused
+		}
 
 		if len(changes) > 0 {
 			if err := tx.Model(&b).Updates(changes).Error; err != nil {

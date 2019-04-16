@@ -2117,6 +2117,28 @@ paths:
   /webhooks/{webhookID}/icon:
     parameters:
       - $ref: "#/components/parameters/webhookIdInPath"
+    get:
+      tags:
+        - webhook
+      description: 指定したWebhookのアイコンを取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: 取得できませんでした。指定したWebhookは存在しません。
     put:
       tags:
         - webhook
@@ -2235,6 +2257,38 @@ paths:
                 $ref: "#/components/schemas/Bot"
         "404":
           description: 取得できませんでした。指定したBotは存在しません。
+    patch:
+      tags:
+        - bot
+      description: Bot情報を変更します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName:
+                  type: string
+                  description: Bot表示名
+                description:
+                  type: string
+                  description: Bot説明
+                privileged:
+                  type: boolean
+                  description: privileged属性
+                webhookUrl:
+                  type: string
+                  format: url
+                  description: BotのPOSTエンドポイント
+      responses:
+        "204":
+          description: 正常に変更できました。
+        "400":
+          description: 変更できませんでした。リクエスト内容が不正です。
+        "403":
+          description: 変更できませんでした。権限がありません。
+        "404":
+          description: 削除できませんでした。指定したBotは存在しません。
     delete:
       tags:
         - bot
@@ -2269,6 +2323,28 @@ paths:
   /bots/{botID}/icon:
     parameters:
       - $ref: "#/components/parameters/botIdInPath"
+    get:
+      tags:
+        - bot
+      description: 指定したBotのアイコンを取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: 取得できませんでした。指定したBotは存在しません。
     put:
       tags:
         - bot

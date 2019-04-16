@@ -10,6 +10,7 @@ import (
 type UpdateBotArgs struct {
 	DisplayName null.String
 	Description null.String
+	WebhookURL  null.String
 	Privileged  null.Bool
 }
 

@@ -10,9 +10,14 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/validator"
 	"go.uber.org/zap"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -140,6 +145,7 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 	var req struct {
 		DisplayName null.String `json:"displayName" validate:"max=32"`
 		Description null.String `json:"description"`
+		WebhookURL  null.String `json:"webhookUrl"`
 		Privileged  null.Bool   `json:"privileged"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
@@ -150,15 +156,25 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "displayName is empty")
 	}
 
-	if req.Privileged.Valid {
-		if getRequestUser(c).Role != role.Admin.ID() {
-			return echo.NewHTTPError(http.StatusForbidden)
+	if req.WebhookURL.Valid {
+		w := req.WebhookURL.String
+
+		if err := validator.ValidateVar(w, "required,url"); err != nil || !strings.HasPrefix(w, "http") {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid webhookUrl")
 		}
+		if u, _ := url.Parse(w); utils.IsPrivateHost(u.Hostname()) {
+			return echo.NewHTTPError(http.StatusBadRequest, "prohibited webhookUrl host")
+		}
+	}
+
+	if req.Privileged.Valid && getRequestUser(c).Role != role.Admin.ID() {
+		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
 	args := repository.UpdateBotArgs{
 		DisplayName: req.DisplayName,
 		Description: req.Description,
+		WebhookURL:  req.WebhookURL,
 		Privileged:  req.Privileged,
 	}
 
@@ -252,6 +268,38 @@ func (h *Handlers) PutBotEvents(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+// GetBotIcon GET /bots/:botID/icon
+func (h *Handlers) GetBotIcon(c echo.Context) error {
+	b := getBotFromContext(c)
+
+	// ユーザー取得
+	user, err := h.Repo.GetUser(b.BotUserID)
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// ファイルメタ取得
+	meta, err := h.Repo.GetFileMeta(user.Icon)
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	// ファイルオープン
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	defer file.Close()
+
+	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
+	c.Response().Header().Set(headerETag, strconv.Quote(meta.Hash))
+	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
+	return nil
 }
 
 // PutBotIcon PUT /bots/:botID/icon
