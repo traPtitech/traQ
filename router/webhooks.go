@@ -127,10 +127,8 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	a := repository.UpdateWebhookArgs{
-		Name:        req.Name,
-		Description: req.Description,
-		Secret:      req.Secret,
+	if req.Name.Valid && len(req.Name.String) == 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "name is empty")
 	}
 
 	if req.ChannelID.Valid {
@@ -147,10 +145,16 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 		if !ch.IsPublic {
 			return echo.NewHTTPError(http.StatusBadRequest)
 		}
-		a.ChannelID = req.ChannelID
 	}
 
-	if err := h.Repo.UpdateWebhook(w.GetID(), a); err != nil {
+	args := repository.UpdateWebhookArgs{
+		Name:        req.Name,
+		Description: req.Description,
+		ChannelID:   req.ChannelID,
+		Secret:      req.Secret,
+	}
+
+	if err := h.Repo.UpdateWebhook(w.GetID(), args); err != nil {
 		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}

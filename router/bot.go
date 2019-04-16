@@ -146,15 +146,20 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	args := repository.UpdateBotArgs{
-		DisplayName: req.DisplayName,
-		Description: req.Description,
+	if req.DisplayName.Valid && len(req.DisplayName.String) == 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "displayName is empty")
 	}
+
 	if req.Privileged.Valid {
 		if getRequestUser(c).Role != role.Admin.ID() {
 			return echo.NewHTTPError(http.StatusForbidden)
 		}
-		args.Privileged = req.Privileged
+	}
+
+	args := repository.UpdateBotArgs{
+		DisplayName: req.DisplayName,
+		Description: req.Description,
+		Privileged:  req.Privileged,
 	}
 
 	if err := h.Repo.UpdateBot(b.ID, args); err != nil {
