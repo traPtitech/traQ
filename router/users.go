@@ -270,12 +270,13 @@ func (h *Handlers) PostUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "the name's user has already existed")
 	}
 
-	if _, err := h.Repo.CreateUser(req.Name, req.Password, role.User); err != nil {
+	user, err := h.Repo.CreateUser(req.Name, req.Password, role.User)
+	if err != nil {
 		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	return c.NoContent(http.StatusCreated)
+	return c.JSON(http.StatusCreated, map[string]interface{}{"id": user.ID})
 }
 
 func (h *Handlers) formatUser(user *model.User) *UserForResponse {
