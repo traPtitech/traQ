@@ -58,14 +58,14 @@ func blockByMessageChannel(h *Handlers, bot *model.Bot, c echo.Context) (bool, e
 	return blockByChannelID(h, bot, c, getMessageFromContext(c).ChannelID)
 }
 
-func blockByChannelID(h *Handlers, bot *model.Bot, c echo.Context, channelId uuid.UUID) (bool, error) {
+func blockByChannelID(h *Handlers, bot *model.Bot, c echo.Context, channelID uuid.UUID) (bool, error) {
 	ids, err := h.Repo.GetParticipatingChannelIDsByBot(bot.ID)
 	if err != nil {
 		return false, err
 	}
 
 	for _, v := range ids {
-		if v == channelId {
+		if v == channelID {
 			return true, nil
 		}
 	}
