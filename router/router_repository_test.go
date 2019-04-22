@@ -81,6 +81,10 @@ type TestRepository struct {
 	OAuth2TokensLock          sync.RWMutex
 }
 
+func (repo *TestRepository) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) {
+	panic("implement me")
+}
+
 func (repo *TestRepository) UpdateBot(id uuid.UUID, args repository.UpdateBotArgs) error {
 	panic("implement me")
 }

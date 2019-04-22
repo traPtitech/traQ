@@ -238,6 +238,21 @@ func (repo *RepositoryImpl) GetBotByID(id uuid.UUID) (*model.Bot, error) {
 	return &b, nil
 }
 
+// GetBotByBotUserID Botを取得します
+func (repo *RepositoryImpl) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) {
+	if id == uuid.Nil {
+		return nil, repository.ErrNotFound
+	}
+	var b model.Bot
+	if err := repo.db.Where(&model.Bot{BotUserID: id}).First(&b).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, repository.ErrNotFound
+		}
+		return nil, err
+	}
+	return &b, nil
+}
+
 // GetBotByCode BotCodeからBotを取得します
 func (repo *RepositoryImpl) GetBotByCode(code string) (*model.Bot, error) {
 	if len(code) == 0 {

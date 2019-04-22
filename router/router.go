@@ -19,6 +19,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	// middleware preparation
 	requires := AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := RequestBodyLengthLimit
+	botGuard := h.BotGuard
 
 	api := e.Group("/api/1.0", h.UserAuthenticate())
 	{
@@ -30,21 +31,21 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			{
 				apiUsersMe.GET("", h.GetMe, requires(permission.GetMe))
 				apiUsersMe.PATCH("", h.PatchMe, requires(permission.EditMe))
-				apiUsersMe.PUT("/password", h.PutPassword, requires(permission.ChangeMyPassword))
+				apiUsersMe.PUT("/password", h.PutPassword, requires(permission.ChangeMyPassword), botGuard(blockAlways))
 				apiUsersMe.GET("/icon", h.GetMyIcon, requires(permission.DownloadFile))
 				apiUsersMe.PUT("/icon", h.PutMyIcon, requires(permission.ChangeMyIcon))
 				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
 				apiUsersMe.GET("/groups", h.GetMyBelongingGroup)
-				apiUsersMe.GET("/notification", h.GetMyNotificationChannels, requires(permission.GetNotificationStatus))
-				apiUsersMe.GET("/tokens", h.GetMyTokens, requires(permission.GetMyTokens))
-				apiUsersMe.DELETE("/tokens/:tokenID", h.DeleteMyToken, requires(permission.RevokeMyToken))
-				apiUsersMeSessions := apiUsersMe.Group("/sessions")
+				apiUsersMe.GET("/notification", h.GetMyNotificationChannels, requires(permission.GetNotificationStatus), botGuard(blockAlways))
+				apiUsersMe.GET("/tokens", h.GetMyTokens, requires(permission.GetMyTokens), botGuard(blockAlways))
+				apiUsersMe.DELETE("/tokens/:tokenID", h.DeleteMyToken, requires(permission.RevokeMyToken), botGuard(blockAlways))
+				apiUsersMeSessions := apiUsersMe.Group("/sessions", botGuard(blockAlways))
 				{
 					apiUsersMeSessions.GET("", h.GetMySessions, requires(permission.GetMySessions))
 					apiUsersMeSessions.DELETE("", h.DeleteAllMySessions, requires(permission.DeleteMySessions))
 					apiUsersMeSessions.DELETE("/:referenceID", h.DeleteMySession, requires(permission.DeleteMySessions))
 				}
-				apiUsersMeClips := apiUsersMe.Group("/clips")
+				apiUsersMeClips := apiUsersMe.Group("/clips", botGuard(blockAlways))
 				{
 					apiUsersMeClips.GET("", h.GetClips, requires(permission.GetClip))
 					apiUsersMeClips.POST("", h.PostClip, requires(permission.CreateClip))
@@ -67,7 +68,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 						}
 					}
 				}
-				apiUsersMeStars := apiUsersMe.Group("/stars")
+				apiUsersMeStars := apiUsersMe.Group("/stars", botGuard(blockAlways))
 				{
 					apiUsersMeStars.GET("", h.GetStars, requires(permission.GetStar))
 					apiUsersMeStarsCid := apiUsersMeStars.Group("/:channelID", h.ValidateChannelID(true))
@@ -76,12 +77,12 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 						apiUsersMeStarsCid.DELETE("", h.DeleteStars, requires(permission.DeleteStar))
 					}
 				}
-				apiUsersMeUnread := apiUsersMe.Group("/unread")
+				apiUsersMeUnread := apiUsersMe.Group("/unread", botGuard(blockAlways))
 				{
 					apiUsersMeUnread.GET("", h.GetUnread, requires(permission.GetUnread))
 					apiUsersMeUnread.DELETE("/:channelID", h.DeleteUnread, requires(permission.DeleteUnread))
 				}
-				apiUsersMeMute := apiUsersMe.Group("/mute")
+				apiUsersMeMute := apiUsersMe.Group("/mute", botGuard(blockAlways))
 				{
 					apiUsersMeMute.GET("", h.GetMutedChannelIDs, requires(permission.GetMutedChannels))
 					apiUsersMeMuteCid := apiUsersMeMute.Group("/:channelID", h.ValidateChannelID(false))
@@ -111,42 +112,55 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				}
 			}
 		}
-		apiHeartBeat := api.Group("/heartbeat")
+		apiHeartBeat := api.Group("/heartbeat", botGuard(blockAlways))
 		{
 			apiHeartBeat.GET("", h.GetHeartbeat, requires(permission.GetHeartbeat))
 			apiHeartBeat.POST("", h.PostHeartbeat, requires(permission.PostHeartbeat))
 		}
 		apiChannels := api.Group("/channels")
 		{
-			apiChannels.GET("", h.GetChannels, requires(permission.GetChannel))
+			apiChannels.GET("", h.GetChannels, requires(permission.GetChannel), botGuard(blockAlways))
 			apiChannels.POST("", h.PostChannels, requires(permission.CreateChannel))
-			apiChannelsCid := apiChannels.Group("/:channelID", h.ValidateChannelID(false))
+			apiChannelsCid := apiChannels.Group("/:channelID", h.ValidateChannelID(false), botGuard(blockByChannelIdQuery))
 			{
 				apiChannelsCid.GET("", h.GetChannelByChannelID, requires(permission.GetChannel))
 				apiChannelsCid.PATCH("", h.PatchChannelByChannelID, requires(permission.EditChannel))
 				apiChannelsCid.DELETE("", h.DeleteChannelByChannelID, requires(permission.DeleteChannel))
 				apiChannelsCid.PUT("/parent", h.PutChannelParent, requires(permission.ChangeParentChannel))
 				apiChannelsCid.POST("/children", h.PostChannelChildren, requires(permission.CreateChannel))
-				apiChannelsCid.GET("/topic", h.GetTopic, requires(permission.GetTopic))
-				apiChannelsCid.PUT("/topic", h.PutTopic, requires(permission.EditTopic))
-				apiChannelsCid.GET("/messages", h.GetMessagesByChannelID, requires(permission.GetMessage))
-				apiChannelsCid.POST("/messages", h.PostMessage, bodyLimit(100), requires(permission.PostMessage))
-				apiChannelsCid.GET("/notification", h.GetNotificationStatus, requires(permission.GetNotificationStatus))
-				apiChannelsCid.PUT("/notification", h.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
 				apiChannelsCid.GET("/pins", h.GetChannelPin, requires(permission.GetPin))
-				apiChannelsCid.GET("/bots", h.GetChannelBots, requires(permission.GetBot))
-				apiChannelsCid.POST("/bots", h.PostChannelBots, requires(permission.InstallBot))
-				apiChannelsCid.DELETE("/bots/:botID", h.DeleteChannelBot, requires(permission.UninstallBot), h.ValidateBotID(false))
+				apiChannelsCidTopic := apiChannelsCid.Group("/topic")
+				{
+					apiChannelsCidTopic.GET("", h.GetTopic, requires(permission.GetTopic))
+					apiChannelsCidTopic.PUT("", h.PutTopic, requires(permission.EditTopic))
+				}
+				apiChannelsCidMessages := apiChannelsCid.Group("/messages")
+				{
+					apiChannelsCidMessages.GET("", h.GetMessagesByChannelID, requires(permission.GetMessage))
+					apiChannelsCidMessages.POST("", h.PostMessage, bodyLimit(100), requires(permission.PostMessage))
+				}
+				apiChannelsCidNotification := apiChannelsCid.Group("/notification")
+				{
+					apiChannelsCidNotification.GET("", h.GetNotificationStatus, requires(permission.GetNotificationStatus))
+					apiChannelsCidNotification.PUT("", h.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
+				}
+				apiChannelsCidBots := apiChannelsCid.Group("/bots")
+				{
+					apiChannelsCidBots.GET("", h.GetChannelBots, requires(permission.GetBot))
+					apiChannelsCidBots.POST("", h.PostChannelBots, requires(permission.InstallBot))
+					apiChannelsCidBots.DELETE("/:botID", h.DeleteChannelBot, requires(permission.UninstallBot), h.ValidateBotID(false))
+				}
 			}
 		}
-		apiNotification := api.Group("/notification")
+		apiNotification := api.Group("/notification", botGuard(blockAlways))
 		{
 			apiNotification.GET("", h.NotificationStream, requires(permission.ConnectNotificationStream))
 			apiNotification.POST("/device", h.PostDeviceToken, requires(permission.RegisterDevice))
 		}
 		apiMessages := api.Group("/messages")
 		{
-			apiMessagesMid := apiMessages.Group("/:messageID", h.ValidateMessageID())
+			apiMessages.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports))
+			apiMessagesMid := apiMessages.Group("/:messageID", h.ValidateMessageID(), botGuard(blockByMessageChannel))
 			{
 				apiMessagesMid.GET("", h.GetMessageByID, requires(permission.GetMessage))
 				apiMessagesMid.PUT("", h.PutMessageByID, bodyLimit(100), requires(permission.EditMessage))
@@ -199,7 +213,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiStampsSid.DELETE("", h.DeleteStamp, requires(permission.DeleteStamp))
 			}
 		}
-		apiWebhooks := api.Group("/webhooks")
+		apiWebhooks := api.Group("/webhooks", botGuard(blockAlways))
 		{
 			apiWebhooks.GET("", h.GetWebhooks, requires(permission.GetWebhook))
 			apiWebhooks.POST("", h.PostWebhooks, requires(permission.CreateWebhook))
@@ -230,7 +244,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				}
 			}
 		}
-		apiClients := api.Group("/clients")
+		apiClients := api.Group("/clients", botGuard(blockAlways))
 		{
 			apiClients.GET("", h.GetClients, requires(permission.GetClients))
 			apiClients.POST("", h.PostClients, requires(permission.CreateClient))
@@ -241,7 +255,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiClientCid.DELETE("", h.DeleteClient, requires(permission.DeleteMyClient))
 			}
 		}
-		apiBots := api.Group("/bots")
+		apiBots := api.Group("/bots", botGuard(blockAlways))
 		{
 			apiBots.GET("", h.GetBots, requires(permission.GetBot))
 			apiBots.POST("", h.PostBots, requires(permission.CreateBot))
@@ -260,9 +274,11 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiBotsBid.GET("/channels", h.GetBotJoinChannels, requires(permission.GetBot))
 			}
 		}
-		api.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports))
-		api.GET("/activity/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
-		api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler)
+		apiActivity := api.Group("/activity", botGuard(blockAlways))
+		{
+			apiActivity.GET("/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
+		}
+		api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler, botGuard(blockAlways))
 	}
 
 	apiNoAuth := e.Group("/api/1.0")
