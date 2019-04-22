@@ -2699,7 +2699,7 @@ paths:
         "404":
           description: 削除できませんでした。指定されたクライアントは存在しません。
 
-  /reports:
+  /messages/reports:
     get:
       tags:
         - message

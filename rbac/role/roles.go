@@ -208,8 +208,6 @@ func SetRole(rbac *rbac.RBAC) {
 			permission.RemoveMessageStamp,
 
 			permission.DownloadFile,
-
-			permission.GetHeartbeat,
 		},
 		ManageBot: {
 			permission.GetChannel,
