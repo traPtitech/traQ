@@ -121,7 +121,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		{
 			apiChannels.GET("", h.GetChannels, requires(permission.GetChannel), botGuard(blockAlways))
 			apiChannels.POST("", h.PostChannels, requires(permission.CreateChannel))
-			apiChannelsCid := apiChannels.Group("/:channelID", h.ValidateChannelID(false), botGuard(blockByChannelIdQuery))
+			apiChannelsCid := apiChannels.Group("/:channelID", h.ValidateChannelID(false), botGuard(blockByChannelIDQuery))
 			{
 				apiChannelsCid.GET("", h.GetChannelByChannelID, requires(permission.GetChannel))
 				apiChannelsCid.PATCH("", h.PatchChannelByChannelID, requires(permission.EditChannel))

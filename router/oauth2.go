@@ -49,14 +49,16 @@ const (
 )
 
 const (
+	// Admin 管理者権限
+	Admin model.AccessScope = "admin"
 	// Read 読み込み権限
 	Read model.AccessScope = "read"
 	// PrivateRead プライベートなチャンネルの読み込み権限
-	PrivateRead model.AccessScope = "private_read" //TODO
+	PrivateRead model.AccessScope = "private_read" // TODO
 	// Write 書き込み権限
 	Write model.AccessScope = "write"
 	// PrivateWrite プライベートなチャンネルの書き込み権限
-	PrivateWrite model.AccessScope = "private_write" //TODO
+	PrivateWrite model.AccessScope = "private_write" // TODO
 	// Bot Botユーザー
 	Bot model.AccessScope = "bot"
 	// ManageBot Botの管理権限
@@ -64,6 +66,7 @@ const (
 )
 
 var list = map[model.AccessScope]gorbac.Role{
+	Admin:        role.Admin,
 	Read:         role.ReadUser,
 	PrivateRead:  role.PrivateReadUser,
 	Write:        role.WriteUser,
@@ -73,6 +76,9 @@ var list = map[model.AccessScope]gorbac.Role{
 }
 
 func validScope(s model.AccessScope) bool {
+	if s == Admin {
+		return false
+	}
 	_, ok := list[s]
 	return ok
 }

@@ -48,17 +48,17 @@ func blockAlways(h *Handlers, bot *model.Bot, c echo.Context) (bool, error) {
 	return true, nil
 }
 
-// blockByChannelIdQuery BOTが参加しているチャンネル以外へのリクエストを拒否
-func blockByChannelIdQuery(h *Handlers, bot *model.Bot, c echo.Context) (bool, error) {
-	return blockByChannelId(h, bot, c, getRequestParamAsUUID(c, paramChannelID))
+// blockByChannelIDQuery BOTが参加しているチャンネル以外へのリクエストを拒否
+func blockByChannelIDQuery(h *Handlers, bot *model.Bot, c echo.Context) (bool, error) {
+	return blockByChannelID(h, bot, c, getRequestParamAsUUID(c, paramChannelID))
 }
 
 // blockByMessageChannel BOTが参加しているチャンネル以外のメッセージへのリクエストを拒否
 func blockByMessageChannel(h *Handlers, bot *model.Bot, c echo.Context) (bool, error) {
-	return blockByChannelId(h, bot, c, getMessageFromContext(c).ChannelID)
+	return blockByChannelID(h, bot, c, getMessageFromContext(c).ChannelID)
 }
 
-func blockByChannelId(h *Handlers, bot *model.Bot, c echo.Context, channelId uuid.UUID) (bool, error) {
+func blockByChannelID(h *Handlers, bot *model.Bot, c echo.Context, channelId uuid.UUID) (bool, error) {
 	ids, err := h.Repo.GetParticipatingChannelIDsByBot(bot.ID)
 	if err != nil {
 		return false, err
