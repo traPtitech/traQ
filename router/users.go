@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -11,6 +10,7 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -213,28 +213,47 @@ func (h *Handlers) PutUserPassword(c echo.Context) error {
 
 // GetUserIcon GET /users/:userID/icon
 func (h *Handlers) GetUserIcon(c echo.Context) error {
-	user := getUserFromContext(c)
-
-	if hasQuery(c, "thumb") {
-		return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s/thumbnail", user.Icon))
-	}
-
-	return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s", user.Icon))
+	return h.getUserIcon(c, getUserFromContext(c))
 }
 
 // GetMyIcon GET /users/me/icon
 func (h *Handlers) GetMyIcon(c echo.Context) error {
-	user := getRequestUser(c)
-	if hasQuery(c, "thumb") {
-		return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s/thumbnail", user.Icon))
+	return h.getUserIcon(c, getRequestUser(c))
+}
+
+func (h *Handlers) getUserIcon(c echo.Context, user *model.User) error {
+	// ファイルメタ取得
+	meta, err := h.Repo.GetFileMeta(user.Icon)
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s", user.Icon))
+
+	// ファイルオープン
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	defer file.Close()
+
+	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
+	c.Response().Header().Set(headerETag, strconv.Quote(meta.Hash))
+	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
+	return nil
+}
+
+// PutUserIcon PUT /users/:userID/icon
+func (h *Handlers) PutUserIcon(c echo.Context) error {
+	return h.putUserIcon(c, getRequestParamAsUUID(c, paramUserID))
 }
 
 // PutMyIcon PUT /users/me/icon
 func (h *Handlers) PutMyIcon(c echo.Context) error {
-	userID := getRequestUserID(c)
+	return h.putUserIcon(c, getRequestUserID(c))
+}
 
+func (h *Handlers) putUserIcon(c echo.Context, userID uuid.UUID) error {
 	// file確認
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
@@ -252,7 +271,7 @@ func (h *Handlers) PutMyIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.NoContent(http.StatusNoContent)
 }
 
 // PatchMe PATCH /users/me

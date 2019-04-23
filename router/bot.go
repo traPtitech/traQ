@@ -16,7 +16,6 @@ import (
 	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -281,25 +280,7 @@ func (h *Handlers) GetBotIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	// ファイルメタ取得
-	meta, err := h.Repo.GetFileMeta(user.Icon)
-	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	// ファイルオープン
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
-	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	defer file.Close()
-
-	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
-	c.Response().Header().Set(headerETag, strconv.Quote(meta.Hash))
-	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
-	return nil
+	return h.getUserIcon(c, user)
 }
 
 // PutBotIcon PUT /bots/:botID/icon
@@ -310,24 +291,7 @@ func (h *Handlers) PutBotIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
-	// file確認
-	uploadedFile, err := c.FormFile("file")
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	iconID, err := h.processMultipartFormIconUpload(c, uploadedFile)
-	if err != nil {
-		return err
-	}
-
-	// アイコン変更
-	if err := h.Repo.ChangeUserIcon(b.BotUserID, iconID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return c.NoContent(http.StatusNoContent)
+	return h.putUserIcon(c, b.BotUserID)
 }
 
 // PutBotState PUT /bots/:botID/state

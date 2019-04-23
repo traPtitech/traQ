@@ -16,7 +16,6 @@ import (
 	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -245,49 +244,12 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	// ファイルメタ取得
-	meta, err := h.Repo.GetFileMeta(user.Icon)
-	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	// ファイルオープン
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
-	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
-	}
-	defer file.Close()
-
-	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
-	c.Response().Header().Set(headerETag, strconv.Quote(meta.Hash))
-	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
-	return nil
+	return h.getUserIcon(c, user)
 }
 
 // PutWebhookIcon PUT /webhooks/:webhookID/icon
 func (h *Handlers) PutWebhookIcon(c echo.Context) error {
-	w := getWebhookFromContext(c)
-
-	// file確認
-	uploadedFile, err := c.FormFile("file")
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	iconID, err := h.processMultipartFormIconUpload(c, uploadedFile)
-	if err != nil {
-		return err
-	}
-
-	// アイコン変更
-	if err := h.Repo.ChangeUserIcon(w.GetBotUserID(), iconID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	}
-
-	return c.NoContent(http.StatusNoContent)
+	return h.putUserIcon(c, getWebhookFromContext(c).GetBotUserID())
 }
 
 // PostWebhookByGithub POST /webhooks/:webhookID/github
