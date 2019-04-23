@@ -173,6 +173,25 @@ func (h *Handlers) PatchUserByID(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// PutUserStatus PUT /users/:userID/status
+func (h *Handlers) PutUserStatus(c echo.Context) error {
+	userID := getRequestParamAsUUID(c, paramUserID)
+
+	var req struct {
+		Status int `json:"status" validate:"min=0,max=2"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if err := h.Repo.ChangeUserAccountStatus(userID, model.UserAccountStatus(req.Status)); err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 // GetUserIcon GET /users/:userID/icon
 func (h *Handlers) GetUserIcon(c echo.Context) error {
 	user := getUserFromContext(c)

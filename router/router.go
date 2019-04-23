@@ -96,6 +96,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			{
 				apiUsersUID.GET("", h.GetUserByID, requires(permission.GetUser))
 				apiUsersUID.PATCH("", h.PatchUserByID, requires(permission.EditOtherUsers))
+				apiUsersUID.PUT("/status", h.PutUserStatus, requires(permission.EditOtherUsers))
 				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage))
 				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
 				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
