@@ -219,21 +219,40 @@ func (repo *TestRepository) UserExists(id uuid.UUID) (bool, error) {
 	return ok, nil
 }
 
-func (repo *TestRepository) ChangeUserDisplayName(id uuid.UUID, displayName string) error {
+func (repo *TestRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	if utf8.RuneCountInString(displayName) > 64 {
-		return errors.New("displayName must be <=64 characters")
-	}
 	repo.UsersLock.Lock()
+	defer repo.UsersLock.Unlock()
+
 	u, ok := repo.Users[id]
-	if ok {
-		u.DisplayName = displayName
+	if !ok {
+		return repository.ErrNotFound
+	}
+
+	changed := false
+	if args.DisplayName.Valid {
+		if utf8.RuneCountInString(args.DisplayName.String) > 64 {
+			return repository.ArgError("args.DisplayName", "DisplayName must be shorter than 64 characters")
+		}
+		u.DisplayName = args.DisplayName.String
+		changed = true
+	}
+	if args.TwitterID.Valid {
+		if len(args.TwitterID.String) > 0 && !validator.TwitterIDRegex.MatchString(args.TwitterID.String) {
+			return repository.ArgError("args.TwitterID", "invalid TwitterID")
+		}
+		u.TwitterID = args.TwitterID.String
+	}
+	if args.Role.Valid {
+		u.Role = args.Role.String
+	}
+
+	if changed {
 		u.UpdatedAt = time.Now()
 		repo.Users[id] = u
 	}
-	repo.UsersLock.Unlock()
 	return nil
 }
 
@@ -263,24 +282,6 @@ func (repo *TestRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
 	u, ok := repo.Users[id]
 	if ok {
 		u.Icon = fileID
-		u.UpdatedAt = time.Now()
-		repo.Users[id] = u
-	}
-	repo.UsersLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) ChangeUserTwitterID(id uuid.UUID, twitterID string) error {
-	if id == uuid.Nil {
-		return repository.ErrNilID
-	}
-	if err := validator.ValidateVar(twitterID, "twitterid"); err != nil {
-		return err
-	}
-	repo.UsersLock.Lock()
-	u, ok := repo.Users[id]
-	if ok {
-		u.TwitterID = twitterID
 		u.UpdatedAt = time.Now()
 		repo.Users[id] = u
 	}

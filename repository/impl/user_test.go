@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
+	"gopkg.in/guregu/null.v3"
 	"strings"
 	"testing"
 )
@@ -76,6 +77,109 @@ func TestRepositoryImpl_GetUserByName(t *testing.T) {
 	}
 }
 
+func TestRepositoryImpl_UpdateUser(t *testing.T) {
+	t.Parallel()
+	repo, _, _, user := setupWithUser(t, common)
+
+	t.Run("No Args", func(t *testing.T) {
+		t.Parallel()
+		assert, _ := assertAndRequire(t)
+
+		assert.NoError(repo.UpdateUser(user.ID, repository.UpdateUserArgs{}))
+	})
+
+	t.Run("Nil ID", func(t *testing.T) {
+		t.Parallel()
+		assert, _ := assertAndRequire(t)
+		assert.EqualError(repo.UpdateUser(uuid.Nil, repository.UpdateUserArgs{}), repository.ErrNilID.Error())
+	})
+
+	t.Run("Unknown User", func(t *testing.T) {
+		t.Parallel()
+		assert, _ := assertAndRequire(t)
+		assert.EqualError(repo.UpdateUser(uuid.Must(uuid.NewV4()), repository.UpdateUserArgs{}), repository.ErrNotFound.Error())
+	})
+
+	t.Run("DisplayName", func(t *testing.T) {
+		t.Parallel()
+
+		user := mustMakeUser(t, repo, random)
+
+		t.Run("Failed", func(t *testing.T) {
+			assert, _ := assertAndRequire(t)
+
+			err := repo.UpdateUser(user.ID, repository.UpdateUserArgs{DisplayName: null.StringFrom(strings.Repeat("a", 65))})
+			if assert.IsType(&repository.ArgumentError{}, err) {
+				assert.Equal("args.DisplayName", err.(*repository.ArgumentError).FieldName)
+			}
+		})
+
+		t.Run("Success", func(t *testing.T) {
+			assert, require := assertAndRequire(t)
+			newDN := utils.RandAlphabetAndNumberString(30)
+
+			if assert.NoError(repo.UpdateUser(user.ID, repository.UpdateUserArgs{DisplayName: null.StringFrom(newDN)})) {
+				u, err := repo.GetUser(user.ID)
+				require.NoError(err)
+				assert.Equal(newDN, u.DisplayName)
+			}
+		})
+	})
+
+	t.Run("TwitterID", func(t *testing.T) {
+		t.Parallel()
+
+		user := mustMakeUser(t, repo, random)
+
+		t.Run("Failed", func(t *testing.T) {
+			assert, _ := assertAndRequire(t)
+
+			err := repo.UpdateUser(user.ID, repository.UpdateUserArgs{TwitterID: null.StringFrom("ああああ")})
+			if assert.IsType(&repository.ArgumentError{}, err) {
+				assert.Equal("args.TwitterID", err.(*repository.ArgumentError).FieldName)
+			}
+		})
+
+		t.Run("Success1", func(t *testing.T) {
+			assert, require := assertAndRequire(t)
+			newTwitter := "aiueo"
+
+			if assert.NoError(repo.UpdateUser(user.ID, repository.UpdateUserArgs{TwitterID: null.StringFrom(newTwitter)})) {
+				u, err := repo.GetUser(user.ID)
+				require.NoError(err)
+				assert.Equal(newTwitter, u.TwitterID)
+			}
+		})
+
+		t.Run("Success2", func(t *testing.T) {
+			assert, require := assertAndRequire(t)
+			newTwitter := ""
+
+			if assert.NoError(repo.UpdateUser(user.ID, repository.UpdateUserArgs{TwitterID: null.StringFrom(newTwitter)})) {
+				u, err := repo.GetUser(user.ID)
+				require.NoError(err)
+				assert.Equal(newTwitter, u.TwitterID)
+			}
+		})
+	})
+
+	t.Run("Role", func(t *testing.T) {
+		t.Parallel()
+
+		user := mustMakeUser(t, repo, random)
+
+		t.Run("Success", func(t *testing.T) {
+			assert, require := assertAndRequire(t)
+
+			if assert.NoError(repo.UpdateUser(user.ID, repository.UpdateUserArgs{Role: null.StringFrom("admin")})) {
+				u, err := repo.GetUser(user.ID)
+				require.NoError(err)
+				assert.Equal("admin", u.Role)
+			}
+		})
+	})
+}
+
 func TestRepositoryImpl_ChangeUserPassword(t *testing.T) {
 	t.Parallel()
 	repo, assert, require, user := setupWithUser(t, common)
@@ -102,36 +206,6 @@ func TestRepositoryImpl_ChangeUserIcon(t *testing.T) {
 		require.NoError(err)
 		assert.Equal(newIcon, u.Icon)
 	}
-}
-
-func TestRepositoryImpl_ChangeUserDisplayName(t *testing.T) {
-	t.Parallel()
-	repo, assert, require, user := setupWithUser(t, common)
-
-	newDN := uuid.Must(uuid.NewV4()).String()
-
-	if assert.NoError(repo.ChangeUserDisplayName(user.ID, newDN)) {
-		u, err := repo.GetUser(user.ID)
-		require.NoError(err)
-		assert.Equal(newDN, u.DisplayName)
-	}
-
-	assert.Error(repo.ChangeUserDisplayName(user.ID, strings.Repeat("a", 100)))
-}
-
-func TestRepositoryImpl_ChangeUserTwitterID(t *testing.T) {
-	t.Parallel()
-	repo, assert, require, user := setupWithUser(t, common)
-
-	newTwitter := "aiueo"
-
-	if assert.NoError(repo.ChangeUserTwitterID(user.ID, newTwitter)) {
-		u, err := repo.GetUser(user.ID)
-		require.NoError(err)
-		assert.Equal(newTwitter, u.TwitterID)
-	}
-
-	assert.Error(repo.ChangeUserTwitterID(user.ID, "あああああ"))
 }
 
 func TestRepositoryImpl_ChangeUserAccountStatus(t *testing.T) {

@@ -4,7 +4,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
+	"gopkg.in/guregu/null.v3"
 	"strings"
 	"testing"
 
@@ -123,7 +125,7 @@ func TestHandlers_PatchMe(t *testing.T) {
 	t.Run("Successful2", func(t *testing.T) {
 		t.Parallel()
 		user := mustMakeUser(t, repo, random)
-		require.NoError(t, repo.ChangeUserDisplayName(user.ID, "test"))
+		require.NoError(t, repo.UpdateUser(user.ID, repository.UpdateUserArgs{DisplayName: null.StringFrom("test")}))
 
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/users/me").
@@ -215,6 +217,86 @@ func TestHandlers_PutPassword(t *testing.T) {
 		u, err := repo.GetUser(user.ID)
 		require.NoError(t, err)
 		assert.NoError(t, model.AuthenticateUser(u, new))
+	})
+}
+
+func TestHandlers_PutUserPassword(t *testing.T) {
+	t.Parallel()
+	repo, server, _, _, session, adminSession, user, _ := setupWithUsers(t, common4)
+
+	t.Run("NotLoggedIn", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/{userID}/password", user.ID).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("Forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/{userID}/password", user.ID).
+			WithCookie(sessions.CookieName, session).
+			WithJSON(map[string]string{"newPassword": "aaaaaaaaaaaaa"}).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("invalid body", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/{userID}/password", user.ID).
+			WithCookie(sessions.CookieName, adminSession).
+			WithJSON(map[string]interface{}{"newPassword": false}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("invalid password1", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/{userID}/password", user.ID).
+			WithCookie(sessions.CookieName, adminSession).
+			WithJSON(map[string]string{"newPassword": "a"}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("invalid password2", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/{userID}/password", user.ID).
+			WithCookie(sessions.CookieName, adminSession).
+			WithJSON(map[string]string{"newPassword": "アイウエオ"}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("invalid password3", func(t *testing.T) {
+		t.Parallel()
+		e := makeExp(t, server)
+		e.PUT("/api/1.0/users/{userID}/password", user.ID).
+			WithCookie(sessions.CookieName, adminSession).
+			WithJSON(map[string]string{"newPassword": strings.Repeat("a", 33)}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		user := mustMakeUser(t, repo, random)
+
+		e := makeExp(t, server)
+		newPass := strings.Repeat("a", 20)
+		e.PUT("/api/1.0/users/{userID}/password", user.ID).
+			WithCookie(sessions.CookieName, adminSession).
+			WithJSON(map[string]string{"newPassword": newPass}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		u, err := repo.GetUser(user.ID)
+		require.NoError(t, err)
+		assert.NoError(t, model.AuthenticateUser(u, newPass))
 	})
 }
 

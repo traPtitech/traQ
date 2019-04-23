@@ -15,4 +15,6 @@ var (
 	ChangeMyIcon = gorbac.NewStdPermission("change_my_icon")
 	// ChangeMyPassword 自ユーザーパスワード変更権限
 	ChangeMyPassword = gorbac.NewStdPermission("change_my_password")
+	// EditOtherUsers 他ユーザー情報変更権限
+	EditOtherUsers = gorbac.NewStdPermission("edit_other_users")
 )

@@ -77,7 +77,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 	// データ初期化
 	data := map[string]string{
 		"title":     "traQ",
-		"icon":      fmt.Sprintf("%s/api/1.0/users/%s/icon?thumb", m.origin, message.UserID),
+		"icon":      fmt.Sprintf("%s/api/1.0/public/icon/%s", m.origin, mUser.Icon),
 		"vibration": "[1000, 1000, 1000]",
 		"tag":       fmt.Sprintf("c:%s", message.ChannelID),
 		"badge":     fmt.Sprintf("%s/static/badge.png", m.origin),

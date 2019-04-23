@@ -95,9 +95,13 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			apiUsersUID := apiUsers.Group("/:userID", h.ValidateUserID(false))
 			{
 				apiUsersUID.GET("", h.GetUserByID, requires(permission.GetUser))
+				apiUsersUID.PATCH("", h.PatchUserByID, requires(permission.EditOtherUsers))
+				apiUsersUID.PUT("/status", h.PutUserStatus, requires(permission.EditOtherUsers))
+				apiUsersUID.PUT("/password", h.PutUserPassword, requires(permission.EditOtherUsers))
 				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage))
 				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
 				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
+				apiUsersUID.PUT("/icon", h.PutUserIcon, requires(permission.EditOtherUsers))
 				apiUsersUID.GET("/notification", h.GetNotificationChannels, requires(permission.GetNotificationStatus))
 				apiUsersUID.GET("/groups", h.GetUserBelongingGroup)
 				apiUsersUIDTags := apiUsersUID.Group("/tags")

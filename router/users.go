@@ -1,16 +1,16 @@
 package router
 
 import (
-	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
-	"github.com/traPtitech/traQ/utils/validator"
 	"go.uber.org/zap"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -152,30 +152,108 @@ func (h *Handlers) GetUserByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, userDetail)
 }
 
-// GetUserIcon GET /users/:userID/icon
-func (h *Handlers) GetUserIcon(c echo.Context) error {
-	user := getUserFromContext(c)
+// PatchUserByID PATCH /users/:userID
+func (h *Handlers) PatchUserByID(c echo.Context) error {
+	userID := getRequestParamAsUUID(c, paramUserID)
 
-	if hasQuery(c, "thumb") {
-		return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s/thumbnail", user.Icon))
+	var req struct {
+		DisplayName null.String `json:"displayName" validate:"max=64"`
+		TwitterID   null.String `json:"twitterId" validate:"twitterid"`
+		Role        null.String `json:"role"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s", user.Icon))
+	if err := h.Repo.UpdateUser(userID, repository.UpdateUserArgs{DisplayName: req.DisplayName, TwitterID: req.TwitterID, Role: req.Role}); err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// PutUserStatus PUT /users/:userID/status
+func (h *Handlers) PutUserStatus(c echo.Context) error {
+	userID := getRequestParamAsUUID(c, paramUserID)
+
+	var req struct {
+		Status int `json:"status" validate:"min=0,max=2"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if err := h.Repo.ChangeUserAccountStatus(userID, model.UserAccountStatus(req.Status)); err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// PutUserPassword PUT /users/:userID/password
+func (h *Handlers) PutUserPassword(c echo.Context) error {
+	userID := getRequestParamAsUUID(c, paramUserID)
+
+	var req struct {
+		NewPassword string `json:"newPassword" validate:"password"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if err := h.Repo.ChangeUserPassword(userID, req.NewPassword); err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// GetUserIcon GET /users/:userID/icon
+func (h *Handlers) GetUserIcon(c echo.Context) error {
+	return h.getUserIcon(c, getUserFromContext(c))
 }
 
 // GetMyIcon GET /users/me/icon
 func (h *Handlers) GetMyIcon(c echo.Context) error {
-	user := getRequestUser(c)
-	if hasQuery(c, "thumb") {
-		return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s/thumbnail", user.Icon))
+	return h.getUserIcon(c, getRequestUser(c))
+}
+
+func (h *Handlers) getUserIcon(c echo.Context, user *model.User) error {
+	// ファイルメタ取得
+	meta, err := h.Repo.GetFileMeta(user.Icon)
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-	return c.Redirect(http.StatusFound, fmt.Sprintf("/api/1.0/files/%s", user.Icon))
+
+	// ファイルオープン
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return c.NoContent(http.StatusInternalServerError)
+	}
+	defer file.Close()
+
+	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
+	c.Response().Header().Set(headerETag, strconv.Quote(meta.Hash))
+	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
+	return nil
+}
+
+// PutUserIcon PUT /users/:userID/icon
+func (h *Handlers) PutUserIcon(c echo.Context) error {
+	return h.putUserIcon(c, getRequestParamAsUUID(c, paramUserID))
 }
 
 // PutMyIcon PUT /users/me/icon
 func (h *Handlers) PutMyIcon(c echo.Context) error {
-	userID := getRequestUserID(c)
+	return h.putUserIcon(c, getRequestUserID(c))
+}
 
+func (h *Handlers) putUserIcon(c echo.Context, userID uuid.UUID) error {
 	// file確認
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
@@ -193,36 +271,24 @@ func (h *Handlers) PutMyIcon(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.NoContent(http.StatusNoContent)
 }
 
 // PatchMe PATCH /users/me
 func (h *Handlers) PatchMe(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	req := struct {
-		DisplayName *string `json:"displayName"`
-		TwitterID   string  `json:"twitterId"   validate:"twitterid"`
-	}{}
+	var req struct {
+		DisplayName null.String `json:"displayName" validate:"max=32"`
+		TwitterID   null.String `json:"twitterId"   validate:"twitterid"`
+	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if req.DisplayName != nil {
-		if err := validator.ValidateVar(*req.DisplayName, "max=32"); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err)
-		}
-		if err := h.Repo.ChangeUserDisplayName(userID, *req.DisplayName); err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
-	if len(req.TwitterID) > 0 {
-		if err := h.Repo.ChangeUserTwitterID(userID, req.TwitterID); err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if err := h.Repo.UpdateUser(userID, repository.UpdateUserArgs{DisplayName: req.DisplayName, TwitterID: req.TwitterID}); err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return c.NoContent(http.StatusNoContent)

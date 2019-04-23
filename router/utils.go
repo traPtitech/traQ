@@ -99,9 +99,9 @@ type Handlers struct {
 type HandlerConfig struct {
 	// ImageMagickPath ImageMagickの実行パス
 	ImageMagickPath string
-	//AccessTokenExp アクセストークンの有効時間(秒)
+	// AccessTokenExp アクセストークンの有効時間(秒)
 	AccessTokenExp int
-	//IsRefreshEnabled リフレッシュトークンを発行するかどうか
+	// IsRefreshEnabled リフレッシュトークンを発行するかどうか
 	IsRefreshEnabled bool
 }
 
@@ -223,7 +223,7 @@ func (h *Handlers) processStillImage(c echo.Context, src io.Reader, maxWidth, ma
 }
 
 func (h *Handlers) processGifImage(c echo.Context, imagemagickPath string, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //10秒以内に終わらないファイルは無効
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // 10秒以内に終わらないファイルは無効
 	defer cancel()
 
 	b, err := imagemagick.ResizeAnimationGIF(ctx, imagemagickPath, src, maxWidth, maxHeight, false)
@@ -292,7 +292,9 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	return l
 }
 
+/*
 func hasQuery(c echo.Context, query string) bool {
 	_, ok := c.QueryParams()[query]
 	return ok
 }
+*/

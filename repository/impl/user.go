@@ -2,7 +2,6 @@ package impl
 
 import (
 	"encoding/hex"
-	"errors"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
@@ -213,19 +212,52 @@ func (repo *RepositoryImpl) UserExists(id uuid.UUID) (bool, error) {
 	return c > 0, err
 }
 
-// ChangeUserDisplayName ユーザーの表示名を変更します
-func (repo *RepositoryImpl) ChangeUserDisplayName(id uuid.UUID, displayName string) error {
+// UpdateUser ユーザー情報を更新します
+func (repo *RepositoryImpl) UpdateUser(id uuid.UUID, args repository.UpdateUserArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	if utf8.RuneCountInString(displayName) > 64 {
-		return errors.New("displayName must be <=64 characters")
+	var (
+		u       model.User
+		changed bool
+	)
+	err := repo.transact(func(tx *gorm.DB) error {
+		if err := tx.First(&u, model.User{ID: id}).Error; err != nil {
+			if gorm.IsRecordNotFoundError(err) {
+				return repository.ErrNotFound
+			}
+			return err
+		}
+
+		changes := map[string]interface{}{}
+		if args.DisplayName.Valid {
+			if utf8.RuneCountInString(args.DisplayName.String) > 64 {
+				return repository.ArgError("args.DisplayName", "DisplayName must be shorter than 64 characters")
+			}
+			changes["display_name"] = args.DisplayName.String
+		}
+		if args.TwitterID.Valid {
+			if len(args.TwitterID.String) > 0 && !validator.TwitterIDRegex.MatchString(args.TwitterID.String) {
+				return repository.ArgError("args.TwitterID", "invalid TwitterID")
+			}
+			changes["twitter_id"] = args.TwitterID.String
+		}
+		if args.Role.Valid {
+			changes["role"] = args.Role.String
+		}
+
+		if len(changes) > 0 {
+			if err := tx.Model(&u).Updates(changes).Error; err != nil {
+				return err
+			}
+			changed = true
+		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
-	result := repo.db.Model(&model.User{ID: id}).Update("display_name", displayName)
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected > 0 {
+	if changed {
 		repo.hub.Publish(hub.Message{
 			Name: event.UserUpdated,
 			Fields: hub.Fields{
@@ -242,22 +274,10 @@ func (repo *RepositoryImpl) ChangeUserPassword(id uuid.UUID, password string) er
 		return repository.ErrNilID
 	}
 	salt := utils.GenerateSalt()
-	result := repo.db.Model(&model.User{ID: id}).Updates(map[string]interface{}{
+	return repo.db.Model(&model.User{ID: id}).Updates(map[string]interface{}{
 		"salt":     hex.EncodeToString(salt),
 		"password": hex.EncodeToString(utils.HashPassword(password, salt)),
-	})
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserUpdated,
-			Fields: hub.Fields{
-				"user_id": id,
-			},
-		})
-	}
-	return nil
+	}).Error
 }
 
 // ChangeUserIcon ユーザーのアイコンを変更します
@@ -279,17 +299,6 @@ func (repo *RepositoryImpl) ChangeUserIcon(id, fileID uuid.UUID) error {
 		})
 	}
 	return nil
-}
-
-// ChangeUserTwitterID ユーザーのTwitterIDを変更します
-func (repo *RepositoryImpl) ChangeUserTwitterID(id uuid.UUID, twitterID string) error {
-	if id == uuid.Nil {
-		return repository.ErrNilID
-	}
-	if err := validator.ValidateVar(twitterID, "twitterid"); err != nil {
-		return err
-	}
-	return repo.db.Model(&model.User{ID: id}).Update("twitter_id", twitterID).Error
 }
 
 // ChangeUserAccountStatus ユーザーのアカウント状態を変更します
