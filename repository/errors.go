@@ -14,3 +14,19 @@ var (
 	// ErrInvalidArgs 汎用エラー 引数が不正
 	ErrInvalidArgs = errors.New("invalid args")
 )
+
+// ArgumentError 引数エラー
+type ArgumentError struct {
+	FieldName string
+	Message   string
+}
+
+// Error Messageを返します
+func (ae *ArgumentError) Error() string {
+	return ae.Message
+}
+
+// ArgError 引数エラーを発生させます
+func ArgError(field, message string) *ArgumentError {
+	return &ArgumentError{FieldName: field, Message: message}
+}

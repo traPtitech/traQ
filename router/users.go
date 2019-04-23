@@ -8,8 +8,8 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
-	"github.com/traPtitech/traQ/utils/validator"
 	"go.uber.org/zap"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"time"
 )
@@ -152,6 +152,27 @@ func (h *Handlers) GetUserByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, userDetail)
 }
 
+// PatchUserByID PATCH /users/:userID
+func (h *Handlers) PatchUserByID(c echo.Context) error {
+	userID := getRequestParamAsUUID(c, paramUserID)
+
+	var req struct {
+		DisplayName null.String `json:"displayName" validate:"max=64"`
+		TwitterID   null.String `json:"twitterId" validate:"twitterid"`
+		Role        null.String `json:"role"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if err := h.Repo.UpdateUser(userID, repository.UpdateUserArgs{DisplayName: req.DisplayName, TwitterID: req.TwitterID, Role: req.Role}); err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 // GetUserIcon GET /users/:userID/icon
 func (h *Handlers) GetUserIcon(c echo.Context) error {
 	user := getUserFromContext(c)
@@ -200,29 +221,17 @@ func (h *Handlers) PutMyIcon(c echo.Context) error {
 func (h *Handlers) PatchMe(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	req := struct {
-		DisplayName *string `json:"displayName"`
-		TwitterID   string  `json:"twitterId"   validate:"twitterid"`
-	}{}
+	var req struct {
+		DisplayName null.String `json:"displayName" validate:"max=32"`
+		TwitterID   null.String `json:"twitterId"   validate:"twitterid"`
+	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if req.DisplayName != nil {
-		if err := validator.ValidateVar(*req.DisplayName, "max=32"); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err)
-		}
-		if err := h.Repo.ChangeUserDisplayName(userID, *req.DisplayName); err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
-	if len(req.TwitterID) > 0 {
-		if err := h.Repo.ChangeUserTwitterID(userID, req.TwitterID); err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+	if err := h.Repo.UpdateUser(userID, repository.UpdateUserArgs{DisplayName: req.DisplayName, TwitterID: req.TwitterID}); err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return c.NoContent(http.StatusNoContent)

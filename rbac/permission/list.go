@@ -35,6 +35,7 @@ var list = map[string]gorbac.Permission{
 	EditMe.ID():           EditMe,
 	ChangeMyIcon.ID():     ChangeMyIcon,
 	ChangeMyPassword.ID(): ChangeMyPassword,
+	EditOtherUsers.ID():   EditOtherUsers,
 
 	GetMySessions.ID():    GetMySessions,
 	DeleteMySessions.ID(): DeleteMySessions,
