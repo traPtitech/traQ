@@ -192,6 +192,25 @@ func (h *Handlers) PutUserStatus(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// PutUserPassword PUT /users/:userID/password
+func (h *Handlers) PutUserPassword(c echo.Context) error {
+	userID := getRequestParamAsUUID(c, paramUserID)
+
+	var req struct {
+		NewPassword string `json:"newPassword" validate:"password"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if err := h.Repo.ChangeUserPassword(userID, req.NewPassword); err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 // GetUserIcon GET /users/:userID/icon
 func (h *Handlers) GetUserIcon(c echo.Context) error {
 	user := getUserFromContext(c)
