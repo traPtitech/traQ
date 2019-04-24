@@ -9,6 +9,8 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
@@ -74,6 +76,12 @@ const (
 	unexpectedError = "unexpected error"
 )
 
+var (
+	onlineUsersCounter = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "online_users_total",
+	})
+)
+
 func init() {
 	gob.Register(uuid.UUID{})
 }
@@ -116,6 +124,16 @@ func NewHandlers(rbac *rbac.RBAC, repo repository.Repository, hub *hub.Hub, logg
 		HandlerConfig: config,
 	}
 	go h.stampEventSubscriber(hub.Subscribe(10, event.StampCreated, event.StampUpdated, event.StampDeleted))
+	go func() {
+		for v := range hub.Subscribe(1, event.UserOnline, event.UserOffline).Receiver {
+			switch v.Name {
+			case event.UserOnline:
+				onlineUsersCounter.Inc()
+			case event.UserOffline:
+				onlineUsersCounter.Dec()
+			}
+		}
+	}()
 	return h
 }
 

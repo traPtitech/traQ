@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/utils/validator"
 )
@@ -283,6 +284,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			apiActivity.GET("/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
 		}
 		api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler, botGuard(blockAlways))
+		api.GET("/metrics", echo.WrapHandler(promhttp.Handler()), requires(permission.GetMetrics))
 	}
 
 	apiNoAuth := e.Group("/api/1.0")
