@@ -5,6 +5,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -13,6 +15,11 @@ import (
 	"sync"
 	"time"
 )
+
+var sseConnectionsCounter = promauto.NewGauge(prometheus.GaugeOpts{
+	Namespace: "traq",
+	Name:      "sse_connections_total",
+})
 
 // Payload データペイロード型
 type Payload map[string]interface{}
@@ -643,7 +650,7 @@ func (h *Handlers) NotificationStream(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotImplemented, "Server Sent Events is not supported.")
 	}
 
-	//Set headers for SSE
+	// Set headers for SSE
 	c.Response().Header().Set("Content-Type", "text/event-stream")
 	c.Response().Header().Set("Cache-Control", "no-cache, no-transform")
 	c.Response().Header().Set("Connection", "keep-alive")
@@ -656,6 +663,9 @@ func (h *Handlers) NotificationStream(c echo.Context) error {
 		send:         make(chan *eventData, 100),
 	}
 	h.SSE.connect <- client
+
+	sseConnectionsCounter.Inc()
+	defer sseConnectionsCounter.Dec()
 
 	res := c.Response()
 	rw := res.Writer

@@ -175,6 +175,8 @@ func SetRole(rbac *rbac.RBAC) {
 			permission.EditStampCreatedByOthers,
 			permission.DeleteStamp,
 			permission.DeleteFile,
+
+			permission.GetMetrics,
 		},
 		// Botユーザーのパーミッション
 		Bot: {
