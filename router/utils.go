@@ -79,7 +79,7 @@ const (
 var (
 	onlineUsersCounter = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: "traq",
-		Name:      "online_users_total",
+		Name:      "online_users",
 	})
 )
 
