@@ -40,6 +40,7 @@ func (repo *RepositoryImpl) CreateMessage(userID, channelID uuid.UUID, text stri
 			"plain":      plain,
 		},
 	})
+	messagesCounter.Inc()
 	return m, nil
 }
 

@@ -49,6 +49,23 @@ func (repo *RepositoryImpl) Sync() (bool, error) {
 		}
 		return true, err
 	}
+
+	// メトリクス用データ取得
+	if !initialized {
+		initialized = true
+
+		messageNum := 0
+		if err := repo.db.Unscoped().Model(&model.Message{}).Count(&messageNum).Error; err != nil {
+			return false, err
+		}
+		messagesCounter.Add(float64(messageNum))
+
+		channelNum := 0
+		if err := repo.db.Unscoped().Model(&model.Channel{}).Where(&model.Channel{IsPublic: true}).Count(&channelNum).Error; err != nil {
+			return false, err
+		}
+		channelsCounter.Add(float64(channelNum))
+	}
 	return false, nil
 }
 

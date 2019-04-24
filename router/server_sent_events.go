@@ -18,7 +18,7 @@ import (
 
 var sseConnectionsCounter = promauto.NewGauge(prometheus.GaugeOpts{
 	Namespace: "traq",
-	Name:      "sse_connections_total",
+	Name:      "sse_connections",
 })
 
 // Payload データペイロード型

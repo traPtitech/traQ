@@ -8,6 +8,8 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -16,6 +18,11 @@ import (
 	"golang.org/x/exp/utf8string"
 	"google.golang.org/api/option"
 )
+
+var fcmSendCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+	Namespace: "firebase",
+	Name:      "fcm_send_count_total",
+}, []string{"result"})
 
 // FCMManager Firebaseマネージャー構造体
 type FCMManager struct {
@@ -214,6 +221,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 				payload.Token = token
 				err := backoff.Retry(func() error {
 					if _, err := m.messaging.Send(context.Background(), payload); err != nil {
+						fcmSendCounter.WithLabelValues("error").Inc()
 						switch {
 						case messaging.IsRegistrationTokenNotRegistered(err):
 							if err := m.repo.UnregisterDevice(token); err != nil {
@@ -233,6 +241,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 							return err
 						}
 					}
+					fcmSendCounter.WithLabelValues("ok").Inc()
 					return nil
 				}, backoff.NewExponentialBackOff())
 				if err != nil {
