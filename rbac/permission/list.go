@@ -107,8 +107,6 @@ var list = map[string]gorbac.Permission{
 	CreateClient.ID():   CreateClient,
 	EditMyClient.ID():   EditMyClient,
 	DeleteMyClient.ID(): DeleteMyClient,
-
-	GetMetrics.ID(): GetMetrics,
 }
 
 // GetPermission : パーミッション名からgorbac.Permissionを取得します
