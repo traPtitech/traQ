@@ -21,7 +21,7 @@ import (
 	"time"
 )
 
-const messageTTLSeconds = 60 * 60 * 24 * 3 // 2日
+const messageTTLSeconds = 60 * 60 * 24 * 2 // 2日
 var messageTTL = messageTTLSeconds * time.Second
 
 var fcmSendCounter = promauto.NewCounterVec(prometheus.CounterOpts{
