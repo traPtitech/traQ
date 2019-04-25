@@ -17,7 +17,12 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"
 	"google.golang.org/api/option"
+	"strconv"
+	"time"
 )
+
+const messageTTLSeconds = 60 * 60 * 24 * 2 // 2日
+var messageTTL = messageTTLSeconds * time.Second
 
 var fcmSendCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 	Namespace: "firebase",
@@ -203,8 +208,12 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 				Data: data,
 				Android: &messaging.AndroidConfig{
 					Priority: "high",
+					TTL:      &messageTTL,
 				},
 				APNS: &messaging.APNSConfig{
+					Headers: map[string]string{
+						"apns-expiration": strconv.FormatInt(time.Now().Add(messageTTL).Unix(), 10),
+					},
 					Payload: &messaging.APNSPayload{
 						Aps: &messaging.Aps{
 							Alert: &messaging.ApsAlert{
@@ -214,6 +223,11 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 							Sound:    "default",
 							ThreadID: data["tag"],
 						},
+					},
+				},
+				Webpush: &messaging.WebpushConfig{
+					Headers: map[string]string{
+						"TTL": strconv.Itoa(messageTTLSeconds),
 					},
 				},
 			}
