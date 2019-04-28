@@ -15,6 +15,7 @@ type ChannelForResponse struct {
 	ChannelID  string      `json:"channelId"`
 	Name       string      `json:"name"`
 	Parent     string      `json:"parent"`
+	Topic      string      `json:"topic"`
 	Children   []uuid.UUID `json:"children"`
 	Member     []uuid.UUID `json:"member"`
 	Visibility bool        `json:"visibility"`
@@ -52,6 +53,7 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 		entry.ChannelID = ch.ID.String()
 		entry.Name = ch.Name
 		entry.Visibility = ch.IsVisible
+		entry.Topic = ch.Topic
 		entry.Force = ch.IsForced
 		entry.Private = !ch.IsPublic
 		entry.DM = ch.IsDMChannel()
@@ -314,6 +316,7 @@ func (h *Handlers) formatChannel(channel *model.Channel) (response *ChannelForRe
 	response = &ChannelForResponse{
 		ChannelID:  channel.ID.String(),
 		Name:       channel.Name,
+		Topic:      channel.Topic,
 		Visibility: channel.IsVisible,
 		Force:      channel.IsForced,
 		Private:    !channel.IsPublic,
