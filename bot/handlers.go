@@ -5,8 +5,10 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
+	"sync"
 )
 
 type eventHandler func(p *Processor, event string, fields hub.Fields)
@@ -25,22 +27,63 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	embedded := fields["embedded"].([]*message.EmbeddedInfo)
 	plain := fields["plain"].(string)
 
-	bots, err := p.repo.GetBotsByChannel(m.ChannelID)
+	ch, err := p.repo.GetChannel(m.ChannelID)
 	if err != nil {
-		p.logger.Error("failed to GetBotsByChannel", zap.Error(err))
-		return
-	}
-	bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(MessageCreated), botUserIDNotEqualsFilter(m.UserID))
-	if len(bots) == 0 {
+		p.logger.Error("failed to GetChannel", zap.Error(err))
 		return
 	}
 
-	payload := messageCreatedPayload{
-		basePayload: makeBasePayload(),
-		Message:     makeMessagePayload(m, embedded, plain),
-	}
+	if ch.IsDMChannel() {
+		ids, err := p.repo.GetPrivateChannelMemberIDs(ch.ID)
+		if err != nil {
+			p.logger.Error("failed to GetPrivateChannelMemberIDs", zap.Error(err))
+			return
+		}
 
-	multicast(p, MessageCreated, &payload, bots)
+		var id uuid.UUID
+		for _, v := range ids {
+			if v != m.UserID {
+				id = v
+				break
+			}
+		}
+
+		bot, err := p.repo.GetBotByBotUserID(id)
+		if err != nil {
+			if err != repository.ErrNotFound {
+				p.logger.Error("failed to GetBotByBotUserID", zap.Error(err))
+			}
+			return
+		}
+		if !filterBot(p, bot, stateFilter(model.BotActive), eventFilter(DirectMessageCreated), botUserIDNotEqualsFilter(m.UserID)) {
+			return
+		}
+
+		payload := directMessageCreatedPayload{
+			basePayload: makeBasePayload(),
+			UserID:      m.UserID,
+			Message:     makeMessagePayload(m, embedded, plain),
+		}
+
+		multicast(p, DirectMessageCreated, &payload, []*model.Bot{bot})
+	} else {
+		bots, err := p.repo.GetBotsByChannel(m.ChannelID)
+		if err != nil {
+			p.logger.Error("failed to GetBotsByChannel", zap.Error(err))
+			return
+		}
+		bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(MessageCreated), botUserIDNotEqualsFilter(m.UserID))
+		if len(bots) == 0 {
+			return
+		}
+
+		payload := messageCreatedPayload{
+			basePayload: makeBasePayload(),
+			Message:     makeMessagePayload(m, embedded, plain),
+		}
+
+		multicast(p, MessageCreated, &payload, bots)
+	}
 }
 
 func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
@@ -181,7 +224,13 @@ func multicast(p *Processor, ev model.BotEvent, payload interface{}, targets []*
 	}
 	defer release()
 
+	var wg sync.WaitGroup
 	for _, bot := range targets {
-		p.sendEvent(bot, ev, buf)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			p.sendEvent(bot, ev, buf)
+		}()
 	}
+	wg.Wait()
 }

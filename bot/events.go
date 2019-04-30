@@ -13,6 +13,9 @@ const (
 	// MessageCreated メッセージ作成イベント
 	MessageCreated model.BotEvent = "MESSAGE_CREATED"
 
+	// DirectMessageCreated ダイレクトメッセージ作成イベント
+	DirectMessageCreated model.BotEvent = "DIRECT_MESSAGE_CREATED"
+
 	// ChannelCreated チャンネル作成イベント
 	ChannelCreated model.BotEvent = "CHANNEL_CREATED"
 
@@ -21,12 +24,13 @@ const (
 )
 
 var eventSet = map[model.BotEvent]bool{
-	Ping:           true,
-	Joined:         true,
-	Left:           true,
-	MessageCreated: true,
-	ChannelCreated: true,
-	UserCreated:    true,
+	Ping:                 true,
+	Joined:               true,
+	Left:                 true,
+	MessageCreated:       true,
+	DirectMessageCreated: true,
+	ChannelCreated:       true,
+	UserCreated:          true,
 }
 
 // IsEvent 引数の文字列がボットイベントかどうか
