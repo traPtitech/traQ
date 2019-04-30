@@ -226,6 +226,7 @@ func multicast(p *Processor, ev model.BotEvent, payload interface{}, targets []*
 
 	var wg sync.WaitGroup
 	for _, bot := range targets {
+		bot := bot
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
