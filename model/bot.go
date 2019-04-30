@@ -129,6 +129,8 @@ type BotEventLog struct {
 	RequestID uuid.UUID `gorm:"type:char(36);not null;primary_key"                json:"requestId"`
 	BotID     uuid.UUID `gorm:"type:char(36);not null;index:bot_id_date_time_idx" json:"botId"`
 	Event     BotEvent  `gorm:"type:varchar(30);not null"                         json:"event"`
+	Body      string    `gorm:"type:text"                                         json:"-"`
+	Error     string    `gorm:"type:text"                                         json:"-"`
 	Code      int       `gorm:"not null;default:0"                                json:"code"`
 	DateTime  time.Time `gorm:"precision:6;index:bot_id_date_time_idx"            json:"dateTime"`
 }

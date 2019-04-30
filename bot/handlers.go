@@ -11,7 +11,7 @@ import (
 
 type eventHandler func(p *Processor, event string, fields hub.Fields)
 
-var eventHandlers = map[string]eventHandler{
+var eventHandlerSet = map[string]eventHandler{
 	event.BotJoined:      botJoinedAndLeftHandler,
 	event.BotLeft:        botJoinedAndLeftHandler,
 	event.BotPingRequest: botPingRequestHandler,

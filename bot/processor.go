@@ -44,14 +44,14 @@ func NewProcessor(repo repository.Repository, hub *hub.Hub, logger *zap.Logger) 
 		},
 	}
 	go func() {
-		events := make([]string, 0, len(eventHandlers))
-		for k := range eventHandlers {
+		events := make([]string, 0, len(eventHandlerSet))
+		for k := range eventHandlerSet {
 			events = append(events, k)
 		}
 
 		sub := hub.Subscribe(100, events...)
 		for ev := range sub.Receiver {
-			h, ok := eventHandlers[ev.Name]
+			h, ok := eventHandlerSet[ev.Name]
 			if ok {
 				go h(p, ev.Name, ev.Fields)
 			}
@@ -76,6 +76,8 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 			RequestID: reqID,
 			BotID:     b.ID,
 			Event:     event,
+			Body:      string(body),
+			Error:     err.Error(),
 			Code:      -1,
 			DateTime:  time.Now(),
 		}); err != nil {
@@ -89,6 +91,7 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 		RequestID: reqID,
 		BotID:     b.ID,
 		Event:     event,
+		Body:      string(body),
 		Code:      res.StatusCode,
 		DateTime:  time.Now(),
 	}); err != nil {
