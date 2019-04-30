@@ -6,10 +6,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
 	"net/http"
 	"sync"
@@ -46,50 +44,16 @@ func NewProcessor(repo repository.Repository, hub *hub.Hub, logger *zap.Logger) 
 		},
 	}
 	go func() {
-		sub := hub.Subscribe(10, event.MessageCreated)
-		for ev := range sub.Receiver {
-			m := ev.Fields["message"].(*model.Message)
-			e := ev.Fields["embedded"].([]*message.EmbeddedInfo)
-			plain := ev.Fields["plain"].(string)
-			go p.createMessageHandler(m, e, plain)
+		events := make([]string, 0, len(eventHandlerSet))
+		for k := range eventHandlerSet {
+			events = append(events, k)
 		}
-	}()
-	go func() {
-		sub := hub.Subscribe(1, event.BotPingRequest)
+
+		sub := hub.Subscribe(100, events...)
 		for ev := range sub.Receiver {
-			botID := ev.Fields["bot_id"].(uuid.UUID)
-			bot, err := repo.GetBotByID(botID)
-			if err != nil {
-				logger.Error("failed to GetBotByID", zap.Error(err), zap.Stringer("bot_id", botID))
-				continue
-			}
-			p.pingHandler(bot)
-		}
-	}()
-	go func() {
-		sub := hub.Subscribe(10, event.BotJoined, event.BotLeft)
-		for ev := range sub.Receiver {
-			botID := ev.Fields["bot_id"].(uuid.UUID)
-			chID := ev.Fields["channel_id"].(uuid.UUID)
-			switch ev.Name {
-			case event.BotJoined:
-				go p.joinedAndLeftHandler(botID, chID, Joined)
-			case event.BotLeft:
-				go p.joinedAndLeftHandler(botID, chID, Left)
-			}
-		}
-	}()
-	go func() {
-		sub := hub.Subscribe(100,
-			event.ChannelCreated,
-			event.UserCreated,
-		)
-		for ev := range sub.Receiver {
-			switch ev.Name {
-			case event.ChannelCreated:
-				go p.channelCreatedHandler(ev.Fields["channel_id"].(uuid.UUID), ev.Fields["private"].(bool))
-			case event.UserCreated:
-				go p.userCreatedHandler(ev.Fields["user"].(*model.User))
+			h, ok := eventHandlerSet[ev.Name]
+			if ok {
+				go h(p, ev.Name, ev.Fields)
 			}
 		}
 	}()
@@ -112,6 +76,8 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 			RequestID: reqID,
 			BotID:     b.ID,
 			Event:     event,
+			Body:      string(body),
+			Error:     err.Error(),
 			Code:      -1,
 			DateTime:  time.Now(),
 		}); err != nil {
@@ -125,6 +91,7 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 		RequestID: reqID,
 		BotID:     b.ID,
 		Event:     event,
+		Body:      string(body),
 		Code:      res.StatusCode,
 		DateTime:  time.Now(),
 	}); err != nil {

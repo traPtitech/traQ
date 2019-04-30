@@ -58,6 +58,13 @@ func blockByMessageChannel(h *Handlers, bot *model.Bot, c echo.Context) (bool, e
 	return blockByChannelID(h, bot, c, getMessageFromContext(c).ChannelID)
 }
 
+// blockUnlessSubscribingEvent BOTが指定したイベントを購読していない場合にリクエストを拒否
+func blockUnlessSubscribingEvent(event model.BotEvent) botGuardFunc {
+	return func(h *Handlers, bot *model.Bot, c echo.Context) (b bool, e error) {
+		return bot.SubscribeEvents.Contains(event), nil
+	}
+}
+
 func blockByChannelID(h *Handlers, bot *model.Bot, c echo.Context, channelID uuid.UUID) (bool, error) {
 	ids, err := h.Repo.GetParticipatingChannelIDsByBot(bot.ID)
 	if err != nil {

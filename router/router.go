@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/utils/validator"
 )
@@ -99,8 +100,8 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiUsersUID.PATCH("", h.PatchUserByID, requires(permission.EditOtherUsers))
 				apiUsersUID.PUT("/status", h.PutUserStatus, requires(permission.EditOtherUsers))
 				apiUsersUID.PUT("/password", h.PutUserPassword, requires(permission.EditOtherUsers))
-				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage))
-				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
+				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage), botGuard(blockUnlessSubscribingEvent(bot.DirectMessageCreated)))
+				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage), botGuard(blockUnlessSubscribingEvent(bot.DirectMessageCreated)))
 				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
 				apiUsersUID.PUT("/icon", h.PutUserIcon, requires(permission.EditOtherUsers))
 				apiUsersUID.GET("/notification", h.GetNotificationChannels, requires(permission.GetNotificationStatus))
@@ -125,14 +126,14 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		apiChannels := api.Group("/channels")
 		{
 			apiChannels.GET("", h.GetChannels, requires(permission.GetChannel), botGuard(blockAlways))
-			apiChannels.POST("", h.PostChannels, requires(permission.CreateChannel))
+			apiChannels.POST("", h.PostChannels, requires(permission.CreateChannel), botGuard(blockAlways))
 			apiChannelsCid := apiChannels.Group("/:channelID", h.ValidateChannelID(false), botGuard(blockByChannelIDQuery))
 			{
 				apiChannelsCid.GET("", h.GetChannelByChannelID, requires(permission.GetChannel))
-				apiChannelsCid.PATCH("", h.PatchChannelByChannelID, requires(permission.EditChannel))
-				apiChannelsCid.DELETE("", h.DeleteChannelByChannelID, requires(permission.DeleteChannel))
-				apiChannelsCid.PUT("/parent", h.PutChannelParent, requires(permission.ChangeParentChannel))
-				apiChannelsCid.POST("/children", h.PostChannelChildren, requires(permission.CreateChannel))
+				apiChannelsCid.PATCH("", h.PatchChannelByChannelID, requires(permission.EditChannel), botGuard(blockAlways))
+				apiChannelsCid.DELETE("", h.DeleteChannelByChannelID, requires(permission.DeleteChannel), botGuard(blockAlways))
+				apiChannelsCid.PUT("/parent", h.PutChannelParent, requires(permission.ChangeParentChannel), botGuard(blockAlways))
+				apiChannelsCid.POST("/children", h.PostChannelChildren, requires(permission.CreateChannel), botGuard(blockAlways))
 				apiChannelsCid.GET("/pins", h.GetChannelPin, requires(permission.GetPin))
 				apiChannelsCidTopic := apiChannelsCid.Group("/topic")
 				{
@@ -147,13 +148,13 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiChannelsCidNotification := apiChannelsCid.Group("/notification")
 				{
 					apiChannelsCidNotification.GET("", h.GetNotificationStatus, requires(permission.GetNotificationStatus))
-					apiChannelsCidNotification.PUT("", h.PutNotificationStatus, requires(permission.ChangeNotificationStatus))
+					apiChannelsCidNotification.PUT("", h.PutNotificationStatus, requires(permission.ChangeNotificationStatus), botGuard(blockAlways))
 				}
 				apiChannelsCidBots := apiChannelsCid.Group("/bots")
 				{
 					apiChannelsCidBots.GET("", h.GetChannelBots, requires(permission.GetBot))
-					apiChannelsCidBots.POST("", h.PostChannelBots, requires(permission.InstallBot))
-					apiChannelsCidBots.DELETE("/:botID", h.DeleteChannelBot, requires(permission.UninstallBot), h.ValidateBotID(false))
+					apiChannelsCidBots.POST("", h.PostChannelBots, requires(permission.InstallBot), botGuard(blockAlways))
+					apiChannelsCidBots.DELETE("/:botID", h.DeleteChannelBot, requires(permission.UninstallBot), h.ValidateBotID(false), botGuard(blockAlways))
 				}
 			}
 		}
@@ -170,7 +171,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiMessagesMid.GET("", h.GetMessageByID, requires(permission.GetMessage))
 				apiMessagesMid.PUT("", h.PutMessageByID, bodyLimit(100), requires(permission.EditMessage))
 				apiMessagesMid.DELETE("", h.DeleteMessageByID, requires(permission.DeleteMessage))
-				apiMessagesMid.POST("/report", h.PostMessageReport, requires(permission.ReportMessage))
+				apiMessagesMid.POST("/report", h.PostMessageReport, requires(permission.ReportMessage), botGuard(blockAlways))
 				apiMessagesMid.GET("/stamps", h.GetMessageStamps, requires(permission.GetMessageStamp))
 				apiMessagesMidStampsSid := apiMessagesMid.Group("/stamps/:stampID", h.ValidateStampID(true))
 				{
@@ -210,12 +211,12 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		apiStamps := api.Group("/stamps")
 		{
 			apiStamps.GET("", h.GetStamps, requires(permission.GetStamp))
-			apiStamps.POST("", h.PostStamp, requires(permission.CreateStamp))
+			apiStamps.POST("", h.PostStamp, requires(permission.CreateStamp), botGuard(blockAlways))
 			apiStampsSid := apiStamps.Group("/:stampID", h.ValidateStampID(false))
 			{
 				apiStampsSid.GET("", h.GetStamp, requires(permission.GetStamp))
-				apiStampsSid.PATCH("", h.PatchStamp, requires(permission.EditStamp))
-				apiStampsSid.DELETE("", h.DeleteStamp, requires(permission.DeleteStamp))
+				apiStampsSid.PATCH("", h.PatchStamp, requires(permission.EditStamp), botGuard(blockAlways))
+				apiStampsSid.DELETE("", h.DeleteStamp, requires(permission.DeleteStamp), botGuard(blockAlways))
 			}
 		}
 		apiWebhooks := api.Group("/webhooks", botGuard(blockAlways))

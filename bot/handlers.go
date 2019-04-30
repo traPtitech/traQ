@@ -2,37 +2,94 @@ package bot
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/leandro-lugaresi/hub"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
+	"sync"
 )
 
-func (p *Processor) pingHandler(bot *model.Bot) {
-	payload := pingPayload{
-		basePayload: makeBasePayload(),
-	}
+type eventHandler func(p *Processor, event string, fields hub.Fields)
 
-	buf, release, err := p.makePayloadJSON(&payload)
+var eventHandlerSet = map[string]eventHandler{
+	event.BotJoined:      botJoinedAndLeftHandler,
+	event.BotLeft:        botJoinedAndLeftHandler,
+	event.BotPingRequest: botPingRequestHandler,
+	event.MessageCreated: messageCreatedHandler,
+	event.UserCreated:    userCreatedHandler,
+	event.ChannelCreated: channelCreatedHandler,
+}
+
+func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
+	m := fields["message"].(*model.Message)
+	embedded := fields["embedded"].([]*message.EmbeddedInfo)
+	plain := fields["plain"].(string)
+
+	ch, err := p.repo.GetChannel(m.ChannelID)
 	if err != nil {
-		p.logger.Error("unexpected json encode error", zap.Error(err))
+		p.logger.Error("failed to GetChannel", zap.Error(err))
 		return
 	}
-	defer release()
 
-	if p.sendEvent(bot, Ping, buf) {
-		// OK
-		if err := p.repo.ChangeBotState(bot.ID, model.BotActive); err != nil {
-			p.logger.Error("failed to ChangeBotState", zap.Error(err))
+	if ch.IsDMChannel() {
+		ids, err := p.repo.GetPrivateChannelMemberIDs(ch.ID)
+		if err != nil {
+			p.logger.Error("failed to GetPrivateChannelMemberIDs", zap.Error(err))
+			return
 		}
+
+		var id uuid.UUID
+		for _, v := range ids {
+			if v != m.UserID {
+				id = v
+				break
+			}
+		}
+
+		bot, err := p.repo.GetBotByBotUserID(id)
+		if err != nil {
+			if err != repository.ErrNotFound {
+				p.logger.Error("failed to GetBotByBotUserID", zap.Error(err))
+			}
+			return
+		}
+		if !filterBot(p, bot, stateFilter(model.BotActive), eventFilter(DirectMessageCreated), botUserIDNotEqualsFilter(m.UserID)) {
+			return
+		}
+
+		payload := directMessageCreatedPayload{
+			basePayload: makeBasePayload(),
+			UserID:      m.UserID,
+			Message:     makeMessagePayload(m, embedded, plain),
+		}
+
+		multicast(p, DirectMessageCreated, &payload, []*model.Bot{bot})
 	} else {
-		// NG
-		if err := p.repo.ChangeBotState(bot.ID, model.BotPaused); err != nil {
-			p.logger.Error("failed to ChangeBotState", zap.Error(err))
+		bots, err := p.repo.GetBotsByChannel(m.ChannelID)
+		if err != nil {
+			p.logger.Error("failed to GetBotsByChannel", zap.Error(err))
+			return
 		}
+		bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(MessageCreated), botUserIDNotEqualsFilter(m.UserID))
+		if len(bots) == 0 {
+			return
+		}
+
+		payload := messageCreatedPayload{
+			basePayload: makeBasePayload(),
+			Message:     makeMessagePayload(m, embedded, plain),
+		}
+
+		multicast(p, MessageCreated, &payload, bots)
 	}
 }
 
-func (p *Processor) joinedAndLeftHandler(botID, channelID uuid.UUID, ev model.BotEvent) {
+func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
+	botID := fields["bot_id"].(uuid.UUID)
+	channelID := fields["channel_id"].(uuid.UUID)
+
 	bot, err := p.repo.GetBotByID(botID)
 	if err != nil {
 		p.logger.Error("failed to GetBotByID", zap.Error(err), zap.Stringer("id", botID))
@@ -55,29 +112,39 @@ func (p *Processor) joinedAndLeftHandler(botID, channelID uuid.UUID, ev model.Bo
 	}
 	defer release()
 
-	p.sendEvent(bot, ev, buf)
+	switch ev {
+	case event.BotJoined:
+		p.sendEvent(bot, Joined, buf)
+	case event.BotLeft:
+		p.sendEvent(bot, Left, buf)
+	}
 }
 
-func (p *Processor) createMessageHandler(message *model.Message, embedded []*message.EmbeddedInfo, plain string) {
-	bots, err := p.repo.GetBotsByChannel(message.ChannelID)
+func userCreatedHandler(p *Processor, _ string, fields hub.Fields) {
+	user := fields["user"].(*model.User)
+
+	bots, err := p.repo.GetAllBots()
 	if err != nil {
-		p.logger.Error("failed to GetBotsByChannel", zap.Error(err))
+		p.logger.Error("failed to GetAllBots", zap.Error(err))
 		return
 	}
-	bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(MessageCreated), botUserIDNotEqualsFilter(message.UserID))
+	bots = filterBots(p, bots, privilegedFilter(), stateFilter(model.BotActive), eventFilter(UserCreated))
 	if len(bots) == 0 {
 		return
 	}
 
-	payload := messageCreatedPayload{
+	payload := userCreatedPayload{
 		basePayload: makeBasePayload(),
-		Message:     makeMessagePayload(message, embedded, plain),
+		User:        makeUserPayload(user),
 	}
 
-	multicast(p, MessageCreated, &payload, bots)
+	multicast(p, UserCreated, &payload, bots)
 }
 
-func (p *Processor) channelCreatedHandler(chID uuid.UUID, private bool) {
+func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
+	chID := fields["channel_id"].(uuid.UUID)
+	private := fields["private"].(bool)
+
 	bots, err := p.repo.GetAllBots()
 	if err != nil {
 		p.logger.Error("failed to GetAllBots", zap.Error(err))
@@ -117,23 +184,36 @@ func (p *Processor) channelCreatedHandler(chID uuid.UUID, private bool) {
 	}
 }
 
-func (p *Processor) userCreatedHandler(user *model.User) {
-	bots, err := p.repo.GetAllBots()
+func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
+	botID := fields["bot_id"].(uuid.UUID)
+	bot, err := p.repo.GetBotByID(botID)
 	if err != nil {
-		p.logger.Error("failed to GetAllBots", zap.Error(err))
-		return
-	}
-	bots = filterBots(p, bots, privilegedFilter(), stateFilter(model.BotActive), eventFilter(UserCreated))
-	if len(bots) == 0 {
+		p.logger.Error("failed to GetBotByID", zap.Error(err), zap.Stringer("bot_id", botID))
 		return
 	}
 
-	payload := userCreatedPayload{
+	payload := pingPayload{
 		basePayload: makeBasePayload(),
-		User:        makeUserPayload(user),
 	}
 
-	multicast(p, UserCreated, &payload, bots)
+	buf, release, err := p.makePayloadJSON(&payload)
+	if err != nil {
+		p.logger.Error("unexpected json encode error", zap.Error(err))
+		return
+	}
+	defer release()
+
+	if p.sendEvent(bot, Ping, buf) {
+		// OK
+		if err := p.repo.ChangeBotState(bot.ID, model.BotActive); err != nil {
+			p.logger.Error("failed to ChangeBotState", zap.Error(err))
+		}
+	} else {
+		// NG
+		if err := p.repo.ChangeBotState(bot.ID, model.BotPaused); err != nil {
+			p.logger.Error("failed to ChangeBotState", zap.Error(err))
+		}
+	}
 }
 
 func multicast(p *Processor, ev model.BotEvent, payload interface{}, targets []*model.Bot) {
@@ -144,7 +224,14 @@ func multicast(p *Processor, ev model.BotEvent, payload interface{}, targets []*
 	}
 	defer release()
 
+	var wg sync.WaitGroup
 	for _, bot := range targets {
-		p.sendEvent(bot, ev, buf)
+		bot := bot
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			p.sendEvent(bot, ev, buf)
+		}()
 	}
+	wg.Wait()
 }

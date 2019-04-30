@@ -74,6 +74,12 @@ type messageCreatedPayload struct {
 	Message messagePayload `json:"message"`
 }
 
+type directMessageCreatedPayload struct {
+	basePayload
+	UserID  uuid.UUID      `json:"userId"`
+	Message messagePayload `json:"message"`
+}
+
 type pingPayload struct {
 	basePayload
 }
