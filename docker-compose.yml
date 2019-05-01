@@ -48,7 +48,7 @@ services:
       - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
 
   mysql:
-    image: mariadb:10.3.9
+    image: mariadb:10.0.19
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password

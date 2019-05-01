@@ -37,7 +37,7 @@ init:
 
 .PHONY: up-docker-test-db
 up-docker-test-db:
-	docker run --name traq-test-db -p 3000:3306 -e MYSQL_ROOT_PASSWORD=password -d mariadb:10.4.2 mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+	docker run --name traq-test-db -p 3000:3306 -e MYSQL_ROOT_PASSWORD=password -d mariadb:10.0.19 mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
 	sleep 5
 	TEST_DB_PORT=3000 go run .circleci/init.go
 
