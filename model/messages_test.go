@@ -16,6 +16,11 @@ func TestUnread_TableName(t *testing.T) {
 	assert.Equal(t, "unreads", (&Unread{}).TableName())
 }
 
+func TestChannelLatestMessage_TableName(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "channel_latest_messages", (&ChannelLatestMessage{}).TableName())
+}
+
 func TestMessage_Validate(t *testing.T) {
 	t.Parallel()
 
