@@ -27,6 +27,18 @@ func (m *Message) Validate() error {
 	return validator.ValidateStruct(m)
 }
 
+// ChannelLatestMessage チャンネル別最新メッセージ
+type ChannelLatestMessage struct {
+	ChannelID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	MessageID uuid.UUID `gorm:"type:char(36);not null;"`
+	DateTime  time.Time `gorm:"precision:6;index"`
+}
+
+// TableName テーブル名
+func (m *ChannelLatestMessage) TableName() string {
+	return "channel_latest_messages"
+}
+
 // Unread 未読レコード
 type Unread struct {
 	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key"`

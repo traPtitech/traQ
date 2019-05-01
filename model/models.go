@@ -5,6 +5,7 @@ var (
 	// モデルを追加したら各自ここに追加しなければいけない
 	// **順番注意**
 	Tables = []interface{}{
+		&ChannelLatestMessage{},
 		&BotEventLog{},
 		&BotJoinChannel{},
 		&Bot{},
