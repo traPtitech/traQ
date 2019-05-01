@@ -29,6 +29,10 @@ var (
 		Namespace: "traq",
 		Name:      "channels_count_total",
 	})
+	onlineUsersCounter = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "traq",
+		Name:      "online_users",
+	})
 )
 
 // RepositoryImpl リポジトリ実装

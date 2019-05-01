@@ -58,6 +58,7 @@ func (h *heartbeatImpl) onTick() {
 				s, ok := h.CurrentUserOnlineMap.Load(userStatus.UserID)
 				if ok {
 					if toOffline := s.(*userOnlineStatus).dec(); toOffline {
+						onlineUsersCounter.Dec()
 						h.hub.Publish(hub.Message{
 							Name: event.UserOffline,
 							Fields: hub.Fields{
@@ -387,6 +388,7 @@ func (repo *RepositoryImpl) UpdateHeartbeatStatus(userID, channelID uuid.UUID, s
 	}
 	channelStatus.UserStatuses = append(channelStatus.UserStatuses, userStatus)
 	if toOnline := s.(*userOnlineStatus).inc(); toOnline {
+		onlineUsersCounter.Inc()
 		repo.hub.Publish(hub.Message{
 			Name: event.UserOnline,
 			Fields: hub.Fields{
