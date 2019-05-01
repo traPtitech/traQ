@@ -269,9 +269,9 @@ func (repo *RepositoryImpl) GetChannelLatestMessagesByUserID(userID uuid.UUID, l
 		query = `
 SELECT m.id, m.user_id, m.channel_id, m.text, m.created_at, m.updated_at, m.deleted_at
 FROM channel_latest_messages clm
-         INNER JOIN users_subscribe_channels s ON s.channel_id = m.channel_id
-         INNER JOIN channels c ON m.channel_id = c.id
-         INNER JOIN messages m ON clm.channel_id = m.channel_id
+         INNER JOIN users_subscribe_channels s ON clm.channel_id = s.channel_id
+         INNER JOIN messages m ON clm.message_id = m.id
+         INNER JOIN channels c ON clm.channel_id = c.id
 WHERE s.user_id = 'USER_ID'
   AND c.deleted_at IS NULL
   AND c.is_public = TRUE
@@ -282,8 +282,8 @@ ORDER BY clm.date_time DESC
 		query = `
 SELECT m.id, m.user_id, m.channel_id, m.text, m.created_at, m.updated_at, m.deleted_at
 FROM channel_latest_messages clm
-         INNER JOIN channels c ON m.channel_id = c.id
-         INNER JOIN messages m ON clm.channel_id = m.channel_id
+         INNER JOIN messages m ON clm.message_id = m.id
+         INNER JOIN channels c ON clm.channel_id = c.id
 WHERE c.deleted_at IS NULL
   AND c.is_public = TRUE
   AND m.deleted_at IS NULL
