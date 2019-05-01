@@ -27,9 +27,30 @@ func (repo *RepositoryImpl) CreateMessage(userID, channelID uuid.UUID, text stri
 	if err := m.Validate(); err != nil {
 		return nil, err
 	}
-	if err := repo.db.Create(m).Error; err != nil {
+
+	err := repo.transact(func(tx *gorm.DB) error {
+		if err := tx.Create(m).Error; err != nil {
+			return err
+		}
+
+		clm := &model.ChannelLatestMessage{
+			ChannelID: m.ChannelID,
+			MessageID: m.ID,
+			DateTime:  m.CreatedAt,
+		}
+		r := tx.Model(&model.ChannelLatestMessage{ChannelID: channelID}).Updates(clm)
+		if r.Error != nil {
+			return r.Error
+		}
+		if r.RowsAffected == 0 {
+			return tx.Create(clm).Error
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
+
 	embedded, plain := message.Parse(text)
 	repo.hub.Publish(hub.Message{
 		Name: event.MessageCreated,
@@ -240,43 +261,33 @@ func (repo *RepositoryImpl) DeleteUnreadsByChannelID(channelID, userID uuid.UUID
 	return nil
 }
 
-// GetChannelLatestMessagesByUserID 指定したユーザーが閲覧可能な全てのチャンネルの最新のメッセージの一覧を取得します
+// GetChannelLatestMessagesByUserID 指定したユーザーが閲覧可能な全てのパブリックチャンネルの最新のメッセージの一覧を取得します
 func (repo *RepositoryImpl) GetChannelLatestMessagesByUserID(userID uuid.UUID, limit int, subscribeOnly bool) ([]*model.Message, error) {
 	var query string
 	switch {
 	case subscribeOnly:
 		query = `
 SELECT m.id, m.user_id, m.channel_id, m.text, m.created_at, m.updated_at, m.deleted_at
-FROM (
-       SELECT ROW_NUMBER() OVER(PARTITION BY m.channel_id ORDER BY m.created_at DESC) AS r,
-              m.*
-       FROM messages m
-       WHERE m.deleted_at IS NULL
-     ) m
-       INNER JOIN channels c ON m.channel_id = c.id
-       INNER JOIN (SELECT channel_id
-                   FROM users_subscribe_channels
-                   WHERE user_id = 'USER_ID'
-                   UNION
-                   SELECT channel_id
-                   FROM users_private_channels
-                   WHERE user_id = 'USER_ID') s ON s.channel_id = m.channel_id
-WHERE m.r = 1 AND c.deleted_at IS NULL
-ORDER BY m.created_at DESC
+FROM channel_latest_messages clm
+         INNER JOIN users_subscribe_channels s ON clm.channel_id = s.channel_id
+         INNER JOIN messages m ON clm.message_id = m.id
+         INNER JOIN channels c ON clm.channel_id = c.id
+WHERE s.user_id = 'USER_ID'
+  AND c.deleted_at IS NULL
+  AND c.is_public = TRUE
+  AND m.deleted_at IS NULL
+ORDER BY clm.date_time DESC
 `
 	default:
 		query = `
 SELECT m.id, m.user_id, m.channel_id, m.text, m.created_at, m.updated_at, m.deleted_at
-FROM (
-       SELECT ROW_NUMBER() OVER(PARTITION BY m.channel_id ORDER BY m.created_at DESC) AS r,
-              m.*
-       FROM messages m
-       WHERE m.deleted_at IS NULL
-     ) m
-       INNER JOIN channels c ON m.channel_id = c.id
-       LEFT JOIN users_private_channels upc ON upc.channel_id = m.channel_id
-WHERE m.r = 1 AND c.deleted_at IS NULL AND (c.is_public = true OR upc.user_id = 'USER_ID')
-ORDER BY m.created_at DESC
+FROM channel_latest_messages clm
+         INNER JOIN messages m ON clm.message_id = m.id
+         INNER JOIN channels c ON clm.channel_id = c.id
+WHERE c.deleted_at IS NULL
+  AND c.is_public = TRUE
+  AND m.deleted_at IS NULL
+ORDER BY clm.date_time DESC
 `
 	}
 
@@ -286,8 +297,7 @@ ORDER BY m.created_at DESC
 	}
 
 	result := make([]*model.Message, 0)
-	err := repo.db.Raw(query).Scan(&result).Error
-	return result, err
+	return result, repo.db.Raw(query).Scan(&result).Error
 }
 
 // GetArchivedMessagesByID アーカイブメッセージを取得します

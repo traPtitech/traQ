@@ -233,7 +233,6 @@ func TestRepositoryImpl_GetChannelLatestMessagesByUserID(t *testing.T) {
 	t.Parallel()
 	repo, _, require, user := setupWithUser(t, ex1)
 
-	// TODO プライベートチャンネルを考慮する
 	var latests []uuid.UUID
 	for j := 0; j < 10; j++ {
 		ch := mustMakeChannel(t, repo, random)
