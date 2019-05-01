@@ -15,7 +15,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/role"
-	repoimpl "github.com/traPtitech/traQ/repository/impl"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -93,7 +93,7 @@ func main() {
 	}
 
 	// Repository
-	repo, err := repoimpl.NewRepositoryImpl(engine, fs, hub)
+	repo, err := repository.NewRepositoryImpl(engine, fs, hub)
 	if err != nil {
 		logger.Fatal("failed to initialize repository", zap.Error(err))
 	}
