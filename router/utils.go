@@ -290,8 +290,8 @@ func getRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
 	return uuid.FromStringOrNil(c.Param(name))
 }
 
-// GetTraceID トレースIDを返します
-func GetTraceID(c echo.Context) string {
+// getTraceID トレースIDを返します
+func getTraceID(c echo.Context) string {
 	v, ok := c.Get(traceIDKey).(string)
 	if ok {
 		return v
@@ -306,7 +306,7 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	if ok {
 		return l
 	}
-	l = h.Logger.With(zap.String("logging.googleapis.com/trace", GetTraceID(c)))
+	l = h.Logger.With(zap.String("logging.googleapis.com/trace", getTraceID(c)))
 	c.Set(loggerKey, l)
 	return l
 }

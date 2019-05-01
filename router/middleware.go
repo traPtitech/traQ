@@ -3,18 +3,55 @@ package router
 import (
 	"fmt"
 	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/logging"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"go.uber.org/zap"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/mikespook/gorbac"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 )
+
+// AccessLoggingMiddleware アクセスログミドルウェア
+func AccessLoggingMiddleware(logger *zap.Logger, excludesHeartbeat bool) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if excludesHeartbeat && strings.HasPrefix(c.Path(), "/api/1.0/heartbeat") {
+				return next(c)
+			}
+
+			start := time.Now()
+			if err := next(c); err != nil {
+				c.Error(err)
+			}
+			stop := time.Now()
+
+			req := c.Request()
+			res := c.Response()
+			logger.Info("", zap.String("logging.googleapis.com/trace", getTraceID(c)), logging.HTTPRequest(&logging.HTTPPayload{
+				RequestMethod: req.Method,
+				Status:        res.Status,
+				UserAgent:     req.UserAgent(),
+				RemoteIP:      c.RealIP(),
+				Referer:       req.Referer(),
+				Protocol:      req.Proto,
+				RequestURL:    req.URL.String(),
+				RequestSize:   req.Header.Get(echo.HeaderContentLength),
+				ResponseSize:  strconv.FormatInt(res.Size, 10),
+				Latency:       strconv.FormatFloat(stop.Sub(start).Seconds(), 'f', 9, 64) + "s",
+			}))
+			return nil
+		}
+	}
+}
 
 // UserAuthenticate User認証するミドルウェア
 func (h *Handlers) UserAuthenticate() echo.MiddlewareFunc {
