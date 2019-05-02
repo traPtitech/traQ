@@ -2384,8 +2384,13 @@ func (repo *TestRepository) CreateWebhook(name, description string, channelID, c
 		UpdatedAt:   time.Now(),
 	}
 
+	repo.WebhooksLock.Lock()
+	repo.UsersLock.Lock()
 	repo.ChannelsLock.RLock()
+	defer repo.UsersLock.Unlock()
+	defer repo.WebhooksLock.Unlock()
 	defer repo.ChannelsLock.RUnlock()
+
 	ch, ok := repo.Channels[channelID]
 	if !ok {
 		return nil, repository.ArgError("channelID", "the Channel is not found")
@@ -2394,12 +2399,8 @@ func (repo *TestRepository) CreateWebhook(name, description string, channelID, c
 		return nil, repository.ArgError("channelID", "private channels are not allowed")
 	}
 
-	repo.WebhooksLock.Lock()
-	repo.UsersLock.Lock()
 	repo.Users[uid] = u
 	repo.Webhooks[bid] = wb
-	repo.UsersLock.Unlock()
-	repo.WebhooksLock.Unlock()
 
 	wb.BotUser = u
 	return &wb, nil
@@ -2412,8 +2413,11 @@ func (repo *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWe
 
 	repo.WebhooksLock.Lock()
 	repo.UsersLock.Lock()
+	repo.ChannelsLock.RLock()
 	defer repo.WebhooksLock.Unlock()
 	defer repo.UsersLock.Unlock()
+	defer repo.ChannelsLock.RUnlock()
+
 	wb, ok := repo.Webhooks[id]
 	if !ok {
 		return repository.ErrNotFound
@@ -2425,8 +2429,6 @@ func (repo *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWe
 		wb.UpdatedAt = time.Now()
 	}
 	if args.ChannelID.Valid {
-		repo.ChannelsLock.RLock()
-		defer repo.ChannelsLock.RUnlock()
 		ch, ok := repo.Channels[args.ChannelID.UUID]
 		if !ok {
 			return repository.ArgError("args.ChannelID", "the Channel is not found")
