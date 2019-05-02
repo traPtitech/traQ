@@ -241,7 +241,7 @@ func mustMakeUserGroup(t *testing.T, repo repository.Repository, name string, ad
 	if name == random {
 		name = utils.RandAlphabetAndNumberString(20)
 	}
-	g, err := repo.CreateUserGroup(name, "", adminID)
+	g, err := repo.CreateUserGroup(name, "", "", adminID)
 	require.NoError(t, err)
 	return g
 }

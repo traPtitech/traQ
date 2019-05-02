@@ -11,17 +11,34 @@ import (
 )
 
 // CreateUserGroup ユーザーグループを作成します
-func (repo *GormRepository) CreateUserGroup(name, description string, adminID uuid.UUID) (*model.UserGroup, error) {
+func (repo *GormRepository) CreateUserGroup(name, description, gType string, adminID uuid.UUID) (*model.UserGroup, error) {
 	g := &model.UserGroup{
 		ID:          uuid.Must(uuid.NewV4()),
 		Name:        name,
 		Description: description,
+		Type:        gType,
 		AdminUserID: adminID,
 	}
-	if err := g.Validate(); err != nil {
-		return nil, err
-	}
 	err := repo.transact(func(tx *gorm.DB) error {
+		// 名前チェック
+		if len(g.Name) == 0 || utf8.RuneCountInString(g.Name) > 30 {
+			return ArgError("name", "Name must be non-empty and shorter than 31 characters")
+		}
+		// ユーザーチェック
+		if exists, err := dbExists(tx, map[string]interface{}{
+			"id":     g.AdminUserID,
+			"status": model.UserAccountStatusActive,
+			"bot":    false,
+		}, (&model.User{}).TableName()); err != nil {
+			return err
+		} else if !exists {
+			return ArgError("AdminUserID", "invalid AdminUserID")
+		}
+		// タイプチェック
+		if utf8.RuneCountInString(g.Type) > 30 {
+			return ArgError("Type", "Type must be shorter than 31 characters")
+		}
+
 		err := tx.Create(g).Error
 		if isMySQLDuplicatedRecordErr(err) {
 			return ErrAlreadyExists
@@ -57,15 +74,14 @@ func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNa
 
 		changes := map[string]interface{}{}
 		if args.Name.Valid {
-			if len(args.Name.String) == 0 && utf8.RuneCountInString(args.Name.String) > 30 {
+			if len(args.Name.String) == 0 || utf8.RuneCountInString(args.Name.String) > 30 {
 				return ArgError("args.Name", "Name must be non-empty and shorter than 31 characters")
 			}
 
-			c := 0
-			if err := tx.Model(&model.UserGroup{}).Where(&model.UserGroup{Name: args.Name.String}).Limit(1).Count(&c).Error; err != nil {
+			// 重複チェック
+			if exists, err := dbExists(tx, &model.UserGroup{Name: args.Name.String}); err != nil {
 				return err
-			}
-			if c > 0 {
+			} else if exists {
 				return ErrAlreadyExists
 			}
 			changes["name"] = args.Name.String
@@ -74,6 +90,16 @@ func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNa
 			changes["description"] = args.Description.String
 		}
 		if args.AdminUserID.Valid {
+			// ユーザーチェック
+			if exists, err := dbExists(tx, map[string]interface{}{
+				"id":     args.AdminUserID.UUID,
+				"status": model.UserAccountStatusActive,
+				"bot":    false,
+			}, (&model.User{}).TableName()); err != nil {
+				return err
+			} else if !exists {
+				return ArgError("args.AdminUserID", "invalid AdminUserID")
+			}
 			changes["admin_user_id"] = args.AdminUserID.UUID
 		}
 		if args.Type.Valid {

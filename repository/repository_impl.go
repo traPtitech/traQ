@@ -155,3 +155,14 @@ func isMySQLDuplicatedRecordErr(err error) bool {
 	}
 	return merr.Number == errMySQLDuplicatedRecord
 }
+
+func dbExists(tx *gorm.DB, where interface{}, tableName ...string) (exists bool, err error) {
+	c := 0
+	if len(tableName) > 0 {
+		tx = tx.Table(tableName[0])
+	} else {
+		tx = tx.Model(where)
+	}
+	err = tx.Where(where).Limit(1).Count(&c).Error
+	return c > 0, err
+}
