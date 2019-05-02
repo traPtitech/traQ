@@ -7,7 +7,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// AddStampToMessage メッセージにスタンプを追加します
+// AddStampToMessage implements MessageStampRepository interface.
 func (repo *GormRepository) AddStampToMessage(messageID, stampID, userID uuid.UUID) (ms *model.MessageStamp, err error) {
 	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
 		return nil, ErrNilID
@@ -21,8 +21,9 @@ func (repo *GormRepository) AddStampToMessage(messageID, stampID, userID uuid.UU
 		return nil, err
 	}
 
+	// 楽観的に取得し直す。
 	ms = &model.MessageStamp{}
-	if err := repo.db.Where(&model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID}).Take(ms).Error; err != nil {
+	if err := repo.db.Take(ms, &model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID}).Error; err != nil {
 		return nil, err
 	}
 	repo.hub.Publish(hub.Message{
@@ -38,12 +39,12 @@ func (repo *GormRepository) AddStampToMessage(messageID, stampID, userID uuid.UU
 	return ms, nil
 }
 
-// RemoveStampFromMessage メッセージからスタンプを削除します
+// RemoveStampFromMessage implements MessageStampRepository interface.
 func (repo *GormRepository) RemoveStampFromMessage(messageID, stampID, userID uuid.UUID) (err error) {
 	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
 		return ErrNilID
 	}
-	result := repo.db.Where(&model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID}).Delete(&model.MessageStamp{})
+	result := repo.db.Delete(&model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -60,21 +61,21 @@ func (repo *GormRepository) RemoveStampFromMessage(messageID, stampID, userID uu
 	return nil
 }
 
-// GetMessageStamps メッセージのスタンプを取得します
+// GetMessageStamps implements MessageStampRepository interface.
 func (repo *GormRepository) GetMessageStamps(messageID uuid.UUID) (stamps []*model.MessageStamp, err error) {
 	stamps = make([]*model.MessageStamp, 0)
 	if messageID == uuid.Nil {
 		return
 	}
 	err = repo.db.
-		Joins("JOIN stamps ON messages_stamps.stamp_id = stamps.id AND messages_stamps.message_id = ?", messageID.String()).
+		Joins("JOIN stamps ON messages_stamps.stamp_id = stamps.id AND messages_stamps.message_id = ?", messageID).
 		Order("messages_stamps.updated_at").
 		Find(&stamps).
 		Error
 	return
 }
 
-// GetUserStampHistory ユーザーのスタンプ履歴を最大50件取得します。
+// GetUserStampHistory implements MessageStampRepository interface.
 func (repo *GormRepository) GetUserStampHistory(userID uuid.UUID) (h []*model.UserStampHistory, err error) {
 	h = make([]*model.UserStampHistory, 0)
 	if userID == uuid.Nil {
@@ -82,11 +83,11 @@ func (repo *GormRepository) GetUserStampHistory(userID uuid.UUID) (h []*model.Us
 	}
 	err = repo.db.
 		Table("messages_stamps").
-		Where("user_id = ?", userID.String()).
+		Where("user_id = ?", userID).
 		Group("stamp_id").
 		Select("stamp_id, max(updated_at) AS datetime").
 		Order("datetime DESC").
-		Limit(50).
+		Limit(100).
 		Scan(&h).
 		Error
 	return
