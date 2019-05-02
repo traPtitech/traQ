@@ -8,7 +8,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// CreatePin ピン留めを作成する
+// CreatePin implements PinRepository interface.
 func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, error) {
 	if messageID == uuid.Nil || userID == uuid.Nil {
 		return uuid.Nil, ErrNilID
@@ -32,7 +32,7 @@ func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, e
 	return p.ID, err
 }
 
-// GetPin ピン留めを取得する
+// GetPin implements PinRepository interface.
 func (repo *GormRepository) GetPin(id uuid.UUID) (p *model.Pin, err error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
@@ -40,30 +40,20 @@ func (repo *GormRepository) GetPin(id uuid.UUID) (p *model.Pin, err error) {
 	p = &model.Pin{}
 	err = repo.db.Preload("Message").Where(&model.Pin{ID: id}).Take(p).Error
 	if err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+		return nil, convertError(err)
 	}
-	return p, err
+	return p, nil
 }
 
-// IsPinned 指定したメッセージがピン留めされているかを取得する
+// IsPinned implements PinRepository interface.
 func (repo *GormRepository) IsPinned(messageID uuid.UUID) (bool, error) {
 	if messageID == uuid.Nil {
 		return false, nil
 	}
-	c := 0
-	err := repo.db.
-		Model(&model.Pin{}).
-		Where(&model.Pin{MessageID: messageID}).
-		Limit(1).
-		Count(&c).
-		Error
-	return c > 0, err
+	return dbExists(repo.db, &model.Pin{MessageID: messageID})
 }
 
-// DeletePin ピン留めを削除する
+// DeletePin implements PinRepository interface.
 func (repo *GormRepository) DeletePin(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
@@ -97,7 +87,7 @@ func (repo *GormRepository) DeletePin(id uuid.UUID) error {
 	return nil
 }
 
-// GetPinsByChannelID チャンネルのピン留めを全て取得する
+// GetPinsByChannelID implements PinRepository interface.
 func (repo *GormRepository) GetPinsByChannelID(channelID uuid.UUID) (pins []*model.Pin, err error) {
 	pins = make([]*model.Pin, 0)
 	if channelID == uuid.Nil {

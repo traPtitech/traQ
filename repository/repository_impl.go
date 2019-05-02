@@ -175,3 +175,12 @@ func dbPluck(tx *gorm.DB, where interface{}, column string, dest interface{}, ta
 	}
 	return tx.Where(where).Pluck(column, dest).Error
 }
+
+func convertError(err error) error {
+	switch {
+	case gorm.IsRecordNotFoundError(err):
+		return ErrNotFound
+	default:
+		return err
+	}
+}
