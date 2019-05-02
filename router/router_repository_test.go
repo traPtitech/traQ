@@ -1777,55 +1777,82 @@ func (repo *TestRepository) GetUserStampHistory(userID uuid.UUID) (h []*model.Us
 }
 
 func (repo *TestRepository) CreateStamp(name string, fileID, userID uuid.UUID) (s *model.Stamp, err error) {
-	if fileID == uuid.Nil {
-		return nil, repository.ErrNilID
-	}
-
 	stamp := &model.Stamp{
 		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
-		CreatorID: userID,
 		FileID:    fileID,
+		CreatorID: userID, // uuid.Nilを許容する
 	}
-	if err := stamp.Validate(); err != nil {
-		return nil, err
-	}
+
 	repo.StampsLock.Lock()
+	repo.FilesLock.RLock()
 	defer repo.StampsLock.Unlock()
+	defer repo.FilesLock.RUnlock()
+
+	// 名前チェック
+	if !validator.NameRegex.MatchString(name) {
+		return nil, repository.ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
+	}
+	// 名前重複チェック
 	for _, v := range repo.Stamps {
 		if v.Name == name {
 			return nil, repository.ErrAlreadyExists
 		}
 	}
+	// ファイル存在チェック
+	if fileID == uuid.Nil {
+		return nil, repository.ArgError("fileID", "FileID's file is not found")
+	}
+	if _, ok := repo.Files[fileID]; !ok {
+		return nil, repository.ArgError("fileID", "fileID's file is not found")
+	}
+
 	repo.Stamps[stamp.ID] = *stamp
 	return stamp, nil
 }
 
-func (repo *TestRepository) UpdateStamp(id uuid.UUID, name string, fileID uuid.UUID) error {
+func (repo *TestRepository) UpdateStamp(id uuid.UUID, args repository.UpdateStampArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
 
 	repo.StampsLock.Lock()
+	repo.FilesLock.RLock()
 	defer repo.StampsLock.Unlock()
+	defer repo.FilesLock.RUnlock()
+
 	s, ok := repo.Stamps[id]
-
-	data := map[string]string{}
-	if len(name) > 0 {
-		if err := validator.ValidateVar(name, "name"); err != nil {
-			return err
-		}
-		s.Name = name
-	}
-	if fileID != uuid.Nil {
-		s.FileID = fileID
-	}
-	if len(data) == 0 {
-		return repository.ErrInvalidArgs
-	}
-
 	if !ok {
 		return repository.ErrNotFound
+	}
+
+	if args.Name.Valid {
+		if !validator.NameRegex.MatchString(args.Name.String) {
+			return repository.ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
+		}
+
+		// 重複チェック
+		for _, v := range repo.Stamps {
+			if v.Name == args.Name.String {
+				return repository.ErrAlreadyExists
+			}
+		}
+		s.Name = args.Name.String
+	}
+	if args.FileID.Valid {
+		// 存在チェック
+		if args.FileID.UUID == uuid.Nil {
+			return repository.ArgError("args.FileID", "FileID's file is not found")
+		}
+		if _, ok := repo.Files[args.FileID.UUID]; !ok {
+			return repository.ArgError("fileID", "fileID's file is not found")
+		}
+
+		s.FileID = args.FileID.UUID
+	}
+	if args.CreatorID.Valid {
+		// uuid.Nilを許容する
+		s.CreatorID = args.CreatorID.UUID
 	}
 
 	s.UpdatedAt = time.Now()
@@ -1879,7 +1906,7 @@ func (repo *TestRepository) StampExists(id uuid.UUID) (bool, error) {
 	return ok, nil
 }
 
-func (repo *TestRepository) IsStampNameDuplicate(name string) (bool, error) {
+func (repo *TestRepository) StampNameExists(name string) (bool, error) {
 	if len(name) == 0 {
 		return false, nil
 	}

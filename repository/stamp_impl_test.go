@@ -4,6 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/utils"
+	"gopkg.in/guregu/null.v3"
 	"testing"
 )
 
@@ -14,17 +15,32 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 	fid, err := repo.GenerateIconFile("stamp")
 	require.NoError(err)
 
-	t.Run("nil id", func(t *testing.T) {
+	t.Run("nil file id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateStamp("test", uuid.Nil, user.ID)
-		assert.EqualError(t, err, ErrNilID.Error())
+		_, err := repo.CreateStamp(utils.RandAlphabetAndNumberString(20), uuid.Nil, user.ID)
+		assert.Error(t, err)
 	})
 
 	t.Run("invalid name", func(t *testing.T) {
 		t.Parallel()
 
 		_, err := repo.CreateStamp("あ", fid, user.ID)
+		assert.Error(t, err)
+	})
+
+	t.Run("file not found", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.CreateStamp(utils.RandAlphabetAndNumberString(20), uuid.Must(uuid.NewV4()), user.ID)
+		assert.Error(t, err)
+	})
+
+	t.Run("duplicate name", func(t *testing.T) {
+		t.Parallel()
+		s := mustMakeStamp(t, repo, random, uuid.Nil)
+
+		_, err := repo.CreateStamp(s.Name, fid, user.ID)
 		assert.Error(t, err)
 	})
 
@@ -43,9 +59,6 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 			assert.NotEmpty(s.UpdatedAt)
 			assert.Nil(s.DeletedAt)
 		}
-
-		_, err = repo.CreateStamp(name, fid, user.ID)
-		assert.EqualError(err, ErrAlreadyExists.Error())
 	})
 }
 
@@ -53,30 +66,48 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common)
 
+	s := mustMakeStamp(t, repo, random, uuid.Nil)
+
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.UpdateStamp(uuid.Nil, "", uuid.Nil), ErrNilID.Error())
-	})
-
-	t.Run("invalid name", func(t *testing.T) {
-		t.Parallel()
-
-		s := mustMakeStamp(t, repo, random, uuid.Nil)
-
-		assert.Error(t, repo.UpdateStamp(s.ID, "あ", uuid.Nil))
-	})
-
-	t.Run("invalid args", func(t *testing.T) {
-		t.Parallel()
-
-		assert.EqualError(t, repo.UpdateStamp(uuid.Must(uuid.NewV4()), "", uuid.Nil), ErrInvalidArgs.Error())
+		assert.EqualError(t, repo.UpdateStamp(uuid.Nil, UpdateStampArgs{}), ErrNilID.Error())
 	})
 
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.UpdateStamp(uuid.Must(uuid.NewV4()), "a", uuid.Nil), ErrNotFound.Error())
+		assert.EqualError(t, repo.UpdateStamp(uuid.Must(uuid.NewV4()), UpdateStampArgs{}), ErrNotFound.Error())
+	})
+
+	t.Run("no change", func(t *testing.T) {
+		t.Parallel()
+
+		assert.NoError(t, repo.UpdateStamp(s.ID, UpdateStampArgs{}))
+	})
+
+	t.Run("invalid name", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{Name: null.StringFrom("あ")}))
+	})
+
+	t.Run("duplicate name", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{Name: null.StringFrom(s.Name)}))
+	})
+
+	t.Run("nil file id", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{FileID: uuid.NullUUID{Valid: true}}))
+	})
+
+	t.Run("file not found", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{FileID: uuid.NullUUID{Valid: true, UUID: uuid.Must(uuid.NewV4())}}))
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -88,7 +119,11 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 		require.NoError(err)
 		newName := utils.RandAlphabetAndNumberString(20)
 
-		if assert.NoError(repo.UpdateStamp(s.ID, newName, newFile)) {
+		if assert.NoError(repo.UpdateStamp(s.ID, UpdateStampArgs{
+			Name:      null.StringFrom(newName),
+			FileID:    uuid.NullUUID{Valid: true, UUID: newFile},
+			CreatorID: uuid.NullUUID{Valid: true},
+		})) {
 			a, err := repo.GetStamp(s.ID)
 			require.NoError(err)
 			assert.Equal(newFile, a.FileID)
@@ -207,7 +242,7 @@ func TestRepositoryImpl_StampExists(t *testing.T) {
 	})
 }
 
-func TestRepositoryImpl_IsStampNameDuplicate(t *testing.T) {
+func TestRepositoryImpl_StampNameExists(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common)
 
@@ -216,7 +251,7 @@ func TestRepositoryImpl_IsStampNameDuplicate(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		t.Parallel()
 
-		ok, err := repo.IsStampNameDuplicate("")
+		ok, err := repo.StampNameExists("")
 		if assert.NoError(t, err) {
 			assert.False(t, ok)
 		}
@@ -225,7 +260,7 @@ func TestRepositoryImpl_IsStampNameDuplicate(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		ok, err := repo.IsStampNameDuplicate(utils.RandAlphabetAndNumberString(20))
+		ok, err := repo.StampNameExists(utils.RandAlphabetAndNumberString(20))
 		if assert.NoError(t, err) {
 			assert.False(t, ok)
 		}
@@ -234,7 +269,7 @@ func TestRepositoryImpl_IsStampNameDuplicate(t *testing.T) {
 	t.Run("found", func(t *testing.T) {
 		t.Parallel()
 
-		ok, err := repo.IsStampNameDuplicate(s.Name)
+		ok, err := repo.StampNameExists(s.Name)
 		if assert.NoError(t, err) {
 			assert.True(t, ok)
 		}
