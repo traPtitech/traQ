@@ -35,8 +35,8 @@ var (
 	})
 )
 
-// RepositoryImpl リポジトリ実装
-type RepositoryImpl struct {
+// GormRepository リポジトリ実装
+type GormRepository struct {
 	db  *gorm.DB
 	hub *hub.Hub
 	channelImpl
@@ -45,7 +45,7 @@ type RepositoryImpl struct {
 }
 
 // Sync DBと同期します
-func (repo *RepositoryImpl) Sync() (bool, error) {
+func (repo *GormRepository) Sync() (bool, error) {
 	// スキーマ同期
 	if err := repo.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(model.Tables...).Error; err != nil {
 		return false, fmt.Errorf("failed to sync Table schema: %v", err)
@@ -92,13 +92,13 @@ func (repo *RepositoryImpl) Sync() (bool, error) {
 }
 
 // GetFS ファイルストレージを取得します
-func (repo *RepositoryImpl) GetFS() storage.FileStorage {
+func (repo *GormRepository) GetFS() storage.FileStorage {
 	return repo.FS
 }
 
-// NewRepositoryImpl リポジトリ実装を初期化して生成します
-func NewRepositoryImpl(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub) (Repository, error) {
-	repo := &RepositoryImpl{
+// NewGormRepository リポジトリ実装を初期化して生成します
+func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub) (Repository, error) {
+	repo := &GormRepository{
 		db:  db,
 		hub: hub,
 		fileImpl: fileImpl{
@@ -117,7 +117,7 @@ func NewRepositoryImpl(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub) (Repos
 	return repo, nil
 }
 
-func (repo *RepositoryImpl) transact(txFunc func(tx *gorm.DB) error) (err error) {
+func (repo *GormRepository) transact(txFunc func(tx *gorm.DB) error) (err error) {
 	tx := repo.db.Begin()
 	if err := tx.Error; err != nil {
 		return err

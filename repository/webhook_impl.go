@@ -12,7 +12,7 @@ import (
 	"unicode/utf8"
 )
 
-func (repo *RepositoryImpl) CreateWebhook(name, description string, channelID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
+func (repo *GormRepository) CreateWebhook(name, description string, channelID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
 		return nil, errors.New("invalid name")
 	}
@@ -72,7 +72,7 @@ func (repo *RepositoryImpl) CreateWebhook(name, description string, channelID, c
 }
 
 // UpdateWebhook Webhookを更新します
-func (repo *RepositoryImpl) UpdateWebhook(id uuid.UUID, args UpdateWebhookArgs) error {
+func (repo *GormRepository) UpdateWebhook(id uuid.UUID, args UpdateWebhookArgs) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -141,7 +141,7 @@ func (repo *RepositoryImpl) UpdateWebhook(id uuid.UUID, args UpdateWebhookArgs) 
 }
 
 // DeleteWebhook Webhookをdbから削除
-func (repo *RepositoryImpl) DeleteWebhook(id uuid.UUID) error {
+func (repo *GormRepository) DeleteWebhook(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -172,7 +172,7 @@ func (repo *RepositoryImpl) DeleteWebhook(id uuid.UUID) error {
 }
 
 // GetWebhook Webhookを取得
-func (repo *RepositoryImpl) GetWebhook(id uuid.UUID) (model.Webhook, error) {
+func (repo *GormRepository) GetWebhook(id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -187,7 +187,7 @@ func (repo *RepositoryImpl) GetWebhook(id uuid.UUID) (model.Webhook, error) {
 }
 
 // GetWebhookByBotUserID Webhookを取得
-func (repo *RepositoryImpl) GetWebhookByBotUserID(id uuid.UUID) (model.Webhook, error) {
+func (repo *GormRepository) GetWebhookByBotUserID(id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -202,7 +202,7 @@ func (repo *RepositoryImpl) GetWebhookByBotUserID(id uuid.UUID) (model.Webhook, 
 }
 
 // GetAllWebhooks Webhookを全て取得
-func (repo *RepositoryImpl) GetAllWebhooks() (arr []model.Webhook, err error) {
+func (repo *GormRepository) GetAllWebhooks() (arr []model.Webhook, err error) {
 	var webhooks []*model.WebhookBot
 	err = repo.db.Preload("BotUser").Find(&webhooks).Error
 	if err != nil {
@@ -216,7 +216,7 @@ func (repo *RepositoryImpl) GetAllWebhooks() (arr []model.Webhook, err error) {
 }
 
 // GetWebhooksByCreator 指定した制作者のWebhookを全て取得
-func (repo *RepositoryImpl) GetWebhooksByCreator(creatorID uuid.UUID) (arr []model.Webhook, err error) {
+func (repo *GormRepository) GetWebhooksByCreator(creatorID uuid.UUID) (arr []model.Webhook, err error) {
 	arr = make([]model.Webhook, 0)
 	if creatorID == uuid.Nil {
 		return arr, nil

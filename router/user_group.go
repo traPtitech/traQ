@@ -4,8 +4,10 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"time"
 )
@@ -85,9 +87,10 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 	g := getGroupFromContext(c)
 
 	var req struct {
-		Name        string     `json:"name" validate:"max=30"`
-		Description *string    `json:"description"`
-		AdminUserID *uuid.UUID `json:"adminUserId"`
+		Name        null.String   `json:"name" validate:"max=30"`
+		Description null.String   `json:"description"`
+		AdminUserID uuid.NullUUID `json:"adminUserId"`
+		Type        null.String   `json:"type" validate:"max=30"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -98,26 +101,29 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 		return c.NoContent(http.StatusForbidden)
 	}
 
-	args := repository.UpdateUserGroupNameArgs{
-		Name: req.Name,
-	}
-	if req.Description != nil {
-		args.Description.Valid = true
-		args.Description.String = *req.Description
-	}
-	if req.AdminUserID != nil {
+	if req.AdminUserID.Valid {
 		// ユーザーが存在するか
-		if ok, err := h.Repo.UserExists(*req.AdminUserID); err != nil {
+		if ok, err := h.Repo.UserExists(req.AdminUserID.UUID); err != nil {
 			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return c.NoContent(http.StatusInternalServerError)
 		} else if !ok {
 			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return c.NoContent(http.StatusBadRequest)
 		}
-		args.AdminUserID.Valid = true
-		args.AdminUserID.UUID = *req.AdminUserID
+	}
+	if req.Type.ValueOrZero() == "grade" {
+		// 学年グループは権限が必要
+		if getRequestUser(c).Role != role.Admin.ID() {
+			return c.NoContent(http.StatusForbidden)
+		}
 	}
 
+	args := repository.UpdateUserGroupNameArgs{
+		Name:        req.Name,
+		Description: req.Description,
+		AdminUserID: req.AdminUserID,
+		Type:        req.Type,
+	}
 	if err := h.Repo.UpdateUserGroup(groupID, args); err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:

@@ -8,7 +8,7 @@ import (
 )
 
 // AddStampToMessage メッセージにスタンプを追加します
-func (repo *RepositoryImpl) AddStampToMessage(messageID, stampID, userID uuid.UUID) (ms *model.MessageStamp, err error) {
+func (repo *GormRepository) AddStampToMessage(messageID, stampID, userID uuid.UUID) (ms *model.MessageStamp, err error) {
 	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
 		return nil, ErrNilID
 	}
@@ -39,7 +39,7 @@ func (repo *RepositoryImpl) AddStampToMessage(messageID, stampID, userID uuid.UU
 }
 
 // RemoveStampFromMessage メッセージからスタンプを削除します
-func (repo *RepositoryImpl) RemoveStampFromMessage(messageID, stampID, userID uuid.UUID) (err error) {
+func (repo *GormRepository) RemoveStampFromMessage(messageID, stampID, userID uuid.UUID) (err error) {
 	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
 		return ErrNilID
 	}
@@ -61,7 +61,7 @@ func (repo *RepositoryImpl) RemoveStampFromMessage(messageID, stampID, userID uu
 }
 
 // GetMessageStamps メッセージのスタンプを取得します
-func (repo *RepositoryImpl) GetMessageStamps(messageID uuid.UUID) (stamps []*model.MessageStamp, err error) {
+func (repo *GormRepository) GetMessageStamps(messageID uuid.UUID) (stamps []*model.MessageStamp, err error) {
 	stamps = make([]*model.MessageStamp, 0)
 	if messageID == uuid.Nil {
 		return
@@ -75,7 +75,7 @@ func (repo *RepositoryImpl) GetMessageStamps(messageID uuid.UUID) (stamps []*mod
 }
 
 // GetUserStampHistory ユーザーのスタンプ履歴を最大50件取得します。
-func (repo *RepositoryImpl) GetUserStampHistory(userID uuid.UUID) (h []*model.UserStampHistory, err error) {
+func (repo *GormRepository) GetUserStampHistory(userID uuid.UUID) (h []*model.UserStampHistory, err error) {
 	h = make([]*model.UserStampHistory, 0)
 	if userID == uuid.Nil {
 		return

@@ -9,7 +9,7 @@ import (
 )
 
 // GetClient クライアントIDからクライアントを取得します
-func (repo *RepositoryImpl) GetClient(id string) (*model.OAuth2Client, error) {
+func (repo *GormRepository) GetClient(id string) (*model.OAuth2Client, error) {
 	if len(id) == 0 {
 		return nil, ErrNotFound
 	}
@@ -24,7 +24,7 @@ func (repo *RepositoryImpl) GetClient(id string) (*model.OAuth2Client, error) {
 }
 
 // GetClientsByUser 指定した登録者のクライアントを全て取得します
-func (repo *RepositoryImpl) GetClientsByUser(userID uuid.UUID) ([]*model.OAuth2Client, error) {
+func (repo *GormRepository) GetClientsByUser(userID uuid.UUID) ([]*model.OAuth2Client, error) {
 	cs := make([]*model.OAuth2Client, 0)
 	if userID == uuid.Nil {
 		return cs, nil
@@ -33,12 +33,12 @@ func (repo *RepositoryImpl) GetClientsByUser(userID uuid.UUID) ([]*model.OAuth2C
 }
 
 // SaveClient クライアントを保存します
-func (repo *RepositoryImpl) SaveClient(client *model.OAuth2Client) error {
+func (repo *GormRepository) SaveClient(client *model.OAuth2Client) error {
 	return repo.db.Create(client).Error
 }
 
 // UpdateClient クライアント情報を更新します
-func (repo *RepositoryImpl) UpdateClient(client *model.OAuth2Client) error {
+func (repo *GormRepository) UpdateClient(client *model.OAuth2Client) error {
 	if len(client.ID) == 0 {
 		return ErrNilID
 	}
@@ -54,7 +54,7 @@ func (repo *RepositoryImpl) UpdateClient(client *model.OAuth2Client) error {
 }
 
 // DeleteClient クライアントを削除します
-func (repo *RepositoryImpl) DeleteClient(id string) error {
+func (repo *GormRepository) DeleteClient(id string) error {
 	if len(id) == 0 {
 		return nil
 	}
@@ -72,12 +72,12 @@ func (repo *RepositoryImpl) DeleteClient(id string) error {
 }
 
 // SaveAuthorize 認可データを保存します
-func (repo *RepositoryImpl) SaveAuthorize(data *model.OAuth2Authorize) error {
+func (repo *GormRepository) SaveAuthorize(data *model.OAuth2Authorize) error {
 	return repo.db.Create(data).Error
 }
 
 // GetAuthorize 認可コードから認可データを取得します
-func (repo *RepositoryImpl) GetAuthorize(code string) (*model.OAuth2Authorize, error) {
+func (repo *GormRepository) GetAuthorize(code string) (*model.OAuth2Authorize, error) {
 	if len(code) == 0 {
 		return nil, ErrNotFound
 	}
@@ -92,7 +92,7 @@ func (repo *RepositoryImpl) GetAuthorize(code string) (*model.OAuth2Authorize, e
 }
 
 // DeleteAuthorize 認可コードから認可データを削除します
-func (repo *RepositoryImpl) DeleteAuthorize(code string) error {
+func (repo *GormRepository) DeleteAuthorize(code string) error {
 	if len(code) == 0 {
 		return nil
 	}
@@ -100,7 +100,7 @@ func (repo *RepositoryImpl) DeleteAuthorize(code string) error {
 }
 
 // SaveToken トークンを発行します
-func (repo *RepositoryImpl) IssueToken(client *model.OAuth2Client, userID uuid.UUID, redirectURI string, scope model.AccessScopes, expire int, refresh bool) (*model.OAuth2Token, error) {
+func (repo *GormRepository) IssueToken(client *model.OAuth2Client, userID uuid.UUID, redirectURI string, scope model.AccessScopes, expire int, refresh bool) (*model.OAuth2Token, error) {
 	newToken := &model.OAuth2Token{
 		ID:             uuid.Must(uuid.NewV4()),
 		UserID:         userID,
@@ -121,7 +121,7 @@ func (repo *RepositoryImpl) IssueToken(client *model.OAuth2Client, userID uuid.U
 }
 
 // GetTokenByID トークンIDからトークンを取得します
-func (repo *RepositoryImpl) GetTokenByID(id uuid.UUID) (*model.OAuth2Token, error) {
+func (repo *GormRepository) GetTokenByID(id uuid.UUID) (*model.OAuth2Token, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -136,7 +136,7 @@ func (repo *RepositoryImpl) GetTokenByID(id uuid.UUID) (*model.OAuth2Token, erro
 }
 
 // DeleteTokenByID トークンIDからトークンを削除します
-func (repo *RepositoryImpl) DeleteTokenByID(id uuid.UUID) error {
+func (repo *GormRepository) DeleteTokenByID(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return nil
 	}
@@ -144,7 +144,7 @@ func (repo *RepositoryImpl) DeleteTokenByID(id uuid.UUID) error {
 }
 
 // GetTokenByAccess アクセストークンからトークンを取得します
-func (repo *RepositoryImpl) GetTokenByAccess(access string) (*model.OAuth2Token, error) {
+func (repo *GormRepository) GetTokenByAccess(access string) (*model.OAuth2Token, error) {
 	if len(access) == 0 {
 		return nil, ErrNotFound
 	}
@@ -159,7 +159,7 @@ func (repo *RepositoryImpl) GetTokenByAccess(access string) (*model.OAuth2Token,
 }
 
 // DeleteTokenByAccess アクセストークンからトークンを削除します
-func (repo *RepositoryImpl) DeleteTokenByAccess(access string) error {
+func (repo *GormRepository) DeleteTokenByAccess(access string) error {
 	if len(access) == 0 {
 		return nil
 	}
@@ -167,7 +167,7 @@ func (repo *RepositoryImpl) DeleteTokenByAccess(access string) error {
 }
 
 // GetTokenByRefresh リフレッシュトークンからトークンを取得します
-func (repo *RepositoryImpl) GetTokenByRefresh(refresh string) (*model.OAuth2Token, error) {
+func (repo *GormRepository) GetTokenByRefresh(refresh string) (*model.OAuth2Token, error) {
 	if len(refresh) == 0 {
 		return nil, ErrNotFound
 	}
@@ -182,7 +182,7 @@ func (repo *RepositoryImpl) GetTokenByRefresh(refresh string) (*model.OAuth2Toke
 }
 
 // DeleteTokenByRefresh リフレッシュトークンからトークンを削除します
-func (repo *RepositoryImpl) DeleteTokenByRefresh(refresh string) error {
+func (repo *GormRepository) DeleteTokenByRefresh(refresh string) error {
 	if len(refresh) == 0 {
 		return nil
 	}
@@ -190,7 +190,7 @@ func (repo *RepositoryImpl) DeleteTokenByRefresh(refresh string) error {
 }
 
 // GetTokensByUser 指定したユーザーのトークンを全て取得します
-func (repo *RepositoryImpl) GetTokensByUser(userID uuid.UUID) ([]*model.OAuth2Token, error) {
+func (repo *GormRepository) GetTokensByUser(userID uuid.UUID) ([]*model.OAuth2Token, error) {
 	ts := make([]*model.OAuth2Token, 0)
 	if userID == uuid.Nil {
 		return ts, nil
@@ -199,7 +199,7 @@ func (repo *RepositoryImpl) GetTokensByUser(userID uuid.UUID) ([]*model.OAuth2To
 }
 
 // DeleteTokenByUser 指定したユーザーのトークンを全て削除します
-func (repo *RepositoryImpl) DeleteTokenByUser(userID uuid.UUID) error {
+func (repo *GormRepository) DeleteTokenByUser(userID uuid.UUID) error {
 	if userID == uuid.Nil {
 		return nil
 	}
@@ -207,7 +207,7 @@ func (repo *RepositoryImpl) DeleteTokenByUser(userID uuid.UUID) error {
 }
 
 // DeleteTokenByClient 指定したクライアントのトークンを全て削除します
-func (repo *RepositoryImpl) DeleteTokenByClient(clientID string) error {
+func (repo *GormRepository) DeleteTokenByClient(clientID string) error {
 	if len(clientID) == 0 {
 		return nil
 	}

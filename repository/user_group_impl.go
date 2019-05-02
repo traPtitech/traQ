@@ -7,10 +7,11 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"time"
+	"unicode/utf8"
 )
 
 // CreateUserGroup ユーザーグループを作成します
-func (repo *RepositoryImpl) CreateUserGroup(name, description string, adminID uuid.UUID) (*model.UserGroup, error) {
+func (repo *GormRepository) CreateUserGroup(name, description string, adminID uuid.UUID) (*model.UserGroup, error) {
 	g := &model.UserGroup{
 		ID:          uuid.Must(uuid.NewV4()),
 		Name:        name,
@@ -41,43 +42,57 @@ func (repo *RepositoryImpl) CreateUserGroup(name, description string, adminID uu
 }
 
 // UpdateUserGroup ユーザーグループを更新します
-func (repo *RepositoryImpl) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNameArgs) error {
+func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNameArgs) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
 	err := repo.transact(func(tx *gorm.DB) error {
 		var g model.UserGroup
-		if err := tx.Where(&model.UserGroup{ID: id}).First(&g).Error; err != nil {
+		if err := tx.First(&g, &model.UserGroup{ID: id}).Error; err != nil {
 			if gorm.IsRecordNotFoundError(err) {
 				return ErrNotFound
 			}
 			return err
 		}
-		if len(args.Name) > 0 {
-			g.Name = args.Name
+
+		changes := map[string]interface{}{}
+		if args.Name.Valid {
+			if len(args.Name.String) == 0 && utf8.RuneCountInString(args.Name.String) > 30 {
+				return ArgError("args.Name", "Name must be non-empty and shorter than 31 characters")
+			}
+
+			c := 0
+			if err := tx.Model(&model.UserGroup{}).Where(&model.UserGroup{Name: args.Name.String}).Limit(1).Count(&c).Error; err != nil {
+				return err
+			}
+			if c > 0 {
+				return ErrAlreadyExists
+			}
+			changes["name"] = args.Name.String
 		}
 		if args.Description.Valid {
-			g.Description = args.Description.String
+			changes["description"] = args.Description.String
 		}
 		if args.AdminUserID.Valid {
-			g.AdminUserID = args.AdminUserID.UUID
+			changes["admin_user_id"] = args.AdminUserID.UUID
+		}
+		if args.Type.Valid {
+			if utf8.RuneCountInString(args.Type.String) > 30 {
+				return ArgError("args.Type", "Type must be shorter than 31 characters")
+			}
+			changes["type"] = args.Type.String
 		}
 
-		if err := g.Validate(); err != nil {
-			return err
+		if len(changes) > 0 {
+			return tx.Model(&g).Updates(changes).Error
 		}
-
-		err := tx.Save(&g).Error
-		if isMySQLDuplicatedRecordErr(err) {
-			return ErrAlreadyExists
-		}
-		return err
+		return nil
 	})
 	return err
 }
 
 // DeleteUserGroup ユーザーグループを削除します
-func (repo *RepositoryImpl) DeleteUserGroup(id uuid.UUID) error {
+func (repo *GormRepository) DeleteUserGroup(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -107,7 +122,7 @@ func (repo *RepositoryImpl) DeleteUserGroup(id uuid.UUID) error {
 }
 
 // GetUserGroup ユーザーグループを取得します
-func (repo *RepositoryImpl) GetUserGroup(id uuid.UUID) (*model.UserGroup, error) {
+func (repo *GormRepository) GetUserGroup(id uuid.UUID) (*model.UserGroup, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -122,7 +137,7 @@ func (repo *RepositoryImpl) GetUserGroup(id uuid.UUID) (*model.UserGroup, error)
 }
 
 // GetUserGroupByName ユーザーグループを取得します
-func (repo *RepositoryImpl) GetUserGroupByName(name string) (*model.UserGroup, error) {
+func (repo *GormRepository) GetUserGroupByName(name string) (*model.UserGroup, error) {
 	if len(name) == 0 {
 		return nil, ErrNotFound
 	}
@@ -137,7 +152,7 @@ func (repo *RepositoryImpl) GetUserGroupByName(name string) (*model.UserGroup, e
 }
 
 // GetUserBelongingGroupIDs ユーザーが所属しているグループのUUIDを取得します
-func (repo *RepositoryImpl) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *GormRepository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.UUID, error) {
 	groups := make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
 		return groups, nil
@@ -151,14 +166,14 @@ func (repo *RepositoryImpl) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.U
 }
 
 // GetAllUserGroups 全てのグループを取得します
-func (repo *RepositoryImpl) GetAllUserGroups() ([]*model.UserGroup, error) {
+func (repo *GormRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
 	groups := make([]*model.UserGroup, 0)
 	err := repo.db.Find(&groups).Error
 	return groups, err
 }
 
 // AddUserToGroup グループにユーザーを追加します
-func (repo *RepositoryImpl) AddUserToGroup(userID, groupID uuid.UUID) error {
+func (repo *GormRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return ErrNilID
 	}
@@ -189,7 +204,7 @@ func (repo *RepositoryImpl) AddUserToGroup(userID, groupID uuid.UUID) error {
 }
 
 // RemoveUserFromGroup グループからユーザーを削除します
-func (repo *RepositoryImpl) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
+func (repo *GormRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return ErrNilID
 	}
@@ -221,7 +236,7 @@ func (repo *RepositoryImpl) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 }
 
 // GetUserGroupMemberIDs グループのメンバーのUUIDを取得します
-func (repo *RepositoryImpl) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *GormRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUID, error) {
 	ids := make([]uuid.UUID, 0)
 	if groupID == uuid.Nil {
 		return ids, ErrNotFound

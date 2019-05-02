@@ -8,7 +8,7 @@ import (
 )
 
 // AddStar チャンネルをお気に入り登録します
-func (repo *RepositoryImpl) AddStar(userID, channelID uuid.UUID) error {
+func (repo *GormRepository) AddStar(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
 	}
@@ -28,7 +28,7 @@ func (repo *RepositoryImpl) AddStar(userID, channelID uuid.UUID) error {
 }
 
 // RemoveStar チャンネルのお気に入りを解除します
-func (repo *RepositoryImpl) RemoveStar(userID, channelID uuid.UUID) error {
+func (repo *GormRepository) RemoveStar(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
 	}
@@ -49,7 +49,7 @@ func (repo *RepositoryImpl) RemoveStar(userID, channelID uuid.UUID) error {
 }
 
 // GetStaredChannels ユーザーがお気に入りをしているチャンネルIDを取得する
-func (repo *RepositoryImpl) GetStaredChannels(userID uuid.UUID) (ids []uuid.UUID, err error) {
+func (repo *GormRepository) GetStaredChannels(userID uuid.UUID) (ids []uuid.UUID, err error) {
 	ids = make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
 		return ids, nil

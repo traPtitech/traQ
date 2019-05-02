@@ -18,7 +18,7 @@ import (
 )
 
 // CreateBot Botを作成します
-func (repo *RepositoryImpl) CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
+func (repo *GormRepository) CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
 	if err := validator.ValidateVar(name, "required,name,max=20"); err != nil {
 		return nil, errors.New("invalid name")
 	}
@@ -109,7 +109,7 @@ func (repo *RepositoryImpl) CreateBot(name, displayName, description string, cre
 }
 
 // UpdateBot Botを更新します
-func (repo *RepositoryImpl) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
+func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -189,7 +189,7 @@ func (repo *RepositoryImpl) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 }
 
 // SetSubscribeEventsToBot Botの購読イベントを変更します
-func (repo *RepositoryImpl) SetSubscribeEventsToBot(botID uuid.UUID, events model.BotEvents) error {
+func (repo *GormRepository) SetSubscribeEventsToBot(botID uuid.UUID, events model.BotEvents) error {
 	if botID == uuid.Nil {
 		return ErrNilID
 	}
@@ -217,13 +217,13 @@ func (repo *RepositoryImpl) SetSubscribeEventsToBot(botID uuid.UUID, events mode
 }
 
 // GetAllBots 全てのBotを取得します
-func (repo *RepositoryImpl) GetAllBots() ([]*model.Bot, error) {
+func (repo *GormRepository) GetAllBots() ([]*model.Bot, error) {
 	bots := make([]*model.Bot, 0)
 	return bots, repo.db.Find(&bots).Error
 }
 
 // GetBotByID Botを取得します
-func (repo *RepositoryImpl) GetBotByID(id uuid.UUID) (*model.Bot, error) {
+func (repo *GormRepository) GetBotByID(id uuid.UUID) (*model.Bot, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -238,7 +238,7 @@ func (repo *RepositoryImpl) GetBotByID(id uuid.UUID) (*model.Bot, error) {
 }
 
 // GetBotByBotUserID Botを取得します
-func (repo *RepositoryImpl) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) {
+func (repo *GormRepository) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -253,7 +253,7 @@ func (repo *RepositoryImpl) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) 
 }
 
 // GetBotByCode BotCodeからBotを取得します
-func (repo *RepositoryImpl) GetBotByCode(code string) (*model.Bot, error) {
+func (repo *GormRepository) GetBotByCode(code string) (*model.Bot, error) {
 	if len(code) == 0 {
 		return nil, ErrNotFound
 	}
@@ -268,7 +268,7 @@ func (repo *RepositoryImpl) GetBotByCode(code string) (*model.Bot, error) {
 }
 
 // GetBotsByCreator 指定したCreatorのBotを取得します
-func (repo *RepositoryImpl) GetBotsByCreator(userID uuid.UUID) ([]*model.Bot, error) {
+func (repo *GormRepository) GetBotsByCreator(userID uuid.UUID) ([]*model.Bot, error) {
 	bots := make([]*model.Bot, 0)
 	if userID == uuid.Nil {
 		return bots, nil
@@ -277,7 +277,7 @@ func (repo *RepositoryImpl) GetBotsByCreator(userID uuid.UUID) ([]*model.Bot, er
 }
 
 // GetBotsByChannel 指定したチャンネルに参加しているBotを取得します
-func (repo *RepositoryImpl) GetBotsByChannel(channelID uuid.UUID) ([]*model.Bot, error) {
+func (repo *GormRepository) GetBotsByChannel(channelID uuid.UUID) ([]*model.Bot, error) {
 	bots := make([]*model.Bot, 0)
 	if channelID == uuid.Nil {
 		return bots, nil
@@ -293,7 +293,7 @@ func (repo *RepositoryImpl) GetBotsByChannel(channelID uuid.UUID) ([]*model.Bot,
 }
 
 // ChangeBotState Botの状態を変更します
-func (repo *RepositoryImpl) ChangeBotState(id uuid.UUID, state model.BotState) error {
+func (repo *GormRepository) ChangeBotState(id uuid.UUID, state model.BotState) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -328,7 +328,7 @@ func (repo *RepositoryImpl) ChangeBotState(id uuid.UUID, state model.BotState) e
 }
 
 // ReissueBotTokens Botの各種トークンを再発行します
-func (repo *RepositoryImpl) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
+func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 	if id == uuid.Nil {
 		return nil, ErrNilID
 	}
@@ -382,7 +382,7 @@ func (repo *RepositoryImpl) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 }
 
 // DeleteBot Botを削除します
-func (repo *RepositoryImpl) DeleteBot(id uuid.UUID) error {
+func (repo *GormRepository) DeleteBot(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -418,7 +418,7 @@ func (repo *RepositoryImpl) DeleteBot(id uuid.UUID) error {
 }
 
 // AddBotToChannel Botをチャンネルに参加させます
-func (repo *RepositoryImpl) AddBotToChannel(botID, channelID uuid.UUID) error {
+func (repo *GormRepository) AddBotToChannel(botID, channelID uuid.UUID) error {
 	if botID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
 	}
@@ -437,7 +437,7 @@ func (repo *RepositoryImpl) AddBotToChannel(botID, channelID uuid.UUID) error {
 }
 
 // RemoveBotFromChannel Botをチャンネルから退出させます
-func (repo *RepositoryImpl) RemoveBotFromChannel(botID, channelID uuid.UUID) error {
+func (repo *GormRepository) RemoveBotFromChannel(botID, channelID uuid.UUID) error {
 	if botID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
 	}
@@ -455,7 +455,7 @@ func (repo *RepositoryImpl) RemoveBotFromChannel(botID, channelID uuid.UUID) err
 }
 
 // GetParticipatingChannelIDsByBot Botが参加しているチャンネルのIDを取得します
-func (repo *RepositoryImpl) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *GormRepository) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid.UUID, error) {
 	channels := make([]uuid.UUID, 0)
 	if botID == uuid.Nil {
 		return channels, nil
@@ -468,7 +468,7 @@ func (repo *RepositoryImpl) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]
 }
 
 // WriteBotEventLog Botイベントログを書き込みます
-func (repo *RepositoryImpl) WriteBotEventLog(log *model.BotEventLog) error {
+func (repo *GormRepository) WriteBotEventLog(log *model.BotEventLog) error {
 	if log == nil || log.RequestID == uuid.Nil {
 		return nil
 	}
@@ -476,7 +476,7 @@ func (repo *RepositoryImpl) WriteBotEventLog(log *model.BotEventLog) error {
 }
 
 // GetBotEventLogs Botイベントログを取得します
-func (repo *RepositoryImpl) GetBotEventLogs(botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error) {
+func (repo *GormRepository) GetBotEventLogs(botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error) {
 	logs := make([]*model.BotEventLog, 0)
 	if botID == uuid.Nil {
 		return logs, nil

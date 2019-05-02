@@ -9,7 +9,7 @@ import (
 )
 
 // CreatePin ピン留めを作成する
-func (repo *RepositoryImpl) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, error) {
+func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, error) {
 	if messageID == uuid.Nil || userID == uuid.Nil {
 		return uuid.Nil, ErrNilID
 	}
@@ -33,7 +33,7 @@ func (repo *RepositoryImpl) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, e
 }
 
 // GetPin ピン留めを取得する
-func (repo *RepositoryImpl) GetPin(id uuid.UUID) (p *model.Pin, err error) {
+func (repo *GormRepository) GetPin(id uuid.UUID) (p *model.Pin, err error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -49,7 +49,7 @@ func (repo *RepositoryImpl) GetPin(id uuid.UUID) (p *model.Pin, err error) {
 }
 
 // IsPinned 指定したメッセージがピン留めされているかを取得する
-func (repo *RepositoryImpl) IsPinned(messageID uuid.UUID) (bool, error) {
+func (repo *GormRepository) IsPinned(messageID uuid.UUID) (bool, error) {
 	if messageID == uuid.Nil {
 		return false, nil
 	}
@@ -64,7 +64,7 @@ func (repo *RepositoryImpl) IsPinned(messageID uuid.UUID) (bool, error) {
 }
 
 // DeletePin ピン留めを削除する
-func (repo *RepositoryImpl) DeletePin(id uuid.UUID) error {
+func (repo *GormRepository) DeletePin(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -98,7 +98,7 @@ func (repo *RepositoryImpl) DeletePin(id uuid.UUID) error {
 }
 
 // GetPinsByChannelID チャンネルのピン留めを全て取得する
-func (repo *RepositoryImpl) GetPinsByChannelID(channelID uuid.UUID) (pins []*model.Pin, err error) {
+func (repo *GormRepository) GetPinsByChannelID(channelID uuid.UUID) (pins []*model.Pin, err error) {
 	pins = make([]*model.Pin, 0)
 	if channelID == uuid.Nil {
 		return pins, nil

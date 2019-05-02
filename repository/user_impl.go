@@ -128,7 +128,7 @@ func (s *userOnlineStatus) getTime() (t time.Time) {
 }
 
 // CreateUser ユーザーを作成します
-func (repo *RepositoryImpl) CreateUser(name, password string, role gorbac.Role) (*model.User, error) {
+func (repo *GormRepository) CreateUser(name, password string, role gorbac.Role) (*model.User, error) {
 	salt := utils.GenerateSalt()
 	user := &model.User{
 		ID:       uuid.Must(uuid.NewV4()),
@@ -164,7 +164,7 @@ func (repo *RepositoryImpl) CreateUser(name, password string, role gorbac.Role) 
 }
 
 // GetUser ユーザーを取得する
-func (repo *RepositoryImpl) GetUser(id uuid.UUID) (*model.User, error) {
+func (repo *GormRepository) GetUser(id uuid.UUID) (*model.User, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -179,7 +179,7 @@ func (repo *RepositoryImpl) GetUser(id uuid.UUID) (*model.User, error) {
 }
 
 // GetUserByName ユーザーを取得する
-func (repo *RepositoryImpl) GetUserByName(name string) (*model.User, error) {
+func (repo *GormRepository) GetUserByName(name string) (*model.User, error) {
 	if len(name) == 0 {
 		return nil, ErrNotFound
 	}
@@ -194,14 +194,14 @@ func (repo *RepositoryImpl) GetUserByName(name string) (*model.User, error) {
 }
 
 // GetUsers 全ユーザーの取得
-func (repo *RepositoryImpl) GetUsers() (users []*model.User, err error) {
+func (repo *GormRepository) GetUsers() (users []*model.User, err error) {
 	users = make([]*model.User, 0)
 	err = repo.db.Find(&users).Error
 	return users, err
 }
 
 // UserExists 指定したIDのユーザーが存在するかどうか
-func (repo *RepositoryImpl) UserExists(id uuid.UUID) (bool, error) {
+func (repo *GormRepository) UserExists(id uuid.UUID) (bool, error) {
 	c := 0
 	err := repo.db.
 		Model(&model.User{}).
@@ -213,7 +213,7 @@ func (repo *RepositoryImpl) UserExists(id uuid.UUID) (bool, error) {
 }
 
 // UpdateUser ユーザー情報を更新します
-func (repo *RepositoryImpl) UpdateUser(id uuid.UUID, args UpdateUserArgs) error {
+func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -269,7 +269,7 @@ func (repo *RepositoryImpl) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 }
 
 // ChangeUserPassword ユーザーのパスワードを変更します
-func (repo *RepositoryImpl) ChangeUserPassword(id uuid.UUID, password string) error {
+func (repo *GormRepository) ChangeUserPassword(id uuid.UUID, password string) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -281,7 +281,7 @@ func (repo *RepositoryImpl) ChangeUserPassword(id uuid.UUID, password string) er
 }
 
 // ChangeUserIcon ユーザーのアイコンを変更します
-func (repo *RepositoryImpl) ChangeUserIcon(id, fileID uuid.UUID) error {
+func (repo *GormRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
 	if id == uuid.Nil || fileID == uuid.Nil {
 		return ErrNilID
 	}
@@ -302,7 +302,7 @@ func (repo *RepositoryImpl) ChangeUserIcon(id, fileID uuid.UUID) error {
 }
 
 // ChangeUserAccountStatus ユーザーのアカウント状態を変更します
-func (repo *RepositoryImpl) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
+func (repo *GormRepository) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -324,7 +324,7 @@ func (repo *RepositoryImpl) ChangeUserAccountStatus(id uuid.UUID, status model.U
 }
 
 // UpdateUserLastOnline ユーザーの最終オンライン日時を更新します
-func (repo *RepositoryImpl) UpdateUserLastOnline(id uuid.UUID, time time.Time) (err error) {
+func (repo *GormRepository) UpdateUserLastOnline(id uuid.UUID, time time.Time) (err error) {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -332,7 +332,7 @@ func (repo *RepositoryImpl) UpdateUserLastOnline(id uuid.UUID, time time.Time) (
 }
 
 // GetUserLastOnline ユーザーの最終オンライン日時を取得します
-func (repo *RepositoryImpl) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
+func (repo *GormRepository) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
 	i, ok := repo.CurrentUserOnlineMap.Load(id)
 	if !ok {
 		var u model.User
@@ -351,7 +351,7 @@ func (repo *RepositoryImpl) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
 }
 
 // GetHeartbeatStatus channelIDで指定したHeartbeatStatusを取得する
-func (repo *RepositoryImpl) GetHeartbeatStatus(channelID uuid.UUID) (model.HeartbeatStatus, bool) {
+func (repo *GormRepository) GetHeartbeatStatus(channelID uuid.UUID) (model.HeartbeatStatus, bool) {
 	repo.heartbeatImpl.RLock()
 	defer repo.heartbeatImpl.RUnlock()
 	status, ok := repo.HeartbeatStatuses[channelID]
@@ -362,7 +362,7 @@ func (repo *RepositoryImpl) GetHeartbeatStatus(channelID uuid.UUID) (model.Heart
 }
 
 // UpdateHeartbeatStatus UserIDで指定されたUserのHeartbeatの更新を行う
-func (repo *RepositoryImpl) UpdateHeartbeatStatus(userID, channelID uuid.UUID, status string) {
+func (repo *GormRepository) UpdateHeartbeatStatus(userID, channelID uuid.UUID, status string) {
 	repo.heartbeatImpl.Lock()
 	defer repo.heartbeatImpl.Unlock()
 	channelStatus, ok := repo.HeartbeatStatuses[channelID]
@@ -400,7 +400,7 @@ func (repo *RepositoryImpl) UpdateHeartbeatStatus(userID, channelID uuid.UUID, s
 }
 
 // IsUserOnline ユーザーがオンラインかどうかを返します。
-func (repo *RepositoryImpl) IsUserOnline(id uuid.UUID) bool {
+func (repo *GormRepository) IsUserOnline(id uuid.UUID) bool {
 	s, ok := repo.CurrentUserOnlineMap.Load(id)
 	if !ok {
 		return false

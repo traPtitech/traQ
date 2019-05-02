@@ -10,7 +10,7 @@ import (
 )
 
 // CreateStamp スタンプを作成します
-func (repo *RepositoryImpl) CreateStamp(name string, fileID, userID uuid.UUID) (s *model.Stamp, err error) {
+func (repo *GormRepository) CreateStamp(name string, fileID, userID uuid.UUID) (s *model.Stamp, err error) {
 	if fileID == uuid.Nil {
 		return nil, ErrNilID
 	}
@@ -41,7 +41,7 @@ func (repo *RepositoryImpl) CreateStamp(name string, fileID, userID uuid.UUID) (
 }
 
 // UpdateStamp スタンプの情報を更新します
-func (repo *RepositoryImpl) UpdateStamp(id uuid.UUID, name string, fileID uuid.UUID) error {
+func (repo *GormRepository) UpdateStamp(id uuid.UUID, name string, fileID uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -77,7 +77,7 @@ func (repo *RepositoryImpl) UpdateStamp(id uuid.UUID, name string, fileID uuid.U
 }
 
 // GetStamp 指定したIDのスタンプを取得します
-func (repo *RepositoryImpl) GetStamp(id uuid.UUID) (s *model.Stamp, err error) {
+func (repo *GormRepository) GetStamp(id uuid.UUID) (s *model.Stamp, err error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -92,7 +92,7 @@ func (repo *RepositoryImpl) GetStamp(id uuid.UUID) (s *model.Stamp, err error) {
 }
 
 // DeleteStamp 指定したIDのスタンプを削除します
-func (repo *RepositoryImpl) DeleteStamp(id uuid.UUID) (err error) {
+func (repo *GormRepository) DeleteStamp(id uuid.UUID) (err error) {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -113,14 +113,14 @@ func (repo *RepositoryImpl) DeleteStamp(id uuid.UUID) (err error) {
 }
 
 // GetAllStamps 全てのスタンプを取得します
-func (repo *RepositoryImpl) GetAllStamps() (stamps []*model.Stamp, err error) {
+func (repo *GormRepository) GetAllStamps() (stamps []*model.Stamp, err error) {
 	stamps = make([]*model.Stamp, 0)
 	err = repo.db.Find(&stamps).Error
 	return stamps, err
 }
 
 // StampExists 指定したIDのスタンプが存在するかどうか
-func (repo *RepositoryImpl) StampExists(id uuid.UUID) (bool, error) {
+func (repo *GormRepository) StampExists(id uuid.UUID) (bool, error) {
 	if id == uuid.Nil {
 		return false, nil
 	}
@@ -135,7 +135,7 @@ func (repo *RepositoryImpl) StampExists(id uuid.UUID) (bool, error) {
 }
 
 // IsStampNameDuplicate 指定した名前のスタンプが存在するかどうか
-func (repo *RepositoryImpl) IsStampNameDuplicate(name string) (bool, error) {
+func (repo *GormRepository) IsStampNameDuplicate(name string) (bool, error) {
 	if len(name) == 0 {
 		return false, nil
 	}

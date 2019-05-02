@@ -27,7 +27,7 @@ type fileImpl struct {
 }
 
 // GenerateIconFile アイコンファイルを生成します
-func (repo *RepositoryImpl) GenerateIconFile(salt string) (uuid.UUID, error) {
+func (repo *GormRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
 	var img bytes.Buffer
 	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
 	file, err := repo.SaveFile(fmt.Sprintf("%s.png", salt), &img, int64(img.Len()), "image/png", model.FileTypeIcon, uuid.Nil)
@@ -35,12 +35,12 @@ func (repo *RepositoryImpl) GenerateIconFile(salt string) (uuid.UUID, error) {
 }
 
 // SaveFile ファイルを保存します。mimeが指定されていない場合はnameの拡張子によって決まります
-func (repo *RepositoryImpl) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID) (*model.File, error) {
+func (repo *GormRepository) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID) (*model.File, error) {
 	return repo.SaveFileWithACL(name, src, size, mimeType, fType, creatorID, ACL{uuid.Nil: true})
 }
 
 // SaveFileWithACL ファイルを保存します。mimeが指定されていない場合はnameの拡張子によって決まります
-func (repo *RepositoryImpl) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID, read ACL) (*model.File, error) {
+func (repo *GormRepository) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID, read ACL) (*model.File, error) {
 	f := &model.File{
 		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
@@ -125,7 +125,7 @@ func (repo *RepositoryImpl) SaveFileWithACL(name string, src io.Reader, size int
 }
 
 // OpenFile ファイルを開きます
-func (repo *RepositoryImpl) OpenFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
+func (repo *GormRepository) OpenFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
 	meta, err := repo.GetFileMeta(fileID)
 	if err != nil {
 		return nil, nil, err
@@ -135,7 +135,7 @@ func (repo *RepositoryImpl) OpenFile(fileID uuid.UUID) (*model.File, io.ReadClos
 }
 
 // OpenThumbnailFile サムネイルファイルを開きます
-func (repo *RepositoryImpl) OpenThumbnailFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
+func (repo *GormRepository) OpenThumbnailFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
 	meta, err := repo.GetFileMeta(fileID)
 	if err != nil {
 		return nil, nil, err
@@ -148,7 +148,7 @@ func (repo *RepositoryImpl) OpenThumbnailFile(fileID uuid.UUID) (*model.File, io
 }
 
 // GetFileMeta ファイルのメタデータを取得します
-func (repo *RepositoryImpl) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
+func (repo *GormRepository) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
 	if fileID == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -163,7 +163,7 @@ func (repo *RepositoryImpl) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
 }
 
 // DeleteFile ファイルを削除します
-func (repo *RepositoryImpl) DeleteFile(fileID uuid.UUID) error {
+func (repo *GormRepository) DeleteFile(fileID uuid.UUID) error {
 	if fileID == uuid.Nil {
 		return ErrNilID
 	}
@@ -185,7 +185,7 @@ func (repo *RepositoryImpl) DeleteFile(fileID uuid.UUID) error {
 }
 
 // RegenerateThumbnail サムネイル画像を再生成します
-func (repo *RepositoryImpl) RegenerateThumbnail(fileID uuid.UUID) (bool, error) {
+func (repo *GormRepository) RegenerateThumbnail(fileID uuid.UUID) (bool, error) {
 	meta, err := repo.GetFileMeta(fileID)
 	if err != nil {
 		return false, err
@@ -219,7 +219,7 @@ func (repo *RepositoryImpl) RegenerateThumbnail(fileID uuid.UUID) (bool, error) 
 }
 
 // IsFileAccessible ユーザーがファイルにアクセス可能かどうか
-func (repo *RepositoryImpl) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
+func (repo *GormRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
 	if fileID == uuid.Nil {
 		return false, ErrNilID
 	}
@@ -250,7 +250,7 @@ func (repo *RepositoryImpl) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 var generateThumbnailS = semaphore.NewWeighted(5) // サムネイル生成並列数
 
 // generateThumbnail サムネイル画像を生成します
-func (repo *RepositoryImpl) generateThumbnail(ctx context.Context, f *model.File, src io.Reader) (image.Rectangle, error) {
+func (repo *GormRepository) generateThumbnail(ctx context.Context, f *model.File, src io.Reader) (image.Rectangle, error) {
 	if err := generateThumbnailS.Acquire(ctx, 1); err != nil {
 		return image.ZR, err
 	}

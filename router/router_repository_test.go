@@ -380,24 +380,39 @@ func (repo *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.Update
 	if !ok {
 		return repository.ErrNotFound
 	}
-	if len(args.Name) > 0 {
+	changed := false
+	if args.Name.Valid {
+		if len(args.Name.String) == 0 && utf8.RuneCountInString(args.Name.String) > 30 {
+			return repository.ArgError("args.Name", "Name must be non-empty and shorter than 31 characters")
+		}
+
 		for _, v := range repo.UserGroups {
-			if v.Name == args.Name {
+			if v.Name == args.Name.String {
 				return repository.ErrAlreadyExists
 			}
 		}
-		g.Name = args.Name
+		g.Name = args.Name.String
 	}
 	if args.Description.Valid {
 		g.Description = args.Description.String
+		changed = true
 	}
 	if args.AdminUserID.Valid {
 		g.AdminUserID = args.AdminUserID.UUID
+		changed = true
 	}
-	if err := g.Validate(); err != nil {
-		return err
+	if args.Type.Valid {
+		if utf8.RuneCountInString(args.Type.String) > 30 {
+			return repository.ArgError("args.Type", "Type must be shorter than 31 characters")
+		}
+		g.Type = args.Type.String
+		changed = true
 	}
-	repo.UserGroups[id] = g
+
+	if changed {
+		g.UpdatedAt = time.Now()
+		repo.UserGroups[id] = g
+	}
 	return nil
 }
 

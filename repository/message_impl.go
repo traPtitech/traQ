@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func (repo *RepositoryImpl) CreateMessage(userID, channelID uuid.UUID, text string) (*model.Message, error) {
+func (repo *GormRepository) CreateMessage(userID, channelID uuid.UUID, text string) (*model.Message, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return nil, ErrNilID
 	}
@@ -64,7 +64,7 @@ func (repo *RepositoryImpl) CreateMessage(userID, channelID uuid.UUID, text stri
 }
 
 // UpdateMessage メッセージを更新します
-func (repo *RepositoryImpl) UpdateMessage(messageID uuid.UUID, text string) error {
+func (repo *GormRepository) UpdateMessage(messageID uuid.UUID, text string) error {
 	if messageID == uuid.Nil {
 		return ErrNilID
 	}
@@ -121,7 +121,7 @@ func (repo *RepositoryImpl) UpdateMessage(messageID uuid.UUID, text string) erro
 }
 
 // DeleteMessage メッセージを削除します
-func (repo *RepositoryImpl) DeleteMessage(messageID uuid.UUID) error {
+func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 	if messageID == uuid.Nil {
 		return ErrNilID
 	}
@@ -163,7 +163,7 @@ func (repo *RepositoryImpl) DeleteMessage(messageID uuid.UUID) error {
 }
 
 // GetMessageByID messageIDで指定されたメッセージを取得します
-func (repo *RepositoryImpl) GetMessageByID(messageID uuid.UUID) (*model.Message, error) {
+func (repo *GormRepository) GetMessageByID(messageID uuid.UUID) (*model.Message, error) {
 	if messageID == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -178,7 +178,7 @@ func (repo *RepositoryImpl) GetMessageByID(messageID uuid.UUID) (*model.Message,
 }
 
 // GetMessagesByChannelID 指定されたチャンネルのメッセージを取得します
-func (repo *RepositoryImpl) GetMessagesByChannelID(channelID uuid.UUID, limit, offset int) (arr []*model.Message, err error) {
+func (repo *GormRepository) GetMessagesByChannelID(channelID uuid.UUID, limit, offset int) (arr []*model.Message, err error) {
 	arr = make([]*model.Message, 0)
 	if channelID == uuid.Nil {
 		return arr, nil
@@ -193,7 +193,7 @@ func (repo *RepositoryImpl) GetMessagesByChannelID(channelID uuid.UUID, limit, o
 }
 
 // GetMessagesByChannelID 指定されたユーザーのメッセージを取得します
-func (repo *RepositoryImpl) GetMessagesByUserID(userID uuid.UUID, limit, offset int) (arr []*model.Message, err error) {
+func (repo *GormRepository) GetMessagesByUserID(userID uuid.UUID, limit, offset int) (arr []*model.Message, err error) {
 	arr = make([]*model.Message, 0)
 	if userID == uuid.Nil {
 		return arr, nil
@@ -208,7 +208,7 @@ func (repo *RepositoryImpl) GetMessagesByUserID(userID uuid.UUID, limit, offset 
 }
 
 // SetMessageUnread 指定したメッセージを未読にします
-func (repo *RepositoryImpl) SetMessageUnread(userID, messageID uuid.UUID) error {
+func (repo *GormRepository) SetMessageUnread(userID, messageID uuid.UUID) error {
 	if userID == uuid.Nil || messageID == uuid.Nil {
 		return ErrNilID
 	}
@@ -217,7 +217,7 @@ func (repo *RepositoryImpl) SetMessageUnread(userID, messageID uuid.UUID) error 
 }
 
 // GetUnreadMessagesByUserID あるユーザーの未読メッセージをすべて取得
-func (repo *RepositoryImpl) GetUnreadMessagesByUserID(userID uuid.UUID) (unreads []*model.Message, err error) {
+func (repo *GormRepository) GetUnreadMessagesByUserID(userID uuid.UUID) (unreads []*model.Message, err error) {
 	unreads = make([]*model.Message, 0)
 	if userID == uuid.Nil {
 		return unreads, nil
@@ -231,7 +231,7 @@ func (repo *RepositoryImpl) GetUnreadMessagesByUserID(userID uuid.UUID) (unreads
 }
 
 // DeleteUnreadsByMessageID 指定したメッセージIDの未読レコードを全て削除
-func (repo *RepositoryImpl) DeleteUnreadsByMessageID(messageID uuid.UUID) error {
+func (repo *GormRepository) DeleteUnreadsByMessageID(messageID uuid.UUID) error {
 	if messageID == uuid.Nil {
 		return ErrNilID
 	}
@@ -239,7 +239,7 @@ func (repo *RepositoryImpl) DeleteUnreadsByMessageID(messageID uuid.UUID) error 
 }
 
 // DeleteUnreadsByChannelID 指定したチャンネルIDに存在する、指定したユーザーIDの未読レコードをすべて削除
-func (repo *RepositoryImpl) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error {
+func (repo *GormRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error {
 	if channelID == uuid.Nil || userID == uuid.Nil {
 		return ErrNilID
 	}
@@ -260,7 +260,7 @@ func (repo *RepositoryImpl) DeleteUnreadsByChannelID(channelID, userID uuid.UUID
 }
 
 // GetChannelLatestMessagesByUserID 指定したユーザーが閲覧可能な全てのパブリックチャンネルの最新のメッセージの一覧を取得します
-func (repo *RepositoryImpl) GetChannelLatestMessagesByUserID(userID uuid.UUID, limit int, subscribeOnly bool) ([]*model.Message, error) {
+func (repo *GormRepository) GetChannelLatestMessagesByUserID(userID uuid.UUID, limit int, subscribeOnly bool) ([]*model.Message, error) {
 	var query string
 	switch {
 	case subscribeOnly:
@@ -299,7 +299,7 @@ ORDER BY clm.date_time DESC
 }
 
 // GetArchivedMessagesByID アーカイブメッセージを取得します
-func (repo *RepositoryImpl) GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error) {
+func (repo *GormRepository) GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error) {
 	r := make([]*model.ArchivedMessage, 0)
 	if messageID == uuid.Nil {
 		return r, nil

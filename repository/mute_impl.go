@@ -8,7 +8,7 @@ import (
 )
 
 // MuteChannel 指定したチャンネルをミュートします
-func (repo *RepositoryImpl) MuteChannel(userID, channelID uuid.UUID) error {
+func (repo *GormRepository) MuteChannel(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
 	}
@@ -27,7 +27,7 @@ func (repo *RepositoryImpl) MuteChannel(userID, channelID uuid.UUID) error {
 }
 
 // UnmuteChannel 指定したチャンネルをアンミュートします
-func (repo *RepositoryImpl) UnmuteChannel(userID, channelID uuid.UUID) error {
+func (repo *GormRepository) UnmuteChannel(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
 	}
@@ -48,7 +48,7 @@ func (repo *RepositoryImpl) UnmuteChannel(userID, channelID uuid.UUID) error {
 }
 
 // GetMutedChannelIDs ミュートしているチャンネルのIDの配列を取得します
-func (repo *RepositoryImpl) GetMutedChannelIDs(userID uuid.UUID) (ids []uuid.UUID, err error) {
+func (repo *GormRepository) GetMutedChannelIDs(userID uuid.UUID) (ids []uuid.UUID, err error) {
 	ids = make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
 		return ids, nil
@@ -57,7 +57,7 @@ func (repo *RepositoryImpl) GetMutedChannelIDs(userID uuid.UUID) (ids []uuid.UUI
 }
 
 // GetMuteUserIDs ミュートしているユーザーのIDの配列を取得します
-func (repo *RepositoryImpl) GetMuteUserIDs(channelID uuid.UUID) (ids []uuid.UUID, err error) {
+func (repo *GormRepository) GetMuteUserIDs(channelID uuid.UUID) (ids []uuid.UUID, err error) {
 	ids = make([]uuid.UUID, 0)
 	if channelID == uuid.Nil {
 		return ids, nil
@@ -66,7 +66,7 @@ func (repo *RepositoryImpl) GetMuteUserIDs(channelID uuid.UUID) (ids []uuid.UUID
 }
 
 // IsChannelMuted 指定したユーザーが指定したチャンネルをミュートしているかどうかを返します
-func (repo *RepositoryImpl) IsChannelMuted(userID, channelID uuid.UUID) (bool, error) {
+func (repo *GormRepository) IsChannelMuted(userID, channelID uuid.UUID) (bool, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return false, nil
 	}

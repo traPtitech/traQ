@@ -9,6 +9,6 @@ import (
 func TestRepositoryImpl_GetFS(t *testing.T) {
 	t.Parallel()
 	fs := storage.NewInMemoryFileStorage()
-	repo := &RepositoryImpl{fileImpl: fileImpl{FS: fs}}
+	repo := &GormRepository{fileImpl: fileImpl{FS: fs}}
 	assert.Equal(t, fs, repo.GetFS())
 }

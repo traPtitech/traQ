@@ -25,7 +25,7 @@ const (
 )
 
 var (
-	repositories = map[string]*RepositoryImpl{}
+	repositories = map[string]*GormRepository{}
 )
 
 func TestMain(m *testing.M) {
@@ -50,7 +50,7 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 
-		repo, err := NewRepositoryImpl(db, storage.NewInMemoryFileStorage(), hub.New())
+		repo, err := NewGormRepository(db, storage.NewInMemoryFileStorage(), hub.New())
 		if err != nil {
 			panic(err)
 		}
@@ -58,7 +58,7 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 
-		repositories[key] = repo.(*RepositoryImpl)
+		repositories[key] = repo.(*GormRepository)
 	}
 
 	// Execute tests
@@ -108,7 +108,7 @@ func getEnvOrDefault(env string, def string) string {
 }
 
 func getDB(repo Repository) *gorm.DB {
-	return repo.(*RepositoryImpl).db
+	return repo.(*GormRepository).db
 }
 
 func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {

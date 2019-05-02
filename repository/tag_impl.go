@@ -9,7 +9,7 @@ import (
 )
 
 // CreateTag タグを作成します
-func (repo *RepositoryImpl) CreateTag(name string, restricted bool, tagType string) (*model.Tag, error) {
+func (repo *GormRepository) CreateTag(name string, restricted bool, tagType string) (*model.Tag, error) {
 	t := &model.Tag{
 		ID:         uuid.Must(uuid.NewV4()),
 		Name:       name,
@@ -23,7 +23,7 @@ func (repo *RepositoryImpl) CreateTag(name string, restricted bool, tagType stri
 }
 
 // ChangeTagType タグの種類を変更します
-func (repo *RepositoryImpl) ChangeTagType(id uuid.UUID, tagType string) error {
+func (repo *GormRepository) ChangeTagType(id uuid.UUID, tagType string) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -31,7 +31,7 @@ func (repo *RepositoryImpl) ChangeTagType(id uuid.UUID, tagType string) error {
 }
 
 // ChangeTagRestrict タグの制限を変更します
-func (repo *RepositoryImpl) ChangeTagRestrict(id uuid.UUID, restrict bool) error {
+func (repo *GormRepository) ChangeTagRestrict(id uuid.UUID, restrict bool) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -39,13 +39,13 @@ func (repo *RepositoryImpl) ChangeTagRestrict(id uuid.UUID, restrict bool) error
 }
 
 // GetAllTags 全てのタグを取得します
-func (repo *RepositoryImpl) GetAllTags() (result []*model.Tag, err error) {
+func (repo *GormRepository) GetAllTags() (result []*model.Tag, err error) {
 	err = repo.db.Find(&result).Error
 	return result, err
 }
 
 // GetTagByID タグを取得します
-func (repo *RepositoryImpl) GetTagByID(id uuid.UUID) (*model.Tag, error) {
+func (repo *GormRepository) GetTagByID(id uuid.UUID) (*model.Tag, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -60,7 +60,7 @@ func (repo *RepositoryImpl) GetTagByID(id uuid.UUID) (*model.Tag, error) {
 }
 
 // GetTagByName タグを取得します
-func (repo *RepositoryImpl) GetTagByName(name string) (*model.Tag, error) {
+func (repo *GormRepository) GetTagByName(name string) (*model.Tag, error) {
 	if len(name) == 0 {
 		return nil, ErrNotFound
 	}
@@ -75,7 +75,7 @@ func (repo *RepositoryImpl) GetTagByName(name string) (*model.Tag, error) {
 }
 
 // GetOrCreateTagByName 引数のタグを取得するか、生成したものを返します。
-func (repo *RepositoryImpl) GetOrCreateTagByName(name string) (*model.Tag, error) {
+func (repo *GormRepository) GetOrCreateTagByName(name string) (*model.Tag, error) {
 	if len(name) == 0 {
 		return nil, ErrNotFound
 	}
@@ -89,7 +89,7 @@ func (repo *RepositoryImpl) GetOrCreateTagByName(name string) (*model.Tag, error
 }
 
 // AddUserTag ユーザーにタグを付与します
-func (repo *RepositoryImpl) AddUserTag(userID, tagID uuid.UUID) error {
+func (repo *GormRepository) AddUserTag(userID, tagID uuid.UUID) error {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return ErrNilID
 	}
@@ -114,7 +114,7 @@ func (repo *RepositoryImpl) AddUserTag(userID, tagID uuid.UUID) error {
 }
 
 // ChangeUserTagLock ユーザーのタグのロック状態を変更します
-func (repo *RepositoryImpl) ChangeUserTagLock(userID, tagID uuid.UUID, locked bool) error {
+func (repo *GormRepository) ChangeUserTagLock(userID, tagID uuid.UUID, locked bool) error {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return ErrNilID
 	}
@@ -135,7 +135,7 @@ func (repo *RepositoryImpl) ChangeUserTagLock(userID, tagID uuid.UUID, locked bo
 }
 
 // DeleteUserTag ユーザーからタグを削除します
-func (repo *RepositoryImpl) DeleteUserTag(userID, tagID uuid.UUID) error {
+func (repo *GormRepository) DeleteUserTag(userID, tagID uuid.UUID) error {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return ErrNilID
 	}
@@ -156,7 +156,7 @@ func (repo *RepositoryImpl) DeleteUserTag(userID, tagID uuid.UUID) error {
 }
 
 // GetUserTag ユーザータグを取得します
-func (repo *RepositoryImpl) GetUserTag(userID, tagID uuid.UUID) (*model.UsersTag, error) {
+func (repo *GormRepository) GetUserTag(userID, tagID uuid.UUID) (*model.UsersTag, error) {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -171,7 +171,7 @@ func (repo *RepositoryImpl) GetUserTag(userID, tagID uuid.UUID) (*model.UsersTag
 }
 
 // GetUserTagsByUserID ユーザーに付与されているタグを取得します
-func (repo *RepositoryImpl) GetUserTagsByUserID(userID uuid.UUID) (tags []*model.UsersTag, err error) {
+func (repo *GormRepository) GetUserTagsByUserID(userID uuid.UUID) (tags []*model.UsersTag, err error) {
 	tags = make([]*model.UsersTag, 0)
 	if userID == uuid.Nil {
 		return tags, nil
@@ -181,7 +181,7 @@ func (repo *RepositoryImpl) GetUserTagsByUserID(userID uuid.UUID) (tags []*model
 }
 
 // GetUsersByTag 指定したタグを持った全ユーザーを取得します
-func (repo *RepositoryImpl) GetUsersByTag(tag string) (arr []*model.User, err error) {
+func (repo *GormRepository) GetUsersByTag(tag string) (arr []*model.User, err error) {
 	arr = make([]*model.User, 0)
 	if len(tag) == 0 {
 		return arr, nil
@@ -198,7 +198,7 @@ func (repo *RepositoryImpl) GetUsersByTag(tag string) (arr []*model.User, err er
 }
 
 // GetUserIDsByTag 指定したタグを持った全ユーザーのUUIDを取得します
-func (repo *RepositoryImpl) GetUserIDsByTag(tag string) (arr []uuid.UUID, err error) {
+func (repo *GormRepository) GetUserIDsByTag(tag string) (arr []uuid.UUID, err error) {
 	arr = make([]uuid.UUID, 0)
 	if len(tag) == 0 {
 		return arr, nil
@@ -216,7 +216,7 @@ func (repo *RepositoryImpl) GetUserIDsByTag(tag string) (arr []uuid.UUID, err er
 }
 
 // GetUserIDsByTagID 指定したタグを持った全ユーザーのUUIDを取得します
-func (repo *RepositoryImpl) GetUserIDsByTagID(tagID uuid.UUID) (arr []uuid.UUID, err error) {
+func (repo *GormRepository) GetUserIDsByTagID(tagID uuid.UUID) (arr []uuid.UUID, err error) {
 	arr = make([]uuid.UUID, 0)
 	if tagID == uuid.Nil {
 		return arr, nil

@@ -93,7 +93,7 @@ func main() {
 	}
 
 	// Repository
-	repo, err := repository.NewRepositoryImpl(engine, fs, hub)
+	repo, err := repository.NewGormRepository(engine, fs, hub)
 	if err != nil {
 		logger.Fatal("failed to initialize repository", zap.Error(err))
 	}

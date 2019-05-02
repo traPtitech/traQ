@@ -8,7 +8,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-func (repo *RepositoryImpl) GetClipFolder(id uuid.UUID) (*model.ClipFolder, error) {
+func (repo *GormRepository) GetClipFolder(id uuid.UUID) (*model.ClipFolder, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -23,7 +23,7 @@ func (repo *RepositoryImpl) GetClipFolder(id uuid.UUID) (*model.ClipFolder, erro
 }
 
 // GetClipFolders 指定したユーザーのクリップフォルダを全て取得します
-func (repo *RepositoryImpl) GetClipFolders(userID uuid.UUID) (res []*model.ClipFolder, err error) {
+func (repo *GormRepository) GetClipFolders(userID uuid.UUID) (res []*model.ClipFolder, err error) {
 	res = make([]*model.ClipFolder, 0)
 	if userID == uuid.Nil {
 		return res, nil
@@ -33,7 +33,7 @@ func (repo *RepositoryImpl) GetClipFolders(userID uuid.UUID) (res []*model.ClipF
 }
 
 // CreateClipFolder クリップフォルダを作成します
-func (repo *RepositoryImpl) CreateClipFolder(userID uuid.UUID, name string) (*model.ClipFolder, error) {
+func (repo *GormRepository) CreateClipFolder(userID uuid.UUID, name string) (*model.ClipFolder, error) {
 	if userID == uuid.Nil {
 		return nil, ErrNilID
 	}
@@ -59,7 +59,7 @@ func (repo *RepositoryImpl) CreateClipFolder(userID uuid.UUID, name string) (*mo
 }
 
 // UpdateClipFolderName クリップフォルダ名を更新します
-func (repo *RepositoryImpl) UpdateClipFolderName(id uuid.UUID, name string) error {
+func (repo *GormRepository) UpdateClipFolderName(id uuid.UUID, name string) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -93,7 +93,7 @@ func (repo *RepositoryImpl) UpdateClipFolderName(id uuid.UUID, name string) erro
 }
 
 // DeleteClipFolder クリップフォルダを削除します
-func (repo *RepositoryImpl) DeleteClipFolder(id uuid.UUID) error {
+func (repo *GormRepository) DeleteClipFolder(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -127,7 +127,7 @@ func (repo *RepositoryImpl) DeleteClipFolder(id uuid.UUID) error {
 }
 
 // GetClipMessage 指定したIDのクリップを取得します
-func (repo *RepositoryImpl) GetClipMessage(id uuid.UUID) (*model.Clip, error) {
+func (repo *GormRepository) GetClipMessage(id uuid.UUID) (*model.Clip, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -142,7 +142,7 @@ func (repo *RepositoryImpl) GetClipMessage(id uuid.UUID) (*model.Clip, error) {
 }
 
 // GetClipMessages 指定したフォルダのクリップを全て取得します
-func (repo *RepositoryImpl) GetClipMessages(folderID uuid.UUID) (res []*model.Clip, err error) {
+func (repo *GormRepository) GetClipMessages(folderID uuid.UUID) (res []*model.Clip, err error) {
 	res = make([]*model.Clip, 0)
 	if folderID == uuid.Nil {
 		return res, nil
@@ -152,7 +152,7 @@ func (repo *RepositoryImpl) GetClipMessages(folderID uuid.UUID) (res []*model.Cl
 }
 
 // GetClipMessagesByUser 指定したユーザーのクリップを全て取得します
-func (repo *RepositoryImpl) GetClipMessagesByUser(userID uuid.UUID) (res []*model.Clip, err error) {
+func (repo *GormRepository) GetClipMessagesByUser(userID uuid.UUID) (res []*model.Clip, err error) {
 	res = make([]*model.Clip, 0)
 	if userID == uuid.Nil {
 		return res, nil
@@ -162,7 +162,7 @@ func (repo *RepositoryImpl) GetClipMessagesByUser(userID uuid.UUID) (res []*mode
 }
 
 // CreateClip クリップを作成します
-func (repo *RepositoryImpl) CreateClip(messageID, folderID, userID uuid.UUID) (*model.Clip, error) {
+func (repo *GormRepository) CreateClip(messageID, folderID, userID uuid.UUID) (*model.Clip, error) {
 	if messageID == uuid.Nil || folderID == uuid.Nil || userID == uuid.Nil {
 		return nil, ErrNilID
 	}
@@ -186,7 +186,7 @@ func (repo *RepositoryImpl) CreateClip(messageID, folderID, userID uuid.UUID) (*
 }
 
 // ChangeClipFolder クリップのフォルダを変更します
-func (repo *RepositoryImpl) ChangeClipFolder(clipID, folderID uuid.UUID) error {
+func (repo *GormRepository) ChangeClipFolder(clipID, folderID uuid.UUID) error {
 	if clipID == uuid.Nil || folderID == uuid.Nil {
 		return ErrNilID
 	}
@@ -220,7 +220,7 @@ func (repo *RepositoryImpl) ChangeClipFolder(clipID, folderID uuid.UUID) error {
 }
 
 // DeleteClip クリップを削除します
-func (repo *RepositoryImpl) DeleteClip(id uuid.UUID) error {
+func (repo *GormRepository) DeleteClip(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}

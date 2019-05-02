@@ -21,7 +21,7 @@ type channelImpl struct {
 }
 
 // CreatePublicChannel パブリックチャンネルを作成します
-func (repo *RepositoryImpl) CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
+func (repo *GormRepository) CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
 	// チャンネル名検証
 	if err := validator.ValidateVar(name, "channel,required"); err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (repo *RepositoryImpl) CreatePublicChannel(name string, parent, creatorID u
 }
 
 // CreatePrivateChannel プライベートチャンネルを作成します
-func (repo *RepositoryImpl) CreatePrivateChannel(name string, creatorID uuid.UUID, members []uuid.UUID) (*model.Channel, error) {
+func (repo *GormRepository) CreatePrivateChannel(name string, creatorID uuid.UUID, members []uuid.UUID) (*model.Channel, error) {
 	validMember := make([]uuid.UUID, 0, len(members))
 	for _, v := range members {
 		ok, err := repo.UserExists(v)
@@ -162,7 +162,7 @@ func (repo *RepositoryImpl) CreatePrivateChannel(name string, creatorID uuid.UUI
 }
 
 // CreateChildChannel 子チャンネルを作成します TODO トランザクション
-func (repo *RepositoryImpl) CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*model.Channel, error) {
+func (repo *GormRepository) CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*model.Channel, error) {
 	// ダイレクトメッセージルートの子チャンネルは作れない
 	if parentID == dmChannelRootUUID {
 		return nil, ErrForbidden
@@ -263,7 +263,7 @@ func (repo *RepositoryImpl) CreateChildChannel(name string, parentID, creatorID 
 }
 
 // UpdateChannelAttributes チャンネルの属性を変更します
-func (repo *RepositoryImpl) UpdateChannelAttributes(channelID uuid.UUID, visibility, forced *bool) error {
+func (repo *GormRepository) UpdateChannelAttributes(channelID uuid.UUID, visibility, forced *bool) error {
 	if channelID == uuid.Nil {
 		return ErrNilID
 	}
@@ -305,7 +305,7 @@ func (repo *RepositoryImpl) UpdateChannelAttributes(channelID uuid.UUID, visibil
 }
 
 // UpdateChannelTopic チャンネルトピックを更新します
-func (repo *RepositoryImpl) UpdateChannelTopic(channelID uuid.UUID, topic string, updaterID uuid.UUID) error {
+func (repo *GormRepository) UpdateChannelTopic(channelID uuid.UUID, topic string, updaterID uuid.UUID) error {
 	if channelID == uuid.Nil {
 		return ErrNilID
 	}
@@ -342,7 +342,7 @@ func (repo *RepositoryImpl) UpdateChannelTopic(channelID uuid.UUID, topic string
 }
 
 // ChangeChannelName チャンネル名を変更します TODO トランザクション
-func (repo *RepositoryImpl) ChangeChannelName(channelID uuid.UUID, name string) error {
+func (repo *GormRepository) ChangeChannelName(channelID uuid.UUID, name string) error {
 	if channelID == uuid.Nil {
 		return ErrNilID
 	}
@@ -395,7 +395,7 @@ func (repo *RepositoryImpl) ChangeChannelName(channelID uuid.UUID, name string) 
 }
 
 // ChangeChannelParent チャンネルの親を変更します TODO トランザクション
-func (repo *RepositoryImpl) ChangeChannelParent(channelID uuid.UUID, parent uuid.UUID) error {
+func (repo *GormRepository) ChangeChannelParent(channelID uuid.UUID, parent uuid.UUID) error {
 	if channelID == uuid.Nil {
 		return ErrNilID
 	}
@@ -500,7 +500,7 @@ func (repo *RepositoryImpl) ChangeChannelParent(channelID uuid.UUID, parent uuid
 }
 
 // DeleteChannel 子孫チャンネルを含めてチャンネルを削除します
-func (repo *RepositoryImpl) DeleteChannel(channelID uuid.UUID) error {
+func (repo *GormRepository) DeleteChannel(channelID uuid.UUID) error {
 	if channelID == uuid.Nil {
 		return ErrNilID
 	}
@@ -544,7 +544,7 @@ func (repo *RepositoryImpl) DeleteChannel(channelID uuid.UUID) error {
 }
 
 // GetChannel チャンネルを取得する
-func (repo *RepositoryImpl) GetChannel(channelID uuid.UUID) (*model.Channel, error) {
+func (repo *GormRepository) GetChannel(channelID uuid.UUID) (*model.Channel, error) {
 	if channelID == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -560,7 +560,7 @@ func (repo *RepositoryImpl) GetChannel(channelID uuid.UUID) (*model.Channel, err
 }
 
 // GetChannelByMessageID メッセージIDによってチャンネルを取得
-func (repo *RepositoryImpl) GetChannelByMessageID(messageID uuid.UUID) (*model.Channel, error) {
+func (repo *GormRepository) GetChannelByMessageID(messageID uuid.UUID) (*model.Channel, error) {
 	if messageID == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -584,7 +584,7 @@ func (repo *RepositoryImpl) GetChannelByMessageID(messageID uuid.UUID) (*model.C
 }
 
 // GetChannelsByUserID ユーザーから見えるチャンネルの一覧を取得する
-func (repo *RepositoryImpl) GetChannelsByUserID(userID uuid.UUID) (channels []*model.Channel, err error) {
+func (repo *GormRepository) GetChannelsByUserID(userID uuid.UUID) (channels []*model.Channel, err error) {
 	channels = make([]*model.Channel, 0)
 	if userID == uuid.Nil {
 		err = repo.db.Where(&model.Channel{IsPublic: true}).Find(&channels).Error
@@ -599,7 +599,7 @@ func (repo *RepositoryImpl) GetChannelsByUserID(userID uuid.UUID) (channels []*m
 }
 
 // GetOrCreateDirectMessageChannel DMチャンネル取得する
-func (repo *RepositoryImpl) GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.Channel, error) {
+func (repo *GormRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.Channel, error) {
 	var channel model.Channel
 
 	// ユーザーが存在するかどうかの判定はusers_private_channelsテーブルに外部キー制約が貼ってあるのでそれで対応する
@@ -680,14 +680,14 @@ func (repo *RepositoryImpl) GetDirectMessageChannel(user1, user2 uuid.UUID) (*mo
 }
 
 // GetAllChannels 全てのチャンネルを取得する
-func (repo *RepositoryImpl) GetAllChannels() (channels []*model.Channel, err error) {
+func (repo *GormRepository) GetAllChannels() (channels []*model.Channel, err error) {
 	channels = make([]*model.Channel, 0)
 	err = repo.db.Find(&channels).Error
 	return
 }
 
 // IsChannelPresent チャンネル名が同階層に既に存在するか
-func (repo *RepositoryImpl) IsChannelPresent(name string, parent uuid.UUID) (bool, error) {
+func (repo *GormRepository) IsChannelPresent(name string, parent uuid.UUID) (bool, error) {
 	c := 0
 	err := repo.db.
 		Model(&model.Channel{}).
@@ -703,7 +703,7 @@ func (repo *RepositoryImpl) IsChannelPresent(name string, parent uuid.UUID) (boo
 }
 
 // IsChannelAccessibleToUser 指定したチャンネルが指定したユーザーからアクセス可能かどうか
-func (repo *RepositoryImpl) IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error) {
+func (repo *GormRepository) IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return false, nil
 	}
@@ -722,7 +722,7 @@ func (repo *RepositoryImpl) IsChannelAccessibleToUser(userID, channelID uuid.UUI
 }
 
 // GetParentChannel 親のチャンネルを取得する
-func (repo *RepositoryImpl) GetParentChannel(channelID uuid.UUID) (*model.Channel, error) {
+func (repo *GormRepository) GetParentChannel(channelID uuid.UUID) (*model.Channel, error) {
 	if channelID == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -757,7 +757,7 @@ func (repo *RepositoryImpl) GetParentChannel(channelID uuid.UUID) (*model.Channe
 }
 
 // GetChildrenChannelIDs 子チャンネルのIDを取得する
-func (repo *RepositoryImpl) GetChildrenChannelIDs(channelID uuid.UUID) (children []uuid.UUID, err error) {
+func (repo *GormRepository) GetChildrenChannelIDs(channelID uuid.UUID) (children []uuid.UUID, err error) {
 	children = make([]uuid.UUID, 0)
 	if channelID == uuid.Nil {
 		return children, nil
@@ -770,7 +770,7 @@ func (repo *RepositoryImpl) GetChildrenChannelIDs(channelID uuid.UUID) (children
 }
 
 // GetDescendantChannelIDs 子孫チャンネルのIDを取得する
-func (repo *RepositoryImpl) GetDescendantChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *GormRepository) GetDescendantChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
 	var descendants []uuid.UUID
 	children, err := repo.GetChildrenChannelIDs(channelID)
 	if err != nil {
@@ -788,7 +788,7 @@ func (repo *RepositoryImpl) GetDescendantChannelIDs(channelID uuid.UUID) ([]uuid
 }
 
 // GetAscendantChannelIDs 祖先チャンネルのIDを取得する
-func (repo *RepositoryImpl) GetAscendantChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *GormRepository) GetAscendantChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
 	var ascendants []uuid.UUID
 	parent, err := repo.GetParentChannel(channelID)
 	if err != nil {
@@ -809,7 +809,7 @@ func (repo *RepositoryImpl) GetAscendantChannelIDs(channelID uuid.UUID) ([]uuid.
 }
 
 // GetChannelPath チャンネルのパス文字列を取得する
-func (repo *RepositoryImpl) GetChannelPath(id uuid.UUID) (string, error) {
+func (repo *GormRepository) GetChannelPath(id uuid.UUID) (string, error) {
 	if id == uuid.Nil {
 		return "", ErrNotFound
 	}
@@ -842,7 +842,7 @@ func (repo *RepositoryImpl) GetChannelPath(id uuid.UUID) (string, error) {
 }
 
 // GetChannelDepth 指定したチャンネル木の深さを取得する
-func (repo *RepositoryImpl) GetChannelDepth(id uuid.UUID) (int, error) {
+func (repo *GormRepository) GetChannelDepth(id uuid.UUID) (int, error) {
 	children, err := repo.GetChildrenChannelIDs(id)
 	if err != nil {
 		return 0, err
@@ -861,7 +861,7 @@ func (repo *RepositoryImpl) GetChannelDepth(id uuid.UUID) (int, error) {
 }
 
 // AddPrivateChannelMember プライベートチャンネルにメンバーを追加します
-func (repo *RepositoryImpl) AddPrivateChannelMember(channelID, userID uuid.UUID) error {
+func (repo *GormRepository) AddPrivateChannelMember(channelID, userID uuid.UUID) error {
 	if channelID == uuid.Nil || userID == uuid.Nil {
 		return ErrNilID
 	}
@@ -870,7 +870,7 @@ func (repo *RepositoryImpl) AddPrivateChannelMember(channelID, userID uuid.UUID)
 }
 
 // GetPrivateChannelMemberIDs プライベートチャンネルのメンバーの配列を取得する
-func (repo *RepositoryImpl) GetPrivateChannelMemberIDs(channelID uuid.UUID) (users []uuid.UUID, err error) {
+func (repo *GormRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) (users []uuid.UUID, err error) {
 	users = make([]uuid.UUID, 0)
 	if channelID == uuid.Nil {
 		return users, nil
@@ -884,7 +884,7 @@ func (repo *RepositoryImpl) GetPrivateChannelMemberIDs(channelID uuid.UUID) (use
 }
 
 // IsUserPrivateChannelMember ユーザーがプライベートチャンネルのメンバーかどうかを確認します
-func (repo *RepositoryImpl) IsUserPrivateChannelMember(channelID, userID uuid.UUID) (bool, error) {
+func (repo *GormRepository) IsUserPrivateChannelMember(channelID, userID uuid.UUID) (bool, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return false, nil
 	}
@@ -903,7 +903,7 @@ func (repo *RepositoryImpl) IsUserPrivateChannelMember(channelID, userID uuid.UU
 }
 
 // SubscribeChannel 指定したチャンネルを購読します
-func (repo *RepositoryImpl) SubscribeChannel(userID, channelID uuid.UUID) error {
+func (repo *GormRepository) SubscribeChannel(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
 	}
@@ -912,7 +912,7 @@ func (repo *RepositoryImpl) SubscribeChannel(userID, channelID uuid.UUID) error 
 }
 
 // UnsubscribeChannel 指定したチャンネルの購読を解除します
-func (repo *RepositoryImpl) UnsubscribeChannel(userID, channelID uuid.UUID) error {
+func (repo *GormRepository) UnsubscribeChannel(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return nil
 	}
@@ -923,7 +923,7 @@ func (repo *RepositoryImpl) UnsubscribeChannel(userID, channelID uuid.UUID) erro
 }
 
 // GetSubscribingUserIDs 指定したチャンネルを購読しているユーザーを取得
-func (repo *RepositoryImpl) GetSubscribingUserIDs(channelID uuid.UUID) (users []uuid.UUID, err error) {
+func (repo *GormRepository) GetSubscribingUserIDs(channelID uuid.UUID) (users []uuid.UUID, err error) {
 	users = make([]uuid.UUID, 0)
 	if channelID == uuid.Nil {
 		return users, nil
@@ -937,7 +937,7 @@ func (repo *RepositoryImpl) GetSubscribingUserIDs(channelID uuid.UUID) (users []
 }
 
 // GetSubscribedChannelIDs ユーザーが購読しているチャンネルを取得する
-func (repo *RepositoryImpl) GetSubscribedChannelIDs(userID uuid.UUID) (channels []uuid.UUID, err error) {
+func (repo *GormRepository) GetSubscribedChannelIDs(userID uuid.UUID) (channels []uuid.UUID, err error) {
 	channels = make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
 		return channels, nil
