@@ -51,6 +51,8 @@ var (
 		{"devices", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"stars", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"stars", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
+		{"mutes", "user_id", "users(id)", "CASCADE", "CASCADE"},
+		{"mutes", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 		{"users_subscribe_channels", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"users_subscribe_channels", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 		{"clips", "folder_id", "clip_folders(id)", "CASCADE", "CASCADE"},
