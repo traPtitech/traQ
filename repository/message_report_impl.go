@@ -5,7 +5,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// CreateMessageReport 指定したメッセージの通報を登録します
+// CreateMessageReport implements MessageReportRepository interface.
 func (repo *GormRepository) CreateMessageReport(messageID, reporterID uuid.UUID, reason string) error {
 	// nil check
 	if messageID == uuid.Nil || reporterID == uuid.Nil {
@@ -19,17 +19,23 @@ func (repo *GormRepository) CreateMessageReport(messageID, reporterID uuid.UUID,
 		Reporter:  reporterID,
 		Reason:    reason,
 	}
-	return repo.db.Create(r).Error
+	if err := repo.db.Create(r).Error; err != nil {
+		if isMySQLDuplicatedRecordErr(err) {
+			return ErrAlreadyExists
+		}
+		return err
+	}
+	return nil
 }
 
-// GetMessageReports メッセージ通報を通報日時の昇順で取得します
+// GetMessageReports implements MessageReportRepository interface.
 func (repo *GormRepository) GetMessageReports(offset, limit int) (arr []*model.MessageReport, err error) {
 	arr = make([]*model.MessageReport, 0)
 	err = repo.db.Scopes(limitAndOffset(limit, offset)).Order("created_at").Find(&arr).Error
 	return arr, err
 }
 
-// GetMessageReportsByMessageID メッセージ通報を取得します
+// GetMessageReportsByMessageID implements MessageReportRepository interface.
 func (repo *GormRepository) GetMessageReportsByMessageID(messageID uuid.UUID) (arr []*model.MessageReport, err error) {
 	arr = make([]*model.MessageReport, 0)
 	if messageID == uuid.Nil {
@@ -39,7 +45,7 @@ func (repo *GormRepository) GetMessageReportsByMessageID(messageID uuid.UUID) (a
 	return arr, err
 }
 
-// GetMessageReportsByReporterID メッセージ通報を取得します
+// GetMessageReportsByReporterID implements MessageReportRepository interface.
 func (repo *GormRepository) GetMessageReportsByReporterID(reporterID uuid.UUID) (arr []*model.MessageReport, err error) {
 	arr = make([]*model.MessageReport, 0)
 	if reporterID == uuid.Nil {
