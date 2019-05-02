@@ -1,21 +1,22 @@
 package repository
 
 import (
-	"database/sql"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"gopkg.in/guregu/null.v3"
 )
 
 // UpdateUserGroupNameArgs ユーザーグループ更新引数
 type UpdateUserGroupNameArgs struct {
-	Name        string
-	Description sql.NullString
+	Name        null.String
+	Description null.String
 	AdminUserID uuid.NullUUID
+	Type        null.String
 }
 
 // UserGroupRepository ユーザーグループリポジトリー
 type UserGroupRepository interface {
-	CreateUserGroup(name, description string, adminID uuid.UUID) (*model.UserGroup, error)
+	CreateUserGroup(name, description, gType string, adminID uuid.UUID) (*model.UserGroup, error)
 	UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNameArgs) error
 	DeleteUserGroup(id uuid.UUID) error
 	GetUserGroup(id uuid.UUID) (*model.UserGroup, error)

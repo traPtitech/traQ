@@ -4,8 +4,10 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"time"
 )
@@ -43,18 +45,28 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 	reqUserID := getRequestUserID(c)
 
 	var req struct {
-		Name        string `json:"name" validate:"max=30,required"`
+		Name        string `json:"name"`
 		Description string `json:"description"`
+		Type        string `json:"type"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	g, err := h.Repo.CreateUserGroup(req.Name, req.Description, reqUserID)
+	if req.Type == "grade" {
+		// 学年グループは権限が必要
+		if getRequestUser(c).Role != role.Admin.ID() {
+			return c.NoContent(http.StatusForbidden)
+		}
+	}
+
+	g, err := h.Repo.CreateUserGroup(req.Name, req.Description, req.Type, reqUserID)
 	if err != nil {
-		switch err {
-		case repository.ErrAlreadyExists:
-			return c.NoContent(http.StatusConflict)
+		switch {
+		case err == repository.ErrAlreadyExists:
+			return echo.NewHTTPError(http.StatusConflict, "name conflicts")
+		case repository.IsArgError(err):
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		default:
 			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return c.NoContent(http.StatusInternalServerError)
@@ -85,9 +97,10 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 	g := getGroupFromContext(c)
 
 	var req struct {
-		Name        string     `json:"name" validate:"max=30"`
-		Description *string    `json:"description"`
-		AdminUserID *uuid.UUID `json:"adminUserId"`
+		Name        null.String   `json:"name"`
+		Description null.String   `json:"description"`
+		AdminUserID uuid.NullUUID `json:"adminUserId"`
+		Type        null.String   `json:"type"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -98,30 +111,25 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 		return c.NoContent(http.StatusForbidden)
 	}
 
-	args := repository.UpdateUserGroupNameArgs{
-		Name: req.Name,
-	}
-	if req.Description != nil {
-		args.Description.Valid = true
-		args.Description.String = *req.Description
-	}
-	if req.AdminUserID != nil {
-		// ユーザーが存在するか
-		if ok, err := h.Repo.UserExists(*req.AdminUserID); err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return c.NoContent(http.StatusInternalServerError)
-		} else if !ok {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return c.NoContent(http.StatusBadRequest)
+	if req.Type.ValueOrZero() == "grade" {
+		// 学年グループは権限が必要
+		if getRequestUser(c).Role != role.Admin.ID() {
+			return c.NoContent(http.StatusForbidden)
 		}
-		args.AdminUserID.Valid = true
-		args.AdminUserID.UUID = *req.AdminUserID
 	}
 
+	args := repository.UpdateUserGroupNameArgs{
+		Name:        req.Name,
+		Description: req.Description,
+		AdminUserID: req.AdminUserID,
+		Type:        req.Type,
+	}
 	if err := h.Repo.UpdateUserGroup(groupID, args); err != nil {
-		switch err {
-		case repository.ErrAlreadyExists:
-			return c.NoContent(http.StatusConflict)
+		switch {
+		case err == repository.ErrAlreadyExists:
+			return echo.NewHTTPError(http.StatusConflict, "name conflicts")
+		case repository.IsArgError(err):
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		default:
 			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return c.NoContent(http.StatusInternalServerError)

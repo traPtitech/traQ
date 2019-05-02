@@ -12,11 +12,11 @@ import (
 
 func TestHandlers_GetUserGroups(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, s1)
+	repo, server, _, _, session, _, _, adminUser := setupWithUsers(t, s1)
 
-	mustMakeUserGroup(t, repo, random, uuid.Nil)
-	mustMakeUserGroup(t, repo, random, uuid.Nil)
-	mustMakeUserGroup(t, repo, random, uuid.Nil)
+	mustMakeUserGroup(t, repo, random, adminUser.ID)
+	mustMakeUserGroup(t, repo, random, adminUser.ID)
+	mustMakeUserGroup(t, repo, random, adminUser.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -42,7 +42,7 @@ func TestHandlers_GetUserGroups(t *testing.T) {
 
 func TestHandlers_PostUserGroups(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common5)
+	repo, server, _, _, session, _, user, adminUser := setupWithUsers(t, common5)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -68,7 +68,7 @@ func TestHandlers_PostUserGroups(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		name := utils.RandAlphabetAndNumberString(20)
-		mustMakeUserGroup(t, repo, name, uuid.Nil)
+		mustMakeUserGroup(t, repo, name, adminUser.ID)
 		e.POST("/api/1.0/groups").
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]interface{}{"name": name, "description": name}).
@@ -98,9 +98,9 @@ func TestHandlers_PostUserGroups(t *testing.T) {
 
 func TestHandlers_GetUserGroup(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common5)
+	repo, server, _, _, session, _, user, adminUser := setupWithUsers(t, common5)
 
-	g := mustMakeUserGroup(t, repo, random, uuid.Nil)
+	g := mustMakeUserGroup(t, repo, random, adminUser.ID)
 	mustAddUserToGroup(t, repo, user.ID, g.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -140,7 +140,7 @@ func TestHandlers_GetUserGroup(t *testing.T) {
 
 func TestHandlers_PatchUserGroup(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common5)
+	repo, server, _, _, session, _, user, adminUser := setupWithUsers(t, common5)
 
 	user2 := mustMakeUser(t, repo, random)
 	g := mustMakeUserGroup(t, repo, random, user.ID)
@@ -187,7 +187,7 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		name := utils.RandAlphabetAndNumberString(20)
-		mustMakeUserGroup(t, repo, name, uuid.Nil)
+		mustMakeUserGroup(t, repo, name, adminUser.ID)
 		e.PATCH("/api/1.0/groups/{groupID}", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]interface{}{"name": name}).
@@ -275,9 +275,9 @@ func TestHandlers_DeleteUserGroup(t *testing.T) {
 
 func TestHandlers_GetUserGroupMembers(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common5)
+	repo, server, _, _, session, _, user, adminUser := setupWithUsers(t, common5)
 
-	g := mustMakeUserGroup(t, repo, random, uuid.Nil)
+	g := mustMakeUserGroup(t, repo, random, adminUser.ID)
 	mustAddUserToGroup(t, repo, user.ID, g.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -440,10 +440,10 @@ func TestHandlers_DeleteUserGroupMembers(t *testing.T) {
 
 func TestHandlers_GetMyBelongingGroup(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common5)
+	repo, server, _, _, session, _, user, adminUser := setupWithUsers(t, common5)
 
-	g1 := mustMakeUserGroup(t, repo, random, uuid.Nil)
-	g2 := mustMakeUserGroup(t, repo, random, uuid.Nil)
+	g1 := mustMakeUserGroup(t, repo, random, adminUser.ID)
+	g2 := mustMakeUserGroup(t, repo, random, adminUser.ID)
 	mustAddUserToGroup(t, repo, user.ID, g1.ID)
 	mustAddUserToGroup(t, repo, user.ID, g2.ID)
 
@@ -470,11 +470,11 @@ func TestHandlers_GetMyBelongingGroup(t *testing.T) {
 
 func TestHandlers_GetUserBelongingGroup(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common5)
+	repo, server, _, _, session, _, _, adminUser := setupWithUsers(t, common5)
 
 	user := mustMakeUser(t, repo, random)
-	g1 := mustMakeUserGroup(t, repo, random, uuid.Nil)
-	g2 := mustMakeUserGroup(t, repo, random, uuid.Nil)
+	g1 := mustMakeUserGroup(t, repo, random, adminUser.ID)
+	g2 := mustMakeUserGroup(t, repo, random, adminUser.ID)
 	mustAddUserToGroup(t, repo, user.ID, g1.ID)
 	mustAddUserToGroup(t, repo, user.ID, g2.ID)
 

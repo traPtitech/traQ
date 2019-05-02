@@ -9,8 +9,6 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
@@ -76,13 +74,6 @@ const (
 	unexpectedError = "unexpected error"
 )
 
-var (
-	onlineUsersCounter = promauto.NewGauge(prometheus.GaugeOpts{
-		Namespace: "traq",
-		Name:      "online_users",
-	})
-)
-
 func init() {
 	gob.Register(uuid.UUID{})
 }
@@ -125,16 +116,6 @@ func NewHandlers(rbac *rbac.RBAC, repo repository.Repository, hub *hub.Hub, logg
 		HandlerConfig: config,
 	}
 	go h.stampEventSubscriber(hub.Subscribe(10, event.StampCreated, event.StampUpdated, event.StampDeleted))
-	go func() {
-		for v := range hub.Subscribe(1, event.UserOnline, event.UserOffline).Receiver {
-			switch v.Name {
-			case event.UserOnline:
-				onlineUsersCounter.Inc()
-			case event.UserOffline:
-				onlineUsersCounter.Dec()
-			}
-		}
-	}()
 	return h
 }
 
@@ -290,8 +271,8 @@ func getRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
 	return uuid.FromStringOrNil(c.Param(name))
 }
 
-// GetTraceID トレースIDを返します
-func GetTraceID(c echo.Context) string {
+// getTraceID トレースIDを返します
+func getTraceID(c echo.Context) string {
 	v, ok := c.Get(traceIDKey).(string)
 	if ok {
 		return v
@@ -306,7 +287,7 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	if ok {
 		return l
 	}
-	l = h.Logger.With(zap.String("logging.googleapis.com/trace", GetTraceID(c)))
+	l = h.Logger.With(zap.String("logging.googleapis.com/trace", getTraceID(c)))
 	c.Set(loggerKey, l)
 	return l
 }

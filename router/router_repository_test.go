@@ -345,7 +345,7 @@ func (repo *TestRepository) UpdateHeartbeatStatus(userID, channelID uuid.UUID, s
 	panic("implement me")
 }
 
-func (repo *TestRepository) CreateUserGroup(name, description string, adminID uuid.UUID) (*model.UserGroup, error) {
+func (repo *TestRepository) CreateUserGroup(name, description, gType string, adminID uuid.UUID) (*model.UserGroup, error) {
 	g := model.UserGroup{
 		ID:          uuid.Must(uuid.NewV4()),
 		Name:        name,
@@ -354,12 +354,25 @@ func (repo *TestRepository) CreateUserGroup(name, description string, adminID uu
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
-	if err := g.Validate(); err != nil {
-		return nil, err
-	}
 
 	repo.UserGroupsLock.Lock()
+	repo.UsersLock.RLock()
 	defer repo.UserGroupsLock.Unlock()
+	defer repo.UsersLock.RUnlock()
+
+	// 名前チェック
+	if len(g.Name) == 0 || utf8.RuneCountInString(g.Name) > 30 {
+		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 31 characters")
+	}
+	// ユーザーチェック
+	if u, ok := repo.Users[g.AdminUserID]; !ok || !(u.Status == model.UserAccountStatusActive && !u.Bot) {
+		return nil, repository.ArgError("AdminUserID", "invalid AdminUserID")
+	}
+	// タイプチェック
+	if utf8.RuneCountInString(g.Type) > 30 {
+		return nil, repository.ArgError("Type", "Type must be shorter than 31 characters")
+	}
+
 	for _, v := range repo.UserGroups {
 		if v.Name == name {
 			return nil, repository.ErrAlreadyExists
@@ -375,29 +388,49 @@ func (repo *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.Update
 	}
 
 	repo.UserGroupsLock.Lock()
+	repo.UsersLock.RLock()
 	defer repo.UserGroupsLock.Unlock()
+	defer repo.UsersLock.RUnlock()
 	g, ok := repo.UserGroups[id]
 	if !ok {
 		return repository.ErrNotFound
 	}
-	if len(args.Name) > 0 {
+	changed := false
+	if args.Name.Valid {
+		if len(args.Name.String) == 0 || utf8.RuneCountInString(args.Name.String) > 30 {
+			return repository.ArgError("args.Name", "Name must be non-empty and shorter than 31 characters")
+		}
+
 		for _, v := range repo.UserGroups {
-			if v.Name == args.Name {
+			if v.Name == args.Name.String {
 				return repository.ErrAlreadyExists
 			}
 		}
-		g.Name = args.Name
+		g.Name = args.Name.String
 	}
 	if args.Description.Valid {
 		g.Description = args.Description.String
+		changed = true
 	}
 	if args.AdminUserID.Valid {
+		if u, ok := repo.Users[args.AdminUserID.UUID]; !ok || !(u.Status == model.UserAccountStatusActive && !u.Bot) {
+			return repository.ArgError("AdminUserID", "invalid AdminUserID")
+		}
 		g.AdminUserID = args.AdminUserID.UUID
+		changed = true
 	}
-	if err := g.Validate(); err != nil {
-		return err
+	if args.Type.Valid {
+		if utf8.RuneCountInString(args.Type.String) > 30 {
+			return repository.ArgError("args.Type", "Type must be shorter than 31 characters")
+		}
+		g.Type = args.Type.String
+		changed = true
 	}
-	repo.UserGroups[id] = g
+
+	if changed {
+		g.UpdatedAt = time.Now()
+		repo.UserGroups[id] = g
+	}
 	return nil
 }
 

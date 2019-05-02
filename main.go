@@ -15,7 +15,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/role"
-	repoimpl "github.com/traPtitech/traQ/repository/impl"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -25,7 +25,6 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -94,7 +93,7 @@ func main() {
 	}
 
 	// Repository
-	repo, err := repoimpl.NewRepositoryImpl(engine, fs, hub)
+	repo, err := repository.NewGormRepository(engine, fs, hub)
 	if err != nil {
 		logger.Fatal("failed to initialize repository", zap.Error(err))
 	}
@@ -154,37 +153,7 @@ func main() {
 	})
 	e := echo.New()
 	if viper.GetBool("accessLog.enabled") {
-		alog := logger.Named("access_log")
-		exHeartbeat := viper.GetBool("accessLog.excludesHeartbeat")
-		e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-			return func(c echo.Context) error {
-				if exHeartbeat && strings.HasPrefix(c.Path(), "/api/1.0/heartbeat") {
-					return next(c)
-				}
-
-				start := time.Now()
-				if err := next(c); err != nil {
-					c.Error(err)
-				}
-				stop := time.Now()
-
-				req := c.Request()
-				res := c.Response()
-				alog.Info("", zap.String("logging.googleapis.com/trace", router.GetTraceID(c)), logging.HTTPRequest(&logging.HTTPPayload{
-					RequestMethod: req.Method,
-					Status:        res.Status,
-					UserAgent:     req.UserAgent(),
-					RemoteIP:      c.RealIP(),
-					Referer:       req.Referer(),
-					Protocol:      req.Proto,
-					RequestURL:    req.URL.String(),
-					RequestSize:   req.Header.Get(echo.HeaderContentLength),
-					ResponseSize:  strconv.FormatInt(res.Size, 10),
-					Latency:       strconv.FormatFloat(stop.Sub(start).Seconds(), 'f', 9, 64) + "s",
-				}))
-				return nil
-			}
-		})
+		e.Use(router.AccessLoggingMiddleware(logger.Named("access_log"), viper.GetBool("accessLog.excludesHeartbeat")))
 	}
 	e.Use(router.AddHeadersMiddleware(map[string]string{"X-TRAQ-VERSION": versionAndRevision}))
 	e.HideBanner = true

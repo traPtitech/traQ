@@ -30,3 +30,12 @@ func (ae *ArgumentError) Error() string {
 func ArgError(field, message string) *ArgumentError {
 	return &ArgumentError{FieldName: field, Message: message}
 }
+
+// IsArgError 引数エラーかどうか
+func IsArgError(err error) bool {
+	if err == nil {
+		return false
+	}
+	_, ok := err.(*ArgumentError)
+	return ok
+}
