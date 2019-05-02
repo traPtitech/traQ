@@ -62,7 +62,7 @@ func (repo *GormRepository) UpdateStamp(id uuid.UUID, args UpdateStampArgs) erro
 	changes := map[string]interface{}{}
 	err := repo.transact(func(tx *gorm.DB) error {
 		var s model.Stamp
-		if err := tx.First(&model.Stamp{ID: id}).Error; err != nil {
+		if err := tx.First(&s, &model.Stamp{ID: id}).Error; err != nil {
 			return convertError(err)
 		}
 

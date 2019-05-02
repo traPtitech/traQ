@@ -167,15 +167,6 @@ func dbExists(tx *gorm.DB, where interface{}, tableName ...string) (exists bool,
 	return c > 0, err
 }
 
-func dbPluck(tx *gorm.DB, where interface{}, column string, dest interface{}, tableName ...string) error {
-	if len(tableName) > 0 {
-		tx = tx.Table(tableName[0])
-	} else {
-		tx = tx.Model(where)
-	}
-	return tx.Where(where).Pluck(column, dest).Error
-}
-
 func convertError(err error) error {
 	switch {
 	case gorm.IsRecordNotFoundError(err):

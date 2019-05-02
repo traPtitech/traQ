@@ -54,7 +54,7 @@ func (repo *GormRepository) GetDeviceTokensByUserID(userID uuid.UUID) (result []
 	if userID == uuid.Nil {
 		return result, nil
 	}
-	return result, dbPluck(repo.db, &model.Device{UserID: userID}, "token", &result)
+	return result, repo.db.Model(&model.Device{}).Where(&model.Device{UserID: userID}).Pluck("token", &result).Error
 }
 
 // GetAllDevices implements DeviceRepository interface.
@@ -66,5 +66,5 @@ func (repo *GormRepository) GetAllDevices() (result []*model.Device, err error) 
 // GetAllDeviceIDs implements DeviceRepository interface.
 func (repo *GormRepository) GetAllDeviceTokens() (result []string, err error) {
 	result = make([]string, 0)
-	return result, dbPluck(repo.db, &model.Device{}, "token", &result)
+	return result, repo.db.Model(&model.Device{}).Pluck("token", &result).Error
 }

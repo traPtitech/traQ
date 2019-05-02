@@ -54,5 +54,5 @@ func (repo *GormRepository) GetStaredChannels(userID uuid.UUID) (ids []uuid.UUID
 	if userID == uuid.Nil {
 		return ids, nil
 	}
-	return ids, dbPluck(repo.db, &model.Star{UserID: userID}, "channel_id", &ids)
+	return ids, repo.db.Model(&model.Star{}).Where(&model.Star{UserID: userID}).Pluck("channel_id", &ids).Error
 }

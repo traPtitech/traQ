@@ -53,7 +53,7 @@ func (repo *GormRepository) GetMutedChannelIDs(userID uuid.UUID) (ids []uuid.UUI
 	if userID == uuid.Nil {
 		return ids, nil
 	}
-	return ids, dbPluck(repo.db, &model.Mute{UserID: userID}, "channel_id", &ids)
+	return ids, repo.db.Model(&model.Mute{}).Where(&model.Mute{UserID: userID}).Pluck("channel_id", &ids).Error
 }
 
 // GetMuteUserIDs implements MuteRepository interface.
@@ -62,7 +62,7 @@ func (repo *GormRepository) GetMuteUserIDs(channelID uuid.UUID) (ids []uuid.UUID
 	if channelID == uuid.Nil {
 		return ids, nil
 	}
-	return ids, dbPluck(repo.db, &model.Mute{ChannelID: channelID}, "user_id", &ids)
+	return ids, repo.db.Model(&model.Mute{}).Where(&model.Mute{ChannelID: channelID}).Pluck("user_id", &ids).Error
 }
 
 // IsChannelMuted implements MuteRepository interface.
