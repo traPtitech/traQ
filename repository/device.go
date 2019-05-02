@@ -7,10 +7,35 @@ import (
 
 // DeviceRepository FCMデバイスリポジトリ
 type DeviceRepository interface {
+	// RegisterDevice FCMデバイスを登録します
+	//
+	// 成功した、或いは既に登録されていた場合に*model.Deviceとnilを返します。
+	// 登録しようとしたトークンが既に他のユーザーと関連づけられていた場合はArgumentErrorを返します。
+	// DBによるエラーを返すことがあります。
 	RegisterDevice(userID uuid.UUID, token string) (*model.Device, error)
+	// UnregisterDevice FCMデバイスの登録を解除します
+	//
+	// 成功した、或いは既に登録解除されていた場合にnilを返します。
+	// DBによるエラーを返すことがあります。
 	UnregisterDevice(token string) (err error)
-	GetDevicesByUserID(user uuid.UUID) (result []*model.Device, err error)
-	GetDeviceTokensByUserID(user uuid.UUID) (result []string, err error)
+	// GetDevicesByUserID 指定したユーザーのデバイスを全て取得します
+	//
+	// 成功した場合、*model.Deviceの配列とnilを返します。
+	// 存在しないユーザーを指定した場合は空配列とnilを返します。
+	// DBによるエラーを返すことがあります。
+	GetDevicesByUserID(userID uuid.UUID) (result []*model.Device, err error)
+	// GetDeviceTokensByUserID 指定したユーザーの全デバイストークンを取得します
+	//
+	// 成功した場合、デバイストークンの配列とnilを返します。
+	// 存在しないユーザーを指定した場合は空配列とnilを返します。
+	// DBによるエラーを返すことがあります。
+	GetDeviceTokensByUserID(userID uuid.UUID) (result []string, err error)
+	// GetAllDevices 全ユーザーの全デバイスを取得します
+	//
+	// DBによるエラーを返すことがあります。
 	GetAllDevices() (result []*model.Device, err error)
+	// GetAllDeviceIDs 全ユーザーの全デバイストークンを取得します
+	//
+	// DBによるエラーを返すことがあります。
 	GetAllDeviceTokens() (result []string, err error)
 }

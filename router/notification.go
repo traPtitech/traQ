@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
 	"net/http"
 
@@ -76,8 +77,13 @@ func (h *Handlers) PostDeviceToken(c echo.Context) error {
 	}
 
 	if _, err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		switch {
+		case repository.IsArgError(err):
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		default:
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+			return c.NoContent(http.StatusInternalServerError)
+		}
 	}
 
 	return c.NoContent(http.StatusCreated)
