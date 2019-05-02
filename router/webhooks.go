@@ -75,8 +75,8 @@ func (h *Handlers) PostWebhooks(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	req := struct {
-		Name        string    `json:"name"        validate:"max=32,required"`
-		Description string    `json:"description" validate:"required"`
+		Name        string    `json:"name"`
+		Description string    `json:"description"`
 		ChannelID   uuid.UUID `json:"channelId"`
 		Secret      string    `json:"secret"`
 	}{}
@@ -84,24 +84,15 @@ func (h *Handlers) PostWebhooks(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	ch, err := h.Repo.GetChannel(req.ChannelID)
+	w, err := h.Repo.CreateWebhook(req.Name, req.Description, req.ChannelID, userID, req.Secret)
 	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusBadRequest)
+		switch {
+		case repository.IsArgError(err):
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		default:
 			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-	}
-	if !ch.IsPublic {
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
-
-	w, err := h.Repo.CreateWebhook(req.Name, req.Description, req.ChannelID, userID, req.Secret)
-	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
 	return c.JSON(http.StatusCreated, formatWebhook(w))
@@ -118,7 +109,7 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 	w := getWebhookFromContext(c)
 
 	req := struct {
-		Name        null.String   `json:"name"        validate:"max=32"`
+		Name        null.String   `json:"name"`
 		Description null.String   `json:"description"`
 		ChannelID   uuid.NullUUID `json:"channelId"`
 		Secret      null.String   `json:"secret"`
@@ -127,36 +118,20 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	if req.Name.Valid && len(req.Name.String) == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "name is empty")
-	}
-
-	if req.ChannelID.Valid {
-		ch, err := h.Repo.GetChannel(req.ChannelID.UUID)
-		if err != nil {
-			switch err {
-			case repository.ErrNotFound:
-				return echo.NewHTTPError(http.StatusBadRequest)
-			default:
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
-		}
-		if !ch.IsPublic {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
-	}
-
 	args := repository.UpdateWebhookArgs{
 		Name:        req.Name,
 		Description: req.Description,
 		ChannelID:   req.ChannelID,
 		Secret:      req.Secret,
 	}
-
 	if err := h.Repo.UpdateWebhook(w.GetID(), args); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch {
+		case repository.IsArgError(err):
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		default:
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
 	return c.NoContent(http.StatusNoContent)
 }

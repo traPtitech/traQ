@@ -2353,7 +2353,7 @@ func (repo *TestRepository) generateThumbnail(ctx context.Context, f *model.File
 
 func (repo *TestRepository) CreateWebhook(name, description string, channelID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
-		return nil, errors.New("invalid name")
+		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 33 characters")
 	}
 	uid := uuid.Must(uuid.NewV4())
 	bid := uuid.Must(uuid.NewV4())
@@ -2382,6 +2382,16 @@ func (repo *TestRepository) CreateWebhook(name, description string, channelID, c
 		CreatorID:   creatorID,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
+	}
+
+	repo.ChannelsLock.RLock()
+	defer repo.ChannelsLock.RUnlock()
+	ch, ok := repo.Channels[channelID]
+	if !ok {
+		return nil, repository.ArgError("channelID", "the Channel is not found")
+	}
+	if !ch.IsPublic {
+		return nil, repository.ArgError("channelID", "private channels are not allowed")
 	}
 
 	repo.WebhooksLock.Lock()
@@ -2415,6 +2425,15 @@ func (repo *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWe
 		wb.UpdatedAt = time.Now()
 	}
 	if args.ChannelID.Valid {
+		repo.ChannelsLock.RLock()
+		defer repo.ChannelsLock.RUnlock()
+		ch, ok := repo.Channels[args.ChannelID.UUID]
+		if !ok {
+			return repository.ArgError("args.ChannelID", "the Channel is not found")
+		}
+		if !ch.IsPublic {
+			return repository.ArgError("args.ChannelID", "private channels are not allowed")
+		}
 		wb.ChannelID = args.ChannelID.UUID
 		wb.UpdatedAt = time.Now()
 	}
@@ -2424,7 +2443,7 @@ func (repo *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWe
 	}
 	if args.Name.Valid {
 		if len(args.Name.String) == 0 || utf8.RuneCountInString(args.Name.String) > 32 {
-			return errors.New("invalid name")
+			return repository.ArgError("args.Name", "Name must be non-empty and shorter than 33 characters")
 		}
 		u.DisplayName = args.Name.String
 		u.UpdatedAt = time.Now()

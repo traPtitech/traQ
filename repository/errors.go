@@ -11,8 +11,6 @@ var (
 	ErrAlreadyExists = errors.New("already exists")
 	// ErrForbidden 汎用エラー 禁止されています
 	ErrForbidden = errors.New("forbidden")
-	// ErrInvalidArgs 汎用エラー 引数が不正
-	ErrInvalidArgs = errors.New("invalid args")
 )
 
 // ArgumentError 引数エラー

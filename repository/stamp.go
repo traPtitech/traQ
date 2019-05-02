@@ -25,6 +25,7 @@ type StampRepository interface {
 	// UpdateStamp 指定したスタンプの情報を更新します
 	//
 	// 成功した場合、nilを返します。
+	// 存在しないスタンプの場合、ErrNotFoundを返します。
 	// idにuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 更新内容に問題がある場合、ArgumentErrorを返します。
 	// 変更後のNameが既に使われている場合、ErrAlreadyExistsを返します。

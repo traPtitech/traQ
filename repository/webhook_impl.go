@@ -2,7 +2,6 @@ package repository
 
 import (
 	"encoding/base64"
-	"errors"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
@@ -12,10 +11,12 @@ import (
 	"unicode/utf8"
 )
 
+// CreateWebhook implements WebhookRepository interface.
 func (repo *GormRepository) CreateWebhook(name, description string, channelID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
-		return nil, errors.New("invalid name")
+		return nil, ArgError("name", "Name must be non-empty and shorter than 33 characters")
 	}
+
 	uid := uuid.Must(uuid.NewV4())
 	bid := uuid.Must(uuid.NewV4())
 	iconID, err := repo.GenerateIconFile(name)
@@ -42,6 +43,18 @@ func (repo *GormRepository) CreateWebhook(name, description string, channelID, c
 	}
 
 	err = repo.transact(func(tx *gorm.DB) error {
+		// チャンネル検証
+		var ch model.Channel
+		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
+			if gorm.IsRecordNotFoundError(err) {
+				return ArgError("channelID", "the Channel is not found")
+			}
+			return err
+		}
+		if !ch.IsPublic {
+			return ArgError("channelID", "private channels are not allowed")
+		}
+
 		if err := tx.Create(u).Error; err != nil {
 			return err
 		}
@@ -71,7 +84,7 @@ func (repo *GormRepository) CreateWebhook(name, description string, channelID, c
 	return wb, nil
 }
 
-// UpdateWebhook Webhookを更新します
+// UpdateWebhook implements WebhookRepository interface.
 func (repo *GormRepository) UpdateWebhook(id uuid.UUID, args UpdateWebhookArgs) error {
 	if id == uuid.Nil {
 		return ErrNilID
@@ -83,10 +96,7 @@ func (repo *GormRepository) UpdateWebhook(id uuid.UUID, args UpdateWebhookArgs) 
 	)
 	err := repo.transact(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.WebhookBot{ID: id}).First(&w).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				return ErrNotFound
-			}
-			return err
+			return convertError(err)
 		}
 
 		changes := map[string]interface{}{}
@@ -94,6 +104,18 @@ func (repo *GormRepository) UpdateWebhook(id uuid.UUID, args UpdateWebhookArgs) 
 			changes["description"] = args.Description.String
 		}
 		if args.ChannelID.Valid {
+			// チャンネル検証
+			var ch model.Channel
+			if err := tx.First(&ch, &model.Channel{ID: args.ChannelID.UUID}).Error; err != nil {
+				if gorm.IsRecordNotFoundError(err) {
+					return ArgError("args.ChannelID", "the Channel is not found")
+				}
+				return err
+			}
+			if !ch.IsPublic {
+				return ArgError("args.ChannelID", "private channels are not allowed")
+			}
+
 			changes["channel_id"] = args.ChannelID.UUID
 		}
 		if args.Secret.Valid {
@@ -108,7 +130,7 @@ func (repo *GormRepository) UpdateWebhook(id uuid.UUID, args UpdateWebhookArgs) 
 
 		if args.Name.Valid {
 			if len(args.Name.String) == 0 || utf8.RuneCountInString(args.Name.String) > 32 {
-				return errors.New("invalid name")
+				return ArgError("args.Name", "Name must be non-empty and shorter than 33 characters")
 			}
 
 			if err := tx.Model(&model.User{ID: w.BotUserID}).Update("display_name", args.Name.String).Error; err != nil {
@@ -140,18 +162,15 @@ func (repo *GormRepository) UpdateWebhook(id uuid.UUID, args UpdateWebhookArgs) 
 	return nil
 }
 
-// DeleteWebhook Webhookをdbから削除
+// DeleteWebhook implements WebhookRepository interface.
 func (repo *GormRepository) DeleteWebhook(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
 	err := repo.transact(func(tx *gorm.DB) error {
 		var b model.WebhookBot
-		if err := tx.Where(&model.WebhookBot{ID: id}).Take(&b).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				return ErrNotFound
-			}
-			return err
+		if err := tx.Take(&b, &model.WebhookBot{ID: id}).Error; err != nil {
+			return convertError(err)
 		}
 
 		if err := tx.Delete(&model.WebhookBot{ID: id}).Error; err != nil {
@@ -171,37 +190,31 @@ func (repo *GormRepository) DeleteWebhook(id uuid.UUID) error {
 	return nil
 }
 
-// GetWebhook Webhookを取得
+// GetWebhook implements WebhookRepository interface.
 func (repo *GormRepository) GetWebhook(id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
 	b := &model.WebhookBot{}
 	if err := repo.db.Preload("BotUser").Where(&model.WebhookBot{ID: id}).Take(b).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+		return nil, convertError(err)
 	}
 	return b, nil
 }
 
-// GetWebhookByBotUserID Webhookを取得
+// GetWebhookByBotUserID implements WebhookRepository interface.
 func (repo *GormRepository) GetWebhookByBotUserID(id uuid.UUID) (model.Webhook, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
 	b := &model.WebhookBot{}
 	if err := repo.db.Preload("BotUser").Where(&model.WebhookBot{BotUserID: id}).Take(b).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+		return nil, convertError(err)
 	}
 	return b, nil
 }
 
-// GetAllWebhooks Webhookを全て取得
+// GetAllWebhooks implements WebhookRepository interface.
 func (repo *GormRepository) GetAllWebhooks() (arr []model.Webhook, err error) {
 	var webhooks []*model.WebhookBot
 	err = repo.db.Preload("BotUser").Find(&webhooks).Error
@@ -215,7 +228,7 @@ func (repo *GormRepository) GetAllWebhooks() (arr []model.Webhook, err error) {
 	return arr, nil
 }
 
-// GetWebhooksByCreator 指定した制作者のWebhookを全て取得
+// GetWebhooksByCreator implements WebhookRepository interface.
 func (repo *GormRepository) GetWebhooksByCreator(creatorID uuid.UUID) (arr []model.Webhook, err error) {
 	arr = make([]model.Webhook, 0)
 	if creatorID == uuid.Nil {

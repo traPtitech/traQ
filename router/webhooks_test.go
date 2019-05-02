@@ -69,16 +69,6 @@ func TestHandlers_PostWebhooks(t *testing.T) {
 			Status(http.StatusUnauthorized)
 	})
 
-	t.Run("Bad Request (No description)", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.POST("/api/1.0/webhooks").
-			WithJSON(map[string]string{"name": "test", "channelId": ch.ID.String()}).
-			WithCookie(sessions.CookieName, session).
-			Expect().
-			Status(http.StatusBadRequest)
-	})
-
 	t.Run("Bad Request (No channel)", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
