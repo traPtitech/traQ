@@ -1,6 +1,8 @@
 package bot
 
 import (
+	"sync"
+
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
@@ -8,7 +10,6 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
-	"sync"
 )
 
 type eventHandler func(p *Processor, event string, fields hub.Fields)
@@ -30,6 +31,12 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	ch, err := p.repo.GetChannel(m.ChannelID)
 	if err != nil {
 		p.logger.Error("failed to GetChannel", zap.Error(err))
+		return
+	}
+
+	user, err := p.repo.GetUser(m.UserID)
+	if err != nil {
+		p.logger.Error("failed to GetUser", zap.Error(err))
 		return
 	}
 
@@ -61,8 +68,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 		payload := directMessageCreatedPayload{
 			basePayload: makeBasePayload(),
-			UserID:      m.UserID,
-			Message:     makeMessagePayload(m, embedded, plain),
+			Message:     makeMessagePayload(m, user, embedded, plain),
 		}
 
 		multicast(p, DirectMessageCreated, &payload, []*model.Bot{bot})
@@ -79,7 +85,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 		payload := messageCreatedPayload{
 			basePayload: makeBasePayload(),
-			Message:     makeMessagePayload(m, embedded, plain),
+			Message:     makeMessagePayload(m, user, embedded, plain),
 		}
 
 		multicast(p, MessageCreated, &payload, bots)
@@ -100,9 +106,25 @@ func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
 		return
 	}
 
+	ch, err := p.repo.GetChannel(channelID)
+	if err != nil {
+		p.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("id", channelID))
+		return
+	}
+	path, err := p.repo.GetChannelPath(channelID)
+	if err != nil {
+		p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", channelID))
+		return
+	}
+	user, err := p.repo.GetUser(ch.CreatorID)
+	if err != nil {
+		p.logger.Error("failed to GetUser", zap.Error(err))
+		return
+	}
+
 	payload := joinAndLeftPayload{
 		basePayload: makeBasePayload(),
-		ChannelID:   channelID,
+		Channel:     makeChannelPayload(ch, path, user),
 	}
 
 	buf, release, err := p.makePayloadJSON(&payload)
@@ -166,18 +188,15 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", chID))
 			return
 		}
+		user, err := p.repo.GetUser(ch.CreatorID)
+		if err != nil {
+			p.logger.Error("failed to GetUser", zap.Error(err))
+			return
+		}
 
 		payload := channelCreatedPayload{
 			basePayload: makeBasePayload(),
-			Channel: channelPayload{
-				ID:        chID,
-				Name:      ch.Name,
-				Path:      "#" + path,
-				ParentID:  ch.ParentID,
-				CreatorID: ch.CreatorID,
-				CreatedAt: ch.CreatedAt,
-				UpdatedAt: ch.UpdatedAt,
-			},
+			Channel:     makeChannelPayload(ch, path, user),
 		}
 
 		multicast(p, ChannelCreated, &payload, bots)

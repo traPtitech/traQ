@@ -1,10 +1,11 @@
 package bot
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/message"
-	"time"
 )
 
 type basePayload struct {
@@ -19,7 +20,7 @@ func makeBasePayload() basePayload {
 
 type messagePayload struct {
 	ID        uuid.UUID               `json:"id"`
-	UserID    uuid.UUID               `json:"userId"`
+	User      userPayload             `json:"user"`
 	ChannelID uuid.UUID               `json:"channelId"`
 	Text      string                  `json:"text"`
 	PlainText string                  `json:"plainText"`
@@ -28,10 +29,10 @@ type messagePayload struct {
 	UpdatedAt time.Time               `json:"updatedAt"`
 }
 
-func makeMessagePayload(message *model.Message, embedded []*message.EmbeddedInfo, plain string) messagePayload {
+func makeMessagePayload(message *model.Message, user *model.User, embedded []*message.EmbeddedInfo, plain string) messagePayload {
 	return messagePayload{
 		ID:        message.ID,
-		UserID:    message.UserID,
+		User:      makeUserPayload(user),
 		ChannelID: message.ChannelID,
 		Text:      message.Text,
 		PlainText: plain,
@@ -42,13 +43,25 @@ func makeMessagePayload(message *model.Message, embedded []*message.EmbeddedInfo
 }
 
 type channelPayload struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	Path      string    `json:"path"`
-	ParentID  uuid.UUID `json:"parentId"`
-	CreatorID uuid.UUID `json:"creatorId"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID        uuid.UUID   `json:"id"`
+	Name      string      `json:"name"`
+	Path      string      `json:"path"`
+	ParentID  uuid.UUID   `json:"parentId"`
+	Creator   userPayload `json:"creator"`
+	CreatedAt time.Time   `json:"createdAt"`
+	UpdatedAt time.Time   `json:"updatedAt"`
+}
+
+func makeChannelPayload(ch *model.Channel, path string, user *model.User) channelPayload {
+	return channelPayload{
+		ID:        ch.ID,
+		Name:      ch.Name,
+		Path:      "#" + path,
+		ParentID:  ch.ParentID,
+		Creator:   makeUserPayload(user),
+		CreatedAt: ch.CreatedAt,
+		UpdatedAt: ch.UpdatedAt,
+	}
 }
 
 type userPayload struct {
@@ -76,7 +89,6 @@ type messageCreatedPayload struct {
 
 type directMessageCreatedPayload struct {
 	basePayload
-	UserID  uuid.UUID      `json:"userId"`
 	Message messagePayload `json:"message"`
 }
 
@@ -86,7 +98,7 @@ type pingPayload struct {
 
 type joinAndLeftPayload struct {
 	basePayload
-	ChannelID uuid.UUID `json:"channelId"`
+	Channel channelPayload `json:"channel"`
 }
 
 type channelCreatedPayload struct {
