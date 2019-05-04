@@ -30,20 +30,20 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 	ch, err := p.repo.GetChannel(m.ChannelID)
 	if err != nil {
-		p.logger.Error("failed to GetChannel", zap.Error(err))
+		p.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("id", m.ChannelID))
 		return
 	}
 
 	user, err := p.repo.GetUser(m.UserID)
 	if err != nil {
-		p.logger.Error("failed to GetUser", zap.Error(err))
+		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", m.UserID))
 		return
 	}
 
 	if ch.IsDMChannel() {
 		ids, err := p.repo.GetPrivateChannelMemberIDs(ch.ID)
 		if err != nil {
-			p.logger.Error("failed to GetPrivateChannelMemberIDs", zap.Error(err))
+			p.logger.Error("failed to GetPrivateChannelMemberIDs", zap.Error(err), zap.Stringer("id", ch.ID))
 			return
 		}
 
@@ -58,7 +58,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		bot, err := p.repo.GetBotByBotUserID(id)
 		if err != nil {
 			if err != repository.ErrNotFound {
-				p.logger.Error("failed to GetBotByBotUserID", zap.Error(err))
+				p.logger.Error("failed to GetBotByBotUserID", zap.Error(err), zap.Stringer("id", id))
 			}
 			return
 		}
@@ -75,7 +75,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	} else {
 		bots, err := p.repo.GetBotsByChannel(m.ChannelID)
 		if err != nil {
-			p.logger.Error("failed to GetBotsByChannel", zap.Error(err))
+			p.logger.Error("failed to GetBotsByChannel", zap.Error(err), zap.Stringer("id", m.ChannelID))
 			return
 		}
 		bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(MessageCreated), botUserIDNotEqualsFilter(m.UserID))
@@ -118,7 +118,7 @@ func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
 	}
 	user, err := p.repo.GetUser(ch.CreatorID)
 	if err != nil {
-		p.logger.Error("failed to GetUser", zap.Error(err))
+		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", ch.CreatorID))
 		return
 	}
 
@@ -190,7 +190,7 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		}
 		user, err := p.repo.GetUser(ch.CreatorID)
 		if err != nil {
-			p.logger.Error("failed to GetUser", zap.Error(err))
+			p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", ch.CreatorID))
 			return
 		}
 
