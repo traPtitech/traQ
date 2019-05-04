@@ -10,7 +10,7 @@ import (
 	"unicode/utf8"
 )
 
-// CreateUserGroup ユーザーグループを作成します
+// CreateUserGroup implements UserGroupRepository interface.
 func (repo *GormRepository) CreateUserGroup(name, description, gType string, adminID uuid.UUID) (*model.UserGroup, error) {
 	g := &model.UserGroup{
 		ID:          uuid.Must(uuid.NewV4()),
@@ -58,7 +58,7 @@ func (repo *GormRepository) CreateUserGroup(name, description, gType string, adm
 	return g, nil
 }
 
-// UpdateUserGroup ユーザーグループを更新します
+// UpdateUserGroup implements UserGroupRepository interface.
 func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNameArgs) error {
 	if id == uuid.Nil {
 		return ErrNilID
@@ -66,10 +66,7 @@ func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNa
 	err := repo.transact(func(tx *gorm.DB) error {
 		var g model.UserGroup
 		if err := tx.First(&g, &model.UserGroup{ID: id}).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				return ErrNotFound
-			}
-			return err
+			return convertError(err)
 		}
 
 		changes := map[string]interface{}{}
@@ -117,7 +114,7 @@ func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNa
 	return err
 }
 
-// DeleteUserGroup ユーザーグループを削除します
+// DeleteUserGroup implements UserGroupRepository interface.
 func (repo *GormRepository) DeleteUserGroup(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
@@ -147,37 +144,31 @@ func (repo *GormRepository) DeleteUserGroup(id uuid.UUID) error {
 	return err
 }
 
-// GetUserGroup ユーザーグループを取得します
+// GetUserGroup implements UserGroupRepository interface.
 func (repo *GormRepository) GetUserGroup(id uuid.UUID) (*model.UserGroup, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
 	var g model.UserGroup
-	if err := repo.db.Where(&model.UserGroup{ID: id}).First(&g).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+	if err := repo.db.First(&g, &model.UserGroup{ID: id}).Error; err != nil {
+		return nil, convertError(err)
 	}
 	return &g, nil
 }
 
-// GetUserGroupByName ユーザーグループを取得します
+// GetUserGroupByName implements UserGroupRepository interface.
 func (repo *GormRepository) GetUserGroupByName(name string) (*model.UserGroup, error) {
 	if len(name) == 0 {
 		return nil, ErrNotFound
 	}
 	var g model.UserGroup
-	if err := repo.db.Where(&model.UserGroup{Name: name}).First(&g).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+	if err := repo.db.First(&g, &model.UserGroup{Name: name}).Error; err != nil {
+		return nil, convertError(err)
 	}
 	return &g, nil
 }
 
-// GetUserBelongingGroupIDs ユーザーが所属しているグループのUUIDを取得します
+// GetUserBelongingGroupIDs implements UserGroupRepository interface.
 func (repo *GormRepository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.UUID, error) {
 	groups := make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
@@ -191,14 +182,14 @@ func (repo *GormRepository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.U
 	return groups, err
 }
 
-// GetAllUserGroups 全てのグループを取得します
+// GetAllUserGroups implements UserGroupRepository interface.
 func (repo *GormRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
 	groups := make([]*model.UserGroup, 0)
 	err := repo.db.Find(&groups).Error
 	return groups, err
 }
 
-// AddUserToGroup グループにユーザーを追加します
+// AddUserToGroup implements UserGroupRepository interface.
 func (repo *GormRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return ErrNilID
@@ -229,7 +220,7 @@ func (repo *GormRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
 	return nil
 }
 
-// RemoveUserFromGroup グループからユーザーを削除します
+// RemoveUserFromGroup implements UserGroupRepository interface.
 func (repo *GormRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return ErrNilID
@@ -261,25 +252,15 @@ func (repo *GormRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 	return nil
 }
 
-// GetUserGroupMemberIDs グループのメンバーのUUIDを取得します
+// GetUserGroupMemberIDs implements UserGroupRepository interface.
 func (repo *GormRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUID, error) {
 	ids := make([]uuid.UUID, 0)
 	if groupID == uuid.Nil {
-		return ids, ErrNotFound
+		return ids, nil
 	}
-	err := repo.transact(func(tx *gorm.DB) error {
-		c := 0
-		if err := tx.Model(&model.UserGroup{ID: groupID}).Limit(1).Count(&c).Error; err != nil {
-			return err
-		}
-		if c == 0 {
-			return ErrNotFound
-		}
-		return tx.
-			Model(&model.UserGroupMember{}).
-			Where(&model.UserGroupMember{GroupID: groupID}).
-			Pluck("user_id", &ids).
-			Error
-	})
-	return ids, err
+	return ids, repo.db.
+		Model(&model.UserGroupMember{}).
+		Where(&model.UserGroupMember{GroupID: groupID}).
+		Pluck("user_id", &ids).
+		Error
 }

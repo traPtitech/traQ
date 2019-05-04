@@ -282,15 +282,10 @@ func TestRepositoryImpl_GetUserGroupMemberIDs(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserGroupMemberIDs(uuid.Nil)
-		assert.Error(t, err, ErrNotFound.Error())
-	})
-
-	t.Run("not found", func(t *testing.T) {
-		t.Parallel()
-
-		_, err := repo.GetUserGroupMemberIDs(uuid.Must(uuid.NewV4()))
-		assert.Error(t, err, ErrNotFound.Error())
+		ids, err := repo.GetUserGroupMemberIDs(uuid.Nil)
+		if assert.NoError(t, err) {
+			assert.Empty(t, ids)
+		}
 	})
 
 	t.Run("success1", func(t *testing.T) {
