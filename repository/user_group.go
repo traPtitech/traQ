@@ -26,6 +26,7 @@ type UserGroupRepository interface {
 	// UpdateUserGroup 指定したユーザーグループを更新します
 	//
 	// 成功した場合、nilを返します。
+	// 存在しないグループの場合、ErrNotFoundを返します。
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 既にNameが使われている場合、ErrAlreadyExistsを返します。

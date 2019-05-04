@@ -127,7 +127,7 @@ func (s *userOnlineStatus) getTime() (t time.Time) {
 	return
 }
 
-// CreateUser ユーザーを作成します
+// CreateUser implements UserRepository interface.
 func (repo *GormRepository) CreateUser(name, password string, role gorbac.Role) (*model.User, error) {
 	salt := utils.GenerateSalt()
 	user := &model.User{
@@ -163,56 +163,46 @@ func (repo *GormRepository) CreateUser(name, password string, role gorbac.Role) 
 	return user, nil
 }
 
-// GetUser ユーザーを取得する
+// GetUser implements UserRepository interface.
 func (repo *GormRepository) GetUser(id uuid.UUID) (*model.User, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
 	user := &model.User{}
-	if err := repo.db.Where(&model.User{ID: id}).Take(user).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+	if err := repo.db.First(user, &model.User{ID: id}).Error; err != nil {
+		return nil, convertError(err)
 	}
 	return user, nil
 }
 
-// GetUserByName ユーザーを取得する
+// GetUserByName implements UserRepository interface.
 func (repo *GormRepository) GetUserByName(name string) (*model.User, error) {
 	if len(name) == 0 {
 		return nil, ErrNotFound
 	}
 	user := &model.User{}
-	if err := repo.db.Where(&model.User{Name: name}).Take(user).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+	if err := repo.db.First(user, &model.User{Name: name}).Error; err != nil {
+		return nil, convertError(err)
 	}
 	return user, nil
 }
 
-// GetUsers 全ユーザーの取得
+// GetUsers implements UserRepository interface.
 func (repo *GormRepository) GetUsers() (users []*model.User, err error) {
 	users = make([]*model.User, 0)
 	err = repo.db.Find(&users).Error
 	return users, err
 }
 
-// UserExists 指定したIDのユーザーが存在するかどうか
+// UserExists implements UserRepository interface.
 func (repo *GormRepository) UserExists(id uuid.UUID) (bool, error) {
-	c := 0
-	err := repo.db.
-		Model(&model.User{}).
-		Where(&model.User{ID: id}).
-		Limit(1).
-		Count(&c).
-		Error
-	return c > 0, err
+	if id == uuid.Nil {
+		return false, nil
+	}
+	return dbExists(repo.db, &model.User{ID: id})
 }
 
-// UpdateUser ユーザー情報を更新します
+// UpdateUser implements UserRepository interface.
 func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error {
 	if id == uuid.Nil {
 		return ErrNilID
@@ -223,10 +213,7 @@ func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 	)
 	err := repo.transact(func(tx *gorm.DB) error {
 		if err := tx.First(&u, model.User{ID: id}).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				return ErrNotFound
-			}
-			return err
+			return convertError(err)
 		}
 
 		changes := map[string]interface{}{}
@@ -268,7 +255,7 @@ func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 	return nil
 }
 
-// ChangeUserPassword ユーザーのパスワードを変更します
+// ChangeUserPassword implements UserRepository interface.
 func (repo *GormRepository) ChangeUserPassword(id uuid.UUID, password string) error {
 	if id == uuid.Nil {
 		return ErrNilID
@@ -280,7 +267,7 @@ func (repo *GormRepository) ChangeUserPassword(id uuid.UUID, password string) er
 	}).Error
 }
 
-// ChangeUserIcon ユーザーのアイコンを変更します
+// ChangeUserIcon implements UserRepository interface.
 func (repo *GormRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
 	if id == uuid.Nil || fileID == uuid.Nil {
 		return ErrNilID
@@ -301,7 +288,7 @@ func (repo *GormRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
 	return nil
 }
 
-// ChangeUserAccountStatus ユーザーのアカウント状態を変更します
+// ChangeUserAccountStatus implements UserRepository interface.
 func (repo *GormRepository) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
 	if id == uuid.Nil {
 		return ErrNilID
@@ -323,7 +310,7 @@ func (repo *GormRepository) ChangeUserAccountStatus(id uuid.UUID, status model.U
 	return nil
 }
 
-// UpdateUserLastOnline ユーザーの最終オンライン日時を更新します
+// UpdateUserLastOnline implements UserRepository interface.
 func (repo *GormRepository) UpdateUserLastOnline(id uuid.UUID, time time.Time) (err error) {
 	if id == uuid.Nil {
 		return ErrNilID
@@ -331,16 +318,16 @@ func (repo *GormRepository) UpdateUserLastOnline(id uuid.UUID, time time.Time) (
 	return repo.db.Model(&model.User{ID: id}).Update("last_online", &time).Error
 }
 
-// GetUserLastOnline ユーザーの最終オンライン日時を取得します
+// GetUserLastOnline implements UserRepository interface.
 func (repo *GormRepository) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
+	if id == uuid.Nil {
+		return time.Time{}, ErrNotFound
+	}
 	i, ok := repo.CurrentUserOnlineMap.Load(id)
 	if !ok {
 		var u model.User
 		if err := repo.db.Model(&model.User{ID: id}).Select("last_online").Take(&u).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				return time.Time{}, ErrNotFound
-			}
-			return time.Time{}, err
+			return time.Time{}, convertError(err)
 		}
 		if u.LastOnline == nil {
 			return time.Time{}, nil
@@ -350,7 +337,7 @@ func (repo *GormRepository) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
 	return i.(*userOnlineStatus).getTime(), nil
 }
 
-// GetHeartbeatStatus channelIDで指定したHeartbeatStatusを取得する
+// GetHeartbeatStatus implements UserRepository interface.
 func (repo *GormRepository) GetHeartbeatStatus(channelID uuid.UUID) (model.HeartbeatStatus, bool) {
 	repo.heartbeatImpl.RLock()
 	defer repo.heartbeatImpl.RUnlock()
@@ -361,7 +348,7 @@ func (repo *GormRepository) GetHeartbeatStatus(channelID uuid.UUID) (model.Heart
 	return model.HeartbeatStatus{}, ok
 }
 
-// UpdateHeartbeatStatus UserIDで指定されたUserのHeartbeatの更新を行う
+// UpdateHeartbeatStatus implements UserRepository interface.
 func (repo *GormRepository) UpdateHeartbeatStatus(userID, channelID uuid.UUID, status string) {
 	repo.heartbeatImpl.Lock()
 	defer repo.heartbeatImpl.Unlock()
@@ -399,7 +386,7 @@ func (repo *GormRepository) UpdateHeartbeatStatus(userID, channelID uuid.UUID, s
 	}
 }
 
-// IsUserOnline ユーザーがオンラインかどうかを返します。
+// IsUserOnline implements UserRepository interface.
 func (repo *GormRepository) IsUserOnline(id uuid.UUID) bool {
 	s, ok := repo.CurrentUserOnlineMap.Load(id)
 	if !ok {
