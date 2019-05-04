@@ -26,20 +26,23 @@ type fileImpl struct {
 	FS storage.FileStorage
 }
 
-// GenerateIconFile アイコンファイルを生成します
+// GenerateIconFile implements FileRepository interface.
 func (repo *GormRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
 	var img bytes.Buffer
 	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
 	file, err := repo.SaveFile(fmt.Sprintf("%s.png", salt), &img, int64(img.Len()), "image/png", model.FileTypeIcon, uuid.Nil)
-	return file.ID, err
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return file.ID, nil
 }
 
-// SaveFile ファイルを保存します。mimeが指定されていない場合はnameの拡張子によって決まります
+// SaveFile implements FileRepository interface.
 func (repo *GormRepository) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID) (*model.File, error) {
 	return repo.SaveFileWithACL(name, src, size, mimeType, fType, creatorID, ACL{uuid.Nil: true})
 }
 
-// SaveFileWithACL ファイルを保存します。mimeが指定されていない場合はnameの拡張子によって決まります
+// SaveFileWithACL implements FileRepository interface.
 func (repo *GormRepository) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID, read ACL) (*model.File, error) {
 	f := &model.File{
 		ID:        uuid.Must(uuid.NewV4()),
@@ -124,7 +127,7 @@ func (repo *GormRepository) SaveFileWithACL(name string, src io.Reader, size int
 	return f, nil
 }
 
-// OpenFile ファイルを開きます
+// OpenFile implements FileRepository interface.
 func (repo *GormRepository) OpenFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
 	meta, err := repo.GetFileMeta(fileID)
 	if err != nil {
@@ -134,7 +137,7 @@ func (repo *GormRepository) OpenFile(fileID uuid.UUID) (*model.File, io.ReadClos
 	return meta, r, err
 }
 
-// OpenThumbnailFile サムネイルファイルを開きます
+// OpenThumbnailFile implements FileRepository interface.
 func (repo *GormRepository) OpenThumbnailFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
 	meta, err := repo.GetFileMeta(fileID)
 	if err != nil {
@@ -147,44 +150,48 @@ func (repo *GormRepository) OpenThumbnailFile(fileID uuid.UUID) (*model.File, io
 	return meta, nil, ErrNotFound
 }
 
-// GetFileMeta ファイルのメタデータを取得します
+// GetFileMeta implements FileRepository interface.
 func (repo *GormRepository) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
 	if fileID == uuid.Nil {
 		return nil, ErrNotFound
 	}
 	f := &model.File{}
-	if err := repo.db.Where(&model.File{ID: fileID}).Take(f).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+	if err := repo.db.Take(f, &model.File{ID: fileID}).Error; err != nil {
+		return nil, convertError(err)
 	}
 	return f, nil
 }
 
-// DeleteFile ファイルを削除します
+// DeleteFile implements FileRepository interface.
 func (repo *GormRepository) DeleteFile(fileID uuid.UUID) error {
 	if fileID == uuid.Nil {
 		return ErrNilID
 	}
-	f, err := repo.GetFileMeta(fileID)
+
+	var f model.File
+	err := repo.transact(func(tx *gorm.DB) error {
+		if err := tx.Take(&f, &model.File{ID: fileID}).Error; err != nil {
+			return convertError(err)
+		}
+
+		if err := tx.Delete(&f).Error; err != nil {
+			return err
+		}
+
+		return repo.FS.DeleteByKey(f.GetKey())
+	})
 	if err != nil {
 		return err
 	}
 
-	if err := repo.db.Delete(f).Error; err != nil {
-		return err
-	}
-
 	if f.HasThumbnail {
-		if err := repo.FS.DeleteByKey(f.GetThumbKey()); err != nil {
-			return err
-		}
+		// エラーを無視
+		_ = repo.FS.DeleteByKey(f.GetThumbKey())
 	}
-	return repo.FS.DeleteByKey(f.GetKey())
+	return nil
 }
 
-// RegenerateThumbnail サムネイル画像を再生成します
+// RegenerateThumbnail implements FileRepository interface.
 func (repo *GormRepository) RegenerateThumbnail(fileID uuid.UUID) (bool, error) {
 	meta, err := repo.GetFileMeta(fileID)
 	if err != nil {
@@ -218,16 +225,15 @@ func (repo *GormRepository) RegenerateThumbnail(fileID uuid.UUID) (bool, error) 
 	}).Error
 }
 
-// IsFileAccessible ユーザーがファイルにアクセス可能かどうか
+// IsFileAccessible implements FileRepository interface.
 func (repo *GormRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
 	if fileID == uuid.Nil {
 		return false, ErrNilID
 	}
 
-	c := 0
-	if err := repo.db.Model(&model.File{ID: fileID}).Limit(1).Count(&c).Error; err != nil {
+	if ok, err := dbExists(repo.db, &model.File{ID: fileID}); err != nil {
 		return false, err
-	} else if c == 0 {
+	} else if !ok {
 		return false, ErrNotFound
 	}
 
