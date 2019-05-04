@@ -21,13 +21,6 @@ func TestChannelLatestMessage_TableName(t *testing.T) {
 	assert.Equal(t, "channel_latest_messages", (&ChannelLatestMessage{}).TableName())
 }
 
-func TestMessage_Validate(t *testing.T) {
-	t.Parallel()
-
-	assert.Error(t, (&Message{Text: ""}).Validate())
-	assert.NoError(t, (&Message{Text: "test"}).Validate())
-}
-
 func TestArchivedMessage_TableName(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "archived_messages", (&ArchivedMessage{}).TableName())

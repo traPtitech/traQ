@@ -6,7 +6,6 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/gofrs/uuid"
@@ -1485,6 +1484,10 @@ func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
+	if len(text) == 0 {
+		return nil, repository.ArgError("text", "Text is required")
+	}
+
 	m := &model.Message{
 		ID:        uuid.Must(uuid.NewV4()),
 		UserID:    userID,
@@ -1493,9 +1496,7 @@ func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	if err := m.Validate(); err != nil {
-		return nil, err
-	}
+
 	repo.MessagesLock.Lock()
 	repo.Messages[m.ID] = *m
 	repo.MessagesLock.Unlock()
@@ -1507,7 +1508,7 @@ func (repo *TestRepository) UpdateMessage(messageID uuid.UUID, text string) erro
 		return repository.ErrNilID
 	}
 	if len(text) == 0 {
-		return errors.New("text is empty")
+		return repository.ArgError("text", "Text is required")
 	}
 
 	repo.MessagesLock.Lock()
