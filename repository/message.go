@@ -41,7 +41,7 @@ type MessageRepository interface {
 	// 存在しないチャンネルを指定した場合、空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetMessagesByChannelID(channelID uuid.UUID, limit, offset int) ([]*model.Message, error)
-	// GetMessagesByChannelID 指定したユーザーのメッセージを取得します
+	// GetMessagesByUserID 指定したユーザーのメッセージを取得します
 	//
 	// 成功した場合、メッセージの配列とnilを返します。負のoffset, limitは無視されます。
 	// 存在しないユーザーを指定した場合、空配列とnilを返します。
