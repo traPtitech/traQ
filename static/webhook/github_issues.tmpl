@@ -1,6 +1,8 @@
 {{- if eq .Action "opened" -}}
 ## Issue Opened
 [{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .Issue.Title }}]({{ .Issue.HTMLURL }})
+Comment:
+{{ .Issue.Body }}
 {{- else if eq .Action "closed" -}}
 ## Issue Closed
 [{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .Issue.Title }}]({{ .Issue.HTMLURL }})

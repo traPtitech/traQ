@@ -1,6 +1,8 @@
 {{- if eq .Action "opened" -}}
 ## PullRequest Opened
 [{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .PullRequest.Title }}]({{ .PullRequest.HTMLURL }})
+Comment:
+{{ .PullRequest.Body }}
 {{- else if eq .Action "closed" -}}
 {{- if .PullRequest.Merged -}}
 ## PullRequest Merged
