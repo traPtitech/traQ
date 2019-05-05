@@ -8,22 +8,19 @@ import (
 	"time"
 )
 
-// GetClient クライアントIDからクライアントを取得します
+// GetClient implements OAuth2Repository interface.
 func (repo *GormRepository) GetClient(id string) (*model.OAuth2Client, error) {
 	if len(id) == 0 {
 		return nil, ErrNotFound
 	}
 	oc := &model.OAuth2Client{}
-	if err := repo.db.Where(model.OAuth2Client{ID: id}).Take(oc).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+	if err := repo.db.Take(oc, &model.OAuth2Client{ID: id}).Error; err != nil {
+		return nil, convertError(err)
 	}
 	return oc, nil
 }
 
-// GetClientsByUser 指定した登録者のクライアントを全て取得します
+// GetClientsByUser implements OAuth2Repository interface.
 func (repo *GormRepository) GetClientsByUser(userID uuid.UUID) ([]*model.OAuth2Client, error) {
 	cs := make([]*model.OAuth2Client, 0)
 	if userID == uuid.Nil {
@@ -32,12 +29,12 @@ func (repo *GormRepository) GetClientsByUser(userID uuid.UUID) ([]*model.OAuth2C
 	return cs, repo.db.Where(&model.OAuth2Client{CreatorID: userID}).Find(&cs).Error
 }
 
-// SaveClient クライアントを保存します
+// SaveClient implements OAuth2Repository interface.
 func (repo *GormRepository) SaveClient(client *model.OAuth2Client) error {
 	return repo.db.Create(client).Error
 }
 
-// UpdateClient クライアント情報を更新します
+// UpdateClient implements OAuth2Repository interface.
 func (repo *GormRepository) UpdateClient(client *model.OAuth2Client) error {
 	if len(client.ID) == 0 {
 		return ErrNilID
@@ -53,7 +50,7 @@ func (repo *GormRepository) UpdateClient(client *model.OAuth2Client) error {
 	}).Error
 }
 
-// DeleteClient クライアントを削除します
+// DeleteClient implements OAuth2Repository interface.
 func (repo *GormRepository) DeleteClient(id string) error {
 	if len(id) == 0 {
 		return nil
@@ -71,35 +68,32 @@ func (repo *GormRepository) DeleteClient(id string) error {
 	return err
 }
 
-// SaveAuthorize 認可データを保存します
+// SaveAuthorize implements OAuth2Repository interface.
 func (repo *GormRepository) SaveAuthorize(data *model.OAuth2Authorize) error {
 	return repo.db.Create(data).Error
 }
 
-// GetAuthorize 認可コードから認可データを取得します
+// GetAuthorize implements OAuth2Repository interface.
 func (repo *GormRepository) GetAuthorize(code string) (*model.OAuth2Authorize, error) {
 	if len(code) == 0 {
 		return nil, ErrNotFound
 	}
 	oa := &model.OAuth2Authorize{}
-	if err := repo.db.Where(&model.OAuth2Authorize{Code: code}).Take(oa).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+	if err := repo.db.Take(oa, &model.OAuth2Authorize{Code: code}).Error; err != nil {
+		return nil, convertError(err)
 	}
 	return oa, nil
 }
 
-// DeleteAuthorize 認可コードから認可データを削除します
+// DeleteAuthorize implements OAuth2Repository interface.
 func (repo *GormRepository) DeleteAuthorize(code string) error {
 	if len(code) == 0 {
 		return nil
 	}
-	return repo.db.Where(&model.OAuth2Authorize{Code: code}).Delete(&model.OAuth2Authorize{}).Error
+	return repo.db.Delete(&model.OAuth2Authorize{Code: code}).Error
 }
 
-// SaveToken トークンを発行します
+// IssueToken implements OAuth2Repository interface.
 func (repo *GormRepository) IssueToken(client *model.OAuth2Client, userID uuid.UUID, redirectURI string, scope model.AccessScopes, expire int, refresh bool) (*model.OAuth2Token, error) {
 	newToken := &model.OAuth2Token{
 		ID:             uuid.Must(uuid.NewV4()),
@@ -120,76 +114,67 @@ func (repo *GormRepository) IssueToken(client *model.OAuth2Client, userID uuid.U
 	return newToken, repo.db.Create(newToken).Error
 }
 
-// GetTokenByID トークンIDからトークンを取得します
+// GetTokenByID implements OAuth2Repository interface.
 func (repo *GormRepository) GetTokenByID(id uuid.UUID) (*model.OAuth2Token, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
 	ot := &model.OAuth2Token{}
-	if err := repo.db.Where(&model.OAuth2Token{ID: id}).Take(ot).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+	if err := repo.db.Take(ot, &model.OAuth2Token{ID: id}).Error; err != nil {
+		return nil, convertError(err)
 	}
 	return ot, nil
 }
 
-// DeleteTokenByID トークンIDからトークンを削除します
+// DeleteTokenByID implements OAuth2Repository interface.
 func (repo *GormRepository) DeleteTokenByID(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return nil
 	}
-	return repo.db.Where(&model.OAuth2Token{ID: id}).Delete(&model.OAuth2Token{}).Error
+	return repo.db.Delete(&model.OAuth2Token{}, &model.OAuth2Token{ID: id}).Error
 }
 
-// GetTokenByAccess アクセストークンからトークンを取得します
+// GetTokenByAccess implements OAuth2Repository interface.
 func (repo *GormRepository) GetTokenByAccess(access string) (*model.OAuth2Token, error) {
 	if len(access) == 0 {
 		return nil, ErrNotFound
 	}
 	ot := &model.OAuth2Token{}
-	if err := repo.db.Where(&model.OAuth2Token{AccessToken: access}).Take(ot).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+	if err := repo.db.Take(ot, &model.OAuth2Token{AccessToken: access}).Error; err != nil {
+		return nil, convertError(err)
 	}
 	return ot, nil
 }
 
-// DeleteTokenByAccess アクセストークンからトークンを削除します
+// DeleteTokenByAccess implements OAuth2Repository interface.
 func (repo *GormRepository) DeleteTokenByAccess(access string) error {
 	if len(access) == 0 {
 		return nil
 	}
-	return repo.db.Where(&model.OAuth2Token{AccessToken: access}).Delete(&model.OAuth2Token{}).Error
+	return repo.db.Delete(&model.OAuth2Token{}, &model.OAuth2Token{AccessToken: access}).Error
 }
 
-// GetTokenByRefresh リフレッシュトークンからトークンを取得します
+// GetTokenByRefresh implements OAuth2Repository interface.
 func (repo *GormRepository) GetTokenByRefresh(refresh string) (*model.OAuth2Token, error) {
 	if len(refresh) == 0 {
 		return nil, ErrNotFound
 	}
 	ot := &model.OAuth2Token{}
-	if err := repo.db.Where(&model.OAuth2Token{RefreshToken: refresh, RefreshEnabled: true}).Take(ot).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+	if err := repo.db.Take(ot, &model.OAuth2Token{RefreshToken: refresh, RefreshEnabled: true}).Error; err != nil {
+		return nil, convertError(err)
 	}
 	return ot, nil
 }
 
-// DeleteTokenByRefresh リフレッシュトークンからトークンを削除します
+// DeleteTokenByRefresh implements OAuth2Repository interface.
 func (repo *GormRepository) DeleteTokenByRefresh(refresh string) error {
 	if len(refresh) == 0 {
 		return nil
 	}
-	return repo.db.Where(&model.OAuth2Token{RefreshToken: refresh, RefreshEnabled: true}).Delete(&model.OAuth2Token{}).Error
+	return repo.db.Delete(&model.OAuth2Token{}, &model.OAuth2Token{RefreshToken: refresh, RefreshEnabled: true}).Error
 }
 
-// GetTokensByUser 指定したユーザーのトークンを全て取得します
+// GetTokensByUser implements OAuth2Repository interface.
 func (repo *GormRepository) GetTokensByUser(userID uuid.UUID) ([]*model.OAuth2Token, error) {
 	ts := make([]*model.OAuth2Token, 0)
 	if userID == uuid.Nil {
@@ -198,18 +183,18 @@ func (repo *GormRepository) GetTokensByUser(userID uuid.UUID) ([]*model.OAuth2To
 	return ts, repo.db.Where(&model.OAuth2Token{UserID: userID}).Find(&ts).Error
 }
 
-// DeleteTokenByUser 指定したユーザーのトークンを全て削除します
+// DeleteTokenByUser implements OAuth2Repository interface.
 func (repo *GormRepository) DeleteTokenByUser(userID uuid.UUID) error {
 	if userID == uuid.Nil {
 		return nil
 	}
-	return repo.db.Where(&model.OAuth2Token{UserID: userID}).Delete(&model.OAuth2Token{}).Error
+	return repo.db.Delete(&model.OAuth2Token{}, &model.OAuth2Token{UserID: userID}).Error
 }
 
-// DeleteTokenByClient 指定したクライアントのトークンを全て削除します
+// DeleteTokenByClient implements OAuth2Repository interface.
 func (repo *GormRepository) DeleteTokenByClient(clientID string) error {
 	if len(clientID) == 0 {
 		return nil
 	}
-	return repo.db.Where(&model.OAuth2Token{ClientID: clientID}).Delete(&model.OAuth2Token{}).Error
+	return repo.db.Delete(&model.OAuth2Token{}, &model.OAuth2Token{ClientID: clientID}).Error
 }
