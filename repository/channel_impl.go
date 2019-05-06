@@ -87,6 +87,7 @@ func (repo *GormRepository) CreatePublicChannel(name string, parent, creatorID u
 	if err := repo.db.Create(ch).Error; err != nil {
 		return nil, err
 	}
+	channelsCounter.Inc()
 	repo.hub.Publish(hub.Message{
 		Name: event.ChannelCreated,
 		Fields: hub.Fields{
@@ -225,6 +226,7 @@ func (repo *GormRepository) CreateChildChannel(name string, parentID, creatorID 
 		if err := repo.db.Create(ch).Error; err != nil {
 			return nil, err
 		}
+		channelsCounter.Inc()
 	} else {
 		// 非公開チャンネル
 		ch.IsPublic = false
