@@ -576,7 +576,7 @@ func (repo *TestRepository) CreateTag(name string, restricted bool, tagType stri
 	defer repo.TagsLock.Unlock()
 	// 名前チェック
 	if len(name) == 0 || utf8.RuneCountInString(name) > 30 {
-		return nil, ArgError("name", "Name must be non-empty and shorter than 31 characters")
+		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 31 characters")
 	}
 	for _, t := range repo.Tags {
 		if t.Name == name {
