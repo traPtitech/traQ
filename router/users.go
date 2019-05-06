@@ -1,17 +1,21 @@
 package router
 
 import (
+	"net/http"
+	"strconv"
+	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
+	qrcode "github.com/skip2/go-qrcode"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/utils"
 	"go.uber.org/zap"
 	"gopkg.in/guregu/null.v3"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 // UserForResponse クライアントに返す形のユーザー構造体
@@ -41,6 +45,15 @@ type UserDetailForResponse struct {
 	Suspended   bool              `json:"suspended"`
 	Status      int               `json:"accountStatus"`
 	TagList     []*TagForResponse `json:"tagList"`
+}
+
+// UserForJWTClaim QRコードで表示するJWTのClaimの形のユーザー構造体
+type UserForJWTClaim struct {
+	jwt.StandardClaims
+	UserID      uuid.UUID `json:"userId"`
+	Name        string    `json:"name"`
+	DisplayName string    `json:"displayName"`
+	IconID      uuid.UUID `json:"iconId"`
 }
 
 // PostLogin POST /login
@@ -316,6 +329,39 @@ func (h *Handlers) PutPassword(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+// GetMyQRCode GET /users/me/qr-code
+func (h *Handlers) GetMyQRCode(c echo.Context) error {
+	user := getRequestUser(c)
+
+	now := time.Now()
+	deadline := now.Add(10 * time.Minute)
+
+	token, err := utils.Signer.Sign(&UserForJWTClaim{
+		StandardClaims: jwt.StandardClaims{
+			IssuedAt:  now.Unix(),
+			NotBefore: now.Unix(),
+			ExpiresAt: deadline.Unix(),
+		},
+		UserID:      user.ID,
+		Name:        user.Name,
+		DisplayName: user.DisplayName,
+		IconID:      user.Icon,
+	})
+
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	png, err := qrcode.Encode(token, qrcode.High, 512)
+	if err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return c.NoContent(http.StatusInternalServerError)
+	}
+
+	return c.Blob(http.StatusOK, "image/png", png)
 }
 
 // PostUsers POST /users

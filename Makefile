@@ -34,6 +34,9 @@ ci-test:
 init:
 	go mod download
 	go install golang.org/x/lint/golint
+	mkdir -p ./keys
+	openssl ecparam -genkey -name prime256v1 -noout -out ec.pem
+	openssl ec -in ec.pem -out ec_pub.pem -pubout
 
 .PHONY: up-docker-test-db
 up-docker-test-db:

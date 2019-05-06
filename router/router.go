@@ -34,6 +34,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiUsersMe.GET("", h.GetMe, requires(permission.GetMe))
 				apiUsersMe.PATCH("", h.PatchMe, requires(permission.EditMe))
 				apiUsersMe.PUT("/password", h.PutPassword, requires(permission.ChangeMyPassword), botGuard(blockAlways))
+				apiUsersMe.GET("/qr-code", h.GetMyQRCode, requires(permission.DownloadFile))
 				apiUsersMe.GET("/icon", h.GetMyIcon, requires(permission.DownloadFile))
 				apiUsersMe.PUT("/icon", h.PutMyIcon, requires(permission.ChangeMyIcon))
 				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
