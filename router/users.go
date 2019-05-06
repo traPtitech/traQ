@@ -339,15 +339,15 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 	deadline := now.Add(10 * time.Minute)
 
 	token, err := utils.Signer.Sign(&UserForJWTClaim{
-		jwt.StandardClaims{
+		StandardClaims: jwt.StandardClaims{
 			IssuedAt:  now.Unix(),
 			NotBefore: now.Unix(),
 			ExpiresAt: deadline.Unix(),
 		},
-		user.ID,
-		user.Name,
-		user.DisplayName,
-		user.Icon,
+		UserID:      user.ID,
+		Name:        user.Name,
+		DisplayName: user.DisplayName,
+		IconID:      user.Icon,
 	})
 
 	if err != nil {
