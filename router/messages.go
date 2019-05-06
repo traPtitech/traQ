@@ -237,13 +237,14 @@ func (h *Handlers) PostMessageReport(c echo.Context) error {
 	}
 
 	if err := h.Repo.CreateMessageReport(messageID, userID, req.Reason); err != nil {
-		if isMySQLDuplicatedRecordErr(err) {
+		switch err {
+		case repository.ErrAlreadyExists:
 			return echo.NewHTTPError(http.StatusBadRequest, "already reported")
+		default:
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
-
 	return c.NoContent(http.StatusNoContent)
 }
 

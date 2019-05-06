@@ -7,7 +7,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// AddStar チャンネルをお気に入り登録します
+// AddStar implements StarRepository interface.
 func (repo *GormRepository) AddStar(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
@@ -27,12 +27,12 @@ func (repo *GormRepository) AddStar(userID, channelID uuid.UUID) error {
 	return nil
 }
 
-// RemoveStar チャンネルのお気に入りを解除します
+// RemoveStar implements StarRepository interface.
 func (repo *GormRepository) RemoveStar(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
 	}
-	result := repo.db.Where(&model.Star{UserID: userID, ChannelID: channelID}).Delete(&model.Star{})
+	result := repo.db.Delete(&model.Star{UserID: userID, ChannelID: channelID})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -48,16 +48,11 @@ func (repo *GormRepository) RemoveStar(userID, channelID uuid.UUID) error {
 	return nil
 }
 
-// GetStaredChannels ユーザーがお気に入りをしているチャンネルIDを取得する
+// GetStaredChannels implements StarRepository interface.
 func (repo *GormRepository) GetStaredChannels(userID uuid.UUID) (ids []uuid.UUID, err error) {
 	ids = make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
 		return ids, nil
 	}
-	err = repo.db.
-		Model(&model.Star{}).
-		Where(&model.Star{UserID: userID}).
-		Pluck("channel_id", &ids).
-		Error
-	return ids, err
+	return ids, repo.db.Model(&model.Star{}).Where(&model.Star{UserID: userID}).Pluck("channel_id", &ids).Error
 }

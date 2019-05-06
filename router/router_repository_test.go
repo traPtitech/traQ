@@ -6,7 +6,6 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/gofrs/uuid"
@@ -575,6 +574,10 @@ func (repo *TestRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUI
 func (repo *TestRepository) CreateTag(name string, restricted bool, tagType string) (*model.Tag, error) {
 	repo.TagsLock.Lock()
 	defer repo.TagsLock.Unlock()
+	// 名前チェック
+	if len(name) == 0 || utf8.RuneCountInString(name) > 30 {
+		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 31 characters")
+	}
 	for _, t := range repo.Tags {
 		if t.Name == name {
 			return nil, repository.ErrAlreadyExists
@@ -587,9 +590,6 @@ func (repo *TestRepository) CreateTag(name string, restricted bool, tagType stri
 		Type:       tagType,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-	}
-	if err := t.Validate(); err != nil {
-		return nil, err
 	}
 	repo.Tags[t.ID] = t
 	return &t, nil
@@ -1485,6 +1485,10 @@ func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
+	if len(text) == 0 {
+		return nil, repository.ArgError("text", "Text is required")
+	}
+
 	m := &model.Message{
 		ID:        uuid.Must(uuid.NewV4()),
 		UserID:    userID,
@@ -1493,9 +1497,7 @@ func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	if err := m.Validate(); err != nil {
-		return nil, err
-	}
+
 	repo.MessagesLock.Lock()
 	repo.Messages[m.ID] = *m
 	repo.MessagesLock.Unlock()
@@ -1507,7 +1509,7 @@ func (repo *TestRepository) UpdateMessage(messageID uuid.UUID, text string) erro
 		return repository.ErrNilID
 	}
 	if len(text) == 0 {
-		return errors.New("text is empty")
+		return repository.ArgError("text", "Text is required")
 	}
 
 	repo.MessagesLock.Lock()
@@ -1777,55 +1779,82 @@ func (repo *TestRepository) GetUserStampHistory(userID uuid.UUID) (h []*model.Us
 }
 
 func (repo *TestRepository) CreateStamp(name string, fileID, userID uuid.UUID) (s *model.Stamp, err error) {
-	if fileID == uuid.Nil {
-		return nil, repository.ErrNilID
-	}
-
 	stamp := &model.Stamp{
 		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
-		CreatorID: userID,
 		FileID:    fileID,
+		CreatorID: userID, // uuid.Nilを許容する
 	}
-	if err := stamp.Validate(); err != nil {
-		return nil, err
-	}
+
 	repo.StampsLock.Lock()
+	repo.FilesLock.RLock()
 	defer repo.StampsLock.Unlock()
+	defer repo.FilesLock.RUnlock()
+
+	// 名前チェック
+	if !validator.NameRegex.MatchString(name) {
+		return nil, repository.ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
+	}
+	// 名前重複チェック
 	for _, v := range repo.Stamps {
 		if v.Name == name {
 			return nil, repository.ErrAlreadyExists
 		}
 	}
+	// ファイル存在チェック
+	if fileID == uuid.Nil {
+		return nil, repository.ArgError("fileID", "FileID's file is not found")
+	}
+	if _, ok := repo.Files[fileID]; !ok {
+		return nil, repository.ArgError("fileID", "fileID's file is not found")
+	}
+
 	repo.Stamps[stamp.ID] = *stamp
 	return stamp, nil
 }
 
-func (repo *TestRepository) UpdateStamp(id uuid.UUID, name string, fileID uuid.UUID) error {
+func (repo *TestRepository) UpdateStamp(id uuid.UUID, args repository.UpdateStampArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
 
 	repo.StampsLock.Lock()
+	repo.FilesLock.RLock()
 	defer repo.StampsLock.Unlock()
+	defer repo.FilesLock.RUnlock()
+
 	s, ok := repo.Stamps[id]
-
-	data := map[string]string{}
-	if len(name) > 0 {
-		if err := validator.ValidateVar(name, "name"); err != nil {
-			return err
-		}
-		s.Name = name
-	}
-	if fileID != uuid.Nil {
-		s.FileID = fileID
-	}
-	if len(data) == 0 {
-		return repository.ErrInvalidArgs
-	}
-
 	if !ok {
 		return repository.ErrNotFound
+	}
+
+	if args.Name.Valid {
+		if !validator.NameRegex.MatchString(args.Name.String) {
+			return repository.ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
+		}
+
+		// 重複チェック
+		for _, v := range repo.Stamps {
+			if v.Name == args.Name.String {
+				return repository.ErrAlreadyExists
+			}
+		}
+		s.Name = args.Name.String
+	}
+	if args.FileID.Valid {
+		// 存在チェック
+		if args.FileID.UUID == uuid.Nil {
+			return repository.ArgError("args.FileID", "FileID's file is not found")
+		}
+		if _, ok := repo.Files[args.FileID.UUID]; !ok {
+			return repository.ArgError("fileID", "fileID's file is not found")
+		}
+
+		s.FileID = args.FileID.UUID
+	}
+	if args.CreatorID.Valid {
+		// uuid.Nilを許容する
+		s.CreatorID = args.CreatorID.UUID
 	}
 
 	s.UpdatedAt = time.Now()
@@ -1879,7 +1908,7 @@ func (repo *TestRepository) StampExists(id uuid.UUID) (bool, error) {
 	return ok, nil
 }
 
-func (repo *TestRepository) IsStampNameDuplicate(name string) (bool, error) {
+func (repo *TestRepository) StampNameExists(name string) (bool, error) {
 	if len(name) == 0 {
 		return false, nil
 	}
@@ -2326,7 +2355,7 @@ func (repo *TestRepository) generateThumbnail(ctx context.Context, f *model.File
 
 func (repo *TestRepository) CreateWebhook(name, description string, channelID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
-		return nil, errors.New("invalid name")
+		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 33 characters")
 	}
 	uid := uuid.Must(uuid.NewV4())
 	bid := uuid.Must(uuid.NewV4())
@@ -2359,10 +2388,21 @@ func (repo *TestRepository) CreateWebhook(name, description string, channelID, c
 
 	repo.WebhooksLock.Lock()
 	repo.UsersLock.Lock()
+	repo.ChannelsLock.RLock()
+	defer repo.UsersLock.Unlock()
+	defer repo.WebhooksLock.Unlock()
+	defer repo.ChannelsLock.RUnlock()
+
+	ch, ok := repo.Channels[channelID]
+	if !ok {
+		return nil, repository.ArgError("channelID", "the Channel is not found")
+	}
+	if !ch.IsPublic {
+		return nil, repository.ArgError("channelID", "private channels are not allowed")
+	}
+
 	repo.Users[uid] = u
 	repo.Webhooks[bid] = wb
-	repo.UsersLock.Unlock()
-	repo.WebhooksLock.Unlock()
 
 	wb.BotUser = u
 	return &wb, nil
@@ -2375,8 +2415,11 @@ func (repo *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWe
 
 	repo.WebhooksLock.Lock()
 	repo.UsersLock.Lock()
+	repo.ChannelsLock.RLock()
 	defer repo.WebhooksLock.Unlock()
 	defer repo.UsersLock.Unlock()
+	defer repo.ChannelsLock.RUnlock()
+
 	wb, ok := repo.Webhooks[id]
 	if !ok {
 		return repository.ErrNotFound
@@ -2388,6 +2431,13 @@ func (repo *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWe
 		wb.UpdatedAt = time.Now()
 	}
 	if args.ChannelID.Valid {
+		ch, ok := repo.Channels[args.ChannelID.UUID]
+		if !ok {
+			return repository.ArgError("args.ChannelID", "the Channel is not found")
+		}
+		if !ch.IsPublic {
+			return repository.ArgError("args.ChannelID", "private channels are not allowed")
+		}
 		wb.ChannelID = args.ChannelID.UUID
 		wb.UpdatedAt = time.Now()
 	}
@@ -2397,7 +2447,7 @@ func (repo *TestRepository) UpdateWebhook(id uuid.UUID, args repository.UpdateWe
 	}
 	if args.Name.Valid {
 		if len(args.Name.String) == 0 || utf8.RuneCountInString(args.Name.String) > 32 {
-			return errors.New("invalid name")
+			return repository.ArgError("args.Name", "Name must be non-empty and shorter than 33 characters")
 		}
 		u.DisplayName = args.Name.String
 		u.UpdatedAt = time.Now()

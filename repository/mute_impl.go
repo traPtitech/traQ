@@ -7,7 +7,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// MuteChannel 指定したチャンネルをミュートします
+// MuteChannel implements MuteRepository interface.
 func (repo *GormRepository) MuteChannel(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
@@ -26,7 +26,7 @@ func (repo *GormRepository) MuteChannel(userID, channelID uuid.UUID) error {
 	return nil
 }
 
-// UnmuteChannel 指定したチャンネルをアンミュートします
+// UnmuteChannel implements MuteRepository interface.
 func (repo *GormRepository) UnmuteChannel(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
@@ -47,7 +47,7 @@ func (repo *GormRepository) UnmuteChannel(userID, channelID uuid.UUID) error {
 	return nil
 }
 
-// GetMutedChannelIDs ミュートしているチャンネルのIDの配列を取得します
+// GetMutedChannelIDs implements MuteRepository interface.
 func (repo *GormRepository) GetMutedChannelIDs(userID uuid.UUID) (ids []uuid.UUID, err error) {
 	ids = make([]uuid.UUID, 0)
 	if userID == uuid.Nil {
@@ -56,7 +56,7 @@ func (repo *GormRepository) GetMutedChannelIDs(userID uuid.UUID) (ids []uuid.UUI
 	return ids, repo.db.Model(&model.Mute{}).Where(&model.Mute{UserID: userID}).Pluck("channel_id", &ids).Error
 }
 
-// GetMuteUserIDs ミュートしているユーザーのIDの配列を取得します
+// GetMuteUserIDs implements MuteRepository interface.
 func (repo *GormRepository) GetMuteUserIDs(channelID uuid.UUID) (ids []uuid.UUID, err error) {
 	ids = make([]uuid.UUID, 0)
 	if channelID == uuid.Nil {
@@ -65,17 +65,10 @@ func (repo *GormRepository) GetMuteUserIDs(channelID uuid.UUID) (ids []uuid.UUID
 	return ids, repo.db.Model(&model.Mute{}).Where(&model.Mute{ChannelID: channelID}).Pluck("user_id", &ids).Error
 }
 
-// IsChannelMuted 指定したユーザーが指定したチャンネルをミュートしているかどうかを返します
+// IsChannelMuted implements MuteRepository interface.
 func (repo *GormRepository) IsChannelMuted(userID, channelID uuid.UUID) (bool, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return false, nil
 	}
-	c := 0
-	err := repo.db.
-		Model(&model.Mute{}).
-		Where(&model.Mute{UserID: userID, ChannelID: channelID}).
-		Limit(1).
-		Count(&c).
-		Error
-	return c > 0, err
+	return dbExists(repo.db, &model.Mute{UserID: userID, ChannelID: channelID})
 }

@@ -44,7 +44,7 @@ type GormRepository struct {
 	*heartbeatImpl
 }
 
-// Sync DBと同期します
+// Sync implements Repository interface.
 func (repo *GormRepository) Sync() (bool, error) {
 	// スキーマ同期
 	if err := repo.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(model.Tables...).Error; err != nil {
@@ -91,7 +91,7 @@ func (repo *GormRepository) Sync() (bool, error) {
 	return false, nil
 }
 
-// GetFS ファイルストレージを取得します
+// GetFS implements Repository interface.
 func (repo *GormRepository) GetFS() storage.FileStorage {
 	return repo.FS
 }
@@ -165,4 +165,13 @@ func dbExists(tx *gorm.DB, where interface{}, tableName ...string) (exists bool,
 	}
 	err = tx.Where(where).Limit(1).Count(&c).Error
 	return c > 0, err
+}
+
+func convertError(err error) error {
+	switch {
+	case gorm.IsRecordNotFoundError(err):
+		return ErrNotFound
+	default:
+		return err
+	}
 }

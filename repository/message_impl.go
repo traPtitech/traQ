@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
@@ -12,20 +11,21 @@ import (
 	"strings"
 )
 
+// CreateMessage implements MessageRepository interface.
 func (repo *GormRepository) CreateMessage(userID, channelID uuid.UUID, text string) (*model.Message, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return nil, ErrNilID
 	}
+	if len(text) == 0 {
+		return nil, ArgError("text", "Text is required")
+	}
+
 	m := &model.Message{
 		ID:        uuid.Must(uuid.NewV4()),
 		UserID:    userID,
 		ChannelID: channelID,
 		Text:      text,
 	}
-	if err := m.Validate(); err != nil {
-		return nil, err
-	}
-
 	err := repo.transact(func(tx *gorm.DB) error {
 		if err := tx.Create(m).Error; err != nil {
 			return err
@@ -63,13 +63,13 @@ func (repo *GormRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 	return m, nil
 }
 
-// UpdateMessage メッセージを更新します
+// UpdateMessage implements MessageRepository interface.
 func (repo *GormRepository) UpdateMessage(messageID uuid.UUID, text string) error {
 	if messageID == uuid.Nil {
 		return ErrNilID
 	}
 	if len(text) == 0 {
-		return errors.New("text is empty")
+		return ArgError("text", "Text is required")
 	}
 
 	var (
@@ -78,11 +78,8 @@ func (repo *GormRepository) UpdateMessage(messageID uuid.UUID, text string) erro
 		ok  bool
 	)
 	err := repo.transact(func(tx *gorm.DB) error {
-		if err := tx.Where(&model.Message{ID: messageID}).First(&old).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				return ErrNotFound
-			}
-			return err
+		if err := tx.First(&old, &model.Message{ID: messageID}).Error; err != nil {
+			return convertError(err)
 		}
 
 		// archiving
@@ -120,7 +117,7 @@ func (repo *GormRepository) UpdateMessage(messageID uuid.UUID, text string) erro
 	return nil
 }
 
-// DeleteMessage メッセージを削除します
+// DeleteMessage implements MessageRepository interface.
 func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 	if messageID == uuid.Nil {
 		return ErrNilID
@@ -132,10 +129,7 @@ func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 	)
 	err := repo.transact(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.Message{ID: messageID}).First(&m).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				return ErrNotFound
-			}
-			return err
+			return convertError(err)
 		}
 
 		if err := tx.Delete(&m).Error; err != nil {
@@ -162,22 +156,19 @@ func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 	return nil
 }
 
-// GetMessageByID messageIDで指定されたメッセージを取得します
+// GetMessageByID implements MessageRepository interface.
 func (repo *GormRepository) GetMessageByID(messageID uuid.UUID) (*model.Message, error) {
 	if messageID == uuid.Nil {
 		return nil, ErrNotFound
 	}
 	message := &model.Message{}
 	if err := repo.db.Where(&model.Message{ID: messageID}).Take(message).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+		return nil, convertError(err)
 	}
 	return message, nil
 }
 
-// GetMessagesByChannelID 指定されたチャンネルのメッセージを取得します
+// GetMessagesByChannelID implements MessageRepository interface.
 func (repo *GormRepository) GetMessagesByChannelID(channelID uuid.UUID, limit, offset int) (arr []*model.Message, err error) {
 	arr = make([]*model.Message, 0)
 	if channelID == uuid.Nil {
@@ -192,7 +183,7 @@ func (repo *GormRepository) GetMessagesByChannelID(channelID uuid.UUID, limit, o
 	return arr, err
 }
 
-// GetMessagesByChannelID 指定されたユーザーのメッセージを取得します
+// GetMessagesByChannelID implements MessageRepository interface.
 func (repo *GormRepository) GetMessagesByUserID(userID uuid.UUID, limit, offset int) (arr []*model.Message, err error) {
 	arr = make([]*model.Message, 0)
 	if userID == uuid.Nil {
@@ -207,7 +198,7 @@ func (repo *GormRepository) GetMessagesByUserID(userID uuid.UUID, limit, offset 
 	return arr, err
 }
 
-// SetMessageUnread 指定したメッセージを未読にします
+// SetMessageUnread implements MessageRepository interface.
 func (repo *GormRepository) SetMessageUnread(userID, messageID uuid.UUID) error {
 	if userID == uuid.Nil || messageID == uuid.Nil {
 		return ErrNilID
@@ -216,7 +207,7 @@ func (repo *GormRepository) SetMessageUnread(userID, messageID uuid.UUID) error 
 	return repo.db.FirstOrCreate(&u, &model.Unread{UserID: userID, MessageID: messageID}).Error
 }
 
-// GetUnreadMessagesByUserID あるユーザーの未読メッセージをすべて取得
+// GetUnreadMessagesByUserID implements MessageRepository interface.
 func (repo *GormRepository) GetUnreadMessagesByUserID(userID uuid.UUID) (unreads []*model.Message, err error) {
 	unreads = make([]*model.Message, 0)
 	if userID == uuid.Nil {
@@ -230,7 +221,7 @@ func (repo *GormRepository) GetUnreadMessagesByUserID(userID uuid.UUID) (unreads
 	return unreads, err
 }
 
-// DeleteUnreadsByMessageID 指定したメッセージIDの未読レコードを全て削除
+// DeleteUnreadsByMessageID implements MessageRepository interface.
 func (repo *GormRepository) DeleteUnreadsByMessageID(messageID uuid.UUID) error {
 	if messageID == uuid.Nil {
 		return ErrNilID
@@ -238,12 +229,12 @@ func (repo *GormRepository) DeleteUnreadsByMessageID(messageID uuid.UUID) error 
 	return repo.db.Where(&model.Unread{MessageID: messageID}).Delete(model.Unread{}).Error
 }
 
-// DeleteUnreadsByChannelID 指定したチャンネルIDに存在する、指定したユーザーIDの未読レコードをすべて削除
+// DeleteUnreadsByChannelID implements MessageRepository interface.
 func (repo *GormRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error {
 	if channelID == uuid.Nil || userID == uuid.Nil {
 		return ErrNilID
 	}
-	result := repo.db.Exec("DELETE unreads FROM unreads INNER JOIN messages ON unreads.user_id = ? AND unreads.message_id = messages.id WHERE messages.channel_id = ?", userID.String(), channelID.String())
+	result := repo.db.Exec("DELETE unreads FROM unreads INNER JOIN messages ON unreads.user_id = ? AND unreads.message_id = messages.id WHERE messages.channel_id = ?", userID, channelID)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -259,7 +250,7 @@ func (repo *GormRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID
 	return nil
 }
 
-// GetChannelLatestMessagesByUserID 指定したユーザーが閲覧可能な全てのパブリックチャンネルの最新のメッセージの一覧を取得します
+// GetChannelLatestMessagesByUserID implements MessageRepository interface.
 func (repo *GormRepository) GetChannelLatestMessagesByUserID(userID uuid.UUID, limit int, subscribeOnly bool) ([]*model.Message, error) {
 	var query string
 	switch {
@@ -276,6 +267,7 @@ WHERE s.user_id = 'USER_ID'
   AND m.deleted_at IS NULL
 ORDER BY clm.date_time DESC
 `
+		query = strings.Replace(query, "USER_ID", userID.String(), -1)
 	default:
 		query = `
 SELECT m.id, m.user_id, m.channel_id, m.text, m.created_at, m.updated_at, m.deleted_at
@@ -289,7 +281,6 @@ ORDER BY clm.date_time DESC
 `
 	}
 
-	query = strings.Replace(query, "USER_ID", userID.String(), -1)
 	if limit > 0 {
 		query += fmt.Sprintf(" LIMIT %d", limit)
 	}
@@ -298,7 +289,7 @@ ORDER BY clm.date_time DESC
 	return result, repo.db.Raw(query).Scan(&result).Error
 }
 
-// GetArchivedMessagesByID アーカイブメッセージを取得します
+// GetArchivedMessagesByID implements MessageRepository interface.
 func (repo *GormRepository) GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error) {
 	r := make([]*model.ArchivedMessage, 0)
 	if messageID == uuid.Nil {

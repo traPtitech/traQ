@@ -1,11 +1,12 @@
 package router
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/permission"
-	"github.com/traPtitech/traQ/utils/validator"
+	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 )
 
@@ -23,20 +24,6 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 func (h *Handlers) PostStamp(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	// name確認
-	name := c.FormValue("name")
-	if !validator.NameRegex.MatchString(name) {
-		return echo.NewHTTPError(http.StatusBadRequest, "name must be 1-32 characters of a-zA-Z0-9_-")
-	}
-
-	// スタンプ名の重複を確認
-	if dup, err := h.Repo.IsStampNameDuplicate(name); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
-	} else if dup {
-		return echo.NewHTTPError(http.StatusConflict, "this name has already been used")
-	}
-
 	// file確認
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
@@ -50,12 +37,18 @@ func (h *Handlers) PostStamp(c echo.Context) error {
 	}
 
 	// スタンプ作成
-	s, err := h.Repo.CreateStamp(name, fileID, userID)
+	s, err := h.Repo.CreateStamp(c.FormValue("name"), fileID, userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch {
+		case repository.IsArgError(err):
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		case err == repository.ErrAlreadyExists:
+			return echo.NewHTTPError(http.StatusConflict, "this name has already been used")
+		default:
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
-
 	return c.JSON(http.StatusCreated, s)
 }
 
@@ -76,7 +69,8 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden, "you are not permitted to edit stamp created by others")
 	}
 
-	data := model.Stamp{}
+	args := repository.UpdateStampArgs{}
+
 	// 名前変更
 	name := c.FormValue("name")
 	if len(name) > 0 {
@@ -84,18 +78,7 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 		if !h.RBAC.IsGranted(user.ID, user.Role, permission.EditStampName) {
 			return echo.NewHTTPError(http.StatusForbidden, "you are not permitted to change stamp name")
 		}
-		// 名前を検証
-		if !validator.NameRegex.MatchString(name) {
-			return echo.NewHTTPError(http.StatusBadRequest, "name must be 1-32 characters of a-zA-Z0-9_-")
-		}
-		// スタンプ名の重複を確認
-		if dup, err := h.Repo.IsStampNameDuplicate(name); err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		} else if dup {
-			return echo.NewHTTPError(http.StatusConflict, "this name has already been used")
-		}
-		data.Name = name
+		args.Name = null.StringFrom(name)
 	}
 
 	// 画像変更
@@ -105,17 +88,23 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		data.FileID = fileID
+		args.FileID = uuid.NullUUID{Valid: true, UUID: fileID}
 	} else if err != http.ErrMissingFile {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	// 更新
-	if err := h.Repo.UpdateStamp(stampID, data.Name, data.FileID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+	if err := h.Repo.UpdateStamp(stampID, args); err != nil {
+		switch {
+		case repository.IsArgError(err):
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		case err == repository.ErrAlreadyExists:
+			return echo.NewHTTPError(http.StatusConflict, "this name has already been used")
+		default:
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
 	}
-
 	return c.NoContent(http.StatusNoContent)
 }
 

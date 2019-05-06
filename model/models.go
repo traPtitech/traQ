@@ -51,6 +51,8 @@ var (
 		{"devices", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"stars", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"stars", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
+		{"mutes", "user_id", "users(id)", "CASCADE", "CASCADE"},
+		{"mutes", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 		{"users_subscribe_channels", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"users_subscribe_channels", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 		{"clips", "folder_id", "clip_folders(id)", "CASCADE", "CASCADE"},
@@ -62,6 +64,7 @@ var (
 		{"messages_stamps", "message_id", "messages(id)", "CASCADE", "CASCADE"},
 		{"messages_stamps", "stamp_id", "stamps(id)", "CASCADE", "CASCADE"},
 		{"messages_stamps", "user_id", "users(id)", "CASCADE", "CASCADE"},
+		{"stamps", "file_id", "files(id)", "NO ACTION", "CASCADE"},
 		{"webhook_bots", "bot_user_id", "users(id)", "CASCADE", "CASCADE"},
 	}
 )

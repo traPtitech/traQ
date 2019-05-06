@@ -164,80 +164,6 @@ func TestRepositoryImpl_GetChannelPath(t *testing.T) {
 	})
 }
 
-func TestRepositoryImpl_GetParentChannel(t *testing.T) {
-	t.Parallel()
-	repo, _, _ := setup(t, common)
-
-	parentChannel := mustMakeChannel(t, repo, random)
-	childChannel := mustMakeChannelDetail(t, repo, uuid.Nil, random, parentChannel.ID)
-
-	t.Run("child", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		parent, err := repo.GetParentChannel(childChannel.ID)
-		if assert.NoError(err) {
-			assert.Equal(parent.ID, parentChannel.ID)
-		}
-	})
-
-	t.Run("parent", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		parent, err := repo.GetParentChannel(parentChannel.ID)
-		if assert.NoError(err) {
-			assert.Nil(parent)
-		}
-	})
-
-	t.Run("NotExists1", func(t *testing.T) {
-		t.Parallel()
-
-		_, err := repo.GetParentChannel(uuid.Nil)
-		assert.Error(t, err)
-	})
-
-	t.Run("NotExists2", func(t *testing.T) {
-		t.Parallel()
-
-		_, err := repo.GetParentChannel(uuid.Must(uuid.NewV4()))
-		assert.Error(t, err)
-	})
-}
-
-func TestRepositoryImpl_IsChannelPresent(t *testing.T) {
-	t.Parallel()
-	repo, _, _, parent := setupWithChannel(t, common)
-
-	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, "test2", parent.ID)
-	mustMakeChannelDetail(t, repo, uuid.Nil, "test3", c2.ID)
-
-	cases := []struct {
-		parentID uuid.UUID
-		name     string
-		expect   bool
-	}{
-		{parent.ID, "test2", true},
-		{parent.ID, "test3", false},
-		{c2.ID, "test3", true},
-		{c2.ID, "test4", false},
-	}
-
-	for i, v := range cases {
-		v := v
-		i := i
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			t.Parallel()
-
-			ok, err := repo.IsChannelPresent(v.name, v.parentID)
-			if assert.NoError(t, err) {
-				assert.Equal(t, v.expect, ok)
-			}
-		})
-	}
-}
-
 func TestRepositoryImpl_ChangeChannelName(t *testing.T) {
 	t.Parallel()
 	repo, _, _, parent := setupWithChannel(t, common)
@@ -369,108 +295,6 @@ func TestRepositoryImpl_GetChildrenChannelIDs(t *testing.T) {
 	}
 }
 
-func TestRepositoryImpl_GetDescendantChannelIDs(t *testing.T) {
-	t.Parallel()
-	repo, _, _, c1 := setupWithChannel(t, common)
-
-	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c1.ID)
-	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
-	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
-	c5 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c3.ID)
-
-	cases := []struct {
-		name   string
-		ch     uuid.UUID
-		expect []uuid.UUID
-	}{
-		{"c1", c1.ID, []uuid.UUID{c2.ID, c3.ID, c4.ID, c5.ID}},
-		{"c2", c2.ID, []uuid.UUID{c3.ID, c4.ID, c5.ID}},
-		{"c3", c3.ID, []uuid.UUID{c5.ID}},
-		{"c4", c4.ID, []uuid.UUID{}},
-		{"c5", c5.ID, []uuid.UUID{}},
-	}
-
-	for _, v := range cases {
-		v := v
-		t.Run(v.name, func(t *testing.T) {
-			t.Parallel()
-
-			ids, err := repo.GetDescendantChannelIDs(v.ch)
-			if assert.NoError(t, err) {
-				assert.ElementsMatch(t, ids, v.expect)
-			}
-		})
-	}
-}
-
-func TestRepositoryImpl_GetAscendantChannelIDs(t *testing.T) {
-	t.Parallel()
-	repo, _, _, c1 := setupWithChannel(t, common)
-
-	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c1.ID)
-	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
-	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
-	c5 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c3.ID)
-
-	cases := []struct {
-		name   string
-		ch     uuid.UUID
-		expect []uuid.UUID
-	}{
-		{"c1", c1.ID, []uuid.UUID{}},
-		{"c2", c2.ID, []uuid.UUID{c1.ID}},
-		{"c3", c3.ID, []uuid.UUID{c1.ID, c2.ID}},
-		{"c4", c4.ID, []uuid.UUID{c1.ID, c2.ID}},
-		{"c5", c5.ID, []uuid.UUID{c1.ID, c2.ID, c3.ID}},
-	}
-
-	for _, v := range cases {
-		v := v
-		t.Run(v.name, func(t *testing.T) {
-			t.Parallel()
-
-			ids, err := repo.GetAscendantChannelIDs(v.ch)
-			if assert.NoError(t, err) {
-				assert.ElementsMatch(t, ids, v.expect)
-			}
-		})
-	}
-}
-
-func TestRepositoryImpl_GetChannelDepth(t *testing.T) {
-	t.Parallel()
-	repo, _, _, c1 := setupWithChannel(t, common)
-
-	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c1.ID)
-	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
-	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
-	c5 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c3.ID)
-
-	cases := []struct {
-		name string
-		ch   uuid.UUID
-		num  int
-	}{
-		{"c1", c1.ID, 4},
-		{"c2", c2.ID, 3},
-		{"c3", c3.ID, 2},
-		{"c4", c4.ID, 1},
-		{"c5", c5.ID, 1},
-	}
-
-	for _, v := range cases {
-		v := v
-		t.Run(v.name, func(t *testing.T) {
-			t.Parallel()
-
-			d, err := repo.GetChannelDepth(v.ch)
-			if assert.NoError(t, err) {
-				assert.Equal(t, v.num, d)
-			}
-		})
-	}
-}
-
 func TestRepositoryImpl_GetPrivateChannelMemberIDs(t *testing.T) {
 	t.Parallel()
 	repo, assert, _ := setup(t, common)
@@ -482,37 +306,6 @@ func TestRepositoryImpl_GetPrivateChannelMemberIDs(t *testing.T) {
 	member, err := repo.GetPrivateChannelMemberIDs(ch.ID)
 	if assert.NoError(err) {
 		assert.Len(member, 2)
-	}
-}
-
-func TestRepositoryImpl_IsUserPrivateChannelMember(t *testing.T) {
-	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
-
-	user1 := mustMakeUser(t, repo, random)
-	user2 := mustMakeUser(t, repo, random)
-	ch := mustMakePrivateChannel(t, repo, random, []uuid.UUID{user1.ID, user2.ID})
-
-	cases := []struct {
-		name   string
-		user   uuid.UUID
-		expect bool
-	}{
-		{"user1", user1.ID, true},
-		{"user2", user2.ID, true},
-		{"user", user.ID, false},
-	}
-
-	for _, v := range cases {
-		v := v
-		t.Run(v.name, func(t *testing.T) {
-			t.Parallel()
-
-			ok, err := repo.IsUserPrivateChannelMember(ch.ID, v.user)
-			if assert.NoError(t, err) {
-				assert.Equal(t, v.expect, ok)
-			}
-		})
 	}
 }
 
@@ -668,4 +461,185 @@ func TestRepositoryImpl_CreatePublicChannel(t *testing.T) {
 	assert.NoError(err)
 	_, err = repo.CreatePublicChannel("Parent6", c5.ID, user.ID)
 	assert.Equal(ErrChannelDepthLimitation, err)
+}
+
+func TestRepositoryImpl_getParentChannel(t *testing.T) {
+	t.Parallel()
+	r, _, _ := setup(t, common)
+	repo := r.(*GormRepository)
+
+	parentChannel := mustMakeChannel(t, repo, random)
+	childChannel := mustMakeChannelDetail(t, repo, uuid.Nil, random, parentChannel.ID)
+
+	t.Run("child", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		parent, err := repo.getParentChannel(repo.db, childChannel.ID)
+		if assert.NoError(err) {
+			assert.Equal(parent.ID, parentChannel.ID)
+		}
+	})
+
+	t.Run("parent", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		parent, err := repo.getParentChannel(repo.db, parentChannel.ID)
+		if assert.NoError(err) {
+			assert.Nil(parent)
+		}
+	})
+
+	t.Run("NotExists1", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.getParentChannel(repo.db, uuid.Nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("NotExists2", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.getParentChannel(repo.db, uuid.Must(uuid.NewV4()))
+		assert.Error(t, err)
+	})
+}
+
+func TestRepositoryImpl_getDescendantChannelIDs(t *testing.T) {
+	t.Parallel()
+	r, _, _, c1 := setupWithChannel(t, common)
+	repo := r.(*GormRepository)
+
+	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c1.ID)
+	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
+	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
+	c5 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c3.ID)
+
+	cases := []struct {
+		name   string
+		ch     uuid.UUID
+		expect []uuid.UUID
+	}{
+		{"c1", c1.ID, []uuid.UUID{c2.ID, c3.ID, c4.ID, c5.ID}},
+		{"c2", c2.ID, []uuid.UUID{c3.ID, c4.ID, c5.ID}},
+		{"c3", c3.ID, []uuid.UUID{c5.ID}},
+		{"c4", c4.ID, []uuid.UUID{}},
+		{"c5", c5.ID, []uuid.UUID{}},
+	}
+
+	for _, v := range cases {
+		v := v
+		t.Run(v.name, func(t *testing.T) {
+			t.Parallel()
+
+			ids, err := repo.getDescendantChannelIDs(repo.db, v.ch)
+			if assert.NoError(t, err) {
+				assert.ElementsMatch(t, ids, v.expect)
+			}
+		})
+	}
+}
+
+func TestRepositoryImpl_getAscendantChannelIDs(t *testing.T) {
+	t.Parallel()
+	r, _, _, c1 := setupWithChannel(t, common)
+	repo := r.(*GormRepository)
+
+	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c1.ID)
+	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
+	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
+	c5 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c3.ID)
+
+	cases := []struct {
+		name   string
+		ch     uuid.UUID
+		expect []uuid.UUID
+	}{
+		{"c1", c1.ID, []uuid.UUID{}},
+		{"c2", c2.ID, []uuid.UUID{c1.ID}},
+		{"c3", c3.ID, []uuid.UUID{c1.ID, c2.ID}},
+		{"c4", c4.ID, []uuid.UUID{c1.ID, c2.ID}},
+		{"c5", c5.ID, []uuid.UUID{c1.ID, c2.ID, c3.ID}},
+	}
+
+	for _, v := range cases {
+		v := v
+		t.Run(v.name, func(t *testing.T) {
+			t.Parallel()
+
+			ids, err := repo.getAscendantChannelIDs(repo.db, v.ch)
+			if assert.NoError(t, err) {
+				assert.ElementsMatch(t, ids, v.expect)
+			}
+		})
+	}
+}
+
+func TestRepositoryImpl_getChannelDepth(t *testing.T) {
+	t.Parallel()
+	r, _, _, c1 := setupWithChannel(t, common)
+	repo := r.(*GormRepository)
+
+	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c1.ID)
+	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
+	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
+	c5 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c3.ID)
+
+	cases := []struct {
+		name string
+		ch   uuid.UUID
+		num  int
+	}{
+		{"c1", c1.ID, 4},
+		{"c2", c2.ID, 3},
+		{"c3", c3.ID, 2},
+		{"c4", c4.ID, 1},
+		{"c5", c5.ID, 1},
+	}
+
+	for _, v := range cases {
+		v := v
+		t.Run(v.name, func(t *testing.T) {
+			t.Parallel()
+
+			d, err := repo.getChannelDepth(repo.db, v.ch)
+			if assert.NoError(t, err) {
+				assert.Equal(t, v.num, d)
+			}
+		})
+	}
+}
+
+func TestRepositoryImpl_isChannelPresent(t *testing.T) {
+	t.Parallel()
+	r, _, _, parent := setupWithChannel(t, common)
+	repo := r.(*GormRepository)
+
+	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, "test2", parent.ID)
+	mustMakeChannelDetail(t, repo, uuid.Nil, "test3", c2.ID)
+
+	cases := []struct {
+		parentID uuid.UUID
+		name     string
+		expect   bool
+	}{
+		{parent.ID, "test2", true},
+		{parent.ID, "test3", false},
+		{c2.ID, "test3", true},
+		{c2.ID, "test4", false},
+	}
+
+	for i, v := range cases {
+		v := v
+		i := i
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			t.Parallel()
+
+			ok, err := repo.isChannelPresent(repo.db, v.name, v.parentID)
+			if assert.NoError(t, err) {
+				assert.Equal(t, v.expect, ok)
+			}
+		})
+	}
 }

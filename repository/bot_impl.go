@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
@@ -17,22 +16,22 @@ import (
 	"unicode/utf8"
 )
 
-// CreateBot Botを作成します
+// CreateBot implements BotRepository interface.
 func (repo *GormRepository) CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
 	if err := validator.ValidateVar(name, "required,name,max=20"); err != nil {
-		return nil, errors.New("invalid name")
+		return nil, ArgError("name", "invalid name")
 	}
-	if err := validator.ValidateVar(displayName, "required,max=64"); err != nil {
-		return nil, errors.New("invalid displayName")
+	if len(displayName) == 0 || utf8.RuneCountInString(displayName) > 32 {
+		return nil, ArgError("displayName", "DisplayName must be non-empty and shorter than 33 characters")
 	}
 	if err := validator.ValidateVar(webhookURL, "required,url"); err != nil || !strings.HasPrefix(webhookURL, "http") {
-		return nil, errors.New("invalid webhookURL")
+		return nil, ArgError("webhookURL", "invalid webhookURL")
 	}
 	if u, _ := url.Parse(webhookURL); utils.IsPrivateHost(u.Hostname()) {
-		return nil, errors.New("prohibited webhook host")
+		return nil, ArgError("webhookURL", "prohibited webhook host")
 	}
 	if creatorID == uuid.Nil {
-		return nil, errors.New("creatorID is nil")
+		return nil, ArgError("creatorID", "CreatorID is required")
 	}
 	if _, err := repo.GetUserByName("BOT_" + name); err == nil {
 		return nil, ErrAlreadyExists
@@ -108,7 +107,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 	return b, nil
 }
 
-// UpdateBot Botを更新します
+// UpdateBot implements BotRepository interface.
 func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 	if id == uuid.Nil {
 		return ErrNilID
@@ -119,11 +118,8 @@ func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 		userUpdated bool
 	)
 	err := repo.transact(func(tx *gorm.DB) error {
-		if err := tx.Where(&model.Bot{ID: id}).First(&b).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				return ErrNotFound
-			}
-			return err
+		if err := tx.First(&b, &model.Bot{ID: id}).Error; err != nil {
+			return convertError(err)
 		}
 
 		changes := map[string]interface{}{}
@@ -136,10 +132,10 @@ func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 		if args.WebhookURL.Valid {
 			w := args.WebhookURL.String
 			if err := validator.ValidateVar(w, "required,url"); err != nil || !strings.HasPrefix(w, "http") {
-				return errors.New("invalid webhookURL")
+				return ArgError("args.WebhookURL", "invalid webhookURL")
 			}
 			if u, _ := url.Parse(w); utils.IsPrivateHost(u.Hostname()) {
-				return errors.New("prohibited webhook host")
+				return ArgError("args.WebhookURL", "prohibited webhook host")
 			}
 
 			changes["post_url"] = w
@@ -155,7 +151,7 @@ func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 
 		if args.DisplayName.Valid {
 			if len(args.DisplayName.String) == 0 || utf8.RuneCountInString(args.DisplayName.String) > 32 {
-				return errors.New("invalid name")
+				return ArgError("args.DisplayName", "DisplayName must be non-empty and shorter than 33 characters")
 			}
 
 			if err := tx.Model(&model.User{ID: b.BotUserID}).Update("display_name", args.DisplayName.String).Error; err != nil {
@@ -188,18 +184,15 @@ func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 	return nil
 }
 
-// SetSubscribeEventsToBot Botの購読イベントを変更します
+// SetSubscribeEventsToBot implements BotRepository interface.
 func (repo *GormRepository) SetSubscribeEventsToBot(botID uuid.UUID, events model.BotEvents) error {
 	if botID == uuid.Nil {
 		return ErrNilID
 	}
 	err := repo.transact(func(tx *gorm.DB) error {
 		var b model.Bot
-		if err := tx.Take(&b, &model.Bot{ID: botID}).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				return ErrNotFound
-			}
-			return err
+		if err := tx.First(&b, &model.Bot{ID: botID}).Error; err != nil {
+			return convertError(err)
 		}
 		return tx.Model(&b).Update("subscribe_events", events).Error
 	})
@@ -216,58 +209,49 @@ func (repo *GormRepository) SetSubscribeEventsToBot(botID uuid.UUID, events mode
 	return nil
 }
 
-// GetAllBots 全てのBotを取得します
+// GetAllBots implements BotRepository interface.
 func (repo *GormRepository) GetAllBots() ([]*model.Bot, error) {
 	bots := make([]*model.Bot, 0)
 	return bots, repo.db.Find(&bots).Error
 }
 
-// GetBotByID Botを取得します
+// GetBotByID implements BotRepository interface.
 func (repo *GormRepository) GetBotByID(id uuid.UUID) (*model.Bot, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
 	var b model.Bot
-	if err := repo.db.Where(&model.Bot{ID: id}).First(&b).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+	if err := repo.db.First(&b, &model.Bot{ID: id}).Error; err != nil {
+		return nil, convertError(err)
 	}
 	return &b, nil
 }
 
-// GetBotByBotUserID Botを取得します
+// GetBotByBotUserID implements BotRepository interface.
 func (repo *GormRepository) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
 	var b model.Bot
-	if err := repo.db.Where(&model.Bot{BotUserID: id}).First(&b).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+	if err := repo.db.First(&b, &model.Bot{BotUserID: id}).Error; err != nil {
+		return nil, convertError(err)
 	}
 	return &b, nil
 }
 
-// GetBotByCode BotCodeからBotを取得します
+// GetBotByCode implements BotRepository interface.
 func (repo *GormRepository) GetBotByCode(code string) (*model.Bot, error) {
 	if len(code) == 0 {
 		return nil, ErrNotFound
 	}
 	var b model.Bot
-	if err := repo.db.Where(&model.Bot{BotCode: code}).First(&b).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
-			return nil, ErrNotFound
-		}
-		return nil, err
+	if err := repo.db.First(&b, &model.Bot{BotCode: code}).Error; err != nil {
+		return nil, convertError(err)
 	}
 	return &b, nil
 }
 
-// GetBotsByCreator 指定したCreatorのBotを取得します
+// GetBotsByCreator implements BotRepository interface.
 func (repo *GormRepository) GetBotsByCreator(userID uuid.UUID) ([]*model.Bot, error) {
 	bots := make([]*model.Bot, 0)
 	if userID == uuid.Nil {
@@ -276,7 +260,7 @@ func (repo *GormRepository) GetBotsByCreator(userID uuid.UUID) ([]*model.Bot, er
 	return bots, repo.db.Where(&model.Bot{CreatorID: userID}).Find(&bots).Error
 }
 
-// GetBotsByChannel 指定したチャンネルに参加しているBotを取得します
+// GetBotsByChannel implements BotRepository interface.
 func (repo *GormRepository) GetBotsByChannel(channelID uuid.UUID) ([]*model.Bot, error) {
 	bots := make([]*model.Bot, 0)
 	if channelID == uuid.Nil {
@@ -292,7 +276,7 @@ func (repo *GormRepository) GetBotsByChannel(channelID uuid.UUID) ([]*model.Bot,
 		Error
 }
 
-// ChangeBotState Botの状態を変更します
+// ChangeBotState implements BotRepository interface.
 func (repo *GormRepository) ChangeBotState(id uuid.UUID, state model.BotState) error {
 	if id == uuid.Nil {
 		return ErrNilID
@@ -301,10 +285,7 @@ func (repo *GormRepository) ChangeBotState(id uuid.UUID, state model.BotState) e
 	err := repo.transact(func(tx *gorm.DB) error {
 		var b model.Bot
 		if err := tx.Take(&b, &model.Bot{ID: id}).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				return ErrNotFound
-			}
-			return err
+			return convertError(err)
 		}
 		if b.State == state {
 			return nil
@@ -327,18 +308,15 @@ func (repo *GormRepository) ChangeBotState(id uuid.UUID, state model.BotState) e
 	return nil
 }
 
-// ReissueBotTokens Botの各種トークンを再発行します
+// ReissueBotTokens implements BotRepository interface.
 func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 	if id == uuid.Nil {
 		return nil, ErrNilID
 	}
 	var bot *model.Bot
 	err := repo.transact(func(tx *gorm.DB) error {
-		if err := tx.Take(&bot, &model.Bot{ID: id}).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				return ErrNotFound
-			}
-			return err
+		if err := tx.First(&bot, &model.Bot{ID: id}).Error; err != nil {
+			return convertError(err)
 		}
 
 		bot.State = model.BotPaused
@@ -381,18 +359,15 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 	return bot, nil
 }
 
-// DeleteBot Botを削除します
+// DeleteBot implements BotRepository interface.
 func (repo *GormRepository) DeleteBot(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
 	err := repo.transact(func(tx *gorm.DB) error {
 		var b model.Bot
-		if err := tx.Take(&b, &model.Bot{ID: id}).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
-				return ErrNotFound
-			}
-			return err
+		if err := tx.First(&b, &model.Bot{ID: id}).Error; err != nil {
+			return convertError(err)
 		}
 
 		errs := tx.Model(&model.User{ID: b.BotUserID}).Update("status", model.UserAccountStatusDeactivated).New().
@@ -417,7 +392,7 @@ func (repo *GormRepository) DeleteBot(id uuid.UUID) error {
 	return nil
 }
 
-// AddBotToChannel Botをチャンネルに参加させます
+// AddBotToChannel implements BotRepository interface.
 func (repo *GormRepository) AddBotToChannel(botID, channelID uuid.UUID) error {
 	if botID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
@@ -436,7 +411,7 @@ func (repo *GormRepository) AddBotToChannel(botID, channelID uuid.UUID) error {
 	return result.Error
 }
 
-// RemoveBotFromChannel Botをチャンネルから退出させます
+// RemoveBotFromChannel implements BotRepository interface.
 func (repo *GormRepository) RemoveBotFromChannel(botID, channelID uuid.UUID) error {
 	if botID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
@@ -454,7 +429,7 @@ func (repo *GormRepository) RemoveBotFromChannel(botID, channelID uuid.UUID) err
 	return result.Error
 }
 
-// GetParticipatingChannelIDsByBot Botが参加しているチャンネルのIDを取得します
+// GetParticipatingChannelIDsByBot implements BotRepository interface.
 func (repo *GormRepository) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid.UUID, error) {
 	channels := make([]uuid.UUID, 0)
 	if botID == uuid.Nil {
@@ -467,7 +442,7 @@ func (repo *GormRepository) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]
 		Error
 }
 
-// WriteBotEventLog Botイベントログを書き込みます
+// WriteBotEventLog implements BotRepository interface.
 func (repo *GormRepository) WriteBotEventLog(log *model.BotEventLog) error {
 	if log == nil || log.RequestID == uuid.Nil {
 		return nil
@@ -475,7 +450,7 @@ func (repo *GormRepository) WriteBotEventLog(log *model.BotEventLog) error {
 	return repo.db.Create(log).Error
 }
 
-// GetBotEventLogs Botイベントログを取得します
+// GetBotEventLogs implements BotRepository interface.
 func (repo *GormRepository) GetBotEventLogs(botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error) {
 	logs := make([]*model.BotEventLog, 0)
 	if botID == uuid.Nil {

@@ -2,7 +2,6 @@ package model
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/utils/validator"
 	"time"
 )
 
@@ -11,7 +10,7 @@ type Message struct {
 	ID        uuid.UUID  `gorm:"type:char(36);not null;primary_key"`
 	UserID    uuid.UUID  `gorm:"type:char(36);not null;"`
 	ChannelID uuid.UUID  `gorm:"type:char(36);not null;index"`
-	Text      string     `gorm:"type:text;not null"                 validate:"required"`
+	Text      string     `gorm:"type:text;not null"`
 	CreatedAt time.Time  `gorm:"precision:6;index"`
 	UpdatedAt time.Time  `gorm:"precision:6"`
 	DeletedAt *time.Time `gorm:"precision:6;index"`
@@ -20,11 +19,6 @@ type Message struct {
 // TableName DBの名前を指定するメソッド
 func (m *Message) TableName() string {
 	return "messages"
-}
-
-// Validate 構造体を検証します
-func (m *Message) Validate() error {
-	return validator.ValidateStruct(m)
 }
 
 // ChannelLatestMessage チャンネル別最新メッセージ
