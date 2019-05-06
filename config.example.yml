@@ -63,3 +63,8 @@
 #oauth2:
 #  isRefreshEnabled: false
 #  accessTokenExp: 31536000
+
+#jwt:
+#  keys:
+#    public: /keys/ec_pub.pem
+#    private: /keys/ec.pem

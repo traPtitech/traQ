@@ -1,6 +1,7 @@
 .vagrant
 .envrc
 .idea/
+keys
 /vendor/
 
 traQ

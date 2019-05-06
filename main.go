@@ -1,9 +1,17 @@
 package main
 
 import (
-	"cloud.google.com/go/profiler"
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	_ "net/http/pprof"
+	"os"
+	"os/signal"
+	"strings"
+	"time"
+
+	"cloud.google.com/go/profiler"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -18,15 +26,10 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
-	"net/http"
-	_ "net/http/pprof"
-	"os"
-	"os/signal"
-	"strings"
-	"time"
 )
 
 var (
@@ -145,6 +148,19 @@ func main() {
 	// Bot Processor
 	bot.NewProcessor(repo, hub, logger.Named("bot_processor"))
 
+	// JWT for QRCode
+	pubRaw, err := ioutil.ReadFile(viper.GetString("jwt.keys.public"))
+	if err != nil {
+		logger.Fatal("failed to read jwt public key", zap.Error(err))
+	}
+	privRaw, err := ioutil.ReadFile(viper.GetString("jwt.keys.private"))
+	if err != nil {
+		logger.Fatal("failed to read jwt private key", zap.Error(err))
+	}
+	if err := utils.SetupSigner(pubRaw, privRaw); err != nil {
+		logger.Fatal("failed to setup signer", zap.Error(err))
+	}
+
 	// Routing
 	h := router.NewHandlers(r, repo, hub, logger.Named("router"), router.HandlerConfig{
 		ImageMagickPath:  viper.GetString("imagemagick.path"),
@@ -208,6 +224,9 @@ func setDefaultConfigs() {
 
 	viper.SetDefault("oauth2.isRefreshEnabled", false)
 	viper.SetDefault("oauth2.accessTokenExp", 60*60*24*365)
+
+	viper.SetDefault("jwt.keys.public", "./keys/ec_pub.pem")
+	viper.SetDefault("jwt.keys.private", "./keys/ec.pem")
 }
 
 func getDatabase() (*gorm.DB, error) {
