@@ -574,6 +574,10 @@ func (repo *TestRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUI
 func (repo *TestRepository) CreateTag(name string, restricted bool, tagType string) (*model.Tag, error) {
 	repo.TagsLock.Lock()
 	defer repo.TagsLock.Unlock()
+	// 名前チェック
+	if len(name) == 0 || utf8.RuneCountInString(name) > 30 {
+		return nil, ArgError("name", "Name must be non-empty and shorter than 31 characters")
+	}
 	for _, t := range repo.Tags {
 		if t.Name == name {
 			return nil, repository.ErrAlreadyExists
@@ -586,9 +590,6 @@ func (repo *TestRepository) CreateTag(name string, restricted bool, tagType stri
 		Type:       tagType,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
-	}
-	if err := t.Validate(); err != nil {
-		return nil, err
 	}
 	repo.Tags[t.ID] = t
 	return &t, nil
