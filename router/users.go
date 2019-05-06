@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
-	qrcode "github.com/skip2/go-qrcode"
+	"github.com/skip2/go-qrcode"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
@@ -53,7 +53,6 @@ type UserForJWTClaim struct {
 	UserID      uuid.UUID `json:"userId"`
 	Name        string    `json:"name"`
 	DisplayName string    `json:"displayName"`
-	IconID      uuid.UUID `json:"iconId"`
 }
 
 // PostLogin POST /login
@@ -341,13 +340,11 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 	token, err := utils.Signer.Sign(&UserForJWTClaim{
 		StandardClaims: jwt.StandardClaims{
 			IssuedAt:  now.Unix(),
-			NotBefore: now.Unix(),
 			ExpiresAt: deadline.Unix(),
 		},
 		UserID:      user.ID,
 		Name:        user.Name,
 		DisplayName: user.DisplayName,
-		IconID:      user.Icon,
 	})
 
 	if err != nil {
@@ -355,7 +352,7 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	png, err := qrcode.Encode(token, qrcode.High, 512)
+	png, err := qrcode.Encode(token, qrcode.Low, 512)
 	if err != nil {
 		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return c.NoContent(http.StatusInternalServerError)
