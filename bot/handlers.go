@@ -102,7 +102,7 @@ func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
 		return
 	}
 
-	if filterBot(p, bot, stateFilter(model.BotActive)) {
+	if !filterBot(p, bot, stateFilter(model.BotActive)) {
 		return
 	}
 

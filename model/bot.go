@@ -132,6 +132,7 @@ type BotEventLog struct {
 	Body      string    `gorm:"type:text"                                         json:"-"`
 	Error     string    `gorm:"type:text"                                         json:"-"`
 	Code      int       `gorm:"not null;default:0"                                json:"code"`
+	Latency   int64     `gorm:"not null;default:0"                                json:"-"`
 	DateTime  time.Time `gorm:"precision:6;index:bot_id_date_time_idx"            json:"dateTime"`
 }
 
