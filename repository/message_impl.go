@@ -144,6 +144,9 @@ func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 		if err := tx.Where(&model.Unread{MessageID: messageID}).Delete(model.Unread{}).Error; err != nil {
 			return err
 		}
+		if err := tx.Where(&model.Pin{ID:id}).Delete(model.Pin{}).Error;err != nil {
+			return err
+		}
 		ok = true
 		return nil
 	})
