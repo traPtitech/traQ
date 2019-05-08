@@ -39,7 +39,7 @@ func NewProcessor(repo repository.Repository, hub *hub.Hub, logger *zap.Logger) 
 			New: func() interface{} { return &bytes.Buffer{} },
 		},
 		client: http.Client{
-			Timeout:       5 * time.Second,
+			Timeout:       10 * time.Second,
 			CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
 		},
 	}
@@ -69,7 +69,10 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 	req.Header.Set(headerTRAQBotRequestID, reqID.String())
 	req.Header.Set(headerTRAQBotVerificationToken, b.VerificationToken)
 
+	start := time.Now()
 	res, err := p.client.Do(req)
+	stop := time.Now()
+
 	if err != nil {
 		p.logger.Error("failed to send bot event. network error", zap.Error(err))
 		if err := p.repo.WriteBotEventLog(&model.BotEventLog{
@@ -79,6 +82,7 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 			Body:      string(body),
 			Error:     err.Error(),
 			Code:      -1,
+			Latency:   stop.Sub(start).Nanoseconds(),
 			DateTime:  time.Now(),
 		}); err != nil {
 			p.logger.Error("failed to WriteBotEventLog", zap.Error(err), zap.Stringer("requestId", reqID))
@@ -93,6 +97,7 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 		Event:     event,
 		Body:      string(body),
 		Code:      res.StatusCode,
+		Latency:   stop.Sub(start).Nanoseconds(),
 		DateTime:  time.Now(),
 	}); err != nil {
 		p.logger.Error("failed to WriteBotEventLog", zap.Error(err), zap.Stringer("requestId", reqID))
