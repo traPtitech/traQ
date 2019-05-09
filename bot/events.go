@@ -19,6 +19,9 @@ const (
 	// ChannelCreated チャンネル作成イベント
 	ChannelCreated model.BotEvent = "CHANNEL_CREATED"
 
+	// ChannelTopicChanged チャンネルトピック変更イベント
+	ChannelTopicChanged model.BotEvent = "CHANNEL_TOPIC_CHANGED"
+
 	// UserCreated ユーザー作成イベント
 	UserCreated model.BotEvent = "USER_CREATED"
 )
@@ -30,6 +33,7 @@ var eventSet = map[model.BotEvent]bool{
 	MessageCreated:       true,
 	DirectMessageCreated: true,
 	ChannelCreated:       true,
+	ChannelTopicChanged:  true,
 	UserCreated:          true,
 }
 

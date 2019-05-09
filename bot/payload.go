@@ -106,6 +106,13 @@ type channelCreatedPayload struct {
 	Channel channelPayload `json:"channel"`
 }
 
+type channelTopicChangedPayload struct {
+	basePayload
+	Channel channelPayload `json:"channel"`
+	Topic   string         `json:"topic"`
+	Updater userPayload    `json:"updater"`
+}
+
 type userCreatedPayload struct {
 	basePayload
 	User userPayload `json:"user"`

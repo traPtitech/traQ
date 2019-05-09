@@ -323,6 +323,14 @@ func (repo *GormRepository) UpdateChannelTopic(channelID uuid.UUID, topic string
 			"private":    !ch.IsPublic,
 		},
 	})
+	repo.hub.Publish(hub.Message{
+		Name: event.ChannelTopicUpdated,
+		Fields: hub.Fields{
+			"channel_id": ch.ID,
+			"topic":      ch.Topic,
+			"updater_id": updaterID,
+		},
+	})
 	return nil
 }
 

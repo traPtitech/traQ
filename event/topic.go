@@ -119,6 +119,12 @@ const (
 	// 		channel_id: uuid.UUID
 	// 		private: bool
 	ChannelUpdated = "channel.updated"
+	// ChannelTopicUpdated チャンネルトピックが更新された
+	// 	Fields:
+	// 		channel_id: uuid.UUID
+	// 		topic: string
+	// 		updater_id: uuid.UUID
+	ChannelTopicUpdated = "channel.topic.updated"
 	// ChannelDeleted チャンネルが削除された
 	// 	Fields:
 	// 		channel_id: uuid.UUID
@@ -126,27 +132,27 @@ const (
 	ChannelDeleted = "channel.deleted"
 	// ChannelRead チャンネルのメッセージが既読された
 	// 	Fields:
-	//		user_id: uuid.UUID
+	// 		user_id: uuid.UUID
 	// 		channel_id: uuid.UUID
 	ChannelRead = "channel.read"
 	// ChannelStared チャンネルがスターされた
 	// 	Fields:
-	//		user_id: uuid.UUID
+	// 		user_id: uuid.UUID
 	// 		channel_id: uuid.UUID
 	ChannelStared = "channel.stared"
 	// ChannelUnstared チャンネルのスターが解除された
 	// 	Fields:
-	//		user_id: uuid.UUID
+	// 		user_id: uuid.UUID
 	// 		channel_id: uuid.UUID
 	ChannelUnstared = "channel.unstared"
 	// ChannelMuted チャンネルがミュートされた
 	// 	Fields:
-	//		user_id: uuid.UUID
+	// 		user_id: uuid.UUID
 	// 		channel_id: uuid.UUID
 	ChannelMuted = "channel.muted"
 	// ChannelUnmuted チャンネルのミュートが解除された
 	// 	Fields:
-	//		user_id: uuid.UUID
+	// 		user_id: uuid.UUID
 	// 		channel_id: uuid.UUID
 	ChannelUnmuted = "channel.unmuted"
 
@@ -166,32 +172,32 @@ const (
 
 	// ClipCreated クリップが作成された
 	// 	Fields:
-	//		user_id: uuid.UUID
+	// 		user_id: uuid.UUID
 	// 		clip_id: uuid.UUID
 	ClipCreated = "clip.created"
 	// ClipMoved クリップが移動された
 	// 	Fields:
-	//		user_id: uuid.UUID
+	// 		user_id: uuid.UUID
 	// 		clip_id: uuid.UUID
 	ClipMoved = "clip.moved"
 	// ClipDeleted クリップが削除された
 	// 	Fields:
-	//		user_id: uuid.UUID
+	// 		user_id: uuid.UUID
 	// 		clip_id: uuid.UUID
 	ClipDeleted = "clip.deleted"
 	// ClipFolderCreated クリップフォルダが作成された
 	// 	Fields:
-	//		user_id: uuid.UUID
+	// 		user_id: uuid.UUID
 	// 		folder_id: uuid.UUID
 	ClipFolderCreated = "clip_folder.created"
 	// ClipFolderUpdated クリップフォルダが更新された
 	// 	Fields:
-	//		user_id: uuid.UUID
+	// 		user_id: uuid.UUID
 	// 		folder_id: uuid.UUID
 	ClipFolderUpdated = "clip_folder.updated"
 	// ClipFolderDeleted クリップフォルダが削除された
 	// 	Fields:
-	//		user_id: uuid.UUID
+	// 		user_id: uuid.UUID
 	// 		folder_id: uuid.UUID
 	ClipFolderDeleted = "clip_folder.deleted"
 
