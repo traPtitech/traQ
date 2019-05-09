@@ -15,12 +15,13 @@ import (
 type eventHandler func(p *Processor, event string, fields hub.Fields)
 
 var eventHandlerSet = map[string]eventHandler{
-	event.BotJoined:      botJoinedAndLeftHandler,
-	event.BotLeft:        botJoinedAndLeftHandler,
-	event.BotPingRequest: botPingRequestHandler,
-	event.MessageCreated: messageCreatedHandler,
-	event.UserCreated:    userCreatedHandler,
-	event.ChannelCreated: channelCreatedHandler,
+	event.BotJoined:           botJoinedAndLeftHandler,
+	event.BotLeft:             botJoinedAndLeftHandler,
+	event.BotPingRequest:      botPingRequestHandler,
+	event.MessageCreated:      messageCreatedHandler,
+	event.UserCreated:         userCreatedHandler,
+	event.ChannelCreated:      channelCreatedHandler,
+	event.ChannelTopicUpdated: channelTopicUpdatedHandler,
 }
 
 func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
@@ -201,6 +202,55 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 		multicast(p, ChannelCreated, &payload, bots)
 	}
+}
+
+func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
+	chID := fields["channel_id"].(uuid.UUID)
+	topic := fields["topic"].(string)
+	updaterID := fields["updater_id"].(uuid.UUID)
+
+	bots, err := p.repo.GetBotsByChannel(chID)
+	if err != nil {
+		p.logger.Error("failed to GetBotsByChannel", zap.Error(err), zap.Stringer("id", chID))
+		return
+	}
+	bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(ChannelTopicChanged))
+	if len(bots) == 0 {
+		return
+	}
+
+	ch, err := p.repo.GetChannel(chID)
+	if err != nil {
+		p.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("id", chID))
+		return
+	}
+
+	path, err := p.repo.GetChannelPath(chID)
+	if err != nil {
+		p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", chID))
+		return
+	}
+
+	chCreator, err := p.repo.GetUser(ch.CreatorID)
+	if err != nil {
+		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", ch.CreatorID))
+		return
+	}
+
+	user, err := p.repo.GetUser(updaterID)
+	if err != nil {
+		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", updaterID))
+		return
+	}
+
+	payload := channelTopicChangedPayload{
+		basePayload: makeBasePayload(),
+		Channel:     makeChannelPayload(ch, path, chCreator),
+		Topic:       topic,
+		Updater:     makeUserPayload(user),
+	}
+
+	multicast(p, ChannelTopicChanged, &payload, bots)
 }
 
 func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
