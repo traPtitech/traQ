@@ -194,8 +194,7 @@ workflows:
               only: /.*/
       - deploy-staging:
           requires:
-            - test
-            - lint
+            - build-image
           filters:
             branches:
               only: master
