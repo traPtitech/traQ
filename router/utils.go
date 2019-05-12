@@ -10,6 +10,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/logging"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
@@ -20,6 +21,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"runtime"
 	"sync"
 	"time"
 
@@ -292,9 +294,28 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	return l
 }
 
-/*
-func hasQuery(c echo.Context, query string) bool {
-	_, ok := c.QueryParams()[query]
-	return ok
+func badRequest(err interface{}) error {
+	return httpError(http.StatusBadRequest, err)
 }
-*/
+
+func forbidden(err interface{}) error {
+	return httpError(http.StatusForbidden, err)
+}
+
+func internalServerError(err error, logger *zap.Logger) error {
+	if logger != nil {
+		logger.Error(unexpectedError, logging.ErrorReport(runtime.Caller(1)), zap.Error(err))
+	}
+	return echo.NewHTTPError(http.StatusInternalServerError)
+}
+
+func httpError(code int, err interface{}) error {
+	switch v := err.(type) {
+	case string:
+		return echo.NewHTTPError(code, v)
+	case *repository.ArgumentError:
+		return echo.NewHTTPError(code, v.Error())
+	default:
+		return echo.NewHTTPError(code, v)
+	}
+}

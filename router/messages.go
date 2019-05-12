@@ -37,21 +37,25 @@ func (h *Handlers) PutMessageByID(c echo.Context) error {
 	messageID := getRequestParamAsUUID(c, paramMessageID)
 	m := getMessageFromContext(c)
 
-	// 他人のテキストは編集できない
-	if userID != m.UserID {
-		return echo.NewHTTPError(http.StatusForbidden, "This is not your message")
+	var req struct {
+		Text string `json:"text"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return badRequest(err)
 	}
 
-	req := struct {
-		Text string `json:"text" validate:"required"`
-	}{}
-	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+	// 他人のテキストは編集できない
+	if userID != m.UserID {
+		return forbidden("This is not your message")
 	}
 
 	if err := h.Repo.UpdateMessage(messageID, req.Text); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch {
+		case repository.IsArgError(err):
+			return badRequest(err)
+		default:
+			return internalServerError(err, h.requestContextLogger(c))
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -66,12 +70,11 @@ func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 	if m.UserID != userID {
 		mUser, err := h.Repo.GetUser(m.UserID)
 		if err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 
 		if !mUser.Bot {
-			return echo.NewHTTPError(http.StatusForbidden, "you are not allowed to delete this message")
+			return forbidden("you are not allowed to delete this message")
 		}
 
 		// Webhookのメッセージの削除権限の確認
@@ -79,21 +82,19 @@ func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 		if err != nil {
 			switch err {
 			case repository.ErrNotFound:
-				return echo.NewHTTPError(http.StatusForbidden, "you are not allowed to delete this message")
+				return forbidden("you are not allowed to delete this message")
 			default:
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-				return echo.NewHTTPError(http.StatusInternalServerError)
+				return internalServerError(err, h.requestContextLogger(c))
 			}
 		}
 
 		if wh.GetCreatorID() != userID {
-			return echo.NewHTTPError(http.StatusForbidden, "you are not allowed to delete this message")
+			return forbidden("you are not allowed to delete this message")
 		}
 	}
 
 	if err := h.Repo.DeleteMessage(messageID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -101,27 +102,29 @@ func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 
 // GetMessagesByChannelID GET /channels/:channelID/messages
 func (h *Handlers) GetMessagesByChannelID(c echo.Context) error {
-	req := struct {
-		Limit  int `query:"limit"  validate:"min=0"`
-		Offset int `query:"offset" validate:"min=0"`
-	}{}
-	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
 	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
+	var req struct {
+		Limit  int `query:"limit"`
+		Offset int `query:"offset"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return badRequest(err)
+	}
+
+	if req.Limit > 200 || req.Limit == 0 {
+		req.Limit = 200
+	}
+
 	messages, err := h.Repo.GetMessagesByChannelID(channelID, req.Limit, req.Offset)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	reports, err := h.Repo.GetMessageReportsByReporterID(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	hidden := make(map[uuid.UUID]bool)
 	for _, v := range reports {
@@ -142,49 +145,56 @@ func (h *Handlers) GetMessagesByChannelID(c echo.Context) error {
 
 // PostMessage POST /channels/:channelID/messages
 func (h *Handlers) PostMessage(c echo.Context) error {
-	post := struct {
-		Text string `json:"text" validate:"required"`
-	}{}
-	if err := bindAndValidate(c, &post); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
 	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	m, err := h.createMessage(c, post.Text, userID, channelID)
-	if err != nil {
-		return err
+	var req struct {
+		Text string `json:"text"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return badRequest(err)
 	}
 
-	return c.JSON(http.StatusCreated, m)
+	m, err := h.Repo.CreateMessage(userID, channelID, req.Text)
+	if err != nil {
+		switch {
+		case repository.IsArgError(err):
+			return badRequest(err)
+		default:
+			return internalServerError(err, h.requestContextLogger(c))
+		}
+	}
+
+	return c.JSON(http.StatusCreated, h.formatMessage(m))
 }
 
 // GetDirectMessages GET /users/:userId/messages
 func (h *Handlers) GetDirectMessages(c echo.Context) error {
-	req := struct {
-		Limit  int `query:"limit"  validate:"min=0"`
-		Offset int `query:"offset" validate:"min=0"`
-	}{}
-	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
 	myID := getRequestUserID(c)
 	targetID := getRequestParamAsUUID(c, paramUserID)
+
+	var req struct {
+		Limit  int `query:"limit"`
+		Offset int `query:"offset"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return badRequest(err)
+	}
+
+	if req.Limit > 200 || req.Limit == 0 {
+		req.Limit = 200
+	}
 
 	// DMチャンネルを取得
 	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	// メッセージ取得
 	messages, err := h.Repo.GetMessagesByChannelID(ch.ID, req.Limit, req.Offset)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	// 整形
@@ -198,30 +208,33 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 
 // PostDirectMessage POST /users/:userId/messages
 func (h *Handlers) PostDirectMessage(c echo.Context) error {
-	req := struct {
-		Text string `json:"text" validate:"required"`
-	}{}
-	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
 	myID := getRequestUserID(c)
 	targetID := getRequestParamAsUUID(c, paramUserID)
+
+	var req struct {
+		Text string `json:"text"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return badRequest(err)
+	}
 
 	// DMチャンネルを取得
 	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
-	// 投稿
-	m, err := h.createMessage(c, req.Text, myID, ch.ID)
+	m, err := h.Repo.CreateMessage(myID, ch.ID, req.Text)
 	if err != nil {
-		return err
+		switch {
+		case repository.IsArgError(err):
+			return badRequest(err)
+		default:
+			return internalServerError(err, h.requestContextLogger(c))
+		}
 	}
 
-	return c.JSON(http.StatusCreated, m)
+	return c.JSON(http.StatusCreated, h.formatMessage(m))
 }
 
 // PostMessageReport POST /messages/:messageID/report
@@ -229,20 +242,23 @@ func (h *Handlers) PostMessageReport(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getRequestParamAsUUID(c, paramMessageID)
 
-	req := struct {
-		Reason string `json:"reason" validate:"max=100,required"`
-	}{}
+	var req struct {
+		Reason string `json:"reason"`
+	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
+	}
+
+	if len(req.Reason) == 0 {
+		return badRequest("reason is required")
 	}
 
 	if err := h.Repo.CreateMessageReport(messageID, userID, req.Reason); err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
-			return echo.NewHTTPError(http.StatusBadRequest, "already reported")
+			return badRequest("already reported")
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -254,8 +270,7 @@ func (h *Handlers) GetMessageReports(c echo.Context) error {
 
 	reports, err := h.Repo.GetMessageReports(p*50, 50)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, reports)
@@ -267,8 +282,7 @@ func (h *Handlers) GetUnread(c echo.Context) error {
 
 	unreads, err := h.Repo.GetUnreadMessagesByUserID(userID)
 	if err != nil {
-		c.Logger().Error()
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	responseBody := make([]*MessageForResponse, len(unreads))
@@ -285,21 +299,10 @@ func (h *Handlers) DeleteUnread(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
 	if err := h.Repo.DeleteUnreadsByChannelID(channelID, userID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
-}
-
-// dbにデータを入れる
-func (h *Handlers) createMessage(c echo.Context, text string, userID, channelID uuid.UUID) (*MessageForResponse, error) {
-	m, err := h.Repo.CreateMessage(userID, channelID, text)
-	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
-	}
-	return h.formatMessage(m), nil
 }
 
 func (h *Handlers) formatMessage(raw *model.Message) *MessageForResponse {
@@ -324,27 +327,4 @@ func (h *Handlers) formatMessage(raw *model.Message) *MessageForResponse {
 		StampList:       stampList,
 	}
 	return res
-}
-
-// リクエストで飛んできたmessageIDを検証する。存在する場合はそのメッセージを返す
-func (h *Handlers) validateMessageID(c echo.Context, messageID, userID uuid.UUID) (*model.Message, error) {
-	m, err := h.Repo.GetMessageByID(messageID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return nil, echo.NewHTTPError(http.StatusNotFound, "Message is not found")
-		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return nil, echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return nil, echo.NewHTTPError(http.StatusInternalServerError)
-	} else if !ok {
-		return nil, echo.NewHTTPError(http.StatusNotFound)
-	}
-
-	return m, nil
 }

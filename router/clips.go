@@ -48,16 +48,30 @@ func (h *Handlers) PostClip(c echo.Context) error {
 
 	// リクエスト検証
 	req := struct {
-		MessageID string `json:"messageId" validate:"uuid,required"`
-		FolderID  string `json:"folderId"`
+		MessageID uuid.UUID `json:"messageId"`
+		FolderID  string    `json:"folderId"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	// メッセージの存在と可用性を確認
-	if _, err := h.validateMessageID(c, uuid.FromStringOrNil(req.MessageID), userID); err != nil {
-		return err
+	m, err := h.Repo.GetMessageByID(req.MessageID)
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return echo.NewHTTPError(http.StatusBadRequest, "Message is not found")
+		default:
+			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+			return echo.NewHTTPError(http.StatusInternalServerError)
+		}
+	}
+
+	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
+		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	} else if !ok {
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	if len(req.FolderID) > 0 {
