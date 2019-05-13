@@ -23,6 +23,11 @@ var (
 // UserAccountStatus ユーザーアカウント状態
 type UserAccountStatus int
 
+// Valid 有効な値かどうか
+func (v UserAccountStatus) Valid() bool {
+	return userAccountStatuses[v]
+}
+
 const (
 	// UserAccountStatusDeactivated ユーザーアカウント状態: 凍結
 	UserAccountStatusDeactivated UserAccountStatus = 0
@@ -31,6 +36,12 @@ const (
 	// UserAccountStatusSuspended ユーザーアカウント状態: 一時停止
 	UserAccountStatusSuspended UserAccountStatus = 2
 )
+
+var userAccountStatuses = map[UserAccountStatus]bool{
+	UserAccountStatusDeactivated: true,
+	UserAccountStatusActive:      true,
+	UserAccountStatusSuspended:   true,
+}
 
 // User userの構造体
 type User struct {

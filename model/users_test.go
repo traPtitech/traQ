@@ -42,3 +42,10 @@ func TestAuthenticateUser(t *testing.T) {
 		assert.NoError(quick.Check(tester, &quick.Config{MaxCount: 10}))
 	})
 }
+
+func TestUserAccountStatus_Valid(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, UserAccountStatusDeactivated.Valid())
+	assert.False(t, UserAccountStatus(-1).Valid())
+}

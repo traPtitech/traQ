@@ -14,7 +14,6 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
-	"go.uber.org/zap"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -57,22 +56,21 @@ type UserForJWTClaim struct {
 
 // PostLogin POST /login
 func (h *Handlers) PostLogin(c echo.Context) error {
-	req := struct {
-		Name string `json:"name" form:"name" validate:"required"`
-		Pass string `json:"pass" form:"pass" validate:"required"`
-	}{}
+	var req struct {
+		Name string `json:"name" form:"name"`
+		Pass string `json:"pass" form:"pass"`
+	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	user, err := h.Repo.GetUserByName(req.Name)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
-			return c.NoContent(http.StatusUnauthorized)
+			return echo.NewHTTPError(http.StatusUnauthorized, "invalid name")
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return c.NoContent(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 	if err := model.AuthenticateUser(user, req.Pass); err != nil {
@@ -82,20 +80,18 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 	// ユーザーのアカウント状態の確認
 	switch user.Status {
 	case model.UserAccountStatusDeactivated, model.UserAccountStatusSuspended:
-		return echo.NewHTTPError(http.StatusForbidden, "this account is currently suspended")
+		return forbidden("this account is currently suspended")
 	case model.UserAccountStatusActive:
 		break
 	}
 
 	sess, err := sessions.Get(c.Response(), c.Request(), true)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	if err := sess.SetUser(user.ID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	if redirect := c.QueryParam("redirect"); len(redirect) > 0 {
@@ -108,13 +104,11 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 func (h *Handlers) PostLogout(c echo.Context) error {
 	sess, err := sessions.Get(c.Response(), c.Request(), false)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	if sess != nil {
 		if err := sess.Destroy(c.Response(), c.Request()); err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return c.NoContent(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
@@ -128,8 +122,7 @@ func (h *Handlers) PostLogout(c echo.Context) error {
 func (h *Handlers) GetUsers(c echo.Context) error {
 	users, err := h.Repo.GetUsers()
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	res := make([]*UserForResponse, len(users))
@@ -152,8 +145,7 @@ func (h *Handlers) GetUserByID(c echo.Context) error {
 
 	tagList, err := h.Repo.GetUserTagsByUserID(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	userDetail, err := h.formatUserDetail(user, tagList)
@@ -169,17 +161,21 @@ func (h *Handlers) PatchUserByID(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 
 	var req struct {
-		DisplayName null.String `json:"displayName" validate:"max=64"`
-		TwitterID   null.String `json:"twitterId" validate:"twitterid"`
+		DisplayName null.String `json:"displayName"`
+		TwitterID   null.String `json:"twitterId"`
 		Role        null.String `json:"role"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	if err := h.Repo.UpdateUser(userID, repository.UpdateUserArgs{DisplayName: req.DisplayName, TwitterID: req.TwitterID, Role: req.Role}); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch {
+		case repository.IsArgError(err):
+			return badRequest(err)
+		default:
+			return internalServerError(err, h.requestContextLogger(c))
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -190,15 +186,19 @@ func (h *Handlers) PutUserStatus(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 
 	var req struct {
-		Status int `json:"status" validate:"min=0,max=2"`
+		Status int `json:"status"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	if err := h.Repo.ChangeUserAccountStatus(userID, model.UserAccountStatus(req.Status)); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch {
+		case repository.IsArgError(err):
+			return badRequest(err)
+		default:
+			return internalServerError(err, h.requestContextLogger(c))
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -209,15 +209,19 @@ func (h *Handlers) PutUserPassword(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 
 	var req struct {
-		NewPassword string `json:"newPassword" validate:"password"`
+		NewPassword string `json:"newPassword"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	if err := h.Repo.ChangeUserPassword(userID, req.NewPassword); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		switch {
+		case repository.IsArgError(err):
+			return badRequest(err)
+		default:
+			return internalServerError(err, h.requestContextLogger(c))
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -237,15 +241,13 @@ func (h *Handlers) getUserIcon(c echo.Context, user *model.User) error {
 	// ファイルメタ取得
 	meta, err := h.Repo.GetFileMeta(user.Icon)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	// ファイルオープン
 	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	defer file.Close()
 
@@ -269,7 +271,7 @@ func (h *Handlers) putUserIcon(c echo.Context, userID uuid.UUID) error {
 	// file確認
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	iconID, err := h.processMultipartFormIconUpload(c, uploadedFile)
@@ -279,8 +281,7 @@ func (h *Handlers) putUserIcon(c echo.Context, userID uuid.UUID) error {
 
 	// アイコン変更
 	if err := h.Repo.ChangeUserIcon(userID, iconID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -291,16 +292,20 @@ func (h *Handlers) PatchMe(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	var req struct {
-		DisplayName null.String `json:"displayName" validate:"max=32"`
-		TwitterID   null.String `json:"twitterId"   validate:"twitterid"`
+		DisplayName null.String `json:"displayName"`
+		TwitterID   null.String `json:"twitterId"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	if err := h.Repo.UpdateUser(userID, repository.UpdateUserArgs{DisplayName: req.DisplayName, TwitterID: req.TwitterID}); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch {
+		case repository.IsArgError(err):
+			return badRequest(err)
+		default:
+			return internalServerError(err, h.requestContextLogger(c))
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -310,21 +315,25 @@ func (h *Handlers) PatchMe(c echo.Context) error {
 func (h *Handlers) PutPassword(c echo.Context) error {
 	user := getRequestUser(c)
 
-	req := struct {
-		Old string `json:"password"    validate:"required"`
-		New string `json:"newPassword" validate:"password"`
-	}{}
+	var req struct {
+		Old string `json:"password"`
+		New string `json:"newPassword"`
+	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	if err := model.AuthenticateUser(user, req.Old); err != nil {
-		return c.NoContent(http.StatusUnauthorized)
+		return echo.NewHTTPError(http.StatusUnauthorized, "current password is wrong")
 	}
 
 	if err := h.Repo.ChangeUserPassword(user.ID, req.New); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		switch {
+		case repository.IsArgError(err):
+			return badRequest(err)
+		default:
+			return internalServerError(err, h.requestContextLogger(c))
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -348,14 +357,12 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 	})
 
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	png, err := qrcode.Encode(token, qrcode.Low, 512)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.Blob(http.StatusOK, "image/png", png)
@@ -363,26 +370,24 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 
 // PostUsers POST /users
 func (h *Handlers) PostUsers(c echo.Context) error {
-	req := struct {
+	var req struct {
 		Name     string `json:"name"     validate:"name"`
 		Password string `json:"password" validate:"password"`
-	}{}
+	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	if _, err := h.Repo.GetUserByName(req.Name); err != repository.ErrNotFound {
 		if err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
-		return echo.NewHTTPError(http.StatusBadRequest, "the name's user has already existed")
+		return conflict("the name's user has already existed")
 	}
 
 	user, err := h.Repo.CreateUser(req.Name, req.Password, role.User)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{"id": user.ID})
