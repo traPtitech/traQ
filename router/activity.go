@@ -3,7 +3,6 @@ package router
 import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
-	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -12,26 +11,28 @@ func (h *Handlers) GetActivityLatestMessages(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	req := struct {
-		Limit         int  `query:"limit"  validate:"min=1,max=50"`
+		Limit         int  `query:"limit"`
 		SubscribeOnly bool `query:"subscribe"`
 	}{
 		Limit:         50,
 		SubscribeOnly: true,
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
+	}
+
+	if req.Limit <= 0 || req.Limit > 50 {
+		req.Limit = 50
 	}
 
 	messages, err := h.Repo.GetChannelLatestMessagesByUserID(userID, req.Limit, req.SubscribeOnly)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	reports, err := h.Repo.GetMessageReportsByReporterID(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	hidden := make(map[uuid.UUID]bool)
 	for _, v := range reports {
