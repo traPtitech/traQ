@@ -136,7 +136,7 @@ func (h *Handlers) AuthorizationEndpointHandler(c echo.Context) error {
 
 	req := authorizeRequest{}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 	req.AccessTime = time.Now()
 
@@ -145,19 +145,18 @@ func (h *Handlers) AuthorizationEndpointHandler(c echo.Context) error {
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusBadRequest)
+			return badRequest("unknown client")
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 	if len(client.RedirectURI) == 0 {
-		return echo.NewHTTPError(http.StatusForbidden)
+		return forbidden("invalid client")
 	}
 
 	// リダイレクトURI確認
 	if len(req.RedirectURI) > 0 && client.RedirectURI != req.RedirectURI {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return badRequest("invalid client")
 	}
 	redirectURI, _ := url.ParseRequestURI(client.RedirectURI)
 
@@ -334,28 +333,26 @@ func (h *Handlers) AuthorizationDecideHandler(c echo.Context) error {
 	req := struct {
 		Submit string `form:"submit"`
 	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+	if err := bindAndValidate(c, &req); err != nil {
+		return badRequest(err)
 	}
 
 	// セッション確認
 	se, err := sessions.Get(c.Response(), c.Request(), false)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	if se == nil {
-		return echo.NewHTTPError(http.StatusForbidden)
+		return forbidden("bad session")
 	}
 
 	reqAuth, ok := se.Get(oauth2ContextSession).(authorizeRequest)
 	if !ok {
-		return echo.NewHTTPError(http.StatusForbidden)
+		return forbidden("bad session")
 	}
 	userID := se.GetUserID()
 	if err := se.Delete(oauth2ContextSession); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	// クライアント確認
@@ -363,14 +360,13 @@ func (h *Handlers) AuthorizationDecideHandler(c echo.Context) error {
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusBadRequest)
+			return badRequest("unknown client")
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 	if client.RedirectURI == "" { // RedirectURIが事前登録されていない
-		return echo.NewHTTPError(http.StatusForbidden)
+		return forbidden("invalid client")
 	}
 	redirectURI, _ := url.ParseRequestURI(client.RedirectURI)
 
@@ -771,7 +767,7 @@ func (h *Handlers) RevokeTokenEndpointHandler(c echo.Context) error {
 		Token string `form:"token"`
 	}
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	if len(req.Token) == 0 {
@@ -779,12 +775,10 @@ func (h *Handlers) RevokeTokenEndpointHandler(c echo.Context) error {
 	}
 
 	if err := h.Repo.DeleteTokenByAccess(req.Token); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	if err := h.Repo.DeleteTokenByRefresh(req.Token); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusOK)
