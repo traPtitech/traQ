@@ -155,7 +155,7 @@ func isMySQLDuplicatedRecordErr(err error) bool {
 func (h *Handlers) processMultipartFormIconUpload(c echo.Context, file *multipart.FileHeader) (uuid.UUID, error) {
 	// ファイルサイズ制限
 	if file.Size > iconFileMaxSize {
-		return uuid.Nil, echo.NewHTTPError(http.StatusBadRequest, "too large image file (limit exceeded)")
+		return uuid.Nil, badRequest("too large image file (limit exceeded)")
 	}
 	return h.processMultipartForm(c, file, model.FileTypeIcon, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
 		switch mime {
@@ -164,14 +164,14 @@ func (h *Handlers) processMultipartFormIconUpload(c echo.Context, file *multipar
 		case mimeImageGIF:
 			return h.processGifImage(c, h.ImageMagickPath, src, iconMaxWidth, iconMaxHeight)
 		}
-		return nil, "", echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
+		return nil, "", badRequest("invalid image file")
 	})
 }
 
 func (h *Handlers) processMultipartFormStampUpload(c echo.Context, file *multipart.FileHeader) (uuid.UUID, error) {
 	// ファイルサイズ制限
 	if file.Size > stampFileMaxSize {
-		return uuid.Nil, echo.NewHTTPError(http.StatusBadRequest, "too large image file (limit exceeded)")
+		return uuid.Nil, badRequest("too large image file (limit exceeded)")
 	}
 	return h.processMultipartForm(c, file, model.FileTypeStamp, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
 		switch mime {
@@ -182,7 +182,7 @@ func (h *Handlers) processMultipartFormStampUpload(c echo.Context, file *multipa
 		case mimeImageSVG:
 			return h.processSVGImage(c, src)
 		}
-		return nil, "", echo.NewHTTPError(http.StatusBadRequest, "invalid image file")
+		return nil, "", badRequest("invalid image file")
 	})
 }
 
@@ -190,8 +190,7 @@ func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHead
 	// ファイルタイプ確認・必要があればリサイズ
 	src, err := file.Open()
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError)
+		return uuid.Nil, internalServerError(err, h.requestContextLogger(c))
 	}
 	b, mime, err := process(c, file.Header.Get(echo.HeaderContentType), src)
 	src.Close()
@@ -202,8 +201,7 @@ func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHead
 	// ファイル保存
 	f, err := h.Repo.SaveFile(file.Filename, b, int64(b.Len()), mime, fType, uuid.Nil)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return uuid.Nil, echo.NewHTTPError(http.StatusInternalServerError)
+		return uuid.Nil, internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return f.ID, nil
@@ -212,7 +210,7 @@ func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHead
 func (h *Handlers) processStillImage(c echo.Context, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, string, error) {
 	img, err := imaging.Decode(src, imaging.AutoOrientation(true))
 	if err != nil {
-		return nil, "", echo.NewHTTPError(http.StatusBadRequest, "bad image file")
+		return nil, "", badRequest("bad image file")
 	}
 
 	if size := img.Bounds().Size(); size.X > maxWidth || size.Y > maxHeight {
@@ -234,17 +232,16 @@ func (h *Handlers) processGifImage(c echo.Context, imagemagickPath string, src i
 		switch err {
 		case imagemagick.ErrUnavailable:
 			// gifは一時的にサポートされていない
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "gif file is temporarily unsupported")
+			return nil, "", badRequest("gif file is temporarily unsupported")
 		case imagemagick.ErrUnsupportedType:
 			// 不正なgifである
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "bad image file")
+			return nil, "", badRequest("bad image file")
 		case context.DeadlineExceeded:
 			// リサイズタイムアウト
-			return nil, "", echo.NewHTTPError(http.StatusBadRequest, "bad image file (resize timeout)")
+			return nil, "", badRequest("bad image file (resize timeout)")
 		default:
 			// 予期しないエラー
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return nil, "", echo.NewHTTPError(http.StatusInternalServerError)
+			return nil, "", internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
@@ -256,8 +253,7 @@ func (h *Handlers) processSVGImage(c echo.Context, src io.Reader) (*bytes.Buffer
 	b := &bytes.Buffer{}
 	_, err := io.Copy(b, src)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return nil, "", echo.NewHTTPError(http.StatusInternalServerError)
+		return nil, "", internalServerError(err, h.requestContextLogger(c))
 	}
 	return b, mimeImageSVG, nil
 }
