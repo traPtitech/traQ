@@ -600,3 +600,36 @@ func (h *Handlers) ValidateFileID() echo.MiddlewareFunc {
 func getFileFromContext(c echo.Context) *model.File {
 	return c.Get("paramFile").(*model.File)
 }
+
+// ValidateClientID 'clientID'パラメータのクライアントを検証するミドルウェア
+func (h *Handlers) ValidateClientID(requestUserCheck bool) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			clientID := c.Param("clientID")
+
+			oc, err := h.Repo.GetClient(clientID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return notFound()
+				default:
+					return internalServerError(err, h.requestContextLogger(c))
+				}
+			}
+
+			if requestUserCheck {
+				userID := getRequestUserID(c)
+				if oc.CreatorID != userID {
+					return forbidden()
+				}
+			}
+
+			c.Set("paramClient", oc)
+			return next(c)
+		}
+	}
+}
+
+func getClientFromContext(c echo.Context) *model.OAuth2Client {
+	return c.Get("paramClient").(*model.OAuth2Client)
+}

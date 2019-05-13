@@ -53,6 +53,7 @@ const (
 	paramFolderID    = "folderID"
 	paramTokenID     = "tokenID"
 	paramBotID       = "botID"
+	paramClientID    = "clientID"
 
 	loggerKey  = "logger"
 	traceIDKey = "traceId"

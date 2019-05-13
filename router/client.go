@@ -1,12 +1,12 @@
 package router
 
 import (
+	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
-	"go.uber.org/zap"
 	"net/http"
 	"regexp"
 	"time"
@@ -50,21 +50,14 @@ func (h *Handlers) GetMyTokens(c echo.Context) error {
 
 	ot, err := h.Repo.GetTokensByUser(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	res := make([]AllowedClientInfo, len(ot))
 	for i, v := range ot {
 		oc, err := h.Repo.GetClient(v.ClientID)
 		if err != nil {
-			switch err {
-			case repository.ErrNotFound:
-				continue
-			default:
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-				return echo.NewHTTPError(http.StatusInternalServerError)
-			}
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 		res[i] = AllowedClientInfo{
 			TokenID:     v.ID,
@@ -89,24 +82,17 @@ func (h *Handlers) DeleteMyToken(c echo.Context) error {
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
+			return notFound()
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 	if ot.UserID != userID {
-		return echo.NewHTTPError(http.StatusNotFound)
+		return notFound()
 	}
 
 	if err := h.Repo.DeleteTokenByAccess(ot.AccessToken); err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -118,8 +104,7 @@ func (h *Handlers) GetClients(c echo.Context) error {
 
 	oc, err := h.Repo.GetClientsByUser(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	res := make([]OwnedClientInfo, len(oc))
@@ -149,14 +134,14 @@ func (h *Handlers) PostClients(c echo.Context) error {
 		Scopes      []string `json:"scopes"      validate:"unique,dive,required"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	scopes := model.AccessScopes{}
 	for _, v := range req.Scopes {
 		s := model.AccessScope(v)
 		if !validScope(s) {
-			return echo.NewHTTPError(http.StatusBadRequest)
+			return badRequest(fmt.Sprintf("invalid scope: %s", s))
 		}
 		scopes = append(scopes, s)
 	}
@@ -172,8 +157,7 @@ func (h *Handlers) PostClients(c echo.Context) error {
 		Scopes:       scopes,
 	}
 	if err := h.Repo.SaveClient(client); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, &OwnedClientInfo{
@@ -189,19 +173,7 @@ func (h *Handlers) PostClients(c echo.Context) error {
 
 // GetClient GET /clients/:clientID
 func (h *Handlers) GetClient(c echo.Context) error {
-	clientID := c.Param("clientID")
-
-	oc, err := h.Repo.GetClient(clientID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-
+	oc := getClientFromContext(c)
 	return c.JSON(http.StatusOK, &ClientInfo{
 		ClientID:    oc.ID,
 		Name:        oc.Name,
@@ -212,35 +184,20 @@ func (h *Handlers) GetClient(c echo.Context) error {
 
 // PatchClient PATCH /clients/:clientID
 func (h *Handlers) PatchClient(c echo.Context) error {
-	clientID := c.Param("clientID")
-	userID := getRequestUserID(c)
+	oc := getClientFromContext(c)
 
-	oc, err := h.Repo.GetClient(clientID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-	if oc.CreatorID != userID {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
-
-	req := struct {
+	var req struct {
 		Name        string `json:"name"`
 		Description string `json:"description"`
 		RedirectURI string `json:"redirectUri"`
-	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return badRequest(err)
 	}
 
 	if len(req.Name) > 0 {
 		if len(req.Name) > 32 {
-			return echo.NewHTTPError(http.StatusBadRequest)
+			return badRequest("invalid name")
 		}
 		oc.Name = req.Name
 	}
@@ -251,14 +208,13 @@ func (h *Handlers) PatchClient(c echo.Context) error {
 
 	if len(req.RedirectURI) > 0 {
 		if !uriRegex.MatchString(req.RedirectURI) {
-			return echo.NewHTTPError(http.StatusBadRequest)
+			return badRequest("invalid redirect uri")
 		}
 		oc.RedirectURI = req.RedirectURI
 	}
 
 	if err := h.Repo.UpdateClient(oc); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -266,27 +222,11 @@ func (h *Handlers) PatchClient(c echo.Context) error {
 
 // DeleteClient DELETE /clients/:clientID
 func (h *Handlers) DeleteClient(c echo.Context) error {
-	clientID := c.Param("clientID")
-	userID := getRequestUserID(c)
-
-	oc, err := h.Repo.GetClient(clientID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
-		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
-		}
-	}
-	if oc.CreatorID != userID {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
+	clientID := c.Param(paramClientID)
 
 	// delete client
 	if err := h.Repo.DeleteClient(clientID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
