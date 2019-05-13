@@ -10,13 +10,9 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/utils"
-	"github.com/traPtitech/traQ/utils/validator"
 	"go.uber.org/zap"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
-	"net/url"
-	"strings"
 	"time"
 )
 
@@ -51,8 +47,7 @@ type botDetailResponse struct {
 func (h *Handlers) GetBots(c echo.Context) error {
 	list, err := h.Repo.GetBotsByCreator(getRequestUserID(c))
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	res := make([]*botResponse, len(list))
@@ -75,30 +70,30 @@ func (h *Handlers) GetBots(c echo.Context) error {
 // PostBots POST /bots
 func (h *Handlers) PostBots(c echo.Context) error {
 	var req struct {
-		Name        string `json:"name" validate:"required,name,max=16"`
-		DisplayName string `json:"displayName" validate:"max=32"`
-		Description string `json:"description" validate:"required"`
-		WebhookURL  string `json:"webhookUrl" validate:"required,url"`
+		Name        string `json:"name"`
+		DisplayName string `json:"displayName"`
+		Description string `json:"description"`
+		WebhookURL  string `json:"webhookUrl"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	b, err := h.Repo.CreateBot(req.Name, req.DisplayName, req.Description, getRequestUserID(c), req.WebhookURL)
 	if err != nil {
-		switch err {
-		case repository.ErrAlreadyExists:
-			return echo.NewHTTPError(http.StatusConflict, "this name has already been used.")
+		switch {
+		case repository.IsArgError(err):
+			return badRequest(err)
+		case err == repository.ErrAlreadyExists:
+			return conflict("this name has already been used")
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
 	t, err := h.Repo.GetTokenByID(b.AccessTokenID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusCreated, &botDetailResponse{
@@ -137,37 +132,18 @@ func (h *Handlers) GetBot(c echo.Context) error {
 func (h *Handlers) PatchBot(c echo.Context) error {
 	b := getBotFromContext(c)
 
-	if b.CreatorID != getRequestUserID(c) {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
-
 	var req struct {
-		DisplayName null.String `json:"displayName" validate:"max=32"`
+		DisplayName null.String `json:"displayName"`
 		Description null.String `json:"description"`
 		WebhookURL  null.String `json:"webhookUrl"`
 		Privileged  null.Bool   `json:"privileged"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
-	}
-
-	if req.DisplayName.Valid && len(req.DisplayName.String) == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "displayName is empty")
-	}
-
-	if req.WebhookURL.Valid {
-		w := req.WebhookURL.String
-
-		if err := validator.ValidateVar(w, "required,url"); err != nil || !strings.HasPrefix(w, "http") {
-			return echo.NewHTTPError(http.StatusBadRequest, "invalid webhookUrl")
-		}
-		if u, _ := url.Parse(w); utils.IsPrivateHost(u.Hostname()) {
-			return echo.NewHTTPError(http.StatusBadRequest, "prohibited webhookUrl host")
-		}
+		return badRequest(err)
 	}
 
 	if req.Privileged.Valid && getRequestUser(c).Role != role.Admin.ID() {
-		return echo.NewHTTPError(http.StatusForbidden)
+		return forbidden("you are not permitted to set privileged flag to bots")
 	}
 
 	args := repository.UpdateBotArgs{
@@ -178,8 +154,12 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 	}
 
 	if err := h.Repo.UpdateBot(b.ID, args); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		switch {
+		case repository.IsArgError(err):
+			return badRequest(err)
+		default:
+			return internalServerError(err, h.requestContextLogger(c))
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -189,13 +169,8 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 func (h *Handlers) DeleteBot(c echo.Context) error {
 	b := getBotFromContext(c)
 
-	if b.CreatorID != getRequestUserID(c) {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
-
 	if err := h.Repo.DeleteBot(b.ID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -205,10 +180,6 @@ func (h *Handlers) DeleteBot(c echo.Context) error {
 func (h *Handlers) GetBotDetail(c echo.Context) error {
 	b := getBotFromContext(c)
 
-	if b.CreatorID != getRequestUserID(c) {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
-
 	t, err := h.Repo.GetTokenByID(b.AccessTokenID)
 	if err != nil {
 		switch err {
@@ -216,8 +187,7 @@ func (h *Handlers) GetBotDetail(c echo.Context) error {
 			h.requestContextLogger(c).Error("Bot's Access Token has been revoked unexpectedly", zap.Stringer("botId", b.ID), zap.Stringer("tokenId", b.AccessTokenID))
 			return echo.NewHTTPError(http.StatusInternalServerError, "This bot's Access Token has been revoked unexpectedly. Please inform admin about this error.")
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
@@ -242,28 +212,23 @@ func (h *Handlers) GetBotDetail(c echo.Context) error {
 func (h *Handlers) PutBotEvents(c echo.Context) error {
 	b := getBotFromContext(c)
 
-	if b.CreatorID != getRequestUserID(c) {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
-
 	var req struct {
-		Events []string `json:"events" validate:"dive,required"`
+		Events []string `json:"events"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	events := model.BotEvents{}
 	for _, v := range req.Events {
 		if !bot.IsEvent(v) {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid event: %s", v))
+			return badRequest(fmt.Sprintf("invalid event: %s", v))
 		}
 		events[model.BotEvent(v)] = true
 	}
 
 	if err := h.Repo.SetSubscribeEventsToBot(b.ID, events); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -276,8 +241,7 @@ func (h *Handlers) GetBotIcon(c echo.Context) error {
 	// ユーザー取得
 	user, err := h.Repo.GetUser(b.BotUserID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return h.getUserIcon(c, user)
@@ -286,11 +250,6 @@ func (h *Handlers) GetBotIcon(c echo.Context) error {
 // PutBotIcon PUT /bots/:botID/icon
 func (h *Handlers) PutBotIcon(c echo.Context) error {
 	b := getBotFromContext(c)
-
-	if b.CreatorID != getRequestUserID(c) {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
-
 	return h.putUserIcon(c, b.BotUserID)
 }
 
@@ -298,15 +257,11 @@ func (h *Handlers) PutBotIcon(c echo.Context) error {
 func (h *Handlers) PutBotState(c echo.Context) error {
 	b := getBotFromContext(c)
 
-	if b.CreatorID != getRequestUserID(c) {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
-
 	var req struct {
-		State string `json:"state" validate:"required"`
+		State string `json:"state"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	switch req.State {
@@ -320,12 +275,11 @@ func (h *Handlers) PutBotState(c echo.Context) error {
 		return c.NoContent(http.StatusAccepted)
 	case "inactive":
 		if err := h.Repo.ChangeBotState(b.ID, model.BotInactive); err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 		return c.NoContent(http.StatusNoContent)
 	default:
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return badRequest("invalid state")
 	}
 }
 
@@ -333,20 +287,14 @@ func (h *Handlers) PutBotState(c echo.Context) error {
 func (h *Handlers) PostBotReissueTokens(c echo.Context) error {
 	b := getBotFromContext(c)
 
-	if b.CreatorID != getRequestUserID(c) {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
-
 	b, err := h.Repo.ReissueBotTokens(b.ID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	t, err := h.Repo.GetTokenByID(b.AccessTokenID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{
@@ -360,14 +308,9 @@ func (h *Handlers) PostBotReissueTokens(c echo.Context) error {
 func (h *Handlers) GetBotJoinChannels(c echo.Context) error {
 	b := getBotFromContext(c)
 
-	if b.CreatorID != getRequestUserID(c) {
-		return echo.NewHTTPError(http.StatusForbidden)
-	}
-
 	ids, err := h.Repo.GetParticipatingChannelIDsByBot(b.ID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, ids)
@@ -378,25 +321,20 @@ func (h *Handlers) GetBotEventLogs(c echo.Context) error {
 	b := getBotFromContext(c)
 
 	var req struct {
-		Limit  int `query:"limit"  validate:"min=0,max=50"`
-		Offset int `query:"offset" validate:"min=0"`
+		Limit  int `query:"limit"`
+		Offset int `query:"offset"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
-	if req.Limit == 0 {
+	if req.Limit <= 0 || req.Limit > 50 {
 		req.Limit = 50
-	}
-
-	if b.CreatorID != getRequestUserID(c) {
-		return echo.NewHTTPError(http.StatusForbidden)
 	}
 
 	logs, err := h.Repo.GetBotEventLogs(b.ID, req.Limit, req.Offset)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, logs)
@@ -408,8 +346,7 @@ func (h *Handlers) GetChannelBots(c echo.Context) error {
 
 	bots, err := h.Repo.GetBotsByChannel(channelID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	type response struct {
@@ -435,26 +372,24 @@ func (h *Handlers) PostChannelBots(c echo.Context) error {
 	}
 
 	var req struct {
-		Code string `json:"code" validate:"required"`
+		Code string `json:"code"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	b, err := h.Repo.GetBotByCode(req.Code)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusBadRequest, "bot not found")
+			return badRequest("invalid bot code")
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
 	if err := h.Repo.AddBotToChannel(b.ID, ch.ID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, map[string]uuid.UUID{"botId": b.ID})
@@ -466,8 +401,7 @@ func (h *Handlers) DeleteChannelBot(c echo.Context) error {
 	botID := getRequestParamAsUUID(c, paramBotID)
 
 	if err := h.Repo.RemoveBotFromChannel(botID, channelID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
