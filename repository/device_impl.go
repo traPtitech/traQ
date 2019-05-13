@@ -8,6 +8,13 @@ import (
 
 // RegisterDevice implements DeviceRepository interface.
 func (repo *GormRepository) RegisterDevice(userID uuid.UUID, token string) (*model.Device, error) {
+	if userID == uuid.Nil {
+		return nil, ErrNilID
+	}
+	if len(token) == 0 {
+		return nil, ArgError("Token", "token is empty")
+	}
+
 	var d model.Device
 	err := repo.transact(func(tx *gorm.DB) error {
 		if err := tx.Take(&d, &model.Device{Token: token}).Error; err == nil {
