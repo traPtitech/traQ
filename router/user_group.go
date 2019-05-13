@@ -6,7 +6,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
-	"go.uber.org/zap"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"time"
@@ -27,14 +26,12 @@ type userGroupResponse struct {
 func (h *Handlers) GetUserGroups(c echo.Context) error {
 	gs, err := h.Repo.GetAllUserGroups()
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	res, err := h.formatUserGroups(gs)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, res)
@@ -50,13 +47,13 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 		Type        string `json:"type"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	if req.Type == "grade" {
 		// 学年グループは権限が必要
 		if getRequestUser(c).Role != role.Admin.ID() {
-			return c.NoContent(http.StatusForbidden)
+			return forbidden("you are not permitted to create groups of this type")
 		}
 	}
 
@@ -64,12 +61,11 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 	if err != nil {
 		switch {
 		case err == repository.ErrAlreadyExists:
-			return echo.NewHTTPError(http.StatusConflict, "name conflicts")
+			return conflict("the name's group has already existed")
 		case repository.IsArgError(err):
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return badRequest(err)
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return c.NoContent(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
@@ -83,8 +79,7 @@ func (h *Handlers) GetUserGroup(c echo.Context) error {
 
 	res, err := h.formatUserGroup(g)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, res)
@@ -103,18 +98,18 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 		Type        null.String   `json:"type"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	// 管理者ユーザーかどうか
 	if g.AdminUserID != reqUserID {
-		return c.NoContent(http.StatusForbidden)
+		return forbidden("you are not the group's admin")
 	}
 
 	if req.Type.ValueOrZero() == "grade" {
 		// 学年グループは権限が必要
 		if getRequestUser(c).Role != role.Admin.ID() {
-			return c.NoContent(http.StatusForbidden)
+			return forbidden("you are not permitted to create groups of this type")
 		}
 	}
 
@@ -127,12 +122,11 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 	if err := h.Repo.UpdateUserGroup(groupID, args); err != nil {
 		switch {
 		case err == repository.ErrAlreadyExists:
-			return echo.NewHTTPError(http.StatusConflict, "name conflicts")
+			return conflict("the name's group has already existed")
 		case repository.IsArgError(err):
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return badRequest(err)
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return c.NoContent(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
@@ -147,12 +141,11 @@ func (h *Handlers) DeleteUserGroup(c echo.Context) error {
 
 	// 管理者ユーザーかどうか
 	if g.AdminUserID != userID {
-		return c.NoContent(http.StatusForbidden)
+		return forbidden("you are not the group's admin")
 	}
 
 	if err := h.Repo.DeleteUserGroup(groupID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -164,8 +157,7 @@ func (h *Handlers) GetUserGroupMembers(c echo.Context) error {
 
 	res, err := h.Repo.GetUserGroupMemberIDs(groupID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, res)
@@ -181,26 +173,23 @@ func (h *Handlers) PostUserGroupMembers(c echo.Context) error {
 		UserID uuid.UUID `json:"userId"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	// 管理者ユーザーかどうか
 	if g.AdminUserID != reqUserID {
-		return c.NoContent(http.StatusForbidden)
+		return forbidden("you are not the group's admin")
 	}
 
 	// ユーザーが存在するか
 	if ok, err := h.Repo.UserExists(req.UserID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	} else if !ok {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusBadRequest)
+		return badRequest("this user doesn't exist")
 	}
 
 	if err := h.Repo.AddUserToGroup(req.UserID, groupID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -215,21 +204,11 @@ func (h *Handlers) DeleteUserGroupMembers(c echo.Context) error {
 
 	// 管理者ユーザーかどうか
 	if g.AdminUserID != reqUserID {
-		return c.NoContent(http.StatusForbidden)
-	}
-
-	// ユーザーが存在するか
-	if ok, err := h.Repo.UserExists(userID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
-	} else if !ok {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusBadRequest)
+		return forbidden("you are not the group's admin")
 	}
 
 	if err := h.Repo.RemoveUserFromGroup(userID, groupID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -241,8 +220,7 @@ func (h *Handlers) GetMyBelongingGroup(c echo.Context) error {
 
 	ids, err := h.Repo.GetUserBelongingGroupIDs(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, ids)
@@ -254,8 +232,7 @@ func (h *Handlers) GetUserBelongingGroup(c echo.Context) error {
 
 	ids, err := h.Repo.GetUserBelongingGroupIDs(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, ids)
