@@ -306,6 +306,10 @@ func forbidden(err ...interface{}) error {
 	return httpError(http.StatusForbidden, err)
 }
 
+func conflict(err ...interface{}) error {
+	return httpError(http.StatusConflict, err)
+}
+
 func internalServerError(err error, logger *zap.Logger) error {
 	if logger != nil {
 		logger.Error(unexpectedError, logging.ErrorReport(runtime.Caller(1)), zap.Error(err))

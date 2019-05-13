@@ -5,7 +5,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
-	"go.uber.org/zap"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
 )
@@ -14,8 +13,7 @@ import (
 func (h *Handlers) GetStamps(c echo.Context) error {
 	stamps, err := h.Repo.GetAllStamps()
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	return c.JSON(http.StatusOK, stamps)
 }
@@ -27,7 +25,7 @@ func (h *Handlers) PostStamp(c echo.Context) error {
 	// file確認
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	// file処理
@@ -41,12 +39,11 @@ func (h *Handlers) PostStamp(c echo.Context) error {
 	if err != nil {
 		switch {
 		case repository.IsArgError(err):
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return badRequest(err)
 		case err == repository.ErrAlreadyExists:
-			return echo.NewHTTPError(http.StatusConflict, "this name has already been used")
+			return conflict("this name has already been used")
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 	return c.JSON(http.StatusCreated, s)
@@ -66,7 +63,7 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 
 	// ユーザー確認
 	if stamp.CreatorID != user.ID && !h.RBAC.IsGranted(user.ID, user.Role, permission.EditStampCreatedByOthers) {
-		return echo.NewHTTPError(http.StatusForbidden, "you are not permitted to edit stamp created by others")
+		return forbidden("you are not permitted to edit stamp created by others")
 	}
 
 	args := repository.UpdateStampArgs{}
@@ -76,7 +73,7 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 	if len(name) > 0 {
 		// 権限確認
 		if !h.RBAC.IsGranted(user.ID, user.Role, permission.EditStampName) {
-			return echo.NewHTTPError(http.StatusForbidden, "you are not permitted to change stamp name")
+			return forbidden("you are not permitted to change stamp name")
 		}
 		args.Name = null.StringFrom(name)
 	}
@@ -90,19 +87,18 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 		}
 		args.FileID = uuid.NullUUID{Valid: true, UUID: fileID}
 	} else if err != http.ErrMissingFile {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	// 更新
 	if err := h.Repo.UpdateStamp(stampID, args); err != nil {
 		switch {
 		case repository.IsArgError(err):
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return badRequest(err)
 		case err == repository.ErrAlreadyExists:
-			return echo.NewHTTPError(http.StatusConflict, "this name has already been used")
+			return conflict("this name has already been used")
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -113,8 +109,7 @@ func (h *Handlers) DeleteStamp(c echo.Context) error {
 	stampID := getRequestParamAsUUID(c, paramStampID)
 
 	if err := h.Repo.DeleteStamp(stampID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -126,8 +121,7 @@ func (h *Handlers) GetMessageStamps(c echo.Context) error {
 
 	stamps, err := h.Repo.GetMessageStamps(messageID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, stamps)
@@ -141,8 +135,7 @@ func (h *Handlers) PostMessageStamp(c echo.Context) error {
 
 	// スタンプをメッセージに押す
 	if _, err := h.Repo.AddStampToMessage(messageID, stampID, userID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -156,8 +149,7 @@ func (h *Handlers) DeleteMessageStamp(c echo.Context) error {
 
 	// スタンプをメッセージから削除
 	if err := h.Repo.RemoveStampFromMessage(messageID, stampID, userID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -169,8 +161,7 @@ func (h *Handlers) GetMyStampHistory(c echo.Context) error {
 
 	history, err := h.Repo.GetUserStampHistory(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, history)
