@@ -259,6 +259,9 @@ func (repo *TestRepository) ChangeUserPassword(id uuid.UUID, password string) er
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
+	if !validator.PasswordRegex.MatchString(password) {
+		return repository.ArgError("password", "invalid password characters")
+	}
 	salt := utils.GenerateSalt()
 	hashed := utils.HashPassword(password, salt)
 	repo.UsersLock.Lock()
@@ -291,6 +294,9 @@ func (repo *TestRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
 func (repo *TestRepository) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
+	}
+	if !status.Valid() {
+		return repository.ArgError("status", "invalid status")
 	}
 	repo.UsersLock.Lock()
 	defer repo.UsersLock.Unlock()
@@ -960,8 +966,8 @@ func (repo *TestRepository) CreateChildChannel(name string, parentID, creatorID 
 	}
 
 	// チャンネル名検証
-	if err := validator.ValidateVar(name, "channel,required"); err != nil {
-		return nil, err
+	if !validator.ChannelRegex.MatchString(name) {
+		return nil, repository.ArgError("name", "invalid name")
 	}
 	if has, err := repo.IsChannelPresent(name, pCh.ID); err != nil {
 		return nil, err
