@@ -294,11 +294,15 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	return l
 }
 
-func badRequest(err interface{}) error {
+func notFound(err ...interface{}) error {
+	return httpError(http.StatusNotFound, err)
+}
+
+func badRequest(err ...interface{}) error {
 	return httpError(http.StatusBadRequest, err)
 }
 
-func forbidden(err interface{}) error {
+func forbidden(err ...interface{}) error {
 	return httpError(http.StatusForbidden, err)
 }
 
@@ -311,10 +315,17 @@ func internalServerError(err error, logger *zap.Logger) error {
 
 func httpError(code int, err interface{}) error {
 	switch v := err.(type) {
+	case []interface{}:
+		if len(v) > 0 {
+			return httpError(code, v[0])
+		}
+		return httpError(code, nil)
 	case string:
 		return echo.NewHTTPError(code, v)
 	case *repository.ArgumentError:
 		return echo.NewHTTPError(code, v.Error())
+	case nil:
+		return echo.NewHTTPError(code)
 	default:
 		return echo.NewHTTPError(code, v)
 	}
