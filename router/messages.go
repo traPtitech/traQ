@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
@@ -117,11 +118,23 @@ func (h *Handlers) GetMessagesByChannelID(c echo.Context) error {
 		req.Limit = 200
 	}
 
-	messages, err := h.Repo.GetMessagesByChannelID(channelID, req.Limit, req.Offset)
+	resI, err, _ := h.messagesResponseCacheGroup.Do(fmt.Sprintf("%s/%d/%d", channelID, req.Limit, req.Offset), func() (interface{}, error) {
+		messages, err := h.Repo.GetMessagesByChannelID(channelID, req.Limit, req.Offset)
+		if err != nil {
+			return nil, err
+		}
+
+		res := make([]*MessageForResponse, len(messages))
+		for i, message := range messages {
+			res[i] = h.formatMessage(message)
+		}
+		return res, nil
+	})
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 
+	res := resI.([]*MessageForResponse)
 	reports, err := h.Repo.GetMessageReportsByReporterID(userID)
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
@@ -130,14 +143,8 @@ func (h *Handlers) GetMessagesByChannelID(c echo.Context) error {
 	for _, v := range reports {
 		hidden[v.MessageID] = true
 	}
-
-	res := make([]*MessageForResponse, 0, req.Limit)
-	for _, message := range messages {
-		ms := h.formatMessage(message)
-		if hidden[message.ID] {
-			ms.Reported = true
-		}
-		res = append(res, ms)
+	for _, v := range res {
+		v.Reported = hidden[v.MessageID]
 	}
 
 	return c.JSON(http.StatusOK, res)

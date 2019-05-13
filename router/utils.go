@@ -16,6 +16,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/imagemagick"
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
 	"io"
@@ -96,6 +97,8 @@ type Handlers struct {
 	emojiCSSCache      bytes.Buffer
 	emojiCSSTime       time.Time
 	emojiCSSCacheLock  sync.RWMutex
+
+	messagesResponseCacheGroup singleflight.Group
 }
 
 // HandlerConfig ハンドラ設定
