@@ -12,10 +12,10 @@ func (h *Handlers) PostHeartbeat(c echo.Context) error {
 
 	req := struct {
 		ChannelID uuid.UUID `json:"channelId"`
-		Status    string    `json:"status"    validate:"required"`
+		Status    string    `json:"status"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	h.Repo.UpdateHeartbeatStatus(userID, req.ChannelID, req.Status)
@@ -30,7 +30,7 @@ func (h *Handlers) GetHeartbeat(c echo.Context) error {
 		ChannelID uuid.UUID `query:"channelId"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	status, _ := h.Repo.GetHeartbeatStatus(req.ChannelID)
