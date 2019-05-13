@@ -4,8 +4,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
-	"go.uber.org/zap"
-	"net/http"
 )
 
 type botGuardFunc func(h *Handlers, bot *model.Bot, c echo.Context) (bool, error)
@@ -21,8 +19,7 @@ func (h *Handlers) BotGuard(f botGuardFunc) echo.MiddlewareFunc {
 
 			b, err := h.Repo.GetBotByBotUserID(user.ID)
 			if err != nil {
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-				return echo.NewHTTPError(http.StatusInternalServerError)
+				return internalServerError(err, h.requestContextLogger(c))
 			}
 
 			if b.Privileged {
@@ -31,11 +28,10 @@ func (h *Handlers) BotGuard(f botGuardFunc) echo.MiddlewareFunc {
 
 			ok, err := f(h, b, c)
 			if err != nil {
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-				return echo.NewHTTPError(http.StatusInternalServerError)
+				return internalServerError(err, h.requestContextLogger(c))
 			}
 			if !ok {
-				return echo.NewHTTPError(http.StatusForbidden)
+				return forbidden("your bot is not permitted to access this API")
 			}
 
 			return next(c)
