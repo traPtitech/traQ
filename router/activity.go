@@ -4,10 +4,20 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"net/http"
+	"time"
 )
 
 // GET /activity/latest-messages
 func (h *Handlers) GetActivityLatestMessages(c echo.Context) error {
+	type responseMessage struct {
+		MessageID       uuid.UUID `json:"messageId"`
+		UserID          uuid.UUID `json:"userId"`
+		ParentChannelID uuid.UUID `json:"parentChannelId"`
+		Content         string    `json:"content"`
+		CreatedAt       time.Time `json:"createdAt"`
+		UpdatedAt       time.Time `json:"updatedAt"`
+	}
+
 	userID := getRequestUserID(c)
 
 	req := struct {
@@ -30,22 +40,16 @@ func (h *Handlers) GetActivityLatestMessages(c echo.Context) error {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 
-	reports, err := h.Repo.GetMessageReportsByReporterID(userID)
-	if err != nil {
-		return internalServerError(err, h.requestContextLogger(c))
-	}
-	hidden := make(map[uuid.UUID]bool)
-	for _, v := range reports {
-		hidden[v.MessageID] = true
-	}
-
-	res := make([]*MessageForResponse, 0, len(messages))
-	for _, message := range messages {
-		ms := h.formatMessage(message)
-		if hidden[message.ID] {
-			ms.Reported = true
+	res := make([]responseMessage, len(messages))
+	for i, raw := range messages {
+		res[i] = responseMessage{
+			MessageID:       raw.ID,
+			UserID:          raw.UserID,
+			ParentChannelID: raw.ChannelID,
+			Content:         raw.Text,
+			CreatedAt:       raw.CreatedAt,
+			UpdatedAt:       raw.UpdatedAt,
 		}
-		res = append(res, ms)
 	}
 
 	return c.JSON(http.StatusOK, res)
