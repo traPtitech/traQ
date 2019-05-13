@@ -55,6 +55,7 @@ type UserRepository interface {
 	// ChangeUserPassword 指定したユーザーのパスワードを変更します
 	//
 	// 成功した場合、nilを返します。
+	// 無効なパスワード文字列を指定した場合、ArgumentErrorを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	ChangeUserPassword(id uuid.UUID, password string) error
@@ -68,6 +69,7 @@ type UserRepository interface {
 	//
 	// 成功した場合、nilを返します。
 	// 存在しないユーザーの場合、ErrNotFoundを返します。
+	// 無効なstatusを指定した場合、ArgumentErrorを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error

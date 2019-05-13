@@ -181,18 +181,34 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 
 func TestRepositoryImpl_ChangeUserPassword(t *testing.T) {
 	t.Parallel()
-	repo, assert, require, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common)
 
-	newPass := "aiueo123"
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		assert, require := assertAndRequire(t)
 
-	if assert.NoError(repo.ChangeUserPassword(user.ID, newPass)) {
-		u, err := repo.GetUser(user.ID)
-		require.NoError(err)
+		newPass := "aiueo123456"
+		if assert.NoError(repo.ChangeUserPassword(user.ID, newPass)) {
+			u, err := repo.GetUser(user.ID)
+			require.NoError(err)
 
-		salt, err := hex.DecodeString(u.Salt)
-		require.NoError(err)
-		assert.Equal(u.Password, hex.EncodeToString(utils.HashPassword(newPass, salt)))
-	}
+			salt, err := hex.DecodeString(u.Salt)
+			require.NoError(err)
+			assert.Equal(u.Password, hex.EncodeToString(utils.HashPassword(newPass, salt)))
+		}
+	})
+
+	t.Run("nil id", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.ChangeUserPassword(uuid.Nil, ""), ErrNilID.Error())
+	})
+
+	t.Run("invalid password", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Error(t, repo.ChangeUserPassword(user.ID, "a"))
+	})
 }
 
 func TestRepositoryImpl_ChangeUserIcon(t *testing.T) {

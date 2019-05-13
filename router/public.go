@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/repository"
-	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 	"time"
@@ -21,10 +20,9 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
+			return notFound()
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
@@ -33,24 +31,22 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusNotFound)
+			return notFound()
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
 	// ファイルオープン
 	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	defer file.Close()
 
 	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
 	c.Response().Header().Set(headerETag, strconv.Quote(meta.Hash))
-	c.Response().Header().Set(headerCacheControl, "public, max-age=3600") //1時間キャッシュ
+	c.Response().Header().Set(headerCacheControl, "public, max-age=3600") // 1時間キャッシュ
 	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
 	return nil
 }
@@ -79,8 +75,7 @@ func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 	}
 
 	if err := generateEmojiJSON(h.Repo, &h.emojiJSONCache); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	h.emojiJSONTime = time.Now()
 	setLastModified(c, h.emojiJSONTime)
@@ -128,8 +123,7 @@ func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 	}
 
 	if err := generateEmojiCSS(h.Repo, &h.emojiCSSCache); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	h.emojiCSSTime = time.Now()
 	setLastModified(c, h.emojiCSSTime)
@@ -158,20 +152,18 @@ func (h *Handlers) GetPublicEmojiImage(c echo.Context) error {
 
 	meta, err := h.Repo.GetFileMeta(s.FileID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	defer file.Close()
 
 	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
 	c.Response().Header().Set(headerETag, strconv.Quote(meta.Hash))
-	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") //1年間キャッシュ
+	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") // 1年間キャッシュ
 	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
 	return nil
 }

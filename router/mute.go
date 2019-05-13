@@ -2,7 +2,6 @@ package router
 
 import (
 	"github.com/labstack/echo"
-	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -12,8 +11,7 @@ func (h *Handlers) GetMutedChannelIDs(c echo.Context) error {
 
 	ids, err := h.Repo.GetMutedChannelIDs(uid)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, ids)
@@ -27,12 +25,11 @@ func (h *Handlers) PostMutedChannel(c echo.Context) error {
 
 	// 強制通知チャンネルを確認
 	if ch.IsForced {
-		return c.NoContent(http.StatusForbidden)
+		return forbidden("this channel cannot be muted")
 	}
 
 	if err := h.Repo.MuteChannel(uid, cid); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -44,8 +41,7 @@ func (h *Handlers) DeleteMutedChannel(c echo.Context) error {
 	cid := getRequestParamAsUUID(c, paramChannelID)
 
 	if err := h.Repo.UnmuteChannel(uid, cid); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)

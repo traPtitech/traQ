@@ -3,7 +3,6 @@ package router
 import (
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/sessions"
-	"go.uber.org/zap"
 	"net/http"
 	"time"
 )
@@ -14,8 +13,7 @@ func (h *Handlers) GetMySessions(c echo.Context) error {
 
 	ses, err := sessions.GetByUserID(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	type response struct {
@@ -47,8 +45,7 @@ func (h *Handlers) DeleteAllMySessions(c echo.Context) error {
 
 	err := sessions.DestroyByUserID(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -61,8 +58,7 @@ func (h *Handlers) DeleteMySession(c echo.Context) error {
 
 	err := sessions.DestroyByReferenceID(userID, referenceID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)

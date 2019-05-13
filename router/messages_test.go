@@ -278,6 +278,7 @@ func TestHandlers_PutMessageByID(t *testing.T) {
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/messages/{messageID}", message.ID.String()).
 			WithCookie(sessions.CookieName, generateSession(t, postmanID)).
+			WithJSON(map[string]string{"text": "new message"}).
 			Expect().
 			Status(http.StatusForbidden)
 	})

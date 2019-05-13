@@ -186,7 +186,6 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			apiTagsTid := apiTags.Group("/:tagID")
 			{
 				apiTagsTid.GET("", h.GetUsersByTagID, requires(permission.GetTag))
-				apiTagsTid.PATCH("", h.PatchTag, requires(permission.EditTag))
 			}
 		}
 		apiFiles := api.Group("/files")
@@ -257,28 +256,28 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			apiClients.POST("", h.PostClients, requires(permission.CreateClient))
 			apiClientCid := apiClients.Group("/:clientID")
 			{
-				apiClientCid.GET("", h.GetClient, requires(permission.GetClients))
-				apiClientCid.PATCH("", h.PatchClient, requires(permission.EditMyClient))
-				apiClientCid.DELETE("", h.DeleteClient, requires(permission.DeleteMyClient))
+				apiClientCid.GET("", h.GetClient, requires(permission.GetClients), h.ValidateClientID(false))
+				apiClientCid.PATCH("", h.PatchClient, requires(permission.EditMyClient), h.ValidateClientID(true))
+				apiClientCid.DELETE("", h.DeleteClient, requires(permission.DeleteMyClient), h.ValidateClientID(true))
 			}
 		}
 		apiBots := api.Group("/bots", botGuard(blockAlways))
 		{
 			apiBots.GET("", h.GetBots, requires(permission.GetBot))
 			apiBots.POST("", h.PostBots, requires(permission.CreateBot))
-			apiBotsBid := apiBots.Group("/:botID", h.ValidateBotID(false))
+			apiBotsBid := apiBots.Group("/:botID")
 			{
-				apiBotsBid.GET("", h.GetBot, requires(permission.GetBot))
-				apiBotsBid.PATCH("", h.PatchBot, requires(permission.EditBot))
-				apiBotsBid.DELETE("", h.DeleteBot, requires(permission.DeleteBot))
-				apiBotsBid.GET("/detail", h.GetBotDetail, requires(permission.GetBot))
-				apiBotsBid.PUT("/events", h.PutBotEvents, requires(permission.EditBot))
-				apiBotsBid.GET(`/events/logs`, h.GetBotEventLogs, requires(permission.GetBot))
-				apiBotsBid.GET("/icon", h.GetBotIcon, requires(permission.GetBot))
-				apiBotsBid.PUT("/icon", h.PutBotIcon, requires(permission.EditBot))
-				apiBotsBid.PUT("/state", h.PutBotState, requires(permission.EditBot))
-				apiBotsBid.POST("/reissue", h.PostBotReissueTokens, requires(permission.EditBot))
-				apiBotsBid.GET("/channels", h.GetBotJoinChannels, requires(permission.GetBot))
+				apiBotsBid.GET("", h.GetBot, requires(permission.GetBot), h.ValidateBotID(false))
+				apiBotsBid.PATCH("", h.PatchBot, requires(permission.EditBot), h.ValidateBotID(true))
+				apiBotsBid.DELETE("", h.DeleteBot, requires(permission.DeleteBot), h.ValidateBotID(true))
+				apiBotsBid.GET("/detail", h.GetBotDetail, requires(permission.GetBot), h.ValidateBotID(true))
+				apiBotsBid.PUT("/events", h.PutBotEvents, requires(permission.EditBot), h.ValidateBotID(true))
+				apiBotsBid.GET(`/events/logs`, h.GetBotEventLogs, requires(permission.GetBot), h.ValidateBotID(true))
+				apiBotsBid.GET("/icon", h.GetBotIcon, requires(permission.GetBot), h.ValidateBotID(false))
+				apiBotsBid.PUT("/icon", h.PutBotIcon, requires(permission.EditBot), h.ValidateBotID(true))
+				apiBotsBid.PUT("/state", h.PutBotState, requires(permission.EditBot), h.ValidateBotID(true))
+				apiBotsBid.POST("/reissue", h.PostBotReissueTokens, requires(permission.EditBot), h.ValidateBotID(true))
+				apiBotsBid.GET("/channels", h.GetBotJoinChannels, requires(permission.GetBot), h.ValidateBotID(true))
 			}
 		}
 		apiActivity := api.Group("/activity", botGuard(blockAlways))

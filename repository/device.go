@@ -10,6 +10,8 @@ type DeviceRepository interface {
 	// RegisterDevice FCMデバイスを登録します
 	//
 	// 成功した、或いは既に登録されていた場合に*model.Deviceとnilを返します。
+	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
+	// tokenが空文字列の場合、ArgumentErrorを返します。
 	// 登録しようとしたトークンが既に他のユーザーと関連づけられていた場合はArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
 	RegisterDevice(userID uuid.UUID, token string) (*model.Device, error)

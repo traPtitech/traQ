@@ -62,12 +62,11 @@ var list = map[string]gorbac.Permission{
 	MuteChannel.ID():      MuteChannel,
 	UnmuteChannel.ID():    UnmuteChannel,
 
-	GetTag.ID():                  GetTag,
-	AddTag.ID():                  AddTag,
-	RemoveTag.ID():               RemoveTag,
-	ChangeTagLockState.ID():      ChangeTagLockState,
-	OperateForRestrictedTag.ID(): OperateForRestrictedTag,
-	EditTag.ID():                 EditTag,
+	GetTag.ID():             GetTag,
+	AddTag.ID():             AddTag,
+	RemoveTag.ID():          RemoveTag,
+	ChangeTagLockState.ID(): ChangeTagLockState,
+	EditTag.ID():            EditTag,
 
 	GetStamp.ID():                 GetStamp,
 	CreateStamp.ID():              CreateStamp,

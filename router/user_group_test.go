@@ -405,13 +405,13 @@ func TestHandlers_DeleteUserGroupMembers(t *testing.T) {
 			Status(http.StatusNotFound)
 	})
 
-	t.Run("bad request", func(t *testing.T) {
+	t.Run("unknown user", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", g.ID.String(), uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
 			Expect().
-			Status(http.StatusBadRequest)
+			Status(http.StatusNoContent)
 	})
 
 	t.Run("forbidden", func(t *testing.T) {

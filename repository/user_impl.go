@@ -260,6 +260,9 @@ func (repo *GormRepository) ChangeUserPassword(id uuid.UUID, password string) er
 	if id == uuid.Nil {
 		return ErrNilID
 	}
+	if !validator.PasswordRegex.MatchString(password) {
+		return ArgError("password", "invalid password characters")
+	}
 	salt := utils.GenerateSalt()
 	return repo.db.Model(&model.User{ID: id}).Updates(map[string]interface{}{
 		"salt":     hex.EncodeToString(salt),
@@ -292,6 +295,9 @@ func (repo *GormRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
 func (repo *GormRepository) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
 	if id == uuid.Nil {
 		return ErrNilID
+	}
+	if !status.Valid() {
+		return ArgError("status", "invalid status")
 	}
 	result := repo.db.Model(&model.User{ID: id}).Update("status", status)
 	if err := result.Error; err != nil {

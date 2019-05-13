@@ -3,7 +3,6 @@ package router
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/repository"
-	"go.uber.org/zap"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -15,13 +14,12 @@ func (h *Handlers) GetNotificationStatus(c echo.Context) error {
 
 	// プライベートチャンネルの通知は取得できない。
 	if !ch.IsPublic {
-		return c.NoContent(http.StatusForbidden)
+		return forbidden("private channel's notification is not configurable")
 	}
 
 	users, err := h.Repo.GetSubscribingUserIDs(ch.ID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	return c.JSON(http.StatusOK, users)
 }
@@ -32,7 +30,7 @@ func (h *Handlers) PutNotificationStatus(c echo.Context) error {
 
 	// プライベートチャンネルの通知は変更できない。
 	if !ch.IsPublic {
-		return c.NoContent(http.StatusForbidden)
+		return forbidden("private channel's notification is not configurable")
 	}
 
 	var req struct {
@@ -40,25 +38,22 @@ func (h *Handlers) PutNotificationStatus(c echo.Context) error {
 		Off []uuid.UUID `json:"off"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	for _, id := range req.On {
 		if ok, err := h.Repo.UserExists(id); err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return c.NoContent(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		} else if ok {
 			if err := h.Repo.SubscribeChannel(id, ch.ID); err != nil {
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-				return c.NoContent(http.StatusInternalServerError)
+				return internalServerError(err, h.requestContextLogger(c))
 			}
 		}
 	}
 	for _, id := range req.Off {
 		err := h.Repo.UnsubscribeChannel(id, ch.ID)
 		if err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return c.NoContent(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
@@ -70,19 +65,18 @@ func (h *Handlers) PostDeviceToken(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	var req struct {
-		Token string `json:"token" validate:"required"`
+		Token string `json:"token"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	if _, err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
 		switch {
 		case repository.IsArgError(err):
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return badRequest(err)
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return c.NoContent(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
@@ -95,8 +89,7 @@ func (h *Handlers) GetNotificationChannels(c echo.Context) error {
 
 	channelIDs, err := h.Repo.GetSubscribedChannelIDs(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, channelIDs)
@@ -108,8 +101,7 @@ func (h *Handlers) GetMyNotificationChannels(c echo.Context) error {
 
 	channelIDs, err := h.Repo.GetSubscribedChannelIDs(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, channelIDs)

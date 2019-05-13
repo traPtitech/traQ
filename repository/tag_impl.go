@@ -25,24 +25,6 @@ func (repo *GormRepository) CreateTag(name string, restricted bool, tagType stri
 	return t, repo.db.Create(t).Error
 }
 
-// ChangeTagType implements TagRepository interface.
-func (repo *GormRepository) ChangeTagType(id uuid.UUID, tagType string) error {
-	if id == uuid.Nil {
-		return ErrNilID
-	}
-	// TODO タグの存在確認
-	return repo.db.Model(&model.Tag{ID: id}).Update("type", tagType).Error
-}
-
-// ChangeTagRestrict implements TagRepository interface.
-func (repo *GormRepository) ChangeTagRestrict(id uuid.UUID, restrict bool) error {
-	if id == uuid.Nil {
-		return ErrNilID
-	}
-	// TODO タグの存在確認
-	return repo.db.Model(&model.Tag{ID: id}).Update("restricted", restrict).Error
-}
-
 // GetTagByID implements TagRepository interface.
 func (repo *GormRepository) GetTagByID(id uuid.UUID) (*model.Tag, error) {
 	if id == uuid.Nil {
@@ -71,6 +53,9 @@ func (repo *GormRepository) GetTagByName(name string) (*model.Tag, error) {
 func (repo *GormRepository) GetOrCreateTagByName(name string) (*model.Tag, error) {
 	if len(name) == 0 {
 		return nil, ErrNotFound
+	}
+	if utf8.RuneCountInString(name) > 30 {
+		return nil, ArgError("name", "tag must be non-empty and shorter than 31 characters")
 	}
 	tag := &model.Tag{}
 	err := repo.db.
