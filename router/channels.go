@@ -3,7 +3,6 @@ package router
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/repository"
-	"go.uber.org/zap"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -26,7 +25,7 @@ type ChannelForResponse struct {
 
 // PostChannel リクエストボディ用構造体
 type PostChannel struct {
-	Name    string      `json:"name"    validate:"channel,required"`
+	Name    string      `json:"name"`
 	Parent  uuid.UUID   `json:"parent"`
 	Private bool        `json:"private"`
 	Members []uuid.UUID `json:"member"`
@@ -38,8 +37,7 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 
 	channelList, err := h.Repo.GetChannelsByUserID(userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	chMap := make(map[string]*ChannelForResponse, len(channelList))
@@ -62,8 +60,7 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 			// プライベートチャンネルのメンバー取得
 			member, err := h.Repo.GetPrivateChannelMemberIDs(ch.ID)
 			if err != nil {
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-				return echo.NewHTTPError(http.StatusInternalServerError)
+				return internalServerError(err, h.requestContextLogger(c))
 			}
 			entry.Member = member
 		}
@@ -101,15 +98,15 @@ func (h *Handlers) PostChannels(c echo.Context) error {
 
 	req := PostChannel{}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	// 親チャンネルがユーザーから見えないと作成できない
 	if req.Parent != uuid.Nil {
 		if ok, err := h.Repo.IsChannelAccessibleToUser(userID, req.Parent); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		} else if !ok {
-			return echo.NewHTTPError(http.StatusBadRequest, "this parent channel is not found")
+			return badRequest("the parent channel doesn't exist")
 		}
 	}
 
@@ -122,40 +119,41 @@ func (h *Handlers) PostChannels(c echo.Context) error {
 		// 非公開チャンネル
 		ch, err = h.Repo.CreatePrivateChannel(req.Name, userID, req.Members)
 		if err != nil {
-			switch err {
-			case repository.ErrAlreadyExists:
-				return echo.NewHTTPError(http.StatusConflict, err)
-			case repository.ErrForbidden:
-				return echo.NewHTTPError(http.StatusForbidden)
-			case repository.ErrChannelDepthLimitation:
-				return echo.NewHTTPError(http.StatusBadRequest, err)
+			switch {
+			case repository.IsArgError(err):
+				return badRequest(err)
+			case err == repository.ErrAlreadyExists:
+				return conflict("channel name conflicts")
+			case err == repository.ErrChannelDepthLimitation:
+				return badRequest("channel depth limit exceeded")
+			case err == repository.ErrForbidden:
+				return forbidden("invalid parent channel")
 			default:
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-				return echo.NewHTTPError(http.StatusInternalServerError)
+				return internalServerError(err, h.requestContextLogger(c))
 			}
 		}
 	} else {
 		// 公開チャンネル
 		ch, err = h.Repo.CreatePublicChannel(req.Name, req.Parent, userID)
 		if err != nil {
-			switch err {
-			case repository.ErrAlreadyExists:
-				return echo.NewHTTPError(http.StatusConflict, err)
-			case repository.ErrForbidden:
-				return echo.NewHTTPError(http.StatusForbidden)
-			case repository.ErrChannelDepthLimitation:
-				return echo.NewHTTPError(http.StatusBadRequest, err)
+			switch {
+			case repository.IsArgError(err):
+				return badRequest(err)
+			case err == repository.ErrAlreadyExists:
+				return conflict("channel name conflicts")
+			case err == repository.ErrChannelDepthLimitation:
+				return badRequest("channel depth limit exceeded")
+			case err == repository.ErrForbidden:
+				return forbidden("invalid parent channel")
 			default:
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-				return echo.NewHTTPError(http.StatusInternalServerError)
+				return internalServerError(err, h.requestContextLogger(c))
 			}
 		}
 	}
 
 	formatted, err := h.formatChannel(ch)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	return c.JSON(http.StatusCreated, formatted)
 }
@@ -166,8 +164,7 @@ func (h *Handlers) GetChannelByChannelID(c echo.Context) error {
 
 	formatted, err := h.formatChannel(ch)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	return c.JSON(http.StatusOK, formatted)
 }
@@ -176,33 +173,33 @@ func (h *Handlers) GetChannelByChannelID(c echo.Context) error {
 func (h *Handlers) PatchChannelByChannelID(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	req := struct {
+	var req struct {
 		Name       *string `json:"name"`
 		Visibility *bool   `json:"visibility"`
 		Force      *bool   `json:"force"`
-	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return badRequest(err)
 	}
 
 	if req.Name != nil && len(*req.Name) > 0 {
 		if err := h.Repo.ChangeChannelName(channelID, *req.Name); err != nil {
-			switch err {
-			case repository.ErrAlreadyExists:
-				return echo.NewHTTPError(http.StatusConflict, err)
-			case repository.ErrForbidden:
-				return echo.NewHTTPError(http.StatusForbidden)
+			switch {
+			case repository.IsArgError(err):
+				return badRequest(err)
+			case err == repository.ErrAlreadyExists:
+				return conflict("channel name conflicts")
+			case err == repository.ErrForbidden:
+				return forbidden("the channel's name cannot be changed")
 			default:
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-				return echo.NewHTTPError(http.StatusInternalServerError)
+				return internalServerError(err, h.requestContextLogger(c))
 			}
 		}
 	}
 
 	if req.Force != nil || req.Visibility != nil {
 		if err := h.Repo.UpdateChannelAttributes(channelID, req.Visibility, req.Force); err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -214,32 +211,32 @@ func (h *Handlers) PostChannelChildren(c echo.Context) error {
 	parentCh := getChannelFromContext(c)
 
 	var req struct {
-		Name string `json:"name" validate:"channel,required"`
+		Name string `json:"name"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	// 子チャンネル作成
 	ch, err := h.Repo.CreateChildChannel(req.Name, parentCh.ID, userID)
 	if err != nil {
-		switch err {
-		case repository.ErrAlreadyExists:
-			return echo.NewHTTPError(http.StatusConflict, err)
-		case repository.ErrForbidden:
-			return echo.NewHTTPError(http.StatusForbidden)
-		case repository.ErrChannelDepthLimitation:
-			return echo.NewHTTPError(http.StatusBadRequest, err)
+		switch {
+		case repository.IsArgError(err):
+			return badRequest(err)
+		case err == repository.ErrAlreadyExists:
+			return conflict("channel name conflicts")
+		case err == repository.ErrChannelDepthLimitation:
+			return badRequest("channel depth limit exceeded")
+		case err == repository.ErrForbidden:
+			return forbidden("invalid parent channel")
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
 	formatted, err := h.formatChannel(ch)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	return c.JSON(http.StatusCreated, formatted)
 }
@@ -248,24 +245,23 @@ func (h *Handlers) PostChannelChildren(c echo.Context) error {
 func (h *Handlers) PutChannelParent(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	req := struct {
+	var req struct {
 		Parent uuid.UUID `json:"parent"`
-	}{}
+	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	if err := h.Repo.ChangeChannelParent(channelID, req.Parent); err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
-			return echo.NewHTTPError(http.StatusConflict, err)
+			return conflict("channel name conflicts")
 		case repository.ErrChannelDepthLimitation:
-			return echo.NewHTTPError(http.StatusBadRequest, err)
+			return badRequest("channel depth limit exceeded")
 		case repository.ErrForbidden:
-			return echo.NewHTTPError(http.StatusForbidden)
+			return forbidden("invalid parent channel")
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
@@ -277,8 +273,7 @@ func (h *Handlers) DeleteChannelByChannelID(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
 	if err := h.Repo.DeleteChannel(channelID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -297,16 +292,15 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	req := struct {
+	var req struct {
 		Text string `json:"text"`
-	}{}
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return badRequest(err)
 	}
 
 	if err := h.Repo.UpdateChannelTopic(channelID, req.Text, userID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
