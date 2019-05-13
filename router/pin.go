@@ -3,7 +3,6 @@ package router
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/repository"
-	"go.uber.org/zap"
 	"net/http"
 	"time"
 
@@ -25,8 +24,7 @@ func (h *Handlers) GetChannelPin(c echo.Context) error {
 
 	res, err := h.getChannelPinResponse(channelID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusOK, res)
@@ -40,32 +38,29 @@ func (h *Handlers) PostPin(c echo.Context) error {
 		MessageID uuid.UUID `json:"messageId"`
 	}{}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	m, err := h.Repo.GetMessageByID(req.MessageID)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
-			return echo.NewHTTPError(http.StatusBadRequest, "the message doesn't exist")
+			return badRequest("the message doesn't exist")
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
 	// ユーザーからアクセス可能なチャンネルかどうか
 	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	} else if !ok {
-		return echo.NewHTTPError(http.StatusBadRequest, "the message doesn't exist")
+		return badRequest("the message doesn't exist")
 	}
 
 	pinID, err := h.Repo.CreatePin(m.ID, userID)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.JSON(http.StatusCreated, map[string]string{"id": pinID.String()})
@@ -82,8 +77,7 @@ func (h *Handlers) DeletePin(c echo.Context) error {
 	pinID := getRequestParamAsUUID(c, paramPinID)
 
 	if err := h.Repo.DeletePin(pinID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
