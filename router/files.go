@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/repository"
-	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,23 +18,18 @@ func (h *Handlers) PostFile(c echo.Context) error {
 
 	uploadedFile, err := c.FormFile("file")
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	// アクセスコントロールリスト作成
 	aclRead := repository.ACL{}
 	if s := c.FormValue("acl_readable"); len(s) != 0 && s != "all" {
 		for _, v := range strings.Split(s, ",") {
-			uid, err := uuid.FromString(v)
-			if err != nil || uid == uuid.Nil {
-				return echo.NewHTTPError(http.StatusBadRequest, err)
-			}
-
+			uid, _ := uuid.FromString(v)
 			if ok, err := h.Repo.UserExists(uid); err != nil {
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-				return c.NoContent(http.StatusInternalServerError)
+				return internalServerError(err, h.requestContextLogger(c))
 			} else if !ok {
-				return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("unknown acl user id: %s", uid))
+				return badRequest(fmt.Sprintf("unknown acl user id: %s", uid))
 			}
 			aclRead[uid] = true
 		}
@@ -45,15 +39,13 @@ func (h *Handlers) PostFile(c echo.Context) error {
 
 	src, err := uploadedFile.Open()
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	defer src.Close()
 
 	file, err := h.Repo.SaveFileWithACL(uploadedFile.Filename, src, uploadedFile.Size, uploadedFile.Header.Get(echo.HeaderContentType), model.FileTypeUserFile, userID, aclRead)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	return c.JSON(http.StatusCreated, file)
 }
@@ -77,14 +69,13 @@ func (h *Handlers) GetFileByID(c echo.Context) error {
 
 	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	defer file.Close()
 
 	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
 	c.Response().Header().Set(headerETag, strconv.Quote(meta.Hash))
-	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") //1年間キャッシュ
+	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") // 1年間キャッシュ
 	if dl == "1" {
 		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", meta.Name))
 	}
@@ -98,8 +89,7 @@ func (h *Handlers) DeleteFileByID(c echo.Context) error {
 	fileID := getRequestParamAsUUID(c, paramFileID)
 
 	if err := h.Repo.DeleteFile(fileID); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -116,7 +106,7 @@ func (h *Handlers) GetThumbnailByID(c echo.Context) error {
 	meta := getFileFromContext(c)
 
 	if !meta.HasThumbnail {
-		return echo.NewHTTPError(http.StatusNotFound, "file is found, but thumbnail is not found")
+		return notFound("file is found, but thumbnail is not found")
 	}
 
 	c.Response().Header().Set(headerFileMetaType, meta.Type)
@@ -130,11 +120,10 @@ func (h *Handlers) GetThumbnailByID(c echo.Context) error {
 
 	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetThumbKey())
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return c.NoContent(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	defer file.Close()
 
-	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") //1年間キャッシュ
+	c.Response().Header().Set(headerCacheControl, "private, max-age=31536000") // 1年間キャッシュ
 	return c.Stream(http.StatusOK, mimeImagePNG, file)
 }
