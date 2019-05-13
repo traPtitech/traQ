@@ -13,18 +13,6 @@ type TagRepository interface {
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
 	CreateTag(name string, restricted bool, tagType string) (*model.Tag, error)
-	// ChangeTagType 指定したタグの種類を変更します
-	//
-	// 成功した場合、nilを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// DBによるエラーを返すことがあります。
-	ChangeTagType(id uuid.UUID, tagType string) error
-	// ChangeTagRestrict 指定したタグの制限属性を変更します
-	//
-	// 成功した場合、nilを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// DBによるエラーを返すことがあります。
-	ChangeTagRestrict(id uuid.UUID, restrict bool) error
 	// GetTagByID 指定したIDのタグを取得します
 	//
 	// 成功した場合、タグとnilを返します。
@@ -40,6 +28,7 @@ type TagRepository interface {
 	// GetOrCreateTagByName 指定したタグを取得するか、生成したものを返します
 	//
 	// 成功した場合、タグとnilを返します。
+	// 引数に問題がある場合、ArgumentErrorを返します。
 	// 空文字を指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetOrCreateTagByName(name string) (*model.Tag, error)

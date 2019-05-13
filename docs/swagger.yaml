@@ -1544,33 +1544,6 @@ paths:
                     $ref: "#/components/schemas/UUIDs"
         "404":
           description: 正常に取得できませんでした。指定されたタグIDは存在しません
-    patch:
-      tags:
-        - userTag
-      description: 指定されたタグの情報を変更します。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                type:
-                  type: string
-                  description: タグの種類(30文字以内)
-                restrict:
-                  type: boolean
-                  description: 操作制限付きタグにするか
-                name:
-                  type: string
-                  description: タグ名(30文字以内)
-      responses:
-        "204":
-          description: 正常に変更できました。
-        "400":
-          description: 正常に変更できませんでした。リクエストが不正です。
-        "403":
-          description: 正常に変更できませんでした。権限がありません。
-        "404":
-          description: 正常に変更できませんでした。指定されたタグは存在しません。
 
   /stamps:
     get:

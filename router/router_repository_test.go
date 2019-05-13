@@ -601,47 +601,6 @@ func (repo *TestRepository) CreateTag(name string, restricted bool, tagType stri
 	return &t, nil
 }
 
-func (repo *TestRepository) ChangeTagType(id uuid.UUID, tagType string) error {
-	if id == uuid.Nil {
-		return repository.ErrNilID
-	}
-	repo.TagsLock.Lock()
-	t, ok := repo.Tags[id]
-	if ok {
-		t.Type = tagType
-		t.UpdatedAt = time.Now()
-		repo.Tags[id] = t
-	}
-	repo.TagsLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) ChangeTagRestrict(id uuid.UUID, restrict bool) error {
-	if id == uuid.Nil {
-		return repository.ErrNilID
-	}
-	repo.TagsLock.Lock()
-	t, ok := repo.Tags[id]
-	if ok {
-		t.Restricted = restrict
-		t.UpdatedAt = time.Now()
-		repo.Tags[id] = t
-	}
-	repo.TagsLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) GetAllTags() ([]*model.Tag, error) {
-	result := make([]*model.Tag, 0)
-	repo.TagsLock.RLock()
-	for _, v := range repo.Tags {
-		v := v
-		result = append(result, &v)
-	}
-	repo.TagsLock.RUnlock()
-	return result, nil
-}
-
 func (repo *TestRepository) GetTagByID(id uuid.UUID) (*model.Tag, error) {
 	repo.TagsLock.RLock()
 	t, ok := repo.Tags[id]
@@ -666,6 +625,9 @@ func (repo *TestRepository) GetTagByName(name string) (*model.Tag, error) {
 func (repo *TestRepository) GetOrCreateTagByName(name string) (*model.Tag, error) {
 	if len(name) == 0 {
 		return nil, repository.ErrNotFound
+	}
+	if utf8.RuneCountInString(name) > 30 {
+		return nil, repository.ArgError("name", "tag must be non-empty and shorter than 31 characters")
 	}
 	repo.TagsLock.Lock()
 	defer repo.TagsLock.Unlock()

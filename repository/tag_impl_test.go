@@ -224,41 +224,6 @@ func TestRepositoryImpl_CreateTag(t *testing.T) {
 	}
 }
 
-func TestRepositoryImpl_ChangeTagType(t *testing.T) {
-	t.Parallel()
-	repo, assert, require := setup(t, common)
-
-	tag := mustMakeTag(t, repo, random)
-
-	err := repo.ChangeTagType(tag.ID, "newType")
-	if assert.NoError(err) {
-		t, err := repo.GetTagByID(tag.ID)
-		require.NoError(err)
-		assert.Equal("newType", t.Type)
-	}
-}
-
-func TestRepositoryImpl_ChangeTagRestrict(t *testing.T) {
-	t.Parallel()
-	repo, assert, require := setup(t, common)
-
-	tag := mustMakeTag(t, repo, random)
-
-	err := repo.ChangeTagRestrict(tag.ID, true)
-	if assert.NoError(err) {
-		t, err := repo.GetTagByID(tag.ID)
-		require.NoError(err)
-		assert.True(t.Restricted)
-	}
-
-	err = repo.ChangeTagRestrict(tag.ID, false)
-	if assert.NoError(err) {
-		t, err := repo.GetTagByID(tag.ID)
-		require.NoError(err)
-		assert.False(t.Restricted)
-	}
-}
-
 func TestRepositoryImpl_GetTagByID(t *testing.T) {
 	t.Parallel()
 	repo, assert, _ := setup(t, common)
