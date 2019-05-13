@@ -11,7 +11,6 @@ import (
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
-	"go.uber.org/zap"
 	"gopkg.in/go-playground/webhooks.v5/github"
 	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
@@ -58,8 +57,7 @@ func (h *Handlers) GetWebhooks(c echo.Context) error {
 		list, err = h.Repo.GetWebhooksByCreator(user.ID)
 	}
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	res := make([]*webhookForResponse, len(list))
@@ -74,24 +72,23 @@ func (h *Handlers) GetWebhooks(c echo.Context) error {
 func (h *Handlers) PostWebhooks(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	req := struct {
+	var req struct {
 		Name        string    `json:"name"`
 		Description string    `json:"description"`
 		ChannelID   uuid.UUID `json:"channelId"`
 		Secret      string    `json:"secret"`
-	}{}
+	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	w, err := h.Repo.CreateWebhook(req.Name, req.Description, req.ChannelID, userID, req.Secret)
 	if err != nil {
 		switch {
 		case repository.IsArgError(err):
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return badRequest(err)
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
@@ -108,14 +105,14 @@ func (h *Handlers) GetWebhook(c echo.Context) error {
 func (h *Handlers) PatchWebhook(c echo.Context) error {
 	w := getWebhookFromContext(c)
 
-	req := struct {
+	var req struct {
 		Name        null.String   `json:"name"`
 		Description null.String   `json:"description"`
 		ChannelID   uuid.NullUUID `json:"channelId"`
 		Secret      null.String   `json:"secret"`
-	}{}
+	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+		return badRequest(err)
 	}
 
 	args := repository.UpdateWebhookArgs{
@@ -127,10 +124,9 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 	if err := h.Repo.UpdateWebhook(w.GetID(), args); err != nil {
 		switch {
 		case repository.IsArgError(err):
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return badRequest(err)
 		default:
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 	return c.NoContent(http.StatusNoContent)
@@ -141,8 +137,7 @@ func (h *Handlers) DeleteWebhook(c echo.Context) error {
 	w := getWebhookFromContext(c)
 
 	if err := h.Repo.DeleteWebhook(w.GetID()); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -162,17 +157,16 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 	if len(body) == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return badRequest("empty body")
 	}
 
 	if len(w.GetSecret()) > 0 {
 		sig, _ := hex.DecodeString(c.Request().Header.Get(headerSignature))
 		if len(sig) == 0 {
-			return echo.NewHTTPError(http.StatusBadRequest, "missing X-TRAQ-Signature header")
+			return badRequest("missing X-TRAQ-Signature header")
 		}
 		if subtle.ConstantTimeCompare(utils.CalcHMACSHA1(body, w.GetSecret()), sig) != 1 {
 			return echo.NewHTTPError(http.StatusUnauthorized)
@@ -181,28 +175,23 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 
 	if cid := c.Request().Header.Get(headerChannelID); len(cid) > 0 {
 		id := uuid.FromStringOrNil(cid)
-		if id == uuid.Nil {
-			return echo.NewHTTPError(http.StatusBadRequest)
-		}
 		ch, err := h.Repo.GetChannel(id)
 		if err != nil {
 			switch err {
 			case repository.ErrNotFound:
-				return echo.NewHTTPError(http.StatusBadRequest)
+				return badRequest(fmt.Sprintf("invalid %s header", headerChannelID))
 			default:
-				h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-				return echo.NewHTTPError(http.StatusInternalServerError)
+				return internalServerError(err, h.requestContextLogger(c))
 			}
 		}
 		if !ch.IsPublic {
-			return echo.NewHTTPError(http.StatusBadRequest)
+			return badRequest("invalid channel")
 		}
 		channelID = id
 	}
 
 	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), channelID, string(body)); err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -215,8 +204,7 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 	// ユーザー取得
 	user, err := h.Repo.GetUser(w.GetBotUserID())
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	return h.getUserIcon(c, user)
@@ -240,19 +228,18 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 
 	ev := c.Request().Header.Get("X-GitHub-Event")
 	if len(ev) == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "missing X-GitHub-Event header")
+		return badRequest("missing X-GitHub-Event header")
 	}
 
 	body, err := ioutil.ReadAll(c.Request().Body)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusBadRequest)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	if len(w.GetSecret()) > 0 {
 		sig, _ := hex.DecodeString(strings.TrimPrefix(c.Request().Header.Get("X-Hub-Signature"), "sha1="))
 		if len(sig) == 0 {
-			return echo.NewHTTPError(http.StatusBadRequest, "missing X-Hub-Signature header")
+			return badRequest("missing X-TRAQ-Signature header")
 		}
 		if subtle.ConstantTimeCompare(utils.CalcHMACSHA1(body, w.GetSecret()), sig) != 1 {
 			return echo.NewHTTPError(http.StatusUnauthorized)
@@ -267,141 +254,75 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 	var payload interface{}
 	switch github.Event(ev) {
 	case github.CommitCommentEvent:
-		var d github.CommitCommentPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.CommitCommentPayload{}
 	case github.CreateEvent:
-		var d github.CreatePayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.CreatePayload{}
 	case github.DeleteEvent:
-		var d github.DeletePayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.DeletePayload{}
 	case github.DeploymentEvent:
-		var d github.DeploymentPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.DeploymentPayload{}
 	case github.DeploymentStatusEvent:
-		var d github.DeploymentStatusPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.DeploymentStatusPayload{}
 	case github.ForkEvent:
-		var d github.ForkPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.ForkPayload{}
 	case github.GollumEvent:
-		var d github.GollumPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.GollumPayload{}
 	case github.InstallationEvent, github.IntegrationInstallationEvent:
-		var d github.InstallationPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.InstallationPayload{}
 	case github.IssueCommentEvent:
-		var d github.IssueCommentPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.IssueCommentPayload{}
 	case github.IssuesEvent:
-		var d github.IssuesPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.IssuesPayload{}
 	case github.LabelEvent:
-		var d github.LabelPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.LabelPayload{}
 	case github.MemberEvent:
-		var d github.MemberPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.MemberPayload{}
 	case github.MembershipEvent:
-		var d github.MembershipPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.MembershipPayload{}
 	case github.MilestoneEvent:
-		var d github.MilestonePayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.MilestonePayload{}
 	case github.OrganizationEvent:
-		var d github.OrganizationPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.OrganizationPayload{}
 	case github.OrgBlockEvent:
-		var d github.OrgBlockPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.OrgBlockPayload{}
 	case github.PageBuildEvent:
-		var d github.PageBuildPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.PageBuildPayload{}
 	case github.PingEvent:
-		var d github.PingPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.PingPayload{}
 	case github.ProjectCardEvent:
-		var d github.ProjectCardPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.ProjectCardPayload{}
 	case github.ProjectColumnEvent:
-		var d github.ProjectColumnPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.ProjectColumnPayload{}
 	case github.ProjectEvent:
-		var d github.ProjectPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.ProjectPayload{}
 	case github.PublicEvent:
-		var d github.PublicPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.PublicPayload{}
 	case github.PullRequestEvent:
-		var d github.PullRequestPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.PullRequestPayload{}
 	case github.PullRequestReviewEvent:
-		var d github.PullRequestReviewPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.PullRequestReviewPayload{}
 	case github.PullRequestReviewCommentEvent:
-		var d github.PullRequestReviewCommentPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.PullRequestReviewCommentPayload{}
 	case github.PushEvent:
-		var d github.PushPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.PushPayload{}
 	case github.ReleaseEvent:
-		var d github.ReleasePayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.ReleasePayload{}
 	case github.RepositoryEvent:
-		var d github.RepositoryPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.RepositoryPayload{}
 	case github.StatusEvent:
-		var d github.StatusPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.StatusPayload{}
 	case github.TeamEvent:
-		var d github.TeamPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.TeamPayload{}
 	case github.TeamAddEvent:
-		var d github.TeamAddPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
+		payload = &github.TeamAddPayload{}
 	case github.WatchEvent:
-		var d github.WatchPayload
-		err = json.Unmarshal(body, &d)
-		payload = d
-	}
-
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest)
-	}
-
-	if payload == nil {
+		payload = &github.WatchPayload{}
+	default:
 		return c.NoContent(http.StatusNoContent)
+	}
+
+	if err := json.Unmarshal(body, payload); err != nil {
+		return badRequest(err)
 	}
 
 	messageBuf := &strings.Builder{}
@@ -412,8 +333,7 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 	if messageBuf.Len() > 0 {
 		_, err := h.Repo.CreateMessage(w.GetBotUserID(), w.GetChannelID(), messageBuf.String())
 		if err != nil {
-			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-			return echo.NewHTTPError(http.StatusInternalServerError)
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
@@ -424,21 +344,20 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 func (h *Handlers) GetWebhookMessages(c echo.Context) error {
 	w := getWebhookFromContext(c)
 
-	req := struct {
-		Limit  int `query:"limit"  validate:"min=0"`
-		Offset int `query:"offset" validate:"min=0"`
-	}{}
-	if err := bindAndValidate(c, &req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err)
+	var req struct {
+		Limit  int `query:"limit"`
+		Offset int `query:"offset"`
 	}
-	if req.Limit > 50 || req.Limit == 0 {
+	if err := bindAndValidate(c, &req); err != nil {
+		return badRequest(err)
+	}
+	if req.Limit > 50 || req.Limit <= 0 {
 		req.Limit = 50
 	}
 
 	messages, err := h.Repo.GetMessagesByUserID(w.GetBotUserID(), req.Limit, req.Offset)
 	if err != nil {
-		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
-		return echo.NewHTTPError(http.StatusInternalServerError)
+		return internalServerError(err, h.requestContextLogger(c))
 	}
 
 	res := make([]*MessageForResponse, 0, req.Limit)
