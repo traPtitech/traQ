@@ -115,7 +115,7 @@ func (h *Handlers) PostClip(c echo.Context) error {
 	}
 
 	// クリップ作成
-	clip, err := h.Repo.CreateClip(uuid.Must(uuid.FromString(req.MessageID)), uuid.Must(uuid.FromString(req.FolderID)), userID)
+	clip, err := h.Repo.CreateClip(req.MessageID, uuid.Must(uuid.FromString(req.FolderID)), userID)
 	if err != nil {
 		if isMySQLDuplicatedRecordErr(err) {
 			return echo.NewHTTPError(http.StatusBadRequest, "already clipped")
