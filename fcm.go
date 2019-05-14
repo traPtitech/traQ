@@ -18,6 +18,7 @@ import (
 	"golang.org/x/exp/utf8string"
 	"google.golang.org/api/option"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -89,7 +90,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 	// データ初期化
 	data := map[string]string{
 		"title":     "traQ",
-		"icon":      fmt.Sprintf("%s/api/1.0/public/icon/%s", m.origin, mUser.Name),
+		"icon":      fmt.Sprintf("%s/api/1.0/public/icon/%s", m.origin, strings.ReplaceAll(mUser.Name, "#", "%23")),
 		"vibration": "[1000, 1000, 1000]",
 		"tag":       fmt.Sprintf("c:%s", message.ChannelID),
 		"badge":     fmt.Sprintf("%s/static/badge.png", m.origin),
