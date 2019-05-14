@@ -2,13 +2,14 @@ package repository
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/message"
-	"strings"
 )
 
 // CreateMessage implements MessageRepository interface.
@@ -136,6 +137,9 @@ func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 			return err
 		}
 		if err := tx.Where(&model.Unread{MessageID: messageID}).Delete(model.Unread{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where(&model.Pin{MessageID: messageID}).Delete(model.Pin{}).Error; err != nil {
 			return err
 		}
 		ok = true
