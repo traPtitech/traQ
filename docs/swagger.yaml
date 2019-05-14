@@ -1249,7 +1249,7 @@ paths:
     get:
       tags:
         - unread
-      description: 未読メッセージのリストを取得します。
+      description: [DEPRECATED] 未読メッセージのリストを取得します。
       responses:
         "200":
           description: |+
@@ -1266,11 +1266,52 @@ paths:
     delete:
       tags:
         - unread
+      description: [DEPRECATED] 指定されたチャンネルの未読メッセージを既読にします。存在しないチャンネルIDを指定した場合は、無視されます。
+      responses:
+        "204":
+          description: 正常にメッセージを既読にできました。
+
+  /users/me/unread/channels:
+    get:
+      tags:
+        - unread
+      description: 未読チャンネル情報のリストを取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    channelId:
+                      type: string
+                      format: uuid
+                      description: チャンネルID
+                    count:
+                      type: integer
+                      description: そのチャンネルの未読メッセージ数
+                    since:
+                      type: string
+                      format: date-time
+                      description: そのチャンネルの最古の未読メッセージの日時
+                    updatedAt:
+                      type: string
+                      format: date-time
+                      description: そのチャンネルの最新の未読メッセージの日時
+
+  /users/me/unread/channels/{channelID}:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+    delete:
+      tags:
+        - unread
       description: 指定されたチャンネルの未読メッセージを既読にします。存在しないチャンネルIDを指定した場合は、無視されます。
       responses:
         "204":
-          description: |+
-            正常にメッセージを既読にできました。
+          description: 正常にメッセージを既読にできました。
 
   /users/me/mute:
     get:
