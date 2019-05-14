@@ -312,6 +312,18 @@ func (h *Handlers) DeleteUnread(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// GetUnreadChannels GET /users/me/unread/channels
+func (h *Handlers) GetUnreadChannels(c echo.Context) error {
+	userID := getRequestUserID(c)
+
+	list, err := h.Repo.GetUserUnreadChannels(userID)
+	if err != nil {
+		return internalServerError(err, h.requestContextLogger(c))
+	}
+
+	return c.JSON(http.StatusOK, list)
+}
+
 func (h *Handlers) formatMessage(raw *model.Message) *MessageForResponse {
 	isPinned, err := h.Repo.IsPinned(raw.ID)
 	if err != nil {

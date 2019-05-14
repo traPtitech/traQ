@@ -80,6 +80,10 @@ type TestRepository struct {
 	OAuth2TokensLock          sync.RWMutex
 }
 
+func (repo *TestRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*repository.UserUnreadChannel, error) {
+	panic("implement me")
+}
+
 func (repo *TestRepository) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) {
 	panic("implement me")
 }

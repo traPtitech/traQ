@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"time"
 )
 
 // MessageRepository メッセージリポジトリ
@@ -71,6 +72,12 @@ type MessageRepository interface {
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error
+	// GetUserUnreadChannels 指定したユーザーの未読チャンネル一覧を取得します
+	//
+	// 成功した場合、UserUnreadChannelの配列とnilを返します。
+	// 存在しないユーザーを指定した場合、空配列とnilを返します。
+	// DBによるエラーを返すことがあります。
+	GetUserUnreadChannels(userID uuid.UUID) ([]*UserUnreadChannel, error)
 	// GetChannelLatestMessagesByUserID 指定したユーザーが閲覧可能な全てのパブリックチャンネルの最新のメッセージの一覧を取得します
 	//
 	// 成功した場合、メッセージの配列とnilを返します。負のlimitは無視されます。
@@ -82,4 +89,12 @@ type MessageRepository interface {
 	// 存在しないメッセージを指定した場合、空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error)
+}
+
+// UserUnreadChannel ユーザーの未読チャンネル構造体
+type UserUnreadChannel struct {
+	ChannelID uuid.UUID `json:"channelId"`
+	Count     int       `json:"count"`
+	Since     time.Time `json:"since"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
