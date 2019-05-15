@@ -28,10 +28,9 @@ ci-test:
 .PHONY: init
 init:
 	go mod download
-	mkdir -p ./keys
-	cd /keys
-	openssl ecparam -genkey -name prime256v1 -noout -out ec.pem
-	openssl ec -in ec.pem -out ec_pub.pem -pubout
+	mkdir -p ./dev/keys
+	openssl ecparam -genkey -name prime256v1 -noout -out ./dev/keys/ec.pem
+	openssl ec -in ./dev/keys/ec.pem -out ./dev/keys/ec_pub.pem -pubout
 
 .PHONY: up-docker-test-db
 up-docker-test-db:

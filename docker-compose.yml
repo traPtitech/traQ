@@ -21,8 +21,8 @@ services:
     networks:
       - traQnet
     volumes:
-      - ./data:/initdata:ro
-      - ./keys:/app/keys:ro
+      - ./dev/data:/initdata:ro
+      - ./dev/keys:/app/keys:ro
 
   traq-frontend:
     image: trap/traq-ui
@@ -45,7 +45,7 @@ services:
     networks:
       - traQnet
     volumes:
-      - ./docker/Caddyfile:/etc/Caddyfile:ro
+      - ./dev/Caddyfile:/etc/Caddyfile:ro
 
   mysql:
     image: mariadb:10.0.19
