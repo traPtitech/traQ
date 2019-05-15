@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/logging"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
@@ -199,7 +200,7 @@ func AddHeadersMiddleware(headers map[string]string) echo.MiddlewareFunc {
 	}
 }
 
-var requestCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+var requestCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 	Namespace: "traq",
 	Name:      "http_requests_total",
 }, []string{"code", "method"})
