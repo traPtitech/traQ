@@ -8,7 +8,7 @@
 ### Requirements
 
 - go
-	- tested with 1.11
+	- tested with 1.12
 - git
 - make
 
@@ -34,17 +34,14 @@ Now you can access to
 
 ### Setup (for Linux, macOS)
 
-Setup [GOPATH](https://github.com/golang/go/wiki/GOPATH) first
-
-Set Environment Variable 'GO111MODULE' to 'on'.
-We recommend using [direnv](https://github.com/direnv/direnv) for setting up it.
+Install golang 1.12.x
 
 ```
 make init
 make
 ```
 
-### Setup with Vagrant (recommended for Windows)
+### [Unmaintained] Setup with Vagrant (recommended for Windows)
 
 Use [Vagrant](https://www.vagrantup.com/downloads.html)
 

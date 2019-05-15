@@ -11,7 +11,6 @@ fmt:
 test:
 	-@make ci-fmt
 	-@make ci-vet
-	-@make ci-lint
 	-@make ci-test
 
 .PHONY: ci-fmt
@@ -22,10 +21,6 @@ ci-fmt:
 ci-vet:
 	go vet ./...
 
-.PHONY: ci-lint
-ci-lint:
-	golint -set_exit_status $$(go list ./...)
-
 .PHONY: ci-test
 ci-test:
 	go test -race ./...
@@ -33,16 +28,16 @@ ci-test:
 .PHONY: init
 init:
 	go mod download
-	go install golang.org/x/lint/golint
 	mkdir -p ./keys
+	cd /keys
 	openssl ecparam -genkey -name prime256v1 -noout -out ec.pem
 	openssl ec -in ec.pem -out ec_pub.pem -pubout
 
 .PHONY: up-docker-test-db
 up-docker-test-db:
-	docker run --name traq-test-db -p 3000:3306 -e MYSQL_ROOT_PASSWORD=password -d mariadb:10.0.19 mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+	docker run --name traq-test-db -p 3003:3306 -e MYSQL_ROOT_PASSWORD=password -d mariadb:10.0.19 mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
 	sleep 5
-	TEST_DB_PORT=3000 go run .circleci/init.go
+	TEST_DB_PORT=3003 go run .circleci/init.go
 
 .PHONY: start-docker-test-db
 start-docker-test-db:

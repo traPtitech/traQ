@@ -33,7 +33,7 @@ services:
       - traQnet
 
   reverse-proxy:
-    image: nginx:1.15.3-alpine
+    image: abiosoft/caddy:0.11.5-no-stats
     restart: always
     expose:
       - "80"
@@ -42,11 +42,10 @@ services:
     depends_on:
       - traq-backend
       - traq-frontend
-      - swagger-ui
     networks:
       - traQnet
     volumes:
-      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./docker/Caddyfile:/etc/Caddyfile:ro
 
   mysql:
     image: mariadb:10.0.19
@@ -75,18 +74,6 @@ services:
       - "3001:8080"
     networks:
       - adminNet
-
-  swagger-ui:
-    image: swaggerapi/swagger-ui:3.18.2
-    restart: always
-    volumes:
-      - ./docs/swagger.yaml:/usr/share/nginx/html/traQ-R.yaml
-    environment:
-      API_URL: traQ-R.yaml
-    expose:
-      - "8080"
-    networks:
-      - traQnet
 
 networks:
   traQnet:
