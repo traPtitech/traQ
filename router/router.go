@@ -12,6 +12,7 @@ import (
 // SetupRouting APIルーティングを行います
 func SetupRouting(e *echo.Echo, h *Handlers) {
 	e.Validator = validator.New()
+	e.Use(RequestCounterMiddleware())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		ExposeHeaders: []string{"X-TRAQ-VERSION", headerCacheFile, headerFileMetaType},
 		AllowHeaders:  []string{echo.HeaderContentType, echo.HeaderAuthorization, headerSignature},
