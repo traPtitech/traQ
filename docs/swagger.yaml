@@ -1249,7 +1249,7 @@ paths:
     get:
       tags:
         - unread
-      description: [DEPRECATED] 未読メッセージのリストを取得します。
+      description: (DEPRECATED) 未読メッセージのリストを取得します。
       responses:
         "200":
           description: |+
@@ -1266,7 +1266,7 @@ paths:
     delete:
       tags:
         - unread
-      description: [DEPRECATED] 指定されたチャンネルの未読メッセージを既読にします。存在しないチャンネルIDを指定した場合は、無視されます。
+      description: (DEPRECATED) 指定されたチャンネルの未読メッセージを既読にします。存在しないチャンネルIDを指定した場合は、無視されます。
       responses:
         "204":
           description: 正常にメッセージを既読にできました。
@@ -1576,10 +1576,6 @@ paths:
                     type: string
                     format: uuid
                   tag:
-                    type: string
-                  editable:
-                    type: boolean
-                  type:
                     type: string
                   users:
                     $ref: "#/components/schemas/UUIDs"
@@ -3246,10 +3242,6 @@ components:
           type: string
         isLocked:
           type: boolean
-        editable:
-          type: boolean
-        type:
-          type: string
         createdAt:
           type: string
           format: date-time

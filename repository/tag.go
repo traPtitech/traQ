@@ -12,7 +12,7 @@ type TagRepository interface {
 	// 成功した場合、タグとnilを返します。
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
-	CreateTag(name string, restricted bool, tagType string) (*model.Tag, error)
+	CreateTag(name string) (*model.Tag, error)
 	// GetTagByID 指定したIDのタグを取得します
 	//
 	// 成功した場合、タグとnilを返します。

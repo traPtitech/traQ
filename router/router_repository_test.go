@@ -581,7 +581,7 @@ func (repo *TestRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUI
 	return ids, nil
 }
 
-func (repo *TestRepository) CreateTag(name string, restricted bool, tagType string) (*model.Tag, error) {
+func (repo *TestRepository) CreateTag(name string) (*model.Tag, error) {
 	repo.TagsLock.Lock()
 	defer repo.TagsLock.Unlock()
 	// 名前チェック
@@ -594,12 +594,10 @@ func (repo *TestRepository) CreateTag(name string, restricted bool, tagType stri
 		}
 	}
 	t := model.Tag{
-		ID:         uuid.Must(uuid.NewV4()),
-		Name:       name,
-		Restricted: restricted,
-		Type:       tagType,
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
+		ID:        uuid.Must(uuid.NewV4()),
+		Name:      name,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 	repo.Tags[t.ID] = t
 	return &t, nil
