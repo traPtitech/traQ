@@ -1,8 +1,6 @@
 /.circleci/
 /.idea/
-/bin/
-/data/
-/docker/
+/dev/
 /docs/
 /vendor/
 codecov.yml

@@ -1,0 +1,12 @@
+:80
+
+log stdout
+errors stdout
+
+proxy / traq-frontend {
+    transparent
+}
+
+proxy /api traq-backend:3000 {
+    transparent
+}
