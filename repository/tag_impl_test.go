@@ -111,8 +111,6 @@ func TestRepositoryImpl_GetUserTag(t *testing.T) {
 			if assert.NotZero(ut.Tag) {
 				assert.Equal(tag.Name, ut.Tag.Name)
 				assert.Equal(tag.ID, ut.Tag.ID)
-				assert.False(ut.Tag.Restricted)
-				assert.Empty(ut.Tag.Type)
 				assert.NotZero(ut.Tag.CreatedAt)
 				assert.NotZero(ut.Tag.UpdatedAt)
 			}
@@ -210,12 +208,10 @@ func TestRepositoryImpl_CreateTag(t *testing.T) {
 			t.Parallel()
 			assert := assert.New(t)
 
-			tag, err := repo.CreateTag(v.name, v.restricted, v.tagType)
+			tag, err := repo.CreateTag(v.name)
 			if assert.NoError(err) {
 				assert.NotZero(tag.ID)
 				assert.Equal(v.name, tag.Name)
-				assert.Equal(v.restricted, tag.Restricted)
-				assert.Equal(v.tagType, tag.Type)
 				assert.NotZero(tag.CreatedAt)
 				assert.NotZero(tag.UpdatedAt)
 				assert.Equal(1, count(t, getDB(repo).Model(model.Tag{}).Where(&model.Tag{ID: tag.ID})))
@@ -275,8 +271,6 @@ func TestRepositoryImpl_GetOrCreateTagByName(t *testing.T) {
 	if assert.NoError(err) {
 		assert.NotZero(r.ID)
 		assert.Equal(b, r.Name)
-		assert.False(r.Restricted)
-		assert.Empty(r.Type)
 		assert.NotZero(r.CreatedAt)
 		assert.NotZero(r.UpdatedAt)
 	}

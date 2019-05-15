@@ -9,7 +9,7 @@ import (
 )
 
 // CreateTag implements TagRepository interface.
-func (repo *GormRepository) CreateTag(name string, restricted bool, tagType string) (*model.Tag, error) {
+func (repo *GormRepository) CreateTag(name string) (*model.Tag, error) {
 	// 名前チェック
 	if len(name) == 0 || utf8.RuneCountInString(name) > 30 {
 		return nil, ArgError("name", "Name must be non-empty and shorter than 31 characters")
@@ -17,10 +17,8 @@ func (repo *GormRepository) CreateTag(name string, restricted bool, tagType stri
 	// TODO タグの存在確認
 
 	t := &model.Tag{
-		ID:         uuid.Must(uuid.NewV4()),
-		Name:       name,
-		Restricted: restricted,
-		Type:       tagType,
+		ID:   uuid.Must(uuid.NewV4()),
+		Name: name,
 	}
 	return t, repo.db.Create(t).Error
 }

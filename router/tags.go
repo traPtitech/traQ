@@ -15,8 +15,6 @@ type TagForResponse struct {
 	ID        uuid.UUID `json:"tagId"`
 	Tag       string    `json:"tag"`
 	IsLocked  bool      `json:"isLocked"`
-	Editable  bool      `json:"editable"`
-	Type      string    `json:"type"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -25,10 +23,16 @@ type TagForResponse struct {
 func (h *Handlers) GetUserTags(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 
-	res, err := h.getUserTags(userID, c)
+	tagList, err := h.Repo.GetUserTagsByUserID(userID)
 	if err != nil {
-		return err
+		return internalServerError(err, h.requestContextLogger(c))
 	}
+
+	res := make([]*TagForResponse, len(tagList))
+	for i, v := range tagList {
+		res[i] = formatTag(v)
+	}
+
 	return c.JSON(http.StatusOK, res)
 }
 
@@ -135,11 +139,9 @@ func (h *Handlers) DeleteUserTag(c echo.Context) error {
 // GetUsersByTagID GET /tags/:tagID
 func (h *Handlers) GetUsersByTagID(c echo.Context) error {
 	type response struct {
-		ID       uuid.UUID   `json:"tagId"`
-		Tag      string      `json:"tag"`
-		Editable bool        `json:"editable"`
-		Type     string      `json:"type"`
-		Users    []uuid.UUID `json:"users"`
+		ID    uuid.UUID   `json:"tagId"`
+		Tag   string      `json:"tag"`
+		Users []uuid.UUID `json:"users"`
 	}
 
 	tagID := getRequestParamAsUUID(c, paramTagID)
@@ -160,25 +162,10 @@ func (h *Handlers) GetUsersByTagID(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, &response{
-		ID:       t.ID,
-		Tag:      t.Name,
-		Editable: !t.Restricted,
-		Type:     t.Type,
-		Users:    users,
+		ID:    t.ID,
+		Tag:   t.Name,
+		Users: users,
 	})
-}
-
-func (h *Handlers) getUserTags(userID uuid.UUID, c echo.Context) ([]*TagForResponse, error) {
-	tagList, err := h.Repo.GetUserTagsByUserID(userID)
-	if err != nil {
-		return nil, internalServerError(err, h.requestContextLogger(c))
-	}
-
-	res := make([]*TagForResponse, len(tagList))
-	for i, v := range tagList {
-		res[i] = formatTag(v)
-	}
-	return res, nil
 }
 
 func formatTag(ut *model.UsersTag) *TagForResponse {
@@ -186,9 +173,7 @@ func formatTag(ut *model.UsersTag) *TagForResponse {
 	return &TagForResponse{
 		ID:        tag.ID,
 		Tag:       tag.Name,
-		IsLocked:  ut.IsLocked || tag.Restricted,
-		Editable:  !tag.Restricted,
-		Type:      tag.Type,
+		IsLocked:  ut.IsLocked,
 		CreatedAt: ut.CreatedAt,
 		UpdatedAt: ut.UpdatedAt,
 	}
