@@ -3,6 +3,7 @@ package router
 import (
 	"fmt"
 	"github.com/gofrs/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/traPtitech/traQ/logging"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
@@ -194,6 +195,22 @@ func AddHeadersMiddleware(headers map[string]string) echo.MiddlewareFunc {
 				c.Response().Header().Set(k, v)
 			}
 			return next(c)
+		}
+	}
+}
+
+var requestCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
+	Namespace: "traq",
+	Name:      "http_requests_total",
+}, []string{"code", "method"})
+
+// RequestCounterMiddleware prometheus metrics用リクエストカウンター
+func RequestCounterMiddleware() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) (err error) {
+			err = next(c)
+			requestCounter.WithLabelValues(strconv.Itoa(c.Response().Status), c.Request().Method).Inc()
+			return err
 		}
 	}
 }
