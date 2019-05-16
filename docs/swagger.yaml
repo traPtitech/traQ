@@ -1293,6 +1293,9 @@ paths:
                     count:
                       type: integer
                       description: そのチャンネルの未読メッセージ数
+                    noticeable:
+                      type: boolean
+                      description: 自分にメンションされたメッセージを含んでいるかどうか
                     since:
                       type: string
                       format: date-time
