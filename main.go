@@ -166,6 +166,7 @@ func main() {
 		ImageMagickPath:  viper.GetString("imagemagick.path"),
 		AccessTokenExp:   viper.GetInt("oauth2.accessTokenExp"),
 		IsRefreshEnabled: viper.GetBool("oauth2.isRefreshEnabled"),
+		SkyWaySecretKey:  viper.GetString("skyway.secretKey"),
 	})
 	e := echo.New()
 	if viper.GetBool("accessLog.enabled") {
@@ -227,6 +228,8 @@ func setDefaultConfigs() {
 
 	viper.SetDefault("jwt.keys.public", "./keys/ec_pub.pem")
 	viper.SetDefault("jwt.keys.private", "./keys/ec.pem")
+
+	viper.SetDefault("skyway.secretKey", "")
 }
 
 func getDatabase() (*gorm.DB, error) {

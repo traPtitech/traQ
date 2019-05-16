@@ -291,6 +291,10 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			apiActivity.GET("/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
 		}
 		api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler, botGuard(blockAlways))
+
+		if len(h.SkyWaySecretKey) > 0 {
+			api.POST("/skyway/authenticate", h.PostSkyWayAuthenticate, botGuard(blockAlways))
+		}
 	}
 
 	apiNoAuth := e.Group("/api/1.0")
