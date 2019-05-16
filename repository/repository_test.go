@@ -163,7 +163,7 @@ func mustMakeMessage(t *testing.T, repo Repository, userID, channelID uuid.UUID)
 
 func mustMakeMessageUnread(t *testing.T, repo Repository, userID, messageID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.SetMessageUnread(userID, messageID))
+	require.NoError(t, repo.SetMessageUnread(userID, messageID, false))
 }
 
 func mustMakeUser(t *testing.T, repo Repository, userName string) *model.User {
