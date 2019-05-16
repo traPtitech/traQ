@@ -71,6 +71,41 @@ func TestCalcSHA1Signature(t *testing.T) {
 	}
 }
 
+func TestCalcSHA256Signature(t *testing.T) {
+	t.Parallel()
+
+	// test cases from https://tools.ietf.org/html/rfc4231#section-4
+	cases := []struct {
+		Secret   string
+		Data     []byte
+		Expected []byte
+	}{
+		{
+			Secret:   string(mustHexDecode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b")),
+			Data:     []byte("Hi There"),
+			Expected: mustHexDecode("b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7"),
+		},
+		{
+			Secret:   "Jefe",
+			Data:     []byte("what do ya want for nothing?"),
+			Expected: mustHexDecode("5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843"),
+		},
+		{
+			Secret:   string(mustHexDecode("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+			Data:     mustHexDecode(strings.Repeat("dd", 50)),
+			Expected: mustHexDecode("773ea91e36800e46854db8ebd09181a72959098b3ef8c122d9635514ced565fe"),
+		},
+		{
+			Secret:   string(mustHexDecode("0102030405060708090a0b0c0d0e0f10111213141516171819")),
+			Data:     mustHexDecode(strings.Repeat("cd", 50)),
+			Expected: mustHexDecode("82558a389a443c0ea4cc819899f2083a85f0faa3e578f8077a2e3ff46729665b"),
+		},
+	}
+	for _, v := range cases {
+		assert.Equal(t, v.Expected, CalcHMACSHA256(v.Data, v.Secret))
+	}
+}
+
 func mustHexDecode(h string) []byte {
 	b, _ := hex.DecodeString(h)
 	return b

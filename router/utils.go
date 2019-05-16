@@ -109,6 +109,8 @@ type HandlerConfig struct {
 	AccessTokenExp int
 	// IsRefreshEnabled リフレッシュトークンを発行するかどうか
 	IsRefreshEnabled bool
+	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
+	SkyWaySecretKey string
 }
 
 // NewHandlers ハンドラを生成します
