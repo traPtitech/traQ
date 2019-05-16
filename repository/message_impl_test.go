@@ -147,12 +147,12 @@ func TestRepositoryImpl_SetMessageUnread(t *testing.T) {
 
 	m := mustMakeMessage(t, repo, user.ID, channel.ID)
 
-	assert.Error(repo.SetMessageUnread(uuid.Nil, m.ID))
-	assert.Error(repo.SetMessageUnread(user.ID, uuid.Nil))
-	if assert.NoError(repo.SetMessageUnread(user.ID, m.ID)) {
+	assert.Error(repo.SetMessageUnread(uuid.Nil, m.ID, true))
+	assert.Error(repo.SetMessageUnread(user.ID, uuid.Nil, true))
+	if assert.NoError(repo.SetMessageUnread(user.ID, m.ID, true)) {
 		assert.Equal(1, count(t, getDB(repo).Model(model.Unread{}).Where(model.Unread{UserID: user.ID})))
 	}
-	assert.NoError(repo.SetMessageUnread(user.ID, m.ID))
+	assert.NoError(repo.SetMessageUnread(user.ID, m.ID, true))
 }
 
 func TestRepositoryImpl_GetUnreadMessagesByUserID(t *testing.T) {

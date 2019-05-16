@@ -1574,7 +1574,7 @@ func (repo *TestRepository) GetArchivedMessagesByID(messageID uuid.UUID) ([]*mod
 	panic("implement me")
 }
 
-func (repo *TestRepository) SetMessageUnread(userID, messageID uuid.UUID) error {
+func (repo *TestRepository) SetMessageUnread(userID, messageID uuid.UUID, noticeable bool) error {
 	if userID == uuid.Nil || messageID == uuid.Nil {
 		return repository.ErrNilID
 	}

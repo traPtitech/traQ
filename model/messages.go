@@ -35,9 +35,10 @@ func (m *ChannelLatestMessage) TableName() string {
 
 // Unread 未読レコード
 type Unread struct {
-	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	MessageID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	CreatedAt time.Time `gorm:"precision:6"`
+	UserID     uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	MessageID  uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	Noticeable bool      `gorm:"type:boolean;not null;default:false"`
+	CreatedAt  time.Time `gorm:"precision:6"`
 }
 
 // TableName テーブル名
