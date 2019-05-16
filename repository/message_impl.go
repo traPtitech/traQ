@@ -203,12 +203,12 @@ func (repo *GormRepository) GetMessagesByUserID(userID uuid.UUID, limit, offset 
 }
 
 // SetMessageUnread implements MessageRepository interface.
-func (repo *GormRepository) SetMessageUnread(userID, messageID uuid.UUID) error {
+func (repo *GormRepository) SetMessageUnread(userID, messageID uuid.UUID, noticeable bool) error {
 	if userID == uuid.Nil || messageID == uuid.Nil {
 		return ErrNilID
 	}
 	var u model.Unread
-	return repo.db.FirstOrCreate(&u, &model.Unread{UserID: userID, MessageID: messageID}).Error
+	return repo.db.Assign(map[string]bool{"noticeable": noticeable}).FirstOrCreate(&u, &model.Unread{UserID: userID, MessageID: messageID}).Error
 }
 
 // GetUnreadMessagesByUserID implements MessageRepository interface.
@@ -239,7 +239,7 @@ func (repo *GormRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*UserUnre
 	if userID == uuid.Nil {
 		return res, nil
 	}
-	return res, repo.db.Raw(`SELECT m.channel_id AS channel_id, COUNT(m.id) AS count, min(m.created_at) AS since, max(m.created_at) AS updated_at FROM unreads u JOIN messages m on u.message_id = m.id WHERE u.user_id = ? GROUP BY m.channel_id`, userID).Scan(&res).Error
+	return res, repo.db.Raw(`SELECT m.channel_id AS channel_id, COUNT(m.id) AS count, MAX(u.noticeable) AS noticeable, MIN(m.created_at) AS since, MAX(m.created_at) AS updated_at FROM unreads u JOIN messages m on u.message_id = m.id WHERE u.user_id = ? GROUP BY m.channel_id`, userID).Scan(&res).Error
 }
 
 // DeleteUnreadsByChannelID implements MessageRepository interface.

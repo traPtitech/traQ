@@ -239,6 +239,7 @@ func (s *SSEStreamer) processMessageCreated(message *model.Message, plain string
 	viewers := map[uuid.UUID]bool{}
 	connector := map[uuid.UUID]bool{}
 	subscribers := map[uuid.UUID]bool{}
+	noticeable := map[uuid.UUID]bool{}
 	ch, _ := s.repo.GetChannel(message.ChannelID)
 	switch {
 	case ch.IsForced: // 強制通知チャンネル
@@ -248,6 +249,7 @@ func (s *SSEStreamer) processMessageCreated(message *model.Message, plain string
 				continue
 			}
 			subscribers[v.ID] = true
+			noticeable[v.ID] = true
 		}
 
 	case !ch.IsPublic: // プライベートチャンネル
@@ -263,17 +265,19 @@ func (s *SSEStreamer) processMessageCreated(message *model.Message, plain string
 			subscribers[v] = true
 		}
 
-		// タグユーザー・メンションユーザー取得
+		// グループユーザー・メンションユーザー取得
 		for _, v := range embedded {
 			switch v.Type {
 			case "user":
 				if uid, err := uuid.FromString(v.ID); err == nil {
 					subscribers[uid] = true
+					noticeable[uid] = true
 				}
 			case "group":
 				gs, _ := s.repo.GetUserGroupMemberIDs(uuid.FromStringOrNil(v.ID))
 				for _, v := range gs {
 					subscribers[v] = true
+					noticeable[v] = true
 				}
 			}
 		}
@@ -292,7 +296,7 @@ func (s *SSEStreamer) processMessageCreated(message *model.Message, plain string
 	// 送信
 	for id := range subscribers {
 		if !(id == message.UserID || viewers[id]) {
-			_ = s.repo.SetMessageUnread(id, message.ID)
+			_ = s.repo.SetMessageUnread(id, message.ID, noticeable[id])
 		}
 		go s.multicast(id, ed)
 	}

@@ -53,7 +53,7 @@ type MessageRepository interface {
 	// 成功した場合、nilを返します。
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	SetMessageUnread(userID, messageID uuid.UUID) error
+	SetMessageUnread(userID, messageID uuid.UUID, noticeable bool) error
 	// GetUnreadMessagesByUserID 指定したユーザーの未読メッセージをすべて取得します
 	//
 	// 成功した場合、メッセージの配列とnilを返します。
@@ -93,8 +93,9 @@ type MessageRepository interface {
 
 // UserUnreadChannel ユーザーの未読チャンネル構造体
 type UserUnreadChannel struct {
-	ChannelID uuid.UUID `json:"channelId"`
-	Count     int       `json:"count"`
-	Since     time.Time `json:"since"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ChannelID  uuid.UUID `json:"channelId"`
+	Count      int       `json:"count"`
+	Noticeable bool      `json:"noticeable"`
+	Since      time.Time `json:"since"`
+	UpdatedAt  time.Time `json:"updatedAt"`
 }
