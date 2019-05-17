@@ -283,24 +283,7 @@ func (h *Handlers) GetMessageReports(c echo.Context) error {
 	return c.JSON(http.StatusOK, reports)
 }
 
-// GetUnread GET /users/me/unread
-func (h *Handlers) GetUnread(c echo.Context) error {
-	userID := getRequestUserID(c)
-
-	unreads, err := h.Repo.GetUnreadMessagesByUserID(userID)
-	if err != nil {
-		return internalServerError(err, h.requestContextLogger(c))
-	}
-
-	responseBody := make([]*MessageForResponse, len(unreads))
-	for i, v := range unreads {
-		responseBody[i] = h.formatMessage(v)
-	}
-
-	return c.JSON(http.StatusOK, responseBody)
-}
-
-// DeleteUnread DELETE /users/me/unread/:channelID
+// DeleteUnread DELETE /users/me/unread/channels/:channelID
 func (h *Handlers) DeleteUnread(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)

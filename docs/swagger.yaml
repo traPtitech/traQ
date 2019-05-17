@@ -1245,32 +1245,6 @@ paths:
         "404":
           description: 削除に失敗しました。指定されたチャンネルは存在しません。
 
-  /users/me/unread:
-    get:
-      tags:
-        - unread
-      description: (DEPRECATED) 未読メッセージのリストを取得します。
-      responses:
-        "200":
-          description: |+
-            正常に取得できました。
-            未読メッセージリストを返します。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MessageList"
-
-  /users/me/unread/{channelID}:
-    parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
-    delete:
-      tags:
-        - unread
-      description: (DEPRECATED) 指定されたチャンネルの未読メッセージを既読にします。存在しないチャンネルIDを指定した場合は、無視されます。
-      responses:
-        "204":
-          description: 正常にメッセージを既読にできました。
-
   /users/me/unread/channels:
     get:
       tags:

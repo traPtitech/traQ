@@ -85,10 +85,6 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				{
 					apiUsersMeUnread.GET("/channels", h.GetUnreadChannels, requires(permission.GetUnread))
 					apiUsersMeUnread.DELETE("/channels/:channelID", h.DeleteUnread, requires(permission.DeleteUnread))
-					// Deprecated TODO Remove
-					apiUsersMeUnread.GET("", h.GetUnread, requires(permission.GetUnread))
-					// Deprecated TODO Remove
-					apiUsersMeUnread.DELETE("/:channelID", h.DeleteUnread, requires(permission.DeleteUnread))
 				}
 
 				apiUsersMeMute := apiUsersMe.Group("/mute", botGuard(blockAlways))

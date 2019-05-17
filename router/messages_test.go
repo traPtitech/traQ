@@ -402,37 +402,6 @@ func TestHandlers_PostMessageReport(t *testing.T) {
 	})
 }
 
-func TestHandlers_GetUnread(t *testing.T) {
-	t.Parallel()
-	repo, server, _, _, _, _, testUser, _ := setupWithUsers(t, common2)
-
-	channel := mustMakeChannel(t, repo, random)
-	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
-	user := mustMakeUser(t, repo, random)
-	mustMakeMessageUnread(t, repo, user.ID, message.ID)
-
-	t.Run("NotLoggedIn", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.GET("/api/1.0/users/me/unread").
-			Expect().
-			Status(http.StatusUnauthorized)
-	})
-
-	t.Run("Successful1", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.GET("/api/1.0/users/me/unread").
-			WithCookie(sessions.CookieName, generateSession(t, user.ID)).
-			Expect().
-			Status(http.StatusOK).
-			JSON().
-			Array().
-			Length().
-			Equal(1)
-	})
-}
-
 func TestHandlers_DeleteUnread(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
@@ -444,7 +413,7 @@ func TestHandlers_DeleteUnread(t *testing.T) {
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/users/me/unread/{channelID}", channel.ID.String()).
+		e.DELETE("/api/1.0/users/me/unread/channels/{channelID}", channel.ID.String()).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -452,7 +421,7 @@ func TestHandlers_DeleteUnread(t *testing.T) {
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/users/me/unread/{channelID}", channel.ID.String()).
+		e.DELETE("/api/1.0/users/me/unread/channels/{channelID}", channel.ID.String()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNoContent)
