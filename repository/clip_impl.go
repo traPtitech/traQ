@@ -136,7 +136,7 @@ func (repo *GormRepository) GetClipMessage(id uuid.UUID) (*model.Clip, error) {
 		return nil, ErrNotFound
 	}
 	c := &model.Clip{}
-	if err := repo.db.Preload("Message").Where(&model.Clip{ID: id}).Take(c).Error; err != nil {
+	if err := repo.db.Scopes(clipPreloads).Where(&model.Clip{ID: id}).Take(c).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return c, nil
@@ -149,7 +149,7 @@ func (repo *GormRepository) GetClipMessages(folderID uuid.UUID) (res []*model.Cl
 		return res, nil
 	}
 	err = repo.db.
-		Preload("Message").
+		Scopes(clipPreloads).
 		Where(&model.Clip{FolderID: folderID}).
 		Order("updated_at").
 		Find(&res).
@@ -164,7 +164,7 @@ func (repo *GormRepository) GetClipMessagesByUser(userID uuid.UUID) (res []*mode
 		return res, nil
 	}
 	err = repo.db.
-		Preload("Message").
+		Scopes(clipPreloads).
 		Where(&model.Clip{UserID: userID}).
 		Order("updated_at").
 		Find(&res).
@@ -246,4 +246,13 @@ func (repo *GormRepository) DeleteClip(id uuid.UUID) error {
 		},
 	})
 	return nil
+}
+
+func clipPreloads(db *gorm.DB) *gorm.DB {
+	return db.
+		Preload("Message").
+		Preload("Message.Stamps", func(db *gorm.DB) *gorm.DB {
+			return db.Order("updated_at")
+		}).
+		Preload("Message.Pin")
 }

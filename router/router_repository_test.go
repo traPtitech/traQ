@@ -733,34 +733,6 @@ func (repo *TestRepository) GetUserTagsByUserID(userID uuid.UUID) ([]*model.User
 	return tags, nil
 }
 
-func (repo *TestRepository) GetUsersByTag(tag string) ([]*model.User, error) {
-	users := make([]*model.User, 0)
-	repo.TagsLock.RLock()
-	tid := uuid.Nil
-	for _, t := range repo.Tags {
-		if t.Name == tag {
-			tid = t.ID
-		}
-	}
-	repo.TagsLock.RUnlock()
-	if tid == uuid.Nil {
-		return users, nil
-	}
-	repo.UserTagsLock.RLock()
-	for uid, tags := range repo.UserTags {
-		if _, ok := tags[tid]; ok {
-			repo.UsersLock.RLock()
-			u, ok := repo.Users[uid]
-			repo.UsersLock.RUnlock()
-			if ok {
-				users = append(users, &u)
-			}
-		}
-	}
-	repo.UserTagsLock.RUnlock()
-	return users, nil
-}
-
 func (repo *TestRepository) GetUserIDsByTag(tag string) ([]uuid.UUID, error) {
 	users := make([]uuid.UUID, 0)
 	repo.TagsLock.RLock()
@@ -1229,17 +1201,6 @@ func (repo *TestRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*mo
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetAllChannels() ([]*model.Channel, error) {
-	repo.ChannelsLock.RLock()
-	result := make([]*model.Channel, 0, len(repo.Channels))
-	for _, c := range repo.Channels {
-		c := c
-		result = append(result, &c)
-	}
-	repo.ChannelsLock.RUnlock()
-	return result, nil
-}
-
 func (repo *TestRepository) IsChannelPresent(name string, parent uuid.UUID) (bool, error) {
 	repo.ChannelsLock.RLock()
 	defer repo.ChannelsLock.RUnlock()
@@ -1466,6 +1427,7 @@ func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 		Text:      text,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
+		Stamps:    make([]model.MessageStamp, 0),
 	}
 
 	repo.MessagesLock.Lock()
@@ -1515,6 +1477,7 @@ func (repo *TestRepository) GetMessageByID(messageID uuid.UUID) (*model.Message,
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
+	m.Stamps = make([]model.MessageStamp, 0)
 	return &m, nil
 }
 
@@ -1524,6 +1487,7 @@ func (repo *TestRepository) GetMessagesByChannelID(channelID uuid.UUID, limit, o
 	for _, v := range repo.Messages {
 		if v.ChannelID == channelID {
 			v := v
+			v.Stamps = make([]model.MessageStamp, 0)
 			tmp = append(tmp, &v)
 		}
 	}
@@ -1550,6 +1514,7 @@ func (repo *TestRepository) GetMessagesByUserID(userID uuid.UUID, limit, offset 
 	for _, v := range repo.Messages {
 		if v.UserID == userID {
 			v := v
+			v.Stamps = make([]model.MessageStamp, 0)
 			tmp = append(tmp, &v)
 		}
 	}
