@@ -3,24 +3,11 @@ package router
 import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
-	"time"
 )
-
-type userGroupResponse struct {
-	GroupID     uuid.UUID   `json:"groupId"`
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	Type        string      `json:"type"`
-	AdminUserID uuid.UUID   `json:"adminUserId"`
-	Members     []uuid.UUID `json:"members"`
-	CreatedAt   time.Time   `json:"createdAt"`
-	UpdatedAt   time.Time   `json:"updatedAt"`
-}
 
 // GetUserGroups GET /groups
 func (h *Handlers) GetUserGroups(c echo.Context) error {
@@ -236,30 +223,4 @@ func (h *Handlers) GetUserBelongingGroup(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, ids)
-}
-
-func (h *Handlers) formatUserGroup(g *model.UserGroup) (r *userGroupResponse, err error) {
-	r = &userGroupResponse{
-		GroupID:     g.ID,
-		Name:        g.Name,
-		Description: g.Description,
-		Type:        g.Type,
-		AdminUserID: g.AdminUserID,
-		CreatedAt:   g.CreatedAt,
-		UpdatedAt:   g.UpdatedAt,
-	}
-	r.Members, err = h.Repo.GetUserGroupMemberIDs(g.ID)
-	return
-}
-
-func (h *Handlers) formatUserGroups(gs []*model.UserGroup) ([]*userGroupResponse, error) {
-	arr := make([]*userGroupResponse, len(gs))
-	for i, g := range gs {
-		r, err := h.formatUserGroup(g)
-		if err != nil {
-			return nil, err
-		}
-		arr[i] = r
-	}
-	return arr, nil
 }

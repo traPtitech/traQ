@@ -9,20 +9,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
-// ChannelForResponse レスポンス用のチャンネル構造体
-type ChannelForResponse struct {
-	ChannelID  string      `json:"channelId"`
-	Name       string      `json:"name"`
-	Parent     string      `json:"parent"`
-	Topic      string      `json:"topic"`
-	Children   []uuid.UUID `json:"children"`
-	Member     []uuid.UUID `json:"member"`
-	Visibility bool        `json:"visibility"`
-	Force      bool        `json:"force"`
-	Private    bool        `json:"private"`
-	DM         bool        `json:"dm"`
-}
-
 // PostChannel リクエストボディ用構造体
 type PostChannel struct {
 	Name    string      `json:"name"`
@@ -40,11 +26,11 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 
-	chMap := make(map[string]*ChannelForResponse, len(channelList))
+	chMap := make(map[string]*channelResponse, len(channelList))
 	for _, ch := range channelList {
 		entry, ok := chMap[ch.ID.String()]
 		if !ok {
-			entry = &ChannelForResponse{}
+			entry = &channelResponse{}
 			chMap[ch.ID.String()] = entry
 		}
 
@@ -69,7 +55,7 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 			entry.Parent = ch.ParentID.String()
 			parent, ok := chMap[ch.ParentID.String()]
 			if !ok {
-				parent = &ChannelForResponse{
+				parent = &channelResponse{
 					ChannelID: ch.ParentID.String(),
 				}
 				chMap[ch.ParentID.String()] = parent
@@ -78,14 +64,14 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 		} else {
 			parent, ok := chMap[""]
 			if !ok {
-				parent = &ChannelForResponse{}
+				parent = &channelResponse{}
 				chMap[""] = parent
 			}
 			parent.Children = append(parent.Children, ch.ID)
 		}
 	}
 
-	res := make([]*ChannelForResponse, 0, len(chMap))
+	res := make([]*channelResponse, 0, len(chMap))
 	for _, v := range chMap {
 		res = append(res, v)
 	}
@@ -304,33 +290,4 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
-}
-
-func (h *Handlers) formatChannel(channel *model.Channel) (response *ChannelForResponse, err error) {
-	response = &ChannelForResponse{
-		ChannelID:  channel.ID.String(),
-		Name:       channel.Name,
-		Topic:      channel.Topic,
-		Visibility: channel.IsVisible,
-		Force:      channel.IsForced,
-		Private:    !channel.IsPublic,
-		DM:         channel.IsDMChannel(),
-		Member:     make([]uuid.UUID, 0),
-	}
-	if channel.ParentID != uuid.Nil {
-		response.Parent = channel.ParentID.String()
-	}
-	response.Children, err = h.Repo.GetChildrenChannelIDs(channel.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	if response.Private {
-		response.Member, err = h.Repo.GetPrivateChannelMemberIDs(channel.ID)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return response, nil
 }

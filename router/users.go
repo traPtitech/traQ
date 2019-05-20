@@ -2,7 +2,6 @@ package router
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -16,43 +15,6 @@ import (
 	"github.com/traPtitech/traQ/utils"
 	"gopkg.in/guregu/null.v3"
 )
-
-// UserForResponse クライアントに返す形のユーザー構造体
-type UserForResponse struct {
-	UserID      uuid.UUID  `json:"userId"`
-	Name        string     `json:"name"`
-	DisplayName string     `json:"displayName"`
-	IconID      uuid.UUID  `json:"iconFileId"`
-	Bot         bool       `json:"bot"`
-	TwitterID   string     `json:"twitterId"`
-	LastOnline  *time.Time `json:"lastOnline"`
-	IsOnline    bool       `json:"isOnline"`
-	Suspended   bool       `json:"suspended"`
-	Status      int        `json:"accountStatus"`
-}
-
-// UserDetailForResponse クライアントに返す形の詳細ユーザー構造体
-type UserDetailForResponse struct {
-	UserID      uuid.UUID         `json:"userId"`
-	Name        string            `json:"name"`
-	DisplayName string            `json:"displayName"`
-	IconID      uuid.UUID         `json:"iconFileId"`
-	Bot         bool              `json:"bot"`
-	TwitterID   string            `json:"twitterId"`
-	LastOnline  *time.Time        `json:"lastOnline"`
-	IsOnline    bool              `json:"isOnline"`
-	Suspended   bool              `json:"suspended"`
-	Status      int               `json:"accountStatus"`
-	TagList     []*TagForResponse `json:"tagList"`
-}
-
-// UserForJWTClaim QRコードで表示するJWTのClaimの形のユーザー構造体
-type UserForJWTClaim struct {
-	jwt.StandardClaims
-	UserID      uuid.UUID `json:"userId"`
-	Name        string    `json:"name"`
-	DisplayName string    `json:"displayName"`
-}
 
 // PostLogin POST /login
 func (h *Handlers) PostLogin(c echo.Context) error {
@@ -124,12 +86,7 @@ func (h *Handlers) GetUsers(c echo.Context) error {
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
-
-	res := make([]*UserForResponse, len(users))
-	for i, user := range users {
-		res[i] = h.formatUser(user)
-	}
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, h.formatUsers(users))
 }
 
 // GetMe GET /users/me
@@ -237,26 +194,6 @@ func (h *Handlers) GetMyIcon(c echo.Context) error {
 	return h.getUserIcon(c, getRequestUser(c))
 }
 
-func (h *Handlers) getUserIcon(c echo.Context, user *model.User) error {
-	// ファイルメタ取得
-	meta, err := h.Repo.GetFileMeta(user.Icon)
-	if err != nil {
-		return internalServerError(err, h.requestContextLogger(c))
-	}
-
-	// ファイルオープン
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
-	if err != nil {
-		return internalServerError(err, h.requestContextLogger(c))
-	}
-	defer file.Close()
-
-	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
-	c.Response().Header().Set(headerETag, strconv.Quote(meta.Hash))
-	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
-	return nil
-}
-
 // PutUserIcon PUT /users/:userID/icon
 func (h *Handlers) PutUserIcon(c echo.Context) error {
 	return h.putUserIcon(c, getRequestParamAsUUID(c, paramUserID))
@@ -265,26 +202,6 @@ func (h *Handlers) PutUserIcon(c echo.Context) error {
 // PutMyIcon PUT /users/me/icon
 func (h *Handlers) PutMyIcon(c echo.Context) error {
 	return h.putUserIcon(c, getRequestUserID(c))
-}
-
-func (h *Handlers) putUserIcon(c echo.Context, userID uuid.UUID) error {
-	// file確認
-	uploadedFile, err := c.FormFile("file")
-	if err != nil {
-		return badRequest(err)
-	}
-
-	iconID, err := h.processMultipartFormIconUpload(c, uploadedFile)
-	if err != nil {
-		return err
-	}
-
-	// アイコン変更
-	if err := h.Repo.ChangeUserIcon(userID, iconID); err != nil {
-		return internalServerError(err, h.requestContextLogger(c))
-	}
-
-	return c.NoContent(http.StatusNoContent)
 }
 
 // PatchMe PATCH /users/me
@@ -341,6 +258,14 @@ func (h *Handlers) PutPassword(c echo.Context) error {
 
 // GetMyQRCode GET /users/me/qr-code
 func (h *Handlers) GetMyQRCode(c echo.Context) error {
+	// UserForJWTClaim QRコードで表示するJWTのClaimの形のユーザー構造体
+	type UserForJWTClaim struct {
+		jwt.StandardClaims
+		UserID      uuid.UUID `json:"userId"`
+		Name        string    `json:"name"`
+		DisplayName string    `json:"displayName"`
+	}
+
 	user := getRequestUser(c)
 
 	now := time.Now()
@@ -355,7 +280,6 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 		Name:        user.Name,
 		DisplayName: user.DisplayName,
 	})
-
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
@@ -391,51 +315,4 @@ func (h *Handlers) PostUsers(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{"id": user.ID})
-}
-
-func (h *Handlers) formatUser(user *model.User) *UserForResponse {
-	res := &UserForResponse{
-		UserID:      user.ID,
-		Name:        user.Name,
-		DisplayName: user.DisplayName,
-		IconID:      user.Icon,
-		Bot:         user.Bot,
-		TwitterID:   user.TwitterID,
-		IsOnline:    h.Repo.IsUserOnline(user.ID),
-		Suspended:   user.Status != model.UserAccountStatusActive,
-		Status:      int(user.Status),
-	}
-	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
-		res.LastOnline = &t
-	}
-	if len(res.DisplayName) == 0 {
-		res.DisplayName = res.Name
-	}
-	return res
-}
-
-func (h *Handlers) formatUserDetail(user *model.User, tagList []*model.UsersTag) (*UserDetailForResponse, error) {
-	res := &UserDetailForResponse{
-		UserID:      user.ID,
-		Name:        user.Name,
-		DisplayName: user.DisplayName,
-		IconID:      user.Icon,
-		Bot:         user.Bot,
-		TwitterID:   user.TwitterID,
-		IsOnline:    h.Repo.IsUserOnline(user.ID),
-		Suspended:   user.Status != model.UserAccountStatusActive,
-		Status:      int(user.Status),
-	}
-	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
-		res.LastOnline = &t
-	}
-	if len(res.DisplayName) == 0 {
-		res.DisplayName = res.Name
-	}
-
-	res.TagList = make([]*TagForResponse, len(tagList))
-	for i, tag := range tagList {
-		res.TagList[i] = formatTag(tag)
-	}
-	return res, nil
 }

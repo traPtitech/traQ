@@ -13,35 +13,7 @@ import (
 	"go.uber.org/zap"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
-	"time"
 )
-
-type botResponse struct {
-	BotID           uuid.UUID       `json:"botId"`
-	BotUserID       uuid.UUID       `json:"botUserId"`
-	Description     string          `json:"description"`
-	SubscribeEvents model.BotEvents `json:"subscribeEvents"`
-	State           model.BotState  `json:"state"`
-	CreatorID       uuid.UUID       `json:"creatorId"`
-	CreatedAt       time.Time       `json:"createdAt"`
-	UpdatedAt       time.Time       `json:"updatedAt"`
-}
-
-type botDetailResponse struct {
-	BotID            uuid.UUID       `json:"botId"`
-	BotUserID        uuid.UUID       `json:"botUserId"`
-	Description      string          `json:"description"`
-	SubscribeEvents  model.BotEvents `json:"subscribeEvents"`
-	State            model.BotState  `json:"state"`
-	CreatorID        uuid.UUID       `json:"creatorId"`
-	CreatedAt        time.Time       `json:"createdAt"`
-	UpdatedAt        time.Time       `json:"updatedAt"`
-	VerificationCode string          `json:"verificationCode"`
-	AccessToken      string          `json:"accessToken"`
-	PostURL          string          `json:"postUrl"`
-	Privileged       bool            `json:"privileged"`
-	BotCode          string          `json:"botCode"`
-}
 
 // GetBots GET /bots
 func (h *Handlers) GetBots(c echo.Context) error {
@@ -49,22 +21,7 @@ func (h *Handlers) GetBots(c echo.Context) error {
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
-
-	res := make([]*botResponse, len(list))
-	for i, b := range list {
-		res[i] = &botResponse{
-			BotID:           b.ID,
-			BotUserID:       b.BotUserID,
-			Description:     b.Description,
-			SubscribeEvents: b.SubscribeEvents,
-			State:           b.State,
-			CreatorID:       b.CreatorID,
-			CreatedAt:       b.CreatedAt,
-			UpdatedAt:       b.UpdatedAt,
-		}
-	}
-
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, formatBots(list))
 }
 
 // PostBots POST /bots
@@ -96,36 +53,13 @@ func (h *Handlers) PostBots(c echo.Context) error {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 
-	return c.JSON(http.StatusCreated, &botDetailResponse{
-		BotID:            b.ID,
-		BotUserID:        b.BotUserID,
-		Description:      b.Description,
-		SubscribeEvents:  b.SubscribeEvents,
-		State:            b.State,
-		CreatorID:        b.CreatorID,
-		CreatedAt:        b.CreatedAt,
-		UpdatedAt:        b.UpdatedAt,
-		VerificationCode: b.VerificationToken,
-		AccessToken:      t.AccessToken,
-		PostURL:          b.PostURL,
-		Privileged:       b.Privileged,
-		BotCode:          b.BotCode,
-	})
+	return c.JSON(http.StatusCreated, formatBotDetail(b, t))
 }
 
 // GetBot GET /bots/:botID
 func (h *Handlers) GetBot(c echo.Context) error {
 	b := getBotFromContext(c)
-	return c.JSON(http.StatusOK, &botResponse{
-		BotID:           b.ID,
-		BotUserID:       b.BotUserID,
-		Description:     b.Description,
-		SubscribeEvents: b.SubscribeEvents,
-		State:           b.State,
-		CreatorID:       b.CreatorID,
-		CreatedAt:       b.CreatedAt,
-		UpdatedAt:       b.UpdatedAt,
-	})
+	return c.JSON(http.StatusOK, formatBot(b))
 }
 
 // PatchBot PATCH /bots/:botID
@@ -191,21 +125,7 @@ func (h *Handlers) GetBotDetail(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, &botDetailResponse{
-		BotID:            b.ID,
-		BotUserID:        b.BotUserID,
-		Description:      b.Description,
-		SubscribeEvents:  b.SubscribeEvents,
-		State:            b.State,
-		CreatorID:        b.CreatorID,
-		CreatedAt:        b.CreatedAt,
-		UpdatedAt:        b.UpdatedAt,
-		VerificationCode: b.VerificationToken,
-		AccessToken:      t.AccessToken,
-		PostURL:          b.PostURL,
-		Privileged:       b.Privileged,
-		BotCode:          b.BotCode,
-	})
+	return c.JSON(http.StatusOK, formatBotDetail(b, t))
 }
 
 // PutBotEvents PUT /bots/:botID/events

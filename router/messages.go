@@ -3,32 +3,16 @@ package router
 import (
 	"fmt"
 	"github.com/gofrs/uuid"
+	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/repository"
 	"net/http"
 	"strconv"
-	"time"
-
-	"github.com/labstack/echo"
-	"github.com/traPtitech/traQ/model"
 )
-
-// MessageForResponse クライアントに返す形のメッセージオブジェクト
-type MessageForResponse struct {
-	MessageID       uuid.UUID            `json:"messageId"`
-	UserID          uuid.UUID            `json:"userId"`
-	ParentChannelID uuid.UUID            `json:"parentChannelId"`
-	Content         string               `json:"content"`
-	CreatedAt       time.Time            `json:"createdAt"`
-	UpdatedAt       time.Time            `json:"updatedAt"`
-	Pin             bool                 `json:"pin"`
-	Reported        bool                 `json:"reported"`
-	StampList       []model.MessageStamp `json:"stampList"`
-}
 
 // GetMessageByID GET /messages/:messageID
 func (h *Handlers) GetMessageByID(c echo.Context) error {
 	m := getMessageFromContext(c)
-	return c.JSON(http.StatusOK, h.formatMessage(m))
+	return c.JSON(http.StatusOK, formatMessage(m))
 }
 
 // PutMessageByID PUT /messages/:messageID
@@ -119,21 +103,13 @@ func (h *Handlers) GetMessagesByChannelID(c echo.Context) error {
 
 	resI, err, _ := h.messagesResponseCacheGroup.Do(fmt.Sprintf("%s/%d/%d", channelID, req.Limit, req.Offset), func() (interface{}, error) {
 		messages, err := h.Repo.GetMessagesByChannelID(channelID, req.Limit, req.Offset)
-		if err != nil {
-			return nil, err
-		}
-
-		res := make([]*MessageForResponse, len(messages))
-		for i, message := range messages {
-			res[i] = h.formatMessage(message)
-		}
-		return res, nil
+		return formatMessages(messages), err
 	})
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 
-	res := resI.([]*MessageForResponse)
+	res := resI.([]*messageResponse)
 	reports, err := h.Repo.GetMessageReportsByReporterID(userID)
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
@@ -171,7 +147,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusCreated, h.formatMessage(m))
+	return c.JSON(http.StatusCreated, formatMessage(m))
 }
 
 // GetDirectMessages GET /users/:userId/messages
@@ -203,13 +179,7 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 
-	// 整形
-	res := make([]*MessageForResponse, 0, req.Limit)
-	for _, message := range messages {
-		res = append(res, h.formatMessage(message))
-	}
-
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, formatMessages(messages))
 }
 
 // PostDirectMessage POST /users/:userId/messages
@@ -240,7 +210,7 @@ func (h *Handlers) PostDirectMessage(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusCreated, h.formatMessage(m))
+	return c.JSON(http.StatusCreated, formatMessage(m))
 }
 
 // PostMessageReport POST /messages/:messageID/report
@@ -304,17 +274,4 @@ func (h *Handlers) GetUnreadChannels(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, list)
-}
-
-func (h *Handlers) formatMessage(raw *model.Message) *MessageForResponse {
-	return &MessageForResponse{
-		MessageID:       raw.ID,
-		UserID:          raw.UserID,
-		ParentChannelID: raw.ChannelID,
-		Pin:             raw.Pin != nil,
-		Content:         raw.Text,
-		CreatedAt:       raw.CreatedAt,
-		UpdatedAt:       raw.UpdatedAt,
-		StampList:       raw.Stamps,
-	}
 }

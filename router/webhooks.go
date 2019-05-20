@@ -17,20 +17,7 @@ import (
 	"net/http"
 	"strings"
 	"text/template"
-	"time"
 )
-
-type webhookForResponse struct {
-	WebhookID   string    `json:"webhookId"`
-	BotUserID   string    `json:"botUserId"`
-	DisplayName string    `json:"displayName"`
-	Description string    `json:"description"`
-	Secure      bool      `json:"secure"`
-	ChannelID   string    `json:"channelId"`
-	CreatorID   string    `json:"creatorId"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-}
 
 var (
 	webhookDefTmpls = template.New("")
@@ -60,12 +47,7 @@ func (h *Handlers) GetWebhooks(c echo.Context) error {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 
-	res := make([]*webhookForResponse, len(list))
-	for i, v := range list {
-		res[i] = formatWebhook(v)
-	}
-
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, formatWebhooks(list))
 }
 
 // PostWebhooks POST /webhooks
@@ -360,24 +342,5 @@ func (h *Handlers) GetWebhookMessages(c echo.Context) error {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 
-	res := make([]*MessageForResponse, 0, req.Limit)
-	for _, message := range messages {
-		res = append(res, h.formatMessage(message))
-	}
-
-	return c.JSON(http.StatusOK, res)
-}
-
-func formatWebhook(w model.Webhook) *webhookForResponse {
-	return &webhookForResponse{
-		WebhookID:   w.GetID().String(),
-		BotUserID:   w.GetBotUserID().String(),
-		DisplayName: w.GetName(),
-		Description: w.GetDescription(),
-		Secure:      len(w.GetSecret()) > 0,
-		ChannelID:   w.GetChannelID().String(),
-		CreatorID:   w.GetCreatorID().String(),
-		CreatedAt:   w.GetCreatedAt(),
-		UpdatedAt:   w.GetUpdatedAt(),
-	}
+	return c.JSON(http.StatusOK, formatMessages(messages))
 }
