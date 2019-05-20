@@ -23,6 +23,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"runtime"
+	"strconv"
 	"sync"
 	"time"
 
@@ -261,6 +262,46 @@ func (h *Handlers) processSVGImage(c echo.Context, src io.Reader) (*bytes.Buffer
 		return nil, "", internalServerError(err, h.requestContextLogger(c))
 	}
 	return b, mimeImageSVG, nil
+}
+
+func (h *Handlers) getUserIcon(c echo.Context, user *model.User) error {
+	// ファイルメタ取得
+	meta, err := h.Repo.GetFileMeta(user.Icon)
+	if err != nil {
+		return internalServerError(err, h.requestContextLogger(c))
+	}
+
+	// ファイルオープン
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
+	if err != nil {
+		return internalServerError(err, h.requestContextLogger(c))
+	}
+	defer file.Close()
+
+	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
+	c.Response().Header().Set(headerETag, strconv.Quote(meta.Hash))
+	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
+	return nil
+}
+
+func (h *Handlers) putUserIcon(c echo.Context, userID uuid.UUID) error {
+	// file確認
+	uploadedFile, err := c.FormFile("file")
+	if err != nil {
+		return badRequest(err)
+	}
+
+	iconID, err := h.processMultipartFormIconUpload(c, uploadedFile)
+	if err != nil {
+		return err
+	}
+
+	// アイコン変更
+	if err := h.Repo.ChangeUserIcon(userID, iconID); err != nil {
+		return internalServerError(err, h.requestContextLogger(c))
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }
 
 func getRequestUser(c echo.Context) *model.User {

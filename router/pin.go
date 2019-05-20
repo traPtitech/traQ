@@ -2,41 +2,30 @@ package router
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/repository"
 	"net/http"
-	"time"
-
-	"github.com/labstack/echo"
-	"github.com/traPtitech/traQ/model"
 )
-
-type pinForResponse struct {
-	PinID     uuid.UUID           `json:"pinId"`
-	ChannelID uuid.UUID           `json:"channelId"`
-	UserID    uuid.UUID           `json:"userId"`
-	DateTime  time.Time           `json:"dateTime"`
-	Message   *MessageForResponse `json:"message"`
-}
 
 // GetChannelPin GET /channels/:channelID/pins
 func (h *Handlers) GetChannelPin(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	res, err := h.getChannelPinResponse(channelID)
+	pins, err := h.Repo.GetPinsByChannelID(channelID)
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, formatPins(pins))
 }
 
 // PostPin POST /pins
 func (h *Handlers) PostPin(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	req := struct {
+	var req struct {
 		MessageID uuid.UUID `json:"messageId"`
-	}{}
+	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return badRequest(err)
 	}
@@ -69,7 +58,7 @@ func (h *Handlers) PostPin(c echo.Context) error {
 // GetPin GET /pins/:pinID
 func (h *Handlers) GetPin(c echo.Context) error {
 	pin := getPinFromContext(c)
-	return c.JSON(http.StatusOK, h.formatPin(pin))
+	return c.JSON(http.StatusOK, formatPin(pin))
 }
 
 // DeletePin DELETE /pins/:pinID
@@ -81,27 +70,4 @@ func (h *Handlers) DeletePin(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
-}
-
-func (h *Handlers) getChannelPinResponse(channelID uuid.UUID) ([]*pinForResponse, error) {
-	pins, err := h.Repo.GetPinsByChannelID(channelID)
-	if err != nil {
-		return nil, err
-	}
-
-	res := make([]*pinForResponse, len(pins))
-	for i, pin := range pins {
-		res[i] = h.formatPin(pin)
-	}
-	return res, nil
-}
-
-func (h *Handlers) formatPin(raw *model.Pin) *pinForResponse {
-	return &pinForResponse{
-		PinID:     raw.ID,
-		ChannelID: raw.Message.ChannelID,
-		UserID:    raw.UserID,
-		DateTime:  raw.CreatedAt,
-		Message:   h.formatMessage(&raw.Message),
-	}
 }

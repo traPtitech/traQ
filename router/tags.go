@@ -2,38 +2,21 @@ package router
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/repository"
 	"net/http"
-	"time"
-
-	"github.com/labstack/echo"
-	"github.com/traPtitech/traQ/model"
 )
-
-// TagForResponse クライアントに返す形のタグ構造体
-type TagForResponse struct {
-	ID        uuid.UUID `json:"tagId"`
-	Tag       string    `json:"tag"`
-	IsLocked  bool      `json:"isLocked"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
 
 // GetUserTags GET /users/:userID/tags
 func (h *Handlers) GetUserTags(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, paramUserID)
 
-	tagList, err := h.Repo.GetUserTagsByUserID(userID)
+	tags, err := h.Repo.GetUserTagsByUserID(userID)
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 
-	res := make([]*TagForResponse, len(tagList))
-	for i, v := range tagList {
-		res[i] = formatTag(v)
-	}
-
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, formatTags(tags))
 }
 
 // PostUserTag POST /users/:userID/tags
@@ -166,15 +149,4 @@ func (h *Handlers) GetUsersByTagID(c echo.Context) error {
 		Tag:   t.Name,
 		Users: users,
 	})
-}
-
-func formatTag(ut *model.UsersTag) *TagForResponse {
-	tag := ut.Tag
-	return &TagForResponse{
-		ID:        tag.ID,
-		Tag:       tag.Name,
-		IsLocked:  ut.IsLocked,
-		CreatedAt: ut.CreatedAt,
-		UpdatedAt: ut.UpdatedAt,
-	}
 }

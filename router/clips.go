@@ -12,10 +12,10 @@ import (
 // GetClips GET /users/me/clips
 func (h *Handlers) GetClips(c echo.Context) error {
 	type clipMessageForResponse struct {
-		FolderID  uuid.UUID           `json:"folderId"`
-		ClipID    uuid.UUID           `json:"clipId"`
-		ClippedAt time.Time           `json:"clippedAt"`
-		Message   *MessageForResponse `json:"message"`
+		FolderID  uuid.UUID        `json:"folderId"`
+		ClipID    uuid.UUID        `json:"clipId"`
+		ClippedAt time.Time        `json:"clippedAt"`
+		Message   *messageResponse `json:"message"`
 	}
 
 	userID := getRequestUserID(c)
@@ -33,7 +33,7 @@ func (h *Handlers) GetClips(c echo.Context) error {
 			FolderID:  v.FolderID,
 			ClipID:    v.ID,
 			ClippedAt: v.CreatedAt,
-			Message:   h.formatMessage(&v.Message),
+			Message:   formatMessage(&v.Message),
 		}
 	}
 
@@ -122,7 +122,7 @@ func (h *Handlers) PostClip(c echo.Context) error {
 // GetClip GET /users/me/clips/:clipID
 func (h *Handlers) GetClip(c echo.Context) error {
 	clip := getClipFromContext(c)
-	return c.JSON(http.StatusOK, h.formatMessage(&clip.Message))
+	return c.JSON(http.StatusOK, formatMessage(&clip.Message))
 }
 
 // DeleteClip DELETE /users/me/clips/:clipID
@@ -238,9 +238,9 @@ func (h *Handlers) GetClipFolder(c echo.Context) error {
 	folder := getClipFolderFromContext(c)
 
 	type clipMessageForResponse struct {
-		ClipID    uuid.UUID           `json:"clipId"`
-		ClippedAt time.Time           `json:"clippedAt"`
-		Message   *MessageForResponse `json:"message"`
+		ClipID    uuid.UUID        `json:"clipId"`
+		ClippedAt time.Time        `json:"clippedAt"`
+		Message   *messageResponse `json:"message"`
 	}
 
 	// クリップ取得
@@ -255,7 +255,7 @@ func (h *Handlers) GetClipFolder(c echo.Context) error {
 		res[i] = &clipMessageForResponse{
 			ClipID:    v.ID,
 			ClippedAt: v.CreatedAt,
-			Message:   h.formatMessage(&v.Message),
+			Message:   formatMessage(&v.Message),
 		}
 	}
 
