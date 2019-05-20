@@ -166,7 +166,9 @@ func (repo *GormRepository) GetMessageByID(messageID uuid.UUID) (*model.Message,
 		return nil, ErrNotFound
 	}
 	message := &model.Message{}
-	if err := repo.db.Where(&model.Message{ID: messageID}).Take(message).Error; err != nil {
+	if err := repo.db.Preload("Stamps", func(db *gorm.DB) *gorm.DB {
+		return db.Order("messages_stamps.updated_at")
+	}).Where(&model.Message{ID: messageID}).Take(message).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return message, nil
@@ -179,6 +181,9 @@ func (repo *GormRepository) GetMessagesByChannelID(channelID uuid.UUID, limit, o
 		return arr, nil
 	}
 	err = repo.db.
+		Preload("Stamps", func(db *gorm.DB) *gorm.DB {
+			return db.Order("messages_stamps.updated_at")
+		}).
 		Where(&model.Message{ChannelID: channelID}).
 		Order("created_at DESC").
 		Scopes(limitAndOffset(limit, offset)).
@@ -194,6 +199,9 @@ func (repo *GormRepository) GetMessagesByUserID(userID uuid.UUID, limit, offset 
 		return arr, nil
 	}
 	err = repo.db.
+		Preload("Stamps", func(db *gorm.DB) *gorm.DB {
+			return db.Order("messages_stamps.updated_at")
+		}).
 		Where(&model.Message{UserID: userID}).
 		Order("created_at DESC").
 		Scopes(limitAndOffset(limit, offset)).

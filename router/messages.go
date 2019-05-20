@@ -15,15 +15,15 @@ import (
 
 // MessageForResponse クライアントに返す形のメッセージオブジェクト
 type MessageForResponse struct {
-	MessageID       uuid.UUID             `json:"messageId"`
-	UserID          uuid.UUID             `json:"userId"`
-	ParentChannelID uuid.UUID             `json:"parentChannelId"`
-	Content         string                `json:"content"`
-	CreatedAt       time.Time             `json:"createdAt"`
-	UpdatedAt       time.Time             `json:"updatedAt"`
-	Pin             bool                  `json:"pin"`
-	Reported        bool                  `json:"reported"`
-	StampList       []*model.MessageStamp `json:"stampList"`
+	MessageID       uuid.UUID            `json:"messageId"`
+	UserID          uuid.UUID            `json:"userId"`
+	ParentChannelID uuid.UUID            `json:"parentChannelId"`
+	Content         string               `json:"content"`
+	CreatedAt       time.Time            `json:"createdAt"`
+	UpdatedAt       time.Time            `json:"updatedAt"`
+	Pin             bool                 `json:"pin"`
+	Reported        bool                 `json:"reported"`
+	StampList       []model.MessageStamp `json:"stampList"`
 }
 
 // GetMessageByID GET /messages/:messageID
@@ -313,11 +313,6 @@ func (h *Handlers) formatMessage(raw *model.Message) *MessageForResponse {
 		h.Logger.Error("failed to IsPinned", zap.Error(err))
 	}
 
-	stampList, err := h.Repo.GetMessageStamps(raw.ID)
-	if err != nil {
-		h.Logger.Error("failed to GetMessageStamps", zap.Error(err))
-	}
-
 	res := &MessageForResponse{
 		MessageID:       raw.ID,
 		UserID:          raw.UserID,
@@ -326,7 +321,7 @@ func (h *Handlers) formatMessage(raw *model.Message) *MessageForResponse {
 		Content:         raw.Text,
 		CreatedAt:       raw.CreatedAt,
 		UpdatedAt:       raw.UpdatedAt,
-		StampList:       stampList,
+		StampList:       raw.Stamps,
 	}
 	return res
 }

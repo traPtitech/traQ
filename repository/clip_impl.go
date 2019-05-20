@@ -136,7 +136,9 @@ func (repo *GormRepository) GetClipMessage(id uuid.UUID) (*model.Clip, error) {
 		return nil, ErrNotFound
 	}
 	c := &model.Clip{}
-	if err := repo.db.Preload("Message").Where(&model.Clip{ID: id}).Take(c).Error; err != nil {
+	if err := repo.db.Preload("Message").Preload("Message.Stamps", func(db *gorm.DB) *gorm.DB {
+		return db.Order("messages_stamps.updated_at")
+	}).Where(&model.Clip{ID: id}).Take(c).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return c, nil
@@ -150,6 +152,9 @@ func (repo *GormRepository) GetClipMessages(folderID uuid.UUID) (res []*model.Cl
 	}
 	err = repo.db.
 		Preload("Message").
+		Preload("Message.Stamps", func(db *gorm.DB) *gorm.DB {
+			return db.Order("messages_stamps.updated_at")
+		}).
 		Where(&model.Clip{FolderID: folderID}).
 		Order("updated_at").
 		Find(&res).
@@ -165,6 +170,9 @@ func (repo *GormRepository) GetClipMessagesByUser(userID uuid.UUID) (res []*mode
 	}
 	err = repo.db.
 		Preload("Message").
+		Preload("Message.Stamps", func(db *gorm.DB) *gorm.DB {
+			return db.Order("messages_stamps.updated_at")
+		}).
 		Where(&model.Clip{UserID: userID}).
 		Order("updated_at").
 		Find(&res).
