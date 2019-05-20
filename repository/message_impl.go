@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"github.com/traPtitech/traQ/utils/message"
 	"strings"
 
 	"github.com/gofrs/uuid"
@@ -9,7 +10,6 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/message"
 )
 
 // CreateMessage implements MessageRepository interface.
@@ -166,9 +166,7 @@ func (repo *GormRepository) GetMessageByID(messageID uuid.UUID) (*model.Message,
 		return nil, ErrNotFound
 	}
 	message := &model.Message{}
-	if err := repo.db.Preload("Stamps", func(db *gorm.DB) *gorm.DB {
-		return db.Order("messages_stamps.updated_at")
-	}).Where(&model.Message{ID: messageID}).Take(message).Error; err != nil {
+	if err := repo.db.Scopes(messagePreloads).Where(&model.Message{ID: messageID}).Take(message).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return message, nil
@@ -181,12 +179,9 @@ func (repo *GormRepository) GetMessagesByChannelID(channelID uuid.UUID, limit, o
 		return arr, nil
 	}
 	err = repo.db.
-		Preload("Stamps", func(db *gorm.DB) *gorm.DB {
-			return db.Order("messages_stamps.updated_at")
-		}).
+		Scopes(limitAndOffset(limit, offset), messagePreloads).
 		Where(&model.Message{ChannelID: channelID}).
 		Order("created_at DESC").
-		Scopes(limitAndOffset(limit, offset)).
 		Find(&arr).
 		Error
 	return arr, err
@@ -199,12 +194,9 @@ func (repo *GormRepository) GetMessagesByUserID(userID uuid.UUID, limit, offset 
 		return arr, nil
 	}
 	err = repo.db.
-		Preload("Stamps", func(db *gorm.DB) *gorm.DB {
-			return db.Order("messages_stamps.updated_at")
-		}).
+		Scopes(limitAndOffset(limit, offset), messagePreloads).
 		Where(&model.Message{UserID: userID}).
 		Order("created_at DESC").
-		Scopes(limitAndOffset(limit, offset)).
 		Find(&arr).
 		Error
 	return arr, err
@@ -322,4 +314,12 @@ func (repo *GormRepository) GetArchivedMessagesByID(messageID uuid.UUID) ([]*mod
 		Find(&r).
 		Error
 	return r, err
+}
+
+func messagePreloads(db *gorm.DB) *gorm.DB {
+	return db.
+		Preload("Stamps", func(db *gorm.DB) *gorm.DB {
+			return db.Order("updated_at")
+		}).
+		Preload("Pin")
 }

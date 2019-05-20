@@ -9,7 +9,7 @@ import (
 type Pin struct {
 	ID        uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	MessageID uuid.UUID `gorm:"type:char(36);not null;unique"`
-	Message   Message   `gorm:"association_autoupdate:false;association_autocreate:false"`
+	Message   Message   `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;"`
 	UserID    uuid.UUID `gorm:"type:char(36);not null"`
 	CreatedAt time.Time `gorm:"precision:6"`
 }

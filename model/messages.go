@@ -15,6 +15,7 @@ type Message struct {
 	UpdatedAt time.Time      `gorm:"precision:6"`
 	DeletedAt *time.Time     `gorm:"precision:6;index"`
 	Stamps    []MessageStamp `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;foreignkey:MessageID"`
+	Pin       *Pin           `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;foreignkey:MessageID"`
 }
 
 // TableName DBの名前を指定するメソッド

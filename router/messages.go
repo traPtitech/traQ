@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/repository"
-	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 	"time"
@@ -308,20 +307,14 @@ func (h *Handlers) GetUnreadChannels(c echo.Context) error {
 }
 
 func (h *Handlers) formatMessage(raw *model.Message) *MessageForResponse {
-	isPinned, err := h.Repo.IsPinned(raw.ID)
-	if err != nil {
-		h.Logger.Error("failed to IsPinned", zap.Error(err))
-	}
-
-	res := &MessageForResponse{
+	return &MessageForResponse{
 		MessageID:       raw.ID,
 		UserID:          raw.UserID,
 		ParentChannelID: raw.ChannelID,
-		Pin:             isPinned,
+		Pin:             raw.Pin != nil,
 		Content:         raw.Text,
 		CreatedAt:       raw.CreatedAt,
 		UpdatedAt:       raw.UpdatedAt,
 		StampList:       raw.Stamps,
 	}
-	return res
 }
