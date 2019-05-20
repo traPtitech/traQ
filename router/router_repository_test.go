@@ -1427,6 +1427,7 @@ func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 		Text:      text,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
+		Stamps:    make([]model.MessageStamp, 0),
 	}
 
 	repo.MessagesLock.Lock()
