@@ -26,6 +26,7 @@ func (repo *GormRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 		UserID:    userID,
 		ChannelID: channelID,
 		Text:      text,
+		Stamps:    []model.MessageStamp{},
 	}
 	err := repo.transact(func(tx *gorm.DB) error {
 		if err := tx.Create(m).Error; err != nil {
