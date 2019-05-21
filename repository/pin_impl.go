@@ -38,7 +38,7 @@ func (repo *GormRepository) GetPin(id uuid.UUID) (p *model.Pin, err error) {
 		return nil, ErrNotFound
 	}
 	p = &model.Pin{}
-	err = repo.db.Preload("Message").Where(&model.Pin{ID: id}).Take(p).Error
+	err = repo.db.Scopes(pinPreloads).Where(&model.Pin{ID: id}).Take(p).Error
 	if err != nil {
 		return nil, convertError(err)
 	}
@@ -94,9 +94,17 @@ func (repo *GormRepository) GetPinsByChannelID(channelID uuid.UUID) (pins []*mod
 		return pins, nil
 	}
 	err = repo.db.
+		Scopes(pinPreloads).
 		Joins("INNER JOIN messages ON messages.id = pins.message_id AND messages.channel_id = ?", channelID).
-		Preload("Message").
 		Find(&pins).
 		Error
 	return
+}
+
+func pinPreloads(db *gorm.DB) *gorm.DB {
+	return db.
+		Preload("Message").
+		Preload("Message.Stamps", func(db *gorm.DB) *gorm.DB {
+			return db.Order("updated_at")
+		})
 }

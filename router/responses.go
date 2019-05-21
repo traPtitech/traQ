@@ -126,13 +126,15 @@ type pinResponse struct {
 }
 
 func formatPin(pin *model.Pin) *pinResponse {
-	return &pinResponse{
+	res := &pinResponse{
 		PinID:     pin.ID,
 		ChannelID: pin.Message.ChannelID,
 		UserID:    pin.UserID,
 		DateTime:  pin.CreatedAt,
 		Message:   formatMessage(&pin.Message),
 	}
+	res.Message.Pin = true
+	return res
 }
 
 func formatPins(pins []*model.Pin) []*pinResponse {
