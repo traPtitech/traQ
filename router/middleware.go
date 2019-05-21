@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 	"net/http"
 	"strconv"
 	"strings"
@@ -299,12 +300,14 @@ func getStampFromContext(c echo.Context) *model.Stamp {
 
 // ValidateMessageID 'messageID'パラメータのメッセージを検証するミドルウェア
 func (h *Handlers) ValidateMessageID() echo.MiddlewareFunc {
+	var cache singleflight.Group
+
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			messageID := getRequestParamAsUUID(c, paramMessageID)
 			userID := getRequestUserID(c)
 
-			m, err := h.Repo.GetMessageByID(messageID)
+			mI, err, _ := cache.Do(messageID.String(), func() (interface{}, error) { return h.Repo.GetMessageByID(messageID) })
 			if err != nil {
 				switch err {
 				case repository.ErrNotFound:
@@ -314,6 +317,7 @@ func (h *Handlers) ValidateMessageID() echo.MiddlewareFunc {
 				}
 			}
 
+			m := mI.(*model.Message)
 			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
 				return internalServerError(err, h.requestContextLogger(c))
 			} else if !ok {
