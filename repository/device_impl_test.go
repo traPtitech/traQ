@@ -26,6 +26,8 @@ func TestRepositoryImpl_RegisterDevice(t *testing.T) {
 		{id2, token2, false},
 		{id2, token2, false},
 		{id1, token2, true},
+		{uuid.Nil, token2, true},
+		{id1, "", true},
 	}
 
 	for _, v := range cases {

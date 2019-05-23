@@ -20,3 +20,15 @@ type Stamp struct {
 func (*Stamp) TableName() string {
 	return "stamps"
 }
+
+// FavoriteStamp お気に入りスタンプ構造体
+type FavoriteStamp struct {
+	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key" json:"-"`
+	StampID   uuid.UUID `gorm:"type:char(36);not null;primary_key" json:"stampId"`
+	CreatedAt time.Time `gorm:"precision:6"                        json:"createdAt"`
+}
+
+// TableName テーブル名を取得します
+func (*FavoriteStamp) TableName() string {
+	return "favorite_stamps"
+}

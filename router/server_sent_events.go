@@ -197,6 +197,8 @@ func (s *SSEStreamer) setupSubscriber(h *hub.Hub) {
 		event.ChannelUnstared,
 		event.ChannelMuted,
 		event.ChannelUnmuted,
+		event.FavoriteStampAdded,
+		event.FavoriteStampRemoved,
 		event.ClipCreated,
 		event.ClipDeleted,
 		event.ClipMoved,
@@ -378,6 +380,22 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 			EventType: "CHANNEL_UNMUTED",
 			Payload: Payload{
 				"id": ev.Fields["channel_id"].(uuid.UUID),
+			},
+		}
+		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+	case event.FavoriteStampAdded:
+		ed = &eventData{
+			EventType: "FAVORITE_STAMP_ADDED",
+			Payload: Payload{
+				"id": ev.Fields["stamp_id"].(uuid.UUID),
+			},
+		}
+		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+	case event.FavoriteStampRemoved:
+		ed = &eventData{
+			EventType: "FAVORITE_STAMP_REMOVED",
+			Payload: Payload{
+				"id": ev.Fields["stamp_id"].(uuid.UUID),
 			},
 		}
 		targets[ev.Fields["user_id"].(uuid.UUID)] = true
