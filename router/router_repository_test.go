@@ -80,6 +80,18 @@ type TestRepository struct {
 	OAuth2TokensLock          sync.RWMutex
 }
 
+func (repo *TestRepository) AddFavoriteStamp(userID, stampID uuid.UUID) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) RemoveFavoriteStamp(userID, stampID uuid.UUID) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetUserFavoriteStamps(userID uuid.UUID) ([]uuid.UUID, error) {
+	panic("implement me")
+}
+
 func (repo *TestRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*repository.UserUnreadChannel, error) {
 	panic("implement me")
 }
