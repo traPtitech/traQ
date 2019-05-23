@@ -133,15 +133,13 @@ func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 		if err := tx.Where(&model.Message{ID: messageID}).First(&m).Error; err != nil {
 			return convertError(err)
 		}
-
-		if err := tx.Delete(&m).Error; err != nil {
-			return err
-		}
-		if err := tx.Where(&model.Unread{MessageID: messageID}).Delete(model.Unread{}).Error; err != nil {
-			return err
-		}
-		if err := tx.Where(&model.Pin{MessageID: messageID}).Delete(model.Pin{}).Error; err != nil {
-			return err
+		errs := tx.
+			Delete(&m).
+			Delete(model.Unread{}, &model.Unread{MessageID: messageID}).
+			Delete(model.Pin{}, &model.Pin{MessageID: messageID}).
+			GetErrors()
+		if len(errs) > 0 {
+			return errs[0]
 		}
 		ok = true
 		return nil

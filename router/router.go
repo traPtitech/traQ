@@ -86,7 +86,6 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 					apiUsersMeUnread.GET("/channels", h.GetUnreadChannels, requires(permission.GetUnread))
 					apiUsersMeUnread.DELETE("/channels/:channelID", h.DeleteUnread, requires(permission.DeleteUnread))
 				}
-
 				apiUsersMeMute := apiUsersMe.Group("/mute", botGuard(blockAlways))
 				{
 					apiUsersMeMute.GET("", h.GetMutedChannelIDs, requires(permission.GetMutedChannels))
@@ -95,6 +94,12 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 						apiUsersMeMuteCid.POST("", h.PostMutedChannel, requires(permission.MuteChannel))
 						apiUsersMeMuteCid.DELETE("", h.DeleteMutedChannel, requires(permission.UnmuteChannel))
 					}
+				}
+				apiUsersMeFavoriteStamps := apiUsersMe.Group("/favorite-stamps", botGuard(blockAlways))
+				{
+					apiUsersMeFavoriteStamps.GET("", h.GetMyFavoriteStamps)
+					apiUsersMeFavoriteStamps.POST("", h.PostMyFavoriteStamp)
+					apiUsersMeFavoriteStamps.DELETE("/:stampID", h.DeleteMyFavoriteStamp)
 				}
 			}
 			apiUsersUID := apiUsers.Group("/:userID", h.ValidateUserID(false))
