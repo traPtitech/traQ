@@ -23,6 +23,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -355,7 +356,7 @@ func conflict(err ...interface{}) error {
 
 func internalServerError(err error, logger *zap.Logger) error {
 	if logger != nil {
-		logger.Error(unexpectedError, logging.ErrorReport(runtime.Caller(1)), zap.Error(err))
+		logger.Error(fmt.Sprintf("%s\n%s", err.Error(), debug.Stack()), logging.ErrorReport(runtime.Caller(1)), zap.Error(err))
 	}
 	return echo.NewHTTPError(http.StatusInternalServerError)
 }
