@@ -49,3 +49,11 @@ stop-docker-test-db:
 .PHONY: down-docker-test-db
 down-docker-test-db:
 	docker rm -f -v traq-test-db
+
+.PHONY: make-db-docs
+make-db-docs:
+	TBLS_DSN="mysql://root:password@127.0.0.1:3002/traq" tbls doc -t svg
+
+.PHONY: diff-db-docs
+diff-db-docs:
+	TBLS_DSN="mysql://root:password@127.0.0.1:3002/traq" tbls diff -t svg
