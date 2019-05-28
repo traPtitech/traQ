@@ -13,6 +13,7 @@
 | [clip_folders](clip_folders.md) | 5 |  | BASE TABLE |
 | [clips](clips.md) | 6 |  | BASE TABLE |
 | [devices](devices.md) | 3 |  | BASE TABLE |
+| [dm_channel_mappings](dm_channel_mappings.md) | 3 |  | BASE TABLE |
 | [files](files.md) | 12 |  | BASE TABLE |
 | [files_acl](files_acl.md) | 3 |  | BASE TABLE |
 | [message_reports](message_reports.md) | 6 |  | BASE TABLE |

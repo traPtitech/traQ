@@ -30,7 +30,7 @@ CREATE TABLE `channels` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [messages](messages.md) [mutes](mutes.md) [stars](stars.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) |  |  |
+| id | char(36) |  | false | [dm_channel_mappings](dm_channel_mappings.md) [messages](messages.md) [mutes](mutes.md) [stars](stars.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) |  |  |
 | name | varchar(20) |  | false |  |  |  |
 | parent_id | char(36) |  | false |  |  |  |
 | topic | text |  | false |  |  |  |

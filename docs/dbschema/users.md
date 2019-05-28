@@ -31,7 +31,7 @@ CREATE TABLE `users` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [clip_folders](clip_folders.md) [clips](clips.md) [devices](devices.md) [messages](messages.md) [messages_stamps](messages_stamps.md) [mutes](mutes.md) [pins](pins.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [users_tags](users_tags.md) |  |  |
+| id | char(36) |  | false | [clip_folders](clip_folders.md) [clips](clips.md) [devices](devices.md) [dm_channel_mappings](dm_channel_mappings.md) [dm_channel_mappings](dm_channel_mappings.md) [messages](messages.md) [messages_stamps](messages_stamps.md) [mutes](mutes.md) [pins](pins.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [users_tags](users_tags.md) |  |  |
 | name | varchar(32) |  | false |  |  |  |
 | display_name | varchar(64) |  | false |  |  |  |
 | password | char(128) |  | false |  |  |  |

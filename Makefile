@@ -52,6 +52,7 @@ down-docker-test-db:
 
 .PHONY: make-db-docs
 make-db-docs:
+	rm -r ./docs/dbschema
 	TBLS_DSN="mysql://root:password@127.0.0.1:3002/traq" tbls doc -t svg
 
 .PHONY: diff-db-docs
