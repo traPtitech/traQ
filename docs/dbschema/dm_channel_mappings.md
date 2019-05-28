@@ -2,6 +2,8 @@
 
 ## Description
 
+DMチャンネルマッピングテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -25,9 +27,9 @@ CREATE TABLE `dm_channel_mappings` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| channel_id | char(36) |  | false |  | [channels](channels.md) |  |
-| user1 | char(36) |  | false |  | [users](users.md) |  |
-| user2 | char(36) |  | false |  | [users](users.md) |  |
+| channel_id | char(36) |  | false |  | [channels](channels.md) | チャンネルUUID |
+| user1 | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
+| user2 | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
 
 ## Constraints
 

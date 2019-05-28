@@ -2,6 +2,8 @@
 
 ## Description
 
+ユーザータグテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -26,11 +28,11 @@ CREATE TABLE `users_tags` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| user_id | char(36) |  | false |  | [users](users.md) |  |
-| tag_id | char(36) |  | false |  | [tags](tags.md) |  |
-| is_locked | tinyint(1) | 0 | false |  |  |  |
-| created_at | timestamp(6) |  | true |  |  |  |
-| updated_at | timestamp(6) |  | true |  |  |  |
+| user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
+| tag_id | char(36) |  | false |  | [tags](tags.md) | タグUUID |
+| is_locked | tinyint(1) | 0 | false |  |  | ロックされているかどうか |
+| created_at | timestamp(6) |  | true |  |  | 作成日時 |
+| updated_at | timestamp(6) |  | true |  |  | 更新日時 |
 
 ## Constraints
 

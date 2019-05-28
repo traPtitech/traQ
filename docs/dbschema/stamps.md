@@ -2,6 +2,8 @@
 
 ## Description
 
+スタンプテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -27,13 +29,13 @@ CREATE TABLE `stamps` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [messages_stamps](messages_stamps.md) |  |  |
-| name | varchar(32) |  | false |  |  |  |
-| creator_id | char(36) |  | false |  |  |  |
-| file_id | char(36) |  | false |  | [files](files.md) |  |
-| created_at | timestamp(6) |  | true |  |  |  |
-| updated_at | timestamp(6) |  | true |  |  |  |
-| deleted_at | timestamp(6) |  | true |  |  |  |
+| id | char(36) |  | false | [messages_stamps](messages_stamps.md) |  | スタンプUUID |
+| name | varchar(32) |  | false |  |  | スタンプ名 |
+| creator_id | char(36) |  | false |  | [users](users.md) | 作成者UUID |
+| file_id | char(36) |  | false |  | [files](files.md) | ファイルUUID |
+| created_at | timestamp(6) |  | true |  |  | 作成日時 |
+| updated_at | timestamp(6) |  | true |  |  | 更新日時 |
+| deleted_at | timestamp(6) |  | true |  |  | 削除日時 |
 
 ## Constraints
 

@@ -1,3 +1,163 @@
 docPath: docs/dbschema
 er:
   format: svg
+
+relations:
+  - table: users
+    columns:
+      - icon
+    parentTable: files
+    parentColumns:
+      - id
+  - table: channels
+    columns:
+      - creator_id
+      - updater_id
+    parentTable: users
+    parentColumns:
+      - id
+  - table: channels
+    columns:
+      - parent_id
+    parentTable: channels
+    parentColumns:
+      - id
+  - table: stamps
+    columns:
+      - creator_id
+    parentTable: users
+    parentColumns:
+      - id
+
+comments:
+  - table: users
+    tableComment: ユーザーテーブル
+    columnComments:
+      id: ユーザーUUID
+      name: traP ID
+      display_name: 表示名
+      password: ハッシュ化されたパスワード
+      salt: パスワードソルト
+      icon: アイコンファイルUUID
+      status: アカウント状態
+      bot: BOTユーザーかどうか
+      role: ユーザーロール
+      twitter_id: Twitter ID
+      last_online: 最終オンライン日時
+      created_at: 作成日時
+      updated_at: 更新日時
+  - table: channels
+    tableComment: チャンネルテーブル
+    columnComments:
+      id: チャンネルUUID
+      name: チャンネル名
+      parent_id: 親チャンネルUUID
+      topic: チャンネルトピック
+      is_forced: 強制通知チャンネルかどうか
+      is_public: 公開チャンネルかどうか
+      is_visible: 可視チャンネルかどうか
+      creator_id: チャンネル作成者UUID
+      updater_id: チャンネル更新者UUID
+      created_at: チャンネル作成日時
+      updated_at: チャンネル更新日時
+      deleted_at: チャンネル削除日時
+  - table: messages
+    tableComment: メッセージテーブル
+    columnComments:
+      id: メッセージUUID
+      user_id: 投稿ユーザーUUID
+      channel_id: 投稿先チャンネルUUID
+      text: 本文
+      created_at: 作成日時
+      updated_at: 更新日時
+      deleted_at: 削除日時
+  - table: stars
+    tableComment: お気に入りチャンネルテーブル
+    columnComments:
+      user_id: ユーザーUUID
+      channel_id: チャンネルUUID
+  - table: mutes
+    tableComment: ミュートチャンネルテーブル
+    columnComments:
+      user_id: ユーザーUUID
+      channel_id: チャンネルUUID
+  - table: users_private_channels
+    tableComment: プライベートチャンネル参加者テーブル
+    columnComments:
+      user_id: ユーザーUUID
+      channel_id: チャンネルUUID
+  - table: users_subscribe_channels
+    tableComment: チャンネル購読者テーブル
+    columnComments:
+      user_id: ユーザーUUID
+      channel_id: チャンネルUUID
+  - table: unreads
+    tableComment: メッセージ未読テーブル
+    columnComments:
+      user_id: ユーザーUUID
+      message_id: メッセージUUID
+      noticeable: 注目メッセージかどうか
+      created_at: 未読日時
+  - table: users_tags
+    tableComment: ユーザータグテーブル
+    columnComments:
+      user_id: ユーザーUUID
+      tag_id: タグUUID
+      is_locked: ロックされているかどうか
+      created_at: 作成日時
+      updated_at: 更新日時
+  - table: tags
+    tableComment: タグテーブル
+    columnComments:
+      id: タグUUID
+      name: タグ文字列
+      created_at: 作成日時
+      updated_at: 更新日時
+  - table: stamps
+    tableComment: スタンプテーブル
+    columnComments:
+      id: スタンプUUID
+      name: スタンプ名
+      creator_id: 作成者UUID
+      file_id: ファイルUUID
+      created_at: 作成日時
+      updated_at: 更新日時
+      deleted_at: 削除日時
+  - table: messages_stamps
+    tableComment: メッセージスタンプテーブル
+    columnComments:
+      message_id: メッセージUUID
+      stamp_id: スタンプUUID
+      user_id: ユーザーUUID
+      count: スタンプ数
+      created_at: 作成日時
+      updated_at: 更新日時
+  - table: devices
+    tableComment: FCMデバイステーブル
+    columnComments:
+      token: FCMデバイストークン
+      user_id: ユーザーUUID
+      created_at: 作成日時
+  - table: clips
+    tableComment: クリップテーブル
+    columnComments:
+      id: クリップUUID
+      user_id: ユーザーUUID
+      message_id: メッセージUUID
+      folder_id: クリップフォルダUUID
+      created_at: 作成日時
+      updated_at: 更新日時
+  - table: clip_folders
+    tableComment: クリップフォルダテーブル
+    columnComments:
+      id: クリップフォルダUUID
+      user_id: ユーザーUUID
+      name: クリップフォルダ名
+      created_at: 作成日時
+      updated_at: 更新日時
+  - table: dm_channel_mappings
+    tableComment: DMチャンネルマッピングテーブル
+    columnComments:
+      channel_id: チャンネルUUID
+      user1: ユーザーUUID
+      user2: ユーザーUUID

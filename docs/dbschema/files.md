@@ -29,7 +29,7 @@ CREATE TABLE `files` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [stamps](stamps.md) |  |  |
+| id | char(36) |  | false | [stamps](stamps.md) [users](users.md) |  |  |
 | name | text |  | false |  |  |  |
 | mime | text |  | false |  |  |  |
 | size | bigint(20) |  | false |  |  |  |

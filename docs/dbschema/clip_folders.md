@@ -2,6 +2,8 @@
 
 ## Description
 
+クリップフォルダテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -24,11 +26,11 @@ CREATE TABLE `clip_folders` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [clips](clips.md) |  |  |
-| user_id | char(36) |  | false |  | [users](users.md) |  |
-| name | varchar(30) |  | false |  |  |  |
-| created_at | timestamp(6) |  | true |  |  |  |
-| updated_at | timestamp(6) |  | true |  |  |  |
+| id | char(36) |  | false | [clips](clips.md) |  | クリップフォルダUUID |
+| user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
+| name | varchar(30) |  | false |  |  | クリップフォルダ名 |
+| created_at | timestamp(6) |  | true |  |  | 作成日時 |
+| updated_at | timestamp(6) |  | true |  |  | 更新日時 |
 
 ## Constraints
 

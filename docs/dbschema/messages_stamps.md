@@ -2,6 +2,8 @@
 
 ## Description
 
+メッセージスタンプテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -30,12 +32,12 @@ CREATE TABLE `messages_stamps` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| message_id | char(36) |  | false |  | [messages](messages.md) |  |
-| stamp_id | char(36) |  | false |  | [stamps](stamps.md) |  |
-| user_id | char(36) |  | false |  | [users](users.md) |  |
-| count | int(11) |  | false |  |  |  |
-| created_at | timestamp(6) |  | true |  |  |  |
-| updated_at | timestamp(6) |  | true |  |  |  |
+| message_id | char(36) |  | false |  | [messages](messages.md) | メッセージUUID |
+| stamp_id | char(36) |  | false |  | [stamps](stamps.md) | スタンプUUID |
+| user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
+| count | int(11) |  | false |  |  | スタンプ数 |
+| created_at | timestamp(6) |  | true |  |  | 作成日時 |
+| updated_at | timestamp(6) |  | true |  |  | 更新日時 |
 
 ## Constraints
 

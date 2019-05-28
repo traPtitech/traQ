@@ -2,6 +2,8 @@
 
 ## Description
 
+ユーザーテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -31,19 +33,19 @@ CREATE TABLE `users` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [clip_folders](clip_folders.md) [clips](clips.md) [devices](devices.md) [dm_channel_mappings](dm_channel_mappings.md) [dm_channel_mappings](dm_channel_mappings.md) [messages](messages.md) [messages_stamps](messages_stamps.md) [mutes](mutes.md) [pins](pins.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [users_tags](users_tags.md) |  |  |
-| name | varchar(32) |  | false |  |  |  |
-| display_name | varchar(64) |  | false |  |  |  |
-| password | char(128) |  | false |  |  |  |
-| salt | char(128) |  | false |  |  |  |
-| icon | char(36) |  | false |  |  |  |
-| status | tinyint(4) | 0 | false |  |  |  |
-| bot | tinyint(1) | 0 | false |  |  |  |
-| role | varchar(30) | user | false |  |  |  |
-| twitter_id | varchar(15) |  | false |  |  |  |
-| last_online | timestamp(6) |  | true |  |  |  |
-| created_at | timestamp(6) |  | true |  |  |  |
-| updated_at | timestamp(6) |  | true |  |  |  |
+| id | char(36) |  | false | [clip_folders](clip_folders.md) [clips](clips.md) [devices](devices.md) [dm_channel_mappings](dm_channel_mappings.md) [dm_channel_mappings](dm_channel_mappings.md) [messages](messages.md) [messages_stamps](messages_stamps.md) [mutes](mutes.md) [pins](pins.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [users_tags](users_tags.md) [channels](channels.md) [stamps](stamps.md) |  | ユーザーUUID |
+| name | varchar(32) |  | false |  |  | traP ID |
+| display_name | varchar(64) |  | false |  |  | 表示名 |
+| password | char(128) |  | false |  |  | ハッシュ化されたパスワード |
+| salt | char(128) |  | false |  |  | パスワードソルト |
+| icon | char(36) |  | false |  | [files](files.md) | アイコンファイルUUID |
+| status | tinyint(4) | 0 | false |  |  | アカウント状態 |
+| bot | tinyint(1) | 0 | false |  |  | BOTユーザーかどうか |
+| role | varchar(30) | user | false |  |  | ユーザーロール |
+| twitter_id | varchar(15) |  | false |  |  | Twitter ID |
+| last_online | timestamp(6) |  | true |  |  | 最終オンライン日時 |
+| created_at | timestamp(6) |  | true |  |  | 作成日時 |
+| updated_at | timestamp(6) |  | true |  |  | 更新日時 |
 
 ## Constraints
 

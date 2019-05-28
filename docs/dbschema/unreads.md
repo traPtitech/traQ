@@ -2,6 +2,8 @@
 
 ## Description
 
+メッセージ未読テーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -24,10 +26,10 @@ CREATE TABLE `unreads` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| user_id | char(36) |  | false |  | [users](users.md) |  |
-| message_id | char(36) |  | false |  | [messages](messages.md) |  |
-| noticeable | tinyint(1) | 0 | false |  |  |  |
-| created_at | timestamp(6) |  | true |  |  |  |
+| user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
+| message_id | char(36) |  | false |  | [messages](messages.md) | メッセージUUID |
+| noticeable | tinyint(1) | 0 | false |  |  | 注目メッセージかどうか |
+| created_at | timestamp(6) |  | true |  |  | 未読日時 |
 
 ## Constraints
 

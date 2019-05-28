@@ -2,6 +2,8 @@
 
 ## Description
 
+チャンネルテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -30,18 +32,18 @@ CREATE TABLE `channels` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [dm_channel_mappings](dm_channel_mappings.md) [messages](messages.md) [mutes](mutes.md) [stars](stars.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) |  |  |
-| name | varchar(20) |  | false |  |  |  |
-| parent_id | char(36) |  | false |  |  |  |
-| topic | text |  | false |  |  |  |
-| is_forced | tinyint(1) | 0 | false |  |  |  |
-| is_public | tinyint(1) | 0 | false |  |  |  |
-| is_visible | tinyint(1) | 0 | false |  |  |  |
-| creator_id | char(36) |  | false |  |  |  |
-| updater_id | char(36) |  | false |  |  |  |
-| created_at | timestamp(6) |  | true |  |  |  |
-| updated_at | timestamp(6) |  | true |  |  |  |
-| deleted_at | timestamp(6) |  | true |  |  |  |
+| id | char(36) |  | false | [dm_channel_mappings](dm_channel_mappings.md) [messages](messages.md) [mutes](mutes.md) [stars](stars.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [channels](channels.md) |  | チャンネルUUID |
+| name | varchar(20) |  | false |  |  | チャンネル名 |
+| parent_id | char(36) |  | false |  | [channels](channels.md) | 親チャンネルUUID |
+| topic | text |  | false |  |  | チャンネルトピック |
+| is_forced | tinyint(1) | 0 | false |  |  | 強制通知チャンネルかどうか |
+| is_public | tinyint(1) | 0 | false |  |  | 公開チャンネルかどうか |
+| is_visible | tinyint(1) | 0 | false |  |  | 可視チャンネルかどうか |
+| creator_id | char(36) |  | false |  | [users](users.md) | チャンネル作成者UUID |
+| updater_id | char(36) |  | false |  | [users](users.md) | チャンネル更新者UUID |
+| created_at | timestamp(6) |  | true |  |  | チャンネル作成日時 |
+| updated_at | timestamp(6) |  | true |  |  | チャンネル更新日時 |
+| deleted_at | timestamp(6) |  | true |  |  | チャンネル削除日時 |
 
 ## Constraints
 

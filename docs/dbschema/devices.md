@@ -2,6 +2,8 @@
 
 ## Description
 
+FCMデバイステーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -22,9 +24,9 @@ CREATE TABLE `devices` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| token | varchar(190) |  | false |  |  |  |
-| user_id | char(36) |  | false |  | [users](users.md) |  |
-| created_at | timestamp(6) |  | true |  |  |  |
+| token | varchar(190) |  | false |  |  | FCMデバイストークン |
+| user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
+| created_at | timestamp(6) |  | true |  |  | 作成日時 |
 
 ## Constraints
 

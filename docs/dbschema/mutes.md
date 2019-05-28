@@ -2,6 +2,8 @@
 
 ## Description
 
+ミュートチャンネルテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -22,8 +24,8 @@ CREATE TABLE `mutes` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| user_id | char(36) |  | false |  | [users](users.md) |  |
-| channel_id | char(36) |  | false |  | [channels](channels.md) |  |
+| user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
+| channel_id | char(36) |  | false |  | [channels](channels.md) | チャンネルUUID |
 
 ## Constraints
 

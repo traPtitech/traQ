@@ -2,6 +2,8 @@
 
 ## Description
 
+メッセージテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -30,13 +32,13 @@ CREATE TABLE `messages` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [clips](clips.md) [messages_stamps](messages_stamps.md) [unreads](unreads.md) |  |  |
-| user_id | char(36) |  | false |  | [users](users.md) |  |
-| channel_id | char(36) |  | false |  | [channels](channels.md) |  |
-| text | text |  | false |  |  |  |
-| created_at | timestamp(6) |  | true |  |  |  |
-| updated_at | timestamp(6) |  | true |  |  |  |
-| deleted_at | timestamp(6) |  | true |  |  |  |
+| id | char(36) |  | false | [clips](clips.md) [messages_stamps](messages_stamps.md) [unreads](unreads.md) |  | メッセージUUID |
+| user_id | char(36) |  | false |  | [users](users.md) | 投稿ユーザーUUID |
+| channel_id | char(36) |  | false |  | [channels](channels.md) | 投稿先チャンネルUUID |
+| text | text |  | false |  |  | 本文 |
+| created_at | timestamp(6) |  | true |  |  | 作成日時 |
+| updated_at | timestamp(6) |  | true |  |  | 更新日時 |
+| deleted_at | timestamp(6) |  | true |  |  | 削除日時 |
 
 ## Constraints
 

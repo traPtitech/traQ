@@ -2,6 +2,8 @@
 
 ## Description
 
+クリップテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -29,12 +31,12 @@ CREATE TABLE `clips` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false |  |  |  |
-| user_id | char(36) |  | false |  | [users](users.md) |  |
-| message_id | char(36) |  | false |  | [messages](messages.md) |  |
-| folder_id | char(36) |  | false |  | [clip_folders](clip_folders.md) |  |
-| created_at | timestamp(6) |  | true |  |  |  |
-| updated_at | timestamp(6) |  | true |  |  |  |
+| id | char(36) |  | false |  |  | クリップUUID |
+| user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
+| message_id | char(36) |  | false |  | [messages](messages.md) | メッセージUUID |
+| folder_id | char(36) |  | false |  | [clip_folders](clip_folders.md) | クリップフォルダUUID |
+| created_at | timestamp(6) |  | true |  |  | 作成日時 |
+| updated_at | timestamp(6) |  | true |  |  | 更新日時 |
 
 ## Constraints
 
