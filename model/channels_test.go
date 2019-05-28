@@ -27,3 +27,9 @@ func TestUserSubscribeChannel_TableName(t *testing.T) {
 
 	assert.Equal(t, "users_subscribe_channels", (&UserSubscribeChannel{}).TableName())
 }
+
+func TestDMChannelMapping_TableName(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "dm_channel_mappings", (&DMChannelMapping{}).TableName())
+}

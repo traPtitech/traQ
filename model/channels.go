@@ -61,3 +61,15 @@ type UserSubscribeChannel struct {
 func (*UserSubscribeChannel) TableName() string {
 	return "users_subscribe_channels"
 }
+
+// DMChannelMapping ダイレクトメッセージチャンネルとユーザーのマッピング
+type DMChannelMapping struct {
+	ChannelID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	User1     uuid.UUID `gorm:"type:char(36);not null;unique_index:user1_user2"`
+	User2     uuid.UUID `gorm:"type:char(36);not null;unique_index:user1_user2"`
+}
+
+// TableName DMChannelMapping構造体のテーブル名
+func (*DMChannelMapping) TableName() string {
+	return "dm_channel_mappings"
+}
