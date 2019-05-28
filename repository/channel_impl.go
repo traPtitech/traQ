@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bytes"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
@@ -596,46 +597,24 @@ func (repo *GormRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*mo
 	if user1 == uuid.Nil || user2 == uuid.Nil {
 		return nil, ErrNilID
 	}
-	var channel model.Channel
 
-	// TODO トランザクションが必要かどうか
-
-	// ユーザーが存在するかどうかの判定はusers_private_channelsテーブルに外部キー制約が貼ってあるのでそれで対応する
+	// user1 <= user2 になるように入れかえ
+	if bytes.Compare(user1.Bytes(), user2.Bytes()) == 1 {
+		t := user1
+		user1 = user2
+		user2 = t
+	}
 
 	// チャンネル存在確認
-	if user1 == user2 {
-		// 自分宛DM
-		err := repo.db.
-			Where("parent_id = ? AND id IN ?", dmChannelRootUUID, repo.db.
-				Table("users_private_channels").
-				Select("channel_id").
-				Group("channel_id").
-				Having("COUNT(*) = 1 AND GROUP_CONCAT(user_id) = ?", user1).
-				SubQuery()).
-			Take(&channel).
-			Error
-		if err != nil {
-			if !gorm.IsRecordNotFoundError(err) {
-				return nil, err
-			}
-		} else {
-			return &channel, nil
-		}
-	} else {
-		// 他人宛DM
-		err := repo.db.
-			Where("parent_id = ? AND id IN ?", dmChannelRootUUID, repo.db.
-				Raw("SELECT u.channel_id FROM users_private_channels AS u INNER JOIN (SELECT channel_id FROM users_private_channels GROUP BY channel_id HAVING COUNT(*) = 2) AS ex ON ex.channel_id = u.channel_id AND u.user_id IN (?, ?) GROUP BY channel_id HAVING COUNT(*) = 2", user1, user2).
-				SubQuery()).
-			Take(&channel).
-			Error
-		if err != nil {
-			if !gorm.IsRecordNotFoundError(err) {
-				return nil, err
-			}
-		} else {
-			return &channel, nil
-		}
+	var channel model.Channel
+	err := repo.db.
+		Where("id = (SELECT channel_id FROM dm_channel_mappings WHERE user1 = ? AND user2 = ?)", user1, user2).
+		First(&channel).
+		Error
+	if err == nil {
+		return &channel, nil
+	} else if !gorm.IsRecordNotFoundError(err) {
+		return nil, err
 	}
 
 	// 存在しなかったので作成
@@ -648,17 +627,18 @@ func (repo *GormRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*mo
 		IsForced:  false,
 	}
 
-	err := repo.transact(func(tx *gorm.DB) error {
-		if err := tx.Create(&channel).Error; err != nil {
-			return err
-		}
+	arr := []interface{}{
+		&channel,
+		&model.DMChannelMapping{ChannelID: channel.ID, User1: user1, User2: user2},
+		&model.UsersPrivateChannel{UserID: user1, ChannelID: channel.ID},
+	}
+	if user1 != user2 {
+		arr = append(arr, &model.UsersPrivateChannel{UserID: user2, ChannelID: channel.ID})
+	}
 
-		// メンバーに追加
-		if err := tx.Create(&model.UsersPrivateChannel{UserID: user1, ChannelID: channel.ID}).Error; err != nil {
-			return err
-		}
-		if user1 != user2 {
-			if err := tx.Create(&model.UsersPrivateChannel{UserID: user2, ChannelID: channel.ID}).Error; err != nil {
+	err = repo.transact(func(tx *gorm.DB) error {
+		for _, v := range arr {
+			if err := tx.Create(v).Error; err != nil {
 				return err
 			}
 		}

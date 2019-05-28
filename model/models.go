@@ -5,6 +5,7 @@ var (
 	// モデルを追加したら各自ここに追加しなければいけない
 	// **順番注意**
 	Tables = []interface{}{
+		&DMChannelMapping{},
 		&ChannelLatestMessage{},
 		&BotEventLog{},
 		&BotJoinChannel{},
@@ -42,6 +43,9 @@ var (
 		// Table, Key, Reference, OnDelete, OnUpdate
 		{"users_private_channels", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"users_private_channels", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
+		{"dm_channel_mappings", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
+		{"dm_channel_mappings", "user1", "users(id)", "CASCADE", "CASCADE"},
+		{"dm_channel_mappings", "user2", "users(id)", "CASCADE", "CASCADE"},
 		{"messages", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"messages", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 		{"users_tags", "user_id", "users(id)", "CASCADE", "CASCADE"},
