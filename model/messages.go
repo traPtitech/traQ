@@ -13,7 +13,7 @@ type Message struct {
 	Text      string     `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
 	CreatedAt time.Time  `gorm:"precision:6;index"`
 	UpdatedAt time.Time  `gorm:"precision:6"`
-	DeletedAt *time.Time `gorm:"precision:6;index"`
+	DeletedAt *time.Time `gorm:"precision:6"`
 
 	Stamps []MessageStamp `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;foreignkey:MessageID"`
 	Pin    *Pin           `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;foreignkey:MessageID"`

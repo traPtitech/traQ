@@ -115,5 +115,5 @@ var allTables = []interface{}{
 
 // データベースマイグレーション
 var migrations = []*gormigrate.Migration{
-	migration.V1, // インデックスidx_messages_channel_id_deleted_at_created_atの追加
+	migration.V1, // インデックスidx_messages_deleted_atの削除とidx_messages_channel_id_deleted_at_created_atの追加
 }
