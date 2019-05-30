@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"net/url"
 	"time"
@@ -55,7 +56,7 @@ type User struct {
 	Bot         bool              `gorm:"type:boolean;not null;default:false"`
 	Role        string            `gorm:"type:varchar(30);not null;default:'user'"    validate:"required"`
 	TwitterID   string            `gorm:"type:varchar(15);not null;default:''" validate:"twitterid"`
-	LastOnline  *time.Time        `gorm:"precision:6"`
+	LastOnline  null.Time         `gorm:"precision:6"`
 	CreatedAt   time.Time         `gorm:"precision:6"`
 	UpdatedAt   time.Time         `gorm:"precision:6"`
 }

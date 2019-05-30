@@ -18,6 +18,7 @@ import (
 	"github.com/traPtitech/traQ/utils/storage"
 	"github.com/traPtitech/traQ/utils/validator"
 	"golang.org/x/sync/errgroup"
+	"gopkg.in/guregu/null.v3"
 	"image"
 	"io"
 	"math"
@@ -333,7 +334,7 @@ func (repo *TestRepository) UpdateUserLastOnline(id uuid.UUID, t time.Time) (err
 	repo.UsersLock.Lock()
 	u, ok := repo.Users[id]
 	if ok {
-		u.LastOnline = &t
+		u.LastOnline = null.TimeFrom(t)
 		u.UpdatedAt = time.Now()
 		repo.Users[id] = u
 	}
@@ -352,10 +353,7 @@ func (repo *TestRepository) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
 	if !ok {
 		return time.Time{}, repository.ErrNotFound
 	}
-	if u.LastOnline != nil {
-		return *u.LastOnline, nil
-	}
-	return time.Time{}, nil
+	return u.LastOnline.Time, nil
 }
 
 func (repo *TestRepository) GetHeartbeatStatus(channelID uuid.UUID) (model.HeartbeatStatus, bool) {

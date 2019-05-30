@@ -335,10 +335,7 @@ func (repo *GormRepository) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
 		if err := repo.db.Model(&model.User{ID: id}).Select("last_online").Take(&u).Error; err != nil {
 			return time.Time{}, convertError(err)
 		}
-		if u.LastOnline == nil {
-			return time.Time{}, nil
-		}
-		return *u.LastOnline, nil
+		return u.LastOnline.Time, nil
 	}
 	return i.(*userOnlineStatus).getTime(), nil
 }
