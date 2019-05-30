@@ -79,6 +79,8 @@ func (h *Handlers) formatUserDetail(user *model.User, tagList []*model.UsersTag)
 	}
 	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
 		res.LastOnline = &t
+	} else {
+		res.LastOnline = user.LastOnline.Ptr()
 	}
 	if len(res.DisplayName) == 0 {
 		res.DisplayName = res.Name

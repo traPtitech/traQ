@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
+	"gopkg.in/guregu/null.v3"
 	"sync"
 	"time"
 	"unicode/utf8"
@@ -321,7 +322,7 @@ func (repo *GormRepository) UpdateUserLastOnline(id uuid.UUID, time time.Time) (
 	if id == uuid.Nil {
 		return ErrNilID
 	}
-	return repo.db.Model(&model.User{ID: id}).Update("last_online", &time).Error
+	return repo.db.Model(&model.User{ID: id}).Update("last_online", null.TimeFrom(time)).Error
 }
 
 // GetUserLastOnline implements UserRepository interface.
@@ -332,7 +333,7 @@ func (repo *GormRepository) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
 	i, ok := repo.CurrentUserOnlineMap.Load(id)
 	if !ok {
 		var u model.User
-		if err := repo.db.Model(&model.User{ID: id}).Select("last_online").Take(&u).Error; err != nil {
+		if err := repo.db.Select("last_online").First(&u, &model.User{ID: id}).Error; err != nil {
 			return time.Time{}, convertError(err)
 		}
 		return u.LastOnline.Time, nil
