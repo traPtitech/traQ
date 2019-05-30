@@ -10,7 +10,7 @@ CREATE TABLE `message_reports` (
   `id` char(36) NOT NULL,
   `message_id` char(36) NOT NULL,
   `reporter` char(36) NOT NULL,
-  `reason` text NOT NULL,
+  `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `created_at` timestamp(6) NULL DEFAULT NULL,
   `deleted_at` timestamp(6) NULL DEFAULT NULL,
   PRIMARY KEY (`id`),

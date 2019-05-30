@@ -161,3 +161,5 @@ comments:
       channel_id: チャンネルUUID
       user1: ユーザーUUID
       user2: ユーザーUUID
+  - table: migrations
+    tableComment: gormigrate用のデータベースバージョンテーブル

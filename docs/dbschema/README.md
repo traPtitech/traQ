@@ -19,6 +19,7 @@
 | [message_reports](message_reports.md) | 6 |  | BASE TABLE |
 | [messages](messages.md) | 7 | メッセージテーブル | BASE TABLE |
 | [messages_stamps](messages_stamps.md) | 6 | メッセージスタンプテーブル | BASE TABLE |
+| [migrations](migrations.md) | 1 | gormigrate用のデータベースバージョンテーブル | BASE TABLE |
 | [mutes](mutes.md) | 2 | ミュートチャンネルテーブル | BASE TABLE |
 | [oauth2_authorizes](oauth2_authorizes.md) | 11 |  | BASE TABLE |
 | [oauth2_clients](oauth2_clients.md) | 11 |  | BASE TABLE |

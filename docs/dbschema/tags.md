@@ -10,7 +10,7 @@
 ```sql
 CREATE TABLE `tags` (
   `id` char(36) NOT NULL,
-  `name` varchar(30) NOT NULL,
+  `name` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `created_at` timestamp(6) NULL DEFAULT NULL,
   `updated_at` timestamp(6) NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
