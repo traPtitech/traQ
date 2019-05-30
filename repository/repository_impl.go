@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
@@ -46,16 +45,8 @@ type GormRepository struct {
 
 // Sync implements Repository interface.
 func (repo *GormRepository) Sync() (bool, error) {
-	// スキーマ同期
-	if err := repo.db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(model.Tables...).Error; err != nil {
-		return false, fmt.Errorf("failed to sync Table schema: %v", err)
-	}
-
-	// 外部キー制約同期
-	for _, c := range model.Constraints {
-		if err := repo.db.Table(c[0]).AddForeignKey(c[1], c[2], c[3], c[4]).Error; err != nil {
-			return false, err
-		}
+	if err := repo.migration(); err != nil {
+		return false, err
 	}
 
 	// サーバーユーザーの確認
@@ -99,7 +90,7 @@ func (repo *GormRepository) GetFS() storage.FileStorage {
 // NewGormRepository リポジトリ実装を初期化して生成します
 func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub) (Repository, error) {
 	repo := &GormRepository{
-		db:  db,
+		db:  db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"),
 		hub: hub,
 		fileImpl: fileImpl{
 			FS: fs,

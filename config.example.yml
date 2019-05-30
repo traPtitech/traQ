@@ -9,6 +9,8 @@
 
 #pprof: false
 
+#gormLogMode: false
+
 #initDataDir:
 
 #generateThumbnailOnStartUp: false
