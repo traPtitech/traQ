@@ -10,10 +10,10 @@ type Message struct {
 	ID        uuid.UUID  `gorm:"type:char(36);not null;primary_key"`
 	UserID    uuid.UUID  `gorm:"type:char(36);not null;"`
 	ChannelID uuid.UUID  `gorm:"type:char(36);not null;index"`
-	Text      string     `gorm:"type:text;not null"`
+	Text      string     `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
 	CreatedAt time.Time  `gorm:"precision:6;index"`
 	UpdatedAt time.Time  `gorm:"precision:6"`
-	DeletedAt *time.Time `gorm:"precision:6;index"`
+	DeletedAt *time.Time `gorm:"precision:6"`
 
 	Stamps []MessageStamp `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;foreignkey:MessageID"`
 	Pin    *Pin           `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;foreignkey:MessageID"`
@@ -54,7 +54,7 @@ type ArchivedMessage struct {
 	ID        uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	MessageID uuid.UUID `gorm:"type:char(36);not null;index"`
 	UserID    uuid.UUID `gorm:"type:char(36);not null"`
-	Text      string    `gorm:"type:text;not null"`
+	Text      string    `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
 	DateTime  time.Time `gorm:"precision:6"`
 }
 

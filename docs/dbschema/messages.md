@@ -12,15 +12,15 @@ CREATE TABLE `messages` (
   `id` char(36) NOT NULL,
   `user_id` char(36) NOT NULL,
   `channel_id` char(36) NOT NULL,
-  `text` text NOT NULL,
+  `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `created_at` timestamp(6) NULL DEFAULT NULL,
   `updated_at` timestamp(6) NULL DEFAULT NULL,
   `deleted_at` timestamp(6) NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_messages_channel_id` (`channel_id`),
   KEY `idx_messages_created_at` (`created_at`),
-  KEY `idx_messages_deleted_at` (`deleted_at`),
   KEY `messages_user_id_users_id_foreign` (`user_id`),
+  KEY `idx_messages_channel_id_deleted_at_created_at` (`channel_id`,`deleted_at`,`created_at`),
   CONSTRAINT `messages_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `messages_user_id_users_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -53,8 +53,8 @@ CREATE TABLE `messages` (
 | Name | Definition |
 | ---- | ---------- |
 | idx_messages_channel_id | KEY idx_messages_channel_id (channel_id) USING BTREE |
+| idx_messages_channel_id_deleted_at_created_at | KEY idx_messages_channel_id_deleted_at_created_at (channel_id, deleted_at, created_at) USING BTREE |
 | idx_messages_created_at | KEY idx_messages_created_at (created_at) USING BTREE |
-| idx_messages_deleted_at | KEY idx_messages_deleted_at (deleted_at) USING BTREE |
 | messages_user_id_users_id_foreign | KEY messages_user_id_users_id_foreign (user_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 

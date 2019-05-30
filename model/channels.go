@@ -19,7 +19,7 @@ type Channel struct {
 	ID        uuid.UUID  `gorm:"type:char(36);not null;primary_key"`
 	Name      string     `gorm:"type:varchar(20);not null;unique_index:name_parent" validate:"channel,required"`
 	ParentID  uuid.UUID  `gorm:"type:char(36);not null;unique_index:name_parent"`
-	Topic     string     `gorm:"type:text;not null"`
+	Topic     string     `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
 	IsForced  bool       `gorm:"type:boolean;not null;default:false"`
 	IsPublic  bool       `gorm:"type:boolean;not null;default:false"`
 	IsVisible bool       `gorm:"type:boolean;not null;default:false"`

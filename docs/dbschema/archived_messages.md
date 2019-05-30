@@ -10,7 +10,7 @@ CREATE TABLE `archived_messages` (
   `id` char(36) NOT NULL,
   `message_id` char(36) NOT NULL,
   `user_id` char(36) NOT NULL,
-  `text` text NOT NULL,
+  `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `date_time` timestamp(6) NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_archived_messages_message_id` (`message_id`)

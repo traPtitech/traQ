@@ -12,7 +12,7 @@ CREATE TABLE `channels` (
   `id` char(36) NOT NULL,
   `name` varchar(20) NOT NULL,
   `parent_id` char(36) NOT NULL,
-  `topic` text NOT NULL,
+  `topic` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `is_forced` tinyint(1) NOT NULL DEFAULT '0',
   `is_public` tinyint(1) NOT NULL DEFAULT '0',
   `is_visible` tinyint(1) NOT NULL DEFAULT '0',

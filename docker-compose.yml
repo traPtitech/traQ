@@ -8,6 +8,7 @@ services:
       TRAQ_ORIGIN: http://localhost:3000
       TRAQ_MARIADB_HOST: mysql
       TRAQ_PPROF: "true"
+      TRAQ_GORMLOGMODE: "true"
       TRAQ_INITDATADIR: /initdata
     entrypoint: dockerize -timeout 60s -wait tcp://mysql:3306
     command: ./traQ
@@ -53,7 +54,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: traq
-    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    # conohaのDBのデフォルトCharsetはutf8
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
     expose:
       - "3306"
     ports:
