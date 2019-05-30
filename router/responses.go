@@ -33,6 +33,8 @@ func (h *Handlers) formatUser(user *model.User) *userResponse {
 	}
 	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
 		res.LastOnline = &t
+	} else {
+		res.LastOnline = user.LastOnline
 	}
 	if len(res.DisplayName) == 0 {
 		res.DisplayName = res.Name
