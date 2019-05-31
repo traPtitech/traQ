@@ -16,6 +16,11 @@ func TestBotJoinChannel_TableName(t *testing.T) {
 	assert.Equal(t, "bot_join_channels", (&BotJoinChannel{}).TableName())
 }
 
+func TestBotEventLog_TableName(t *testing.T) {
+	t.Parallel()
+	assert.Equal(t, "bot_event_logs", (&BotEventLog{}).TableName())
+}
+
 func TestBotEvent_String(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "event", BotEvent("event").String())
