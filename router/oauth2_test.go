@@ -51,7 +51,6 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
 			"read",
-			"private_read",
 		},
 	}
 	require.NoError(t, repo.SaveClient(client))
@@ -371,7 +370,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithFormField("client_id", client.ID).
 			WithFormField("response_type", "code").
 			WithFormField("prompt", "none").
-			WithFormField("scope", "read private_read").
+			WithFormField("scope", "read write").
 			WithCookie(sessions.CookieName, generateSession(t, user.ID)).
 			Expect()
 		res.Status(http.StatusFound)
@@ -422,7 +421,6 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
 			"read",
-			"private_read",
 		},
 	}
 	require.NoError(t, repo.SaveClient(client))
@@ -525,7 +523,6 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			Secret:       utils.RandAlphabetAndNumberString(36),
 			Scopes: model.AccessScopes{
 				"read",
-				"private_read",
 			},
 		}
 		require.NoError(t, repo.SaveClient(client))
@@ -666,7 +663,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
 			"read",
-			"private_read",
+			"write",
 		},
 	}
 	require.NoError(t, repo.SaveClient(client))
@@ -715,7 +712,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 		e := makeExp(t, server)
 		res := e.POST("/api/1.0/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
-			WithFormField("scope", "private_read").
+			WithFormField("scope", "read").
 			WithBasicAuth(client.ID, client.Secret).
 			Expect()
 
@@ -735,7 +732,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 		e := makeExp(t, server)
 		res := e.POST("/api/1.0/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
-			WithFormField("scope", "private_read write").
+			WithFormField("scope", "read manage_bot").
 			WithBasicAuth(client.ID, client.Secret).
 			Expect()
 
@@ -747,7 +744,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 		obj.Value("token_type").String().Equal(authScheme)
 		obj.Value("expires_in").Number().Equal(1000)
 		obj.NotContainsKey("refresh_token")
-		obj.Value("scope").String().Equal("private_read")
+		obj.Value("scope").String().Equal("read")
 	})
 
 	t.Run("Invalid Client (No credentials)", func(t *testing.T) {
@@ -802,7 +799,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			RedirectURI:  "http://example.com",
 			Scopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 		}
 		require.NoError(t, repo.SaveClient(client))
@@ -838,7 +835,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 		e := makeExp(t, server)
 		res := e.POST("/api/1.0/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
-			WithFormField("scope", "write").
+			WithFormField("scope", "manage_bot").
 			WithBasicAuth(client.ID, client.Secret).
 			Expect()
 
@@ -862,7 +859,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
 			"read",
-			"private_read",
+			"write",
 		},
 	}
 	require.NoError(t, repo.SaveClient(client))
@@ -917,7 +914,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.Name).
 			WithFormField("password", "test").
-			WithFormField("scope", "private_read").
+			WithFormField("scope", "read").
 			WithBasicAuth(client.ID, client.Secret).
 			Expect()
 
@@ -939,7 +936,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.Name).
 			WithFormField("password", "test").
-			WithFormField("scope", "private_read write").
+			WithFormField("scope", "read manage_bot").
 			WithBasicAuth(client.ID, client.Secret).
 			Expect()
 
@@ -951,7 +948,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		obj.Value("token_type").String().Equal(authScheme)
 		obj.Value("expires_in").Number().Equal(1000)
 		obj.Value("refresh_token").String().NotEmpty()
-		obj.Value("scope").String().Equal("private_read")
+		obj.Value("scope").String().Equal("read")
 	})
 
 	t.Run("Success with not confidential client", func(t *testing.T) {
@@ -965,7 +962,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			RedirectURI:  "http://example.com",
 			Scopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 		}
 		require.NoError(t, repo.SaveClient(client))
@@ -1089,7 +1086,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.Name).
 			WithFormField("password", "test").
-			WithFormField("scope", "write").
+			WithFormField("scope", "manage_bot").
 			WithBasicAuth(client.ID, client.Secret).
 			Expect()
 
@@ -1113,7 +1110,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
 			"read",
-			"private_read",
+			"write",
 		},
 	}
 	require.NoError(t, repo.SaveClient(client))
@@ -1127,7 +1124,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
 			"read",
-			"private_read",
+			"write",
 		},
 	}
 	require.NoError(t, repo.SaveClient(clientConf))
@@ -1162,7 +1159,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		res := e.POST("/api/1.0/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			WithFormField("refresh_token", token.RefreshToken).
-			WithFormField("scope", "private_read").
+			WithFormField("scope", "read").
 			Expect()
 
 		res.Status(http.StatusOK)
@@ -1173,7 +1170,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		obj.Value("token_type").String().Equal(authScheme)
 		obj.Value("expires_in").Number().Equal(1000)
 		obj.Value("refresh_token").String().NotEmpty()
-		obj.Value("scope").String().Equal("private_read")
+		obj.Value("scope").String().Equal("read")
 
 		_, err := repo.GetTokenByRefresh(token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
@@ -1186,7 +1183,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		res := e.POST("/api/1.0/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			WithFormField("refresh_token", token.RefreshToken).
-			WithFormField("scope", "private_read write").
+			WithFormField("scope", "read manage_bot").
 			Expect()
 
 		res.Status(http.StatusOK)
@@ -1197,7 +1194,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		obj.Value("token_type").String().Equal(authScheme)
 		obj.Value("expires_in").Number().Equal(1000)
 		obj.Value("refresh_token").String().NotEmpty()
-		obj.Value("scope").String().Equal("private_read")
+		obj.Value("scope").String().Equal("read")
 
 		_, err := repo.GetTokenByRefresh(token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
@@ -1333,7 +1330,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		res := e.POST("/api/1.0/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			WithFormField("refresh_token", token.RefreshToken).
-			WithFormField("scope", "write").
+			WithFormField("scope", "manage_bot").
 			Expect()
 
 		res.Status(http.StatusBadRequest)
@@ -1356,7 +1353,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
 			"read",
-			"private_read",
+			"write",
 		},
 	}
 	require.NoError(t, repo.SaveClient(client))
@@ -1370,7 +1367,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes: model.AccessScopes{
 			"read",
-			"private_read",
+			"write",
 		},
 	}
 	require.NoError(t, repo.SaveClient(clientConf))
@@ -1463,11 +1460,11 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			RedirectURI: "http://example.com",
 			Scopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 			OriginalScopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 			Nonce:               "nonce",
 			CodeChallengeMethod: "plain",
@@ -1508,11 +1505,11 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			RedirectURI: "http://example.com",
 			Scopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 			OriginalScopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 			Nonce:               "nonce",
 			CodeChallengeMethod: "S256",
@@ -1596,7 +1593,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			},
 			OriginalScopes: model.AccessScopes{
 				"read",
-				"write",
+				"manage_bot",
 			},
 			Nonce: "nonce",
 		}
@@ -1724,11 +1721,11 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			RedirectURI: "http://example.com",
 			Scopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 			OriginalScopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 			Nonce: "nonce",
 		}
@@ -1761,11 +1758,11 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			RedirectURI: "http://example.com",
 			Scopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 			OriginalScopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 			Nonce: "nonce",
 		}
@@ -1817,11 +1814,11 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			ExpiresIn: 1000,
 			Scopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 			OriginalScopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 			Nonce: "nonce",
 		}
@@ -1854,11 +1851,11 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			RedirectURI: "http://example.com",
 			Scopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 			OriginalScopes: model.AccessScopes{
 				"read",
-				"private_read",
+				"write",
 			},
 			Nonce:               "nonce",
 			CodeChallengeMethod: "plain",
