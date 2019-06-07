@@ -47,7 +47,7 @@ func (set Permissions) Has(p Permission) bool {
 // Array セットの権限の配列を返します
 func (set Permissions) Array() []Permission {
 	result := make([]Permission, 0, len(set))
-	for k, _ := range set {
+	for k := range set {
 		result = append(result, k)
 	}
 	return result
