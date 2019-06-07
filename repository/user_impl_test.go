@@ -41,7 +41,7 @@ func TestRepositoryImpl_CreateUser(t *testing.T) {
 		assert.Equal(s, user.Name)
 		assert.NotEmpty(user.Salt)
 		assert.NotEmpty(user.Password)
-		assert.Equal(role.User.ID(), user.Role)
+		assert.Equal(role.User, user.Role)
 	}
 
 	_, err = repo.CreateUser(s, "test", role.User)

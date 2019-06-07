@@ -7,7 +7,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/logging"
 	"github.com/traPtitech/traQ/rbac/permission"
-	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"go.uber.org/zap"
@@ -18,7 +17,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
-	"github.com/mikespook/gorbac"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 )
@@ -98,14 +96,7 @@ func (h *Handlers) UserAuthenticate() echo.MiddlewareFunc {
 					}
 				}
 
-				// 認可に基づきRole生成
-				var roles []gorbac.Role
-				for _, v := range token.Scopes {
-					if r, ok := list[v]; ok && r != nil {
-						roles = append(roles, r)
-					}
-				}
-				c.Set("role", role.NewCompositeRole(roles...))
+				c.Set("scopes", token.Scopes)
 			} else {
 				// Authorizationヘッダーがないためセッションを確認する
 				sess, err := sessions.Get(c.Response(), c.Request(), false)
@@ -143,14 +134,19 @@ func (h *Handlers) UserAuthenticate() echo.MiddlewareFunc {
 }
 
 // AccessControlMiddlewareGenerator アクセスコントロールミドルウェアのジェネレーターを返します
-func AccessControlMiddlewareGenerator(rbac *rbac.RBAC) func(p ...gorbac.Permission) echo.MiddlewareFunc {
-	return func(p ...gorbac.Permission) echo.MiddlewareFunc {
+func AccessControlMiddlewareGenerator(r rbac.RBAC) func(p ...rbac.Permission) echo.MiddlewareFunc {
+	return func(p ...rbac.Permission) echo.MiddlewareFunc {
 		return func(next echo.HandlerFunc) echo.HandlerFunc {
 			return func(c echo.Context) error {
-				// クライアント権限検証
-				if role, ok := c.Get("role").(gorbac.Role); ok {
+				// OAuth2スコープ権限検証
+				if scopes, ok := c.Get("scopes").(model.AccessScopes); ok {
+					roles := make([]string, len(scopes))
+					for k, v := range scopes {
+						roles[k] = string(v)
+					}
+
 					for _, v := range p {
-						if !role.Permit(v) {
+						if !r.IsAnyGranted(roles, v) {
 							// NG
 							return forbidden(fmt.Sprintf("you are not permitted to request to '%s'", c.Request().URL.Path))
 						}
@@ -160,12 +156,11 @@ func AccessControlMiddlewareGenerator(rbac *rbac.RBAC) func(p ...gorbac.Permissi
 				// ユーザー権限検証
 				user := c.Get("user").(*model.User)
 				for _, v := range p {
-					if !rbac.IsGranted(user.ID, user.Role, v) {
+					if !r.IsGranted(user.Role, v) {
 						// NG
 						return forbidden(fmt.Sprintf("you are not permitted to request to '%s'", c.Request().URL.Path))
 					}
 				}
-				c.Set("rbac", rbac)
 
 				return next(c) // OK
 			}
@@ -520,7 +515,7 @@ func (h *Handlers) ValidateWebhookID(requestUserCheck bool) echo.MiddlewareFunc 
 
 			if requestUserCheck {
 				user, ok := c.Get("user").(*model.User)
-				if !ok || (!h.RBAC.IsGranted(user.ID, user.Role, permission.AccessOthersWebhook) && w.GetCreatorID() != user.ID) {
+				if !ok || (!h.RBAC.IsGranted(user.Role, permission.AccessOthersWebhook) && w.GetCreatorID() != user.ID) {
 					return forbidden()
 				}
 			}

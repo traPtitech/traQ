@@ -1,18 +1,20 @@
 package permission
 
-import "github.com/mikespook/gorbac"
+import (
+	"github.com/traPtitech/traQ/rbac"
+)
 
-var (
+const (
 	// GetMessage メッセージ取得権限
-	GetMessage = gorbac.NewStdPermission("get_message")
+	GetMessage = rbac.Permission("get_message")
 	// PostMessage メッセージ投稿権限
-	PostMessage = gorbac.NewStdPermission("post_message")
+	PostMessage = rbac.Permission("post_message")
 	// EditMessage メッセージ編集権限
-	EditMessage = gorbac.NewStdPermission("edit_message")
+	EditMessage = rbac.Permission("edit_message")
 	// DeleteMessage メッセージ削除権限
-	DeleteMessage = gorbac.NewStdPermission("delete_message")
+	DeleteMessage = rbac.Permission("delete_message")
 	// ReportMessage メッセージ通報権限
-	ReportMessage = gorbac.NewStdPermission("report_message")
+	ReportMessage = rbac.Permission("report_message")
 	// GetMessageReports メッセージ通報取得権限
-	GetMessageReports = gorbac.NewStdPermission("get_message_reports")
+	GetMessageReports = rbac.Permission("get_message_reports")
 )

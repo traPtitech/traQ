@@ -26,6 +26,9 @@ func (repo *GormRepository) migration() error {
 		// 外部キー制約
 		foreignKeys := [][5]string{
 			// Table, Key, Reference, OnDelete, OnUpdate
+			{"user_defined_role_inheritances", "role", "user_defined_roles(name)", "CASCADE", "CASCADE"},
+			{"user_defined_role_inheritances", "sub_role", "user_defined_roles(name)", "CASCADE", "CASCADE"},
+			{"user_defined_role_permissions", "role", "user_defined_roles(name)", "CASCADE", "CASCADE"},
 			{"users_private_channels", "user_id", "users(id)", "CASCADE", "CASCADE"},
 			{"users_private_channels", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 			{"dm_channel_mappings", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
@@ -80,6 +83,9 @@ func (repo *GormRepository) migration() error {
 
 // 全テーブル
 var allTables = []interface{}{
+	&model.RolePermission{},
+	&model.RoleInheritance{},
+	&model.UserDefinedRole{},
 	&model.DMChannelMapping{},
 	&model.ChannelLatestMessage{},
 	&model.BotEventLog{},
@@ -116,4 +122,5 @@ var allTables = []interface{}{
 // データベースマイグレーション
 var migrations = []*gormigrate.Migration{
 	migration.V1, // インデックスidx_messages_deleted_atの削除とidx_messages_channel_id_deleted_at_created_atの追加
+	migration.V2, // RBAC周りのリフォーム
 }

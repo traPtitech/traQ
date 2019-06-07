@@ -37,7 +37,6 @@ require (
 	github.com/lib/pq v1.1.1 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.3 // indirect
-	github.com/mikespook/gorbac v2.1.0+incompatible
 	github.com/moul/http2curl v0.0.0-20170919181001-9ac6cf4d929b // indirect
 	github.com/ncw/swift v1.0.47
 	github.com/onsi/ginkgo v1.7.0 // indirect

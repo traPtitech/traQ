@@ -163,8 +163,6 @@ github.com/mattn/go-sqlite3 v1.10.0 h1:jbhqpg7tQe4SupckyijYiy0mJJ/pRyHvXf7JdWK86
 github.com/mattn/go-sqlite3 v1.10.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
 github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0jegS5sx/RkqARlsWZ6pIwiU=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
-github.com/mikespook/gorbac v2.1.0+incompatible h1:otWotQcs8ehjzn6DBBj+lxRu9QOnE9a3Cp+/EMUpwhg=
-github.com/mikespook/gorbac v2.1.0+incompatible/go.mod h1:IZtfzfI4wPQxddP0qrFEzLJxM4BbT7c86I3j8I5rD/8=
 github.com/mitchellh/mapstructure v1.1.2 h1:fmNYVwqnSfB9mZU6OS2O6GsXM+wcskZDuKQzvN1EDeE=
 github.com/mitchellh/mapstructure v1.1.2/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=
 github.com/moul/http2curl v0.0.0-20170919181001-9ac6cf4d929b h1:Pip12xNtMvEFUBF4f8/b5yRXj94LLrNdLWELfOr2KcY=

@@ -1,16 +1,18 @@
 package permission
 
-import "github.com/mikespook/gorbac"
+import (
+	"github.com/traPtitech/traQ/rbac"
+)
 
-var (
+const (
 	// GetTag : ユーザータグ取得権限
-	GetTag = gorbac.NewStdPermission("get_tag")
+	GetTag = rbac.Permission("get_tag")
 	// AddTag : ユーザータグ追加権限
-	AddTag = gorbac.NewStdPermission("add_tag")
+	AddTag = rbac.Permission("add_tag")
 	// RemoveTag : ユーザータグ削除権限
-	RemoveTag = gorbac.NewStdPermission("remove_tag")
+	RemoveTag = rbac.Permission("remove_tag")
 	// ChangeTagLockState : ユーザータグロック状態変更権限
-	ChangeTagLockState = gorbac.NewStdPermission("change_tag_lock_state")
+	ChangeTagLockState = rbac.Permission("change_tag_lock_state")
 	// EditTag : タグ情報編集権限
-	EditTag = gorbac.NewStdPermission("edit_tag")
+	EditTag = rbac.Permission("edit_tag")
 )

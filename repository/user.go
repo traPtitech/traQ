@@ -2,7 +2,6 @@ package repository
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/mikespook/gorbac"
 	"github.com/traPtitech/traQ/model"
 	"gopkg.in/guregu/null.v3"
 	"time"
@@ -21,7 +20,7 @@ type UserRepository interface {
 	//
 	// 成功した場合、ユーザーとnilを返します。
 	// DBによるエラーを返すことがあります。
-	CreateUser(name, password string, role gorbac.Role) (*model.User, error)
+	CreateUser(name, password, role string) (*model.User, error)
 	// GetUser 指定したIDのユーザーを取得します
 	//
 	// 成功した場合、ユーザーとnilを返します。

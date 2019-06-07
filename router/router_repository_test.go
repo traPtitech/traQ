@@ -10,7 +10,6 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
-	"github.com/mikespook/gorbac"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
@@ -79,6 +78,10 @@ type TestRepository struct {
 	OAuth2AuthorizesLock      sync.RWMutex
 	OAuth2Tokens              map[uuid.UUID]model.OAuth2Token
 	OAuth2TokensLock          sync.RWMutex
+}
+
+func (repo *TestRepository) GetAllRoles() ([]*model.UserDefinedRole, error) {
+	return []*model.UserDefinedRole{}, nil
 }
 
 func (repo *TestRepository) AddFavoriteStamp(userID, stampID uuid.UUID) error {
@@ -158,7 +161,7 @@ func (repo *TestRepository) GetFS() storage.FileStorage {
 	return repo.FS
 }
 
-func (repo *TestRepository) CreateUser(name, password string, role gorbac.Role) (*model.User, error) {
+func (repo *TestRepository) CreateUser(name, password string, role string) (*model.User, error) {
 	repo.UsersLock.Lock()
 	defer repo.UsersLock.Unlock()
 
@@ -176,7 +179,7 @@ func (repo *TestRepository) CreateUser(name, password string, role gorbac.Role) 
 		Salt:      hex.EncodeToString(salt),
 		Status:    model.UserAccountStatusActive,
 		Bot:       false,
-		Role:      role.ID(),
+		Role:      role,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -2316,7 +2319,7 @@ func (repo *TestRepository) CreateWebhook(name, description string, channelID, c
 		Icon:        iconID,
 		Bot:         true,
 		Status:      model.UserAccountStatusActive,
-		Role:        role.Bot.ID(),
+		Role:        role.Bot,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}

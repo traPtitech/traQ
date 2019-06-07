@@ -5,7 +5,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/mikespook/gorbac"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
@@ -129,7 +128,7 @@ func (s *userOnlineStatus) getTime() (t time.Time) {
 }
 
 // CreateUser implements UserRepository interface.
-func (repo *GormRepository) CreateUser(name, password string, role gorbac.Role) (*model.User, error) {
+func (repo *GormRepository) CreateUser(name, password, role string) (*model.User, error) {
 	salt := utils.GenerateSalt()
 	user := &model.User{
 		ID:       uuid.Must(uuid.NewV4()),
@@ -138,7 +137,7 @@ func (repo *GormRepository) CreateUser(name, password string, role gorbac.Role) 
 		Salt:     hex.EncodeToString(salt),
 		Status:   model.UserAccountStatusActive,
 		Bot:      false,
-		Role:     role.ID(),
+		Role:     role,
 	}
 
 	if err := user.Validate(); err != nil {

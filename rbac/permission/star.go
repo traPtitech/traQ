@@ -1,12 +1,14 @@
 package permission
 
-import "github.com/mikespook/gorbac"
+import (
+	"github.com/traPtitech/traQ/rbac"
+)
 
-var (
+const (
 	// GetStar : スター取得権限
-	GetStar = gorbac.NewStdPermission("get_star")
+	GetStar = rbac.Permission("get_star")
 	// CreateStar : スター作成権限
-	CreateStar = gorbac.NewStdPermission("create_star")
+	CreateStar = rbac.Permission("create_star")
 	// DeleteStar : スター削除権限
-	DeleteStar = gorbac.NewStdPermission("delete_star")
+	DeleteStar = rbac.Permission("delete_star")
 )

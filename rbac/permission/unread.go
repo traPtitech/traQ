@@ -1,10 +1,12 @@
 package permission
 
-import "github.com/mikespook/gorbac"
+import (
+	"github.com/traPtitech/traQ/rbac"
+)
 
-var (
+const (
 	// GetUnread : 未読メッセージ一覧の取得権限
-	GetUnread = gorbac.NewStdPermission("get_unread")
+	GetUnread = rbac.Permission("get_unread")
 	// DeleteUnread : メッセージ既読化権限
-	DeleteUnread = gorbac.NewStdPermission("delete_unread")
+	DeleteUnread = rbac.Permission("delete_unread")
 )

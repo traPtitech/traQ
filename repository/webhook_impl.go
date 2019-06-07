@@ -31,7 +31,7 @@ func (repo *GormRepository) CreateWebhook(name, description string, channelID, c
 		Icon:        iconID,
 		Bot:         true,
 		Status:      model.UserAccountStatusActive,
-		Role:        role.Bot.ID(),
+		Role:        role.Bot,
 	}
 	wb := &model.WebhookBot{
 		ID:          bid,

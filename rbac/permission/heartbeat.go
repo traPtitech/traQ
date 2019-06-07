@@ -1,10 +1,12 @@
 package permission
 
-import "github.com/mikespook/gorbac"
+import (
+	"github.com/traPtitech/traQ/rbac"
+)
 
-var (
+const (
 	// GetHeartbeat : ハートビート取得権限
-	GetHeartbeat = gorbac.NewStdPermission("get_heartbeat")
+	GetHeartbeat = rbac.Permission("get_heartbeat")
 	// PostHeartbeat : ハートビート送信権限
-	PostHeartbeat = gorbac.NewStdPermission("post_heartbeat")
+	PostHeartbeat = rbac.Permission("post_heartbeat")
 )

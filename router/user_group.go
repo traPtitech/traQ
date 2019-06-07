@@ -39,7 +39,7 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 
 	if req.Type == "grade" {
 		// 学年グループは権限が必要
-		if getRequestUser(c).Role != role.Admin.ID() {
+		if getRequestUser(c).Role != role.Admin {
 			return forbidden("you are not permitted to create groups of this type")
 		}
 	}
@@ -95,7 +95,7 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 
 	if req.Type.ValueOrZero() == "grade" {
 		// 学年グループは権限が必要
-		if getRequestUser(c).Role != role.Admin.ID() {
+		if getRequestUser(c).Role != role.Admin {
 			return forbidden("you are not permitted to create groups of this type")
 		}
 	}

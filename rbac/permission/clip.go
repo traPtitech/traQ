@@ -1,20 +1,22 @@
 package permission
 
-import "github.com/mikespook/gorbac"
+import (
+	"github.com/traPtitech/traQ/rbac"
+)
 
-var (
+const (
 	// GetClip クリップ取得権限
-	GetClip = gorbac.NewStdPermission("get_clip")
+	GetClip = rbac.Permission("get_clip")
 	// CreateClip クリップ作成権限
-	CreateClip = gorbac.NewStdPermission("create_clip")
+	CreateClip = rbac.Permission("create_clip")
 	// DeleteClip クリップ削除権限
-	DeleteClip = gorbac.NewStdPermission("delete_clip")
+	DeleteClip = rbac.Permission("delete_clip")
 	// GetClipFolder クリップフォルダ取得権限
-	GetClipFolder = gorbac.NewStdPermission("get_clip_folder")
+	GetClipFolder = rbac.Permission("get_clip_folder")
 	// CreateClipFolder クリップフォルダ作成権限
-	CreateClipFolder = gorbac.NewStdPermission("create_clip_folder")
+	CreateClipFolder = rbac.Permission("create_clip_folder")
 	// PatchClipFolder クリップフォルダ修正権限
-	PatchClipFolder = gorbac.NewStdPermission("patch_clip_folder")
+	PatchClipFolder = rbac.Permission("patch_clip_folder")
 	// DeleteClipFolder クリップフォルダ削除権限
-	DeleteClipFolder = gorbac.NewStdPermission("delete_clip_folder")
+	DeleteClipFolder = rbac.Permission("delete_clip_folder")
 )
