@@ -26,11 +26,13 @@
 | [oauth2_tokens](oauth2_tokens.md) | 11 |  | BASE TABLE |
 | [pins](pins.md) | 4 |  | BASE TABLE |
 | [r_sessions](r_sessions.md) | 8 |  | BASE TABLE |
-| [rbac_overrides](rbac_overrides.md) | 5 |  | BASE TABLE |
 | [stamps](stamps.md) | 7 | スタンプテーブル | BASE TABLE |
 | [stars](stars.md) | 2 | お気に入りチャンネルテーブル | BASE TABLE |
 | [tags](tags.md) | 4 | タグテーブル | BASE TABLE |
 | [unreads](unreads.md) | 4 | メッセージ未読テーブル | BASE TABLE |
+| [user_defined_role_inheritances](user_defined_role_inheritances.md) | 2 |  | BASE TABLE |
+| [user_defined_role_permissions](user_defined_role_permissions.md) | 2 |  | BASE TABLE |
+| [user_defined_roles](user_defined_roles.md) | 2 |  | BASE TABLE |
 | [user_group_members](user_group_members.md) | 2 |  | BASE TABLE |
 | [user_groups](user_groups.md) | 7 |  | BASE TABLE |
 | [users](users.md) | 13 | ユーザーテーブル | BASE TABLE |
