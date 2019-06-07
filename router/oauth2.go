@@ -540,7 +540,7 @@ func (h *Handlers) tokenEndpointPasswordHandler(c echo.Context) error {
 	}
 
 	// 要求スコープ確認
-	reqScopes, err := h.plitAndValidateScope(req.Scope)
+	reqScopes, err := h.splitAndValidateScope(req.Scope)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidScope})
 	}
@@ -610,7 +610,7 @@ func (h *Handlers) tokenEndpointClientCredentialsHandler(c echo.Context) error {
 	}
 
 	// 要求スコープ確認
-	reqScopes, err := h.plitAndValidateScope(req.Scope)
+	reqScopes, err := h.splitAndValidateScope(req.Scope)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidScope})
 	}
