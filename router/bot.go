@@ -76,7 +76,7 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 		return badRequest(err)
 	}
 
-	if req.Privileged.Valid && getRequestUser(c).Role != role.Admin.ID() {
+	if req.Privileged.Valid && getRequestUser(c).Role != role.Admin {
 		return forbidden("you are not permitted to set privileged flag to bots")
 	}
 

@@ -54,7 +54,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 		Icon:        iconID,
 		Bot:         true,
 		Status:      model.UserAccountStatusActive,
-		Role:        role.Bot.ID(),
+		Role:        role.Bot,
 	}
 	b := &model.Bot{
 		ID:                bid,

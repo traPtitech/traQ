@@ -1,14 +1,14 @@
 package permission
 
-import "github.com/mikespook/gorbac"
+import "github.com/traPtitech/traQ/rbac"
 
-var (
+const (
 	// GetNotificationStatus : チャンネルの通知状況取得権限
-	GetNotificationStatus = gorbac.NewStdPermission("get_notification_status")
+	GetNotificationStatus = rbac.Permission("get_notification_status")
 	// ChangeNotificationStatus : チャンネルの通知状況変更権限
-	ChangeNotificationStatus = gorbac.NewStdPermission("change_notification_status")
+	ChangeNotificationStatus = rbac.Permission("change_notification_status")
 	// ConnectNotificationStream : 通知ストリームへの接続権限
-	ConnectNotificationStream = gorbac.NewStdPermission("connect_notification_stream")
+	ConnectNotificationStream = rbac.Permission("connect_notification_stream")
 	// RegisterDevice : 通知デバイスの登録権限
-	RegisterDevice = gorbac.NewStdPermission("register_device")
+	RegisterDevice = rbac.Permission("register_device")
 )

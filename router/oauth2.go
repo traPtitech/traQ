@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
-	"github.com/mikespook/gorbac"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
@@ -47,41 +45,6 @@ const (
 
 	authorizationCodeExp = 60 * 5
 )
-
-const (
-	// Admin 管理者権限
-	Admin model.AccessScope = "admin"
-	// Read 読み込み権限
-	Read model.AccessScope = "read"
-	// PrivateRead プライベートなチャンネルの読み込み権限
-	PrivateRead model.AccessScope = "private_read" // TODO
-	// Write 書き込み権限
-	Write model.AccessScope = "write"
-	// PrivateWrite プライベートなチャンネルの書き込み権限
-	PrivateWrite model.AccessScope = "private_write" // TODO
-	// Bot Botユーザー
-	Bot model.AccessScope = "bot"
-	// ManageBot Botの管理権限
-	ManageBot model.AccessScope = "manage_bot"
-)
-
-var list = map[model.AccessScope]gorbac.Role{
-	Admin:        role.Admin,
-	Read:         role.ReadUser,
-	PrivateRead:  role.PrivateReadUser,
-	Write:        role.WriteUser,
-	PrivateWrite: role.PrivateWriteUser,
-	Bot:          role.Bot,
-	ManageBot:    role.ManageBot,
-}
-
-func validScope(s model.AccessScope) bool {
-	if s == Admin {
-		return false
-	}
-	_, ok := list[s]
-	return ok
-}
 
 type tokenResponse struct {
 	AccessToken  string `json:"access_token"`
@@ -180,7 +143,7 @@ func (h *Handlers) AuthorizationEndpointHandler(c echo.Context) error {
 	}
 
 	// スコープ確認
-	reqScopes, err := SplitAndValidateScope(req.RawScope)
+	reqScopes, err := h.splitAndValidateScope(req.RawScope)
 	if err != nil {
 		q.Set("error", errInvalidScope)
 		redirectURI.RawQuery = q.Encode()
@@ -577,7 +540,7 @@ func (h *Handlers) tokenEndpointPasswordHandler(c echo.Context) error {
 	}
 
 	// 要求スコープ確認
-	reqScopes, err := SplitAndValidateScope(req.Scope)
+	reqScopes, err := h.plitAndValidateScope(req.Scope)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidScope})
 	}
@@ -647,7 +610,7 @@ func (h *Handlers) tokenEndpointClientCredentialsHandler(c echo.Context) error {
 	}
 
 	// 要求スコープ確認
-	reqScopes, err := SplitAndValidateScope(req.Scope)
+	reqScopes, err := h.plitAndValidateScope(req.Scope)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidScope})
 	}
@@ -725,7 +688,7 @@ func (h *Handlers) tokenEndpointRefreshTokenHandler(c echo.Context) error {
 	}
 
 	// 要求スコープ確認
-	reqScopes, err := SplitAndValidateScope(req.Scope)
+	reqScopes, err := h.splitAndValidateScope(req.Scope)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidScope})
 	}
@@ -784,14 +747,14 @@ func (h *Handlers) RevokeTokenEndpointHandler(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-// SplitAndValidateScope スペース区切りのスコープ文字列を分解し、検証します
-func SplitAndValidateScope(str string) (model.AccessScopes, error) {
+// splitAndValidateScope スペース区切りのスコープ文字列を分解し、検証します
+func (h *Handlers) splitAndValidateScope(str string) (model.AccessScopes, error) {
 	var scopes model.AccessScopes
 	set := map[model.AccessScope]bool{}
 
 	for _, v := range strings.Fields(str) {
 		s := model.AccessScope(v)
-		if ok := set[s]; !validScope(s) || ok {
+		if ok := set[s]; !h.RBAC.IsOAuth2Scope(string(s)) || ok {
 			return nil, errors.New(errInvalidScope)
 		}
 		scopes = append(scopes, s)

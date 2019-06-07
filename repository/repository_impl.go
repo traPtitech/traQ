@@ -51,7 +51,7 @@ func (repo *GormRepository) Sync() (bool, error) {
 
 	// サーバーユーザーの確認
 	c := 0
-	err := repo.db.Model(&model.User{}).Where(&model.User{Role: role.Admin.ID()}).Limit(1).Count(&c).Error
+	err := repo.db.Model(&model.User{}).Where(&model.User{Role: role.Admin}).Limit(1).Count(&c).Error
 	if err != nil {
 		return false, err
 	}

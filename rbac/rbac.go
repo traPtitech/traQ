@@ -1,103 +1,89 @@
 package rbac
 
-import (
-	"github.com/gofrs/uuid"
-	"github.com/mikespook/gorbac"
-	"sync"
-)
-
-// RBAC : Role-Based Access Controller extending gorbac
-type RBAC struct {
-	*gorbac.RBAC
-	mutex     sync.RWMutex
-	store     Store
-	overrides map[uuid.UUID]map[gorbac.Permission]bool
+// RBAC Role-based Access Controllerインターフェース
+type RBAC interface {
+	// IsGranted 指定したロールで指定した権限が許可されているかどうか
+	IsGranted(role string, perm Permission) bool
+	// IsAllGranted 指定したロール全てで指定した権限が許可されているかどうか
+	IsAllGranted(roles []string, perm Permission) bool
+	// IsAnyGranted 指定したロールのいずれかで指定した権限が許可されているかどうか
+	IsAnyGranted(roles []string, perm Permission) bool
+	// Reload 設定を読み込みます
+	Reload() error
+	// IsOAuth2Scope 指定したロールがOAuth2Scopeかどうか
+	IsOAuth2Scope(v string) bool
+	// IsValidRole 有効なロールかどうか
+	IsValidRole(v string) bool
+	// GetGrantedPermissions 指定したロールに与えられている全ての権限を取得します
+	GetGrantedPermissions(role string) Permissions
 }
 
-// New : 空のRBACを生成します
-func New(store Store) (*RBAC, error) {
-	rbac := &RBAC{
-		RBAC:      gorbac.New(),
-		overrides: make(map[uuid.UUID]map[gorbac.Permission]bool),
-	}
+// Permission パーミッション
+type Permission string
 
-	// Restore
-	if store != nil {
-		overrides, err := store.GetAllOverrides()
-		if err != nil {
-			return nil, err
-		}
-		for _, v := range overrides {
-			_ = rbac.SetOverride(v.GetUserID(), v.GetPermission(), v.GetValidity())
-		}
-
-		rbac.store = store
-	}
-
-	return rbac, nil
+// Name パーミッション名
+func (p Permission) Name() string {
+	return string(p)
 }
 
-// IsGranted tests if the role `ID` has Permission `p`. it may be overridden according to userID.
-func (rbac *RBAC) IsGranted(userID uuid.UUID, roleID string, p gorbac.Permission) bool {
-	rbac.mutex.RLock()
-	defer rbac.mutex.RUnlock()
+// Permissions パーミッションセット
+type Permissions map[Permission]bool
 
-	override, ok := rbac.overrides[userID]
-	if ok {
-		if state, ok := override[p]; ok {
-			return state
-		}
-	}
-
-	return rbac.RBAC.IsGranted(roleID, p, nil)
+// Add セットに権限を追加します
+func (set Permissions) Add(p Permission) {
+	set[p] = true
 }
 
-// GetOverride : 指定したユーザーに付与されているオーバライドルールを取得します
-func (rbac *RBAC) GetOverride(userID uuid.UUID) (result map[gorbac.Permission]bool) {
-	rbac.mutex.RLock()
-	if override, ok := rbac.overrides[userID]; ok {
-		// Copy
-		result = map[gorbac.Permission]bool{}
-		for k, v := range override {
-			result[k] = v
-		}
-	}
-	rbac.mutex.RUnlock()
-	return
+// Remove セットから権限を削除します
+func (set Permissions) Remove(p Permission) {
+	delete(set, p)
 }
 
-// SetOverride : 指定したユーザーにオーバーライドルールを付与します
-func (rbac *RBAC) SetOverride(userID uuid.UUID, p gorbac.Permission, validity bool) (err error) {
-	rbac.mutex.Lock()
-	if override, ok := rbac.overrides[userID]; ok {
-		override[p] = validity
-		rbac.overrides[userID] = override
-	} else {
-		override = make(map[gorbac.Permission]bool)
-		override[p] = validity
-		rbac.overrides[userID] = override
-	}
-
-	// Persistence
-	if rbac.store != nil {
-		err = rbac.store.SaveOverride(userID, p, validity)
-	}
-
-	rbac.mutex.Unlock()
-	return
+// Has セットに指定した権限が含まれているかどうか
+func (set Permissions) Has(p Permission) bool {
+	return set[p]
 }
 
-// DeleteOverride : 指定したユーザーの指定したパーミッションのオーバーライドルールを削除します
-func (rbac *RBAC) DeleteOverride(userID uuid.UUID, p gorbac.Permission) (err error) {
-	rbac.mutex.Lock()
-	if override, ok := rbac.overrides[userID]; ok {
-		delete(override, p)
+// Array セットの権限の配列を返します
+func (set Permissions) Array() []Permission {
+	result := make([]Permission, 0, len(set))
+	for k, _ := range set {
+		result = append(result, k)
+	}
+	return result
+}
 
-		// Persistence
-		if rbac.store != nil {
-			err = rbac.store.DeleteOverride(userID, p)
+// Role ロールインターフェース
+type Role interface {
+	Name() string
+	IsGranted(p Permission) bool
+	IsOAuth2Scope() bool
+	Permissions() Permissions
+}
+
+// Roles ロールセット
+type Roles map[string]Role
+
+// Add セットにロールを追加します
+func (roles Roles) Add(role Role) {
+	roles[role.Name()] = role
+}
+
+// IsGranted セットで指定した権限が許可されているかどうか
+func (roles Roles) IsGranted(p Permission) bool {
+	for _, v := range roles {
+		if v.IsGranted(p) {
+			return true
 		}
 	}
-	rbac.mutex.Unlock()
-	return
+	return false
+}
+
+// HasAndIsGranted
+func (roles Roles) HasAndIsGranted(r string, p Permission) bool {
+	set, ok := roles[r]
+	if !ok {
+		return false
+	}
+	return set.IsGranted(p)
 }

@@ -140,7 +140,7 @@ func (h *Handlers) PostClients(c echo.Context) error {
 	scopes := model.AccessScopes{}
 	for _, v := range req.Scopes {
 		s := model.AccessScope(v)
-		if !validScope(s) {
+		if !h.RBAC.IsOAuth2Scope(v) {
 			return badRequest(fmt.Sprintf("invalid scope: %s", s))
 		}
 		scopes = append(scopes, s)

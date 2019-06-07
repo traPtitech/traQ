@@ -38,38 +38,6 @@ func TestResponseType_valid(t *testing.T) {
 	}
 }
 
-func TestSplitAndValidateScope(t *testing.T) {
-	t.Parallel()
-
-	t.Run("Case1", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		s, err := SplitAndValidateScope("read write")
-		if assert.NoError(err) {
-			assert.True(s.Contains("read"))
-			assert.True(s.Contains("write"))
-			assert.False(s.Contains("a"))
-		}
-	})
-
-	t.Run("Case2", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		_, err := SplitAndValidateScope("read write (っ‘△‘ｃ)＜ﾜｧ!")
-		assert.Error(err)
-	})
-
-	t.Run("Case3", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		_, err := SplitAndValidateScope("read write read write")
-		assert.Error(err)
-	})
-}
-
 func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _ := setup(t, common7)

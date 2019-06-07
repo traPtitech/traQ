@@ -1,31 +1,33 @@
 package permission
 
-import "github.com/mikespook/gorbac"
+import (
+	"github.com/traPtitech/traQ/rbac"
+)
 
-var (
+const (
 	// GetWebhook Webhook情報取得権限
-	GetWebhook = gorbac.NewStdPermission("get_webhook")
+	GetWebhook = rbac.Permission("get_webhook")
 	// CreateWebhook Webhook作成権限
-	CreateWebhook = gorbac.NewStdPermission("create_webhook")
+	CreateWebhook = rbac.Permission("create_webhook")
 	// EditWebhook Webhook編集権限
-	EditWebhook = gorbac.NewStdPermission("edit_webhook")
+	EditWebhook = rbac.Permission("edit_webhook")
 	// DeleteWebhook Webhook削除権限
-	DeleteWebhook = gorbac.NewStdPermission("delete_webhook")
+	DeleteWebhook = rbac.Permission("delete_webhook")
 	// AccessOthersWebhook 他人のWebhookのアクセス権限
-	AccessOthersWebhook = gorbac.NewStdPermission("access_others_webhook")
+	AccessOthersWebhook = rbac.Permission("access_others_webhook")
 
 	// GetBot Bot情報取得権限
-	GetBot = gorbac.NewStdPermission("get_bot")
+	GetBot = rbac.Permission("get_bot")
 	// CreateBot Bot作成権限
-	CreateBot = gorbac.NewStdPermission("create_bot")
+	CreateBot = rbac.Permission("create_bot")
 	// EditBot Bot編集権限
-	EditBot = gorbac.NewStdPermission("edit_bot")
+	EditBot = rbac.Permission("edit_bot")
 	// DeleteBot Bot削除権限
-	DeleteBot = gorbac.NewStdPermission("delete_bot")
+	DeleteBot = rbac.Permission("delete_bot")
 	// ReissueBotToken Botトークン再発行権限
-	ReissueBotToken = gorbac.NewStdPermission("reissue_bot_token")
+	ReissueBotToken = rbac.Permission("reissue_bot_token")
 	// InstallBot Botインストール権限
-	InstallBot = gorbac.NewStdPermission("install_bot")
+	InstallBot = rbac.Permission("install_bot")
 	// UninstallBot Botアンインストール権限
-	UninstallBot = gorbac.NewStdPermission("uninstall_bot")
+	UninstallBot = rbac.Permission("uninstall_bot")
 )

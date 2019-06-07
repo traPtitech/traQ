@@ -1,20 +1,22 @@
 package permission
 
-import "github.com/mikespook/gorbac"
+import (
+	"github.com/traPtitech/traQ/rbac"
+)
 
-var (
+const (
 	// GetUser ユーザー情報取得権限
-	GetUser = gorbac.NewStdPermission("get_user")
+	GetUser = rbac.Permission("get_user")
 	// RegisterUser 新規ユーザー登録権限
-	RegisterUser = gorbac.NewStdPermission("register_user")
+	RegisterUser = rbac.Permission("register_user")
 	// GetMe 自ユーザー情報取得権限
-	GetMe = gorbac.NewStdPermission("get_me")
+	GetMe = rbac.Permission("get_me")
 	// EditMe 自ユーザー情報変更権限
-	EditMe = gorbac.NewStdPermission("edit_me")
+	EditMe = rbac.Permission("edit_me")
 	// ChangeMyIcon 自ユーザーアイコン変更権限
-	ChangeMyIcon = gorbac.NewStdPermission("change_my_icon")
+	ChangeMyIcon = rbac.Permission("change_my_icon")
 	// ChangeMyPassword 自ユーザーパスワード変更権限
-	ChangeMyPassword = gorbac.NewStdPermission("change_my_password")
+	ChangeMyPassword = rbac.Permission("change_my_password")
 	// EditOtherUsers 他ユーザー情報変更権限
-	EditOtherUsers = gorbac.NewStdPermission("edit_other_users")
+	EditOtherUsers = rbac.Permission("edit_other_users")
 )

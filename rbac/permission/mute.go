@@ -1,12 +1,14 @@
 package permission
 
-import "github.com/mikespook/gorbac"
+import (
+	"github.com/traPtitech/traQ/rbac"
+)
 
-var (
+const (
 	// GetMutedChannels ミュートチャンネル一覧取得権限
-	GetMutedChannels = gorbac.NewStdPermission("get_muted_channels")
+	GetMutedChannels = rbac.Permission("get_muted_channels")
 	// MuteChannel チャンネルミュート権限
-	MuteChannel = gorbac.NewStdPermission("mute_channel")
+	MuteChannel = rbac.Permission("mute_channel")
 	// UnmuteChannel チャンネルアンミュート権限
-	UnmuteChannel = gorbac.NewStdPermission("unmute_channel")
+	UnmuteChannel = rbac.Permission("unmute_channel")
 )

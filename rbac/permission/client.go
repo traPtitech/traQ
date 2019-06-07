@@ -1,18 +1,20 @@
 package permission
 
-import "github.com/mikespook/gorbac"
+import (
+	"github.com/traPtitech/traQ/rbac"
+)
 
-var (
+const (
 	// GetMyTokens : 自トークン情報取得権限
-	GetMyTokens = gorbac.NewStdPermission("get_my_tokens")
+	GetMyTokens = rbac.Permission("get_my_tokens")
 	// RevokeMyToken : 自トークン削除権限
-	RevokeMyToken = gorbac.NewStdPermission("revoke_my_token")
+	RevokeMyToken = rbac.Permission("revoke_my_token")
 	// GetClients : クライアント情報取得権限
-	GetClients = gorbac.NewStdPermission("get_clients")
+	GetClients = rbac.Permission("get_clients")
 	// CreateClient : 新規クライアント登録権限
-	CreateClient = gorbac.NewStdPermission("create_client")
+	CreateClient = rbac.Permission("create_client")
 	// EditMyClient : クライアント情報編集権限
-	EditMyClient = gorbac.NewStdPermission("edit_my_client")
+	EditMyClient = rbac.Permission("edit_my_client")
 	// DeleteMyClient : クライアント削除権限
-	DeleteMyClient = gorbac.NewStdPermission("delete_my_client")
+	DeleteMyClient = rbac.Permission("delete_my_client")
 )

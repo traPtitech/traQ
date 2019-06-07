@@ -38,7 +38,7 @@ func (h *Handlers) GetWebhooks(c echo.Context) error {
 		list []model.Webhook
 		err  error
 	)
-	if c.QueryParam("all") == "1" && h.RBAC.IsGranted(user.ID, user.Role, permission.AccessOthersWebhook) {
+	if c.QueryParam("all") == "1" && h.RBAC.IsGranted(user.Role, permission.AccessOthersWebhook) {
 		list, err = h.Repo.GetAllWebhooks()
 	} else {
 		list, err = h.Repo.GetWebhooksByCreator(user.ID)

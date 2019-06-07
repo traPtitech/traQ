@@ -21,8 +21,7 @@ import (
 	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/logging"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/rbac/role"
+	rbac "github.com/traPtitech/traQ/rbac/impl"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/sessions"
@@ -127,16 +126,11 @@ func main() {
 	}
 	sessions.SetStore(sessionStore)
 
-	// Init Role-Based Access Controller
-	rbacStore, err := rbac.NewDefaultStore(engine)
-	if err != nil {
-		logger.Fatal("failed to setup rbac store", zap.Error(err))
-	}
-	r, err := rbac.New(rbacStore)
+	// Role-Based Access Controller
+	r, err := rbac.New(repo)
 	if err != nil {
 		logger.Fatal("failed to init rbac", zap.Error(err))
 	}
-	role.SetRole(r)
 
 	// Firebase
 	if f := viper.GetString("firebase.serviceAccount.file"); len(f) > 0 {

@@ -1,12 +1,14 @@
 package permission
 
-import "github.com/mikespook/gorbac"
+import (
+	"github.com/traPtitech/traQ/rbac"
+)
 
-var (
+const (
 	// UploadFile : ファイルアップロード権限
-	UploadFile = gorbac.NewStdPermission("upload_file")
+	UploadFile = rbac.Permission("upload_file")
 	// DownloadFile : ファイルダウンロード権限
-	DownloadFile = gorbac.NewStdPermission("download_file")
+	DownloadFile = rbac.Permission("download_file")
 	// DeleteFile : ファイル削除権限
-	DeleteFile = gorbac.NewStdPermission("delete_file")
+	DeleteFile = rbac.Permission("delete_file")
 )

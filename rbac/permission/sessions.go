@@ -1,10 +1,12 @@
 package permission
 
-import "github.com/mikespook/gorbac"
+import (
+	"github.com/traPtitech/traQ/rbac"
+)
 
-var (
+const (
 	// GetMySessions セッションリスト取得権限
-	GetMySessions = gorbac.NewStdPermission("get_my_sessions")
+	GetMySessions = rbac.Permission("get_my_sessions")
 	// DeleteMySessions セッション削除権限
-	DeleteMySessions = gorbac.NewStdPermission("delete_my_sessions")
+	DeleteMySessions = rbac.Permission("delete_my_sessions")
 )
