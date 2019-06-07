@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"github.com/gavv/httpexpect"
 	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/rbac"
+	rbac "github.com/traPtitech/traQ/rbac/impl"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
@@ -60,14 +60,12 @@ func TestMain(m *testing.M) {
 		s4,
 	}
 	for _, key := range repos {
-		r, err := rbac.New(nil)
+		e := echo.New()
+		repo := NewTestRepository()
+		r, err := rbac.New(repo)
 		if err != nil {
 			panic(err)
 		}
-		role.SetRole(r)
-
-		e := echo.New()
-		repo := NewTestRepository()
 		SetupRouting(e, &Handlers{
 			RBAC:   r,
 			Repo:   repo,
