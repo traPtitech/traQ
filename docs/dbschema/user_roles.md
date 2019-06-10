@@ -1,4 +1,4 @@
-# user_defined_roles
+# user_roles
 
 ## Description
 
@@ -6,9 +6,10 @@
 <summary><strong>Table Definition</strong></summary>
 
 ```sql
-CREATE TABLE `user_defined_roles` (
+CREATE TABLE `user_roles` (
   `name` varchar(30) NOT NULL,
-  `o_auth2_scope` tinyint(1) NOT NULL DEFAULT '0',
+  `oauth2_scope` tinyint(1) NOT NULL DEFAULT '0',
+  `system` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
@@ -19,8 +20,9 @@ CREATE TABLE `user_defined_roles` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| name | varchar(30) |  | false | [user_defined_role_inheritances](user_defined_role_inheritances.md) [user_defined_role_inheritances](user_defined_role_inheritances.md) [user_defined_role_permissions](user_defined_role_permissions.md) |  |  |
-| o_auth2_scope | tinyint(1) | 0 | false |  |  |  |
+| name | varchar(30) |  | false | [user_role_inheritances](user_role_inheritances.md) [user_role_inheritances](user_role_inheritances.md) [user_role_permissions](user_role_permissions.md) |  |  |
+| oauth2_scope | tinyint(1) | 0 | false |  |  |  |
+| system | tinyint(1) | 0 | false |  |  |  |
 
 ## Constraints
 
@@ -36,7 +38,7 @@ CREATE TABLE `user_defined_roles` (
 
 ## Relations
 
-![er](user_defined_roles.svg)
+![er](user_roles.svg)
 
 ---
 

@@ -1,4 +1,4 @@
-# user_defined_role_permissions
+# user_role_permissions
 
 ## Description
 
@@ -6,11 +6,11 @@
 <summary><strong>Table Definition</strong></summary>
 
 ```sql
-CREATE TABLE `user_defined_role_permissions` (
+CREATE TABLE `user_role_permissions` (
   `role` varchar(30) NOT NULL,
   `permission` varchar(30) NOT NULL,
   PRIMARY KEY (`role`,`permission`),
-  CONSTRAINT `user_defined_roles_name_583119bc40d20976de99ef781e2ba297d3b0e18f` FOREIGN KEY (`role`) REFERENCES `user_defined_roles` (`name`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `user_role_permissions_role_user_roles_name_foreign` FOREIGN KEY (`role`) REFERENCES `user_roles` (`name`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -20,7 +20,7 @@ CREATE TABLE `user_defined_role_permissions` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| role | varchar(30) |  | false |  | [user_defined_roles](user_defined_roles.md) |  |
+| role | varchar(30) |  | false |  | [user_roles](user_roles.md) |  |
 | permission | varchar(30) |  | false |  |  |  |
 
 ## Constraints
@@ -28,7 +28,7 @@ CREATE TABLE `user_defined_role_permissions` (
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (role, permission) |
-| user_defined_roles_name_583119bc40d20976de99ef781e2ba297d3b0e18f | FOREIGN KEY | FOREIGN KEY (role) REFERENCES user_defined_roles (name) |
+| user_role_permissions_role_user_roles_name_foreign | FOREIGN KEY | FOREIGN KEY (role) REFERENCES user_roles (name) |
 
 ## Indexes
 
@@ -38,7 +38,7 @@ CREATE TABLE `user_defined_role_permissions` (
 
 ## Relations
 
-![er](user_defined_role_permissions.svg)
+![er](user_role_permissions.svg)
 
 ---
 

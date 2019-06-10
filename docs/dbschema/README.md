@@ -30,11 +30,11 @@
 | [stars](stars.md) | 2 | お気に入りチャンネルテーブル | BASE TABLE |
 | [tags](tags.md) | 4 | タグテーブル | BASE TABLE |
 | [unreads](unreads.md) | 4 | メッセージ未読テーブル | BASE TABLE |
-| [user_defined_role_inheritances](user_defined_role_inheritances.md) | 2 |  | BASE TABLE |
-| [user_defined_role_permissions](user_defined_role_permissions.md) | 2 |  | BASE TABLE |
-| [user_defined_roles](user_defined_roles.md) | 2 |  | BASE TABLE |
 | [user_group_members](user_group_members.md) | 2 |  | BASE TABLE |
 | [user_groups](user_groups.md) | 7 |  | BASE TABLE |
+| [user_role_inheritances](user_role_inheritances.md) | 2 |  | BASE TABLE |
+| [user_role_permissions](user_role_permissions.md) | 2 |  | BASE TABLE |
+| [user_roles](user_roles.md) | 3 |  | BASE TABLE |
 | [users](users.md) | 13 | ユーザーテーブル | BASE TABLE |
 | [users_private_channels](users_private_channels.md) | 2 | プライベートチャンネル参加者テーブル | BASE TABLE |
 | [users_subscribe_channels](users_subscribe_channels.md) | 2 | チャンネル購読者テーブル | BASE TABLE |
