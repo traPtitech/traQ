@@ -15,12 +15,14 @@ const (
 	DeleteChannel = rbac.Permission("delete_channel")
 	// ChangeParentChannel 親チャンネル変更権限
 	ChangeParentChannel = rbac.Permission("change_parent_channel")
-	// GetTopic : チャンネルトピック取得権限
-	GetTopic = rbac.Permission("get_topic")
-	// EditTopic : チャンネルトピック変更権限
-	EditTopic = rbac.Permission("edit_topic")
-	// GetChannelVisibility : チャンネルの可視状態の取得権限
-	GetChannelVisibility = rbac.Permission("get_channel_visibility")
-	// ChangeChannelVisibility : チャンネルの可視状態の変更権限
-	ChangeChannelVisibility = rbac.Permission("change_channel_visibility")
+	// EditChannelTopic チャンネルトピック変更権限
+	EditChannelTopic = rbac.Permission("edit_channel_topic")
+	// GetChannelStar チャンネルスター取得権限
+	GetChannelStar = rbac.Permission("get_channel_star")
+	// EditChannelStar チャンネルスター編集権限
+	EditChannelStar = rbac.Permission("edit_channel_star")
+	// GetChannelMute チャンネルミュート取得権限
+	GetChannelMute = rbac.Permission("get_channel_mute")
+	// EditChannelMute チャンネルミュート編集権限
+	EditChannelMute = rbac.Permission("edit_channel_mute")
 )

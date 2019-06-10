@@ -3,7 +3,7 @@ package router
 import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
-	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
@@ -37,11 +37,9 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 		return badRequest(err)
 	}
 
-	if req.Type == "grade" {
+	if req.Type == "grade" && !h.RBAC.IsGranted(getRequestUser(c).Role, permission.CreateSpecialUserGroup) {
 		// 学年グループは権限が必要
-		if getRequestUser(c).Role != role.Admin {
-			return forbidden("you are not permitted to create groups of this type")
-		}
+		return forbidden("you are not permitted to create groups of this type")
 	}
 
 	g, err := h.Repo.CreateUserGroup(req.Name, req.Description, req.Type, reqUserID)
@@ -93,11 +91,9 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 		return forbidden("you are not the group's admin")
 	}
 
-	if req.Type.ValueOrZero() == "grade" {
+	if req.Type.ValueOrZero() == "grade" && !h.RBAC.IsGranted(getRequestUser(c).Role, permission.CreateSpecialUserGroup) {
 		// 学年グループは権限が必要
-		if getRequestUser(c).Role != role.Admin {
-			return forbidden("you are not permitted to create groups of this type")
-		}
+		return forbidden("you are not permitted to create groups of this type")
 	}
 
 	args := repository.UpdateUserGroupNameArgs{

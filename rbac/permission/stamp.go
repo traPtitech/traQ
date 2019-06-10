@@ -5,24 +5,26 @@ import (
 )
 
 const (
-	// GetStamp : スタンプ情報取得権限
+	// GetStamp スタンプ情報取得権限
 	GetStamp = rbac.Permission("get_stamp")
-	// CreateStamp : スタンプ作成権限
+	// CreateStamp スタンプ作成権限
 	CreateStamp = rbac.Permission("create_stamp")
-	// EditStamp : 自スタンプ画像変更権限
+	// EditStamp 自スタンプ画像変更権限
 	EditStamp = rbac.Permission("edit_stamp")
-	// EditStampName : 自スタンプ名変更権限
+	// EditStampName 自スタンプ名変更権限
 	EditStampName = rbac.Permission("edit_stamp_name")
-	// EditStampCreatedByOthers : 他ユーザー作成のスタンプの変更権限
+	// EditStampCreatedByOthers 他ユーザー作成のスタンプの変更権限
 	EditStampCreatedByOthers = rbac.Permission("edit_stamp_created_by_others")
-	// DeleteStamp : スタンプ削除権限
+	// DeleteStamp スタンプ削除権限
 	DeleteStamp = rbac.Permission("delete_stamp")
-	// GetMessageStamp : メッセージスタンプ一覧取得権限
-	GetMessageStamp = rbac.Permission("get_message_stamp")
-	// AddMessageStamp : メッセージスタンプ追加権限
+	// AddMessageStamp メッセージスタンプ追加権限
 	AddMessageStamp = rbac.Permission("add_message_stamp")
-	// RemoveMessageStamp : メッセージスタンプ削除権限
+	// RemoveMessageStamp メッセージスタンプ削除権限
 	RemoveMessageStamp = rbac.Permission("remove_message_stamp")
 	// GetMyStampHistory 自分のスタンプ履歴取得権限
 	GetMyStampHistory = rbac.Permission("get_my_stamp_history")
+	// GetFavoriteStamp お気に入りスタンプ取得権限
+	GetFavoriteStamp = rbac.Permission("get_favorite_stamp")
+	// EditFavoriteStamp お気に入りスタンプ編集権限
+	EditFavoriteStamp = rbac.Permission("edit_favorite_stamp")
 )

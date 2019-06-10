@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository/migration"
 	"gopkg.in/gormigrate.v1"
 )
@@ -26,9 +27,9 @@ func (repo *GormRepository) migration() error {
 		// 外部キー制約
 		foreignKeys := [][5]string{
 			// Table, Key, Reference, OnDelete, OnUpdate
-			{"user_defined_role_inheritances", "role", "user_defined_roles(name)", "CASCADE", "CASCADE"},
-			{"user_defined_role_inheritances", "sub_role", "user_defined_roles(name)", "CASCADE", "CASCADE"},
-			{"user_defined_role_permissions", "role", "user_defined_roles(name)", "CASCADE", "CASCADE"},
+			{"user_role_inheritances", "role", "user_roles(name)", "CASCADE", "CASCADE"},
+			{"user_role_inheritances", "sub_role", "user_roles(name)", "CASCADE", "CASCADE"},
+			{"user_role_permissions", "role", "user_roles(name)", "CASCADE", "CASCADE"},
 			{"users_private_channels", "user_id", "users(id)", "CASCADE", "CASCADE"},
 			{"users_private_channels", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 			{"dm_channel_mappings", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
@@ -76,6 +77,19 @@ func (repo *GormRepository) migration() error {
 			}
 		}
 
+		// 初期ユーザーロール投入
+		for _, v := range role.SystemRoles() {
+			if err := db.Create(v).Error; err != nil {
+				return err
+			}
+
+			for _, v := range v.Permissions {
+				if err := db.Create(v).Error; err != nil {
+					return err
+				}
+			}
+		}
+
 		return nil
 	})
 	return m.Migrate()
@@ -85,7 +99,7 @@ func (repo *GormRepository) migration() error {
 var allTables = []interface{}{
 	&model.RolePermission{},
 	&model.RoleInheritance{},
-	&model.UserDefinedRole{},
+	&model.UserRole{},
 	&model.DMChannelMapping{},
 	&model.ChannelLatestMessage{},
 	&model.BotEventLog{},

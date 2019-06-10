@@ -11,6 +11,7 @@ const User = "user"
 var userPerms = []rbac.Permission{
 	// read, writeロールのパーミッションを全て含む
 	permission.ChangeMyPassword,
+	permission.GetUserQRCode,
 	permission.GetMySessions,
 	permission.DeleteMySessions,
 	permission.GetMyTokens,
@@ -25,7 +26,6 @@ var userPerms = []rbac.Permission{
 	permission.CreateBot,
 	permission.EditBot,
 	permission.DeleteBot,
-	permission.ReissueBotToken,
 }
 
 func init() {

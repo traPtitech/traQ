@@ -29,5 +29,5 @@ type Repository interface {
 	OAuth2Repository
 	BotRepository
 	FavoriteStampRepository
-	UserDefinedRoleRepository
+	UserRoleRepository
 }

@@ -8,8 +8,8 @@ import (
 	"github.com/labstack/echo"
 )
 
-// GetNotificationStatus GET /channels/:channelID/notification
-func (h *Handlers) GetNotificationStatus(c echo.Context) error {
+// GetChannelSubscribers GET /channels/:channelID/notification
+func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
 	ch := getChannelFromContext(c)
 
 	// プライベートチャンネルの通知は取得できない。
@@ -24,8 +24,8 @@ func (h *Handlers) GetNotificationStatus(c echo.Context) error {
 	return c.JSON(http.StatusOK, users)
 }
 
-// PutNotificationStatus PUT /channels/:channelID/notification
-func (h *Handlers) PutNotificationStatus(c echo.Context) error {
+// PutChannelSubscribers PUT /channels/:channelID/notification
+func (h *Handlers) PutChannelSubscribers(c echo.Context) error {
 	ch := getChannelFromContext(c)
 
 	// プライベートチャンネルの通知は変更できない。

@@ -92,7 +92,7 @@ func (h *Handlers) GetUsers(c echo.Context) error {
 // GetMe GET /users/me
 func (h *Handlers) GetMe(c echo.Context) error {
 	me := getRequestUser(c)
-	return c.JSON(http.StatusOK, h.formatUser(me))
+	return c.JSON(http.StatusOK, h.formatMe(me))
 }
 
 // GetUserByID GET /users/:userID
