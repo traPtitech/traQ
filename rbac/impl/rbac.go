@@ -86,7 +86,7 @@ func (r *rbacImpl) Reload() error {
 
 		roles[v.Name] = &role{
 			name:         v.Name,
-			oauth2:       v.OAuth2Scope,
+			oauth2:       v.Oauth2Scope,
 			inheritances: rbac.Roles{},
 			permissions:  perms,
 		}

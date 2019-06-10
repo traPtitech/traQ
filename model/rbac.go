@@ -3,7 +3,7 @@ package model
 // UserRole ユーザーロール構造体
 type UserRole struct {
 	Name         string            `gorm:"type:varchar(30);not null;primary_key"`
-	OAuth2Scope  bool              `gorm:"type:boolean;not null;default:false"`
+	Oauth2Scope  bool              `gorm:"type:boolean;not null;default:false"`
 	Inheritances []RoleInheritance `gorm:"association_autoupdate:false;association_autocreate:false;foreignkey:Role"`
 	Permissions  []RolePermission  `gorm:"association_autoupdate:false;association_autocreate:false;foreignkey:Role"`
 	System       bool              `gorm:"type:boolean;not null;default:false"`

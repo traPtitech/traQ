@@ -31,8 +31,10 @@ var V2 = &gormigrate.Migration{
 			if err := db.Create(v).Error; err != nil {
 				return err
 			}
-			if err := db.Model(v).Association("Permissions").Replace(v.Permissions).Error; err != nil {
-				return err
+			for _, v := range v.Permissions {
+				if err := db.Create(v).Error; err != nil {
+					return err
+				}
 			}
 		}
 
@@ -60,7 +62,7 @@ var V2 = &gormigrate.Migration{
 
 type v2UserRole struct {
 	Name        string `gorm:"type:varchar(30);not null;primary_key"`
-	OAuth2Scope bool   `gorm:"type:boolean;not null;default:false"`
+	Oauth2Scope bool   `gorm:"type:boolean;not null;default:false"`
 	System      bool   `gorm:"type:boolean;not null;default:false"`
 }
 

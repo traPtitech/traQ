@@ -82,8 +82,11 @@ func (repo *GormRepository) migration() error {
 			if err := db.Create(v).Error; err != nil {
 				return err
 			}
-			if err := db.Model(v).Association("Permissions").Replace(v.Permissions).Error; err != nil {
-				return err
+
+			for _, v := range v.Permissions {
+				if err := db.Create(v).Error; err != nil {
+					return err
+				}
 			}
 		}
 
