@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/rbac/permission"
+	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
@@ -66,14 +67,18 @@ func (h *Handlers) PatchRole(c echo.Context) error {
 		return badRequest(err)
 	}
 
-	role := c.Param("role")
+	r := c.Param("role")
+	if r == role.Admin {
+		return forbidden()
+	}
+
 	args := repository.UpdateRoleArgs{
 		Permissions:  req.Permissions,
 		Inheritances: req.Inheritances,
 		OAuth2Scope:  req.OAuth2Scope,
 	}
 
-	if err := h.Repo.UpdateRole(role, args); err != nil {
+	if err := h.Repo.UpdateRole(r, args); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return badRequest(err)

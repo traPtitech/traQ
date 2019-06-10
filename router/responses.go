@@ -4,6 +4,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
+	"github.com/traPtitech/traQ/rbac/permission"
+	"github.com/traPtitech/traQ/rbac/role"
 	"time"
 )
 
@@ -34,7 +36,11 @@ func (h *Handlers) formatMe(user *model.User) *meResponse {
 		Suspended:   user.Status != model.UserAccountStatusActive,
 		Status:      int(user.Status),
 		Role:        user.Role,
-		Permissions: h.RBAC.GetGrantedPermissions(user.Role).Array(),
+	}
+	if user.Role == role.Admin {
+		res.Permissions = permission.List.Array()
+	} else {
+		res.Permissions = h.RBAC.GetGrantedPermissions(user.Role).Array()
 	}
 	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
 		res.LastOnline = &t
