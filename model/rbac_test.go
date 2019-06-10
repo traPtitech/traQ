@@ -7,15 +7,15 @@ import (
 
 func TestRole_TableName(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, "user_defined_roles", (&UserDefinedRole{}).TableName())
+	assert.Equal(t, "user_roles", (&UserRole{}).TableName())
 }
 
 func TestRoleInheritance_TableName(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, "user_defined_role_inheritances", (&RoleInheritance{}).TableName())
+	assert.Equal(t, "user_role_inheritances", (&RoleInheritance{}).TableName())
 }
 
 func TestRolePermission_TableName(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, "user_defined_role_permissions", (&RolePermission{}).TableName())
+	assert.Equal(t, "user_role_permissions", (&RolePermission{}).TableName())
 }

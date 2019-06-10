@@ -80,8 +80,8 @@ type TestRepository struct {
 	OAuth2TokensLock          sync.RWMutex
 }
 
-func (repo *TestRepository) GetAllRoles() ([]*model.UserDefinedRole, error) {
-	return []*model.UserDefinedRole{}, nil
+func (repo *TestRepository) GetAllRoles() ([]*model.UserRole, error) {
+	return []*model.UserRole{}, nil
 }
 
 func (repo *TestRepository) AddFavoriteStamp(userID, stampID uuid.UUID) error {

@@ -1,5 +1,7 @@
 package rbac
 
+import "time"
+
 // RBAC Role-based Access Controllerインターフェース
 type RBAC interface {
 	// IsGranted 指定したロールで指定した権限が許可されているかどうか
@@ -10,6 +12,8 @@ type RBAC interface {
 	IsAnyGranted(roles []string, perm Permission) bool
 	// Reload 設定を読み込みます
 	Reload() error
+	// LastReloadTime 最後に設定を読み込んだ時間を返します
+	LastReloadTime() time.Time
 	// IsOAuth2Scope 指定したロールがOAuth2Scopeかどうか
 	IsOAuth2Scope(v string) bool
 	// IsValidRole 有効なロールかどうか

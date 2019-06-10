@@ -6,12 +6,14 @@ import (
 	systemRole "github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"sync"
+	"time"
 )
 
 type rbacImpl struct {
 	roles      rbac.Roles
 	rolesMutex sync.RWMutex
 	repo       repository.Repository
+	reloadTime time.Time
 }
 
 // New RBACを初期化
@@ -71,10 +73,9 @@ func (r *rbacImpl) Reload() error {
 	if err != nil {
 		return err
 	}
-	rs = append(systemRole.SystemRoles(), rs...)
 
 	roles := map[string]*role{}
-	roleMap := map[string]*model.UserDefinedRole{}
+	roleMap := map[string]*model.UserRole{}
 	for _, v := range rs {
 		roleMap[v.Name] = v
 
@@ -106,8 +107,13 @@ func (r *rbacImpl) Reload() error {
 	}
 	r.rolesMutex.Lock()
 	r.roles = result
+	r.reloadTime = time.Now()
 	r.rolesMutex.Unlock()
 	return nil
+}
+
+func (r *rbacImpl) LastReloadTime() time.Time {
+	return r.reloadTime
 }
 
 func (r *rbacImpl) IsOAuth2Scope(v string) bool {
