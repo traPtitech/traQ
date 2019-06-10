@@ -81,7 +81,7 @@ type TestRepository struct {
 }
 
 func (repo *TestRepository) GetAllRoles() ([]*model.UserRole, error) {
-	return []*model.UserRole{}, nil
+	return role.SystemRoles(), nil
 }
 
 func (repo *TestRepository) AddFavoriteStamp(userID, stampID uuid.UUID) error {
