@@ -3,8 +3,49 @@ package router
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac"
 	"time"
 )
+
+type meResponse struct {
+	UserID      uuid.UUID         `json:"userId"`
+	Name        string            `json:"name"`
+	DisplayName string            `json:"displayName"`
+	IconID      uuid.UUID         `json:"iconFileId"`
+	Bot         bool              `json:"bot"`
+	TwitterID   string            `json:"twitterId"`
+	LastOnline  *time.Time        `json:"lastOnline"`
+	IsOnline    bool              `json:"isOnline"`
+	Suspended   bool              `json:"suspended"`
+	Status      int               `json:"accountStatus"`
+	Role        string            `json:"role"`
+	Permissions []rbac.Permission `json:"permissions"`
+}
+
+func (h *Handlers) formatMe(user *model.User) *meResponse {
+	res := &meResponse{
+		UserID:      user.ID,
+		Name:        user.Name,
+		DisplayName: user.DisplayName,
+		IconID:      user.Icon,
+		Bot:         user.Bot,
+		TwitterID:   user.TwitterID,
+		IsOnline:    h.Repo.IsUserOnline(user.ID),
+		Suspended:   user.Status != model.UserAccountStatusActive,
+		Status:      int(user.Status),
+		Role:        user.Role,
+		Permissions: h.RBAC.GetGrantedPermissions(user.Role).Array(),
+	}
+	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
+		res.LastOnline = &t
+	} else {
+		res.LastOnline = user.LastOnline.Ptr()
+	}
+	if len(res.DisplayName) == 0 {
+		res.DisplayName = res.Name
+	}
+	return res
+}
 
 type userResponse struct {
 	UserID      uuid.UUID  `json:"userId"`
@@ -352,4 +393,38 @@ func (h *Handlers) formatUserGroups(gs []*model.UserGroup) ([]*userGroupResponse
 		arr[i] = r
 	}
 	return arr, nil
+}
+
+type roleResponse struct {
+	Name          string   `json:"name"`
+	Permissions   []string `json:"permissions"`
+	Inheritances  []string `json:"inheritances"`
+	IsOAuth2Scope bool     `json:"isOAuth2Scope"`
+	System        bool     `json:"system"`
+}
+
+func formatRole(role *model.UserRole) *roleResponse {
+	perms := make([]string, len(role.Permissions))
+	for k, v := range role.Permissions {
+		perms[k] = v.Permission
+	}
+	inhrs := make([]string, len(role.Inheritances))
+	for k, v := range role.Inheritances {
+		inhrs[k] = v.SubRole
+	}
+	return &roleResponse{
+		Name:          role.Name,
+		Permissions:   perms,
+		Inheritances:  inhrs,
+		IsOAuth2Scope: role.Oauth2Scope,
+		System:        role.System,
+	}
+}
+
+func formatRoles(roles []*model.UserRole) []*roleResponse {
+	arr := make([]*roleResponse, 0, len(roles))
+	for _, v := range roles {
+		arr = append(arr, formatRole(v))
+	}
+	return arr
 }
