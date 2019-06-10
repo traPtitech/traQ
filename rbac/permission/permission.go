@@ -16,7 +16,6 @@ func init() {
 		CreateBot,
 		EditBot,
 		DeleteBot,
-		ReissueBotToken,
 		InstallBot,
 		UninstallBot,
 
@@ -25,10 +24,7 @@ func init() {
 		EditChannel,
 		DeleteChannel,
 		ChangeParentChannel,
-		GetTopic,
-		EditTopic,
-		GetChannelVisibility,
-		ChangeChannelVisibility,
+		EditChannelTopic,
 
 		GetMyTokens,
 		RevokeMyToken,
@@ -59,18 +55,16 @@ func init() {
 		ReportMessage,
 		GetMessageReports,
 
-		GetMutedChannels,
-		MuteChannel,
-		UnmuteChannel,
+		GetChannelMute,
+		EditChannelMute,
 
-		GetNotificationStatus,
-		ChangeNotificationStatus,
+		GetChannelSubscription,
+		EditChannelSubscription,
 		ConnectNotificationStream,
-		RegisterDevice,
+		RegisterFCMDevice,
 
-		GetPin,
-		CreatePin,
-		DeletePin,
+		CreateMessagePin,
+		DeleteMessagePin,
 
 		GetMySessions,
 		DeleteMySessions,
@@ -81,14 +75,14 @@ func init() {
 		EditStampName,
 		EditStampCreatedByOthers,
 		DeleteStamp,
-		GetMessageStamp,
 		AddMessageStamp,
 		RemoveMessageStamp,
 		GetMyStampHistory,
+		GetFavoriteStamp,
+		EditFavoriteStamp,
 
-		GetStar,
-		CreateStar,
-		DeleteStar,
+		GetChannelStar,
+		EditChannelStar,
 
 		GetUnread,
 		DeleteUnread,
@@ -100,12 +94,15 @@ func init() {
 		ChangeMyIcon,
 		ChangeMyPassword,
 		EditOtherUsers,
+		GetUserQRCode,
+		GetUserGroup,
+		CreateUserGroup,
+		CreateSpecialUserGroup,
+		EditUserGroup,
+		DeleteUserGroup,
 
-		GetTag,
-		AddTag,
-		RemoveTag,
-		ChangeTagLockState,
-		EditTag,
+		GetUserTag,
+		EditUserTag,
 	}
 	for _, p := range l {
 		List.Add(p)

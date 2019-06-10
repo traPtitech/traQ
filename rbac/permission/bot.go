@@ -24,8 +24,6 @@ const (
 	EditBot = rbac.Permission("edit_bot")
 	// DeleteBot Bot削除権限
 	DeleteBot = rbac.Permission("delete_bot")
-	// ReissueBotToken Botトークン再発行権限
-	ReissueBotToken = rbac.Permission("reissue_bot_token")
 	// InstallBot Botインストール権限
 	InstallBot = rbac.Permission("install_bot")
 	// UninstallBot Botアンインストール権限

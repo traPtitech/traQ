@@ -19,4 +19,24 @@ const (
 	ChangeMyPassword = rbac.Permission("change_my_password")
 	// EditOtherUsers 他ユーザー情報変更権限
 	EditOtherUsers = rbac.Permission("edit_other_users")
+	// GetUserQRCode ユーザーQRコード取得権限
+	GetUserQRCode = rbac.Permission("get_user_qr_code")
+	// GetUserTag ユーザータグ取得権限
+	GetUserTag = rbac.Permission("get_user_tag")
+	// EditUserTag ユーザータグ編集権限
+	EditUserTag = rbac.Permission("edit_user_tag")
+	// GetUserGroup ユーザーグループ取得権限
+	GetUserGroup = rbac.Permission("get_user_group")
+	// CreateUserGroup ユーザーグループ作成権限
+	CreateUserGroup = rbac.Permission("create_user_group")
+	// CreateSpecialUserGroup 特殊ユーザーグループ作成権限
+	CreateSpecialUserGroup = rbac.Permission("create_special_user_group")
+	// EditUserGroup ユーザーグループ編集権限
+	EditUserGroup = rbac.Permission("edit_user_group")
+	// DeleteUserGroup ユーザーグループ削除権限
+	DeleteUserGroup = rbac.Permission("delete_user_group")
+	// GetHeartbeat ハートビート取得権限
+	GetHeartbeat = rbac.Permission("get_heartbeat")
+	// PostHeartbeat ハートビート送信権限
+	PostHeartbeat = rbac.Permission("post_heartbeat")
 )
