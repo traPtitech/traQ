@@ -316,7 +316,6 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				{
 					apiAuthorityRolesRid.GET("", h.GetRole)
 					apiAuthorityRolesRid.PATCH("", h.PatchRole)
-					apiAuthorityRolesRid.GET("/users", h.GetRoleUserIDs)
 				}
 			}
 			apiAuthority.GET("/permissions", h.GetPermissions)

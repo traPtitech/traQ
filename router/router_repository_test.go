@@ -80,6 +80,18 @@ type TestRepository struct {
 	OAuth2TokensLock          sync.RWMutex
 }
 
+func (repo *TestRepository) GetRole(role string) (*model.UserRole, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) CreateRole(name string) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) UpdateRole(role string, args repository.UpdateRoleArgs) error {
+	panic("implement me")
+}
+
 func (repo *TestRepository) GetAllRoles() ([]*model.UserRole, error) {
 	return role.SystemRoles(), nil
 }
