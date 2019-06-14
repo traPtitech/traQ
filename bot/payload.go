@@ -117,3 +117,11 @@ type userCreatedPayload struct {
 	basePayload
 	User userPayload `json:"user"`
 }
+
+type stampCreatedPayload struct {
+	basePayload
+	ID      uuid.UUID   `json:"id"`
+	Name    string      `json:"name"`
+	FileID  uuid.UUID   `json:"fileId"`
+	Creator userPayload `json:"creator"`
+}

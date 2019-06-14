@@ -22,6 +22,7 @@ var eventHandlerSet = map[string]eventHandler{
 	event.UserCreated:         userCreatedHandler,
 	event.ChannelCreated:      channelCreatedHandler,
 	event.ChannelTopicUpdated: channelTopicUpdatedHandler,
+	event.StampCreated:        stampCreatedHandler,
 }
 
 func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
@@ -270,6 +271,36 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 
 	multicast(p, ChannelTopicChanged, &payload, bots)
+}
+
+func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
+	stamp := fields["stamp"].(*model.Stamp)
+
+	bots, err := p.repo.GetAllBots()
+	if err != nil {
+		p.logger.Error("failed to GetAllBots", zap.Error(err))
+		return
+	}
+	bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(StampCreated))
+	if len(bots) == 0 {
+		return
+	}
+
+	user, err := p.repo.GetUser(stamp.CreatorID)
+	if err != nil {
+		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", stamp.CreatorID))
+		return
+	}
+
+	payload := stampCreatedPayload{
+		basePayload: makeBasePayload(),
+		ID:          stamp.ID,
+		Name:        stamp.Name,
+		FileID:      stamp.FileID,
+		Creator:     makeUserPayload(user),
+	}
+
+	multicast(p, StampCreated, &payload, bots)
 }
 
 func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
