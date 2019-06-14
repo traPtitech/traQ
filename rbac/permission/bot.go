@@ -28,4 +28,6 @@ const (
 	InstallBot = rbac.Permission("install_bot")
 	// UninstallBot Botアンインストール権限
 	UninstallBot = rbac.Permission("uninstall_bot")
+	// AccessOthersBot 他人のBotのアクセス権限
+	AccessOthersBot = rbac.Permission("access_others_bot")
 )

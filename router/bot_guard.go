@@ -1,7 +1,6 @@
 package router
 
 import (
-	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 )
@@ -44,33 +43,9 @@ func blockAlways(h *Handlers, bot *model.Bot, c echo.Context) (bool, error) {
 	return true, nil
 }
 
-// blockByChannelIDQuery BOTが参加しているチャンネル以外へのリクエストを拒否
-func blockByChannelIDQuery(h *Handlers, bot *model.Bot, c echo.Context) (bool, error) {
-	return blockByChannelID(h, bot, c, getRequestParamAsUUID(c, paramChannelID))
-}
-
-// blockByMessageChannel BOTが参加しているチャンネル以外のメッセージへのリクエストを拒否
-func blockByMessageChannel(h *Handlers, bot *model.Bot, c echo.Context) (bool, error) {
-	return blockByChannelID(h, bot, c, getMessageFromContext(c).ChannelID)
-}
-
 // blockUnlessSubscribingEvent BOTが指定したイベントを購読していない場合にリクエストを拒否
 func blockUnlessSubscribingEvent(event model.BotEvent) botGuardFunc {
 	return func(h *Handlers, bot *model.Bot, c echo.Context) (b bool, e error) {
 		return bot.SubscribeEvents.Contains(event), nil
 	}
-}
-
-func blockByChannelID(h *Handlers, bot *model.Bot, c echo.Context, channelID uuid.UUID) (bool, error) {
-	ids, err := h.Repo.GetParticipatingChannelIDsByBot(bot.ID)
-	if err != nil {
-		return false, err
-	}
-
-	for _, v := range ids {
-		if v == channelID {
-			return true, nil
-		}
-	}
-	return false, nil
 }

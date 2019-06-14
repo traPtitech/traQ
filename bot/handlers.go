@@ -22,6 +22,7 @@ var eventHandlerSet = map[string]eventHandler{
 	event.UserCreated:         userCreatedHandler,
 	event.ChannelCreated:      channelCreatedHandler,
 	event.ChannelTopicUpdated: channelTopicUpdatedHandler,
+	event.StampCreated:        stampCreatedHandler,
 }
 
 func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
@@ -74,11 +75,30 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 		multicast(p, DirectMessageCreated, &payload, []*model.Bot{bot})
 	} else {
+		// 購読BOT
 		bots, err := p.repo.GetBotsByChannel(m.ChannelID)
 		if err != nil {
 			p.logger.Error("failed to GetBotsByChannel", zap.Error(err), zap.Stringer("id", m.ChannelID))
 			return
 		}
+
+		// メンションBOT
+		for _, v := range embedded {
+			if v.Type == "user" {
+				uid, err := uuid.FromString(v.ID)
+				if err != nil {
+					b, err := p.repo.GetBotByBotUserID(uid)
+					if err != nil {
+						if err != repository.ErrNotFound {
+							p.logger.Error("failed to GetBotByBotUserID", zap.Error(err), zap.Stringer("uid", uid))
+						}
+						continue
+					}
+					bots = append(bots, b)
+				}
+			}
+		}
+
 		bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(MessageCreated), botUserIDNotEqualsFilter(m.UserID))
 		if len(bots) == 0 {
 			return
@@ -251,6 +271,38 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 
 	multicast(p, ChannelTopicChanged, &payload, bots)
+}
+
+func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
+	stamp := fields["stamp"].(*model.Stamp)
+
+	bots, err := p.repo.GetAllBots()
+	if err != nil {
+		p.logger.Error("failed to GetAllBots", zap.Error(err))
+		return
+	}
+	bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(StampCreated))
+	if len(bots) == 0 {
+		return
+	}
+
+	payload := stampCreatedPayload{
+		basePayload: makeBasePayload(),
+		ID:          stamp.ID,
+		Name:        stamp.Name,
+		FileID:      stamp.FileID,
+	}
+
+	if stamp.CreatorID != uuid.Nil {
+		user, err := p.repo.GetUser(stamp.CreatorID)
+		if err != nil {
+			p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", stamp.CreatorID))
+			return
+		}
+		payload.Creator = makeUserPayload(user)
+	}
+
+	multicast(p, StampCreated, &payload, bots)
 }
 
 func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
