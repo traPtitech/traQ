@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
@@ -17,10 +18,21 @@ import (
 
 // GetBots GET /bots
 func (h *Handlers) GetBots(c echo.Context) error {
-	list, err := h.Repo.GetBotsByCreator(getRequestUserID(c))
+	user := getRequestUser(c)
+
+	var (
+		list []*model.Bot
+		err  error
+	)
+	if c.QueryParam("all") == "1" && h.RBAC.IsGranted(user.Role, permission.AccessOthersBot) {
+		list, err = h.Repo.GetAllBots()
+	} else {
+		list, err = h.Repo.GetBotsByCreator(user.ID)
+	}
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
+
 	return c.JSON(http.StatusOK, formatBots(list))
 }
 

@@ -18,6 +18,7 @@ func init() {
 		DeleteBot,
 		InstallBot,
 		UninstallBot,
+		AccessOthersBot,
 
 		CreateChannel,
 		GetChannel,

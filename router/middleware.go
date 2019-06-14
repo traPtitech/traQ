@@ -548,7 +548,7 @@ func (h *Handlers) ValidateBotID(requestUserCheck bool) echo.MiddlewareFunc {
 
 			if requestUserCheck {
 				user, ok := c.Get("user").(*model.User)
-				if !ok || b.CreatorID != user.ID {
+				if !ok || (!h.RBAC.IsGranted(user.Role, permission.AccessOthersBot) && b.CreatorID != user.ID) {
 					return forbidden()
 				}
 			}
