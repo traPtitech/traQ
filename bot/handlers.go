@@ -286,18 +286,20 @@ func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	user, err := p.repo.GetUser(stamp.CreatorID)
-	if err != nil {
-		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", stamp.CreatorID))
-		return
-	}
-
 	payload := stampCreatedPayload{
 		basePayload: makeBasePayload(),
 		ID:          stamp.ID,
 		Name:        stamp.Name,
 		FileID:      stamp.FileID,
-		Creator:     makeUserPayload(user),
+	}
+
+	if stamp.CreatorID != uuid.Nil {
+		user, err := p.repo.GetUser(stamp.CreatorID)
+		if err != nil {
+			p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", stamp.CreatorID))
+			return
+		}
+		payload.Creator = makeUserPayload(user)
 	}
 
 	multicast(p, StampCreated, &payload, bots)
