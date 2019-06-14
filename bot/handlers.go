@@ -74,11 +74,30 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 		multicast(p, DirectMessageCreated, &payload, []*model.Bot{bot})
 	} else {
+		// 購読BOT
 		bots, err := p.repo.GetBotsByChannel(m.ChannelID)
 		if err != nil {
 			p.logger.Error("failed to GetBotsByChannel", zap.Error(err), zap.Stringer("id", m.ChannelID))
 			return
 		}
+
+		// メンションBOT
+		for _, v := range embedded {
+			if v.Type == "user" {
+				uid, err := uuid.FromString(v.ID)
+				if err != nil {
+					b, err := p.repo.GetBotByBotUserID(uid)
+					if err != nil {
+						if err != repository.ErrNotFound {
+							p.logger.Error("failed to GetBotByBotUserID", zap.Error(err), zap.Stringer("uid", uid))
+						}
+						continue
+					}
+					bots = append(bots, b)
+				}
+			}
+		}
+
 		bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(MessageCreated), botUserIDNotEqualsFilter(m.UserID))
 		if len(bots) == 0 {
 			return
