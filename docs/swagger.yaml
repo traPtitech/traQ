@@ -557,23 +557,19 @@ paths:
         - message
       description: チャンネルに存在するメッセージを取得します。
       parameters:
-        - in: query
-          name: limit
-          schema:
-            type: integer
-          description: 取得する件数 1-200
-          example: 50
-        - in: query
-          name: offset
-          schema:
-            type: integer
-          description: 取得するメッセージのオフセット
-          example: 150
+        - $ref: "#/components/parameters/limitInQuery"
+        - $ref: "#/components/parameters/offsetInQuery"
+        - $ref: "#/components/parameters/sinceInQuery"
+        - $ref: "#/components/parameters/untilInQuery"
+        - $ref: "#/components/parameters/inclusiveInQuery"
       responses:
         "200":
           description: |+
             正常に取得ができました。
             メッセージの配列を返します。
+          headers:
+            X-TRAQ-MORE:
+              $ref: "#/components/headers/X-TRAQ-MORE"
           content:
             application/json:
               schema:
@@ -624,23 +620,19 @@ paths:
         - message
       description: DMチャンネルに存在するメッセージを取得します。
       parameters:
-        - in: query
-          name: limit
-          schema:
-            type: integer
-          description: 取得する件数 1-200
-          example: 50
-        - in: query
-          name: offset
-          schema:
-            type: integer
-          description: 取得するメッセージのオフセット
-          example: 150
+        - $ref: "#/components/parameters/limitInQuery"
+        - $ref: "#/components/parameters/offsetInQuery"
+        - $ref: "#/components/parameters/sinceInQuery"
+        - $ref: "#/components/parameters/untilInQuery"
+        - $ref: "#/components/parameters/inclusiveInQuery"
       responses:
         "200":
           description: |+
             正常に取得ができました。
             メッセージの配列を返します。
+          headers:
+            X-TRAQ-MORE:
+              $ref: "#/components/headers/X-TRAQ-MORE"
           content:
             application/json:
               schema:
@@ -3067,6 +3059,53 @@ components:
       schema:
         type: string
         format: uuid
+    limitInQuery:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        default: 0
+      description: 取得する件数 1-200
+      example: 50
+    offsetInQuery:
+      in: query
+      name: offset
+      schema:
+        type: integer
+        default: 0
+      description: 取得するオフセット
+      example: 150
+    sinceInQuery:
+      in: query
+      name: since
+      schema:
+        type: string
+        format: date-time
+        default: 0000-01-01T00:00:00.000000Z
+      description: 取得する時間範囲の開始日時
+      example: 2016-10-12T11:00:00.000000Z
+    untilInQuery:
+      in: query
+      name: until
+      schema:
+        type: string
+        format: date-time
+        default: 9999-12-31T23:59:99.999999Z
+      description: 取得する時間範囲の終了日時
+      example: 2016-10-12T11:00:00.0000000Z
+    inclusiveInQuery:
+      in: query
+      name: inclusive
+      schema:
+        type: boolean
+        default: false
+      description: 範囲の端を含めるかどうか
+
+  headers:
+    X-TRAQ-MORE:
+      schema:
+        type: boolean
+      description: 指定した範囲に要素がさらに存在するかどうか
 
   schemas:
     UUIDs:
