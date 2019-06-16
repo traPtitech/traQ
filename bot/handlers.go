@@ -83,9 +83,11 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		}
 
 		// メンションBOT
+		done := make(map[uuid.UUID]bool)
 		for _, v := range embedded {
 			if v.Type == "user" {
-				if uid, err := uuid.FromString(v.ID); err == nil {
+				if uid, err := uuid.FromString(v.ID); err == nil && !done[uid] {
+					done[uid] = true
 					b, err := p.repo.GetBotByBotUserID(uid)
 					if err != nil {
 						if err != repository.ErrNotFound {

@@ -171,34 +171,48 @@ func (repo *GormRepository) GetMessageByID(messageID uuid.UUID) (*model.Message,
 	return message, nil
 }
 
-// GetMessagesByChannelID implements MessageRepository interface.
-func (repo *GormRepository) GetMessagesByChannelID(channelID uuid.UUID, limit, offset int) (arr []*model.Message, err error) {
-	arr = make([]*model.Message, 0)
-	if channelID == uuid.Nil {
-		return arr, nil
-	}
-	err = repo.db.
-		Scopes(limitAndOffset(limit, offset), messagePreloads).
-		Where(&model.Message{ChannelID: channelID}).
-		Order("created_at DESC").
-		Find(&arr).
-		Error
-	return arr, err
-}
+// GetMessages implements MessageRepository interface.
+func (repo *GormRepository) GetMessages(query MessagesQuery) (messages []*model.Message, more bool, err error) {
+	messages = make([]*model.Message, 0)
 
-// GetMessagesByChannelID implements MessageRepository interface.
-func (repo *GormRepository) GetMessagesByUserID(userID uuid.UUID, limit, offset int) (arr []*model.Message, err error) {
-	arr = make([]*model.Message, 0)
-	if userID == uuid.Nil {
-		return arr, nil
+	tx := repo.db.Scopes(messagePreloads).Order("created_at DESC")
+
+	if query.Channel != uuid.Nil {
+		tx = tx.Where("channel_id = ?", query.Channel)
 	}
-	err = repo.db.
-		Scopes(limitAndOffset(limit, offset), messagePreloads).
-		Where(&model.Message{UserID: userID}).
-		Order("created_at DESC").
-		Find(&arr).
-		Error
-	return arr, err
+	if query.User != uuid.Nil {
+		tx = tx.Where("user_id = ?", query.User)
+	}
+
+	if query.Inclusive {
+		if query.Since.Valid {
+			tx = tx.Where("created_at >= ?", query.Since.Time)
+		}
+		if query.Until.Valid {
+			tx = tx.Where("created_at <= ?", query.Until.Time)
+		}
+	} else {
+		if query.Since.Valid {
+			tx = tx.Where("created_at > ?", query.Since.Time)
+		}
+		if query.Until.Valid {
+			tx = tx.Where("created_at < ?", query.Until.Time)
+		}
+	}
+
+	if query.Offset > 0 {
+		tx = tx.Offset(query.Offset)
+	}
+
+	if query.Limit > 0 {
+		err = tx.Limit(query.Limit + 1).Find(&messages).Error
+		if len(messages) > query.Limit {
+			return messages[:len(messages)-1], true, err
+		}
+	} else {
+		err = tx.Find(&messages).Error
+	}
+	return messages, false, err
 }
 
 // SetMessageUnread implements MessageRepository interface.

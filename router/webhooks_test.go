@@ -481,7 +481,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		arr, err := repo.GetMessagesByChannelID(ch.ID, 0, 0)
+		arr, _, err := repo.GetMessages(repository.MessagesQuery{Channel: ch.ID})
 		require.NoError(err)
 		if assert.Len(arr, 1) {
 			assert.Equal(wb.GetBotUserID(), arr[0].UserID)
@@ -502,7 +502,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		arr, err := repo.GetMessagesByChannelID(ch.ID, 0, 0)
+		arr, _, err := repo.GetMessages(repository.MessagesQuery{Channel: ch.ID})
 		require.NoError(err)
 		if assert.Len(arr, 1) {
 			assert.Equal(wb.GetBotUserID(), arr[0].UserID)

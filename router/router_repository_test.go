@@ -1506,58 +1506,106 @@ func (repo *TestRepository) GetMessageByID(messageID uuid.UUID) (*model.Message,
 	return &m, nil
 }
 
-func (repo *TestRepository) GetMessagesByChannelID(channelID uuid.UUID, limit, offset int) ([]*model.Message, error) {
+func (repo *TestRepository) GetMessages(query repository.MessagesQuery) (messages []*model.Message, more bool, err error) {
 	tmp := make([]*model.Message, 0)
-	repo.MessagesLock.RLock()
-	for _, v := range repo.Messages {
-		if v.ChannelID == channelID {
-			v := v
-			v.Stamps = make([]model.MessageStamp, 0)
-			tmp = append(tmp, &v)
-		}
-	}
-	repo.MessagesLock.RUnlock()
-	sort.Slice(tmp, func(i, j int) bool {
-		return tmp[i].CreatedAt.After(tmp[j].CreatedAt)
-	})
-	if offset < 0 {
-		offset = 0
-	}
-	if limit <= 0 {
-		limit = math.MaxInt32
-	}
-	result := make([]*model.Message, 0)
-	for i := offset; i < len(tmp) && i < offset+limit; i++ {
-		result = append(result, tmp[i])
-	}
-	return result, nil
-}
 
-func (repo *TestRepository) GetMessagesByUserID(userID uuid.UUID, limit, offset int) ([]*model.Message, error) {
-	tmp := make([]*model.Message, 0)
 	repo.MessagesLock.RLock()
-	for _, v := range repo.Messages {
-		if v.UserID == userID {
+	if query.Channel != uuid.Nil {
+		if query.User != uuid.Nil {
+			for _, v := range repo.Messages {
+				if v.ChannelID == query.Channel && v.UserID == query.User {
+					v := v
+					v.Stamps = make([]model.MessageStamp, 0)
+					tmp = append(tmp, &v)
+				}
+			}
+		} else {
+			for _, v := range repo.Messages {
+				if v.ChannelID == query.Channel {
+					v := v
+					v.Stamps = make([]model.MessageStamp, 0)
+					tmp = append(tmp, &v)
+				}
+			}
+		}
+	} else if query.User != uuid.Nil {
+		for _, v := range repo.Messages {
+			if v.UserID == query.User {
+				v := v
+				v.Stamps = make([]model.MessageStamp, 0)
+				tmp = append(tmp, &v)
+			}
+		}
+	} else {
+		for _, v := range repo.Messages {
 			v := v
 			v.Stamps = make([]model.MessageStamp, 0)
 			tmp = append(tmp, &v)
 		}
 	}
 	repo.MessagesLock.RUnlock()
+
 	sort.Slice(tmp, func(i, j int) bool {
 		return tmp[i].CreatedAt.After(tmp[j].CreatedAt)
 	})
-	if offset < 0 {
-		offset = 0
+
+	if query.Since.Valid {
+		var start int
+
+		for start = 0; start < len(tmp); start++ {
+			if query.Inclusive {
+				if !tmp[start].CreatedAt.Before(query.Since.Time) {
+					break
+				}
+			} else {
+				if tmp[start].CreatedAt.After(query.Since.Time) {
+					break
+				}
+			}
+		}
+
+		if start == len(tmp) {
+			tmp = make([]*model.Message, 0)
+		} else {
+			tmp = tmp[start:]
+		}
 	}
-	if limit <= 0 {
-		limit = math.MaxInt32
+	if query.Until.Valid {
+		var end int
+
+		for end = len(tmp) - 1; end >= 0; end-- {
+			if query.Inclusive {
+				if !tmp[end].CreatedAt.After(query.Until.Time) {
+					break
+				}
+			} else {
+				if tmp[end].CreatedAt.Before(query.Until.Time) {
+					break
+				}
+			}
+		}
+
+		if end < 0 {
+			tmp = make([]*model.Message, 0)
+		} else {
+			tmp = tmp[:end+1]
+		}
 	}
-	result := make([]*model.Message, 0)
-	for i := offset; i < len(tmp) && i < offset+limit; i++ {
-		result = append(result, tmp[i])
+
+	if query.Offset < 0 {
+		query.Offset = 0
 	}
-	return result, nil
+
+	if query.Limit <= 0 {
+		query.Limit = math.MaxInt32
+	}
+
+	more = len(tmp) > query.Offset+query.Limit
+	messages = make([]*model.Message, 0)
+	for i := query.Offset; i < len(tmp) && i < query.Offset+query.Limit; i++ {
+		messages = append(messages, tmp[i])
+	}
+	return
 }
 
 func (repo *TestRepository) GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error) {

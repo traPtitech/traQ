@@ -75,54 +75,6 @@ func TestRepositoryImpl_DeleteMessage(t *testing.T) {
 	assert.EqualError(repo.DeleteMessage(m.ID), ErrNotFound.Error())
 }
 
-func TestRepositoryImpl_GetMessagesByChannelID(t *testing.T) {
-	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common)
-
-	for i := 0; i < 10; i++ {
-		mustMakeMessage(t, repo, user.ID, channel.ID)
-	}
-
-	r, err := repo.GetMessagesByChannelID(channel.ID, 0, 0)
-	if assert.NoError(err) {
-		assert.Len(r, 10)
-	}
-
-	r, err = repo.GetMessagesByChannelID(channel.ID, 3, 5)
-	if assert.NoError(err) {
-		assert.Len(r, 3)
-	}
-
-	r, err = repo.GetMessagesByChannelID(uuid.Nil, 0, 0)
-	if assert.NoError(err) {
-		assert.Len(r, 0)
-	}
-}
-
-func TestRepositoryImpl_GetMessagesByUserID(t *testing.T) {
-	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common)
-
-	for i := 0; i < 10; i++ {
-		mustMakeMessage(t, repo, user.ID, channel.ID)
-	}
-
-	r, err := repo.GetMessagesByUserID(user.ID, 0, 0)
-	if assert.NoError(err) {
-		assert.Len(r, 10)
-	}
-
-	r, err = repo.GetMessagesByUserID(user.ID, 3, 5)
-	if assert.NoError(err) {
-		assert.Len(r, 3)
-	}
-
-	r, err = repo.GetMessagesByUserID(uuid.Nil, 0, 0)
-	if assert.NoError(err) {
-		assert.Len(r, 0)
-	}
-}
-
 func TestRepositoryImpl_GetMessageByID(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user, channel := setupWithUserAndChannel(t, common)

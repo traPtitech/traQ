@@ -326,21 +326,10 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 func (h *Handlers) GetWebhookMessages(c echo.Context) error {
 	w := getWebhookFromContext(c)
 
-	var req struct {
-		Limit  int `query:"limit"`
-		Offset int `query:"offset"`
-	}
-	if err := bindAndValidate(c, &req); err != nil {
+	var req messagesQuery
+	if err := req.bind(c); err != nil {
 		return badRequest(err)
 	}
-	if req.Limit > 50 || req.Limit <= 0 {
-		req.Limit = 50
-	}
 
-	messages, err := h.Repo.GetMessagesByUserID(w.GetBotUserID(), req.Limit, req.Offset)
-	if err != nil {
-		return internalServerError(err, h.requestContextLogger(c))
-	}
-
-	return c.JSON(http.StatusOK, formatMessages(messages))
+	return h.getMessages(c, req.convertU(w.GetBotUserID()), false)
 }

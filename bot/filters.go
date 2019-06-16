@@ -11,10 +11,13 @@ func filterBots(p *Processor, bots []*model.Bot, filters ...filterFunc) []*model
 	set := make(map[uuid.UUID]bool)
 	result := make([]*model.Bot, 0, len(bots))
 	for _, bot := range bots {
-		if set[bot.ID] || !filterBot(p, bot, filters...) {
+		if set[bot.ID] {
 			continue
 		}
-		result = append(result, bot)
+
+		if filterBot(p, bot, filters...) {
+			result = append(result, bot)
+		}
 		set[bot.ID] = true
 	}
 	return result
