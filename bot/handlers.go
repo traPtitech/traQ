@@ -81,6 +81,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			p.logger.Error("failed to GetBotsByChannel", zap.Error(err), zap.Stringer("id", m.ChannelID))
 			return
 		}
+		bots = filterBots(p, bots, eventFilter(MessageCreated))
 
 		// メンションBOT
 		done := make(map[uuid.UUID]bool)
@@ -102,7 +103,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			}
 		}
 
-		bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(MessageCreated), botUserIDNotEqualsFilter(m.UserID))
+		bots = filterBots(p, bots, stateFilter(model.BotActive), botUserIDNotEqualsFilter(m.UserID))
 		if len(bots) == 0 {
 			return
 		}
