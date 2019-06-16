@@ -481,7 +481,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		arr, err := repo.GetMessagesByChannelID(ch.ID, 0, 0)
+		arr, _, err := repo.GetMessages(repository.MessagesQuery{Channel: ch.ID})
 		require.NoError(err)
 		if assert.Len(arr, 1) {
 			assert.Equal(wb.GetBotUserID(), arr[0].UserID)
@@ -502,7 +502,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		arr, err := repo.GetMessagesByChannelID(ch.ID, 0, 0)
+		arr, _, err := repo.GetMessages(repository.MessagesQuery{Channel: ch.ID})
 		require.NoError(err)
 		if assert.Len(arr, 1) {
 			assert.Equal(wb.GetBotUserID(), arr[0].UserID)
@@ -539,7 +539,7 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 			JSON().
 			Array().
 			Length().
-			Equal(50)
+			Equal(60)
 	})
 
 	t.Run("Successful2", func(t *testing.T) {
@@ -555,20 +555,6 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 			Array().
 			Length().
 			Equal(3)
-	})
-
-	t.Run("Successful3", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.GET("/api/1.0/webhooks/{webhookID}/messages", wb.GetID()).
-			WithQuery("limit", 51).
-			WithCookie(sessions.CookieName, session).
-			Expect().
-			Status(http.StatusOK).
-			JSON().
-			Array().
-			Length().
-			Equal(50)
 	})
 
 	t.Run("Not Found", func(t *testing.T) {

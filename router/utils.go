@@ -6,11 +6,9 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github.com/disintegration/imaging"
-	"github.com/go-sql-driver/mysql"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
-	"github.com/traPtitech/traQ/logging"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
@@ -22,8 +20,6 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"runtime"
-	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -76,12 +72,22 @@ const (
 	headerCacheFile         = "X-TRAQ-FILE-CACHE"
 	headerSignature         = "X-TRAQ-Signature"
 	headerChannelID         = "X-TRAQ-Channel-Id"
+	headerMore              = "X-TRAQ-More"
 
 	unexpectedError = "unexpected error"
 )
 
 func init() {
 	gob.Register(uuid.UUID{})
+}
+
+type timestamp time.Time
+
+// UnmarshalParam implements BindUnmarshaler interface.
+func (t *timestamp) UnmarshalParam(src string) error {
+	ts, err := time.Parse(time.RFC3339, src)
+	*t = timestamp(ts)
+	return err
 }
 
 // Handlers ハンドラ
@@ -149,14 +155,6 @@ func bindAndValidate(c echo.Context, i interface{}) error {
 		return err
 	}
 	return nil
-}
-
-func isMySQLDuplicatedRecordErr(err error) bool {
-	merr, ok := err.(*mysql.MySQLError)
-	if !ok {
-		return false
-	}
-	return merr.Number == errMySQLDuplicatedRecord
 }
 
 func (h *Handlers) processMultipartFormIconUpload(c echo.Context, file *multipart.FileHeader) (uuid.UUID, error) {
@@ -336,45 +334,4 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	l = h.Logger.With(zap.String("logging.googleapis.com/trace", getTraceID(c)))
 	c.Set(loggerKey, l)
 	return l
-}
-
-func notFound(err ...interface{}) error {
-	return httpError(http.StatusNotFound, err)
-}
-
-func badRequest(err ...interface{}) error {
-	return httpError(http.StatusBadRequest, err)
-}
-
-func forbidden(err ...interface{}) error {
-	return httpError(http.StatusForbidden, err)
-}
-
-func conflict(err ...interface{}) error {
-	return httpError(http.StatusConflict, err)
-}
-
-func internalServerError(err error, logger *zap.Logger) error {
-	if logger != nil {
-		logger.Error(fmt.Sprintf("%s\n%s", err.Error(), debug.Stack()), logging.ErrorReport(runtime.Caller(1)), zap.Error(err))
-	}
-	return echo.NewHTTPError(http.StatusInternalServerError)
-}
-
-func httpError(code int, err interface{}) error {
-	switch v := err.(type) {
-	case []interface{}:
-		if len(v) > 0 {
-			return httpError(code, v[0])
-		}
-		return httpError(code, nil)
-	case string:
-		return echo.NewHTTPError(code, v)
-	case *repository.ArgumentError:
-		return echo.NewHTTPError(code, v.Error())
-	case nil:
-		return echo.NewHTTPError(code)
-	default:
-		return echo.NewHTTPError(code, v)
-	}
 }

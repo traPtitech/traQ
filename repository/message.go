@@ -3,8 +3,20 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"gopkg.in/guregu/null.v3"
 	"time"
 )
+
+// MessagesQuery GetMessages用クエリ
+type MessagesQuery struct {
+	User      uuid.UUID
+	Channel   uuid.UUID
+	Since     null.Time
+	Until     null.Time
+	Inclusive bool
+	Limit     int
+	Offset    int
+}
 
 // MessageRepository メッセージリポジトリ
 type MessageRepository interface {
@@ -36,18 +48,12 @@ type MessageRepository interface {
 	// 存在しないメッセージを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetMessageByID(messageID uuid.UUID) (*model.Message, error)
-	// GetMessagesByChannelID 指定したチャンネルのメッセージを取得します
+	// GetMessages 指定したクエリでメッセージを取得します
 	//
-	// 成功した場合、メッセージの配列とnilを返します。負のoffset, limitは無視されます。
-	// 存在しないチャンネルを指定した場合、空配列とnilを返します。
+	// 成功した場合、メッセージの配列を返します。負のoffset, limitは無視されます。
+	// 指定した範囲内にlimitを超えてメッセージが存在していた場合、trueを返します。
 	// DBによるエラーを返すことがあります。
-	GetMessagesByChannelID(channelID uuid.UUID, limit, offset int) ([]*model.Message, error)
-	// GetMessagesByUserID 指定したユーザーのメッセージを取得します
-	//
-	// 成功した場合、メッセージの配列とnilを返します。負のoffset, limitは無視されます。
-	// 存在しないユーザーを指定した場合、空配列とnilを返します。
-	// DBによるエラーを返すことがあります。
-	GetMessagesByUserID(userID uuid.UUID, limit, offset int) ([]*model.Message, error)
+	GetMessages(query MessagesQuery) (messages []*model.Message, more bool, err error)
 	// SetMessageUnread 指定したメッセージを未読にします
 	//
 	// 成功した場合、nilを返します。
