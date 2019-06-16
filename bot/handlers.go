@@ -81,6 +81,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			p.logger.Error("failed to GetBotsByChannel", zap.Error(err), zap.Stringer("id", m.ChannelID))
 			return
 		}
+		bots = filterBots(p, bots, eventFilter(MessageCreated))
 
 		// メンションBOT
 		done := make(map[uuid.UUID]bool)
@@ -95,12 +96,14 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 						}
 						continue
 					}
-					bots = append(bots, b)
+					if b.SubscribeEvents.Contains(MentionMessageCreated) {
+						bots = append(bots, b)
+					}
 				}
 			}
 		}
 
-		bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(MessageCreated), botUserIDNotEqualsFilter(m.UserID))
+		bots = filterBots(p, bots, stateFilter(model.BotActive), botUserIDNotEqualsFilter(m.UserID))
 		if len(bots) == 0 {
 			return
 		}
@@ -347,13 +350,17 @@ func multicast(p *Processor, ev model.BotEvent, payload interface{}, targets []*
 	defer release()
 
 	var wg sync.WaitGroup
+	done := make(map[uuid.UUID]bool, len(targets))
 	for _, bot := range targets {
-		bot := bot
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			p.sendEvent(bot, ev, buf)
-		}()
+		if !done[bot.ID] {
+			done[bot.ID] = true
+			bot := bot
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				p.sendEvent(bot, ev, buf)
+			}()
+		}
 	}
 	wg.Wait()
 }

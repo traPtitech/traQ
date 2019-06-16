@@ -1650,26 +1650,6 @@ func (repo *TestRepository) GetUnreadMessagesByUserID(userID uuid.UUID) ([]*mode
 	return result, nil
 }
 
-func (repo *TestRepository) DeleteUnreadsByMessageID(messageID uuid.UUID) error {
-	if messageID == uuid.Nil {
-		return repository.ErrNilID
-	}
-	repo.MessageUnreadsLock.Lock()
-	for _, mMap := range repo.MessageUnreads {
-		var deleted []uuid.UUID
-		for mid := range mMap {
-			if mid == messageID {
-				deleted = append(deleted, mid)
-			}
-		}
-		for _, v := range deleted {
-			delete(mMap, v)
-		}
-	}
-	repo.MessageUnreadsLock.Unlock()
-	return nil
-}
-
 func (repo *TestRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error {
 	if channelID == uuid.Nil || userID == uuid.Nil {
 		return repository.ErrNilID

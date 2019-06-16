@@ -123,36 +123,6 @@ func TestRepositoryImpl_GetUnreadMessagesByUserID(t *testing.T) {
 	}
 }
 
-func TestRepositoryImpl_DeleteUnreadsByMessageID(t *testing.T) {
-	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
-
-	testMessage := mustMakeMessage(t, repo, user.ID, channel.ID)
-	testMessage2 := mustMakeMessage(t, repo, user.ID, channel.ID)
-	for i := 0; i < 10; i++ {
-		mustMakeMessageUnread(t, repo, mustMakeUser(t, repo, random).ID, testMessage.ID)
-		mustMakeMessageUnread(t, repo, mustMakeUser(t, repo, random).ID, testMessage2.ID)
-	}
-
-	t.Run("nil id", func(t *testing.T) {
-		t.Parallel()
-
-		assert.EqualError(t, repo.DeleteUnreadsByMessageID(uuid.Nil), ErrNilID.Error())
-	})
-
-	t.Run("success", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		if assert.NoError(repo.DeleteUnreadsByMessageID(testMessage.ID)) {
-			assert.Equal(0, count(t, getDB(repo).Model(model.Unread{}).Where(&model.Unread{MessageID: testMessage.ID})))
-		}
-		if assert.NoError(repo.DeleteUnreadsByMessageID(testMessage2.ID)) {
-			assert.Equal(0, count(t, getDB(repo).Model(model.Unread{}).Where(&model.Unread{MessageID: testMessage2.ID})))
-		}
-	})
-}
-
 func TestRepositoryImpl_DeleteUnreadsByChannelID(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common)

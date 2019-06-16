@@ -238,14 +238,6 @@ func (repo *GormRepository) GetUnreadMessagesByUserID(userID uuid.UUID) (unreads
 	return unreads, err
 }
 
-// DeleteUnreadsByMessageID implements MessageRepository interface.
-func (repo *GormRepository) DeleteUnreadsByMessageID(messageID uuid.UUID) error {
-	if messageID == uuid.Nil {
-		return ErrNilID
-	}
-	return repo.db.Where(&model.Unread{MessageID: messageID}).Delete(model.Unread{}).Error
-}
-
 // GetUserUnreadChannels implements MessageRepository interface.
 func (repo *GormRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*UserUnreadChannel, error) {
 	res := make([]*UserUnreadChannel, 0)
