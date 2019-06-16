@@ -66,12 +66,6 @@ type MessageRepository interface {
 	// 存在しないユーザーを指定した場合、空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetUnreadMessagesByUserID(userID uuid.UUID) ([]*model.Message, error)
-	// DeleteUnreadsByMessageID 指定したメッセージの未読レコードを全て削除します
-	//
-	// 成功した場合、nilを返します。
-	// 引数にuuid.Nilを指定するとErrNilIDを返します。
-	// DBによるエラーを返すことがあります。
-	DeleteUnreadsByMessageID(messageID uuid.UUID) error
 	// DeleteUnreadsByChannelID 指定したチャンネルに存在する、指定したユーザーの未読レコードをすべて削除します
 	//
 	// 成功した場合、nilを返します。

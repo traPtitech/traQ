@@ -95,7 +95,9 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 						}
 						continue
 					}
-					bots = append(bots, b)
+					if b.SubscribeEvents.Contains(MentionMessageCreated) {
+						bots = append(bots, b)
+					}
 				}
 			}
 		}
@@ -347,13 +349,17 @@ func multicast(p *Processor, ev model.BotEvent, payload interface{}, targets []*
 	defer release()
 
 	var wg sync.WaitGroup
+	done := make(map[uuid.UUID]bool, len(targets))
 	for _, bot := range targets {
-		bot := bot
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			p.sendEvent(bot, ev, buf)
-		}()
+		if !done[bot.ID] {
+			done[bot.ID] = true
+			bot := bot
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				p.sendEvent(bot, ev, buf)
+			}()
+		}
 	}
 	wg.Wait()
 }

@@ -8,17 +8,11 @@ import (
 type filterFunc func(p *Processor, bot *model.Bot) bool
 
 func filterBots(p *Processor, bots []*model.Bot, filters ...filterFunc) []*model.Bot {
-	set := make(map[uuid.UUID]bool)
 	result := make([]*model.Bot, 0, len(bots))
 	for _, bot := range bots {
-		if set[bot.ID] {
-			continue
-		}
-
 		if filterBot(p, bot, filters...) {
 			result = append(result, bot)
 		}
-		set[bot.ID] = true
 	}
 	return result
 }
