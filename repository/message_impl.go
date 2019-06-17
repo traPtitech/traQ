@@ -175,7 +175,12 @@ func (repo *GormRepository) GetMessageByID(messageID uuid.UUID) (*model.Message,
 func (repo *GormRepository) GetMessages(query MessagesQuery) (messages []*model.Message, more bool, err error) {
 	messages = make([]*model.Message, 0)
 
-	tx := repo.db.Scopes(messagePreloads).Order("created_at DESC")
+	tx := repo.db.Scopes(messagePreloads)
+	if query.Asc {
+		tx = tx.Order("created_at")
+	} else {
+		tx = tx.Order("created_at DESC")
+	}
 
 	if query.Channel != uuid.Nil {
 		tx = tx.Where("channel_id = ?", query.Channel)

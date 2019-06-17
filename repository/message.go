@@ -16,6 +16,7 @@ type MessagesQuery struct {
 	Inclusive bool
 	Limit     int
 	Offset    int
+	Asc       bool
 }
 
 // MessageRepository メッセージリポジトリ

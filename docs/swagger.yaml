@@ -562,6 +562,7 @@ paths:
         - $ref: "#/components/parameters/sinceInQuery"
         - $ref: "#/components/parameters/untilInQuery"
         - $ref: "#/components/parameters/inclusiveInQuery"
+        - $ref: "#/components/parameters/orderInQuery"
       responses:
         "200":
           description: |+
@@ -625,6 +626,7 @@ paths:
         - $ref: "#/components/parameters/sinceInQuery"
         - $ref: "#/components/parameters/untilInQuery"
         - $ref: "#/components/parameters/inclusiveInQuery"
+        - $ref: "#/components/parameters/orderInQuery"
       responses:
         "200":
           description: |+
@@ -3081,18 +3083,18 @@ components:
       schema:
         type: string
         format: date-time
-        default: 0000-01-01T00:00:00.000000Z
+        default: "0000-01-01T00:00:00.000000Z"
       description: 取得する時間範囲の開始日時
-      example: 2016-10-12T11:00:00.000000Z
+      example: "2016-10-12T11:00:00.000000Z"
     untilInQuery:
       in: query
       name: until
       schema:
         type: string
         format: date-time
-        default: 9999-12-31T23:59:99.999999Z
+        default: "9999-12-31T23:59:99.999999Z"
       description: 取得する時間範囲の終了日時
-      example: 2016-10-12T11:00:00.0000000Z
+      example: "2016-10-12T11:00:00.0000000Z"
     inclusiveInQuery:
       in: query
       name: inclusive
@@ -3100,6 +3102,16 @@ components:
         type: boolean
         default: false
       description: 範囲の端を含めるかどうか
+    orderInQuery:
+      in: query
+      name: order
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+        default: desc
+      description: 昇順か降順か
 
   headers:
     X-TRAQ-MORE:
