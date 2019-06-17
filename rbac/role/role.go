@@ -9,12 +9,12 @@ func SystemRoles() []*model.UserRole {
 	return []*model.UserRole{
 		{
 			Name:        Admin,
-			Oauth2Scope: true,
+			Oauth2Scope: false,
 			System:      true,
 		},
 		{
 			Name:        User,
-			Oauth2Scope: true,
+			Oauth2Scope: false,
 			Permissions: convertRolePermissions(User, userPerms),
 			System:      true,
 		},
@@ -32,7 +32,7 @@ func SystemRoles() []*model.UserRole {
 		},
 		{
 			Name:        Bot,
-			Oauth2Scope: true,
+			Oauth2Scope: false,
 			Permissions: convertRolePermissions(Bot, botPerms),
 			System:      true,
 		},
