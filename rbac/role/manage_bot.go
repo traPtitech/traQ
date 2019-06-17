@@ -22,4 +22,8 @@ var manageBotPerms = []rbac.Permission{
 	permission.DeleteBot,
 	permission.InstallBot,
 	permission.UninstallBot,
+	permission.GetClients,
+	permission.CreateClient,
+	permission.EditMyClient,
+	permission.DeleteMyClient,
 }
