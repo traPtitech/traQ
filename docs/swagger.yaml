@@ -562,6 +562,7 @@ paths:
         - $ref: "#/components/parameters/sinceInQuery"
         - $ref: "#/components/parameters/untilInQuery"
         - $ref: "#/components/parameters/inclusiveInQuery"
+        - $ref: "#/components/parameters/orderInQuery"
       responses:
         "200":
           description: |+
@@ -625,6 +626,7 @@ paths:
         - $ref: "#/components/parameters/sinceInQuery"
         - $ref: "#/components/parameters/untilInQuery"
         - $ref: "#/components/parameters/inclusiveInQuery"
+        - $ref: "#/components/parameters/orderInQuery"
       responses:
         "200":
           description: |+
@@ -3100,6 +3102,16 @@ components:
         type: boolean
         default: false
       description: 範囲の端を含めるかどうか
+    orderInQuery:
+      in: query
+      name: order
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+        default: desc
+      description: 昇順か降順か
 
   headers:
     X-TRAQ-MORE:

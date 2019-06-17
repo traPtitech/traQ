@@ -8,6 +8,7 @@ import (
 	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -242,6 +243,7 @@ type messagesQuery struct {
 	Since     *timestamp `query:"since"`
 	Until     *timestamp `query:"until"`
 	Inclusive bool       `query:"inclusive"`
+	Order     string     `query:"order"`
 }
 
 func (q *messagesQuery) bind(c echo.Context) error {
@@ -255,6 +257,7 @@ func (q *messagesQuery) convert() repository.MessagesQuery {
 		Inclusive: q.Inclusive,
 		Limit:     q.Limit,
 		Offset:    q.Offset,
+		Asc:       strings.ToLower(q.Order) == "asc",
 	}
 }
 
