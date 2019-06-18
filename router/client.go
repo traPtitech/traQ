@@ -2,14 +2,15 @@ package router
 
 import (
 	"fmt"
+	"net/http"
+	"regexp"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
-	"net/http"
-	"regexp"
-	"time"
 )
 
 var uriRegex = regexp.MustCompile(`^([a-z0-9+.-]+):(?://(?:((?:[a-z0-9-._~!$&'()*+,;=:]|%[0-9A-F]{2})*)@)?((?:[a-z0-9-._~!$&'()*+,;=]|%[0-9A-F]{2})*)(?::(\d*))?(/(?:[a-z0-9-._~!$&'()*+,;=:@/]|%[0-9A-F]{2})*)?|(/?(?:[a-z0-9-._~!$&'()*+,;=:@]|%[0-9A-F]{2})+(?:[a-z0-9-._~!$&'()*+,;=:@/]|%[0-9A-F]{2})*)?)(?:\?((?:[a-z0-9-._~!$&'()*+,;=:/?@]|%[0-9A-F]{2})*))?(?:#((?:[a-z0-9-._~!$&'()*+,;=:/?@]|%[0-9A-F]{2})*))?$`)
@@ -230,4 +231,19 @@ func (h *Handlers) DeleteClient(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+// GetClientDetail GET /client/:clientID/detail
+func (h *Handlers) GetClientDetail(c echo.Context) error {
+	oc := getClientFromContext(c)
+
+	return c.JSON(http.StatusOK, &OwnedClientInfo{
+		ClientID:    oc.ID,
+		Name:        oc.Name,
+		Description: oc.Description,
+		CreatorID:   oc.CreatorID,
+		Scopes:      oc.Scopes,
+		RedirectURI: oc.RedirectURI,
+		Secret:      oc.Secret,
+	})
 }
