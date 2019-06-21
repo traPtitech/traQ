@@ -2946,6 +2946,21 @@ paths:
         "404":
           description: 削除できませんでした。指定されたクライアントは存在しません。
 
+  /clients/{clientID}/detail:
+    get:
+      tags:
+        - client
+      description: クライアントの詳細を取得します。
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnedClientInfo"
+        "403":
+          description: 取得できませんでした。権限がありません。
+
   /bots:
     get:
       tags:

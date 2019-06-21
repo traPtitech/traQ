@@ -281,6 +281,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiClientCid.GET("", h.GetClient, requires(permission.GetClients), h.ValidateClientID(false))
 				apiClientCid.PATCH("", h.PatchClient, requires(permission.EditMyClient), h.ValidateClientID(true))
 				apiClientCid.DELETE("", h.DeleteClient, requires(permission.DeleteMyClient), h.ValidateClientID(true))
+				apiClientCid.GET("/detail", h.GetClientDetail, requires(permission.GetClients), h.ValidateClientID(true))
 			}
 		}
 		apiBots := api.Group("/bots")
