@@ -20,6 +20,9 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	if err != nil {
 		return badRequest(err)
 	}
+	if uploadedFile.Size == 0 {
+		return badRequest("non-empty file is required")
+	}
 
 	// アクセスコントロールリスト作成
 	aclRead := repository.ACL{}
