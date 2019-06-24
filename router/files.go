@@ -101,6 +101,7 @@ func (h *Handlers) DeleteFileByID(c echo.Context) error {
 // GetMetaDataByFileID GET /files/:fileID/meta
 func (h *Handlers) GetMetaDataByFileID(c echo.Context) error {
 	meta := getFileFromContext(c)
+	c.Response().Header().Set(headerCacheControl, "private, max-age=86400") // 1日キャッシュ
 	return c.JSON(http.StatusOK, meta)
 }
 
