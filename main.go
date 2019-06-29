@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/profiler"
-	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo"
@@ -20,7 +19,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/logging"
-	"github.com/traPtitech/traQ/model"
 	rbac "github.com/traPtitech/traQ/rbac/impl"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
@@ -109,16 +107,6 @@ func main() {
 		}
 	}
 
-	if viper.GetBool("generateThumbnailOnStartUp") {
-		var files []uuid.UUID
-		if err := engine.Model(&model.File{}).Where("has_thumbnail = false").Pluck("id", &files).Error; err != nil {
-			logger.Warn("failed to fetch no thumbnail files", zap.Error(err))
-		}
-		for _, v := range files {
-			_, _ = repo.RegenerateThumbnail(v)
-		}
-	}
-
 	// SessionStore
 	sessionStore, err := sessions.NewGORMStore(engine)
 	if err != nil {
@@ -166,6 +154,9 @@ func main() {
 	if viper.GetBool("accessLog.enabled") {
 		e.Use(router.AccessLoggingMiddleware(logger.Named("access_log"), viper.GetBool("accessLog.excludesHeartbeat")))
 	}
+	if viper.GetBool("gzip") {
+		e.Use(router.Gzip())
+	}
 	e.Use(router.AddHeadersMiddleware(map[string]string{"X-TRAQ-VERSION": versionAndRevision}))
 	e.HideBanner = true
 	e.HidePort = true
@@ -189,18 +180,18 @@ func main() {
 		logger.Warn("abnormal shutdown", zap.Error(err))
 	}
 	sessions.PurgeCache()
+	logger.Info("traQ shutdown")
 }
 
 func setDefaultConfigs() {
 	viper.SetDefault("origin", "http://localhost:3000")
 	viper.SetDefault("port", 3000)
+	viper.SetDefault("gzip", true)
 	viper.SetDefault("accessLog.enabled", true)
 	viper.SetDefault("accessLog.excludesHeartbeat", true)
 
 	viper.SetDefault("pprof", false)
 	viper.SetDefault("gormLogMode", false)
-
-	viper.SetDefault("generateThumbnailOnStartUp", false)
 
 	viper.SetDefault("externalAuthentication.enabled", false)
 

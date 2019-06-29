@@ -1,7 +1,9 @@
 package router
 
 import (
+	"compress/gzip"
 	"fmt"
+	"github.com/NYTimes/gziphandler"
 	"github.com/gofrs/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -208,6 +210,31 @@ func RequestCounterMiddleware() echo.MiddlewareFunc {
 			err = next(c)
 			requestCounter.WithLabelValues(strconv.Itoa(c.Response().Status), c.Request().Method).Inc()
 			return err
+		}
+	}
+}
+
+// Gzip Gzipミドルウェア
+func Gzip() echo.MiddlewareFunc {
+	gzh, _ := gziphandler.GzipHandlerWithOpts(
+		gziphandler.ContentTypes([]string{
+			"application/javascript",
+			"application/json",
+			"image/svg+xml",
+			"text/css",
+			"text/html",
+			"text/plain",
+			"text/xml",
+		}),
+		gziphandler.CompressionLevel(gzip.BestSpeed),
+	)
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) (err error) {
+			gzh(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				c.SetRequest(r)
+				err = next(c)
+			})).ServeHTTP(c.Response(), c.Request())
+			return
 		}
 	}
 }
