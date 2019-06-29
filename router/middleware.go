@@ -1,10 +1,10 @@
 package router
 
 import (
+	"compress/gzip"
 	"fmt"
 	"github.com/NYTimes/gziphandler"
 	"github.com/gofrs/uuid"
-	"github.com/klauspost/compress/gzip"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/logging"

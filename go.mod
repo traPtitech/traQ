@@ -30,7 +30,6 @@ require (
 	github.com/jinzhu/gorm v1.9.8
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
-	github.com/klauspost/compress v1.4.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.2.8 // indirect
