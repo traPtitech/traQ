@@ -142,7 +142,7 @@ func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
 		return
 	}
 	user, err := p.repo.GetUser(ch.CreatorID)
-	if err != nil {
+	if err != nil && err != repository.ErrNotFound {
 		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", ch.CreatorID))
 		return
 	}
@@ -256,7 +256,7 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 
 	chCreator, err := p.repo.GetUser(ch.CreatorID)
-	if err != nil {
+	if err != nil && err != repository.ErrNotFound {
 		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", ch.CreatorID))
 		return
 	}
@@ -290,20 +290,18 @@ func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
+	user, err := p.repo.GetUser(stamp.CreatorID)
+	if err != nil && err != repository.ErrNotFound {
+		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", stamp.CreatorID))
+		return
+	}
+
 	payload := stampCreatedPayload{
 		basePayload: makeBasePayload(),
 		ID:          stamp.ID,
 		Name:        stamp.Name,
 		FileID:      stamp.FileID,
-	}
-
-	if stamp.CreatorID != uuid.Nil {
-		user, err := p.repo.GetUser(stamp.CreatorID)
-		if err != nil {
-			p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", stamp.CreatorID))
-			return
-		}
-		payload.Creator = makeUserPayload(user)
+		Creator:     makeUserPayload(user),
 	}
 
 	multicast(p, StampCreated, &payload, bots)

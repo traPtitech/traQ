@@ -73,6 +73,9 @@ type userPayload struct {
 }
 
 func makeUserPayload(user *model.User) userPayload {
+	if user == nil {
+		return userPayload{}
+	}
 	return userPayload{
 		ID:          user.ID,
 		Name:        user.Name,
