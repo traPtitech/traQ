@@ -86,6 +86,9 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 		logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", message.UserID)) // 失敗
 		return
 	}
+	if len(mUser.DisplayName) == 0 {
+		mUser.DisplayName = mUser.Name
+	}
 
 	// データ初期化
 	data := map[string]string{
@@ -99,11 +102,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 	// メッセージボディ作成
 	body := ""
 	if ch.IsDMChannel() {
-		if len(mUser.DisplayName) == 0 {
-			data["title"] = "@" + mUser.Name
-		} else {
-			data["title"] = "@" + mUser.DisplayName
-		}
+		data["title"] = "@" + mUser.DisplayName
 		data["path"] = "/users/" + mUser.Name
 		body = plain
 	} else {
@@ -115,12 +114,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 
 		data["title"] = "#" + path
 		data["path"] = "/channels/" + path
-
-		if len(mUser.DisplayName) == 0 {
-			body = fmt.Sprintf("%s: %s", mUser.Name, plain)
-		} else {
-			body = fmt.Sprintf("%s: %s", mUser.DisplayName, plain)
-		}
+		body = fmt.Sprintf("%s: %s", mUser.DisplayName, plain)
 	}
 
 	if s := utf8string.NewString(body); s.RuneCount() > 100 {

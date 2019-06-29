@@ -48,13 +48,6 @@ type FileRepository interface {
 	// 成功した場合、メタデータとnilを返します。
 	// DB, ファイルシステムによるエラーを返すことがあります。
 	SaveFileWithACL(name string, src io.Reader, size int64, mime string, fType string, creatorID uuid.UUID, read ACL) (*model.File, error)
-	// RegenerateThumbnail 指定したファイルのサムネイル画像を再生成します
-	//
-	// 成功した場合、trueとnilを返します。
-	// サムネイルが生成できないファイルの場合、falseとnilを返します。
-	// 存在しないファイルを指定した場合、ErrNotFoundを返します。
-	// DB, ファイルシステムによるエラーを返すことがあります。
-	RegenerateThumbnail(fileID uuid.UUID) (bool, error)
 	// IsFileAccessible 指定したユーザーが指定したファイルにアクセス可能かどうかを返します
 	//
 	// アクセス可能な場合、trueとnilを返します。

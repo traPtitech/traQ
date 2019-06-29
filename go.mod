@@ -3,6 +3,7 @@ module github.com/traPtitech/traQ
 require (
 	cloud.google.com/go v0.39.0
 	firebase.google.com/go v3.7.0+incompatible
+	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ajg/form v0.0.0-20160822230020-523a5da1a92f // indirect
 	github.com/cenkalti/backoff v2.1.1+incompatible
 	github.com/denisenkom/go-mssqldb v0.0.0-20190515213511-eb9f6a1743f3 // indirect
@@ -29,6 +30,7 @@ require (
 	github.com/jinzhu/gorm v1.9.8
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
+	github.com/klauspost/compress v1.4.0
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.2.8 // indirect

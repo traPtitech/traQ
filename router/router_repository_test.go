@@ -2291,10 +2291,6 @@ func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int
 	return f, nil
 }
 
-func (repo *TestRepository) RegenerateThumbnail(fileID uuid.UUID) (bool, error) {
-	return false, nil
-}
-
 func (repo *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
 	if fileID == uuid.Nil {
 		return false, repository.ErrNilID

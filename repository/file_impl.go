@@ -191,40 +191,6 @@ func (repo *GormRepository) DeleteFile(fileID uuid.UUID) error {
 	return nil
 }
 
-// RegenerateThumbnail implements FileRepository interface.
-func (repo *GormRepository) RegenerateThumbnail(fileID uuid.UUID) (bool, error) {
-	meta, err := repo.GetFileMeta(fileID)
-	if err != nil {
-		return false, err
-	}
-
-	// 既存のものを削除
-	if meta.HasThumbnail {
-		_ = repo.FS.DeleteByKey(meta.GetThumbKey())
-		meta.HasThumbnail = false
-		meta.ThumbnailWidth = 0
-		meta.ThumbnailHeight = 0
-	}
-
-	src, err := repo.FS.OpenFileByKey(meta.GetKey())
-	if err != nil {
-		return false, err
-	}
-	defer src.Close()
-
-	size, _ := repo.generateThumbnail(context.Background(), meta, src)
-	if !size.Empty() {
-		meta.HasThumbnail = true
-		meta.ThumbnailWidth = size.Size().X
-		meta.ThumbnailHeight = size.Size().Y
-	}
-	return !size.Empty(), repo.db.Model(meta).Updates(map[string]interface{}{
-		"has_thumbnail":    meta.HasThumbnail,
-		"thumbnail_width":  meta.ThumbnailWidth,
-		"thumbnail_height": meta.ThumbnailHeight,
-	}).Error
-}
-
 // IsFileAccessible implements FileRepository interface.
 func (repo *GormRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
 	if fileID == uuid.Nil {
