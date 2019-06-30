@@ -3,7 +3,9 @@ package storage
 import (
 	"fmt"
 	"github.com/ncw/swift"
+	"github.com/traPtitech/traQ/model"
 	"io"
+	"os"
 	"time"
 )
 
@@ -12,10 +14,11 @@ type SwiftFileStorage struct {
 	container  string
 	tempURLKey string
 	connection swift.Connection
+	cacheDir   string
 }
 
 // NewSwiftFileStorage 引数の情報でOpenStack Swiftストレージを生成します
-func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL, tempURLKey string) (*SwiftFileStorage, error) {
+func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL, tempURLKey, cacheDir string) (*SwiftFileStorage, error) {
 	m := &SwiftFileStorage{
 		container:  container,
 		tempURLKey: tempURLKey,
@@ -26,6 +29,7 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL,
 			Tenant:   tenant,
 			TenantId: tenantID,
 		},
+		cacheDir: cacheDir,
 	}
 
 	if err := m.connection.Authenticate(); err != nil {
@@ -46,16 +50,58 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL,
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *SwiftFileStorage) OpenFileByKey(key string) (file ReadSeekCloser, err error) {
-	file, _, err = fs.connection.ObjectOpen(fs.container, key, true, nil)
-	if err == swift.ObjectNotFound {
+func (fs *SwiftFileStorage) OpenFileByKey(key, fileType string) (file ReadSeekCloser, err error) {
+	cacheName := fs.getCacheFilePath(key)
+
+	if _, err := os.Stat(cacheName); os.IsNotExist(err) {
+		file, _, err = fs.connection.ObjectOpen(fs.container, key, true, nil)
+		if err == swift.ObjectNotFound {
+			return nil, ErrFileNotFound
+		}
+
+		if !fs.cacheable(fileType) {
+			return
+		}
+
+		// save cache
+		cacheName := fs.getCacheFilePath(key)
+		f, fe := os.Create(cacheName)
+		if fe != nil {
+			return
+		}
+
+		if _, err := io.Copy(f, file); err != nil {
+			f.Close()
+			return nil, err
+		}
+		f.Close()
+	}
+
+	// from cache
+	reader, err := os.Open(cacheName)
+	if err != nil {
 		return nil, ErrFileNotFound
 	}
-	return
+	return reader, nil
 }
 
 // SaveByKey srcの内容をkeyで指定されたファイルに書き込みます
 func (fs *SwiftFileStorage) SaveByKey(src io.Reader, key, name, contentType, fileType string) (err error) {
+	if fs.cacheable(fileType) {
+		cacheName := fs.getCacheFilePath(key)
+
+		file, fe := os.Create(cacheName)
+		if fe == nil {
+			defer func() {
+				file.Close()
+				if err != nil {
+					_ = os.Remove(cacheName)
+				}
+			}()
+			src = io.TeeReader(src, file)
+		}
+	}
+
 	_, err = fs.connection.ObjectPut(fs.container, key, src, true, "", contentType, swift.Headers{
 		"Content-Disposition": fmt.Sprintf("attachment; filename=%s", name),
 	})
@@ -63,18 +109,37 @@ func (fs *SwiftFileStorage) SaveByKey(src io.Reader, key, name, contentType, fil
 }
 
 // DeleteByKey ファイルを削除します
-func (fs *SwiftFileStorage) DeleteByKey(key string) (err error) {
+func (fs *SwiftFileStorage) DeleteByKey(key, fileType string) (err error) {
 	err = fs.connection.ObjectDelete(fs.container, key)
-	if err == swift.ObjectNotFound {
-		return ErrFileNotFound
+	if err != nil {
+		if err == swift.ObjectNotFound {
+			return ErrFileNotFound
+		}
+		return err
 	}
-	return err
+
+	// delete cache
+	cacheName := fs.getCacheFilePath(key)
+	if _, err := os.Stat(cacheName); err == nil {
+		_ = os.Remove(cacheName)
+	}
+	return nil
 }
 
 // GenerateAccessURL keyで指定されたファイルの直接アクセスURLを発行する。
-func (fs *SwiftFileStorage) GenerateAccessURL(key string) (string, error) {
-	if len(fs.tempURLKey) > 0 {
-		return fs.connection.ObjectTempUrl(fs.container, key, fs.tempURLKey, "GET", time.Now().Add(5*time.Minute)), nil
+func (fs *SwiftFileStorage) GenerateAccessURL(key, fileType string) (string, error) {
+	if !fs.cacheable(fileType) && len(fs.tempURLKey) > 0 {
+		if _, err := os.Stat(fs.getCacheFilePath(key)); os.IsNotExist(err) {
+			return fs.connection.ObjectTempUrl(fs.container, key, fs.tempURLKey, "GET", time.Now().Add(5*time.Minute)), nil
+		}
 	}
 	return "", nil
+}
+
+func (fs *SwiftFileStorage) getCacheFilePath(key string) string {
+	return fs.cacheDir + "/" + key
+}
+
+func (fs *SwiftFileStorage) cacheable(fileType string) bool {
+	return fileType == model.FileTypeIcon || fileType == model.FileTypeStamp || fileType == model.FileTypeThumbnail
 }

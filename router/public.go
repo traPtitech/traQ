@@ -38,7 +38,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	}
 
 	// ファイルオープン
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey(), meta.Type)
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
@@ -155,7 +155,7 @@ func (h *Handlers) GetPublicEmojiImage(c echo.Context) error {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey(), meta.Type)
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}

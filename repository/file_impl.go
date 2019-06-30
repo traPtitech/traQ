@@ -133,7 +133,7 @@ func (repo *GormRepository) OpenFile(fileID uuid.UUID) (*model.File, io.ReadClos
 	if err != nil {
 		return nil, nil, err
 	}
-	r, err := repo.FS.OpenFileByKey(meta.GetKey())
+	r, err := repo.FS.OpenFileByKey(meta.GetKey(), meta.Type)
 	return meta, r, err
 }
 
@@ -144,7 +144,7 @@ func (repo *GormRepository) OpenThumbnailFile(fileID uuid.UUID) (*model.File, io
 		return nil, nil, err
 	}
 	if meta.HasThumbnail {
-		r, err := repo.FS.OpenFileByKey(meta.GetThumbKey())
+		r, err := repo.FS.OpenFileByKey(meta.GetThumbKey(), model.FileTypeThumbnail)
 		return meta, r, err
 	}
 	return meta, nil, ErrNotFound
@@ -178,7 +178,7 @@ func (repo *GormRepository) DeleteFile(fileID uuid.UUID) error {
 			return err
 		}
 
-		return repo.FS.DeleteByKey(f.GetKey())
+		return repo.FS.DeleteByKey(f.GetKey(), f.Type)
 	})
 	if err != nil {
 		return err
@@ -186,7 +186,7 @@ func (repo *GormRepository) DeleteFile(fileID uuid.UUID) error {
 
 	if f.HasThumbnail {
 		// エラーを無視
-		_ = repo.FS.DeleteByKey(f.GetThumbKey())
+		_ = repo.FS.DeleteByKey(f.GetThumbKey(), model.FileTypeThumbnail)
 	}
 	return nil
 }

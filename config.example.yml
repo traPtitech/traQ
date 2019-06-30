@@ -60,6 +60,7 @@
 #    container: ''
 #    authUrl: ''
 #    tempUrlKey: ''
+#    cacheDir: ''
 
 #oauth2:
 #  isRefreshEnabled: false

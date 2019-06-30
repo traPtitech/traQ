@@ -65,12 +65,12 @@ func (h *Handlers) GetFileByID(c echo.Context) error {
 	}
 
 	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
-	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetKey())
+	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetKey(), meta.Type)
 	if len(url) > 0 {
 		return c.Redirect(http.StatusFound, url)
 	}
 
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey(), meta.Type)
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
@@ -117,12 +117,12 @@ func (h *Handlers) GetThumbnailByID(c echo.Context) error {
 	c.Response().Header().Set(headerCacheFile, "true")
 
 	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
-	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetThumbKey())
+	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetThumbKey(), model.FileTypeThumbnail)
 	if len(url) > 0 {
 		return c.Redirect(http.StatusFound, url)
 	}
 
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetThumbKey())
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetThumbKey(), model.FileTypeThumbnail)
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
