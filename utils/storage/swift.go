@@ -50,31 +50,33 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL,
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *SwiftFileStorage) OpenFileByKey(key, fileType string) (file ReadSeekCloser, err error) {
+func (fs *SwiftFileStorage) OpenFileByKey(key, fileType string) (ReadSeekCloser, error) {
 	cacheName := fs.getCacheFilePath(key)
 
 	if _, err := os.Stat(cacheName); os.IsNotExist(err) {
-		file, _, err = fs.connection.ObjectOpen(fs.container, key, true, nil)
-		if err == swift.ObjectNotFound {
-			return nil, ErrFileNotFound
+		file, _, err := fs.connection.ObjectOpen(fs.container, key, true, nil)
+		if err != nil {
+			if err == swift.ObjectNotFound {
+				return nil, ErrFileNotFound
+			}
+			return nil, err
 		}
 
 		if !fs.cacheable(fileType) {
-			return
+			return file, nil
 		}
 
 		// save cache
-		cacheName := fs.getCacheFilePath(key)
-		f, fe := os.Create(cacheName)
-		if fe != nil {
-			return
+		cf, err := os.Create(cacheName)
+		if err != nil {
+			return file, nil
 		}
 
-		if _, err := io.Copy(f, file); err != nil {
-			f.Close()
+		if _, err := io.Copy(cf, file); err != nil {
+			cf.Close()
 			return nil, err
 		}
-		f.Close()
+		cf.Close()
 	}
 
 	// from cache
