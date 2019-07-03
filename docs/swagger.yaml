@@ -2836,6 +2836,8 @@ paths:
       tags:
         - client
       description: 自分が登録しているクライアントの一覧を取得します。
+      traqOAuth2:
+        - manage_bot
       responses:
         "200":
           description: 正常に取得できました。
@@ -2851,6 +2853,8 @@ paths:
       tags:
         - client
       description: クライアントを登録します。
+      traqOAuth2:
+        - manage_bot
       requestBody:
         content:
           application/json:
@@ -2896,6 +2900,8 @@ paths:
       tags:
         - client
       description: 指定したクライアントIDのクライアントの情報を取得します。
+      traqOAuth2:
+        - manage_bot
       responses:
         "200":
           description: 正常に取得できました。
@@ -2909,6 +2915,8 @@ paths:
       tags:
         - client
       description: 指定したクライアントIDのクライアントの情報を変更します。
+      traqOAuth2:
+        - manage_bot
       requestBody:
         content:
           application/json:
@@ -2938,6 +2946,8 @@ paths:
       description: |+
         指定したクライアントIDのクライアントを削除します。
         正常に削除された場合、このクライアントを通じての認可は全て取り消されます。
+      traqOAuth2:
+        - manage_bot
       responses:
         "204":
           description: 正常に削除できました。
@@ -2951,6 +2961,8 @@ paths:
       tags:
         - client
       description: クライアントの詳細を取得します。
+      traqOAuth2:
+        - manage_bot
       responses:
         "200":
           description: 正常に取得できました。
