@@ -71,6 +71,13 @@ paths:
       tags:
         - public
       description: 指定したユーザーのアイコン画像を取得します。
+      parameters:
+        - name: username
+          description: 画像を取得するユーザーのユーザー名
+          in: path
+          required: true
+          schema:
+            type: string
       security: []
       responses:
         "200":
@@ -1176,6 +1183,8 @@ paths:
           description: 取得に失敗しました。指定したユーザーは存在しません。
 
   /users/{userID}/groups:
+    parameters:
+      - $ref: "#/components/parameters/userIdInPath"
     get:
       tags:
         - user group
@@ -2947,6 +2956,8 @@ paths:
           description: 削除できませんでした。指定されたクライアントは存在しません。
 
   /clients/{clientID}/detail:
+    parameters:
+      - $ref: "#/components/parameters/clientIdInPath"
     get:
       tags:
         - client
