@@ -61,7 +61,7 @@ func main() {
 
 	// enable pprof http handler
 	if viper.GetBool("pprof") {
-		go func() { _ = http.ListenAndServe("localhost:6060", nil) }()
+		go func() { _ = http.ListenAndServe("0.0.0.0:6060", nil) }()
 	}
 
 	// Stackdriver Profiler
