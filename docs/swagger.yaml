@@ -1351,26 +1351,30 @@ paths:
       security:
         - traqOAuth2:
             - write
-      parameters:
-        - name: status
-          in: query
-          description: editing,monitoring,noneでユーザーの状態を指定する
-          required: true
-          schema:
-            type: string
-            enum:
-              - none
-              - monitoring
-              - editing
-        - name: channelId
-          in: query
-          description: 現在いるチャンネルId
-          required: true
-          schema:
-            type: string
-            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+                - channelId
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - none
+                    - monitoring
+                    - editing
+                  description: editing,monitoring,noneでユーザーの状態を指定する
+                  example: monitoring
+                channelId:
+                  type: string
+                  format: uuid
+                  description: 現在いるチャンネルId
+                  example: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
       responses:
-        "204":
+        "200":
           description: 正常に送信できました。
 
   /channels:
