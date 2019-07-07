@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
 	"sync"
+	"time"
 )
 
 var (
@@ -722,23 +723,53 @@ func (repo *GormRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) (use
 	return users, err
 }
 
-// SubscribeChannel implements ChannelRepository interface.
-func (repo *GormRepository) SubscribeChannel(userID, channelID uuid.UUID) error {
-	if userID == uuid.Nil || channelID == uuid.Nil {
+// ChangeChannelSubscription implements ChannelRepository interface.
+func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args ChangeChannelSubscriptionArgs) error {
+	if channelID == uuid.Nil {
 		return ErrNilID
 	}
-	var s model.UserSubscribeChannel
-	return repo.db.FirstOrCreate(&s, &model.UserSubscribeChannel{UserID: userID, ChannelID: channelID}).Error
-}
 
-// UnsubscribeChannel implements ChannelRepository interface.
-func (repo *GormRepository) UnsubscribeChannel(userID, channelID uuid.UUID) error {
-	if userID == uuid.Nil || channelID == uuid.Nil {
+	var (
+		on  []uuid.UUID
+		off []uuid.UUID
+	)
+	err := repo.transact(func(tx *gorm.DB) error {
+		for userID, subscribe := range args.Subscription {
+			if userID == uuid.Nil {
+				continue
+			}
+			if subscribe {
+				err := tx.Create(&model.UserSubscribeChannel{UserID: userID, ChannelID: channelID}).Error
+				switch {
+				case err == nil:
+					// 成功
+					on = append(on, userID)
+				case isMySQLDuplicatedRecordErr(err):
+					// 既に購読中なので無視
+					continue
+				case isMySQLForeignKeyConstraintFailsError(err):
+					// 存在しないユーザーは無視
+					continue
+				default:
+					return err
+				}
+			} else {
+				result := tx.Delete(&model.UserSubscribeChannel{UserID: userID, ChannelID: channelID})
+				if result.Error != nil {
+					return result.Error
+				}
+				if result.RowsAffected > 0 {
+					off = append(off, userID)
+				}
+			}
+		}
 		return nil
+	})
+	if err != nil {
+		return err
 	}
-	return repo.db.
-		Delete(&model.UserSubscribeChannel{UserID: userID, ChannelID: channelID}).
-		Error
+	// TODO イベント発行
+	return nil
 }
 
 // GetSubscribingUserIDs implements ChannelRepository interface.

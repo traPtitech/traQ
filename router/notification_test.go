@@ -64,7 +64,7 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 		t.Parallel()
 
 		channel := mustMakeChannel(t, repo, random)
-		require.NoError(t, repo.SubscribeChannel(user.ID, channel.ID))
+		mustChangeChannelSubscription(t, repo, channel.ID, user.ID, true)
 
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
@@ -86,7 +86,7 @@ func TestHandlers_GetNotificationStatus(t *testing.T) {
 	channel := mustMakeChannel(t, repo, random)
 	user := mustMakeUser(t, repo, random)
 
-	require.NoError(t, repo.SubscribeChannel(user.ID, channel.ID))
+	mustChangeChannelSubscription(t, repo, channel.ID, user.ID, true)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -115,8 +115,8 @@ func TestHandlers_GetNotificationChannels(t *testing.T) {
 	repo, server, _, _, session, _ := setup(t, common2)
 
 	user := mustMakeUser(t, repo, random)
-	require.NoError(t, repo.SubscribeChannel(user.ID, mustMakeChannel(t, repo, random).ID))
-	require.NoError(t, repo.SubscribeChannel(user.ID, mustMakeChannel(t, repo, random).ID))
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID, true)
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID, true)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -144,8 +144,8 @@ func TestHandlers_GetMyNotificationChannels(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common2)
 
-	require.NoError(t, repo.SubscribeChannel(user.ID, mustMakeChannel(t, repo, random).ID))
-	require.NoError(t, repo.SubscribeChannel(user.ID, mustMakeChannel(t, repo, random).ID))
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID, true)
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID, true)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()

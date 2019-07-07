@@ -4,12 +4,19 @@ import (
 	"errors"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"time"
 )
 
 var (
 	// ErrChannelDepthLimitation チャンネルの深さ制限を超えている
 	ErrChannelDepthLimitation = errors.New("channel depth limit exceeded")
 )
+
+// ChangeChannelSubscriptionArgs チャンネル購読変更引数
+type ChangeChannelSubscriptionArgs struct {
+	UpdaterID    uuid.UUID
+	Subscription map[uuid.UUID]bool
+}
 
 // ChannelRepository チャンネルリポジトリ
 type ChannelRepository interface {
@@ -131,18 +138,13 @@ type ChannelRepository interface {
 	// 存在しないチャンネルを指定した場合は空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]uuid.UUID, error)
-	// SubscribeChannel 指定したユーザーの指定したチャンネルの購読を登録します
+	// ChangeChannelSubscription ユーザーのチャンネルの購読を変更します
 	//
-	// 成功した、或いは既に購読していた場合、nilを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
+	// 成功した場合、nilを返します。
+	// channelIDにuuid.Nilを指定した場合、ErrNilIDを返します。
+	// 存在しないユーザーを指定した場合は無視されます。
 	// DBによるエラーを返すことがあります。
-	SubscribeChannel(userID, channelID uuid.UUID) error
-	// UnsubscribeChannel 指定したユーザーの指定したチャンネルの購読を解除します
-	//
-	// 成功した、或いは既に購読していない場合、nilを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// DBによるエラーを返すことがあります。
-	UnsubscribeChannel(userID, channelID uuid.UUID) error
+	ChangeChannelSubscription(channelID uuid.UUID, args ChangeChannelSubscriptionArgs) error
 	// GetSubscribingUserIDs 指定したチャンネルを購読しているユーザーのUUIDを全て取得する
 	//
 	// 成功した場合、UUIDの配列とnilを返します。

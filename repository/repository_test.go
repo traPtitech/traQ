@@ -244,6 +244,11 @@ func mustMakeWebhook(t *testing.T, repo Repository, name string, channelID, crea
 	return w
 }
 
+func mustChangeChannelSubscription(t *testing.T, repo Repository, channelID, userID uuid.UUID, subscribe bool) {
+	t.Helper()
+	require.NoError(t, repo.ChangeChannelSubscription(channelID, ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]bool{userID: subscribe}}))
+}
+
 func count(t *testing.T, where *gorm.DB) int {
 	t.Helper()
 	c := 0

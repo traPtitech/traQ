@@ -41,22 +41,26 @@ func (h *Handlers) PutChannelSubscribers(c echo.Context) error {
 		return badRequest(err)
 	}
 
+	args := repository.ChangeChannelSubscriptionArgs{
+		UpdaterID:    getRequestUserID(c),
+		Subscription: map[uuid.UUID]bool{},
+	}
+
 	for _, id := range req.On {
-		if ok, err := h.Repo.UserExists(id); err != nil {
-			return internalServerError(err, h.requestContextLogger(c))
-		} else if ok {
-			if err := h.Repo.SubscribeChannel(id, ch.ID); err != nil {
-				return internalServerError(err, h.requestContextLogger(c))
-			}
-		}
+		args.Subscription[id] = true
 	}
 	for _, id := range req.Off {
-		err := h.Repo.UnsubscribeChannel(id, ch.ID)
-		if err != nil {
-			return internalServerError(err, h.requestContextLogger(c))
+		if args.Subscription[id] {
+			// On, Offどっちにもあるものは相殺
+			delete(args.Subscription, id)
+		} else {
+			args.Subscription[id] = false
 		}
 	}
 
+	if err := h.Repo.ChangeChannelSubscription(ch.ID, args); err != nil {
+		return internalServerError(err, h.requestContextLogger(c))
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 

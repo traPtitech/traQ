@@ -1381,31 +1381,36 @@ func (repo *TestRepository) IsUserPrivateChannelMember(channelID, userID uuid.UU
 	return false, nil
 }
 
-func (repo *TestRepository) SubscribeChannel(userID, channelID uuid.UUID) error {
-	if userID == uuid.Nil || channelID == uuid.Nil {
+func (repo *TestRepository) ChangeChannelSubscription(channelID uuid.UUID, args repository.ChangeChannelSubscriptionArgs) error {
+	if channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
 	repo.ChannelSubscribesLock.Lock()
-	chMap, ok := repo.ChannelSubscribes[userID]
-	if !ok {
-		chMap = make(map[uuid.UUID]bool)
-	}
-	chMap[channelID] = true
-	repo.ChannelSubscribes[userID] = chMap
-	repo.ChannelSubscribesLock.Unlock()
-	return nil
-}
 
-func (repo *TestRepository) UnsubscribeChannel(userID, channelID uuid.UUID) error {
-	if userID == uuid.Nil || channelID == uuid.Nil {
-		return repository.ErrNilID
+	for userID, subscribe := range args.Subscription {
+		repo.UsersLock.RLock()
+		_, ok := repo.Users[userID]
+		repo.UsersLock.RUnlock()
+		if !ok {
+			continue
+		}
+
+		if subscribe {
+			chMap, ok := repo.ChannelSubscribes[userID]
+			if !ok {
+				chMap = make(map[uuid.UUID]bool)
+			}
+			chMap[channelID] = true
+			repo.ChannelSubscribes[userID] = chMap
+		} else {
+			chMap, ok := repo.ChannelSubscribes[userID]
+			if ok {
+				delete(chMap, channelID)
+				repo.ChannelSubscribes[userID] = chMap
+			}
+		}
 	}
-	repo.ChannelSubscribesLock.Lock()
-	chMap, ok := repo.ChannelSubscribes[userID]
-	if ok {
-		delete(chMap, channelID)
-		repo.ChannelSubscribes[userID] = chMap
-	}
+
 	repo.ChannelSubscribesLock.Unlock()
 	return nil
 }
