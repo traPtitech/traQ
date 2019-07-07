@@ -59,6 +59,7 @@ func (repo *GormRepository) migration() error {
 			{"messages_stamps", "user_id", "users(id)", "CASCADE", "CASCADE"},
 			{"stamps", "file_id", "files(id)", "NO ACTION", "CASCADE"},
 			{"webhook_bots", "bot_user_id", "users(id)", "CASCADE", "CASCADE"},
+			{"channel_events", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 		}
 		for _, c := range foreignKeys {
 			if err := db.Table(c[0]).AddForeignKey(c[1], c[2], c[3], c[4]).Error; err != nil {
@@ -70,6 +71,8 @@ func (repo *GormRepository) migration() error {
 		indexes := [][]string{
 			// Name,  Table, Columns...
 			{"idx_messages_channel_id_deleted_at_created_at", "messages", "channel_id", "deleted_at", "created_at"},
+			{"idx_channel_events_channel_id_date_time", "channel_events", "channel_id", "date_time"},
+			{"idx_channel_events_channel_id_event_type_date_time", "channel_events", "channel_id", "event_type", "date_time"},
 		}
 		for _, v := range indexes {
 			if err := db.Table(v[1]).AddIndex(v[0], v[2:]...).Error; err != nil {
@@ -97,6 +100,7 @@ func (repo *GormRepository) migration() error {
 
 // 全テーブル
 var allTables = []interface{}{
+	&model.ChannelEvent{},
 	&model.RolePermission{},
 	&model.RoleInheritance{},
 	&model.UserRole{},
@@ -137,4 +141,5 @@ var allTables = []interface{}{
 var migrations = []*gormigrate.Migration{
 	migration.V1, // インデックスidx_messages_deleted_atの削除とidx_messages_channel_id_deleted_at_created_atの追加
 	migration.V2, // RBAC周りのリフォーム
+	migration.V3, // チャンネルイベント履歴
 }
