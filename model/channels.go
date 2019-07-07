@@ -1,6 +1,9 @@
 package model
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"github.com/gofrs/uuid"
 	"time"
 )
@@ -72,4 +75,96 @@ type DMChannelMapping struct {
 // TableName DMChannelMapping構造体のテーブル名
 func (*DMChannelMapping) TableName() string {
 	return "dm_channel_mappings"
+}
+
+// ChannelEventType チャンネルイベントタイプ
+type ChannelEventType string
+
+const (
+	// ChannelEventTopicChanged チャンネルイベント トピック変更
+	//
+	// 	userId 変更者UUID
+	// 	before 変更前トピック
+	// 	after  変更後トピック
+	ChannelEventTopicChanged = ChannelEventType("TopicChanged")
+	// ChannelEventSubscribersChanged チャンネルイベント 購読者変更
+	//
+	// 	userId 変更者UUID
+	// 	on     オンにしたユーザーのUUIDの配列
+	// 	off    オフにしたユーザーのUUIDの配列
+	ChannelEventSubscribersChanged = ChannelEventType("SubscribersChanged")
+	// ChannelEventPinAdded チャンネルイベント ピン追加
+	//
+	// 	userId    変更者UUID
+	// 	messageId メッセージUUID
+	ChannelEventPinAdded = ChannelEventType("PinAdded")
+	// ChannelEventPinRemoved チャンネルイベント ピン削除
+	//
+	// 	userId    変更者UUID
+	// 	messageId メッセージUUID
+	ChannelEventPinRemoved = ChannelEventType("PinRemoved")
+	// ChannelEventNameChanged チャンネルイベント 名前変更
+	//
+	// 	userId 変更者UUID
+	// 	before 変更前名前
+	// 	after  変更後名前
+	ChannelEventNameChanged = ChannelEventType("NameChanged")
+	// ChannelEventParentChanged チャンネルイベント 親チャンネル変更
+	//
+	// 	userId 変更者UUID
+	// 	before 変更前親チャンネルUUID
+	// 	after  変更後親チャンネルUUID
+	ChannelEventParentChanged = ChannelEventType("ParentChanged")
+	// ChannelEventVisibilityChanged チャンネルイベント 可視状態変更
+	//
+	// 	userId     変更者UUID
+	// 	visibility 可視状態
+	ChannelEventVisibilityChanged = ChannelEventType("VisibilityChanged")
+	// ChannelEventForcedNotificationChanged チャンネルイベント 強制通知変更
+	//
+	// 	userId 変更者UUID
+	// 	force  強制状態
+	ChannelEventForcedNotificationChanged = ChannelEventType("ForcedNotificationChanged")
+	// ChannelEventChildCreated チャンネルイベント 子チャンネル作成
+	//
+	// 	userId    作成者UUID
+	// 	channelId チャンネルUUID
+	ChannelEventChildCreated = ChannelEventType("ChildCreated")
+)
+
+// ChannelEventDetail チャンネルイベント詳細
+type ChannelEventDetail map[string]interface{}
+
+// Value database/sql/driver.Valuer 実装
+func (ced ChannelEventDetail) Value() (driver.Value, error) {
+	return json.Marshal(ced)
+}
+
+// Scan database/sql.Scanner 実装
+func (ced *ChannelEventDetail) Scan(src interface{}) error {
+	*ced = ChannelEventDetail{}
+	switch s := src.(type) {
+	case nil:
+		return nil
+	case string:
+		return json.Unmarshal([]byte(s), ced)
+	case []byte:
+		return json.Unmarshal(s, ced)
+	default:
+		return errors.New("failed to scan ChannelEventDetail")
+	}
+}
+
+// ChannelEvent チャンネルイベント
+type ChannelEvent struct {
+	EventID   uuid.UUID          `gorm:"type:char(36);not null;primary_key"`
+	ChannelID uuid.UUID          `gorm:"type:char(36);not null"`
+	EventType ChannelEventType   `gorm:"type:varchar(30);not null;"`
+	Detail    ChannelEventDetail `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
+	DateTime  time.Time          `gorm:"precision:6"`
+}
+
+// TableName テーブル名
+func (*ChannelEvent) TableName() string {
+	return "channel_events"
 }
