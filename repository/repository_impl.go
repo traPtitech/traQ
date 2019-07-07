@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	errMySQLDuplicatedRecord uint16 = 1062
+	errMySQLDuplicatedRecord          uint16 = 1062
+	errMySQLForeignKeyConstraintFails uint16 = 1452
 )
 
 var (
@@ -145,6 +146,14 @@ func isMySQLDuplicatedRecordErr(err error) bool {
 		return false
 	}
 	return merr.Number == errMySQLDuplicatedRecord
+}
+
+func isMySQLForeignKeyConstraintFailsError(err error) bool {
+	merr, ok := err.(*mysql.MySQLError)
+	if !ok {
+		return false
+	}
+	return merr.Number == errMySQLForeignKeyConstraintFails
 }
 
 func dbExists(tx *gorm.DB, where interface{}, tableName ...string) (exists bool, err error) {
