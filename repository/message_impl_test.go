@@ -152,13 +152,13 @@ func TestRepositoryImpl_DeleteUnreadsByChannelID(t *testing.T) {
 
 func TestRepositoryImpl_GetChannelLatestMessagesByUserID(t *testing.T) {
 	t.Parallel()
-	repo, _, require, user := setupWithUser(t, ex1)
+	repo, _, _, user := setupWithUser(t, ex1)
 
 	var latests []uuid.UUID
 	for j := 0; j < 10; j++ {
 		ch := mustMakeChannel(t, repo, random)
 		if j < 5 {
-			require.NoError(repo.SubscribeChannel(user.ID, ch.ID))
+			mustChangeChannelSubscription(t, repo, ch.ID, user.ID, true)
 		}
 		for i := 0; i < 10; i++ {
 			mustMakeMessage(t, repo, user.ID, ch.ID)

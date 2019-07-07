@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"time"
 )
 
 var (
