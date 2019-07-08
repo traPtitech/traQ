@@ -5,6 +5,9 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/model"
@@ -291,4 +294,50 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+type channelEventsQuery struct {
+	Limit     int        `query:"limit"`
+	Offset    int        `query:"offset"`
+	Since     *timestamp `query:"since"`
+	Until     *timestamp `query:"until"`
+	Inclusive bool       `query:"inclusive"`
+	Order     string     `query:"order"`
+}
+
+func (q *channelEventsQuery) bind(c echo.Context) error {
+	return bindAndValidate(c, q)
+}
+
+func (q *channelEventsQuery) convert(cid uuid.UUID) repository.ChannelEventsQuery {
+	return repository.ChannelEventsQuery{
+		Since:     null.TimeFromPtr((*time.Time)(q.Since)),
+		Until:     null.TimeFromPtr((*time.Time)(q.Until)),
+		Inclusive: q.Inclusive,
+		Limit:     q.Limit,
+		Offset:    q.Offset,
+		Asc:       strings.ToLower(q.Order) == "asc",
+		Channel:   cid,
+	}
+}
+
+// GetChannelEvents GET /channels/:channelID/events
+func (h *Handlers) GetChannelEvents(c echo.Context) error {
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+
+	var req channelEventsQuery
+	if err := req.bind(c); err != nil {
+		return badRequest(err)
+	}
+
+	if req.Limit > 200 || req.Limit == 0 {
+		req.Limit = 200 // １度に取れるのは200件まで
+	}
+
+	events, more, err := h.Repo.GetChannelEvents(req.convert(channelID))
+	if err != nil {
+		return internalServerError(err, h.requestContextLogger(c))
+	}
+	c.Response().Header().Set(headerMore, strconv.FormatBool(more))
+	return c.JSON(http.StatusOK, events)
 }

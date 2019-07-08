@@ -27,6 +27,17 @@ type UpdateChannelArgs struct {
 	ForcedNotification null.Bool
 }
 
+// ChannelEventsQuery GetChannelEvents用クエリ
+type ChannelEventsQuery struct {
+	Channel   uuid.UUID
+	Since     null.Time
+	Until     null.Time
+	Inclusive bool
+	Limit     int
+	Offset    int
+	Asc       bool
+}
+
 // ChannelRepository チャンネルリポジトリ
 type ChannelRepository interface {
 	// CreatePublicChannel パブリックチャンネルを作成します
@@ -152,4 +163,10 @@ type ChannelRepository interface {
 	// 存在しないユーザーを指定した場合は空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetSubscribedChannelIDs(userID uuid.UUID) ([]uuid.UUID, error)
+	// GetChannelEvents 指定したクエリでチャンネルイベントを取得します
+	//
+	// 成功した場合、イベントの配列を返します。負のoffset, limitは無視されます。
+	// 指定した範囲内にlimitを超えてイベントが存在していた場合、trueを返します。
+	// DBによるエラーを返すことがあります。
+	GetChannelEvents(query ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error)
 }
