@@ -29,7 +29,7 @@ var V3 = &gormigrate.Migration{
 			{"idx_channel_events_channel_id_event_type_date_time", "channel_events", "channel_id", "event_type", "date_time"},
 		}
 		for _, c := range indexes {
-			if err := db.Table(c[0]).AddIndex(c[1], c[2:]...).Error; err != nil {
+			if err := db.Table(c[1]).AddIndex(c[0], c[2:]...).Error; err != nil {
 				return err
 			}
 		}
