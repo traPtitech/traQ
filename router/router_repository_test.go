@@ -2086,7 +2086,7 @@ func (repo *TestRepository) IsPinned(messageID uuid.UUID) (bool, error) {
 	return false, nil
 }
 
-func (repo *TestRepository) DeletePin(id uuid.UUID) error {
+func (repo *TestRepository) DeletePin(id uuid.UUID, userID uuid.UUID) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
