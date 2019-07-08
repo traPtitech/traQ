@@ -7,61 +7,65 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
+	"gopkg.in/guregu/null.v3"
 	"strconv"
 	"testing"
 )
 
-func TestRepositoryImpl_UpdateChannelTopic(t *testing.T) {
+func TestGormRepository_UpdateChannel(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common)
 
-	cases := []struct {
-		topic string
-	}{
-		{"test"},
-		{""},
+	cases := []UpdateChannelArgs{
+		{
+			UpdaterID: user.ID,
+			Topic:     null.StringFrom("test"),
+		},
+		{
+			UpdaterID: user.ID,
+			Topic:     null.StringFrom(""),
+		},
+		{
+			UpdaterID:          user.ID,
+			Visibility:         null.BoolFrom(true),
+			ForcedNotification: null.BoolFrom(true),
+		},
+		{
+			UpdaterID:          user.ID,
+			Visibility:         null.BoolFrom(true),
+			ForcedNotification: null.BoolFrom(false),
+		},
+		{
+			UpdaterID:          user.ID,
+			Visibility:         null.BoolFrom(false),
+			ForcedNotification: null.BoolFrom(true),
+		},
+		{
+			UpdaterID:          user.ID,
+			Visibility:         null.BoolFrom(false),
+			ForcedNotification: null.BoolFrom(false),
+		},
 	}
 
 	for i, v := range cases {
 		v := v
 		i := i
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Case%d", i), func(t *testing.T) {
 			t.Parallel()
 			ch := mustMakeChannel(t, repo, random)
-			if assert.NoError(t, repo.UpdateChannelTopic(ch.ID, v.topic, user.ID)) {
+			if assert.NoError(t, repo.UpdateChannel(ch.ID, v)) {
 				ch, err := repo.GetChannel(ch.ID)
 				require.NoError(t, err)
-				assert.Equal(t, v.topic, ch.Topic)
-			}
-		})
-	}
-}
 
-func TestRepositoryImpl_UpdateChannelAttributes(t *testing.T) {
-	t.Parallel()
-	repo, _, _ := setup(t, common)
-
-	cases := []struct {
-		flag1 bool
-		flag2 bool
-	}{
-		{true, true},
-		{true, false},
-		{false, true},
-		{false, false},
-	}
-
-	for i, v := range cases {
-		v := v
-		i := i
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			t.Parallel()
-			ch := mustMakeChannel(t, repo, random)
-			if assert.NoError(t, repo.UpdateChannelAttributes(ch.ID, &v.flag1, &v.flag2)) {
-				c, err := repo.GetChannel(ch.ID)
-				require.NoError(t, err)
-				assert.Equal(t, v.flag1, c.IsVisible)
-				assert.Equal(t, v.flag2, c.IsForced)
+				if v.Topic.Valid {
+					assert.Equal(t, v.Topic.String, ch.Topic)
+				}
+				if v.ForcedNotification.Valid {
+					assert.Equal(t, v.ForcedNotification.Bool, ch.IsForced)
+				}
+				if v.Visibility.Valid {
+					assert.Equal(t, v.Visibility.Bool, ch.IsVisible)
+				}
 			}
 		})
 	}
@@ -176,16 +180,16 @@ func TestRepositoryImpl_ChangeChannelName(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.Error(repo.ChangeChannelName(parent.ID, ""))
-		assert.Error(repo.ChangeChannelName(parent.ID, "あああ"))
-		assert.Error(repo.ChangeChannelName(parent.ID, "test2???"))
+		assert.Error(repo.UpdateChannel(parent.ID, UpdateChannelArgs{Name: null.StringFrom("")}))
+		assert.Error(repo.UpdateChannel(parent.ID, UpdateChannelArgs{Name: null.StringFrom("あああ")}))
+		assert.Error(repo.UpdateChannel(parent.ID, UpdateChannelArgs{Name: null.StringFrom("test2???")}))
 	})
 
 	t.Run("c2", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		if assert.NoError(repo.ChangeChannelName(c2.ID, "aiueo")) {
+		if assert.NoError(repo.UpdateChannel(c2.ID, UpdateChannelArgs{Name: null.StringFrom("aiueo")})) {
 			c, err := repo.GetChannel(c2.ID)
 			require.NoError(t, err)
 			assert.Equal("aiueo", c.Name)
@@ -196,8 +200,8 @@ func TestRepositoryImpl_ChangeChannelName(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.Error(repo.ChangeChannelName(c3.ID, "test4"))
-		if assert.NoError(repo.ChangeChannelName(c3.ID, "test2")) {
+		assert.Error(repo.UpdateChannel(c3.ID, UpdateChannelArgs{Name: null.StringFrom("test4")}))
+		if assert.NoError(repo.UpdateChannel(c3.ID, UpdateChannelArgs{Name: null.StringFrom("test2")})) {
 			c, err := repo.GetChannel(c3.ID)
 			require.NoError(t, err)
 			assert.Equal("test2", c.Name)
@@ -217,13 +221,13 @@ func TestRepositoryImpl_ChangeChannelParent(t *testing.T) {
 	t.Run("fail", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.ChangeChannelParent(c4.ID, uuid.Nil))
+		assert.Error(t, repo.ChangeChannelParent(c4.ID, uuid.Nil, uuid.Nil))
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		if assert.NoError(t, repo.ChangeChannelParent(c3.ID, uuid.Nil)) {
+		if assert.NoError(t, repo.ChangeChannelParent(c3.ID, uuid.Nil, uuid.Nil)) {
 			c, err := repo.GetChannel(c3.ID)
 			require.NoError(t, err)
 			assert.Equal(t, uuid.Nil, c.ParentID)
@@ -309,60 +313,61 @@ func TestRepositoryImpl_GetPrivateChannelMemberIDs(t *testing.T) {
 	}
 }
 
-func TestRepositoryImpl_SubscribeChannel(t *testing.T) {
+func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user1, ch := setupWithUserAndChannel(t, common)
+	repo, _, _ := setup(t, common)
 
-	if assert.NoError(repo.SubscribeChannel(user1.ID, ch.ID)) {
-		assert.Equal(1, count(t, getDB(repo).Model(model.UserSubscribeChannel{}).Where(&model.UserSubscribeChannel{UserID: user1.ID})))
-	}
-	assert.NoError(repo.SubscribeChannel(user1.ID, ch.ID))
-}
+	t.Run("Nil ID", func(t *testing.T) {
+		t.Parallel()
+		assert, _ := assertAndRequire(t)
 
-func TestRepositoryImpl_UnsubscribeChannel(t *testing.T) {
-	t.Parallel()
-	repo, _, require := setup(t, common)
+		assert.EqualError(repo.ChangeChannelSubscription(uuid.Nil, ChangeChannelSubscriptionArgs{}), ErrNilID.Error())
+	})
 
-	user1 := mustMakeUser(t, repo, random)
-	user2 := mustMakeUser(t, repo, random)
-	ch1 := mustMakeChannel(t, repo, random)
-	ch2 := mustMakeChannel(t, repo, random)
-	require.NoError(repo.SubscribeChannel(user1.ID, ch1.ID))
-	require.NoError(repo.SubscribeChannel(user1.ID, ch2.ID))
-	require.NoError(repo.SubscribeChannel(user2.ID, ch2.ID))
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		assert, _ := assertAndRequire(t)
+		ch := mustMakeChannel(t, repo, random)
+		user1 := mustMakeUser(t, repo, random)
+		user2 := mustMakeUser(t, repo, random)
 
-	cases := []struct {
-		name   string
-		user   uuid.UUID
-		ch     uuid.UUID
-		expect int
-	}{
-		{"user2-channel2", user2.ID, ch2.ID, 2},
-		{"user1-channel2", user1.ID, ch2.ID, 1},
-		{"user1-channel1", user1.ID, ch1.ID, 0},
-	}
+		args := ChangeChannelSubscriptionArgs{
+			UpdaterID: uuid.Nil,
+			Subscription: map[uuid.UUID]bool{
+				user1.ID:                true,
+				user2.ID:                true,
+				uuid.Must(uuid.NewV4()): true,
+			},
+		}
+		if assert.NoError(repo.ChangeChannelSubscription(ch.ID, args)) {
+			assert.Equal(2, count(t, getDB(repo).Model(model.UserSubscribeChannel{}).Where(&model.UserSubscribeChannel{ChannelID: ch.ID})))
+		}
 
-	for _, v := range cases {
-		v := v
-		t.Run(v.name, func(t *testing.T) {
-			if assert.NoError(t, repo.UnsubscribeChannel(v.user, v.ch)) {
-				assert.Equal(t, v.expect, count(t, getDB(repo).Model(model.UserSubscribeChannel{}).Where("user_id IN (?, ?)", user1.ID, user2.ID)))
-			}
-		})
-	}
+		args = ChangeChannelSubscriptionArgs{
+			UpdaterID: uuid.Nil,
+			Subscription: map[uuid.UUID]bool{
+				user1.ID:                true,
+				user2.ID:                false,
+				uuid.Must(uuid.NewV4()): false,
+			},
+		}
+		if assert.NoError(repo.ChangeChannelSubscription(ch.ID, args)) {
+			assert.Equal(1, count(t, getDB(repo).Model(model.UserSubscribeChannel{}).Where(&model.UserSubscribeChannel{ChannelID: ch.ID})))
+		}
+	})
 }
 
 func TestRepositoryImpl_GetSubscribingUserIDs(t *testing.T) {
 	t.Parallel()
-	repo, _, require := setup(t, common)
+	repo, _, _ := setup(t, common)
 
 	user1 := mustMakeUser(t, repo, random)
 	user2 := mustMakeUser(t, repo, random)
 	ch1 := mustMakeChannel(t, repo, random)
 	ch2 := mustMakeChannel(t, repo, random)
-	require.NoError(repo.SubscribeChannel(user1.ID, ch1.ID))
-	require.NoError(repo.SubscribeChannel(user1.ID, ch2.ID))
-	require.NoError(repo.SubscribeChannel(user2.ID, ch2.ID))
+	mustChangeChannelSubscription(t, repo, ch1.ID, user1.ID, true)
+	mustChangeChannelSubscription(t, repo, ch2.ID, user1.ID, true)
+	mustChangeChannelSubscription(t, repo, ch2.ID, user2.ID, true)
 
 	cases := []struct {
 		name   string
@@ -389,15 +394,15 @@ func TestRepositoryImpl_GetSubscribingUserIDs(t *testing.T) {
 
 func TestRepositoryImpl_GetSubscribedChannelIDs(t *testing.T) {
 	t.Parallel()
-	repo, _, require := setup(t, common)
+	repo, _, _ := setup(t, common)
 
 	user1 := mustMakeUser(t, repo, random)
 	user2 := mustMakeUser(t, repo, random)
 	ch1 := mustMakeChannel(t, repo, random)
 	ch2 := mustMakeChannel(t, repo, random)
-	require.NoError(repo.SubscribeChannel(user1.ID, ch1.ID))
-	require.NoError(repo.SubscribeChannel(user1.ID, ch2.ID))
-	require.NoError(repo.SubscribeChannel(user2.ID, ch2.ID))
+	mustChangeChannelSubscription(t, repo, ch1.ID, user1.ID, true)
+	mustChangeChannelSubscription(t, repo, ch2.ID, user1.ID, true)
+	mustChangeChannelSubscription(t, repo, ch2.ID, user2.ID, true)
 
 	cases := []struct {
 		name   string

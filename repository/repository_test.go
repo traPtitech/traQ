@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/storage"
+	"go.uber.org/zap"
 	"os"
 	"testing"
 )
@@ -50,7 +51,7 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 
-		repo, err := NewGormRepository(db, storage.NewInMemoryFileStorage(), hub.New())
+		repo, err := NewGormRepository(db, storage.NewInMemoryFileStorage(), hub.New(), zap.NewNop())
 		if err != nil {
 			panic(err)
 		}
@@ -242,6 +243,11 @@ func mustMakeWebhook(t *testing.T, repo Repository, name string, channelID, crea
 	w, err := repo.CreateWebhook(name, "", channelID, creatorID, secret)
 	require.NoError(t, err)
 	return w
+}
+
+func mustChangeChannelSubscription(t *testing.T, repo Repository, channelID, userID uuid.UUID, subscribe bool) {
+	t.Helper()
+	require.NoError(t, repo.ChangeChannelSubscription(channelID, ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]bool{userID: subscribe}}))
 }
 
 func count(t *testing.T, where *gorm.DB) int {

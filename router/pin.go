@@ -65,7 +65,7 @@ func (h *Handlers) GetPin(c echo.Context) error {
 func (h *Handlers) DeletePin(c echo.Context) error {
 	pinID := getRequestParamAsUUID(c, paramPinID)
 
-	if err := h.Repo.DeletePin(pinID); err != nil {
+	if err := h.Repo.DeletePin(pinID, getRequestUserID(c)); err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 

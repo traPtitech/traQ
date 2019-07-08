@@ -6,6 +6,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"time"
 )
 
 // CreatePin implements PinRepository interface.
@@ -13,22 +14,46 @@ func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, e
 	if messageID == uuid.Nil || userID == uuid.Nil {
 		return uuid.Nil, ErrNilID
 	}
-	var p model.Pin
-	err := repo.db.
-		Where(&model.Pin{MessageID: messageID}).
-		Attrs(&model.Pin{ID: uuid.Must(uuid.NewV4()), UserID: userID}).
-		FirstOrCreate(&p).
-		Error
+	var (
+		p       model.Pin
+		m       model.Message
+		changed bool
+	)
+	err := repo.transact(func(tx *gorm.DB) error {
+		if err := tx.First(&m, &model.Message{ID: messageID}).Error; err != nil {
+			return convertError(err)
+		}
+
+		if err := tx.First(&p, &model.Pin{MessageID: messageID}).Error; err != nil {
+			if gorm.IsRecordNotFoundError(err) {
+				p = model.Pin{ID: uuid.Must(uuid.NewV4()), MessageID: messageID, UserID: userID}
+				changed = true
+				return tx.Create(&p).Error
+			}
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return uuid.Nil, err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.MessagePinned,
-		Fields: hub.Fields{
-			"message_id": messageID,
-			"pin_id":     p.ID,
-		},
-	})
+
+	if changed {
+		repo.hub.Publish(hub.Message{
+			Name: event.MessagePinned,
+			Fields: hub.Fields{
+				"message_id": messageID,
+				"pin_id":     p.ID,
+			},
+		})
+
+		// ロギング
+		go repo.recordChannelEvent(m.ChannelID, model.ChannelEventPinAdded, model.ChannelEventDetail{
+			"userId":    userID,
+			"messageId": messageID,
+		}, p.CreatedAt)
+	}
+
 	return p.ID, err
 }
 
@@ -54,8 +79,8 @@ func (repo *GormRepository) IsPinned(messageID uuid.UUID) (bool, error) {
 }
 
 // DeletePin implements PinRepository interface.
-func (repo *GormRepository) DeletePin(id uuid.UUID) error {
-	if id == uuid.Nil {
+func (repo *GormRepository) DeletePin(pinID, userID uuid.UUID) error {
+	if pinID == uuid.Nil {
 		return ErrNilID
 	}
 	var (
@@ -63,14 +88,14 @@ func (repo *GormRepository) DeletePin(id uuid.UUID) error {
 		ok  bool
 	)
 	err := repo.transact(func(tx *gorm.DB) error {
-		if err := tx.Where(&model.Pin{ID: id}).First(&pin).Error; err != nil {
+		if err := tx.Preload("Message").Where(&model.Pin{ID: pinID}).First(&pin).Error; err != nil {
 			if gorm.IsRecordNotFoundError(err) {
 				return nil
 			}
 			return err
 		}
 		ok = true
-		return tx.Delete(&model.Pin{ID: id}).Error
+		return tx.Delete(&model.Pin{ID: pinID}).Error
 	})
 	if err != nil {
 		return err
@@ -79,10 +104,16 @@ func (repo *GormRepository) DeletePin(id uuid.UUID) error {
 		repo.hub.Publish(hub.Message{
 			Name: event.MessageUnpinned,
 			Fields: hub.Fields{
-				"pin_id":     id,
+				"pin_id":     pinID,
 				"message_id": pin.MessageID,
 			},
 		})
+
+		// ロギング
+		go repo.recordChannelEvent(pin.Message.ChannelID, model.ChannelEventPinRemoved, model.ChannelEventDetail{
+			"userId":    userID,
+			"messageId": pin.MessageID,
+		}, time.Now())
 	}
 	return nil
 }

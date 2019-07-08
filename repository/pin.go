@@ -11,6 +11,7 @@ type PinRepository interface {
 	//
 	// 成功した、或いは既にピン留めされていた場合、ピン留めのUUIDとnilを返します。既にピン留めされていた場合にユーザーIDは上書きされません。
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
+	// 存在しないメッセージを指定した場合はErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	CreatePin(messageID, userID uuid.UUID) (uuid.UUID, error)
 	// GetPin 指定したピン留めを取得します
@@ -25,12 +26,12 @@ type PinRepository interface {
 	// 存在しないメッセージを指定した場合はfalseとnilを返します。
 	// DBによるエラーを返すことがあります。
 	IsPinned(messageID uuid.UUID) (bool, error)
-	// DeletePin 指定したピン留めを削除します
+	// DeletePin 指定したユーザーによって指定したピン留めを削除します
 	//
 	// 成功した、或いは既にピン留めされていなかった場合にnilを返します。
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	DeletePin(id uuid.UUID) error
+	DeletePin(pinID, userID uuid.UUID) error
 	// GetPinsByChannelID 指定したチャンネルのピン留めを全て取得します
 	//
 	// 成功した場合、ピン留めの配列とnilを返します。

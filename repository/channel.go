@@ -4,12 +4,28 @@ import (
 	"errors"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"gopkg.in/guregu/null.v3"
 )
 
 var (
 	// ErrChannelDepthLimitation チャンネルの深さ制限を超えている
 	ErrChannelDepthLimitation = errors.New("channel depth limit exceeded")
 )
+
+// ChangeChannelSubscriptionArgs チャンネル購読変更引数
+type ChangeChannelSubscriptionArgs struct {
+	UpdaterID    uuid.UUID
+	Subscription map[uuid.UUID]bool
+}
+
+// UpdateChannelArgs チャンネル情報更新引数
+type UpdateChannelArgs struct {
+	UpdaterID          uuid.UUID
+	Name               null.String
+	Topic              null.String
+	Visibility         null.Bool
+	ForcedNotification null.Bool
+}
 
 // ChannelRepository チャンネルリポジトリ
 type ChannelRepository interface {
@@ -42,30 +58,16 @@ type ChannelRepository interface {
 	// 存在しない親チャンネルを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*model.Channel, error)
-	// UpdateChannelAttributes 指定したチャンネルの属性を変更します
-	//
-	// 成功した場合、nilを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
-	// DBによるエラーを返すことがあります。
-	UpdateChannelAttributes(channelID uuid.UUID, visibility, forced *bool) error
-	// UpdateChannelTopic 指定したチャンネルのトピックを更新します
-	//
-	// 成功した場合、nilを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
-	// DBによるエラーを返すことがあります。
-	UpdateChannelTopic(channelID uuid.UUID, topic string, updaterID uuid.UUID) error
-	// ChangeChannelName 指定したチャンネルのチャンネル名を変更します
+	// UpdateChannel 指定したチャンネルの情報を変更します
 	//
 	// 成功した場合、nilを返します。
 	// 引数に問題がある場合、ArgumentErrorを返します。
-	// 既にNameが使われている場合、ErrAlreadyExistsを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
+	// 既にNameが使われている場合、ErrAlreadyExistsを返します。
 	// 変更不可能なチャンネルを指定した場合、ErrForbiddenを返します。
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	ChangeChannelName(channelID uuid.UUID, name string) error
+	UpdateChannel(channelID uuid.UUID, args UpdateChannelArgs) error
 	// ChangeChannelParent 指定したチャンネルの親を変更します
 	//
 	// 成功した場合、nilを返します。
@@ -75,7 +77,7 @@ type ChannelRepository interface {
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
 	// 階層数制限に到達する場合、ErrChannelDepthLimitationを返します。
 	// DBによるエラーを返すことがあります。
-	ChangeChannelParent(channelID, parent uuid.UUID) error
+	ChangeChannelParent(channelID, parent, updaterID uuid.UUID) error
 	// DeleteChannel 指定したチャンネルとその子孫チャンネルを全て削除します
 	//
 	// 成功した場合、nilを返します。
@@ -131,18 +133,13 @@ type ChannelRepository interface {
 	// 存在しないチャンネルを指定した場合は空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]uuid.UUID, error)
-	// SubscribeChannel 指定したユーザーの指定したチャンネルの購読を登録します
+	// ChangeChannelSubscription ユーザーのチャンネルの購読を変更します
 	//
-	// 成功した、或いは既に購読していた場合、nilを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
+	// 成功した場合、nilを返します。
+	// channelIDにuuid.Nilを指定した場合、ErrNilIDを返します。
+	// 存在しないユーザーを指定した場合は無視されます。
 	// DBによるエラーを返すことがあります。
-	SubscribeChannel(userID, channelID uuid.UUID) error
-	// UnsubscribeChannel 指定したユーザーの指定したチャンネルの購読を解除します
-	//
-	// 成功した、或いは既に購読していない場合、nilを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// DBによるエラーを返すことがあります。
-	UnsubscribeChannel(userID, channelID uuid.UUID) error
+	ChangeChannelSubscription(channelID uuid.UUID, args ChangeChannelSubscriptionArgs) error
 	// GetSubscribingUserIDs 指定したチャンネルを購読しているユーザーのUUIDを全て取得する
 	//
 	// 成功した場合、UUIDの配列とnilを返します。

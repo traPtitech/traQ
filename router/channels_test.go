@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"testing"
 )
@@ -412,7 +413,10 @@ func TestHandlers_GetTopic(t *testing.T) {
 
 	pubCh := mustMakeChannel(t, repo, random)
 	topicText := "Topic test"
-	require.NoError(t, repo.UpdateChannelTopic(pubCh.ID, topicText, testUser.ID))
+	require.NoError(t, repo.UpdateChannel(pubCh.ID, repository.UpdateChannelArgs{
+		UpdaterID: testUser.ID,
+		Topic:     null.StringFrom(topicText),
+	}))
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -443,7 +447,10 @@ func TestHandlers_PutTopic(t *testing.T) {
 
 	pubCh := mustMakeChannel(t, repo, random)
 	topicText := "Topic test"
-	require.NoError(t, repo.UpdateChannelTopic(pubCh.ID, topicText, testUser.ID))
+	require.NoError(t, repo.UpdateChannel(pubCh.ID, repository.UpdateChannelArgs{
+		UpdaterID: testUser.ID,
+		Topic:     null.StringFrom(topicText),
+	}))
 	newTopic := "new Topic"
 
 	t.Run("NotLoggedIn", func(t *testing.T) {

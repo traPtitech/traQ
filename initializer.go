@@ -5,6 +5,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/validator"
+	"gopkg.in/guregu/null.v3"
 	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
@@ -92,10 +93,10 @@ func channelTreeTraverse(repo repository.Repository, name string, node *dataChan
 		return nil, err
 	}
 
-	if err := repo.UpdateChannelTopic(ch.ID, node.Topic, uuid.Nil); err != nil {
-		return nil, err
-	}
-	if err := repo.UpdateChannelAttributes(ch.ID, nil, &node.Force); err != nil {
+	if err := repo.UpdateChannel(ch.ID, repository.UpdateChannelArgs{
+		Topic:              null.StringFrom(node.Topic),
+		ForcedNotification: null.BoolFrom(node.Force),
+	}); err != nil {
 		return nil, err
 	}
 

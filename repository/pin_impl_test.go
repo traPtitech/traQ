@@ -81,14 +81,14 @@ func TestRepositoryImpl_DeletePin(t *testing.T) {
 	testMessage := mustMakeMessage(t, repo, user.ID, channel.ID)
 	p := mustMakePin(t, repo, testMessage.ID, user.ID)
 
-	assert.Error(repo.DeletePin(uuid.Nil))
+	assert.Error(repo.DeletePin(uuid.Nil, user.ID))
 
-	if assert.NoError(repo.DeletePin(p)) {
+	if assert.NoError(repo.DeletePin(p, user.ID)) {
 		_, err := repo.GetPin(p)
 		assert.Equal(ErrNotFound, err)
 	}
 
-	assert.NoError(repo.DeletePin(uuid.Must(uuid.NewV4())))
+	assert.NoError(repo.DeletePin(uuid.Must(uuid.NewV4()), user.ID))
 }
 
 func TestRepositoryImpl_GetPinsByChannelID(t *testing.T) {

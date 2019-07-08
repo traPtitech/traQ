@@ -301,6 +301,11 @@ func mustMakeAuthorizeData(t *testing.T, repo repository.Repository, clientID st
 	return authorize
 }
 
+func mustChangeChannelSubscription(t *testing.T, repo repository.Repository, channelID, userID uuid.UUID, subscribe bool) {
+	t.Helper()
+	require.NoError(t, repo.ChangeChannelSubscription(channelID, repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]bool{userID: subscribe}}))
+}
+
 /*
 func genPNG(salt string) []byte {
 	if salt == random {
