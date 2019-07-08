@@ -8,6 +8,7 @@
 | [bot_event_logs](bot_event_logs.md) | 8 |  | BASE TABLE |
 | [bot_join_channels](bot_join_channels.md) | 2 |  | BASE TABLE |
 | [bots](bots.md) | 14 |  | BASE TABLE |
+| [channel_events](channel_events.md) | 5 |  | BASE TABLE |
 | [channel_latest_messages](channel_latest_messages.md) | 3 |  | BASE TABLE |
 | [channels](channels.md) | 12 | チャンネルテーブル | BASE TABLE |
 | [clip_folders](clip_folders.md) | 5 | クリップフォルダテーブル | BASE TABLE |
