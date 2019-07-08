@@ -80,6 +80,11 @@ func (*DMChannelMapping) TableName() string {
 // ChannelEventType チャンネルイベントタイプ
 type ChannelEventType string
 
+// String stringに変換します
+func (t ChannelEventType) String() string {
+	return string(t)
+}
+
 const (
 	// ChannelEventTopicChanged チャンネルイベント トピック変更
 	//

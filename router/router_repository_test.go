@@ -994,82 +994,55 @@ func (repo *TestRepository) CreateChildChannel(name string, parentID, creatorID 
 	return &ch, nil
 }
 
-func (repo *TestRepository) UpdateChannelAttributes(channelID uuid.UUID, visibility, forced *bool) error {
+func (repo *TestRepository) UpdateChannel(channelID uuid.UUID, args repository.UpdateChannelArgs) error {
 	if channelID == uuid.Nil {
 		return repository.ErrNilID
 	}
+
 	repo.ChannelsLock.Lock()
+	defer repo.ChannelsLock.Unlock()
 	ch, ok := repo.Channels[channelID]
-	if ok {
-		if visibility != nil {
-			ch.IsVisible = *visibility
+	if !ok {
+		return repository.ErrNotFound
+	}
+
+	if args.Topic.Valid {
+		ch.Topic = args.Topic.String
+	}
+	if args.Visibility.Valid {
+		ch.IsVisible = args.Visibility.Bool
+	}
+	if args.ForcedNotification.Valid {
+		ch.IsForced = args.ForcedNotification.Bool
+	}
+	if args.Name.Valid {
+		// チャンネル名検証
+		if !validator.ChannelRegex.MatchString(args.Name.String) {
+			return repository.ArgError("args.Name", "invalid name")
 		}
-		if forced != nil {
-			ch.IsForced = *forced
+
+		// ダイレクトメッセージチャンネルの名前は変更不可能
+		if ch.IsDMChannel() {
+			return repository.ErrForbidden
 		}
-		ch.UpdatedAt = time.Now()
-		repo.Channels[channelID] = ch
+
+		// チャンネル名重複を確認
+		for _, c := range repo.Channels {
+			if c.Name == args.Name.String && c.ParentID == ch.ParentID {
+				return repository.ErrAlreadyExists
+			}
+		}
+
+		ch.Name = args.Name.String
 	}
-	repo.ChannelsLock.Unlock()
+
+	ch.UpdatedAt = time.Now()
+	ch.UpdaterID = args.UpdaterID
+	repo.Channels[channelID] = ch
 	return nil
 }
 
-func (repo *TestRepository) UpdateChannelTopic(channelID uuid.UUID, topic string, updaterID uuid.UUID) error {
-	if channelID == uuid.Nil {
-		return repository.ErrNilID
-	}
-	repo.ChannelsLock.Lock()
-	ch, ok := repo.Channels[channelID]
-	if ok {
-		ch.Topic = topic
-		ch.UpdatedAt = time.Now()
-		repo.Channels[channelID] = ch
-	}
-	repo.ChannelsLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) ChangeChannelName(channelID uuid.UUID, name string) error {
-	if channelID == uuid.Nil {
-		return repository.ErrNilID
-	}
-
-	// チャンネル名検証
-	if err := validator.ValidateVar(name, "channel,required"); err != nil {
-		return err
-	}
-
-	// チャンネル取得
-	ch, err := repo.GetChannel(channelID)
-	if err != nil {
-		return err
-	}
-
-	// ダイレクトメッセージチャンネルの名前は変更不可能
-	if ch.IsDMChannel() {
-		return repository.ErrForbidden
-	}
-
-	// チャンネル名重複を確認
-	if has, err := repo.IsChannelPresent(name, ch.ParentID); err != nil {
-		return err
-	} else if has {
-		return repository.ErrAlreadyExists
-	}
-
-	// 更新
-	repo.ChannelsLock.Lock()
-	nch, ok := repo.Channels[channelID]
-	if ok {
-		nch.Name = name
-		nch.UpdatedAt = time.Now()
-		repo.Channels[channelID] = nch
-	}
-	repo.ChannelsLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) ChangeChannelParent(channelID, parent uuid.UUID) error {
+func (repo *TestRepository) ChangeChannelParent(channelID, parent, updaterID uuid.UUID) error {
 	if channelID == uuid.Nil {
 		return repository.ErrNilID
 	}

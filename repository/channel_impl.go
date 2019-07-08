@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
+	"go.uber.org/zap"
 	"sync"
 	"time"
 )
@@ -98,6 +99,13 @@ func (repo *GormRepository) CreatePublicChannel(name string, parent, creatorID u
 		},
 	})
 
+	if ch.ParentID != uuid.Nil {
+		// ロギング
+		go repo.recordChannelEvent(ch.ParentID, model.ChannelEventChildCreated, model.ChannelEventDetail{
+			"userId":    ch.CreatorID,
+			"channelId": ch.ID,
+		}, ch.UpdatedAt)
+	}
 	return ch, nil
 }
 
@@ -263,133 +271,135 @@ func (repo *GormRepository) CreateChildChannel(name string, parentID, creatorID 
 			"private":    !ch.IsPublic,
 		},
 	})
+
+	// ロギング
+	go repo.recordChannelEvent(ch.ParentID, model.ChannelEventChildCreated, model.ChannelEventDetail{
+		"userId":    ch.CreatorID,
+		"channelId": ch.ID,
+	}, ch.UpdatedAt)
 	return ch, nil
 }
 
-// UpdateChannelAttributes implements ChannelRepository interface.
-func (repo *GormRepository) UpdateChannelAttributes(channelID uuid.UUID, visibility, forced *bool) error {
+// UpdateChannel implements ChannelRepository interface.
+func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChannelArgs) error {
 	if channelID == uuid.Nil {
 		return ErrNilID
 	}
 
-	data := map[string]interface{}{}
-	if visibility != nil {
-		data["is_visible"] = *visibility
-	}
-	if forced != nil {
-		data["is_forced"] = *forced
-	}
+	var (
+		ch                model.Channel
+		nameChanged       bool
+		topicChanged      bool
+		visibilityChanged bool
+		forcedChanged     bool
+		nameBefore        string
+		topicBefore       string
+	)
 
-	var ch model.Channel
 	err := repo.transact(func(tx *gorm.DB) error {
 		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
 			return convertError(err)
 		}
+
+		data := map[string]interface{}{"updater_id": args.UpdaterID}
+		if args.Topic.Valid && ch.Topic != args.Topic.String {
+			topicBefore = ch.Topic
+			topicChanged = true
+			data["topic"] = args.Topic.String
+		}
+		if args.Visibility.Valid && ch.IsVisible != args.Visibility.Bool {
+			visibilityChanged = true
+			data["is_visible"] = args.Visibility.Bool
+		}
+		if args.ForcedNotification.Valid && ch.IsForced != args.ForcedNotification.Bool {
+			forcedChanged = true
+			data["is_forced"] = args.ForcedNotification.Bool
+		}
+		if args.Name.Valid && ch.Name != args.Name.String {
+			// チャンネル名検証
+			if !validator.ChannelRegex.MatchString(args.Name.String) {
+				return ArgError("args.Name", "invalid name")
+			}
+
+			// ダイレクトメッセージチャンネルの名前は変更不可能
+			if ch.IsDMChannel() {
+				return ErrForbidden
+			}
+
+			// チャンネル名重複を確認
+			if exists, err := repo.isChannelPresent(tx, args.Name.String, ch.ParentID); err != nil {
+				return err
+			} else if exists {
+				return ErrAlreadyExists
+			}
+
+			nameBefore = ch.Name
+			nameChanged = true
+			data["name"] = args.Name.String
+		}
+
 		return tx.Model(&ch).Updates(data).Error
 	})
 	if err != nil {
 		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.ChannelUpdated,
-		Fields: hub.Fields{
-			"channel_id": ch.ID,
-			"private":    !ch.IsPublic,
-		},
-	})
-	return nil
-}
 
-// UpdateChannelTopic implements ChannelRepository interface.
-func (repo *GormRepository) UpdateChannelTopic(channelID uuid.UUID, topic string, updaterID uuid.UUID) error {
-	if channelID == uuid.Nil {
-		return ErrNilID
-	}
-	var ch model.Channel
-	err := repo.transact(func(tx *gorm.DB) error {
-		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
-			return convertError(err)
+	if forcedChanged || visibilityChanged || topicChanged || nameChanged {
+		repo.hub.Publish(hub.Message{
+			Name: event.ChannelUpdated,
+			Fields: hub.Fields{
+				"channel_id": channelID,
+				"private":    !ch.IsPublic,
+			},
+		})
+		if topicChanged {
+			repo.hub.Publish(hub.Message{
+				Name: event.ChannelTopicUpdated,
+				Fields: hub.Fields{
+					"channel_id": channelID,
+					"topic":      args.Topic.String,
+					"updater_id": args.UpdaterID,
+				},
+			})
+
+			go repo.recordChannelEvent(channelID, model.ChannelEventTopicChanged, model.ChannelEventDetail{
+				"userId": args.UpdaterID,
+				"before": topicBefore,
+				"after":  args.Topic.String,
+			}, ch.UpdatedAt)
 		}
-		return tx.Model(&ch).Updates(map[string]interface{}{
-			"topic":      topic,
-			"updater_id": updaterID,
-		}).Error
-	})
-	if err != nil {
-		return err
-	}
-	repo.hub.Publish(hub.Message{
-		Name: event.ChannelUpdated,
-		Fields: hub.Fields{
-			"channel_id": ch.ID,
-			"private":    !ch.IsPublic,
-		},
-	})
-	repo.hub.Publish(hub.Message{
-		Name: event.ChannelTopicUpdated,
-		Fields: hub.Fields{
-			"channel_id": ch.ID,
-			"topic":      ch.Topic,
-			"updater_id": updaterID,
-		},
-	})
-	return nil
-}
-
-// ChangeChannelName implements ChannelRepository interface.
-func (repo *GormRepository) ChangeChannelName(channelID uuid.UUID, name string) error {
-	if channelID == uuid.Nil {
-		return ErrNilID
-	}
-
-	// チャンネル名検証
-	if !validator.ChannelRegex.MatchString(name) {
-		return ArgError("name", "invalid name")
-	}
-
-	var ch model.Channel
-	err := repo.transact(func(tx *gorm.DB) error {
-		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
-			return convertError(err)
+		if forcedChanged {
+			go repo.recordChannelEvent(channelID, model.ChannelEventForcedNotificationChanged, model.ChannelEventDetail{
+				"userId": args.UpdaterID,
+				"force":  args.ForcedNotification.Bool,
+			}, ch.UpdatedAt)
 		}
-
-		// ダイレクトメッセージチャンネルの名前は変更不可能
-		if ch.IsDMChannel() {
-			return ErrForbidden
+		if visibilityChanged {
+			go repo.recordChannelEvent(channelID, model.ChannelEventVisibilityChanged, model.ChannelEventDetail{
+				"userId":     args.UpdaterID,
+				"visibility": args.Visibility.Bool,
+			}, ch.UpdatedAt)
 		}
+		if nameChanged {
+			// チャンネルパスキャッシュの削除
+			repo.ChannelPathMap.Delete(channelID)
+			ids, _ := repo.getDescendantChannelIDs(repo.db, channelID)
+			for _, v := range ids {
+				repo.ChannelPathMap.Delete(v)
+			}
 
-		// チャンネル名重複を確認
-		if exists, err := repo.isChannelPresent(tx, name, ch.ParentID); err != nil {
-			return err
-		} else if exists {
-			return ErrAlreadyExists
+			go repo.recordChannelEvent(channelID, model.ChannelEventNameChanged, model.ChannelEventDetail{
+				"userId": args.UpdaterID,
+				"before": nameBefore,
+				"after":  args.Name.String,
+			}, ch.UpdatedAt)
 		}
-
-		return tx.Model(&ch).Update("name", name).Error
-	})
-	if err != nil {
-		return err
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.ChannelUpdated,
-		Fields: hub.Fields{
-			"channel_id": ch.ID,
-			"private":    !ch.IsPublic,
-		},
-	})
-
-	// チャンネルパスキャッシュの削除
-	repo.ChannelPathMap.Delete(channelID)
-	ids, _ := repo.getDescendantChannelIDs(repo.db, channelID)
-	for _, v := range ids {
-		repo.ChannelPathMap.Delete(v)
-	}
-
 	return nil
 }
 
 // ChangeChannelParent implements ChannelRepository interface. TODO トランザクション
-func (repo *GormRepository) ChangeChannelParent(channelID uuid.UUID, parent uuid.UUID) error {
+func (repo *GormRepository) ChangeChannelParent(channelID uuid.UUID, parent uuid.UUID, updaterID uuid.UUID) error {
 	if channelID == uuid.Nil {
 		return ErrNilID
 	}
@@ -470,6 +480,7 @@ func (repo *GormRepository) ChangeChannelParent(channelID uuid.UUID, parent uuid
 	}
 
 	// 更新
+	parentBefore := ch.ParentID
 	if err := repo.db.Model(&model.Channel{ID: channelID}).Updates(map[string]interface{}{
 		"parent_id": parent,
 	}).Error; err != nil {
@@ -489,6 +500,13 @@ func (repo *GormRepository) ChangeChannelParent(channelID uuid.UUID, parent uuid
 	for _, v := range ids {
 		repo.ChannelPathMap.Delete(v)
 	}
+
+	// ロギング
+	go repo.recordChannelEvent(channelID, model.ChannelEventParentChanged, model.ChannelEventDetail{
+		"userId": updaterID,
+		"before": parentBefore,
+		"after":  parent,
+	}, ch.UpdatedAt)
 
 	return nil
 }
@@ -730,8 +748,8 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 	}
 
 	var (
-		on  []uuid.UUID
-		off []uuid.UUID
+		on  = make([]uuid.UUID, 0)
+		off = make([]uuid.UUID, 0)
 	)
 	err := repo.transact(func(tx *gorm.DB) error {
 		for userID, subscribe := range args.Subscription {
@@ -768,7 +786,14 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 	if err != nil {
 		return err
 	}
-	// TODO イベント発行
+
+	// ロギング
+	go repo.recordChannelEvent(channelID, model.ChannelEventSubscribersChanged, model.ChannelEventDetail{
+		"userId": args.UpdaterID,
+		"on":     on,
+		"off":    off,
+	}, time.Now())
+
 	return nil
 }
 
@@ -798,6 +823,17 @@ func (repo *GormRepository) GetSubscribedChannelIDs(userID uuid.UUID) (channels 
 		Pluck("channel_id", &channels).
 		Error
 	return channels, err
+}
+
+// RecordChannelEvent implements ChannelRepository interface.
+func (repo *GormRepository) RecordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error {
+	return repo.db.Create(&model.ChannelEvent{
+		EventID:   uuid.Must(uuid.NewV4()),
+		ChannelID: channelID,
+		EventType: eventType,
+		Detail:    detail,
+		DateTime:  datetime,
+	}).Error
 }
 
 // isChannelPresent チャンネル名が同階層に既に存在するか
@@ -909,4 +945,11 @@ func (repo *GormRepository) getAscendantChannelIDs(tx *gorm.DB, channelID uuid.U
 	}
 	ascendants = append(ascendants, sub...)
 	return ascendants, nil
+}
+
+func (repo *GormRepository) recordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) {
+	err := repo.RecordChannelEvent(channelID, eventType, detail, datetime)
+	if err != nil {
+		repo.logger.Warn("Recording channel event failed", zap.Error(err), zap.Stringer("channelID", channelID), zap.Stringer("type", eventType), zap.Any("detail", detail), zap.Time("datetime", datetime))
+	}
 }

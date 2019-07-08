@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/utils/storage"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -37,8 +38,9 @@ var (
 
 // GormRepository リポジトリ実装
 type GormRepository struct {
-	db  *gorm.DB
-	hub *hub.Hub
+	db     *gorm.DB
+	hub    *hub.Hub
+	logger *zap.Logger
 	channelImpl
 	fileImpl
 	*heartbeatImpl
@@ -89,10 +91,11 @@ func (repo *GormRepository) GetFS() storage.FileStorage {
 }
 
 // NewGormRepository リポジトリ実装を初期化して生成します
-func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub) (Repository, error) {
+func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub, logger *zap.Logger) (Repository, error) {
 	repo := &GormRepository{
-		db:  db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"),
-		hub: hub,
+		db:     db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"),
+		hub:    hub,
+		logger: logger,
 		fileImpl: fileImpl{
 			FS: fs,
 		},

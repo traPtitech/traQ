@@ -7,61 +7,65 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
+	"gopkg.in/guregu/null.v3"
 	"strconv"
 	"testing"
 )
 
-func TestRepositoryImpl_UpdateChannelTopic(t *testing.T) {
+func TestGormRepository_UpdateChannel(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common)
 
-	cases := []struct {
-		topic string
-	}{
-		{"test"},
-		{""},
+	cases := []UpdateChannelArgs{
+		{
+			UpdaterID: user.ID,
+			Topic:     null.StringFrom("test"),
+		},
+		{
+			UpdaterID: user.ID,
+			Topic:     null.StringFrom(""),
+		},
+		{
+			UpdaterID:          user.ID,
+			Visibility:         null.BoolFrom(true),
+			ForcedNotification: null.BoolFrom(true),
+		},
+		{
+			UpdaterID:          user.ID,
+			Visibility:         null.BoolFrom(true),
+			ForcedNotification: null.BoolFrom(false),
+		},
+		{
+			UpdaterID:          user.ID,
+			Visibility:         null.BoolFrom(false),
+			ForcedNotification: null.BoolFrom(true),
+		},
+		{
+			UpdaterID:          user.ID,
+			Visibility:         null.BoolFrom(false),
+			ForcedNotification: null.BoolFrom(false),
+		},
 	}
 
 	for i, v := range cases {
 		v := v
 		i := i
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Case%d", i), func(t *testing.T) {
 			t.Parallel()
 			ch := mustMakeChannel(t, repo, random)
-			if assert.NoError(t, repo.UpdateChannelTopic(ch.ID, v.topic, user.ID)) {
+			if assert.NoError(t, repo.UpdateChannel(ch.ID, v)) {
 				ch, err := repo.GetChannel(ch.ID)
 				require.NoError(t, err)
-				assert.Equal(t, v.topic, ch.Topic)
-			}
-		})
-	}
-}
 
-func TestRepositoryImpl_UpdateChannelAttributes(t *testing.T) {
-	t.Parallel()
-	repo, _, _ := setup(t, common)
-
-	cases := []struct {
-		flag1 bool
-		flag2 bool
-	}{
-		{true, true},
-		{true, false},
-		{false, true},
-		{false, false},
-	}
-
-	for i, v := range cases {
-		v := v
-		i := i
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			t.Parallel()
-			ch := mustMakeChannel(t, repo, random)
-			if assert.NoError(t, repo.UpdateChannelAttributes(ch.ID, &v.flag1, &v.flag2)) {
-				c, err := repo.GetChannel(ch.ID)
-				require.NoError(t, err)
-				assert.Equal(t, v.flag1, c.IsVisible)
-				assert.Equal(t, v.flag2, c.IsForced)
+				if v.Topic.Valid {
+					assert.Equal(t, v.Topic.String, ch.Topic)
+				}
+				if v.ForcedNotification.Valid {
+					assert.Equal(t, v.ForcedNotification.Bool, ch.IsForced)
+				}
+				if v.Visibility.Valid {
+					assert.Equal(t, v.Visibility.Bool, ch.IsVisible)
+				}
 			}
 		})
 	}
@@ -176,16 +180,16 @@ func TestRepositoryImpl_ChangeChannelName(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.Error(repo.ChangeChannelName(parent.ID, ""))
-		assert.Error(repo.ChangeChannelName(parent.ID, "あああ"))
-		assert.Error(repo.ChangeChannelName(parent.ID, "test2???"))
+		assert.Error(repo.UpdateChannel(parent.ID, UpdateChannelArgs{Name: null.StringFrom("")}))
+		assert.Error(repo.UpdateChannel(parent.ID, UpdateChannelArgs{Name: null.StringFrom("あああ")}))
+		assert.Error(repo.UpdateChannel(parent.ID, UpdateChannelArgs{Name: null.StringFrom("test2???")}))
 	})
 
 	t.Run("c2", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		if assert.NoError(repo.ChangeChannelName(c2.ID, "aiueo")) {
+		if assert.NoError(repo.UpdateChannel(c2.ID, UpdateChannelArgs{Name: null.StringFrom("aiueo")})) {
 			c, err := repo.GetChannel(c2.ID)
 			require.NoError(t, err)
 			assert.Equal("aiueo", c.Name)
@@ -196,8 +200,8 @@ func TestRepositoryImpl_ChangeChannelName(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.Error(repo.ChangeChannelName(c3.ID, "test4"))
-		if assert.NoError(repo.ChangeChannelName(c3.ID, "test2")) {
+		assert.Error(repo.UpdateChannel(c3.ID, UpdateChannelArgs{Name: null.StringFrom("test4")}))
+		if assert.NoError(repo.UpdateChannel(c3.ID, UpdateChannelArgs{Name: null.StringFrom("test2")})) {
 			c, err := repo.GetChannel(c3.ID)
 			require.NoError(t, err)
 			assert.Equal("test2", c.Name)
@@ -217,13 +221,13 @@ func TestRepositoryImpl_ChangeChannelParent(t *testing.T) {
 	t.Run("fail", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.ChangeChannelParent(c4.ID, uuid.Nil))
+		assert.Error(t, repo.ChangeChannelParent(c4.ID, uuid.Nil, uuid.Nil))
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		if assert.NoError(t, repo.ChangeChannelParent(c3.ID, uuid.Nil)) {
+		if assert.NoError(t, repo.ChangeChannelParent(c3.ID, uuid.Nil, uuid.Nil)) {
 			c, err := repo.GetChannel(c3.ID)
 			require.NoError(t, err)
 			assert.Equal(t, uuid.Nil, c.ParentID)

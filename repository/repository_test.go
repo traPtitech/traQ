@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/storage"
+	"go.uber.org/zap"
 	"os"
 	"testing"
 )
@@ -50,7 +51,7 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 
-		repo, err := NewGormRepository(db, storage.NewInMemoryFileStorage(), hub.New())
+		repo, err := NewGormRepository(db, storage.NewInMemoryFileStorage(), hub.New(), zap.NewNop())
 		if err != nil {
 			panic(err)
 		}

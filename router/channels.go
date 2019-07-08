@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/repository"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 
 	"github.com/labstack/echo"
@@ -160,31 +161,29 @@ func (h *Handlers) PatchChannelByChannelID(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
 	var req struct {
-		Name       *string `json:"name"`
-		Visibility *bool   `json:"visibility"`
-		Force      *bool   `json:"force"`
+		Name       null.String `json:"name"`
+		Visibility null.Bool   `json:"visibility"`
+		Force      null.Bool   `json:"force"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return badRequest(err)
 	}
 
-	if req.Name != nil && len(*req.Name) > 0 {
-		if err := h.Repo.ChangeChannelName(channelID, *req.Name); err != nil {
-			switch {
-			case repository.IsArgError(err):
-				return badRequest(err)
-			case err == repository.ErrAlreadyExists:
-				return conflict("channel name conflicts")
-			case err == repository.ErrForbidden:
-				return forbidden("the channel's name cannot be changed")
-			default:
-				return internalServerError(err, h.requestContextLogger(c))
-			}
-		}
+	args := repository.UpdateChannelArgs{
+		UpdaterID:          getRequestUserID(c),
+		Name:               req.Name,
+		Visibility:         req.Visibility,
+		ForcedNotification: req.Force,
 	}
-
-	if req.Force != nil || req.Visibility != nil {
-		if err := h.Repo.UpdateChannelAttributes(channelID, req.Visibility, req.Force); err != nil {
+	if err := h.Repo.UpdateChannel(channelID, args); err != nil {
+		switch {
+		case repository.IsArgError(err):
+			return badRequest(err)
+		case err == repository.ErrAlreadyExists:
+			return conflict("channel name conflicts")
+		case err == repository.ErrForbidden:
+			return forbidden("the channel's name cannot be changed")
+		default:
 			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
@@ -238,7 +237,7 @@ func (h *Handlers) PutChannelParent(c echo.Context) error {
 		return badRequest(err)
 	}
 
-	if err := h.Repo.ChangeChannelParent(channelID, req.Parent); err != nil {
+	if err := h.Repo.ChangeChannelParent(channelID, req.Parent, getRequestUserID(c)); err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
 			return conflict("channel name conflicts")
@@ -275,7 +274,6 @@ func (h *Handlers) GetTopic(c echo.Context) error {
 
 // PutTopic PUT /channels/:channelID/topic
 func (h *Handlers) PutTopic(c echo.Context) error {
-	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
 	var req struct {
@@ -285,7 +283,10 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 		return badRequest(err)
 	}
 
-	if err := h.Repo.UpdateChannelTopic(channelID, req.Text, userID); err != nil {
+	if err := h.Repo.UpdateChannel(channelID, repository.UpdateChannelArgs{
+		UpdaterID: getRequestUserID(c),
+		Topic:     null.StringFrom(req.Text),
+	}); err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 
