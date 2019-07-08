@@ -27,6 +27,7 @@ func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, e
 		if err := tx.First(&p, &model.Pin{MessageID: messageID}).Error; err != nil {
 			if gorm.IsRecordNotFoundError(err) {
 				p = model.Pin{ID: uuid.Must(uuid.NewV4()), MessageID: messageID, UserID: userID}
+				changed = true
 				return tx.Create(&p).Error
 			}
 			return err
