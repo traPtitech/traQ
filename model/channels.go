@@ -163,11 +163,11 @@ func (ced *ChannelEventDetail) Scan(src interface{}) error {
 
 // ChannelEvent チャンネルイベント
 type ChannelEvent struct {
-	EventID   uuid.UUID          `gorm:"type:char(36);not null;primary_key"`
-	ChannelID uuid.UUID          `gorm:"type:char(36);not null"`
-	EventType ChannelEventType   `gorm:"type:varchar(30);not null;"`
-	Detail    ChannelEventDetail `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
-	DateTime  time.Time          `gorm:"precision:6"`
+	EventID   uuid.UUID          `gorm:"type:char(36);not null;primary_key"    json:"-"`
+	ChannelID uuid.UUID          `gorm:"type:char(36);not null"                json:"-"`
+	EventType ChannelEventType   `gorm:"type:varchar(30);not null;"            json:"type"`
+	Detail    ChannelEventDetail `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL" json:"detail"`
+	DateTime  time.Time          `gorm:"precision:6"                           json:"dateTime"`
 }
 
 // TableName テーブル名

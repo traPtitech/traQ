@@ -158,6 +158,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiChannelsCid.PUT("/parent", h.PutChannelParent, requires(permission.ChangeParentChannel))
 				apiChannelsCid.POST("/children", h.PostChannelChildren, requires(permission.CreateChannel))
 				apiChannelsCid.GET("/pins", h.GetChannelPin, requires(permission.GetMessage))
+				apiChannelsCid.GET("/events", h.GetChannelEvents, requires(permission.GetChannel))
 				apiChannelsCidTopic := apiChannelsCid.Group("/topic")
 				{
 					apiChannelsCidTopic.GET("", h.GetTopic, requires(permission.GetChannel))

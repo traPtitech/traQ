@@ -80,6 +80,10 @@ type TestRepository struct {
 	OAuth2TokensLock          sync.RWMutex
 }
 
+func (repo *TestRepository) GetChannelEvents(query repository.ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error) {
+	panic("implement me")
+}
+
 func (repo *TestRepository) GetRole(role string) (*model.UserRole, error) {
 	panic("implement me")
 }

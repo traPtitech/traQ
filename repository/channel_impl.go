@@ -825,6 +825,52 @@ func (repo *GormRepository) GetSubscribedChannelIDs(userID uuid.UUID) (channels 
 	return channels, err
 }
 
+// GetChannelEvents implements ChannelRepository interface.
+func (repo *GormRepository) GetChannelEvents(query ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error) {
+	events = make([]*model.ChannelEvent, 0)
+
+	tx := repo.db
+	if query.Asc {
+		tx = tx.Order("date_time")
+	} else {
+		tx = tx.Order("date_time DESC")
+	}
+
+	if query.Channel != uuid.Nil {
+		tx = tx.Where("channel_id = ?", query.Channel)
+	}
+
+	if query.Inclusive {
+		if query.Since.Valid {
+			tx = tx.Where("date_time >= ?", query.Since.Time)
+		}
+		if query.Until.Valid {
+			tx = tx.Where("date_time <= ?", query.Until.Time)
+		}
+	} else {
+		if query.Since.Valid {
+			tx = tx.Where("date_time > ?", query.Since.Time)
+		}
+		if query.Until.Valid {
+			tx = tx.Where("date_time < ?", query.Until.Time)
+		}
+	}
+
+	if query.Offset > 0 {
+		tx = tx.Offset(query.Offset)
+	}
+
+	if query.Limit > 0 {
+		err = tx.Limit(query.Limit + 1).Find(&events).Error
+		if len(events) > query.Limit {
+			return events[:len(events)-1], true, err
+		}
+	} else {
+		err = tx.Find(&events).Error
+	}
+	return events, false, err
+}
+
 // RecordChannelEvent implements ChannelRepository interface.
 func (repo *GormRepository) RecordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error {
 	return repo.db.Create(&model.ChannelEvent{
