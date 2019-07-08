@@ -1723,6 +1723,44 @@ paths:
             投稿に失敗しました。
             指定したチャンネルは存在しません。
 
+  /channels/{channelID}/events:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+    get:
+      tags:
+        - channel
+      description: チャンネルイベントのリストを取得します。
+      security:
+        - traqOAuth2:
+            - read
+      parameters:
+        - $ref: "#/components/parameters/limitInQuery"
+        - $ref: "#/components/parameters/offsetInQuery"
+        - $ref: "#/components/parameters/sinceInQuery"
+        - $ref: "#/components/parameters/untilInQuery"
+        - $ref: "#/components/parameters/inclusiveInQuery"
+        - $ref: "#/components/parameters/orderInQuery"
+      responses:
+        "200":
+          description: 正常に取得ができました。イベントの配列を返します。
+          headers:
+            X-TRAQ-MORE:
+              $ref: "#/components/headers/X-TRAQ-MORE"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChannelEvent"
+        "400":
+          description: |+
+            変更に失敗しました
+            不正なリクエストです
+        "404":
+          description: +|
+            取得に失敗しました。
+            指定したチャンネルは存在しません。
+
   /channels/{channelID}/notification:
     parameters:
       - $ref: "#/components/parameters/channelIdInPath"
@@ -4153,6 +4191,142 @@ components:
           type: string
           format: date-time
           description: 承認日時
+    ChannelEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          description: イベントタイプ
+          enum:
+            - TopicChanged
+            - SubscribersChanged
+            - PinAdded
+            - PinRemoved
+            - NameChanged
+            - ParentChanged
+            - VisibilityChanged
+            - ForcedNotificationChanged
+            - ChildCreated
+        detail:
+          oneOf:
+            - type: object
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                  description: 変更者UUID
+                before:
+                  type: string
+                  description: 変更前トピック
+                after:
+                  type: string
+                  description: 変更後トピック
+              description: TopicChanged
+            - type: object
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                  description: 変更者UUID
+                on:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: オンにしたユーザーのUUIDの配列
+                off:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: オフにしたユーザーのUUIDの配列
+              description: SubscribersChanged
+            - type: object
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                  description: 変更者UUID
+                messageId:
+                  type: string
+                  format: uuid
+                  description: メッセージUUID
+              description: PinAdded
+            - type: object
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                  description: 変更者UUID
+                messageId:
+                  type: string
+                  format: uuid
+                  description: メッセージUUID
+              description: PinRemoved
+            - type: object
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                  description: 変更者UUID
+                before:
+                  type: string
+                  description: 変更前名前
+                after:
+                  type: string
+                  description: 変更後名前
+              description: NameChanged
+            - type: object
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                  description: 変更者UUID
+                before:
+                  type: string
+                  format: uuid
+                  description: 変更前親チャンネルUUID
+                after:
+                  type: string
+                  format: uuid
+                  description: 変更後親チャンネルUUID
+              description: ParentChanged
+            - type: object
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                  description: 作成者UUID
+                visibility:
+                  type: boolean
+                  description: 可視状態
+              description: VisibilityChanged
+            - type: object
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                  description: 作成者UUID
+                force:
+                  type: boolean
+                  description: 強制状態
+              description: ForcedNotificationChanged
+            - type: object
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                  description: 作成者UUID
+                channelId:
+                  type: string
+                  format: uuid
+                  description: チャンネルUUID
+              description: ChildCreated
+          description: イベント詳細
+        date_time:
+          type: string
+          format: date-time
+          description: イベント発生日時
 
 security:
   - cookieAuth: []
