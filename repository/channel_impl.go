@@ -788,11 +788,13 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 	}
 
 	// ロギング
-	go repo.recordChannelEvent(channelID, model.ChannelEventSubscribersChanged, model.ChannelEventDetail{
-		"userId": args.UpdaterID,
-		"on":     on,
-		"off":    off,
-	}, time.Now())
+	if len(on) > 0 || len(off) > 0 {
+		go repo.recordChannelEvent(channelID, model.ChannelEventSubscribersChanged, model.ChannelEventDetail{
+			"userId": args.UpdaterID,
+			"on":     on,
+			"off":    off,
+		}, time.Now())
+	}
 
 	return nil
 }
