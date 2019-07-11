@@ -17,7 +17,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 	e.Validator = validator.New()
 	e.Use(RequestCounterMiddleware())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		ExposeHeaders: []string{"X-TRAQ-VERSION", headerCacheFile, headerFileMetaType},
+		ExposeHeaders: []string{"X-TRAQ-VERSION", headerCacheFile, headerFileMetaType, headerMore},
 		AllowHeaders:  []string{echo.HeaderContentType, echo.HeaderAuthorization, headerSignature},
 		MaxAge:        3600,
 	}))
