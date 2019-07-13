@@ -35,9 +35,6 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
-	if err := model.AuthenticateUser(user, req.Pass); err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, err)
-	}
 
 	// ユーザーのアカウント状態の確認
 	switch user.Status {
@@ -45,6 +42,11 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 		return forbidden("this account is currently suspended")
 	case model.UserAccountStatusActive:
 		break
+	}
+
+	// パスワード検証
+	if err := model.AuthenticateUser(user, req.Pass); err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, err)
 	}
 
 	sess, err := sessions.Get(c.Response(), c.Request(), true)
