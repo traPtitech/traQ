@@ -75,11 +75,14 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 
 				uid := session.GetUserID()
 				err := session.Destroy(rw, req)
+				if err != nil {
+					return nil, err
+				}
 				session, err := IssueNewSession(ip, userAgent)
 				if err != nil {
 					return nil, err
 				}
-				session.SetUser(uid)
+				err = session.SetUser(uid)
 				setCookie(session.token, rw)
 				return session, nil
 			}
