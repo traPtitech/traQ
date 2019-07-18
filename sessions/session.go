@@ -69,7 +69,7 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 		regenerate := absent <= time.Duration(sessionKeepAge)*time.Second
 
 		if !valid {
-			
+
 			if regenerate {
 				// 最終アクセスからsessionKeepAge経過していない場合はセッションを継続
 
@@ -83,11 +83,11 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 				setCookie(session.token, rw)
 				return session, nil
 			}
-				
+
 			if err := session.Destroy(rw, req); err != nil {
 				return nil, err
 			}
-			
+
 			session = nil
 
 		} else {
@@ -283,7 +283,7 @@ func (s *Session) Expired() bool {
 	s.RLock()
 	age := time.Since(s.created)
 	s.RUnlock()
-	return age > time.Duration(sessionMaxAge + sessionKeepAge)*time.Second
+	return age > time.Duration(sessionMaxAge+sessionKeepAge)*time.Second
 }
 
 func deleteCookie(cookie *http.Cookie, rw http.ResponseWriter) {
@@ -298,7 +298,7 @@ func setCookie(token string, rw http.ResponseWriter) {
 	cookie := &http.Cookie{
 		Name:     CookieName,
 		Value:    token,
-		Expires:  time.Now().Add(time.Duration(sessionMaxAge + sessionKeepAge) * time.Second),
+		Expires:  time.Now().Add(time.Duration(sessionMaxAge+sessionKeepAge) * time.Second),
 		MaxAge:   sessionMaxAge + sessionKeepAge,
 		Path:     "/",
 		HttpOnly: true,
