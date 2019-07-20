@@ -61,17 +61,41 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 	if session != nil {
 		session.RLock()
 		age := time.Since(session.created)
+		absent := time.Since(session.lastAccess)
 		session.RUnlock()
 
 		// TODO ipアドレス確認をする (地域・国レベルでのipアドレス変化を検出)
-		// TODO セッションリフレッシュ
 		valid := age <= time.Duration(sessionMaxAge)*time.Second
+		regenerate := absent <= time.Duration(sessionKeepAge)*time.Second
 
 		if !valid {
+
+			if regenerate {
+				// 最終アクセスからsessionKeepAge経過していない場合はセッションを継続
+
+				uid := session.GetUserID()
+				err := session.Destroy(rw, req)
+				if err != nil {
+					return nil, err
+				}
+				session, err := IssueNewSession(ip, userAgent)
+				if err != nil {
+					return nil, err
+				}
+				err = session.SetUser(uid)
+				if err != nil {
+					return nil, err
+				}
+				setCookie(session.token, rw)
+				return session, nil
+			}
+
 			if err := session.Destroy(rw, req); err != nil {
 				return nil, err
 			}
+
 			session = nil
+
 		} else {
 			session.Lock()
 			session.lastAccess = time.Now()
@@ -87,7 +111,18 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 		return nil, nil
 	}
 
-	session = &Session{
+	session, err = IssueNewSession(ip, userAgent)
+	if err != nil {
+		return nil, nil
+	}
+	setCookie(session.token, rw)
+
+	return session, nil
+}
+
+// IssueNewSession 新しいセッションを生成します
+func IssueNewSession(ip string, userAgent string) (s *Session, err error) {
+	session := &Session{
 		token:         utils.RandAlphabetAndNumberString(50),
 		referenceID:   uuid.Must(uuid.NewV4()),
 		userID:        uuid.Nil,
@@ -100,8 +135,6 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 	if err := store.Save(session.token, session); err != nil {
 		return nil, err
 	}
-	setCookie(session.token, rw)
-
 	return session, nil
 }
 
@@ -256,7 +289,7 @@ func (s *Session) Expired() bool {
 	s.RLock()
 	age := time.Since(s.created)
 	s.RUnlock()
-	return age > time.Duration(sessionMaxAge)*time.Second
+	return age > time.Duration(sessionMaxAge+sessionKeepAge)*time.Second
 }
 
 func deleteCookie(cookie *http.Cookie, rw http.ResponseWriter) {
@@ -271,8 +304,8 @@ func setCookie(token string, rw http.ResponseWriter) {
 	cookie := &http.Cookie{
 		Name:     CookieName,
 		Value:    token,
-		Expires:  time.Now().Add(time.Duration(sessionMaxAge) * time.Second),
-		MaxAge:   sessionMaxAge,
+		Expires:  time.Now().Add(time.Duration(sessionMaxAge+sessionKeepAge) * time.Second),
+		MaxAge:   sessionMaxAge + sessionKeepAge,
 		Path:     "/",
 		HttpOnly: true,
 	}
