@@ -105,7 +105,7 @@ paths:
         - name: response_type
           in: query
           schema:
-            type: string
+            $ref: "#/components/schemas/OAuth2ResponseType"
         - name: client_id
           in: query
           schema:
@@ -137,7 +137,7 @@ paths:
         - name: prompt
           in: query
           schema:
-            type: string
+            $ref: "#/components/schemas/OAuth2Prompt"
       security: []
       responses:
         "302":
@@ -3040,11 +3040,21 @@ components:
       items:
         type: string
         format: uuid
+    OAuth2ResponseType:
+      type: string
+      enum:
+        - code
+        - token
+        - none
+    OAuth2Prompt:
+      type: string
+      enum:
+        - none
     OAuth2Authorization:
       type: object
       properties:
         response_type:
-          type: string
+          $ref: "#/components/schemas/OAuth2ResponseType"
         client_id:
           type: string
         redirect_uri:
@@ -3060,7 +3070,7 @@ components:
         nonce:
           type: string
         prompt:
-          type: string
+          $ref: "#/components/schemas/OAuth2Prompt"
     OAuth2Token:
       type: object
       required:
@@ -3098,6 +3108,7 @@ components:
           type: string
         password:
           type: string
+          format: password
         scope:
           type: string
         refresh_token:
@@ -3122,6 +3133,7 @@ components:
           type: string
         pass:
           type: string
+          format: password
     UserRegister:
       type: object
       required:
@@ -3152,9 +3164,11 @@ components:
       properties:
         password:
           type: string
+          format: password
           description: 現在のパスワード
         newPassword:
           type: string
+          format: password
           description: 新しいパスワード(10文字以上32文字以下のアスキー文字)
     Session:
       type: object
@@ -3251,10 +3265,7 @@ components:
           description: チャンネル名
           example: yamada
         member:
-          type: array
-          items:
-            type: string
-            format: uuid
+          $ref: "#/components/schemas/UUIDs"
           description: privateチャンネルの場合は参加しているメンバー、公開チャンネルの場合は空
         parent:
           type: string
@@ -3265,10 +3276,7 @@ components:
           description: チャンネルトピック
           example: yamadaチャンネルです！
         children:
-          type: array
-          items:
-            type: string
-            format: uuid
+          $ref: "#/components/schemas/UUIDs"
           description: 子のチャンネルUUIDの配列
         visibility:
           type: boolean
@@ -3316,11 +3324,8 @@ components:
           type: boolean
           description: プライベートチャンネルかどうか
         member:
-          type: array
-          items:
-            type: string
-            format: uuid
-            description: チャンネルに参加させるuserのuserId
+          $ref: "#/components/schemas/UUIDs"
+          description: チャンネルに参加させるuserのuserId
         name:
           type: string
           description: チャンネル名
@@ -3378,6 +3383,8 @@ components:
           type: string
           description: チャンネルの説明
           example: なんでも良いチャンネルです!!
+    UserStatus:
+      $ref: "#/components/schemas/UserStatus"
     User:
       type: object
       properties:
@@ -3412,8 +3419,7 @@ components:
           type: boolean
           description: アカウントが停止中かどうか
         accountStatus:
-          type: integer
-          description: アカウントの状態 (0:停止,1:有効,2:一時停止)
+          $ref: "#/components/schemas/UserStatus"
     Me:
       type: object
       properties:
@@ -3448,8 +3454,7 @@ components:
           type: boolean
           description: アカウントが停止中かどうか
         accountStatus:
-          type: integer
-          description: アカウントの状態 (0:停止,1:有効,2:一時停止)
+          $ref: "#/components/schemas/UserStatus"
         role:
           type: string
           description: ユーザーロール
@@ -3496,8 +3501,7 @@ components:
           type: boolean
           description: アカウントが停止中かどうか
         accountStatus:
-          type: integer
-          description: アカウントの状態 (0:停止,1:有効,2:一時停止)
+          $ref: "#/components/schemas/UserStatus"
         tagList:
           $ref: "#/components/schemas/TagList"
     UserGroup:
@@ -3537,7 +3541,8 @@ components:
       properties:
         name:
           type: string
-          description: グループ名(30文字以内)
+          maxLength: 30
+          description: グループ名
         description:
           type: string
           description: 説明
@@ -3546,7 +3551,8 @@ components:
       properties:
         name:
           type: string
-          description: グループ名(30文字以内)
+          maxLength: 30
+          description: グループ名
         description:
           type: string
           description: 説明
@@ -3595,7 +3601,8 @@ components:
       properties:
         tag:
           type: string
-          description: 追加するタグ(30文字まで)
+          maxLength: 30
+          description: 追加するタグ
           example: 山田太郎
     SetTagLock:
       type: object
@@ -3732,17 +3739,11 @@ components:
       type: object
       properties:
         on:
+          $ref: "#/components/schemas/UUIDs"
           description: 通知をつける人のユーザーIDの配列
-          type: array
-          items:
-            type: string
-            format: uuid
         off:
+          $ref: "#/components/schemas/UUIDs"
           description: 通知をつけない人のユーザーIDの配列
-          type: array
-          items:
-            type: string
-            format: uuid
     FCMToken:
       type: object
       required:
@@ -3797,7 +3798,8 @@ components:
       properties:
         name:
           type: string
-          description: webhookユーザーの表示名(32文字まで)
+          maxLength: 32
+          description: webhookユーザーの表示名
         description:
           type: string
           description: webhookの説明
@@ -3813,7 +3815,8 @@ components:
       properties:
         name:
           type: string
-          description: webhookユーザーの表示名(32文字まで)
+          maxLength: 32
+          description: webhookユーザーの表示名
         description:
           type: string
           description: webhookの説明
@@ -3894,10 +3897,12 @@ components:
       properties:
         name:
           type: string
-          description: botユーザーID(16文字まで)。自動的に先頭に"BOT_"が付与されます
+          maxLength: 16
+          description: botユーザーID。自動的に先頭に"BOT_"が付与されます
         displayName:
           type: string
-          description: botユーザーの表示名(32文字まで)
+          maxLength: 32
+          description: botユーザーの表示名
         description:
           type: string
           description: botの説明
@@ -4074,6 +4079,14 @@ components:
           type: string
           format: date-time
           description: アップロード日時
+    HeartbeatStatus:
+      type: string
+      enum:
+        - none
+        - monitoring
+        - editing
+      description: editing,monitoring,noneのユーザーの状態
+      example: monitoring
     Heartbeat:
       type: object
       required:
@@ -4081,13 +4094,7 @@ components:
         - channelId
       properties:
         status:
-          type: string
-          enum:
-            - none
-            - monitoring
-            - editing
-          description: editing,monitoring,noneでユーザーの状態を指定する
-          example: monitoring
+          $ref: "#/components/schemas/HeartbeatStatus"
         channelId:
           type: string
           format: uuid
@@ -4106,12 +4113,7 @@ components:
                 format: uuid
                 description: ユーザーUUID
               status:
-                type: string
-                enum:
-                  - monitoring
-                  - editing
-                  - none
-                description: ユーザー状態
+                $ref: "#/components/schemas/HeartbeatStatus"
         channelId:
           type: string
           format: uuid
@@ -4160,6 +4162,12 @@ components:
         reason:
           type: string
           description: 通報理由(100文字以内)
+    ClientScope:
+      type: string
+      enum:
+        - read
+        - write
+        - manage_bot
     ClientInfo:
       type: object
       properties:
@@ -4195,7 +4203,7 @@ components:
         scopes:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/ClientScope"
           description: 要求スコープの配列
         redirectUri:
           type: string
@@ -4227,7 +4235,7 @@ components:
         scopes:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/ClientScope"
           description: 要求スコープの配列
         approvedAt:
           type: string
@@ -4243,7 +4251,9 @@ components:
       properties:
         name:
           type: string
-          description: クライアント名(1-32文字)
+          minLength: 1
+          maxLength: 32
+          description: クライアント名
         description:
           type: string
           description: クライアントの説明
@@ -4255,13 +4265,15 @@ components:
           type: array
           description: 要求するスコープ(必ず１つ以上)
           items:
-            type: string
+            $ref: "#/components/schemas/ClientScope"
     PatchClient:
       type: object
       properties:
         name:
           type: string
-          description: クライアント名(1-32文字)
+          minLength: 1
+          maxLength: 32
+          description: クライアント名
         description:
           type: string
           description: 説明
@@ -4323,16 +4335,10 @@ components:
           format: uuid
           description: 変更者UUID
         on:
-          type: array
-          items:
-            type: string
-            format: uuid
+          $ref: "#/components/schemas/UUIDs"
           description: オンにしたユーザーのUUIDの配列
         off:
-          type: array
-          items:
-            type: string
-            format: uuid
+          $ref: "#/components/schemas/UUIDs"
           description: オフにしたユーザーのUUIDの配列
       description: SubscribersChanged
     PinAddedEvent:
