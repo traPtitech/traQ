@@ -27,15 +27,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-                - pass
-              properties:
-                name:
-                  type: string
-                pass:
-                  type: string
+              $ref: "#/components/schemas/UserLogin"
       responses:
         "204":
           description: 正常にログインできました。
@@ -163,26 +155,7 @@ paths:
         content:
           application/x-www-form-urlencoded:
             schema:
-              type: object
-              properties:
-                response_type:
-                  type: string
-                client_id:
-                  type: string
-                redirect_uri:
-                  type: string
-                scope:
-                  type: string
-                state:
-                  type: string
-                code_challenge:
-                  type: string
-                code_challenge_method:
-                  type: string
-                nonce:
-                  type: string
-                prompt:
-                  type: string
+              $ref: "#/components/schemas/OAuth2Authorization"
       responses:
         "302":
           description: 結果に応じてリダイレクトします。
@@ -200,13 +173,7 @@ paths:
         content:
           application/x-www-form-urlencoded:
             schema:
-              type: object
-              required:
-                - submit
-              properties:
-                submit:
-                  type: string
-                  description: 承諾する場合は"approve"
+              $ref: "#/components/schemas/OAuth2Decide"
       responses:
         "302":
           description: RedirectURIに結果をリダイレクトします。
@@ -225,53 +192,14 @@ paths:
         content:
           application/x-www-form-urlencoded:
             schema:
-              type: object
-              required:
-                - grant_type
-              properties:
-                grant_type:
-                  type: string
-                code:
-                  type: string
-                redirect_uri:
-                  type: string
-                client_id:
-                  type: string
-                code_verifier:
-                  type: string
-                username:
-                  type: string
-                password:
-                  type: string
-                scope:
-                  type: string
-                refresh_token:
-                  type: string
-                client_secret:
-                  type: string
+              $ref: "#/components/schemas/PostOAuth2Token"
       responses:
         "200":
           description: トークンが正常に発行されました。
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - access_token
-                  - token_type
-                properties:
-                  access_token:
-                    type: string
-                  token_type:
-                    type: string
-                  expires_in:
-                    type: integer
-                  refresh_token:
-                    type: string
-                  scope:
-                    type: string
-                  id_token:
-                    type: string
+                $ref: "#/components/schemas/OAuth2Token"
         "400":
           description: トークン発行に失敗しました。
         "403":
@@ -307,18 +235,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-                - password
-              properties:
-                name:
-                  type: string
-                  description: ユーザー名(半角英数字とアンダーバー(_)の1文字以上32文字以下)
-                password:
-                  type: string
-                  format: password
-                  description: パスワード
+              $ref: "#/components/schemas/UserRegister"
       responses:
         "201":
           description: 正常に登録できました。
@@ -354,14 +271,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                displayName:
-                  type: string
-                  description: 新しい表示名(0-32文字)。変更しない場合は""
-                twitterId:
-                  type: string
-                  description: TwitterID
+              $ref: "#/components/schemas/UserData"
       responses:
         "204":
           description: 正常に変更できました。
@@ -377,17 +287,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - password
-                - newPassword
-              properties:
-                password:
-                  type: string
-                  description: 現在のパスワード
-                newPassword:
-                  type: string
-                  description: 新しいパスワード(10文字以上32文字以下のアスキー文字)
+              $ref: "#/components/schemas/ChangePassword"
       responses:
         "204":
           description: 正常に変更できました。
@@ -475,16 +375,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    stampId:
-                      type: string
-                      format: uuid
-                      description: スタンプID
-                    datetime:
-                      type: string
-                      format: date-time
-                      description: そのスタンプが最後に押された日時
+                  $ref: "#/components/schemas/StampHistory"
 
   /users/me/groups:
     get:
@@ -563,21 +454,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                    lastIP:
-                      type: string
-                    lastUserAgent:
-                      type: string
-                    lastAccess:
-                      type: string
-                      format: date-time
-                    createdAt:
-                      type: string
-                      format: date-time
+                  $ref: "#/components/schemas/Session"
         "403":
           description: 権限がありません。
     delete:
@@ -626,22 +503,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    folderId:
-                      type: string
-                      format: uuid
-                      description: フォルダID
-                    clipId:
-                      type: string
-                      format: uuid
-                      description: クリップID
-                    clippedAt:
-                      type: string
-                      format: date-time
-                      description: クリップ日時
-                    message:
-                      $ref: "#/components/schemas/Message"
+                  $ref: "#/components/schemas/Clip"
     post:
       tags:
         - clip
@@ -653,30 +515,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - messageId
-              properties:
-                messageId:
-                  type: string
-                  format: uuid
-                  description: クリップするメッセージID
-                folderId:
-                  type: string
-                  format: uuid
-                  description: クリップフォルダ名
+              $ref: "#/components/schemas/SetClip"
       responses:
         "201":
           description: 正常にクリップできました。クリップIDを返します。
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                    description: クリップID
+                $ref: "#/components/schemas/ClipIDObject"
         "400":
           description: 正常にクリップできませんでした。リクエスト内容が不正です。
 
@@ -742,14 +588,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - folderId
-              properties:
-                folderId:
-                  type: string
-                  format: uuid
-                  description: フォルダID
+              $ref: "#/components/schemas/ClipsFolderIDObject"
       responses:
         "204":
           description: 正常に変更できました。
@@ -786,13 +625,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-              properties:
-                name:
-                  type: string
-                  description: フォルダ名(30文字以内)
+              $ref: "#/components/schemas/ClipsFolderNameObject"
       responses:
         "201":
           description: 正常に作成できました。作成したフォルダ情報を返します。
@@ -829,18 +662,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    clipId:
-                      type: string
-                      format: uuid
-                      description: クリップID
-                    clippedAt:
-                      type: string
-                      format: date-time
-                      description: クリップ日時
-                    message:
-                      $ref: "#/components/schemas/Message"
+                  $ref: "#/components/schemas/ClipOfFolder"
         "404":
           description: 取得できませんでした。存在しないフォルダです。
     patch:
@@ -854,13 +676,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-              properties:
-                name:
-                  type: string
-                  description: フォルダ名(30文字以内)
+              $ref: "#/components/schemas/ClipsFolderNameObject"
       responses:
         "204":
           description: 正常に変更できました。
@@ -945,26 +761,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    channelId:
-                      type: string
-                      format: uuid
-                      description: チャンネルID
-                    count:
-                      type: integer
-                      description: そのチャンネルの未読メッセージ数
-                    noticeable:
-                      type: boolean
-                      description: 自分にメンションされたメッセージを含んでいるかどうか
-                    since:
-                      type: string
-                      format: date-time
-                      description: そのチャンネルの最古の未読メッセージの日時
-                    updatedAt:
-                      type: string
-                      format: date-time
-                      description: そのチャンネルの最新の未読メッセージの日時
+                  $ref: "#/components/schemas/UnreadChannel"
 
   /users/me/unread/channels/{channelID}:
     parameters:
@@ -1109,14 +906,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - text
-              properties:
-                text:
-                  type: string
-                  description: Markdown形式のメッセージ本文
-                  example: Raskって誰？
+              $ref: "#/components/schemas/SendMessage"
       responses:
         "201":
           description: |+
@@ -1236,14 +1026,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - tag
-              properties:
-                tag:
-                  type: string
-                  description: 追加するタグ(30文字まで)
-                  example: 山田太郎
+              $ref: "#/components/schemas/SetTag"
       responses:
         "201":
           description: |+
@@ -1276,14 +1059,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - isLocked
-              properties:
-                isLocked:
-                  type: boolean
-                  description: lockするときはtrue,解除するときはfalse
-                  example: true
+              $ref: "#/components/schemas/SetTagLock"
       responses:
         "204":
           description: |+
@@ -1355,24 +1131,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - status
-                - channelId
-              properties:
-                status:
-                  type: string
-                  enum:
-                    - none
-                    - monitoring
-                    - editing
-                  description: editing,monitoring,noneでユーザーの状態を指定する
-                  example: monitoring
-                channelId:
-                  type: string
-                  format: uuid
-                  description: 現在いるチャンネルId
-                  example: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
+              $ref: "#/components/schemas/Heartbeat"
       responses:
         "200":
           description: 正常に送信できました。
@@ -1407,28 +1166,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - type
-              properties:
-                private:
-                  type: boolean
-                  description: プライベートチャンネルかどうか
-                member:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-                    description: チャンネルに参加させるuserのuserId
-                name:
-                  type: string
-                  description: チャンネル名
-                  example: random
-                parent:
-                  type: string
-                  format: uuid
-                  description: 親のチャンネルID
-                  example: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
+              $ref: "#/components/schemas/CreateChannel"
       responses:
         "201":
           description: |+
@@ -1474,19 +1212,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: チャンネル名
-                  example: gps
-                visibility:
-                  type: boolean
-                  description: 変更後のvisibility
-                  example: true
-                force:
-                  type: boolean
-                  description: 強制通知かどうか
+              $ref: "#/components/schemas/PatchChannel"
       responses:
         "204":
           description: 正常に変更ができました。
@@ -1521,14 +1247,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - parent
-              properties:
-                parent:
-                  type: string
-                  format: uuid
-                  description: 変更後の親チャンネルID
+              $ref: "#/components/schemas/PutParentChannel"
       responses:
         "204":
           description: 変更に成功しました。
@@ -1555,14 +1274,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-              properties:
-                name:
-                  type: string
-                  description: チャンネル名
-                  example: random
+              $ref: "#/components/schemas/CreateChannelChild"
       responses:
         "201":
           description: 正常にチャンネルが作成できました。作成されたチャンネルを返します。
@@ -1616,12 +1328,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  text:
-                    type: string
-                    description: チャンネルトピック
-                    example: yamadaチャンネルです！
+                $ref: "#/components/schemas/ChannelTopic"
         "404":
           description: +|
             取得に失敗しました。
@@ -1637,14 +1344,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - text
-              properties:
-                text:
-                  type: string
-                  description: チャンネルの説明
-                  example: なんでも良いチャンネルです!!
+              $ref: "#/components/schemas/SetChannelTopic"
       responses:
         "204":
           description: 正常に更新できました。
@@ -1701,14 +1401,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - text
-              properties:
-                text:
-                  type: string
-                  description: Markdown形式のメッセージ本文
-                  example: Raskって誰？
+              $ref: "#/components/schemas/SendMessage"
       responses:
         "201":
           description: |+
@@ -1794,20 +1487,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                on:
-                  description: 通知をつける人のユーザーIDの配列
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-                off:
-                  description: 通知をつけない人のユーザーIDの配列
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
+              $ref: "#/components/schemas/NotificationUsers"
       responses:
         "204":
           description: 正常に更新できました。
@@ -1835,16 +1515,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    botId:
-                      type: string
-                      format: uuid
-                      description: BotのID
-                    botUserId:
-                      type: string
-                      format: uuid
-                      description: BotのユーザーID
+                  $ref: "#/components/schemas/ChannelBot"
         "404":
           description: 取得できませんでした。指定したチャンネルは存在しません。
     post:
@@ -1859,25 +1530,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - code
-              properties:
-                code:
-                  type: string
-                  description: ボットコード
+              $ref: "#/components/schemas/PostBotChannel"
       responses:
         "200":
           description: 正常にBotが参加しました。
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  botId:
-                    type: string
-                    format: uuid
-                    description: 参加したBotのID
+                $ref: "#/components/schemas/BotIdObject"
         "400":
           description: 参加させることができませんでした。リクエスト内容が不正です。
         "404":
@@ -1925,14 +1585,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - token
-              properties:
-                token:
-                  type: string
-                  description: FCMのデバイストークン
-                  example: bk3RNwTe3H0:CI2k_HHwgIpoDKCIZvvDMExUdFQ3P1
+              $ref: "#/components/schemas/FCMToken"
       responses:
         "201":
           description: 正常に登録できました。
@@ -1956,27 +1609,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                      description: 通報ID
-                    messageId:
-                      type: string
-                      format: uuid
-                      description: 通報対象のメッセージID
-                    reporter:
-                      type: string
-                      format: uuid
-                      description: 通報者ID
-                    reason:
-                      type: string
-                      description: 通報内容
-                    createdAt:
-                      type: string
-                      format: date-time
-                      description: 通報日時
+                  $ref: "#/components/schemas/Report"
         "403":
           description: 取得できませんでした。権限がありません。
 
@@ -2010,14 +1643,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - text
-              properties:
-                text:
-                  type: string
-                  description: Markdown形式のメッセージ本文
-                  example: Raskって誰？
+              $ref: "#/components/schemas/SendMessage"
       responses:
         "204":
           description: 正常に編集できました。
@@ -2054,13 +1680,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - reason
-              properties:
-                reason:
-                  type: string
-                  description: 通報理由(100文字以内)
+              $ref: "#/components/schemas/ReportMessage"
       responses:
         "204":
           description: 通報を受理しました。
@@ -2136,15 +1756,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  tagId:
-                    type: string
-                    format: uuid
-                  tag:
-                    type: string
-                  users:
-                    $ref: "#/components/schemas/UUIDs"
+                $ref: "#/components/schemas/TagUsers"
         "404":
           description: 正常に取得できませんでした。指定されたタグIDは存在しません
 
@@ -2286,26 +1898,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - messageId
-              properties:
-                messageId:
-                  type: string
-                  format: uuid
-                  description: ピン留めするメッセージID
+              $ref: "#/components/schemas/MessageIDObject"
       responses:
         "201":
           description: 正常にピン留めできました。
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                    description: ピンID
+                $ref: "#/components/schemas/PinIDObject"
 
   /pins/{pinID}:
     parameters:
@@ -2481,25 +2081,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-                - description
-                - channelId
-              properties:
-                name:
-                  type: string
-                  description: webhookユーザーの表示名(32文字まで)
-                description:
-                  type: string
-                  description: webhookの説明
-                channelId:
-                  type: string
-                  format: uuid
-                  description: デフォルトの投稿先チャンネル(パブリックチャンネルのみ)
-                secret:
-                  type: string
-                  description: webhookシークレット
+              $ref: "#/components/schemas/PostWebhook"
       responses:
         "201":
           description: 正常に作成できました。
@@ -2545,21 +2127,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: webhookユーザーの表示名(32文字まで)
-                description:
-                  type: string
-                  description: webhookの説明
-                channelId:
-                  type: string
-                  format: uuid
-                  description: デフォルトの投稿先チャンネル(パブリックチャンネルのみ)
-                secret:
-                  type: string
-                  description: webhookシークレット
+              $ref: "#/components/schemas/PatchWebhook"
       responses:
         "204":
           description: 正常に修正できました。
@@ -2723,16 +2291,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-              properties:
-                name:
-                  type: string
-                  description: グループ名(30文字以内)
-                description:
-                  type: string
-                  description: 説明
+              $ref: "#/components/schemas/PostUserGroup"
       responses:
         "201":
           description: 正常に作成できました
@@ -2775,18 +2334,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: グループ名(30文字以内)
-                description:
-                  type: string
-                  description: 説明
-                adminUserId:
-                  type: string
-                  format: uuid
-                  description: 管理ユーザー
+              $ref: "#/components/schemas/PatchUserGroup"
       responses:
         "204":
           description: 正常に変更できました
@@ -2843,14 +2391,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - userId
-              properties:
-                userId:
-                  type: string
-                  format: uuid
-                  description: 追加するユーザーのID
+              $ref: "#/components/schemas/AddUserGroup"
       responses:
         "204":
           description: 正常に追加できました
@@ -2912,28 +2453,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-                - description
-                - redirectUri
-                - scopes
-              properties:
-                name:
-                  type: string
-                  description: クライアント名(1-32文字)
-                description:
-                  type: string
-                  description: クライアントの説明
-                redirectUri:
-                  type: string
-                  format: uri
-                  description: リダイレクト先のURI
-                scopes:
-                  type: array
-                  description: 要求するスコープ(必ず１つ以上)
-                  items:
-                    type: string
+              $ref: "#/components/schemas/PostClient"
       responses:
         "200":
           description: 正常に登録できました。クライアント情報を返します。
@@ -2976,18 +2496,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: クライアント名(1-32文字)
-                description:
-                  type: string
-                  description: 説明
-                redirectUri:
-                  type: string
-                  format: uri
-                  description: リダイレクト先のURI
+              $ref: "#/components/schemas/PatchClient"
       responses:
         "204":
           description: 正常に変更できました。
@@ -3061,26 +2570,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - name
-                - displayName
-                - description
-                - postUrl
-              properties:
-                name:
-                  type: string
-                  description: botユーザーID(16文字まで)。自動的に先頭に"BOT_"が付与されます
-                displayName:
-                  type: string
-                  description: botユーザーの表示名(32文字まで)
-                description:
-                  type: string
-                  description: botの説明
-                postUrl:
-                  type: string
-                  format: url
-                  description: botのPOSTエンドポイント
+              $ref: "#/components/schemas/PostBot"
       responses:
         "201":
           description: 正常に作成できました。
@@ -3126,21 +2616,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                displayName:
-                  type: string
-                  description: Bot表示名
-                description:
-                  type: string
-                  description: Bot説明
-                privileged:
-                  type: boolean
-                  description: privileged属性
-                webhookUrl:
-                  type: string
-                  format: url
-                  description: BotのPOSTエンドポイント
+              $ref: "#/components/schemas/PatchBot"
       responses:
         "204":
           description: 正常に変更できました。
@@ -3202,15 +2678,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - events
-              properties:
-                events:
-                  type: array
-                  description: 購読するイベントの配列
-                  items:
-                    type: string
+              $ref: "#/components/schemas/PutBotEvents"
       responses:
         "204":
           description: 変更できました。
@@ -3295,13 +2763,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - state
-              properties:
-                state:
-                  type: string
-                  description: activeまたはinactive
+              $ref: "#/components/schemas/PutBotState"
       responses:
         "204":
           description: 変更できました。
@@ -3330,17 +2792,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  verificationToken:
-                    type: string
-                    description: Verification Token
-                  accessToken:
-                    type: string
-                    description: BOTアクセストークン
-                  botCode:
-                    type: string
-                    description: BOTインストールコード
+                $ref: "#/components/schemas/BotTokens"
         "403":
           description: 権限がありません。
         "404":
@@ -3588,6 +3040,205 @@ components:
       items:
         type: string
         format: uuid
+    OAuth2Authorization:
+      type: object
+      properties:
+        response_type:
+          type: string
+        client_id:
+          type: string
+        redirect_uri:
+          type: string
+        scope:
+          type: string
+        state:
+          type: string
+        code_challenge:
+          type: string
+        code_challenge_method:
+          type: string
+        nonce:
+          type: string
+        prompt:
+          type: string
+    OAuth2Token:
+      type: object
+      required:
+        - access_token
+        - token_type
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+        refresh_token:
+          type: string
+        scope:
+          type: string
+        id_token:
+          type: string
+    PostOAuth2Token:
+      type: object
+      required:
+        - grant_type
+      properties:
+        grant_type:
+          type: string
+        code:
+          type: string
+        redirect_uri:
+          type: string
+        client_id:
+          type: string
+        code_verifier:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        scope:
+          type: string
+        refresh_token:
+          type: string
+        client_secret:
+          type: string
+    OAuth2Decide:
+      type: object
+      required:
+        - submit
+      properties:
+        submit:
+          type: string
+          description: 承諾する場合は"approve"
+    UserLogin:
+      type: object
+      required:
+        - name
+        - pass
+      properties:
+        name:
+          type: string
+        pass:
+          type: string
+    UserRegister:
+      type: object
+      required:
+        - name
+        - password
+      properties:
+        name:
+          type: string
+          description: ユーザー名(半角英数字とアンダーバー(_)の1文字以上32文字以下)
+        password:
+          type: string
+          format: password
+          description: パスワード
+    UserData:
+      type: object
+      properties:
+        displayName:
+          type: string
+          description: 新しい表示名(0-32文字)。変更しない場合は""
+        twitterId:
+          type: string
+          description: TwitterID
+    ChangePassword:
+      type: object
+      required:
+        - password
+        - newPassword
+      properties:
+        password:
+          type: string
+          description: 現在のパスワード
+        newPassword:
+          type: string
+          description: 新しいパスワード(10文字以上32文字以下のアスキー文字)
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        lastIP:
+          type: string
+        lastUserAgent:
+          type: string
+        lastAccess:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    Clip:
+      type: object
+      properties:
+        folderId:
+          type: string
+          format: uuid
+          description: フォルダID
+        clipId:
+          type: string
+          format: uuid
+          description: クリップID
+        clippedAt:
+          type: string
+          format: date-time
+          description: クリップ日時
+        message:
+          $ref: "#/components/schemas/Message"
+    SetClip:
+      type: object
+      required:
+        - messageId
+      properties:
+        messageId:
+          type: string
+          format: uuid
+          description: クリップするメッセージID
+        folderId:
+          type: string
+          format: uuid
+          description: クリップフォルダ名
+    ClipOfFolder:
+      type: object
+      properties:
+        clipId:
+          type: string
+          format: uuid
+          description: クリップID
+        clippedAt:
+          type: string
+          format: date-time
+          description: クリップ日時
+        message:
+          $ref: "#/components/schemas/Message"
+    ClipIDObject:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: クリップID
+    ClipsFolderIDObject:
+      type: object
+      required:
+        - folderId
+      properties:
+        folderId:
+          type: string
+          format: uuid
+          description: フォルダID
+    ClipsFolderNameObject:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: フォルダ名(30文字以内)
     Channel:
       type: object
       properties:
@@ -3635,6 +3286,98 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Channel"
+    UnreadChannel:
+      type: object
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: チャンネルID
+        count:
+          type: integer
+          description: そのチャンネルの未読メッセージ数
+        noticeable:
+          type: boolean
+          description: 自分にメンションされたメッセージを含んでいるかどうか
+        since:
+          type: string
+          format: date-time
+          description: そのチャンネルの最古の未読メッセージの日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: そのチャンネルの最新の未読メッセージの日時
+    CreateChannel:
+      type: object
+      required:
+        - type
+      properties:
+        private:
+          type: boolean
+          description: プライベートチャンネルかどうか
+        member:
+          type: array
+          items:
+            type: string
+            format: uuid
+            description: チャンネルに参加させるuserのuserId
+        name:
+          type: string
+          description: チャンネル名
+          example: random
+        parent:
+          type: string
+          format: uuid
+          description: 親のチャンネルID
+          example: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
+    CreateChannelChild:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: チャンネル名
+          example: random
+    PatchChannel:
+      type: object
+      properties:
+        name:
+          type: string
+          description: チャンネル名
+          example: gps
+        visibility:
+          type: boolean
+          description: 変更後のvisibility
+          example: true
+        force:
+          type: boolean
+          description: 強制通知かどうか
+    PutParentChannel:
+      type: object
+      required:
+        - parent
+      properties:
+        parent:
+          type: string
+          format: uuid
+          description: 変更後の親チャンネルID
+    ChannelTopic:
+      type: object
+      properties:
+        text:
+          type: string
+          description: チャンネルトピック
+          example: yamadaチャンネルです！
+    SetChannelTopic:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: チャンネルの説明
+          example: なんでも良いチャンネルです!!
     User:
       type: object
       properties:
@@ -3787,6 +3530,39 @@ components:
           type: string
           format: date-time
           description: グループ更新日時
+    PostUserGroup:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: グループ名(30文字以内)
+        description:
+          type: string
+          description: 説明
+    PatchUserGroup:
+      type: object
+      properties:
+        name:
+          type: string
+          description: グループ名(30文字以内)
+        description:
+          type: string
+          description: 説明
+        adminUserId:
+          type: string
+          format: uuid
+          description: 管理ユーザー
+    AddUserGroup:
+      type: object
+      required:
+        - userId
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: 追加するユーザーのID
     Tag:
       type: object
       properties:
@@ -3812,6 +3588,34 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Tag"
+    SetTag:
+      type: object
+      required:
+        - tag
+      properties:
+        tag:
+          type: string
+          description: 追加するタグ(30文字まで)
+          example: 山田太郎
+    SetTagLock:
+      type: object
+      required:
+        - isLocked
+      properties:
+        isLocked:
+          type: boolean
+          description: lockするときはtrue,解除するときはfalse
+          example: true
+    TagUsers:
+      type: object
+      properties:
+        tagId:
+          type: string
+          format: uuid
+        tag:
+          type: string
+        users:
+          $ref: "#/components/schemas/UUIDs"
     Message:
       type: object
       properties:
@@ -3852,6 +3656,24 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Message"
+    SendMessage:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Markdown形式のメッセージ本文
+          example: Raskって誰？
+    MessageIDObject:
+      type: object
+      required:
+        - messageId
+      properties:
+        messageId:
+          type: string
+          format: uuid
+          description: ピン留めするメッセージID
     MessageStamp:
       type: object
       properties:
@@ -3899,6 +3721,37 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/Pin"
+    PinIDObject:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ピンID
+    NotificationUsers:
+      type: object
+      properties:
+        on:
+          description: 通知をつける人のユーザーIDの配列
+          type: array
+          items:
+            type: string
+            format: uuid
+        off:
+          description: 通知をつけない人のユーザーIDの配列
+          type: array
+          items:
+            type: string
+            format: uuid
+    FCMToken:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: FCMのデバイストークン
+          example: bk3RNwTe3H0:CI2k_HHwgIpoDKCIZvvDMExUdFQ3P1
     Webhook:
       type: object
       properties:
@@ -3935,6 +3788,42 @@ components:
           type: string
           format: date-time
           description: Webhook更新日時
+    PostWebhook:
+      type: object
+      required:
+        - name
+        - description
+        - channelId
+      properties:
+        name:
+          type: string
+          description: webhookユーザーの表示名(32文字まで)
+        description:
+          type: string
+          description: webhookの説明
+        channelId:
+          type: string
+          format: uuid
+          description: デフォルトの投稿先チャンネル(パブリックチャンネルのみ)
+        secret:
+          type: string
+          description: webhookシークレット
+    PatchWebhook:
+      type: object
+      properties:
+        name:
+          type: string
+          description: webhookユーザーの表示名(32文字まで)
+        description:
+          type: string
+          description: webhookの説明
+        channelId:
+          type: string
+          format: uuid
+          description: デフォルトの投稿先チャンネル(パブリックチャンネルのみ)
+        secret:
+          type: string
+          description: webhookシークレット
     Bot:
       type: object
       properties:
@@ -3969,6 +3858,89 @@ components:
           type: string
           format: date-time
           description: BOT更新日時
+    ChannelBot:
+      type: object
+      properties:
+        botId:
+          type: string
+          format: uuid
+          description: BotのID
+        botUserId:
+          type: string
+          format: uuid
+          description: BotのユーザーID
+    PostBotChannel:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          description: ボットコード
+    BotIdObject:
+      type: object
+      properties:
+        botId:
+          type: string
+          format: uuid
+          description: 参加したBotのID
+    PostBot:
+      type: object
+      required:
+        - name
+        - displayName
+        - description
+        - postUrl
+      properties:
+        name:
+          type: string
+          description: botユーザーID(16文字まで)。自動的に先頭に"BOT_"が付与されます
+        displayName:
+          type: string
+          description: botユーザーの表示名(32文字まで)
+        description:
+          type: string
+          description: botの説明
+        postUrl:
+          type: string
+          format: url
+          description: botのPOSTエンドポイント
+    PatchBot:
+      type: object
+      properties:
+        displayName:
+          type: string
+          description: Bot表示名
+        description:
+          type: string
+          description: Bot説明
+        privileged:
+          type: boolean
+          description: privileged属性
+        webhookUrl:
+          type: string
+          format: url
+          description: BotのPOSTエンドポイント
+    PutBotState:
+      type: object
+      required:
+        - state
+      properties:
+        state:
+          type: string
+          description: activeまたはinactive
+    BotTokens:
+      type: object
+      properties:
+        verificationToken:
+          type: string
+          description: Verification Token
+        accessToken:
+          type: string
+          description: BOTアクセストークン
+        botCode:
+          type: string
+          description: BOTインストールコード
     BotDetail:
       type: object
       properties:
@@ -4023,6 +3995,27 @@ components:
           type: string
           example: NT672c7bgpfwdiMTyDXoeKiudlMazu
           description: BOTインストールコード
+    PutBotEvents:
+      type: object
+      required:
+        - events
+      properties:
+        events:
+          type: array
+          description: 購読するイベントの配列
+          items:
+            type: string
+    StampHistory:
+      type: object
+      properties:
+        stampId:
+          type: string
+          format: uuid
+          description: スタンプID
+        datetime:
+          type: string
+          format: date-time
+          description: そのスタンプが最後に押された日時
     Stamp:
       type: object
       properties:
@@ -4081,6 +4074,25 @@ components:
           type: string
           format: date-time
           description: アップロード日時
+    Heartbeat:
+      type: object
+      required:
+        - status
+        - channelId
+      properties:
+        status:
+          type: string
+          enum:
+            - none
+            - monitoring
+            - editing
+          description: editing,monitoring,noneでユーザーの状態を指定する
+          example: monitoring
+        channelId:
+          type: string
+          format: uuid
+          description: 現在いるチャンネルId
+          example: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
     HeartbeatRes:
       type: object
       properties:
@@ -4118,6 +4130,36 @@ components:
           type: string
           format: date-time
           description: フォルダ作成日時
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 通報ID
+        messageId:
+          type: string
+          format: uuid
+          description: 通報対象のメッセージID
+        reporter:
+          type: string
+          format: uuid
+          description: 通報者ID
+        reason:
+          type: string
+          description: 通報内容
+        createdAt:
+          type: string
+          format: date-time
+          description: 通報日時
+    ReportMessage:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          description: 通報理由(100文字以内)
     ClientInfo:
       type: object
       properties:
@@ -4191,6 +4233,42 @@ components:
           type: string
           format: date-time
           description: 承認日時
+    PostClient:
+      type: object
+      required:
+        - name
+        - description
+        - redirectUri
+        - scopes
+      properties:
+        name:
+          type: string
+          description: クライアント名(1-32文字)
+        description:
+          type: string
+          description: クライアントの説明
+        redirectUri:
+          type: string
+          format: uri
+          description: リダイレクト先のURI
+        scopes:
+          type: array
+          description: 要求するスコープ(必ず１つ以上)
+          items:
+            type: string
+    PatchClient:
+      type: object
+      properties:
+        name:
+          type: string
+          description: クライアント名(1-32文字)
+        description:
+          type: string
+          description: 説明
+        redirectUri:
+          type: string
+          format: uri
+          description: リダイレクト先のURI
     ChannelEvent:
       type: object
       properties:
