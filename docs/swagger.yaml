@@ -3384,7 +3384,12 @@ components:
           description: チャンネルの説明
           example: なんでも良いチャンネルです!!
     UserStatus:
-      $ref: "#/components/schemas/UserStatus"
+      type: integer
+      enum:
+        - 0
+        - 1
+        - 2
+      description: アカウントの状態 (0:停止,1:有効,2:一時停止)
     User:
       type: object
       properties:
