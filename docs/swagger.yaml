@@ -64,7 +64,7 @@ paths:
     get:
       tags:
         - public
-      operationId: getUserIcon
+      operationId: getPublicUserIcon
       description: 指定したユーザーのアイコン画像を取得します。
       parameters:
         - name: username
