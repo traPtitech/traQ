@@ -15,6 +15,7 @@ paths:
     post:
       tags:
         - authentication
+      operationId: login
       description: ログインを行います。リダイレクトパラメーターが存在する場合はログイン後にリダイレクトします
       parameters:
         - in: query
@@ -44,6 +45,7 @@ paths:
     post:
       tags:
         - authentication
+      operationId: logout
       description: ログアウトを行います。リダイレクトパラメーターが存在する場合はログアウト後にリダイレクトします
       parameters:
         - in: query
@@ -62,6 +64,7 @@ paths:
     get:
       tags:
         - public
+      operationId: getPublicUserIcon
       description: 指定したユーザーのアイコン画像を取得します。
       parameters:
         - name: username
@@ -100,6 +103,7 @@ paths:
     get:
       tags:
         - authorization
+      operationId: getOauth2Authorize
       description: OAuth2 認可エンドポイント
       parameters:
         - name: response_type
@@ -149,6 +153,7 @@ paths:
     post:
       tags:
         - authorization
+      operationId: postOauth2Authorize
       description: OAuth2 認可エンドポイント
       security: []
       requestBody:
@@ -168,6 +173,7 @@ paths:
     post:
       tags:
         - authorization
+      operationId: postOauth2AuthorizeDecide
       description: OAuth2 認可承諾
       requestBody:
         content:
@@ -186,6 +192,7 @@ paths:
     post:
       tags:
         - authorization
+      operationId: postOauth2Token
       description: OAuth2 トークンエンドポイント
       security: []
       requestBody:
@@ -213,6 +220,7 @@ paths:
     get:
       tags:
         - user
+      operationId: getUsers
       description: 全ユーザーのリストを取得します。
       security:
         - traqOAuth2:
@@ -230,6 +238,7 @@ paths:
     post:
       tags:
         - user
+      operationId: registerUser
       description: ユーザー登録します
       requestBody:
         content:
@@ -248,6 +257,7 @@ paths:
     get:
       tags:
         - user
+      operationId: getMe
       description: 自分のユーザー情報を取得します。
       security:
         - traqOAuth2:
@@ -263,6 +273,7 @@ paths:
     patch:
       tags:
         - user
+      operationId: changeMe
       description: 自分のユーザー情報を変更します。
       security:
         - traqOAuth2:
@@ -282,6 +293,7 @@ paths:
     put:
       tags:
         - user
+      operationId: changePassword
       description: 自分のパスワードを変更します。
       requestBody:
         content:
@@ -300,6 +312,7 @@ paths:
     get:
       tags:
         - user
+      operationId: getQrCode
       description: 自分のQRコードを取得します。
       responses:
         "200":
@@ -314,6 +327,7 @@ paths:
     get:
       tags:
         - user
+      operationId: getMyIcon
       description: 自分のアイコン画像を取得します。
       security:
         - traqOAuth2:
@@ -337,6 +351,7 @@ paths:
     put:
       tags:
         - user
+      operationId: changeMyIcon
       description: 自分のアイコンを更新します。
       security:
         - traqOAuth2:
@@ -363,6 +378,7 @@ paths:
     get:
       tags:
         - stamp
+      operationId: getStampHistory
       description: 自分のスタンプ履歴を最大50件取得します。結果は降順で返されます。
       security:
         - traqOAuth2:
@@ -381,6 +397,7 @@ paths:
     get:
       tags:
         - user group
+      operationId: getMyGroups
       description: 所属するユーザーグループのIDを取得します
       security:
         - traqOAuth2:
@@ -397,6 +414,7 @@ paths:
     get:
       tags:
         - notification
+      operationId: getNotifiedChannels
       description: 自分が通知を入れているチャンネルのリストを取得します
       security:
         - traqOAuth2:
@@ -413,6 +431,7 @@ paths:
     get:
       tags:
         - client
+      operationId: getTokens
       description: 自分が許可しているクライアントの一覧とトークン情報を取得します。
       responses:
         "200":
@@ -432,6 +451,7 @@ paths:
     delete:
       tags:
         - client
+      operationId: deleteToken
       description: 指定したトークンの認可を取り消します。
       responses:
         "204":
@@ -445,6 +465,7 @@ paths:
     get:
       tags:
         - sessions
+      operationId: getSessions
       description: 自分のログインセッションリストを取得します。
       responses:
         "200":
@@ -460,6 +481,7 @@ paths:
     delete:
       tags:
         - sessions
+      operationId: deleteSessions
       description: 自分のログインセッションを全てログアウトします。
       responses:
         "204":
@@ -478,6 +500,7 @@ paths:
     delete:
       tags:
         - sessions
+      operationId: deleteSession
       description: 対象のセッションをログアウトします。
       responses:
         "204":
@@ -491,6 +514,7 @@ paths:
     get:
       tags:
         - clip
+      operationId: getClips
       description: 全てのクリップを取得します。
       security:
         - traqOAuth2:
@@ -507,6 +531,7 @@ paths:
     post:
       tags:
         - clip
+      operationId: clipMessage
       description: 新しくメッセージをクリップします。
       security:
         - traqOAuth2:
@@ -532,6 +557,7 @@ paths:
     get:
       tags:
         - clip
+      operationId: getClip
       description: 指定したクリップのメッセージを取得します。
       security:
         - traqOAuth2:
@@ -548,6 +574,7 @@ paths:
     delete:
       tags:
         - clip
+      operationId: unclipMessage
       description: 指定したクリップを削除します。
       security:
         - traqOAuth2:
@@ -564,6 +591,7 @@ paths:
     get:
       tags:
         - clip
+      operationId: getClipsFolder
       description: 指定したクリップのフォルダ情報を取得します。
       security:
         - traqOAuth2:
@@ -580,6 +608,7 @@ paths:
     put:
       tags:
         - clip
+      operationId: changeClipsFolder
       description: 指定したクリップのフォルダを変更します。
       security:
         - traqOAuth2:
@@ -601,6 +630,7 @@ paths:
     get:
       tags:
         - clip
+      operationId: getClipFolders
       description: クリップフォルダ一覧を取得します。
       security:
         - traqOAuth2:
@@ -617,6 +647,7 @@ paths:
     post:
       tags:
         - clip
+      operationId: createClipFolders
       description: クリップフォルダを作成します。
       security:
         - traqOAuth2:
@@ -650,6 +681,7 @@ paths:
     get:
       tags:
         - clip
+      operationId: getClipFolder
       description: フォルダ内のクリップ一覧を取得します。
       security:
         - traqOAuth2:
@@ -668,6 +700,7 @@ paths:
     patch:
       tags:
         - clip
+      operationId: editClipFolder
       description: クリップフォルダ名を変更します。
       security:
         - traqOAuth2:
@@ -689,6 +722,7 @@ paths:
     delete:
       tags:
         - clip
+      operationId: deleteClipFolder
       description: クリップフォルダを削除します。フォルダ内のクリップは全て削除されます。
       security:
         - traqOAuth2:
@@ -703,6 +737,7 @@ paths:
     get:
       tags:
         - star
+      operationId: getStaredChannels
       description: お気に入りチャンネルリストを取得します。
       security:
         - traqOAuth2:
@@ -721,6 +756,7 @@ paths:
     put:
       tags:
         - star
+      operationId: starChannel
       description: お気に入りチャンネルリストにチャンネルを追加します。
       security:
         - traqOAuth2:
@@ -733,6 +769,7 @@ paths:
     delete:
       tags:
         - star
+      operationId: unstarChannel
       description: +|
         お気に入りチャンネルリストから削除します。
         既にお気に入りチャンネルリストに無いチャンネルを指定した場合は無視されます(204)。
@@ -749,6 +786,7 @@ paths:
     get:
       tags:
         - unread
+      operationId: getUnreadChannels
       description: 未読チャンネル情報のリストを取得します。
       security:
         - traqOAuth2:
@@ -769,6 +807,7 @@ paths:
     delete:
       tags:
         - unread
+      operationId: readMessages
       description: 指定されたチャンネルの未読メッセージを既読にします。存在しないチャンネルIDを指定した場合は、無視されます。
       security:
         - traqOAuth2:
@@ -781,6 +820,7 @@ paths:
     get:
       tags:
         - mute
+      operationId: getMutedChannels
       description: ミュートしているチャンネルのIDの配列を返します。
       security:
         - traqOAuth2:
@@ -799,6 +839,7 @@ paths:
     post:
       tags:
         - mute
+      operationId: muteChannel
       description: 指定したチャンネルをミュートします。ただし、強制通知チャンネルはミュートできません。既にミュートしていた場合は204を返します。
       security:
         - traqOAuth2:
@@ -813,6 +854,7 @@ paths:
     delete:
       tags:
         - mute
+      operationId: unmuteChannel
       description: 指定したチャンネルのミュートを解除します。既に解除されていた場合は204を返します。
       security:
         - traqOAuth2:
@@ -833,6 +875,7 @@ paths:
     get:
       tags:
         - user
+      operationId: getUser
       description: ユーザーの詳細を取得します。
       security:
         - traqOAuth2:
@@ -864,6 +907,7 @@ paths:
     get:
       tags:
         - message
+      operationId: getDirectMessages
       description: DMチャンネルに存在するメッセージを取得します。
       security:
         - traqOAuth2:
@@ -898,6 +942,7 @@ paths:
     post:
       tags:
         - message
+      operationId: postDirectMessage
       description: DMチャンネルにメッセージを投稿します。
       security:
         - traqOAuth2:
@@ -927,6 +972,7 @@ paths:
     get:
       tags:
         - user
+      operationId: getUserIcon
       description: ユーザーのアイコン画像を取得します。
       security:
         - traqOAuth2:
@@ -958,6 +1004,7 @@ paths:
     get:
       tags:
         - notification
+      operationId: getUserNotifiedChannels
       description: ユーザーが通知を入れているチャンネルのリストを取得します
       security:
         - traqOAuth2:
@@ -978,6 +1025,7 @@ paths:
     get:
       tags:
         - user group
+      operationId: getUserGroups
       description: 所属するユーザーグループのIDを取得します
       security:
         - traqOAuth2:
@@ -998,6 +1046,7 @@ paths:
     get:
       tags:
         - userTag
+      operationId: getUserTags
       description: ユーザーのタグのリストを取得します。
       security:
         - traqOAuth2:
@@ -1018,6 +1067,7 @@ paths:
     post:
       tags:
         - userTag
+      operationId: addUserTags
       description: ユーザーにタグを追加します。
       security:
         - traqOAuth2:
@@ -1051,6 +1101,7 @@ paths:
     patch:
       tags:
         - userTag
+      operationId: changeLockUserTag
       description: タグのロック、アンロックを変更します。
       security:
         - traqOAuth2:
@@ -1079,6 +1130,7 @@ paths:
     delete:
       tags:
         - userTag
+      operationId: deleteUserTag
       description: ユーザーから指定したタグを削除します。既に存在しないタグを削除しようとした場合は無視されます(204)。
       security:
         - traqOAuth2:
@@ -1100,6 +1152,7 @@ paths:
     get:
       tags:
         - heartbeat
+      operationId: getHeartbeat
       description: チャンネルを現在見ている人・編集している人を取得します。
       security:
         - traqOAuth2:
@@ -1123,6 +1176,7 @@ paths:
     post:
       tags:
         - heartbeat
+      operationId: postHeartbeat
       description: どのチャンネルを見ているか・編集しているかを送信します。
       security:
         - traqOAuth2:
@@ -1140,6 +1194,7 @@ paths:
     get:
       tags:
         - channel
+      operationId: getChannels
       description: |+
         (すべての)チャンネルのリストを取得します。
       security:
@@ -1158,6 +1213,7 @@ paths:
     post:
       tags:
         - channel
+      operationId: createChannel
       description: チャンネルを作成します。
       security:
         - traqOAuth2:
@@ -1187,6 +1243,7 @@ paths:
     get:
       tags:
         - channel
+      operationId: getChannel
       description: チャンネルの情報を返します。
       security:
         - traqOAuth2:
@@ -1207,6 +1264,7 @@ paths:
     patch:
       tags:
         - channel
+      operationId: editChannel
       description: チャンネルの情報を変更します。
       requestBody:
         content:
@@ -1227,6 +1285,7 @@ paths:
     delete:
       tags:
         - channel
+      operationId: deleteChannel
       description: チャンネルを削除します。
       responses:
         "204":
@@ -1242,6 +1301,7 @@ paths:
     put:
       tags:
         - channel
+      operationId: changeChannelParent
       description: チャンネルの親チャンネルを変更します。
       requestBody:
         content:
@@ -1266,6 +1326,7 @@ paths:
     post:
       tags:
         - channel
+      operationId: createChannelChild
       description: 子チャンネルを作成します。
       security:
         - traqOAuth2:
@@ -1297,6 +1358,7 @@ paths:
     get:
       tags:
         - pin
+      operationId: getPinnedMessages
       description: チャンネルのピン留め一覧を取得します。
       security:
         - traqOAuth2:
@@ -1316,6 +1378,7 @@ paths:
     get:
       tags:
         - channel
+      operationId: getChannelTopic
       description: チャンネルの説明を取得します。
       security:
         - traqOAuth2:
@@ -1336,6 +1399,7 @@ paths:
     put:
       tags:
         - channel
+      operationId: changeChannelTopic
       description: チャンネルの説明を変更します。
       security:
         - traqOAuth2:
@@ -1359,6 +1423,7 @@ paths:
     get:
       tags:
         - message
+      operationId: getMessages
       description: チャンネルに存在するメッセージを取得します。
       security:
         - traqOAuth2:
@@ -1393,6 +1458,7 @@ paths:
     post:
       tags:
         - message
+      operationId: postMessage
       description: チャンネルにメッセージを投稿します。
       security:
         - traqOAuth2:
@@ -1422,6 +1488,7 @@ paths:
     get:
       tags:
         - channel
+      operationId: getChannelEvents
       description: チャンネルイベントのリストを取得します。
       security:
         - traqOAuth2:
@@ -1460,6 +1527,7 @@ paths:
     get:
       tags:
         - notification
+      operationId: getNotifications
       description: 通知を点けているユーザーのIDの配列を取得します。
       security:
         - traqOAuth2:
@@ -1476,6 +1544,7 @@ paths:
     put:
       tags:
         - notification
+      operationId: changeNotifications
       description: |+
         チャンネルの通知状況を変更します。
         リクエストに含めなかったユーザーIDのユーザーの通知状況は変更しません。
@@ -1502,6 +1571,7 @@ paths:
     get:
       tags:
         - bot
+      operationId: getChannelBots
       description: チャンネルに参加しているBot一覧を取得します。
       security:
         - traqOAuth2:
@@ -1521,6 +1591,7 @@ paths:
     post:
       tags:
         - bot
+      operationId: addChannelBot
       description: チャンネルにBotを参加させます。
       security:
         - traqOAuth2:
@@ -1550,6 +1621,7 @@ paths:
     delete:
       tags:
         - bot
+      operationId: removeChannelBot
       description: Botをチャンネルから退出させます。
       security:
         - traqOAuth2:
@@ -1565,6 +1637,7 @@ paths:
     get:
       tags:
         - notification
+      operationId: connectNotification
       description: 通知ストリーム(Server Sent Events)に接続します。
       security:
         - traqOAuth2:
@@ -1577,6 +1650,7 @@ paths:
     post:
       tags:
         - notification
+      operationId: registerNotificationDevice
       description: FCMデバイスを登録します。
       security:
         - traqOAuth2:
@@ -1594,6 +1668,7 @@ paths:
     get:
       tags:
         - message
+      operationId: getReports
       description: メッセージ通報を最大50件取得します。
       parameters:
         - name: p
@@ -1619,6 +1694,7 @@ paths:
     get:
       tags:
         - message
+      operationId: getMessage
       description: 指定したメッセージを取得します。
       security:
         - traqOAuth2:
@@ -1635,6 +1711,7 @@ paths:
     put:
       tags:
         - message
+      operationId: editMessage
       description: 指定したメッセージを編集します。
       security:
         - traqOAuth2:
@@ -1654,6 +1731,7 @@ paths:
     delete:
       tags:
         - message
+      operationId: deleteMessage
       description: 指定したメッセージを削除します。
       security:
         - traqOAuth2:
@@ -1672,6 +1750,7 @@ paths:
     post:
       tags:
         - message
+      operationId: reportMessage
       description: 指定したメッセージを通報します。
       security:
         - traqOAuth2:
@@ -1695,6 +1774,7 @@ paths:
     get:
       tags:
         - stamp
+      operationId: getMessageStamps
       description: 指定したメッセージに押されているスタンプを全て取得します。
       security:
         - traqOAuth2:
@@ -1718,6 +1798,7 @@ paths:
     post:
       tags:
         - stamp
+      operationId: stampMessage
       description: 指定したメッセージに指定したスタンプを押します。
       security:
         - traqOAuth2:
@@ -1730,6 +1811,7 @@ paths:
     delete:
       tags:
         - stamp
+      operationId: unstampMessage
       description: 指定したメッセージから指定したスタンプを外します。
       security:
         - traqOAuth2:
@@ -1746,6 +1828,7 @@ paths:
     get:
       tags:
         - userTag
+      operationId: getTag
       description: 指定されたタグの情報を取得します。
       security:
         - traqOAuth2:
@@ -1764,6 +1847,7 @@ paths:
     post:
       tags:
         - file
+      operationId: uploadFile
       description: ファイルをアップロードします
       security:
         - traqOAuth2:
@@ -1803,6 +1887,7 @@ paths:
     get:
       tags:
         - file
+      operationId: getFile
       description: 指定したファイルの中身を取得します。
       security:
         - traqOAuth2:
@@ -1832,6 +1917,7 @@ paths:
     delete:
       tags:
         - file
+      operationId: deleteFile
       description: 指定したファイルを削除します。
       responses:
         "204":
@@ -1847,6 +1933,7 @@ paths:
     get:
       tags:
         - file
+      operationId: getFileMeta
       description: 指定したファイルのメタデータを取得します
       security:
         - traqOAuth2:
@@ -1869,6 +1956,7 @@ paths:
     get:
       tags:
         - file
+      operationId: getFileThumbnail
       description: 指定したファイルのサムネイルを取得します
       security:
         - traqOAuth2:
@@ -1890,6 +1978,7 @@ paths:
     post:
       tags:
         - pin
+      operationId: pinMessage
       description: チャンネルにメッセージをピン留めします。
       security:
         - traqOAuth2:
@@ -1913,6 +2002,7 @@ paths:
     get:
       tags:
         - pin
+      operationId: getPinnedMessage
       description: ピン留めを取得します。
       security:
         - traqOAuth2:
@@ -1928,6 +2018,7 @@ paths:
     delete:
       tags:
         - pin
+      operationId: unpinMessage
       description: ピン留めを外します。
       security:
         - traqOAuth2:
@@ -1944,6 +2035,7 @@ paths:
     get:
       tags:
         - stamp
+      operationId: getStamps
       description: 全スタンプのリストを取得します。
       security:
         - traqOAuth2:
@@ -1960,6 +2052,7 @@ paths:
     post:
       tags:
         - stamp
+      operationId: createStamp
       description: スタンプを新規作成します。
       security:
         - traqOAuth2:
@@ -1998,6 +2091,7 @@ paths:
     get:
       tags:
         - stamp
+      operationId: getStamp
       description: スタンプの情報を取得します。
       security:
         - traqOAuth2:
@@ -2014,6 +2108,7 @@ paths:
     patch:
       tags:
         - stamp
+      operationId: editStamp
       description: スタンプを修正します。
       security:
         - traqOAuth2:
@@ -2043,6 +2138,7 @@ paths:
     delete:
       tags:
         - stamp
+      operationId: deleteStamp
       description: スタンプを削除します。
       responses:
         "204":
@@ -2056,6 +2152,7 @@ paths:
     get:
       tags:
         - webhook
+      operationId: getWebhooks
       description: 自分が作成したwebhookの一覧を取得します。
       security:
         - traqOAuth2:
@@ -2073,6 +2170,7 @@ paths:
     post:
       tags:
         - webhook
+      operationId: createWebhooks
       description: webhookを作成します。
       security:
         - traqOAuth2:
@@ -2100,6 +2198,7 @@ paths:
     get:
       tags:
         - webhook
+      operationId: getWebhook
       description: webhookの詳細を取得します。
       security:
         - traqOAuth2:
@@ -2119,6 +2218,7 @@ paths:
     patch:
       tags:
         - webhook
+      operationId: editWebhook
       description: webhookを修正します。
       security:
         - traqOAuth2:
@@ -2140,6 +2240,7 @@ paths:
     delete:
       tags:
         - webhook
+      operationId: deleteWebhook
       description: webhookを削除します。
       security:
         - traqOAuth2:
@@ -2154,6 +2255,7 @@ paths:
     post:
       tags:
         - webhook
+      operationId: postWebhook
       description: webhookを送信します。
       parameters:
         - in: header
@@ -2188,6 +2290,7 @@ paths:
     get:
       tags:
         - webhook
+      operationId: getWebhookIcon
       description: 指定したWebhookのアイコンを取得します。
       security:
         - traqOAuth2:
@@ -2214,6 +2317,7 @@ paths:
     put:
       tags:
         - webhook
+      operationId: changeWebhookIcon
       description: 指定したwebhookのアイコンを変更します。
       security:
         - traqOAuth2:
@@ -2248,6 +2352,7 @@ paths:
     post:
       tags:
         - webhook
+      operationId: postGitHubWebhook
       description: Github-Compatibleなwebhookを送信します。
       security: []
       requestBody:
@@ -2267,6 +2372,7 @@ paths:
     get:
       tags:
         - user group
+      operationId: getGroups
       description: 全てのユーザーグループを取得します
       security:
         - traqOAuth2:
@@ -2283,6 +2389,7 @@ paths:
     post:
       tags:
         - user group
+      operationId: createGroups
       description: ユーザーグループを作成します
       security:
         - traqOAuth2:
@@ -2310,6 +2417,7 @@ paths:
     get:
       tags:
         - user group
+      operationId: getGroup
       description: ユーザーグループを取得します
       security:
         - traqOAuth2:
@@ -2326,6 +2434,7 @@ paths:
     patch:
       tags:
         - user group
+      operationId: editGroup
       description: ユーザーグループの情報を変更します
       security:
         - traqOAuth2:
@@ -2349,6 +2458,7 @@ paths:
     delete:
       tags:
         - user group
+      operationId: deleteGroup
       description: ユーザーグループを削除します
       security:
         - traqOAuth2:
@@ -2367,6 +2477,7 @@ paths:
     get:
       tags:
         - user group
+      operationId: getGroupMembers
       description: ユーザーグループのメンバーのIDを取得します
       security:
         - traqOAuth2:
@@ -2383,6 +2494,7 @@ paths:
     post:
       tags:
         - user group
+      operationId: addGroupMember
       description: ユーザーグループにメンバーを追加します
       security:
         - traqOAuth2:
@@ -2409,6 +2521,7 @@ paths:
     delete:
       tags:
         - user group
+      operationId: deleteGroupMember
       description: ユーザーグループからメンバーを削除します
       security:
         - traqOAuth2:
@@ -2427,6 +2540,7 @@ paths:
     get:
       tags:
         - client
+      operationId: getClients
       description: 自分が登録しているクライアントの一覧を取得します。
       security:
         - traqOAuth2:
@@ -2445,6 +2559,7 @@ paths:
     post:
       tags:
         - client
+      operationId: createClient
       description: クライアントを登録します。
       security:
         - traqOAuth2:
@@ -2472,6 +2587,7 @@ paths:
     get:
       tags:
         - client
+      operationId: getClient
       description: 指定したクライアントIDのクライアントの情報を取得します。
       security:
         - traqOAuth2:
@@ -2488,6 +2604,7 @@ paths:
     patch:
       tags:
         - client
+      operationId: patchClient
       description: 指定したクライアントIDのクライアントの情報を変更します。
       security:
         - traqOAuth2:
@@ -2507,6 +2624,7 @@ paths:
     delete:
       tags:
         - client
+      operationId: deleteClient
       description: |+
         指定したクライアントIDのクライアントを削除します。
         正常に削除された場合、このクライアントを通じての認可は全て取り消されます。
@@ -2527,6 +2645,7 @@ paths:
     get:
       tags:
         - client
+      operationId: getClientDetail
       description: クライアントの詳細を取得します。
       security:
         - traqOAuth2:
@@ -2545,6 +2664,7 @@ paths:
     get:
       tags:
         - bot
+      operationId: getBots
       description: 自分が作成したBotの一覧を取得します。
       security:
         - traqOAuth2:
@@ -2562,6 +2682,7 @@ paths:
     post:
       tags:
         - bot
+      operationId: createBots
       description: Botを作成します。
       security:
         - traqOAuth2:
@@ -2591,6 +2712,7 @@ paths:
     get:
       tags:
         - bot
+      operationId: getBot
       description: Botを取得します。
       security:
         - traqOAuth2:
@@ -2608,6 +2730,7 @@ paths:
     patch:
       tags:
         - bot
+      operationId: editBot
       description: Bot情報を変更します。
       security:
         - traqOAuth2:
@@ -2629,6 +2752,7 @@ paths:
     delete:
       tags:
         - bot
+      operationId: deleteBot
       description: Botを削除します。
       security:
         - traqOAuth2:
@@ -2647,6 +2771,7 @@ paths:
     get:
       tags:
         - bot
+      operationId: getBotDetail
       description: Botの詳細を取得します。
       security:
         - traqOAuth2:
@@ -2670,6 +2795,7 @@ paths:
     put:
       tags:
         - bot
+      operationId: changeBotEvents
       description: Botの購読イベントを変更します。
       security:
         - traqOAuth2:
@@ -2697,6 +2823,7 @@ paths:
     get:
       tags:
         - bot
+      operationId: getBotIcon
       description: 指定したBotのアイコンを取得します。
       security:
         - traqOAuth2:
@@ -2723,6 +2850,7 @@ paths:
     put:
       tags:
         - bot
+      operationId: changeBotIcon
       description: 指定したBotのアイコンを変更します。
       security:
         - traqOAuth2:
@@ -2755,6 +2883,7 @@ paths:
     put:
       tags:
         - bot
+      operationId: changeBotState
       description: Botの状態を変更します。
       security:
         - traqOAuth2:
@@ -2782,6 +2911,7 @@ paths:
     post:
       tags:
         - bot
+      operationId: reissueBotTokens
       description: Botの各種トークンを再発行します。
       security:
         - traqOAuth2:
@@ -2804,6 +2934,7 @@ paths:
     get:
       tags:
         - bot
+      operationId: getBotChannels
       description: Botが参加しているチャンネルのUUIDの配列を取得します。
       security:
         - traqOAuth2:
@@ -2825,6 +2956,7 @@ paths:
     get:
       tags:
         - activity
+      operationId: getActivities
       description: 各チャンネルの最新のメッセージ１件をメッセージ作成日時の降順で取得します。
       security:
         - traqOAuth2:
@@ -4304,15 +4436,15 @@ components:
             - ChildCreated
         detail:
           oneOf:
-            - $ref: '#/components/schemas/TopicChangedEvent'
-            - $ref: '#/components/schemas/SubscribersChangedEvent'
-            - $ref: '#/components/schemas/PinAddedEvent'
-            - $ref: '#/components/schemas/PinRemovedEvent'
-            - $ref: '#/components/schemas/NameChangedEvent'
-            - $ref: '#/components/schemas/ParentChangedEvent'
-            - $ref: '#/components/schemas/VisibilityChangedEvent'
-            - $ref: '#/components/schemas/ForcedNotificationChangedEvent'
-            - $ref: '#/components/schemas/ChildCreatedEvent'
+            - $ref: "#/components/schemas/TopicChangedEvent"
+            - $ref: "#/components/schemas/SubscribersChangedEvent"
+            - $ref: "#/components/schemas/PinAddedEvent"
+            - $ref: "#/components/schemas/PinRemovedEvent"
+            - $ref: "#/components/schemas/NameChangedEvent"
+            - $ref: "#/components/schemas/ParentChangedEvent"
+            - $ref: "#/components/schemas/VisibilityChangedEvent"
+            - $ref: "#/components/schemas/ForcedNotificationChangedEvent"
+            - $ref: "#/components/schemas/ChildCreatedEvent"
           description: イベント詳細
         date_time:
           type: string
