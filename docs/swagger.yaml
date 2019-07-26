@@ -414,7 +414,7 @@ paths:
     get:
       tags:
         - notification
-      operationId: getMyNotifiedChannels
+      operationId: getMySubscribedChannels
       description: 自分が通知を入れているチャンネルのリストを取得します
       security:
         - traqOAuth2:
@@ -1004,7 +1004,7 @@ paths:
     get:
       tags:
         - notification
-      operationId: getUserNotifiedChannels
+      operationId: getUserSubscribedChannels
       description: ユーザーが通知を入れているチャンネルのリストを取得します
       security:
         - traqOAuth2:
@@ -1527,7 +1527,7 @@ paths:
     get:
       tags:
         - notification
-      operationId: getNotifications
+      operationId: getSubscribers
       description: 通知を点けているユーザーのIDの配列を取得します。
       security:
         - traqOAuth2:
@@ -1544,7 +1544,7 @@ paths:
     put:
       tags:
         - notification
-      operationId: changeNotifications
+      operationId: changeSubscribers
       description: |+
         チャンネルの通知状況を変更します。
         リクエストに含めなかったユーザーIDのユーザーの通知状況は変更しません。
