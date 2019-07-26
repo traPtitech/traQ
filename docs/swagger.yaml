@@ -414,7 +414,7 @@ paths:
     get:
       tags:
         - notification
-      operationId: getNotifiedChannels
+      operationId: getMyNotifiedChannels
       description: 自分が通知を入れているチャンネルのリストを取得します
       security:
         - traqOAuth2:
@@ -647,7 +647,7 @@ paths:
     post:
       tags:
         - clip
-      operationId: createClipFolders
+      operationId: createClipFolder
       description: クリップフォルダを作成します。
       security:
         - traqOAuth2:
@@ -1067,7 +1067,7 @@ paths:
     post:
       tags:
         - userTag
-      operationId: addUserTags
+      operationId: addUserTag
       description: ユーザーにタグを追加します。
       security:
         - traqOAuth2:
@@ -2389,7 +2389,7 @@ paths:
     post:
       tags:
         - user group
-      operationId: createGroups
+      operationId: createGroup
       description: ユーザーグループを作成します
       security:
         - traqOAuth2:
