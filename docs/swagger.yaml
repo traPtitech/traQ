@@ -414,7 +414,7 @@ paths:
     get:
       tags:
         - notification
-      operationId: getNotifiedChannels
+      operationId: getMySubscribeChannels
       description: 自分が通知を入れているチャンネルのリストを取得します
       security:
         - traqOAuth2:
@@ -647,7 +647,7 @@ paths:
     post:
       tags:
         - clip
-      operationId: createClipFolders
+      operationId: createClipFolder
       description: クリップフォルダを作成します。
       security:
         - traqOAuth2:
@@ -1004,7 +1004,7 @@ paths:
     get:
       tags:
         - notification
-      operationId: getUserNotifiedChannels
+      operationId: getUserSubscribeChannels
       description: ユーザーが通知を入れているチャンネルのリストを取得します
       security:
         - traqOAuth2:
@@ -1067,7 +1067,7 @@ paths:
     post:
       tags:
         - userTag
-      operationId: addUserTags
+      operationId: addUserTag
       description: ユーザーにタグを追加します。
       security:
         - traqOAuth2:
@@ -1527,7 +1527,7 @@ paths:
     get:
       tags:
         - notification
-      operationId: getNotifications
+      operationId: getSubscribers
       description: 通知を点けているユーザーのIDの配列を取得します。
       security:
         - traqOAuth2:
@@ -1544,7 +1544,7 @@ paths:
     put:
       tags:
         - notification
-      operationId: changeNotifications
+      operationId: changeSubscribers
       description: |+
         チャンネルの通知状況を変更します。
         リクエストに含めなかったユーザーIDのユーザーの通知状況は変更しません。
@@ -2389,7 +2389,7 @@ paths:
     post:
       tags:
         - user group
-      operationId: createGroups
+      operationId: createGroup
       description: ユーザーグループを作成します
       security:
         - traqOAuth2:
