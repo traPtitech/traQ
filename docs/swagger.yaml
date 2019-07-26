@@ -414,7 +414,7 @@ paths:
     get:
       tags:
         - notification
-      operationId: getMySubscribedChannels
+      operationId: getMySubscribeChannels
       description: 自分が通知を入れているチャンネルのリストを取得します
       security:
         - traqOAuth2:
@@ -1004,7 +1004,7 @@ paths:
     get:
       tags:
         - notification
-      operationId: getUserSubscribedChannels
+      operationId: getUserSubscribeChannels
       description: ユーザーが通知を入れているチャンネルのリストを取得します
       security:
         - traqOAuth2:
