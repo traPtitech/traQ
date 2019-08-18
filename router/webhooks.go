@@ -92,6 +92,7 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 		Description null.String   `json:"description"`
 		ChannelID   uuid.NullUUID `json:"channelId"`
 		Secret      null.String   `json:"secret"`
+		CreatorID   uuid.NullUUID `json:"creatorId"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return badRequest(err)
@@ -102,6 +103,7 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 		Description: req.Description,
 		ChannelID:   req.ChannelID,
 		Secret:      req.Secret,
+		CreatorID:   req.CreatorID,
 	}
 	if err := h.Repo.UpdateWebhook(w.GetID(), args); err != nil {
 		switch {

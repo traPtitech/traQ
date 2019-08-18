@@ -141,6 +141,21 @@ func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 			changes["post_url"] = w
 			changes["state"] = model.BotPaused
 		}
+		if args.CreatorID.Valid {
+			// 作成者検証
+			var user model.User
+			if err := tx.First(&user, &model.User{ID: args.CreatorID.UUID}).Error; err != nil {
+				if gorm.IsRecordNotFoundError(err) {
+					return ArgError("args.CreatorID", "the Creator is not found")
+				}
+				return err
+			}
+			if !(user.IsActive() && !user.Bot) {
+				return ArgError("args.CreatorID", "invalid User")
+			}
+
+			changes["creator_id"] = args.CreatorID.UUID
+		}
 
 		if len(changes) > 0 {
 			if err := tx.Model(&b).Updates(changes).Error; err != nil {

@@ -121,6 +121,21 @@ func (repo *GormRepository) UpdateWebhook(id uuid.UUID, args UpdateWebhookArgs) 
 		if args.Secret.Valid {
 			changes["secret"] = args.Secret.String
 		}
+		if args.CreatorID.Valid {
+			// 作成者検証
+			var user model.User
+			if err := tx.First(&user, &model.User{ID: args.CreatorID.UUID}).Error; err != nil {
+				if gorm.IsRecordNotFoundError(err) {
+					return ArgError("args.CreatorID", "the Creator is not found")
+				}
+				return err
+			}
+			if !(user.IsActive() && !user.Bot) {
+				return ArgError("args.CreatorID", "invalid User")
+			}
+
+			changes["creator_id"] = args.CreatorID.UUID
+		}
 		if len(changes) > 0 {
 			if err := tx.Model(&model.WebhookBot{ID: id}).Updates(changes).Error; err != nil {
 				return err

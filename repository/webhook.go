@@ -12,6 +12,7 @@ type UpdateWebhookArgs struct {
 	Description null.String
 	ChannelID   uuid.NullUUID
 	Secret      null.String
+	CreatorID   uuid.NullUUID
 }
 
 // WebhookRepository Webhookボットリポジトリ

@@ -12,6 +12,7 @@ type UpdateBotArgs struct {
 	Description null.String
 	WebhookURL  null.String
 	Privileged  null.Bool
+	CreatorID   uuid.NullUUID
 }
 
 // BotRepository Botリポジトリ
