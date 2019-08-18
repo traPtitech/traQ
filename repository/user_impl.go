@@ -168,11 +168,7 @@ func (repo *GormRepository) GetUser(id uuid.UUID) (*model.User, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
-	user := &model.User{}
-	if err := repo.db.First(user, &model.User{ID: id}).Error; err != nil {
-		return nil, convertError(err)
-	}
-	return user, nil
+	return getUser(repo.db, &model.User{ID: id})
 }
 
 // GetUserByName implements UserRepository interface.
@@ -180,11 +176,15 @@ func (repo *GormRepository) GetUserByName(name string) (*model.User, error) {
 	if len(name) == 0 {
 		return nil, ErrNotFound
 	}
-	user := &model.User{}
-	if err := repo.db.First(user, &model.User{Name: name}).Error; err != nil {
+	return getUser(repo.db, &model.User{Name: name})
+}
+
+func getUser(tx *gorm.DB, where interface{}) (*model.User, error) {
+	var user model.User
+	if err := tx.First(&user, where).Error; err != nil {
 		return nil, convertError(err)
 	}
-	return user, nil
+	return &user, nil
 }
 
 // GetUsers implements UserRepository interface.
