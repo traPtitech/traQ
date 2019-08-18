@@ -59,6 +59,8 @@ func (repo *GormRepository) migration() error {
 			{"messages_stamps", "user_id", "users(id)", "CASCADE", "CASCADE"},
 			{"stamps", "file_id", "files(id)", "NO ACTION", "CASCADE"},
 			{"webhook_bots", "bot_user_id", "users(id)", "CASCADE", "CASCADE"},
+			{"webhook_bots", "creator_id", "users(id)", "CASCADE", "CASCADE"},
+			{"webhook_bots", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 			{"channel_events", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 		}
 		for _, c := range foreignKeys {
@@ -142,4 +144,5 @@ var migrations = []*gormigrate.Migration{
 	migration.V1, // インデックスidx_messages_deleted_atの削除とidx_messages_channel_id_deleted_at_created_atの追加
 	migration.V2, // RBAC周りのリフォーム
 	migration.V3, // チャンネルイベント履歴
+	migration.V4, // Webhook, Bot外部キー
 }

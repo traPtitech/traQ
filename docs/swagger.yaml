@@ -3964,6 +3964,10 @@ components:
         secret:
           type: string
           description: webhookシークレット
+        creatorId:
+          type: string
+          format: uuid
+          description: 移譲先のユーザーUUID
     Bot:
       type: object
       properties:

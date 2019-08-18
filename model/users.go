@@ -71,6 +71,11 @@ func (user *User) Validate() error {
 	return validator.ValidateStruct(user)
 }
 
+// IsActive ユーザーが有効かどうか
+func (user *User) IsActive() bool {
+	return user.Status == UserAccountStatusActive
+}
+
 // AuthenticateUser ユーザー構造体とパスワードを照合します
 func AuthenticateUser(user *User, password string) error {
 	if user == nil {

@@ -18,7 +18,11 @@ CREATE TABLE `webhook_bots` (
   `deleted_at` timestamp(6) NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `bot_user_id` (`bot_user_id`),
-  CONSTRAINT `webhook_bots_bot_user_id_users_id_foreign` FOREIGN KEY (`bot_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `webhook_bots_creator_id_users_id_foreign` (`creator_id`),
+  KEY `webhook_bots_channel_id_channels_id_foreign` (`channel_id`),
+  CONSTRAINT `webhook_bots_bot_user_id_users_id_foreign` FOREIGN KEY (`bot_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `webhook_bots_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `webhook_bots_creator_id_users_id_foreign` FOREIGN KEY (`creator_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -32,8 +36,8 @@ CREATE TABLE `webhook_bots` (
 | bot_user_id | char(36) |  | false |  |  |  |
 | description | text |  | false |  |  |  |
 | secret | text |  | false |  |  |  |
-| channel_id | char(36) |  | false |  |  |  |
-| creator_id | char(36) |  | false |  |  |  |
+| channel_id | char(36) |  | false |  | [channels](channels.md) |  |
+| creator_id | char(36) |  | false |  | [users](users.md) |  |
 | created_at | timestamp(6) |  | true |  |  |  |
 | updated_at | timestamp(6) |  | true |  |  |  |
 | deleted_at | timestamp(6) |  | true |  |  |  |
@@ -45,11 +49,15 @@ CREATE TABLE `webhook_bots` (
 | bot_user_id | UNIQUE | UNIQUE KEY bot_user_id (bot_user_id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 | webhook_bots_bot_user_id_users_id_foreign | UNIQUE | UNIQUE KEY webhook_bots_bot_user_id_users_id_foreign (bot_user_id) |
+| webhook_bots_channel_id_channels_id_foreign | FOREIGN KEY | FOREIGN KEY (channel_id) REFERENCES channels (id) |
+| webhook_bots_creator_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (creator_id) REFERENCES users (id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
+| webhook_bots_channel_id_channels_id_foreign | KEY webhook_bots_channel_id_channels_id_foreign (channel_id) USING BTREE |
+| webhook_bots_creator_id_users_id_foreign | KEY webhook_bots_creator_id_users_id_foreign (creator_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 | bot_user_id | UNIQUE KEY bot_user_id (bot_user_id) USING BTREE |
 
