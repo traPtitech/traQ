@@ -4067,6 +4067,10 @@ components:
           type: string
           format: url
           description: BotのPOSTエンドポイント
+        creatorId:
+          type: string
+          format: uuid
+          description: 移譲先のユーザーUUID
     PutBotState:
       type: object
       required:

@@ -61,6 +61,8 @@ func (repo *GormRepository) migration() error {
 			{"webhook_bots", "bot_user_id", "users(id)", "CASCADE", "CASCADE"},
 			{"webhook_bots", "creator_id", "users(id)", "CASCADE", "CASCADE"},
 			{"webhook_bots", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
+			{"bots", "creator_id", "users(id)", "CASCADE", "CASCADE"},
+			{"bots", "bot_user_id", "users(id)", "CASCADE", "CASCADE"},
 			{"channel_events", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 		}
 		for _, c := range foreignKeys {

@@ -79,10 +79,11 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 	b := getBotFromContext(c)
 
 	var req struct {
-		DisplayName null.String `json:"displayName"`
-		Description null.String `json:"description"`
-		WebhookURL  null.String `json:"webhookUrl"`
-		Privileged  null.Bool   `json:"privileged"`
+		DisplayName null.String   `json:"displayName"`
+		Description null.String   `json:"description"`
+		WebhookURL  null.String   `json:"webhookUrl"`
+		Privileged  null.Bool     `json:"privileged"`
+		CreatorID   uuid.NullUUID `json:"creatorId"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return badRequest(err)
@@ -97,6 +98,7 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 		Description: req.Description,
 		WebhookURL:  req.WebhookURL,
 		Privileged:  req.Privileged,
+		CreatorID:   req.CreatorID,
 	}
 
 	if err := h.Repo.UpdateBot(b.ID, args); err != nil {
