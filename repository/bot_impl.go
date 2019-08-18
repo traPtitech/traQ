@@ -235,11 +235,7 @@ func (repo *GormRepository) GetBotByID(id uuid.UUID) (*model.Bot, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
-	var b model.Bot
-	if err := repo.db.First(&b, &model.Bot{ID: id}).Error; err != nil {
-		return nil, convertError(err)
-	}
-	return &b, nil
+	return getBot(repo.db, &model.Bot{ID: id})
 }
 
 // GetBotByBotUserID implements BotRepository interface.
@@ -247,11 +243,7 @@ func (repo *GormRepository) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) 
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
-	var b model.Bot
-	if err := repo.db.First(&b, &model.Bot{BotUserID: id}).Error; err != nil {
-		return nil, convertError(err)
-	}
-	return &b, nil
+	return getBot(repo.db, &model.Bot{BotUserID: id})
 }
 
 // GetBotByCode implements BotRepository interface.
@@ -259,8 +251,12 @@ func (repo *GormRepository) GetBotByCode(code string) (*model.Bot, error) {
 	if len(code) == 0 {
 		return nil, ErrNotFound
 	}
+	return getBot(repo.db, &model.Bot{BotCode: code})
+}
+
+func getBot(tx *gorm.DB, where interface{}) (*model.Bot, error) {
 	var b model.Bot
-	if err := repo.db.First(&b, &model.Bot{BotCode: code}).Error; err != nil {
+	if err := tx.First(&b, where).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return &b, nil
