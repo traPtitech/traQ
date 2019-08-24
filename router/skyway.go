@@ -23,7 +23,7 @@ func (h *Handlers) PostSkyWayAuthenticate(c echo.Context) error {
 	}
 
 	ts := time.Now().Unix()
-	ttl := 600
+	ttl := 40000
 	hash := utils.CalcHMACSHA256([]byte(fmt.Sprintf("%d:%d:%s", ts, ttl, req.PeerID)), h.SkyWaySecretKey)
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"peerId":    req.PeerID,
