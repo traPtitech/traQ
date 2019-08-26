@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/traPtitech/traQ/event"
 	"sync"
 )
 
@@ -88,6 +89,14 @@ func (m *Manager) setState(user, channel uuid.UUID, state string) error {
 	us.ChannelID = channel
 	cs.SetUser(us)
 
+	m.eventbus.Publish(hub.Message{
+		Name: event.UserWebRTCStateChanged,
+		Fields: hub.Fields{
+			"user_id":    user,
+			"channel_id": channel,
+			"state":      state,
+		},
+	})
 	return nil
 }
 
@@ -106,6 +115,14 @@ func (m *Manager) RemoveState(user uuid.UUID) error {
 
 	us.ChannelID = uuid.Nil
 	us.State = ""
+	m.eventbus.Publish(hub.Message{
+		Name: event.UserWebRTCStateChanged,
+		Fields: hub.Fields{
+			"user_id":    user,
+			"channel_id": uuid.Nil,
+			"state":      "",
+		},
+	})
 	return nil
 }
 

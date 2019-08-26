@@ -262,4 +262,11 @@ const (
 	// 		bot_id: uuid.UUID
 	// 		channel_id: uuid.UUID
 	BotLeft = "bot.left"
+
+	// UserWebRTCStateChanged
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	// 		channel_id: uuid.UUID
+	// 		state: string
+	UserWebRTCStateChanged = "user.webrtc.state_changed"
 )
