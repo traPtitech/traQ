@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/imagemagick"
+	"github.com/traPtitech/traQ/webrtc"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	_ "image/jpeg" // image.Decode用
@@ -97,6 +98,7 @@ type Handlers struct {
 	SSE    *SSEStreamer
 	Hub    *hub.Hub
 	Logger *zap.Logger
+	WebRTC *webrtc.Manager
 	HandlerConfig
 
 	emojiJSONCache     bytes.Buffer
@@ -129,6 +131,7 @@ func NewHandlers(rbac rbac.RBAC, repo repository.Repository, hub *hub.Hub, logge
 		SSE:           NewSSEStreamer(hub, repo),
 		Hub:           hub,
 		Logger:        logger,
+		WebRTC:        webrtc.NewManager(hub),
 		HandlerConfig: config,
 	}
 	go h.stampEventSubscriber(hub.Subscribe(10, event.StampCreated, event.StampUpdated, event.StampDeleted))

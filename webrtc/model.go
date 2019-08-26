@@ -1,20 +1,26 @@
 package webrtc
 
-import "github.com/gofrs/uuid"
+import (
+	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/utils"
+)
 
 type UserState struct {
-	UserID    uuid.UUID
-	ChannelID uuid.UUID
-	State     string
+	UserID    uuid.UUID       `json:"userId"`
+	ChannelID uuid.UUID       `json:"channelId"`
+	State     utils.StringSet `json:"state"`
 }
 
 func (s *UserState) Valid() bool {
-	return s.UserID != uuid.Nil && s.ChannelID != uuid.Nil && s.State != ""
+	return s.UserID != uuid.Nil && s.ChannelID != uuid.Nil && len(s.State) != 0
 }
 
 func (s *UserState) Clone() *UserState {
-	a := *s
-	return &a
+	return &UserState{
+		UserID:    s.UserID,
+		ChannelID: s.ChannelID,
+		State:     s.State.Clone(),
+	}
 }
 
 type ChannelState struct {

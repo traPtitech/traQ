@@ -5,6 +5,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/utils"
 	"sync"
 )
 
@@ -28,7 +29,11 @@ func (m *Manager) GetUserState(id uuid.UUID) *UserState {
 	defer m.statesLock.RUnlock()
 	s, ok := m.userStates[id]
 	if !ok {
-		return nil
+		return &UserState{
+			UserID:    id,
+			ChannelID: uuid.Nil,
+			State:     utils.StringSet{},
+		}
 	}
 	return s.Clone()
 }
@@ -38,29 +43,32 @@ func (m *Manager) GetChannelState(id uuid.UUID) *ChannelState {
 	defer m.statesLock.RUnlock()
 	s, ok := m.channelStates[id]
 	if !ok {
-		return nil
+		return &ChannelState{
+			ChannelID: id,
+			Users:     map[uuid.UUID]*UserState{},
+		}
 	}
 	return s.Clone()
 }
 
-func (m *Manager) SetState(user, channel uuid.UUID, state string) error {
+func (m *Manager) SetState(user, channel uuid.UUID, state utils.StringSet) error {
 	if user == uuid.Nil {
 		return errors.New("invalid user id")
 	}
-	if channel == uuid.Nil && state != "" {
+	if channel == uuid.Nil && len(state) != 0 {
 		return errors.New("invalid channel id")
 	}
-	if channel != uuid.Nil && state == "" {
+	if channel != uuid.Nil && len(state) == 0 {
 		return errors.New("invalid state")
 	}
 
-	if state != "" {
+	if len(state) != 0 {
 		return m.setState(user, channel, state)
 	}
 	return m.RemoveState(user)
 }
 
-func (m *Manager) setState(user, channel uuid.UUID, state string) error {
+func (m *Manager) setState(user, channel uuid.UUID, state utils.StringSet) error {
 	m.statesLock.Lock()
 	defer m.statesLock.Unlock()
 
@@ -92,9 +100,9 @@ func (m *Manager) setState(user, channel uuid.UUID, state string) error {
 	m.eventbus.Publish(hub.Message{
 		Name: event.UserWebRTCStateChanged,
 		Fields: hub.Fields{
-			"user_id":    user,
-			"channel_id": channel,
-			"state":      state,
+			"user_id":    us.UserID,
+			"channel_id": us.ChannelID,
+			"state":      us.State,
 		},
 	})
 	return nil
@@ -114,13 +122,13 @@ func (m *Manager) RemoveState(user uuid.UUID) error {
 	}
 
 	us.ChannelID = uuid.Nil
-	us.State = ""
+	us.State = utils.StringSet{}
 	m.eventbus.Publish(hub.Message{
 		Name: event.UserWebRTCStateChanged,
 		Fields: hub.Fields{
-			"user_id":    user,
-			"channel_id": uuid.Nil,
-			"state":      "",
+			"user_id":    us.UserID,
+			"channel_id": us.ChannelID,
+			"state":      us.State,
 		},
 	})
 	return nil

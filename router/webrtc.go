@@ -3,8 +3,10 @@ package router
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/webrtc"
 	"net/http"
 	"time"
 )
@@ -31,4 +33,44 @@ func (h *Handlers) PostSkyWayAuthenticate(c echo.Context) error {
 		"ttl":       ttl,
 		"authToken": base64.StdEncoding.EncodeToString(hash),
 	})
+}
+
+// GetChannelWebRTCState GET /channels/:channelID/webrtc/state
+func (h *Handlers) GetChannelWebRTCState(c echo.Context) error {
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+	cs := h.WebRTC.GetChannelState(channelID)
+
+	var users []*webrtc.UserState
+	for _, v := range cs.Users {
+		users = append(users, v)
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"users": users,
+	})
+}
+
+// PutChannelWebRTCState PUT /webrtc/state
+func (h *Handlers) PutWebRTCState(c echo.Context) error {
+	userID := getRequestUserID(c)
+	var req struct {
+		ChannelID uuid.NullUUID `json:"channelId"`
+		State     []string      `json:"state"`
+	}
+	if err := bindAndValidate(c, &req); err != nil {
+		return badRequest(err)
+	}
+
+	if err := h.WebRTC.SetState(userID, req.ChannelID.UUID, utils.StringSetFromArray(req.State)); err != nil {
+		return badRequest(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// GetWebRTCState GET /webrtc/state
+func (h *Handlers) GetWebRTCState(c echo.Context) error {
+	userID := getRequestUserID(c)
+	us := h.WebRTC.GetUserState(userID)
+	return c.JSON(http.StatusOK, us)
 }

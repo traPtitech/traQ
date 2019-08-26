@@ -315,3 +315,13 @@ TODO
 対象: 全員
 
 + `id`: 削除されたスタンプのId
+
+## USER_WEBRTC_STATE_CHANGED
+ユーザーのWebRTCの状態が変化した
+
+### SSE
+対象: 全員
+
++ `user_id`: 変更があったユーザーのId
++ `channel_id`: ユーザーの変更後の接続チャンネルのId
++ `state`: ユーザーの変更後の状態(配列)
