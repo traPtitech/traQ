@@ -5,17 +5,18 @@ import (
 	"github.com/traPtitech/traQ/utils"
 )
 
+// UserState WebRTCのユーザー状態
 type UserState struct {
 	UserID    uuid.UUID       `json:"userId"`
 	ChannelID uuid.UUID       `json:"channelId"`
 	State     utils.StringSet `json:"state"`
 }
 
-func (s *UserState) Valid() bool {
+func (s *UserState) valid() bool {
 	return s.UserID != uuid.Nil && s.ChannelID != uuid.Nil && len(s.State) != 0
 }
 
-func (s *UserState) Clone() *UserState {
+func (s *UserState) clone() *UserState {
 	return &UserState{
 		UserID:    s.UserID,
 		ChannelID: s.ChannelID,
@@ -23,30 +24,31 @@ func (s *UserState) Clone() *UserState {
 	}
 }
 
+// ChannelState WebRTCのチャンネル状態
 type ChannelState struct {
 	ChannelID uuid.UUID
 	Users     map[uuid.UUID]*UserState
 }
 
-func (s *ChannelState) Valid() bool {
+func (s *ChannelState) valid() bool {
 	return s.ChannelID != uuid.Nil && len(s.Users) > 0
 }
 
-func (s *ChannelState) SetUser(us *UserState) {
+func (s *ChannelState) setUser(us *UserState) {
 	s.Users[us.UserID] = us
 }
 
-func (s *ChannelState) RemoveUser(user uuid.UUID) {
+func (s *ChannelState) removeUser(user uuid.UUID) {
 	delete(s.Users, user)
 }
 
-func (s *ChannelState) Clone() *ChannelState {
+func (s *ChannelState) clone() *ChannelState {
 	a := &ChannelState{
 		ChannelID: s.ChannelID,
 		Users:     map[uuid.UUID]*UserState{},
 	}
 	for k, v := range s.Users {
-		a.Users[k] = v.Clone()
+		a.Users[k] = v.clone()
 	}
 	return a
 }
