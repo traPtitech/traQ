@@ -1633,6 +1633,27 @@ paths:
         "404":
           description: 退出させることができませんでした。指定したチャンネル、またはBotは存在しません。
 
+  /channels/{channelID}/webrtc/state:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+    get:
+      tags:
+        - webrtc
+      operationId: getChannelWebRTCState
+      description: チャンネルのWebRTC状態を取得します。
+      security:
+        - traqOAuth2:
+            - read
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebRTCChannelState"
+        "404":
+          description: 取得できませんでした。指定したチャンネルは存在しません。
+
   /notification:
     get:
       tags:
@@ -2987,6 +3008,39 @@ paths:
           description: リクエスト内容が不正です
 
   # /skyway/authenticate
+
+  /webrtc/state:
+    get:
+      tags:
+        - webrtc
+      operationId: getWebRTCState
+      description: 自身のWebRTCの状態を取得します。
+      security:
+        - traqOAuth2:
+            - read
+      responses:
+        "200":
+          description: 正常に取得できました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebRTCUserState"
+    put:
+      tags:
+        - webrtc
+      operationId: putWebRTCState
+      description: 自身のWebRTCの状態を変更します。
+      security:
+        - traqOAuth2:
+            - write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutWebRTCState"
+      responses:
+        "204":
+          description: 正常に変更できました。
 
 components:
   securitySchemes:
@@ -4573,6 +4627,42 @@ components:
           format: uuid
           description: チャンネルUUID
       description: ChildCreated
+    WebRTCUserState:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: ユーザーUUID
+        channelId:
+          type: string
+          format: uuid
+          description: ユーザーの接続先チャンネルUUID(未接続の場合は00000000-0000-0000-0000-000000000000)
+        state:
+          type: array
+          items:
+            type: string
+          description: ユーザーの状態の配列(未接続の場合は空配列)
+    WebRTCChannelState:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebRTCUserState"
+          description: 接続ユーザーの状態の配列
+    PutWebRTCState:
+      type: object
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: ユーザーの接続先チャンネルUUID(切断はnullを指定)
+        state:
+          type: array
+          items:
+            type: string
+          description: ユーザーの状態の配列(切断は空配列を指定)
 
 security:
   - cookieAuth: []

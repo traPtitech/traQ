@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/message"
 	"net/http"
 	"sync"
@@ -228,6 +229,7 @@ func (s *SSEStreamer) setupSubscriber(h *hub.Hub) {
 		event.StampCreated,
 		event.StampUpdated,
 		event.StampDeleted,
+		event.UserWebRTCStateChanged,
 	))
 }
 
@@ -660,6 +662,15 @@ func (s *SSEStreamer) processBroadcastEvent(ev hub.Message) {
 			EventType: "STAMP_DELETED",
 			Payload: Payload{
 				"id": ev.Fields["stamp_id"].(uuid.UUID),
+			},
+		}
+	case event.UserWebRTCStateChanged:
+		ed = &eventData{
+			EventType: "USER_WEBRTC_STATE_CHANGED",
+			Payload: Payload{
+				"user_id":    ev.Fields["user_id"].(uuid.UUID),
+				"channel_id": ev.Fields["channel_id"].(uuid.UUID),
+				"state":      ev.Fields["state"].(utils.StringSet),
 			},
 		}
 	}

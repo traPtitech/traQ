@@ -180,6 +180,10 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 					apiChannelsCidBots.POST("", h.PostChannelBots, requires(permission.InstallBot))
 					apiChannelsCidBots.DELETE("/:botID", h.DeleteChannelBot, requires(permission.UninstallBot), h.ValidateBotID(false))
 				}
+				apiChannelsCidWebRTC := apiChannelsCid.Group("/webrtc")
+				{
+					apiChannelsCidWebRTC.GET("/state", h.GetChannelWebRTCState, requires(permission.GetChannel))
+				}
 			}
 		}
 		apiNotification := api.Group("/notification")
@@ -323,6 +327,11 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			apiAuthority.GET("/permissions", h.GetPermissions)
 			apiAuthority.GET("/reload", h.GetAuthorityReload)
 			apiAuthority.POST("/reload", h.PostAuthorityReload)
+		}
+		apiWebRTC := api.Group("/webrtc")
+		{
+			apiWebRTC.GET("/state", h.GetWebRTCState)
+			apiWebRTC.PUT("/state", h.PutWebRTCState)
 		}
 		api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler, botGuard(blockAlways))
 
