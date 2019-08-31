@@ -324,7 +324,7 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 	if id == uuid.Nil {
 		return nil, ErrNilID
 	}
-	var bot *model.Bot
+	var bot model.Bot
 	err := repo.transact(func(tx *gorm.DB) error {
 		if err := tx.First(&bot, &model.Bot{ID: id}).Error; err != nil {
 			return convertError(err)
@@ -351,7 +351,7 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 		}
 		bot.AccessTokenID = tid
 
-		errs := tx.Create(t).Save(bot).GetErrors()
+		errs := tx.Create(t).Save(&bot).GetErrors()
 		if len(errs) > 0 {
 			return errs[0]
 		}
@@ -367,7 +367,7 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 			"state":  bot.State,
 		},
 	})
-	return bot, nil
+	return &bot, nil
 }
 
 // DeleteBot implements BotRepository interface.
