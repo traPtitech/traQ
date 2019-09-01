@@ -33,7 +33,7 @@ func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, name, contentType, 
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *InMemoryFileStorage) OpenFileByKey(key string) (ReadSeekCloser, error) {
+func (fs *InMemoryFileStorage) OpenFileByKey(key, fileType string) (ReadSeekCloser, error) {
 	fs.RLock()
 	f, ok := fs.fileMap[key]
 	fs.RUnlock()
@@ -44,7 +44,7 @@ func (fs *InMemoryFileStorage) OpenFileByKey(key string) (ReadSeekCloser, error)
 }
 
 // DeleteByKey ファイルを削除します
-func (fs *InMemoryFileStorage) DeleteByKey(key string) error {
+func (fs *InMemoryFileStorage) DeleteByKey(key, fileType string) error {
 	fs.Lock()
 	delete(fs.fileMap, key)
 	fs.Unlock()
@@ -52,7 +52,7 @@ func (fs *InMemoryFileStorage) DeleteByKey(key string) error {
 }
 
 // GenerateAccessURL "",nilを返します
-func (fs *InMemoryFileStorage) GenerateAccessURL(key string) (string, error) {
+func (fs *InMemoryFileStorage) GenerateAccessURL(key, fileType string) (string, error) {
 	return "", nil
 }
 

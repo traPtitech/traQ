@@ -274,7 +274,7 @@ func (h *Handlers) getUserIcon(c echo.Context, user *model.User) error {
 	}
 
 	// ファイルオープン
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey())
+	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey(), meta.Type)
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}

@@ -2146,7 +2146,7 @@ func (repo *TestRepository) OpenFile(fileID uuid.UUID) (*model.File, io.ReadClos
 	if err != nil {
 		return nil, nil, err
 	}
-	rc, err := repo.FS.OpenFileByKey(meta.GetKey())
+	rc, err := repo.FS.OpenFileByKey(meta.GetKey(), meta.Type)
 	return meta, rc, err
 }
 
@@ -2156,7 +2156,7 @@ func (repo *TestRepository) OpenThumbnailFile(fileID uuid.UUID) (*model.File, io
 		return nil, nil, err
 	}
 	if meta.HasThumbnail {
-		rc, err := repo.FS.OpenFileByKey(meta.GetThumbKey())
+		rc, err := repo.FS.OpenFileByKey(meta.GetThumbKey(), model.FileTypeThumbnail)
 		return meta, rc, err
 	}
 	return meta, nil, repository.ErrNotFound
@@ -2186,7 +2186,7 @@ func (repo *TestRepository) DeleteFile(fileID uuid.UUID) error {
 		return repository.ErrNotFound
 	}
 	delete(repo.Files, fileID)
-	return repo.FS.DeleteByKey(meta.GetKey())
+	return repo.FS.DeleteByKey(meta.GetKey(), meta.Type)
 }
 
 func (repo *TestRepository) GenerateIconFile(salt string) (uuid.UUID, error) {

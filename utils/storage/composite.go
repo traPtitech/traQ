@@ -13,9 +13,9 @@ type CompositeFileStorage struct {
 }
 
 // NewCompositeFileStorage 引数の情報で複合型ファイルストレージを生成します
-func NewCompositeFileStorage(localDir, container, userName, apiKey, tenant, tenantID, authURL, tempURLKey string) (*CompositeFileStorage, error) {
+func NewCompositeFileStorage(localDir, container, userName, apiKey, tenant, tenantID, authURL, tempURLKey, cacheDir string) (*CompositeFileStorage, error) {
 	l := NewLocalFileStorage(localDir)
-	s, err := NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL, tempURLKey)
+	s, err := NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL, tempURLKey, cacheDir)
 	if err != nil {
 		return nil, err
 	}
@@ -36,25 +36,25 @@ func (fs *CompositeFileStorage) SaveByKey(src io.Reader, key, name, contentType,
 }
 
 // OpenFileByKey keyで指定されたファイルを読み込む
-func (fs *CompositeFileStorage) OpenFileByKey(key string) (ReadSeekCloser, error) {
+func (fs *CompositeFileStorage) OpenFileByKey(key string, fileType string) (ReadSeekCloser, error) {
 	if _, err := os.Stat(fs.local.getFilePath(key)); os.IsNotExist(err) {
-		return fs.swift.OpenFileByKey(key)
+		return fs.swift.OpenFileByKey(key, fileType)
 	}
-	return fs.local.OpenFileByKey(key)
+	return fs.local.OpenFileByKey(key, fileType)
 }
 
 // DeleteByKey keyで指定されたファイルを削除する
-func (fs *CompositeFileStorage) DeleteByKey(key string) error {
+func (fs *CompositeFileStorage) DeleteByKey(key string, fileType string) error {
 	if _, err := os.Stat(fs.local.getFilePath(key)); os.IsNotExist(err) {
-		return fs.swift.DeleteByKey(key)
+		return fs.swift.DeleteByKey(key, fileType)
 	}
-	return fs.local.DeleteByKey(key)
+	return fs.local.DeleteByKey(key, fileType)
 }
 
 // GenerateAccessURL keyで指定されたファイルの直接アクセスURLを発行する。発行機能がない場合は空文字列を返します(エラーはありません)。
-func (fs *CompositeFileStorage) GenerateAccessURL(key string) (string, error) {
+func (fs *CompositeFileStorage) GenerateAccessURL(key string, fileType string) (string, error) {
 	if _, err := os.Stat(fs.local.getFilePath(key)); os.IsNotExist(err) {
-		return fs.swift.GenerateAccessURL(key)
+		return fs.swift.GenerateAccessURL(key, fileType)
 	}
-	return fs.local.GenerateAccessURL(key)
+	return fs.local.GenerateAccessURL(key, fileType)
 }
