@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ncw/swift"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils"
 	"io"
 	"os"
 	"time"
@@ -15,6 +16,7 @@ type SwiftFileStorage struct {
 	tempURLKey string
 	connection swift.Connection
 	cacheDir   string
+	mutexes    *utils.KeyMutex
 }
 
 // NewSwiftFileStorage 引数の情報でOpenStack Swiftストレージを生成します
@@ -30,6 +32,7 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL,
 			TenantId: tenantID,
 		},
 		cacheDir: cacheDir,
+		mutexes:  utils.NewKeyMutex(256),
 	}
 
 	if err := m.connection.Authenticate(); err != nil {
@@ -50,10 +53,10 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL,
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *SwiftFileStorage) OpenFileByKey(key, fileType string) (ReadSeekCloser, error) {
+func (fs *SwiftFileStorage) OpenFileByKey(key, fileType string) (reader ReadSeekCloser, err error) {
 	cacheName := fs.getCacheFilePath(key)
 
-	if _, err := os.Stat(cacheName); os.IsNotExist(err) {
+	if !fs.cacheable(fileType) {
 		file, _, err := fs.connection.ObjectOpen(fs.container, key, true, nil)
 		if err != nil {
 			if err == swift.ObjectNotFound {
@@ -61,26 +64,39 @@ func (fs *SwiftFileStorage) OpenFileByKey(key, fileType string) (ReadSeekCloser,
 			}
 			return nil, err
 		}
+		return file, nil
+	}
 
-		if !fs.cacheable(fileType) {
-			return file, nil
+	fs.mutexes.Lock(key)
+	if _, err := os.Stat(cacheName); os.IsNotExist(err) {
+		defer fs.mutexes.Unlock(key)
+		remote, _, err := fs.connection.ObjectOpen(fs.container, key, true, nil)
+		if err != nil {
+			if err == swift.ObjectNotFound {
+				return nil, ErrFileNotFound
+			}
+			return nil, err
 		}
 
 		// save cache
-		cf, err := os.Create(cacheName)
+		file, err := os.OpenFile(cacheName, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666) // ファイルが存在していた場合はエラーにしてremoteを返す
 		if err != nil {
-			return file, nil
+			return remote, nil
 		}
 
-		if _, err := io.Copy(cf, file); err != nil {
-			cf.Close()
+		if _, err := io.Copy(file, remote); err != nil {
+			file.Close()
+			_ = os.Remove(cacheName)
 			return nil, err
 		}
-		cf.Close()
+
+		_, _ = file.Seek(0, 0)
+		return file, nil
 	}
+	fs.mutexes.Unlock(key)
 
 	// from cache
-	reader, err := os.Open(cacheName)
+	reader, err = os.Open(cacheName)
 	if err != nil {
 		return nil, ErrFileNotFound
 	}
