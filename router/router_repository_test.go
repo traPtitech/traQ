@@ -1732,7 +1732,7 @@ func (repo *TestRepository) GetMessageReportsByReporterID(reporterID uuid.UUID) 
 	return result, nil
 }
 
-func (repo *TestRepository) AddStampToMessage(messageID, stampID, userID uuid.UUID) (ms *model.MessageStamp, err error) {
+func (repo *TestRepository) AddStampToMessage(messageID, stampID, userID uuid.UUID, count int) (ms *model.MessageStamp, err error) {
 	panic("implement me")
 }
 

@@ -231,7 +231,7 @@ func mustMakeStamp(t *testing.T, repo Repository, name string, userID uuid.UUID)
 
 func mustAddMessageStamp(t *testing.T, repo Repository, messageID, stampID, userID uuid.UUID) {
 	t.Helper()
-	_, err := repo.AddStampToMessage(messageID, stampID, userID)
+	_, err := repo.AddStampToMessage(messageID, stampID, userID, 1)
 	require.NoError(t, err)
 }
 

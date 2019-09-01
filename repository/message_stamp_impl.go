@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
@@ -8,14 +9,14 @@ import (
 )
 
 // AddStampToMessage implements MessageStampRepository interface.
-func (repo *GormRepository) AddStampToMessage(messageID, stampID, userID uuid.UUID) (ms *model.MessageStamp, err error) {
+func (repo *GormRepository) AddStampToMessage(messageID, stampID, userID uuid.UUID, count int) (ms *model.MessageStamp, err error) {
 	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
 		return nil, ErrNilID
 	}
 
 	err = repo.db.
-		Set("gorm:insert_option", "ON DUPLICATE KEY UPDATE count = count + 1, updated_at = now()").
-		Create(&model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID, Count: 1}).
+		Set("gorm:insert_option", fmt.Sprintf("ON DUPLICATE KEY UPDATE count = count + %d, updated_at = now()", count)).
+		Create(&model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID, Count: count}).
 		Error
 	if err != nil {
 		return nil, err
