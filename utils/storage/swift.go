@@ -90,7 +90,7 @@ func (fs *SwiftFileStorage) OpenFileByKey(key, fileType string) (reader ReadSeek
 			return nil, err
 		}
 
-		file.Seek(0, 0)
+		_, _ = file.Seek(0, 0)
 		return file, nil
 	}
 	fs.mutexes.Unlock(key)
