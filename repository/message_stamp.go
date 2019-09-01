@@ -12,7 +12,7 @@ type MessageStampRepository interface {
 	// 成功した場合、そのメッセージスタンプとnilを返します。
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	AddStampToMessage(messageID, stampID, userID uuid.UUID) (ms *model.MessageStamp, err error)
+	AddStampToMessage(messageID, stampID, userID uuid.UUID, count int) (ms *model.MessageStamp, err error)
 	// RemoveStampFromMessage 指定したメッセージから指定したユーザーの指定したスタンプを全て削除します
 	//
 	// 成功した、或いは既に削除されていた場合、nilを返します。

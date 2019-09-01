@@ -17,7 +17,7 @@ func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.AddStampToMessage(uuid.Nil, uuid.Nil, uuid.Nil)
+		_, err := repo.AddStampToMessage(uuid.Nil, uuid.Nil, uuid.Nil, 1)
 		assert.EqualError(t, err, ErrNilID.Error())
 	})
 
@@ -25,7 +25,7 @@ func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 		{
-			ms, err := repo.AddStampToMessage(message.ID, stamp.ID, user.ID)
+			ms, err := repo.AddStampToMessage(message.ID, stamp.ID, user.ID, 1)
 			if assert.NoError(err) {
 				assert.Equal(message.ID, ms.MessageID)
 				assert.Equal(stamp.ID, ms.StampID)
@@ -36,12 +36,23 @@ func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
 			}
 		}
 		{
-			ms, err := repo.AddStampToMessage(message.ID, stamp.ID, user.ID)
+			ms, err := repo.AddStampToMessage(message.ID, stamp.ID, user.ID, 1)
 			if assert.NoError(err) {
 				assert.Equal(message.ID, ms.MessageID)
 				assert.Equal(stamp.ID, ms.StampID)
 				assert.Equal(user.ID, ms.UserID)
 				assert.Equal(2, ms.Count)
+				assert.NotEmpty(ms.CreatedAt)
+				assert.NotEmpty(ms.UpdatedAt)
+			}
+		}
+		{
+			ms, err := repo.AddStampToMessage(message.ID, stamp.ID, user.ID, 3)
+			if assert.NoError(err) {
+				assert.Equal(message.ID, ms.MessageID)
+				assert.Equal(stamp.ID, ms.StampID)
+				assert.Equal(user.ID, ms.UserID)
+				assert.Equal(5, ms.Count)
 				assert.NotEmpty(ms.CreatedAt)
 				assert.NotEmpty(ms.UpdatedAt)
 			}

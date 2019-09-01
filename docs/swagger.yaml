@@ -1824,9 +1824,16 @@ paths:
       security:
         - traqOAuth2:
             - write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageStampPost"
       responses:
         "204":
           description: 正常にスタンプを押すことができました。
+        "400":
+          description: スタンプを押すことができませんでした。リクエスト内容が不正です。
         "404":
           description: スタンプを押すことができませんでした。指定されたスタンプまたはメッセージは存在しません。
     delete:
@@ -3893,6 +3900,12 @@ components:
           type: string
           format: date-time
           description: 最後に押した日時
+    MessageStampPost:
+      type: object
+      properties:
+        count:
+          type: integer
+          description: 押す個数(1-100)、100より大きい場合は100として受け取ります
     Pin:
       type: object
       properties:

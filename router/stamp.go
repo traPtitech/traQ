@@ -132,9 +132,24 @@ func (h *Handlers) PostMessageStamp(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getRequestParamAsUUID(c, paramMessageID)
 	stampID := getRequestParamAsUUID(c, paramStampID)
+	count := 1
+
+	if c.Request().ContentLength != 0 {
+		var req struct {
+			Count int `json:"count" validate:"gte=1"`
+		}
+		if err := bindAndValidate(c, &req); err != nil {
+			return badRequest(err)
+		}
+		count = req.Count
+
+		if count > 100 {
+			count = 100
+		}
+	}
 
 	// スタンプをメッセージに押す
-	if _, err := h.Repo.AddStampToMessage(messageID, stampID, userID); err != nil {
+	if _, err := h.Repo.AddStampToMessage(messageID, stampID, userID, count); err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
 
