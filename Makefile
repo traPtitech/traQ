@@ -55,8 +55,8 @@ make-db-docs:
 	if [ -d "./docs/dbschema" ]; then \
 		rm -r ./docs/dbschema; \
 	fi
-	TBLS_DSN="mysql://root:password@127.0.0.1:3002/traq" tbls doc -t svg
+	TBLS_DSN="mysql://root:password@127.0.0.1:3002/traq" tbls doc
 
 .PHONY: diff-db-docs
 diff-db-docs:
-	TBLS_DSN="mysql://root:password@127.0.0.1:3002/traq" tbls diff -t svg
+	TBLS_DSN="mysql://root:password@127.0.0.1:3002/traq" tbls diff

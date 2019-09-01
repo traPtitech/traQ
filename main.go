@@ -251,6 +251,18 @@ func getFileStorage() (storage.FileStorage, error) {
 			viper.GetString("storage.swift.tempUrlKey"),
 			viper.GetString("storage.swift.cacheDir"),
 		)
+	case "composite":
+		return storage.NewCompositeFileStorage(
+			viper.GetString("storage.local.dir"),
+			viper.GetString("storage.swift.container"),
+			viper.GetString("storage.swift.username"),
+			viper.GetString("storage.swift.apiKey"),
+			viper.GetString("storage.swift.tenantName"),
+			viper.GetString("storage.swift.tenantId"),
+			viper.GetString("storage.swift.authUrl"),
+			viper.GetString("storage.swift.tempUrlKey"),
+			viper.GetString("storage.swift.cacheDir"),
+		)
 	case "memory":
 		return storage.NewInMemoryFileStorage(), nil
 	default:
