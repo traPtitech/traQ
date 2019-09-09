@@ -4427,7 +4427,8 @@ components:
       properties:
         reason:
           type: string
-          description: 通報理由(100文字以内)
+          maxLength: 100
+          description: 通報理由
     ClientScope:
       type: string
       enum:
@@ -4529,7 +4530,8 @@ components:
           description: リダイレクト先のURI
         scopes:
           type: array
-          description: 要求するスコープ(必ず１つ以上)
+          minItems: 1
+          description: 要求するスコープ
           items:
             $ref: "#/components/schemas/ClientScope"
     PatchClient:
@@ -4725,6 +4727,7 @@ components:
         channelId:
           type: string
           format: uuid
+          nullable: true
           description: ユーザーの接続先チャンネルUUID(切断はnullを指定)
         state:
           type: array
