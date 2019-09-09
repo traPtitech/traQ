@@ -3292,6 +3292,8 @@ components:
         - none
     OAuth2Authorization:
       type: object
+      required:
+        - client_id
       properties:
         response_type:
           $ref: "#/components/schemas/OAuth2ResponseType"
@@ -3950,6 +3952,8 @@ components:
           description: 最後に押した日時
     MessageStampPost:
       type: object
+      required:
+        - count
       properties:
         count:
           type: integer
