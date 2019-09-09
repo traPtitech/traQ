@@ -3906,6 +3906,9 @@ components:
         count:
           type: integer
           description: 押す個数(1-100)、100より大きい場合は100として受け取ります
+          minimum: 1
+          default: 1
+          example: 1
     Pin:
       type: object
       properties:
