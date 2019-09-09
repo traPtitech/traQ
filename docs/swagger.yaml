@@ -25,6 +25,7 @@ paths:
           description: リダイレクト先
       security: []
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -112,6 +113,7 @@ paths:
             $ref: "#/components/schemas/OAuth2ResponseType"
         - name: client_id
           in: query
+          required: true
           schema:
             type: string
         - name: redirect_uri
@@ -157,6 +159,7 @@ paths:
       description: OAuth2 認可エンドポイント
       security: []
       requestBody:
+        required: true
         content:
           application/x-www-form-urlencoded:
             schema:
@@ -176,6 +179,7 @@ paths:
       operationId: postOauth2AuthorizeDecide
       description: OAuth2 認可承諾
       requestBody:
+        required: true
         content:
           application/x-www-form-urlencoded:
             schema:
@@ -196,6 +200,7 @@ paths:
       description: OAuth2 トークンエンドポイント
       security: []
       requestBody:
+        required: true
         content:
           application/x-www-form-urlencoded:
             schema:
@@ -241,6 +246,7 @@ paths:
       operationId: registerUser
       description: ユーザー登録します
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -279,6 +285,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -296,6 +303,7 @@ paths:
       operationId: changePassword
       description: 自分のパスワードを変更します。
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -357,6 +365,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
@@ -537,6 +546,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -614,6 +624,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -653,6 +664,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -706,6 +718,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -948,6 +961,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1073,6 +1087,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1107,6 +1122,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1182,6 +1198,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1219,6 +1236,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1267,6 +1285,7 @@ paths:
       operationId: editChannel
       description: チャンネルの情報を変更します。
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1304,6 +1323,7 @@ paths:
       operationId: changeChannelParent
       description: チャンネルの親チャンネルを変更します。
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1332,6 +1352,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1405,6 +1426,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1464,6 +1486,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1553,6 +1576,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1598,6 +1622,7 @@ paths:
             - write
             - manage_bot
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1677,6 +1702,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1738,6 +1764,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1777,6 +1804,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1881,6 +1909,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
@@ -2012,6 +2041,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2086,6 +2116,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
@@ -2142,6 +2173,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
@@ -2204,6 +2236,7 @@ paths:
         - traqOAuth2:
             - manage_bot
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2252,6 +2285,7 @@ paths:
         - traqOAuth2:
             - manage_bot
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2299,6 +2333,7 @@ paths:
           description: リクエストボディシグネチャ。Secretが設定されている場合は必須
       security: []
       requestBody:
+        required: true
         content:
           text/plain:
             schema:
@@ -2351,6 +2386,7 @@ paths:
         - traqOAuth2:
             - manage_bot
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
@@ -2384,6 +2420,7 @@ paths:
       description: Github-Compatibleなwebhookを送信します。
       security: []
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2423,6 +2460,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2468,6 +2506,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2528,6 +2567,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2593,6 +2633,7 @@ paths:
         - traqOAuth2:
             - manage_bot
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2638,6 +2679,7 @@ paths:
         - traqOAuth2:
             - manage_bot
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2716,6 +2758,7 @@ paths:
         - traqOAuth2:
             - manage_bot
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2764,6 +2807,7 @@ paths:
         - traqOAuth2:
             - manage_bot
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2829,6 +2873,7 @@ paths:
         - traqOAuth2:
             - manage_bot
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -2884,6 +2929,7 @@ paths:
         - traqOAuth2:
             - manage_bot
       requestBody:
+        required: true
         content:
           multipart/form-data:
             schema:
@@ -2917,6 +2963,7 @@ paths:
         - traqOAuth2:
             - manage_bot
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -3041,6 +3088,7 @@ paths:
         - traqOAuth2:
             - write
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -3244,6 +3292,8 @@ components:
         - none
     OAuth2Authorization:
       type: object
+      required:
+        - client_id
       properties:
         response_type:
           $ref: "#/components/schemas/OAuth2ResponseType"
@@ -3902,10 +3952,15 @@ components:
           description: 最後に押した日時
     MessageStampPost:
       type: object
+      required:
+        - count
       properties:
         count:
           type: integer
           description: 押す個数(1-100)、100より大きい場合は100として受け取ります
+          minimum: 1
+          default: 1
+          example: 1
     Pin:
       type: object
       properties:
@@ -4372,7 +4427,8 @@ components:
       properties:
         reason:
           type: string
-          description: 通報理由(100文字以内)
+          maxLength: 100
+          description: 通報理由
     ClientScope:
       type: string
       enum:
@@ -4474,7 +4530,8 @@ components:
           description: リダイレクト先のURI
         scopes:
           type: array
-          description: 要求するスコープ(必ず１つ以上)
+          minItems: 1
+          description: 要求するスコープ
           items:
             $ref: "#/components/schemas/ClientScope"
     PatchClient:
@@ -4670,6 +4727,7 @@ components:
         channelId:
           type: string
           format: uuid
+          nullable: true
           description: ユーザーの接続先チャンネルUUID(切断はnullを指定)
         state:
           type: array
