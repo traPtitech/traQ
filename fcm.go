@@ -134,22 +134,18 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 
 	// 対象者計算
 	targets := set.UUIDSet{}
+	q := repository.UsersQuery{}.Active().NotBot()
 	switch {
 	case ch.IsForced: // 強制通知チャンネル
-		users, err := m.repo.GetUsers()
+		users, err := m.repo.GetUserIDs(q)
 		if err != nil {
 			logger.Error("failed to GetUsers", zap.Error(err)) // 失敗
 			return
 		}
-		for _, v := range users {
-			if v.Bot {
-				continue
-			}
-			targets.Add(v.ID)
-		}
+		targets.Add(users...)
 
 	case !ch.IsPublic: // プライベートチャンネル
-		pUsers, err := m.repo.GetPrivateChannelMemberIDs(message.ChannelID)
+		pUsers, err := m.repo.GetUserIDs(q.CMemberOf(ch.ID))
 		if err != nil {
 			logger.Error("failed to GetPrivateChannelMemberIDs", zap.Error(err), zap.Stringer("channelId", message.ChannelID)) // 失敗
 			return
@@ -157,7 +153,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 		targets.Add(pUsers...)
 
 	default: // 通常チャンネルメッセージ
-		users, err := m.repo.GetSubscribingUserIDs(message.ChannelID)
+		users, err := m.repo.GetUserIDs(q.SubscriberOf(ch.ID))
 		if err != nil {
 			logger.Error("failed to GetSubscribingUserIDs", zap.Error(err), zap.Stringer("channelId", message.ChannelID)) // 失敗
 			return
@@ -169,10 +165,12 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 			switch v.Type {
 			case "user":
 				if uid, err := uuid.FromString(v.ID); err == nil {
+					// TODO 凍結ユーザーの除外
+					// MEMO 凍結ユーザーはクライアント側で置換されないのでこのままでも問題はない
 					targets.Add(uid)
 				}
 			case "group":
-				gs, err := m.repo.GetUserGroupMemberIDs(uuid.FromStringOrNil(v.ID))
+				gs, err := m.repo.GetUserIDs(q.GMemberOf(uuid.FromStringOrNil(v.ID)))
 				if err != nil {
 					logger.Error("failed to GetUserGroupMemberIDs", zap.Error(err), zap.String("groupId", v.ID)) // 失敗
 					return

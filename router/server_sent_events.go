@@ -244,25 +244,22 @@ func (s *SSEStreamer) processMessageCreated(message *model.Message, plain string
 	connector := set.UUIDSet{}
 	subscribers := set.UUIDSet{}
 	noticeable := set.UUIDSet{}
+	q := repository.UsersQuery{}.NotBot().Active()
+
 	ch, _ := s.repo.GetChannel(message.ChannelID)
 	switch {
 	case ch.IsForced: // 強制通知チャンネル
-		users, _ := s.repo.GetUsers()
-		for _, v := range users {
-			if v.Bot {
-				continue
-			}
-			subscribers.Add(v.ID)
-			noticeable.Add(v.ID)
-		}
+		users, _ := s.repo.GetUserIDs(q)
+		subscribers.Add(users...)
+		noticeable.Add(users...)
 
 	case !ch.IsPublic: // プライベートチャンネル
-		users, _ := s.repo.GetPrivateChannelMemberIDs(ch.ID)
+		users, _ := s.repo.GetUserIDs(q.CMemberOf(ch.ID))
 		subscribers.Add(users...)
 
 	default: // 通常チャンネルメッセージ
 		// チャンネル通知ユーザー取得
-		users, _ := s.repo.GetSubscribingUserIDs(message.ChannelID)
+		users, _ := s.repo.GetUserIDs(q.SubscriberOf(ch.ID))
 		subscribers.Add(users...)
 
 		// グループユーザー・メンションユーザー取得
@@ -270,11 +267,13 @@ func (s *SSEStreamer) processMessageCreated(message *model.Message, plain string
 			switch v.Type {
 			case "user":
 				if uid, err := uuid.FromString(v.ID); err == nil {
+					// TODO 凍結ユーザーの除外
+					// MEMO 凍結ユーザーはクライアント側で置換されないのでこのままでも問題はない
 					subscribers.Add(uid)
 					noticeable.Add(uid)
 				}
 			case "group":
-				gs, _ := s.repo.GetUserGroupMemberIDs(uuid.FromStringOrNil(v.ID))
+				gs, _ := s.repo.GetUserIDs(q.GMemberOf(uuid.FromStringOrNil(v.ID)))
 				subscribers.Add(gs...)
 				noticeable.Add(gs...)
 			}
