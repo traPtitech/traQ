@@ -5,6 +5,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/utils/message"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"strconv"
@@ -111,6 +112,10 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 		return badRequest(err)
 	}
 
+	if c.QueryParam("embed") == "1" {
+		req.Text = message.NewReplacer(h.Repo).Replace(req.Text)
+	}
+
 	m, err := h.Repo.CreateMessage(userID, channelID, req.Text)
 	if err != nil {
 		switch {
@@ -159,6 +164,10 @@ func (h *Handlers) PostDirectMessage(c echo.Context) error {
 	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
+	}
+
+	if c.QueryParam("embed") == "1" {
+		req.Text = message.NewReplacer(h.Repo).Replace(req.Text)
 	}
 
 	m, err := h.Repo.CreateMessage(myID, ch.ID, req.Text)

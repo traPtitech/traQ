@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/message"
 	"gopkg.in/go-playground/webhooks.v5/github"
 	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
@@ -172,6 +173,10 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 			return badRequest("invalid channel")
 		}
 		channelID = id
+	}
+
+	if c.QueryParam("embed") == "1" {
+		body = []byte(message.NewReplacer(h.Repo).Replace(string(body)))
 	}
 
 	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), channelID, string(body)); err != nil {

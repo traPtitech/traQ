@@ -957,6 +957,13 @@ paths:
         - message
       operationId: postDirectMessage
       description: DMチャンネルにメッセージを投稿します。
+      parameters:
+        - name: embed
+          description: メンション・チャンネルリンクを自動埋め込みする場合に1を指定する
+          in: query
+          required: false
+          schema:
+            type: integer
       security:
         - traqOAuth2:
             - write
@@ -1482,6 +1489,13 @@ paths:
         - message
       operationId: postMessage
       description: チャンネルにメッセージを投稿します。
+      parameters:
+        - name: embed
+          description: メンション・チャンネルリンクを自動埋め込みする場合に1を指定する
+          in: query
+          required: false
+          schema:
+            type: integer
       security:
         - traqOAuth2:
             - write
@@ -2331,6 +2345,12 @@ paths:
           schema:
             type: string
           description: リクエストボディシグネチャ。Secretが設定されている場合は必須
+        - name: embed
+          description: メンション・チャンネルリンクを自動埋め込みする場合に1を指定する
+          in: query
+          required: false
+          schema:
+            type: integer
       security: []
       requestBody:
         required: true

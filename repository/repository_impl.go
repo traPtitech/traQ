@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
+	"strings"
 	"time"
 )
 
@@ -44,6 +45,41 @@ type GormRepository struct {
 	channelImpl
 	fileImpl
 	*heartbeatImpl
+}
+
+// Channel implements ReplaceMapper interface.
+func (repo *GormRepository) Channel(path string) (uuid.UUID, bool) {
+	levels := strings.Split(path, "/")
+	if len(levels) == 0 {
+		return uuid.Nil, false
+	}
+
+	var c model.Channel
+	for _, name := range levels {
+		err := repo.db.Where("parent_id = ? AND name = ?", c.ID, name).First(&c).Error
+		if err != nil {
+			return uuid.Nil, false
+		}
+	}
+	return c.ID, true
+}
+
+// Group implements ReplaceMapper interface.
+func (repo *GormRepository) Group(name string) (uuid.UUID, bool) {
+	g, err := repo.GetUserGroupByName(name)
+	if err != nil {
+		return uuid.Nil, false
+	}
+	return g.ID, true
+}
+
+// User implements ReplaceMapper interface.
+func (repo *GormRepository) User(name string) (uuid.UUID, bool) {
+	u, err := repo.GetUserByName(name)
+	if err != nil {
+		return uuid.Nil, false
+	}
+	return u.ID, true
 }
 
 // Sync implements Repository interface.
