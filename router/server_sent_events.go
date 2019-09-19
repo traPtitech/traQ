@@ -240,10 +240,10 @@ func (s *SSEStreamer) processMessageCreated(message *model.Message, plain string
 			"id": message.ID,
 		},
 	}
-	viewers := map[uuid.UUID]bool{}
-	connector := map[uuid.UUID]bool{}
-	subscribers := map[uuid.UUID]bool{}
-	noticeable := map[uuid.UUID]bool{}
+	viewers := set.UUIDSet{}
+	connector := set.UUIDSet{}
+	subscribers := set.UUIDSet{}
+	noticeable := set.UUIDSet{}
 	ch, _ := s.repo.GetChannel(message.ChannelID)
 	switch {
 	case ch.IsForced: // 強制通知チャンネル
@@ -252,37 +252,31 @@ func (s *SSEStreamer) processMessageCreated(message *model.Message, plain string
 			if v.Bot {
 				continue
 			}
-			subscribers[v.ID] = true
-			noticeable[v.ID] = true
+			subscribers.Add(v.ID)
+			noticeable.Add(v.ID)
 		}
 
 	case !ch.IsPublic: // プライベートチャンネル
 		users, _ := s.repo.GetPrivateChannelMemberIDs(ch.ID)
-		for _, v := range users {
-			subscribers[v] = true
-		}
+		subscribers.Add(users...)
 
 	default: // 通常チャンネルメッセージ
 		// チャンネル通知ユーザー取得
 		users, _ := s.repo.GetSubscribingUserIDs(message.ChannelID)
-		for _, v := range users {
-			subscribers[v] = true
-		}
+		subscribers.Add(users...)
 
 		// グループユーザー・メンションユーザー取得
 		for _, v := range embedded {
 			switch v.Type {
 			case "user":
 				if uid, err := uuid.FromString(v.ID); err == nil {
-					subscribers[uid] = true
-					noticeable[uid] = true
+					subscribers.Add(uid)
+					noticeable.Add(uid)
 				}
 			case "group":
 				gs, _ := s.repo.GetUserGroupMemberIDs(uuid.FromStringOrNil(v.ID))
-				for _, v := range gs {
-					subscribers[v] = true
-					noticeable[v] = true
-				}
+				subscribers.Add(gs...)
+				noticeable.Add(gs...)
 			}
 		}
 	}
@@ -290,22 +284,22 @@ func (s *SSEStreamer) processMessageCreated(message *model.Message, plain string
 	// ハートビートユーザー取得
 	if s, ok := s.repo.GetHeartbeatStatus(message.ChannelID); ok {
 		for _, u := range s.UserStatuses {
-			connector[u.UserID] = true
+			connector.Add(u.UserID)
 			if u.Status != "none" {
-				viewers[u.UserID] = true
+				viewers.Add(u.UserID)
 			}
 		}
 	}
 
 	// 送信
 	for id := range subscribers {
-		if !(id == message.UserID || viewers[id]) {
-			_ = s.repo.SetMessageUnread(id, message.ID, noticeable[id])
+		if !(id == message.UserID || viewers.Contains(id)) {
+			_ = s.repo.SetMessageUnread(id, message.ID, noticeable.Contains(id))
 		}
 		go s.multicast(id, ed)
 	}
 	for id := range connector {
-		if !subscribers[id] {
+		if !subscribers.Contains(id) {
 			go s.multicast(id, ed)
 		}
 	}
@@ -314,7 +308,7 @@ func (s *SSEStreamer) processMessageCreated(message *model.Message, plain string
 func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 	var (
 		ed      *eventData
-		targets = map[uuid.UUID]bool{}
+		targets = set.UUIDSet{}
 	)
 	switch ev.Topic() {
 	case event.ChannelCreated:
@@ -326,9 +320,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 			},
 		}
 		members, _ := s.repo.GetPrivateChannelMemberIDs(cid)
-		for _, u := range members {
-			targets[u] = true
-		}
+		targets.Add(members...)
 	case event.ChannelUpdated:
 		cid := ev.Fields["channel_id"].(uuid.UUID)
 		ed = &eventData{
@@ -338,9 +330,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 			},
 		}
 		members, _ := s.repo.GetPrivateChannelMemberIDs(cid)
-		for _, u := range members {
-			targets[u] = true
-		}
+		targets.Add(members...)
 	case event.ChannelDeleted:
 		cid := ev.Fields["channel_id"].(uuid.UUID)
 		ed = &eventData{
@@ -350,9 +340,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 			},
 		}
 		members, _ := s.repo.GetPrivateChannelMemberIDs(cid)
-		for _, u := range members {
-			targets[u] = true
-		}
+		targets.Add(members...)
 	case event.ChannelStared:
 		ed = &eventData{
 			EventType: "CHANNEL_STARED",
@@ -360,7 +348,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 				"id": ev.Fields["channel_id"].(uuid.UUID),
 			},
 		}
-		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+		targets.Add(ev.Fields["user_id"].(uuid.UUID))
 	case event.ChannelUnstared:
 		ed = &eventData{
 			EventType: "CHANNEL_UNSTARED",
@@ -368,7 +356,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 				"id": ev.Fields["channel_id"].(uuid.UUID),
 			},
 		}
-		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+		targets.Add(ev.Fields["user_id"].(uuid.UUID))
 	case event.ChannelMuted:
 		ed = &eventData{
 			EventType: "CHANNEL_MUTED",
@@ -376,7 +364,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 				"id": ev.Fields["channel_id"].(uuid.UUID),
 			},
 		}
-		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+		targets.Add(ev.Fields["user_id"].(uuid.UUID))
 	case event.ChannelUnmuted:
 		ed = &eventData{
 			EventType: "CHANNEL_UNMUTED",
@@ -384,7 +372,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 				"id": ev.Fields["channel_id"].(uuid.UUID),
 			},
 		}
-		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+		targets.Add(ev.Fields["user_id"].(uuid.UUID))
 	case event.FavoriteStampAdded:
 		ed = &eventData{
 			EventType: "FAVORITE_STAMP_ADDED",
@@ -392,7 +380,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 				"id": ev.Fields["stamp_id"].(uuid.UUID),
 			},
 		}
-		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+		targets.Add(ev.Fields["user_id"].(uuid.UUID))
 	case event.FavoriteStampRemoved:
 		ed = &eventData{
 			EventType: "FAVORITE_STAMP_REMOVED",
@@ -400,7 +388,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 				"id": ev.Fields["stamp_id"].(uuid.UUID),
 			},
 		}
-		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+		targets.Add(ev.Fields["user_id"].(uuid.UUID))
 	case event.ClipCreated:
 		ed = &eventData{
 			EventType: "CLIP_CREATED",
@@ -408,7 +396,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 				"id": ev.Fields["clip_id"].(uuid.UUID),
 			},
 		}
-		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+		targets.Add(ev.Fields["user_id"].(uuid.UUID))
 	case event.ClipDeleted:
 		ed = &eventData{
 			EventType: "CLIP_DELETED",
@@ -416,7 +404,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 				"id": ev.Fields["clip_id"].(uuid.UUID),
 			},
 		}
-		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+		targets.Add(ev.Fields["user_id"].(uuid.UUID))
 	case event.ClipMoved:
 		ed = &eventData{
 			EventType: "CLIP_MOVED",
@@ -424,7 +412,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 				"id": ev.Fields["clip_id"].(uuid.UUID),
 			},
 		}
-		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+		targets.Add(ev.Fields["user_id"].(uuid.UUID))
 	case event.ClipFolderCreated:
 		ed = &eventData{
 			EventType: "CLIP_FOLDER_CREATED",
@@ -432,7 +420,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 				"id": ev.Fields["folder_id"].(uuid.UUID),
 			},
 		}
-		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+		targets.Add(ev.Fields["user_id"].(uuid.UUID))
 	case event.ClipFolderUpdated:
 		ed = &eventData{
 			EventType: "CLIP_FOLDER_UPDATED",
@@ -440,7 +428,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 				"id": ev.Fields["folder_id"].(uuid.UUID),
 			},
 		}
-		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+		targets.Add(ev.Fields["user_id"].(uuid.UUID))
 	case event.ClipFolderDeleted:
 		ed = &eventData{
 			EventType: "CLIP_FOLDER_DELETED",
@@ -448,7 +436,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 				"id": ev.Fields["folder_id"].(uuid.UUID),
 			},
 		}
-		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+		targets.Add(ev.Fields["user_id"].(uuid.UUID))
 	case event.ChannelRead:
 		ed = &eventData{
 			EventType: "MESSAGE_READ",
@@ -456,7 +444,7 @@ func (s *SSEStreamer) processUserMulticastEvent(ev hub.Message) {
 				"id": ev.Fields["channel_id"].(uuid.UUID),
 			},
 		}
-		targets[ev.Fields["user_id"].(uuid.UUID)] = true
+		targets.Add(ev.Fields["user_id"].(uuid.UUID))
 	}
 	for u := range targets {
 		go s.multicast(u, ed)

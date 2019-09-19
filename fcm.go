@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
+	"github.com/traPtitech/traQ/utils/set"
 	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"
 	"google.golang.org/api/option"
@@ -132,7 +133,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 	}
 
 	// 対象者計算
-	targets := map[uuid.UUID]bool{}
+	targets := set.UUIDSet{}
 	switch {
 	case ch.IsForced: // 強制通知チャンネル
 		users, err := m.repo.GetUsers()
@@ -144,7 +145,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 			if v.Bot {
 				continue
 			}
-			targets[v.ID] = true
+			targets.Add(v.ID)
 		}
 
 	case !ch.IsPublic: // プライベートチャンネル
@@ -153,7 +154,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 			logger.Error("failed to GetPrivateChannelMemberIDs", zap.Error(err), zap.Stringer("channelId", message.ChannelID)) // 失敗
 			return
 		}
-		addIDsToSet(targets, pUsers)
+		targets.Add(pUsers...)
 
 	default: // 通常チャンネルメッセージ
 		users, err := m.repo.GetSubscribingUserIDs(message.ChannelID)
@@ -161,14 +162,14 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 			logger.Error("failed to GetSubscribingUserIDs", zap.Error(err), zap.Stringer("channelId", message.ChannelID)) // 失敗
 			return
 		}
-		addIDsToSet(targets, users)
+		targets.Add(users...)
 
 		// ユーザーグループ・メンションユーザー取得
 		for _, v := range embedded {
 			switch v.Type {
 			case "user":
 				if uid, err := uuid.FromString(v.ID); err == nil {
-					addIDsToSet(targets, []uuid.UUID{uid})
+					targets.Add(uid)
 				}
 			case "group":
 				gs, err := m.repo.GetUserGroupMemberIDs(uuid.FromStringOrNil(v.ID))
@@ -176,7 +177,7 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 					logger.Error("failed to GetUserGroupMemberIDs", zap.Error(err), zap.String("groupId", v.ID)) // 失敗
 					return
 				}
-				addIDsToSet(targets, gs)
+				targets.Add(gs...)
 			}
 		}
 
@@ -186,9 +187,9 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 			logger.Error("failed to GetMuteUserIDs", zap.Error(err), zap.Stringer("channelId", message.ChannelID)) // 失敗
 			return
 		}
-		deleteIDsFromSet(targets, muted)
+		targets.Remove(muted...)
 	}
-	delete(targets, message.UserID) // 自分を除外
+	targets.Remove(message.UserID) // 自分を除外
 
 	// 送信
 	for u := range targets {
@@ -258,17 +259,5 @@ func (m *FCMManager) processMessageCreated(message *model.Message, plain string,
 				}
 			}
 		}(u)
-	}
-}
-
-func addIDsToSet(set map[uuid.UUID]bool, ids []uuid.UUID) {
-	for _, v := range ids {
-		set[v] = true
-	}
-}
-
-func deleteIDsFromSet(set map[uuid.UUID]bool, ids []uuid.UUID) {
-	for _, v := range ids {
-		delete(set, v)
 	}
 }
