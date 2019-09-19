@@ -2400,7 +2400,7 @@ func (repo *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 func (repo *TestRepository) generateThumbnail(ctx context.Context, f *model.File, src io.Reader) (image.Rectangle, error) {
 	orig, err := imaging.Decode(src, imaging.AutoOrientation(true))
 	if err != nil {
-		return image.ZR, err
+		return image.Rectangle{}, err
 	}
 
 	img := imaging.Fit(orig, 360, 480, imaging.Linear)
@@ -2412,7 +2412,7 @@ func (repo *TestRepository) generateThumbnail(ctx context.Context, f *model.File
 	}()
 
 	if err := repo.FS.SaveByKey(r, f.GetThumbKey(), f.GetThumbKey()+".png", "image/png", model.FileTypeThumbnail); err != nil {
-		return image.ZR, err
+		return image.Rectangle{}, err
 	}
 	return img.Bounds(), nil
 }
