@@ -3,7 +3,7 @@ version: 2.1
 executors:
   default:
     docker:
-      - image: circleci/golang:1.12.5
+      - image: circleci/golang:1.13.0
         environment:
           - GO111MODULE: "on"
           - GOCACHE: "/tmp/go/cache"
@@ -43,8 +43,8 @@ jobs:
       - checkout
       - restore_mod
       - run:
-          name: Install golangci-lint v1.13.2
-          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.13.2
+          name: Install golangci-lint v1.18.0
+          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.18.0
       - run: ./bin/golangci-lint run
 
   build:
@@ -70,7 +70,7 @@ jobs:
 
   test:
     docker:
-      - image: circleci/golang:1.12.5
+      - image: circleci/golang:1.13.0
         environment:
           - GO111MODULE: "on"
           - GOCACHE: "/tmp/go/cache"

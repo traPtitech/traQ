@@ -8,7 +8,7 @@
 ### Requirements
 
 - go
-	- tested with 1.12
+	- tested with 1.13
 - git
 - make
 
@@ -34,7 +34,7 @@ Now you can access to
 
 ### Setup (for Linux, macOS)
 
-Install golang 1.12.x
+Install golang 1.13.x
 
 ```
 make init
