@@ -224,13 +224,13 @@ var generateThumbnailS = semaphore.NewWeighted(5) // サムネイル生成並列
 // generateThumbnail サムネイル画像を生成します
 func (repo *GormRepository) generateThumbnail(ctx context.Context, f *model.File, src io.Reader) (image.Rectangle, error) {
 	if err := generateThumbnailS.Acquire(ctx, 1); err != nil {
-		return image.ZR, err
+		return image.Rectangle{}, err
 	}
 	defer generateThumbnailS.Release(1)
 
 	orig, err := imaging.Decode(src, imaging.AutoOrientation(true))
 	if err != nil {
-		return image.ZR, err
+		return image.Rectangle{}, err
 	}
 
 	img := imaging.Fit(orig, 360, 480, imaging.Linear)
@@ -242,7 +242,7 @@ func (repo *GormRepository) generateThumbnail(ctx context.Context, f *model.File
 	}()
 
 	if err := repo.FS.SaveByKey(r, f.GetThumbKey(), f.GetThumbKey()+".png", "image/png", model.FileTypeThumbnail); err != nil {
-		return image.ZR, err
+		return image.Rectangle{}, err
 	}
 	return img.Bounds(), nil
 }
