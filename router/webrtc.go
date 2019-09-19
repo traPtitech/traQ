@@ -6,6 +6,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/set"
 	"github.com/traPtitech/traQ/webrtc"
 	"net/http"
 	"time"
@@ -61,7 +62,7 @@ func (h *Handlers) PutWebRTCState(c echo.Context) error {
 		return badRequest(err)
 	}
 
-	if err := h.WebRTC.SetState(userID, req.ChannelID.UUID, utils.StringSetFromArray(req.State)); err != nil {
+	if err := h.WebRTC.SetState(userID, req.ChannelID.UUID, set.StringSetFromArray(req.State)); err != nil {
 		return badRequest(err)
 	}
 

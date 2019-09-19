@@ -1,4 +1,4 @@
-package utils
+package set
 
 import (
 	"encoding/json"
@@ -11,20 +11,22 @@ type StringSet map[string]struct{}
 // StringSetFromArray 配列から集合を生成します
 func StringSetFromArray(arr []string) StringSet {
 	s := StringSet{}
-	for _, v := range arr {
-		s.Add(v)
-	}
+	s.Add(arr...)
 	return s
 }
 
 // Add 要素を追加します
-func (set StringSet) Add(str string) {
-	set[str] = struct{}{}
+func (set StringSet) Add(v ...string) {
+	for _, v := range v {
+		set[v] = struct{}{}
+	}
 }
 
 // Remove 要素を削除します
-func (set StringSet) Remove(str string) {
-	delete(set, str)
+func (set StringSet) Remove(v ...string) {
+	for _, v := range v {
+		delete(set, v)
+	}
 }
 
 // String 要素をsep区切りで文字列に出力します
@@ -37,8 +39,8 @@ func (set StringSet) String(sep string) string {
 }
 
 // Contains 指定した要素が含まれているかどうか
-func (set StringSet) Contains(str string) bool {
-	_, ok := set[str]
+func (set StringSet) Contains(v string) bool {
+	_, ok := set[v]
 	return ok
 }
 

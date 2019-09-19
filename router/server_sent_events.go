@@ -10,8 +10,8 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/message"
+	"github.com/traPtitech/traQ/utils/set"
 	"net/http"
 	"sync"
 	"time"
@@ -670,7 +670,7 @@ func (s *SSEStreamer) processBroadcastEvent(ev hub.Message) {
 			Payload: Payload{
 				"user_id":    ev.Fields["user_id"].(uuid.UUID),
 				"channel_id": ev.Fields["channel_id"].(uuid.UUID),
-				"state":      ev.Fields["state"].(utils.StringSet),
+				"state":      ev.Fields["state"].(set.StringSet),
 			},
 		}
 	}
