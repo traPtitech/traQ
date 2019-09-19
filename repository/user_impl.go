@@ -194,6 +194,35 @@ func (repo *GormRepository) GetUsers() (users []*model.User, err error) {
 	return users, err
 }
 
+// GetUserIDs implements UserRepository interface.
+func (repo *GormRepository) GetUserIDs(query UsersQuery) (ids []uuid.UUID, err error) {
+	ids = make([]uuid.UUID, 0)
+	tx := repo.db.Table("users")
+
+	if query.IsActive.Valid {
+		if query.IsActive.Bool {
+			tx = tx.Where("users.status = ?", model.UserAccountStatusActive)
+		} else {
+			tx = tx.Where("users.status != ?", model.UserAccountStatusActive)
+		}
+	}
+	if query.IsBot.Valid {
+		tx = tx.Where("users.bot = ?", query.IsBot.Bool)
+	}
+	if query.IsSubscriberOf.Valid {
+		tx = tx.Joins("INNER JOIN users_subscribe_channels ON users_subscribe_channels.user_id = users.id AND users_subscribe_channels.channel_id = ?", query.IsSubscriberOf.UUID)
+	}
+	if query.IsCMemberOf.Valid {
+		tx = tx.Joins("INNER JOIN users_private_channels ON users_private_channels.user_id = users.id AND users_private_channels.channel_id = ?", query.IsCMemberOf.UUID)
+	}
+	if query.IsGMemberOf.Valid {
+		tx = tx.Joins("INNER JOIN user_group_members ON user_group_members.user_id = users.id AND user_group_members.group_id = ?", query.IsGMemberOf.UUID)
+	}
+
+	err = tx.Pluck("users.id", &ids).Error
+	return ids, err
+}
+
 // UserExists implements UserRepository interface.
 func (repo *GormRepository) UserExists(id uuid.UUID) (bool, error) {
 	if id == uuid.Nil {
