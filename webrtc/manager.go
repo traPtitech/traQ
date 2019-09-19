@@ -5,7 +5,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/set"
 	"sync"
 	"time"
 )
@@ -43,7 +43,7 @@ func (m *Manager) GetUserState(id uuid.UUID) *UserState {
 		return &UserState{
 			UserID:    id,
 			ChannelID: uuid.Nil,
-			State:     utils.StringSet{},
+			State:     set.StringSet{},
 		}
 	}
 	return s.clone()
@@ -64,7 +64,7 @@ func (m *Manager) GetChannelState(id uuid.UUID) *ChannelState {
 }
 
 // SetState 指定した状態をセットします
-func (m *Manager) SetState(user, channel uuid.UUID, state utils.StringSet) error {
+func (m *Manager) SetState(user, channel uuid.UUID, state set.StringSet) error {
 	if user == uuid.Nil {
 		return errors.New("invalid user id")
 	}
@@ -81,7 +81,7 @@ func (m *Manager) SetState(user, channel uuid.UUID, state utils.StringSet) error
 	return m.RemoveState(user)
 }
 
-func (m *Manager) setState(user, channel uuid.UUID, state utils.StringSet) error {
+func (m *Manager) setState(user, channel uuid.UUID, state set.StringSet) error {
 	m.statesLock.Lock()
 	defer m.statesLock.Unlock()
 
@@ -136,7 +136,7 @@ func (m *Manager) RemoveState(user uuid.UUID) error {
 	}
 
 	us.ChannelID = uuid.Nil
-	us.State = utils.StringSet{}
+	us.State = set.StringSet{}
 	m.eventbus.Publish(hub.Message{
 		Name: event.UserWebRTCStateChanged,
 		Fields: hub.Fields{

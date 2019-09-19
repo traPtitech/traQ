@@ -2,14 +2,14 @@ package webrtc
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/set"
 )
 
 // UserState WebRTCのユーザー状態
 type UserState struct {
-	UserID    uuid.UUID       `json:"userId"`
-	ChannelID uuid.UUID       `json:"channelId"`
-	State     utils.StringSet `json:"state"`
+	UserID    uuid.UUID     `json:"userId"`
+	ChannelID uuid.UUID     `json:"channelId"`
+	State     set.StringSet `json:"state"`
 }
 
 func (s *UserState) valid() bool {

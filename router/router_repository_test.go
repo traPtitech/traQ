@@ -247,6 +247,56 @@ func (repo *TestRepository) GetUsers() ([]*model.User, error) {
 	return result, nil
 }
 
+func (repo *TestRepository) GetUserIDs(query repository.UsersQuery) ([]uuid.UUID, error) {
+	ids := make([]uuid.UUID, 0)
+	repo.UsersLock.RLock()
+	repo.ChannelSubscribesLock.RLock()
+	repo.PrivateChannelMembersLock.RLock()
+	repo.UserGroupMembersLock.RLock()
+	for _, v := range repo.Users {
+		if query.IsBot.Valid {
+			if v.Bot != query.IsBot.Bool {
+				continue
+			}
+		}
+		if query.IsActive.Valid {
+			if query.IsActive.Bool {
+				if v.Status != model.UserAccountStatusActive {
+					continue
+				}
+			} else {
+				if v.Status == model.UserAccountStatusActive {
+					continue
+				}
+			}
+		}
+		if query.IsSubscriberOf.Valid {
+			arr, ok := repo.ChannelSubscribes[query.IsSubscriberOf.UUID]
+			if !ok || !arr[v.ID] {
+				continue
+			}
+		}
+		if query.IsCMemberOf.Valid {
+			arr, ok := repo.PrivateChannelMembers[query.IsCMemberOf.UUID]
+			if !ok || !arr[v.ID] {
+				continue
+			}
+		}
+		if query.IsGMemberOf.Valid {
+			arr, ok := repo.UserGroupMembers[query.IsGMemberOf.UUID]
+			if !ok || !arr[v.ID] {
+				continue
+			}
+		}
+		ids = append(ids, v.ID)
+	}
+	repo.UserGroupMembersLock.RUnlock()
+	repo.PrivateChannelMembersLock.RUnlock()
+	repo.ChannelSubscribesLock.RUnlock()
+	repo.UsersLock.RUnlock()
+	return ids, nil
+}
+
 func (repo *TestRepository) UserExists(id uuid.UUID) (bool, error) {
 	repo.UsersLock.RLock()
 	_, ok := repo.Users[id]

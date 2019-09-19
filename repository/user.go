@@ -14,6 +14,54 @@ type UpdateUserArgs struct {
 	Role        null.String
 }
 
+// UsersQuery GetUsers用クエリ
+type UsersQuery struct {
+	IsBot          null.Bool
+	IsActive       null.Bool
+	IsCMemberOf    uuid.NullUUID
+	IsGMemberOf    uuid.NullUUID
+	IsSubscriberOf uuid.NullUUID
+}
+
+// NotBot Botでない
+func (q UsersQuery) NotBot() UsersQuery {
+	q.IsBot = null.BoolFrom(true)
+	return q
+}
+
+// Active アカウントが有効である
+func (q UsersQuery) Active() UsersQuery {
+	q.IsActive = null.BoolFrom(true)
+	return q
+}
+
+// CMemberOf channelIDプライベートチャンネルのメンバーである
+func (q UsersQuery) CMemberOf(channelID uuid.UUID) UsersQuery {
+	q.IsCMemberOf = uuid.NullUUID{
+		UUID:  channelID,
+		Valid: true,
+	}
+	return q
+}
+
+// GMemberOf groupIDグループのメンバーである
+func (q UsersQuery) GMemberOf(groupID uuid.UUID) UsersQuery {
+	q.IsGMemberOf = uuid.NullUUID{
+		UUID:  groupID,
+		Valid: true,
+	}
+	return q
+}
+
+// SubscriberOf channelIDチャンネルの購読者である
+func (q UsersQuery) SubscriberOf(channelID uuid.UUID) UsersQuery {
+	q.IsSubscriberOf = uuid.NullUUID{
+		UUID:  channelID,
+		Valid: true,
+	}
+	return q
+}
+
 // UserRepository ユーザーリポジトリ
 type UserRepository interface {
 	// CreateUser ユーザーを作成します
@@ -38,6 +86,11 @@ type UserRepository interface {
 	// 成功した場合、ユーザーの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetUsers() ([]*model.User, error)
+	// GetUserIDs 指定した条件を満たすユーザーのUUIDの配列を取得します
+	//
+	// 成功した場合、UUIDの配列とnilを返します。
+	// DBによるエラーを返すことがあります。
+	GetUserIDs(query UsersQuery) ([]uuid.UUID, error)
 	// UserExists 指定したIDのユーザーが存在するかどうかを返します
 	//
 	// 存在する場合、trueとnilを返します。
