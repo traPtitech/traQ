@@ -6,10 +6,31 @@ import (
 	"testing"
 )
 
+type TestReplaceMapper struct {
+	ChannelMap map[string]uuid.UUID
+	UserMap    map[string]uuid.UUID
+	GroupMap   map[string]uuid.UUID
+}
+
+func (t *TestReplaceMapper) Channel(path string) (uuid.UUID, bool) {
+	v, ok := t.ChannelMap[path]
+	return v, ok
+}
+
+func (t *TestReplaceMapper) Group(name string) (uuid.UUID, bool) {
+	v, ok := t.GroupMap[name]
+	return v, ok
+}
+
+func (t *TestReplaceMapper) User(name string) (uuid.UUID, bool) {
+	v, ok := t.UserMap[name]
+	return v, ok
+}
+
 func TestReplacer_Replace(t *testing.T) {
 	t.Parallel()
 
-	re := &Replacer{
+	re := NewReplacer(&TestReplaceMapper{
 		ChannelMap: map[string]uuid.UUID{
 			"a": uuid.Must(uuid.FromString("ea452867-553b-4808-a14f-a47ee0009ee6")),
 		},
@@ -17,7 +38,7 @@ func TestReplacer_Replace(t *testing.T) {
 			"takashi_trap": uuid.Must(uuid.FromString("dfdff0c9-5de0-46ee-9721-2525e8bb3d45")),
 		},
 		GroupMap: map[string]uuid.UUID{},
-	}
+	})
 
 	tt := [][]string{
 		{
