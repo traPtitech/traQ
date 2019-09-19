@@ -1,6 +1,9 @@
 package repository
 
-import "github.com/traPtitech/traQ/utils/storage"
+import (
+	"github.com/traPtitech/traQ/utils/message"
+	"github.com/traPtitech/traQ/utils/storage"
+)
 
 // Repository データリポジトリ
 type Repository interface {
@@ -30,4 +33,5 @@ type Repository interface {
 	BotRepository
 	FavoriteStampRepository
 	UserRoleRepository
+	message.ReplaceMapper
 }

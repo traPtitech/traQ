@@ -24,6 +24,7 @@ import (
 	"mime"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 	"unicode/utf8"
@@ -78,6 +79,53 @@ type TestRepository struct {
 	OAuth2AuthorizesLock      sync.RWMutex
 	OAuth2Tokens              map[uuid.UUID]model.OAuth2Token
 	OAuth2TokensLock          sync.RWMutex
+}
+
+func (repo *TestRepository) Channel(path string) (uuid.UUID, bool) {
+	levels := strings.Split(path, "/")
+	if len(levels) == 0 {
+		return uuid.Nil, false
+	}
+
+	repo.ChannelsLock.RLock()
+	defer repo.ChannelsLock.RUnlock()
+	var c model.Channel
+	for _, name := range levels {
+		ok := false
+		for _, v := range repo.Channels {
+			if v.ParentID == c.ID && strings.ToLower(v.Name) == name {
+				c = v
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return uuid.Nil, false
+		}
+	}
+	return c.ID, true
+}
+
+func (repo *TestRepository) Group(name string) (uuid.UUID, bool) {
+	repo.UserGroupsLock.RLock()
+	defer repo.UserGroupsLock.RUnlock()
+	for _, v := range repo.UserGroups {
+		if v.Name == name {
+			return v.ID, true
+		}
+	}
+	return uuid.Nil, false
+}
+
+func (repo *TestRepository) User(name string) (uuid.UUID, bool) {
+	repo.UsersLock.RLock()
+	defer repo.UsersLock.RUnlock()
+	for _, u := range repo.Users {
+		if strings.ToLower(u.Name) == name {
+			return u.ID, true
+		}
+	}
+	return uuid.Nil, false
 }
 
 func (repo *TestRepository) GetChannelEvents(query repository.ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error) {
