@@ -54,14 +54,16 @@ func (repo *GormRepository) Channel(path string) (uuid.UUID, bool) {
 		return uuid.Nil, false
 	}
 
-	var c model.Channel
+	var id uuid.UUID
 	for _, name := range levels {
-		err := repo.db.Where("parent_id = ? AND name = ?", c.ID, name).First(&c).Error
+		var c model.Channel
+		err := repo.db.Select("id").Where("parent_id = ? AND name = ?", id, name).First(&c).Error
 		if err != nil {
 			return uuid.Nil, false
 		}
+		id = c.ID
 	}
-	return c.ID, true
+	return id, true
 }
 
 // Group implements ReplaceMapper interface.

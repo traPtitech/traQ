@@ -117,12 +117,10 @@ func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {
 }
 
 func dropTables(db *gorm.DB) error {
-	for _, v := range allTables {
-		if err := db.DropTableIfExists(v).Error; err != nil {
-			return err
-		}
+	if err := db.DropTableIfExists(allTables...).Error; err != nil {
+		return err
 	}
-	return nil
+	return db.DropTableIfExists("migrations").Error
 }
 
 func mustMakeChannel(t *testing.T, repo Repository, name string) *model.Channel {
