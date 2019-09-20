@@ -49,7 +49,7 @@ func TestChannelEventDetail_Value(t *testing.T) {
 	v, err := d.Value()
 	assert.NoError(t, err)
 	j := ChannelEventDetail{}
-	json.Unmarshal([]byte(v.(string)), &j)
+	assert.NoError(t, json.Unmarshal([]byte(v.(string)), &j))
 	assert.EqualValues(t, d, j)
 }
 
