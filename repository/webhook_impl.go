@@ -58,10 +58,7 @@ func (repo *GormRepository) CreateWebhook(name, description string, channelID, c
 		if err := tx.Create(u).Error; err != nil {
 			return err
 		}
-		if err := tx.Create(wb).Error; err != nil {
-			return err
-		}
-		return nil
+		return tx.Create(wb).Error
 	})
 	if err != nil {
 		return nil, err

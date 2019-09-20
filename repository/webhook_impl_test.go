@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/utils"
 	"gopkg.in/guregu/null.v3"
 	"strings"
 	"testing"
@@ -19,6 +20,22 @@ func TestRepositoryImpl_CreateWebhook(t *testing.T) {
 		_, err := repo.CreateWebhook("", "", channel.ID, user.ID, "")
 		assert.Error(t, err)
 		_, err = repo.CreateWebhook(strings.Repeat("a", 40), "", channel.ID, user.ID, "")
+		assert.Error(t, err)
+	})
+
+	t.Run("channel not found", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.CreateWebhook(utils.RandAlphabetAndNumberString(20), "aaa", uuid.Must(uuid.NewV4()), user.ID, "test")
+		assert.Error(t, err)
+	})
+
+	t.Run("private channel", func(t *testing.T) {
+		t.Parallel()
+
+		c1 := mustMakePrivateChannel(t, repo, random, []uuid.UUID{user.ID})
+
+		_, err := repo.CreateWebhook(utils.RandAlphabetAndNumberString(20), "aaa", c1.ID, user.ID, "test")
 		assert.Error(t, err)
 	})
 
@@ -67,6 +84,55 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("channel not found", func(t *testing.T) {
+		t.Parallel()
+		wb := mustMakeWebhook(t, repo, random, channel.ID, user.ID, "test")
+		err := repo.UpdateWebhook(wb.GetID(), UpdateWebhookArgs{
+			ChannelID: uuid.NullUUID{
+				UUID:  uuid.Must(uuid.NewV4()),
+				Valid: true,
+			},
+		})
+		assert.Error(t, err)
+	})
+
+	t.Run("private channel", func(t *testing.T) {
+		t.Parallel()
+		wb := mustMakeWebhook(t, repo, random, channel.ID, user.ID, "test")
+		c1 := mustMakePrivateChannel(t, repo, random, []uuid.UUID{user.ID})
+		err := repo.UpdateWebhook(wb.GetID(), UpdateWebhookArgs{
+			ChannelID: uuid.NullUUID{
+				UUID:  c1.ID,
+				Valid: true,
+			},
+		})
+		assert.Error(t, err)
+	})
+
+	t.Run("creator not found", func(t *testing.T) {
+		t.Parallel()
+		wb := mustMakeWebhook(t, repo, random, channel.ID, user.ID, "test")
+		err := repo.UpdateWebhook(wb.GetID(), UpdateWebhookArgs{
+			CreatorID: uuid.NullUUID{
+				UUID:  uuid.Must(uuid.NewV4()),
+				Valid: true,
+			},
+		})
+		assert.Error(t, err)
+	})
+
+	t.Run("invalid creator", func(t *testing.T) {
+		t.Parallel()
+		wb := mustMakeWebhook(t, repo, random, channel.ID, user.ID, "test")
+		err := repo.UpdateWebhook(wb.GetID(), UpdateWebhookArgs{
+			CreatorID: uuid.NullUUID{
+				UUID:  wb.GetBotUserID(),
+				Valid: true,
+			},
+		})
+		assert.Error(t, err)
+	})
+
 	t.Run("No changes", func(t *testing.T) {
 		t.Parallel()
 		wb := mustMakeWebhook(t, repo, random, channel.ID, user.ID, "test")
@@ -88,6 +154,10 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 				Valid: true,
 				UUID:  ch.ID,
 			},
+			CreatorID: uuid.NullUUID{
+				UUID:  user.ID,
+				Valid: true,
+			},
 		})
 		if assert.NoError(err) {
 			wb, err := repo.GetWebhook(wb.GetID())
@@ -95,6 +165,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 			assert.Equal("new name", wb.GetName())
 			assert.Equal("new description", wb.GetDescription())
 			assert.Equal("new secret", wb.GetSecret())
+			assert.Equal(user.ID, wb.GetCreatorID())
 			assert.Equal(ch.ID, wb.GetChannelID())
 		}
 	})
