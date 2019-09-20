@@ -31,32 +31,31 @@ func (arr AccessScopes) Value() (driver.Value, error) {
 
 // Scan database/sql.Scanner 実装
 func (arr *AccessScopes) Scan(src interface{}) error {
-	if src == nil {
+	switch s := src.(type) {
+	case nil:
 		*arr = AccessScopes{}
 		return nil
-	}
-	if sv, err := driver.String.ConvertValue(src); err == nil {
-		if v, ok := sv.(string); ok {
-			as := AccessScopes{}
-			for _, v := range strings.Split(v, " ") {
-				if len(v) > 0 {
-					as = append(as, AccessScope(v))
-				}
+	case string:
+		as := AccessScopes{}
+		for _, v := range strings.Split(s, " ") {
+			if len(v) > 0 {
+				as = append(as, AccessScope(v))
 			}
-			*arr = as
-			return nil
-		} else if v, ok := sv.([]byte); ok {
-			as := AccessScopes{}
-			for _, v := range strings.Split(string(v), " ") {
-				if len(v) > 0 {
-					as = append(as, AccessScope(v))
-				}
-			}
-			*arr = as
-			return nil
 		}
+		*arr = as
+		return nil
+	case []byte:
+		as := AccessScopes{}
+		for _, v := range strings.Split(string(s), " ") {
+			if len(v) > 0 {
+				as = append(as, AccessScope(v))
+			}
+		}
+		*arr = as
+		return nil
+	default:
+		return errors.New("failed to scan AccessScopes")
 	}
-	return errors.New("failed to scan AccessScopes")
 }
 
 // Contains AccessScopesに指定したスコープが含まれるかどうかを返します
