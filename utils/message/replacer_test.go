@@ -37,13 +37,15 @@ func TestReplacer_Replace(t *testing.T) {
 		UserMap: map[string]uuid.UUID{
 			"takashi_trap": uuid.Must(uuid.FromString("dfdff0c9-5de0-46ee-9721-2525e8bb3d45")),
 		},
-		GroupMap: map[string]uuid.UUID{},
+		GroupMap: map[string]uuid.UUID{
+			"okあok": uuid.Must(uuid.FromString("dfabf0c9-5de0-46ee-9721-2525e8bb3d45")),
+		},
 	})
 
 	tt := [][]string{
 		{
-			"aaaa#aeee `#a` @takashi_trapa @takashi_trap @#a\n```\n#a @takashi_trap\n```\n",
-			"aaaa#aeee `#a` @takashi_trapa !{\"type\":\"user\",\"raw\":\"@takashi_trap\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d45\"} @!{\"type\":\"channel\",\"raw\":\"#a\",\"id\":\"ea452867-553b-4808-a14f-a47ee0009ee6\"}\n```\n#a @takashi_trap\n```\n",
+			"aaaa#aeee `#a` @takashi_trapa @takashi_trap @#a\n```\n#a @takashi_trap\n```\n@okあok",
+			"aaaa#aeee `#a` @takashi_trapa !{\"type\":\"user\",\"raw\":\"@takashi_trap\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d45\"} @!{\"type\":\"channel\",\"raw\":\"#a\",\"id\":\"ea452867-553b-4808-a14f-a47ee0009ee6\"}\n```\n#a @takashi_trap\n```\n!{\"type\":\"group\",\"raw\":\"@okあok\",\"id\":\"dfabf0c9-5de0-46ee-9721-2525e8bb3d45\"}",
 		},
 	}
 	for _, v := range tt {
