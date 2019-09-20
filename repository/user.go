@@ -25,7 +25,7 @@ type UsersQuery struct {
 
 // NotBot Botでない
 func (q UsersQuery) NotBot() UsersQuery {
-	q.IsBot = null.BoolFrom(true)
+	q.IsBot = null.BoolFrom(false)
 	return q
 }
 
