@@ -193,6 +193,11 @@ func mustMakeTag(t *testing.T, repo Repository, name string) *model.Tag {
 	return tag
 }
 
+func mustAddTagToUser(t *testing.T, repo Repository, userID, tagID uuid.UUID) {
+	t.Helper()
+	require.NoError(t, repo.AddUserTag(userID, tagID))
+}
+
 func mustMakePin(t *testing.T, repo Repository, messageID, userID uuid.UUID) uuid.UUID {
 	t.Helper()
 	p, err := repo.CreatePin(messageID, userID)
