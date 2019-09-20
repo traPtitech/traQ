@@ -34,6 +34,45 @@ func TestBotEvents_Value(t *testing.T) {
 	assert.ElementsMatch(t, []string{"PING", "PONG"}, strings.Split(v.(string), " "))
 }
 
+func TestBotEvents_Scan(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil", func(t *testing.T) {
+		t.Parallel()
+
+		s := BotEvents{}
+		assert.NoError(t, s.Scan(nil))
+		assert.EqualValues(t, BotEvents{}, s)
+	})
+
+	t.Run("string", func(t *testing.T) {
+		t.Parallel()
+
+		s := BotEvents{}
+		assert.NoError(t, s.Scan("a b c c  "))
+		assert.Contains(t, s, BotEvent("a"))
+		assert.Contains(t, s, BotEvent("b"))
+		assert.Contains(t, s, BotEvent("c"))
+	})
+
+	t.Run("[]byte", func(t *testing.T) {
+		t.Parallel()
+
+		s := BotEvents{}
+		assert.NoError(t, s.Scan([]byte("a b c c  ")))
+		assert.Contains(t, s, BotEvent("a"))
+		assert.Contains(t, s, BotEvent("b"))
+		assert.Contains(t, s, BotEvent("c"))
+	})
+
+	t.Run("other", func(t *testing.T) {
+		t.Parallel()
+
+		s := BotEvents{}
+		assert.Error(t, s.Scan(123))
+	})
+}
+
 func TestBotEvents_String(t *testing.T) {
 	t.Parallel()
 	es := BotEvents{"PING": true, "PONG": true}

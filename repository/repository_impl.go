@@ -50,7 +50,7 @@ type GormRepository struct {
 // Channel implements ReplaceMapper interface.
 func (repo *GormRepository) Channel(path string) (uuid.UUID, bool) {
 	levels := strings.Split(path, "/")
-	if len(levels) == 0 {
+	if len(levels[0]) == 0 {
 		return uuid.Nil, false
 	}
 

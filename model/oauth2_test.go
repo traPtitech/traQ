@@ -21,11 +21,55 @@ func TestOAuth2Token_TableName(t *testing.T) {
 	assert.Equal(t, "oauth2_tokens", (&OAuth2Token{}).TableName())
 }
 
+func TestAccessScopes_Value(t *testing.T) {
+	t.Parallel()
+
+	s := AccessScopes{"read", "write"}
+
+	v, err := s.Value()
+	assert.NoError(t, err)
+	assert.EqualValues(t, "read write", v)
+}
+
+func TestAccessScopes_Scan(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil", func(t *testing.T) {
+		t.Parallel()
+
+		s := AccessScopes{}
+		assert.NoError(t, s.Scan(nil))
+		assert.EqualValues(t, AccessScopes{}, s)
+	})
+
+	t.Run("string", func(t *testing.T) {
+		t.Parallel()
+
+		s := AccessScopes{}
+		assert.NoError(t, s.Scan("a b c  "))
+		assert.EqualValues(t, AccessScopes{"a", "b", "c"}, s)
+	})
+
+	t.Run("[]byte", func(t *testing.T) {
+		t.Parallel()
+
+		s := AccessScopes{}
+		assert.NoError(t, s.Scan([]byte("a b c  ")))
+		assert.EqualValues(t, AccessScopes{"a", "b", "c"}, s)
+	})
+
+	t.Run("other", func(t *testing.T) {
+		t.Parallel()
+
+		s := AccessScopes{}
+		assert.Error(t, s.Scan(123))
+	})
+}
+
 func TestAccessScopes_Contains(t *testing.T) {
 	t.Parallel()
 
-	s := AccessScopes{}
-	s = append(s, "read", "write")
+	s := AccessScopes{"read", "write"}
 
 	assert.True(t, s.Contains("read"))
 	assert.True(t, s.Contains("write"))
@@ -35,8 +79,7 @@ func TestAccessScopes_Contains(t *testing.T) {
 func TestAccessScopes_String(t *testing.T) {
 	t.Parallel()
 
-	s := AccessScopes{}
-	s = append(s, "read", "write")
+	s := AccessScopes{"read", "write"}
 
 	assert.EqualValues(t, "read write", s.String())
 	assert.EqualValues(t, "", AccessScopes{}.String())

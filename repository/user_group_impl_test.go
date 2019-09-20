@@ -11,18 +11,41 @@ import (
 
 func TestRepositoryImpl_CreateUserGroup(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common)
 
+	// Success
 	a := utils.RandAlphabetAndNumberString(20)
-	if g, err := repo.CreateUserGroup(a, "", "", user.ID); assert.NoError(err) {
-		assert.NotNil(g)
+	if g, err := repo.CreateUserGroup(a, "", "", user.ID); assert.NoError(t, err) {
+		assert.NotNil(t, g)
 	}
 
-	_, err := repo.CreateUserGroup(a, "", "", user.ID)
-	assert.EqualError(err, ErrAlreadyExists.Error())
+	t.Run("duplicate", func(t *testing.T) {
+		t.Parallel()
 
-	_, err = repo.CreateUserGroup(strings.Repeat("a", 31), "", "", uuid.Nil)
-	assert.Error(err)
+		_, err := repo.CreateUserGroup(a, "", "", user.ID)
+		assert.EqualError(t, err, ErrAlreadyExists.Error())
+	})
+
+	t.Run("invalid name", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.CreateUserGroup(strings.Repeat("a", 31), "", "", uuid.Nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("invalid admin", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.CreateUserGroup(utils.RandAlphabetAndNumberString(20), "", "", uuid.Nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("invalid type", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.CreateUserGroup(utils.RandAlphabetAndNumberString(20), "", strings.Repeat("a", 31), user.ID)
+		assert.Error(t, err)
+	})
 }
 
 func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
@@ -44,6 +67,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 		if assert.NoError(repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{
 			Name:        null.StringFrom(a),
 			Description: null.StringFrom(a),
+			Type:        null.StringFrom(a),
 			AdminUserID: uuid.NullUUID{
 				Valid: true,
 				UUID:  user.ID,
@@ -53,8 +77,16 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 			require.NoError(err)
 			assert.Equal(a, g.Name)
 			assert.Equal(a, g.Description)
+			assert.Equal(a, g.Type)
 			assert.Equal(user.ID, g.AdminUserID)
 		}
+	})
+
+	t.Run("no change", func(t *testing.T) {
+		t.Parallel()
+		g := mustMakeUserGroup(t, repo, random, user.ID)
+
+		assert.NoError(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{}))
 	})
 
 	t.Run("not found", func(t *testing.T) {
@@ -77,6 +109,23 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 		g := mustMakeUserGroup(t, repo, random, user.ID)
 
 		assert.Error(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Name: null.StringFrom(strings.Repeat("a", 31))}))
+	})
+
+	t.Run("invalid admin", func(t *testing.T) {
+		t.Parallel()
+		g := mustMakeUserGroup(t, repo, random, user.ID)
+
+		assert.Error(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{AdminUserID: uuid.NullUUID{
+			UUID:  uuid.Nil,
+			Valid: true,
+		}}))
+	})
+
+	t.Run("invalid type", func(t *testing.T) {
+		t.Parallel()
+		g := mustMakeUserGroup(t, repo, random, user.ID)
+
+		assert.Error(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Type: null.StringFrom(strings.Repeat("a", 31))}))
 	})
 }
 

@@ -27,32 +27,31 @@ func (set BotEvents) Value() (driver.Value, error) {
 
 // Scan database/sql.Scanner 実装
 func (set *BotEvents) Scan(src interface{}) error {
-	if src == nil {
+	switch s := src.(type) {
+	case nil:
 		*set = BotEvents{}
 		return nil
-	}
-	if sv, err := driver.String.ConvertValue(src); err == nil {
-		if v, ok := sv.(string); ok {
-			as := BotEvents{}
-			for _, v := range strings.Split(v, " ") {
-				if len(v) > 0 {
-					as[BotEvent(v)] = true
-				}
+	case string:
+		as := BotEvents{}
+		for _, v := range strings.Split(s, " ") {
+			if len(v) > 0 {
+				as[BotEvent(v)] = true
 			}
-			*set = as
-			return nil
-		} else if v, ok := sv.([]byte); ok {
-			as := BotEvents{}
-			for _, v := range strings.Split(string(v), " ") {
-				if len(v) > 0 {
-					as[BotEvent(v)] = true
-				}
-			}
-			*set = as
-			return nil
 		}
+		*set = as
+		return nil
+	case []byte:
+		as := BotEvents{}
+		for _, v := range strings.Split(string(s), " ") {
+			if len(v) > 0 {
+				as[BotEvent(v)] = true
+			}
+		}
+		*set = as
+		return nil
+	default:
+		return errors.New("failed to scan BotEvents")
 	}
-	return errors.New("failed to scan BotEvents")
 }
 
 // String BotEventsをスペース区切りで文字列に出力します
