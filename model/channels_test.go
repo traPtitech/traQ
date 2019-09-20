@@ -44,13 +44,13 @@ func TestChannelEventType_String(t *testing.T) {
 func TestChannelEventDetail_Value(t *testing.T) {
 	t.Parallel()
 
-	d := ChannelEventDetail{"a": "test", "b": 123, "c": []int{1, 2, 4}}
+	d := ChannelEventDetail{"a": "test", "b": 123.4, "c": []interface{}{"1", "2", "4"}}
 
 	v, err := d.Value()
 	assert.NoError(t, err)
 	j := ChannelEventDetail{}
-	json.Unmarshal(v.([]byte), &j)
-	assert.EqualValues(t, j, v)
+	json.Unmarshal([]byte(v.(string)), &j)
+	assert.EqualValues(t, d, j)
 }
 
 func TestChannelEventDetail_Scan(t *testing.T) {
