@@ -50,9 +50,9 @@ func TestBotEvents_Scan(t *testing.T) {
 
 		s := BotEvents{}
 		assert.NoError(t, s.Scan("a b c c  "))
-		assert.Contains(t, s, "a")
-		assert.Contains(t, s, "b")
-		assert.Contains(t, s, "c")
+		assert.Contains(t, s, BotEvent("a"))
+		assert.Contains(t, s, BotEvent("b"))
+		assert.Contains(t, s, BotEvent("c"))
 	})
 
 	t.Run("[]byte", func(t *testing.T) {
@@ -60,9 +60,9 @@ func TestBotEvents_Scan(t *testing.T) {
 
 		s := BotEvents{}
 		assert.NoError(t, s.Scan([]byte("a b c c  ")))
-		assert.Contains(t, s, "a")
-		assert.Contains(t, s, "b")
-		assert.Contains(t, s, "c")
+		assert.Contains(t, s, BotEvent("a"))
+		assert.Contains(t, s, BotEvent("b"))
+		assert.Contains(t, s, BotEvent("c"))
 	})
 
 	t.Run("other", func(t *testing.T) {

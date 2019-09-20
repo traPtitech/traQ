@@ -68,9 +68,9 @@ func TestChannelEventDetail_Scan(t *testing.T) {
 		t.Parallel()
 
 		ced := ChannelEventDetail{}
-		assert.NoError(t, ced.Scan(`{"a":1,"b":"c","d":["e","f"]}`))
+		assert.NoError(t, ced.Scan(`{"a":1.2,"b":"c","d":["e","f"]}`))
 		assert.EqualValues(t,
-			ChannelEventDetail{"a": 1, "b": "c", "d": []string{"e", "f"}},
+			ChannelEventDetail{"a": 1.2, "b": "c", "d": []interface{}{"e", "f"}},
 			ced,
 		)
 	})
@@ -79,9 +79,9 @@ func TestChannelEventDetail_Scan(t *testing.T) {
 		t.Parallel()
 
 		ced := ChannelEventDetail{}
-		assert.NoError(t, ced.Scan([]byte(`{"a":1,"b":"c","d":["e","f"]}`)))
+		assert.NoError(t, ced.Scan([]byte(`{"a":1.2,"b":"c","d":["e","f"]}`)))
 		assert.EqualValues(t,
-			ChannelEventDetail{"a": 1, "b": "c", "d": []string{"e", "f"}},
+			ChannelEventDetail{"a": 1.2, "b": "c", "d": []interface{}{"e", "f"}},
 			ced,
 		)
 	})
