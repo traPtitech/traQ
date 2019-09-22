@@ -49,6 +49,9 @@ func (c *Client) send(targetUserIDs set.UUIDSet, payload *Payload) error {
 		logger.Error("failed to GetDeviceTokens", zap.Error(err), zap.Strings("target_user_ids", targetUserIDs.StringArray()))
 		return err
 	}
+	if len(tokens) == 0 {
+		return nil
+	}
 
 	var invalidTokens []string
 	for _, v := range chunk(tokens, batchSize) {
