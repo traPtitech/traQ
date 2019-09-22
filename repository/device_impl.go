@@ -4,6 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/set"
 )
 
 // RegisterDevice implements DeviceRepository interface.
@@ -38,14 +39,6 @@ func (repo *GormRepository) RegisterDevice(userID uuid.UUID, token string) (*mod
 	return &d, nil
 }
 
-// UnregisterDevice implements DeviceRepository interface.
-func (repo *GormRepository) UnregisterDevice(token string) (err error) {
-	if len(token) == 0 {
-		return nil
-	}
-	return repo.db.Delete(&model.Device{Token: token}).Error
-}
-
 // GetDevicesByUserID implements DeviceRepository interface.
 func (repo *GormRepository) GetDevicesByUserID(userID uuid.UUID) (result []*model.Device, err error) {
 	result = make([]*model.Device, 0)
@@ -53,15 +46,6 @@ func (repo *GormRepository) GetDevicesByUserID(userID uuid.UUID) (result []*mode
 		return result, nil
 	}
 	return result, repo.db.Where(&model.Device{UserID: userID}).Find(&result).Error
-}
-
-// GetDeviceTokensByUserID implements DeviceRepository interface.
-func (repo *GormRepository) GetDeviceTokensByUserID(userID uuid.UUID) (result []string, err error) {
-	result = make([]string, 0)
-	if userID == uuid.Nil {
-		return result, nil
-	}
-	return result, repo.db.Model(&model.Device{}).Where(&model.Device{UserID: userID}).Pluck("token", &result).Error
 }
 
 // GetAllDevices implements DeviceRepository interface.
@@ -74,4 +58,15 @@ func (repo *GormRepository) GetAllDevices() (result []*model.Device, err error) 
 func (repo *GormRepository) GetAllDeviceTokens() (result []string, err error) {
 	result = make([]string, 0)
 	return result, repo.db.Model(&model.Device{}).Pluck("token", &result).Error
+}
+
+// GetDeviceTokens implements DeviceRepository interface.
+func (repo *GormRepository) GetDeviceTokens(userIDs set.UUIDSet) (tokens []string, err error) {
+	tokens = make([]string, 0)
+	return tokens, repo.db.Model(&model.Device{}).Where("user_id IN (?)", userIDs.StringArray()).Pluck("token", &tokens).Error
+}
+
+// DeleteDeviceTokens implements DeviceRepository interface.
+func (repo *GormRepository) DeleteDeviceTokens(tokens []string) error {
+	return repo.db.Where("token IN (?)", tokens).Delete(&model.Device{}).Error
 }

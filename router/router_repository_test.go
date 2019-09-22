@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/set"
 	"github.com/traPtitech/traQ/utils/storage"
 	"github.com/traPtitech/traQ/utils/validator"
 	"golang.org/x/sync/errgroup"
@@ -2219,7 +2220,7 @@ func (repo *TestRepository) RegisterDevice(userID uuid.UUID, token string) (*mod
 	panic("implement me")
 }
 
-func (repo *TestRepository) UnregisterDevice(token string) (err error) {
+func (repo *TestRepository) DeleteDeviceTokens(tokens []string) error {
 	panic("implement me")
 }
 
@@ -2227,7 +2228,7 @@ func (repo *TestRepository) GetDevicesByUserID(user uuid.UUID) (result []*model.
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetDeviceTokensByUserID(user uuid.UUID) (result []string, err error) {
+func (repo *TestRepository) GetDeviceTokens(users set.UUIDSet) (tokens []string, err error) {
 	panic("implement me")
 }
 

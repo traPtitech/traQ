@@ -3,6 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/fcm"
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/message"
 	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
@@ -123,9 +127,17 @@ func main() {
 
 	// Firebase
 	if f := viper.GetString("firebase.serviceAccount.file"); len(f) > 0 {
-		if _, err := NewFCMManager(repo, hub, logger.Named("firebase"), f, viper.GetString("origin")); err != nil {
+		logger := logger.Named("fcm")
+		origin := viper.GetString("origin")
+		c, err := fcm.NewClient(repo, logger, option.WithCredentialsFile(f))
+		if err != nil {
 			logger.Fatal("failed to setup firebase", zap.Error(err))
 		}
+		go func() {
+			for ev := range hub.Subscribe(1, event.MessageCreated).Receiver {
+				go processMessageCreated(c, repo, logger, origin, ev.Fields["message"].(*model.Message), ev.Fields["plain"].(string), ev.Fields["embedded"].([]*message.EmbeddedInfo))
+			}
+		}()
 	}
 
 	// Bot Processor
