@@ -49,6 +49,7 @@ func (p *Payload) toMessage() *messaging.Message {
 			"title": p.Title,
 			"body":  p.Body,
 			"path":  p.Path,
+			"tag":   p.Tag,
 		},
 		Notification: &messaging.Notification{
 			Title: p.Title,
