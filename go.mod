@@ -1,11 +1,12 @@
 module github.com/traPtitech/traQ
 
 require (
-	cloud.google.com/go v0.44.3
+	cloud.google.com/go v0.46.3
+	cloud.google.com/go/firestore v1.0.0 // indirect
+	cloud.google.com/go/storage v1.0.0 // indirect
 	firebase.google.com/go v3.9.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ajg/form v0.0.0-20160822230020-523a5da1a92f // indirect
-	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/denisenkom/go-mssqldb v0.0.0-20190806190131-db2462fef53b // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/disintegration/imaging v1.6.0
@@ -62,16 +63,18 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	github.com/yudai/pp v2.0.1+incompatible // indirect
+	go.opencensus.io v0.22.1 // indirect
 	go.uber.org/zap v1.10.0
 	golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7
-	golang.org/x/exp v0.0.0-20190731235908-ec7cb31e5a56
-	golang.org/x/image v0.0.0-20190802002840-cff245a6509b // indirect
-	golang.org/x/net v0.0.0-20190912160710-24e19bdeb0f2 // indirect
+	golang.org/x/exp v0.0.0-20190919035709-81c71964d733
+	golang.org/x/net v0.0.0-20190918130420-a8b05e9114ab // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20190913121621-c3b328c6e5a7 // indirect
-	google.golang.org/api v0.8.0
-	google.golang.org/genproto v0.0.0-20190817000702-55e96fffbd48 // indirect
-	google.golang.org/grpc v1.23.0 // indirect
+	golang.org/x/sys v0.0.0-20190919044723-0c1ff786ef13 // indirect
+	golang.org/x/tools v0.0.0-20190920130846-1081e67f6b77 // indirect
+	google.golang.org/api v0.10.0
+	google.golang.org/appengine v1.6.2 // indirect
+	google.golang.org/genproto v0.0.0-20190916214212-f660b8655731 // indirect
+	google.golang.org/grpc v1.23.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.29.1

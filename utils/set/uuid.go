@@ -72,3 +72,12 @@ func (set UUIDSet) Clone() UUIDSet {
 	}
 	return a
 }
+
+// StringArray stringのスライスに変換します
+func (set UUIDSet) StringArray() []string {
+	arr := make([]string, 0, len(set))
+	for k := range set {
+		arr = append(arr, k.String())
+	}
+	return arr
+}

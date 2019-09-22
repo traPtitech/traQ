@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/set"
 	"testing"
 )
 
@@ -42,7 +43,7 @@ func TestRepositoryImpl_RegisterDevice(t *testing.T) {
 	assert.EqualValues(2, count(t, getDB(repo).Model(model.Device{}).Where("user_id IN (?, ?)", id1, id2)))
 }
 
-func TestRepositoryImpl_UnregisterDevice(t *testing.T) {
+func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	t.Parallel()
 	repo, assert, require := setup(t, common)
 
@@ -51,6 +52,7 @@ func TestRepositoryImpl_UnregisterDevice(t *testing.T) {
 	token1 := utils.RandAlphabetAndNumberString(20)
 	token2 := utils.RandAlphabetAndNumberString(20)
 	token3 := utils.RandAlphabetAndNumberString(20)
+	token4 := utils.RandAlphabetAndNumberString(20)
 
 	_, err := repo.RegisterDevice(id1, token1)
 	require.NoError(err)
@@ -58,17 +60,20 @@ func TestRepositoryImpl_UnregisterDevice(t *testing.T) {
 	require.NoError(err)
 	_, err = repo.RegisterDevice(id1, token3)
 	require.NoError(err)
+	_, err = repo.RegisterDevice(id1, token4)
+	require.NoError(err)
 
 	cases := []struct {
-		token  string
+		tokens []string
 		expect int
 	}{
-		{token2, 2},
-		{"", 2},
-		{token3, 1},
+		{[]string{token2}, 3},
+		{[]string{}, 3},
+		{[]string{token1, token3, ""}, 1},
+		{[]string{token4, token2}, 0},
 	}
 	for _, v := range cases {
-		assert.NoError(repo.UnregisterDevice(v.token))
+		assert.NoError(repo.DeleteDeviceTokens(v.tokens))
 		assert.EqualValues(v.expect, count(t, getDB(repo).Model(model.Device{}).Where("user_id IN (?, ?)", id1, id2)))
 	}
 }
@@ -112,7 +117,7 @@ func TestRepositoryImpl_GetDevicesByUserID(t *testing.T) {
 	}
 }
 
-func TestRepositoryImpl_GetDeviceTokensByUserID(t *testing.T) {
+func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 	t.Parallel()
 	repo, _, require := setup(t, common)
 
@@ -131,12 +136,13 @@ func TestRepositoryImpl_GetDeviceTokensByUserID(t *testing.T) {
 
 	cases := []struct {
 		name   string
-		user   uuid.UUID
+		users  []uuid.UUID
 		expect int
 	}{
-		{"id1", id1, 2},
-		{"id2", id2, 1},
-		{"nil id", uuid.Nil, 0},
+		{"id1", []uuid.UUID{id1}, 2},
+		{"id2", []uuid.UUID{id2}, 1},
+		{"id1, id2", []uuid.UUID{id1, id2}, 3},
+		{"nil", []uuid.UUID{}, 0},
 	}
 
 	for _, v := range cases {
@@ -144,7 +150,7 @@ func TestRepositoryImpl_GetDeviceTokensByUserID(t *testing.T) {
 		t.Run(v.name, func(t *testing.T) {
 			t.Parallel()
 			assert := assert.New(t)
-			devs, err := repo.GetDeviceTokensByUserID(v.user)
+			devs, err := repo.GetDeviceTokens(set.UUIDSetFromArray(v.users))
 			if assert.NoError(err) {
 				assert.Len(devs, v.expect)
 			}
