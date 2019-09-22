@@ -26,13 +26,12 @@ var (
 
 // Payload FCMペイロード
 type Payload struct {
-	Title      string
-	Body       string
-	Icon       string
-	Path       string
-	Tag        string
-	Image      string
-	BadgeCount *int
+	Title string
+	Body  string
+	Icon  string
+	Path  string
+	Tag   string
+	Image string
 }
 
 // SetBodyWithEllipsis 100文字を超える場合は...で省略
@@ -45,32 +44,22 @@ func (p *Payload) SetBodyWithEllipsis(body string) {
 
 func (p *Payload) toMessage() *messaging.Message {
 	return &messaging.Message{
+		// データ メッセージとして全て処理する
 		Data: map[string]string{
 			"title": p.Title,
 			"body":  p.Body,
 			"path":  p.Path,
 			"tag":   p.Tag,
-		},
-		Notification: &messaging.Notification{
-			Title: p.Title,
-			Body:  p.Body,
+			"icon":  p.Icon,
+			"image": p.Image,
 		},
 		Android: &messaging.AndroidConfig{
 			Priority: notificationPriority,
 			TTL:      &messageTTL,
-			Notification: &messaging.AndroidNotification{
-				Icon: p.Icon,
-			},
 		},
 		Webpush: &messaging.WebpushConfig{
 			Headers: map[string]string{
 				"TTL": messageTTLString,
-			},
-			Notification: &messaging.WebpushNotification{
-				Icon:     p.Icon,
-				Image:    p.Image,
-				Tag:      p.Tag,
-				Renotify: true,
 			},
 		},
 		APNS: &messaging.APNSConfig{
@@ -79,7 +68,6 @@ func (p *Payload) toMessage() *messaging.Message {
 			},
 			Payload: &messaging.APNSPayload{
 				Aps: &messaging.Aps{
-					Badge:    p.BadgeCount,
 					Sound:    "default",
 					ThreadID: p.Tag,
 				},
