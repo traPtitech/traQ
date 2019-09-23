@@ -3,10 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/fcm"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/message"
+	"github.com/traPtitech/traQ/notification"
 	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
@@ -126,18 +124,12 @@ func main() {
 	}
 
 	// Firebase
+	var fcmClient *fcm.Client
 	if f := viper.GetString("firebase.serviceAccount.file"); len(f) > 0 {
-		logger := logger.Named("fcm")
-		origin := viper.GetString("origin")
-		c, err := fcm.NewClient(repo, logger, option.WithCredentialsFile(f))
+		fcmClient, err = fcm.NewClient(repo, logger.Named("fcm"), option.WithCredentialsFile(f))
 		if err != nil {
 			logger.Fatal("failed to setup firebase", zap.Error(err))
 		}
-		go func() {
-			for ev := range hub.Subscribe(1, event.MessageCreated).Receiver {
-				go processMessageCreated(c, repo, logger, origin, ev.Fields["message"].(*model.Message), ev.Fields["plain"].(string), ev.Fields["embedded"].([]*message.EmbeddedInfo))
-			}
-		}()
 	}
 
 	// Bot Processor
@@ -176,6 +168,9 @@ func main() {
 	router.SetupRouting(e, h)
 	router.LoadWebhookTemplate("static/webhook/*.tmpl")
 
+	// Notification Service
+	notification.StartService(repo, hub, logger.Named("notification"), fcmClient, h.SSE, viper.GetString("origin"))
+
 	go func() {
 		if err := e.Start(fmt.Sprintf(":%d", viper.GetInt("port"))); err != nil {
 			logger.Info("shutting down the server")
@@ -189,6 +184,7 @@ func main() {
 	<-quit
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	h.SSE.Dispose()
 	if err := e.Shutdown(ctx); err != nil {
 		logger.Warn("abnormal shutdown", zap.Error(err))
 	}

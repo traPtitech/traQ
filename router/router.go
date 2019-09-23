@@ -188,7 +188,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		}
 		apiNotification := api.Group("/notification")
 		{
-			apiNotification.GET("", h.NotificationStream, requires(permission.ConnectNotificationStream))
+			apiNotification.GET("", echo.WrapHandler(h.SSE), requires(permission.ConnectNotificationStream))
 			apiNotification.POST("/device", h.PostDeviceToken, requires(permission.RegisterFCMDevice))
 		}
 		apiMessages := api.Group("/messages")

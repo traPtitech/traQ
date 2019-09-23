@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/sse"
 	"github.com/traPtitech/traQ/utils/imagemagick"
 	"github.com/traPtitech/traQ/webrtc"
 	"go.uber.org/zap"
@@ -95,7 +96,7 @@ func (t *timestamp) UnmarshalParam(src string) error {
 type Handlers struct {
 	RBAC   rbac.RBAC
 	Repo   repository.Repository
-	SSE    *SSEStreamer
+	SSE    *sse.Streamer
 	Hub    *hub.Hub
 	Logger *zap.Logger
 	WebRTC *webrtc.Manager
@@ -128,7 +129,7 @@ func NewHandlers(rbac rbac.RBAC, repo repository.Repository, hub *hub.Hub, logge
 	h := &Handlers{
 		RBAC:          rbac,
 		Repo:          repo,
-		SSE:           NewSSEStreamer(hub, repo),
+		SSE:           sse.NewStreamer(),
 		Hub:           hub,
 		Logger:        logger,
 		WebRTC:        webrtc.NewManager(hub),
