@@ -54,7 +54,7 @@ func (c *Client) send(targetUserIDs set.UUIDSet, payload *Payload) error {
 	}
 
 	var invalidTokens []string
-	for _, v := range chunk(tokens, batchSize) {
+	for _, v := range chunk(tokens, batchSize) { // 1度に送信できるのは100トークン分まで
 		ng, err := c.sendOneChunk(v, payload)
 		if err != nil {
 			logger.Error("an error occurred in sending fcm", zap.Error(err))
