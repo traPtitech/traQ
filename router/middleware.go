@@ -2,6 +2,7 @@ package router
 
 import (
 	"compress/gzip"
+	"context"
 	"fmt"
 	"github.com/NYTimes/gziphandler"
 	"github.com/gofrs/uuid"
@@ -10,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/logging"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/sse"
 	"github.com/traPtitech/traQ/sessions"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
@@ -129,7 +131,8 @@ func (h *Handlers) UserAuthenticate() echo.MiddlewareFunc {
 			}
 
 			c.Set("user", user)
-			c.Set("userID", user.ID)
+			c.Set(userIDKey, user.ID)
+			c.SetRequest(c.Request().WithContext(context.WithValue(c.Request().Context(), sse.CtxUserIDKey, user.ID))) // SSEストリーマーで使う
 			return next(c)
 		}
 	}
