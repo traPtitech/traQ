@@ -78,7 +78,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	client := &sseClient{
-		userID:       ctx.Value("userID").(uuid.UUID),
+		userID:       ctx.Value(CtxUserIDKey).(uuid.UUID),
 		connectionID: uuid.Must(uuid.NewV4()),
 		send:         make(chan *EventData, 100),
 	}

@@ -19,3 +19,11 @@ func (d *EventData) write(rw http.ResponseWriter) {
 	_, _ = rw.Write(data)
 	_, _ = rw.Write([]byte("\n\n"))
 }
+
+// CtxKey context.Context用のキータイプ
+type CtxKey int
+
+const (
+	// CtxUserIDKey ユーザーUUIDキー
+	CtxUserIDKey CtxKey = iota
+)
