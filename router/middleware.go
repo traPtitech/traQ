@@ -130,8 +130,8 @@ func (h *Handlers) UserAuthenticate() echo.MiddlewareFunc {
 			}
 
 			c.Set("user", user)
-			c.Set("userID", user.ID)
-			c.SetRequest(c.Request().WithContext(context.WithValue(c.Request().Context(), "userID", user.ID))) // SSEストリーマーで使う
+			c.Set(userIDKey, user.ID)
+			c.SetRequest(c.Request().WithContext(context.WithValue(c.Request().Context(), userIDKey, user.ID))) // SSEストリーマーで使う
 			return next(c)
 		}
 	}

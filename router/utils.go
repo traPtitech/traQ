@@ -58,6 +58,7 @@ const (
 
 	loggerKey  = "logger"
 	traceIDKey = "traceId"
+	userIDKey  = "userID"
 
 	mimeImagePNG  = "image/png"
 	mimeImageJPEG = "image/jpeg"
