@@ -5,6 +5,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"gopkg.in/guregu/null.v3"
+	"time"
 )
 
 var (
@@ -36,6 +37,12 @@ type ChannelEventsQuery struct {
 	Limit     int
 	Offset    int
 	Asc       bool
+}
+
+// ChannelStats チャンネル統計情報
+type ChannelStats struct {
+	TotalMessageCount int
+	DateTime          time.Time
 }
 
 // ChannelRepository チャンネルリポジトリ
@@ -169,4 +176,9 @@ type ChannelRepository interface {
 	// 指定した範囲内にlimitを超えてイベントが存在していた場合、trueを返します。
 	// DBによるエラーを返すことがあります。
 	GetChannelEvents(query ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error)
+	// GetChannelStats 指定したチャンネルの統計情報を取得します
+	//
+	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
+	// DBによるエラーを返すことがあります。
+	GetChannelStats(channelID uuid.UUID) (*ChannelStats, error)
 }

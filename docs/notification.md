@@ -171,9 +171,7 @@ TODO
 + `path`: チャンネルのパス(`/users/:userID`または`/channels/:channelPath`)
 + `icon`: ユーザーアイコン
 + `tag`: `c:(チャンネルID)`
-+ `vibration`: `[1000, 1000, 1000]`(文字列)
 + `image`: 添付ファイルに画像があればその(１つ目の)サムネイル画像のURL
-+ `badge`: 通知バー用アイコンのURL
 
 ## MESSAGE_UPDATED
 メッセージが更新された。

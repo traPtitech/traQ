@@ -884,6 +884,23 @@ func (repo *GormRepository) RecordChannelEvent(channelID uuid.UUID, eventType mo
 	}).Error
 }
 
+// GetChannelStats implements ChannelRepository interface.
+func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats, error) {
+	if channelID == uuid.Nil {
+		return nil, ErrNotFound
+	}
+
+	if ok, err := dbExists(repo.db, &model.Channel{ID: channelID}); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, ErrNotFound
+	}
+
+	var stats ChannelStats
+	stats.DateTime = time.Now()
+	return &stats, repo.db.Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error
+}
+
 // isChannelPresent チャンネル名が同階層に既に存在するか
 func (repo *GormRepository) isChannelPresent(tx *gorm.DB, name string, parent uuid.UUID) (bool, error) {
 	c := 0
