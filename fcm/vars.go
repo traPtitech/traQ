@@ -68,6 +68,10 @@ func (p *Payload) toMessage() *messaging.Message {
 			},
 			Payload: &messaging.APNSPayload{
 				Aps: &messaging.Aps{
+					Alert: &messaging.ApsAlert{
+						Title: p.Title,
+						Body:  p.Body,
+					},
 					Sound:    "default",
 					ThreadID: p.Tag,
 				},
