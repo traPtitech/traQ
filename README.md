@@ -7,19 +7,23 @@
 
 ### Requirements
 
-- go
-	- tested with 1.13
+- go 1.13.x
 - git
 - make
+- openssl
+- docker
+- docker-compose
 
-### Setup with docker and docker-compose (Recommended)
+### Setup with docker and docker-compose
 
 #### First Up (or entirely rebuild)
-`docker-compose up -d --build`
+`make init && docker-compose up -d --build`
 
 Now you can access to
 + `http://localhost:3000` for traQ
-+ `http://localhost:3001` for Adminer(Browser Database Management Tool)
+    + admin user id: `traq`
+    + admin user password: `traq`
++ `http://localhost:3001` for Adminer
 + `http://localhost:6060` for traQ pprof web interface
 + `3002/tcp` for traQ MariaDB
     + username: `root`
@@ -31,30 +35,6 @@ Now you can access to
 
 #### Destroy Containers and Volumes
 `docker-compose down -v`
-
-### Setup (for Linux, macOS)
-
-Install golang 1.13.x
-
-```
-make init
-make
-```
-
-### [Unmaintained] Setup with Vagrant (recommended for Windows)
-
-Use [Vagrant](https://www.vagrantup.com/downloads.html)
-
-```
-vagrant plugin install vagrant-itamae
-vagrant up
-```
-
-```
-vagrant ssh
-make init
-make
-```
 
 ## License
 Code licensed under [the MIT License](https://github.com/traPtitech/traQ/blob/master/LICENSE).
