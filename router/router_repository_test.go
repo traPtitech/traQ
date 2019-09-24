@@ -82,6 +82,10 @@ type TestRepository struct {
 	OAuth2TokensLock          sync.RWMutex
 }
 
+func (repo *TestRepository) GetChannelStats(channelID uuid.UUID) (*repository.ChannelStats, error) {
+	panic("implement me")
+}
+
 func (repo *TestRepository) Channel(path string) (uuid.UUID, bool) {
 	levels := strings.Split(path, "/")
 	if len(levels) == 0 {

@@ -898,7 +898,7 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 
 	var stats ChannelStats
 	stats.DateTime = time.Now()
-	return &stats, repo.db.Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error
+	return &stats, repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error
 }
 
 // isChannelPresent チャンネル名が同階層に既に存在するか

@@ -341,3 +341,14 @@ func (h *Handlers) GetChannelEvents(c echo.Context) error {
 	c.Response().Header().Set(headerMore, strconv.FormatBool(more))
 	return c.JSON(http.StatusOK, events)
 }
+
+// GetChannelStats GET /channels/:channelID/stats
+func (h *Handlers) GetChannelStats(c echo.Context) error {
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+
+	stats, err := h.Repo.GetChannelStats(channelID)
+	if err != nil {
+		return internalServerError(err, h.requestContextLogger(c))
+	}
+	return c.JSON(http.StatusOK, stats)
+}

@@ -41,8 +41,8 @@ type ChannelEventsQuery struct {
 
 // ChannelStats チャンネル統計情報
 type ChannelStats struct {
-	TotalMessageCount int
-	DateTime          time.Time
+	TotalMessageCount int       `json:"totalMessageCount"`
+	DateTime          time.Time `json:"datetime"`
 }
 
 // ChannelRepository チャンネルリポジトリ
