@@ -468,6 +468,40 @@ func TestRepositoryImpl_CreatePublicChannel(t *testing.T) {
 	assert.Equal(ErrChannelDepthLimitation, err)
 }
 
+func TestGormRepository_GetChannelStats(t *testing.T) {
+	t.Parallel()
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+
+	t.Run("nil id", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.GetChannelStats(uuid.Nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.GetChannelStats(uuid.Must(uuid.NewV4()))
+		assert.Error(t, err)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		for i := 0; i < 14; i++ {
+			mustMakeMessage(t, repo, user.ID, channel.ID)
+		}
+		require.NoError(t, repo.DeleteMessage(mustMakeMessage(t, repo, user.ID, channel.ID).ID))
+
+		stats, err := repo.GetChannelStats(channel.ID)
+		if assert.NoError(t, err) {
+			assert.NotEmpty(t, stats.DateTime)
+			assert.EqualValues(t, 15, stats.TotalMessageCount)
+		}
+	})
+}
+
 func TestRepositoryImpl_getParentChannel(t *testing.T) {
 	t.Parallel()
 	r, _, _ := setup(t, common)
