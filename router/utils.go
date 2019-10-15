@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/gofrs/uuid"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
@@ -79,6 +80,8 @@ const (
 
 	unexpectedError = "unexpected error"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func init() {
 	gob.Register(uuid.UUID{})

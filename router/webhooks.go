@@ -3,7 +3,6 @@ package router
 import (
 	"crypto/subtle"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"

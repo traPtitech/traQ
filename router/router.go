@@ -9,12 +9,17 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/utils/validator"
 )
 
 // SetupRouting APIルーティングを行います
 func SetupRouting(e *echo.Echo, h *Handlers) {
 	e.Validator = validator.New()
+	e.Binder = &extension.Binder{}
+	e.Use(func(n echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error { return n(&extension.Context{Context: c}) }
+	})
 	e.Use(RequestCounterMiddleware())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		ExposeHeaders: []string{"X-TRAQ-VERSION", headerCacheFile, headerFileMetaType, headerMore},

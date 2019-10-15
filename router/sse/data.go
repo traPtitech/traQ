@@ -1,7 +1,7 @@
 package sse
 
 import (
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"net/http"
 )
 
@@ -12,7 +12,7 @@ type EventData struct {
 }
 
 func (d *EventData) write(rw http.ResponseWriter) {
-	data, _ := json.Marshal(d.Payload)
+	data, _ := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(d.Payload)
 	_, _ = rw.Write([]byte("event: "))
 	_, _ = rw.Write([]byte(d.EventType))
 	_, _ = rw.Write([]byte("\ndata: "))

@@ -1,7 +1,6 @@
 package set
 
 import (
-	"encoding/json"
 	"github.com/gofrs/uuid"
 	"strings"
 )
