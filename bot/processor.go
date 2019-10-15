@@ -102,7 +102,7 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 }
 
 func (p *Processor) makePayloadJSON(payload interface{}) (b []byte, releaseFunc func(), err error) {
-	cfg := jsoniter.ConfigCompatibleWithStandardLibrary
+	cfg := jsoniter.ConfigFastest
 	stream := cfg.BorrowStream(nil)
 	releaseFunc = func() { cfg.ReturnStream(stream) }
 	stream.WriteVal(payload)

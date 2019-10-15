@@ -15,7 +15,7 @@ func (c *Context) JSON(code int, i interface{}) (err error) {
 	if _, pretty := c.QueryParams()["pretty"]; pretty {
 		return c.Context.JSON(code, i)
 	}
-	return c.json(code, i, jsoniter.ConfigCompatibleWithStandardLibrary)
+	return c.json(code, i, jsoniter.ConfigFastest)
 }
 
 func (c *Context) json(code int, i interface{}, cfg jsoniter.API) error {

@@ -21,7 +21,7 @@ func (b *Binder) Bind(i interface{}, c echo.Context) error {
 		return defaultBinder.Bind(i, c)
 	}
 
-	if err := jsoniter.ConfigCompatibleWithStandardLibrary.NewDecoder(req.Body).Decode(i); err != nil {
+	if err := jsoniter.ConfigFastest.NewDecoder(req.Body).Decode(i); err != nil {
 		if ute, ok := err.(*json.UnmarshalTypeError); ok {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Unmarshal type error: expected=%v, got=%v, field=%v, offset=%v", ute.Type, ute.Value, ute.Field, ute.Offset)).SetInternal(err)
 		} else if se, ok := err.(*json.SyntaxError); ok {

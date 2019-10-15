@@ -81,7 +81,7 @@ const (
 	unexpectedError = "unexpected error"
 )
 
-var json = jsoniter.ConfigCompatibleWithStandardLibrary
+var json = jsoniter.ConfigFastest
 
 func init() {
 	gob.Register(uuid.UUID{})

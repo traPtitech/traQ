@@ -19,7 +19,7 @@ type EmbeddedInfo struct {
 func Parse(m string) (res []*EmbeddedInfo, plain string) {
 	tmp := embRegex.ReplaceAllStringFunc(m, func(s string) string {
 		info := &EmbeddedInfo{}
-		if err := jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal([]byte(s[1:]), info); err != nil || len(info.Type) == 0 || len(info.ID) == 0 {
+		if err := jsoniter.ConfigFastest.Unmarshal([]byte(s[1:]), info); err != nil || len(info.Type) == 0 || len(info.ID) == 0 {
 			return s
 		}
 		res = append(res, info)
