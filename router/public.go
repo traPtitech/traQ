@@ -2,7 +2,6 @@ package router
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo"
 	"github.com/traPtitech/traQ/repository"

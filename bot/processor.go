@@ -2,15 +2,14 @@ package bot
 
 import (
 	"bytes"
-	"encoding/json"
 	"github.com/gofrs/uuid"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/labstack/echo"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
 	"net/http"
-	"sync"
 	"time"
 )
 
@@ -22,11 +21,10 @@ const (
 
 // Processor ボットプロセッサー
 type Processor struct {
-	repo    repository.Repository
-	logger  *zap.Logger
-	hub     *hub.Hub
-	bufPool sync.Pool
-	client  http.Client
+	repo   repository.Repository
+	logger *zap.Logger
+	hub    *hub.Hub
+	client http.Client
 }
 
 // NewProcessor ボットプロセッサーを生成し、起動します
@@ -35,9 +33,6 @@ func NewProcessor(repo repository.Repository, hub *hub.Hub, logger *zap.Logger) 
 		repo:   repo,
 		logger: logger,
 		hub:    hub,
-		bufPool: sync.Pool{
-			New: func() interface{} { return &bytes.Buffer{} },
-		},
 		client: http.Client{
 			Timeout:       10 * time.Second,
 			CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
@@ -107,16 +102,14 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 }
 
 func (p *Processor) makePayloadJSON(payload interface{}) (b []byte, releaseFunc func(), err error) {
-	buf := p.bufPool.Get().(*bytes.Buffer)
-	releaseFunc = func() {
-		buf.Reset()
-		p.bufPool.Put(buf)
-	}
-
-	if err := json.NewEncoder(buf).Encode(&payload); err != nil {
+	cfg := jsoniter.ConfigFastest
+	stream := cfg.BorrowStream(nil)
+	releaseFunc = func() { cfg.ReturnStream(stream) }
+	stream.WriteVal(payload)
+	stream.WriteRaw("\n")
+	if err = stream.Error; err != nil {
 		releaseFunc()
 		return nil, nil, err
 	}
-
-	return buf.Bytes(), releaseFunc, nil
+	return stream.Buffer(), releaseFunc, nil
 }

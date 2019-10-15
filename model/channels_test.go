@@ -1,7 +1,6 @@
 package model
 
 import (
-	"encoding/json"
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"testing"

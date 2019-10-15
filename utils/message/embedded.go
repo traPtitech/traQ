@@ -1,7 +1,7 @@
 package message
 
 import (
-	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
 	"regexp"
 	"strings"
 )
@@ -19,7 +19,7 @@ type EmbeddedInfo struct {
 func Parse(m string) (res []*EmbeddedInfo, plain string) {
 	tmp := embRegex.ReplaceAllStringFunc(m, func(s string) string {
 		info := &EmbeddedInfo{}
-		if err := json.Unmarshal([]byte(s[1:]), info); err != nil || len(info.Type) == 0 || len(info.ID) == 0 {
+		if err := jsoniter.ConfigFastest.Unmarshal([]byte(s[1:]), info); err != nil || len(info.Type) == 0 || len(info.ID) == 0 {
 			return s
 		}
 		res = append(res, info)
