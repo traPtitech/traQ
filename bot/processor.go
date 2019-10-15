@@ -107,10 +107,10 @@ func (p *Processor) makePayloadJSON(payload interface{}) (b []byte, releaseFunc 
 	releaseFunc = func() { cfg.ReturnStream(stream) }
 	stream.WriteVal(payload)
 	stream.WriteRaw("\n")
-	stream.Flush()
-	if stream.Error != nil {
+	err = stream.Flush()
+	if err != nil {
 		releaseFunc()
-		return nil, nil, stream.Error
+		return nil, nil, err
 	}
 	return stream.Buffer(), releaseFunc, nil
 }

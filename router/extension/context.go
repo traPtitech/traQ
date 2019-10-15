@@ -26,6 +26,5 @@ func (c *Context) json(code int, i interface{}, cfg jsoniter.API) error {
 	c.Response().WriteHeader(code)
 	stream.WriteVal(i)
 	stream.WriteRaw("\n")
-	stream.Flush()
-	return stream.Error
+	return stream.Flush()
 }
