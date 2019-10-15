@@ -12,11 +12,13 @@ type EventData struct {
 }
 
 func (d *EventData) write(rw http.ResponseWriter) {
-	data, _ := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(d.Payload)
+	stream := jsoniter.ConfigCompatibleWithStandardLibrary.BorrowStream(rw)
 	_, _ = rw.Write([]byte("event: "))
 	_, _ = rw.Write([]byte(d.EventType))
 	_, _ = rw.Write([]byte("\ndata: "))
-	_, _ = rw.Write(data)
+	stream.WriteVal(d.Payload)
+	_ = stream.Flush()
+	jsoniter.ConfigCompatibleWithStandardLibrary.ReturnStream(stream)
 	_, _ = rw.Write([]byte("\n\n"))
 }
 

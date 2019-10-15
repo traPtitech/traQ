@@ -25,5 +25,7 @@ func (c *Context) json(code int, i interface{}, cfg jsoniter.API) error {
 	c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
 	c.Response().WriteHeader(code)
 	stream.WriteVal(i)
+	stream.WriteRaw("\n")
+	stream.Flush()
 	return stream.Error
 }
