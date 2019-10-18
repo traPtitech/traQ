@@ -131,21 +131,4 @@ type UserRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	UpdateUserLastOnline(id uuid.UUID, time time.Time) (err error)
-	// IsUserOnline 指定したユーザーがオンラインかどうかを返します
-	//
-	// オンラインの場合、trueを返します。
-	IsUserOnline(id uuid.UUID) bool
-	// GetUserLastOnline 指定したユーザーの最終オンライン日時を取得します
-	//
-	// 成功した場合、日時とnilを返します。
-	// 存在しないユーザーの場合、ErrNotFoundを返します。
-	// DBによるエラーを返すことがあります。
-	GetUserLastOnline(id uuid.UUID) (time.Time, error)
-	// GetHeartbeatStatus 指定したチャンネルのHeartbeatStatusを取得します
-	//
-	// 成功した場合、HeartbeatStatusとtrueを返します。
-	// 失敗した場合、falseを返します。
-	GetHeartbeatStatus(channelID uuid.UUID) (model.HeartbeatStatus, bool)
-	// UpdateHeartbeatStatus 指定したユーザーのハートビートを更新します
-	UpdateHeartbeatStatus(userID, channelID uuid.UUID, status string)
 }

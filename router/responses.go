@@ -6,6 +6,7 @@ import (
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
+	"gopkg.in/guregu/null.v3"
 	"time"
 )
 
@@ -32,7 +33,7 @@ func (h *Handlers) formatMe(user *model.User) *meResponse {
 		IconID:      user.Icon,
 		Bot:         user.Bot,
 		TwitterID:   user.TwitterID,
-		IsOnline:    h.Repo.IsUserOnline(user.ID),
+		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.ID),
 		Suspended:   user.Status != model.UserAccountStatusActive,
 		Status:      int(user.Status),
 		Role:        user.Role,
@@ -42,8 +43,9 @@ func (h *Handlers) formatMe(user *model.User) *meResponse {
 	} else {
 		res.Permissions = h.RBAC.GetGrantedPermissions(user.Role).Array()
 	}
-	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
-		res.LastOnline = &t
+
+	if res.IsOnline {
+		res.LastOnline = null.TimeFrom(time.Now()).Ptr()
 	} else {
 		res.LastOnline = user.LastOnline.Ptr()
 	}
@@ -74,12 +76,13 @@ func (h *Handlers) formatUser(user *model.User) *userResponse {
 		IconID:      user.Icon,
 		Bot:         user.Bot,
 		TwitterID:   user.TwitterID,
-		IsOnline:    h.Repo.IsUserOnline(user.ID),
+		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.ID),
 		Suspended:   user.Status != model.UserAccountStatusActive,
 		Status:      int(user.Status),
 	}
-	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
-		res.LastOnline = &t
+
+	if res.IsOnline {
+		res.LastOnline = null.TimeFrom(time.Now()).Ptr()
 	} else {
 		res.LastOnline = user.LastOnline.Ptr()
 	}
@@ -119,13 +122,14 @@ func (h *Handlers) formatUserDetail(user *model.User, tagList []*model.UsersTag)
 		IconID:      user.Icon,
 		Bot:         user.Bot,
 		TwitterID:   user.TwitterID,
-		IsOnline:    h.Repo.IsUserOnline(user.ID),
+		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.ID),
 		Suspended:   user.Status != model.UserAccountStatusActive,
 		Status:      int(user.Status),
 		TagList:     formatTags(tagList),
 	}
-	if t, err := h.Repo.GetUserLastOnline(user.ID); err == nil && !t.IsZero() {
-		res.LastOnline = &t
+
+	if res.IsOnline {
+		res.LastOnline = null.TimeFrom(time.Now()).Ptr()
 	} else {
 		res.LastOnline = user.LastOnline.Ptr()
 	}

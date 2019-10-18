@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/traPtitech/traQ/fcm"
 	"github.com/traPtitech/traQ/notification"
+	"github.com/traPtitech/traQ/realtime"
 	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
@@ -148,8 +149,11 @@ func main() {
 		logger.Fatal("failed to setup signer", zap.Error(err))
 	}
 
+	// Realtime Manager
+	rt := realtime.NewManager(hub)
+
 	// Routing
-	h := router.NewHandlers(r, repo, hub, logger.Named("router"), router.HandlerConfig{
+	h := router.NewHandlers(r, repo, hub, logger.Named("router"), rt, router.HandlerConfig{
 		ImageMagickPath:  viper.GetString("imagemagick.path"),
 		AccessTokenExp:   viper.GetInt("oauth2.accessTokenExp"),
 		IsRefreshEnabled: viper.GetBool("oauth2.isRefreshEnabled"),
@@ -169,7 +173,7 @@ func main() {
 	router.LoadWebhookTemplate("static/webhook/*.tmpl")
 
 	// Notification Service
-	notification.StartService(repo, hub, logger.Named("notification"), fcmClient, h.SSE, viper.GetString("origin"))
+	notification.StartService(repo, hub, logger.Named("notification"), fcmClient, h.SSE, rt, viper.GetString("origin"))
 
 	go func() {
 		if err := e.Start(fmt.Sprintf(":%d", viper.GetInt("port"))); err != nil {

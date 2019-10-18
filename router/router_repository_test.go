@@ -464,28 +464,6 @@ func (repo *TestRepository) UpdateUserLastOnline(id uuid.UUID, t time.Time) (err
 	return nil
 }
 
-func (repo *TestRepository) IsUserOnline(id uuid.UUID) bool {
-	return false
-}
-
-func (repo *TestRepository) GetUserLastOnline(id uuid.UUID) (time.Time, error) {
-	repo.UsersLock.RLock()
-	u, ok := repo.Users[id]
-	repo.UsersLock.RUnlock()
-	if !ok {
-		return time.Time{}, repository.ErrNotFound
-	}
-	return u.LastOnline.Time, nil
-}
-
-func (repo *TestRepository) GetHeartbeatStatus(channelID uuid.UUID) (model.HeartbeatStatus, bool) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) UpdateHeartbeatStatus(userID, channelID uuid.UUID, status string) {
-	panic("implement me")
-}
-
 func (repo *TestRepository) CreateUserGroup(name, description, gType string, adminID uuid.UUID) (*model.UserGroup, error) {
 	g := model.UserGroup{
 		ID:          uuid.Must(uuid.NewV4()),

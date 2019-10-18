@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
+	"github.com/traPtitech/traQ/realtime"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sse"
 	"github.com/traPtitech/traQ/utils/imagemagick"
@@ -98,12 +99,13 @@ func (t *timestamp) UnmarshalParam(src string) error {
 
 // Handlers ハンドラ
 type Handlers struct {
-	RBAC   rbac.RBAC
-	Repo   repository.Repository
-	SSE    *sse.Streamer
-	Hub    *hub.Hub
-	Logger *zap.Logger
-	WebRTC *webrtc.Manager
+	RBAC     rbac.RBAC
+	Repo     repository.Repository
+	SSE      *sse.Streamer
+	Hub      *hub.Hub
+	Logger   *zap.Logger
+	WebRTC   *webrtc.Manager
+	Realtime *realtime.Manager
 	HandlerConfig
 
 	emojiJSONCache     bytes.Buffer
@@ -129,7 +131,7 @@ type HandlerConfig struct {
 }
 
 // NewHandlers ハンドラを生成します
-func NewHandlers(rbac rbac.RBAC, repo repository.Repository, hub *hub.Hub, logger *zap.Logger, config HandlerConfig) *Handlers {
+func NewHandlers(rbac rbac.RBAC, repo repository.Repository, hub *hub.Hub, logger *zap.Logger, realtime *realtime.Manager, config HandlerConfig) *Handlers {
 	h := &Handlers{
 		RBAC:          rbac,
 		Repo:          repo,
@@ -137,6 +139,7 @@ func NewHandlers(rbac rbac.RBAC, repo repository.Repository, hub *hub.Hub, logge
 		Hub:           hub,
 		Logger:        logger,
 		WebRTC:        webrtc.NewManager(hub),
+		Realtime:      realtime,
 		HandlerConfig: config,
 	}
 	go h.stampEventSubscriber(hub.Subscribe(10, event.StampCreated, event.StampUpdated, event.StampDeleted))

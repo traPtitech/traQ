@@ -188,7 +188,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	// ハートビートユーザー取得
-	if s, ok := ns.repo.GetHeartbeatStatus(m.ChannelID); ok {
+	if s, ok := ns.realtime.HeartBeats.GetHearts(m.ChannelID); ok {
 		for _, u := range s.UserStatuses {
 			connector.Add(u.UserID)
 			if u.Status != "none" {
@@ -591,7 +591,7 @@ func channelHandler(ns *Service, ev hub.Message, ssePayload *sse.EventData) {
 }
 
 func channelHeartbeatMulticast(ns *Service, cid uuid.UUID, ssePayload *sse.EventData) {
-	if status, ok := ns.repo.GetHeartbeatStatus(cid); ok {
+	if status, ok := ns.realtime.HeartBeats.GetHearts(cid); ok {
 		for _, u := range status.UserStatuses {
 			go ns.sse.Multicast(u.UserID, ssePayload)
 		}
