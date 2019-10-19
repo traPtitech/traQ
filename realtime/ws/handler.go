@@ -9,7 +9,7 @@ import (
 )
 
 func (s *session) commandHandler(cmd string) {
-	args := strings.Split(cmd, ":")
+	args := strings.Split(strings.TrimSpace(cmd), ":")
 
 	switch strings.ToLower(args[0]) {
 	case "viewstate":
