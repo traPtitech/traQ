@@ -80,3 +80,21 @@ func (set UUIDSet) StringArray() []string {
 	}
 	return arr
 }
+
+// Array uuid.UUIDのスライスに変換します
+func (set UUIDSet) Array() []uuid.UUID {
+	arr := make([]uuid.UUID, 0, len(set))
+	for k := range set {
+		arr = append(arr, k)
+	}
+	return arr
+}
+
+// Plus 集合を足します
+func (set UUIDSet) Plus(sets ...UUIDSet) {
+	for _, s := range sets {
+		for k := range s {
+			set[k] = struct{}{}
+		}
+	}
+}
