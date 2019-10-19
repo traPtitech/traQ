@@ -7,6 +7,8 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/fcm"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/realtime"
+	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sse"
 	"github.com/traPtitech/traQ/utils/message"
@@ -34,6 +36,7 @@ var handlerMap = map[string]eventHandler{
 	event.ChannelMuted:           channelMutedHandler,
 	event.ChannelUnmuted:         channelUnmutedHandler,
 	event.ChannelRead:            channelReadHandler,
+	event.ChannelViewersChanged:  channelViewersChangedHandler,
 	event.UserCreated:            userCreatedHandler,
 	event.UserUpdated:            userUpdatedHandler,
 	event.UserIconUpdated:        userIconUpdatedHandler,
@@ -187,13 +190,11 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		targets.Remove(muted...)
 	}
 
-	// ハートビートユーザー取得
-	if s, ok := ns.realtime.HeartBeats.GetHearts(m.ChannelID); ok {
-		for _, u := range s.UserStatuses {
-			connector.Add(u.UserID)
-			if u.Status != "none" {
-				viewers.Add(u.UserID)
-			}
+	// チャンネル閲覧者取得
+	for uid, state := range ns.realtime.ViewerManager.GetChannelViewers(m.ChannelID) {
+		connector.Add(uid)
+		if state > realtime.ViewStateNone {
+			viewers.Add(uid)
 		}
 	}
 
@@ -215,6 +216,9 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		}
 	}
 
+	// WS送信
+	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetUserSets(subscribers, connector))
+
 	// FCM送信
 	if ns.fcm != nil {
 		ns.fcm.Send(targets, fcmPayload)
@@ -222,7 +226,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 }
 
 func messageUpdatedHandler(ns *Service, ev hub.Message) {
-	channelHeartbeatMulticast(ns, ev.Fields["message"].(*model.Message).ChannelID, &sse.EventData{
+	channelViewerMulticast(ns, ev.Fields["message"].(*model.Message).ChannelID, &sse.EventData{
 		EventType: "MESSAGE_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["message_id"].(uuid.UUID),
@@ -231,7 +235,7 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 }
 
 func messageDeletedHandler(ns *Service, ev hub.Message) {
-	channelHeartbeatMulticast(ns, ev.Fields["message"].(*model.Message).ChannelID, &sse.EventData{
+	channelViewerMulticast(ns, ev.Fields["message"].(*model.Message).ChannelID, &sse.EventData{
 		EventType: "MESSAGE_DELETED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["message_id"].(uuid.UUID),
@@ -240,7 +244,7 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func messagePinnedHandler(ns *Service, ev hub.Message) {
-	messageHeartbeatMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
+	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
 		EventType: "MESSAGE_PINNED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["pin_id"].(uuid.UUID),
@@ -249,7 +253,7 @@ func messagePinnedHandler(ns *Service, ev hub.Message) {
 }
 
 func messageUnpinnedHandler(ns *Service, ev hub.Message) {
-	messageHeartbeatMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
+	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
 		EventType: "MESSAGE_UNPINNED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["pin_id"].(uuid.UUID),
@@ -258,7 +262,7 @@ func messageUnpinnedHandler(ns *Service, ev hub.Message) {
 }
 
 func messageStampedHandler(ns *Service, ev hub.Message) {
-	messageHeartbeatMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
+	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
 		EventType: "MESSAGE_STAMPED",
 		Payload: map[string]interface{}{
 			"message_id": ev.Fields["message_id"].(uuid.UUID),
@@ -271,7 +275,7 @@ func messageStampedHandler(ns *Service, ev hub.Message) {
 }
 
 func messageUnstampedHandler(ns *Service, ev hub.Message) {
-	messageHeartbeatMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
+	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
 		EventType: "MESSAGE_UNSTAMPED",
 		Payload: map[string]interface{}{
 			"message_id": ev.Fields["message_id"].(uuid.UUID),
@@ -309,7 +313,7 @@ func channelDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func channelStaredHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Multicast(ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CHANNEL_STARED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["channel_id"].(uuid.UUID),
@@ -318,7 +322,7 @@ func channelStaredHandler(ns *Service, ev hub.Message) {
 }
 
 func channelUnstaredHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Multicast(ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CHANNEL_UNSTARED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["channel_id"].(uuid.UUID),
@@ -327,7 +331,7 @@ func channelUnstaredHandler(ns *Service, ev hub.Message) {
 }
 
 func channelMutedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Multicast(ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CHANNEL_MUTED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["channel_id"].(uuid.UUID),
@@ -336,7 +340,7 @@ func channelMutedHandler(ns *Service, ev hub.Message) {
 }
 
 func channelUnmutedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Multicast(ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CHANNEL_UNMUTED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["channel_id"].(uuid.UUID),
@@ -345,7 +349,7 @@ func channelUnmutedHandler(ns *Service, ev hub.Message) {
 }
 
 func channelReadHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Multicast(ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "MESSAGE_READ",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["channel_id"].(uuid.UUID),
@@ -353,8 +357,30 @@ func channelReadHandler(ns *Service, ev hub.Message) {
 	})
 }
 
+func channelViewersChangedHandler(ns *Service, ev hub.Message) {
+	type viewer struct {
+		UserID uuid.UUID `json:"userId"`
+		State  string    `json:"state"`
+	}
+	viewers := make([]viewer, 0)
+	for uid, state := range ev.Fields["viewers"].(map[uuid.UUID]realtime.ViewState) {
+		viewers = append(viewers, viewer{
+			UserID: uid,
+			State:  state.String(),
+		})
+	}
+	cid := ev.Fields["channel_id"].(uuid.UUID)
+	channelViewerMulticast(ns, cid, &sse.EventData{
+		EventType: "CHANNEL_VIEWERS_CHANGED",
+		Payload: map[string]interface{}{
+			"id":      cid,
+			"viewers": viewers,
+		},
+	})
+}
+
 func userCreatedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "USER_JOINED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["user_id"].(uuid.UUID),
@@ -363,7 +389,7 @@ func userCreatedHandler(ns *Service, ev hub.Message) {
 }
 
 func userUpdatedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "USER_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["user_id"].(uuid.UUID),
@@ -372,7 +398,7 @@ func userUpdatedHandler(ns *Service, ev hub.Message) {
 }
 
 func userIconUpdatedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "USER_ICON_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["user_id"].(uuid.UUID),
@@ -381,7 +407,7 @@ func userIconUpdatedHandler(ns *Service, ev hub.Message) {
 }
 
 func userOnlineHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "USER_ONLINE",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["user_id"].(uuid.UUID),
@@ -390,7 +416,7 @@ func userOnlineHandler(ns *Service, ev hub.Message) {
 }
 
 func userOfflineHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "USER_OFFLINE",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["user_id"].(uuid.UUID),
@@ -399,7 +425,7 @@ func userOfflineHandler(ns *Service, ev hub.Message) {
 }
 
 func userTagAddedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "USER_TAGS_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["user_id"].(uuid.UUID),
@@ -408,7 +434,7 @@ func userTagAddedHandler(ns *Service, ev hub.Message) {
 }
 
 func userTagUpdatedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "USER_TAGS_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["user_id"].(uuid.UUID),
@@ -417,7 +443,7 @@ func userTagUpdatedHandler(ns *Service, ev hub.Message) {
 }
 
 func userTagRemovedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "USER_TAGS_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["user_id"].(uuid.UUID),
@@ -426,7 +452,7 @@ func userTagRemovedHandler(ns *Service, ev hub.Message) {
 }
 
 func userGroupCreatedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "USER_GROUP_CREATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["group_id"].(uuid.UUID),
@@ -435,7 +461,7 @@ func userGroupCreatedHandler(ns *Service, ev hub.Message) {
 }
 
 func userGroupDeletedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "USER_GROUP_DELETED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["group_id"].(uuid.UUID),
@@ -444,7 +470,7 @@ func userGroupDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func userGroupMemberAddedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "USER_GROUP_MEMBER_ADDED",
 		Payload: map[string]interface{}{
 			"id":      ev.Fields["group_id"].(uuid.UUID),
@@ -454,7 +480,7 @@ func userGroupMemberAddedHandler(ns *Service, ev hub.Message) {
 }
 
 func userGroupMemberRemovedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "USER_GROUP_MEMBER_REMOVED",
 		Payload: map[string]interface{}{
 			"id":      ev.Fields["group_id"].(uuid.UUID),
@@ -464,7 +490,7 @@ func userGroupMemberRemovedHandler(ns *Service, ev hub.Message) {
 }
 
 func stampCreatedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "STAMP_CREATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_id"].(uuid.UUID),
@@ -473,7 +499,7 @@ func stampCreatedHandler(ns *Service, ev hub.Message) {
 }
 
 func stampUpdatedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "STAMP_MODIFIED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_id"].(uuid.UUID),
@@ -482,7 +508,7 @@ func stampUpdatedHandler(ns *Service, ev hub.Message) {
 }
 
 func stampDeletedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "STAMP_DELETED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_id"].(uuid.UUID),
@@ -491,7 +517,7 @@ func stampDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func favoriteStampAddedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Multicast(ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "FAVORITE_STAMP_ADDED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_id"].(uuid.UUID),
@@ -500,7 +526,7 @@ func favoriteStampAddedHandler(ns *Service, ev hub.Message) {
 }
 
 func favoriteStampRemovedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Multicast(ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "FAVORITE_STAMP_REMOVED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_id"].(uuid.UUID),
@@ -509,7 +535,7 @@ func favoriteStampRemovedHandler(ns *Service, ev hub.Message) {
 }
 
 func clipCreatedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Multicast(ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CLIP_CREATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["clip_id"].(uuid.UUID),
@@ -518,7 +544,7 @@ func clipCreatedHandler(ns *Service, ev hub.Message) {
 }
 
 func clipDeletedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Multicast(ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CLIP_DELETED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["clip_id"].(uuid.UUID),
@@ -527,7 +553,7 @@ func clipDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func clipMovedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Multicast(ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CLIP_MOVED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["clip_id"].(uuid.UUID),
@@ -536,7 +562,7 @@ func clipMovedHandler(ns *Service, ev hub.Message) {
 }
 
 func clipFolderCreatedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Multicast(ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CLIP_FOLDER_CREATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["folder_id"].(uuid.UUID),
@@ -545,7 +571,7 @@ func clipFolderCreatedHandler(ns *Service, ev hub.Message) {
 }
 
 func clipFolderUpdatedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Multicast(ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CLIP_FOLDER_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["folder_id"].(uuid.UUID),
@@ -554,7 +580,7 @@ func clipFolderUpdatedHandler(ns *Service, ev hub.Message) {
 }
 
 func clipFolderDeletedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Multicast(ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CLIP_FOLDER_DELETED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["folder_id"].(uuid.UUID),
@@ -563,7 +589,7 @@ func clipFolderDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func userWebRTCStateChangedHandler(ns *Service, ev hub.Message) {
-	go ns.sse.Broadcast(&sse.EventData{
+	broadcast(ns, &sse.EventData{
 		EventType: "USER_WEBRTC_STATE_CHANGED",
 		Payload: map[string]interface{}{
 			"user_id":    ev.Fields["user_id"].(uuid.UUID),
@@ -585,24 +611,35 @@ func channelHandler(ns *Service, ev hub.Message, ssePayload *sse.EventData) {
 		for _, uid := range members {
 			go ns.sse.Multicast(uid, ssePayload)
 		}
+		go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetUsers(members...))
 	} else {
 		go ns.sse.Broadcast(ssePayload)
+		go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetAll())
 	}
 }
 
-func channelHeartbeatMulticast(ns *Service, cid uuid.UUID, ssePayload *sse.EventData) {
-	if status, ok := ns.realtime.HeartBeats.GetHearts(cid); ok {
-		for _, u := range status.UserStatuses {
-			go ns.sse.Multicast(u.UserID, ssePayload)
-		}
+func channelViewerMulticast(ns *Service, cid uuid.UUID, ssePayload *sse.EventData) {
+	for uid := range ns.realtime.ViewerManager.GetChannelViewers(cid) {
+		go ns.sse.Multicast(uid, ssePayload)
 	}
+	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetChannelViewers(cid))
 }
 
-func messageHeartbeatMulticast(ns *Service, mid uuid.UUID, ssePayload *sse.EventData) {
+func messageViewerMulticast(ns *Service, mid uuid.UUID, ssePayload *sse.EventData) {
 	ch, err := ns.repo.GetChannelByMessageID(mid)
 	if err != nil {
 		ns.logger.Error("failed to GetChannelByMessageID", zap.Error(err), zap.Stringer("messageId", mid)) // 失敗
 		return
 	}
-	channelHeartbeatMulticast(ns, ch.ID, ssePayload)
+	channelViewerMulticast(ns, ch.ID, ssePayload)
+}
+
+func broadcast(ns *Service, ssePayload *sse.EventData) {
+	go ns.sse.Broadcast(ssePayload)
+	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetAll())
+}
+
+func userMulticast(ns *Service, userID uuid.UUID, ssePayload *sse.EventData) {
+	go ns.sse.Multicast(userID, ssePayload)
+	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetUsers(userID))
 }
