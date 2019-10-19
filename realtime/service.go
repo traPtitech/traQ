@@ -4,13 +4,14 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/realtime/viewer"
 	"github.com/traPtitech/traQ/realtime/webrtc"
 )
 
 // Service リアルタイム情報管理
 type Service struct {
 	OnlineCounter *OnlineCounter
-	ViewerManager *ViewerManager
+	ViewerManager *viewer.Manager
 	HeartBeats    *HeartBeats
 	WebRTC        *webrtc.Manager
 }
@@ -18,7 +19,7 @@ type Service struct {
 // NewService realtime.Serviceを生成・起動します
 func NewService(hub *hub.Hub) *Service {
 	oc := newOnlineCounter(hub)
-	vm := newViewerManager(hub)
+	vm := viewer.NewManager(hub)
 	hb := newHeartBeats(vm)
 	wr := webrtc.NewManager(hub)
 

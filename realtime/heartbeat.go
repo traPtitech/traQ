@@ -2,6 +2,7 @@ package realtime
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/realtime/viewer"
 	"sync"
 	"time"
 )
@@ -13,7 +14,7 @@ const (
 
 // HeartBeats ハートビートマネージャー
 type HeartBeats struct {
-	vm           *ViewerManager
+	vm           *viewer.Manager
 	channelBeats map[uuid.UUID][]*beat
 	mu           sync.RWMutex
 }
@@ -23,7 +24,7 @@ type beat struct {
 	lastTime time.Time
 }
 
-func newHeartBeats(vm *ViewerManager) *HeartBeats {
+func newHeartBeats(vm *viewer.Manager) *HeartBeats {
 	h := &HeartBeats{
 		vm:           vm,
 		channelBeats: make(map[uuid.UUID][]*beat),
@@ -73,7 +74,7 @@ func (h *HeartBeats) Beat(userID, channelID uuid.UUID, status string) {
 	for _, b := range beats {
 		if b.userID == userID {
 			b.lastTime = t
-			h.vm.SetViewer(b, userID, channelID, FromString(status))
+			h.vm.SetViewer(b, userID, channelID, viewer.FromString(status))
 			return
 		}
 	}
@@ -82,5 +83,5 @@ func (h *HeartBeats) Beat(userID, channelID uuid.UUID, status string) {
 		lastTime: t,
 	}
 	h.channelBeats[channelID] = append(beats, b)
-	h.vm.SetViewer(b, userID, channelID, FromString(status))
+	h.vm.SetViewer(b, userID, channelID, viewer.FromString(status))
 }

@@ -1,68 +1,31 @@
-package realtime
+package viewer
 
 import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
-	"strings"
 	"sync"
 	"time"
 )
 
-// ViewState 閲覧状態
-type ViewState int
-
-const (
-	// ViewStateNone バックグランド表示中
-	ViewStateNone ViewState = iota
-	// ViewStateMonitoring メッセージ表示中
-	ViewStateMonitoring
-	// ViewStateEditing メッセージ入力中
-	ViewStateEditing
-)
-
-// String string表記にします
-func (s ViewState) String() string {
-	return viewStateStrings[s]
-}
-
-// FromString stringからViewStateに変換します
-func FromString(s string) ViewState {
-	return stringViewStates[strings.ToLower(s)]
-}
-
-var viewStateStrings = map[ViewState]string{
-	ViewStateNone:       "none",
-	ViewStateEditing:    "editing",
-	ViewStateMonitoring: "monitoring",
-}
-
-var stringViewStates map[string]ViewState
-
-func init() {
-	stringViewStates = map[string]ViewState{}
-	for v, k := range viewStateStrings {
-		stringViewStates[k] = v
-	}
-}
-
-type viewer struct {
-	key       interface{}
-	userID    uuid.UUID
-	channelID uuid.UUID
-	state     ViewState
-}
-
-// ViewerManager チャンネルビュアーマネージャ
-type ViewerManager struct {
+// Manager チャンネル閲覧者マネージャ
+type Manager struct {
 	hub      *hub.Hub
 	channels map[uuid.UUID]map[*viewer]struct{}
 	viewers  map[interface{}]*viewer
 	mu       sync.RWMutex
 }
 
-func newViewerManager(hub *hub.Hub) *ViewerManager {
-	vm := &ViewerManager{
+type viewer struct {
+	key       interface{}
+	userID    uuid.UUID
+	channelID uuid.UUID
+	state     State
+}
+
+// NewManager チャンネル閲覧者マネージャーを生成します
+func NewManager(hub *hub.Hub) *Manager {
+	vm := &Manager{
 		hub:      hub,
 		channels: map[uuid.UUID]map[*viewer]struct{}{},
 		viewers:  map[interface{}]*viewer{},
@@ -79,14 +42,14 @@ func newViewerManager(hub *hub.Hub) *ViewerManager {
 }
 
 // GetChannelViewers 指定したチャンネルのチャンネル閲覧者状態を取得します
-func (vm *ViewerManager) GetChannelViewers(channelID uuid.UUID) map[uuid.UUID]ViewState {
+func (vm *Manager) GetChannelViewers(channelID uuid.UUID) map[uuid.UUID]State {
 	vm.mu.RLock()
 	defer vm.mu.RUnlock()
 	return calculateChannelViewers(vm.channels[channelID])
 }
 
 // SetViewer 指定したキーのチャンネル閲覧者状態を設定します
-func (vm *ViewerManager) SetViewer(key interface{}, userID uuid.UUID, channelID uuid.UUID, state ViewState) {
+func (vm *Manager) SetViewer(key interface{}, userID uuid.UUID, channelID uuid.UUID, state State) {
 	vm.mu.Lock()
 	defer vm.mu.Unlock()
 
@@ -143,7 +106,7 @@ func (vm *ViewerManager) SetViewer(key interface{}, userID uuid.UUID, channelID 
 }
 
 // RemoveViewer 指定したキーのチャンネル閲覧者状態を削除します
-func (vm *ViewerManager) RemoveViewer(key interface{}) {
+func (vm *Manager) RemoveViewer(key interface{}) {
 	vm.mu.Lock()
 	defer vm.mu.Unlock()
 
@@ -166,7 +129,7 @@ func (vm *ViewerManager) RemoveViewer(key interface{}) {
 }
 
 // 5分に１回呼び出される。チャンネルマップのお掃除
-func (vm *ViewerManager) gc() {
+func (vm *Manager) gc() {
 	for cid, cv := range vm.channels {
 		if len(cv) == 0 {
 			delete(vm.channels, cid)
@@ -174,8 +137,8 @@ func (vm *ViewerManager) gc() {
 	}
 }
 
-func calculateChannelViewers(vs map[*viewer]struct{}) map[uuid.UUID]ViewState {
-	result := make(map[uuid.UUID]ViewState, len(vs))
+func calculateChannelViewers(vs map[*viewer]struct{}) map[uuid.UUID]State {
+	result := make(map[uuid.UUID]State, len(vs))
 	for v := range vs {
 		if s, ok := result[v.userID]; ok && s > v.state {
 			continue

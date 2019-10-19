@@ -3,7 +3,7 @@ package ws
 import (
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/traPtitech/traQ/realtime"
+	"github.com/traPtitech/traQ/realtime/viewer"
 	"net/http"
 	"sync"
 	"time"
@@ -13,8 +13,8 @@ import (
 type Session interface {
 	// UserID このセッションのUserID
 	UserID() uuid.UUID
-	// ViewState このセッションのチャンネル閲覧状態
-	ViewState() (channelID uuid.UUID, state realtime.ViewState)
+	// State このセッションのチャンネル閲覧状態
+	ViewState() (channelID uuid.UUID, state viewer.State)
 }
 
 type session struct {
@@ -26,7 +26,7 @@ type session struct {
 	userID    uuid.UUID
 	viewState struct {
 		channelID uuid.UUID
-		state     realtime.ViewState
+		state     viewer.State
 	}
 	sync.RWMutex
 }
@@ -123,6 +123,6 @@ func (s *session) UserID() uuid.UUID {
 }
 
 // ViewState implements Session interface.
-func (s *session) ViewState() (uuid.UUID, realtime.ViewState) {
+func (s *session) ViewState() (uuid.UUID, viewer.State) {
 	return s.viewState.channelID, s.viewState.state
 }

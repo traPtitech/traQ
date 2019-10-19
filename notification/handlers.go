@@ -7,7 +7,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/fcm"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/realtime"
+	"github.com/traPtitech/traQ/realtime/viewer"
 	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sse"
@@ -193,7 +193,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	// チャンネル閲覧者取得
 	for uid, state := range ns.realtime.ViewerManager.GetChannelViewers(m.ChannelID) {
 		connector.Add(uid)
-		if state > realtime.ViewStateNone {
+		if state > viewer.StateNone {
 			viewers.Add(uid)
 		}
 	}
@@ -358,13 +358,13 @@ func channelReadHandler(ns *Service, ev hub.Message) {
 }
 
 func channelViewersChangedHandler(ns *Service, ev hub.Message) {
-	type viewer struct {
+	type v struct {
 		UserID uuid.UUID `json:"userId"`
 		State  string    `json:"state"`
 	}
-	viewers := make([]viewer, 0)
-	for uid, state := range ev.Fields["viewers"].(map[uuid.UUID]realtime.ViewState) {
-		viewers = append(viewers, viewer{
+	viewers := make([]v, 0)
+	for uid, state := range ev.Fields["viewers"].(map[uuid.UUID]viewer.State) {
+		viewers = append(viewers, v{
 			UserID: uid,
 			State:  state.String(),
 		})

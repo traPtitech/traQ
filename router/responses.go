@@ -6,7 +6,7 @@ import (
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
-	"github.com/traPtitech/traQ/realtime"
+	"github.com/traPtitech/traQ/realtime/viewer"
 	"gopkg.in/guregu/null.v3"
 	"time"
 )
@@ -450,7 +450,7 @@ type heartbeatUserResponse struct {
 	Status string    `json:"status"`
 }
 
-func formatHeartbeat(cid uuid.UUID, vs map[uuid.UUID]realtime.ViewState) *heartbeatResponse {
+func formatHeartbeat(cid uuid.UUID, vs map[uuid.UUID]viewer.State) *heartbeatResponse {
 	result := &heartbeatResponse{
 		UserStatuses: make([]*heartbeatUserResponse, 0, len(vs)),
 		ChannelID:    cid,
