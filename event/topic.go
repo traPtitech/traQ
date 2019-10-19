@@ -155,6 +155,11 @@ const (
 	// 		user_id: uuid.UUID
 	// 		channel_id: uuid.UUID
 	ChannelUnmuted = "channel.unmuted"
+	// ChannelViewersChanged チャンネルの閲覧者が変化した
+	// 	Fields:
+	// 		channel_id: uuid.UUID
+	// 		viewers: map[uuid.UUID]realtime.ViewState
+	ChannelViewersChanged = "channel.viewers_changed"
 
 	// StampCreated スタンプが作成された
 	// 	Fields:
