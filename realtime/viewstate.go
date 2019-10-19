@@ -3,6 +3,8 @@ package realtime
 import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/model"
 	"strings"
 	"sync"
 	"time"
@@ -81,27 +83,11 @@ func newViewerManager(hub *hub.Hub, hb *HeartBeats) *ViewerManager {
 
 // GetChannelViewers 指定したチャンネルのチャンネル閲覧者状態を取得します
 func (vm *ViewerManager) GetChannelViewers(channelID uuid.UUID) map[uuid.UUID]ViewState {
-	result := map[uuid.UUID]ViewState{}
-
-	hs, ok := vm.hb.GetHearts(channelID)
-	if ok {
-		for _, v := range hs.UserStatuses {
-			result[v.UserID] = FromString(v.Status)
-		}
-	}
+	hs, _ := vm.hb.GetHearts(channelID)
 
 	vm.mu.RLock()
-	vs, ok := vm.channels[channelID]
-	if ok {
-		for v := range vs {
-			if s, ok := result[v.userID]; ok {
-				if s > v.state {
-					continue
-				}
-			}
-			result[v.userID] = v.state
-		}
-	}
+	vs, _ := vm.channels[channelID]
+	result := mergeViewStateAndHeartbeat(hs, vs)
 	vm.mu.RUnlock()
 
 	return result
@@ -112,10 +98,38 @@ func (vm *ViewerManager) SetViewer(key interface{}, userID uuid.UUID, channelID 
 	vm.mu.Lock()
 	defer vm.mu.Unlock()
 
+	cv, ok := vm.channels[channelID]
+	if !ok {
+		cv = map[*viewer]struct{}{}
+		vm.channels[channelID] = cv
+	}
+
+	hs, _ := vm.hb.GetHearts(channelID)
+
 	v, ok := vm.viewers[key]
 	if ok {
-		// 前の状態を削除
-		delete(vm.channels[v.channelID], v)
+		if v.channelID == channelID {
+			// stateだけ変更
+			v.state = state
+		} else {
+			// channelとstateが変更
+
+			oldC := v.channelID
+			old := vm.channels[oldC]
+			delete(old, v)
+
+			v.channelID = channelID
+			v.state = state
+
+			oldHs, _ := vm.hb.GetHearts(oldC)
+			vm.hub.Publish(hub.Message{
+				Name: event.ChannelViewersChanged,
+				Fields: hub.Fields{
+					"channel_id": oldC,
+					"viewers":    mergeViewStateAndHeartbeat(oldHs, old),
+				},
+			})
+		}
 	} else {
 		v = &viewer{
 			key:       key,
@@ -125,16 +139,15 @@ func (vm *ViewerManager) SetViewer(key interface{}, userID uuid.UUID, channelID 
 		}
 		vm.viewers[key] = v
 	}
-	v.channelID = channelID
-	v.userID = userID
-	v.state = state
 
-	cv, ok := vm.channels[channelID]
-	if !ok {
-		cv = map[*viewer]struct{}{}
-		vm.channels[channelID] = cv
-	}
 	cv[v] = struct{}{}
+	vm.hub.Publish(hub.Message{
+		Name: event.ChannelViewersChanged,
+		Fields: hub.Fields{
+			"channel_id": channelID,
+			"viewers":    mergeViewStateAndHeartbeat(hs, cv),
+		},
+	})
 }
 
 // RemoveViewer 指定したキーのチャンネル閲覧者状態を削除します
@@ -146,8 +159,20 @@ func (vm *ViewerManager) RemoveViewer(key interface{}) {
 	if !ok {
 		return
 	}
+
+	cv := vm.channels[v.channelID]
 	delete(vm.viewers, key)
-	delete(vm.channels[v.channelID], v)
+	delete(cv, v)
+
+	hs, _ := vm.hb.GetHearts(v.channelID)
+
+	vm.hub.Publish(hub.Message{
+		Name: event.ChannelViewersChanged,
+		Fields: hub.Fields{
+			"channel_id": v.channelID,
+			"viewers":    mergeViewStateAndHeartbeat(hs, cv),
+		},
+	})
 }
 
 // 5分に１回呼び出される。チャンネルマップのお掃除
@@ -157,4 +182,19 @@ func (vm *ViewerManager) gc() {
 			delete(vm.channels, cid)
 		}
 	}
+}
+
+func mergeViewStateAndHeartbeat(hbs model.HeartbeatStatus, vs map[*viewer]struct{}) map[uuid.UUID]ViewState {
+	result := make(map[uuid.UUID]ViewState, len(hbs.UserStatuses)+len(vs))
+	for _, v := range hbs.UserStatuses {
+		result[v.UserID] = FromString(v.Status)
+	}
+
+	for v := range vs {
+		if s, ok := result[v.userID]; ok && s > v.state {
+			continue
+		}
+		result[v.userID] = v.state
+	}
+	return result
 }

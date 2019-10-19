@@ -6,15 +6,15 @@ import (
 	"github.com/traPtitech/traQ/event"
 )
 
-// Manager リアルタイム情報管理
-type Manager struct {
+// Service リアルタイム情報管理
+type Service struct {
 	OnlineCounter *OnlineCounter
 	ViewerManager *ViewerManager
 	HeartBeats    *HeartBeats
 }
 
-// NewManager realtime.Managerを生成・起動します
-func NewManager(hub *hub.Hub) *Manager {
+// NewService realtime.Serviceを生成・起動します
+func NewService(hub *hub.Hub) *Service {
 	oc := newOnlineCounter(hub)
 	hb := newHeartBeats(hub)
 	vm := newViewerManager(hub, hb)
@@ -30,7 +30,7 @@ func NewManager(hub *hub.Hub) *Manager {
 		}
 	}()
 
-	return &Manager{
+	return &Service{
 		OnlineCounter: oc,
 		ViewerManager: vm,
 		HeartBeats:    hb,
