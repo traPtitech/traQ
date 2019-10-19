@@ -17,7 +17,7 @@ func makeMessage(t string, b interface{}) (m *message) {
 	}
 }
 
-func (m *message) toJson() (b []byte) {
+func (m *message) toJSON() (b []byte) {
 	b, _ = json.Marshal(m)
 	return
 }

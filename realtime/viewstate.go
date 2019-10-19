@@ -86,7 +86,7 @@ func (vm *ViewerManager) GetChannelViewers(channelID uuid.UUID) map[uuid.UUID]Vi
 	hs, _ := vm.hb.GetHearts(channelID)
 
 	vm.mu.RLock()
-	vs, _ := vm.channels[channelID]
+	vs := vm.channels[channelID]
 	result := mergeViewStateAndHeartbeat(hs, vs)
 	vm.mu.RUnlock()
 

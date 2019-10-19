@@ -35,7 +35,7 @@ func (s *session) readLoop() {
 	s.conn.SetReadLimit(maxReadMessageSize)
 	_ = s.conn.SetReadDeadline(time.Now().Add(pongWait))
 	s.conn.SetPongHandler(func(string) error {
-		s.conn.SetReadDeadline(time.Now().Add(pongWait))
+		_ = s.conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
 

@@ -79,7 +79,7 @@ func (s *Streamer) run() {
 				data: websocket.FormatCloseMessage(websocket.CloseServiceRestart, "Server is stopping..."),
 			}
 			for session := range s.sessions {
-				session.writeMessage(m)
+				_ = session.writeMessage(m)
 				delete(s.sessions, session)
 				session.close()
 			}
@@ -94,7 +94,7 @@ func (s *Streamer) run() {
 func (s *Streamer) WriteMessage(t string, body interface{}, targetFunc TargetFunc) {
 	m := &rawMessage{
 		t:    websocket.TextMessage,
-		data: makeMessage(t, body).toJson(),
+		data: makeMessage(t, body).toJSON(),
 	}
 	s.mu.RLock()
 	for session := range s.sessions {
@@ -157,8 +157,6 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	wsConnectionCounter.Dec()
 	s.unregister <- session
 	session.close()
-
-	return
 }
 
 // IsClosed ストリーマーが停止しているかどうか

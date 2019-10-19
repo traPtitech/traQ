@@ -51,6 +51,6 @@ func (s *session) commandHandler(cmd string) {
 func (s *session) sendErrorMessage(error string) {
 	_ = s.writeMessage(&rawMessage{
 		t:    websocket.TextMessage,
-		data: makeMessage("ERROR", error).toJson(),
+		data: makeMessage("ERROR", error).toJSON(),
 	})
 }
