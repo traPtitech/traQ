@@ -9,4 +9,5 @@ proxy / traq-frontend {
 
 proxy /api traq-backend:3000 {
     transparent
+    websocket
 }
