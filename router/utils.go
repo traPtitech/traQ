@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/realtime"
+	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sse"
 	"github.com/traPtitech/traQ/utils/imagemagick"
@@ -102,10 +103,11 @@ type Handlers struct {
 	RBAC     rbac.RBAC
 	Repo     repository.Repository
 	SSE      *sse.Streamer
+	WS       *ws.Streamer
 	Hub      *hub.Hub
 	Logger   *zap.Logger
 	WebRTC   *webrtc.Manager
-	Realtime *realtime.Manager
+	Realtime *realtime.Service
 	HandlerConfig
 
 	emojiJSONCache     bytes.Buffer
@@ -131,11 +133,12 @@ type HandlerConfig struct {
 }
 
 // NewHandlers ハンドラを生成します
-func NewHandlers(rbac rbac.RBAC, repo repository.Repository, hub *hub.Hub, logger *zap.Logger, realtime *realtime.Manager, config HandlerConfig) *Handlers {
+func NewHandlers(rbac rbac.RBAC, repo repository.Repository, hub *hub.Hub, logger *zap.Logger, realtime *realtime.Service, config HandlerConfig) *Handlers {
 	h := &Handlers{
 		RBAC:          rbac,
 		Repo:          repo,
 		SSE:           sse.NewStreamer(hub),
+		WS:            ws.NewStreamer(hub, realtime, logger.Named("ws")),
 		Hub:           hub,
 		Logger:        logger,
 		WebRTC:        webrtc.NewManager(hub),

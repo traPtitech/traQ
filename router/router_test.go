@@ -71,7 +71,7 @@ func TestMain(m *testing.M) {
 		SetupRouting(e, &Handlers{
 			RBAC:     r,
 			Repo:     repo,
-			Realtime: realtime.NewManager(hub.New()),
+			Realtime: realtime.NewService(hub.New()),
 			Logger:   zap.NewNop(),
 			HandlerConfig: HandlerConfig{
 				AccessTokenExp:   1000,

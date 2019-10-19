@@ -340,6 +340,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			apiWebRTC.PUT("/state", h.PutWebRTCState)
 		}
 		api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler, botGuard(blockAlways))
+		api.GET("/ws", echo.WrapHandler(h.WS), requires(permission.ConnectNotificationStream))
 
 		if len(h.SkyWaySecretKey) > 0 {
 			api.POST("/skyway/authenticate", h.PostSkyWayAuthenticate, botGuard(blockAlways))

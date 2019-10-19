@@ -149,8 +149,8 @@ func main() {
 		logger.Fatal("failed to setup signer", zap.Error(err))
 	}
 
-	// Realtime Manager
-	rt := realtime.NewManager(hub)
+	// Realtime Service
+	rt := realtime.NewService(hub)
 
 	// Routing
 	h := router.NewHandlers(r, repo, hub, logger.Named("router"), rt, router.HandlerConfig{
@@ -173,7 +173,7 @@ func main() {
 	router.LoadWebhookTemplate("static/webhook/*.tmpl")
 
 	// Notification Service
-	notification.StartService(repo, hub, logger.Named("notification"), fcmClient, h.SSE, rt, viper.GetString("origin"))
+	notification.StartService(repo, hub, logger.Named("notification"), fcmClient, h.SSE, h.WS, rt, viper.GetString("origin"))
 
 	go func() {
 		if err := e.Start(fmt.Sprintf(":%d", viper.GetInt("port"))); err != nil {
@@ -189,6 +189,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	h.SSE.Dispose()
+	h.WS.Close()
 	if err := e.Shutdown(ctx); err != nil {
 		logger.Warn("abnormal shutdown", zap.Error(err))
 	}
