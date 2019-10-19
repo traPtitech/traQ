@@ -10,29 +10,27 @@ import (
 func (h *Handlers) PostHeartbeat(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	req := struct {
+	var req struct {
 		ChannelID uuid.UUID `json:"channelId"`
 		Status    string    `json:"status"`
-	}{}
+	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return badRequest(err)
 	}
 
-	h.Repo.UpdateHeartbeatStatus(userID, req.ChannelID, req.Status)
+	h.Realtime.HeartBeats.Beat(userID, req.ChannelID, req.Status)
 
-	status, _ := h.Repo.GetHeartbeatStatus(req.ChannelID)
-	return c.JSON(http.StatusOK, status)
+	return c.JSON(http.StatusOK, formatHeartbeat(req.ChannelID, h.Realtime.ViewerManager.GetChannelViewers(req.ChannelID)))
 }
 
-// GetHeartbeat GET /heartbeat
+// GetHeartbeat [deprecated] GET /heartbeat
 func (h *Handlers) GetHeartbeat(c echo.Context) error {
-	req := struct {
+	var req struct {
 		ChannelID uuid.UUID `query:"channelId"`
-	}{}
+	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return badRequest(err)
 	}
 
-	status, _ := h.Repo.GetHeartbeatStatus(req.ChannelID)
-	return c.JSON(http.StatusOK, status)
+	return c.JSON(http.StatusOK, formatHeartbeat(req.ChannelID, h.Realtime.ViewerManager.GetChannelViewers(req.ChannelID)))
 }

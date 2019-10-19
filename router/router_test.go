@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"github.com/gavv/httpexpect"
 	"github.com/gofrs/uuid"
+	"github.com/leandro-lugaresi/hub"
 	rbac "github.com/traPtitech/traQ/rbac/impl"
+	"github.com/traPtitech/traQ/realtime"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
@@ -67,9 +69,10 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 		SetupRouting(e, &Handlers{
-			RBAC:   r,
-			Repo:   repo,
-			Logger: zap.NewNop(),
+			RBAC:     r,
+			Repo:     repo,
+			Realtime: realtime.NewService(hub.New()),
+			Logger:   zap.NewNop(),
 			HandlerConfig: HandlerConfig{
 				AccessTokenExp:   1000,
 				IsRefreshEnabled: true,

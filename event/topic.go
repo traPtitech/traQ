@@ -155,6 +155,11 @@ const (
 	// 		user_id: uuid.UUID
 	// 		channel_id: uuid.UUID
 	ChannelUnmuted = "channel.unmuted"
+	// ChannelViewersChanged チャンネルの閲覧者が変化した
+	// 	Fields:
+	// 		channel_id: uuid.UUID
+	// 		viewers: map[uuid.UUID]realtime.ViewState
+	ChannelViewersChanged = "channel.viewers_changed"
 
 	// StampCreated スタンプが作成された
 	// 	Fields:
@@ -269,4 +274,26 @@ const (
 	// 		channel_id: uuid.UUID
 	// 		state: string
 	UserWebRTCStateChanged = "user.webrtc.state_changed"
+
+	// SSEConnected ユーザーがSSEストリームに接続した
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		req: *http.Request
+	SSEConnected = "sse.connected"
+	// SSEDisconnected ユーザーがSSEストリームから切断した
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		req: *http.Request
+	SSEDisconnected = "sse.disconnected"
+
+	// WSConnected ユーザーがWSストリームに接続した
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		req: *http.Request
+	WSConnected = "ws.connected"
+	// WSDisconnected ユーザーがWSストリームから切断した
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		req: *http.Request
+	WSDisconnected = "ws.disconnected"
 )

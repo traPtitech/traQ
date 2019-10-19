@@ -28,3 +28,11 @@ func (c *Context) json(code int, i interface{}, cfg jsoniter.API) error {
 	stream.WriteRaw("\n")
 	return stream.Flush()
 }
+
+// CtxKey context.Context用のキータイプ
+type CtxKey int
+
+const (
+	// CtxUserIDKey ユーザーUUIDキー
+	CtxUserIDKey CtxKey = iota
+)

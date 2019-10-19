@@ -31,10 +31,6 @@ var (
 		Namespace: "traq",
 		Name:      "channels_count_total",
 	})
-	onlineUsersCounter = promauto.NewGauge(prometheus.GaugeOpts{
-		Namespace: "traq",
-		Name:      "online_users",
-	})
 )
 
 // GormRepository リポジトリ実装
@@ -44,7 +40,6 @@ type GormRepository struct {
 	logger *zap.Logger
 	channelImpl
 	fileImpl
-	*heartbeatImpl
 }
 
 // Channel implements ReplaceMapper interface.
@@ -137,7 +132,6 @@ func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub, logger
 		fileImpl: fileImpl{
 			FS: fs,
 		},
-		heartbeatImpl: newHeartbeatImpl(hub),
 	}
 	go func() {
 		sub := hub.Subscribe(10, event.UserOffline)

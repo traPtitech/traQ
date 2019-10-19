@@ -23,6 +23,7 @@ require (
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/google/pprof v0.0.0-20190723021845-34ac40c74b70 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
+	github.com/gorilla/websocket v1.4.1
 	github.com/hashicorp/golang-lru v0.5.3
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a

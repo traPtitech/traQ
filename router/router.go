@@ -148,7 +148,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		}
 		apiHeartBeat := api.Group("/heartbeat")
 		{
-			apiHeartBeat.GET("", h.GetHeartbeat, requires(permission.GetHeartbeat))
+			apiHeartBeat.GET("", h.GetHeartbeat, requires(permission.GetHeartbeat)) // Deprecated
 			apiHeartBeat.POST("", h.PostHeartbeat, requires(permission.PostHeartbeat))
 		}
 		apiChannels := api.Group("/channels")
@@ -165,6 +165,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiChannelsCid.GET("/pins", h.GetChannelPin, requires(permission.GetMessage))
 				apiChannelsCid.GET("/events", h.GetChannelEvents, requires(permission.GetChannel))
 				apiChannelsCid.GET("/stats", h.GetChannelStats, requires(permission.GetChannel))
+				apiChannelsCid.GET("/viewers", h.GetChannelViewers, requires(permission.GetChannel))
 				apiChannelsCidTopic := apiChannelsCid.Group("/topic")
 				{
 					apiChannelsCidTopic.GET("", h.GetTopic, requires(permission.GetChannel))
@@ -340,6 +341,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 			apiWebRTC.PUT("/state", h.PutWebRTCState)
 		}
 		api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler, botGuard(blockAlways))
+		api.GET("/ws", echo.WrapHandler(h.WS), requires(permission.ConnectNotificationStream))
 
 		if len(h.SkyWaySecretKey) > 0 {
 			api.POST("/skyway/authenticate", h.PostSkyWayAuthenticate, botGuard(blockAlways))

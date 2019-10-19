@@ -2,8 +2,11 @@ package sse
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/leandro-lugaresi/hub"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/router/extension"
 	"net/http"
 	"time"
 )
@@ -16,14 +19,16 @@ var sseConnectionsCounter = promauto.NewGauge(prometheus.GaugeOpts{
 // Streamer SSEストリーマー
 type Streamer struct {
 	sseClientMap
+	hub        *hub.Hub
 	connect    chan *sseClient
 	disconnect chan *sseClient
 	stop       chan struct{}
 }
 
 // NewStreamer SSEストリーマーを作成します
-func NewStreamer() *Streamer {
+func NewStreamer(hub *hub.Hub) *Streamer {
 	s := &Streamer{
+		hub:        hub,
 		connect:    make(chan *sseClient),
 		disconnect: make(chan *sseClient, 10),
 		stop:       make(chan struct{}),
@@ -78,7 +83,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	client := &sseClient{
-		userID:       ctx.Value(CtxUserIDKey).(uuid.UUID),
+		userID:       ctx.Value(extension.CtxUserIDKey).(uuid.UUID),
 		connectionID: uuid.Must(uuid.NewV4()),
 		send:         make(chan *EventData, 100),
 	}
@@ -86,6 +91,21 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	sseConnectionsCounter.Inc()
 	defer sseConnectionsCounter.Dec()
+
+	s.hub.Publish(hub.Message{
+		Name: event.SSEConnected,
+		Fields: hub.Fields{
+			"user_id": client.userID,
+			"req":     r,
+		},
+	})
+	defer s.hub.Publish(hub.Message{
+		Name: event.SSEDisconnected,
+		Fields: hub.Fields{
+			"user_id": client.userID,
+			"req":     r,
+		},
+	})
 
 	t := time.NewTicker(10 * time.Second)
 	defer t.Stop()
