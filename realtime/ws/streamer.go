@@ -146,7 +146,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	go session.writeLoop()
 	session.readLoop()
 
-	s.realtime.ViewerManager.RemoveViewer(s)
+	s.realtime.ViewerManager.RemoveViewer(session)
 	s.hub.Publish(hub.Message{
 		Name: event.WSDisconnected,
 		Fields: hub.Fields{
