@@ -16,15 +16,13 @@ var (
 // HeartBeats ハートビートマネージャー
 type HeartBeats struct {
 	hub               *hub.Hub
-	onlineCounter     *OnlineCounter
 	heartbeatStatuses map[uuid.UUID]*model.HeartbeatStatus
 	sync.RWMutex
 }
 
-func newHeartBeats(hub *hub.Hub, oc *OnlineCounter) *HeartBeats {
+func newHeartBeats(hub *hub.Hub) *HeartBeats {
 	h := &HeartBeats{
 		hub:               hub,
-		onlineCounter:     oc,
 		heartbeatStatuses: make(map[uuid.UUID]*model.HeartbeatStatus),
 	}
 	go func() {
@@ -44,11 +42,9 @@ func (h *HeartBeats) onTick() {
 	for cid, channelStatus := range h.heartbeatStatuses {
 		arr := make([]*model.UserStatus, 0)
 		for _, userStatus := range channelStatus.UserStatuses {
+			// 最終POSTから指定時間以上経ったものを削除する
 			if timeout.Before(userStatus.LastTime) {
 				arr = append(arr, userStatus)
-			} else {
-				// 最終POSTから指定時間以上経ったものを削除する
-				h.onlineCounter.Dec(userStatus.UserID)
 			}
 		}
 		if len(arr) > 0 {
@@ -82,7 +78,6 @@ func (h *HeartBeats) Beat(userID, channelID uuid.UUID, status string) {
 		Status:   status,
 		LastTime: t,
 	})
-	h.onlineCounter.Inc(userID)
 }
 
 // GetHearts 指定したチャンネルのハートビートを取得します

@@ -135,7 +135,7 @@ func NewHandlers(rbac rbac.RBAC, repo repository.Repository, hub *hub.Hub, logge
 	h := &Handlers{
 		RBAC:          rbac,
 		Repo:          repo,
-		SSE:           sse.NewStreamer(),
+		SSE:           sse.NewStreamer(hub),
 		Hub:           hub,
 		Logger:        logger,
 		WebRTC:        webrtc.NewManager(hub),

@@ -65,6 +65,7 @@ func newViewerManager(hub *hub.Hub, hb *HeartBeats) *ViewerManager {
 	}
 }
 
+// GetChannelViewers 指定したチャンネルのチャンネル閲覧者状態を取得します
 func (vm *ViewerManager) GetChannelViewers(channelID uuid.UUID) map[uuid.UUID]ViewState {
 	result := map[uuid.UUID]ViewState{}
 

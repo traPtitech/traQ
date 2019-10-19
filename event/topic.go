@@ -269,4 +269,15 @@ const (
 	// 		channel_id: uuid.UUID
 	// 		state: string
 	UserWebRTCStateChanged = "user.webrtc.state_changed"
+
+	// SSEConnected ユーザーがSSEストリームに接続した
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		req: *http.Request
+	SSEConnected = "sse.connected"
+	// SSEDisconnected ユーザーがSSEストリームから切断した
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		req: *http.Request
+	SSEDisconnected = "sse.disconnected"
 )
