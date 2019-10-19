@@ -20,11 +20,11 @@ func NewManager(hub *hub.Hub) *Manager {
 	vm := newViewerManager(hub, hb)
 
 	go func() {
-		for e := range hub.Subscribe(8, event.SSEConnected, event.SSEDisconnected).Receiver {
+		for e := range hub.Subscribe(8, event.SSEConnected, event.SSEDisconnected, event.WSConnected, event.WSDisconnected).Receiver {
 			switch e.Topic() {
-			case event.SSEConnected:
+			case event.SSEConnected, event.WSConnected:
 				oc.Inc(e.Fields["user_id"].(uuid.UUID))
-			case event.SSEDisconnected:
+			case event.SSEDisconnected, event.WSDisconnected:
 				oc.Dec(e.Fields["user_id"].(uuid.UUID))
 			}
 		}
