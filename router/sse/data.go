@@ -21,11 +21,3 @@ func (d *EventData) write(rw http.ResponseWriter) {
 	jsoniter.ConfigFastest.ReturnStream(stream)
 	_, _ = rw.Write([]byte("\n\n"))
 }
-
-// CtxKey context.Context用のキータイプ
-type CtxKey int
-
-const (
-	// CtxUserIDKey ユーザーUUIDキー
-	CtxUserIDKey CtxKey = iota
-)

@@ -6,6 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/router/extension"
 	"net/http"
 	"time"
 )
@@ -82,7 +83,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	client := &sseClient{
-		userID:       ctx.Value(CtxUserIDKey).(uuid.UUID),
+		userID:       ctx.Value(extension.CtxUserIDKey).(uuid.UUID),
 		connectionID: uuid.Must(uuid.NewV4()),
 		send:         make(chan *EventData, 100),
 	}
