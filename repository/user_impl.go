@@ -14,11 +14,6 @@ import (
 	"unicode/utf8"
 )
 
-var (
-	timeoutDuration = 5 * time.Second
-	tickTime        = 500 * time.Millisecond
-)
-
 // CreateUser implements UserRepository interface.
 func (repo *GormRepository) CreateUser(name, password, role string) (*model.User, error) {
 	salt := utils.GenerateSalt()
