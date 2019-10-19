@@ -352,3 +352,22 @@ func (h *Handlers) GetChannelStats(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, stats)
 }
+
+// GetChannelViewers GET /channels/:channelID/viewers
+func (h *Handlers) GetChannelViewers(c echo.Context) error {
+	channelID := getRequestParamAsUUID(c, paramChannelID)
+
+	type user struct {
+		UserID uuid.UUID `json:"userId"`
+		State  string    `json:"state"`
+	}
+	cv := h.Realtime.ViewerManager.GetChannelViewers(channelID)
+	result := make([]*user, 0, len(cv))
+	for uid, state := range cv {
+		result = append(result, &user{
+			UserID: uid,
+			State:  state.String(),
+		})
+	}
+	return c.JSON(http.StatusOK, result)
+}

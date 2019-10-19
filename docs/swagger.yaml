@@ -1173,6 +1173,7 @@ paths:
 
   /heartbeat:
     get:
+      deprecated: true
       tags:
         - heartbeat
       operationId: getHeartbeat
@@ -1464,6 +1465,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChannelStats"
+        "404":
+          description: +|
+            取得に失敗しました。
+            指定したチャンネルは存在しません。
+
+  /channels/{channelID}/viewers:
+    parameters:
+      - $ref: "#/components/parameters/channelIdInPath"
+    get:
+      tags:
+        - channel
+      operationId: getChannelViewers
+      description: 現在のチャンネル閲覧者のリストを取得します。
+      security:
+        - traqOAuth2:
+            - read
+      responses:
+        "200":
+          description: 正常に取得ができました。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelViewers"
         "404":
           description: +|
             取得に失敗しました。
@@ -4788,6 +4812,24 @@ components:
           type: string
           format: date-time
           description: 統計情報日時
+    ChannelViewer:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: ユーザーのUUID
+        state:
+          type: string
+          enum:
+            - none
+            - monitoring
+            - editing
+          description: 閲覧状態
+    ChannelViewers:
+      type: array
+      items:
+        $ref: "#/components/schemas/ChannelViewer"
 
 security:
   - cookieAuth: []

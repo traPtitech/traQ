@@ -23,7 +23,7 @@ func (h *Handlers) PostHeartbeat(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatHeartbeat(req.ChannelID, h.Realtime.ViewerManager.GetChannelViewers(req.ChannelID)))
 }
 
-// GetHeartbeat GET /heartbeat
+// GetHeartbeat [deprecated] GET /heartbeat
 func (h *Handlers) GetHeartbeat(c echo.Context) error {
 	var req struct {
 		ChannelID uuid.UUID `query:"channelId"`

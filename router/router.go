@@ -148,7 +148,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 		}
 		apiHeartBeat := api.Group("/heartbeat")
 		{
-			apiHeartBeat.GET("", h.GetHeartbeat, requires(permission.GetHeartbeat))
+			apiHeartBeat.GET("", h.GetHeartbeat, requires(permission.GetHeartbeat)) // Deprecated
 			apiHeartBeat.POST("", h.PostHeartbeat, requires(permission.PostHeartbeat))
 		}
 		apiChannels := api.Group("/channels")
@@ -165,6 +165,7 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 				apiChannelsCid.GET("/pins", h.GetChannelPin, requires(permission.GetMessage))
 				apiChannelsCid.GET("/events", h.GetChannelEvents, requires(permission.GetChannel))
 				apiChannelsCid.GET("/stats", h.GetChannelStats, requires(permission.GetChannel))
+				apiChannelsCid.GET("/viewers", h.GetChannelViewers, requires(permission.GetChannel))
 				apiChannelsCidTopic := apiChannelsCid.Group("/topic")
 				{
 					apiChannelsCidTopic.GET("", h.GetTopic, requires(permission.GetChannel))
