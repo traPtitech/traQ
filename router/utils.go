@@ -17,7 +17,6 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sse"
 	"github.com/traPtitech/traQ/utils/imagemagick"
-	"github.com/traPtitech/traQ/webrtc"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	_ "image/jpeg" // image.Decode用
@@ -106,7 +105,6 @@ type Handlers struct {
 	WS       *ws.Streamer
 	Hub      *hub.Hub
 	Logger   *zap.Logger
-	WebRTC   *webrtc.Manager
 	Realtime *realtime.Service
 	HandlerConfig
 
@@ -141,7 +139,6 @@ func NewHandlers(rbac rbac.RBAC, repo repository.Repository, hub *hub.Hub, logge
 		WS:            ws.NewStreamer(hub, realtime, logger.Named("ws")),
 		Hub:           hub,
 		Logger:        logger,
-		WebRTC:        webrtc.NewManager(hub),
 		Realtime:      realtime,
 		HandlerConfig: config,
 	}

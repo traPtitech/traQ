@@ -4,6 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/realtime/webrtc"
 )
 
 // Service リアルタイム情報管理
@@ -11,6 +12,7 @@ type Service struct {
 	OnlineCounter *OnlineCounter
 	ViewerManager *ViewerManager
 	HeartBeats    *HeartBeats
+	WebRTC        *webrtc.Manager
 }
 
 // NewService realtime.Serviceを生成・起動します
@@ -18,6 +20,7 @@ func NewService(hub *hub.Hub) *Service {
 	oc := newOnlineCounter(hub)
 	vm := newViewerManager(hub)
 	hb := newHeartBeats(vm)
+	wr := webrtc.NewManager(hub)
 
 	go func() {
 		for e := range hub.Subscribe(8, event.SSEConnected, event.SSEDisconnected, event.WSConnected, event.WSDisconnected).Receiver {
@@ -34,5 +37,6 @@ func NewService(hub *hub.Hub) *Service {
 		OnlineCounter: oc,
 		ViewerManager: vm,
 		HeartBeats:    hb,
+		WebRTC:        wr,
 	}
 }

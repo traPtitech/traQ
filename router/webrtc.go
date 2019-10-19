@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo"
+	"github.com/traPtitech/traQ/realtime/webrtc"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/set"
-	"github.com/traPtitech/traQ/webrtc"
 	"net/http"
 	"time"
 )
@@ -39,7 +39,7 @@ func (h *Handlers) PostSkyWayAuthenticate(c echo.Context) error {
 // GetChannelWebRTCState GET /channels/:channelID/webrtc/state
 func (h *Handlers) GetChannelWebRTCState(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
-	cs := h.WebRTC.GetChannelState(channelID)
+	cs := h.Realtime.WebRTC.GetChannelState(channelID)
 
 	var users []*webrtc.UserState
 	for _, v := range cs.Users {
@@ -62,7 +62,7 @@ func (h *Handlers) PutWebRTCState(c echo.Context) error {
 		return badRequest(err)
 	}
 
-	if err := h.WebRTC.SetState(userID, req.ChannelID.UUID, set.StringSetFromArray(req.State)); err != nil {
+	if err := h.Realtime.WebRTC.SetState(userID, req.ChannelID.UUID, set.StringSetFromArray(req.State)); err != nil {
 		return badRequest(err)
 	}
 
@@ -72,6 +72,6 @@ func (h *Handlers) PutWebRTCState(c echo.Context) error {
 // GetWebRTCState GET /webrtc/state
 func (h *Handlers) GetWebRTCState(c echo.Context) error {
 	userID := getRequestUserID(c)
-	us := h.WebRTC.GetUserState(userID)
+	us := h.Realtime.WebRTC.GetUserState(userID)
 	return c.JSON(http.StatusOK, us)
 }
