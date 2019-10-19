@@ -6,6 +6,7 @@ import (
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/realtime"
 	"gopkg.in/guregu/null.v3"
 	"time"
 )
@@ -437,4 +438,25 @@ func formatRoles(roles []*model.UserRole) []*roleResponse {
 		arr = append(arr, formatRole(v))
 	}
 	return arr
+}
+
+type heartbeatResponse struct {
+	UserStatuses []*heartbeatUserResponse `json:"userStatuses"`
+	ChannelID    uuid.UUID                `json:"channelId"`
+}
+
+type heartbeatUserResponse struct {
+	UserID uuid.UUID `json:"userId"`
+	Status string    `json:"status"`
+}
+
+func formatHeartbeat(cid uuid.UUID, vs map[uuid.UUID]realtime.ViewState) *heartbeatResponse {
+	result := &heartbeatResponse{
+		UserStatuses: make([]*heartbeatUserResponse, 0, len(vs)),
+		ChannelID:    cid,
+	}
+	for uid, s := range vs {
+		result.UserStatuses = append(result.UserStatuses, &heartbeatUserResponse{UserID: uid, Status: s.String()})
+	}
+	return result
 }

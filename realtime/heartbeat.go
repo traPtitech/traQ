@@ -2,28 +2,31 @@ package realtime
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/model"
 	"sync"
 	"time"
 )
 
-var (
+const (
 	timeoutDuration = 5 * time.Second
 	tickTime        = 500 * time.Millisecond
 )
 
 // HeartBeats ハートビートマネージャー
 type HeartBeats struct {
-	hub               *hub.Hub
-	heartbeatStatuses map[uuid.UUID]*model.HeartbeatStatus
-	sync.RWMutex
+	vm           *ViewerManager
+	channelBeats map[uuid.UUID][]*beat
+	mu           sync.RWMutex
 }
 
-func newHeartBeats(hub *hub.Hub) *HeartBeats {
+type beat struct {
+	userID   uuid.UUID
+	lastTime time.Time
+}
+
+func newHeartBeats(vm *ViewerManager) *HeartBeats {
 	h := &HeartBeats{
-		hub:               hub,
-		heartbeatStatuses: make(map[uuid.UUID]*model.HeartbeatStatus),
+		vm:           vm,
+		channelBeats: make(map[uuid.UUID][]*beat),
 	}
 	go func() {
 		t := time.NewTicker(tickTime)
@@ -35,58 +38,49 @@ func newHeartBeats(hub *hub.Hub) *HeartBeats {
 }
 
 func (h *HeartBeats) onTick() {
-	h.Lock()
-	defer h.Unlock()
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	timeout := time.Now().Add(-1 * timeoutDuration)
-	updated := make(map[uuid.UUID]*model.HeartbeatStatus)
-	for cid, channelStatus := range h.heartbeatStatuses {
-		arr := make([]*model.UserStatus, 0)
-		for _, userStatus := range channelStatus.UserStatuses {
+	updated := make(map[uuid.UUID][]*beat)
+	for cid, beats := range h.channelBeats {
+		arr := make([]*beat, 0, len(beats))
+		for _, b := range beats {
 			// 最終POSTから指定時間以上経ったものを削除する
-			if timeout.Before(userStatus.LastTime) {
-				arr = append(arr, userStatus)
+			if timeout.Before(b.lastTime) {
+				arr = append(arr, b)
+			} else {
+				h.vm.RemoveViewer(b)
 			}
 		}
 		if len(arr) > 0 {
-			channelStatus.UserStatuses = arr
-			updated[cid] = channelStatus
+			updated[cid] = arr
 		}
 	}
-	h.heartbeatStatuses = updated
+	h.channelBeats = updated
 }
 
 // Beat ハートビートを打ちます
 func (h *HeartBeats) Beat(userID, channelID uuid.UUID, status string) {
-	h.Lock()
-	defer h.Unlock()
-	channelStatus, ok := h.heartbeatStatuses[channelID]
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	beats, ok := h.channelBeats[channelID]
 	if !ok {
-		channelStatus = &model.HeartbeatStatus{ChannelID: channelID}
-		h.heartbeatStatuses[channelID] = channelStatus
+		beats = make([]*beat, 0)
+		h.channelBeats[channelID] = beats
 	}
 
 	t := time.Now()
-	for _, userStatus := range channelStatus.UserStatuses {
-		if userStatus.UserID == userID {
-			userStatus.LastTime = t
-			userStatus.Status = status
+	for _, b := range beats {
+		if b.userID == userID {
+			b.lastTime = t
+			h.vm.SetViewer(b, userID, channelID, FromString(status))
 			return
 		}
 	}
-	channelStatus.UserStatuses = append(channelStatus.UserStatuses, &model.UserStatus{
-		UserID:   userID,
-		Status:   status,
-		LastTime: t,
-	})
-}
-
-// GetHearts 指定したチャンネルのハートビートを取得します
-func (h *HeartBeats) GetHearts(channelID uuid.UUID) (model.HeartbeatStatus, bool) {
-	h.RLock()
-	defer h.RUnlock()
-	status, ok := h.heartbeatStatuses[channelID]
-	if ok {
-		return *status, ok
+	b := &beat{
+		userID:   userID,
+		lastTime: t,
 	}
-	return model.HeartbeatStatus{}, ok
+	h.channelBeats[channelID] = append(beats, b)
+	h.vm.SetViewer(b, userID, channelID, FromString(status))
 }

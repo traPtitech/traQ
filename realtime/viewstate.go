@@ -4,7 +4,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
-	"github.com/traPtitech/traQ/model"
 	"strings"
 	"sync"
 	"time"
@@ -57,16 +56,14 @@ type viewer struct {
 // ViewerManager チャンネルビュアーマネージャ
 type ViewerManager struct {
 	hub      *hub.Hub
-	hb       *HeartBeats
 	channels map[uuid.UUID]map[*viewer]struct{}
 	viewers  map[interface{}]*viewer
 	mu       sync.RWMutex
 }
 
-func newViewerManager(hub *hub.Hub, hb *HeartBeats) *ViewerManager {
+func newViewerManager(hub *hub.Hub) *ViewerManager {
 	vm := &ViewerManager{
 		hub:      hub,
-		hb:       hb,
 		channels: map[uuid.UUID]map[*viewer]struct{}{},
 		viewers:  map[interface{}]*viewer{},
 	}
@@ -83,14 +80,9 @@ func newViewerManager(hub *hub.Hub, hb *HeartBeats) *ViewerManager {
 
 // GetChannelViewers 指定したチャンネルのチャンネル閲覧者状態を取得します
 func (vm *ViewerManager) GetChannelViewers(channelID uuid.UUID) map[uuid.UUID]ViewState {
-	hs, _ := vm.hb.GetHearts(channelID)
-
 	vm.mu.RLock()
-	vs := vm.channels[channelID]
-	result := mergeViewStateAndHeartbeat(hs, vs)
-	vm.mu.RUnlock()
-
-	return result
+	defer vm.mu.RUnlock()
+	return calculateChannelViewers(vm.channels[channelID])
 }
 
 // SetViewer 指定したキーのチャンネル閲覧者状態を設定します
@@ -104,16 +96,17 @@ func (vm *ViewerManager) SetViewer(key interface{}, userID uuid.UUID, channelID 
 		vm.channels[channelID] = cv
 	}
 
-	hs, _ := vm.hb.GetHearts(channelID)
-
 	v, ok := vm.viewers[key]
 	if ok {
 		if v.channelID == channelID {
+			if v.state == state {
+				// 何も変わってない
+				return
+			}
 			// stateだけ変更
 			v.state = state
 		} else {
 			// channelとstateが変更
-
 			oldC := v.channelID
 			old := vm.channels[oldC]
 			delete(old, v)
@@ -121,12 +114,11 @@ func (vm *ViewerManager) SetViewer(key interface{}, userID uuid.UUID, channelID 
 			v.channelID = channelID
 			v.state = state
 
-			oldHs, _ := vm.hb.GetHearts(oldC)
 			vm.hub.Publish(hub.Message{
 				Name: event.ChannelViewersChanged,
 				Fields: hub.Fields{
 					"channel_id": oldC,
-					"viewers":    mergeViewStateAndHeartbeat(oldHs, old),
+					"viewers":    calculateChannelViewers(old),
 				},
 			})
 		}
@@ -145,7 +137,7 @@ func (vm *ViewerManager) SetViewer(key interface{}, userID uuid.UUID, channelID 
 		Name: event.ChannelViewersChanged,
 		Fields: hub.Fields{
 			"channel_id": channelID,
-			"viewers":    mergeViewStateAndHeartbeat(hs, cv),
+			"viewers":    calculateChannelViewers(cv),
 		},
 	})
 }
@@ -164,13 +156,11 @@ func (vm *ViewerManager) RemoveViewer(key interface{}) {
 	delete(vm.viewers, key)
 	delete(cv, v)
 
-	hs, _ := vm.hb.GetHearts(v.channelID)
-
 	vm.hub.Publish(hub.Message{
 		Name: event.ChannelViewersChanged,
 		Fields: hub.Fields{
 			"channel_id": v.channelID,
-			"viewers":    mergeViewStateAndHeartbeat(hs, cv),
+			"viewers":    calculateChannelViewers(cv),
 		},
 	})
 }
@@ -184,12 +174,8 @@ func (vm *ViewerManager) gc() {
 	}
 }
 
-func mergeViewStateAndHeartbeat(hbs model.HeartbeatStatus, vs map[*viewer]struct{}) map[uuid.UUID]ViewState {
-	result := make(map[uuid.UUID]ViewState, len(hbs.UserStatuses)+len(vs))
-	for _, v := range hbs.UserStatuses {
-		result[v.UserID] = FromString(v.Status)
-	}
-
+func calculateChannelViewers(vs map[*viewer]struct{}) map[uuid.UUID]ViewState {
+	result := make(map[uuid.UUID]ViewState, len(vs))
 	for v := range vs {
 		if s, ok := result[v.userID]; ok && s > v.state {
 			continue

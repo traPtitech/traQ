@@ -16,8 +16,8 @@ type Service struct {
 // NewService realtime.Serviceを生成・起動します
 func NewService(hub *hub.Hub) *Service {
 	oc := newOnlineCounter(hub)
-	hb := newHeartBeats(hub)
-	vm := newViewerManager(hub, hb)
+	vm := newViewerManager(hub)
+	hb := newHeartBeats(vm)
 
 	go func() {
 		for e := range hub.Subscribe(8, event.SSEConnected, event.SSEDisconnected, event.WSConnected, event.WSDisconnected).Receiver {
