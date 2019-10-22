@@ -180,12 +180,10 @@ func userCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	payload := userCreatedPayload{
+	multicast(p, UserCreated, &userCreatedPayload{
 		basePayload: makeBasePayload(),
 		User:        makeUserPayload(user),
-	}
-
-	multicast(p, UserCreated, &payload, bots)
+	}, bots)
 }
 
 func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
@@ -219,12 +217,10 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			return
 		}
 
-		payload := channelCreatedPayload{
+		multicast(p, ChannelCreated, &channelCreatedPayload{
 			basePayload: makeBasePayload(),
 			Channel:     makeChannelPayload(ch, path, user),
-		}
-
-		multicast(p, ChannelCreated, &payload, bots)
+		}, bots)
 	}
 }
 
@@ -249,9 +245,9 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	path, err := p.repo.GetChannelPath(chID)
+	path, err := p.repo.GetChannelPath(ch.ID)
 	if err != nil {
-		p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", chID))
+		p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", ch.ID))
 		return
 	}
 
@@ -267,14 +263,12 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	payload := channelTopicChangedPayload{
+	multicast(p, ChannelTopicChanged, &channelTopicChangedPayload{
 		basePayload: makeBasePayload(),
 		Channel:     makeChannelPayload(ch, path, chCreator),
 		Topic:       topic,
 		Updater:     makeUserPayload(user),
-	}
-
-	multicast(p, ChannelTopicChanged, &payload, bots)
+	}, bots)
 }
 
 func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
@@ -296,30 +290,19 @@ func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	payload := stampCreatedPayload{
+	multicast(p, StampCreated, &stampCreatedPayload{
 		basePayload: makeBasePayload(),
 		ID:          stamp.ID,
 		Name:        stamp.Name,
 		FileID:      stamp.FileID,
 		Creator:     makeUserPayload(user),
-	}
-
-	multicast(p, StampCreated, &payload, bots)
+	}, bots)
 }
 
 func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
-	botID := fields["bot_id"].(uuid.UUID)
-	bot, err := p.repo.GetBotByID(botID)
-	if err != nil {
-		p.logger.Error("failed to GetBotByID", zap.Error(err), zap.Stringer("bot_id", botID))
-		return
-	}
+	bot := fields["bot"].(*model.Bot)
 
-	payload := pingPayload{
-		basePayload: makeBasePayload(),
-	}
-
-	buf, release, err := p.makePayloadJSON(&payload)
+	buf, release, err := p.makePayloadJSON(&pingPayload{basePayload: makeBasePayload()})
 	if err != nil {
 		p.logger.Error("unexpected json encode error", zap.Error(err))
 		return
@@ -340,6 +323,9 @@ func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
 }
 
 func multicast(p *Processor, ev model.BotEvent, payload interface{}, targets []*model.Bot) {
+	if len(targets) == 0 {
+		return
+	}
 	buf, release, err := p.makePayloadJSON(&payload)
 	if err != nil {
 		p.logger.Error("unexpected json encode error", zap.Error(err))
