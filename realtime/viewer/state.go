@@ -1,6 +1,9 @@
 package viewer
 
-import "strings"
+import (
+	jsoniter "github.com/json-iterator/go"
+	"strings"
+)
 
 // State 閲覧状態
 type State int
@@ -19,21 +22,27 @@ func (s State) String() string {
 	return viewStateStrings[s]
 }
 
+// MarshalJSON encoding/json.Marshaler 実装
+func (s State) MarshalJSON() ([]byte, error) {
+	return jsoniter.ConfigFastest.Marshal(s.String())
+}
+
 // StateFromString stringからviewer.Stateに変換します
 func StateFromString(s string) State {
 	return stringViewStates[strings.ToLower(s)]
 }
 
-var viewStateStrings = map[State]string{
-	StateNone:       "none",
-	StateEditing:    "editing",
-	StateMonitoring: "monitoring",
-}
-
-var stringViewStates map[string]State
+var (
+	viewStateStrings = map[State]string{
+		StateNone:       "none",
+		StateEditing:    "editing",
+		StateMonitoring: "monitoring",
+	}
+	stringViewStates = map[string]State{}
+)
 
 func init() {
-	stringViewStates = map[string]State{}
+	// 転置マップ生成
 	for v, k := range viewStateStrings {
 		stringViewStates[k] = v
 	}

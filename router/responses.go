@@ -446,8 +446,8 @@ type heartbeatResponse struct {
 }
 
 type heartbeatUserResponse struct {
-	UserID uuid.UUID `json:"userId"`
-	Status string    `json:"status"`
+	UserID uuid.UUID    `json:"userId"`
+	Status viewer.State `json:"status"`
 }
 
 func formatHeartbeat(cid uuid.UUID, vs map[uuid.UUID]viewer.State) *heartbeatResponse {
@@ -456,7 +456,7 @@ func formatHeartbeat(cid uuid.UUID, vs map[uuid.UUID]viewer.State) *heartbeatRes
 		ChannelID:    cid,
 	}
 	for uid, s := range vs {
-		result.UserStatuses = append(result.UserStatuses, &heartbeatUserResponse{UserID: uid, Status: s.String()})
+		result.UserStatuses = append(result.UserStatuses, &heartbeatUserResponse{UserID: uid, Status: s})
 	}
 	return result
 }
