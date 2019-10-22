@@ -3,7 +3,6 @@ module github.com/traPtitech/traQ
 require (
 	cloud.google.com/go v0.47.0
 	cloud.google.com/go/firestore v1.0.0 // indirect
-	cloud.google.com/go/storage v1.0.0 // indirect
 	firebase.google.com/go v3.9.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/ajg/form v0.0.0-20160822230020-523a5da1a92f // indirect
@@ -39,15 +38,12 @@ require (
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.3 // indirect
-	github.com/mattn/go-sqlite3 v1.11.0 // indirect
 	github.com/moul/http2curl v0.0.0-20170919181001-9ac6cf4d929b // indirect
 	github.com/ncw/swift v1.0.49
 	github.com/onsi/ginkgo v1.10.1 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/pelletier/go-toml v1.4.0 // indirect
-	github.com/pkg/errors v0.8.1 // indirect
 	github.com/prometheus/client_golang v1.2.1
-	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/skip2/go-qrcode v0.0.0-20190110000554-dc11ecdae0a9
 	github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d // indirect
@@ -68,14 +64,11 @@ require (
 	go.opencensus.io v0.22.1 // indirect
 	go.uber.org/zap v1.11.0
 	golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7
-	golang.org/x/exp v0.0.0-20190919035709-81c71964d733
+	golang.org/x/exp v0.0.0-20191002040644-a1355ae1e2c3
 	golang.org/x/net v0.0.0-20190918130420-a8b05e9114ab // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20190919044723-0c1ff786ef13 // indirect
-	golang.org/x/tools v0.0.0-20190920130846-1081e67f6b77 // indirect
 	google.golang.org/api v0.11.0
 	google.golang.org/appengine v1.6.2 // indirect
-	google.golang.org/genproto v0.0.0-20190916214212-f660b8655731 // indirect
 	google.golang.org/grpc v1.23.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
