@@ -19,8 +19,8 @@ func (s State) String() string {
 	return viewStateStrings[s]
 }
 
-// FromString stringからviewer.Stateに変換します
-func FromString(s string) State {
+// StateFromString stringからviewer.Stateに変換します
+func StateFromString(s string) State {
 	return stringViewStates[strings.ToLower(s)]
 }
 

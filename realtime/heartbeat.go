@@ -74,7 +74,7 @@ func (h *HeartBeats) Beat(userID, channelID uuid.UUID, status string) {
 	for _, b := range beats {
 		if b.userID == userID {
 			b.lastTime = t
-			h.vm.SetViewer(b, userID, channelID, viewer.FromString(status))
+			h.vm.SetViewer(b, userID, channelID, viewer.StateFromString(status))
 			return
 		}
 	}
@@ -83,5 +83,5 @@ func (h *HeartBeats) Beat(userID, channelID uuid.UUID, status string) {
 		lastTime: t,
 	}
 	h.channelBeats[channelID] = append(beats, b)
-	h.vm.SetViewer(b, userID, channelID, viewer.FromString(status))
+	h.vm.SetViewer(b, userID, channelID, viewer.StateFromString(status))
 }
