@@ -257,6 +257,7 @@ const (
 	// BotPingRequest BotのPingがリクエストされた
 	// 	Fields:
 	// 		bot_id: uuid.UUID
+	// 		bot: *model.Bot
 	BotPingRequest = "bot.ping"
 	// BotJoined Botがチャンネルに参加した
 	// 	Fields:

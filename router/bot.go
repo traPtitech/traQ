@@ -204,6 +204,7 @@ func (h *Handlers) PutBotState(c echo.Context) error {
 			Name: event.BotPingRequest,
 			Fields: hub.Fields{
 				"bot_id": b.ID,
+				"bot":    b,
 			},
 		})
 		return c.NoContent(http.StatusAccepted)
