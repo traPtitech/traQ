@@ -76,12 +76,12 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		multicast(p, DirectMessageCreated, &payload, []*model.Bot{bot})
 	} else {
 		// 購読BOT
-		bots, err := p.repo.GetBotsByChannel(m.ChannelID)
+		query := repository.BotsQuery{}
+		bots, err := p.repo.GetBots(query.CMemberOf(m.ChannelID).Active().Subscribe(MessageCreated))
 		if err != nil {
-			p.logger.Error("failed to GetBotsByChannel", zap.Error(err), zap.Stringer("id", m.ChannelID))
+			p.logger.Error("failed to GetBots", zap.Error(err))
 			return
 		}
-		bots = filterBots(p, bots, eventFilter(MessageCreated))
 
 		// メンションBOT
 		done := make(map[uuid.UUID]bool)
@@ -126,8 +126,7 @@ func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
 		p.logger.Error("failed to GetBotByID", zap.Error(err), zap.Stringer("id", botID))
 		return
 	}
-
-	if !filterBot(p, bot, stateFilter(model.BotActive)) {
+	if bot.State != model.BotActive {
 		return
 	}
 
@@ -170,13 +169,9 @@ func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
 func userCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	user := fields["user"].(*model.User)
 
-	bots, err := p.repo.GetAllBots()
+	bots, err := p.repo.GetBots(repository.BotsQuery{}.Privileged().Active().Subscribe(UserCreated))
 	if err != nil {
-		p.logger.Error("failed to GetAllBots", zap.Error(err))
-		return
-	}
-	bots = filterBots(p, bots, privilegedFilter(), stateFilter(model.BotActive), eventFilter(UserCreated))
-	if len(bots) == 0 {
+		p.logger.Error("failed to GetBots", zap.Error(err))
 		return
 	}
 
@@ -187,28 +182,22 @@ func userCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 }
 
 func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
-	chID := fields["channel_id"].(uuid.UUID)
+	ch := fields["channel"].(*model.Channel)
 	private := fields["private"].(bool)
 
-	bots, err := p.repo.GetAllBots()
-	if err != nil {
-		p.logger.Error("failed to GetAllBots", zap.Error(err))
-		return
-	}
 	if !private {
-		bots = filterBots(p, bots, privilegedFilter(), stateFilter(model.BotActive), eventFilter(ChannelCreated))
+		bots, err := p.repo.GetBots(repository.BotsQuery{}.Privileged().Active().Subscribe(ChannelCreated))
+		if err != nil {
+			p.logger.Error("failed to GetBots", zap.Error(err))
+			return
+		}
 		if len(bots) == 0 {
 			return
 		}
 
-		ch, err := p.repo.GetChannel(chID)
+		path, err := p.repo.GetChannelPath(ch.ID)
 		if err != nil {
-			p.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("id", chID))
-			return
-		}
-		path, err := p.repo.GetChannelPath(chID)
-		if err != nil {
-			p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", chID))
+			p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", ch.ID))
 			return
 		}
 		user, err := p.repo.GetUser(ch.CreatorID)
@@ -229,12 +218,11 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 	topic := fields["topic"].(string)
 	updaterID := fields["updater_id"].(uuid.UUID)
 
-	bots, err := p.repo.GetBotsByChannel(chID)
+	bots, err := p.repo.GetBots(repository.BotsQuery{}.CMemberOf(chID).Active().Subscribe(ChannelTopicChanged))
 	if err != nil {
-		p.logger.Error("failed to GetBotsByChannel", zap.Error(err), zap.Stringer("id", chID))
+		p.logger.Error("failed to GetBots", zap.Error(err))
 		return
 	}
-	bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(ChannelTopicChanged))
 	if len(bots) == 0 {
 		return
 	}
@@ -274,12 +262,11 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	stamp := fields["stamp"].(*model.Stamp)
 
-	bots, err := p.repo.GetAllBots()
+	bots, err := p.repo.GetBots(repository.BotsQuery{}.Active().Subscribe(StampCreated))
 	if err != nil {
-		p.logger.Error("failed to GetAllBots", zap.Error(err))
+		p.logger.Error("failed to GetBots", zap.Error(err))
 		return
 	}
-	bots = filterBots(p, bots, stateFilter(model.BotActive), eventFilter(StampCreated))
 	if len(bots) == 0 {
 		return
 	}

@@ -23,11 +23,12 @@ func (h *Handlers) GetBots(c echo.Context) error {
 	var (
 		list []*model.Bot
 		err  error
+		q    repository.BotsQuery
 	)
 	if c.QueryParam("all") == "1" && h.RBAC.IsGranted(user.Role, permission.AccessOthersBot) {
-		list, err = h.Repo.GetAllBots()
+		list, err = h.Repo.GetBots(q)
 	} else {
-		list, err = h.Repo.GetBotsByCreator(user.ID)
+		list, err = h.Repo.GetBots(q.CreatedBy(user.ID))
 	}
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
@@ -279,7 +280,7 @@ func (h *Handlers) GetBotEventLogs(c echo.Context) error {
 func (h *Handlers) GetChannelBots(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	bots, err := h.Repo.GetBotsByChannel(channelID)
+	bots, err := h.Repo.GetBots(repository.BotsQuery{}.CMemberOf(channelID))
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}

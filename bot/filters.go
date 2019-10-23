@@ -32,12 +32,6 @@ func stateFilter(state model.BotState) filterFunc {
 	}
 }
 
-func privilegedFilter() filterFunc {
-	return func(p *Processor, bot *model.Bot) bool {
-		return bot.Privileged
-	}
-}
-
 func eventFilter(event model.BotEvent) filterFunc {
 	return func(p *Processor, bot *model.Bot) bool {
 		return bot.SubscribeEvents.Contains(event)

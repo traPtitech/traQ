@@ -15,6 +15,58 @@ type UpdateBotArgs struct {
 	CreatorID   uuid.NullUUID
 }
 
+// BotsQuery Bot情報取得用クエリ
+type BotsQuery struct {
+	IsPrivileged    null.Bool
+	IsActive        null.Bool
+	IsCMemberOf     uuid.NullUUID
+	SubscribeEvents model.BotEvents
+	Creator         uuid.NullUUID
+}
+
+// Privileged 特権Botである
+func (q BotsQuery) Privileged() BotsQuery {
+	q.IsPrivileged = null.BoolFrom(true)
+	return q
+}
+
+// Active 有効である
+func (q BotsQuery) Active() BotsQuery {
+	q.IsActive = null.BoolFrom(true)
+	return q
+}
+
+// CreatedBy userIDによって作成された
+func (q BotsQuery) CreatedBy(userID uuid.UUID) BotsQuery {
+	q.Creator = uuid.NullUUID{
+		UUID:  userID,
+		Valid: true,
+	}
+	return q
+}
+
+// CMemberOf channelIDに入っている
+func (q BotsQuery) CMemberOf(channelID uuid.UUID) BotsQuery {
+	q.IsCMemberOf = uuid.NullUUID{
+		UUID:  channelID,
+		Valid: true,
+	}
+	return q
+}
+
+// Subscribe eventsを購読している
+func (q BotsQuery) Subscribe(events ...model.BotEvent) BotsQuery {
+	if q.SubscribeEvents == nil {
+		q.SubscribeEvents = model.BotEvents{}
+	} else {
+		q.SubscribeEvents = q.SubscribeEvents.Clone()
+	}
+	for _, event := range events {
+		q.SubscribeEvents[event] = true
+	}
+	return q
+}
+
 // BotRepository Botリポジトリ
 type BotRepository interface {
 	// CreateBot Botを作成します
@@ -43,7 +95,7 @@ type BotRepository interface {
 	//
 	// 成功した場合、Botの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetAllBots() ([]*model.Bot, error)
+	GetBots(query BotsQuery) ([]*model.Bot, error)
 	// GetBotByID 指定したIDのBotを取得します
 	//
 	// 成功した場合、Botとnilを返します。
@@ -62,18 +114,6 @@ type BotRepository interface {
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetBotByCode(code string) (*model.Bot, error)
-	// GetBotsByCreator 指定したCreatorのBotを全て取得します
-	//
-	// 成功した場合、Botの配列とnilを返します。
-	// 存在しないユーザーの場合、空配列とnilを返します。
-	// DBによるエラーを返すことがあります。
-	GetBotsByCreator(userID uuid.UUID) ([]*model.Bot, error)
-	// GetBotsByChannel 指定したチャンネルに参加しているBotを全て取得します
-	//
-	// 成功した場合、Botの配列とnilを返します。
-	// 存在しないチャンネルの場合、空配列とnilを返します。
-	// DBによるエラーを返すことがあります。
-	GetBotsByChannel(channelID uuid.UUID) ([]*model.Bot, error)
 	// ChangeBotState Botの状態を変更します
 	//
 	// 成功した場合、nilを返します。

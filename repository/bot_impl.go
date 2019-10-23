@@ -224,10 +224,46 @@ func (repo *GormRepository) SetSubscribeEventsToBot(botID uuid.UUID, events mode
 	return nil
 }
 
-// GetAllBots implements BotRepository interface.
-func (repo *GormRepository) GetAllBots() ([]*model.Bot, error) {
+// GetBots implements BotRepository interface.
+func (repo *GormRepository) GetBots(query BotsQuery) ([]*model.Bot, error) {
 	bots := make([]*model.Bot, 0)
-	return bots, repo.db.Find(&bots).Error
+	tx := repo.db.Table("bots")
+
+	if query.IsPrivileged.Valid {
+		tx = tx.Where("bots.privileged = ?", query.IsPrivileged.Bool)
+	}
+	if query.IsActive.Valid {
+		if query.IsActive.Bool {
+			tx = tx.Where("bots.state = ?", model.BotActive)
+		} else {
+			tx = tx.Where("bots.state != ?", model.BotActive)
+		}
+	}
+	if query.Creator.Valid {
+		tx = tx.Where("bots.creator_id = ?", query.Creator.UUID)
+	}
+	if query.IsCMemberOf.Valid {
+		tx = tx.Joins("INNER JOIN bot_join_channels ON bot_join_channels.bot_id = bots.id AND bot_join_channels.channel_id = ?", query.IsCMemberOf.UUID)
+	}
+	if len(query.SubscribeEvents) == 0 {
+		return bots, tx.Find(&bots).Error
+	}
+
+	// MEMO SubscribeEventsを正規化したほうがいいかもしれない
+	if err := tx.Find(&bots).Error; err != nil {
+		return nil, err
+	}
+	result := make([]*model.Bot, 0, len(bots))
+BotsFor:
+	for _, v := range bots {
+		for e := range query.SubscribeEvents {
+			if !v.SubscribeEvents.Contains(e) {
+				continue BotsFor
+			}
+		}
+		result = append(result, v)
+	}
+	return result, nil
 }
 
 // GetBotByID implements BotRepository interface.
@@ -260,31 +296,6 @@ func getBot(tx *gorm.DB, where interface{}) (*model.Bot, error) {
 		return nil, convertError(err)
 	}
 	return &b, nil
-}
-
-// GetBotsByCreator implements BotRepository interface.
-func (repo *GormRepository) GetBotsByCreator(userID uuid.UUID) ([]*model.Bot, error) {
-	bots := make([]*model.Bot, 0)
-	if userID == uuid.Nil {
-		return bots, nil
-	}
-	return bots, repo.db.Where(&model.Bot{CreatorID: userID}).Find(&bots).Error
-}
-
-// GetBotsByChannel implements BotRepository interface.
-func (repo *GormRepository) GetBotsByChannel(channelID uuid.UUID) ([]*model.Bot, error) {
-	bots := make([]*model.Bot, 0)
-	if channelID == uuid.Nil {
-		return bots, nil
-	}
-	return bots, repo.db.
-		Where("id IN ?", repo.db.
-			Model(&model.BotJoinChannel{}).
-			Select("bot_id").
-			Where(&model.BotJoinChannel{ChannelID: channelID}).
-			SubQuery()).
-		Find(&bots).
-		Error
 }
 
 // ChangeBotState implements BotRepository interface.
