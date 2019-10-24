@@ -2894,11 +2894,7 @@ func (repo *TestRepository) GetBotByCode(code string) (*model.Bot, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetBotsByCreator(userID uuid.UUID) ([]*model.Bot, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetBotsByChannel(channelID uuid.UUID) ([]*model.Bot, error) {
+func (repo *TestRepository) GetBots(query repository.BotsQuery) ([]*model.Bot, error) {
 	panic("implement me")
 }
 
