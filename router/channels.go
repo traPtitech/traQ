@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/realtime/viewer"
 	"github.com/traPtitech/traQ/repository"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
@@ -357,17 +358,6 @@ func (h *Handlers) GetChannelStats(c echo.Context) error {
 func (h *Handlers) GetChannelViewers(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, paramChannelID)
 
-	type user struct {
-		UserID uuid.UUID `json:"userId"`
-		State  string    `json:"state"`
-	}
 	cv := h.Realtime.ViewerManager.GetChannelViewers(channelID)
-	result := make([]*user, 0, len(cv))
-	for uid, state := range cv {
-		result = append(result, &user{
-			UserID: uid,
-			State:  state.String(),
-		})
-	}
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, viewer.ConvertToArray(cv))
 }

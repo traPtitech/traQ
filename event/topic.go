@@ -112,6 +112,7 @@ const (
 	// ChannelCreated チャンネルが作成された
 	// 	Fields:
 	// 		channel_id: uuid.UUID
+	// 		channel: *model.Channel
 	// 		private: bool
 	ChannelCreated = "channel.created"
 	// ChannelUpdated チャンネルが更新された
@@ -256,6 +257,7 @@ const (
 	// BotPingRequest BotのPingがリクエストされた
 	// 	Fields:
 	// 		bot_id: uuid.UUID
+	// 		bot: *model.Bot
 	BotPingRequest = "bot.ping"
 	// BotJoined Botがチャンネルに参加した
 	// 	Fields:

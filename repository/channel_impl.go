@@ -95,6 +95,7 @@ func (repo *GormRepository) CreatePublicChannel(name string, parent, creatorID u
 		Name: event.ChannelCreated,
 		Fields: hub.Fields{
 			"channel_id": ch.ID,
+			"channel":    ch,
 			"private":    false,
 		},
 	})
@@ -165,6 +166,7 @@ func (repo *GormRepository) CreatePrivateChannel(name string, creatorID uuid.UUI
 		Name: event.ChannelCreated,
 		Fields: hub.Fields{
 			"channel_id": ch.ID,
+			"channel":    ch,
 			"private":    true,
 		},
 	})
@@ -268,6 +270,7 @@ func (repo *GormRepository) CreateChildChannel(name string, parentID, creatorID 
 		Name: event.ChannelCreated,
 		Fields: hub.Fields{
 			"channel_id": ch.ID,
+			"channel":    ch,
 			"private":    !ch.IsPublic,
 		},
 	})
@@ -670,6 +673,7 @@ func (repo *GormRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*mo
 		Name: event.ChannelCreated,
 		Fields: hub.Fields{
 			"channel_id": channel.ID,
+			"channel":    &channel,
 			"private":    true,
 		},
 	})

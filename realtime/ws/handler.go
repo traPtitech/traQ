@@ -39,7 +39,7 @@ func (s *session) commandHandler(cmd string) {
 
 		// TODO channelのアクセスチェック
 		s.viewState.channelID = cid
-		s.viewState.state = viewer.FromString(args[2])
+		s.viewState.state = viewer.StateFromString(args[2])
 		s.streamer.realtime.ViewerManager.SetViewer(s, s.userID, s.viewState.channelID, s.viewState.state)
 
 	default:

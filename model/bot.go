@@ -76,6 +76,15 @@ func (set BotEvents) MarshalJSON() ([]byte, error) {
 	return json.Marshal(arr)
 }
 
+// Clone BotEventsを複製します
+func (set BotEvents) Clone() BotEvents {
+	dst := make(BotEvents, len(set))
+	for k, v := range set {
+		dst[k] = v
+	}
+	return dst
+}
+
 // BotState Bot状態
 type BotState int
 
