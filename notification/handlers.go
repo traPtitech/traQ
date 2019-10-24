@@ -358,23 +358,12 @@ func channelReadHandler(ns *Service, ev hub.Message) {
 }
 
 func channelViewersChangedHandler(ns *Service, ev hub.Message) {
-	type v struct {
-		UserID uuid.UUID `json:"userId"`
-		State  string    `json:"state"`
-	}
-	viewers := make([]v, 0)
-	for uid, state := range ev.Fields["viewers"].(map[uuid.UUID]viewer.State) {
-		viewers = append(viewers, v{
-			UserID: uid,
-			State:  state.String(),
-		})
-	}
 	cid := ev.Fields["channel_id"].(uuid.UUID)
 	channelViewerMulticast(ns, cid, &sse.EventData{
 		EventType: "CHANNEL_VIEWERS_CHANGED",
 		Payload: map[string]interface{}{
 			"id":      cid,
-			"viewers": viewers,
+			"viewers": viewer.ConvertToArray(ev.Fields["viewers"].(map[uuid.UUID]viewer.State)),
 		},
 	})
 }
