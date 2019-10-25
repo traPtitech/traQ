@@ -16,7 +16,7 @@ import (
 
 // PostChannel リクエストボディ用構造体
 type PostChannel struct {
-	Name    string      `json:"name"`
+	Name    string      `json:"name" validate:"required"`
 	Parent  uuid.UUID   `json:"parent"`
 	Private bool        `json:"private"`
 	Members []uuid.UUID `json:"member"`
