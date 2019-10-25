@@ -88,15 +88,6 @@ func init() {
 	gob.Register(uuid.UUID{})
 }
 
-type timestamp time.Time
-
-// UnmarshalParam implements BindUnmarshaler interface.
-func (t *timestamp) UnmarshalParam(src string) error {
-	ts, err := time.Parse(time.RFC3339, src)
-	*t = timestamp(ts)
-	return err
-}
-
 // Handlers ハンドラ
 type Handlers struct {
 	RBAC     rbac.RBAC
