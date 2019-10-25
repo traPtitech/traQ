@@ -3,7 +3,7 @@ package router
 import (
 	"fmt"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/event"

@@ -2,7 +2,7 @@ package extension
 
 import (
 	jsoniter "github.com/json-iterator/go"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 // Context echo.Contextのカスタム

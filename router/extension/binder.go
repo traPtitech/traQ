@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"strings"
 )

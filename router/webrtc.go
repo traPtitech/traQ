@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/realtime/webrtc"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/set"

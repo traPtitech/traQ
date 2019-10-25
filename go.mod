@@ -30,14 +30,11 @@ require (
 	github.com/json-iterator/go v1.1.7
 	github.com/jtolds/gls v4.2.1+incompatible // indirect
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
-	github.com/labstack/echo v3.3.10+incompatible
-	github.com/labstack/gommon v0.2.8 // indirect
+	github.com/labstack/echo/v4 v4.1.11
 	github.com/leandro-lugaresi/hub v1.1.0
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
-	github.com/mattn/go-colorable v0.0.9 // indirect
-	github.com/mattn/go-isatty v0.0.3 // indirect
 	github.com/moul/http2curl v0.0.0-20170919181001-9ac6cf4d929b // indirect
 	github.com/ncw/swift v1.0.49
 	github.com/onsi/ginkgo v1.10.1 // indirect
@@ -53,7 +50,6 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.4.0
 	github.com/valyala/fasthttp v1.0.0 // indirect
-	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v0.0.0-20181016150526-f3a9dae5b194 // indirect

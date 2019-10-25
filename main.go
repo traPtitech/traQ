@@ -18,7 +18,7 @@ import (
 	"cloud.google.com/go/profiler"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/bot"

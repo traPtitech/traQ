@@ -5,7 +5,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go"
 )
 
 var (

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 )
 

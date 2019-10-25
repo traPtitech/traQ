@@ -2,7 +2,7 @@ package router
 
 import (
 	"fmt"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"

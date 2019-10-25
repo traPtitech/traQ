@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"

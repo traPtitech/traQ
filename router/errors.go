@@ -3,7 +3,7 @@ package router
 import (
 	"fmt"
 	"github.com/go-sql-driver/mysql"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/logging"
 	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"

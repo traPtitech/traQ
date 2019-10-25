@@ -10,7 +10,7 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/storage"
