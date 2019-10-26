@@ -191,9 +191,9 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	// チャンネル閲覧者取得
-	for uid, state := range ns.realtime.ViewerManager.GetChannelViewers(m.ChannelID) {
+	for uid, swt := range ns.realtime.ViewerManager.GetChannelViewers(m.ChannelID) {
 		connector.Add(uid)
-		if state > viewer.StateNone {
+		if swt.State > viewer.StateNone {
 			viewers.Add(uid)
 		}
 	}
@@ -363,7 +363,7 @@ func channelViewersChangedHandler(ns *Service, ev hub.Message) {
 		EventType: "CHANNEL_VIEWERS_CHANGED",
 		Payload: map[string]interface{}{
 			"id":      cid,
-			"viewers": viewer.ConvertToArray(ev.Fields["viewers"].(map[uuid.UUID]viewer.State)),
+			"viewers": viewer.ConvertToArray(ev.Fields["viewers"].(map[uuid.UUID]viewer.StateWithTime)),
 		},
 	})
 }
