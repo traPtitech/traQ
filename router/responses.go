@@ -450,13 +450,13 @@ type heartbeatUserResponse struct {
 	Status viewer.State `json:"status"`
 }
 
-func formatHeartbeat(cid uuid.UUID, vs map[uuid.UUID]viewer.State) *heartbeatResponse {
+func formatHeartbeat(cid uuid.UUID, vs viewer.UserStates) *heartbeatResponse {
 	result := &heartbeatResponse{
-		UserStatuses: make([]*heartbeatUserResponse, 0, len(vs)),
+		UserStatuses: make([]*heartbeatUserResponse, len(vs)),
 		ChannelID:    cid,
 	}
-	for uid, s := range vs {
-		result.UserStatuses = append(result.UserStatuses, &heartbeatUserResponse{UserID: uid, Status: s})
+	for i, s := range vs {
+		result.UserStatuses[i] = &heartbeatUserResponse{UserID: s.UserID, Status: s.State}
 	}
 	return result
 }

@@ -191,9 +191,9 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	// チャンネル閲覧者取得
-	for uid, state := range ns.realtime.ViewerManager.GetChannelViewers(m.ChannelID) {
+	for uid, swt := range ns.realtime.ViewerManager.GetChannelViewers(m.ChannelID) {
 		connector.Add(uid)
-		if state > viewer.StateNone {
+		if swt.State > viewer.StateNone {
 			viewers.Add(uid)
 		}
 	}

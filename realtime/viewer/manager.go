@@ -20,7 +20,7 @@ type viewer struct {
 	key       interface{}
 	userID    uuid.UUID
 	channelID uuid.UUID
-	state     State
+	state     StateWithTime
 }
 
 // NewManager チャンネル閲覧者マネージャーを生成します
@@ -42,7 +42,7 @@ func NewManager(hub *hub.Hub) *Manager {
 }
 
 // GetChannelViewers 指定したチャンネルのチャンネル閲覧者状態を取得します
-func (vm *Manager) GetChannelViewers(channelID uuid.UUID) map[uuid.UUID]State {
+func (vm *Manager) GetChannelViewers(channelID uuid.UUID) map[uuid.UUID]StateWithTime {
 	vm.mu.RLock()
 	defer vm.mu.RUnlock()
 	return calculateChannelViewers(vm.channels[channelID])
@@ -62,12 +62,15 @@ func (vm *Manager) SetViewer(key interface{}, userID uuid.UUID, channelID uuid.U
 	v, ok := vm.viewers[key]
 	if ok {
 		if v.channelID == channelID {
-			if v.state == state {
+			if v.state.State == state {
 				// 何も変わってない
 				return
 			}
 			// stateだけ変更
-			v.state = state
+			v.state = StateWithTime{
+				State: state,
+				Time:  time.Now(),
+			}
 		} else {
 			// channelとstateが変更
 			oldC := v.channelID
@@ -75,7 +78,10 @@ func (vm *Manager) SetViewer(key interface{}, userID uuid.UUID, channelID uuid.U
 			delete(old, v)
 
 			v.channelID = channelID
-			v.state = state
+			v.state = StateWithTime{
+				State: state,
+				Time:  time.Now(),
+			}
 
 			vm.hub.Publish(hub.Message{
 				Name: event.ChannelViewersChanged,
@@ -90,7 +96,10 @@ func (vm *Manager) SetViewer(key interface{}, userID uuid.UUID, channelID uuid.U
 			key:       key,
 			userID:    userID,
 			channelID: channelID,
-			state:     state,
+			state: StateWithTime{
+				State: state,
+				Time:  time.Now(),
+			},
 		}
 		vm.viewers[key] = v
 	}
@@ -137,10 +146,10 @@ func (vm *Manager) gc() {
 	}
 }
 
-func calculateChannelViewers(vs map[*viewer]struct{}) map[uuid.UUID]State {
-	result := make(map[uuid.UUID]State, len(vs))
+func calculateChannelViewers(vs map[*viewer]struct{}) map[uuid.UUID]StateWithTime {
+	result := make(map[uuid.UUID]StateWithTime, len(vs))
 	for v := range vs {
-		if s, ok := result[v.userID]; ok && s > v.state {
+		if s, ok := result[v.userID]; ok && s.State > v.state.State {
 			continue
 		}
 		result[v.userID] = v.state

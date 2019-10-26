@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/realtime/viewer"
 	"net/http"
 )
 
@@ -20,7 +21,7 @@ func (h *Handlers) PostHeartbeat(c echo.Context) error {
 
 	h.Realtime.HeartBeats.Beat(userID, req.ChannelID, req.Status)
 
-	return c.JSON(http.StatusOK, formatHeartbeat(req.ChannelID, h.Realtime.ViewerManager.GetChannelViewers(req.ChannelID)))
+	return c.JSON(http.StatusOK, formatHeartbeat(req.ChannelID, viewer.ConvertToArray(h.Realtime.ViewerManager.GetChannelViewers(req.ChannelID))))
 }
 
 // GetHeartbeat [deprecated] GET /heartbeat
@@ -32,5 +33,5 @@ func (h *Handlers) GetHeartbeat(c echo.Context) error {
 		return badRequest(err)
 	}
 
-	return c.JSON(http.StatusOK, formatHeartbeat(req.ChannelID, h.Realtime.ViewerManager.GetChannelViewers(req.ChannelID)))
+	return c.JSON(http.StatusOK, formatHeartbeat(req.ChannelID, viewer.ConvertToArray(h.Realtime.ViewerManager.GetChannelViewers(req.ChannelID))))
 }
