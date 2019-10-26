@@ -67,10 +67,7 @@ func (vm *Manager) SetViewer(key interface{}, userID uuid.UUID, channelID uuid.U
 				return
 			}
 			// stateだけ変更
-			v.state = StateWithTime{
-				State: state,
-				Time:  time.Now(),
-			}
+			v.state.State = state
 		} else {
 			// channelとstateが変更
 			oldC := v.channelID

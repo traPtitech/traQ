@@ -10,7 +10,7 @@ import (
 type UserState struct {
 	UserID uuid.UUID `json:"userId"`
 	State  State     `json:"state"`
-	time   time.Time `json:"-"`
+	time   time.Time
 }
 
 // UserStates []UserState
