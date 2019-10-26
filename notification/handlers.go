@@ -363,7 +363,7 @@ func channelViewersChangedHandler(ns *Service, ev hub.Message) {
 		EventType: "CHANNEL_VIEWERS_CHANGED",
 		Payload: map[string]interface{}{
 			"id":      cid,
-			"viewers": viewer.ConvertToArray(ev.Fields["viewers"].(map[uuid.UUID]viewer.State)),
+			"viewers": viewer.ConvertToArray(ev.Fields["viewers"].(map[uuid.UUID]viewer.StateWithTime)),
 		},
 	})
 }
