@@ -5,7 +5,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"net/http"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 // GetChannelSubscribers GET /channels/:channelID/notification

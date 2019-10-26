@@ -3,7 +3,7 @@ package router
 import (
 	"fmt"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
 	"gopkg.in/guregu/null.v3"
@@ -249,8 +249,8 @@ func (h *Handlers) GetUnreadChannels(c echo.Context) error {
 type messagesQuery struct {
 	Limit     int        `query:"limit"`
 	Offset    int        `query:"offset"`
-	Since     *timestamp `query:"since"`
-	Until     *timestamp `query:"until"`
+	Since     *time.Time `query:"since"`
+	Until     *time.Time `query:"until"`
 	Inclusive bool       `query:"inclusive"`
 	Order     string     `query:"order"`
 }
@@ -261,8 +261,8 @@ func (q *messagesQuery) bind(c echo.Context) error {
 
 func (q *messagesQuery) convert() repository.MessagesQuery {
 	return repository.MessagesQuery{
-		Since:     null.TimeFromPtr((*time.Time)(q.Since)),
-		Until:     null.TimeFromPtr((*time.Time)(q.Until)),
+		Since:     null.TimeFromPtr(q.Since),
+		Until:     null.TimeFromPtr(q.Until),
 		Inclusive: q.Inclusive,
 		Limit:     q.Limit,
 		Offset:    q.Offset,

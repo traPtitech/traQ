@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/sessions"
 	"net/http"
 	"time"

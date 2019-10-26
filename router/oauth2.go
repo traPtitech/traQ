@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/sessions"
@@ -293,9 +293,9 @@ func (h *Handlers) AuthorizationDecideHandler(c echo.Context) error {
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
 
-	req := struct {
-		Submit string `form:"submit"`
-	}{}
+	var req struct {
+		Submit string `form:"submit" validate:"required"`
+	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return badRequest(err)
 	}

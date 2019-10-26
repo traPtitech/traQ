@@ -2,8 +2,8 @@ package router
 
 import (
 	"fmt"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/model"

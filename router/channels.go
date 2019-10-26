@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 )
 
 // PostChannel リクエストボディ用構造体
 type PostChannel struct {
-	Name    string      `json:"name"`
+	Name    string      `json:"name" validate:"required"`
 	Parent  uuid.UUID   `json:"parent"`
 	Private bool        `json:"private"`
 	Members []uuid.UUID `json:"member"`
@@ -300,8 +300,8 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 type channelEventsQuery struct {
 	Limit     int        `query:"limit"`
 	Offset    int        `query:"offset"`
-	Since     *timestamp `query:"since"`
-	Until     *timestamp `query:"until"`
+	Since     *time.Time `query:"since"`
+	Until     *time.Time `query:"until"`
 	Inclusive bool       `query:"inclusive"`
 	Order     string     `query:"order"`
 }
@@ -312,8 +312,8 @@ func (q *channelEventsQuery) bind(c echo.Context) error {
 
 func (q *channelEventsQuery) convert(cid uuid.UUID) repository.ChannelEventsQuery {
 	return repository.ChannelEventsQuery{
-		Since:     null.TimeFromPtr((*time.Time)(q.Since)),
-		Until:     null.TimeFromPtr((*time.Time)(q.Until)),
+		Since:     null.TimeFromPtr(q.Since),
+		Until:     null.TimeFromPtr(q.Until),
 		Inclusive: q.Inclusive,
 		Limit:     q.Limit,
 		Offset:    q.Offset,

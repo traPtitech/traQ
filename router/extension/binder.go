@@ -1,12 +1,7 @@
 package extension
 
 import (
-	"encoding/json"
-	"fmt"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/labstack/echo"
-	"net/http"
-	"strings"
+	"github.com/labstack/echo/v4"
 )
 
 var defaultBinder echo.DefaultBinder
@@ -16,6 +11,8 @@ type Binder struct{}
 
 // Bind encoding/jsonをjsoniter.ConfigCompatibleWithStandardLibraryに置換
 func (b *Binder) Bind(i interface{}, c echo.Context) error {
+	return defaultBinder.Bind(i, c)
+	/* TODO 戻す
 	req := c.Request()
 	if req.ContentLength == 0 || !strings.HasPrefix(req.Header.Get(echo.HeaderContentType), echo.MIMEApplicationJSON) {
 		return defaultBinder.Bind(i, c)
@@ -30,4 +27,5 @@ func (b *Binder) Bind(i interface{}, c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	}
 	return nil
+	*/
 }

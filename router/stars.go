@@ -3,7 +3,7 @@ package router
 import (
 	"net/http"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 // GetStars GET /users/me/stars

@@ -28,7 +28,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 const (
@@ -86,15 +86,6 @@ var json = jsoniter.ConfigFastest
 
 func init() {
 	gob.Register(uuid.UUID{})
-}
-
-type timestamp time.Time
-
-// UnmarshalParam implements BindUnmarshaler interface.
-func (t *timestamp) UnmarshalParam(src string) error {
-	ts, err := time.Parse(time.RFC3339, src)
-	*t = timestamp(ts)
-	return err
 }
 
 // Handlers ハンドラ

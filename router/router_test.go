@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
