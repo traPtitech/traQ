@@ -236,7 +236,9 @@ func Gzip() echo.MiddlewareFunc {
 			gzh(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				c.SetRequest(r)
 				c.Response().Writer = w
-				err = next(c)
+				if err := next(c); err != nil {
+					c.Error(err)
+				}
 			})).ServeHTTP(c.Response().Writer, c.Request())
 			return
 		}
