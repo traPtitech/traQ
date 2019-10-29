@@ -63,7 +63,7 @@ require (
 	golang.org/x/exp v0.0.0-20191002040644-a1355ae1e2c3
 	golang.org/x/net v0.0.0-20190918130420-a8b05e9114ab // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	google.golang.org/api v0.11.0
+	google.golang.org/api v0.13.0
 	google.golang.org/appengine v1.6.2 // indirect
 	google.golang.org/grpc v1.23.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
