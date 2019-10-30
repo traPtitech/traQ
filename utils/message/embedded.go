@@ -17,6 +17,7 @@ type EmbeddedInfo struct {
 
 // Parse メッセージの埋め込み情報を抽出したものと、平文化したメッセージを返します
 func Parse(m string) (res []*EmbeddedInfo, plain string) {
+	res = make([]*EmbeddedInfo, 0)
 	tmp := embRegex.ReplaceAllStringFunc(m, func(s string) string {
 		info := &EmbeddedInfo{}
 		if err := jsoniter.ConfigFastest.Unmarshal([]byte(s[1:]), info); err != nil || len(info.Type) == 0 || len(info.ID) == 0 {
