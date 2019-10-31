@@ -11,11 +11,17 @@ import (
 
 // GetStamps GET /stamps
 func (h *Handlers) GetStamps(c echo.Context) error {
-	stamps, err := h.Repo.GetAllStamps()
+	res, err, _ := h.getStampsResponseCacheGroup.Do("", func() (interface{}, error) {
+		stamps, err := h.Repo.GetAllStamps()
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(stamps)
+	})
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
-	return c.JSON(http.StatusOK, stamps)
+	return c.JSONBlob(http.StatusOK, res.([]byte))
 }
 
 // PostStamp POST /stamps

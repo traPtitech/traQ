@@ -84,11 +84,17 @@ func (h *Handlers) PostLogout(c echo.Context) error {
 
 // GetUsers GET /users
 func (h *Handlers) GetUsers(c echo.Context) error {
-	users, err := h.Repo.GetUsers()
+	res, err, _ := h.getUsersResponseCacheGroup.Do("", func() (interface{}, error) {
+		users, err := h.Repo.GetUsers()
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(h.formatUsers(users))
+	})
 	if err != nil {
 		return internalServerError(err, h.requestContextLogger(c))
 	}
-	return c.JSON(http.StatusOK, h.formatUsers(users))
+	return c.JSONBlob(http.StatusOK, res.([]byte))
 }
 
 // GetMe GET /users/me

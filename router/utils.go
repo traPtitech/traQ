@@ -106,7 +106,9 @@ type Handlers struct {
 	emojiCSSTime       time.Time
 	emojiCSSCacheLock  sync.RWMutex
 
-	messagesResponseCacheGroup singleflight.Group
+	messagesResponseCacheGroup  singleflight.Group
+	getStampsResponseCacheGroup singleflight.Group
+	getUsersResponseCacheGroup  singleflight.Group
 }
 
 // HandlerConfig ハンドラ設定
