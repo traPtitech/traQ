@@ -72,7 +72,7 @@ require (
 	gopkg.in/go-playground/webhooks.v5 v5.13.0
 	gopkg.in/gormigrate.v1 v1.6.0
 	gopkg.in/guregu/null.v3 v3.4.0
-	gopkg.in/yaml.v2 v2.2.4
+	gopkg.in/yaml.v2 v2.2.5
 )
 
 go 1.13
