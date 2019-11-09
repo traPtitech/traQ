@@ -28,7 +28,6 @@ var writePerms = []rbac.Permission{
 	permission.DeleteClipFolder,
 	permission.EditChannelStar,
 	permission.DeleteUnread,
-	permission.EditChannelMute,
 	permission.EditUserTag,
 	permission.CreateUserGroup,
 	permission.EditUserGroup,

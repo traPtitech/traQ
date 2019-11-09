@@ -21,8 +21,4 @@ const (
 	GetChannelStar = rbac.Permission("get_channel_star")
 	// EditChannelStar チャンネルスター編集権限
 	EditChannelStar = rbac.Permission("edit_channel_star")
-	// GetChannelMute チャンネルミュート取得権限
-	GetChannelMute = rbac.Permission("get_channel_mute")
-	// EditChannelMute チャンネルミュート編集権限
-	EditChannelMute = rbac.Permission("edit_channel_mute")
 )

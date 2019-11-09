@@ -56,9 +56,6 @@ func init() {
 		ReportMessage,
 		GetMessageReports,
 
-		GetChannelMute,
-		EditChannelMute,
-
 		GetChannelSubscription,
 		EditChannelSubscription,
 		ConnectNotificationStream,

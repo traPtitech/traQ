@@ -19,7 +19,6 @@ var readPerms = []rbac.Permission{
 	permission.GetClipFolder,
 	permission.GetChannelStar,
 	permission.GetUnread,
-	permission.GetChannelMute,
 	permission.GetUserTag,
 	permission.GetUserGroup,
 	permission.GetStamp,
