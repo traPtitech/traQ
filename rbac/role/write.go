@@ -37,7 +37,6 @@ var writePerms = []rbac.Permission{
 	permission.AddMessageStamp,
 	permission.RemoveMessageStamp,
 	permission.EditStamp,
-	permission.EditFavoriteStamp,
 	permission.UploadFile,
 	permission.PostHeartbeat,
 	permission.InstallBot,

@@ -115,12 +115,6 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 						apiUsersMeMuteCid.DELETE("", h.DeleteMutedChannel, requires(permission.EditChannelMute))
 					}
 				}
-				apiUsersMeFavoriteStamps := apiUsersMe.Group("/favorite-stamps")
-				{
-					apiUsersMeFavoriteStamps.GET("", h.GetMyFavoriteStamps, requires(permission.GetFavoriteStamp))
-					apiUsersMeFavoriteStamps.POST("", h.PostMyFavoriteStamp, requires(permission.EditFavoriteStamp))
-					apiUsersMeFavoriteStamps.DELETE("/:stampID", h.DeleteMyFavoriteStamp, requires(permission.EditFavoriteStamp))
-				}
 			}
 			apiUsersUID := apiUsers.Group("/:userID", h.ValidateUserID(false))
 			{

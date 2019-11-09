@@ -153,18 +153,6 @@ func (repo *TestRepository) GetAllRoles() ([]*model.UserRole, error) {
 	return role.SystemRoles(), nil
 }
 
-func (repo *TestRepository) AddFavoriteStamp(userID, stampID uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) RemoveFavoriteStamp(userID, stampID uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetUserFavoriteStamps(userID uuid.UUID) ([]uuid.UUID, error) {
-	panic("implement me")
-}
-
 func (repo *TestRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*repository.UserUnreadChannel, error) {
 	panic("implement me")
 }
@@ -182,10 +170,6 @@ func (repo *TestRepository) GetBotEventLogs(botID uuid.UUID, limit, offset int) 
 }
 
 func (repo *TestRepository) WriteBotEventLog(log *model.BotEventLog) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetAllBots() ([]*model.Bot, error) {
 	panic("implement me")
 }
 

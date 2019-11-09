@@ -23,8 +23,4 @@ const (
 	RemoveMessageStamp = rbac.Permission("remove_message_stamp")
 	// GetMyStampHistory 自分のスタンプ履歴取得権限
 	GetMyStampHistory = rbac.Permission("get_my_stamp_history")
-	// GetFavoriteStamp お気に入りスタンプ取得権限
-	GetFavoriteStamp = rbac.Permission("get_favorite_stamp")
-	// EditFavoriteStamp お気に入りスタンプ編集権限
-	EditFavoriteStamp = rbac.Permission("edit_favorite_stamp")
 )

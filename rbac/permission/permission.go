@@ -79,8 +79,6 @@ func init() {
 		AddMessageStamp,
 		RemoveMessageStamp,
 		GetMyStampHistory,
-		GetFavoriteStamp,
-		EditFavoriteStamp,
 
 		GetChannelStar,
 		EditChannelStar,

@@ -31,7 +31,6 @@ type Repository interface {
 	WebhookRepository
 	OAuth2Repository
 	BotRepository
-	FavoriteStampRepository
 	UserRoleRepository
 	message.ReplaceMapper
 }
