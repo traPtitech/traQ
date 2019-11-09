@@ -33,8 +33,6 @@ var handlerMap = map[string]eventHandler{
 	event.ChannelDeleted:         channelDeletedHandler,
 	event.ChannelStared:          channelStaredHandler,
 	event.ChannelUnstared:        channelUnstaredHandler,
-	event.ChannelMuted:           channelMutedHandler,
-	event.ChannelUnmuted:         channelUnmutedHandler,
 	event.ChannelRead:            channelReadHandler,
 	event.ChannelViewersChanged:  channelViewersChangedHandler,
 	event.UserCreated:            userCreatedHandler,
@@ -180,14 +178,6 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 				noticeable.Add(gs...)
 			}
 		}
-
-		// ミュート除外
-		muted, err := ns.repo.GetMuteUserIDs(m.ChannelID)
-		if err != nil {
-			logger.Error("failed to GetMuteUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
-			return
-		}
-		targets.Remove(muted...)
 	}
 
 	// チャンネル閲覧者取得
@@ -324,24 +314,6 @@ func channelStaredHandler(ns *Service, ev hub.Message) {
 func channelUnstaredHandler(ns *Service, ev hub.Message) {
 	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CHANNEL_UNSTARED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["channel_id"].(uuid.UUID),
-		},
-	})
-}
-
-func channelMutedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
-		EventType: "CHANNEL_MUTED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["channel_id"].(uuid.UUID),
-		},
-	})
-}
-
-func channelUnmutedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
-		EventType: "CHANNEL_UNMUTED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["channel_id"].(uuid.UUID),
 		},

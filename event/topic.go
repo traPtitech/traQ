@@ -146,16 +146,6 @@ const (
 	// 		user_id: uuid.UUID
 	// 		channel_id: uuid.UUID
 	ChannelUnstared = "channel.unstared"
-	// ChannelMuted チャンネルがミュートされた
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		channel_id: uuid.UUID
-	ChannelMuted = "channel.muted"
-	// ChannelUnmuted チャンネルのミュートが解除された
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		channel_id: uuid.UUID
-	ChannelUnmuted = "channel.unmuted"
 	// ChannelViewersChanged チャンネルの閲覧者が変化した
 	// 	Fields:
 	// 		channel_id: uuid.UUID

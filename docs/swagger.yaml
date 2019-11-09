@@ -829,55 +829,6 @@ paths:
         "204":
           description: 正常にメッセージを既読にできました。
 
-  /users/me/mute:
-    get:
-      tags:
-        - mute
-      operationId: getMutedChannels
-      description: ミュートしているチャンネルのIDの配列を返します。
-      security:
-        - traqOAuth2:
-            - read
-      responses:
-        "200":
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UUIDs"
-
-  /users/me/mute/{channelID}:
-    parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
-    post:
-      tags:
-        - mute
-      operationId: muteChannel
-      description: 指定したチャンネルをミュートします。ただし、強制通知チャンネルはミュートできません。既にミュートしていた場合は204を返します。
-      security:
-        - traqOAuth2:
-            - write
-      responses:
-        "204":
-          description: 正常にミュートできました。
-        "403":
-          description: ミュートできませんでした。許可されていません。
-        "404":
-          description: ミュートできませんでした。指定したチャンネルは存在しません。
-    delete:
-      tags:
-        - mute
-      operationId: unmuteChannel
-      description: 指定したチャンネルのミュートを解除します。既に解除されていた場合は204を返します。
-      security:
-        - traqOAuth2:
-            - write
-      responses:
-        "204":
-          description: 正常にミュートを解除できました。
-        "404":
-          description: ミュートを解除できませんでした。指定したチャンネルは存在しません。
-
   /users/{userID}:
     parameters:
       - $ref: "#/components/parameters/userIdInPath"

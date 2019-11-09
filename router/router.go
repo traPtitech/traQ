@@ -106,15 +106,6 @@ func SetupRouting(e *echo.Echo, h *Handlers) {
 					apiUsersMeUnread.GET("/channels", h.GetUnreadChannels, requires(permission.GetUnread))
 					apiUsersMeUnread.DELETE("/channels/:channelID", h.DeleteUnread, requires(permission.DeleteUnread))
 				}
-				apiUsersMeMute := apiUsersMe.Group("/mute")
-				{
-					apiUsersMeMute.GET("", h.GetMutedChannelIDs, requires(permission.GetChannelMute))
-					apiUsersMeMuteCid := apiUsersMeMute.Group("/:channelID", h.ValidateChannelID(false))
-					{
-						apiUsersMeMuteCid.POST("", h.PostMutedChannel, requires(permission.EditChannelMute))
-						apiUsersMeMuteCid.DELETE("", h.DeleteMutedChannel, requires(permission.EditChannelMute))
-					}
-				}
 			}
 			apiUsersUID := apiUsers.Group("/:userID", h.ValidateUserID(false))
 			{
