@@ -34,7 +34,6 @@ require (
 	github.com/leandro-lugaresi/hub v1.1.0
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/lib/pq v1.2.0 // indirect
-	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/moul/http2curl v0.0.0-20170919181001-9ac6cf4d929b // indirect
 	github.com/ncw/swift v1.0.49
 	github.com/onsi/ginkgo v1.10.1 // indirect
