@@ -878,10 +878,6 @@ paths:
         "404":
           description: ミュートを解除できませんでした。指定したチャンネルは存在しません。
 
-  # /users/me/favorite-stamps
-
-  # /users/me/favorite-stamps/{stampID}
-
   /users/{userID}:
     parameters:
       - $ref: "#/components/parameters/userIdInPath"
