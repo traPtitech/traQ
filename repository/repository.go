@@ -23,7 +23,6 @@ type Repository interface {
 	MessageStampRepository
 	StampRepository
 	ClipRepository
-	MuteRepository
 	StarRepository
 	PinRepository
 	DeviceRepository
