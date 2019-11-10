@@ -11,15 +11,12 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/model"
 )
 
 // PostChannel リクエストボディ用構造体
 type PostChannel struct {
-	Name    string      `json:"name" validate:"required"`
-	Parent  uuid.UUID   `json:"parent"`
-	Private bool        `json:"private"`
-	Members []uuid.UUID `json:"member"`
+	Name   string    `json:"name" validate:"required"`
+	Parent uuid.UUID `json:"parent"`
 }
 
 // GetChannels GET /channels
@@ -101,44 +98,19 @@ func (h *Handlers) PostChannels(c echo.Context) error {
 		}
 	}
 
-	var (
-		ch  *model.Channel
-		err error
-	)
-
-	if req.Private {
-		// 非公開チャンネル
-		ch, err = h.Repo.CreatePrivateChannel(req.Name, userID, req.Members)
-		if err != nil {
-			switch {
-			case repository.IsArgError(err):
-				return badRequest(err)
-			case err == repository.ErrAlreadyExists:
-				return conflict("channel name conflicts")
-			case err == repository.ErrChannelDepthLimitation:
-				return badRequest("channel depth limit exceeded")
-			case err == repository.ErrForbidden:
-				return forbidden("invalid parent channel")
-			default:
-				return internalServerError(err, h.requestContextLogger(c))
-			}
-		}
-	} else {
-		// 公開チャンネル
-		ch, err = h.Repo.CreatePublicChannel(req.Name, req.Parent, userID)
-		if err != nil {
-			switch {
-			case repository.IsArgError(err):
-				return badRequest(err)
-			case err == repository.ErrAlreadyExists:
-				return conflict("channel name conflicts")
-			case err == repository.ErrChannelDepthLimitation:
-				return badRequest("channel depth limit exceeded")
-			case err == repository.ErrForbidden:
-				return forbidden("invalid parent channel")
-			default:
-				return internalServerError(err, h.requestContextLogger(c))
-			}
+	ch, err := h.Repo.CreatePublicChannel(req.Name, req.Parent, userID)
+	if err != nil {
+		switch {
+		case repository.IsArgError(err):
+			return badRequest(err)
+		case err == repository.ErrAlreadyExists:
+			return conflict("channel name conflicts")
+		case err == repository.ErrChannelDepthLimitation:
+			return badRequest("channel depth limit exceeded")
+		case err == repository.ErrForbidden:
+			return forbidden("invalid parent channel")
+		default:
+			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
 
