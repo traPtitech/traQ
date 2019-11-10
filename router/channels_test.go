@@ -14,14 +14,13 @@ import (
 
 func TestHandlers_GetChannels(t *testing.T) {
 	t.Parallel()
-	repo, server, _, require, session, adminSession, testUser, _ := setupWithUsers(t, s1)
+	repo, server, _, require, session, adminSession := setup(t, s1)
 
 	for i := 0; i < 5; i++ {
 		c := mustMakeChannel(t, repo, random)
 		_, err := repo.CreateChildChannel(utils.RandAlphabetAndNumberString(20), c.ID, uuid.Nil)
 		require.NoError(err)
 	}
-	mustMakePrivateChannel(t, repo, random, []uuid.UUID{testUser.ID})
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -40,7 +39,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Status(http.StatusOK).
 			JSON().
 			Array()
-		arr.Length().Equal(11 + 1)
+		arr.Length().Equal(10 + 1)
 	})
 
 	t.Run("Successful2", func(t *testing.T) {

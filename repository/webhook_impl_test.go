@@ -30,15 +30,6 @@ func TestRepositoryImpl_CreateWebhook(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("private channel", func(t *testing.T) {
-		t.Parallel()
-
-		c1 := mustMakePrivateChannel(t, repo, random, []uuid.UUID{user.ID})
-
-		_, err := repo.CreateWebhook(utils.RandAlphabetAndNumberString(20), "aaa", c1.ID, user.ID, "test")
-		assert.Error(t, err)
-	})
-
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
@@ -90,19 +81,6 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		err := repo.UpdateWebhook(wb.GetID(), UpdateWebhookArgs{
 			ChannelID: uuid.NullUUID{
 				UUID:  uuid.Must(uuid.NewV4()),
-				Valid: true,
-			},
-		})
-		assert.Error(t, err)
-	})
-
-	t.Run("private channel", func(t *testing.T) {
-		t.Parallel()
-		wb := mustMakeWebhook(t, repo, random, channel.ID, user.ID, "test")
-		c1 := mustMakePrivateChannel(t, repo, random, []uuid.UUID{user.ID})
-		err := repo.UpdateWebhook(wb.GetID(), UpdateWebhookArgs{
-			ChannelID: uuid.NullUUID{
-				UUID:  c1.ID,
 				Valid: true,
 			},
 		})

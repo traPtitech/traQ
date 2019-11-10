@@ -57,7 +57,7 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 
 func TestHandlers_PostWebhooks(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
+	repo, server, _, _, session, _ := setup(t, common6)
 	ch := mustMakeChannel(t, repo, random)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -74,17 +74,6 @@ func TestHandlers_PostWebhooks(t *testing.T) {
 		e := makeExp(t, server)
 		e.POST("/api/1.0/webhooks").
 			WithJSON(map[string]string{"name": "test", "description": "test"}).
-			WithCookie(sessions.CookieName, session).
-			Expect().
-			Status(http.StatusBadRequest)
-	})
-
-	t.Run("Bad Request (Private channel)", func(t *testing.T) {
-		t.Parallel()
-		ch := mustMakePrivateChannel(t, repo, random, []uuid.UUID{testUser.ID})
-		e := makeExp(t, server)
-		e.POST("/api/1.0/webhooks").
-			WithJSON(map[string]string{"name": "test", "description": "test", "channelId": ch.ID.String()}).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -207,17 +196,6 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithJSON(map[string]string{"name": strings.Repeat("a", 40)}).
-			WithCookie(sessions.CookieName, session).
-			Expect().
-			Status(http.StatusBadRequest)
-	})
-
-	t.Run("Bad Request (Private Channel)", func(t *testing.T) {
-		t.Parallel()
-		ch := mustMakePrivateChannel(t, repo, random, []uuid.UUID{testUser.ID})
-		e := makeExp(t, server)
-		e.PATCH("/api/1.0/webhooks/{webhookId}", wb.GetID()).
-			WithJSON(map[string]string{"channelId": ch.ID.String()}).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -453,19 +431,6 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			WithText(body).
 			WithHeader(headerSignature, hex.EncodeToString(utils.CalcHMACSHA1([]byte(body), wb.GetSecret()))).
 			WithHeader(headerChannelID, uuid.Must(uuid.NewV4()).String()).
-			Expect().
-			Status(http.StatusBadRequest)
-	})
-
-	t.Run("Bad Request (Private Channel)", func(t *testing.T) {
-		t.Parallel()
-		ch := mustMakePrivateChannel(t, repo, random, []uuid.UUID{testUser.ID})
-		body := "test"
-		e := makeExp(t, server)
-		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
-			WithText(body).
-			WithHeader(headerSignature, hex.EncodeToString(utils.CalcHMACSHA1([]byte(body), wb.GetSecret()))).
-			WithHeader(headerChannelID, ch.ID.String()).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
