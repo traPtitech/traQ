@@ -15,9 +15,6 @@ func TestHandlers_GetMessageByID(t *testing.T) {
 
 	channel := mustMakeChannel(t, repo, random)
 	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
-	postmanID := mustMakeUser(t, repo, random).ID
-	privateID := mustMakePrivateChannel(t, repo, random, []uuid.UUID{postmanID}).ID
-	message2 := mustMakeMessage(t, repo, postmanID, privateID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -47,37 +44,6 @@ func TestHandlers_GetMessageByID(t *testing.T) {
 		obj.Value("updatedAt").String().NotEmpty()
 		obj.Value("stampList").Array().Empty()
 	})
-
-	t.Run("Successful2", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-
-		obj := e.GET("/api/1.0/messages/{messageID}", message2.ID.String()).
-			WithCookie(sessions.CookieName, generateSession(t, postmanID)).
-			Expect().
-			Status(http.StatusOK).
-			JSON().
-			Object()
-
-		obj.Value("messageId").String().Equal(message2.ID.String())
-		obj.Value("userId").String().Equal(postmanID.String())
-		obj.Value("parentChannelId").String().Equal(privateID.String())
-		obj.Value("pin").Boolean().False()
-		obj.Value("content").String().Equal(message2.Text)
-		obj.Value("reported").Boolean().False()
-		obj.Value("createdAt").String().NotEmpty()
-		obj.Value("updatedAt").String().NotEmpty()
-		obj.Value("stampList").Array().Empty()
-	})
-
-	t.Run("Failure1", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.GET("/api/1.0/messages/{messageID}", message2.ID.String()).
-			WithCookie(sessions.CookieName, session).
-			Expect().
-			Status(http.StatusNotFound)
-	})
 }
 
 func TestHandlers_PostMessage(t *testing.T) {
@@ -85,8 +51,6 @@ func TestHandlers_PostMessage(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
-	postmanID := mustMakeUser(t, repo, random).ID
-	privateID := mustMakePrivateChannel(t, repo, random, []uuid.UUID{postmanID}).ID
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -124,43 +88,6 @@ func TestHandlers_PostMessage(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Successful2", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		message := "test message"
-
-		obj := e.POST("/api/1.0/channels/{channelID}/messages", privateID).
-			WithCookie(sessions.CookieName, generateSession(t, postmanID)).
-			WithJSON(map[string]string{"text": message}).
-			Expect().
-			Status(http.StatusCreated).
-			JSON().
-			Object()
-
-		obj.Value("messageId").String().NotEmpty()
-		obj.Value("userId").String().Equal(postmanID.String())
-		obj.Value("parentChannelId").String().Equal(privateID.String())
-		obj.Value("pin").Boolean().False()
-		obj.Value("content").String().Equal(message)
-		obj.Value("reported").Boolean().False()
-		obj.Value("createdAt").String().NotEmpty()
-		obj.Value("updatedAt").String().NotEmpty()
-		obj.Value("stampList").Array().Empty()
-
-		_, err := repo.GetMessageByID(uuid.FromStringOrNil(obj.Value("messageId").String().Raw()))
-		assert.NoError(t, err)
-	})
-
-	t.Run("Failure1", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.POST("/api/1.0/channels/{channelID}/messages", privateID.String()).
-			WithCookie(sessions.CookieName, session).
-			WithJSON(map[string]string{"text": "test message"}).
-			Expect().
-			Status(http.StatusNotFound)
-	})
-
 	t.Run("Failure2", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
@@ -177,8 +104,6 @@ func TestHandlers_GetMessagesByChannelID(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
-	postmanID := mustMakeUser(t, repo, random).ID
-	privateID := mustMakePrivateChannel(t, repo, random, []uuid.UUID{postmanID}).ID
 
 	for i := 0; i < 5; i++ {
 		mustMakeMessage(t, repo, testUser.ID, channel.ID)
@@ -219,15 +144,6 @@ func TestHandlers_GetMessagesByChannelID(t *testing.T) {
 			Length().
 			Equal(3)
 	})
-
-	t.Run("Failure1", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.GET("/api/1.0/channels/{channelID}/messages", privateID.String()).
-			WithCookie(sessions.CookieName, session).
-			Expect().
-			Status(http.StatusNotFound)
-	})
 }
 
 func TestHandlers_PutMessageByID(t *testing.T) {
@@ -237,8 +153,6 @@ func TestHandlers_PutMessageByID(t *testing.T) {
 	channel := mustMakeChannel(t, repo, random)
 	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
 	postmanID := mustMakeUser(t, repo, random).ID
-	privateID := mustMakePrivateChannel(t, repo, random, []uuid.UUID{postmanID}).ID
-	message2 := mustMakeMessage(t, repo, postmanID, privateID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -264,15 +178,6 @@ func TestHandlers_PutMessageByID(t *testing.T) {
 		assert.Equal(t, text, m.Text)
 	})
 
-	t.Run("Failure1", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.PUT("/api/1.0/messages/{messageID}", message2.ID.String()).
-			WithCookie(sessions.CookieName, session).
-			Expect().
-			Status(http.StatusNotFound)
-	})
-
 	t.Run("Failure2", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
@@ -291,8 +196,6 @@ func TestHandlers_DeleteMessageByID(t *testing.T) {
 	channel := mustMakeChannel(t, repo, random)
 	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
 	postmanID := mustMakeUser(t, repo, random).ID
-	privateID := mustMakePrivateChannel(t, repo, random, []uuid.UUID{postmanID}).ID
-	message2 := mustMakeMessage(t, repo, postmanID, privateID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -327,15 +230,6 @@ func TestHandlers_DeleteMessageByID(t *testing.T) {
 
 		_, err := repo.GetMessageByID(message.ID)
 		assert.Equal(t, repository.ErrNotFound, err)
-	})
-
-	t.Run("Not Found", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.DELETE("/api/1.0/messages/{messageID}", message2.ID.String()).
-			WithCookie(sessions.CookieName, session).
-			Expect().
-			Status(http.StatusNotFound)
 	})
 
 	t.Run("Forbidden (other's message)", func(t *testing.T) {

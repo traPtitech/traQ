@@ -14,14 +14,13 @@ import (
 
 func TestHandlers_GetChannels(t *testing.T) {
 	t.Parallel()
-	repo, server, _, require, session, adminSession, testUser, _ := setupWithUsers(t, s1)
+	repo, server, _, require, session, adminSession := setup(t, s1)
 
 	for i := 0; i < 5; i++ {
 		c := mustMakeChannel(t, repo, random)
 		_, err := repo.CreateChildChannel(utils.RandAlphabetAndNumberString(20), c.ID, uuid.Nil)
 		require.NoError(err)
 	}
-	mustMakePrivateChannel(t, repo, random, []uuid.UUID{testUser.ID})
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -40,7 +39,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 			Status(http.StatusOK).
 			JSON().
 			Array()
-		arr.Length().Equal(11 + 1)
+		arr.Length().Equal(10 + 1)
 	})
 
 	t.Run("Successful2", func(t *testing.T) {
@@ -58,7 +57,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 
 func TestHandlers_PostChannels(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common1)
+	repo, server, _, _, session, _ := setup(t, common1)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -123,54 +122,6 @@ func TestHandlers_PostChannels(t *testing.T) {
 
 		_, err = repo.GetChannel(uuid.FromStringOrNil(obj.Value("channelId").String().Raw()))
 		require.NoError(t, err)
-	})
-
-	t.Run("Successful2", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		assert, require := assertAndRequire(t)
-
-		user2 := mustMakeUser(t, repo, random).ID
-		cname := utils.RandAlphabetAndNumberString(20)
-		obj := e.POST("/api/1.0/channels").
-			WithCookie(sessions.CookieName, session).
-			WithJSON(&PostChannel{
-				Private: true,
-				Name:    cname,
-				Parent:  uuid.Nil,
-				Members: []uuid.UUID{
-					testUser.ID,
-					user2,
-				},
-			}).
-			Expect().
-			Status(http.StatusCreated).
-			JSON().
-			Object()
-
-		obj.Value("channelId").String().NotEmpty()
-		obj.Value("name").String().Equal(cname)
-		obj.Value("visibility").Boolean().True()
-		obj.Value("parent").String().Empty()
-		obj.Value("force").Boolean().False()
-		obj.Value("private").Boolean().True()
-		obj.Value("dm").Boolean().False()
-		obj.Value("member").Array().ContainsOnly(testUser.ID, user2)
-
-		c, err := repo.GetChannel(uuid.FromStringOrNil(obj.Value("channelId").String().Raw()))
-		require.NoError(err)
-
-		ok, err := repo.IsChannelAccessibleToUser(testUser.ID, c.ID)
-		require.NoError(err)
-		assert.True(ok)
-
-		ok, err = repo.IsChannelAccessibleToUser(user2, c.ID)
-		require.NoError(err)
-		assert.True(ok)
-
-		ok, err = repo.IsChannelAccessibleToUser(uuid.Must(uuid.NewV4()), c.ID)
-		require.NoError(err)
-		assert.False(ok)
 	})
 }
 

@@ -299,20 +299,6 @@ func TestRepositoryImpl_GetChildrenChannelIDs(t *testing.T) {
 	}
 }
 
-func TestRepositoryImpl_GetPrivateChannelMemberIDs(t *testing.T) {
-	t.Parallel()
-	repo, assert, _ := setup(t, common)
-
-	user1 := mustMakeUser(t, repo, random)
-	user2 := mustMakeUser(t, repo, random)
-	ch := mustMakePrivateChannel(t, repo, random, []uuid.UUID{user1.ID, user2.ID})
-
-	member, err := repo.GetPrivateChannelMemberIDs(ch.ID)
-	if assert.NoError(err) {
-		assert.Len(member, 2)
-	}
-}
-
 func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common)

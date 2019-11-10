@@ -110,70 +110,6 @@ func (repo *GormRepository) CreatePublicChannel(name string, parent, creatorID u
 	return ch, nil
 }
 
-// CreatePrivateChannel implements ChannelRepository interface. TODO トランザクション
-func (repo *GormRepository) CreatePrivateChannel(name string, creatorID uuid.UUID, members []uuid.UUID) (*model.Channel, error) {
-	validMember := make([]uuid.UUID, 0, len(members))
-	for _, v := range members {
-		ok, err := repo.UserExists(v)
-		if err != nil {
-			return nil, err
-		}
-		if ok {
-			validMember = append(validMember, v)
-		}
-	}
-	if err := validator.ValidateVar(validMember, "min=1"); err != nil {
-		return nil, err
-	}
-
-	// チャンネル名検証
-	if !validator.ChannelRegex.MatchString(name) {
-		return nil, ArgError("name", "invalid name")
-	}
-	if has, err := repo.isChannelPresent(repo.db, name, uuid.Nil); err != nil {
-		return nil, err
-	} else if has {
-		return nil, ErrAlreadyExists
-	}
-
-	ch := &model.Channel{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      name,
-		CreatorID: creatorID,
-		UpdaterID: creatorID,
-		IsPublic:  false,
-		IsForced:  false,
-		IsVisible: true,
-	}
-
-	err := repo.transact(func(tx *gorm.DB) error {
-		if err := tx.Create(ch).Error; err != nil {
-			return err
-		}
-
-		// メンバーに追加
-		for _, v := range validMember {
-			if err := tx.Create(&model.UsersPrivateChannel{UserID: v, ChannelID: ch.ID}).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	repo.hub.Publish(hub.Message{
-		Name: event.ChannelCreated,
-		Fields: hub.Fields{
-			"channel_id": ch.ID,
-			"channel":    ch,
-			"private":    true,
-		},
-	})
-
-	return ch, nil
-}
-
 // CreateChildChannel implements ChannelRepository interface. TODO トランザクション
 func (repo *GormRepository) CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*model.Channel, error) {
 	// ダイレクトメッセージルートの子チャンネルは作れない
@@ -230,42 +166,14 @@ func (repo *GormRepository) CreateChildChannel(name string, parentID, creatorID 
 		UpdaterID: creatorID,
 		IsForced:  false,
 		IsVisible: true,
+		IsPublic:  true,
 	}
 
-	if pCh.IsPublic {
-		// 公開チャンネル
-		ch.IsPublic = true
-		if err := repo.db.Create(ch).Error; err != nil {
-			return nil, err
-		}
-		channelsCounter.Inc()
-	} else {
-		// 非公開チャンネル
-		ch.IsPublic = false
-
-		// 親チャンネルとメンバーは同じ
-		ids, err := repo.GetPrivateChannelMemberIDs(pCh.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		err = repo.transact(func(tx *gorm.DB) error {
-			if err := tx.Create(ch).Error; err != nil {
-				return err
-			}
-
-			// メンバーに追加
-			for _, v := range ids {
-				if err := tx.Create(&model.UsersPrivateChannel{UserID: v, ChannelID: ch.ID}).Error; err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
+	if err := repo.db.Create(ch).Error; err != nil {
+		return nil, err
 	}
+	channelsCounter.Inc()
+
 	repo.hub.Publish(hub.Message{
 		Name: event.ChannelCreated,
 		Fields: hub.Fields{

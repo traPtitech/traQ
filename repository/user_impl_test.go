@@ -23,24 +23,22 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 	g1 := mustMakeUserGroup(t, repo, random, u0.ID)
 	c1 := mustMakeChannel(t, repo, random)
 	us := make([]uuid.UUID, 0)
-	p1m := make([]uuid.UUID, 0)
 
 	type u struct {
 		Bot    bool
 		Active bool
 		c1     bool
 		g1     bool
-		p1     bool
 	}
 	ut := []u{
-		{false, false, true, false, false},
-		{true, false, true, false, false},
-		{false, true, true, true, false},
-		{true, true, true, true, false},
-		{false, false, false, true, true},
-		{true, false, false, true, true},
-		{false, true, false, false, true},
-		{true, true, false, false, true},
+		{false, false, true, false},
+		{true, false, true, false},
+		{false, true, true, true},
+		{true, true, true, true},
+		{false, false, false, true},
+		{true, false, false, true},
+		{false, true, false, false},
+		{true, true, false, false},
 	}
 	for _, v := range ut {
 		u := mustMakeUser(t, repo, random)
@@ -58,13 +56,9 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 		if v.g1 {
 			mustAddUserToGroup(t, repo, u.ID, g1.ID)
 		}
-		if v.p1 {
-			p1m = append(p1m, u.ID)
-		}
 	}
-	p1 := mustMakePrivateChannel(t, repo, random, p1m)
 
-	ut = append(ut, u{false, true, false, false, false}) // traQユーザー
+	ut = append(ut, u{false, true, false, false}) // traQユーザー
 	us = append(us, u0.ID)
 
 	tt := []struct {
@@ -72,20 +66,19 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 		active int
 		c1     int
 		g1     int
-		p1     int
 	}{
-		{-1, -1, -1, -1, -1},
-		{0, -1, -1, -1, -1},
-		{1, -1, -1, -1, -1},
-		{-1, 0, -1, -1, -1},
-		{-1, 1, -1, -1, -1},
-		{0, 1, 1, -1, -1},
-		{0, 1, -1, 1, -1},
-		{0, 1, -1, -1, 1},
-		{0, 1, 1, 1, -1},
-		{0, 1, -1, 1, 1},
-		{0, 1, 1, -1, 1},
-		{0, 1, 1, 1, 1},
+		{-1, -1, -1, -1},
+		{0, -1, -1, -1},
+		{1, -1, -1, -1},
+		{-1, 0, -1, -1},
+		{-1, 1, -1, -1},
+		{0, 1, 1, -1},
+		{0, 1, -1, 1},
+		{0, 1, -1, -1},
+		{0, 1, 1, 1},
+		{0, 1, -1, 1},
+		{0, 1, 1, -1},
+		{0, 1, 1, 1},
 	}
 	for i, v := range tt {
 		v := v
@@ -106,9 +99,6 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 				if (v.g1 == 0 && u.g1) || (v.g1 == 1 && !u.g1) {
 					continue
 				}
-				if (v.p1 == 0 && u.p1) || (v.p1 == 1 && !u.p1) {
-					continue
-				}
 				ans = append(ans, us[k])
 			}
 
@@ -126,12 +116,6 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 			if v.c1 == 1 {
 				q.IsSubscriberOf = uuid.NullUUID{
 					UUID:  c1.ID,
-					Valid: true,
-				}
-			}
-			if v.p1 == 1 {
-				q.IsCMemberOf = uuid.NullUUID{
-					UUID:  p1.ID,
 					Valid: true,
 				}
 			}

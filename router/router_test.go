@@ -174,16 +174,6 @@ func mustMakeChannel(t *testing.T, repo repository.Repository, name string) *mod
 	return ch
 }
 
-func mustMakePrivateChannel(t *testing.T, repo repository.Repository, name string, members []uuid.UUID) *model.Channel {
-	t.Helper()
-	if name == random {
-		name = utils.RandAlphabetAndNumberString(20)
-	}
-	ch, err := repo.CreatePrivateChannel(name, members[0], members)
-	require.NoError(t, err)
-	return ch
-}
-
 func mustMakeMessage(t *testing.T, repo repository.Repository, userID, channelID uuid.UUID) *model.Message {
 	t.Helper()
 	m, err := repo.CreateMessage(userID, channelID, "popopo")
