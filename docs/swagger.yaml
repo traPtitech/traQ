@@ -3576,12 +3576,6 @@ components:
       required:
         - type
       properties:
-        private:
-          type: boolean
-          description: プライベートチャンネルかどうか
-        member:
-          $ref: "#/components/schemas/UUIDs"
-          description: チャンネルに参加させるuserのuserId
         name:
           type: string
           description: チャンネル名
