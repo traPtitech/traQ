@@ -188,6 +188,7 @@ func (h *Handlers) PutUserPassword(c echo.Context) error {
 			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
+	_ = sessions.DestroyByUserID(userID)
 
 	return c.NoContent(http.StatusNoContent)
 }
@@ -260,6 +261,7 @@ func (h *Handlers) PutPassword(c echo.Context) error {
 			return internalServerError(err, h.requestContextLogger(c))
 		}
 	}
+	_ = sessions.DestroyByUserID(user.ID)
 
 	return c.NoContent(http.StatusNoContent)
 }
