@@ -930,51 +930,6 @@ func (repo *TestRepository) CreatePublicChannel(name string, parent, creatorID u
 	return &ch, nil
 }
 
-func (repo *TestRepository) CreatePrivateChannel(name string, creatorID uuid.UUID, members []uuid.UUID) (*model.Channel, error) {
-	validMember := make([]uuid.UUID, 0, len(members))
-	for _, v := range members {
-		ok, err := repo.UserExists(v)
-		if err != nil {
-			return nil, err
-		}
-		if ok {
-			validMember = append(validMember, v)
-		}
-	}
-	if err := validator.ValidateVar(validMember, "min=1"); err != nil {
-		return nil, err
-	}
-
-	// チャンネル名検証
-	if err := validator.ValidateVar(name, "channel,required"); err != nil {
-		return nil, err
-	}
-	if has, err := repo.IsChannelPresent(name, uuid.Nil); err != nil {
-		return nil, err
-	} else if has {
-		return nil, repository.ErrAlreadyExists
-	}
-
-	ch := model.Channel{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      name,
-		CreatorID: creatorID,
-		UpdaterID: creatorID,
-		IsPublic:  false,
-		IsForced:  false,
-		IsVisible: true,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	repo.ChannelsLock.Lock()
-	repo.Channels[ch.ID] = ch
-	for _, v := range validMember {
-		_ = repo.AddPrivateChannelMember(ch.ID, v)
-	}
-	repo.ChannelsLock.Unlock()
-	return &ch, nil
-}
-
 func (repo *TestRepository) CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*model.Channel, error) {
 	// ダイレクトメッセージルートの子チャンネルは作れない
 	if parentID == dmChannelRootUUID {
@@ -1030,33 +985,14 @@ func (repo *TestRepository) CreateChildChannel(name string, parentID, creatorID 
 		UpdaterID: creatorID,
 		IsForced:  false,
 		IsVisible: true,
+		IsPublic:  true,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
-	if pCh.IsPublic {
-		// 公開チャンネル
-		ch.IsPublic = true
-		repo.ChannelsLock.Lock()
-		repo.Channels[ch.ID] = ch
-		repo.ChannelsLock.Unlock()
-	} else {
-		// 非公開チャンネル
-		ch.IsPublic = false
-
-		// 親チャンネルとメンバーは同じ
-		ids, err := repo.GetPrivateChannelMemberIDs(pCh.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		repo.ChannelsLock.Lock()
-		repo.Channels[ch.ID] = ch
-		for _, v := range ids {
-			_ = repo.AddPrivateChannelMember(ch.ID, v)
-		}
-		repo.ChannelsLock.Unlock()
-	}
+	repo.ChannelsLock.Lock()
+	repo.Channels[ch.ID] = ch
+	repo.ChannelsLock.Unlock()
 	return &ch, nil
 }
 
@@ -1378,21 +1314,6 @@ func (repo *TestRepository) GetChannelDepth(id uuid.UUID) (int, error) {
 		}
 	}
 	return max + 1, nil
-}
-
-func (repo *TestRepository) AddPrivateChannelMember(channelID, userID uuid.UUID) error {
-	if channelID == uuid.Nil || userID == uuid.Nil {
-		return repository.ErrNilID
-	}
-	repo.PrivateChannelMembersLock.Lock()
-	uids, ok := repo.PrivateChannelMembers[channelID]
-	if !ok {
-		uids = make(map[uuid.UUID]bool)
-	}
-	uids[userID] = true
-	repo.PrivateChannelMembers[channelID] = uids
-	repo.PrivateChannelMembersLock.Unlock()
-	return nil
 }
 
 func (repo *TestRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]uuid.UUID, error) {

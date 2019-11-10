@@ -58,7 +58,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 
 func TestHandlers_PostChannels(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common1)
+	repo, server, _, _, session, _ := setup(t, common1)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
