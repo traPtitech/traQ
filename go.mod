@@ -57,7 +57,7 @@ require (
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	github.com/yudai/pp v2.0.1+incompatible // indirect
 	go.opencensus.io v0.22.1 // indirect
-	go.uber.org/zap v1.12.0
+	go.uber.org/zap v1.13.0
 	golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7
 	golang.org/x/exp v0.0.0-20191002040644-a1355ae1e2c3
 	golang.org/x/net v0.0.0-20190918130420-a8b05e9114ab // indirect
