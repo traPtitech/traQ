@@ -47,6 +47,26 @@ func TestReplacer_Replace(t *testing.T) {
 			"aaaa#aeee `#a` @takashi_trapa @takashi_trap @#a\n```\n#a @takashi_trap\n```\n@okあok",
 			"aaaa#aeee `#a` @takashi_trapa !{\"type\":\"user\",\"raw\":\"@takashi_trap\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d45\"} @!{\"type\":\"channel\",\"raw\":\"#a\",\"id\":\"ea452867-553b-4808-a14f-a47ee0009ee6\"}\n```\n#a @takashi_trap\n```\n!{\"type\":\"group\",\"raw\":\"@okあok\",\"id\":\"dfabf0c9-5de0-46ee-9721-2525e8bb3d45\"}",
 		},
+		{
+			"$$\\text{@takashi_trap}$$",
+			"$$\\text{@takashi_trap}$$",
+		},
+		{
+			"$$\n```\n@takashi_trap\n```\n$$",
+			"$$\n```\n@takashi_trap\n```\n$$",
+		},
+		{
+			"`$@takashi_trap$` @takashi_trap",
+			"`$@takashi_trap$` !{\"type\":\"user\",\"raw\":\"@takashi_trap\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d45\"}",
+		},
+		{
+			"`@takashi_trap` $@takashi_trap$ $$ $ `$@takashi_trap$$@takashi_trap$`$@takashi_trap$`$`",
+			"`@takashi_trap` $@takashi_trap$ $$ $ `$@takashi_trap$$@takashi_trap$`$@takashi_trap$`$`",
+		},
+		{
+			"`$@takashi_trap$` $@takashi_trap$ `@takashi_trap`",
+			"`$@takashi_trap$` $@takashi_trap$ `@takashi_trap`",
+		},
 	}
 	for _, v := range tt {
 		assert.Equal(t, v[1], re.Replace(v[0]))
