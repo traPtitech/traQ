@@ -89,7 +89,7 @@ type Handlers struct {
 }
 
 // Setup APIルーティングを行います
-func (h *Handlers) Setup(e *echo.Echo) {
+func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit

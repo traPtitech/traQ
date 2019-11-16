@@ -51,7 +51,7 @@ func Setup(config *Config) *echo.Echo {
 		IsRefreshEnabled: config.IsRefreshEnabled,
 		SkyWaySecretKey:  config.SkyWaySecretKey,
 	}
-	v1.Setup(e)
+	v1.Setup(api)
 
 	return e
 }

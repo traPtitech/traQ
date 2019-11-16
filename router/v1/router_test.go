@@ -87,7 +87,7 @@ func TestMain(m *testing.M) {
 			AccessTokenExp:   1000,
 			IsRefreshEnabled: true,
 		}
-		handlers.Setup(e)
+		handlers.Setup(e.Group("/api"))
 		servers[key] = httptest.NewServer(e)
 		repositories[key] = repo
 	}
