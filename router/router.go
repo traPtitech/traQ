@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/utils/validator"
 )
 
+// Setup APIサーバーハンドラを構築します
 func Setup(config *Config) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
@@ -19,6 +20,7 @@ func Setup(config *Config) *echo.Echo {
 	e.Binder = &extension.Binder{}
 	e.HTTPErrorHandler = extension.ErrorHandler(config.RootLogger.Named("api_handler"))
 
+	// ミドルウェア設定
 	e.Use(middlewares.ServerVersion(config.Version))
 	if config.AccessLogging {
 		e.Use(middlewares.AccessLogging(config.RootLogger.Named("access_log")))
@@ -37,6 +39,7 @@ func Setup(config *Config) *echo.Echo {
 	api := e.Group("/api")
 	api.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 
+	// v1 APIハンドラ
 	v1.LoadWebhookTemplate("static/webhook/*.tmpl")
 	v1 := v1.Handlers{
 		RBAC:             config.RBAC,

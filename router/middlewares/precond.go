@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// CheckModTimePrecondition 事前条件検査ミドルウェア
 func CheckModTimePrecondition(modTimeFunc func(c echo.Context) time.Time, preFunc ...echo.HandlerFunc) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

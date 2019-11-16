@@ -14,6 +14,7 @@ import (
 
 const authScheme = "Bearer"
 
+// UserAuthenticate リクエスト認証ミドルウェア
 func UserAuthenticate(repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {

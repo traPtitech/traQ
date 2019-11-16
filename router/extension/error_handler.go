@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+// ErrorHandler カスタムエラーハンドラ
 func ErrorHandler(logger *zap.Logger) echo.HTTPErrorHandler {
 	return func(e error, c echo.Context) {
 		var (

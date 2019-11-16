@@ -141,6 +141,7 @@ func isZeroTime(t time.Time) bool {
 	return t.IsZero() || t.Equal(unixEpochTime)
 }
 
+// SetLastModified レスポンスにLast-Modifiedヘッダを追加します
 func SetLastModified(c echo.Context, modtime time.Time) {
 	if !isZeroTime(modtime) {
 		c.Response().Header().Set(echo.HeaderLastModified, modtime.UTC().Format(http.TimeFormat))
@@ -157,6 +158,7 @@ func writeNotModified(c echo.Context) error {
 	return c.NoContent(http.StatusNotModified)
 }
 
+// CheckPreconditions HTTPリクエストの事前条件を検査します
 func CheckPreconditions(c echo.Context, modtime time.Time) (done bool, err error) {
 	ch := checkIfMatch(c)
 	if ch == condNone {

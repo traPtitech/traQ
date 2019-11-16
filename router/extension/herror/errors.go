@@ -7,32 +7,32 @@ import (
 )
 
 func NotFound(err ...interface{}) error {
-	return HttpError(http.StatusNotFound, err)
+	return HTTPError(http.StatusNotFound, err)
 }
 
 func BadRequest(err ...interface{}) error {
-	return HttpError(http.StatusBadRequest, err)
+	return HTTPError(http.StatusBadRequest, err)
 }
 
 func Forbidden(err ...interface{}) error {
-	return HttpError(http.StatusForbidden, err)
+	return HTTPError(http.StatusForbidden, err)
 }
 
 func Conflict(err ...interface{}) error {
-	return HttpError(http.StatusConflict, err)
+	return HTTPError(http.StatusConflict, err)
 }
 
 func Unauthorized(err ...interface{}) error {
-	return HttpError(http.StatusUnauthorized, err)
+	return HTTPError(http.StatusUnauthorized, err)
 }
 
-func HttpError(code int, err interface{}) error {
+func HTTPError(code int, err interface{}) error {
 	switch v := err.(type) {
 	case []interface{}:
 		if len(v) > 0 {
-			return HttpError(code, v[0])
+			return HTTPError(code, v[0])
 		}
-		return HttpError(code, nil)
+		return HTTPError(code, nil)
 	case string:
 		return echo.NewHTTPError(code, v)
 	case *repository.ArgumentError:

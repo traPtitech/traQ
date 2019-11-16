@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Config APIサーバー設定
 type Config struct {
 	// Version サーバーバージョン
 	Version string

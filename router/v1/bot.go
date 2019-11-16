@@ -134,7 +134,7 @@ func (h *Handlers) GetBotDetail(c echo.Context) error {
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
-			return herror.HttpError(http.StatusInternalServerError, "This bot's Access Token has been revoked unexpectedly. Please inform admin about this error.")
+			return herror.HTTPError(http.StatusInternalServerError, "This bot's Access Token has been revoked unexpectedly. Please inform admin about this error.")
 		default:
 			return herror.InternalServerError(err)
 		}

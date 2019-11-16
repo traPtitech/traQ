@@ -8,9 +8,13 @@ import (
 	"runtime/debug"
 )
 
+// InternalError 内部エラー
 type InternalError struct {
-	Err    error
-	Stack  []byte
+	// Err エラー
+	Err error
+	// Stack スタックトレース
+	Stack []byte
+	// Fields zapログ用フィールド
 	Fields []zap.Field
 }
 
