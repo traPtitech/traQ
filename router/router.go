@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/router/v1"
+	v3 "github.com/traPtitech/traQ/router/v3"
 	"github.com/traPtitech/traQ/utils/validator"
 )
 
@@ -21,7 +22,7 @@ func Setup(config *Config) *echo.Echo {
 	e.HTTPErrorHandler = extension.ErrorHandler(config.RootLogger.Named("api_handler"))
 
 	// ミドルウェア設定
-	e.Use(middlewares.ServerVersion(config.Version))
+	e.Use(middlewares.ServerVersion(config.Version + "." + config.Revision))
 	if config.AccessLogging {
 		e.Use(middlewares.AccessLogging(config.RootLogger.Named("access_log")))
 	}
@@ -41,7 +42,7 @@ func Setup(config *Config) *echo.Echo {
 
 	// v1 APIハンドラ
 	v1.LoadWebhookTemplate("static/webhook/*.tmpl")
-	v1 := v1.Handlers{
+	v1.Handlers{
 		RBAC:             config.RBAC,
 		Repo:             config.Repository,
 		SSE:              config.SSE,
@@ -53,8 +54,17 @@ func Setup(config *Config) *echo.Echo {
 		AccessTokenExp:   config.AccessTokenExp,
 		IsRefreshEnabled: config.IsRefreshEnabled,
 		SkyWaySecretKey:  config.SkyWaySecretKey,
-	}
-	v1.Setup(api)
+	}.Setup(api)
+
+	// v3 APIハンドラ
+	v3.Handlers{
+		RBAC:     config.RBAC,
+		Repo:     config.Repository,
+		WS:       config.WS,
+		Hub:      config.Hub,
+		Logger:   config.RootLogger.Named("api_handler"),
+		Realtime: config.Realtime,
+	}.Setup(api)
 
 	return e
 }

@@ -160,6 +160,8 @@ func main() {
 
 	// HTTP Router
 	e := router.Setup(&router.Config{
+		Version:          version,
+		Revision:         revision,
 		AccessLogging:    viper.GetBool("accessLog.enabled"),
 		Gzipped:          viper.GetBool("gzip"),
 		ImageMagickPath:  viper.GetString("imagemagick.path"),

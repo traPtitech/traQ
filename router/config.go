@@ -14,6 +14,8 @@ import (
 type Config struct {
 	// Version サーバーバージョン
 	Version string
+	// Revision サーバーリビジョン
+	Revision string
 	// AccessLogging アクセスログを記録するかどうか
 	AccessLogging bool
 	// Gzipped レスポンスをGzip圧縮するかどうか
