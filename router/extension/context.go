@@ -29,6 +29,12 @@ func (c *Context) json(code int, i interface{}, cfg jsoniter.API) error {
 	return stream.Flush()
 }
 
+func Wrap() echo.MiddlewareFunc {
+	return func(n echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error { return n(&Context{Context: c}) }
+	}
+}
+
 // CtxKey context.Context用のキータイプ
 type CtxKey int
 
