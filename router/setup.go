@@ -41,8 +41,7 @@ func Setup(config *Config) *echo.Echo {
 	api.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 
 	// v1 APIハンドラ
-	v1.LoadWebhookTemplate("static/webhook/*.tmpl")
-	v1.Handlers{
+	v1 := v1.Handlers{
 		RBAC:             config.RBAC,
 		Repo:             config.Repository,
 		SSE:              config.SSE,
@@ -54,17 +53,20 @@ func Setup(config *Config) *echo.Echo {
 		AccessTokenExp:   config.AccessTokenExp,
 		IsRefreshEnabled: config.IsRefreshEnabled,
 		SkyWaySecretKey:  config.SkyWaySecretKey,
-	}.Setup(api)
+	}
+	v1.LoadWebhookTemplate("static/webhook/*.tmpl")
+	v1.Setup(api)
 
 	// v3 APIハンドラ
-	v3.Handlers{
+	v3 := v3.Handlers{
 		RBAC:     config.RBAC,
 		Repo:     config.Repository,
 		WS:       config.WS,
 		Hub:      config.Hub,
 		Logger:   config.RootLogger.Named("api_handler"),
 		Realtime: config.Realtime,
-	}.Setup(api)
+	}
+	v3.Setup(api)
 
 	return e
 }

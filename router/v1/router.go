@@ -31,7 +31,9 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -75,6 +77,8 @@ type Handlers struct {
 	IsRefreshEnabled bool
 	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
 	SkyWaySecretKey string
+
+	webhookDefTmpls *template.Template
 
 	emojiJSONCache     bytes.Buffer
 	emojiJSONTime      time.Time
@@ -420,6 +424,13 @@ func (h *Handlers) stampEventSubscriber(sub hub.Subscription) {
 		h.emojiCSSCache.Reset()
 		h.emojiCSSCacheLock.Unlock()
 	}
+}
+
+// LoadWebhookTemplate Webhookのテンプレートファイルを読み込みます
+func (h *Handlers) LoadWebhookTemplate(pattern string) {
+	h.webhookDefTmpls = template.Must(template.New("").Funcs(template.FuncMap{
+		"replace": strings.Replace,
+	}).ParseGlob(pattern))
 }
 
 func bindAndValidate(c echo.Context, i interface{}) error {

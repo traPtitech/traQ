@@ -18,19 +18,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"text/template"
 )
-
-var (
-	webhookDefTmpls = template.New("")
-)
-
-// LoadWebhookTemplate Webhookのテンプレートファイルを読み込みます
-func LoadWebhookTemplate(pattern string) {
-	webhookDefTmpls = template.Must(template.New("").Funcs(template.FuncMap{
-		"replace": strings.Replace,
-	}).ParseGlob(pattern))
-}
 
 // GetWebhooks GET /webhooks
 func (h *Handlers) GetWebhooks(c echo.Context) error {
@@ -236,7 +224,7 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 		}
 	}
 
-	tmpl := webhookDefTmpls.Lookup(fmt.Sprintf("github_%s.tmpl", github.Event(ev)))
+	tmpl := h.webhookDefTmpls.Lookup(fmt.Sprintf("github_%s.tmpl", github.Event(ev)))
 	if tmpl == nil {
 		return c.NoContent(http.StatusNoContent)
 	}
