@@ -13,8 +13,7 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fogleman/gg v1.1.0 // indirect
 	github.com/gavv/httpexpect v2.0.0+incompatible
-	github.com/go-playground/locales v0.12.1 // indirect
-	github.com/go-playground/universal-translator v0.16.0 // indirect
+	github.com/go-playground/validator/v10 v10.0.1
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
@@ -32,7 +31,6 @@ require (
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/labstack/echo/v4 v4.1.11
 	github.com/leandro-lugaresi/hub v1.1.0
-	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/moul/http2curl v0.0.0-20170919181001-9ac6cf4d929b // indirect
 	github.com/ncw/swift v1.0.49
@@ -66,8 +64,6 @@ require (
 	google.golang.org/appengine v1.6.2 // indirect
 	google.golang.org/grpc v1.23.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
-	gopkg.in/go-playground/validator.v9 v9.30.0
 	gopkg.in/go-playground/webhooks.v5 v5.13.0
 	gopkg.in/gormigrate.v1 v1.6.0
 	gopkg.in/guregu/null.v3 v3.4.0
