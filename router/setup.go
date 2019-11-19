@@ -65,6 +65,8 @@ func Setup(config *Config) *echo.Echo {
 		Hub:      config.Hub,
 		Logger:   config.RootLogger.Named("api_handler"),
 		Realtime: config.Realtime,
+		Version:  config.Version,
+		Revision: config.Revision,
 	}
 	v3.Setup(api)
 
