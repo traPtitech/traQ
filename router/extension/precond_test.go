@@ -1,7 +1,7 @@
 package extension
 
 import (
-	"github.com/gavv/httpexpect"
+	"github.com/gavv/httpexpect/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/router/consts"
 	"net/http"

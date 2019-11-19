@@ -2,7 +2,7 @@ package v1
 
 import (
 	"bytes"
-	"github.com/gavv/httpexpect"
+	"github.com/gavv/httpexpect/v2"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	rbac "github.com/traPtitech/traQ/rbac/impl"
