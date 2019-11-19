@@ -1,0 +1,191 @@
+package v1
+
+import (
+	"github.com/gofrs/uuid"
+	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/rbac/permission"
+	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/router/extension/herror"
+	"gopkg.in/guregu/null.v3"
+	"net/http"
+)
+
+// GetStamps GET /stamps
+func (h *Handlers) GetStamps(c echo.Context) error {
+	res, err, _ := h.getStampsResponseCacheGroup.Do("", func() (interface{}, error) {
+		stamps, err := h.Repo.GetAllStamps()
+		if err != nil {
+			return nil, err
+		}
+		return json.Marshal(stamps)
+	})
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	return c.JSONBlob(http.StatusOK, res.([]byte))
+}
+
+// PostStamp POST /stamps
+func (h *Handlers) PostStamp(c echo.Context) error {
+	userID := getRequestUserID(c)
+
+	// file確認
+	uploadedFile, err := c.FormFile("file")
+	if err != nil {
+		return herror.BadRequest(err)
+	}
+
+	// file処理
+	fileID, err := h.processMultipartFormStampUpload(c, uploadedFile)
+	if err != nil {
+		return err
+	}
+
+	// スタンプ作成
+	s, err := h.Repo.CreateStamp(c.FormValue("name"), fileID, userID)
+	if err != nil {
+		switch {
+		case repository.IsArgError(err):
+			return herror.BadRequest(err)
+		case err == repository.ErrAlreadyExists:
+			return herror.Conflict("this name has already been used")
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+	return c.JSON(http.StatusCreated, s)
+}
+
+// GetStamp GET /stamps/:stampID
+func (h *Handlers) GetStamp(c echo.Context) error {
+	stamp := getStampFromContext(c)
+	return c.JSON(http.StatusOK, stamp)
+}
+
+// PatchStamp PATCH /stamps/:stampID
+func (h *Handlers) PatchStamp(c echo.Context) error {
+	user := getRequestUser(c)
+	stampID := getRequestParamAsUUID(c, consts.ParamStampID)
+	stamp := getStampFromContext(c)
+
+	// ユーザー確認
+	if stamp.CreatorID != user.ID && !h.RBAC.IsGranted(user.Role, permission.EditStampCreatedByOthers) {
+		return herror.Forbidden("you are not permitted to edit stamp created by others")
+	}
+
+	args := repository.UpdateStampArgs{}
+
+	// 名前変更
+	name := c.FormValue("name")
+	if len(name) > 0 {
+		// 権限確認
+		if !h.RBAC.IsGranted(user.Role, permission.EditStampName) {
+			return herror.Forbidden("you are not permitted to change stamp name")
+		}
+		args.Name = null.StringFrom(name)
+	}
+
+	// 画像変更
+	uploadedFile, err := c.FormFile("file")
+	if err == nil {
+		fileID, err := h.processMultipartFormStampUpload(c, uploadedFile)
+		if err != nil {
+			return err
+		}
+		args.FileID = uuid.NullUUID{Valid: true, UUID: fileID}
+	} else if err != http.ErrMissingFile {
+		return herror.BadRequest(err)
+	}
+
+	// 更新
+	if err := h.Repo.UpdateStamp(stampID, args); err != nil {
+		switch {
+		case repository.IsArgError(err):
+			return herror.BadRequest(err)
+		case err == repository.ErrAlreadyExists:
+			return herror.Conflict("this name has already been used")
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+	return c.NoContent(http.StatusNoContent)
+}
+
+// DeleteStamp DELETE /stamps/:stampID
+func (h *Handlers) DeleteStamp(c echo.Context) error {
+	stampID := getRequestParamAsUUID(c, consts.ParamStampID)
+
+	if err := h.Repo.DeleteStamp(stampID); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// GetMessageStamps GET /messages/:messageID/stamps
+func (h *Handlers) GetMessageStamps(c echo.Context) error {
+	messageID := getRequestParamAsUUID(c, consts.ParamMessageID)
+
+	stamps, err := h.Repo.GetMessageStamps(messageID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, stamps)
+}
+
+// PostMessageStamp POST /messages/:messageID/stamps/:stampID
+func (h *Handlers) PostMessageStamp(c echo.Context) error {
+	userID := getRequestUserID(c)
+	messageID := getRequestParamAsUUID(c, consts.ParamMessageID)
+	stampID := getRequestParamAsUUID(c, consts.ParamStampID)
+	count := 1
+
+	if c.Request().ContentLength != 0 {
+		var req struct {
+			Count int `json:"count" validate:"gte=1"`
+		}
+		if err := bindAndValidate(c, &req); err != nil {
+			return herror.BadRequest(err)
+		}
+		count = req.Count
+
+		if count > 100 {
+			count = 100
+		}
+	}
+
+	// スタンプをメッセージに押す
+	if _, err := h.Repo.AddStampToMessage(messageID, stampID, userID, count); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// DeleteMessageStamp DELETE /messages/:messageID/stamps/:stampID
+func (h *Handlers) DeleteMessageStamp(c echo.Context) error {
+	userID := getRequestUserID(c)
+	messageID := getRequestParamAsUUID(c, consts.ParamMessageID)
+	stampID := getRequestParamAsUUID(c, consts.ParamStampID)
+
+	// スタンプをメッセージから削除
+	if err := h.Repo.RemoveStampFromMessage(messageID, stampID, userID); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// GetMyStampHistory GET /users/me/stamp-history
+func (h *Handlers) GetMyStampHistory(c echo.Context) error {
+	userID := getRequestUserID(c)
+
+	history, err := h.Repo.GetUserStampHistory(userID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, history)
+}

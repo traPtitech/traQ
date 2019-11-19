@@ -6,6 +6,9 @@ import (
 	"github.com/traPtitech/traQ/fcm"
 	"github.com/traPtitech/traQ/notification"
 	"github.com/traPtitech/traQ/realtime"
+	"github.com/traPtitech/traQ/realtime/ws"
+	"github.com/traPtitech/traQ/router"
+	"github.com/traPtitech/traQ/router/sse"
 	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
@@ -18,14 +21,12 @@ import (
 	"cloud.google.com/go/profiler"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/logging"
 	rbac "github.com/traPtitech/traQ/rbac/impl"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -151,29 +152,30 @@ func main() {
 
 	// Realtime Service
 	rt := realtime.NewService(hub)
+	wss := ws.NewStreamer(hub, rt, logger.Named("ws"))
+	sses := sse.NewStreamer(hub)
 
-	// Routing
-	h := router.NewHandlers(r, repo, hub, logger.Named("router"), rt, router.HandlerConfig{
+	// Notification Service
+	notification.StartService(repo, hub, logger.Named("notification"), fcmClient, sses, wss, rt, viper.GetString("origin"))
+
+	// HTTP Router
+	e := router.Setup(&router.Config{
+		Version:          version,
+		Revision:         revision,
+		AccessLogging:    viper.GetBool("accessLog.enabled"),
+		Gzipped:          viper.GetBool("gzip"),
 		ImageMagickPath:  viper.GetString("imagemagick.path"),
 		AccessTokenExp:   viper.GetInt("oauth2.accessTokenExp"),
 		IsRefreshEnabled: viper.GetBool("oauth2.isRefreshEnabled"),
 		SkyWaySecretKey:  viper.GetString("skyway.secretKey"),
+		Hub:              hub,
+		Repository:       repo,
+		RBAC:             r,
+		WS:               wss,
+		SSE:              sses,
+		Realtime:         rt,
+		RootLogger:       logger,
 	})
-	e := echo.New()
-	if viper.GetBool("accessLog.enabled") {
-		e.Use(router.AccessLoggingMiddleware(logger.Named("access_log"), viper.GetBool("accessLog.excludesHeartbeat")))
-	}
-	if viper.GetBool("gzip") {
-		e.Use(router.Gzip())
-	}
-	e.Use(router.AddHeadersMiddleware(map[string]string{"X-TRAQ-VERSION": versionAndRevision}))
-	e.HideBanner = true
-	e.HidePort = true
-	router.SetupRouting(e, h)
-	router.LoadWebhookTemplate("static/webhook/*.tmpl")
-
-	// Notification Service
-	notification.StartService(repo, hub, logger.Named("notification"), fcmClient, h.SSE, h.WS, rt, viper.GetString("origin"))
 
 	go func() {
 		if err := e.Start(fmt.Sprintf(":%d", viper.GetInt("port"))); err != nil {
@@ -188,8 +190,8 @@ func main() {
 	<-quit
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	h.SSE.Dispose()
-	h.WS.Close()
+	sses.Dispose()
+	wss.Close()
 	if err := e.Shutdown(ctx); err != nil {
 		logger.Warn("abnormal shutdown", zap.Error(err))
 	}

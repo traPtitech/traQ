@@ -59,7 +59,7 @@ require (
 	go.opencensus.io v0.22.1 // indirect
 	go.uber.org/zap v1.13.0
 	golang.org/x/crypto v0.0.0-20190911031432-227b76d455e7
-	golang.org/x/exp v0.0.0-20191002040644-a1355ae1e2c3
+	golang.org/x/exp v0.0.0-20191030013958-a1ab85dbe136
 	golang.org/x/net v0.0.0-20190918130420-a8b05e9114ab // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	google.golang.org/api v0.14.0
