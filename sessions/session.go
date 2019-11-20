@@ -235,6 +235,11 @@ func (s *Session) Destroy(rw http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
+// GetToken セッショントークンを返します
+func (s *Session) GetToken() string {
+	return s.token
+}
+
 // GetUserID セッションに紐づけられているユーザーのIDを返します
 func (s *Session) GetUserID() uuid.UUID {
 	s.RLock()
