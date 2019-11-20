@@ -1,11 +1,13 @@
 package migration
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"gopkg.in/gormigrate.v1"
+	"time"
 )
 
-// V5 Mute, 旧Clip削除
+// V5 Mute, 旧Clip削除, stampsにカラム追加
 var V5 = &gormigrate.Migration{
 	ID: "5",
 	Migrate: func(db *gorm.DB) error {
@@ -40,6 +42,25 @@ var V5 = &gormigrate.Migration{
 			}
 		}
 
+		if err := db.AutoMigrate(&v5Stamp{}).Error; err != nil {
+			return err
+		}
+
 		return db.DropTableIfExists("mutes", "clips", "clip_folders").Error
 	},
+}
+
+type v5Stamp struct {
+	ID        uuid.UUID  `gorm:"type:char(36);not null;primary_key"`
+	Name      string     `gorm:"type:varchar(32);not null;unique"`
+	CreatorID uuid.UUID  `gorm:"type:char(36);not null"`
+	FileID    uuid.UUID  `gorm:"type:char(36);not null"`
+	IsUnicode bool       `gorm:"type:boolean;not null;default:false;index"`
+	CreatedAt time.Time  `gorm:"precision:6"`
+	UpdatedAt time.Time  `gorm:"precision:6"`
+	DeletedAt *time.Time `gorm:"precision:6"`
+}
+
+func (*v5Stamp) TableName() string {
+	return "stamps"
 }
