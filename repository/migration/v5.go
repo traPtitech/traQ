@@ -35,7 +35,7 @@ var V5 = &gormigrate.Migration{
 			"delete_clip_folder",
 		}
 		for _, v := range deletePermissions {
-			if err := db.Delete(v2RolePermission{Permission: v}).Error; err != nil {
+			if err := db.Delete(v2RolePermission{}, v2RolePermission{Permission: v}).Error; err != nil {
 				return err
 			}
 		}
