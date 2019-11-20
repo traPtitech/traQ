@@ -1,6 +1,7 @@
 package extension
 
 import (
+	jsoniter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"go.uber.org/zap"
@@ -42,7 +43,7 @@ func ErrorHandler(logger *zap.Logger) echo.HTTPErrorHandler {
 			if c.Request().Method == http.MethodHead {
 				e = c.NoContent(code)
 			} else {
-				e = c.JSON(code, body)
+				e = json(c, code, body, jsoniter.ConfigFastest)
 			}
 			if e != nil {
 				logger.Warn("failed to send error response", zap.Error(e), zap.String("logging.googleapis.com/trace", GetTraceID(c)))
