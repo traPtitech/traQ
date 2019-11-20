@@ -1875,50 +1875,6 @@ func (repo *TestRepository) StampNameExists(name string) (bool, error) {
 	return false, nil
 }
 
-func (repo *TestRepository) GetClipFolder(id uuid.UUID) (*model.ClipFolder, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetClipFolders(userID uuid.UUID) ([]*model.ClipFolder, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) CreateClipFolder(userID uuid.UUID, name string) (*model.ClipFolder, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) UpdateClipFolderName(id uuid.UUID, name string) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteClipFolder(id uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetClipMessage(id uuid.UUID) (*model.Clip, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetClipMessages(folderID uuid.UUID) ([]*model.Clip, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetClipMessagesByUser(userID uuid.UUID) ([]*model.Clip, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) CreateClip(messageID, folderID, userID uuid.UUID) (*model.Clip, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) ChangeClipFolder(clipID, folderID uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteClip(id uuid.UUID) error {
-	panic("implement me")
-}
-
 func (repo *TestRepository) AddStar(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID

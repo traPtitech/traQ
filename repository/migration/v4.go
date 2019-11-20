@@ -16,14 +16,6 @@ var V4 = &gormigrate.Migration{
 		}
 		return nil
 	},
-	Rollback: func(db *gorm.DB) error {
-		for _, c := range v4ForeignKeys() {
-			if err := db.Table(c[0]).RemoveForeignKey(c[1], c[2]).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	},
 }
 
 func v4ForeignKeys() [][5]string {

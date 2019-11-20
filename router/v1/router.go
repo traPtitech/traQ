@@ -125,29 +125,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 					apiUsersMeSessions.DELETE("", h.DeleteAllMySessions, requires(permission.DeleteMySessions))
 					apiUsersMeSessions.DELETE("/:referenceID", h.DeleteMySession, requires(permission.DeleteMySessions))
 				}
-				apiUsersMeClips := apiUsersMe.Group("/clips")
-				{
-					apiUsersMeClips.GET("", h.GetClips, requires(permission.GetClip))
-					apiUsersMeClips.POST("", h.PostClip, requires(permission.CreateClip))
-					apiUsersMeClipsCid := apiUsersMeClips.Group("/:clipID", h.ValidateClipID())
-					{
-						apiUsersMeClipsCid.GET("", h.GetClip, requires(permission.GetClip))
-						apiUsersMeClipsCid.DELETE("", h.DeleteClip, requires(permission.DeleteClip))
-						apiUsersMeClipsCid.GET("/folder", h.GetClipsFolder, requires(permission.GetClip, permission.GetClipFolder))
-						apiUsersMeClipsCid.PUT("/folder", h.PutClipsFolder, requires(permission.CreateClip))
-					}
-					apiUsersMeClipsFolders := apiUsersMeClips.Group("/folders")
-					{
-						apiUsersMeClipsFolders.GET("", h.GetClipFolders, requires(permission.GetClipFolder))
-						apiUsersMeClipsFolders.POST("", h.PostClipFolder, requires(permission.CreateClipFolder))
-						apiUsersMeClipsFoldersFid := apiUsersMeClipsFolders.Group("/:folderID", h.ValidateClipFolderID())
-						{
-							apiUsersMeClipsFoldersFid.GET("", h.GetClipFolder, requires(permission.GetClip, permission.GetClipFolder))
-							apiUsersMeClipsFoldersFid.PATCH("", h.PatchClipFolder, requires(permission.PatchClipFolder))
-							apiUsersMeClipsFoldersFid.DELETE("", h.DeleteClipFolder, requires(permission.DeleteClipFolder))
-						}
-					}
-				}
 				apiUsersMeStars := apiUsersMe.Group("/stars")
 				{
 					apiUsersMeStars.GET("", h.GetStars, requires(permission.GetChannelStar))

@@ -40,24 +40,6 @@ var V2 = &gormigrate.Migration{
 
 		return db.DropTableIfExists(&v2Override{}).Error
 	},
-	Rollback: func(db *gorm.DB) error {
-		if err := db.AutoMigrate(&v2Override{}).Error; err != nil {
-			return err
-		}
-
-		foreignKeys := [][3]string{
-			{"user_role_inheritances", "role", "user_roles(name)"},
-			{"user_role_inheritances", "sub_role", "user_roles(name)"},
-			{"user_role_permissions", "role", "user_roles(name)"},
-		}
-		for _, c := range foreignKeys {
-			if err := db.Table(c[0]).RemoveForeignKey(c[1], c[2]).Error; err != nil {
-				return err
-			}
-		}
-
-		return db.DropTableIfExists(&v2UserRole{}, &v2RoleInheritance{}, &v2RolePermission{}).Error
-	},
 }
 
 type v2UserRole struct {
