@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/gob"
 	"github.com/disintegration/imaging"
-	"github.com/go-sql-driver/mysql"
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
@@ -47,8 +46,6 @@ const (
 	stampMaxWidth    = 128
 	stampMaxHeight   = 128
 	stampFileMaxSize = 2 << 20
-
-	errMySQLDuplicatedRecord uint16 = 1062
 
 	unexpectedError = "unexpected error"
 )
@@ -586,12 +583,4 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	l = h.Logger.With(zap.String("logging.googleapis.com/trace", extension.GetTraceID(c)))
 	c.Set(consts.KeyLogger, l)
 	return l
-}
-
-func isMySQLDuplicatedRecordErr(err error) bool {
-	merr, ok := err.(*mysql.MySQLError)
-	if !ok {
-		return false
-	}
-	return merr.Number == errMySQLDuplicatedRecord
 }
