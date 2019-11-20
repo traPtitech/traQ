@@ -572,7 +572,7 @@ func getRequestUserID(c echo.Context) uuid.UUID {
 }
 
 func getRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
-	return uuid.FromStringOrNil(c.Param(name))
+	return extension.GetRequestParamAsUUID(c, name)
 }
 
 func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {

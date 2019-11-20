@@ -11,8 +11,6 @@ const (
 	ParamReferenceID = "referenceID"
 	ParamFileID      = "fileID"
 	ParamWebhookID   = "webhookID"
-	ParamClipID      = "clipID"
-	ParamFolderID    = "folderID"
 	ParamTokenID     = "tokenID"
 	ParamBotID       = "botID"
 	ParamClientID    = "clientID"

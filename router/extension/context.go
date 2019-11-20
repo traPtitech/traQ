@@ -1,8 +1,17 @@
 package extension
 
 import (
+	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
+)
+
+// CtxKey context.Context用のキータイプ
+type CtxKey int
+
+const (
+	// CtxUserIDKey ユーザーUUIDキー
+	CtxUserIDKey CtxKey = iota
 )
 
 // Context echo.Contextのカスタム
@@ -36,10 +45,7 @@ func Wrap() echo.MiddlewareFunc {
 	}
 }
 
-// CtxKey context.Context用のキータイプ
-type CtxKey int
-
-const (
-	// CtxUserIDKey ユーザーUUIDキー
-	CtxUserIDKey CtxKey = iota
-)
+// GetRequestParamAsUUID 指定したリクエストパラメーターをUUIDとして取得します
+func GetRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
+	return uuid.FromStringOrNil(c.Param(name))
+}
