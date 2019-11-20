@@ -20,7 +20,7 @@ CREATE TABLE `user_roles` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| name | varchar(30) |  | false | [user_role_inheritances](user_role_inheritances.md) [user_role_inheritances](user_role_inheritances.md) [user_role_permissions](user_role_permissions.md) |  |  |
+| name | varchar(30) |  | false | [user_role_inheritances](user_role_inheritances.md) [user_role_permissions](user_role_permissions.md) |  |  |
 | oauth2_scope | tinyint(1) | 0 | false |  |  |  |
 | system | tinyint(1) | 0 | false |  |  |  |
 

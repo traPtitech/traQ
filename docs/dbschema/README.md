@@ -11,8 +11,6 @@
 | [channel_events](channel_events.md) | 5 |  | BASE TABLE |
 | [channel_latest_messages](channel_latest_messages.md) | 3 |  | BASE TABLE |
 | [channels](channels.md) | 12 | チャンネルテーブル | BASE TABLE |
-| [clip_folders](clip_folders.md) | 5 | クリップフォルダテーブル | BASE TABLE |
-| [clips](clips.md) | 6 | クリップテーブル | BASE TABLE |
 | [devices](devices.md) | 3 | FCMデバイステーブル | BASE TABLE |
 | [dm_channel_mappings](dm_channel_mappings.md) | 3 | DMチャンネルマッピングテーブル | BASE TABLE |
 | [files](files.md) | 12 |  | BASE TABLE |
@@ -21,7 +19,6 @@
 | [messages](messages.md) | 7 | メッセージテーブル | BASE TABLE |
 | [messages_stamps](messages_stamps.md) | 6 | メッセージスタンプテーブル | BASE TABLE |
 | [migrations](migrations.md) | 1 | gormigrate用のデータベースバージョンテーブル | BASE TABLE |
-| [mutes](mutes.md) | 2 | ミュートチャンネルテーブル | BASE TABLE |
 | [oauth2_authorizes](oauth2_authorizes.md) | 11 |  | BASE TABLE |
 | [oauth2_clients](oauth2_clients.md) | 11 |  | BASE TABLE |
 | [oauth2_tokens](oauth2_tokens.md) | 11 |  | BASE TABLE |
