@@ -547,39 +547,42 @@
 <!-- stamps -->
 <g id="node15" class="node">
 <title>stamps</title>
-<polygon fill="#efefef" stroke="transparent" points="4344,-1426 4344,-1460 4521,-1460 4521,-1426 4344,-1426"/>
-<polygon fill="none" stroke="#000000" points="4344,-1426 4344,-1460 4521,-1460 4521,-1426 4344,-1426"/>
-<text text-anchor="start" x="4353.002" y="-1439.6" font-family="Arial Bold" font-size="18.00" fill="#000000">stamps</text>
-<text text-anchor="start" x="4416.0283" y="-1439.6" font-family="Arial" font-size="14.00" fill="#000000"> </text>
-<text text-anchor="start" x="4419.918" y="-1439.6" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
-<polygon fill="none" stroke="#000000" points="4344,-1396 4344,-1426 4521,-1426 4521,-1396 4344,-1396"/>
-<text text-anchor="start" x="4351" y="-1408.8" font-family="Arial" font-size="14.00" fill="#000000">id </text>
-<text text-anchor="start" x="4365.7861" y="-1408.8" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
-<polygon fill="none" stroke="#000000" points="4344,-1366 4344,-1396 4521,-1396 4521,-1366 4344,-1366"/>
-<text text-anchor="start" x="4351" y="-1378.8" font-family="Arial" font-size="14.00" fill="#000000">name </text>
-<text text-anchor="start" x="4389.9102" y="-1378.8" font-family="Arial" font-size="14.00" fill="#666666">[varchar(32)]</text>
-<polygon fill="none" stroke="#000000" points="4344,-1336 4344,-1366 4521,-1366 4521,-1336 4344,-1336"/>
-<text text-anchor="start" x="4351" y="-1348.8" font-family="Arial" font-size="14.00" fill="#000000">creator_id </text>
-<text text-anchor="start" x="4417.1445" y="-1348.8" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
-<polygon fill="none" stroke="#000000" points="4344,-1306 4344,-1336 4521,-1336 4521,-1306 4344,-1306"/>
-<text text-anchor="start" x="4351" y="-1318.8" font-family="Arial" font-size="14.00" fill="#000000">file_id </text>
-<text text-anchor="start" x="4391.4688" y="-1318.8" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
-<polygon fill="none" stroke="#000000" points="4344,-1276 4344,-1306 4521,-1306 4521,-1276 4344,-1276"/>
-<text text-anchor="start" x="4351" y="-1288.8" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
-<text text-anchor="start" x="4421.0479" y="-1288.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
-<polygon fill="none" stroke="#000000" points="4344,-1246 4344,-1276 4521,-1276 4521,-1246 4344,-1246"/>
-<text text-anchor="start" x="4350.79" y="-1258.8" font-family="Arial" font-size="14.00" fill="#000000">updated_at </text>
-<text text-anchor="start" x="4424.748" y="-1258.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
-<polygon fill="none" stroke="#000000" points="4344,-1216 4344,-1246 4521,-1246 4521,-1216 4344,-1216"/>
-<text text-anchor="start" x="4351" y="-1228.8" font-family="Arial" font-size="14.00" fill="#000000">deleted_at </text>
-<text text-anchor="start" x="4420.2822" y="-1228.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
+<polygon fill="#efefef" stroke="transparent" points="4344,-1441 4344,-1475 4521,-1475 4521,-1441 4344,-1441"/>
+<polygon fill="none" stroke="#000000" points="4344,-1441 4344,-1475 4521,-1475 4521,-1441 4344,-1441"/>
+<text text-anchor="start" x="4353.002" y="-1454.6" font-family="Arial Bold" font-size="18.00" fill="#000000">stamps</text>
+<text text-anchor="start" x="4416.0283" y="-1454.6" font-family="Arial" font-size="14.00" fill="#000000"> </text>
+<text text-anchor="start" x="4419.918" y="-1454.6" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="#000000" points="4344,-1411 4344,-1441 4521,-1441 4521,-1411 4344,-1411"/>
+<text text-anchor="start" x="4351" y="-1423.8" font-family="Arial" font-size="14.00" fill="#000000">id </text>
+<text text-anchor="start" x="4365.7861" y="-1423.8" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="none" stroke="#000000" points="4344,-1381 4344,-1411 4521,-1411 4521,-1381 4344,-1381"/>
+<text text-anchor="start" x="4351" y="-1393.8" font-family="Arial" font-size="14.00" fill="#000000">name </text>
+<text text-anchor="start" x="4389.9102" y="-1393.8" font-family="Arial" font-size="14.00" fill="#666666">[varchar(32)]</text>
+<polygon fill="none" stroke="#000000" points="4344,-1351 4344,-1381 4521,-1381 4521,-1351 4344,-1351"/>
+<text text-anchor="start" x="4351" y="-1363.8" font-family="Arial" font-size="14.00" fill="#000000">creator_id </text>
+<text text-anchor="start" x="4417.1445" y="-1363.8" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="none" stroke="#000000" points="4344,-1321 4344,-1351 4521,-1351 4521,-1321 4344,-1321"/>
+<text text-anchor="start" x="4351" y="-1333.8" font-family="Arial" font-size="14.00" fill="#000000">file_id </text>
+<text text-anchor="start" x="4391.4688" y="-1333.8" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="none" stroke="#000000" points="4344,-1291 4344,-1321 4521,-1321 4521,-1291 4344,-1291"/>
+<text text-anchor="start" x="4351" y="-1303.8" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
+<text text-anchor="start" x="4421.0479" y="-1303.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
+<polygon fill="none" stroke="#000000" points="4344,-1261 4344,-1291 4521,-1291 4521,-1261 4344,-1261"/>
+<text text-anchor="start" x="4350.79" y="-1273.8" font-family="Arial" font-size="14.00" fill="#000000">updated_at </text>
+<text text-anchor="start" x="4424.748" y="-1273.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
+<polygon fill="none" stroke="#000000" points="4344,-1231 4344,-1261 4521,-1261 4521,-1231 4344,-1231"/>
+<text text-anchor="start" x="4351" y="-1243.8" font-family="Arial" font-size="14.00" fill="#000000">deleted_at </text>
+<text text-anchor="start" x="4420.2822" y="-1243.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
+<polygon fill="none" stroke="#000000" points="4344,-1201 4344,-1231 4521,-1231 4521,-1201 4344,-1201"/>
+<text text-anchor="start" x="4351" y="-1213.8" font-family="Arial" font-size="14.00" fill="#000000">is_unicode </text>
+<text text-anchor="start" x="4421.8271" y="-1213.8" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(1)]</text>
 </g>
 <!-- stamps&#45;&gt;users -->
 <g id="edge15" class="edge">
 <title>stamps:creator_id&#45;&gt;users:id</title>
-<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M4333.8426,-1350.5303C4225.6203,-1339.8669 4384.9808,-1150.4351 4292,-1068 4203.5784,-989.6069 2287.1688,-937 2169,-937"/>
-<polygon fill="#000000" stroke="#000000" points="4334.0107,-1350.538 4343.7921,-1355.4952 4339.0053,-1350.769 4344,-1351 4344,-1351 4344,-1351 4339.0053,-1350.769 4344.2079,-1346.5048 4334.0107,-1350.538 4334.0107,-1350.538"/>
-<text text-anchor="start" x="4254.3057" y="-1360.5" font-family="Arial" font-size="10.00" fill="#000000">Additional Relation</text>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M4333.6702,-1365.5393C4219.3313,-1354.6941 4389.4606,-1155.1899 4292,-1068 4203.9305,-989.2115 2287.1688,-937 2169,-937"/>
+<polygon fill="#000000" stroke="#000000" points="4334.0099,-1365.5544 4343.7995,-1370.4955 4339.005,-1365.7772 4344,-1366 4344,-1366 4344,-1366 4339.005,-1365.7772 4344.2005,-1361.5045 4334.0099,-1365.5544 4334.0099,-1365.5544"/>
+<text text-anchor="start" x="4254.3057" y="-1375.5" font-family="Arial" font-size="10.00" fill="#000000">Additional Relation</text>
 </g>
 </g>
 </svg>

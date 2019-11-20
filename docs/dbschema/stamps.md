@@ -16,9 +16,11 @@ CREATE TABLE `stamps` (
   `created_at` timestamp(6) NULL DEFAULT NULL,
   `updated_at` timestamp(6) NULL DEFAULT NULL,
   `deleted_at` timestamp(6) NULL DEFAULT NULL,
+  `is_unicode` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`),
   KEY `stamps_file_id_files_id_foreign` (`file_id`),
+  KEY `idx_stamps_is_unicode` (`is_unicode`),
   CONSTRAINT `stamps_file_id_files_id_foreign` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
@@ -36,6 +38,7 @@ CREATE TABLE `stamps` (
 | created_at | timestamp(6) |  | true |  |  | 作成日時 |
 | updated_at | timestamp(6) |  | true |  |  | 更新日時 |
 | deleted_at | timestamp(6) |  | true |  |  | 削除日時 |
+| is_unicode | tinyint(1) | 0 | false |  |  | Unicode絵文字かどうか |
 
 ## Constraints
 
@@ -49,6 +52,7 @@ CREATE TABLE `stamps` (
 
 | Name | Definition |
 | ---- | ---------- |
+| idx_stamps_is_unicode | KEY idx_stamps_is_unicode (is_unicode) USING BTREE |
 | stamps_file_id_files_id_foreign | KEY stamps_file_id_files_id_foreign (file_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 | name | UNIQUE KEY name (name) USING BTREE |

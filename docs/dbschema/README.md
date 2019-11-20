@@ -24,7 +24,7 @@
 | [oauth2_tokens](oauth2_tokens.md) | 11 |  | BASE TABLE |
 | [pins](pins.md) | 4 |  | BASE TABLE |
 | [r_sessions](r_sessions.md) | 8 |  | BASE TABLE |
-| [stamps](stamps.md) | 7 | スタンプテーブル | BASE TABLE |
+| [stamps](stamps.md) | 8 | スタンプテーブル | BASE TABLE |
 | [stars](stars.md) | 2 | お気に入りチャンネルテーブル | BASE TABLE |
 | [tags](tags.md) | 4 | タグテーブル | BASE TABLE |
 | [unreads](unreads.md) | 4 | メッセージ未読テーブル | BASE TABLE |
