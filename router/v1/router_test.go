@@ -11,7 +11,6 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
-	"github.com/traPtitech/traQ/utils/validator"
 	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
@@ -67,7 +66,6 @@ func TestMain(m *testing.M) {
 		e := echo.New()
 		e.HideBanner = true
 		e.HidePort = true
-		e.Validator = validator.New()
 		e.Binder = &extension.Binder{}
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap())

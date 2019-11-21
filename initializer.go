@@ -1,6 +1,7 @@
 package main
 
 import (
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -19,7 +20,13 @@ type dataRoot struct {
 }
 
 type dataStamp struct {
-	File string `yaml:"file" validate:"required"`
+	File string `yaml:"file"`
+}
+
+func (d dataStamp) Validate() error {
+	return vd.ValidateStruct(&d,
+		vd.Field(&d.File, vd.Required),
+	)
 }
 
 type dataChannel struct {
@@ -40,10 +47,10 @@ func insertInitialData(repo repository.Repository, initDataDir string, data *dat
 
 func createStamps(repo repository.Repository, initDataDir string, stamps map[string]*dataStamp) error {
 	for name, data := range stamps {
-		if err := validator.ValidateVar(name, "name"); err != nil {
+		if err := vd.Validate(name, validator.StampNameRuleRequired...); err != nil {
 			return err
 		}
-		if err := validator.ValidateStruct(data); err != nil {
+		if err := data.Validate(); err != nil {
 			return err
 		}
 
@@ -77,10 +84,7 @@ func createChannels(repo repository.Repository, channels map[string]*dataChannel
 }
 
 func channelTreeTraverse(repo repository.Repository, name string, node *dataChannel, parent *model.Channel) (*model.Channel, error) {
-	if err := validator.ValidateVar(name, "name"); err != nil {
-		return nil, err
-	}
-	if err := validator.ValidateStruct(node); err != nil {
+	if err := vd.Validate(name, validator.ChannelNameRuleRequired...); err != nil {
 		return nil, err
 	}
 

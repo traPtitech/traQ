@@ -1,6 +1,8 @@
 package repository
 
 import (
+	vd "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
@@ -10,7 +12,6 @@ import (
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
 	"math"
-	"net/url"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -18,17 +19,14 @@ import (
 
 // CreateBot implements BotRepository interface.
 func (repo *GormRepository) CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
-	if err := validator.ValidateVar(name, "required,name,max=20"); err != nil {
+	if err := vd.Validate(name, validator.BotUserNameRuleRequired...); err != nil {
 		return nil, ArgError("name", "invalid name")
 	}
 	if len(displayName) == 0 || utf8.RuneCountInString(displayName) > 32 {
 		return nil, ArgError("displayName", "DisplayName must be non-empty and shorter than 33 characters")
 	}
-	if err := validator.ValidateVar(webhookURL, "required,url"); err != nil || !strings.HasPrefix(webhookURL, "http") {
+	if err := vd.Validate(webhookURL, vd.Required, is.URL, validator.NotInternalURL); err != nil || !strings.HasPrefix(webhookURL, "http") {
 		return nil, ArgError("webhookURL", "invalid webhookURL")
-	}
-	if u, _ := url.Parse(webhookURL); utils.IsPrivateHost(u.Hostname()) {
-		return nil, ArgError("webhookURL", "prohibited webhook host")
 	}
 	if creatorID == uuid.Nil {
 		return nil, ArgError("creatorID", "CreatorID is required")
@@ -133,13 +131,9 @@ func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 		}
 		if args.WebhookURL.Valid {
 			w := args.WebhookURL.String
-			if err := validator.ValidateVar(w, "required,url"); err != nil || !strings.HasPrefix(w, "http") {
+			if err := vd.Validate(w, vd.Required, is.URL, validator.NotInternalURL); err != nil || !strings.HasPrefix(w, "http") {
 				return ArgError("args.WebhookURL", "invalid webhookURL")
 			}
-			if u, _ := url.Parse(w); utils.IsPrivateHost(u.Hostname()) {
-				return ArgError("args.WebhookURL", "prohibited webhook host")
-			}
-
 			changes["post_url"] = w
 			changes["state"] = model.BotPaused
 		}

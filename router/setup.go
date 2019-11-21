@@ -9,7 +9,6 @@ import (
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/router/v1"
 	v3 "github.com/traPtitech/traQ/router/v3"
-	"github.com/traPtitech/traQ/utils/validator"
 )
 
 // Setup APIサーバーハンドラを構築します
@@ -17,7 +16,6 @@ func Setup(config *Config) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
-	e.Validator = validator.New()
 	e.Binder = &extension.Binder{}
 	e.HTTPErrorHandler = extension.ErrorHandler(config.RootLogger.Named("api_handler"))
 

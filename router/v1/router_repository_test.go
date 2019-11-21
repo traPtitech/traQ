@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/disintegration/imaging"
+	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
@@ -861,8 +862,8 @@ func (repo *TestRepository) GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, err
 
 func (repo *TestRepository) CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
 	// チャンネル名検証
-	if err := validator.ValidateVar(name, "channel,required"); err != nil {
-		return nil, err
+	if !validator.ChannelRegex.MatchString(name) {
+		return nil, repository.ArgError("name", "invalid name")
 	}
 	if has, err := repo.IsChannelPresent(name, parent); err != nil {
 		return nil, err
@@ -1745,7 +1746,7 @@ func (repo *TestRepository) CreateStamp(name string, fileID, userID uuid.UUID) (
 	defer repo.FilesLock.RUnlock()
 
 	// 名前チェック
-	if !validator.NameRegex.MatchString(name) {
+	if err := validation.Validate(name, validator.StampNameRuleRequired...); err != nil {
 		return nil, repository.ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 	}
 	// 名前重複チェック
@@ -1782,7 +1783,7 @@ func (repo *TestRepository) UpdateStamp(id uuid.UUID, args repository.UpdateStam
 	}
 
 	if args.Name.Valid {
-		if !validator.NameRegex.MatchString(args.Name.String) {
+		if err := validation.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
 			return repository.ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 		}
 
