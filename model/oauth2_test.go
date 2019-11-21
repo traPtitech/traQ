@@ -24,11 +24,12 @@ func TestOAuth2Token_TableName(t *testing.T) {
 func TestAccessScopes_Value(t *testing.T) {
 	t.Parallel()
 
-	s := AccessScopes{"read", "write"}
+	s := AccessScopes{}
+	s.Add("read")
 
 	v, err := s.Value()
 	assert.NoError(t, err)
-	assert.EqualValues(t, "read write", v)
+	assert.EqualValues(t, "read", v)
 }
 
 func TestAccessScopes_Scan(t *testing.T) {
@@ -47,7 +48,10 @@ func TestAccessScopes_Scan(t *testing.T) {
 
 		s := AccessScopes{}
 		assert.NoError(t, s.Scan("a b c  "))
-		assert.EqualValues(t, AccessScopes{"a", "b", "c"}, s)
+
+		expect := AccessScopes{}
+		expect.Add("a", "b", "c")
+		assert.ElementsMatch(t, expect.StringArray(), s.StringArray())
 	})
 
 	t.Run("[]byte", func(t *testing.T) {
@@ -55,7 +59,9 @@ func TestAccessScopes_Scan(t *testing.T) {
 
 		s := AccessScopes{}
 		assert.NoError(t, s.Scan([]byte("a b c  ")))
-		assert.EqualValues(t, AccessScopes{"a", "b", "c"}, s)
+		expect := AccessScopes{}
+		expect.Add("a", "b", "c")
+		assert.ElementsMatch(t, expect.StringArray(), s.StringArray())
 	})
 
 	t.Run("other", func(t *testing.T) {
@@ -69,7 +75,8 @@ func TestAccessScopes_Scan(t *testing.T) {
 func TestAccessScopes_Contains(t *testing.T) {
 	t.Parallel()
 
-	s := AccessScopes{"read", "write"}
+	s := AccessScopes{}
+	s.Add("read", "write")
 
 	assert.True(t, s.Contains("read"))
 	assert.True(t, s.Contains("write"))
@@ -79,9 +86,10 @@ func TestAccessScopes_Contains(t *testing.T) {
 func TestAccessScopes_String(t *testing.T) {
 	t.Parallel()
 
-	s := AccessScopes{"read", "write"}
+	s := AccessScopes{}
+	s.Add("read")
 
-	assert.EqualValues(t, "read write", s.String())
+	assert.EqualValues(t, "read", s.String())
 	assert.EqualValues(t, "", AccessScopes{}.String())
 }
 
@@ -190,23 +198,31 @@ func TestOAuth2Authorize_ValidatePKCE(t *testing.T) {
 func TestOAuth2Client_GetAvailableScopes(t *testing.T) {
 	t.Parallel()
 
+	expect := AccessScopes{}
+	expect.Add("read")
+
+	test := AccessScopes{}
+	test.Add("read", "write")
+
 	client := &OAuth2Client{
-		Scopes: AccessScopes{
-			"read",
-		},
+		Scopes: expect,
 	}
-	assert.EqualValues(t, AccessScopes{"read"}, client.GetAvailableScopes(AccessScopes{"read", "write"}))
+	assert.EqualValues(t, expect.StringArray(), client.GetAvailableScopes(test).StringArray())
 }
 
 func TestOAuth2Token_GetAvailableScopes(t *testing.T) {
 	t.Parallel()
 
+	expect := AccessScopes{}
+	expect.Add("read")
+
+	test := AccessScopes{}
+	test.Add("read", "write")
+
 	token := &OAuth2Token{
-		Scopes: AccessScopes{
-			"read",
-		},
+		Scopes: expect,
 	}
-	assert.EqualValues(t, AccessScopes{"read"}, token.GetAvailableScopes(AccessScopes{"read", "write"}))
+	assert.ElementsMatch(t, expect.StringArray(), token.GetAvailableScopes(test).StringArray())
 }
 
 func TestOAuth2Token_IsExpired(t *testing.T) {

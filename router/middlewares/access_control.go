@@ -17,13 +17,8 @@ func AccessControlMiddlewareGenerator(r rbac.RBAC) func(p ...rbac.Permission) ec
 			return func(c echo.Context) error {
 				// OAuth2スコープ権限検証
 				if scopes, ok := c.Get(consts.KeyOAuth2AccessScopes).(model.AccessScopes); ok {
-					roles := make([]string, len(scopes))
-					for k, v := range scopes {
-						roles[k] = string(v)
-					}
-
 					for _, v := range p {
-						if !r.IsAnyGranted(roles, v) {
+						if !r.IsAnyGranted(scopes.StringArray(), v) {
 							// NG
 							return echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("you are not permitted to request to '%s'", c.Request().URL.Path))
 						}

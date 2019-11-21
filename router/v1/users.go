@@ -3,10 +3,12 @@ package v1
 import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/skip2/go-qrcode"
@@ -25,7 +27,7 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 		Pass string `json:"pass" form:"pass"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	user, err := h.Repo.GetUserByName(req.Name)
@@ -133,7 +135,7 @@ func (h *Handlers) PatchUserByID(c echo.Context) error {
 		Role        null.String `json:"role"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if err := h.Repo.UpdateUser(userID, repository.UpdateUserArgs{DisplayName: req.DisplayName, TwitterID: req.TwitterID, Role: req.Role}); err != nil {
@@ -156,7 +158,7 @@ func (h *Handlers) PutUserStatus(c echo.Context) error {
 		Status int `json:"status"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if err := h.Repo.ChangeUserAccountStatus(userID, model.UserAccountStatus(req.Status)); err != nil {
@@ -179,7 +181,7 @@ func (h *Handlers) PutUserPassword(c echo.Context) error {
 		NewPassword string `json:"newPassword"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if err := h.Repo.ChangeUserPassword(userID, req.NewPassword); err != nil {
@@ -224,7 +226,7 @@ func (h *Handlers) PatchMe(c echo.Context) error {
 		TwitterID   null.String `json:"twitterId"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if err := h.Repo.UpdateUser(userID, repository.UpdateUserArgs{DisplayName: req.DisplayName, TwitterID: req.TwitterID}); err != nil {
@@ -248,7 +250,7 @@ func (h *Handlers) PutPassword(c echo.Context) error {
 		New string `json:"newPassword"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if err := model.AuthenticateUser(user, req.Old); err != nil {
@@ -304,14 +306,24 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 	return c.Blob(http.StatusOK, "image/png", png)
 }
 
+// PostUserRequest POST /users リクエストボディ
+type PostUserRequest struct {
+	Name     string `json:"name"`
+	Password string `json:"password"`
+}
+
+func (r PostUserRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, validator.UserNameRuleRequired...),
+		vd.Field(&r.Password, validator.PasswordRuleRequired...),
+	)
+}
+
 // PostUsers POST /users
 func (h *Handlers) PostUsers(c echo.Context) error {
-	var req struct {
-		Name     string `json:"name"     validate:"name"`
-		Password string `json:"password" validate:"password"`
-	}
+	var req PostUserRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if _, err := h.Repo.GetUserByName(req.Name); err != repository.ErrNotFound {

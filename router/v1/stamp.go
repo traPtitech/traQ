@@ -147,7 +147,7 @@ func (h *Handlers) PostMessageStamp(c echo.Context) error {
 			Count int `json:"count" validate:"gte=1"`
 		}
 		if err := bindAndValidate(c, &req); err != nil {
-			return herror.BadRequest(err)
+			return err
 		}
 		count = req.Count
 

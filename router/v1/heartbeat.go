@@ -4,7 +4,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/realtime/viewer"
-	"github.com/traPtitech/traQ/router/extension/herror"
 	"net/http"
 )
 
@@ -17,7 +16,7 @@ func (h *Handlers) PostHeartbeat(c echo.Context) error {
 		Status    string    `json:"status"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	h.Realtime.HeartBeats.Beat(userID, req.ChannelID, req.Status)
@@ -31,7 +30,7 @@ func (h *Handlers) GetHeartbeat(c echo.Context) error {
 		ChannelID uuid.UUID `query:"channelId"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	return c.JSON(http.StatusOK, formatHeartbeat(req.ChannelID, viewer.ConvertToArray(h.Realtime.ViewerManager.GetChannelViewers(req.ChannelID))))

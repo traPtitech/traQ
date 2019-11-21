@@ -63,7 +63,7 @@ func TestHandlers_PostChannels(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		e.POST("/api/1.0/channels").
-			WithJSON(&PostChannel{Name: "forbidden", Parent: uuid.Nil}).
+			WithJSON(&PostChannelRequest{Name: "forbidden", Parent: uuid.Nil}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -84,7 +84,7 @@ func TestHandlers_PostChannels(t *testing.T) {
 		cname1 := utils.RandAlphabetAndNumberString(20)
 		obj := e.POST("/api/1.0/channels").
 			WithCookie(sessions.CookieName, session).
-			WithJSON(&PostChannel{Name: cname1, Parent: uuid.Nil}).
+			WithJSON(&PostChannelRequest{Name: cname1, Parent: uuid.Nil}).
 			Expect().
 			Status(http.StatusCreated).
 			JSON().
@@ -105,7 +105,7 @@ func TestHandlers_PostChannels(t *testing.T) {
 		cname2 := utils.RandAlphabetAndNumberString(20)
 		obj = e.POST("/api/1.0/channels").
 			WithCookie(sessions.CookieName, session).
-			WithJSON(&PostChannel{Name: cname2, Parent: c1}).
+			WithJSON(&PostChannelRequest{Name: cname2, Parent: c1}).
 			Expect().
 			Status(http.StatusCreated).
 			JSON().

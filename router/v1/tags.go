@@ -30,7 +30,7 @@ func (h *Handlers) PostUserTag(c echo.Context) error {
 		Tag string `json:"tag"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// タグの確認
@@ -70,7 +70,7 @@ func (h *Handlers) PatchUserTag(c echo.Context) error {
 		IsLocked bool `json:"isLocked"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// タグがつけられているかを見る

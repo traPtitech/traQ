@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/gob"
 	"github.com/disintegration/imaging"
+	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
@@ -411,8 +412,11 @@ func bindAndValidate(c echo.Context, i interface{}) error {
 	if err := c.Bind(i); err != nil {
 		return err
 	}
-	if err := c.Validate(i); err != nil {
-		return err
+	if err := validation.Validate(i); err != nil {
+		if e, ok := err.(validation.InternalError); ok {
+			return herror.InternalServerError(e.InternalError())
+		}
+		return herror.BadRequest(err)
 	}
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
@@ -57,7 +58,7 @@ type tokenResponse struct {
 
 type authorizeRequest struct {
 	ResponseType string `query:"response_type" form:"response_type"`
-	ClientID     string `query:"client_id"     form:"client_id"     validate:"required"`
+	ClientID     string `query:"client_id"     form:"client_id"`
 	RedirectURI  string `query:"redirect_uri"  form:"redirect_uri"`
 	RawScope     string `query:"scope"         form:"scope"`
 	State        string `query:"state"         form:"state"`
@@ -72,6 +73,12 @@ type authorizeRequest struct {
 	ValidScopes model.AccessScopes
 	Types       responseType
 	AccessTime  time.Time
+}
+
+func (r authorizeRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.ClientID, vd.Required),
+	)
 }
 
 type responseType struct {
@@ -98,9 +105,9 @@ func (h *Handlers) AuthorizationEndpointHandler(c echo.Context) error {
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
 
-	req := authorizeRequest{}
+	var req authorizeRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 	req.AccessTime = time.Now()
 
@@ -222,7 +229,7 @@ func (h *Handlers) AuthorizationEndpointHandler(c echo.Context) error {
 		for _, v := range tokens {
 			if v.ClientID == req.ClientID {
 				all := true
-				for _, s := range req.Scopes {
+				for s := range req.Scopes {
 					if !v.Scopes.Contains(s) {
 						all = false
 						break
@@ -289,16 +296,24 @@ func (h *Handlers) AuthorizationEndpointHandler(c echo.Context) error {
 	}
 }
 
+type authorizationDecideHandlerRequest struct {
+	Submit string `form:"submit"`
+}
+
+func (r authorizationDecideHandlerRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Submit, vd.Required),
+	)
+}
+
 // AuthorizationDecideHandler 認可エンドポイントの確認フォームのハンドラ
 func (h *Handlers) AuthorizationDecideHandler(c echo.Context) error {
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
 
-	var req struct {
-		Submit string `form:"submit" validate:"required"`
-	}
+	var req authorizationDecideHandlerRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// セッション確認
@@ -403,14 +418,22 @@ func (h *Handlers) TokenEndpointHandler(c echo.Context) error {
 	}
 }
 
+type tokenEndpointAuthorizationCodeHandlerRequest struct {
+	Code         string `form:"code"`
+	RedirectURI  string `form:"redirect_uri"`
+	ClientID     string `form:"client_id"`
+	ClientSecret string `form:"client_secret"`
+	CodeVerifier string `form:"code_verifier"`
+}
+
+func (r tokenEndpointAuthorizationCodeHandlerRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Code, vd.Required),
+	)
+}
+
 func (h *Handlers) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
-	var req struct {
-		Code         string `form:"code" validate:"required"`
-		RedirectURI  string `form:"redirect_uri"`
-		ClientID     string `form:"client_id"`
-		ClientSecret string `form:"client_secret"`
-		CodeVerifier string `form:"code_verifier"`
-	}
+	var req tokenEndpointAuthorizationCodeHandlerRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidRequest})
 	}
@@ -489,14 +512,23 @@ func (h *Handlers) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+type tokenEndpointPasswordHandlerRequest struct {
+	Scope        string `form:"scope"`
+	Username     string `form:"username"`
+	Password     string `form:"password"`
+	ClientID     string `form:"client_id"`
+	ClientSecret string `form:"client_secret"`
+}
+
+func (r tokenEndpointPasswordHandlerRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Username, vd.Required),
+		vd.Field(&r.Password, vd.Required),
+	)
+}
+
 func (h *Handlers) tokenEndpointPasswordHandler(c echo.Context) error {
-	var req struct {
-		Scope        string `form:"scope"`
-		Username     string `form:"username" validate:"required"`
-		Password     string `form:"password" validate:"required"`
-		ClientID     string `form:"client_id"`
-		ClientSecret string `form:"client_secret"`
-	}
+	var req tokenEndpointPasswordHandlerRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidRequest})
 	}
@@ -640,13 +672,21 @@ func (h *Handlers) tokenEndpointClientCredentialsHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+type tokenEndpointRefreshTokenHandlerRequest struct {
+	Scope        string `form:"scope"`
+	RefreshToken string `form:"refresh_token"`
+	ClientID     string `form:"client_id"`
+	ClientSecret string `form:"client_secret"`
+}
+
+func (r tokenEndpointRefreshTokenHandlerRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.RefreshToken, vd.Required),
+	)
+}
+
 func (h *Handlers) tokenEndpointRefreshTokenHandler(c echo.Context) error {
-	var req struct {
-		Scope        string `form:"scope"`
-		RefreshToken string `form:"refresh_token" validate:"required"`
-		ClientID     string `form:"client_id"`
-		ClientSecret string `form:"client_secret"`
-	}
+	var req tokenEndpointRefreshTokenHandlerRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidRequest})
 	}
@@ -750,17 +790,10 @@ func (h *Handlers) RevokeTokenEndpointHandler(c echo.Context) error {
 
 // splitAndValidateScope スペース区切りのスコープ文字列を分解し、検証します
 func (h *Handlers) splitAndValidateScope(str string) (model.AccessScopes, error) {
-	var scopes model.AccessScopes
-	set := map[model.AccessScope]bool{}
-
-	for _, v := range strings.Fields(str) {
-		s := model.AccessScope(v)
-		if ok := set[s]; !h.RBAC.IsOAuth2Scope(string(s)) || ok {
-			return nil, errors.New(errInvalidScope)
-		}
-		scopes = append(scopes, s)
-		set[s] = true
+	scopes := model.AccessScopes{}
+	scopes.FromString(str)
+	if err := scopes.Validate(); err != nil {
+		return nil, errors.New(errInvalidScope)
 	}
-
 	return scopes, nil
 }

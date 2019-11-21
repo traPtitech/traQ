@@ -40,7 +40,7 @@ func (h *Handlers) PutChannelSubscribers(c echo.Context) error {
 		Off []uuid.UUID `json:"off"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	args := repository.ChangeChannelSubscriptionArgs{
@@ -74,7 +74,7 @@ func (h *Handlers) PostDeviceToken(c echo.Context) error {
 		Token string `json:"token"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if _, err := h.Repo.RegisterDevice(userID, req.Token); err != nil {

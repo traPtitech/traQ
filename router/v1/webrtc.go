@@ -20,7 +20,7 @@ func (h *Handlers) PostSkyWayAuthenticate(c echo.Context) error {
 		PeerID string `json:"peerId"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if len(req.PeerID) == 0 {
@@ -61,7 +61,7 @@ func (h *Handlers) PutWebRTCState(c echo.Context) error {
 		State     []string      `json:"state"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if err := h.Realtime.WebRTC.SetState(userID, req.ChannelID.UUID, set.StringSetFromArray(req.State)); err != nil {

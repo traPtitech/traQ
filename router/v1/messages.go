@@ -31,7 +31,7 @@ func (h *Handlers) PutMessageByID(c echo.Context) error {
 		Text string `json:"text"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// 他人のテキストは編集できない
@@ -96,7 +96,7 @@ func (h *Handlers) GetMessagesByChannelID(c echo.Context) error {
 
 	var req messagesQuery
 	if err := req.bind(c); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	return h.getMessages(c, req.convertC(channelID), true)
@@ -111,7 +111,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 		Text string `json:"text"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if c.QueryParam("embed") == "1" {
@@ -138,7 +138,7 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 
 	var req messagesQuery
 	if err := req.bind(c); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// DMチャンネルを取得
@@ -159,7 +159,7 @@ func (h *Handlers) PostDirectMessage(c echo.Context) error {
 		Text string `json:"text"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// DMチャンネルを取得
@@ -194,7 +194,7 @@ func (h *Handlers) PostMessageReport(c echo.Context) error {
 		Reason string `json:"reason"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if len(req.Reason) == 0 {

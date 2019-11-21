@@ -36,7 +36,7 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 		Type        string `json:"type"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if req.Type == "grade" && !h.RBAC.IsGranted(getRequestUser(c).Role, permission.CreateSpecialUserGroup) {
@@ -85,7 +85,7 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 		Type        null.String   `json:"type"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// 管理者ユーザーかどうか
@@ -158,7 +158,7 @@ func (h *Handlers) PostUserGroupMembers(c echo.Context) error {
 		UserID uuid.UUID `json:"userId"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// 管理者ユーザーかどうか

@@ -47,7 +47,7 @@ func (h *Handlers) PostBots(c echo.Context) error {
 		WebhookURL  string `json:"webhookUrl"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	b, err := h.Repo.CreateBot(req.Name, req.DisplayName, req.Description, getRequestUserID(c), req.WebhookURL)
@@ -88,7 +88,7 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 		CreatorID   uuid.NullUUID `json:"creatorId"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if req.Privileged.Valid && getRequestUser(c).Role != role.Admin {
@@ -151,7 +151,7 @@ func (h *Handlers) PutBotEvents(c echo.Context) error {
 		Events []string `json:"events"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	events := model.BotEvents{}
@@ -196,7 +196,7 @@ func (h *Handlers) PutBotState(c echo.Context) error {
 		State string `json:"state"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	switch req.State {
@@ -261,7 +261,7 @@ func (h *Handlers) GetBotEventLogs(c echo.Context) error {
 		Offset int `query:"offset"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if req.Limit <= 0 || req.Limit > 50 {
@@ -311,7 +311,7 @@ func (h *Handlers) PostChannelBots(c echo.Context) error {
 		Code string `json:"code"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	b, err := h.Repo.GetBotByCode(req.Code)

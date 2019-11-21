@@ -1,21 +1,18 @@
 package v1
 
 import (
-	"fmt"
-	"github.com/traPtitech/traQ/router/consts"
-	"github.com/traPtitech/traQ/router/extension/herror"
-	"net/http"
-	"regexp"
-	"time"
-
+	vd "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils"
+	"net/http"
+	"time"
 )
-
-var uriRegex = regexp.MustCompile(`^([a-z0-9+.-]+):(?://(?:((?:[a-z0-9-._~!$&'()*+,;=:]|%[0-9A-F]{2})*)@)?((?:[a-z0-9-._~!$&'()*+,;=]|%[0-9A-F]{2})*)(?::(\d*))?(/(?:[a-z0-9-._~!$&'()*+,;=:@/]|%[0-9A-F]{2})*)?|(/?(?:[a-z0-9-._~!$&'()*+,;=:@]|%[0-9A-F]{2})+(?:[a-z0-9-._~!$&'()*+,;=:@/]|%[0-9A-F]{2})*)?)(?:\?((?:[a-z0-9-._~!$&'()*+,;=:/?@]|%[0-9A-F]{2})*))?(?:#((?:[a-z0-9-._~!$&'()*+,;=:/?@]|%[0-9A-F]{2})*))?$`)
 
 // ClientInfo レスポンス用クライアント情報構造体
 type ClientInfo struct {
@@ -126,27 +123,30 @@ func (h *Handlers) GetClients(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+// PostClientsRequest POST /clients リクエストボディ
+type PostClientsRequest struct {
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	RedirectURI string             `json:"redirectUri"`
+	Scopes      model.AccessScopes `json:"scopes"`
+}
+
+func (r PostClientsRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, vd.Required, vd.Length(1, 32)),
+		vd.Field(&r.Description, vd.Required),
+		vd.Field(&r.RedirectURI, vd.Required, is.URL),
+		vd.Field(&r.Scopes, vd.Required),
+	)
+}
+
 // PostClients POST /clients
 func (h *Handlers) PostClients(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	req := struct {
-		Name        string   `json:"name"        validate:"required,max=32"`
-		Description string   `json:"description" validate:"required"`
-		RedirectURI string   `json:"redirectUri" validate:"uri,required"`
-		Scopes      []string `json:"scopes"      validate:"unique,dive,required"`
-	}{}
+	var req PostClientsRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
-	}
-
-	scopes := model.AccessScopes{}
-	for _, v := range req.Scopes {
-		s := model.AccessScope(v)
-		if !h.RBAC.IsOAuth2Scope(v) {
-			return herror.BadRequest(fmt.Sprintf("invalid scope: %s", s))
-		}
-		scopes = append(scopes, s)
+		return err
 	}
 
 	client := &model.OAuth2Client{
@@ -157,7 +157,7 @@ func (h *Handlers) PostClients(c echo.Context) error {
 		CreatorID:    userID,
 		RedirectURI:  req.RedirectURI,
 		Secret:       utils.RandAlphabetAndNumberString(36),
-		Scopes:       scopes,
+		Scopes:       req.Scopes,
 	}
 	if err := h.Repo.SaveClient(client); err != nil {
 		return herror.InternalServerError(err)
@@ -185,23 +185,31 @@ func (h *Handlers) GetClient(c echo.Context) error {
 	})
 }
 
+// PatchClientRequest PATCH /clients/:clientID リクエストボディ
+type PatchClientRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	RedirectURI string `json:"redirectUri"`
+}
+
+func (r PatchClientRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, vd.Length(1, 32)),
+		vd.Field(&r.Description),
+		vd.Field(&r.RedirectURI, is.URL),
+	)
+}
+
 // PatchClient PATCH /clients/:clientID
 func (h *Handlers) PatchClient(c echo.Context) error {
 	oc := getClientFromContext(c)
 
-	var req struct {
-		Name        string `json:"name"`
-		Description string `json:"description"`
-		RedirectURI string `json:"redirectUri"`
-	}
+	var req PatchClientRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if len(req.Name) > 0 {
-		if len(req.Name) > 32 {
-			return herror.BadRequest("invalid name")
-		}
 		oc.Name = req.Name
 	}
 
@@ -210,9 +218,6 @@ func (h *Handlers) PatchClient(c echo.Context) error {
 	}
 
 	if len(req.RedirectURI) > 0 {
-		if !uriRegex.MatchString(req.RedirectURI) {
-			return herror.BadRequest("invalid redirect uri")
-		}
 		oc.RedirectURI = req.RedirectURI
 	}
 

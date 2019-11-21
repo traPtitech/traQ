@@ -51,7 +51,7 @@ func (h *Handlers) PostWebhooks(c echo.Context) error {
 		Secret      string    `json:"secret"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	w, err := h.Repo.CreateWebhook(req.Name, req.Description, req.ChannelID, userID, req.Secret)
@@ -85,7 +85,7 @@ func (h *Handlers) PatchWebhook(c echo.Context) error {
 		CreatorID   uuid.NullUUID `json:"creatorId"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	args := repository.UpdateWebhookArgs{
@@ -324,7 +324,7 @@ func (h *Handlers) GetWebhookMessages(c echo.Context) error {
 
 	var req messagesQuery
 	if err := req.bind(c); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	return h.getMessages(c, req.convertU(w.GetBotUserID()), false)
