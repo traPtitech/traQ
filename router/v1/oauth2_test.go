@@ -42,6 +42,9 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _ := setup(t, common7)
 
+	scopesRead := model.AccessScopes{}
+	scopesRead.Add("read")
+
 	client := &model.OAuth2Client{
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
@@ -49,9 +52,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
-		Scopes: model.AccessScopes{
-			"read",
-		},
+		Scopes:       scopesRead,
 	}
 	require.NoError(t, repo.SaveClient(client))
 
@@ -363,7 +364,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 		user := mustMakeUser(t, repo, random)
-		_, err := repo.IssueToken(client, user.ID, client.RedirectURI, model.AccessScopes{"read"}, 1000, false)
+		_, err := repo.IssueToken(client, user.ID, client.RedirectURI, scopesRead, 1000, false)
 		require.NoError(t, err)
 		e := makeExp(t, server)
 		res := e.POST("/api/1.0/oauth2/authorize").
@@ -385,16 +386,15 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Forbidden (client without redirect uri)", func(t *testing.T) {
 		t.Parallel()
 
+		scopes := model.AccessScopes{}
+		scopes.Add("read", "write")
 		client := &model.OAuth2Client{
 			ID:           utils.RandAlphabetAndNumberString(36),
 			Name:         "test client",
 			Confidential: false,
 			CreatorID:    uuid.Must(uuid.NewV4()),
 			Secret:       utils.RandAlphabetAndNumberString(36),
-			Scopes: model.AccessScopes{
-				"read",
-				"private_read",
-			},
+			Scopes:       scopes,
 		}
 		require.NoError(t, repo.SaveClient(client))
 
@@ -412,6 +412,11 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common7)
 
+	scopesRead := model.AccessScopes{}
+	scopesRead.Add("read")
+	scopesReadWrite := model.AccessScopes{}
+	scopesReadWrite.Add("read", "write")
+
 	client := &model.OAuth2Client{
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
@@ -419,9 +424,7 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
-		Scopes: model.AccessScopes{
-			"read",
-		},
+		Scopes:       scopesRead,
 	}
 	require.NoError(t, repo.SaveClient(client))
 
@@ -435,17 +438,12 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			ResponseType: "code",
 			ClientID:     client.ID,
 			RedirectURI:  client.RedirectURI,
-			Scopes: model.AccessScopes{
-				"read",
-				"write",
-			},
-			ValidScopes: model.AccessScopes{
-				"read",
-			},
-			State:      "state",
-			Types:      responseType{true, false, false},
-			AccessTime: time.Now(),
-			Nonce:      "nonce",
+			Scopes:       scopesReadWrite,
+			ValidScopes:  scopesRead,
+			State:        "state",
+			Types:        responseType{true, false, false},
+			AccessTime:   time.Now(),
+			Nonce:        "nonce",
 		}))
 
 		return parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName].Value
@@ -521,9 +519,7 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			Confidential: true,
 			CreatorID:    uuid.Must(uuid.NewV4()),
 			Secret:       utils.RandAlphabetAndNumberString(36),
-			Scopes: model.AccessScopes{
-				"read",
-			},
+			Scopes:       scopesRead,
 		}
 		require.NoError(t, repo.SaveClient(client))
 		e := makeExp(t, server)
@@ -567,15 +563,10 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			ResponseType: "code",
 			ClientID:     client.ID,
 			RedirectURI:  client.RedirectURI,
-			Scopes: model.AccessScopes{
-				"read",
-				"write",
-			},
-			ValidScopes: model.AccessScopes{
-				"read",
-			},
-			State:      "state",
-			AccessTime: time.Now(),
+			Scopes:       scopesReadWrite,
+			ValidScopes:  scopesRead,
+			State:        "state",
+			AccessTime:   time.Now(),
 		}))
 
 		e := makeExp(t, server)
@@ -605,15 +596,10 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			ResponseType: "code",
 			ClientID:     client.ID,
 			RedirectURI:  client.RedirectURI,
-			Scopes: model.AccessScopes{
-				"read",
-				"write",
-			},
-			ValidScopes: model.AccessScopes{
-				"read",
-			},
-			State:      "state",
-			AccessTime: time.Now().Add(-6 * time.Minute),
+			Scopes:       scopesReadWrite,
+			ValidScopes:  scopesRead,
+			State:        "state",
+			AccessTime:   time.Now().Add(-6 * time.Minute),
 		}))
 
 		e := makeExp(t, server)
@@ -654,6 +640,8 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, _, _ := setup(t, common7)
 
+	scopesReadWrite := model.AccessScopes{}
+	scopesReadWrite.Add("read", "write")
 	client := &model.OAuth2Client{
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
@@ -661,10 +649,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
-		Scopes: model.AccessScopes{
-			"read",
-			"write",
-		},
+		Scopes:       scopesReadWrite,
 	}
 	require.NoError(t, repo.SaveClient(client))
 
@@ -797,10 +782,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			CreatorID:    uuid.Must(uuid.NewV4()),
 			Secret:       utils.RandAlphabetAndNumberString(36),
 			RedirectURI:  "http://example.com",
-			Scopes: model.AccessScopes{
-				"read",
-				"write",
-			},
+			Scopes:       scopesReadWrite,
 		}
 		require.NoError(t, repo.SaveClient(client))
 		e := makeExp(t, server)
@@ -850,6 +832,8 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, _, _, user, _ := setupWithUsers(t, common7)
 
+	scopesReadWrite := model.AccessScopes{}
+	scopesReadWrite.Add("read", "write")
 	client := &model.OAuth2Client{
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
@@ -857,10 +841,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
-		Scopes: model.AccessScopes{
-			"read",
-			"write",
-		},
+		Scopes:       scopesReadWrite,
 	}
 	require.NoError(t, repo.SaveClient(client))
 
@@ -960,10 +941,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			CreatorID:    uuid.Must(uuid.NewV4()),
 			Secret:       utils.RandAlphabetAndNumberString(36),
 			RedirectURI:  "http://example.com",
-			Scopes: model.AccessScopes{
-				"read",
-				"write",
-			},
+			Scopes:       scopesReadWrite,
 		}
 		require.NoError(t, repo.SaveClient(client))
 		e := makeExp(t, server)
@@ -1101,6 +1079,8 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, _, _, user, _ := setupWithUsers(t, common7)
 
+	scopesReadWrite := model.AccessScopes{}
+	scopesReadWrite.Add("read", "write")
 	client := &model.OAuth2Client{
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
@@ -1108,10 +1088,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
-		Scopes: model.AccessScopes{
-			"read",
-			"write",
-		},
+		Scopes:       scopesReadWrite,
 	}
 	require.NoError(t, repo.SaveClient(client))
 
@@ -1122,10 +1099,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
-		Scopes: model.AccessScopes{
-			"read",
-			"write",
-		},
+		Scopes:       scopesReadWrite,
 	}
 	require.NoError(t, repo.SaveClient(clientConf))
 
@@ -1344,6 +1318,12 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, _, _, user, _ := setupWithUsers(t, common7)
 
+	scopesReadWrite := model.AccessScopes{}
+	scopesReadWrite.Add("read", "write")
+	scopesRead := model.AccessScopes{}
+	scopesRead.Add("read")
+	scopesReadManageBot := model.AccessScopes{}
+	scopesReadManageBot.Add("read", "manage_bot")
 	client := &model.OAuth2Client{
 		ID:           utils.RandAlphabetAndNumberString(36),
 		Name:         "test client",
@@ -1351,10 +1331,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
-		Scopes: model.AccessScopes{
-			"read",
-			"write",
-		},
+		Scopes:       scopesReadWrite,
 	}
 	require.NoError(t, repo.SaveClient(client))
 
@@ -1365,10 +1342,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		CreatorID:    uuid.Must(uuid.NewV4()),
 		Secret:       utils.RandAlphabetAndNumberString(36),
 		RedirectURI:  "http://example.com",
-		Scopes: model.AccessScopes{
-			"read",
-			"write",
-		},
+		Scopes:       scopesReadWrite,
 	}
 	require.NoError(t, repo.SaveClient(clientConf))
 
@@ -1452,20 +1426,14 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 	t.Run("Success with PKCE(plain)", func(t *testing.T) {
 		t.Parallel()
 		authorize := &model.OAuth2Authorize{
-			Code:        utils.RandAlphabetAndNumberString(36),
-			ClientID:    clientConf.ID,
-			UserID:      user.ID,
-			CreatedAt:   time.Now(),
-			ExpiresIn:   1000,
-			RedirectURI: "http://example.com",
-			Scopes: model.AccessScopes{
-				"read",
-				"write",
-			},
-			OriginalScopes: model.AccessScopes{
-				"read",
-				"write",
-			},
+			Code:                utils.RandAlphabetAndNumberString(36),
+			ClientID:            clientConf.ID,
+			UserID:              user.ID,
+			CreatedAt:           time.Now(),
+			ExpiresIn:           1000,
+			RedirectURI:         "http://example.com",
+			Scopes:              scopesReadWrite,
+			OriginalScopes:      scopesReadWrite,
 			Nonce:               "nonce",
 			CodeChallengeMethod: "plain",
 			CodeChallenge:       "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
@@ -1497,20 +1465,14 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 	t.Run("Success with PKCE(S256)", func(t *testing.T) {
 		t.Parallel()
 		authorize := &model.OAuth2Authorize{
-			Code:        utils.RandAlphabetAndNumberString(36),
-			ClientID:    clientConf.ID,
-			UserID:      user.ID,
-			CreatedAt:   time.Now(),
-			ExpiresIn:   1000,
-			RedirectURI: "http://example.com",
-			Scopes: model.AccessScopes{
-				"read",
-				"write",
-			},
-			OriginalScopes: model.AccessScopes{
-				"read",
-				"write",
-			},
+			Code:                utils.RandAlphabetAndNumberString(36),
+			ClientID:            clientConf.ID,
+			UserID:              user.ID,
+			CreatedAt:           time.Now(),
+			ExpiresIn:           1000,
+			RedirectURI:         "http://example.com",
+			Scopes:              scopesReadWrite,
+			OriginalScopes:      scopesReadWrite,
 			Nonce:               "nonce",
 			CodeChallengeMethod: "S256",
 			CodeChallenge:       "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
@@ -1542,19 +1504,15 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 	t.Run("Success with smaller scope", func(t *testing.T) {
 		t.Parallel()
 		authorize := &model.OAuth2Authorize{
-			Code:        utils.RandAlphabetAndNumberString(36),
-			ClientID:    clientConf.ID,
-			UserID:      user.ID,
-			CreatedAt:   time.Now(),
-			ExpiresIn:   1000,
-			RedirectURI: "http://example.com",
-			Scopes: model.AccessScopes{
-				"read",
-			},
-			OriginalScopes: model.AccessScopes{
-				"read",
-			},
-			Nonce: "nonce",
+			Code:           utils.RandAlphabetAndNumberString(36),
+			ClientID:       clientConf.ID,
+			UserID:         user.ID,
+			CreatedAt:      time.Now(),
+			ExpiresIn:      1000,
+			RedirectURI:    "http://example.com",
+			Scopes:         scopesRead,
+			OriginalScopes: scopesRead,
+			Nonce:          "nonce",
 		}
 		require.NoError(t, repo.SaveAuthorize(authorize))
 		e := makeExp(t, server)
@@ -1582,20 +1540,15 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 	t.Run("Success with invalid scope", func(t *testing.T) {
 		t.Parallel()
 		authorize := &model.OAuth2Authorize{
-			Code:        utils.RandAlphabetAndNumberString(36),
-			ClientID:    client.ID,
-			UserID:      user.ID,
-			CreatedAt:   time.Now(),
-			ExpiresIn:   1000,
-			RedirectURI: "http://example.com",
-			Scopes: model.AccessScopes{
-				"read",
-			},
-			OriginalScopes: model.AccessScopes{
-				"read",
-				"manage_bot",
-			},
-			Nonce: "nonce",
+			Code:           utils.RandAlphabetAndNumberString(36),
+			ClientID:       client.ID,
+			UserID:         user.ID,
+			CreatedAt:      time.Now(),
+			ExpiresIn:      1000,
+			RedirectURI:    "http://example.com",
+			Scopes:         scopesRead,
+			OriginalScopes: scopesReadManageBot,
+			Nonce:          "nonce",
 		}
 		require.NoError(t, repo.SaveAuthorize(authorize))
 		e := makeExp(t, server)
@@ -1713,21 +1666,15 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 	t.Run("Invalid Grant (expired)", func(t *testing.T) {
 		t.Parallel()
 		authorize := &model.OAuth2Authorize{
-			Code:        utils.RandAlphabetAndNumberString(36),
-			ClientID:    clientConf.ID,
-			UserID:      user.ID,
-			CreatedAt:   time.Now(),
-			ExpiresIn:   -1000,
-			RedirectURI: "http://example.com",
-			Scopes: model.AccessScopes{
-				"read",
-				"write",
-			},
-			OriginalScopes: model.AccessScopes{
-				"read",
-				"write",
-			},
-			Nonce: "nonce",
+			Code:           utils.RandAlphabetAndNumberString(36),
+			ClientID:       clientConf.ID,
+			UserID:         user.ID,
+			CreatedAt:      time.Now(),
+			ExpiresIn:      -1000,
+			RedirectURI:    "http://example.com",
+			Scopes:         scopesReadWrite,
+			OriginalScopes: scopesReadWrite,
+			Nonce:          "nonce",
 		}
 		require.NoError(t, repo.SaveAuthorize(authorize))
 		e := makeExp(t, server)
@@ -1750,21 +1697,15 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 	t.Run("Invalid Client (client not found)", func(t *testing.T) {
 		t.Parallel()
 		authorize := &model.OAuth2Authorize{
-			Code:        utils.RandAlphabetAndNumberString(36),
-			ClientID:    utils.RandAlphabetAndNumberString(36),
-			UserID:      user.ID,
-			CreatedAt:   time.Now(),
-			ExpiresIn:   1000,
-			RedirectURI: "http://example.com",
-			Scopes: model.AccessScopes{
-				"read",
-				"write",
-			},
-			OriginalScopes: model.AccessScopes{
-				"read",
-				"write",
-			},
-			Nonce: "nonce",
+			Code:           utils.RandAlphabetAndNumberString(36),
+			ClientID:       utils.RandAlphabetAndNumberString(36),
+			UserID:         user.ID,
+			CreatedAt:      time.Now(),
+			ExpiresIn:      1000,
+			RedirectURI:    "http://example.com",
+			Scopes:         scopesReadWrite,
+			OriginalScopes: scopesReadWrite,
+			Nonce:          "nonce",
 		}
 		require.NoError(t, repo.SaveAuthorize(authorize))
 		e := makeExp(t, server)
@@ -1807,20 +1748,14 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 	t.Run("Invalid Grant (unexpected redirect)", func(t *testing.T) {
 		t.Parallel()
 		authorize := &model.OAuth2Authorize{
-			Code:      utils.RandAlphabetAndNumberString(36),
-			ClientID:  clientConf.ID,
-			UserID:    user.ID,
-			CreatedAt: time.Now(),
-			ExpiresIn: 1000,
-			Scopes: model.AccessScopes{
-				"read",
-				"write",
-			},
-			OriginalScopes: model.AccessScopes{
-				"read",
-				"write",
-			},
-			Nonce: "nonce",
+			Code:           utils.RandAlphabetAndNumberString(36),
+			ClientID:       clientConf.ID,
+			UserID:         user.ID,
+			CreatedAt:      time.Now(),
+			ExpiresIn:      1000,
+			Scopes:         scopesReadWrite,
+			OriginalScopes: scopesReadWrite,
+			Nonce:          "nonce",
 		}
 		require.NoError(t, repo.SaveAuthorize(authorize))
 		e := makeExp(t, server)
@@ -1843,20 +1778,14 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 	t.Run("Invalid Request (PKCE failure)", func(t *testing.T) {
 		t.Parallel()
 		authorize := &model.OAuth2Authorize{
-			Code:        utils.RandAlphabetAndNumberString(36),
-			ClientID:    clientConf.ID,
-			UserID:      user.ID,
-			CreatedAt:   time.Now(),
-			ExpiresIn:   1000,
-			RedirectURI: "http://example.com",
-			Scopes: model.AccessScopes{
-				"read",
-				"write",
-			},
-			OriginalScopes: model.AccessScopes{
-				"read",
-				"write",
-			},
+			Code:                utils.RandAlphabetAndNumberString(36),
+			ClientID:            clientConf.ID,
+			UserID:              user.ID,
+			CreatedAt:           time.Now(),
+			ExpiresIn:           1000,
+			RedirectURI:         "http://example.com",
+			Scopes:              scopesReadWrite,
+			OriginalScopes:      scopesReadWrite,
 			Nonce:               "nonce",
 			CodeChallengeMethod: "plain",
 			CodeChallenge:       "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
