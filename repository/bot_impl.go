@@ -69,6 +69,8 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 		BotCode:           utils.RandAlphabetAndNumberString(30),
 		CreatorID:         creatorID,
 	}
+	scopes := model.AccessScopes{}
+	scopes.Add("bot")
 	t := &model.OAuth2Token{
 		ID:             tid,
 		UserID:         uid,
@@ -77,7 +79,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 		RefreshEnabled: false,
 		CreatedAt:      time.Now(),
 		ExpiresIn:      math.MaxInt32,
-		Scopes:         model.AccessScopes{"bot"},
+		Scopes:         scopes,
 	}
 
 	err = repo.transact(func(tx *gorm.DB) error {
@@ -350,6 +352,8 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 		}
 
 		tid := uuid.Must(uuid.NewV4())
+		scopes := model.AccessScopes{}
+		scopes.Add("bot")
 		t := &model.OAuth2Token{
 			ID:             tid,
 			UserID:         bot.BotUserID,
@@ -358,7 +362,7 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 			RefreshEnabled: false,
 			CreatedAt:      time.Now(),
 			ExpiresIn:      math.MaxInt32,
-			Scopes:         model.AccessScopes{"bot"},
+			Scopes:         scopes,
 		}
 		bot.AccessTokenID = tid
 
