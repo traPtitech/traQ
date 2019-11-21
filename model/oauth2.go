@@ -90,7 +90,7 @@ func (arr AccessScopes) Contains(s AccessScope) bool {
 
 // String AccessScopesをスペース区切りで文字列に出力します
 func (arr AccessScopes) String() string {
-	sa := make([]string, len(arr))
+	sa := make([]string, 0, len(arr))
 	for s := range arr {
 		sa = append(sa, string(s))
 	}
