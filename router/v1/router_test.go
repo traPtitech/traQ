@@ -281,22 +281,18 @@ func mustIssueToken(t *testing.T, repo repository.Repository, client *model.OAut
 
 func mustMakeAuthorizeData(t *testing.T, repo repository.Repository, clientID string, userID uuid.UUID) *model.OAuth2Authorize {
 	t.Helper()
+	scopes := model.AccessScopes{}
+	scopes.Add("read")
 	authorize := &model.OAuth2Authorize{
-		Code:        utils.RandAlphabetAndNumberString(36),
-		ClientID:    clientID,
-		UserID:      userID,
-		CreatedAt:   time.Now(),
-		ExpiresIn:   1000,
-		RedirectURI: "http://example.com",
-		Scopes: model.AccessScopes{
-			"read",
-			"private_read",
-		},
-		OriginalScopes: model.AccessScopes{
-			"read",
-			"private_read",
-		},
-		Nonce: "nonce",
+		Code:           utils.RandAlphabetAndNumberString(36),
+		ClientID:       clientID,
+		UserID:         userID,
+		CreatedAt:      time.Now(),
+		ExpiresIn:      1000,
+		RedirectURI:    "http://example.com",
+		Scopes:         scopes,
+		OriginalScopes: scopes,
+		Nonce:          "nonce",
 	}
 	require.NoError(t, repo.SaveAuthorize(authorize))
 	return authorize
