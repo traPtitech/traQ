@@ -3,7 +3,6 @@ package model
 import (
 	"database/sql"
 	vd "github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/gofrs/uuid"
 	"time"
 )
@@ -46,9 +45,6 @@ func (f File) Validate() error {
 		vd.Field(&f.Name, vd.Required),
 		vd.Field(&f.Mime, vd.Required),
 		vd.Field(&f.Size, vd.Min(0)),
-		vd.Field(&f.Hash, vd.Required, vd.Length(32, 32), is.Alphanumeric),
-		vd.Field(&f.ThumbnailWidth, vd.Min(0)),
-		vd.Field(&f.ThumbnailHeight, vd.Min(0)),
 	)
 }
 
