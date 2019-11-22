@@ -1,8 +1,17 @@
 package extension
 
 import (
+	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
+)
+
+// CtxKey context.Context用のキータイプ
+type CtxKey int
+
+const (
+	// CtxUserIDKey ユーザーUUIDキー
+	CtxUserIDKey CtxKey = iota
 )
 
 // Context echo.Contextのカスタム
@@ -15,10 +24,10 @@ func (c *Context) JSON(code int, i interface{}) (err error) {
 	if _, pretty := c.QueryParams()["pretty"]; pretty {
 		return c.Context.JSON(code, i)
 	}
-	return c.json(code, i, jsoniter.ConfigFastest)
+	return json(c, code, i, jsoniter.ConfigFastest)
 }
 
-func (c *Context) json(code int, i interface{}, cfg jsoniter.API) error {
+func json(c echo.Context, code int, i interface{}, cfg jsoniter.API) error {
 	stream := cfg.BorrowStream(c.Response())
 	defer cfg.ReturnStream(stream)
 
@@ -36,10 +45,7 @@ func Wrap() echo.MiddlewareFunc {
 	}
 }
 
-// CtxKey context.Context用のキータイプ
-type CtxKey int
-
-const (
-	// CtxUserIDKey ユーザーUUIDキー
-	CtxUserIDKey CtxKey = iota
-)
+// GetRequestParamAsUUID 指定したリクエストパラメーターをUUIDとして取得します
+func GetRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
+	return uuid.FromStringOrNil(c.Param(name))
+}

@@ -11,7 +11,6 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
-	"github.com/traPtitech/traQ/utils/validator"
 	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
@@ -67,7 +66,6 @@ func TestMain(m *testing.M) {
 		e := echo.New()
 		e.HideBanner = true
 		e.HidePort = true
-		e.Validator = validator.New()
 		e.Binder = &extension.Binder{}
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap())
@@ -283,22 +281,18 @@ func mustIssueToken(t *testing.T, repo repository.Repository, client *model.OAut
 
 func mustMakeAuthorizeData(t *testing.T, repo repository.Repository, clientID string, userID uuid.UUID) *model.OAuth2Authorize {
 	t.Helper()
+	scopes := model.AccessScopes{}
+	scopes.Add("read")
 	authorize := &model.OAuth2Authorize{
-		Code:        utils.RandAlphabetAndNumberString(36),
-		ClientID:    clientID,
-		UserID:      userID,
-		CreatedAt:   time.Now(),
-		ExpiresIn:   1000,
-		RedirectURI: "http://example.com",
-		Scopes: model.AccessScopes{
-			"read",
-			"private_read",
-		},
-		OriginalScopes: model.AccessScopes{
-			"read",
-			"private_read",
-		},
-		Nonce: "nonce",
+		Code:           utils.RandAlphabetAndNumberString(36),
+		ClientID:       clientID,
+		UserID:         userID,
+		CreatedAt:      time.Now(),
+		ExpiresIn:      1000,
+		RedirectURI:    "http://example.com",
+		Scopes:         scopes,
+		OriginalScopes: scopes,
+		Nonce:          "nonce",
 	}
 	require.NoError(t, repo.SaveAuthorize(authorize))
 	return authorize

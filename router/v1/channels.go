@@ -1,11 +1,13 @@
 package v1
 
 import (
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/realtime/viewer"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"strconv"
@@ -14,12 +16,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 )
-
-// PostChannel リクエストボディ用構造体
-type PostChannel struct {
-	Name   string    `json:"name" validate:"required"`
-	Parent uuid.UUID `json:"parent"`
-}
 
 // GetChannels GET /channels
 func (h *Handlers) GetChannels(c echo.Context) error {
@@ -82,13 +78,25 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+// PostChannelRequest POST /channels リクエストボディ
+type PostChannelRequest struct {
+	Name   string    `json:"name"`
+	Parent uuid.UUID `json:"parent"`
+}
+
+func (r PostChannelRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, validator.ChannelNameRuleRequired...),
+	)
+}
+
 // PostChannels POST /channels
 func (h *Handlers) PostChannels(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	req := PostChannel{}
+	var req PostChannelRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// 親チャンネルがユーザーから見えないと作成できない
@@ -144,7 +152,7 @@ func (h *Handlers) PatchChannelByChannelID(c echo.Context) error {
 		Force      null.Bool   `json:"force"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	args := repository.UpdateChannelArgs{
@@ -177,7 +185,7 @@ func (h *Handlers) PostChannelChildren(c echo.Context) error {
 		Name string `json:"name"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// 子チャンネル作成
@@ -212,7 +220,7 @@ func (h *Handlers) PutChannelParent(c echo.Context) error {
 		Parent uuid.UUID `json:"parent"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if err := h.Repo.ChangeChannelParent(channelID, req.Parent, getRequestUserID(c)); err != nil {
@@ -258,7 +266,7 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 		Text string `json:"text"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if err := h.Repo.UpdateChannel(channelID, repository.UpdateChannelArgs{
@@ -302,7 +310,7 @@ func (h *Handlers) GetChannelEvents(c echo.Context) error {
 
 	var req channelEventsQuery
 	if err := req.bind(c); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if req.Limit > 200 || req.Limit == 0 {

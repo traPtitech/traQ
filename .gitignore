@@ -1,7 +1,6 @@
 .vagrant
 .envrc
 .idea/
-dev/keys
 /vendor/
 
 traQ

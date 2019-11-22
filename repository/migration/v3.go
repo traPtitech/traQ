@@ -36,18 +36,6 @@ var V3 = &gormigrate.Migration{
 
 		return nil
 	},
-	Rollback: func(db *gorm.DB) error {
-		foreignKeys := [][5]string{
-			{"channel_events", "channel_id", "channels(id)"},
-		}
-		for _, c := range foreignKeys {
-			if err := db.Table(c[0]).RemoveForeignKey(c[1], c[2]).Error; err != nil {
-				return err
-			}
-		}
-
-		return db.DropTableIfExists(&v3ChannelEvent{}).Error
-	},
 }
 
 type v3ChannelEvent struct {

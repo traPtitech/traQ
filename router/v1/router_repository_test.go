@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/disintegration/imaging"
+	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
@@ -378,9 +379,6 @@ func (repo *TestRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserA
 func (repo *TestRepository) ChangeUserPassword(id uuid.UUID, password string) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
-	}
-	if !validator.PasswordRegex.MatchString(password) {
-		return repository.ArgError("password", "invalid password characters")
 	}
 	salt := utils.GenerateSalt()
 	hashed := utils.HashPassword(password, salt)
@@ -861,8 +859,8 @@ func (repo *TestRepository) GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, err
 
 func (repo *TestRepository) CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
 	// チャンネル名検証
-	if err := validator.ValidateVar(name, "channel,required"); err != nil {
-		return nil, err
+	if !validator.ChannelRegex.MatchString(name) {
+		return nil, repository.ArgError("name", "invalid name")
 	}
 	if has, err := repo.IsChannelPresent(name, parent); err != nil {
 		return nil, err
@@ -1406,9 +1404,6 @@ func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
-	if len(text) == 0 {
-		return nil, repository.ArgError("text", "Text is required")
-	}
 
 	m := &model.Message{
 		ID:        uuid.Must(uuid.NewV4()),
@@ -1429,9 +1424,6 @@ func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 func (repo *TestRepository) UpdateMessage(messageID uuid.UUID, text string) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
-	}
-	if len(text) == 0 {
-		return repository.ArgError("text", "Text is required")
 	}
 
 	repo.MessagesLock.Lock()
@@ -1745,7 +1737,7 @@ func (repo *TestRepository) CreateStamp(name string, fileID, userID uuid.UUID) (
 	defer repo.FilesLock.RUnlock()
 
 	// 名前チェック
-	if !validator.NameRegex.MatchString(name) {
+	if err := validation.Validate(name, validator.StampNameRuleRequired...); err != nil {
 		return nil, repository.ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 	}
 	// 名前重複チェック
@@ -1782,7 +1774,7 @@ func (repo *TestRepository) UpdateStamp(id uuid.UUID, args repository.UpdateStam
 	}
 
 	if args.Name.Valid {
-		if !validator.NameRegex.MatchString(args.Name.String) {
+		if err := validation.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
 			return repository.ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 		}
 
@@ -1873,50 +1865,6 @@ func (repo *TestRepository) StampNameExists(name string) (bool, error) {
 		}
 	}
 	return false, nil
-}
-
-func (repo *TestRepository) GetClipFolder(id uuid.UUID) (*model.ClipFolder, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetClipFolders(userID uuid.UUID) ([]*model.ClipFolder, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) CreateClipFolder(userID uuid.UUID, name string) (*model.ClipFolder, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) UpdateClipFolderName(id uuid.UUID, name string) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteClipFolder(id uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetClipMessage(id uuid.UUID) (*model.Clip, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetClipMessages(folderID uuid.UUID) ([]*model.Clip, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetClipMessagesByUser(userID uuid.UUID) ([]*model.Clip, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) CreateClip(messageID, folderID, userID uuid.UUID) (*model.Clip, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) ChangeClipFolder(clipID, folderID uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteClip(id uuid.UUID) error {
-	panic("implement me")
 }
 
 func (repo *TestRepository) AddStar(userID, channelID uuid.UUID) error {

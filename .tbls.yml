@@ -76,11 +76,6 @@ comments:
     columnComments:
       user_id: ユーザーUUID
       channel_id: チャンネルUUID
-  - table: mutes
-    tableComment: ミュートチャンネルテーブル
-    columnComments:
-      user_id: ユーザーUUID
-      channel_id: チャンネルUUID
   - table: users_private_channels
     tableComment: プライベートチャンネル参加者テーブル
     columnComments:
@@ -120,6 +115,7 @@ comments:
       name: スタンプ名
       creator_id: 作成者UUID
       file_id: ファイルUUID
+      is_unicode: Unicode絵文字かどうか
       created_at: 作成日時
       updated_at: 更新日時
       deleted_at: 削除日時
@@ -138,23 +134,6 @@ comments:
       token: FCMデバイストークン
       user_id: ユーザーUUID
       created_at: 作成日時
-  - table: clips
-    tableComment: クリップテーブル
-    columnComments:
-      id: クリップUUID
-      user_id: ユーザーUUID
-      message_id: メッセージUUID
-      folder_id: クリップフォルダUUID
-      created_at: 作成日時
-      updated_at: 更新日時
-  - table: clip_folders
-    tableComment: クリップフォルダテーブル
-    columnComments:
-      id: クリップフォルダUUID
-      user_id: ユーザーUUID
-      name: クリップフォルダ名
-      created_at: 作成日時
-      updated_at: 更新日時
   - table: dm_channel_mappings
     tableComment: DMチャンネルマッピングテーブル
     columnComments:

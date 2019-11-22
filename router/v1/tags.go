@@ -1,6 +1,7 @@
 package v1
 
 import (
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/repository"
@@ -21,29 +22,31 @@ func (h *Handlers) GetUserTags(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatTags(tags))
 }
 
+// PostUserTagRequest POST /users/:userID/tags リクエストボディ
+type PostUserTagRequest struct {
+	Tag string `json:"tag"`
+}
+
+func (r PostUserTagRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Tag, vd.Required, vd.Length(1, 30)),
+	)
+}
+
 // PostUserTag POST /users/:userID/tags
 func (h *Handlers) PostUserTag(c echo.Context) error {
 	userID := getRequestParamAsUUID(c, consts.ParamUserID)
 
 	// リクエスト検証
-	var req struct {
-		Tag string `json:"tag"`
-	}
+	var req PostUserTagRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// タグの確認
 	t, err := h.Repo.GetOrCreateTagByName(req.Tag)
 	if err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		case err == repository.ErrNotFound:
-			return herror.BadRequest("empty tag")
-		default:
-			return herror.InternalServerError(err)
-		}
+		return herror.InternalServerError(err)
 	}
 
 	// ユーザーにタグを付与
@@ -59,6 +62,11 @@ func (h *Handlers) PostUserTag(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
+// PatchUserTagRequest PATCH /users/:userID/tags/:tagID リクエストボディ
+type PatchUserTagRequest struct {
+	IsLocked bool `json:"isLocked"`
+}
+
 // PatchUserTag PATCH /users/:userID/tags/:tagID
 func (h *Handlers) PatchUserTag(c echo.Context) error {
 	me := getRequestUserID(c)
@@ -66,11 +74,9 @@ func (h *Handlers) PatchUserTag(c echo.Context) error {
 	tagID := getRequestParamAsUUID(c, consts.ParamTagID)
 
 	// リクエスト検証
-	var req struct {
-		IsLocked bool `json:"isLocked"`
-	}
+	var req PatchUserTagRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// タグがつけられているかを見る

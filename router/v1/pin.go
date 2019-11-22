@@ -29,7 +29,7 @@ func (h *Handlers) PostPin(c echo.Context) error {
 		MessageID uuid.UUID `json:"messageId"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	m, err := h.Repo.GetMessageByID(req.MessageID)

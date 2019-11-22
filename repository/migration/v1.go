@@ -15,11 +15,4 @@ var V1 = &gormigrate.Migration{
 			AddIndex("idx_messages_channel_id_deleted_at_created_at", "channel_id", "deleted_at", "created_at").
 			Error
 	},
-	Rollback: func(db *gorm.DB) error {
-		return db.
-			Table("messages").
-			AddIndex("idx_messages_deleted_at", "deleted_at").
-			RemoveIndex("idx_messages_channel_id_deleted_at_created_at").
-			Error
-	},
 }

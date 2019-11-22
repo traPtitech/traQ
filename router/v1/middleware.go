@@ -27,14 +27,14 @@ func (h *Handlers) ValidateGroupID() echo.MiddlewareFunc {
 				}
 			}
 
-			c.Set("paramGroup", g)
+			c.Set(consts.KeyParamGroup, g)
 			return next(c)
 		}
 	}
 }
 
 func getGroupFromContext(c echo.Context) *model.UserGroup {
-	return c.Get("paramGroup").(*model.UserGroup)
+	return c.Get(consts.KeyParamGroup).(*model.UserGroup)
 }
 
 // ValidateStampID 'stampID'パラメータのスタンプを検証するミドルウェア
@@ -62,14 +62,14 @@ func (h *Handlers) ValidateStampID(existenceCheckOnly bool) echo.MiddlewareFunc 
 				}
 			}
 
-			c.Set("paramStamp", s)
+			c.Set(consts.KeyParamStamp, s)
 			return next(c)
 		}
 	}
 }
 
 func getStampFromContext(c echo.Context) *model.Stamp {
-	return c.Get("paramStamp").(*model.Stamp)
+	return c.Get(consts.KeyParamStamp).(*model.Stamp)
 }
 
 // ValidateMessageID 'messageID'パラメータのメッセージを検証するミドルウェア
@@ -98,14 +98,14 @@ func (h *Handlers) ValidateMessageID() echo.MiddlewareFunc {
 				return herror.NotFound()
 			}
 
-			c.Set("paramMessage", m)
+			c.Set(consts.KeyParamMessage, m)
 			return next(c)
 		}
 	}
 }
 
 func getMessageFromContext(c echo.Context) *model.Message {
-	return c.Get("paramMessage").(*model.Message)
+	return c.Get(consts.KeyParamMessage).(*model.Message)
 }
 
 // ValidatePinID 'pinID'パラメータのピンを検証するミドルウェア
@@ -145,70 +145,6 @@ func getPinFromContext(c echo.Context) *model.Pin {
 	return c.Get("paramPin").(*model.Pin)
 }
 
-// ValidateClipID 'clipID'パラメータのクリップを検証するミドルウェア
-func (h *Handlers) ValidateClipID() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			userID := getRequestUserID(c)
-			clipID := getRequestParamAsUUID(c, consts.ParamClipID)
-
-			clip, err := h.Repo.GetClipMessage(clipID)
-			if err != nil {
-				switch err {
-				case repository.ErrNotFound:
-					return herror.NotFound()
-				default:
-					return herror.InternalServerError(err)
-				}
-			}
-
-			// クリップがリクエストユーザーのものかを確認
-			if clip.UserID != userID {
-				return herror.NotFound()
-			}
-
-			c.Set("paramClip", clip)
-			return next(c)
-		}
-	}
-}
-
-func getClipFromContext(c echo.Context) *model.Clip {
-	return c.Get("paramClip").(*model.Clip)
-}
-
-// ValidateClipFolderID 'folderID'パラメータのクリップフォルダを検証するミドルウェア
-func (h *Handlers) ValidateClipFolderID() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			userID := getRequestUserID(c)
-			folderID := getRequestParamAsUUID(c, consts.ParamFolderID)
-
-			folder, err := h.Repo.GetClipFolder(folderID)
-			if err != nil {
-				switch err {
-				case repository.ErrNotFound:
-					return herror.NotFound()
-				default:
-					return herror.InternalServerError(err)
-				}
-			}
-
-			// フォルダがリクエストユーザーのものかを確認
-			if folder.UserID != userID {
-				return herror.NotFound()
-			}
-
-			c.Set("paramClipFolder", folder)
-			return next(c)
-		}
-	}
-}
-
-func getClipFolderFromContext(c echo.Context) *model.ClipFolder {
-	return c.Get("paramClipFolder").(*model.ClipFolder)
-}
-
 // ValidateChannelID 'channelID'パラメータのチャンネルを検証するミドルウェア
 func (h *Handlers) ValidateChannelID(availabilityCheckOnly bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -231,14 +167,14 @@ func (h *Handlers) ValidateChannelID(availabilityCheckOnly bool) echo.Middleware
 				return herror.InternalServerError(err)
 			}
 
-			c.Set("paramChannel", ch)
+			c.Set(consts.KeyParamChannel, ch)
 			return next(c)
 		}
 	}
 }
 
 func getChannelFromContext(c echo.Context) *model.Channel {
-	return c.Get("paramChannel").(*model.Channel)
+	return c.Get(consts.KeyParamChannel).(*model.Channel)
 }
 
 // ValidateUserID 'userID'パラメータのユーザーを検証するミドルウェア
@@ -266,14 +202,14 @@ func (h *Handlers) ValidateUserID(existenceCheckOnly bool) echo.MiddlewareFunc {
 				}
 			}
 
-			c.Set("paramUser", user)
+			c.Set(consts.KeyParamUser, user)
 			return next(c)
 		}
 	}
 }
 
 func getUserFromContext(c echo.Context) *model.User {
-	return c.Get("paramUser").(*model.User)
+	return c.Get(consts.KeyParamUser).(*model.User)
 }
 
 // ValidateWebhookID 'webhookID'パラメータのWebhookを検証するミドルウェア
@@ -299,14 +235,14 @@ func (h *Handlers) ValidateWebhookID(requestUserCheck bool) echo.MiddlewareFunc 
 				}
 			}
 
-			c.Set("paramWebhook", w)
+			c.Set(consts.KeyParamWebhook, w)
 			return next(c)
 		}
 	}
 }
 
 func getWebhookFromContext(c echo.Context) model.Webhook {
-	return c.Get("paramWebhook").(model.Webhook)
+	return c.Get(consts.KeyParamWebhook).(model.Webhook)
 }
 
 // ValidateBotID 'botID'パラメータのBotを検証するミドルウェア
@@ -332,14 +268,14 @@ func (h *Handlers) ValidateBotID(requestUserCheck bool) echo.MiddlewareFunc {
 				}
 			}
 
-			c.Set("paramBot", b)
+			c.Set(consts.KeyParamBot, b)
 			return next(c)
 		}
 	}
 }
 
 func getBotFromContext(c echo.Context) *model.Bot {
-	return c.Get("paramBot").(*model.Bot)
+	return c.Get(consts.KeyParamBot).(*model.Bot)
 }
 
 // ValidateFileID 'fileID'パラメータのファイルを検証するミドルウェア
@@ -366,21 +302,21 @@ func (h *Handlers) ValidateFileID() echo.MiddlewareFunc {
 				return herror.InternalServerError(err)
 			}
 
-			c.Set("paramFile", meta)
+			c.Set(consts.KeyParamFile, meta)
 			return next(c)
 		}
 	}
 }
 
 func getFileFromContext(c echo.Context) *model.File {
-	return c.Get("paramFile").(*model.File)
+	return c.Get(consts.KeyParamFile).(*model.File)
 }
 
 // ValidateClientID 'clientID'パラメータのクライアントを検証するミドルウェア
 func (h *Handlers) ValidateClientID(requestUserCheck bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			clientID := c.Param("clientID")
+			clientID := c.Param(consts.ParamClientID)
 
 			oc, err := h.Repo.GetClient(clientID)
 			if err != nil {
@@ -399,12 +335,12 @@ func (h *Handlers) ValidateClientID(requestUserCheck bool) echo.MiddlewareFunc {
 				}
 			}
 
-			c.Set("paramClient", oc)
+			c.Set(consts.KeyParamClient, oc)
 			return next(c)
 		}
 	}
 }
 
 func getClientFromContext(c echo.Context) *model.OAuth2Client {
-	return c.Get("paramClient").(*model.OAuth2Client)
+	return c.Get(consts.KeyParamClient).(*model.OAuth2Client)
 }

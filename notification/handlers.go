@@ -52,12 +52,6 @@ var handlerMap = map[string]eventHandler{
 	event.StampDeleted:           stampDeletedHandler,
 	event.FavoriteStampAdded:     favoriteStampAddedHandler,
 	event.FavoriteStampRemoved:   favoriteStampRemovedHandler,
-	event.ClipCreated:            clipCreatedHandler,
-	event.ClipDeleted:            clipDeletedHandler,
-	event.ClipMoved:              clipMovedHandler,
-	event.ClipFolderCreated:      clipFolderCreatedHandler,
-	event.ClipFolderUpdated:      clipFolderUpdatedHandler,
-	event.ClipFolderDeleted:      clipFolderDeletedHandler,
 	event.UserWebRTCStateChanged: userWebRTCStateChangedHandler,
 }
 
@@ -491,60 +485,6 @@ func favoriteStampRemovedHandler(ns *Service, ev hub.Message) {
 		EventType: "FAVORITE_STAMP_REMOVED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_id"].(uuid.UUID),
-		},
-	})
-}
-
-func clipCreatedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
-		EventType: "CLIP_CREATED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["clip_id"].(uuid.UUID),
-		},
-	})
-}
-
-func clipDeletedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
-		EventType: "CLIP_DELETED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["clip_id"].(uuid.UUID),
-		},
-	})
-}
-
-func clipMovedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
-		EventType: "CLIP_MOVED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["clip_id"].(uuid.UUID),
-		},
-	})
-}
-
-func clipFolderCreatedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
-		EventType: "CLIP_FOLDER_CREATED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["folder_id"].(uuid.UUID),
-		},
-	})
-}
-
-func clipFolderUpdatedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
-		EventType: "CLIP_FOLDER_UPDATED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["folder_id"].(uuid.UUID),
-		},
-	})
-}
-
-func clipFolderDeletedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
-		EventType: "CLIP_FOLDER_DELETED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["folder_id"].(uuid.UUID),
 		},
 	})
 }

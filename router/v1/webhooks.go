@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
@@ -40,18 +41,28 @@ func (h *Handlers) GetWebhooks(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatWebhooks(list))
 }
 
+// PostWebhooksRequest POST /webhooks リクエストボディ
+type PostWebhooksRequest struct {
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	ChannelID   uuid.UUID `json:"channelId"`
+	Secret      string    `json:"secret"`
+}
+
+func (r PostWebhooksRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, vd.Required, vd.Length(1, 32)),
+		vd.Field(&r.Description, vd.Required, vd.Length(1, 1000)),
+	)
+}
+
 // PostWebhooks POST /webhooks
 func (h *Handlers) PostWebhooks(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	var req struct {
-		Name        string    `json:"name"`
-		Description string    `json:"description"`
-		ChannelID   uuid.UUID `json:"channelId"`
-		Secret      string    `json:"secret"`
-	}
+	var req PostWebhooksRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	w, err := h.Repo.CreateWebhook(req.Name, req.Description, req.ChannelID, userID, req.Secret)
@@ -73,19 +84,29 @@ func (h *Handlers) GetWebhook(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatWebhook(w))
 }
 
+// PatchWebhookRequest PATCH /webhooks/:webhookID リクエストボディ
+type PatchWebhookRequest struct {
+	Name        null.String   `json:"name"`
+	Description null.String   `json:"description"`
+	ChannelID   uuid.NullUUID `json:"channelId"`
+	Secret      null.String   `json:"secret"`
+	CreatorID   uuid.NullUUID `json:"creatorId"`
+}
+
+func (r PatchWebhookRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, vd.Length(1, 32)),
+		vd.Field(&r.Description, vd.Length(1, 1000)),
+	)
+}
+
 // PatchWebhook PATCH /webhooks/:webhookID
 func (h *Handlers) PatchWebhook(c echo.Context) error {
 	w := getWebhookFromContext(c)
 
-	var req struct {
-		Name        null.String   `json:"name"`
-		Description null.String   `json:"description"`
-		ChannelID   uuid.NullUUID `json:"channelId"`
-		Secret      null.String   `json:"secret"`
-		CreatorID   uuid.NullUUID `json:"creatorId"`
-	}
+	var req PatchWebhookRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	args := repository.UpdateWebhookArgs{
@@ -143,7 +164,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 			return herror.BadRequest("missing X-TRAQ-Signature header")
 		}
 		if subtle.ConstantTimeCompare(utils.CalcHMACSHA1(body, w.GetSecret()), sig) != 1 {
-			return echo.NewHTTPError(http.StatusUnauthorized)
+			return herror.Unauthorized()
 		}
 	}
 
@@ -220,7 +241,7 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 			return herror.BadRequest("missing X-TRAQ-Signature header")
 		}
 		if subtle.ConstantTimeCompare(utils.CalcHMACSHA1(body, w.GetSecret()), sig) != 1 {
-			return echo.NewHTTPError(http.StatusUnauthorized)
+			return herror.Unauthorized()
 		}
 	}
 
@@ -324,7 +345,7 @@ func (h *Handlers) GetWebhookMessages(c echo.Context) error {
 
 	var req messagesQuery
 	if err := req.bind(c); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	return h.getMessages(c, req.convertU(w.GetBotUserID()), false)

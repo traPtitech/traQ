@@ -20,7 +20,7 @@ func (repo *GormRepository) migration() error {
 		// 全ての最新のデータベース定義を書く事
 
 		// テーブル
-		if err := db.AutoMigrate(allTables...).Error; err != nil {
+		if err := db.AutoMigrate(AllTables...).Error; err != nil {
 			return err
 		}
 
@@ -46,10 +46,6 @@ func (repo *GormRepository) migration() error {
 			{"stars", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 			{"users_subscribe_channels", "user_id", "users(id)", "CASCADE", "CASCADE"},
 			{"users_subscribe_channels", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
-			{"clips", "folder_id", "clip_folders(id)", "CASCADE", "CASCADE"},
-			{"clips", "message_id", "messages(id)", "CASCADE", "CASCADE"},
-			{"clips", "user_id", "users(id)", "CASCADE", "CASCADE"},
-			{"clip_folders", "user_id", "users(id)", "CASCADE", "CASCADE"},
 			{"pins", "user_id", "users(id)", "CASCADE", "CASCADE"},
 			{"pins", "message_id", "messages(id)", "CASCADE", "CASCADE"},
 			{"messages_stamps", "message_id", "messages(id)", "CASCADE", "CASCADE"},
@@ -100,8 +96,8 @@ func (repo *GormRepository) migration() error {
 	return m.Migrate()
 }
 
-// 全テーブル
-var allTables = []interface{}{
+// AllTables 全テーブル
+var AllTables = []interface{}{
 	&model.ChannelEvent{},
 	&model.RolePermission{},
 	&model.RoleInheritance{},
@@ -118,8 +114,6 @@ var allTables = []interface{}{
 	&model.WebhookBot{},
 	&model.MessageStamp{},
 	&model.Stamp{},
-	&model.Clip{},
-	&model.ClipFolder{},
 	&model.UsersTag{},
 	&model.Unread{},
 	&model.Star{},
@@ -144,4 +138,5 @@ var migrations = []*gormigrate.Migration{
 	migration.V2, // RBAC周りのリフォーム
 	migration.V3, // チャンネルイベント履歴
 	migration.V4, // Webhook, Bot外部キー
+	migration.V5, // Mute, 旧Clip削除
 }

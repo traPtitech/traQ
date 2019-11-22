@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql/driver"
 	"errors"
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"strings"
 	"time"
@@ -14,6 +15,43 @@ type BotEvent string
 // String stringにキャスト
 func (be BotEvent) String() string {
 	return string(be)
+}
+
+const (
+	// BotEventPing Pingイベント
+	BotEventPing BotEvent = "PING"
+	// BotEventJoined チャンネル参加イベント
+	BotEventJoined BotEvent = "JOINED"
+	// BotEventLeft チャンネル退出イベント
+	BotEventLeft BotEvent = "LEFT"
+	// BotEventMessageCreated メッセージ作成イベント
+	BotEventMessageCreated BotEvent = "MESSAGE_CREATED"
+	// BotEventMentionMessageCreated メンションメッセージ作成イベント
+	BotEventMentionMessageCreated BotEvent = "MENTION_MESSAGE_CREATED"
+	// BotEventDirectMessageCreated ダイレクトメッセージ作成イベント
+	BotEventDirectMessageCreated BotEvent = "DIRECT_MESSAGE_CREATED"
+	// BotEventChannelCreated チャンネル作成イベント
+	BotEventChannelCreated BotEvent = "CHANNEL_CREATED"
+	// BotEventChannelTopicChanged チャンネルトピック変更イベント
+	BotEventChannelTopicChanged BotEvent = "CHANNEL_TOPIC_CHANGED"
+	// BotEventUserCreated ユーザー作成イベント
+	BotEventUserCreated BotEvent = "USER_CREATED"
+	// BotEventStampCreated スタンプ作成イベント
+	BotEventStampCreated BotEvent = "STAMP_CREATED"
+)
+
+// BotEventSet ボットイベント一覧
+var BotEventSet = map[BotEvent]bool{
+	BotEventPing:                  true,
+	BotEventJoined:                true,
+	BotEventLeft:                  true,
+	BotEventMessageCreated:        true,
+	BotEventMentionMessageCreated: true,
+	BotEventDirectMessageCreated:  true,
+	BotEventChannelCreated:        true,
+	BotEventChannelTopicChanged:   true,
+	BotEventUserCreated:           true,
+	BotEventStampCreated:          true,
 }
 
 // BotEvents ボットイベントのセット
@@ -69,11 +107,23 @@ func (set BotEvents) Contains(ev BotEvent) bool {
 
 // MarshalJSON encoding/json.Marshaler 実装
 func (set BotEvents) MarshalJSON() ([]byte, error) {
-	arr := make([]string, 0, len(set))
-	for e := range set {
-		arr = append(arr, string(e))
+	return json.Marshal(set.StringArray())
+}
+
+// UnmarshalJSON encoding/json.Unmarshaler 実装
+func (set *BotEvents) UnmarshalJSON(data []byte) error {
+	var str []string
+	err := json.Unmarshal(data, &str)
+	if err != nil {
+		return err
 	}
-	return json.Marshal(arr)
+
+	s := BotEvents{}
+	for _, v := range str {
+		s[BotEvent(v)] = true
+	}
+	*set = s
+	return nil
 }
 
 // Clone BotEventsを複製します
@@ -83,6 +133,26 @@ func (set BotEvents) Clone() BotEvents {
 		dst[k] = v
 	}
 	return dst
+}
+
+// StringArray BotEventsをstringの配列に変換します
+func (set BotEvents) StringArray() (r []string) {
+	r = make([]string, 0, len(set))
+	for s := range set {
+		r = append(r, string(s))
+	}
+	return r
+}
+
+// Validate github.com/go-ozzo/ozzo-validation.Validatable 実装
+func (set BotEvents) Validate() error {
+	return vd.Validate(set.StringArray(), vd.Each(vd.Required, vd.By(func(value interface{}) error {
+		s, _ := value.(string)
+		if BotEventSet[BotEvent(s)] {
+			return errors.New("must be bot event")
+		}
+		return nil
+	})))
 }
 
 // BotState Bot状態

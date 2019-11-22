@@ -117,7 +117,7 @@ func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {
 }
 
 func dropTables(db *gorm.DB) error {
-	if err := db.DropTableIfExists(allTables...).Error; err != nil {
+	if err := db.DropTableIfExists(AllTables...).Error; err != nil {
 		return err
 	}
 	return db.DropTableIfExists("migrations").Error

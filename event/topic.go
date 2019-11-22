@@ -176,37 +176,6 @@ const (
 	// 		stamp_id: uuid.UUID
 	FavoriteStampRemoved = "favorite_stamp.removed"
 
-	// ClipCreated クリップが作成された
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		clip_id: uuid.UUID
-	ClipCreated = "clip.created"
-	// ClipMoved クリップが移動された
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		clip_id: uuid.UUID
-	ClipMoved = "clip.moved"
-	// ClipDeleted クリップが削除された
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		clip_id: uuid.UUID
-	ClipDeleted = "clip.deleted"
-	// ClipFolderCreated クリップフォルダが作成された
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		folder_id: uuid.UUID
-	ClipFolderCreated = "clip_folder.created"
-	// ClipFolderUpdated クリップフォルダが更新された
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		folder_id: uuid.UUID
-	ClipFolderUpdated = "clip_folder.updated"
-	// ClipFolderDeleted クリップフォルダが削除された
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		folder_id: uuid.UUID
-	ClipFolderDeleted = "clip_folder.deleted"
-
 	// WebhookCreated Webhookが作成された
 	// 	Fields:
 	// 		webhook_id: uuid.UUID

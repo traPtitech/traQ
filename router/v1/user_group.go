@@ -1,6 +1,7 @@
 package v1
 
 import (
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/rbac/permission"
@@ -26,17 +27,27 @@ func (h *Handlers) GetUserGroups(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+// PostUserGroupsRequest POST /groups リクエストボディ
+type PostUserGroupsRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Type        string `json:"type"`
+}
+
+func (r PostUserGroupsRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, vd.Required, vd.Length(1, 30)),
+		vd.Field(&r.Type, vd.Length(0, 30)),
+	)
+}
+
 // PostUserGroups POST /groups
 func (h *Handlers) PostUserGroups(c echo.Context) error {
 	reqUserID := getRequestUserID(c)
 
-	var req struct {
-		Name        string `json:"name"`
-		Description string `json:"description"`
-		Type        string `json:"type"`
-	}
+	var req PostUserGroupsRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if req.Type == "grade" && !h.RBAC.IsGranted(getRequestUser(c).Role, permission.CreateSpecialUserGroup) {
@@ -72,20 +83,30 @@ func (h *Handlers) GetUserGroup(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+// PatchUserGroupRequest PATCH /groups/:groupID リクエストボディ
+type PatchUserGroupRequest struct {
+	Name        null.String   `json:"name"`
+	Description null.String   `json:"description"`
+	AdminUserID uuid.NullUUID `json:"adminUserId"`
+	Type        null.String   `json:"type"`
+}
+
+func (r PatchUserGroupRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, vd.Length(1, 30)),
+		vd.Field(&r.Type, vd.Length(0, 30)),
+	)
+}
+
 // PatchUserGroup PATCH /groups/:groupID
 func (h *Handlers) PatchUserGroup(c echo.Context) error {
 	groupID := getRequestParamAsUUID(c, consts.ParamGroupID)
 	reqUserID := getRequestUserID(c)
 	g := getGroupFromContext(c)
 
-	var req struct {
-		Name        null.String   `json:"name"`
-		Description null.String   `json:"description"`
-		AdminUserID uuid.NullUUID `json:"adminUserId"`
-		Type        null.String   `json:"type"`
-	}
+	var req PatchUserGroupRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// 管理者ユーザーかどうか
@@ -148,17 +169,20 @@ func (h *Handlers) GetUserGroupMembers(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
+// PostUserGroupMembersRequest POST /groups/:groupID/members リクエストボディ
+type PostUserGroupMembersRequest struct {
+	UserID uuid.UUID `json:"userId"`
+}
+
 // PostUserGroupMembers POST /groups/:groupID/members
 func (h *Handlers) PostUserGroupMembers(c echo.Context) error {
 	groupID := getRequestParamAsUUID(c, consts.ParamGroupID)
 	reqUserID := getRequestUserID(c)
 	g := getGroupFromContext(c)
 
-	var req struct {
-		UserID uuid.UUID `json:"userId"`
-	}
+	var req PostUserGroupMembersRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	// 管理者ユーザーかどうか

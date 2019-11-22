@@ -23,7 +23,10 @@ CREATE TABLE `bots` (
   `deleted_at` timestamp(6) NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `bot_user_id` (`bot_user_id`),
-  UNIQUE KEY `bot_code` (`bot_code`)
+  UNIQUE KEY `bot_code` (`bot_code`),
+  KEY `bots_creator_id_users_id_foreign` (`creator_id`),
+  CONSTRAINT `bots_bot_user_id_users_id_foreign` FOREIGN KEY (`bot_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `bots_creator_id_users_id_foreign` FOREIGN KEY (`creator_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -43,7 +46,7 @@ CREATE TABLE `bots` (
 | privileged | tinyint(1) | 0 | false |  |  |  |
 | state | tinyint(4) | 0 | false |  |  |  |
 | bot_code | varchar(30) |  | false |  |  |  |
-| creator_id | char(36) |  | false |  |  |  |
+| creator_id | char(36) |  | false |  | [users](users.md) |  |
 | created_at | timestamp(6) |  | true |  |  |  |
 | updated_at | timestamp(6) |  | true |  |  |  |
 | deleted_at | timestamp(6) |  | true |  |  |  |
@@ -52,6 +55,8 @@ CREATE TABLE `bots` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
+| bots_bot_user_id_users_id_foreign | UNIQUE | UNIQUE KEY bots_bot_user_id_users_id_foreign (bot_user_id) |
+| bots_creator_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (creator_id) REFERENCES users (id) |
 | bot_code | UNIQUE | UNIQUE KEY bot_code (bot_code) |
 | bot_user_id | UNIQUE | UNIQUE KEY bot_user_id (bot_user_id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
@@ -60,6 +65,7 @@ CREATE TABLE `bots` (
 
 | Name | Definition |
 | ---- | ---------- |
+| bots_creator_id_users_id_foreign | KEY bots_creator_id_users_id_foreign (creator_id) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 | bot_code | UNIQUE KEY bot_code (bot_code) USING BTREE |
 | bot_user_id | UNIQUE KEY bot_user_id (bot_user_id) USING BTREE |

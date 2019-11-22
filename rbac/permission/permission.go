@@ -34,14 +34,6 @@ func init() {
 		EditMyClient,
 		DeleteMyClient,
 
-		GetClip,
-		CreateClip,
-		DeleteClip,
-		GetClipFolder,
-		CreateClipFolder,
-		PatchClipFolder,
-		DeleteClipFolder,
-
 		UploadFile,
 		DownloadFile,
 		DeleteFile,

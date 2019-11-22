@@ -26,7 +26,7 @@ func (h *Handlers) PostRoles(c echo.Context) error {
 		Name string `json:"name"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if err := h.Repo.CreateRole(req.Name); err != nil {
@@ -65,7 +65,7 @@ func (h *Handlers) PatchRole(c echo.Context) error {
 		OAuth2Scope  null.Bool `json:"oauth2Scope"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	r := c.Param("role")

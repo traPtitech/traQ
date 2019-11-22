@@ -176,9 +176,6 @@ func (repo *GormRepository) ChangeUserPassword(id uuid.UUID, password string) er
 	if id == uuid.Nil {
 		return ErrNilID
 	}
-	if !validator.PasswordRegex.MatchString(password) {
-		return ArgError("password", "invalid password characters")
-	}
 	salt := utils.GenerateSalt()
 	return repo.db.Model(&model.User{ID: id}).Updates(map[string]interface{}{
 		"salt":     hex.EncodeToString(salt),

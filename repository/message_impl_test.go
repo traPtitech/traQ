@@ -11,20 +11,21 @@ func TestRepositoryImpl_CreateMessage(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
 
-	t.Run("failures", func(t *testing.T) {
+	t.Run("failures 1", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateMessage(user.ID, channel.ID, "")
-		assert.Error(t, err)
-
-		_, err = repo.CreateMessage(user.ID, uuid.Nil, "a")
-		assert.Error(t, err)
-
-		_, err = repo.CreateMessage(uuid.Nil, channel.ID, "a")
+		_, err := repo.CreateMessage(user.ID, uuid.Nil, "a")
 		assert.Error(t, err)
 	})
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("failures 2", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.CreateMessage(uuid.Nil, channel.ID, "a")
+		assert.Error(t, err)
+	})
+
+	t.Run("success 1", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
@@ -34,6 +35,33 @@ func TestRepositoryImpl_CreateMessage(t *testing.T) {
 			assert.Equal(user.ID, m.UserID)
 			assert.Equal(channel.ID, m.ChannelID)
 			assert.Equal("test", m.Text)
+			assert.NotZero(m.CreatedAt)
+			assert.NotZero(m.UpdatedAt)
+			assert.Nil(m.DeletedAt)
+		}
+
+		m, err = repo.CreateMessage(user.ID, channel.ID, "")
+		if assert.NoError(err) {
+			assert.NotZero(m.ID)
+			assert.Equal(user.ID, m.UserID)
+			assert.Equal(channel.ID, m.ChannelID)
+			assert.Equal("", m.Text)
+			assert.NotZero(m.CreatedAt)
+			assert.NotZero(m.UpdatedAt)
+			assert.Nil(m.DeletedAt)
+		}
+	})
+
+	t.Run("success 2", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+
+		m, err := repo.CreateMessage(user.ID, channel.ID, "")
+		if assert.NoError(err) {
+			assert.NotZero(m.ID)
+			assert.Equal(user.ID, m.UserID)
+			assert.Equal(channel.ID, m.ChannelID)
+			assert.Equal("", m.Text)
 			assert.NotZero(m.CreatedAt)
 			assert.NotZero(m.UpdatedAt)
 			assert.Nil(m.DeletedAt)
@@ -48,7 +76,6 @@ func TestRepositoryImpl_UpdateMessage(t *testing.T) {
 	m := mustMakeMessage(t, repo, user.ID, channel.ID)
 	originalText := m.Text
 
-	assert.Error(repo.UpdateMessage(m.ID, ""))
 	assert.EqualError(repo.UpdateMessage(uuid.Must(uuid.NewV4()), "new message"), ErrNotFound.Error())
 	assert.EqualError(repo.UpdateMessage(uuid.Nil, "new message"), ErrNilID.Error())
 	assert.NoError(repo.UpdateMessage(m.ID, "new message"))

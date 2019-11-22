@@ -5,11 +5,10 @@ import (
 	"context"
 	"encoding/gob"
 	"github.com/disintegration/imaging"
-	"github.com/go-sql-driver/mysql"
+	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
@@ -47,8 +46,6 @@ const (
 	stampMaxWidth    = 128
 	stampMaxHeight   = 128
 	stampFileMaxSize = 2 << 20
-
-	errMySQLDuplicatedRecord uint16 = 1062
 
 	unexpectedError = "unexpected error"
 )
@@ -125,29 +122,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 					apiUsersMeSessions.DELETE("", h.DeleteAllMySessions, requires(permission.DeleteMySessions))
 					apiUsersMeSessions.DELETE("/:referenceID", h.DeleteMySession, requires(permission.DeleteMySessions))
 				}
-				apiUsersMeClips := apiUsersMe.Group("/clips")
-				{
-					apiUsersMeClips.GET("", h.GetClips, requires(permission.GetClip))
-					apiUsersMeClips.POST("", h.PostClip, requires(permission.CreateClip))
-					apiUsersMeClipsCid := apiUsersMeClips.Group("/:clipID", h.ValidateClipID())
-					{
-						apiUsersMeClipsCid.GET("", h.GetClip, requires(permission.GetClip))
-						apiUsersMeClipsCid.DELETE("", h.DeleteClip, requires(permission.DeleteClip))
-						apiUsersMeClipsCid.GET("/folder", h.GetClipsFolder, requires(permission.GetClip, permission.GetClipFolder))
-						apiUsersMeClipsCid.PUT("/folder", h.PutClipsFolder, requires(permission.CreateClip))
-					}
-					apiUsersMeClipsFolders := apiUsersMeClips.Group("/folders")
-					{
-						apiUsersMeClipsFolders.GET("", h.GetClipFolders, requires(permission.GetClipFolder))
-						apiUsersMeClipsFolders.POST("", h.PostClipFolder, requires(permission.CreateClipFolder))
-						apiUsersMeClipsFoldersFid := apiUsersMeClipsFolders.Group("/:folderID", h.ValidateClipFolderID())
-						{
-							apiUsersMeClipsFoldersFid.GET("", h.GetClipFolder, requires(permission.GetClip, permission.GetClipFolder))
-							apiUsersMeClipsFoldersFid.PATCH("", h.PatchClipFolder, requires(permission.PatchClipFolder))
-							apiUsersMeClipsFoldersFid.DELETE("", h.DeleteClipFolder, requires(permission.DeleteClipFolder))
-						}
-					}
-				}
 				apiUsersMeStars := apiUsersMe.Group("/stars")
 				{
 					apiUsersMeStars.GET("", h.GetStars, requires(permission.GetChannelStar))
@@ -169,8 +143,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersUID.PATCH("", h.PatchUserByID, requires(permission.EditOtherUsers))
 				apiUsersUID.PUT("/status", h.PutUserStatus, requires(permission.EditOtherUsers))
 				apiUsersUID.PUT("/password", h.PutUserPassword, requires(permission.EditOtherUsers))
-				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage), botGuard(blockUnlessSubscribingEvent(bot.DirectMessageCreated)))
-				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage), botGuard(blockUnlessSubscribingEvent(bot.DirectMessageCreated)))
+				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage), botGuard(blockUnlessSubscribingEvent(model.BotEventDirectMessageCreated)))
+				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage), botGuard(blockUnlessSubscribingEvent(model.BotEventDirectMessageCreated)))
 				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
 				apiUsersUID.PUT("/icon", h.PutUserIcon, requires(permission.EditOtherUsers))
 				apiUsersUID.GET("/notification", h.GetNotificationChannels, requires(permission.GetChannelSubscription))
@@ -437,8 +411,11 @@ func bindAndValidate(c echo.Context, i interface{}) error {
 	if err := c.Bind(i); err != nil {
 		return err
 	}
-	if err := c.Validate(i); err != nil {
-		return err
+	if err := validation.Validate(i); err != nil {
+		if e, ok := err.(validation.InternalError); ok {
+			return herror.InternalServerError(e.InternalError())
+		}
+		return herror.BadRequest(err)
 	}
 	return nil
 }
@@ -598,7 +575,7 @@ func getRequestUserID(c echo.Context) uuid.UUID {
 }
 
 func getRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
-	return uuid.FromStringOrNil(c.Param(name))
+	return extension.GetRequestParamAsUUID(c, name)
 }
 
 func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
@@ -609,12 +586,4 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	l = h.Logger.With(zap.String("logging.googleapis.com/trace", extension.GetTraceID(c)))
 	c.Set(consts.KeyLogger, l)
 	return l
-}
-
-func isMySQLDuplicatedRecordErr(err error) bool {
-	merr, ok := err.(*mysql.MySQLError)
-	if !ok {
-		return false
-	}
-	return merr.Number == errMySQLDuplicatedRecord
 }

@@ -319,12 +319,6 @@ func TestRepositoryImpl_ChangeUserPassword(t *testing.T) {
 
 		assert.EqualError(t, repo.ChangeUserPassword(uuid.Nil, ""), ErrNilID.Error())
 	})
-
-	t.Run("invalid password", func(t *testing.T) {
-		t.Parallel()
-
-		assert.Error(t, repo.ChangeUserPassword(user.ID, "a"))
-	})
 }
 
 func TestRepositoryImpl_ChangeUserIcon(t *testing.T) {

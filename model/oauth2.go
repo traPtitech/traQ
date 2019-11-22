@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/utils/validator"
 	"strings"
@@ -21,8 +22,8 @@ import (
 // /と"は使えません。
 type AccessScope string
 
-// AccessScopes AccessScopeのスライス
-type AccessScopes []AccessScope
+// AccessScopes AccessScopeのセット
+type AccessScopes map[AccessScope]struct{}
 
 // Value database/sql/driver.Valuer 実装
 func (arr AccessScopes) Value() (driver.Value, error) {
@@ -34,47 +35,81 @@ func (arr *AccessScopes) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case nil:
 		*arr = AccessScopes{}
-		return nil
 	case string:
-		as := AccessScopes{}
-		for _, v := range strings.Split(s, " ") {
-			if len(v) > 0 {
-				as = append(as, AccessScope(v))
-			}
-		}
-		*arr = as
-		return nil
+		arr.FromString(s)
 	case []byte:
-		as := AccessScopes{}
-		for _, v := range strings.Split(string(s), " ") {
-			if len(v) > 0 {
-				as = append(as, AccessScope(v))
-			}
-		}
-		*arr = as
-		return nil
+		arr.FromString(string(s))
 	default:
 		return errors.New("failed to scan AccessScopes")
+	}
+	return nil
+}
+
+// MarshalJSON encoding/json.Marshaler 実装
+func (arr *AccessScopes) MarshalJSON() ([]byte, error) {
+	return json.Marshal(arr.StringArray())
+}
+
+// UnmarshalJSON encoding/json.Unmarshaler 実装
+func (arr *AccessScopes) UnmarshalJSON(data []byte) error {
+	var str []string
+	err := json.Unmarshal(data, &str)
+	if err != nil {
+		return err
+	}
+
+	s := AccessScopes{}
+	for _, v := range str {
+		s.Add(AccessScope(v))
+	}
+	*arr = s
+	return nil
+}
+
+// FromString スペース区切り文字列からAccessScopeを抽出して追加します
+func (arr *AccessScopes) FromString(s string) {
+	r := AccessScopes{}
+	for _, v := range strings.Fields(s) {
+		r.Add(AccessScope(v))
+	}
+	*arr = r
+}
+
+// Add AccessScopesにスコープを加えます
+func (arr AccessScopes) Add(s ...AccessScope) {
+	for _, v := range s {
+		arr[v] = struct{}{}
 	}
 }
 
 // Contains AccessScopesに指定したスコープが含まれるかどうかを返します
 func (arr AccessScopes) Contains(s AccessScope) bool {
-	for _, v := range arr {
-		if v == s {
-			return true
-		}
-	}
-	return false
+	_, ok := arr[s]
+	return ok
 }
 
 // String AccessScopesをスペース区切りで文字列に出力します
 func (arr AccessScopes) String() string {
-	sa := make([]string, len(arr))
-	for i, v := range arr {
-		sa[i] = string(v)
+	sa := make([]string, 0, len(arr))
+	for s := range arr {
+		sa = append(sa, string(s))
 	}
 	return strings.Join(sa, " ")
+}
+
+// StringArray AccessScopesをstringの配列に変換します
+func (arr AccessScopes) StringArray() (r []string) {
+	r = make([]string, 0, len(arr))
+	for s := range arr {
+		r = append(r, string(s))
+	}
+	return r
+}
+
+// Validate github.com/go-ozzo/ozzo-validation.Validatable 実装
+func (arr AccessScopes) Validate() error {
+	// TODO カスタムスコープに対応
+	return vd.Validate(arr.StringArray(), vd.Each(vd.Required, vd.In("read", "write", "manage_bot")))
 }
 
 // OAuth2Authorize OAuth2 認可データの構造体
@@ -148,9 +183,10 @@ func (*OAuth2Client) TableName() string {
 
 // GetAvailableScopes requestで与えられたスコープのうち、利用可能なものを返します
 func (c *OAuth2Client) GetAvailableScopes(request AccessScopes) (result AccessScopes) {
-	for _, s := range request {
+	result = AccessScopes{}
+	for s := range request {
 		if c.Scopes.Contains(s) {
-			result = append(result, s)
+			result.Add(s)
 		}
 	}
 	return
@@ -178,9 +214,10 @@ func (*OAuth2Token) TableName() string {
 
 // GetAvailableScopes requestで与えられたスコープのうち、利用可能なものを返します
 func (t *OAuth2Token) GetAvailableScopes(request AccessScopes) (result AccessScopes) {
-	for _, s := range request {
+	result = AccessScopes{}
+	for s := range request {
 		if t.Scopes.Contains(s) {
-			result = append(result, s)
+			result.Add(s)
 		}
 	}
 	return
