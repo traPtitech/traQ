@@ -83,7 +83,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		new := strings.Repeat("a", 20)
 		e.PUT(path).
 			WithCookie(sessions.CookieName, S(t, user.ID)).
-			WithJSON(echo.Map{"password": "test", "newPassword": new}).
+			WithJSON(echo.Map{"password": "testtesttesttest", "newPassword": new}).
 			Expect().
 			Status(http.StatusNoContent)
 
