@@ -17,9 +17,6 @@ func (repo *GormRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return nil, ErrNilID
 	}
-	if len(text) == 0 {
-		return nil, ArgError("text", "Text is required")
-	}
 
 	m := &model.Message{
 		ID:        uuid.Must(uuid.NewV4()),
@@ -69,9 +66,6 @@ func (repo *GormRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 func (repo *GormRepository) UpdateMessage(messageID uuid.UUID, text string) error {
 	if messageID == uuid.Nil {
 		return ErrNilID
-	}
-	if len(text) == 0 {
-		return ArgError("text", "Text is required")
 	}
 
 	var (

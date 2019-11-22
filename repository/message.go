@@ -25,13 +25,11 @@ type MessageRepository interface {
 	//
 	// 成功した場合、メッセージとnilを返します。
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
-	// textが空の場合、ArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
 	CreateMessage(userID, channelID uuid.UUID, text string) (*model.Message, error)
 	// UpdateMessage 指定したメッセージを更新します
 	//
 	// 成功した場合、nilを返します。
-	// textが空の場合、ArgumentErrorを返します。
 	// 存在しないメッセージを指定した場合、ErrNotFoundを返します。
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
 	// DBによるエラーを返すことがあります。

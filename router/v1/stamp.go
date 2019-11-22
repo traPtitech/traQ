@@ -1,6 +1,7 @@
 package v1
 
 import (
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/rbac/permission"
@@ -135,29 +136,33 @@ func (h *Handlers) GetMessageStamps(c echo.Context) error {
 	return c.JSON(http.StatusOK, stamps)
 }
 
+// PostMessageStampRequest POST /messages/:messageID/stamps/:stampID リクエストボディ
+type PostMessageStampRequest struct {
+	Count int `json:"count"`
+}
+
+func (r *PostMessageStampRequest) Validate() error {
+	if r.Count == 0 {
+		r.Count = 1
+	}
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Count, vd.Min(1), vd.Max(100)),
+	)
+}
+
 // PostMessageStamp POST /messages/:messageID/stamps/:stampID
 func (h *Handlers) PostMessageStamp(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getRequestParamAsUUID(c, consts.ParamMessageID)
 	stampID := getRequestParamAsUUID(c, consts.ParamStampID)
-	count := 1
 
-	if c.Request().ContentLength != 0 {
-		var req struct {
-			Count int `json:"count" validate:"gte=1"`
-		}
-		if err := bindAndValidate(c, &req); err != nil {
-			return err
-		}
-		count = req.Count
-
-		if count > 100 {
-			count = 100
-		}
+	var req PostMessageStampRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
 	}
 
 	// スタンプをメッセージに押す
-	if _, err := h.Repo.AddStampToMessage(messageID, stampID, userID, count); err != nil {
+	if _, err := h.Repo.AddStampToMessage(messageID, stampID, userID, req.Count); err != nil {
 		return herror.InternalServerError(err)
 	}
 

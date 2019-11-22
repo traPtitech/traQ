@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/repository"
@@ -21,15 +22,24 @@ func (h *Handlers) GetMessageByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatMessage(m))
 }
 
+// PutMessageByIDRequest PUT /messages/:messageID リクエストボディ
+type PutMessageByIDRequest struct {
+	Text string `json:"text"`
+}
+
+func (r PutMessageByIDRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Text, vd.Required),
+	)
+}
+
 // PutMessageByID PUT /messages/:messageID
 func (h *Handlers) PutMessageByID(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getRequestParamAsUUID(c, consts.ParamMessageID)
 	m := getMessageFromContext(c)
 
-	var req struct {
-		Text string `json:"text"`
-	}
+	var req PutMessageByIDRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
@@ -40,12 +50,7 @@ func (h *Handlers) PutMessageByID(c echo.Context) error {
 	}
 
 	if err := h.Repo.UpdateMessage(messageID, req.Text); err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		default:
-			return herror.InternalServerError(err)
-		}
+		return herror.InternalServerError(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -102,30 +107,35 @@ func (h *Handlers) GetMessagesByChannelID(c echo.Context) error {
 	return h.getMessages(c, req.convertC(channelID), true)
 }
 
+// PostMessageRequest POST /channels/:channelID/messages リクエストボディ
+type PostMessageRequest struct {
+	Text  string `json:"text"`
+	Embed bool   `json:"embed" query:"embed"`
+}
+
+func (r PostMessageRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Text, vd.Required),
+	)
+}
+
 // PostMessage POST /channels/:channelID/messages
 func (h *Handlers) PostMessage(c echo.Context) error {
 	userID := getRequestUserID(c)
 	channelID := getRequestParamAsUUID(c, consts.ParamChannelID)
 
-	var req struct {
-		Text string `json:"text"`
-	}
+	var req PostMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	if c.QueryParam("embed") == "1" {
+	if req.Embed {
 		req.Text = message.NewReplacer(h.Repo).Replace(req.Text)
 	}
 
 	m, err := h.Repo.CreateMessage(userID, channelID, req.Text)
 	if err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		default:
-			return herror.InternalServerError(err)
-		}
+		return herror.InternalServerError(err)
 	}
 
 	return c.JSON(http.StatusCreated, formatMessage(m))
@@ -150,14 +160,24 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 	return h.getMessages(c, req.convertC(ch.ID), false)
 }
 
+// PostDirectMessageRequest POST /users/:userId/messages リクエストボディ
+type PostDirectMessageRequest struct {
+	Text  string `json:"text"`
+	Embed bool   `json:"embed" query:"embed"`
+}
+
+func (r PostDirectMessageRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Text, vd.Required),
+	)
+}
+
 // PostDirectMessage POST /users/:userId/messages
 func (h *Handlers) PostDirectMessage(c echo.Context) error {
 	myID := getRequestUserID(c)
 	targetID := getRequestParamAsUUID(c, consts.ParamUserID)
 
-	var req struct {
-		Text string `json:"text"`
-	}
+	var req PostDirectMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
@@ -168,21 +188,27 @@ func (h *Handlers) PostDirectMessage(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	if c.QueryParam("embed") == "1" {
+	if req.Embed {
 		req.Text = message.NewReplacer(h.Repo).Replace(req.Text)
 	}
 
 	m, err := h.Repo.CreateMessage(myID, ch.ID, req.Text)
 	if err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		default:
-			return herror.InternalServerError(err)
-		}
+		return herror.InternalServerError(err)
 	}
 
 	return c.JSON(http.StatusCreated, formatMessage(m))
+}
+
+// PostMessageReportRequest POST /messages/:messageID/report リクエストボディ
+type PostMessageReportRequest struct {
+	Reason string `json:"reason"`
+}
+
+func (r PostMessageReportRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Reason, vd.Required),
+	)
 }
 
 // PostMessageReport POST /messages/:messageID/report
@@ -190,15 +216,9 @@ func (h *Handlers) PostMessageReport(c echo.Context) error {
 	userID := getRequestUserID(c)
 	messageID := getRequestParamAsUUID(c, consts.ParamMessageID)
 
-	var req struct {
-		Reason string `json:"reason"`
-	}
+	var req PostMessageReportRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
-	}
-
-	if len(req.Reason) == 0 {
-		return herror.BadRequest("reason is required")
 	}
 
 	if err := h.Repo.CreateMessageReport(messageID, userID, req.Reason); err != nil {

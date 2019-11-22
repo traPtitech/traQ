@@ -380,9 +380,6 @@ func (repo *TestRepository) ChangeUserPassword(id uuid.UUID, password string) er
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}
-	if !validator.PasswordRegex.MatchString(password) {
-		return repository.ArgError("password", "invalid password characters")
-	}
 	salt := utils.GenerateSalt()
 	hashed := utils.HashPassword(password, salt)
 	repo.UsersLock.Lock()
@@ -1407,9 +1404,6 @@ func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return nil, repository.ErrNilID
 	}
-	if len(text) == 0 {
-		return nil, repository.ArgError("text", "Text is required")
-	}
 
 	m := &model.Message{
 		ID:        uuid.Must(uuid.NewV4()),
@@ -1430,9 +1424,6 @@ func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 func (repo *TestRepository) UpdateMessage(messageID uuid.UUID, text string) error {
 	if messageID == uuid.Nil {
 		return repository.ErrNilID
-	}
-	if len(text) == 0 {
-		return repository.ArgError("text", "Text is required")
 	}
 
 	repo.MessagesLock.Lock()

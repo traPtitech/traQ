@@ -3,7 +3,9 @@ package model
 import (
 	"database/sql/driver"
 	"errors"
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/utils/validator"
 	"strings"
 	"time"
 )
@@ -69,11 +71,23 @@ func (set BotEvents) Contains(ev BotEvent) bool {
 
 // MarshalJSON encoding/json.Marshaler 実装
 func (set BotEvents) MarshalJSON() ([]byte, error) {
-	arr := make([]string, 0, len(set))
-	for e := range set {
-		arr = append(arr, string(e))
+	return json.Marshal(set.StringArray())
+}
+
+// UnmarshalJSON encoding/json.Unmarshaler 実装
+func (set *BotEvents) UnmarshalJSON(data []byte) error {
+	var str []string
+	err := json.Unmarshal(data, &str)
+	if err != nil {
+		return err
 	}
-	return json.Marshal(arr)
+
+	s := BotEvents{}
+	for _, v := range str {
+		s[BotEvent(v)] = true
+	}
+	*set = s
+	return nil
 }
 
 // Clone BotEventsを複製します
@@ -83,6 +97,20 @@ func (set BotEvents) Clone() BotEvents {
 		dst[k] = v
 	}
 	return dst
+}
+
+// StringArray BotEventsをstringの配列に変換します
+func (set BotEvents) StringArray() (r []string) {
+	r = make([]string, 0, len(set))
+	for s := range set {
+		r = append(r, string(s))
+	}
+	return r
+}
+
+// Validate github.com/go-ozzo/ozzo-validation.Validatable 実装
+func (set BotEvents) Validate() error {
+	return vd.Validate(set.StringArray(), vd.Each(vd.Required, validator.IsBotEvent))
 }
 
 // BotState Bot状態

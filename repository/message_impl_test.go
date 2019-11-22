@@ -48,7 +48,6 @@ func TestRepositoryImpl_UpdateMessage(t *testing.T) {
 	m := mustMakeMessage(t, repo, user.ID, channel.ID)
 	originalText := m.Text
 
-	assert.Error(repo.UpdateMessage(m.ID, ""))
 	assert.EqualError(repo.UpdateMessage(uuid.Must(uuid.NewV4()), "new message"), ErrNotFound.Error())
 	assert.EqualError(repo.UpdateMessage(uuid.Nil, "new message"), ErrNilID.Error())
 	assert.NoError(repo.UpdateMessage(m.ID, "new message"))

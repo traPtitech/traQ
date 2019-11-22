@@ -47,7 +47,7 @@ func (arr *AccessScopes) Scan(src interface{}) error {
 
 // MarshalJSON encoding/json.Marshaler 実装
 func (arr *AccessScopes) MarshalJSON() ([]byte, error) {
-	return json.Marshal(arr)
+	return json.Marshal(arr.StringArray())
 }
 
 // UnmarshalJSON encoding/json.Unmarshaler 実装

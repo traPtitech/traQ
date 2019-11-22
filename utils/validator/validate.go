@@ -3,6 +3,7 @@ package validator
 import (
 	"errors"
 	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/utils"
 	"net/url"
 	"regexp"
@@ -25,6 +26,15 @@ var NotInternalURL = validation.By(func(value interface{}) error {
 	u, _ := url.Parse(s)
 	if utils.IsPrivateHost(u.Hostname()) {
 		return errors.New("must not be internal url")
+	}
+	return nil
+})
+
+// IsBotEvent BOTイベントかどうか
+var IsBotEvent = validation.By(func(value interface{}) error {
+	s, _ := value.(string)
+	if bot.IsEvent(s) {
+		return errors.New("must be bot event")
 	}
 	return nil
 })

@@ -1,11 +1,11 @@
 package v1
 
 import (
-	"fmt"
+	vd "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/permission"
@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
 )
@@ -38,14 +39,26 @@ func (h *Handlers) GetBots(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatBots(list))
 }
 
+// PostBotsRequest POST /bots リクエストボディ
+type PostBotsRequest struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
+	Description string `json:"description"`
+	WebhookURL  string `json:"webhookUrl"`
+}
+
+func (r PostBotsRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, validator.BotUserNameRuleRequired...),
+		vd.Field(&r.DisplayName, vd.Required, vd.Length(1, 32)),
+		vd.Field(&r.Description, vd.Required),
+		vd.Field(&r.WebhookURL, vd.Required, is.URL, validator.NotInternalURL),
+	)
+}
+
 // PostBots POST /bots
 func (h *Handlers) PostBots(c echo.Context) error {
-	var req struct {
-		Name        string `json:"name"`
-		DisplayName string `json:"displayName"`
-		Description string `json:"description"`
-		WebhookURL  string `json:"webhookUrl"`
-	}
+	var req PostBotsRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
@@ -53,8 +66,6 @@ func (h *Handlers) PostBots(c echo.Context) error {
 	b, err := h.Repo.CreateBot(req.Name, req.DisplayName, req.Description, getRequestUserID(c), req.WebhookURL)
 	if err != nil {
 		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
 		case err == repository.ErrAlreadyExists:
 			return herror.Conflict("this name has already been used")
 		default:
@@ -76,17 +87,27 @@ func (h *Handlers) GetBot(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatBot(b))
 }
 
+// PatchBotRequest PATCH /bots/:botID リクエストボディ
+type PatchBotRequest struct {
+	DisplayName null.String   `json:"displayName"`
+	Description null.String   `json:"description"`
+	WebhookURL  null.String   `json:"webhookUrl"`
+	Privileged  null.Bool     `json:"privileged"`
+	CreatorID   uuid.NullUUID `json:"creatorId"`
+}
+
+func (r PatchBotRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.DisplayName, vd.Length(1, 32)),
+		vd.Field(&r.WebhookURL, is.URL, validator.NotInternalURL),
+	)
+}
+
 // PatchBot PATCH /bots/:botID
 func (h *Handlers) PatchBot(c echo.Context) error {
 	b := getBotFromContext(c)
 
-	var req struct {
-		DisplayName null.String   `json:"displayName"`
-		Description null.String   `json:"description"`
-		WebhookURL  null.String   `json:"webhookUrl"`
-		Privileged  null.Bool     `json:"privileged"`
-		CreatorID   uuid.NullUUID `json:"creatorId"`
-	}
+	var req PatchBotRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
@@ -143,26 +164,27 @@ func (h *Handlers) GetBotDetail(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatBotDetail(b, t))
 }
 
+// PutBotEventsRequest PUT /bots/:botID/events リクエストボディ
+type PutBotEventsRequest struct {
+	Events model.BotEvents `json:"events"`
+}
+
+func (r PutBotEventsRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Events),
+	)
+}
+
 // PutBotEvents PUT /bots/:botID/events
 func (h *Handlers) PutBotEvents(c echo.Context) error {
 	b := getBotFromContext(c)
 
-	var req struct {
-		Events []string `json:"events"`
-	}
+	var req PutBotEventsRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	events := model.BotEvents{}
-	for _, v := range req.Events {
-		if !bot.IsEvent(v) {
-			return herror.BadRequest(fmt.Sprintf("invalid event: %s", v))
-		}
-		events[model.BotEvent(v)] = true
-	}
-
-	if err := h.Repo.SetSubscribeEventsToBot(b.ID, events); err != nil {
+	if err := h.Repo.SetSubscribeEventsToBot(b.ID, req.Events); err != nil {
 		return herror.InternalServerError(err)
 	}
 

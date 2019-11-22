@@ -1,10 +1,12 @@
 package v1
 
 import (
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/utils/set"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -26,6 +28,12 @@ func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
 	return c.JSON(http.StatusOK, users)
 }
 
+// PutChannelSubscribersRequest PUT /channels/:channelID/notification リクエストボディ
+type PutChannelSubscribersRequest struct {
+	On  set.UUIDSet `json:"on"`
+	Off set.UUIDSet `json:"off"`
+}
+
 // PutChannelSubscribers PUT /channels/:channelID/notification
 func (h *Handlers) PutChannelSubscribers(c echo.Context) error {
 	ch := getChannelFromContext(c)
@@ -35,10 +43,7 @@ func (h *Handlers) PutChannelSubscribers(c echo.Context) error {
 		return herror.Forbidden("private channel's notification is not configurable")
 	}
 
-	var req struct {
-		On  []uuid.UUID `json:"on"`
-		Off []uuid.UUID `json:"off"`
-	}
+	var req PutChannelSubscribersRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
@@ -48,10 +53,10 @@ func (h *Handlers) PutChannelSubscribers(c echo.Context) error {
 		Subscription: map[uuid.UUID]bool{},
 	}
 
-	for _, id := range req.On {
+	for _, id := range req.On.Array() {
 		args.Subscription[id] = true
 	}
-	for _, id := range req.Off {
+	for _, id := range req.Off.Array() {
 		if args.Subscription[id] {
 			// On, Offどっちにもあるものは相殺
 			delete(args.Subscription, id)
@@ -66,13 +71,22 @@ func (h *Handlers) PutChannelSubscribers(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// PostDeviceTokenRequest POST /notification/device リクエストボディ
+type PostDeviceTokenRequest struct {
+	Token string `json:"token"`
+}
+
+func (r PostDeviceTokenRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Token, vd.Required, vd.Length(1, 190)),
+	)
+}
+
 // PostDeviceToken POST /notification/device
 func (h *Handlers) PostDeviceToken(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	var req struct {
-		Token string `json:"token"`
-	}
+	var req PostDeviceTokenRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}

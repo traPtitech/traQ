@@ -3,6 +3,7 @@ package v1
 import (
 	"encoding/base64"
 	"fmt"
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/realtime/webrtc"
@@ -14,23 +15,28 @@ import (
 	"time"
 )
 
+// PostSkyWayAuthenticateRequest POST /skyway/authenticate リクエストボディ
+type PostSkyWayAuthenticateRequest struct {
+	PeerID string `json:"peerId"`
+}
+
+func (r PostSkyWayAuthenticateRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.PeerID, vd.Required),
+	)
+}
+
 // PostSkyWayAuthenticate POST /skyway/authenticate
 func (h *Handlers) PostSkyWayAuthenticate(c echo.Context) error {
-	var req struct {
-		PeerID string `json:"peerId"`
-	}
+	var req PostSkyWayAuthenticateRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
-	}
-
-	if len(req.PeerID) == 0 {
-		return herror.BadRequest("empty peerId")
 	}
 
 	ts := time.Now().Unix()
 	ttl := 40000
 	hash := utils.CalcHMACSHA256([]byte(fmt.Sprintf("%d:%d:%s", ts, ttl, req.PeerID)), h.SkyWaySecretKey)
-	return c.JSON(http.StatusOK, map[string]interface{}{
+	return c.JSON(http.StatusOK, echo.Map{
 		"peerId":    req.PeerID,
 		"timestamp": ts,
 		"ttl":       ttl,
@@ -48,18 +54,21 @@ func (h *Handlers) GetChannelWebRTCState(c echo.Context) error {
 		users = append(users, v)
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
+	return c.JSON(http.StatusOK, echo.Map{
 		"users": users,
 	})
+}
+
+// PutWebRTCStateRequest PUT /webrtc/state リクエストボディ
+type PutWebRTCStateRequest struct {
+	ChannelID uuid.NullUUID `json:"channelId"`
+	State     []string      `json:"state"`
 }
 
 // PutChannelWebRTCState PUT /webrtc/state
 func (h *Handlers) PutWebRTCState(c echo.Context) error {
 	userID := getRequestUserID(c)
-	var req struct {
-		ChannelID uuid.NullUUID `json:"channelId"`
-		State     []string      `json:"state"`
-	}
+	var req PutWebRTCStateRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
