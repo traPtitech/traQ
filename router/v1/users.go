@@ -263,7 +263,7 @@ type PutPasswordRequest struct {
 
 func (r PutPasswordRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Password, validator.PasswordRuleRequired...),
+		vd.Field(&r.Password, vd.Required),
 		vd.Field(&r.NewPassword, validator.PasswordRuleRequired...),
 	)
 }
