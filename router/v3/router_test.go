@@ -89,8 +89,8 @@ func TestMain(m *testing.M) {
 			Hub:      hub,
 			Logger:   zap.NewNop(),
 			Realtime: nil,
-			Version:  "test",
-			Revision: "test",
+			Version:  "version",
+			Revision: "revision",
 		}
 		handlers.Setup(e.Group("/api"))
 		servers[key] = httptest.NewServer(e)
