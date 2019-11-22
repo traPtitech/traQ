@@ -8,10 +8,13 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/traQ/model"
 	rbac "github.com/traPtitech/traQ/rbac/impl"
+	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"net/http"
@@ -23,6 +26,7 @@ import (
 
 const (
 	common = "common"
+	random = "random"
 )
 
 var (
@@ -108,6 +112,17 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+// Setup テストセットアップ
+func Setup(t *testing.T, server string) (repository.Repository, *httptest.Server) {
+	t.Helper()
+	s, ok := servers[server]
+	if !ok {
+		t.FailNow()
+	}
+	repo := repositories[server]
+	return repo, s
+}
+
 // S 指定ユーザーのAPIセッショントークンを発行
 func S(t *testing.T, userID uuid.UUID) string {
 	t.Helper()
@@ -137,6 +152,17 @@ func R(t *testing.T, server *httptest.Server) *httpexpect.Expect {
 			},
 		},
 	})
+}
+
+// User ユーザーを必ず作成します
+func User(t *testing.T, repo repository.Repository, userName string) *model.User {
+	t.Helper()
+	if userName == random {
+		userName = utils.RandAlphabetAndNumberString(32)
+	}
+	u, err := repo.CreateUser(userName, "testtesttesttest", role.User)
+	require.NoError(t, err)
+	return u
 }
 
 func getEnvOrDefault(env string, def string) string {
