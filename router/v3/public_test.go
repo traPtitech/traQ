@@ -10,7 +10,7 @@ func TestHandlers_GetVersion(t *testing.T) {
 	_, server := Setup(t, common)
 
 	e := R(t, server)
-	obj := e.PUT("/api/v3/version").
+	obj := e.GET("/api/v3/version").
 		Expect().
 		Status(http.StatusOK).
 		JSON().
