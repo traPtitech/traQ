@@ -6,6 +6,9 @@ traQ: $(SOURCES)
 .PHONY: init
 init:
 	go mod download
+
+.PHONY: genkey
+genkey:
 	mkdir -p ./dev/keys
 	openssl ecparam -genkey -name prime256v1 -noout -out ./dev/keys/ec.pem
 	openssl ec -in ./dev/keys/ec.pem -out ./dev/keys/ec_pub.pem -pubout

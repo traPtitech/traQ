@@ -12,14 +12,13 @@
 - go 1.13.x
 - git
 - make
-- openssl
 - docker
 - docker-compose
 
 ### Setup with docker and docker-compose
 
 #### First Up (or entirely rebuild)
-`make init && docker-compose up -d --build`
+`docker-compose up -d --build`
 
 Now you can access to
 + `http://localhost:3000` for traQ
