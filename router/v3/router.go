@@ -43,23 +43,23 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiUsers.GET("", NotImplemented)
 			apiUsers.POST("", NotImplemented)
-			apiUsersUid := apiUsers.Group("/:userID", retrieve.UserID(false))
+			apiUsersUID := apiUsers.Group("/:userID", retrieve.UserID(false))
 			{
-				apiUsersUid.GET("", NotImplemented)
-				apiUsersUid.PATCH("", NotImplemented)
-				apiUsersUid.POST("/messages", NotImplemented)
-				apiUsersUid.GET("/messages", NotImplemented)
-				apiUsersUid.GET("/icon", NotImplemented)
-				apiUsersUid.PUT("/icon", NotImplemented)
-				apiUsersUid.PUT("/password", NotImplemented)
-				apiUsersUidTags := apiUsersUid.Group("/tags")
+				apiUsersUID.GET("", NotImplemented)
+				apiUsersUID.PATCH("", NotImplemented)
+				apiUsersUID.POST("/messages", NotImplemented)
+				apiUsersUID.GET("/messages", NotImplemented)
+				apiUsersUID.GET("/icon", NotImplemented)
+				apiUsersUID.PUT("/icon", NotImplemented)
+				apiUsersUID.PUT("/password", NotImplemented)
+				apiUsersUIDTags := apiUsersUID.Group("/tags")
 				{
-					apiUsersUidTags.GET("", NotImplemented)
-					apiUsersUidTags.POST("", NotImplemented)
-					apiUsersUidTagsTid := apiUsersUidTags.Group("/:tagID")
+					apiUsersUIDTags.GET("", NotImplemented)
+					apiUsersUIDTags.POST("", NotImplemented)
+					apiUsersUIDTagsTID := apiUsersUIDTags.Group("/:tagID")
 					{
-						apiUsersUidTagsTid.PATCH("", NotImplemented)
-						apiUsersUidTagsTid.DELETE("", NotImplemented)
+						apiUsersUIDTagsTID.PATCH("", NotImplemented)
+						apiUsersUIDTagsTID.DELETE("", NotImplemented)
 					}
 				}
 			}
@@ -79,10 +79,10 @@ func (h *Handlers) Setup(e *echo.Group) {
 				{
 					apiUsersMeTags.GET("", NotImplemented)
 					apiUsersMeTags.POST("", NotImplemented)
-					apiUsersMeTagsTid := apiUsersMeTags.Group("/:tagID")
+					apiUsersMeTagsTID := apiUsersMeTags.Group("/:tagID")
 					{
-						apiUsersMeTagsTid.PATCH("", NotImplemented)
-						apiUsersMeTagsTid.DELETE("", NotImplemented)
+						apiUsersMeTagsTID.PATCH("", NotImplemented)
+						apiUsersMeTagsTID.DELETE("", NotImplemented)
 					}
 				}
 				apiUsersMeStars := apiUsersMe.Group("/stars")
@@ -103,41 +103,41 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiChannels.GET("", NotImplemented)
 			apiChannels.POST("", NotImplemented)
-			apiChannelsCid := apiChannels.Group("/:channelID")
+			apiChannelsCID := apiChannels.Group("/:channelID")
 			{
-				apiChannelsCid.GET("", NotImplemented)
-				apiChannelsCid.PATCH("", NotImplemented)
-				apiChannelsCid.GET("/messages", NotImplemented)
-				apiChannelsCid.POST("/messages", NotImplemented)
-				apiChannelsCid.GET("/stats", NotImplemented)
-				apiChannelsCid.GET("/topic", NotImplemented)
-				apiChannelsCid.PUT("/topic", NotImplemented)
-				apiChannelsCid.GET("/viewers", NotImplemented)
-				apiChannelsCid.GET("/pins", NotImplemented)
-				apiChannelsCid.GET("/subscribers", NotImplemented)
-				apiChannelsCid.PUT("/subscribers", NotImplemented)
-				apiChannelsCid.PATCH("/subscribers", NotImplemented)
-				apiChannelsCid.GET("/bots", NotImplemented)
-				apiChannelsCid.GET("/events", NotImplemented)
+				apiChannelsCID.GET("", NotImplemented)
+				apiChannelsCID.PATCH("", NotImplemented)
+				apiChannelsCID.GET("/messages", NotImplemented)
+				apiChannelsCID.POST("/messages", NotImplemented)
+				apiChannelsCID.GET("/stats", NotImplemented)
+				apiChannelsCID.GET("/topic", NotImplemented)
+				apiChannelsCID.PUT("/topic", NotImplemented)
+				apiChannelsCID.GET("/viewers", NotImplemented)
+				apiChannelsCID.GET("/pins", NotImplemented)
+				apiChannelsCID.GET("/subscribers", NotImplemented)
+				apiChannelsCID.PUT("/subscribers", NotImplemented)
+				apiChannelsCID.PATCH("/subscribers", NotImplemented)
+				apiChannelsCID.GET("/bots", NotImplemented)
+				apiChannelsCID.GET("/events", NotImplemented)
 			}
 		}
 		apiMessages := api.Group("/messages")
 		{
-			apiMessagesMid := apiMessages.Group("/:messageID")
+			apiMessagesMID := apiMessages.Group("/:messageID")
 			{
-				apiMessagesMid.GET("", NotImplemented)
-				apiMessagesMid.PUT("", NotImplemented)
-				apiMessagesMid.DELETE("", NotImplemented)
-				apiMessagesMid.GET("/pin", NotImplemented)
-				apiMessagesMid.POST("/pin", NotImplemented)
-				apiMessagesMid.DELETE("/pin", NotImplemented)
-				apiMessagesMidStamps := apiMessagesMid.Group("/stamps")
+				apiMessagesMID.GET("", NotImplemented)
+				apiMessagesMID.PUT("", NotImplemented)
+				apiMessagesMID.DELETE("", NotImplemented)
+				apiMessagesMID.GET("/pin", NotImplemented)
+				apiMessagesMID.POST("/pin", NotImplemented)
+				apiMessagesMID.DELETE("/pin", NotImplemented)
+				apiMessagesMIDStamps := apiMessagesMID.Group("/stamps")
 				{
-					apiMessagesMidStamps.GET("", NotImplemented)
-					apiMessagesMidStampsSid := apiMessagesMidStamps.Group("/:stampID")
+					apiMessagesMIDStamps.GET("", NotImplemented)
+					apiMessagesMIDStampsSID := apiMessagesMIDStamps.Group("/:stampID")
 					{
-						apiMessagesMidStampsSid.POST("", NotImplemented)
-						apiMessagesMidStampsSid.DELETE("", NotImplemented)
+						apiMessagesMIDStampsSID.POST("", NotImplemented)
+						apiMessagesMIDStampsSID.DELETE("", NotImplemented)
 					}
 				}
 			}
@@ -146,75 +146,75 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiFiles.GET("", NotImplemented)
 			apiFiles.POST("", NotImplemented)
-			apiFilesFid := apiFiles.Group("/:fileID")
+			apiFilesFID := apiFiles.Group("/:fileID")
 			{
-				apiFilesFid.GET("", NotImplemented)
-				apiFilesFid.DELETE("", NotImplemented)
-				apiFilesFid.GET("/meta", NotImplemented)
-				apiFilesFid.GET("/thumbnail", NotImplemented)
+				apiFilesFID.GET("", NotImplemented)
+				apiFilesFID.DELETE("", NotImplemented)
+				apiFilesFID.GET("/meta", NotImplemented)
+				apiFilesFID.GET("/thumbnail", NotImplemented)
 			}
 		}
 		apiTags := api.Group("/tags")
 		{
-			apiTagsTid := apiTags.Group("/:tagID")
+			apiTagsTID := apiTags.Group("/:tagID")
 			{
-				apiTagsTid.GET("", NotImplemented)
+				apiTagsTID.GET("", NotImplemented)
 			}
 		}
 		apiStamps := api.Group("/stamps")
 		{
 			apiStamps.GET("", NotImplemented)
 			apiStamps.POST("", NotImplemented)
-			apiStampsSid := apiStamps.Group("/:stampID")
+			apiStampsSID := apiStamps.Group("/:stampID")
 			{
-				apiStampsSid.GET("", NotImplemented)
-				apiStampsSid.DELETE("", NotImplemented)
+				apiStampsSID.GET("", NotImplemented)
+				apiStampsSID.DELETE("", NotImplemented)
 			}
 		}
 		apiStampPalettes := api.Group("/stamp-palettes")
 		{
 			apiStampPalettes.GET("", NotImplemented)
 			apiStampPalettes.POST("", NotImplemented)
-			apiStampPalettesPid := apiStampPalettes.Group("/:paletteID")
+			apiStampPalettesPID := apiStampPalettes.Group("/:paletteID")
 			{
-				apiStampPalettesPid.GET("", NotImplemented)
-				apiStampPalettesPid.PATCH("", NotImplemented)
-				apiStampPalettesPid.DELETE("", NotImplemented)
-				apiStampPalettesPid.PUT("/stamps", NotImplemented)
+				apiStampPalettesPID.GET("", NotImplemented)
+				apiStampPalettesPID.PATCH("", NotImplemented)
+				apiStampPalettesPID.DELETE("", NotImplemented)
+				apiStampPalettesPID.PUT("/stamps", NotImplemented)
 			}
 		}
 		apiWebhooks := api.Group("/webhooks")
 		{
 			apiWebhooks.GET("", NotImplemented)
 			apiWebhooks.POST("", NotImplemented)
-			apiWebhooksWid := apiWebhooks.Group("/:webhookID")
+			apiWebhooksWID := apiWebhooks.Group("/:webhookID")
 			{
-				apiWebhooksWid.GET("", NotImplemented)
-				apiWebhooksWid.PATCH("", NotImplemented)
-				apiWebhooksWid.DELETE("", NotImplemented)
-				apiWebhooksWid.GET("/icon", NotImplemented)
-				apiWebhooksWid.PUT("/icon", NotImplemented)
-				apiWebhooksWid.GET("/messages", NotImplemented)
+				apiWebhooksWID.GET("", NotImplemented)
+				apiWebhooksWID.PATCH("", NotImplemented)
+				apiWebhooksWID.DELETE("", NotImplemented)
+				apiWebhooksWID.GET("/icon", NotImplemented)
+				apiWebhooksWID.PUT("/icon", NotImplemented)
+				apiWebhooksWID.GET("/messages", NotImplemented)
 			}
 		}
 		apiGroups := api.Group("/groups")
 		{
 			apiGroups.GET("", NotImplemented)
 			apiGroups.POST("", NotImplemented)
-			apiGroupsGid := apiGroups.Group("/:groupID")
+			apiGroupsGID := apiGroups.Group("/:groupID")
 			{
-				apiGroupsGid.GET("", NotImplemented)
-				apiGroupsGid.PATCH("", NotImplemented)
-				apiGroupsGid.DELETE("", NotImplemented)
-				apiGroupsGidMembers := apiGroupsGid.Group("/members")
+				apiGroupsGID.GET("", NotImplemented)
+				apiGroupsGID.PATCH("", NotImplemented)
+				apiGroupsGID.DELETE("", NotImplemented)
+				apiGroupsGIDMembers := apiGroupsGID.Group("/members")
 				{
-					apiGroupsGidMembers.GET("", NotImplemented)
-					apiGroupsGidMembers.POST("", NotImplemented)
-					apiGroupsGidMembers.PUT("", NotImplemented)
-					apiGroupsGidMembersUid := apiGroupsGidMembers.Group("/:userID")
+					apiGroupsGIDMembers.GET("", NotImplemented)
+					apiGroupsGIDMembers.POST("", NotImplemented)
+					apiGroupsGIDMembers.PUT("", NotImplemented)
+					apiGroupsGIDMembersUID := apiGroupsGIDMembers.Group("/:userID")
 					{
-						apiGroupsGidMembersUid.PATCH("", NotImplemented)
-						apiGroupsGidMembersUid.DELETE("", NotImplemented)
+						apiGroupsGIDMembersUID.PATCH("", NotImplemented)
+						apiGroupsGIDMembersUID.DELETE("", NotImplemented)
 					}
 				}
 			}
@@ -228,32 +228,32 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiClients.GET("", NotImplemented)
 			apiClients.POST("", NotImplemented)
-			apiClientsCid := apiClients.Group("/:clientID")
+			apiClientsCID := apiClients.Group("/:clientID")
 			{
-				apiClientsCid.GET("", NotImplemented)
-				apiClientsCid.PATCH("", NotImplemented)
-				apiClientsCid.DELETE("", NotImplemented)
+				apiClientsCID.GET("", NotImplemented)
+				apiClientsCID.PATCH("", NotImplemented)
+				apiClientsCID.DELETE("", NotImplemented)
 			}
 		}
 		apiBots := api.Group("/bots")
 		{
 			apiBots.GET("", NotImplemented)
 			apiBots.POST("", NotImplemented)
-			apiBotsBid := apiBots.Group("/:botID")
+			apiBotsBID := apiBots.Group("/:botID")
 			{
-				apiBotsBid.GET("", NotImplemented)
-				apiBotsBid.PATCH("", NotImplemented)
-				apiBotsBid.DELETE("", NotImplemented)
-				apiBotsBid.GET("/icon", NotImplemented)
-				apiBotsBid.PUT("/icon", NotImplemented)
-				apiBotsBid.GET("/logs", NotImplemented)
-				apiBotsBidActions := apiBotsBid.Group("/actions")
+				apiBotsBID.GET("", NotImplemented)
+				apiBotsBID.PATCH("", NotImplemented)
+				apiBotsBID.DELETE("", NotImplemented)
+				apiBotsBID.GET("/icon", NotImplemented)
+				apiBotsBID.PUT("/icon", NotImplemented)
+				apiBotsBID.GET("/logs", NotImplemented)
+				apiBotsBIDActions := apiBotsBID.Group("/actions")
 				{
-					apiBotsBidActions.POST("/activate", NotImplemented)
-					apiBotsBidActions.POST("/inactivate", NotImplemented)
-					apiBotsBidActions.POST("/reissue", NotImplemented)
-					apiBotsBidActions.POST("/join", NotImplemented)
-					apiBotsBidActions.POST("/leave", NotImplemented)
+					apiBotsBIDActions.POST("/activate", NotImplemented)
+					apiBotsBIDActions.POST("/inactivate", NotImplemented)
+					apiBotsBIDActions.POST("/reissue", NotImplemented)
+					apiBotsBIDActions.POST("/join", NotImplemented)
+					apiBotsBIDActions.POST("/leave", NotImplemented)
 				}
 			}
 		}
@@ -266,16 +266,16 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiClipFolders.GET("", NotImplemented)
 			apiClipFolders.POST("", NotImplemented)
-			apiClipFoldersFid := apiClipFolders.Group("/:folderID")
+			apiClipFoldersFID := apiClipFolders.Group("/:folderID")
 			{
-				apiClipFoldersFid.GET("", NotImplemented)
-				apiClipFoldersFid.PATCH("", NotImplemented)
-				apiClipFoldersFid.DELETE("", NotImplemented)
-				apiClipFoldersFidMessages := apiClipFoldersFid.Group("/messages")
+				apiClipFoldersFID.GET("", NotImplemented)
+				apiClipFoldersFID.PATCH("", NotImplemented)
+				apiClipFoldersFID.DELETE("", NotImplemented)
+				apiClipFoldersFIDMessages := apiClipFoldersFID.Group("/messages")
 				{
-					apiClipFoldersFidMessages.GET("", NotImplemented)
-					apiClipFoldersFidMessages.POST("", NotImplemented)
-					apiClipFoldersFidMessages.DELETE("/:messageID", NotImplemented)
+					apiClipFoldersFIDMessages.GET("", NotImplemented)
+					apiClipFoldersFIDMessages.POST("", NotImplemented)
+					apiClipFoldersFIDMessages.DELETE("/:messageID", NotImplemented)
 				}
 			}
 		}
