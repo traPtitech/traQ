@@ -669,7 +669,9 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 		obj.Value("token_type").String().Equal(authScheme)
 		obj.Value("expires_in").Number().Equal(1000)
 		obj.NotContainsKey("refresh_token")
-		obj.Value("scope").String().Equal(client.Scopes.String())
+		actual := model.AccessScopes{}
+		actual.FromString(obj.Value("scope").String().Raw())
+		assert.ElementsMatch(t, client.Scopes.StringArray(), actual.StringArray())
 	})
 
 	t.Run("Success with form Auth", func(t *testing.T) {
@@ -689,7 +691,9 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 		obj.Value("token_type").String().Equal(authScheme)
 		obj.Value("expires_in").Number().Equal(1000)
 		obj.NotContainsKey("refresh_token")
-		obj.Value("scope").String().Equal(client.Scopes.String())
+		actual := model.AccessScopes{}
+		actual.FromString(obj.Value("scope").String().Raw())
+		assert.ElementsMatch(t, client.Scopes.StringArray(), actual.StringArray())
 	})
 
 	t.Run("Success with smaller scope", func(t *testing.T) {
@@ -863,7 +867,9 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		obj.Value("token_type").String().Equal(authScheme)
 		obj.Value("expires_in").Number().Equal(1000)
 		obj.Value("refresh_token").String().NotEmpty()
-		obj.Value("scope").String().Equal(client.Scopes.String())
+		actual := model.AccessScopes{}
+		actual.FromString(obj.Value("scope").String().Raw())
+		assert.ElementsMatch(t, client.Scopes.StringArray(), actual.StringArray())
 	})
 
 	t.Run("Success with form Auth", func(t *testing.T) {
@@ -885,7 +891,9 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		obj.Value("token_type").String().Equal(authScheme)
 		obj.Value("expires_in").Number().Equal(1000)
 		obj.Value("refresh_token").String().NotEmpty()
-		obj.Value("scope").String().Equal(client.Scopes.String())
+		actual := model.AccessScopes{}
+		actual.FromString(obj.Value("scope").String().Raw())
+		assert.ElementsMatch(t, client.Scopes.StringArray(), actual.StringArray())
 	})
 
 	t.Run("Success with smaller scope", func(t *testing.T) {
@@ -960,7 +968,9 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		obj.Value("token_type").String().Equal(authScheme)
 		obj.Value("expires_in").Number().Equal(1000)
 		obj.Value("refresh_token").String().NotEmpty()
-		obj.Value("scope").String().Equal(client.Scopes.String())
+		actual := model.AccessScopes{}
+		actual.FromString(obj.Value("scope").String().Raw())
+		assert.ElementsMatch(t, client.Scopes.StringArray(), actual.StringArray())
 	})
 
 	t.Run("Invalid Request (No user credentials)", func(t *testing.T) {
@@ -1567,7 +1577,9 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		obj.Value("token_type").String().Equal(authScheme)
 		obj.Value("expires_in").Number().Equal(1000)
 		obj.Value("refresh_token").String().NotEmpty()
-		obj.Value("scope").String().Equal(authorize.Scopes.String())
+		actual := model.AccessScopes{}
+		actual.FromString(obj.Value("scope").String().Raw())
+		assert.ElementsMatch(t, authorize.Scopes.StringArray(), actual.StringArray())
 
 		_, err := repo.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
