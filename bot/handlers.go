@@ -64,7 +64,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			}
 			return
 		}
-		if !filterBot(p, bot, stateFilter(model.BotActive), eventFilter(DirectMessageCreated), botUserIDNotEqualsFilter(m.UserID)) {
+		if !filterBot(p, bot, stateFilter(model.BotActive), eventFilter(model.BotEventDirectMessageCreated), botUserIDNotEqualsFilter(m.UserID)) {
 			return
 		}
 
@@ -73,11 +73,11 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			Message:     makeMessagePayload(m, user, embedded, plain),
 		}
 
-		multicast(p, DirectMessageCreated, &payload, []*model.Bot{bot})
+		multicast(p, model.BotEventDirectMessageCreated, &payload, []*model.Bot{bot})
 	} else {
 		// 購読BOT
 		query := repository.BotsQuery{}
-		bots, err := p.repo.GetBots(query.CMemberOf(m.ChannelID).Active().Subscribe(MessageCreated))
+		bots, err := p.repo.GetBots(query.CMemberOf(m.ChannelID).Active().Subscribe(model.BotEventMessageCreated))
 		if err != nil {
 			p.logger.Error("failed to GetBots", zap.Error(err))
 			return
@@ -96,7 +96,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 						}
 						continue
 					}
-					if b.SubscribeEvents.Contains(MentionMessageCreated) {
+					if b.SubscribeEvents.Contains(model.BotEventMentionMessageCreated) {
 						bots = append(bots, b)
 					}
 				}
@@ -113,7 +113,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			Message:     makeMessagePayload(m, user, embedded, plain),
 		}
 
-		multicast(p, MessageCreated, &payload, bots)
+		multicast(p, model.BotEventMessageCreated, &payload, bots)
 	}
 }
 
@@ -160,22 +160,22 @@ func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
 
 	switch ev {
 	case event.BotJoined:
-		p.sendEvent(bot, Joined, buf)
+		p.sendEvent(bot, model.BotEventJoined, buf)
 	case event.BotLeft:
-		p.sendEvent(bot, Left, buf)
+		p.sendEvent(bot, model.BotEventLeft, buf)
 	}
 }
 
 func userCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	user := fields["user"].(*model.User)
 
-	bots, err := p.repo.GetBots(repository.BotsQuery{}.Privileged().Active().Subscribe(UserCreated))
+	bots, err := p.repo.GetBots(repository.BotsQuery{}.Privileged().Active().Subscribe(model.BotEventUserCreated))
 	if err != nil {
 		p.logger.Error("failed to GetBots", zap.Error(err))
 		return
 	}
 
-	multicast(p, UserCreated, &userCreatedPayload{
+	multicast(p, model.BotEventUserCreated, &userCreatedPayload{
 		basePayload: makeBasePayload(),
 		User:        makeUserPayload(user),
 	}, bots)
@@ -186,7 +186,7 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	private := fields["private"].(bool)
 
 	if !private {
-		bots, err := p.repo.GetBots(repository.BotsQuery{}.Privileged().Active().Subscribe(ChannelCreated))
+		bots, err := p.repo.GetBots(repository.BotsQuery{}.Privileged().Active().Subscribe(model.BotEventChannelCreated))
 		if err != nil {
 			p.logger.Error("failed to GetBots", zap.Error(err))
 			return
@@ -206,7 +206,7 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			return
 		}
 
-		multicast(p, ChannelCreated, &channelCreatedPayload{
+		multicast(p, model.BotEventChannelCreated, &channelCreatedPayload{
 			basePayload: makeBasePayload(),
 			Channel:     makeChannelPayload(ch, path, user),
 		}, bots)
@@ -218,7 +218,7 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 	topic := fields["topic"].(string)
 	updaterID := fields["updater_id"].(uuid.UUID)
 
-	bots, err := p.repo.GetBots(repository.BotsQuery{}.CMemberOf(chID).Active().Subscribe(ChannelTopicChanged))
+	bots, err := p.repo.GetBots(repository.BotsQuery{}.CMemberOf(chID).Active().Subscribe(model.BotEventChannelTopicChanged))
 	if err != nil {
 		p.logger.Error("failed to GetBots", zap.Error(err))
 		return
@@ -251,7 +251,7 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	multicast(p, ChannelTopicChanged, &channelTopicChangedPayload{
+	multicast(p, model.BotEventChannelTopicChanged, &channelTopicChangedPayload{
 		basePayload: makeBasePayload(),
 		Channel:     makeChannelPayload(ch, path, chCreator),
 		Topic:       topic,
@@ -262,7 +262,7 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	stamp := fields["stamp"].(*model.Stamp)
 
-	bots, err := p.repo.GetBots(repository.BotsQuery{}.Active().Subscribe(StampCreated))
+	bots, err := p.repo.GetBots(repository.BotsQuery{}.Active().Subscribe(model.BotEventStampCreated))
 	if err != nil {
 		p.logger.Error("failed to GetBots", zap.Error(err))
 		return
@@ -277,7 +277,7 @@ func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	multicast(p, StampCreated, &stampCreatedPayload{
+	multicast(p, model.BotEventStampCreated, &stampCreatedPayload{
 		basePayload: makeBasePayload(),
 		ID:          stamp.ID,
 		Name:        stamp.Name,
@@ -296,7 +296,7 @@ func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 	defer release()
 
-	if p.sendEvent(bot, Ping, buf) {
+	if p.sendEvent(bot, model.BotEventPing, buf) {
 		// OK
 		if err := p.repo.ChangeBotState(bot.ID, model.BotActive); err != nil {
 			p.logger.Error("failed to ChangeBotState", zap.Error(err))

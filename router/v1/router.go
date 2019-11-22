@@ -9,7 +9,6 @@ import (
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
@@ -144,8 +143,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersUID.PATCH("", h.PatchUserByID, requires(permission.EditOtherUsers))
 				apiUsersUID.PUT("/status", h.PutUserStatus, requires(permission.EditOtherUsers))
 				apiUsersUID.PUT("/password", h.PutUserPassword, requires(permission.EditOtherUsers))
-				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage), botGuard(blockUnlessSubscribingEvent(bot.DirectMessageCreated)))
-				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage), botGuard(blockUnlessSubscribingEvent(bot.DirectMessageCreated)))
+				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage), botGuard(blockUnlessSubscribingEvent(model.BotEventDirectMessageCreated)))
+				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage), botGuard(blockUnlessSubscribingEvent(model.BotEventDirectMessageCreated)))
 				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
 				apiUsersUID.PUT("/icon", h.PutUserIcon, requires(permission.EditOtherUsers))
 				apiUsersUID.GET("/notification", h.GetNotificationChannels, requires(permission.GetChannelSubscription))
