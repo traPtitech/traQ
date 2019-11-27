@@ -10,6 +10,6 @@ jobs:
       - uses: actions/checkout@v1
       - name: Spectral checks
         uses: stoplightio/spectral-action@v0.5.5
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SPECTRAL_FILE_PATH: docs/swagger.yaml
+        with:
+          file_glob: docs/*.yaml
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
