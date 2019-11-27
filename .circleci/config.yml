@@ -43,9 +43,14 @@ jobs:
       - checkout
       - restore_mod
       - run:
-          name: Install golangci-lint v1.18.0
-          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.18.0
-      - run: ./bin/golangci-lint run
+          name: Install reviewdog
+          command: curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh | sh -s -- -b ./bin
+      - run:
+          name: Install golangci-lint
+          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.21.0
+      - run:
+          name: lint
+          command: ./bin/golangci-lint run --out-format=line-number | ./bin/reviewdog -f=golangci-lint -name=golangci-lint -reporter=github-pr-check
 
   build:
     executor: default
