@@ -2,6 +2,7 @@ package migration
 
 import (
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/sessions"
 )
 
 // AllTables 最新のスキーマの全テーブルモデル
@@ -38,6 +39,7 @@ var AllTables = []interface{}{
 	&model.UserGroupMember{},
 	&model.UserGroup{},
 	&model.User{},
+	&sessions.SessionRecord{},
 }
 
 // AllForeignKeys 最新のスキーマの全外部キー制約
