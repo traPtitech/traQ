@@ -43,6 +43,13 @@ Now you can access to
 
 You can remove the container by `make rm-test-db`
 
+### Code Lint
+`make lint`
+
+Installing below tools in advance is required:
++ [golangci-lint](https://github.com/golangci/golangci-lint) for go codes
++ [spectral](https://github.com/stoplightio/spectral) for swagger specs
+
 ## License
 Code licensed under [the MIT License](https://github.com/traPtitech/traQ/blob/master/LICENSE).
 

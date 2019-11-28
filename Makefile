@@ -24,6 +24,19 @@ up-test-db:
 rm-test-db:
 	@./dev/bin/down-test-db.sh
 
+.PHONY: lint
+lint:
+	-@make golangci-lint
+	-@make swagger-lint
+
+.PHONY: golangci-lint
+golangci-lint:
+	golangci-lint run
+
+.PHONY: swagger-lint
+swagger-lint:
+	spectral lint -q docs/*.yaml
+
 .PHONY: make-db-docs
 make-db-docs:
 	if [ -d "./docs/dbschema" ]; then \
