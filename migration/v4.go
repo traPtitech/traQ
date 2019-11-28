@@ -5,8 +5,8 @@ import (
 	"gopkg.in/gormigrate.v1"
 )
 
-// V4 Webhook, Bot外部キー
-var V4 = &gormigrate.Migration{
+// v4 Webhook, Bot外部キー
+var v4 = &gormigrate.Migration{
 	ID: "4",
 	Migrate: func(db *gorm.DB) error {
 		for _, c := range v4ForeignKeys() {

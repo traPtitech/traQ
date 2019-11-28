@@ -8,6 +8,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/utils"
@@ -117,7 +118,7 @@ func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {
 }
 
 func dropTables(db *gorm.DB) error {
-	if err := db.DropTableIfExists(AllTables...).Error; err != nil {
+	if err := db.DropTableIfExists(migration.AllTables...).Error; err != nil {
 		return err
 	}
 	return db.DropTableIfExists("migrations").Error

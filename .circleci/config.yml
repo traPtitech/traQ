@@ -63,7 +63,7 @@ jobs:
           when: always
           command: |
             mkdir -p $GOCACHE
-            go build -v -ldflags "-X main.version=$(git describe --tags --abbrev=0) -X main.revision=$(git rev-parse --short HEAD)"
+            go build -ldflags "-X main.version=$(git describe --tags --abbrev=0) -X main.revision=$(git rev-parse --short HEAD)"
       - save_cache:
           key: build-cache-{{ .Branch }}--{{ .Revision }}
           when: always

@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-// V2 RBAC周りのリフォーム
-var V2 = &gormigrate.Migration{
+// v2 RBAC周りのリフォーム
+var v2 = &gormigrate.Migration{
 	ID: "2",
 	Migrate: func(db *gorm.DB) error {
 		if err := db.AutoMigrate(&v2UserRole{}, &v2RoleInheritance{}, &v2RolePermission{}).Error; err != nil {

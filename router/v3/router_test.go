@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	rbac "github.com/traPtitech/traQ/rbac/impl"
 	"github.com/traPtitech/traQ/rbac/role"
@@ -174,7 +175,7 @@ func getEnvOrDefault(env string, def string) string {
 }
 
 func dropTables(db *gorm.DB) error {
-	if err := db.DropTableIfExists(repository.AllTables...).Error; err != nil {
+	if err := db.DropTableIfExists(migration.AllTables...).Error; err != nil {
 		return err
 	}
 	return db.DropTableIfExists("migrations").Error

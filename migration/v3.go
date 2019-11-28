@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-// V3 チャンネルイベント履歴
-var V3 = &gormigrate.Migration{
+// v3 チャンネルイベント履歴
+var v3 = &gormigrate.Migration{
 	ID: "3",
 	Migrate: func(db *gorm.DB) error {
 		if err := db.AutoMigrate(&v3ChannelEvent{}).Error; err != nil {
