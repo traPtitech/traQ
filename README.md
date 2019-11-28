@@ -37,6 +37,12 @@ Now you can access to
 #### Destroy Containers and Volumes
 `docker-compose down -v`
 
+### Testing
+1. Run mysql container for test by `make up-test-db`
+2. `make test`
+
+You can remove the container by `make rm-test-db`
+
 ## License
 Code licensed under [the MIT License](https://github.com/traPtitech/traQ/blob/master/LICENSE).
 
