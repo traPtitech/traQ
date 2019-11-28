@@ -15,4 +15,4 @@ linters:
 
 linters-settings:
   errcheck:
-    exclude: .circleci/errcheck-exclude.txt
+    exclude: dev/errcheck-exclude.txt
