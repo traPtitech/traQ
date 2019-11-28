@@ -2,7 +2,14 @@ openapi: 3.0.0
 
 info:
   title: traQ API
+  description: traQ v2 API
   version: 2.6.3
+  license:
+    name: MIT
+    url: 'https://github.com/traPtitech/traQ/blob/master/LICENSE'
+  contact:
+    name: traP
+    url: 'https://github.com/traPtitech/traQ'
 
 servers:
   - url: https://q.trap.jp/api/1.0
@@ -2201,6 +2208,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/webhookIdInPath"
     post:
+      deprecated: true
       tags:
         - webhook
       operationId: postGitHubWebhook
@@ -3221,7 +3229,6 @@ components:
           example: yamada
         member:
           $ref: "#/components/schemas/UUIDs"
-          description: privateチャンネルの場合は参加しているメンバー、公開チャンネルの場合は空
         parent:
           type: string
           format: uuid
@@ -3232,7 +3239,6 @@ components:
           example: yamadaチャンネルです！
         children:
           $ref: "#/components/schemas/UUIDs"
-          description: 子のチャンネルUUIDの配列
         visibility:
           type: boolean
           description: チャンネルの可視状態
@@ -3283,7 +3289,6 @@ components:
           type: string
           format: uuid
           description: 親のチャンネルID
-          example: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
     CreateChannelChild:
       type: object
       required:
@@ -3705,10 +3710,8 @@ components:
       properties:
         on:
           $ref: "#/components/schemas/UUIDs"
-          description: 通知をつける人のユーザーIDの配列
         off:
           $ref: "#/components/schemas/UUIDs"
-          description: 通知をつけない人のユーザーIDの配列
     FCMToken:
       type: object
       required:
@@ -4072,7 +4075,6 @@ components:
           type: string
           format: uuid
           description: 現在いるチャンネルId
-          example: xxxxxxxx-xxxx-xxxx-Nxxx-xxxxxxxxxxxx
     HeartbeatRes:
       type: object
       properties:
@@ -4297,10 +4299,8 @@ components:
           description: 変更者UUID
         on:
           $ref: "#/components/schemas/UUIDs"
-          description: オンにしたユーザーのUUIDの配列
         off:
           $ref: "#/components/schemas/UUIDs"
-          description: オフにしたユーザーのUUIDの配列
       description: SubscribersChanged
     PinAddedEvent:
       type: object
