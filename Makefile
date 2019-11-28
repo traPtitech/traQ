@@ -12,13 +12,17 @@ genkey:
 	mkdir -p ./dev/keys
 	cd ./dev/keys && go run ../bin/gen_ec_pem.go
 
-.PHONY: up-docker-test-db
-up-docker-test-db:
-	docker run --name traq-test-db -p 3100:3306 -e MYSQL_ROOT_PASSWORD=password -d mariadb:10.0.19 mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
+.PHONY: test
+test:
+	MARIADB_PORT=3100 go test ./... -race
 
-.PHONY: down-docker-test-db
-down-docker-test-db:
-	docker rm -f -v traq-test-db
+.PHONY: up-test-db
+up-test-db:
+	@./dev/bin/up-test-db.sh
+
+.PHONY: rm-test-db
+rm-test-db:
+	@./dev/bin/down-test-db.sh
 
 .PHONY: make-db-docs
 make-db-docs:
