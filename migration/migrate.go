@@ -63,3 +63,11 @@ func Migrate(db *gorm.DB) error {
 	})
 	return m.Migrate()
 }
+
+// DropAll データベースの全テーブルを削除します
+func DropAll(db *gorm.DB) error {
+	if err := db.DropTableIfExists(AllTables...).Error; err != nil {
+		return err
+	}
+	return db.DropTableIfExists("migrations").Error
+}

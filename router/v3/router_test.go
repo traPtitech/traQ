@@ -53,7 +53,7 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 		db.DB().SetMaxOpenConns(20)
-		if err := dropTables(db); err != nil {
+		if err := migration.DropAll(db); err != nil {
 			panic(err)
 		}
 		dbConns[key] = db
@@ -172,11 +172,4 @@ func getEnvOrDefault(env string, def string) string {
 		return def
 	}
 	return s
-}
-
-func dropTables(db *gorm.DB) error {
-	if err := db.DropTableIfExists(migration.AllTables...).Error; err != nil {
-		return err
-	}
-	return db.DropTableIfExists("migrations").Error
 }

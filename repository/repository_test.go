@@ -48,7 +48,7 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 		db.DB().SetMaxOpenConns(20)
-		if err := dropTables(db); err != nil {
+		if err := migration.DropAll(db); err != nil {
 			panic(err)
 		}
 
@@ -115,13 +115,6 @@ func getDB(repo Repository) *gorm.DB {
 
 func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {
 	return assert.New(t), require.New(t)
-}
-
-func dropTables(db *gorm.DB) error {
-	if err := db.DropTableIfExists(migration.AllTables...).Error; err != nil {
-		return err
-	}
-	return db.DropTableIfExists("migrations").Error
 }
 
 func mustMakeChannel(t *testing.T, repo Repository, name string) *model.Channel {
