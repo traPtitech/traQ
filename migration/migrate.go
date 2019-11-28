@@ -1,6 +1,8 @@
 package migration
 
 import (
+	"database/sql"
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/rbac/role"
 	"gopkg.in/gormigrate.v1"
@@ -70,4 +72,20 @@ func DropAll(db *gorm.DB) error {
 		return err
 	}
 	return db.DropTableIfExists("migrations").Error
+}
+
+// CreateDatabasesIfNotExists データベースが存在しなければ作成します
+func CreateDatabasesIfNotExists(dialect, dsn, prefix string, names ...string) error {
+	conn, err := sql.Open(dialect, dsn)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	for _, v := range names {
+		_, err = conn.Exec(fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s%s`", prefix, v))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

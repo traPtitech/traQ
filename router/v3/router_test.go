@@ -23,11 +23,14 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
-	common = "common"
-	random = "random"
+	dbPrefix = "traq-test-router-v3-"
+	common   = "common"
+	random   = "random"
 )
 
 var (
@@ -45,10 +48,13 @@ func TestMain(m *testing.M) {
 	dbs := []string{
 		common,
 	}
+	if err := migration.CreateDatabasesIfNotExists("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=true", user, pass, host, port), dbPrefix, dbs...); err != nil {
+		panic(err)
+	}
 
 	for _, key := range dbs {
 		// テスト用データベース接続
-		db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("traq-test-router-v3-%s", key)))
+		db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("%s%s", dbPrefix, key)))
 		if err != nil {
 			panic(err)
 		}

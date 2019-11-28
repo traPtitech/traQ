@@ -92,14 +92,10 @@ jobs:
       - restore_mod
       - restore_build_cache
       - run:
-          name: Setup DB
-          command: |
-            dockerize -wait tcp://localhost:3306 -timeout 1m
-            go run .circleci/init.go
-      - run:
           name: test
           command: |
             export TRAQ_IMAGEMAGICK_PATH=`which convert`
+            dockerize -wait tcp://localhost:3306 -timeout 1m
             go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
       - run:
           name: Upload coverage data

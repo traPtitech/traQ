@@ -16,14 +16,17 @@ import (
 	"go.uber.org/zap"
 	"os"
 	"testing"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
-	common = "common"
-	ex1    = "ex1"
-	ex2    = "ex2"
-	ex3    = "ex3"
-	random = "random"
+	dbPrefix = "traq-test-repo-"
+	common   = "common"
+	ex1      = "ex1"
+	ex2      = "ex2"
+	ex3      = "ex3"
+	random   = "random"
 )
 
 var (
@@ -41,9 +44,12 @@ func TestMain(m *testing.M) {
 		ex2,
 		ex3,
 	}
+	if err := migration.CreateDatabasesIfNotExists("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=true", user, pass, host, port), dbPrefix, dbs...); err != nil {
+		panic(err)
+	}
 
 	for _, key := range dbs {
-		db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("traq-test-repo-%s", key)))
+		db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("%s%s", dbPrefix, key)))
 		if err != nil {
 			panic(err)
 		}

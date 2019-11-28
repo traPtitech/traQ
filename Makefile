@@ -15,8 +15,6 @@ genkey:
 .PHONY: up-docker-test-db
 up-docker-test-db:
 	docker run --name traq-test-db -p 3100:3306 -e MYSQL_ROOT_PASSWORD=password -d mariadb:10.0.19 mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
-	sleep 5
-	TEST_DB_PORT=3100 go run .circleci/init.go
 
 .PHONY: down-docker-test-db
 down-docker-test-db:
