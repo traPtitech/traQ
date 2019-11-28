@@ -3,8 +3,8 @@ name: spectral
 on: push
 
 jobs:
-  checks:
-    name: Lint
+  run:
+    name: Run
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
