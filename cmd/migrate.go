@@ -5,6 +5,8 @@ import (
 	"github.com/traPtitech/traQ/migration"
 )
 
+var dropDB bool
+
 var migrateCommand = &cobra.Command{
 	Use:   "migrate",
 	Short: "Execute database schema migration only",
@@ -14,6 +16,15 @@ var migrateCommand = &cobra.Command{
 			return err
 		}
 		defer engine.Close()
+		if dropDB {
+			if err := migration.DropAll(engine); err != nil {
+				return err
+			}
+		}
 		return migration.Migrate(engine)
 	},
+}
+
+func init() {
+	migrateCommand.Flags().BoolVar(&dropDB, "reset", false, "whether to truncate database (drop all tables)")
 }
