@@ -4,8 +4,6 @@ import (
 	"cloud.google.com/go/profiler"
 	"context"
 	"fmt"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -173,25 +171,6 @@ var serveCommand = &cobra.Command{
 		sessions.PurgeCache()
 		logger.Info("traQ shutdown")
 	},
-}
-
-func getDatabase() (*gorm.DB, error) {
-	engine, err := gorm.Open("mysql", fmt.Sprintf(
-		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=true",
-		viper.GetString("mariadb.username"),
-		viper.GetString("mariadb.password"),
-		viper.GetString("mariadb.host"),
-		viper.GetInt("mariadb.port"),
-		viper.GetString("mariadb.database"),
-	))
-	if err != nil {
-		return nil, err
-	}
-	engine.DB().SetMaxOpenConns(viper.GetInt("mariadb.connection.maxOpen"))
-	engine.DB().SetMaxIdleConns(viper.GetInt("mariadb.connection.maxIdle"))
-	engine.DB().SetConnMaxLifetime(time.Duration(viper.GetInt("mariadb.connection.lifetime")) * time.Second)
-	engine.LogMode(viper.GetBool("gormLogMode"))
-	return engine, nil
 }
 
 func getFileStorage() (storage.FileStorage, error) {

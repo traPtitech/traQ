@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/spf13/cobra"
 	"github.com/traPtitech/traQ/migration"
 )
