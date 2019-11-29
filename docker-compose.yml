@@ -11,7 +11,7 @@ services:
       TRAQ_GORMLOGMODE: "true"
       TRAQ_INITDATADIR: /initdata
     entrypoint: dockerize -timeout 60s -wait tcp://mysql:3306
-    command: ./traQ
+    command: ./traQ serve
     expose:
       - "80"
       - "6060"

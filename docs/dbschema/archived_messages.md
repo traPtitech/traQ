@@ -2,6 +2,8 @@
 
 ## Description
 
+アーカイブ化されたメッセージのテーブル(編集前メッセージ)
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -23,11 +25,11 @@ CREATE TABLE `archived_messages` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false |  |  |  |
-| message_id | char(36) |  | false |  |  |  |
-| user_id | char(36) |  | false |  |  |  |
-| text | text |  | false |  |  |  |
-| date_time | timestamp(6) |  | true |  |  |  |
+| id | char(36) |  | false |  |  | アーカイブUUID |
+| message_id | char(36) |  | false |  |  | 元のメッセージUUID |
+| user_id | char(36) |  | false |  |  | 投稿ユーザーUUID |
+| text | text |  | false |  |  | 本文 |
+| date_time | timestamp(6) |  | true |  |  | 本文の投稿日時 |
 
 ## Constraints
 

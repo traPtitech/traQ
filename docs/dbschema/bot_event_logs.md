@@ -2,6 +2,8 @@
 
 ## Description
 
+BOTイベントログテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -26,14 +28,14 @@ CREATE TABLE `bot_event_logs` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| request_id | char(36) |  | false |  |  |  |
-| bot_id | char(36) |  | false |  |  |  |
-| event | varchar(30) |  | false |  |  |  |
-| body | text |  | true |  |  |  |
-| error | text |  | true |  |  |  |
-| code | int(11) | 0 | false |  |  |  |
-| latency | bigint(20) | 0 | false |  |  |  |
-| date_time | timestamp(6) |  | true |  |  |  |
+| request_id | char(36) |  | false |  |  | リクエストID |
+| bot_id | char(36) |  | false |  |  | BOT UUID |
+| event | varchar(30) |  | false |  |  | イベント名 |
+| body | text |  | true |  |  | イベント内容(jsonテキストが格納) |
+| error | text |  | true |  |  | エラー内容 |
+| code | int(11) | 0 | false |  |  | HTTPステータスコード(0はリクエスト自体失敗) |
+| latency | bigint(20) | 0 | false |  |  | リクエスト時間 |
+| date_time | timestamp(6) |  | true |  |  | イベント発生日時 |
 
 ## Constraints
 

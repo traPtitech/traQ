@@ -2,6 +2,8 @@
 
 ## Description
 
+OAuth2認可リクエストテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -28,16 +30,16 @@ CREATE TABLE `oauth2_authorizes` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| code | varchar(36) |  | false |  |  |  |
-| client_id | char(36) |  | true |  |  |  |
-| user_id | char(36) |  | true |  |  |  |
-| expires_in | int(11) |  | true |  |  |  |
-| redirect_uri | text |  | true |  |  |  |
-| scopes | text |  | true |  |  |  |
-| original_scopes | text |  | true |  |  |  |
-| code_challenge | varchar(128) |  | true |  |  |  |
-| code_challenge_method | text |  | true |  |  |  |
-| nonce | text |  | true |  |  |  |
+| code | varchar(36) |  | false |  |  | 認可コード |
+| client_id | char(36) |  | true |  |  | クライアントID |
+| user_id | char(36) |  | true |  |  | リクエストユーザーUUID |
+| expires_in | int(11) |  | true |  |  | 有効秒 |
+| redirect_uri | text |  | true |  |  | リダイレクトURI |
+| scopes | text |  | true |  |  | 認可対象スコープ |
+| original_scopes | text |  | true |  |  | 元の要求スコープ |
+| code_challenge | varchar(128) |  | true |  |  | PKCEコードチャレンジ |
+| code_challenge_method | text |  | true |  |  | PKCEコードチャレンジ方式 |
+| nonce | text |  | true |  |  | nonce |
 | created_at | timestamp(6) |  | true |  |  |  |
 
 ## Constraints

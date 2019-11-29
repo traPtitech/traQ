@@ -2,6 +2,8 @@
 
 ## Description
 
+traQ BOTテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -37,16 +39,16 @@ CREATE TABLE `bots` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false |  |  |  |
-| bot_user_id | char(36) |  | false |  |  |  |
-| description | text |  | false |  |  |  |
-| verification_token | varchar(30) |  | false |  |  |  |
-| access_token_id | char(36) |  | false |  |  |  |
-| post_url | text |  | false |  |  |  |
-| subscribe_events | text |  | false |  |  |  |
-| privileged | tinyint(1) | 0 | false |  |  |  |
-| state | tinyint(4) | 0 | false |  |  |  |
-| bot_code | varchar(30) |  | false |  |  |  |
-| creator_id | char(36) |  | false |  | [users](users.md) |  |
+| bot_user_id | char(36) |  | false |  |  | BOTユーザーUUID |
+| description | text |  | false |  |  | BOT説明 |
+| verification_token | varchar(30) |  | false |  |  | 認証トークン |
+| access_token_id | char(36) |  | false |  |  | BOTアクセストークンID |
+| post_url | text |  | false |  |  | BOTサーバーエンドポイント |
+| subscribe_events | text |  | false |  |  | BOTが購読しているイベントリスト(スペース区切り) |
+| privileged | tinyint(1) | 0 | false |  |  | 特権BOTかどうか |
+| state | tinyint(4) | 0 | false |  |  | BOTの状態 |
+| bot_code | varchar(30) |  | false |  |  | BOTコード |
+| creator_id | char(36) |  | false |  | [users](users.md) | BOT制作者UUID |
 | created_at | timestamp(6) |  | true |  |  |  |
 | updated_at | timestamp(6) |  | true |  |  |  |
 | deleted_at | timestamp(6) |  | true |  |  |  |

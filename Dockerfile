@@ -26,4 +26,4 @@ ENV TRAQ_IMAGEMAGICK_PATH=/usr/bin/convert
 COPY ./static ./static/
 COPY --from=build /traQ ./
 
-ENTRYPOINT ./traQ
+ENTRYPOINT ./traQ serve

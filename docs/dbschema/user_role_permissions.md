@@ -2,6 +2,8 @@
 
 ## Description
 
+ユーザーロールパーミッションテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -20,8 +22,8 @@ CREATE TABLE `user_role_permissions` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| role | varchar(30) |  | false |  | [user_roles](user_roles.md) |  |
-| permission | varchar(30) |  | false |  |  |  |
+| role | varchar(30) |  | false |  | [user_roles](user_roles.md) | ロール名 |
+| permission | varchar(30) |  | false |  |  | パーミッション名 |
 
 ## Constraints
 

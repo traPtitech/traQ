@@ -2,6 +2,8 @@
 
 ## Description
 
+ファイルアクセスコントロールリストテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -20,9 +22,9 @@ CREATE TABLE `files_acl` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| file_id | char(36) |  | false |  |  |  |
-| user_id | char(36) |  | false |  |  |  |
-| allow | tinyint(1) |  | false |  |  |  |
+| file_id | char(36) |  | false |  |  | ファイルUUID |
+| user_id | char(36) |  | false |  |  | ユーザーUUID |
+| allow | tinyint(1) |  | false |  |  | 許可 |
 
 ## Constraints
 

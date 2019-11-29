@@ -30,17 +30,17 @@
 <text text-anchor="start" x="308" y="-724.8" font-family="Arial" font-size="14.00" fill="#000000">file_id </text>
 <text text-anchor="start" x="348.4688" y="-724.8" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
 <polygon fill="none" stroke="#000000" points="301,-682 301,-712 478,-712 478,-682 301,-682"/>
-<text text-anchor="start" x="308" y="-694.8" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
-<text text-anchor="start" x="378.0479" y="-694.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
+<text text-anchor="start" x="308" y="-694.8" font-family="Arial" font-size="14.00" fill="#000000">is_unicode </text>
+<text text-anchor="start" x="378.8271" y="-694.8" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(1)]</text>
 <polygon fill="none" stroke="#000000" points="301,-652 301,-682 478,-682 478,-652 301,-652"/>
-<text text-anchor="start" x="307.79" y="-664.8" font-family="Arial" font-size="14.00" fill="#000000">updated_at </text>
-<text text-anchor="start" x="381.748" y="-664.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
+<text text-anchor="start" x="308" y="-664.8" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
+<text text-anchor="start" x="378.0479" y="-664.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
 <polygon fill="none" stroke="#000000" points="301,-622 301,-652 478,-652 478,-622 301,-622"/>
-<text text-anchor="start" x="308" y="-634.8" font-family="Arial" font-size="14.00" fill="#000000">deleted_at </text>
-<text text-anchor="start" x="377.2822" y="-634.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
+<text text-anchor="start" x="307.79" y="-634.8" font-family="Arial" font-size="14.00" fill="#000000">updated_at </text>
+<text text-anchor="start" x="381.748" y="-634.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
 <polygon fill="none" stroke="#000000" points="301,-592 301,-622 478,-622 478,-592 301,-592"/>
-<text text-anchor="start" x="308" y="-604.8" font-family="Arial" font-size="14.00" fill="#000000">is_unicode </text>
-<text text-anchor="start" x="378.8271" y="-604.8" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(1)]</text>
+<text text-anchor="start" x="308" y="-604.8" font-family="Arial" font-size="14.00" fill="#000000">deleted_at </text>
+<text text-anchor="start" x="377.2822" y="-604.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
 <polygon fill="none" stroke="#000000" stroke-width="3" points="299,-590.5 299,-867.5 479,-867.5 479,-590.5 299,-590.5"/>
 </g>
 <!-- users -->

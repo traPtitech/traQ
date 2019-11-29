@@ -1,5 +1,7 @@
 SOURCES ?= $(shell find . -path "./vendor" -prune -o -type f -name "*.go" -print)
 
+TEST_DB_PORT := 3100
+
 traQ: $(SOURCES)
 	go build -ldflags "-X main.version=$$(git describe --tags --abbrev=0) -X main.revision=$$(git rev-parse --short HEAD)"
 
@@ -10,26 +12,47 @@ init:
 .PHONY: genkey
 genkey:
 	mkdir -p ./dev/keys
-	openssl ecparam -genkey -name prime256v1 -noout -out ./dev/keys/ec.pem
-	openssl ec -in ./dev/keys/ec.pem -out ./dev/keys/ec_pub.pem -pubout
+	cd ./dev/keys && go run ../bin/gen_ec_pem.go
 
-.PHONY: up-docker-test-db
-up-docker-test-db:
-	docker run --name traq-test-db -p 3100:3306 -e MYSQL_ROOT_PASSWORD=password -d mariadb:10.0.19 mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
-	sleep 5
-	TEST_DB_PORT=3100 go run .circleci/init.go
+.PHONY: test
+test:
+	MARIADB_PORT=$(TEST_DB_PORT) go test ./... -race
 
-.PHONY: down-docker-test-db
-down-docker-test-db:
-	docker rm -f -v traq-test-db
+.PHONY: up-test-db
+up-test-db:
+	@TEST_DB_PORT=$(TEST_DB_PORT) ./dev/bin/up-test-db.sh
 
-.PHONY: make-db-docs
-make-db-docs:
-	if [ -d "./docs/dbschema" ]; then \
+.PHONY: rm-test-db
+rm-test-db:
+	@./dev/bin/down-test-db.sh
+
+.PHONY: lint
+lint:
+	-@make golangci-lint
+	-@make swagger-lint
+
+.PHONY: golangci-lint
+golangci-lint:
+	golangci-lint run
+
+.PHONY: swagger-lint
+swagger-lint:
+	spectral lint -q docs/*.yaml
+
+.PHONY: db-gen-docs
+db-gen-docs:
+	@if [ -d "./docs/dbschema" ]; then \
 		rm -r ./docs/dbschema; \
 	fi
-	TBLS_DSN="mysql://root:password@127.0.0.1:3002/traq" tbls doc
+	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
+	TBLS_DSN="mysql://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" tbls doc
 
-.PHONY: diff-db-docs
-diff-db-docs:
-	TBLS_DSN="mysql://root:password@127.0.0.1:3002/traq" tbls diff
+.PHONY: db-diff-docs
+db-diff-docs:
+	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
+	TBLS_DSN="mysql://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" tbls diff
+
+.PHONY: db-lint
+db-lint:
+	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
+	TBLS_DSN="mysql://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" tbls lint

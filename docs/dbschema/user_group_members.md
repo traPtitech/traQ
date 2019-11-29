@@ -2,6 +2,8 @@
 
 ## Description
 
+ユーザーグループメンバーテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -19,8 +21,8 @@ CREATE TABLE `user_group_members` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| group_id | char(36) |  | false |  |  |  |
-| user_id | char(36) |  | false |  |  |  |
+| group_id | char(36) |  | false |  |  | グループUUID |
+| user_id | char(36) |  | false |  |  | ユーザーUUID |
 
 ## Constraints
 

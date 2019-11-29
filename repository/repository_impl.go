@@ -8,6 +8,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -81,7 +82,7 @@ func (repo *GormRepository) User(name string) (uuid.UUID, bool) {
 
 // Sync implements Repository interface.
 func (repo *GormRepository) Sync() (bool, error) {
-	if err := repo.migration(); err != nil {
+	if err := migration.Migrate(repo.db); err != nil {
 		return false, err
 	}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	rbac "github.com/traPtitech/traQ/rbac/impl"
 	"github.com/traPtitech/traQ/rbac/role"
@@ -22,11 +23,14 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
-	common = "common"
-	random = "random"
+	dbPrefix = "traq-test-router-v3-"
+	common   = "common"
+	random   = "random"
 )
 
 var (
@@ -44,15 +48,18 @@ func TestMain(m *testing.M) {
 	dbs := []string{
 		common,
 	}
+	if err := migration.CreateDatabasesIfNotExists("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=true", user, pass, host, port), dbPrefix, dbs...); err != nil {
+		panic(err)
+	}
 
 	for _, key := range dbs {
 		// テスト用データベース接続
-		db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("traq-test-router-v3-%s", key)))
+		db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("%s%s", dbPrefix, key)))
 		if err != nil {
 			panic(err)
 		}
 		db.DB().SetMaxOpenConns(20)
-		if err := dropTables(db); err != nil {
+		if err := migration.DropAll(db); err != nil {
 			panic(err)
 		}
 		dbConns[key] = db
@@ -171,11 +178,4 @@ func getEnvOrDefault(env string, def string) string {
 		return def
 	}
 	return s
-}
-
-func dropTables(db *gorm.DB) error {
-	if err := db.DropTableIfExists(repository.AllTables...).Error; err != nil {
-		return err
-	}
-	return db.DropTableIfExists("migrations").Error
 }

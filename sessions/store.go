@@ -3,7 +3,6 @@ package sessions
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/hashicorp/golang-lru"
 	"github.com/jinzhu/gorm"
@@ -261,10 +260,6 @@ func (sr *SessionRecord) decode() (*Session, error) {
 
 // NewGORMStore GORMストアを作成します
 func NewGORMStore(db *gorm.DB) (Store, error) {
-	if err := db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").AutoMigrate(&SessionRecord{}).Error; err != nil {
-		return nil, fmt.Errorf("failed to sync Table schema: %v", err)
-	}
-
 	cache, err := lru.NewWithEvict(cacheSize, func(key interface{}, value interface{}) {
 		sess := value.(*Session)
 		if !sess.Expired() {

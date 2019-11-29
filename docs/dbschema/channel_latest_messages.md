@@ -2,6 +2,8 @@
 
 ## Description
 
+チャンネル最新メッセージテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -21,9 +23,9 @@ CREATE TABLE `channel_latest_messages` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| channel_id | char(36) |  | false |  |  |  |
-| message_id | char(36) |  | false |  |  |  |
-| date_time | timestamp(6) |  | true |  |  |  |
+| channel_id | char(36) |  | false |  |  | チャンネルUUID |
+| message_id | char(36) |  | false |  |  | メッセージUUID |
+| date_time | timestamp(6) |  | true |  |  | メッセージ作成日時 |
 
 ## Constraints
 

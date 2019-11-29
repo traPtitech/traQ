@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-// V5 Mute, 旧Clip削除, stampsにカラム追加
-var V5 = &gormigrate.Migration{
+// v5 Mute, 旧Clip削除, stampsにカラム追加
+var v5 = &gormigrate.Migration{
 	ID: "5",
 	Migrate: func(db *gorm.DB) error {
 		deleteForeignKeys := [][5]string{

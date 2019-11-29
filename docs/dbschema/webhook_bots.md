@@ -2,6 +2,8 @@
 
 ## Description
 
+traQ Webhookテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -33,11 +35,11 @@ CREATE TABLE `webhook_bots` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false |  |  |  |
-| bot_user_id | char(36) |  | false |  |  |  |
-| description | text |  | false |  |  |  |
-| secret | text |  | false |  |  |  |
-| channel_id | char(36) |  | false |  | [channels](channels.md) |  |
-| creator_id | char(36) |  | false |  | [users](users.md) |  |
+| bot_user_id | char(36) |  | false |  |  | WebhookユーザーUUID |
+| description | text |  | false |  |  | 説明 |
+| secret | text |  | false |  |  | BOTシークレット |
+| channel_id | char(36) |  | false |  | [channels](channels.md) | デフォルト投稿先チャンネルUUID |
+| creator_id | char(36) |  | false |  | [users](users.md) | 作成者UUID |
 | created_at | timestamp(6) |  | true |  |  |  |
 | updated_at | timestamp(6) |  | true |  |  |  |
 | deleted_at | timestamp(6) |  | true |  |  |  |

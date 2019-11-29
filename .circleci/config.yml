@@ -63,7 +63,7 @@ jobs:
           when: always
           command: |
             mkdir -p $GOCACHE
-            go build -v -ldflags "-X main.version=$(git describe --tags --abbrev=0) -X main.revision=$(git rev-parse --short HEAD)"
+            go build -ldflags "-X main.version=$(git describe --tags --abbrev=0) -X main.revision=$(git rev-parse --short HEAD)"
       - save_cache:
           key: build-cache-{{ .Branch }}--{{ .Revision }}
           when: always
@@ -72,6 +72,10 @@ jobs:
       - store_artifacts:
           path: ~/workspace/traQ
           destination: traQ
+      - persist_to_workspace:
+          root: .
+          paths:
+            - traQ
 
   test:
     docker:
@@ -80,6 +84,7 @@ jobs:
           - GO111MODULE: "on"
           - GOCACHE: "/tmp/go/cache"
       - image: circleci/mariadb:10.0.38-ram
+        command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
         environment:
           - MYSQL_DATABASE: "traq"
           - MYSQL_ROOT_PASSWORD: "password"
@@ -92,18 +97,36 @@ jobs:
       - restore_mod
       - restore_build_cache
       - run:
-          name: Setup DB
-          command: |
-            dockerize -wait tcp://localhost:3306 -timeout 1m
-            go run .circleci/init.go
-      - run:
           name: test
           command: |
             export TRAQ_IMAGEMAGICK_PATH=`which convert`
+            dockerize -wait tcp://localhost:3306 -timeout 1m 2>/dev/null
             go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
       - run:
           name: Upload coverage data
           command: bash <(curl -s https://codecov.io/bash)
+
+  lint-db-docs:
+    docker:
+      - image: circleci/golang
+      - image: circleci/mariadb:10.0.38-ram
+        command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
+        environment:
+          - MYSQL_DATABASE: "traq"
+          - MYSQL_ROOT_PASSWORD: "password"
+    working_directory: ~/workspace
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: diff & lint
+          command: |
+            source <(curl -sL https://git.io/use-tbls)
+            dockerize -wait tcp://localhost:3306 -timeout 1m 2>/dev/null
+            ./traQ migrate --reset
+            TBLS_DSN="mysql://root:password@127.0.0.1:3306/traq" tbls diff
+            TBLS_DSN="mysql://root:password@127.0.0.1:3306/traq" tbls lint
 
   build-image:
     machine: true
@@ -199,6 +222,14 @@ workflows:
             tags:
               only: /.*/
       - test:
+          requires:
+            - build
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /.*/
+      - lint-db-docs:
           requires:
             - build
           filters:

@@ -2,6 +2,8 @@
 
 ## Description
 
+ユーザーロール継承テーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -22,8 +24,8 @@ CREATE TABLE `user_role_inheritances` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| role | varchar(30) |  | false |  | [user_roles](user_roles.md) |  |
-| sub_role | varchar(30) |  | false |  | [user_roles](user_roles.md) |  |
+| role | varchar(30) |  | false |  | [user_roles](user_roles.md) | ロール名 |
+| sub_role | varchar(30) |  | false |  | [user_roles](user_roles.md) | サブロール名 |
 
 ## Constraints
 

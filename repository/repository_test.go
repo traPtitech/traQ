@@ -8,6 +8,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/utils"
@@ -15,14 +16,17 @@ import (
 	"go.uber.org/zap"
 	"os"
 	"testing"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
-	common = "common"
-	ex1    = "ex1"
-	ex2    = "ex2"
-	ex3    = "ex3"
-	random = "random"
+	dbPrefix = "traq-test-repo-"
+	common   = "common"
+	ex1      = "ex1"
+	ex2      = "ex2"
+	ex3      = "ex3"
+	random   = "random"
 )
 
 var (
@@ -40,14 +44,17 @@ func TestMain(m *testing.M) {
 		ex2,
 		ex3,
 	}
+	if err := migration.CreateDatabasesIfNotExists("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=true", user, pass, host, port), dbPrefix, dbs...); err != nil {
+		panic(err)
+	}
 
 	for _, key := range dbs {
-		db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("traq-test-repo-%s", key)))
+		db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("%s%s", dbPrefix, key)))
 		if err != nil {
 			panic(err)
 		}
 		db.DB().SetMaxOpenConns(20)
-		if err := dropTables(db); err != nil {
+		if err := migration.DropAll(db); err != nil {
 			panic(err)
 		}
 
@@ -114,13 +121,6 @@ func getDB(repo Repository) *gorm.DB {
 
 func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {
 	return assert.New(t), require.New(t)
-}
-
-func dropTables(db *gorm.DB) error {
-	if err := db.DropTableIfExists(AllTables...).Error; err != nil {
-		return err
-	}
-	return db.DropTableIfExists("migrations").Error
 }
 
 func mustMakeChannel(t *testing.T, repo Repository, name string) *model.Channel {

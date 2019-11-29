@@ -2,6 +2,8 @@
 
 ## Description
 
+BOT参加チャンネルテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -19,8 +21,8 @@ CREATE TABLE `bot_join_channels` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| channel_id | char(36) |  | false |  |  |  |
-| bot_id | char(36) |  | false |  |  |  |
+| channel_id | char(36) |  | false |  |  | チャンネルUUID |
+| bot_id | char(36) |  | false |  |  | BOT UUID |
 
 ## Constraints
 

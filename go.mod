@@ -28,11 +28,13 @@ require (
 	github.com/leandro-lugaresi/hub v1.1.0
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/ncw/swift v1.0.49
-	github.com/pelletier/go-toml v1.4.0 // indirect
+	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/prometheus/client_golang v1.2.1
 	github.com/skip2/go-qrcode v0.0.0-20190110000554-dc11ecdae0a9
 	github.com/spf13/afero v1.2.2 // indirect
+	github.com/spf13/cobra v0.0.5
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.5.0
 	github.com/stretchr/testify v1.4.0
 	go.opencensus.io v0.22.1 // indirect
@@ -41,6 +43,7 @@ require (
 	golang.org/x/exp v0.0.0-20191030013958-a1ab85dbe136
 	golang.org/x/net v0.0.0-20190918130420-a8b05e9114ab // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/sys v0.0.0-20191128015809-6d18c012aee9 // indirect
 	google.golang.org/api v0.14.0
 	google.golang.org/appengine v1.6.2 // indirect
 	google.golang.org/grpc v1.23.1 // indirect

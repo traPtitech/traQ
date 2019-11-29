@@ -2,6 +2,8 @@
 
 ## Description
 
+ピンテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -26,8 +28,8 @@ CREATE TABLE `pins` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false |  |  |  |
-| message_id | char(36) |  | false |  |  |  |
-| user_id | char(36) |  | false |  | [users](users.md) |  |
+| message_id | char(36) |  | false |  |  | メッセージUUID |
+| user_id | char(36) |  | false |  | [users](users.md) | ピンしたユーザーUUID |
 | created_at | timestamp(6) |  | true |  |  |  |
 
 ## Constraints
