@@ -72,6 +72,10 @@ jobs:
       - store_artifacts:
           path: ~/workspace/traQ
           destination: traQ
+      - persist_to_workspace:
+          root: .
+          paths:
+            - traQ
 
   test:
     docker:
@@ -103,10 +107,7 @@ jobs:
 
   lint-db-docs:
     docker:
-      - image: circleci/golang:1.13.0
-        environment:
-          - GO111MODULE: "on"
-          - GOCACHE: "/tmp/go/cache"
+      - image: circleci/golang
       - image: circleci/mariadb:10.0.38-ram
         environment:
           - MYSQL_DATABASE: "traq"
@@ -114,8 +115,8 @@ jobs:
     working_directory: ~/workspace
     steps:
       - checkout
-      - restore_mod
-      - restore_build_cache
+      - attach_workspace:
+          at: .
       - run:
           name: diff & lint
           command: |
