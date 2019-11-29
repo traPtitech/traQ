@@ -95,11 +95,35 @@ jobs:
           name: test
           command: |
             export TRAQ_IMAGEMAGICK_PATH=`which convert`
-            dockerize -wait tcp://localhost:3306 -timeout 1m
+            dockerize -wait tcp://localhost:3306 -timeout 1m 2>/dev/null
             go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
       - run:
           name: Upload coverage data
           command: bash <(curl -s https://codecov.io/bash)
+
+  lint-db-docs:
+    docker:
+      - image: circleci/golang:1.13.0
+        environment:
+          - GO111MODULE: "on"
+          - GOCACHE: "/tmp/go/cache"
+      - image: circleci/mariadb:10.0.38-ram
+        environment:
+          - MYSQL_DATABASE: "traq"
+          - MYSQL_ROOT_PASSWORD: "password"
+    working_directory: ~/workspace
+    steps:
+      - checkout
+      - restore_mod
+      - restore_build_cache
+      - run:
+          name: diff & lint
+          command: |
+            source <(curl -sL https://git.io/use-tbls)
+            dockerize -wait tcp://localhost:3306 -timeout 1m 2>/dev/null
+            go run main.go migrate --reset
+            TBLS_DSN="mysql://root:password@127.0.0.1:3306/traq" tbls diff
+            TBLS_DSN="mysql://root:password@127.0.0.1:3306/traq" tbls lint
 
   build-image:
     machine: true
@@ -195,6 +219,14 @@ workflows:
             tags:
               only: /.*/
       - test:
+          requires:
+            - build
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /.*/
+      - lint-db-docs:
           requires:
             - build
           filters:
