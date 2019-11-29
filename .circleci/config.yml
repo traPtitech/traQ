@@ -84,6 +84,7 @@ jobs:
           - GO111MODULE: "on"
           - GOCACHE: "/tmp/go/cache"
       - image: circleci/mariadb:10.0.38-ram
+        command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
         environment:
           - MYSQL_DATABASE: "traq"
           - MYSQL_ROOT_PASSWORD: "password"
@@ -109,6 +110,7 @@ jobs:
     docker:
       - image: circleci/golang
       - image: circleci/mariadb:10.0.38-ram
+        command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
         environment:
           - MYSQL_DATABASE: "traq"
           - MYSQL_ROOT_PASSWORD: "password"
