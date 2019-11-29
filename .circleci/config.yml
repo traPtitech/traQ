@@ -122,7 +122,7 @@ jobs:
           command: |
             source <(curl -sL https://git.io/use-tbls)
             dockerize -wait tcp://localhost:3306 -timeout 1m 2>/dev/null
-            go run main.go migrate --reset
+            ./traQ migrate --reset
             TBLS_DSN="mysql://root:password@127.0.0.1:3306/traq" tbls diff
             TBLS_DSN="mysql://root:password@127.0.0.1:3306/traq" tbls lint
 
