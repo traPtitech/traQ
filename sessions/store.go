@@ -61,9 +61,11 @@ func (s *InMemoryStore) GetByUserID(id uuid.UUID) (result []*Session, err error)
 	s.RLock()
 	defer s.RUnlock()
 	for _, v := range s.sessions {
+		v.RLock()
 		if v.userID == id {
 			result = append(result, v)
 		}
+		v.RUnlock()
 	}
 	return
 }
