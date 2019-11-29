@@ -122,12 +122,11 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: diff & lint
+          name: lint
           command: |
             source <(curl -sL https://git.io/use-tbls)
             dockerize -wait tcp://localhost:3306 -timeout 1m 2>/dev/null
             ./traQ migrate --reset
-            tbls diff
             tbls lint
 
   build-image:
