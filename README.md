@@ -44,11 +44,21 @@ Now you can access to
 You can remove the container by `make rm-test-db`
 
 ### Code Lint
-`make lint`
+`make lint` (or individually `make golangci-lint`, `make swagger-lint`)
 
 Installing below tools in advance is required:
 + [golangci-lint](https://github.com/golangci/golangci-lint) for go codes
 + [spectral](https://github.com/stoplightio/spectral) for swagger specs
+
+### Generate DB Schema Docs
+[tbls](https://github.com/k1LoW/tbls) is required.
+
+`make db-gen-docs`
+
+Test mysql container need to be running by `make up-test-db`.
+
+#### DB Docs Lint
+`make db-lint`
 
 ## License
 Code licensed under [the MIT License](https://github.com/traPtitech/traQ/blob/master/LICENSE).

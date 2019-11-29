@@ -2,6 +2,17 @@ docPath: docs/dbschema
 er:
   format: svg
 
+lint:
+  requireTableComment:
+    enabled: true
+  requireColumnComment:
+    enabled: true
+    exclude:
+      - id
+      - created_at
+      - updated_at
+      - deleted_at
+
 relations:
   - table: users
     columns:
