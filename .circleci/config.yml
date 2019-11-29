@@ -109,6 +109,8 @@ jobs:
   lint-db-docs:
     docker:
       - image: circleci/golang
+        environment:
+          - TBLS_DSN: "mysql://root:password@127.0.0.1:3306/traq"
       - image: circleci/mariadb:10.0.38-ram
         command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
         environment:
@@ -120,13 +122,12 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: diff & lint
+          name: lint
           command: |
             source <(curl -sL https://git.io/use-tbls)
             dockerize -wait tcp://localhost:3306 -timeout 1m 2>/dev/null
             ./traQ migrate --reset
-            TBLS_DSN="mysql://root:password@127.0.0.1:3306/traq" tbls diff
-            TBLS_DSN="mysql://root:password@127.0.0.1:3306/traq" tbls lint
+            tbls lint
 
   build-image:
     machine: true
