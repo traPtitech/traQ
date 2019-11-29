@@ -82,6 +82,14 @@ comments:
       created_at: 作成日時
       updated_at: 更新日時
       deleted_at: 削除日時
+  - table: archived_messages
+    tableComment: アーカイブ化されたメッセージのテーブル(編集前メッセージ)
+    columnComments:
+      id: アーカイブUUID
+      message_id: 元のメッセージUUID
+      user_id: 投稿ユーザーUUID
+      text: 本文
+      date_time: 本文の投稿日時
   - table: stars
     tableComment: お気に入りチャンネルテーブル
     columnComments:
@@ -153,3 +161,156 @@ comments:
       user2: ユーザーUUID
   - table: migrations
     tableComment: gormigrate用のデータベースバージョンテーブル
+  - table: bot_event_logs
+    tableComment: BOTイベントログテーブル
+    columnComments:
+      request_id: リクエストID
+      bot_id: BOT UUID
+      event: イベント名
+      body: イベント内容(jsonテキストが格納)
+      error: エラー内容
+      code: HTTPステータスコード(0はリクエスト自体失敗)
+      latency: リクエスト時間
+      date_time: イベント発生日時
+  - table: bot_join_channels
+    tableComment: BOT参加チャンネルテーブル
+    columnComments:
+      bot_id: BOT UUID
+      channel_id: チャンネルUUID
+  - table: bots
+    tableComment: traQ BOTテーブル
+    columnComments:
+      bot_user_id: BOTユーザーUUID
+      description: BOT説明
+      verification_token: 認証トークン
+      access_token_id: BOTアクセストークンID
+      post_url: BOTサーバーエンドポイント
+      subscribe_events: BOTが購読しているイベントリスト(スペース区切り)
+      privileged: 特権BOTかどうか
+      state: BOTの状態
+      bot_code: BOTコード
+      creator_id: BOT制作者UUID
+  - table: channel_events
+    tableComment: チャンネルイベントテーブル
+    columnComments:
+      event_id: イベントID
+      channel_id: チャンネルUUID
+      event_type: イベントタイプ
+      detail: イベント詳細(jsonテキストが格納)
+      date_time: イベント発生日時
+  - table: channel_latest_messages
+    tableComment: チャンネル最新メッセージテーブル
+    columnComments:
+      channel_id: チャンネルUUID
+      message_id: メッセージUUID
+      date_time: メッセージ作成日時
+  - table: files
+    tableComment: ファイルテーブル
+    columnComments:
+      name: ファイル名
+      mime: ファイルMIMEタイプ
+      size: ファイルサイズ(byte)
+      creator_id: ファイル作成者UUID
+      hash: MD5ハッシュ
+      type: ファイルタイプ
+      has_thumbnail: サムネイル画像を持っているか
+      thumbnail_width: サムネイル画像幅
+      thumbnail_height: サムネイル画像高さ
+  - table: files_acl
+    tableComment: ファイルアクセスコントロールリストテーブル
+    columnComments:
+      file_id: ファイルUUID
+      user_id: ユーザーUUID
+      allow: 許可
+  - table: message_reports
+    tableComment: メッセージ通報テーブル
+    columnComments:
+      message_id: メッセージUUID
+      reporter: 通報者UUID
+      reason: 通報理由
+  - table: pins
+    tableComment: ピンテーブル
+    columnComments:
+      message_id: メッセージUUID
+      user_id: ピンしたユーザーUUID
+  - table: webhook_bots
+    tableComment: traQ Webhookテーブル
+    columnComments:
+      bot_user_id: WebhookユーザーUUID
+      description: 説明
+      secret: BOTシークレット
+      channel_id: デフォルト投稿先チャンネルUUID
+      creator_id: 作成者UUID
+  - table: user_group_members
+    tableComment: ユーザーグループメンバーテーブル
+    columnComments:
+      group_id: グループUUID
+      user_id: ユーザーUUID
+  - table: user_groups
+    tableComment: ユーザーグループテーブル
+    columnComments:
+      name: グループ名
+      description: グループ説明
+      type: グループタイプ
+      admin_user_id: 管理者UUID
+  - table: user_roles
+    tableComment: ユーザーロールテーブル
+    columnComments:
+      name: ロール名
+      oauth2_scope: OAuth2のスコープかどうか
+      system: 組み込みロールかどうか
+  - table: user_role_permissions
+    tableComment: ユーザーロールパーミッションテーブル
+    columnComments:
+      role: ロール名
+      permission: パーミッション名
+  - table: user_role_inheritances
+    tableComment: ユーザーロール継承テーブル
+    columnComments:
+      role: ロール名
+      sub_role: サブロール名
+  - table: r_sessions
+    tableComment: traQ API HTTPセッションテーブル
+    columnComments:
+      token: セッショントークン
+      reference_id: 参照ID
+      user_id: セッションがログインしているユーザーUUID
+      last_access: 最終アクセス日時
+      last_ip: 最終アクセスIPアドレス
+      last_user_agent: 最終アクセスUserAgent
+      data: セッションデータ(gobバイナリ)
+      created: 生成日時
+  - table: oauth2_authorizes
+    tableComment: OAuth2認可リクエストテーブル
+    columnComments:
+      code: 認可コード
+      client_id: クライアントID
+      user_id: リクエストユーザーUUID
+      expires_in: 有効秒
+      redirect_uri: リダイレクトURI
+      scopes: 認可対象スコープ
+      original_scopes: 元の要求スコープ
+      code_challenge: PKCEコードチャレンジ
+      code_challenge_method: PKCEコードチャレンジ方式
+      nonce: nonce
+  - table: oauth2_clients
+    tableComment: OAuth2クライアントテーブル
+    columnComments:
+      name: クライアント名
+      description: 説明
+      confidential: コンフィデンシャルかどうか
+      creator_id: 作成者UUID
+      secret: クライアントシークレット
+      redirect_uri: リダイレクトURI
+      scopes: スコープ
+  - table: oauth2_tokens
+    tableComment: OAuth2トークンテーブル
+    columnComments:
+      client_id: クライアントID
+      user_id: ユーザーUUID
+      redirect_uri: リダイレクトURI
+      access_token: アクセストークン
+      refresh_token: リフレッシュトークン
+      refresh_enabled: リフレッシュトークンが有効かどうか
+      scopes: スコープ
+      expires_in: 有効秒

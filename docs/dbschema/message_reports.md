@@ -2,6 +2,8 @@
 
 ## Description
 
+メッセージ通報テーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -26,9 +28,9 @@ CREATE TABLE `message_reports` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false |  |  |  |
-| message_id | char(36) |  | false |  |  |  |
-| reporter | char(36) |  | false |  |  |  |
-| reason | text |  | false |  |  |  |
+| message_id | char(36) |  | false |  |  | メッセージUUID |
+| reporter | char(36) |  | false |  |  | 通報者UUID |
+| reason | text |  | false |  |  | 通報理由 |
 | created_at | timestamp(6) |  | true |  |  |  |
 | deleted_at | timestamp(6) |  | true |  |  |  |
 

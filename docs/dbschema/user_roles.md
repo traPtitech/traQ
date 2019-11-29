@@ -2,6 +2,8 @@
 
 ## Description
 
+ユーザーロールテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -20,9 +22,9 @@ CREATE TABLE `user_roles` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| name | varchar(30) |  | false | [user_role_inheritances](user_role_inheritances.md) [user_role_permissions](user_role_permissions.md) |  |  |
-| oauth2_scope | tinyint(1) | 0 | false |  |  |  |
-| system | tinyint(1) | 0 | false |  |  |  |
+| name | varchar(30) |  | false | [user_role_inheritances](user_role_inheritances.md) [user_role_permissions](user_role_permissions.md) |  | ロール名 |
+| oauth2_scope | tinyint(1) | 0 | false |  |  | OAuth2のスコープかどうか |
+| system | tinyint(1) | 0 | false |  |  | 組み込みロールかどうか |
 
 ## Constraints
 

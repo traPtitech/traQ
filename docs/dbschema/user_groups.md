@@ -2,6 +2,8 @@
 
 ## Description
 
+ユーザーグループテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -26,10 +28,10 @@ CREATE TABLE `user_groups` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false |  |  |  |
-| name | varchar(30) |  | false |  |  |  |
-| description | text |  | false |  |  |  |
-| type | varchar(30) |  | false |  |  |  |
-| admin_user_id | char(36) |  | false |  |  |  |
+| name | varchar(30) |  | false |  |  | グループ名 |
+| description | text |  | false |  |  | グループ説明 |
+| type | varchar(30) |  | false |  |  | グループタイプ |
+| admin_user_id | char(36) |  | false |  |  | 管理者UUID |
 | created_at | timestamp(6) |  | true |  |  |  |
 | updated_at | timestamp(6) |  | true |  |  |  |
 

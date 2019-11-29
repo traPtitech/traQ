@@ -2,6 +2,8 @@
 
 ## Description
 
+ファイルテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -30,15 +32,15 @@ CREATE TABLE `files` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false | [stamps](stamps.md) [users](users.md) |  |  |
-| name | text |  | false |  |  |  |
-| mime | text |  | false |  |  |  |
-| size | bigint(20) |  | false |  |  |  |
-| creator_id | char(36) |  | false |  |  |  |
-| hash | char(32) |  | false |  |  |  |
-| type | varchar(30) |  | false |  |  |  |
-| has_thumbnail | tinyint(1) | 0 | false |  |  |  |
-| thumbnail_width | int(11) | 0 | false |  |  |  |
-| thumbnail_height | int(11) | 0 | false |  |  |  |
+| name | text |  | false |  |  | ファイル名 |
+| mime | text |  | false |  |  | ファイルMIMEタイプ |
+| size | bigint(20) |  | false |  |  | ファイルサイズ(byte) |
+| creator_id | char(36) |  | false |  |  | ファイル作成者UUID |
+| hash | char(32) |  | false |  |  | MD5ハッシュ |
+| type | varchar(30) |  | false |  |  | ファイルタイプ |
+| has_thumbnail | tinyint(1) | 0 | false |  |  | サムネイル画像を持っているか |
+| thumbnail_width | int(11) | 0 | false |  |  | サムネイル画像幅 |
+| thumbnail_height | int(11) | 0 | false |  |  | サムネイル画像高さ |
 | created_at | timestamp(6) |  | true |  |  |  |
 | deleted_at | timestamp(6) |  | true |  |  |  |
 

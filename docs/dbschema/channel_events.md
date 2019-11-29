@@ -2,6 +2,8 @@
 
 ## Description
 
+チャンネルイベントテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -25,11 +27,11 @@ CREATE TABLE `channel_events` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| event_id | char(36) |  | false |  |  |  |
-| channel_id | char(36) |  | false |  | [channels](channels.md) |  |
-| event_type | varchar(30) |  | false |  |  |  |
-| detail | text |  | false |  |  |  |
-| date_time | timestamp(6) |  | true |  |  |  |
+| event_id | char(36) |  | false |  |  | イベントID |
+| channel_id | char(36) |  | false |  | [channels](channels.md) | チャンネルUUID |
+| event_type | varchar(30) |  | false |  |  | イベントタイプ |
+| detail | text |  | false |  |  | イベント詳細(jsonテキストが格納) |
+| date_time | timestamp(6) |  | true |  |  | イベント発生日時 |
 
 ## Constraints
 

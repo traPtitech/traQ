@@ -2,6 +2,8 @@
 
 ## Description
 
+OAuth2クライアントテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -29,13 +31,13 @@ CREATE TABLE `oauth2_clients` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false |  |  |  |
-| name | varchar(32) |  | true |  |  |  |
-| description | text |  | true |  |  |  |
-| confidential | tinyint(1) |  | true |  |  |  |
-| creator_id | char(36) |  | true |  |  |  |
-| secret | varchar(36) |  | true |  |  |  |
-| redirect_uri | text |  | true |  |  |  |
-| scopes | text |  | true |  |  |  |
+| name | varchar(32) |  | true |  |  | クライアント名 |
+| description | text |  | true |  |  | 説明 |
+| confidential | tinyint(1) |  | true |  |  | コンフィデンシャルかどうか |
+| creator_id | char(36) |  | true |  |  | 作成者UUID |
+| secret | varchar(36) |  | true |  |  | クライアントシークレット |
+| redirect_uri | text |  | true |  |  | リダイレクトURI |
+| scopes | text |  | true |  |  | スコープ |
 | created_at | timestamp(6) |  | true |  |  |  |
 | updated_at | timestamp(6) |  | true |  |  |  |
 | deleted_at | timestamp(6) |  | true |  |  |  |

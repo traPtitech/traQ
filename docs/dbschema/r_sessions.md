@@ -2,6 +2,8 @@
 
 ## Description
 
+traQ API HTTPセッションテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -27,14 +29,14 @@ CREATE TABLE `r_sessions` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| token | varchar(50) |  | false |  |  |  |
-| reference_id | char(36) |  | true |  |  |  |
-| user_id | varchar(36) |  | true |  |  |  |
-| last_access | timestamp(6) |  | true |  |  |  |
-| last_ip | text |  | true |  |  |  |
-| last_user_agent | text |  | true |  |  |  |
-| data | longblob |  | true |  |  |  |
-| created | timestamp(6) |  | true |  |  |  |
+| token | varchar(50) |  | false |  |  | セッショントークン |
+| reference_id | char(36) |  | true |  |  | 参照ID |
+| user_id | varchar(36) |  | true |  |  | セッションがログインしているユーザーUUID |
+| last_access | timestamp(6) |  | true |  |  | 最終アクセス日時 |
+| last_ip | text |  | true |  |  | 最終アクセスIPアドレス |
+| last_user_agent | text |  | true |  |  | 最終アクセスUserAgent |
+| data | longblob |  | true |  |  | セッションデータ(gobバイナリ) |
+| created | timestamp(6) |  | true |  |  | 生成日時 |
 
 ## Constraints
 

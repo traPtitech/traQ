@@ -2,6 +2,8 @@
 
 ## Description
 
+OAuth2トークンテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -31,14 +33,14 @@ CREATE TABLE `oauth2_tokens` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false |  |  |  |
-| client_id | char(36) |  | true |  |  |  |
-| user_id | char(36) |  | true |  |  |  |
-| redirect_uri | text |  | true |  |  |  |
-| access_token | varchar(36) |  | true |  |  |  |
-| refresh_token | varchar(36) |  | true |  |  |  |
-| refresh_enabled | tinyint(1) | 0 | true |  |  |  |
-| scopes | text |  | true |  |  |  |
-| expires_in | int(11) |  | true |  |  |  |
+| client_id | char(36) |  | true |  |  | クライアントID |
+| user_id | char(36) |  | true |  |  | ユーザーUUID |
+| redirect_uri | text |  | true |  |  | リダイレクトURI |
+| access_token | varchar(36) |  | true |  |  | アクセストークン |
+| refresh_token | varchar(36) |  | true |  |  | リフレッシュトークン |
+| refresh_enabled | tinyint(1) | 0 | true |  |  | リフレッシュトークンが有効かどうか |
+| scopes | text |  | true |  |  | スコープ |
+| expires_in | int(11) |  | true |  |  | 有効秒 |
 | created_at | timestamp(6) |  | true |  |  |  |
 | deleted_at | timestamp(6) |  | true |  |  |  |
 
