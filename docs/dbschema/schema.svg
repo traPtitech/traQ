@@ -548,17 +548,17 @@
 <text text-anchor="start" x="1159.5" y="-1327.8" font-family="Arial" font-size="14.00" fill="#000000">file_id </text>
 <text text-anchor="start" x="1199.9688" y="-1327.8" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
 <polygon fill="none" stroke="#000000" points="1152.5,-1285 1152.5,-1315 1329.5,-1315 1329.5,-1285 1152.5,-1285"/>
-<text text-anchor="start" x="1159.5" y="-1297.8" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
-<text text-anchor="start" x="1229.5479" y="-1297.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
+<text text-anchor="start" x="1159.5" y="-1297.8" font-family="Arial" font-size="14.00" fill="#000000">is_unicode </text>
+<text text-anchor="start" x="1230.3271" y="-1297.8" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(1)]</text>
 <polygon fill="none" stroke="#000000" points="1152.5,-1255 1152.5,-1285 1329.5,-1285 1329.5,-1255 1152.5,-1255"/>
-<text text-anchor="start" x="1159.29" y="-1267.8" font-family="Arial" font-size="14.00" fill="#000000">updated_at </text>
-<text text-anchor="start" x="1233.248" y="-1267.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
+<text text-anchor="start" x="1159.5" y="-1267.8" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
+<text text-anchor="start" x="1229.5479" y="-1267.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
 <polygon fill="none" stroke="#000000" points="1152.5,-1225 1152.5,-1255 1329.5,-1255 1329.5,-1225 1152.5,-1225"/>
-<text text-anchor="start" x="1159.5" y="-1237.8" font-family="Arial" font-size="14.00" fill="#000000">deleted_at </text>
-<text text-anchor="start" x="1228.7822" y="-1237.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
+<text text-anchor="start" x="1159.29" y="-1237.8" font-family="Arial" font-size="14.00" fill="#000000">updated_at </text>
+<text text-anchor="start" x="1233.248" y="-1237.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
 <polygon fill="none" stroke="#000000" points="1152.5,-1195 1152.5,-1225 1329.5,-1225 1329.5,-1195 1152.5,-1195"/>
-<text text-anchor="start" x="1159.5" y="-1207.8" font-family="Arial" font-size="14.00" fill="#000000">is_unicode </text>
-<text text-anchor="start" x="1230.3271" y="-1207.8" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(1)]</text>
+<text text-anchor="start" x="1159.5" y="-1207.8" font-family="Arial" font-size="14.00" fill="#000000">deleted_at </text>
+<text text-anchor="start" x="1228.7822" y="-1207.8" font-family="Arial" font-size="14.00" fill="#666666">[timestamp(6)]</text>
 </g>
 <!-- messages_stamps&#45;&gt;stamps -->
 <g id="edge10" class="edge">

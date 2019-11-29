@@ -13,14 +13,14 @@ CREATE TABLE `stamps` (
   `name` varchar(32) NOT NULL,
   `creator_id` char(36) NOT NULL,
   `file_id` char(36) NOT NULL,
+  `is_unicode` tinyint(1) NOT NULL DEFAULT '0',
   `created_at` timestamp(6) NULL DEFAULT NULL,
   `updated_at` timestamp(6) NULL DEFAULT NULL,
   `deleted_at` timestamp(6) NULL DEFAULT NULL,
-  `is_unicode` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`),
-  KEY `stamps_file_id_files_id_foreign` (`file_id`),
   KEY `idx_stamps_is_unicode` (`is_unicode`),
+  KEY `stamps_file_id_files_id_foreign` (`file_id`),
   CONSTRAINT `stamps_file_id_files_id_foreign` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
@@ -35,10 +35,10 @@ CREATE TABLE `stamps` (
 | name | varchar(32) |  | false |  |  | スタンプ名 |
 | creator_id | char(36) |  | false |  | [users](users.md) | 作成者UUID |
 | file_id | char(36) |  | false |  | [files](files.md) | ファイルUUID |
+| is_unicode | tinyint(1) | 0 | false |  |  | Unicode絵文字かどうか |
 | created_at | timestamp(6) |  | true |  |  | 作成日時 |
 | updated_at | timestamp(6) |  | true |  |  | 更新日時 |
 | deleted_at | timestamp(6) |  | true |  |  | 削除日時 |
-| is_unicode | tinyint(1) | 0 | false |  |  | Unicode絵文字かどうか |
 
 ## Constraints
 
