@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	vd "github.com/go-ozzo/ozzo-validation"
