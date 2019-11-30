@@ -145,7 +145,7 @@ func (r *PostMessageStampRequest) Validate() error {
 	if r.Count == 0 {
 		r.Count = 1
 	}
-	return vd.ValidateStruct(&r,
+	return vd.ValidateStruct(r,
 		vd.Field(&r.Count, vd.Min(1), vd.Max(100)),
 	)
 }

@@ -27,7 +27,10 @@ func ErrorHandler(logger *zap.Logger) echo.HTTPErrorHandler {
 			}
 			if m, ok := err.Message.(string); ok {
 				body = echo.Map{"message": m}
+			} else if e, ok := err.Message.(error); ok {
+				body = echo.Map{"message": e.Error()}
 			}
+
 			code = err.Code
 		case *herror.InternalError:
 			logger.Error(err.Error(), append(err.Fields, zap.String("logging.googleapis.com/trace", GetTraceID(c)))...)
