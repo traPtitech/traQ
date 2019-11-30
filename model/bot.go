@@ -139,7 +139,7 @@ func (set BotEvents) Clone() BotEvents {
 func (set BotEvents) StringArray() (r []string) {
 	r = make([]string, 0, len(set))
 	for s := range set {
-		r = append(r, string(s))
+		r = append(r, s.String())
 	}
 	return r
 }
@@ -148,7 +148,7 @@ func (set BotEvents) StringArray() (r []string) {
 func (set BotEvents) Validate() error {
 	return vd.Validate(set.StringArray(), vd.Each(vd.Required, vd.By(func(value interface{}) error {
 		s, _ := value.(string)
-		if BotEventSet[BotEvent(s)] {
+		if !BotEventSet[BotEvent(s)] {
 			return errors.New("must be bot event")
 		}
 		return nil
