@@ -20,6 +20,9 @@ var (
 // NotInternalURL 内部ネットワーク宛のURLでない
 var NotInternalURL = validation.By(func(value interface{}) error {
 	s, _ := value.(string)
+	if len(s) == 0 {
+		return nil
+	}
 	u, _ := url.Parse(s)
 	if utils.IsPrivateHost(u.Hostname()) {
 		return errors.New("must not be internal url")
