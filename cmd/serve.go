@@ -3,6 +3,11 @@ package cmd
 import (
 	"cloud.google.com/go/profiler"
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
@@ -111,16 +116,23 @@ var serveCommand = &cobra.Command{
 		bot.NewProcessor(repo, hub, logger.Named("bot_processor"))
 
 		// JWT for QRCode
-		pubRaw, err := ioutil.ReadFile(viper.GetString("jwt.keys.public"))
-		if err != nil {
-			logger.Fatal("failed to read jwt public key", zap.Error(err))
-		}
-		privRaw, err := ioutil.ReadFile(viper.GetString("jwt.keys.private"))
-		if err != nil {
-			logger.Fatal("failed to read jwt private key", zap.Error(err))
-		}
-		if err := utils.SetupSigner(pubRaw, privRaw); err != nil {
-			logger.Fatal("failed to setup signer", zap.Error(err))
+		if priv := viper.GetString("jwt.keys.private"); priv != "" {
+			privRaw, err := ioutil.ReadFile(priv)
+			if err != nil {
+				logger.Fatal("failed to read jwt private key", zap.Error(err))
+			}
+			if err := utils.SetupSigner(privRaw); err != nil {
+				logger.Fatal("failed to setup signer", zap.Error(err))
+			}
+		} else {
+			// 一時鍵を発行
+			priv, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+			ecder, _ := x509.MarshalECPrivateKey(priv)
+			ecderpub, _ := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+			privRaw := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: ecder})
+			pubRaw := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: ecderpub})
+			_ = utils.SetupSigner(privRaw)
+			logger.Warn("a temporary key for QRCode JWT was generated. This key is valid only during this running.", zap.String("public_key", string(pubRaw)))
 		}
 
 		// Realtime Service

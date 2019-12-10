@@ -63,9 +63,6 @@ func init() {
 	viper.SetDefault("oauth2.isRefreshEnabled", false)
 	viper.SetDefault("oauth2.accessTokenExp", 60*60*24*365)
 
-	viper.SetDefault("jwt.keys.public", "./keys/ec_pub.pem")
-	viper.SetDefault("jwt.keys.private", "./keys/ec.pem")
-
 	viper.SetDefault("skyway.secretKey", "")
 
 	rootCommand.AddCommand(serveCommand)

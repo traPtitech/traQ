@@ -21,18 +21,13 @@ type (
 )
 
 // SetupSigner JWTを発行・検証するためのSignerのセットアップ
-func SetupSigner(pubRaw, privRaw []byte) error {
-	pub, err := jwt.ParseECPublicKeyFromPEM(bytes.TrimSpace(pubRaw))
-	if err != nil {
-		return err
-	}
-
+func SetupSigner(privRaw []byte) error {
 	priv, err := jwt.ParseECPrivateKeyFromPEM(bytes.TrimSpace(privRaw))
 	if err != nil {
 		return err
 	}
 
-	Signer = &signer{pub, priv}
+	Signer = &signer{pub: &priv.PublicKey, priv: priv}
 	return nil
 }
 

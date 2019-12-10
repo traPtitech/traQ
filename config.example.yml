@@ -68,7 +68,6 @@
 
 #jwt:
 #  keys:
-#    public: /keys/ec_pub.pem
 #    private: /keys/ec.pem
 
 #skyway:

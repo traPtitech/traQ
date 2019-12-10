@@ -23,7 +23,6 @@ services:
       - traQnet
     volumes:
       - ./dev/data:/initdata:ro
-      - ./dev/keys:/app/keys:ro
 
   traq-frontend:
     image: trap/traq-ui
