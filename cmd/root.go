@@ -6,6 +6,9 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql" // mysql driver
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/traPtitech/traQ/logging"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"log"
 	"net/http"
 	_ "net/http/pprof" // pprof init
@@ -18,6 +21,8 @@ var (
 	Revision string
 )
 
+var development bool
+
 var rootCommand = &cobra.Command{
 	Use: "traQ",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -26,10 +31,6 @@ var rootCommand = &cobra.Command{
 			go func() { _ = http.ListenAndServe("0.0.0.0:6060", nil) }()
 		}
 	},
-}
-
-func Execute() error {
-	return rootCommand.Execute()
 }
 
 func init() {
@@ -68,6 +69,8 @@ func init() {
 	rootCommand.AddCommand(serveCommand)
 	rootCommand.AddCommand(migrateCommand)
 	rootCommand.AddCommand(versionCommand)
+
+	rootCommand.PersistentFlags().BoolVar(&development, "dev", false, "development mode")
 }
 
 func initConfig() {
@@ -82,6 +85,10 @@ func initConfig() {
 			log.Fatalf("failed to read config file: %v", err)
 		}
 	}
+}
+
+func Execute() error {
+	return rootCommand.Execute()
 }
 
 func getDatabase() (*gorm.DB, error) {
@@ -101,4 +108,33 @@ func getDatabase() (*gorm.DB, error) {
 	engine.DB().SetConnMaxLifetime(time.Duration(viper.GetInt("mariadb.connection.lifetime")) * time.Second)
 	engine.LogMode(viper.GetBool("gormLogMode"))
 	return engine, nil
+}
+
+func getLogger() (logger *zap.Logger) {
+	if development {
+		cfg := zap.Config{
+			Level:       zap.NewAtomicLevelAt(zap.DebugLevel),
+			Development: true,
+			Encoding:    "console",
+			EncoderConfig: zapcore.EncoderConfig{
+				TimeKey:        "T",
+				LevelKey:       "L",
+				NameKey:        "N",
+				CallerKey:      "C",
+				MessageKey:     "M",
+				StacktraceKey:  "S",
+				LineEnding:     zapcore.DefaultLineEnding,
+				EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+				EncodeTime:     zapcore.ISO8601TimeEncoder,
+				EncodeDuration: zapcore.StringDurationEncoder,
+				EncodeCaller:   zapcore.ShortCallerEncoder,
+			},
+			OutputPaths:      []string{"stderr"},
+			ErrorOutputPaths: []string{"stderr"},
+		}
+		logger, _ = cfg.Build()
+	} else {
+		logger, _ = logging.CreateNewLogger("traq", fmt.Sprintf("%s.%s", Version, Revision))
+	}
+	return
 }

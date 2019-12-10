@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/fcm"
-	"github.com/traPtitech/traQ/logging"
 	"github.com/traPtitech/traQ/notification"
 	rbac "github.com/traPtitech/traQ/rbac/impl"
 	"github.com/traPtitech/traQ/realtime"
@@ -38,20 +37,15 @@ var serveCommand = &cobra.Command{
 	Use:   "serve",
 	Short: "Serve traQ API",
 	Run: func(cmd *cobra.Command, args []string) {
-		versionAndRevision := fmt.Sprintf("%s.%s", Version, Revision)
-
 		// Logger
-		logger, err := logging.CreateNewLogger("traq", versionAndRevision)
-		if err != nil {
-			panic(err)
-		}
+		logger := getLogger()
 		defer logger.Sync()
 
 		// Stackdriver Profiler
 		if viper.GetBool("gcp.stackdriver.profiler.enabled") {
 			err := profiler.Start(profiler.Config{
 				Service:        "traq",
-				ServiceVersion: versionAndRevision,
+				ServiceVersion: fmt.Sprintf("%s.%s", Version, Revision),
 				ProjectID:      viper.GetString("gcp.serviceAccount.projectId"),
 			}, option.WithCredentialsFile(viper.GetString("gcp.serviceAccount.file")))
 			if err != nil {
