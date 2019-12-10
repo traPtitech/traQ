@@ -2,7 +2,7 @@ package herror
 
 import (
 	"fmt"
-	"github.com/traPtitech/traQ/logging"
+	"github.com/blendle/zapdriver"
 	"go.uber.org/zap"
 	"runtime"
 	"runtime/debug"
@@ -26,6 +26,6 @@ func InternalServerError(err error) error {
 	return &InternalError{
 		Err:    err,
 		Stack:  debug.Stack(),
-		Fields: []zap.Field{logging.ErrorReport(runtime.Caller(1)), zap.Error(err)},
+		Fields: []zap.Field{zapdriver.ErrorReport(runtime.Caller(1)), zap.Error(err)},
 	}
 }

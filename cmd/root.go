@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/blendle/zapdriver"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql" // mysql driver
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/traPtitech/traQ/logging"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"log"
@@ -134,7 +134,14 @@ func getLogger() (logger *zap.Logger) {
 		}
 		logger, _ = cfg.Build()
 	} else {
-		logger, _ = logging.CreateNewLogger("traq", fmt.Sprintf("%s.%s", Version, Revision))
+		cfg := zap.Config{
+			Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
+			Encoding:         "json",
+			EncoderConfig:    zapdriver.NewProductionEncoderConfig(),
+			OutputPaths:      []string{"stdout"},
+			ErrorOutputPaths: []string{"stderr"},
+		}
+		logger, _ = cfg.Build(zapdriver.WrapCore(zapdriver.ServiceName("traq", fmt.Sprintf("%s.%s", Version, Revision))))
 	}
 	return
 }

@@ -1,8 +1,8 @@
 package middlewares
 
 import (
+	"github.com/blendle/zapdriver"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/logging"
 	"github.com/traPtitech/traQ/router/extension"
 	"go.uber.org/zap"
 	"strconv"
@@ -26,7 +26,7 @@ func AccessLogging(logger *zap.Logger) echo.MiddlewareFunc {
 
 			req := c.Request()
 			res := c.Response()
-			logger.Info("", zap.String("logging.googleapis.com/trace", extension.GetTraceID(c)), logging.HTTPRequest(&logging.HTTPPayload{
+			logger.Info("", zap.String("logging.googleapis.com/trace", extension.GetTraceID(c)), zapdriver.HTTP(&zapdriver.HTTPPayload{
 				RequestMethod: req.Method,
 				Status:        res.Status,
 				UserAgent:     req.UserAgent(),
