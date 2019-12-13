@@ -18,8 +18,6 @@ services:
       - "6060:6060"
     depends_on:
       - mysql
-    networks:
-      - traQnet
     volumes:
       - ./dev/data:/initdata:ro
 
@@ -28,8 +26,6 @@ services:
     restart: always
     expose:
       - "80"
-    networks:
-      - traQnet
 
   reverse-proxy:
     image: abiosoft/caddy:0.11.5-no-stats
@@ -41,8 +37,6 @@ services:
     depends_on:
       - traq-backend
       - traq-frontend
-    networks:
-      - traQnet
     volumes:
       - ./dev/Caddyfile:/etc/Caddyfile:ro
 
@@ -58,9 +52,6 @@ services:
       - "3306"
     ports:
       - "3002:3306"
-    networks:
-      - traQnet
-      - adminNet
 
   adminer:
     image: adminer:4.6.3
@@ -72,9 +63,3 @@ services:
       - "8080"
     ports:
       - "3001:8080"
-    networks:
-      - adminNet
-
-networks:
-  traQnet:
-  adminNet:

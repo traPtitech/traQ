@@ -40,7 +40,6 @@ func init() {
 	viper.SetDefault("port", 3000)
 	viper.SetDefault("gzip", true)
 	viper.SetDefault("accessLog.enabled", true)
-	viper.SetDefault("accessLog.excludesHeartbeat", true)
 
 	viper.SetDefault("pprof", false)
 
@@ -62,8 +61,6 @@ func init() {
 
 	viper.SetDefault("oauth2.isRefreshEnabled", false)
 	viper.SetDefault("oauth2.accessTokenExp", 60*60*24*365)
-
-	viper.SetDefault("skyway.secretKey", "")
 
 	rootCommand.AddCommand(serveCommand)
 	rootCommand.AddCommand(migrateCommand)

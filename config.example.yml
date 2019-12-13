@@ -6,7 +6,6 @@
 #gzip: true
 #accessLog:
 #  enabled: true
-#  excludesHeartbeat: true
 
 #pprof: false
 
@@ -66,7 +65,7 @@
 
 #jwt:
 #  keys:
-#    private: /keys/ec.pem
+#    private:
 
 #skyway:
 #  secretKey:
