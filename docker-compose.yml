@@ -8,7 +8,6 @@ services:
       TRAQ_ORIGIN: http://localhost:3000
       TRAQ_MARIADB_HOST: mysql
       TRAQ_PPROF: "true"
-      TRAQ_GORMLOGMODE: "true"
       TRAQ_INITDATADIR: /initdata
     entrypoint: dockerize -timeout 60s -wait tcp://mysql:3306
     command: ./traQ serve --dev

@@ -23,6 +23,7 @@ import (
 	"github.com/traPtitech/traQ/router/sse"
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
@@ -61,6 +62,7 @@ var serveCommand = &cobra.Command{
 		if err != nil {
 			logger.Fatal("failed to connect database", zap.Error(err))
 		}
+		engine.SetLogger(gormzap.New(logger.Named("gorm")))
 		defer engine.Close()
 
 		// FileStorage

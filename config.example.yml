@@ -10,8 +10,6 @@
 
 #pprof: false
 
-#gormLogMode: false
-
 #initDataDir:
 
 #externalAuthentication:

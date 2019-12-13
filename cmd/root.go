@@ -43,7 +43,6 @@ func init() {
 	viper.SetDefault("accessLog.excludesHeartbeat", true)
 
 	viper.SetDefault("pprof", false)
-	viper.SetDefault("gormLogMode", false)
 
 	viper.SetDefault("externalAuthentication.enabled", false)
 
@@ -106,7 +105,7 @@ func getDatabase() (*gorm.DB, error) {
 	engine.DB().SetMaxOpenConns(viper.GetInt("mariadb.connection.maxOpen"))
 	engine.DB().SetMaxIdleConns(viper.GetInt("mariadb.connection.maxIdle"))
 	engine.DB().SetConnMaxLifetime(time.Duration(viper.GetInt("mariadb.connection.lifetime")) * time.Second)
-	engine.LogMode(viper.GetBool("gormLogMode"))
+	engine.LogMode(development)
 	return engine, nil
 }
 
