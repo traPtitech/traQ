@@ -12,6 +12,8 @@ import (
 
 // Config APIサーバー設定
 type Config struct {
+	// 開発モードかどうか
+	Development bool
 	// Version サーバーバージョン
 	Version string
 	// Revision サーバーリビジョン

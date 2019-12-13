@@ -141,6 +141,7 @@ var serveCommand = &cobra.Command{
 
 		// HTTP Router
 		e := router.Setup(&router.Config{
+			Development:      development,
 			Version:          Version,
 			Revision:         Revision,
 			AccessLogging:    viper.GetBool("accessLog.enabled"),
