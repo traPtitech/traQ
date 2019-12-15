@@ -37,21 +37,6 @@ jobs:
           paths:
             - /go/pkg/mod/cache
 
-  lint:
-    executor: default
-    steps:
-      - checkout
-      - restore_mod
-      - run:
-          name: Install reviewdog
-          command: curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh | sh -s -- -b ./bin
-      - run:
-          name: Install golangci-lint
-          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.21.0
-      - run:
-          name: lint
-          command: ./bin/golangci-lint run --out-format=line-number | ./bin/reviewdog -f=golangci-lint -name=golangci-lint -reporter=github-pr-check
-
   build:
     executor: default
     steps:
@@ -69,13 +54,6 @@ jobs:
           when: always
           paths:
             - /tmp/go/cache
-      - store_artifacts:
-          path: ~/workspace/traQ
-          destination: traQ
-      - persist_to_workspace:
-          root: .
-          paths:
-            - traQ
 
   test:
     docker:
@@ -101,33 +79,7 @@ jobs:
           command: |
             export TRAQ_IMAGEMAGICK=`which convert`
             dockerize -wait tcp://localhost:3306 -timeout 1m 2>/dev/null
-            go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
-      - run:
-          name: Upload coverage data
-          command: bash <(curl -s https://codecov.io/bash)
-
-  lint-db-docs:
-    docker:
-      - image: circleci/golang
-        environment:
-          - TBLS_DSN: "mysql://root:password@127.0.0.1:3306/traq"
-      - image: circleci/mariadb:10.0.38-ram
-        command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
-        environment:
-          - MYSQL_DATABASE: "traq"
-          - MYSQL_ROOT_PASSWORD: "password"
-    working_directory: ~/workspace
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: lint
-          command: |
-            source <(curl -sL https://git.io/use-tbls)
-            dockerize -wait tcp://localhost:3306 -timeout 1m 2>/dev/null
-            ./traQ migrate --reset
-            tbls lint
+            go test ./... -coverprofile=coverage.txt -race -vet=off
 
   build-image:
     machine: true
@@ -206,14 +158,6 @@ workflows:
               only: /.*/
             tags:
               only: /.*/
-      - lint:
-          requires:
-            - gomod
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              only: /.*/
       - build:
           requires:
             - gomod
@@ -230,14 +174,6 @@ workflows:
               only: /.*/
             tags:
               only: /.*/
-      - lint-db-docs:
-          requires:
-            - build
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              only: /.*/
       - deploy-staging:
           requires:
             - build-image
@@ -247,7 +183,6 @@ workflows:
       - build-image:
           requires:
             - test
-            - lint
           filters:
             branches:
               only: master
