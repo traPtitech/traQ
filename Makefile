@@ -44,15 +44,15 @@ db-gen-docs:
 	@if [ -d "./docs/dbschema" ]; then \
 		rm -r ./docs/dbschema; \
 	fi
-	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
+	go run main.go migrate --reset --dbport $(TEST_DB_PORT)
 	TBLS_DSN="mysql://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" tbls doc
 
 .PHONY: db-diff-docs
 db-diff-docs:
-	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
+	go run main.go migrate --reset --dbport $(TEST_DB_PORT)
 	TBLS_DSN="mysql://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" tbls diff
 
 .PHONY: db-lint
 db-lint:
-	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
+	go run main.go migrate --reset --dbport $(TEST_DB_PORT)
 	TBLS_DSN="mysql://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" tbls lint

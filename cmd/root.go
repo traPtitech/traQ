@@ -116,8 +116,11 @@ func getLogger() (logger *zap.Logger) {
 	return
 }
 
-func bindPFlag(flags *pflag.FlagSet, key string) {
-	if err := viper.BindPFlag(key, flags.Lookup(key)); err != nil {
+func bindPFlag(flags *pflag.FlagSet, key string, flag ...string) {
+	if len(flag) == 0 {
+		flag = []string{key}
+	}
+	if err := viper.BindPFlag(key, flags.Lookup(flag[0])); err != nil {
 		panic(err)
 	}
 }
