@@ -99,7 +99,7 @@ jobs:
       - run:
           name: test
           command: |
-            export TRAQ_IMAGEMAGICK_PATH=`which convert`
+            export TRAQ_IMAGEMAGICK=`which convert`
             dockerize -wait tcp://localhost:3306 -timeout 1m 2>/dev/null
             go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
       - run:

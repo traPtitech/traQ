@@ -21,7 +21,7 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 
 VOLUME /app/storage
 EXPOSE 3000
-ENV TRAQ_IMAGEMAGICK_PATH=/usr/bin/convert
+ENV TRAQ_IMAGEMAGICK=/usr/bin/convert
 
 COPY ./static ./static/
 COPY --from=build /traQ ./

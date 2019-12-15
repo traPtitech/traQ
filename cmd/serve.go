@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/bot"
 	"github.com/traPtitech/traQ/fcm"
 	"github.com/traPtitech/traQ/notification"
@@ -24,7 +23,6 @@ import (
 	"github.com/traPtitech/traQ/sessions"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/gormzap"
-	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
 	"io/ioutil"
@@ -43,22 +41,23 @@ var serveCommand = &cobra.Command{
 		defer logger.Sync()
 
 		// Stackdriver Profiler
-		if viper.GetBool("gcp.stackdriver.profiler.enabled") {
+		if c.GCP.Stackdriver.Profiler.Enabled {
 			err := profiler.Start(profiler.Config{
 				Service:        "traq",
 				ServiceVersion: fmt.Sprintf("%s.%s", Version, Revision),
-				ProjectID:      viper.GetString("gcp.serviceAccount.projectId"),
-			}, option.WithCredentialsFile(viper.GetString("gcp.serviceAccount.file")))
+				ProjectID:      c.GCP.ServiceAccount.ProjectID,
+			}, option.WithCredentialsFile(c.GCP.ServiceAccount.File))
 			if err != nil {
 				logger.Fatal("failed to setup Stackdriver Profiler", zap.Error(err))
 			}
+			logger.Info("stackdriver profiler started")
 		}
 
 		// Message Hub
 		hub := hub.New()
 
 		// Database
-		engine, err := getDatabase()
+		engine, err := c.getDatabase()
 		if err != nil {
 			logger.Fatal("failed to connect database", zap.Error(err))
 		}
@@ -66,7 +65,7 @@ var serveCommand = &cobra.Command{
 		defer engine.Close()
 
 		// FileStorage
-		fs, err := getFileStorage()
+		fs, err := c.getFileStorage()
 		if err != nil {
 			logger.Fatal("failed to setup file storage", zap.Error(err))
 		}
@@ -79,7 +78,7 @@ var serveCommand = &cobra.Command{
 		if init, err := repo.Sync(); err != nil {
 			logger.Fatal("failed to sync repository", zap.Error(err))
 		} else if init { // 初期化
-			if dir := viper.GetString("initDataDir"); len(dir) > 0 {
+			if dir := c.InitDataDir; len(dir) > 0 {
 				if err := initData(repo, dir); err != nil {
 					logger.Fatal("failed to init data", zap.Error(err))
 				}
@@ -101,7 +100,7 @@ var serveCommand = &cobra.Command{
 
 		// Firebase
 		var fcmClient *fcm.Client
-		if f := viper.GetString("firebase.serviceAccount.file"); len(f) > 0 {
+		if f := c.Firebase.ServiceAccount.File; len(f) > 0 {
 			fcmClient, err = fcm.NewClient(repo, logger.Named("fcm"), option.WithCredentialsFile(f))
 			if err != nil {
 				logger.Fatal("failed to setup firebase", zap.Error(err))
@@ -112,7 +111,7 @@ var serveCommand = &cobra.Command{
 		bot.NewProcessor(repo, hub, logger.Named("bot_processor"))
 
 		// JWT for QRCode
-		if priv := viper.GetString("jwt.keys.private"); priv != "" {
+		if priv := c.JWT.Keys.Private; priv != "" {
 			privRaw, err := ioutil.ReadFile(priv)
 			if err != nil {
 				logger.Fatal("failed to read jwt private key", zap.Error(err))
@@ -137,19 +136,19 @@ var serveCommand = &cobra.Command{
 		sses := sse.NewStreamer(hub)
 
 		// Notification Service
-		notification.StartService(repo, hub, logger.Named("notification"), fcmClient, sses, wss, rt, viper.GetString("origin"))
+		notification.StartService(repo, hub, logger.Named("notification"), fcmClient, sses, wss, rt, c.Origin)
 
 		// HTTP Router
 		e := router.Setup(&router.Config{
-			Development:      development,
+			Development:      c.DevMode,
 			Version:          Version,
 			Revision:         Revision,
-			AccessLogging:    viper.GetBool("accessLog.enabled"),
-			Gzipped:          viper.GetBool("gzip"),
-			ImageMagickPath:  viper.GetString("imagemagick.path"),
-			AccessTokenExp:   viper.GetInt("oauth2.accessTokenExp"),
-			IsRefreshEnabled: viper.GetBool("oauth2.isRefreshEnabled"),
-			SkyWaySecretKey:  viper.GetString("skyway.secretKey"),
+			AccessLogging:    c.AccessLog.Enabled,
+			Gzipped:          c.Gzip,
+			ImageMagickPath:  c.ImageMagick,
+			AccessTokenExp:   c.OAuth2.AccessTokenExpire,
+			IsRefreshEnabled: c.OAuth2.IsRefreshEnabled,
+			SkyWaySecretKey:  c.SkyWay.SecretKey,
 			Hub:              hub,
 			Repository:       repo,
 			RBAC:             r,
@@ -160,7 +159,7 @@ var serveCommand = &cobra.Command{
 		})
 
 		go func() {
-			if err := e.Start(fmt.Sprintf(":%d", viper.GetInt("port"))); err != nil {
+			if err := e.Start(fmt.Sprintf(":%d", c.Port)); err != nil {
 				logger.Info("shutting down the server")
 			}
 		}()
@@ -180,36 +179,4 @@ var serveCommand = &cobra.Command{
 		sessions.PurgeCache()
 		logger.Info("traQ shutdown")
 	},
-}
-
-func getFileStorage() (storage.FileStorage, error) {
-	switch viper.GetString("storage.type") {
-	case "swift":
-		return storage.NewSwiftFileStorage(
-			viper.GetString("storage.swift.container"),
-			viper.GetString("storage.swift.username"),
-			viper.GetString("storage.swift.apiKey"),
-			viper.GetString("storage.swift.tenantName"),
-			viper.GetString("storage.swift.tenantId"),
-			viper.GetString("storage.swift.authUrl"),
-			viper.GetString("storage.swift.tempUrlKey"),
-			viper.GetString("storage.swift.cacheDir"),
-		)
-	case "composite":
-		return storage.NewCompositeFileStorage(
-			viper.GetString("storage.local.dir"),
-			viper.GetString("storage.swift.container"),
-			viper.GetString("storage.swift.username"),
-			viper.GetString("storage.swift.apiKey"),
-			viper.GetString("storage.swift.tenantName"),
-			viper.GetString("storage.swift.tenantId"),
-			viper.GetString("storage.swift.authUrl"),
-			viper.GetString("storage.swift.tempUrlKey"),
-			viper.GetString("storage.swift.cacheDir"),
-		)
-	case "memory":
-		return storage.NewInMemoryFileStorage(), nil
-	default:
-		return storage.NewLocalFileStorage(viper.GetString("storage.local.dir")), nil
-	}
 }

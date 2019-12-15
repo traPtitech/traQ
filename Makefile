@@ -3,7 +3,7 @@ SOURCES ?= $(shell find . -path "./vendor" -prune -o -type f -name "*.go" -print
 TEST_DB_PORT := 3100
 
 traQ: $(SOURCES)
-	go build -ldflags "-X main.version=$$(git describe --tags --abbrev=0) -X main.revision=$$(git rev-parse --short HEAD)"
+	CGO_ENABLED=0 go build -ldflags "-X main.version=$$(git describe --tags --abbrev=0) -X main.revision=$$(git rev-parse --short HEAD)"
 
 .PHONY: init
 init:
