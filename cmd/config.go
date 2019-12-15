@@ -85,8 +85,8 @@ type Config struct {
 			Container string `mapstructure:"container" yaml:"container"`
 			// AuthURL 認証エンドポイント
 			AuthURL string `mapstructure:"authUrl" yaml:"authUrl"`
-			// TempUrlKey 一時URL発行キー
-			TempUrlKey string `mapstructure:"tempUrlKey" yaml:"tempUrlKey"`
+			// TempURLKey 一時URL発行キー
+			TempURLKey string `mapstructure:"tempUrlKey" yaml:"tempUrlKey"`
 			// CacheDir キャッシュディレクトリ
 			CacheDir string `mapstructure:"cacheDir" yaml:"cacheDir"`
 		} `mapstructure:"swift" yaml:"swift"`
@@ -190,7 +190,7 @@ func (c Config) getFileStorage() (storage.FileStorage, error) {
 			c.Storage.Swift.TenantName,
 			c.Storage.Swift.TenantID,
 			c.Storage.Swift.AuthURL,
-			c.Storage.Swift.TempUrlKey,
+			c.Storage.Swift.TempURLKey,
 			c.Storage.Swift.CacheDir,
 		)
 	case "composite":
@@ -202,7 +202,7 @@ func (c Config) getFileStorage() (storage.FileStorage, error) {
 			c.Storage.Swift.TenantName,
 			c.Storage.Swift.TenantID,
 			c.Storage.Swift.AuthURL,
-			c.Storage.Swift.TempUrlKey,
+			c.Storage.Swift.TempURLKey,
 			c.Storage.Swift.CacheDir,
 		)
 	case "memory":

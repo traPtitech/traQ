@@ -5,6 +5,7 @@ import (
 	"github.com/blendle/zapdriver"
 	_ "github.com/jinzhu/gorm/dialects/mysql" // mysql driver
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -50,9 +51,9 @@ func init() {
 	flags.StringVarP(&configFile, "config", "c", "", "config file path")
 
 	flags.Bool("dev", false, "development mode")
-	viper.BindPFlag("dev", flags.Lookup("dev"))
+	bindPFlag(flags, "dev")
 	flags.Bool("pprof", false, "expose pprof http interface")
-	viper.BindPFlag("pprof", flags.Lookup("pprof"))
+	bindPFlag(flags, "pprof")
 }
 
 func initConfig() {
@@ -113,4 +114,10 @@ func getLogger() (logger *zap.Logger) {
 		logger, _ = cfg.Build(zapdriver.WrapCore(zapdriver.ServiceName("traq", fmt.Sprintf("%s.%s", Version, Revision))))
 	}
 	return
+}
+
+func bindPFlag(flags *pflag.FlagSet, key string) {
+	if err := viper.BindPFlag(key, flags.Lookup(key)); err != nil {
+		panic(err)
+	}
 }
