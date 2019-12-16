@@ -138,7 +138,7 @@ type Config struct {
 			SuccessfulCode  int    `mapstructure:"successfulCode" yaml:"successfulCode"`
 			FormUserNameKey string `mapstructure:"formUserNameKey" yaml:"formUserNameKey"`
 			FormPasswordKey string `mapstructure:"formPasswordKey" yaml:"formPasswordKey"`
-		}
+		} `mapstructure:"authPost" yaml:"authPost"`
 	} `mapstructure:"externalAuthentication" yaml:"externalAuthentication"`
 
 	// SkyWay SkyWay設定
@@ -164,7 +164,9 @@ func init() {
 	viper.SetDefault("origin", "http://localhost:3000")
 	viper.SetDefault("port", 3000)
 	viper.SetDefault("gzip", true)
+	viper.SetDefault("initDataDir", "")
 	viper.SetDefault("accessLog.enabled", true)
+	viper.SetDefault("imagemagick", "")
 	viper.SetDefault("mariadb.host", "127.0.0.1")
 	viper.SetDefault("mariadb.port", 3306)
 	viper.SetDefault("mariadb.username", "root")
@@ -175,9 +177,27 @@ func init() {
 	viper.SetDefault("mariadb.connection.lifetime", 0)
 	viper.SetDefault("storage.type", "local")
 	viper.SetDefault("storage.local.dir", "./storage")
+	viper.SetDefault("storage.swift.username", "")
+	viper.SetDefault("storage.swift.apiKey", "")
+	viper.SetDefault("storage.swift.tenantName", "")
+	viper.SetDefault("storage.swift.tenantId", "")
+	viper.SetDefault("storage.swift.container", "")
+	viper.SetDefault("storage.swift.authUrl", "")
+	viper.SetDefault("storage.swift.tempUrlKey", "")
+	viper.SetDefault("storage.swift.cacheDir", "")
+	viper.SetDefault("gcp.serviceAccount.projectId", "")
+	viper.SetDefault("gcp.serviceAccount.file", "")
+	viper.SetDefault("gcp.stackdriver.profiler.enabled", false)
+	viper.SetDefault("firebase.serviceAccount.file", "")
 	viper.SetDefault("oauth2.isRefreshEnabled", false)
 	viper.SetDefault("oauth2.accessTokenExp", 60*60*24*365)
 	viper.SetDefault("externalAuthentication.enabled", false)
+	viper.SetDefault("externalAuthentication.authPost.url", "")
+	viper.SetDefault("externalAuthentication.authPost.successfulCode", 0)
+	viper.SetDefault("externalAuthentication.authPost.formUserNameKey", "")
+	viper.SetDefault("externalAuthentication.authPost.formPasswordKey", "")
+	viper.SetDefault("skyway.secretKey", "")
+	viper.SetDefault("jwt.keys.private", "")
 }
 
 func (c Config) getFileStorage() (storage.FileStorage, error) {
