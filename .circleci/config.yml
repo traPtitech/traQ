@@ -15,12 +15,6 @@ commands:
       - restore_cache:
           keys:
             - gomod-{{ checksum "go.mod" }}
-  restore_build_cache:
-    steps:
-      - restore_cache:
-          keys:
-            - build-cache-{{ .Branch }}--
-            - build-cache-master--
 
 jobs:
   gomod:
@@ -36,53 +30,9 @@ jobs:
           when: always
           paths:
             - /go/pkg/mod/cache
-
-  lint:
-    executor: default
-    steps:
-      - checkout
-      - restore_mod
-      - run:
-          name: Install reviewdog
-          command: curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh | sh -s -- -b ./bin
-      - run:
-          name: Install golangci-lint
-          command: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.21.0
-      - run:
-          name: lint
-          command: ./bin/golangci-lint run --out-format=line-number | ./bin/reviewdog -f=golangci-lint -name=golangci-lint -reporter=github-pr-check
-
-  build:
-    executor: default
-    steps:
-      - checkout
-      - restore_mod
-      - restore_build_cache
-      - run:
-          name: build
-          when: always
-          command: |
-            mkdir -p $GOCACHE
-            go build -ldflags "-X main.version=$(git describe --tags --abbrev=0) -X main.revision=$(git rev-parse --short HEAD)"
-      - save_cache:
-          key: build-cache-{{ .Branch }}--{{ .Revision }}
-          when: always
-          paths:
-            - /tmp/go/cache
-      - store_artifacts:
-          path: ~/workspace/traQ
-          destination: traQ
-      - persist_to_workspace:
-          root: .
-          paths:
-            - traQ
-
   test:
     docker:
       - image: circleci/golang:1.13.0
-        environment:
-          - GO111MODULE: "on"
-          - GOCACHE: "/tmp/go/cache"
       - image: circleci/mariadb:10.0.38-ram
         command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
         environment:
@@ -95,106 +45,13 @@ jobs:
           command: sudo apt-get update && sudo apt-get install -y imagemagick
       - checkout
       - restore_mod
-      - restore_build_cache
       - run:
           name: test
           command: |
-            export TRAQ_IMAGEMAGICK_PATH=`which convert`
+            export TRAQ_IMAGEMAGICK=`which convert`
             dockerize -wait tcp://localhost:3306 -timeout 1m 2>/dev/null
-            go test ./... -covermode=atomic -coverprofile=coverage.txt -race -vet=off
-      - run:
-          name: Upload coverage data
-          command: bash <(curl -s https://codecov.io/bash)
+            go test ./... -coverprofile=coverage.txt -race -vet=off
 
-  lint-db-docs:
-    docker:
-      - image: circleci/golang
-        environment:
-          - TBLS_DSN: "mysql://root:password@127.0.0.1:3306/traq"
-      - image: circleci/mariadb:10.0.38-ram
-        command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
-        environment:
-          - MYSQL_DATABASE: "traq"
-          - MYSQL_ROOT_PASSWORD: "password"
-    working_directory: ~/workspace
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          name: lint
-          command: |
-            source <(curl -sL https://git.io/use-tbls)
-            dockerize -wait tcp://localhost:3306 -timeout 1m 2>/dev/null
-            ./traQ migrate --reset
-            tbls lint
-
-  build-image:
-    machine: true
-    steps:
-      - checkout
-      - run:
-          name: install utils
-          command: npm install --global semver
-      - run:
-          name: docker login
-          command: docker login -u $DOCKER_USER -p $DOCKER_PASS
-      - run:
-          name: docker build and push
-          command: |
-            if [ -n "$CIRCLE_TAG" ]; then
-              IMAGE_TAG="${CIRCLE_TAG:1}"
-              latest=`cat <(curl -Ls https://registry.hub.docker.com/v1/repositories/trap/traq/tags | jq -r '.[].name' | grep -E '^[0-9]+(\.[0-9]+){2}.*') <(echo $IMAGE_TAG) | xargs semver | tail -n 1`
-              if [ "$IMAGE_TAG" = "$latest" ]; then
-                NEW_RELEASE=1
-              fi
-            elif [ "$CIRCLE_BRANCH" = "master" ]; then
-              IMAGE_TAG="latest"
-            else
-              IMAGE_TAG="$CIRCLE_BRANCH"
-            fi
-            docker build -t trap/traq:$IMAGE_TAG .
-            docker push trap/traq:$IMAGE_TAG
-
-            if [ "$NEW_RELEASE" = "1" ]; then
-              docker tag trap/traq:$IMAGE_TAG trap/traq:release
-              docker push trap/traq:release
-            fi
-
-  deploy-staging:
-    machine: true
-    steps:
-      - add_ssh_keys:
-          fingerprints:
-            - "cd:2f:d4:8c:86:98:63:5e:07:37:78:65:f8:2a:a2:cc"
-      - run:
-          name: ssh-keyscan
-          command: ssh-keyscan ${STAGING_DEPLOY_HOST} >> ~/.ssh/known_hosts 2>/dev/null
-      - run:
-          name: deploy staging environment
-          command: ssh -o LogLevel=QUIET -t ${STAGING_DEPLOY_USER}@${STAGING_DEPLOY_HOST} "~/deploy.sh traq-backend"
-
-  deploy-prod:
-    machine: true
-    steps:
-      - add_ssh_keys:
-          fingerprints:
-            - "cd:2f:d4:8c:86:98:63:5e:07:37:78:65:f8:2a:a2:cc"
-      - run:
-          name: ssh-keyscan
-          command: ssh-keyscan ${PROD_DEPLOY_HOST} >> ~/.ssh/known_hosts 2>/dev/null
-      - run:
-          name: deploy production environment
-          command: ssh -o LogLevel=QUIET -t ${PROD_DEPLOY_USER}@${PROD_DEPLOY_HOST} "~/deploy.sh traq-backend"
-
-  swagger-validate:
-    machine: true
-    working_directory: ~/workspace
-    steps:
-      - checkout
-      - run:
-          name: validate
-          command: docker run --rm -v ${PWD}/docs:/docs openapitools/openapi-generator-cli validate -i docs/swagger.yaml
 
 workflows:
   version: 2
@@ -206,71 +63,9 @@ workflows:
               only: /.*/
             tags:
               only: /.*/
-      - lint:
-          requires:
-            - gomod
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              only: /.*/
-      - build:
-          requires:
-            - gomod
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              only: /.*/
       - test:
           requires:
-            - build
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              only: /.*/
-      - lint-db-docs:
-          requires:
-            - build
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              only: /.*/
-      - deploy-staging:
-          requires:
-            - build-image
-          filters:
-            branches:
-              only: master
-      - build-image:
-          requires:
-            - test
-            - lint
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /^v[0-9]+(\.[0-9]+){2}.*/
-      - pending-approval:
-          type: approval
-          requires:
-            - build-image
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v[0-9]+(\.[0-9]+){2}.*/
-      - deploy-prod:
-          requires:
-            - pending-approval
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v[0-9]+(\.[0-9]+){2}.*/
-      - swagger-validate:
+            - gomod
           filters:
             branches:
               only: /.*/

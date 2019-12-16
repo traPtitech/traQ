@@ -22,7 +22,7 @@ func Setup(config *Config) *echo.Echo {
 	// ミドルウェア設定
 	e.Use(middlewares.ServerVersion(config.Version + "." + config.Revision))
 	if config.AccessLogging {
-		e.Use(middlewares.AccessLogging(config.RootLogger.Named("access_log")))
+		e.Use(middlewares.AccessLogging(config.RootLogger.Named("access_log"), config.Development))
 	}
 	if config.Gzipped {
 		e.Use(middlewares.Gzip())

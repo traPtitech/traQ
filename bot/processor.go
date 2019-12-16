@@ -6,10 +6,13 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -18,6 +21,11 @@ const (
 	headerTRAQBotRequestID         = "X-TRAQ-BOT-REQUEST-ID"
 	headerTRAQBotVerificationToken = "X-TRAQ-BOT-TOKEN"
 )
+
+var eventSendCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+	Namespace: "traq",
+	Name:      "bot_event_send_count_total",
+}, []string{"bot_id", "code"})
 
 // Processor ボットプロセッサー
 type Processor struct {
@@ -69,7 +77,7 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 	stop := time.Now()
 
 	if err != nil {
-		p.logger.Error("failed to send bot event. network error", zap.Error(err))
+		eventSendCounter.WithLabelValues(b.ID.String(), "-1").Inc()
 		if err := p.repo.WriteBotEventLog(&model.BotEventLog{
 			RequestID: reqID,
 			BotID:     b.ID,
@@ -86,6 +94,7 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 	}
 	_ = res.Body.Close()
 
+	eventSendCounter.WithLabelValues(b.ID.String(), strconv.Itoa(res.StatusCode)).Inc()
 	if err := p.repo.WriteBotEventLog(&model.BotEventLog{
 		RequestID: reqID,
 		BotID:     b.ID,

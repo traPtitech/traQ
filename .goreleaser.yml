@@ -1,0 +1,11 @@
+# .goreleaser.yml
+project_name: traQ
+before:
+  hooks:
+    - go mod download
+builds:
+  - binary: traQ
+    env:
+      - CGO_ENABLED=0
+archives:
+  - wrap_in_directory: true

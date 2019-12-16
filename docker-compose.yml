@@ -8,10 +8,9 @@ services:
       TRAQ_ORIGIN: http://localhost:3000
       TRAQ_MARIADB_HOST: mysql
       TRAQ_PPROF: "true"
-      TRAQ_GORMLOGMODE: "true"
       TRAQ_INITDATADIR: /initdata
     entrypoint: dockerize -timeout 60s -wait tcp://mysql:3306
-    command: ./traQ serve
+    command: ./traQ serve --dev
     expose:
       - "80"
       - "6060"
@@ -19,19 +18,14 @@ services:
       - "6060:6060"
     depends_on:
       - mysql
-    networks:
-      - traQnet
     volumes:
       - ./dev/data:/initdata:ro
-      - ./dev/keys:/app/keys:ro
 
   traq-frontend:
     image: trap/traq-ui
     restart: always
     expose:
       - "80"
-    networks:
-      - traQnet
 
   reverse-proxy:
     image: abiosoft/caddy:0.11.5-no-stats
@@ -43,8 +37,6 @@ services:
     depends_on:
       - traq-backend
       - traq-frontend
-    networks:
-      - traQnet
     volumes:
       - ./dev/Caddyfile:/etc/Caddyfile:ro
 
@@ -60,9 +52,6 @@ services:
       - "3306"
     ports:
       - "3002:3306"
-    networks:
-      - traQnet
-      - adminNet
 
   adminer:
     image: adminer:4.6.3
@@ -74,9 +63,3 @@ services:
       - "8080"
     ports:
       - "3001:8080"
-    networks:
-      - adminNet
-
-networks:
-  traQnet:
-  adminNet:

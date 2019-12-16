@@ -1,0 +1,143 @@
+name: CI
+
+on: [push]
+
+jobs:
+  mod:
+    name: Mod
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gomod-
+      - run: go mod download
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [mod]
+    env:
+      GOCACHE: "/tmp/go/cache"
+    steps:
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+      - uses: actions/checkout@v1
+      - uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gomod-
+      - uses: actions/cache@v1
+        with:
+          path: /tmp/go/cache
+          key: ${{ runner.os }}-go-build-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-go-build-${{ github.ref }}-
+            ${{ runner.os }}-go-build-
+      - run: make traQ
+      - uses: actions/upload-artifact@v1
+        with:
+          name: traQ
+          path: traQ
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: [mod]
+    steps:
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+      - name: Install reviewdog
+        run: curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+      - name: Install golangci-lint
+        run: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s --  -b $(go env GOPATH)/bin
+      - name: Add PATH
+        run: echo "::add-path::$(go env GOPATH)/bin"
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gomod-
+      - name: golangci-lint
+        run: golangci-lint run --out-format=line-number | reviewdog -f=golangci-lint -name=golangci-lint -reporter=github-pr-check
+        env:
+          REVIEWDOG_TOKEN: ${{ secrets.REVIEWDOG_TOKEN }}
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: [build]
+    env:
+      GOCACHE: "/tmp/go/cache"
+    steps:
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gomod-
+      - uses: actions/cache@v1
+        with:
+          path: /tmp/go/cache
+          key: ${{ runner.os }}-go-build-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-go-build-${{ github.ref }}-
+            ${{ runner.os }}-go-build-
+      - name: Run tests
+        run: |
+          export TRAQ_IMAGEMAGICK=`which convert`
+          go test ./... -coverprofile=coverage.txt -race -vet=off
+        env:
+          MARIADB_PASSWORD: root
+      - name: Upload coverage data
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.txt
+          yml: ./codecov.yml
+      - uses: actions/upload-artifact@v1
+        with:
+          name: coverage.txt
+          path: coverage.txt
+  tbls:
+    name: TBLS
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v1
+        with:
+          name: traQ
+      - name: Create Database
+        run: mysql -uroot -proot -e "CREATE DATABASE traq;"
+      - name: Lint
+        run: |
+          source <(curl -sL https://git.io/use-tbls)
+          chmod +x ./traQ/traQ
+          ./traQ/traQ migrate --reset --pass root
+          tbls lint
+        env:
+          TBLS_DSN: "mysql://root:root@127.0.0.1:3306/traq"
+  spectral:
+    name: Spectral
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Spectral checks
+        uses: stoplightio/spectral-action@v0.5.5
+        with:
+          file_glob: docs/*.yaml
+          repo_token: ${{ secrets.GITHUB_TOKEN }}

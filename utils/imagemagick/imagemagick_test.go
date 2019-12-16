@@ -87,7 +87,7 @@ const base64gif = `R0lGODlhXgFdAfYAAGtaIcacMc6lUufGc97OlP///86lSufWtb1SKb1jSs4hC
 func TestConvertToPNG(t *testing.T) {
 	t.Parallel()
 
-	im := os.Getenv("TRAQ_IMAGEMAGICK_PATH")
+	im := os.Getenv("TRAQ_IMAGEMAGICK")
 	if len(im) == 0 {
 		t.SkipNow()
 	}

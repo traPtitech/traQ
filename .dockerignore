@@ -8,6 +8,7 @@
 .envrc
 .gitignore
 .golangci.yml
+.goreleaser.yml
 .tbls.yml
 codecov.yml
 config.example.yml

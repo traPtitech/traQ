@@ -7,11 +7,26 @@ import (
 
 var dropDB bool
 
+func init() {
+	flags := migrateCommand.Flags()
+	flags.String("host", "", "database host")
+	bindPFlag(flags, "mariadb.host", "host")
+	flags.Int("port", 0, "database port")
+	bindPFlag(flags, "mariadb.port", "port")
+	flags.String("name", "", "database name")
+	bindPFlag(flags, "mariadb.database", "name")
+	flags.String("user", "", "database user")
+	bindPFlag(flags, "mariadb.username", "user")
+	flags.String("pass", "", "database password")
+	bindPFlag(flags, "mariadb.password", "pass")
+	flags.BoolVar(&dropDB, "reset", false, "whether to truncate database (drop all tables)")
+}
+
 var migrateCommand = &cobra.Command{
 	Use:   "migrate",
 	Short: "Execute database schema migration only",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		engine, err := getDatabase()
+		engine, err := c.getDatabase()
 		if err != nil {
 			return err
 		}
@@ -23,8 +38,4 @@ var migrateCommand = &cobra.Command{
 		}
 		return migration.Migrate(engine)
 	},
-}
-
-func init() {
-	migrateCommand.Flags().BoolVar(&dropDB, "reset", false, "whether to truncate database (drop all tables)")
 }

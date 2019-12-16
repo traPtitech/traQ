@@ -6,6 +6,7 @@ require (
 	firebase.google.com/go v3.10.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
+	github.com/blendle/zapdriver v1.3.1
 	github.com/denisenkom/go-mssqldb v0.0.0-20190806190131-db2462fef53b // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/disintegration/imaging v1.6.2
@@ -34,7 +35,7 @@ require (
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.1
 	github.com/stretchr/testify v1.4.0
 	go.opencensus.io v0.22.1 // indirect
@@ -53,5 +54,7 @@ require (
 	gopkg.in/guregu/null.v3 v3.4.0
 	gopkg.in/yaml.v2 v2.2.7
 )
+
+replace github.com/blendle/zapdriver v1.3.1 => github.com/wtks/zapdriver v1.3.1-patch.0
 
 go 1.13
