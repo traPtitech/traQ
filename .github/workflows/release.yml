@@ -1,9 +1,11 @@
 name: release
 
 on:
-  create:
+  push:
     tags:
       - v2.*.*
+    branches-ignore:
+      - '*'
 
 env:
   IMAGE_NAME: traq
