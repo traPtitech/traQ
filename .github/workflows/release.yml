@@ -1,7 +1,7 @@
 name: release
 
 on:
-  push:
+  create:
     tags:
       - v2.*.*
 
@@ -26,3 +26,20 @@ jobs:
         run: |
           docker tag docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:$IMAGE_TAG docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:latest
           docker push docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:latest
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+      - uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-gomod-
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
