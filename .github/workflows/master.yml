@@ -1,0 +1,23 @@
+name: master
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  IMAGE_NAME: traq
+  IMAGE_TAG: master
+
+jobs:
+  image:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Login GitHub Registry
+        run: docker login docker.pkg.github.com -u traPtitech -p ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Image
+        run: docker build -t docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG} .
+      - name: Push image to GitHub Registry
+        run: docker push docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG}
