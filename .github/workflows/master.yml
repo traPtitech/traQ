@@ -21,3 +21,16 @@ jobs:
         run: docker build -t docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG} .
       - name: Push image to GitHub Registry
         run: docker push docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG}
+  deploy-staging:
+    name: Deploy staging
+    runs-on: ubuntu-latest
+    needs: [image]
+    steps:
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v1
+        with:
+          private-key: ${{ secrets.STAGING_SSH_KEY }}
+          public-key: ${{ secrets.STAGING_SSH_KEY_PUBLIC }}
+          known-hosts: ${{ secrets.STAGING_KNOWN_HOSTS }}
+      - name: Deploy
+        run: ssh -o LogLevel=QUIET -t ${{ secrets.STAGING_DEPLOY_USER }}@${{ secrets.STAGING_DEPLOY_HOST }} "~/deploy.sh traq-backend"
