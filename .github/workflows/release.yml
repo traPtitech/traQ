@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set IMAGE_TAG env
-        run: echo ::set-env name=IMAGE_TAG::$(echo ${GITHUB_REF:10})
+        run: echo ::set-env name=IMAGE_TAG::$(echo ${GITHUB_REF:11})
       - uses: actions/checkout@v2
       - name: Login GitHub Registry
         run: docker login docker.pkg.github.com -u traPtitech -p ${{ secrets.GITHUB_TOKEN }}
