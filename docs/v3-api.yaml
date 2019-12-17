@@ -21,7 +21,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     post:
-      summary: チャンネルにメッセージを投稿します
+      summary: チャンネルにメッセージを投稿
       responses:
         '201':
           description: Created
@@ -36,7 +36,7 @@ paths:
             Not Found
             チャンネルが見つかりません。
       description: |-
-        チャンネルにメッセージを投稿します。
+        指定したチャンネルにメッセージを投稿します。
         embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。
       operationId: postMessage
       requestBody:
@@ -49,8 +49,8 @@ paths:
         - message
         - channel
     get:
-      summary: チャンネルのメッセージのリストを取得します
-      description: ''
+      summary: チャンネルメッセージのリストを取得
+      description: 指定したチャンネルのメッセージのリストを取得します。
       operationId: getMessages
       tags:
         - channel
@@ -85,7 +85,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/messageIdInPath'
     get:
-      summary: メッセージを取得します
+      summary: メッセージを取得
       tags:
         - message
       responses:
@@ -98,8 +98,9 @@ paths:
         '404':
           description: Not Found
       operationId: getMessage
+      description: 指定したメッセージを取得します。
     put:
-      summary: メッセージを編集します
+      summary: メッセージを編集
       responses:
         '200':
           description: OK
@@ -115,7 +116,9 @@ paths:
             指定されたメッセージを編集する権限がありません。
         '404':
           description: Not Found
-      description: ''
+      description: |-
+        指定したメッセージを編集します。
+        自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ編集することができます。
       requestBody:
         content:
           application/json:
@@ -125,7 +128,7 @@ paths:
         - message
       operationId: editMessage
     delete:
-      summary: メッセージを削除します
+      summary: メッセージを削除
       responses:
         '204':
           description: |-
@@ -140,11 +143,14 @@ paths:
       tags:
         - message
       operationId: deleteMessage
+      description: |-
+        指定したメッセージを削除します。
+        自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ削除することができます。
   '/messages/{messageId}/pin':
     parameters:
       - $ref: '#/components/parameters/messageIdInPath'
     get:
-      summary: ピン留めを取得します
+      summary: ピン留めを取得
       tags:
         - message
         - pin
@@ -160,8 +166,9 @@ paths:
             Not Found
             指定したメッセージ、またはピン留めが見つかりません。
       operationId: getPin
+      description: 指定したメッセージのピン留め情報を取得します。
     post:
-      summary: ピン留めします
+      summary: ピン留めする
       responses:
         '201':
           description: |-
@@ -183,8 +190,9 @@ paths:
         - message
         - pin
       operationId: createPin
+      description: 指定したメッセージをピン留めします。
     delete:
-      summary: ピン留めを外します
+      summary: ピン留めを外す
       responses:
         '204':
           description: |-
@@ -194,7 +202,7 @@ paths:
           description: |-
             Not Found
             指定したメッセージ、またはピン留めが見つかりません。
-      description: ''
+      description: 指定したメッセージのピン留めを外します。
       tags:
         - message
         - pin
@@ -203,7 +211,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
-      summary: チャンネル統計情報を取得します
+      summary: チャンネル統計情報を取得
       tags:
         - channel
       responses:
@@ -216,11 +224,12 @@ paths:
         '404':
           description: Not Found
       operationId: getChannelStats
+      description: 指定したチャンネルの統計情報を取得します。
   '/channels/{channelId}/topic':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
-      summary: チャンネルトピックを取得します
+      summary: チャンネルトピックを取得
       tags:
         - channel
       responses:
@@ -235,8 +244,9 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelTopic
+      description: 指定したチャンネルのトピックを取得します。
     put:
-      summary: チャンネルトピックを編集します
+      summary: チャンネルトピックを編集
       responses:
         '204':
           description: |-
@@ -250,7 +260,7 @@ paths:
             チャンネルが見つかりません。
       tags:
         - channel
-      description: ''
+      description: 指定したチャンネルのトピックを編集します。
       requestBody:
         content:
           application/json:
@@ -261,7 +271,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
-      summary: チャンネル閲覧者リストを取得します
+      summary: チャンネル閲覧者リストを取得
       tags:
         - channel
       responses:
@@ -279,9 +289,10 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelViewers
+      description: 指定したチャンネルの閲覧者のリストを取得します。
   /files:
     post:
-      summary: ファイルをアップロードします
+      summary: ファイルをアップロード
       responses:
         '201':
           description: Created
@@ -303,8 +314,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PostFileRequest'
       operationId: postFile
+      description: 指定したチャンネルにファイルをアップロードします。
     get:
-      summary: ファイルメタのリストを取得します
+      summary: ファイルメタのリストを取得
       responses:
         '200':
           description: OK
@@ -329,7 +341,7 @@ paths:
             format: uuid
           in: query
           name: channelId
-          description: チャンネルUUID
+          description: アップロード先チャンネルUUID
           required: true
         - $ref: '#/components/parameters/limitInQuery'
         - $ref: '#/components/parameters/offsetInQuery'
@@ -348,12 +360,12 @@ paths:
           in: query
           name: uploaderId
           description: アップロード者UUID
-      description: ''
+      description: 指定したクエリでファイルメタのリストを取得します。
   '/files/{fileId}/meta':
     parameters:
       - $ref: '#/components/parameters/fileIdInPath'
     get:
-      summary: ファイルメタを取得します
+      summary: ファイルメタを取得
       tags:
         - file
       responses:
@@ -370,11 +382,14 @@ paths:
             Not Found
             ファイルが見つかりません。
       operationId: getFileMeta
+      description: |-
+        指定したファイルのメタ情報を取得します。
+        指定したファイルへのアクセス権限が必要です。
   '/files/{fileId}/thumbnail':
     parameters:
       - $ref: '#/components/parameters/fileIdInPath'
     get:
-      summary: サムネイル画像を取得します
+      summary: サムネイル画像を取得
       tags:
         - file
       responses:
@@ -396,11 +411,14 @@ paths:
             Not Found
             ファイルが見つからない、またはサムネイル画像が存在しません。
       operationId: getThumbnailImage
+      description: |-
+        指定したファイルのサムネイル画像を取得します。
+        指定したファイルへのアクセス権限が必要です。
   '/files/{fileId}':
     parameters:
       - $ref: '#/components/parameters/fileIdInPath'
     get:
-      summary: ファイルをダウンロードします
+      summary: ファイルをダウンロード
       tags:
         - file
       responses:
@@ -430,8 +448,11 @@ paths:
           name: dl
           description: 1を指定するとレスポンスにContent-Dispositionヘッダーが付与されます
       operationId: getFile
+      description: |-
+        指定したファイル本体を取得します。
+        指定したファイルへのアクセス権限が必要です。
     delete:
-      summary: ファイルを削除します
+      summary: ファイルを削除
       responses:
         '204':
           description: |-
@@ -444,11 +465,14 @@ paths:
       tags:
         - file
       operationId: deleteFile
+      description: |-
+        指定したファイルを削除します。
+        指定したファイルの削除権限が必要です。
   '/channels/{channelId}/pins':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
-      summary: チャンネルのピンのリストを取得します
+      summary: チャンネルピンのリストを取得
       tags:
         - channel
         - pin
@@ -466,11 +490,12 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelPins
+      description: 指定したチャンネルにピン留めされているピンメッセージのリストを取得します。
   '/messages/{messageId}/stamps':
     parameters:
       - $ref: '#/components/parameters/messageIdInPath'
     get:
-      summary: メッセージのスタンプリストを取得します
+      summary: メッセージのスタンプリストを取得
       tags:
         - message
         - stamp
@@ -485,14 +510,14 @@ paths:
                   $ref: '#/components/schemas/MessageStamp'
         '404':
           description: Not Found
-      description: ''
+      description: 指定したメッセージに押されているスタンプのリストを取得します。
       operationId: getMessageStamps
   '/messages/{messageId}/stamps/{stampId}':
     parameters:
       - $ref: '#/components/parameters/messageIdInPath'
       - $ref: '#/components/parameters/stampIdInPath'
     post:
-      summary: スタンプを押します
+      summary: スタンプを押す
       responses:
         '204':
           description: |-
@@ -514,8 +539,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PostMessageStampRequest'
         description: ''
+      description: 指定したメッセージに指定したスタンプを押します。
     delete:
-      summary: スタンプを消します
+      summary: スタンプを消す
       responses:
         '204':
           description: |-
@@ -529,11 +555,12 @@ paths:
       tags:
         - message
         - stamp
+      description: 指定したメッセージから指定した自身が押したスタンプを削除します。
   '/stamps/{stampId}':
     parameters:
       - $ref: '#/components/parameters/stampIdInPath'
     get:
-      summary: スタンプ情報を取得します
+      summary: スタンプ情報を取得
       tags:
         - stamp
       responses:
@@ -546,8 +573,9 @@ paths:
         '404':
           description: Not Found
       operationId: getStamp
+      description: 指定したスタンプの情報を取得します。
     delete:
-      summary: スタンプを削除します
+      summary: スタンプを削除
       responses:
         '204':
           description: |-
@@ -557,13 +585,15 @@ paths:
           description: Forbidden
         '404':
           description: Not Found
-      description: ''
+      description: |-
+        指定したスタンプを削除します。
+        対象のスタンプの削除権限が必要です。
       operationId: deleteStamp
       tags:
         - stamp
   /stamps:
     post:
-      summary: スタンプを作成します
+      summary: スタンプを作成
       responses:
         '201':
           description: Created
@@ -577,7 +607,7 @@ paths:
           description: Conflict
         '413':
           description: Request Entity Too Large
-      description: ''
+      description: スタンプを新規作成します。
       requestBody:
         content:
           multipart/form-data:
@@ -591,7 +621,7 @@ paths:
       tags:
         - stamp
     get:
-      summary: スタンプリストを取得します
+      summary: スタンプリストを取得
       responses:
         '200':
           description: OK
@@ -611,9 +641,10 @@ paths:
           in: query
           name: include-unicode
           description: Unicode絵文字を含ませるかどうか
+      description: スタンプのリストを取得します。
   /users/me/stamp-history:
     get:
-      summary: スタンプ履歴を取得します
+      summary: スタンプ履歴を取得
       tags:
         - stamp
         - me
@@ -639,9 +670,11 @@ paths:
       description: |-
         自分のスタンプ履歴を最大50件まで取得します。
         結果は降順で返されます。
+
+        このAPIが返すスタンプ履歴は厳密な履歴ではありません。
   /users/me/qr-code:
     get:
-      summary: QRコードを取得します
+      summary: QRコードを取得
       tags:
         - me
       responses:
@@ -657,7 +690,9 @@ paths:
               schema:
                 type: string
                 description: QRコードJWT
-      description: 返されたQRコードまたはトークンは、発行後の5分間のみ有効です
+      description: |-
+        自身のQRコードを取得します。
+        返されたQRコードまたはトークンは、発行後の5分間のみ有効です
       operationId: getMyQRCode
       parameters:
         - schema:
@@ -670,7 +705,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
     get:
-      summary: ユーザー詳細情報を取得します
+      summary: ユーザー詳細情報を取得
       tags:
         - user
       responses:
@@ -683,8 +718,9 @@ paths:
         '404':
           description: Not Found
       operationId: getUser
+      description: 指定したユーザーの詳細情報を取得します。
     patch:
-      summary: ユーザー情報を変更します
+      summary: ユーザー情報を変更
       responses:
         '200':
           description: OK
@@ -706,11 +742,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchUserRequest'
+      description: |-
+        指定したユーザーの情報を変更します。
+        管理者権限が必要です。
   '/groups/{groupId}':
     parameters:
       - $ref: '#/components/parameters/groupIdInPath'
     get:
-      summary: ユーザーグループを取得します
+      summary: ユーザーグループを取得
       responses:
         '200':
           description: OK
@@ -723,8 +762,9 @@ paths:
       operationId: getUserGroup
       tags:
         - group
+      description: 指定したユーザーグループの情報を取得します。
     delete:
-      summary: ユーザーグループを削除します
+      summary: ユーザーグループを削除
       responses:
         '204':
           description: |-
@@ -736,12 +776,14 @@ paths:
             ユーザーグループを操作する権限がありません。
         '404':
           description: Not Found
-      description: ''
+      description: |-
+        指定したユーザーグループを削除します。
+        対象のユーザーグループの管理者権限が必要です。
       operationId: deleteUserGroup
       tags:
         - group
     patch:
-      summary: ユーザーグループを編集します
+      summary: ユーザーグループを編集
       responses:
         '200':
           description: OK
@@ -770,11 +812,14 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchUserGroupRequest'
         description: ''
+      description: |-
+        指定したユーザーグループの情報を編集します。
+        対象のユーザーグループの管理者権限が必要です。
   '/groups/{groupId}/members':
     parameters:
       - $ref: '#/components/parameters/groupIdInPath'
     get:
-      summary: グループメンバーを取得します
+      summary: グループメンバーを取得
       tags:
         - group
       responses:
@@ -792,9 +837,9 @@ paths:
             Not Found
             ユーザーグループが見つかりません。
       operationId: getUserGroupMembers
-      description: ''
+      description: 指定したグループのメンバーのリストを取得します。
     post:
-      summary: グループメンバーを追加します
+      summary: グループメンバーを追加
       responses:
         '204':
           description: |-
@@ -819,8 +864,11 @@ paths:
       tags:
         - group
       operationId: addUserGroupMember
+      description: |-
+        指定したグループにメンバーを追加します。
+        対象のユーザーグループの管理者権限が必要です。
     put:
-      summary: グループメンバーを設定します
+      summary: グループメンバーを設定
       responses:
         '204':
           description: |-
@@ -847,13 +895,16 @@ paths:
       tags:
         - group
       operationId: setUserGroupMembers
-      description: リクエスト内に含まれないメンバーはグループから削除されます。
+      description: |-
+        指定したグループのメンバーをリクエストのメンバーに置き換えます。
+        リクエスト内に含まれないメンバーはグループから削除されます。
+        対象のユーザーグループの管理者権限が必要です。
   '/groups/{groupId}/members/{userId}':
     parameters:
       - $ref: '#/components/parameters/groupIdInPath'
       - $ref: '#/components/parameters/userIdInPath'
     delete:
-      summary: ユーザーグループから削除します
+      summary: ユーザーグループから削除
       responses:
         '204':
           description: |-
@@ -874,8 +925,11 @@ paths:
       tags:
         - group
       operationId: removeUserGroupMember
+      description: |-
+        指定したユーザーグループから指定したユーザーを削除します。
+        対象のユーザーグループの管理者権限が必要です。
     patch:
-      summary: ユーザーグループメンバーを編集します
+      summary: ユーザーグループメンバーを編集
       responses:
         '204':
           description: |-
@@ -901,9 +955,12 @@ paths:
               $ref: '#/components/schemas/PatchGroupMemberRequest'
       tags:
         - group
+      description: |-
+        指定したユーザーグループ内の指定したユーザーの属性を編集します。
+        対象のユーザーグループの管理者権限が必要です。
   /groups:
     get:
-      summary: ユーザーグループのリストを取得します
+      summary: ユーザーグループのリストを取得
       tags:
         - group
       responses:
@@ -916,7 +973,7 @@ paths:
                 description: ユーザーグループの配列
                 items:
                   $ref: '#/components/schemas/UserGroup'
-      description: ''
+      description: ユーザーグループのリストを取得します。
       operationId: getUserGroups
       parameters:
         - schema:
@@ -931,7 +988,7 @@ paths:
           name: admin
           description: 自分が管理者のグループのみを取得するかどうか
     post:
-      summary: ユーザーグループを作成します
+      summary: ユーザーグループを作成
       responses:
         '201':
           description: Created
@@ -962,7 +1019,7 @@ paths:
               $ref: '#/components/schemas/PostUserGroupRequest'
   /users/me:
     get:
-      summary: 自分のユーザー詳細を取得します
+      summary: 自分のユーザー詳細を取得
       tags:
         - me
       responses:
@@ -973,8 +1030,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/MyUserDetail'
       operationId: getMe
+      description: 自身のユーザー詳細情報を取得します。
     patch:
-      summary: 自分のユーザー情報を変更します
+      summary: 自分のユーザー情報を変更
       responses:
         '200':
           description: OK
@@ -992,11 +1050,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchMeRequest'
+      description: 自身のユーザー情報を変更します。
   '/users/{userId}/messages':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
     post:
-      summary: ユーザーにメッセージを送信します
+      summary: ダイレクトメッセージを送信
       responses:
         '201':
           description: Created
@@ -1019,8 +1078,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostMessageRequest'
+      description: 指定したユーザーにダイレクトメッセージを送信します。
     get:
-      summary: ユーザーからのメッセージのリストを取得します
+      summary: ダイレクトメッセージのリストを取得
       operationId: getDirectMessages
       tags:
         - message
@@ -1051,11 +1111,12 @@ paths:
         - $ref: '#/components/parameters/untilInQuery'
         - $ref: '#/components/parameters/inclusiveInQuery'
         - $ref: '#/components/parameters/orderInQuery'
+      description: 指定したユーザーとのダイレクトメッセージのリストを取得します。
   '/channels/{channelId}/subscribers':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
-      summary: チャンネルの通知購読者のリストを取得します
+      summary: チャンネルの通知購読者のリストを取得
       tags:
         - channel
         - notification
@@ -1075,8 +1136,9 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelSubscribers
+      description: 指定したチャンネルを通知購読しているユーザーのUUIDのリストを取得します。
     patch:
-      summary: チャンネルの通知購読者を編集します
+      summary: チャンネルの通知購読者を編集
       responses:
         '200':
           description: OK
@@ -1108,10 +1170,11 @@ paths:
               $ref: '#/components/schemas/PatchChannelSubscribersRequest'
         description: ''
       description: |-
+        指定したチャンネルの通知購読者を編集します。
         リクエストに含めなかったユーザーの購読状態は変更しません。
         また、存在しないユーザーを指定した場合は無視されます。
     put:
-      summary: チャンネルの通知購読者を設定します
+      summary: チャンネルの通知購読者を設定
       responses:
         '204':
           description: |-
@@ -1133,14 +1196,16 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PutChannelSubscribersRequest'
-      description: リクエストに含めなかったユーザーの購読状態はオフになります。
+      description: |-
+        指定したチャンネルの通知購読者を設定します。
+        リクエストに含めなかったユーザーの購読状態はオフになります。
       tags:
         - channel
         - notification
       operationId: setChannelSubscribers
   /users/me/subscriptions:
     get:
-      summary: 自分のチャンネル購読リストを取得します
+      summary: 自分のチャンネル購読状態を取得
       tags:
         - me
         - notification
@@ -1155,11 +1220,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/UserSubscribeState'
       operationId: getMyChannelSubscriptions
+      description: 自身のチャンネル購読状態を取得します。
   '/users/me/subscriptions/{channelId}':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     put:
-      summary: チャンネル購読レベルを設定します
+      summary: チャンネル購読レベルを設定
       responses:
         '204':
           description: |-
@@ -1184,6 +1250,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PutChannelSubscribeLevelRequest'
+      description: 自身の指定したチャンネルの購読レベルを設定します。
   /webhooks:
     get:
       summary: Webhook情報のリストを取得します
@@ -1381,7 +1448,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
     get:
-      summary: ユーザーのアイコン画像を取得します
+      summary: ユーザーのアイコン画像を取得
       tags:
         - user
       responses:
@@ -1405,6 +1472,7 @@ paths:
             Not Found
             ユーザーが見つかりません。
       operationId: getUserIcon
+      description: 指定したユーザーのアイコン画像を取得します。
     put:
       summary: ユーザーのアイコン画像を変更します
       responses:
@@ -1433,9 +1501,12 @@ paths:
                 contentType: 'image/png, image/jpeg, image/gif'
       tags:
         - user
+      description: |-
+        指定したユーザーのアイコン画像を変更します。
+        管理者権限が必要です。
   /users/me/icon:
     get:
-      summary: 自分のアイコン画像を取得します
+      summary: 自分のアイコン画像を取得
       tags:
         - me
       responses:
@@ -1459,8 +1530,9 @@ paths:
             Not Found
             ユーザーが見つかりません。
       operationId: getMyIcon
+      description: 自分のアイコン画像を取得します。
     put:
-      summary: 自分のアイコン画像を変更します
+      summary: 自分のアイコン画像を変更
       responses:
         '204':
           description: |-
@@ -1470,7 +1542,7 @@ paths:
           description: Bad Request
         '413':
           description: Request Entity Too Large
-      description: ''
+      description: 自分のアイコン画像を変更します。
       operationId: changeMyIcon
       requestBody:
         content:
@@ -1484,7 +1556,7 @@ paths:
         - me
   /users/me/password:
     put:
-      summary: 自分のパスワードを変更します
+      summary: 自分のパスワードを変更
       responses:
         '204':
           description: |-
@@ -1505,11 +1577,12 @@ paths:
             schema:
               $ref: '#/components/schemas/PutMyPasswordRequest'
         description: ''
+      description: 自身のパスワードを変更します。
   '/users/{userId}/password':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
     put:
-      summary: ユーザーのパスワードを変更します
+      summary: ユーザーのパスワードを変更
       responses:
         '204':
           description: |-
@@ -1532,9 +1605,12 @@ paths:
       tags:
         - user
       operationId: changeUserPassword
+      description: |-
+        指定したユーザーのパスワードを変更します。
+        管理者権限が必要です。
   /users/me/fcm-device:
     post:
-      summary: FCMデバイスを登録します
+      summary: FCMデバイスを登録
       responses:
         '204':
           description: |-
@@ -1546,7 +1622,7 @@ paths:
         - me
         - notification
       operationId: registerFCMDevice
-      description: ''
+      description: 自身のFCMデバイスを登録します。
       requestBody:
         content:
           application/json:
@@ -1554,7 +1630,7 @@ paths:
               $ref: '#/components/schemas/PostMyFCMDeviceRequest'
   /users:
     post:
-      summary: ユーザー登録します
+      summary: ユーザーを登録
       responses:
         '201':
           description: Created
@@ -1579,8 +1655,11 @@ paths:
             schema:
               $ref: '#/components/schemas/PostUserRequest'
         description: ''
+      description: |-
+        ユーザーを登録します。
+        管理者権限が必要です。
     get:
-      summary: ユーザーのリストを取得します
+      summary: ユーザーのリストを取得
       responses:
         '200':
           description: OK
@@ -1601,9 +1680,10 @@ paths:
           in: query
           name: include-suspended
           description: アカウントがアクティブでないユーザーを含めるかどうか
+      description: ユーザーのリストを取得します。
   /channels:
     post:
-      summary: チャンネルを作成します
+      summary: チャンネルを作成
       responses:
         '201':
           description: Created
@@ -1627,8 +1707,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostChannelRequest'
+      description: |-
+        チャンネルを作成します。
+        階層が6以上になるチャンネルは作成できません。
     get:
-      summary: チャンネルリストを取得します
+      summary: チャンネルリストを取得
       responses:
         '200':
           description: OK
@@ -1642,11 +1725,12 @@ paths:
       operationId: getChannels
       tags:
         - channel
+      description: チャンネルのリストを取得します。
   '/users/{userId}/tags':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
     get:
-      summary: ユーザーのタグリストを取得します
+      summary: ユーザーのタグリストを取得
       tags:
         - user
         - user tag
@@ -1664,10 +1748,10 @@ paths:
           description: |-
             Not Found
             ユーザーが見つかりません。
-      description: ''
+      description: 指定したユーザーのタグリストを取得します。
       operationId: getUserTags
     post:
-      summary: ユーザーにタグを追加します
+      summary: ユーザーにタグを追加
       responses:
         '201':
           description: Created
@@ -1695,6 +1779,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PostUserTagRequest'
         description: ''
+      description: 指定したユーザーに指定したタグを追加します。
   '/users/{userId}/tags/{tagId}':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -1746,7 +1831,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/tagIdInPath'
     get:
-      summary: タグ情報を取得します
+      summary: タグ情報を取得
       responses:
         '200':
           description: OK
@@ -1759,6 +1844,7 @@ paths:
       operationId: getTag
       tags:
         - user tag
+      description: 指定したタグの情報を取得します。
   /users/me/tags:
     get:
       summary: 自分のタグリストを取得します
@@ -1951,7 +2037,7 @@ paths:
       operationId: getServerVersion
   /login:
     post:
-      summary: ログインします
+      summary: ログイン
       responses:
         '204':
           description: |-
@@ -1981,9 +2067,10 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostLoginRequest'
+      description: ログインします。
   /logout:
     post:
-      summary: ログアウトします
+      summary: ログアウト
       responses:
         '204':
           description: |-
@@ -2004,6 +2091,7 @@ paths:
           in: query
           name: all
           description: 全てのセッションでログアウトするかどうか
+      description: ログアウトします。
   /users/me/sessions:
     get:
       summary: 自分のログインセッションリストを取得します
@@ -2039,7 +2127,7 @@ paths:
         - me
   /activity/timeline:
     get:
-      summary: アクテビティタイムラインを取得します
+      summary: アクテビティタイムラインを取得
       tags:
         - activity
       responses:
@@ -2128,7 +2216,7 @@ paths:
           type: string
           pattern: '^[a-zA-Z0-9_-]{1,32}$'
     get:
-      summary: ユーザーのアイコン画像を取得します
+      summary: ユーザーのアイコン画像を取得
       tags:
         - public
       responses:
@@ -2150,11 +2238,12 @@ paths:
         '404':
           description: Not Found
       operationId: getPublicUserIcon
+      description: ユーザーのアイコン画像を取得します。
   '/clients/{clientId}':
     parameters:
       - $ref: '#/components/parameters/clientIdInPath'
     get:
-      summary: OAuth2クライアント情報を取得します
+      summary: OAuth2クライアント情報を取得
       tags:
         - oauth2
       responses:
@@ -2178,9 +2267,11 @@ paths:
           in: query
           name: detail
           description: 詳細情報を含めるかどうか
-      description: 詳細情報の取得には権限が必要です。
+      description: |-
+        指定したOAuth2クライアントの情報を取得します。
+        詳細情報の取得には対象のクライアントの管理権限が必要です。
     delete:
-      summary: OAuth2クライアントを削除します
+      summary: OAuth2クライアントを削除
       responses:
         '204':
           description: |-
@@ -2192,12 +2283,14 @@ paths:
           description: |-
             Not Found
             OAuth2クライアントが見つかりません。
-      description: 正常に削除された場合、このクライアントに対する認可は全て取り消されます。
+      description: |-
+        指定したOAuth2クライアントを削除します。
+        対象のクライアントの管理権限が必要です。正常に削除された場合、このクライアントに対する認可は全て取り消されます。
       operationId: deleteClient
       tags:
         - oauth2
     patch:
-      summary: OAuth2クライアント情報を変更します
+      summary: OAuth2クライアント情報を変更
       responses:
         '204':
           description: |-
@@ -2220,10 +2313,13 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchClientRequest'
         description: ''
-      description: クライアント開発者UUIDを変更した場合は、変更先ユーザーにクライアント管理権限が移譲され、自分自身は権限を失います。
+      description: |-
+        指定したOAuth2クライアントの情報を変更します。
+        対象のクライアントの管理権限が必要です。
+        クライアント開発者UUIDを変更した場合は、変更先ユーザーにクライアント管理権限が移譲され、自分自身は権限を失います。
   /clients:
     get:
-      summary: OAuth2クライアントのリストを取得します
+      summary: OAuth2クライアントのリストを取得
       tags:
         - oauth2
       responses:
@@ -2244,8 +2340,11 @@ paths:
           in: query
           name: all
           description: 全てのクライアントを取得するかどうか
+      description: |-
+        自身が開発者のOAuth2クライアントのリストを取得します。
+        全てのクライアントを取得する場合は、権限が必要です。
     post:
-      summary: OAuth2Clientを作成します
+      summary: OAuth2クライアントを作成
       responses:
         '201':
           description: Created
@@ -2258,7 +2357,7 @@ paths:
       tags:
         - oauth2
       operationId: createClient
-      description: ''
+      description: OAuth2クライアントを作成します。
       requestBody:
         content:
           application/json:
@@ -2266,7 +2365,7 @@ paths:
               $ref: '#/components/schemas/PostClientRequest'
   /bots:
     post:
-      summary: BOTを作成します
+      summary: BOTを作成
       responses:
         '201':
           description: Created
@@ -2281,7 +2380,9 @@ paths:
             Conflict
             既に使われている名前です。
       operationId: createBot
-      description: ''
+      description: |-
+        BOTを作成します。
+        作成後にアクティベーション・購読イベントの設定を行う必要があります。
       tags:
         - bot
       requestBody:
@@ -2290,7 +2391,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PostBotRequest'
     get:
-      summary: BOTのリストを取得します
+      summary: BOTリストを取得
       responses:
         '200':
           description: OK
@@ -2311,11 +2412,12 @@ paths:
           description: 全てのBOTを取得するかどうか
       tags:
         - bot
+      description: BOT情報のリストを取得します。
   '/bots/{botId}/icon':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
     get:
-      summary: BOTのアイコン画像を取得します
+      summary: BOTのアイコン画像を取得
       responses:
         '200':
           description: OK
@@ -2339,8 +2441,9 @@ paths:
       operationId: getBotIcon
       tags:
         - bot
+      description: 指定したBOTのアイコン画像を取得を取得します。
     put:
-      summary: BOTのアイコン画像を変更します
+      summary: BOTのアイコン画像を変更
       responses:
         '204':
           description: |-
@@ -2367,11 +2470,14 @@ paths:
                 contentType: 'image/png, image/jpeg, image/gif'
       tags:
         - bot
+      description: |-
+        指定したBOTのアイコン画像を変更を変更します。
+        対象のBOTの管理権限が必要です。
   '/bots/{botId}':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
     get:
-      summary: BOT情報を取得します
+      summary: BOT情報を取得
       tags:
         - bot
       responses:
@@ -2395,8 +2501,11 @@ paths:
           in: query
           name: detail
           description: 詳細情報を含めるかどうか
+      description: |-
+        指定したBOTのBOT情報を取得します。
+        BOT詳細情報を取得する場合は、対象のBOTの管理権限が必要です。
     delete:
-      summary: BOTを削除します
+      summary: BOTを削除
       responses:
         '204':
           description: |-
@@ -2409,8 +2518,11 @@ paths:
       operationId: deleteBot
       tags:
         - bot
+      description: |-
+        指定したBOTを削除します。
+        対象のBOTの管理権限が必要です。
     patch:
-      summary: BOT情報を変更します
+      summary: BOT情報を変更
       responses:
         '204':
           description: |-
@@ -2423,7 +2535,10 @@ paths:
         '404':
           description: Not Found
       operationId: editBot
-      description: BOT開発者UUIDを変更した場合は、変更先ユーザーにBOT管理権限が移譲され、自分自身は権限を失います。
+      description: |-
+        指定したBOTの情報を変更します。
+        対象のBOTの管理権限が必要です。
+        BOT開発者UUIDを変更した場合は、変更先ユーザーにBOT管理権限が移譲され、自分自身は権限を失います。
       tags:
         - bot
       requestBody:
@@ -2436,7 +2551,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
     post:
-      summary: BOTをアクティベートします
+      summary: BOTをアクティベート
       responses:
         '202':
           description: Accepted
@@ -2449,11 +2564,14 @@ paths:
       operationId: activateBot
       tags:
         - bot
+      description: |-
+        指定したBOTを有効化します。
+        対象のBOTの管理権限が必要です。
   '/bots/{botId}/actions/inactivate':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
     post:
-      summary: BOTをインアクティベートします
+      summary: BOTをインアクティベート
       responses:
         '204':
           description: |-
@@ -2468,11 +2586,12 @@ paths:
       tags:
         - bot
       operationId: inactivateBot
+      description: 指定したBOTを無効化します。対象のBOTの管理権限が必要です。
   '/bots/{botId}/actions/reissue':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
     post:
-      summary: BOTのトークンを再発行します
+      summary: BOTのトークンを再発行
       responses:
         '200':
           description: OK
@@ -2489,11 +2608,14 @@ paths:
       operationId: reissueBot
       tags:
         - bot
+      description: |-
+        指定したBOTの現在の各種トークンを無効化し、再発行を行います。
+        対象のBOTの管理権限が必要です。
   '/bots/{botId}/logs':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
     get:
-      summary: BOTのイベントログを取得します
+      summary: BOTのイベントログを取得
       tags:
         - bot
       responses:
@@ -2516,11 +2638,14 @@ paths:
       parameters:
         - $ref: '#/components/parameters/limitInQuery'
         - $ref: '#/components/parameters/offsetInQuery'
+      description: |-
+        指定したBOTのイベントログを取得します。
+        対象のBOTの管理権限が必要です。
   '/bots/{botId}/actions/join':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
     post:
-      summary: BOTをチャンネルに参加させます
+      summary: BOTをチャンネルに参加させる
       responses:
         '204':
           description: |-
@@ -2534,7 +2659,10 @@ paths:
           description: |-
             Not Found
             BOTが見つかりません。
-      description: ''
+      description: |-
+        指定したBOTを指定したチャンネルに参加させます。
+        チャンネルに参加したBOTは、そのチャンネルの各種イベントを受け取るようになります。
+        対象のBOTの管理権限が必要です。
       operationId: letBotJoinChannel
       tags:
         - bot
@@ -2547,7 +2675,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
     post:
-      summary: BOTをチャンネルから退出させます
+      summary: BOTをチャンネルから退出させる
       responses:
         '204':
           description: |-
@@ -2569,11 +2697,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostBotActionLeaveRequest'
+      description: |-
+        指定したBOTを指定したチャンネルから退出させます。
+        対象のBOTの管理権限が必要です。
   '/channels/{channelId}/bots':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
-      summary: チャンネルに参加しているBOTのリストを取得します
+      summary: チャンネル参加中のBOTのリストを取得
       tags:
         - bot
         - channel
@@ -2592,6 +2723,7 @@ paths:
             Not Found
             チャンネルが見つかりません。
       operationId: getChannelBots
+      description: 指定したチャンネルに参加しているBOTのリストを取得します。
   /webrtc/authenticate:
     post:
       summary: Skyway用認証API
@@ -2617,7 +2749,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
-      summary: チャンネル情報を取得します
+      summary: チャンネル情報を取得
       tags:
         - channel
       responses:
@@ -2630,8 +2762,9 @@ paths:
         '404':
           description: Not Found
       operationId: getChannel
+      description: 指定したチャンネルの情報を取得します。
     patch:
-      summary: チャンネル情報を変更します
+      summary: チャンネル情報を変更
       responses:
         '204':
           description: No Content
@@ -2653,6 +2786,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchChannelRequest'
+      description: |-
+        指定したチャンネルの情報を変更します。
+        変更には権限が必要です。
   /webrtc/state:
     get:
       summary: WebRTC状態を取得します
@@ -2671,7 +2807,7 @@ paths:
       operationId: getWebRTCState
   /clip-folders:
     post:
-      summary: クリップフォルダを作成します
+      summary: クリップフォルダを作成
       responses:
         '201':
           description: Created
@@ -2689,8 +2825,11 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostClipFolderRequest'
+      description: |-
+        クリップフォルダを作成します。
+        既にあるフォルダと同名のフォルダを作成することは可能です。
     get:
-      summary: クリップフォルダのリストを取得します
+      summary: クリップフォルダのリストを取得
       responses:
         '200':
           description: OK
@@ -2705,11 +2844,12 @@ paths:
         - clip
       operationId: getClipFolders
       parameters: []
+      description: 自身が所有するクリップフォルダのリストを取得します。
   '/clip-folders/{folderId}':
     parameters:
       - $ref: '#/components/parameters/folderIdInPath'
     get:
-      summary: クリップフォルダ情報を取得します
+      summary: クリップフォルダ情報を取得
       tags:
         - clip
       responses:
@@ -2724,8 +2864,9 @@ paths:
             Not Found
             クリップフォルダが見つかりません。
       operationId: getClipFolder
+      description: 指定したクリップフォルダの情報を取得します。
     delete:
-      summary: クリップフォルダを削除します
+      summary: クリップフォルダを削除
       responses:
         '204':
           description: |-
@@ -2738,8 +2879,9 @@ paths:
       operationId: deleteClipFolder
       tags:
         - clip
+      description: 指定したクリップフォルダを削除します。
     patch:
-      summary: クリップフォルダ情報を編集します
+      summary: クリップフォルダ情報を編集
       responses:
         '204':
           description: |-
@@ -2757,11 +2899,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchClipFolderRequest'
+      description: 指定したクリップフォルダの情報を編集します。
   '/clip-folders/{folderId}/messages':
     parameters:
       - $ref: '#/components/parameters/folderIdInPath'
     post:
-      summary: メッセージをクリップフォルダに追加します
+      summary: メッセージをクリップフォルダに追加
       responses:
         '200':
           description: OK
@@ -2775,6 +2918,10 @@ paths:
           description: |-
             Not Found
             クリップフォルダが見つかりません。
+        '409':
+          description: |-
+            Conflict
+            既に追加されています。
       operationId: clipMessage
       tags:
         - clip
@@ -2783,8 +2930,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostClipFolderMessageRequest'
+      description: 指定したメッセージを指定したクリップフォルダに追加します。
     get:
-      summary: フォルダ内のメッセージのリストを取得します
+      summary: フォルダ内のクリップのリストを取得
       responses:
         '200':
           description: OK
@@ -2805,12 +2953,13 @@ paths:
         - $ref: '#/components/parameters/offsetInQuery'
       tags:
         - clip
+      description: 指定したフォルダ内のクリップのリストを取得します。
   '/clip-folders/{folderId}/messages/{messageId}':
     parameters:
       - $ref: '#/components/parameters/folderIdInPath'
       - $ref: '#/components/parameters/messageIdInPath'
     delete:
-      summary: メッセージをクリップフォルダから外します
+      summary: メッセージをクリップフォルダから除外
       responses:
         '204':
           description: |-
@@ -2821,7 +2970,9 @@ paths:
             Not Found
             クリップフォルダが見つかりません。
       operationId: unclipMessage
-      description: 既に外されているメッセージを指定した場合は204を返します。
+      description: |-
+        指定したフォルダから指定したメッセージのクリップを除外します。
+        既に外されているメッセージを指定した場合は204を返します。
       tags:
         - clip
   '/webhooks/{webhookId}/messages':
@@ -2858,11 +3009,12 @@ paths:
         - $ref: '#/components/parameters/untilInQuery'
         - $ref: '#/components/parameters/inclusiveInQuery'
         - $ref: '#/components/parameters/orderInQuery'
+      description: ''
   '/channels/{channelId}/events':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
-      summary: チャンネルイベントのリストを取得します
+      summary: チャンネルイベントのリストを取得
       tags:
         - channel
       responses:
@@ -2892,9 +3044,10 @@ paths:
         - $ref: '#/components/parameters/untilInQuery'
         - $ref: '#/components/parameters/inclusiveInQuery'
         - $ref: '#/components/parameters/orderInQuery'
+      description: 指定したチャンネルのイベントリストを取得します。
   /stamp-palettes:
     get:
-      summary: スタンプパレットのリストを取得します
+      summary: スタンプパレットのリストを取得
       tags:
         - stamp
       responses:
@@ -2908,8 +3061,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/StampPalette'
       operationId: getStampPalettes
+      description: 自身が所有しているスタンプパレットのリストを取得します。
     post:
-      summary: スタンプパレットを作成します
+      summary: スタンプパレットを作成
       responses:
         '201':
           description: Created
@@ -2921,7 +3075,7 @@ paths:
           description: Bad Request
       tags:
         - stamp
-      description: ''
+      description: スタンプパレットを作成します。
       operationId: createStampPalette
       requestBody:
         content:
@@ -2932,7 +3086,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/paletteIdInPath'
     get:
-      summary: スタンプパレットを取得します
+      summary: スタンプパレットを取得
       tags:
         - stamp
       responses:
@@ -2945,8 +3099,9 @@ paths:
         '404':
           description: Not Found
       operationId: getStampPalette
+      description: 指定したスタンプパレットの情報を取得します。
     delete:
-      summary: スタンプパレットを削除します
+      summary: スタンプパレットを削除
       responses:
         '204':
           description: |-
@@ -2959,11 +3114,13 @@ paths:
         '404':
           description: Not Found
       operationId: deleteStampPalette
-      description: ''
+      description: |-
+        指定したスタンプパレットを削除します。
+        対象のスタンプパレットの管理権限が必要です。
       tags:
         - stamp
     patch:
-      summary: スタンプパレット情報を変更します
+      summary: スタンプパレット情報を変更
       responses:
         '204':
           description: |-
@@ -2985,11 +3142,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchStampPaletteRequest'
+      description: |-
+        指定したスタンプパレットの情報を変更します。
+        対象のスタンプパレットの管理権限が必要です。
   '/stamp-palettes/{paletteId}/stamps':
     parameters:
       - $ref: '#/components/parameters/paletteIdInPath'
     put:
-      summary: パレット内のスタンプを編集します
+      summary: パレット内のスタンプを編集
       responses:
         '204':
           description: |-
@@ -3013,9 +3173,12 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PutStampPaletteStampsRequest'
+      description: |-
+        指定したスタンプパレットのスタンプを編集します。
+        対象のスタンプパレットの管理権限が必要です。
   /activity/onlines:
     get:
-      summary: 現在オンラインのユーザーのリストを取得します
+      summary: オンラインユーザーリストを取得
       tags:
         - activity
       responses:
@@ -3029,6 +3192,7 @@ paths:
                 items:
                   type: string
       operationId: getOnlineUsers
+      description: 現在オンラインな(SSEまたはWSが接続中)ユーザーのUUIDのリストを返します。
 components:
   schemas:
     Message:
