@@ -299,7 +299,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/File'
+                $ref: '#/components/schemas/FileInfo'
         '400':
           description: Bad Request
         '411':
@@ -326,7 +326,7 @@ paths:
                 type: array
                 description: ファイルメタの配列
                 items:
-                  $ref: '#/components/schemas/File'
+                  $ref: '#/components/schemas/FileInfo'
           headers:
             X-TRAQ-MORE:
               $ref: '#/components/headers/X-TRAQ-MORE'
@@ -374,7 +374,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/File'
+                $ref: '#/components/schemas/FileInfo'
         '403':
           description: Forbidden
         '404':
@@ -3398,8 +3398,8 @@ components:
       required:
         - file
         - channelId
-    File:
-      title: File
+    FileInfo:
+      title: FileInfo
       type: object
       description: ファイル情報
       properties:
