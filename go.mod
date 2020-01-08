@@ -14,7 +14,7 @@ require (
 	github.com/fogleman/gg v1.1.0 // indirect
 	github.com/gavv/httpexpect/v2 v2.0.2
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
-	github.com/go-sql-driver/mysql v1.4.1
+	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/google/go-cmp v0.3.1 // indirect
