@@ -10,7 +10,7 @@ RUN CGO_ENABLED=0 go build -o /traQ -ldflags "-X main.version=$(git describe --t
 FROM alpine:3.10
 WORKDIR /app
 
-RUN apk add --update ca-certificates imagemagick openssl && \
+RUN apk add --update ca-certificates imagemagick && \
     update-ca-certificates && \
     rm -rf /var/cache/apk/*
 ENV DOCKERIZE_VERSION v0.6.1

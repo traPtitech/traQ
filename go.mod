@@ -22,7 +22,7 @@ require (
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
 	github.com/jinzhu/gorm v1.9.12
 	github.com/json-iterator/go v1.1.9
-	github.com/labstack/echo/v4 v4.1.11
+	github.com/labstack/echo/v4 v4.1.13
 	github.com/leandro-lugaresi/hub v1.1.0
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/ncw/swift v1.0.49
@@ -36,9 +36,10 @@ require (
 	github.com/spf13/viper v1.6.1
 	github.com/stretchr/testify v1.4.0
 	go.uber.org/zap v1.13.0
-	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
+	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876
 	golang.org/x/exp v0.0.0-20191227195350-da58074b4299
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/sys v0.0.0-20200107162124-548cf772de50 // indirect
 	google.golang.org/api v0.15.0
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/go-playground/webhooks.v5 v5.13.0
