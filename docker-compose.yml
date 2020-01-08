@@ -28,7 +28,7 @@ services:
       - "80"
 
   reverse-proxy:
-    image: abiosoft/caddy:0.11.5-no-stats
+    image: abiosoft/caddy:1.0.3-no-stats
     restart: always
     expose:
       - "80"
@@ -54,7 +54,7 @@ services:
       - "3002:3306"
 
   adminer:
-    image: adminer:4.6.3
+    image: adminer:4.7.5
     restart: always
     environment:
       ADMINER_DEFAULT_SERVER: mysql

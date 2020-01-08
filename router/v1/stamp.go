@@ -31,14 +31,8 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 func (h *Handlers) PostStamp(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	// file確認
-	uploadedFile, err := c.FormFile("file")
-	if err != nil {
-		return herror.BadRequest(err)
-	}
-
 	// file処理
-	fileID, err := h.processMultipartFormStampUpload(c, uploadedFile)
+	fileID, err := h.processMultipartFormStampUpload(c, "file")
 	if err != nil {
 		return err
 	}
@@ -88,9 +82,10 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 	}
 
 	// 画像変更
-	uploadedFile, err := c.FormFile("file")
+	f, _, err := c.Request().FormFile("file")
 	if err == nil {
-		fileID, err := h.processMultipartFormStampUpload(c, uploadedFile)
+		f.Close()
+		fileID, err := h.processMultipartFormStampUpload(c, "file")
 		if err != nil {
 			return err
 		}

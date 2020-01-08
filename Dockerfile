@@ -1,5 +1,4 @@
-FROM golang:1.13.0-alpine AS build
-ENV GO111MODULE=on
+FROM golang:1.13.5-alpine AS build
 RUN apk add --update --no-cache git
 WORKDIR /go/src/github.com/traPtitech/traQ
 COPY ./go.* ./
@@ -8,10 +7,10 @@ COPY . .
 RUN CGO_ENABLED=0 go build -o /traQ -ldflags "-X main.version=$(git describe --tags --abbrev=0) -X main.revision=$(git rev-parse --short HEAD)"
 
 
-FROM alpine:3.9
+FROM alpine:3.10
 WORKDIR /app
 
-RUN apk add --update ca-certificates imagemagick openssl && \
+RUN apk add --update ca-certificates imagemagick && \
     update-ca-certificates && \
     rm -rf /var/cache/apk/*
 ENV DOCKERIZE_VERSION v0.6.1

@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	batchSize            = 100
+	batchSize            = 500
 	messageTTLSeconds    = 60 * 60 * 24 * 2 // 2日
 	notificationPriority = "high"
 )

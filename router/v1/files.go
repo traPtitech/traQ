@@ -18,10 +18,12 @@ import (
 func (h *Handlers) PostFile(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	uploadedFile, err := c.FormFile("file")
+	src, uploadedFile, err := c.Request().FormFile("file")
 	if err != nil {
 		return herror.BadRequest(err)
 	}
+	defer src.Close()
+
 	if uploadedFile.Size == 0 {
 		return herror.BadRequest("non-empty file is required")
 	}
@@ -41,12 +43,6 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	} else {
 		aclRead[uuid.Nil] = true
 	}
-
-	src, err := uploadedFile.Open()
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-	defer src.Close()
 
 	file, err := h.Repo.SaveFileWithACL(uploadedFile.Filename, src, uploadedFile.Size, uploadedFile.Header.Get(echo.HeaderContentType), model.FileTypeUserFile, userID, aclRead)
 	if err != nil {

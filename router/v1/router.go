@@ -420,12 +420,17 @@ func bindAndValidate(c echo.Context, i interface{}) error {
 	return nil
 }
 
-func (h *Handlers) processMultipartFormIconUpload(c echo.Context, file *multipart.FileHeader) (uuid.UUID, error) {
+func (h *Handlers) processMultipartFormIconUpload(c echo.Context, name string) (uuid.UUID, error) {
+	src, file, err := c.Request().FormFile(name)
+	if err != nil {
+		return uuid.Nil, herror.BadRequest(err)
+	}
+	defer src.Close()
 	// ファイルサイズ制限
 	if file.Size > iconFileMaxSize {
 		return uuid.Nil, herror.BadRequest("too large image file (limit exceeded)")
 	}
-	return h.processMultipartForm(c, file, model.FileTypeIcon, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
+	return h.processMultipartForm(c, src, file, model.FileTypeIcon, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
 		switch mime {
 		case consts.MimeImagePNG, consts.MimeImageJPEG:
 			return h.processStillImage(c, src, iconMaxWidth, iconMaxHeight)
@@ -436,12 +441,17 @@ func (h *Handlers) processMultipartFormIconUpload(c echo.Context, file *multipar
 	})
 }
 
-func (h *Handlers) processMultipartFormStampUpload(c echo.Context, file *multipart.FileHeader) (uuid.UUID, error) {
+func (h *Handlers) processMultipartFormStampUpload(c echo.Context, name string) (uuid.UUID, error) {
+	src, file, err := c.Request().FormFile(name)
+	if err != nil {
+		return uuid.Nil, herror.BadRequest(err)
+	}
+	defer src.Close()
 	// ファイルサイズ制限
 	if file.Size > stampFileMaxSize {
 		return uuid.Nil, herror.BadRequest("too large image file (limit exceeded)")
 	}
-	return h.processMultipartForm(c, file, model.FileTypeStamp, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
+	return h.processMultipartForm(c, src, file, model.FileTypeStamp, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
 		switch mime {
 		case consts.MimeImagePNG, consts.MimeImageJPEG:
 			return h.processStillImage(c, src, stampMaxWidth, stampMaxHeight)
@@ -454,14 +464,9 @@ func (h *Handlers) processMultipartFormStampUpload(c echo.Context, file *multipa
 	})
 }
 
-func (h *Handlers) processMultipartForm(c echo.Context, file *multipart.FileHeader, fType string, process func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error)) (uuid.UUID, error) {
+func (h *Handlers) processMultipartForm(c echo.Context, src io.Reader, file *multipart.FileHeader, fType string, process func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error)) (uuid.UUID, error) {
 	// ファイルタイプ確認・必要があればリサイズ
-	src, err := file.Open()
-	if err != nil {
-		return uuid.Nil, herror.InternalServerError(err)
-	}
 	b, mime, err := process(c, file.Header.Get(echo.HeaderContentType), src)
-	src.Close()
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -547,13 +552,7 @@ func (h *Handlers) getUserIcon(c echo.Context, user *model.User) error {
 }
 
 func (h *Handlers) putUserIcon(c echo.Context, userID uuid.UUID) error {
-	// file確認
-	uploadedFile, err := c.FormFile("file")
-	if err != nil {
-		return herror.BadRequest(err)
-	}
-
-	iconID, err := h.processMultipartFormIconUpload(c, uploadedFile)
+	iconID, err := h.processMultipartFormIconUpload(c, "file")
 	if err != nil {
 		return err
 	}
