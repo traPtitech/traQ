@@ -3,7 +3,7 @@ module github.com/traPtitech/traQ
 require (
 	cloud.google.com/go v0.51.0
 	cloud.google.com/go/firestore v1.0.0 // indirect
-	firebase.google.com/go v3.11.1+incompatible
+	firebase.google.com/go v3.12.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/blendle/zapdriver v1.3.1
