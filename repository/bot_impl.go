@@ -80,7 +80,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 		Scopes:         scopes,
 	}
 
-	err = repo.transact(func(tx *gorm.DB) error {
+	err = repo.db.Transaction(func(tx *gorm.DB) error {
 		errs := tx.Create(u).Create(t).Create(b).GetErrors()
 		if len(errs) > 0 {
 			return errs[0]
@@ -117,7 +117,7 @@ func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 		updated     bool
 		userUpdated bool
 	)
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&b, &model.Bot{ID: id}).Error; err != nil {
 			return convertError(err)
 		}
@@ -200,7 +200,7 @@ func (repo *GormRepository) SetSubscribeEventsToBot(botID uuid.UUID, events mode
 	if botID == uuid.Nil {
 		return ErrNilID
 	}
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var b model.Bot
 		if err := tx.First(&b, &model.Bot{ID: botID}).Error; err != nil {
 			return convertError(err)
@@ -300,7 +300,8 @@ func (repo *GormRepository) ChangeBotState(id uuid.UUID, state model.BotState) e
 		return ErrNilID
 	}
 	var changed bool
-	err := repo.transact(func(tx *gorm.DB) error {
+
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var b model.Bot
 		if err := tx.Take(&b, &model.Bot{ID: id}).Error; err != nil {
 			return convertError(err)
@@ -332,7 +333,7 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 		return nil, ErrNilID
 	}
 	var bot model.Bot
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&bot, &model.Bot{ID: id}).Error; err != nil {
 			return convertError(err)
 		}
@@ -384,7 +385,7 @@ func (repo *GormRepository) DeleteBot(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var b model.Bot
 		if err := tx.First(&b, &model.Bot{ID: id}).Error; err != nil {
 			return convertError(err)

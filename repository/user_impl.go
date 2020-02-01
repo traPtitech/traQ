@@ -127,7 +127,7 @@ func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 		u       model.User
 		changed bool
 	)
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&u, model.User{ID: id}).Error; err != nil {
 			return convertError(err)
 		}

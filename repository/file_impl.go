@@ -104,7 +104,7 @@ func (repo *GormRepository) SaveFileWithACL(name string, src io.Reader, size int
 
 	f.Hash = hex.EncodeToString(hash.Sum(nil))
 
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(f).Error; err != nil {
 			return err
 		}
@@ -169,7 +169,7 @@ func (repo *GormRepository) DeleteFile(fileID uuid.UUID) error {
 	}
 
 	var f model.File
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Take(&f, &model.File{ID: fileID}).Error; err != nil {
 			return convertError(err)
 		}

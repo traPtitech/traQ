@@ -19,7 +19,7 @@ func (repo *GormRepository) CreateUserGroup(name, description, gType string, adm
 		Type:        gType,
 		AdminUserID: adminID,
 	}
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		// 名前チェック
 		if len(g.Name) == 0 || utf8.RuneCountInString(g.Name) > 30 {
 			return ArgError("name", "Name must be non-empty and shorter than 31 characters")
@@ -63,7 +63,7 @@ func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNa
 	if id == uuid.Nil {
 		return ErrNilID
 	}
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var g model.UserGroup
 		if err := tx.First(&g, &model.UserGroup{ID: id}).Error; err != nil {
 			return convertError(err)
@@ -119,7 +119,7 @@ func (repo *GormRepository) DeleteUserGroup(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.UserGroupMember{GroupID: id}).Delete(&model.UserGroupMember{}).Error; err != nil {
 			return err
 		}
@@ -195,7 +195,7 @@ func (repo *GormRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
 		return ErrNilID
 	}
 	var changed bool
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&model.UserGroupMember{UserID: userID, GroupID: groupID}).Error; err != nil {
 			if isMySQLDuplicatedRecordErr(err) {
 				return nil
@@ -226,7 +226,7 @@ func (repo *GormRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 		return ErrNilID
 	}
 	var changed bool
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		result := tx.Delete(&model.UserGroupMember{UserID: userID, GroupID: groupID})
 		if result.Error != nil {
 			return result.Error

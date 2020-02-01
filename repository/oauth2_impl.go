@@ -55,7 +55,7 @@ func (repo *GormRepository) DeleteClient(id string) error {
 	if len(id) == 0 {
 		return nil
 	}
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		errs := tx.Delete(&model.OAuth2Client{ID: id}).
 			Delete(&model.OAuth2Authorize{}, &model.OAuth2Authorize{ClientID: id}).
 			Delete(&model.OAuth2Token{}, &model.OAuth2Token{ClientID: id}).

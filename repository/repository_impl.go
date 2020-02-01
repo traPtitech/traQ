@@ -145,25 +145,6 @@ func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub, logger
 	return repo, nil
 }
 
-func (repo *GormRepository) transact(txFunc func(tx *gorm.DB) error) (err error) {
-	tx := repo.db.Begin()
-	if err := tx.Error; err != nil {
-		return err
-	}
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // re-throw panic after Rollback
-		} else if err != nil {
-			tx.Rollback()
-		} else {
-			err = tx.Commit().Error
-		}
-	}()
-	err = txFunc(tx)
-	return err
-}
-
 func limitAndOffset(limit, offset int) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		if offset > 0 {

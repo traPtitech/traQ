@@ -207,7 +207,7 @@ func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChanne
 		topicBefore       string
 	)
 
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
 			return convertError(err)
 		}
@@ -429,7 +429,7 @@ func (repo *GormRepository) DeleteChannel(channelID uuid.UUID) error {
 	}
 
 	deleted := make([]*model.Channel, 0)
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if exists, err := dbExists(tx, &model.Channel{ID: channelID}); err != nil {
 			return err
 		} else if !exists {
@@ -566,7 +566,7 @@ func (repo *GormRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*mo
 		arr = append(arr, &model.UsersPrivateChannel{UserID: user2, ChannelID: channel.ID})
 	}
 
-	err = repo.transact(func(tx *gorm.DB) error {
+	err = repo.db.Transaction(func(tx *gorm.DB) error {
 		for _, v := range arr {
 			if err := tx.Create(v).Error; err != nil {
 				return err
@@ -663,7 +663,7 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 		on  = make([]uuid.UUID, 0)
 		off = make([]uuid.UUID, 0)
 	)
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		for userID, subscribe := range args.Subscription {
 			if userID == uuid.Nil {
 				continue

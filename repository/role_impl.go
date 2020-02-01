@@ -57,7 +57,7 @@ func (repo *GormRepository) UpdateRole(role string, args UpdateRoleArgs) error {
 		return ErrNotFound
 	}
 
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var r model.UserRole
 		if err := tx.First(&r, &model.UserRole{Name: role}).Error; err != nil {
 			return convertError(err)

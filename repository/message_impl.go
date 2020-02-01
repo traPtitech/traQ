@@ -25,7 +25,7 @@ func (repo *GormRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 		Text:      text,
 		Stamps:    []model.MessageStamp{},
 	}
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(m).Error; err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ func (repo *GormRepository) UpdateMessage(messageID uuid.UUID, text string) erro
 		new model.Message
 		ok  bool
 	)
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&old, &model.Message{ID: messageID}).Error; err != nil {
 			return convertError(err)
 		}
@@ -123,7 +123,7 @@ func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 		m  model.Message
 		ok bool
 	)
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.Message{ID: messageID}).First(&m).Error; err != nil {
 			return convertError(err)
 		}
