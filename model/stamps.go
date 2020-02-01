@@ -21,3 +21,8 @@ type Stamp struct {
 func (*Stamp) TableName() string {
 	return "stamps"
 }
+
+// IsSystemStamp システムが作成したスタンプかどうか
+func (s *Stamp) IsSystemStamp() bool {
+	return s.CreatorID == uuid.Nil && s.ID != uuid.Nil && len(s.Name) > 0
+}
