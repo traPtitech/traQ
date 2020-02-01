@@ -1,8 +1,11 @@
 /.circleci/
 /.github/
 /.idea/
+/.git/
 /dev/
 /docs/
+/vendor/
+/dist/
 
 .dockerignore
 .envrc

@@ -18,10 +18,14 @@ jobs:
       - name: Set IMAGE_TAG env
         run: echo ::set-env name=IMAGE_TAG::$(echo ${GITHUB_REF:11})
       - uses: actions/checkout@v2
+      - name: Set TRAQ_VERSION env
+        run: echo ::set-env name=TRAQ_VERSION::$(git describe --tags --abbrev=0)
+      - name: Set TRAQ_REVISION env
+        run: echo ::set-env name=TRAQ_REVISION::$(git rev-parse --short HEAD)
       - name: Login GitHub Registry
         run: docker login docker.pkg.github.com -u traPtitech -p ${{ secrets.GITHUB_TOKEN }}
       - name: Build Image
-        run: docker build -t docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG} .
+        run: docker build --build-arg TRAQ_VERSION=${TRAQ_VERSION} --build-arg TRAQ_REVISION=${TRAQ_REVISION} -t docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG} .
       - name: Push image to GitHub Registry
         run: docker push docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG}
       - name: Push image to GitHub Registry (latest)

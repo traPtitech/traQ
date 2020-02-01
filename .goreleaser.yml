@@ -7,5 +7,12 @@ builds:
   - binary: traQ
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s
+      - -w
+      - -X main.version={{.Version}}
+      - -X main.revision={{.ShortCommit}}
+    goarch:
+      - amd64
 archives:
   - wrap_in_directory: true

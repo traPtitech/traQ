@@ -3,7 +3,7 @@ SOURCES ?= $(shell find . -path "./vendor" -prune -o -type f -name "*.go" -print
 TEST_DB_PORT := 3100
 
 traQ: $(SOURCES)
-	CGO_ENABLED=0 go build -ldflags "-X main.version=$$(git describe --tags --abbrev=0) -X main.revision=$$(git rev-parse --short HEAD)"
+	CGO_ENABLED=0 go build
 
 .PHONY: init
 init:
@@ -56,3 +56,7 @@ db-diff-docs:
 db-lint:
 	go run main.go migrate --reset --dbport $(TEST_DB_PORT)
 	TBLS_DSN="mysql://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" tbls lint
+
+.PHONY: goreleaser-snapshot
+goreleaser-snapshot:
+	goreleaser --snapshot --skip-publish --rm-dist
