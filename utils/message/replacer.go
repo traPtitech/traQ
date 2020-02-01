@@ -76,15 +76,15 @@ func (re *Replacer) Replace(m string) string {
 				// 「`」は「$」よりも優先されるので
 				// 「$ ` $」のように「`」がペアの「$」より前にあるときは
 				// 「$」のペアとして処理しない
-				backQuoteI := strings.IndexRune(string(chs[i+1:]), backQuoteRune)
-				dollarI := strings.IndexRune(string(chs[i+1:]), dollarRune)
+				backQuoteI := indexOf(chs[i+1:], backQuoteRune)
+				dollarI := indexOf(chs[i+1:], dollarRune)
 				if backQuoteI != -1 && dollarI != -1 && backQuoteI < dollarI {
 					newChs = append(newChs, ch)
 					noExpressionStartIndex = i + 1
 					continue
 				}
 			}
-			newI := strings.IndexRune(string(chs[i+1:]), ch)
+			newI := indexOf(chs[i+1:], ch)
 			if newI == -1 {
 				// 「$」/「`」のペアがないとき
 				newChs = append(newChs, ch)
@@ -132,4 +132,13 @@ func (re *Replacer) replaceChannel(m string) string {
 		}
 		return s
 	})
+}
+
+func indexOf(slice []rune, target rune) int {
+	for k, v := range slice {
+			if v == target {
+					return k
+			}
+	}
+	return -1
 }
