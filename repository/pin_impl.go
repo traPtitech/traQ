@@ -19,7 +19,7 @@ func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, e
 		m       model.Message
 		changed bool
 	)
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&m, &model.Message{ID: messageID}).Error; err != nil {
 			return convertError(err)
 		}
@@ -87,7 +87,7 @@ func (repo *GormRepository) DeletePin(pinID, userID uuid.UUID) error {
 		pin model.Pin
 		ok  bool
 	)
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Preload("Message").Where(&model.Pin{ID: pinID}).First(&pin).Error; err != nil {
 			if gorm.IsRecordNotFoundError(err) {
 				return nil

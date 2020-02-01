@@ -17,7 +17,7 @@ func (repo *GormRepository) RegisterDevice(userID uuid.UUID, token string) (*mod
 	}
 
 	var d model.Device
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Take(&d, &model.Device{Token: token}).Error; err == nil {
 			if d.UserID != userID {
 				return ArgError("Token", "the Token has already been associated with other user")

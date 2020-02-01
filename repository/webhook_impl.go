@@ -42,7 +42,7 @@ func (repo *GormRepository) CreateWebhook(name, description string, channelID, c
 		CreatorID:   creatorID,
 	}
 
-	err = repo.transact(func(tx *gorm.DB) error {
+	err = repo.db.Transaction(func(tx *gorm.DB) error {
 		// チャンネル検証
 		var ch model.Channel
 		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
@@ -91,7 +91,7 @@ func (repo *GormRepository) UpdateWebhook(id uuid.UUID, args UpdateWebhookArgs) 
 		updated     bool
 		userUpdated bool
 	)
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.WebhookBot{ID: id}).First(&w).Error; err != nil {
 			return convertError(err)
 		}
@@ -179,7 +179,7 @@ func (repo *GormRepository) DeleteWebhook(id uuid.UUID) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var b model.WebhookBot
 		if err := tx.Take(&b, &model.WebhookBot{ID: id}).Error; err != nil {
 			return convertError(err)

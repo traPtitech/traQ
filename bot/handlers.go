@@ -271,10 +271,13 @@ func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	user, err := p.repo.GetUser(stamp.CreatorID)
-	if err != nil && err != repository.ErrNotFound {
-		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", stamp.CreatorID))
-		return
+	var user *model.User
+	if !stamp.IsSystemStamp() {
+		user, err = p.repo.GetUser(stamp.CreatorID)
+		if err != nil {
+			p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", stamp.CreatorID))
+			return
+		}
 	}
 
 	multicast(p, model.BotEventStampCreated, &stampCreatedPayload{

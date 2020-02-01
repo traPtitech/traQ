@@ -1,7 +1,8 @@
 .vagrant
 .envrc
-.idea/
+/.idea/
 /vendor/
+/dist/
 
 traQ
 traQ.exe

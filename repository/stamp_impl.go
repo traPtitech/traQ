@@ -19,7 +19,7 @@ func (repo *GormRepository) CreateStamp(name string, fileID, userID uuid.UUID) (
 		CreatorID: userID, // uuid.Nilを許容する
 	}
 
-	err = repo.transact(func(tx *gorm.DB) error {
+	err = repo.db.Transaction(func(tx *gorm.DB) error {
 		// 名前チェック
 		if err := validation.Validate(name, validator.StampNameRuleRequired...); err != nil {
 			return ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
@@ -61,7 +61,7 @@ func (repo *GormRepository) UpdateStamp(id uuid.UUID, args UpdateStampArgs) erro
 		return ErrNilID
 	}
 	changes := map[string]interface{}{}
-	err := repo.transact(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var s model.Stamp
 		if err := tx.First(&s, &model.Stamp{ID: id}).Error; err != nil {
 			return convertError(err)

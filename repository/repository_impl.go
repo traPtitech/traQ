@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"github.com/go-sql-driver/mysql"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
@@ -15,11 +14,6 @@ import (
 	"go.uber.org/zap"
 	"strings"
 	"time"
-)
-
-const (
-	errMySQLDuplicatedRecord          uint16 = 1062
-	errMySQLForeignKeyConstraintFails uint16 = 1452
 )
 
 var (
@@ -143,71 +137,4 @@ func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub, logger
 		}
 	}()
 	return repo, nil
-}
-
-func (repo *GormRepository) transact(txFunc func(tx *gorm.DB) error) (err error) {
-	tx := repo.db.Begin()
-	if err := tx.Error; err != nil {
-		return err
-	}
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p) // re-throw panic after Rollback
-		} else if err != nil {
-			tx.Rollback()
-		} else {
-			err = tx.Commit().Error
-		}
-	}()
-	err = txFunc(tx)
-	return err
-}
-
-func limitAndOffset(limit, offset int) func(db *gorm.DB) *gorm.DB {
-	return func(db *gorm.DB) *gorm.DB {
-		if offset > 0 {
-			db = db.Offset(offset)
-		}
-		if limit > 0 {
-			db = db.Limit(limit)
-		}
-		return db
-	}
-}
-
-func isMySQLDuplicatedRecordErr(err error) bool {
-	merr, ok := err.(*mysql.MySQLError)
-	if !ok {
-		return false
-	}
-	return merr.Number == errMySQLDuplicatedRecord
-}
-
-func isMySQLForeignKeyConstraintFailsError(err error) bool {
-	merr, ok := err.(*mysql.MySQLError)
-	if !ok {
-		return false
-	}
-	return merr.Number == errMySQLForeignKeyConstraintFails
-}
-
-func dbExists(tx *gorm.DB, where interface{}, tableName ...string) (exists bool, err error) {
-	c := 0
-	if len(tableName) > 0 {
-		tx = tx.Table(tableName[0])
-	} else {
-		tx = tx.Model(where)
-	}
-	err = tx.Where(where).Limit(1).Count(&c).Error
-	return c > 0, err
-}
-
-func convertError(err error) error {
-	switch {
-	case gorm.IsRecordNotFoundError(err):
-		return ErrNotFound
-	default:
-		return err
-	}
 }
