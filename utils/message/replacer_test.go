@@ -67,6 +67,18 @@ func TestReplacer_Replace(t *testing.T) {
 			"`$@takashi_trap$` $@takashi_trap$ `@takashi_trap`",
 			"`$@takashi_trap$` $@takashi_trap$ `@takashi_trap`",
 		},
+		{
+			"`okあok`",
+			"`okあok`",
+		},
+		{
+			"$okあok$",
+			"$okあok$",
+		},
+		{
+			"`$okあok$`",
+			"`$okあok$`",
+		},
 	}
 	for _, v := range tt {
 		assert.Equal(t, v[1], re.Replace(v[0]))
