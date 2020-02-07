@@ -31,7 +31,7 @@ require (
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/ncw/swift v1.0.49
 	github.com/pelletier/go-toml v1.6.0 // indirect
-	github.com/prometheus/client_golang v1.4.0
+	github.com/prometheus/client_golang v1.4.1
 	github.com/skip2/go-qrcode v0.0.0-20190110000554-dc11ecdae0a9
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
