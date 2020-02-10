@@ -93,6 +93,19 @@ func (oc *OnlineCounter) IsOnline(userID uuid.UUID) bool {
 	return c.isOnline()
 }
 
+// GetOnlineUserIDs オンラインなユーザーのUUIDの配列を取得します
+func (oc *OnlineCounter) GetOnlineUserIDs() []uuid.UUID {
+	oc.countersLock.Lock()
+	users := make([]uuid.UUID, 0, len(oc.counters))
+	for u, c := range oc.counters {
+		if c.isOnline() {
+			users = append(users, u)
+		}
+	}
+	oc.countersLock.Unlock()
+	return users
+}
+
 type counter struct {
 	sync.RWMutex
 	userID      uuid.UUID
