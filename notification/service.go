@@ -2,7 +2,7 @@ package notification
 
 import (
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/fcm"
+	"github.com/traPtitech/traQ/notification/fcm"
 	"github.com/traPtitech/traQ/realtime"
 	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
