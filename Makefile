@@ -66,7 +66,7 @@ update-frontend:
 	@mkdir -p ./dev/frontend
 	@curl -L -Ss https://github.com/traPtitech/traQ_R-UI/releases/latest/download/dist.tar.gz | tar zxv -C ./dev/frontend --strip-components 1
 
-.PHONY: clear-frontend
+.PHONY: reset-frontend
 reset-frontend:
 	@if [ -d "./dev/frontend" ]; then \
 		rm -r ./dev/frontend; \
