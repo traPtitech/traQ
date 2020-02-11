@@ -385,6 +385,55 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 	}
 
+	t := template.New("").Funcs(template.FuncMap{
+		"replace": strings.Replace,
+	})
+	template.Must(t.New("github_issues.tmpl").Parse(strings.TrimSpace(`
+{{- if eq .Action "opened" -}}
+## Issue Opened
+[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .Issue.Title }}]({{ .Issue.HTMLURL }})
+Comment:
+{{ .Issue.Body }}
+{{- else if eq .Action "closed" -}}
+## Issue Closed
+[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .Issue.Title }}]({{ .Issue.HTMLURL }})
+{{- else if eq .Action "reopened" -}}
+## Issue Reopened
+[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .Issue.Title }}]({{ .Issue.HTMLURL }})
+{{- else -}}
+{{- end -}}
+`)))
+	template.Must(t.New("github_pull_request.tmpl").Parse(strings.TrimSpace(`
+{{- if eq .Action "opened" -}}
+## PullRequest Opened
+[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .PullRequest.Title }}]({{ .PullRequest.HTMLURL }})
+Comment:
+{{ .PullRequest.Body }}
+{{- else if eq .Action "closed" -}}
+{{- if .PullRequest.Merged -}}
+## PullRequest Merged
+[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .PullRequest.Title }}]({{ .PullRequest.HTMLURL }})
+{{- else -}}
+## PullRequest Closed
+[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .PullRequest.Title }}]({{ .PullRequest.HTMLURL }})
+{{- end -}}
+{{- else if eq .Action "reopened" -}}
+## PullRequest Reopened
+[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .PullRequest.Title }}]({{ .PullRequest.HTMLURL }})
+{{- else -}}
+{{- end -}}
+`)))
+	template.Must(t.New("github_push.tmpl").Parse(strings.ReplaceAll(strings.TrimSpace(`
+{{- if gt (len .Commits) 0 -}}
+## {{ len .Commits }} Commit(s) Pushed by {{ .Pusher.Name }}
+[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}), refs: $${{ .Ref }}$$
+{{ range .Commits -}}
++ [$${{ .ID }}$$]({{ .URL }}) - $${{ replace .Message "\n" " " -1 }}$$
+{{ end -}}
+{{- end -}}
+`), "$$", "`")))
+	h.webhookDefTmpls = t
+
 	go h.stampEventSubscriber(h.Hub.Subscribe(10, event.StampCreated, event.StampUpdated, event.StampDeleted))
 }
 
@@ -398,13 +447,6 @@ func (h *Handlers) stampEventSubscriber(sub hub.Subscription) {
 		h.emojiCSSCache.Reset()
 		h.emojiCSSCacheLock.Unlock()
 	}
-}
-
-// LoadWebhookTemplate Webhookのテンプレートファイルを読み込みます
-func (h *Handlers) LoadWebhookTemplate(pattern string) {
-	h.webhookDefTmpls = template.Must(template.New("").Funcs(template.FuncMap{
-		"replace": strings.Replace,
-	}).ParseGlob(pattern))
 }
 
 func bindAndValidate(c echo.Context, i interface{}) error {

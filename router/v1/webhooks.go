@@ -252,70 +252,12 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 
 	var payload interface{}
 	switch github.Event(ev) {
-	case github.CommitCommentEvent:
-		payload = &github.CommitCommentPayload{}
-	case github.CreateEvent:
-		payload = &github.CreatePayload{}
-	case github.DeleteEvent:
-		payload = &github.DeletePayload{}
-	case github.DeploymentEvent:
-		payload = &github.DeploymentPayload{}
-	case github.DeploymentStatusEvent:
-		payload = &github.DeploymentStatusPayload{}
-	case github.ForkEvent:
-		payload = &github.ForkPayload{}
-	case github.GollumEvent:
-		payload = &github.GollumPayload{}
-	case github.InstallationEvent, github.IntegrationInstallationEvent:
-		payload = &github.InstallationPayload{}
-	case github.IssueCommentEvent:
-		payload = &github.IssueCommentPayload{}
 	case github.IssuesEvent:
 		payload = &github.IssuesPayload{}
-	case github.LabelEvent:
-		payload = &github.LabelPayload{}
-	case github.MemberEvent:
-		payload = &github.MemberPayload{}
-	case github.MembershipEvent:
-		payload = &github.MembershipPayload{}
-	case github.MilestoneEvent:
-		payload = &github.MilestonePayload{}
-	case github.OrganizationEvent:
-		payload = &github.OrganizationPayload{}
-	case github.OrgBlockEvent:
-		payload = &github.OrgBlockPayload{}
-	case github.PageBuildEvent:
-		payload = &github.PageBuildPayload{}
-	case github.PingEvent:
-		payload = &github.PingPayload{}
-	case github.ProjectCardEvent:
-		payload = &github.ProjectCardPayload{}
-	case github.ProjectColumnEvent:
-		payload = &github.ProjectColumnPayload{}
-	case github.ProjectEvent:
-		payload = &github.ProjectPayload{}
-	case github.PublicEvent:
-		payload = &github.PublicPayload{}
 	case github.PullRequestEvent:
 		payload = &github.PullRequestPayload{}
-	case github.PullRequestReviewEvent:
-		payload = &github.PullRequestReviewPayload{}
-	case github.PullRequestReviewCommentEvent:
-		payload = &github.PullRequestReviewCommentPayload{}
 	case github.PushEvent:
 		payload = &github.PushPayload{}
-	case github.ReleaseEvent:
-		payload = &github.ReleasePayload{}
-	case github.RepositoryEvent:
-		payload = &github.RepositoryPayload{}
-	case github.StatusEvent:
-		payload = &github.StatusPayload{}
-	case github.TeamEvent:
-		payload = &github.TeamPayload{}
-	case github.TeamAddEvent:
-		payload = &github.TeamAddPayload{}
-	case github.WatchEvent:
-		payload = &github.WatchPayload{}
 	default:
 		return c.NoContent(http.StatusNoContent)
 	}

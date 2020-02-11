@@ -52,7 +52,6 @@ func Setup(config *Config) *echo.Echo {
 		IsRefreshEnabled: config.IsRefreshEnabled,
 		SkyWaySecretKey:  config.SkyWaySecretKey,
 	}
-	v1.LoadWebhookTemplate("static/webhook/*.tmpl")
 	v1.Setup(api)
 
 	// v3 APIハンドラ
