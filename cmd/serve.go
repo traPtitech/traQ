@@ -20,7 +20,7 @@ import (
 	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
-	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"go.uber.org/zap"
