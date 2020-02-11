@@ -76,13 +76,18 @@ func makeUserPayload(user *model.User) userPayload {
 	if user == nil {
 		return userPayload{}
 	}
-	return userPayload{
+
+	payload := userPayload{
 		ID:          user.ID,
 		Name:        user.Name,
 		DisplayName: user.DisplayName,
 		IconID:      user.Icon,
 		Bot:         user.Bot,
 	}
+	if len(payload.DisplayName) == 0 {
+		payload.DisplayName = payload.Name
+	}
+	return payload
 }
 
 type messageCreatedPayload struct {
