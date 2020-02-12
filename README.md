@@ -1,6 +1,6 @@
 # traQ (Project R)
 
-[![CircleCI](https://circleci.com/gh/traPtitech/traQ.svg?style=shield)](https://circleci.com/gh/traPtitech/traQ)
+[![GitHub release](https://img.shields.io/github/release/traPtitech/traQ.svg)](https://GitHub.com/traPtitech/traQ/releases/)
 ![CI](https://github.com/traPtitech/traQ/workflows/CI/badge.svg)
 ![release](https://github.com/traPtitech/traQ/workflows/release/badge.svg)
 [![codecov](https://codecov.io/gh/traPtitech/traQ/branch/master/graph/badge.svg)](https://codecov.io/gh/traPtitech/traQ)
