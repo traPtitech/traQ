@@ -222,7 +222,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiActivity := api.Group("/activity")
 		{
 			apiActivity.GET("/timelines", NotImplemented)
-			apiActivity.GET("/onlines", NotImplemented)
+			apiActivity.GET("/onlines", h.GetOnlineUsers)
 		}
 		apiClients := api.Group("/clients")
 		{
