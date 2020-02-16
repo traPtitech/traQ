@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  traq-backend:
+  backend:
     build: ./
     restart: always
     environment:
@@ -21,13 +21,7 @@ services:
     volumes:
       - ./dev/data:/initdata:ro
 
-  traq-frontend:
-    image: trap/traq-ui
-    restart: always
-    expose:
-      - "80"
-
-  reverse-proxy:
+  frontend:
     image: abiosoft/caddy:1.0.3-no-stats
     restart: always
     expose:
@@ -35,10 +29,10 @@ services:
     ports:
       - "3000:80"
     depends_on:
-      - traq-backend
-      - traq-frontend
+      - backend
     volumes:
       - ./dev/Caddyfile:/etc/Caddyfile:ro
+      - ./dev/frontend:/srv:ro
 
   mysql:
     image: mariadb:10.0.19

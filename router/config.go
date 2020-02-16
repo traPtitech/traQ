@@ -4,9 +4,9 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/realtime"
+	"github.com/traPtitech/traQ/realtime/sse"
 	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/sse"
 	"go.uber.org/zap"
 )
 

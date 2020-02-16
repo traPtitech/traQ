@@ -9,7 +9,7 @@ import (
 	"github.com/traPtitech/traQ/realtime"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
-	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils"
 	"go.uber.org/zap"
 	"net/http"

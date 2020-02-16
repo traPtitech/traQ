@@ -24,7 +24,6 @@ VOLUME /app/storage
 EXPOSE 3000
 ENV TRAQ_IMAGEMAGICK=/usr/bin/convert
 
-COPY ./static ./static/
 COPY --from=build /traQ ./
 
 ENTRYPOINT ./traQ serve

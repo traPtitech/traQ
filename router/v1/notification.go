@@ -78,7 +78,7 @@ type PostDeviceTokenRequest struct {
 
 func (r PostDeviceTokenRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Token, vd.Required, vd.Length(1, 190)),
+		vd.Field(&r.Token, vd.Required, vd.RuneLength(1, 190)),
 	)
 }
 

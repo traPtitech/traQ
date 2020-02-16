@@ -133,7 +133,7 @@ type PostClientsRequest struct {
 
 func (r PostClientsRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, vd.Required, vd.Length(1, 32)),
+		vd.Field(&r.Name, vd.Required, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.Required),
 		vd.Field(&r.RedirectURI, vd.Required, is.URL),
 		vd.Field(&r.Scopes, vd.Required),
@@ -194,7 +194,7 @@ type PatchClientRequest struct {
 
 func (r PatchClientRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, vd.Length(1, 32)),
+		vd.Field(&r.Name, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description),
 		vd.Field(&r.RedirectURI, is.URL),
 	)

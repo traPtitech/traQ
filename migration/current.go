@@ -2,7 +2,7 @@ package migration
 
 import (
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/router/sessions"
 )
 
 // AllTables 最新のスキーマの全テーブルモデル

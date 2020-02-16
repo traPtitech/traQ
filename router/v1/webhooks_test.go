@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
-	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils"
 	"net/http"
 	"strings"

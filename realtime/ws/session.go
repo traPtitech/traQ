@@ -119,10 +119,14 @@ func (s *session) closed() bool {
 
 // UserID implements Session interface.
 func (s *session) UserID() uuid.UUID {
+	s.RLock()
+	defer s.RUnlock()
 	return s.userID
 }
 
 // ViewState implements Session interface.
 func (s *session) ViewState() (uuid.UUID, viewer.State) {
+	s.RLock()
+	defer s.RUnlock()
 	return s.viewState.channelID, s.viewState.state
 }

@@ -1,6 +1,8 @@
 # traQ (Project R)
 
-[![CircleCI](https://circleci.com/gh/traPtitech/traQ.svg?style=shield)](https://circleci.com/gh/traPtitech/traQ)
+[![GitHub release](https://img.shields.io/github/release/traPtitech/traQ.svg)](https://GitHub.com/traPtitech/traQ/releases/)
+![CI](https://github.com/traPtitech/traQ/workflows/CI/badge.svg)
+![release](https://github.com/traPtitech/traQ/workflows/release/badge.svg)
 [![codecov](https://codecov.io/gh/traPtitech/traQ/branch/master/graph/badge.svg)](https://codecov.io/gh/traPtitech/traQ)
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=traPtitech/traQ)](https://dependabot.com)
 
@@ -18,7 +20,7 @@
 ### Setup with docker and docker-compose
 
 #### First Up (or entirely rebuild)
-`docker-compose up -d --build`
+`make update-frontend && docker-compose up -d --build`
 
 Now you can access to
 + `http://localhost:3000` for traQ
@@ -32,7 +34,10 @@ Now you can access to
     + database: `traq`
 
 #### Rebuild traQ
-`docker-compose up -d --no-deps --build traq-backend`
+`docker-compose up -d --no-deps --build backend`
+
+#### Update frontend
+`make update-frontend`
 
 #### Destroy Containers and Volumes
 `docker-compose down -v`

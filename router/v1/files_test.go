@@ -8,7 +8,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
-	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/router/sessions"
 	"net/http"
 	"strings"
 	"testing"

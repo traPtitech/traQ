@@ -1,13 +1,24 @@
 :80
 
 log stdout
-errors stdout
+errors stderr
 
-proxy / traq-frontend {
-    transparent
+root /srv
+gzip {
+    level 1
+    not /api /img
 }
 
-proxy /api traq-backend:3000 {
+header /service-worker.js Cache-Control "max-age=0"
+header /sw.js Cache-Control "max-age=0"
+
+rewrite {
+    regexp .*
+    if {path} not_starts_with /api
+    to {path} /
+}
+
+proxy /api backend:3000 {
     transparent
     websocket
 }

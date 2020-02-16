@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/sessions"
+	"github.com/traPtitech/traQ/router/sessions"
 	"gopkg.in/guregu/null.v3"
 	"strings"
 	"testing"

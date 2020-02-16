@@ -29,7 +29,7 @@ type PostUserTagRequest struct {
 
 func (r PostUserTagRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Tag, vd.Required, vd.Length(1, 30)),
+		vd.Field(&r.Tag, vd.Required, vd.RuneLength(1, 30)),
 	)
 }
 
