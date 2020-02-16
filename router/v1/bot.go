@@ -50,7 +50,7 @@ type PostBotsRequest struct {
 func (r PostBotsRequest) Validate() error {
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, validator.BotUserNameRuleRequired...),
-		vd.Field(&r.DisplayName, vd.Required, vd.Length(1, 32)),
+		vd.Field(&r.DisplayName, vd.Required, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.Required),
 		vd.Field(&r.WebhookURL, vd.Required, is.URL, validator.NotInternalURL),
 	)
@@ -98,7 +98,7 @@ type PatchBotRequest struct {
 
 func (r PatchBotRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.DisplayName, vd.Length(1, 32)),
+		vd.Field(&r.DisplayName, vd.RuneLength(1, 32)),
 		vd.Field(&r.WebhookURL, is.URL, validator.NotInternalURL),
 	)
 }

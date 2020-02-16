@@ -51,8 +51,8 @@ type PostWebhooksRequest struct {
 
 func (r PostWebhooksRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, vd.Required, vd.Length(1, 32)),
-		vd.Field(&r.Description, vd.Required, vd.Length(1, 1000)),
+		vd.Field(&r.Name, vd.Required, vd.RuneLength(1, 32)),
+		vd.Field(&r.Description, vd.Required, vd.RuneLength(1, 1000)),
 	)
 }
 
@@ -95,8 +95,8 @@ type PatchWebhookRequest struct {
 
 func (r PatchWebhookRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, vd.Length(1, 32)),
-		vd.Field(&r.Description, vd.Length(1, 1000)),
+		vd.Field(&r.Name, vd.RuneLength(1, 32)),
+		vd.Field(&r.Description, vd.RuneLength(1, 1000)),
 	)
 }
 

@@ -134,9 +134,9 @@ type PatchUserByIDRequest struct {
 
 func (r PatchUserByIDRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.DisplayName, vd.Length(0, 64)),
+		vd.Field(&r.DisplayName, vd.RuneLength(0, 64)),
 		vd.Field(&r.TwitterID, validator.TwitterIDRule...),
-		vd.Field(&r.Role, vd.Length(0, 30)),
+		vd.Field(&r.Role, vd.RuneLength(0, 30)),
 	)
 }
 
@@ -234,7 +234,7 @@ type PatchMeRequest struct {
 
 func (r PatchMeRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.DisplayName, vd.Length(0, 64)),
+		vd.Field(&r.DisplayName, vd.RuneLength(0, 64)),
 		vd.Field(&r.TwitterID, validator.TwitterIDRule...),
 	)
 }

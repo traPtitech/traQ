@@ -36,8 +36,8 @@ type PostUserGroupsRequest struct {
 
 func (r PostUserGroupsRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, vd.Required, vd.Length(1, 30)),
-		vd.Field(&r.Type, vd.Length(0, 30)),
+		vd.Field(&r.Name, vd.Required, vd.RuneLength(1, 30)),
+		vd.Field(&r.Type, vd.RuneLength(0, 30)),
 	)
 }
 
@@ -93,8 +93,8 @@ type PatchUserGroupRequest struct {
 
 func (r PatchUserGroupRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, vd.Length(1, 30)),
-		vd.Field(&r.Type, vd.Length(0, 30)),
+		vd.Field(&r.Name, vd.RuneLength(1, 30)),
+		vd.Field(&r.Type, vd.RuneLength(0, 30)),
 	)
 }
 
