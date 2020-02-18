@@ -63,6 +63,11 @@ func getParamBot(c echo.Context) *model.Bot {
 	return c.Get(consts.KeyParamBot).(*model.Bot)
 }
 
+// getParamFile URLの:fileIDに対応するFileを取得
+func getParamFile(c echo.Context) *model.File {
+	return c.Get(consts.KeyParamFile).(*model.File)
+}
+
 // getParamAsUUID URLのnameパラメータの文字列をuuid.UUIDとして取得
 func getParamAsUUID(c echo.Context, name string) uuid.UUID {
 	return extension.GetRequestParamAsUUID(c, name)

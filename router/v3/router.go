@@ -147,7 +147,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiFilesFID.GET("", NotImplemented)
 				apiFilesFID.DELETE("", NotImplemented)
 				apiFilesFID.GET("/meta", NotImplemented)
-				apiFilesFID.GET("/thumbnail", NotImplemented)
+				apiFilesFID.GET("/thumbnail", h.GetThumbnailImage)
 			}
 		}
 		apiTags := api.Group("/tags")
