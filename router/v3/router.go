@@ -50,12 +50,12 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersUID.PUT("/password", NotImplemented)
 				apiUsersUIDTags := apiUsersUID.Group("/tags")
 				{
-					apiUsersUIDTags.GET("", NotImplemented)
-					apiUsersUIDTags.POST("", NotImplemented)
+					apiUsersUIDTags.GET("", h.GetUserTags)
+					apiUsersUIDTags.POST("", h.AddUserTag)
 					apiUsersUIDTagsTID := apiUsersUIDTags.Group("/:tagID")
 					{
-						apiUsersUIDTagsTID.PATCH("", NotImplemented)
-						apiUsersUIDTagsTID.DELETE("", NotImplemented)
+						apiUsersUIDTagsTID.PATCH("", h.EditUserTag)
+						apiUsersUIDTagsTID.DELETE("", h.RemoveUserTag)
 					}
 				}
 			}
@@ -73,12 +73,12 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersMe.POST("/fcm-device", h.PostMyFCMDevice)
 				apiUsersMeTags := apiUsersMe.Group("/tags")
 				{
-					apiUsersMeTags.GET("", NotImplemented)
-					apiUsersMeTags.POST("", NotImplemented)
+					apiUsersMeTags.GET("", h.GetMyUserTags)
+					apiUsersMeTags.POST("", h.AddMyUserTag)
 					apiUsersMeTagsTID := apiUsersMeTags.Group("/:tagID")
 					{
-						apiUsersMeTagsTID.PATCH("", NotImplemented)
-						apiUsersMeTagsTID.DELETE("", NotImplemented)
+						apiUsersMeTagsTID.PATCH("", h.EditMyUserTag)
+						apiUsersMeTagsTID.DELETE("", h.RemoveMyUserTag)
 					}
 				}
 				apiUsersMeStars := apiUsersMe.Group("/stars")

@@ -1795,7 +1795,9 @@ paths:
         '400':
           description: Bad Request
         '403':
-          description: Forbidden
+          description: |-
+            Forbidden
+            タグがロックされています。
         '404':
           description: |-
             Not Found
@@ -1899,6 +1901,10 @@ paths:
           description: |-
             No Content
             削除されました。
+        '403':
+          description: |-
+            Forbidden
+            タグがロックされています。
       description: 既に存在しないタグを削除しようとした場合は204を返します。
       operationId: removeMyUserTag
       tags:
