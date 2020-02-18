@@ -245,11 +245,11 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiBotsBID.GET("/logs", NotImplemented)
 				apiBotsBIDActions := apiBotsBID.Group("/actions")
 				{
-					apiBotsBIDActions.POST("/activate", NotImplemented)
-					apiBotsBIDActions.POST("/inactivate", NotImplemented)
-					apiBotsBIDActions.POST("/reissue", NotImplemented)
-					apiBotsBIDActions.POST("/join", NotImplemented)
-					apiBotsBIDActions.POST("/leave", NotImplemented)
+					apiBotsBIDActions.POST("/activate", h.ActivateBot)
+					apiBotsBIDActions.POST("/inactivate", h.InactivateBot)
+					apiBotsBIDActions.POST("/reissue", h.ReissueBot)
+					apiBotsBIDActions.POST("/join", h.LetBotJoinChannel)
+					apiBotsBIDActions.POST("/leave", h.LetBotLeaveChannel)
 				}
 			}
 		}

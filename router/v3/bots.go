@@ -1,8 +1,16 @@
 package v3
 
 import (
+	vd "github.com/go-ozzo/ozzo-validation"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/leandro-lugaresi/hub"
+	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/utils/validator"
+	"net/http"
 )
 
 // GetBotIcon GET /bots/:webhookID/icon
@@ -16,4 +24,116 @@ func (h *Handlers) GetBotIcon(c echo.Context) error {
 	}
 
 	return serveUserIcon(c, h.Repo, user)
+}
+
+// ActivateBot POST /bots/:botID/actions/activate
+func (h *Handlers) ActivateBot(c echo.Context) error {
+	b := getParamBot(c)
+
+	h.Hub.Publish(hub.Message{
+		Name: event.BotPingRequest,
+		Fields: hub.Fields{
+			"bot_id": b.ID,
+			"bot":    b,
+		},
+	})
+	return c.NoContent(http.StatusAccepted)
+}
+
+// InactivateBot POST /bots/:botID/actions/inactivate
+func (h *Handlers) InactivateBot(c echo.Context) error {
+	b := getParamBot(c)
+
+	if err := h.Repo.ChangeBotState(b.ID, model.BotInactive); err != nil {
+		return herror.InternalServerError(err)
+	}
+	return c.NoContent(http.StatusNoContent)
+}
+
+// ReissueBot POST /bots/:botID/actions/reissue
+func (h *Handlers) ReissueBot(c echo.Context) error {
+	b := getParamBot(c)
+
+	b, err := h.Repo.ReissueBotTokens(b.ID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	t, err := h.Repo.GetTokenByID(b.AccessTokenID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"verificationCode": b.VerificationToken,
+		"accessToken":      t.AccessToken,
+	})
+}
+
+// PostBotActionJoinRequest POST /bots/:botID/actions/join リクエストボディ
+type PostBotActionJoinRequest struct {
+	ChannelID uuid.UUID `json:"channelId"`
+}
+
+func (r PostBotActionJoinRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.ChannelID, vd.Required, validator.NotNilUUID),
+	)
+}
+
+// LetBotJoinChannel POST /bots/:botID/actions/join
+func (h *Handlers) LetBotJoinChannel(c echo.Context) error {
+	var req PostBotActionJoinRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	b := getParamBot(c)
+
+	// チャンネル検証
+	ch, err := h.Repo.GetChannel(req.ChannelID)
+	if err != nil {
+		if err == repository.ErrNotFound {
+			return herror.BadRequest("invalid channel")
+		}
+		return herror.InternalServerError(err)
+	}
+	if !ch.IsPublic {
+		return herror.BadRequest("invalid channel") // 公開チャンネルのみ許可
+	}
+
+	// 参加
+	if err := h.Repo.AddBotToChannel(b.ID, ch.ID); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// PostBotActionLeaveRequest POST /bots/:botID/actions/leave リクエストボディ
+type PostBotActionLeaveRequest struct {
+	ChannelID uuid.UUID `json:"channelId"`
+}
+
+func (r PostBotActionLeaveRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.ChannelID, vd.Required, validator.NotNilUUID),
+	)
+}
+
+// LetBotLeaveChannel POST /bots/:botID/actions/leave
+func (h *Handlers) LetBotLeaveChannel(c echo.Context) error {
+	var req PostBotActionLeaveRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	b := getParamBot(c)
+
+	// 退出
+	if err := h.Repo.RemoveBotFromChannel(b.ID, req.ChannelID); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }
