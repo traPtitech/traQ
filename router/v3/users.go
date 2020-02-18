@@ -97,8 +97,11 @@ type GetMyStampHistoryRequest struct {
 	Limit int `query:"limit"`
 }
 
-func (r GetMyStampHistoryRequest) Validate() error {
-	return vd.ValidateStruct(&r,
+func (r *GetMyStampHistoryRequest) Validate() error {
+	if r.Limit == 0 {
+		r.Limit = 100
+	}
+	return vd.ValidateStruct(r,
 		vd.Field(&r.Limit, vd.Min(1), vd.Max(100)),
 	)
 }
@@ -108,10 +111,6 @@ func (h *Handlers) GetMyStampHistory(c echo.Context) error {
 	var req GetMyStampHistoryRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
-	}
-
-	if req.Limit == 0 {
-		req.Limit = 100
 	}
 
 	userID := getRequestUserID(c)
