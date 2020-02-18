@@ -22,6 +22,9 @@ type Handlers struct {
 
 	Version  string
 	Revision string
+
+	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
+	SkyWaySecretKey string
 }
 
 // Setup APIルーティングを行います
@@ -253,7 +256,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiWebRTC := api.Group("/webrtc")
 		{
 			apiWebRTC.GET("/state", NotImplemented)
-			apiWebRTC.POST("/authenticate", NotImplemented)
+			apiWebRTC.POST("/authenticate", h.PostWebRTCAuthenticate)
 		}
 		apiClipFolders := api.Group("/clip-folders")
 		{

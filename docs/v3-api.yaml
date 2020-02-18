@@ -2741,6 +2741,10 @@ paths:
                 $ref: '#/components/schemas/WebRTCAuthenticateResult'
         '400':
           description: Bad Request
+        '503':
+          description: |-
+            Service Unavailable
+            WebRTCは現在機能を停止しています
       description: ''
       operationId: postWebRTCAuthenticate
       tags:
