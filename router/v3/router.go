@@ -12,6 +12,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var imagemagickPath string
+
 type Handlers struct {
 	RBAC     rbac.RBAC
 	Repo     repository.Repository
@@ -23,6 +25,8 @@ type Handlers struct {
 	Version  string
 	Revision string
 
+	// ImageMagickPath ImageMagickの実行パス
+	ImageMagickPath string
 	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
 	SkyWaySecretKey string
 }
@@ -46,7 +50,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersUID.POST("/messages", NotImplemented)
 				apiUsersUID.GET("/messages", NotImplemented)
 				apiUsersUID.GET("/icon", h.GetUserIcon)
-				apiUsersUID.PUT("/icon", NotImplemented)
+				apiUsersUID.PUT("/icon", h.ChangeUserIcon)
 				apiUsersUID.PUT("/password", NotImplemented)
 				apiUsersUIDTags := apiUsersUID.Group("/tags")
 				{
@@ -68,7 +72,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersMe.GET("/subscription", NotImplemented)
 				apiUsersMe.PUT("/subscription/:channelID", NotImplemented)
 				apiUsersMe.GET("/icon", h.GetMyIcon)
-				apiUsersMe.PUT("/icon", NotImplemented)
+				apiUsersMe.PUT("/icon", h.ChangeMyIcon)
 				apiUsersMe.PUT("/password", h.PutMyPassword)
 				apiUsersMe.POST("/fcm-device", h.PostMyFCMDevice)
 				apiUsersMeTags := apiUsersMe.Group("/tags")
@@ -189,7 +193,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiWebhooksWID.PATCH("", NotImplemented)
 				apiWebhooksWID.DELETE("", NotImplemented)
 				apiWebhooksWID.GET("/icon", h.GetWebhookIcon)
-				apiWebhooksWID.PUT("/icon", NotImplemented)
+				apiWebhooksWID.PUT("/icon", h.ChangeWebhookIcon)
 				apiWebhooksWID.GET("/messages", NotImplemented)
 			}
 		}
@@ -241,7 +245,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiBotsBID.PATCH("", NotImplemented)
 				apiBotsBID.DELETE("", NotImplemented)
 				apiBotsBID.GET("/icon", h.GetBotIcon)
-				apiBotsBID.PUT("/icon", NotImplemented)
+				apiBotsBID.PUT("/icon", h.ChangeBotIcon)
 				apiBotsBID.GET("/logs", NotImplemented)
 				apiBotsBIDActions := apiBotsBID.Group("/actions")
 				{
@@ -289,4 +293,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiNoAuthPublic.GET("/icon/:username", NotImplemented)
 		}
 	}
+
+	imagemagickPath = h.ImageMagickPath
 }

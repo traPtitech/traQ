@@ -13,7 +13,7 @@ import (
 	"net/http"
 )
 
-// GetBotIcon GET /bots/:webhookID/icon
+// GetBotIcon GET /bots/:botID/icon
 func (h *Handlers) GetBotIcon(c echo.Context) error {
 	w := getParamBot(c)
 
@@ -24,6 +24,11 @@ func (h *Handlers) GetBotIcon(c echo.Context) error {
 	}
 
 	return serveUserIcon(c, h.Repo, user)
+}
+
+// ChangeBotIcon PUT /bots/:botID/icon
+func (h *Handlers) ChangeBotIcon(c echo.Context) error {
+	return changeUserIcon(c, h.Repo, getParamBot(c).BotUserID)
 }
 
 // ActivateBot POST /bots/:botID/actions/activate

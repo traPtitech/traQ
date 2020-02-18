@@ -17,3 +17,8 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 
 	return serveUserIcon(c, h.Repo, user)
 }
+
+// ChangeWebhookIcon PUT /webhooks/:webhookID/icon
+func (h *Handlers) ChangeWebhookIcon(c echo.Context) error {
+	return changeUserIcon(c, h.Repo, getParamWebhook(c).GetBotUserID())
+}

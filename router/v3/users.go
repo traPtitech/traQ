@@ -87,9 +87,19 @@ func (h *Handlers) GetUserIcon(c echo.Context) error {
 	return serveUserIcon(c, h.Repo, getParamUser(c))
 }
 
+// ChangeUserIcon PUT /users/:userID/icon
+func (h *Handlers) ChangeUserIcon(c echo.Context) error {
+	return changeUserIcon(c, h.Repo, getParamAsUUID(c, consts.ParamUserID))
+}
+
 // GetMyIcon GET /users/me/icon
 func (h *Handlers) GetMyIcon(c echo.Context) error {
 	return serveUserIcon(c, h.Repo, getRequestUser(c))
+}
+
+// ChangeMyIcon PUT /users/me/icon
+func (h *Handlers) ChangeMyIcon(c echo.Context) error {
+	return changeUserIcon(c, h.Repo, getRequestUserID(c))
 }
 
 // GetMyStampHistory GET /users/me/stamp-history リクエストクエリ
