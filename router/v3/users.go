@@ -80,3 +80,13 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 	}
 	return c.Blob(http.StatusOK, consts.MimeImagePNG, png)
 }
+
+// GetUserIcon GET /users/:userID/icon
+func (h *Handlers) GetUserIcon(c echo.Context) error {
+	return serveUserIcon(c, h.Repo, getParamUser(c))
+}
+
+// GetMyIcon GET /users/me/icon
+func (h *Handlers) GetMyIcon(c echo.Context) error {
+	return serveUserIcon(c, h.Repo, getRequestUser(c))
+}
