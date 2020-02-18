@@ -1719,7 +1719,7 @@ func (repo *TestRepository) GetMessageStamps(messageID uuid.UUID) (stamps []*mod
 	return []*model.MessageStamp{}, nil
 }
 
-func (repo *TestRepository) GetUserStampHistory(userID uuid.UUID) (h []*model.UserStampHistory, err error) {
+func (repo *TestRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h []*repository.UserStampHistory, err error) {
 	panic("implement me")
 }
 

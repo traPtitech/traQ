@@ -2,6 +2,7 @@ package v3
 
 import (
 	vd "github.com/go-ozzo/ozzo-validation"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -39,6 +40,11 @@ func isTrue(s string) (b bool) {
 // getRequestUser リクエストしてきたユーザーの情報を取得
 func getRequestUser(c echo.Context) *model.User {
 	return c.Get(consts.KeyUser).(*model.User)
+}
+
+// getRequestUserID リクエストしてきたユーザーUUIDを取得
+func getRequestUserID(c echo.Context) uuid.UUID {
+	return getRequestUser(c).ID
 }
 
 // getParamUser URLの:userIDに対応するユーザー構造体を取得

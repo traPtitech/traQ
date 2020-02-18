@@ -661,14 +661,14 @@ paths:
       parameters:
         - schema:
             type: integer
-            default: '50'
-            maximum: 50
+            default: '100'
+            maximum: 100
             minimum: 1
           in: query
           name: limit
           description: 件数
       description: |-
-        自分のスタンプ履歴を最大50件まで取得します。
+        自分のスタンプ履歴を最大100件まで取得します。
         結果は降順で返されます。
 
         このAPIが返すスタンプ履歴は厳密な履歴ではありません。

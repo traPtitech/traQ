@@ -182,7 +182,7 @@ func (h *Handlers) DeleteMessageStamp(c echo.Context) error {
 func (h *Handlers) GetMyStampHistory(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	history, err := h.Repo.GetUserStampHistory(userID)
+	history, err := h.Repo.GetUserStampHistory(userID, 100)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

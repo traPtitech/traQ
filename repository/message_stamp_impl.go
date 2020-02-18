@@ -77,8 +77,8 @@ func (repo *GormRepository) GetMessageStamps(messageID uuid.UUID) (stamps []*mod
 }
 
 // GetUserStampHistory implements MessageStampRepository interface.
-func (repo *GormRepository) GetUserStampHistory(userID uuid.UUID) (h []*model.UserStampHistory, err error) {
-	h = make([]*model.UserStampHistory, 0)
+func (repo *GormRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h []*UserStampHistory, err error) {
+	h = make([]*UserStampHistory, 0)
 	if userID == uuid.Nil {
 		return
 	}
@@ -88,7 +88,7 @@ func (repo *GormRepository) GetUserStampHistory(userID uuid.UUID) (h []*model.Us
 		Group("stamp_id").
 		Select("stamp_id, max(updated_at) AS datetime").
 		Order("datetime DESC").
-		Limit(100).
+		Scopes(limitAndOffset(limit, 0)).
 		Scan(&h).
 		Error
 	return

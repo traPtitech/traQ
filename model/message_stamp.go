@@ -19,9 +19,3 @@ type MessageStamp struct {
 func (*MessageStamp) TableName() string {
 	return "messages_stamps"
 }
-
-// UserStampHistory スタンプ履歴構造体
-type UserStampHistory struct {
-	StampID  uuid.UUID `json:"stampId"`
-	Datetime time.Time `json:"datetime"`
-}

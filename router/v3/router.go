@@ -60,7 +60,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			{
 				apiUsersMe.GET("", NotImplemented)
 				apiUsersMe.PATCH("", NotImplemented)
-				apiUsersMe.GET("/stamp-history", NotImplemented)
+				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory)
 				apiUsersMe.GET("/qr-code", h.GetMyQRCode)
 				apiUsersMe.GET("/subscription", NotImplemented)
 				apiUsersMe.PUT("/subscription/:channelID", NotImplemented)

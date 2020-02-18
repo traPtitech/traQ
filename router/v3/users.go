@@ -90,3 +90,34 @@ func (h *Handlers) GetUserIcon(c echo.Context) error {
 func (h *Handlers) GetMyIcon(c echo.Context) error {
 	return serveUserIcon(c, h.Repo, getRequestUser(c))
 }
+
+// GetMyStampHistory GET /users/me/stamp-history リクエストクエリ
+type GetMyStampHistoryRequest struct {
+	Limit int `query:"limit"`
+}
+
+func (r GetMyStampHistoryRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Limit, vd.Min(1), vd.Max(100)),
+	)
+}
+
+// GetMyStampHistory GET /users/me/stamp-history
+func (h *Handlers) GetMyStampHistory(c echo.Context) error {
+	var req GetMyStampHistoryRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	if req.Limit == 0 {
+		req.Limit = 100
+	}
+
+	userID := getRequestUserID(c)
+	history, err := h.Repo.GetUserStampHistory(userID, req.Limit)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, history)
+}
