@@ -185,7 +185,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiWebhooksWID.GET("", NotImplemented)
 				apiWebhooksWID.PATCH("", NotImplemented)
 				apiWebhooksWID.DELETE("", NotImplemented)
-				apiWebhooksWID.GET("/icon", NotImplemented)
+				apiWebhooksWID.GET("/icon", h.GetWebhookIcon)
 				apiWebhooksWID.PUT("/icon", NotImplemented)
 				apiWebhooksWID.GET("/messages", NotImplemented)
 			}
