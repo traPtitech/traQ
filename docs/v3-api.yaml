@@ -616,7 +616,7 @@ paths:
               $ref: '#/components/schemas/PostStampRequest'
             encoding:
               file:
-                contentType: 'image/png, image/jpeg, image/gif, image/svg'
+                contentType: 'image/png, image/jpeg, image/gif'
         description: ''
       operationId: createStamp
       tags:
@@ -3524,7 +3524,7 @@ components:
         file:
           type: string
           format: binary
-          description: 'スタンプ画像(1MBまでのpng, jpeg, gif, svg)'
+          description: 'スタンプ画像(1MBまでのpng, jpeg, gif)'
       required:
         - name
         - file

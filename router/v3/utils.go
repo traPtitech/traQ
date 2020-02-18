@@ -68,6 +68,11 @@ func getParamFile(c echo.Context) *model.File {
 	return c.Get(consts.KeyParamFile).(*model.File)
 }
 
+// getParamStamp URLの:stampIDに対応するStampを取得
+func getParamStamp(c echo.Context) *model.Stamp {
+	return c.Get(consts.KeyParamStamp).(*model.Stamp)
+}
+
 // getParamAsUUID URLのnameパラメータの文字列をuuid.UUIDとして取得
 func getParamAsUUID(c echo.Context, name string) uuid.UUID {
 	return extension.GetRequestParamAsUUID(c, name)
