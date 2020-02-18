@@ -67,7 +67,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersMe.GET("/icon", h.GetMyIcon)
 				apiUsersMe.PUT("/icon", NotImplemented)
 				apiUsersMe.PUT("/password", h.PutMyPassword)
-				apiUsersMe.POST("/fcm-device", NotImplemented)
+				apiUsersMe.POST("/fcm-device", h.PostMyFCMDevice)
 				apiUsersMeTags := apiUsersMe.Group("/tags")
 				{
 					apiUsersMeTags.GET("", NotImplemented)

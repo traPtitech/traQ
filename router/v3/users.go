@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/skip2/go-qrcode"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/sessions"
@@ -120,4 +121,35 @@ func (h *Handlers) GetMyStampHistory(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, history)
+}
+
+// PostMyFCMDeviceRequest POST /users/me/fcm-device リクエストボディ
+type PostMyFCMDeviceRequest struct {
+	Token string `json:"token"`
+}
+
+func (r PostMyFCMDeviceRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Token, vd.Required, vd.RuneLength(1, 190)),
+	)
+}
+
+// PostMyFCMDevice POST /users/me/fcm-device
+func (h *Handlers) PostMyFCMDevice(c echo.Context) error {
+	var req PostMyFCMDeviceRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	userID := getRequestUserID(c)
+	if _, err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
+		switch {
+		case repository.IsArgError(err):
+			return herror.BadRequest(err)
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }
