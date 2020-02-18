@@ -1,22 +1,15 @@
 package v3
 
 import (
-	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/realtime"
 	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/consts"
-	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/middlewares"
-	v3middlewares "github.com/traPtitech/traQ/router/v3/middlewares"
 	"go.uber.org/zap"
-	"net/http"
-	"strconv"
 )
 
 type Handlers struct {
@@ -35,7 +28,7 @@ type Handlers struct {
 func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
-	retrieve := v3middlewares.NewParamRetriever(h.Repo)
+	retrieve := middlewares.NewParamRetriever(h.Repo)
 
 	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo))
 	{
@@ -293,30 +286,4 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiNoAuthPublic.GET("/icon/:username", NotImplemented)
 		}
 	}
-}
-
-func NotImplemented(c echo.Context) error {
-	return echo.NewHTTPError(http.StatusNotImplemented)
-}
-
-func bindAndValidate(c echo.Context, i interface{}) error {
-	if err := c.Bind(i); err != nil {
-		return err
-	}
-	if err := vd.Validate(i); err != nil {
-		if e, ok := err.(vd.InternalError); ok {
-			return herror.InternalServerError(e.InternalError())
-		}
-		return herror.BadRequest(err)
-	}
-	return nil
-}
-
-func isTrue(s string) (b bool) {
-	b, _ = strconv.ParseBool(s)
-	return
-}
-
-func getRequestUser(c echo.Context) *model.User {
-	return c.Get(consts.KeyUser).(*model.User)
 }
