@@ -154,7 +154,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiTagsTID := apiTags.Group("/:tagID")
 			{
-				apiTagsTID.GET("", NotImplemented)
+				apiTagsTID.GET("", h.GetTag)
 			}
 		}
 		apiStamps := api.Group("/stamps")

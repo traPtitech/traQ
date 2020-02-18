@@ -182,3 +182,29 @@ func removeUserTag(c echo.Context, repo repository.Repository, userID uuid.UUID)
 
 	return c.NoContent(http.StatusNoContent)
 }
+
+// GetTag GET /tags/:tagID
+func (h *Handlers) GetTag(c echo.Context) error {
+	tagID := getParamAsUUID(c, consts.ParamTagID)
+
+	t, err := h.Repo.GetTagByID(tagID)
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return herror.NotFound()
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+
+	users, err := h.Repo.GetUserIDsByTagID(t.ID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"id":    t.ID,
+		"tag":   t.Name,
+		"users": users,
+	})
+}
