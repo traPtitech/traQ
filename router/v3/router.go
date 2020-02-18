@@ -144,7 +144,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiFiles.POST("", NotImplemented)
 			apiFilesFID := apiFiles.Group("/:fileID")
 			{
-				apiFilesFID.GET("", NotImplemented)
+				apiFilesFID.GET("", h.GetFile)
 				apiFilesFID.DELETE("", NotImplemented)
 				apiFilesFID.GET("/meta", NotImplemented)
 				apiFilesFID.GET("/thumbnail", h.GetThumbnailImage)
