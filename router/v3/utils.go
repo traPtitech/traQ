@@ -51,6 +51,11 @@ func getParamWebhook(c echo.Context) model.Webhook {
 	return c.Get(consts.KeyParamWebhook).(model.Webhook)
 }
 
+// getParamBot URLの:botIDに対応するBotを取得
+func getParamBot(c echo.Context) *model.Bot {
+	return c.Get(consts.KeyParamBot).(*model.Bot)
+}
+
 // serveUserIcon userのアイコン画像ファイルをレスポンスとして返す
 func serveUserIcon(c echo.Context, repo repository.Repository, user *model.User) error {
 	// ファイルメタ取得

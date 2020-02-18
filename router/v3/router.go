@@ -237,7 +237,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiBotsBID.GET("", NotImplemented)
 				apiBotsBID.PATCH("", NotImplemented)
 				apiBotsBID.DELETE("", NotImplemented)
-				apiBotsBID.GET("/icon", NotImplemented)
+				apiBotsBID.GET("/icon", h.GetBotIcon)
 				apiBotsBID.PUT("/icon", NotImplemented)
 				apiBotsBID.GET("/logs", NotImplemented)
 				apiBotsBIDActions := apiBotsBID.Group("/actions")
