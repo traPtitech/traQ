@@ -4128,7 +4128,7 @@ components:
           type: string
           format: date-time
           description: チャンネルの最古の未読メッセージの日時
-        until:
+        updatedAt:
           type: string
           description: チャンネルの最新の未読メッセージの日時
           format: date-time

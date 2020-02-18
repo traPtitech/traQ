@@ -84,7 +84,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 					apiUsersMeStars.POST("", h.PostStar)
 					apiUsersMeStars.DELETE("/:channelID", h.RemoveMyStar)
 				}
-				apiUsersMe.GET("/unread", NotImplemented)
+				apiUsersMe.GET("/unread", h.GetMyUnreadChannels)
 				apiUsersMe.DELETE("/unread", NotImplemented)
 				apiUsersMe.GET("/sessions", NotImplemented)
 				apiUsersMe.DELETE("/sessions/:sessionID", NotImplemented)
