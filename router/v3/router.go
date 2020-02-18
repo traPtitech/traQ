@@ -126,11 +126,11 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiMessagesMID.DELETE("/pin", NotImplemented)
 				apiMessagesMIDStamps := apiMessagesMID.Group("/stamps")
 				{
-					apiMessagesMIDStamps.GET("", NotImplemented)
+					apiMessagesMIDStamps.GET("", h.GetMessageStamps)
 					apiMessagesMIDStampsSID := apiMessagesMIDStamps.Group("/:stampID")
 					{
-						apiMessagesMIDStampsSID.POST("", NotImplemented)
-						apiMessagesMIDStampsSID.DELETE("", NotImplemented)
+						apiMessagesMIDStampsSID.POST("", h.AddMessageStamp)
+						apiMessagesMIDStampsSID.DELETE("", h.RemoveMessageStamp)
 					}
 				}
 			}

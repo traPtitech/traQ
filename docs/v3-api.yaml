@@ -538,6 +538,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostMessageStampRequest'
+            examples: {}
         description: ''
       description: 指定したメッセージに指定したスタンプを押します。
     delete:
@@ -3459,14 +3460,16 @@ components:
     PostMessageStampRequest:
       title: PostMessageStampRequest
       type: object
+      description: スタンプを押すリクエスト
       properties:
         count:
           type: integer
-          format: int32
           description: 押す数
+          format: int32
+          minimum: 1
+          maximum: 100
       required:
         - count
-      description: スタンプを押すリクエスト
     Stamp:
       title: Stamp
       type: object
