@@ -1928,7 +1928,7 @@ paths:
         - me
   /users/me/stars:
     get:
-      summary: スターチャンネルリストを取得します
+      summary: スターチャンネルリストを取得
       tags:
         - me
         - star
@@ -1944,8 +1944,9 @@ paths:
                   type: string
                   format: uuid
       operationId: getMyStars
+      description: 自分がスターしているチャンネルのUUIDの配列を取得します。
     post:
-      summary: チャンネルをスターします
+      summary: チャンネルをスターに追加
       responses:
         '204':
           description: |-
@@ -1962,6 +1963,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostStarRequest'
+      description: |-
+        指定したチャンネルをスターチャンネルに追加します。
+        不正なチャンネルIDを指定した場合、400を返します。
   '/users/me/stars/{channelId}':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'

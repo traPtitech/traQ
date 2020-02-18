@@ -3,6 +3,7 @@ package validator
 import (
 	"errors"
 	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/utils"
 	"net/url"
 	"regexp"
@@ -26,6 +27,15 @@ var NotInternalURL = validation.By(func(value interface{}) error {
 	u, _ := url.Parse(s)
 	if utils.IsPrivateHost(u.Hostname()) {
 		return errors.New("must not be internal url")
+	}
+	return nil
+})
+
+// NotNilUUID uuid.Nilでない
+var NotNilUUID = validation.By(func(value interface{}) error {
+	u, _ := value.(uuid.UUID)
+	if u == uuid.Nil {
+		return errors.New("invalid uuid")
 	}
 	return nil
 })

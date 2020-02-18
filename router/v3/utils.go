@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"net/http"
 	"strconv"
@@ -60,6 +61,11 @@ func getParamWebhook(c echo.Context) model.Webhook {
 // getParamBot URLの:botIDに対応するBotを取得
 func getParamBot(c echo.Context) *model.Bot {
 	return c.Get(consts.KeyParamBot).(*model.Bot)
+}
+
+// getParamAsUUID URLのnameパラメータの文字列をuuid.UUIDとして取得
+func getParamAsUUID(c echo.Context, name string) uuid.UUID {
+	return extension.GetRequestParamAsUUID(c, name)
 }
 
 // serveUserIcon userのアイコン画像ファイルをレスポンスとして返す

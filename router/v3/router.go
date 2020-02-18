@@ -80,9 +80,9 @@ func (h *Handlers) Setup(e *echo.Group) {
 				}
 				apiUsersMeStars := apiUsersMe.Group("/stars")
 				{
-					apiUsersMeStars.GET("", NotImplemented)
-					apiUsersMeStars.POST("", NotImplemented)
-					apiUsersMeStars.DELETE("/:channelID", NotImplemented)
+					apiUsersMeStars.GET("", h.GetMyStars)
+					apiUsersMeStars.POST("", h.PostStar)
+					apiUsersMeStars.DELETE("/:channelID", h.RemoveMyStar)
 				}
 				apiUsersMe.GET("/unread", NotImplemented)
 				apiUsersMe.DELETE("/unread", NotImplemented)
