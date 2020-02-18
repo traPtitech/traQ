@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/router/v1"
 	v3 "github.com/traPtitech/traQ/router/v3"
+	"net/http"
 )
 
 // Setup APIサーバーハンドラを構築します
@@ -37,6 +38,7 @@ func Setup(config *Config) *echo.Echo {
 
 	api := e.Group("/api")
 	api.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
+	api.GET("/ping", func(c echo.Context) error { return c.String(http.StatusOK, http.StatusText(http.StatusOK)) })
 
 	// v1 APIハンドラ
 	v1 := v1.Handlers{
