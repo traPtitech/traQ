@@ -51,7 +51,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersUID.GET("/messages", NotImplemented)
 				apiUsersUID.GET("/icon", h.GetUserIcon)
 				apiUsersUID.PUT("/icon", h.ChangeUserIcon)
-				apiUsersUID.PUT("/password", NotImplemented)
+				apiUsersUID.PUT("/password", h.ChangeUserPassword)
 				apiUsersUIDTags := apiUsersUID.Group("/tags")
 				{
 					apiUsersUIDTags.GET("", h.GetUserTags)

@@ -162,3 +162,32 @@ func (h *Handlers) PostMyFCMDevice(c echo.Context) error {
 
 	return c.NoContent(http.StatusNoContent)
 }
+
+// PutUserPasswordRequest PUT /users/:userID/password リクエストボディ
+type PutUserPasswordRequest struct {
+	NewPassword string `json:"newPassword"`
+}
+
+func (r PutUserPasswordRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.NewPassword, validator.PasswordRuleRequired...),
+	)
+}
+
+// ChangeUserPassword PUT /users/:userID/password
+func (h *Handlers) ChangeUserPassword(c echo.Context) error {
+	var req PutUserPasswordRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	userID := getParamAsUUID(c, consts.ParamUserID)
+
+	if err := h.Repo.ChangeUserPassword(userID, req.NewPassword); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	// ユーザーの全セッションを削除
+	_ = sessions.DestroyByUserID(userID)
+	return c.NoContent(http.StatusNoContent)
+}
