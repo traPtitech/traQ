@@ -592,6 +592,30 @@ paths:
       operationId: deleteStamp
       tags:
         - stamp
+    patch:
+      summary: スタンプ情報を変更
+      operationId: editStamp
+      responses:
+        '204':
+          description: |-
+            No Content
+            スタンプ情報が変更されました。
+        '400':
+          description: Bad Request
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '409':
+          description: Conflict
+      tags:
+        - stamp
+      description: 指定したスタンプの情報を変更します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchStampRequest'
   /stamps:
     post:
       summary: スタンプを作成
@@ -3208,6 +3232,62 @@ paths:
                   type: string
       operationId: getOnlineUsers
       description: 現在オンラインな(SSEまたはWSが接続中)ユーザーのUUIDのリストを返します。
+  '/stamps/{stampId}/image':
+    parameters:
+      - $ref: '#/components/schemas/stampIdInPath'
+    get:
+      summary: スタンプ画像を取得
+      tags:
+        - stamp
+      responses:
+        '200':
+          description: OK
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Not Found
+      operationId: getStampImage
+      description: 指定したIDのスタンプ画像を返します。
+    put:
+      summary: スタンプ画像を変更
+      operationId: changeStampImage
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+        '404':
+          description: Not Found
+        '413':
+          description: Request Entity Too Large
+      tags:
+        - stamp
+      description: 指定したスタンプの画像を変更します。
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              format: binary
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 'スタンプ画像(1MBまでのpng, jpeg, gif)'
+              required:
+                - file
+        description: ''
 components:
   schemas:
     Message:
@@ -4823,6 +4903,19 @@ components:
           type: string
           description: 変更後親チャンネルUUID
           format: uuid
+    PatchStampRequest:
+      title: PatchStampRequest
+      type: object
+      description: スタンプ情報変更リクエスト
+      properties:
+        name:
+          type: string
+          pattern: '^[a-zA-Z0-9_-]{1,32}$'
+          description: スタンプ名
+        creatorId:
+          type: string
+          description: 作成者UUID
+          format: uuid
     VisibilityChangedEvent:
       title: VisibilityChangedEvent
       type: object
@@ -4938,158 +5031,11 @@ components:
         type: string
         format: uuid
   parameters:
-    channelIdInPath:
-      name: channelId
+    paletteIdInPath:
+      name: paletteId
       in: path
       required: true
-      description: チャンネルUUID
-      schema:
-        type: string
-        format: uuid
-    orderInQuery:
-      in: query
-      name: order
-      schema:
-        type: string
-        enum:
-          - asc
-          - desc
-        default: desc
-      description: 昇順か降順か
-    inclusiveInQuery:
-      in: query
-      name: inclusive
-      schema:
-        type: boolean
-        default: false
-      description: 範囲の端を含めるかどうか
-    untilInQuery:
-      in: query
-      name: until
-      schema:
-        type: string
-        format: date-time
-      description: 取得する時間範囲の終了日時
-      example: '2016-10-12T11:00:00.0000000Z'
-    sinceInQuery:
-      in: query
-      name: since
-      schema:
-        type: string
-        format: date-time
-        default: '0000-01-01T00:00:00.000000Z'
-      description: 取得する時間範囲の開始日時
-      example: '2016-10-12T11:00:00.000000Z'
-    offsetInQuery:
-      in: query
-      name: offset
-      schema:
-        type: integer
-        default: 0
-      description: 取得するオフセット
-      example: 150
-    limitInQuery:
-      in: query
-      name: limit
-      schema:
-        type: integer
-        default: 0
-        minimum: 1
-        maximum: 200
-      description: 取得する件数
-      example: 50
-    messageIdInPath:
-      name: messageId
-      in: path
-      required: true
-      description: メッセージUUID
-      schema:
-        type: string
-        format: uuid
-    fileIdInPath:
-      name: fileId
-      in: path
-      required: true
-      description: ファイルUUID
-      schema:
-        type: string
-        format: uuid
-    stampIdInPath:
-      name: stampId
-      in: path
-      required: true
-      description: スタンプUUID
-      schema:
-        type: string
-        format: uuid
-    userIdInPath:
-      name: userId
-      in: path
-      required: true
-      description: ユーザーUUID
-      schema:
-        type: string
-        format: uuid
-    groupIdInPath:
-      name: groupId
-      in: path
-      required: true
-      description: ユーザーグループUUID
-      schema:
-        type: string
-        format: uuid
-    webhookIdInPath:
-      name: webhookId
-      in: path
-      required: true
-      description: WebhookUUID
-      schema:
-        type: string
-        format: uuid
-    tagIdInPath:
-      name: tagId
-      in: path
-      required: true
-      description: タグUUID
-      schema:
-        type: string
-        format: uuid
-    redirectInQuery:
-      schema:
-        type: string
-        format: uri
-      description: リダイレクト先
-      name: redirect
-      in: query
-    sessionIdInPath:
-      name: sessionId
-      in: path
-      required: true
-      description: セッションUUID
-      schema:
-        type: string
-        format: uuid
-    tokenIdInPath:
-      name: tokenId
-      in: path
-      required: true
-      description: OAuth2トークンUUID
-      schema:
-        type: string
-        format: uuid
-    clientIdInPath:
-      name: clientId
-      in: path
-      required: true
-      description: OAuth2クライアントUUID
-      schema:
-        type: string
-        format: uuid
-    botIdInPath:
-      name: botId
-      in: path
-      required: true
-      description: BOTUUID
+      description: スタンプパレットUUID
       schema:
         type: string
         format: uuid
@@ -5101,11 +5047,158 @@ components:
       schema:
         type: string
         format: uuid
-    paletteIdInPath:
-      name: paletteId
+    botIdInPath:
+      name: botId
       in: path
       required: true
-      description: スタンプパレットUUID
+      description: BOTUUID
+      schema:
+        type: string
+        format: uuid
+    clientIdInPath:
+      name: clientId
+      in: path
+      required: true
+      description: OAuth2クライアントUUID
+      schema:
+        type: string
+        format: uuid
+    tokenIdInPath:
+      name: tokenId
+      in: path
+      required: true
+      description: OAuth2トークンUUID
+      schema:
+        type: string
+        format: uuid
+    sessionIdInPath:
+      name: sessionId
+      in: path
+      required: true
+      description: セッションUUID
+      schema:
+        type: string
+        format: uuid
+    redirectInQuery:
+      schema:
+        type: string
+        format: uri
+      description: リダイレクト先
+      name: redirect
+      in: query
+    tagIdInPath:
+      name: tagId
+      in: path
+      required: true
+      description: タグUUID
+      schema:
+        type: string
+        format: uuid
+    webhookIdInPath:
+      name: webhookId
+      in: path
+      required: true
+      description: WebhookUUID
+      schema:
+        type: string
+        format: uuid
+    groupIdInPath:
+      name: groupId
+      in: path
+      required: true
+      description: ユーザーグループUUID
+      schema:
+        type: string
+        format: uuid
+    userIdInPath:
+      name: userId
+      in: path
+      required: true
+      description: ユーザーUUID
+      schema:
+        type: string
+        format: uuid
+    stampIdInPath:
+      name: stampId
+      in: path
+      required: true
+      description: スタンプUUID
+      schema:
+        type: string
+        format: uuid
+    fileIdInPath:
+      name: fileId
+      in: path
+      required: true
+      description: ファイルUUID
+      schema:
+        type: string
+        format: uuid
+    messageIdInPath:
+      name: messageId
+      in: path
+      required: true
+      description: メッセージUUID
+      schema:
+        type: string
+        format: uuid
+    limitInQuery:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        default: 0
+        minimum: 1
+        maximum: 200
+      description: 取得する件数
+      example: 50
+    offsetInQuery:
+      in: query
+      name: offset
+      schema:
+        type: integer
+        default: 0
+      description: 取得するオフセット
+      example: 150
+    sinceInQuery:
+      in: query
+      name: since
+      schema:
+        type: string
+        format: date-time
+        default: '0000-01-01T00:00:00.000000Z'
+      description: 取得する時間範囲の開始日時
+      example: '2016-10-12T11:00:00.000000Z'
+    untilInQuery:
+      in: query
+      name: until
+      schema:
+        type: string
+        format: date-time
+      description: 取得する時間範囲の終了日時
+      example: '2016-10-12T11:00:00.0000000Z'
+    inclusiveInQuery:
+      in: query
+      name: inclusive
+      schema:
+        type: boolean
+        default: false
+      description: 範囲の端を含めるかどうか
+    orderInQuery:
+      in: query
+      name: order
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+        default: desc
+      description: 昇順か降順か
+    channelIdInPath:
+      name: channelId
+      in: path
+      required: true
+      description: チャンネルUUID
       schema:
         type: string
         format: uuid
