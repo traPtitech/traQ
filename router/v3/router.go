@@ -290,7 +290,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook)
 		apiNoAuthPublic := apiNoAuth.Group("/public")
 		{
-			apiNoAuthPublic.GET("/icon/:username", NotImplemented)
+			apiNoAuthPublic.GET("/icon/:username", h.GetPublicUserIcon)
 		}
 	}
 
