@@ -78,6 +78,11 @@ func getParamStamp(c echo.Context) *model.Stamp {
 	return c.Get(consts.KeyParamStamp).(*model.Stamp)
 }
 
+// getParamChannel URLの:channelIDに対応するChannelを取得
+func getParamChannel(c echo.Context) *model.Channel {
+	return c.Get(consts.KeyParamChannel).(*model.Channel)
+}
+
 // getParamAsUUID URLのnameパラメータの文字列をuuid.UUIDとして取得
 func getParamAsUUID(c echo.Context, name string) uuid.UUID {
 	return extension.GetRequestParamAsUUID(c, name)
