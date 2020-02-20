@@ -150,10 +150,13 @@ func (repo *GormRepository) DeleteStamp(id uuid.UUID) (err error) {
 }
 
 // GetAllStamps implements StampRepository interface.
-func (repo *GormRepository) GetAllStamps() (stamps []*model.Stamp, err error) {
+func (repo *GormRepository) GetAllStamps(excludeUnicode bool) (stamps []*model.Stamp, err error) {
 	stamps = make([]*model.Stamp, 0)
-	err = repo.db.Find(&stamps).Error
-	return stamps, err
+	tx := repo.db
+	if excludeUnicode {
+		tx = tx.Where("is_unicode = FALSE")
+	}
+	return stamps, tx.Find(&stamps).Error
 }
 
 // StampExists implements StampRepository interface.

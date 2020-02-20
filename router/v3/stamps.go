@@ -7,6 +7,21 @@ import (
 	"net/http"
 )
 
+// GetStamps GET /stamps
+func (h *Handlers) GetStamps(c echo.Context) error {
+	u := c.QueryParam("include-unicode")
+	if len(u) == 0 {
+		u = "1"
+	}
+
+	stamps, err := h.Repo.GetAllStamps(!isTrue(u))
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, stamps)
+}
+
 // GetStamp GET /stamps/:stampID
 func (h *Handlers) GetStamp(c echo.Context) error {
 	return c.JSON(http.StatusOK, getParamStamp(c))

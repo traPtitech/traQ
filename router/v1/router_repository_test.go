@@ -1833,10 +1833,13 @@ func (repo *TestRepository) DeleteStamp(id uuid.UUID) (err error) {
 	return nil
 }
 
-func (repo *TestRepository) GetAllStamps() (stamps []*model.Stamp, err error) {
+func (repo *TestRepository) GetAllStamps(excludeUnicode bool) (stamps []*model.Stamp, err error) {
 	repo.StampsLock.RLock()
 	for _, v := range repo.Stamps {
 		v := v
+		if excludeUnicode && v.IsUnicode {
+			continue
+		}
 		stamps = append(stamps, &v)
 	}
 	repo.StampsLock.RUnlock()

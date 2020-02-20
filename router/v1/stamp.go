@@ -15,7 +15,7 @@ import (
 // GetStamps GET /stamps
 func (h *Handlers) GetStamps(c echo.Context) error {
 	res, err, _ := h.getStampsResponseCacheGroup.Do("", func() (interface{}, error) {
-		stamps, err := h.Repo.GetAllStamps()
+		stamps, err := h.Repo.GetAllStamps(false)
 		if err != nil {
 			return nil, err
 		}
