@@ -112,7 +112,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiChannelsCID.GET("/stats", NotImplemented)
 				apiChannelsCID.GET("/topic", NotImplemented)
 				apiChannelsCID.PUT("/topic", NotImplemented)
-				apiChannelsCID.GET("/viewers", NotImplemented)
+				apiChannelsCID.GET("/viewers", h.GetChannelViewers)
 				apiChannelsCID.GET("/pins", NotImplemented)
 				apiChannelsCID.GET("/subscribers", NotImplemented)
 				apiChannelsCID.PUT("/subscribers", NotImplemented)
