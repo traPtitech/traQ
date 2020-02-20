@@ -27,7 +27,7 @@ func serveUserTags(c echo.Context, repo repository.Repository, userID uuid.UUID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	return c.JSON(http.StatusOK, formatTags(tags))
+	return c.JSON(http.StatusOK, formatUserTags(tags))
 }
 
 // PostUserTagRequest POST /users/:userID/tags リクエストボディ

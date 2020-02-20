@@ -45,7 +45,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiUsers.POST("", NotImplemented)
 			apiUsersUID := apiUsers.Group("/:userID", retrieve.UserID(false))
 			{
-				apiUsersUID.GET("", NotImplemented)
+				apiUsersUID.GET("", h.GetUser)
 				apiUsersUID.PATCH("", NotImplemented)
 				apiUsersUID.POST("/messages", NotImplemented)
 				apiUsersUID.GET("/messages", NotImplemented)

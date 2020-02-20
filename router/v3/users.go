@@ -191,3 +191,20 @@ func (h *Handlers) ChangeUserPassword(c echo.Context) error {
 	_ = sessions.DestroyByUserID(userID)
 	return c.NoContent(http.StatusNoContent)
 }
+
+// GetUser GET /users/:userID
+func (h *Handlers) GetUser(c echo.Context) error {
+	user := getParamUser(c)
+
+	tags, err := h.Repo.GetUserTagsByUserID(user.ID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	groups, err := h.Repo.GetUserBelongingGroupIDs(user.ID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, formatUserDetail(user, tags, groups))
+}

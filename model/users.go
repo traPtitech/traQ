@@ -30,6 +30,11 @@ func (v UserAccountStatus) Valid() bool {
 	return userAccountStatuses[v]
 }
 
+// Int Int型にキャストします
+func (v UserAccountStatus) Int() int {
+	return int(v)
+}
+
 const (
 	// UserAccountStatusDeactivated ユーザーアカウント状態: 凍結
 	UserAccountStatusDeactivated UserAccountStatus = 0
