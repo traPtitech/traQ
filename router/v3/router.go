@@ -109,7 +109,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiChannelsCID.PATCH("", NotImplemented)
 				apiChannelsCID.GET("/messages", NotImplemented)
 				apiChannelsCID.POST("/messages", NotImplemented)
-				apiChannelsCID.GET("/stats", NotImplemented)
+				apiChannelsCID.GET("/stats", h.GetChannelStats)
 				apiChannelsCID.GET("/topic", NotImplemented)
 				apiChannelsCID.PUT("/topic", NotImplemented)
 				apiChannelsCID.GET("/viewers", h.GetChannelViewers)
