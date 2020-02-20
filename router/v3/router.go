@@ -164,7 +164,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiStamps := api.Group("/stamps")
 		{
 			apiStamps.GET("", h.GetStamps)
-			apiStamps.POST("", NotImplemented)
+			apiStamps.POST("", h.CreateStamp)
 			apiStampsSID := apiStamps.Group("/:stampID")
 			{
 				apiStampsSID.GET("", h.GetStamp)
