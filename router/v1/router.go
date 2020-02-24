@@ -96,7 +96,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	bodyLimit := middlewares.RequestBodyLengthLimit
 	adminOnly := middlewares.AdminOnly
 	retrieve := middlewares.NewParamRetriever(h.Repo)
-	botGuard := h.BotGuard
+	blockBot := middlewares.BlockBot(h.Repo)
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
@@ -151,8 +151,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersUID.PATCH("", h.PatchUserByID, requires(permission.EditOtherUsers))
 				apiUsersUID.PUT("/status", h.PutUserStatus, requires(permission.EditOtherUsers))
 				apiUsersUID.PUT("/password", h.PutUserPassword, requires(permission.EditOtherUsers))
-				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage), botGuard(blockUnlessSubscribingEvent(model.BotEventDirectMessageCreated)))
-				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage), botGuard(blockUnlessSubscribingEvent(model.BotEventDirectMessageCreated)))
+				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage))
+				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
 				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
 				apiUsersUID.PUT("/icon", h.PutUserIcon, requires(permission.EditOtherUsers))
 				apiUsersUID.GET("/notification", h.GetNotificationChannels, requires(permission.GetChannelSubscription))
@@ -363,11 +363,11 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiWebRTC.GET("/state", h.GetWebRTCState)
 			apiWebRTC.PUT("/state", h.PutWebRTCState)
 		}
-		api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler, botGuard(blockAlways))
+		api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler, blockBot)
 		api.GET("/ws", echo.WrapHandler(h.WS), requires(permission.ConnectNotificationStream))
 
 		if len(h.SkyWaySecretKey) > 0 {
-			api.POST("/skyway/authenticate", h.PostSkyWayAuthenticate, botGuard(blockAlways))
+			api.POST("/skyway/authenticate", h.PostSkyWayAuthenticate, blockBot)
 		}
 	}
 
@@ -675,4 +675,59 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	l = h.Logger.With(zap.String("logging.googleapis.com/trace", extension.GetTraceID(c)))
 	c.Set(consts.KeyLogger, l)
 	return l
+}
+
+// ValidateGroupID 'groupID'パラメータのグループを検証するミドルウェア
+func (h *Handlers) ValidateGroupID() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			groupID := getRequestParamAsUUID(c, consts.ParamGroupID)
+
+			g, err := h.Repo.GetUserGroup(groupID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return herror.NotFound()
+				default:
+					return herror.InternalServerError(err)
+				}
+			}
+
+			c.Set(consts.KeyParamGroup, g)
+			return next(c)
+		}
+	}
+}
+
+// ValidatePinID 'pinID'パラメータのピンを検証するミドルウェア
+func (h *Handlers) ValidatePinID() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			userID := getRequestUserID(c)
+			pinID := getRequestParamAsUUID(c, consts.ParamPinID)
+
+			pin, err := h.Repo.GetPin(pinID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return herror.NotFound()
+				default:
+					return herror.InternalServerError(err)
+				}
+			}
+
+			if pin.Message.ID == uuid.Nil {
+				return herror.NotFound()
+			}
+
+			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, pin.Message.ChannelID); err != nil {
+				return herror.InternalServerError(err)
+			} else if !ok {
+				return herror.NotFound()
+			}
+
+			c.Set("paramPin", pin)
+			return next(c)
+		}
+	}
 }

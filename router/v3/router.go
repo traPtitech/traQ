@@ -37,6 +37,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
 	retrieve := middlewares.NewParamRetriever(h.Repo)
+	blockBot := middlewares.BlockBot(h.Repo)
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
@@ -271,7 +272,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiWebRTC := api.Group("/webrtc")
 		{
 			apiWebRTC.GET("/state", NotImplemented)
-			apiWebRTC.POST("/authenticate", h.PostWebRTCAuthenticate)
+			apiWebRTC.POST("/authenticate", h.PostWebRTCAuthenticate, blockBot)
 		}
 		apiClipFolders := api.Group("/clip-folders")
 		{

@@ -56,6 +56,19 @@ func AdminOnly(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+// BlockBot Botのリクエストを制限するミドルウェア
+func BlockBot(repo repository.Repository) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			user := c.Get(consts.KeyUser).(*model.User)
+			if user.Bot {
+				return herror.Forbidden("your bot is not permitted to access this API")
+			}
+			return next(c)
+		}
+	}
+}
+
 // CheckBotAccessPerm BOTアクセス権限を確認するミドルウェア
 func CheckBotAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -135,7 +148,7 @@ func CheckClientAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Midd
 func CheckMessageAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			userID := c.Get(consts.KeyParamUser).(*model.User).ID
+			userID := c.Get(consts.KeyUser).(*model.User).ID
 			m := c.Get(consts.KeyParamMessage).(*model.Message)
 
 			// アクセス権確認
