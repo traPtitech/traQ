@@ -60,7 +60,7 @@ func AdminOnly(next echo.HandlerFunc) echo.HandlerFunc {
 func CheckBotAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			user := c.Get(consts.KeyParamUser).(*model.User)
+			user := c.Get(consts.KeyUser).(*model.User)
 			b := c.Get(consts.KeyParamBot).(*model.Bot)
 
 			// アクセス権確認
@@ -77,7 +77,7 @@ func CheckBotAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Middlew
 func CheckWebhookAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			user := c.Get(consts.KeyParamUser).(*model.User)
+			user := c.Get(consts.KeyUser).(*model.User)
 			w := c.Get(consts.KeyParamWebhook).(model.Webhook)
 
 			// アクセス権確認
@@ -94,7 +94,7 @@ func CheckWebhookAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Mid
 func CheckFileAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			userID := c.Get(consts.KeyParamUser).(*model.User).ID
+			userID := c.Get(consts.KeyUser).(*model.User).ID
 			fileID := extension.GetRequestParamAsUUID(c, consts.ParamFileID)
 
 			// アクセス権確認
@@ -118,7 +118,7 @@ func CheckFileAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Middle
 func CheckClientAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			user := c.Get(consts.KeyParamUser).(*model.User)
+			user := c.Get(consts.KeyUser).(*model.User)
 			oc := c.Get(consts.KeyParamClient).(*model.OAuth2Client)
 
 			// アクセス権確認
@@ -154,7 +154,7 @@ func CheckMessageAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Mid
 func CheckChannelAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			userID := c.Get(consts.KeyParamUser).(*model.User).ID
+			userID := c.Get(consts.KeyUser).(*model.User).ID
 			ch := c.Get(consts.KeyParamChannel).(*model.Channel)
 
 			// アクセス権確認

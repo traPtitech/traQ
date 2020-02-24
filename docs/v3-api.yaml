@@ -3234,7 +3234,7 @@ paths:
       description: 現在オンラインな(SSEまたはWSが接続中)ユーザーのUUIDのリストを返します。
   '/stamps/{stampId}/image':
     parameters:
-      - $ref: '#/components/schemas/stampIdInPath'
+      - $ref: '#/components/parameters/stampIdInPath'
     get:
       summary: スタンプ画像を取得
       tags:
@@ -4903,19 +4903,6 @@ components:
           type: string
           description: 変更後親チャンネルUUID
           format: uuid
-    PatchStampRequest:
-      title: PatchStampRequest
-      type: object
-      description: スタンプ情報変更リクエスト
-      properties:
-        name:
-          type: string
-          pattern: '^[a-zA-Z0-9_-]{1,32}$'
-          description: スタンプ名
-        creatorId:
-          type: string
-          description: 作成者UUID
-          format: uuid
     VisibilityChangedEvent:
       title: VisibilityChangedEvent
       type: object
@@ -5030,6 +5017,24 @@ components:
       items:
         type: string
         format: uuid
+    PatchStampRequest:
+      title: PatchStampRequest
+      type: object
+      description: スタンプ情報変更リクエスト
+      properties:
+        name:
+          type: string
+          pattern: '^[a-zA-Z0-9_-]{1,32}$'
+          description: スタンプ名
+        creatorId:
+          type: string
+          description: 作成者UUID
+          format: uuid
+  headers:
+    X-TRAQ-MORE:
+      schema:
+        type: boolean
+      description: 指定した範囲に要素がさらに存在するかどうか
   parameters:
     paletteIdInPath:
       name: paletteId
@@ -5202,11 +5207,6 @@ components:
       schema:
         type: string
         format: uuid
-  headers:
-    X-TRAQ-MORE:
-      schema:
-        type: boolean
-      description: 指定した範囲に要素がさらに存在するかどうか
 tags:
   - name: user
     description: ユーザーAPI
