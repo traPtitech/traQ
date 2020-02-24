@@ -7,8 +7,6 @@ require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/blendle/zapdriver v1.3.1
-	github.com/coreos/go-etcd v2.0.0+incompatible // indirect
-	github.com/cpuguy83/go-md2man v1.0.10 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/disintegration/imaging v1.6.2
 	github.com/fatih/structs v1.1.0 // indirect
@@ -38,9 +36,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.2
-	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.5.1
-	github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8 // indirect
 	go.uber.org/zap v1.14.0
 	golang.org/x/crypto v0.0.0-20200128174031-69ecbb4d6d5d
 	golang.org/x/exp v0.0.0-20200207192155-f17229e696bd
