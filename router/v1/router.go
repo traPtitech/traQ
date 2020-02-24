@@ -95,7 +95,15 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
 	adminOnly := middlewares.AdminOnly
+	retrieve := middlewares.NewParamRetriever(h.Repo)
 	botGuard := h.BotGuard
+
+	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
+	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
+	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.Repo)
+	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC, h.Repo)
+	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.Repo)
+	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.Repo)
 
 	api := e.Group("/1.0", middlewares.UserAuthenticate(h.Repo))
 	{
@@ -125,7 +133,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersMeStars := apiUsersMe.Group("/stars")
 				{
 					apiUsersMeStars.GET("", h.GetStars, requires(permission.GetChannelStar))
-					apiUsersMeStarsCid := apiUsersMeStars.Group("/:channelID", h.ValidateChannelID(true))
+					apiUsersMeStarsCid := apiUsersMeStars.Group("/:channelID", retrieve.ChannelID(), requiresChannelAccessPerm)
 					{
 						apiUsersMeStarsCid.PUT("", h.PutStars, requires(permission.EditChannelStar))
 						apiUsersMeStarsCid.DELETE("", h.DeleteStars, requires(permission.EditChannelStar))
@@ -137,7 +145,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 					apiUsersMeUnread.DELETE("/channels/:channelID", h.DeleteUnread, requires(permission.DeleteUnread))
 				}
 			}
-			apiUsersUID := apiUsers.Group("/:userID", h.ValidateUserID(false))
+			apiUsersUID := apiUsers.Group("/:userID", retrieve.UserID(false))
 			{
 				apiUsersUID.GET("", h.GetUserByID, requires(permission.GetUser))
 				apiUsersUID.PATCH("", h.PatchUserByID, requires(permission.EditOtherUsers))
@@ -170,7 +178,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiChannels.GET("", h.GetChannels, requires(permission.GetChannel))
 			apiChannels.POST("", h.PostChannels, requires(permission.CreateChannel))
-			apiChannelsCid := apiChannels.Group("/:channelID", h.ValidateChannelID(false))
+			apiChannelsCid := apiChannels.Group("/:channelID", retrieve.ChannelID(), requiresChannelAccessPerm)
 			{
 				apiChannelsCid.GET("", h.GetChannelByChannelID, requires(permission.GetChannel))
 				apiChannelsCid.PATCH("", h.PatchChannelByChannelID, requires(permission.EditChannel))
@@ -200,7 +208,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				{
 					apiChannelsCidBots.GET("", h.GetChannelBots, requires(permission.GetBot))
 					apiChannelsCidBots.POST("", h.PostChannelBots, requires(permission.InstallBot))
-					apiChannelsCidBots.DELETE("/:botID", h.DeleteChannelBot, requires(permission.UninstallBot), h.ValidateBotID(false))
+					apiChannelsCidBots.DELETE("/:botID", h.DeleteChannelBot, requires(permission.UninstallBot), retrieve.BotID())
 				}
 				apiChannelsCidWebRTC := apiChannelsCid.Group("/webrtc")
 				{
@@ -216,14 +224,14 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiMessages := api.Group("/messages")
 		{
 			apiMessages.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports))
-			apiMessagesMid := apiMessages.Group("/:messageID", h.ValidateMessageID())
+			apiMessagesMid := apiMessages.Group("/:messageID", retrieve.MessageID(), requiresMessageAccessPerm)
 			{
 				apiMessagesMid.GET("", h.GetMessageByID, requires(permission.GetMessage))
 				apiMessagesMid.PUT("", h.PutMessageByID, bodyLimit(100), requires(permission.EditMessage))
 				apiMessagesMid.DELETE("", h.DeleteMessageByID, requires(permission.DeleteMessage))
 				apiMessagesMid.POST("/report", h.PostMessageReport, requires(permission.ReportMessage))
 				apiMessagesMid.GET("/stamps", h.GetMessageStamps, requires(permission.GetMessage))
-				apiMessagesMidStampsSid := apiMessagesMid.Group("/stamps/:stampID", h.ValidateStampID(true))
+				apiMessagesMidStampsSid := apiMessagesMid.Group("/stamps/:stampID", retrieve.StampID(true))
 				{
 					apiMessagesMidStampsSid.POST("", h.PostMessageStamp, requires(permission.AddMessageStamp))
 					apiMessagesMidStampsSid.DELETE("", h.DeleteMessageStamp, requires(permission.RemoveMessageStamp))
@@ -240,7 +248,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiFiles := api.Group("/files")
 		{
 			apiFiles.POST("", h.PostFile, bodyLimit(30<<10), requires(permission.UploadFile))
-			apiFilesFid := apiFiles.Group("/:fileID", h.ValidateFileID())
+			apiFilesFid := apiFiles.Group("/:fileID", retrieve.FileID(), requiresFileAccessPerm)
 			{
 				apiFilesFid.GET("", h.GetFileByID, requires(permission.DownloadFile))
 				apiFilesFid.DELETE("", h.DeleteFileByID, requires(permission.DeleteFile))
@@ -261,7 +269,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiStamps.GET("", h.GetStamps, requires(permission.GetStamp))
 			apiStamps.POST("", h.PostStamp, requires(permission.CreateStamp))
-			apiStampsSid := apiStamps.Group("/:stampID", h.ValidateStampID(false))
+			apiStampsSid := apiStamps.Group("/:stampID", retrieve.StampID(false))
 			{
 				apiStampsSid.GET("", h.GetStamp, requires(permission.GetStamp))
 				apiStampsSid.PATCH("", h.PatchStamp, requires(permission.EditStamp))
@@ -272,7 +280,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiWebhooks.GET("", h.GetWebhooks, requires(permission.GetWebhook))
 			apiWebhooks.POST("", h.PostWebhooks, requires(permission.CreateWebhook))
-			apiWebhooksWid := apiWebhooks.Group("/:webhookID", h.ValidateWebhookID(true))
+			apiWebhooksWid := apiWebhooks.Group("/:webhookID", retrieve.WebhookID(), requiresWebhookAccessPerm)
 			{
 				apiWebhooksWid.GET("", h.GetWebhook, requires(permission.GetWebhook))
 				apiWebhooksWid.PATCH("", h.PatchWebhook, requires(permission.EditWebhook))
@@ -303,31 +311,31 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiClients.GET("", h.GetClients, requires(permission.GetClients))
 			apiClients.POST("", h.PostClients, requires(permission.CreateClient))
-			apiClientCid := apiClients.Group("/:clientID")
+			apiClientCid := apiClients.Group("/:clientID", retrieve.ClientID())
 			{
-				apiClientCid.GET("", h.GetClient, requires(permission.GetClients), h.ValidateClientID(false))
-				apiClientCid.PATCH("", h.PatchClient, requires(permission.EditMyClient), h.ValidateClientID(true))
-				apiClientCid.DELETE("", h.DeleteClient, requires(permission.DeleteMyClient), h.ValidateClientID(true))
-				apiClientCid.GET("/detail", h.GetClientDetail, requires(permission.GetClients), h.ValidateClientID(true))
+				apiClientCid.GET("", h.GetClient, requires(permission.GetClients))
+				apiClientCid.PATCH("", h.PatchClient, requires(permission.EditMyClient), requiresClientAccessPerm)
+				apiClientCid.DELETE("", h.DeleteClient, requires(permission.DeleteMyClient), requiresClientAccessPerm)
+				apiClientCid.GET("/detail", h.GetClientDetail, requires(permission.GetClients), requiresClientAccessPerm)
 			}
 		}
 		apiBots := api.Group("/bots")
 		{
 			apiBots.GET("", h.GetBots, requires(permission.GetBot))
 			apiBots.POST("", h.PostBots, requires(permission.CreateBot))
-			apiBotsBid := apiBots.Group("/:botID")
+			apiBotsBid := apiBots.Group("/:botID", retrieve.BotID())
 			{
-				apiBotsBid.GET("", h.GetBot, requires(permission.GetBot), h.ValidateBotID(false))
-				apiBotsBid.PATCH("", h.PatchBot, requires(permission.EditBot), h.ValidateBotID(true))
-				apiBotsBid.DELETE("", h.DeleteBot, requires(permission.DeleteBot), h.ValidateBotID(true))
-				apiBotsBid.GET("/detail", h.GetBotDetail, requires(permission.GetBot), h.ValidateBotID(true))
-				apiBotsBid.PUT("/events", h.PutBotEvents, requires(permission.EditBot), h.ValidateBotID(true))
-				apiBotsBid.GET(`/events/logs`, h.GetBotEventLogs, requires(permission.GetBot), h.ValidateBotID(true))
-				apiBotsBid.GET("/icon", h.GetBotIcon, requires(permission.GetBot), h.ValidateBotID(false))
-				apiBotsBid.PUT("/icon", h.PutBotIcon, requires(permission.EditBot), h.ValidateBotID(true))
-				apiBotsBid.PUT("/state", h.PutBotState, requires(permission.EditBot), h.ValidateBotID(true))
-				apiBotsBid.POST("/reissue", h.PostBotReissueTokens, requires(permission.EditBot), h.ValidateBotID(true))
-				apiBotsBid.GET("/channels", h.GetBotJoinChannels, requires(permission.GetBot), h.ValidateBotID(true))
+				apiBotsBid.GET("", h.GetBot, requires(permission.GetBot))
+				apiBotsBid.PATCH("", h.PatchBot, requires(permission.EditBot), requiresBotAccessPerm)
+				apiBotsBid.DELETE("", h.DeleteBot, requires(permission.DeleteBot), requiresBotAccessPerm)
+				apiBotsBid.GET("/detail", h.GetBotDetail, requires(permission.GetBot), requiresBotAccessPerm)
+				apiBotsBid.PUT("/events", h.PutBotEvents, requires(permission.EditBot), requiresBotAccessPerm)
+				apiBotsBid.GET(`/events/logs`, h.GetBotEventLogs, requires(permission.GetBot), requiresBotAccessPerm)
+				apiBotsBid.GET("/icon", h.GetBotIcon, requires(permission.GetBot))
+				apiBotsBid.PUT("/icon", h.PutBotIcon, requires(permission.EditBot), requiresBotAccessPerm)
+				apiBotsBid.PUT("/state", h.PutBotState, requires(permission.EditBot), requiresBotAccessPerm)
+				apiBotsBid.POST("/reissue", h.PostBotReissueTokens, requires(permission.EditBot), requiresBotAccessPerm)
+				apiBotsBid.GET("/channels", h.GetBotJoinChannels, requires(permission.GetBot), requiresBotAccessPerm)
 			}
 		}
 		apiActivity := api.Group("/activity")
@@ -372,10 +380,10 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiPublic.GET("/icon/:username", h.GetPublicUserIcon)
 			apiPublic.GET("/emoji.json", h.GetPublicEmojiJSON)
 			apiPublic.GET("/emoji.css", h.GetPublicEmojiCSS)
-			apiPublic.GET("/emoji/:stampID", h.GetPublicEmojiImage, h.ValidateStampID(false))
+			apiPublic.GET("/emoji/:stampID", h.GetPublicEmojiImage, retrieve.StampID(false))
 		}
-		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, h.ValidateWebhookID(false))
-		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, h.ValidateWebhookID(false))
+		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, retrieve.WebhookID())
+		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, retrieve.WebhookID())
 		apiOAuth := apiNoAuth.Group("/oauth2")
 		{
 			apiOAuth.GET("/authorize", h.AuthorizationEndpointHandler)
@@ -617,6 +625,46 @@ func getRequestUserID(c echo.Context) uuid.UUID {
 
 func getRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
 	return extension.GetRequestParamAsUUID(c, name)
+}
+
+func getGroupFromContext(c echo.Context) *model.UserGroup {
+	return c.Get(consts.KeyParamGroup).(*model.UserGroup)
+}
+
+func getStampFromContext(c echo.Context) *model.Stamp {
+	return c.Get(consts.KeyParamStamp).(*model.Stamp)
+}
+
+func getMessageFromContext(c echo.Context) *model.Message {
+	return c.Get(consts.KeyParamMessage).(*model.Message)
+}
+
+func getPinFromContext(c echo.Context) *model.Pin {
+	return c.Get("paramPin").(*model.Pin)
+}
+
+func getChannelFromContext(c echo.Context) *model.Channel {
+	return c.Get(consts.KeyParamChannel).(*model.Channel)
+}
+
+func getUserFromContext(c echo.Context) *model.User {
+	return c.Get(consts.KeyParamUser).(*model.User)
+}
+
+func getWebhookFromContext(c echo.Context) model.Webhook {
+	return c.Get(consts.KeyParamWebhook).(model.Webhook)
+}
+
+func getBotFromContext(c echo.Context) *model.Bot {
+	return c.Get(consts.KeyParamBot).(*model.Bot)
+}
+
+func getFileFromContext(c echo.Context) *model.File {
+	return c.Get(consts.KeyParamFile).(*model.File)
+}
+
+func getClientFromContext(c echo.Context) *model.OAuth2Client {
+	return c.Get(consts.KeyParamClient).(*model.OAuth2Client)
 }
 
 func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {

@@ -37,7 +37,7 @@ func (pr *ParamRetriever) byString(param string, key string, f func(c echo.Conte
 func (pr *ParamRetriever) byUUID(param string, key string, f func(c echo.Context, v uuid.UUID) (interface{}, error)) echo.MiddlewareFunc {
 	return pr.byString(param, key, func(c echo.Context, v string) (interface{}, error) {
 		u, err := uuid.FromString(v)
-		if err != nil {
+		if err != nil || u == uuid.Nil {
 			return nil, herror.NotFound()
 		}
 		return f(c, u)
