@@ -68,6 +68,11 @@ func getParamBot(c echo.Context) *model.Bot {
 	return c.Get(consts.KeyParamBot).(*model.Bot)
 }
 
+// getParamClient URLの:clientIDに対応するOAuth2Clientを取得
+func getParamClient(c echo.Context) *model.OAuth2Client {
+	return c.Get(consts.KeyParamClient).(*model.OAuth2Client)
+}
+
 // getParamFile URLの:fileIDに対応するFileを取得
 func getParamFile(c echo.Context) *model.File {
 	return c.Get(consts.KeyParamFile).(*model.File)
@@ -81,6 +86,11 @@ func getParamStamp(c echo.Context) *model.Stamp {
 // getParamChannel URLの:channelIDに対応するChannelを取得
 func getParamChannel(c echo.Context) *model.Channel {
 	return c.Get(consts.KeyParamChannel).(*model.Channel)
+}
+
+// getParamMessage URLの:messageIDに対応するMessageを取得
+func getParamMessage(c echo.Context) *model.Message {
+	return c.Get(consts.KeyParamMessage).(*model.Message)
 }
 
 // getParamAsUUID URLのnameパラメータの文字列をuuid.UUIDとして取得
