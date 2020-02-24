@@ -8,9 +8,6 @@ import (
 	"github.com/traPtitech/traQ/realtime"
 	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/consts"
-	"github.com/traPtitech/traQ/router/extension"
-	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/middlewares"
 	"go.uber.org/zap"
 )
@@ -40,6 +37,13 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
 	retrieve := middlewares.NewParamRetriever(h.Repo)
+
+	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
+	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
+	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.Repo)
+	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC, h.Repo)
+	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.Repo)
+	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.Repo)
 
 	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo))
 	{
@@ -107,7 +111,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiChannels.GET("", NotImplemented, requires(permission.GetChannel))
 			apiChannels.POST("", NotImplemented, requires(permission.CreateChannel))
-			apiChannelsCID := apiChannels.Group("/:channelID", retrieve.ChannelID(), h.checkChannelAccessPerm())
+			apiChannelsCID := apiChannels.Group("/:channelID", retrieve.ChannelID(), requiresChannelAccessPerm)
 			{
 				apiChannelsCID.GET("", NotImplemented, requires(permission.GetChannel))
 				apiChannelsCID.PATCH("", NotImplemented, requires(permission.EditChannel))
@@ -127,7 +131,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiMessages := api.Group("/messages")
 		{
-			apiMessagesMID := apiMessages.Group("/:messageID", retrieve.MessageID(), h.checkMessageAccessPerm())
+			apiMessagesMID := apiMessages.Group("/:messageID", retrieve.MessageID(), requiresMessageAccessPerm)
 			{
 				apiMessagesMID.GET("", NotImplemented, requires(permission.GetMessage))
 				apiMessagesMID.PUT("", NotImplemented, bodyLimit(100), requires(permission.EditMessage))
@@ -150,7 +154,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiFiles.GET("", NotImplemented, requires(permission.DownloadFile))
 			apiFiles.POST("", NotImplemented, bodyLimit(30<<10), requires(permission.UploadFile))
-			apiFilesFID := apiFiles.Group("/:fileID", retrieve.FileID(), h.checkFileAccessPerm())
+			apiFilesFID := apiFiles.Group("/:fileID", retrieve.FileID(), requiresFileAccessPerm)
 			{
 				apiFilesFID.GET("", h.GetFile, requires(permission.DownloadFile))
 				apiFilesFID.DELETE("", NotImplemented, requires(permission.DeleteFile))
@@ -194,7 +198,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiWebhooks.GET("", NotImplemented, requires(permission.GetWebhook))
 			apiWebhooks.POST("", NotImplemented, requires(permission.CreateWebhook))
-			apiWebhooksWID := apiWebhooks.Group("/:webhookID", retrieve.WebhookID(), h.checkWebhookAccessPerm())
+			apiWebhooksWID := apiWebhooks.Group("/:webhookID", retrieve.WebhookID(), requiresWebhookAccessPerm)
 			{
 				apiWebhooksWID.GET("", NotImplemented, requires(permission.GetWebhook))
 				apiWebhooksWID.PATCH("", NotImplemented, requires(permission.EditWebhook))
@@ -238,8 +242,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiClientsCID := apiClients.Group("/:clientID", retrieve.ClientID())
 			{
 				apiClientsCID.GET("", NotImplemented, requires(permission.GetClients))
-				apiClientsCID.PATCH("", NotImplemented, h.checkClientAccessPerm(), requires(permission.EditMyClient))
-				apiClientsCID.DELETE("", NotImplemented, h.checkClientAccessPerm(), requires(permission.DeleteMyClient))
+				apiClientsCID.PATCH("", NotImplemented, requiresClientAccessPerm, requires(permission.EditMyClient))
+				apiClientsCID.DELETE("", NotImplemented, requiresClientAccessPerm, requires(permission.DeleteMyClient))
 			}
 		}
 		apiBots := api.Group("/bots")
@@ -249,12 +253,12 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiBotsBID := apiBots.Group("/:botID", retrieve.BotID())
 			{
 				apiBotsBID.GET("", NotImplemented, requires(permission.GetBot))
-				apiBotsBID.PATCH("", NotImplemented, h.checkBotAccessPerm(), requires(permission.EditBot))
-				apiBotsBID.DELETE("", NotImplemented, h.checkBotAccessPerm(), requires(permission.DeleteBot))
+				apiBotsBID.PATCH("", NotImplemented, requiresBotAccessPerm, requires(permission.EditBot))
+				apiBotsBID.DELETE("", NotImplemented, requiresBotAccessPerm, requires(permission.DeleteBot))
 				apiBotsBID.GET("/icon", h.GetBotIcon, requires(permission.GetBot, permission.DownloadFile))
-				apiBotsBID.PUT("/icon", h.ChangeBotIcon, h.checkBotAccessPerm(), requires(permission.EditBot))
-				apiBotsBID.GET("/logs", NotImplemented, h.checkBotAccessPerm(), requires(permission.GetBot))
-				apiBotsBIDActions := apiBotsBID.Group("/actions", h.checkBotAccessPerm(), requires(permission.EditBot))
+				apiBotsBID.PUT("/icon", h.ChangeBotIcon, requiresBotAccessPerm, requires(permission.EditBot))
+				apiBotsBID.GET("/logs", NotImplemented, requiresBotAccessPerm, requires(permission.GetBot))
+				apiBotsBIDActions := apiBotsBID.Group("/actions", requiresBotAccessPerm, requires(permission.EditBot))
 				{
 					apiBotsBIDActions.POST("/activate", h.ActivateBot)
 					apiBotsBIDActions.POST("/inactivate", h.InactivateBot)
@@ -302,117 +306,4 @@ func (h *Handlers) Setup(e *echo.Group) {
 	}
 
 	imagemagickPath = h.ImageMagickPath
-}
-
-// checkFileAccessPerm ファイルアクセス権限を確認するミドルウェア
-func (h *Handlers) checkFileAccessPerm() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			userID := getRequestUserID(c)
-			fileID := extension.GetRequestParamAsUUID(c, consts.ParamFileID)
-
-			// アクセス権確認
-			if ok, err := h.Repo.IsFileAccessible(fileID, userID); err != nil {
-				switch err {
-				case repository.ErrNilID, repository.ErrNotFound:
-					return herror.NotFound()
-				default:
-					return herror.InternalServerError(err)
-				}
-			} else if !ok {
-				return herror.Forbidden()
-			}
-
-			return next(c)
-		}
-	}
-}
-
-// checkBotAccessPerm BOTアクセス権限を確認するミドルウェア
-func (h *Handlers) checkBotAccessPerm() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			user := getRequestUser(c)
-			b := getParamBot(c)
-
-			// アクセス権確認
-			if !h.RBAC.IsGranted(user.Role, permission.AccessOthersBot) && b.CreatorID != user.ID {
-				return herror.Forbidden()
-			}
-
-			return next(c)
-		}
-	}
-}
-
-// checkWebhookAccessPerm Webhookアクセス権限を確認するミドルウェア
-func (h *Handlers) checkWebhookAccessPerm() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			user := getRequestUser(c)
-			w := getParamWebhook(c)
-
-			// アクセス権確認
-			if !h.RBAC.IsGranted(user.Role, permission.AccessOthersWebhook) && w.GetCreatorID() != user.ID {
-				return herror.Forbidden()
-			}
-
-			return next(c)
-		}
-	}
-}
-
-// checkClientAccessPerm Clientアクセス権限を確認するミドルウェア
-func (h *Handlers) checkClientAccessPerm() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			user := getRequestUser(c)
-			oc := getParamClient(c)
-
-			// アクセス権確認
-			if oc.CreatorID != user.ID {
-				return herror.Forbidden()
-			}
-
-			return next(c)
-		}
-	}
-}
-
-// checkMessageAccessPerm Messageアクセス権限を確認するミドルウェア
-func (h *Handlers) checkMessageAccessPerm() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			userID := getRequestUserID(c)
-			m := getParamMessage(c)
-
-			// アクセス権確認
-			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
-				return herror.InternalServerError(err)
-			} else if !ok {
-				return herror.NotFound()
-			}
-
-			return next(c)
-		}
-	}
-}
-
-// checkChannelAccessPerm Channelアクセス権限を確認するミドルウェア
-func (h *Handlers) checkChannelAccessPerm() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			userID := getRequestUserID(c)
-			ch := getParamChannel(c)
-
-			// アクセス権確認
-			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, ch.ID); err != nil {
-				return herror.InternalServerError(err)
-			} else if !ok {
-				return herror.NotFound()
-			}
-
-			return next(c)
-		}
-	}
 }
