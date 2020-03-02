@@ -197,13 +197,13 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiWebhooks := api.Group("/webhooks")
 		{
-			apiWebhooks.GET("", NotImplemented, requires(permission.GetWebhook))
-			apiWebhooks.POST("", NotImplemented, requires(permission.CreateWebhook))
+			apiWebhooks.GET("", h.GetWebhooks, requires(permission.GetWebhook))
+			apiWebhooks.POST("", h.CreateWebhook, requires(permission.CreateWebhook))
 			apiWebhooksWID := apiWebhooks.Group("/:webhookID", retrieve.WebhookID(), requiresWebhookAccessPerm)
 			{
-				apiWebhooksWID.GET("", NotImplemented, requires(permission.GetWebhook))
-				apiWebhooksWID.PATCH("", NotImplemented, requires(permission.EditWebhook))
-				apiWebhooksWID.DELETE("", NotImplemented, requires(permission.DeleteWebhook))
+				apiWebhooksWID.GET("", h.GetWebhook, requires(permission.GetWebhook))
+				apiWebhooksWID.PATCH("", h.EditWebhook, requires(permission.EditWebhook))
+				apiWebhooksWID.DELETE("", h.DeleteWebhook, requires(permission.DeleteWebhook))
 				apiWebhooksWID.GET("/icon", h.GetWebhookIcon, requires(permission.GetWebhook, permission.DownloadFile))
 				apiWebhooksWID.PUT("/icon", h.ChangeWebhookIcon, requires(permission.EditWebhook))
 				apiWebhooksWID.GET("/messages", NotImplemented, requires(permission.GetWebhook))

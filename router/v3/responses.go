@@ -64,3 +64,37 @@ func formatUserDetail(user *model.User, uts []*model.UsersTag, g []uuid.UUID) *U
 	}
 	return u
 }
+
+type Webhook struct {
+	WebhookID   string    `json:"id"`
+	BotUserID   string    `json:"botUserId"`
+	DisplayName string    `json:"displayName"`
+	Description string    `json:"description"`
+	Secure      bool      `json:"secure"`
+	ChannelID   string    `json:"channelId"`
+	OwnerID     string    `json:"ownerId"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+func formatWebhook(w model.Webhook) *Webhook {
+	return &Webhook{
+		WebhookID:   w.GetID().String(),
+		BotUserID:   w.GetBotUserID().String(),
+		DisplayName: w.GetName(),
+		Description: w.GetDescription(),
+		Secure:      len(w.GetSecret()) > 0,
+		ChannelID:   w.GetChannelID().String(),
+		OwnerID:     w.GetCreatorID().String(),
+		CreatedAt:   w.GetCreatedAt(),
+		UpdatedAt:   w.GetUpdatedAt(),
+	}
+}
+
+func formatWebhooks(ws []model.Webhook) []*Webhook {
+	res := make([]*Webhook, len(ws))
+	for i, w := range ws {
+		res[i] = formatWebhook(w)
+	}
+	return res
+}
