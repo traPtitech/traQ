@@ -297,8 +297,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 	apiNoAuth := e.Group("/v3")
 	{
 		apiNoAuth.GET("/version", h.GetVersion)
-		apiNoAuth.POST("/login", NotImplemented)
-		apiNoAuth.POST("/logout", NotImplemented)
+		apiNoAuth.POST("/login", h.Login)
+		apiNoAuth.POST("/logout", h.Logout)
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook)
 		apiNoAuthPublic := apiNoAuth.Group("/public")
 		{
