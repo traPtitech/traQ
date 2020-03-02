@@ -6,6 +6,28 @@ import (
 	"time"
 )
 
+type Channel struct {
+	ID         uuid.UUID     `json:"id"`
+	Name       string        `json:"name"`
+	ParentID   uuid.NullUUID `json:"parentId"`
+	Topic      string        `json:"topic"`
+	Children   []uuid.UUID   `json:"children"`
+	Visibility bool          `json:"visibility"`
+	Force      bool          `json:"force"`
+}
+
+func formatChannel(channel *model.Channel, childrenID []uuid.UUID) *Channel {
+	return &Channel{
+		ID:         channel.ID,
+		Name:       channel.Name,
+		ParentID:   uuid.NullUUID{UUID: channel.ParentID, Valid: channel.ParentID != uuid.Nil},
+		Topic:      channel.Topic,
+		Children:   childrenID,
+		Visibility: channel.IsVisible,
+		Force:      channel.IsForced,
+	}
+}
+
 type UserTag struct {
 	ID        uuid.UUID `json:"tagId"`
 	Tag       string    `json:"tag"`
