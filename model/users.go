@@ -89,6 +89,13 @@ func (user *User) IsActive() bool {
 	return user.Status == UserAccountStatusActive
 }
 
+func (user *User) GetResponseDisplayName() string {
+	if len(user.DisplayName) == 0 {
+		return user.Name
+	}
+	return user.DisplayName
+}
+
 // AuthenticateUser ユーザー構造体とパスワードを照合します
 func AuthenticateUser(user *User, password string) error {
 	if user == nil {

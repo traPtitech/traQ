@@ -6,6 +6,9 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/skip2/go-qrcode"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac"
+	"github.com/traPtitech/traQ/rbac/permission"
+	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -15,6 +18,44 @@ import (
 	"net/http"
 	"time"
 )
+
+// GetMe GET /users/me
+func (h *Handlers) GetMe(c echo.Context) error {
+	me := getRequestUser(c)
+
+	tags, err := h.Repo.GetUserTagsByUserID(me.ID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	groups, err := h.Repo.GetUserBelongingGroupIDs(me.ID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	var perms []rbac.Permission
+	if me.Role == role.Admin {
+		perms = permission.List.Array()
+	} else {
+		perms = h.RBAC.GetGrantedPermissions(me.Role).Array()
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"id":          me.ID,
+		"bio":         "", // TODO
+		"groups":      groups,
+		"tags":        formatUserTags(tags),
+		"updatedAt":   me.UpdatedAt,
+		"lastOnline":  me.LastOnline.Ptr(),
+		"twitterId":   me.TwitterID,
+		"name":        me.Name,
+		"displayName": me.GetResponseDisplayName(),
+		"iconFileId":  me.Icon,
+		"bot":         me.Bot,
+		"state":       me.Status.Int(),
+		"permissions": perms,
+	})
+}
 
 // PutMyPasswordRequest PUT /users/me/password リクエストボディ
 type PutMyPasswordRequest struct {

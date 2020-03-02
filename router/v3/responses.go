@@ -66,12 +66,12 @@ type UserDetail struct {
 }
 
 func formatUserDetail(user *model.User, uts []*model.UsersTag, g []uuid.UUID) *UserDetail {
-	u := &UserDetail{
+	return &UserDetail{
 		ID:          user.ID,
 		State:       user.Status.Int(),
 		Bot:         user.Bot,
 		IconFileID:  user.Icon,
-		DisplayName: user.DisplayName,
+		DisplayName: user.GetResponseDisplayName(),
 		Name:        user.Name,
 		TwitterID:   user.TwitterID,
 		LastOnline:  user.LastOnline.Ptr(),
@@ -80,11 +80,6 @@ func formatUserDetail(user *model.User, uts []*model.UsersTag, g []uuid.UUID) *U
 		Groups:      g,
 		Bio:         "", // TODO
 	}
-
-	if len(u.DisplayName) == 0 {
-		u.DisplayName = u.Name
-	}
-	return u
 }
 
 type Webhook struct {

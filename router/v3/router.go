@@ -74,7 +74,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			}
 			apiUsersMe := apiUsers.Group("/me")
 			{
-				apiUsersMe.GET("", NotImplemented, requires(permission.GetMe))
+				apiUsersMe.GET("", h.GetMe, requires(permission.GetMe))
 				apiUsersMe.PATCH("", NotImplemented, requires(permission.EditMe))
 				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
 				apiUsersMe.GET("/qr-code", h.GetMyQRCode, requires(permission.GetUserQRCode))
