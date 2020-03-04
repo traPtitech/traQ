@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
@@ -29,6 +30,25 @@ func (h *Handlers) GetBotIcon(c echo.Context) error {
 // ChangeBotIcon PUT /bots/:botID/icon
 func (h *Handlers) ChangeBotIcon(c echo.Context) error {
 	return changeUserIcon(c, h.Repo, getParamBot(c).BotUserID)
+}
+
+// GetChannelBots GET /channels/:channelID/bots
+func (h *Handlers) GetChannelBots(c echo.Context) error {
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+
+	bots, err := h.Repo.GetBots(repository.BotsQuery{}.CMemberOf(channelID))
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	res := make([]echo.Map, len(bots))
+	for i, v := range bots {
+		res[i] = echo.Map{
+			"botId":     v.ID,
+			"botUserId": v.BotUserID,
+		}
+	}
+	return c.JSON(http.StatusOK, res)
 }
 
 // ActivateBot POST /bots/:botID/actions/activate

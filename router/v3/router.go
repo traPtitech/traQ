@@ -126,7 +126,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiChannelsCID.GET("/subscribers", NotImplemented, requires(permission.GetChannelSubscription))
 				apiChannelsCID.PUT("/subscribers", NotImplemented, requires(permission.EditChannelSubscription))
 				apiChannelsCID.PATCH("/subscribers", NotImplemented, requires(permission.EditChannelSubscription))
-				apiChannelsCID.GET("/bots", NotImplemented, requires(permission.GetChannel))
+				apiChannelsCID.GET("/bots", h.GetChannelBots, requires(permission.GetChannel))
 				apiChannelsCID.GET("/events", NotImplemented, requires(permission.GetChannel))
 			}
 		}
