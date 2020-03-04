@@ -2668,10 +2668,6 @@ func (repo *TestRepository) CreateBot(name, displayName, description string, cre
 	panic("implement me")
 }
 
-func (repo *TestRepository) SetSubscribeEventsToBot(botID uuid.UUID, events model.BotEvents) error {
-	panic("implement me")
-}
-
 func (repo *TestRepository) GetBotByID(id uuid.UUID) (*model.Bot, error) {
 	panic("implement me")
 }

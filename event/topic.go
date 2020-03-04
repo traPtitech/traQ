@@ -203,11 +203,6 @@ const (
 	// 	Fields:
 	// 		bot_id: uuid.UUID
 	BotDeleted = "bot.deleted"
-	// BotSubscribeEventsChanged Botの購読イベントが変更された
-	// 	Fields:
-	// 		bot_id: uuid.UUID
-	// 		events: model.BotEvents
-	BotSubscribeEventsChanged = "bot.subscribe_events_changed"
 	// BotStateChanged Botの状態が変化した
 	// 	Fields:
 	// 		bot_id: uuid.UUID

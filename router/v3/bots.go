@@ -2,17 +2,74 @@ package v3
 
 import (
 	vd "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils/validator"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 )
+
+// PatchBotRequest PATCH /bots/:botID リクエストボディ
+type PatchBotRequest struct {
+	DisplayName     null.String     `json:"displayName"`
+	Description     null.String     `json:"description"`
+	Endpoint        null.String     `json:"endpoint"`
+	Privileged      null.Bool       `json:"privileged"`
+	DeveloperID     uuid.NullUUID   `json:"developerId"`
+	SubscribeEvents model.BotEvents `json:"subscribeEvents"`
+}
+
+func (r PatchBotRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.DisplayName, vd.RuneLength(1, 32)),
+		vd.Field(&r.Description, vd.RuneLength(0, 1000)),
+		vd.Field(&r.Endpoint, is.URL, validator.NotInternalURL),
+		vd.Field(&r.DeveloperID, validator.NotNilUUID),
+		vd.Field(&r.SubscribeEvents),
+	)
+}
+
+// EditBot PATCH /bots/:botID
+func (h *Handlers) EditBot(c echo.Context) error {
+	b := getParamBot(c)
+
+	var req PatchBotRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	if req.Privileged.Valid && getRequestUser(c).Role != role.Admin {
+		return herror.Forbidden("you are not permitted to set privileged flag to bots")
+	}
+
+	args := repository.UpdateBotArgs{
+		DisplayName:     req.DisplayName,
+		Description:     req.Description,
+		WebhookURL:      req.Endpoint,
+		Privileged:      req.Privileged,
+		CreatorID:       req.DeveloperID,
+		SubscribeEvents: req.SubscribeEvents,
+	}
+
+	if err := h.Repo.UpdateBot(b.ID, args); err != nil {
+		switch {
+		case repository.IsArgError(err):
+			return herror.BadRequest(err)
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
 
 // DeleteBot DELETE /bots/:botID
 func (h *Handlers) DeleteBot(c echo.Context) error {

@@ -4470,6 +4470,7 @@ components:
         subscribeEvents:
           type: array
           description: 購読するイベント
+          uniqueItems: false
           items:
             type: string
     BotTokens:

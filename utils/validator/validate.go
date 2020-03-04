@@ -33,9 +33,15 @@ var NotInternalURL = validation.By(func(value interface{}) error {
 
 // NotNilUUID uuid.Nilでない
 var NotNilUUID = validation.By(func(value interface{}) error {
-	u, _ := value.(uuid.UUID)
-	if u == uuid.Nil {
-		return errors.New("invalid uuid")
+	switch u := value.(type) {
+	case uuid.UUID:
+		if u == uuid.Nil {
+			return errors.New("invalid uuid")
+		}
+	case string:
+		if v := uuid.FromStringOrNil(u); v == uuid.Nil {
+			return errors.New("invalid uuid")
+		}
 	}
 	return nil
 })
