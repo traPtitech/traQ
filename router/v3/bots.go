@@ -14,6 +14,17 @@ import (
 	"net/http"
 )
 
+// DeleteBot DELETE /bots/:botID
+func (h *Handlers) DeleteBot(c echo.Context) error {
+	b := getParamBot(c)
+
+	if err := h.Repo.DeleteBot(b.ID); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 // GetBotIcon GET /bots/:botID/icon
 func (h *Handlers) GetBotIcon(c echo.Context) error {
 	w := getParamBot(c)

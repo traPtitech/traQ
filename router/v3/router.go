@@ -255,7 +255,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			{
 				apiBotsBID.GET("", NotImplemented, requires(permission.GetBot))
 				apiBotsBID.PATCH("", NotImplemented, requiresBotAccessPerm, requires(permission.EditBot))
-				apiBotsBID.DELETE("", NotImplemented, requiresBotAccessPerm, requires(permission.DeleteBot))
+				apiBotsBID.DELETE("", h.DeleteBot, requiresBotAccessPerm, requires(permission.DeleteBot))
 				apiBotsBID.GET("/icon", h.GetBotIcon, requires(permission.GetBot, permission.DownloadFile))
 				apiBotsBID.PUT("/icon", h.ChangeBotIcon, requiresBotAccessPerm, requires(permission.EditBot))
 				apiBotsBID.GET("/logs", NotImplemented, requiresBotAccessPerm, requires(permission.GetBot))
