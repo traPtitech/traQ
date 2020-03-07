@@ -190,3 +190,25 @@ func (h *Handlers) GetMessages(c echo.Context) error {
 
 	return serveMessages(c, h.Repo, req.convertC(channelID))
 }
+
+// PostMessage POST /channels/:channelID/messages
+func (h *Handlers) PostMessage(c echo.Context) error {
+	userID := getRequestUserID(c)
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+
+	var req PostMessageRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	if req.Embed {
+		req.Content = message.NewReplacer(h.Repo).Replace(req.Content)
+	}
+
+	m, err := h.Repo.CreateMessage(userID, channelID, req.Content)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusCreated, formatMessage(m))
+}
