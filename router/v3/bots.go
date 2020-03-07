@@ -35,6 +35,48 @@ func (h *Handlers) GetBots(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatBots(list))
 }
 
+// PostBotRequest POST /bots リクエストボディ
+type PostBotRequest struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
+	Description string `json:"description"`
+	Endpoint    string `json:"endpoint"`
+}
+
+func (r PostBotRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, validator.BotUserNameRuleRequired...),
+		vd.Field(&r.DisplayName, vd.Required, vd.RuneLength(1, 32)),
+		vd.Field(&r.Description, vd.Required, vd.RuneLength(0, 1000)),
+		vd.Field(&r.Endpoint, vd.Required, is.URL, validator.NotInternalURL),
+	)
+}
+
+// CreateBot POST /bots
+func (h *Handlers) CreateBot(c echo.Context) error {
+	var req PostBotRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	b, err := h.Repo.CreateBot(req.Name, req.DisplayName, req.Description, getRequestUserID(c), req.Endpoint)
+	if err != nil {
+		switch {
+		case err == repository.ErrAlreadyExists:
+			return herror.Conflict("this name has already been used")
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+
+	t, err := h.Repo.GetTokenByID(b.AccessTokenID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusCreated, formatBotDetail(b, t, make([]uuid.UUID, 0)))
+}
+
 // GetBot GET /bots/:botID
 func (h *Handlers) GetBot(c echo.Context) error {
 	b := getParamBot(c)
