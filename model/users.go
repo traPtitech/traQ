@@ -12,6 +12,7 @@ import (
 	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -49,6 +50,14 @@ var userAccountStatuses = map[UserAccountStatus]bool{
 	UserAccountStatusActive:      true,
 	UserAccountStatusSuspended:   true,
 }
+
+type UserType int
+
+const (
+	UserTypeHuman UserType = iota
+	UserTypeBot
+	UserTypeWebhook
+)
 
 // User userの構造体
 type User struct {
@@ -94,6 +103,16 @@ func (user *User) GetResponseDisplayName() string {
 		return user.Name
 	}
 	return user.DisplayName
+}
+
+func (user *User) GetUserType() UserType {
+	if user.Bot {
+		if strings.HasPrefix(user.Name, "Webhook") {
+			return UserTypeWebhook
+		}
+		return UserTypeBot
+	}
+	return UserTypeHuman
 }
 
 // AuthenticateUser ユーザー構造体とパスワードを照合します

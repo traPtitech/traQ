@@ -3,6 +3,8 @@ package v3
 import (
 	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils/message"
@@ -41,7 +43,6 @@ func (r PostMessageRequest) Validate() error {
 // EditMessage PUT /messages/:messageID
 func (h *Handlers) EditMessage(c echo.Context) error {
 	userID := getRequestUserID(c)
-	messageID := getParamAsUUID(c, consts.ParamMessageID)
 	m := getParamMessage(c)
 
 	var req PostMessageRequest
@@ -58,7 +59,61 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 		req.Content = message.NewReplacer(h.Repo).Replace(req.Content)
 	}
 
-	if err := h.Repo.UpdateMessage(messageID, req.Content); err != nil {
+	if err := h.Repo.UpdateMessage(m.ID, req.Content); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// DeleteMessage DELETE /message/:messageID
+func (h *Handlers) DeleteMessage(c echo.Context) error {
+	userID := getRequestUserID(c)
+	m := getParamMessage(c)
+
+	if m.UserID != userID {
+		mUser, err := h.Repo.GetUser(m.UserID)
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+
+		switch mUser.GetUserType() {
+		case model.UserTypeHuman:
+			return herror.Forbidden("you are not allowed to delete this message")
+		case model.UserTypeBot:
+			// BOTのメッセージの削除権限の確認
+			wh, err := h.Repo.GetBotByBotUserID(mUser.ID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return herror.Forbidden("you are not allowed to delete this message")
+				default:
+					return herror.InternalServerError(err)
+				}
+			}
+
+			if wh.CreatorID != userID {
+				return herror.Forbidden("you are not allowed to delete this message")
+			}
+		case model.UserTypeWebhook:
+			// Webhookのメッセージの削除権限の確認
+			wh, err := h.Repo.GetWebhookByBotUserID(mUser.ID)
+			if err != nil {
+				switch err {
+				case repository.ErrNotFound:
+					return herror.Forbidden("you are not allowed to delete this message")
+				default:
+					return herror.InternalServerError(err)
+				}
+			}
+
+			if wh.GetCreatorID() != userID {
+				return herror.Forbidden("you are not allowed to delete this message")
+			}
+		}
+	}
+
+	if err := h.Repo.DeleteMessage(m.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
