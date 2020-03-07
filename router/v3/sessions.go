@@ -6,10 +6,12 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
+	"time"
 )
 
 // PostLoginRequest POST /login リクエストボディ
@@ -98,5 +100,50 @@ func (h *Handlers) Logout(c echo.Context) error {
 	if redirect := c.QueryParam("redirect"); len(redirect) > 0 {
 		return c.Redirect(http.StatusFound, redirect)
 	}
+	return c.NoContent(http.StatusNoContent)
+}
+
+// GetMySessions GET /users/me/sessions
+func (h *Handlers) GetMySessions(c echo.Context) error {
+	userID := getRequestUserID(c)
+
+	ses, err := sessions.GetByUserID(userID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	type response struct {
+		ID         string    `json:"id"`
+		IP         string    `json:"ip"`
+		UA         string    `json:"ua"`
+		LastAccess time.Time `json:"lastAccess"`
+		IssuedAt   time.Time `json:"issuedAt"`
+	}
+
+	res := make([]response, len(ses))
+	for k, v := range ses {
+		referenceID, created, lastAccess, lastIP, lastUserAgent := v.GetSessionInfo()
+		res[k] = response{
+			ID:         referenceID.String(),
+			IP:         lastIP,
+			UA:         lastUserAgent,
+			LastAccess: lastAccess,
+			IssuedAt:   created,
+		}
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+// RevokeMySession DELETE /users/me/sessions/:referenceID
+func (h *Handlers) RevokeMySession(c echo.Context) error {
+	userID := getRequestUserID(c)
+	referenceID := getParamAsUUID(c, consts.ParamReferenceID)
+
+	err := sessions.DestroyByReferenceID(userID, referenceID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
 	return c.NoContent(http.StatusNoContent)
 }

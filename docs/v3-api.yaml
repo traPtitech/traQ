@@ -2150,8 +2150,6 @@ paths:
           description: |-
             No Content
             無効化しました。
-        '404':
-          description: Not Found
       operationId: revokeMySession
       tags:
         - authentication
@@ -4246,18 +4244,18 @@ components:
           type: string
           description: セッションUUID
           format: uuid
-        ipAddress:
+        ip:
           type: string
           description: 最終アクセスIPアドレス
           format: ipv4
-        userAgent:
+        ua:
           type: string
           description: 最終アクセスユーザーエージェント
         lastAccess:
           type: string
           format: date-time
           description: 最終アクセス日時
-        createdAt:
+        issuedAt:
           type: string
           description: 発行日時
           format: date-time
