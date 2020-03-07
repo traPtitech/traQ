@@ -5,6 +5,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/utils/message"
 	"net/http"
 )
 
@@ -23,6 +24,45 @@ func (h *Handlers) GetMyUnreadChannels(c echo.Context) error {
 // GetMessage GET /messages/:messageID
 func (h *Handlers) GetMessage(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatMessage(getParamMessage(c)))
+}
+
+// PostMessageRequest POST /channels/:channelID/messages等リクエストボディ
+type PostMessageRequest struct {
+	Content string `json:"content"`
+	Embed   bool   `json:"embed"`
+}
+
+func (r PostMessageRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Content, vd.Required, vd.RuneLength(1, 10000)),
+	)
+}
+
+// EditMessage PUT /messages/:messageID
+func (h *Handlers) EditMessage(c echo.Context) error {
+	userID := getRequestUserID(c)
+	messageID := getParamAsUUID(c, consts.ParamMessageID)
+	m := getParamMessage(c)
+
+	var req PostMessageRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	// 他人のテキストは編集できない
+	if userID != m.UserID {
+		return herror.Forbidden("This is not your message")
+	}
+
+	if req.Embed {
+		req.Content = message.NewReplacer(h.Repo).Replace(req.Content)
+	}
+
+	if err := h.Repo.UpdateMessage(messageID, req.Content); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }
 
 // GetMessageStamps GET /messages/:messageID/stamps

@@ -3415,6 +3415,7 @@ components:
           type: string
           description: メッセージ本文
           minLength: 1
+          maxLength: 10000
         embed:
           type: boolean
           default: false

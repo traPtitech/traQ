@@ -135,7 +135,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiMessagesMID := apiMessages.Group("/:messageID", retrieve.MessageID(), requiresMessageAccessPerm)
 			{
 				apiMessagesMID.GET("", h.GetMessage, requires(permission.GetMessage))
-				apiMessagesMID.PUT("", NotImplemented, bodyLimit(100), requires(permission.EditMessage))
+				apiMessagesMID.PUT("", h.EditMessage, bodyLimit(100), requires(permission.EditMessage))
 				apiMessagesMID.DELETE("", NotImplemented, requires(permission.DeleteMessage))
 				apiMessagesMID.GET("/pin", NotImplemented, requires(permission.GetMessage))
 				apiMessagesMID.POST("/pin", NotImplemented, requires(permission.CreateMessagePin))
