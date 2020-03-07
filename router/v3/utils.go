@@ -13,8 +13,10 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils/imagemagick"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -207,4 +209,59 @@ func saveUploadImage(c echo.Context, repo repository.Repository, name string, fT
 	}
 
 	return f.ID, nil
+}
+
+type MessagesQuery struct {
+	Limit     int       `query:"limit"`
+	Offset    int       `query:"offset"`
+	Since     null.Time `query:"since"`
+	Until     null.Time `query:"until"`
+	Inclusive bool      `query:"inclusive"`
+	Order     string    `query:"order"`
+}
+
+func (q *MessagesQuery) bind(c echo.Context) error {
+	return bindAndValidate(c, q)
+}
+
+func (q *MessagesQuery) Validate() error {
+	if q.Limit == 0 {
+		q.Limit = 20
+	}
+	return vd.ValidateStruct(q,
+		vd.Field(&q.Limit, vd.Min(1), vd.Max(200)),
+		vd.Field(&q.Offset, vd.Min(0)),
+	)
+}
+
+func (q *MessagesQuery) convert() repository.MessagesQuery {
+	return repository.MessagesQuery{
+		Since:     q.Since,
+		Until:     q.Until,
+		Inclusive: q.Inclusive,
+		Limit:     q.Limit,
+		Offset:    q.Offset,
+		Asc:       strings.ToLower(q.Order) == "asc",
+	}
+}
+
+func (q *MessagesQuery) convertC(cid uuid.UUID) repository.MessagesQuery {
+	r := q.convert()
+	r.Channel = cid
+	return r
+}
+
+func (q *MessagesQuery) convertU(uid uuid.UUID) repository.MessagesQuery {
+	r := q.convert()
+	r.User = uid
+	return r
+}
+
+func serveMessages(c echo.Context, repo repository.Repository, query repository.MessagesQuery) error {
+	messages, more, err := repo.GetMessages(query)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	c.Response().Header().Set(consts.HeaderMore, strconv.FormatBool(more))
+	return c.JSON(http.StatusOK, formatMessages(messages))
 }

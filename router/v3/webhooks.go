@@ -219,3 +219,15 @@ func (h *Handlers) DeleteWebhook(c echo.Context) error {
 
 	return c.NoContent(http.StatusNoContent)
 }
+
+// GetWebhookMessages GET /webhooks/:webhookID/messages
+func (h *Handlers) GetWebhookMessages(c echo.Context) error {
+	w := getParamWebhook(c)
+
+	var req MessagesQuery
+	if err := req.bind(c); err != nil {
+		return err
+	}
+
+	return serveMessages(c, h.Repo, req.convertU(w.GetBotUserID()))
+}

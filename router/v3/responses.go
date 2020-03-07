@@ -187,3 +187,35 @@ func formatBotDetail(b *model.Bot, t *model.OAuth2Token, channels []uuid.UUID) *
 		Channels:   channels,
 	}
 }
+
+type Message struct {
+	ID        uuid.UUID            `json:"id"`
+	UserID    uuid.UUID            `json:"userId"`
+	ChannelID uuid.UUID            `json:"channelId"`
+	Content   string               `json:"content"`
+	CreatedAt time.Time            `json:"createdAt"`
+	UpdatedAt time.Time            `json:"updatedAt"`
+	Pinned    bool                 `json:"pinned"`
+	Stamps    []model.MessageStamp `json:"stamps"`
+}
+
+func formatMessage(m *model.Message) *Message {
+	return &Message{
+		ID:        m.ID,
+		UserID:    m.UserID,
+		ChannelID: m.ChannelID,
+		Content:   m.Text,
+		CreatedAt: m.CreatedAt,
+		UpdatedAt: m.UpdatedAt,
+		Pinned:    m.Pin != nil,
+		Stamps:    m.Stamps,
+	}
+}
+
+func formatMessages(ms []*model.Message) []*Message {
+	res := make([]*Message, len(ms))
+	for i, m := range ms {
+		res[i] = formatMessage(m)
+	}
+	return res
+}

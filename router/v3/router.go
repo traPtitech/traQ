@@ -206,7 +206,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiWebhooksWID.DELETE("", h.DeleteWebhook, requires(permission.DeleteWebhook))
 				apiWebhooksWID.GET("/icon", h.GetWebhookIcon, requires(permission.GetWebhook, permission.DownloadFile))
 				apiWebhooksWID.PUT("/icon", h.ChangeWebhookIcon, requires(permission.EditWebhook))
-				apiWebhooksWID.GET("/messages", NotImplemented, requires(permission.GetWebhook))
+				apiWebhooksWID.GET("/messages", h.GetWebhookMessages, requires(permission.GetWebhook, permission.GetMessage))
 			}
 		}
 		apiGroups := api.Group("/groups")
