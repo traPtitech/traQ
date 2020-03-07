@@ -253,7 +253,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiBots.POST("", NotImplemented, requires(permission.CreateBot))
 			apiBotsBID := apiBots.Group("/:botID", retrieve.BotID())
 			{
-				apiBotsBID.GET("", NotImplemented, requires(permission.GetBot))
+				apiBotsBID.GET("", h.GetBot, requires(permission.GetBot))
 				apiBotsBID.PATCH("", h.EditBot, requiresBotAccessPerm, requires(permission.EditBot))
 				apiBotsBID.DELETE("", h.DeleteBot, requiresBotAccessPerm, requires(permission.DeleteBot))
 				apiBotsBID.GET("/icon", h.GetBotIcon, requires(permission.GetBot, permission.DownloadFile))

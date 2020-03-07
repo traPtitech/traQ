@@ -115,3 +115,75 @@ func formatWebhooks(ws []model.Webhook) []*Webhook {
 	}
 	return res
 }
+
+type Bot struct {
+	ID              uuid.UUID       `json:"id"`
+	BotUserID       uuid.UUID       `json:"botUserId"`
+	Description     string          `json:"description"`
+	DeveloperID     uuid.UUID       `json:"developerId"`
+	SubscribeEvents model.BotEvents `json:"subscribeEvents"`
+	State           model.BotState  `json:"state"`
+	CreatedAt       time.Time       `json:"createdAt"`
+	UpdatedAt       time.Time       `json:"updatedAt"`
+}
+
+func formatBot(b *model.Bot) *Bot {
+	return &Bot{
+		ID:              b.ID,
+		BotUserID:       b.BotUserID,
+		Description:     b.Description,
+		SubscribeEvents: b.SubscribeEvents,
+		State:           b.State,
+		DeveloperID:     b.CreatorID,
+		CreatedAt:       b.CreatedAt,
+		UpdatedAt:       b.UpdatedAt,
+	}
+}
+
+func formatBots(bs []*model.Bot) []*Bot {
+	res := make([]*Bot, len(bs))
+	for i, b := range bs {
+		res[i] = formatBot(b)
+	}
+	return res
+}
+
+type BotTokens struct {
+	VerificationToken string `json:"verificationToken"`
+	AccessToken       string `json:"accessToken"`
+}
+
+type BotDetail struct {
+	ID              uuid.UUID       `json:"id"`
+	BotUserID       uuid.UUID       `json:"botUserId"`
+	Description     string          `json:"description"`
+	DeveloperID     uuid.UUID       `json:"developerId"`
+	SubscribeEvents model.BotEvents `json:"subscribeEvents"`
+	State           model.BotState  `json:"state"`
+	CreatedAt       time.Time       `json:"createdAt"`
+	UpdatedAt       time.Time       `json:"updatedAt"`
+	Tokens          BotTokens       `json:"tokens"`
+	Endpoint        string          `json:"endpoint"`
+	Privileged      bool            `json:"privileged"`
+	Channels        []uuid.UUID     `json:"channels"`
+}
+
+func formatBotDetail(b *model.Bot, t *model.OAuth2Token, channels []uuid.UUID) *BotDetail {
+	return &BotDetail{
+		ID:              b.ID,
+		BotUserID:       b.BotUserID,
+		Description:     b.Description,
+		SubscribeEvents: b.SubscribeEvents,
+		State:           b.State,
+		DeveloperID:     b.CreatorID,
+		CreatedAt:       b.CreatedAt,
+		UpdatedAt:       b.UpdatedAt,
+		Tokens: BotTokens{
+			VerificationToken: b.VerificationToken,
+			AccessToken:       t.AccessToken,
+		},
+		Endpoint:   b.PostURL,
+		Privileged: b.Privileged,
+		Channels:   channels,
+	}
+}

@@ -8,6 +8,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -16,6 +17,39 @@ import (
 	"gopkg.in/guregu/null.v3"
 	"net/http"
 )
+
+// GetBot GET /bots/:botID
+func (h *Handlers) GetBot(c echo.Context) error {
+	b := getParamBot(c)
+
+	if isTrue(c.QueryParam("detail")) {
+		user := getRequestUser(c)
+
+		// アクセス権確認
+		if !h.RBAC.IsGranted(user.Role, permission.AccessOthersBot) && b.CreatorID != user.ID {
+			return herror.Forbidden()
+		}
+
+		t, err := h.Repo.GetTokenByID(b.AccessTokenID)
+		if err != nil {
+			switch err {
+			case repository.ErrNotFound:
+				return herror.HTTPError(http.StatusInternalServerError, "This bot's Access Token has been revoked unexpectedly. Please inform admin about this error.")
+			default:
+				return herror.InternalServerError(err)
+			}
+		}
+
+		ids, err := h.Repo.GetParticipatingChannelIDsByBot(b.ID)
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+
+		return c.JSON(http.StatusOK, formatBotDetail(b, t, ids))
+	}
+
+	return c.JSON(http.StatusOK, formatBot(b))
+}
 
 // PatchBotRequest PATCH /bots/:botID リクエストボディ
 type PatchBotRequest struct {

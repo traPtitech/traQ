@@ -747,12 +747,10 @@ paths:
     patch:
       summary: ユーザー情報を変更
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserDetail'
+        '204':
+          description: |-
+            No Content
+            変更されました。
         '400':
           description: Bad Request
         '403':
@@ -1059,12 +1057,10 @@ paths:
     patch:
       summary: 自分のユーザー情報を変更
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MyUserDetail'
+        '204':
+          description: |-
+            No Content
+            変更されました。
         '400':
           description: Bad Request
       tags:
@@ -2447,7 +2443,9 @@ paths:
           description: 全てのBOTを取得するかどうか
       tags:
         - bot
-      description: BOT情報のリストを取得します。
+      description: |-
+        BOT情報のリストを取得します。
+        allを指定しない場合、自分が開発者のBOTのみを返します。
   '/bots/{botId}/icon':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
