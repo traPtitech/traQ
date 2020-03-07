@@ -3367,10 +3367,6 @@ components:
           type: string
           format: date-time
           description: ピン留めされた日時
-        messageId:
-          type: string
-          format: uuid
-          description: メッセージUUID
         message:
           $ref: '#/components/schemas/Message'
     Channel:
