@@ -258,7 +258,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiBotsBID.DELETE("", h.DeleteBot, requiresBotAccessPerm, requires(permission.DeleteBot))
 				apiBotsBID.GET("/icon", h.GetBotIcon, requires(permission.GetBot, permission.DownloadFile))
 				apiBotsBID.PUT("/icon", h.ChangeBotIcon, requiresBotAccessPerm, requires(permission.EditBot))
-				apiBotsBID.GET("/logs", NotImplemented, requiresBotAccessPerm, requires(permission.GetBot))
+				apiBotsBID.GET("/logs", h.GetBotLogs, requiresBotAccessPerm, requires(permission.GetBot))
 				apiBotsBIDActions := apiBotsBID.Group("/actions", requiresBotAccessPerm, requires(permission.EditBot))
 				{
 					apiBotsBIDActions.POST("/activate", h.ActivateBot)

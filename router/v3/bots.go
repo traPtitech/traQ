@@ -193,6 +193,39 @@ func (h *Handlers) ChangeBotIcon(c echo.Context) error {
 	return changeUserIcon(c, h.Repo, getParamBot(c).BotUserID)
 }
 
+// GetBotLogsRequest GET /bots/:botID/logs リクエストクエリ
+type GetBotLogsRequest struct {
+	Limit  int `query:"limit"`
+	Offset int `query:"offset"`
+}
+
+func (r *GetBotLogsRequest) Validate() error {
+	if r.Limit == 0 {
+		r.Limit = 30
+	}
+	return vd.ValidateStruct(r,
+		vd.Field(&r.Limit, vd.Min(1), vd.Max(200)),
+		vd.Field(&r.Offset, vd.Min(0)),
+	)
+}
+
+// GetBotLogs GET /bots/:botID/logs
+func (h *Handlers) GetBotLogs(c echo.Context) error {
+	b := getParamBot(c)
+
+	var req GetBotLogsRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	logs, err := h.Repo.GetBotEventLogs(b.ID, req.Limit, req.Offset)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, logs)
+}
+
 // GetChannelBots GET /channels/:channelID/bots
 func (h *Handlers) GetChannelBots(c echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
