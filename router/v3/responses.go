@@ -197,6 +197,7 @@ type Message struct {
 	UpdatedAt time.Time            `json:"updatedAt"`
 	Pinned    bool                 `json:"pinned"`
 	Stamps    []model.MessageStamp `json:"stamps"`
+	ThreadID  uuid.NullUUID        `json:"threadId"` // TODO
 }
 
 func formatMessage(m *model.Message) *Message {

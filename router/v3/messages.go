@@ -20,6 +20,11 @@ func (h *Handlers) GetMyUnreadChannels(c echo.Context) error {
 	return c.JSON(http.StatusOK, list)
 }
 
+// GetMessage GET /messages/:messageID
+func (h *Handlers) GetMessage(c echo.Context) error {
+	return c.JSON(http.StatusOK, formatMessage(getParamMessage(c)))
+}
+
 // GetMessageStamps GET /messages/:messageID/stamps
 func (h *Handlers) GetMessageStamps(c echo.Context) error {
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
