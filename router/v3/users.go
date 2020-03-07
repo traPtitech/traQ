@@ -15,6 +15,7 @@ import (
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"time"
 )
@@ -248,4 +249,47 @@ func (h *Handlers) GetUser(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, formatUserDetail(user, tags, groups))
+}
+
+// PatchUserRequest PATCH /users/:userID リクエストボディ
+type PatchUserRequest struct {
+	DisplayName null.String `json:"displayName"`
+	TwitterID   null.String `json:"twitterId"`
+	Role        null.String `json:"role"`
+	State       null.Int    `json:"state"`
+}
+
+func (r PatchUserRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.DisplayName, vd.RuneLength(0, 64)),
+		vd.Field(&r.TwitterID, validator.TwitterIDRule...),
+		vd.Field(&r.Role, vd.RuneLength(0, 30)),
+		vd.Field(&r.State, vd.Min(0), vd.Max(2)),
+	)
+}
+
+// EditUser PATCH /users/:userID
+func (h *Handlers) EditUser(c echo.Context) error {
+	userID := getParamAsUUID(c, consts.ParamUserID)
+
+	var req PatchUserRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	args := repository.UpdateUserArgs{
+		DisplayName: req.DisplayName,
+		TwitterID:   req.TwitterID,
+		Role:        req.Role,
+	}
+	if req.State.Valid {
+		args.UserState.Valid = true
+		args.UserState.State = model.UserAccountStatus(req.State.Int64)
+	}
+
+	if err := h.Repo.UpdateUser(userID, args); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
 }

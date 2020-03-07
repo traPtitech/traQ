@@ -409,25 +409,6 @@ func (repo *TestRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
 	return nil
 }
 
-func (repo *TestRepository) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
-	if id == uuid.Nil {
-		return repository.ErrNilID
-	}
-	if !status.Valid() {
-		return repository.ArgError("status", "invalid status")
-	}
-	repo.UsersLock.Lock()
-	defer repo.UsersLock.Unlock()
-	u, ok := repo.Users[id]
-	if !ok {
-		return repository.ErrNotFound
-	}
-	u.Status = status
-	u.UpdatedAt = time.Now()
-	repo.Users[id] = u
-	return nil
-}
-
 func (repo *TestRepository) UpdateUserLastOnline(id uuid.UUID, t time.Time) (err error) {
 	if id == uuid.Nil {
 		return repository.ErrNilID

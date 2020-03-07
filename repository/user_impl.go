@@ -148,6 +148,9 @@ func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 		if args.Role.Valid {
 			changes["role"] = args.Role.String
 		}
+		if args.UserState.Valid {
+			changes["status"] = args.UserState.State.Int()
+		}
 
 		if len(changes) > 0 {
 			if err := tx.Model(&u).Updates(changes).Error; err != nil {
@@ -201,31 +204,6 @@ func (repo *GormRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
 			},
 		})
 	}
-	return nil
-}
-
-// ChangeUserAccountStatus implements UserRepository interface.
-func (repo *GormRepository) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
-	if id == uuid.Nil {
-		return ErrNilID
-	}
-	if !status.Valid() {
-		return ArgError("status", "invalid status")
-	}
-	result := repo.db.Model(&model.User{ID: id}).Update("status", status)
-	if err := result.Error; err != nil {
-		return err
-	}
-	if result.RowsAffected == 0 {
-		return ErrNotFound
-	}
-	repo.hub.Publish(hub.Message{
-		Name: event.UserAccountStatusUpdated,
-		Fields: hub.Fields{
-			"user_id": id,
-			"status":  status,
-		},
-	})
 	return nil
 }
 

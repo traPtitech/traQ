@@ -167,13 +167,16 @@ func (h *Handlers) PutUserStatus(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.ChangeUserAccountStatus(userID, model.UserAccountStatus(req.Status)); err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		default:
-			return herror.InternalServerError(err)
-		}
+	var args repository.UpdateUserArgs
+	args.UserState.Valid = true
+	args.UserState.State = model.UserAccountStatus(req.Status)
+
+	if !args.UserState.State.Valid() {
+		return herror.BadRequest("invalid status")
+	}
+
+	if err := h.Repo.UpdateUser(userID, args); err != nil {
+		return herror.InternalServerError(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
