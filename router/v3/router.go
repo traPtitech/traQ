@@ -249,7 +249,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiBots := api.Group("/bots")
 		{
-			apiBots.GET("", NotImplemented, requires(permission.GetBot))
+			apiBots.GET("", h.GetBots, requires(permission.GetBot))
 			apiBots.POST("", NotImplemented, requires(permission.CreateBot))
 			apiBotsBID := apiBots.Group("/:botID", retrieve.BotID())
 			{

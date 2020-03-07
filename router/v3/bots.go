@@ -18,6 +18,23 @@ import (
 	"net/http"
 )
 
+// GetBots GET /bots
+func (h *Handlers) GetBots(c echo.Context) error {
+	user := getRequestUser(c)
+
+	var q repository.BotsQuery
+	if !isTrue(c.QueryParam("all")) {
+		q = q.CreatedBy(user.ID)
+	}
+
+	list, err := h.Repo.GetBots(q)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, formatBots(list))
+}
+
 // GetBot GET /bots/:botID
 func (h *Handlers) GetBot(c echo.Context) error {
 	b := getParamBot(c)
