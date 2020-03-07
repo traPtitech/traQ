@@ -31,7 +31,7 @@ func (h *Handlers) GetMessage(c echo.Context) error {
 // PostMessageRequest POST /channels/:channelID/messages等リクエストボディ
 type PostMessageRequest struct {
 	Content string `json:"content"`
-	Embed   bool   `json:"embed"`
+	Embed   bool   `json:"embed" query:"embed"`
 }
 
 func (r PostMessageRequest) Validate() error {
@@ -177,4 +177,16 @@ func (h *Handlers) RemoveMessageStamp(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+// GetMessages GET /channels/:channelID/messages
+func (h *Handlers) GetMessages(c echo.Context) error {
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+
+	var req MessagesQuery
+	if err := req.bind(c); err != nil {
+		return err
+	}
+
+	return serveMessages(c, h.Repo, req.convertC(channelID))
 }
