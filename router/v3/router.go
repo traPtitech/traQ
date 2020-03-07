@@ -104,8 +104,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersMe.DELETE("/unread", NotImplemented, requires(permission.DeleteUnread))
 				apiUsersMe.GET("/sessions", h.GetMySessions, requires(permission.GetMySessions))
 				apiUsersMe.DELETE("/sessions/:referenceID", h.RevokeMySession, requires(permission.DeleteMySessions))
-				apiUsersMe.GET("/tokens", NotImplemented, requires(permission.GetMyTokens))
-				apiUsersMe.DELETE("/tokens/:tokenID", NotImplemented, requires(permission.RevokeMyToken))
+				apiUsersMe.GET("/tokens", h.GetMyTokens, requires(permission.GetMyTokens))
+				apiUsersMe.DELETE("/tokens/:tokenID", h.RevokeMyToken, requires(permission.RevokeMyToken))
 			}
 		}
 		apiChannels := api.Group("/channels")

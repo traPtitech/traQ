@@ -147,3 +147,57 @@ func (h *Handlers) RevokeMySession(c echo.Context) error {
 
 	return c.NoContent(http.StatusNoContent)
 }
+
+// GetMyTokens GET /users/me/tokens
+func (h *Handlers) GetMyTokens(c echo.Context) error {
+	userID := getRequestUserID(c)
+
+	ot, err := h.Repo.GetTokensByUser(userID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	type response struct {
+		ID       uuid.UUID          `json:"id"`
+		ClientID string             `json:"clientId"`
+		Scopes   model.AccessScopes `json:"scopes"`
+		IssuedAt time.Time          `json:"issuedAt"`
+	}
+
+	res := make([]response, len(ot))
+	for i, v := range ot {
+		res[i] = response{
+			ID:       v.ID,
+			ClientID: v.ClientID,
+			Scopes:   v.Scopes,
+			IssuedAt: v.CreatedAt,
+		}
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+// RevokeMyToken DELETE /users/me/tokens/:tokenID
+func (h *Handlers) RevokeMyToken(c echo.Context) error {
+	tokenID := getParamAsUUID(c, consts.ParamTokenID)
+	userID := getRequestUserID(c)
+
+	ot, err := h.Repo.GetTokenByID(tokenID)
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return herror.NotFound()
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+	if ot.UserID != userID {
+		return herror.NotFound()
+	}
+
+	if err := h.Repo.DeleteTokenByAccess(ot.AccessToken); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
