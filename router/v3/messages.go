@@ -212,3 +212,22 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, formatMessage(m))
 }
+
+// GetDirectMessages GET /users/:userId/messages
+func (h *Handlers) GetDirectMessages(c echo.Context) error {
+	myID := getRequestUserID(c)
+	targetID := getParamAsUUID(c, consts.ParamUserID)
+
+	var req MessagesQuery
+	if err := req.bind(c); err != nil {
+		return err
+	}
+
+	// DMチャンネルを取得
+	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return serveMessages(c, h.Repo, req.convertC(ch.ID))
+}

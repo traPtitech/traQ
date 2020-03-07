@@ -56,7 +56,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			{
 				apiUsersUID.GET("", h.GetUser, requires(permission.GetUser))
 				apiUsersUID.PATCH("", NotImplemented, requires(permission.EditOtherUsers))
-				apiUsersUID.GET("/messages", NotImplemented, requires(permission.GetMessage))
+				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage))
 				apiUsersUID.POST("/messages", NotImplemented, bodyLimit(100), requires(permission.PostMessage))
 				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
 				apiUsersUID.PUT("/icon", h.ChangeUserIcon, requires(permission.EditOtherUsers))
