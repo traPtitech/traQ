@@ -231,3 +231,31 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 
 	return serveMessages(c, h.Repo, req.convertC(ch.ID))
 }
+
+// PostDirectMessage POST /users/:userId/messages
+func (h *Handlers) PostDirectMessage(c echo.Context) error {
+	myID := getRequestUserID(c)
+	targetID := getParamAsUUID(c, consts.ParamUserID)
+
+	var req PostMessageRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	// DMチャンネルを取得
+	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	if req.Embed {
+		req.Content = message.NewReplacer(h.Repo).Replace(req.Content)
+	}
+
+	m, err := h.Repo.CreateMessage(myID, ch.ID, req.Content)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusCreated, formatMessage(m))
+}
