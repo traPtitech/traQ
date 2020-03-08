@@ -11,6 +11,8 @@ import (
 	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 // GetChannels GET /channels
@@ -168,4 +170,56 @@ func (h *Handlers) GetChannelPins(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, formatPins(pins))
+}
+
+type channelEventsQuery struct {
+	Limit     int       `query:"limit"`
+	Offset    int       `query:"offset"`
+	Since     null.Time `query:"since"`
+	Until     null.Time `query:"until"`
+	Inclusive bool      `query:"inclusive"`
+	Order     string    `query:"order"`
+}
+
+func (q *channelEventsQuery) bind(c echo.Context) error {
+	return bindAndValidate(c, q)
+}
+
+func (q *channelEventsQuery) Validate() error {
+	if q.Limit == 0 {
+		q.Limit = 20
+	}
+	return vd.ValidateStruct(q,
+		vd.Field(&q.Limit, vd.Min(1), vd.Max(200)),
+		vd.Field(&q.Offset, vd.Min(0)),
+	)
+}
+
+func (q *channelEventsQuery) convert(cid uuid.UUID) repository.ChannelEventsQuery {
+	return repository.ChannelEventsQuery{
+		Since:     q.Since,
+		Until:     q.Until,
+		Inclusive: q.Inclusive,
+		Limit:     q.Limit,
+		Offset:    q.Offset,
+		Asc:       strings.ToLower(q.Order) == "asc",
+		Channel:   cid,
+	}
+}
+
+// GetChannelEvents GET /channels/:channelID/events
+func (h *Handlers) GetChannelEvents(c echo.Context) error {
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+
+	var req channelEventsQuery
+	if err := req.bind(c); err != nil {
+		return err
+	}
+
+	events, more, err := h.Repo.GetChannelEvents(req.convert(channelID))
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	c.Response().Header().Set(consts.HeaderMore, strconv.FormatBool(more))
+	return c.JSON(http.StatusOK, events)
 }

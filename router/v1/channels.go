@@ -3,6 +3,7 @@ package v1
 import (
 	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/realtime/viewer"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -12,9 +13,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/labstack/echo/v4"
 )
 
 // GetChannels GET /channels
@@ -280,12 +278,12 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 }
 
 type channelEventsQuery struct {
-	Limit     int        `query:"limit"`
-	Offset    int        `query:"offset"`
-	Since     *time.Time `query:"since"`
-	Until     *time.Time `query:"until"`
-	Inclusive bool       `query:"inclusive"`
-	Order     string     `query:"order"`
+	Limit     int       `query:"limit"`
+	Offset    int       `query:"offset"`
+	Since     null.Time `query:"since"`
+	Until     null.Time `query:"until"`
+	Inclusive bool      `query:"inclusive"`
+	Order     string    `query:"order"`
 }
 
 func (q *channelEventsQuery) bind(c echo.Context) error {
@@ -294,8 +292,8 @@ func (q *channelEventsQuery) bind(c echo.Context) error {
 
 func (q *channelEventsQuery) convert(cid uuid.UUID) repository.ChannelEventsQuery {
 	return repository.ChannelEventsQuery{
-		Since:     null.TimeFromPtr(q.Since),
-		Until:     null.TimeFromPtr(q.Until),
+		Since:     q.Since,
+		Until:     q.Until,
 		Inclusive: q.Inclusive,
 		Limit:     q.Limit,
 		Offset:    q.Offset,
