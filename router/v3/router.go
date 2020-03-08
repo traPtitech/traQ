@@ -101,7 +101,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 					apiUsersMeStars.DELETE("/:channelID", h.RemoveMyStar, requires(permission.EditChannelStar))
 				}
 				apiUsersMe.GET("/unread", h.GetMyUnreadChannels, requires(permission.GetUnread))
-				apiUsersMe.DELETE("/unread", NotImplemented, requires(permission.DeleteUnread))
+				apiUsersMe.DELETE("/unread/:channelID", h.ReadChannel, requires(permission.DeleteUnread))
 				apiUsersMe.GET("/sessions", h.GetMySessions, requires(permission.GetMySessions))
 				apiUsersMe.DELETE("/sessions/:referenceID", h.RevokeMySession, requires(permission.DeleteMySessions))
 				apiUsersMe.GET("/tokens", h.GetMyTokens, requires(permission.GetMyTokens))

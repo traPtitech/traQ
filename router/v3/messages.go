@@ -23,6 +23,18 @@ func (h *Handlers) GetMyUnreadChannels(c echo.Context) error {
 	return c.JSON(http.StatusOK, list)
 }
 
+// ReadChannel DELETE /users/me/unread/:channelID
+func (h *Handlers) ReadChannel(c echo.Context) error {
+	userID := getRequestUserID(c)
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+
+	if err := h.Repo.DeleteUnreadsByChannelID(channelID, userID); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 // GetMessage GET /messages/:messageID
 func (h *Handlers) GetMessage(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatMessage(getParamMessage(c)))

@@ -2025,27 +2025,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/UnreadChannel'
       operationId: getMyUnreadChannels
-    delete:
-      summary: 未読チャンネルを既読にします
-      responses:
-        '204':
-          description: |-
-            No Content
-            既読にしました。
-        '400':
-          description: Bad Request
-      operationId: readChannels
-      parameters:
-        - schema:
-            type: string
-            format: uuid
-          in: query
-          name: channelId
-          description: 既読にするチャンネルUUID
-      description: 既読にするチャンネルUUIDが指定されてない場合は、全てのチャンネルを既読にします。
-      tags:
-        - me
-        - notification
   /version:
     get:
       summary: バージョンを取得します
@@ -3284,6 +3263,18 @@ paths:
               required:
                 - file
         description: ''
+  '/users/me/unread/{channelId}':
+    parameters:
+      - $ref: '#/components/parameters/channelIdInPath'
+    delete:
+      summary: 未読チャンネルを既読にします
+      operationId: readChannel
+      responses:
+        '204':
+          description: |-
+            No Content
+            既読にしました。
+      description: ''
 components:
   schemas:
     Message:
