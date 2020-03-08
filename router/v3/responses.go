@@ -50,6 +50,32 @@ func formatUserTags(uts []*model.UsersTag) []UserTag {
 	return res
 }
 
+type User struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	DisplayName string    `json:"displayName"`
+	IconFileID  uuid.UUID `json:"iconFileId"`
+	Bot         bool      `json:"bot"`
+	State       int       `json:"state"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+func formatUsers(users []*model.User) []User {
+	res := make([]User, len(users))
+	for i, user := range users {
+		res[i] = User{
+			ID:          user.ID,
+			Name:        user.Name,
+			DisplayName: user.GetResponseDisplayName(),
+			IconFileID:  user.Icon,
+			Bot:         user.Bot,
+			State:       user.Status.Int(),
+			UpdatedAt:   user.UpdatedAt,
+		}
+	}
+	return res
+}
+
 type UserDetail struct {
 	ID          uuid.UUID   `json:"id"`
 	State       int         `json:"state"`

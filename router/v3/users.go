@@ -20,6 +20,21 @@ import (
 	"time"
 )
 
+// GetUsers GET /users
+func (h *Handlers) GetUsers(c echo.Context) error {
+	q := repository.UsersQuery{}
+
+	if !isTrue(c.QueryParam("include-suspended")) {
+		q = q.Active()
+	}
+
+	users, err := h.Repo.GetUsers(q)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	return c.JSON(http.StatusOK, formatUsers(users))
+}
+
 // GetMe GET /users/me
 func (h *Handlers) GetMe(c echo.Context) error {
 	me := getRequestUser(c)

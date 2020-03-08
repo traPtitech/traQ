@@ -50,7 +50,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	{
 		apiUsers := api.Group("/users")
 		{
-			apiUsers.GET("", NotImplemented, requires(permission.GetUser))
+			apiUsers.GET("", h.GetUsers, requires(permission.GetUser))
 			apiUsers.POST("", NotImplemented, requires(permission.RegisterUser))
 			apiUsersUID := apiUsers.Group("/:userID", retrieve.UserID(false))
 			{
