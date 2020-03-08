@@ -13,9 +13,8 @@ CREATE TABLE `user_groups` (
   `name` varchar(30) NOT NULL,
   `description` text NOT NULL,
   `type` varchar(30) NOT NULL DEFAULT '',
-  `admin_user_id` char(36) NOT NULL,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `updated_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -31,9 +30,8 @@ CREATE TABLE `user_groups` (
 | name | varchar(30) |  | false |  |  | グループ名 |
 | description | text |  | false |  |  | グループ説明 |
 | type | varchar(30) |  | false |  |  | グループタイプ |
-| admin_user_id | char(36) |  | false |  |  | 管理者UUID |
-| created_at | timestamp(6) |  | true |  |  |  |
-| updated_at | timestamp(6) |  | true |  |  |  |
+| created_at | datetime(6) |  | true |  |  |  |
+| updated_at | datetime(6) |  | true |  |  |  |
 
 ## Constraints
 

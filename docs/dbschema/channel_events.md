@@ -13,7 +13,7 @@ CREATE TABLE `channel_events` (
   `channel_id` char(36) NOT NULL,
   `event_type` varchar(30) NOT NULL,
   `detail` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `date_time` timestamp(6) NULL DEFAULT NULL,
+  `date_time` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`event_id`),
   KEY `idx_channel_events_channel_id_date_time` (`channel_id`,`date_time`),
   KEY `idx_channel_events_channel_id_event_type_date_time` (`channel_id`,`event_type`,`date_time`),
@@ -31,7 +31,7 @@ CREATE TABLE `channel_events` (
 | channel_id | char(36) |  | false |  | [channels](channels.md) | チャンネルUUID |
 | event_type | varchar(30) |  | false |  |  | イベントタイプ |
 | detail | text |  | false |  |  | イベント詳細(jsonテキストが格納) |
-| date_time | timestamp(6) |  | true |  |  | イベント発生日時 |
+| date_time | datetime(6) |  | true |  |  | イベント発生日時 |
 
 ## Constraints
 

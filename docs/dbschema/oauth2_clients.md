@@ -17,9 +17,9 @@ CREATE TABLE `oauth2_clients` (
   `secret` varchar(36) DEFAULT NULL,
   `redirect_uri` text,
   `scopes` text,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `updated_at` timestamp(6) NULL DEFAULT NULL,
-  `deleted_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
@@ -38,9 +38,9 @@ CREATE TABLE `oauth2_clients` (
 | secret | varchar(36) |  | true |  |  | クライアントシークレット |
 | redirect_uri | text |  | true |  |  | リダイレクトURI |
 | scopes | text |  | true |  |  | スコープ |
-| created_at | timestamp(6) |  | true |  |  |  |
-| updated_at | timestamp(6) |  | true |  |  |  |
-| deleted_at | timestamp(6) |  | true |  |  |  |
+| created_at | datetime(6) |  | true |  |  |  |
+| updated_at | datetime(6) |  | true |  |  |  |
+| deleted_at | datetime(6) |  | true |  |  |  |
 
 ## Constraints
 

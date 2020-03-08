@@ -18,9 +18,9 @@ CREATE TABLE `channels` (
   `is_visible` tinyint(1) NOT NULL DEFAULT '0',
   `creator_id` char(36) NOT NULL,
   `updater_id` char(36) NOT NULL,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `updated_at` timestamp(6) NULL DEFAULT NULL,
-  `deleted_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_parent` (`name`,`parent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -41,9 +41,9 @@ CREATE TABLE `channels` (
 | is_visible | tinyint(1) | 0 | false |  |  | 可視チャンネルかどうか |
 | creator_id | char(36) |  | false |  | [users](users.md) | チャンネル作成者UUID |
 | updater_id | char(36) |  | false |  | [users](users.md) | チャンネル更新者UUID |
-| created_at | timestamp(6) |  | true |  |  | チャンネル作成日時 |
-| updated_at | timestamp(6) |  | true |  |  | チャンネル更新日時 |
-| deleted_at | timestamp(6) |  | true |  |  | チャンネル削除日時 |
+| created_at | datetime(6) |  | true |  |  | チャンネル作成日時 |
+| updated_at | datetime(6) |  | true |  |  | チャンネル更新日時 |
+| deleted_at | datetime(6) |  | true |  |  | チャンネル削除日時 |
 
 ## Constraints
 

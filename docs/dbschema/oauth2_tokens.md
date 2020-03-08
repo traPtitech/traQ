@@ -18,8 +18,8 @@ CREATE TABLE `oauth2_tokens` (
   `refresh_enabled` tinyint(1) DEFAULT '0',
   `scopes` text,
   `expires_in` int(11) DEFAULT NULL,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `deleted_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `access_token` (`access_token`),
   UNIQUE KEY `refresh_token` (`refresh_token`)
@@ -41,8 +41,8 @@ CREATE TABLE `oauth2_tokens` (
 | refresh_enabled | tinyint(1) | 0 | true |  |  | リフレッシュトークンが有効かどうか |
 | scopes | text |  | true |  |  | スコープ |
 | expires_in | int(11) |  | true |  |  | 有効秒 |
-| created_at | timestamp(6) |  | true |  |  |  |
-| deleted_at | timestamp(6) |  | true |  |  |  |
+| created_at | datetime(6) |  | true |  |  |  |
+| deleted_at | datetime(6) |  | true |  |  |  |
 
 ## Constraints
 

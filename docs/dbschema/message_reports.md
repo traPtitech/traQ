@@ -13,8 +13,8 @@ CREATE TABLE `message_reports` (
   `message_id` char(36) NOT NULL,
   `reporter` char(36) NOT NULL,
   `reason` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `deleted_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `message_reporter` (`message_id`,`reporter`),
   KEY `idx_message_reports_created_at` (`created_at`)
@@ -31,8 +31,8 @@ CREATE TABLE `message_reports` (
 | message_id | char(36) |  | false |  |  | メッセージUUID |
 | reporter | char(36) |  | false |  |  | 通報者UUID |
 | reason | text |  | false |  |  | 通報理由 |
-| created_at | timestamp(6) |  | true |  |  |  |
-| deleted_at | timestamp(6) |  | true |  |  |  |
+| created_at | datetime(6) |  | true |  |  |  |
+| deleted_at | datetime(6) |  | true |  |  |  |
 
 ## Constraints
 

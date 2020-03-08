@@ -13,8 +13,8 @@ CREATE TABLE `messages_stamps` (
   `stamp_id` char(36) NOT NULL,
   `user_id` char(36) NOT NULL,
   `count` int(11) NOT NULL,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `updated_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`message_id`,`stamp_id`,`user_id`),
   KEY `idx_messages_stamps_message_id` (`message_id`),
   KEY `idx_messages_stamps_updated_at` (`updated_at`),
@@ -36,8 +36,8 @@ CREATE TABLE `messages_stamps` (
 | stamp_id | char(36) |  | false |  | [stamps](stamps.md) | スタンプUUID |
 | user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
 | count | int(11) |  | false |  |  | スタンプ数 |
-| created_at | timestamp(6) |  | true |  |  | 作成日時 |
-| updated_at | timestamp(6) |  | true |  |  | 更新日時 |
+| created_at | datetime(6) |  | true |  |  | 作成日時 |
+| updated_at | datetime(6) |  | true |  |  | 更新日時 |
 
 ## Constraints
 

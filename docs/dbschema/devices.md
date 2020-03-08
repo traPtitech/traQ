@@ -11,7 +11,7 @@ FCMデバイステーブル
 CREATE TABLE `devices` (
   `token` varchar(190) NOT NULL,
   `user_id` char(36) NOT NULL,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`token`),
   KEY `idx_devices_user_id` (`user_id`),
   CONSTRAINT `devices_user_id_users_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -26,7 +26,7 @@ CREATE TABLE `devices` (
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | token | varchar(190) |  | false |  |  | FCMデバイストークン |
 | user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
-| created_at | timestamp(6) |  | true |  |  | 作成日時 |
+| created_at | datetime(6) |  | true |  |  | 作成日時 |
 
 ## Constraints
 

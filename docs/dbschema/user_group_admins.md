@@ -1,17 +1,16 @@
-# user_group_members
+# user_group_admins
 
 ## Description
 
-ユーザーグループメンバーテーブル
+ユーザーグループ管理者テーブル
 
 <details>
 <summary><strong>Table Definition</strong></summary>
 
 ```sql
-CREATE TABLE `user_group_members` (
+CREATE TABLE `user_group_admins` (
   `group_id` char(36) NOT NULL,
   `user_id` char(36) NOT NULL,
-  `role` varchar(100) NOT NULL DEFAULT '',
   PRIMARY KEY (`group_id`,`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
@@ -24,7 +23,6 @@ CREATE TABLE `user_group_members` (
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | group_id | char(36) |  | false |  |  | グループUUID |
 | user_id | char(36) |  | false |  |  | ユーザーUUID |
-| role | varchar(100) |  | false |  |  | 役割 |
 
 ## Constraints
 
@@ -40,7 +38,7 @@ CREATE TABLE `user_group_members` (
 
 ## Relations
 
-![er](user_group_members.svg)
+![er](user_group_admins.svg)
 
 ---
 

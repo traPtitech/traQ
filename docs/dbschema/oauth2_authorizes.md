@@ -19,7 +19,7 @@ CREATE TABLE `oauth2_authorizes` (
   `code_challenge` varchar(128) DEFAULT NULL,
   `code_challenge_method` text,
   `nonce` text,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
@@ -40,7 +40,7 @@ CREATE TABLE `oauth2_authorizes` (
 | code_challenge | varchar(128) |  | true |  |  | PKCEコードチャレンジ |
 | code_challenge_method | text |  | true |  |  | PKCEコードチャレンジ方式 |
 | nonce | text |  | true |  |  | nonce |
-| created_at | timestamp(6) |  | true |  |  |  |
+| created_at | datetime(6) |  | true |  |  |  |
 
 ## Constraints
 

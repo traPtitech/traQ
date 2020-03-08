@@ -19,8 +19,8 @@ CREATE TABLE `files` (
   `has_thumbnail` tinyint(1) NOT NULL DEFAULT '0',
   `thumbnail_width` int(11) NOT NULL DEFAULT '0',
   `thumbnail_height` int(11) NOT NULL DEFAULT '0',
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `deleted_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
@@ -41,8 +41,8 @@ CREATE TABLE `files` (
 | has_thumbnail | tinyint(1) | 0 | false |  |  | サムネイル画像を持っているか |
 | thumbnail_width | int(11) | 0 | false |  |  | サムネイル画像幅 |
 | thumbnail_height | int(11) | 0 | false |  |  | サムネイル画像高さ |
-| created_at | timestamp(6) |  | true |  |  |  |
-| deleted_at | timestamp(6) |  | true |  |  |  |
+| created_at | datetime(6) |  | true |  |  |  |
+| deleted_at | datetime(6) |  | true |  |  |  |
 
 ## Constraints
 

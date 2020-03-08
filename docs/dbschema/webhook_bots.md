@@ -15,9 +15,9 @@ CREATE TABLE `webhook_bots` (
   `secret` text NOT NULL,
   `channel_id` char(36) NOT NULL,
   `creator_id` char(36) NOT NULL,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `updated_at` timestamp(6) NULL DEFAULT NULL,
-  `deleted_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `bot_user_id` (`bot_user_id`),
   KEY `webhook_bots_creator_id_users_id_foreign` (`creator_id`),
@@ -35,14 +35,14 @@ CREATE TABLE `webhook_bots` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false |  |  |  |
-| bot_user_id | char(36) |  | false |  |  | WebhookユーザーUUID |
+| bot_user_id | char(36) |  | false |  | [users](users.md) | WebhookユーザーUUID |
 | description | text |  | false |  |  | 説明 |
 | secret | text |  | false |  |  | BOTシークレット |
 | channel_id | char(36) |  | false |  | [channels](channels.md) | デフォルト投稿先チャンネルUUID |
 | creator_id | char(36) |  | false |  | [users](users.md) | 作成者UUID |
-| created_at | timestamp(6) |  | true |  |  |  |
-| updated_at | timestamp(6) |  | true |  |  |  |
-| deleted_at | timestamp(6) |  | true |  |  |  |
+| created_at | datetime(6) |  | true |  |  |  |
+| updated_at | datetime(6) |  | true |  |  |  |
+| deleted_at | datetime(6) |  | true |  |  |  |
 
 ## Constraints
 
@@ -50,7 +50,7 @@ CREATE TABLE `webhook_bots` (
 | ---- | ---- | ---------- |
 | bot_user_id | UNIQUE | UNIQUE KEY bot_user_id (bot_user_id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
-| webhook_bots_bot_user_id_users_id_foreign | UNIQUE | UNIQUE KEY webhook_bots_bot_user_id_users_id_foreign (bot_user_id) |
+| webhook_bots_bot_user_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (bot_user_id) REFERENCES users (id) |
 | webhook_bots_channel_id_channels_id_foreign | FOREIGN KEY | FOREIGN KEY (channel_id) REFERENCES channels (id) |
 | webhook_bots_creator_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (creator_id) REFERENCES users (id) |
 

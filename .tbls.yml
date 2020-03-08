@@ -246,13 +246,18 @@ comments:
     columnComments:
       group_id: グループUUID
       user_id: ユーザーUUID
+      role: 役割
+  - table: user_group_admins
+    tableComment: ユーザーグループ管理者テーブル
+    columnComments:
+      group_id: グループUUID
+      user_id: ユーザーUUID
   - table: user_groups
     tableComment: ユーザーグループテーブル
     columnComments:
       name: グループ名
       description: グループ説明
       type: グループタイプ
-      admin_user_id: 管理者UUID
   - table: user_roles
     tableComment: ユーザーロールテーブル
     columnComments:
