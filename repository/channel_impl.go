@@ -41,6 +41,7 @@ func (repo *GormRepository) CreatePublicChannel(name string, parent, creatorID u
 	case dmChannelRootUUID: // DMルート
 		return nil, ErrForbidden
 	default: // ルート以外
+		// 親チャンネル検証
 		pCh, err := repo.GetChannel(parent)
 		if err != nil {
 			return nil, err
@@ -107,87 +108,6 @@ func (repo *GormRepository) CreatePublicChannel(name string, parent, creatorID u
 			"channelId": ch.ID,
 		}, ch.UpdatedAt)
 	}
-	return ch, nil
-}
-
-// CreateChildChannel implements ChannelRepository interface. TODO トランザクション
-func (repo *GormRepository) CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*model.Channel, error) {
-	// ダイレクトメッセージルートの子チャンネルは作れない
-	if parentID == dmChannelRootUUID {
-		return nil, ErrForbidden
-	}
-
-	// 親チャンネル検証
-	pCh, err := repo.GetChannel(parentID)
-	if err != nil {
-		return nil, err
-	}
-
-	// ダイレクトメッセージの子チャンネルは作れない
-	if pCh.IsDMChannel() {
-		return nil, ErrForbidden
-	}
-
-	// チャンネル名検証
-	if !validator.ChannelRegex.MatchString(name) {
-		return nil, ArgError("name", "invalid name")
-	}
-	if has, err := repo.isChannelPresent(repo.db, name, pCh.ID); err != nil {
-		return nil, err
-	} else if has {
-		return nil, ErrAlreadyExists
-	}
-
-	// 深さを検証
-	for parent, depth := pCh, 2; ; { // 祖先
-		if parent.ParentID == uuid.Nil {
-			// ルート
-			break
-		}
-
-		parent, err = repo.GetChannel(parent.ParentID)
-		if err != nil {
-			if err == ErrNotFound {
-				break
-			}
-			return nil, err
-		}
-		depth++
-		if depth > model.MaxChannelDepth {
-			return nil, ErrChannelDepthLimitation
-		}
-	}
-
-	ch := &model.Channel{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      name,
-		ParentID:  pCh.ID,
-		CreatorID: creatorID,
-		UpdaterID: creatorID,
-		IsForced:  false,
-		IsVisible: true,
-		IsPublic:  true,
-	}
-
-	if err := repo.db.Create(ch).Error; err != nil {
-		return nil, err
-	}
-	channelsCounter.Inc()
-
-	repo.hub.Publish(hub.Message{
-		Name: event.ChannelCreated,
-		Fields: hub.Fields{
-			"channel_id": ch.ID,
-			"channel":    ch,
-			"private":    !ch.IsPublic,
-		},
-	})
-
-	// ロギング
-	go repo.recordChannelEvent(ch.ParentID, model.ChannelEventChildCreated, model.ChannelEventDetail{
-		"userId":    ch.CreatorID,
-		"channelId": ch.ID,
-	}, ch.UpdatedAt)
 	return ch, nil
 }
 

@@ -58,16 +58,6 @@ type ChannelRepository interface {
 	// 存在しない親チャンネルを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error)
-	// CreateChildChannel 子チャンネルを作成します
-	//
-	// 成功した場合、チャンネルとnilを返します。
-	// 引数に問題がある場合、ArgumentErrorを返します。
-	// 既にNameが使われている場合、ErrAlreadyExistsを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// 作成不可能な親チャンネルを指定した場合、ErrForbiddenを返します。
-	// 存在しない親チャンネルを指定した場合、ErrNotFoundを返します。
-	// DBによるエラーを返すことがあります。
-	CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*model.Channel, error)
 	// UpdateChannel 指定したチャンネルの情報を変更します
 	//
 	// 成功した場合、nilを返します。

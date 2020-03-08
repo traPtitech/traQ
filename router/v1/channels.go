@@ -187,7 +187,7 @@ func (h *Handlers) PostChannelChildren(c echo.Context) error {
 	}
 
 	// 子チャンネル作成
-	ch, err := h.Repo.CreateChildChannel(req.Name, parentCh.ID, userID)
+	ch, err := h.Repo.CreatePublicChannel(req.Name, parentCh.ID, userID)
 	if err != nil {
 		switch {
 		case repository.IsArgError(err):
