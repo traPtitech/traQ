@@ -160,7 +160,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pin'
+                $ref: '#/components/schemas/MessagePin'
         '404':
           description: |-
             Not Found
@@ -177,7 +177,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pin'
+                $ref: '#/components/schemas/MessagePin'
         '400':
           description: |-
             Forbidden
@@ -3355,7 +3355,7 @@ components:
     Pin:
       title: Pin
       type: object
-      description: ピン情報
+      description: ピン情報(メッセージ本体付き)
       properties:
         userId:
           type: string
@@ -5024,6 +5024,19 @@ components:
           type: string
           description: 作成者UUID
           format: uuid
+    MessagePin:
+      title: MessagePin
+      type: object
+      description: ピン情報
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: ピン留めしたユーザーUUID
+        pinnedAt:
+          type: string
+          format: date-time
+          description: ピン留めされた日時
   headers:
     X-TRAQ-MORE:
       schema:

@@ -216,7 +216,7 @@ func mustMakePin(t *testing.T, repo repository.Repository, messageID, userID uui
 	t.Helper()
 	p, err := repo.CreatePin(messageID, userID)
 	require.NoError(t, err)
-	return p
+	return p.ID
 }
 
 func mustMakeTag(t *testing.T, repo repository.Repository, userID uuid.UUID, tagText string) uuid.UUID {

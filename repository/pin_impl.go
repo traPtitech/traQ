@@ -10,9 +10,9 @@ import (
 )
 
 // CreatePin implements PinRepository interface.
-func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, error) {
+func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (*model.Pin, error) {
 	if messageID == uuid.Nil || userID == uuid.Nil {
-		return uuid.Nil, ErrNilID
+		return nil, ErrNilID
 	}
 	var (
 		p       model.Pin
@@ -35,7 +35,7 @@ func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, e
 		return nil
 	})
 	if err != nil {
-		return uuid.Nil, err
+		return nil, err
 	}
 
 	if changed {
@@ -54,7 +54,7 @@ func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, e
 		}, p.CreatedAt)
 	}
 
-	return p.ID, err
+	return &p, err
 }
 
 // GetPin implements PinRepository interface.
@@ -68,14 +68,6 @@ func (repo *GormRepository) GetPin(id uuid.UUID) (p *model.Pin, err error) {
 		return nil, convertError(err)
 	}
 	return p, nil
-}
-
-// IsPinned implements PinRepository interface.
-func (repo *GormRepository) IsPinned(messageID uuid.UUID) (bool, error) {
-	if messageID == uuid.Nil {
-		return false, nil
-	}
-	return dbExists(repo.db, &model.Pin{MessageID: messageID})
 }
 
 // DeletePin implements PinRepository interface.

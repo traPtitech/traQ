@@ -66,7 +66,7 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// DeleteMessage DELETE /message/:messageID
+// DeleteMessage DELETE /messages/:messageID
 func (h *Handlers) DeleteMessage(c echo.Context) error {
 	userID := getRequestUserID(c)
 	m := getParamMessage(c)
@@ -114,6 +114,43 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 	}
 
 	if err := h.Repo.DeleteMessage(m.ID); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// GetPin GET /messages/:messageID/pin
+func (h *Handlers) GetPin(c echo.Context) error {
+	m := getParamMessage(c)
+	if m.Pin == nil {
+		return herror.NotFound("this message is not pinned")
+	}
+	return c.JSON(http.StatusOK, formatMessagePin(m.Pin))
+}
+
+// CreatePin POST /messages/:messageID/pin
+func (h *Handlers) CreatePin(c echo.Context) error {
+	m := getParamMessage(c)
+	if m.Pin != nil {
+		return herror.BadRequest("this message has already been pinned")
+	}
+
+	p, err := h.Repo.CreatePin(m.ID, getRequestUserID(c))
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	return c.JSON(http.StatusCreated, formatMessagePin(p))
+}
+
+// RemovePin DELETE /messages/:messageID/pin
+func (h *Handlers) RemovePin(c echo.Context) error {
+	m := getParamMessage(c)
+	if m.Pin == nil {
+		return herror.NotFound("this message is not pinned")
+	}
+
+	if err := h.Repo.DeletePin(m.Pin.ID, getRequestUserID(c)); err != nil {
 		return herror.InternalServerError(err)
 	}
 

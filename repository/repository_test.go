@@ -192,7 +192,7 @@ func mustMakePin(t *testing.T, repo Repository, messageID, userID uuid.UUID) uui
 	t.Helper()
 	p, err := repo.CreatePin(messageID, userID)
 	require.NoError(t, err)
-	return p
+	return p.ID
 }
 
 func mustMakeUserGroup(t *testing.T, repo Repository, name string, adminID uuid.UUID) *model.UserGroup {

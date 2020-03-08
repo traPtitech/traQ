@@ -244,3 +244,15 @@ func formatPins(pins []*model.Pin) []*Pin {
 	}
 	return res
 }
+
+type MessagePin struct {
+	UserID   uuid.UUID `json:"userId"`
+	PinnedAt time.Time `json:"pinnedAt"`
+}
+
+func formatMessagePin(pin *model.Pin) *Pin {
+	return &Pin{
+		UserID:   pin.UserID,
+		PinnedAt: pin.CreatedAt,
+	}
+}

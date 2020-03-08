@@ -1893,15 +1893,16 @@ func (repo *TestRepository) GetStaredChannels(userID uuid.UUID) ([]uuid.UUID, er
 	return result, nil
 }
 
-func (repo *TestRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, error) {
+func (repo *TestRepository) CreatePin(messageID, userID uuid.UUID) (*model.Pin, error) {
 	if messageID == uuid.Nil || userID == uuid.Nil {
-		return uuid.Nil, repository.ErrNilID
+		return nil, repository.ErrNilID
 	}
 	repo.PinsLock.Lock()
 	defer repo.PinsLock.Unlock()
 	for _, pin := range repo.Pins {
+		pin := pin
 		if pin.MessageID == messageID {
-			return pin.ID, nil
+			return &pin, nil
 		}
 	}
 	p := model.Pin{
@@ -1911,7 +1912,7 @@ func (repo *TestRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, e
 		CreatedAt: time.Now(),
 	}
 	repo.Pins[p.ID] = p
-	return p.ID, nil
+	return &p, nil
 }
 
 func (repo *TestRepository) GetPin(id uuid.UUID) (*model.Pin, error) {
@@ -1925,17 +1926,6 @@ func (repo *TestRepository) GetPin(id uuid.UUID) (*model.Pin, error) {
 	pin.Message = repo.Messages[pin.MessageID]
 	repo.MessagesLock.RUnlock()
 	return &pin, nil
-}
-
-func (repo *TestRepository) IsPinned(messageID uuid.UUID) (bool, error) {
-	repo.PinsLock.RLock()
-	defer repo.PinsLock.RUnlock()
-	for _, p := range repo.Pins {
-		if p.MessageID == messageID {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 func (repo *TestRepository) DeletePin(id uuid.UUID, userID uuid.UUID) error {
