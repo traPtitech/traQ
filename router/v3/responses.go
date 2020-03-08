@@ -282,3 +282,59 @@ func formatMessagePin(pin *model.Pin) *Pin {
 		PinnedAt: pin.CreatedAt,
 	}
 }
+
+type UserGroupMember struct {
+	ID   uuid.UUID `json:"id"`
+	Role string    `json:"role"`
+}
+
+func formatUserGroupMembers(members []*model.UserGroupMember) []UserGroupMember {
+	arr := make([]UserGroupMember, len(members))
+	for i, m := range members {
+		arr[i] = UserGroupMember{
+			ID:   m.UserID,
+			Role: m.Role,
+		}
+	}
+	return arr
+}
+
+func formatUserGroupAdmins(admins []*model.UserGroupAdmin) []uuid.UUID {
+	arr := make([]uuid.UUID, len(admins))
+	for i, m := range admins {
+		arr[i] = m.UserID
+	}
+	return arr
+}
+
+type UserGroup struct {
+	ID          uuid.UUID         `json:"id"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Type        string            `json:"type"`
+	Members     []UserGroupMember `json:"members"`
+	Admins      []uuid.UUID       `json:"admins"`
+	CreatedAt   time.Time         `json:"createdAt"`
+	UpdatedAt   time.Time         `json:"updatedAt"`
+}
+
+func formatUserGroup(g *model.UserGroup) *UserGroup {
+	return &UserGroup{
+		ID:          g.ID,
+		Name:        g.Name,
+		Description: g.Description,
+		Type:        g.Type,
+		Members:     formatUserGroupMembers(g.Members),
+		Admins:      formatUserGroupAdmins(g.Admins),
+		CreatedAt:   g.CreatedAt,
+		UpdatedAt:   g.UpdatedAt,
+	}
+}
+
+func formatUserGroups(gs []*model.UserGroup) []*UserGroup {
+	arr := make([]*UserGroup, len(gs))
+	for i, g := range gs {
+		arr[i] = formatUserGroup(g)
+	}
+	return arr
+}

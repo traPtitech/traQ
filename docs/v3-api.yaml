@@ -3244,6 +3244,91 @@ paths:
             No Content
             既読にしました。
       description: ''
+      tags:
+        - me
+        - notification
+  '/groups/{groupId}/admins/{userId}':
+    parameters:
+      - $ref: '#/components/parameters/groupIdInPath'
+      - $ref: '#/components/parameters/userIdInPath'
+    delete:
+      summary: グループ管理者を削除
+      responses:
+        '204':
+          description: |-
+            No Content
+            指定したユーザーがユーザーグループ管理者から削除されました。
+        '400':
+          description: |-
+            Bad Request
+            管理者がグループに存在しません。
+        '403':
+          description: |-
+            Forbidden
+            ユーザーグループを操作する権限がありません。
+        '404':
+          description: |-
+            Not Found
+            ユーザーグループが見つかりません。
+      tags:
+        - group
+      operationId: removeUserGroupAdmin
+      description: |-
+        指定したユーザーグループから指定した管理者を削除します。
+        対象のユーザーグループの管理者権限が必要です。
+  '/groups/{groupId}/admins':
+    parameters:
+      - $ref: '#/components/parameters/groupIdInPath'
+    post:
+      summary: グループ管理者を追加
+      responses:
+        '204':
+          description: |-
+            No Content
+            追加されました。
+        '400':
+          description: Bad Request
+        '403':
+          description: |-
+            Forbidden
+            ユーザーグループを操作する権限がありません。
+        '404':
+          description: |-
+            Not Found
+            ユーザーグループが見つかりません。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostUserGroupAdminRequest'
+        description: ''
+      tags:
+        - group
+      operationId: addUserGroupAdmin
+      description: |-
+        指定したグループに管理者を追加します。
+        対象のユーザーグループの管理者権限が必要です。
+    get:
+      summary: グループ管理者を取得
+      tags:
+        - group
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                description: ユーザーグループ管理者のUUIDの配列
+                items:
+                  type: string
+                  format: uuid
+        '404':
+          description: |-
+            Not Found
+            ユーザーグループが見つかりません。
+      operationId: getUserGroupAdmins
+      description: 指定したグループの管理者のリストを取得します。
 components:
   schemas:
     Message:
@@ -5004,6 +5089,17 @@ components:
           type: string
           format: date-time
           description: ピン留めされた日時
+    PostUserGroupAdminRequest:
+      title: PostUserGroupAdmin
+      type: object
+      description: グループ管理者追加リクエスト
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 追加するユーザーのUUID
+      required:
+        - id
   headers:
     X-TRAQ-MORE:
       schema:

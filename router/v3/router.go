@@ -45,6 +45,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC, h.Repo)
 	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.Repo)
 	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.Repo)
+	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC, h.Repo)
 
 	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo))
 	{
@@ -213,20 +214,28 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiGroups.GET("", NotImplemented, requires(permission.GetUserGroup))
 			apiGroups.POST("", NotImplemented, requires(permission.CreateUserGroup))
-			apiGroupsGID := apiGroups.Group("/:groupID") // TODO retriever
+			apiGroupsGID := apiGroups.Group("/:groupID", retrieve.GroupID())
 			{
 				apiGroupsGID.GET("", NotImplemented, requires(permission.GetUserGroup))
-				apiGroupsGID.PATCH("", NotImplemented, requires(permission.EditUserGroup))
-				apiGroupsGID.DELETE("", NotImplemented, requires(permission.DeleteUserGroup))
+				apiGroupsGID.PATCH("", NotImplemented, requiresGroupAdminPerm, requires(permission.EditUserGroup))
+				apiGroupsGID.DELETE("", NotImplemented, requiresGroupAdminPerm, requires(permission.DeleteUserGroup))
 				apiGroupsGIDMembers := apiGroupsGID.Group("/members")
 				{
 					apiGroupsGIDMembers.GET("", NotImplemented, requires(permission.GetUserGroup))
-					apiGroupsGIDMembers.POST("", NotImplemented, requires(permission.EditUserGroup))
-					apiGroupsGIDMembers.PUT("", NotImplemented, requires(permission.EditUserGroup))
-					apiGroupsGIDMembersUID := apiGroupsGIDMembers.Group("/:userID")
+					apiGroupsGIDMembers.POST("", NotImplemented, requiresGroupAdminPerm, requires(permission.EditUserGroup))
+					apiGroupsGIDMembersUID := apiGroupsGIDMembers.Group("/:userID", requiresGroupAdminPerm)
 					{
 						apiGroupsGIDMembersUID.PATCH("", NotImplemented, requires(permission.EditUserGroup))
 						apiGroupsGIDMembersUID.DELETE("", NotImplemented, requires(permission.EditUserGroup))
+					}
+				}
+				apiGroupsGIDAdmins := apiGroupsGID.Group("/admins")
+				{
+					apiGroupsGIDAdmins.GET("", NotImplemented, requires(permission.GetUserGroup))
+					apiGroupsGIDAdmins.POST("", NotImplemented, requiresGroupAdminPerm, requires(permission.EditUserGroup))
+					apiGroupsGIDAdminsUID := apiGroupsGIDAdmins.Group("/:userID", requiresGroupAdminPerm)
+					{
+						apiGroupsGIDAdminsUID.DELETE("", NotImplemented, requires(permission.EditUserGroup))
 					}
 				}
 			}

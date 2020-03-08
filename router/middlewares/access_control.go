@@ -181,3 +181,19 @@ func CheckChannelAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Mid
 		}
 	}
 }
+
+// CheckUserGroupAdminPerm UserGroup管理者権限を確認するミドルウェア
+func CheckUserGroupAdminPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			userID := c.Get(consts.KeyUser).(*model.User).ID
+			g := c.Get(consts.KeyParamGroup).(*model.UserGroup)
+
+			if !g.IsAdmin(userID) {
+				return herror.Forbidden()
+			}
+
+			return next(c)
+		}
+	}
+}
