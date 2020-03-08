@@ -221,7 +221,7 @@ func (h *Handlers) PutChannelParent(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.ChangeChannelParent(channelID, req.Parent, getRequestUserID(c)); err != nil {
+	if err := h.Repo.UpdateChannel(channelID, repository.UpdateChannelArgs{Parent: uuid.NullUUID{Valid: true, UUID: req.Parent}, UpdaterID: getRequestUserID(c)}); err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
 			return herror.Conflict("channel name conflicts")

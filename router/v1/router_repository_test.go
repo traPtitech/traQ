@@ -930,122 +930,105 @@ func (repo *TestRepository) UpdateChannel(channelID uuid.UUID, args repository.U
 	if args.ForcedNotification.Valid {
 		ch.IsForced = args.ForcedNotification.Bool
 	}
-	if args.Name.Valid {
-		// チャンネル名検証
-		if !validator.ChannelRegex.MatchString(args.Name.String) {
-			return repository.ArgError("args.Name", "invalid name")
-		}
-
-		// ダイレクトメッセージチャンネルの名前は変更不可能
+	if args.Name.Valid || args.Parent.Valid {
+		// ダイレクトメッセージチャンネルの名前・親は変更不可能
 		if ch.IsDMChannel() {
 			return repository.ErrForbidden
 		}
 
 		// チャンネル名重複を確認
-		for _, c := range repo.Channels {
-			if c.Name == args.Name.String && c.ParentID == ch.ParentID {
-				return repository.ErrAlreadyExists
+		{
+			var (
+				n string
+				p uuid.UUID
+			)
+
+			if args.Name.Valid {
+				n = args.Name.String
+			} else {
+				n = ch.Name
+			}
+			if args.Parent.Valid {
+				p = args.Parent.UUID
+			} else {
+				p = ch.ParentID
+			}
+
+			// チャンネル名重複を確認
+			for _, c := range repo.Channels {
+				if c.Name == n && c.ParentID == p {
+					return repository.ErrAlreadyExists
+				}
 			}
 		}
 
-		ch.Name = args.Name.String
+		if args.Name.Valid {
+			// チャンネル名検証
+			if !validator.ChannelRegex.MatchString(args.Name.String) {
+				return repository.ArgError("args.Name", "invalid name")
+			}
+
+			ch.Name = args.Name.String
+		}
+		if args.Parent.Valid {
+			// チャンネル階層検証
+			switch args.Parent.UUID {
+			case uuid.Nil:
+				// ルートチャンネル
+				break
+			case dmChannelRootUUID:
+				// DMチャンネルには出来ない
+				return repository.ErrForbidden
+			default:
+				pCh, ok := repo.Channels[args.Parent.UUID]
+				if !ok {
+					return repository.ErrNotFound
+				}
+
+				// DMチャンネルの子チャンネルには出来ない
+				if pCh.IsDMChannel() {
+					return repository.ErrForbidden
+				}
+
+				// 親と公開状況が一致しているか
+				if ch.IsPublic != pCh.IsPublic {
+					return repository.ErrForbidden
+				}
+
+				// 深さを検証
+				depth := 1 // ↑で見た親
+				for {      // 祖先
+					if pCh.ParentID == uuid.Nil {
+						// ルート
+						break
+					}
+					if ch.ID == pCh.ID {
+						// ループ検出
+						return repository.ErrChannelDepthLimitation
+					}
+
+					pCh, ok = repo.Channels[pCh.ParentID]
+					if !ok {
+						break
+					}
+					depth++
+					if depth >= model.MaxChannelDepth {
+						return repository.ErrChannelDepthLimitation
+					}
+				}
+				depth += repo.getChannelDepthWithoutLock(ch.ID) // 子孫 (自分を含む)
+				if depth > model.MaxChannelDepth {
+					return repository.ErrChannelDepthLimitation
+				}
+			}
+
+			ch.ParentID = args.Parent.UUID
+		}
 	}
 
 	ch.UpdatedAt = time.Now()
 	ch.UpdaterID = args.UpdaterID
 	repo.Channels[channelID] = ch
-	return nil
-}
-
-func (repo *TestRepository) ChangeChannelParent(channelID, parent, updaterID uuid.UUID) error {
-	if channelID == uuid.Nil {
-		return repository.ErrNilID
-	}
-
-	// チャンネル取得
-	ch, err := repo.GetChannel(channelID)
-	if err != nil {
-		return err
-	}
-
-	// ダイレクトメッセージチャンネルの親は変更不可能
-	if ch.IsDMChannel() {
-		return repository.ErrForbidden
-	}
-
-	switch parent {
-	case uuid.Nil:
-		// ルートチャンネル
-		break
-	case dmChannelRootUUID:
-		// DMチャンネルには出来ない
-		return repository.ErrForbidden
-	default:
-		pCh, err := repo.GetChannel(parent)
-		if err != nil {
-			return err
-		}
-
-		// DMチャンネルの子チャンネルには出来ない
-		if pCh.IsDMChannel() {
-			return repository.ErrForbidden
-		}
-
-		// 親と公開状況が一致しているか
-		if ch.IsPublic != pCh.IsPublic {
-			return repository.ErrForbidden
-		}
-
-		// 深さを検証
-		depth := 1 // ↑で見た親
-		for {      // 祖先
-			if pCh.ParentID == uuid.Nil {
-				// ルート
-				break
-			}
-			if ch.ID == pCh.ID {
-				// ループ検出
-				return repository.ErrChannelDepthLimitation
-			}
-
-			pCh, err = repo.GetChannel(pCh.ParentID)
-			if err != nil {
-				if err == repository.ErrNotFound {
-					break
-				}
-				return err
-			}
-			depth++
-			if depth >= model.MaxChannelDepth {
-				return repository.ErrChannelDepthLimitation
-			}
-		}
-		bottom, err := repo.GetChannelDepth(ch.ID) // 子孫 (自分を含む)
-		if err != nil {
-			return err
-		}
-		depth += bottom
-		if depth > model.MaxChannelDepth {
-			return repository.ErrChannelDepthLimitation
-		}
-	}
-
-	// チャンネル名検証
-	if has, err := repo.IsChannelPresent(ch.Name, parent); err != nil {
-		return err
-	} else if has {
-		return repository.ErrAlreadyExists
-	}
-
-	// 更新
-	repo.ChannelsLock.Lock()
-	nch, ok := repo.Channels[channelID]
-	if ok {
-		nch.ParentID = parent
-		nch.UpdatedAt = time.Now()
-		repo.Channels[channelID] = nch
-	}
-	repo.ChannelsLock.Unlock()
 	return nil
 }
 
@@ -1211,22 +1194,21 @@ func (repo *TestRepository) GetChannelPath(id uuid.UUID) (string, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetChannelDepth(id uuid.UUID) (int, error) {
-	children, err := repo.GetChildrenChannelIDs(id)
-	if err != nil {
-		return 0, err
+func (repo *TestRepository) getChannelDepthWithoutLock(id uuid.UUID) int {
+	children := make([]uuid.UUID, 0)
+	for cid, ch := range repo.Channels {
+		if ch.ParentID == id {
+			children = append(children, cid)
+		}
 	}
 	max := 0
 	for _, v := range children {
-		d, err := repo.GetChannelDepth(v)
-		if err != nil {
-			return 0, err
-		}
+		d := repo.getChannelDepthWithoutLock(v)
 		if max < d {
 			max = d
 		}
 	}
-	return max + 1, nil
+	return max + 1
 }
 
 func (repo *TestRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]uuid.UUID, error) {

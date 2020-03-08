@@ -26,6 +26,7 @@ type UpdateChannelArgs struct {
 	Topic              null.String
 	Visibility         null.Bool
 	ForcedNotification null.Bool
+	Parent             uuid.NullUUID
 }
 
 // ChannelEventsQuery GetChannelEvents用クエリ
@@ -66,18 +67,9 @@ type ChannelRepository interface {
 	// 既にNameが使われている場合、ErrAlreadyExistsを返します。
 	// 変更不可能なチャンネルを指定した場合、ErrForbiddenを返します。
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
-	// DBによるエラーを返すことがあります。
-	UpdateChannel(channelID uuid.UUID, args UpdateChannelArgs) error
-	// ChangeChannelParent 指定したチャンネルの親を変更します
-	//
-	// 成功した場合、nilを返します。
-	// Nameが変更先で重複している場合、ErrAlreadyExistsを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// 変更不可能なチャンネルを指定した場合、ErrForbiddenを返します。
-	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
 	// 階層数制限に到達する場合、ErrChannelDepthLimitationを返します。
 	// DBによるエラーを返すことがあります。
-	ChangeChannelParent(channelID, parent, updaterID uuid.UUID) error
+	UpdateChannel(channelID uuid.UUID, args UpdateChannelArgs) error
 	// DeleteChannel 指定したチャンネルとその子孫チャンネルを全て削除します
 	//
 	// 成功した場合、nilを返します。
