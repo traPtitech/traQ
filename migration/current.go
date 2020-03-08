@@ -36,6 +36,7 @@ var AllTables = []interface{}{
 	&model.ArchivedMessage{},
 	&model.Message{},
 	&model.Channel{},
+	&model.UserGroupAdmin{},
 	&model.UserGroupMember{},
 	&model.UserGroup{},
 	&model.User{},

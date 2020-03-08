@@ -45,6 +45,8 @@ type TestRepository struct {
 	UserGroupsLock            sync.RWMutex
 	UserGroupMembers          map[uuid.UUID]map[uuid.UUID]bool
 	UserGroupMembersLock      sync.RWMutex
+	UserGroupAdmins           map[uuid.UUID]map[uuid.UUID]bool
+	UserGroupAdminsLock       sync.RWMutex
 	Tags                      map[uuid.UUID]model.Tag
 	TagsLock                  sync.RWMutex
 	UserTags                  map[uuid.UUID]map[uuid.UUID]model.UsersTag
@@ -182,6 +184,7 @@ func NewTestRepository() *TestRepository {
 		Users:                 map[uuid.UUID]model.User{},
 		UserGroups:            map[uuid.UUID]model.UserGroup{},
 		UserGroupMembers:      map[uuid.UUID]map[uuid.UUID]bool{},
+		UserGroupAdmins:       map[uuid.UUID]map[uuid.UUID]bool{},
 		Tags:                  map[uuid.UUID]model.Tag{},
 		UserTags:              map[uuid.UUID]map[uuid.UUID]model.UsersTag{},
 		Channels:              map[uuid.UUID]model.Channel{},
@@ -469,23 +472,19 @@ func (repo *TestRepository) CreateUserGroup(name, description, gType string, adm
 		ID:          uuid.Must(uuid.NewV4()),
 		Name:        name,
 		Description: description,
-		AdminUserID: adminID,
+		Type:        gType,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
 
 	repo.UserGroupsLock.Lock()
-	repo.UsersLock.RLock()
+	repo.UserGroupAdminsLock.Lock()
 	defer repo.UserGroupsLock.Unlock()
-	defer repo.UsersLock.RUnlock()
+	defer repo.UserGroupAdminsLock.Unlock()
 
 	// 名前チェック
 	if len(g.Name) == 0 || utf8.RuneCountInString(g.Name) > 30 {
 		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 31 characters")
-	}
-	// ユーザーチェック
-	if u, ok := repo.Users[g.AdminUserID]; !ok || !(u.Status == model.UserAccountStatusActive && !u.Bot) {
-		return nil, repository.ArgError("AdminUserID", "invalid AdminUserID")
 	}
 	// タイプチェック
 	if utf8.RuneCountInString(g.Type) > 30 {
@@ -498,6 +497,10 @@ func (repo *TestRepository) CreateUserGroup(name, description, gType string, adm
 		}
 	}
 	repo.UserGroups[g.ID] = g
+	repo.UserGroupAdmins[g.ID] = make(map[uuid.UUID]bool)
+	repo.UserGroupAdmins[g.ID][adminID] = true
+	g.Members = make([]*model.UserGroupMember, 0)
+	g.Admins = []*model.UserGroupAdmin{{GroupID: g.ID, UserID: adminID}}
 	return &g, nil
 }
 
@@ -531,13 +534,6 @@ func (repo *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.Update
 		g.Description = args.Description.String
 		changed = true
 	}
-	if args.AdminUserID.Valid {
-		if u, ok := repo.Users[args.AdminUserID.UUID]; !ok || !(u.Status == model.UserAccountStatusActive && !u.Bot) {
-			return repository.ArgError("AdminUserID", "invalid AdminUserID")
-		}
-		g.AdminUserID = args.AdminUserID.UUID
-		changed = true
-	}
 	if args.Type.Valid {
 		if utf8.RuneCountInString(args.Type.String) > 30 {
 			return repository.ArgError("args.Type", "Type must be shorter than 31 characters")
@@ -561,11 +557,14 @@ func (repo *TestRepository) DeleteUserGroup(id uuid.UUID) error {
 	defer repo.UserGroupsLock.Unlock()
 	repo.UserGroupMembersLock.Lock()
 	defer repo.UserGroupMembersLock.Unlock()
+	repo.UserGroupAdminsLock.Lock()
+	defer repo.UserGroupAdminsLock.Unlock()
 	if _, ok := repo.UserGroups[id]; !ok {
 		return repository.ErrNotFound
 	}
 	delete(repo.UserGroups, id)
 	delete(repo.UserGroupMembers, id)
+	delete(repo.UserGroupAdmins, id)
 	return nil
 }
 
@@ -574,10 +573,22 @@ func (repo *TestRepository) GetUserGroup(id uuid.UUID) (*model.UserGroup, error)
 		return nil, repository.ErrNotFound
 	}
 	repo.UserGroupsLock.RLock()
+	repo.UserGroupAdminsLock.Lock()
+	repo.UserGroupMembersLock.Lock()
+	defer repo.UserGroupsLock.RUnlock()
+	defer repo.UserGroupAdminsLock.Unlock()
+	defer repo.UserGroupMembersLock.Unlock()
 	g, ok := repo.UserGroups[id]
-	repo.UserGroupsLock.RUnlock()
 	if !ok {
 		return nil, repository.ErrNotFound
+	}
+	members := repo.UserGroupMembers[id]
+	for u := range members {
+		g.Members = append(g.Members, &model.UserGroupMember{GroupID: g.ID, UserID: u})
+	}
+	admins := repo.UserGroupAdmins[id]
+	for u := range admins {
+		g.Admins = append(g.Admins, &model.UserGroupAdmin{GroupID: g.ID, UserID: u})
 	}
 	return &g, nil
 }
@@ -587,9 +598,21 @@ func (repo *TestRepository) GetUserGroupByName(name string) (*model.UserGroup, e
 		return nil, repository.ErrNotFound
 	}
 	repo.UserGroupsLock.RLock()
+	repo.UserGroupAdminsLock.Lock()
+	repo.UserGroupMembersLock.Lock()
 	defer repo.UserGroupsLock.RUnlock()
+	defer repo.UserGroupAdminsLock.Unlock()
+	defer repo.UserGroupMembersLock.Unlock()
 	for _, v := range repo.UserGroups {
 		if v.Name == name {
+			members := repo.UserGroupMembers[v.ID]
+			for u := range members {
+				v.Members = append(v.Members, &model.UserGroupMember{GroupID: v.ID, UserID: u})
+			}
+			admins := repo.UserGroupAdmins[v.ID]
+			for u := range admins {
+				v.Admins = append(v.Admins, &model.UserGroupAdmin{GroupID: v.ID, UserID: u})
+			}
 			return &v, nil
 		}
 	}
@@ -617,10 +640,22 @@ func (repo *TestRepository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.U
 func (repo *TestRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
 	groups := make([]*model.UserGroup, 0)
 	repo.UserGroupsLock.RLock()
+	repo.UserGroupAdminsLock.Lock()
+	repo.UserGroupMembersLock.Lock()
 	for _, v := range repo.UserGroups {
 		v := v
+		members := repo.UserGroupMembers[v.ID]
+		for u := range members {
+			v.Members = append(v.Members, &model.UserGroupMember{GroupID: v.ID, UserID: u})
+		}
+		admins := repo.UserGroupAdmins[v.ID]
+		for u := range admins {
+			v.Admins = append(v.Admins, &model.UserGroupAdmin{GroupID: v.ID, UserID: u})
+		}
 		groups = append(groups, &v)
 	}
+	repo.UserGroupMembersLock.Unlock()
+	repo.UserGroupAdminsLock.Unlock()
 	repo.UserGroupsLock.RUnlock()
 	return groups, nil
 }
@@ -664,6 +699,49 @@ func (repo *TestRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 	}
 
 	users, ok := repo.UserGroupMembers[groupID]
+	if ok && users[userID] {
+		delete(users, userID)
+		g.UpdatedAt = time.Now()
+		repo.UserGroups[groupID] = g
+	}
+	return nil
+}
+
+func (repo *TestRepository) AddUserToGroupAdmin(userID, groupID uuid.UUID) error {
+	if userID == uuid.Nil || groupID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	repo.UserGroupsLock.Lock()
+	defer repo.UserGroupsLock.Unlock()
+	repo.UserGroupAdminsLock.Lock()
+	defer repo.UserGroupAdminsLock.Unlock()
+	g, ok := repo.UserGroups[groupID]
+	if !ok {
+		return nil
+	}
+	users := repo.UserGroupAdmins[groupID]
+	if !users[userID] {
+		users[userID] = true
+		g.UpdatedAt = time.Now()
+		repo.UserGroups[groupID] = g
+	}
+	return nil
+}
+
+func (repo *TestRepository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) error {
+	if userID == uuid.Nil || groupID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	repo.UserGroupsLock.Lock()
+	defer repo.UserGroupsLock.Unlock()
+	repo.UserGroupAdminsLock.Lock()
+	defer repo.UserGroupAdminsLock.Unlock()
+	g, ok := repo.UserGroups[groupID]
+	if !ok {
+		return nil
+	}
+
+	users, ok := repo.UserGroupAdmins[groupID]
 	if ok && users[userID] {
 		delete(users, userID)
 		g.UpdatedAt = time.Now()

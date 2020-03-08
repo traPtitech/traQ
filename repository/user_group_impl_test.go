@@ -33,13 +33,6 @@ func TestRepositoryImpl_CreateUserGroup(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("invalid admin", func(t *testing.T) {
-		t.Parallel()
-
-		_, err := repo.CreateUserGroup(utils.RandAlphabetAndNumberString(20), "", "", uuid.Nil)
-		assert.Error(t, err)
-	})
-
 	t.Run("invalid type", func(t *testing.T) {
 		t.Parallel()
 

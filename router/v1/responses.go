@@ -386,7 +386,7 @@ func (h *Handlers) formatUserGroup(g *model.UserGroup) (r *userGroupResponse, er
 		Name:        g.Name,
 		Description: g.Description,
 		Type:        g.Type,
-		AdminUserID: g.AdminUserID,
+		AdminUserID: g.Admins[0].UserID,
 		CreatedAt:   g.CreatedAt,
 		UpdatedAt:   g.UpdatedAt,
 	}

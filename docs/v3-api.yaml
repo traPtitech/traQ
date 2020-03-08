@@ -890,38 +890,6 @@ paths:
       description: |-
         指定したグループにメンバーを追加します。
         対象のユーザーグループの管理者権限が必要です。
-    put:
-      summary: グループメンバーを設定
-      responses:
-        '204':
-          description: |-
-            No Content
-            編集できました。
-        '400':
-          description: Bad Request
-        '403':
-          description: |-
-            Forbidden
-            ユーザーグループを操作する権限がありません。
-        '404':
-          description: |-
-            Not Found
-            ユーザーグループが見つかりません。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              description: グループメンバーの配列
-              items:
-                $ref: '#/components/schemas/UserGroupMember'
-      tags:
-        - group
-      operationId: setUserGroupMembers
-      description: |-
-        指定したグループのメンバーをリクエストのメンバーに置き換えます。
-        リクエスト内に含まれないメンバーはグループから削除されます。
-        対象のユーザーグループの管理者権限が必要です。
   '/groups/{groupId}/members/{userId}':
     parameters:
       - $ref: '#/components/parameters/groupIdInPath'
@@ -3755,6 +3723,12 @@ components:
           type: string
           format: date-time
           description: 更新日時
+        admins:
+          type: array
+          description: グループ管理者のUUIDの配列
+          items:
+            type: string
+            format: uuid
     UserGroupMember:
       title: UserGroupMember
       type: object
@@ -3764,10 +3738,10 @@ components:
           type: string
           format: uuid
           description: ユーザーUUID
-        isAdmin:
-          type: boolean
-          default: false
-          description: グループ管理者かどうか
+        role:
+          type: string
+          description: ユーザーの役割
+          maxLength: 100
       required:
         - id
     PatchGroupMemberRequest:
@@ -3775,9 +3749,10 @@ components:
       type: object
       description: ユーザーグループメンバー編集リクエスト
       properties:
-        isAdmin:
-          type: boolean
-          description: グループ管理者かどうか
+        role:
+          type: string
+          description: ユーザーの役割
+          maxLength: 100
     PatchUserGroupRequest:
       title: PatchUserGroupRequest
       type: object

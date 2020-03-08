@@ -17,23 +17,13 @@ func (repo *GormRepository) CreateUserGroup(name, description, gType string, adm
 		Name:        name,
 		Description: description,
 		Type:        gType,
-		AdminUserID: adminID,
 	}
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		// 名前チェック
 		if len(g.Name) == 0 || utf8.RuneCountInString(g.Name) > 30 {
 			return ArgError("name", "Name must be non-empty and shorter than 31 characters")
 		}
-		// ユーザーチェック
-		if exists, err := dbExists(tx, map[string]interface{}{
-			"id":     g.AdminUserID,
-			"status": model.UserAccountStatusActive,
-			"bot":    false,
-		}, (&model.User{}).TableName()); err != nil {
-			return err
-		} else if !exists {
-			return ArgError("AdminUserID", "invalid AdminUserID")
-		}
+
 		// タイプチェック
 		if utf8.RuneCountInString(g.Type) > 30 {
 			return ArgError("Type", "Type must be shorter than 31 characters")
@@ -43,11 +33,14 @@ func (repo *GormRepository) CreateUserGroup(name, description, gType string, adm
 		if isMySQLDuplicatedRecordErr(err) {
 			return ErrAlreadyExists
 		}
-		return err
+
+		return tx.Create(&model.UserGroupAdmin{GroupID: g.ID, UserID: adminID}).Error
 	})
 	if err != nil {
 		return nil, err
 	}
+	g.Members = make([]*model.UserGroupMember, 0)
+	g.Admins = []*model.UserGroupAdmin{{GroupID: g.ID, UserID: adminID}}
 	repo.hub.Publish(hub.Message{
 		Name: event.UserGroupCreated,
 		Fields: hub.Fields{
@@ -86,19 +79,6 @@ func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNa
 		if args.Description.Valid {
 			changes["description"] = args.Description.String
 		}
-		if args.AdminUserID.Valid {
-			// ユーザーチェック
-			if exists, err := dbExists(tx, map[string]interface{}{
-				"id":     args.AdminUserID.UUID,
-				"status": model.UserAccountStatusActive,
-				"bot":    false,
-			}, (&model.User{}).TableName()); err != nil {
-				return err
-			} else if !exists {
-				return ArgError("args.AdminUserID", "invalid AdminUserID")
-			}
-			changes["admin_user_id"] = args.AdminUserID.UUID
-		}
 		if args.Type.Valid {
 			if utf8.RuneCountInString(args.Type.String) > 30 {
 				return ArgError("args.Type", "Type must be shorter than 31 characters")
@@ -121,6 +101,9 @@ func (repo *GormRepository) DeleteUserGroup(id uuid.UUID) error {
 	}
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.UserGroupMember{GroupID: id}).Delete(&model.UserGroupMember{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where(&model.UserGroupAdmin{GroupID: id}).Delete(&model.UserGroupAdmin{}).Error; err != nil {
 			return err
 		}
 		result := tx.Delete(&model.UserGroup{ID: id})
@@ -150,7 +133,7 @@ func (repo *GormRepository) GetUserGroup(id uuid.UUID) (*model.UserGroup, error)
 		return nil, ErrNotFound
 	}
 	var g model.UserGroup
-	if err := repo.db.First(&g, &model.UserGroup{ID: id}).Error; err != nil {
+	if err := repo.db.Scopes(userGroupPreloads).First(&g, &model.UserGroup{ID: id}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return &g, nil
@@ -162,7 +145,7 @@ func (repo *GormRepository) GetUserGroupByName(name string) (*model.UserGroup, e
 		return nil, ErrNotFound
 	}
 	var g model.UserGroup
-	if err := repo.db.First(&g, &model.UserGroup{Name: name}).Error; err != nil {
+	if err := repo.db.Scopes(userGroupPreloads).First(&g, &model.UserGroup{Name: name}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return &g, nil
@@ -185,7 +168,7 @@ func (repo *GormRepository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.U
 // GetAllUserGroups implements UserGroupRepository interface.
 func (repo *GormRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
 	groups := make([]*model.UserGroup, 0)
-	err := repo.db.Find(&groups).Error
+	err := repo.db.Scopes(userGroupPreloads).Find(&groups).Error
 	return groups, err
 }
 
@@ -196,6 +179,11 @@ func (repo *GormRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
 	}
 	var changed bool
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		var g model.UserGroup
+		if err := tx.First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
+			return convertError(err)
+		}
+
 		if err := tx.Create(&model.UserGroupMember{UserID: userID, GroupID: groupID}).Error; err != nil {
 			if isMySQLDuplicatedRecordErr(err) {
 				return nil
@@ -203,7 +191,7 @@ func (repo *GormRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
 			return err
 		}
 		changed = true
-		return tx.Model(&model.UserGroup{ID: groupID}).UpdateColumn("updated_at", time.Now()).Error
+		return tx.Model(&g).UpdateColumn("updated_at", time.Now()).Error
 	})
 	if err != nil {
 		return err
@@ -227,13 +215,18 @@ func (repo *GormRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 	}
 	var changed bool
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		var g model.UserGroup
+		if err := tx.Scopes(userGroupPreloads).First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
+			return convertError(err)
+		}
+
 		result := tx.Delete(&model.UserGroupMember{UserID: userID, GroupID: groupID})
 		if result.Error != nil {
 			return result.Error
 		}
 		if result.RowsAffected > 0 {
 			changed = true
-			return tx.Model(&model.UserGroup{ID: groupID}).UpdateColumn("updated_at", time.Now()).Error
+			return tx.Model(&g).UpdateColumn("updated_at", time.Now()).Error
 		}
 		return nil
 	})
@@ -252,6 +245,55 @@ func (repo *GormRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 	return nil
 }
 
+// AddUserToGroupAdmin implements UserGroupRepository interface.
+func (repo *GormRepository) AddUserToGroupAdmin(userID, groupID uuid.UUID) error {
+	if userID == uuid.Nil || groupID == uuid.Nil {
+		return ErrNilID
+	}
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		var g model.UserGroup
+		if err := tx.First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
+			return convertError(err)
+		}
+
+		if err := tx.Create(&model.UserGroupAdmin{UserID: userID, GroupID: groupID}).Error; err != nil {
+			if isMySQLDuplicatedRecordErr(err) {
+				return nil
+			}
+			return err
+		}
+		return tx.Model(&g).UpdateColumn("updated_at", time.Now()).Error
+	})
+	return err
+}
+
+// RemoveUserFromGroupAdmin implements UserGroupRepository interface.
+func (repo *GormRepository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) error {
+	if userID == uuid.Nil || groupID == uuid.Nil {
+		return ErrNilID
+	}
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		var g model.UserGroup
+		if err := tx.Scopes(userGroupPreloads).First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
+			return convertError(err)
+		}
+
+		if !g.IsAdmin(groupID) {
+			return nil
+		}
+		if len(g.Admins) <= 1 {
+			// Adminは必ず一人以上存在している必要がある
+			return ErrForbidden
+		}
+
+		if err := tx.Delete(&model.UserGroupAdmin{UserID: userID, GroupID: groupID}).Error; err != nil {
+			return err
+		}
+		return tx.Model(&g).UpdateColumn("updated_at", time.Now()).Error
+	})
+	return err
+}
+
 // GetUserGroupMemberIDs implements UserGroupRepository interface.
 func (repo *GormRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUID, error) {
 	ids := make([]uuid.UUID, 0)
@@ -263,4 +305,10 @@ func (repo *GormRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUI
 		Where(&model.UserGroupMember{GroupID: groupID}).
 		Pluck("user_id", &ids).
 		Error
+}
+
+func userGroupPreloads(db *gorm.DB) *gorm.DB {
+	return db.
+		Preload("Admins").
+		Preload("Members")
 }

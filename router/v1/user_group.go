@@ -85,10 +85,9 @@ func (h *Handlers) GetUserGroup(c echo.Context) error {
 
 // PatchUserGroupRequest PATCH /groups/:groupID リクエストボディ
 type PatchUserGroupRequest struct {
-	Name        null.String   `json:"name"`
-	Description null.String   `json:"description"`
-	AdminUserID uuid.NullUUID `json:"adminUserId"`
-	Type        null.String   `json:"type"`
+	Name        null.String `json:"name"`
+	Description null.String `json:"description"`
+	Type        null.String `json:"type"`
 }
 
 func (r PatchUserGroupRequest) Validate() error {
@@ -110,7 +109,7 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 	}
 
 	// 管理者ユーザーかどうか
-	if g.AdminUserID != reqUserID {
+	if g.IsAdmin(reqUserID) {
 		return herror.Forbidden("you are not the group's admin")
 	}
 
@@ -122,7 +121,6 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 	args := repository.UpdateUserGroupNameArgs{
 		Name:        req.Name,
 		Description: req.Description,
-		AdminUserID: req.AdminUserID,
 		Type:        req.Type,
 	}
 	if err := h.Repo.UpdateUserGroup(groupID, args); err != nil {
@@ -146,7 +144,7 @@ func (h *Handlers) DeleteUserGroup(c echo.Context) error {
 	g := getGroupFromContext(c)
 
 	// 管理者ユーザーかどうか
-	if g.AdminUserID != userID {
+	if g.IsAdmin(userID) {
 		return herror.Forbidden("you are not the group's admin")
 	}
 
@@ -186,7 +184,7 @@ func (h *Handlers) PostUserGroupMembers(c echo.Context) error {
 	}
 
 	// 管理者ユーザーかどうか
-	if g.AdminUserID != reqUserID {
+	if g.IsAdmin(reqUserID) {
 		return herror.Forbidden("you are not the group's admin")
 	}
 
@@ -212,7 +210,7 @@ func (h *Handlers) DeleteUserGroupMembers(c echo.Context) error {
 	g := getGroupFromContext(c)
 
 	// 管理者ユーザーかどうか
-	if g.AdminUserID != reqUserID {
+	if g.IsAdmin(reqUserID) {
 		return herror.Forbidden("you are not the group's admin")
 	}
 
