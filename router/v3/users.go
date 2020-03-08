@@ -58,6 +58,37 @@ func (h *Handlers) GetMe(c echo.Context) error {
 	})
 }
 
+// PatchMeRequest PATCH /users/me リクエストボディ
+type PatchMeRequest struct {
+	DisplayName null.String `json:"displayName"`
+	TwitterID   null.String `json:"twitterId"`
+	Bio         null.String `json:"bio"`
+}
+
+func (r PatchMeRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.DisplayName, vd.RuneLength(0, 64)),
+		vd.Field(&r.TwitterID, validator.TwitterIDRule...),
+		vd.Field(&r.Bio, vd.RuneLength(0, 1000)),
+	)
+}
+
+// EditMe PATCH /users/me
+func (h *Handlers) EditMe(c echo.Context) error {
+	userID := getRequestUserID(c)
+
+	var req PatchMeRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	if err := h.Repo.UpdateUser(userID, repository.UpdateUserArgs{DisplayName: req.DisplayName, TwitterID: req.TwitterID, Bio: req.Bio}); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
 // PutMyPasswordRequest PUT /users/me/password リクエストボディ
 type PutMyPasswordRequest struct {
 	Password    string `json:"password"`

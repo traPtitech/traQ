@@ -16,6 +16,7 @@ type UpdateUserArgs struct {
 		Valid bool
 		State model.UserAccountStatus
 	}
+	Bio null.String
 }
 
 // UsersQuery GetUsers用クエリ
