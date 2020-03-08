@@ -86,11 +86,11 @@ type UserRepository interface {
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetUserByName(name string) (*model.User, error)
-	// GetUsers 全ユーザーを取得します
+	// GetUsers 指定した条件を満たすユーザーを取得します
 	//
 	// 成功した場合、ユーザーの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetUsers() ([]*model.User, error)
+	GetUsers(query UsersQuery) ([]*model.User, error)
 	// GetUserIDs 指定した条件を満たすユーザーのUUIDの配列を取得します
 	//
 	// 成功した場合、UUIDの配列とnilを返します。

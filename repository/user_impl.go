@@ -75,15 +75,20 @@ func getUser(tx *gorm.DB, where interface{}) (*model.User, error) {
 }
 
 // GetUsers implements UserRepository interface.
-func (repo *GormRepository) GetUsers() (users []*model.User, err error) {
+func (repo *GormRepository) GetUsers(query UsersQuery) (users []*model.User, err error) {
 	users = make([]*model.User, 0)
-	err = repo.db.Find(&users).Error
+	err = repo.makeGetUsersTx(query).Find(&users).Error
 	return users, err
 }
 
 // GetUserIDs implements UserRepository interface.
 func (repo *GormRepository) GetUserIDs(query UsersQuery) (ids []uuid.UUID, err error) {
 	ids = make([]uuid.UUID, 0)
+	err = repo.makeGetUsersTx(query).Pluck("users.id", &ids).Error
+	return ids, err
+}
+
+func (repo *GormRepository) makeGetUsersTx(query UsersQuery) *gorm.DB {
 	tx := repo.db.Table("users")
 
 	if query.IsActive.Valid {
@@ -106,8 +111,7 @@ func (repo *GormRepository) GetUserIDs(query UsersQuery) (ids []uuid.UUID, err e
 		tx = tx.Joins("INNER JOIN user_group_members ON user_group_members.user_id = users.id AND user_group_members.group_id = ?", query.IsGMemberOf.UUID)
 	}
 
-	err = tx.Pluck("users.id", &ids).Error
-	return ids, err
+	return tx
 }
 
 // UserExists implements UserRepository interface.

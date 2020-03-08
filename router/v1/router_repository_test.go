@@ -271,13 +271,53 @@ func (repo *TestRepository) GetUserByName(name string) (*model.User, error) {
 	return nil, repository.ErrNotFound
 }
 
-func (repo *TestRepository) GetUsers() ([]*model.User, error) {
-	repo.UsersLock.RLock()
+func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]*model.User, error) {
 	result := make([]*model.User, 0, len(repo.Users))
+	repo.UsersLock.RLock()
+	repo.ChannelSubscribesLock.RLock()
+	repo.PrivateChannelMembersLock.RLock()
+	repo.UserGroupMembersLock.RLock()
 	for _, u := range repo.Users {
+		if query.IsBot.Valid {
+			if u.Bot != query.IsBot.Bool {
+				continue
+			}
+		}
+		if query.IsActive.Valid {
+			if query.IsActive.Bool {
+				if u.Status != model.UserAccountStatusActive {
+					continue
+				}
+			} else {
+				if u.Status == model.UserAccountStatusActive {
+					continue
+				}
+			}
+		}
+		if query.IsSubscriberOf.Valid {
+			arr, ok := repo.ChannelSubscribes[query.IsSubscriberOf.UUID]
+			if !ok || !arr[u.ID] {
+				continue
+			}
+		}
+		if query.IsCMemberOf.Valid {
+			arr, ok := repo.PrivateChannelMembers[query.IsCMemberOf.UUID]
+			if !ok || !arr[u.ID] {
+				continue
+			}
+		}
+		if query.IsGMemberOf.Valid {
+			arr, ok := repo.UserGroupMembers[query.IsGMemberOf.UUID]
+			if !ok || !arr[u.ID] {
+				continue
+			}
+		}
 		u := u
 		result = append(result, &u)
 	}
+	repo.UserGroupMembersLock.RUnlock()
+	repo.PrivateChannelMembersLock.RUnlock()
+	repo.ChannelSubscribesLock.RUnlock()
 	repo.UsersLock.RUnlock()
 	return result, nil
 }

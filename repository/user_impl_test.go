@@ -135,7 +135,7 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 	t.Run("GetUsers", func(t *testing.T) {
 		t.Parallel()
 
-		users, err := repo.GetUsers()
+		users, err := repo.GetUsers(UsersQuery{})
 		if assert.NoError(err) {
 			assert.Len(users, len(us))
 		}
