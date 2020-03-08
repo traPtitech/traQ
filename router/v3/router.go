@@ -213,29 +213,29 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiGroups := api.Group("/groups")
 		{
 			apiGroups.GET("", NotImplemented, requires(permission.GetUserGroup))
-			apiGroups.POST("", NotImplemented, requires(permission.CreateUserGroup))
+			apiGroups.POST("", h.PostUserGroups, requires(permission.CreateUserGroup))
 			apiGroupsGID := apiGroups.Group("/:groupID", retrieve.GroupID())
 			{
-				apiGroupsGID.GET("", NotImplemented, requires(permission.GetUserGroup))
-				apiGroupsGID.PATCH("", NotImplemented, requiresGroupAdminPerm, requires(permission.EditUserGroup))
-				apiGroupsGID.DELETE("", NotImplemented, requiresGroupAdminPerm, requires(permission.DeleteUserGroup))
+				apiGroupsGID.GET("", h.GetUserGroup, requires(permission.GetUserGroup))
+				apiGroupsGID.PATCH("", h.EditUserGroup, requiresGroupAdminPerm, requires(permission.EditUserGroup))
+				apiGroupsGID.DELETE("", h.DeleteUserGroup, requiresGroupAdminPerm, requires(permission.DeleteUserGroup))
 				apiGroupsGIDMembers := apiGroupsGID.Group("/members")
 				{
-					apiGroupsGIDMembers.GET("", NotImplemented, requires(permission.GetUserGroup))
+					apiGroupsGIDMembers.GET("", h.GetUserGroupMembers, requires(permission.GetUserGroup))
 					apiGroupsGIDMembers.POST("", NotImplemented, requiresGroupAdminPerm, requires(permission.EditUserGroup))
 					apiGroupsGIDMembersUID := apiGroupsGIDMembers.Group("/:userID", requiresGroupAdminPerm)
 					{
 						apiGroupsGIDMembersUID.PATCH("", NotImplemented, requires(permission.EditUserGroup))
-						apiGroupsGIDMembersUID.DELETE("", NotImplemented, requires(permission.EditUserGroup))
+						apiGroupsGIDMembersUID.DELETE("", h.RemoveUserGroupMember, requires(permission.EditUserGroup))
 					}
 				}
 				apiGroupsGIDAdmins := apiGroupsGID.Group("/admins")
 				{
-					apiGroupsGIDAdmins.GET("", NotImplemented, requires(permission.GetUserGroup))
-					apiGroupsGIDAdmins.POST("", NotImplemented, requiresGroupAdminPerm, requires(permission.EditUserGroup))
+					apiGroupsGIDAdmins.GET("", h.GetUserGroupAdmins, requires(permission.GetUserGroup))
+					apiGroupsGIDAdmins.POST("", h.AddUserGroupAdmin, requiresGroupAdminPerm, requires(permission.EditUserGroup))
 					apiGroupsGIDAdminsUID := apiGroupsGIDAdmins.Group("/:userID", requiresGroupAdminPerm)
 					{
-						apiGroupsGIDAdminsUID.DELETE("", NotImplemented, requires(permission.EditUserGroup))
+						apiGroupsGIDAdminsUID.DELETE("", h.RemoveUserGroupAdmin, requires(permission.EditUserGroup))
 					}
 				}
 			}

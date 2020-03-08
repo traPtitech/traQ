@@ -95,6 +95,11 @@ func getParamMessage(c echo.Context) *model.Message {
 	return c.Get(consts.KeyParamMessage).(*model.Message)
 }
 
+// getParamGroup URLの:groupIDに対応するUserGroupを取得
+func getParamGroup(c echo.Context) *model.UserGroup {
+	return c.Get(consts.KeyParamGroup).(*model.UserGroup)
+}
+
 // getParamAsUUID URLのnameパラメータの文字列をuuid.UUIDとして取得
 func getParamAsUUID(c echo.Context, name string) uuid.UUID {
 	return extension.GetRequestParamAsUUID(c, name)

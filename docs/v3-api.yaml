@@ -808,12 +808,10 @@ paths:
     patch:
       summary: ユーザーグループを編集
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroup'
+        '204':
+          description: |-
+            No Content
+            編集されました。
         '400':
           description: Bad Request
         '403':
@@ -1001,7 +999,7 @@ paths:
         - group
       description: |-
         ユーザーグループを作成します。
-        作成者は自動的にメンバーに追加され、グループ管理者になります。
+        作成者は自動的にグループ管理者になります。
       operationId: createUserGroup
       requestBody:
         content:
@@ -3259,9 +3257,7 @@ paths:
             No Content
             指定したユーザーがユーザーグループ管理者から削除されました。
         '400':
-          description: |-
-            Bad Request
-            管理者がグループに存在しません。
+          description: Bad Request
         '403':
           description: |-
             Forbidden
@@ -3276,6 +3272,7 @@ paths:
       description: |-
         指定したユーザーグループから指定した管理者を削除します。
         対象のユーザーグループの管理者権限が必要です。
+        グループから管理者が存在しなくなる場合は400エラーを返します。
   '/groups/{groupId}/admins':
     parameters:
       - $ref: '#/components/parameters/groupIdInPath'
@@ -3849,6 +3846,7 @@ components:
         description:
           type: string
           description: グループ説明
+          maxLength: 100
         type:
           type: string
           description: グループタイプ
@@ -3863,6 +3861,7 @@ components:
         description:
           type: string
           description: 説明
+          maxLength: 100
         type:
           type: string
           description: グループタイプ

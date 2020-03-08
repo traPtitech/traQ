@@ -1,4 +1,4 @@
-package v1
+package v3
 
 import (
 	vd "github.com/go-ozzo/ozzo-validation"
@@ -8,33 +8,19 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
 )
 
-// GetUserGroups GET /groups
-func (h *Handlers) GetUserGroups(c echo.Context) error {
-	gs, err := h.Repo.GetAllUserGroups()
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	res, err := h.formatUserGroups(gs)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.JSON(http.StatusOK, res)
-}
-
-// PostUserGroupsRequest POST /groups リクエストボディ
-type PostUserGroupsRequest struct {
+// PostUserGroupRequest POST /groups リクエストボディ
+type PostUserGroupRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Type        string `json:"type"`
 }
 
-func (r PostUserGroupsRequest) Validate() error {
+func (r PostUserGroupRequest) Validate() error {
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, vd.Required, vd.RuneLength(1, 30)),
 		vd.Field(&r.Description, vd.RuneLength(0, 100)),
@@ -46,7 +32,7 @@ func (r PostUserGroupsRequest) Validate() error {
 func (h *Handlers) PostUserGroups(c echo.Context) error {
 	reqUserID := getRequestUserID(c)
 
-	var req PostUserGroupsRequest
+	var req PostUserGroupRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
@@ -73,8 +59,7 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 
 // GetUserGroup GET /groups/:groupID
 func (h *Handlers) GetUserGroup(c echo.Context) error {
-	g := getGroupFromContext(c)
-	return c.JSON(http.StatusOK, formatUserGroup(g))
+	return c.JSON(http.StatusOK, formatUserGroup(getParamGroup(c)))
 }
 
 // PatchUserGroupRequest PATCH /groups/:groupID リクエストボディ
@@ -92,20 +77,13 @@ func (r PatchUserGroupRequest) Validate() error {
 	)
 }
 
-// PatchUserGroup PATCH /groups/:groupID
-func (h *Handlers) PatchUserGroup(c echo.Context) error {
-	groupID := getRequestParamAsUUID(c, consts.ParamGroupID)
-	reqUserID := getRequestUserID(c)
-	g := getGroupFromContext(c)
+// EditUserGroup PATCH /groups/:groupID
+func (h *Handlers) EditUserGroup(c echo.Context) error {
+	g := getParamGroup(c)
 
 	var req PatchUserGroupRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
-	}
-
-	// 管理者ユーザーかどうか
-	if !g.IsAdmin(reqUserID) {
-		return herror.Forbidden("you are not the group's admin")
 	}
 
 	if req.Type.ValueOrZero() == "grade" && !h.RBAC.IsGranted(getRequestUser(c).Role, permission.CreateSpecialUserGroup) {
@@ -118,7 +96,7 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 		Description: req.Description,
 		Type:        req.Type,
 	}
-	if err := h.Repo.UpdateUserGroup(groupID, args); err != nil {
+	if err := h.Repo.UpdateUserGroup(g.ID, args); err != nil {
 		switch {
 		case err == repository.ErrAlreadyExists:
 			return herror.Conflict("the name's group has already existed")
@@ -134,16 +112,9 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 
 // DeleteUserGroup DELETE /groups/:groupID
 func (h *Handlers) DeleteUserGroup(c echo.Context) error {
-	groupID := getRequestParamAsUUID(c, consts.ParamGroupID)
-	userID := getRequestUserID(c)
-	g := getGroupFromContext(c)
+	g := getParamGroup(c)
 
-	// 管理者ユーザーかどうか
-	if !g.IsAdmin(userID) {
-		return herror.Forbidden("you are not the group's admin")
-	}
-
-	if err := h.Repo.DeleteUserGroup(groupID); err != nil {
+	if err := h.Repo.DeleteUserGroup(g.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -152,90 +123,76 @@ func (h *Handlers) DeleteUserGroup(c echo.Context) error {
 
 // GetUserGroupMembers GET /groups/:groupID/members
 func (h *Handlers) GetUserGroupMembers(c echo.Context) error {
-	groupID := getRequestParamAsUUID(c, consts.ParamGroupID)
+	return c.JSON(http.StatusOK, formatUserGroupMembers(getParamGroup(c).Members))
+}
 
-	res, err := h.Repo.GetUserIDs(repository.UsersQuery{}.GMemberOf(groupID))
-	if err != nil {
+// RemoveUserGroupMember DELETE /groups/:groupID/admins/:userID
+func (h *Handlers) RemoveUserGroupMember(c echo.Context) error {
+	userID := getParamAsUUID(c, consts.ParamUserID)
+	g := getParamGroup(c)
+
+	if err := h.Repo.RemoveUserFromGroup(userID, g.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, res)
+	return c.NoContent(http.StatusNoContent)
 }
 
-// PostUserGroupMembersRequest POST /groups/:groupID/members リクエストボディ
-type PostUserGroupMembersRequest struct {
-	UserID uuid.UUID `json:"userId"`
+// GetUserGroupAdmins GET /groups/:groupID/admins
+func (h *Handlers) GetUserGroupAdmins(c echo.Context) error {
+	g := getParamGroup(c)
+	result := make([]uuid.UUID, 0)
+	for _, admin := range g.Admins {
+		result = append(result, admin.UserID)
+	}
+	return c.JSON(http.StatusOK, result)
 }
 
-// PostUserGroupMembers POST /groups/:groupID/members
-func (h *Handlers) PostUserGroupMembers(c echo.Context) error {
-	groupID := getRequestParamAsUUID(c, consts.ParamGroupID)
-	reqUserID := getRequestUserID(c)
-	g := getGroupFromContext(c)
+// PostUserGroupAdminRequest POST /groups/:groupID/admins リクエストボディ
+type PostUserGroupAdminRequest struct {
+	ID uuid.UUID `json:"id"`
+}
 
-	var req PostUserGroupMembersRequest
+func (r PostUserGroupAdminRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.ID, vd.Required, validator.NotNilUUID),
+	)
+}
+
+// AddUserGroupAdmin POST /groups/:groupID/admins
+func (h *Handlers) AddUserGroupAdmin(c echo.Context) error {
+	g := getParamGroup(c)
+
+	var req PostUserGroupAdminRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	// 管理者ユーザーかどうか
-	if !g.IsAdmin(reqUserID) {
-		return herror.Forbidden("you are not the group's admin")
-	}
-
 	// ユーザーが存在するか
-	if ok, err := h.Repo.UserExists(req.UserID); err != nil {
+	if ok, err := h.Repo.UserExists(req.ID); err != nil {
 		return herror.InternalServerError(err)
 	} else if !ok {
 		return herror.BadRequest("this user doesn't exist")
 	}
 
-	if err := h.Repo.AddUserToGroup(req.UserID, groupID); err != nil {
+	if err := h.Repo.AddUserToGroupAdmin(req.ID, g.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
 }
 
-// DeleteUserGroupMembers DELETE /groups/:groupID/members/:userID
-func (h *Handlers) DeleteUserGroupMembers(c echo.Context) error {
-	groupID := getRequestParamAsUUID(c, consts.ParamGroupID)
-	userID := getRequestParamAsUUID(c, consts.ParamUserID)
-	reqUserID := getRequestUserID(c)
-	g := getGroupFromContext(c)
+// RemoveUserGroupAdmin DELETE /groups/:groupID/admins/:userID
+func (h *Handlers) RemoveUserGroupAdmin(c echo.Context) error {
+	userID := getParamAsUUID(c, consts.ParamUserID)
+	g := getParamGroup(c)
 
-	// 管理者ユーザーかどうか
-	if !g.IsAdmin(reqUserID) {
-		return herror.Forbidden("you are not the group's admin")
-	}
-
-	if err := h.Repo.RemoveUserFromGroup(userID, groupID); err != nil {
+	if err := h.Repo.RemoveUserFromGroupAdmin(userID, g.ID); err != nil {
+		if err == repository.ErrForbidden {
+			return herror.BadRequest()
+		}
 		return herror.InternalServerError(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
-}
-
-// GetMyBelongingGroup GET /users/me/groups
-func (h *Handlers) GetMyBelongingGroup(c echo.Context) error {
-	userID := getRequestUserID(c)
-
-	ids, err := h.Repo.GetUserBelongingGroupIDs(userID)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.JSON(http.StatusOK, ids)
-}
-
-// GetUserBelongingGroup GET /users/:userID/groups
-func (h *Handlers) GetUserBelongingGroup(c echo.Context) error {
-	userID := getRequestParamAsUUID(c, consts.ParamUserID)
-
-	ids, err := h.Repo.GetUserBelongingGroupIDs(userID)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.JSON(http.StatusOK, ids)
 }
