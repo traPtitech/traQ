@@ -387,7 +387,7 @@ func formatUserGroup(g *model.UserGroup) *userGroupResponse {
 		Description: g.Description,
 		Type:        g.Type,
 		AdminUserID: g.Admins[0].UserID,
-		Members:     make([]uuid.UUID, len(g.Members)),
+		Members:     make([]uuid.UUID, 0),
 		CreatedAt:   g.CreatedAt,
 		UpdatedAt:   g.UpdatedAt,
 	}
