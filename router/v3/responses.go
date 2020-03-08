@@ -338,3 +338,42 @@ func formatUserGroups(gs []*model.UserGroup) []*UserGroup {
 	}
 	return arr
 }
+
+type FileInfoThumbnail struct {
+	Mime   string `json:"mime"`
+	Width  int    `json:"width"`
+	Height int    `json:"height"`
+}
+
+type FileInfo struct {
+	ID         uuid.UUID          `json:"id"`
+	Name       string             `json:"name"`
+	Mime       string             `json:"mime"`
+	Size       int64              `json:"size"`
+	MD5        string             `json:"md5"`
+	CreatedAt  time.Time          `json:"createdAt"`
+	Thumbnail  *FileInfoThumbnail `json:"thumbnail"`
+	ChannelID  uuid.NullUUID      `json:"channelId"`
+	UploaderID uuid.NullUUID      `json:"uploaderId"`
+}
+
+func formatFileInfo(meta *model.File) *FileInfo {
+	fi := &FileInfo{
+		ID:         meta.ID,
+		Name:       meta.Name,
+		Mime:       meta.Mime,
+		Size:       meta.Size,
+		MD5:        meta.Hash,
+		CreatedAt:  meta.CreatedAt,
+		ChannelID:  uuid.NullUUID{},                                  // TODO
+		UploaderID: uuid.NullUUID{Valid: true, UUID: meta.CreatorID}, // TODO
+	}
+	if meta.HasThumbnail {
+		fi.Thumbnail = &FileInfoThumbnail{
+			Mime:   "image/png", // TODO
+			Width:  meta.ThumbnailWidth,
+			Height: meta.ThumbnailHeight,
+		}
+	}
+	return fi
+}

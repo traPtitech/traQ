@@ -10,6 +10,11 @@ import (
 	"strconv"
 )
 
+// GetFileMeta GET /files/:fileID/meta
+func (h *Handlers) GetFileMeta(c echo.Context) error {
+	return c.JSON(http.StatusOK, formatFileInfo(getParamFile(c)))
+}
+
 // GetThumbnailImage GET /files/:fileID/thumbnail
 func (h *Handlers) GetThumbnailImage(c echo.Context) error {
 	meta := getParamFile(c)
