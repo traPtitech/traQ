@@ -90,10 +90,4 @@ type UserGroupRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) error
-	// GetUserGroupMemberIDs 指定したグループのメンバーのUUIDを取得します
-	//
-	// 成功した場合、UUIDの配列とnilを返します。
-	// 存在しないグループを指定した場合は空配列とnilを返します。
-	// DBによるエラーを返すことがあります。
-	GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUID, error)
 }

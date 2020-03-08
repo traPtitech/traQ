@@ -294,19 +294,6 @@ func (repo *GormRepository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) 
 	return err
 }
 
-// GetUserGroupMemberIDs implements UserGroupRepository interface.
-func (repo *GormRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUID, error) {
-	ids := make([]uuid.UUID, 0)
-	if groupID == uuid.Nil {
-		return ids, nil
-	}
-	return ids, repo.db.
-		Model(&model.UserGroupMember{}).
-		Where(&model.UserGroupMember{GroupID: groupID}).
-		Pluck("user_id", &ids).
-		Error
-}
-
 func userGroupPreloads(db *gorm.DB) *gorm.DB {
 	return db.
 		Preload("Admins").

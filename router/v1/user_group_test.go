@@ -363,7 +363,7 @@ func TestHandlers_PostUserGroupMembers(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ids, err := repo.GetUserGroupMemberIDs(g.ID)
+		ids, err := repo.GetUserIDs(repository.UsersQuery{}.GMemberOf(g.ID))
 		if assert.NoError(t, err) {
 			assert.ElementsMatch(t, ids, []uuid.UUID{user.ID})
 		}
@@ -420,7 +420,7 @@ func TestHandlers_DeleteUserGroupMembers(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ids, err := repo.GetUserGroupMemberIDs(g.ID)
+		ids, err := repo.GetUserIDs(repository.UsersQuery{}.GMemberOf(g.ID))
 		if assert.NoError(t, err) {
 			assert.Len(t, ids, 0)
 		}

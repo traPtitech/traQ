@@ -750,25 +750,6 @@ func (repo *TestRepository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) 
 	return nil
 }
 
-func (repo *TestRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUID, error) {
-	ids := make([]uuid.UUID, 0)
-	if groupID == uuid.Nil {
-		return ids, repository.ErrNotFound
-	}
-	repo.UserGroupsLock.RLock()
-	_, ok := repo.UserGroups[groupID]
-	repo.UserGroupsLock.RUnlock()
-	if !ok {
-		return ids, repository.ErrNotFound
-	}
-	repo.UserGroupMembersLock.RLock()
-	for uid := range repo.UserGroupMembers[groupID] {
-		ids = append(ids, uid)
-	}
-	repo.UserGroupMembersLock.RUnlock()
-	return ids, nil
-}
-
 func (repo *TestRepository) CreateTag(name string) (*model.Tag, error) {
 	repo.TagsLock.Lock()
 	defer repo.TagsLock.Unlock()

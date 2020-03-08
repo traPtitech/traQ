@@ -67,20 +67,13 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 		}
 	}
 
-	res, _ := h.formatUserGroup(g)
-	return c.JSON(http.StatusCreated, res)
+	return c.JSON(http.StatusCreated, formatUserGroup(g))
 }
 
 // GetUserGroup GET /groups/:groupID
 func (h *Handlers) GetUserGroup(c echo.Context) error {
 	g := getGroupFromContext(c)
-
-	res, err := h.formatUserGroup(g)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, formatUserGroup(g))
 }
 
 // PatchUserGroupRequest PATCH /groups/:groupID リクエストボディ
@@ -109,7 +102,7 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 	}
 
 	// 管理者ユーザーかどうか
-	if g.IsAdmin(reqUserID) {
+	if !g.IsAdmin(reqUserID) {
 		return herror.Forbidden("you are not the group's admin")
 	}
 
@@ -144,7 +137,7 @@ func (h *Handlers) DeleteUserGroup(c echo.Context) error {
 	g := getGroupFromContext(c)
 
 	// 管理者ユーザーかどうか
-	if g.IsAdmin(userID) {
+	if !g.IsAdmin(userID) {
 		return herror.Forbidden("you are not the group's admin")
 	}
 
@@ -159,7 +152,7 @@ func (h *Handlers) DeleteUserGroup(c echo.Context) error {
 func (h *Handlers) GetUserGroupMembers(c echo.Context) error {
 	groupID := getRequestParamAsUUID(c, consts.ParamGroupID)
 
-	res, err := h.Repo.GetUserGroupMemberIDs(groupID)
+	res, err := h.Repo.GetUserIDs(repository.UsersQuery{}.GMemberOf(groupID))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -184,7 +177,7 @@ func (h *Handlers) PostUserGroupMembers(c echo.Context) error {
 	}
 
 	// 管理者ユーザーかどうか
-	if g.IsAdmin(reqUserID) {
+	if !g.IsAdmin(reqUserID) {
 		return herror.Forbidden("you are not the group's admin")
 	}
 
@@ -210,7 +203,7 @@ func (h *Handlers) DeleteUserGroupMembers(c echo.Context) error {
 	g := getGroupFromContext(c)
 
 	// 管理者ユーザーかどうか
-	if g.IsAdmin(reqUserID) {
+	if !g.IsAdmin(reqUserID) {
 		return herror.Forbidden("you are not the group's admin")
 	}
 
