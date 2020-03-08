@@ -3760,7 +3760,7 @@ components:
       type: object
       description: ユーザーグループメンバー
       properties:
-        userId:
+        id:
           type: string
           format: uuid
           description: ユーザーUUID
@@ -3769,7 +3769,7 @@ components:
           default: false
           description: グループ管理者かどうか
       required:
-        - userId
+        - id
     PatchGroupMemberRequest:
       title: PatchGroupMemberRequest
       type: object

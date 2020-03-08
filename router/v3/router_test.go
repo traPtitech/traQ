@@ -161,8 +161,8 @@ func R(t *testing.T, server *httptest.Server) *httpexpect.Expect {
 	})
 }
 
-// User ユーザーを必ず作成します
-func User(t *testing.T, repo repository.Repository, userName string) *model.User {
+// CreateUser ユーザーを必ず作成します
+func CreateUser(t *testing.T, repo repository.Repository, userName string) *model.User {
 	t.Helper()
 	if userName == random {
 		userName = utils.RandAlphabetAndNumberString(32)
