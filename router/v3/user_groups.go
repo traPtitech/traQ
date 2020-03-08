@@ -13,6 +13,15 @@ import (
 	"net/http"
 )
 
+// GetUserGroups GET /groups
+func (h *Handlers) GetUserGroups(c echo.Context) error {
+	gs, err := h.Repo.GetAllUserGroups()
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	return c.JSON(http.StatusOK, formatUserGroups(gs))
+}
+
 // PostUserGroupRequest POST /groups リクエストボディ
 type PostUserGroupRequest struct {
 	Name        string `json:"name"`

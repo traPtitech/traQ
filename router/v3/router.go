@@ -212,7 +212,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiGroups := api.Group("/groups")
 		{
-			apiGroups.GET("", NotImplemented, requires(permission.GetUserGroup))
+			apiGroups.GET("", h.GetUserGroups, requires(permission.GetUserGroup))
 			apiGroups.POST("", h.PostUserGroups, requires(permission.CreateUserGroup))
 			apiGroupsGID := apiGroups.Group("/:groupID", retrieve.GroupID())
 			{

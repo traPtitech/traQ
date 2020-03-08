@@ -964,18 +964,7 @@ paths:
                   $ref: '#/components/schemas/UserGroup'
       description: ユーザーグループのリストを取得します。
       operationId: getUserGroups
-      parameters:
-        - schema:
-            type: string
-          in: query
-          name: type
-          description: グループタイプ
-        - schema:
-            type: boolean
-            default: 'false'
-          in: query
-          name: admin
-          description: 自分が管理者のグループのみを取得するかどうか
+      parameters: []
     post:
       summary: ユーザーグループを作成
       responses:
