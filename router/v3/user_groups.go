@@ -126,7 +126,76 @@ func (h *Handlers) GetUserGroupMembers(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatUserGroupMembers(getParamGroup(c).Members))
 }
 
-// RemoveUserGroupMember DELETE /groups/:groupID/admins/:userID
+// PostUserGroupMemberRequest POST /groups/:groupID/members リクエストボディ
+type PostUserGroupMemberRequest struct {
+	ID   uuid.UUID `json:"id"`
+	Role string    `json:"role"`
+}
+
+func (r PostUserGroupMemberRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.ID, vd.Required, validator.NotNilUUID),
+		vd.Field(&r.Role, vd.RuneLength(0, 100)),
+	)
+}
+
+// AddUserGroupMember POST /groups/:groupID/members
+func (h *Handlers) AddUserGroupMember(c echo.Context) error {
+	g := getParamGroup(c)
+
+	var req PostUserGroupMemberRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	// ユーザーが存在するか
+	if ok, err := h.Repo.UserExists(req.ID); err != nil {
+		return herror.InternalServerError(err)
+	} else if !ok {
+		return herror.BadRequest("this user doesn't exist")
+	}
+
+	if err := h.Repo.AddUserToGroup(req.ID, g.ID, req.Role); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// PatchUserGroupMemberRequest PATCH /groups/:groupID/members リクエストボディ
+type PatchUserGroupMemberRequest struct {
+	Role string `json:"role"`
+}
+
+func (r PatchUserGroupMemberRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Role, vd.RuneLength(0, 100)),
+	)
+}
+
+// EditUserGroupMember POST /groups/:groupID/members/:userID
+func (h *Handlers) EditUserGroupMember(c echo.Context) error {
+	g := getParamGroup(c)
+	uid := getParamAsUUID(c, consts.ParamUserID)
+
+	var req PatchUserGroupMemberRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	// ユーザーがグループに存在するか
+	if !g.IsMember(uid) {
+		return herror.BadRequest("this user is not this group's member")
+	}
+
+	if err := h.Repo.AddUserToGroup(uid, g.ID, req.Role); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// RemoveUserGroupMember DELETE /groups/:groupID/members/:userID
 func (h *Handlers) RemoveUserGroupMember(c echo.Context) error {
 	userID := getParamAsUUID(c, consts.ParamUserID)
 	g := getParamGroup(c)

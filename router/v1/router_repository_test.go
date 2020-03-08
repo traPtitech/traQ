@@ -660,7 +660,7 @@ func (repo *TestRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
 	return groups, nil
 }
 
-func (repo *TestRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
+func (repo *TestRepository) AddUserToGroup(userID, groupID uuid.UUID, role string) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}

@@ -222,10 +222,10 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiGroupsGIDMembers := apiGroupsGID.Group("/members")
 				{
 					apiGroupsGIDMembers.GET("", h.GetUserGroupMembers, requires(permission.GetUserGroup))
-					apiGroupsGIDMembers.POST("", NotImplemented, requiresGroupAdminPerm, requires(permission.EditUserGroup))
+					apiGroupsGIDMembers.POST("", h.AddUserGroupMember, requiresGroupAdminPerm, requires(permission.EditUserGroup))
 					apiGroupsGIDMembersUID := apiGroupsGIDMembers.Group("/:userID", requiresGroupAdminPerm)
 					{
-						apiGroupsGIDMembersUID.PATCH("", NotImplemented, requires(permission.EditUserGroup))
+						apiGroupsGIDMembersUID.PATCH("", h.EditUserGroupMember, requires(permission.EditUserGroup))
 						apiGroupsGIDMembersUID.DELETE("", h.RemoveUserGroupMember, requires(permission.EditUserGroup))
 					}
 				}

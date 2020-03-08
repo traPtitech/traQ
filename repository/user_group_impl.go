@@ -173,30 +173,33 @@ func (repo *GormRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
 }
 
 // AddUserToGroup implements UserGroupRepository interface.
-func (repo *GormRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
+func (repo *GormRepository) AddUserToGroup(userID, groupID uuid.UUID, role string) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return ErrNilID
 	}
-	var changed bool
+	var added bool
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var g model.UserGroup
-		if err := tx.First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
+		if err := tx.Preload("Members").First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
 			return convertError(err)
 		}
 
-		if err := tx.Create(&model.UserGroupMember{UserID: userID, GroupID: groupID}).Error; err != nil {
-			if isMySQLDuplicatedRecordErr(err) {
-				return nil
+		if g.IsMember(userID) {
+			if err := tx.Model(&model.UserGroupMember{UserID: userID, GroupID: groupID}).Update("role", role).Error; err != nil {
+				return err
 			}
-			return err
+		} else {
+			if err := tx.Create(&model.UserGroupMember{UserID: userID, GroupID: groupID, Role: role}).Error; err != nil {
+				return err
+			}
+			added = true
 		}
-		changed = true
 		return tx.Model(&g).UpdateColumn("updated_at", time.Now()).Error
 	})
 	if err != nil {
 		return err
 	}
-	if changed {
+	if added {
 		repo.hub.Publish(hub.Message{
 			Name: event.UserGroupMemberAdded,
 			Fields: hub.Fields{

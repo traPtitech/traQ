@@ -190,7 +190,7 @@ func (h *Handlers) PostUserGroupMembers(c echo.Context) error {
 		return herror.BadRequest("this user doesn't exist")
 	}
 
-	if err := h.Repo.AddUserToGroup(req.UserID, groupID); err != nil {
+	if err := h.Repo.AddUserToGroup(req.UserID, groupID, ""); err != nil {
 		return herror.InternalServerError(err)
 	}
 

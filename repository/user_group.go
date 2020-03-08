@@ -67,7 +67,7 @@ type UserGroupRepository interface {
 	// 存在しないグループの場合、ErrNotFoundを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	AddUserToGroup(userID, groupID uuid.UUID) error
+	AddUserToGroup(userID, groupID uuid.UUID, role string) error
 	// RemoveUserFromGroup 指定したグループから指定したユーザーを削除します
 	//
 	// 成功した、或いは既に居ない場合、nilを返します。

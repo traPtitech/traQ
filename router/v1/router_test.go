@@ -247,7 +247,7 @@ func mustMakeUserGroup(t *testing.T, repo repository.Repository, name string, ad
 
 func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.AddUserToGroup(userID, groupID))
+	require.NoError(t, repo.AddUserToGroup(userID, groupID, ""))
 }
 
 func mustMakeWebhook(t *testing.T, repo repository.Repository, name string, channelID, creatorID uuid.UUID, secret string) model.Webhook {

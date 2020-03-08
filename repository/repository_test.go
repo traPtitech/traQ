@@ -207,7 +207,7 @@ func mustMakeUserGroup(t *testing.T, repo Repository, name string, adminID uuid.
 
 func mustAddUserToGroup(t *testing.T, repo Repository, userID, groupID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.AddUserToGroup(userID, groupID))
+	require.NoError(t, repo.AddUserToGroup(userID, groupID, ""))
 }
 
 func mustMakeStamp(t *testing.T, repo Repository, name string, userID uuid.UUID) *model.Stamp {

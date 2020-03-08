@@ -32,6 +32,15 @@ func (ug *UserGroup) IsAdmin(uid uuid.UUID) bool {
 	return false
 }
 
+func (ug *UserGroup) IsMember(uid uuid.UUID) bool {
+	for _, admin := range ug.Members {
+		if admin.UserID == uid {
+			return true
+		}
+	}
+	return false
+}
+
 // UserGroupMember ユーザーグループメンバー構造体
 type UserGroupMember struct {
 	GroupID uuid.UUID `gorm:"type:char(36);not null;primary_key"`

@@ -259,14 +259,14 @@ func TestRepositoryImpl_AddUserToGroup(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.AddUserToGroup(uuid.Nil, g.ID), ErrNilID.Error())
+		assert.EqualError(t, repo.AddUserToGroup(uuid.Nil, g.ID, ""), ErrNilID.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NoError(t, repo.AddUserToGroup(user.ID, g.ID))
-		assert.NoError(t, repo.AddUserToGroup(user.ID, g.ID))
+		assert.NoError(t, repo.AddUserToGroup(user.ID, g.ID, ""))
+		assert.NoError(t, repo.AddUserToGroup(user.ID, g.ID, ""))
 	})
 }
 
