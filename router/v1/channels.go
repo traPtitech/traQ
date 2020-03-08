@@ -222,13 +222,15 @@ func (h *Handlers) PutChannelParent(c echo.Context) error {
 	}
 
 	if err := h.Repo.UpdateChannel(channelID, repository.UpdateChannelArgs{Parent: uuid.NullUUID{Valid: true, UUID: req.Parent}, UpdaterID: getRequestUserID(c)}); err != nil {
-		switch err {
-		case repository.ErrAlreadyExists:
+		switch {
+		case repository.IsArgError(err):
+			return herror.BadRequest(err)
+		case err == repository.ErrAlreadyExists:
 			return herror.Conflict("channel name conflicts")
-		case repository.ErrChannelDepthLimitation:
+		case err == repository.ErrChannelDepthLimitation:
 			return herror.BadRequest("channel depth limit exceeded")
-		case repository.ErrForbidden:
-			return herror.Forbidden("invalid parent channel")
+		case err == repository.ErrForbidden:
+			return herror.Forbidden()
 		default:
 			return herror.InternalServerError(err)
 		}

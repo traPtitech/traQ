@@ -197,21 +197,24 @@ func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChanne
 					break
 				case dmChannelRootUUID:
 					// DMチャンネルには出来ない
-					return ErrForbidden
+					return ArgError("args.Parent", "invalid parent channel")
 				default:
 					pCh, err := repo.getChannel(tx, args.Parent.UUID)
 					if err != nil {
+						if err == ErrNotFound {
+							return ArgError("args.Parent", "invalid parent channel")
+						}
 						return err
 					}
 
 					// DMチャンネルの子チャンネルには出来ない
 					if pCh.IsDMChannel() {
-						return ErrForbidden
+						return ArgError("args.Parent", "invalid parent channel")
 					}
 
 					// 親と公開状況が一致しているか
 					if ch.IsPublic != pCh.IsPublic {
-						return ErrForbidden
+						return ArgError("args.Parent", "invalid parent channel")
 					}
 
 					// 深さを検証

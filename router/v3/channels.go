@@ -109,6 +109,53 @@ func (h *Handlers) GetChannel(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatChannel(ch, childrenID))
 }
 
+// PatchChannelRequest PATCH /channels/:channelID リクエストボディ
+type PatchChannelRequest struct {
+	Name       null.String   `json:"name"`
+	Visibility null.Bool     `json:"visibility"`
+	Force      null.Bool     `json:"force"`
+	Parent     uuid.NullUUID `json:"parent"`
+}
+
+func (r PatchChannelRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, validator.ChannelNameRule...),
+	)
+}
+
+// EditChannel PATCH /channels/:channelID
+func (h *Handlers) EditChannel(c echo.Context) error {
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+
+	var req PatchChannelRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	args := repository.UpdateChannelArgs{
+		UpdaterID:          getRequestUserID(c),
+		Name:               req.Name,
+		Visibility:         req.Visibility,
+		ForcedNotification: req.Force,
+		Parent:             req.Parent,
+	}
+	if err := h.Repo.UpdateChannel(channelID, args); err != nil {
+		switch {
+		case repository.IsArgError(err):
+			return herror.BadRequest(err)
+		case err == repository.ErrAlreadyExists:
+			return herror.Conflict("channel name conflicts")
+		case err == repository.ErrForbidden:
+			return herror.Forbidden()
+		case err == repository.ErrChannelDepthLimitation:
+			return herror.BadRequest("channel depth limit exceeded")
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+	return c.NoContent(http.StatusNoContent)
+}
+
 // GetChannelViewers GET /channels/:channelID/viewers
 func (h *Handlers) GetChannelViewers(c echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)

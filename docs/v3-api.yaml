@@ -2803,6 +2803,7 @@ paths:
       description: |-
         指定したチャンネルの情報を変更します。
         変更には権限が必要です。
+        ルートチャンネルに移動させる場合は、`parent`に`00000000-0000-0000-0000-000000000000`を指定してください。
   /webrtc/state:
     get:
       summary: WebRTC状態を取得します
@@ -4656,7 +4657,7 @@ components:
         force:
           type: boolean
           description: 強制通知チャンネルかどうか
-        parentId:
+        parent:
           type: string
           description: 親チャンネルUUID
           format: uuid

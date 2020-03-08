@@ -115,7 +115,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiChannelsCID := apiChannels.Group("/:channelID", retrieve.ChannelID(), requiresChannelAccessPerm)
 			{
 				apiChannelsCID.GET("", h.GetChannel, requires(permission.GetChannel))
-				apiChannelsCID.PATCH("", NotImplemented, requires(permission.EditChannel))
+				apiChannelsCID.PATCH("", h.EditChannel, requires(permission.EditChannel))
 				apiChannelsCID.GET("/messages", h.GetMessages, requires(permission.GetMessage))
 				apiChannelsCID.POST("/messages", h.PostMessage, bodyLimit(100), requires(permission.PostMessage))
 				apiChannelsCID.GET("/stats", h.GetChannelStats, requires(permission.GetChannel))

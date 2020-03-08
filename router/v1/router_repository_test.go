@@ -982,17 +982,17 @@ func (repo *TestRepository) UpdateChannel(channelID uuid.UUID, args repository.U
 			default:
 				pCh, ok := repo.Channels[args.Parent.UUID]
 				if !ok {
-					return repository.ErrNotFound
+					return repository.ArgError("args.Name", "invalid name")
 				}
 
 				// DMチャンネルの子チャンネルには出来ない
 				if pCh.IsDMChannel() {
-					return repository.ErrForbidden
+					return repository.ArgError("args.Name", "invalid name")
 				}
 
 				// 親と公開状況が一致しているか
 				if ch.IsPublic != pCh.IsPublic {
-					return repository.ErrForbidden
+					return repository.ArgError("args.Name", "invalid name")
 				}
 
 				// 深さを検証
