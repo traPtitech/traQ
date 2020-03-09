@@ -13,15 +13,21 @@ CREATE TABLE `files` (
   `name` text NOT NULL,
   `mime` text NOT NULL,
   `size` bigint(20) NOT NULL,
-  `creator_id` char(36) NOT NULL,
+  `creator_id` char(36) DEFAULT NULL,
   `hash` char(32) NOT NULL,
   `type` varchar(30) NOT NULL DEFAULT '',
   `has_thumbnail` tinyint(1) NOT NULL DEFAULT '0',
+  `thumbnail_mime` text,
   `thumbnail_width` int(11) NOT NULL DEFAULT '0',
   `thumbnail_height` int(11) NOT NULL DEFAULT '0',
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `deleted_at` timestamp(6) NULL DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `channel_id` char(36) DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `deleted_at` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `files_creator_id_users_id_foreign` (`creator_id`),
+  KEY `idx_files_channel_id_created_at` (`channel_id`,`created_at`),
+  CONSTRAINT `files_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `files_creator_id_users_id_foreign` FOREIGN KEY (`creator_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -31,29 +37,35 @@ CREATE TABLE `files` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [stamps](stamps.md) [users](users.md) |  |  |
+| id | char(36) |  | false | [files_acl](files_acl.md) [stamps](stamps.md) [users](users.md) |  |  |
 | name | text |  | false |  |  | ファイル名 |
 | mime | text |  | false |  |  | ファイルMIMEタイプ |
 | size | bigint(20) |  | false |  |  | ファイルサイズ(byte) |
-| creator_id | char(36) |  | false |  |  | ファイル作成者UUID |
+| creator_id | char(36) |  | true |  | [users](users.md) | ファイル作成者UUID |
 | hash | char(32) |  | false |  |  | MD5ハッシュ |
 | type | varchar(30) |  | false |  |  | ファイルタイプ |
 | has_thumbnail | tinyint(1) | 0 | false |  |  | サムネイル画像を持っているか |
+| thumbnail_mime | text |  | true |  |  | サムネイル画像MIMEタイプ |
 | thumbnail_width | int(11) | 0 | false |  |  | サムネイル画像幅 |
 | thumbnail_height | int(11) | 0 | false |  |  | サムネイル画像高さ |
-| created_at | timestamp(6) |  | true |  |  |  |
-| deleted_at | timestamp(6) |  | true |  |  |  |
+| channel_id | char(36) |  | true |  | [channels](channels.md) | 所属チャンネルUUID |
+| created_at | datetime(6) |  | true |  |  |  |
+| deleted_at | datetime(6) |  | true |  |  |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
+| files_channel_id_channels_id_foreign | FOREIGN KEY | FOREIGN KEY (channel_id) REFERENCES channels (id) |
+| files_creator_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (creator_id) REFERENCES users (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
+| files_creator_id_users_id_foreign | KEY files_creator_id_users_id_foreign (creator_id) USING BTREE |
+| idx_files_channel_id_created_at | KEY idx_files_channel_id_created_at (channel_id, created_at) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 
 ## Relations

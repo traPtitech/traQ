@@ -11,8 +11,8 @@
 CREATE TABLE `tags` (
   `id` char(36) NOT NULL,
   `name` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `updated_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -26,8 +26,8 @@ CREATE TABLE `tags` (
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false | [users_tags](users_tags.md) |  | タグUUID |
 | name | varchar(30) |  | false |  |  | タグ文字列 |
-| created_at | timestamp(6) |  | true |  |  | 作成日時 |
-| updated_at | timestamp(6) |  | true |  |  | 更新日時 |
+| created_at | datetime(6) |  | true |  |  | 作成日時 |
+| updated_at | datetime(6) |  | true |  |  | 更新日時 |
 
 ## Constraints
 

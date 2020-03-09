@@ -20,9 +20,9 @@ CREATE TABLE `bots` (
   `state` tinyint(4) NOT NULL DEFAULT '0',
   `bot_code` varchar(30) NOT NULL,
   `creator_id` char(36) NOT NULL,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `updated_at` timestamp(6) NULL DEFAULT NULL,
-  `deleted_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `bot_user_id` (`bot_user_id`),
   UNIQUE KEY `bot_code` (`bot_code`),
@@ -39,7 +39,7 @@ CREATE TABLE `bots` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false |  |  |  |
-| bot_user_id | char(36) |  | false |  |  | BOTユーザーUUID |
+| bot_user_id | char(36) |  | false |  | [users](users.md) | BOTユーザーUUID |
 | description | text |  | false |  |  | BOT説明 |
 | verification_token | varchar(30) |  | false |  |  | 認証トークン |
 | access_token_id | char(36) |  | false |  |  | BOTアクセストークンID |
@@ -49,15 +49,15 @@ CREATE TABLE `bots` (
 | state | tinyint(4) | 0 | false |  |  | BOTの状態 |
 | bot_code | varchar(30) |  | false |  |  | BOTコード |
 | creator_id | char(36) |  | false |  | [users](users.md) | BOT制作者UUID |
-| created_at | timestamp(6) |  | true |  |  |  |
-| updated_at | timestamp(6) |  | true |  |  |  |
-| deleted_at | timestamp(6) |  | true |  |  |  |
+| created_at | datetime(6) |  | true |  |  |  |
+| updated_at | datetime(6) |  | true |  |  |  |
+| deleted_at | datetime(6) |  | true |  |  |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
-| bots_bot_user_id_users_id_foreign | UNIQUE | UNIQUE KEY bots_bot_user_id_users_id_foreign (bot_user_id) |
+| bots_bot_user_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (bot_user_id) REFERENCES users (id) |
 | bots_creator_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (creator_id) REFERENCES users (id) |
 | bot_code | UNIQUE | UNIQUE KEY bot_code (bot_code) |
 | bot_user_id | UNIQUE | UNIQUE KEY bot_user_id (bot_user_id) |

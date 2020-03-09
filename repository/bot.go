@@ -8,11 +8,12 @@ import (
 
 // UpdateBotArgs Bot情報更新引数
 type UpdateBotArgs struct {
-	DisplayName null.String
-	Description null.String
-	WebhookURL  null.String
-	Privileged  null.Bool
-	CreatorID   uuid.NullUUID
+	DisplayName     null.String
+	Description     null.String
+	WebhookURL      null.String
+	Privileged      null.Bool
+	CreatorID       uuid.NullUUID
+	SubscribeEvents model.BotEvents
 }
 
 // BotsQuery Bot情報取得用クエリ
@@ -84,13 +85,6 @@ type BotRepository interface {
 	// idにuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	UpdateBot(id uuid.UUID, args UpdateBotArgs) error
-	// SetSubscribeEventsToBot 指定したBotの購読イベントを変更します
-	//
-	// 成功した場合、nilを返します。
-	// 存在しないBotを指定した場合、ErrNotFoundを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// DBによるエラーを返すことがあります。
-	SetSubscribeEventsToBot(botID uuid.UUID, events model.BotEvents) error
 	// GetAllBots 全てのBotを取得します
 	//
 	// 成功した場合、Botの配列とnilを返します。

@@ -12,7 +12,8 @@ CREATE TABLE `files_acl` (
   `file_id` char(36) NOT NULL,
   `user_id` char(36) NOT NULL,
   `allow` tinyint(1) NOT NULL,
-  PRIMARY KEY (`file_id`,`user_id`)
+  PRIMARY KEY (`file_id`,`user_id`),
+  CONSTRAINT `files_acl_file_id_files_id_foreign` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -22,7 +23,7 @@ CREATE TABLE `files_acl` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| file_id | char(36) |  | false |  |  | ファイルUUID |
+| file_id | char(36) |  | false |  | [files](files.md) | ファイルUUID |
 | user_id | char(36) |  | false |  |  | ユーザーUUID |
 | allow | tinyint(1) |  | false |  |  | 許可 |
 
@@ -30,6 +31,7 @@ CREATE TABLE `files_acl` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
+| files_acl_file_id_files_id_foreign | FOREIGN KEY | FOREIGN KEY (file_id) REFERENCES files (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (file_id, user_id) |
 
 ## Indexes

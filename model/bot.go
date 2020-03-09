@@ -146,6 +146,9 @@ func (set BotEvents) StringArray() (r []string) {
 
 // Validate github.com/go-ozzo/ozzo-validation.Validatable 実装
 func (set BotEvents) Validate() error {
+	if set == nil {
+		return nil
+	}
 	return vd.Validate(set.StringArray(), vd.Each(vd.Required, vd.By(func(value interface{}) error {
 		s, _ := value.(string)
 		if !BotEventSet[BotEvent(s)] {

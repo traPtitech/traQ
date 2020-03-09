@@ -37,7 +37,7 @@ func (pr *ParamRetriever) byString(param string, key string, f func(c echo.Conte
 func (pr *ParamRetriever) byUUID(param string, key string, f func(c echo.Context, v uuid.UUID) (interface{}, error)) echo.MiddlewareFunc {
 	return pr.byString(param, key, func(c echo.Context, v string) (interface{}, error) {
 		u, err := uuid.FromString(v)
-		if err != nil {
+		if err != nil || u == uuid.Nil {
 			return nil, herror.NotFound()
 		}
 		return f(c, u)
@@ -105,6 +105,20 @@ func (pr *ParamRetriever) ClientID() echo.MiddlewareFunc {
 func (pr *ParamRetriever) BotID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamBotID, consts.KeyParamBot, func(c echo.Context, v uuid.UUID) (interface{}, error) {
 		return pr.repo.GetBotByID(v)
+	})
+}
+
+// ChannelID リクエストURLの`channelID`パラメータからChannelを取り出す
+func (pr *ParamRetriever) ChannelID() echo.MiddlewareFunc {
+	return pr.byUUID(consts.ParamChannelID, consts.KeyParamChannel, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+		return pr.repo.GetChannel(v)
+	})
+}
+
+// FileID リクエストURLの`fileID`パラメータからFileを取り出す
+func (pr *ParamRetriever) FileID() echo.MiddlewareFunc {
+	return pr.byUUID(consts.ParamFileID, consts.KeyParamFile, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+		return pr.repo.GetFileMeta(v)
 	})
 }
 

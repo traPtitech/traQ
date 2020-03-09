@@ -19,12 +19,12 @@ func TestRepositoryImpl_CreatePin(t *testing.T) {
 
 	p, err := repo.CreatePin(testMessage.ID, user.ID)
 	if assert.NoError(err) {
-		assert.NotEmpty(p)
+		assert.NotEmpty(p.ID)
 	}
 
 	p2, err := repo.CreatePin(testMessage.ID, user.ID)
 	if assert.NoError(err) {
-		assert.EqualValues(p, p2)
+		assert.EqualValues(p.ID, p2.ID)
 	}
 }
 
@@ -49,29 +49,6 @@ func TestRepositoryImpl_GetPin(t *testing.T) {
 
 	_, err = repo.GetPin(uuid.Must(uuid.NewV4()))
 	assert.Equal(ErrNotFound, err)
-}
-
-func TestRepositoryImpl_IsPinned(t *testing.T) {
-	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common)
-
-	testMessage := mustMakeMessage(t, repo, user.ID, channel.ID)
-	mustMakePin(t, repo, testMessage.ID, user.ID)
-
-	ok, err := repo.IsPinned(testMessage.ID)
-	if assert.NoError(err) {
-		assert.True(ok)
-	}
-
-	ok, err = repo.IsPinned(uuid.Nil)
-	if assert.NoError(err) {
-		assert.False(ok)
-	}
-
-	ok, err = repo.IsPinned(uuid.Must(uuid.NewV4()))
-	if assert.NoError(err) {
-		assert.False(ok)
-	}
 }
 
 func TestRepositoryImpl_DeletePin(t *testing.T) {

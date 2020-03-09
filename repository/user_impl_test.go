@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/utils"
@@ -136,7 +135,7 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 	t.Run("GetUsers", func(t *testing.T) {
 		t.Parallel()
 
-		users, err := repo.GetUsers()
+		users, err := repo.GetUsers(UsersQuery{})
 		if assert.NoError(err) {
 			assert.Len(users, len(us))
 		}
@@ -331,31 +330,4 @@ func TestRepositoryImpl_ChangeUserIcon(t *testing.T) {
 		require.NoError(err)
 		assert.Equal(newIcon, u.Icon)
 	}
-}
-
-func TestRepositoryImpl_ChangeUserAccountStatus(t *testing.T) {
-	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
-
-	t.Run("nil id", func(t *testing.T) {
-		t.Parallel()
-
-		assert.EqualError(t, repo.ChangeUserAccountStatus(uuid.Nil, model.UserAccountStatusDeactivated), ErrNilID.Error())
-	})
-
-	t.Run("unknown user", func(t *testing.T) {
-		t.Parallel()
-
-		assert.EqualError(t, repo.ChangeUserAccountStatus(uuid.Must(uuid.NewV4()), model.UserAccountStatusDeactivated), ErrNotFound.Error())
-	})
-
-	t.Run("success", func(t *testing.T) {
-		t.Parallel()
-
-		if assert.NoError(t, repo.ChangeUserAccountStatus(user.ID, model.UserAccountStatusDeactivated)) {
-			u, err := repo.GetUser(user.ID)
-			require.NoError(t, err)
-			assert.Equal(t, u.Status, model.UserAccountStatusDeactivated)
-		}
-	})
 }

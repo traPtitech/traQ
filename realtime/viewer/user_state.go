@@ -8,9 +8,9 @@ import (
 
 // UserState ユーザー閲覧状態
 type UserState struct {
-	UserID uuid.UUID `json:"userId"`
-	State  State     `json:"state"`
-	time   time.Time
+	UserID    uuid.UUID `json:"userId"`
+	State     State     `json:"state"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // UserStates []UserState
@@ -23,7 +23,7 @@ func (u UserStates) Len() int {
 
 // Less implements sort.Interface
 func (u UserStates) Less(i, j int) bool {
-	return u[i].time.Before(u[j].time)
+	return u[i].UpdatedAt.Before(u[j].UpdatedAt)
 }
 
 // Swap implements sort.Interface
@@ -36,9 +36,9 @@ func ConvertToArray(cv map[uuid.UUID]StateWithTime) UserStates {
 	result := make(UserStates, 0, len(cv))
 	for uid, swt := range cv {
 		result = append(result, UserState{
-			UserID: uid,
-			State:  swt.State,
-			time:   swt.Time,
+			UserID:    uid,
+			State:     swt.State,
+			UpdatedAt: swt.Time,
 		})
 	}
 	sort.Sort(result)

@@ -18,9 +18,9 @@ CREATE TABLE `channels` (
   `is_visible` tinyint(1) NOT NULL DEFAULT '0',
   `creator_id` char(36) NOT NULL,
   `updater_id` char(36) NOT NULL,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `updated_at` timestamp(6) NULL DEFAULT NULL,
-  `deleted_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name_parent` (`name`,`parent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -32,7 +32,7 @@ CREATE TABLE `channels` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [channel_events](channel_events.md) [dm_channel_mappings](dm_channel_mappings.md) [messages](messages.md) [stars](stars.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [webhook_bots](webhook_bots.md) [channels](channels.md) |  | チャンネルUUID |
+| id | char(36) |  | false | [channel_events](channel_events.md) [dm_channel_mappings](dm_channel_mappings.md) [files](files.md) [messages](messages.md) [stars](stars.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [webhook_bots](webhook_bots.md) [channels](channels.md) |  | チャンネルUUID |
 | name | varchar(20) |  | false |  |  | チャンネル名 |
 | parent_id | char(36) |  | false |  | [channels](channels.md) | 親チャンネルUUID |
 | topic | text |  | false |  |  | チャンネルトピック |
@@ -41,9 +41,9 @@ CREATE TABLE `channels` (
 | is_visible | tinyint(1) | 0 | false |  |  | 可視チャンネルかどうか |
 | creator_id | char(36) |  | false |  | [users](users.md) | チャンネル作成者UUID |
 | updater_id | char(36) |  | false |  | [users](users.md) | チャンネル更新者UUID |
-| created_at | timestamp(6) |  | true |  |  | チャンネル作成日時 |
-| updated_at | timestamp(6) |  | true |  |  | チャンネル更新日時 |
-| deleted_at | timestamp(6) |  | true |  |  | チャンネル削除日時 |
+| created_at | datetime(6) |  | true |  |  | チャンネル作成日時 |
+| updated_at | datetime(6) |  | true |  |  | チャンネル更新日時 |
+| deleted_at | datetime(6) |  | true |  |  | チャンネル削除日時 |
 
 ## Constraints
 

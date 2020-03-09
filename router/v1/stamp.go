@@ -15,7 +15,7 @@ import (
 // GetStamps GET /stamps
 func (h *Handlers) GetStamps(c echo.Context) error {
 	res, err, _ := h.getStampsResponseCacheGroup.Do("", func() (interface{}, error) {
-		stamps, err := h.Repo.GetAllStamps()
+		stamps, err := h.Repo.GetAllStamps(false)
 		if err != nil {
 			return nil, err
 		}
@@ -182,7 +182,7 @@ func (h *Handlers) DeleteMessageStamp(c echo.Context) error {
 func (h *Handlers) GetMyStampHistory(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	history, err := h.Repo.GetUserStampHistory(userID)
+	history, err := h.Repo.GetUserStampHistory(userID, 100)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

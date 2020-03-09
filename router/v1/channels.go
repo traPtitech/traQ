@@ -3,6 +3,7 @@ package v1
 import (
 	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
+	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/realtime/viewer"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -12,9 +13,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
-
-	"github.com/labstack/echo/v4"
 )
 
 // GetChannels GET /channels
@@ -189,7 +187,7 @@ func (h *Handlers) PostChannelChildren(c echo.Context) error {
 	}
 
 	// 子チャンネル作成
-	ch, err := h.Repo.CreateChildChannel(req.Name, parentCh.ID, userID)
+	ch, err := h.Repo.CreatePublicChannel(req.Name, parentCh.ID, userID)
 	if err != nil {
 		switch {
 		case repository.IsArgError(err):
@@ -223,14 +221,16 @@ func (h *Handlers) PutChannelParent(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.ChangeChannelParent(channelID, req.Parent, getRequestUserID(c)); err != nil {
-		switch err {
-		case repository.ErrAlreadyExists:
+	if err := h.Repo.UpdateChannel(channelID, repository.UpdateChannelArgs{Parent: uuid.NullUUID{Valid: true, UUID: req.Parent}, UpdaterID: getRequestUserID(c)}); err != nil {
+		switch {
+		case repository.IsArgError(err):
+			return herror.BadRequest(err)
+		case err == repository.ErrAlreadyExists:
 			return herror.Conflict("channel name conflicts")
-		case repository.ErrChannelDepthLimitation:
+		case err == repository.ErrChannelDepthLimitation:
 			return herror.BadRequest("channel depth limit exceeded")
-		case repository.ErrForbidden:
-			return herror.Forbidden("invalid parent channel")
+		case err == repository.ErrForbidden:
+			return herror.Forbidden()
 		default:
 			return herror.InternalServerError(err)
 		}
@@ -280,12 +280,12 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 }
 
 type channelEventsQuery struct {
-	Limit     int        `query:"limit"`
-	Offset    int        `query:"offset"`
-	Since     *time.Time `query:"since"`
-	Until     *time.Time `query:"until"`
-	Inclusive bool       `query:"inclusive"`
-	Order     string     `query:"order"`
+	Limit     int       `query:"limit"`
+	Offset    int       `query:"offset"`
+	Since     null.Time `query:"since"`
+	Until     null.Time `query:"until"`
+	Inclusive bool      `query:"inclusive"`
+	Order     string    `query:"order"`
 }
 
 func (q *channelEventsQuery) bind(c echo.Context) error {
@@ -294,8 +294,8 @@ func (q *channelEventsQuery) bind(c echo.Context) error {
 
 func (q *channelEventsQuery) convert(cid uuid.UUID) repository.ChannelEventsQuery {
 	return repository.ChannelEventsQuery{
-		Since:     null.TimeFromPtr(q.Since),
-		Until:     null.TimeFromPtr(q.Until),
+		Since:     q.Since,
+		Until:     q.Until,
 		Inclusive: q.Inclusive,
 		Limit:     q.Limit,
 		Offset:    q.Offset,

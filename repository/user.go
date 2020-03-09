@@ -12,6 +12,11 @@ type UpdateUserArgs struct {
 	DisplayName null.String
 	TwitterID   null.String
 	Role        null.String
+	UserState   struct {
+		Valid bool
+		State model.UserAccountStatus
+	}
+	Bio null.String
 }
 
 // UsersQuery GetUsers用クエリ
@@ -81,11 +86,11 @@ type UserRepository interface {
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetUserByName(name string) (*model.User, error)
-	// GetUsers 全ユーザーを取得します
+	// GetUsers 指定した条件を満たすユーザーを取得します
 	//
 	// 成功した場合、ユーザーの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetUsers() ([]*model.User, error)
+	GetUsers(query UsersQuery) ([]*model.User, error)
 	// GetUserIDs 指定した条件を満たすユーザーのUUIDの配列を取得します
 	//
 	// 成功した場合、UUIDの配列とnilを返します。
@@ -116,14 +121,6 @@ type UserRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	ChangeUserIcon(id, fileID uuid.UUID) error
-	// ChangeUserAccountStatus 指定したユーザーのアカウント状態を変更します
-	//
-	// 成功した場合、nilを返します。
-	// 存在しないユーザーの場合、ErrNotFoundを返します。
-	// 無効なstatusを指定した場合、ArgumentErrorを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// DBによるエラーを返すことがあります。
-	ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error
 	// UpdateUserLastOnline 指定したユーザーの最終オンライン日時を更新します
 	//
 	// 成功した場合、nilを返します。

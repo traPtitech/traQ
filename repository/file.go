@@ -1,10 +1,65 @@
 package repository
 
 import (
+	vd "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/validator"
 	"io"
+	"mime"
+	"path/filepath"
 )
+
+type SaveFileArgs struct {
+	FileName  string
+	FileSize  int64
+	MimeType  string
+	FileType  string
+	CreatorID uuid.NullUUID
+	ChannelID uuid.NullUUID
+	ACL       ACL
+	Src       io.Reader
+}
+
+func (args *SaveFileArgs) Validate() error {
+	if len(args.MimeType) == 0 {
+		args.MimeType = mime.TypeByExtension(filepath.Ext(args.FileName))
+		if len(args.MimeType) == 0 {
+			args.MimeType = "application/octet-stream"
+		}
+	}
+	if args.ACL == nil {
+		args.ACLAllow(uuid.Nil)
+	}
+	if args.CreatorID.Valid {
+		args.ACLAllow(args.CreatorID.UUID)
+	}
+	return vd.ValidateStruct(args,
+		vd.Field(&args.FileName, vd.Required),
+		vd.Field(&args.FileSize, vd.Required, vd.Min(1)),
+		vd.Field(&args.MimeType, vd.Required, is.PrintableASCII),
+		vd.Field(&args.CreatorID, validator.NotNilUUID),
+		vd.Field(&args.ChannelID, validator.NotNilUUID),
+		vd.Field(&args.ACL, vd.Required),
+		vd.Field(&args.Src, vd.NotNil),
+	)
+}
+
+func (args *SaveFileArgs) SetChannel(id uuid.UUID) {
+	args.ChannelID = uuid.NullUUID{Valid: true, UUID: id}
+}
+
+func (args *SaveFileArgs) SetCreator(id uuid.UUID) {
+	args.CreatorID = uuid.NullUUID{Valid: true, UUID: id}
+}
+
+func (args *SaveFileArgs) ACLAllow(userID uuid.UUID) {
+	if args.ACL == nil {
+		args.ACL = ACL{}
+	}
+	args.ACL[userID] = true
+}
 
 // FileRepository ファイルリポジトリ
 type FileRepository interface {
@@ -40,14 +95,10 @@ type FileRepository interface {
 	GenerateIconFile(salt string) (uuid.UUID, error)
 	// SaveFile ファイルを保存します
 	//
-	// SaveFileWithACLの引数readにACL{uuid.Nil: true}を指定したものと同じです。
-	SaveFile(name string, src io.Reader, size int64, mime string, fType string, creatorID uuid.UUID) (*model.File, error)
-	// SaveFileWithACL ファイルを保存します
-	//
 	// mimeが指定されていない場合はnameの拡張子によって決まります。
 	// 成功した場合、メタデータとnilを返します。
 	// DB, ファイルシステムによるエラーを返すことがあります。
-	SaveFileWithACL(name string, src io.Reader, size int64, mime string, fType string, creatorID uuid.UUID, read ACL) (*model.File, error)
+	SaveFile(args SaveFileArgs) (*model.File, error)
 	// IsFileAccessible 指定したユーザーが指定したファイルにアクセス可能かどうかを返します
 	//
 	// アクセス可能な場合、trueとnilを返します。

@@ -133,7 +133,7 @@ func TestHandlers_GetUserGroup(t *testing.T) {
 		obj.Value("groupId").String().Equal(g.ID.String())
 		obj.Value("name").String().Equal(g.Name)
 		obj.Value("description").String().Equal(g.Description)
-		obj.Value("adminUserId").String().Equal(g.AdminUserID.String())
+		obj.Value("adminUserId").String().Equal(g.Admins[0].UserID.String())
 		obj.Value("members").Array().ContainsOnly(user.ID.String())
 	})
 }
@@ -168,17 +168,7 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/groups/{groupID}", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
-			WithJSON(map[string]interface{}{"name": true, "adminUserId": uuid.Nil.String()}).
-			Expect().
-			Status(http.StatusBadRequest)
-	})
-
-	t.Run("bad request2", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.PATCH("/api/1.0/groups/{groupID}", g.ID.String()).
-			WithCookie(sessions.CookieName, session).
-			WithJSON(map[string]interface{}{"adminUserId": uuid.Nil.String()}).
+			WithJSON(map[string]interface{}{"name": true}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -212,7 +202,7 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 		name := utils.RandAlphabetAndNumberString(20)
 		e.PATCH("/api/1.0/groups/{groupID}", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
-			WithJSON(map[string]interface{}{"name": name, "description": "aaa", "adminUserId": user2.ID}).
+			WithJSON(map[string]interface{}{"name": name, "description": "aaa"}).
 			Expect().
 			Status(http.StatusNoContent)
 
@@ -220,7 +210,6 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 		if assert.NoError(t, err) {
 			assert.Equal(t, a.Name, name)
 			assert.Equal(t, a.Description, "aaa")
-			assert.Equal(t, a.AdminUserID, user2.ID)
 		}
 	})
 
@@ -374,7 +363,7 @@ func TestHandlers_PostUserGroupMembers(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ids, err := repo.GetUserGroupMemberIDs(g.ID)
+		ids, err := repo.GetUserIDs(repository.UsersQuery{}.GMemberOf(g.ID))
 		if assert.NoError(t, err) {
 			assert.ElementsMatch(t, ids, []uuid.UUID{user.ID})
 		}
@@ -431,7 +420,7 @@ func TestHandlers_DeleteUserGroupMembers(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ids, err := repo.GetUserGroupMemberIDs(g.ID)
+		ids, err := repo.GetUserIDs(repository.UsersQuery{}.GMemberOf(g.ID))
 		if assert.NoError(t, err) {
 			assert.Len(t, ids, 0)
 		}

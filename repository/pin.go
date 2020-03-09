@@ -13,19 +13,13 @@ type PinRepository interface {
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
 	// 存在しないメッセージを指定した場合はErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	CreatePin(messageID, userID uuid.UUID) (uuid.UUID, error)
+	CreatePin(messageID, userID uuid.UUID) (*model.Pin, error)
 	// GetPin 指定したピン留めを取得します
 	//
 	// 成功した場合、ピン留めとnilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetPin(id uuid.UUID) (*model.Pin, error)
-	// IsPinned 指定したメッセージがピン留めされているかどうかを返します
-	//
-	// ピン留めされている場合、trueとnilを返します。
-	// 存在しないメッセージを指定した場合はfalseとnilを返します。
-	// DBによるエラーを返すことがあります。
-	IsPinned(messageID uuid.UUID) (bool, error)
 	// DeletePin 指定したユーザーによって指定したピン留めを削除します
 	//
 	// 成功した、或いは既にピン留めされていなかった場合にnilを返します。

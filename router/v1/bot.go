@@ -171,7 +171,7 @@ type PutBotEventsRequest struct {
 
 func (r PutBotEventsRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Events),
+		vd.Field(&r.Events, vd.Required),
 	)
 }
 
@@ -184,7 +184,7 @@ func (h *Handlers) PutBotEvents(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.SetSubscribeEventsToBot(b.ID, req.Events); err != nil {
+	if err := h.Repo.UpdateBot(b.ID, repository.UpdateBotArgs{SubscribeEvents: req.Events}); err != nil {
 		return herror.InternalServerError(err)
 	}
 

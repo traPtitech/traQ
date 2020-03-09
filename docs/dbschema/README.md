@@ -13,7 +13,7 @@
 | [channels](channels.md) | 12 | チャンネルテーブル | BASE TABLE |
 | [devices](devices.md) | 3 | FCMデバイステーブル | BASE TABLE |
 | [dm_channel_mappings](dm_channel_mappings.md) | 3 | DMチャンネルマッピングテーブル | BASE TABLE |
-| [files](files.md) | 12 | ファイルテーブル | BASE TABLE |
+| [files](files.md) | 14 | ファイルテーブル | BASE TABLE |
 | [files_acl](files_acl.md) | 3 | ファイルアクセスコントロールリストテーブル | BASE TABLE |
 | [message_reports](message_reports.md) | 6 | メッセージ通報テーブル | BASE TABLE |
 | [messages](messages.md) | 7 | メッセージテーブル | BASE TABLE |
@@ -28,8 +28,9 @@
 | [stars](stars.md) | 2 | お気に入りチャンネルテーブル | BASE TABLE |
 | [tags](tags.md) | 4 | タグテーブル | BASE TABLE |
 | [unreads](unreads.md) | 4 | メッセージ未読テーブル | BASE TABLE |
-| [user_group_members](user_group_members.md) | 2 | ユーザーグループメンバーテーブル | BASE TABLE |
-| [user_groups](user_groups.md) | 7 | ユーザーグループテーブル | BASE TABLE |
+| [user_group_admins](user_group_admins.md) | 2 | ユーザーグループ管理者テーブル | BASE TABLE |
+| [user_group_members](user_group_members.md) | 3 | ユーザーグループメンバーテーブル | BASE TABLE |
+| [user_groups](user_groups.md) | 6 | ユーザーグループテーブル | BASE TABLE |
 | [user_role_inheritances](user_role_inheritances.md) | 2 | ユーザーロール継承テーブル | BASE TABLE |
 | [user_role_permissions](user_role_permissions.md) | 2 | ユーザーロールパーミッションテーブル | BASE TABLE |
 | [user_roles](user_roles.md) | 3 | ユーザーロールテーブル | BASE TABLE |

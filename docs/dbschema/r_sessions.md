@@ -12,11 +12,11 @@ CREATE TABLE `r_sessions` (
   `token` varchar(50) NOT NULL DEFAULT '',
   `reference_id` char(36) DEFAULT NULL,
   `user_id` varchar(36) DEFAULT NULL,
-  `last_access` timestamp(6) NULL DEFAULT NULL,
+  `last_access` datetime(6) DEFAULT NULL,
   `last_ip` text,
   `last_user_agent` text,
   `data` longblob,
-  `created` timestamp(6) NULL DEFAULT NULL,
+  `created` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`token`),
   UNIQUE KEY `reference_id` (`reference_id`),
   KEY `idx_r_sessions_user_id` (`user_id`)
@@ -32,11 +32,11 @@ CREATE TABLE `r_sessions` (
 | token | varchar(50) |  | false |  |  | セッショントークン |
 | reference_id | char(36) |  | true |  |  | 参照ID |
 | user_id | varchar(36) |  | true |  |  | セッションがログインしているユーザーUUID |
-| last_access | timestamp(6) |  | true |  |  | 最終アクセス日時 |
+| last_access | datetime(6) |  | true |  |  | 最終アクセス日時 |
 | last_ip | text |  | true |  |  | 最終アクセスIPアドレス |
 | last_user_agent | text |  | true |  |  | 最終アクセスUserAgent |
 | data | longblob |  | true |  |  | セッションデータ(gobバイナリ) |
-| created | timestamp(6) |  | true |  |  | 生成日時 |
+| created | datetime(6) |  | true |  |  | 生成日時 |
 
 ## Constraints
 

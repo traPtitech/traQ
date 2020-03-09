@@ -3,7 +3,14 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"time"
 )
+
+// UserStampHistory スタンプ履歴構造体
+type UserStampHistory struct {
+	StampID  uuid.UUID `json:"stampId"`
+	Datetime time.Time `json:"datetime"`
+}
 
 // MessageStampRepository メッセージスタンプリポジトリ
 type MessageStampRepository interface {
@@ -25,10 +32,11 @@ type MessageStampRepository interface {
 	// 存在しないメッセージを指定した場合は空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetMessageStamps(messageID uuid.UUID) (stamps []*model.MessageStamp, err error)
-	// GetUserStampHistory 指定したユーザーのスタンプ履歴を最大100件取得します
+	// GetUserStampHistory 指定したユーザーのスタンプ履歴を最大limit件取得します
 	//
+	// 0を指定した場合、全て取得します。
 	// 成功した場合、降順のスタンプ履歴の配列とnilを返します。
 	// 存在しないユーザーを指定した場合は空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetUserStampHistory(userID uuid.UUID) (h []*model.UserStampHistory, err error)
+	GetUserStampHistory(userID uuid.UUID, limit int) (h []*UserStampHistory, err error)
 }

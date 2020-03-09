@@ -10,7 +10,6 @@ import (
 	"github.com/disintegration/imaging"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
@@ -23,8 +22,6 @@ import (
 	"image"
 	"io"
 	"math"
-	"mime"
-	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -45,6 +42,8 @@ type TestRepository struct {
 	UserGroupsLock            sync.RWMutex
 	UserGroupMembers          map[uuid.UUID]map[uuid.UUID]bool
 	UserGroupMembersLock      sync.RWMutex
+	UserGroupAdmins           map[uuid.UUID]map[uuid.UUID]bool
+	UserGroupAdminsLock       sync.RWMutex
 	Tags                      map[uuid.UUID]model.Tag
 	TagsLock                  sync.RWMutex
 	UserTags                  map[uuid.UUID]map[uuid.UUID]model.UsersTag
@@ -182,6 +181,7 @@ func NewTestRepository() *TestRepository {
 		Users:                 map[uuid.UUID]model.User{},
 		UserGroups:            map[uuid.UUID]model.UserGroup{},
 		UserGroupMembers:      map[uuid.UUID]map[uuid.UUID]bool{},
+		UserGroupAdmins:       map[uuid.UUID]map[uuid.UUID]bool{},
 		Tags:                  map[uuid.UUID]model.Tag{},
 		UserTags:              map[uuid.UUID]map[uuid.UUID]model.UsersTag{},
 		Channels:              map[uuid.UUID]model.Channel{},
@@ -271,13 +271,53 @@ func (repo *TestRepository) GetUserByName(name string) (*model.User, error) {
 	return nil, repository.ErrNotFound
 }
 
-func (repo *TestRepository) GetUsers() ([]*model.User, error) {
-	repo.UsersLock.RLock()
+func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]*model.User, error) {
 	result := make([]*model.User, 0, len(repo.Users))
+	repo.UsersLock.RLock()
+	repo.ChannelSubscribesLock.RLock()
+	repo.PrivateChannelMembersLock.RLock()
+	repo.UserGroupMembersLock.RLock()
 	for _, u := range repo.Users {
+		if query.IsBot.Valid {
+			if u.Bot != query.IsBot.Bool {
+				continue
+			}
+		}
+		if query.IsActive.Valid {
+			if query.IsActive.Bool {
+				if u.Status != model.UserAccountStatusActive {
+					continue
+				}
+			} else {
+				if u.Status == model.UserAccountStatusActive {
+					continue
+				}
+			}
+		}
+		if query.IsSubscriberOf.Valid {
+			arr, ok := repo.ChannelSubscribes[query.IsSubscriberOf.UUID]
+			if !ok || !arr[u.ID] {
+				continue
+			}
+		}
+		if query.IsCMemberOf.Valid {
+			arr, ok := repo.PrivateChannelMembers[query.IsCMemberOf.UUID]
+			if !ok || !arr[u.ID] {
+				continue
+			}
+		}
+		if query.IsGMemberOf.Valid {
+			arr, ok := repo.UserGroupMembers[query.IsGMemberOf.UUID]
+			if !ok || !arr[u.ID] {
+				continue
+			}
+		}
 		u := u
 		result = append(result, &u)
 	}
+	repo.UserGroupMembersLock.RUnlock()
+	repo.PrivateChannelMembersLock.RUnlock()
+	repo.ChannelSubscribesLock.RUnlock()
 	repo.UsersLock.RUnlock()
 	return result, nil
 }
@@ -409,25 +449,6 @@ func (repo *TestRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
 	return nil
 }
 
-func (repo *TestRepository) ChangeUserAccountStatus(id uuid.UUID, status model.UserAccountStatus) error {
-	if id == uuid.Nil {
-		return repository.ErrNilID
-	}
-	if !status.Valid() {
-		return repository.ArgError("status", "invalid status")
-	}
-	repo.UsersLock.Lock()
-	defer repo.UsersLock.Unlock()
-	u, ok := repo.Users[id]
-	if !ok {
-		return repository.ErrNotFound
-	}
-	u.Status = status
-	u.UpdatedAt = time.Now()
-	repo.Users[id] = u
-	return nil
-}
-
 func (repo *TestRepository) UpdateUserLastOnline(id uuid.UUID, t time.Time) (err error) {
 	if id == uuid.Nil {
 		return repository.ErrNilID
@@ -448,23 +469,19 @@ func (repo *TestRepository) CreateUserGroup(name, description, gType string, adm
 		ID:          uuid.Must(uuid.NewV4()),
 		Name:        name,
 		Description: description,
-		AdminUserID: adminID,
+		Type:        gType,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
 
 	repo.UserGroupsLock.Lock()
-	repo.UsersLock.RLock()
+	repo.UserGroupAdminsLock.Lock()
 	defer repo.UserGroupsLock.Unlock()
-	defer repo.UsersLock.RUnlock()
+	defer repo.UserGroupAdminsLock.Unlock()
 
 	// 名前チェック
 	if len(g.Name) == 0 || utf8.RuneCountInString(g.Name) > 30 {
 		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 31 characters")
-	}
-	// ユーザーチェック
-	if u, ok := repo.Users[g.AdminUserID]; !ok || !(u.Status == model.UserAccountStatusActive && !u.Bot) {
-		return nil, repository.ArgError("AdminUserID", "invalid AdminUserID")
 	}
 	// タイプチェック
 	if utf8.RuneCountInString(g.Type) > 30 {
@@ -477,6 +494,10 @@ func (repo *TestRepository) CreateUserGroup(name, description, gType string, adm
 		}
 	}
 	repo.UserGroups[g.ID] = g
+	repo.UserGroupAdmins[g.ID] = make(map[uuid.UUID]bool)
+	repo.UserGroupAdmins[g.ID][adminID] = true
+	g.Members = make([]*model.UserGroupMember, 0)
+	g.Admins = []*model.UserGroupAdmin{{GroupID: g.ID, UserID: adminID}}
 	return &g, nil
 }
 
@@ -510,13 +531,6 @@ func (repo *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.Update
 		g.Description = args.Description.String
 		changed = true
 	}
-	if args.AdminUserID.Valid {
-		if u, ok := repo.Users[args.AdminUserID.UUID]; !ok || !(u.Status == model.UserAccountStatusActive && !u.Bot) {
-			return repository.ArgError("AdminUserID", "invalid AdminUserID")
-		}
-		g.AdminUserID = args.AdminUserID.UUID
-		changed = true
-	}
 	if args.Type.Valid {
 		if utf8.RuneCountInString(args.Type.String) > 30 {
 			return repository.ArgError("args.Type", "Type must be shorter than 31 characters")
@@ -540,11 +554,14 @@ func (repo *TestRepository) DeleteUserGroup(id uuid.UUID) error {
 	defer repo.UserGroupsLock.Unlock()
 	repo.UserGroupMembersLock.Lock()
 	defer repo.UserGroupMembersLock.Unlock()
+	repo.UserGroupAdminsLock.Lock()
+	defer repo.UserGroupAdminsLock.Unlock()
 	if _, ok := repo.UserGroups[id]; !ok {
 		return repository.ErrNotFound
 	}
 	delete(repo.UserGroups, id)
 	delete(repo.UserGroupMembers, id)
+	delete(repo.UserGroupAdmins, id)
 	return nil
 }
 
@@ -553,10 +570,22 @@ func (repo *TestRepository) GetUserGroup(id uuid.UUID) (*model.UserGroup, error)
 		return nil, repository.ErrNotFound
 	}
 	repo.UserGroupsLock.RLock()
+	repo.UserGroupAdminsLock.Lock()
+	repo.UserGroupMembersLock.Lock()
+	defer repo.UserGroupsLock.RUnlock()
+	defer repo.UserGroupAdminsLock.Unlock()
+	defer repo.UserGroupMembersLock.Unlock()
 	g, ok := repo.UserGroups[id]
-	repo.UserGroupsLock.RUnlock()
 	if !ok {
 		return nil, repository.ErrNotFound
+	}
+	members := repo.UserGroupMembers[id]
+	for u := range members {
+		g.Members = append(g.Members, &model.UserGroupMember{GroupID: g.ID, UserID: u})
+	}
+	admins := repo.UserGroupAdmins[id]
+	for u := range admins {
+		g.Admins = append(g.Admins, &model.UserGroupAdmin{GroupID: g.ID, UserID: u})
 	}
 	return &g, nil
 }
@@ -566,9 +595,21 @@ func (repo *TestRepository) GetUserGroupByName(name string) (*model.UserGroup, e
 		return nil, repository.ErrNotFound
 	}
 	repo.UserGroupsLock.RLock()
+	repo.UserGroupAdminsLock.Lock()
+	repo.UserGroupMembersLock.Lock()
 	defer repo.UserGroupsLock.RUnlock()
+	defer repo.UserGroupAdminsLock.Unlock()
+	defer repo.UserGroupMembersLock.Unlock()
 	for _, v := range repo.UserGroups {
 		if v.Name == name {
+			members := repo.UserGroupMembers[v.ID]
+			for u := range members {
+				v.Members = append(v.Members, &model.UserGroupMember{GroupID: v.ID, UserID: u})
+			}
+			admins := repo.UserGroupAdmins[v.ID]
+			for u := range admins {
+				v.Admins = append(v.Admins, &model.UserGroupAdmin{GroupID: v.ID, UserID: u})
+			}
 			return &v, nil
 		}
 	}
@@ -596,15 +637,27 @@ func (repo *TestRepository) GetUserBelongingGroupIDs(userID uuid.UUID) ([]uuid.U
 func (repo *TestRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
 	groups := make([]*model.UserGroup, 0)
 	repo.UserGroupsLock.RLock()
+	repo.UserGroupAdminsLock.Lock()
+	repo.UserGroupMembersLock.Lock()
 	for _, v := range repo.UserGroups {
 		v := v
+		members := repo.UserGroupMembers[v.ID]
+		for u := range members {
+			v.Members = append(v.Members, &model.UserGroupMember{GroupID: v.ID, UserID: u})
+		}
+		admins := repo.UserGroupAdmins[v.ID]
+		for u := range admins {
+			v.Admins = append(v.Admins, &model.UserGroupAdmin{GroupID: v.ID, UserID: u})
+		}
 		groups = append(groups, &v)
 	}
+	repo.UserGroupMembersLock.Unlock()
+	repo.UserGroupAdminsLock.Unlock()
 	repo.UserGroupsLock.RUnlock()
 	return groups, nil
 }
 
-func (repo *TestRepository) AddUserToGroup(userID, groupID uuid.UUID) error {
+func (repo *TestRepository) AddUserToGroup(userID, groupID uuid.UUID, role string) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -651,23 +704,47 @@ func (repo *TestRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 	return nil
 }
 
-func (repo *TestRepository) GetUserGroupMemberIDs(groupID uuid.UUID) ([]uuid.UUID, error) {
-	ids := make([]uuid.UUID, 0)
-	if groupID == uuid.Nil {
-		return ids, repository.ErrNotFound
+func (repo *TestRepository) AddUserToGroupAdmin(userID, groupID uuid.UUID) error {
+	if userID == uuid.Nil || groupID == uuid.Nil {
+		return repository.ErrNilID
 	}
-	repo.UserGroupsLock.RLock()
-	_, ok := repo.UserGroups[groupID]
-	repo.UserGroupsLock.RUnlock()
+	repo.UserGroupsLock.Lock()
+	defer repo.UserGroupsLock.Unlock()
+	repo.UserGroupAdminsLock.Lock()
+	defer repo.UserGroupAdminsLock.Unlock()
+	g, ok := repo.UserGroups[groupID]
 	if !ok {
-		return ids, repository.ErrNotFound
+		return nil
 	}
-	repo.UserGroupMembersLock.RLock()
-	for uid := range repo.UserGroupMembers[groupID] {
-		ids = append(ids, uid)
+	users := repo.UserGroupAdmins[groupID]
+	if !users[userID] {
+		users[userID] = true
+		g.UpdatedAt = time.Now()
+		repo.UserGroups[groupID] = g
 	}
-	repo.UserGroupMembersLock.RUnlock()
-	return ids, nil
+	return nil
+}
+
+func (repo *TestRepository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) error {
+	if userID == uuid.Nil || groupID == uuid.Nil {
+		return repository.ErrNilID
+	}
+	repo.UserGroupsLock.Lock()
+	defer repo.UserGroupsLock.Unlock()
+	repo.UserGroupAdminsLock.Lock()
+	defer repo.UserGroupAdminsLock.Unlock()
+	g, ok := repo.UserGroups[groupID]
+	if !ok {
+		return nil
+	}
+
+	users, ok := repo.UserGroupAdmins[groupID]
+	if ok && users[userID] {
+		delete(users, userID)
+		g.UpdatedAt = time.Now()
+		repo.UserGroups[groupID] = g
+	}
+	return nil
 }
 
 func (repo *TestRepository) CreateTag(name string) (*model.Tag, error) {
@@ -928,72 +1005,6 @@ func (repo *TestRepository) CreatePublicChannel(name string, parent, creatorID u
 	return &ch, nil
 }
 
-func (repo *TestRepository) CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*model.Channel, error) {
-	// ダイレクトメッセージルートの子チャンネルは作れない
-	if parentID == dmChannelRootUUID {
-		return nil, repository.ErrForbidden
-	}
-
-	// 親チャンネル検証
-	pCh, err := repo.GetChannel(parentID)
-	if err != nil {
-		return nil, err
-	}
-
-	// ダイレクトメッセージの子チャンネルは作れない
-	if pCh.IsDMChannel() {
-		return nil, repository.ErrForbidden
-	}
-
-	// チャンネル名検証
-	if !validator.ChannelRegex.MatchString(name) {
-		return nil, repository.ArgError("name", "invalid name")
-	}
-	if has, err := repo.IsChannelPresent(name, pCh.ID); err != nil {
-		return nil, err
-	} else if has {
-		return nil, repository.ErrAlreadyExists
-	}
-
-	// 深さを検証
-	for parent, depth := pCh, 2; ; { // 祖先
-		if parent.ParentID == uuid.Nil {
-			// ルート
-			break
-		}
-
-		parent, err = repo.GetChannel(parent.ParentID)
-		if err != nil {
-			if err == repository.ErrNotFound {
-				break
-			}
-			return nil, err
-		}
-		depth++
-		if depth > model.MaxChannelDepth {
-			return nil, repository.ErrChannelDepthLimitation
-		}
-	}
-
-	ch := model.Channel{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      name,
-		ParentID:  pCh.ID,
-		CreatorID: creatorID,
-		UpdaterID: creatorID,
-		IsForced:  false,
-		IsVisible: true,
-		IsPublic:  true,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	repo.ChannelsLock.Lock()
-	repo.Channels[ch.ID] = ch
-	repo.ChannelsLock.Unlock()
-	return &ch, nil
-}
-
 func (repo *TestRepository) UpdateChannel(channelID uuid.UUID, args repository.UpdateChannelArgs) error {
 	if channelID == uuid.Nil {
 		return repository.ErrNilID
@@ -1015,122 +1026,105 @@ func (repo *TestRepository) UpdateChannel(channelID uuid.UUID, args repository.U
 	if args.ForcedNotification.Valid {
 		ch.IsForced = args.ForcedNotification.Bool
 	}
-	if args.Name.Valid {
-		// チャンネル名検証
-		if !validator.ChannelRegex.MatchString(args.Name.String) {
-			return repository.ArgError("args.Name", "invalid name")
-		}
-
-		// ダイレクトメッセージチャンネルの名前は変更不可能
+	if args.Name.Valid || args.Parent.Valid {
+		// ダイレクトメッセージチャンネルの名前・親は変更不可能
 		if ch.IsDMChannel() {
 			return repository.ErrForbidden
 		}
 
 		// チャンネル名重複を確認
-		for _, c := range repo.Channels {
-			if c.Name == args.Name.String && c.ParentID == ch.ParentID {
-				return repository.ErrAlreadyExists
+		{
+			var (
+				n string
+				p uuid.UUID
+			)
+
+			if args.Name.Valid {
+				n = args.Name.String
+			} else {
+				n = ch.Name
+			}
+			if args.Parent.Valid {
+				p = args.Parent.UUID
+			} else {
+				p = ch.ParentID
+			}
+
+			// チャンネル名重複を確認
+			for _, c := range repo.Channels {
+				if c.Name == n && c.ParentID == p {
+					return repository.ErrAlreadyExists
+				}
 			}
 		}
 
-		ch.Name = args.Name.String
+		if args.Name.Valid {
+			// チャンネル名検証
+			if !validator.ChannelRegex.MatchString(args.Name.String) {
+				return repository.ArgError("args.Name", "invalid name")
+			}
+
+			ch.Name = args.Name.String
+		}
+		if args.Parent.Valid {
+			// チャンネル階層検証
+			switch args.Parent.UUID {
+			case uuid.Nil:
+				// ルートチャンネル
+				break
+			case dmChannelRootUUID:
+				// DMチャンネルには出来ない
+				return repository.ErrForbidden
+			default:
+				pCh, ok := repo.Channels[args.Parent.UUID]
+				if !ok {
+					return repository.ArgError("args.Name", "invalid name")
+				}
+
+				// DMチャンネルの子チャンネルには出来ない
+				if pCh.IsDMChannel() {
+					return repository.ArgError("args.Name", "invalid name")
+				}
+
+				// 親と公開状況が一致しているか
+				if ch.IsPublic != pCh.IsPublic {
+					return repository.ArgError("args.Name", "invalid name")
+				}
+
+				// 深さを検証
+				depth := 1 // ↑で見た親
+				for {      // 祖先
+					if pCh.ParentID == uuid.Nil {
+						// ルート
+						break
+					}
+					if ch.ID == pCh.ID {
+						// ループ検出
+						return repository.ErrChannelDepthLimitation
+					}
+
+					pCh, ok = repo.Channels[pCh.ParentID]
+					if !ok {
+						break
+					}
+					depth++
+					if depth >= model.MaxChannelDepth {
+						return repository.ErrChannelDepthLimitation
+					}
+				}
+				depth += repo.getChannelDepthWithoutLock(ch.ID) // 子孫 (自分を含む)
+				if depth > model.MaxChannelDepth {
+					return repository.ErrChannelDepthLimitation
+				}
+			}
+
+			ch.ParentID = args.Parent.UUID
+		}
 	}
 
 	ch.UpdatedAt = time.Now()
 	ch.UpdaterID = args.UpdaterID
 	repo.Channels[channelID] = ch
-	return nil
-}
-
-func (repo *TestRepository) ChangeChannelParent(channelID, parent, updaterID uuid.UUID) error {
-	if channelID == uuid.Nil {
-		return repository.ErrNilID
-	}
-
-	// チャンネル取得
-	ch, err := repo.GetChannel(channelID)
-	if err != nil {
-		return err
-	}
-
-	// ダイレクトメッセージチャンネルの親は変更不可能
-	if ch.IsDMChannel() {
-		return repository.ErrForbidden
-	}
-
-	switch parent {
-	case uuid.Nil:
-		// ルートチャンネル
-		break
-	case dmChannelRootUUID:
-		// DMチャンネルには出来ない
-		return repository.ErrForbidden
-	default:
-		pCh, err := repo.GetChannel(parent)
-		if err != nil {
-			return err
-		}
-
-		// DMチャンネルの子チャンネルには出来ない
-		if pCh.IsDMChannel() {
-			return repository.ErrForbidden
-		}
-
-		// 親と公開状況が一致しているか
-		if ch.IsPublic != pCh.IsPublic {
-			return repository.ErrForbidden
-		}
-
-		// 深さを検証
-		depth := 1 // ↑で見た親
-		for {      // 祖先
-			if pCh.ParentID == uuid.Nil {
-				// ルート
-				break
-			}
-			if ch.ID == pCh.ID {
-				// ループ検出
-				return repository.ErrChannelDepthLimitation
-			}
-
-			pCh, err = repo.GetChannel(pCh.ParentID)
-			if err != nil {
-				if err == repository.ErrNotFound {
-					break
-				}
-				return err
-			}
-			depth++
-			if depth >= model.MaxChannelDepth {
-				return repository.ErrChannelDepthLimitation
-			}
-		}
-		bottom, err := repo.GetChannelDepth(ch.ID) // 子孫 (自分を含む)
-		if err != nil {
-			return err
-		}
-		depth += bottom
-		if depth > model.MaxChannelDepth {
-			return repository.ErrChannelDepthLimitation
-		}
-	}
-
-	// チャンネル名検証
-	if has, err := repo.IsChannelPresent(ch.Name, parent); err != nil {
-		return err
-	} else if has {
-		return repository.ErrAlreadyExists
-	}
-
-	// 更新
-	repo.ChannelsLock.Lock()
-	nch, ok := repo.Channels[channelID]
-	if ok {
-		nch.ParentID = parent
-		nch.UpdatedAt = time.Now()
-		repo.Channels[channelID] = nch
-	}
-	repo.ChannelsLock.Unlock()
 	return nil
 }
 
@@ -1196,6 +1190,10 @@ func (repo *TestRepository) GetChannelsByUserID(userID uuid.UUID) ([]*model.Chan
 }
 
 func (repo *TestRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.Channel, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetDirectMessageChannelMapping(userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error) {
 	panic("implement me")
 }
 
@@ -1296,22 +1294,21 @@ func (repo *TestRepository) GetChannelPath(id uuid.UUID) (string, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetChannelDepth(id uuid.UUID) (int, error) {
-	children, err := repo.GetChildrenChannelIDs(id)
-	if err != nil {
-		return 0, err
+func (repo *TestRepository) getChannelDepthWithoutLock(id uuid.UUID) int {
+	children := make([]uuid.UUID, 0)
+	for cid, ch := range repo.Channels {
+		if ch.ParentID == id {
+			children = append(children, cid)
+		}
 	}
 	max := 0
 	for _, v := range children {
-		d, err := repo.GetChannelDepth(v)
-		if err != nil {
-			return 0, err
-		}
+		d := repo.getChannelDepthWithoutLock(v)
 		if max < d {
 			max = d
 		}
 	}
-	return max + 1, nil
+	return max + 1
 }
 
 func (repo *TestRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
@@ -1719,7 +1716,7 @@ func (repo *TestRepository) GetMessageStamps(messageID uuid.UUID) (stamps []*mod
 	return []*model.MessageStamp{}, nil
 }
 
-func (repo *TestRepository) GetUserStampHistory(userID uuid.UUID) (h []*model.UserStampHistory, err error) {
+func (repo *TestRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h []*repository.UserStampHistory, err error) {
 	panic("implement me")
 }
 
@@ -1833,10 +1830,13 @@ func (repo *TestRepository) DeleteStamp(id uuid.UUID) (err error) {
 	return nil
 }
 
-func (repo *TestRepository) GetAllStamps() (stamps []*model.Stamp, err error) {
+func (repo *TestRepository) GetAllStamps(excludeUnicode bool) (stamps []*model.Stamp, err error) {
 	repo.StampsLock.RLock()
 	for _, v := range repo.Stamps {
 		v := v
+		if excludeUnicode && v.IsUnicode {
+			continue
+		}
 		stamps = append(stamps, &v)
 	}
 	repo.StampsLock.RUnlock()
@@ -1909,15 +1909,16 @@ func (repo *TestRepository) GetStaredChannels(userID uuid.UUID) ([]uuid.UUID, er
 	return result, nil
 }
 
-func (repo *TestRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, error) {
+func (repo *TestRepository) CreatePin(messageID, userID uuid.UUID) (*model.Pin, error) {
 	if messageID == uuid.Nil || userID == uuid.Nil {
-		return uuid.Nil, repository.ErrNilID
+		return nil, repository.ErrNilID
 	}
 	repo.PinsLock.Lock()
 	defer repo.PinsLock.Unlock()
 	for _, pin := range repo.Pins {
+		pin := pin
 		if pin.MessageID == messageID {
-			return pin.ID, nil
+			return &pin, nil
 		}
 	}
 	p := model.Pin{
@@ -1927,7 +1928,7 @@ func (repo *TestRepository) CreatePin(messageID, userID uuid.UUID) (uuid.UUID, e
 		CreatedAt: time.Now(),
 	}
 	repo.Pins[p.ID] = p
-	return p.ID, nil
+	return &p, nil
 }
 
 func (repo *TestRepository) GetPin(id uuid.UUID) (*model.Pin, error) {
@@ -1941,17 +1942,6 @@ func (repo *TestRepository) GetPin(id uuid.UUID) (*model.Pin, error) {
 	pin.Message = repo.Messages[pin.MessageID]
 	repo.MessagesLock.RUnlock()
 	return &pin, nil
-}
-
-func (repo *TestRepository) IsPinned(messageID uuid.UUID) (bool, error) {
-	repo.PinsLock.RLock()
-	defer repo.PinsLock.RUnlock()
-	for _, p := range repo.Pins {
-		if p.MessageID == messageID {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 func (repo *TestRepository) DeletePin(id uuid.UUID, userID uuid.UUID) error {
@@ -2056,36 +2046,30 @@ func (repo *TestRepository) DeleteFile(fileID uuid.UUID) error {
 func (repo *TestRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
 	var img bytes.Buffer
 	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
-	file, err := repo.SaveFile(fmt.Sprintf("%s.png", salt), &img, int64(img.Len()), "image/png", model.FileTypeIcon, uuid.Nil)
+	file, err := repo.SaveFile(repository.SaveFileArgs{
+		FileName: fmt.Sprintf("%s.png", salt),
+		FileSize: int64(img.Len()),
+		MimeType: "image/png",
+		FileType: model.FileTypeIcon,
+		Src:      &img,
+	})
 	return file.ID, err
 }
 
-func (repo *TestRepository) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID) (*model.File, error) {
-	return repo.SaveFileWithACL(name, src, size, mimeType, fType, creatorID, repository.ACL{uuid.Nil: true})
-}
-
-func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID, read repository.ACL) (*model.File, error) {
-	f := &model.File{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      name,
-		Size:      size,
-		Mime:      mimeType,
-		Type:      fType,
-		CreatorID: creatorID,
-		CreatedAt: time.Now(),
-	}
-	if len(mimeType) == 0 {
-		f.Mime = mime.TypeByExtension(filepath.Ext(name))
-		if len(f.Mime) == 0 {
-			f.Mime = echo.MIMEOctetStream
-		}
-	}
-	if err := f.Validate(); err != nil {
+func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (*model.File, error) {
+	if err := args.Validate(); err != nil {
 		return nil, err
 	}
 
-	if read != nil {
-		read[creatorID] = true
+	f := &model.File{
+		ID:        uuid.Must(uuid.NewV4()),
+		Name:      args.FileName,
+		Size:      args.FileSize,
+		Mime:      args.MimeType,
+		Type:      args.FileType,
+		CreatorID: args.CreatorID,
+		ChannelID: args.ChannelID,
+		CreatedAt: time.Now(),
 	}
 
 	eg, ctx := errgroup.WithContext(context.Background())
@@ -2097,7 +2081,7 @@ func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int
 	go func() {
 		defer fileWriter.Close()
 		defer thumbWriter.Close()
-		_, _ = io.Copy(utils.MultiWriter(fileWriter, hash, thumbWriter), src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
+		_, _ = io.Copy(utils.MultiWriter(fileWriter, hash, thumbWriter), args.Src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
 	}()
 
 	// fileの保存
@@ -2117,6 +2101,7 @@ func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int
 		size, _ := repo.generateThumbnail(ctx, f, thumbSrc)
 		if !size.Empty() {
 			f.HasThumbnail = true
+			f.ThumbnailMime = null.StringFrom("image/png")
 			f.ThumbnailWidth = size.Size().X
 			f.ThumbnailHeight = size.Size().Y
 		}
@@ -2131,7 +2116,7 @@ func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int
 	repo.FilesLock.Lock()
 	repo.FilesACLLock.Lock()
 	repo.Files[f.ID] = *f
-	repo.FilesACL[f.ID] = read
+	repo.FilesACL[f.ID] = args.ACL
 	repo.FilesACLLock.Unlock()
 	repo.FilesLock.Unlock()
 	return f, nil
@@ -2662,10 +2647,6 @@ func (repo *TestRepository) DeleteTokenByClient(clientID string) error {
 }
 
 func (repo *TestRepository) CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) SetSubscribeEventsToBot(botID uuid.UUID, events model.BotEvents) error {
 	panic("implement me")
 }
 

@@ -1,23 +1,18 @@
 package v3
 
 import (
-	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/realtime"
 	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/consts"
-	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/middlewares"
-	v3middlewares "github.com/traPtitech/traQ/router/v3/middlewares"
 	"go.uber.org/zap"
-	"net/http"
-	"strconv"
 )
+
+var imagemagickPath string
 
 type Handlers struct {
 	RBAC     rbac.RBAC
@@ -29,146 +24,164 @@ type Handlers struct {
 
 	Version  string
 	Revision string
+
+	// ImageMagickPath ImageMagickの実行パス
+	ImageMagickPath string
+	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
+	SkyWaySecretKey string
 }
 
 // Setup APIルーティングを行います
 func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
-	retrieve := v3middlewares.NewParamRetriever(h.Repo)
+	bodyLimit := middlewares.RequestBodyLengthLimit
+	retrieve := middlewares.NewParamRetriever(h.Repo)
+	blockBot := middlewares.BlockBot(h.Repo)
+
+	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
+	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
+	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.Repo)
+	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC, h.Repo)
+	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.Repo)
+	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.Repo)
+	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC, h.Repo)
 
 	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo))
 	{
 		apiUsers := api.Group("/users")
 		{
-			apiUsers.GET("", NotImplemented)
-			apiUsers.POST("", NotImplemented)
+			apiUsers.GET("", h.GetUsers, requires(permission.GetUser))
+			apiUsers.POST("", NotImplemented, requires(permission.RegisterUser))
 			apiUsersUID := apiUsers.Group("/:userID", retrieve.UserID(false))
 			{
-				apiUsersUID.GET("", NotImplemented)
-				apiUsersUID.PATCH("", NotImplemented)
-				apiUsersUID.POST("/messages", NotImplemented)
-				apiUsersUID.GET("/messages", NotImplemented)
-				apiUsersUID.GET("/icon", NotImplemented)
-				apiUsersUID.PUT("/icon", NotImplemented)
-				apiUsersUID.PUT("/password", NotImplemented)
+				apiUsersUID.GET("", h.GetUser, requires(permission.GetUser))
+				apiUsersUID.PATCH("", h.EditUser, requires(permission.EditOtherUsers))
+				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage))
+				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
+				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
+				apiUsersUID.PUT("/icon", h.ChangeUserIcon, requires(permission.EditOtherUsers))
+				apiUsersUID.PUT("/password", h.ChangeUserPassword, requires(permission.EditOtherUsers))
 				apiUsersUIDTags := apiUsersUID.Group("/tags")
 				{
-					apiUsersUIDTags.GET("", NotImplemented)
-					apiUsersUIDTags.POST("", NotImplemented)
+					apiUsersUIDTags.GET("", h.GetUserTags, requires(permission.GetUserTag))
+					apiUsersUIDTags.POST("", h.AddUserTag, requires(permission.EditUserTag))
 					apiUsersUIDTagsTID := apiUsersUIDTags.Group("/:tagID")
 					{
-						apiUsersUIDTagsTID.PATCH("", NotImplemented)
-						apiUsersUIDTagsTID.DELETE("", NotImplemented)
+						apiUsersUIDTagsTID.PATCH("", h.EditUserTag, requires(permission.EditUserTag))
+						apiUsersUIDTagsTID.DELETE("", h.RemoveUserTag, requires(permission.EditUserTag))
 					}
 				}
 			}
 			apiUsersMe := apiUsers.Group("/me")
 			{
-				apiUsersMe.GET("", NotImplemented)
-				apiUsersMe.PATCH("", NotImplemented)
-				apiUsersMe.GET("/stamp-history", NotImplemented)
-				apiUsersMe.GET("/qr-code", h.GetMyQRCode)
+				apiUsersMe.GET("", h.GetMe, requires(permission.GetMe))
+				apiUsersMe.PATCH("", h.EditMe, requires(permission.EditMe))
+				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
+				apiUsersMe.GET("/qr-code", h.GetMyQRCode, requires(permission.GetUserQRCode))
 				apiUsersMe.GET("/subscription", NotImplemented)
 				apiUsersMe.PUT("/subscription/:channelID", NotImplemented)
-				apiUsersMe.GET("/icon", NotImplemented)
-				apiUsersMe.PUT("/icon", NotImplemented)
-				apiUsersMe.PUT("/password", h.PutMyPassword)
-				apiUsersMe.POST("/fcm-device", NotImplemented)
+				apiUsersMe.GET("/icon", h.GetMyIcon, requires(permission.DownloadFile))
+				apiUsersMe.PUT("/icon", h.ChangeMyIcon, requires(permission.ChangeMyIcon))
+				apiUsersMe.PUT("/password", h.PutMyPassword, requires(permission.ChangeMyPassword))
+				apiUsersMe.POST("/fcm-device", h.PostMyFCMDevice, requires(permission.RegisterFCMDevice))
 				apiUsersMeTags := apiUsersMe.Group("/tags")
 				{
-					apiUsersMeTags.GET("", NotImplemented)
-					apiUsersMeTags.POST("", NotImplemented)
+					apiUsersMeTags.GET("", h.GetMyUserTags, requires(permission.GetUserTag))
+					apiUsersMeTags.POST("", h.AddMyUserTag, requires(permission.EditUserTag))
 					apiUsersMeTagsTID := apiUsersMeTags.Group("/:tagID")
 					{
-						apiUsersMeTagsTID.PATCH("", NotImplemented)
-						apiUsersMeTagsTID.DELETE("", NotImplemented)
+						apiUsersMeTagsTID.PATCH("", h.EditMyUserTag, requires(permission.EditUserTag))
+						apiUsersMeTagsTID.DELETE("", h.RemoveMyUserTag, requires(permission.EditUserTag))
 					}
 				}
 				apiUsersMeStars := apiUsersMe.Group("/stars")
 				{
-					apiUsersMeStars.GET("", NotImplemented)
-					apiUsersMeStars.POST("", NotImplemented)
-					apiUsersMeStars.DELETE("/:channelID", NotImplemented)
+					apiUsersMeStars.GET("", h.GetMyStars, requires(permission.GetChannelStar))
+					apiUsersMeStars.POST("", h.PostStar, requires(permission.EditChannelStar))
+					apiUsersMeStars.DELETE("/:channelID", h.RemoveMyStar, requires(permission.EditChannelStar))
 				}
-				apiUsersMe.GET("/unread", NotImplemented)
-				apiUsersMe.DELETE("/unread", NotImplemented)
-				apiUsersMe.GET("/sessions", NotImplemented)
-				apiUsersMe.DELETE("/sessions/:sessionID", NotImplemented)
-				apiUsersMe.GET("/tokens", NotImplemented)
-				apiUsersMe.DELETE("/tokens/:tokenID", NotImplemented)
+				apiUsersMe.GET("/unread", h.GetMyUnreadChannels, requires(permission.GetUnread))
+				apiUsersMe.DELETE("/unread/:channelID", h.ReadChannel, requires(permission.DeleteUnread))
+				apiUsersMe.GET("/sessions", h.GetMySessions, requires(permission.GetMySessions))
+				apiUsersMe.DELETE("/sessions/:referenceID", h.RevokeMySession, requires(permission.DeleteMySessions))
+				apiUsersMe.GET("/tokens", h.GetMyTokens, requires(permission.GetMyTokens))
+				apiUsersMe.DELETE("/tokens/:tokenID", h.RevokeMyToken, requires(permission.RevokeMyToken))
 			}
 		}
 		apiChannels := api.Group("/channels")
 		{
-			apiChannels.GET("", NotImplemented)
-			apiChannels.POST("", NotImplemented)
-			apiChannelsCID := apiChannels.Group("/:channelID")
+			apiChannels.GET("", h.GetChannels, requires(permission.GetChannel))
+			apiChannels.POST("", h.CreateChannels, requires(permission.CreateChannel))
+			apiChannelsCID := apiChannels.Group("/:channelID", retrieve.ChannelID(), requiresChannelAccessPerm)
 			{
-				apiChannelsCID.GET("", NotImplemented)
-				apiChannelsCID.PATCH("", NotImplemented)
-				apiChannelsCID.GET("/messages", NotImplemented)
-				apiChannelsCID.POST("/messages", NotImplemented)
-				apiChannelsCID.GET("/stats", NotImplemented)
-				apiChannelsCID.GET("/topic", NotImplemented)
-				apiChannelsCID.PUT("/topic", NotImplemented)
-				apiChannelsCID.GET("/viewers", NotImplemented)
-				apiChannelsCID.GET("/pins", NotImplemented)
-				apiChannelsCID.GET("/subscribers", NotImplemented)
-				apiChannelsCID.PUT("/subscribers", NotImplemented)
-				apiChannelsCID.PATCH("/subscribers", NotImplemented)
-				apiChannelsCID.GET("/bots", NotImplemented)
-				apiChannelsCID.GET("/events", NotImplemented)
+				apiChannelsCID.GET("", h.GetChannel, requires(permission.GetChannel))
+				apiChannelsCID.PATCH("", h.EditChannel, requires(permission.EditChannel))
+				apiChannelsCID.GET("/messages", h.GetMessages, requires(permission.GetMessage))
+				apiChannelsCID.POST("/messages", h.PostMessage, bodyLimit(100), requires(permission.PostMessage))
+				apiChannelsCID.GET("/stats", h.GetChannelStats, requires(permission.GetChannel))
+				apiChannelsCID.GET("/topic", h.GetChannelTopic, requires(permission.GetChannel))
+				apiChannelsCID.PUT("/topic", h.EditChannelTopic, requires(permission.EditChannelTopic))
+				apiChannelsCID.GET("/viewers", h.GetChannelViewers, requires(permission.GetChannel))
+				apiChannelsCID.GET("/pins", h.GetChannelPins, requires(permission.GetMessage))
+				apiChannelsCID.GET("/subscribers", NotImplemented, requires(permission.GetChannelSubscription))
+				apiChannelsCID.PUT("/subscribers", NotImplemented, requires(permission.EditChannelSubscription))
+				apiChannelsCID.PATCH("/subscribers", NotImplemented, requires(permission.EditChannelSubscription))
+				apiChannelsCID.GET("/bots", h.GetChannelBots, requires(permission.GetChannel))
+				apiChannelsCID.GET("/events", h.GetChannelEvents, requires(permission.GetChannel))
 			}
 		}
 		apiMessages := api.Group("/messages")
 		{
-			apiMessagesMID := apiMessages.Group("/:messageID")
+			apiMessagesMID := apiMessages.Group("/:messageID", retrieve.MessageID(), requiresMessageAccessPerm)
 			{
-				apiMessagesMID.GET("", NotImplemented)
-				apiMessagesMID.PUT("", NotImplemented)
-				apiMessagesMID.DELETE("", NotImplemented)
-				apiMessagesMID.GET("/pin", NotImplemented)
-				apiMessagesMID.POST("/pin", NotImplemented)
-				apiMessagesMID.DELETE("/pin", NotImplemented)
+				apiMessagesMID.GET("", h.GetMessage, requires(permission.GetMessage))
+				apiMessagesMID.PUT("", h.EditMessage, bodyLimit(100), requires(permission.EditMessage))
+				apiMessagesMID.DELETE("", h.DeleteMessage, requires(permission.DeleteMessage))
+				apiMessagesMID.GET("/pin", h.GetPin, requires(permission.GetMessage))
+				apiMessagesMID.POST("/pin", h.CreatePin, requires(permission.CreateMessagePin))
+				apiMessagesMID.DELETE("/pin", h.RemovePin, requires(permission.DeleteMessagePin))
 				apiMessagesMIDStamps := apiMessagesMID.Group("/stamps")
 				{
-					apiMessagesMIDStamps.GET("", NotImplemented)
-					apiMessagesMIDStampsSID := apiMessagesMIDStamps.Group("/:stampID")
+					apiMessagesMIDStamps.GET("", h.GetMessageStamps, requires(permission.GetMessage))
+					apiMessagesMIDStampsSID := apiMessagesMIDStamps.Group("/:stampID", retrieve.StampID(true))
 					{
-						apiMessagesMIDStampsSID.POST("", NotImplemented)
-						apiMessagesMIDStampsSID.DELETE("", NotImplemented)
+						apiMessagesMIDStampsSID.POST("", h.AddMessageStamp, requires(permission.AddMessageStamp))
+						apiMessagesMIDStampsSID.DELETE("", h.RemoveMessageStamp, requires(permission.RemoveMessageStamp))
 					}
 				}
 			}
 		}
 		apiFiles := api.Group("/files")
 		{
-			apiFiles.GET("", NotImplemented)
-			apiFiles.POST("", NotImplemented)
-			apiFilesFID := apiFiles.Group("/:fileID")
+			apiFiles.GET("", NotImplemented, requires(permission.DownloadFile))
+			apiFiles.POST("", h.PostFile, bodyLimit(30<<10), requires(permission.UploadFile))
+			apiFilesFID := apiFiles.Group("/:fileID", retrieve.FileID(), requiresFileAccessPerm)
 			{
-				apiFilesFID.GET("", NotImplemented)
-				apiFilesFID.DELETE("", NotImplemented)
-				apiFilesFID.GET("/meta", NotImplemented)
-				apiFilesFID.GET("/thumbnail", NotImplemented)
+				apiFilesFID.GET("", h.GetFile, requires(permission.DownloadFile))
+				apiFilesFID.DELETE("", NotImplemented, requires(permission.DeleteFile))
+				apiFilesFID.GET("/meta", h.GetFileMeta, requires(permission.DownloadFile))
+				apiFilesFID.GET("/thumbnail", h.GetThumbnailImage, requires(permission.DownloadFile))
 			}
 		}
 		apiTags := api.Group("/tags")
 		{
 			apiTagsTID := apiTags.Group("/:tagID")
 			{
-				apiTagsTID.GET("", NotImplemented)
+				apiTagsTID.GET("", h.GetTag, requires(permission.GetUserTag))
 			}
 		}
 		apiStamps := api.Group("/stamps")
 		{
-			apiStamps.GET("", NotImplemented)
-			apiStamps.POST("", NotImplemented)
-			apiStampsSID := apiStamps.Group("/:stampID")
+			apiStamps.GET("", h.GetStamps, requires(permission.GetStamp))
+			apiStamps.POST("", h.CreateStamp, requires(permission.CreateStamp))
+			apiStampsSID := apiStamps.Group("/:stampID", retrieve.StampID(false))
 			{
-				apiStampsSID.GET("", NotImplemented)
-				apiStampsSID.DELETE("", NotImplemented)
+				apiStampsSID.GET("", h.GetStamp, requires(permission.GetStamp))
+				apiStampsSID.PATCH("", h.EditStamp, requires(permission.EditStamp))
+				apiStampsSID.DELETE("", h.DeleteStamp, requires(permission.DeleteStamp))
+				apiStampsSID.GET("/image", h.GetStampImage, requires(permission.GetStamp, permission.DownloadFile))
+				apiStampsSID.PUT("/image", h.ChangeStampImage, requires(permission.EditStamp))
 			}
 		}
 		apiStampPalettes := api.Group("/stamp-palettes")
@@ -185,82 +198,90 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiWebhooks := api.Group("/webhooks")
 		{
-			apiWebhooks.GET("", NotImplemented)
-			apiWebhooks.POST("", NotImplemented)
-			apiWebhooksWID := apiWebhooks.Group("/:webhookID")
+			apiWebhooks.GET("", h.GetWebhooks, requires(permission.GetWebhook))
+			apiWebhooks.POST("", h.CreateWebhook, requires(permission.CreateWebhook))
+			apiWebhooksWID := apiWebhooks.Group("/:webhookID", retrieve.WebhookID(), requiresWebhookAccessPerm)
 			{
-				apiWebhooksWID.GET("", NotImplemented)
-				apiWebhooksWID.PATCH("", NotImplemented)
-				apiWebhooksWID.DELETE("", NotImplemented)
-				apiWebhooksWID.GET("/icon", NotImplemented)
-				apiWebhooksWID.PUT("/icon", NotImplemented)
-				apiWebhooksWID.GET("/messages", NotImplemented)
+				apiWebhooksWID.GET("", h.GetWebhook, requires(permission.GetWebhook))
+				apiWebhooksWID.PATCH("", h.EditWebhook, requires(permission.EditWebhook))
+				apiWebhooksWID.DELETE("", h.DeleteWebhook, requires(permission.DeleteWebhook))
+				apiWebhooksWID.GET("/icon", h.GetWebhookIcon, requires(permission.GetWebhook, permission.DownloadFile))
+				apiWebhooksWID.PUT("/icon", h.ChangeWebhookIcon, requires(permission.EditWebhook))
+				apiWebhooksWID.GET("/messages", h.GetWebhookMessages, requires(permission.GetWebhook, permission.GetMessage))
 			}
 		}
 		apiGroups := api.Group("/groups")
 		{
-			apiGroups.GET("", NotImplemented)
-			apiGroups.POST("", NotImplemented)
-			apiGroupsGID := apiGroups.Group("/:groupID")
+			apiGroups.GET("", h.GetUserGroups, requires(permission.GetUserGroup))
+			apiGroups.POST("", h.PostUserGroups, requires(permission.CreateUserGroup))
+			apiGroupsGID := apiGroups.Group("/:groupID", retrieve.GroupID())
 			{
-				apiGroupsGID.GET("", NotImplemented)
-				apiGroupsGID.PATCH("", NotImplemented)
-				apiGroupsGID.DELETE("", NotImplemented)
+				apiGroupsGID.GET("", h.GetUserGroup, requires(permission.GetUserGroup))
+				apiGroupsGID.PATCH("", h.EditUserGroup, requiresGroupAdminPerm, requires(permission.EditUserGroup))
+				apiGroupsGID.DELETE("", h.DeleteUserGroup, requiresGroupAdminPerm, requires(permission.DeleteUserGroup))
 				apiGroupsGIDMembers := apiGroupsGID.Group("/members")
 				{
-					apiGroupsGIDMembers.GET("", NotImplemented)
-					apiGroupsGIDMembers.POST("", NotImplemented)
-					apiGroupsGIDMembers.PUT("", NotImplemented)
-					apiGroupsGIDMembersUID := apiGroupsGIDMembers.Group("/:userID")
+					apiGroupsGIDMembers.GET("", h.GetUserGroupMembers, requires(permission.GetUserGroup))
+					apiGroupsGIDMembers.POST("", h.AddUserGroupMember, requiresGroupAdminPerm, requires(permission.EditUserGroup))
+					apiGroupsGIDMembersUID := apiGroupsGIDMembers.Group("/:userID", requiresGroupAdminPerm)
 					{
-						apiGroupsGIDMembersUID.PATCH("", NotImplemented)
-						apiGroupsGIDMembersUID.DELETE("", NotImplemented)
+						apiGroupsGIDMembersUID.PATCH("", h.EditUserGroupMember, requires(permission.EditUserGroup))
+						apiGroupsGIDMembersUID.DELETE("", h.RemoveUserGroupMember, requires(permission.EditUserGroup))
+					}
+				}
+				apiGroupsGIDAdmins := apiGroupsGID.Group("/admins")
+				{
+					apiGroupsGIDAdmins.GET("", h.GetUserGroupAdmins, requires(permission.GetUserGroup))
+					apiGroupsGIDAdmins.POST("", h.AddUserGroupAdmin, requiresGroupAdminPerm, requires(permission.EditUserGroup))
+					apiGroupsGIDAdminsUID := apiGroupsGIDAdmins.Group("/:userID", requiresGroupAdminPerm)
+					{
+						apiGroupsGIDAdminsUID.DELETE("", h.RemoveUserGroupAdmin, requires(permission.EditUserGroup))
 					}
 				}
 			}
 		}
 		apiActivity := api.Group("/activity")
 		{
-			apiActivity.GET("/timelines", NotImplemented)
+			apiActivity.GET("/timelines", NotImplemented, requires(permission.GetMessage))
 			apiActivity.GET("/onlines", h.GetOnlineUsers)
 		}
 		apiClients := api.Group("/clients")
 		{
-			apiClients.GET("", NotImplemented)
-			apiClients.POST("", NotImplemented)
-			apiClientsCID := apiClients.Group("/:clientID")
+			apiClients.GET("", NotImplemented, requires(permission.GetClients))
+			apiClients.POST("", NotImplemented, requires(permission.CreateClient))
+			apiClientsCID := apiClients.Group("/:clientID", retrieve.ClientID())
 			{
-				apiClientsCID.GET("", NotImplemented)
-				apiClientsCID.PATCH("", NotImplemented)
-				apiClientsCID.DELETE("", NotImplemented)
+				apiClientsCID.GET("", NotImplemented, requires(permission.GetClients))
+				apiClientsCID.PATCH("", NotImplemented, requiresClientAccessPerm, requires(permission.EditMyClient))
+				apiClientsCID.DELETE("", NotImplemented, requiresClientAccessPerm, requires(permission.DeleteMyClient))
 			}
 		}
 		apiBots := api.Group("/bots")
 		{
-			apiBots.GET("", NotImplemented)
-			apiBots.POST("", NotImplemented)
-			apiBotsBID := apiBots.Group("/:botID")
+			apiBots.GET("", h.GetBots, requires(permission.GetBot))
+			apiBots.POST("", h.CreateBot, requires(permission.CreateBot))
+			apiBotsBID := apiBots.Group("/:botID", retrieve.BotID())
 			{
-				apiBotsBID.GET("", NotImplemented)
-				apiBotsBID.PATCH("", NotImplemented)
-				apiBotsBID.DELETE("", NotImplemented)
-				apiBotsBID.GET("/icon", NotImplemented)
-				apiBotsBID.PUT("/icon", NotImplemented)
-				apiBotsBID.GET("/logs", NotImplemented)
-				apiBotsBIDActions := apiBotsBID.Group("/actions")
+				apiBotsBID.GET("", h.GetBot, requires(permission.GetBot))
+				apiBotsBID.PATCH("", h.EditBot, requiresBotAccessPerm, requires(permission.EditBot))
+				apiBotsBID.DELETE("", h.DeleteBot, requiresBotAccessPerm, requires(permission.DeleteBot))
+				apiBotsBID.GET("/icon", h.GetBotIcon, requires(permission.GetBot, permission.DownloadFile))
+				apiBotsBID.PUT("/icon", h.ChangeBotIcon, requiresBotAccessPerm, requires(permission.EditBot))
+				apiBotsBID.GET("/logs", h.GetBotLogs, requiresBotAccessPerm, requires(permission.GetBot))
+				apiBotsBIDActions := apiBotsBID.Group("/actions", requiresBotAccessPerm, requires(permission.EditBot))
 				{
-					apiBotsBIDActions.POST("/activate", NotImplemented)
-					apiBotsBIDActions.POST("/inactivate", NotImplemented)
-					apiBotsBIDActions.POST("/reissue", NotImplemented)
-					apiBotsBIDActions.POST("/join", NotImplemented)
-					apiBotsBIDActions.POST("/leave", NotImplemented)
+					apiBotsBIDActions.POST("/activate", h.ActivateBot)
+					apiBotsBIDActions.POST("/inactivate", h.InactivateBot)
+					apiBotsBIDActions.POST("/reissue", h.ReissueBot)
+					apiBotsBIDActions.POST("/join", h.LetBotJoinChannel)
+					apiBotsBIDActions.POST("/leave", h.LetBotLeaveChannel)
 				}
 			}
 		}
 		apiWebRTC := api.Group("/webrtc")
 		{
 			apiWebRTC.GET("/state", NotImplemented)
-			apiWebRTC.POST("/authenticate", NotImplemented)
+			apiWebRTC.POST("/authenticate", h.PostWebRTCAuthenticate, blockBot)
 		}
 		apiClipFolders := api.Group("/clip-folders")
 		{
@@ -285,38 +306,14 @@ func (h *Handlers) Setup(e *echo.Group) {
 	apiNoAuth := e.Group("/v3")
 	{
 		apiNoAuth.GET("/version", h.GetVersion)
-		apiNoAuth.POST("/login", NotImplemented)
-		apiNoAuth.POST("/logout", NotImplemented)
-		apiNoAuth.POST("/webhooks/:webhookID", NotImplemented)
+		apiNoAuth.POST("/login", h.Login)
+		apiNoAuth.POST("/logout", h.Logout)
+		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook)
 		apiNoAuthPublic := apiNoAuth.Group("/public")
 		{
-			apiNoAuthPublic.GET("/icon/:username", NotImplemented)
+			apiNoAuthPublic.GET("/icon/:username", h.GetPublicUserIcon)
 		}
 	}
-}
 
-func NotImplemented(c echo.Context) error {
-	return echo.NewHTTPError(http.StatusNotImplemented)
-}
-
-func bindAndValidate(c echo.Context, i interface{}) error {
-	if err := c.Bind(i); err != nil {
-		return err
-	}
-	if err := vd.Validate(i); err != nil {
-		if e, ok := err.(vd.InternalError); ok {
-			return herror.InternalServerError(e.InternalError())
-		}
-		return herror.BadRequest(err)
-	}
-	return nil
-}
-
-func isTrue(s string) (b bool) {
-	b, _ = strconv.ParseBool(s)
-	return
-}
-
-func getRequestUser(c echo.Context) *model.User {
-	return c.Get(consts.KeyUser).(*model.User)
+	imagemagickPath = h.ImageMagickPath
 }

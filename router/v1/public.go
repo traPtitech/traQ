@@ -85,7 +85,7 @@ func (h *Handlers) GetPublicEmojiJSON(c echo.Context) error {
 }
 
 func generateEmojiJSON(repo repository.StampRepository, buf *bytes.Buffer) error {
-	stamps, err := repo.GetAllStamps()
+	stamps, err := repo.GetAllStamps(false)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (h *Handlers) GetPublicEmojiCSS(c echo.Context) error {
 }
 
 func generateEmojiCSS(repo repository.StampRepository, buf *bytes.Buffer) error {
-	stamps, err := repo.GetAllStamps()
+	stamps, err := repo.GetAllStamps(false)
 	if err != nil {
 		return err
 	}

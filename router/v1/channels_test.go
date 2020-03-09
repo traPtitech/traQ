@@ -18,7 +18,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 
 	for i := 0; i < 5; i++ {
 		c := mustMakeChannel(t, repo, random)
-		_, err := repo.CreateChildChannel(utils.RandAlphabetAndNumberString(20), c.ID, uuid.Nil)
+		_, err := repo.CreatePublicChannel(utils.RandAlphabetAndNumberString(20), c.ID, uuid.Nil)
 		require.NoError(err)
 	}
 

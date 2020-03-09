@@ -10,11 +10,6 @@ const (
 	// 	Fields:
 	//      user_id: uuid.UUID
 	UserUpdated = "user.updated"
-	// UserAccountStatusUpdated ユーザーのアカウント状態が更新された
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		status: model.UserAccountStatus
-	UserAccountStatusUpdated = "user.account_status.updated"
 	// UserIconUpdated ユーザーのアイコンが更新された
 	// 	Fields:
 	// 		user_id: uuid.UUID
@@ -203,11 +198,6 @@ const (
 	// 	Fields:
 	// 		bot_id: uuid.UUID
 	BotDeleted = "bot.deleted"
-	// BotSubscribeEventsChanged Botの購読イベントが変更された
-	// 	Fields:
-	// 		bot_id: uuid.UUID
-	// 		events: model.BotEvents
-	BotSubscribeEventsChanged = "bot.subscribe_events_changed"
 	// BotStateChanged Botの状態が変化した
 	// 	Fields:
 	// 		bot_id: uuid.UUID

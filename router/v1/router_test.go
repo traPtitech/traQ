@@ -204,10 +204,15 @@ func mustMakeUser(t *testing.T, repo repository.Repository, userName string) *mo
 	return u
 }
 
-func mustMakeFile(t *testing.T, repo repository.Repository, userID uuid.UUID) *model.File {
+func mustMakeFile(t *testing.T, repo repository.Repository) *model.File {
 	t.Helper()
 	buf := bytes.NewBufferString("test message")
-	f, err := repo.SaveFile("test.txt", buf, int64(buf.Len()), "", model.FileTypeUserFile, userID)
+	f, err := repo.SaveFile(repository.SaveFileArgs{
+		FileName: "test.txt",
+		FileSize: int64(buf.Len()),
+		FileType: model.FileTypeUserFile,
+		Src:      buf,
+	})
 	require.NoError(t, err)
 	return f
 }
@@ -216,7 +221,7 @@ func mustMakePin(t *testing.T, repo repository.Repository, messageID, userID uui
 	t.Helper()
 	p, err := repo.CreatePin(messageID, userID)
 	require.NoError(t, err)
-	return p
+	return p.ID
 }
 
 func mustMakeTag(t *testing.T, repo repository.Repository, userID uuid.UUID, tagText string) uuid.UUID {
@@ -247,7 +252,7 @@ func mustMakeUserGroup(t *testing.T, repo repository.Repository, name string, ad
 
 func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.AddUserToGroup(userID, groupID))
+	require.NoError(t, repo.AddUserToGroup(userID, groupID, ""))
 }
 
 func mustMakeWebhook(t *testing.T, repo repository.Repository, name string, channelID, creatorID uuid.UUID, secret string) model.Webhook {

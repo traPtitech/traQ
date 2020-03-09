@@ -11,7 +11,7 @@
 CREATE TABLE `channel_latest_messages` (
   `channel_id` char(36) NOT NULL,
   `message_id` char(36) NOT NULL,
-  `date_time` timestamp(6) NULL DEFAULT NULL,
+  `date_time` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`channel_id`),
   KEY `idx_channel_latest_messages_date_time` (`date_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -25,7 +25,7 @@ CREATE TABLE `channel_latest_messages` (
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | channel_id | char(36) |  | false |  |  | チャンネルUUID |
 | message_id | char(36) |  | false |  |  | メッセージUUID |
-| date_time | timestamp(6) |  | true |  |  | メッセージ作成日時 |
+| date_time | datetime(6) |  | true |  |  | メッセージ作成日時 |
 
 ## Constraints
 

@@ -3,7 +3,6 @@ module github.com/traPtitech/traQ
 require (
 	cloud.google.com/go v0.53.0
 	cloud.google.com/go/firestore v1.1.1 // indirect
-	cloud.google.com/go/storage v1.5.0 // indirect
 	firebase.google.com/go v3.12.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
@@ -17,8 +16,6 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
-	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
-	github.com/golang/protobuf v1.3.3 // indirect
 	github.com/gorilla/websocket v1.4.1
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/imkira/go-interpol v1.1.0 // indirect
@@ -35,25 +32,23 @@ require (
 	github.com/skip2/go-qrcode v0.0.0-20190110000554-dc11ecdae0a9
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v0.0.6
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.2
-	github.com/stretchr/testify v1.4.0
-	go.uber.org/zap v1.13.0
+	github.com/stretchr/testify v1.5.1
+	go.uber.org/zap v1.14.0
 	golang.org/x/crypto v0.0.0-20200128174031-69ecbb4d6d5d
-	golang.org/x/exp v0.0.0-20200119233911-0405dc783f0a
-	golang.org/x/lint v0.0.0-20200130185559-910be7a94367 // indirect
+	golang.org/x/exp v0.0.0-20200207192155-f17229e696bd
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20200124204421-9fbb57f87de9 // indirect
-	golang.org/x/tools v0.0.0-20200131000851-b4207ef49307 // indirect
+	golang.org/x/tools v0.0.0-20200221224223-e1da425f72fd // indirect
 	google.golang.org/api v0.17.0
-	google.golang.org/genproto v0.0.0-20200128133413-58ce757ed39b // indirect
 	gopkg.in/go-playground/webhooks.v5 v5.13.0
 	gopkg.in/gormigrate.v1 v1.6.0
 	gopkg.in/guregu/null.v3 v3.4.0
 	gopkg.in/ini.v1 v1.51.1 // indirect
 	gopkg.in/yaml.v2 v2.2.8
+	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
 )
 
 replace github.com/blendle/zapdriver v1.3.1 => github.com/wtks/zapdriver v1.3.1-patch.0

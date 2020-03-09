@@ -12,7 +12,7 @@ CREATE TABLE `pins` (
   `id` char(36) NOT NULL,
   `message_id` char(36) NOT NULL,
   `user_id` char(36) NOT NULL,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `message_id` (`message_id`),
   KEY `pins_user_id_users_id_foreign` (`user_id`),
@@ -28,16 +28,16 @@ CREATE TABLE `pins` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false |  |  |  |
-| message_id | char(36) |  | false |  |  | メッセージUUID |
+| message_id | char(36) |  | false |  | [messages](messages.md) | メッセージUUID |
 | user_id | char(36) |  | false |  | [users](users.md) | ピンしたユーザーUUID |
-| created_at | timestamp(6) |  | true |  |  |  |
+| created_at | datetime(6) |  | true |  |  |  |
 
 ## Constraints
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | message_id | UNIQUE | UNIQUE KEY message_id (message_id) |
-| pins_message_id_messages_id_foreign | UNIQUE | UNIQUE KEY pins_message_id_messages_id_foreign (message_id) |
+| pins_message_id_messages_id_foreign | FOREIGN KEY | FOREIGN KEY (message_id) REFERENCES messages (id) |
 | pins_user_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (user_id) REFERENCES users (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (id) |
 

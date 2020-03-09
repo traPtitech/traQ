@@ -12,8 +12,8 @@ CREATE TABLE `users_tags` (
   `user_id` char(36) NOT NULL,
   `tag_id` char(36) NOT NULL,
   `is_locked` tinyint(1) NOT NULL DEFAULT '0',
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `updated_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`user_id`,`tag_id`),
   KEY `idx_users_tags_created_at` (`created_at`),
   KEY `users_tags_tag_id_tags_id_foreign` (`tag_id`),
@@ -31,8 +31,8 @@ CREATE TABLE `users_tags` (
 | user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
 | tag_id | char(36) |  | false |  | [tags](tags.md) | タグUUID |
 | is_locked | tinyint(1) | 0 | false |  |  | ロックされているかどうか |
-| created_at | timestamp(6) |  | true |  |  | 作成日時 |
-| updated_at | timestamp(6) |  | true |  |  | 更新日時 |
+| created_at | datetime(6) |  | true |  |  | 作成日時 |
+| updated_at | datetime(6) |  | true |  |  | 更新日時 |
 
 ## Constraints
 

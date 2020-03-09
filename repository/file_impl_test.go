@@ -59,7 +59,7 @@ func TestRepositoryImpl_OpenFile(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		f := mustMakeFile(t, repo, uuid.Nil)
+		f := mustMakeFile(t, repo)
 		_, file, err := repo.OpenFile(f.ID)
 		if assert.NoError(err) {
 			defer file.Close()
@@ -95,7 +95,7 @@ func TestRepositoryImpl_OpenThumbnailFile(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		f := mustMakeFile(t, repo, uuid.Nil)
+		f := mustMakeFile(t, repo)
 		_, _, err := repo.OpenThumbnailFile(f.ID)
 		assert.EqualError(err, ErrNotFound.Error())
 	})
@@ -112,7 +112,7 @@ func TestRepositoryImpl_GetFileMeta(t *testing.T) {
 	t.Parallel()
 	repo, assert, _ := setup(t, common)
 
-	file := mustMakeFile(t, repo, uuid.Nil)
+	file := mustMakeFile(t, repo)
 	result, err := repo.GetFileMeta(file.ID)
 	if assert.NoError(err) {
 		assert.Equal(file.ID, result.ID)
@@ -127,7 +127,12 @@ func TestRepositoryImpl_SaveFile(t *testing.T) {
 	repo, assert, _ := setup(t, common)
 
 	buf := bytes.NewBufferString("test message")
-	f, err := repo.SaveFile("test.txt", buf, int64(buf.Len()), "", model.FileTypeUserFile, uuid.Nil)
+	f, err := repo.SaveFile(SaveFileArgs{
+		FileName: "test.txt",
+		FileSize: int64(buf.Len()),
+		FileType: model.FileTypeUserFile,
+		Src:      buf,
+	})
 	if assert.NoError(err) {
 		assert.Equal("text/plain; charset=utf-8", f.Mime)
 	}
@@ -153,7 +158,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 
 	t.Run("Allow all", func(t *testing.T) {
 		t.Parallel()
-		f := mustMakeFile(t, repo, uuid.Nil)
+		f := mustMakeFile(t, repo)
 
 		t.Run("any user", func(t *testing.T) {
 			t.Parallel()
@@ -178,7 +183,15 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 		t.Parallel()
 
 		buf := bytes.NewBufferString("test message")
-		f, err := repo.SaveFileWithACL("test.txt", buf, int64(buf.Len()), "", model.FileTypeUserFile, user.ID, ACL{})
+		args := SaveFileArgs{
+			FileName: "test.txt",
+			FileSize: int64(buf.Len()),
+			FileType: model.FileTypeUserFile,
+			Src:      buf,
+			ACL:      ACL{},
+		}
+		args.SetCreator(user.ID)
+		f, err := repo.SaveFile(args)
 		require.NoError(t, err)
 
 		t.Run("any user", func(t *testing.T) {
@@ -215,7 +228,15 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 
 		user2 := mustMakeUser(t, repo, random)
 		buf := bytes.NewBufferString("test message")
-		f, err := repo.SaveFileWithACL("test.txt", buf, int64(buf.Len()), "", model.FileTypeUserFile, user.ID, ACL{user2.ID: true})
+		args := SaveFileArgs{
+			FileName: "test.txt",
+			FileSize: int64(buf.Len()),
+			FileType: model.FileTypeUserFile,
+			Src:      buf,
+			ACL:      ACL{user2.ID: true},
+		}
+		args.SetCreator(user.ID)
+		f, err := repo.SaveFile(args)
 		require.NoError(t, err)
 
 		t.Run("any user", func(t *testing.T) {
@@ -261,10 +282,17 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 
 		deninedUser := mustMakeUser(t, repo, random)
 		buf := bytes.NewBufferString("test message")
-		f, err := repo.SaveFileWithACL("test.txt", buf, int64(buf.Len()), "", model.FileTypeUserFile, uuid.Nil, ACL{
-			uuid.Nil:       true,
-			deninedUser.ID: false,
-		})
+		args := SaveFileArgs{
+			FileName: "test.txt",
+			FileSize: int64(buf.Len()),
+			FileType: model.FileTypeUserFile,
+			Src:      buf,
+			ACL: ACL{
+				uuid.Nil:       true,
+				deninedUser.ID: false,
+			},
+		}
+		f, err := repo.SaveFile(args)
 		require.NoError(t, err)
 
 		t.Run("any user", func(t *testing.T) {

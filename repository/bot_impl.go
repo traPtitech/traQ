@@ -152,6 +152,9 @@ func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 
 			changes["creator_id"] = args.CreatorID.UUID
 		}
+		if args.SubscribeEvents != nil {
+			changes["subscribe_events"] = args.SubscribeEvents
+		}
 
 		if len(changes) > 0 {
 			if err := tx.Model(&b).Updates(changes).Error; err != nil {
@@ -192,31 +195,6 @@ func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 			},
 		})
 	}
-	return nil
-}
-
-// SetSubscribeEventsToBot implements BotRepository interface.
-func (repo *GormRepository) SetSubscribeEventsToBot(botID uuid.UUID, events model.BotEvents) error {
-	if botID == uuid.Nil {
-		return ErrNilID
-	}
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		var b model.Bot
-		if err := tx.First(&b, &model.Bot{ID: botID}).Error; err != nil {
-			return convertError(err)
-		}
-		return tx.Model(&b).Update("subscribe_events", events).Error
-	})
-	if err != nil {
-		return err
-	}
-	repo.hub.Publish(hub.Message{
-		Name: event.BotSubscribeEventsChanged,
-		Fields: hub.Fields{
-			"bot_id": botID,
-			"events": events,
-		},
-	})
 	return nil
 }
 

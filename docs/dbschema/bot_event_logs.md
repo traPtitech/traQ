@@ -16,7 +16,7 @@ CREATE TABLE `bot_event_logs` (
   `error` text,
   `code` int(11) NOT NULL DEFAULT '0',
   `latency` bigint(20) NOT NULL DEFAULT '0',
-  `date_time` timestamp(6) NULL DEFAULT NULL,
+  `date_time` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`request_id`),
   KEY `bot_id_date_time_idx` (`bot_id`,`date_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -35,7 +35,7 @@ CREATE TABLE `bot_event_logs` (
 | error | text |  | true |  |  | エラー内容 |
 | code | int(11) | 0 | false |  |  | HTTPステータスコード(0はリクエスト自体失敗) |
 | latency | bigint(20) | 0 | false |  |  | リクエスト時間 |
-| date_time | timestamp(6) |  | true |  |  | イベント発生日時 |
+| date_time | datetime(6) |  | true |  |  | イベント発生日時 |
 
 ## Constraints
 

@@ -26,6 +26,7 @@ type UpdateChannelArgs struct {
 	Topic              null.String
 	Visibility         null.Bool
 	ForcedNotification null.Bool
+	Parent             uuid.NullUUID
 }
 
 // ChannelEventsQuery GetChannelEvents用クエリ
@@ -58,16 +59,6 @@ type ChannelRepository interface {
 	// 存在しない親チャンネルを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error)
-	// CreateChildChannel 子チャンネルを作成します
-	//
-	// 成功した場合、チャンネルとnilを返します。
-	// 引数に問題がある場合、ArgumentErrorを返します。
-	// 既にNameが使われている場合、ErrAlreadyExistsを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// 作成不可能な親チャンネルを指定した場合、ErrForbiddenを返します。
-	// 存在しない親チャンネルを指定した場合、ErrNotFoundを返します。
-	// DBによるエラーを返すことがあります。
-	CreateChildChannel(name string, parentID, creatorID uuid.UUID) (*model.Channel, error)
 	// UpdateChannel 指定したチャンネルの情報を変更します
 	//
 	// 成功した場合、nilを返します。
@@ -76,18 +67,9 @@ type ChannelRepository interface {
 	// 既にNameが使われている場合、ErrAlreadyExistsを返します。
 	// 変更不可能なチャンネルを指定した場合、ErrForbiddenを返します。
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
-	// DBによるエラーを返すことがあります。
-	UpdateChannel(channelID uuid.UUID, args UpdateChannelArgs) error
-	// ChangeChannelParent 指定したチャンネルの親を変更します
-	//
-	// 成功した場合、nilを返します。
-	// Nameが変更先で重複している場合、ErrAlreadyExistsを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// 変更不可能なチャンネルを指定した場合、ErrForbiddenを返します。
-	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
 	// 階層数制限に到達する場合、ErrChannelDepthLimitationを返します。
 	// DBによるエラーを返すことがあります。
-	ChangeChannelParent(channelID, parent, updaterID uuid.UUID) error
+	UpdateChannel(channelID uuid.UUID, args UpdateChannelArgs) error
 	// DeleteChannel 指定したチャンネルとその子孫チャンネルを全て削除します
 	//
 	// 成功した場合、nilを返します。
@@ -119,6 +101,11 @@ type ChannelRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.Channel, error)
+	// GetDirectMessageChannelMapping 引数に指定したユーザーのDMチャンネルのチャンネルUUID->ユーザーUUIDのマッピングを取得します
+	//
+	// 成功した場合、マッピングとnilを返します。
+	// DBによるエラーを返すことがあります。
+	GetDirectMessageChannelMapping(userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error)
 	// IsChannelAccessibleToUser 指定したチャンネルが指定したユーザーからアクセス可能かどうかを返します
 	//
 	// アクセス可能な場合、trueとnilを返します。

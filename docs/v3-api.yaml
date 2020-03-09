@@ -160,7 +160,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pin'
+                $ref: '#/components/schemas/MessagePin'
         '404':
           description: |-
             Not Found
@@ -177,7 +177,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pin'
+                $ref: '#/components/schemas/MessagePin'
         '400':
           description: |-
             Forbidden
@@ -538,6 +538,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostMessageStampRequest'
+            examples: {}
         description: ''
       description: 指定したメッセージに指定したスタンプを押します。
     delete:
@@ -591,6 +592,30 @@ paths:
       operationId: deleteStamp
       tags:
         - stamp
+    patch:
+      summary: スタンプ情報を変更
+      operationId: editStamp
+      responses:
+        '204':
+          description: |-
+            No Content
+            スタンプ情報が変更されました。
+        '400':
+          description: Bad Request
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '409':
+          description: Conflict
+      tags:
+        - stamp
+      description: 指定したスタンプの情報を変更します。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchStampRequest'
   /stamps:
     post:
       summary: スタンプを作成
@@ -615,7 +640,7 @@ paths:
               $ref: '#/components/schemas/PostStampRequest'
             encoding:
               file:
-                contentType: 'image/png, image/jpeg, image/gif, image/svg'
+                contentType: 'image/png, image/jpeg, image/gif'
         description: ''
       operationId: createStamp
       tags:
@@ -661,14 +686,14 @@ paths:
       parameters:
         - schema:
             type: integer
-            default: '50'
-            maximum: 50
+            default: '100'
+            maximum: 100
             minimum: 1
           in: query
           name: limit
           description: 件数
       description: |-
-        自分のスタンプ履歴を最大50件まで取得します。
+        自分のスタンプ履歴を最大100件まで取得します。
         結果は降順で返されます。
 
         このAPIが返すスタンプ履歴は厳密な履歴ではありません。
@@ -722,12 +747,10 @@ paths:
     patch:
       summary: ユーザー情報を変更
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserDetail'
+        '204':
+          description: |-
+            No Content
+            変更されました。
         '400':
           description: Bad Request
         '403':
@@ -785,12 +808,10 @@ paths:
     patch:
       summary: ユーザーグループを編集
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroup'
+        '204':
+          description: |-
+            No Content
+            編集されました。
         '400':
           description: Bad Request
         '403':
@@ -866,38 +887,6 @@ paths:
       operationId: addUserGroupMember
       description: |-
         指定したグループにメンバーを追加します。
-        対象のユーザーグループの管理者権限が必要です。
-    put:
-      summary: グループメンバーを設定
-      responses:
-        '204':
-          description: |-
-            No Content
-            編集できました。
-        '400':
-          description: Bad Request
-        '403':
-          description: |-
-            Forbidden
-            ユーザーグループを操作する権限がありません。
-        '404':
-          description: |-
-            Not Found
-            ユーザーグループが見つかりません。
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              description: グループメンバーの配列
-              items:
-                $ref: '#/components/schemas/UserGroupMember'
-      tags:
-        - group
-      operationId: setUserGroupMembers
-      description: |-
-        指定したグループのメンバーをリクエストのメンバーに置き換えます。
-        リクエスト内に含まれないメンバーはグループから削除されます。
         対象のユーザーグループの管理者権限が必要です。
   '/groups/{groupId}/members/{userId}':
     parameters:
@@ -975,18 +964,7 @@ paths:
                   $ref: '#/components/schemas/UserGroup'
       description: ユーザーグループのリストを取得します。
       operationId: getUserGroups
-      parameters:
-        - schema:
-            type: string
-          in: query
-          name: type
-          description: グループタイプ
-        - schema:
-            type: boolean
-            default: 'false'
-          in: query
-          name: admin
-          description: 自分が管理者のグループのみを取得するかどうか
+      parameters: []
     post:
       summary: ユーザーグループを作成
       responses:
@@ -1010,7 +988,7 @@ paths:
         - group
       description: |-
         ユーザーグループを作成します。
-        作成者は自動的にメンバーに追加され、グループ管理者になります。
+        作成者は自動的にグループ管理者になります。
       operationId: createUserGroup
       requestBody:
         content:
@@ -1034,12 +1012,10 @@ paths:
     patch:
       summary: 自分のユーザー情報を変更
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MyUserDetail'
+        '204':
+          description: |-
+            No Content
+            変更されました。
         '400':
           description: Bad Request
       tags:
@@ -1680,7 +1656,9 @@ paths:
           in: query
           name: include-suspended
           description: アカウントがアクティブでないユーザーを含めるかどうか
-      description: ユーザーのリストを取得します。
+      description: |-
+        ユーザーのリストを取得します。
+        `include-suspended`を指定しない場合、レスポンスに非アクティブユーザーは含まれません。
   /channels:
     post:
       summary: チャンネルを作成
@@ -1718,14 +1696,18 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                description: チャンネルの配列
-                items:
-                  $ref: '#/components/schemas/Channel'
+                $ref: '#/components/schemas/ChannelList'
       operationId: getChannels
       tags:
         - channel
       description: チャンネルのリストを取得します。
+      parameters:
+        - schema:
+            type: boolean
+            default: 'false'
+          in: query
+          name: include-dm
+          description: ダイレクトメッセージチャンネルをレスポンスに含めるかどうか
   '/users/{userId}/tags':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -1794,7 +1776,9 @@ paths:
         '400':
           description: Bad Request
         '403':
-          description: Forbidden
+          description: |-
+            Forbidden
+            タグがロックされています。
         '404':
           description: |-
             Not Found
@@ -1898,6 +1882,10 @@ paths:
           description: |-
             No Content
             削除されました。
+        '403':
+          description: |-
+            Forbidden
+            タグがロックされています。
       description: 既に存在しないタグを削除しようとした場合は204を返します。
       operationId: removeMyUserTag
       tags:
@@ -1928,7 +1916,7 @@ paths:
         - me
   /users/me/stars:
     get:
-      summary: スターチャンネルリストを取得します
+      summary: スターチャンネルリストを取得
       tags:
         - me
         - star
@@ -1944,8 +1932,9 @@ paths:
                   type: string
                   format: uuid
       operationId: getMyStars
+      description: 自分がスターしているチャンネルのUUIDの配列を取得します。
     post:
-      summary: チャンネルをスターします
+      summary: チャンネルをスターに追加
       responses:
         '204':
           description: |-
@@ -1962,6 +1951,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostStarRequest'
+      description: |-
+        指定したチャンネルをスターチャンネルに追加します。
+        不正なチャンネルIDを指定した場合、400を返します。
   '/users/me/stars/{channelId}':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -1994,27 +1986,6 @@ paths:
                 items:
                   $ref: '#/components/schemas/UnreadChannel'
       operationId: getMyUnreadChannels
-    delete:
-      summary: 未読チャンネルを既読にします
-      responses:
-        '204':
-          description: |-
-            No Content
-            既読にしました。
-        '400':
-          description: Bad Request
-      operationId: readChannels
-      parameters:
-        - schema:
-            type: string
-            format: uuid
-          in: query
-          name: channelId
-          description: 既読にするチャンネルUUID
-      description: 既読にするチャンネルUUIDが指定されてない場合は、全てのチャンネルを既読にします。
-      tags:
-        - me
-        - notification
   /version:
     get:
       summary: バージョンを取得します
@@ -2119,8 +2090,6 @@ paths:
           description: |-
             No Content
             無効化しました。
-        '404':
-          description: Not Found
       operationId: revokeMySession
       tags:
         - authentication
@@ -2412,7 +2381,9 @@ paths:
           description: 全てのBOTを取得するかどうか
       tags:
         - bot
-      description: BOT情報のリストを取得します。
+      description: |-
+        BOT情報のリストを取得します。
+        allを指定しない場合、自分が開発者のBOTのみを返します。
   '/bots/{botId}/icon':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
@@ -2736,6 +2707,10 @@ paths:
                 $ref: '#/components/schemas/WebRTCAuthenticateResult'
         '400':
           description: Bad Request
+        '503':
+          description: |-
+            Service Unavailable
+            WebRTCは現在機能を停止しています
       description: ''
       operationId: postWebRTCAuthenticate
       tags:
@@ -2789,6 +2764,7 @@ paths:
       description: |-
         指定したチャンネルの情報を変更します。
         変更には権限が必要です。
+        ルートチャンネルに移動させる場合は、`parent`に`00000000-0000-0000-0000-000000000000`を指定してください。
   /webrtc/state:
     get:
       summary: WebRTC状態を取得します
@@ -3193,6 +3169,158 @@ paths:
                   type: string
       operationId: getOnlineUsers
       description: 現在オンラインな(SSEまたはWSが接続中)ユーザーのUUIDのリストを返します。
+  '/stamps/{stampId}/image':
+    parameters:
+      - $ref: '#/components/parameters/stampIdInPath'
+    get:
+      summary: スタンプ画像を取得
+      tags:
+        - stamp
+      responses:
+        '200':
+          description: OK
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Not Found
+      operationId: getStampImage
+      description: 指定したIDのスタンプ画像を返します。
+    put:
+      summary: スタンプ画像を変更
+      operationId: changeStampImage
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+        '404':
+          description: Not Found
+        '413':
+          description: Request Entity Too Large
+      tags:
+        - stamp
+      description: 指定したスタンプの画像を変更します。
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              format: binary
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 'スタンプ画像(1MBまでのpng, jpeg, gif)'
+              required:
+                - file
+        description: ''
+  '/users/me/unread/{channelId}':
+    parameters:
+      - $ref: '#/components/parameters/channelIdInPath'
+    delete:
+      summary: 未読チャンネルを既読にします
+      operationId: readChannel
+      responses:
+        '204':
+          description: |-
+            No Content
+            既読にしました。
+      description: ''
+      tags:
+        - me
+        - notification
+  '/groups/{groupId}/admins/{userId}':
+    parameters:
+      - $ref: '#/components/parameters/groupIdInPath'
+      - $ref: '#/components/parameters/userIdInPath'
+    delete:
+      summary: グループ管理者を削除
+      responses:
+        '204':
+          description: |-
+            No Content
+            指定したユーザーがユーザーグループ管理者から削除されました。
+        '400':
+          description: Bad Request
+        '403':
+          description: |-
+            Forbidden
+            ユーザーグループを操作する権限がありません。
+        '404':
+          description: |-
+            Not Found
+            ユーザーグループが見つかりません。
+      tags:
+        - group
+      operationId: removeUserGroupAdmin
+      description: |-
+        指定したユーザーグループから指定した管理者を削除します。
+        対象のユーザーグループの管理者権限が必要です。
+        グループから管理者が存在しなくなる場合は400エラーを返します。
+  '/groups/{groupId}/admins':
+    parameters:
+      - $ref: '#/components/parameters/groupIdInPath'
+    post:
+      summary: グループ管理者を追加
+      responses:
+        '204':
+          description: |-
+            No Content
+            追加されました。
+        '400':
+          description: Bad Request
+        '403':
+          description: |-
+            Forbidden
+            ユーザーグループを操作する権限がありません。
+        '404':
+          description: |-
+            Not Found
+            ユーザーグループが見つかりません。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostUserGroupAdminRequest'
+        description: ''
+      tags:
+        - group
+      operationId: addUserGroupAdmin
+      description: |-
+        指定したグループに管理者を追加します。
+        対象のユーザーグループの管理者権限が必要です。
+    get:
+      summary: グループ管理者を取得
+      tags:
+        - group
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                description: ユーザーグループ管理者のUUIDの配列
+                items:
+                  type: string
+                  format: uuid
+        '404':
+          description: |-
+            Not Found
+            ユーザーグループが見つかりません。
+      operationId: getUserGroupAdmins
+      description: 指定したグループの管理者のリストを取得します。
 components:
   schemas:
     Message:
@@ -3264,7 +3392,7 @@ components:
     Pin:
       title: Pin
       type: object
-      description: ピン情報
+      description: ピン情報(メッセージ本体付き)
       properties:
         userId:
           type: string
@@ -3274,10 +3402,6 @@ components:
           type: string
           format: date-time
           description: ピン留めされた日時
-        messageId:
-          type: string
-          format: uuid
-          description: メッセージUUID
         message:
           $ref: '#/components/schemas/Message'
     Channel:
@@ -3322,6 +3446,7 @@ components:
           type: string
           description: メッセージ本文
           minLength: 1
+          maxLength: 10000
         embed:
           type: boolean
           default: false
@@ -3357,6 +3482,7 @@ components:
         topic:
           type: string
           description: トピック
+          maxLength: 200
       required:
         - topic
     ChannelViewer:
@@ -3455,14 +3581,16 @@ components:
     PostMessageStampRequest:
       title: PostMessageStampRequest
       type: object
+      description: スタンプを押すリクエスト
       properties:
         count:
           type: integer
-          format: int32
           description: 押す数
+          format: int32
+          minimum: 1
+          maximum: 100
       required:
         - count
-      description: スタンプを押すリクエスト
     Stamp:
       title: Stamp
       type: object
@@ -3507,7 +3635,7 @@ components:
         file:
           type: string
           format: binary
-          description: 'スタンプ画像(1MBまでのpng, jpeg, gif, svg)'
+          description: 'スタンプ画像(1MBまでのpng, jpeg, gif)'
       required:
         - name
         - file
@@ -3672,29 +3800,36 @@ components:
           type: string
           format: date-time
           description: 更新日時
+        admins:
+          type: array
+          description: グループ管理者のUUIDの配列
+          items:
+            type: string
+            format: uuid
     UserGroupMember:
       title: UserGroupMember
       type: object
       description: ユーザーグループメンバー
       properties:
-        userId:
+        id:
           type: string
           format: uuid
           description: ユーザーUUID
-        isAdmin:
-          type: boolean
-          default: false
-          description: グループ管理者かどうか
+        role:
+          type: string
+          description: ユーザーの役割
+          maxLength: 100
       required:
-        - userId
+        - id
     PatchGroupMemberRequest:
       title: PatchGroupMemberRequest
       type: object
       description: ユーザーグループメンバー編集リクエスト
       properties:
-        isAdmin:
-          type: boolean
-          description: グループ管理者かどうか
+        role:
+          type: string
+          description: ユーザーの役割
+          maxLength: 100
     PatchUserGroupRequest:
       title: PatchUserGroupRequest
       type: object
@@ -3706,6 +3841,7 @@ components:
         description:
           type: string
           description: グループ説明
+          maxLength: 100
         type:
           type: string
           description: グループタイプ
@@ -3720,6 +3856,7 @@ components:
         description:
           type: string
           description: 説明
+          maxLength: 100
         type:
           type: string
           description: グループタイプ
@@ -4124,7 +4261,7 @@ components:
           type: string
           format: date-time
           description: チャンネルの最古の未読メッセージの日時
-        until:
+        updatedAt:
           type: string
           description: チャンネルの最新の未読メッセージの日時
           format: date-time
@@ -4153,18 +4290,18 @@ components:
           type: string
           description: セッションUUID
           format: uuid
-        ipAddress:
+        ip:
           type: string
           description: 最終アクセスIPアドレス
           format: ipv4
-        userAgent:
+        ua:
           type: string
           description: 最終アクセスユーザーエージェント
         lastAccess:
           type: string
           format: date-time
           description: 最終アクセス日時
-        createdAt:
+        issuedAt:
           type: string
           description: 発行日時
           format: date-time
@@ -4372,6 +4509,7 @@ components:
         subscribeEvents:
           type: array
           description: 購読するイベント
+          uniqueItems: false
           items:
             type: string
     BotTokens:
@@ -4573,7 +4711,7 @@ components:
         force:
           type: boolean
           description: 強制通知チャンネルかどうか
-        parentId:
+        parent:
           type: string
           description: 親チャンネルUUID
           format: uuid
@@ -4919,159 +5057,82 @@ components:
       items:
         type: string
         format: uuid
-  parameters:
-    channelIdInPath:
-      name: channelId
-      in: path
-      required: true
-      description: チャンネルUUID
-      schema:
-        type: string
-        format: uuid
-    orderInQuery:
-      in: query
-      name: order
-      schema:
-        type: string
-        enum:
-          - asc
-          - desc
-        default: desc
-      description: 昇順か降順か
-    inclusiveInQuery:
-      in: query
-      name: inclusive
+    PatchStampRequest:
+      title: PatchStampRequest
+      type: object
+      description: スタンプ情報変更リクエスト
+      properties:
+        name:
+          type: string
+          pattern: '^[a-zA-Z0-9_-]{1,32}$'
+          description: スタンプ名
+        creatorId:
+          type: string
+          description: 作成者UUID
+          format: uuid
+    MessagePin:
+      title: MessagePin
+      type: object
+      description: ピン情報
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: ピン留めしたユーザーUUID
+        pinnedAt:
+          type: string
+          format: date-time
+          description: ピン留めされた日時
+    PostUserGroupAdminRequest:
+      title: PostUserGroupAdmin
+      type: object
+      description: グループ管理者追加リクエスト
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 追加するユーザーのUUID
+      required:
+        - id
+    ChannelList:
+      title: ChannelList
+      type: object
+      description: GET /channelsレスポンス
+      properties:
+        public:
+          type: array
+          description: パブリックチャンネルの配列
+          items:
+            $ref: '#/components/schemas/Channel'
+        dm:
+          type: array
+          description: ダイレクトメッセージチャンネルの配列
+          items:
+            $ref: '#/components/schemas/DMChannel'
+    DMChannel:
+      title: DMChannel
+      type: object
+      description: ダイレクトメッセージチャンネル
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: チャンネルUUID
+        userId:
+          type: string
+          description: 送信先相手のUUID
+          format: uuid
+  headers:
+    X-TRAQ-MORE:
       schema:
         type: boolean
-        default: false
-      description: 範囲の端を含めるかどうか
-    untilInQuery:
-      in: query
-      name: until
-      schema:
-        type: string
-        format: date-time
-      description: 取得する時間範囲の終了日時
-      example: '2016-10-12T11:00:00.0000000Z'
-    sinceInQuery:
-      in: query
-      name: since
-      schema:
-        type: string
-        format: date-time
-        default: '0000-01-01T00:00:00.000000Z'
-      description: 取得する時間範囲の開始日時
-      example: '2016-10-12T11:00:00.000000Z'
-    offsetInQuery:
-      in: query
-      name: offset
-      schema:
-        type: integer
-        default: 0
-      description: 取得するオフセット
-      example: 150
-    limitInQuery:
-      in: query
-      name: limit
-      schema:
-        type: integer
-        default: 0
-        minimum: 1
-        maximum: 200
-      description: 取得する件数
-      example: 50
-    messageIdInPath:
-      name: messageId
+      description: 指定した範囲に要素がさらに存在するかどうか
+  parameters:
+    paletteIdInPath:
+      name: paletteId
       in: path
       required: true
-      description: メッセージUUID
-      schema:
-        type: string
-        format: uuid
-    fileIdInPath:
-      name: fileId
-      in: path
-      required: true
-      description: ファイルUUID
-      schema:
-        type: string
-        format: uuid
-    stampIdInPath:
-      name: stampId
-      in: path
-      required: true
-      description: スタンプUUID
-      schema:
-        type: string
-        format: uuid
-    userIdInPath:
-      name: userId
-      in: path
-      required: true
-      description: ユーザーUUID
-      schema:
-        type: string
-        format: uuid
-    groupIdInPath:
-      name: groupId
-      in: path
-      required: true
-      description: ユーザーグループUUID
-      schema:
-        type: string
-        format: uuid
-    webhookIdInPath:
-      name: webhookId
-      in: path
-      required: true
-      description: WebhookUUID
-      schema:
-        type: string
-        format: uuid
-    tagIdInPath:
-      name: tagId
-      in: path
-      required: true
-      description: タグUUID
-      schema:
-        type: string
-        format: uuid
-    redirectInQuery:
-      schema:
-        type: string
-        format: uri
-      description: リダイレクト先
-      name: redirect
-      in: query
-    sessionIdInPath:
-      name: sessionId
-      in: path
-      required: true
-      description: セッションUUID
-      schema:
-        type: string
-        format: uuid
-    tokenIdInPath:
-      name: tokenId
-      in: path
-      required: true
-      description: OAuth2トークンUUID
-      schema:
-        type: string
-        format: uuid
-    clientIdInPath:
-      name: clientId
-      in: path
-      required: true
-      description: OAuth2クライアントUUID
-      schema:
-        type: string
-        format: uuid
-    botIdInPath:
-      name: botId
-      in: path
-      required: true
-      description: BOTUUID
+      description: スタンプパレットUUID
       schema:
         type: string
         format: uuid
@@ -5083,19 +5144,161 @@ components:
       schema:
         type: string
         format: uuid
-    paletteIdInPath:
-      name: paletteId
+    botIdInPath:
+      name: botId
       in: path
       required: true
-      description: スタンプパレットUUID
+      description: BOTUUID
       schema:
         type: string
         format: uuid
-  headers:
-    X-TRAQ-MORE:
+    clientIdInPath:
+      name: clientId
+      in: path
+      required: true
+      description: OAuth2クライアントUUID
+      schema:
+        type: string
+        format: uuid
+    tokenIdInPath:
+      name: tokenId
+      in: path
+      required: true
+      description: OAuth2トークンUUID
+      schema:
+        type: string
+        format: uuid
+    sessionIdInPath:
+      name: sessionId
+      in: path
+      required: true
+      description: セッションUUID
+      schema:
+        type: string
+        format: uuid
+    redirectInQuery:
+      schema:
+        type: string
+        format: uri
+      description: リダイレクト先
+      name: redirect
+      in: query
+    tagIdInPath:
+      name: tagId
+      in: path
+      required: true
+      description: タグUUID
+      schema:
+        type: string
+        format: uuid
+    webhookIdInPath:
+      name: webhookId
+      in: path
+      required: true
+      description: WebhookUUID
+      schema:
+        type: string
+        format: uuid
+    groupIdInPath:
+      name: groupId
+      in: path
+      required: true
+      description: ユーザーグループUUID
+      schema:
+        type: string
+        format: uuid
+    userIdInPath:
+      name: userId
+      in: path
+      required: true
+      description: ユーザーUUID
+      schema:
+        type: string
+        format: uuid
+    stampIdInPath:
+      name: stampId
+      in: path
+      required: true
+      description: スタンプUUID
+      schema:
+        type: string
+        format: uuid
+    fileIdInPath:
+      name: fileId
+      in: path
+      required: true
+      description: ファイルUUID
+      schema:
+        type: string
+        format: uuid
+    messageIdInPath:
+      name: messageId
+      in: path
+      required: true
+      description: メッセージUUID
+      schema:
+        type: string
+        format: uuid
+    limitInQuery:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        default: 0
+        minimum: 1
+        maximum: 200
+      description: 取得する件数
+      example: 50
+    offsetInQuery:
+      in: query
+      name: offset
+      schema:
+        type: integer
+        default: 0
+      description: 取得するオフセット
+      example: 150
+    sinceInQuery:
+      in: query
+      name: since
+      schema:
+        type: string
+        format: date-time
+        default: '0000-01-01T00:00:00.000000Z'
+      description: 取得する時間範囲の開始日時
+      example: '2016-10-12T11:00:00.000000Z'
+    untilInQuery:
+      in: query
+      name: until
+      schema:
+        type: string
+        format: date-time
+      description: 取得する時間範囲の終了日時
+      example: '2016-10-12T11:00:00.0000000Z'
+    inclusiveInQuery:
+      in: query
+      name: inclusive
       schema:
         type: boolean
-      description: 指定した範囲に要素がさらに存在するかどうか
+        default: false
+      description: 範囲の端を含めるかどうか
+    orderInQuery:
+      in: query
+      name: order
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+        default: desc
+      description: 昇順か降順か
+    channelIdInPath:
+      name: channelId
+      in: path
+      required: true
+      description: チャンネルUUID
+      schema:
+        type: string
+        format: uuid
 tags:
   - name: user
     description: ユーザーAPI

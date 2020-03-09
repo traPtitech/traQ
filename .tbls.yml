@@ -214,8 +214,10 @@ comments:
       hash: MD5ハッシュ
       type: ファイルタイプ
       has_thumbnail: サムネイル画像を持っているか
+      thumbnail_mime: サムネイル画像MIMEタイプ
       thumbnail_width: サムネイル画像幅
       thumbnail_height: サムネイル画像高さ
+      channel_id: 所属チャンネルUUID
   - table: files_acl
     tableComment: ファイルアクセスコントロールリストテーブル
     columnComments:
@@ -246,13 +248,18 @@ comments:
     columnComments:
       group_id: グループUUID
       user_id: ユーザーUUID
+      role: 役割
+  - table: user_group_admins
+    tableComment: ユーザーグループ管理者テーブル
+    columnComments:
+      group_id: グループUUID
+      user_id: ユーザーUUID
   - table: user_groups
     tableComment: ユーザーグループテーブル
     columnComments:
       name: グループ名
       description: グループ説明
       type: グループタイプ
-      admin_user_id: 管理者UUID
   - table: user_roles
     tableComment: ユーザーロールテーブル
     columnComments:

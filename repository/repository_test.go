@@ -165,10 +165,15 @@ func mustMakeUser(t *testing.T, repo Repository, userName string) *model.User {
 	return u
 }
 
-func mustMakeFile(t *testing.T, repo Repository, userID uuid.UUID) *model.File {
+func mustMakeFile(t *testing.T, repo Repository) *model.File {
 	t.Helper()
 	buf := bytes.NewBufferString("test message")
-	f, err := repo.SaveFile("test.txt", buf, int64(buf.Len()), "", model.FileTypeUserFile, userID)
+	f, err := repo.SaveFile(SaveFileArgs{
+		FileName: "test.txt",
+		FileSize: int64(buf.Len()),
+		FileType: model.FileTypeUserFile,
+		Src:      buf,
+	})
 	require.NoError(t, err)
 	return f
 }
@@ -192,7 +197,7 @@ func mustMakePin(t *testing.T, repo Repository, messageID, userID uuid.UUID) uui
 	t.Helper()
 	p, err := repo.CreatePin(messageID, userID)
 	require.NoError(t, err)
-	return p
+	return p.ID
 }
 
 func mustMakeUserGroup(t *testing.T, repo Repository, name string, adminID uuid.UUID) *model.UserGroup {
@@ -207,7 +212,7 @@ func mustMakeUserGroup(t *testing.T, repo Repository, name string, adminID uuid.
 
 func mustAddUserToGroup(t *testing.T, repo Repository, userID, groupID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.AddUserToGroup(userID, groupID))
+	require.NoError(t, repo.AddUserToGroup(userID, groupID, ""))
 }
 
 func mustMakeStamp(t *testing.T, repo Repository, name string, userID uuid.UUID) *model.Stamp {

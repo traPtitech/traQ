@@ -48,7 +48,7 @@ type StampRepository interface {
 	//
 	// 成功した場合、スタンプの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetAllStamps() (stamps []*model.Stamp, err error)
+	GetAllStamps(excludeUnicode bool) (stamps []*model.Stamp, err error)
 	// StampExists 指定したIDのスタンプが存在するかどうかを返します
 	//
 	// 存在する場合、trueとnilを返します。

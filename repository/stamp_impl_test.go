@@ -202,7 +202,7 @@ func TestRepositoryImpl_GetAllStamps(t *testing.T) {
 		mustMakeStamp(t, repo, random, uuid.Nil)
 	}
 
-	arr, err := repo.GetAllStamps()
+	arr, err := repo.GetAllStamps(false)
 	if assert.NoError(err) {
 		assert.Len(arr, n)
 	}

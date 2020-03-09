@@ -380,28 +380,27 @@ type userGroupResponse struct {
 	UpdatedAt   time.Time   `json:"updatedAt"`
 }
 
-func (h *Handlers) formatUserGroup(g *model.UserGroup) (r *userGroupResponse, err error) {
-	r = &userGroupResponse{
+func formatUserGroup(g *model.UserGroup) *userGroupResponse {
+	r := &userGroupResponse{
 		GroupID:     g.ID,
 		Name:        g.Name,
 		Description: g.Description,
 		Type:        g.Type,
-		AdminUserID: g.AdminUserID,
+		AdminUserID: g.Admins[0].UserID,
+		Members:     make([]uuid.UUID, 0),
 		CreatedAt:   g.CreatedAt,
 		UpdatedAt:   g.UpdatedAt,
 	}
-	r.Members, err = h.Repo.GetUserGroupMemberIDs(g.ID)
-	return
+	for _, member := range g.Members {
+		r.Members = append(r.Members, member.UserID)
+	}
+	return r
 }
 
 func (h *Handlers) formatUserGroups(gs []*model.UserGroup) ([]*userGroupResponse, error) {
 	arr := make([]*userGroupResponse, len(gs))
 	for i, g := range gs {
-		r, err := h.formatUserGroup(g)
-		if err != nil {
-			return nil, err
-		}
-		arr[i] = r
+		arr[i] = formatUserGroup(g)
 	}
 	return arr, nil
 }

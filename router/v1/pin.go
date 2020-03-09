@@ -49,12 +49,12 @@ func (h *Handlers) PostPin(c echo.Context) error {
 		return herror.BadRequest("the message doesn't exist")
 	}
 
-	pinID, err := h.Repo.CreatePin(m.ID, userID)
+	pin, err := h.Repo.CreatePin(m.ID, userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusCreated, map[string]string{"id": pinID.String()})
+	return c.JSON(http.StatusCreated, echo.Map{"id": pin.ID})
 }
 
 // GetPin GET /pins/:pinID

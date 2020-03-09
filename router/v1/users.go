@@ -89,7 +89,7 @@ func (h *Handlers) PostLogout(c echo.Context) error {
 // GetUsers GET /users
 func (h *Handlers) GetUsers(c echo.Context) error {
 	res, err, _ := h.getUsersResponseCacheGroup.Do("", func() (interface{}, error) {
-		users, err := h.Repo.GetUsers()
+		users, err := h.Repo.GetUsers(repository.UsersQuery{})
 		if err != nil {
 			return nil, err
 		}
@@ -167,13 +167,16 @@ func (h *Handlers) PutUserStatus(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.ChangeUserAccountStatus(userID, model.UserAccountStatus(req.Status)); err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		default:
-			return herror.InternalServerError(err)
-		}
+	var args repository.UpdateUserArgs
+	args.UserState.Valid = true
+	args.UserState.State = model.UserAccountStatus(req.Status)
+
+	if !args.UserState.State.Valid() {
+		return herror.BadRequest("invalid status")
+	}
+
+	if err := h.Repo.UpdateUser(userID, args); err != nil {
+		return herror.InternalServerError(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)

@@ -13,9 +13,9 @@ CREATE TABLE `messages` (
   `user_id` char(36) NOT NULL,
   `channel_id` char(36) NOT NULL,
   `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `updated_at` timestamp(6) NULL DEFAULT NULL,
-  `deleted_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_messages_channel_id` (`channel_id`),
   KEY `idx_messages_created_at` (`created_at`),
@@ -32,13 +32,13 @@ CREATE TABLE `messages` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [messages_stamps](messages_stamps.md) [unreads](unreads.md) |  | メッセージUUID |
+| id | char(36) |  | false | [messages_stamps](messages_stamps.md) [pins](pins.md) [unreads](unreads.md) |  | メッセージUUID |
 | user_id | char(36) |  | false |  | [users](users.md) | 投稿ユーザーUUID |
 | channel_id | char(36) |  | false |  | [channels](channels.md) | 投稿先チャンネルUUID |
 | text | text |  | false |  |  | 本文 |
-| created_at | timestamp(6) |  | true |  |  | 作成日時 |
-| updated_at | timestamp(6) |  | true |  |  | 更新日時 |
-| deleted_at | timestamp(6) |  | true |  |  | 削除日時 |
+| created_at | datetime(6) |  | true |  |  | 作成日時 |
+| updated_at | datetime(6) |  | true |  |  | 更新日時 |
+| deleted_at | datetime(6) |  | true |  |  | 削除日時 |
 
 ## Constraints
 

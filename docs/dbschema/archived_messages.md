@@ -13,7 +13,7 @@ CREATE TABLE `archived_messages` (
   `message_id` char(36) NOT NULL,
   `user_id` char(36) NOT NULL,
   `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `date_time` timestamp(6) NULL DEFAULT NULL,
+  `date_time` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_archived_messages_message_id` (`message_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -29,7 +29,7 @@ CREATE TABLE `archived_messages` (
 | message_id | char(36) |  | false |  |  | 元のメッセージUUID |
 | user_id | char(36) |  | false |  |  | 投稿ユーザーUUID |
 | text | text |  | false |  |  | 本文 |
-| date_time | timestamp(6) |  | true |  |  | 本文の投稿日時 |
+| date_time | datetime(6) |  | true |  |  | 本文の投稿日時 |
 
 ## Constraints
 

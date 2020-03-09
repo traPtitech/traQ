@@ -221,13 +221,13 @@ func TestRepositoryImpl_ChangeChannelParent(t *testing.T) {
 	t.Run("fail", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.ChangeChannelParent(c4.ID, uuid.Nil, uuid.Nil))
+		assert.Error(t, repo.UpdateChannel(c4.ID, UpdateChannelArgs{Parent: uuid.NullUUID{Valid: true, UUID: uuid.Nil}}))
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		if assert.NoError(t, repo.ChangeChannelParent(c3.ID, uuid.Nil, uuid.Nil)) {
+		if assert.NoError(t, repo.UpdateChannel(c3.ID, UpdateChannelArgs{Parent: uuid.NullUUID{Valid: true, UUID: uuid.Nil}})) {
 			c, err := repo.GetChannel(c3.ID)
 			require.NoError(t, err)
 			assert.Equal(t, uuid.Nil, c.ParentID)

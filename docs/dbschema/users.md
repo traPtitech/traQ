@@ -19,9 +19,9 @@ CREATE TABLE `users` (
   `bot` tinyint(1) NOT NULL DEFAULT '0',
   `role` varchar(30) NOT NULL DEFAULT 'user',
   `twitter_id` varchar(15) NOT NULL DEFAULT '',
-  `last_online` timestamp(6) NULL DEFAULT NULL,
-  `created_at` timestamp(6) NULL DEFAULT NULL,
-  `updated_at` timestamp(6) NULL DEFAULT NULL,
+  `last_online` datetime(6) DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -33,7 +33,7 @@ CREATE TABLE `users` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [bots](bots.md) [devices](devices.md) [dm_channel_mappings](dm_channel_mappings.md) [messages](messages.md) [messages_stamps](messages_stamps.md) [pins](pins.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [users_tags](users_tags.md) [webhook_bots](webhook_bots.md) [channels](channels.md) [stamps](stamps.md) |  | ユーザーUUID |
+| id | char(36) |  | false | [bots](bots.md) [devices](devices.md) [dm_channel_mappings](dm_channel_mappings.md) [files](files.md) [messages](messages.md) [messages_stamps](messages_stamps.md) [pins](pins.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [users_tags](users_tags.md) [webhook_bots](webhook_bots.md) [channels](channels.md) [stamps](stamps.md) |  | ユーザーUUID |
 | name | varchar(32) |  | false |  |  | traP ID |
 | display_name | varchar(64) |  | false |  |  | 表示名 |
 | password | char(128) |  | false |  |  | ハッシュ化されたパスワード |
@@ -43,9 +43,9 @@ CREATE TABLE `users` (
 | bot | tinyint(1) | 0 | false |  |  | BOTユーザーかどうか |
 | role | varchar(30) | user | false |  |  | ユーザーロール |
 | twitter_id | varchar(15) |  | false |  |  | Twitter ID |
-| last_online | timestamp(6) |  | true |  |  | 最終オンライン日時 |
-| created_at | timestamp(6) |  | true |  |  | 作成日時 |
-| updated_at | timestamp(6) |  | true |  |  | 更新日時 |
+| last_online | datetime(6) |  | true |  |  | 最終オンライン日時 |
+| created_at | datetime(6) |  | true |  |  | 作成日時 |
+| updated_at | datetime(6) |  | true |  |  | 更新日時 |
 
 ## Constraints
 

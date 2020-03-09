@@ -12,7 +12,7 @@ CREATE TABLE `unreads` (
   `user_id` char(36) NOT NULL,
   `message_id` char(36) NOT NULL,
   `noticeable` tinyint(1) NOT NULL DEFAULT '0',
-  `created_at` timestamp(6) NULL DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`user_id`,`message_id`),
   KEY `unreads_message_id_messages_id_foreign` (`message_id`),
   CONSTRAINT `unreads_message_id_messages_id_foreign` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -29,7 +29,7 @@ CREATE TABLE `unreads` (
 | user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
 | message_id | char(36) |  | false |  | [messages](messages.md) | メッセージUUID |
 | noticeable | tinyint(1) | 0 | false |  |  | 注目メッセージかどうか |
-| created_at | timestamp(6) |  | true |  |  | 未読日時 |
+| created_at | datetime(6) |  | true |  |  | 未読日時 |
 
 ## Constraints
 
