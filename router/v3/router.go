@@ -155,7 +155,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiFiles := api.Group("/files")
 		{
 			apiFiles.GET("", NotImplemented, requires(permission.DownloadFile))
-			apiFiles.POST("", NotImplemented, bodyLimit(30<<10), requires(permission.UploadFile))
+			apiFiles.POST("", h.PostFile, bodyLimit(30<<10), requires(permission.UploadFile))
 			apiFilesFID := apiFiles.Group("/:fileID", retrieve.FileID(), requiresFileAccessPerm)
 			{
 				apiFilesFID.GET("", h.GetFile, requires(permission.DownloadFile))
