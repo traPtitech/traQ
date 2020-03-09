@@ -168,7 +168,12 @@ func mustMakeUser(t *testing.T, repo Repository, userName string) *model.User {
 func mustMakeFile(t *testing.T, repo Repository) *model.File {
 	t.Helper()
 	buf := bytes.NewBufferString("test message")
-	f, err := repo.SaveFile("test.txt", buf, int64(buf.Len()), "", model.FileTypeUserFile)
+	f, err := repo.SaveFile(SaveFileArgs{
+		FileName: "test.txt",
+		FileSize: int64(buf.Len()),
+		FileType: model.FileTypeUserFile,
+		Src:      buf,
+	})
 	require.NoError(t, err)
 	return f
 }

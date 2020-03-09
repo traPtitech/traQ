@@ -10,7 +10,6 @@ import (
 	"github.com/disintegration/imaging"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
@@ -23,8 +22,6 @@ import (
 	"image"
 	"io"
 	"math"
-	"mime"
-	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -2045,36 +2042,30 @@ func (repo *TestRepository) DeleteFile(fileID uuid.UUID) error {
 func (repo *TestRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
 	var img bytes.Buffer
 	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
-	file, err := repo.SaveFile(fmt.Sprintf("%s.png", salt), &img, int64(img.Len()), "image/png", model.FileTypeIcon)
+	file, err := repo.SaveFile(repository.SaveFileArgs{
+		FileName: fmt.Sprintf("%s.png", salt),
+		FileSize: int64(img.Len()),
+		MimeType: "image/png",
+		FileType: model.FileTypeIcon,
+		Src:      &img,
+	})
 	return file.ID, err
 }
 
-func (repo *TestRepository) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string) (*model.File, error) {
-	return repo.SaveFileWithACL(name, src, size, mimeType, fType, uuid.NullUUID{}, repository.ACL{uuid.Nil: true})
-}
-
-func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.NullUUID, read repository.ACL) (*model.File, error) {
-	f := &model.File{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      name,
-		Size:      size,
-		Mime:      mimeType,
-		Type:      fType,
-		CreatorID: creatorID,
-		CreatedAt: time.Now(),
-	}
-	if len(mimeType) == 0 {
-		f.Mime = mime.TypeByExtension(filepath.Ext(name))
-		if len(f.Mime) == 0 {
-			f.Mime = echo.MIMEOctetStream
-		}
-	}
-	if err := f.Validate(); err != nil {
+func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (*model.File, error) {
+	if err := args.Validate(); err != nil {
 		return nil, err
 	}
 
-	if read != nil && creatorID.Valid {
-		read[creatorID.UUID] = true
+	f := &model.File{
+		ID:        uuid.Must(uuid.NewV4()),
+		Name:      args.FileName,
+		Size:      args.FileSize,
+		Mime:      args.MimeType,
+		Type:      args.FileType,
+		CreatorID: args.CreatorID,
+		ChannelID: args.ChannelID,
+		CreatedAt: time.Now(),
 	}
 
 	eg, ctx := errgroup.WithContext(context.Background())
@@ -2086,7 +2077,7 @@ func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int
 	go func() {
 		defer fileWriter.Close()
 		defer thumbWriter.Close()
-		_, _ = io.Copy(utils.MultiWriter(fileWriter, hash, thumbWriter), src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
+		_, _ = io.Copy(utils.MultiWriter(fileWriter, hash, thumbWriter), args.Src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
 	}()
 
 	// fileの保存
@@ -2121,7 +2112,7 @@ func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int
 	repo.FilesLock.Lock()
 	repo.FilesACLLock.Lock()
 	repo.Files[f.ID] = *f
-	repo.FilesACL[f.ID] = read
+	repo.FilesACL[f.ID] = args.ACL
 	repo.FilesACLLock.Unlock()
 	repo.FilesLock.Unlock()
 	return f, nil

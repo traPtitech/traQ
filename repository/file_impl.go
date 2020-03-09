@@ -10,7 +10,6 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -19,8 +18,6 @@ import (
 	"gopkg.in/guregu/null.v3"
 	"image"
 	"io"
-	"mime"
-	"path/filepath"
 )
 
 type fileImpl struct {
@@ -31,7 +28,13 @@ type fileImpl struct {
 func (repo *GormRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
 	var img bytes.Buffer
 	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
-	file, err := repo.SaveFile(fmt.Sprintf("%s.png", salt), &img, int64(img.Len()), "image/png", model.FileTypeIcon)
+	file, err := repo.SaveFile(SaveFileArgs{
+		FileName: fmt.Sprintf("%s.png", salt),
+		FileSize: int64(img.Len()),
+		MimeType: "image/png",
+		FileType: model.FileTypeIcon,
+		Src:      &img,
+	})
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -39,32 +42,19 @@ func (repo *GormRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
 }
 
 // SaveFile implements FileRepository interface.
-func (repo *GormRepository) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string) (*model.File, error) {
-	return repo.SaveFileWithACL(name, src, size, mimeType, fType, uuid.NullUUID{}, ACL{uuid.Nil: true})
-}
-
-// SaveFileWithACL implements FileRepository interface.
-func (repo *GormRepository) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.NullUUID, read ACL) (*model.File, error) {
-	f := &model.File{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      name,
-		Size:      size,
-		Mime:      mimeType,
-		Type:      fType,
-		CreatorID: creatorID,
-	}
-	if len(mimeType) == 0 {
-		f.Mime = mime.TypeByExtension(filepath.Ext(name))
-		if len(f.Mime) == 0 {
-			f.Mime = echo.MIMEOctetStream
-		}
-	}
-	if err := f.Validate(); err != nil {
+func (repo *GormRepository) SaveFile(args SaveFileArgs) (*model.File, error) {
+	if err := args.Validate(); err != nil {
 		return nil, err
 	}
 
-	if read != nil && creatorID.Valid {
-		read[creatorID.UUID] = true
+	f := &model.File{
+		ID:        uuid.Must(uuid.NewV4()),
+		Name:      args.FileName,
+		Size:      args.FileSize,
+		Mime:      args.MimeType,
+		Type:      args.FileType,
+		CreatorID: args.CreatorID,
+		ChannelID: args.ChannelID,
 	}
 
 	eg, ctx := errgroup.WithContext(context.Background())
@@ -76,7 +66,7 @@ func (repo *GormRepository) SaveFileWithACL(name string, src io.Reader, size int
 	go func() {
 		defer fileWriter.Close()
 		defer thumbWriter.Close()
-		_, _ = io.Copy(utils.MultiWriter(fileWriter, hash, thumbWriter), src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
+		_, _ = io.Copy(utils.MultiWriter(fileWriter, hash, thumbWriter), args.Src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
 	}()
 
 	// fileの保存
@@ -111,7 +101,7 @@ func (repo *GormRepository) SaveFileWithACL(name string, src io.Reader, size int
 			return err
 		}
 
-		for uid, allow := range read {
+		for uid, allow := range args.ACL {
 			if err := tx.Create(&model.FileACLEntry{
 				FileID: f.ID,
 				UserID: uuid.NullUUID{UUID: uid, Valid: true},

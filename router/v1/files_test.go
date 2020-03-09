@@ -130,7 +130,16 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	file := mustMakeFile(t, repo)
 	grantedUser := mustMakeUser(t, repo, random)
 	secureContent := "secure"
-	secureFile, err := repo.SaveFileWithACL("secure", strings.NewReader(secureContent), int64(len(secureContent)), "text/plain", model.FileTypeUserFile, uuid.NullUUID{Valid: true, UUID: grantedUser.ID}, repository.ACL{})
+	secureFile, err := repo.SaveFile(repository.SaveFileArgs{
+		FileName:  "secure",
+		FileSize:  int64(len(secureContent)),
+		MimeType:  "text/plain",
+		FileType:  model.FileTypeUserFile,
+		CreatorID: uuid.NullUUID{Valid: true, UUID: grantedUser.ID},
+		ChannelID: uuid.NullUUID{},
+		ACL:       repository.ACL{},
+		Src:       strings.NewReader(secureContent),
+	})
 	require.NoError(err)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -289,7 +298,16 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 	file := mustMakeFile(t, repo)
 	grantedUser := mustMakeUser(t, repo, random)
 	secureContent := "secure"
-	secureFile, err := repo.SaveFileWithACL("secure", strings.NewReader(secureContent), int64(len(secureContent)), "text/plain", model.FileTypeUserFile, uuid.NullUUID{Valid: true, UUID: grantedUser.ID}, repository.ACL{})
+	secureFile, err := repo.SaveFile(repository.SaveFileArgs{
+		FileName:  "secure",
+		FileSize:  int64(len(secureContent)),
+		MimeType:  "text/plain",
+		FileType:  model.FileTypeUserFile,
+		CreatorID: uuid.NullUUID{Valid: true, UUID: grantedUser.ID},
+		ChannelID: uuid.NullUUID{},
+		ACL:       repository.ACL{},
+		Src:       strings.NewReader(secureContent),
+	})
 	require.NoError(err)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {

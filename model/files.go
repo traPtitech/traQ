@@ -2,7 +2,6 @@ package model
 
 import (
 	"database/sql"
-	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"gopkg.in/guregu/null.v3"
 	"time"
@@ -40,15 +39,6 @@ type File struct {
 // TableName dbのtableの名前を返します
 func (f *File) TableName() string {
 	return "files"
-}
-
-// Validate 構造体を検証します
-func (f File) Validate() error {
-	return vd.ValidateStruct(&f,
-		vd.Field(&f.Name, vd.Required),
-		vd.Field(&f.Mime, vd.Required),
-		vd.Field(&f.Size, vd.Min(0)),
-	)
 }
 
 // GetKey ファイルのストレージに対するキーを返す

@@ -28,8 +28,17 @@ func (h *Handlers) PostFile(c echo.Context) error {
 		return herror.BadRequest("non-empty file is required")
 	}
 
+	args := repository.SaveFileArgs{
+		FileName: uploadedFile.Filename,
+		FileSize: uploadedFile.Size,
+		MimeType: uploadedFile.Header.Get(echo.HeaderContentType),
+		FileType: model.FileTypeUserFile,
+		ACL:      repository.ACL{},
+		Src:      src,
+	}
+	args.SetCreator(userID)
+
 	// アクセスコントロールリスト作成
-	aclRead := repository.ACL{}
 	if s := c.FormValue("acl_readable"); len(s) != 0 && s != "all" {
 		for _, v := range strings.Split(s, ",") {
 			uid, _ := uuid.FromString(v)
@@ -38,13 +47,13 @@ func (h *Handlers) PostFile(c echo.Context) error {
 			} else if !ok {
 				return herror.BadRequest(fmt.Sprintf("unknown acl user id: %s", uid))
 			}
-			aclRead[uid] = true
+			args.ACLAllow(uid)
 		}
 	} else {
-		aclRead[uuid.Nil] = true
+		args.ACLAllow(uuid.Nil)
 	}
 
-	file, err := h.Repo.SaveFileWithACL(uploadedFile.Filename, src, uploadedFile.Size, uploadedFile.Header.Get(echo.HeaderContentType), model.FileTypeUserFile, uuid.NullUUID{Valid: true, UUID: userID}, aclRead)
+	file, err := h.Repo.SaveFile(args)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

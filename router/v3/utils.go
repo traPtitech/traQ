@@ -208,7 +208,13 @@ func saveUploadImage(c echo.Context, repo repository.Repository, name string, fT
 	}
 
 	// ファイル保存
-	f, err := repo.SaveFile(file.Filename, b, int64(b.Len()), mime, fType)
+	f, err := repo.SaveFile(repository.SaveFileArgs{
+		FileName: file.Filename,
+		FileSize: int64(b.Len()),
+		MimeType: mime,
+		FileType: fType,
+		Src:      b,
+	})
 	if err != nil {
 		return uuid.Nil, herror.InternalServerError(err)
 	}

@@ -127,7 +127,12 @@ func TestRepositoryImpl_SaveFile(t *testing.T) {
 	repo, assert, _ := setup(t, common)
 
 	buf := bytes.NewBufferString("test message")
-	f, err := repo.SaveFile("test.txt", buf, int64(buf.Len()), "", model.FileTypeUserFile)
+	f, err := repo.SaveFile(SaveFileArgs{
+		FileName: "test.txt",
+		FileSize: int64(buf.Len()),
+		FileType: model.FileTypeUserFile,
+		Src:      buf,
+	})
 	if assert.NoError(err) {
 		assert.Equal("text/plain; charset=utf-8", f.Mime)
 	}
@@ -178,7 +183,15 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 		t.Parallel()
 
 		buf := bytes.NewBufferString("test message")
-		f, err := repo.SaveFileWithACL("test.txt", buf, int64(buf.Len()), "", model.FileTypeUserFile, uuid.NullUUID{Valid: true, UUID: user.ID}, ACL{})
+		args := SaveFileArgs{
+			FileName: "test.txt",
+			FileSize: int64(buf.Len()),
+			FileType: model.FileTypeUserFile,
+			Src:      buf,
+			ACL:      ACL{},
+		}
+		args.SetCreator(user.ID)
+		f, err := repo.SaveFile(args)
 		require.NoError(t, err)
 
 		t.Run("any user", func(t *testing.T) {
@@ -215,7 +228,15 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 
 		user2 := mustMakeUser(t, repo, random)
 		buf := bytes.NewBufferString("test message")
-		f, err := repo.SaveFileWithACL("test.txt", buf, int64(buf.Len()), "", model.FileTypeUserFile, uuid.NullUUID{Valid: true, UUID: user.ID}, ACL{user2.ID: true})
+		args := SaveFileArgs{
+			FileName: "test.txt",
+			FileSize: int64(buf.Len()),
+			FileType: model.FileTypeUserFile,
+			Src:      buf,
+			ACL:      ACL{user2.ID: true},
+		}
+		args.SetCreator(user.ID)
+		f, err := repo.SaveFile(args)
 		require.NoError(t, err)
 
 		t.Run("any user", func(t *testing.T) {
@@ -261,10 +282,17 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 
 		deninedUser := mustMakeUser(t, repo, random)
 		buf := bytes.NewBufferString("test message")
-		f, err := repo.SaveFileWithACL("test.txt", buf, int64(buf.Len()), "", model.FileTypeUserFile, uuid.NullUUID{}, ACL{
-			uuid.Nil:       true,
-			deninedUser.ID: false,
-		})
+		args := SaveFileArgs{
+			FileName: "test.txt",
+			FileSize: int64(buf.Len()),
+			FileType: model.FileTypeUserFile,
+			Src:      buf,
+			ACL: ACL{
+				uuid.Nil:       true,
+				deninedUser.ID: false,
+			},
+		}
+		f, err := repo.SaveFile(args)
 		require.NoError(t, err)
 
 		t.Run("any user", func(t *testing.T) {
