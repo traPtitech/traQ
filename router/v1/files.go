@@ -44,7 +44,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 		aclRead[uuid.Nil] = true
 	}
 
-	file, err := h.Repo.SaveFileWithACL(uploadedFile.Filename, src, uploadedFile.Size, uploadedFile.Header.Get(echo.HeaderContentType), model.FileTypeUserFile, userID, aclRead)
+	file, err := h.Repo.SaveFileWithACL(uploadedFile.Filename, src, uploadedFile.Size, uploadedFile.Header.Get(echo.HeaderContentType), model.FileTypeUserFile, uuid.NullUUID{Valid: true, UUID: userID}, aclRead)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

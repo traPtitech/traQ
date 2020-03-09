@@ -365,12 +365,12 @@ func formatFileInfo(meta *model.File) *FileInfo {
 		Size:       meta.Size,
 		MD5:        meta.Hash,
 		CreatedAt:  meta.CreatedAt,
-		ChannelID:  uuid.NullUUID{},                                  // TODO
-		UploaderID: uuid.NullUUID{Valid: true, UUID: meta.CreatorID}, // TODO
+		ChannelID:  meta.ChannelID,
+		UploaderID: meta.CreatorID,
 	}
 	if meta.HasThumbnail {
 		fi.Thumbnail = &FileInfoThumbnail{
-			Mime:   "image/png", // TODO
+			Mime:   meta.ThumbnailMime.String,
 			Width:  meta.ThumbnailWidth,
 			Height: meta.ThumbnailHeight,
 		}

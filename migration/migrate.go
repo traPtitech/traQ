@@ -16,6 +16,7 @@ var migrations = []*gormigrate.Migration{
 	v4, // Webhook, Bot外部キー
 	v5, // Mute, 旧Clip削除
 	v6, // v6 ユーザーグループ拡張
+	v7, // ファイルメタ拡張
 }
 
 // Migrate データベースマイグレーションを実行します

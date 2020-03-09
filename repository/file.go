@@ -40,14 +40,14 @@ type FileRepository interface {
 	GenerateIconFile(salt string) (uuid.UUID, error)
 	// SaveFile ファイルを保存します
 	//
-	// SaveFileWithACLの引数readにACL{uuid.Nil: true}を指定したものと同じです。
-	SaveFile(name string, src io.Reader, size int64, mime string, fType string, creatorID uuid.UUID) (*model.File, error)
+	// SaveFileWithACLの引数creatorIDにuuid.NullUUID、readにACL{uuid.Nil: true}を指定したものと同じです。
+	SaveFile(name string, src io.Reader, size int64, mime string, fType string) (*model.File, error)
 	// SaveFileWithACL ファイルを保存します
 	//
 	// mimeが指定されていない場合はnameの拡張子によって決まります。
 	// 成功した場合、メタデータとnilを返します。
 	// DB, ファイルシステムによるエラーを返すことがあります。
-	SaveFileWithACL(name string, src io.Reader, size int64, mime string, fType string, creatorID uuid.UUID, read ACL) (*model.File, error)
+	SaveFileWithACL(name string, src io.Reader, size int64, mime string, fType string, creatorID uuid.NullUUID, read ACL) (*model.File, error)
 	// IsFileAccessible 指定したユーザーが指定したファイルにアクセス可能かどうかを返します
 	//
 	// アクセス可能な場合、trueとnilを返します。

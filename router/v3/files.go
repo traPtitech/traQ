@@ -39,7 +39,7 @@ func (h *Handlers) GetThumbnailImage(c echo.Context) error {
 	defer file.Close()
 
 	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=31536000") // 1年間キャッシュ
-	return c.Stream(http.StatusOK, consts.MimeImagePNG, file)
+	return c.Stream(http.StatusOK, meta.ThumbnailMime.String, file)
 }
 
 // GetFile GET /files/:fileID

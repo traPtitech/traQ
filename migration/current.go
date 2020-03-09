@@ -77,6 +77,9 @@ var AllForeignKeys = [][5]string{
 	{"bots", "creator_id", "users(id)", "CASCADE", "CASCADE"},
 	{"bots", "bot_user_id", "users(id)", "CASCADE", "CASCADE"},
 	{"channel_events", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
+	{"files", "channel_id", "channels(id)", "SET NULL", "CASCADE"},
+	{"files", "creator_id", "users(id)", "RESTRICT", "CASCADE"},
+	{"files_acl", "file_id", "files(id)", "CASCADE", "CASCADE"},
 }
 
 // AllCompositeIndexes 最新のスキーマの全複合インデックス
@@ -85,4 +88,5 @@ var AllCompositeIndexes = [][]string{
 	{"idx_messages_channel_id_deleted_at_created_at", "messages", "channel_id", "deleted_at", "created_at"},
 	{"idx_channel_events_channel_id_date_time", "channel_events", "channel_id", "date_time"},
 	{"idx_channel_events_channel_id_event_type_date_time", "channel_events", "channel_id", "event_type", "date_time"},
+	{"idx_files_channel_id_created_at", "files", "channel_id", "created_at"},
 }

@@ -522,7 +522,7 @@ func (h *Handlers) processMultipartForm(c echo.Context, src io.Reader, file *mul
 	}
 
 	// ファイル保存
-	f, err := h.Repo.SaveFile(file.Filename, b, int64(b.Len()), mime, fType, uuid.Nil)
+	f, err := h.Repo.SaveFile(file.Filename, b, int64(b.Len()), mime, fType)
 	if err != nil {
 		return uuid.Nil, herror.InternalServerError(err)
 	}

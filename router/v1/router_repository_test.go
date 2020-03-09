@@ -2045,15 +2045,15 @@ func (repo *TestRepository) DeleteFile(fileID uuid.UUID) error {
 func (repo *TestRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
 	var img bytes.Buffer
 	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
-	file, err := repo.SaveFile(fmt.Sprintf("%s.png", salt), &img, int64(img.Len()), "image/png", model.FileTypeIcon, uuid.Nil)
+	file, err := repo.SaveFile(fmt.Sprintf("%s.png", salt), &img, int64(img.Len()), "image/png", model.FileTypeIcon)
 	return file.ID, err
 }
 
-func (repo *TestRepository) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID) (*model.File, error) {
-	return repo.SaveFileWithACL(name, src, size, mimeType, fType, creatorID, repository.ACL{uuid.Nil: true})
+func (repo *TestRepository) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string) (*model.File, error) {
+	return repo.SaveFileWithACL(name, src, size, mimeType, fType, uuid.NullUUID{}, repository.ACL{uuid.Nil: true})
 }
 
-func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID, read repository.ACL) (*model.File, error) {
+func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.NullUUID, read repository.ACL) (*model.File, error) {
 	f := &model.File{
 		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
@@ -2073,8 +2073,8 @@ func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int
 		return nil, err
 	}
 
-	if read != nil {
-		read[creatorID] = true
+	if read != nil && creatorID.Valid {
+		read[creatorID.UUID] = true
 	}
 
 	eg, ctx := errgroup.WithContext(context.Background())
@@ -2106,6 +2106,7 @@ func (repo *TestRepository) SaveFileWithACL(name string, src io.Reader, size int
 		size, _ := repo.generateThumbnail(ctx, f, thumbSrc)
 		if !size.Empty() {
 			f.HasThumbnail = true
+			f.ThumbnailMime = null.StringFrom("image/png")
 			f.ThumbnailWidth = size.Size().X
 			f.ThumbnailHeight = size.Size().Y
 		}

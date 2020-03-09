@@ -61,7 +61,7 @@ func createStamps(repo repository.Repository, initDataDir string, stamps map[str
 			return err
 		}
 		stat, _ := f.Stat()
-		meta, err := repo.SaveFile(filename, f, stat.Size(), "", model.FileTypeStamp, uuid.Nil)
+		meta, err := repo.SaveFile(filename, f, stat.Size(), "", model.FileTypeStamp)
 		f.Close()
 		if err != nil {
 			return err

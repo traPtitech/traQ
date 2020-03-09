@@ -16,6 +16,7 @@ import (
 	"github.com/traPtitech/traQ/utils/storage"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"
+	"gopkg.in/guregu/null.v3"
 	"image"
 	"io"
 	"mime"
@@ -30,7 +31,7 @@ type fileImpl struct {
 func (repo *GormRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
 	var img bytes.Buffer
 	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
-	file, err := repo.SaveFile(fmt.Sprintf("%s.png", salt), &img, int64(img.Len()), "image/png", model.FileTypeIcon, uuid.Nil)
+	file, err := repo.SaveFile(fmt.Sprintf("%s.png", salt), &img, int64(img.Len()), "image/png", model.FileTypeIcon)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -38,12 +39,12 @@ func (repo *GormRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
 }
 
 // SaveFile implements FileRepository interface.
-func (repo *GormRepository) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID) (*model.File, error) {
-	return repo.SaveFileWithACL(name, src, size, mimeType, fType, creatorID, ACL{uuid.Nil: true})
+func (repo *GormRepository) SaveFile(name string, src io.Reader, size int64, mimeType string, fType string) (*model.File, error) {
+	return repo.SaveFileWithACL(name, src, size, mimeType, fType, uuid.NullUUID{}, ACL{uuid.Nil: true})
 }
 
 // SaveFileWithACL implements FileRepository interface.
-func (repo *GormRepository) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.UUID, read ACL) (*model.File, error) {
+func (repo *GormRepository) SaveFileWithACL(name string, src io.Reader, size int64, mimeType string, fType string, creatorID uuid.NullUUID, read ACL) (*model.File, error) {
 	f := &model.File{
 		ID:        uuid.Must(uuid.NewV4()),
 		Name:      name,
@@ -62,8 +63,8 @@ func (repo *GormRepository) SaveFileWithACL(name string, src io.Reader, size int
 		return nil, err
 	}
 
-	if read != nil {
-		read[creatorID] = true
+	if read != nil && creatorID.Valid {
+		read[creatorID.UUID] = true
 	}
 
 	eg, ctx := errgroup.WithContext(context.Background())
@@ -92,6 +93,7 @@ func (repo *GormRepository) SaveFileWithACL(name string, src io.Reader, size int
 		size, _ := repo.generateThumbnail(ctx, f, thumbSrc)
 		if !size.Empty() {
 			f.HasThumbnail = true
+			f.ThumbnailMime = null.StringFrom("image/png")
 			f.ThumbnailWidth = size.Size().X
 			f.ThumbnailHeight = size.Size().Y
 		}

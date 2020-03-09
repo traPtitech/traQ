@@ -127,10 +127,10 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	t.Parallel()
 	repo, server, _, require, session, _ := setup(t, common1)
 
-	file := mustMakeFile(t, repo, uuid.Nil)
+	file := mustMakeFile(t, repo)
 	grantedUser := mustMakeUser(t, repo, random)
 	secureContent := "secure"
-	secureFile, err := repo.SaveFileWithACL("secure", strings.NewReader(secureContent), int64(len(secureContent)), "text/plain", model.FileTypeUserFile, grantedUser.ID, repository.ACL{})
+	secureFile, err := repo.SaveFileWithACL("secure", strings.NewReader(secureContent), int64(len(secureContent)), "text/plain", model.FileTypeUserFile, uuid.NullUUID{Valid: true, UUID: grantedUser.ID}, repository.ACL{})
 	require.NoError(err)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -216,7 +216,7 @@ func TestHandlers_DeleteFileByID(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, adminSession := setup(t, common1)
 
-	file := mustMakeFile(t, repo, uuid.Nil)
+	file := mustMakeFile(t, repo)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -241,7 +241,7 @@ func TestHandlers_DeleteFileByID(t *testing.T) {
 	t.Run("Failure1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		file := mustMakeFile(t, repo, uuid.Nil)
+		file := mustMakeFile(t, repo)
 		e.DELETE("/api/1.0/files/{fileID}", file.ID).
 			WithCookie(sessions.CookieName, session).
 			Expect().
@@ -253,7 +253,7 @@ func TestHandlers_GetMetaDataByFileID(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _ := setup(t, common1)
 
-	file := mustMakeFile(t, repo, uuid.Nil)
+	file := mustMakeFile(t, repo)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -286,10 +286,10 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 	t.Parallel()
 	repo, server, _, require, session, _ := setup(t, common1)
 
-	file := mustMakeFile(t, repo, uuid.Nil)
+	file := mustMakeFile(t, repo)
 	grantedUser := mustMakeUser(t, repo, random)
 	secureContent := "secure"
-	secureFile, err := repo.SaveFileWithACL("secure", strings.NewReader(secureContent), int64(len(secureContent)), "text/plain", model.FileTypeUserFile, grantedUser.ID, repository.ACL{})
+	secureFile, err := repo.SaveFileWithACL("secure", strings.NewReader(secureContent), int64(len(secureContent)), "text/plain", model.FileTypeUserFile, uuid.NullUUID{Valid: true, UUID: grantedUser.ID}, repository.ACL{})
 	require.NoError(err)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
