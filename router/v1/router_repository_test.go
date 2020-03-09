@@ -1193,6 +1193,10 @@ func (repo *TestRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*mo
 	panic("implement me")
 }
 
+func (repo *TestRepository) GetDirectMessageChannelMapping(userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error) {
+	panic("implement me")
+}
+
 func (repo *TestRepository) IsChannelPresent(name string, parent uuid.UUID) (bool, error) {
 	repo.ChannelsLock.RLock()
 	defer repo.ChannelsLock.RUnlock()

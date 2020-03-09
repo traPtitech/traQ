@@ -1656,7 +1656,9 @@ paths:
           in: query
           name: include-suspended
           description: アカウントがアクティブでないユーザーを含めるかどうか
-      description: ユーザーのリストを取得します。
+      description: |-
+        ユーザーのリストを取得します。
+        `include-suspended`を指定しない場合、レスポンスに非アクティブユーザーは含まれません。
   /channels:
     post:
       summary: チャンネルを作成
@@ -1694,14 +1696,18 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                description: チャンネルの配列
-                items:
-                  $ref: '#/components/schemas/Channel'
+                $ref: '#/components/schemas/ChannelList'
       operationId: getChannels
       tags:
         - channel
       description: チャンネルのリストを取得します。
+      parameters:
+        - schema:
+            type: boolean
+            default: 'false'
+          in: query
+          name: include-dm
+          description: ダイレクトメッセージチャンネルをレスポンスに含めるかどうか
   '/users/{userId}/tags':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -5088,6 +5094,34 @@ components:
           description: 追加するユーザーのUUID
       required:
         - id
+    ChannelList:
+      title: ChannelList
+      type: object
+      description: GET /channelsレスポンス
+      properties:
+        public:
+          type: array
+          description: パブリックチャンネルの配列
+          items:
+            $ref: '#/components/schemas/Channel'
+        dm:
+          type: array
+          description: ダイレクトメッセージチャンネルの配列
+          items:
+            $ref: '#/components/schemas/DMChannel'
+    DMChannel:
+      title: DMChannel
+      type: object
+      description: ダイレクトメッセージチャンネル
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: チャンネルUUID
+        userId:
+          type: string
+          description: 送信先相手のUUID
+          format: uuid
   headers:
     X-TRAQ-MORE:
       schema:

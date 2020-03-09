@@ -17,12 +17,13 @@ import (
 
 // GetChannels GET /channels
 func (h *Handlers) GetChannels(c echo.Context) error {
+	res := echo.Map{}
+
 	channelList, err := h.Repo.GetChannelsByUserID(uuid.Nil)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-
-	res := make([]*Channel, 0, len(channelList))
+	channels := make([]*Channel, 0, len(channelList))
 	chMap := make(map[uuid.UUID]*Channel, len(channelList))
 	for _, ch := range channelList {
 		entry, ok := chMap[ch.ID]
@@ -51,7 +52,24 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 			parent.Children = append(parent.Children, ch.ID)
 		}
 
-		res = append(res, entry)
+		channels = append(channels, entry)
+	}
+	res["public"] = channels
+
+	if isTrue(c.QueryParam("include-dm")) {
+		type dmc struct {
+			ID     uuid.UUID `json:"id"`
+			UserID uuid.UUID `json:"userId"`
+		}
+		mapping, err := h.Repo.GetDirectMessageChannelMapping(getRequestUserID(c))
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+		dms := make([]*dmc, 0, len(mapping))
+		for cid, uid := range mapping {
+			dms = append(dms, &dmc{ID: cid, UserID: uid})
+		}
+		res["dm"] = dms
 	}
 
 	return c.JSON(http.StatusOK, res)

@@ -101,6 +101,11 @@ type ChannelRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.Channel, error)
+	// GetDirectMessageChannelMapping 引数に指定したユーザーのDMチャンネルのチャンネルUUID->ユーザーUUIDのマッピングを取得します
+	//
+	// 成功した場合、マッピングとnilを返します。
+	// DBによるエラーを返すことがあります。
+	GetDirectMessageChannelMapping(userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error)
 	// IsChannelAccessibleToUser 指定したチャンネルが指定したユーザーからアクセス可能かどうかを返します
 	//
 	// アクセス可能な場合、trueとnilを返します。

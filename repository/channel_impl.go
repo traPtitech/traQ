@@ -484,6 +484,28 @@ func (repo *GormRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*mo
 	return &channel, nil
 }
 
+// GetDirectMessageChannelMapping implements ChannelRepository interface.
+func (repo *GormRepository) GetDirectMessageChannelMapping(userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error) {
+	if userID == uuid.Nil {
+		return map[uuid.UUID]uuid.UUID{}, nil
+	}
+
+	var mappings []model.DMChannelMapping
+	if err := repo.db.Where("user1 = ? OR user2 = ?", userID, userID).Find(&mappings).Error; err != nil {
+		return nil, err
+	}
+
+	result := map[uuid.UUID]uuid.UUID{}
+	for _, ch := range mappings {
+		if ch.User1 != userID {
+			result[ch.ChannelID] = ch.User1
+		} else {
+			result[ch.ChannelID] = ch.User2
+		}
+	}
+	return result, nil
+}
+
 // IsChannelAccessibleToUser implements ChannelRepository interface.
 func (repo *GormRepository) IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
