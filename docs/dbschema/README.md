@@ -13,7 +13,7 @@
 | [channels](channels.md) | 12 | チャンネルテーブル | BASE TABLE |
 | [devices](devices.md) | 3 | FCMデバイステーブル | BASE TABLE |
 | [dm_channel_mappings](dm_channel_mappings.md) | 3 | DMチャンネルマッピングテーブル | BASE TABLE |
-| [files](files.md) | 12 | ファイルテーブル | BASE TABLE |
+| [files](files.md) | 14 | ファイルテーブル | BASE TABLE |
 | [files_acl](files_acl.md) | 3 | ファイルアクセスコントロールリストテーブル | BASE TABLE |
 | [message_reports](message_reports.md) | 6 | メッセージ通報テーブル | BASE TABLE |
 | [messages](messages.md) | 7 | メッセージテーブル | BASE TABLE |
