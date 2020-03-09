@@ -9,51 +9,53 @@ import (
 )
 
 // v7 ファイルメタ拡張
-var v7 = &gormigrate.Migration{
-	ID: "7",
-	Migrate: func(db *gorm.DB) error {
-		if err := db.Table(v7File{}.TableName()).ModifyColumn("creator_id", "char(36)").Error; err != nil {
-			return err
-		}
-
-		if err := db.AutoMigrate(&v7File{}).Error; err != nil {
-			return err
-		}
-
-		// サムネイル画像があるファイルのthumbnail_mimeを全てimage/pngに
-		if err := db.Table(v7File{}.TableName()).Where("has_thumbnail = true").Update("thumbnail_mime", "image/png").Error; err != nil {
-			return err
-		}
-
-		// uuid.Nilのcreator_idを全てnullに
-		if err := db.Table(v7File{}.TableName()).Where("creator_id = '00000000-0000-0000-0000-000000000000'").Update("creator_id", nil).Error; err != nil {
-			return err
-		}
-
-		// 複合インデックス
-		indexes := [][]string{
-			{"idx_files_channel_id_created_at", "files", "channel_id", "created_at"},
-		}
-		for _, c := range indexes {
-			if err := db.Table(c[1]).AddIndex(c[0], c[2:]...).Error; err != nil {
+func v7() *gormigrate.Migration {
+	return &gormigrate.Migration{
+		ID: "7",
+		Migrate: func(db *gorm.DB) error {
+			if err := db.Table(v7File{}.TableName()).ModifyColumn("creator_id", "char(36)").Error; err != nil {
 				return err
 			}
-		}
 
-		// 外部キー制約
-		foreignKeys := [][5]string{
-			{"files", "channel_id", "channels(id)", "SET NULL", "CASCADE"},
-			{"files", "creator_id", "users(id)", "RESTRICT", "CASCADE"},
-			{"files_acl", "file_id", "files(id)", "CASCADE", "CASCADE"},
-		}
-		for _, c := range foreignKeys {
-			if err := db.Table(c[0]).AddForeignKey(c[1], c[2], c[3], c[4]).Error; err != nil {
+			if err := db.AutoMigrate(&v7File{}).Error; err != nil {
 				return err
 			}
-		}
 
-		return nil
-	},
+			// サムネイル画像があるファイルのthumbnail_mimeを全てimage/pngに
+			if err := db.Table(v7File{}.TableName()).Where("has_thumbnail = true").Update("thumbnail_mime", "image/png").Error; err != nil {
+				return err
+			}
+
+			// uuid.Nilのcreator_idを全てnullに
+			if err := db.Table(v7File{}.TableName()).Where("creator_id = '00000000-0000-0000-0000-000000000000'").Update("creator_id", nil).Error; err != nil {
+				return err
+			}
+
+			// 複合インデックス
+			indexes := [][]string{
+				{"idx_files_channel_id_created_at", "files", "channel_id", "created_at"},
+			}
+			for _, c := range indexes {
+				if err := db.Table(c[1]).AddIndex(c[0], c[2:]...).Error; err != nil {
+					return err
+				}
+			}
+
+			// 外部キー制約
+			foreignKeys := [][5]string{
+				{"files", "channel_id", "channels(id)", "SET NULL", "CASCADE"},
+				{"files", "creator_id", "users(id)", "RESTRICT", "CASCADE"},
+				{"files_acl", "file_id", "files(id)", "CASCADE", "CASCADE"},
+			}
+			for _, c := range foreignKeys {
+				if err := db.Table(c[0]).AddForeignKey(c[1], c[2], c[3], c[4]).Error; err != nil {
+					return err
+				}
+			}
+
+			return nil
+		},
+	}
 }
 
 type v7File struct {
