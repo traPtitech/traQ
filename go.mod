@@ -1,7 +1,7 @@
 module github.com/traPtitech/traQ
 
 require (
-	cloud.google.com/go v0.53.0
+	cloud.google.com/go v0.54.0
 	cloud.google.com/go/firestore v1.1.1 // indirect
 	firebase.google.com/go v3.12.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
@@ -28,7 +28,7 @@ require (
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/ncw/swift v1.0.50
 	github.com/pelletier/go-toml v1.6.0 // indirect
-	github.com/prometheus/client_golang v1.4.1
+	github.com/prometheus/client_golang v1.5.0
 	github.com/skip2/go-qrcode v0.0.0-20190110000554-dc11ecdae0a9
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
@@ -39,16 +39,15 @@ require (
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.14.0
 	golang.org/x/crypto v0.0.0-20200128174031-69ecbb4d6d5d
-	golang.org/x/exp v0.0.0-20200207192155-f17229e696bd
+	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/tools v0.0.0-20200221224223-e1da425f72fd // indirect
-	google.golang.org/api v0.17.0
+	golang.org/x/tools v0.0.0-20200308013534-11ec41452d41 // indirect
+	google.golang.org/api v0.20.0
 	gopkg.in/go-playground/webhooks.v5 v5.13.0
 	gopkg.in/gormigrate.v1 v1.6.0
 	gopkg.in/guregu/null.v3 v3.4.0
 	gopkg.in/ini.v1 v1.51.1 // indirect
 	gopkg.in/yaml.v2 v2.2.8
-	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
 )
 
 replace github.com/blendle/zapdriver v1.3.1 => github.com/wtks/zapdriver v1.3.1-patch.0
