@@ -42,7 +42,7 @@ require (
 	golang.org/x/exp v0.0.0-20200207192155-f17229e696bd
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/tools v0.0.0-20200221224223-e1da425f72fd // indirect
-	google.golang.org/api v0.17.0
+	google.golang.org/api v0.20.0
 	gopkg.in/go-playground/webhooks.v5 v5.13.0
 	gopkg.in/gormigrate.v1 v1.6.0
 	gopkg.in/guregu/null.v3 v3.4.0
