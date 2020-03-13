@@ -96,11 +96,13 @@ const (
 	// MessagePinned メッセージがピンされた
 	// 	Fields:
 	// 		message_id: uuid.UUID
+	// 		channel_id: uuid.UUID
 	// 		pin_id: uuid.UUID
 	MessagePinned = "message.pinned"
 	// MessageUnpinned メッセージがピンから外れた
 	// 	Fields:
 	// 		message_id: uuid.UUID
+	// 		channel_id: uuid.UUID
 	// 		pin_id: uuid.UUID
 	MessageUnpinned = "message.unpinned"
 

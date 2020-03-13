@@ -228,19 +228,23 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func messagePinnedHandler(ns *Service, ev hub.Message) {
-	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
+	channelViewerMulticast(ns, ev.Fields["channel_id"].(uuid.UUID), &sse.EventData{
 		EventType: "MESSAGE_PINNED",
 		Payload: map[string]interface{}{
-			"id": ev.Fields["pin_id"].(uuid.UUID),
+			"id":         ev.Fields["pin_id"].(uuid.UUID),
+			"message_id": ev.Fields["message_id"].(uuid.UUID),
+			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
 		},
 	})
 }
 
 func messageUnpinnedHandler(ns *Service, ev hub.Message) {
-	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
+	channelViewerMulticast(ns, ev.Fields["channel_id"].(uuid.UUID), &sse.EventData{
 		EventType: "MESSAGE_UNPINNED",
 		Payload: map[string]interface{}{
-			"id": ev.Fields["pin_id"].(uuid.UUID),
+			"id":         ev.Fields["pin_id"].(uuid.UUID),
+			"message_id": ev.Fields["message_id"].(uuid.UUID),
+			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
 		},
 	})
 }

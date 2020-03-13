@@ -190,7 +190,8 @@ FCMはFirebaseCloudMessagingで通知される情報を表す。記載されて�
 ### SSE
 対象: 投稿チャンネルにハートビートを送信しているユーザー
 
-+ `id`: 作成されたピンID
++ `message_id`: ピンされたメッセージのID
++ `channel_id`: ピンされたメッセージのチャンネルID
 
 ## MESSAGE_UNPINNED
 ピン留めされたメッセージのピンが外された。
@@ -198,7 +199,8 @@ FCMはFirebaseCloudMessagingで通知される情報を表す。記載されて�
 ### SSE
 対象: 投稿チャンネルにハートビートを送信しているユーザー
 
-+ `id`: 外されたピンID
++ `message_id`: ピンが外されたメッセージのID
++ `channel_id`: ピンが外されたメッセージのチャンネルID
 
 ## STAMP_CREATED
 スタンプが新しく追加された。
