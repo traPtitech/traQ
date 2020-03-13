@@ -1107,6 +1107,10 @@ paths:
                 items:
                   type: string
                   format: uuid
+        '403':
+          description: |-
+            Forbidden
+            プライベートチャンネル・強制通知チャンネルの設定は取得できません。
         '404':
           description: |-
             Not Found
@@ -1116,15 +1120,10 @@ paths:
     patch:
       summary: チャンネルの通知購読者を編集
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                description: 変更後の購読者UUIDの配列
-                items:
-                  type: string
+        '204':
+          description: |-
+            No Content
+            変更できました。
         '400':
           description: Bad Request
         '403':
@@ -3941,11 +3940,16 @@ components:
             format: uuid
     PutChannelSubscribersRequest:
       title: PutChannelSubscribersRequest
-      type: array
+      type: object
       description: 通知をオンにするユーザーのUUID配列
-      items:
-        type: string
-        format: uuid
+      properties:
+        'on':
+          type: array
+          format: uuid
+          description: 通知をオンにするユーザーのUUID配列
+          items:
+            type: string
+            format: uuid
     UserSubscribeState:
       title: UserSubscribeState
       type: object

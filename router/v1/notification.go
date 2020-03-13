@@ -57,6 +57,7 @@ func (h *Handlers) PutChannelSubscribers(c echo.Context) error {
 	args := repository.ChangeChannelSubscriptionArgs{
 		UpdaterID:    getRequestUserID(c),
 		Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{},
+		KeepOffLevel: true,
 	}
 
 	for _, id := range req.On.Array() {
