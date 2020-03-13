@@ -40,18 +40,16 @@ var handlerMap = map[string]eventHandler{
 	event.UserIconUpdated:        userIconUpdatedHandler,
 	event.UserOnline:             userOnlineHandler,
 	event.UserOffline:            userOfflineHandler,
-	event.UserTagAdded:           userTagAddedHandler,
-	event.UserTagRemoved:         userTagRemovedHandler,
+	event.UserTagAdded:           userTagUpdatedHandler,
+	event.UserTagRemoved:         userTagUpdatedHandler,
 	event.UserTagUpdated:         userTagUpdatedHandler,
 	event.UserGroupCreated:       userGroupCreatedHandler,
 	event.UserGroupDeleted:       userGroupDeletedHandler,
-	event.UserGroupMemberAdded:   userGroupMemberAddedHandler,
-	event.UserGroupMemberRemoved: userGroupMemberRemovedHandler,
+	event.UserGroupMemberAdded:   userGroupUpdatedHandler,
+	event.UserGroupMemberRemoved: userGroupUpdatedHandler,
 	event.StampCreated:           stampCreatedHandler,
 	event.StampUpdated:           stampUpdatedHandler,
 	event.StampDeleted:           stampDeletedHandler,
-	event.FavoriteStampAdded:     favoriteStampAddedHandler,
-	event.FavoriteStampRemoved:   favoriteStampRemovedHandler,
 	event.UserWebRTCStateChanged: userWebRTCStateChangedHandler,
 }
 
@@ -230,19 +228,23 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func messagePinnedHandler(ns *Service, ev hub.Message) {
-	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
+	channelViewerMulticast(ns, ev.Fields["channel_id"].(uuid.UUID), &sse.EventData{
 		EventType: "MESSAGE_PINNED",
 		Payload: map[string]interface{}{
-			"id": ev.Fields["pin_id"].(uuid.UUID),
+			"id":         ev.Fields["pin_id"].(uuid.UUID),
+			"message_id": ev.Fields["message_id"].(uuid.UUID),
+			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
 		},
 	})
 }
 
 func messageUnpinnedHandler(ns *Service, ev hub.Message) {
-	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
+	channelViewerMulticast(ns, ev.Fields["channel_id"].(uuid.UUID), &sse.EventData{
 		EventType: "MESSAGE_UNPINNED",
 		Payload: map[string]interface{}{
-			"id": ev.Fields["pin_id"].(uuid.UUID),
+			"id":         ev.Fields["pin_id"].(uuid.UUID),
+			"message_id": ev.Fields["message_id"].(uuid.UUID),
+			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
 		},
 	})
 }
@@ -381,25 +383,7 @@ func userOfflineHandler(ns *Service, ev hub.Message) {
 	})
 }
 
-func userTagAddedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
-		EventType: "USER_TAGS_UPDATED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
-		},
-	})
-}
-
 func userTagUpdatedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
-		EventType: "USER_TAGS_UPDATED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
-		},
-	})
-}
-
-func userTagRemovedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns, &sse.EventData{
 		EventType: "USER_TAGS_UPDATED",
 		Payload: map[string]interface{}{
@@ -417,31 +401,20 @@ func userGroupCreatedHandler(ns *Service, ev hub.Message) {
 	})
 }
 
-func userGroupDeletedHandler(ns *Service, ev hub.Message) {
+func userGroupUpdatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns, &sse.EventData{
-		EventType: "USER_GROUP_DELETED",
+		EventType: "USER_GROUP_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["group_id"].(uuid.UUID),
 		},
 	})
 }
 
-func userGroupMemberAddedHandler(ns *Service, ev hub.Message) {
+func userGroupDeletedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns, &sse.EventData{
-		EventType: "USER_GROUP_MEMBER_ADDED",
+		EventType: "USER_GROUP_DELETED",
 		Payload: map[string]interface{}{
-			"id":      ev.Fields["group_id"].(uuid.UUID),
-			"user_id": ev.Fields["user_id"].(uuid.UUID),
-		},
-	})
-}
-
-func userGroupMemberRemovedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
-		EventType: "USER_GROUP_MEMBER_REMOVED",
-		Payload: map[string]interface{}{
-			"id":      ev.Fields["group_id"].(uuid.UUID),
-			"user_id": ev.Fields["user_id"].(uuid.UUID),
+			"id": ev.Fields["group_id"].(uuid.UUID),
 		},
 	})
 }
@@ -457,7 +430,7 @@ func stampCreatedHandler(ns *Service, ev hub.Message) {
 
 func stampUpdatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns, &sse.EventData{
-		EventType: "STAMP_MODIFIED",
+		EventType: "STAMP_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_id"].(uuid.UUID),
 		},
@@ -467,24 +440,6 @@ func stampUpdatedHandler(ns *Service, ev hub.Message) {
 func stampDeletedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns, &sse.EventData{
 		EventType: "STAMP_DELETED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["stamp_id"].(uuid.UUID),
-		},
-	})
-}
-
-func favoriteStampAddedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
-		EventType: "FAVORITE_STAMP_ADDED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["stamp_id"].(uuid.UUID),
-		},
-	})
-}
-
-func favoriteStampRemovedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
-		EventType: "FAVORITE_STAMP_REMOVED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_id"].(uuid.UUID),
 		},

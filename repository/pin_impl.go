@@ -43,6 +43,7 @@ func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (*model.Pin, 
 			Name: event.MessagePinned,
 			Fields: hub.Fields{
 				"message_id": messageID,
+				"channel_id": m.ChannelID,
 				"pin_id":     p.ID,
 			},
 		})
@@ -97,6 +98,7 @@ func (repo *GormRepository) DeletePin(pinID, userID uuid.UUID) error {
 			Name: event.MessageUnpinned,
 			Fields: hub.Fields{
 				"pin_id":     pinID,
+				"channel_id": pin.Message.ChannelID,
 				"message_id": pin.MessageID,
 			},
 		})

@@ -96,11 +96,13 @@ const (
 	// MessagePinned メッセージがピンされた
 	// 	Fields:
 	// 		message_id: uuid.UUID
+	// 		channel_id: uuid.UUID
 	// 		pin_id: uuid.UUID
 	MessagePinned = "message.pinned"
 	// MessageUnpinned メッセージがピンから外れた
 	// 	Fields:
 	// 		message_id: uuid.UUID
+	// 		channel_id: uuid.UUID
 	// 		pin_id: uuid.UUID
 	MessageUnpinned = "message.unpinned"
 
@@ -160,16 +162,6 @@ const (
 	// 	Fields:
 	// 		stamp_id: uuid.UUID
 	StampDeleted = "stamp.deleted"
-	// FavoriteStampAdded スタンプがお気に入り登録された
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		stamp_id: uuid.UUID
-	FavoriteStampAdded = "favorite_stamp.added"
-	// FavoriteStampRemoved スタンプのお気に入りが解除された
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		stamp_id: uuid.UUID
-	FavoriteStampRemoved = "favorite_stamp.removed"
 
 	// WebhookCreated Webhookが作成された
 	// 	Fields:
