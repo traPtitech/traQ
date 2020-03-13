@@ -4361,6 +4361,11 @@ components:
           type: string
           description: クライアント開発者UUID
           format: uuid
+        scopes:
+          type: array
+          description: 要求スコープの配列
+          items:
+            $ref: '#/components/schemas/OAuth2Scope'
     PatchClientRequest:
       title: PatchClientRequest
       type: object

@@ -251,7 +251,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiClients.POST("", NotImplemented, requires(permission.CreateClient))
 			apiClientsCID := apiClients.Group("/:clientID", retrieve.ClientID())
 			{
-				apiClientsCID.GET("", NotImplemented, requires(permission.GetClients))
+				apiClientsCID.GET("", h.GetClient, requires(permission.GetClients))
 				apiClientsCID.PATCH("", NotImplemented, requiresClientAccessPerm, requires(permission.EditMyClient))
 				apiClientsCID.DELETE("", h.DeleteClient, requiresClientAccessPerm, requires(permission.DeleteMyClient))
 			}
