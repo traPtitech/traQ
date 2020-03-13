@@ -430,7 +430,7 @@ func stampCreatedHandler(ns *Service, ev hub.Message) {
 
 func stampUpdatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns, &sse.EventData{
-		EventType: "STAMP_MODIFIED",
+		EventType: "STAMP_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_id"].(uuid.UUID),
 		},
