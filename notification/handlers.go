@@ -40,8 +40,8 @@ var handlerMap = map[string]eventHandler{
 	event.UserIconUpdated:        userIconUpdatedHandler,
 	event.UserOnline:             userOnlineHandler,
 	event.UserOffline:            userOfflineHandler,
-	event.UserTagAdded:           userTagAddedHandler,
-	event.UserTagRemoved:         userTagRemovedHandler,
+	event.UserTagAdded:           userTagUpdatedHandler,
+	event.UserTagRemoved:         userTagUpdatedHandler,
 	event.UserTagUpdated:         userTagUpdatedHandler,
 	event.UserGroupCreated:       userGroupCreatedHandler,
 	event.UserGroupDeleted:       userGroupDeletedHandler,
@@ -383,25 +383,7 @@ func userOfflineHandler(ns *Service, ev hub.Message) {
 	})
 }
 
-func userTagAddedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
-		EventType: "USER_TAGS_UPDATED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
-		},
-	})
-}
-
 func userTagUpdatedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
-		EventType: "USER_TAGS_UPDATED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["user_id"].(uuid.UUID),
-		},
-	})
-}
-
-func userTagRemovedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns, &sse.EventData{
 		EventType: "USER_TAGS_UPDATED",
 		Payload: map[string]interface{}{
