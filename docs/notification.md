@@ -112,14 +112,6 @@ FCMはFirebaseCloudMessagingで通知される情報を表す。記載されて�
 
 + `id`: スターしたチャンネルのId
 
-## CHANNEL_VISIBILITY_CHANGED
-チャンネルの可視状態が変更された。
-
-### SSE
-対象: 全員
-
-TODO
-
 ## MESSAGE_CREATED
 メッセージが投稿された。
 
