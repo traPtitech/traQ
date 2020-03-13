@@ -98,3 +98,14 @@ func (set UUIDSet) Plus(sets ...UUIDSet) {
 		}
 	}
 }
+
+// UnionUUIDSets 集合の和集合を返します
+func UnionUUIDSets(sets ...UUIDSet) UUIDSet {
+	result := UUIDSet{}
+	for _, s := range sets {
+		for k := range s {
+			result[k] = struct{}{}
+		}
+	}
+	return result
+}

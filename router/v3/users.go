@@ -3,6 +3,7 @@ package v3
 import (
 	"github.com/dgrijalva/jwt-go"
 	vd "github.com/go-ozzo/ozzo-validation"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/skip2/go-qrcode"
 	"github.com/traPtitech/traQ/model"
@@ -337,5 +338,66 @@ func (h *Handlers) EditUser(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
+	return c.NoContent(http.StatusNoContent)
+}
+
+// GetMyChannelSubscriptions GET /users/me/subscriptions
+func (h *Handlers) GetMyChannelSubscriptions(c echo.Context) error {
+	subscriptions, err := h.Repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetUser(getRequestUserID(c)))
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	type response struct {
+		ChannelID uuid.UUID `json:"channelId"`
+		Level     int       `json:"level"`
+	}
+	result := make([]response, len(subscriptions))
+	for i, subscription := range subscriptions {
+		result[i] = response{ChannelID: subscription.ChannelID, Level: subscription.GetLevel().Int()}
+	}
+
+	return c.JSON(http.StatusOK, result)
+}
+
+// PutChannelSubscribeLevelRequest PUT /users/me/subscriptions/:channelID リクエストボディ
+type PutChannelSubscribeLevelRequest struct {
+	Level null.Int `json:"level"`
+}
+
+func (r PutChannelSubscribeLevelRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Level, vd.Required, vd.Min(0), vd.Max(2)),
+	)
+}
+
+// SetChannelSubscribeLevel PUT /users/me/subscriptions/:channelID
+func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
+	channelID := getParamAsUUID(c, consts.ParamChannelID)
+
+	var req PutChannelSubscribeLevelRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	ch, err := h.Repo.GetChannel(channelID)
+	if err != nil {
+		if err == repository.ErrNotFound {
+			return herror.NotFound()
+		}
+		return herror.InternalServerError(err)
+	}
+
+	if ch.IsForced || !ch.IsPublic {
+		return herror.Forbidden()
+	}
+
+	args := repository.ChangeChannelSubscriptionArgs{
+		UpdaterID:    getRequestUserID(c),
+		Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{getRequestUserID(c): model.ChannelSubscribeLevel(req.Level.Int64)},
+	}
+	if err := h.Repo.ChangeChannelSubscription(ch.ID, args); err != nil {
+		return herror.InternalServerError(err)
+	}
 	return c.NoContent(http.StatusNoContent)
 }

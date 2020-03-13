@@ -8,29 +8,31 @@ import (
 )
 
 // v6 ユーザーグループ拡張
-var v6 = &gormigrate.Migration{
-	ID: "6",
-	Migrate: func(db *gorm.DB) error {
-		if err := db.AutoMigrate(&v6UserGroupMember{}, &v6UserGroupAdmin{}).Error; err != nil {
-			return err
-		}
-
-		var oldGroups []v6OldUserGroup
-		if err := db.Find(&oldGroups).Error; err != nil {
-			return err
-		}
-		for _, g := range oldGroups {
-			if err := db.Create(&v6UserGroupAdmin{GroupID: g.ID, UserID: g.AdminUserID}).Error; err != nil {
+func v6() *gormigrate.Migration {
+	return &gormigrate.Migration{
+		ID: "6",
+		Migrate: func(db *gorm.DB) error {
+			if err := db.AutoMigrate(&v6UserGroupMember{}, &v6UserGroupAdmin{}).Error; err != nil {
 				return err
 			}
-		}
 
-		if err := db.Table(v6OldUserGroup{}.TableName()).DropColumn("admin_user_id").Error; err != nil {
-			return err
-		}
+			var oldGroups []v6OldUserGroup
+			if err := db.Find(&oldGroups).Error; err != nil {
+				return err
+			}
+			for _, g := range oldGroups {
+				if err := db.Create(&v6UserGroupAdmin{GroupID: g.ID, UserID: g.AdminUserID}).Error; err != nil {
+					return err
+				}
+			}
 
-		return nil
-	},
+			if err := db.Table(v6OldUserGroup{}.TableName()).DropColumn("admin_user_id").Error; err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
 }
 
 type v6OldUserGroup struct {

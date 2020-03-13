@@ -4,6 +4,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sessions"
 	"net/http"
 	"testing"
@@ -38,8 +40,13 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		users, err := repo.GetSubscribingUserIDs(channel.ID)
+		subscriptions, err := repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(channel.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 		require.NoError(t, err)
+		users := make([]uuid.UUID, 0)
+		for _, subscription := range subscriptions {
+			users = append(users, subscription.UserID)
+		}
+
 		assert.EqualValues(t, []uuid.UUID{user.ID}, users)
 	})
 
@@ -55,8 +62,13 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		users, err := repo.GetSubscribingUserIDs(channel.ID)
+		subscriptions, err := repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(channel.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 		require.NoError(t, err)
+		users := make([]uuid.UUID, 0)
+		for _, subscription := range subscriptions {
+			users = append(users, subscription.UserID)
+		}
+
 		assert.EqualValues(t, []uuid.UUID{user.ID}, users)
 	})
 
@@ -64,7 +76,7 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 		t.Parallel()
 
 		channel := mustMakeChannel(t, repo, random)
-		mustChangeChannelSubscription(t, repo, channel.ID, user.ID, true)
+		mustChangeChannelSubscription(t, repo, channel.ID, user.ID)
 
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
@@ -73,9 +85,9 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		users, err := repo.GetSubscribingUserIDs(channel.ID)
+		subscriptions, err := repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(channel.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 		require.NoError(t, err)
-		assert.Len(t, users, 0)
+		assert.Len(t, subscriptions, 0)
 	})
 }
 
@@ -86,7 +98,7 @@ func TestHandlers_GetNotificationStatus(t *testing.T) {
 	channel := mustMakeChannel(t, repo, random)
 	user := mustMakeUser(t, repo, random)
 
-	mustChangeChannelSubscription(t, repo, channel.ID, user.ID, true)
+	mustChangeChannelSubscription(t, repo, channel.ID, user.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -115,8 +127,8 @@ func TestHandlers_GetNotificationChannels(t *testing.T) {
 	repo, server, _, _, session, _ := setup(t, common2)
 
 	user := mustMakeUser(t, repo, random)
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID, true)
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID, true)
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID)
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -144,8 +156,8 @@ func TestHandlers_GetMyNotificationChannels(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common2)
 
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID, true)
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID, true)
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID)
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()

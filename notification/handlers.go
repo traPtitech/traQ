@@ -74,12 +74,9 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", m.UserID)) // 失敗
 		return
 	}
-	if len(mUser.DisplayName) == 0 {
-		mUser.DisplayName = mUser.Name
-	}
 
 	fcmPayload := &fcm.Payload{
-		Icon: fmt.Sprintf("%s/api/1.0/public/icon/%s", ns.origin, strings.ReplaceAll(mUser.Name, "#", "%23")),
+		Icon: fmt.Sprintf("%s/api/v3/public/icon/%s", ns.origin, strings.ReplaceAll(mUser.Name, "#", "%23")),
 		Tag:  "c:" + m.ChannelID.String(),
 	}
 	ssePayload := &sse.EventData{
@@ -88,14 +85,15 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 			"id": m.ID,
 		},
 	}
-	viewers := set.UUIDSet{}
-	connector := set.UUIDSet{}
-	subscribers := set.UUIDSet{}
-	noticeable := set.UUIDSet{}
+
+	viewers := set.UUIDSet{}       // バックグラウンドを含む対象チャンネル閲覧中のユーザー
+	notifiedUsers := set.UUIDSet{} // チャンネル通知購読ユーザー
+	markedUsers := set.UUIDSet{}   // チャンネル未読管理ユーザー
+	noticeable := set.UUIDSet{}    // noticeableな未読追加対象のユーザー
 
 	// メッセージボディ作成
 	if ch.IsDMChannel() {
-		fcmPayload.Title = "@" + mUser.DisplayName
+		fcmPayload.Title = "@" + mUser.GetResponseDisplayName()
 		fcmPayload.Path = "/users/" + mUser.Name
 		fcmPayload.SetBodyWithEllipsis(plain)
 	} else {
@@ -106,20 +104,19 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		}
 		fcmPayload.Title = "#" + path
 		fcmPayload.Path = "/channels/" + path
-		fcmPayload.SetBodyWithEllipsis(mUser.DisplayName + ": " + plain)
+		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + plain)
 	}
 
 	for _, v := range embedded {
 		if v.Type == "file" {
 			if f, _ := ns.repo.GetFileMeta(uuid.FromStringOrNil(v.ID)); f != nil && f.HasThumbnail {
-				fcmPayload.Image = fmt.Sprintf("%s/api/1.0/files/%s/thumbnail", ns.origin, v.ID)
+				fcmPayload.Image = fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, v.ID)
 				break
 			}
 		}
 	}
 
 	// 対象者計算
-	targets := set.UUIDSet{}
 	q := repository.UsersQuery{}.Active().NotBot()
 	switch {
 	case ch.IsForced: // 強制通知チャンネル
@@ -128,8 +125,8 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 			logger.Error("failed to GetUsers", zap.Error(err)) // 失敗
 			return
 		}
-		targets.Add(users...)
-		subscribers.Add(users...)
+		notifiedUsers.Add(users...)
+		markedUsers.Add(users...)
 		noticeable.Add(users...)
 
 	case !ch.IsPublic: // プライベートチャンネル
@@ -138,17 +135,25 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 			logger.Error("failed to GetPrivateChannelMemberIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
 		}
-		targets.Add(users...)
-		subscribers.Add(users...)
+		notifiedUsers.Add(users...)
+		markedUsers.Add(users...)
 
 	default: // 通常チャンネルメッセージ
-		users, err := ns.repo.GetUserIDs(q.SubscriberOf(ch.ID))
+		// チャンネル通知購読者取得
+		notify, err := ns.repo.GetUserIDs(q.SubscriberAtNotifyLevelOf(ch.ID))
 		if err != nil {
-			logger.Error("failed to GetSubscribingUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
+			logger.Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
 		}
-		targets.Add(users...)
-		subscribers.Add(users...)
+		notifiedUsers.Add(notify...)
+
+		// チャンネル未読管理購読者取得
+		mark, err := ns.repo.GetUserIDs(q.SubscriberAtMarkLevelOf(ch.ID))
+		if err != nil {
+			logger.Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
+			return
+		}
+		markedUsers.Add(mark...)
 
 		// ユーザーグループ・メンションユーザー取得
 		for _, v := range embedded {
@@ -157,8 +162,8 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 				if uid, err := uuid.FromString(v.ID); err == nil {
 					// TODO 凍結ユーザーの除外
 					// MEMO 凍結ユーザーはクライアント側で置換されないのでこのままでも問題はない
-					targets.Add(uid)
-					subscribers.Add(uid)
+					notifiedUsers.Add(uid)
+					markedUsers.Add(uid)
 					noticeable.Add(uid)
 				}
 			case "group":
@@ -167,8 +172,8 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 					logger.Error("failed to GetUserGroupMemberIDs", zap.Error(err), zap.String("groupId", v.ID)) // 失敗
 					return
 				}
-				targets.Add(gs...)
-				subscribers.Add(gs...)
+				notifiedUsers.Add(gs...)
+				markedUsers.Add(gs...)
 				noticeable.Add(gs...)
 			}
 		}
@@ -176,36 +181,33 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	// チャンネル閲覧者取得
 	for uid, swt := range ns.realtime.ViewerManager.GetChannelViewers(m.ChannelID) {
-		connector.Add(uid)
+		viewers.Add(uid)
 		if swt.State > viewer.StateNone {
-			viewers.Add(uid)
+			markedUsers.Remove(uid) // 閲覧中ユーザーは未読管理から外す
 		}
 	}
 
-	targets.Remove(m.UserID) // 自分を除外
+	// 未読追加
+	markedUsers.Remove(m.UserID)
+	for id := range markedUsers {
+		err := ns.repo.SetMessageUnread(id, m.ID, noticeable.Contains(id))
+		if err != nil {
+			logger.Error("failed to SetMessageUnread", zap.Error(err), zap.Stringer("user_id", id)) // 失敗
+		}
+	}
 
 	// SSE送信
-	for id := range subscribers {
-		if !(id == m.UserID || viewers.Contains(id)) {
-			err := ns.repo.SetMessageUnread(id, m.ID, noticeable.Contains(id))
-			if err != nil {
-				logger.Error("failed to SetMessageUnread", zap.Error(err), zap.Stringer("user_id", id)) // 失敗
-			}
-		}
+	for id := range set.UnionUUIDSets(notifiedUsers, viewers) {
 		go ns.sse.Multicast(id, ssePayload)
-	}
-	for id := range connector {
-		if !subscribers.Contains(id) {
-			go ns.sse.Multicast(id, ssePayload)
-		}
 	}
 
 	// WS送信
-	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetUserSets(subscribers, connector))
+	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetUserSets(notifiedUsers, viewers))
 
 	// FCM送信
 	if ns.fcm != nil {
-		ns.fcm.Send(targets, fcmPayload)
+		notifiedUsers.Remove(m.UserID)
+		ns.fcm.Send(notifiedUsers, fcmPayload)
 	}
 }
 

@@ -9,37 +9,39 @@ import (
 )
 
 // v2 RBAC周りのリフォーム
-var v2 = &gormigrate.Migration{
-	ID: "2",
-	Migrate: func(db *gorm.DB) error {
-		if err := db.AutoMigrate(&v2UserRole{}, &v2RoleInheritance{}, &v2RolePermission{}).Error; err != nil {
-			return err
-		}
-
-		foreignKeys := [][5]string{
-			{"user_role_inheritances", "role", "user_roles(name)", "CASCADE", "CASCADE"},
-			{"user_role_inheritances", "sub_role", "user_roles(name)", "CASCADE", "CASCADE"},
-			{"user_role_permissions", "role", "user_roles(name)", "CASCADE", "CASCADE"},
-		}
-		for _, c := range foreignKeys {
-			if err := db.Table(c[0]).AddForeignKey(c[1], c[2], c[3], c[4]).Error; err != nil {
+func v2() *gormigrate.Migration {
+	return &gormigrate.Migration{
+		ID: "2",
+		Migrate: func(db *gorm.DB) error {
+			if err := db.AutoMigrate(&v2UserRole{}, &v2RoleInheritance{}, &v2RolePermission{}).Error; err != nil {
 				return err
 			}
-		}
 
-		for _, v := range role.SystemRoles() {
-			if err := db.Create(v).Error; err != nil {
-				return err
+			foreignKeys := [][5]string{
+				{"user_role_inheritances", "role", "user_roles(name)", "CASCADE", "CASCADE"},
+				{"user_role_inheritances", "sub_role", "user_roles(name)", "CASCADE", "CASCADE"},
+				{"user_role_permissions", "role", "user_roles(name)", "CASCADE", "CASCADE"},
 			}
-			for _, v := range v.Permissions {
-				if err := db.Create(v).Error; err != nil {
+			for _, c := range foreignKeys {
+				if err := db.Table(c[0]).AddForeignKey(c[1], c[2], c[3], c[4]).Error; err != nil {
 					return err
 				}
 			}
-		}
 
-		return db.DropTableIfExists(&v2Override{}).Error
-	},
+			for _, v := range role.SystemRoles() {
+				if err := db.Create(v).Error; err != nil {
+					return err
+				}
+				for _, v := range v.Permissions {
+					if err := db.Create(v).Error; err != nil {
+						return err
+					}
+				}
+			}
+
+			return db.DropTableIfExists(&v2Override{}).Error
+		},
+	}
 }
 
 type v2UserRole struct {

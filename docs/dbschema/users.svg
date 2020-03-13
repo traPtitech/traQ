@@ -419,24 +419,30 @@
 <!-- users_subscribe_channels -->
 <g id="node12" class="node">
 <title>users_subscribe_channels</title>
-<polygon fill="#efefef" stroke="transparent" points="2899,-1412.5 2899,-1447.5 3223,-1447.5 3223,-1412.5 2899,-1412.5"/>
-<polygon fill="none" stroke="#000000" points="2899,-1412.5 2899,-1447.5 3223,-1447.5 3223,-1412.5 2899,-1412.5"/>
-<text text-anchor="start" x="2905.8464" y="-1425.3" font-family="Arial Bold" font-size="18.00" fill="#000000">users_subscribe_channels</text>
-<text text-anchor="start" x="3118.8998" y="-1425.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
-<text text-anchor="start" x="3122.7904" y="-1425.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="#efefef" stroke="transparent" points="2899,-1442.5 2899,-1477.5 3223,-1477.5 3223,-1442.5 2899,-1442.5"/>
+<polygon fill="none" stroke="#000000" points="2899,-1442.5 2899,-1477.5 3223,-1477.5 3223,-1442.5 2899,-1442.5"/>
+<text text-anchor="start" x="2905.8464" y="-1455.3" font-family="Arial Bold" font-size="18.00" fill="#000000">users_subscribe_channels</text>
+<text text-anchor="start" x="3118.8998" y="-1455.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
+<text text-anchor="start" x="3122.7904" y="-1455.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="#000000" points="2899,-1412.5 2899,-1442.5 3223,-1442.5 3223,-1412.5 2899,-1412.5"/>
+<text text-anchor="start" x="2906" y="-1423.9" font-family="Arial" font-size="14.00" fill="#000000">user_id </text>
+<text text-anchor="start" x="2955.7882" y="-1423.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
 <polygon fill="none" stroke="#000000" points="2899,-1382.5 2899,-1412.5 3223,-1412.5 3223,-1382.5 2899,-1382.5"/>
-<text text-anchor="start" x="2906" y="-1393.9" font-family="Arial" font-size="14.00" fill="#000000">user_id </text>
-<text text-anchor="start" x="2955.7882" y="-1393.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<text text-anchor="start" x="2906" y="-1393.9" font-family="Arial" font-size="14.00" fill="#000000">channel_id </text>
+<text text-anchor="start" x="2977.582" y="-1393.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
 <polygon fill="none" stroke="#000000" points="2899,-1352.5 2899,-1382.5 3223,-1382.5 3223,-1352.5 2899,-1352.5"/>
-<text text-anchor="start" x="2906" y="-1363.9" font-family="Arial" font-size="14.00" fill="#000000">channel_id </text>
-<text text-anchor="start" x="2977.582" y="-1363.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<text text-anchor="start" x="2906" y="-1363.9" font-family="Arial" font-size="14.00" fill="#000000">mark </text>
+<text text-anchor="start" x="2940.9944" y="-1363.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(1)]</text>
+<polygon fill="none" stroke="#000000" points="2899,-1322.5 2899,-1352.5 3223,-1352.5 3223,-1322.5 2899,-1322.5"/>
+<text text-anchor="start" x="2906" y="-1333.9" font-family="Arial" font-size="14.00" fill="#000000">notify </text>
+<text text-anchor="start" x="2943.3436" y="-1333.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(1)]</text>
 </g>
 <!-- users_subscribe_channels&#45;&gt;users -->
 <g id="edge13" class="edge">
 <title>users_subscribe_channels:user_id&#45;&gt;users:id</title>
-<path fill="none" stroke="#000000" d="M2888.7457,-1397.0065C2787.0616,-1386.5507 2930.483,-1212.611 2847,-1130 2731.0501,-1015.2611 2288.1239,-997.5 2125,-997.5"/>
-<polygon fill="#000000" stroke="#000000" points="2889.0116,-1397.0192 2898.7836,-1401.9948 2894.0058,-1397.2596 2899,-1397.5 2899,-1397.5 2899,-1397.5 2894.0058,-1397.2596 2899.2164,-1393.0052 2889.0116,-1397.0192 2889.0116,-1397.0192"/>
-<text text-anchor="start" x="2845.945" y="-1381.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (user_id) REFERENCES users (id)</text>
+<path fill="none" stroke="#000000" d="M2889.1118,-1425.3323C2838.3803,-1400.7781 2891.671,-1175.0504 2847,-1130 2732.1428,-1014.1673 2288.1239,-997.5 2125,-997.5"/>
+<polygon fill="#000000" stroke="#000000" points="2889.232,-1425.3586 2898.0363,-1431.8956 2894.116,-1426.4293 2899,-1427.5 2899,-1427.5 2899,-1427.5 2894.116,-1426.4293 2899.9637,-1423.1044 2889.232,-1425.3586 2889.232,-1425.3586"/>
+<text text-anchor="start" x="2845.945" y="-1411.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (user_id) REFERENCES users (id)</text>
 </g>
 <!-- users_tags -->
 <g id="node13" class="node">

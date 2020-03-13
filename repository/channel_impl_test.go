@@ -319,10 +319,10 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 
 		args := ChangeChannelSubscriptionArgs{
 			UpdaterID: uuid.Nil,
-			Subscription: map[uuid.UUID]bool{
-				user1.ID:                true,
-				user2.ID:                true,
-				uuid.Must(uuid.NewV4()): true,
+			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{
+				user1.ID:                model.ChannelSubscribeLevelMarkAndNotify,
+				user2.ID:                model.ChannelSubscribeLevelMarkAndNotify,
+				uuid.Must(uuid.NewV4()): model.ChannelSubscribeLevelMarkAndNotify,
 			},
 		}
 		if assert.NoError(repo.ChangeChannelSubscription(ch.ID, args)) {
@@ -331,86 +331,16 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 
 		args = ChangeChannelSubscriptionArgs{
 			UpdaterID: uuid.Nil,
-			Subscription: map[uuid.UUID]bool{
-				user1.ID:                true,
-				user2.ID:                false,
-				uuid.Must(uuid.NewV4()): false,
+			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{
+				user1.ID:                model.ChannelSubscribeLevelMarkAndNotify,
+				user2.ID:                model.ChannelSubscribeLevelNone,
+				uuid.Must(uuid.NewV4()): model.ChannelSubscribeLevelNone,
 			},
 		}
 		if assert.NoError(repo.ChangeChannelSubscription(ch.ID, args)) {
 			assert.Equal(1, count(t, getDB(repo).Model(model.UserSubscribeChannel{}).Where(&model.UserSubscribeChannel{ChannelID: ch.ID})))
 		}
 	})
-}
-
-func TestRepositoryImpl_GetSubscribingUserIDs(t *testing.T) {
-	t.Parallel()
-	repo, _, _ := setup(t, common)
-
-	user1 := mustMakeUser(t, repo, random)
-	user2 := mustMakeUser(t, repo, random)
-	ch1 := mustMakeChannel(t, repo, random)
-	ch2 := mustMakeChannel(t, repo, random)
-	mustChangeChannelSubscription(t, repo, ch1.ID, user1.ID, true)
-	mustChangeChannelSubscription(t, repo, ch2.ID, user1.ID, true)
-	mustChangeChannelSubscription(t, repo, ch2.ID, user2.ID, true)
-
-	cases := []struct {
-		name   string
-		ch     uuid.UUID
-		expect int
-	}{
-		{"ch1", ch1.ID, 1},
-		{"ch2", ch2.ID, 2},
-		{"nil ch", uuid.Nil, 0},
-	}
-
-	for _, v := range cases {
-		v := v
-		t.Run(v.name, func(t *testing.T) {
-			t.Parallel()
-
-			arr, err := repo.GetSubscribingUserIDs(v.ch)
-			if assert.NoError(t, err) {
-				assert.Len(t, arr, v.expect)
-			}
-		})
-	}
-}
-
-func TestRepositoryImpl_GetSubscribedChannelIDs(t *testing.T) {
-	t.Parallel()
-	repo, _, _ := setup(t, common)
-
-	user1 := mustMakeUser(t, repo, random)
-	user2 := mustMakeUser(t, repo, random)
-	ch1 := mustMakeChannel(t, repo, random)
-	ch2 := mustMakeChannel(t, repo, random)
-	mustChangeChannelSubscription(t, repo, ch1.ID, user1.ID, true)
-	mustChangeChannelSubscription(t, repo, ch2.ID, user1.ID, true)
-	mustChangeChannelSubscription(t, repo, ch2.ID, user2.ID, true)
-
-	cases := []struct {
-		name   string
-		user   uuid.UUID
-		expect int
-	}{
-		{"user1", user1.ID, 2},
-		{"user2", user2.ID, 1},
-		{"nil user", uuid.Nil, 0},
-	}
-
-	for _, v := range cases {
-		v := v
-		t.Run(v.name, func(t *testing.T) {
-			t.Parallel()
-
-			arr, err := repo.GetSubscribedChannelIDs(v.user)
-			if assert.NoError(t, err) {
-				assert.Len(t, arr, v.expect)
-			}
-		})
-	}
 }
 
 func TestRepositoryImpl_CreatePublicChannel(t *testing.T) {

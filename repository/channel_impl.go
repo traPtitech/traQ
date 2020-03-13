@@ -582,33 +582,67 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 		off = make([]uuid.UUID, 0)
 	)
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		for userID, subscribe := range args.Subscription {
-			if userID == uuid.Nil {
-				continue
+		// 現在のチャンネルの購読設定を全取得
+		var _current []*model.UserSubscribeChannel
+		if err := tx.Where(&model.UserSubscribeChannel{ChannelID: channelID}).Find(&_current).Error; err != nil {
+			return err
+		}
+		current := make(map[uuid.UUID]model.ChannelSubscribeLevel, len(_current))
+		for _, s := range _current {
+			current[s.UserID] = s.GetLevel()
+		}
+
+		for uid, level := range args.Subscription {
+			if cl := current[uid]; cl == level {
+				continue // 既に同じ設定がされているのでスキップ
 			}
-			if subscribe {
-				err := tx.Create(&model.UserSubscribeChannel{UserID: userID, ChannelID: channelID}).Error
-				switch {
-				case err == nil:
-					// 成功
-					on = append(on, userID)
-				case isMySQLDuplicatedRecordErr(err):
-					// 既に購読中なので無視
-					continue
-				case isMySQLForeignKeyConstraintFailsError(err):
-					// 存在しないユーザーは無視
-					continue
-				default:
+
+			switch level {
+			case model.ChannelSubscribeLevelNone:
+				if _, ok := current[uid]; !ok {
+					continue // 既にオフ
+				}
+
+				if args.KeepOffLevel {
+					if cl := current[uid]; cl == model.ChannelSubscribeLevelMark {
+						continue // 未読管理のみをキープしたままにする
+					}
+				}
+
+				if err := tx.Delete(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID}).Error; err != nil {
 					return err
 				}
-			} else {
-				result := tx.Delete(&model.UserSubscribeChannel{UserID: userID, ChannelID: channelID})
-				if result.Error != nil {
-					return result.Error
+				off = append(off, uid)
+
+			case model.ChannelSubscribeLevelMark:
+				if _, ok := current[uid]; ok {
+					if err := tx.Where(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID}).Updates(map[string]bool{"mark": true, "notify": false}).Error; err != nil {
+						return err
+					}
+				} else {
+					if err := tx.Create(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID, Mark: true, Notify: false}).Error; err != nil {
+						if isMySQLForeignKeyConstraintFailsError(err) {
+							continue // 存在しないユーザーは無視
+						}
+						return err
+					}
 				}
-				if result.RowsAffected > 0 {
-					off = append(off, userID)
+
+			case model.ChannelSubscribeLevelMarkAndNotify:
+				if _, ok := current[uid]; ok {
+					if err := tx.Where(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID}).Updates(map[string]bool{"mark": true, "notify": true}).Error; err != nil {
+						return err
+					}
+				} else {
+					if err := tx.Create(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID, Mark: true, Notify: true}).Error; err != nil {
+						if isMySQLForeignKeyConstraintFailsError(err) {
+							continue // 存在しないユーザーは無視
+						}
+						return err
+					}
 				}
+				on = append(on, uid)
+
 			}
 		}
 		return nil
@@ -625,36 +659,31 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 			"off":    off,
 		}, time.Now())
 	}
-
 	return nil
 }
 
-// GetSubscribingUserIDs implements ChannelRepository interface.
-func (repo *GormRepository) GetSubscribingUserIDs(channelID uuid.UUID) (users []uuid.UUID, err error) {
-	users = make([]uuid.UUID, 0)
-	if channelID == uuid.Nil {
-		return users, nil
-	}
-	err = repo.db.
-		Model(&model.UserSubscribeChannel{}).
-		Where(&model.UserSubscribeChannel{ChannelID: channelID}).
-		Pluck("user_id", &users).
-		Error
-	return users, err
-}
+// GetChannelSubscriptions implements ChannelRepository interface.
+func (repo *GormRepository) GetChannelSubscriptions(query ChannelSubscriptionQuery) ([]*model.UserSubscribeChannel, error) {
+	tx := repo.db
 
-// GetSubscribedChannelIDs implements ChannelRepository interface.
-func (repo *GormRepository) GetSubscribedChannelIDs(userID uuid.UUID) (channels []uuid.UUID, err error) {
-	channels = make([]uuid.UUID, 0)
-	if userID == uuid.Nil {
-		return channels, nil
+	if query.UserID.Valid {
+		tx = tx.Where("user_id = ?", query.UserID.UUID)
 	}
-	err = repo.db.
-		Model(&model.UserSubscribeChannel{}).
-		Where(&model.UserSubscribeChannel{UserID: userID}).
-		Pluck("channel_id", &channels).
-		Error
-	return channels, err
+	if query.ChannelID.Valid {
+		tx = tx.Where("channel_id = ?", query.ChannelID.UUID)
+	}
+	switch query.Level {
+	case model.ChannelSubscribeLevelMark:
+		tx = tx.Where("mark = true AND notify = false")
+	case model.ChannelSubscribeLevelMarkAndNotify:
+		tx = tx.Where("mark = true AND notify = true")
+	default:
+		tx = tx.Where("mark = true OR notify = true")
+	}
+
+	result := make([]*model.UserSubscribeChannel, 0)
+	err := tx.Find(&result).Error
+	return result, err
 }
 
 // GetChannelEvents implements ChannelRepository interface.

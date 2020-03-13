@@ -79,6 +79,7 @@ jobs:
     env:
       GOCACHE: "/tmp/go/cache"
     steps:
+      - run: sudo /etc/init.d/mysql start
       - uses: actions/setup-go@v1
         with:
           go-version: 1.13
@@ -117,6 +118,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build]
     steps:
+      - run: sudo /etc/init.d/mysql start
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v1
         with:

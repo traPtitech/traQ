@@ -303,9 +303,9 @@ func mustMakeAuthorizeData(t *testing.T, repo repository.Repository, clientID st
 	return authorize
 }
 
-func mustChangeChannelSubscription(t *testing.T, repo repository.Repository, channelID, userID uuid.UUID, subscribe bool) {
+func mustChangeChannelSubscription(t *testing.T, repo repository.Repository, channelID, userID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.ChangeChannelSubscription(channelID, repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]bool{userID: subscribe}}))
+	require.NoError(t, repo.ChangeChannelSubscription(channelID, repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}}))
 }
 
 /*
