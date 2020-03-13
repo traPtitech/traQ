@@ -16,7 +16,8 @@ var (
 // ChangeChannelSubscriptionArgs チャンネル購読変更引数
 type ChangeChannelSubscriptionArgs struct {
 	UpdaterID    uuid.UUID
-	Subscription map[uuid.UUID]bool
+	Subscription map[uuid.UUID]model.ChannelSubscribeLevel
+	KeepOffLevel bool
 }
 
 // UpdateChannelArgs チャンネル情報更新引数
@@ -38,6 +39,28 @@ type ChannelEventsQuery struct {
 	Limit     int
 	Offset    int
 	Asc       bool
+}
+
+// ChannelSubscriptionQuery GetChannelSubscriptions用クエリ
+type ChannelSubscriptionQuery struct {
+	UserID    uuid.NullUUID
+	ChannelID uuid.NullUUID
+	Level     model.ChannelSubscribeLevel
+}
+
+func (q ChannelSubscriptionQuery) SetUser(id uuid.UUID) ChannelSubscriptionQuery {
+	q.UserID = uuid.NullUUID{Valid: true, UUID: id}
+	return q
+}
+
+func (q ChannelSubscriptionQuery) SetChannel(id uuid.UUID) ChannelSubscriptionQuery {
+	q.ChannelID = uuid.NullUUID{Valid: true, UUID: id}
+	return q
+}
+
+func (q ChannelSubscriptionQuery) SetLevel(level model.ChannelSubscribeLevel) ChannelSubscriptionQuery {
+	q.Level = level
+	return q
 }
 
 // ChannelStats チャンネル統計情報
@@ -137,18 +160,11 @@ type ChannelRepository interface {
 	// 存在しないユーザーを指定した場合は無視されます。
 	// DBによるエラーを返すことがあります。
 	ChangeChannelSubscription(channelID uuid.UUID, args ChangeChannelSubscriptionArgs) error
-	// GetSubscribingUserIDs 指定したチャンネルを購読しているユーザーのUUIDを全て取得する
+	// GetChannelSubscriptions 指定したクエリに基づいてチャンネル購読情報を取得します
 	//
-	// 成功した場合、UUIDの配列とnilを返します。
-	// 存在しないチャンネルを指定した場合は空配列とnilを返します。
+	// 成功した場合、購読情報の配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetSubscribingUserIDs(channelID uuid.UUID) ([]uuid.UUID, error)
-	// GetSubscribedChannelIDs 指定したユーザーが購読しているチャンネルのUUIDを全て取得する
-	//
-	// 成功した場合、UUIDの配列とnilを返します。
-	// 存在しないユーザーを指定した場合は空配列とnilを返します。
-	// DBによるエラーを返すことがあります。
-	GetSubscribedChannelIDs(userID uuid.UUID) ([]uuid.UUID, error)
+	GetChannelSubscriptions(query ChannelSubscriptionQuery) ([]*model.UserSubscribeChannel, error)
 	// GetChannelEvents 指定したクエリでチャンネルイベントを取得します
 	//
 	// 成功した場合、イベントの配列を返します。負のoffset, limitは無視されます。

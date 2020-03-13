@@ -53,15 +53,41 @@ func (upc *UsersPrivateChannel) TableName() string {
 	return "users_private_channels"
 }
 
+// ChannelSubscribeLevel チャンネル購読レベル
+type ChannelSubscribeLevel int
+
+const (
+	// ChannelSubscribeLevelNone レベル：無し
+	ChannelSubscribeLevelNone ChannelSubscribeLevel = iota
+	// ChannelSubscribeLevelMark レベル：未読管理のみ
+	ChannelSubscribeLevelMark
+	// ChannelSubscribeLevelMarkAndNotify レベル：未読管理＋通知
+	ChannelSubscribeLevelMarkAndNotify
+)
+
 // UserSubscribeChannel ユーザー・通知チャンネル対構造体
 type UserSubscribeChannel struct {
 	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	ChannelID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	Mark      bool      `gorm:"type:boolean;not null;default:false"`
+	Notify    bool      `gorm:"type:boolean;not null;default:false"`
 }
 
 // TableName UserNotifiedChannel構造体のテーブル名
 func (*UserSubscribeChannel) TableName() string {
 	return "users_subscribe_channels"
+}
+
+// GetLevel 購読レベルを返します
+func (usc *UserSubscribeChannel) GetLevel() ChannelSubscribeLevel {
+	switch {
+	case usc.Notify:
+		return ChannelSubscribeLevelMarkAndNotify
+	case usc.Mark:
+		return ChannelSubscribeLevelMark
+	default:
+		return ChannelSubscribeLevelNone
+	}
 }
 
 // DMChannelMapping ダイレクトメッセージチャンネルとユーザーのマッピング

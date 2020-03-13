@@ -20,24 +20,22 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 	u0, err := repo.GetUserByName("traq")
 	require.NoError(err)
 	g1 := mustMakeUserGroup(t, repo, random, u0.ID)
-	c1 := mustMakeChannel(t, repo, random)
 	us := make([]uuid.UUID, 0)
 
 	type u struct {
 		Bot    bool
 		Active bool
-		c1     bool
 		g1     bool
 	}
 	ut := []u{
-		{false, false, true, false},
-		{true, false, true, false},
-		{false, true, true, true},
-		{true, true, true, true},
-		{false, false, false, true},
-		{true, false, false, true},
-		{false, true, false, false},
-		{true, true, false, false},
+		{false, false, false},
+		{true, false, false},
+		{false, true, true},
+		{true, true, true},
+		{false, false, true},
+		{true, false, true},
+		{false, true, false},
+		{true, true, false},
 	}
 	for _, v := range ut {
 		u := mustMakeUser(t, repo, random)
@@ -49,35 +47,26 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 		if !v.Active {
 			getDB(repo).Model(&model.User{ID: u.ID}).Update("status", model.UserAccountStatusDeactivated)
 		}
-		if v.c1 {
-			mustChangeChannelSubscription(t, repo, c1.ID, u.ID, true)
-		}
 		if v.g1 {
 			mustAddUserToGroup(t, repo, u.ID, g1.ID)
 		}
 	}
 
-	ut = append(ut, u{false, true, false, false}) // traQユーザー
+	ut = append(ut, u{false, true, false}) // traQユーザー
 	us = append(us, u0.ID)
 
 	tt := []struct {
 		bot    int
 		active int
-		c1     int
 		g1     int
 	}{
-		{-1, -1, -1, -1},
-		{0, -1, -1, -1},
-		{1, -1, -1, -1},
-		{-1, 0, -1, -1},
-		{-1, 1, -1, -1},
-		{0, 1, 1, -1},
-		{0, 1, -1, 1},
-		{0, 1, -1, -1},
-		{0, 1, 1, 1},
-		{0, 1, -1, 1},
-		{0, 1, 1, -1},
-		{0, 1, 1, 1},
+		{-1, -1, -1},
+		{0, -1, -1},
+		{1, -1, -1},
+		{-1, 0, -1},
+		{-1, 1, -1},
+		{0, 1, -1},
+		{0, 1, 1},
 	}
 	for i, v := range tt {
 		v := v
@@ -90,9 +79,6 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 					continue
 				}
 				if (v.active == 0 && u.Active) || (v.active == 1 && !u.Active) {
-					continue
-				}
-				if (v.c1 == 0 && u.c1) || (v.c1 == 1 && !u.c1) {
 					continue
 				}
 				if (v.g1 == 0 && u.g1) || (v.g1 == 1 && !u.g1) {
@@ -111,12 +97,6 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 				q.IsActive = null.BoolFrom(false)
 			} else if v.active == 1 {
 				q.IsActive = null.BoolFrom(true)
-			}
-			if v.c1 == 1 {
-				q.IsSubscriberOf = uuid.NullUUID{
-					UUID:  c1.ID,
-					Valid: true,
-				}
 			}
 			if v.g1 == 1 {
 				q.IsGMemberOf = uuid.NullUUID{

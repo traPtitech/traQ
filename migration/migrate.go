@@ -19,6 +19,7 @@ func Migrate(db *gorm.DB) error {
 		v5(), // Mute, 旧Clip削除
 		v6(), // v6 ユーザーグループ拡張
 		v7(), // ファイルメタ拡張
+		v8(), // チャンネル購読拡張
 	}
 
 	m := gormigrate.New(db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"), &gormigrate.Options{

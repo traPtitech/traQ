@@ -46,22 +46,11 @@ func TestUsersQuery_GMemberOf(t *testing.T) {
 	)
 }
 
-func TestUsersQuery_SubscriberOf(t *testing.T) {
-	t.Parallel()
-
-	id, _ := uuid.NewV4()
-	assert.EqualValues(t,
-		UsersQuery{IsSubscriberOf: uuid.NullUUID{UUID: id, Valid: true}},
-		UsersQuery{}.SubscriberOf(id),
-	)
-}
-
 func TestUsersQuery_Composite(t *testing.T) {
 	t.Parallel()
 
-	id, _ := uuid.NewV4()
 	assert.EqualValues(t,
-		UsersQuery{IsActive: null.Bool{NullBool: sql.NullBool{Bool: true, Valid: true}}, IsBot: null.Bool{NullBool: sql.NullBool{Bool: false, Valid: true}}, IsSubscriberOf: uuid.NullUUID{UUID: id, Valid: true}},
-		UsersQuery{}.NotBot().SubscriberOf(id).Active(),
+		UsersQuery{IsActive: null.Bool{NullBool: sql.NullBool{Bool: true, Valid: true}}, IsBot: null.Bool{NullBool: sql.NullBool{Bool: false, Valid: true}}},
+		UsersQuery{}.NotBot().Active(),
 	)
 }

@@ -50,7 +50,7 @@ type TestRepository struct {
 	UserTagsLock              sync.RWMutex
 	Channels                  map[uuid.UUID]model.Channel
 	ChannelsLock              sync.RWMutex
-	ChannelSubscribes         map[uuid.UUID]map[uuid.UUID]bool
+	ChannelSubscribes         map[uuid.UUID]map[uuid.UUID]model.ChannelSubscribeLevel
 	ChannelSubscribesLock     sync.RWMutex
 	PrivateChannelMembers     map[uuid.UUID]map[uuid.UUID]bool
 	PrivateChannelMembersLock sync.RWMutex
@@ -185,7 +185,7 @@ func NewTestRepository() *TestRepository {
 		Tags:                  map[uuid.UUID]model.Tag{},
 		UserTags:              map[uuid.UUID]map[uuid.UUID]model.UsersTag{},
 		Channels:              map[uuid.UUID]model.Channel{},
-		ChannelSubscribes:     map[uuid.UUID]map[uuid.UUID]bool{},
+		ChannelSubscribes:     map[uuid.UUID]map[uuid.UUID]model.ChannelSubscribeLevel{},
 		PrivateChannelMembers: map[uuid.UUID]map[uuid.UUID]bool{},
 		Messages:              map[uuid.UUID]model.Message{},
 		MessageUnreads:        map[uuid.UUID]map[uuid.UUID]bool{},
@@ -274,7 +274,6 @@ func (repo *TestRepository) GetUserByName(name string) (*model.User, error) {
 func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]*model.User, error) {
 	result := make([]*model.User, 0, len(repo.Users))
 	repo.UsersLock.RLock()
-	repo.ChannelSubscribesLock.RLock()
 	repo.PrivateChannelMembersLock.RLock()
 	repo.UserGroupMembersLock.RLock()
 	for _, u := range repo.Users {
@@ -294,12 +293,6 @@ func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]*model.User
 				}
 			}
 		}
-		if query.IsSubscriberOf.Valid {
-			arr, ok := repo.ChannelSubscribes[query.IsSubscriberOf.UUID]
-			if !ok || !arr[u.ID] {
-				continue
-			}
-		}
 		if query.IsCMemberOf.Valid {
 			arr, ok := repo.PrivateChannelMembers[query.IsCMemberOf.UUID]
 			if !ok || !arr[u.ID] {
@@ -317,7 +310,6 @@ func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]*model.User
 	}
 	repo.UserGroupMembersLock.RUnlock()
 	repo.PrivateChannelMembersLock.RUnlock()
-	repo.ChannelSubscribesLock.RUnlock()
 	repo.UsersLock.RUnlock()
 	return result, nil
 }
@@ -325,7 +317,6 @@ func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]*model.User
 func (repo *TestRepository) GetUserIDs(query repository.UsersQuery) ([]uuid.UUID, error) {
 	ids := make([]uuid.UUID, 0)
 	repo.UsersLock.RLock()
-	repo.ChannelSubscribesLock.RLock()
 	repo.PrivateChannelMembersLock.RLock()
 	repo.UserGroupMembersLock.RLock()
 	for _, v := range repo.Users {
@@ -345,12 +336,6 @@ func (repo *TestRepository) GetUserIDs(query repository.UsersQuery) ([]uuid.UUID
 				}
 			}
 		}
-		if query.IsSubscriberOf.Valid {
-			arr, ok := repo.ChannelSubscribes[query.IsSubscriberOf.UUID]
-			if !ok || !arr[v.ID] {
-				continue
-			}
-		}
 		if query.IsCMemberOf.Valid {
 			arr, ok := repo.PrivateChannelMembers[query.IsCMemberOf.UUID]
 			if !ok || !arr[v.ID] {
@@ -367,7 +352,6 @@ func (repo *TestRepository) GetUserIDs(query repository.UsersQuery) ([]uuid.UUID
 	}
 	repo.UserGroupMembersLock.RUnlock()
 	repo.PrivateChannelMembersLock.RUnlock()
-	repo.ChannelSubscribesLock.RUnlock()
 	repo.UsersLock.RUnlock()
 	return ids, nil
 }
@@ -1341,28 +1325,51 @@ func (repo *TestRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 		return repository.ErrNilID
 	}
 	repo.ChannelSubscribesLock.Lock()
+	current, ok := repo.ChannelSubscribes[channelID]
+	if !ok {
+		current = make(map[uuid.UUID]model.ChannelSubscribeLevel)
+		repo.ChannelSubscribes[channelID] = current
+	}
 
-	for userID, subscribe := range args.Subscription {
-		repo.UsersLock.RLock()
-		_, ok := repo.Users[userID]
-		repo.UsersLock.RUnlock()
-		if !ok {
-			continue
+	for uid, level := range args.Subscription {
+		if cl := current[uid]; cl == level {
+			continue // 既に同じ設定がされているのでスキップ
 		}
 
-		if subscribe {
-			chMap, ok := repo.ChannelSubscribes[userID]
+		switch level {
+		case model.ChannelSubscribeLevelNone:
+			if _, ok := current[uid]; !ok {
+				continue // 既にオフ
+			}
+
+			if args.KeepOffLevel {
+				if cl := current[uid]; cl == model.ChannelSubscribeLevelMark {
+					continue // 未読管理のみをキープしたままにする
+				}
+			}
+
+			delete(current, uid)
+
+		case model.ChannelSubscribeLevelMark:
+			repo.UsersLock.RLock()
+			_, ok := repo.Users[uid]
+			repo.UsersLock.RUnlock()
 			if !ok {
-				chMap = make(map[uuid.UUID]bool)
+				continue
 			}
-			chMap[channelID] = true
-			repo.ChannelSubscribes[userID] = chMap
-		} else {
-			chMap, ok := repo.ChannelSubscribes[userID]
-			if ok {
-				delete(chMap, channelID)
-				repo.ChannelSubscribes[userID] = chMap
+
+			current[uid] = model.ChannelSubscribeLevelMark
+
+		case model.ChannelSubscribeLevelMarkAndNotify:
+			repo.UsersLock.RLock()
+			_, ok := repo.Users[uid]
+			repo.UsersLock.RUnlock()
+			if !ok {
+				continue
 			}
+
+			current[uid] = model.ChannelSubscribeLevelMarkAndNotify
+
 		}
 	}
 
@@ -1370,30 +1377,44 @@ func (repo *TestRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 	return nil
 }
 
-func (repo *TestRepository) GetSubscribingUserIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
-	repo.ChannelSubscribesLock.RLock()
-	result := make([]uuid.UUID, 0)
-	for uid, chMap := range repo.ChannelSubscribes {
-		for cid := range chMap {
-			if cid == channelID {
-				result = append(result, uid)
-			}
-		}
-	}
-	repo.ChannelSubscribesLock.RUnlock()
-	return result, nil
-}
+func (repo *TestRepository) GetChannelSubscriptions(query repository.ChannelSubscriptionQuery) ([]*model.UserSubscribeChannel, error) {
+	repo.ChannelSubscribesLock.Lock()
+	result := make([]*model.UserSubscribeChannel, 0)
 
-func (repo *TestRepository) GetSubscribedChannelIDs(userID uuid.UUID) ([]uuid.UUID, error) {
-	repo.ChannelSubscribesLock.RLock()
-	result := make([]uuid.UUID, 0)
-	chMap, ok := repo.ChannelSubscribes[userID]
-	if ok {
-		for id := range chMap {
-			result = append(result, id)
+	for cid, users := range repo.ChannelSubscribes {
+		if query.ChannelID.Valid && cid != query.ChannelID.UUID {
+			continue
+		}
+		for uid, level := range users {
+			if query.UserID.Valid && uid != query.UserID.UUID {
+				continue
+			}
+
+			switch query.Level {
+			case model.ChannelSubscribeLevelMark:
+				if level != model.ChannelSubscribeLevelMark {
+					continue
+				}
+			case model.ChannelSubscribeLevelMarkAndNotify:
+				if level != model.ChannelSubscribeLevelMarkAndNotify {
+					continue
+				}
+			default:
+				if level != model.ChannelSubscribeLevelNone {
+					continue
+				}
+			}
+
+			result = append(result, &model.UserSubscribeChannel{
+				ChannelID: cid,
+				UserID:    uid,
+				Mark:      level >= model.ChannelSubscribeLevelMark,
+				Notify:    level >= model.ChannelSubscribeLevelMarkAndNotify,
+			})
 		}
 	}
-	repo.ChannelSubscribesLock.RUnlock()
+
+	repo.ChannelSubscribesLock.Unlock()
 	return result, nil
 }
 

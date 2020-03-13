@@ -3,6 +3,7 @@ package v1
 import (
 	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -21,11 +22,16 @@ func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
 		return herror.Forbidden("private channel's notification is not configurable")
 	}
 
-	users, err := h.Repo.GetSubscribingUserIDs(ch.ID)
+	subscriptions, err := h.Repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	return c.JSON(http.StatusOK, users)
+	result := make([]uuid.UUID, 0)
+	for _, subscription := range subscriptions {
+		result = append(result, subscription.UserID)
+	}
+
+	return c.JSON(http.StatusOK, result)
 }
 
 // PutChannelSubscribersRequest PUT /channels/:channelID/notification リクエストボディ
@@ -50,18 +56,18 @@ func (h *Handlers) PutChannelSubscribers(c echo.Context) error {
 
 	args := repository.ChangeChannelSubscriptionArgs{
 		UpdaterID:    getRequestUserID(c),
-		Subscription: map[uuid.UUID]bool{},
+		Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{},
 	}
 
 	for _, id := range req.On.Array() {
-		args.Subscription[id] = true
+		args.Subscription[id] = model.ChannelSubscribeLevelMarkAndNotify
 	}
 	for _, id := range req.Off.Array() {
-		if args.Subscription[id] {
+		if _, ok := args.Subscription[id]; ok {
 			// On, Offどっちにもあるものは相殺
 			delete(args.Subscription, id)
 		} else {
-			args.Subscription[id] = false
+			args.Subscription[id] = model.ChannelSubscribeLevelNone
 		}
 	}
 
@@ -105,24 +111,22 @@ func (h *Handlers) PostDeviceToken(c echo.Context) error {
 
 // GetNotificationChannels GET /users/:userID/notification
 func (h *Handlers) GetNotificationChannels(c echo.Context) error {
-	userID := getRequestParamAsUUID(c, consts.ParamUserID)
-
-	channelIDs, err := h.Repo.GetSubscribedChannelIDs(userID)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.JSON(http.StatusOK, channelIDs)
+	return h.getUserNotificationChannels(c, getRequestParamAsUUID(c, consts.ParamUserID))
 }
 
 // GetMyNotificationChannels GET /users/me/notification
 func (h *Handlers) GetMyNotificationChannels(c echo.Context) error {
-	userID := getRequestUserID(c)
+	return h.getUserNotificationChannels(c, getRequestUserID(c))
+}
 
-	channelIDs, err := h.Repo.GetSubscribedChannelIDs(userID)
+func (h *Handlers) getUserNotificationChannels(c echo.Context, userID uuid.UUID) error {
+	subscriptions, err := h.Repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetUser(userID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-
-	return c.JSON(http.StatusOK, channelIDs)
+	result := make([]uuid.UUID, 0)
+	for _, subscription := range subscriptions {
+		result = append(result, subscription.ChannelID)
+	}
+	return c.JSON(http.StatusOK, result)
 }

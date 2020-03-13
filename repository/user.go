@@ -21,11 +21,12 @@ type UpdateUserArgs struct {
 
 // UsersQuery GetUsers用クエリ
 type UsersQuery struct {
-	IsBot          null.Bool
-	IsActive       null.Bool
-	IsCMemberOf    uuid.NullUUID
-	IsGMemberOf    uuid.NullUUID
-	IsSubscriberOf uuid.NullUUID
+	IsBot                       null.Bool
+	IsActive                    null.Bool
+	IsCMemberOf                 uuid.NullUUID
+	IsGMemberOf                 uuid.NullUUID
+	IsSubscriberAtMarkLevelOf   uuid.NullUUID
+	IsSubscriberAtNotifyLevelOf uuid.NullUUID
 }
 
 // NotBot Botでない
@@ -58,9 +59,18 @@ func (q UsersQuery) GMemberOf(groupID uuid.UUID) UsersQuery {
 	return q
 }
 
-// SubscriberOf channelIDチャンネルの購読者である
-func (q UsersQuery) SubscriberOf(channelID uuid.UUID) UsersQuery {
-	q.IsSubscriberOf = uuid.NullUUID{
+// SubscriberAtMarkLevelOf channelIDチャンネルの未読管理レベル購読ユーザーである
+func (q UsersQuery) SubscriberAtMarkLevelOf(channelID uuid.UUID) UsersQuery {
+	q.IsSubscriberAtMarkLevelOf = uuid.NullUUID{
+		UUID:  channelID,
+		Valid: true,
+	}
+	return q
+}
+
+// SubscriberAtNotifyLevelOf channelIDチャンネルの通知レベル購読ユーザーである
+func (q UsersQuery) SubscriberAtNotifyLevelOf(channelID uuid.UUID) UsersQuery {
+	q.IsSubscriberAtNotifyLevelOf = uuid.NullUUID{
 		UUID:  channelID,
 		Valid: true,
 	}

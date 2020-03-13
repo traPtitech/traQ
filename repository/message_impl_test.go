@@ -185,7 +185,7 @@ func TestRepositoryImpl_GetChannelLatestMessagesByUserID(t *testing.T) {
 	for j := 0; j < 10; j++ {
 		ch := mustMakeChannel(t, repo, random)
 		if j < 5 {
-			mustChangeChannelSubscription(t, repo, ch.ID, user.ID, true)
+			mustChangeChannelSubscription(t, repo, ch.ID, user.ID)
 		}
 		for i := 0; i < 10; i++ {
 			mustMakeMessage(t, repo, user.ID, ch.ID)
