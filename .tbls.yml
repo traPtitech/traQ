@@ -105,6 +105,8 @@ comments:
     columnComments:
       user_id: ユーザーUUID
       channel_id: チャンネルUUID
+      mark: 未読管理が有効かどうか
+      notify: 通知が有効かどうか
   - table: unreads
     tableComment: メッセージ未読テーブル
     columnComments:

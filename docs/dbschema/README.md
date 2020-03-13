@@ -36,7 +36,7 @@
 | [user_roles](user_roles.md) | 3 | ユーザーロールテーブル | BASE TABLE |
 | [users](users.md) | 13 | ユーザーテーブル | BASE TABLE |
 | [users_private_channels](users_private_channels.md) | 2 | プライベートチャンネル参加者テーブル | BASE TABLE |
-| [users_subscribe_channels](users_subscribe_channels.md) | 2 | チャンネル購読者テーブル | BASE TABLE |
+| [users_subscribe_channels](users_subscribe_channels.md) | 4 | チャンネル購読者テーブル | BASE TABLE |
 | [users_tags](users_tags.md) | 5 | ユーザータグテーブル | BASE TABLE |
 | [webhook_bots](webhook_bots.md) | 9 | traQ Webhookテーブル | BASE TABLE |
 
