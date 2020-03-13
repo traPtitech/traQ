@@ -45,6 +45,8 @@ var handlerMap = map[string]eventHandler{
 	event.UserTagUpdated:         userTagUpdatedHandler,
 	event.UserGroupCreated:       userGroupCreatedHandler,
 	event.UserGroupDeleted:       userGroupDeletedHandler,
+	event.UserGroupMemberAdded:   userGroupUpdatedHandler,
+	event.UserGroupMemberRemoved: userGroupUpdatedHandler,
 	event.StampCreated:           stampCreatedHandler,
 	event.StampUpdated:           stampUpdatedHandler,
 	event.StampDeleted:           stampDeletedHandler,
@@ -407,6 +409,15 @@ func userTagRemovedHandler(ns *Service, ev hub.Message) {
 func userGroupCreatedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns, &sse.EventData{
 		EventType: "USER_GROUP_CREATED",
+		Payload: map[string]interface{}{
+			"id": ev.Fields["group_id"].(uuid.UUID),
+		},
+	})
+}
+
+func userGroupUpdatedHandler(ns *Service, ev hub.Message) {
+	broadcast(ns, &sse.EventData{
+		EventType: "USER_GROUP_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["group_id"].(uuid.UUID),
 		},

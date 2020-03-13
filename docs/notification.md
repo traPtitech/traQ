@@ -38,6 +38,14 @@ FCMはFirebaseCloudMessagingで通知される情報を表す。記載されて�
 
 + `id`: 作成されたユーザーグループのId
 
+## USER_GROUP_UPDATED
+ユーザーグループが更新された
+
+### SSE
+対象: 全員
+
++ `id`: 作成されたユーザーグループのId
+
 ## USER_GROUP_DELETED
 ユーザーグループが削除された
 
