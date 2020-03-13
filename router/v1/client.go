@@ -134,7 +134,7 @@ type PostClientsRequest struct {
 func (r PostClientsRequest) Validate() error {
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, vd.Required, vd.RuneLength(1, 32)),
-		vd.Field(&r.Description, vd.Required),
+		vd.Field(&r.Description, vd.Required, vd.RuneLength(0, 1000)),
 		vd.Field(&r.RedirectURI, vd.Required, is.URL),
 		vd.Field(&r.Scopes, vd.Required),
 	)

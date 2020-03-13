@@ -248,7 +248,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiClients := api.Group("/clients")
 		{
 			apiClients.GET("", NotImplemented, requires(permission.GetClients))
-			apiClients.POST("", NotImplemented, requires(permission.CreateClient))
+			apiClients.POST("", h.CreateClient, requires(permission.CreateClient))
 			apiClientsCID := apiClients.Group("/:clientID", retrieve.ClientID())
 			{
 				apiClientsCID.GET("", h.GetClient, requires(permission.GetClients))
