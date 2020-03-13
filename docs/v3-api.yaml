@@ -3950,6 +3950,8 @@ components:
           items:
             type: string
             format: uuid
+      required:
+        - 'on'
     UserSubscribeState:
       title: UserSubscribeState
       type: object

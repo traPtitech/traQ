@@ -65,6 +65,10 @@ const (
 	ChannelSubscribeLevelMarkAndNotify
 )
 
+func (v ChannelSubscribeLevel) Int() int {
+	return int(v)
+}
+
 // UserSubscribeChannel ユーザー・通知チャンネル対構造体
 type UserSubscribeChannel struct {
 	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key"`

@@ -297,7 +297,7 @@ func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
 
 	// プライベートチャンネル・強制通知チャンネルの設定は取得できない。
 	if !ch.IsPublic || ch.IsForced {
-		return herror.Forbidden("private channel's notification is not configurable")
+		return herror.Forbidden()
 	}
 
 	subscriptions, err := h.Repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
@@ -323,7 +323,7 @@ func (h *Handlers) SetChannelSubscribers(c echo.Context) error {
 
 	// プライベートチャンネル・強制通知チャンネルの設定は取得できない。
 	if !ch.IsPublic || ch.IsForced {
-		return herror.Forbidden("private channel's notification is not configurable")
+		return herror.Forbidden()
 	}
 
 	var req PutChannelSubscribersRequest
@@ -367,7 +367,7 @@ func (h *Handlers) EditChannelSubscribers(c echo.Context) error {
 
 	// プライベートチャンネル・強制通知チャンネルの設定は取得できない。
 	if !ch.IsPublic || ch.IsForced {
-		return herror.Forbidden("private channel's notification is not configurable")
+		return herror.Forbidden()
 	}
 
 	var req PatchChannelSubscribersRequest
