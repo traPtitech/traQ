@@ -1146,7 +1146,7 @@ paths:
         description: ''
       description: |-
         指定したチャンネルの通知購読者を編集します。
-        リクエストに含めなかったユーザーの購読状態は変更しません。
+        リクエストに含めなかったユーザーの通知購読状態は変更しません。
         また、存在しないユーザーを指定した場合は無視されます。
     put:
       summary: チャンネルの通知購読者を設定
@@ -1173,7 +1173,8 @@ paths:
               $ref: '#/components/schemas/PutChannelSubscribersRequest'
       description: |-
         指定したチャンネルの通知購読者を設定します。
-        リクエストに含めなかったユーザーの購読状態はオフになります。
+        リクエストに含めなかったユーザーの通知購読状態はオフになります。
+        また、存在しないユーザーを指定した場合は無視されます。
       tags:
         - channel
         - notification
@@ -2136,10 +2137,7 @@ paths:
         '101':
           description: Switching Protocols
       operationId: ws
-      externalDocs:
-        description: 通知イベントドキュメント
-        url: 'https://github.com/traPtitech/traQ/blob/master/docs/notification.md'
-      description: "# WebSocketプロトコル\n## 送信\n`コマンド:引数1:引数2:...`のような形式のTextMessageをサーバーに送信することで、このWebSocketセッションに対する設定が実行できる。\n### `viewstate`コマンド\nこのWebSocketセッションが見ているチャンネル(イベントを受け取るチャンネル)を設定する。\n現時点では1つのセッションに対して1つのチャンネルしか設定できない。\n\n`viewstate:(チャンネルID):(閲覧状態)`\n+ チャンネルID: 対象のチャンネルID\n+ 閲覧状態: `none`, `monitoring`, `editing`\n\n最初の`viewstate`コマンドを送る前、または`viewstate:null`を送信した後は、このセッションはどこのチャンネルも見ていないことになる。\n\n## 受信\nSSEのイベントと同じものがTextMessageとして非同期に送られてくる。\n`type`と`body`を持つJSONを受信。`type`はSSEのイベントタイプと同じ、`body`はSSEのデータと同じ。\n例: \n```json\n{\"type\":\"USER_ONLINE\",\"body\":{\"id\":\"7dd8e07f-7f5d-4331-9176-b56a4299768b\"}}\n```"
+      description: "# WebSocketプロトコル\n## 送信\n`コマンド:引数1:引数2:...`のような形式のTextMessageをサーバーに送信することで、このWebSocketセッションに対する設定が実行できる。\n### `viewstate`コマンド\nこのWebSocketセッションが見ているチャンネル(イベントを受け取るチャンネル)を設定する。\n現時点では1つのセッションに対して1つのチャンネルしか設定できない。\n\n`viewstate:(チャンネルID):(閲覧状態)`\n+ チャンネルID: 対象のチャンネルID\n+ 閲覧状態: `none`, `monitoring`, `editing`\n\n最初の`viewstate`コマンドを送る前、または`viewstate:null`を送信した後は、このセッションはどこのチャンネルも見ていないことになる。\n\n## 受信\nTextMessageとして各種イベントが`type`と`body`を持つJSONとして非同期に送られます。\n\n例: \n```json\n{\"type\":\"USER_ONLINE\",\"body\":{\"id\":\"7dd8e07f-7f5d-4331-9176-b56a4299768b\"}}\n```\n\n## イベント一覧\n\n### `USER_JOINED`\nユーザーが新規登録された。\n\n対象: 全員\n\n+ `id`: 登録されたユーザーのId\n\n### `USER_UPDATED`\nユーザーの情報が更新された。\n\n対象: 全員\n\n+ `id`: 情報が更新されたユーザーのId\n\n### `USER_TAGS_UPDATED`\nユーザーのタグが更新された。\n\n対象: 全員\n\n+ `id`: タグが更新されたユーザーのId\n\n### `USER_ICON_UPDATED`\nユーザーのアイコンが更新された。\n\n対象: 全員\n\n+ `id`: アイコンが更新されたユーザーのId\n\n### `USER_WEBRTC_STATE_CHANGED`\nユーザーのWebRTCの状態が変化した\n\n対象: 全員\n\n+ `user_id`: 変更があったユーザーのId\n+ `channel_id`: ユーザーの変更後の接続チャンネルのId\n+ `state`: ユーザーの変更後の状態(配列)\n\n### `USER_ONLINE`\nユーザーがオンラインになった。\n\n対象: 全員\n\n+ `id`: オンラインになったユーザーのId\n\n### `USER_OFFLINE`\nユーザーがオフラインになった。\n\n対象: 全員\n\n+ `id`: オフラインになったユーザーのId\n\n### `USER_GROUP_CREATED`\nユーザーグループが作成された\n\n対象: 全員\n\n+ `id`: 作成されたユーザーグループのId\n\n### `USER_GROUP_UPDATED`\nユーザーグループが更新された\n\n対象: 全員\n\n+ `id`: 作成されたユーザーグループのId\n\n### `USER_GROUP_DELETED`\nユーザーグループが削除された\n\n対象: 全員\n\n+ `id`: 削除されたユーザーグループのId\n\n### `CHANNEL_CREATED`\nチャンネルが新規作成された。\n\n対象: 全員\n\n+ `id`: 作成されたチャンネルのId\n\n### `CHANNEL_UPDATED`\nチャンネルの情報が変更された。\n\n対象: 全員\n\n+ `id`: 変更があったチャンネルのId\n\n### `CHANNEL_DELETED`\nチャンネルが削除された。\n\n対象: 全員\n\n+ `id`: 削除されたチャンネルのId\n\n### `CHANNEL_STARED`\n自分がチャンネルをスターした。\n\n対象: 自分\n\n+ `id`: スターしたチャンネルのId\n\n### `CHANNEL_UNSTARED`\n自分がチャンネルのスターを解除した。\n\n対象: 自分\n\n+ `id`: スターしたチャンネルのId\n\n### `MESSAGE_CREATED`\nメッセージが投稿された。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー・投稿チャンネルに通知をつけているユーザー・メンションを受けたユーザー\n\n+ `id`: 投稿されたメッセージのId\n\n### `MESSAGE_UPDATED`\nメッセージが更新された。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー\n\n+ `id`: 更新されたメッセージのId\n\n### `MESSAGE_DELETED`\nメッセージが削除された。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー\n\n+ `id`: 削除されたメッセージのId\n\n### `MESSAGE_STAMPED`\nメッセージにスタンプが押された。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー\n\n+ `message_id`: メッセージId\n+ `user_id`: スタンプを押したユーザーのId\n+ `stamp_id`: スタンプのId\n+ `count`: そのユーザーが押した数\n+ `created_at`: そのユーザーがそのスタンプをそのメッセージに最初に押した日時\n\n### `MESSAGE_UNSTAMPED`\nメッセージからスタンプが外された。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー\n\n+ `message_id`: メッセージId\n+ `user_id`: スタンプを押したユーザーのId\n+ `stamp_id`: スタンプのId\n\n### `MESSAGE_PINNED`\nメッセージがピン留めされた。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー\n\n+ `message_id`: ピンされたメッセージのID\n+ `channel_id`: ピンされたメッセージのチャンネルID\n\n### `MESSAGE_UNPINNED`\nピン留めされたメッセージのピンが外された。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー\n\n+ `message_id`: ピンが外されたメッセージのID\n+ `channel_id`: ピンが外されたメッセージのチャンネルID\n\n### `MESSAGE_READ`\n自分があるチャンネルのメッセージを読んだ。\n\n対象: 自分\n\n+ `id`: 読んだチャンネルId\n\n### `STAMP_CREATED`\nスタンプが新しく追加された。\n\n対象: 全員\n\n+ `id`: 作成されたスタンプのId\n\n### `STAMP_UPDATED`\nスタンプが修正された。\n\n対象: 全員\n\n+ `id`: 修正されたスタンプのId\n\n### `STAMP_DELETED`\nスタンプが削除された。\n\n対象: 全員\n\n+ `id`: 削除されたスタンプのId"
   /users/me/tokens:
     get:
       summary: 有効なOAuth2トークンのリストを取得します
