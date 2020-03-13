@@ -160,16 +160,6 @@ const (
 	// 	Fields:
 	// 		stamp_id: uuid.UUID
 	StampDeleted = "stamp.deleted"
-	// FavoriteStampAdded スタンプがお気に入り登録された
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		stamp_id: uuid.UUID
-	FavoriteStampAdded = "favorite_stamp.added"
-	// FavoriteStampRemoved スタンプのお気に入りが解除された
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		stamp_id: uuid.UUID
-	FavoriteStampRemoved = "favorite_stamp.removed"
 
 	// WebhookCreated Webhookが作成された
 	// 	Fields:

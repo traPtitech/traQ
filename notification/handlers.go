@@ -48,8 +48,6 @@ var handlerMap = map[string]eventHandler{
 	event.StampCreated:           stampCreatedHandler,
 	event.StampUpdated:           stampUpdatedHandler,
 	event.StampDeleted:           stampDeletedHandler,
-	event.FavoriteStampAdded:     favoriteStampAddedHandler,
-	event.FavoriteStampRemoved:   favoriteStampRemovedHandler,
 	event.UserWebRTCStateChanged: userWebRTCStateChangedHandler,
 }
 
@@ -445,24 +443,6 @@ func stampUpdatedHandler(ns *Service, ev hub.Message) {
 func stampDeletedHandler(ns *Service, ev hub.Message) {
 	broadcast(ns, &sse.EventData{
 		EventType: "STAMP_DELETED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["stamp_id"].(uuid.UUID),
-		},
-	})
-}
-
-func favoriteStampAddedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
-		EventType: "FAVORITE_STAMP_ADDED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["stamp_id"].(uuid.UUID),
-		},
-	})
-}
-
-func favoriteStampRemovedHandler(ns *Service, ev hub.Message) {
-	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
-		EventType: "FAVORITE_STAMP_REMOVED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_id"].(uuid.UUID),
 		},
