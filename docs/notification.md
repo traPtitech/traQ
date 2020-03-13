@@ -46,24 +46,6 @@ FCMはFirebaseCloudMessagingで通知される情報を表す。記載されて�
 
 + `id`: 削除されたユーザーグループのId
 
-## USER_GROUP_MEMBER_ADDED
-ユーザーグループにユーザーが追加された
-
-### SSE
-対象: 全員
-
-+ `id`: ユーザーグループのId
-+ `user_id`: 追加されたユーザーのId
-
-## USER_GROUP_MEMBER_REMOVED
-ユーザーグループからユーザーが削除された
-
-### SSE
-対象: 全員
-
-+ `id`: ユーザーグループのId
-+ `user_id`: 削除されたユーザーのId
-
 ## USER_ICON_UPDATED
 ユーザーのアイコンが更新された。
 
