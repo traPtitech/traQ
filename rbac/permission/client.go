@@ -17,4 +17,6 @@ const (
 	EditMyClient = rbac.Permission("edit_my_client")
 	// DeleteMyClient : クライアント削除権限
 	DeleteMyClient = rbac.Permission("delete_my_client")
+	// ManageOthersClient 他人のClientの管理権限
+	ManageOthersClient = rbac.Permission("manage_others_client")
 )

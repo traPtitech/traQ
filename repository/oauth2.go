@@ -3,7 +3,27 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"gopkg.in/guregu/null.v3"
 )
+
+type UpdateClientArgs struct {
+	Name         null.String
+	Description  null.String
+	Confidential null.Bool
+	DeveloperID  uuid.NullUUID
+	Secret       null.String
+	CallbackURL  null.String
+	Scopes       model.AccessScopes
+}
+
+type GetClientsQuery struct {
+	DeveloperID uuid.NullUUID
+}
+
+func (q GetClientsQuery) IsDevelopedBy(userID uuid.UUID) GetClientsQuery {
+	q.DeveloperID = uuid.NullUUID{Valid: true, UUID: userID}
+	return q
+}
 
 // OAuth2Repository OAuth2用リポジトリ
 type OAuth2Repository interface {
@@ -13,12 +33,11 @@ type OAuth2Repository interface {
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetClient(id string) (*model.OAuth2Client, error)
-	// GetClientsByUser 指定した登録者のクライアントを全て取得します
+	// GetClients 指定したクライアントを全て取得します
 	//
 	// 成功した場合、クライアントの配列とnilを返します。
-	// 存在しないユーザーを指定した場合、空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetClientsByUser(userID uuid.UUID) ([]*model.OAuth2Client, error)
+	GetClients(query GetClientsQuery) ([]*model.OAuth2Client, error)
 	// SaveClient クライアントを保存します
 	//
 	// 成功した場合、nilを返します。
@@ -27,9 +46,11 @@ type OAuth2Repository interface {
 	// UpdateClient クライアント情報を更新します
 	//
 	// 成功した場合、nilを返します。
-	// client.IDにuuid.Nilを指定するとErrNilIDを返します。
+	// 存在しないクライアントの場合、ErrNotFoundを返します。
+	// clientIDに空文字を指定するとErrNilIDを返します。
+	// 更新内容に問題がある場合、ArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
-	UpdateClient(client *model.OAuth2Client) error
+	UpdateClient(clientID string, args UpdateClientArgs) error
 	// DeleteClient 指定したクライアントを削除します
 	//
 	// 成功した、或いは既に存在しない場合、nilを返します。

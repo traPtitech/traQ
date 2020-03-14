@@ -33,6 +33,7 @@ func init() {
 		CreateClient,
 		EditMyClient,
 		DeleteMyClient,
+		ManageOthersClient,
 
 		UploadFile,
 		DownloadFile,

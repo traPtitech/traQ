@@ -294,7 +294,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiGroups.GET("", h.GetUserGroups, requires(permission.GetUserGroup))
 			apiGroups.POST("", h.PostUserGroups, requires(permission.CreateUserGroup))
-			apiGroupsGid := apiGroups.Group("/:groupID", h.ValidateGroupID())
+			apiGroupsGid := apiGroups.Group("/:groupID", retrieve.GroupID())
 			{
 				apiGroupsGid.GET("", h.GetUserGroup, requires(permission.GetUserGroup))
 				apiGroupsGid.PATCH("", h.PatchUserGroup, requires(permission.EditUserGroup))
@@ -681,28 +681,6 @@ func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
 	l = h.Logger.With(zap.String("logging.googleapis.com/trace", extension.GetTraceID(c)))
 	c.Set(consts.KeyLogger, l)
 	return l
-}
-
-// ValidateGroupID 'groupID'パラメータのグループを検証するミドルウェア
-func (h *Handlers) ValidateGroupID() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			groupID := getRequestParamAsUUID(c, consts.ParamGroupID)
-
-			g, err := h.Repo.GetUserGroup(groupID)
-			if err != nil {
-				switch err {
-				case repository.ErrNotFound:
-					return herror.NotFound()
-				default:
-					return herror.InternalServerError(err)
-				}
-			}
-
-			c.Set(consts.KeyParamGroup, g)
-			return next(c)
-		}
-	}
 }
 
 // ValidatePinID 'pinID'パラメータのピンを検証するミドルウェア

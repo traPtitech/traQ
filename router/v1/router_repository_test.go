@@ -2402,20 +2402,8 @@ func (repo *TestRepository) GetClient(id string) (*model.OAuth2Client, error) {
 	return &c, nil
 }
 
-func (repo *TestRepository) GetClientsByUser(userID uuid.UUID) ([]*model.OAuth2Client, error) {
-	cs := make([]*model.OAuth2Client, 0)
-	if userID == uuid.Nil {
-		return cs, nil
-	}
-	repo.OAuth2ClientsLock.RLock()
-	for _, v := range repo.OAuth2Clients {
-		v := v
-		if v.CreatorID == userID {
-			cs = append(cs, &v)
-		}
-	}
-	repo.OAuth2ClientsLock.RUnlock()
-	return cs, nil
+func (repo *TestRepository) GetClients(query repository.GetClientsQuery) ([]*model.OAuth2Client, error) {
+	panic("implement me")
 }
 
 func (repo *TestRepository) SaveClient(client *model.OAuth2Client) error {
@@ -2427,25 +2415,8 @@ func (repo *TestRepository) SaveClient(client *model.OAuth2Client) error {
 	return nil
 }
 
-func (repo *TestRepository) UpdateClient(client *model.OAuth2Client) error {
-	if len(client.ID) == 0 {
-		return repository.ErrNilID
-	}
-	repo.OAuth2ClientsLock.Lock()
-	defer repo.OAuth2ClientsLock.Unlock()
-	c, ok := repo.OAuth2Clients[client.ID]
-	if ok {
-		c.UpdatedAt = time.Now()
-		c.Name = client.Name
-		c.Description = client.Description
-		c.Confidential = client.Confidential
-		c.CreatorID = client.CreatorID
-		c.Secret = client.Secret
-		c.RedirectURI = client.RedirectURI
-		c.Scopes = client.Scopes
-		repo.OAuth2Clients[client.ID] = c
-	}
-	return nil
+func (repo *TestRepository) UpdateClient(clientID string, args repository.UpdateClientArgs) error {
+	panic("implement me")
 }
 
 func (repo *TestRepository) DeleteClient(id string) error {

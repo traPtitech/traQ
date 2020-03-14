@@ -247,13 +247,13 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiClients := api.Group("/clients")
 		{
-			apiClients.GET("", NotImplemented, requires(permission.GetClients))
-			apiClients.POST("", NotImplemented, requires(permission.CreateClient))
+			apiClients.GET("", h.GetClients, requires(permission.GetClients))
+			apiClients.POST("", h.CreateClient, requires(permission.CreateClient))
 			apiClientsCID := apiClients.Group("/:clientID", retrieve.ClientID())
 			{
-				apiClientsCID.GET("", NotImplemented, requires(permission.GetClients))
-				apiClientsCID.PATCH("", NotImplemented, requiresClientAccessPerm, requires(permission.EditMyClient))
-				apiClientsCID.DELETE("", NotImplemented, requiresClientAccessPerm, requires(permission.DeleteMyClient))
+				apiClientsCID.GET("", h.GetClient, requires(permission.GetClients))
+				apiClientsCID.PATCH("", h.EditClient, requiresClientAccessPerm, requires(permission.EditMyClient))
+				apiClientsCID.DELETE("", h.DeleteClient, requiresClientAccessPerm, requires(permission.DeleteMyClient))
 			}
 		}
 		apiBots := api.Group("/bots")

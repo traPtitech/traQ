@@ -345,20 +345,6 @@ func TestHandlers_PutWebhookIcon(t *testing.T) {
 			Expect().
 			Status(http.StatusBadRequest)
 	})
-
-	/* TODO
-	t.Run("Success", func(t *testing.T) {
-		t.Parallel()
-		img := genPNG(random)
-		e := makeExp(t, server)
-		e.PUT("/api/1.0/webhooks/{webhookId}/icon", wb.GetID()).
-			WithCookie(sessions.CookieName, session).
-			WithMultipart().
-			WithFileBytes("file", "icon.png", img).
-			Expect().
-			Status(http.StatusNoContent)
-	})
-	*/
 }
 
 func TestHandlers_PostWebhook(t *testing.T) {
