@@ -14,6 +14,21 @@ import (
 	"net/http"
 )
 
+// GetClients GET /clients
+func (h *Handlers) GetClients(c echo.Context) error {
+	var q repository.GetClientsQuery
+
+	if !isTrue(c.QueryParam("all")) {
+		q = q.IsDevelopedBy(getRequestUserID(c))
+	}
+
+	ocs, err := h.Repo.GetClients(q)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	return c.JSON(http.StatusOK, formatOAuth2Clients(ocs))
+}
+
 // PostClientsRequest POST /clients リクエストボディ
 type PostClientsRequest struct {
 	Name        string             `json:"name"`

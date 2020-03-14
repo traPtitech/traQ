@@ -101,9 +101,7 @@ func (h *Handlers) DeleteMyToken(c echo.Context) error {
 
 // GetClients GET /clients
 func (h *Handlers) GetClients(c echo.Context) error {
-	userID := getRequestUserID(c)
-
-	oc, err := h.Repo.GetClientsByUser(userID)
+	oc, err := h.Repo.GetClients(repository.GetClientsQuery{}.IsDevelopedBy(getRequestUserID(c)))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

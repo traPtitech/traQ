@@ -135,7 +135,7 @@ func CheckClientAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Midd
 			oc := c.Get(consts.KeyParamClient).(*model.OAuth2Client)
 
 			// アクセス権確認
-			if oc.CreatorID != user.ID {
+			if oc.CreatorID != user.ID { // TODO 管理者権限
 				return herror.Forbidden()
 			}
 

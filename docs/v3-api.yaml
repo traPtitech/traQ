@@ -2308,7 +2308,7 @@ paths:
           description: 全てのクライアントを取得するかどうか
       description: |-
         自身が開発者のOAuth2クライアントのリストを取得します。
-        全てのクライアントを取得する場合は、権限が必要です。
+        `all`が`true`の場合、全開発者の全クライアントのリストを返します。
     post:
       summary: OAuth2クライアントを作成
       responses:

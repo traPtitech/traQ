@@ -20,13 +20,14 @@ func (repo *GormRepository) GetClient(id string) (*model.OAuth2Client, error) {
 	return oc, nil
 }
 
-// GetClientsByUser implements OAuth2Repository interface.
-func (repo *GormRepository) GetClientsByUser(userID uuid.UUID) ([]*model.OAuth2Client, error) {
+// GetClients implements OAuth2Repository interface.
+func (repo *GormRepository) GetClients(query GetClientsQuery) ([]*model.OAuth2Client, error) {
 	cs := make([]*model.OAuth2Client, 0)
-	if userID == uuid.Nil {
-		return cs, nil
+	tx := repo.db
+	if query.DeveloperID.Valid {
+		tx = tx.Where("creator_id = ?", query.DeveloperID.UUID)
 	}
-	return cs, repo.db.Where(&model.OAuth2Client{CreatorID: userID}).Find(&cs).Error
+	return cs, tx.Find(&cs).Error
 }
 
 // SaveClient implements OAuth2Repository interface.

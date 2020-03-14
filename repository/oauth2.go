@@ -16,6 +16,15 @@ type UpdateClientArgs struct {
 	Scopes       model.AccessScopes
 }
 
+type GetClientsQuery struct {
+	DeveloperID uuid.NullUUID
+}
+
+func (q GetClientsQuery) IsDevelopedBy(userID uuid.UUID) GetClientsQuery {
+	q.DeveloperID = uuid.NullUUID{Valid: true, UUID: userID}
+	return q
+}
+
 // OAuth2Repository OAuth2用リポジトリ
 type OAuth2Repository interface {
 	// GetClient 指定したIDのクライアントを取得します
@@ -24,12 +33,11 @@ type OAuth2Repository interface {
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetClient(id string) (*model.OAuth2Client, error)
-	// GetClientsByUser 指定した登録者のクライアントを全て取得します
+	// GetClients 指定したクライアントを全て取得します
 	//
 	// 成功した場合、クライアントの配列とnilを返します。
-	// 存在しないユーザーを指定した場合、空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetClientsByUser(userID uuid.UUID) ([]*model.OAuth2Client, error)
+	GetClients(query GetClientsQuery) ([]*model.OAuth2Client, error)
 	// SaveClient クライアントを保存します
 	//
 	// 成功した場合、nilを返します。

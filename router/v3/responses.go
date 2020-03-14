@@ -396,6 +396,14 @@ func formatOAuth2Client(oc *model.OAuth2Client) *OAuth2Client {
 	}
 }
 
+func formatOAuth2Clients(ocs []*model.OAuth2Client) []*OAuth2Client {
+	arr := make([]*OAuth2Client, len(ocs))
+	for i, oc := range ocs {
+		arr[i] = formatOAuth2Client(oc)
+	}
+	return arr
+}
+
 type OAuth2ClientDetail struct {
 	ID          string             `json:"id"`
 	Name        string             `json:"name"`
