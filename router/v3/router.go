@@ -252,7 +252,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiClientsCID := apiClients.Group("/:clientID", retrieve.ClientID())
 			{
 				apiClientsCID.GET("", h.GetClient, requires(permission.GetClients))
-				apiClientsCID.PATCH("", NotImplemented, requiresClientAccessPerm, requires(permission.EditMyClient))
+				apiClientsCID.PATCH("", h.EditClient, requiresClientAccessPerm, requires(permission.EditMyClient))
 				apiClientsCID.DELETE("", h.DeleteClient, requiresClientAccessPerm, requires(permission.DeleteMyClient))
 			}
 		}

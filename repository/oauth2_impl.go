@@ -35,19 +35,58 @@ func (repo *GormRepository) SaveClient(client *model.OAuth2Client) error {
 }
 
 // UpdateClient implements OAuth2Repository interface.
-func (repo *GormRepository) UpdateClient(client *model.OAuth2Client) error {
-	if len(client.ID) == 0 {
+func (repo *GormRepository) UpdateClient(clientID string, args UpdateClientArgs) error {
+	if len(clientID) == 0 {
 		return ErrNilID
 	}
-	return repo.db.Model(&model.OAuth2Client{ID: client.ID}).Updates(map[string]interface{}{
-		"name":         client.Name,
-		"description":  client.Description,
-		"confidential": client.Confidential,
-		"creator_id":   client.CreatorID,
-		"secret":       client.Secret,
-		"redirect_uri": client.RedirectURI,
-		"scopes":       client.Scopes,
-	}).Error
+	return repo.db.Transaction(func(tx *gorm.DB) error {
+		var oc model.OAuth2Client
+		if err := repo.db.Where(&model.OAuth2Client{ID: clientID}).First(&oc).Error; err != nil {
+			return convertError(err)
+		}
+
+		changes := map[string]interface{}{}
+		if args.Name.Valid {
+			changes["name"] = args.Name.String
+		}
+		if args.Description.Valid {
+			changes["description"] = args.Description.String
+		}
+		if args.Secret.Valid {
+			changes["secret"] = args.Secret.String
+		}
+		if args.Confidential.Valid {
+			changes["confidential"] = args.Confidential.Bool
+		}
+		if args.Scopes != nil {
+			changes["scopes"] = args.Scopes
+		}
+		if args.CallbackURL.Valid {
+			changes["redirect_uri"] = args.CallbackURL.String
+		}
+		if args.DeveloperID.Valid {
+			// 作成者検証
+			var user model.User
+			if err := tx.Where("id = ?", args.DeveloperID.UUID).First(&user).Error; err != nil {
+				if gorm.IsRecordNotFoundError(err) {
+					return ArgError("args.DeveloperID", "the Developer is not found")
+				}
+				return err
+			}
+			if !(user.IsActive() && !user.Bot) {
+				return ArgError("args.DeveloperID", "invalid User")
+			}
+
+			changes["creator_id"] = args.DeveloperID.UUID
+		}
+
+		if len(changes) > 0 {
+			if err := tx.Model(&oc).Updates(changes).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // DeleteClient implements OAuth2Repository interface.

@@ -2427,25 +2427,8 @@ func (repo *TestRepository) SaveClient(client *model.OAuth2Client) error {
 	return nil
 }
 
-func (repo *TestRepository) UpdateClient(client *model.OAuth2Client) error {
-	if len(client.ID) == 0 {
-		return repository.ErrNilID
-	}
-	repo.OAuth2ClientsLock.Lock()
-	defer repo.OAuth2ClientsLock.Unlock()
-	c, ok := repo.OAuth2Clients[client.ID]
-	if ok {
-		c.UpdatedAt = time.Now()
-		c.Name = client.Name
-		c.Description = client.Description
-		c.Confidential = client.Confidential
-		c.CreatorID = client.CreatorID
-		c.Secret = client.Secret
-		c.RedirectURI = client.RedirectURI
-		c.Scopes = client.Scopes
-		repo.OAuth2Clients[client.ID] = c
-	}
-	return nil
+func (repo *TestRepository) UpdateClient(clientID string, args repository.UpdateClientArgs) error {
+	panic("implement me")
 }
 
 func (repo *TestRepository) DeleteClient(id string) error {

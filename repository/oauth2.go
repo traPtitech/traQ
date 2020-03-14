@@ -3,7 +3,18 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"gopkg.in/guregu/null.v3"
 )
+
+type UpdateClientArgs struct {
+	Name         null.String
+	Description  null.String
+	Confidential null.Bool
+	DeveloperID  uuid.NullUUID
+	Secret       null.String
+	CallbackURL  null.String
+	Scopes       model.AccessScopes
+}
 
 // OAuth2Repository OAuth2用リポジトリ
 type OAuth2Repository interface {
@@ -27,9 +38,11 @@ type OAuth2Repository interface {
 	// UpdateClient クライアント情報を更新します
 	//
 	// 成功した場合、nilを返します。
-	// client.IDにuuid.Nilを指定するとErrNilIDを返します。
+	// 存在しないクライアントの場合、ErrNotFoundを返します。
+	// clientIDに空文字を指定するとErrNilIDを返します。
+	// 更新内容に問題がある場合、ArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
-	UpdateClient(client *model.OAuth2Client) error
+	UpdateClient(clientID string, args UpdateClientArgs) error
 	// DeleteClient 指定したクライアントを削除します
 	//
 	// 成功した、或いは既に存在しない場合、nilを返します。

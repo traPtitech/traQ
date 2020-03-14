@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"time"
 )
@@ -187,15 +188,15 @@ func (h *Handlers) GetClient(c echo.Context) error {
 
 // PatchClientRequest PATCH /clients/:clientID リクエストボディ
 type PatchClientRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	RedirectURI string `json:"redirectUri"`
+	Name        null.String `json:"name"`
+	Description null.String `json:"description"`
+	RedirectURI null.String `json:"redirectUri"`
 }
 
 func (r PatchClientRequest) Validate() error {
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, vd.RuneLength(1, 32)),
-		vd.Field(&r.Description),
+		vd.Field(&r.Description, vd.RuneLength(1, 1000)),
 		vd.Field(&r.RedirectURI, is.URL),
 	)
 }
@@ -209,19 +210,12 @@ func (h *Handlers) PatchClient(c echo.Context) error {
 		return err
 	}
 
-	if len(req.Name) > 0 {
-		oc.Name = req.Name
+	args := repository.UpdateClientArgs{
+		Name:        req.Name,
+		Description: req.Description,
+		CallbackURL: req.RedirectURI,
 	}
-
-	if len(req.Description) > 0 {
-		oc.Description = req.Description
-	}
-
-	if len(req.RedirectURI) > 0 {
-		oc.RedirectURI = req.RedirectURI
-	}
-
-	if err := h.Repo.UpdateClient(oc); err != nil {
+	if err := h.Repo.UpdateClient(oc.ID, args); err != nil {
 		return herror.InternalServerError(err)
 	}
 
