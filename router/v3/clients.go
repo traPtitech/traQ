@@ -6,6 +6,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils"
@@ -77,7 +78,8 @@ func (h *Handlers) GetClient(c echo.Context) error {
 	oc := getParamClient(c)
 
 	if isTrue(c.QueryParam("detail")) {
-		if oc.CreatorID != getRequestUserID(c) { // TODO 管理者権限
+		user := getRequestUser(c)
+		if !h.RBAC.IsGranted(user.Role, permission.ManageOthersClient) && oc.CreatorID != user.ID {
 			return herror.Forbidden()
 		}
 		return c.JSON(http.StatusOK, formatOAuth2ClientDetail(oc))
