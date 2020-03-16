@@ -89,7 +89,7 @@ func setup(t *testing.T, repo string) (Repository, *assert.Assertions, *require.
 	return r, assert, require
 }
 
-func setupWithUserAndChannel(t *testing.T, repo string) (Repository, *assert.Assertions, *require.Assertions, *model.User, *model.Channel) {
+func setupWithUserAndChannel(t *testing.T, repo string) (Repository, *assert.Assertions, *require.Assertions, model.UserInfo, *model.Channel) {
 	t.Helper()
 	r, assert, require := setup(t, repo)
 	return r, assert, require, mustMakeUser(t, r, random), mustMakeChannel(t, r, random)
@@ -101,7 +101,7 @@ func setupWithChannel(t *testing.T, repo string) (Repository, *assert.Assertions
 	return r, assert, require, mustMakeChannel(t, r, random)
 }
 
-func setupWithUser(t *testing.T, repo string) (Repository, *assert.Assertions, *require.Assertions, *model.User) {
+func setupWithUser(t *testing.T, repo string) (Repository, *assert.Assertions, *require.Assertions, model.UserInfo) {
 	t.Helper()
 	r, assert, require := setup(t, repo)
 	return r, assert, require, mustMakeUser(t, r, random)
@@ -155,7 +155,7 @@ func mustMakeMessageUnread(t *testing.T, repo Repository, userID, messageID uuid
 	require.NoError(t, repo.SetMessageUnread(userID, messageID, false))
 }
 
-func mustMakeUser(t *testing.T, repo Repository, userName string) *model.User {
+func mustMakeUser(t *testing.T, repo Repository, userName string) model.UserInfo {
 	t.Helper()
 	if userName == random {
 		userName = utils.RandAlphabetAndNumberString(32)

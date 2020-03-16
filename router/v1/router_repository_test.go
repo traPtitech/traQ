@@ -212,7 +212,7 @@ func (repo *TestRepository) GetFS() storage.FileStorage {
 	return repo.FS
 }
 
-func (repo *TestRepository) CreateUser(name, password string, role string) (*model.User, error) {
+func (repo *TestRepository) CreateUser(name, password string, role string) (model.UserInfo, error) {
 	repo.UsersLock.Lock()
 	defer repo.UsersLock.Unlock()
 
@@ -223,8 +223,9 @@ func (repo *TestRepository) CreateUser(name, password string, role string) (*mod
 	}
 
 	salt := utils.GenerateSalt()
+	uid := uuid.Must(uuid.NewV4())
 	user := model.User{
-		ID:        uuid.Must(uuid.NewV4()),
+		ID:        uid,
 		Name:      name,
 		Password:  hex.EncodeToString(utils.HashPassword(password, salt)),
 		Salt:      hex.EncodeToString(salt),
@@ -233,6 +234,10 @@ func (repo *TestRepository) CreateUser(name, password string, role string) (*mod
 		Role:      role,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
+		Profile: &model.UserProfile{
+			UserID:    uid,
+			UpdatedAt: time.Now(),
+		},
 	}
 
 	if err := user.Validate(); err != nil {
@@ -249,7 +254,7 @@ func (repo *TestRepository) CreateUser(name, password string, role string) (*mod
 	return &user, nil
 }
 
-func (repo *TestRepository) GetUser(id uuid.UUID) (*model.User, error) {
+func (repo *TestRepository) GetUser(id uuid.UUID, withProfile bool) (model.UserInfo, error) {
 	repo.UsersLock.RLock()
 	u, ok := repo.Users[id]
 	repo.UsersLock.RUnlock()
@@ -259,7 +264,7 @@ func (repo *TestRepository) GetUser(id uuid.UUID) (*model.User, error) {
 	return &u, nil
 }
 
-func (repo *TestRepository) GetUserByName(name string) (*model.User, error) {
+func (repo *TestRepository) GetUserByName(name string, withProfile bool) (model.UserInfo, error) {
 	repo.UsersLock.RLock()
 	defer repo.UsersLock.RUnlock()
 	for _, u := range repo.Users {
@@ -271,8 +276,8 @@ func (repo *TestRepository) GetUserByName(name string) (*model.User, error) {
 	return nil, repository.ErrNotFound
 }
 
-func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]*model.User, error) {
-	result := make([]*model.User, 0, len(repo.Users))
+func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]model.UserInfo, error) {
+	result := make([]model.UserInfo, 0, len(repo.Users))
 	repo.UsersLock.RLock()
 	repo.PrivateChannelMembersLock.RLock()
 	repo.UserGroupMembersLock.RLock()
@@ -387,7 +392,8 @@ func (repo *TestRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserA
 		if len(args.TwitterID.String) > 0 && !validator.TwitterIDRegex.MatchString(args.TwitterID.String) {
 			return repository.ArgError("args.TwitterID", "invalid TwitterID")
 		}
-		u.TwitterID = args.TwitterID.String
+		u.Profile.TwitterID = args.TwitterID.String
+		u.Profile.UpdatedAt = time.Now()
 	}
 	if args.Role.Valid {
 		u.Role = args.Role.String
@@ -440,8 +446,8 @@ func (repo *TestRepository) UpdateUserLastOnline(id uuid.UUID, t time.Time) (err
 	repo.UsersLock.Lock()
 	u, ok := repo.Users[id]
 	if ok {
-		u.LastOnline = null.TimeFrom(t)
-		u.UpdatedAt = time.Now()
+		u.Profile.LastOnline = null.TimeFrom(t)
+		u.Profile.UpdatedAt = time.Now()
 		repo.Users[id] = u
 	}
 	repo.UsersLock.Unlock()
@@ -2210,6 +2216,10 @@ func (repo *TestRepository) CreateWebhook(name, description string, channelID, c
 		Role:        role.Bot,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
+		Profile: &model.UserProfile{
+			UserID:    uid,
+			UpdatedAt: time.Now(),
+		},
 	}
 	wb := model.WebhookBot{
 		ID:          bid,

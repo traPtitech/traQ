@@ -29,10 +29,10 @@ func (h *Handlers) GetWebhooks(c echo.Context) error {
 		list []model.Webhook
 		err  error
 	)
-	if c.QueryParam("all") == "1" && h.RBAC.IsGranted(user.Role, permission.AccessOthersWebhook) {
+	if c.QueryParam("all") == "1" && h.RBAC.IsGranted(user.GetRole(), permission.AccessOthersWebhook) {
 		list, err = h.Repo.GetAllWebhooks()
 	} else {
-		list, err = h.Repo.GetWebhooksByCreator(user.ID)
+		list, err = h.Repo.GetWebhooksByCreator(user.GetID())
 	}
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -201,7 +201,7 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 	w := getWebhookFromContext(c)
 
 	// ユーザー取得
-	user, err := h.Repo.GetUser(w.GetBotUserID())
+	user, err := h.Repo.GetUser(w.GetBotUserID(), false)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

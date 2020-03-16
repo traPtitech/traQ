@@ -53,9 +53,15 @@ comments:
       status: アカウント状態
       bot: BOTユーザーかどうか
       role: ユーザーロール
+      created_at: 作成日時
+      updated_at: 更新日時
+  - table: user_profiles
+    tableComment: ユーザープロフィールテーブル
+    columnComments:
+      user_id: ユーザーUUID
+      bio: bio
       twitter_id: Twitter ID
       last_online: 最終オンライン日時
-      created_at: 作成日時
       updated_at: 更新日時
   - table: channels
     tableComment: チャンネルテーブル

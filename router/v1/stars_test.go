@@ -13,7 +13,7 @@ func TestHandlers_GetStars(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
 	channel := mustMakeChannel(t, repo, random)
-	mustStarChannel(t, repo, testUser.ID, channel.ID)
+	mustStarChannel(t, repo, testUser.GetID(), channel.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -58,7 +58,7 @@ func TestHandlers_PutStars(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		a, err := repo.GetStaredChannels(testUser.ID)
+		a, err := repo.GetStaredChannels(testUser.GetID())
 		require.NoError(t, err)
 		assert.Len(t, a, 1)
 		assert.Contains(t, a, channel.ID)
@@ -70,7 +70,7 @@ func TestHandlers_DeleteStars(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
 	channel := mustMakeChannel(t, repo, random)
-	mustStarChannel(t, repo, testUser.ID, channel.ID)
+	mustStarChannel(t, repo, testUser.GetID(), channel.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -87,7 +87,7 @@ func TestHandlers_DeleteStars(t *testing.T) {
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNoContent)
-		a, err := repo.GetStaredChannels(testUser.ID)
+		a, err := repo.GetStaredChannels(testUser.GetID())
 		require.NoError(t, err)
 		assert.Empty(t, a)
 	})

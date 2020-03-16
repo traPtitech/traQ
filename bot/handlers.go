@@ -36,7 +36,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	user, err := p.repo.GetUser(m.UserID)
+	user, err := p.repo.GetUser(m.UserID, false)
 	if err != nil {
 		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", m.UserID))
 		return
@@ -140,7 +140,7 @@ func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
 		p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", channelID))
 		return
 	}
-	user, err := p.repo.GetUser(ch.CreatorID)
+	user, err := p.repo.GetUser(ch.CreatorID, false)
 	if err != nil && err != repository.ErrNotFound {
 		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", ch.CreatorID))
 		return
@@ -167,7 +167,7 @@ func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
 }
 
 func userCreatedHandler(p *Processor, _ string, fields hub.Fields) {
-	user := fields["user"].(*model.User)
+	user := fields["user"].(model.UserInfo)
 
 	bots, err := p.repo.GetBots(repository.BotsQuery{}.Privileged().Active().Subscribe(model.BotEventUserCreated))
 	if err != nil {
@@ -200,7 +200,7 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", ch.ID))
 			return
 		}
-		user, err := p.repo.GetUser(ch.CreatorID)
+		user, err := p.repo.GetUser(ch.CreatorID, false)
 		if err != nil {
 			p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", ch.CreatorID))
 			return
@@ -239,13 +239,13 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	chCreator, err := p.repo.GetUser(ch.CreatorID)
+	chCreator, err := p.repo.GetUser(ch.CreatorID, false)
 	if err != nil && err != repository.ErrNotFound {
 		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", ch.CreatorID))
 		return
 	}
 
-	user, err := p.repo.GetUser(updaterID)
+	user, err := p.repo.GetUser(updaterID, false)
 	if err != nil {
 		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", updaterID))
 		return
@@ -271,9 +271,9 @@ func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	var user *model.User
+	var user model.UserInfo
 	if !stamp.IsSystemStamp() {
-		user, err = p.repo.GetUser(stamp.CreatorID)
+		user, err = p.repo.GetUser(stamp.CreatorID, false)
 		if err != nil {
 			p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", stamp.CreatorID))
 			return

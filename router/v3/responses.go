@@ -60,17 +60,17 @@ type User struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
-func formatUsers(users []*model.User) []User {
+func formatUsers(users []model.UserInfo) []User {
 	res := make([]User, len(users))
 	for i, user := range users {
 		res[i] = User{
-			ID:          user.ID,
-			Name:        user.Name,
+			ID:          user.GetID(),
+			Name:        user.GetName(),
 			DisplayName: user.GetResponseDisplayName(),
-			IconFileID:  user.Icon,
-			Bot:         user.Bot,
-			State:       user.Status.Int(),
-			UpdatedAt:   user.UpdatedAt,
+			IconFileID:  user.GetIconFileID(),
+			Bot:         user.IsBot(),
+			State:       user.GetState().Int(),
+			UpdatedAt:   user.GetUpdatedAt(),
 		}
 	}
 	return res
@@ -91,20 +91,20 @@ type UserDetail struct {
 	Bio         string      `json:"bio"`
 }
 
-func formatUserDetail(user *model.User, uts []*model.UsersTag, g []uuid.UUID) *UserDetail {
+func formatUserDetail(user model.UserInfo, uts []*model.UsersTag, g []uuid.UUID) *UserDetail {
 	return &UserDetail{
-		ID:          user.ID,
-		State:       user.Status.Int(),
-		Bot:         user.Bot,
-		IconFileID:  user.Icon,
+		ID:          user.GetID(),
+		State:       user.GetState().Int(),
+		Bot:         user.IsBot(),
+		IconFileID:  user.GetIconFileID(),
 		DisplayName: user.GetResponseDisplayName(),
-		Name:        user.Name,
-		TwitterID:   user.TwitterID,
-		LastOnline:  user.LastOnline.Ptr(),
-		UpdatedAt:   user.UpdatedAt,
+		Name:        user.GetName(),
+		TwitterID:   user.GetTwitterID(),
+		LastOnline:  user.GetLastOnline().Ptr(),
+		UpdatedAt:   user.GetUpdatedAt(),
 		Tags:        formatUserTags(uts),
 		Groups:      g,
-		Bio:         "", // TODO
+		Bio:         user.GetBio(),
 	}
 }
 

@@ -29,7 +29,7 @@ type messagePayload struct {
 	UpdatedAt time.Time               `json:"updatedAt"`
 }
 
-func makeMessagePayload(message *model.Message, user *model.User, embedded []*message.EmbeddedInfo, plain string) messagePayload {
+func makeMessagePayload(message *model.Message, user model.UserInfo, embedded []*message.EmbeddedInfo, plain string) messagePayload {
 	return messagePayload{
 		ID:        message.ID,
 		User:      makeUserPayload(user),
@@ -52,7 +52,7 @@ type channelPayload struct {
 	UpdatedAt time.Time   `json:"updatedAt"`
 }
 
-func makeChannelPayload(ch *model.Channel, path string, user *model.User) channelPayload {
+func makeChannelPayload(ch *model.Channel, path string, user model.UserInfo) channelPayload {
 	return channelPayload{
 		ID:        ch.ID,
 		Name:      ch.Name,
@@ -72,20 +72,17 @@ type userPayload struct {
 	Bot         bool      `json:"bot"`
 }
 
-func makeUserPayload(user *model.User) userPayload {
+func makeUserPayload(user model.UserInfo) userPayload {
 	if user == nil {
 		return userPayload{}
 	}
 
 	payload := userPayload{
-		ID:          user.ID,
-		Name:        user.Name,
-		DisplayName: user.DisplayName,
-		IconID:      user.Icon,
-		Bot:         user.Bot,
-	}
-	if len(payload.DisplayName) == 0 {
-		payload.DisplayName = payload.Name
+		ID:          user.GetID(),
+		Name:        user.GetName(),
+		DisplayName: user.GetResponseDisplayName(),
+		IconID:      user.GetIconFileID(),
+		Bot:         user.IsBot(),
 	}
 	return payload
 }

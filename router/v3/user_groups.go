@@ -46,7 +46,7 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 		return err
 	}
 
-	if req.Type == "grade" && !h.RBAC.IsGranted(getRequestUser(c).Role, permission.CreateSpecialUserGroup) {
+	if req.Type == "grade" && !h.RBAC.IsGranted(getRequestUser(c).GetRole(), permission.CreateSpecialUserGroup) {
 		// 学年グループは権限が必要
 		return herror.Forbidden("you are not permitted to create groups of this type")
 	}
@@ -95,7 +95,7 @@ func (h *Handlers) EditUserGroup(c echo.Context) error {
 		return err
 	}
 
-	if req.Type.ValueOrZero() == "grade" && !h.RBAC.IsGranted(getRequestUser(c).Role, permission.CreateSpecialUserGroup) {
+	if req.Type.ValueOrZero() == "grade" && !h.RBAC.IsGranted(getRequestUser(c).GetRole(), permission.CreateSpecialUserGroup) {
 		// 学年グループは権限が必要
 		return herror.Forbidden("you are not permitted to create groups of this type")
 	}

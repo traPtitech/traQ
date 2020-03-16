@@ -79,7 +79,7 @@ func (h *Handlers) GetClient(c echo.Context) error {
 
 	if isTrue(c.QueryParam("detail")) {
 		user := getRequestUser(c)
-		if !h.RBAC.IsGranted(user.Role, permission.ManageOthersClient) && oc.CreatorID != user.ID {
+		if !h.RBAC.IsGranted(user.GetRole(), permission.ManageOthersClient) && oc.CreatorID != user.GetID() {
 			return herror.Forbidden()
 		}
 		return c.JSON(http.StatusOK, formatOAuth2ClientDetail(oc))

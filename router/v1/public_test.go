@@ -34,13 +34,13 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 		t.Parallel()
 		_, require := assertAndRequire(t)
 
-		_, src, err := repo.OpenFile(testUser.Icon)
+		_, src, err := repo.OpenFile(testUser.GetIconFileID())
 		require.NoError(err)
 		i, err := ioutil.ReadAll(src)
 		require.NoError(err)
 
 		e := makeExp(t, server)
-		e.GET("/api/1.0/public/icon/{username}", testUser.Name).
+		e.GET("/api/1.0/public/icon/{username}", testUser.GetName()).
 			Expect().
 			Status(http.StatusOK).
 			Header(echo.HeaderContentLength).
@@ -51,11 +51,11 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 		t.Parallel()
 		_, require := assertAndRequire(t)
 
-		meta, err := repo.GetFileMeta(testUser.Icon)
+		meta, err := repo.GetFileMeta(testUser.GetIconFileID())
 		require.NoError(err)
 
 		e := makeExp(t, server)
-		e.GET("/api/1.0/public/icon/{username}", testUser.Name).
+		e.GET("/api/1.0/public/icon/{username}", testUser.GetName()).
 			WithHeader("If-None-Match", strconv.Quote(meta.Hash)).
 			Expect().
 			Status(http.StatusNotModified)

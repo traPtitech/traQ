@@ -84,7 +84,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 	m := getParamMessage(c)
 
 	if m.UserID != userID {
-		mUser, err := h.Repo.GetUser(m.UserID)
+		mUser, err := h.Repo.GetUser(m.UserID, false)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -94,7 +94,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 			return herror.Forbidden("you are not allowed to delete this message")
 		case model.UserTypeBot:
 			// BOTのメッセージの削除権限の確認
-			wh, err := h.Repo.GetBotByBotUserID(mUser.ID)
+			wh, err := h.Repo.GetBotByBotUserID(mUser.GetID())
 			if err != nil {
 				switch err {
 				case repository.ErrNotFound:
@@ -109,7 +109,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 			}
 		case model.UserTypeWebhook:
 			// Webhookのメッセージの削除権限の確認
-			wh, err := h.Repo.GetWebhookByBotUserID(mUser.ID)
+			wh, err := h.Repo.GetWebhookByBotUserID(mUser.GetID())
 			if err != nil {
 				switch err {
 				case repository.ErrNotFound:

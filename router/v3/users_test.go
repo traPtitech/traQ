@@ -4,7 +4,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/sessions"
 	"net/http"
 	"strings"
@@ -15,7 +14,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 	t.Parallel()
 	path := "/api/v3/users/me/password"
 	repo, server := Setup(t, common)
-	commonSession := S(t, CreateUser(t, repo, random).ID)
+	commonSession := S(t, CreateUser(t, repo, random).GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -82,13 +81,13 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		e := R(t, server)
 		new := strings.Repeat("a", 20)
 		e.PUT(path).
-			WithCookie(sessions.CookieName, S(t, user.ID)).
+			WithCookie(sessions.CookieName, S(t, user.GetID())).
 			WithJSON(echo.Map{"password": "testtesttesttest", "newPassword": new}).
 			Expect().
 			Status(http.StatusNoContent)
 
-		u, err := repo.GetUser(user.ID)
+		u, err := repo.GetUser(user.GetID(), false)
 		require.NoError(t, err)
-		assert.NoError(t, model.AuthenticateUser(u, new))
+		assert.NoError(t, u.Authenticate(new))
 	})
 }

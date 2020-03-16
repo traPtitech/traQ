@@ -15,16 +15,18 @@ import (
 )
 
 // CreateUser implements UserRepository interface.
-func (repo *GormRepository) CreateUser(name, password, role string) (*model.User, error) {
+func (repo *GormRepository) CreateUser(name, password, role string) (model.UserInfo, error) {
 	salt := utils.GenerateSalt()
+	uid := uuid.Must(uuid.NewV4())
 	user := &model.User{
-		ID:       uuid.Must(uuid.NewV4()),
+		ID:       uid,
 		Name:     name,
 		Password: hex.EncodeToString(utils.HashPassword(password, salt)),
 		Salt:     hex.EncodeToString(salt),
 		Status:   model.UserAccountStatusActive,
 		Bot:      false,
 		Role:     role,
+		Profile:  &model.UserProfile{UserID: uid},
 	}
 
 	if err := user.Validate(); err != nil {
@@ -37,7 +39,16 @@ func (repo *GormRepository) CreateUser(name, password, role string) (*model.User
 	}
 	user.Icon = iconID
 
-	if err := repo.db.Create(user).Error; err != nil {
+	err = repo.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(user).Error; err != nil {
+			return err
+		}
+		if err := tx.Create(user.Profile).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 	repo.hub.Publish(hub.Message{
@@ -51,34 +62,44 @@ func (repo *GormRepository) CreateUser(name, password, role string) (*model.User
 }
 
 // GetUser implements UserRepository interface.
-func (repo *GormRepository) GetUser(id uuid.UUID) (*model.User, error) {
+func (repo *GormRepository) GetUser(id uuid.UUID, withProfile bool) (model.UserInfo, error) {
 	if id == uuid.Nil {
 		return nil, ErrNotFound
 	}
-	return getUser(repo.db, &model.User{ID: id})
+	return getUser(repo.db, withProfile, &model.User{ID: id})
 }
 
 // GetUserByName implements UserRepository interface.
-func (repo *GormRepository) GetUserByName(name string) (*model.User, error) {
+func (repo *GormRepository) GetUserByName(name string, withProfile bool) (model.UserInfo, error) {
 	if len(name) == 0 {
 		return nil, ErrNotFound
 	}
-	return getUser(repo.db, &model.User{Name: name})
+	return getUser(repo.db, withProfile, &model.User{Name: name})
 }
 
-func getUser(tx *gorm.DB, where interface{}) (*model.User, error) {
+func getUser(tx *gorm.DB, withProfile bool, where ...interface{}) (model.UserInfo, error) {
 	var user model.User
-	if err := tx.First(&user, where).Error; err != nil {
+	if withProfile {
+		tx = tx.Preload("Profile")
+	}
+	if err := tx.First(&user, where...).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return &user, nil
 }
 
 // GetUsers implements UserRepository interface.
-func (repo *GormRepository) GetUsers(query UsersQuery) (users []*model.User, err error) {
-	users = make([]*model.User, 0)
-	err = repo.makeGetUsersTx(query).Find(&users).Error
-	return users, err
+func (repo *GormRepository) GetUsers(query UsersQuery) (users []model.UserInfo, err error) {
+	arr := make([]*model.User, 0)
+	if err = repo.makeGetUsersTx(query).Find(&arr).Error; err != nil {
+		return nil, err
+	}
+
+	users = make([]model.UserInfo, len(arr))
+	for i, u := range arr {
+		users[i] = u
+	}
+	return users, nil
 }
 
 // GetUserIDs implements UserRepository interface.
@@ -113,6 +134,9 @@ func (repo *GormRepository) makeGetUsersTx(query UsersQuery) *gorm.DB {
 	if query.IsGMemberOf.Valid {
 		tx = tx.Joins("INNER JOIN user_group_members ON user_group_members.user_id = users.id AND user_group_members.group_id = ?", query.IsGMemberOf.UUID)
 	}
+	if query.EnableProfileLoading {
+		tx = tx.Preload("Profile")
+	}
 
 	return tx
 }
@@ -130,12 +154,10 @@ func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 	if id == uuid.Nil {
 		return ErrNilID
 	}
-	var (
-		u       model.User
-		changed bool
-	)
+	var changed bool
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(&u, model.User{ID: id}).Error; err != nil {
+		var u model.User
+		if err := tx.Preload("Profile").First(&u, model.User{ID: id}).Error; err != nil {
 			return convertError(err)
 		}
 
@@ -146,21 +168,31 @@ func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 			}
 			changes["display_name"] = args.DisplayName.String
 		}
-		if args.TwitterID.Valid {
-			if len(args.TwitterID.String) > 0 && !validator.TwitterIDRegex.MatchString(args.TwitterID.String) {
-				return ArgError("args.TwitterID", "invalid TwitterID")
-			}
-			changes["twitter_id"] = args.TwitterID.String
-		}
 		if args.Role.Valid {
 			changes["role"] = args.Role.String
 		}
 		if args.UserState.Valid {
 			changes["status"] = args.UserState.State.Int()
 		}
-
 		if len(changes) > 0 {
 			if err := tx.Model(&u).Updates(changes).Error; err != nil {
+				return err
+			}
+			changed = true
+		}
+
+		changes = map[string]interface{}{}
+		if args.TwitterID.Valid {
+			if len(args.TwitterID.String) > 0 && !validator.TwitterIDRegex.MatchString(args.TwitterID.String) {
+				return ArgError("args.TwitterID", "invalid TwitterID")
+			}
+			changes["twitter_id"] = args.TwitterID.String
+		}
+		if args.Bio.Valid {
+			changes["bio"] = args.Bio.String
+		}
+		if len(changes) > 0 {
+			if err := tx.Model(u.Profile).Updates(changes).Error; err != nil {
 				return err
 			}
 			changed = true
@@ -219,5 +251,5 @@ func (repo *GormRepository) UpdateUserLastOnline(id uuid.UUID, time time.Time) (
 	if id == uuid.Nil {
 		return ErrNilID
 	}
-	return repo.db.Model(&model.User{ID: id}).Update("last_online", null.TimeFrom(time)).Error
+	return repo.db.Model(&model.UserProfile{UserID: id}).Update("last_online", null.TimeFrom(time)).Error
 }

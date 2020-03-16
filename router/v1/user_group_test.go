@@ -14,9 +14,9 @@ func TestHandlers_GetUserGroups(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, _, adminUser := setupWithUsers(t, s1)
 
-	mustMakeUserGroup(t, repo, random, adminUser.ID)
-	mustMakeUserGroup(t, repo, random, adminUser.ID)
-	mustMakeUserGroup(t, repo, random, adminUser.ID)
+	mustMakeUserGroup(t, repo, random, adminUser.GetID())
+	mustMakeUserGroup(t, repo, random, adminUser.GetID())
+	mustMakeUserGroup(t, repo, random, adminUser.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -68,7 +68,7 @@ func TestHandlers_PostUserGroups(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		name := utils.RandAlphabetAndNumberString(20)
-		mustMakeUserGroup(t, repo, name, adminUser.ID)
+		mustMakeUserGroup(t, repo, name, adminUser.GetID())
 		e.POST("/api/1.0/groups").
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]interface{}{"name": name, "description": name}).
@@ -91,7 +91,7 @@ func TestHandlers_PostUserGroups(t *testing.T) {
 		obj.Value("groupId").String().NotEmpty()
 		obj.Value("name").String().Equal(name)
 		obj.Value("description").String().Equal(name)
-		obj.Value("adminUserId").String().Equal(user.ID.String())
+		obj.Value("adminUserId").String().Equal(user.GetID().String())
 		obj.Value("members").Array().Empty()
 	})
 }
@@ -100,8 +100,8 @@ func TestHandlers_GetUserGroup(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, adminUser := setupWithUsers(t, common5)
 
-	g := mustMakeUserGroup(t, repo, random, adminUser.ID)
-	mustAddUserToGroup(t, repo, user.ID, g.ID)
+	g := mustMakeUserGroup(t, repo, random, adminUser.GetID())
+	mustAddUserToGroup(t, repo, user.GetID(), g.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -134,7 +134,7 @@ func TestHandlers_GetUserGroup(t *testing.T) {
 		obj.Value("name").String().Equal(g.Name)
 		obj.Value("description").String().Equal(g.Description)
 		obj.Value("adminUserId").String().Equal(g.Admins[0].UserID.String())
-		obj.Value("members").Array().ContainsOnly(user.ID.String())
+		obj.Value("members").Array().ContainsOnly(user.GetID().String())
 	})
 }
 
@@ -143,7 +143,7 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 	repo, server, _, _, session, _, user, adminUser := setupWithUsers(t, common5)
 
 	user2 := mustMakeUser(t, repo, random)
-	g := mustMakeUserGroup(t, repo, random, user.ID)
+	g := mustMakeUserGroup(t, repo, random, user.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -177,7 +177,7 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		name := utils.RandAlphabetAndNumberString(20)
-		mustMakeUserGroup(t, repo, name, adminUser.ID)
+		mustMakeUserGroup(t, repo, name, adminUser.GetID())
 		e.PATCH("/api/1.0/groups/{groupID}", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]interface{}{"name": name}).
@@ -189,7 +189,7 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/groups/{groupID}", g.ID.String()).
-			WithCookie(sessions.CookieName, generateSession(t, user2.ID)).
+			WithCookie(sessions.CookieName, generateSession(t, user2.GetID())).
 			WithJSON(map[string]interface{}{"description": "aaa"}).
 			Expect().
 			Status(http.StatusForbidden)
@@ -198,7 +198,7 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		g := mustMakeUserGroup(t, repo, random, user.ID)
+		g := mustMakeUserGroup(t, repo, random, user.GetID())
 		name := utils.RandAlphabetAndNumberString(20)
 		e.PATCH("/api/1.0/groups/{groupID}", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
@@ -219,7 +219,7 @@ func TestHandlers_DeleteUserGroup(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common5)
 
-	g := mustMakeUserGroup(t, repo, random, user.ID)
+	g := mustMakeUserGroup(t, repo, random, user.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -243,14 +243,14 @@ func TestHandlers_DeleteUserGroup(t *testing.T) {
 		user2 := mustMakeUser(t, repo, random)
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/groups/{groupID}", g.ID.String()).
-			WithCookie(sessions.CookieName, generateSession(t, user2.ID)).
+			WithCookie(sessions.CookieName, generateSession(t, user2.GetID())).
 			Expect().
 			Status(http.StatusForbidden)
 	})
 
 	t.Run("ok", func(t *testing.T) {
 		t.Parallel()
-		g := mustMakeUserGroup(t, repo, random, user.ID)
+		g := mustMakeUserGroup(t, repo, random, user.GetID())
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/groups/{groupID}", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
@@ -266,8 +266,8 @@ func TestHandlers_GetUserGroupMembers(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, adminUser := setupWithUsers(t, common5)
 
-	g := mustMakeUserGroup(t, repo, random, adminUser.ID)
-	mustAddUserToGroup(t, repo, user.ID, g.ID)
+	g := mustMakeUserGroup(t, repo, random, adminUser.GetID())
+	mustAddUserToGroup(t, repo, user.GetID(), g.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -295,21 +295,21 @@ func TestHandlers_GetUserGroupMembers(t *testing.T) {
 			Status(http.StatusOK).
 			JSON().
 			Array().
-			ContainsOnly(user.ID.String())
+			ContainsOnly(user.GetID().String())
 	})
 }
 
 func TestHandlers_PostUserGroupMembers(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common5)
-	g := mustMakeUserGroup(t, repo, random, user.ID)
+	g := mustMakeUserGroup(t, repo, random, user.GetID())
 	user2 := mustMakeUser(t, repo, random)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		e.POST("/api/1.0/groups/{groupID}/members", g.ID.String()).
-			WithJSON(map[string]interface{}{"userId": user.ID}).
+			WithJSON(map[string]interface{}{"userId": user.GetID()}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -319,7 +319,7 @@ func TestHandlers_PostUserGroupMembers(t *testing.T) {
 		e := makeExp(t, server)
 		e.POST("/api/1.0/groups/{groupID}/members", uuid.Must(uuid.NewV4())).
 			WithCookie(sessions.CookieName, session).
-			WithJSON(map[string]interface{}{"userId": user.ID}).
+			WithJSON(map[string]interface{}{"userId": user.GetID()}).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -338,8 +338,8 @@ func TestHandlers_PostUserGroupMembers(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		e.POST("/api/1.0/groups/{groupID}/members", g.ID.String()).
-			WithCookie(sessions.CookieName, generateSession(t, user2.ID)).
-			WithJSON(map[string]interface{}{"userId": user.ID}).
+			WithCookie(sessions.CookieName, generateSession(t, user2.GetID())).
+			WithJSON(map[string]interface{}{"userId": user.GetID()}).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -359,13 +359,13 @@ func TestHandlers_PostUserGroupMembers(t *testing.T) {
 		e := makeExp(t, server)
 		e.POST("/api/1.0/groups/{groupID}/members", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
-			WithJSON(map[string]interface{}{"userId": user.ID}).
+			WithJSON(map[string]interface{}{"userId": user.GetID()}).
 			Expect().
 			Status(http.StatusNoContent)
 
 		ids, err := repo.GetUserIDs(repository.UsersQuery{}.GMemberOf(g.ID))
 		if assert.NoError(t, err) {
-			assert.ElementsMatch(t, ids, []uuid.UUID{user.ID})
+			assert.ElementsMatch(t, ids, []uuid.UUID{user.GetID()})
 		}
 	})
 }
@@ -373,14 +373,14 @@ func TestHandlers_PostUserGroupMembers(t *testing.T) {
 func TestHandlers_DeleteUserGroupMembers(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common5)
-	g := mustMakeUserGroup(t, repo, random, user.ID)
-	mustAddUserToGroup(t, repo, user.ID, g.ID)
+	g := mustMakeUserGroup(t, repo, random, user.GetID())
+	mustAddUserToGroup(t, repo, user.GetID(), g.ID)
 	user2 := mustMakeUser(t, repo, random)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", g.ID.String(), user.ID.String()).
+		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", g.ID.String(), user.GetID().String()).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -388,7 +388,7 @@ func TestHandlers_DeleteUserGroupMembers(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", uuid.Must(uuid.NewV4()), user.ID.String()).
+		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", uuid.Must(uuid.NewV4()), user.GetID().String()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)
@@ -406,8 +406,8 @@ func TestHandlers_DeleteUserGroupMembers(t *testing.T) {
 	t.Run("forbidden", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", g.ID.String(), user.ID.String()).
-			WithCookie(sessions.CookieName, generateSession(t, user2.ID)).
+		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", g.ID.String(), user.GetID().String()).
+			WithCookie(sessions.CookieName, generateSession(t, user2.GetID())).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -415,7 +415,7 @@ func TestHandlers_DeleteUserGroupMembers(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", g.ID.String(), user.ID.String()).
+		e.DELETE("/api/1.0/groups/{groupID}/members/{userID}", g.ID.String(), user.GetID().String()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNoContent)
@@ -431,10 +431,10 @@ func TestHandlers_GetMyBelongingGroup(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, adminUser := setupWithUsers(t, common5)
 
-	g1 := mustMakeUserGroup(t, repo, random, adminUser.ID)
-	g2 := mustMakeUserGroup(t, repo, random, adminUser.ID)
-	mustAddUserToGroup(t, repo, user.ID, g1.ID)
-	mustAddUserToGroup(t, repo, user.ID, g2.ID)
+	g1 := mustMakeUserGroup(t, repo, random, adminUser.GetID())
+	g2 := mustMakeUserGroup(t, repo, random, adminUser.GetID())
+	mustAddUserToGroup(t, repo, user.GetID(), g1.ID)
+	mustAddUserToGroup(t, repo, user.GetID(), g2.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -462,15 +462,15 @@ func TestHandlers_GetUserBelongingGroup(t *testing.T) {
 	repo, server, _, _, session, _, _, adminUser := setupWithUsers(t, common5)
 
 	user := mustMakeUser(t, repo, random)
-	g1 := mustMakeUserGroup(t, repo, random, adminUser.ID)
-	g2 := mustMakeUserGroup(t, repo, random, adminUser.ID)
-	mustAddUserToGroup(t, repo, user.ID, g1.ID)
-	mustAddUserToGroup(t, repo, user.ID, g2.ID)
+	g1 := mustMakeUserGroup(t, repo, random, adminUser.GetID())
+	g2 := mustMakeUserGroup(t, repo, random, adminUser.GetID())
+	mustAddUserToGroup(t, repo, user.GetID(), g1.ID)
+	mustAddUserToGroup(t, repo, user.GetID(), g2.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/users/{userID}/groups", user.ID.String()).
+		e.GET("/api/1.0/users/{userID}/groups", user.GetID().String()).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -487,7 +487,7 @@ func TestHandlers_GetUserBelongingGroup(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/users/{userID}/groups", user.ID.String()).
+		e.GET("/api/1.0/users/{userID}/groups", user.GetID().String()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusOK).

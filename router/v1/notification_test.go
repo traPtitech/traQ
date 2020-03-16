@@ -36,7 +36,7 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
 			WithCookie(sessions.CookieName, session).
-			WithJSON(map[string][]string{"on": {user.ID.String()}}).
+			WithJSON(map[string][]string{"on": {user.GetID().String()}}).
 			Expect().
 			Status(http.StatusNoContent)
 
@@ -47,7 +47,7 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 			users = append(users, subscription.UserID)
 		}
 
-		assert.EqualValues(t, []uuid.UUID{user.ID}, users)
+		assert.EqualValues(t, []uuid.UUID{user.GetID()}, users)
 	})
 
 	t.Run("Successful2", func(t *testing.T) {
@@ -58,7 +58,7 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
 			WithCookie(sessions.CookieName, session).
-			WithJSON(map[string][]uuid.UUID{"on": {uuid.Must(uuid.NewV4()), user.ID, uuid.Must(uuid.NewV4())}, "off": {uuid.Must(uuid.NewV4())}}).
+			WithJSON(map[string][]uuid.UUID{"on": {uuid.Must(uuid.NewV4()), user.GetID(), uuid.Must(uuid.NewV4())}, "off": {uuid.Must(uuid.NewV4())}}).
 			Expect().
 			Status(http.StatusNoContent)
 
@@ -69,19 +69,19 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 			users = append(users, subscription.UserID)
 		}
 
-		assert.EqualValues(t, []uuid.UUID{user.ID}, users)
+		assert.EqualValues(t, []uuid.UUID{user.GetID()}, users)
 	})
 
 	t.Run("Successful3", func(t *testing.T) {
 		t.Parallel()
 
 		channel := mustMakeChannel(t, repo, random)
-		mustChangeChannelSubscription(t, repo, channel.ID, user.ID)
+		mustChangeChannelSubscription(t, repo, channel.ID, user.GetID())
 
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
 			WithCookie(sessions.CookieName, session).
-			WithJSON(map[string][]string{"off": {user.ID.String()}}).
+			WithJSON(map[string][]string{"off": {user.GetID().String()}}).
 			Expect().
 			Status(http.StatusNoContent)
 
@@ -98,7 +98,7 @@ func TestHandlers_GetNotificationStatus(t *testing.T) {
 	channel := mustMakeChannel(t, repo, random)
 	user := mustMakeUser(t, repo, random)
 
-	mustChangeChannelSubscription(t, repo, channel.ID, user.ID)
+	mustChangeChannelSubscription(t, repo, channel.ID, user.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -127,13 +127,13 @@ func TestHandlers_GetNotificationChannels(t *testing.T) {
 	repo, server, _, _, session, _ := setup(t, common2)
 
 	user := mustMakeUser(t, repo, random)
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID)
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID)
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.GetID())
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/users/{userID}/notification", user.ID).
+		e.GET("/api/1.0/users/{userID}/notification", user.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -141,7 +141,7 @@ func TestHandlers_GetNotificationChannels(t *testing.T) {
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/users/{userID}/notification", user.ID).
+		e.GET("/api/1.0/users/{userID}/notification", user.GetID()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusOK).
@@ -156,8 +156,8 @@ func TestHandlers_GetMyNotificationChannels(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common2)
 
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID)
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.ID)
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.GetID())
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()

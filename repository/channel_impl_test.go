@@ -18,30 +18,30 @@ func TestGormRepository_UpdateChannel(t *testing.T) {
 
 	cases := []UpdateChannelArgs{
 		{
-			UpdaterID: user.ID,
+			UpdaterID: user.GetID(),
 			Topic:     null.StringFrom("test"),
 		},
 		{
-			UpdaterID: user.ID,
+			UpdaterID: user.GetID(),
 			Topic:     null.StringFrom(""),
 		},
 		{
-			UpdaterID:          user.ID,
+			UpdaterID:          user.GetID(),
 			Visibility:         null.BoolFrom(true),
 			ForcedNotification: null.BoolFrom(true),
 		},
 		{
-			UpdaterID:          user.ID,
+			UpdaterID:          user.GetID(),
 			Visibility:         null.BoolFrom(true),
 			ForcedNotification: null.BoolFrom(false),
 		},
 		{
-			UpdaterID:          user.ID,
+			UpdaterID:          user.GetID(),
 			Visibility:         null.BoolFrom(false),
 			ForcedNotification: null.BoolFrom(true),
 		},
 		{
-			UpdaterID:          user.ID,
+			UpdaterID:          user.GetID(),
 			Visibility:         null.BoolFrom(false),
 			ForcedNotification: null.BoolFrom(false),
 		},
@@ -78,7 +78,7 @@ func TestRepositoryImpl_GetChannelByMessageID(t *testing.T) {
 	t.Run("Exists", func(t *testing.T) {
 		t.Parallel()
 
-		message := mustMakeMessage(t, repo, user.ID, channel.ID)
+		message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		ch, err := repo.GetChannelByMessageID(message.ID)
 		if assert.NoError(t, err) {
 			assert.Equal(t, channel.ID, ch.ID)
@@ -320,8 +320,8 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 		args := ChangeChannelSubscriptionArgs{
 			UpdaterID: uuid.Nil,
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{
-				user1.ID:                model.ChannelSubscribeLevelMarkAndNotify,
-				user2.ID:                model.ChannelSubscribeLevelMarkAndNotify,
+				user1.GetID():           model.ChannelSubscribeLevelMarkAndNotify,
+				user2.GetID():           model.ChannelSubscribeLevelMarkAndNotify,
 				uuid.Must(uuid.NewV4()): model.ChannelSubscribeLevelMarkAndNotify,
 			},
 		}
@@ -332,8 +332,8 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 		args = ChangeChannelSubscriptionArgs{
 			UpdaterID: uuid.Nil,
 			Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{
-				user1.ID:                model.ChannelSubscribeLevelMarkAndNotify,
-				user2.ID:                model.ChannelSubscribeLevelNone,
+				user1.GetID():           model.ChannelSubscribeLevelMarkAndNotify,
+				user2.GetID():           model.ChannelSubscribeLevelNone,
 				uuid.Must(uuid.NewV4()): model.ChannelSubscribeLevelNone,
 			},
 		}
@@ -348,39 +348,39 @@ func TestRepositoryImpl_CreatePublicChannel(t *testing.T) {
 	repo, assert, _, user := setupWithUser(t, common)
 
 	name := utils.RandAlphabetAndNumberString(20)
-	c, err := repo.CreatePublicChannel(name, uuid.Nil, user.ID)
+	c, err := repo.CreatePublicChannel(name, uuid.Nil, user.GetID())
 	if assert.NoError(err) {
 		assert.NotEmpty(c.ID)
 		assert.Equal(name, c.Name)
-		assert.Equal(user.ID, c.CreatorID)
+		assert.Equal(user.GetID(), c.CreatorID)
 		assert.EqualValues(uuid.Nil, c.ParentID)
 		assert.True(c.IsPublic)
 		assert.True(c.IsVisible)
 		assert.False(c.IsForced)
-		assert.Equal(user.ID, c.UpdaterID)
+		assert.Equal(user.GetID(), c.UpdaterID)
 		assert.Empty(c.Topic)
 		assert.NotZero(c.CreatedAt)
 		assert.NotZero(c.UpdatedAt)
 		assert.Nil(c.DeletedAt)
 	}
 
-	_, err = repo.CreatePublicChannel(name, uuid.Nil, user.ID)
+	_, err = repo.CreatePublicChannel(name, uuid.Nil, user.GetID())
 	assert.Equal(ErrAlreadyExists, err)
 
-	_, err = repo.CreatePublicChannel("ああああ", uuid.Nil, user.ID)
+	_, err = repo.CreatePublicChannel("ああああ", uuid.Nil, user.GetID())
 	assert.Error(err)
 
-	c2, err := repo.CreatePublicChannel("Parent2", c.ID, user.ID)
+	c2, err := repo.CreatePublicChannel("Parent2", c.ID, user.GetID())
 	assert.NoError(err)
-	c3, err := repo.CreatePublicChannel("Parent3", c2.ID, user.ID)
+	c3, err := repo.CreatePublicChannel("Parent3", c2.ID, user.GetID())
 	assert.NoError(err)
-	c4, err := repo.CreatePublicChannel("Parent4", c3.ID, user.ID)
+	c4, err := repo.CreatePublicChannel("Parent4", c3.ID, user.GetID())
 	assert.NoError(err)
-	_, err = repo.CreatePublicChannel("Parent4", c3.ID, user.ID)
+	_, err = repo.CreatePublicChannel("Parent4", c3.ID, user.GetID())
 	assert.Equal(ErrAlreadyExists, err)
-	c5, err := repo.CreatePublicChannel("Parent5", c4.ID, user.ID)
+	c5, err := repo.CreatePublicChannel("Parent5", c4.ID, user.GetID())
 	assert.NoError(err)
-	_, err = repo.CreatePublicChannel("Parent6", c5.ID, user.ID)
+	_, err = repo.CreatePublicChannel("Parent6", c5.ID, user.GetID())
 	assert.Equal(ErrChannelDepthLimitation, err)
 }
 
@@ -406,9 +406,9 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		t.Parallel()
 
 		for i := 0; i < 14; i++ {
-			mustMakeMessage(t, repo, user.ID, channel.ID)
+			mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		}
-		require.NoError(t, repo.DeleteMessage(mustMakeMessage(t, repo, user.ID, channel.ID).ID))
+		require.NoError(t, repo.DeleteMessage(mustMakeMessage(t, repo, user.GetID(), channel.ID).ID))
 
 		stats, err := repo.GetChannelStats(channel.ID)
 		if assert.NoError(t, err) {

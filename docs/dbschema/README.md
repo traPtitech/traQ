@@ -31,10 +31,11 @@
 | [user_group_admins](user_group_admins.md) | 2 | ユーザーグループ管理者テーブル | BASE TABLE |
 | [user_group_members](user_group_members.md) | 3 | ユーザーグループメンバーテーブル | BASE TABLE |
 | [user_groups](user_groups.md) | 6 | ユーザーグループテーブル | BASE TABLE |
+| [user_profiles](user_profiles.md) | 5 | ユーザープロフィールテーブル | BASE TABLE |
 | [user_role_inheritances](user_role_inheritances.md) | 2 | ユーザーロール継承テーブル | BASE TABLE |
 | [user_role_permissions](user_role_permissions.md) | 2 | ユーザーロールパーミッションテーブル | BASE TABLE |
 | [user_roles](user_roles.md) | 3 | ユーザーロールテーブル | BASE TABLE |
-| [users](users.md) | 13 | ユーザーテーブル | BASE TABLE |
+| [users](users.md) | 11 | ユーザーテーブル | BASE TABLE |
 | [users_private_channels](users_private_channels.md) | 2 | プライベートチャンネル参加者テーブル | BASE TABLE |
 | [users_subscribe_channels](users_subscribe_channels.md) | 4 | チャンネル購読者テーブル | BASE TABLE |
 | [users_tags](users_tags.md) | 5 | ユーザータグテーブル | BASE TABLE |

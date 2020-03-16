@@ -152,7 +152,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.IsFileAccessible(uuid.Must(uuid.NewV4()), user.ID)
+		_, err := repo.IsFileAccessible(uuid.Must(uuid.NewV4()), user.GetID())
 		assert.EqualError(t, err, ErrNotFound.Error())
 	})
 
@@ -172,7 +172,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 		t.Run("user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(f.ID, user.ID)
+			ok, err := repo.IsFileAccessible(f.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -190,7 +190,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 			Src:      buf,
 			ACL:      ACL{},
 		}
-		args.SetCreator(user.ID)
+		args.SetCreator(user.GetID())
 		f, err := repo.SaveFile(args)
 		require.NoError(t, err)
 
@@ -206,7 +206,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 		t.Run("allowed user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(f.ID, user.ID)
+			ok, err := repo.IsFileAccessible(f.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -216,7 +216,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 			t.Parallel()
 
 			user := mustMakeUser(t, repo, random)
-			ok, err := repo.IsFileAccessible(f.ID, user.ID)
+			ok, err := repo.IsFileAccessible(f.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
 			}
@@ -233,9 +233,9 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 			FileSize: int64(buf.Len()),
 			FileType: model.FileTypeUserFile,
 			Src:      buf,
-			ACL:      ACL{user2.ID: true},
+			ACL:      ACL{user2.GetID(): true},
 		}
-		args.SetCreator(user.ID)
+		args.SetCreator(user.GetID())
 		f, err := repo.SaveFile(args)
 		require.NoError(t, err)
 
@@ -251,7 +251,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 		t.Run("allowed user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(f.ID, user.ID)
+			ok, err := repo.IsFileAccessible(f.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -260,7 +260,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 		t.Run("allowed user2", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(f.ID, user2.ID)
+			ok, err := repo.IsFileAccessible(f.ID, user2.GetID())
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -270,7 +270,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 			t.Parallel()
 
 			user := mustMakeUser(t, repo, random)
-			ok, err := repo.IsFileAccessible(f.ID, user.ID)
+			ok, err := repo.IsFileAccessible(f.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
 			}
@@ -288,8 +288,8 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 			FileType: model.FileTypeUserFile,
 			Src:      buf,
 			ACL: ACL{
-				uuid.Nil:       true,
-				deninedUser.ID: false,
+				uuid.Nil:            true,
+				deninedUser.GetID(): false,
 			},
 		}
 		f, err := repo.SaveFile(args)
@@ -307,7 +307,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 		t.Run("allowed user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(f.ID, user.ID)
+			ok, err := repo.IsFileAccessible(f.ID, user.GetID())
 			if assert.NoError(t, err) {
 				assert.True(t, ok)
 			}
@@ -316,7 +316,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 		t.Run("denied user", func(t *testing.T) {
 			t.Parallel()
 
-			ok, err := repo.IsFileAccessible(f.ID, deninedUser.ID)
+			ok, err := repo.IsFileAccessible(f.ID, deninedUser.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
 			}

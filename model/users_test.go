@@ -22,12 +22,16 @@ func TestAuthenticateUser(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.Error(AuthenticateUser(nil, "test"))
-		assert.Error(AuthenticateUser(&User{Bot: true}, "test"))
-		assert.Error(AuthenticateUser(&User{}, "test"))
-		assert.Error(AuthenticateUser(&User{Password: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes()), Salt: "アイウエオ"}, "test"))
-		assert.Error(AuthenticateUser(&User{Salt: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes()), Password: "アイウエオ"}, "test"))
-		assert.Error(AuthenticateUser(&User{Salt: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes()), Password: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes())}, "test"))
+		tt := []UserInfo{
+			&User{Bot: true},
+			&User{},
+			&User{Password: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes()), Salt: "アイウエオ"},
+			&User{Salt: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes()), Password: "アイウエオ"},
+			&User{Salt: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes()), Password: hex.EncodeToString(uuid.Must(uuid.NewV4()).Bytes())},
+		}
+		for _, u := range tt {
+			assert.Error(u.Authenticate("test"))
+		}
 	})
 
 	t.Run("successes", func(t *testing.T) {
@@ -36,7 +40,8 @@ func TestAuthenticateUser(t *testing.T) {
 		tester := func(pass string) bool {
 			salt := utils.GenerateSalt()
 			hashed := utils.HashPassword(pass, salt)
-			return AuthenticateUser(&User{Password: hex.EncodeToString(hashed), Salt: hex.EncodeToString(salt)}, pass) == nil
+			u := &User{Password: hex.EncodeToString(hashed), Salt: hex.EncodeToString(salt)}
+			return u.Authenticate(pass) == nil
 		}
 
 		assert.NoError(quick.Check(tester, &quick.Config{MaxCount: 10}))

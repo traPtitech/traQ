@@ -18,7 +18,7 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
 	ch := mustMakeChannel(t, repo, random)
 	for i := 0; i < 10; i++ {
-		mustMakeWebhook(t, repo, random, ch.ID, testUser.ID, "")
+		mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "")
 	}
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -47,7 +47,7 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 		u := mustMakeUser(t, repo, random)
 		e := makeExp(t, server)
 		e.GET("/api/1.0/webhooks").
-			WithCookie(sessions.CookieName, generateSession(t, u.ID)).
+			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -110,7 +110,7 @@ func TestHandlers_GetWebhook(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
 	ch := mustMakeChannel(t, repo, random)
-	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.ID, "")
+	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "")
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -134,7 +134,7 @@ func TestHandlers_GetWebhook(t *testing.T) {
 		u := mustMakeUser(t, repo, random)
 		e := makeExp(t, server)
 		e.GET("/api/1.0/webhooks/{webhookID}", wb.GetID()).
-			WithCookie(sessions.CookieName, generateSession(t, u.ID)).
+			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -161,7 +161,7 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
 	ch := mustMakeChannel(t, repo, random)
-	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.ID, "secret")
+	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "secret")
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -187,7 +187,7 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/webhooks/{webhookID}", wb.GetID()).
 			WithJSON(map[string]string{"name": strings.Repeat("a", 30)}).
-			WithCookie(sessions.CookieName, generateSession(t, u.ID)).
+			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -239,7 +239,7 @@ func TestHandlers_DeleteWebhook(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
 	ch := mustMakeChannel(t, repo, random)
-	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.ID, "secret")
+	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "secret")
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -263,14 +263,14 @@ func TestHandlers_DeleteWebhook(t *testing.T) {
 		u := mustMakeUser(t, repo, random)
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/webhooks/{webhookID}", wb.GetID()).
-			WithCookie(sessions.CookieName, generateSession(t, u.ID)).
+			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
 			Expect().
 			Status(http.StatusForbidden)
 	})
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.ID, "secret")
+		wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "secret")
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithCookie(sessions.CookieName, session).
@@ -286,7 +286,7 @@ func TestHandlers_PutWebhookIcon(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
 	ch := mustMakeChannel(t, repo, random)
-	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.ID, "secret")
+	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "secret")
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -310,7 +310,7 @@ func TestHandlers_PutWebhookIcon(t *testing.T) {
 		u := mustMakeUser(t, repo, random)
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/webhooks/{webhookID}/icon", wb.GetID()).
-			WithCookie(sessions.CookieName, generateSession(t, u.ID)).
+			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -351,7 +351,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, _, _, testUser, _ := setupWithUsers(t, common6)
 	ch := mustMakeChannel(t, repo, random)
-	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.ID, "secret")
+	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "secret")
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
@@ -467,7 +467,7 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
 	ch := mustMakeChannel(t, repo, random)
-	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.ID, "")
+	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "")
 
 	for i := 0; i < 60; i++ {
 		mustMakeMessage(t, repo, wb.GetBotUserID(), ch.ID)

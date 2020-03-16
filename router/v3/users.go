@@ -40,36 +40,36 @@ func (h *Handlers) GetUsers(c echo.Context) error {
 func (h *Handlers) GetMe(c echo.Context) error {
 	me := getRequestUser(c)
 
-	tags, err := h.Repo.GetUserTagsByUserID(me.ID)
+	tags, err := h.Repo.GetUserTagsByUserID(me.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	groups, err := h.Repo.GetUserBelongingGroupIDs(me.ID)
+	groups, err := h.Repo.GetUserBelongingGroupIDs(me.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
 	var perms []rbac.Permission
-	if me.Role == role.Admin {
+	if me.GetRole() == role.Admin {
 		perms = permission.List.Array()
 	} else {
-		perms = h.RBAC.GetGrantedPermissions(me.Role).Array()
+		perms = h.RBAC.GetGrantedPermissions(me.GetRole()).Array()
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"id":          me.ID,
-		"bio":         "", // TODO
+		"id":          me.GetID(),
+		"bio":         me.GetBio(),
 		"groups":      groups,
 		"tags":        formatUserTags(tags),
-		"updatedAt":   me.UpdatedAt,
-		"lastOnline":  me.LastOnline.Ptr(),
-		"twitterId":   me.TwitterID,
-		"name":        me.Name,
+		"updatedAt":   me.GetUpdatedAt(),
+		"lastOnline":  me.GetLastOnline().Ptr(),
+		"twitterId":   me.GetTwitterID(),
+		"name":        me.GetName(),
 		"displayName": me.GetResponseDisplayName(),
-		"iconFileId":  me.Icon,
-		"bot":         me.Bot,
-		"state":       me.Status.Int(),
+		"iconFileId":  me.GetIconFileID(),
+		"bot":         me.IsBot(),
+		"state":       me.GetState().Int(),
 		"permissions": perms,
 	})
 }
@@ -128,15 +128,15 @@ func (h *Handlers) PutMyPassword(c echo.Context) error {
 	user := getRequestUser(c)
 
 	// パスワード認証
-	if err := model.AuthenticateUser(user, req.Password); err != nil {
+	if err := user.Authenticate(req.Password); err != nil {
 		return herror.Unauthorized("password is wrong")
 	}
 
 	// パスワード変更
-	if err := h.Repo.ChangeUserPassword(user.ID, req.NewPassword); err != nil {
+	if err := h.Repo.ChangeUserPassword(user.GetID(), req.NewPassword); err != nil {
 		return herror.InternalServerError(err)
 	}
-	_ = sessions.DestroyByUserID(user.ID) // 全セッションを破棄(強制ログアウト)
+	_ = sessions.DestroyByUserID(user.GetID()) // 全セッションを破棄(強制ログアウト)
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -150,9 +150,9 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 	token, err := utils.Signer.Sign(jwt.MapClaims{
 		"iat":         now.Unix(),
 		"exp":         deadline.Unix(),
-		"userId":      user.ID,
-		"name":        user.Name,
-		"displayName": user.DisplayName,
+		"userId":      user.GetID(),
+		"name":        user.GetName(),
+		"displayName": user.GetDisplayName(),
 	})
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -285,12 +285,12 @@ func (h *Handlers) ChangeUserPassword(c echo.Context) error {
 func (h *Handlers) GetUser(c echo.Context) error {
 	user := getParamUser(c)
 
-	tags, err := h.Repo.GetUserTagsByUserID(user.ID)
+	tags, err := h.Repo.GetUserTagsByUserID(user.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	groups, err := h.Repo.GetUserBelongingGroupIDs(user.ID)
+	groups, err := h.Repo.GetUserBelongingGroupIDs(user.GetID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

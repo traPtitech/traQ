@@ -17,9 +17,9 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 	t.Parallel()
 	repo, assert, require := setup(t, ex2)
 
-	u0, err := repo.GetUserByName("traq")
+	u0, err := repo.GetUserByName("traq", false)
 	require.NoError(err)
-	g1 := mustMakeUserGroup(t, repo, random, u0.ID)
+	g1 := mustMakeUserGroup(t, repo, random, u0.GetID())
 	us := make([]uuid.UUID, 0)
 
 	type u struct {
@@ -39,21 +39,21 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 	}
 	for _, v := range ut {
 		u := mustMakeUser(t, repo, random)
-		us = append(us, u.ID)
+		us = append(us, u.GetID())
 
 		if v.Bot {
-			getDB(repo).Model(&model.User{ID: u.ID}).Update("bot", true)
+			getDB(repo).Model(&model.User{ID: u.GetID()}).Update("bot", true)
 		}
 		if !v.Active {
-			getDB(repo).Model(&model.User{ID: u.ID}).Update("status", model.UserAccountStatusDeactivated)
+			getDB(repo).Model(&model.User{ID: u.GetID()}).Update("status", model.UserAccountStatusDeactivated)
 		}
 		if v.g1 {
-			mustAddUserToGroup(t, repo, u.ID, g1.ID)
+			mustAddUserToGroup(t, repo, u.GetID(), g1.ID)
 		}
 	}
 
 	ut = append(ut, u{false, true, false}) // traQユーザー
-	us = append(us, u0.ID)
+	us = append(us, u0.GetID())
 
 	tt := []struct {
 		bot    int
@@ -132,11 +132,9 @@ func TestRepositoryImpl_CreateUser(t *testing.T) {
 	s := utils.RandAlphabetAndNumberString(10)
 	user, err := repo.CreateUser(s, "test", role.User)
 	if assert.NoError(err) {
-		assert.NotEmpty(user.ID)
-		assert.Equal(s, user.Name)
-		assert.NotEmpty(user.Salt)
-		assert.NotEmpty(user.Password)
-		assert.Equal(role.User, user.Role)
+		assert.NotEmpty(user.GetID())
+		assert.Equal(s, user.GetName())
+		assert.Equal(role.User, user.GetRole())
 	}
 
 	_, err = repo.CreateUser(s, "test", role.User)
@@ -147,13 +145,13 @@ func TestRepositoryImpl_GetUser(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user := setupWithUser(t, common)
 
-	_, err := repo.GetUser(uuid.Nil)
+	_, err := repo.GetUser(uuid.Nil, false)
 	assert.Error(err)
 
-	u, err := repo.GetUser(user.ID)
+	u, err := repo.GetUser(user.GetID(), false)
 	if assert.NoError(err) {
-		assert.Equal(user.ID, u.ID)
-		assert.Equal(user.Name, u.Name)
+		assert.Equal(user.GetID(), u.GetID())
+		assert.Equal(user.GetName(), u.GetName())
 	}
 }
 
@@ -161,13 +159,13 @@ func TestRepositoryImpl_GetUserByName(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user := setupWithUser(t, common)
 
-	_, err := repo.GetUserByName("")
+	_, err := repo.GetUserByName("", false)
 	assert.Error(err)
 
-	u, err := repo.GetUserByName(user.Name)
+	u, err := repo.GetUserByName(user.GetName(), false)
 	if assert.NoError(err) {
-		assert.Equal(user.ID, u.ID)
-		assert.Equal(user.Name, u.Name)
+		assert.Equal(user.GetID(), u.GetID())
+		assert.Equal(user.GetName(), u.GetName())
 	}
 }
 
@@ -179,7 +177,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		assert.NoError(repo.UpdateUser(user.ID, UpdateUserArgs{}))
+		assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{}))
 	})
 
 	t.Run("Nil ID", func(t *testing.T) {
@@ -202,7 +200,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		t.Run("Failed", func(t *testing.T) {
 			assert, _ := assertAndRequire(t)
 
-			err := repo.UpdateUser(user.ID, UpdateUserArgs{DisplayName: null.StringFrom(strings.Repeat("a", 65))})
+			err := repo.UpdateUser(user.GetID(), UpdateUserArgs{DisplayName: null.StringFrom(strings.Repeat("a", 65))})
 			if assert.IsType(&ArgumentError{}, err) {
 				assert.Equal("args.DisplayName", err.(*ArgumentError).FieldName)
 			}
@@ -212,10 +210,10 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			assert, require := assertAndRequire(t)
 			newDN := utils.RandAlphabetAndNumberString(30)
 
-			if assert.NoError(repo.UpdateUser(user.ID, UpdateUserArgs{DisplayName: null.StringFrom(newDN)})) {
-				u, err := repo.GetUser(user.ID)
+			if assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{DisplayName: null.StringFrom(newDN)})) {
+				u, err := repo.GetUser(user.GetID(), true)
 				require.NoError(err)
-				assert.Equal(newDN, u.DisplayName)
+				assert.Equal(newDN, u.GetDisplayName())
 			}
 		})
 	})
@@ -228,7 +226,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		t.Run("Failed", func(t *testing.T) {
 			assert, _ := assertAndRequire(t)
 
-			err := repo.UpdateUser(user.ID, UpdateUserArgs{TwitterID: null.StringFrom("ああああ")})
+			err := repo.UpdateUser(user.GetID(), UpdateUserArgs{TwitterID: null.StringFrom("ああああ")})
 			if assert.IsType(&ArgumentError{}, err) {
 				assert.Equal("args.TwitterID", err.(*ArgumentError).FieldName)
 			}
@@ -238,10 +236,10 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			assert, require := assertAndRequire(t)
 			newTwitter := "aiueo"
 
-			if assert.NoError(repo.UpdateUser(user.ID, UpdateUserArgs{TwitterID: null.StringFrom(newTwitter)})) {
-				u, err := repo.GetUser(user.ID)
+			if assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{TwitterID: null.StringFrom(newTwitter)})) {
+				u, err := repo.GetUser(user.GetID(), true)
 				require.NoError(err)
-				assert.Equal(newTwitter, u.TwitterID)
+				assert.Equal(newTwitter, u.GetTwitterID())
 			}
 		})
 
@@ -249,10 +247,10 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			assert, require := assertAndRequire(t)
 			newTwitter := ""
 
-			if assert.NoError(repo.UpdateUser(user.ID, UpdateUserArgs{TwitterID: null.StringFrom(newTwitter)})) {
-				u, err := repo.GetUser(user.ID)
+			if assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{TwitterID: null.StringFrom(newTwitter)})) {
+				u, err := repo.GetUser(user.GetID(), true)
 				require.NoError(err)
-				assert.Equal(newTwitter, u.TwitterID)
+				assert.Equal(newTwitter, u.GetTwitterID())
 			}
 		})
 	})
@@ -265,10 +263,10 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		t.Run("Success", func(t *testing.T) {
 			assert, require := assertAndRequire(t)
 
-			if assert.NoError(repo.UpdateUser(user.ID, UpdateUserArgs{Role: null.StringFrom("admin")})) {
-				u, err := repo.GetUser(user.ID)
+			if assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{Role: null.StringFrom("admin")})) {
+				u, err := repo.GetUser(user.GetID(), false)
 				require.NoError(err)
-				assert.Equal("admin", u.Role)
+				assert.Equal("admin", u.GetRole())
 			}
 		})
 	})
@@ -283,13 +281,14 @@ func TestRepositoryImpl_ChangeUserPassword(t *testing.T) {
 		assert, require := assertAndRequire(t)
 
 		newPass := "aiueo123456"
-		if assert.NoError(repo.ChangeUserPassword(user.ID, newPass)) {
-			u, err := repo.GetUser(user.ID)
+		if assert.NoError(repo.ChangeUserPassword(user.GetID(), newPass)) {
+			u, err := repo.GetUser(user.GetID(), false)
 			require.NoError(err)
 
-			salt, err := hex.DecodeString(u.Salt)
+			um := u.(*model.User)
+			salt, err := hex.DecodeString(um.Salt)
 			require.NoError(err)
-			assert.Equal(u.Password, hex.EncodeToString(utils.HashPassword(newPass, salt)))
+			assert.Equal(um.Password, hex.EncodeToString(utils.HashPassword(newPass, salt)))
 		}
 	})
 
@@ -305,9 +304,9 @@ func TestRepositoryImpl_ChangeUserIcon(t *testing.T) {
 	repo, assert, require, user := setupWithUser(t, common)
 
 	newIcon := uuid.Must(uuid.NewV4())
-	if assert.NoError(repo.ChangeUserIcon(user.ID, newIcon)) {
-		u, err := repo.GetUser(user.ID)
+	if assert.NoError(repo.ChangeUserIcon(user.GetID(), newIcon)) {
+		u, err := repo.GetUser(user.GetID(), false)
 		require.NoError(err)
-		assert.Equal(newIcon, u.Icon)
+		assert.Equal(newIcon, u.GetIconFileID())
 	}
 }

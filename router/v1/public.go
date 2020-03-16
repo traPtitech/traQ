@@ -18,7 +18,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	username := c.Param("username")
 
 	// ユーザー取得
-	user, err := h.Repo.GetUserByName(username)
+	user, err := h.Repo.GetUserByName(username, false)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -29,7 +29,7 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	}
 
 	// ファイルメタ取得
-	meta, err := h.Repo.GetFileMeta(user.Icon)
+	meta, err := h.Repo.GetFileMeta(user.GetIconFileID())
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:

@@ -28,7 +28,7 @@ require (
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/ncw/swift v1.0.50
 	github.com/pelletier/go-toml v1.6.0 // indirect
-	github.com/prometheus/client_golang v1.5.0
+	github.com/prometheus/client_golang v1.5.1
 	github.com/skip2/go-qrcode v0.0.0-20190110000554-dc11ecdae0a9
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
@@ -37,7 +37,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.5.1
-	go.uber.org/zap v1.14.0
+	go.uber.org/zap v1.14.1
 	golang.org/x/crypto v0.0.0-20200128174031-69ecbb4d6d5d
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e

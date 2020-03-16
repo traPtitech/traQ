@@ -365,7 +365,7 @@ func TestHandlers_GetTopic(t *testing.T) {
 	pubCh := mustMakeChannel(t, repo, random)
 	topicText := "Topic test"
 	require.NoError(t, repo.UpdateChannel(pubCh.ID, repository.UpdateChannelArgs{
-		UpdaterID: testUser.ID,
+		UpdaterID: testUser.GetID(),
 		Topic:     null.StringFrom(topicText),
 	}))
 
@@ -399,7 +399,7 @@ func TestHandlers_PutTopic(t *testing.T) {
 	pubCh := mustMakeChannel(t, repo, random)
 	topicText := "Topic test"
 	require.NoError(t, repo.UpdateChannel(pubCh.ID, repository.UpdateChannelArgs{
-		UpdaterID: testUser.ID,
+		UpdaterID: testUser.GetID(),
 		Topic:     null.StringFrom(topicText),
 	}))
 	newTopic := "new Topic"
