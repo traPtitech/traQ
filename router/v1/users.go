@@ -86,7 +86,7 @@ func (h *Handlers) PostLogout(c echo.Context) error {
 // GetUsers GET /users
 func (h *Handlers) GetUsers(c echo.Context) error {
 	res, err, _ := h.getUsersResponseCacheGroup.Do("", func() (interface{}, error) {
-		users, err := h.Repo.GetUsers(repository.UsersQuery{})
+		users, err := h.Repo.GetUsers(repository.UsersQuery{}.LoadProfile())
 		if err != nil {
 			return nil, err
 		}

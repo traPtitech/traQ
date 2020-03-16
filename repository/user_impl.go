@@ -82,7 +82,7 @@ func getUser(tx *gorm.DB, withProfile bool, where ...interface{}) (model.UserInf
 	if withProfile {
 		tx = tx.Preload("Profile")
 	}
-	if err := tx.First(&user, where).Error; err != nil {
+	if err := tx.First(&user, where...).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return &user, nil
