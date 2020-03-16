@@ -108,9 +108,9 @@ func setup(t *testing.T, server string) (repository.Repository, *httptest.Server
 	assert, require := assertAndRequire(t)
 	repo := repositories[server]
 	testUser := mustMakeUser(t, repo, random)
-	adminUser, err := repo.GetUserByName("traq")
+	adminUser, err := repo.GetUserByName("traq", true)
 	require.NoError(err)
-	return repo, s, assert, require, generateSession(t, testUser.GetID()), generateSession(t, adminUser.ID)
+	return repo, s, assert, require, generateSession(t, testUser.GetID()), generateSession(t, adminUser.GetID())
 }
 
 func setupWithUsers(t *testing.T, server string) (repository.Repository, *httptest.Server, *assert.Assertions, *require.Assertions, string, string, model.UserInfo, model.UserInfo) {
@@ -122,9 +122,9 @@ func setupWithUsers(t *testing.T, server string) (repository.Repository, *httpte
 	assert, require := assertAndRequire(t)
 	repo := repositories[server]
 	testUser := mustMakeUser(t, repo, random)
-	adminUser, err := repo.GetUserByName("traq")
+	adminUser, err := repo.GetUserByName("traq", true)
 	require.NoError(err)
-	return repo, s, assert, require, generateSession(t, testUser.GetID()), generateSession(t, adminUser.ID), testUser, adminUser
+	return repo, s, assert, require, generateSession(t, testUser.GetID()), generateSession(t, adminUser.GetID()), testUser, adminUser
 }
 
 func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {
