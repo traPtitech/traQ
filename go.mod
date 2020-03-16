@@ -37,7 +37,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.5.1
-	go.uber.org/zap v1.14.0
+	go.uber.org/zap v1.14.1
 	golang.org/x/crypto v0.0.0-20200128174031-69ecbb4d6d5d
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
