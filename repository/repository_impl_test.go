@@ -20,7 +20,7 @@ func TestGormRepository_Group(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common)
 
-	g1 := mustMakeUserGroup(t, repo, random, user.ID)
+	g1 := mustMakeUserGroup(t, repo, random, user.GetID())
 
 	t.Run("Found", func(t *testing.T) {
 		t.Parallel()
@@ -99,16 +99,16 @@ func TestGormRepository_User(t *testing.T) {
 
 	t.Run("Found1", func(t *testing.T) {
 		t.Parallel()
-		id, ok := repo.User(u1.Name)
+		id, ok := repo.User(u1.GetName())
 		assert.True(t, ok)
-		assert.EqualValues(t, u1.ID, id)
+		assert.EqualValues(t, u1.GetID(), id)
 	})
 
 	t.Run("Found2", func(t *testing.T) {
 		t.Parallel()
-		id, ok := repo.User(strings.ToUpper(u1.Name))
+		id, ok := repo.User(strings.ToUpper(u1.GetName()))
 		assert.True(t, ok)
-		assert.EqualValues(t, u1.ID, id)
+		assert.EqualValues(t, u1.GetID(), id)
 	})
 
 	t.Run("NotFound", func(t *testing.T) {

@@ -63,17 +63,17 @@ func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 	m := getMessageFromContext(c)
 
 	if m.UserID != userID {
-		mUser, err := h.Repo.GetUser(m.UserID)
+		mUser, err := h.Repo.GetUser(m.UserID, false)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
 
-		if !mUser.Bot {
+		if !mUser.IsBot() {
 			return herror.Forbidden("you are not allowed to delete this message")
 		}
 
 		// Webhookのメッセージの削除権限の確認
-		wh, err := h.Repo.GetWebhookByBotUserID(mUser.ID)
+		wh, err := h.Repo.GetWebhookByBotUserID(mUser.GetID())
 		if err != nil {
 			switch err {
 			case repository.ErrNotFound:

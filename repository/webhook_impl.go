@@ -32,6 +32,7 @@ func (repo *GormRepository) CreateWebhook(name, description string, channelID, c
 		Bot:         true,
 		Status:      model.UserAccountStatusActive,
 		Role:        role.Bot,
+		Profile:     &model.UserProfile{UserID: uid},
 	}
 	wb := &model.WebhookBot{
 		ID:          bid,
@@ -56,6 +57,9 @@ func (repo *GormRepository) CreateWebhook(name, description string, channelID, c
 		}
 
 		if err := tx.Create(u).Error; err != nil {
+			return err
+		}
+		if err := tx.Create(u.Profile).Error; err != nil {
 			return err
 		}
 		return tx.Create(wb).Error
@@ -120,14 +124,14 @@ func (repo *GormRepository) UpdateWebhook(id uuid.UUID, args UpdateWebhookArgs) 
 		}
 		if args.CreatorID.Valid {
 			// 作成者検証
-			var user model.User
-			if err := tx.First(&user, &model.User{ID: args.CreatorID.UUID}).Error; err != nil {
-				if gorm.IsRecordNotFoundError(err) {
+			user, err := getUser(tx, false, "id = ?", args.CreatorID.UUID)
+			if err != nil {
+				if err == ErrNotFound {
 					return ArgError("args.CreatorID", "the Creator is not found")
 				}
 				return err
 			}
-			if !(user.IsActive() && !user.Bot) {
+			if !user.IsActive() || user.IsBot() {
 				return ArgError("args.CreatorID", "invalid User")
 			}
 

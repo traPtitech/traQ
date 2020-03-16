@@ -30,7 +30,7 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 		return err
 	}
 
-	user, err := h.Repo.GetUserByName(req.Name)
+	user, err := h.Repo.GetUserByName(req.Name, false)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -41,15 +41,12 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 	}
 
 	// ユーザーのアカウント状態の確認
-	switch user.Status {
-	case model.UserAccountStatusDeactivated, model.UserAccountStatusSuspended:
+	if !user.IsActive() {
 		return herror.Forbidden("this account is currently suspended")
-	case model.UserAccountStatusActive:
-		break
 	}
 
 	// パスワード検証
-	if err := model.AuthenticateUser(user, req.Pass); err != nil {
+	if err := user.Authenticate(req.Pass); err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, err)
 	}
 
@@ -58,7 +55,7 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	if err := sess.SetUser(user.ID); err != nil {
+	if err := sess.SetUser(user.GetID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -280,14 +277,14 @@ func (h *Handlers) PutPassword(c echo.Context) error {
 		return err
 	}
 
-	if err := model.AuthenticateUser(user, req.Password); err != nil {
+	if err := user.Authenticate(req.Password); err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "current password is wrong")
 	}
 
-	if err := h.Repo.ChangeUserPassword(user.ID, req.NewPassword); err != nil {
+	if err := h.Repo.ChangeUserPassword(user.GetID(), req.NewPassword); err != nil {
 		return herror.InternalServerError(err)
 	}
-	_ = sessions.DestroyByUserID(user.ID)
+	_ = sessions.DestroyByUserID(user.GetID())
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -311,9 +308,9 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 			IssuedAt:  now.Unix(),
 			ExpiresAt: deadline.Unix(),
 		},
-		UserID:      user.ID,
-		Name:        user.Name,
-		DisplayName: user.DisplayName,
+		UserID:      user.GetID(),
+		Name:        user.GetName(),
+		DisplayName: user.GetDisplayName(),
 	})
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -347,7 +344,7 @@ func (h *Handlers) PostUsers(c echo.Context) error {
 		return err
 	}
 
-	if _, err := h.Repo.GetUserByName(req.Name); err != repository.ErrNotFound {
+	if _, err := h.Repo.GetUserByName(req.Name, false); err != repository.ErrNotFound {
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -359,5 +356,5 @@ func (h *Handlers) PostUsers(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusCreated, map[string]interface{}{"id": user.ID})
+	return c.JSON(http.StatusCreated, map[string]interface{}{"id": user.GetID()})
 }

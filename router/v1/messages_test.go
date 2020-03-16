@@ -14,7 +14,7 @@ func TestHandlers_GetMessageByID(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
-	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
+	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -35,7 +35,7 @@ func TestHandlers_GetMessageByID(t *testing.T) {
 			Object()
 
 		obj.Value("messageId").String().Equal(message.ID.String())
-		obj.Value("userId").String().Equal(testUser.ID.String())
+		obj.Value("userId").String().Equal(testUser.GetID().String())
 		obj.Value("parentChannelId").String().Equal(channel.ID.String())
 		obj.Value("pin").Boolean().False()
 		obj.Value("content").String().Equal(message.Text)
@@ -75,7 +75,7 @@ func TestHandlers_PostMessage(t *testing.T) {
 			Object()
 
 		obj.Value("messageId").String().NotEmpty()
-		obj.Value("userId").String().Equal(testUser.ID.String())
+		obj.Value("userId").String().Equal(testUser.GetID().String())
 		obj.Value("parentChannelId").String().Equal(channel.ID.String())
 		obj.Value("pin").Boolean().False()
 		obj.Value("content").String().Equal(message)
@@ -106,7 +106,7 @@ func TestHandlers_GetMessagesByChannelID(t *testing.T) {
 	channel := mustMakeChannel(t, repo, random)
 
 	for i := 0; i < 5; i++ {
-		mustMakeMessage(t, repo, testUser.ID, channel.ID)
+		mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
 	}
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -151,8 +151,8 @@ func TestHandlers_PutMessageByID(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
-	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
-	postmanID := mustMakeUser(t, repo, random).ID
+	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
+	postmanID := mustMakeUser(t, repo, random).GetID()
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -194,8 +194,8 @@ func TestHandlers_DeleteMessageByID(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
-	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
-	postmanID := mustMakeUser(t, repo, random).ID
+	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
+	postmanID := mustMakeUser(t, repo, random).GetID()
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -219,7 +219,7 @@ func TestHandlers_DeleteMessageByID(t *testing.T) {
 
 	t.Run("Webhook Message", func(t *testing.T) {
 		t.Parallel()
-		wb := mustMakeWebhook(t, repo, random, channel.ID, testUser.ID, "")
+		wb := mustMakeWebhook(t, repo, random, channel.ID, testUser.GetID(), "")
 		message := mustMakeMessage(t, repo, wb.GetBotUserID(), channel.ID)
 
 		e := makeExp(t, server)
@@ -235,7 +235,7 @@ func TestHandlers_DeleteMessageByID(t *testing.T) {
 	t.Run("Forbidden (other's message)", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
+		message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
 		e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
 			WithCookie(sessions.CookieName, generateSession(t, postmanID)).
 			Expect().
@@ -244,7 +244,7 @@ func TestHandlers_DeleteMessageByID(t *testing.T) {
 
 	t.Run("Forbidden (other's webhook message)", func(t *testing.T) {
 		t.Parallel()
-		wb := mustMakeWebhook(t, repo, random, channel.ID, testUser.ID, "")
+		wb := mustMakeWebhook(t, repo, random, channel.ID, testUser.GetID(), "")
 		message := mustMakeMessage(t, repo, wb.GetBotUserID(), channel.ID)
 
 		e := makeExp(t, server)
@@ -260,7 +260,7 @@ func TestHandlers_PostMessageReport(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
-	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
+	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -301,8 +301,8 @@ func TestHandlers_DeleteUnread(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
 
 	channel := mustMakeChannel(t, repo, random)
-	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
-	mustMakeMessageUnread(t, repo, testUser.ID, message.ID)
+	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
+	mustMakeMessageUnread(t, repo, testUser.GetID(), message.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()

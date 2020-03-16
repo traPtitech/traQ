@@ -27,10 +27,10 @@ func (h *Handlers) GetBots(c echo.Context) error {
 		err  error
 		q    repository.BotsQuery
 	)
-	if c.QueryParam("all") == "1" && h.RBAC.IsGranted(user.Role, permission.AccessOthersBot) {
+	if c.QueryParam("all") == "1" && h.RBAC.IsGranted(user.GetRole(), permission.AccessOthersBot) {
 		list, err = h.Repo.GetBots(q)
 	} else {
-		list, err = h.Repo.GetBots(q.CreatedBy(user.ID))
+		list, err = h.Repo.GetBots(q.CreatedBy(user.GetID()))
 	}
 	if err != nil {
 		return herror.InternalServerError(err)
@@ -112,7 +112,7 @@ func (h *Handlers) PatchBot(c echo.Context) error {
 		return err
 	}
 
-	if req.Privileged.Valid && getRequestUser(c).Role != role.Admin {
+	if req.Privileged.Valid && getRequestUser(c).GetRole() != role.Admin {
 		return herror.Forbidden("you are not permitted to set privileged flag to bots")
 	}
 
@@ -196,7 +196,7 @@ func (h *Handlers) GetBotIcon(c echo.Context) error {
 	b := getBotFromContext(c)
 
 	// ユーザー取得
-	user, err := h.Repo.GetUser(b.BotUserID)
+	user, err := h.Repo.GetUser(b.BotUserID, false)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

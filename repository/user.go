@@ -27,6 +27,7 @@ type UsersQuery struct {
 	IsGMemberOf                 uuid.NullUUID
 	IsSubscriberAtMarkLevelOf   uuid.NullUUID
 	IsSubscriberAtNotifyLevelOf uuid.NullUUID
+	EnableProfileLoading        bool
 }
 
 // NotBot Botでない
@@ -77,30 +78,36 @@ func (q UsersQuery) SubscriberAtNotifyLevelOf(channelID uuid.UUID) UsersQuery {
 	return q
 }
 
+// LoadProfile ユーザーの追加プロファイル情報を読み込むかどうか
+func (q UsersQuery) LoadProfile() UsersQuery {
+	q.EnableProfileLoading = true
+	return q
+}
+
 // UserRepository ユーザーリポジトリ
 type UserRepository interface {
 	// CreateUser ユーザーを作成します
 	//
 	// 成功した場合、ユーザーとnilを返します。
 	// DBによるエラーを返すことがあります。
-	CreateUser(name, password, role string) (*model.User, error)
+	CreateUser(name, password, role string) (model.UserInfo, error)
 	// GetUser 指定したIDのユーザーを取得します
 	//
 	// 成功した場合、ユーザーとnilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetUser(id uuid.UUID) (*model.User, error)
+	GetUser(id uuid.UUID, withProfile bool) (model.UserInfo, error)
 	// GetUserByName 指定したNameのユーザーを取得する
 	//
 	// 成功した場合、ユーザーとnilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetUserByName(name string) (*model.User, error)
+	GetUserByName(name string, withProfile bool) (model.UserInfo, error)
 	// GetUsers 指定した条件を満たすユーザーを取得します
 	//
 	// 成功した場合、ユーザーの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetUsers(query UsersQuery) ([]*model.User, error)
+	GetUsers(query UsersQuery) ([]model.UserInfo, error)
 	// GetUserIDs 指定した条件を満たすユーザーのUUIDの配列を取得します
 	//
 	// 成功した場合、UUIDの配列とnilを返します。

@@ -18,7 +18,7 @@ const authScheme = "Bearer"
 func UserAuthenticate(repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			var user *model.User
+			var user model.UserInfo
 			ah := c.Request().Header.Get(echo.HeaderAuthorization)
 			if len(ah) > 0 {
 				// AuthorizationヘッダーがあるためOAuth2で検証
@@ -46,7 +46,7 @@ func UserAuthenticate(repo repository.Repository) echo.MiddlewareFunc {
 				}
 
 				// tokenの検証に成功。ユーザーを取得
-				user, err = repo.GetUser(token.UserID)
+				user, err = repo.GetUser(token.UserID, true)
 				if err != nil {
 					return herror.InternalServerError(err)
 				}
@@ -62,23 +62,21 @@ func UserAuthenticate(repo repository.Repository) echo.MiddlewareFunc {
 					return herror.Unauthorized("You are not logged in")
 				}
 
-				user, err = repo.GetUser(sess.GetUserID())
+				user, err = repo.GetUser(sess.GetUserID(), true)
 				if err != nil {
 					return herror.InternalServerError(err)
 				}
 			}
 
 			// ユーザーアカウント状態を確認
-			switch user.Status {
-			case model.UserAccountStatusDeactivated, model.UserAccountStatusSuspended:
+			if !user.IsActive() {
 				return herror.Forbidden("this account is currently suspended")
-			case model.UserAccountStatusActive:
-				break
+
 			}
 
 			c.Set(consts.KeyUser, user)
-			c.Set(consts.KeyUserID, user.ID)
-			c.SetRequest(c.Request().WithContext(context.WithValue(c.Request().Context(), extension.CtxUserIDKey, user.ID))) // SSEストリーマーで使う
+			c.Set(consts.KeyUserID, user.GetID())
+			c.SetRequest(c.Request().WithContext(context.WithValue(c.Request().Context(), extension.CtxUserIDKey, user.GetID()))) // SSEストリーマーで使う
 			return next(c)
 		}
 	}

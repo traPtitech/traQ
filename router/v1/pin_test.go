@@ -15,7 +15,7 @@ func TestHandlers_PostPin(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
 	channel := mustMakeChannel(t, repo, random)
-	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
+	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -51,8 +51,8 @@ func TestHandlers_GetPin(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
 	channel := mustMakeChannel(t, repo, random)
-	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
-	pin := mustMakePin(t, repo, message.ID, testUser.ID)
+	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
+	pin := mustMakePin(t, repo, message.ID, testUser.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -74,8 +74,8 @@ func TestHandlers_GetPin(t *testing.T) {
 	t.Run("Not found (deleted message)", func(t *testing.T) {
 		t.Parallel()
 
-		message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
-		pin := mustMakePin(t, repo, message.ID, testUser.ID)
+		message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
+		pin := mustMakePin(t, repo, message.ID, testUser.GetID())
 		require.NoError(t, repo.DeleteMessage(message.ID))
 
 		e := makeExp(t, server)
@@ -106,8 +106,8 @@ func TestHandlers_DeletePin(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
 	channel := mustMakeChannel(t, repo, random)
-	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
-	pin := mustMakePin(t, repo, message.ID, testUser.ID)
+	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
+	pin := mustMakePin(t, repo, message.ID, testUser.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -135,8 +135,8 @@ func TestHandlers_GetChannelPin(t *testing.T) {
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
 	channel := mustMakeChannel(t, repo, random)
-	message := mustMakeMessage(t, repo, testUser.ID, channel.ID)
-	mustMakePin(t, repo, message.ID, testUser.ID)
+	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
+	mustMakePin(t, repo, message.ID, testUser.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()

@@ -31,7 +31,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 	if creatorID == uuid.Nil {
 		return nil, ArgError("creatorID", "CreatorID is required")
 	}
-	if _, err := repo.GetUserByName("BOT_" + name); err == nil {
+	if _, err := repo.GetUserByName("BOT_"+name, false); err == nil {
 		return nil, ErrAlreadyExists
 	} else if err != ErrNotFound {
 		return nil, err
@@ -53,6 +53,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 		Bot:         true,
 		Status:      model.UserAccountStatusActive,
 		Role:        role.Bot,
+		Profile:     &model.UserProfile{UserID: uid},
 	}
 	b := &model.Bot{
 		ID:                bid,
@@ -81,7 +82,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 	}
 
 	err = repo.db.Transaction(func(tx *gorm.DB) error {
-		errs := tx.Create(u).Create(t).Create(b).GetErrors()
+		errs := tx.Create(u).Create(u.Profile).Create(t).Create(b).GetErrors()
 		if len(errs) > 0 {
 			return errs[0]
 		}
@@ -139,14 +140,14 @@ func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 		}
 		if args.CreatorID.Valid {
 			// 作成者検証
-			var user model.User
-			if err := tx.First(&user, &model.User{ID: args.CreatorID.UUID}).Error; err != nil {
-				if gorm.IsRecordNotFoundError(err) {
+			user, err := getUser(tx, false, "id = ?", args.CreatorID.UUID)
+			if err != nil {
+				if err == ErrNotFound {
 					return ArgError("args.CreatorID", "the Creator is not found")
 				}
 				return err
 			}
-			if !(user.IsActive() && !user.Bot) {
+			if !user.IsActive() || user.IsBot() {
 				return ArgError("args.CreatorID", "invalid User")
 			}
 

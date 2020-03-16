@@ -67,11 +67,11 @@ func (repo *GormRepository) Group(name string) (uuid.UUID, bool) {
 
 // User implements ReplaceMapper interface.
 func (repo *GormRepository) User(name string) (uuid.UUID, bool) {
-	u, err := repo.GetUserByName(name)
+	u, err := repo.GetUserByName(name, false)
 	if err != nil {
 		return uuid.Nil, false
 	}
-	return u.ID, true
+	return u.GetID(), true
 }
 
 // Sync implements Repository interface.

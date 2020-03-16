@@ -93,7 +93,7 @@ func TestHandlers_PostFile(t *testing.T) {
 			WithCookie(sessions.CookieName, session).
 			WithMultipart().
 			WithFileBytes("file", "test.txt", file).
-			WithFormField("acl_readable", user.ID).
+			WithFormField("acl_readable", user.GetID()).
 			Expect().
 			Status(http.StatusCreated).
 			JSON().
@@ -108,7 +108,7 @@ func TestHandlers_PostFile(t *testing.T) {
 
 		t.Run("granted user", func(t *testing.T) {
 			t.Parallel()
-			ok, err := repo.IsFileAccessible(f.ID, user.ID)
+			ok, err := repo.IsFileAccessible(f.ID, user.GetID())
 			require.NoError(t, err)
 			assert.True(t, ok)
 		})
@@ -116,7 +116,7 @@ func TestHandlers_PostFile(t *testing.T) {
 		t.Run("not granted user", func(t *testing.T) {
 			t.Parallel()
 			user := mustMakeUser(t, repo, random)
-			ok, err := repo.IsFileAccessible(f.ID, user.ID)
+			ok, err := repo.IsFileAccessible(f.ID, user.GetID())
 			require.NoError(t, err)
 			assert.False(t, ok)
 		})
@@ -135,7 +135,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 		FileSize:  int64(len(secureContent)),
 		MimeType:  "text/plain",
 		FileType:  model.FileTypeUserFile,
-		CreatorID: uuid.NullUUID{Valid: true, UUID: grantedUser.ID},
+		CreatorID: uuid.NullUUID{Valid: true, UUID: grantedUser.GetID()},
 		ChannelID: uuid.NullUUID{},
 		ACL:       repository.ACL{},
 		Src:       strings.NewReader(secureContent),
@@ -213,7 +213,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		e.GET("/api/1.0/files/{fileID}", secureFile.ID).
-			WithCookie(sessions.CookieName, generateSession(t, grantedUser.ID)).
+			WithCookie(sessions.CookieName, generateSession(t, grantedUser.GetID())).
 			Expect().
 			Status(http.StatusOK).
 			Body().
@@ -303,7 +303,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 		FileSize:  int64(len(secureContent)),
 		MimeType:  "text/plain",
 		FileType:  model.FileTypeUserFile,
-		CreatorID: uuid.NullUUID{Valid: true, UUID: grantedUser.ID},
+		CreatorID: uuid.NullUUID{Valid: true, UUID: grantedUser.GetID()},
 		ChannelID: uuid.NullUUID{},
 		ACL:       repository.ACL{},
 		Src:       strings.NewReader(secureContent),

@@ -26,32 +26,29 @@ type meResponse struct {
 	Permissions []rbac.Permission `json:"permissions"`
 }
 
-func (h *Handlers) formatMe(user *model.User) *meResponse {
+func (h *Handlers) formatMe(user model.UserInfo) *meResponse {
 	res := &meResponse{
-		UserID:      user.ID,
-		Name:        user.Name,
-		DisplayName: user.DisplayName,
-		IconID:      user.Icon,
-		Bot:         user.Bot,
-		TwitterID:   user.TwitterID,
-		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.ID),
-		Suspended:   user.Status != model.UserAccountStatusActive,
-		Status:      int(user.Status),
-		Role:        user.Role,
+		UserID:      user.GetID(),
+		Name:        user.GetName(),
+		DisplayName: user.GetResponseDisplayName(),
+		IconID:      user.GetIconFileID(),
+		Bot:         user.IsBot(),
+		TwitterID:   user.GetTwitterID(),
+		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.GetID()),
+		Suspended:   user.GetState() != model.UserAccountStatusActive,
+		Status:      user.GetState().Int(),
+		Role:        user.GetRole(),
 	}
-	if user.Role == role.Admin {
+	if user.GetRole() == role.Admin {
 		res.Permissions = permission.List.Array()
 	} else {
-		res.Permissions = h.RBAC.GetGrantedPermissions(user.Role).Array()
+		res.Permissions = h.RBAC.GetGrantedPermissions(user.GetRole()).Array()
 	}
 
 	if res.IsOnline {
 		res.LastOnline = null.TimeFrom(time.Now()).Ptr()
 	} else {
-		res.LastOnline = user.LastOnline.Ptr()
-	}
-	if len(res.DisplayName) == 0 {
-		res.DisplayName = res.Name
+		res.LastOnline = user.GetLastOnline().Ptr()
 	}
 	return res
 }
@@ -69,31 +66,28 @@ type userResponse struct {
 	Status      int        `json:"accountStatus"`
 }
 
-func (h *Handlers) formatUser(user *model.User) *userResponse {
+func (h *Handlers) formatUser(user model.UserInfo) *userResponse {
 	res := &userResponse{
-		UserID:      user.ID,
-		Name:        user.Name,
-		DisplayName: user.DisplayName,
-		IconID:      user.Icon,
-		Bot:         user.Bot,
-		TwitterID:   user.TwitterID,
-		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.ID),
-		Suspended:   user.Status != model.UserAccountStatusActive,
-		Status:      int(user.Status),
+		UserID:      user.GetID(),
+		Name:        user.GetName(),
+		DisplayName: user.GetResponseDisplayName(),
+		IconID:      user.GetIconFileID(),
+		Bot:         user.IsBot(),
+		TwitterID:   user.GetTwitterID(),
+		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.GetID()),
+		Suspended:   user.GetState() != model.UserAccountStatusActive,
+		Status:      user.GetState().Int(),
 	}
 
 	if res.IsOnline {
 		res.LastOnline = null.TimeFrom(time.Now()).Ptr()
 	} else {
-		res.LastOnline = user.LastOnline.Ptr()
-	}
-	if len(res.DisplayName) == 0 {
-		res.DisplayName = res.Name
+		res.LastOnline = user.GetLastOnline().Ptr()
 	}
 	return res
 }
 
-func (h *Handlers) formatUsers(users []*model.User) []*userResponse {
+func (h *Handlers) formatUsers(users []model.UserInfo) []*userResponse {
 	res := make([]*userResponse, len(users))
 	for i, user := range users {
 		res[i] = h.formatUser(user)
@@ -115,27 +109,24 @@ type userDetailResponse struct {
 	TagList     []*tagResponse `json:"tagList"`
 }
 
-func (h *Handlers) formatUserDetail(user *model.User, tagList []*model.UsersTag) (*userDetailResponse, error) {
+func (h *Handlers) formatUserDetail(user model.UserInfo, tagList []*model.UsersTag) (*userDetailResponse, error) {
 	res := &userDetailResponse{
-		UserID:      user.ID,
-		Name:        user.Name,
-		DisplayName: user.DisplayName,
-		IconID:      user.Icon,
-		Bot:         user.Bot,
-		TwitterID:   user.TwitterID,
-		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.ID),
-		Suspended:   user.Status != model.UserAccountStatusActive,
-		Status:      int(user.Status),
+		UserID:      user.GetID(),
+		Name:        user.GetName(),
+		DisplayName: user.GetResponseDisplayName(),
+		IconID:      user.GetIconFileID(),
+		Bot:         user.IsBot(),
+		TwitterID:   user.GetTwitterID(),
+		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.GetID()),
+		Suspended:   user.GetState() != model.UserAccountStatusActive,
+		Status:      user.GetState().Int(),
 		TagList:     formatTags(tagList),
 	}
 
 	if res.IsOnline {
 		res.LastOnline = null.TimeFrom(time.Now()).Ptr()
 	} else {
-		res.LastOnline = user.LastOnline.Ptr()
-	}
-	if len(res.DisplayName) == 0 {
-		res.DisplayName = res.Name
+		res.LastOnline = user.GetLastOnline().Ptr()
 	}
 	return res, nil
 }

@@ -34,7 +34,7 @@ func (h *Handlers) Login(c echo.Context) error {
 		return err
 	}
 
-	user, err := h.Repo.GetUserByName(req.Name)
+	user, err := h.Repo.GetUserByName(req.Name, false)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -45,15 +45,12 @@ func (h *Handlers) Login(c echo.Context) error {
 	}
 
 	// ユーザーのアカウント状態の確認
-	switch user.Status {
-	case model.UserAccountStatusDeactivated, model.UserAccountStatusSuspended:
+	if !user.IsActive() {
 		return herror.Forbidden("this account is currently suspended")
-	case model.UserAccountStatusActive:
-		break
 	}
 
 	// パスワード検証
-	if err := model.AuthenticateUser(user, req.Password); err != nil {
+	if err := user.Authenticate(req.Password); err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, err)
 	}
 
@@ -62,7 +59,7 @@ func (h *Handlers) Login(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	if err := sess.SetUser(user.ID); err != nil {
+	if err := sess.SetUser(user.GetID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 

@@ -110,10 +110,10 @@ func setup(t *testing.T, server string) (repository.Repository, *httptest.Server
 	testUser := mustMakeUser(t, repo, random)
 	adminUser, err := repo.GetUserByName("traq")
 	require.NoError(err)
-	return repo, s, assert, require, generateSession(t, testUser.ID), generateSession(t, adminUser.ID)
+	return repo, s, assert, require, generateSession(t, testUser.GetID()), generateSession(t, adminUser.ID)
 }
 
-func setupWithUsers(t *testing.T, server string) (repository.Repository, *httptest.Server, *assert.Assertions, *require.Assertions, string, string, *model.User, *model.User) {
+func setupWithUsers(t *testing.T, server string) (repository.Repository, *httptest.Server, *assert.Assertions, *require.Assertions, string, string, model.UserInfo, model.UserInfo) {
 	t.Helper()
 	s, ok := servers[server]
 	if !ok {
@@ -124,7 +124,7 @@ func setupWithUsers(t *testing.T, server string) (repository.Repository, *httpte
 	testUser := mustMakeUser(t, repo, random)
 	adminUser, err := repo.GetUserByName("traq")
 	require.NoError(err)
-	return repo, s, assert, require, generateSession(t, testUser.ID), generateSession(t, adminUser.ID), testUser, adminUser
+	return repo, s, assert, require, generateSession(t, testUser.GetID()), generateSession(t, adminUser.ID), testUser, adminUser
 }
 
 func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {
@@ -194,7 +194,7 @@ func mustMakeMessageUnread(t *testing.T, repo repository.Repository, userID, mes
 	require.NoError(t, repo.SetMessageUnread(userID, messageID, false))
 }
 
-func mustMakeUser(t *testing.T, repo repository.Repository, userName string) *model.User {
+func mustMakeUser(t *testing.T, repo repository.Repository, userName string) model.UserInfo {
 	t.Helper()
 	if userName == random {
 		userName = utils.RandAlphabetAndNumberString(32)

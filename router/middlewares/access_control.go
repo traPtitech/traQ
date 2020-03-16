@@ -30,9 +30,9 @@ func AccessControlMiddlewareGenerator(r rbac.RBAC) func(p ...rbac.Permission) ec
 				}
 
 				// ユーザー権限検証
-				user := c.Get(consts.KeyUser).(*model.User)
+				user := c.Get(consts.KeyUser).(model.UserInfo)
 				for _, v := range p {
-					if !r.IsGranted(user.Role, v) {
+					if !r.IsGranted(user.GetRole(), v) {
 						// NG
 						return echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("you are not permitted to request to '%s'", c.Request().URL.Path))
 					}
@@ -48,8 +48,8 @@ func AccessControlMiddlewareGenerator(r rbac.RBAC) func(p ...rbac.Permission) ec
 func AdminOnly(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// ユーザーロール検証
-		user := c.Get(consts.KeyUser).(*model.User)
-		if user.Role != role.Admin {
+		user := c.Get(consts.KeyUser).(model.UserInfo)
+		if user.GetRole() != role.Admin {
 			return echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("you are not permitted to request to '%s'", c.Request().URL.Path))
 		}
 		return next(c) // OK
@@ -60,8 +60,8 @@ func AdminOnly(next echo.HandlerFunc) echo.HandlerFunc {
 func BlockBot(repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			user := c.Get(consts.KeyUser).(*model.User)
-			if user.Bot {
+			user := c.Get(consts.KeyUser).(model.UserInfo)
+			if user.IsBot() {
 				return herror.Forbidden("your bot is not permitted to access this API")
 			}
 			return next(c)
@@ -73,11 +73,11 @@ func BlockBot(repo repository.Repository) echo.MiddlewareFunc {
 func CheckBotAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			user := c.Get(consts.KeyUser).(*model.User)
+			user := c.Get(consts.KeyUser).(model.UserInfo)
 			b := c.Get(consts.KeyParamBot).(*model.Bot)
 
 			// アクセス権確認
-			if !rbac.IsGranted(user.Role, permission.AccessOthersBot) && b.CreatorID != user.ID {
+			if !rbac.IsGranted(user.GetRole(), permission.AccessOthersBot) && b.CreatorID != user.GetID() {
 				return herror.Forbidden()
 			}
 
@@ -90,11 +90,11 @@ func CheckBotAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Middlew
 func CheckWebhookAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			user := c.Get(consts.KeyUser).(*model.User)
+			user := c.Get(consts.KeyUser).(model.UserInfo)
 			w := c.Get(consts.KeyParamWebhook).(model.Webhook)
 
 			// アクセス権確認
-			if !rbac.IsGranted(user.Role, permission.AccessOthersWebhook) && w.GetCreatorID() != user.ID {
+			if !rbac.IsGranted(user.GetRole(), permission.AccessOthersWebhook) && w.GetCreatorID() != user.GetID() {
 				return herror.Forbidden()
 			}
 
@@ -107,7 +107,7 @@ func CheckWebhookAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Mid
 func CheckFileAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			userID := c.Get(consts.KeyUser).(*model.User).ID
+			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
 			fileID := extension.GetRequestParamAsUUID(c, consts.ParamFileID)
 
 			// アクセス権確認
@@ -131,11 +131,11 @@ func CheckFileAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Middle
 func CheckClientAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			user := c.Get(consts.KeyUser).(*model.User)
+			user := c.Get(consts.KeyUser).(model.UserInfo)
 			oc := c.Get(consts.KeyParamClient).(*model.OAuth2Client)
 
 			// アクセス権確認
-			if !rbac.IsGranted(user.Role, permission.ManageOthersClient) && oc.CreatorID != user.ID {
+			if !rbac.IsGranted(user.GetRole(), permission.ManageOthersClient) && oc.CreatorID != user.GetID() {
 				return herror.Forbidden()
 			}
 
@@ -148,7 +148,7 @@ func CheckClientAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Midd
 func CheckMessageAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			userID := c.Get(consts.KeyUser).(*model.User).ID
+			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
 			m := c.Get(consts.KeyParamMessage).(*model.Message)
 
 			// アクセス権確認
@@ -167,7 +167,7 @@ func CheckMessageAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Mid
 func CheckChannelAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			userID := c.Get(consts.KeyUser).(*model.User).ID
+			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
 			ch := c.Get(consts.KeyParamChannel).(*model.Channel)
 
 			// アクセス権確認
@@ -186,7 +186,7 @@ func CheckChannelAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Mid
 func CheckUserGroupAdminPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			userID := c.Get(consts.KeyUser).(*model.User).ID
+			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
 			g := c.Get(consts.KeyParamGroup).(*model.UserGroup)
 
 			if !g.IsAdmin(userID) {

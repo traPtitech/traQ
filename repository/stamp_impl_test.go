@@ -18,21 +18,21 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 	t.Run("nil file id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateStamp(utils.RandAlphabetAndNumberString(20), uuid.Nil, user.ID)
+		_, err := repo.CreateStamp(utils.RandAlphabetAndNumberString(20), uuid.Nil, user.GetID())
 		assert.Error(t, err)
 	})
 
 	t.Run("invalid name", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateStamp("あ", fid, user.ID)
+		_, err := repo.CreateStamp("あ", fid, user.GetID())
 		assert.Error(t, err)
 	})
 
 	t.Run("file not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateStamp(utils.RandAlphabetAndNumberString(20), uuid.Must(uuid.NewV4()), user.ID)
+		_, err := repo.CreateStamp(utils.RandAlphabetAndNumberString(20), uuid.Must(uuid.NewV4()), user.GetID())
 		assert.Error(t, err)
 	})
 
@@ -40,7 +40,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 		t.Parallel()
 		s := mustMakeStamp(t, repo, random, uuid.Nil)
 
-		_, err := repo.CreateStamp(s.Name, fid, user.ID)
+		_, err := repo.CreateStamp(s.Name, fid, user.GetID())
 		assert.Error(t, err)
 	})
 
@@ -49,12 +49,12 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 		assert, _ := assertAndRequire(t)
 
 		name := utils.RandAlphabetAndNumberString(20)
-		s, err := repo.CreateStamp(name, fid, user.ID)
+		s, err := repo.CreateStamp(name, fid, user.GetID())
 		if assert.NoError(err) {
 			assert.NotEmpty(s.ID)
 			assert.Equal(name, s.Name)
 			assert.Equal(fid, s.FileID)
-			assert.Equal(user.ID, s.CreatorID)
+			assert.Equal(user.GetID(), s.CreatorID)
 			assert.NotEmpty(s.CreatedAt)
 			assert.NotEmpty(s.UpdatedAt)
 			assert.Nil(s.DeletedAt)

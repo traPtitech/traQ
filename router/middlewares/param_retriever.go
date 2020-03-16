@@ -149,6 +149,6 @@ func (pr *ParamRetriever) UserID(checkOnly bool) echo.MiddlewareFunc {
 		})
 	}
 	return pr.byUUID(consts.ParamUserID, consts.KeyParamUser, func(c echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetUser(v)
+		return pr.repo.GetUser(v, true)
 	})
 }

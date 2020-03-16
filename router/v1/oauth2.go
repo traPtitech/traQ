@@ -205,7 +205,7 @@ func (h *Handlers) AuthorizationEndpointHandler(c echo.Context) error {
 		break
 
 	case "none":
-		u, err := h.Repo.GetUser(userID)
+		u, err := h.Repo.GetUser(userID, false)
 		if err != nil {
 			switch err {
 			case repository.ErrNotFound:
@@ -218,7 +218,7 @@ func (h *Handlers) AuthorizationEndpointHandler(c echo.Context) error {
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
 
-		tokens, err := h.Repo.GetTokensByUser(u.ID)
+		tokens, err := h.Repo.GetTokensByUser(u.GetID())
 		if err != nil {
 			h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 			q.Set("error", errServerError)
@@ -558,7 +558,7 @@ func (h *Handlers) tokenEndpointPasswordHandler(c echo.Context) error {
 	}
 
 	// ユーザー確認
-	user, err := h.Repo.GetUserByName(req.Username)
+	user, err := h.Repo.GetUserByName(req.Username, false)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -568,7 +568,7 @@ func (h *Handlers) tokenEndpointPasswordHandler(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 		}
 	}
-	if model.AuthenticateUser(user, req.Password) != nil {
+	if user.Authenticate(req.Password) != nil {
 		return c.JSON(http.StatusUnauthorized, oauth2ErrorResponse{ErrorType: errInvalidGrant})
 	}
 
@@ -585,7 +585,7 @@ func (h *Handlers) tokenEndpointPasswordHandler(c echo.Context) error {
 	}
 
 	// トークン発行
-	newToken, err := h.Repo.IssueToken(client, user.ID, client.RedirectURI, validScopes, h.AccessTokenExp, h.IsRefreshEnabled)
+	newToken, err := h.Repo.IssueToken(client, user.GetID(), client.RedirectURI, validScopes, h.AccessTokenExp, h.IsRefreshEnabled)
 	if err != nil {
 		h.requestContextLogger(c).Error(unexpectedError, zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})

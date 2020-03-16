@@ -587,9 +587,9 @@ func (h *Handlers) processSVGImage(c echo.Context, src io.Reader) (*bytes.Buffer
 	return b, consts.MimeImageSVG, nil
 }
 
-func (h *Handlers) getUserIcon(c echo.Context, user *model.User) error {
+func (h *Handlers) getUserIcon(c echo.Context, user model.UserInfo) error {
 	// ファイルメタ取得
-	meta, err := h.Repo.GetFileMeta(user.Icon)
+	meta, err := h.Repo.GetFileMeta(user.GetIconFileID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -621,12 +621,12 @@ func (h *Handlers) putUserIcon(c echo.Context, userID uuid.UUID) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func getRequestUser(c echo.Context) *model.User {
-	return c.Get(consts.KeyUser).(*model.User)
+func getRequestUser(c echo.Context) model.UserInfo {
+	return c.Get(consts.KeyUser).(model.UserInfo)
 }
 
 func getRequestUserID(c echo.Context) uuid.UUID {
-	return getRequestUser(c).ID
+	return getRequestUser(c).GetID()
 }
 
 func getRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
@@ -653,8 +653,8 @@ func getChannelFromContext(c echo.Context) *model.Channel {
 	return c.Get(consts.KeyParamChannel).(*model.Channel)
 }
 
-func getUserFromContext(c echo.Context) *model.User {
-	return c.Get(consts.KeyParamUser).(*model.User)
+func getUserFromContext(c echo.Context) model.UserInfo {
+	return c.Get(consts.KeyParamUser).(model.UserInfo)
 }
 
 func getWebhookFromContext(c echo.Context) model.Webhook {

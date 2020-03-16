@@ -67,14 +67,14 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	// 投稿ユーザー情報を取得
-	mUser, err := ns.repo.GetUser(m.UserID)
+	mUser, err := ns.repo.GetUser(m.UserID, false)
 	if err != nil {
 		logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", m.UserID)) // 失敗
 		return
 	}
 
 	fcmPayload := &fcm.Payload{
-		Icon: fmt.Sprintf("%s/api/v3/public/icon/%s", ns.origin, strings.ReplaceAll(mUser.Name, "#", "%23")),
+		Icon: fmt.Sprintf("%s/api/v3/public/icon/%s", ns.origin, strings.ReplaceAll(mUser.GetName(), "#", "%23")),
 		Tag:  "c:" + m.ChannelID.String(),
 	}
 	ssePayload := &sse.EventData{
@@ -92,7 +92,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	// メッセージボディ作成
 	if ch.IsDMChannel() {
 		fcmPayload.Title = "@" + mUser.GetResponseDisplayName()
-		fcmPayload.Path = "/users/" + mUser.Name
+		fcmPayload.Path = "/users/" + mUser.GetName()
 		fcmPayload.SetBodyWithEllipsis(plain)
 	} else {
 		path, err := ns.repo.GetChannelPath(m.ChannelID)

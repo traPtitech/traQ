@@ -46,18 +46,18 @@ func isTrue(s string) (b bool) {
 }
 
 // getRequestUser リクエストしてきたユーザーの情報を取得
-func getRequestUser(c echo.Context) *model.User {
-	return c.Get(consts.KeyUser).(*model.User)
+func getRequestUser(c echo.Context) model.UserInfo {
+	return c.Get(consts.KeyUser).(model.UserInfo)
 }
 
 // getRequestUserID リクエストしてきたユーザーUUIDを取得
 func getRequestUserID(c echo.Context) uuid.UUID {
-	return getRequestUser(c).ID
+	return getRequestUser(c).GetID()
 }
 
 // getParamUser URLの:userIDに対応するユーザー構造体を取得
-func getParamUser(c echo.Context) *model.User {
-	return c.Get(consts.KeyParamUser).(*model.User)
+func getParamUser(c echo.Context) model.UserInfo {
+	return c.Get(consts.KeyParamUser).(model.UserInfo)
 }
 
 // getParamWebhook URLの:webhookIDに対応するWebhookを取得
@@ -106,9 +106,9 @@ func getParamAsUUID(c echo.Context, name string) uuid.UUID {
 }
 
 // serveUserIcon userのアイコン画像ファイルをレスポンスとして返す
-func serveUserIcon(c echo.Context, repo repository.Repository, user *model.User) error {
+func serveUserIcon(c echo.Context, repo repository.Repository, user model.UserInfo) error {
 	// ファイルメタ取得
-	meta, err := repo.GetFileMeta(user.Icon)
+	meta, err := repo.GetFileMeta(user.GetIconFileID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

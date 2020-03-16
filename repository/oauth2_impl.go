@@ -67,14 +67,14 @@ func (repo *GormRepository) UpdateClient(clientID string, args UpdateClientArgs)
 		}
 		if args.DeveloperID.Valid {
 			// 作成者検証
-			var user model.User
-			if err := tx.Where("id = ?", args.DeveloperID.UUID).First(&user).Error; err != nil {
-				if gorm.IsRecordNotFoundError(err) {
+			user, err := getUser(tx, false, "id = ?", args.DeveloperID.UUID)
+			if err != nil {
+				if err == ErrNotFound {
 					return ArgError("args.DeveloperID", "the Developer is not found")
 				}
 				return err
 			}
-			if !(user.IsActive() && !user.Bot) {
+			if !user.IsActive() || user.IsBot() {
 				return ArgError("args.DeveloperID", "invalid User")
 			}
 

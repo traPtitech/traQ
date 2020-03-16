@@ -17,7 +17,7 @@ func TestHandlers_PostUserTag(t *testing.T) {
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.POST("/api/1.0/users/{userID}/tags", user.ID.String()).
+		e.POST("/api/1.0/users/{userID}/tags", user.GetID().String()).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -26,7 +26,7 @@ func TestHandlers_PostUserTag(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		tag := utils.RandAlphabetAndNumberString(20)
-		e.POST("/api/1.0/users/{userID}/tags", user.ID.String()).
+		e.POST("/api/1.0/users/{userID}/tags", user.GetID().String()).
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]string{"tag": tag}).
 			Expect().
@@ -35,7 +35,7 @@ func TestHandlers_PostUserTag(t *testing.T) {
 		a, err := repo.GetUserIDsByTag(tag)
 		require.NoError(t, err)
 		assert.Len(t, a, 1)
-		assert.Contains(t, a, user.ID)
+		assert.Contains(t, a, user.GetID())
 	})
 }
 
@@ -44,13 +44,13 @@ func TestHandlers_GetUserTags(t *testing.T) {
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common3)
 
 	for i := 0; i < 5; i++ {
-		mustMakeTag(t, repo, user.ID, random)
+		mustMakeTag(t, repo, user.GetID(), random)
 	}
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/users/{userID}/tags", user.ID.String()).
+		e.GET("/api/1.0/users/{userID}/tags", user.GetID().String()).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -58,7 +58,7 @@ func TestHandlers_GetUserTags(t *testing.T) {
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/users/{userID}/tags", user.ID.String()).
+		e.GET("/api/1.0/users/{userID}/tags", user.GetID().String()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusOK).
@@ -74,12 +74,12 @@ func TestHandlers_PatchUserTag(t *testing.T) {
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common3)
 
 	other := mustMakeUser(t, repo, random)
-	tag := mustMakeTag(t, repo, user.ID, random)
+	tag := mustMakeTag(t, repo, user.GetID(), random)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.ID.String(), tag.String()).
+		e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.GetID().String(), tag.String()).
 			WithJSON(map[string]bool{"isLocked": true}).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -88,13 +88,13 @@ func TestHandlers_PatchUserTag(t *testing.T) {
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.ID.String(), tag.String()).
+		e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.GetID().String(), tag.String()).
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]bool{"isLocked": true}).
 			Expect().
 			Status(http.StatusNoContent)
 
-		ut, err := repo.GetUserTag(user.ID, tag)
+		ut, err := repo.GetUserTag(user.GetID(), tag)
 		require.NoError(t, err)
 		assert.True(t, ut.IsLocked)
 	})
@@ -102,8 +102,8 @@ func TestHandlers_PatchUserTag(t *testing.T) {
 	t.Run("Failure1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.ID.String(), tag.String()).
-			WithCookie(sessions.CookieName, generateSession(t, other.ID)).
+		e.PATCH("/api/1.0/users/{userID}/tags/{tagID}", user.GetID().String(), tag.String()).
+			WithCookie(sessions.CookieName, generateSession(t, other.GetID())).
 			WithJSON(map[string]bool{"isLocked": true}).
 			Expect().
 			Status(http.StatusForbidden)
@@ -114,12 +114,12 @@ func TestHandlers_DeleteUserTag(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common3)
 
-	tag := mustMakeTag(t, repo, user.ID, random)
+	tag := mustMakeTag(t, repo, user.GetID(), random)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/users/{userID}/tags/{tagID}", user.ID.String(), tag.String()).
+		e.DELETE("/api/1.0/users/{userID}/tags/{tagID}", user.GetID().String(), tag.String()).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -127,12 +127,12 @@ func TestHandlers_DeleteUserTag(t *testing.T) {
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/users/{userID}/tags/{tagID}", user.ID.String(), tag.String()).
+		e.DELETE("/api/1.0/users/{userID}/tags/{tagID}", user.GetID().String(), tag.String()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := repo.GetUserTag(user.ID, tag)
+		_, err := repo.GetUserTag(user.GetID(), tag)
 		require.Equal(t, repository.ErrNotFound, err)
 	})
 }

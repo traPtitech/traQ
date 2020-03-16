@@ -40,6 +40,7 @@ func AllTables() []interface{} {
 		&model.UserGroupAdmin{},
 		&model.UserGroupMember{},
 		&model.UserGroup{},
+		&model.UserProfile{},
 		&model.User{},
 		&sessions.SessionRecord{},
 	}
@@ -83,6 +84,7 @@ func AllForeignKeys() [][5]string {
 		{"files", "channel_id", "channels(id)", "SET NULL", "CASCADE"},
 		{"files", "creator_id", "users(id)", "RESTRICT", "CASCADE"},
 		{"files_acl", "file_id", "files(id)", "CASCADE", "CASCADE"},
+		{"user_profiles", "user_id", "users(id)", "CASCADE", "CASCADE"},
 	}
 }
 

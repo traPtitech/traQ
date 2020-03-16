@@ -83,7 +83,7 @@ func (h *Handlers) EditStamp(c echo.Context) error {
 	stamp := getParamStamp(c)
 
 	// ユーザー確認
-	if stamp.CreatorID != user.ID && !h.RBAC.IsGranted(user.Role, permission.EditStampCreatedByOthers) {
+	if stamp.CreatorID != user.GetID() && !h.RBAC.IsGranted(user.GetRole(), permission.EditStampCreatedByOthers) {
 		return herror.Forbidden("you are not permitted to edit stamp created by others")
 	}
 
@@ -92,7 +92,7 @@ func (h *Handlers) EditStamp(c echo.Context) error {
 	// 名前変更
 	if req.Name.Valid {
 		// 権限確認
-		if !h.RBAC.IsGranted(user.Role, permission.EditStampName) {
+		if !h.RBAC.IsGranted(user.GetRole(), permission.EditStampName) {
 			return herror.Forbidden("you are not permitted to change stamp name")
 		}
 		args.Name = req.Name
@@ -165,7 +165,7 @@ func (h *Handlers) ChangeStampImage(c echo.Context) error {
 	stamp := getParamStamp(c)
 
 	// ユーザー確認
-	if stamp.CreatorID != user.ID && !h.RBAC.IsGranted(user.Role, permission.EditStampCreatedByOthers) {
+	if stamp.CreatorID != user.GetID() && !h.RBAC.IsGranted(user.GetRole(), permission.EditStampCreatedByOthers) {
 		return herror.Forbidden("you are not permitted to edit stamp created by others")
 	}
 
