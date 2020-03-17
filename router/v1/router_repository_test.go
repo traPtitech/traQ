@@ -2088,7 +2088,7 @@ func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (model.FileMe
 	go func() {
 		defer fileWriter.Close()
 		defer thumbWriter.Close()
-		_, _ = io.Copy(utils.MultiWriter(fileWriter, hash, thumbWriter), args.Src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
+		_, _ = io.Copy(ioext.MultiWriter(fileWriter, hash, thumbWriter), args.Src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
 	}()
 
 	// fileの保存
