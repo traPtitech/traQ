@@ -275,3 +275,34 @@ func TestRepositoryImpl_StampNameExists(t *testing.T) {
 		}
 	})
 }
+
+func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
+	t.Parallel()
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+
+	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
+	stamp1 := mustMakeStamp(t, repo, random, uuid.Nil)
+	stamp2 := mustMakeStamp(t, repo, random, uuid.Nil)
+	stamp3 := mustMakeStamp(t, repo, random, uuid.Nil)
+	mustAddMessageStamp(t, repo, message.ID, stamp1.ID, user.GetID())
+	mustAddMessageStamp(t, repo, message.ID, stamp3.ID, user.GetID())
+	mustAddMessageStamp(t, repo, message.ID, stamp2.ID, user.GetID())
+
+	t.Run("Nil id", func(t *testing.T) {
+		t.Parallel()
+		ms, err := repo.GetUserStampHistory(uuid.Nil, 0)
+		if assert.NoError(t, err) {
+			assert.Empty(t, ms)
+		}
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		ms, err := repo.GetUserStampHistory(user.GetID(), 0)
+		if assert.NoError(t, err) && assert.Len(t, ms, 3) {
+			assert.Equal(t, ms[0].StampID, stamp2.ID)
+			assert.Equal(t, ms[1].StampID, stamp3.ID)
+			assert.Equal(t, ms[2].StampID, stamp1.ID)
+		}
+	})
+}

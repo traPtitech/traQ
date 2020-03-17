@@ -88,6 +88,18 @@ type MessageRepository interface {
 	// 存在しないメッセージを指定した場合、空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error)
+	// AddStampToMessage 指定したメッセージに指定したユーザーの指定したスタンプを追加します
+	//
+	// 成功した場合、そのメッセージスタンプとnilを返します。
+	// 引数にuuid.Nilを指定するとErrNilIDを返します。
+	// DBによるエラーを返すことがあります。
+	AddStampToMessage(messageID, stampID, userID uuid.UUID, count int) (ms *model.MessageStamp, err error)
+	// RemoveStampFromMessage 指定したメッセージから指定したユーザーの指定したスタンプを全て削除します
+	//
+	// 成功した、或いは既に削除されていた場合、nilを返します。
+	// 引数にuuid.Nilを指定するとErrNilIDを返します。
+	// DBによるエラーを返すことがあります。
+	RemoveStampFromMessage(messageID, stampID, userID uuid.UUID) (err error)
 }
 
 // UserUnreadChannel ユーザーの未読チャンネル構造体
