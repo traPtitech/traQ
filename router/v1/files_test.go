@@ -194,7 +194,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 
 	t.Run("Success with icon file", func(t *testing.T) {
 		t.Parallel()
-		iconFileID, err := repo.GenerateIconFile("test")
+		iconFileID, err := repository.GenerateIconFile(repo, "test")
 		require.NoError(err)
 		iconFile, err := repo.GetFileMeta(iconFileID)
 		require.NoError(err)
@@ -347,7 +347,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		iconFileID, err := repo.GenerateIconFile("test")
+		iconFileID, err := repository.GenerateIconFile(repo, "test")
 		require.NoError(err)
 
 		e := makeExp(t, server)

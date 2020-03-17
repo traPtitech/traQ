@@ -270,7 +270,7 @@ func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID
 	if name == random {
 		name = utils.RandAlphabetAndNumberString(20)
 	}
-	fileID, err := repo.GenerateIconFile(name)
+	fileID, err := repository.GenerateIconFile(repo, name)
 	require.NoError(t, err)
 	s, err := repo.CreateStamp(name, fileID, userID)
 	require.NoError(t, err)

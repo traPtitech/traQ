@@ -1,10 +1,14 @@
 package repository
 
 import (
+	"bytes"
+	"fmt"
+	"github.com/disintegration/imaging"
 	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
 	"io"
 	"mime"
@@ -76,11 +80,6 @@ type FileRepository interface {
 	// 存在しないファイルを指定した場合、ErrNotFoundを返します。
 	// DB, ファイルシステムによるエラーを返すことがあります。
 	DeleteFile(fileID uuid.UUID) error
-	// GenerateIconFile アイコンファイルを生成します
-	//
-	// 成功した場合、そのファイルのUUIDとnilを返します。
-	// DB, ファイルシステムによるエラーを返すことがあります。
-	GenerateIconFile(salt string) (uuid.UUID, error)
 	// SaveFile ファイルを保存します
 	//
 	// mimeが指定されていない場合はnameの拡張子によって決まります。
@@ -102,3 +101,23 @@ type FileRepository interface {
 // keyとしてユーザーのUUIDを取り、valueとしてAllowをtrue、Denyをfalseで表します。
 // keyとしてuuid.Nilを指定すると、全てのユーザーを表します。Denyルールが優先されます。
 type ACL map[uuid.UUID]bool
+
+// GenerateIconFile アイコンファイルを生成します
+//
+// 成功した場合、そのファイルのUUIDとnilを返します。
+// DB, ファイルシステムによるエラーを返すことがあります。
+func GenerateIconFile(repo FileRepository, salt string) (uuid.UUID, error) {
+	var img bytes.Buffer
+	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
+	file, err := repo.SaveFile(SaveFileArgs{
+		FileName: fmt.Sprintf("%s.png", salt),
+		FileSize: int64(img.Len()),
+		MimeType: "image/png",
+		FileType: model.FileTypeIcon,
+		Src:      &img,
+	})
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return file.GetID(), nil
+}

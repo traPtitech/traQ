@@ -1,17 +1,14 @@
 package repository
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"database/sql"
 	"encoding/hex"
-	"fmt"
 	"github.com/disintegration/imaging"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/ioext"
 	"github.com/traPtitech/traQ/utils/storage"
 	"golang.org/x/sync/errgroup"
@@ -92,23 +89,6 @@ func (f *fileMetaImpl) OpenThumbnail() (ioext.ReadSeekCloser, error) {
 		return nil, ErrNotFound
 	}
 	return f.fs.OpenFileByKey(f.GetID().String()+"-thumb", model.FileTypeThumbnail)
-}
-
-// GenerateIconFile implements FileRepository interface.
-func (repo *GormRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
-	var img bytes.Buffer
-	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
-	file, err := repo.SaveFile(SaveFileArgs{
-		FileName: fmt.Sprintf("%s.png", salt),
-		FileSize: int64(img.Len()),
-		MimeType: "image/png",
-		FileType: model.FileTypeIcon,
-		Src:      &img,
-	})
-	if err != nil {
-		return uuid.Nil, err
-	}
-	return file.GetID(), nil
 }
 
 // SaveFile implements FileRepository interface.

@@ -9,16 +9,17 @@ import (
 	"testing"
 )
 
-func TestRepositoryImpl_GenerateIconFile(t *testing.T) {
+func TestGenerateIconFile(t *testing.T) {
 	t.Parallel()
 	repo, assert, require := setup(t, common)
 
-	id, err := repo.GenerateIconFile("salt")
+	id, err := GenerateIconFile(repo, "salt")
 	if assert.NoError(err) {
 		meta, err := repo.GetFileMeta(id)
 		require.NoError(err)
 		assert.Equal(model.FileTypeIcon, meta.GetFileType())
 	}
+
 }
 
 func TestRepositoryImpl_DeleteFile(t *testing.T) {

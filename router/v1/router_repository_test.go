@@ -1,12 +1,10 @@
 package v1
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"github.com/disintegration/imaging"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
@@ -245,7 +243,7 @@ func (repo *TestRepository) CreateUser(name, password string, role string) (mode
 		return nil, err
 	}
 
-	iconID, err := repo.GenerateIconFile(user.Name)
+	iconID, err := repository.GenerateIconFile(repo, user.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -2050,19 +2048,6 @@ func (repo *TestRepository) DeleteFile(fileID uuid.UUID) error {
 	return repo.FS.DeleteByKey(meta.ID.String(), meta.Type)
 }
 
-func (repo *TestRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
-	var img bytes.Buffer
-	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
-	file, err := repo.SaveFile(repository.SaveFileArgs{
-		FileName: fmt.Sprintf("%s.png", salt),
-		FileSize: int64(img.Len()),
-		MimeType: "image/png",
-		FileType: model.FileTypeIcon,
-		Src:      &img,
-	})
-	return file.GetID(), err
-}
-
 func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (model.FileMeta, error) {
 	if err := args.Validate(); err != nil {
 		return nil, err
@@ -2182,7 +2167,7 @@ func (repo *TestRepository) CreateWebhook(name, description string, channelID, c
 	}
 	uid := uuid.Must(uuid.NewV4())
 	bid := uuid.Must(uuid.NewV4())
-	iconID, err := repo.GenerateIconFile(name)
+	iconID, err := repository.GenerateIconFile(repo, name)
 	if err != nil {
 		return nil, err
 	}

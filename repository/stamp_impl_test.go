@@ -12,7 +12,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 	t.Parallel()
 	repo, _, require, user := setupWithUser(t, common)
 
-	fid, err := repo.GenerateIconFile("stamp")
+	fid, err := GenerateIconFile(repo, "stamp")
 	require.NoError(err)
 
 	t.Run("nil file id", func(t *testing.T) {
@@ -115,7 +115,7 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 		assert, require := assertAndRequire(t)
 
 		s := mustMakeStamp(t, repo, random, uuid.Nil)
-		newFile, err := repo.GenerateIconFile("stamp")
+		newFile, err := GenerateIconFile(repo, "stamp")
 		require.NoError(err)
 		newName := utils.RandAlphabetAndNumberString(20)
 
