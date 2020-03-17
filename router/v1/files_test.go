@@ -108,7 +108,7 @@ func TestHandlers_PostFile(t *testing.T) {
 
 		t.Run("granted user", func(t *testing.T) {
 			t.Parallel()
-			ok, err := repo.IsFileAccessible(f.ID, user.GetID())
+			ok, err := repo.IsFileAccessible(f.GetID(), user.GetID())
 			require.NoError(t, err)
 			assert.True(t, ok)
 		})
@@ -116,7 +116,7 @@ func TestHandlers_PostFile(t *testing.T) {
 		t.Run("not granted user", func(t *testing.T) {
 			t.Parallel()
 			user := mustMakeUser(t, repo, random)
-			ok, err := repo.IsFileAccessible(f.ID, user.GetID())
+			ok, err := repo.IsFileAccessible(f.GetID(), user.GetID())
 			require.NoError(t, err)
 			assert.False(t, ok)
 		})
@@ -145,7 +145,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/files/{fileID}", file.ID).
+		e.GET("/api/1.0/files/{fileID}", file.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -162,7 +162,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	t.Run("Not Accessible", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/files/{fileID}", secureFile.ID).
+		e.GET("/api/1.0/files/{fileID}", secureFile.GetID()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusForbidden)
@@ -171,7 +171,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/files/{fileID}", file.ID).
+		e.GET("/api/1.0/files/{fileID}", file.GetID()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusOK).
@@ -182,12 +182,12 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	t.Run("Success with dl param", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		res := e.GET("/api/1.0/files/{fileID}", file.ID).
+		res := e.GET("/api/1.0/files/{fileID}", file.GetID()).
 			WithCookie(sessions.CookieName, session).
 			WithQuery("dl", 1).
 			Expect().
 			Status(http.StatusOK)
-		res.Header(echo.HeaderContentDisposition).Equal(fmt.Sprintf("attachment; filename=%s", file.Name))
+		res.Header(echo.HeaderContentDisposition).Equal(fmt.Sprintf("attachment; filename=%s", file.GetFileName()))
 		res.Header(consts.HeaderCacheControl).Equal("private, max-age=31536000")
 		res.Body().Equal("test message")
 	})
@@ -200,11 +200,11 @@ func TestHandlers_GetFileByID(t *testing.T) {
 		require.NoError(err)
 
 		e := makeExp(t, server)
-		res := e.GET("/api/1.0/files/{fileID}", iconFile.ID).
+		res := e.GET("/api/1.0/files/{fileID}", iconFile.GetID()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusOK)
-		res.ContentType(iconFile.Mime)
+		res.ContentType(iconFile.GetMIMEType())
 		res.Header(consts.HeaderCacheFile).Equal("true")
 		res.Header(consts.HeaderFileMetaType).Equal("icon")
 	})
@@ -212,7 +212,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	t.Run("Success With secure file", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/files/{fileID}", secureFile.ID).
+		e.GET("/api/1.0/files/{fileID}", secureFile.GetID()).
 			WithCookie(sessions.CookieName, generateSession(t, grantedUser.GetID())).
 			Expect().
 			Status(http.StatusOK).
@@ -230,7 +230,7 @@ func TestHandlers_DeleteFileByID(t *testing.T) {
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/files/{fileID}", file.ID).
+		e.DELETE("/api/1.0/files/{fileID}", file.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -238,12 +238,12 @@ func TestHandlers_DeleteFileByID(t *testing.T) {
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.DELETE("/api/1.0/files/{fileID}", file.ID).
+		e.DELETE("/api/1.0/files/{fileID}", file.GetID()).
 			WithCookie(sessions.CookieName, adminSession).
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := repo.GetFileMeta(file.ID)
+		_, err := repo.GetFileMeta(file.GetID())
 		require.Equal(t, repository.ErrNotFound, err)
 	})
 
@@ -251,7 +251,7 @@ func TestHandlers_DeleteFileByID(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		file := mustMakeFile(t, repo)
-		e.DELETE("/api/1.0/files/{fileID}", file.ID).
+		e.DELETE("/api/1.0/files/{fileID}", file.GetID()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusForbidden)
@@ -267,7 +267,7 @@ func TestHandlers_GetMetaDataByFileID(t *testing.T) {
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/files/{fileID}/meta", file.ID).
+		e.GET("/api/1.0/files/{fileID}/meta", file.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -275,19 +275,19 @@ func TestHandlers_GetMetaDataByFileID(t *testing.T) {
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		obj := e.GET("/api/1.0/files/{fileID}/meta", file.ID).
+		obj := e.GET("/api/1.0/files/{fileID}/meta", file.GetID()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
 			Object()
 
-		obj.Value("fileId").String().Equal(file.ID.String())
-		obj.Value("name").String().Equal(file.Name)
-		obj.Value("mime").String().Equal(file.Mime)
-		obj.Value("size").Number().Equal(file.Size)
-		obj.Value("md5").String().Equal(file.Hash)
-		obj.Value("hasThumb").Boolean().Equal(file.HasThumbnail)
+		obj.Value("fileId").String().Equal(file.GetID().String())
+		obj.Value("name").String().Equal(file.GetFileName())
+		obj.Value("mime").String().Equal(file.GetMIMEType())
+		obj.Value("size").Number().Equal(file.GetFileSize())
+		obj.Value("md5").String().Equal(file.GetMD5Hash())
+		obj.Value("hasThumb").Boolean().Equal(file.HasThumbnail())
 	})
 }
 
@@ -313,7 +313,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/files/{fileID}/thumbnail", file.ID).
+		e.GET("/api/1.0/files/{fileID}/thumbnail", file.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -330,7 +330,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 	t.Run("Not Accessible", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/files/{fileID}/thumbnail", secureFile.ID).
+		e.GET("/api/1.0/files/{fileID}/thumbnail", secureFile.GetID()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusForbidden)
@@ -339,7 +339,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 	t.Run("No Thumbnail", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		e.GET("/api/1.0/files/{fileID}/thumbnail", file.ID).
+		e.GET("/api/1.0/files/{fileID}/thumbnail", file.GetID()).
 			WithCookie(sessions.CookieName, session).
 			Expect().
 			Status(http.StatusNotFound)

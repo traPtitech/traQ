@@ -73,58 +73,51 @@ func (h *Handlers) GetFileMeta(c echo.Context) error {
 func (h *Handlers) GetThumbnailImage(c echo.Context) error {
 	meta := getParamFile(c)
 
-	if !meta.HasThumbnail {
+	if !meta.HasThumbnail() {
 		return herror.NotFound()
 	}
 
-	c.Response().Header().Set(consts.HeaderFileMetaType, meta.Type)
-	c.Response().Header().Set(consts.HeaderCacheFile, "true")
-
-	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
-	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetThumbKey(), model.FileTypeThumbnail)
-	if len(url) > 0 {
-		return c.Redirect(http.StatusFound, url)
-	}
-
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetThumbKey(), model.FileTypeThumbnail)
+	file, err := meta.OpenThumbnail()
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 	defer file.Close()
 
+	c.Response().Header().Set(consts.HeaderFileMetaType, meta.GetFileType())
+	c.Response().Header().Set(consts.HeaderCacheFile, "true")
 	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=31536000") // 1年間キャッシュ
-	return c.Stream(http.StatusOK, meta.ThumbnailMime.String, file)
+	return c.Stream(http.StatusOK, meta.GetThumbnailMIMEType(), file)
 }
 
 // GetFile GET /files/:fileID
 func (h *Handlers) GetFile(c echo.Context) error {
 	meta := getParamFile(c)
 
-	c.Response().Header().Set(consts.HeaderFileMetaType, meta.Type)
-	switch meta.Type {
+	c.Response().Header().Set(consts.HeaderFileMetaType, meta.GetFileType())
+	switch meta.GetFileType() {
 	case model.FileTypeStamp, model.FileTypeIcon:
 		c.Response().Header().Set(consts.HeaderCacheFile, "true")
 	}
 
 	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
-	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetKey(), meta.Type)
+	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetID().String(), meta.GetFileType())
 	if len(url) > 0 {
 		return c.Redirect(http.StatusFound, url)
 	}
 
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey(), meta.Type)
+	file, err := meta.Open()
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 	defer file.Close()
 
-	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
-	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.Hash))
+	c.Response().Header().Set(echo.HeaderContentType, meta.GetMIMEType())
+	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.GetMD5Hash()))
 	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=31536000") // 1年間キャッシュ
 	if isTrue(c.QueryParam("dl")) {
-		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", meta.Name))
+		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", meta.GetFileName()))
 	}
 
-	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
+	http.ServeContent(c.Response(), c.Request(), meta.GetFileName(), meta.GetCreatedAt(), file)
 	return nil
 }

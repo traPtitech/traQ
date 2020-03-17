@@ -5,6 +5,7 @@ import (
 	"github.com/ncw/swift"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/ioext"
 	"io"
 	"os"
 	"time"
@@ -53,7 +54,7 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL,
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *SwiftFileStorage) OpenFileByKey(key, fileType string) (reader ReadSeekCloser, err error) {
+func (fs *SwiftFileStorage) OpenFileByKey(key, fileType string) (reader ioext.ReadSeekCloser, err error) {
 	cacheName := fs.getCacheFilePath(key)
 
 	if !fs.cacheable(fileType) {

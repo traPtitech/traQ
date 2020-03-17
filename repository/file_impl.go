@@ -12,16 +12,86 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/ioext"
 	"github.com/traPtitech/traQ/utils/storage"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/semaphore"
 	"gopkg.in/guregu/null.v3"
 	"image"
 	"io"
+	"time"
 )
 
 type fileImpl struct {
 	FS storage.FileStorage
+}
+
+type fileMetaImpl struct {
+	meta *model.File
+	fs   storage.FileStorage
+}
+
+func (f *fileMetaImpl) GetID() uuid.UUID {
+	return f.meta.ID
+}
+
+func (f *fileMetaImpl) GetFileName() string {
+	return f.meta.Name
+}
+
+func (f *fileMetaImpl) GetMIMEType() string {
+	return f.meta.Mime
+}
+
+func (f *fileMetaImpl) GetFileSize() int64 {
+	return f.meta.Size
+}
+
+func (f *fileMetaImpl) GetFileType() string {
+	return f.meta.Type
+}
+
+func (f *fileMetaImpl) GetCreatorID() uuid.NullUUID {
+	return f.meta.CreatorID
+}
+
+func (f *fileMetaImpl) GetMD5Hash() string {
+	return f.meta.Hash
+}
+
+func (f *fileMetaImpl) HasThumbnail() bool {
+	return f.meta.HasThumbnail
+}
+
+func (f *fileMetaImpl) GetThumbnailMIMEType() string {
+	return f.meta.ThumbnailMime.String
+}
+
+func (f *fileMetaImpl) GetThumbnailWidth() int {
+	return f.meta.ThumbnailWidth
+}
+
+func (f *fileMetaImpl) GetThumbnailHeight() int {
+	return f.meta.ThumbnailHeight
+}
+
+func (f *fileMetaImpl) GetUploadChannelID() uuid.NullUUID {
+	return f.meta.ChannelID
+}
+
+func (f *fileMetaImpl) GetCreatedAt() time.Time {
+	return f.meta.CreatedAt
+}
+
+func (f *fileMetaImpl) Open() (ioext.ReadSeekCloser, error) {
+	return f.fs.OpenFileByKey(f.GetID().String(), f.GetFileType())
+}
+
+func (f *fileMetaImpl) OpenThumbnail() (ioext.ReadSeekCloser, error) {
+	if !f.HasThumbnail() {
+		return nil, ErrNotFound
+	}
+	return f.fs.OpenFileByKey(f.GetID().String()+"-thumb", model.FileTypeThumbnail)
 }
 
 // GenerateIconFile implements FileRepository interface.
@@ -38,11 +108,11 @@ func (repo *GormRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
 	if err != nil {
 		return uuid.Nil, err
 	}
-	return file.ID, nil
+	return file.GetID(), nil
 }
 
 // SaveFile implements FileRepository interface.
-func (repo *GormRepository) SaveFile(args SaveFileArgs) (*model.File, error) {
+func (repo *GormRepository) SaveFile(args SaveFileArgs) (model.FileMeta, error) {
 	if err := args.Validate(); err != nil {
 		return nil, err
 	}
@@ -72,7 +142,7 @@ func (repo *GormRepository) SaveFile(args SaveFileArgs) (*model.File, error) {
 	// fileの保存
 	eg.Go(func() error {
 		defer fileSrc.Close()
-		return repo.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime, f.Type)
+		return repo.FS.SaveByKey(fileSrc, f.ID.String(), f.Name, f.Mime, f.Type)
 	})
 
 	// サムネイルの生成
@@ -116,11 +186,11 @@ func (repo *GormRepository) SaveFile(args SaveFileArgs) (*model.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	return f, nil
+	return repo.makeFileMetaImpl(f), nil
 }
 
 // GetFileMeta implements FileRepository interface.
-func (repo *GormRepository) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
+func (repo *GormRepository) GetFileMeta(fileID uuid.UUID) (model.FileMeta, error) {
 	if fileID == uuid.Nil {
 		return nil, ErrNotFound
 	}
@@ -128,7 +198,7 @@ func (repo *GormRepository) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
 	if err := repo.db.Take(f, &model.File{ID: fileID}).Error; err != nil {
 		return nil, convertError(err)
 	}
-	return f, nil
+	return repo.makeFileMetaImpl(f), nil
 }
 
 // DeleteFile implements FileRepository interface.
@@ -147,7 +217,7 @@ func (repo *GormRepository) DeleteFile(fileID uuid.UUID) error {
 			return err
 		}
 
-		return repo.FS.DeleteByKey(f.GetKey(), f.Type)
+		return repo.FS.DeleteByKey(f.ID.String(), f.Type)
 	})
 	if err != nil {
 		return err
@@ -155,7 +225,7 @@ func (repo *GormRepository) DeleteFile(fileID uuid.UUID) error {
 
 	if f.HasThumbnail {
 		// エラーを無視
-		_ = repo.FS.DeleteByKey(f.GetThumbKey(), model.FileTypeThumbnail)
+		_ = repo.FS.DeleteByKey(f.ID.String()+"-thumb", model.FileTypeThumbnail)
 	}
 	return nil
 }
@@ -210,8 +280,13 @@ func (repo *GormRepository) generateThumbnail(ctx context.Context, f *model.File
 		_ = w.Close()
 	}()
 
-	if err := repo.FS.SaveByKey(r, f.GetThumbKey(), f.GetThumbKey()+".png", "image/png", model.FileTypeThumbnail); err != nil {
+	key := f.ID.String() + "-thumb"
+	if err := repo.FS.SaveByKey(r, key, key+".png", "image/png", model.FileTypeThumbnail); err != nil {
 		return image.Rectangle{}, err
 	}
 	return img.Bounds(), nil
+}
+
+func (repo *GormRepository) makeFileMetaImpl(f *model.File) *fileMetaImpl {
+	return &fileMetaImpl{meta: f, fs: repo.FS}
 }

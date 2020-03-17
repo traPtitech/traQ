@@ -148,15 +148,15 @@ func (h *Handlers) GetStampImage(c echo.Context) error {
 	}
 
 	// ファイルオープン
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey(), meta.Type)
+	file, err := meta.Open()
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 	defer file.Close()
 
-	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
-	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.Hash))
-	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
+	c.Response().Header().Set(echo.HeaderContentType, meta.GetMIMEType())
+	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.GetMD5Hash()))
+	http.ServeContent(c.Response(), c.Request(), meta.GetFileName(), meta.GetCreatedAt(), file)
 	return nil
 }
 

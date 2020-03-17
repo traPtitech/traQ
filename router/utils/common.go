@@ -35,17 +35,17 @@ func ServeUserIcon(c echo.Context, repo repository.Repository, user model.UserIn
 	}
 
 	// ファイルオープン
-	file, err := repo.GetFS().OpenFileByKey(meta.GetKey(), meta.Type)
+	file, err := meta.Open()
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 	defer file.Close()
 
 	// レスポンスヘッダ設定
-	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
-	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.Hash))
+	c.Response().Header().Set(echo.HeaderContentType, meta.GetMIMEType())
+	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.GetMD5Hash()))
 
 	// ファイル送信
-	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
+	http.ServeContent(c.Response(), c.Request(), meta.GetFileName(), meta.GetCreatedAt(), file)
 	return nil
 }

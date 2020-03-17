@@ -204,7 +204,7 @@ func mustMakeUser(t *testing.T, repo repository.Repository, userName string) mod
 	return u
 }
 
-func mustMakeFile(t *testing.T, repo repository.Repository) *model.File {
+func mustMakeFile(t *testing.T, repo repository.Repository) model.FileMeta {
 	t.Helper()
 	buf := bytes.NewBufferString("test message")
 	f, err := repo.SaveFile(repository.SaveFileArgs{

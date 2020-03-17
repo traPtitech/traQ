@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/ioext"
 	"github.com/traPtitech/traQ/utils/set"
 	"github.com/traPtitech/traQ/utils/storage"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -2022,7 +2023,7 @@ func (repo *TestRepository) GetAllDeviceTokens() (result []string, err error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
+func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (model.FileMeta, error) {
 	if fileID == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
@@ -2032,7 +2033,7 @@ func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
-	return &meta, nil
+	return &fileMetaImpl{meta: &meta, fs: repo.FS}, nil
 }
 
 func (repo *TestRepository) DeleteFile(fileID uuid.UUID) error {
@@ -2046,7 +2047,7 @@ func (repo *TestRepository) DeleteFile(fileID uuid.UUID) error {
 		return repository.ErrNotFound
 	}
 	delete(repo.Files, fileID)
-	return repo.FS.DeleteByKey(meta.GetKey(), meta.Type)
+	return repo.FS.DeleteByKey(meta.ID.String(), meta.Type)
 }
 
 func (repo *TestRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
@@ -2059,10 +2060,10 @@ func (repo *TestRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
 		FileType: model.FileTypeIcon,
 		Src:      &img,
 	})
-	return file.ID, err
+	return file.GetID(), err
 }
 
-func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (*model.File, error) {
+func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (model.FileMeta, error) {
 	if err := args.Validate(); err != nil {
 		return nil, err
 	}
@@ -2093,7 +2094,7 @@ func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (*model.File,
 	// fileの保存
 	eg.Go(func() error {
 		defer fileSrc.Close()
-		if err := repo.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime, f.Type); err != nil {
+		if err := repo.FS.SaveByKey(fileSrc, f.ID.String(), f.Name, f.Mime, f.Type); err != nil {
 			return err
 		}
 		return nil
@@ -2125,7 +2126,7 @@ func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (*model.File,
 	repo.FilesACL[f.ID] = args.ACL
 	repo.FilesACLLock.Unlock()
 	repo.FilesLock.Unlock()
-	return f, nil
+	return &fileMetaImpl{meta: f, fs: repo.FS}, nil
 }
 
 func (repo *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
@@ -2168,7 +2169,8 @@ func (repo *TestRepository) generateThumbnail(ctx context.Context, f *model.File
 		_ = w.Close()
 	}()
 
-	if err := repo.FS.SaveByKey(r, f.GetThumbKey(), f.GetThumbKey()+".png", "image/png", model.FileTypeThumbnail); err != nil {
+	key := f.ID.String() + "-thumb"
+	if err := repo.FS.SaveByKey(r, key, key+".png", "image/png", model.FileTypeThumbnail); err != nil {
 		return image.Rectangle{}, err
 	}
 	return img.Bounds(), nil
@@ -2661,4 +2663,72 @@ func (repo *TestRepository) RemoveBotFromChannel(botID, channelID uuid.UUID) err
 
 func (repo *TestRepository) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid.UUID, error) {
 	panic("implement me")
+}
+
+type fileMetaImpl struct {
+	meta *model.File
+	fs   storage.FileStorage
+}
+
+func (f *fileMetaImpl) GetID() uuid.UUID {
+	return f.meta.ID
+}
+
+func (f *fileMetaImpl) GetFileName() string {
+	return f.meta.Name
+}
+
+func (f *fileMetaImpl) GetMIMEType() string {
+	return f.meta.Mime
+}
+
+func (f *fileMetaImpl) GetFileSize() int64 {
+	return f.meta.Size
+}
+
+func (f *fileMetaImpl) GetFileType() string {
+	return f.meta.Type
+}
+
+func (f *fileMetaImpl) GetCreatorID() uuid.NullUUID {
+	return f.meta.CreatorID
+}
+
+func (f *fileMetaImpl) GetMD5Hash() string {
+	return f.meta.Hash
+}
+
+func (f *fileMetaImpl) HasThumbnail() bool {
+	return f.meta.HasThumbnail
+}
+
+func (f *fileMetaImpl) GetThumbnailMIMEType() string {
+	return f.meta.ThumbnailMime.String
+}
+
+func (f *fileMetaImpl) GetThumbnailWidth() int {
+	return f.meta.ThumbnailWidth
+}
+
+func (f *fileMetaImpl) GetThumbnailHeight() int {
+	return f.meta.ThumbnailHeight
+}
+
+func (f *fileMetaImpl) GetUploadChannelID() uuid.NullUUID {
+	return f.meta.ChannelID
+}
+
+func (f *fileMetaImpl) GetCreatedAt() time.Time {
+	return f.meta.CreatedAt
+}
+
+func (f *fileMetaImpl) Open() (ioext.ReadSeekCloser, error) {
+	return f.fs.OpenFileByKey(f.GetID().String(), f.GetFileType())
+}
+
+func (f *fileMetaImpl) OpenThumbnail() (ioext.ReadSeekCloser, error) {
+	if !f.HasThumbnail() {
+		return nil, repository.ErrNotFound
+	}
+	return f.fs.OpenFileByKey(f.GetID().String()+"-thumb", model.FileTypeThumbnail)
 }

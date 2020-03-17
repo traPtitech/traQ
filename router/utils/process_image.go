@@ -91,5 +91,5 @@ func SaveUploadImage(c echo.Context, repo repository.Repository, name string, fT
 		return uuid.Nil, herror.InternalServerError(err)
 	}
 
-	return f.ID, nil
+	return f.GetID(), nil
 }

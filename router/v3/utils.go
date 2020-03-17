@@ -71,8 +71,8 @@ func getParamClient(c echo.Context) *model.OAuth2Client {
 }
 
 // getParamFile URLの:fileIDに対応するFileを取得
-func getParamFile(c echo.Context) *model.File {
-	return c.Get(consts.KeyParamFile).(*model.File)
+func getParamFile(c echo.Context) model.FileMeta {
+	return c.Get(consts.KeyParamFile).(model.FileMeta)
 }
 
 // getParamStamp URLの:stampIDに対応するStampを取得

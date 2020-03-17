@@ -40,16 +40,16 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	}
 
 	// ファイルオープン
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey(), meta.Type)
+	file, err := meta.Open()
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 	defer file.Close()
 
-	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
-	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.Hash))
+	c.Response().Header().Set(echo.HeaderContentType, meta.GetMIMEType())
+	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.GetMD5Hash()))
 	c.Response().Header().Set(consts.HeaderCacheControl, "public, max-age=3600") // 1時間キャッシュ
-	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
+	http.ServeContent(c.Response(), c.Request(), meta.GetFileName(), meta.GetCreatedAt(), file)
 	return nil
 }
 
@@ -158,15 +158,15 @@ func (h *Handlers) GetPublicEmojiImage(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey(), meta.Type)
+	file, err := meta.Open()
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 	defer file.Close()
 
-	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
-	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.Hash))
+	c.Response().Header().Set(echo.HeaderContentType, meta.GetMIMEType())
+	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.GetMD5Hash()))
 	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=31536000") // 1年間キャッシュ
-	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
+	http.ServeContent(c.Response(), c.Request(), meta.GetFileName(), meta.GetCreatedAt(), file)
 	return nil
 }

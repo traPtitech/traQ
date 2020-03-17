@@ -165,7 +165,7 @@ func mustMakeUser(t *testing.T, repo Repository, userName string) model.UserInfo
 	return u
 }
 
-func mustMakeFile(t *testing.T, repo Repository) *model.File {
+func mustMakeFile(t *testing.T, repo Repository) model.FileMeta {
 	t.Helper()
 	buf := bytes.NewBufferString("test message")
 	f, err := repo.SaveFile(SaveFileArgs{

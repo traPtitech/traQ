@@ -40,7 +40,7 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 			Expect().
 			Status(http.StatusOK).
 			Header(echo.HeaderContentLength).
-			Equal(strconv.FormatInt(meta.Size, 10))
+			Equal(strconv.FormatInt(meta.GetFileSize(), 10))
 	})
 
 	t.Run("Success With 304", func(t *testing.T) {
@@ -52,7 +52,7 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 
 		e := makeExp(t, server)
 		e.GET("/api/1.0/public/icon/{username}", testUser.GetName()).
-			WithHeader("If-None-Match", strconv.Quote(meta.Hash)).
+			WithHeader("If-None-Match", strconv.Quote(meta.GetMD5Hash())).
 			Expect().
 			Status(http.StatusNotModified)
 	})
@@ -165,7 +165,7 @@ func TestHandlers_GetPublicEmojiImage(t *testing.T) {
 
 		e := makeExp(t, server)
 		e.GET("/api/1.0/public/emoji/{stampID}", s.ID).
-			WithHeader("If-None-Match", strconv.Quote(meta.Hash)).
+			WithHeader("If-None-Match", strconv.Quote(meta.GetMD5Hash())).
 			Expect().
 			Status(http.StatusNotModified)
 	})
