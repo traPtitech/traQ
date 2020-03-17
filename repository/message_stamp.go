@@ -26,12 +26,6 @@ type MessageStampRepository interface {
 	// 引数にuuid.Nilを指定するとErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	RemoveStampFromMessage(messageID, stampID, userID uuid.UUID) (err error)
-	// GetMessageStamps 指定したメッセージのスタンプを全て取得します
-	//
-	// 成功した場合、メッセージスタンプの配列とnilを返します。
-	// 存在しないメッセージを指定した場合は空配列とnilを返します。
-	// DBによるエラーを返すことがあります。
-	GetMessageStamps(messageID uuid.UUID) (stamps []*model.MessageStamp, err error)
 	// GetUserStampHistory 指定したユーザーのスタンプ履歴を最大limit件取得します
 	//
 	// 0を指定した場合、全て取得します。

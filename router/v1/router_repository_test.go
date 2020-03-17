@@ -1702,10 +1702,6 @@ func (repo *TestRepository) RemoveStampFromMessage(messageID, stampID, userID uu
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetMessageStamps(messageID uuid.UUID) (stamps []*model.MessageStamp, err error) {
-	return []*model.MessageStamp{}, nil
-}
-
 func (repo *TestRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h []*repository.UserStampHistory, err error) {
 	panic("implement me")
 }

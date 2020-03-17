@@ -62,20 +62,6 @@ func (repo *GormRepository) RemoveStampFromMessage(messageID, stampID, userID uu
 	return nil
 }
 
-// GetMessageStamps implements MessageStampRepository interface.
-func (repo *GormRepository) GetMessageStamps(messageID uuid.UUID) (stamps []*model.MessageStamp, err error) {
-	stamps = make([]*model.MessageStamp, 0)
-	if messageID == uuid.Nil {
-		return
-	}
-	err = repo.db.
-		Joins("JOIN stamps ON messages_stamps.stamp_id = stamps.id AND messages_stamps.message_id = ?", messageID).
-		Order("messages_stamps.updated_at").
-		Find(&stamps).
-		Error
-	return
-}
-
 // GetUserStampHistory implements MessageStampRepository interface.
 func (repo *GormRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h []*UserStampHistory, err error) {
 	h = make([]*UserStampHistory, 0)

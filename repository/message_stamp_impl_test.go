@@ -85,34 +85,6 @@ func TestRepositoryImpl_RemoveStampFromMessage(t *testing.T) {
 	})
 }
 
-func TestRepositoryImpl_GetMessageStamps(t *testing.T) {
-	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
-
-	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
-	stamp1 := mustMakeStamp(t, repo, random, uuid.Nil)
-	stamp2 := mustMakeStamp(t, repo, random, uuid.Nil)
-	mustAddMessageStamp(t, repo, message.ID, stamp1.ID, user.GetID())
-	mustAddMessageStamp(t, repo, message.ID, stamp2.ID, user.GetID())
-	mustAddMessageStamp(t, repo, message.ID, stamp1.ID, user.GetID())
-
-	t.Run("Nil id", func(t *testing.T) {
-		t.Parallel()
-		ms, err := repo.GetMessageStamps(uuid.Nil)
-		if assert.NoError(t, err) {
-			assert.Empty(t, ms)
-		}
-	})
-
-	t.Run("Success", func(t *testing.T) {
-		t.Parallel()
-		ms, err := repo.GetMessageStamps(message.ID)
-		if assert.NoError(t, err) {
-			assert.Len(t, ms, 2)
-		}
-	})
-}
-
 func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
