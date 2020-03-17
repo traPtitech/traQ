@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/hmac"
 	"net/http"
 	"strings"
 	"testing"
@@ -404,7 +405,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 		e := makeExp(t, server)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText(body).
-			WithHeader(consts.HeaderSignature, hex.EncodeToString(utils.CalcHMACSHA1([]byte(body), wb.GetSecret()))).
+			WithHeader(consts.HeaderSignature, hex.EncodeToString(hmac.SHA1([]byte(body), wb.GetSecret()))).
 			WithHeader(consts.HeaderChannelID, "aaaa").
 			Expect().
 			Status(http.StatusBadRequest)
@@ -416,7 +417,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 		e := makeExp(t, server)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText(body).
-			WithHeader(consts.HeaderSignature, hex.EncodeToString(utils.CalcHMACSHA1([]byte(body), wb.GetSecret()))).
+			WithHeader(consts.HeaderSignature, hex.EncodeToString(hmac.SHA1([]byte(body), wb.GetSecret()))).
 			WithHeader(consts.HeaderChannelID, uuid.Must(uuid.NewV4()).String()).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -429,7 +430,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 		e := makeExp(t, server)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText(body).
-			WithHeader(consts.HeaderSignature, hex.EncodeToString(utils.CalcHMACSHA1([]byte(body), wb.GetSecret()))).
+			WithHeader(consts.HeaderSignature, hex.EncodeToString(hmac.SHA1([]byte(body), wb.GetSecret()))).
 			Expect().
 			Status(http.StatusNoContent)
 
@@ -449,7 +450,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 		e := makeExp(t, server)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText(body).
-			WithHeader(consts.HeaderSignature, hex.EncodeToString(utils.CalcHMACSHA1([]byte(body), wb.GetSecret()))).
+			WithHeader(consts.HeaderSignature, hex.EncodeToString(hmac.SHA1([]byte(body), wb.GetSecret()))).
 			WithHeader(consts.HeaderChannelID, ch.ID.String()).
 			Expect().
 			Status(http.StatusNoContent)

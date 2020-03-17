@@ -12,7 +12,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/message"
 	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
@@ -173,7 +173,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 		if len(sig) == 0 {
 			return herror.BadRequest("missing X-TRAQ-Signature header")
 		}
-		if subtle.ConstantTimeCompare(utils.CalcHMACSHA1(body, w.GetSecret()), sig) != 1 {
+		if subtle.ConstantTimeCompare(hmac.SHA1(body, w.GetSecret()), sig) != 1 {
 			return herror.BadRequest("X-TRAQ-Signature is wrong")
 		}
 	}
