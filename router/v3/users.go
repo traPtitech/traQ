@@ -13,7 +13,6 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/router/utils"
 	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -133,12 +132,7 @@ func (h *Handlers) PutMyPassword(c echo.Context) error {
 		return herror.Unauthorized("password is wrong")
 	}
 
-	// パスワード変更
-	if err := h.Repo.ChangeUserPassword(user.GetID(), req.NewPassword); err != nil {
-		return herror.InternalServerError(err)
-	}
-	_ = sessions.DestroyByUserID(user.GetID()) // 全セッションを破棄(強制ログアウト)
-	return c.NoContent(http.StatusNoContent)
+	return utils.ChangeUserPassword(c, h.Repo, user.GetID(), req.NewPassword)
 }
 
 // GetMyQRCode GET /users/me/qr-code
@@ -270,16 +264,7 @@ func (h *Handlers) ChangeUserPassword(c echo.Context) error {
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
-
-	userID := getParamAsUUID(c, consts.ParamUserID)
-
-	if err := h.Repo.ChangeUserPassword(userID, req.NewPassword); err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	// ユーザーの全セッションを削除
-	_ = sessions.DestroyByUserID(userID)
-	return c.NoContent(http.StatusNoContent)
+	return utils.ChangeUserPassword(c, h.Repo, getParamAsUUID(c, consts.ParamUserID), req.NewPassword)
 }
 
 // GetUser GET /users/:userID

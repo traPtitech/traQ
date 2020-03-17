@@ -379,13 +379,19 @@ func (repo *TestRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserA
 		return repository.ErrNotFound
 	}
 
-	changed := false
 	if args.DisplayName.Valid {
 		if utf8.RuneCountInString(args.DisplayName.String) > 64 {
 			return repository.ArgError("args.DisplayName", "DisplayName must be shorter than 64 characters")
 		}
 		u.DisplayName = args.DisplayName.String
-		changed = true
+		u.UpdatedAt = time.Now()
+	}
+	if args.Password.Valid {
+		salt := utils.GenerateSalt()
+		hashed := utils.HashPassword(args.Password.String, salt)
+		u.Salt = hex.EncodeToString(salt)
+		u.Password = hex.EncodeToString(hashed)
+		u.UpdatedAt = time.Now()
 	}
 	if args.TwitterID.Valid {
 		if len(args.TwitterID.String) > 0 && !validator.TwitterIDRegex.MatchString(args.TwitterID.String) {
@@ -396,60 +402,18 @@ func (repo *TestRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserA
 	}
 	if args.Role.Valid {
 		u.Role = args.Role.String
-	}
-
-	if changed {
 		u.UpdatedAt = time.Now()
-		repo.Users[id] = u
 	}
-	return nil
-}
-
-func (repo *TestRepository) ChangeUserPassword(id uuid.UUID, password string) error {
-	if id == uuid.Nil {
-		return repository.ErrNilID
-	}
-	salt := utils.GenerateSalt()
-	hashed := utils.HashPassword(password, salt)
-	repo.UsersLock.Lock()
-	u, ok := repo.Users[id]
-	if ok {
-		u.Salt = hex.EncodeToString(salt)
-		u.Password = hex.EncodeToString(hashed)
+	if args.IconFileID.Valid {
+		u.Icon = args.IconFileID.UUID
 		u.UpdatedAt = time.Now()
-		repo.Users[id] = u
 	}
-	repo.UsersLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
-	if id == uuid.Nil || fileID == uuid.Nil {
-		return repository.ErrNilID
-	}
-	repo.UsersLock.Lock()
-	u, ok := repo.Users[id]
-	if ok {
-		u.Icon = fileID
-		u.UpdatedAt = time.Now()
-		repo.Users[id] = u
-	}
-	repo.UsersLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) UpdateUserLastOnline(id uuid.UUID, t time.Time) (err error) {
-	if id == uuid.Nil {
-		return repository.ErrNilID
-	}
-	repo.UsersLock.Lock()
-	u, ok := repo.Users[id]
-	if ok {
-		u.Profile.LastOnline = null.TimeFrom(t)
+	if args.LastOnline.Valid {
+		u.Profile.LastOnline = args.LastOnline
 		u.Profile.UpdatedAt = time.Now()
-		repo.Users[id] = u
 	}
-	repo.UsersLock.Unlock()
+
+	repo.Users[id] = u
 	return nil
 }
 

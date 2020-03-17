@@ -7,6 +7,8 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/router/sessions"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"strconv"
 )
@@ -19,7 +21,7 @@ func ChangeUserIcon(c echo.Context, repo repository.Repository, userID uuid.UUID
 	}
 
 	// アイコン変更
-	if err := repo.ChangeUserIcon(userID, iconID); err != nil {
+	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{IconFileID: uuid.NullUUID{UUID: iconID, Valid: true}}); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -48,4 +50,15 @@ func ServeUserIcon(c echo.Context, repo repository.Repository, user model.UserIn
 	// ファイル送信
 	http.ServeContent(c.Response(), c.Request(), meta.GetFileName(), meta.GetCreatedAt(), file)
 	return nil
+}
+
+// ChangeUserPassword userIDのユーザーのパスワードを変更するハンドラ
+func ChangeUserPassword(c echo.Context, repo repository.Repository, userID uuid.UUID, newPassword string) error {
+	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{Password: null.StringFrom(newPassword)}); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	// ユーザーの全セッションを破棄(強制ログアウト)
+	_ = sessions.DestroyByUserID(userID)
+	return c.NoContent(http.StatusNoContent)
 }

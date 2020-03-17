@@ -9,8 +9,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
-	"gopkg.in/guregu/null.v3"
-	"time"
 	"unicode/utf8"
 )
 
@@ -154,7 +152,10 @@ func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 	if id == uuid.Nil {
 		return ErrNilID
 	}
-	var changed bool
+	var (
+		changed bool
+		count   int
+	)
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var u model.User
 		if err := tx.Preload("Profile").First(&u, model.User{ID: id}).Error; err != nil {
@@ -174,11 +175,20 @@ func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 		if args.UserState.Valid {
 			changes["status"] = args.UserState.State.Int()
 		}
+		if args.IconFileID.Valid {
+			changes["icon"] = args.IconFileID.UUID
+		}
+		if args.Password.Valid {
+			salt := utils.GenerateSalt()
+			changes["salt"] = hex.EncodeToString(salt)
+			changes["password"] = hex.EncodeToString(utils.HashPassword(args.Password.String, salt))
+		}
 		if len(changes) > 0 {
 			if err := tx.Model(&u).Updates(changes).Error; err != nil {
 				return err
 			}
 			changed = true
+			count += len(changes)
 		}
 
 		changes = map[string]interface{}{}
@@ -191,65 +201,45 @@ func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 		if args.Bio.Valid {
 			changes["bio"] = args.Bio.String
 		}
+		if args.LastOnline.Valid {
+			changes["last_online"] = args.LastOnline
+		}
 		if len(changes) > 0 {
 			if err := tx.Model(u.Profile).Updates(changes).Error; err != nil {
 				return err
 			}
 			changed = true
+			count += len(changes)
 		}
 		return nil
 	})
 	if err != nil {
 		return err
 	}
+
+	if args.Password.Valid && count == 2 {
+		return nil // パスワードのみの変更の時はUserUpdatedイベントを発生させない
+	}
+	if args.LastOnline.Valid && count == 1 {
+		return nil // 最終オンライン日時のみの更新の時はUserUpdatedイベントを発生させない
+	}
 	if changed {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserUpdated,
-			Fields: hub.Fields{
-				"user_id": id,
-			},
-		})
+		if args.IconFileID.Valid && count == 1 {
+			repo.hub.Publish(hub.Message{
+				Name: event.UserIconUpdated,
+				Fields: hub.Fields{
+					"user_id": id,
+					"file_id": args.IconFileID.UUID,
+				},
+			})
+		} else {
+			repo.hub.Publish(hub.Message{
+				Name: event.UserUpdated,
+				Fields: hub.Fields{
+					"user_id": id,
+				},
+			})
+		}
 	}
 	return nil
-}
-
-// ChangeUserPassword implements UserRepository interface.
-func (repo *GormRepository) ChangeUserPassword(id uuid.UUID, password string) error {
-	if id == uuid.Nil {
-		return ErrNilID
-	}
-	salt := utils.GenerateSalt()
-	return repo.db.Model(&model.User{ID: id}).Updates(map[string]interface{}{
-		"salt":     hex.EncodeToString(salt),
-		"password": hex.EncodeToString(utils.HashPassword(password, salt)),
-	}).Error
-}
-
-// ChangeUserIcon implements UserRepository interface.
-func (repo *GormRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
-	if id == uuid.Nil || fileID == uuid.Nil {
-		return ErrNilID
-	}
-	result := repo.db.Model(&model.User{ID: id}).Update("icon", fileID)
-	if err := result.Error; err != nil {
-		return err
-	}
-	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserIconUpdated,
-			Fields: hub.Fields{
-				"user_id": id,
-				"file_id": fileID,
-			},
-		})
-	}
-	return nil
-}
-
-// UpdateUserLastOnline implements UserRepository interface.
-func (repo *GormRepository) UpdateUserLastOnline(id uuid.UUID, time time.Time) (err error) {
-	if id == uuid.Nil {
-		return ErrNilID
-	}
-	return repo.db.Model(&model.UserProfile{UserID: id}).Update("last_online", null.TimeFrom(time)).Error
 }

@@ -4,7 +4,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"gopkg.in/guregu/null.v3"
-	"time"
 )
 
 // UpdateUserArgs User情報更新引数
@@ -16,7 +15,10 @@ type UpdateUserArgs struct {
 		Valid bool
 		State model.UserAccountStatus
 	}
-	Bio null.String
+	Bio        null.String
+	IconFileID uuid.NullUUID
+	LastOnline null.Time
+	Password   null.String
 }
 
 // UsersQuery GetUsers用クエリ
@@ -126,22 +128,4 @@ type UserRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	UpdateUser(id uuid.UUID, args UpdateUserArgs) error
-	// ChangeUserPassword 指定したユーザーのパスワードを変更します
-	//
-	// 成功した場合、nilを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// DBによるエラーを返すことがあります。
-	ChangeUserPassword(id uuid.UUID, password string) error
-	// ChangeUserIcon 指定したユーザーのアイコンを変更します
-	//
-	// 成功した場合、nilを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// DBによるエラーを返すことがあります。
-	ChangeUserIcon(id, fileID uuid.UUID) error
-	// UpdateUserLastOnline 指定したユーザーの最終オンライン日時を更新します
-	//
-	// 成功した場合、nilを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// DBによるエラーを返すことがあります。
-	UpdateUserLastOnline(id uuid.UUID, time time.Time) (err error)
 }

@@ -193,18 +193,11 @@ func (r PutUserPasswordRequest) Validate() error {
 
 // PutUserPassword PUT /users/:userID/password
 func (h *Handlers) PutUserPassword(c echo.Context) error {
-	userID := getRequestParamAsUUID(c, consts.ParamUserID)
-
 	var req PutUserPasswordRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
-
-	if err := h.Repo.ChangeUserPassword(userID, req.NewPassword); err != nil {
-		return herror.InternalServerError(err)
-	}
-	_ = sessions.DestroyByUserID(userID)
-	return c.NoContent(http.StatusNoContent)
+	return utils.ChangeUserPassword(c, h.Repo, getRequestParamAsUUID(c, consts.ParamUserID), req.NewPassword)
 }
 
 // GetUserIcon GET /users/:userID/icon
@@ -282,11 +275,7 @@ func (h *Handlers) PutPassword(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "current password is wrong")
 	}
 
-	if err := h.Repo.ChangeUserPassword(user.GetID(), req.NewPassword); err != nil {
-		return herror.InternalServerError(err)
-	}
-	_ = sessions.DestroyByUserID(user.GetID())
-	return c.NoContent(http.StatusNoContent)
+	return utils.ChangeUserPassword(c, h.Repo, user.GetID(), req.NewPassword)
 }
 
 // GetMyQRCode GET /users/me/qr-code
