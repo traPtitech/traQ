@@ -2022,27 +2022,6 @@ func (repo *TestRepository) GetAllDeviceTokens() (result []string, err error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) OpenFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
-	meta, err := repo.GetFileMeta(fileID)
-	if err != nil {
-		return nil, nil, err
-	}
-	rc, err := repo.FS.OpenFileByKey(meta.GetKey(), meta.Type)
-	return meta, rc, err
-}
-
-func (repo *TestRepository) OpenThumbnailFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
-	meta, err := repo.GetFileMeta(fileID)
-	if err != nil {
-		return nil, nil, err
-	}
-	if meta.HasThumbnail {
-		rc, err := repo.FS.OpenFileByKey(meta.GetThumbKey(), model.FileTypeThumbnail)
-		return meta, rc, err
-	}
-	return meta, nil, repository.ErrNotFound
-}
-
 func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
 	if fileID == uuid.Nil {
 		return nil, repository.ErrNotFound

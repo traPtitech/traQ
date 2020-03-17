@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
-	"io/ioutil"
 	"testing"
 )
 
@@ -48,63 +47,6 @@ func TestRepositoryImpl_DeleteFile(t *testing.T) {
 		t.Parallel()
 
 		assert.EqualError(t, repo.DeleteFile(uuid.Must(uuid.NewV4())), ErrNotFound.Error())
-	})
-}
-
-func TestRepositoryImpl_OpenFile(t *testing.T) {
-	t.Parallel()
-	repo, _, _ := setup(t, common)
-
-	t.Run("success", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		f := mustMakeFile(t, repo)
-		_, file, err := repo.OpenFile(f.ID)
-		if assert.NoError(err) {
-			defer file.Close()
-			b, _ := ioutil.ReadAll(file)
-			assert.Equal("test message", string(b))
-		}
-	})
-
-	t.Run("not found", func(t *testing.T) {
-		t.Parallel()
-
-		_, _, err := repo.OpenFile(uuid.Must(uuid.NewV4()))
-		assert.EqualError(t, err, ErrNotFound.Error())
-	})
-}
-
-func TestRepositoryImpl_OpenThumbnailFile(t *testing.T) {
-	t.Parallel()
-	repo, _, _ := setup(t, common)
-
-	t.Run("success", func(t *testing.T) {
-		t.Parallel()
-		assert, require := assertAndRequire(t)
-
-		id, err := repo.GenerateIconFile("test")
-		require.NoError(err)
-
-		_, _, err = repo.OpenThumbnailFile(id)
-		assert.NoError(err)
-	})
-
-	t.Run("no thumb", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		f := mustMakeFile(t, repo)
-		_, _, err := repo.OpenThumbnailFile(f.ID)
-		assert.EqualError(err, ErrNotFound.Error())
-	})
-
-	t.Run("not found", func(t *testing.T) {
-		t.Parallel()
-
-		_, _, err := repo.OpenThumbnailFile(uuid.Must(uuid.NewV4()))
-		assert.EqualError(t, err, ErrNotFound.Error())
 	})
 }
 

@@ -63,18 +63,6 @@ func (args *SaveFileArgs) ACLAllow(userID uuid.UUID) {
 
 // FileRepository ファイルリポジトリ
 type FileRepository interface {
-	// OpenFile 指定したファイルのストリームを開きます
-	//
-	// 成功した場合、メタデータとストリームとnilを返します。
-	// 存在しないファイルを指定した場合、ErrNotFoundを返します。
-	// DB, ファイルシステムによるエラーを返すことがあります。
-	OpenFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error)
-	// OpenThumbnailFile 指定したファイルのサムネイルのストリームを開きます
-	//
-	// 成功した場合、メタデータとストリームとnilを返します。
-	// 存在しないファイル、或いはサムネイルが存在しないファイルを指定した場合、ErrNotFoundを返します。
-	// DB, ファイルシステムによるエラーを返すことがあります。
-	OpenThumbnailFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error)
 	// GetFileMeta 指定したファイルのメタデータを取得します
 	//
 	// 成功した場合、メタデータとnilを返します。

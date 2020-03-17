@@ -119,29 +119,6 @@ func (repo *GormRepository) SaveFile(args SaveFileArgs) (*model.File, error) {
 	return f, nil
 }
 
-// OpenFile implements FileRepository interface.
-func (repo *GormRepository) OpenFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
-	meta, err := repo.GetFileMeta(fileID)
-	if err != nil {
-		return nil, nil, err
-	}
-	r, err := repo.FS.OpenFileByKey(meta.GetKey(), meta.Type)
-	return meta, r, err
-}
-
-// OpenThumbnailFile implements FileRepository interface.
-func (repo *GormRepository) OpenThumbnailFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
-	meta, err := repo.GetFileMeta(fileID)
-	if err != nil {
-		return nil, nil, err
-	}
-	if meta.HasThumbnail {
-		r, err := repo.FS.OpenFileByKey(meta.GetThumbKey(), model.FileTypeThumbnail)
-		return meta, r, err
-	}
-	return meta, nil, ErrNotFound
-}
-
 // GetFileMeta implements FileRepository interface.
 func (repo *GormRepository) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
 	if fileID == uuid.Nil {
