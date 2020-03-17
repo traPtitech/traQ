@@ -73,6 +73,12 @@ type FileRepository interface {
 	// 存在しないファイルを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetFileMeta(fileID uuid.UUID) (model.FileMeta, error)
+	// SaveFile ファイルを保存します
+	//
+	// mimeが指定されていない場合はnameの拡張子によって決まります。
+	// 成功した場合、メタデータとnilを返します。
+	// DB, ファイルシステムによるエラーを返すことがあります。
+	SaveFile(args SaveFileArgs) (model.FileMeta, error)
 	// DeleteFile 指定したファイルを削除します
 	//
 	// 成功した場合、nilを返します。ファイルデータは完全に削除されます。
@@ -80,12 +86,6 @@ type FileRepository interface {
 	// 存在しないファイルを指定した場合、ErrNotFoundを返します。
 	// DB, ファイルシステムによるエラーを返すことがあります。
 	DeleteFile(fileID uuid.UUID) error
-	// SaveFile ファイルを保存します
-	//
-	// mimeが指定されていない場合はnameの拡張子によって決まります。
-	// 成功した場合、メタデータとnilを返します。
-	// DB, ファイルシステムによるエラーを返すことがあります。
-	SaveFile(args SaveFileArgs) (model.FileMeta, error)
 	// IsFileAccessible 指定したユーザーが指定したファイルにアクセス可能かどうかを返します
 	//
 	// アクセス可能な場合、trueとnilを返します。

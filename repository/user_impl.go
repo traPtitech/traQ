@@ -33,7 +33,7 @@ func (repo *GormRepository) CreateUser(name, password, role string) (model.UserI
 		return nil, err
 	}
 
-	iconID, err := repo.GenerateIconFile(user.Name)
+	iconID, err := GenerateIconFile(repo, user.Name)
 	if err != nil {
 		return nil, err
 	}
