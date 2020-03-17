@@ -12,7 +12,8 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/message"
 	"gopkg.in/go-playground/webhooks.v5/github"
 	"gopkg.in/guregu/null.v3"
@@ -163,7 +164,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 		if len(sig) == 0 {
 			return herror.BadRequest("missing X-TRAQ-Signature header")
 		}
-		if subtle.ConstantTimeCompare(utils.CalcHMACSHA1(body, w.GetSecret()), sig) != 1 {
+		if subtle.ConstantTimeCompare(hmac.SHA1(body, w.GetSecret()), sig) != 1 {
 			return herror.Unauthorized()
 		}
 	}
@@ -206,12 +207,12 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return h.getUserIcon(c, user)
+	return utils.ServeUserIcon(c, h.Repo, user)
 }
 
 // PutWebhookIcon PUT /webhooks/:webhookID/icon
 func (h *Handlers) PutWebhookIcon(c echo.Context) error {
-	return h.putUserIcon(c, getWebhookFromContext(c).GetBotUserID())
+	return utils.ChangeUserIcon(c, h.Repo, getWebhookFromContext(c).GetBotUserID())
 }
 
 // PostWebhookByGithub POST /webhooks/:webhookID/github
@@ -240,7 +241,7 @@ func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
 		if len(sig) == 0 {
 			return herror.BadRequest("missing X-TRAQ-Signature header")
 		}
-		if subtle.ConstantTimeCompare(utils.CalcHMACSHA1(body, w.GetSecret()), sig) != 1 {
+		if subtle.ConstantTimeCompare(hmac.SHA1(body, w.GetSecret()), sig) != 1 {
 			return herror.Unauthorized()
 		}
 	}

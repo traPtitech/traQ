@@ -165,7 +165,7 @@ func mustMakeUser(t *testing.T, repo Repository, userName string) model.UserInfo
 	return u
 }
 
-func mustMakeFile(t *testing.T, repo Repository) *model.File {
+func mustMakeFile(t *testing.T, repo Repository) model.FileMeta {
 	t.Helper()
 	buf := bytes.NewBufferString("test message")
 	f, err := repo.SaveFile(SaveFileArgs{
@@ -220,7 +220,7 @@ func mustMakeStamp(t *testing.T, repo Repository, name string, userID uuid.UUID)
 	if name == random {
 		name = utils.RandAlphabetAndNumberString(20)
 	}
-	fid, err := repo.GenerateIconFile(name)
+	fid, err := GenerateIconFile(repo, name)
 	require.NoError(t, err)
 	s, err := repo.CreateStamp(name, fid, userID)
 	require.NoError(t, err)

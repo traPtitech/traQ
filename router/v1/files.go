@@ -6,8 +6,8 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/router/utils"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -57,41 +57,13 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	return c.JSON(http.StatusCreated, file)
+
+	return c.JSON(http.StatusCreated, formatFile(file))
 }
 
 // GetFileByID GET /files/:fileID
 func (h *Handlers) GetFileByID(c echo.Context) error {
-	meta := getFileFromContext(c)
-	dl := c.QueryParam("dl")
-
-	c.Response().Header().Set(consts.HeaderFileMetaType, meta.Type)
-	switch meta.Type {
-	case model.FileTypeStamp, model.FileTypeIcon:
-		c.Response().Header().Set(consts.HeaderCacheFile, "true")
-	}
-
-	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
-	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetKey(), meta.Type)
-	if len(url) > 0 {
-		return c.Redirect(http.StatusFound, url)
-	}
-
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey(), meta.Type)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-	defer file.Close()
-
-	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
-	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.Hash))
-	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=31536000") // 1年間キャッシュ
-	if dl == "1" {
-		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", meta.Name))
-	}
-
-	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
-	return nil
+	return utils.ServeFile(c, getFileFromContext(c))
 }
 
 // DeleteFileByID DELETE /files/:fileID
@@ -109,32 +81,10 @@ func (h *Handlers) DeleteFileByID(c echo.Context) error {
 func (h *Handlers) GetMetaDataByFileID(c echo.Context) error {
 	meta := getFileFromContext(c)
 	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=86400") // 1日キャッシュ
-	return c.JSON(http.StatusOK, meta)
+	return c.JSON(http.StatusOK, formatFile(meta))
 }
 
 // GetThumbnailByID GET /files/:fileID/thumbnail
 func (h *Handlers) GetThumbnailByID(c echo.Context) error {
-	meta := getFileFromContext(c)
-
-	if !meta.HasThumbnail {
-		return herror.NotFound("file is found, but thumbnail is not found")
-	}
-
-	c.Response().Header().Set(consts.HeaderFileMetaType, meta.Type)
-	c.Response().Header().Set(consts.HeaderCacheFile, "true")
-
-	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
-	url, _ := h.Repo.GetFS().GenerateAccessURL(meta.GetThumbKey(), model.FileTypeThumbnail)
-	if len(url) > 0 {
-		return c.Redirect(http.StatusFound, url)
-	}
-
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetThumbKey(), model.FileTypeThumbnail)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-	defer file.Close()
-
-	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=31536000") // 1年間キャッシュ
-	return c.Stream(http.StatusOK, consts.MimeImagePNG, file)
+	return utils.ServeFileThumbnail(c, getFileFromContext(c))
 }

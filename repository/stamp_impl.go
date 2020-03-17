@@ -174,3 +174,21 @@ func (repo *GormRepository) StampNameExists(name string) (bool, error) {
 	}
 	return dbExists(repo.db, &model.Stamp{Name: name})
 }
+
+// GetUserStampHistory implements StampRepository interface.
+func (repo *GormRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h []*UserStampHistory, err error) {
+	h = make([]*UserStampHistory, 0)
+	if userID == uuid.Nil {
+		return
+	}
+	err = repo.db.
+		Table("messages_stamps").
+		Where("user_id = ?", userID).
+		Group("stamp_id").
+		Select("stamp_id, max(updated_at) AS datetime").
+		Order("datetime DESC").
+		Scopes(limitAndOffset(limit, 0)).
+		Scan(&h).
+		Error
+	return
+}

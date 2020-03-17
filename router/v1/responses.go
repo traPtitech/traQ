@@ -450,3 +450,29 @@ func formatHeartbeat(cid uuid.UUID, vs viewer.UserStates) *heartbeatResponse {
 	}
 	return result
 }
+
+type fileResponse struct {
+	FileID      uuid.UUID `json:"fileId"`
+	Name        string    `json:"name"`
+	Mime        string    `json:"mime"`
+	Size        int64     `json:"size"`
+	MD5         string    `json:"md5"`
+	HasThumb    bool      `json:"hasThumb"`
+	ThumbWidth  int       `json:"thumbWidth,omitempty"`
+	ThumbHeight int       `json:"thumbHeight,omitempty"`
+	Datetime    time.Time `json:"datetime"`
+}
+
+func formatFile(f model.FileMeta) *fileResponse {
+	return &fileResponse{
+		FileID:      f.GetID(),
+		Name:        f.GetFileName(),
+		Mime:        f.GetMIMEType(),
+		Size:        f.GetFileSize(),
+		MD5:         f.GetMD5Hash(),
+		HasThumb:    f.HasThumbnail(),
+		ThumbWidth:  f.GetThumbnailWidth(),
+		ThumbHeight: f.GetThumbnailHeight(),
+		Datetime:    f.GetCreatedAt(),
+	}
+}

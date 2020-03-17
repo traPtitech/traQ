@@ -21,8 +21,8 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/gormzap"
+	"github.com/traPtitech/traQ/utils/jwt"
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
 	"io/ioutil"
@@ -116,7 +116,7 @@ var serveCommand = &cobra.Command{
 			if err != nil {
 				logger.Fatal("failed to read jwt private key", zap.Error(err))
 			}
-			if err := utils.SetupSigner(privRaw); err != nil {
+			if err := jwt.SetupSigner(privRaw); err != nil {
 				logger.Fatal("failed to setup signer", zap.Error(err))
 			}
 		} else {
@@ -126,7 +126,7 @@ var serveCommand = &cobra.Command{
 			ecderpub, _ := x509.MarshalPKIXPublicKey(&priv.PublicKey)
 			privRaw := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: ecder})
 			pubRaw := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: ecderpub})
-			_ = utils.SetupSigner(privRaw)
+			_ = jwt.SetupSigner(privRaw)
 			logger.Warn("a temporary key for QRCode JWT was generated. This key is valid only during this running.", zap.String("public_key", string(pubRaw)))
 		}
 

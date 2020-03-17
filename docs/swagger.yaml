@@ -1918,10 +1918,10 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: 1MBまでのpng, jpeg, gif, svg
+                  description: 1MBまでのpng, jpeg, gif
             encoding:
               file:
-                contentType: image/png, image/jpeg, image/gif, image/svg+xml
+                contentType: image/png, image/jpeg, image/gif
       responses:
         "201":
           description: 正常にスタンプが作成されました。
@@ -1972,10 +1972,10 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: 1MBまでのpng, jpeg, gif, svg
+                  description: 1MBまでのpng, jpeg, gif
             encoding:
               file:
-                contentType: image/png, image/jpeg, image/gif, image/svg+xml
+                contentType: image/png, image/jpeg, image/gif
       responses:
         "204":
           description: 正常に修正できました。

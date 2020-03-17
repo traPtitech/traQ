@@ -4,6 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"gopkg.in/guregu/null.v3"
+	"time"
 )
 
 // UpdateStampArgs スタンプ情報更新引数
@@ -11,6 +12,12 @@ type UpdateStampArgs struct {
 	Name      null.String
 	FileID    uuid.NullUUID
 	CreatorID uuid.NullUUID
+}
+
+// UserStampHistory スタンプ履歴構造体
+type UserStampHistory struct {
+	StampID  uuid.UUID `json:"stampId"`
+	Datetime time.Time `json:"datetime"`
 }
 
 // StampRepository スタンプリポジトリ
@@ -59,4 +66,11 @@ type StampRepository interface {
 	// 存在する場合、trueとnilを返します。
 	// DBによるエラーを返すことがあります。
 	StampNameExists(name string) (bool, error)
+	// GetUserStampHistory 指定したユーザーのスタンプ履歴を最大limit件取得します
+	//
+	// 0を指定した場合、全て取得します。
+	// 成功した場合、降順のスタンプ履歴の配列とnilを返します。
+	// 存在しないユーザーを指定した場合は空配列とnilを返します。
+	// DBによるエラーを返すことがあります。
+	GetUserStampHistory(userID uuid.UUID, limit int) (h []*UserStampHistory, err error)
 }

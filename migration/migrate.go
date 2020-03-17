@@ -10,25 +10,13 @@ import (
 
 // Migrate データベースマイグレーションを実行します
 func Migrate(db *gorm.DB) error {
-	// データベースマイグレーション
-	migrations := []*gormigrate.Migration{
-		v1(), // インデックスidx_messages_deleted_atの削除とidx_messages_channel_id_deleted_at_created_atの追加
-		v2(), // RBAC周りのリフォーム
-		v3(), // チャンネルイベント履歴
-		v4(), // Webhook, Bot外部キー
-		v5(), // Mute, 旧Clip削除
-		v6(), // v6 ユーザーグループ拡張
-		v7(), // ファイルメタ拡張
-		v8(), // チャンネル購読拡張
-		v9(), // ユーザーテーブル拡張
-	}
-
 	m := gormigrate.New(db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"), &gormigrate.Options{
-		TableName:      "migrations",
-		IDColumnName:   "id",
-		IDColumnSize:   190,
-		UseTransaction: false,
-	}, migrations)
+		TableName:                 "migrations",
+		IDColumnName:              "id",
+		IDColumnSize:              190,
+		UseTransaction:            false,
+		ValidateUnknownMigrations: true,
+	}, Migrations())
 	m.InitSchema(func(db *gorm.DB) error {
 		// 初回のみに呼ばれる
 		// 全ての最新のデータベース定義を書く事

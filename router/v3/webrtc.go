@@ -5,7 +5,7 @@ import (
 	"fmt"
 	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/hmac"
 	"net/http"
 	"time"
 )
@@ -34,7 +34,7 @@ func (h *Handlers) PostWebRTCAuthenticate(c echo.Context) error {
 
 	ts := time.Now().Unix()
 	ttl := 40000
-	hash := utils.CalcHMACSHA256([]byte(fmt.Sprintf("%d:%d:%s", ts, ttl, req.PeerID)), h.SkyWaySecretKey)
+	hash := hmac.SHA256([]byte(fmt.Sprintf("%d:%d:%s", ts, ttl, req.PeerID)), h.SkyWaySecretKey)
 	return c.JSON(http.StatusOK, echo.Map{
 		"peerId":    req.PeerID,
 		"timestamp": ts,

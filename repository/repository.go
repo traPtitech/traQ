@@ -20,7 +20,6 @@ type Repository interface {
 	ChannelRepository
 	MessageRepository
 	MessageReportRepository
-	MessageStampRepository
 	StampRepository
 	StarRepository
 	PinRepository

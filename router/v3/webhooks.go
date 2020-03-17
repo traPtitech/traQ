@@ -12,7 +12,8 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/message"
 	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
@@ -50,12 +51,12 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return serveUserIcon(c, h.Repo, user)
+	return utils.ServeUserIcon(c, h.Repo, user)
 }
 
 // ChangeWebhookIcon PUT /webhooks/:webhookID/icon
 func (h *Handlers) ChangeWebhookIcon(c echo.Context) error {
-	return changeUserIcon(c, h.Repo, getParamWebhook(c).GetBotUserID())
+	return utils.ChangeUserIcon(c, h.Repo, getParamWebhook(c).GetBotUserID())
 }
 
 // PostWebhooksRequest POST /webhooks リクエストボディ
@@ -173,7 +174,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 		if len(sig) == 0 {
 			return herror.BadRequest("missing X-TRAQ-Signature header")
 		}
-		if subtle.ConstantTimeCompare(utils.CalcHMACSHA1(body, w.GetSecret()), sig) != 1 {
+		if subtle.ConstantTimeCompare(hmac.SHA1(body, w.GetSecret()), sig) != 1 {
 			return herror.BadRequest("X-TRAQ-Signature is wrong")
 		}
 	}

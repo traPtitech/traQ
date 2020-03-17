@@ -19,7 +19,7 @@ func (repo *GormRepository) CreateWebhook(name, description string, channelID, c
 
 	uid := uuid.Must(uuid.NewV4())
 	bid := uuid.Must(uuid.NewV4())
-	iconID, err := repo.GenerateIconFile(name)
+	iconID, err := GenerateIconFile(repo, name)
 	if err != nil {
 		return nil, err
 	}

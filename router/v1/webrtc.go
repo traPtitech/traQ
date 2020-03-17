@@ -9,7 +9,7 @@ import (
 	"github.com/traPtitech/traQ/realtime/webrtc"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/set"
 	"net/http"
 	"time"
@@ -35,7 +35,7 @@ func (h *Handlers) PostSkyWayAuthenticate(c echo.Context) error {
 
 	ts := time.Now().Unix()
 	ttl := 40000
-	hash := utils.CalcHMACSHA256([]byte(fmt.Sprintf("%d:%d:%s", ts, ttl, req.PeerID)), h.SkyWaySecretKey)
+	hash := hmac.SHA256([]byte(fmt.Sprintf("%d:%d:%s", ts, ttl, req.PeerID)), h.SkyWaySecretKey)
 	return c.JSON(http.StatusOK, echo.Map{
 		"peerId":    req.PeerID,
 		"timestamp": ts,

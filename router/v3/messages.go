@@ -171,14 +171,7 @@ func (h *Handlers) RemovePin(c echo.Context) error {
 
 // GetMessageStamps GET /messages/:messageID/stamps
 func (h *Handlers) GetMessageStamps(c echo.Context) error {
-	messageID := getParamAsUUID(c, consts.ParamMessageID)
-
-	stamps, err := h.Repo.GetMessageStamps(messageID)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.JSON(http.StatusOK, stamps)
+	return c.JSON(http.StatusOK, getParamMessage(c).Stamps)
 }
 
 // PostMessageStampRequest POST /messages/:messageID/stamps/:stampID リクエストボディ

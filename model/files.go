@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql"
 	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/utils/ioext"
 	"gopkg.in/guregu/null.v3"
 	"time"
 )
@@ -18,37 +19,47 @@ const (
 	FileTypeThumbnail = "thumbnail"
 )
 
+type FileMeta interface {
+	GetID() uuid.UUID
+	GetFileName() string
+	GetMIMEType() string
+	GetFileSize() int64
+	GetFileType() string
+	GetCreatorID() uuid.NullUUID
+	GetMD5Hash() string
+	HasThumbnail() bool
+	GetThumbnailMIMEType() string
+	GetThumbnailWidth() int
+	GetThumbnailHeight() int
+	GetUploadChannelID() uuid.NullUUID
+	GetCreatedAt() time.Time
+
+	Open() (ioext.ReadSeekCloser, error)
+	OpenThumbnail() (ioext.ReadSeekCloser, error)
+	GetAlternativeURL() string
+}
+
 // File DBに格納するファイルの構造体
 type File struct {
-	ID              uuid.UUID     `gorm:"type:char(36);not null;primary_key"   json:"fileId"`
-	Name            string        `gorm:"type:text;not null"                   json:"name"`
-	Mime            string        `gorm:"type:text;not null"                   json:"mime"`
-	Size            int64         `gorm:"type:bigint;not null"                 json:"size"`
-	CreatorID       uuid.NullUUID `gorm:"type:char(36)"                        json:"-"`
-	Hash            string        `gorm:"type:char(32);not null"               json:"md5"`
-	Type            string        `gorm:"type:varchar(30);not null;default:''" json:"-"`
-	HasThumbnail    bool          `gorm:"type:boolean;not null;default:false"  json:"hasThumb"`
-	ThumbnailMime   null.String   `gorm:"type:text"                            json:"-"`
-	ThumbnailWidth  int           `gorm:"type:int;not null;default:0"          json:"thumbWidth,omitempty"`
-	ThumbnailHeight int           `gorm:"type:int;not null;default:0"          json:"thumbHeight,omitempty"`
-	ChannelID       uuid.NullUUID `gorm:"type:char(36)"                        json:"-"`
-	CreatedAt       time.Time     `gorm:"precision:6"                          json:"datetime"`
-	DeletedAt       *time.Time    `gorm:"precision:6"                          json:"-"`
+	ID              uuid.UUID     `gorm:"type:char(36);not null;primary_key"`
+	Name            string        `gorm:"type:text;not null"`
+	Mime            string        `gorm:"type:text;not null"`
+	Size            int64         `gorm:"type:bigint;not null"`
+	CreatorID       uuid.NullUUID `gorm:"type:char(36)"`
+	Hash            string        `gorm:"type:char(32);not null"`
+	Type            string        `gorm:"type:varchar(30);not null;default:''"`
+	HasThumbnail    bool          `gorm:"type:boolean;not null;default:false"`
+	ThumbnailMime   null.String   `gorm:"type:text"`
+	ThumbnailWidth  int           `gorm:"type:int;not null;default:0"`
+	ThumbnailHeight int           `gorm:"type:int;not null;default:0"`
+	ChannelID       uuid.NullUUID `gorm:"type:char(36)"`
+	CreatedAt       time.Time     `gorm:"precision:6"`
+	DeletedAt       *time.Time    `gorm:"precision:6"`
 }
 
 // TableName dbのtableの名前を返します
 func (f *File) TableName() string {
 	return "files"
-}
-
-// GetKey ファイルのストレージに対するキーを返す
-func (f *File) GetKey() string {
-	return f.ID.String()
-}
-
-// GetThumbKey ファイルのサムネイルのストレージに対するキーを返す
-func (f *File) GetThumbKey() string {
-	return f.ID.String() + "-thumb"
 }
 
 // FileACLEntry ファイルアクセスコントロールリストエントリー構造体

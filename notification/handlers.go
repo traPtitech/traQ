@@ -107,7 +107,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	for _, v := range embedded {
 		if v.Type == "file" {
-			if f, _ := ns.repo.GetFileMeta(uuid.FromStringOrNil(v.ID)); f != nil && f.HasThumbnail {
+			if f, _ := ns.repo.GetFileMeta(uuid.FromStringOrNil(v.ID)); f != nil && f.HasThumbnail() {
 				fcmPayload.Image = fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, v.ID)
 				break
 			}

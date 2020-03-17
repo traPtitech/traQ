@@ -4,7 +4,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/router/consts"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"testing"
@@ -34,17 +33,14 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 		t.Parallel()
 		_, require := assertAndRequire(t)
 
-		_, src, err := repo.OpenFile(testUser.GetIconFileID())
+		meta, err := repo.GetFileMeta(testUser.GetIconFileID())
 		require.NoError(err)
-		i, err := ioutil.ReadAll(src)
-		require.NoError(err)
-
 		e := makeExp(t, server)
 		e.GET("/api/1.0/public/icon/{username}", testUser.GetName()).
 			Expect().
 			Status(http.StatusOK).
 			Header(echo.HeaderContentLength).
-			Equal(strconv.Itoa(len(i)))
+			Equal(strconv.FormatInt(meta.GetFileSize(), 10))
 	})
 
 	t.Run("Success With 304", func(t *testing.T) {
@@ -56,7 +52,7 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 
 		e := makeExp(t, server)
 		e.GET("/api/1.0/public/icon/{username}", testUser.GetName()).
-			WithHeader("If-None-Match", strconv.Quote(meta.Hash)).
+			WithHeader("If-None-Match", strconv.Quote(meta.GetMD5Hash())).
 			Expect().
 			Status(http.StatusNotModified)
 	})
@@ -169,7 +165,7 @@ func TestHandlers_GetPublicEmojiImage(t *testing.T) {
 
 		e := makeExp(t, server)
 		e.GET("/api/1.0/public/emoji/{stampID}", s.ID).
-			WithHeader("If-None-Match", strconv.Quote(meta.Hash)).
+			WithHeader("If-None-Match", strconv.Quote(meta.GetMD5Hash())).
 			Expect().
 			Status(http.StatusNotModified)
 	})

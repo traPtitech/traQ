@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"github.com/traPtitech/traQ/utils/ioext"
 	"io"
 	"os"
 )
@@ -22,7 +23,7 @@ func NewLocalFileStorage(dir string) *LocalFileStorage {
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *LocalFileStorage) OpenFileByKey(key, fileType string) (ReadSeekCloser, error) {
+func (fs *LocalFileStorage) OpenFileByKey(key, fileType string) (ioext.ReadSeekCloser, error) {
 	fileName := fs.getFilePath(key)
 	reader, err := os.Open(fileName)
 	if err != nil {

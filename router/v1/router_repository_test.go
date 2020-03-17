@@ -1,12 +1,10 @@
 package v1
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"github.com/disintegration/imaging"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
@@ -14,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/ioext"
 	"github.com/traPtitech/traQ/utils/set"
 	"github.com/traPtitech/traQ/utils/storage"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -244,7 +243,7 @@ func (repo *TestRepository) CreateUser(name, password string, role string) (mode
 		return nil, err
 	}
 
-	iconID, err := repo.GenerateIconFile(user.Name)
+	iconID, err := repository.GenerateIconFile(repo, user.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -380,13 +379,19 @@ func (repo *TestRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserA
 		return repository.ErrNotFound
 	}
 
-	changed := false
 	if args.DisplayName.Valid {
 		if utf8.RuneCountInString(args.DisplayName.String) > 64 {
 			return repository.ArgError("args.DisplayName", "DisplayName must be shorter than 64 characters")
 		}
 		u.DisplayName = args.DisplayName.String
-		changed = true
+		u.UpdatedAt = time.Now()
+	}
+	if args.Password.Valid {
+		salt := utils.GenerateSalt()
+		hashed := utils.HashPassword(args.Password.String, salt)
+		u.Salt = hex.EncodeToString(salt)
+		u.Password = hex.EncodeToString(hashed)
+		u.UpdatedAt = time.Now()
 	}
 	if args.TwitterID.Valid {
 		if len(args.TwitterID.String) > 0 && !validator.TwitterIDRegex.MatchString(args.TwitterID.String) {
@@ -397,60 +402,18 @@ func (repo *TestRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserA
 	}
 	if args.Role.Valid {
 		u.Role = args.Role.String
-	}
-
-	if changed {
 		u.UpdatedAt = time.Now()
-		repo.Users[id] = u
 	}
-	return nil
-}
-
-func (repo *TestRepository) ChangeUserPassword(id uuid.UUID, password string) error {
-	if id == uuid.Nil {
-		return repository.ErrNilID
-	}
-	salt := utils.GenerateSalt()
-	hashed := utils.HashPassword(password, salt)
-	repo.UsersLock.Lock()
-	u, ok := repo.Users[id]
-	if ok {
-		u.Salt = hex.EncodeToString(salt)
-		u.Password = hex.EncodeToString(hashed)
+	if args.IconFileID.Valid {
+		u.Icon = args.IconFileID.UUID
 		u.UpdatedAt = time.Now()
-		repo.Users[id] = u
 	}
-	repo.UsersLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) ChangeUserIcon(id, fileID uuid.UUID) error {
-	if id == uuid.Nil || fileID == uuid.Nil {
-		return repository.ErrNilID
-	}
-	repo.UsersLock.Lock()
-	u, ok := repo.Users[id]
-	if ok {
-		u.Icon = fileID
-		u.UpdatedAt = time.Now()
-		repo.Users[id] = u
-	}
-	repo.UsersLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) UpdateUserLastOnline(id uuid.UUID, t time.Time) (err error) {
-	if id == uuid.Nil {
-		return repository.ErrNilID
-	}
-	repo.UsersLock.Lock()
-	u, ok := repo.Users[id]
-	if ok {
-		u.Profile.LastOnline = null.TimeFrom(t)
+	if args.LastOnline.Valid {
+		u.Profile.LastOnline = args.LastOnline
 		u.Profile.UpdatedAt = time.Now()
-		repo.Users[id] = u
 	}
-	repo.UsersLock.Unlock()
+
+	repo.Users[id] = u
 	return nil
 }
 
@@ -1739,10 +1702,6 @@ func (repo *TestRepository) RemoveStampFromMessage(messageID, stampID, userID uu
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetMessageStamps(messageID uuid.UUID) (stamps []*model.MessageStamp, err error) {
-	return []*model.MessageStamp{}, nil
-}
-
 func (repo *TestRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h []*repository.UserStampHistory, err error) {
 	panic("implement me")
 }
@@ -2022,28 +1981,7 @@ func (repo *TestRepository) GetAllDeviceTokens() (result []string, err error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) OpenFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
-	meta, err := repo.GetFileMeta(fileID)
-	if err != nil {
-		return nil, nil, err
-	}
-	rc, err := repo.FS.OpenFileByKey(meta.GetKey(), meta.Type)
-	return meta, rc, err
-}
-
-func (repo *TestRepository) OpenThumbnailFile(fileID uuid.UUID) (*model.File, io.ReadCloser, error) {
-	meta, err := repo.GetFileMeta(fileID)
-	if err != nil {
-		return nil, nil, err
-	}
-	if meta.HasThumbnail {
-		rc, err := repo.FS.OpenFileByKey(meta.GetThumbKey(), model.FileTypeThumbnail)
-		return meta, rc, err
-	}
-	return meta, nil, repository.ErrNotFound
-}
-
-func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
+func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (model.FileMeta, error) {
 	if fileID == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
@@ -2053,7 +1991,7 @@ func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (*model.File, error) {
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
-	return &meta, nil
+	return &fileMetaImpl{meta: &meta, fs: repo.FS}, nil
 }
 
 func (repo *TestRepository) DeleteFile(fileID uuid.UUID) error {
@@ -2067,23 +2005,10 @@ func (repo *TestRepository) DeleteFile(fileID uuid.UUID) error {
 		return repository.ErrNotFound
 	}
 	delete(repo.Files, fileID)
-	return repo.FS.DeleteByKey(meta.GetKey(), meta.Type)
+	return repo.FS.DeleteByKey(meta.ID.String(), meta.Type)
 }
 
-func (repo *TestRepository) GenerateIconFile(salt string) (uuid.UUID, error) {
-	var img bytes.Buffer
-	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
-	file, err := repo.SaveFile(repository.SaveFileArgs{
-		FileName: fmt.Sprintf("%s.png", salt),
-		FileSize: int64(img.Len()),
-		MimeType: "image/png",
-		FileType: model.FileTypeIcon,
-		Src:      &img,
-	})
-	return file.ID, err
-}
-
-func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (*model.File, error) {
+func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (model.FileMeta, error) {
 	if err := args.Validate(); err != nil {
 		return nil, err
 	}
@@ -2108,13 +2033,13 @@ func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (*model.File,
 	go func() {
 		defer fileWriter.Close()
 		defer thumbWriter.Close()
-		_, _ = io.Copy(utils.MultiWriter(fileWriter, hash, thumbWriter), args.Src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
+		_, _ = io.Copy(ioext.MultiWriter(fileWriter, hash, thumbWriter), args.Src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
 	}()
 
 	// fileの保存
 	eg.Go(func() error {
 		defer fileSrc.Close()
-		if err := repo.FS.SaveByKey(fileSrc, f.GetKey(), f.Name, f.Mime, f.Type); err != nil {
+		if err := repo.FS.SaveByKey(fileSrc, f.ID.String(), f.Name, f.Mime, f.Type); err != nil {
 			return err
 		}
 		return nil
@@ -2146,7 +2071,7 @@ func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (*model.File,
 	repo.FilesACL[f.ID] = args.ACL
 	repo.FilesACLLock.Unlock()
 	repo.FilesLock.Unlock()
-	return f, nil
+	return &fileMetaImpl{meta: f, fs: repo.FS}, nil
 }
 
 func (repo *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
@@ -2189,7 +2114,8 @@ func (repo *TestRepository) generateThumbnail(ctx context.Context, f *model.File
 		_ = w.Close()
 	}()
 
-	if err := repo.FS.SaveByKey(r, f.GetThumbKey(), f.GetThumbKey()+".png", "image/png", model.FileTypeThumbnail); err != nil {
+	key := f.ID.String() + "-thumb"
+	if err := repo.FS.SaveByKey(r, key, key+".png", "image/png", model.FileTypeThumbnail); err != nil {
 		return image.Rectangle{}, err
 	}
 	return img.Bounds(), nil
@@ -2201,7 +2127,7 @@ func (repo *TestRepository) CreateWebhook(name, description string, channelID, c
 	}
 	uid := uuid.Must(uuid.NewV4())
 	bid := uuid.Must(uuid.NewV4())
-	iconID, err := repo.GenerateIconFile(name)
+	iconID, err := repository.GenerateIconFile(repo, name)
 	if err != nil {
 		return nil, err
 	}
@@ -2682,4 +2608,77 @@ func (repo *TestRepository) RemoveBotFromChannel(botID, channelID uuid.UUID) err
 
 func (repo *TestRepository) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid.UUID, error) {
 	panic("implement me")
+}
+
+type fileMetaImpl struct {
+	meta *model.File
+	fs   storage.FileStorage
+}
+
+func (f *fileMetaImpl) GetID() uuid.UUID {
+	return f.meta.ID
+}
+
+func (f *fileMetaImpl) GetFileName() string {
+	return f.meta.Name
+}
+
+func (f *fileMetaImpl) GetMIMEType() string {
+	return f.meta.Mime
+}
+
+func (f *fileMetaImpl) GetFileSize() int64 {
+	return f.meta.Size
+}
+
+func (f *fileMetaImpl) GetFileType() string {
+	return f.meta.Type
+}
+
+func (f *fileMetaImpl) GetCreatorID() uuid.NullUUID {
+	return f.meta.CreatorID
+}
+
+func (f *fileMetaImpl) GetMD5Hash() string {
+	return f.meta.Hash
+}
+
+func (f *fileMetaImpl) HasThumbnail() bool {
+	return f.meta.HasThumbnail
+}
+
+func (f *fileMetaImpl) GetThumbnailMIMEType() string {
+	return f.meta.ThumbnailMime.String
+}
+
+func (f *fileMetaImpl) GetThumbnailWidth() int {
+	return f.meta.ThumbnailWidth
+}
+
+func (f *fileMetaImpl) GetThumbnailHeight() int {
+	return f.meta.ThumbnailHeight
+}
+
+func (f *fileMetaImpl) GetUploadChannelID() uuid.NullUUID {
+	return f.meta.ChannelID
+}
+
+func (f *fileMetaImpl) GetCreatedAt() time.Time {
+	return f.meta.CreatedAt
+}
+
+func (f *fileMetaImpl) Open() (ioext.ReadSeekCloser, error) {
+	return f.fs.OpenFileByKey(f.GetID().String(), f.GetFileType())
+}
+
+func (f *fileMetaImpl) OpenThumbnail() (ioext.ReadSeekCloser, error) {
+	if !f.HasThumbnail() {
+		return nil, repository.ErrNotFound
+	}
+	return f.fs.OpenFileByKey(f.GetID().String()+"-thumb", model.FileTypeThumbnail)
+}
+
+func (f *fileMetaImpl) GetAlternativeURL() string {
+	url, _ := f.fs.GenerateAccessURL(f.GetID().String(), f.GetFileType())
+	return url
 }

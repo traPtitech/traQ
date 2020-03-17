@@ -3,9 +3,29 @@ package migration
 import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/sessions"
+	"gopkg.in/gormigrate.v1"
 )
 
+// Migrations 全てのデータベースマイグレーション
+//
+// 新たなマイグレーションを行う場合は、この配列の末尾に必ず追加すること
+func Migrations() []*gormigrate.Migration {
+	return []*gormigrate.Migration{
+		v1(), // インデックスidx_messages_deleted_atの削除とidx_messages_channel_id_deleted_at_created_atの追加
+		v2(), // RBAC周りのリフォーム
+		v3(), // チャンネルイベント履歴
+		v4(), // Webhook, Bot外部キー
+		v5(), // Mute, 旧Clip削除
+		v6(), // v6 ユーザーグループ拡張
+		v7(), // ファイルメタ拡張
+		v8(), // チャンネル購読拡張
+		v9(), // ユーザーテーブル拡張
+	}
+}
+
 // AllTables 最新のスキーマの全テーブルモデル
+//
+// 最新のスキーマの全テーブルのモデル構造体を記述すること
 func AllTables() []interface{} {
 	return []interface{}{
 		&model.ChannelEvent{},
@@ -47,6 +67,8 @@ func AllTables() []interface{} {
 }
 
 // AllForeignKeys 最新のスキーマの全外部キー制約
+//
+// 最新のスキーマの全外部キー制約を記述すること
 func AllForeignKeys() [][5]string {
 	return [][5]string{
 		// Table, Key, Reference, OnDelete, OnUpdate
@@ -89,6 +111,8 @@ func AllForeignKeys() [][5]string {
 }
 
 // AllCompositeIndexes 最新のスキーマの全複合インデックス
+//
+// 最新のスキーマの全複合インデックスを記述すること。
 func AllCompositeIndexes() [][]string {
 	return [][]string{
 		// Name,  Table, Columns...

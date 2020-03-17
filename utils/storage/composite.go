@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/ioext"
 	"io"
 	"os"
 )
@@ -36,7 +37,7 @@ func (fs *CompositeFileStorage) SaveByKey(src io.Reader, key, name, contentType,
 }
 
 // OpenFileByKey keyで指定されたファイルを読み込む
-func (fs *CompositeFileStorage) OpenFileByKey(key string, fileType string) (ReadSeekCloser, error) {
+func (fs *CompositeFileStorage) OpenFileByKey(key string, fileType string) (ioext.ReadSeekCloser, error) {
 	if _, err := os.Stat(fs.local.getFilePath(key)); os.IsNotExist(err) {
 		return fs.swift.OpenFileByKey(key, fileType)
 	}

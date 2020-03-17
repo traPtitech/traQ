@@ -3,6 +3,8 @@ package v1
 import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/router/utils"
+	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
 	"time"
@@ -16,7 +18,6 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -192,38 +193,31 @@ func (r PutUserPasswordRequest) Validate() error {
 
 // PutUserPassword PUT /users/:userID/password
 func (h *Handlers) PutUserPassword(c echo.Context) error {
-	userID := getRequestParamAsUUID(c, consts.ParamUserID)
-
 	var req PutUserPasswordRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
-
-	if err := h.Repo.ChangeUserPassword(userID, req.NewPassword); err != nil {
-		return herror.InternalServerError(err)
-	}
-	_ = sessions.DestroyByUserID(userID)
-	return c.NoContent(http.StatusNoContent)
+	return utils.ChangeUserPassword(c, h.Repo, getRequestParamAsUUID(c, consts.ParamUserID), req.NewPassword)
 }
 
 // GetUserIcon GET /users/:userID/icon
 func (h *Handlers) GetUserIcon(c echo.Context) error {
-	return h.getUserIcon(c, getUserFromContext(c))
+	return utils.ServeUserIcon(c, h.Repo, getUserFromContext(c))
 }
 
 // GetMyIcon GET /users/me/icon
 func (h *Handlers) GetMyIcon(c echo.Context) error {
-	return h.getUserIcon(c, getRequestUser(c))
+	return utils.ServeUserIcon(c, h.Repo, getRequestUser(c))
 }
 
 // PutUserIcon PUT /users/:userID/icon
 func (h *Handlers) PutUserIcon(c echo.Context) error {
-	return h.putUserIcon(c, getRequestParamAsUUID(c, consts.ParamUserID))
+	return utils.ChangeUserIcon(c, h.Repo, getRequestParamAsUUID(c, consts.ParamUserID))
 }
 
 // PutMyIcon PUT /users/me/icon
 func (h *Handlers) PutMyIcon(c echo.Context) error {
-	return h.putUserIcon(c, getRequestUserID(c))
+	return utils.ChangeUserIcon(c, h.Repo, getRequestUserID(c))
 }
 
 // PatchMeRequest PATCH /users/me リクエストボディ
@@ -281,11 +275,7 @@ func (h *Handlers) PutPassword(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "current password is wrong")
 	}
 
-	if err := h.Repo.ChangeUserPassword(user.GetID(), req.NewPassword); err != nil {
-		return herror.InternalServerError(err)
-	}
-	_ = sessions.DestroyByUserID(user.GetID())
-	return c.NoContent(http.StatusNoContent)
+	return utils.ChangeUserPassword(c, h.Repo, user.GetID(), req.NewPassword)
 }
 
 // GetMyQRCode GET /users/me/qr-code
@@ -303,7 +293,7 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 	now := time.Now()
 	deadline := now.Add(10 * time.Minute)
 
-	token, err := utils.Signer.Sign(&UserForJWTClaim{
+	token, err := jwt2.Sign(&UserForJWTClaim{
 		StandardClaims: jwt.StandardClaims{
 			IssuedAt:  now.Unix(),
 			ExpiresAt: deadline.Unix(),

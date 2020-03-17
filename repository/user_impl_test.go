@@ -1,10 +1,8 @@
 package repository
 
 import (
-	"encoding/hex"
 	"fmt"
 	"github.com/gofrs/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/utils"
@@ -270,43 +268,4 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			}
 		})
 	})
-}
-
-func TestRepositoryImpl_ChangeUserPassword(t *testing.T) {
-	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
-
-	t.Run("success", func(t *testing.T) {
-		t.Parallel()
-		assert, require := assertAndRequire(t)
-
-		newPass := "aiueo123456"
-		if assert.NoError(repo.ChangeUserPassword(user.GetID(), newPass)) {
-			u, err := repo.GetUser(user.GetID(), false)
-			require.NoError(err)
-
-			um := u.(*model.User)
-			salt, err := hex.DecodeString(um.Salt)
-			require.NoError(err)
-			assert.Equal(um.Password, hex.EncodeToString(utils.HashPassword(newPass, salt)))
-		}
-	})
-
-	t.Run("nil id", func(t *testing.T) {
-		t.Parallel()
-
-		assert.EqualError(t, repo.ChangeUserPassword(uuid.Nil, ""), ErrNilID.Error())
-	})
-}
-
-func TestRepositoryImpl_ChangeUserIcon(t *testing.T) {
-	t.Parallel()
-	repo, assert, require, user := setupWithUser(t, common)
-
-	newIcon := uuid.Must(uuid.NewV4())
-	if assert.NoError(repo.ChangeUserIcon(user.GetID(), newIcon)) {
-		u, err := repo.GetUser(user.GetID(), false)
-		require.NoError(err)
-		assert.Equal(newIcon, u.GetIconFileID())
-	}
 }

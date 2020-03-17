@@ -13,8 +13,8 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/router/utils"
+	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
@@ -132,12 +132,7 @@ func (h *Handlers) PutMyPassword(c echo.Context) error {
 		return herror.Unauthorized("password is wrong")
 	}
 
-	// パスワード変更
-	if err := h.Repo.ChangeUserPassword(user.GetID(), req.NewPassword); err != nil {
-		return herror.InternalServerError(err)
-	}
-	_ = sessions.DestroyByUserID(user.GetID()) // 全セッションを破棄(強制ログアウト)
-	return c.NoContent(http.StatusNoContent)
+	return utils.ChangeUserPassword(c, h.Repo, user.GetID(), req.NewPassword)
 }
 
 // GetMyQRCode GET /users/me/qr-code
@@ -147,7 +142,7 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 	// トークン生成
 	now := time.Now()
 	deadline := now.Add(5 * time.Minute)
-	token, err := utils.Signer.Sign(jwt.MapClaims{
+	token, err := jwt2.Sign(jwt.MapClaims{
 		"iat":         now.Unix(),
 		"exp":         deadline.Unix(),
 		"userId":      user.GetID(),
@@ -173,22 +168,22 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 
 // GetUserIcon GET /users/:userID/icon
 func (h *Handlers) GetUserIcon(c echo.Context) error {
-	return serveUserIcon(c, h.Repo, getParamUser(c))
+	return utils.ServeUserIcon(c, h.Repo, getParamUser(c))
 }
 
 // ChangeUserIcon PUT /users/:userID/icon
 func (h *Handlers) ChangeUserIcon(c echo.Context) error {
-	return changeUserIcon(c, h.Repo, getParamAsUUID(c, consts.ParamUserID))
+	return utils.ChangeUserIcon(c, h.Repo, getParamAsUUID(c, consts.ParamUserID))
 }
 
 // GetMyIcon GET /users/me/icon
 func (h *Handlers) GetMyIcon(c echo.Context) error {
-	return serveUserIcon(c, h.Repo, getRequestUser(c))
+	return utils.ServeUserIcon(c, h.Repo, getRequestUser(c))
 }
 
 // ChangeMyIcon PUT /users/me/icon
 func (h *Handlers) ChangeMyIcon(c echo.Context) error {
-	return changeUserIcon(c, h.Repo, getRequestUserID(c))
+	return utils.ChangeUserIcon(c, h.Repo, getRequestUserID(c))
 }
 
 // GetMyStampHistory GET /users/me/stamp-history リクエストクエリ
@@ -269,16 +264,7 @@ func (h *Handlers) ChangeUserPassword(c echo.Context) error {
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
-
-	userID := getParamAsUUID(c, consts.ParamUserID)
-
-	if err := h.Repo.ChangeUserPassword(userID, req.NewPassword); err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	// ユーザーの全セッションを削除
-	_ = sessions.DestroyByUserID(userID)
-	return c.NoContent(http.StatusNoContent)
+	return utils.ChangeUserPassword(c, h.Repo, getParamAsUUID(c, consts.ParamUserID), req.NewPassword)
 }
 
 // GetUser GET /users/:userID

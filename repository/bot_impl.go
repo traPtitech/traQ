@@ -40,7 +40,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 	uid := uuid.Must(uuid.NewV4())
 	bid := uuid.Must(uuid.NewV4())
 	tid := uuid.Must(uuid.NewV4())
-	iconID, err := repo.GenerateIconFile(name)
+	iconID, err := GenerateIconFile(repo, name)
 	if err != nil {
 		return nil, err
 	}

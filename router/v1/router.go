@@ -2,9 +2,7 @@ package v1
 
 import (
 	"bytes"
-	"context"
 	"encoding/gob"
-	"github.com/disintegration/imaging"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
@@ -21,15 +19,10 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/middlewares"
-	"github.com/traPtitech/traQ/utils/imagemagick"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
-	"io"
-	"mime/multipart"
-	"net/http"
-	"strconv"
 	"strings"
 	"sync"
 	"text/template"
@@ -38,17 +31,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-const (
-	iconMaxWidth    = 256
-	iconMaxHeight   = 256
-	iconFileMaxSize = 2 << 20
-
-	stampMaxWidth    = 128
-	stampMaxHeight   = 128
-	stampFileMaxSize = 2 << 20
-
-	unexpectedError = "unexpected error"
-)
+const unexpectedError = "unexpected error"
 
 var json = jsoniter.ConfigFastest
 
@@ -66,8 +49,6 @@ type Handlers struct {
 	Logger   *zap.Logger
 	Realtime *realtime.Service
 
-	// ImageMagickPath ImageMagickの実行パス
-	ImageMagickPath string
 	// AccessTokenExp アクセストークンの有効時間(秒)
 	AccessTokenExp int
 	// IsRefreshEnabled リフレッシュトークンを発行するかどうか
@@ -470,157 +451,6 @@ func bindAndValidate(c echo.Context, i interface{}) error {
 	return nil
 }
 
-func (h *Handlers) processMultipartFormIconUpload(c echo.Context, name string) (uuid.UUID, error) {
-	src, file, err := c.Request().FormFile(name)
-	if err != nil {
-		return uuid.Nil, herror.BadRequest(err)
-	}
-	defer src.Close()
-	// ファイルサイズ制限
-	if file.Size > iconFileMaxSize {
-		return uuid.Nil, herror.BadRequest("too large image file (limit exceeded)")
-	}
-	return h.processMultipartForm(c, src, file, model.FileTypeIcon, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
-		switch mime {
-		case consts.MimeImagePNG, consts.MimeImageJPEG:
-			return h.processStillImage(c, src, iconMaxWidth, iconMaxHeight)
-		case consts.MimeImageGIF:
-			return h.processGifImage(c, h.ImageMagickPath, src, iconMaxWidth, iconMaxHeight)
-		}
-		return nil, "", herror.BadRequest("invalid image file")
-	})
-}
-
-func (h *Handlers) processMultipartFormStampUpload(c echo.Context, name string) (uuid.UUID, error) {
-	src, file, err := c.Request().FormFile(name)
-	if err != nil {
-		return uuid.Nil, herror.BadRequest(err)
-	}
-	defer src.Close()
-	// ファイルサイズ制限
-	if file.Size > stampFileMaxSize {
-		return uuid.Nil, herror.BadRequest("too large image file (limit exceeded)")
-	}
-	return h.processMultipartForm(c, src, file, model.FileTypeStamp, func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error) {
-		switch mime {
-		case consts.MimeImagePNG, consts.MimeImageJPEG:
-			return h.processStillImage(c, src, stampMaxWidth, stampMaxHeight)
-		case consts.MimeImageGIF:
-			return h.processGifImage(c, h.ImageMagickPath, src, stampMaxWidth, stampMaxHeight)
-		case consts.MimeImageSVG:
-			return h.processSVGImage(c, src)
-		}
-		return nil, "", herror.BadRequest("invalid image file")
-	})
-}
-
-func (h *Handlers) processMultipartForm(c echo.Context, src io.Reader, file *multipart.FileHeader, fType string, process func(c echo.Context, mime string, src io.Reader) (*bytes.Buffer, string, error)) (uuid.UUID, error) {
-	// ファイルタイプ確認・必要があればリサイズ
-	b, mime, err := process(c, file.Header.Get(echo.HeaderContentType), src)
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	// ファイル保存
-	f, err := h.Repo.SaveFile(repository.SaveFileArgs{
-		FileName: file.Filename,
-		FileSize: int64(b.Len()),
-		MimeType: mime,
-		FileType: fType,
-		Src:      b,
-	})
-	if err != nil {
-		return uuid.Nil, herror.InternalServerError(err)
-	}
-
-	return f.ID, nil
-}
-
-func (h *Handlers) processStillImage(c echo.Context, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, string, error) {
-	img, err := imaging.Decode(src, imaging.AutoOrientation(true))
-	if err != nil {
-		return nil, "", herror.BadRequest("bad image file")
-	}
-
-	if size := img.Bounds().Size(); size.X > maxWidth || size.Y > maxHeight {
-		img = imaging.Fit(img, maxWidth, maxHeight, imaging.Linear)
-	}
-
-	// bytesに戻す
-	var b bytes.Buffer
-	_ = imaging.Encode(&b, img, imaging.PNG)
-	return &b, consts.MimeImagePNG, nil
-}
-
-func (h *Handlers) processGifImage(c echo.Context, imagemagickPath string, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // 10秒以内に終わらないファイルは無効
-	defer cancel()
-
-	b, err := imagemagick.ResizeAnimationGIF(ctx, imagemagickPath, src, maxWidth, maxHeight, false)
-	if err != nil {
-		switch err {
-		case imagemagick.ErrUnavailable:
-			// gifは一時的にサポートされていない
-			return nil, "", herror.BadRequest("gif file is temporarily unsupported")
-		case imagemagick.ErrUnsupportedType:
-			// 不正なgifである
-			return nil, "", herror.BadRequest("bad image file")
-		case context.DeadlineExceeded:
-			// リサイズタイムアウト
-			return nil, "", herror.BadRequest("bad image file (resize timeout)")
-		default:
-			// 予期しないエラー
-			return nil, "", herror.InternalServerError(err)
-		}
-	}
-
-	return b, consts.MimeImageGIF, nil
-}
-
-func (h *Handlers) processSVGImage(c echo.Context, src io.Reader) (*bytes.Buffer, string, error) {
-	// TODO svg検証
-	b := &bytes.Buffer{}
-	_, err := io.Copy(b, src)
-	if err != nil {
-		return nil, "", herror.InternalServerError(err)
-	}
-	return b, consts.MimeImageSVG, nil
-}
-
-func (h *Handlers) getUserIcon(c echo.Context, user model.UserInfo) error {
-	// ファイルメタ取得
-	meta, err := h.Repo.GetFileMeta(user.GetIconFileID())
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	// ファイルオープン
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey(), meta.Type)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-	defer file.Close()
-
-	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
-	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.Hash))
-	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
-	return nil
-}
-
-func (h *Handlers) putUserIcon(c echo.Context, userID uuid.UUID) error {
-	iconID, err := h.processMultipartFormIconUpload(c, "file")
-	if err != nil {
-		return err
-	}
-
-	// アイコン変更
-	if err := h.Repo.ChangeUserIcon(userID, iconID); err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.NoContent(http.StatusNoContent)
-}
-
 func getRequestUser(c echo.Context) model.UserInfo {
 	return c.Get(consts.KeyUser).(model.UserInfo)
 }
@@ -665,8 +495,8 @@ func getBotFromContext(c echo.Context) *model.Bot {
 	return c.Get(consts.KeyParamBot).(*model.Bot)
 }
 
-func getFileFromContext(c echo.Context) *model.File {
-	return c.Get(consts.KeyParamFile).(*model.File)
+func getFileFromContext(c echo.Context) model.FileMeta {
+	return c.Get(consts.KeyParamFile).(model.FileMeta)
 }
 
 func getClientFromContext(c echo.Context) *model.OAuth2Client {

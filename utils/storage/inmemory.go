@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"github.com/traPtitech/traQ/utils/ioext"
 	"io"
 	"io/ioutil"
 	"sync"
@@ -33,7 +34,7 @@ func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, name, contentType, 
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *InMemoryFileStorage) OpenFileByKey(key, fileType string) (ReadSeekCloser, error) {
+func (fs *InMemoryFileStorage) OpenFileByKey(key, fileType string) (ioext.ReadSeekCloser, error) {
 	fs.RLock()
 	f, ok := fs.fileMap[key]
 	fs.RUnlock()

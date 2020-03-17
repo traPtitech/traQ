@@ -277,3 +277,81 @@ func TestRepositoryImpl_GetArchivedMessagesByID(t *testing.T) {
 		}
 	})
 }
+
+func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
+	t.Parallel()
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+
+	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
+	stamp := mustMakeStamp(t, repo, random, uuid.Nil)
+
+	t.Run("Nil id", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.AddStampToMessage(uuid.Nil, uuid.Nil, uuid.Nil, 1)
+		assert.EqualError(t, err, ErrNilID.Error())
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		assert, _ := assertAndRequire(t)
+		{
+			ms, err := repo.AddStampToMessage(message.ID, stamp.ID, user.GetID(), 1)
+			if assert.NoError(err) {
+				assert.Equal(message.ID, ms.MessageID)
+				assert.Equal(stamp.ID, ms.StampID)
+				assert.Equal(user.GetID(), ms.UserID)
+				assert.Equal(1, ms.Count)
+				assert.NotEmpty(ms.CreatedAt)
+				assert.NotEmpty(ms.UpdatedAt)
+			}
+		}
+		{
+			ms, err := repo.AddStampToMessage(message.ID, stamp.ID, user.GetID(), 1)
+			if assert.NoError(err) {
+				assert.Equal(message.ID, ms.MessageID)
+				assert.Equal(stamp.ID, ms.StampID)
+				assert.Equal(user.GetID(), ms.UserID)
+				assert.Equal(2, ms.Count)
+				assert.NotEmpty(ms.CreatedAt)
+				assert.NotEmpty(ms.UpdatedAt)
+			}
+		}
+		{
+			ms, err := repo.AddStampToMessage(message.ID, stamp.ID, user.GetID(), 3)
+			if assert.NoError(err) {
+				assert.Equal(message.ID, ms.MessageID)
+				assert.Equal(stamp.ID, ms.StampID)
+				assert.Equal(user.GetID(), ms.UserID)
+				assert.Equal(5, ms.Count)
+				assert.NotEmpty(ms.CreatedAt)
+				assert.NotEmpty(ms.UpdatedAt)
+			}
+		}
+	})
+}
+
+func TestRepositoryImpl_RemoveStampFromMessage(t *testing.T) {
+	t.Parallel()
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+
+	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
+	stamp := mustMakeStamp(t, repo, random, uuid.Nil)
+
+	t.Run("Nil id", func(t *testing.T) {
+		t.Parallel()
+		assert.EqualError(t, repo.RemoveStampFromMessage(message.ID, stamp.ID, uuid.Nil), ErrNilID.Error())
+		assert.EqualError(t, repo.RemoveStampFromMessage(message.ID, uuid.Nil, user.GetID()), ErrNilID.Error())
+		assert.EqualError(t, repo.RemoveStampFromMessage(uuid.Nil, stamp.ID, user.GetID()), ErrNilID.Error())
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		t.Parallel()
+		mustAddMessageStamp(t, repo, message.ID, stamp.ID, user.GetID())
+		mustAddMessageStamp(t, repo, message.ID, stamp.ID, user.GetID())
+
+		if assert.NoError(t, repo.RemoveStampFromMessage(message.ID, stamp.ID, user.GetID())) {
+			assert.Equal(t, 0, count(t, getDB(repo).Model(&model.MessageStamp{}).Where(&model.MessageStamp{MessageID: message.ID, StampID: stamp.ID, UserID: user.GetID()})))
+		}
+	})
+}

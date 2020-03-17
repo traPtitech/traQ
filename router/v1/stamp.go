@@ -4,10 +4,12 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/router/utils"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
 )
@@ -31,8 +33,8 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 func (h *Handlers) PostStamp(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	// file処理
-	fileID, err := h.processMultipartFormStampUpload(c, "file")
+	// スタンプ画像保存
+	fileID, err := utils.SaveUploadImage(c, h.Repo, "file", model.FileTypeStamp, 1<<20, 128)
 	if err != nil {
 		return err
 	}
@@ -85,7 +87,7 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 	f, _, err := c.Request().FormFile("file")
 	if err == nil {
 		f.Close()
-		fileID, err := h.processMultipartFormStampUpload(c, "file")
+		fileID, err := utils.SaveUploadImage(c, h.Repo, "file", model.FileTypeStamp, 1<<20, 128)
 		if err != nil {
 			return err
 		}
@@ -121,14 +123,7 @@ func (h *Handlers) DeleteStamp(c echo.Context) error {
 
 // GetMessageStamps GET /messages/:messageID/stamps
 func (h *Handlers) GetMessageStamps(c echo.Context) error {
-	messageID := getRequestParamAsUUID(c, consts.ParamMessageID)
-
-	stamps, err := h.Repo.GetMessageStamps(messageID)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.JSON(http.StatusOK, stamps)
+	return c.JSON(http.StatusOK, getMessageFromContext(c).Stamps)
 }
 
 // PostMessageStampRequest POST /messages/:messageID/stamps/:stampID リクエストボディ

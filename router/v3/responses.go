@@ -357,22 +357,22 @@ type FileInfo struct {
 	UploaderID uuid.NullUUID      `json:"uploaderId"`
 }
 
-func formatFileInfo(meta *model.File) *FileInfo {
+func formatFileInfo(meta model.FileMeta) *FileInfo {
 	fi := &FileInfo{
-		ID:         meta.ID,
-		Name:       meta.Name,
-		Mime:       meta.Mime,
-		Size:       meta.Size,
-		MD5:        meta.Hash,
-		CreatedAt:  meta.CreatedAt,
-		ChannelID:  meta.ChannelID,
-		UploaderID: meta.CreatorID,
+		ID:         meta.GetID(),
+		Name:       meta.GetFileName(),
+		Mime:       meta.GetMIMEType(),
+		Size:       meta.GetFileSize(),
+		MD5:        meta.GetMD5Hash(),
+		CreatedAt:  meta.GetCreatedAt(),
+		ChannelID:  meta.GetUploadChannelID(),
+		UploaderID: meta.GetCreatorID(),
 	}
-	if meta.HasThumbnail {
+	if meta.HasThumbnail() {
 		fi.Thumbnail = &FileInfoThumbnail{
-			Mime:   meta.ThumbnailMime.String,
-			Width:  meta.ThumbnailWidth,
-			Height: meta.ThumbnailHeight,
+			Mime:   meta.GetThumbnailMIMEType(),
+			Width:  meta.GetThumbnailWidth(),
+			Height: meta.GetThumbnailHeight(),
 		}
 	}
 	return fi

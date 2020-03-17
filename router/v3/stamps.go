@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
@@ -35,7 +36,7 @@ func (h *Handlers) CreateStamp(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	// スタンプ画像保存
-	fileID, err := saveUploadImage(c, h.Repo, "file", model.FileTypeStamp, 1<<20, 128)
+	fileID, err := utils.SaveUploadImage(c, h.Repo, "file", model.FileTypeStamp, 1<<20, 128)
 	if err != nil {
 		return err
 	}
@@ -147,15 +148,15 @@ func (h *Handlers) GetStampImage(c echo.Context) error {
 	}
 
 	// ファイルオープン
-	file, err := h.Repo.GetFS().OpenFileByKey(meta.GetKey(), meta.Type)
+	file, err := meta.Open()
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 	defer file.Close()
 
-	c.Response().Header().Set(echo.HeaderContentType, meta.Mime)
-	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.Hash))
-	http.ServeContent(c.Response(), c.Request(), meta.Name, meta.CreatedAt, file)
+	c.Response().Header().Set(echo.HeaderContentType, meta.GetMIMEType())
+	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.GetMD5Hash()))
+	http.ServeContent(c.Response(), c.Request(), meta.GetFileName(), meta.GetCreatedAt(), file)
 	return nil
 }
 
@@ -170,7 +171,7 @@ func (h *Handlers) ChangeStampImage(c echo.Context) error {
 	}
 
 	// スタンプ画像保存
-	fileID, err := saveUploadImage(c, h.Repo, "file", model.FileTypeStamp, 1<<20, 128)
+	fileID, err := utils.SaveUploadImage(c, h.Repo, "file", model.FileTypeStamp, 1<<20, 128)
 	if err != nil {
 		return err
 	}
