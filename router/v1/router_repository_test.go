@@ -2681,3 +2681,8 @@ func (f *fileMetaImpl) OpenThumbnail() (ioext.ReadSeekCloser, error) {
 	}
 	return f.fs.OpenFileByKey(f.GetID().String()+"-thumb", model.FileTypeThumbnail)
 }
+
+func (f *fileMetaImpl) GetAlternativeURL() string {
+	url, _ := f.fs.GenerateAccessURL(f.GetID().String(), f.GetFileType())
+	return url
+}

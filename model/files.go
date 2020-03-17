@@ -36,6 +36,7 @@ type FileMeta interface {
 
 	Open() (ioext.ReadSeekCloser, error)
 	OpenThumbnail() (ioext.ReadSeekCloser, error)
+	GetAlternativeURL() string
 }
 
 // File DBに格納するファイルの構造体
