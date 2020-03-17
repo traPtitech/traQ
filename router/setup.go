@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
+	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/router/v1"
 	v3 "github.com/traPtitech/traQ/router/v3"
 	"net/http"
@@ -49,7 +50,6 @@ func Setup(config *Config) *echo.Echo {
 		Hub:              config.Hub,
 		Logger:           config.RootLogger.Named("api_handler"),
 		Realtime:         config.Realtime,
-		ImageMagickPath:  config.ImageMagickPath,
 		AccessTokenExp:   config.AccessTokenExp,
 		IsRefreshEnabled: config.IsRefreshEnabled,
 		SkyWaySecretKey:  config.SkyWaySecretKey,
@@ -70,5 +70,6 @@ func Setup(config *Config) *echo.Echo {
 	}
 	v3.Setup(api)
 
+	utils.ImageMagickPath = config.ImageMagickPath
 	return e
 }

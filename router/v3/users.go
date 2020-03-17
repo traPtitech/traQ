@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/router/utils"
 	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
@@ -173,22 +174,22 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 
 // GetUserIcon GET /users/:userID/icon
 func (h *Handlers) GetUserIcon(c echo.Context) error {
-	return serveUserIcon(c, h.Repo, getParamUser(c))
+	return utils.ServeUserIcon(c, h.Repo, getParamUser(c))
 }
 
 // ChangeUserIcon PUT /users/:userID/icon
 func (h *Handlers) ChangeUserIcon(c echo.Context) error {
-	return changeUserIcon(c, h.Repo, getParamAsUUID(c, consts.ParamUserID))
+	return utils.ChangeUserIcon(c, h.Repo, getParamAsUUID(c, consts.ParamUserID))
 }
 
 // GetMyIcon GET /users/me/icon
 func (h *Handlers) GetMyIcon(c echo.Context) error {
-	return serveUserIcon(c, h.Repo, getRequestUser(c))
+	return utils.ServeUserIcon(c, h.Repo, getRequestUser(c))
 }
 
 // ChangeMyIcon PUT /users/me/icon
 func (h *Handlers) ChangeMyIcon(c echo.Context) error {
-	return changeUserIcon(c, h.Repo, getRequestUserID(c))
+	return utils.ChangeUserIcon(c, h.Repo, getRequestUserID(c))
 }
 
 // GetMyStampHistory GET /users/me/stamp-history リクエストクエリ

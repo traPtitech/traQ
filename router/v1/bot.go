@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
@@ -201,13 +202,12 @@ func (h *Handlers) GetBotIcon(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return h.getUserIcon(c, user)
+	return utils.ServeUserIcon(c, h.Repo, user)
 }
 
 // PutBotIcon PUT /bots/:botID/icon
 func (h *Handlers) PutBotIcon(c echo.Context) error {
-	b := getBotFromContext(c)
-	return h.putUserIcon(c, b.BotUserID)
+	return utils.ChangeUserIcon(c, h.Repo, getBotFromContext(c).BotUserID)
 }
 
 // PutBotState PUT /bots/:botID/state

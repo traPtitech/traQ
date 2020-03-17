@@ -12,8 +12,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var imagemagickPath string
-
 type Handlers struct {
 	RBAC     rbac.RBAC
 	Repo     repository.Repository
@@ -25,8 +23,6 @@ type Handlers struct {
 	Version  string
 	Revision string
 
-	// ImageMagickPath ImageMagickの実行パス
-	ImageMagickPath string
 	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
 	SkyWaySecretKey string
 }
@@ -314,6 +310,4 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiNoAuthPublic.GET("/icon/:username", h.GetPublicUserIcon)
 		}
 	}
-
-	imagemagickPath = h.ImageMagickPath
 }

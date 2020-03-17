@@ -3,6 +3,7 @@ package v1
 import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/router/utils"
 	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
@@ -208,22 +209,22 @@ func (h *Handlers) PutUserPassword(c echo.Context) error {
 
 // GetUserIcon GET /users/:userID/icon
 func (h *Handlers) GetUserIcon(c echo.Context) error {
-	return h.getUserIcon(c, getUserFromContext(c))
+	return utils.ServeUserIcon(c, h.Repo, getUserFromContext(c))
 }
 
 // GetMyIcon GET /users/me/icon
 func (h *Handlers) GetMyIcon(c echo.Context) error {
-	return h.getUserIcon(c, getRequestUser(c))
+	return utils.ServeUserIcon(c, h.Repo, getRequestUser(c))
 }
 
 // PutUserIcon PUT /users/:userID/icon
 func (h *Handlers) PutUserIcon(c echo.Context) error {
-	return h.putUserIcon(c, getRequestParamAsUUID(c, consts.ParamUserID))
+	return utils.ChangeUserIcon(c, h.Repo, getRequestParamAsUUID(c, consts.ParamUserID))
 }
 
 // PutMyIcon PUT /users/me/icon
 func (h *Handlers) PutMyIcon(c echo.Context) error {
-	return h.putUserIcon(c, getRequestUserID(c))
+	return utils.ChangeUserIcon(c, h.Repo, getRequestUserID(c))
 }
 
 // PatchMeRequest PATCH /users/me リクエストボディ
