@@ -14,7 +14,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
+	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
@@ -147,7 +147,7 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 	// トークン生成
 	now := time.Now()
 	deadline := now.Add(5 * time.Minute)
-	token, err := utils.Signer.Sign(jwt.MapClaims{
+	token, err := jwt2.Sign(jwt.MapClaims{
 		"iat":         now.Unix(),
 		"exp":         deadline.Unix(),
 		"userId":      user.GetID(),

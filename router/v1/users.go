@@ -3,6 +3,7 @@ package v1
 import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
 	"time"
@@ -16,7 +17,6 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -303,7 +303,7 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 	now := time.Now()
 	deadline := now.Add(10 * time.Minute)
 
-	token, err := utils.Signer.Sign(&UserForJWTClaim{
+	token, err := jwt2.Sign(&UserForJWTClaim{
 		StandardClaims: jwt.StandardClaims{
 			IssuedAt:  now.Unix(),
 			ExpiresAt: deadline.Unix(),
