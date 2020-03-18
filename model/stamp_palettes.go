@@ -12,7 +12,7 @@ type StampPalette struct {
 	Stamps      []Stamp
 	CreatorID   uuid.UUID  `gorm:"type:char(36);not null"`
 	CreatedAt   time.Time  `gorm:"precision:6"`
-	DeletedAt   *time.Time `gorm:"precision:6"`
+	UpdatedAt   *time.Time `gorm:"precision:6"`
 }
 
 // TableName StampPalettes構造体のテーブル名
