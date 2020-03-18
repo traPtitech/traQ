@@ -18,7 +18,6 @@ func Setup(config *Config) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
-	e.Binder = &extension.Binder{}
 	e.HTTPErrorHandler = extension.ErrorHandler(config.RootLogger.Named("api_handler"))
 
 	// ミドルウェア設定
