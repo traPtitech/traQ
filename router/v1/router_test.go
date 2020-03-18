@@ -66,7 +66,6 @@ func TestMain(m *testing.M) {
 		e := echo.New()
 		e.HideBanner = true
 		e.HidePort = true
-		e.Binder = &extension.Binder{}
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap())
 

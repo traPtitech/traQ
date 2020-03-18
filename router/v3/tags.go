@@ -84,15 +84,20 @@ type PatchUserTagRequest struct {
 
 // EditUserTag PATCH /users/:userID/tags/:tagID
 func (h *Handlers) EditUserTag(c echo.Context) error {
+	me := getRequestUserID(c)
+	userID := getParamAsUUID(c, consts.ParamUserID)
+
+	// 他人のロックは変更不可
+	if me != userID {
+		return herror.Forbidden(fmt.Sprintf("you are not user (%s)", userID))
+	}
+
 	var req PatchUserTagRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	me := getRequestUserID(c)
-	userID := getParamAsUUID(c, consts.ParamUserID)
 	tagID := getParamAsUUID(c, consts.ParamTagID)
-
 	// タグがつけられているかを見る
 	ut, err := h.Repo.GetUserTag(userID, tagID)
 	if err != nil {
@@ -102,11 +107,6 @@ func (h *Handlers) EditUserTag(c echo.Context) error {
 		default:
 			return herror.InternalServerError(err)
 		}
-	}
-
-	// 他人のロックは変更不可 TODO 管理者権限発動
-	if me != userID {
-		return herror.Forbidden(fmt.Sprintf("you are not user (%s)", userID))
 	}
 
 	// 更新

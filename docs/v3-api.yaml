@@ -2924,9 +2924,12 @@ paths:
       parameters:
         - $ref: '#/components/parameters/limitInQuery'
         - $ref: '#/components/parameters/offsetInQuery'
+        - $ref: '#/components/parameters/orderInQuery'
       tags:
         - clip
-      description: 指定したフォルダ内のクリップのリストを取得します。
+      description: |-
+        指定したフォルダ内のクリップのリストを取得します。
+        `order`を指定しない場合、クリップした日時の新しい順で返されます。
   '/clip-folders/{folderId}/messages/{messageId}':
     parameters:
       - $ref: '#/components/parameters/folderIdInPath'
@@ -2952,7 +2955,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/webhookIdInPath'
     get:
-      summary: Webhookが投稿したメッセージのリストを取得します
+      summary: Webhookの投稿メッセージのリストを取得
       tags:
         - webhook
       operationId: getWebhookMessages
@@ -2982,7 +2985,7 @@ paths:
         - $ref: '#/components/parameters/untilInQuery'
         - $ref: '#/components/parameters/inclusiveInQuery'
         - $ref: '#/components/parameters/orderInQuery'
-      description: ''
+      description: 指定されたWebhookが投稿したメッセージのリストを返します。
   '/channels/{channelId}/events':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -3093,7 +3096,7 @@ paths:
       tags:
         - stamp
     patch:
-      summary: スタンプパレット情報を変更
+      summary: スタンプパレットを編集
       responses:
         '204':
           description: |-
@@ -3116,38 +3119,8 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchStampPaletteRequest'
       description: |-
-        指定したスタンプパレットの情報を変更します。
-        対象のスタンプパレットの管理権限が必要です。
-  '/stamp-palettes/{paletteId}/stamps':
-    parameters:
-      - $ref: '#/components/parameters/paletteIdInPath'
-    put:
-      summary: パレット内のスタンプを編集
-      responses:
-        '204':
-          description: |-
-            No Content
-            編集しました。
-        '400':
-          description: Bad Request
-        '403':
-          description: |-
-            Forbidden
-            対象のスタンプパレットを編集する権限がありません。
-        '404':
-          description: |-
-            Not Found
-            スタンプパレットが見つかりません。
-      tags:
-        - stamp
-      operationId: editStampPaletteStamps
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutStampPaletteStampsRequest'
-      description: |-
-        指定したスタンプパレットのスタンプを編集します。
+        指定したスタンプパレットを編集します。
+        リクエストのスタンプの配列の順番は保存されて変更されます。
         対象のスタンプパレットの管理権限が必要です。
   /activity/onlines:
     get:
@@ -5032,6 +5005,8 @@ components:
         stamps:
           type: array
           description: パレット内のスタンプのUUID配列
+          uniqueItems: true
+          maxItems: 200
           items:
             type: string
             format: uuid
@@ -5059,13 +5034,14 @@ components:
           type: string
           description: 説明
           maxLength: 1000
-    PutStampPaletteStampsRequest:
-      title: PutStampPaletteStampsRequest
-      type: array
-      description: パレット内のスタンプUUIDの配列
-      items:
-        type: string
-        format: uuid
+        stamps:
+          type: array
+          description: パレット内のスタンプUUIDの配列
+          uniqueItems: true
+          maxItems: 200
+          items:
+            type: string
+            format: uuid
     PatchStampRequest:
       title: PatchStampRequest
       type: object

@@ -25,4 +25,6 @@ var readPerms = []rbac.Permission{
 	permission.GetHeartbeat,
 	permission.GetWebhook,
 	permission.GetBot,
+	permission.GetClipFolder,
+	permission.GetStampPalette,
 }

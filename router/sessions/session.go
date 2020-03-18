@@ -64,7 +64,6 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 		absent := time.Since(session.lastAccess)
 		session.RUnlock()
 
-		// TODO ipアドレス確認をする (地域・国レベルでのipアドレス変化を検出)
 		valid := age <= time.Duration(sessionMaxAge)*time.Second
 		regenerate := absent <= time.Duration(sessionKeepAge)*time.Second
 

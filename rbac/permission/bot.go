@@ -24,10 +24,11 @@ const (
 	EditBot = rbac.Permission("edit_bot")
 	// DeleteBot Bot削除権限
 	DeleteBot = rbac.Permission("delete_bot")
-	// InstallBot Botインストール権限
-	InstallBot = rbac.Permission("install_bot")
-	// UninstallBot Botアンインストール権限
-	UninstallBot = rbac.Permission("uninstall_bot")
 	// AccessOthersBot 他人のBotのアクセス権限
 	AccessOthersBot = rbac.Permission("access_others_bot")
+
+	// BotActionJoinChannel BOTアクション実行権限：チャンネル参加
+	BotActionJoinChannel = rbac.Permission("bot_action_join_channel")
+	// BotActionLeaveChannel BOTアクション実行権限：チャンネル退出
+	BotActionLeaveChannel = rbac.Permission("bot_action_leave_channel")
 )

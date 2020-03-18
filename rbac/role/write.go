@@ -33,6 +33,10 @@ var writePerms = []rbac.Permission{
 	permission.EditStamp,
 	permission.UploadFile,
 	permission.PostHeartbeat,
-	permission.InstallBot,
-	permission.UninstallBot,
+	permission.CreateClipFolder,
+	permission.EditClipFolder,
+	permission.DeleteClipFolder,
+	permission.CreateStampPalette,
+	permission.EditStampPalette,
+	permission.DeleteStampPalette,
 }
