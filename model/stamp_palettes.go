@@ -2,10 +2,10 @@ package model
 
 import (
 	"database/sql/driver"
-	"github.com/gofrs/uuid"
-	"time"
-	"strings"
 	"errors"
+	"github.com/gofrs/uuid"
+	"strings"
+	"time"
 )
 
 type UUIDs []uuid.UUID
@@ -45,9 +45,9 @@ type StampPalette struct {
 	ID          uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	Name        string    `gorm:"type:varchar(30);not null"`
 	Description string    `gorm:"type:text(1000);not null"`
-	Stamps      UUIDs	`gorm:"type:text;not null"`
-	CreatorID   uuid.UUID  `gorm:"type:char(36);not null"`
-	CreatedAt   time.Time  `gorm:"precision:6"`
+	Stamps      UUIDs     `gorm:"type:text;not null"`
+	CreatorID   uuid.UUID `gorm:"type:char(36);not null"`
+	CreatedAt   time.Time `gorm:"precision:6"`
 	UpdatedAt   time.Time `gorm:"precision:6"`
 }
 
