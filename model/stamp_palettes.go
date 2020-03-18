@@ -8,7 +8,7 @@ import (
 type StampPalette struct {
 	ID          uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	Name        string    `gorm:"type:varchar(30);not null"`
-	Description string    `gorm:"type:varchar(300)"`
+	Description string    `gorm:"type:varchar(1000)"`
 	Stamps      []Stamp
 	CreatorID   uuid.UUID  `gorm:"type:char(36);not null"`
 	CreatedAt   time.Time  `gorm:"precision:6"`
