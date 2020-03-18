@@ -146,6 +146,16 @@ comments:
       created_at: 作成日時
       updated_at: 更新日時
       deleted_at: 削除日時
+  - table: stamp_paletts
+    tableComment: スタンプパレットテーブル
+    columnComments:
+      id: スタンプパレットUUID
+      name: スタンプパレット名
+      description: スタンプパレットの説明
+      stamps: スタンプUUID配列の文字列
+      creator_id: 作成者UUID
+      created_at: 作成日時
+      updated_at: 更新日時
   - table: messages_stamps
     tableComment: メッセージスタンプテーブル
     columnComments:
