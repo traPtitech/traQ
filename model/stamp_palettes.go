@@ -25,18 +25,24 @@ func (arr *UUIDs) Scan(src interface{}) error {
 	case string:
 		idSlice := strings.Split(s, ",")
 		for _, id := range idSlice {
-			stampID, _ := uuid.FromString(id)
+			stampID, err := uuid.FromString(id)
+			if err != nil {
+				continue
+			}
 			*arr = append(*arr, stampID)
 		}
 	case []byte:
 		str := string(s)
 		idSlice := strings.Split(str, ",")
 		for _, id := range idSlice {
-			stampID, _ := uuid.FromString(id)
+			stampID, err := uuid.FromString(id)
+			if err != nil {
+				continue
+			}
 			*arr = append(*arr, stampID)
 		}
 	default:
-		return errors.New("failed to scan Stamps")
+		return errors.New("failed to scan UUIDs")
 	}
 	return nil
 }
@@ -44,7 +50,7 @@ func (arr *UUIDs) Scan(src interface{}) error {
 type StampPalette struct {
 	ID          uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	Name        string    `gorm:"type:varchar(30);not null"`
-	Description string    `gorm:"type:text(1000);not null"`
+	Description string    `gorm:"type:text;not null"`
 	Stamps      UUIDs     `gorm:"type:text;not null"`
 	CreatorID   uuid.UUID `gorm:"type:char(36);not null"`
 	CreatedAt   time.Time `gorm:"precision:6"`
