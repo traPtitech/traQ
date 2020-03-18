@@ -39,4 +39,23 @@ const (
 	GetHeartbeat = rbac.Permission("get_heartbeat")
 	// PostHeartbeat ハートビート送信権限
 	PostHeartbeat = rbac.Permission("post_heartbeat")
+	// WebRTC WebRTC利用権限
+	WebRTC = rbac.Permission("web_rtc")
+	// GetMySessions セッションリスト取得権限
+	GetMySessions = rbac.Permission("get_my_sessions")
+	// DeleteMySessions セッション削除権限
+	DeleteMySessions = rbac.Permission("delete_my_sessions")
+	// GetUnread 未読メッセージ一覧の取得権限
+	GetUnread = rbac.Permission("get_unread")
+	// DeleteUnread メッセージ既読化権限
+	DeleteUnread = rbac.Permission("delete_unread")
+
+	// GetClipFolder クリップフォルダ取得権限
+	GetClipFolder = rbac.Permission("get_clip_folder")
+	// CreateClipFolder クリップフォルダ作成権限
+	CreateClipFolder = rbac.Permission("create_clip_folder")
+	// EditClipFolder クリップフォルダ編集権限
+	EditClipFolder = rbac.Permission("edit_clip_folder")
+	// DeleteClipFolder クリップフォルダ削除権限
+	DeleteClipFolder = rbac.Permission("delete_clip_folder")
 )

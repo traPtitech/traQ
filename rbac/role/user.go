@@ -26,6 +26,9 @@ var userPerms = []rbac.Permission{
 	permission.CreateBot,
 	permission.EditBot,
 	permission.DeleteBot,
+	permission.BotActionJoinChannel,
+	permission.BotActionLeaveChannel,
+	permission.WebRTC,
 }
 
 func init() {

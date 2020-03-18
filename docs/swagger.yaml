@@ -925,6 +925,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/HeartbeatRes"
     post:
+      deprecated: true
       tags:
         - heartbeat
       operationId: postHeartbeat
@@ -1401,6 +1402,7 @@ paths:
         "404":
           description: 取得できませんでした。指定したチャンネルは存在しません。
     post:
+      deprecated: true
       tags:
         - bot
       operationId: addChannelBot
@@ -1432,6 +1434,7 @@ paths:
       - $ref: "#/components/parameters/channelIdInPath"
       - $ref: "#/components/parameters/botIdInPath"
     delete:
+      deprecated: true
       tags:
         - bot
       operationId: removeChannelBot
@@ -1469,6 +1472,7 @@ paths:
 
   /notification:
     get:
+      deprecated: true
       tags:
         - notification
       operationId: connectNotification
@@ -1689,6 +1693,7 @@ paths:
 
   /files:
     post:
+      deprecated: true
       tags:
         - file
       operationId: uploadFile
@@ -1821,6 +1826,7 @@ paths:
 
   /pins:
     post:
+      deprecated: true
       tags:
         - pin
       operationId: pinMessage
@@ -1846,6 +1852,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/pinIdInPath"
     get:
+      deprecated: true
       tags:
         - pin
       operationId: getPinnedMessage
@@ -1862,6 +1869,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Pin"
     delete:
+      deprecated: true
       tags:
         - pin
       operationId: unpinMessage
@@ -2230,6 +2238,7 @@ paths:
 
   /groups:
     get:
+      deprecated: true
       tags:
         - user group
       operationId: getGroups
@@ -2247,6 +2256,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/UserGroup"
     post:
+      deprecated: true
       tags:
         - user group
       operationId: createGroup
@@ -2276,6 +2286,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/groupIdInPath"
     get:
+      deprecated: true
       tags:
         - user group
       operationId: getGroup
@@ -2293,6 +2304,7 @@ paths:
         "404":
           description: 正常に取得できませんでした。指定したグループは存在しません。
     patch:
+      deprecated: true
       tags:
         - user group
       operationId: editGroup
@@ -2318,6 +2330,7 @@ paths:
         "409":
           description: 正常に変更できませんでした。既に存在するグループ名です
     delete:
+      deprecated: true
       tags:
         - user group
       operationId: deleteGroup
@@ -2337,6 +2350,7 @@ paths:
     parameters:
       - $ref: "#/components/parameters/groupIdInPath"
     get:
+      deprecated: true
       tags:
         - user group
       operationId: getGroupMembers
@@ -2354,6 +2368,7 @@ paths:
         "404":
           description: 正常に取得できませんでした。指定したグループは存在しません。
     post:
+      deprecated: true
       tags:
         - user group
       operationId: addGroupMember
@@ -2382,6 +2397,7 @@ paths:
       - $ref: "#/components/parameters/groupIdInPath"
       - $ref: "#/components/parameters/userIdInPath"
     delete:
+      deprecated: true
       tags:
         - user group
       operationId: deleteGroupMember

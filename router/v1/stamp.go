@@ -76,10 +76,6 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 	// 名前変更
 	name := c.FormValue("name")
 	if len(name) > 0 {
-		// 権限確認
-		if !h.RBAC.IsGranted(user.GetRole(), permission.EditStampName) {
-			return herror.Forbidden("you are not permitted to change stamp name")
-		}
 		args.Name = null.StringFrom(name)
 	}
 

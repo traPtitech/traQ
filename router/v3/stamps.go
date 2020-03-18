@@ -88,15 +88,8 @@ func (h *Handlers) EditStamp(c echo.Context) error {
 		return herror.Forbidden("you are not permitted to edit stamp created by others")
 	}
 
-	args := repository.UpdateStampArgs{}
-
-	// 名前変更
-	if req.Name.Valid {
-		// 権限確認
-		if !h.RBAC.IsGranted(user.GetRole(), permission.EditStampName) {
-			return herror.Forbidden("you are not permitted to change stamp name")
-		}
-		args.Name = req.Name
+	args := repository.UpdateStampArgs{
+		Name: req.Name,
 	}
 
 	// 作成者変更

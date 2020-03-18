@@ -62,7 +62,7 @@ func BlockBot(repo repository.Repository) echo.MiddlewareFunc {
 		return func(c echo.Context) error {
 			user := c.Get(consts.KeyUser).(model.UserInfo)
 			if user.IsBot() {
-				return herror.Forbidden("your bot is not permitted to access this API")
+				return herror.Forbidden("Bot users are not permitted to access this API")
 			}
 			return next(c)
 		}
@@ -77,11 +77,17 @@ func CheckBotAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Middlew
 			b := c.Get(consts.KeyParamBot).(*model.Bot)
 
 			// アクセス権確認
-			if !rbac.IsGranted(user.GetRole(), permission.AccessOthersBot) && b.CreatorID != user.GetID() {
-				return herror.Forbidden()
+			if b.BotUserID == user.GetID() {
+				return next(c) // Bot自身のアクセス
+			}
+			if b.CreatorID == user.GetID() {
+				return next(c) // Bot管理人のアクセス
+			}
+			if rbac.IsGranted(user.GetRole(), permission.AccessOthersBot) {
+				return next(c) // 特権使用のアクセス
 			}
 
-			return next(c)
+			return herror.Forbidden()
 		}
 	}
 }

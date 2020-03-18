@@ -16,9 +16,10 @@ func init() {
 		CreateBot,
 		EditBot,
 		DeleteBot,
-		InstallBot,
-		UninstallBot,
 		AccessOthersBot,
+
+		BotActionJoinChannel,
+		BotActionLeaveChannel,
 
 		CreateChannel,
 		GetChannel,
@@ -63,7 +64,6 @@ func init() {
 		GetStamp,
 		CreateStamp,
 		EditStamp,
-		EditStampName,
 		EditStampCreatedByOthers,
 		DeleteStamp,
 		AddMessageStamp,
@@ -92,6 +92,18 @@ func init() {
 
 		GetUserTag,
 		EditUserTag,
+
+		WebRTC,
+
+		GetClipFolder,
+		CreateClipFolder,
+		EditClipFolder,
+		DeleteClipFolder,
+
+		GetStampPalette,
+		CreateStampPalette,
+		EditStampPalette,
+		DeleteStampPalette,
 	}
 	for _, p := range l {
 		List.Add(p)

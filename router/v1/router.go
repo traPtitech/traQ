@@ -96,22 +96,20 @@ func (h *Handlers) Setup(e *echo.Group) {
 			{
 				apiUsersMe.GET("", h.GetMe, requires(permission.GetMe))
 				apiUsersMe.PATCH("", h.PatchMe, requires(permission.EditMe))
-				apiUsersMe.PUT("/password", h.PutPassword, requires(permission.ChangeMyPassword))
-				apiUsersMe.GET("/qr-code", h.GetMyQRCode, requires(permission.GetUserQRCode))
+				apiUsersMe.PUT("/password", h.PutPassword, requires(permission.ChangeMyPassword), blockBot)
+				apiUsersMe.GET("/qr-code", h.GetMyQRCode, requires(permission.GetUserQRCode), blockBot)
 				apiUsersMe.GET("/icon", h.GetMyIcon, requires(permission.DownloadFile))
 				apiUsersMe.PUT("/icon", h.PutMyIcon, requires(permission.ChangeMyIcon))
 				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
 				apiUsersMe.GET("/groups", h.GetMyBelongingGroup, requires(permission.GetUserGroup))
-				apiUsersMe.GET("/notification", h.GetMyNotificationChannels, requires(permission.GetChannelSubscription))
-				apiUsersMe.GET("/tokens", h.GetMyTokens, requires(permission.GetMyTokens))
-				apiUsersMe.DELETE("/tokens/:tokenID", h.DeleteMyToken, requires(permission.RevokeMyToken))
-				apiUsersMeSessions := apiUsersMe.Group("/sessions")
+				apiUsersMe.GET("/notification", h.GetMyNotificationChannels, requires(permission.GetChannelSubscription), blockBot)
+				apiUsersMeSessions := apiUsersMe.Group("/sessions", blockBot)
 				{
 					apiUsersMeSessions.GET("", h.GetMySessions, requires(permission.GetMySessions))
 					apiUsersMeSessions.DELETE("", h.DeleteAllMySessions, requires(permission.DeleteMySessions))
 					apiUsersMeSessions.DELETE("/:referenceID", h.DeleteMySession, requires(permission.DeleteMySessions))
 				}
-				apiUsersMeStars := apiUsersMe.Group("/stars")
+				apiUsersMeStars := apiUsersMe.Group("/stars", blockBot)
 				{
 					apiUsersMeStars.GET("", h.GetStars, requires(permission.GetChannelStar))
 					apiUsersMeStarsCid := apiUsersMeStars.Group("/:channelID", retrieve.ChannelID(), requiresChannelAccessPerm)
@@ -120,10 +118,15 @@ func (h *Handlers) Setup(e *echo.Group) {
 						apiUsersMeStarsCid.DELETE("", h.DeleteStars, requires(permission.EditChannelStar))
 					}
 				}
-				apiUsersMeUnread := apiUsersMe.Group("/unread")
+				apiUsersMeUnread := apiUsersMe.Group("/unread", blockBot)
 				{
 					apiUsersMeUnread.GET("/channels", h.GetUnreadChannels, requires(permission.GetUnread))
 					apiUsersMeUnread.DELETE("/channels/:channelID", h.DeleteUnread, requires(permission.DeleteUnread))
+				}
+				apiUsersMeTokens := apiUsersMe.Group("/tokens", blockBot)
+				{
+					apiUsersMeTokens.GET("", h.GetMyTokens, requires(permission.GetMyTokens))
+					apiUsersMeTokens.DELETE("/:tokenID", h.DeleteMyToken, requires(permission.RevokeMyToken))
 				}
 			}
 			apiUsersUID := apiUsers.Group("/:userID", retrieve.UserID(false))
@@ -150,7 +153,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				}
 			}
 		}
-		apiHeartBeat := api.Group("/heartbeat")
+		apiHeartBeat := api.Group("/heartbeat", blockBot)
 		{
 			apiHeartBeat.GET("", h.GetHeartbeat, requires(permission.GetHeartbeat)) // Deprecated
 			apiHeartBeat.POST("", h.PostHeartbeat, requires(permission.PostHeartbeat))
@@ -185,32 +188,32 @@ func (h *Handlers) Setup(e *echo.Group) {
 					apiChannelsCidNotification.GET("", h.GetChannelSubscribers, requires(permission.GetChannelSubscription))
 					apiChannelsCidNotification.PUT("", h.PutChannelSubscribers, requires(permission.EditChannelSubscription))
 				}
-				apiChannelsCidBots := apiChannelsCid.Group("/bots")
+				apiChannelsCidBots := apiChannelsCid.Group("/bots", blockBot)
 				{
 					apiChannelsCidBots.GET("", h.GetChannelBots, requires(permission.GetBot))
-					apiChannelsCidBots.POST("", h.PostChannelBots, requires(permission.InstallBot))
-					apiChannelsCidBots.DELETE("/:botID", h.DeleteChannelBot, requires(permission.UninstallBot), retrieve.BotID())
+					apiChannelsCidBots.POST("", h.PostChannelBots, requires(permission.BotActionJoinChannel))
+					apiChannelsCidBots.DELETE("/:botID", h.DeleteChannelBot, requires(permission.BotActionLeaveChannel), retrieve.BotID())
 				}
-				apiChannelsCidWebRTC := apiChannelsCid.Group("/webrtc")
+				apiChannelsCidWebRTC := apiChannelsCid.Group("/webrtc", blockBot)
 				{
 					apiChannelsCidWebRTC.GET("/state", h.GetChannelWebRTCState, requires(permission.GetChannel))
 				}
 			}
 		}
-		apiNotification := api.Group("/notification")
+		apiNotification := api.Group("/notification", blockBot)
 		{
 			apiNotification.GET("", echo.WrapHandler(h.SSE), requires(permission.ConnectNotificationStream))
 			apiNotification.POST("/device", h.PostDeviceToken, requires(permission.RegisterFCMDevice))
 		}
 		apiMessages := api.Group("/messages")
 		{
-			apiMessages.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports))
+			apiMessages.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports), blockBot)
 			apiMessagesMid := apiMessages.Group("/:messageID", retrieve.MessageID(), requiresMessageAccessPerm)
 			{
 				apiMessagesMid.GET("", h.GetMessageByID, requires(permission.GetMessage))
 				apiMessagesMid.PUT("", h.PutMessageByID, bodyLimit(100), requires(permission.EditMessage))
 				apiMessagesMid.DELETE("", h.DeleteMessageByID, requires(permission.DeleteMessage))
-				apiMessagesMid.POST("/report", h.PostMessageReport, requires(permission.ReportMessage))
+				apiMessagesMid.POST("/report", h.PostMessageReport, requires(permission.ReportMessage), blockBot)
 				apiMessagesMid.GET("/stamps", h.GetMessageStamps, requires(permission.GetMessage))
 				apiMessagesMidStampsSid := apiMessagesMid.Group("/stamps/:stampID", retrieve.StampID(true))
 				{
@@ -228,7 +231,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiFiles := api.Group("/files")
 		{
-			apiFiles.POST("", h.PostFile, bodyLimit(30<<10), requires(permission.UploadFile))
+			apiFiles.POST("", h.PostFile, bodyLimit(30<<10), requires(permission.UploadFile), blockBot)
 			apiFilesFid := apiFiles.Group("/:fileID", retrieve.FileID(), requiresFileAccessPerm)
 			{
 				apiFilesFid.GET("", h.GetFileByID, requires(permission.DownloadFile))
@@ -257,7 +260,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiStampsSid.DELETE("", h.DeleteStamp, requires(permission.DeleteStamp))
 			}
 		}
-		apiWebhooks := api.Group("/webhooks")
+		apiWebhooks := api.Group("/webhooks", blockBot)
 		{
 			apiWebhooks.GET("", h.GetWebhooks, requires(permission.GetWebhook))
 			apiWebhooks.POST("", h.PostWebhooks, requires(permission.CreateWebhook))
@@ -288,7 +291,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				}
 			}
 		}
-		apiClients := api.Group("/clients")
+		apiClients := api.Group("/clients", blockBot)
 		{
 			apiClients.GET("", h.GetClients, requires(permission.GetClients))
 			apiClients.POST("", h.PostClients, requires(permission.CreateClient))
@@ -300,7 +303,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiClientCid.GET("/detail", h.GetClientDetail, requires(permission.GetClients), requiresClientAccessPerm)
 			}
 		}
-		apiBots := api.Group("/bots")
+		apiBots := api.Group("/bots", blockBot)
 		{
 			apiBots.GET("", h.GetBots, requires(permission.GetBot))
 			apiBots.POST("", h.PostBots, requires(permission.CreateBot))
@@ -339,13 +342,13 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiAuthority.GET("/reload", h.GetAuthorityReload)
 			apiAuthority.POST("/reload", h.PostAuthorityReload)
 		}
-		apiWebRTC := api.Group("/webrtc")
+		apiWebRTC := api.Group("/webrtc", blockBot)
 		{
 			apiWebRTC.GET("/state", h.GetWebRTCState)
 			apiWebRTC.PUT("/state", h.PutWebRTCState)
 		}
 		api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler, blockBot)
-		api.GET("/ws", echo.WrapHandler(h.WS), requires(permission.ConnectNotificationStream))
+		api.GET("/ws", echo.WrapHandler(h.WS), requires(permission.ConnectNotificationStream), blockBot)
 
 		if len(h.SkyWaySecretKey) > 0 {
 			api.POST("/skyway/authenticate", h.PostSkyWayAuthenticate, blockBot)
