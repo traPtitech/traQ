@@ -329,3 +329,17 @@ comments:
       refresh_enabled: リフレッシュトークンが有効かどうか
       scopes: スコープ
       expires_in: 有効秒
+  - table: clip_folders
+    tableComment: クリップフォルダーテーブル
+    columnComments:
+      id: クリップフォルダーID
+      name: クリップフォルダー名
+      description: 説明
+      owner_id: 所有者のUUID
+      created_at: 作成日時
+  - table: clip_folder_messages
+    tableComment: クリップフォルダーメッセージテーブル
+    columnComments:
+      folder_id: クリップフォルダーID
+      message_id: メッセージID
+      clipped_at: クリップされた日時
