@@ -146,7 +146,7 @@ comments:
       created_at: 作成日時
       updated_at: 更新日時
       deleted_at: 削除日時
-  - table: stamp_paletts
+  - table: stamp_palettes
     tableComment: スタンプパレットテーブル
     columnComments:
       id: スタンプパレットUUID
