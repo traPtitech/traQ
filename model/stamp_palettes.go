@@ -24,22 +24,22 @@ func (arr *UUIDs) Scan(src interface{}) error {
 		*arr = UUIDs{}
 	case string:
 		idSlice := strings.Split(s, ",")
-		for _, id := range idSlice {
-			stampID, err := uuid.FromString(id)
+		for _, value := range idSlice {
+			ID, err := uuid.FromString(value)
 			if err != nil {
 				continue
 			}
-			*arr = append(*arr, stampID)
+			*arr = append(*arr, ID)
 		}
 	case []byte:
 		str := string(s)
 		idSlice := strings.Split(str, ",")
-		for _, id := range idSlice {
-			stampID, err := uuid.FromString(id)
+		for _, value := range idSlice {
+			ID, err := uuid.FromString(value)
 			if err != nil {
 				continue
 			}
-			*arr = append(*arr, stampID)
+			*arr = append(*arr, ID)
 		}
 	default:
 		return errors.New("failed to scan UUIDs")
