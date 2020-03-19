@@ -57,16 +57,16 @@ func AllTables() []interface{} {
 		&model.UserSubscribeChannel{},
 		&model.Tag{},
 		&model.ArchivedMessage{},
+		&model.ClipFolderMessage{},
 		&model.Message{},
 		&model.Channel{},
 		&model.UserGroupAdmin{},
 		&model.UserGroupMember{},
 		&model.UserGroup{},
 		&model.UserProfile{},
+		&model.ClipFolder{},
 		&model.User{},
 		&sessions.SessionRecord{},
-		&model.ClipFolder{},
-		&model.ClipFolderMessage{},
 	}
 }
 
