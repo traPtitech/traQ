@@ -128,7 +128,3 @@
 </g>
 </g>
 </svg>
-ont-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (channel_id) REFERENCES channels (id)</text>
-</g>
-</g>
-</svg>

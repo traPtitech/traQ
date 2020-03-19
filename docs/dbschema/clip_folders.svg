@@ -110,7 +110,3 @@
 </g>
 </g>
 </svg>
-nt-size="10.00" fill="#000000">FOREIGN KEY (folder_id) REFERENCES clip_folders (id)</text>
-</g>
-</g>
-</svg>

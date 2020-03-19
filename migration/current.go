@@ -61,13 +61,13 @@ func AllTables() []interface{} {
 		&model.ClipFolderMessage{},
 		&model.Message{},
 		&model.Channel{},
+		&model.StampPalette{},
 		&model.UserGroupAdmin{},
 		&model.UserGroupMember{},
 		&model.UserGroup{},
 		&model.UserProfile{},
 		&model.ClipFolder{},
 		&model.User{},
-		&model.StampPalette{},
 		&sessions.SessionRecord{},
 	}
 }
@@ -116,6 +116,7 @@ func AllForeignKeys() [][5]string {
 		{"clip_folders", "owner_id", "users(id)", "CASCADE", "CASCADE"},
 		{"clip_folder_messages", "folder_id", "clip_folders(id)", "CASCADE", "CASCADE"},
 		{"clip_folder_messages", "message_id", "messages(id)", "CASCADE", "CASCADE"},
+		{"stamp_palettes", "creator_id", "users(id)", "CASCADE", "CASCADE"},
 	}
 }
 

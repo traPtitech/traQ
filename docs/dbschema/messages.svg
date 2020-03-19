@@ -258,8 +258,3 @@
 </g>
 </g>
 </svg>
--1037.1081 1063.8527,-1033.0138 1053.5308,-1036.7163 1053.5308,-1036.7163"/>
-<text text-anchor="start" x="1070.327" y="-1021.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (message_id) REFERENCES messages (id)</text>
-</g>
-</g>
-</svg>

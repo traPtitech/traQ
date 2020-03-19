@@ -138,7 +138,3 @@
 </g>
 </g>
 </svg>
-.334" y="-572.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (user2) REFERENCES users (id)</text>
-</g>
-</g>
-</svg>

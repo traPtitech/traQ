@@ -98,7 +98,3 @@
 </g>
 </g>
 </svg>
-10.00" fill="#000000">FOREIGN KEY (message_id) REFERENCES messages (id)</text>
-</g>
-</g>
-</svg>

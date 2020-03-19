@@ -119,7 +119,3 @@
 </g>
 </g>
 </svg>
-y="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (message_id) REFERENCES messages (id)</text>
-</g>
-</g>
-</svg>

@@ -186,8 +186,3 @@
 </g>
 </g>
 </svg>
-1156.926"/>
-<text text-anchor="start" x="7.166" y="-1167.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (stamp_id) REFERENCES stamps (id)</text>
-</g>
-</g>
-</svg>

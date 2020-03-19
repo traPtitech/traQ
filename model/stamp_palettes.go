@@ -52,7 +52,7 @@ type StampPalette struct {
 	Name        string    `gorm:"type:varchar(30);not null"`
 	Description string    `gorm:"type:text;not null"`
 	Stamps      UUIDs     `gorm:"type:text;not null"`
-	CreatorID   uuid.UUID `gorm:"type:char(36);not null"`
+	CreatorID   uuid.UUID `gorm:"type:char(36);not null;index"`
 	CreatedAt   time.Time `gorm:"precision:6"`
 	UpdatedAt   time.Time `gorm:"precision:6"`
 }
