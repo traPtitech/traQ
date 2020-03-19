@@ -292,18 +292,18 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiClipFolders := api.Group("/clip-folders", blockBot)
 		{
-			apiClipFolders.GET("", NotImplemented, requires(permission.GetClipFolder))
-			apiClipFolders.POST("", NotImplemented, requires(permission.CreateClipFolder))
+			apiClipFolders.GET("", h.GetClipFolders, requires(permission.GetClipFolder))
+			apiClipFolders.POST("", h.PostClipFolders, requires(permission.CreateClipFolder))
 			apiClipFoldersFID := apiClipFolders.Group("/:folderID")
 			{
-				apiClipFoldersFID.GET("", NotImplemented, requires(permission.GetClipFolder))
-				apiClipFoldersFID.PATCH("", NotImplemented, requires(permission.EditClipFolder))
-				apiClipFoldersFID.DELETE("", NotImplemented, requires(permission.DeleteClipFolder))
+				apiClipFoldersFID.GET("", h.GetClipFolder, requires(permission.GetClipFolder))
+				apiClipFoldersFID.PATCH("", h.EditClipFolder, requires(permission.EditClipFolder))
+				apiClipFoldersFID.DELETE("", h.DeleteClipFolder, requires(permission.DeleteClipFolder))
 				apiClipFoldersFIDMessages := apiClipFoldersFID.Group("/messages")
 				{
-					apiClipFoldersFIDMessages.GET("", NotImplemented, requires(permission.GetClipFolder, permission.GetMessage))
-					apiClipFoldersFIDMessages.POST("", NotImplemented, requires(permission.EditClipFolder))
-					apiClipFoldersFIDMessages.DELETE("/:messageID", NotImplemented, requires(permission.EditClipFolder))
+					apiClipFoldersFIDMessages.GET("", h.GetClipFolderMessages, requires(permission.GetClipFolder, permission.GetMessage))
+					apiClipFoldersFIDMessages.POST("", h.PostClipFolderMessages, requires(permission.EditClipFolder))
+					apiClipFoldersFIDMessages.DELETE("/:messageID", h.DeleteClipFolderMessages, requires(permission.EditClipFolder))
 				}
 			}
 		}
