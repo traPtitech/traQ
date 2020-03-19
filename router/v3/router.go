@@ -293,7 +293,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiClipFolders := api.Group("/clip-folders", blockBot)
 		{
 			apiClipFolders.GET("", h.GetClipFolders, requires(permission.GetClipFolder))
-			apiClipFolders.POST("", h.PostClipFolders, requires(permission.CreateClipFolder))
+			apiClipFolders.POST("", h.CreateClipFolders, requires(permission.CreateClipFolder))
 			apiClipFoldersFID := apiClipFolders.Group("/:folderID")
 			{
 				apiClipFoldersFID.GET("", h.GetClipFolder, requires(permission.GetClipFolder))

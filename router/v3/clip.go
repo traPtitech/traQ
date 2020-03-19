@@ -7,7 +7,7 @@ import (
 )
 
 // PostClipFolders POST /clip-folders
-func (h *Handlers) PostClipFolders(c echo.Context) error {
+func (h *Handlers) CreateClipFolders(c echo.Context) error {
 	return c.JSON(http.StatusOK, h.Realtime.OnlineCounter.GetOnlineUserIDs())
 }
 
