@@ -2108,10 +2108,12 @@ paths:
                 type: array
                 description: メッセージの配列
                 items:
-                  $ref: '#/components/schemas/Message'
+                  $ref: '#/components/schemas/ActivityTimelineMessage'
         '400':
           description: Bad Request
-      description: 各チャンネルの最新のメッセージ１件をメッセージ作成日時の降順で取得します。
+      description: |-
+        各チャンネルの最新のメッセージ１件をメッセージ作成日時の降順で取得します。
+        `all`が`true`でない場合、購読チャンネルのみのタイムラインを取得します
       parameters:
         - schema:
             type: integer
@@ -2123,10 +2125,10 @@ paths:
           description: 取得する件数
         - schema:
             type: boolean
-            default: 'true'
+            default: 'false'
           in: query
-          name: subscribe-only
-          description: 購読チャンネルのみを取得する
+          name: all
+          description: 全てのチャンネルのタイムラインを取得する
       operationId: getActivityTimeline
   /ws:
     get:
@@ -5107,6 +5109,34 @@ components:
           type: string
           description: 送信先相手のUUID
           format: uuid
+    ActivityTimelineMessage:
+      title: ActivityTimelineMessage
+      type: object
+      description: Timelineアクテビティ用メッセージ
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: メッセージUUID
+        userId:
+          type: string
+          description: 投稿者UUID
+          format: uuid
+        channelId:
+          type: string
+          description: チャンネルUUID
+          format: uuid
+        content:
+          type: string
+          description: メッセージ本文
+        createdAt:
+          type: string
+          format: date-time
+          description: 投稿日時
+        updatedAt:
+          type: string
+          format: date-time
+          description: 編集日時
   headers:
     X-TRAQ-MORE:
       schema:
