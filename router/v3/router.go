@@ -249,7 +249,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiActivity := api.Group("/activity")
 		{
-			apiActivity.GET("/timelines", NotImplemented, requires(permission.GetMessage))
+			apiActivity.GET("/timeline", h.GetActivityTimeline, requires(permission.GetMessage))
 			apiActivity.GET("/onlines", h.GetOnlineUsers, requires(permission.GetUser))
 		}
 		apiClients := api.Group("/clients", blockBot)
