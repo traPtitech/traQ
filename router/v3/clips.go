@@ -8,6 +8,12 @@ import (
 
 // PostClipFolders POST /clip-folders
 func (h *Handlers) CreateClipFolders(c echo.Context) error {
+	userID := getRequestUserID(c)
+
+	var req PostChannelRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
 	return c.JSON(http.StatusOK, h.Realtime.OnlineCounter.GetOnlineUserIDs())
 }
 
