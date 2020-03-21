@@ -87,3 +87,26 @@ func (repo *GormRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUI
 	}
 	return nil
 }
+
+func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) error {
+	if folderID == uuid.Nil || messageID == uuid.Nil {
+		return ErrNilID
+	}
+	cfm := &model.ClipFolderMessage{
+		FolderID:  folderID,
+		MessageID: messageID,
+	}
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		// 名前重複チェック
+		if exists, err := dbExists(tx, &model.ClipFolderMessage{FolderID: folderID, MessageID: messageID}); err != nil {
+			return err
+		} else if exists {
+			return ErrAlreadyExists
+		}
+		return tx.Create(cfm).Error
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
