@@ -53,3 +53,20 @@ func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name string, de
 	}
 	return nil
 }
+
+func (repo *GormRepository) DeleteClipFolder(folderID uuid.UUID) error {
+	if folderID == uuid.Nil {
+		return ErrNilID
+	}
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		var cf model.ClipFolder
+		if err := tx.First(&cf, &model.ClipFolder{ID: folderID}).Error; err != nil {
+			return convertError(err)
+		}
+		return tx.Delete(&model.ClipFolder{ID: folderID}).Error
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
