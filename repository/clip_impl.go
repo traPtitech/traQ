@@ -124,3 +124,16 @@ func (repo *GormRepository) GetClipFoldersByUserID(userID uuid.UUID) ([]*model.C
 
 	return clipFolders, nil
 }
+
+func (repo *GormRepository) GetClipFolder(folderID uuid.UUID) (*model.ClipFolder, error) {
+	if folderID == uuid.Nil {
+		return nil, ErrNilID
+	}
+	clipFolder := &model.ClipFolder{}
+
+	if err := repo.db.First(clipFolder, &model.ClipFolder{ID: folderID}).Error; err != nil {
+		return nil, convertError(err)
+	}
+
+	return clipFolder, nil
+}
