@@ -7,9 +7,9 @@ import (
 
 // ClipFolderMessageQuery クリップフォルダー内のメッセージ取得用クエリ
 type ClipFolderMessageQuery struct {
-	Limit  int    `query:"limit"`
-	Offset int    `query:"offset"`
-	Order  string `query:"order"`
+	Limit  int `query:"limit"`
+	Offset int `query:"offset"`
+	Asc    bool
 }
 
 type CliplRepository interface {
@@ -20,5 +20,5 @@ type CliplRepository interface {
 	AddClipFolderMessage(folderID, messageID uuid.UUID) error
 	GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipFolder, error)
 	GetClipFolder(folderID uuid.UUID) (*model.ClipFolder, error)
-	GetClipFolderMessages(folderID uuid.UUID, query ClipFolderMessageQuery) ([]*model.Message, error)
+	GetClipFolderMessages(folderID uuid.UUID, query ClipFolderMessageQuery) (messages []*model.Message, more bool, err error)
 }

@@ -137,3 +137,31 @@ func (repo *GormRepository) GetClipFolder(folderID uuid.UUID) (*model.ClipFolder
 
 	return clipFolder, nil
 }
+
+func (repo *GormRepository) GetClipFolderMessages(folderID uuid.UUID, query ClipFolderMessageQuery) (messages []*model.Message, more bool, err error) {
+	if folderID == uuid.Nil {
+		return nil, false, ErrNilID
+	}
+	messages = make([]*model.Message, 0)
+
+	tx := repo.db
+	if query.Asc {
+		tx = tx.Order("created_at")
+	} else {
+		tx = tx.Order("created_at DESC")
+	}
+
+	if query.Offset > 0 {
+		tx.Offset(query.Offset)
+	}
+
+	if query.Limit > 0 {
+		err = tx.Limit(query.Limit + 1).Find(&messages).Error
+		if len(messages) > query.Limit {
+			return messages[:len(messages)-1], true, err
+		}
+	} else {
+		err = tx.Find(&messages).Error
+	}
+	return messages, false, err
+}
