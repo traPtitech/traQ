@@ -70,3 +70,20 @@ func (repo *GormRepository) DeleteClipFolder(folderID uuid.UUID) error {
 	}
 	return nil
 }
+
+func (repo *GormRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUID) error {
+	if folderID == uuid.Nil || messageID == uuid.Nil {
+		return ErrNilID
+	}
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		var cfm model.ClipFolderMessage
+		if err := tx.First(&cfm, &model.ClipFolderMessage{MessageID: messageID, FolderID: folderID}).Error; err != nil {
+			return convertError(err)
+		}
+		return tx.Delete(&model.ClipFolderMessage{MessageID: messageID, FolderID: folderID}).Error
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
