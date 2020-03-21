@@ -2112,7 +2112,7 @@ paths:
         '400':
           description: Bad Request
       description: |-
-        各チャンネルの最新のメッセージ１件をメッセージ作成日時の降順で取得します。
+        パブリックチャンネルの直近の投稿メッセージを作成日時の降順で取得します。
         `all`が`true`でない場合、購読チャンネルのみのタイムラインを取得します
       parameters:
         - schema:
@@ -2129,6 +2129,12 @@ paths:
           in: query
           name: all
           description: 全てのチャンネルのタイムラインを取得する
+        - schema:
+            type: boolean
+            default: 'false'
+          in: query
+          name: per_channel
+          description: 同じチャンネルのメッセージは最新のもののみ取得するか
       operationId: getActivityTimeline
   /ws:
     get:
