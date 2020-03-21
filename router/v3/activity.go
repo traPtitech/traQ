@@ -4,6 +4,8 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"net/http"
 	"time"
@@ -16,8 +18,9 @@ func (h *Handlers) GetOnlineUsers(c echo.Context) error {
 
 // GetActivityTimelineRequest GET /activity/timeline リクエストボディ
 type GetActivityTimelineRequest struct {
-	Limit int  `query:"limit"`
-	All   bool `query:"all"`
+	Limit      int  `query:"limit"`
+	All        bool `query:"all"`
+	PerChannel bool `query:"per_channel"`
 }
 
 func (r *GetActivityTimelineRequest) Validate() error {
@@ -38,7 +41,20 @@ func (h *Handlers) GetActivityTimeline(c echo.Context) error {
 		return herror.BadRequest(err)
 	}
 
-	messages, err := h.Repo.GetChannelLatestMessagesByUserID(userID, req.Limit, !req.All)
+	var (
+		messages []*model.Message
+		err      error
+	)
+
+	if req.PerChannel {
+		messages, err = h.Repo.GetChannelLatestMessagesByUserID(userID, req.Limit, !req.All)
+	} else {
+		messages, _, err = h.Repo.GetMessages(repository.MessagesQuery{
+			Limit:          req.Limit,
+			ExcludeDMs:     true,
+			DisablePreload: true,
+		})
+	}
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

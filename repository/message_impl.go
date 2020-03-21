@@ -169,34 +169,42 @@ func (repo *GormRepository) GetMessageByID(messageID uuid.UUID) (*model.Message,
 func (repo *GormRepository) GetMessages(query MessagesQuery) (messages []*model.Message, more bool, err error) {
 	messages = make([]*model.Message, 0)
 
-	tx := repo.db.Scopes(messagePreloads)
+	tx := repo.db
+	if !query.DisablePreload {
+		tx = tx.Scopes(messagePreloads)
+	}
+
 	if query.Asc {
-		tx = tx.Order("created_at")
+		tx = tx.Order("messages.created_at")
 	} else {
-		tx = tx.Order("created_at DESC")
+		tx = tx.Order("messages.created_at DESC")
 	}
 
 	if query.Channel != uuid.Nil {
-		tx = tx.Where("channel_id = ?", query.Channel)
+		tx = tx.Where("messages.channel_id = ?", query.Channel)
 	}
 	if query.User != uuid.Nil {
-		tx = tx.Where("user_id = ?", query.User)
+		tx = tx.Where("messages.user_id = ?", query.User)
 	}
 
 	if query.Inclusive {
 		if query.Since.Valid {
-			tx = tx.Where("created_at >= ?", query.Since.Time)
+			tx = tx.Where("messages.created_at >= ?", query.Since.Time)
 		}
 		if query.Until.Valid {
-			tx = tx.Where("created_at <= ?", query.Until.Time)
+			tx = tx.Where("messages.created_at <= ?", query.Until.Time)
 		}
 	} else {
 		if query.Since.Valid {
-			tx = tx.Where("created_at > ?", query.Since.Time)
+			tx = tx.Where("messages.created_at > ?", query.Since.Time)
 		}
 		if query.Until.Valid {
-			tx = tx.Where("created_at < ?", query.Until.Time)
+			tx = tx.Where("messages.created_at < ?", query.Until.Time)
 		}
+	}
+
+	if query.ExcludeDMs {
+		tx = tx.Joins("INNER JOIN channels ON messages.channel_id = channels.id").Where("channels.is_public = true")
 	}
 
 	if query.Offset > 0 {
