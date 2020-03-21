@@ -110,3 +110,17 @@ func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) 
 	}
 	return nil
 }
+
+func (repo *GormRepository) GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipFolder, error) {
+	if userID == uuid.Nil {
+		return nil, ErrNilID
+	}
+
+	clipFolders := make([]*model.ClipFolder, 0)
+
+	if err := repo.db.Find(&clipFolders, "owner_id=?", userID).Error; err != nil {
+		return nil, convertError(err)
+	}
+
+	return clipFolders, nil
+}
