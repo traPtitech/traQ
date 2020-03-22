@@ -163,6 +163,20 @@ const (
 	// 		stamp_id: uuid.UUID
 	StampDeleted = "stamp.deleted"
 
+	// StampPaletteCreated スタンプパレットが作成された
+	// 	Fields:
+	// 		stamp_palette_id: uuid.UUID
+	// 		stamp_palette: *model.StampPalette
+	StampPaletteCreated = "stamp_palette.created"
+	// StampPaletteUpdated スタンプパレットが更新された
+	// 	Fields:
+	// 		stamp_palette_id: uuid.UUID
+	StampPaletteUpdated = "stamp_palette.updated"
+	// StampPaletteDeleted スタンプパレットが削除された
+	// 	Fields:
+	// 		stamp_palette_id: uuid.UUID
+	StampPaletteDeleted = "stamp_palette.deleted"
+
 	// WebhookCreated Webhookが作成された
 	// 	Fields:
 	// 		webhook_id: uuid.UUID

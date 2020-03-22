@@ -21,6 +21,7 @@ type Repository interface {
 	MessageRepository
 	MessageReportRepository
 	StampRepository
+	StampPaletteRepository
 	StarRepository
 	PinRepository
 	DeviceRepository

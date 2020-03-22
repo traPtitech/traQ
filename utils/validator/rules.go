@@ -62,6 +62,26 @@ var StampNameRuleRequired = append([]vd.Rule{
 	vd.Required,
 }, StampNameRule...)
 
+// StampPaletteNameRule スタンプパレット名バリデーションルール
+var StampPaletteNameRule = []vd.Rule{
+	vd.RuneLength(1, 30),
+}
+
+// StampPaletteNameRuleRequired スタンプパレット名バリデーションルール with Required
+var StampPaletteNameRuleRequired = append([]vd.Rule{
+	vd.Required,
+}, StampPaletteNameRule...)
+
+// StampPaletteDescriptionRule スタンプパレット説明バリデーションルール
+var StampPaletteDescriptionRule = []vd.Rule{
+	vd.RuneLength(0, 1000),
+}
+
+// StampPaletteDescriptionRuleRequired スタンプパレット説明バリデーションルール with Required
+var StampPaletteDescriptionRuleRequired = append([]vd.Rule{
+	vd.Required,
+}, StampPaletteDescriptionRule...)
+
 // TwitterIDRule TwitterIDバリデーションルール
 var TwitterIDRule = []vd.Rule{
 	vd.Match(regexp.MustCompile(`^[a-zA-Z0-9_]+$`)).Error("must contain [a-zA-Z0-9_] only"),

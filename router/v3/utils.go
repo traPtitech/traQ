@@ -72,6 +72,11 @@ func getParamStamp(c echo.Context) *model.Stamp {
 	return c.Get(consts.KeyParamStamp).(*model.Stamp)
 }
 
+// getParamStampPalette URLの:stampIDに対応するStampを取得
+func getParamStampPalette(c echo.Context) *model.StampPalette {
+	return c.Get(consts.KeyParamStampPalette).(*model.StampPalette)
+}
+
 // getParamChannel URLの:channelIDに対応するChannelを取得
 func getParamChannel(c echo.Context) *model.Channel {
 	return c.Get(consts.KeyParamChannel).(*model.Channel)
