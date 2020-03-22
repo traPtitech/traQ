@@ -42,6 +42,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.Repo)
 	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.Repo)
 	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC, h.Repo)
+	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm(h.RBAC, h.Repo)
 
 	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo))
 	{
@@ -294,7 +295,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiClipFolders.GET("", h.GetClipFolders, requires(permission.GetClipFolder))
 			apiClipFolders.POST("", h.CreateClipFolders, requires(permission.CreateClipFolder))
-			apiClipFoldersFID := apiClipFolders.Group("/:folderID")
+			apiClipFoldersFID := apiClipFolders.Group("/:folderID", retrieve.ClipFolderID(), requiresClipFolderAccessPerm)
 			{
 				apiClipFoldersFID.GET("", h.GetClipFolder, requires(permission.GetClipFolder))
 				apiClipFoldersFID.PATCH("", h.EditClipFolder, requires(permission.EditClipFolder))
