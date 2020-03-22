@@ -3,7 +3,6 @@ package v1
 import (
 	"bytes"
 	"encoding/gob"
-	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
@@ -442,16 +441,7 @@ func (h *Handlers) stampEventSubscriber(sub hub.Subscription) {
 }
 
 func bindAndValidate(c echo.Context, i interface{}) error {
-	if err := c.Bind(i); err != nil {
-		return err
-	}
-	if err := validation.Validate(i); err != nil {
-		if e, ok := err.(validation.InternalError); ok {
-			return herror.InternalServerError(e.InternalError())
-		}
-		return herror.BadRequest(err)
-	}
-	return nil
+	return extension.BindAndValidate(c, i)
 }
 
 func getRequestUser(c echo.Context) model.UserInfo {

@@ -1,9 +1,11 @@
 package extension
 
 import (
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/router/extension/herror"
 )
 
 // CtxKey context.Context用のキータイプ
@@ -48,4 +50,18 @@ func Wrap() echo.MiddlewareFunc {
 // GetRequestParamAsUUID 指定したリクエストパラメーターをUUIDとして取得します
 func GetRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
 	return uuid.FromStringOrNil(c.Param(name))
+}
+
+// BindAndValidate 構造体iにFormDataまたはJsonをデシリアライズします
+func BindAndValidate(c echo.Context, i interface{}) error {
+	if err := c.Bind(i); err != nil {
+		return err
+	}
+	if err := vd.Validate(i); err != nil {
+		if e, ok := err.(vd.InternalError); ok {
+			return herror.InternalServerError(e.InternalError())
+		}
+		return herror.BadRequest(err)
+	}
+	return nil
 }
