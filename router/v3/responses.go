@@ -1,9 +1,10 @@
 package v3
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"time"
 )
 
 type Channel struct {
@@ -424,4 +425,50 @@ func formatOAuth2ClientDetail(oc *model.OAuth2Client) *OAuth2ClientDetail {
 		CallbackURL: oc.RedirectURI,
 		Secret:      oc.Secret,
 	}
+}
+
+type ClipFolder struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	OwnerID     uuid.UUID `json:"ownerId"`
+	CreatedAt   time.Time `json:"createdAt"`
+}
+
+func formatClipFolder(cf *model.ClipFolder) *ClipFolder {
+	return &ClipFolder{
+		ID:          cf.ID,
+		CreatedAt:   cf.CreatedAt,
+		Description: cf.Description,
+		Name:        cf.Description,
+		OwnerID:     cf.OwnerID,
+	}
+}
+
+func formatClipFolders(cfs []*model.ClipFolder) []*ClipFolder {
+	res := make([]*ClipFolder, len(cfs))
+	for i, cf := range cfs {
+		res[i] = formatClipFolder(cf)
+	}
+	return res
+}
+
+type ClipFolderMessage struct {
+	FolderID uuid.UUID
+	Message  *Message
+}
+
+func formatClipFolderMessage(folderID uuid.UUID, m *model.Message) *ClipFolderMessage {
+	return &ClipFolderMessage{
+		FolderID: folderID,
+		Message:  formatMessage(m),
+	}
+}
+
+func formatClipFolderMessages(folderID uuid.UUID, ms []*model.Message) []*ClipFolderMessage {
+	res := make([]*ClipFolderMessage, len(ms))
+	for i, m := range ms {
+		res[i] = formatClipFolderMessage(folderID, m)
+	}
+	return res
 }
