@@ -4788,9 +4788,6 @@ components:
       type: object
       description: クリップされたメッセージ
       properties:
-        folderId:
-          type: string
-          description: クリップフォルダUUID
         message:
           $ref: '#/components/schemas/Message'
         clippedAt:
