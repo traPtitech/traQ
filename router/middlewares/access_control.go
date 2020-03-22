@@ -210,13 +210,8 @@ func CheckClipFolderAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.
 		return func(c echo.Context) error {
 			user := c.Get(consts.KeyUser).(model.UserInfo)
 			cf := c.Get(consts.KeyParamClipFolder).(*model.ClipFolder)
-			g := c.Get(consts.KeyParamGroup).(*model.UserGroup)
-
 			if user.GetID() == cf.OwnerID {
 				return next(c) // 所有者のアクセス
-			}
-			if g.IsAdmin(user.GetID()) {
-				return next(c) // adminのアクセス
 			}
 
 			return herror.Forbidden()
