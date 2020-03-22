@@ -88,9 +88,9 @@ func (repo *GormRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUI
 	return nil
 }
 
-func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) error {
+func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) (*model.ClipFolderMessage, error) {
 	if folderID == uuid.Nil || messageID == uuid.Nil {
-		return ErrNilID
+		return nil, ErrNilID
 	}
 
 	cfm := &model.ClipFolderMessage{
@@ -108,10 +108,10 @@ func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) 
 		return tx.Create(cfm).Error
 	})
 	if err != nil {
-		return err
+		return cfm, err
 	}
 
-	return nil
+	return cfm, nil
 }
 
 func (repo *GormRepository) GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipFolder, error) {
@@ -141,13 +141,14 @@ func (repo *GormRepository) GetClipFolder(folderID uuid.UUID) (*model.ClipFolder
 	return clipFolder, nil
 }
 
-func (repo *GormRepository) GetClipFolderMessages(folderID uuid.UUID, query ClipFolderMessageQuery) (messages []*model.Message, more bool, err error) {
+func (repo *GormRepository) GetClipFolderMessages(folderID uuid.UUID, query ClipFolderMessageQuery) (messages []*ClipFolderMessage, more bool, err error) {
 	if folderID == uuid.Nil {
 		return nil, false, ErrNilID
 	}
-	messages = make([]*model.Message, 0)
+	messages = make([]*ClipFolderMessage, 0)
 
-	tx := repo.db
+	tx := repo.db.Table("messages").Select("messages*,clip_folder_messages.clipped_at").Joins("INNER JOIN clip_folder_messages ON clip_folder_messages.message_id = id").Where("clip_folder_messages.folder_id=?", folderID)
+
 	if query.Asc {
 		tx = tx.Order("created_at")
 	} else {

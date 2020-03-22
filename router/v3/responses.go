@@ -454,21 +454,13 @@ func formatClipFolders(cfs []*model.ClipFolder) []*ClipFolder {
 }
 
 type ClipFolderMessage struct {
-	FolderID uuid.UUID
-	Message  *Message
+	Message   *Message  `json:message`
+	ClippedAt time.Time `json:"clippedAt"`
 }
 
-func formatClipFolderMessage(folderID uuid.UUID, m *model.Message) *ClipFolderMessage {
+func formatClipFolderMessage(clippedAt time.Time, m *model.Message) *ClipFolderMessage {
 	return &ClipFolderMessage{
-		FolderID: folderID,
-		Message:  formatMessage(m),
+		Message:   formatMessage(m),
+		ClippedAt: clippedAt,
 	}
-}
-
-func formatClipFolderMessages(folderID uuid.UUID, ms []*model.Message) []*ClipFolderMessage {
-	res := make([]*ClipFolderMessage, len(ms))
-	for i, m := range ms {
-		res[i] = formatClipFolderMessage(folderID, m)
-	}
-	return res
 }

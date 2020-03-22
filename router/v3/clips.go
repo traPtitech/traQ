@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -94,11 +95,13 @@ func (h *Handlers) PostClipFolderMessages(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	if err = h.Repo.AddClipFolderMessage(cf.ID, req.MessageID); err != nil {
+	var cfm *model.ClipFolderMessage
+	cfm, err = h.Repo.AddClipFolderMessage(cf.ID, req.MessageID)
+	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, formatClipFolderMessage(cf.ID, m))
+	return c.JSON(http.StatusOK, formatClipFolderMessage(cfm.ClippedAt, m))
 }
 
 // GetFolderMessages GET /clip-folders/:folderID/messages
@@ -117,7 +120,7 @@ func (h *Handlers) GetClipFolderMessages(c echo.Context) error {
 
 	c.Response().Header().Set(consts.HeaderMore, strconv.FormatBool(more))
 
-	return c.JSON(http.StatusOK, formatClipFolderMessages(cf.ID, messages))
+	return c.JSON(http.StatusOK, messages)
 }
 
 // DeleteFolderMessages DELETE /clip-folders/:folderID/messages/:messageID
