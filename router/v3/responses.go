@@ -440,7 +440,7 @@ func formatClipFolder(cf *model.ClipFolder) *ClipFolder {
 		ID:          cf.ID,
 		CreatedAt:   cf.CreatedAt,
 		Description: cf.Description,
-		Name:        cf.Description,
+		Name:        cf.Name,
 		OwnerID:     cf.OwnerID,
 	}
 }
