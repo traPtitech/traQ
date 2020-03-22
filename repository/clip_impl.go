@@ -4,6 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/router/extension/herror"
 )
 
 func (repo *GormRepository) CreateClipFolder(userID uuid.UUID, name string, description string) (*model.ClipFolder, error) {
@@ -88,15 +89,22 @@ func (repo *GormRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUI
 	return nil
 }
 
-func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) error {
+func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) (*model.Message, error) {
 	if folderID == uuid.Nil || messageID == uuid.Nil {
-		return ErrNilID
+		return nil, ErrNilID
 	}
+
 	cfm := &model.ClipFolderMessage{
 		FolderID:  folderID,
 		MessageID: messageID,
 	}
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+
+	m, err := repo.GetMessageByID(messageID)
+	if err != nil {
+		return nil, herror.InternalServerError(err)
+	}
+
+	err = repo.db.Transaction(func(tx *gorm.DB) error {
 		// 名前重複チェック
 		if exists, err := dbExists(tx, &model.ClipFolderMessage{FolderID: folderID, MessageID: messageID}); err != nil {
 			return err
@@ -106,9 +114,10 @@ func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) 
 		return tx.Create(cfm).Error
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+
+	return m, nil
 }
 
 func (repo *GormRepository) GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipFolder, error) {

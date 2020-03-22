@@ -17,7 +17,7 @@ type CliplRepository interface {
 	UpdateClipFolder(folderID uuid.UUID, name string, description string) error
 	DeleteClipFolder(folderID uuid.UUID) error
 	DeleteClipFolderMessage(folderID, messageID uuid.UUID) error
-	AddClipFolderMessage(folderID, messageID uuid.UUID) error
+	AddClipFolderMessage(folderID, messageID uuid.UUID) (*model.Message, error)
 	GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipFolder, error)
 	GetClipFolder(folderID uuid.UUID) (*model.ClipFolder, error)
 	GetClipFolderMessages(folderID uuid.UUID, query ClipFolderMessageQuery) (messages []*model.Message, more bool, err error)

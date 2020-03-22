@@ -39,7 +39,19 @@ func (h *Handlers) EditClipFolder(c echo.Context) error {
 
 // PostClipFolderMessage POST /clip-folders/:folderID/messages
 func (h *Handlers) PostClipFolderMessages(c echo.Context) error {
-	return c.JSON(http.StatusOK, h.Realtime.OnlineCounter.GetOnlineUserIDs())
+	cf := getParamClipFolder(c)
+
+	var req PostClipFolderMessageRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	m, err := h.Repo.AddClipFolderMessage(cf.ID, req.MessageID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, formatClipFolderMessage(cf.ID, m))
 }
 
 // GetFolderMessages GET /clip-folders/:folderID/messages
