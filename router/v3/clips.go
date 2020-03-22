@@ -2,6 +2,7 @@ package v3
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
@@ -105,13 +106,12 @@ func (h *Handlers) GetClipFolderMessages(c echo.Context) error {
 		return err
 	}
 
-	// wip:moreを読み捨ててる
-	messages, _, err := h.Repo.GetClipFolderMessages(cf.ID, req)
+	messages, more, err := h.Repo.GetClipFolderMessages(cf.ID, req)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	// wip
-	// c.Response().Header().Set(consts.HeaderMore, strconv.FormatBool(more))
+
+	c.Response().Header().Set(consts.HeaderMore, strconv.FormatBool(more))
 
 	return c.JSON(http.StatusOK, formatClipFolderMessages(cf.ID, messages))
 }
