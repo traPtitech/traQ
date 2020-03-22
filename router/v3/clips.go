@@ -89,8 +89,12 @@ func (h *Handlers) PostClipFolderMessages(c echo.Context) error {
 		return err
 	}
 
-	m, err := h.Repo.AddClipFolderMessage(cf.ID, req.MessageID)
+	m, err := h.Repo.GetMessageByID(req.MessageID)
 	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	if err = h.Repo.AddClipFolderMessage(cf.ID, req.MessageID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
