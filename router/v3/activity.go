@@ -38,7 +38,7 @@ func (h *Handlers) GetActivityTimeline(c echo.Context) error {
 
 	var req GetActivityTimelineRequest
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	var (

@@ -29,7 +29,7 @@ func (h *Handlers) GetActivityLatestMessages(c echo.Context) error {
 		SubscribeOnly: true,
 	}
 	if err := bindAndValidate(c, &req); err != nil {
-		return herror.BadRequest(err)
+		return err
 	}
 
 	if req.Limit <= 0 || req.Limit > 50 {
