@@ -233,6 +233,19 @@ func mustAddMessageStamp(t *testing.T, repo Repository, messageID, stampID, user
 	require.NoError(t, err)
 }
 
+func mustMakeStampPalette(t *testing.T, repo Repository, name, discription string, stamps []uuid.UUID, userID uuid.UUID) *model.StampPalette {
+	t.Helper()
+	if name == random {
+		name = utils.RandAlphabetAndNumberString(20)
+	}
+	if discription == random {
+		discription = utils.RandAlphabetAndNumberString(100)
+	}
+	sp, err := repo.CreateStampPalette(name, discription, stamps, userID)
+	require.NoError(t, err)
+	return sp
+}
+
 func mustMakeWebhook(t *testing.T, repo Repository, name string, channelID, creatorID uuid.UUID, secret string) model.Webhook {
 	t.Helper()
 	if name == random {

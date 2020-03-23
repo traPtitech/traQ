@@ -84,13 +84,12 @@ var StampPaletteDescriptionRuleRequired = append([]vd.Rule{
 
 // StampPaletteStampsRule スタンプパレット内スタンプバリデーションルール
 var StampPaletteStampsRule = []vd.Rule{
-	// 0を許可するとテストが簡単になるけど、フロントによっては誤登録がおきそう
 	vd.Length(0, 200),
 }
 
-// StampPaletteStampsRuleRequired スタンプパレット内スタンプバリデーションルール with Required
-var StampPaletteStampsRuleRequired = append([]vd.Rule{
-	vd.Required,
+// StampPaletteStampsRuleNotNil スタンプパレット内スタンプバリデーションルール with NotNil
+var StampPaletteStampsRuleNotNil = append([]vd.Rule{
+	vd.NotNil,
 }, StampPaletteStampsRule...)
 
 // TwitterIDRule TwitterIDバリデーションルール

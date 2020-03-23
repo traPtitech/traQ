@@ -6,7 +6,6 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -83,7 +82,7 @@ func (h *Handlers) EditStampPalette(c echo.Context) error {
 	stampPalette := getParamStampPalette(c)
 
 	// 権限チェック
-	if user.GetID() != stampPalette.CreatorID && !h.RBAC.IsGranted(user.GetRole(), permission.EditStampPalette) {
+	if user.GetID() != stampPalette.CreatorID {
 		return herror.Forbidden("you are not permitted to edit stamp-palette created by others")
 	}
 	var req PatchStampPaletteRequest
@@ -120,7 +119,7 @@ func (h *Handlers) DeleteStampPalette(c echo.Context) error {
 	stampPalette := getParamStampPalette(c)
 
 	// 権限チェック
-	if user.GetID() != stampPalette.CreatorID && !h.RBAC.IsGranted(user.GetRole(), permission.EditStampPalette) {
+	if user.GetID() != stampPalette.CreatorID {
 		return herror.Forbidden("you are not permitted to delete stamp-palette created by others")
 	}
 

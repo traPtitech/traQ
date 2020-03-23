@@ -73,4 +73,10 @@ type StampRepository interface {
 	// 存在しないユーザーを指定した場合は空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetUserStampHistory(userID uuid.UUID, limit int) (h []*UserStampHistory, err error)
+	// ExistStamps stampIDの配列から指定したスタンプが全て存在するか判定します
+	//
+	// 成功した場合、nilを返します。
+	// 存在しないスタンプがあった場合、ArgumentErrorを返します。
+	// DBによるエラーを返すことがあります。
+	ExistStamps(stampIDs model.UUIDs) (err error)
 }

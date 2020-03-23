@@ -33,8 +33,7 @@ func (repo *GormRepository) CreateStampPalette(name, description string, stamps 
 			return ArgError("description", "Description must be 0-1000")
 		}
 		// スタンプ上限チェック
-		// requiredにするとテストがめんどくさそう？
-		if err = validation.Validate(stamps, validator.StampPaletteStampsRuleRequired...); err != nil {
+		if err = validation.Validate(stamps, validator.StampPaletteStampsRuleNotNil...); err != nil {
 			return ArgError("stamps", "stamps must be 0-200")
 		}
 		// スタンプ存在チェック
@@ -65,14 +64,14 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 	}
 	changes := map[string]interface{}{}
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		var s model.Stamp
-		if err := tx.First(&s, &model.StampPalette{ID: id}).Error; err != nil {
+		var sp model.StampPalette
+		if err := tx.First(&sp, &model.StampPalette{ID: id}).Error; err != nil {
 			return convertError(err)
 		}
 
 		if args.Name.Valid {
 			if err := validation.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
-				return ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
+				return ArgError("args.Name", "Name must be 1-30")
 			}
 			changes["name"] = args.Name.String
 		}
@@ -83,7 +82,7 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 			changes["description"] = args.Description.String
 		}
 		if args.Stamps != nil {
-			if err := validation.Validate(args.Stamps, validator.StampPaletteStampsRuleRequired...); err != nil {
+			if err := validation.Validate(args.Stamps, validator.StampPaletteStampsRuleNotNil...); err != nil {
 				return ArgError("args.Stamps", "stamps must be 0-200")
 			}
 			if err := repo.ExistStamps(args.Stamps); err != nil {
@@ -93,7 +92,7 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 		}
 
 		if len(changes) > 0 {
-			return tx.Model(&s).Updates(changes).Error
+			return tx.Model(&sp).Updates(changes).Error
 		}
 		return nil
 	})
@@ -149,21 +148,4 @@ func (repo *GormRepository) GetStampPalettes(userID uuid.UUID) (sps []*model.Sta
 	sps = make([]*model.StampPalette, 0)
 	tx := repo.db
 	return sps, tx.Find(&sps).Error
-}
-
-// ExistStamps implements StampPaletteRepository interface.
-func (repo *GormRepository) ExistStamps(stampIDs model.UUIDs) (err error) {
-	var num int
-	err = repo.db.
-		Table("stamps").
-		Where("id IN (?)", stampIDs).
-		Count(&num).
-		Error
-	if err != nil {
-		return err
-	}
-	if len(stampIDs) != num {
-		err = ArgError("stamp", "stamp is not found")
-	}
-	return
 }
