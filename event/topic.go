@@ -239,4 +239,10 @@ const (
 	// 		user_id: uuid.UUID
 	//		req: *http.Request
 	WSDisconnected = "ws.disconnected"
+
+	ClipFolderCreated        = "clip_folder.created"
+	ClipFolderUpdated        = "clip_folder.updated"
+	ClipFolderDeleted        = "clip_folder.deleted"
+	ClipFolderMessageDeleted = "clip_folder_message.deleted"
+	ClipFolderMessageAdded   = "clip_folder_message.added"
 )

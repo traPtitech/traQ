@@ -4,6 +4,8 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
+	"github.com/leandro-lugaresi/hub"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
@@ -34,6 +36,13 @@ func (repo *GormRepository) CreateClipFolder(userID uuid.UUID, name string, desc
 	if err := repo.db.Create(clipFolder).Error; err != nil {
 		return nil, err
 	}
+	repo.hub.Publish(hub.Message{
+		Name: event.ClipFolderCreated,
+		Fields: hub.Fields{
+			"clip_folder_id": clipFolder.ID,
+			"clip_folder":    clipFolder,
+		},
+	})
 
 	return clipFolder, nil
 }
@@ -63,6 +72,8 @@ func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name null.Strin
 
 	var (
 		old model.ClipFolder
+		new model.ClipFolder
+		ok  bool
 	)
 
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
@@ -76,10 +87,21 @@ func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name null.Strin
 				return err
 			}
 		}
-		return nil
+		ok = true
+		return tx.Where(&model.ClipFolder{ID: folderID}).First(&new).Error
 	})
 	if err != nil {
 		return err
+	}
+	if ok {
+		repo.hub.Publish(hub.Message{
+			Name: event.ClipFolderUpdated,
+			Fields: hub.Fields{
+				"clip_folder_id":  folderID,
+				"old_clip_folder": &old,
+				"clip_folder":     &new,
+			},
+		})
 	}
 	return nil
 }
@@ -89,8 +111,8 @@ func (repo *GormRepository) DeleteClipFolder(folderID uuid.UUID) error {
 	if folderID == uuid.Nil {
 		return ErrNilID
 	}
+	var cf model.ClipFolder
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		var cf model.ClipFolder
 		if err := tx.First(&cf, &model.ClipFolder{ID: folderID}).Error; err != nil {
 			return convertError(err)
 		}
@@ -99,6 +121,13 @@ func (repo *GormRepository) DeleteClipFolder(folderID uuid.UUID) error {
 	if err != nil {
 		return err
 	}
+	repo.hub.Publish(hub.Message{
+		Name: event.ClipFolderDeleted,
+		Fields: hub.Fields{
+			"clip_folder_id": folderID,
+			"clip_folder":    &cf,
+		},
+	})
 	return nil
 }
 
@@ -107,8 +136,8 @@ func (repo *GormRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUI
 	if folderID == uuid.Nil || messageID == uuid.Nil {
 		return ErrNilID
 	}
+	var cfm model.ClipFolderMessage
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		var cfm model.ClipFolderMessage
 		if err := tx.First(&cfm, &model.ClipFolderMessage{MessageID: messageID, FolderID: folderID}).Error; err != nil {
 			return convertError(err)
 		}
@@ -117,6 +146,13 @@ func (repo *GormRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUI
 	if err != nil {
 		return err
 	}
+	repo.hub.Publish(hub.Message{
+		Name: event.ClipFolderMessageDeleted,
+		Fields: hub.Fields{
+			"clip_folder_message_id": messageID,
+			"clip_folder_message":    &cfm,
+		},
+	})
 	return nil
 }
 
@@ -143,6 +179,14 @@ func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) 
 	if err != nil {
 		return cfm, err
 	}
+
+	repo.hub.Publish(hub.Message{
+		Name: event.ClipFolderMessageAdded,
+		Fields: hub.Fields{
+			"clip_folder_message_id": folderID,
+			"clip_folder_message":    &cfm,
+		},
+	})
 
 	return cfm, nil
 }
