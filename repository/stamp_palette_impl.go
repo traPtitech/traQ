@@ -76,7 +76,7 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 			changes["name"] = args.Name.String
 		}
 		if args.Description.Valid {
-			if err := validation.Validate(args.Description.String, validator.StampPaletteDescriptionRuleRequired...); err != nil {
+			if err := validation.Validate(args.Description.String, validator.StampPaletteDescriptionRule...); err != nil {
 				return ArgError("args.Description", "Description must be 0-1000")
 			}
 			changes["description"] = args.Description.String
@@ -113,7 +113,7 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 // GetStampPalette implements StampPaletteRepository interface.
 func (repo *GormRepository) GetStampPalette(id uuid.UUID) (sp *model.StampPalette, err error) {
 	if id == uuid.Nil {
-		return nil, ErrNilID
+		return nil, ErrNotFound
 	}
 	sp = &model.StampPalette{}
 	if err := repo.db.Take(sp, &model.StampPalette{ID: id}).Error; err != nil {

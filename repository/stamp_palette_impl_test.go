@@ -31,7 +31,6 @@ func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 			assert.NotEmpty(sp.ID)
 			assert.Equal(name, sp.Name)
 			assert.Equal(description, sp.Description)
-			assert.Equal(stamps, sp.Stamps)
 			assert.Equal(user.GetID(), sp.CreatorID)
 			assert.NotEmpty(sp.CreatedAt)
 			assert.NotEmpty(sp.UpdatedAt)
@@ -113,7 +112,6 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 			assert.Equal(createdStampPalette.Name, stampPalette.Name)
 			assert.Equal(createdStampPalette.Description, stampPalette.Description)
 			assert.Equal(createdStampPalette.CreatorID, stampPalette.CreatorID)
-			assert.Equal(createdStampPalette.Stamps, stampPalette.Stamps)
 		}
 	})
 }
@@ -139,7 +137,7 @@ func TestRepositoryImpl_DeleteStampPalette(t *testing.T) {
 		assert, _ := assertAndRequire(t)
 
 		stampPalette := mustMakeStampPalette(t, repo, random, random, make([]uuid.UUID, 0), user.GetID())
-		if assert.NoError(repo.DeleteStamp(stampPalette.ID)) {
+		if assert.NoError(repo.DeleteStampPalette(stampPalette.ID)) {
 			_, err := repo.GetStampPalette(stampPalette.ID)
 			assert.EqualError(err, ErrNotFound.Error())
 		}
@@ -158,8 +156,8 @@ func TestRepositoryImpl_GetStampPalettes(t *testing.T) {
 	arr, err := repo.GetStampPalettes(user.GetID())
 	if assert.NoError(err) {
 		assert.Len(arr, n)
-		for _, creatorID := range arr {
-			assert.Equal(user.GetID(), creatorID)
+		for _, stampPalette := range arr {
+			assert.Equal(user.GetID(), stampPalette.CreatorID)
 		}
 	}
 }
