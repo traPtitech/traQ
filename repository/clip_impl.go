@@ -137,8 +137,6 @@ func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) 
 			return err
 		} else if exists {
 			return ErrAlreadyExists
-		} else if !exists {
-			return ErrNotFound
 		}
 		return tx.Create(cfm).Error
 	})

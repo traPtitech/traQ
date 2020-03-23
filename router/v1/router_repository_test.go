@@ -5,6 +5,15 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
+	"image"
+	"io"
+	"math"
+	"sort"
+	"strings"
+	"sync"
+	"time"
+	"unicode/utf8"
+
 	"github.com/disintegration/imaging"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
@@ -18,14 +27,6 @@ import (
 	"github.com/traPtitech/traQ/utils/validator"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/guregu/null.v3"
-	"image"
-	"io"
-	"math"
-	"sort"
-	"strings"
-	"sync"
-	"time"
-	"unicode/utf8"
 )
 
 var (
@@ -2607,6 +2608,38 @@ func (repo *TestRepository) RemoveBotFromChannel(botID, channelID uuid.UUID) err
 }
 
 func (repo *TestRepository) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid.UUID, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) CreateClipFolder(userID uuid.UUID, name string, description string) (*model.ClipFolder, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) UpdateClipFolder(folderID uuid.UUID, name null.String, description null.String) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) DeleteClipFolder(folderID uuid.UUID) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUID) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) (*model.ClipFolderMessage, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipFolder, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetClipFolder(folderID uuid.UUID) (*model.ClipFolder, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetClipFolderMessages(folderID uuid.UUID, query repository.ClipFolderMessageQuery) (messages []*model.ClipFolderMessage, more bool, err error) {
 	panic("implement me")
 }
 

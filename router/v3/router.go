@@ -304,7 +304,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				{
 					apiClipFoldersFIDMessages.GET("", h.GetClipFolderMessages, requires(permission.GetClipFolder, permission.GetMessage))
 					apiClipFoldersFIDMessages.POST("", h.PostClipFolderMessages, requires(permission.EditClipFolder))
-					apiClipFoldersFIDMessages.DELETE("/:messageID", h.DeleteClipFolderMessages, requires(permission.EditClipFolder), retrieve.MessageID())
+					apiClipFoldersFIDMessages.DELETE("/:messageID", h.DeleteClipFolderMessages, requires(permission.EditClipFolder))
 				}
 			}
 		}

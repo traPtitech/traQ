@@ -5,12 +5,14 @@ import (
 	"strconv"
 	"strings"
 
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -19,9 +21,23 @@ type PostClipFolderRequest struct {
 	Description string `json:"description"`
 }
 
+func (r PostClipFolderRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, validator.ClipFolderNameRuleRequired...),
+		vd.Field(&r.Description, validator.ClipFolderDescriptionRule...),
+	)
+}
+
 type UpdateClipFolderRequest struct {
 	Name        null.String `json:"name"`
 	Description null.String `json:"description"`
+}
+
+func (r UpdateClipFolderRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, validator.ClipFolderNameRule...),
+		vd.Field(&r.Description, validator.ClipFolderDescriptionRule...),
+	)
 }
 
 // PostClipFolders POST /clip-folders
@@ -64,7 +80,7 @@ func (h *Handlers) DeleteClipFolder(c echo.Context) error {
 	folderID := getParamAsUUID(c, consts.ParamClipFolderID)
 
 	if err := h.Repo.DeleteClipFolder(folderID); err != nil {
-		return err
+		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -167,9 +183,10 @@ func (h *Handlers) GetClipFolderMessages(c echo.Context) error {
 
 // DeleteFolderMessages DELETE /clip-folders/:folderID/messages/:messageID
 func (h *Handlers) DeleteClipFolderMessages(c echo.Context) error {
-	m := getParamMessage(c)
+	messageID := getParamAsUUID(c, consts.ParamMessageID)
+
 	cf := getParamClipFolder(c)
-	if err := h.Repo.DeleteClipFolderMessage(cf.ID, m.ID); err != nil {
+	if err := h.Repo.DeleteClipFolderMessage(cf.ID, messageID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
