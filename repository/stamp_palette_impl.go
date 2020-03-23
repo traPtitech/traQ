@@ -32,14 +32,14 @@ func (repo *GormRepository) CreateStampPalette(name, description string, stamps 
 		if err = validation.Validate(description, validator.StampPaletteDescriptionRuleRequired...); err != nil {
 			return ArgError("description", "Description must be 0-1000")
 		}
+		// スタンプ上限チェック
+		// requiredにするとテストがめんどくさそう？
+		if err = validation.Validate(stamps, validator.StampPaletteStampsRuleRequired...); err != nil {
+			return ArgError("stamps", "stamps must be 0-200")
+		}
 		// スタンプ存在チェック
-		// dbExistの重さが分らないですが、クエリ数的には全件に対してやると、ここめちゃくちゃ重そう
-		for _, stamp := range stamps {
-			if exists, err := repo.StampExists(stamp); err != nil {
-				return err
-			} else if !exists {
-				return ArgError("stamp", "stamp is not found")
-			}
+		if err = repo.ExistStamps(stamps); err != nil {
+			return err
 		}
 
 		return tx.Create(stampPalette).Error
@@ -49,13 +49,66 @@ func (repo *GormRepository) CreateStampPalette(name, description string, stamps 
 	}
 
 	repo.hub.Publish(hub.Message{
-		Name: event.StampCreated,
+		Name: event.StampPaletteCreated,
 		Fields: hub.Fields{
 			"stamp_palette_id": stampPalette.ID,
 			"stamp_palette": stampPalette,
 		},
 	})
 	return stampPalette, nil
+}
+
+// UpdateStampPalette implements StampPaletteRepository interface.
+func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPaletteArgs) error {
+	if id == uuid.Nil {
+		return ErrNilID
+	}
+	changes := map[string]interface{}{}
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		var s model.Stamp
+		if err := tx.First(&s, &model.StampPalette{ID: id}).Error; err != nil {
+			return convertError(err)
+		}
+
+		if args.Name.Valid {
+			if err := validation.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
+				return ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
+			}
+			changes["name"] = args.Name.String
+		}
+		if args.Description.Valid {
+			if err := validation.Validate(args.Description.String, validator.StampPaletteDescriptionRuleRequired...); err != nil {
+				return ArgError("args.Description", "Description must be 0-1000")
+			}
+			changes["description"] = args.Description.String
+		}
+		if args.Stamps != nil {
+			if err := validation.Validate(args.Stamps, validator.StampPaletteStampsRuleRequired...); err != nil {
+				return ArgError("args.Stamps", "stamps must be 0-200")
+			}
+			if err := repo.ExistStamps(args.Stamps); err != nil {
+				return err
+			}
+			changes["stamps"] = args.Stamps
+		}
+
+		if len(changes) > 0 {
+			return tx.Model(&s).Updates(changes).Error
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	if len(changes) > 0 {
+		repo.hub.Publish(hub.Message{
+			Name: event.StampPaletteUpdated,
+			Fields: hub.Fields{
+				"stamp_palette_id": id,
+			},
+		})
+	}
+	return nil
 }
 
 // GetStampPalette implements StampPaletteRepository interface.
@@ -96,4 +149,21 @@ func (repo *GormRepository) GetStampPalettes(userID uuid.UUID) (sps []*model.Sta
 	sps = make([]*model.StampPalette, 0)
 	tx := repo.db
 	return sps, tx.Find(&sps).Error
+}
+
+// ExistStamps implements StampPaletteRepository interface.
+func (repo *GormRepository) ExistStamps(stampIDs model.UUIDs) (err error) {
+	var num int
+	err = repo.db.
+		Table("stamps").
+		Where("id IN (?)", stampIDs).
+		Count(&num).
+		Error
+	if err != nil {
+		return err
+	}
+	if len(stampIDs) != num {
+		err = ArgError("stamp", "stamp is not found")
+	}
+	return
 }

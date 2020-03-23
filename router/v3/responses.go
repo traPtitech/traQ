@@ -472,3 +472,33 @@ func formatClipFolderMessages(cfms []*model.ClipFolderMessage) []*ClipFolderMess
 	}
 	return res
 }
+
+type StampPalette struct {
+	ID          uuid.UUID   `json:"id"`
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	Stamps      model.UUIDs `json:"stamps"`
+	CreatorID   uuid.UUID   `json:"creatorId"`
+	CreatedAt   time.Time   `json:"createdAt"`
+	UpdatedAt   time.Time   `json:"updatedAt"`
+}
+
+func formatStampPalette(cf *model.StampPalette) *StampPalette {
+	return &StampPalette{
+		ID:          cf.ID,
+		Name:        cf.Name,
+		Description: cf.Description,
+		Stamps:      cf.Stamps,
+		CreatorID:   cf.CreatorID,
+		CreatedAt:   cf.CreatedAt,
+		UpdatedAt:   cf.UpdatedAt,
+	}
+}
+
+func formatStampPalettes(cfs []*model.StampPalette) []*StampPalette {
+	res := make([]*StampPalette, len(cfs))
+	for i, cf := range cfs {
+		res[i] = formatStampPalette(cf)
+	}
+	return res
+}

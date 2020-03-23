@@ -10,8 +10,7 @@ import (
 type UpdateStampPaletteArgs struct {
 	Name        null.String
 	Description null.String
-	// model.UUIDsにnullかどうかを持たせるか悩んでます
-	// Stamps model.UUIDs
+	Stamps      model.UUIDs
 }
 
 // StampPaletteRepository スタンプパレットリポジトリ
@@ -23,7 +22,6 @@ type StampPaletteRepository interface {
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
 	CreateStampPalette(name, description string, stamps model.UUIDs, userID uuid.UUID) (sp *model.StampPalette, err error)
-
 	// UpdateStampPalette 指定したスタンプパレットの情報を更新します
 	//
 	// 成功した場合、nilを返します。
@@ -31,8 +29,7 @@ type StampPaletteRepository interface {
 	// idにuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 更新内容に問題がある場合、ArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
-	//UpdateStampPalette(id uuid.UUID, args UpdateStampPaletteArgs) error
-
+	UpdateStampPalette(id uuid.UUID, args UpdateStampPaletteArgs) error
 	// GetStampPalette 指定したIDのスタンプパレットを取得します
 	//
 	// 成功した場合、スタンプパレットとnilを返します。
@@ -51,4 +48,10 @@ type StampPaletteRepository interface {
 	// 成功した場合、スタンプパレットの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetStampPalettes(userID uuid.UUID) (sps []*model.StampPalette, err error)
+	// ExistStamps stampIDの配列から指定したスタンプが全て存在するか判定します
+	//
+	// 成功した場合、nilを返します。
+	// 存在しないスタンプがあった場合、ArgumentErrorを返します。
+	// DBによるエラーを返すことがあります。
+	ExistStamps(stampIDs model.UUIDs) (err error)
 }

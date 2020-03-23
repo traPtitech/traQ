@@ -82,6 +82,17 @@ var StampPaletteDescriptionRuleRequired = append([]vd.Rule{
 	vd.Required,
 }, StampPaletteDescriptionRule...)
 
+// StampPaletteStampsRule スタンプパレット内スタンプバリデーションルール
+var StampPaletteStampsRule = []vd.Rule{
+	// 0を許可するとテストが簡単になるけど、フロントによっては誤登録がおきそう
+	vd.Length(0, 200),
+}
+
+// StampPaletteStampsRuleRequired スタンプパレット内スタンプバリデーションルール with Required
+var StampPaletteStampsRuleRequired = append([]vd.Rule{
+	vd.Required,
+}, StampPaletteStampsRule...)
+
 // TwitterIDRule TwitterIDバリデーションルール
 var TwitterIDRule = []vd.Rule{
 	vd.Match(regexp.MustCompile(`^[a-zA-Z0-9_]+$`)).Error("must contain [a-zA-Z0-9_] only"),

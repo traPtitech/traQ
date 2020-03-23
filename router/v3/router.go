@@ -200,7 +200,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiStampPalettesPID := apiStampPalettes.Group("/:paletteID", retrieve.StampPalettesID())
 			{
 				apiStampPalettesPID.GET("", h.GetStampPalette, requires(permission.GetStampPalette))
-				apiStampPalettesPID.PATCH("", NotImplemented, requires(permission.EditStampPalette))
+				apiStampPalettesPID.PATCH("", h.EditStampPalette, requires(permission.EditStampPalette))
 				apiStampPalettesPID.DELETE("", h.DeleteStampPalette, requires(permission.DeleteStampPalette))
 			}
 		}
