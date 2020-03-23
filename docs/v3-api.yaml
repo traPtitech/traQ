@@ -3921,10 +3921,6 @@ components:
         type:
           type: string
           description: グループタイプ
-      required:
-        - name
-        - description
-        - type
     PostUserGroupRequest:
       title: PostUserGroupRequest
       type: object
@@ -4034,9 +4030,6 @@ components:
           items:
             type: string
             format: uuid
-      required:
-        - 'on'
-        - 'off'
     PutChannelSubscribersRequest:
       title: PutChannelSubscribersRequest
       type: object
@@ -4329,7 +4322,7 @@ components:
           type: boolean
           description: タグのロック状態
       required:
-      - isLocked
+        - isLocked
     Tag:
       title: Tag
       type: object
@@ -5320,10 +5313,6 @@ components:
           items:
             type: string
             format: uuid
-      required:
-        - name
-        - description
-        - stamps
     PatchStampRequest:
       title: PatchStampRequest
       type: object
@@ -5337,9 +5326,6 @@ components:
           type: string
           description: 作成者UUID
           format: uuid
-      required:
-        - name
-        - creatorId
     MessagePin:
       title: MessagePin
       type: object
