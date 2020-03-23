@@ -76,3 +76,23 @@ func (h *Handlers) GetThumbnailImage(c echo.Context) error {
 func (h *Handlers) GetFile(c echo.Context) error {
 	return utils.ServeFile(c, getParamFile(c))
 }
+
+// DeleteFile DELETE /files/:fileID
+func (h *Handlers) DeleteFile(c echo.Context) error {
+	userID := getRequestUserID(c)
+	f := getParamFile(c)
+
+	if !f.GetCreatorID().Valid || f.GetFileType() != model.FileTypeUserFile {
+		return herror.Forbidden()
+	}
+
+	if f.GetCreatorID().UUID != userID { // TODO 管理者権限
+		return herror.Forbidden()
+	}
+
+	if err := h.Repo.DeleteFile(f.GetID()); err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
