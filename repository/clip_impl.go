@@ -77,8 +77,8 @@ func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name null.Strin
 	)
 
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(&old, &model.ClipFolder{ID: folderID}).Error; err != nil {
-			return convertError(err)
+		if err := tx.First(&old, &model.ClipFolder{ID: folderID}).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+			return err
 		}
 
 		// update
