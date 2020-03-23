@@ -3616,7 +3616,7 @@ components:
           minimum: 1
           maximum: 100
       required:
-      - count
+        - count
     Stamp:
       title: Stamp
       type: object
@@ -4160,12 +4160,6 @@ components:
           type: string
           format: uuid
           description: 移譲先のユーザーUUID
-      required:
-        - name
-        - description
-        - channelId
-        - secret
-        - ownerId
     PostWebhookRequest:
       title: PostWebhookRequest
       type: object
@@ -4538,11 +4532,6 @@ components:
           type: string
           description: クライアント開発者UUID
           format: uuid
-      required:
-        - name
-        - description
-        - callbackUrl
-        - developerId
     OAuth2ClientDetail:
       title: OAuth2ClientDetail
       description: OAuth2クライアント詳細情報
@@ -4693,13 +4682,6 @@ components:
           uniqueItems: false
           items:
             type: string
-      required:
-        - displayName
-        - description
-        - privileged
-        - endpoint
-        - developerId
-        - subscribeEvents
     BotTokens:
       title: BotTokens
       type: object
@@ -4933,11 +4915,6 @@ components:
           type: string
           description: 親チャンネルUUID
           format: uuid
-      required:
-        - name
-        - visibility
-        - force
-        - parentId
     WebRTCUserState:
       title: WebRTCUserState
       type: object
@@ -5007,9 +4984,6 @@ components:
           type: string
           description: 説明
           maxLength: 1000
-      required:
-        - name
-        - description
     PostClipFolderRequest:
       title: PostClipFolderRequest
       type: object
