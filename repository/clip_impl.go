@@ -3,14 +3,29 @@ package repository
 import (
 	"strings"
 
+	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/validator"
 )
 
+// CreateClipFolder implements ClipRepository interface.
 func (repo *GormRepository) CreateClipFolder(userID uuid.UUID, name string, description string) (*model.ClipFolder, error) {
+	if userID == uuid.Nil {
+		return nil, ErrNilID
+	}
+
+	// 名前チェック
+	if err := validation.Validate(name, validator.ClipFolderNameRuleRequired...); err != nil {
+		return nil, ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
+	}
+	// descriptionチェック
+	if err := validation.Validate(name, validator.ClipFolderDescriptionRule...); err != nil {
+		return nil, ArgError("description", "description must be less than 1000 characters")
+	}
+
 	uid := uuid.Must(uuid.NewV4())
-	//description のバリデーションする
 	clipFolder := &model.ClipFolder{
 		ID:          uid,
 		Description: description,
@@ -20,12 +35,23 @@ func (repo *GormRepository) CreateClipFolder(userID uuid.UUID, name string, desc
 	if err := repo.db.Create(clipFolder).Error; err != nil {
 		return nil, err
 	}
+
 	return clipFolder, nil
 }
 
+// UpdateClipFolder implements ClipRepository interface.
 func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name string, description string) error {
 	if folderID == uuid.Nil {
 		return ErrNilID
+	}
+
+	// 名前チェック
+	if err := validation.Validate(name, validator.ClipFolderNameRuleRequired...); err != nil {
+		return ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
+	}
+	// descriptionチェック
+	if err := validation.Validate(name, validator.ClipFolderDescriptionRule...); err != nil {
+		return ArgError("description", "description must be less than 1000 characters")
 	}
 
 	var (
@@ -36,8 +62,8 @@ func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name string, de
 		if err := tx.First(&old, &model.ClipFolder{ID: folderID}).Error; err != nil {
 			return convertError(err)
 		}
+
 		changes := map[string]interface{}{}
-		//バリデーションする
 		changes["description"] = description
 		changes["name"] = name
 

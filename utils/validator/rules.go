@@ -1,9 +1,10 @@
 package validator
 
 import (
+	"regexp"
+
 	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
-	"regexp"
 )
 
 // PasswordRule パスワードバリデーションルール
@@ -65,4 +66,20 @@ var StampNameRuleRequired = append([]vd.Rule{
 var TwitterIDRule = []vd.Rule{
 	vd.Match(regexp.MustCompile(`^[a-zA-Z0-9_]+$`)).Error("must contain [a-zA-Z0-9_] only"),
 	vd.RuneLength(1, 15),
+}
+
+// ClipFolderNameRule クリップフォルダー名バリデーションルール
+var ClipFolderNameRule = []vd.Rule{
+	vd.Match(regexp.MustCompile(`^[a-zA-Z0-9_]+$`)).Error("must contain [a-zA-Z0-9_] only"),
+	vd.RuneLength(1, 30),
+}
+
+// ClipFolderNameRuleRequired クリップフォルダー名バリデーションルール with Required
+var ClipFolderNameRuleRequired = append([]vd.Rule{
+	vd.Required,
+}, ClipFolderNameRule...)
+
+// ClipFolderDescriptionRule クリップフォルダーの説明バリデーションルール
+var ClipFolderDescriptionRule = []vd.Rule{
+	vd.Length(0, 1000),
 }
