@@ -35,7 +35,6 @@ const (
 	common4 = "common4"
 	common5 = "common5"
 	common6 = "common6"
-	common7 = "common7"
 	s1      = "s1"
 	s2      = "s2"
 	s3      = "s3"
@@ -56,7 +55,6 @@ func TestMain(m *testing.M) {
 		common4,
 		common5,
 		common6,
-		common7,
 		s1,
 		s2,
 		s3,
@@ -76,13 +74,11 @@ func TestMain(m *testing.M) {
 		}
 		h := hub.New()
 		handlers := &Handlers{
-			RBAC:             r,
-			Repo:             repo,
-			Hub:              h,
-			Logger:           zap.NewNop(),
-			Realtime:         realtime.NewService(h),
-			AccessTokenExp:   1000,
-			IsRefreshEnabled: true,
+			RBAC:     r,
+			Repo:     repo,
+			Hub:      h,
+			Logger:   zap.NewNop(),
+			Realtime: realtime.NewService(h),
 		}
 		handlers.Setup(e.Group("/api"))
 		servers[key] = httptest.NewServer(e)
@@ -274,32 +270,6 @@ func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID
 	s, err := repo.CreateStamp(name, fileID, userID)
 	require.NoError(t, err)
 	return s
-}
-
-func mustIssueToken(t *testing.T, repo repository.Repository, client *model.OAuth2Client, userID uuid.UUID, refresh bool) *model.OAuth2Token {
-	t.Helper()
-	token, err := repo.IssueToken(client, userID, client.RedirectURI, client.Scopes, 1000, refresh)
-	require.NoError(t, err)
-	return token
-}
-
-func mustMakeAuthorizeData(t *testing.T, repo repository.Repository, clientID string, userID uuid.UUID) *model.OAuth2Authorize {
-	t.Helper()
-	scopes := model.AccessScopes{}
-	scopes.Add("read")
-	authorize := &model.OAuth2Authorize{
-		Code:           utils.RandAlphabetAndNumberString(36),
-		ClientID:       clientID,
-		UserID:         userID,
-		CreatedAt:      time.Now(),
-		ExpiresIn:      1000,
-		RedirectURI:    "http://example.com",
-		Scopes:         scopes,
-		OriginalScopes: scopes,
-		Nonce:          "nonce",
-	}
-	require.NoError(t, repo.SaveAuthorize(authorize))
-	return authorize
 }
 
 func mustChangeChannelSubscription(t *testing.T, repo repository.Repository, channelID, userID uuid.UUID) {
