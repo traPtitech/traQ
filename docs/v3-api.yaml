@@ -3342,6 +3342,16 @@ components:
           format: uuid
           description: スレッドUUID
           nullable: true
+      required:
+        - id
+        - userId
+        - channelId
+        - content
+        - createdAt
+        - updatedAt
+        - pinned
+        - stamps
+        - threadId
     MessageStamp:
       title: MessageStamp
       type: object
@@ -3367,6 +3377,12 @@ components:
           type: string
           format: date-time
           description: スタンプが最後に押された日時
+      required:
+        - userId
+        - stampId
+        - count
+        - createdAt
+        - updatedAt
     Pin:
       title: Pin
       type: object
@@ -3382,6 +3398,11 @@ components:
           description: ピン留めされた日時
         message:
           $ref: '#/components/schemas/Message'
+      required:
+        - userId
+        - pinnedAt
+        - messageId
+        - message
     Channel:
       title: Channel
       type: object
@@ -3415,6 +3436,14 @@ components:
           items:
             type: string
             format: uuid
+      required:
+        - id
+        - parentId
+        - visibility
+        - force
+        - topic
+        - name
+        - children
     PostMessageRequest:
       title: PostMessageRequest
       type: object
@@ -3444,6 +3473,9 @@ components:
           type: string
           format: date-time
           description: 統計情報日時
+      required:
+        - totalMessageCount
+        - datetime
     ChannelTopic:
       title: ChannelTopic
       type: object
@@ -3452,6 +3484,8 @@ components:
         topic:
           type: string
           description: トピック
+      required:
+        - topic
     PutChannelTopicRequest:
       title: PutChannelTopicRequest
       type: object
@@ -3478,13 +3512,17 @@ components:
           type: string
           format: date-time
           description: 更新日時
+      required:
+        - userId
+        - state
+        - updatedAt
     ChannelViewState:
       type: string
       title: ChannelViewState
       enum:
-        - none
-        - monitoring
-        - editing
+      - none
+      - monitoring
+      - editing
       description: 閲覧状態
     PostFileRequest:
       title: PostFileRequest
@@ -3500,8 +3538,8 @@ components:
           format: uuid
           description: アップロード先チャンネルUUID
       required:
-        - file
-        - channelId
+      - file
+      - channelId
     FileInfo:
       title: FileInfo
       type: object
@@ -3556,6 +3594,16 @@ components:
           description: アップロード者UUID
           format: uuid
           nullable: true
+      required:
+        - id
+        - name
+        - mime
+        - size
+        - md5
+        - createdAt
+        - thumbnail
+        - channelId
+        - uploaderId
     PostMessageStampRequest:
       title: PostMessageStampRequest
       type: object
@@ -3568,7 +3616,7 @@ components:
           minimum: 1
           maximum: 100
       required:
-        - count
+      - count
     Stamp:
       title: Stamp
       type: object
@@ -3601,6 +3649,14 @@ components:
         isUnicode:
           type: boolean
           description: Unicode絵文字か
+      required:
+        - id
+        - name
+        - creatorId
+        - createdAt
+        - updatedAt
+        - fileId
+        - isUnicode
     PostStampRequest:
       title: PostStampRequest
       type: object
@@ -3615,8 +3671,8 @@ components:
           format: binary
           description: 'スタンプ画像(1MBまでのpng, jpeg, gif)'
       required:
-        - name
-        - file
+      - name
+      - file
     StampHistoryEntry:
       title: StampHistoryEntry
       type: object
@@ -3630,6 +3686,9 @@ components:
           type: string
           description: 使用日時
           format: date-time
+      required:
+        - stampId
+        - datetime
     User:
       title: User
       type: object
@@ -3661,6 +3720,14 @@ components:
           type: string
           description: 更新日時
           format: date-time
+      required:
+        - id
+        - name
+        - displayName
+        - iconFileId
+        - bot
+        - state
+        - updatedAt
     UserDetail:
       title: UserDetail
       type: object
@@ -3715,6 +3782,19 @@ components:
           type: string
           description: 自己紹介(biography)
           maxLength: 1000
+      required:
+        - id
+        - state
+        - bot
+        - iconFileId
+        - displayName
+        - name
+        - twitterId
+        - lastOnline
+        - updatedAt
+        - tags
+        - groups
+        - bio
     UserTag:
       title: UserTag
       type: object
@@ -3738,14 +3818,20 @@ components:
           type: string
           format: date-time
           description: タグ更新日時
+      required:
+        - tagId
+        - tag
+        - isLocked
+        - createdAt
+        - updatedAt
     UserAccountState:
       type: integer
       title: UserAccountState
       description: ユーザーアカウント状態
       enum:
-        - 0
-        - 1
-        - 2
+      - 0
+      - 1
+      - 2
       format: int32
     UserGroup:
       title: UserGroup
@@ -3784,6 +3870,15 @@ components:
           items:
             type: string
             format: uuid
+      required:
+        - id
+        - name
+        - description
+        - type
+        - members
+        - createdAt
+        - updatedAt
+        - admins
     UserGroupMember:
       title: UserGroupMember
       type: object
@@ -3799,6 +3894,7 @@ components:
           maxLength: 100
       required:
         - id
+        - role
     PatchGroupMemberRequest:
       title: PatchGroupMemberRequest
       type: object
@@ -3808,6 +3904,8 @@ components:
           type: string
           description: ユーザーの役割
           maxLength: 100
+      required:
+        - role
     PatchUserGroupRequest:
       title: PatchUserGroupRequest
       type: object
@@ -3823,6 +3921,10 @@ components:
         type:
           type: string
           description: グループタイプ
+      required:
+        - name
+        - description
+        - type
     PostUserGroupRequest:
       title: PostUserGroupRequest
       type: object
@@ -3841,6 +3943,7 @@ components:
       required:
         - name
         - description
+        - type
     MyUserDetail:
       title: MyUserDetail
       type: object
@@ -3900,6 +4003,20 @@ components:
             type: string
           description: 所有している権限の配列
       description: 自分のユーザー詳細情報
+      required:
+        - id
+        - bio
+        - groups
+        - tags
+        - updatedAt
+        - lastOnline
+        - twitterId
+        - name
+        - displayName
+        - iconFileId
+        - bot
+        - state
+        - permissions
     PatchChannelSubscribersRequest:
       title: PatchChannelSubscribersRequest
       type: object
@@ -3917,6 +4034,9 @@ components:
           items:
             type: string
             format: uuid
+      required:
+        - 'on'
+        - 'off'
     PutChannelSubscribersRequest:
       title: PutChannelSubscribersRequest
       type: object
@@ -3942,6 +4062,9 @@ components:
           format: uuid
         level:
           $ref: '#/components/schemas/ChannelSubscribeLevel'
+      required:
+        - channelId
+        - level
     ChannelSubscribeLevel:
       type: integer
       title: ChannelSubscribeLevel
@@ -3951,9 +4074,9 @@ components:
         1：未読管理
         2：未読管理+通知
       enum:
-        - 0
-        - 1
-        - 2
+      - 0
+      - 1
+      - 2
     PutChannelSubscribeLevelRequest:
       title: PutChannelSubscribeLevelRequest
       type: object
@@ -3962,7 +4085,7 @@ components:
         level:
           $ref: '#/components/schemas/ChannelSubscribeLevel'
       required:
-        - level
+      - level
     Webhook:
       title: Webhook
       type: object
@@ -4001,6 +4124,16 @@ components:
           type: string
           description: 更新日時
           format: date-time
+      required:
+        - id
+        - botUserId
+        - displayName
+        - description
+        - secure
+        - channelId
+        - ownerId
+        - createdAt
+        - updatedAt
     PatchWebhookRequest:
       title: PatchWebhookRequest
       type: object
@@ -4027,6 +4160,12 @@ components:
           type: string
           format: uuid
           description: 移譲先のユーザーUUID
+      required:
+        - name
+        - description
+        - channelId
+        - secret
+        - ownerId
     PostWebhookRequest:
       title: PostWebhookRequest
       type: object
@@ -4054,6 +4193,7 @@ components:
         - name
         - description
         - channelId
+        - secret
     PutUserIconRequest:
       title: PutUserIconRequest
       type: object
@@ -4064,7 +4204,7 @@ components:
           format: binary
           description: 'アイコン画像(1MBまでのpng, jpeg, gif)'
       required:
-        - file
+      - file
     PutMyPasswordRequest:
       title: PutMyPasswordRequest
       type: object
@@ -4079,8 +4219,8 @@ components:
           pattern: "^[\\x20-\\x7E]{10,32}$"
           description: 新しいパスワード
       required:
-        - password
-        - newPassword
+      - password
+      - newPassword
     PatchMeRequest:
       title: PatchMeRequest
       type: object
@@ -4108,7 +4248,7 @@ components:
           description: 新しいパスワード
           pattern: "^[\\x20-\\x7E]{10,32}$"
       required:
-        - newPassword
+      - newPassword
       description: ユーザーパスワード変更リクエスト
     PatchUserRequest:
       title: PatchUserRequest
@@ -4138,7 +4278,7 @@ components:
           description: FCMのデバイストークン
           example: 'bk3RNwTe3H0:CI2k_HHwgIpoDKCIZvvDMExUdFQ3P1'
       required:
-        - token
+      - token
     PostUserRequest:
       title: PostUserRequest
       type: object
@@ -4150,11 +4290,11 @@ components:
           pattern: '^[a-zA-Z0-9_-]{1,32}$'
         password:
           type: string
-          pattern: "^[\\x20-\\x7E]{10,32}$"
+          pattern: '^[\\x20-\\x7E]{10,32}$'
           description: パスワード
       required:
-        - name
-        - password
+      - name
+      - password
     PostChannelRequest:
       title: PostChannelRequest
       type: object
@@ -4173,6 +4313,7 @@ components:
           nullable: true
       required:
         - name
+        - parent
     PostUserTagRequest:
       title: PostUserTagRequest
       type: object
@@ -4184,7 +4325,7 @@ components:
           minLength: 1
           maxLength: 30
       required:
-        - tag
+      - tag
     PatchUserTagRequest:
       title: PatchUserTagRequest
       type: object
@@ -4194,7 +4335,7 @@ components:
           type: boolean
           description: タグのロック状態
       required:
-        - isLocked
+      - isLocked
     Tag:
       title: Tag
       type: object
@@ -4215,6 +4356,10 @@ components:
           items:
             type: string
             format: uuid
+      required:
+        - id
+        - tag
+        - users
     PostStarRequest:
       title: PostStarRequest
       type: object
@@ -4225,7 +4370,7 @@ components:
           description: チャンネルUUID
           format: uuid
       required:
-        - channelId
+      - channelId
     UnreadChannel:
       title: UnreadChannel
       type: object
@@ -4250,6 +4395,12 @@ components:
           type: string
           description: チャンネルの最新の未読メッセージの日時
           format: date-time
+      required:
+        - channelId
+        - count
+        - noticeable
+        - since
+        - until
     PostLoginRequest:
       title: PostLoginRequest
       type: object
@@ -4264,8 +4415,8 @@ components:
           description: パスワード
           pattern: "^[\\\\x20-\\\\x7E]{10,32}$"
       required:
-        - name
-        - password
+      - name
+      - password
     LoginSession:
       title: LoginSession
       type: object
@@ -4290,6 +4441,12 @@ components:
           type: string
           description: 発行日時
           format: date-time
+      required:
+        - id
+        - ipAddress
+        - userAgent
+        - lastAccess
+        - createdAt
     ActiveOAuth2Token:
       title: ActiveOAuth2Token
       type: object
@@ -4312,14 +4469,19 @@ components:
           type: string
           description: 発行日時
           format: date-time
+      required:
+        - id
+        - clientId
+        - scopes
+        - issuedAt
     OAuth2Scope:
       type: string
       title: OAuth2Scope
       description: OAuth2スコープ
       enum:
-        - read
-        - write
-        - manage_bot
+      - read
+      - write
+      - manage_bot
     OAuth2Client:
       title: OAuth2Client
       type: object
@@ -4347,6 +4509,12 @@ components:
           description: 要求スコープの配列
           items:
             $ref: '#/components/schemas/OAuth2Scope'
+      required:
+        - id
+        - name
+        - description
+        - developerId
+        - scopes
     PatchClientRequest:
       title: PatchClientRequest
       type: object
@@ -4369,6 +4537,11 @@ components:
           type: string
           description: クライアント開発者UUID
           format: uuid
+      required:
+        - name
+        - description
+        - callbackUrl
+        - developerId
     OAuth2ClientDetail:
       title: OAuth2ClientDetail
       description: OAuth2クライアント詳細情報
@@ -4403,6 +4576,14 @@ components:
         secret:
           type: string
           description: クライアントシークレット
+      required:
+        - id
+        - developerId
+        - description
+        - name
+        - scopes
+        - callbackUrl
+        - secret
     PostClientRequest:
       title: PostClientRequest
       type: object
@@ -4427,10 +4608,10 @@ components:
           description: 説明
           maxLength: 1000
       required:
-        - name
-        - callbackUrl
-        - scopes
-        - description
+      - name
+      - callbackUrl
+      - scopes
+      - description
     Bot:
       title: Bot
       type: object
@@ -4461,9 +4642,9 @@ components:
           type: integer
           description: BOT状態
           enum:
-            - 0
-            - 1
-            - 2
+          - 0
+          - 1
+          - 2
         createdAt:
           type: string
           description: 作成日時
@@ -4472,6 +4653,15 @@ components:
           type: string
           description: 更新日時
           format: date-time
+      required:
+        - id
+        - botUserId
+        - description
+        - developerId
+        - subscribeEvents
+        - state
+        - createdAt
+        - updatedAt
     PatchBotRequest:
       title: PatchBotRequest
       type: object
@@ -4502,6 +4692,13 @@ components:
           uniqueItems: false
           items:
             type: string
+      required:
+        - displayName
+        - description
+        - privileged
+        - endpoint
+        - developerId
+        - subscribeEvents
     BotTokens:
       title: BotTokens
       type: object
@@ -4513,6 +4710,9 @@ components:
         accessToken:
           type: string
           description: BOTアクセストークン
+      required:
+        - verificationToken
+        - accessToken
     BotDetail:
       title: BotDetail
       type: object
@@ -4534,9 +4734,9 @@ components:
           type: integer
           description: BOT状態
           enum:
-            - 0
-            - 1
-            - 2
+          - 0
+          - 1
+          - 2
         subscribeEvents:
           type: array
           description: BOTが購読しているイベントの配列
@@ -4569,6 +4769,19 @@ components:
           items:
             type: string
             format: uuid
+      required:
+        - id
+        - updatedAt
+        - createdAt
+        - state
+        - subscribeEvents
+        - developerId
+        - description
+        - botUserId
+        - tokens
+        - endpoint
+        - privileged
+        - channels
     BotEventLog:
       title: BotEventLog
       type: object
@@ -4593,6 +4806,12 @@ components:
           type: string
           format: date-time
           description: イベント日時
+      required:
+        - botId
+        - requestId
+        - event
+        - code
+        - datetime
     PostBotRequest:
       title: PostBotRequest
       type: object
@@ -4618,10 +4837,10 @@ components:
           description: BOTサーバーエンドポイント
           format: uri
       required:
-        - name
-        - displayName
-        - description
-        - endpoint
+      - name
+      - displayName
+      - description
+      - endpoint
     PostBotActionJoinRequest:
       title: PostBotActionJoinRequest
       type: object
@@ -4631,7 +4850,7 @@ components:
           description: チャンネルUUID
           format: uuid
       required:
-        - channelId
+      - channelId
       description: BOTチャンネル参加リクエスト
     PostBotActionLeaveRequest:
       title: PostBotActionLeaveRequest
@@ -4642,7 +4861,7 @@ components:
           description: チャンネルUUID
           format: uuid
       required:
-        - channelId
+      - channelId
       description: BOTチャンネル退出リクエスト
     BotUser:
       title: BotUser
@@ -4657,6 +4876,9 @@ components:
           type: string
           description: BOTユーザーUUID
           format: uuid
+      required:
+        - id
+        - botUserId
     PostWebRTCAuthenticateRequest:
       title: PostWebRTCAuthenticateRequest
       type: object
@@ -4666,7 +4888,7 @@ components:
           type: string
           description: ピアID
       required:
-        - peerId
+      - peerId
     WebRTCAuthenticateResult:
       title: WebRTCAuthenticateResult
       type: object
@@ -4686,6 +4908,11 @@ components:
         authToken:
           type: string
           description: 認証トークン
+      required:
+        - peerId
+        - ttl
+        - timestamp
+        - authToken
     PatchChannelRequest:
       title: PatchChannelRequest
       type: object
@@ -4705,6 +4932,11 @@ components:
           type: string
           description: 親チャンネルUUID
           format: uuid
+      required:
+        - name
+        - visibility
+        - force
+        - parentId
     WebRTCUserState:
       title: WebRTCUserState
       type: object
@@ -4724,6 +4956,10 @@ components:
           description: WebRTC状態の配列
           items:
             type: string
+      required:
+        - userId
+        - channelId
+        - state
     ClipFolder:
       title: ClipFolder
       type: object
@@ -4750,6 +4986,12 @@ components:
           type: string
           description: 説明
           maxLength: 1000
+      required:
+        - id
+        - name
+        - createdAt
+        - ownerId
+        - description
     PatchClipFolderRequest:
       title: PatchClipFolderRequest
       type: object
@@ -4764,6 +5006,9 @@ components:
           type: string
           description: 説明
           maxLength: 1000
+      required:
+        - name
+        - description
     PostClipFolderRequest:
       title: PostClipFolderRequest
       type: object
@@ -4780,6 +5025,7 @@ components:
           maxLength: 1000
       required:
         - name
+        - description
     PostClipFolderMessageRequest:
       title: PostClipFolderMessageRequest
       type: object
@@ -4789,7 +5035,7 @@ components:
           description: メッセージUUID
           format: uuid
       required:
-        - messageId
+      - messageId
       description: クリップ追加リクエスト
     ClippedMessage:
       title: ClippedMessage
@@ -4805,6 +5051,10 @@ components:
           type: string
           description: クリップした日時
           format: date-time
+      required:
+        - folderId
+        - message
+        - clippedAt
     ChannelEvent:
       title: ChannelEvent
       type: object
@@ -4813,15 +5063,15 @@ components:
         type:
           type: string
           enum:
-            - TopicChanged
-            - SubscribersChanged
-            - PinAdded
-            - PinRemoved
-            - NameChanged
-            - ParentChanged
-            - VisibilityChanged
-            - ForcedNotificationChanged
-            - ChildCreated
+          - TopicChanged
+          - SubscribersChanged
+          - PinAdded
+          - PinRemoved
+          - NameChanged
+          - ParentChanged
+          - VisibilityChanged
+          - ForcedNotificationChanged
+          - ChildCreated
           description: イベントタイプ
         datetime:
           type: string
@@ -4830,15 +5080,19 @@ components:
         detail:
           description: イベント内容
           oneOf:
-            - $ref: '#/components/schemas/TopicChangedEvent'
-            - $ref: '#/components/schemas/SubscribersChangedEvent'
-            - $ref: '#/components/schemas/PinAddedEvent'
-            - $ref: '#/components/schemas/PinRemovedEvent'
-            - $ref: '#/components/schemas/NameChangedEvent'
-            - $ref: '#/components/schemas/ParentChangedEvent'
-            - $ref: '#/components/schemas/VisibilityChangedEvent'
-            - $ref: '#/components/schemas/ForcedNotificationChangedEvent'
-            - $ref: '#/components/schemas/ChildCreatedEvent'
+          - $ref: '#/components/schemas/TopicChangedEvent'
+          - $ref: '#/components/schemas/SubscribersChangedEvent'
+          - $ref: '#/components/schemas/PinAddedEvent'
+          - $ref: '#/components/schemas/PinRemovedEvent'
+          - $ref: '#/components/schemas/NameChangedEvent'
+          - $ref: '#/components/schemas/ParentChangedEvent'
+          - $ref: '#/components/schemas/VisibilityChangedEvent'
+          - $ref: '#/components/schemas/ForcedNotificationChangedEvent'
+          - $ref: '#/components/schemas/ChildCreatedEvent'
+      required:
+        - type
+        - datetime
+        - detail
     TopicChangedEvent:
       title: TopicChangedEvent
       type: object
@@ -4854,6 +5108,10 @@ components:
         after:
           type: string
           description: 変更後トピック
+      required:
+        - userId
+        - before
+        - after
     SubscribersChangedEvent:
       title: SubscribersChangedEvent
       type: object
@@ -4875,6 +5133,10 @@ components:
           items:
             type: string
             format: uuid
+      required:
+        - userId
+        - 'on'
+        - 'off'
     PinAddedEvent:
       title: PinAddedEvent
       type: object
@@ -4888,6 +5150,9 @@ components:
           type: string
           description: メッセージUUID
           format: uuid
+      required:
+        - userId
+        - messageId
     PinRemovedEvent:
       title: PinRemovedEvent
       type: object
@@ -4901,6 +5166,9 @@ components:
           type: string
           description: メッセージUUID
           format: uuid
+      required:
+        - userId
+        - messageId
     NameChangedEvent:
       title: NameChangedEvent
       type: object
@@ -4916,6 +5184,10 @@ components:
         after:
           type: string
           description: 変更後チャンネル名
+      required:
+        - userId
+        - before
+        - after
     ParentChangedEvent:
       title: NameChangedEvent
       type: object
@@ -4933,6 +5205,10 @@ components:
           type: string
           description: 変更後親チャンネルUUID
           format: uuid
+      required:
+        - userId
+        - before
+        - after
     VisibilityChangedEvent:
       title: VisibilityChangedEvent
       type: object
@@ -4945,6 +5221,9 @@ components:
         visibility:
           type: boolean
           description: 変更後可視状態
+      required:
+        - userId
+        - visibility
     ForcedNotificationChangedEvent:
       title: ForcedNotificationChangedEvent
       type: object
@@ -4957,6 +5236,9 @@ components:
         force:
           type: boolean
           description: 変更後強制通知状態
+      required:
+        - userId
+        - force
     ChildCreatedEvent:
       title: ChildCreatedEvent
       type: object
@@ -4970,6 +5252,9 @@ components:
           type: string
           description: チャンネルUUID
           format: uuid
+      required:
+        - userId
+        - channelId
     StampPalette:
       title: StampPalette
       type: object
@@ -5005,6 +5290,14 @@ components:
           type: string
           description: パレット説明
           maxLength: 1000
+      required:
+        - id
+        - name
+        - stamps
+        - creatorId
+        - createdAt
+        - updatedAt
+        - description
     PostStampPaletteRequest:
       title: PostStampPaletteRequest
       type: object
@@ -5027,7 +5320,9 @@ components:
           description: 説明
           maxLength: 1000
       required:
+        - stamps
         - name
+        - description
     PatchStampPaletteRequest:
       title: PatchStampPaletteRequest
       type: object
@@ -5050,6 +5345,10 @@ components:
           items:
             type: string
             format: uuid
+      required:
+        - name
+        - description
+        - stamps
     PatchStampRequest:
       title: PatchStampRequest
       type: object
@@ -5063,6 +5362,9 @@ components:
           type: string
           description: 作成者UUID
           format: uuid
+      required:
+        - name
+        - creatorId
     MessagePin:
       title: MessagePin
       type: object
@@ -5076,6 +5378,9 @@ components:
           type: string
           format: date-time
           description: ピン留めされた日時
+      required:
+        - userId
+        - pinnedAt
     PostUserGroupAdminRequest:
       title: PostUserGroupAdmin
       type: object
@@ -5102,6 +5407,9 @@ components:
           description: ダイレクトメッセージチャンネルの配列
           items:
             $ref: '#/components/schemas/DMChannel'
+      required:
+        - public
+        - dm
     DMChannel:
       title: DMChannel
       type: object
@@ -5115,6 +5423,9 @@ components:
           type: string
           description: 送信先相手のUUID
           format: uuid
+      required:
+        - id
+        - userId
     ActivityTimelineMessage:
       title: ActivityTimelineMessage
       type: object
@@ -5143,6 +5454,13 @@ components:
           type: string
           format: date-time
           description: 編集日時
+      required:
+        - id
+        - userId
+        - channelId
+        - content
+        - createdAt
+        - updatedAt
   headers:
     X-TRAQ-MORE:
       schema:
