@@ -22,11 +22,7 @@ type CliplRepository interface {
 	AddClipFolderMessage(folderID, messageID uuid.UUID) (*model.ClipFolderMessage, error)
 	GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipFolder, error)
 	GetClipFolder(folderID uuid.UUID) (*model.ClipFolder, error)
-	GetClipFolderMessages(folderID uuid.UUID, query ClipFolderMessageQuery) (messages []*ClipFolderMessage, more bool, err error)
+	GetClipFolderMessages(folderID uuid.UUID, query ClipFolderMessageQuery) (messages []*model.ClipFolderMessage, more bool, err error)
 }
 
 // ClipFolderMessage クリップフォルダーに入っているメッセージの構造体
-type ClipFolderMessage struct {
-	ClippedAt time.Time `json:"clippedAt"`
-	Message   *Message  `json:"message"`
-}

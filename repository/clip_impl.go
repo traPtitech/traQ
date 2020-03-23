@@ -141,13 +141,15 @@ func (repo *GormRepository) GetClipFolder(folderID uuid.UUID) (*model.ClipFolder
 	return clipFolder, nil
 }
 
-func (repo *GormRepository) GetClipFolderMessages(folderID uuid.UUID, query ClipFolderMessageQuery) (messages []*ClipFolderMessage, more bool, err error) {
+func (repo *GormRepository) GetClipFolderMessages(folderID uuid.UUID, query ClipFolderMessageQuery) (messages []*model.ClipFolderMessage, more bool, err error) {
 	if folderID == uuid.Nil {
 		return nil, false, ErrNilID
 	}
-	messages = make([]*ClipFolderMessage, 0)
+	messages = make([]*model.ClipFolderMessage, 0)
 
-	tx := repo.db.Table("messages").Select("messages*,clip_folder_messages.clipped_at").Joins("INNER JOIN clip_folder_messages ON clip_folder_messages.message_id = id").Where("clip_folder_messages.folder_id=?", folderID)
+	tx := repo.db
+
+	tx = tx.Where("folder_id=?", folderID).Scopes(clipPreloads)
 
 	if query.Asc {
 		tx = tx.Order("created_at")
@@ -168,4 +170,10 @@ func (repo *GormRepository) GetClipFolderMessages(folderID uuid.UUID, query Clip
 		err = tx.Find(&messages).Error
 	}
 	return messages, false, err
+}
+
+func clipPreloads(db *gorm.DB) *gorm.DB {
+	return db.Preload("Message").Preload("Message.Stamps", func(db *gorm.DB) *gorm.DB {
+		return db.Order("updated_at")
+	}).Preload("Message.Pin")
 }

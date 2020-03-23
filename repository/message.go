@@ -111,15 +111,3 @@ type UserUnreadChannel struct {
 	Since      time.Time `json:"since"`
 	UpdatedAt  time.Time `json:"updatedAt"`
 }
-
-type Message struct {
-	ID        uuid.UUID            `json:"id"`
-	UserID    uuid.UUID            `json:"userId"`
-	ChannelID uuid.UUID            `json:"channelId"`
-	Content   string               `json:"content"`
-	CreatedAt time.Time            `json:"createdAt"`
-	UpdatedAt time.Time            `json:"updatedAt"`
-	Pinned    bool                 `json:"pinned"`
-	Stamps    []model.MessageStamp `json:"stamps"`
-	ThreadID  uuid.NullUUID        `json:"threadId"`
-}

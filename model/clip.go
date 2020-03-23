@@ -24,7 +24,8 @@ func (*ClipFolder) TableName() string {
 type ClipFolderMessage struct {
 	FolderID  uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	MessageID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	ClippedAt time.Time `gorm:"precision:6"`
+	CreatedAt time.Time `gorm:"precision:6"`
+	Message   Message   `gorm:"association_autoupdate:false;association_autocreate:false;`
 }
 
 // TableName ClipFolderMessage構造体のテーブル名

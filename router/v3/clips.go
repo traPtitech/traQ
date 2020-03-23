@@ -100,8 +100,9 @@ func (h *Handlers) PostClipFolderMessages(c echo.Context) error {
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
+	cfm.Message = *m
 
-	return c.JSON(http.StatusOK, formatClipFolderMessage(cfm.ClippedAt, m))
+	return c.JSON(http.StatusOK, formatClipFolderMessage(cfm))
 }
 
 // GetFolderMessages GET /clip-folders/:folderID/messages
@@ -120,7 +121,7 @@ func (h *Handlers) GetClipFolderMessages(c echo.Context) error {
 
 	c.Response().Header().Set(consts.HeaderMore, strconv.FormatBool(more))
 
-	return c.JSON(http.StatusOK, messages)
+	return c.JSON(http.StatusOK, formatClipFolderMessages(messages))
 }
 
 // DeleteFolderMessages DELETE /clip-folders/:folderID/messages/:messageID

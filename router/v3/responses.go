@@ -458,9 +458,17 @@ type ClipFolderMessage struct {
 	ClippedAt time.Time `json:"clippedAt"`
 }
 
-func formatClipFolderMessage(clippedAt time.Time, m *model.Message) *ClipFolderMessage {
+func formatClipFolderMessage(cfm *model.ClipFolderMessage) *ClipFolderMessage {
 	return &ClipFolderMessage{
-		Message:   formatMessage(m),
-		ClippedAt: clippedAt,
+		Message:   formatMessage(&cfm.Message),
+		ClippedAt: cfm.CreatedAt,
 	}
+}
+
+func formatClipFolderMessages(cfms []*model.ClipFolderMessage) []*ClipFolderMessage {
+	res := make([]*ClipFolderMessage, len(cfms))
+	for i, cfm := range cfms {
+		res[i] = formatClipFolderMessage(cfm)
+	}
+	return res
 }
