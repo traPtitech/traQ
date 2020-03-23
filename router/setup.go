@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
+	"github.com/traPtitech/traQ/router/oauth2"
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/router/v1"
 	v3 "github.com/traPtitech/traQ/router/v3"
@@ -42,16 +43,14 @@ func Setup(config *Config) *echo.Echo {
 
 	// v1 APIハンドラ
 	v1 := v1.Handlers{
-		RBAC:             config.RBAC,
-		Repo:             config.Repository,
-		SSE:              config.SSE,
-		WS:               config.WS,
-		Hub:              config.Hub,
-		Logger:           config.RootLogger.Named("api_handler"),
-		Realtime:         config.Realtime,
-		AccessTokenExp:   config.AccessTokenExp,
-		IsRefreshEnabled: config.IsRefreshEnabled,
-		SkyWaySecretKey:  config.SkyWaySecretKey,
+		RBAC:            config.RBAC,
+		Repo:            config.Repository,
+		SSE:             config.SSE,
+		WS:              config.WS,
+		Hub:             config.Hub,
+		Logger:          config.RootLogger.Named("api_handler"),
+		Realtime:        config.Realtime,
+		SkyWaySecretKey: config.SkyWaySecretKey,
 	}
 	v1.Setup(api)
 
@@ -68,6 +67,18 @@ func Setup(config *Config) *echo.Echo {
 		SkyWaySecretKey: config.SkyWaySecretKey,
 	}
 	v3.Setup(api)
+
+	// oauth2ハンドラ
+	oa2 := &oauth2.Config{
+		RBAC:             config.RBAC,
+		Repo:             config.Repository,
+		Logger:           config.RootLogger.Named("oauth2_api_handler"),
+		AccessTokenExp:   config.AccessTokenExp,
+		IsRefreshEnabled: config.IsRefreshEnabled,
+	}
+	oa2.Setup(api.Group("/oauth2"))
+	oa2.Setup(api.Group("/1.0/oauth2"))
+	oa2.Setup(api.Group("/v3/oauth2"))
 
 	utils.ImageMagickPath = config.ImageMagickPath
 	return e

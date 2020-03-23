@@ -23,7 +23,9 @@ type PostLoginRequest struct {
 func (r PostLoginRequest) Validate() error {
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, validator.UserNameRuleRequired...),
-		vd.Field(&r.Password, validator.PasswordRuleRequired...),
+		// MEMO 旧パスワード者のためにバリデーションを消している
+		// vd.Field(&r.Password, validator.PasswordRuleRequired...),
+		vd.Field(&r.Password, vd.Required),
 	)
 }
 

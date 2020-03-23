@@ -22,16 +22,7 @@ func NotImplemented(c echo.Context) error {
 
 // bindAndValidate 構造体iにFormDataまたはJsonをデシリアライズします
 func bindAndValidate(c echo.Context, i interface{}) error {
-	if err := c.Bind(i); err != nil {
-		return err
-	}
-	if err := vd.Validate(i); err != nil {
-		if e, ok := err.(vd.InternalError); ok {
-			return herror.InternalServerError(e.InternalError())
-		}
-		return herror.BadRequest(err)
-	}
-	return nil
+	return extension.BindAndValidate(c, i)
 }
 
 // isTrue 文字列sが"1", "t", "T", "true", "TRUE", "True"の場合にtrueを返す

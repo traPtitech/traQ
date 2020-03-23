@@ -3,7 +3,6 @@ package v1
 import (
 	"bytes"
 	"encoding/gob"
-	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
@@ -31,8 +30,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-const unexpectedError = "unexpected error"
-
 var json = jsoniter.ConfigFastest
 
 func init() {
@@ -49,10 +46,6 @@ type Handlers struct {
 	Logger   *zap.Logger
 	Realtime *realtime.Service
 
-	// AccessTokenExp アクセストークンの有効時間(秒)
-	AccessTokenExp int
-	// IsRefreshEnabled リフレッシュトークンを発行するかどうか
-	IsRefreshEnabled bool
 	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
 	SkyWaySecretKey string
 
@@ -347,7 +340,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiWebRTC.GET("/state", h.GetWebRTCState)
 			apiWebRTC.PUT("/state", h.PutWebRTCState)
 		}
-		api.POST("/oauth2/authorize/decide", h.AuthorizationDecideHandler, blockBot)
 		api.GET("/ws", echo.WrapHandler(h.WS), requires(permission.ConnectNotificationStream), blockBot)
 
 		if len(h.SkyWaySecretKey) > 0 {
@@ -368,13 +360,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, retrieve.WebhookID())
 		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, retrieve.WebhookID())
-		apiOAuth := apiNoAuth.Group("/oauth2")
-		{
-			apiOAuth.GET("/authorize", h.AuthorizationEndpointHandler)
-			apiOAuth.POST("/authorize", h.AuthorizationEndpointHandler)
-			apiOAuth.POST("/token", h.TokenEndpointHandler)
-			apiOAuth.POST("/revoke", h.RevokeTokenEndpointHandler)
-		}
 	}
 
 	t := template.New("").Funcs(template.FuncMap{
@@ -442,16 +427,7 @@ func (h *Handlers) stampEventSubscriber(sub hub.Subscription) {
 }
 
 func bindAndValidate(c echo.Context, i interface{}) error {
-	if err := c.Bind(i); err != nil {
-		return err
-	}
-	if err := validation.Validate(i); err != nil {
-		if e, ok := err.(validation.InternalError); ok {
-			return herror.InternalServerError(e.InternalError())
-		}
-		return herror.BadRequest(err)
-	}
-	return nil
+	return extension.BindAndValidate(c, i)
 }
 
 func getRequestUser(c echo.Context) model.UserInfo {

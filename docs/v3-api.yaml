@@ -3299,6 +3299,136 @@ paths:
             ユーザーグループが見つかりません。
       operationId: getUserGroupAdmins
       description: 指定したグループの管理者のリストを取得します。
+  /oauth2/token:
+    post:
+      tags:
+        - oauth2
+      operationId: postOAuth2Token
+      description: OAuth2 トークンエンドポイント
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PostOAuth2Token'
+      responses:
+        '200':
+          description: トークンが正常に発行されました。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuth2Token'
+        '400':
+          description: トークン発行に失敗しました。
+        '403':
+          description: トークン発行に失敗しました。
+      summary: OAuth2 トークンエンドポイント
+  /oauth2/authorize/decide:
+    post:
+      tags:
+        - oauth2
+      operationId: postOAuth2AuthorizeDecide
+      description: OAuth2 認可承諾
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OAuth2Decide'
+      responses:
+        '302':
+          description: RedirectURIに結果をリダイレクトします。
+        '400':
+          description: リクエストが不正です。
+        '403':
+          description: リクエストが許可されていません。
+      summary: OAuth2 認可承諾API
+  /oauth2/authorize:
+    get:
+      tags:
+        - oauth2
+      operationId: getOAuth2Authorize
+      description: OAuth2 認可エンドポイント
+      parameters:
+        - name: response_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/OAuth2ResponseType'
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: redirect_uri
+          in: query
+          schema:
+            type: string
+        - name: scope
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+        - name: code_challenge
+          in: query
+          schema:
+            type: string
+        - name: code_challenge_method
+          in: query
+          schema:
+            type: string
+        - name: nonce
+          in: query
+          schema:
+            type: string
+        - name: prompt
+          in: query
+          schema:
+            $ref: '#/components/schemas/OAuth2Prompt'
+      responses:
+        '302':
+          description: 結果に応じてリダイレクトします。
+        '400':
+          description: リクエストが不正です。
+        '403':
+          description: リクエストが許可されていません。
+      summary: OAuth2 認可エンドポイント
+    post:
+      tags:
+        - oauth2
+      operationId: postOAuth2Authorize
+      description: OAuth2 認可エンドポイント
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OAuth2Authorization'
+      responses:
+        '302':
+          description: 結果に応じてリダイレクトします。
+        '400':
+          description: リクエストが不正です。
+        '403':
+          description: リクエストが許可されていません。
+      summary: OAuth2 認可エンドポイント
+  /oauth2/revoke:
+    post:
+      summary: OAuth2 トークン無効化エンドポイント
+      operationId: revokeOAuth2Token
+      responses:
+        '200':
+          description: OK
+      description: OAuth2 トークン無効化エンドポイント
+      tags:
+        - oauth2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostOAuth2Revoke'
 components:
   schemas:
     Message:
@@ -4277,7 +4407,7 @@ components:
           pattern: '^[a-zA-Z0-9_-]{1,32}$'
         password:
           type: string
-          pattern: '^[\\x20-\\x7E]{10,32}$'
+          pattern: "^[\\\\x20-\\\\x7E]{10,32}$"
           description: パスワード
       required:
         - name
@@ -5422,6 +5552,101 @@ components:
         - content
         - createdAt
         - updatedAt
+    OAuth2Decide:
+      type: object
+      required:
+        - submit
+      properties:
+        submit:
+          type: string
+          description: '承諾する場合は"approve"'
+    PostOAuth2Token:
+      type: object
+      required:
+        - grant_type
+      properties:
+        grant_type:
+          type: string
+        code:
+          type: string
+        redirect_uri:
+          type: string
+        client_id:
+          type: string
+        code_verifier:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+        scope:
+          type: string
+        refresh_token:
+          type: string
+        client_secret:
+          type: string
+    OAuth2Token:
+      type: object
+      required:
+        - access_token
+        - token_type
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+        refresh_token:
+          type: string
+        scope:
+          type: string
+        id_token:
+          type: string
+    OAuth2Authorization:
+      type: object
+      required:
+        - client_id
+      properties:
+        response_type:
+          $ref: '#/components/schemas/OAuth2ResponseType'
+        client_id:
+          type: string
+        redirect_uri:
+          type: string
+        scope:
+          type: string
+        state:
+          type: string
+        code_challenge:
+          type: string
+        code_challenge_method:
+          type: string
+        nonce:
+          type: string
+        prompt:
+          $ref: '#/components/schemas/OAuth2Prompt'
+    OAuth2Prompt:
+      type: string
+      enum:
+        - none
+    OAuth2ResponseType:
+      type: string
+      enum:
+        - code
+        - token
+        - none
+    PostOAuth2Revoke:
+      title: PostOAuth2Revoke
+      type: object
+      description: POST /oauth2/revoke 用リクエストボディ
+      properties:
+        token:
+          type: string
+          description: 無効化するOAuth2トークンまたはOAuth2リフレッシュトークン
+      required:
+        - token
   headers:
     X-TRAQ-MORE:
       schema:

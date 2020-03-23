@@ -25,10 +25,14 @@ func ErrorHandler(logger *zap.Logger) echo.HTTPErrorHandler {
 					err = herr
 				}
 			}
-			if m, ok := err.Message.(string); ok {
+
+			switch m := err.Message.(type) {
+			case string:
 				body = echo.Map{"message": m}
-			} else if e, ok := err.Message.(error); ok {
-				body = echo.Map{"message": e.Error()}
+			case error:
+				body = echo.Map{"message": m.Error()}
+			default:
+				body = echo.Map{"message": m}
 			}
 
 			code = err.Code
