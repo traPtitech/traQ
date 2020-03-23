@@ -30,5 +30,5 @@ type Repository interface {
 	BotRepository
 	UserRoleRepository
 	message.ReplaceMapper
-	CliplRepository
+	ClipRepository
 }
