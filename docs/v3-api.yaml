@@ -3829,9 +3829,9 @@ components:
       title: UserAccountState
       description: ユーザーアカウント状態
       enum:
-      - 0
-      - 1
-      - 2
+        - 0
+        - 1
+        - 2
       format: int32
     UserGroup:
       title: UserGroup
@@ -4074,9 +4074,9 @@ components:
         1：未読管理
         2：未読管理+通知
       enum:
-      - 0
-      - 1
-      - 2
+        - 0
+        - 1
+        - 2
     PutChannelSubscribeLevelRequest:
       title: PutChannelSubscribeLevelRequest
       type: object
@@ -4401,6 +4401,7 @@ components:
         - noticeable
         - since
         - until
+        - updatedAt
     PostLoginRequest:
       title: PostLoginRequest
       type: object
@@ -4443,10 +4444,10 @@ components:
           format: date-time
       required:
         - id
-        - ipAddress
-        - userAgent
+        - ip
+        - ua
         - lastAccess
-        - createdAt
+        - issuedAt
     ActiveOAuth2Token:
       title: ActiveOAuth2Token
       type: object
@@ -4642,9 +4643,9 @@ components:
           type: integer
           description: BOT状態
           enum:
-          - 0
-          - 1
-          - 2
+            - 0
+            - 1
+            - 2
         createdAt:
           type: string
           description: 作成日時
@@ -4734,9 +4735,9 @@ components:
           type: integer
           description: BOT状態
           enum:
-          - 0
-          - 1
-          - 2
+            - 0
+            - 1
+            - 2
         subscribeEvents:
           type: array
           description: BOTが購読しているイベントの配列
