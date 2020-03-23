@@ -228,7 +228,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiFilesFid := apiFiles.Group("/:fileID", retrieve.FileID(), requiresFileAccessPerm)
 			{
 				apiFilesFid.GET("", h.GetFileByID, requires(permission.DownloadFile))
-				apiFilesFid.DELETE("", h.DeleteFileByID, requires(permission.DeleteFile))
 				apiFilesFid.GET("/meta", h.GetMetaDataByFileID, requires(permission.DownloadFile))
 				apiFilesFid.GET("/thumbnail", h.GetThumbnailByID, requires(permission.DownloadFile))
 			}

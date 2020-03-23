@@ -221,43 +221,6 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	})
 }
 
-func TestHandlers_DeleteFileByID(t *testing.T) {
-	t.Parallel()
-	repo, server, _, _, session, adminSession := setup(t, common1)
-
-	file := mustMakeFile(t, repo)
-
-	t.Run("NotLoggedIn", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.DELETE("/api/1.0/files/{fileID}", file.GetID()).
-			Expect().
-			Status(http.StatusUnauthorized)
-	})
-
-	t.Run("Successful1", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.DELETE("/api/1.0/files/{fileID}", file.GetID()).
-			WithCookie(sessions.CookieName, adminSession).
-			Expect().
-			Status(http.StatusNoContent)
-
-		_, err := repo.GetFileMeta(file.GetID())
-		require.Equal(t, repository.ErrNotFound, err)
-	})
-
-	t.Run("Failure1", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		file := mustMakeFile(t, repo)
-		e.DELETE("/api/1.0/files/{fileID}", file.GetID()).
-			WithCookie(sessions.CookieName, session).
-			Expect().
-			Status(http.StatusForbidden)
-	})
-}
-
 func TestHandlers_GetMetaDataByFileID(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _ := setup(t, common1)

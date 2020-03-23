@@ -1764,18 +1764,6 @@ paths:
           description: 取得できませんでした。指定されたファイルにアクセスする権限がありません。
         "404":
           description: 取得できませんでした。指定されたファイルは存在しません。
-    delete:
-      tags:
-        - file
-      operationId: deleteFile
-      description: 指定したファイルを削除します。
-      responses:
-        "204":
-          description: 正常に削除できました。
-        "403":
-          description: 削除できませんでした。指定されたファイルを削除する権限がありません。
-        "404":
-          description: 削除できませんでした。指定されたファイルは存在しません。
 
   /files/{fileID}/meta:
     parameters:
