@@ -1,13 +1,12 @@
 package repository
 
 import (
-	"strings"
-
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/validator"
+	"gopkg.in/guregu/null.v3"
 )
 
 // CreateClipFolder implements ClipRepository interface.
@@ -40,18 +39,26 @@ func (repo *GormRepository) CreateClipFolder(userID uuid.UUID, name string, desc
 }
 
 // UpdateClipFolder implements ClipRepository interface.
-func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name string, description string) error {
+func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name null.String, description null.String) error {
 	if folderID == uuid.Nil {
 		return ErrNilID
 	}
 
+	changes := map[string]interface{}{}
+
 	// 名前チェック
-	if err := validation.Validate(name, validator.ClipFolderNameRuleRequired...); err != nil {
-		return ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
+	if name.Valid {
+		if err := validation.Validate(name, validator.ClipFolderNameRuleRequired...); err != nil {
+			return ArgError("name", "Name must be 1-30")
+		}
+		changes["name"] = name
 	}
 	// descriptionチェック
-	if err := validation.Validate(name, validator.ClipFolderDescriptionRule...); err != nil {
-		return ArgError("description", "description must be less than 1000 characters")
+	if description.Valid {
+		if err := validation.Validate(name, validator.ClipFolderDescriptionRule...); err != nil {
+			return ArgError("description", "description must be less than 1000 characters")
+		}
+		changes["description"] = description
 	}
 
 	var (
@@ -62,10 +69,6 @@ func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name string, de
 		if err := tx.First(&old, &model.ClipFolder{ID: folderID}).Error; err != nil {
 			return convertError(err)
 		}
-
-		changes := map[string]interface{}{}
-		changes["description"] = description
-		changes["name"] = name
 
 		// update
 		if len(changes) > 0 {
@@ -134,6 +137,8 @@ func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) 
 			return err
 		} else if exists {
 			return ErrAlreadyExists
+		} else if !exists {
+			return ErrNotFound
 		}
 		return tx.Create(cfm).Error
 	})
@@ -183,7 +188,7 @@ func (repo *GormRepository) GetClipFolderMessages(folderID uuid.UUID, query Clip
 	tx := repo.db
 	tx = tx.Where("folder_id=?", folderID).Scopes(clipPreloads)
 
-	if strings.ToLower(query.Order) == "asc" {
+	if query.Asc {
 		tx = tx.Order("created_at")
 	} else {
 		tx = tx.Order("created_at DESC")

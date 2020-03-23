@@ -3,13 +3,14 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"gopkg.in/guregu/null.v3"
 )
 
 // ClipFolderMessageQuery クリップフォルダー内のメッセージ取得用クエリ
 type ClipFolderMessageQuery struct {
-	Limit  int    `query:"limit"`
-	Offset int    `query:"offset"`
-	Order  string `query:"order"`
+	Limit  int `query:"limit"`
+	Offset int `query:"offset"`
+	Asc    bool
 }
 
 // ClipRepository クリップリポジトリ
@@ -28,7 +29,7 @@ type ClipRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 存在しないクリップフォルダーを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	UpdateClipFolder(folderID uuid.UUID, name string, description string) error
+	UpdateClipFolder(folderID uuid.UUID, name null.String, description null.String) error
 	// DeleteClipFolder 指定したクリップフォルダーを削除します。
 	//
 	// 成功した場合、nilを返します。

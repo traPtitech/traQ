@@ -70,7 +70,6 @@ var TwitterIDRule = []vd.Rule{
 
 // ClipFolderNameRule クリップフォルダー名バリデーションルール
 var ClipFolderNameRule = []vd.Rule{
-	vd.Match(regexp.MustCompile(`^[a-zA-Z0-9_]+$`)).Error("must contain [a-zA-Z0-9_] only"),
 	vd.RuneLength(1, 30),
 }
 
