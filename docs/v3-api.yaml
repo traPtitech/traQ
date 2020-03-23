@@ -3520,9 +3520,9 @@ components:
       type: string
       title: ChannelViewState
       enum:
-      - none
-      - monitoring
-      - editing
+        - none
+        - monitoring
+        - editing
       description: 閲覧状態
     PostFileRequest:
       title: PostFileRequest
@@ -3538,8 +3538,8 @@ components:
           format: uuid
           description: アップロード先チャンネルUUID
       required:
-      - file
-      - channelId
+        - file
+        - channelId
     FileInfo:
       title: FileInfo
       type: object
@@ -3671,8 +3671,8 @@ components:
           format: binary
           description: 'スタンプ画像(1MBまでのpng, jpeg, gif)'
       required:
-      - name
-      - file
+        - name
+        - file
     StampHistoryEntry:
       title: StampHistoryEntry
       type: object
@@ -4085,7 +4085,7 @@ components:
         level:
           $ref: '#/components/schemas/ChannelSubscribeLevel'
       required:
-      - level
+        - level
     Webhook:
       title: Webhook
       type: object
@@ -4198,7 +4198,7 @@ components:
           format: binary
           description: 'アイコン画像(1MBまでのpng, jpeg, gif)'
       required:
-      - file
+        - file
     PutMyPasswordRequest:
       title: PutMyPasswordRequest
       type: object
@@ -4213,8 +4213,8 @@ components:
           pattern: "^[\\x20-\\x7E]{10,32}$"
           description: 新しいパスワード
       required:
-      - password
-      - newPassword
+        - password
+        - newPassword
     PatchMeRequest:
       title: PatchMeRequest
       type: object
@@ -4242,7 +4242,7 @@ components:
           description: 新しいパスワード
           pattern: "^[\\x20-\\x7E]{10,32}$"
       required:
-      - newPassword
+        - newPassword
       description: ユーザーパスワード変更リクエスト
     PatchUserRequest:
       title: PatchUserRequest
@@ -4272,7 +4272,7 @@ components:
           description: FCMのデバイストークン
           example: 'bk3RNwTe3H0:CI2k_HHwgIpoDKCIZvvDMExUdFQ3P1'
       required:
-      - token
+        - token
     PostUserRequest:
       title: PostUserRequest
       type: object
@@ -4287,8 +4287,8 @@ components:
           pattern: '^[\\x20-\\x7E]{10,32}$'
           description: パスワード
       required:
-      - name
-      - password
+        - name
+        - password
     PostChannelRequest:
       title: PostChannelRequest
       type: object
@@ -4319,7 +4319,7 @@ components:
           minLength: 1
           maxLength: 30
       required:
-      - tag
+        - tag
     PatchUserTagRequest:
       title: PatchUserTagRequest
       type: object
@@ -4364,7 +4364,7 @@ components:
           description: チャンネルUUID
           format: uuid
       required:
-      - channelId
+        - channelId
     UnreadChannel:
       title: UnreadChannel
       type: object
@@ -4410,8 +4410,8 @@ components:
           description: パスワード
           pattern: "^[\\\\x20-\\\\x7E]{10,32}$"
       required:
-      - name
-      - password
+        - name
+        - password
     LoginSession:
       title: LoginSession
       type: object
@@ -4474,9 +4474,9 @@ components:
       title: OAuth2Scope
       description: OAuth2スコープ
       enum:
-      - read
-      - write
-      - manage_bot
+        - read
+        - write
+        - manage_bot
     OAuth2Client:
       title: OAuth2Client
       type: object
@@ -4598,10 +4598,10 @@ components:
           description: 説明
           maxLength: 1000
       required:
-      - name
-      - callbackUrl
-      - scopes
-      - description
+        - name
+        - callbackUrl
+        - scopes
+        - description
     Bot:
       title: Bot
       type: object
@@ -4820,10 +4820,10 @@ components:
           description: BOTサーバーエンドポイント
           format: uri
       required:
-      - name
-      - displayName
-      - description
-      - endpoint
+        - name
+        - displayName
+        - description
+        - endpoint
     PostBotActionJoinRequest:
       title: PostBotActionJoinRequest
       type: object
@@ -4833,7 +4833,7 @@ components:
           description: チャンネルUUID
           format: uuid
       required:
-      - channelId
+        - channelId
       description: BOTチャンネル参加リクエスト
     PostBotActionLeaveRequest:
       title: PostBotActionLeaveRequest
@@ -4844,7 +4844,7 @@ components:
           description: チャンネルUUID
           format: uuid
       required:
-      - channelId
+        - channelId
       description: BOTチャンネル退出リクエスト
     BotUser:
       title: BotUser
@@ -4871,7 +4871,7 @@ components:
           type: string
           description: ピアID
       required:
-      - peerId
+        - peerId
     WebRTCAuthenticateResult:
       title: WebRTCAuthenticateResult
       type: object
@@ -5010,7 +5010,7 @@ components:
           description: メッセージUUID
           format: uuid
       required:
-      - messageId
+        - messageId
       description: クリップ追加リクエスト
     ClippedMessage:
       title: ClippedMessage
@@ -5038,15 +5038,15 @@ components:
         type:
           type: string
           enum:
-          - TopicChanged
-          - SubscribersChanged
-          - PinAdded
-          - PinRemoved
-          - NameChanged
-          - ParentChanged
-          - VisibilityChanged
-          - ForcedNotificationChanged
-          - ChildCreated
+            - TopicChanged
+            - SubscribersChanged
+            - PinAdded
+            - PinRemoved
+            - NameChanged
+            - ParentChanged
+            - VisibilityChanged
+            - ForcedNotificationChanged
+            - ChildCreated
           description: イベントタイプ
         datetime:
           type: string
@@ -5055,15 +5055,15 @@ components:
         detail:
           description: イベント内容
           oneOf:
-          - $ref: '#/components/schemas/TopicChangedEvent'
-          - $ref: '#/components/schemas/SubscribersChangedEvent'
-          - $ref: '#/components/schemas/PinAddedEvent'
-          - $ref: '#/components/schemas/PinRemovedEvent'
-          - $ref: '#/components/schemas/NameChangedEvent'
-          - $ref: '#/components/schemas/ParentChangedEvent'
-          - $ref: '#/components/schemas/VisibilityChangedEvent'
-          - $ref: '#/components/schemas/ForcedNotificationChangedEvent'
-          - $ref: '#/components/schemas/ChildCreatedEvent'
+            - $ref: '#/components/schemas/TopicChangedEvent'
+            - $ref: '#/components/schemas/SubscribersChangedEvent'
+            - $ref: '#/components/schemas/PinAddedEvent'
+            - $ref: '#/components/schemas/PinRemovedEvent'
+            - $ref: '#/components/schemas/NameChangedEvent'
+            - $ref: '#/components/schemas/ParentChangedEvent'
+            - $ref: '#/components/schemas/VisibilityChangedEvent'
+            - $ref: '#/components/schemas/ForcedNotificationChangedEvent'
+            - $ref: '#/components/schemas/ChildCreatedEvent'
       required:
         - type
         - datetime
