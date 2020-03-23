@@ -29,7 +29,7 @@ func (repo *GormRepository) CreateStampPalette(name, description string, stamps 
 			return ArgError("name", "Name must be 1-30")
 		}
 		// 説明チェック
-		if err = validation.Validate(description, validator.StampPaletteDescriptionRuleRequired...); err != nil {
+		if err = validation.Validate(description, validator.StampPaletteDescriptionRule...); err != nil {
 			return ArgError("description", "Description must be 0-1000")
 		}
 		// スタンプ上限チェック
@@ -147,5 +147,5 @@ func (repo *GormRepository) DeleteStampPalette(id uuid.UUID) (err error) {
 func (repo *GormRepository) GetStampPalettes(userID uuid.UUID) (sps []*model.StampPalette, err error) {
 	sps = make([]*model.StampPalette, 0)
 	tx := repo.db
-	return sps, tx.Find(&sps).Error
+	return sps, tx.Where("creator_id = ?", userID).Find(&sps).Error
 }

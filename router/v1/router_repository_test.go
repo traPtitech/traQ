@@ -195,7 +195,7 @@ func (repo *TestRepository) GetStampPalettes(userID uuid.UUID) (sps []*model.Sta
 	panic("implement me")
 }
 
-func (repo *TestRepository) ExistStamps(stampIDs model.UUIDs) (err error) {
+func (repo *TestRepository) ExistStamps(stampIDs []uuid.UUID) (err error) {
 	panic("implement me")
 }
 

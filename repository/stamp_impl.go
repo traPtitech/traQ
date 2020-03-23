@@ -168,7 +168,7 @@ func (repo *GormRepository) StampExists(id uuid.UUID) (bool, error) {
 }
 
 // ExistStamps implements StampPaletteRepository interface.
-func (repo *GormRepository) ExistStamps(stampIDs model.UUIDs) (err error) {
+func (repo *GormRepository) ExistStamps(stampIDs []uuid.UUID) (err error) {
 	var num int
 	err = repo.db.
 		Table("stamps").
