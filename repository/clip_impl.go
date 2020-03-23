@@ -72,7 +72,6 @@ func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name string, de
 			if err := tx.Model(&old).Updates(changes).Error; err != nil {
 				return err
 			}
-			// updated = true
 		}
 		return nil
 	})
@@ -82,6 +81,7 @@ func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name string, de
 	return nil
 }
 
+// DeleteClipFolder implements ClipRepository interface.
 func (repo *GormRepository) DeleteClipFolder(folderID uuid.UUID) error {
 	if folderID == uuid.Nil {
 		return ErrNilID
@@ -99,6 +99,7 @@ func (repo *GormRepository) DeleteClipFolder(folderID uuid.UUID) error {
 	return nil
 }
 
+// DeleteClipFolderMessage implements ClipRepository interface.
 func (repo *GormRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUID) error {
 	if folderID == uuid.Nil || messageID == uuid.Nil {
 		return ErrNilID
@@ -116,6 +117,7 @@ func (repo *GormRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUI
 	return nil
 }
 
+// AddClipFolderMesssage implements ClipRepository interface.
 func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) (*model.ClipFolderMessage, error) {
 	if folderID == uuid.Nil || messageID == uuid.Nil {
 		return nil, ErrNilID
@@ -142,6 +144,7 @@ func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) 
 	return cfm, nil
 }
 
+// GetClipFolderByUserID implements ClipRepository interface.
 func (repo *GormRepository) GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipFolder, error) {
 	if userID == uuid.Nil {
 		return nil, ErrNilID
@@ -156,6 +159,7 @@ func (repo *GormRepository) GetClipFoldersByUserID(userID uuid.UUID) ([]*model.C
 	return clipFolders, nil
 }
 
+// GetClipFolder implements ClipRepository interface.
 func (repo *GormRepository) GetClipFolder(folderID uuid.UUID) (*model.ClipFolder, error) {
 	if folderID == uuid.Nil {
 		return nil, ErrNilID
@@ -169,6 +173,7 @@ func (repo *GormRepository) GetClipFolder(folderID uuid.UUID) (*model.ClipFolder
 	return clipFolder, nil
 }
 
+// GetClipFolderMessages implements ClipRepository interface.
 func (repo *GormRepository) GetClipFolderMessages(folderID uuid.UUID, query ClipFolderMessageQuery) (messages []*model.ClipFolderMessage, more bool, err error) {
 	if folderID == uuid.Nil {
 		return nil, false, ErrNilID
@@ -176,7 +181,6 @@ func (repo *GormRepository) GetClipFolderMessages(folderID uuid.UUID, query Clip
 	messages = make([]*model.ClipFolderMessage, 0)
 
 	tx := repo.db
-
 	tx = tx.Where("folder_id=?", folderID).Scopes(clipPreloads)
 
 	if strings.ToLower(query.Order) == "asc" {
