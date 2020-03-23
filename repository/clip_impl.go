@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"strings"
+
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/model"
@@ -151,7 +153,7 @@ func (repo *GormRepository) GetClipFolderMessages(folderID uuid.UUID, query Clip
 
 	tx = tx.Where("folder_id=?", folderID).Scopes(clipPreloads)
 
-	if query.Asc {
+	if strings.ToLower(query.Order) == "asc" {
 		tx = tx.Order("created_at")
 	} else {
 		tx = tx.Order("created_at DESC")

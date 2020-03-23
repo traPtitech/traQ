@@ -1,17 +1,15 @@
 package repository
 
 import (
-	"time"
-
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 )
 
 // ClipFolderMessageQuery クリップフォルダー内のメッセージ取得用クエリ
 type ClipFolderMessageQuery struct {
-	Limit  int `query:"limit"`
-	Offset int `query:"offset"`
-	Asc    bool
+	Limit  int    `query:"limit"`
+	Offset int    `query:"offset"`
+	Order  string `query:"order"`
 }
 
 type CliplRepository interface {
