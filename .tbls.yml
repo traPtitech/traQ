@@ -342,4 +342,4 @@ comments:
     columnComments:
       folder_id: クリップフォルダーID
       message_id: メッセージID
-      clipped_at: クリップされた日時
+      created_at: クリップされた日時

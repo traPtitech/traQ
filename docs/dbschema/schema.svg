@@ -311,8 +311,8 @@
 <text text-anchor="start" x="2065.5" y="-2361.9" font-family="Arial" font-size="14.00" fill="#000000">message_id </text>
 <text text-anchor="start" x="2144.8534" y="-2361.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
 <polygon fill="none" stroke="#000000" points="2058.5,-2320.5 2058.5,-2350.5 2343.5,-2350.5 2343.5,-2320.5 2058.5,-2320.5"/>
-<text text-anchor="start" x="2065.5" y="-2331.9" font-family="Arial" font-size="14.00" fill="#000000">clipped_at </text>
-<text text-anchor="start" x="2133.19" y="-2331.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
+<text text-anchor="start" x="2065.5" y="-2331.9" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
+<text text-anchor="start" x="2135.528" y="-2331.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
 </g>
 <!-- clip_folders -->
 <g id="node9" class="node">

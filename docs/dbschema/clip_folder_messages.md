@@ -11,7 +11,7 @@
 CREATE TABLE `clip_folder_messages` (
   `folder_id` char(36) NOT NULL,
   `message_id` char(36) NOT NULL,
-  `clipped_at` datetime(6) DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`folder_id`,`message_id`),
   KEY `clip_folder_messages_message_id_messages_id_foreign` (`message_id`),
   CONSTRAINT `clip_folder_messages_folder_id_clip_folders_id_foreign` FOREIGN KEY (`folder_id`) REFERENCES `clip_folders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -27,7 +27,7 @@ CREATE TABLE `clip_folder_messages` (
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | folder_id | char(36) |  | false |  | [clip_folders](clip_folders.md) | クリップフォルダーID |
 | message_id | char(36) |  | false |  | [messages](messages.md) | メッセージID |
-| clipped_at | datetime(6) |  | true |  |  | クリップされた日時 |
+| created_at | datetime(6) |  | true |  |  | クリップされた日時 |
 
 ## Constraints
 
