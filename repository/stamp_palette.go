@@ -36,7 +36,7 @@ type StampPaletteRepository interface {
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetStampPalette(id uuid.UUID) (sp *model.StampPalette, err error)
-	// DeleteStamp 指定したIDのスタンプパレットを削除します
+	// DeleteStampPalette 指定したIDのスタンプパレットを削除します
 	//
 	// 成功した場合、nilを返します。
 	// 既に存在しない場合、ErrNotFoundを返します。

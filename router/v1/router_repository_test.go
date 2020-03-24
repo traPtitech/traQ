@@ -175,7 +175,7 @@ func (repo *TestRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) CreateStampPalette (name, description string, stamps model.UUIDs, userID uuid.UUID) (*model.StampPalette, error) {
+func (repo *TestRepository) CreateStampPalette(name, description string, stamps model.UUIDs, userID uuid.UUID) (*model.StampPalette, error) {
 	panic("implement me")
 }
 

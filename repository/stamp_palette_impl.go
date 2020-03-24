@@ -16,11 +16,11 @@ func (repo *GormRepository) CreateStampPalette(name, description string, stamps 
 		return nil, ErrNilID
 	}
 	stampPalette := &model.StampPalette{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      name,
+		ID:          uuid.Must(uuid.NewV4()),
+		Name:        name,
 		Description: description,
-		Stamps: stamps,
-		CreatorID: userID,
+		Stamps:      stamps,
+		CreatorID:   userID,
 	}
 
 	err = repo.db.Transaction(func(tx *gorm.DB) error {
@@ -50,9 +50,9 @@ func (repo *GormRepository) CreateStampPalette(name, description string, stamps 
 	repo.hub.Publish(hub.Message{
 		Name: event.StampPaletteCreated,
 		Fields: hub.Fields{
-			"user_id": userID,
+			"user_id":          userID,
 			"stamp_palette_id": stampPalette.ID,
-			"stamp_palette": stampPalette,
+			"stamp_palette":    stampPalette,
 		},
 	})
 	return stampPalette, nil
@@ -106,7 +106,7 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 		repo.hub.Publish(hub.Message{
 			Name: event.StampPaletteUpdated,
 			Fields: hub.Fields{
-				"user_id": user_id,
+				"user_id":          user_id,
 				"stamp_palette_id": id,
 			},
 		})
@@ -143,7 +143,7 @@ func (repo *GormRepository) DeleteStampPalette(id uuid.UUID) (err error) {
 		repo.hub.Publish(hub.Message{
 			Name: event.StampPaletteDeleted,
 			Fields: hub.Fields{
-				"user_id": stampPalette.CreatorID,
+				"user_id":          stampPalette.CreatorID,
 				"stamp_palette_id": id,
 			},
 		})
@@ -152,7 +152,7 @@ func (repo *GormRepository) DeleteStampPalette(id uuid.UUID) (err error) {
 	return ErrNotFound
 }
 
-// GetAllStamps implements StampPaletteRepository interface.
+// GetStampPalettes implements StampPaletteRepository interface.
 func (repo *GormRepository) GetStampPalettes(userID uuid.UUID) (sps []*model.StampPalette, err error) {
 	sps = make([]*model.StampPalette, 0)
 	tx := repo.db

@@ -26,7 +26,7 @@ func v12() *gormigrate.Migration {
 					return err
 				}
 			}
-			
+
 			return nil
 		},
 	}
