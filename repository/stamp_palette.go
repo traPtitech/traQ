@@ -42,7 +42,7 @@ type StampPaletteRepository interface {
 	// 既に存在しない場合、ErrNotFoundを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	DeleteStampPalette(id uuid.UUID) (err error)
+	DeleteStampPalette(paletteID uuid.UUID) (err error)
 	// GetStampPalettes そのユーザーが作成したスタンプパレットを取得します
 	//
 	// 成功した場合、スタンプパレットの配列とnilを返します。

@@ -50,6 +50,7 @@ func (repo *GormRepository) CreateStampPalette(name, description string, stamps 
 	repo.hub.Publish(hub.Message{
 		Name: event.StampPaletteCreated,
 		Fields: hub.Fields{
+			"user_id": userID,
 			"stamp_palette_id": stampPalette.ID,
 			"stamp_palette": stampPalette,
 		},
@@ -62,6 +63,7 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 	if id == uuid.Nil {
 		return ErrNilID
 	}
+	var user_id uuid.UUID
 	changes := map[string]interface{}{}
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var sp model.StampPalette
@@ -94,6 +96,7 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 		if len(changes) > 0 {
 			return tx.Model(&sp).Updates(changes).Error
 		}
+		user_id = sp.CreatorID
 		return nil
 	})
 	if err != nil {
@@ -103,6 +106,7 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 		repo.hub.Publish(hub.Message{
 			Name: event.StampPaletteUpdated,
 			Fields: hub.Fields{
+				"user_id": user_id,
 				"stamp_palette_id": id,
 			},
 		})
@@ -127,6 +131,10 @@ func (repo *GormRepository) DeleteStampPalette(id uuid.UUID) (err error) {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
+	stampPalette, err := repo.GetStampPalette(id)
+	if err != nil {
+		return err
+	}
 	result := repo.db.Delete(&model.StampPalette{ID: id})
 	if result.Error != nil {
 		return result.Error
@@ -135,6 +143,7 @@ func (repo *GormRepository) DeleteStampPalette(id uuid.UUID) (err error) {
 		repo.hub.Publish(hub.Message{
 			Name: event.StampPaletteDeleted,
 			Fields: hub.Fields{
+				"user_id": stampPalette.CreatorID,
 				"stamp_palette_id": id,
 			},
 		})
