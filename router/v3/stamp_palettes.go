@@ -33,7 +33,7 @@ type CreateStampPaletteRequest struct {
 
 func (r CreateStampPaletteRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, validator.StampPaletteNameRule...),
+		vd.Field(&r.Name, validator.StampPaletteNameRuleRequired...),
 		vd.Field(&r.Description, validator.StampPaletteDescriptionRule...),
 		vd.Field(&r.Stamps, validator.StampPaletteStampsRule...),
 	)

@@ -456,7 +456,7 @@ func stampDeletedHandler(ns *Service, ev hub.Message) {
 }
 
 func stampPaletteCreatedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData {
 		EventType: "STAMP_PALETTE_CREATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_palette_id"].(uuid.UUID),
@@ -465,7 +465,7 @@ func stampPaletteCreatedHandler(ns *Service, ev hub.Message) {
 }
 
 func stampPaletteUpdatedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData {
 		EventType: "STAMP_PALETTE_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_palette_id"].(uuid.UUID),
@@ -474,7 +474,7 @@ func stampPaletteUpdatedHandler(ns *Service, ev hub.Message) {
 }
 
 func stampPaletteDeletedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData {
 		EventType: "STAMP_PALETTE_DELETED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_palette_id"].(uuid.UUID),
