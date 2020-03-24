@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"log"
+
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
@@ -61,14 +63,14 @@ func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name null.Strin
 		if err := validation.Validate(name, validator.ClipFolderNameRuleRequired...); err != nil {
 			return ArgError("name", "Name must be 1-30")
 		}
-		changes["name"] = name
+		changes["name"] = name.String
 	}
 	// descriptionチェック
 	if description.Valid {
 		if err := validation.Validate(name, validator.ClipFolderDescriptionRule...); err != nil {
 			return ArgError("description", "description must be less than 1000 characters")
 		}
-		changes["description"] = description
+		changes["description"] = description.String
 	}
 
 	var (
@@ -79,10 +81,11 @@ func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name null.Strin
 
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&old, &model.ClipFolder{ID: folderID}).Error; err != nil {
-			return err
+			return convertError(err)
 		}
 
 		// update
+		log.Println(changes)
 		if len(changes) > 0 {
 			if err := tx.Model(&old).Updates(changes).Error; err != nil {
 				return err

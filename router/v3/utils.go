@@ -101,7 +101,7 @@ func getParamAsUUID(c echo.Context, name string) uuid.UUID {
 	return extension.GetRequestParamAsUUID(c, name)
 }
 
-// getParamClipFolde URLの:folderIDに対応するClipFolderを取得
+// getParamClipFolder URLの:folderIDに対応するClipFolderを取得
 func getParamClipFolder(c echo.Context) *model.ClipFolder {
 	return c.Get(consts.KeyParamClipFolder).(*model.ClipFolder)
 }
