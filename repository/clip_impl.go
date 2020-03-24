@@ -118,7 +118,7 @@ func (repo *GormRepository) DeleteClipFolder(folderID uuid.UUID) error {
 		if err := tx.First(&cf, &model.ClipFolder{ID: folderID}).Error; err != nil {
 			return convertError(err)
 		}
-		return tx.Delete(&model.ClipFolder{ID: folderID}).Error
+		return tx.Delete(&model.ClipFolderMessage{FolderID: folderID}).Delete(&model.ClipFolder{ID: folderID}).Error
 	})
 	if err != nil {
 		return err
