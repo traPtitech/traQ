@@ -39,6 +39,7 @@ func (repo *GormRepository) CreateClipFolder(userID uuid.UUID, name string, desc
 	repo.hub.Publish(hub.Message{
 		Name: event.ClipFolderCreated,
 		Fields: hub.Fields{
+			"user_id":        clipFolder.OwnerID,
 			"clip_folder_id": clipFolder.ID,
 			"clip_folder":    clipFolder,
 		},
@@ -77,7 +78,7 @@ func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name null.Strin
 	)
 
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(&old, &model.ClipFolder{ID: folderID}).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+		if err := tx.First(&old, &model.ClipFolder{ID: folderID}).Error; err != nil {
 			return err
 		}
 
@@ -97,6 +98,7 @@ func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name null.Strin
 		repo.hub.Publish(hub.Message{
 			Name: event.ClipFolderUpdated,
 			Fields: hub.Fields{
+				"user_id":         old.OwnerID,
 				"clip_folder_id":  folderID,
 				"old_clip_folder": &old,
 				"clip_folder":     &new,
@@ -124,6 +126,7 @@ func (repo *GormRepository) DeleteClipFolder(folderID uuid.UUID) error {
 	repo.hub.Publish(hub.Message{
 		Name: event.ClipFolderDeleted,
 		Fields: hub.Fields{
+			"user_id":        cf.OwnerID,
 			"clip_folder_id": folderID,
 			"clip_folder":    &cf,
 		},
@@ -136,10 +139,19 @@ func (repo *GormRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUI
 	if folderID == uuid.Nil || messageID == uuid.Nil {
 		return ErrNilID
 	}
-	var cfm model.ClipFolderMessage
+	var (
+		cf  model.ClipFolder
+		cfm model.ClipFolderMessage
+	)
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.First(&cfm, &model.ClipFolderMessage{MessageID: messageID, FolderID: folderID}).Error; err != nil {
+		// フォルダ存在チェック
+		if err := tx.First(&cf, &model.ClipFolder{ID: folderID}).Error; err != nil {
 			return convertError(err)
+		}
+
+		// クリップメッセージ存在チェック
+		if err := tx.First(&cfm, &model.ClipFolderMessage{MessageID: messageID, FolderID: folderID}).Error; err != nil && !gorm.IsRecordNotFoundError(err) {
+			return err
 		}
 		return tx.Delete(&model.ClipFolderMessage{MessageID: messageID, FolderID: folderID}).Error
 	})
@@ -149,6 +161,7 @@ func (repo *GormRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUI
 	repo.hub.Publish(hub.Message{
 		Name: event.ClipFolderMessageDeleted,
 		Fields: hub.Fields{
+			"user_id":                cf.OwnerID,
 			"clip_folder_message_id": messageID,
 			"clip_folder_message":    &cfm,
 		},
@@ -166,8 +179,14 @@ func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) 
 		FolderID:  folderID,
 		MessageID: messageID,
 	}
+	var cf model.ClipFolder
 
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		// フォルダ存在チェック
+		if err := tx.First(&cf, &model.ClipFolder{ID: folderID}).Error; err != nil {
+			return convertError(err)
+		}
+
 		// 名前重複チェック
 		if exists, err := dbExists(tx, &model.ClipFolderMessage{FolderID: folderID, MessageID: messageID}); err != nil {
 			return err
@@ -183,8 +202,9 @@ func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) 
 	repo.hub.Publish(hub.Message{
 		Name: event.ClipFolderMessageAdded,
 		Fields: hub.Fields{
-			"clip_folder_message_id": folderID,
-			"clip_folder_message":    &cfm,
+			"user_id":                 cf.OwnerID,
+			"clip_folde4r_message_id": messageID,
+			"clip_folder_message":     &cfm,
 		},
 	})
 

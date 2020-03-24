@@ -464,48 +464,48 @@ func userWebRTCStateChangedHandler(ns *Service, ev hub.Message) {
 }
 
 func clipFolderCreatedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CLIP_FOLDER_CREATED",
 		Payload: map[string]interface{}{
-			"clip_folder_id": ev.Fields["clip_folder_id"].(uuid.UUID),
+			"id": ev.Fields["clip_folder_id"].(uuid.UUID),
 		},
 	})
 }
 
 func clipFolderUpdatedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CLIP_FOLDER_UPDATED",
 		Payload: map[string]interface{}{
-			"clip_folder_id": ev.Fields["clip_folder_id"].(uuid.UUID),
+			"id": ev.Fields["clip_folder_id"].(uuid.UUID),
 		},
 	})
 }
 
 func clipFolderDeletedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CLIP_FOLDER_DELETED",
 		Payload: map[string]interface{}{
-			"clip_folder_id": ev.Fields["clip_folder_id"].(uuid.UUID),
+			"id": ev.Fields["clip_folder_id"].(uuid.UUID),
 		},
 	})
 }
 
 func clipFolderMessageDeletedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CLIP_FOLDER_MESSAGE_DELETED",
 		Payload: map[string]interface{}{
-			"clip_folder_id":         ev.Fields["clip_folder_id"].(uuid.UUID),
-			"clip_folder_message_id": ev.Fields["clip_folder_message_id"].(uuid.UUID),
+			"folder_id":  ev.Fields["clip_folder_id"].(uuid.UUID),
+			"message_id": ev.Fields["clip_folder_message_id"].(uuid.UUID),
 		},
 	})
 }
 
 func clipFolderMessageAddedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
 		EventType: "CLIP_FOLDER_MESSAGE_ADDED",
 		Payload: map[string]interface{}{
-			"clip_folder_id":         ev.Fields["clip_folder_id"].(uuid.UUID),
-			"clip_folder_message_id": ev.Fields["clip_folder_message_id"].(uuid.UUID),
+			"folder_id":  ev.Fields["clip_folder_id"].(uuid.UUID),
+			"message_id": ev.Fields["clip_folder_message_id"].(uuid.UUID),
 		},
 	})
 }

@@ -80,7 +80,12 @@ func (h *Handlers) DeleteClipFolder(c echo.Context) error {
 	folderID := getParamAsUUID(c, consts.ParamClipFolderID)
 
 	if err := h.Repo.DeleteClipFolder(folderID); err != nil {
-		return herror.InternalServerError(err)
+		switch {
+		case err == repository.ErrNotFound:
+			return herror.NotFound("clip folder not found")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -95,7 +100,12 @@ func (h *Handlers) EditClipFolder(c echo.Context) error {
 	}
 
 	if err := h.Repo.UpdateClipFolder(cf.ID, req.Name, req.Description); err != nil {
-		return herror.InternalServerError(err)
+		switch {
+		case err == repository.ErrNotFound:
+			return herror.NotFound("clip folder not found")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -162,6 +172,16 @@ func (q *clipFolderMessageQuery) convert() repository.ClipFolderMessageQuery {
 	}
 }
 
+func (q *clipFolderMessageQuery) Validate() error {
+	if q.Limit == 0 {
+		q.Limit = 20
+	}
+	return vd.ValidateStruct(q,
+		vd.Field(&q.Limit, vd.Min(1), vd.Max(200)),
+		vd.Field(&q.Offset, vd.Min(0)),
+	)
+}
+
 // GetFolderMessages GET /clip-folders/:folderID/messages
 func (h *Handlers) GetClipFolderMessages(c echo.Context) error {
 	cf := getParamClipFolder(c)
@@ -187,6 +207,10 @@ func (h *Handlers) DeleteClipFolderMessages(c echo.Context) error {
 
 	cf := getParamClipFolder(c)
 	if err := h.Repo.DeleteClipFolderMessage(cf.ID, messageID); err != nil {
+		switch {
+		case err == repository.ErrNotFound:
+			return herror.NotFound("clip folder not found")
+		}
 		return herror.InternalServerError(err)
 	}
 

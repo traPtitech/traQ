@@ -48,7 +48,8 @@ type ClipRepository interface {
 	//
 	// 成功した場合、nilを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// 既に存在するフォルダーとメッセージの組みを指定した場合ErrAlreadyExistsを返します。
+	// 存在しないクリップフォルダーを指定した場合、ErrNotFoundを返します。
+	// 既に存在するフォルダーとメッセージの組みを指定した場合、ErrAlreadyExistsを返します。
 	// DBによるエラーを返すことがあります。
 	AddClipFolderMessage(folderID, messageID uuid.UUID) (*model.ClipFolderMessage, error)
 	// GetClipFoldersByUserID ユーザーのクリップフォルダーを取得します。
