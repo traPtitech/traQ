@@ -40,8 +40,8 @@ func (r UpdateClipFolderRequest) Validate() error {
 	)
 }
 
-// CreateClipFolders POST /clip-folders
-func (h *Handlers) CreateClipFolders(c echo.Context) error {
+// CreateClipFolder POST /clip-folders
+func (h *Handlers) CreateClipFolder(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	var req PostClipFolderRequest
@@ -75,7 +75,7 @@ func (h *Handlers) GetClipFolder(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatClipFolder(getParamClipFolder(c)))
 }
 
-// DeleteClipFolder DELETE /clip-folder/:folderID
+// DeleteClipFolder DELETE /clip-folders/:folderID
 func (h *Handlers) DeleteClipFolder(c echo.Context) error {
 	folderID := getParamAsUUID(c, consts.ParamClipFolderID)
 
@@ -115,7 +115,7 @@ type PostClipFolderMessageRequest struct {
 }
 
 // PostClipFolderMessage POST /clip-folders/:folderID/messages
-func (h *Handlers) PostClipFolderMessages(c echo.Context) error {
+func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 	cf := getParamClipFolder(c)
 	userID := getRequestUserID(c)
 
@@ -182,7 +182,7 @@ func (q *clipFolderMessageQuery) Validate() error {
 	)
 }
 
-// GetFolderMessages GET /clip-folders/:folderID/messages
+// GetClipFolderMessages GET /clip-folders/:folderID/messages
 func (h *Handlers) GetClipFolderMessages(c echo.Context) error {
 	cf := getParamClipFolder(c)
 
@@ -201,7 +201,7 @@ func (h *Handlers) GetClipFolderMessages(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatClipFolderMessages(messages))
 }
 
-// DeleteFolderMessages DELETE /clip-folders/:folderID/messages/:messageID
+// DeleteClipFolderMessages DELETE /clip-folders/:folderID/messages/:messageID
 func (h *Handlers) DeleteClipFolderMessages(c echo.Context) error {
 	messageID := getParamAsUUID(c, consts.ParamMessageID)
 

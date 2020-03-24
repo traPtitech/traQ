@@ -8,8 +8,8 @@ import (
 
 // ClipFolderMessageQuery クリップフォルダー内のメッセージ取得用クエリ
 type ClipFolderMessageQuery struct {
-	Limit  int `query:"limit"`
-	Offset int `query:"offset"`
+	Limit  int
+	Offset int
 	Asc    bool
 }
 
@@ -37,7 +37,7 @@ type ClipRepository interface {
 	// 存在しないクリップフォルダーを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	DeleteClipFolder(folderID uuid.UUID) error
-	// DeleteClipFolderMessage 指定したクリップフォルダーメッセージを削除します。
+	// DeleteClipFolderMessage 指定したクリップフォルダーのメッセージを削除します。
 	//
 	// 成功した場合、nilを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
@@ -49,7 +49,7 @@ type ClipRepository interface {
 	// 成功した場合、nilを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 存在しないクリップフォルダーを指定した場合、ErrNotFoundを返します。
-	// 既に存在するフォルダーとメッセージの組みを指定した場合、ErrAlreadyExistsを返します。
+	// 既に存在するフォルダーとメッセージの組み合わせを指定した場合、ErrAlreadyExistsを返します。
 	// DBによるエラーを返すことがあります。
 	AddClipFolderMessage(folderID, messageID uuid.UUID) (*model.ClipFolderMessage, error)
 	// GetClipFoldersByUserID ユーザーのクリップフォルダーを取得します。
@@ -68,7 +68,7 @@ type ClipRepository interface {
 	GetClipFolder(folderID uuid.UUID) (*model.ClipFolder, error)
 	// GetClipFolderMessages 指定したクエリでクリップフォルダー内のメッセージのリストを取得します。
 	//
-	// 成功した場合クリップフォルダーメッセージの情報を返します。負のoffset, limitは無視されます。
+	// 成功した場合クリップフォルダー内のメッセージの情報を返します。負のoffset, limitは無視されます。
 	// 指定した範囲内にlimitを超えてメッセージが存在していた場合、trueを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 存在しないクリップフォルダーを指定した場合、ErrNotFoundを返します。

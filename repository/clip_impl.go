@@ -3,13 +3,11 @@ package repository
 import (
 	"log"
 
-	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -17,15 +15,6 @@ import (
 func (repo *GormRepository) CreateClipFolder(userID uuid.UUID, name string, description string) (*model.ClipFolder, error) {
 	if userID == uuid.Nil {
 		return nil, ErrNilID
-	}
-
-	// 名前チェック
-	if err := validation.Validate(name, validator.ClipFolderNameRuleRequired...); err != nil {
-		return nil, ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
-	}
-	// descriptionチェック
-	if err := validation.Validate(name, validator.ClipFolderDescriptionRule...); err != nil {
-		return nil, ArgError("description", "description must be less than 1000 characters")
 	}
 
 	uid := uuid.Must(uuid.NewV4())
@@ -58,18 +47,11 @@ func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name null.Strin
 
 	changes := map[string]interface{}{}
 
-	// 名前チェック
 	if name.Valid {
-		if err := validation.Validate(name, validator.ClipFolderNameRuleRequired...); err != nil {
-			return ArgError("name", "Name must be 1-30")
-		}
 		changes["name"] = name.String
 	}
-	// descriptionチェック
+
 	if description.Valid {
-		if err := validation.Validate(name, validator.ClipFolderDescriptionRule...); err != nil {
-			return ArgError("description", "description must be less than 1000 characters")
-		}
 		changes["description"] = description.String
 	}
 
@@ -173,7 +155,7 @@ func (repo *GormRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUI
 	return nil
 }
 
-// AddClipFolderMesssage implements ClipRepository interface.
+// AddClipFolderMessage implements ClipRepository interface.
 func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) (*model.ClipFolderMessage, error) {
 	if folderID == uuid.Nil || messageID == uuid.Nil {
 		return nil, ErrNilID
@@ -216,7 +198,7 @@ func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) 
 	return cfm, nil
 }
 
-// GetClipFolderByUserID implements ClipRepository interface.
+// GetClipFoldersByUserID implements ClipRepository interface.
 func (repo *GormRepository) GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipFolder, error) {
 	if userID == uuid.Nil {
 		return nil, ErrNilID

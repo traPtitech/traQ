@@ -294,7 +294,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiClipFolders := api.Group("/clip-folders", blockBot)
 		{
 			apiClipFolders.GET("", h.GetClipFolders, requires(permission.GetClipFolder))
-			apiClipFolders.POST("", h.CreateClipFolders, requires(permission.CreateClipFolder))
+			apiClipFolders.POST("", h.CreateClipFolder, requires(permission.CreateClipFolder))
 			apiClipFoldersFID := apiClipFolders.Group("/:folderID", retrieve.ClipFolderID(), requiresClipFolderAccessPerm)
 			{
 				apiClipFoldersFID.GET("", h.GetClipFolder, requires(permission.GetClipFolder))
@@ -303,7 +303,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiClipFoldersFIDMessages := apiClipFoldersFID.Group("/messages")
 				{
 					apiClipFoldersFIDMessages.GET("", h.GetClipFolderMessages, requires(permission.GetClipFolder, permission.GetMessage))
-					apiClipFoldersFIDMessages.POST("", h.PostClipFolderMessages, requires(permission.EditClipFolder))
+					apiClipFoldersFIDMessages.POST("", h.PostClipFolderMessage, requires(permission.EditClipFolder))
 					apiClipFoldersFIDMessages.DELETE("/:messageID", h.DeleteClipFolderMessages, requires(permission.EditClipFolder))
 				}
 			}
