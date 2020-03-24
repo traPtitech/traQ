@@ -240,9 +240,37 @@ const (
 	//		req: *http.Request
 	WSDisconnected = "ws.disconnected"
 
-	ClipFolderCreated        = "clip_folder.created"
-	ClipFolderUpdated        = "clip_folder.updated"
-	ClipFolderDeleted        = "clip_folder.deleted"
+	// ClipFolderCreated クリップフォルダーが作成された
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		clip_folder_id: uuid.UUID
+	//		clip_folder: model.clipFolder
+	ClipFolderCreated = "clip_folder.created"
+	// ClipFolderUpdated クリップフォルダーが更新された
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		clip_folder_id: uuid.UUID
+	//		old_clip_folder: model.clipFolder
+	//		clip_folder: model.clipFolder
+	ClipFolderUpdated = "clip_folder.updated"
+	// ClipFolderDeleted クリップフォルダーが削除された
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		clip_folder_id: uuid.UUID
+	//		clip_folder: model.clipFolder
+	ClipFolderDeleted = "clip_folder.deleted"
+	// ClipFolderMessageDeleted クリップフォルダーのメッセージが除外された
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		clip_folder_id: uuid.UUID
+	//		clip_folder_message_id: uuid.UUID
+	//		clip_folder_message: model.clipFolderMessage
 	ClipFolderMessageDeleted = "clip_folder_message.deleted"
-	ClipFolderMessageAdded   = "clip_folder_message.added"
+	// ClipFolderMessageAdded クリップフォルダーにメッセージが追加された
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		clip_folder_id: uuid.UUID
+	//		clip_folder_message_id: uuid.UUID
+	//		clip_folder_message: model.clipFolderMessage
+	ClipFolderMessageAdded = "clip_folder_message.added"
 )

@@ -454,7 +454,7 @@ func formatClipFolders(cfs []*model.ClipFolder) []*ClipFolder {
 }
 
 type ClipFolderMessage struct {
-	Message   *Message  `json:message`
+	Message   *Message  `json:"message"`
 	ClippedAt time.Time `json:"clippedAt"`
 }
 

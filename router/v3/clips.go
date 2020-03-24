@@ -40,7 +40,7 @@ func (r UpdateClipFolderRequest) Validate() error {
 	)
 }
 
-// PostClipFolders POST /clip-folders
+// CreateClipFolders POST /clip-folders
 func (h *Handlers) CreateClipFolders(c echo.Context) error {
 	userID := getRequestUserID(c)
 
