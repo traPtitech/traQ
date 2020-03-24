@@ -37,7 +37,7 @@ type ClipRepository interface {
 	// 存在しないクリップフォルダーを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	DeleteClipFolder(folderID uuid.UUID) error
-	// DeleteClipFolder 指定したクリップフォルダーメッセージを削除します。
+	// DeleteClipFolderMessage 指定したクリップフォルダーメッセージを削除します。
 	//
 	// 成功した場合、nilを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。

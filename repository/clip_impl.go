@@ -165,6 +165,7 @@ func (repo *GormRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUI
 		Name: event.ClipFolderMessageDeleted,
 		Fields: hub.Fields{
 			"user_id":                cf.OwnerID,
+			"clip_folder_id":         cf.ID,
 			"clip_folder_message_id": messageID,
 			"clip_folder_message":    &cfm,
 		},
@@ -205,9 +206,10 @@ func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) 
 	repo.hub.Publish(hub.Message{
 		Name: event.ClipFolderMessageAdded,
 		Fields: hub.Fields{
-			"user_id":                 cf.OwnerID,
-			"clip_folde4r_message_id": messageID,
-			"clip_folder_message":     &cfm,
+			"user_id":                cf.OwnerID,
+			"clip_folder_id":         cf.ID,
+			"clip_folder_message_id": messageID,
+			"clip_folder_message":    cfm,
 		},
 	})
 
@@ -260,7 +262,7 @@ func (repo *GormRepository) GetClipFolderMessages(folderID uuid.UUID, query Clip
 	}
 
 	if query.Offset > 0 {
-		tx.Offset(query.Offset)
+		tx = tx.Offset(query.Offset)
 	}
 
 	if query.Limit > 0 {
