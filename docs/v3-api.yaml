@@ -342,7 +342,6 @@ paths:
           in: query
           name: channelId
           description: アップロード先チャンネルUUID
-          required: true
         - $ref: '#/components/parameters/limitInQuery'
         - $ref: '#/components/parameters/offsetInQuery'
         - $ref: '#/components/parameters/sinceInQuery'
@@ -350,17 +349,14 @@ paths:
         - $ref: '#/components/parameters/inclusiveInQuery'
         - $ref: '#/components/parameters/orderInQuery'
         - schema:
-            type: string
+            type: boolean
+            default: 'false'
           in: query
-          name: mime
-          description: MIMEタイプ
-        - schema:
-            type: string
-            format: uuid
-          in: query
-          name: uploaderId
-          description: アップロード者UUID
-      description: 指定したクエリでファイルメタのリストを取得します。
+          name: mine
+          description: アップロード者が自分のファイルのみを取得するか
+      description: |-
+        指定したクエリでファイルメタのリストを取得します。
+        クエリパラメータ`channelId`, `mine`の少なくともいずれかが必須です。
   '/files/{fileId}/meta':
     parameters:
       - $ref: '#/components/parameters/fileIdInPath'

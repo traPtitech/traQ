@@ -2739,3 +2739,7 @@ func (f *fileMetaImpl) GetAlternativeURL() string {
 	url, _ := f.fs.GenerateAccessURL(f.GetID().String(), f.GetFileType())
 	return url
 }
+
+func (repo *TestRepository) GetFiles(q repository.FilesQuery) (result []model.FileMeta, more bool, err error) {
+	panic("implement me")
+}

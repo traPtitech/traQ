@@ -66,17 +66,6 @@ func (h *Handlers) GetFileByID(c echo.Context) error {
 	return utils.ServeFile(c, getFileFromContext(c))
 }
 
-// DeleteFileByID DELETE /files/:fileID
-func (h *Handlers) DeleteFileByID(c echo.Context) error {
-	fileID := getRequestParamAsUUID(c, consts.ParamFileID)
-
-	if err := h.Repo.DeleteFile(fileID); err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.NoContent(http.StatusNoContent)
-}
-
 // GetMetaDataByFileID GET /files/:fileID/meta
 func (h *Handlers) GetMetaDataByFileID(c echo.Context) error {
 	meta := getFileFromContext(c)

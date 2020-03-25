@@ -379,6 +379,14 @@ func formatFileInfo(meta model.FileMeta) *FileInfo {
 	return fi
 }
 
+func formatFileInfos(metas []model.FileMeta) []*FileInfo {
+	result := make([]*FileInfo, len(metas))
+	for i, meta := range metas {
+		result[i] = formatFileInfo(meta)
+	}
+	return result
+}
+
 type OAuth2Client struct {
 	ID          string             `json:"id"`
 	Name        string             `json:"name"`

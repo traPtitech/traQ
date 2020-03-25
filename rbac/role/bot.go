@@ -35,6 +35,7 @@ var botPerms = []rbac.Permission{
 	permission.RemoveMessageStamp,
 	permission.DownloadFile,
 	permission.UploadFile,
+	permission.DeleteFile,
 	permission.BotActionJoinChannel,
 	permission.BotActionLeaveChannel,
 }

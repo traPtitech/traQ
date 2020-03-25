@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
+	"gopkg.in/guregu/null.v3"
 	"io"
 	"mime"
 	"path/filepath"
@@ -65,8 +66,27 @@ func (args *SaveFileArgs) ACLAllow(userID uuid.UUID) {
 	args.ACL[userID] = true
 }
 
+// FilesQuery GetFiles用クエリ
+type FilesQuery struct {
+	UploaderID uuid.NullUUID
+	ChannelID  uuid.NullUUID
+	Since      null.Time
+	Until      null.Time
+	Inclusive  bool
+	Limit      int
+	Offset     int
+	Asc        bool
+	Type       null.String
+}
+
 // FileRepository ファイルリポジトリ
 type FileRepository interface {
+	// GetFiles 指定したクエリでファイルを取得します
+	//
+	// 成功した場合、ファイルメタの配列を返します。負のoffset, limitは無視されます。
+	// 指定した範囲内にlimitを超えてファイルメタが存在していた場合、trueを返します。
+	// DBによるエラーを返すことがあります。
+	GetFiles(q FilesQuery) (result []model.FileMeta, more bool, err error)
 	// GetFileMeta 指定したファイルのメタデータを取得します
 	//
 	// 成功した場合、メタデータとnilを返します。

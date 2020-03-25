@@ -24,8 +24,8 @@ CREATE TABLE `files` (
   `created_at` datetime(6) DEFAULT NULL,
   `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `files_creator_id_users_id_foreign` (`creator_id`),
   KEY `idx_files_channel_id_created_at` (`channel_id`,`created_at`),
+  KEY `idx_files_creator_id_created_at` (`creator_id`,`created_at`),
   CONSTRAINT `files_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `files_creator_id_users_id_foreign` FOREIGN KEY (`creator_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -64,8 +64,8 @@ CREATE TABLE `files` (
 
 | Name | Definition |
 | ---- | ---------- |
-| files_creator_id_users_id_foreign | KEY files_creator_id_users_id_foreign (creator_id) USING BTREE |
 | idx_files_channel_id_created_at | KEY idx_files_channel_id_created_at (channel_id, created_at) USING BTREE |
+| idx_files_creator_id_created_at | KEY idx_files_creator_id_created_at (creator_id, created_at) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 
 ## Relations

@@ -96,6 +96,66 @@ func (f *fileMetaImpl) GetAlternativeURL() string {
 	return url
 }
 
+// GetFiles implements FileRepository interface.
+func (repo *GormRepository) GetFiles(q FilesQuery) (result []model.FileMeta, more bool, err error) {
+	files := make([]*model.File, 0)
+	tx := repo.db
+
+	if q.ChannelID.Valid {
+		if q.ChannelID.UUID == uuid.Nil {
+			tx = tx.Where("files.channel_id IS NULL")
+		} else {
+			tx = tx.Where("files.channel_id = ?", q.ChannelID.UUID)
+		}
+	}
+	if q.UploaderID.Valid {
+		if q.UploaderID.UUID == uuid.Nil {
+			tx = tx.Where("files.creator_id IS NULL")
+		} else {
+			tx = tx.Where("files.creator_id = ?", q.UploaderID.UUID)
+		}
+	}
+	if q.Type.Valid {
+		tx = tx.Where("files.type = ?", q.Type.String)
+	}
+
+	if q.Inclusive {
+		if q.Since.Valid {
+			tx = tx.Where("files.created_at >= ?", q.Since.Time)
+		}
+		if q.Until.Valid {
+			tx = tx.Where("files.created_at <= ?", q.Until.Time)
+		}
+	} else {
+		if q.Since.Valid {
+			tx = tx.Where("files.created_at > ?", q.Since.Time)
+		}
+		if q.Until.Valid {
+			tx = tx.Where("files.created_at < ?", q.Until.Time)
+		}
+	}
+
+	if q.Asc {
+		tx = tx.Order("files.created_at")
+	} else {
+		tx = tx.Order("files.created_at DESC")
+	}
+
+	if q.Offset > 0 {
+		tx = tx.Offset(q.Offset)
+	}
+
+	if q.Limit > 0 {
+		err = tx.Limit(q.Limit + 1).Find(&files).Error
+		if len(files) > q.Limit {
+			return repo.makeFileMetas(files[:len(files)-1]), true, err
+		}
+	} else {
+		err = tx.Find(&files).Error
+	}
+	return repo.makeFileMetas(files), false, err
+}
+
 // SaveFile implements FileRepository interface.
 func (repo *GormRepository) SaveFile(args SaveFileArgs) (model.FileMeta, error) {
 	if err := args.Validate(); err != nil {
@@ -171,7 +231,7 @@ func (repo *GormRepository) SaveFile(args SaveFileArgs) (model.FileMeta, error) 
 	if err != nil {
 		return nil, err
 	}
-	return repo.makeFileMetaImpl(f), nil
+	return repo.makeFileMeta(f), nil
 }
 
 // GetFileMeta implements FileRepository interface.
@@ -183,7 +243,7 @@ func (repo *GormRepository) GetFileMeta(fileID uuid.UUID) (model.FileMeta, error
 	if err := repo.db.Take(f, &model.File{ID: fileID}).Error; err != nil {
 		return nil, convertError(err)
 	}
-	return repo.makeFileMetaImpl(f), nil
+	return repo.makeFileMeta(f), nil
 }
 
 // DeleteFile implements FileRepository interface.
@@ -272,6 +332,14 @@ func (repo *GormRepository) generateThumbnail(ctx context.Context, f *model.File
 	return img.Bounds(), nil
 }
 
-func (repo *GormRepository) makeFileMetaImpl(f *model.File) *fileMetaImpl {
+func (repo *GormRepository) makeFileMeta(f *model.File) model.FileMeta {
 	return &fileMetaImpl{meta: f, fs: repo.FS}
+}
+
+func (repo *GormRepository) makeFileMetas(fs []*model.File) []model.FileMeta {
+	result := make([]model.FileMeta, len(fs))
+	for i, f := range fs {
+		result[i] = repo.makeFileMeta(f)
+	}
+	return result
 }
