@@ -1,14 +1,82 @@
 package v3
 
 import (
+	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"gopkg.in/guregu/null.v3"
 	"net/http"
+	"strconv"
+	"strings"
 )
+
+// GetFilesRequest GET /files 用リクエストクエリ
+type GetFilesRequest struct {
+	Limit     int           `query:"limit"`
+	Offset    int           `query:"offset"`
+	Since     null.Time     `query:"since"`
+	Until     null.Time     `query:"until"`
+	Inclusive bool          `query:"inclusive"`
+	Order     string        `query:"order"`
+	ChannelID uuid.NullUUID `query:"channelId"`
+	Mine      bool          `query:"mine"`
+}
+
+func (q *GetFilesRequest) Validate() error {
+	if q.Limit == 0 {
+		q.Limit = 20
+	}
+	if !q.ChannelID.Valid && !q.Mine {
+		q.Mine = true
+	}
+	return vd.ValidateStruct(q,
+		vd.Field(&q.Limit, vd.Min(1), vd.Max(200)),
+		vd.Field(&q.Offset, vd.Min(0)),
+	)
+}
+
+// GetFiles GET /files
+func (h *Handlers) GetFiles(c echo.Context) error {
+	var req GetFilesRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	q := repository.FilesQuery{
+		Since:     req.Since,
+		Until:     req.Until,
+		Inclusive: req.Inclusive,
+		Limit:     req.Limit,
+		Offset:    req.Offset,
+		Asc:       strings.ToLower(req.Order) == "asc",
+		Type:      null.StringFrom(model.FileTypeUserFile),
+	}
+
+	if req.Mine {
+		q.UploaderID = uuid.NullUUID{Valid: true, UUID: getRequestUserID(c)}
+	}
+	if req.ChannelID.Valid {
+		// チャンネルアクセス権確認
+		if ok, err := h.Repo.IsChannelAccessibleToUser(getRequestUserID(c), req.ChannelID.UUID); err != nil {
+			return herror.InternalServerError(err)
+		} else if !ok {
+			return herror.BadRequest("invalid channelId")
+		}
+		q.ChannelID = req.ChannelID
+	}
+
+	files, more, err := h.Repo.GetFiles(q)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	c.Response().Header().Set(consts.HeaderMore, strconv.FormatBool(more))
+	return c.JSON(http.StatusOK, formatFileInfos(files))
+}
 
 // PostFile POST /files
 func (h *Handlers) PostFile(c echo.Context) error {
