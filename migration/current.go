@@ -23,6 +23,7 @@ func Migrations() []*gormigrate.Migration {
 		v10(), // パーミッション周りの調整
 		v11(), // クリップ機能の追加
 		v12(), // カスタムスタンプパレットの追加
+		v13(), // パーミッション調整・インデックス付与
 	}
 }
 
@@ -130,5 +131,7 @@ func AllCompositeIndexes() [][]string {
 		{"idx_channel_events_channel_id_date_time", "channel_events", "channel_id", "date_time"},
 		{"idx_channel_events_channel_id_event_type_date_time", "channel_events", "channel_id", "event_type", "date_time"},
 		{"idx_files_channel_id_created_at", "files", "channel_id", "created_at"},
+		{"idx_files_creator_id_created_at", "files", "creator_id", "created_at"},
+		{"idx_messages_stamps_user_id_stamp_id_updated_at", "messages_stamps", "user_id", "stamp_id", "updated_at"},
 	}
 }
