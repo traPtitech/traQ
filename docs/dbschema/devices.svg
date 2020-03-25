@@ -79,3 +79,7 @@
 </g>
 </g>
 </svg>
+#000000">FOREIGN KEY (user_id) REFERENCES users (id)</text>
+</g>
+</g>
+</svg>

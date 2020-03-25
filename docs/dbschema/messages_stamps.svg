@@ -165,3 +165,7 @@
 </g>
 </g>
 </svg>
+ext-anchor="start" x="562.445" y="-647.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (user_id) REFERENCES users (id)</text>
+</g>
+</g>
+</svg>

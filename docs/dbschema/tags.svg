@@ -64,3 +64,7 @@
 </g>
 </g>
 </svg>
+IGN KEY (tag_id) REFERENCES tags (id)</text>
+</g>
+</g>
+</svg>

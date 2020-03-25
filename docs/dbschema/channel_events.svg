@@ -88,3 +88,7 @@
 </g>
 </g>
 </svg>
+l="#000000">FOREIGN KEY (channel_id) REFERENCES channels (id)</text>
+</g>
+</g>
+</svg>

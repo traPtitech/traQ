@@ -22,6 +22,7 @@ func Migrations() []*gormigrate.Migration {
 		v9(),  // ユーザーテーブル拡張
 		v10(), // パーミッション周りの調整
 		v11(), // クリップ機能の追加
+		v12(), // カスタムスタンプパレットの追加
 	}
 }
 
@@ -66,6 +67,7 @@ func AllTables() []interface{} {
 		&model.UserProfile{},
 		&model.ClipFolder{},
 		&model.User{},
+		&model.StampPalette{},
 		&sessions.SessionRecord{},
 	}
 }

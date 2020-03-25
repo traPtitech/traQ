@@ -88,3 +88,7 @@
 </g>
 </g>
 </svg>
+0" fill="#000000">FOREIGN KEY (file_id) REFERENCES files (id)</text>
+</g>
+</g>
+</svg>

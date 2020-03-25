@@ -113,3 +113,7 @@
 </g>
 </g>
 </svg>
+ily="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (tag_id) REFERENCES tags (id)</text>
+</g>
+</g>
+</svg>

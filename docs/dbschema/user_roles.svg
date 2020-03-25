@@ -81,3 +81,7 @@
 </g>
 </g>
 </svg>
+00000">FOREIGN KEY (role) REFERENCES user_roles (name)</text>
+</g>
+</g>
+</svg>
