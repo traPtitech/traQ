@@ -2635,11 +2635,11 @@ func (repo *TestRepository) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]
 	panic("implement me")
 }
 
-func (repo *TestRepository) CreateClipFolder(userID uuid.UUID, name string, description string) (*model.ClipFolder, error) {
+func (repo *TestRepository) CreateClipFolder(userID uuid.UUID, name, description string) (*model.ClipFolder, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) UpdateClipFolder(folderID uuid.UUID, name null.String, description null.String) error {
+func (repo *TestRepository) UpdateClipFolder(folderID uuid.UUID, name, description null.String) error {
 	panic("implement me")
 }
 
