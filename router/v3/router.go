@@ -42,6 +42,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.Repo)
 	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.Repo)
 	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC, h.Repo)
+	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm(h.RBAC, h.Repo)
 
 	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo))
 	{
@@ -292,18 +293,18 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiClipFolders := api.Group("/clip-folders", blockBot)
 		{
-			apiClipFolders.GET("", NotImplemented, requires(permission.GetClipFolder))
-			apiClipFolders.POST("", NotImplemented, requires(permission.CreateClipFolder))
-			apiClipFoldersFID := apiClipFolders.Group("/:folderID")
+			apiClipFolders.GET("", h.GetClipFolders, requires(permission.GetClipFolder))
+			apiClipFolders.POST("", h.CreateClipFolder, requires(permission.CreateClipFolder))
+			apiClipFoldersFID := apiClipFolders.Group("/:folderID", retrieve.ClipFolderID(), requiresClipFolderAccessPerm)
 			{
-				apiClipFoldersFID.GET("", NotImplemented, requires(permission.GetClipFolder))
-				apiClipFoldersFID.PATCH("", NotImplemented, requires(permission.EditClipFolder))
-				apiClipFoldersFID.DELETE("", NotImplemented, requires(permission.DeleteClipFolder))
+				apiClipFoldersFID.GET("", h.GetClipFolder, requires(permission.GetClipFolder))
+				apiClipFoldersFID.PATCH("", h.EditClipFolder, requires(permission.EditClipFolder))
+				apiClipFoldersFID.DELETE("", h.DeleteClipFolder, requires(permission.DeleteClipFolder))
 				apiClipFoldersFIDMessages := apiClipFoldersFID.Group("/messages")
 				{
-					apiClipFoldersFIDMessages.GET("", NotImplemented, requires(permission.GetClipFolder, permission.GetMessage))
-					apiClipFoldersFIDMessages.POST("", NotImplemented, requires(permission.EditClipFolder))
-					apiClipFoldersFIDMessages.DELETE("/:messageID", NotImplemented, requires(permission.EditClipFolder))
+					apiClipFoldersFIDMessages.GET("", h.GetClipFolderMessages, requires(permission.GetClipFolder, permission.GetMessage))
+					apiClipFoldersFIDMessages.POST("", h.PostClipFolderMessage, requires(permission.EditClipFolder))
+					apiClipFoldersFIDMessages.DELETE("/:messageID", h.DeleteClipFolderMessages, requires(permission.EditClipFolder))
 				}
 			}
 		}

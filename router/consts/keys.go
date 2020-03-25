@@ -15,4 +15,5 @@ const (
 	KeyParamMessage       = "paramMessage"
 	KeyParamChannel       = "paramChannel"
 	KeyParamFile          = "paramFile"
+	KeyParamClipFolder    = "paramClipFolder"
 )

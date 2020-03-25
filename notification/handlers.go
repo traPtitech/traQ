@@ -2,6 +2,9 @@ package notification
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
@@ -14,43 +17,46 @@ import (
 	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/set"
 	"go.uber.org/zap"
-	"strings"
-	"time"
 )
 
 type eventHandler func(ns *Service, ev hub.Message)
 
 var handlerMap = map[string]eventHandler{
-	event.MessageCreated:         messageCreatedHandler,
-	event.MessageUpdated:         messageUpdatedHandler,
-	event.MessageDeleted:         messageDeletedHandler,
-	event.MessagePinned:          messagePinnedHandler,
-	event.MessageUnpinned:        messageUnpinnedHandler,
-	event.MessageStamped:         messageStampedHandler,
-	event.MessageUnstamped:       messageUnstampedHandler,
-	event.ChannelCreated:         channelCreatedHandler,
-	event.ChannelUpdated:         channelUpdatedHandler,
-	event.ChannelDeleted:         channelDeletedHandler,
-	event.ChannelStared:          channelStaredHandler,
-	event.ChannelUnstared:        channelUnstaredHandler,
-	event.ChannelRead:            channelReadHandler,
-	event.ChannelViewersChanged:  channelViewersChangedHandler,
-	event.UserCreated:            userCreatedHandler,
-	event.UserUpdated:            userUpdatedHandler,
-	event.UserIconUpdated:        userIconUpdatedHandler,
-	event.UserOnline:             userOnlineHandler,
-	event.UserOffline:            userOfflineHandler,
-	event.UserTagAdded:           userTagUpdatedHandler,
-	event.UserTagRemoved:         userTagUpdatedHandler,
-	event.UserTagUpdated:         userTagUpdatedHandler,
-	event.UserGroupCreated:       userGroupCreatedHandler,
-	event.UserGroupDeleted:       userGroupDeletedHandler,
-	event.UserGroupMemberAdded:   userGroupUpdatedHandler,
-	event.UserGroupMemberRemoved: userGroupUpdatedHandler,
-	event.StampCreated:           stampCreatedHandler,
-	event.StampUpdated:           stampUpdatedHandler,
-	event.StampDeleted:           stampDeletedHandler,
-	event.UserWebRTCStateChanged: userWebRTCStateChangedHandler,
+	event.MessageCreated:           messageCreatedHandler,
+	event.MessageUpdated:           messageUpdatedHandler,
+	event.MessageDeleted:           messageDeletedHandler,
+	event.MessagePinned:            messagePinnedHandler,
+	event.MessageUnpinned:          messageUnpinnedHandler,
+	event.MessageStamped:           messageStampedHandler,
+	event.MessageUnstamped:         messageUnstampedHandler,
+	event.ChannelCreated:           channelCreatedHandler,
+	event.ChannelUpdated:           channelUpdatedHandler,
+	event.ChannelDeleted:           channelDeletedHandler,
+	event.ChannelStared:            channelStaredHandler,
+	event.ChannelUnstared:          channelUnstaredHandler,
+	event.ChannelRead:              channelReadHandler,
+	event.ChannelViewersChanged:    channelViewersChangedHandler,
+	event.UserCreated:              userCreatedHandler,
+	event.UserUpdated:              userUpdatedHandler,
+	event.UserIconUpdated:          userIconUpdatedHandler,
+	event.UserOnline:               userOnlineHandler,
+	event.UserOffline:              userOfflineHandler,
+	event.UserTagAdded:             userTagUpdatedHandler,
+	event.UserTagRemoved:           userTagUpdatedHandler,
+	event.UserTagUpdated:           userTagUpdatedHandler,
+	event.UserGroupCreated:         userGroupCreatedHandler,
+	event.UserGroupDeleted:         userGroupDeletedHandler,
+	event.UserGroupMemberAdded:     userGroupUpdatedHandler,
+	event.UserGroupMemberRemoved:   userGroupUpdatedHandler,
+	event.StampCreated:             stampCreatedHandler,
+	event.StampUpdated:             stampUpdatedHandler,
+	event.StampDeleted:             stampDeletedHandler,
+	event.ClipFolderCreated:        clipFolderCreatedHandler,
+	event.ClipFolderUpdated:        clipFolderUpdatedHandler,
+	event.ClipFolderDeleted:        clipFolderDeletedHandler,
+	event.ClipFolderMessageDeleted: clipFolderMessageDeletedHandler,
+	event.ClipFolderMessageAdded:   clipFolderMessageAddedHandler,
+	event.UserWebRTCStateChanged:   userWebRTCStateChangedHandler,
 }
 
 func messageCreatedHandler(ns *Service, ev hub.Message) {
@@ -453,6 +459,53 @@ func userWebRTCStateChangedHandler(ns *Service, ev hub.Message) {
 			"user_id":    ev.Fields["user_id"].(uuid.UUID),
 			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
 			"state":      ev.Fields["state"].(set.StringSet),
+		},
+	})
+}
+
+func clipFolderCreatedHandler(ns *Service, ev hub.Message) {
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+		EventType: "CLIP_FOLDER_CREATED",
+		Payload: map[string]interface{}{
+			"id": ev.Fields["clip_folder_id"].(uuid.UUID),
+		},
+	})
+}
+
+func clipFolderUpdatedHandler(ns *Service, ev hub.Message) {
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+		EventType: "CLIP_FOLDER_UPDATED",
+		Payload: map[string]interface{}{
+			"id": ev.Fields["clip_folder_id"].(uuid.UUID),
+		},
+	})
+}
+
+func clipFolderDeletedHandler(ns *Service, ev hub.Message) {
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+		EventType: "CLIP_FOLDER_DELETED",
+		Payload: map[string]interface{}{
+			"id": ev.Fields["clip_folder_id"].(uuid.UUID),
+		},
+	})
+}
+
+func clipFolderMessageDeletedHandler(ns *Service, ev hub.Message) {
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+		EventType: "CLIP_FOLDER_MESSAGE_DELETED",
+		Payload: map[string]interface{}{
+			"folder_id":  ev.Fields["clip_folder_id"].(uuid.UUID),
+			"message_id": ev.Fields["clip_folder_message_id"].(uuid.UUID),
+		},
+	})
+}
+
+func clipFolderMessageAddedHandler(ns *Service, ev hub.Message) {
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+		EventType: "CLIP_FOLDER_MESSAGE_ADDED",
+		Payload: map[string]interface{}{
+			"folder_id":  ev.Fields["clip_folder_id"].(uuid.UUID),
+			"message_id": ev.Fields["clip_folder_message_id"].(uuid.UUID),
 		},
 	})
 }

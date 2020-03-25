@@ -2,8 +2,9 @@ package repository
 
 import (
 	"fmt"
-	"github.com/traPtitech/traQ/utils/message"
 	"strings"
+
+	"github.com/traPtitech/traQ/utils/message"
 
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
@@ -131,6 +132,7 @@ func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 			Delete(&m).
 			Delete(model.Unread{}, &model.Unread{MessageID: messageID}).
 			Delete(model.Pin{}, &model.Pin{MessageID: messageID}).
+			Delete(model.ClipFolderMessage{}, &model.ClipFolderMessage{MessageID: messageID}).
 			GetErrors()
 		if len(errs) > 0 {
 			return errs[0]

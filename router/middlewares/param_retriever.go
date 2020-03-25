@@ -152,3 +152,10 @@ func (pr *ParamRetriever) UserID(checkOnly bool) echo.MiddlewareFunc {
 		return pr.repo.GetUser(v, true)
 	})
 }
+
+// ClipFolderID リクエストURLの`folderID`パラメータからClipFolderを取り出す
+func (pr *ParamRetriever) ClipFolderID() echo.MiddlewareFunc {
+	return pr.byUUID(consts.ParamClipFolderID, consts.KeyParamClipFolder, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+		return pr.repo.GetClipFolder(v)
+	})
+}

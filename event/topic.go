@@ -239,4 +239,38 @@ const (
 	// 		user_id: uuid.UUID
 	//		req: *http.Request
 	WSDisconnected = "ws.disconnected"
+
+	// ClipFolderCreated クリップフォルダーが作成された
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		clip_folder_id: uuid.UUID
+	//		clip_folder: *model.ClipFolder
+	ClipFolderCreated = "clip_folder.created"
+	// ClipFolderUpdated クリップフォルダーが更新された
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		clip_folder_id: uuid.UUID
+	//		old_clip_folder: *model.ClipFolder
+	//		clip_folder: *model.ClipFolder
+	ClipFolderUpdated = "clip_folder.updated"
+	// ClipFolderDeleted クリップフォルダーが削除された
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		clip_folder_id: uuid.UUID
+	//		clip_folder: *model.ClipFolder
+	ClipFolderDeleted = "clip_folder.deleted"
+	// ClipFolderMessageDeleted クリップフォルダーのメッセージが除外された
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		clip_folder_id: uuid.UUID
+	//		clip_folder_message_id: uuid.UUID
+	//		clip_folder_message: *model.ClipFolderMessage
+	ClipFolderMessageDeleted = "clip_folder_message.deleted"
+	// ClipFolderMessageAdded クリップフォルダーにメッセージが追加された
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	//		clip_folder_id: uuid.UUID
+	//		clip_folder_message_id: uuid.UUID
+	//		clip_folder_message: *model.ClipFolderMessage
+	ClipFolderMessageAdded = "clip_folder_message.added"
 )

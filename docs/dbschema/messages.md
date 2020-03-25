@@ -32,7 +32,7 @@ CREATE TABLE `messages` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [messages_stamps](messages_stamps.md) [pins](pins.md) [unreads](unreads.md) |  | メッセージUUID |
+| id | char(36) |  | false | [clip_folder_messages](clip_folder_messages.md) [messages_stamps](messages_stamps.md) [pins](pins.md) [unreads](unreads.md) |  | メッセージUUID |
 | user_id | char(36) |  | false |  | [users](users.md) | 投稿ユーザーUUID |
 | channel_id | char(36) |  | false |  | [channels](channels.md) | 投稿先チャンネルUUID |
 | text | text |  | false |  |  | 本文 |

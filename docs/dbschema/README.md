@@ -11,6 +11,8 @@
 | [channel_events](channel_events.md) | 5 | チャンネルイベントテーブル | BASE TABLE |
 | [channel_latest_messages](channel_latest_messages.md) | 3 | チャンネル最新メッセージテーブル | BASE TABLE |
 | [channels](channels.md) | 12 | チャンネルテーブル | BASE TABLE |
+| [clip_folder_messages](clip_folder_messages.md) | 3 | クリップフォルダーメッセージテーブル | BASE TABLE |
+| [clip_folders](clip_folders.md) | 5 | クリップフォルダーテーブル | BASE TABLE |
 | [devices](devices.md) | 3 | FCMデバイステーブル | BASE TABLE |
 | [dm_channel_mappings](dm_channel_mappings.md) | 3 | DMチャンネルマッピングテーブル | BASE TABLE |
 | [files](files.md) | 14 | ファイルテーブル | BASE TABLE |

@@ -21,6 +21,7 @@ func Migrations() []*gormigrate.Migration {
 		v8(),  // チャンネル購読拡張
 		v9(),  // ユーザーテーブル拡張
 		v10(), // パーミッション周りの調整
+		v11(), // クリップ機能の追加
 	}
 }
 
@@ -56,12 +57,14 @@ func AllTables() []interface{} {
 		&model.UserSubscribeChannel{},
 		&model.Tag{},
 		&model.ArchivedMessage{},
+		&model.ClipFolderMessage{},
 		&model.Message{},
 		&model.Channel{},
 		&model.UserGroupAdmin{},
 		&model.UserGroupMember{},
 		&model.UserGroup{},
 		&model.UserProfile{},
+		&model.ClipFolder{},
 		&model.User{},
 		&sessions.SessionRecord{},
 	}
@@ -108,6 +111,9 @@ func AllForeignKeys() [][5]string {
 		{"files", "creator_id", "users(id)", "RESTRICT", "CASCADE"},
 		{"files_acl", "file_id", "files(id)", "CASCADE", "CASCADE"},
 		{"user_profiles", "user_id", "users(id)", "CASCADE", "CASCADE"},
+		{"clip_folders", "owner_id", "users(id)", "CASCADE", "CASCADE"},
+		{"clip_folder_messages", "folder_id", "clip_folders(id)", "CASCADE", "CASCADE"},
+		{"clip_folder_messages", "message_id", "messages(id)", "CASCADE", "CASCADE"},
 	}
 }
 

@@ -1,6 +1,10 @@
 package v3
 
 import (
+	"net/http"
+	"strconv"
+	"strings"
+
 	vd "github.com/go-ozzo/ozzo-validation"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
@@ -10,9 +14,6 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"gopkg.in/guregu/null.v3"
-	"net/http"
-	"strconv"
-	"strings"
 )
 
 // NotImplemented 未実装API. 501 NotImplementedを返す
@@ -89,6 +90,11 @@ func getParamGroup(c echo.Context) *model.UserGroup {
 // getParamAsUUID URLのnameパラメータの文字列をuuid.UUIDとして取得
 func getParamAsUUID(c echo.Context, name string) uuid.UUID {
 	return extension.GetRequestParamAsUUID(c, name)
+}
+
+// getParamClipFolder URLの:folderIDに対応するClipFolderを取得
+func getParamClipFolder(c echo.Context) *model.ClipFolder {
+	return c.Get(consts.KeyParamClipFolder).(*model.ClipFolder)
 }
 
 type MessagesQuery struct {

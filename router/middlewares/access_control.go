@@ -203,3 +203,18 @@ func CheckUserGroupAdminPerm(rbac rbac.RBAC, repo repository.Repository) echo.Mi
 		}
 	}
 }
+
+// CheckClipFolderAccessPerm ClipFolderアクセス権限を確認するミドルウェア
+func CheckClipFolderAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			user := c.Get(consts.KeyUser).(model.UserInfo)
+			cf := c.Get(consts.KeyParamClipFolder).(*model.ClipFolder)
+			if user.GetID() == cf.OwnerID {
+				return next(c) // 所有者のアクセス
+			}
+
+			return herror.Forbidden()
+		}
+	}
+}

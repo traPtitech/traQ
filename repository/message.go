@@ -1,10 +1,11 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"gopkg.in/guregu/null.v3"
-	"time"
 )
 
 // MessagesQuery GetMessages用クエリ
