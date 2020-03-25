@@ -51,12 +51,15 @@ var handlerMap = map[string]eventHandler{
 	event.StampCreated:             stampCreatedHandler,
 	event.StampUpdated:             stampUpdatedHandler,
 	event.StampDeleted:             stampDeletedHandler,
+	event.StampPaletteCreated:      stampPaletteCreatedHandler,
+	event.StampPaletteUpdated:      stampPaletteUpdatedHandler,
+	event.StampPaletteDeleted:      stampPaletteDeletedHandler,
+	event.UserWebRTCStateChanged:   userWebRTCStateChangedHandler,
 	event.ClipFolderCreated:        clipFolderCreatedHandler,
 	event.ClipFolderUpdated:        clipFolderUpdatedHandler,
 	event.ClipFolderDeleted:        clipFolderDeletedHandler,
 	event.ClipFolderMessageDeleted: clipFolderMessageDeletedHandler,
 	event.ClipFolderMessageAdded:   clipFolderMessageAddedHandler,
-	event.UserWebRTCStateChanged:   userWebRTCStateChangedHandler,
 }
 
 func messageCreatedHandler(ns *Service, ev hub.Message) {
@@ -448,6 +451,33 @@ func stampDeletedHandler(ns *Service, ev hub.Message) {
 		EventType: "STAMP_DELETED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_id"].(uuid.UUID),
+		},
+	})
+}
+
+func stampPaletteCreatedHandler(ns *Service, ev hub.Message) {
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+		EventType: "STAMP_PALETTE_CREATED",
+		Payload: map[string]interface{}{
+			"id": ev.Fields["stamp_palette_id"].(uuid.UUID),
+		},
+	})
+}
+
+func stampPaletteUpdatedHandler(ns *Service, ev hub.Message) {
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+		EventType: "STAMP_PALETTE_UPDATED",
+		Payload: map[string]interface{}{
+			"id": ev.Fields["stamp_palette_id"].(uuid.UUID),
+		},
+	})
+}
+
+func stampPaletteDeletedHandler(ns *Service, ev hub.Message) {
+	userMulticast(ns, ev.Fields["user_id"].(uuid.UUID), &sse.EventData{
+		EventType: "STAMP_PALETTE_DELETED",
+		Payload: map[string]interface{}{
+			"id": ev.Fields["stamp_palette_id"].(uuid.UUID),
 		},
 	})
 }

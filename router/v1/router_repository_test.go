@@ -175,6 +175,30 @@ func (repo *TestRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 	panic("implement me")
 }
 
+func (repo *TestRepository) CreateStampPalette(name, description string, stamps model.UUIDs, userID uuid.UUID) (*model.StampPalette, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) UpdateStampPalette(id uuid.UUID, args repository.UpdateStampPaletteArgs) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetStampPalette(id uuid.UUID) (sp *model.StampPalette, err error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) DeleteStampPalette(id uuid.UUID) (err error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetStampPalettes(userID uuid.UUID) (sps []*model.StampPalette, err error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) ExistStamps(stampIDs []uuid.UUID) (err error) {
+	panic("implement me")
+}
+
 func NewTestRepository() *TestRepository {
 	r := &TestRepository{
 		FS:                    storage.NewInMemoryFileStorage(),

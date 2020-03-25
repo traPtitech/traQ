@@ -22,6 +22,7 @@ func Migrations() []*gormigrate.Migration {
 		v9(),  // ユーザーテーブル拡張
 		v10(), // パーミッション周りの調整
 		v11(), // クリップ機能の追加
+		v12(), // カスタムスタンプパレットの追加
 	}
 }
 
@@ -60,6 +61,7 @@ func AllTables() []interface{} {
 		&model.ClipFolderMessage{},
 		&model.Message{},
 		&model.Channel{},
+		&model.StampPalette{},
 		&model.UserGroupAdmin{},
 		&model.UserGroupMember{},
 		&model.UserGroup{},
@@ -114,6 +116,7 @@ func AllForeignKeys() [][5]string {
 		{"clip_folders", "owner_id", "users(id)", "CASCADE", "CASCADE"},
 		{"clip_folder_messages", "folder_id", "clip_folders(id)", "CASCADE", "CASCADE"},
 		{"clip_folder_messages", "message_id", "messages(id)", "CASCADE", "CASCADE"},
+		{"stamp_palettes", "creator_id", "users(id)", "CASCADE", "CASCADE"},
 	}
 }
 

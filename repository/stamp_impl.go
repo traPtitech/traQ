@@ -167,6 +167,23 @@ func (repo *GormRepository) StampExists(id uuid.UUID) (bool, error) {
 	return dbExists(repo.db, &model.Stamp{ID: id})
 }
 
+// ExistStamps implements StampPaletteRepository interface.
+func (repo *GormRepository) ExistStamps(stampIDs []uuid.UUID) (err error) {
+	var num int
+	err = repo.db.
+		Table("stamps").
+		Where("id IN (?)", stampIDs).
+		Count(&num).
+		Error
+	if err != nil {
+		return err
+	}
+	if len(stampIDs) != num {
+		err = ArgError("stamp", "stamp is not found")
+	}
+	return
+}
+
 // StampNameExists implements StampRepository interface.
 func (repo *GormRepository) StampNameExists(name string) (bool, error) {
 	if len(name) == 0 {

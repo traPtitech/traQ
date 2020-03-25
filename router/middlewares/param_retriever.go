@@ -141,6 +141,13 @@ func (pr *ParamRetriever) StampID(checkOnly bool) echo.MiddlewareFunc {
 	})
 }
 
+// StampPalettesID リクエストURLの`paletteID`パラメータからStampPaletteを取り出す
+func (pr *ParamRetriever) StampPalettesID() echo.MiddlewareFunc {
+	return pr.byUUID(consts.ParamStampPaletteID, consts.KeyParamStampPalette, func(c echo.Context, v uuid.UUID) (interface{}, error) {
+		return pr.repo.GetStampPalette(v)
+	})
+}
+
 // UserID リクエストURLの`userID`パラメータからUserを取り出す
 func (pr *ParamRetriever) UserID(checkOnly bool) echo.MiddlewareFunc {
 	if checkOnly {

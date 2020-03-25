@@ -195,13 +195,13 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiStampPalettes := api.Group("/stamp-palettes", blockBot)
 		{
-			apiStampPalettes.GET("", NotImplemented, requires(permission.GetStampPalette))
-			apiStampPalettes.POST("", NotImplemented, requires(permission.CreateStampPalette))
-			apiStampPalettesPID := apiStampPalettes.Group("/:paletteID")
+			apiStampPalettes.GET("", h.GetStampPalettes, requires(permission.GetStampPalette))
+			apiStampPalettes.POST("", h.CreateStampPalette, requires(permission.CreateStampPalette))
+			apiStampPalettesPID := apiStampPalettes.Group("/:paletteID", retrieve.StampPalettesID())
 			{
-				apiStampPalettesPID.GET("", NotImplemented, requires(permission.GetStampPalette))
-				apiStampPalettesPID.PATCH("", NotImplemented, requires(permission.EditStampPalette))
-				apiStampPalettesPID.DELETE("", NotImplemented, requires(permission.DeleteStampPalette))
+				apiStampPalettesPID.GET("", h.GetStampPalette, requires(permission.GetStampPalette))
+				apiStampPalettesPID.PATCH("", h.EditStampPalette, requires(permission.EditStampPalette))
+				apiStampPalettesPID.DELETE("", h.DeleteStampPalette, requires(permission.DeleteStampPalette))
 			}
 		}
 		apiWebhooks := api.Group("/webhooks", blockBot)

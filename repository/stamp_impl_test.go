@@ -242,6 +242,37 @@ func TestRepositoryImpl_StampExists(t *testing.T) {
 	})
 }
 
+func TestRepositoryImpl_ExistStamps(t *testing.T) {
+	t.Parallel()
+	repo, _, _ := setup(t, common)
+
+	stampIDs := make([]uuid.UUID, 0, 10)
+
+	for i := 0; i < 10; i++ {
+		s := mustMakeStamp(t, repo, random, uuid.Nil)
+		stampIDs = append(stampIDs, s.ID)
+	}
+
+	t.Run("argument err", func(t *testing.T) {
+		t.Parallel()
+		assert, _ := assertAndRequire(t)
+
+		stampIDsCopy := make([]uuid.UUID, len(stampIDs), cap(stampIDs))
+		_ = copy(stampIDsCopy, stampIDs)
+		if assert.True(len(stampIDsCopy) > 0) {
+			stampIDsCopy[0] = uuid.Must(uuid.NewV4())
+		}
+		assert.Error(repo.ExistStamps(stampIDsCopy))
+	})
+
+	t.Run("sucess", func(t *testing.T) {
+		t.Parallel()
+		assert, _ := assertAndRequire(t)
+
+		assert.NoError(repo.ExistStamps(stampIDs))
+	})
+}
+
 func TestRepositoryImpl_StampNameExists(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common)
