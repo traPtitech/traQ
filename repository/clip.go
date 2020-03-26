@@ -21,7 +21,7 @@ type ClipRepository interface {
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
-	CreateClipFolder(userID uuid.UUID, name string, description string) (*model.ClipFolder, error)
+	CreateClipFolder(userID uuid.UUID, name, description string) (*model.ClipFolder, error)
 	// UpdateClipFolder 指定したクリップフォルダーの情報を変更します
 	//
 	// 成功した場合、nilを返します。
@@ -29,7 +29,7 @@ type ClipRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 存在しないクリップフォルダーを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	UpdateClipFolder(folderID uuid.UUID, name null.String, description null.String) error
+	UpdateClipFolder(folderID uuid.UUID, name, description null.String) error
 	// DeleteClipFolder 指定したクリップフォルダーを削除します。
 	//
 	// 成功した場合、nilを返します。
@@ -56,7 +56,6 @@ type ClipRepository interface {
 	//
 	// 成功した場合クリップフォルダーのスライスとnilを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// 存在しないユーザーを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipFolder, error)
 	// GetClipFolder クリップフォルダーの情報を取得します。

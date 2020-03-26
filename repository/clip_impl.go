@@ -234,6 +234,13 @@ func (repo *GormRepository) GetClipFolderMessages(folderID uuid.UUID, query Clip
 	}
 	messages = make([]*model.ClipFolderMessage, 0)
 
+	// フォルダ存在チェック
+	if exists, err := dbExists(repo.db, &model.ClipFolder{ID: folderID}); err != nil {
+		return nil, false, err
+	} else if !exists {
+		return nil, false, ErrNotFound
+	}
+
 	tx := repo.db
 	tx = tx.Where("folder_id=?", folderID).Scopes(clipPreloads)
 

@@ -261,6 +261,26 @@ func mustChangeChannelSubscription(t *testing.T, repo Repository, channelID, use
 	require.NoError(t, repo.ChangeChannelSubscription(channelID, ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}}))
 }
 
+func mustMakeClipFolder(t *testing.T, repo Repository, userID uuid.UUID, name, description string) *model.ClipFolder {
+	t.Helper()
+	if name == random {
+		name = utils.RandAlphabetAndNumberString(20)
+	}
+	if description == random {
+		description = utils.RandAlphabetAndNumberString(100)
+	}
+	cf, err := repo.CreateClipFolder(userID, name, description)
+	require.NoError(t, err)
+	return cf
+}
+
+func mustMakeClipFolderMessage(t *testing.T, repo Repository, folderID, messageID uuid.UUID) *model.ClipFolderMessage {
+	t.Helper()
+	cfm, err := repo.AddClipFolderMessage(folderID, messageID)
+	require.NoError(t, err)
+	return cfm
+}
+
 func count(t *testing.T, where *gorm.DB) int {
 	t.Helper()
 	c := 0
