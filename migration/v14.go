@@ -20,6 +20,7 @@ func v14() *gormigrate.Migration {
 					"create_stamp_palette",
 					"edit_stamp_palette",
 					"delete_stamp_palette",
+					"delete_file",
 				},
 			}
 			for role, perms := range addedRolePermissions {
