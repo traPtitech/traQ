@@ -308,6 +308,10 @@ func (repo *TestRepository) GetUserByName(name string, withProfile bool) (model.
 	return nil, repository.ErrNotFound
 }
 
+func (repo *TestRepository) GetUserByExternalID(providerName, externalID string, withProfile bool) (model.UserInfo, error) {
+	panic("implement me")
+}
+
 func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]model.UserInfo, error) {
 	result := make([]model.UserInfo, 0, len(repo.Users))
 	repo.UsersLock.RLock()

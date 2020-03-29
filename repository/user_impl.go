@@ -94,6 +94,18 @@ func (repo *GormRepository) GetUserByName(name string, withProfile bool) (model.
 	return getUser(repo.db, withProfile, &model.User{Name: name})
 }
 
+// GetUserByExternalID implements UserRepository interface.
+func (repo *GormRepository) GetUserByExternalID(providerName, externalID string, withProfile bool) (model.UserInfo, error) {
+	if len(providerName) == 0 || len(externalID) == 0 {
+		return nil, ErrNotFound
+	}
+	var extUser model.ExternalProviderUser
+	if err := repo.db.First(&extUser, &model.ExternalProviderUser{ProviderName: providerName, ExternalID: externalID}).Error; err != nil {
+		return nil, convertError(err)
+	}
+	return getUser(repo.db, withProfile, &model.User{ID: extUser.UserID})
+}
+
 func getUser(tx *gorm.DB, withProfile bool, where ...interface{}) (model.UserInfo, error) {
 	var user model.User
 	if withProfile {

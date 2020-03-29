@@ -116,6 +116,12 @@ type UserRepository interface {
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetUserByName(name string, withProfile bool) (model.UserInfo, error)
+	// GetUserByExternalID 指定したproviderのexternalIDのユーザーを取得する
+	//
+	// 成功した場合、ユーザーとnilを返します。
+	// 存在しなかった場合、ErrNotFoundを返します。
+	// DBによるエラーを返すことがあります。
+	GetUserByExternalID(providerName, externalID string, withProfile bool) (model.UserInfo, error)
 	// GetUsers 指定した条件を満たすユーザーを取得します
 	//
 	// 成功した場合、ユーザーの配列とnilを返します。
