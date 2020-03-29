@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/traPtitech/traQ/router/auth"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
@@ -79,6 +80,14 @@ func Setup(config *Config) *echo.Echo {
 	oa2.Setup(api.Group("/oauth2"))
 	oa2.Setup(api.Group("/1.0/oauth2"))
 	oa2.Setup(api.Group("/v3/oauth2"))
+
+	// 外部authハンドラ
+	extAuth := api.Group("/auth")
+	if config.ExternalAuth.GitHub.Valid() {
+		p := auth.NewGithubProvider(config.Repository, config.RootLogger.Named("ext_auth"), config.ExternalAuth.GitHub)
+		extAuth.GET("/github", p.LoginHandler)
+		extAuth.GET("/github/callback", p.CallbackHandler)
+	}
 
 	utils.ImageMagickPath = config.ImageMagickPath
 	return e

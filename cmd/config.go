@@ -155,6 +155,15 @@ type Config struct {
 			Private string `mapstructure:"private" yaml:"private"`
 		} `mapstructure:"keys" yaml:"keys"`
 	} `mapstructure:"jwt" yaml:"jwt"`
+
+	// ExternalAuth 外部認証設定
+	ExternalAuth struct {
+		GitHub struct {
+			ClientID     string `mapstructure:"clientId" yaml:"clientId"`
+			ClientSecret string `mapstructure:"clientSecret" yaml:"clientSecret"`
+			AllowSignUp  bool   `mapstructure:"allowSignUp" yaml:"allowSignUp"`
+		} `mapstructure:"github" yaml:"github"`
+	} `mapstructure:"externalAuth" yaml:"externalAuth"`
 }
 
 // Configのデフォルト値設定
@@ -196,6 +205,9 @@ func init() {
 	viper.SetDefault("externalAuthentication.authPost.successfulCode", 0)
 	viper.SetDefault("externalAuthentication.authPost.formUserNameKey", "")
 	viper.SetDefault("externalAuthentication.authPost.formPasswordKey", "")
+	viper.SetDefault("externalAuth.github.clientId", "")
+	viper.SetDefault("externalAuth.github.clientSecret", "")
+	viper.SetDefault("externalAuth.github.allowSignUp", false)
 	viper.SetDefault("skyway.secretKey", "")
 	viper.SetDefault("jwt.keys.private", "")
 }

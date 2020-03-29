@@ -20,6 +20,7 @@ import (
 	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
+	"github.com/traPtitech/traQ/router/auth"
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/jwt"
@@ -156,6 +157,13 @@ var serveCommand = &cobra.Command{
 			SSE:              sses,
 			Realtime:         rt,
 			RootLogger:       logger,
+			ExternalAuth: router.ExternalAuthConfig{
+				GitHub: auth.GithubProviderConfig{
+					ClientID:               c.ExternalAuth.GitHub.ClientID,
+					ClientSecret:           c.ExternalAuth.GitHub.ClientSecret,
+					RegisterUserIfNotFound: c.ExternalAuth.GitHub.AllowSignUp,
+				},
+			},
 		})
 
 		go func() {
