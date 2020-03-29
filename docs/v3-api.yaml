@@ -4573,7 +4573,6 @@ components:
         clientId:
           type: string
           description: OAuth2クライアントUUID
-          format: uuid
         scopes:
           type: array
           description: スコープ
@@ -4604,7 +4603,6 @@ components:
         id:
           type: string
           description: クライアントUUID
-          format: uuid
         name:
           type: string
           description: クライアント名
@@ -4658,7 +4656,6 @@ components:
       properties:
         id:
           type: string
-          format: uuid
           description: クライアントUUID
         developerId:
           type: string
@@ -5677,7 +5674,6 @@ components:
       description: OAuth2クライアントUUID
       schema:
         type: string
-        format: uuid
     tokenIdInPath:
       name: tokenId
       in: path
