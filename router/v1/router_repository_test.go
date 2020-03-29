@@ -224,7 +224,7 @@ func NewTestRepository() *TestRepository {
 		OAuth2Authorizes:      map[string]model.OAuth2Authorize{},
 		OAuth2Tokens:          map[uuid.UUID]model.OAuth2Token{},
 	}
-	_, _ = r.CreateUser("traq", "traq", role.Admin)
+	_, _ = r.CreateUser(repository.CreateUserArgs{Name: "traq", Password: "traq", Role: role.Admin})
 	return r
 }
 
@@ -236,43 +236,51 @@ func (repo *TestRepository) GetFS() storage.FileStorage {
 	return repo.FS
 }
 
-func (repo *TestRepository) CreateUser(name, password string, role string) (model.UserInfo, error) {
+func (repo *TestRepository) CreateUser(args repository.CreateUserArgs) (model.UserInfo, error) {
 	repo.UsersLock.Lock()
 	defer repo.UsersLock.Unlock()
 
-	for _, v := range repo.Users {
-		if v.Name == name {
-			return nil, repository.ErrAlreadyExists
-		}
-	}
-
-	salt := utils.GenerateSalt()
 	uid := uuid.Must(uuid.NewV4())
 	user := model.User{
-		ID:        uid,
-		Name:      name,
-		Password:  hex.EncodeToString(utils.HashPassword(password, salt)),
-		Salt:      hex.EncodeToString(salt),
-		Status:    model.UserAccountStatusActive,
-		Bot:       false,
-		Role:      role,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:          uid,
+		Name:        args.Name,
+		DisplayName: args.DisplayName,
+		Status:      model.UserAccountStatusActive,
+		Bot:         false,
+		Role:        args.Role,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 		Profile: &model.UserProfile{
 			UserID:    uid,
 			UpdatedAt: time.Now(),
 		},
 	}
 
-	if err := user.Validate(); err != nil {
-		return nil, err
+	if len(args.Password) > 0 {
+		salt := utils.GenerateSalt()
+		user.Password = hex.EncodeToString(utils.HashPassword(args.Password, salt))
+		user.Salt = hex.EncodeToString(salt)
 	}
 
-	iconID, err := repository.GenerateIconFile(repo, user.Name)
-	if err != nil {
-		return nil, err
+	if args.IconFileID.Valid {
+		user.Icon = args.IconFileID.UUID
+	} else {
+		iconID, err := repository.GenerateIconFile(repo, user.Name)
+		if err != nil {
+			return nil, err
+		}
+		user.Icon = iconID
 	}
-	user.Icon = iconID
+
+	if args.ExternalLogin != nil {
+		panic("implement me")
+	}
+
+	for _, v := range repo.Users {
+		if v.Name == user.Name {
+			return nil, repository.ErrAlreadyExists
+		}
+	}
 
 	repo.Users[user.ID] = user
 	return &user, nil

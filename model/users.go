@@ -97,8 +97,7 @@ type User struct {
 	CreatedAt   time.Time         `gorm:"precision:6"`
 	UpdatedAt   time.Time         `gorm:"precision:6"`
 
-	Profile        *UserProfile            `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;"`
-	ExternalLogins []*ExternalProviderUser `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;"`
+	Profile *UserProfile `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;"`
 }
 
 // TableName dbの名前を指定する

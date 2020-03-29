@@ -88,7 +88,11 @@ func (repo *GormRepository) Sync() (bool, error) {
 		return false, err
 	}
 	if c == 0 {
-		_, err := repo.CreateUser("traq", "traq", role.Admin)
+		_, err := repo.CreateUser(CreateUserArgs{
+			Name:     "traq",
+			Password: "traq",
+			Role:     role.Admin,
+		})
 		if err != nil {
 			return false, err
 		}

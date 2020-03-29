@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/utils"
 	"gopkg.in/guregu/null.v3"
 	"strings"
@@ -118,25 +117,6 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 			assert.Len(users, len(us))
 		}
 	})
-}
-
-func TestRepositoryImpl_CreateUser(t *testing.T) {
-	t.Parallel()
-	repo, assert, _ := setup(t, common)
-
-	_, err := repo.CreateUser("あああ", "test", role.User)
-	assert.Error(err)
-
-	s := utils.RandAlphabetAndNumberString(10)
-	user, err := repo.CreateUser(s, "test", role.User)
-	if assert.NoError(err) {
-		assert.NotEmpty(user.GetID())
-		assert.Equal(s, user.GetName())
-		assert.Equal(role.User, user.GetRole())
-	}
-
-	_, err = repo.CreateUser(s, "test", role.User)
-	assert.Error(err)
 }
 
 func TestRepositoryImpl_GetUser(t *testing.T) {

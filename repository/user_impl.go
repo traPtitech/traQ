@@ -13,36 +13,55 @@ import (
 )
 
 // CreateUser implements UserRepository interface.
-func (repo *GormRepository) CreateUser(name, password, role string) (model.UserInfo, error) {
-	salt := utils.GenerateSalt()
+func (repo *GormRepository) CreateUser(args CreateUserArgs) (model.UserInfo, error) {
 	uid := uuid.Must(uuid.NewV4())
 	user := &model.User{
-		ID:       uid,
-		Name:     name,
-		Password: hex.EncodeToString(utils.HashPassword(password, salt)),
-		Salt:     hex.EncodeToString(salt),
-		Status:   model.UserAccountStatusActive,
-		Bot:      false,
-		Role:     role,
-		Profile:  &model.UserProfile{UserID: uid},
+		ID:          uid,
+		Name:        args.Name,
+		DisplayName: args.DisplayName,
+		Status:      model.UserAccountStatusActive,
+		Bot:         false,
+		Role:        args.Role,
+		Profile:     &model.UserProfile{UserID: uid},
 	}
 
-	if err := user.Validate(); err != nil {
-		return nil, err
+	if len(args.Password) > 0 {
+		salt := utils.GenerateSalt()
+		user.Password = hex.EncodeToString(utils.HashPassword(args.Password, salt))
+		user.Salt = hex.EncodeToString(salt)
 	}
 
-	iconID, err := GenerateIconFile(repo, user.Name)
-	if err != nil {
-		return nil, err
+	if args.IconFileID.Valid {
+		user.Icon = args.IconFileID.UUID
+	} else {
+		iconID, err := GenerateIconFile(repo, user.Name)
+		if err != nil {
+			return nil, err
+		}
+		user.Icon = iconID
 	}
-	user.Icon = iconID
 
-	err = repo.db.Transaction(func(tx *gorm.DB) error {
+	if args.ExternalLogin != nil {
+		args.ExternalLogin.UserID = uid
+	}
+
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		if exist, err := dbExists(tx, &model.User{Name: user.Name}); err != nil {
+			return err
+		} else if exist {
+			return ErrAlreadyExists
+		}
+
 		if err := tx.Create(user).Error; err != nil {
 			return err
 		}
 		if err := tx.Create(user.Profile).Error; err != nil {
 			return err
+		}
+		if args.ExternalLogin != nil {
+			if err := tx.Create(args.ExternalLogin).Error; err != nil {
+				return err
+			}
 		}
 		return nil
 	})

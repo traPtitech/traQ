@@ -341,7 +341,7 @@ func (h *Handlers) PostUsers(c echo.Context) error {
 		return herror.Conflict("the name's user has already existed")
 	}
 
-	user, err := h.Repo.CreateUser(req.Name, req.Password, role.User)
+	user, err := h.Repo.CreateUser(repository.CreateUserArgs{Name: req.Name, Password: req.Password, Role: role.User})
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
