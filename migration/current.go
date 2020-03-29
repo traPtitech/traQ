@@ -25,6 +25,7 @@ func Migrations() []*gormigrate.Migration {
 		v12(), // カスタムスタンプパレットの追加
 		v13(), // パーミッション調整・インデックス付与
 		v14(), // パーミッション不足修正
+		v15(), // 外部ログイン機能追加
 	}
 }
 
@@ -67,6 +68,7 @@ func AllTables() []interface{} {
 		&model.UserGroupAdmin{},
 		&model.UserGroupMember{},
 		&model.UserGroup{},
+		&model.ExternalProviderUser{},
 		&model.UserProfile{},
 		&model.ClipFolder{},
 		&model.User{},
@@ -119,6 +121,7 @@ func AllForeignKeys() [][5]string {
 		{"clip_folder_messages", "folder_id", "clip_folders(id)", "CASCADE", "CASCADE"},
 		{"clip_folder_messages", "message_id", "messages(id)", "CASCADE", "CASCADE"},
 		{"stamp_palettes", "creator_id", "users(id)", "CASCADE", "CASCADE"},
+		{"external_provider_users", "user_id", "users(id)", "CASCADE", "CASCADE"},
 	}
 }
 
@@ -134,5 +137,15 @@ func AllCompositeIndexes() [][]string {
 		{"idx_files_channel_id_created_at", "files", "channel_id", "created_at"},
 		{"idx_files_creator_id_created_at", "files", "creator_id", "created_at"},
 		{"idx_messages_stamps_user_id_stamp_id_updated_at", "messages_stamps", "user_id", "stamp_id", "updated_at"},
+	}
+}
+
+// AllCompositeUniqueIndexes 最新のスキーマの全複合ユニークインデックス
+//
+// 最新のスキーマの全複合ユニークインデックスを記述すること。
+func AllCompositeUniqueIndexes() [][]string {
+	return [][]string{
+		// Name,  Table, Columns...
+		{"idx_external_provider_users_provider_name_external_id", "external_provider_users", "provider_name", "external_id"},
 	}
 }

@@ -40,6 +40,13 @@ func Migrate(db *gorm.DB) error {
 			}
 		}
 
+		// 複合ユニークインデックス
+		for _, v := range AllCompositeUniqueIndexes() {
+			if err := db.Table(v[1]).AddUniqueIndex(v[0], v[2:]...).Error; err != nil {
+				return err
+			}
+		}
+
 		// 初期ユーザーロール投入
 		for _, v := range role.SystemRoles() {
 			if err := db.Create(v).Error; err != nil {
