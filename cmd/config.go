@@ -174,6 +174,13 @@ type Config struct {
 			ClientSecret string `mapstructure:"clientSecret" yaml:"clientSecret"`
 			AllowSignUp  bool   `mapstructure:"allowSignUp" yaml:"allowSignUp"`
 		} `mapstructure:"traq" yaml:"traq"`
+		OIDC struct {
+			Issuer       string   `mapstructure:"issuer" yaml:"issuer"`
+			ClientID     string   `mapstructure:"clientId" yaml:"clientId"`
+			ClientSecret string   `mapstructure:"clientSecret" yaml:"clientSecret"`
+			AllowSignUp  bool     `mapstructure:"allowSignUp" yaml:"allowSignUp"`
+			Scopes       []string `mapstructure:"scopes" yaml:"scopes"`
+		} `mapstructure:"oidc" yaml:"oidc"`
 	} `mapstructure:"externalAuth" yaml:"externalAuth"`
 }
 
@@ -226,6 +233,11 @@ func init() {
 	viper.SetDefault("externalAuth.traq.clientId", "")
 	viper.SetDefault("externalAuth.traq.clientSecret", "")
 	viper.SetDefault("externalAuth.traq.allowSignUp", false)
+	viper.SetDefault("externalAuth.oidc.issuer", "")
+	viper.SetDefault("externalAuth.oidc.clientId", "")
+	viper.SetDefault("externalAuth.oidc.clientSecret", "")
+	viper.SetDefault("externalAuth.oidc.scopes", []string{})
+	viper.SetDefault("externalAuth.oidc.allowSignUp", false)
 	viper.SetDefault("skyway.secretKey", "")
 	viper.SetDefault("jwt.keys.private", "")
 }

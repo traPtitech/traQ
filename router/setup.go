@@ -98,6 +98,14 @@ func Setup(config *Config) *echo.Echo {
 		extAuth.GET("/traq", p.LoginHandler)
 		extAuth.GET("/traq/callback", p.CallbackHandler)
 	}
+	if config.ExternalAuth.OIDC.Valid() {
+		p, err := auth.NewOIDCProvider(config.Repository, config.RootLogger.Named("ext_auth"), config.ExternalAuth.OIDC)
+		if err != nil {
+			panic(err)
+		}
+		extAuth.GET("/oidc", p.LoginHandler)
+		extAuth.GET("/oidc/callback", p.CallbackHandler)
+	}
 
 	utils.ImageMagickPath = config.ImageMagickPath
 	return e

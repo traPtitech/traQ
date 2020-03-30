@@ -176,6 +176,14 @@ var serveCommand = &cobra.Command{
 					CallbackURL:            c.Origin + "/api/auth/traq/callback",
 					RegisterUserIfNotFound: c.ExternalAuth.TraQ.AllowSignUp,
 				},
+				OIDC: auth.OIDCProviderConfig{
+					Issuer:                 c.ExternalAuth.OIDC.Issuer,
+					ClientID:               c.ExternalAuth.OIDC.ClientID,
+					ClientSecret:           c.ExternalAuth.OIDC.ClientSecret,
+					Scopes:                 c.ExternalAuth.OIDC.Scopes,
+					CallbackURL:            c.Origin + "/api/auth/oidc/callback",
+					RegisterUserIfNotFound: c.ExternalAuth.OIDC.AllowSignUp,
+				},
 			},
 		})
 

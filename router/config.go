@@ -57,4 +57,6 @@ type ExternalAuthConfig struct {
 	Google auth.GoogleProviderConfig
 	// TraQ TraQ OAuth2
 	TraQ auth.TraQProviderConfig
+	// OIDC OpenID Connect
+	OIDC auth.OIDCProviderConfig
 }
