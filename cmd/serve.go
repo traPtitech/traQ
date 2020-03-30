@@ -163,6 +163,12 @@ var serveCommand = &cobra.Command{
 					ClientSecret:           c.ExternalAuth.GitHub.ClientSecret,
 					RegisterUserIfNotFound: c.ExternalAuth.GitHub.AllowSignUp,
 				},
+				Google: auth.GoogleProviderConfig{
+					ClientID:               c.ExternalAuth.Google.ClientID,
+					ClientSecret:           c.ExternalAuth.Google.ClientSecret,
+					CallbackURL:            c.Origin + "/api/auth/google/callback",
+					RegisterUserIfNotFound: c.ExternalAuth.Google.AllowSignUp,
+				},
 			},
 		})
 

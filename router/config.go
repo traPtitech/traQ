@@ -53,4 +53,6 @@ type Config struct {
 type ExternalAuthConfig struct {
 	// GitHub GitHub OAuth2
 	GitHub auth.GithubProviderConfig
+	// Google Google OAuth2
+	Google auth.GoogleProviderConfig
 }

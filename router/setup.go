@@ -88,6 +88,11 @@ func Setup(config *Config) *echo.Echo {
 		extAuth.GET("/github", p.LoginHandler)
 		extAuth.GET("/github/callback", p.CallbackHandler)
 	}
+	if config.ExternalAuth.Google.Valid() {
+		p := auth.NewGoogleProvider(config.Repository, config.RootLogger.Named("ext_auth"), config.ExternalAuth.Google)
+		extAuth.GET("/google", p.LoginHandler)
+		extAuth.GET("/google/callback", p.CallbackHandler)
+	}
 
 	utils.ImageMagickPath = config.ImageMagickPath
 	return e
