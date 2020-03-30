@@ -26,6 +26,11 @@ func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 		name := utils.RandAlphabetAndNumberString(20)
 		description := utils.RandAlphabetAndNumberString(100)
 		stamps := make([]uuid.UUID, 0)
+		n := 100
+		for i := 0; i < n; i++ {
+			s := mustMakeStamp(t, repo, random, user.GetID())
+			stamps = append(stamps, s.ID)
+		}
 		sp, err := repo.CreateStampPalette(name, description, stamps, user.GetID())
 		if assert.NoError(err) {
 			assert.NotEmpty(sp.ID)

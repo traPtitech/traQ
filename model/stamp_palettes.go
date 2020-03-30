@@ -47,6 +47,14 @@ func (arr *UUIDs) Scan(src interface{}) error {
 	return nil
 }
 
+func (arr UUIDs) ToUUIDSlice() ([]uuid.UUID) {
+	uuidSlice := []uuid.UUID{}
+	for _, id := range arr {
+		uuidSlice = append(uuidSlice, id)
+	}
+	return uuidSlice
+}
+
 type StampPalette struct {
 	ID          uuid.UUID `gorm:"type:char(36);not null;primary_key" json:"id"`
 	Name        string    `gorm:"type:varchar(30);not null" json:"name"`

@@ -33,7 +33,9 @@ func (repo *GormRepository) CreateStampPalette(name, description string, stamps 
 			return ArgError("description", "Description must be 0-1000")
 		}
 		// スタンプ上限チェック
-		if err = validation.Validate(stamps, validator.StampPaletteStampsRuleNotNil...); err != nil {
+		// SqlのValuerが実装されていると、その結果でバリデーションをかけるため[]uuid.UUIDに変換
+		uuids := stamps.ToUUIDSlice()
+		if err = validation.Validate(uuids, validator.StampPaletteStampsRuleNotNil...); err != nil {
 			return ArgError("stamps", "stamps must be 0-200")
 		}
 		// スタンプ存在チェック
@@ -84,7 +86,8 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 			changes["description"] = args.Description.String
 		}
 		if args.Stamps != nil {
-			if err := validation.Validate(args.Stamps, validator.StampPaletteStampsRuleNotNil...); err != nil {
+			uuids := args.Stamps.ToUUIDSlice()
+			if err := validation.Validate(uuids, validator.StampPaletteStampsRuleNotNil...); err != nil {
 				return ArgError("args.Stamps", "stamps must be 0-200")
 			}
 			if err := repo.ExistStamps(args.Stamps); err != nil {
