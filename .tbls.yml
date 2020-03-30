@@ -353,3 +353,10 @@ comments:
       folder_id: クリップフォルダーID
       message_id: メッセージID
       created_at: クリップされた日時
+  - table: external_provider_users
+    tableComment: 外部認証ユーザーテーブル
+    columnComments:
+      user_id: ユーザーUUID
+      provider_name: 認証プロバイダ名
+      external_id: 認証プロバイダ上でのID
+      extra: 追加データ

@@ -15,6 +15,7 @@
 | [clip_folders](clip_folders.md) | 5 | クリップフォルダーテーブル | BASE TABLE |
 | [devices](devices.md) | 3 | FCMデバイステーブル | BASE TABLE |
 | [dm_channel_mappings](dm_channel_mappings.md) | 3 | DMチャンネルマッピングテーブル | BASE TABLE |
+| [external_provider_users](external_provider_users.md) | 6 | 外部認証ユーザーテーブル | BASE TABLE |
 | [files](files.md) | 14 | ファイルテーブル | BASE TABLE |
 | [files_acl](files_acl.md) | 3 | ファイルアクセスコントロールリストテーブル | BASE TABLE |
 | [message_reports](message_reports.md) | 6 | メッセージ通報テーブル | BASE TABLE |

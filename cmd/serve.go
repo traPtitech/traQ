@@ -20,6 +20,7 @@ import (
 	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
+	"github.com/traPtitech/traQ/router/auth"
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/jwt"
@@ -156,6 +157,34 @@ var serveCommand = &cobra.Command{
 			SSE:              sses,
 			Realtime:         rt,
 			RootLogger:       logger,
+			ExternalAuth: router.ExternalAuthConfig{
+				GitHub: auth.GithubProviderConfig{
+					ClientID:               c.ExternalAuth.GitHub.ClientID,
+					ClientSecret:           c.ExternalAuth.GitHub.ClientSecret,
+					RegisterUserIfNotFound: c.ExternalAuth.GitHub.AllowSignUp,
+				},
+				Google: auth.GoogleProviderConfig{
+					ClientID:               c.ExternalAuth.Google.ClientID,
+					ClientSecret:           c.ExternalAuth.Google.ClientSecret,
+					CallbackURL:            c.Origin + "/api/auth/google/callback",
+					RegisterUserIfNotFound: c.ExternalAuth.Google.AllowSignUp,
+				},
+				TraQ: auth.TraQProviderConfig{
+					Origin:                 c.ExternalAuth.TraQ.Origin,
+					ClientID:               c.ExternalAuth.TraQ.ClientID,
+					ClientSecret:           c.ExternalAuth.TraQ.ClientSecret,
+					CallbackURL:            c.Origin + "/api/auth/traq/callback",
+					RegisterUserIfNotFound: c.ExternalAuth.TraQ.AllowSignUp,
+				},
+				OIDC: auth.OIDCProviderConfig{
+					Issuer:                 c.ExternalAuth.OIDC.Issuer,
+					ClientID:               c.ExternalAuth.OIDC.ClientID,
+					ClientSecret:           c.ExternalAuth.OIDC.ClientSecret,
+					Scopes:                 c.ExternalAuth.OIDC.Scopes,
+					CallbackURL:            c.Origin + "/api/auth/oidc/callback",
+					RegisterUserIfNotFound: c.ExternalAuth.OIDC.AllowSignUp,
+				},
+			},
 		})
 
 		go func() {

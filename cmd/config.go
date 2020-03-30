@@ -155,6 +155,33 @@ type Config struct {
 			Private string `mapstructure:"private" yaml:"private"`
 		} `mapstructure:"keys" yaml:"keys"`
 	} `mapstructure:"jwt" yaml:"jwt"`
+
+	// ExternalAuth 外部認証設定
+	ExternalAuth struct {
+		GitHub struct {
+			ClientID     string `mapstructure:"clientId" yaml:"clientId"`
+			ClientSecret string `mapstructure:"clientSecret" yaml:"clientSecret"`
+			AllowSignUp  bool   `mapstructure:"allowSignUp" yaml:"allowSignUp"`
+		} `mapstructure:"github" yaml:"github"`
+		Google struct {
+			ClientID     string `mapstructure:"clientId" yaml:"clientId"`
+			ClientSecret string `mapstructure:"clientSecret" yaml:"clientSecret"`
+			AllowSignUp  bool   `mapstructure:"allowSignUp" yaml:"allowSignUp"`
+		} `mapstructure:"google" yaml:"google"`
+		TraQ struct {
+			Origin       string `mapstructure:"origin" yaml:"origin"`
+			ClientID     string `mapstructure:"clientId" yaml:"clientId"`
+			ClientSecret string `mapstructure:"clientSecret" yaml:"clientSecret"`
+			AllowSignUp  bool   `mapstructure:"allowSignUp" yaml:"allowSignUp"`
+		} `mapstructure:"traq" yaml:"traq"`
+		OIDC struct {
+			Issuer       string   `mapstructure:"issuer" yaml:"issuer"`
+			ClientID     string   `mapstructure:"clientId" yaml:"clientId"`
+			ClientSecret string   `mapstructure:"clientSecret" yaml:"clientSecret"`
+			AllowSignUp  bool     `mapstructure:"allowSignUp" yaml:"allowSignUp"`
+			Scopes       []string `mapstructure:"scopes" yaml:"scopes"`
+		} `mapstructure:"oidc" yaml:"oidc"`
+	} `mapstructure:"externalAuth" yaml:"externalAuth"`
 }
 
 // Configのデフォルト値設定
@@ -196,6 +223,21 @@ func init() {
 	viper.SetDefault("externalAuthentication.authPost.successfulCode", 0)
 	viper.SetDefault("externalAuthentication.authPost.formUserNameKey", "")
 	viper.SetDefault("externalAuthentication.authPost.formPasswordKey", "")
+	viper.SetDefault("externalAuth.github.clientId", "")
+	viper.SetDefault("externalAuth.github.clientSecret", "")
+	viper.SetDefault("externalAuth.github.allowSignUp", false)
+	viper.SetDefault("externalAuth.google.clientId", "")
+	viper.SetDefault("externalAuth.google.clientSecret", "")
+	viper.SetDefault("externalAuth.google.allowSignUp", false)
+	viper.SetDefault("externalAuth.traq.origin", "")
+	viper.SetDefault("externalAuth.traq.clientId", "")
+	viper.SetDefault("externalAuth.traq.clientSecret", "")
+	viper.SetDefault("externalAuth.traq.allowSignUp", false)
+	viper.SetDefault("externalAuth.oidc.issuer", "")
+	viper.SetDefault("externalAuth.oidc.clientId", "")
+	viper.SetDefault("externalAuth.oidc.clientSecret", "")
+	viper.SetDefault("externalAuth.oidc.scopes", []string{})
+	viper.SetDefault("externalAuth.oidc.allowSignUp", false)
 	viper.SetDefault("skyway.secretKey", "")
 	viper.SetDefault("jwt.keys.private", "")
 }

@@ -160,7 +160,7 @@ func mustMakeUser(t *testing.T, repo Repository, userName string) model.UserInfo
 	if userName == random {
 		userName = utils.RandAlphabetAndNumberString(32)
 	}
-	u, err := repo.CreateUser(userName, "test", role.User)
+	u, err := repo.CreateUser(CreateUserArgs{Name: userName, Password: "test", Role: role.User})
 	require.NoError(t, err)
 	return u
 }

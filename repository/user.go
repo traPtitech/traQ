@@ -6,6 +6,16 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
+// CreateUserArgs ユーザー作成引数
+type CreateUserArgs struct {
+	Name          string
+	DisplayName   string
+	Role          string
+	IconFileID    uuid.NullUUID
+	Password      string
+	ExternalLogin *model.ExternalProviderUser
+}
+
 // UpdateUserArgs User情報更新引数
 type UpdateUserArgs struct {
 	DisplayName null.String
@@ -91,8 +101,9 @@ type UserRepository interface {
 	// CreateUser ユーザーを作成します
 	//
 	// 成功した場合、ユーザーとnilを返します。
+	// Nameが既に使われている場合、ErrAlreadyExistsを返します。
 	// DBによるエラーを返すことがあります。
-	CreateUser(name, password, role string) (model.UserInfo, error)
+	CreateUser(args CreateUserArgs) (model.UserInfo, error)
 	// GetUser 指定したIDのユーザーを取得します
 	//
 	// 成功した場合、ユーザーとnilを返します。
@@ -105,6 +116,12 @@ type UserRepository interface {
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetUserByName(name string, withProfile bool) (model.UserInfo, error)
+	// GetUserByExternalID 指定したproviderのexternalIDのユーザーを取得する
+	//
+	// 成功した場合、ユーザーとnilを返します。
+	// 存在しなかった場合、ErrNotFoundを返します。
+	// DBによるエラーを返すことがあります。
+	GetUserByExternalID(providerName, externalID string, withProfile bool) (model.UserInfo, error)
 	// GetUsers 指定した条件を満たすユーザーを取得します
 	//
 	// 成功した場合、ユーザーの配列とnilを返します。

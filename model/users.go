@@ -128,6 +128,19 @@ func (UserProfile) TableName() string {
 	return "user_profiles"
 }
 
+type ExternalProviderUser struct {
+	UserID       uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	ProviderName string    `gorm:"type:varchar(30);not null;primary_key"`
+	ExternalID   string    `gorm:"type:varchar(100);not null"`
+	Extra        string    `gorm:"type:text;not null"`
+	CreatedAt    time.Time `gorm:"precision:6"`
+	UpdatedAt    time.Time `gorm:"precision:6"`
+}
+
+func (ExternalProviderUser) TableName() string {
+	return "external_provider_users"
+}
+
 // GetID implements UserInfo interface
 func (user *User) GetID() uuid.UUID {
 	return user.ID

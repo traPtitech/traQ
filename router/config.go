@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/realtime/sse"
 	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/auth"
 	"go.uber.org/zap"
 )
 
@@ -30,6 +31,8 @@ type Config struct {
 	IsRefreshEnabled bool
 	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
 	SkyWaySecretKey string
+	// ExternalAuth 外部認証設定
+	ExternalAuth ExternalAuthConfig
 	// Hub イベントハブ
 	Hub *hub.Hub
 	// Repository リポジトリ
@@ -44,4 +47,16 @@ type Config struct {
 	Realtime *realtime.Service
 	// RootLogger ルートロガー
 	RootLogger *zap.Logger
+}
+
+// ExternalAuth 外部認証設定
+type ExternalAuthConfig struct {
+	// GitHub GitHub OAuth2
+	GitHub auth.GithubProviderConfig
+	// Google Google OAuth2
+	Google auth.GoogleProviderConfig
+	// TraQ TraQ OAuth2
+	TraQ auth.TraQProviderConfig
+	// OIDC OpenID Connect
+	OIDC auth.OIDCProviderConfig
 }
