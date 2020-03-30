@@ -32,10 +32,11 @@ type CreateStampPaletteRequest struct {
 }
 
 func (r CreateStampPaletteRequest) Validate() error {
+	uuids := r.Stamps.ToUUIDSlice()
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, validator.StampPaletteNameRuleRequired...),
 		vd.Field(&r.Description, validator.StampPaletteDescriptionRule...),
-		vd.Field(&r.Stamps, validator.StampPaletteStampsRule...),
+		vd.Field(&uuids, validator.StampPaletteStampsRule...),
 	)
 }
 
@@ -69,10 +70,11 @@ type PatchStampPaletteRequest struct {
 }
 
 func (r PatchStampPaletteRequest) Validate() error {
+	uuids := r.Stamps.ToUUIDSlice()
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, validator.StampPaletteNameRule...),
 		vd.Field(&r.Description, validator.StampPaletteDescriptionRule...),
-		vd.Field(&r.Stamps, validator.StampPaletteStampsRule...),
+		vd.Field(&uuids, validator.StampPaletteStampsRule...),
 	)
 }
 
