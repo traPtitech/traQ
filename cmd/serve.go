@@ -169,6 +169,13 @@ var serveCommand = &cobra.Command{
 					CallbackURL:            c.Origin + "/api/auth/google/callback",
 					RegisterUserIfNotFound: c.ExternalAuth.Google.AllowSignUp,
 				},
+				TraQ: auth.TraQProviderConfig{
+					Origin:                 c.ExternalAuth.TraQ.Origin,
+					ClientID:               c.ExternalAuth.TraQ.ClientID,
+					ClientSecret:           c.ExternalAuth.TraQ.ClientSecret,
+					CallbackURL:            c.Origin + "/api/auth/traq/callback",
+					RegisterUserIfNotFound: c.ExternalAuth.TraQ.AllowSignUp,
+				},
 			},
 		})
 

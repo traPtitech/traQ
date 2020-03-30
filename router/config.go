@@ -55,4 +55,6 @@ type ExternalAuthConfig struct {
 	GitHub auth.GithubProviderConfig
 	// Google Google OAuth2
 	Google auth.GoogleProviderConfig
+	// TraQ TraQ OAuth2
+	TraQ auth.TraQProviderConfig
 }

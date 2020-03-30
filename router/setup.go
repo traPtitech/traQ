@@ -93,6 +93,11 @@ func Setup(config *Config) *echo.Echo {
 		extAuth.GET("/google", p.LoginHandler)
 		extAuth.GET("/google/callback", p.CallbackHandler)
 	}
+	if config.ExternalAuth.TraQ.Valid() {
+		p := auth.NewTraQProvider(config.Repository, config.RootLogger.Named("ext_auth"), config.ExternalAuth.TraQ)
+		extAuth.GET("/traq", p.LoginHandler)
+		extAuth.GET("/traq/callback", p.CallbackHandler)
+	}
 
 	utils.ImageMagickPath = config.ImageMagickPath
 	return e
