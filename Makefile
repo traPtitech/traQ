@@ -72,3 +72,11 @@ reset-frontend:
 		rm -r ./dev/frontend; \
 	fi
 	@make update-frontend
+
+.PHONY: up
+up:
+	@docker-compose up -d --build
+
+.PHONY: down
+down:
+	@docker-compose down -v

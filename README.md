@@ -20,7 +20,7 @@
 ### Setup with docker and docker-compose
 
 #### First Up (or entirely rebuild)
-`make update-frontend && docker-compose up -d --build`
+`make update-frontend && make up`
 
 Now you can access to
 + `http://localhost:3000` for traQ
@@ -34,13 +34,13 @@ Now you can access to
     + database: `traq`
 
 #### Rebuild traQ
-`docker-compose up -d --no-deps --build backend`
+`make up`
 
 #### Update frontend
 `make update-frontend`
 
 #### Destroy Containers and Volumes
-`docker-compose down -v`
+`make down`
 
 ### Testing
 1. Run mysql container for test by `make up-test-db`
