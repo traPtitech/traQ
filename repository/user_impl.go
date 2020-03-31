@@ -300,6 +300,12 @@ func (repo *GormRepository) LinkExternalUserAccount(userID uuid.UUID, args LinkE
 			return ErrAlreadyExists
 		}
 
+		if exist, err := dbExists(tx, &model.ExternalProviderUser{ProviderName: args.ProviderName, ExternalID: args.ExternalID}); err != nil {
+			return err
+		} else if exist {
+			return ErrAlreadyExists
+		}
+
 		return tx.Create(&model.ExternalProviderUser{
 			UserID:       userID,
 			ProviderName: args.ProviderName,
