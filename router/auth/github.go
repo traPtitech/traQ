@@ -55,6 +55,10 @@ func (u *githubUserInfo) GetID() string {
 	return strconv.Itoa(u.id)
 }
 
+func (u *githubUserInfo) GetRawName() string {
+	return u.name
+}
+
 func (u *githubUserInfo) GetName() string {
 	if s := utf8string.NewString(u.name); s.RuneCount() > 32 {
 		return s.Slice(0, 32)

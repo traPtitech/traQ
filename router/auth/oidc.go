@@ -59,6 +59,10 @@ func (u *oidcUserInfo) GetID() string {
 	return u.sub
 }
 
+func (u *oidcUserInfo) GetRawName() string {
+	return u.name
+}
+
 func (u *oidcUserInfo) GetName() string {
 	s := strings.ReplaceAll(u.name, " ", "")
 	regex := regexp.MustCompile(`[^a-zA-Z0-9_-]`)

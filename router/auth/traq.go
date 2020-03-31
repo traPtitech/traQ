@@ -52,6 +52,10 @@ func (u *traqUserInfo) GetID() string {
 	return u.id
 }
 
+func (u *traqUserInfo) GetRawName() string {
+	return u.name
+}
+
 func (u *traqUserInfo) GetName() string {
 	return u.name
 }

@@ -34,6 +34,7 @@ type Provider interface {
 type UserInfo interface {
 	GetProviderName() string
 	GetID() string
+	GetRawName() string
 	GetName() string
 	GetDisplayName() string
 	GetProfileImage() ([]byte, error)

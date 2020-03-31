@@ -55,6 +55,10 @@ func (u *googleUserInfo) GetID() string {
 	return u.id
 }
 
+func (u *googleUserInfo) GetRawName() string {
+	return u.email
+}
+
 func (u *googleUserInfo) GetName() string {
 	return strings.ReplaceAll(strings.Split(u.email, "@")[0], ".", "_")
 }
