@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	oidcProviderName          = "oidc"
+	OIDCProviderName          = "oidc"
 	oidcAPIRequestErrorFormat = "oidc api request error: %w"
 )
 
@@ -52,11 +52,15 @@ type oidcUserInfo struct {
 }
 
 func (u *oidcUserInfo) GetProviderName() string {
-	return oidcProviderName
+	return OIDCProviderName
 }
 
 func (u *oidcUserInfo) GetID() string {
 	return u.sub
+}
+
+func (u *oidcUserInfo) GetRawName() string {
+	return u.name
 }
 
 func (u *oidcUserInfo) GetName() string {

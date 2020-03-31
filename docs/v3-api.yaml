@@ -3425,6 +3425,65 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostOAuth2Revoke'
+  /users/me/ex-accounts:
+    get:
+      summary: 外部ログインアカウント一覧を取得
+      tags:
+        - authentication
+        - me
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                description: 紐付けられているアカウントの配列
+                items:
+                  $ref: '#/components/schemas/ExternalProviderUser'
+      operationId: getMyExternalAccounts
+      description: ''
+    parameters: []
+  /users/me/ex-accounts/link:
+    post:
+      summary: 外部ログインアカウントを紐付ける
+      operationId: linkExternalAccount
+      responses:
+        '302':
+          description: |-
+            Found
+            外部サービスの認証画面に遷移します。
+        '400':
+          description: Bad Request
+      tags:
+        - authentication
+        - me
+      description: ''
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostLinkExternalAccount'
+  /users/me/ex-accounts/unlink:
+    post:
+      summary: 外部ログインアカウントの紐付けを解除
+      operationId: unlinkExternalAccount
+      responses:
+        '204':
+          description: |-
+            No Content
+            紐付けを解除しました。
+        '400':
+          description: Bad Request
+      description: ''
+      tags:
+        - authentication
+        - me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostUnlinkExternalAccount'
 components:
   schemas:
     Message:
@@ -5637,6 +5696,44 @@ components:
           description: 無効化するOAuth2トークンまたはOAuth2リフレッシュトークン
       required:
         - token
+    ExternalProviderUser:
+      title: ExternalProviderUser
+      type: object
+      description: 外部認証アカウントユーザー
+      properties:
+        providerName:
+          type: string
+          description: 外部サービス名
+        linkedAt:
+          type: string
+          description: 紐付けた日時
+        externalName:
+          type: string
+          description: 外部アカウント名
+      required:
+        - providerName
+        - linkedAt
+        - externalName
+    PostLinkExternalAccount:
+      title: PostLinkExternalAccount
+      type: object
+      description: POST /users/me/ex-accounts/link 用リクエストボディ
+      properties:
+        providerName:
+          type: string
+          description: 外部サービス名
+      required:
+        - providerName
+    PostUnlinkExternalAccount:
+      title: PostUnlinkExternalAccount
+      type: object
+      description: POST /users/me/ex-accounts/unlink 用リクエストボディ
+      properties:
+        providerName:
+          type: string
+          description: 外部サービス名
+      required:
+        - providerName
   headers:
     X-TRAQ-MORE:
       schema:

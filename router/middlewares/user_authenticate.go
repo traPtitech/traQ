@@ -71,7 +71,6 @@ func UserAuthenticate(repo repository.Repository) echo.MiddlewareFunc {
 			// ユーザーアカウント状態を確認
 			if !user.IsActive() {
 				return herror.Forbidden("this account is currently suspended")
-
 			}
 
 			c.Set(consts.KeyUser, user)

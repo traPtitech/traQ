@@ -16,6 +16,8 @@ var userPerms = []rbac.Permission{
 	permission.DeleteMySessions,
 	permission.GetMyTokens,
 	permission.RevokeMyToken,
+	permission.GetMyExternalAccount,
+	permission.EditMyExternalAccount,
 	permission.GetClients,
 	permission.CreateClient,
 	permission.EditMyClient,

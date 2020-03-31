@@ -57,15 +57,16 @@ func Setup(config *Config) *echo.Echo {
 
 	// v3 APIハンドラ
 	v3 := v3.Handlers{
-		RBAC:            config.RBAC,
-		Repo:            config.Repository,
-		WS:              config.WS,
-		Hub:             config.Hub,
-		Logger:          config.RootLogger.Named("api_handler"),
-		Realtime:        config.Realtime,
-		Version:         config.Version,
-		Revision:        config.Revision,
-		SkyWaySecretKey: config.SkyWaySecretKey,
+		RBAC:                            config.RBAC,
+		Repo:                            config.Repository,
+		WS:                              config.WS,
+		Hub:                             config.Hub,
+		Logger:                          config.RootLogger.Named("api_handler"),
+		Realtime:                        config.Realtime,
+		Version:                         config.Version,
+		Revision:                        config.Revision,
+		SkyWaySecretKey:                 config.SkyWaySecretKey,
+		EnabledExternalAccountProviders: config.ExternalAuth.ValidProviders(),
 	}
 	v3.Setup(api)
 
@@ -82,7 +83,7 @@ func Setup(config *Config) *echo.Echo {
 	oa2.Setup(api.Group("/v3/oauth2"))
 
 	// 外部authハンドラ
-	extAuth := api.Group("/auth", middlewares.NoLogin())
+	extAuth := api.Group("/auth")
 	if config.ExternalAuth.GitHub.Valid() {
 		p := auth.NewGithubProvider(config.Repository, config.RootLogger.Named("ext_auth"), config.ExternalAuth.GitHub)
 		extAuth.GET("/github", p.LoginHandler)

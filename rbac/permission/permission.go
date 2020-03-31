@@ -61,6 +61,9 @@ func init() {
 		GetMySessions,
 		DeleteMySessions,
 
+		GetMyExternalAccount,
+		EditMyExternalAccount,
+
 		GetStamp,
 		CreateStamp,
 		EditStamp,

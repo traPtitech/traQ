@@ -80,6 +80,18 @@ type TestRepository struct {
 	OAuth2TokensLock          sync.RWMutex
 }
 
+func (repo *TestRepository) LinkExternalUserAccount(userID uuid.UUID, args repository.LinkExternalUserAccountArgs) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetLinkedExternalUserAccounts(userID uuid.UUID) ([]*model.ExternalProviderUser, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) UnlinkExternalUserAccount(userID uuid.UUID, providerName string) error {
+	panic("implement me")
+}
+
 func (repo *TestRepository) GetChannelStats(channelID uuid.UUID) (*repository.ChannelStats, error) {
 	panic("implement me")
 }

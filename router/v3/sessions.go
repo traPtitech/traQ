@@ -200,3 +200,96 @@ func (h *Handlers) RevokeMyToken(c echo.Context) error {
 
 	return c.NoContent(http.StatusNoContent)
 }
+
+// GetMyExternalAccounts GET /users/me/ex-accounts
+func (h *Handlers) GetMyExternalAccounts(c echo.Context) error {
+	links, err := h.Repo.GetLinkedExternalUserAccounts(getRequestUserID(c))
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	type response struct {
+		ProviderName string    `json:"providerName"`
+		ExternalName string    `json:"externalName"`
+		LinkedAt     time.Time `json:"linkedAt"`
+	}
+	res := make([]response, len(links))
+	for i, link := range links {
+		res[i] = response{
+			ProviderName: link.ProviderName,
+			LinkedAt:     link.CreatedAt,
+		}
+		if exName, ok := link.Extra["externalName"]; ok {
+			res[i].ExternalName = exName.(string)
+		} else {
+			res[i].ExternalName = link.ExternalID
+		}
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+// PostLinkExternalAccount POST /users/me/ex-accounts/link リクエストボディ
+type PostLinkExternalAccount struct {
+	ProviderName string `json:"providerName"`
+}
+
+func (r PostLinkExternalAccount) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.ProviderName, vd.Required),
+	)
+}
+
+// UnlinkExternalAccount POST /users/me/ex-accounts/link
+func (h *Handlers) LinkExternalAccount(c echo.Context) error {
+	var req PostLinkExternalAccount
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	if !h.EnabledExternalAccountProviders[req.ProviderName] {
+		return herror.BadRequest("invalid provider name")
+	}
+
+	links, err := h.Repo.GetLinkedExternalUserAccounts(getRequestUserID(c))
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	for _, link := range links {
+		if link.ProviderName == req.ProviderName {
+			return herror.BadRequest("already linked")
+		}
+	}
+
+	return c.Redirect(http.StatusFound, "/api/auth/"+req.ProviderName+"?link=1")
+}
+
+// PostUnlinkExternalAccount POST /users/me/ex-accounts/unlink リクエストボディ
+type PostUnlinkExternalAccount struct {
+	ProviderName string `json:"providerName"`
+}
+
+func (r PostUnlinkExternalAccount) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.ProviderName, vd.Required),
+	)
+}
+
+// UnlinkExternalAccount POST /users/me/ex-accounts/unlink
+func (h *Handlers) UnlinkExternalAccount(c echo.Context) error {
+	var req PostUnlinkExternalAccount
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	if err := h.Repo.UnlinkExternalUserAccount(getRequestUserID(c), req.ProviderName); err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return herror.BadRequest("invalid provider name")
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}

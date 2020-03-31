@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	googleProviderName          = "google"
+	GoogleProviderName          = "google"
 	googleAPIRequestErrorFormat = "google api request error: %w"
 )
 
@@ -48,11 +48,15 @@ type googleUserInfo struct {
 }
 
 func (u *googleUserInfo) GetProviderName() string {
-	return googleProviderName
+	return GoogleProviderName
 }
 
 func (u *googleUserInfo) GetID() string {
 	return u.id
+}
+
+func (u *googleUserInfo) GetRawName() string {
+	return u.email
 }
 
 func (u *googleUserInfo) GetName() string {
