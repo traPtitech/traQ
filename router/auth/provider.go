@@ -54,7 +54,7 @@ func defaultLoginHandler(oac *oauth2.Config) echo.HandlerFunc {
 			return herror.InternalServerError(err)
 		}
 
-		if isTrue("link") {
+		if isTrue(c.QueryParam("link")) {
 			// アカウント関連付けモード
 			if sess == nil || sess.GetUserID() == uuid.Nil {
 				return herror.Unauthorized("You are not logged in. Please login.")
