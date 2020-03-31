@@ -274,3 +274,62 @@ func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 	}
 	return nil
 }
+
+// LinkExternalUserAccount implements UserRepository interface.
+func (repo *GormRepository) LinkExternalUserAccount(userID uuid.UUID, args LinkExternalUserAccountArgs) error {
+	if userID == uuid.Nil {
+		return ErrNilID
+	}
+	if len(args.ProviderName) == 0 {
+		return ArgError("args.ProviderName", "ProviderName must not be empty")
+	}
+	if len(args.ExternalID) == 0 {
+		return ArgError("args.ExternalID", "ExternalID must not be empty")
+	}
+
+	return repo.db.Transaction(func(tx *gorm.DB) error {
+		if exist, err := dbExists(tx, &model.User{ID: userID}); err != nil {
+			return err
+		} else if exist {
+			return ErrNotFound
+		}
+
+		if exist, err := dbExists(tx, &model.ExternalProviderUser{UserID: userID, ProviderName: args.ProviderName}); err != nil {
+			return err
+		} else if exist {
+			return ErrAlreadyExists
+		}
+
+		return tx.Create(&model.ExternalProviderUser{
+			UserID:       userID,
+			ProviderName: args.ProviderName,
+			ExternalID:   args.ExternalID,
+			Extra:        args.Extra,
+		}).Error
+	})
+}
+
+// GetLinkedExternalUserAccounts implements UserRepository interface.
+func (repo *GormRepository) GetLinkedExternalUserAccounts(userID uuid.UUID) ([]*model.ExternalProviderUser, error) {
+	result := make([]*model.ExternalProviderUser, 0)
+	if userID == uuid.Nil {
+		return result, nil
+	}
+	return result, repo.db.Find(&result, &model.ExternalProviderUser{UserID: userID}).Error
+}
+
+// UnlinkExternalUserAccount implements UserRepository interface.
+func (repo *GormRepository) UnlinkExternalUserAccount(userID uuid.UUID, providerName string) error {
+	if userID == uuid.Nil || len(providerName) == 0 {
+		return ErrNilID
+	}
+
+	result := repo.db.Delete(model.ExternalProviderUser{}, &model.ExternalProviderUser{UserID: userID, ProviderName: providerName})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return ErrNotFound
+	}
+	return nil
+}

@@ -31,6 +31,13 @@ type UpdateUserArgs struct {
 	Password   null.String
 }
 
+// LinkExternalUserAccountArgs 外部アカウント関連付け引数
+type LinkExternalUserAccountArgs struct {
+	ProviderName string
+	ExternalID   string
+	Extra        model.JSON
+}
+
 // UsersQuery GetUsers用クエリ
 type UsersQuery struct {
 	IsBot                       null.Bool
@@ -145,4 +152,25 @@ type UserRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	UpdateUser(id uuid.UUID, args UpdateUserArgs) error
+	// LinkExternalUserAccount 指定したユーザーに外部ログインアカウントを関連付けします
+	//
+	// 成功した場合、nilを返します。
+	// 存在しないユーザーの場合、ErrNotFoundを返します。
+	// 既に指定された外部プロバイダとの関連付けがある場合、ErrAlreadyExistを返します。
+	// 引数に問題がある場合、ArgumentErrorを返します。
+	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
+	// DBによるエラーを返すことがあります。
+	LinkExternalUserAccount(userID uuid.UUID, args LinkExternalUserAccountArgs) error
+	// GetLinkedExternalUserAccounts 指定したユーザーに関連づけられている外部ログインアカウントの配列を返します
+	//
+	// 成功した場合、外部ログインアカウントの配列とnilを返します。
+	// DBによるエラーを返すことがあります。
+	GetLinkedExternalUserAccounts(userID uuid.UUID) ([]*model.ExternalProviderUser, error)
+	// UnlinkExternalUserAccount 指定したユーザーに関連づけられている指定した外部ログインアカウントの関連付けを解除します
+	//
+	// 成功した場合、nilを返します。
+	// 既に関連付けが無い場合、ErrNotFoundを返します。
+	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
+	// DBによるエラーを返すことがあります。
+	UnlinkExternalUserAccount(userID uuid.UUID, providerName string) error
 }
