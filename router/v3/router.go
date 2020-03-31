@@ -25,6 +25,9 @@ type Handlers struct {
 
 	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
 	SkyWaySecretKey string
+
+	// EnabledExternalAccountLink リンク可能な外部認証アカウントのプロバイダ
+	EnabledExternalAccountProviders map[string]bool
 }
 
 // Setup APIルーティングを行います
@@ -116,6 +119,12 @@ func (h *Handlers) Setup(e *echo.Group) {
 				{
 					apiUsersMeTokens.GET("", h.GetMyTokens, requires(permission.GetMyTokens))
 					apiUsersMeTokens.DELETE("/:tokenID", h.RevokeMyToken, requires(permission.RevokeMyToken))
+				}
+				apiUsersMeExAccounts := apiUsersMe.Group("/ex-accounts", blockBot)
+				{
+					apiUsersMeExAccounts.GET("", h.GetMyExternalAccounts, requires(permission.GetMyExternalAccount))
+					apiUsersMeExAccounts.POST("/link", h.LinkExternalAccount, requires(permission.EditMyExternalAccount))
+					apiUsersMeExAccounts.POST("/unlink", h.UnlinkExternalAccount, requires(permission.EditMyExternalAccount))
 				}
 			}
 		}

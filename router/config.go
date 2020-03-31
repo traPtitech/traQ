@@ -60,3 +60,20 @@ type ExternalAuthConfig struct {
 	// OIDC OpenID Connect
 	OIDC auth.OIDCProviderConfig
 }
+
+func (c ExternalAuthConfig) ValidProviders() map[string]bool {
+	res := make(map[string]bool)
+	if c.GitHub.Valid() {
+		res[auth.GithubProviderName] = true
+	}
+	if c.Google.Valid() {
+		res[auth.GoogleProviderName] = true
+	}
+	if c.TraQ.Valid() {
+		res[auth.TraQProviderName] = true
+	}
+	if c.OIDC.Valid() {
+		res[auth.OIDCProviderName] = true
+	}
+	return res
+}

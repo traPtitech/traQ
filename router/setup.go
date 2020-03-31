@@ -57,15 +57,16 @@ func Setup(config *Config) *echo.Echo {
 
 	// v3 APIハンドラ
 	v3 := v3.Handlers{
-		RBAC:            config.RBAC,
-		Repo:            config.Repository,
-		WS:              config.WS,
-		Hub:             config.Hub,
-		Logger:          config.RootLogger.Named("api_handler"),
-		Realtime:        config.Realtime,
-		Version:         config.Version,
-		Revision:        config.Revision,
-		SkyWaySecretKey: config.SkyWaySecretKey,
+		RBAC:                            config.RBAC,
+		Repo:                            config.Repository,
+		WS:                              config.WS,
+		Hub:                             config.Hub,
+		Logger:                          config.RootLogger.Named("api_handler"),
+		Realtime:                        config.Realtime,
+		Version:                         config.Version,
+		Revision:                        config.Revision,
+		SkyWaySecretKey:                 config.SkyWaySecretKey,
+		EnabledExternalAccountProviders: config.ExternalAuth.ValidProviders(),
 	}
 	v3.Setup(api)
 
