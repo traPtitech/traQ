@@ -45,6 +45,10 @@ const (
 	GetMySessions = rbac.Permission("get_my_sessions")
 	// DeleteMySessions セッション削除権限
 	DeleteMySessions = rbac.Permission("delete_my_sessions")
+	// GetMyExternalAccount 外部ログインアカウント情報取得権限
+	GetMyExternalAccount = rbac.Permission("get_my_external_account")
+	// EditMyExternalAccount 外部ログインアカウント情報編集権限
+	EditMyExternalAccount = rbac.Permission("edit_my_external_account")
 	// GetUnread 未読メッセージ一覧の取得権限
 	GetUnread = rbac.Permission("get_unread")
 	// DeleteUnread メッセージ既読化権限
