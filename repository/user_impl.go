@@ -290,7 +290,7 @@ func (repo *GormRepository) LinkExternalUserAccount(userID uuid.UUID, args LinkE
 	return repo.db.Transaction(func(tx *gorm.DB) error {
 		if exist, err := dbExists(tx, &model.User{ID: userID}); err != nil {
 			return err
-		} else if exist {
+		} else if !exist {
 			return ErrNotFound
 		}
 
