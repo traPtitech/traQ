@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	traQProviderName          = "traQ"
+	TraQProviderName          = "traQ"
 	traQAPIRequestErrorFormat = "traQ api request error: %w"
 )
 
@@ -45,7 +45,7 @@ type traqUserInfo struct {
 }
 
 func (u *traqUserInfo) GetProviderName() string {
-	return traQProviderName
+	return TraQProviderName
 }
 
 func (u *traqUserInfo) GetID() string {

@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	githubProviderName          = "github"
+	GithubProviderName          = "github"
 	githubProfileURL            = "https://api.github.com/user"
 	githubAPIRequestErrorFormat = "github api request error: %w"
 )
@@ -48,7 +48,7 @@ type githubUserInfo struct {
 }
 
 func (u *githubUserInfo) GetProviderName() string {
-	return githubProviderName
+	return GithubProviderName
 }
 
 func (u *githubUserInfo) GetID() string {
