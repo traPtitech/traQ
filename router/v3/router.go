@@ -34,6 +34,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	bodyLimit := middlewares.RequestBodyLengthLimit
 	retrieve := middlewares.NewParamRetriever(h.Repo)
 	blockBot := middlewares.BlockBot(h.Repo)
+	nologin := middlewares.NoLogin()
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
@@ -314,7 +315,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	apiNoAuth := e.Group("/v3")
 	{
 		apiNoAuth.GET("/version", h.GetVersion)
-		apiNoAuth.POST("/login", h.Login)
+		apiNoAuth.POST("/login", h.Login, nologin)
 		apiNoAuth.POST("/logout", h.Logout)
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook)
 		apiNoAuthPublic := apiNoAuth.Group("/public")
