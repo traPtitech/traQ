@@ -103,6 +103,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				ExternalLogin: &model.ExternalProviderUser{
 					ProviderName: tu.GetProviderName(),
 					ExternalID:   tu.GetID(),
+					Extra:        model.JSON{"externalName": tu.GetRawName()},
 				},
 			}
 
