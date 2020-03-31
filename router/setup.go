@@ -82,7 +82,7 @@ func Setup(config *Config) *echo.Echo {
 	oa2.Setup(api.Group("/v3/oauth2"))
 
 	// 外部authハンドラ
-	extAuth := api.Group("/auth")
+	extAuth := api.Group("/auth", middlewares.NoLogin())
 	if config.ExternalAuth.GitHub.Valid() {
 		p := auth.NewGithubProvider(config.Repository, config.RootLogger.Named("ext_auth"), config.ExternalAuth.GitHub)
 		extAuth.GET("/github", p.LoginHandler)

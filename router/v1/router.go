@@ -71,6 +71,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	adminOnly := middlewares.AdminOnly
 	retrieve := middlewares.NewParamRetriever(h.Repo)
 	blockBot := middlewares.BlockBot(h.Repo)
+	nologin := middlewares.NoLogin()
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
@@ -348,7 +349,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 
 	apiNoAuth := e.Group("/1.0")
 	{
-		apiNoAuth.POST("/login", h.PostLogin)
+		apiNoAuth.POST("/login", h.PostLogin, nologin)
 		apiNoAuth.POST("/logout", h.PostLogout)
 		apiPublic := apiNoAuth.Group("/public")
 		{
