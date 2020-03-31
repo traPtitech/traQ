@@ -2,6 +2,7 @@ package model
 
 import (
 	"crypto/subtle"
+	"database/sql/driver"
 	"encoding/hex"
 	"errors"
 	vd "github.com/go-ozzo/ozzo-validation"
@@ -128,11 +129,32 @@ func (UserProfile) TableName() string {
 	return "user_profiles"
 }
 
+type JSON map[string]interface{}
+
+// Value database/sql/driver.Valuer 実装
+func (v JSON) Value() (driver.Value, error) {
+	return json.MarshalToString(v)
+}
+
+// Scan database/sql.Scanner 実装
+func (v *JSON) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case nil:
+		return nil
+	case string:
+		return json.Unmarshal([]byte(s), v)
+	case []byte:
+		return json.Unmarshal(s, v)
+	default:
+		return errors.New("failed to scan JSON")
+	}
+}
+
 type ExternalProviderUser struct {
 	UserID       uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	ProviderName string    `gorm:"type:varchar(30);not null;primary_key"`
 	ExternalID   string    `gorm:"type:varchar(100);not null"`
-	Extra        string    `gorm:"type:text;not null"`
+	Extra        JSON      `gorm:"type:text;not null"`
 	CreatedAt    time.Time `gorm:"precision:6"`
 	UpdatedAt    time.Time `gorm:"precision:6"`
 }
