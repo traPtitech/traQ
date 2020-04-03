@@ -1,7 +1,7 @@
 package repository
 
 import (
-	validation "github.com/go-ozzo/ozzo-validation"
+	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
@@ -21,7 +21,7 @@ func (repo *GormRepository) CreateStamp(name string, fileID, userID uuid.UUID) (
 
 	err = repo.db.Transaction(func(tx *gorm.DB) error {
 		// 名前チェック
-		if err := validation.Validate(name, validator.StampNameRuleRequired...); err != nil {
+		if err := vd.Validate(name, validator.StampNameRuleRequired...); err != nil {
 			return ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 		}
 		// 名前重複チェック
@@ -68,7 +68,7 @@ func (repo *GormRepository) UpdateStamp(id uuid.UUID, args UpdateStampArgs) erro
 		}
 
 		if args.Name.Valid {
-			if err := validation.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
+			if err := vd.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
 				return ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 			}
 

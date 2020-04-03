@@ -2,7 +2,7 @@ package validator
 
 import (
 	"errors"
-	validation "github.com/go-ozzo/ozzo-validation"
+	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/utils"
 	"net/url"
@@ -19,7 +19,7 @@ var (
 )
 
 // NotInternalURL 内部ネットワーク宛のURLでない
-var NotInternalURL = validation.By(func(value interface{}) error {
+var NotInternalURL = vd.By(func(value interface{}) error {
 	s, _ := value.(string)
 	if len(s) == 0 {
 		return nil
@@ -32,7 +32,7 @@ var NotInternalURL = validation.By(func(value interface{}) error {
 })
 
 // NotNilUUID uuid.Nilでない
-var NotNilUUID = validation.By(func(value interface{}) error {
+var NotNilUUID = vd.By(func(value interface{}) error {
 	switch u := value.(type) {
 	case nil:
 		return nil

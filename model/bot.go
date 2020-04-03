@@ -3,7 +3,7 @@ package model
 import (
 	"database/sql/driver"
 	"errors"
-	vd "github.com/go-ozzo/ozzo-validation"
+	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"strings"
 	"time"

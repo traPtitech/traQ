@@ -1,7 +1,7 @@
 package extension
 
 import (
-	vd "github.com/go-ozzo/ozzo-validation"
+	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"

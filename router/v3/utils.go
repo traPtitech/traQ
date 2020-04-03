@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	vd "github.com/go-ozzo/ozzo-validation"
+	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"

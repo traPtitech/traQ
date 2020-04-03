@@ -1,8 +1,8 @@
 package repository
 
 import (
-	vd "github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
+	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"

@@ -5,7 +5,6 @@ require (
 	cloud.google.com/go/firestore v1.1.1 // indirect
 	firebase.google.com/go v3.12.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/blendle/zapdriver v1.3.1
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -13,7 +12,7 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fogleman/gg v1.1.0 // indirect
 	github.com/gavv/httpexpect/v2 v2.0.3
-	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
+	github.com/go-ozzo/ozzo-validation/v4 v4.1.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gofrs/uuid v3.2.0+incompatible
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
@@ -42,7 +41,6 @@ require (
 	go.uber.org/zap v1.14.1
 	golang.org/x/crypto v0.0.0-20200128174031-69ecbb4d6d5d
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6
-	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
 	google.golang.org/api v0.20.0
