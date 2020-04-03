@@ -12,7 +12,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fogleman/gg v1.1.0 // indirect
-	github.com/gavv/httpexpect/v2 v2.0.2
+	github.com/gavv/httpexpect/v2 v2.0.3
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gofrs/uuid v3.2.0+incompatible
