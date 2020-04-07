@@ -25,10 +25,11 @@ type UpdateUserArgs struct {
 		Valid bool
 		State model.UserAccountStatus
 	}
-	Bio        null.String
-	IconFileID uuid.NullUUID
-	LastOnline null.Time
-	Password   null.String
+	Bio         null.String
+	IconFileID  uuid.NullUUID
+	LastOnline  null.Time
+	HomeChannel uuid.NullUUID
+	Password    null.String
 }
 
 // LinkExternalUserAccountArgs 外部アカウント関連付け引数

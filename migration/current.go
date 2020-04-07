@@ -27,6 +27,7 @@ func Migrations() []*gormigrate.Migration {
 		v14(), // パーミッション不足修正
 		v15(), // 外部ログイン機能追加
 		v16(), // パーミッション修正
+		v17(), // ユーザーホームチャンネル
 	}
 }
 
@@ -123,6 +124,7 @@ func AllForeignKeys() [][5]string {
 		{"clip_folder_messages", "message_id", "messages(id)", "CASCADE", "CASCADE"},
 		{"stamp_palettes", "creator_id", "users(id)", "CASCADE", "CASCADE"},
 		{"external_provider_users", "user_id", "users(id)", "CASCADE", "CASCADE"},
+		{"user_profiles", "home_channel", "channels(id)", "CASCADE", "CASCADE"},
 	}
 }
 

@@ -3948,6 +3948,7 @@ components:
           type: string
           description: 最終オンライン日時
           format: date-time
+          nullable: true
         updatedAt:
           type: string
           format: date-time
@@ -3967,6 +3968,11 @@ components:
           type: string
           description: 自己紹介(biography)
           maxLength: 1000
+        homeChannel:
+          type: string
+          format: uuid
+          description: ホームチャンネル
+          nullable: true
       required:
         - id
         - state
@@ -3980,6 +3986,7 @@ components:
         - tags
         - groups
         - bio
+        - homeChannel
     UserTag:
       title: UserTag
       type: object
@@ -4156,6 +4163,7 @@ components:
           type: string
           description: 最終オンライン日時
           format: date-time
+          nullable: true
         twitterId:
           type: string
           description: Twitter ID
@@ -4183,6 +4191,11 @@ components:
           items:
             type: string
           description: 所有している権限の配列
+        homeChannel:
+          type: string
+          format: uuid
+          description: ホームチャンネル
+          nullable: true
       description: 自分のユーザー詳細情報
       required:
         - id
@@ -4198,6 +4211,7 @@ components:
         - bot
         - state
         - permissions
+        - homeChannel
     PatchChannelSubscribersRequest:
       title: PatchChannelSubscribersRequest
       type: object
@@ -4411,6 +4425,12 @@ components:
           type: string
           description: 自己紹介(biography)
           maxLength: 1000
+        homeChannel:
+          type: string
+          description: |-
+            ホームチャンネルのUUID
+            `00000000-0000-0000-0000-000000000000`を指定すると、ホームチャンネルが`null`に設定されます
+          format: uuid
     PutUserPasswordRequest:
       title: PutUserPasswordRequest
       type: object

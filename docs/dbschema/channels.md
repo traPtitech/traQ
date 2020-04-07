@@ -32,7 +32,7 @@ CREATE TABLE `channels` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [channel_events](channel_events.md) [dm_channel_mappings](dm_channel_mappings.md) [files](files.md) [messages](messages.md) [stars](stars.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [webhook_bots](webhook_bots.md) [channels](channels.md) |  | チャンネルUUID |
+| id | char(36) |  | false | [channel_events](channel_events.md) [dm_channel_mappings](dm_channel_mappings.md) [files](files.md) [messages](messages.md) [stars](stars.md) [user_profiles](user_profiles.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [webhook_bots](webhook_bots.md) [channels](channels.md) |  | チャンネルUUID |
 | name | varchar(20) |  | false |  |  | チャンネル名 |
 | parent_id | char(36) |  | false |  | [channels](channels.md) | 親チャンネルUUID |
 | topic | text |  | false |  |  | チャンネルトピック |

@@ -493,33 +493,36 @@
 <!-- user_profiles -->
 <g id="node14" class="node">
 <title>user_profiles</title>
-<polygon fill="#efefef" stroke="transparent" points="3546,-1397.5 3546,-1432.5 3760,-1432.5 3760,-1397.5 3546,-1397.5"/>
-<polygon fill="none" stroke="#000000" points="3546,-1397.5 3546,-1432.5 3760,-1432.5 3760,-1397.5 3546,-1397.5"/>
-<text text-anchor="start" x="3552.867" y="-1410.3" font-family="Arial Bold" font-size="18.00" fill="#000000">user_profiles</text>
-<text text-anchor="start" x="3655.8792" y="-1410.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
-<text text-anchor="start" x="3659.7698" y="-1410.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
-<polygon fill="none" stroke="#000000" points="3546,-1367.5 3546,-1397.5 3760,-1397.5 3760,-1367.5 3546,-1367.5"/>
-<text text-anchor="start" x="3553" y="-1378.9" font-family="Arial" font-size="14.00" fill="#000000">user_id </text>
-<text text-anchor="start" x="3602.7882" y="-1378.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
-<polygon fill="none" stroke="#000000" points="3546,-1337.5 3546,-1367.5 3760,-1367.5 3760,-1337.5 3546,-1337.5"/>
-<text text-anchor="start" x="3553" y="-1348.9" font-family="Arial" font-size="14.00" fill="#000000">bio </text>
-<text text-anchor="start" x="3575.5624" y="-1348.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
-<polygon fill="none" stroke="#000000" points="3546,-1307.5 3546,-1337.5 3760,-1337.5 3760,-1307.5 3546,-1307.5"/>
-<text text-anchor="start" x="3553" y="-1318.9" font-family="Arial" font-size="14.00" fill="#000000">twitter_id </text>
-<text text-anchor="start" x="3612.8906" y="-1318.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(15)]</text>
-<polygon fill="none" stroke="#000000" points="3546,-1277.5 3546,-1307.5 3760,-1307.5 3760,-1277.5 3546,-1277.5"/>
-<text text-anchor="start" x="3553" y="-1288.9" font-family="Arial" font-size="14.00" fill="#000000">last_online </text>
-<text text-anchor="start" x="3623.7966" y="-1288.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
-<polygon fill="none" stroke="#000000" points="3546,-1247.5 3546,-1277.5 3760,-1277.5 3760,-1247.5 3546,-1247.5"/>
-<text text-anchor="start" x="3553" y="-1258.9" font-family="Arial" font-size="14.00" fill="#000000">updated_at </text>
-<text text-anchor="start" x="3626.9326" y="-1258.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
+<polygon fill="#efefef" stroke="transparent" points="3546,-1412.5 3546,-1447.5 3760,-1447.5 3760,-1412.5 3546,-1412.5"/>
+<polygon fill="none" stroke="#000000" points="3546,-1412.5 3546,-1447.5 3760,-1447.5 3760,-1412.5 3546,-1412.5"/>
+<text text-anchor="start" x="3552.867" y="-1425.3" font-family="Arial Bold" font-size="18.00" fill="#000000">user_profiles</text>
+<text text-anchor="start" x="3655.8792" y="-1425.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
+<text text-anchor="start" x="3659.7698" y="-1425.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="#000000" points="3546,-1382.5 3546,-1412.5 3760,-1412.5 3760,-1382.5 3546,-1382.5"/>
+<text text-anchor="start" x="3553" y="-1393.9" font-family="Arial" font-size="14.00" fill="#000000">user_id </text>
+<text text-anchor="start" x="3602.7882" y="-1393.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="none" stroke="#000000" points="3546,-1352.5 3546,-1382.5 3760,-1382.5 3760,-1352.5 3546,-1352.5"/>
+<text text-anchor="start" x="3553" y="-1363.9" font-family="Arial" font-size="14.00" fill="#000000">bio </text>
+<text text-anchor="start" x="3575.5624" y="-1363.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
+<polygon fill="none" stroke="#000000" points="3546,-1322.5 3546,-1352.5 3760,-1352.5 3760,-1322.5 3546,-1322.5"/>
+<text text-anchor="start" x="3553" y="-1333.9" font-family="Arial" font-size="14.00" fill="#000000">twitter_id </text>
+<text text-anchor="start" x="3612.8906" y="-1333.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(15)]</text>
+<polygon fill="none" stroke="#000000" points="3546,-1292.5 3546,-1322.5 3760,-1322.5 3760,-1292.5 3546,-1292.5"/>
+<text text-anchor="start" x="3553" y="-1303.9" font-family="Arial" font-size="14.00" fill="#000000">last_online </text>
+<text text-anchor="start" x="3623.7966" y="-1303.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
+<polygon fill="none" stroke="#000000" points="3546,-1262.5 3546,-1292.5 3760,-1292.5 3760,-1262.5 3546,-1262.5"/>
+<text text-anchor="start" x="3553" y="-1273.9" font-family="Arial" font-size="14.00" fill="#000000">home_channel </text>
+<text text-anchor="start" x="3648.7012" y="-1273.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="none" stroke="#000000" points="3546,-1232.5 3546,-1262.5 3760,-1262.5 3760,-1232.5 3546,-1232.5"/>
+<text text-anchor="start" x="3553" y="-1243.9" font-family="Arial" font-size="14.00" fill="#000000">updated_at </text>
+<text text-anchor="start" x="3626.9326" y="-1243.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
 </g>
 <!-- user_profiles&#45;&gt;users -->
 <g id="edge15" class="edge">
 <title>user_profiles:user_id&#45;&gt;users:id</title>
-<path fill="none" stroke="#000000" d="M3535.9714,-1380.3874C3482.341,-1355.5029 3539.9936,-1118.288 3494,-1070 3398.1782,-969.398 3021.9337,-937.5 2883,-937.5"/>
-<polygon fill="#000000" stroke="#000000" points="3536.2148,-1380.4386 3545.0724,-1386.9034 3541.1074,-1381.4693 3546,-1382.5 3546,-1382.5 3546,-1382.5 3541.1074,-1381.4693 3546.9276,-1378.0966 3536.2148,-1380.4386 3536.2148,-1380.4386"/>
-<text text-anchor="start" x="3492.945" y="-1366.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (user_id) REFERENCES users (id)</text>
+<path fill="none" stroke="#000000" d="M3535.8682,-1395.4454C3479.3379,-1370.245 3542.054,-1120.8277 3494,-1070 3398.5523,-969.043 3021.9337,-937.5 2883,-937.5"/>
+<polygon fill="#000000" stroke="#000000" points="3536.1995,-1395.5125 3545.1056,-1401.9102 3541.0997,-1396.5062 3546,-1397.5 3546,-1397.5 3546,-1397.5 3541.0997,-1396.5062 3546.8944,-1393.0898 3536.1995,-1395.5125 3536.1995,-1395.5125"/>
+<text text-anchor="start" x="3492.945" y="-1381.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (user_id) REFERENCES users (id)</text>
 </g>
 <!-- users_private_channels -->
 <g id="node15" class="node">

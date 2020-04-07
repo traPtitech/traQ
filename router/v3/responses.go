@@ -78,18 +78,19 @@ func formatUsers(users []model.UserInfo) []User {
 }
 
 type UserDetail struct {
-	ID          uuid.UUID   `json:"id"`
-	State       int         `json:"state"`
-	Bot         bool        `json:"bot"`
-	IconFileID  uuid.UUID   `json:"iconFileId"`
-	DisplayName string      `json:"displayName"`
-	Name        string      `json:"name"`
-	TwitterID   string      `json:"twitterId"`
-	LastOnline  *time.Time  `json:"lastOnline"`
-	UpdatedAt   time.Time   `json:"updatedAt"`
-	Tags        []UserTag   `json:"tags"`
-	Groups      []uuid.UUID `json:"groups"`
-	Bio         string      `json:"bio"`
+	ID          uuid.UUID     `json:"id"`
+	State       int           `json:"state"`
+	Bot         bool          `json:"bot"`
+	IconFileID  uuid.UUID     `json:"iconFileId"`
+	DisplayName string        `json:"displayName"`
+	Name        string        `json:"name"`
+	TwitterID   string        `json:"twitterId"`
+	LastOnline  *time.Time    `json:"lastOnline"`
+	UpdatedAt   time.Time     `json:"updatedAt"`
+	Tags        []UserTag     `json:"tags"`
+	Groups      []uuid.UUID   `json:"groups"`
+	Bio         string        `json:"bio"`
+	HomeChannel uuid.NullUUID `json:"homeChannel"`
 }
 
 func formatUserDetail(user model.UserInfo, uts []*model.UsersTag, g []uuid.UUID) *UserDetail {
@@ -106,6 +107,7 @@ func formatUserDetail(user model.UserInfo, uts []*model.UsersTag, g []uuid.UUID)
 		Tags:        formatUserTags(uts),
 		Groups:      g,
 		Bio:         user.GetBio(),
+		HomeChannel: user.GetHomeChannel(),
 	}
 }
 
