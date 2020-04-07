@@ -1,7 +1,7 @@
 package repository
 
 import (
-	validation "github.com/go-ozzo/ozzo-validation"
+	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
@@ -25,17 +25,17 @@ func (repo *GormRepository) CreateStampPalette(name, description string, stamps 
 
 	err = repo.db.Transaction(func(tx *gorm.DB) error {
 		// 名前チェック
-		if err := validation.Validate(name, validator.StampPaletteNameRuleRequired...); err != nil {
+		if err := vd.Validate(name, validator.StampPaletteNameRuleRequired...); err != nil {
 			return ArgError("name", "Name must be 1-30")
 		}
 		// 説明チェック
-		if err = validation.Validate(description, validator.StampPaletteDescriptionRule...); err != nil {
+		if err = vd.Validate(description, validator.StampPaletteDescriptionRule...); err != nil {
 			return ArgError("description", "Description must be 0-1000")
 		}
 		// スタンプ上限チェック
 		// SqlのValuerが実装されていると、その結果でバリデーションをかけるため[]uuid.UUIDに変換
 		uuids := stamps.ToUUIDSlice()
-		if err = validation.Validate(uuids, validator.StampPaletteStampsRuleNotNil...); err != nil {
+		if err = vd.Validate(uuids, validator.StampPaletteStampsRuleNotNil...); err != nil {
 			return ArgError("stamps", "stamps must be 0-200")
 		}
 		// スタンプ存在チェック
@@ -74,20 +74,20 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 		}
 
 		if args.Name.Valid {
-			if err := validation.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
+			if err := vd.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
 				return ArgError("args.Name", "Name must be 1-30")
 			}
 			changes["name"] = args.Name.String
 		}
 		if args.Description.Valid {
-			if err := validation.Validate(args.Description.String, validator.StampPaletteDescriptionRule...); err != nil {
+			if err := vd.Validate(args.Description.String, validator.StampPaletteDescriptionRule...); err != nil {
 				return ArgError("args.Description", "Description must be 0-1000")
 			}
 			changes["description"] = args.Description.String
 		}
 		if args.Stamps != nil {
 			uuids := args.Stamps.ToUUIDSlice()
-			if err := validation.Validate(uuids, validator.StampPaletteStampsRuleNotNil...); err != nil {
+			if err := vd.Validate(uuids, validator.StampPaletteStampsRuleNotNil...); err != nil {
 				return ArgError("args.Stamps", "stamps must be 0-200")
 			}
 			if err := repo.ExistStamps(args.Stamps); err != nil {

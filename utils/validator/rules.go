@@ -3,8 +3,8 @@ package validator
 import (
 	"regexp"
 
-	vd "github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
+	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
 // PasswordRule パスワードバリデーションルール
@@ -110,5 +110,5 @@ var ClipFolderNameRuleRequired = append([]vd.Rule{
 
 // ClipFolderDescriptionRule クリップフォルダーの説明バリデーションルール
 var ClipFolderDescriptionRule = []vd.Rule{
-	vd.Length(0, 1000),
+	vd.RuneLength(0, 1000),
 }

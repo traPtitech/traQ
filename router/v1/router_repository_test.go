@@ -15,7 +15,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/disintegration/imaging"
-	validation "github.com/go-ozzo/ozzo-validation"
+	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
@@ -1769,7 +1769,7 @@ func (repo *TestRepository) CreateStamp(name string, fileID, userID uuid.UUID) (
 	defer repo.FilesLock.RUnlock()
 
 	// 名前チェック
-	if err := validation.Validate(name, validator.StampNameRuleRequired...); err != nil {
+	if err := vd.Validate(name, validator.StampNameRuleRequired...); err != nil {
 		return nil, repository.ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 	}
 	// 名前重複チェック
@@ -1806,7 +1806,7 @@ func (repo *TestRepository) UpdateStamp(id uuid.UUID, args repository.UpdateStam
 	}
 
 	if args.Name.Valid {
-		if err := validation.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
+		if err := vd.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
 			return repository.ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 		}
 

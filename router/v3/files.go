@@ -1,7 +1,7 @@
 package v3
 
 import (
-	vd "github.com/go-ozzo/ozzo-validation"
+	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
@@ -31,12 +31,10 @@ func (q *GetFilesRequest) Validate() error {
 	if q.Limit == 0 {
 		q.Limit = 20
 	}
-	if !q.ChannelID.Valid && !q.Mine {
-		q.Mine = true
-	}
 	return vd.ValidateStruct(q,
 		vd.Field(&q.Limit, vd.Min(1), vd.Max(200)),
 		vd.Field(&q.Offset, vd.Min(0)),
+		vd.Field(&q.Mine, vd.When(!q.ChannelID.Valid || q.ChannelID.UUID == uuid.Nil, vd.Required)),
 	)
 }
 
