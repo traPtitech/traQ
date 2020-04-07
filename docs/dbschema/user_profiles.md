@@ -13,8 +13,11 @@ CREATE TABLE `user_profiles` (
   `bio` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `twitter_id` varchar(15) NOT NULL DEFAULT '',
   `last_online` datetime(6) DEFAULT NULL,
+  `home_channel` char(36) DEFAULT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`user_id`),
+  KEY `user_profiles_home_channel_channels_id_foreign` (`home_channel`),
+  CONSTRAINT `user_profiles_home_channel_channels_id_foreign` FOREIGN KEY (`home_channel`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `user_profiles_user_id_users_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
@@ -29,6 +32,7 @@ CREATE TABLE `user_profiles` (
 | bio | text |  | false |  |  | bio |
 | twitter_id | varchar(15) |  | false |  |  | Twitter ID |
 | last_online | datetime(6) |  | true |  |  | 最終オンライン日時 |
+| home_channel | char(36) |  | true |  | [channels](channels.md) | ホームチャンネルUUID |
 | updated_at | datetime(6) |  | true |  |  | 更新日時 |
 
 ## Constraints
@@ -36,12 +40,14 @@ CREATE TABLE `user_profiles` (
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (user_id) |
+| user_profiles_home_channel_channels_id_foreign | FOREIGN KEY | FOREIGN KEY (home_channel) REFERENCES channels (id) |
 | user_profiles_user_id_users_id_foreign | FOREIGN KEY | FOREIGN KEY (user_id) REFERENCES users (id) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
+| user_profiles_home_channel_channels_id_foreign | KEY user_profiles_home_channel_channels_id_foreign (home_channel) USING BTREE |
 | PRIMARY | PRIMARY KEY (user_id) USING BTREE |
 
 ## Relations

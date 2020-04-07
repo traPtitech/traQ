@@ -62,6 +62,7 @@ comments:
       bio: bio
       twitter_id: Twitter ID
       last_online: 最終オンライン日時
+      home_channel: ホームチャンネルUUID
       updated_at: 更新日時
   - table: channels
     tableComment: チャンネルテーブル
