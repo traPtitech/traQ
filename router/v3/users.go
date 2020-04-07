@@ -71,14 +71,16 @@ func (h *Handlers) GetMe(c echo.Context) error {
 		"bot":         me.IsBot(),
 		"state":       me.GetState().Int(),
 		"permissions": perms,
+		"homeChannel": me.GetHomeChannel(),
 	})
 }
 
 // PatchMeRequest PATCH /users/me リクエストボディ
 type PatchMeRequest struct {
-	DisplayName null.String `json:"displayName"`
-	TwitterID   null.String `json:"twitterId"`
-	Bio         null.String `json:"bio"`
+	DisplayName null.String   `json:"displayName"`
+	TwitterID   null.String   `json:"twitterId"`
+	Bio         null.String   `json:"bio"`
+	HomeChannel uuid.NullUUID `json:"homeChannel"`
 }
 
 func (r PatchMeRequest) Validate() error {
@@ -98,7 +100,24 @@ func (h *Handlers) EditMe(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.UpdateUser(userID, repository.UpdateUserArgs{DisplayName: req.DisplayName, TwitterID: req.TwitterID, Bio: req.Bio}); err != nil {
+	if req.HomeChannel.Valid {
+		if req.HomeChannel.UUID != uuid.Nil {
+			// チャンネルアクセス権確認
+			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, req.HomeChannel.UUID); err != nil {
+				return herror.InternalServerError(err)
+			} else if !ok {
+				return herror.BadRequest("invalid homeChannel")
+			}
+		}
+	}
+
+	args := repository.UpdateUserArgs{
+		DisplayName: req.DisplayName,
+		TwitterID:   req.TwitterID,
+		Bio:         req.Bio,
+		HomeChannel: req.HomeChannel,
+	}
+	if err := h.Repo.UpdateUser(userID, args); err != nil {
 		return herror.InternalServerError(err)
 	}
 

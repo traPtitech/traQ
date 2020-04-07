@@ -235,6 +235,13 @@ func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 		if args.LastOnline.Valid {
 			changes["last_online"] = args.LastOnline
 		}
+		if args.HomeChannel.Valid {
+			if args.HomeChannel.UUID == uuid.Nil {
+				changes["home_channel"] = uuid.NullUUID{}
+			} else {
+				changes["home_channel"] = args.HomeChannel.UUID
+			}
+		}
 		if len(changes) > 0 {
 			if err := tx.Model(u.Profile).Updates(changes).Error; err != nil {
 				return err

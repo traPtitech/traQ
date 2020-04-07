@@ -74,6 +74,7 @@ type UserInfo interface {
 	GetTwitterID() string
 	GetBio() string
 	GetLastOnline() null.Time
+	GetHomeChannel() uuid.NullUUID
 
 	// IsActive ユーザーが有効かどうか
 	IsActive() bool
@@ -118,11 +119,12 @@ func (user User) Validate() error {
 }
 
 type UserProfile struct {
-	UserID     uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	Bio        string    `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
-	TwitterID  string    `gorm:"type:varchar(15);not null;default:''"`
-	LastOnline null.Time `gorm:"precision:6"`
-	UpdatedAt  time.Time `gorm:"precision:6"`
+	UserID      uuid.UUID     `gorm:"type:char(36);not null;primary_key"`
+	Bio         string        `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
+	TwitterID   string        `gorm:"type:varchar(15);not null;default:''"`
+	LastOnline  null.Time     `gorm:"precision:6"`
+	HomeChannel uuid.NullUUID `gorm:"type:char(36)"`
+	UpdatedAt   time.Time     `gorm:"precision:6"`
 }
 
 func (UserProfile) TableName() string {
@@ -235,6 +237,14 @@ func (user *User) GetLastOnline() null.Time {
 		panic("unexpected control flow")
 	}
 	return user.Profile.LastOnline
+}
+
+// GetHomeChannel implements UserInfo interface
+func (user *User) GetHomeChannel() uuid.NullUUID {
+	if user.Profile == nil {
+		panic("unexpected control flow")
+	}
+	return user.Profile.HomeChannel
 }
 
 // IsActive implements UserInfo interface
