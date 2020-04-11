@@ -372,7 +372,7 @@ type PutChannelSubscribeLevelRequest struct {
 
 func (r PutChannelSubscribeLevelRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Level, vd.Required, vd.Min(0), vd.Max(2)),
+		vd.Field(&r.Level, vd.NotNil, vd.Min(0), vd.Max(2)),
 	)
 }
 

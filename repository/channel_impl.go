@@ -616,7 +616,7 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 
 			case model.ChannelSubscribeLevelMark:
 				if _, ok := current[uid]; ok {
-					if err := tx.Where(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID}).Updates(map[string]bool{"mark": true, "notify": false}).Error; err != nil {
+					if err := tx.Model(model.UserSubscribeChannel{}).Where(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID}).Updates(map[string]bool{"mark": true, "notify": false}).Error; err != nil {
 						return err
 					}
 				} else {
@@ -630,7 +630,7 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 
 			case model.ChannelSubscribeLevelMarkAndNotify:
 				if _, ok := current[uid]; ok {
-					if err := tx.Where(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID}).Updates(map[string]bool{"mark": true, "notify": true}).Error; err != nil {
+					if err := tx.Model(model.UserSubscribeChannel{}).Where(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID}).Updates(map[string]bool{"mark": true, "notify": true}).Error; err != nil {
 						return err
 					}
 				} else {
