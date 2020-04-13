@@ -4019,11 +4019,19 @@ components:
     UserAccountState:
       type: integer
       title: UserAccountState
-      description: ユーザーアカウント状態
+      description: |-
+        ユーザーアカウント状態
+        0: 停止
+        1: 有効
+        2: 一時停止
       enum:
         - 0
         - 1
         - 2
+      x-enum-varnames:
+        - deactivated
+        - active
+        - suspended
       format: int32
     UserGroup:
       title: UserGroup
@@ -4269,6 +4277,10 @@ components:
         - 0
         - 1
         - 2
+      x-enum-varnames:
+        - none
+        - subscribed
+        - notified
     PutChannelSubscribeLevelRequest:
       title: PutChannelSubscribeLevelRequest
       type: object
@@ -4797,6 +4809,23 @@ components:
         - callbackUrl
         - scopes
         - description
+    BotState:
+      type: integer
+      title: BotState
+      description: |-
+        BOT状態
+        0: 停止
+        1: 有効
+        2: 一時停止
+      enum:
+        - 0
+        - 1
+        - 2
+      x-enum-varnames:
+        - deactivated
+        - active
+        - suspended
+      format: int32
     Bot:
       title: Bot
       type: object
@@ -4824,12 +4853,7 @@ components:
           items:
             type: string
         state:
-          type: integer
-          description: BOT状態
-          enum:
-            - 0
-            - 1
-            - 2
+          $ref: '#/components/schemas/BotState'
         createdAt:
           type: string
           description: 作成日時
@@ -4909,12 +4933,7 @@ components:
           description: 作成日時
           format: date-time
         state:
-          type: integer
-          description: BOT状態
-          enum:
-            - 0
-            - 1
-            - 2
+          $ref: '#/components/schemas/BotState'
         subscribeEvents:
           type: array
           description: BOTが購読しているイベントの配列
