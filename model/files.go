@@ -58,7 +58,7 @@ type File struct {
 }
 
 // TableName dbのtableの名前を返します
-func (f *File) TableName() string {
+func (f File) TableName() string {
 	return "files"
 }
 
@@ -70,6 +70,6 @@ type FileACLEntry struct {
 }
 
 // TableName FileACLEntry構造体のテーブル名
-func (f *FileACLEntry) TableName() string {
+func (f FileACLEntry) TableName() string {
 	return "files_acl"
 }

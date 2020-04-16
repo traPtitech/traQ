@@ -54,4 +54,4 @@ require (
 
 replace github.com/blendle/zapdriver v1.3.1 => github.com/wtks/zapdriver v1.3.1-patch.0
 
-go 1.13
+go 1.14

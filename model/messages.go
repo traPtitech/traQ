@@ -20,7 +20,7 @@ type Message struct {
 }
 
 // TableName DBの名前を指定するメソッド
-func (m *Message) TableName() string {
+func (m Message) TableName() string {
 	return "messages"
 }
 

@@ -40,12 +40,33 @@ var rootCommand = &cobra.Command{
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(func() {
+		if len(configFile) > 0 {
+			viper.SetConfigFile(configFile)
+		} else {
+			viper.AddConfigPath(".")
+			viper.SetConfigName("config")
+		}
+		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+		viper.SetEnvPrefix("TRAQ")
+		viper.AutomaticEnv()
+		if err := viper.ReadInConfig(); err != nil {
+			if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+				log.Fatalf("failed to read config file: %v", err)
+			}
+		}
+		if err := viper.Unmarshal(&c); err != nil {
+			log.Fatal(err)
+		}
+	})
 
-	rootCommand.AddCommand(serveCommand)
-	rootCommand.AddCommand(migrateCommand)
-	rootCommand.AddCommand(confCommand)
-	rootCommand.AddCommand(versionCommand)
+	rootCommand.AddCommand(
+		serveCommand(),
+		migrateCommand(),
+		confCommand(),
+		fileCommand(),
+		versionCommand(),
+	)
 
 	flags := rootCommand.PersistentFlags()
 	flags.StringVarP(&configFile, "config", "c", "", "config file path")
@@ -54,26 +75,6 @@ func init() {
 	bindPFlag(flags, "dev")
 	flags.Bool("pprof", false, "expose pprof http interface")
 	bindPFlag(flags, "pprof")
-}
-
-func initConfig() {
-	if len(configFile) > 0 {
-		viper.SetConfigFile(configFile)
-	} else {
-		viper.AddConfigPath(".")
-		viper.SetConfigName("config")
-	}
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	viper.SetEnvPrefix("TRAQ")
-	viper.AutomaticEnv()
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			log.Fatalf("failed to read config file: %v", err)
-		}
-	}
-	if err := viper.Unmarshal(&c); err != nil {
-		log.Fatal(err)
-	}
 }
 
 func Execute() error {
