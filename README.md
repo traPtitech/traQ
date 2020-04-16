@@ -11,7 +11,7 @@
 
 ### Requirements
 
-- go 1.13.x
+- go 1.14
 - git
 - make
 - docker
