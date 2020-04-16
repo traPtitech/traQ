@@ -37,7 +37,10 @@ func fileCommand() *cobra.Command {
 
 // filePruneCommand 未使用ファイル解放コマンド
 func filePruneCommand() *cobra.Command {
-	var dryRun bool
+	var (
+		dryRun   bool
+		userFile bool
+	)
 
 	cmd := cobra.Command{
 		Use:   "prune",
@@ -91,9 +94,14 @@ func filePruneCommand() *cobra.Command {
 			files = append(files, tmp...)
 			tmp = nil
 
+			// 未使用ユーザーアップロードファイル
+			if userFile {
+				// TODO
+			}
+
 			logger.Sugar().Infof("%d unused-files was detected", len(files))
 			for _, file := range files {
-				logger.Sugar().Infof("%s (%d bytes) %s", file.ID, file.Size, file.Type)
+				logger.Sugar().Infof("%s - %s", file.ID, file.CreatedAt)
 				if !dryRun {
 					if err := repo.DeleteFile(file.ID); err != nil {
 						logger.Fatal(err.Error())
@@ -105,6 +113,7 @@ func filePruneCommand() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.BoolVar(&dryRun, "dry-run", false, "list target files only (no delete)")
+	flags.BoolVar(&userFile, "include-user-file", false, "include user-uploaded files which has no link to any messages (may take long time)")
 
 	return &cmd
 }
