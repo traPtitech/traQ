@@ -131,7 +131,7 @@ jobs:
         with:
           name: traQ
       - name: Create Database
-        run: mysql -uroot -proot -e "CREATE DATABASE traq;"
+        run: mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE traq;"
       - name: Lint
         run: |
           source <(curl -sL https://git.io/use-tbls)
