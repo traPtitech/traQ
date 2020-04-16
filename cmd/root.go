@@ -63,6 +63,7 @@ func init() {
 	rootCommand.AddCommand(
 		serveCommand(),
 		migrateCommand(),
+		migrateV2ToV3Command(),
 		confCommand(),
 		fileCommand(),
 		versionCommand(),
@@ -83,27 +84,7 @@ func Execute() error {
 
 func getLogger() (logger *zap.Logger) {
 	if c.DevMode {
-		cfg := zap.Config{
-			Level:       zap.NewAtomicLevelAt(zap.DebugLevel),
-			Development: true,
-			Encoding:    "console",
-			EncoderConfig: zapcore.EncoderConfig{
-				TimeKey:        "T",
-				LevelKey:       "L",
-				NameKey:        "N",
-				CallerKey:      "C",
-				MessageKey:     "M",
-				StacktraceKey:  "S",
-				LineEnding:     zapcore.DefaultLineEnding,
-				EncodeLevel:    zapcore.CapitalColorLevelEncoder,
-				EncodeTime:     zapcore.ISO8601TimeEncoder,
-				EncodeDuration: zapcore.StringDurationEncoder,
-				EncodeCaller:   zapcore.ShortCallerEncoder,
-			},
-			OutputPaths:      []string{"stderr"},
-			ErrorOutputPaths: []string{"stderr"},
-		}
-		logger, _ = cfg.Build()
+		return getCLILogger()
 	} else {
 		cfg := zap.Config{
 			Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
@@ -114,6 +95,35 @@ func getLogger() (logger *zap.Logger) {
 		}
 		logger, _ = cfg.Build(zapdriver.WrapCore(zapdriver.ServiceName("traq", fmt.Sprintf("%s.%s", Version, Revision))))
 	}
+	return
+}
+
+func getCLILogger() (logger *zap.Logger) {
+	level := zap.NewAtomicLevel()
+	if c.DevMode {
+		level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	}
+	cfg := zap.Config{
+		Level:       level,
+		Development: c.DevMode,
+		Encoding:    "console",
+		EncoderConfig: zapcore.EncoderConfig{
+			TimeKey:        "T",
+			LevelKey:       "L",
+			NameKey:        "N",
+			CallerKey:      "C",
+			MessageKey:     "M",
+			StacktraceKey:  "S",
+			LineEnding:     zapcore.DefaultLineEnding,
+			EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+			EncodeTime:     zapcore.ISO8601TimeEncoder,
+			EncodeDuration: zapcore.StringDurationEncoder,
+			EncodeCaller:   zapcore.ShortCallerEncoder,
+		},
+		OutputPaths:      []string{"stdout"},
+		ErrorOutputPaths: []string{"stderr"},
+	}
+	logger, _ = cfg.Build()
 	return
 }
 
