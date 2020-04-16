@@ -119,27 +119,26 @@ jobs:
     needs: [build]
     services:
       mysql:
-        image: mysql:5.7
-        options: --health-cmd "mysqladmin ping -h localhost" --health-interval 20s --health-timeout 10s --health-retries 10
+        image: mariadb:10.0.19
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
         env:
-          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: traq
         ports:
-          - 3306
+          - 3306:3306
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v1
         with:
           name: traQ
-      - name: Create Database
-        run: mysql -h 127.0.0.1 -uroot -proot -e "CREATE DATABASE traq;"
       - name: Lint
         run: |
           source <(curl -sL https://git.io/use-tbls)
           chmod +x ./traQ/traQ
-          ./traQ/traQ migrate --reset --pass root
+          ./traQ/traQ migrate --reset
           tbls lint
         env:
-          TBLS_DSN: "mysql://root:root@127.0.0.1:3306/traq"
+          TBLS_DSN: "mysql://root:password@127.0.0.1:3306/traq"
   spectral:
     name: Spectral
     runs-on: ubuntu-latest
