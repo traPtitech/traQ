@@ -47,7 +47,7 @@ func filePruneCommand() *cobra.Command {
 		Short: "delete files which are not used or linked to anywhere",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Logger
-			logger := getLogger()
+			logger := getCLILogger()
 			defer logger.Sync()
 
 			// Database
