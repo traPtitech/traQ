@@ -117,8 +117,15 @@ jobs:
     name: TBLS
     runs-on: ubuntu-latest
     needs: [build]
+    services:
+      mysql:
+        image: mysql:5.7
+        options: --health-cmd "mysqladmin ping -h localhost" --health-interval 20s --health-timeout 10s --health-retries 10
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306
     steps:
-      - run: sudo /etc/init.d/mysql start
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v1
         with:
