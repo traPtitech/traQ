@@ -279,44 +279,6 @@ func TestHandlers_PatchChannelByChannelID(t *testing.T) {
 	})
 }
 
-func TestHandlers_DeleteChannelByChannelID(t *testing.T) {
-	t.Parallel()
-	repo, server, _, _, session, adminSession := setup(t, common1)
-
-	pubCh := mustMakeChannel(t, repo, random)
-
-	t.Run("NotLoggedIn", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.DELETE("/api/1.0/channels/{channelID}", pubCh.ID.String()).
-			Expect().
-			Status(http.StatusUnauthorized)
-	})
-
-	t.Run("Successful1", func(t *testing.T) {
-		t.Parallel()
-		e := makeExp(t, server)
-		e.DELETE("/api/1.0/channels/{channelID}", pubCh.ID.String()).
-			WithCookie(sessions.CookieName, adminSession).
-			Expect().
-			Status(http.StatusNoContent)
-
-		_, err := repo.GetChannel(pubCh.ID)
-		assert.Equal(t, err, repository.ErrNotFound)
-	})
-
-	// 権限がない
-	t.Run("Failure1", func(t *testing.T) {
-		t.Parallel()
-		pubCh := mustMakeChannel(t, repo, random)
-		e := makeExp(t, server)
-		e.DELETE("/api/1.0/channels/{channelID}", pubCh.ID.String()).
-			WithCookie(sessions.CookieName, session).
-			Expect().
-			Status(http.StatusForbidden)
-	})
-}
-
 func TestHandlers_PutChannelParent(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, adminSession := setup(t, common1)
