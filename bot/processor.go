@@ -20,6 +20,8 @@ const (
 	headerTRAQBotEvent             = "X-TRAQ-BOT-EVENT"
 	headerTRAQBotRequestID         = "X-TRAQ-BOT-REQUEST-ID"
 	headerTRAQBotVerificationToken = "X-TRAQ-BOT-TOKEN"
+	headerUserAgent                = "User-Agent"
+	ua                             = "traQ_Bot_Processor/1.0"
 )
 
 var eventSendCounter = promauto.NewCounterVec(prometheus.CounterOpts{
@@ -67,6 +69,7 @@ func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (
 	reqID := uuid.Must(uuid.NewV4())
 
 	req, _ := http.NewRequest(http.MethodPost, b.PostURL, bytes.NewReader(body))
+	req.Header.Set(headerUserAgent, ua)
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
 	req.Header.Set(headerTRAQBotEvent, event.String())
 	req.Header.Set(headerTRAQBotRequestID, reqID.String())
