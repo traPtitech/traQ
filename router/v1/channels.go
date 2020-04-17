@@ -239,17 +239,6 @@ func (h *Handlers) PutChannelParent(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// DeleteChannelByChannelID DELETE /channels/:channelID
-func (h *Handlers) DeleteChannelByChannelID(c echo.Context) error {
-	channelID := getRequestParamAsUUID(c, consts.ParamChannelID)
-
-	if err := h.Repo.DeleteChannel(channelID); err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.NoContent(http.StatusNoContent)
-}
-
 // GetTopic GET /channels/:channelID/topic
 func (h *Handlers) GetTopic(c echo.Context) error {
 	ch := getChannelFromContext(c)

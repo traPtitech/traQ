@@ -160,7 +160,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 			{
 				apiChannelsCid.GET("", h.GetChannelByChannelID, requires(permission.GetChannel))
 				apiChannelsCid.PATCH("", h.PatchChannelByChannelID, requires(permission.EditChannel))
-				apiChannelsCid.DELETE("", h.DeleteChannelByChannelID, requires(permission.DeleteChannel))
 				apiChannelsCid.PUT("/parent", h.PutChannelParent, requires(permission.ChangeParentChannel))
 				apiChannelsCid.POST("/children", h.PostChannelChildren, requires(permission.CreateChannel))
 				apiChannelsCid.GET("/pins", h.GetChannelPin, requires(permission.GetMessage))

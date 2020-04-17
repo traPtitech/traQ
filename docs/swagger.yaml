@@ -1037,18 +1037,6 @@ paths:
           description: |+
             変更に失敗しました。
             指定したチャンネルは存在しません。
-    delete:
-      tags:
-        - channel
-      operationId: deleteChannel
-      description: チャンネルを削除します。
-      responses:
-        "204":
-          description: 削除に成功しました。
-        "404":
-          description: +|
-            削除に失敗しました。
-            指定したチャンネルは既に存在しません。
 
   /channels/{channelID}/parent:
     parameters:
