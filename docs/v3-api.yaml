@@ -1250,7 +1250,7 @@ paths:
         Webhookのリストを取得します。
         allがtrueで無い場合は、自分がオーナーのWebhookのリストを返します。
     post:
-      summary: Webhookを作成します
+      summary: Webhookを新規作成
       responses:
         '201':
           description: Created
@@ -1268,11 +1268,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostWebhookRequest'
+      description: |-
+        Webhookを新規作成します。
+        `secret`が空文字の場合、insecureウェブフックが作成されます。
   '/webhooks/{webhookId}':
     parameters:
       - $ref: '#/components/parameters/webhookIdInPath'
     get:
-      summary: Webhook情報を取得します
+      summary: Webhook情報を取得
       tags:
         - webhook
       responses:
@@ -1287,8 +1290,9 @@ paths:
             Not Found
             Webhookが見つかりません。
       operationId: getWebhook
+      description: 指定したWebhookの詳細を取得します。
     post:
-      summary: Webhookを送信します
+      summary: Webhookを送信
       responses:
         '204':
           description: No Content
@@ -1323,8 +1327,11 @@ paths:
         description: ''
       tags:
         - webhook
+      description: |-
+        Webhookにメッセージを投稿します。
+        secureなウェブフックに対しては`X-TRAQ-Signature`ヘッダーが必須です。
     delete:
-      summary: Webhookを削除します
+      summary: Webhookを削除
       responses:
         '204':
           description: |-
@@ -1337,9 +1344,11 @@ paths:
       tags:
         - webhook
       operationId: deleteWebhook
-      description: ''
+      description: |-
+        指定したWebhookを削除します。
+        Webhookによって投稿されたメッセージは削除されません。
     patch:
-      summary: Webhook情報を変更します
+      summary: Webhook情報を変更
       responses:
         '200':
           description: OK
@@ -1361,11 +1370,12 @@ paths:
               $ref: '#/components/schemas/PatchWebhookRequest'
       tags:
         - webhook
+      description: 指定したWebhookの情報を変更します。
   '/webhooks/{webhookId}/icon':
     parameters:
       - $ref: '#/components/parameters/webhookIdInPath'
     get:
-      summary: Webhookのアイコンを取得します
+      summary: Webhookのアイコンを取得
       tags:
         - webhook
       responses:
@@ -1389,8 +1399,9 @@ paths:
             Not Found
             Webhookが見つかりません。
       operationId: getWebhookIcon
+      description: 指定したWebhookのアイコン画像を取得します
     put:
-      summary: Webhookのアイコンを変更します
+      summary: Webhookのアイコンを変更
       responses:
         '204':
           description: |-
@@ -1416,6 +1427,7 @@ paths:
         description: ''
       tags:
         - webhook
+      description: 指定したWebhookのアイコン画像を変更します。
   '/users/{userId}/icon':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -1763,7 +1775,7 @@ paths:
       - $ref: '#/components/parameters/userIdInPath'
       - $ref: '#/components/parameters/tagIdInPath'
     patch:
-      summary: ユーザーのタグを編集します
+      summary: ユーザーのタグを編集
       responses:
         '204':
           description: |-
@@ -1789,6 +1801,9 @@ paths:
       tags:
         - user
         - user tag
+      description: |-
+        指定したユーザーの指定したタグの状態を変更します。
+        他人の状態は変更できません。
     delete:
       summary: ユーザーからタグを削除します
       responses:
@@ -1827,7 +1842,7 @@ paths:
       description: 指定したタグの情報を取得します。
   /users/me/tags:
     get:
-      summary: 自分のタグリストを取得します
+      summary: 自分のタグリストを取得
       tags:
         - me
         - user tag
@@ -1842,9 +1857,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/UserTag'
       operationId: getMyUserTags
-      description: ''
+      description: 自分に付けられているタグの配列を取得します。
     post:
-      summary: 自分にタグを追加します
+      summary: 自分にタグを追加
       responses:
         '201':
           description: Created
@@ -1868,6 +1883,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PostUserTagRequest'
         description: ''
+      description: 自分に新しくタグを追加します。
   '/users/me/tags/{tagId}':
     parameters:
       - $ref: '#/components/parameters/tagIdInPath'
@@ -1888,7 +1904,7 @@ paths:
         - user tag
         - me
     patch:
-      summary: 自分のタグを編集します
+      summary: 自分のタグを編集
       responses:
         '204':
           description: |-
@@ -1910,6 +1926,7 @@ paths:
       tags:
         - user tag
         - me
+      description: 自分の指定したタグの状態を変更します。
   /users/me/stars:
     get:
       summary: スターチャンネルリストを取得
@@ -1967,7 +1984,7 @@ paths:
       operationId: removeMyStar
   /users/me/unread:
     get:
-      summary: 未読チャンネルのリストを取得します
+      summary: 未読チャンネルを取得
       tags:
         - me
         - notification
@@ -1982,9 +1999,10 @@ paths:
                 items:
                   $ref: '#/components/schemas/UnreadChannel'
       operationId: getMyUnreadChannels
+      description: 自分が現在未読のチャンネルの未読情報を取得します。
   /version:
     get:
-      summary: バージョンを取得します
+      summary: バージョンを取得
       tags:
         - public
       responses:
@@ -2002,6 +2020,7 @@ paths:
                     type: string
                     description: traQ(サーバー)リビジョン
       operationId: getServerVersion
+      description: サーバーバージョン及びサーバーフラグ情報を取得します。
   /login:
     post:
       summary: ログイン
@@ -2061,7 +2080,7 @@ paths:
       description: ログアウトします。
   /users/me/sessions:
     get:
-      summary: 自分のログインセッションリストを取得します
+      summary: 自分のログインセッションリストを取得
       tags:
         - authentication
         - me
@@ -2076,11 +2095,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/LoginSession'
       operationId: getMySessions
+      description: 自分のログインセッションのリストを取得します。
   '/users/me/sessions/{sessionId}':
     parameters:
       - $ref: '#/components/parameters/sessionIdInPath'
     delete:
-      summary: セッションを無効化します
+      summary: セッションを無効化
       responses:
         '204':
           description: |-
@@ -2090,6 +2110,9 @@ paths:
       tags:
         - authentication
         - me
+      description: |-
+        指定した自分のセッションを無効化(ログアウト)します。
+        既に存在しない・無効化されているセッションを指定した場合も`204`を返します。
   /activity/timeline:
     get:
       summary: アクテビティタイムラインを取得
@@ -2144,7 +2167,7 @@ paths:
       description: "# WebSocketプロトコル\n## 送信\n`コマンド:引数1:引数2:...`のような形式のTextMessageをサーバーに送信することで、このWebSocketセッションに対する設定が実行できる。\n### `viewstate`コマンド\nこのWebSocketセッションが見ているチャンネル(イベントを受け取るチャンネル)を設定する。\n現時点では1つのセッションに対して1つのチャンネルしか設定できない。\n\n`viewstate:(チャンネルID):(閲覧状態)`\n+ チャンネルID: 対象のチャンネルID\n+ 閲覧状態: `none`, `monitoring`, `editing`\n\n最初の`viewstate`コマンドを送る前、または`viewstate:null`を送信した後は、このセッションはどこのチャンネルも見ていないことになる。\n\n## 受信\nTextMessageとして各種イベントが`type`と`body`を持つJSONとして非同期に送られます。\n\n例: \n```json\n{\"type\":\"USER_ONLINE\",\"body\":{\"id\":\"7dd8e07f-7f5d-4331-9176-b56a4299768b\"}}\n```\n\n## イベント一覧\n\n### `USER_JOINED`\nユーザーが新規登録された。\n\n対象: 全員\n\n+ `id`: 登録されたユーザーのId\n\n### `USER_UPDATED`\nユーザーの情報が更新された。\n\n対象: 全員\n\n+ `id`: 情報が更新されたユーザーのId\n\n### `USER_TAGS_UPDATED`\nユーザーのタグが更新された。\n\n対象: 全員\n\n+ `id`: タグが更新されたユーザーのId\n\n### `USER_ICON_UPDATED`\nユーザーのアイコンが更新された。\n\n対象: 全員\n\n+ `id`: アイコンが更新されたユーザーのId\n\n### `USER_WEBRTC_STATE_CHANGED`\nユーザーのWebRTCの状態が変化した\n\n対象: 全員\n\n+ `user_id`: 変更があったユーザーのId\n+ `channel_id`: ユーザーの変更後の接続チャンネルのId\n+ `state`: ユーザーの変更後の状態(配列)\n\n### `USER_ONLINE`\nユーザーがオンラインになった。\n\n対象: 全員\n\n+ `id`: オンラインになったユーザーのId\n\n### `USER_OFFLINE`\nユーザーがオフラインになった。\n\n対象: 全員\n\n+ `id`: オフラインになったユーザーのId\n\n### `USER_GROUP_CREATED`\nユーザーグループが作成された\n\n対象: 全員\n\n+ `id`: 作成されたユーザーグループのId\n\n### `USER_GROUP_UPDATED`\nユーザーグループが更新された\n\n対象: 全員\n\n+ `id`: 作成されたユーザーグループのId\n\n### `USER_GROUP_DELETED`\nユーザーグループが削除された\n\n対象: 全員\n\n+ `id`: 削除されたユーザーグループのId\n\n### `CHANNEL_CREATED`\nチャンネルが新規作成された。\n\n対象: 全員\n\n+ `id`: 作成されたチャンネルのId\n\n### `CHANNEL_UPDATED`\nチャンネルの情報が変更された。\n\n対象: 全員\n\n+ `id`: 変更があったチャンネルのId\n\n### `CHANNEL_DELETED`\nチャンネルが削除された。\n\n対象: 全員\n\n+ `id`: 削除されたチャンネルのId\n\n### `CHANNEL_STARED`\n自分がチャンネルをスターした。\n\n対象: 自分\n\n+ `id`: スターしたチャンネルのId\n\n### `CHANNEL_UNSTARED`\n自分がチャンネルのスターを解除した。\n\n対象: 自分\n\n+ `id`: スターしたチャンネルのId\n\n### `MESSAGE_CREATED`\nメッセージが投稿された。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー・投稿チャンネルに通知をつけているユーザー・メンションを受けたユーザー\n\n+ `id`: 投稿されたメッセージのId\n\n### `MESSAGE_UPDATED`\nメッセージが更新された。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー\n\n+ `id`: 更新されたメッセージのId\n\n### `MESSAGE_DELETED`\nメッセージが削除された。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー\n\n+ `id`: 削除されたメッセージのId\n\n### `MESSAGE_STAMPED`\nメッセージにスタンプが押された。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー\n\n+ `message_id`: メッセージId\n+ `user_id`: スタンプを押したユーザーのId\n+ `stamp_id`: スタンプのId\n+ `count`: そのユーザーが押した数\n+ `created_at`: そのユーザーがそのスタンプをそのメッセージに最初に押した日時\n\n### `MESSAGE_UNSTAMPED`\nメッセージからスタンプが外された。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー\n\n+ `message_id`: メッセージId\n+ `user_id`: スタンプを押したユーザーのId\n+ `stamp_id`: スタンプのId\n\n### `MESSAGE_PINNED`\nメッセージがピン留めされた。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー\n\n+ `message_id`: ピンされたメッセージのID\n+ `channel_id`: ピンされたメッセージのチャンネルID\n\n### `MESSAGE_UNPINNED`\nピン留めされたメッセージのピンが外された。\n\n対象: 投稿チャンネルにハートビートを送信しているユーザー\n\n+ `message_id`: ピンが外されたメッセージのID\n+ `channel_id`: ピンが外されたメッセージのチャンネルID\n\n### `MESSAGE_READ`\n自分があるチャンネルのメッセージを読んだ。\n\n対象: 自分\n\n+ `id`: 読んだチャンネルId\n\n### `STAMP_CREATED`\nスタンプが新しく追加された。\n\n対象: 全員\n\n+ `id`: 作成されたスタンプのId\n\n### `STAMP_UPDATED`\nスタンプが修正された。\n\n対象: 全員\n\n+ `id`: 修正されたスタンプのId\n\n### `STAMP_DELETED`\nスタンプが削除された。\n\n対象: 全員\n\n+ `id`: 削除されたスタンプのId\n\n### `STAMP_PALETTE_CREATED`\nスタンプパレットが新しく追加された。\n\n対象: 自分\n\n+ `id`: 作成されたスタンプパレットのId\n\n### `STAMP_PALETTE_UPDATED`\nスタンプパレットが修正された。\n\n対象: 自分\n\n+ `id`: 修正されたスタンプパレットのId\n\n### `STAMP_PALETTE_DELETED`\nスタンプパレットが削除された。\n\n対象: 自分\n\n+ `id`: 削除されたスタンプパレットのId\n\n### `CLIP_FOLDER_CREATED`\nクリップフォルダーが作成された。\n\n対象：自分\n\n+ `id`: 作成されたクリップフォルダーのId\n\n### `CLIP_FOLDER_UPDATED`\nクリップフォルダーが修正された。\n\n対象: 自分\n\n+ `id`: 更新されたクリップフォルダーのId\n\n### `CLIP_FOLDER_DELETED`\nクリップフォルダーが削除された。\n\n対象: 自分\n\n+ `id`: 削除されたクリップフォルダーのId\n\n### `CLIP_FOLDER_MESSAGE_DELETED`\nクリップフォルダーからメッセージが除外された。\n\n対象: 自分\n\n+ `folder_id`: メッセージが除外されたクリップフォルダーのId\n+ `message_id`: クリップフォルダーから除外されたメッセージのId\n\n### `CLIP_FOLDER_MESSAGE_ADDED`\nクリップフォルダーにメッセージが追加された。\n\n対象: 自分\n\n+ `folder_id`: メッセージが追加されたクリップフォルダーのId\n+ `message_id`: クリップフォルダーに追加されたメッセージのId"
   /users/me/tokens:
     get:
-      summary: 有効なOAuth2トークンのリストを取得します
+      summary: 有効トークンのリストを取得
       tags:
         - oauth2
         - me
@@ -2159,11 +2182,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/ActiveOAuth2Token'
       operationId: getMyTokens
+      description: 有効な自分に発行されたOAuth2トークンのリストを取得します。
   '/users/me/tokens/{tokenId}':
     parameters:
       - $ref: '#/components/parameters/tokenIdInPath'
     delete:
-      summary: トークンの認可を取り消します
+      summary: トークンの認可を取り消す
       responses:
         '204':
           description: |-
@@ -2172,7 +2196,7 @@ paths:
         '404':
           description: Not Found
       operationId: revokeMyToken
-      description: ''
+      description: 自分の指定したトークンの認可を取り消します。
       tags:
         - oauth2
         - me
@@ -2712,7 +2736,7 @@ paths:
           description: |-
             Service Unavailable
             WebRTCは現在機能を停止しています
-      description: ''
+      description: Skyway WebRTC用の認証API
       operationId: postWebRTCAuthenticate
       tags:
         - webrtc
@@ -2768,7 +2792,7 @@ paths:
         ルートチャンネルに移動させる場合は、`parent`に`00000000-0000-0000-0000-000000000000`を指定してください。
   /webrtc/state:
     get:
-      summary: WebRTC状態を取得します
+      summary: WebRTC状態を取得
       tags:
         - webrtc
       responses:
@@ -2782,6 +2806,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/WebRTCUserState'
       operationId: getWebRTCState
+      description: 現在のWebRTC状態を取得します。
   /clip-folders:
     post:
       summary: クリップフォルダを作成
@@ -3203,14 +3228,14 @@ paths:
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     delete:
-      summary: 未読チャンネルを既読にします
+      summary: チャンネルを既読にする
       operationId: readChannel
       responses:
         '204':
           description: |-
             No Content
             既読にしました。
-      description: ''
+      description: 自分が未読のチャンネルを既読にします。
       tags:
         - me
         - notification
@@ -3442,7 +3467,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/ExternalProviderUser'
       operationId: getMyExternalAccounts
-      description: ''
+      description: 自分に紐付けられている外部ログインアカウント一覧を取得します。
     parameters: []
   /users/me/ex-accounts/link:
     post:
@@ -3458,7 +3483,10 @@ paths:
       tags:
         - authentication
         - me
-      description: ''
+      description: |-
+        自分に外部ログインアカウントを紐付けます。
+        指定した`providerName`がサーバー側で有効である必要があります。
+        リクエストが受理された場合、外部サービスの認証画面にリダイレクトされ、認証される必要があります。
       requestBody:
         content:
           application/json:
@@ -3475,7 +3503,7 @@ paths:
             紐付けを解除しました。
         '400':
           description: Bad Request
-      description: ''
+      description: 自分に紐付けられている外部ログインアカウントの紐付けを解除します。
       tags:
         - authentication
         - me
