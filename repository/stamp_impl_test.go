@@ -10,7 +10,7 @@ import (
 
 func TestRepositoryImpl_CreateStamp(t *testing.T) {
 	t.Parallel()
-	repo, _, require, user := setupWithUser(t, common)
+	repo, _, require, user := setupWithUser(t, common2)
 
 	fid, err := GenerateIconFile(repo, "stamp")
 	require.NoError(err)
@@ -64,7 +64,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 
 func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 	t.Parallel()
-	repo, _, _ := setup(t, common)
+	repo, _, _ := setup(t, common2)
 
 	s := mustMakeStamp(t, repo, random, uuid.Nil)
 
@@ -134,7 +134,7 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 
 func TestRepositoryImpl_GetStamp(t *testing.T) {
 	t.Parallel()
-	repo, _, _ := setup(t, common)
+	repo, _, _ := setup(t, common2)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -167,7 +167,7 @@ func TestRepositoryImpl_GetStamp(t *testing.T) {
 
 func TestRepositoryImpl_DeleteStamp(t *testing.T) {
 	t.Parallel()
-	repo, _, _ := setup(t, common)
+	repo, _, _ := setup(t, common2)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -210,7 +210,7 @@ func TestRepositoryImpl_GetAllStamps(t *testing.T) {
 
 func TestRepositoryImpl_StampExists(t *testing.T) {
 	t.Parallel()
-	repo, _, _ := setup(t, common)
+	repo, _, _ := setup(t, common2)
 
 	s := mustMakeStamp(t, repo, random, uuid.Nil)
 
@@ -244,7 +244,7 @@ func TestRepositoryImpl_StampExists(t *testing.T) {
 
 func TestRepositoryImpl_ExistStamps(t *testing.T) {
 	t.Parallel()
-	repo, _, _ := setup(t, common)
+	repo, _, _ := setup(t, common2)
 
 	stampIDs := make([]uuid.UUID, 0, 10)
 
@@ -275,7 +275,7 @@ func TestRepositoryImpl_ExistStamps(t *testing.T) {
 
 func TestRepositoryImpl_StampNameExists(t *testing.T) {
 	t.Parallel()
-	repo, _, _ := setup(t, common)
+	repo, _, _ := setup(t, common2)
 
 	s := mustMakeStamp(t, repo, random, uuid.Nil)
 
@@ -309,7 +309,7 @@ func TestRepositoryImpl_StampNameExists(t *testing.T) {
 
 func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common2)
 
 	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	stamp1 := mustMakeStamp(t, repo, random, uuid.Nil)

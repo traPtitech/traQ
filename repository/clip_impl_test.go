@@ -11,7 +11,7 @@ import (
 
 func TestRepositoryImpl_CreateClipFolder(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common3)
 	t.Run("nil user id", func(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
@@ -42,7 +42,7 @@ func TestRepositoryImpl_CreateClipFolder(t *testing.T) {
 
 func TestRepositoryImpl_UpdateClipFolder(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common3)
 
 	clipFolder := mustMakeClipFolder(t, repo, user.GetID(), random, random)
 
@@ -85,7 +85,7 @@ func TestRepositoryImpl_UpdateClipFolder(t *testing.T) {
 
 func TestRepositoryImpl_DeleteClipFolder(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common3)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -117,7 +117,7 @@ func TestRepositoryImpl_DeleteClipFolder(t *testing.T) {
 
 func TestRepositoryImpl_DeleteClipFolderMessage(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common3)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -151,7 +151,7 @@ func TestRepositoryImpl_DeleteClipFolderMessage(t *testing.T) {
 }
 
 func TestRepositoryImpl_AddClipFolderMessage(t *testing.T) {
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common3)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -198,7 +198,7 @@ func TestRepositoryImpl_AddClipFolderMessage(t *testing.T) {
 }
 
 func TestRepositoryImpl_GetClipFoldersByUserID(t *testing.T) {
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common3)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -231,7 +231,7 @@ func TestRepositoryImpl_GetClipFoldersByUserID(t *testing.T) {
 }
 
 func TestRepositoryImpl_GetClipFolder(t *testing.T) {
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common3)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -267,7 +267,7 @@ func TestRepositoryImpl_GetClipFolder(t *testing.T) {
 }
 
 func TestRepositoryImpl_GetClipFolderMessages(t *testing.T) {
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common3)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
