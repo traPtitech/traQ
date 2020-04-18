@@ -71,7 +71,7 @@ func createStamps(repo repository.Repository, initDataDir string, stamps map[str
 		if err != nil {
 			return err
 		}
-		if _, err := repo.CreateStamp(name, meta.GetID(), uuid.Nil); err != nil {
+		if _, err := repo.CreateStamp(repository.CreateStampArgs{Name: name, FileID: meta.GetID(), CreatorID: uuid.Nil}); err != nil {
 			return err
 		}
 	}

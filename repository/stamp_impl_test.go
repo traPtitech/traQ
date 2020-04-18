@@ -18,21 +18,21 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 	t.Run("nil file id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateStamp(utils.RandAlphabetAndNumberString(20), uuid.Nil, user.GetID())
+		_, err := repo.CreateStamp(CreateStampArgs{Name: utils.RandAlphabetAndNumberString(20), FileID: uuid.Nil, CreatorID: user.GetID()})
 		assert.Error(t, err)
 	})
 
 	t.Run("invalid name", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateStamp("あ", fid, user.GetID())
+		_, err := repo.CreateStamp(CreateStampArgs{Name: "あ", FileID: fid, CreatorID: user.GetID()})
 		assert.Error(t, err)
 	})
 
 	t.Run("file not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateStamp(utils.RandAlphabetAndNumberString(20), uuid.Must(uuid.NewV4()), user.GetID())
+		_, err := repo.CreateStamp(CreateStampArgs{Name: utils.RandAlphabetAndNumberString(20), FileID: uuid.Must(uuid.NewV4()), CreatorID: user.GetID()})
 		assert.Error(t, err)
 	})
 
@@ -40,7 +40,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 		t.Parallel()
 		s := mustMakeStamp(t, repo, random, uuid.Nil)
 
-		_, err := repo.CreateStamp(s.Name, fid, user.GetID())
+		_, err := repo.CreateStamp(CreateStampArgs{Name: s.Name, FileID: fid, CreatorID: user.GetID()})
 		assert.Error(t, err)
 	})
 
@@ -49,7 +49,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 		assert, _ := assertAndRequire(t)
 
 		name := utils.RandAlphabetAndNumberString(20)
-		s, err := repo.CreateStamp(name, fid, user.GetID())
+		s, err := repo.CreateStamp(CreateStampArgs{Name: name, FileID: fid, CreatorID: user.GetID()})
 		if assert.NoError(err) {
 			assert.NotEmpty(s.ID)
 			assert.Equal(name, s.Name)

@@ -42,7 +42,7 @@ func (h *Handlers) CreateStamp(c echo.Context) error {
 	}
 
 	// スタンプ作成
-	s, err := h.Repo.CreateStamp(c.FormValue("name"), fileID, userID)
+	s, err := h.Repo.CreateStamp(repository.CreateStampArgs{Name: c.FormValue("name"), FileID: fileID, CreatorID: userID})
 	if err != nil {
 		switch {
 		case repository.IsArgError(err):

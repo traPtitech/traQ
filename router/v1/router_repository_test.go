@@ -1755,12 +1755,13 @@ func (repo *TestRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h 
 	panic("implement me")
 }
 
-func (repo *TestRepository) CreateStamp(name string, fileID, userID uuid.UUID) (s *model.Stamp, err error) {
+func (repo *TestRepository) CreateStamp(args repository.CreateStampArgs) (s *model.Stamp, err error) {
 	stamp := &model.Stamp{
 		ID:        uuid.Must(uuid.NewV4()),
-		Name:      name,
-		FileID:    fileID,
-		CreatorID: userID, // uuid.Nilを許容する
+		Name:      args.Name,
+		FileID:    args.FileID,
+		CreatorID: args.CreatorID, // uuid.Nilを許容する
+		IsUnicode: args.IsUnicode,
 	}
 
 	repo.StampsLock.Lock()
@@ -1769,20 +1770,20 @@ func (repo *TestRepository) CreateStamp(name string, fileID, userID uuid.UUID) (
 	defer repo.FilesLock.RUnlock()
 
 	// 名前チェック
-	if err := vd.Validate(name, validator.StampNameRuleRequired...); err != nil {
+	if err := vd.Validate(stamp.Name, validator.StampNameRuleRequired...); err != nil {
 		return nil, repository.ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 	}
 	// 名前重複チェック
 	for _, v := range repo.Stamps {
-		if v.Name == name {
+		if v.Name == stamp.Name {
 			return nil, repository.ErrAlreadyExists
 		}
 	}
 	// ファイル存在チェック
-	if fileID == uuid.Nil {
+	if stamp.FileID == uuid.Nil {
 		return nil, repository.ArgError("fileID", "FileID's file is not found")
 	}
-	if _, ok := repo.Files[fileID]; !ok {
+	if _, ok := repo.Files[stamp.FileID]; !ok {
 		return nil, repository.ArgError("fileID", "fileID's file is not found")
 	}
 
@@ -1850,6 +1851,20 @@ func (repo *TestRepository) GetStamp(id uuid.UUID) (*model.Stamp, error) {
 		return nil, repository.ErrNotFound
 	}
 	return &s, nil
+}
+
+func (repo *TestRepository) GetStampByName(name string) (*model.Stamp, error) {
+	if len(name) == 0 {
+		return nil, repository.ErrNotFound
+	}
+	repo.StampsLock.RLock()
+	defer repo.StampsLock.RUnlock()
+	for _, stamp := range repo.Stamps {
+		if stamp.Name == name {
+			return &stamp, nil
+		}
+	}
+	return nil, repository.ErrNotFound
 }
 
 func (repo *TestRepository) DeleteStamp(id uuid.UUID) (err error) {
