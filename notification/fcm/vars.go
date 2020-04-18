@@ -26,6 +26,7 @@ var (
 
 // Payload FCMペイロード
 type Payload struct {
+	Type  string
 	Title string
 	Body  string
 	Icon  string
@@ -46,6 +47,7 @@ func (p *Payload) toMessage() *messaging.Message {
 	return &messaging.Message{
 		// データ メッセージとして全て処理する
 		Data: map[string]string{
+			"type":  p.Type,
 			"title": p.Title,
 			"body":  p.Body,
 			"path":  p.Path,

@@ -83,6 +83,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	fcmPayload := &fcm.Payload{
+		Type: "new_message",
 		Icon: fmt.Sprintf("%s/api/v3/public/icon/%s", ns.origin, strings.ReplaceAll(mUser.GetName(), "#", "%23")),
 		Tag:  "c:" + m.ChannelID.String(),
 	}
