@@ -65,8 +65,7 @@ const (
 	// 	Fields:
 	// 		message_id: uuid.UUID
 	//  	message: *model.Message
-	//  	embedded: []*message.EmbeddedInfo
-	//      plain: string
+	// 		parse_result: *message.ParseResult
 	MessageCreated = "message.created"
 	// MessageUpdated メッセージが更新された
 	// 	Fields:
@@ -105,6 +104,12 @@ const (
 	// 		channel_id: uuid.UUID
 	// 		pin_id: uuid.UUID
 	MessageUnpinned = "message.unpinned"
+	// MessageCited メッセージが引用された
+	// 	Fields:
+	// 		message_id: uuid.UUID	引用したメッセージのID
+	//  	message: *model.Message
+	// 		cited_ids: []uuid.UUID	引用されたメッセージのIDの配列
+	MessageCited = "message.cited"
 
 	// ChannelCreated チャンネルが作成された
 	// 	Fields:

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestParse(t *testing.T) {
+func TestExtractEmbedding(t *testing.T) {
 	t.Parallel()
 
 	type Case struct {
@@ -89,7 +89,7 @@ func TestParse(t *testing.T) {
 		v := v
 		t.Run(v.Plain, func(t *testing.T) {
 			t.Parallel()
-			res, plain := Parse(v.Message)
+			res, plain := ExtractEmbedding(v.Message)
 			deref := make([]EmbeddedInfo, len(res))
 			for k, v := range res {
 				deref[k] = *v

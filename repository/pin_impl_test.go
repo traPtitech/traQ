@@ -7,7 +7,7 @@ import (
 
 func TestRepositoryImpl_CreatePin(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, assert, _, user, channel := setupWithUserAndChannel(t, common2)
 
 	testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 
@@ -30,7 +30,7 @@ func TestRepositoryImpl_CreatePin(t *testing.T) {
 
 func TestRepositoryImpl_GetPin(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, assert, _, user, channel := setupWithUserAndChannel(t, common2)
 
 	testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	p := mustMakePin(t, repo, testMessage.ID, user.GetID())
@@ -53,7 +53,7 @@ func TestRepositoryImpl_GetPin(t *testing.T) {
 
 func TestRepositoryImpl_DeletePin(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, assert, _, user, channel := setupWithUserAndChannel(t, common2)
 
 	testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	p := mustMakePin(t, repo, testMessage.ID, user.GetID())
@@ -70,7 +70,7 @@ func TestRepositoryImpl_DeletePin(t *testing.T) {
 
 func TestRepositoryImpl_GetPinsByChannelID(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, assert, _, user, channel := setupWithUserAndChannel(t, common2)
 
 	testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	mustMakePin(t, repo, testMessage.ID, user.GetID())

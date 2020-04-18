@@ -27,8 +27,7 @@ var eventHandlerSet = map[string]eventHandler{
 
 func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	m := fields["message"].(*model.Message)
-	embedded := fields["embedded"].([]*message.EmbeddedInfo)
-	plain := fields["plain"].(string)
+	parsed := fields["parse_result"].(*message.ParseResult)
 
 	ch, err := p.repo.GetChannel(m.ChannelID)
 	if err != nil {
@@ -42,6 +41,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
+	embedded, _ := message.ExtractEmbedding(m.Text)
 	if ch.IsDMChannel() {
 		ids, err := p.repo.GetPrivateChannelMemberIDs(ch.ID)
 		if err != nil {
@@ -70,7 +70,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 		payload := directMessageCreatedPayload{
 			basePayload: makeBasePayload(),
-			Message:     makeMessagePayload(m, user, embedded, plain),
+			Message:     makeMessagePayload(m, user, embedded, parsed.PlainText),
 		}
 
 		multicast(p, model.BotEventDirectMessageCreated, &payload, []*model.Bot{bot})
@@ -85,20 +85,18 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 		// メンションBOT
 		done := make(map[uuid.UUID]bool)
-		for _, v := range embedded {
-			if v.Type == "user" {
-				if uid, err := uuid.FromString(v.ID); err == nil && !done[uid] {
-					done[uid] = true
-					b, err := p.repo.GetBotByBotUserID(uid)
-					if err != nil {
-						if err != repository.ErrNotFound {
-							p.logger.Error("failed to GetBotByBotUserID", zap.Error(err), zap.Stringer("uid", uid))
-						}
-						continue
+		for _, uid := range parsed.Mentions {
+			if !done[uid] {
+				done[uid] = true
+				b, err := p.repo.GetBotByBotUserID(uid)
+				if err != nil {
+					if err != repository.ErrNotFound {
+						p.logger.Error("failed to GetBotByBotUserID", zap.Error(err), zap.Stringer("uid", uid))
 					}
-					if b.SubscribeEvents.Contains(model.BotEventMentionMessageCreated) {
-						bots = append(bots, b)
-					}
+					continue
+				}
+				if b.SubscribeEvents.Contains(model.BotEventMentionMessageCreated) {
+					bots = append(bots, b)
 				}
 			}
 		}
@@ -110,7 +108,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 		payload := messageCreatedPayload{
 			basePayload: makeBasePayload(),
-			Message:     makeMessagePayload(m, user, embedded, plain),
+			Message:     makeMessagePayload(m, user, embedded, parsed.PlainText),
 		}
 
 		multicast(p, model.BotEventMessageCreated, &payload, bots)

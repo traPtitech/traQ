@@ -11,7 +11,7 @@ import (
 
 func TestRepositoryImpl_CreateUserGroup(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common3)
 
 	// Success
 	a := utils.RandAlphabetAndNumberString(20)
@@ -43,7 +43,7 @@ func TestRepositoryImpl_CreateUserGroup(t *testing.T) {
 
 func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common3)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -109,7 +109,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 
 func TestRepositoryImpl_DeleteUserGroup(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common3)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -133,7 +133,7 @@ func TestRepositoryImpl_DeleteUserGroup(t *testing.T) {
 
 func TestRepositoryImpl_GetUserGroup(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common3)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -165,7 +165,7 @@ func TestRepositoryImpl_GetUserGroup(t *testing.T) {
 
 func TestRepositoryImpl_GetUserGroupByName(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common3)
 
 	t.Run("empty", func(t *testing.T) {
 		t.Parallel()
@@ -197,7 +197,7 @@ func TestRepositoryImpl_GetUserGroupByName(t *testing.T) {
 
 func TestRepositoryImpl_GetUserBelongingGroups(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common3)
 
 	user2 := mustMakeUser(t, repo, random)
 	g1 := mustMakeUserGroup(t, repo, random, user.GetID())
@@ -252,7 +252,7 @@ func TestRepositoryImpl_GetAllUserGroups(t *testing.T) {
 
 func TestRepositoryImpl_AddUserToGroup(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common3)
 
 	g := mustMakeUserGroup(t, repo, random, user.GetID())
 
@@ -272,7 +272,7 @@ func TestRepositoryImpl_AddUserToGroup(t *testing.T) {
 
 func TestRepositoryImpl_RemoveUserFromGroup(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common3)
 
 	g := mustMakeUserGroup(t, repo, random, user.GetID())
 	mustAddUserToGroup(t, repo, user.GetID(), g.ID)

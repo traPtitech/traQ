@@ -9,7 +9,7 @@ import (
 
 func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common2)
 
 	t.Run("nil user id", func(t *testing.T) {
 		t.Parallel()
@@ -46,7 +46,7 @@ func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 
 func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common2)
 
 	stampPalette := mustMakeStampPalette(t, repo, random, random, make([]uuid.UUID, 0), user.GetID())
 
@@ -94,7 +94,7 @@ func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 
 func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common2)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -129,7 +129,7 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 
 func TestRepositoryImpl_DeleteStampPalette(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common2)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -159,7 +159,7 @@ func TestRepositoryImpl_DeleteStampPalette(t *testing.T) {
 
 func TestRepositoryImpl_GetStampPalettes(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user := setupWithUser(t, common)
+	repo, assert, _, user := setupWithUser(t, common2)
 	otherUser := mustMakeUser(t, repo, random)
 
 	n := 10

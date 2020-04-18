@@ -23,6 +23,8 @@ import (
 const (
 	dbPrefix = "traq-test-repo-"
 	common   = "common"
+	common2  = "common2"
+	common3  = "common3"
 	ex1      = "ex1"
 	ex2      = "ex2"
 	ex3      = "ex3"
@@ -43,6 +45,8 @@ func TestMain(m *testing.M) {
 		ex1,
 		ex2,
 		ex3,
+		common2,
+		common3,
 	}
 	if err := migration.CreateDatabasesIfNotExists("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=true", user, pass, host, port), dbPrefix, dbs...); err != nil {
 		panic(err)

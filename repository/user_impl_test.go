@@ -121,7 +121,7 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 
 func TestRepositoryImpl_GetUser(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user := setupWithUser(t, common)
+	repo, assert, _, user := setupWithUser(t, common2)
 
 	_, err := repo.GetUser(uuid.Nil, false)
 	assert.Error(err)
@@ -135,7 +135,7 @@ func TestRepositoryImpl_GetUser(t *testing.T) {
 
 func TestRepositoryImpl_GetUserByName(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user := setupWithUser(t, common)
+	repo, assert, _, user := setupWithUser(t, common2)
 
 	_, err := repo.GetUserByName("", false)
 	assert.Error(err)
@@ -149,7 +149,7 @@ func TestRepositoryImpl_GetUserByName(t *testing.T) {
 
 func TestRepositoryImpl_UpdateUser(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user := setupWithUser(t, common)
+	repo, _, _, user := setupWithUser(t, common2)
 
 	t.Run("No Args", func(t *testing.T) {
 		t.Parallel()
