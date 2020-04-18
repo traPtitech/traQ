@@ -48,14 +48,25 @@ func (repo *GormRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 		return nil, err
 	}
 
+	parseResult := message.Parse(text)
 	repo.hub.Publish(hub.Message{
 		Name: event.MessageCreated,
 		Fields: hub.Fields{
 			"message_id":   m.ID,
 			"message":      m,
-			"parse_result": message.Parse(text),
+			"parse_result": parseResult,
 		},
 	})
+	if len(parseResult.Citation) > 0 {
+		repo.hub.Publish(hub.Message{
+			Name: event.MessageCited,
+			Fields: hub.Fields{
+				"message_id": m.ID,
+				"message":    m,
+				"cited_ids":  parseResult.Citation,
+			},
+		})
+	}
 	messagesCounter.Inc()
 	return m, nil
 }
