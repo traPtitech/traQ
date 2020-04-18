@@ -2,6 +2,7 @@ package notification
 
 import (
 	"fmt"
+	"gopkg.in/guregu/null.v3"
 	"strings"
 	"time"
 
@@ -83,6 +84,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	fcmPayload := &fcm.Payload{
+		Type: "new_message",
 		Icon: fmt.Sprintf("%s/api/v3/public/icon/%s", ns.origin, strings.ReplaceAll(mUser.GetName(), "#", "%23")),
 		Tag:  "c:" + m.ChannelID.String(),
 	}
@@ -117,7 +119,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	for _, v := range embedded {
 		if v.Type == "file" {
 			if f, _ := ns.repo.GetFileMeta(uuid.FromStringOrNil(v.ID)); f != nil && f.HasThumbnail() {
-				fcmPayload.Image = fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, v.ID)
+				fcmPayload.Image = null.StringFrom(fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, v.ID))
 				break
 			}
 		}

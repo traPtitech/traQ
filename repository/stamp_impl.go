@@ -11,30 +11,31 @@ import (
 )
 
 // CreateStamp implements StampRepository interface.
-func (repo *GormRepository) CreateStamp(name string, fileID, userID uuid.UUID) (s *model.Stamp, err error) {
+func (repo *GormRepository) CreateStamp(args CreateStampArgs) (s *model.Stamp, err error) {
 	stamp := &model.Stamp{
 		ID:        uuid.Must(uuid.NewV4()),
-		Name:      name,
-		FileID:    fileID,
-		CreatorID: userID, // uuid.Nilを許容する
+		Name:      args.Name,
+		FileID:    args.FileID,
+		CreatorID: args.CreatorID, // uuid.Nilを許容する
+		IsUnicode: args.IsUnicode,
 	}
 
 	err = repo.db.Transaction(func(tx *gorm.DB) error {
 		// 名前チェック
-		if err := vd.Validate(name, validator.StampNameRuleRequired...); err != nil {
+		if err := vd.Validate(stamp.Name, validator.StampNameRuleRequired...); err != nil {
 			return ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 		}
 		// 名前重複チェック
-		if exists, err := dbExists(tx, &model.Stamp{Name: name}); err != nil {
+		if exists, err := dbExists(tx, &model.Stamp{Name: stamp.Name}); err != nil {
 			return err
 		} else if exists {
 			return ErrAlreadyExists
 		}
 		// ファイル存在チェック
-		if fileID == uuid.Nil {
+		if stamp.FileID == uuid.Nil {
 			return ArgError("fileID", "FileID's file is not found")
 		}
-		if exists, err := dbExists(tx, &model.File{ID: fileID}); err != nil {
+		if exists, err := dbExists(tx, &model.File{ID: stamp.FileID}); err != nil {
 			return err
 		} else if !exists {
 			return ArgError("fileID", "fileID's file is not found")
@@ -123,6 +124,18 @@ func (repo *GormRepository) GetStamp(id uuid.UUID) (s *model.Stamp, err error) {
 	}
 	s = &model.Stamp{}
 	if err := repo.db.Take(s, &model.Stamp{ID: id}).Error; err != nil {
+		return nil, convertError(err)
+	}
+	return s, nil
+}
+
+// GetStampByName implements StampRepository interface.
+func (repo *GormRepository) GetStampByName(name string) (s *model.Stamp, err error) {
+	if len(name) == 0 {
+		return nil, ErrNotFound
+	}
+	s = &model.Stamp{}
+	if err := repo.db.Take(s, &model.Stamp{Name: name}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return s, nil

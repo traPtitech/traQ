@@ -7,6 +7,14 @@ import (
 	"time"
 )
 
+// CreateStampArgs スタンプ作成引数
+type CreateStampArgs struct {
+	Name      string
+	FileID    uuid.UUID
+	CreatorID uuid.UUID
+	IsUnicode bool
+}
+
 // UpdateStampArgs スタンプ情報更新引数
 type UpdateStampArgs struct {
 	Name      null.String
@@ -28,7 +36,7 @@ type StampRepository interface {
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// 既にNameが使われている場合、ErrAlreadyExistsを返します。
 	// DBによるエラーを返すことがあります。
-	CreateStamp(name string, fileID, creatorID uuid.UUID) (s *model.Stamp, err error)
+	CreateStamp(args CreateStampArgs) (s *model.Stamp, err error)
 	// UpdateStamp 指定したスタンプの情報を更新します
 	//
 	// 成功した場合、nilを返します。
@@ -44,6 +52,12 @@ type StampRepository interface {
 	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetStamp(id uuid.UUID) (s *model.Stamp, err error)
+	// GetStampByName 指定したnameのスタンプを取得します
+	//
+	// 成功した場合、スタンプとnilを返します。
+	// 存在しなかった場合、ErrNotFoundを返します。
+	// DBによるエラーを返すことがあります。
+	GetStampByName(name string) (s *model.Stamp, err error)
 	// DeleteStamp 指定したIDのスタンプを削除します
 	//
 	// 成功した場合、nilを返します。

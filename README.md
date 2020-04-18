@@ -75,4 +75,5 @@ Test mysql container need to be running by `make up-test-db`.
 ## License
 Code licensed under [the MIT License](https://github.com/traPtitech/traQ/blob/master/LICENSE).
 
-[twemoji](https://twemoji.twitter.com) (svg files in `/dev/data/twemoji`) by 2018 Twitter, Inc and other contributors is licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). 
+This application uses [twemoji](https://twemoji.twitter.com)'s SVG images as Unicode emoji stamps.
+[twemoji](https://twemoji.twitter.com) by 2019 Twitter, Inc and other contributors is licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). 

@@ -267,7 +267,7 @@ func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID
 	}
 	fileID, err := repository.GenerateIconFile(repo, name)
 	require.NoError(t, err)
-	s, err := repo.CreateStamp(name, fileID, userID)
+	s, err := repo.CreateStamp(repository.CreateStampArgs{Name: name, FileID: fileID, CreatorID: userID})
 	require.NoError(t, err)
 	return s
 }
