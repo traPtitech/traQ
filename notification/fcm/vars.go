@@ -5,6 +5,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"golang.org/x/exp/utf8string"
+	"gopkg.in/guregu/null.v3"
 	"strconv"
 	"time"
 )
@@ -22,6 +23,16 @@ var (
 	}, []string{"result"})
 	messageTTL       = messageTTLSeconds * time.Second
 	messageTTLString = strconv.Itoa(messageTTLSeconds)
+
+	defaultAndroidConfig = &messaging.AndroidConfig{
+		Priority: notificationPriority,
+		TTL:      &messageTTL,
+	}
+	defaultWebpushConfig = &messaging.WebpushConfig{
+		Headers: map[string]string{
+			"TTL": messageTTLString,
+		},
+	}
 )
 
 // Payload FCMペイロード
@@ -32,7 +43,7 @@ type Payload struct {
 	Icon  string
 	Path  string
 	Tag   string
-	Image string
+	Image null.String
 }
 
 // SetBodyWithEllipsis 100文字を超える場合は...で省略
@@ -44,26 +55,23 @@ func (p *Payload) SetBodyWithEllipsis(body string) {
 }
 
 func (p *Payload) toMessage() *messaging.Message {
+	data := map[string]string{
+		"type":  p.Type,
+		"title": p.Title,
+		"body":  p.Body,
+		"path":  p.Path,
+		"tag":   p.Tag,
+		"icon":  p.Icon,
+	}
+	if p.Image.Valid {
+		data["image"] = p.Image.String
+	}
+
 	return &messaging.Message{
 		// データ メッセージとして全て処理する
-		Data: map[string]string{
-			"type":  p.Type,
-			"title": p.Title,
-			"body":  p.Body,
-			"path":  p.Path,
-			"tag":   p.Tag,
-			"icon":  p.Icon,
-			"image": p.Image,
-		},
-		Android: &messaging.AndroidConfig{
-			Priority: notificationPriority,
-			TTL:      &messageTTL,
-		},
-		Webpush: &messaging.WebpushConfig{
-			Headers: map[string]string{
-				"TTL": messageTTLString,
-			},
-		},
+		Data:    data,
+		Android: defaultAndroidConfig,
+		Webpush: defaultWebpushConfig,
 		APNS: &messaging.APNSConfig{
 			Headers: map[string]string{
 				"apns-expiration": strconv.FormatInt(time.Now().Add(messageTTL).Unix(), 10),
