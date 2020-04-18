@@ -2,9 +2,8 @@ package repository
 
 import (
 	"fmt"
-	"strings"
-
 	"github.com/traPtitech/traQ/utils/message"
+	"strings"
 
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
@@ -49,14 +48,12 @@ func (repo *GormRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 		return nil, err
 	}
 
-	embedded, plain := message.Parse(text)
 	repo.hub.Publish(hub.Message{
 		Name: event.MessageCreated,
 		Fields: hub.Fields{
-			"message_id": m.ID,
-			"message":    m,
-			"embedded":   embedded,
-			"plain":      plain,
+			"message_id":   m.ID,
+			"message":      m,
+			"parse_result": message.Parse(text),
 		},
 	})
 	messagesCounter.Inc()

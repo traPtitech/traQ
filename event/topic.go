@@ -65,8 +65,7 @@ const (
 	// 	Fields:
 	// 		message_id: uuid.UUID
 	//  	message: *model.Message
-	//  	embedded: []*message.EmbeddedInfo
-	//      plain: string
+	// 		parse_result: *message.ParseResult
 	MessageCreated = "message.created"
 	// MessageUpdated メッセージが更新された
 	// 	Fields:

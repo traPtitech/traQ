@@ -65,8 +65,7 @@ var handlerMap = map[string]eventHandler{
 
 func messageCreatedHandler(ns *Service, ev hub.Message) {
 	m := ev.Fields["message"].(*model.Message)
-	plain := ev.Fields["plain"].(string)
-	embedded := ev.Fields["embedded"].([]*message.EmbeddedInfo)
+	parsed := ev.Fields["parse_result"].(*message.ParseResult)
 	logger := ns.logger.With(zap.Stringer("messageId", m.ID))
 
 	// チャンネル情報を取得
@@ -104,7 +103,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	if ch.IsDMChannel() {
 		fcmPayload.Title = "@" + mUser.GetResponseDisplayName()
 		fcmPayload.Path = "/users/" + mUser.GetName()
-		fcmPayload.SetBodyWithEllipsis(plain)
+		fcmPayload.SetBodyWithEllipsis(parsed.OneLine())
 	} else {
 		path, err := ns.repo.GetChannelPath(m.ChannelID)
 		if err != nil {
@@ -113,15 +112,12 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		}
 		fcmPayload.Title = "#" + path
 		fcmPayload.Path = "/channels/" + path
-		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + plain)
+		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + parsed.OneLine())
 	}
 
-	for _, v := range embedded {
-		if v.Type == "file" {
-			if f, _ := ns.repo.GetFileMeta(uuid.FromStringOrNil(v.ID)); f != nil && f.HasThumbnail() {
-				fcmPayload.Image = null.StringFrom(fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, v.ID))
-				break
-			}
+	if len(parsed.Attachments) > 0 {
+		if f, _ := ns.repo.GetFileMeta(parsed.Attachments[0]); f != nil && f.HasThumbnail() {
+			fcmPayload.Image = null.StringFrom(fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, f.GetID()))
 		}
 	}
 
@@ -165,26 +161,22 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		markedUsers.Add(mark...)
 
 		// ユーザーグループ・メンションユーザー取得
-		for _, v := range embedded {
-			switch v.Type {
-			case "user":
-				if uid, err := uuid.FromString(v.ID); err == nil {
-					// TODO 凍結ユーザーの除外
-					// MEMO 凍結ユーザーはクライアント側で置換されないのでこのままでも問題はない
-					notifiedUsers.Add(uid)
-					markedUsers.Add(uid)
-					noticeable.Add(uid)
-				}
-			case "group":
-				gs, err := ns.repo.GetUserIDs(q.GMemberOf(uuid.FromStringOrNil(v.ID)))
-				if err != nil {
-					logger.Error("failed to GetUserGroupMemberIDs", zap.Error(err), zap.String("groupId", v.ID)) // 失敗
-					return
-				}
-				notifiedUsers.Add(gs...)
-				markedUsers.Add(gs...)
-				noticeable.Add(gs...)
+		for _, uid := range parsed.Mentions {
+			// TODO 凍結ユーザーの除外
+			// MEMO 凍結ユーザーはクライアント側で置換されないのでこのままでも問題はない
+			notifiedUsers.Add(uid)
+			markedUsers.Add(uid)
+			noticeable.Add(uid)
+		}
+		for _, gid := range parsed.GroupMentions {
+			gs, err := ns.repo.GetUserIDs(q.GMemberOf(gid))
+			if err != nil {
+				logger.Error("failed to GetUserGroupMemberIDs", zap.Error(err), zap.Stringer("groupId", gid)) // 失敗
+				return
 			}
+			notifiedUsers.Add(gs...)
+			markedUsers.Add(gs...)
+			noticeable.Add(gs...)
 		}
 	}
 
