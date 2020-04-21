@@ -3623,9 +3623,9 @@ components:
           format: uuid
           description: 親チャンネルUUID
           nullable: true
-        visibility:
+        archived:
           type: boolean
-          description: チャンネルが可視かどうか
+          description: チャンネルがアーカイブされているかどうか
         force:
           type: boolean
           description: 強制通知チャンネルかどうか
@@ -3645,7 +3645,7 @@ components:
       required:
         - id
         - parentId
-        - visibility
+        - archived
         - force
         - topic
         - name
@@ -5140,9 +5140,9 @@ components:
           type: string
           description: チャンネル名
           pattern: '^[a-zA-Z0-9-_]{1,20}$'
-        visibility:
+        archived:
           type: boolean
-          description: 可視かどうか
+          description: アーカイブされているかどうか
         force:
           type: boolean
           description: 強制通知チャンネルかどうか

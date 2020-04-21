@@ -8,24 +8,24 @@ import (
 )
 
 type Channel struct {
-	ID         uuid.UUID     `json:"id"`
-	Name       string        `json:"name"`
-	ParentID   uuid.NullUUID `json:"parentId"`
-	Topic      string        `json:"topic"`
-	Children   []uuid.UUID   `json:"children"`
-	Visibility bool          `json:"visibility"`
-	Force      bool          `json:"force"`
+	ID       uuid.UUID     `json:"id"`
+	Name     string        `json:"name"`
+	ParentID uuid.NullUUID `json:"parentId"`
+	Topic    string        `json:"topic"`
+	Children []uuid.UUID   `json:"children"`
+	Archived bool          `json:"archived"`
+	Force    bool          `json:"force"`
 }
 
 func formatChannel(channel *model.Channel, childrenID []uuid.UUID) *Channel {
 	return &Channel{
-		ID:         channel.ID,
-		Name:       channel.Name,
-		ParentID:   uuid.NullUUID{UUID: channel.ParentID, Valid: channel.ParentID != uuid.Nil},
-		Topic:      channel.Topic,
-		Children:   childrenID,
-		Visibility: channel.IsVisible,
-		Force:      channel.IsForced,
+		ID:       channel.ID,
+		Name:     channel.Name,
+		ParentID: uuid.NullUUID{UUID: channel.ParentID, Valid: channel.ParentID != uuid.Nil},
+		Topic:    channel.Topic,
+		Children: childrenID,
+		Archived: channel.IsArchived(),
+		Force:    channel.IsForced,
 	}
 }
 

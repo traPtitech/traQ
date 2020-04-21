@@ -39,7 +39,7 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 
 		entry.Name = ch.Name
 		entry.Topic = ch.Topic
-		entry.Visibility = ch.IsVisible
+		entry.Archived = ch.IsArchived()
 		entry.Force = ch.IsForced
 		if ch.ParentID != uuid.Nil {
 			entry.ParentID = uuid.NullUUID{UUID: ch.ParentID, Valid: true}
@@ -131,10 +131,10 @@ func (h *Handlers) GetChannel(c echo.Context) error {
 
 // PatchChannelRequest PATCH /channels/:channelID リクエストボディ
 type PatchChannelRequest struct {
-	Name       null.String   `json:"name"`
-	Visibility null.Bool     `json:"visibility"`
-	Force      null.Bool     `json:"force"`
-	Parent     uuid.NullUUID `json:"parent"`
+	Name     null.String   `json:"name"`
+	Archived null.Bool     `json:"archived"`
+	Force    null.Bool     `json:"force"`
+	Parent   uuid.NullUUID `json:"parent"`
 }
 
 func (r PatchChannelRequest) Validate() error {
@@ -155,7 +155,7 @@ func (h *Handlers) EditChannel(c echo.Context) error {
 	args := repository.UpdateChannelArgs{
 		UpdaterID:          getRequestUserID(c),
 		Name:               req.Name,
-		Visibility:         req.Visibility,
+		Visibility:         null.NewBool(!req.Archived.Bool, req.Archived.Valid),
 		ForcedNotification: req.Force,
 		Parent:             req.Parent,
 	}
