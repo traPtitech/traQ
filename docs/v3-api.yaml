@@ -2011,14 +2011,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  version:
-                    type: string
-                    description: traQ(サーバー)バージョン
-                  revision:
-                    type: string
-                    description: traQ(サーバー)リビジョン
+                $ref: '#/components/schemas/Version'
       operationId: getServerVersion
       description: サーバーバージョン及びサーバーフラグ情報を取得します。
   /login:
@@ -5971,6 +5964,25 @@ components:
         - CreateClipFolder
         - EditClipFolder
         - DeleteClipFolder
+    Version:
+      title: Version
+      type: object
+      properties:
+        revision:
+          type: string
+          description: traQ(サーバー)リビジョン
+        version:
+          type: string
+          description: traQ(サーバー)バージョン
+        flags:
+          type: object
+          properties:
+            externalLogin:
+              type: array
+              description: 有効な外部ログインプロバイダ
+              items:
+                type: string
+      description: バージョン・サーバーフラグ情報
   headers:
     X-TRAQ-MORE:
       schema:
