@@ -38,6 +38,7 @@ paths:
       description: |-
         指定したチャンネルにメッセージを投稿します。
         embedをtrueに指定すると、メッセージ埋め込みが自動で行われます。
+        アーカイブされているチャンネルに投稿することはできません。
       operationId: postMessage
       requestBody:
         content:
@@ -119,6 +120,7 @@ paths:
       description: |-
         指定したメッセージを編集します。
         自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ編集することができます。
+        アーカイブされているチャンネルのメッセージを編集することは出来ません。
       requestBody:
         content:
           application/json:
@@ -146,6 +148,7 @@ paths:
       description: |-
         指定したメッセージを削除します。
         自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ削除することができます。
+        アーカイブされているチャンネルのメッセージを編集することは出来ません。
   '/messages/{messageId}/pin':
     parameters:
       - $ref: '#/components/parameters/messageIdInPath'
@@ -260,7 +263,9 @@ paths:
             チャンネルが見つかりません。
       tags:
         - channel
-      description: 指定したチャンネルのトピックを編集します。
+      description: |-
+        指定したチャンネルのトピックを編集します。
+        アーカイブされているチャンネルのトピックは編集できません。
       requestBody:
         content:
           application/json:
@@ -314,7 +319,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PostFileRequest'
       operationId: postFile
-      description: 指定したチャンネルにファイルをアップロードします。
+      description: |-
+        指定したチャンネルにファイルをアップロードします。
+        アーカイブされているチャンネルにはアップロード出来ません。
     get:
       summary: ファイルメタのリストを取得
       responses:
@@ -1330,6 +1337,7 @@ paths:
       description: |-
         Webhookにメッセージを投稿します。
         secureなウェブフックに対しては`X-TRAQ-Signature`ヘッダーが必須です。
+        アーカイブされているチャンネルには投稿できません。
     delete:
       summary: Webhookを削除
       responses:

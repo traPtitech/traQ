@@ -169,28 +169,38 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 		}
 	}
 
+	// 投稿先チャンネル変更
 	if cid := c.Request().Header.Get(consts.HeaderChannelID); len(cid) > 0 {
-		id := uuid.FromStringOrNil(cid)
-		ch, err := h.Repo.GetChannel(id)
+		id, err := uuid.FromString(cid)
 		if err != nil {
-			switch err {
-			case repository.ErrNotFound:
-				return herror.BadRequest(fmt.Sprintf("invalid %s header", consts.HeaderChannelID))
-			default:
-				return herror.InternalServerError(err)
-			}
-		}
-		if !ch.IsPublic {
-			return herror.BadRequest("invalid channel")
+			return herror.BadRequest(fmt.Sprintf("invalid %s header", consts.HeaderChannelID))
 		}
 		channelID = id
+	}
+
+	// 投稿先チャンネル確認
+	ch, err := h.Repo.GetChannel(channelID)
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return herror.BadRequest("invalid channel")
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+	if !ch.IsPublic {
+		return herror.BadRequest("invalid channel")
+	}
+	if ch.IsArchived() {
+		path, _ := h.Repo.GetChannelPath(ch.ID)
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
 	}
 
 	if c.QueryParam("embed") == "1" {
 		body = []byte(message.NewReplacer(h.Repo).Replace(string(body)))
 	}
 
-	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), channelID, string(body)); err != nil {
+	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), ch.ID, string(body)); err != nil {
 		return herror.InternalServerError(err)
 	}
 

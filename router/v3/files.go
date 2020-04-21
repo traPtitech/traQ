@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"fmt"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
@@ -100,6 +101,11 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	ch, err := h.Repo.GetChannel(channelId)
 	if err != nil {
 		return herror.InternalServerError(err)
+	}
+
+	if ch.IsArchived() {
+		path, _ := h.Repo.GetChannelPath(ch.ID)
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
 	}
 
 	args := repository.SaveFileArgs{
