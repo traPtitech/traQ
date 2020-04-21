@@ -11,9 +11,16 @@ import (
 
 // GetVersion GET /version
 func (h *Handlers) GetVersion(c echo.Context) error {
+	extLogins := make([]string, 0, len(h.EnabledExternalAccountProviders))
+	for p := range h.EnabledExternalAccountProviders {
+		extLogins = append(extLogins, p)
+	}
 	return c.JSON(http.StatusOK, echo.Map{
 		"version":  h.Version,
 		"revision": h.Revision,
+		"flags": echo.Map{
+			"externalLogin": extLogins,
+		},
 	})
 }
 
