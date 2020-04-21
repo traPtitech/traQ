@@ -36,8 +36,17 @@ func (r PutMessageByIDRequest) Validate() error {
 // PutMessageByID PUT /messages/:messageID
 func (h *Handlers) PutMessageByID(c echo.Context) error {
 	userID := getRequestUserID(c)
-	messageID := getRequestParamAsUUID(c, consts.ParamMessageID)
 	m := getMessageFromContext(c)
+
+	// 投稿先チャンネル確認
+	ch, err := h.Repo.GetChannel(m.ChannelID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	if ch.IsArchived() {
+		path, _ := h.Repo.GetChannelPath(ch.ID)
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+	}
 
 	var req PutMessageByIDRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -49,7 +58,7 @@ func (h *Handlers) PutMessageByID(c echo.Context) error {
 		return herror.Forbidden("This is not your message")
 	}
 
-	if err := h.Repo.UpdateMessage(messageID, req.Text); err != nil {
+	if err := h.Repo.UpdateMessage(m.ID, req.Text); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -59,7 +68,6 @@ func (h *Handlers) PutMessageByID(c echo.Context) error {
 // DeleteMessageByID DELETE /message/:messageID
 func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 	userID := getRequestUserID(c)
-	messageID := getRequestParamAsUUID(c, consts.ParamMessageID)
 	m := getMessageFromContext(c)
 
 	if m.UserID != userID {
@@ -88,7 +96,17 @@ func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 		}
 	}
 
-	if err := h.Repo.DeleteMessage(messageID); err != nil {
+	// 投稿先チャンネル確認
+	ch, err := h.Repo.GetChannel(m.ChannelID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	if ch.IsArchived() {
+		path, _ := h.Repo.GetChannelPath(ch.ID)
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+	}
+
+	if err := h.Repo.DeleteMessage(m.ID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -122,7 +140,12 @@ func (r PostMessageRequest) Validate() error {
 // PostMessage POST /channels/:channelID/messages
 func (h *Handlers) PostMessage(c echo.Context) error {
 	userID := getRequestUserID(c)
-	channelID := getRequestParamAsUUID(c, consts.ParamChannelID)
+	ch := getChannelFromContext(c)
+
+	if ch.IsArchived() {
+		path, _ := h.Repo.GetChannelPath(ch.ID)
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+	}
 
 	var req PostMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -133,7 +156,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 		req.Text = message.NewReplacer(h.Repo).Replace(req.Text)
 	}
 
-	m, err := h.Repo.CreateMessage(userID, channelID, req.Text)
+	m, err := h.Repo.CreateMessage(userID, ch.ID, req.Text)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

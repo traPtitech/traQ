@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"fmt"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
@@ -39,7 +40,7 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 
 		entry.Name = ch.Name
 		entry.Topic = ch.Topic
-		entry.Visibility = ch.IsVisible
+		entry.Archived = ch.IsArchived()
 		entry.Force = ch.IsForced
 		if ch.ParentID != uuid.Nil {
 			entry.ParentID = uuid.NullUUID{UUID: ch.ParentID, Valid: true}
@@ -131,10 +132,10 @@ func (h *Handlers) GetChannel(c echo.Context) error {
 
 // PatchChannelRequest PATCH /channels/:channelID リクエストボディ
 type PatchChannelRequest struct {
-	Name       null.String   `json:"name"`
-	Visibility null.Bool     `json:"visibility"`
-	Force      null.Bool     `json:"force"`
-	Parent     uuid.NullUUID `json:"parent"`
+	Name     null.String   `json:"name"`
+	Archived null.Bool     `json:"archived"`
+	Force    null.Bool     `json:"force"`
+	Parent   uuid.NullUUID `json:"parent"`
 }
 
 func (r PatchChannelRequest) Validate() error {
@@ -155,7 +156,7 @@ func (h *Handlers) EditChannel(c echo.Context) error {
 	args := repository.UpdateChannelArgs{
 		UpdaterID:          getRequestUserID(c),
 		Name:               req.Name,
-		Visibility:         req.Visibility,
+		Visibility:         null.NewBool(!req.Archived.Bool, req.Archived.Valid),
 		ForcedNotification: req.Force,
 		Parent:             req.Parent,
 	}
@@ -211,13 +212,19 @@ func (r PutChannelTopicRequest) Validate() error {
 
 // EditChannelTopic PUT /channels/:channelID/topic
 func (h *Handlers) EditChannelTopic(c echo.Context) error {
+	ch := getParamChannel(c)
+
+	if ch.IsArchived() {
+		path, _ := h.Repo.GetChannelPath(ch.ID)
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+	}
+
 	var req PutChannelTopicRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	channelID := getParamAsUUID(c, consts.ParamChannelID)
-	if err := h.Repo.UpdateChannel(channelID, repository.UpdateChannelArgs{
+	if err := h.Repo.UpdateChannel(ch.ID, repository.UpdateChannelArgs{
 		UpdaterID: getRequestUserID(c),
 		Topic:     null.StringFrom(req.Topic),
 	}); err != nil {

@@ -42,6 +42,11 @@ func (ch *Channel) IsDMChannel() bool {
 	return ch.ParentID == dmChannelRootUUID
 }
 
+// IsArchived アーカイブされているチャンネルかどうか
+func (ch *Channel) IsArchived() bool {
+	return !ch.IsVisible
+}
+
 // UsersPrivateChannel UsersPrivateChannelsの構造体
 type UsersPrivateChannel struct {
 	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key"`

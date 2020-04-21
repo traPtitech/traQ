@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
@@ -249,7 +250,12 @@ func (h *Handlers) GetTopic(c echo.Context) error {
 
 // PutTopic PUT /channels/:channelID/topic
 func (h *Handlers) PutTopic(c echo.Context) error {
-	channelID := getRequestParamAsUUID(c, consts.ParamChannelID)
+	ch := getChannelFromContext(c)
+
+	if ch.IsArchived() {
+		path, _ := h.Repo.GetChannelPath(ch.ID)
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+	}
 
 	var req struct {
 		Text string `json:"text"`
@@ -258,7 +264,7 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.UpdateChannel(channelID, repository.UpdateChannelArgs{
+	if err := h.Repo.UpdateChannel(ch.ID, repository.UpdateChannelArgs{
 		UpdaterID: getRequestUserID(c),
 		Topic:     null.StringFrom(req.Text),
 	}); err != nil {

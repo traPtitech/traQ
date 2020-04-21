@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"fmt"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
@@ -56,6 +57,16 @@ func (r PostMessageRequest) Validate() error {
 func (h *Handlers) EditMessage(c echo.Context) error {
 	userID := getRequestUserID(c)
 	m := getParamMessage(c)
+
+	// 投稿先チャンネル確認
+	ch, err := h.Repo.GetChannel(m.ChannelID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	if ch.IsArchived() {
+		path, _ := h.Repo.GetChannelPath(ch.ID)
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+	}
 
 	var req PostMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -123,6 +134,16 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 				return herror.Forbidden("you are not allowed to delete this message")
 			}
 		}
+	}
+
+	// 投稿先チャンネル確認
+	ch, err := h.Repo.GetChannel(m.ChannelID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	if ch.IsArchived() {
+		path, _ := h.Repo.GetChannelPath(ch.ID)
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
 	}
 
 	if err := h.Repo.DeleteMessage(m.ID); err != nil {
@@ -236,7 +257,12 @@ func (h *Handlers) GetMessages(c echo.Context) error {
 // PostMessage POST /channels/:channelID/messages
 func (h *Handlers) PostMessage(c echo.Context) error {
 	userID := getRequestUserID(c)
-	channelID := getParamAsUUID(c, consts.ParamChannelID)
+	ch := getParamChannel(c)
+
+	if ch.IsArchived() {
+		path, _ := h.Repo.GetChannelPath(ch.ID)
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+	}
 
 	var req PostMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -247,7 +273,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 		req.Content = message.NewReplacer(h.Repo).Replace(req.Content)
 	}
 
-	m, err := h.Repo.CreateMessage(userID, channelID, req.Content)
+	m, err := h.Repo.CreateMessage(userID, ch.ID, req.Content)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
