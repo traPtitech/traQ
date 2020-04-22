@@ -13,8 +13,8 @@ var ErrOccupied = errors.New("connection has already existed")
 // Manager WebRTCマネージャー
 type Manager struct {
 	eventbus      *hub.Hub
-	userStates    map[uuid.UUID]*UserState
-	channelStates map[uuid.UUID]*ChannelState
+	userStates    map[uuid.UUID]*userState
+	channelStates map[uuid.UUID]*channelState
 	statesLock    sync.RWMutex
 }
 
@@ -22,32 +22,19 @@ type Manager struct {
 func NewManager(eventbus *hub.Hub) *Manager {
 	manager := &Manager{
 		eventbus:      eventbus,
-		userStates:    map[uuid.UUID]*UserState{},
-		channelStates: map[uuid.UUID]*ChannelState{},
+		userStates:    map[uuid.UUID]*userState{},
+		channelStates: map[uuid.UUID]*channelState{},
 	}
 	return manager
 }
 
-// GetUserState 指定したユーザーの状態を返します
-func (m *Manager) GetUserState(id uuid.UUID) *UserState {
+// IterateStates 全状態をイテレートします
+func (m *Manager) IterateStates(f func(state ChannelState)) {
 	m.statesLock.RLock()
 	defer m.statesLock.RUnlock()
-	s, ok := m.userStates[id]
-	if !ok {
-		return nil
+	for _, state := range m.channelStates {
+		f(state)
 	}
-	return s.clone()
-}
-
-// GetChannelState 指定したチャンネルの状態を返します
-func (m *Manager) GetChannelState(id uuid.UUID) *ChannelState {
-	m.statesLock.RLock()
-	defer m.statesLock.RUnlock()
-	s, ok := m.channelStates[id]
-	if !ok {
-		return nil
-	}
-	return s.clone()
 }
 
 // SetState 指定した状態をセットします
@@ -61,36 +48,36 @@ func (m *Manager) SetState(connKey string, user, channel uuid.UUID, sessions map
 
 	us, ok := m.userStates[user]
 	if !ok {
-		us = &UserState{
-			ConnKey: connKey,
-			UserID:  user,
+		us = &userState{
+			connKey: connKey,
+			userID:  user,
 		}
 		m.userStates[user] = us
 	}
 
-	if us.valid() && us.ChannelID != channel {
-		m.channelStates[us.ChannelID].removeUser(user)
+	if us.valid() && us.channelID != channel {
+		m.channelStates[us.channelID].removeUser(user)
 	}
 
 	cs, ok := m.channelStates[channel]
 	if !ok {
-		cs = &ChannelState{
-			ChannelID: channel,
-			Users:     map[uuid.UUID]*UserState{},
+		cs = &channelState{
+			channelID: channel,
+			users:     map[uuid.UUID]*userState{},
 		}
 		m.channelStates[channel] = cs
 	}
 
-	us.Sessions = sessions
-	us.ChannelID = channel
+	us.sessions = sessions
+	us.channelID = channel
 	cs.setUser(us)
 
 	m.eventbus.Publish(hub.Message{
 		Name: event.UserWebRTCv3StateChanged,
 		Fields: hub.Fields{
-			"user_id":    us.UserID,
-			"channel_id": us.ChannelID,
-			"sessions":   us.Sessions,
+			"user_id":    us.userID,
+			"channel_id": us.channelID,
+			"sessions":   us.sessions,
 		},
 	})
 	return nil
@@ -106,22 +93,22 @@ func (m *Manager) ResetState(connKey string, user uuid.UUID) error {
 		return nil
 	}
 
-	if us.ConnKey != connKey {
+	if us.connKey != connKey {
 		return ErrOccupied
 	}
 
 	delete(m.userStates, user)
-	cs := m.channelStates[us.ChannelID]
+	cs := m.channelStates[us.channelID]
 	cs.removeUser(user)
 	if !cs.valid() {
-		delete(m.channelStates, cs.ChannelID)
+		delete(m.channelStates, cs.channelID)
 	}
 
 	m.eventbus.Publish(hub.Message{
 		Name: event.UserWebRTCv3StateChanged,
 		Fields: hub.Fields{
-			"user_id":    us.UserID,
-			"channel_id": us.ChannelID,
+			"user_id":    us.userID,
+			"channel_id": us.channelID,
 			"sessions":   map[string]string{},
 		},
 	})

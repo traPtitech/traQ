@@ -5,55 +5,71 @@ import (
 )
 
 // UserState WebRTCのユーザー状態
-type UserState struct {
-	ConnKey   string
-	UserID    uuid.UUID
-	ChannelID uuid.UUID
-	Sessions  map[string]string
+type UserState interface {
+	UserID() uuid.UUID
+	ChannelID() uuid.UUID
+	Sessions() map[string]string
 }
 
-func (s *UserState) valid() bool {
-	return s.ChannelID != uuid.Nil && len(s.Sessions) != 0
+type userState struct {
+	connKey   string
+	userID    uuid.UUID
+	channelID uuid.UUID
+	sessions  map[string]string
 }
 
-func (s *UserState) clone() *UserState {
-	sessions := make(map[string]string, len(s.Sessions))
-	for k, v := range s.Sessions {
-		sessions[k] = v
-	}
-	return &UserState{
-		ConnKey:   s.ConnKey,
-		UserID:    s.UserID,
-		ChannelID: s.ChannelID,
-		Sessions:  sessions,
-	}
+// UserID implements UserState interface.
+func (s *userState) UserID() uuid.UUID {
+	return s.userID
+}
+
+// ChannelID implements UserState interface.
+func (s *userState) ChannelID() uuid.UUID {
+	return s.channelID
+}
+
+// Sessions implements UserState interface.
+func (s *userState) Sessions() map[string]string {
+	return s.sessions
+}
+
+func (s *userState) valid() bool {
+	return s.channelID != uuid.Nil && len(s.sessions) != 0
 }
 
 // ChannelState WebRTCのチャンネル状態
-type ChannelState struct {
-	ChannelID uuid.UUID
-	Users     map[uuid.UUID]*UserState
+type ChannelState interface {
+	ChannelID() uuid.UUID
+	Users() []UserState
 }
 
-func (s *ChannelState) valid() bool {
-	return s.ChannelID != uuid.Nil && len(s.Users) > 0
+type channelState struct {
+	channelID uuid.UUID
+	users     map[uuid.UUID]*userState
 }
 
-func (s *ChannelState) setUser(us *UserState) {
-	s.Users[us.UserID] = us
+// ChannelID implements ChannelState interface.
+func (s *channelState) ChannelID() uuid.UUID {
+	return s.channelID
 }
 
-func (s *ChannelState) removeUser(user uuid.UUID) {
-	delete(s.Users, user)
-}
-
-func (s *ChannelState) clone() *ChannelState {
-	a := &ChannelState{
-		ChannelID: s.ChannelID,
-		Users:     map[uuid.UUID]*UserState{},
+// Users implements ChannelState interface.
+func (s *channelState) Users() []UserState {
+	var tmp []UserState
+	for _, state := range s.users {
+		tmp = append(tmp, state)
 	}
-	for k, v := range s.Users {
-		a.Users[k] = v.clone()
-	}
-	return a
+	return tmp
+}
+
+func (s *channelState) valid() bool {
+	return s.channelID != uuid.Nil && len(s.users) > 0
+}
+
+func (s *channelState) setUser(us *userState) {
+	s.users[us.userID] = us
+}
+
+func (s *channelState) removeUser(user uuid.UUID) {
+	delete(s.users, user)
 }
