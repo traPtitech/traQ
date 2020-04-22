@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/realtime"
 	"github.com/traPtitech/traQ/router/extension"
+	"github.com/traPtitech/traQ/utils"
 	"go.uber.org/zap"
 	"net/http"
 	"sync"
@@ -125,6 +126,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	session := &session{
+		key:      utils.RandAlphabetAndNumberString(20),
 		req:      r,
 		conn:     conn,
 		open:     true,
@@ -138,7 +140,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	s.hub.Publish(hub.Message{
 		Name: event.WSConnected,
 		Fields: hub.Fields{
-			"user_id": session.userID,
+			"user_id": session.UserID(),
 			"req":     r,
 		},
 	})
@@ -147,10 +149,11 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	session.readLoop()
 
 	s.realtime.ViewerManager.RemoveViewer(session)
+	s.realtime.WebRTCv3.ResetState(session.Key(), session.UserID())
 	s.hub.Publish(hub.Message{
 		Name: event.WSDisconnected,
 		Fields: hub.Fields{
-			"user_id": session.userID,
+			"user_id": session.UserID(),
 			"req":     r,
 		},
 	})

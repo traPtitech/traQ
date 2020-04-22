@@ -4,7 +4,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/realtime/webrtcv3"
 	"github.com/traPtitech/traQ/utils/hmac"
 	"net/http"
 	"time"
@@ -41,4 +43,34 @@ func (h *Handlers) PostWebRTCAuthenticate(c echo.Context) error {
 		"ttl":       ttl,
 		"authToken": base64.StdEncoding.EncodeToString(hash),
 	})
+}
+
+// GetWebRTCState GET /webrtc/state
+func (h *Handlers) GetWebRTCState(c echo.Context) error {
+	type StateSession struct {
+		State     string `json:"state"`
+		SessionID string `json:"sessionId"`
+	}
+	type WebRTCUserState struct {
+		UserID    uuid.UUID      `json:"userId"`
+		ChannelID uuid.UUID      `json:"channelId"`
+		Sessions  []StateSession `json:"sessions"`
+	}
+
+	var res []WebRTCUserState
+	h.Realtime.WebRTCv3.IterateStates(func(state webrtcv3.ChannelState) {
+		for _, userState := range state.Users() {
+			var sessions []StateSession
+			for sessionID, state := range userState.Sessions() {
+				sessions = append(sessions, StateSession{State: state, SessionID: sessionID})
+			}
+			res = append(res, WebRTCUserState{
+				UserID:    userState.UserID(),
+				ChannelID: userState.ChannelID(),
+				Sessions:  sessions,
+			})
+		}
+	})
+
+	return c.JSON(http.StatusOK, res)
 }

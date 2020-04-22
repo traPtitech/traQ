@@ -298,7 +298,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiWebRTC := api.Group("/webrtc", requires(permission.WebRTC), blockBot)
 		{
-			apiWebRTC.GET("/state", NotImplemented)
+			apiWebRTC.GET("/state", h.GetWebRTCState)
 			apiWebRTC.POST("/authenticate", h.PostWebRTCAuthenticate)
 		}
 		apiClipFolders := api.Group("/clip-folders", blockBot)

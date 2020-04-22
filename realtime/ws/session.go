@@ -11,6 +11,7 @@ import (
 
 // Session WebSocketセッション
 type Session interface {
+	Key() string
 	// UserID このセッションのUserID
 	UserID() uuid.UUID
 	// State このセッションのチャンネル閲覧状態
@@ -18,17 +19,20 @@ type Session interface {
 }
 
 type session struct {
-	req       *http.Request
-	conn      *websocket.Conn
-	open      bool
-	streamer  *Streamer
-	send      chan *rawMessage
-	userID    uuid.UUID
+	key    string
+	userID uuid.UUID
+
 	viewState struct {
 		channelID uuid.UUID
 		state     viewer.State
 	}
 	sync.RWMutex
+
+	req      *http.Request
+	conn     *websocket.Conn
+	open     bool
+	streamer *Streamer
+	send     chan *rawMessage
 }
 
 func (s *session) readLoop() {
@@ -117,10 +121,13 @@ func (s *session) closed() bool {
 	return !s.open
 }
 
+// Key implements Session interface.
+func (s *session) Key() string {
+	return s.key
+}
+
 // UserID implements Session interface.
 func (s *session) UserID() uuid.UUID {
-	s.RLock()
-	defer s.RUnlock()
 	return s.userID
 }
 
