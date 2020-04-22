@@ -56,6 +56,7 @@ var handlerMap = map[string]eventHandler{
 	event.StampPaletteUpdated:      stampPaletteUpdatedHandler,
 	event.StampPaletteDeleted:      stampPaletteDeletedHandler,
 	event.UserWebRTCStateChanged:   userWebRTCStateChangedHandler,
+	event.UserWebRTCv3StateChanged: userWebRTCv3StateChangedHandler,
 	event.ClipFolderCreated:        clipFolderCreatedHandler,
 	event.ClipFolderUpdated:        clipFolderUpdatedHandler,
 	event.ClipFolderDeleted:        clipFolderDeletedHandler,
@@ -485,6 +486,23 @@ func userWebRTCStateChangedHandler(ns *Service, ev hub.Message) {
 			"state":      ev.Fields["state"].(set.StringSet),
 		},
 	})
+}
+
+func userWebRTCv3StateChangedHandler(ns *Service, ev hub.Message) {
+	type StateSession struct {
+		State     string `json:"state"`
+		SessionId string `json:"sessionId"`
+	}
+	sessions := make([]StateSession, 0)
+	for session, state := range ev.Fields["sessions"].(map[string]string) {
+		sessions = append(sessions, StateSession{State: state, SessionId: session})
+	}
+
+	go ns.ws.WriteMessage("USER_WEBRTC_STATE_CHANGED", map[string]interface{}{
+		"user_id":    ev.Fields["user_id"].(uuid.UUID),
+		"channel_id": ev.Fields["channel_id"].(uuid.UUID),
+		"sessions":   sessions,
+	}, ws.TargetAll())
 }
 
 func clipFolderCreatedHandler(ns *Service, ev hub.Message) {

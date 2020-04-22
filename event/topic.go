@@ -240,6 +240,13 @@ const (
 	// 		state: string
 	UserWebRTCStateChanged = "user.webrtc.state_changed"
 
+	// UserWebRTCv3StateChanged ユーザーのWebRTCの状態が変化した
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	// 		channel_id: uuid.UUID
+	// 		sessions: map[string]string
+	UserWebRTCv3StateChanged = "user.webrtc_v3.state_changed"
+
 	// SSEConnected ユーザーがSSEストリームに接続した
 	// 	Fields:
 	// 		user_id: uuid.UUID
