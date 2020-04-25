@@ -8,9 +8,8 @@ services:
       TRAQ_ORIGIN: http://localhost:3000
       TRAQ_MARIADB_HOST: mysql
       TRAQ_PPROF: "true"
-      TRAQ_INITDATADIR: /initdata
     entrypoint: dockerize -timeout 60s -wait tcp://mysql:3306
-    command: ./traQ serve --dev
+    command: ./traQ serve --dev --skip-init-emojis
     expose:
       - "80"
       - "6060"
@@ -18,8 +17,6 @@ services:
       - "6060:6060"
     depends_on:
       - mysql
-    volumes:
-      - ./dev/data:/initdata:ro
 
   frontend:
     image: abiosoft/caddy:1.0.3-no-stats

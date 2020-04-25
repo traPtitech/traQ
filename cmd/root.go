@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"log"
@@ -58,6 +59,7 @@ func init() {
 		if err := viper.Unmarshal(&c); err != nil {
 			log.Fatal(err)
 		}
+		message.SetOrigin(c.Origin)
 	})
 
 	rootCommand.AddCommand(
@@ -66,6 +68,7 @@ func init() {
 		migrateV2ToV3Command(),
 		confCommand(),
 		fileCommand(),
+		stampCommand(),
 		versionCommand(),
 	)
 
