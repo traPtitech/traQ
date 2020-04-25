@@ -4,17 +4,21 @@ import (
 	"context"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/sessions"
+	"golang.org/x/sync/singleflight"
 )
 
 const authScheme = "Bearer"
 
 // UserAuthenticate リクエスト認証ミドルウェア
 func UserAuthenticate(repo repository.Repository) echo.MiddlewareFunc {
+	var sfUser singleflight.Group
+
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			var uid uuid.UUID
@@ -60,10 +64,11 @@ func UserAuthenticate(repo repository.Repository) echo.MiddlewareFunc {
 			}
 
 			// ユーザー取得
-			user, err := repo.GetUser(uid, true)
+			uI, err, _ := sfUser.Do(uid.String(), func() (interface{}, error) { return repo.GetUser(uid, true) })
 			if err != nil {
 				return herror.InternalServerError(err)
 			}
+			user := uI.(model.UserInfo)
 
 			// ユーザーアカウント状態を確認
 			if !user.IsActive() {
