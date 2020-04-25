@@ -2802,10 +2802,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                description: 接続ユーザーの状態の配列
-                items:
-                  $ref: '#/components/schemas/WebRTCUserStates'
+                $ref: '#/components/schemas/WebRTCUserStates'
       operationId: getWebRTCState
       description: 現在のWebRTC状態を取得します。
   /clip-folders:
