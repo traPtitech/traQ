@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
@@ -18,9 +17,9 @@ const authScheme = "Bearer"
 func UserAuthenticate(repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			var user model.UserInfo
-			ah := c.Request().Header.Get(echo.HeaderAuthorization)
-			if len(ah) > 0 {
+			var uid uuid.UUID
+
+			if ah := c.Request().Header.Get(echo.HeaderAuthorization); len(ah) > 0 {
 				// AuthorizationヘッダーがあるためOAuth2で検証
 
 				// Authorizationスキーム検証
@@ -45,13 +44,8 @@ func UserAuthenticate(repo repository.Repository) echo.MiddlewareFunc {
 					return herror.Unauthorized("invalid token")
 				}
 
-				// tokenの検証に成功。ユーザーを取得
-				user, err = repo.GetUser(token.UserID, true)
-				if err != nil {
-					return herror.InternalServerError(err)
-				}
-
 				c.Set(consts.KeyOAuth2AccessScopes, token.Scopes)
+				uid = token.UserID
 			} else {
 				// Authorizationヘッダーがないためセッションを確認する
 				sess, err := sessions.Get(c.Response(), c.Request(), false)
@@ -62,10 +56,13 @@ func UserAuthenticate(repo repository.Repository) echo.MiddlewareFunc {
 					return herror.Unauthorized("You are not logged in")
 				}
 
-				user, err = repo.GetUser(sess.GetUserID(), true)
-				if err != nil {
-					return herror.InternalServerError(err)
-				}
+				uid = sess.GetUserID()
+			}
+
+			// ユーザー取得
+			user, err := repo.GetUser(uid, true)
+			if err != nil {
+				return herror.InternalServerError(err)
 			}
 
 			// ユーザーアカウント状態を確認
