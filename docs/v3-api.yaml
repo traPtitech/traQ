@@ -5958,6 +5958,7 @@ components:
     Version:
       title: Version
       type: object
+      description: バージョン・サーバーフラグ情報
       properties:
         revision:
           type: string
@@ -5967,13 +5968,18 @@ components:
           description: traQ(サーバー)バージョン
         flags:
           type: object
+          required:
+            - externalLogin
           properties:
             externalLogin:
               type: array
               description: 有効な外部ログインプロバイダ
               items:
                 type: string
-      description: バージョン・サーバーフラグ情報
+      required:
+        - revision
+        - version
+        - flags
     WebRTCUserState:
       title: WebRTCUserState
       type: object
