@@ -41,7 +41,7 @@ func v11() *gormigrate.Migration {
 type v11ClipFolder struct {
 	ID          uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	Name        string    `gorm:"type:varchar(30);not null"`
-	Description string    `gorm:"type:text"`
+	Description string    `gorm:"type:text;not null"`
 	OwnerID     uuid.UUID `gorm:"type:char(36);not null;index"`
 	CreatedAt   time.Time `gorm:"precision:6"`
 }
@@ -53,7 +53,7 @@ func (*v11ClipFolder) TableName() string {
 type v11ClipFolderMessage struct {
 	FolderID  uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	MessageID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	ClippedAt time.Time `gorm:"precision:6"`
+	CreatedAt time.Time `gorm:"precision:6"`
 }
 
 func (*v11ClipFolderMessage) TableName() string {
