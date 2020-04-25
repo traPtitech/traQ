@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
 	"github.com/traPtitech/traQ/bot"
@@ -78,13 +79,23 @@ func serveCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}
+
+			// Repository Sync
 			if init, err := repo.Sync(); err != nil {
 				logger.Fatal("failed to sync repository", zap.Error(err))
-			} else if init { // 初期化
-				if dir := c.InitDataDir; len(dir) > 0 {
-					if err := initData(repo, dir); err != nil {
-						logger.Fatal("failed to init data", zap.Error(err))
-					}
+			} else if init {
+				// 初期化
+
+				// generalチャンネル作成
+				if ch, err := repo.CreatePublicChannel("general", uuid.Nil, uuid.Nil); err == nil {
+					logger.Info("channel `general` was created", zap.Stringer("cid", ch.ID))
+				} else {
+					logger.Error("failed to init general channel", zap.Error(err))
+				}
+
+				// unicodeスタンプ初期化
+				if err := installEmojis(repo, logger, false); err != nil {
+					logger.Error("failed to install unicode emojis", zap.Error(err))
 				}
 			}
 

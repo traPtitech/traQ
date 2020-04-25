@@ -22,9 +22,6 @@ type Config struct {
 	// Gzip レスポンスのGZIP圧縮を有効にするかどうか (default: true)
 	Gzip bool `mapstructure:"gzip" yaml:"gzip"`
 
-	// InitDataDir 初期化データディレクトリ
-	InitDataDir string `mapstructure:"initDataDir" yaml:"initDataDir"`
-
 	// AccessLog HTTPアクセスログ設定
 	AccessLog struct {
 		// Enabled 有効かどうか (default: true)
@@ -191,7 +188,6 @@ func init() {
 	viper.SetDefault("origin", "http://localhost:3000")
 	viper.SetDefault("port", 3000)
 	viper.SetDefault("gzip", true)
-	viper.SetDefault("initDataDir", "")
 	viper.SetDefault("accessLog.enabled", true)
 	viper.SetDefault("imagemagick", "")
 	viper.SetDefault("mariadb.host", "127.0.0.1")
