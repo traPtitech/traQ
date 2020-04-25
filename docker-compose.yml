@@ -9,7 +9,7 @@ services:
       TRAQ_MARIADB_HOST: mysql
       TRAQ_PPROF: "true"
     entrypoint: dockerize -timeout 60s -wait tcp://mysql:3306
-    command: ./traQ serve --dev
+    command: ./traQ serve --dev --skip-init-emojis
     expose:
       - "80"
       - "6060"

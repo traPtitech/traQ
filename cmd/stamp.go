@@ -140,13 +140,16 @@ func installEmojis(repo repository.Repository, logger *zap.Logger, update bool) 
 
 	logger.Info("installing emojis...")
 	for _, file := range zipfile.File {
-		if file.FileInfo().IsDir() || !strings.HasPrefix(file.Name, emojiDir) || path.Ext(file.Name) != "svg" {
+		if file.FileInfo().IsDir() {
 			continue
 		}
 
-		_, filename := path.Split(file.Name)
-		code := strings.TrimSuffix(filename, ".svg")
+		dir, filename := path.Split(file.Name)
+		if dir != emojiDir || !strings.HasSuffix(filename, ".svg") {
+			continue
+		}
 
+		code := strings.TrimSuffix(filename, ".svg")
 		emoji, ok := emojis[code]
 		if !ok {
 			emoji, ok = emojis["00"+code]
@@ -156,7 +159,6 @@ func installEmojis(repo repository.Repository, logger *zap.Logger, update bool) 
 		}
 
 		name := strings.Trim(emoji.ShortName, ":")
-
 		s, err := repo.GetStampByName(name)
 		if err != nil && err != repository.ErrNotFound {
 			return err
