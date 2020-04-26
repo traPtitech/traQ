@@ -13,6 +13,7 @@ import (
 type ParamRetriever struct {
 	repo         repository.Repository
 	messageCache singleflight.Group
+	channelCache singleflight.Group
 }
 
 // NewParamRetriever ParamRetrieverを生成
@@ -111,7 +112,8 @@ func (pr *ParamRetriever) BotID() echo.MiddlewareFunc {
 // ChannelID リクエストURLの`channelID`パラメータからChannelを取り出す
 func (pr *ParamRetriever) ChannelID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamChannelID, consts.KeyParamChannel, func(c echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetChannel(v)
+		cI, err, _ := pr.channelCache.Do(v.String(), func() (interface{}, error) { return pr.repo.GetChannel(v) })
+		return cI, err
 	})
 }
 
