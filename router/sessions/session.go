@@ -122,7 +122,7 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 // IssueNewSession 新しいセッションを生成します
 func IssueNewSession(ip string, userAgent string) (s *Session, err error) {
 	session := &Session{
-		token:         utils.RandAlphabetAndNumberString(50),
+		token:         utils.SecureRandAlphabetAndNumberString(50),
 		referenceID:   uuid.Must(uuid.NewV4()),
 		userID:        uuid.Nil,
 		created:       time.Now(),

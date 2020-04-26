@@ -4,15 +4,8 @@ import (
 	crand "crypto/rand"
 	"io"
 	"math/rand"
-	"sync"
-	"time"
+	"unsafe"
 )
-
-var randSrcPool = sync.Pool{
-	New: func() interface{} {
-		return rand.NewSource(time.Now().UnixNano())
-	},
-}
 
 const (
 	rs6Letters       = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
@@ -22,13 +15,13 @@ const (
 )
 
 // RandAlphabetAndNumberString 指定した文字数のランダム英数字文字列を生成します
+// この関数はmath/randが生成する擬似乱数を使用します
 func RandAlphabetAndNumberString(n int) string {
 	b := make([]byte, n)
-	randSrc := randSrcPool.Get().(rand.Source)
-	cache, remain := randSrc.Int63(), rs6LetterIdxMax
+	cache, remain := rand.Int63(), rs6LetterIdxMax
 	for i := n - 1; i >= 0; {
 		if remain == 0 {
-			cache, remain = randSrc.Int63(), rs6LetterIdxMax
+			cache, remain = rand.Int63(), rs6LetterIdxMax
 		}
 		idx := int(cache & rs6LetterIdxMask)
 		if idx < len(rs6Letters) {
@@ -38,8 +31,28 @@ func RandAlphabetAndNumberString(n int) string {
 		cache >>= rs6LetterIdxBits
 		remain--
 	}
-	randSrcPool.Put(randSrc)
-	return string(b)
+	return *(*string)(unsafe.Pointer(&b))
+}
+
+// SecureRandAlphabetAndNumberString 指定した文字数のランダム英数字文字列を生成します
+// // この関数はcrypto/randが生成する暗号学的に安全な乱数を使用します
+func SecureRandAlphabetAndNumberString(n int) string {
+	b := make([]byte, n)
+	if _, err := crand.Read(b); err != nil {
+		panic(err)
+	}
+	for i := 0; i < n; {
+		idx := int(b[i] & rs6LetterIdxMask)
+		if idx < len(rs6Letters) {
+			b[i] = rs6Letters[idx]
+			i++
+		} else {
+			if _, err := crand.Read(b[i : i+1]); err != nil {
+				panic(err)
+			}
+		}
+	}
+	return *(*string)(unsafe.Pointer(&b))
 }
 
 // GenerateSalt 64bytesソルトを生成します

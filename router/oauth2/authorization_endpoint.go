@@ -209,7 +209,7 @@ func (h *Config) AuthorizationEndpointHandler(c echo.Context) error {
 		}
 
 		data := &model.OAuth2Authorize{
-			Code:                utils.RandAlphabetAndNumberString(36),
+			Code:                utils.SecureRandAlphabetAndNumberString(36),
 			ClientID:            req.ClientID,
 			UserID:              userID,
 			CreatedAt:           time.Now(),
@@ -332,7 +332,7 @@ func (h *Config) AuthorizationDecideHandler(c echo.Context) error {
 	switch {
 	case reqAuth.Types.Code && !reqAuth.Types.Token: // "code" 現状はcodeしかサポートしない
 		data := &model.OAuth2Authorize{
-			Code:                utils.RandAlphabetAndNumberString(36),
+			Code:                utils.SecureRandAlphabetAndNumberString(36),
 			ClientID:            reqAuth.ClientID,
 			UserID:              userID,
 			CreatedAt:           time.Now(),
