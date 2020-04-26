@@ -154,7 +154,7 @@ func (h *Config) AuthorizationEndpointHandler(c echo.Context) error {
 	// セッション確認
 	se, err := sessions.Get(c.Response(), c.Request(), true)
 	if err != nil {
-		h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+		h.L(c).Error(err.Error(), zap.Error(err))
 		q.Set("error", errServerError)
 		redirectURI.RawQuery = q.Encode()
 		return c.Redirect(http.StatusFound, redirectURI.String())
@@ -172,7 +172,7 @@ func (h *Config) AuthorizationEndpointHandler(c echo.Context) error {
 			case repository.ErrNotFound:
 				q.Set("error", errLoginRequired)
 			default:
-				h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+				h.L(c).Error(err.Error(), zap.Error(err))
 				q.Set("error", errServerError)
 			}
 			redirectURI.RawQuery = q.Encode()
@@ -181,7 +181,7 @@ func (h *Config) AuthorizationEndpointHandler(c echo.Context) error {
 
 		tokens, err := h.Repo.GetTokensByUser(u.GetID())
 		if err != nil {
-			h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
@@ -222,7 +222,7 @@ func (h *Config) AuthorizationEndpointHandler(c echo.Context) error {
 			Nonce:               req.Nonce,
 		}
 		if err := h.Repo.SaveAuthorize(data); err != nil {
-			h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
@@ -241,7 +241,7 @@ func (h *Config) AuthorizationEndpointHandler(c echo.Context) error {
 	switch {
 	case types.Code && !types.Token: // "code" 現状はcodeしかサポートしない
 		if err := se.Set(oauth2ContextSession, req); err != nil {
-			h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
@@ -345,7 +345,7 @@ func (h *Config) AuthorizationDecideHandler(c echo.Context) error {
 			Nonce:               reqAuth.Nonce,
 		}
 		if err := h.Repo.SaveAuthorize(data); err != nil {
-			h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())

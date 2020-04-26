@@ -6,7 +6,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
 	"go.uber.org/zap"
@@ -65,12 +64,7 @@ func (h *Config) splitAndValidateScope(str string) (model.AccessScopes, error) {
 	return scopes, nil
 }
 
-func (h *Config) requestContextLogger(c echo.Context) *zap.Logger {
-	l, ok := c.Get(consts.KeyLogger).(*zap.Logger)
-	if ok {
-		return l
-	}
-	l = h.Logger.With(zap.String("logging.googleapis.com/trace", extension.GetTraceID(c)))
-	c.Set(consts.KeyLogger, l)
-	return l
+// L ロガーを返します
+func (h *Config) L(c echo.Context) *zap.Logger {
+	return h.Logger.With(zap.String("requestId", extension.GetRequestID(c)))
 }

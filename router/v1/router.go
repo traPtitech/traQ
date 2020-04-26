@@ -481,14 +481,9 @@ func getClientFromContext(c echo.Context) *model.OAuth2Client {
 	return c.Get(consts.KeyParamClient).(*model.OAuth2Client)
 }
 
-func (h *Handlers) requestContextLogger(c echo.Context) *zap.Logger {
-	l, ok := c.Get(consts.KeyLogger).(*zap.Logger)
-	if ok {
-		return l
-	}
-	l = h.Logger.With(zap.String("logging.googleapis.com/trace", extension.GetTraceID(c)))
-	c.Set(consts.KeyLogger, l)
-	return l
+// L ロガーを返します
+func (h *Handlers) L(c echo.Context) *zap.Logger {
+	return h.Logger.With(zap.String("requestId", extension.GetRequestID(c)))
 }
 
 // ValidatePinID 'pinID'パラメータのピンを検証するミドルウェア

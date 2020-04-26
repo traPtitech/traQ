@@ -42,18 +42,20 @@ func AccessLogging(logger *zap.Logger, dev bool) echo.MiddlewareFunc {
 
 			req := c.Request()
 			res := c.Response()
-			logger.Info("", zap.String("logging.googleapis.com/trace", extension.GetTraceID(c)), zapdriver.HTTP(&zapdriver.HTTPPayload{
-				RequestMethod: req.Method,
-				Status:        res.Status,
-				UserAgent:     req.UserAgent(),
-				RemoteIP:      c.RealIP(),
-				Referer:       req.Referer(),
-				Protocol:      req.Proto,
-				RequestURL:    req.URL.String(),
-				RequestSize:   req.Header.Get(echo.HeaderContentLength),
-				ResponseSize:  strconv.FormatInt(res.Size, 10),
-				Latency:       strconv.FormatFloat(stop.Sub(start).Seconds(), 'f', 9, 64) + "s",
-			}))
+			logger.Info("",
+				zap.String("requestId", extension.GetRequestID(c)),
+				zapdriver.HTTP(&zapdriver.HTTPPayload{
+					RequestMethod: req.Method,
+					Status:        res.Status,
+					UserAgent:     req.UserAgent(),
+					RemoteIP:      c.RealIP(),
+					Referer:       req.Referer(),
+					Protocol:      req.Proto,
+					RequestURL:    req.URL.String(),
+					RequestSize:   req.Header.Get(echo.HeaderContentLength),
+					ResponseSize:  strconv.FormatInt(res.Size, 10),
+					Latency:       strconv.FormatFloat(stop.Sub(start).Seconds(), 'f', 9, 64) + "s",
+				}))
 			return nil
 		}
 	}

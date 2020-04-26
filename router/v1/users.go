@@ -36,7 +36,7 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
-			h.Logger.Info("an api login attempt failed: unknown user", zap.String("username", req.Name))
+			h.L(c).Info("an api login attempt failed: unknown user", zap.String("username", req.Name))
 			return echo.NewHTTPError(http.StatusUnauthorized, "invalid name")
 		default:
 			return herror.InternalServerError(err)
@@ -45,16 +45,16 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 
 	// ユーザーのアカウント状態の確認
 	if !user.IsActive() {
-		h.Logger.Info("an api login attempt failed: suspended user", zap.String("username", req.Name))
+		h.L(c).Info("an api login attempt failed: suspended user", zap.String("username", req.Name))
 		return herror.Forbidden("this account is currently suspended")
 	}
 
 	// パスワード検証
 	if err := user.Authenticate(req.Pass); err != nil {
-		h.Logger.Info("an api login attempt failed: wrong password", zap.String("username", req.Name))
+		h.L(c).Info("an api login attempt failed: wrong password", zap.String("username", req.Name))
 		return echo.NewHTTPError(http.StatusUnauthorized, err)
 	}
-	h.Logger.Info("an api login attempt succeeded", zap.String("username", req.Name))
+	h.L(c).Info("an api login attempt succeeded", zap.String("username", req.Name))
 
 	sess, err := sessions.Get(c.Response(), c.Request(), true)
 	if err != nil {

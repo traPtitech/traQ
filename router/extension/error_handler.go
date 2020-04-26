@@ -37,11 +37,11 @@ func ErrorHandler(logger *zap.Logger) echo.HTTPErrorHandler {
 
 			code = err.Code
 		case *herror.InternalError:
-			logger.Error(err.Error(), append(err.Fields, zap.String("logging.googleapis.com/trace", GetTraceID(c)))...)
+			logger.Error(err.Error(), append(err.Fields, zap.String("requestId", GetRequestID(c)))...)
 			code = http.StatusInternalServerError
 			body = echo.Map{"message": http.StatusText(http.StatusInternalServerError)}
 		default:
-			logger.Error(err.Error(), zap.String("logging.googleapis.com/trace", GetTraceID(c)))
+			logger.Error(err.Error(), zap.String("requestId", GetRequestID(c)))
 			code = http.StatusInternalServerError
 			body = echo.Map{"message": http.StatusText(http.StatusInternalServerError)}
 		}
@@ -53,7 +53,7 @@ func ErrorHandler(logger *zap.Logger) echo.HTTPErrorHandler {
 				e = json(c, code, body, jsoniter.ConfigFastest)
 			}
 			if e != nil {
-				logger.Warn("failed to send error response", zap.Error(e), zap.String("logging.googleapis.com/trace", GetTraceID(c)))
+				logger.Warn("failed to send error response", zap.Error(e), zap.String("requestId", GetRequestID(c)))
 			}
 		}
 	}
