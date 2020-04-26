@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/realtime"
 	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
 	"go.uber.org/zap"
 )
@@ -332,4 +333,9 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiNoAuthPublic.GET("/icon/:username", h.GetPublicUserIcon)
 		}
 	}
+}
+
+// L ロガーを返します
+func (h *Handlers) L(c echo.Context) *zap.Logger {
+	return h.Logger.With(zap.String("requestId", extension.GetRequestID(c)))
 }

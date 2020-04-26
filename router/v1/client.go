@@ -149,13 +149,13 @@ func (h *Handlers) PostClients(c echo.Context) error {
 	}
 
 	client := &model.OAuth2Client{
-		ID:           utils.RandAlphabetAndNumberString(36),
+		ID:           utils.SecureRandAlphabetAndNumberString(36),
 		Name:         req.Name,
 		Description:  req.Description,
 		Confidential: false,
 		CreatorID:    userID,
 		RedirectURI:  req.RedirectURI,
-		Secret:       utils.RandAlphabetAndNumberString(36),
+		Secret:       utils.SecureRandAlphabetAndNumberString(36),
 		Scopes:       req.Scopes,
 	}
 	if err := h.Repo.SaveClient(client); err != nil {

@@ -1,19 +1,15 @@
 package extension
 
 import (
-	"fmt"
-	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/utils"
 )
 
-// GetTraceID トレースIDを返します
-func GetTraceID(c echo.Context) string {
-	v, ok := c.Get(consts.KeyTraceID).(string)
-	if ok {
-		return v
+// GetRequestID リクエストIDを返します
+func GetRequestID(c echo.Context) string {
+	rid := c.Request().Header.Get(echo.HeaderXRequestID)
+	if len(rid) == 0 {
+		rid = utils.RandAlphabetAndNumberString(32)
 	}
-	v = fmt.Sprintf("%02x", uuid.Must(uuid.NewV4()).Bytes())
-	c.Set(consts.KeyTraceID, v)
-	return v
+	return rid
 }

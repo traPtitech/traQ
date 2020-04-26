@@ -70,7 +70,7 @@ func defaultLoginHandler(oac *oauth2.Config) echo.HandlerFunc {
 			}
 		}
 
-		state := utils.RandAlphabetAndNumberString(32)
+		state := utils.SecureRandAlphabetAndNumberString(32)
 		c.SetCookie(&http.Cookie{
 			Name:     cookieName,
 			Value:    state,

@@ -46,6 +46,8 @@ func serveCommand() *cobra.Command {
 			logger := getLogger()
 			defer logger.Sync()
 
+			logger.Info(fmt.Sprintf("traQ %s (revision %s)\n", Version, Revision))
+
 			// Stackdriver Profiler
 			if c.GCP.Stackdriver.Profiler.Enabled {
 				err := profiler.Start(profiler.Config{

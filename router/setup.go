@@ -24,6 +24,7 @@ func Setup(config *Config) *echo.Echo {
 
 	// ミドルウェア設定
 	e.Use(middlewares.ServerVersion(config.Version))
+	e.Use(middlewares.RequestID())
 	if config.AccessLogging {
 		e.Use(middlewares.AccessLogging(config.RootLogger.Named("access_log"), config.Development))
 	}
@@ -33,7 +34,7 @@ func Setup(config *Config) *echo.Echo {
 	e.Use(extension.Wrap())
 	e.Use(middlewares.RequestCounter())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		ExposeHeaders: []string{consts.HeaderVersion, consts.HeaderCacheFile, consts.HeaderFileMetaType, consts.HeaderMore},
+		ExposeHeaders: []string{consts.HeaderVersion, consts.HeaderCacheFile, consts.HeaderFileMetaType, consts.HeaderMore, echo.HeaderXRequestID},
 		AllowHeaders:  []string{echo.HeaderContentType, echo.HeaderAuthorization, consts.HeaderSignature},
 		MaxAge:        3600,
 	}))

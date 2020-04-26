@@ -70,13 +70,13 @@ func (h *Config) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
 		case repository.ErrNotFound:
 			return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidGrant})
 		default:
-			h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+			h.L(c).Error(err.Error(), zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 		}
 	}
 	// 認可コードは２回使えない
 	if err := h.Repo.DeleteAuthorize(code.Code); err != nil {
-		h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 	}
 	if code.IsExpired() {
@@ -90,7 +90,7 @@ func (h *Config) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
 		case repository.ErrNotFound:
 			return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidClient})
 		default:
-			h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+			h.L(c).Error(err.Error(), zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 		}
 	}
@@ -119,7 +119,7 @@ func (h *Config) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
 	// トークン発行
 	newToken, err := h.Repo.IssueToken(client, code.UserID, client.RedirectURI, code.Scopes, h.AccessTokenExp, h.IsRefreshEnabled)
 	if err != nil {
-		h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 	}
 
@@ -174,7 +174,7 @@ func (h *Config) tokenEndpointPasswordHandler(c echo.Context) error {
 		case repository.ErrNotFound:
 			return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidClient})
 		default:
-			h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+			h.L(c).Error(err.Error(), zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 		}
 	}
@@ -189,7 +189,7 @@ func (h *Config) tokenEndpointPasswordHandler(c echo.Context) error {
 		case repository.ErrNotFound:
 			return c.JSON(http.StatusUnauthorized, oauth2ErrorResponse{ErrorType: errInvalidGrant})
 		default:
-			h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+			h.L(c).Error(err.Error(), zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 		}
 	}
@@ -212,7 +212,7 @@ func (h *Config) tokenEndpointPasswordHandler(c echo.Context) error {
 	// トークン発行
 	newToken, err := h.Repo.IssueToken(client, user.GetID(), client.RedirectURI, validScopes, h.AccessTokenExp, h.IsRefreshEnabled)
 	if err != nil {
-		h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 	}
 
@@ -256,7 +256,7 @@ func (h *Config) tokenEndpointClientCredentialsHandler(c echo.Context) error {
 		case repository.ErrNotFound:
 			return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidClient})
 		default:
-			h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+			h.L(c).Error(err.Error(), zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 		}
 	}
@@ -282,7 +282,7 @@ func (h *Config) tokenEndpointClientCredentialsHandler(c echo.Context) error {
 	// トークン発行
 	newToken, err := h.Repo.IssueToken(client, uuid.Nil, client.RedirectURI, validScopes, h.AccessTokenExp, false)
 	if err != nil {
-		h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 	}
 
@@ -323,7 +323,7 @@ func (h *Config) tokenEndpointRefreshTokenHandler(c echo.Context) error {
 		case repository.ErrNotFound:
 			return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidGrant})
 		default:
-			h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+			h.L(c).Error(err.Error(), zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 		}
 	}
@@ -335,7 +335,7 @@ func (h *Config) tokenEndpointRefreshTokenHandler(c echo.Context) error {
 		case repository.ErrNotFound:
 			return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidClient})
 		default:
-			h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+			h.L(c).Error(err.Error(), zap.Error(err))
 			return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 		}
 	}
@@ -368,11 +368,11 @@ func (h *Config) tokenEndpointRefreshTokenHandler(c echo.Context) error {
 	// トークン発行
 	newToken, err := h.Repo.IssueToken(client, token.UserID, token.RedirectURI, newScopes, h.AccessTokenExp, h.IsRefreshEnabled)
 	if err != nil {
-		h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 	}
 	if err := h.Repo.DeleteTokenByRefresh(req.RefreshToken); err != nil {
-		h.requestContextLogger(c).Error(err.Error(), zap.Error(err))
+		h.L(c).Error(err.Error(), zap.Error(err))
 		return c.JSON(http.StatusInternalServerError, oauth2ErrorResponse{ErrorType: errServerError})
 	}
 

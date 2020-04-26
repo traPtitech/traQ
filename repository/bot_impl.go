@@ -59,7 +59,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 		ID:                bid,
 		BotUserID:         uid,
 		Description:       description,
-		VerificationToken: utils.RandAlphabetAndNumberString(30),
+		VerificationToken: utils.SecureRandAlphabetAndNumberString(30),
 		PostURL:           webhookURL,
 		AccessTokenID:     tid,
 		SubscribeEvents:   model.BotEvents{},
@@ -73,8 +73,8 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 	t := &model.OAuth2Token{
 		ID:             tid,
 		UserID:         uid,
-		AccessToken:    utils.RandAlphabetAndNumberString(36),
-		RefreshToken:   utils.RandAlphabetAndNumberString(36),
+		AccessToken:    utils.SecureRandAlphabetAndNumberString(36),
+		RefreshToken:   utils.SecureRandAlphabetAndNumberString(36),
 		RefreshEnabled: false,
 		CreatedAt:      time.Now(),
 		ExpiresIn:      math.MaxInt32,
@@ -319,7 +319,7 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 
 		bot.State = model.BotPaused
 		bot.BotCode = utils.RandAlphabetAndNumberString(30)
-		bot.VerificationToken = utils.RandAlphabetAndNumberString(30)
+		bot.VerificationToken = utils.SecureRandAlphabetAndNumberString(30)
 
 		if err := tx.Delete(&model.OAuth2Token{ID: bot.AccessTokenID}).Error; err != nil {
 			return err
@@ -331,8 +331,8 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 		t := &model.OAuth2Token{
 			ID:             tid,
 			UserID:         bot.BotUserID,
-			AccessToken:    utils.RandAlphabetAndNumberString(36),
-			RefreshToken:   utils.RandAlphabetAndNumberString(36),
+			AccessToken:    utils.SecureRandAlphabetAndNumberString(36),
+			RefreshToken:   utils.SecureRandAlphabetAndNumberString(36),
 			RefreshEnabled: false,
 			CreatedAt:      time.Now(),
 			ExpiresIn:      math.MaxInt32,
