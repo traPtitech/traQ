@@ -38,8 +38,10 @@ func migrateV2ToV3Command() *cobra.Command {
 
 			// バックアップテーブル作成
 			backupTable := fmt.Sprintf("v2_message_backup-%d", time.Now().Unix())
-			if err := db.Exec(fmt.Sprintf("CREATE TABLE `%s` (`id` char(36) NOT NULL, `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", backupTable)).Error; err != nil {
-				logger.Fatal(err.Error())
+			if !dryRun {
+				if err := db.Exec(fmt.Sprintf("CREATE TABLE `%s` (`id` char(36) NOT NULL, `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", backupTable)).Error; err != nil {
+					logger.Fatal(err.Error())
+				}
 			}
 
 			err = db.Transaction(func(tx *gorm.DB) error {
