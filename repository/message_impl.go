@@ -190,11 +190,18 @@ func (repo *GormRepository) GetMessages(query MessagesQuery) (messages []*model.
 		tx = tx.Order("messages.created_at DESC")
 	}
 
+	if query.ChannelsSubscribedByUser != uuid.Nil || query.ExcludeDMs {
+		tx = tx.Joins("INNER JOIN channels ON messages.channel_id = channels.id")
+	}
+
 	if query.Channel != uuid.Nil {
 		tx = tx.Where("messages.channel_id = ?", query.Channel)
 	}
 	if query.User != uuid.Nil {
 		tx = tx.Where("messages.user_id = ?", query.User)
+	}
+	if query.ChannelsSubscribedByUser != uuid.Nil {
+		tx = tx.Where("channels.is_forced = TRUE OR channels.id IN (SELECT s.channel_id FROM users_subscribe_channels s WHERE s.user_id = ?)", query.ChannelsSubscribedByUser)
 	}
 
 	if query.Inclusive {
@@ -214,7 +221,7 @@ func (repo *GormRepository) GetMessages(query MessagesQuery) (messages []*model.
 	}
 
 	if query.ExcludeDMs {
-		tx = tx.Joins("INNER JOIN channels ON messages.channel_id = channels.id").Where("channels.is_public = true")
+		tx = tx.Where("channels.is_public = true")
 	}
 
 	if query.Offset > 0 {

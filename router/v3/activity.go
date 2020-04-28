@@ -49,11 +49,15 @@ func (h *Handlers) GetActivityTimeline(c echo.Context) error {
 	if req.PerChannel {
 		messages, err = h.Repo.GetChannelLatestMessagesByUserID(userID, req.Limit, !req.All)
 	} else {
-		messages, _, err = h.Repo.GetMessages(repository.MessagesQuery{
+		query := repository.MessagesQuery{
 			Limit:          req.Limit,
 			ExcludeDMs:     true,
 			DisablePreload: true,
-		})
+		}
+		if !req.All {
+			query.ChannelsSubscribedByUser = userID
+		}
+		messages, _, err = h.Repo.GetMessages(query)
 	}
 	if err != nil {
 		return herror.InternalServerError(err)

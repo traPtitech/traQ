@@ -10,16 +10,18 @@ import (
 
 // MessagesQuery GetMessages用クエリ
 type MessagesQuery struct {
-	User           uuid.UUID
-	Channel        uuid.UUID
-	Since          null.Time
-	Until          null.Time
-	Inclusive      bool
-	Limit          int
-	Offset         int
-	Asc            bool
-	ExcludeDMs     bool
-	DisablePreload bool
+	User    uuid.UUID
+	Channel uuid.UUID
+	// ChannelsSubscribedByUser 指定したユーザーが購読しているチャンネルのメッセージを指定
+	ChannelsSubscribedByUser uuid.UUID
+	Since                    null.Time
+	Until                    null.Time
+	Inclusive                bool
+	Limit                    int
+	Offset                   int
+	Asc                      bool
+	ExcludeDMs               bool
+	DisablePreload           bool
 }
 
 // MessageRepository メッセージリポジトリ
