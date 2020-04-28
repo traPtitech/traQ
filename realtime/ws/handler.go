@@ -23,6 +23,7 @@ Command:
 
 		if str := strings.ToLower(args[1]); str == "null" || str == "" {
 			// viewstate:null
+			s.setViewState(uuid.Nil, 0)
 			s.streamer.realtime.ViewerManager.RemoveViewer(s)
 			break
 		}
@@ -41,11 +42,8 @@ Command:
 		}
 
 		// TODO channelのアクセスチェック
-		s.Lock()
-		s.viewState.channelID = cid
-		s.viewState.state = viewer.StateFromString(args[2])
-		s.Unlock()
 
+		s.setViewState(cid, viewer.StateFromString(args[2]))
 		s.streamer.realtime.ViewerManager.SetViewer(s, s.userID, s.viewState.channelID, s.viewState.state)
 
 	case "rtcstate":
@@ -92,6 +90,26 @@ Command:
 		}
 
 		s.streamer.realtime.WebRTCv3.SetState(s.Key(), s.UserID(), cid, sessions)
+
+	case "timeline_streaming":
+		// timeline_streaming:(on|off|true|false)
+		if len(args) != 2 {
+			// 引数が不正
+			s.sendErrorMessage(fmt.Sprintf("invalid args: %s", cmd))
+			break
+		}
+
+		switch strings.ToLower(args[1]) {
+		case "on", "true":
+			s.setTimelineStreaming(true)
+
+		case "off", "false":
+			s.setTimelineStreaming(false)
+
+		default:
+			// 引数が不正
+			s.sendErrorMessage(fmt.Sprintf("invalid args: %s", cmd))
+		}
 
 	default:
 		// 不明なコマンド

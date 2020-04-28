@@ -204,7 +204,14 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	// WS送信
-	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetUserSets(notifiedUsers, viewers))
+	if ch.IsPublic {
+		go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.Or(
+			ws.TargetUserSets(notifiedUsers, viewers),
+			ws.TargetTimelineStreamingEnabled(),
+		))
+	} else {
+		go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetUserSets(notifiedUsers))
+	}
 
 	// FCM送信
 	if ns.fcm != nil {
