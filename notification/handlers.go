@@ -215,8 +215,9 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	// FCM送信
 	if ns.fcm != nil {
-		notifiedUsers.Remove(m.UserID)
-		ns.fcm.Send(notifiedUsers, fcmPayload)
+		targets := notifiedUsers.Clone()
+		targets.Remove(m.UserID)
+		ns.fcm.Send(targets, fcmPayload)
 	}
 }
 
