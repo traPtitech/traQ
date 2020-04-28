@@ -46,3 +46,22 @@ func TargetChannelViewers(channelID uuid.UUID) TargetFunc {
 		return c == channelID
 	}
 }
+
+// TargetTimelineStreamingEnabled タイムラインストリーミングが有効なコネクションを対象に送信します
+func TargetTimelineStreamingEnabled() TargetFunc {
+	return func(s Session) bool {
+		return s.TimelineStreaming()
+	}
+}
+
+// Or いずれかのTargetFuncの条件に該当する対象に送信します
+func Or(funcs ...TargetFunc) TargetFunc {
+	return func(s Session) bool {
+		for _, f := range funcs {
+			if f(s) {
+				return true
+			}
+		}
+		return false
+	}
+}
