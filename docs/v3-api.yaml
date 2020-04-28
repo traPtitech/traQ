@@ -3510,6 +3510,33 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PostUnlinkExternalAccount'
+  '/users/{userId}/dm-channel':
+    parameters:
+      - schema:
+          type: string
+        name: userId
+        in: path
+        required: true
+    get:
+      summary: DMチャンネル情報を取得
+      tags:
+        - user
+        - channel
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DMChannel'
+        '404':
+          description: |
+            Not Found
+            ユーザーが見つかりません。
+      operationId: getUserDMChannel
+      description: |-
+        指定したユーザーとのダイレクトメッセージチャンネルの情報を返します。
+        ダイレクトメッセージチャンネルが存在しなかった場合、自動的に作成されます。
 components:
   schemas:
     Message:

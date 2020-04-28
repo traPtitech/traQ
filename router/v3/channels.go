@@ -405,3 +405,20 @@ func (h *Handlers) EditChannelSubscribers(c echo.Context) error {
 	}
 	return c.NoContent(http.StatusNoContent)
 }
+
+// GetUserDMChannel GET /users/:userID/dm-channel
+func (h *Handlers) GetUserDMChannel(c echo.Context) error {
+	userID := getParamAsUUID(c, consts.ParamUserID)
+	myID := getRequestUserID(c)
+
+	// DMチャンネルを取得
+	ch, err := h.Repo.GetDirectMessageChannel(myID, userID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"id":     ch.ID,
+		"userId": userID,
+	})
+}
