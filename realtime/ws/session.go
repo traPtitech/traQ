@@ -16,6 +16,8 @@ type Session interface {
 	UserID() uuid.UUID
 	// State このセッションのチャンネル閲覧状態
 	ViewState() (channelID uuid.UUID, state viewer.State)
+	// TimelineStreaming このセッションのタイムラインストリーミングが有効かどうか
+	TimelineStreaming() bool
 }
 
 type session struct {
@@ -26,6 +28,7 @@ type session struct {
 		channelID uuid.UUID
 		state     viewer.State
 	}
+	enabledTimelineStreaming bool
 	sync.RWMutex
 
 	req      *http.Request
@@ -136,4 +139,24 @@ func (s *session) ViewState() (uuid.UUID, viewer.State) {
 	s.RLock()
 	defer s.RUnlock()
 	return s.viewState.channelID, s.viewState.state
+}
+
+// TimelineStreaming implements Session interface.
+func (s *session) TimelineStreaming() bool {
+	s.RLock()
+	defer s.RUnlock()
+	return s.enabledTimelineStreaming
+}
+
+func (s *session) setViewState(cid uuid.UUID, state viewer.State) {
+	s.Lock()
+	defer s.Unlock()
+	s.viewState.channelID = cid
+	s.viewState.state = state
+}
+
+func (s *session) setTimelineStreaming(enabled bool) {
+	s.Lock()
+	defer s.Unlock()
+	s.enabledTimelineStreaming = enabled
 }
