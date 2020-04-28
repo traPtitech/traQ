@@ -14,13 +14,15 @@ func (s *session) commandHandler(cmd string) {
 Command:
 	switch strings.ToLower(args[0]) {
 	case "viewstate":
+		// viewstate:{チャンネルID}(:{状態})
 		if len(args) < 2 {
 			// 引数が不正
 			s.sendErrorMessage(fmt.Sprintf("invalid args: %s", cmd))
 			break
 		}
 
-		if str := strings.ToLower(args[2]); str == "null" || str == "" {
+		if str := strings.ToLower(args[1]); str == "null" || str == "" {
+			// viewstate:null
 			s.streamer.realtime.ViewerManager.RemoveViewer(s)
 			break
 		}
