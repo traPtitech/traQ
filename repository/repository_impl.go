@@ -126,7 +126,7 @@ func (repo *GormRepository) GetFS() storage.FileStorage {
 // NewGormRepository リポジトリ実装を初期化して生成します
 func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub, logger *zap.Logger) (Repository, error) {
 	repo := &GormRepository{
-		db:     db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"),
+		db:     db,
 		hub:    hub,
 		logger: logger,
 		fileImpl: fileImpl{

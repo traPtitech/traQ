@@ -10,7 +10,7 @@ import (
 
 // Migrate データベースマイグレーションを実行します
 func Migrate(db *gorm.DB) error {
-	m := gormigrate.New(db.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"), &gormigrate.Options{
+	m := gormigrate.New(db, &gormigrate.Options{
 		TableName:                 "migrations",
 		IDColumnName:              "id",
 		IDColumnSize:              190,

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
@@ -9,15 +10,17 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"go.uber.org/zap"
+	"golang.org/x/sync/semaphore"
 	"regexp"
 	"strings"
-	"time"
+	"sync"
 )
 
 // migrateV2ToV3Command traQv2データをv3データに変換するコマンド
 func migrateV2ToV3Command() *cobra.Command {
 	var (
-		dryRun bool
+		dryRun             bool
+		skipConvertMessage bool
 	)
 
 	cmd := cobra.Command{
@@ -36,146 +39,20 @@ func migrateV2ToV3Command() *cobra.Command {
 			db.SetLogger(gormzap.New(logger.Named("gorm")))
 			defer db.Close()
 
-			// バックアップテーブル作成
-			backupTable := fmt.Sprintf("v2_message_backup-%d", time.Now().Unix())
-			if !dryRun {
-				if err := db.Exec(fmt.Sprintf("CREATE TABLE `%s` (`id` char(36) NOT NULL, `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4", backupTable)).Error; err != nil {
+			// バックアップ・作業テーブル作成
+			if err := db.AutoMigrate(&V2MessageBackup{}, &V2MessageFileMapping{}).Error; err != nil {
+				logger.Fatal(err.Error())
+			}
+
+			// メッセージ変換
+			if !skipConvertMessage {
+				if err := convertMessages(db, logger, dryRun); err != nil {
 					logger.Fatal(err.Error())
 				}
 			}
 
-			err = db.Transaction(func(tx *gorm.DB) error {
-				var embRegex = regexp.MustCompile(`(?m)!({(?:[ \t\n]*"(?:[^"]|\\.)*"[ \t\n]*:[ \t\n]*"(?:[^"]|\\.)*",)*(?:[ \t\n]*"(?:[^"]|\\.)*"[ \t\n]*:[ \t\n]*"(?:[^"]|\\.)*")})`)
-				type embeddedInfo struct {
-					Type string    `json:"type"`
-					ID   uuid.UUID `json:"id"`
-				}
-				type fileInfo struct {
-					MessageID      uuid.UUID
-					ChannelID      uuid.UUID
-					MessageDeleted bool
-				}
-
-				fileMap := map[uuid.UUID][]*fileInfo{}
-
-				// 全メッセージを1000件ずつ処理
-				for page := 0; ; page++ {
-					var messages []*model.Message
-					if err := tx.
-						Unscoped(). // Unscopedで削除メッセージも取得
-						Limit(1000).
-						Offset(page * 1000).
-						Order("created_at ASC").
-						Find(&messages).Error; err != nil {
-						return err
-					}
-					if len(messages) == 0 {
-						break
-					}
-
-					for _, m := range messages {
-						var links []string
-						converted := embRegex.ReplaceAllStringFunc(m.Text, func(s string) string {
-							var info embeddedInfo
-							if err := jsoniter.ConfigFastest.Unmarshal([]byte(s[1:]), &info); err != nil {
-								return s
-							}
-							switch info.Type {
-							case "file":
-								if fs, ok := fileMap[info.ID]; !ok {
-									fileMap[info.ID] = []*fileInfo{{
-										MessageID:      m.ID,
-										ChannelID:      m.ChannelID,
-										MessageDeleted: m.DeletedAt != nil,
-									}}
-								} else {
-									fileMap[info.ID] = append(fs, &fileInfo{
-										MessageID:      m.ID,
-										ChannelID:      m.ChannelID,
-										MessageDeleted: m.DeletedAt != nil,
-									})
-								}
-								links = append(links, c.Origin+"/files/"+info.ID.String())
-								return ""
-							case "message":
-								links = append(links, c.Origin+"/messages/"+info.ID.String())
-								return ""
-							default:
-								return s
-							}
-						})
-
-						if len(links) == 0 {
-							continue // 変化無し
-						}
-
-						converted += "\n" + strings.Join(links, "\n")
-
-						if !dryRun {
-							// バックアップ
-							if err := tx.Exec(fmt.Sprintf("INSERT INTO `%s` VALUES (?, ?)", backupTable), m.ID, m.Text).Error; err != nil {
-								return err
-							}
-
-							// 書き換え (updated_atは更新しない)
-							if err := tx.Model(&m).UpdateColumn("text", converted).Error; err != nil {
-								return err
-							}
-						}
-						logger.Info("message: " + m.ID.String())
-					}
-				}
-
-				for fid, infos := range fileMap {
-					var f model.File
-					if err := tx.Where("type = '' AND id = ?", fid).First(&f).Error; err != nil {
-						if gorm.IsRecordNotFoundError(err) {
-							continue
-						}
-						return err
-					}
-
-					// 全部削除されてたら無視
-					deleted := true
-					for _, info := range infos {
-						if !info.MessageDeleted {
-							deleted = false
-							break
-						}
-					}
-					if deleted {
-						continue
-					}
-
-					// 異なるチャンネルで貼られているかどうか
-					multiple := false
-					for _, info := range infos {
-						if infos[0].ChannelID != info.ChannelID {
-							multiple = true
-							break
-						}
-					}
-
-					if !multiple {
-						if !dryRun {
-							// 書き換え (updated_atは更新しない)
-							if err := tx.Model(&f).UpdateColumn("channel_id", infos[0].ChannelID).Error; err != nil {
-								return err
-							}
-						}
-						logger.Info("file: " + fid.String() + " -> " + infos[0].ChannelID.String())
-					} else {
-						var ids []string
-						for _, info := range infos {
-							ids = append(ids, info.MessageID.String())
-						}
-						logger.Warn(fmt.Sprintf("multiple times file attaching detected: %s (%s)", fid, strings.Join(ids, ",")))
-					}
-				}
-
-				return nil
-			})
-			if err != nil {
+			// ファイルのチャンネル紐付け
+			if err := linkFileToChannel(db, logger, dryRun); err != nil {
 				logger.Fatal(err.Error())
 			}
 		},
@@ -194,7 +71,225 @@ func migrateV2ToV3Command() *cobra.Command {
 	bindPFlag(flags, "mariadb.password", "pass")
 	flags.String("origin", "", "traQ origin")
 	bindPFlag(flags, "origin", "origin")
-	flags.BoolVar(&dryRun, "dry-run", false, "list target files only (no delete)")
+	flags.BoolVar(&dryRun, "dry-run", false, "dry run")
+	flags.BoolVar(&skipConvertMessage, "skip-convert-message", false, "skip message converting")
 
 	return &cmd
+}
+
+type V2MessageBackup struct {
+	MessageID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	OldText   string    `gorm:"type:text;not null"`
+	NewText   string    `gorm:"type:text;not null"`
+}
+
+type V2MessageFileMapping struct {
+	FileID         uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	MessageID      uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	ChannelID      uuid.UUID `gorm:"type:char(36);not null"`
+	MessageDeleted bool      `gorm:"type:boolean;not null"`
+}
+
+func convertMessages(db *gorm.DB, logger *zap.Logger, dryRun bool) error {
+	embRegex := regexp.MustCompile(`(?m)!({(?:[ \t\n]*"(?:[^"]|\\.)*"[ \t\n]*:[ \t\n]*"(?:[^"]|\\.)*",)*(?:[ \t\n]*"(?:[^"]|\\.)*"[ \t\n]*:[ \t\n]*"(?:[^"]|\\.)*")})`)
+	for page := 0; ; page++ {
+		logger.Info(fmt.Sprintf("messages_page: %d", page+1))
+
+		var messages []*model.Message
+		if err := db.
+			Unscoped(). // Unscopedで削除メッセージも取得
+			Limit(1000).
+			Offset(page * 1000).
+			Order("created_at ASC").
+			Find(&messages).Error; err != nil {
+			return err
+		}
+		if len(messages) == 0 {
+			break
+		}
+
+		var fail bool
+		var failLock sync.Mutex
+
+		wg := &sync.WaitGroup{}
+		s := semaphore.NewWeighted(10)
+		for _, m := range messages {
+			wg.Add(1)
+			go func(m *model.Message) {
+				defer wg.Done()
+
+				var links []string
+				var files []*V2MessageFileMapping
+				converted := embRegex.ReplaceAllStringFunc(m.Text, func(s string) string {
+					var info struct {
+						Type string    `json:"type"`
+						ID   uuid.UUID `json:"id"`
+					}
+					if err := jsoniter.ConfigFastest.Unmarshal([]byte(s[1:]), &info); err != nil {
+						return s
+					}
+					switch info.Type {
+					case "file":
+						files = append(files, &V2MessageFileMapping{
+							FileID:         info.ID,
+							MessageID:      m.ID,
+							ChannelID:      m.ChannelID,
+							MessageDeleted: m.DeletedAt != nil,
+						})
+						links = append(links, c.Origin+"/files/"+info.ID.String())
+						return ""
+					case "message":
+						links = append(links, c.Origin+"/messages/"+info.ID.String())
+						return ""
+					default:
+						return s
+					}
+				})
+				if len(links) == 0 {
+					return // 変化無し
+				}
+				converted += "\n" + strings.Join(links, "\n")
+
+				if !dryRun {
+					s.Acquire(context.Background(), 1)
+					defer s.Release(1)
+
+					err := db.Transaction(func(tx *gorm.DB) error {
+						// バックアップ
+						if err := tx.Create(&V2MessageBackup{
+							MessageID: m.ID,
+							OldText:   m.Text,
+							NewText:   converted,
+						}).Error; err != nil {
+							return err
+						}
+
+						// ファイルマッピング情報保存
+						for _, file := range files {
+							if err := tx.Create(file).Error; err != nil {
+								return err
+							}
+						}
+
+						// 書き換え (updated_atは更新しない)
+						if err := tx.Unscoped().Model(m).UpdateColumn("text", converted).Error; err != nil {
+							return err
+						}
+
+						return nil
+					})
+					if err != nil {
+						logger.Error(err.Error())
+						failLock.Lock()
+						fail = true
+						failLock.Unlock()
+						return
+					}
+				}
+				logger.Info("message: " + m.ID.String())
+			}(m)
+		}
+		wg.Wait()
+
+		if fail {
+			logger.Fatal("error occurred")
+		}
+	}
+	return nil
+}
+
+func linkFileToChannel(db *gorm.DB, logger *zap.Logger, dryRun bool) error {
+	for page := 0; ; page++ {
+		logger.Info(fmt.Sprintf("files_page: %d", page+1))
+
+		var files []*model.File
+		if err := db.
+			Where("type = ''").
+			Limit(1000).
+			Offset(page * 1000).
+			Order("id ASC").
+			Find(&files).Error; err != nil {
+			return err
+		}
+		if len(files) == 0 {
+			break
+		}
+
+		var fail bool
+		var failLock sync.Mutex
+
+		wg := &sync.WaitGroup{}
+		s := semaphore.NewWeighted(10)
+		for _, file := range files {
+			if file.ChannelID.Valid {
+				continue
+			}
+
+			wg.Add(1)
+			s.Acquire(context.Background(), 1)
+			go func(file *model.File) {
+				defer wg.Done()
+				defer s.Release(1)
+
+				var mappings []V2MessageFileMapping
+				if err := db.Where(&V2MessageFileMapping{FileID: file.ID}).Find(&mappings).Error; err != nil {
+					logger.Error(err.Error())
+					failLock.Lock()
+					fail = true
+					failLock.Unlock()
+					return
+				}
+				if len(mappings) == 0 {
+					return
+				}
+
+				// 全部削除されてたら無視
+				deleted := true
+				for _, mapping := range mappings {
+					if !mapping.MessageDeleted {
+						deleted = false
+						break
+					}
+				}
+				if deleted {
+					return
+				}
+
+				// 異なるチャンネルで貼られているかどうか
+				multiple := false
+				for _, mapping := range mappings {
+					if mappings[0].ChannelID != mapping.ChannelID {
+						multiple = true
+						break
+					}
+				}
+				if multiple {
+					var ids []string
+					for _, mapping := range mappings {
+						ids = append(ids, mapping.MessageID.String())
+					}
+					logger.Warn(fmt.Sprintf("multiple times file attaching detected: %s (%s)", file.ID, strings.Join(ids, ",")))
+					return
+				}
+
+				if !dryRun {
+					// 書き換え (updated_atは更新しない)
+					if err := db.Model(&file).UpdateColumn("channel_id", mappings[0].ChannelID).Error; err != nil {
+						logger.Error(err.Error())
+						failLock.Lock()
+						fail = true
+						failLock.Unlock()
+						return
+					}
+				}
+				logger.Info("file: " + file.ID.String() + " -> " + mappings[0].ChannelID.String())
+			}(file)
+		}
+		wg.Wait()
+
+		if fail {
+			logger.Fatal("error occurred")
+		}
+	}
+	return nil
 }
