@@ -286,6 +286,26 @@ func formatMessagePin(pin *model.Pin) *Pin {
 	}
 }
 
+type MessageClip struct {
+	FolderID  uuid.UUID `json:"folderId"`
+	ClippedAt time.Time `json:"clippedAt"`
+}
+
+func formatMessageClip(cfm *model.ClipFolderMessage) *MessageClip {
+	return &MessageClip{
+		FolderID:  cfm.FolderID,
+		ClippedAt: cfm.CreatedAt,
+	}
+}
+
+func formatMessageClips(cfms []*model.ClipFolderMessage) []*MessageClip {
+	res := make([]*MessageClip, len(cfms))
+	for i, cfm := range cfms {
+		res[i] = formatMessageClip(cfm)
+	}
+	return res
+}
+
 type UserGroupMember struct {
 	ID   uuid.UUID `json:"id"`
 	Role string    `json:"role"`

@@ -242,6 +242,19 @@ func (h *Handlers) RemoveMessageStamp(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// GetMessageClips GET /messages/:messageID/clips
+func (h *Handlers) GetMessageClips(c echo.Context) error {
+	userID := getRequestUserID(c)
+	messageID := getParamAsUUID(c, consts.ParamMessageID)
+
+	clips, err := h.Repo.GetMessageClips(userID, messageID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, formatMessageClips(clips))
+}
+
 // GetMessages GET /channels/:channelID/messages
 func (h *Handlers) GetMessages(c echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)

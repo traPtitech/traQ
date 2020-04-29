@@ -162,6 +162,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiMessagesMID.GET("/pin", h.GetPin, requires(permission.GetMessage))
 				apiMessagesMID.POST("/pin", h.CreatePin, requires(permission.CreateMessagePin))
 				apiMessagesMID.DELETE("/pin", h.RemovePin, requires(permission.DeleteMessagePin))
+				apiMessagesMID.GET("/clips", h.GetMessageClips, requires(permission.GetClipFolder))
 				apiMessagesMIDStamps := apiMessagesMID.Group("/stamps")
 				{
 					apiMessagesMIDStamps.GET("", h.GetMessageStamps, requires(permission.GetMessage))

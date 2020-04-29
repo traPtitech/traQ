@@ -2706,6 +2706,10 @@ func (repo *TestRepository) GetClipFolderMessages(folderID uuid.UUID, query repo
 	panic("implement me")
 }
 
+func (repo *TestRepository) GetMessageClips(userID, messageID uuid.UUID) ([]*model.ClipFolderMessage, error) {
+	panic("implement me")
+}
+
 type fileMetaImpl struct {
 	meta *model.File
 	fs   storage.FileStorage

@@ -73,4 +73,10 @@ type ClipRepository interface {
 	// 存在しないクリップフォルダーを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetClipFolderMessages(folderID uuid.UUID, query ClipFolderMessageQuery) (messages []*model.ClipFolderMessage, more bool, err error)
+	// GetMessageClips 指定したユーザーの指定したメッセージのクリップのリストを取得します。
+	//
+	// 成功した場合、クリップの配列とnilを返します。
+	// 存在しないユーザー・メッセージを指定した場合、空配列とnilを返します。
+	// DBによるエラーを返すことがあります。
+	GetMessageClips(userID, messageID uuid.UUID) ([]*model.ClipFolderMessage, error)
 }
