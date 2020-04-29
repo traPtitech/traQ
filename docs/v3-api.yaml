@@ -3537,6 +3537,28 @@ paths:
       description: |-
         指定したユーザーとのダイレクトメッセージチャンネルの情報を返します。
         ダイレクトメッセージチャンネルが存在しなかった場合、自動的に作成されます。
+  '/messages/{messageId}/clips':
+    parameters:
+      - $ref: './swagger.yaml#/components/parameters/messageIdInPath'
+    get:
+      summary: 自分のクリップを取得
+      tags:
+        - message
+        - clip
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MessageClip'
+        '404':
+          description: |
+            Not Found
+      operationId: getMessageClips
+      description: 対象のメッセージの自分のクリップの一覧を返します。
 components:
   schemas:
     Message:
@@ -6036,6 +6058,22 @@ components:
         - userId
         - channelId
         - sessions
+    MessageClip:
+      title: MessageClip
+      type: object
+      properties:
+        folderId:
+          type: string
+          format: uuid
+          description: クリップされているフォルダのID
+        clippedAt:
+          type: string
+          format: date-time
+          description: クリップされた日時
+      required:
+        - folderId
+        - clippedAt
+      description: メッセージクリップ
   headers:
     X-TRAQ-MORE:
       schema:
