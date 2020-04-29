@@ -265,6 +265,21 @@ func (repo *GormRepository) GetClipFolderMessages(folderID uuid.UUID, query Clip
 	return messages, false, err
 }
 
+// GetMessageClips implements ClipRepository interface.
+func (repo *GormRepository) GetMessageClips(userID, messageID uuid.UUID) ([]*model.ClipFolderMessage, error) {
+	clips := make([]*model.ClipFolderMessage, 0)
+	if userID == uuid.Nil || messageID == uuid.Nil {
+		return clips, nil
+	}
+
+	err := repo.db.
+		Joins("INNER JOIN clip_folders ON clip_folders.id = clip_folder_messages.folder_id").
+		Where("clip_folders.owner_id = ? AND clip_folder_messages.message_id = ?", userID, messageID).
+		Find(&clips).
+		Error
+	return clips, err
+}
+
 func clipPreloads(db *gorm.DB) *gorm.DB {
 	return db.Preload("Message").Preload("Message.Stamps", func(db *gorm.DB) *gorm.DB {
 		return db.Order("updated_at")
