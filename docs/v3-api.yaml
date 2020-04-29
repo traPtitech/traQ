@@ -3539,7 +3539,7 @@ paths:
         ダイレクトメッセージチャンネルが存在しなかった場合、自動的に作成されます。
   '/messages/{messageId}/clips':
     parameters:
-      - $ref: './swagger.yaml#/components/parameters/messageIdInPath'
+      - $ref: '#/components/parameters/messageIdInPath'
     get:
       summary: 自分のクリップを取得
       tags:
