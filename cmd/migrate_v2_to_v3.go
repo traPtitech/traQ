@@ -21,6 +21,8 @@ func migrateV2ToV3Command() *cobra.Command {
 	var (
 		dryRun             bool
 		skipConvertMessage bool
+		startMessagePage   int
+		startFilePage      int
 	)
 
 	cmd := cobra.Command{
@@ -46,13 +48,13 @@ func migrateV2ToV3Command() *cobra.Command {
 
 			// メッセージ変換
 			if !skipConvertMessage {
-				if err := convertMessages(db, logger, dryRun); err != nil {
+				if err := convertMessages(db, logger, dryRun, startMessagePage); err != nil {
 					logger.Fatal(err.Error())
 				}
 			}
 
 			// ファイルのチャンネル紐付け
-			if err := linkFileToChannel(db, logger, dryRun); err != nil {
+			if err := linkFileToChannel(db, logger, dryRun, startFilePage); err != nil {
 				logger.Fatal(err.Error())
 			}
 		},
@@ -73,6 +75,8 @@ func migrateV2ToV3Command() *cobra.Command {
 	bindPFlag(flags, "origin", "origin")
 	flags.BoolVar(&dryRun, "dry-run", false, "dry run")
 	flags.BoolVar(&skipConvertMessage, "skip-convert-message", false, "skip message converting")
+	flags.IntVar(&startMessagePage, "start-message-page", 0, "start message page (zero-origin)")
+	flags.IntVar(&startFilePage, "start-file-page", 0, "start file page (zero-origin)")
 
 	return &cmd
 }
@@ -90,10 +94,10 @@ type V2MessageFileMapping struct {
 	MessageDeleted bool      `gorm:"type:boolean;not null"`
 }
 
-func convertMessages(db *gorm.DB, logger *zap.Logger, dryRun bool) error {
+func convertMessages(db *gorm.DB, logger *zap.Logger, dryRun bool, startMessagePage int) error {
 	embRegex := regexp.MustCompile(`(?m)!({(?:[ \t\n]*"(?:[^"]|\\.)*"[ \t\n]*:[ \t\n]*"(?:[^"]|\\.)*",)*(?:[ \t\n]*"(?:[^"]|\\.)*"[ \t\n]*:[ \t\n]*"(?:[^"]|\\.)*")})`)
-	for page := 0; ; page++ {
-		logger.Info(fmt.Sprintf("messages_page: %d", page+1))
+	for page := startMessagePage; ; page++ {
+		logger.Info(fmt.Sprintf("messages_page: %d", page))
 
 		var messages []*model.Message
 		if err := db.
@@ -148,7 +152,10 @@ func convertMessages(db *gorm.DB, logger *zap.Logger, dryRun bool) error {
 				if len(links) == 0 {
 					return // 変化無し
 				}
-				converted += "\n" + strings.Join(links, "\n")
+				if !strings.HasSuffix(converted, "\n") {
+					converted += "\n"
+				}
+				converted += strings.Join(links, "\n")
 
 				if !dryRun {
 					s.Acquire(context.Background(), 1)
@@ -198,9 +205,9 @@ func convertMessages(db *gorm.DB, logger *zap.Logger, dryRun bool) error {
 	return nil
 }
 
-func linkFileToChannel(db *gorm.DB, logger *zap.Logger, dryRun bool) error {
-	for page := 0; ; page++ {
-		logger.Info(fmt.Sprintf("files_page: %d", page+1))
+func linkFileToChannel(db *gorm.DB, logger *zap.Logger, dryRun bool, startFilePage int) error {
+	for page := startFilePage; ; page++ {
+		logger.Info(fmt.Sprintf("files_page: %d", page))
 
 		var files []*model.File
 		if err := db.
