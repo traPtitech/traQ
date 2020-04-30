@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	jsoniter "github.com/json-iterator/go"
@@ -175,6 +176,9 @@ func convertMessages(db *gorm.DB, logger *zap.Logger, dryRun bool, startMessageP
 						// ファイルマッピング情報保存
 						for _, file := range files {
 							if err := tx.Create(file).Error; err != nil {
+								if isMySQLDuplicatedRecordErr(err) {
+									continue
+								}
 								return err
 							}
 						}
@@ -300,4 +304,12 @@ func linkFileToChannel(db *gorm.DB, logger *zap.Logger, dryRun bool, startFilePa
 		}
 	}
 	return nil
+}
+
+func isMySQLDuplicatedRecordErr(err error) bool {
+	merr, ok := err.(*mysql.MySQLError)
+	if !ok {
+		return false
+	}
+	return merr.Number == 1062
 }
