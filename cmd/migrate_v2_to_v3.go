@@ -17,6 +17,7 @@ import (
 )
 
 // migrateV2ToV3Command traQv2データをv3データに変換するコマンド
+// フロントエンドをRからSへと変更する場合、このコマンドでメッセージの埋め込み形式の変換が必要です
 func migrateV2ToV3Command() *cobra.Command {
 	var (
 		dryRun             bool
@@ -27,7 +28,7 @@ func migrateV2ToV3Command() *cobra.Command {
 
 	cmd := cobra.Command{
 		Use:   "migrate-v2-to-v3",
-		Short: "migrate from v2 to v (messages, files)",
+		Short: "migrate from v2 to v3 (messages, files)",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Logger
 			logger := getCLILogger()
@@ -152,7 +153,7 @@ func convertMessages(db *gorm.DB, logger *zap.Logger, dryRun bool, startMessageP
 				if len(links) == 0 {
 					return // 変化無し
 				}
-				if !strings.HasSuffix(converted, "\n") {
+				if len(converted) > 0 && !strings.HasSuffix(converted, "\n") {
 					converted += "\n"
 				}
 				converted += strings.Join(links, "\n")
