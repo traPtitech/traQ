@@ -136,6 +136,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 
 // GetFileMeta GET /files/:fileID/meta
 func (h *Handlers) GetFileMeta(c echo.Context) error {
+	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=86400") // 1日キャッシュ
 	return c.JSON(http.StatusOK, formatFileInfo(getParamFile(c)))
 }
 
