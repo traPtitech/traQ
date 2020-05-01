@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
@@ -21,6 +22,97 @@ var (
 
 type channelImpl struct {
 	ChannelPathMap sync.Map
+	ChTree         *channelTree
+}
+
+type channelNode struct {
+	id       uuid.UUID
+	parent   *channelNode
+	name     string
+	topic    string
+	archived bool
+	force    bool
+	children map[uuid.UUID]*channelNode
+
+	mu sync.RWMutex
+}
+
+func (cn *channelNode) isRoot() bool {
+	return cn.parent == nil
+}
+
+func constructChannelNode(chMap map[uuid.UUID]*model.Channel, nodeMap map[uuid.UUID]*channelNode, id uuid.UUID) (*channelNode, error) {
+	n, ok := nodeMap[id]
+	if ok {
+		return n, nil
+	}
+
+	ch, ok := chMap[id]
+	if !ok {
+		return nil, fmt.Errorf("channel %s was not found", id)
+	}
+
+	n = &channelNode{
+		id:       ch.ID,
+		name:     ch.Name,
+		topic:    ch.Topic,
+		archived: ch.IsArchived(),
+		force:    ch.IsForced,
+		children: map[uuid.UUID]*channelNode{},
+	}
+	if ch.ParentID != uuid.Nil {
+		p, err := constructChannelNode(chMap, nodeMap, ch.ParentID)
+		if err != nil {
+			return nil, fmt.Errorf("inconsistent channel tree: the parent of %s was not found (%w)", ch.ID, err)
+		}
+		n.parent = p
+		p.children[id] = n
+	}
+
+	nodeMap[ch.ID] = n
+	return n, nil
+}
+
+type channelTree struct {
+	channelMap map[uuid.UUID]*channelNode
+	roots      map[uuid.UUID]*channelNode
+	mu         sync.RWMutex
+}
+
+func makeChannelTree(db *gorm.DB) (*channelTree, error) {
+	ct := &channelTree{
+		channelMap: map[uuid.UUID]*channelNode{},
+		roots:      map[uuid.UUID]*channelNode{},
+	}
+
+	var (
+		roots []uuid.UUID
+		chMap = map[uuid.UUID]*model.Channel{}
+	)
+	rows, err := db.Model(&model.Channel{}).Where(&model.Channel{IsPublic: true}).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var ch model.Channel
+		if err := rows.Scan(&ch); err != nil {
+			return nil, err
+		}
+		chMap[ch.ID] = &ch
+		if ch.ParentID == uuid.Nil {
+			roots = append(roots, ch.ID)
+		}
+	}
+	for _, cid := range roots {
+		n, err := constructChannelNode(chMap, ct.channelMap, cid)
+		if err != nil {
+			return nil, err
+		}
+		ct.roots[cid] = n
+	}
+
+	return ct, nil
 }
 
 // CreatePublicChannel implements ChannelRepository interface. TODO トランザクション

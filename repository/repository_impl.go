@@ -125,10 +125,18 @@ func (repo *GormRepository) GetFS() storage.FileStorage {
 
 // NewGormRepository リポジトリ実装を初期化して生成します
 func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub, logger *zap.Logger) (Repository, error) {
+	chTree, err := makeChannelTree(db)
+	if err != nil {
+		return nil, err
+	}
+
 	repo := &GormRepository{
 		db:     db,
 		hub:    hub,
 		logger: logger,
+		channelImpl: channelImpl{
+			ChTree: chTree,
+		},
 		fileImpl: fileImpl{
 			FS: fs,
 		},
