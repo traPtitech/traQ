@@ -28,6 +28,7 @@ func Migrations() []*gormigrate.Migration {
 		v15(), // 外部ログイン機能追加
 		v16(), // パーミッション修正
 		v17(), // ユーザーホームチャンネル
+		v18(), // インデックス追加
 	}
 }
 
@@ -140,6 +141,8 @@ func AllCompositeIndexes() [][]string {
 		{"idx_files_channel_id_created_at", "files", "channel_id", "created_at"},
 		{"idx_files_creator_id_created_at", "files", "creator_id", "created_at"},
 		{"idx_messages_stamps_user_id_stamp_id_updated_at", "messages_stamps", "user_id", "stamp_id", "updated_at"},
+		{"idx_channel_channels_id_is_public_is_forced", "channels", "id", "is_public", "is_forced"},
+		{"idx_messages_deleted_at_created_at", "messages", "deleted_at", "created_at"},
 	}
 }
 

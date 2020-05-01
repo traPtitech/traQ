@@ -190,6 +190,24 @@ func (repo *GormRepository) GetMessages(query MessagesQuery) (messages []*model.
 		tx = tx.Order("messages.created_at DESC")
 	}
 
+	if query.Offset > 0 {
+		tx = tx.Offset(query.Offset)
+	}
+
+	if query.ExcludeDMs && query.Channel == uuid.Nil && query.User == uuid.Nil && query.ChannelsSubscribedByUser == uuid.Nil && !query.Since.Valid && !query.Until.Valid && query.Limit > 0 {
+		// アクティビティ用にUSE INDEX指定でクエリ発行
+		// TODO 綺麗じゃない
+		err = tx.
+			Limit(query.Limit + 1).
+			Raw("SELECT messages.* FROM messages USE INDEX (idx_messages_deleted_at_created_at) INNER JOIN channels ON messages.channel_id = channels.id WHERE messages.deleted_at IS NULL AND channels.is_public = true").
+			Scan(&messages).
+			Error
+		if len(messages) > query.Limit {
+			return messages[:len(messages)-1], true, err
+		}
+		return messages, false, err
+	}
+
 	if query.ChannelsSubscribedByUser != uuid.Nil || query.ExcludeDMs {
 		tx = tx.Joins("INNER JOIN channels ON messages.channel_id = channels.id")
 	}
@@ -222,10 +240,6 @@ func (repo *GormRepository) GetMessages(query MessagesQuery) (messages []*model.
 
 	if query.ExcludeDMs {
 		tx = tx.Where("channels.is_public = true")
-	}
-
-	if query.Offset > 0 {
-		tx = tx.Offset(query.Offset)
 	}
 
 	if query.Limit > 0 {
