@@ -4,11 +4,23 @@ import (
 	"errors"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/event"
 	"sync"
 )
 
-var ErrOccupied = errors.New("connection has already existed")
+var (
+	ErrOccupied             = errors.New("connection has already existed")
+	webrtcUsingUsersCounter = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "traq",
+		Name:      "webrtc_using_users",
+	})
+	webrtcUsingChannelsCounter = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "traq",
+		Name:      "webrtc_using_channels",
+	})
+)
 
 // Manager WebRTCマネージャー
 type Manager struct {
@@ -53,6 +65,7 @@ func (m *Manager) SetState(connKey string, user, channel uuid.UUID, sessions map
 			userID:  user,
 		}
 		m.userStates[user] = us
+		webrtcUsingUsersCounter.Inc()
 	}
 
 	if us.valid() && us.channelID != channel {
@@ -66,6 +79,7 @@ func (m *Manager) SetState(connKey string, user, channel uuid.UUID, sessions map
 			users:     map[uuid.UUID]*userState{},
 		}
 		m.channelStates[channel] = cs
+		webrtcUsingChannelsCounter.Inc()
 	}
 
 	us.sessions = sessions
@@ -98,10 +112,12 @@ func (m *Manager) ResetState(connKey string, user uuid.UUID) error {
 	}
 
 	delete(m.userStates, user)
+	webrtcUsingUsersCounter.Dec()
 	cs := m.channelStates[us.channelID]
 	cs.removeUser(user)
 	if !cs.valid() {
 		delete(m.channelStates, cs.channelID)
+		webrtcUsingChannelsCounter.Dec()
 	}
 
 	m.eventbus.Publish(hub.Message{
