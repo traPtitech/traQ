@@ -60,19 +60,11 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 	res["public"] = channels
 
 	if isTrue(c.QueryParam("include-dm")) {
-		type dmc struct {
-			ID     uuid.UUID `json:"id"`
-			UserID uuid.UUID `json:"userId"`
-		}
 		mapping, err := h.Repo.GetDirectMessageChannelMapping(getRequestUserID(c))
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
-		dms := make([]*dmc, 0, len(mapping))
-		for cid, uid := range mapping {
-			dms = append(dms, &dmc{ID: cid, UserID: uid})
-		}
-		res["dm"] = dms
+		res["dm"] = formatDMChannels(mapping)
 	}
 
 	return c.JSON(http.StatusOK, res)
@@ -417,8 +409,5 @@ func (h *Handlers) GetUserDMChannel(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, echo.Map{
-		"id":     ch.ID,
-		"userId": userID,
-	})
+	return c.JSON(http.StatusOK, &DMChannel{ID: ch.ID, UserID: userID})
 }

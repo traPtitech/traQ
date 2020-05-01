@@ -29,6 +29,19 @@ func formatChannel(channel *model.Channel, childrenID []uuid.UUID) *Channel {
 	}
 }
 
+type DMChannel struct {
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"userId"`
+}
+
+func formatDMChannels(dmcs map[uuid.UUID]uuid.UUID) []*DMChannel {
+	res := make([]*DMChannel, 0, len(dmcs))
+	for cid, uid := range dmcs {
+		res = append(res, &DMChannel{ID: cid, UserID: uid})
+	}
+	return res
+}
+
 type UserTag struct {
 	ID        uuid.UUID `json:"tagId"`
 	Tag       string    `json:"tag"`
