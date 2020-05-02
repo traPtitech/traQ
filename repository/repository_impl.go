@@ -62,27 +62,9 @@ func (repo *GormRepository) User(name string) (uuid.UUID, bool) {
 }
 
 // Sync implements Repository interface.
-func (repo *GormRepository) Sync() (bool, error) {
+func (repo *GormRepository) Sync() (init bool, err error) {
 	if err := migration.Migrate(repo.db); err != nil {
 		return false, err
-	}
-
-	// サーバーユーザーの確認
-	c := 0
-	err := repo.db.Model(&model.User{}).Where(&model.User{Role: role.Admin}).Limit(1).Count(&c).Error
-	if err != nil {
-		return false, err
-	}
-	if c == 0 {
-		_, err := repo.CreateUser(CreateUserArgs{
-			Name:     "traq",
-			Password: "traq",
-			Role:     role.Admin,
-		})
-		if err != nil {
-			return false, err
-		}
-		return true, err
 	}
 
 	// チャンネルツリー構築
@@ -111,6 +93,24 @@ func (repo *GormRepository) Sync() (bool, error) {
 		}
 		channelsCounter.Add(float64(channelNum))
 	}
+
+	// 管理者ユーザーの確認
+	c := 0
+	if err := repo.db.Model(&model.User{}).Where(&model.User{Role: role.Admin}).Limit(1).Count(&c).Error; err != nil {
+		return false, err
+	}
+	if c == 0 {
+		_, err := repo.CreateUser(CreateUserArgs{
+			Name:     "traq",
+			Password: "traq",
+			Role:     role.Admin,
+		})
+		if err != nil {
+			return false, err
+		}
+		return true, err
+	}
+
 	return false, nil
 }
 
