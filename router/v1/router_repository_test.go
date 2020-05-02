@@ -1130,23 +1130,6 @@ func (repo *TestRepository) UpdateChannel(channelID uuid.UUID, args repository.U
 	return nil
 }
 
-func (repo *TestRepository) DeleteChannel(channelID uuid.UUID) error {
-	if channelID == uuid.Nil {
-		return repository.ErrNilID
-	}
-
-	desc, err := repo.GetDescendantChannelIDs(channelID)
-	if err != nil {
-		return err
-	}
-	repo.ChannelsLock.Lock()
-	for _, id := range append(desc, channelID) {
-		delete(repo.Channels, id)
-	}
-	repo.ChannelsLock.Unlock()
-	return nil
-}
-
 func (repo *TestRepository) GetChannel(channelID uuid.UUID) (*model.Channel, error) {
 	repo.ChannelsLock.RLock()
 	ch, ok := repo.Channels[channelID]
@@ -1434,6 +1417,10 @@ func (repo *TestRepository) GetChannelSubscriptions(query repository.ChannelSubs
 
 	repo.ChannelSubscribesLock.Unlock()
 	return result, nil
+}
+
+func (repo *TestRepository) GetChannelTree() repository.ChannelTree {
+	panic("implement me")
 }
 
 func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text string) (*model.Message, error) {

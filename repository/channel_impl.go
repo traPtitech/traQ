@@ -10,7 +10,7 @@ import (
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
 	"go.uber.org/zap"
-	"sync"
+	"gopkg.in/guregu/null.v3"
 	"time"
 )
 
@@ -19,19 +19,17 @@ var (
 	pubChannelRootUUID = uuid.Nil
 )
 
-type channelImpl struct {
-	ChannelPathMap sync.Map
-}
-
-// CreatePublicChannel implements ChannelRepository interface. TODO トランザクション
+// CreatePublicChannel implements ChannelRepository interface.
 func (repo *GormRepository) CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
 	// チャンネル名検証
 	if !validator.ChannelRegex.MatchString(name) {
 		return nil, ArgError("name", "invalid name")
 	}
-	if has, err := repo.isChannelPresent(repo.db, name, parent); err != nil {
-		return nil, err
-	} else if has {
+
+	repo.chTree.mu.Lock()
+	defer repo.chTree.mu.Unlock()
+
+	if repo.chTree.isChildPresent(name, parent) {
 		return nil, ErrAlreadyExists
 	}
 
@@ -42,39 +40,12 @@ func (repo *GormRepository) CreatePublicChannel(name string, parent, creatorID u
 		return nil, ErrForbidden
 	default: // ルート以外
 		// 親チャンネル検証
-		pCh, err := repo.GetChannel(parent)
-		if err != nil {
-			return nil, err
+		if !repo.chTree.isChannelPresent(parent) {
+			return nil, ErrNotFound
 		}
-
-		// DMチャンネルの子チャンネルには出来ない
-		if pCh.IsDMChannel() {
-			return nil, ErrForbidden
-		}
-
-		// 親と公開状況が一致しているか
-		if !pCh.IsPublic {
-			return nil, ErrForbidden
-		}
-
 		// 深さを検証
-		for parent, depth := pCh, 2; ; { // 祖先
-			if parent.ParentID == uuid.Nil {
-				// ルート
-				break
-			}
-
-			parent, err = repo.GetChannel(parent.ParentID)
-			if err != nil {
-				if err == ErrNotFound {
-					break
-				}
-				return nil, err
-			}
-			depth++
-			if depth > model.MaxChannelDepth {
-				return nil, ErrChannelDepthLimitation
-			}
+		if len(repo.chTree.getAscendantIDs(parent))+2 > model.MaxChannelDepth {
+			return nil, ErrChannelDepthLimitation
 		}
 	}
 
@@ -91,6 +62,8 @@ func (repo *GormRepository) CreatePublicChannel(name string, parent, creatorID u
 	if err := repo.db.Create(ch).Error; err != nil {
 		return nil, err
 	}
+	repo.chTree.add(ch)
+
 	channelsCounter.Inc()
 	repo.hub.Publish(hub.Message{
 		Name: event.ChannelCreated,
@@ -117,6 +90,9 @@ func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChanne
 		return ErrNilID
 	}
 
+	repo.chTree.mu.Lock()
+	defer repo.chTree.mu.Unlock()
+
 	var (
 		ch                model.Channel
 		nameChanged       bool
@@ -128,7 +104,6 @@ func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChanne
 		parentBefore      uuid.UUID
 		topicBefore       string
 	)
-
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
 			return convertError(err)
@@ -172,9 +147,7 @@ func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChanne
 					p = ch.ParentID
 				}
 
-				if has, err := repo.isChannelPresent(tx, n, p); err != nil {
-					return err
-				} else if has {
+				if repo.chTree.isChildPresent(n, p) {
 					return ErrAlreadyExists
 				}
 			}
@@ -192,61 +165,26 @@ func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChanne
 			if args.Parent.Valid {
 				// チャンネル階層検証
 				switch args.Parent.UUID {
-				case uuid.Nil:
+				case pubChannelRootUUID:
 					// ルートチャンネル
 					break
 				case dmChannelRootUUID:
 					// DMチャンネルには出来ない
 					return ArgError("args.Parent", "invalid parent channel")
 				default:
-					pCh, err := repo.getChannel(tx, args.Parent.UUID)
-					if err != nil {
-						if err == ErrNotFound {
-							return ArgError("args.Parent", "invalid parent channel")
-						}
-						return err
-					}
-
-					// DMチャンネルの子チャンネルには出来ない
-					if pCh.IsDMChannel() {
-						return ArgError("args.Parent", "invalid parent channel")
-					}
-
-					// 親と公開状況が一致しているか
-					if ch.IsPublic != pCh.IsPublic {
+					// 親チャンネル検証
+					if !repo.chTree.isChannelPresent(args.Parent.UUID) {
 						return ArgError("args.Parent", "invalid parent channel")
 					}
 
 					// 深さを検証
-					depth := 1 // ↑で見た親
-					for {      // 祖先
-						if pCh.ParentID == uuid.Nil {
-							// ルート
-							break
-						}
-						if ch.ID == pCh.ID {
-							// ループ検出
-							return ErrChannelDepthLimitation
-						}
-
-						pCh, err = repo.getChannel(tx, pCh.ParentID)
-						if err != nil {
-							if err == ErrNotFound {
-								break
-							}
-							return err
-						}
-						depth++
-						if depth >= model.MaxChannelDepth {
-							return ErrChannelDepthLimitation
+					ascs := append(repo.chTree.getAscendantIDs(args.Parent.UUID), args.Parent.UUID)
+					for _, id := range ascs {
+						if id == ch.ID {
+							return ErrChannelDepthLimitation // ループ検出
 						}
 					}
-					bottom, err := repo.getChannelDepth(tx, ch.ID) // 子孫 (自分を含む)
-					if err != nil {
-						return err
-					}
-					depth += bottom
-					if depth > model.MaxChannelDepth {
+					if len(ascs)+1+repo.chTree.getChannelDepth(ch.ID) > model.MaxChannelDepth {
 						return ErrChannelDepthLimitation
 					}
 				}
@@ -264,12 +202,7 @@ func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChanne
 	}
 
 	if nameChanged || parentChanged {
-		// チャンネルパスキャッシュの削除
-		repo.ChannelPathMap.Delete(channelID)
-		ids, _ := repo.getDescendantChannelIDs(repo.db, channelID)
-		for _, v := range ids {
-			repo.ChannelPathMap.Delete(v)
-		}
+		repo.chTree.move(channelID, args.Parent, args.Name) // ツリー更新
 	}
 
 	if forcedChanged || visibilityChanged || topicChanged || nameChanged || parentChanged {
@@ -280,6 +213,8 @@ func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChanne
 				"private":    !ch.IsPublic,
 			},
 		})
+		archived := null.NewBool(!args.Visibility.Bool, args.Visibility.Valid)
+		repo.chTree.update(channelID, args.Topic, archived, args.ForcedNotification)
 		if topicChanged {
 			repo.hub.Publish(hub.Message{
 				Name: event.ChannelTopicUpdated,
@@ -326,60 +261,16 @@ func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChanne
 	return nil
 }
 
-// DeleteChannel implements ChannelRepository interface.
-func (repo *GormRepository) DeleteChannel(channelID uuid.UUID) error {
-	if channelID == uuid.Nil {
-		return ErrNilID
-	}
-
-	deleted := make([]*model.Channel, 0)
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		if exists, err := dbExists(tx, &model.Channel{ID: channelID}); err != nil {
-			return err
-		} else if !exists {
-			return ErrNotFound
-		}
-
-		desc, err := repo.getDescendantChannelIDs(tx, channelID)
-		if err != nil {
-			return err
-		}
-		desc = append(desc, channelID)
-
-		for _, v := range desc {
-			ch := model.Channel{}
-			if err := tx.First(&ch, &model.Channel{ID: v}).Error; err != nil {
-				if gorm.IsRecordNotFoundError(err) {
-					continue
-				}
-				return err
-			}
-			deleted = append(deleted, &ch)
-			if err := tx.Delete(ch).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-	for _, v := range deleted {
-		repo.ChannelPathMap.Delete(v.ID)
-		repo.hub.Publish(hub.Message{
-			Name: event.ChannelDeleted,
-			Fields: hub.Fields{
-				"channel_id": v.ID,
-				"private":    !v.IsPublic,
-			},
-		})
-	}
-	return err
-}
-
 // GetChannel implements ChannelRepository interface.
 func (repo *GormRepository) GetChannel(channelID uuid.UUID) (*model.Channel, error) {
-	return repo.getChannel(repo.db, channelID)
+	if channelID == uuid.Nil {
+		return nil, ErrNotFound
+	}
+	var ch model.Channel
+	if err := repo.db.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
+		return nil, convertError(err)
+	}
+	return &ch, nil
 }
 
 // GetChannelByMessageID implements ChannelRepository interface.
@@ -524,37 +415,16 @@ func (repo *GormRepository) IsChannelAccessibleToUser(userID, channelID uuid.UUI
 
 // GetChildrenChannelIDs implements ChannelRepository interface.
 func (repo *GormRepository) GetChildrenChannelIDs(channelID uuid.UUID) (children []uuid.UUID, err error) {
-	return repo.getChildrenChannelIDs(repo.db, channelID)
+	return repo.chTree.GetChildrenIDs(channelID), nil
 }
 
 // GetChannelPath implements ChannelRepository interface.
 func (repo *GormRepository) GetChannelPath(id uuid.UUID) (string, error) {
-	if id == uuid.Nil {
-		return "", ErrNotFound
+	path := repo.chTree.GetChannelPath(id)
+	if len(path) > 0 {
+		return path, nil
 	}
-	v, ok := repo.ChannelPathMap.Load(id)
-	if ok {
-		return v.(string), nil
-	}
-
-	ch := &model.Channel{}
-	if err := repo.db.Take(ch, &model.Channel{ID: id}).Error; err != nil {
-		return "", convertError(err)
-	}
-
-	var path string
-	if pid := ch.ParentID; pid != uuid.Nil {
-		parentPath, err := repo.GetChannelPath(pid)
-		if err != nil && err != ErrNotFound {
-			return "", err
-		}
-		path = parentPath + "/" + ch.Name
-	} else {
-		path = ch.Name
-	}
-
-	repo.ChannelPathMap.Store(id, path)
-	return path, nil
+	return "", ErrNotFound
 }
 
 // GetPrivateChannelMemberIDs implements ChannelRepository interface.
@@ -760,128 +630,9 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 	return &stats, repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error
 }
 
-// getParentChannel チャンネルを取得する
-func (repo *GormRepository) getChannel(tx *gorm.DB, channelID uuid.UUID) (*model.Channel, error) {
-	if channelID == uuid.Nil {
-		return nil, ErrNotFound
-	}
-
-	ch := &model.Channel{}
-	if err := tx.First(ch, &model.Channel{ID: channelID}).Error; err != nil {
-		return nil, convertError(err)
-	}
-	return ch, nil
-}
-
-// isChannelPresent チャンネル名が同階層に既に存在するか
-func (repo *GormRepository) isChannelPresent(tx *gorm.DB, name string, parent uuid.UUID) (bool, error) {
-	c := 0
-	err := tx.
-		Model(&model.Channel{}).
-		Where("parent_id = ? AND name = ?", parent, name).
-		Limit(1).
-		Count(&c).
-		Error
-	return c > 0, err
-}
-
-// getParentChannel 親のチャンネルを取得する
-func (repo *GormRepository) getParentChannel(tx *gorm.DB, channelID uuid.UUID) (*model.Channel, error) {
-	if channelID == uuid.Nil {
-		return nil, ErrNotFound
-	}
-
-	var p []uuid.UUID
-	err := tx.
-		Model(&model.Channel{}).
-		Where(&model.Channel{ID: channelID}).
-		Pluck("parent_id", &p).
-		Error
-	if err != nil {
-		return nil, err
-	}
-	if len(p) == 0 {
-		return nil, ErrNotFound
-	} else if p[0] == uuid.Nil {
-		return nil, nil
-	}
-
-	ch := &model.Channel{}
-	if err := tx.Take(ch, &model.Channel{ID: p[0]}).Error; err != nil {
-		return nil, convertError(err)
-	}
-	return ch, nil
-}
-
-// getChannelDepth 指定したチャンネル木の深さを取得する
-func (repo *GormRepository) getChannelDepth(tx *gorm.DB, id uuid.UUID) (int, error) {
-	children, err := repo.getChildrenChannelIDs(tx, id)
-	if err != nil {
-		return 0, err
-	}
-	max := 0
-	for _, v := range children {
-		d, err := repo.getChannelDepth(tx, v)
-		if err != nil {
-			return 0, err
-		}
-		if max < d {
-			max = d
-		}
-	}
-	return max + 1, nil
-}
-
-// getChildrenChannelIDs 子チャンネルのIDを取得する
-func (repo *GormRepository) getChildrenChannelIDs(tx *gorm.DB, channelID uuid.UUID) (children []uuid.UUID, err error) {
-	children = make([]uuid.UUID, 0)
-	if channelID == uuid.Nil {
-		return children, nil
-	}
-	err = tx.
-		Model(&model.Channel{}).
-		Where(&model.Channel{ParentID: channelID}).
-		Pluck("id", &children).Error
-	return children, err
-}
-
-// getDescendantChannelIDs 子孫チャンネルのIDを取得する
-func (repo *GormRepository) getDescendantChannelIDs(tx *gorm.DB, channelID uuid.UUID) ([]uuid.UUID, error) {
-	var descendants []uuid.UUID
-	children, err := repo.getChildrenChannelIDs(tx, channelID)
-	if err != nil {
-		return nil, err
-	}
-	descendants = append(descendants, children...)
-	for _, v := range children {
-		sub, err := repo.getDescendantChannelIDs(tx, v)
-		if err != nil {
-			return nil, err
-		}
-		descendants = append(descendants, sub...)
-	}
-	return descendants, nil
-}
-
-// getAscendantChannelIDs 祖先チャンネルのIDを取得する
-func (repo *GormRepository) getAscendantChannelIDs(tx *gorm.DB, channelID uuid.UUID) ([]uuid.UUID, error) {
-	var ascendants []uuid.UUID
-	parent, err := repo.getParentChannel(tx, channelID)
-	if err != nil {
-		if err == ErrNotFound {
-			return nil, nil
-		}
-		return nil, err
-	} else if parent == nil {
-		return []uuid.UUID{}, nil
-	}
-	ascendants = append(ascendants, parent.ID)
-	sub, err := repo.getAscendantChannelIDs(tx, parent.ID)
-	if err != nil {
-		return nil, err
-	}
-	ascendants = append(ascendants, sub...)
-	return ascendants, nil
+// GetChannelTree implements ChannelRepository interface.
+func (repo *GormRepository) GetChannelTree() ChannelTree {
+	return repo.chTree
 }
 
 func (repo *GormRepository) recordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) {

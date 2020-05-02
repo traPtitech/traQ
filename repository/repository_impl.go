@@ -13,7 +13,6 @@ import (
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"gopkg.in/guregu/null.v3"
-	"strings"
 	"time"
 )
 
@@ -34,27 +33,14 @@ type GormRepository struct {
 	db     *gorm.DB
 	hub    *hub.Hub
 	logger *zap.Logger
-	channelImpl
+	chTree *channelTreeImpl
 	fileImpl
 }
 
 // Channel implements ReplaceMapper interface.
 func (repo *GormRepository) Channel(path string) (uuid.UUID, bool) {
-	levels := strings.Split(path, "/")
-	if len(levels[0]) == 0 {
-		return uuid.Nil, false
-	}
-
-	var id uuid.UUID
-	for _, name := range levels {
-		var c model.Channel
-		err := repo.db.Select("id").Where("parent_id = ? AND name = ?", id, name).First(&c).Error
-		if err != nil {
-			return uuid.Nil, false
-		}
-		id = c.ID
-	}
-	return id, true
+	id := repo.chTree.GetChannelIDFromPath(path)
+	return id, id != uuid.Nil
 }
 
 // Group implements ReplaceMapper interface.
@@ -76,27 +62,19 @@ func (repo *GormRepository) User(name string) (uuid.UUID, bool) {
 }
 
 // Sync implements Repository interface.
-func (repo *GormRepository) Sync() (bool, error) {
+func (repo *GormRepository) Sync() (init bool, err error) {
 	if err := migration.Migrate(repo.db); err != nil {
 		return false, err
 	}
 
-	// サーバーユーザーの確認
-	c := 0
-	err := repo.db.Model(&model.User{}).Where(&model.User{Role: role.Admin}).Limit(1).Count(&c).Error
-	if err != nil {
+	// チャンネルツリー構築
+	var channels []*model.Channel
+	if err := repo.db.Where(&model.Channel{IsPublic: true}).Find(&channels).Error; err != nil {
 		return false, err
 	}
-	if c == 0 {
-		_, err := repo.CreateUser(CreateUserArgs{
-			Name:     "traq",
-			Password: "traq",
-			Role:     role.Admin,
-		})
-		if err != nil {
-			return false, err
-		}
-		return true, err
+	repo.chTree, err = makeChannelTree(channels)
+	if err != nil {
+		return false, err
 	}
 
 	// メトリクス用データ取得
@@ -115,6 +93,24 @@ func (repo *GormRepository) Sync() (bool, error) {
 		}
 		channelsCounter.Add(float64(channelNum))
 	}
+
+	// 管理者ユーザーの確認
+	c := 0
+	if err := repo.db.Model(&model.User{}).Where(&model.User{Role: role.Admin}).Limit(1).Count(&c).Error; err != nil {
+		return false, err
+	}
+	if c == 0 {
+		_, err := repo.CreateUser(CreateUserArgs{
+			Name:     "traq",
+			Password: "traq",
+			Role:     role.Admin,
+		})
+		if err != nil {
+			return false, err
+		}
+		return true, err
+	}
+
 	return false, nil
 }
 

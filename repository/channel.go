@@ -93,13 +93,6 @@ type ChannelRepository interface {
 	// 階層数制限に到達する場合、ErrChannelDepthLimitationを返します。
 	// DBによるエラーを返すことがあります。
 	UpdateChannel(channelID uuid.UUID, args UpdateChannelArgs) error
-	// DeleteChannel 指定したチャンネルとその子孫チャンネルを全て削除します
-	//
-	// 成功した場合、nilを返します。
-	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
-	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
-	// DBによるエラーを返すことがあります。
-	DeleteChannel(channelID uuid.UUID) error
 	// GetChannel 指定したチャンネルを取得します
 	//
 	// 成功した場合、チャンネルとnilを返します。
@@ -176,4 +169,6 @@ type ChannelRepository interface {
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetChannelStats(channelID uuid.UUID) (*ChannelStats, error)
+	// GetChannelTree チャンネルツリーを取得します
+	GetChannelTree() ChannelTree
 }

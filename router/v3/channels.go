@@ -20,59 +20,16 @@ import (
 
 // GetChannels GET /channels
 func (h *Handlers) GetChannels(c echo.Context) error {
-	res := echo.Map{}
-
-	channelList, err := h.Repo.GetChannelsByUserID(uuid.Nil)
-	if err != nil {
-		return herror.InternalServerError(err)
+	res := echo.Map{
+		"public": h.Repo.GetChannelTree(),
 	}
-	channels := make([]*Channel, 0, len(channelList))
-	chMap := make(map[uuid.UUID]*Channel, len(channelList))
-	for _, ch := range channelList {
-		entry, ok := chMap[ch.ID]
-		if !ok {
-			entry = &Channel{
-				ID:       ch.ID,
-				Children: make([]uuid.UUID, 0),
-			}
-			chMap[ch.ID] = entry
-		}
-
-		entry.Name = ch.Name
-		entry.Topic = ch.Topic
-		entry.Archived = ch.IsArchived()
-		entry.Force = ch.IsForced
-		if ch.ParentID != uuid.Nil {
-			entry.ParentID = uuid.NullUUID{UUID: ch.ParentID, Valid: true}
-			parent, ok := chMap[ch.ParentID]
-			if !ok {
-				parent = &Channel{
-					ID:       ch.ParentID,
-					Children: make([]uuid.UUID, 0),
-				}
-				chMap[ch.ParentID] = parent
-			}
-			parent.Children = append(parent.Children, ch.ID)
-		}
-
-		channels = append(channels, entry)
-	}
-	res["public"] = channels
 
 	if isTrue(c.QueryParam("include-dm")) {
-		type dmc struct {
-			ID     uuid.UUID `json:"id"`
-			UserID uuid.UUID `json:"userId"`
-		}
 		mapping, err := h.Repo.GetDirectMessageChannelMapping(getRequestUserID(c))
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
-		dms := make([]*dmc, 0, len(mapping))
-		for cid, uid := range mapping {
-			dms = append(dms, &dmc{ID: cid, UserID: uid})
-		}
-		res["dm"] = dms
+		res["dm"] = formatDMChannels(mapping)
 	}
 
 	return c.JSON(http.StatusOK, res)
@@ -417,8 +374,5 @@ func (h *Handlers) GetUserDMChannel(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, echo.Map{
-		"id":     ch.ID,
-		"userId": userID,
-	})
+	return c.JSON(http.StatusOK, &DMChannel{ID: ch.ID, UserID: userID})
 }
