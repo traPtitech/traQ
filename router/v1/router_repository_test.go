@@ -1419,6 +1419,10 @@ func (repo *TestRepository) GetChannelSubscriptions(query repository.ChannelSubs
 	return result, nil
 }
 
+func (repo *TestRepository) GetChannelTree() repository.ChannelTree {
+	panic("implement me")
+}
+
 func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text string) (*model.Message, error) {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return nil, repository.ErrNilID

@@ -169,4 +169,6 @@ type ChannelRepository interface {
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetChannelStats(channelID uuid.UUID) (*ChannelStats, error)
+	// GetChannelTree チャンネルツリーを取得します
+	GetChannelTree() ChannelTree
 }

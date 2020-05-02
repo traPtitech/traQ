@@ -630,6 +630,11 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 	return &stats, repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error
 }
 
+// GetChannelTree implements ChannelRepository interface.
+func (repo *GormRepository) GetChannelTree() ChannelTree {
+	return repo.chTree
+}
+
 func (repo *GormRepository) recordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) {
 	err := repo.RecordChannelEvent(channelID, eventType, detail, datetime)
 	if err != nil {

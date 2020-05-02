@@ -20,44 +20,9 @@ import (
 
 // GetChannels GET /channels
 func (h *Handlers) GetChannels(c echo.Context) error {
-	res := echo.Map{}
-
-	channelList, err := h.Repo.GetChannelsByUserID(uuid.Nil)
-	if err != nil {
-		return herror.InternalServerError(err)
+	res := echo.Map{
+		"public": h.Repo.GetChannelTree(),
 	}
-	channels := make([]*Channel, 0, len(channelList))
-	chMap := make(map[uuid.UUID]*Channel, len(channelList))
-	for _, ch := range channelList {
-		entry, ok := chMap[ch.ID]
-		if !ok {
-			entry = &Channel{
-				ID:       ch.ID,
-				Children: make([]uuid.UUID, 0),
-			}
-			chMap[ch.ID] = entry
-		}
-
-		entry.Name = ch.Name
-		entry.Topic = ch.Topic
-		entry.Archived = ch.IsArchived()
-		entry.Force = ch.IsForced
-		if ch.ParentID != uuid.Nil {
-			entry.ParentID = uuid.NullUUID{UUID: ch.ParentID, Valid: true}
-			parent, ok := chMap[ch.ParentID]
-			if !ok {
-				parent = &Channel{
-					ID:       ch.ParentID,
-					Children: make([]uuid.UUID, 0),
-				}
-				chMap[ch.ParentID] = parent
-			}
-			parent.Children = append(parent.Children, ch.ID)
-		}
-
-		channels = append(channels, entry)
-	}
-	res["public"] = channels
 
 	if isTrue(c.QueryParam("include-dm")) {
 		mapping, err := h.Repo.GetDirectMessageChannelMapping(getRequestUserID(c))

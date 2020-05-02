@@ -1,8 +1,10 @@
 package repository
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gofrs/uuid"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/traPtitech/traQ/model"
 	"gopkg.in/guregu/null.v3"
 	"strings"
@@ -18,12 +20,14 @@ type ChannelTree interface {
 	GetChannelPath(id uuid.UUID) string
 	IsChannelPresent(id uuid.UUID) bool
 	GetChannelIDFromPath(path string) uuid.UUID
+	json.Marshaler
 }
 
 type channelTreeImpl struct {
 	nodes map[uuid.UUID]*channelNode
 	roots map[uuid.UUID]*channelNode
 	paths map[uuid.UUID]string
+	json  []byte
 	mu    sync.RWMutex
 }
 
@@ -36,6 +40,26 @@ type channelNode struct {
 	archived bool                       // Nodeでロック
 	force    bool                       // Nodeでロック
 	sync.RWMutex
+}
+
+// MarshalJSON implements json.Marshaler interface
+func (n *channelNode) MarshalJSON() ([]byte, error) {
+	n.RLock()
+	defer n.RUnlock()
+	v := map[string]interface{}{
+		"id":       n.id,
+		"name":     n.name,
+		"topic":    n.topic,
+		"children": n.getChildrenIDs(),
+		"archived": n.archived,
+		"force":    n.force,
+	}
+	if n.parent == nil {
+		v["parentId"] = nil
+	} else {
+		v["parentId"] = n.parent.id
+	}
+	return jsoniter.ConfigFastest.Marshal(v)
 }
 
 func (n *channelNode) getChildrenIDs() []uuid.UUID {
@@ -132,6 +156,7 @@ func makeChannelTree(channels []*model.Channel) (*channelTreeImpl, error) {
 			ct.roots[cid] = n
 		}
 	}
+	ct.regenerateJson()
 	return ct, nil
 }
 
@@ -158,6 +183,7 @@ func (ct *channelTreeImpl) add(ch *model.Channel) {
 		ct.paths[n.id] = ct.paths[p.id] + "/" + n.name
 	}
 	ct.nodes[n.id] = n
+	ct.regenerateJson()
 }
 
 func (ct *channelTreeImpl) move(id uuid.UUID, newParent uuid.NullUUID, newName null.String) {
@@ -186,6 +212,7 @@ func (ct *channelTreeImpl) move(id uuid.UUID, newParent uuid.NullUUID, newName n
 		}
 	}
 	ct.recalculatePath(n)
+	ct.regenerateJson()
 }
 
 func (ct *channelTreeImpl) update(id uuid.UUID, topic null.String, archived null.Bool, force null.Bool) {
@@ -195,7 +222,6 @@ func (ct *channelTreeImpl) update(id uuid.UUID, topic null.String, archived null
 	}
 
 	n.Lock()
-	defer n.Unlock()
 	if topic.Valid {
 		n.topic = topic.String
 	}
@@ -205,6 +231,8 @@ func (ct *channelTreeImpl) update(id uuid.UUID, topic null.String, archived null
 	if force.Valid {
 		n.force = force.Bool
 	}
+	n.Unlock()
+	ct.regenerateJson()
 }
 
 func (ct *channelTreeImpl) recalculatePath(n *channelNode) {
@@ -216,6 +244,18 @@ func (ct *channelTreeImpl) recalculatePath(n *channelNode) {
 	for _, c := range n.children {
 		ct.recalculatePath(c)
 	}
+}
+
+func (ct *channelTreeImpl) regenerateJson() {
+	arr := make([]*channelNode, 0, len(ct.nodes))
+	for _, node := range ct.nodes {
+		arr = append(arr, node)
+	}
+	b, err := jsoniter.ConfigFastest.Marshal(arr)
+	if err != nil {
+		panic(err)
+	}
+	ct.json = b
 }
 
 // GetChildrenIDs 子チャンネルのIDの配列を取得する
@@ -363,4 +403,11 @@ LevelFor:
 		return uuid.Nil
 	}
 	return id
+}
+
+// MarshalJSON implements json.Marshaler interface
+func (ct *channelTreeImpl) MarshalJSON() ([]byte, error) {
+	ct.mu.RLock()
+	defer ct.mu.RUnlock()
+	return ct.json, nil
 }
