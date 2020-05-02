@@ -47,7 +47,7 @@ e : 6301b259-2a3e-4a30-9ec8-78737c4b539d
 │ 　 └ j : 071eefb9-0a77-4cc4-8d38-5c214aca85f0
 └ k : 2636a1e1-5356-4c5f-8822-c52eeb914689
 */
-func makeTestChannelTree(t *testing.T) *channelTree {
+func makeTestChannelTree(t *testing.T) *ChannelTree {
 	t.Helper()
 	tree, err := makeChannelTree([]*model.Channel{
 		{ID: c_a, Name: "a", ParentID: uuid.Nil, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
