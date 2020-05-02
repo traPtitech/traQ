@@ -79,7 +79,7 @@ func stampInstallEmojisCommand() *cobra.Command {
 				logger.Fatal("failed to setup file storage", zap.Error(err))
 			}
 
-			// Repository
+			// Repository チャンネルツリー作ってないので注意
 			repo, err := repository.NewGormRepository(db, fs, hub.New(), logger.Named("repository"))
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))

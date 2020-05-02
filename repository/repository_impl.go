@@ -13,7 +13,6 @@ import (
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"gopkg.in/guregu/null.v3"
-	"strings"
 	"time"
 )
 
@@ -34,27 +33,14 @@ type GormRepository struct {
 	db     *gorm.DB
 	hub    *hub.Hub
 	logger *zap.Logger
-	channelImpl
+	chTree *channelTree
 	fileImpl
 }
 
 // Channel implements ReplaceMapper interface.
 func (repo *GormRepository) Channel(path string) (uuid.UUID, bool) {
-	levels := strings.Split(path, "/")
-	if len(levels[0]) == 0 {
-		return uuid.Nil, false
-	}
-
-	var id uuid.UUID
-	for _, name := range levels {
-		var c model.Channel
-		err := repo.db.Select("id").Where("parent_id = ? AND name = ?", id, name).First(&c).Error
-		if err != nil {
-			return uuid.Nil, false
-		}
-		id = c.ID
-	}
-	return id, true
+	id := repo.chTree.GetChannelIDFromPath(path)
+	return id, id != uuid.Nil
 }
 
 // Group implements ReplaceMapper interface.
@@ -99,6 +85,16 @@ func (repo *GormRepository) Sync() (bool, error) {
 		return true, err
 	}
 
+	// チャンネルツリー構築
+	var channels []*model.Channel
+	if err := repo.db.Where(&model.Channel{IsPublic: true}).Find(&channels).Error; err != nil {
+		return false, err
+	}
+	repo.chTree, err = makeChannelTree(channels)
+	if err != nil {
+		return false, err
+	}
+
 	// メトリクス用データ取得
 	if !initialized {
 		initialized = true
@@ -125,18 +121,10 @@ func (repo *GormRepository) GetFS() storage.FileStorage {
 
 // NewGormRepository リポジトリ実装を初期化して生成します
 func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub, logger *zap.Logger) (Repository, error) {
-	chTree, err := makeChannelTree(db)
-	if err != nil {
-		return nil, err
-	}
-
 	repo := &GormRepository{
 		db:     db,
 		hub:    hub,
 		logger: logger,
-		channelImpl: channelImpl{
-			ChTree: chTree,
-		},
 		fileImpl: fileImpl{
 			FS: fs,
 		},
