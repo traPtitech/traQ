@@ -47,7 +47,7 @@ e : 6301b259-2a3e-4a30-9ec8-78737c4b539d
 │ 　 └ j : 071eefb9-0a77-4cc4-8d38-5c214aca85f0
 └ k : 2636a1e1-5356-4c5f-8822-c52eeb914689
 */
-func makeTestChannelTree(t *testing.T) *ChannelTree {
+func makeTestChannelTree(t *testing.T) *channelTreeImpl {
 	t.Helper()
 	tree, err := makeChannelTree([]*model.Channel{
 		{ID: c_a, Name: "a", ParentID: uuid.Nil, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
@@ -77,7 +77,7 @@ func TestMakeChannelTree(t *testing.T) {
 	makeTestChannelTree(t)
 }
 
-func TestChannelTree_GetChildrenIDs(t *testing.T) {
+func TestChannelTreeImpl_GetChildrenIDs(t *testing.T) {
 	t.Parallel()
 	tree := makeTestChannelTree(t)
 
@@ -88,7 +88,7 @@ func TestChannelTree_GetChildrenIDs(t *testing.T) {
 	assert.ElementsMatch(t, tree.GetChildrenIDs(c_notfound), []uuid.UUID{})
 }
 
-func TestChannelTree_GetDescendantIDs(t *testing.T) {
+func TestChannelTreeImpl_GetDescendantIDs(t *testing.T) {
 	t.Parallel()
 	tree := makeTestChannelTree(t)
 
@@ -99,7 +99,7 @@ func TestChannelTree_GetDescendantIDs(t *testing.T) {
 	assert.ElementsMatch(t, tree.GetDescendantIDs(c_notfound), []uuid.UUID{})
 }
 
-func TestChannelTree_GetAscendantIDs(t *testing.T) {
+func TestChannelTreeImpl_GetAscendantIDs(t *testing.T) {
 	t.Parallel()
 	tree := makeTestChannelTree(t)
 
@@ -110,7 +110,7 @@ func TestChannelTree_GetAscendantIDs(t *testing.T) {
 	assert.ElementsMatch(t, tree.GetAscendantIDs(c_notfound), []uuid.UUID{})
 }
 
-func TestChannelTree_GetChannelDepth(t *testing.T) {
+func TestChannelTreeImpl_GetChannelDepth(t *testing.T) {
 	t.Parallel()
 	tree := makeTestChannelTree(t)
 
@@ -121,7 +121,7 @@ func TestChannelTree_GetChannelDepth(t *testing.T) {
 	assert.EqualValues(t, 0, tree.GetChannelDepth(c_notfound))
 }
 
-func TestChannelTree_IsChannelPresent(t *testing.T) {
+func TestChannelTreeImpl_IsChannelPresent(t *testing.T) {
 	t.Parallel()
 	tree := makeTestChannelTree(t)
 
@@ -132,7 +132,7 @@ func TestChannelTree_IsChannelPresent(t *testing.T) {
 	assert.False(t, tree.IsChannelPresent(c_notfound))
 }
 
-func TestChannelTree_IsChildPresent(t *testing.T) {
+func TestChannelTreeImpl_IsChildPresent(t *testing.T) {
 	t.Parallel()
 	tree := makeTestChannelTree(t)
 
@@ -144,7 +144,7 @@ func TestChannelTree_IsChildPresent(t *testing.T) {
 	assert.False(t, tree.IsChildPresent("a", c_notfound))
 }
 
-func TestChannelTree_GetChannelPath(t *testing.T) {
+func TestChannelTreeImpl_GetChannelPath(t *testing.T) {
 	t.Parallel()
 	tree := makeTestChannelTree(t)
 
@@ -156,7 +156,7 @@ func TestChannelTree_GetChannelPath(t *testing.T) {
 	assert.EqualValues(t, "", tree.GetChannelPath(c_notfound))
 }
 
-func TestChannelTree_GetChannelIDFromPath(t *testing.T) {
+func TestChannelTreeImpl_GetChannelIDFromPath(t *testing.T) {
 	t.Parallel()
 	tree := makeTestChannelTree(t)
 

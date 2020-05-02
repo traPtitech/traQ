@@ -33,7 +33,7 @@ type GormRepository struct {
 	db     *gorm.DB
 	hub    *hub.Hub
 	logger *zap.Logger
-	chTree *ChannelTree
+	chTree *channelTreeImpl
 	fileImpl
 }
 

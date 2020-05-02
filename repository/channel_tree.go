@@ -9,6 +9,24 @@ import (
 	"sync"
 )
 
+type ChannelTree interface {
+	GetChildrenIDs(id uuid.UUID) []uuid.UUID
+	GetDescendantIDs(id uuid.UUID) []uuid.UUID
+	GetAscendantIDs(id uuid.UUID) []uuid.UUID
+	GetChannelDepth(id uuid.UUID) int
+	IsChildPresent(name string, parent uuid.UUID) bool
+	GetChannelPath(id uuid.UUID) string
+	IsChannelPresent(id uuid.UUID) bool
+	GetChannelIDFromPath(path string) uuid.UUID
+}
+
+type channelTreeImpl struct {
+	nodes map[uuid.UUID]*channelNode
+	roots map[uuid.UUID]*channelNode
+	paths map[uuid.UUID]string
+	mu    sync.RWMutex
+}
+
 type channelNode struct {
 	id       uuid.UUID                  // 不変なため非ロック
 	parent   *channelNode               // Treeでロック
@@ -58,7 +76,7 @@ func (n *channelNode) getAscendantIDs() []uuid.UUID {
 	return ascendants
 }
 
-func constructChannelNode(chMap map[uuid.UUID]*model.Channel, tree *ChannelTree, id uuid.UUID) (*channelNode, error) {
+func constructChannelNode(chMap map[uuid.UUID]*model.Channel, tree *channelTreeImpl, id uuid.UUID) (*channelNode, error) {
 	n, ok := tree.nodes[id]
 	if ok {
 		return n, nil
@@ -93,18 +111,11 @@ func constructChannelNode(chMap map[uuid.UUID]*model.Channel, tree *ChannelTree,
 	return n, nil
 }
 
-type ChannelTree struct {
-	nodes map[uuid.UUID]*channelNode
-	roots map[uuid.UUID]*channelNode
-	paths map[uuid.UUID]string
-	mu    sync.RWMutex
-}
-
-func makeChannelTree(channels []*model.Channel) (*ChannelTree, error) {
+func makeChannelTree(channels []*model.Channel) (*channelTreeImpl, error) {
 	var (
 		roots []uuid.UUID
 		chMap = map[uuid.UUID]*model.Channel{}
-		ct    = &ChannelTree{
+		ct    = &channelTreeImpl{
 			nodes: map[uuid.UUID]*channelNode{},
 			roots: map[uuid.UUID]*channelNode{},
 			paths: map[uuid.UUID]string{},
@@ -126,7 +137,7 @@ func makeChannelTree(channels []*model.Channel) (*ChannelTree, error) {
 	return ct, nil
 }
 
-func (ct *ChannelTree) add(ch *model.Channel) {
+func (ct *channelTreeImpl) add(ch *model.Channel) {
 	n := &channelNode{
 		id:       ch.ID,
 		name:     ch.Name,
@@ -150,7 +161,7 @@ func (ct *ChannelTree) add(ch *model.Channel) {
 	ct.nodes[n.id] = n
 }
 
-func (ct *ChannelTree) move(id uuid.UUID, newParent uuid.NullUUID, newName null.String) {
+func (ct *channelTreeImpl) move(id uuid.UUID, newParent uuid.NullUUID, newName null.String) {
 	n, ok := ct.nodes[id]
 	if !ok {
 		panic("assert !ok = false")
@@ -173,7 +184,7 @@ func (ct *ChannelTree) move(id uuid.UUID, newParent uuid.NullUUID, newName null.
 	ct.recalculatePath(n)
 }
 
-func (ct *ChannelTree) update(id uuid.UUID, topic null.String, archived null.Bool, force null.Bool) {
+func (ct *channelTreeImpl) update(id uuid.UUID, topic null.String, archived null.Bool, force null.Bool) {
 	n, ok := ct.nodes[id]
 	if !ok {
 		panic("assert !ok = false")
@@ -192,7 +203,7 @@ func (ct *ChannelTree) update(id uuid.UUID, topic null.String, archived null.Boo
 	}
 }
 
-func (ct *ChannelTree) recalculatePath(n *channelNode) {
+func (ct *channelTreeImpl) recalculatePath(n *channelNode) {
 	if n.parent == nil {
 		ct.paths[n.id] = n.name
 	} else {
@@ -204,13 +215,13 @@ func (ct *ChannelTree) recalculatePath(n *channelNode) {
 }
 
 // GetChildrenIDs 子チャンネルのIDの配列を取得する
-func (ct *ChannelTree) GetChildrenIDs(id uuid.UUID) []uuid.UUID {
+func (ct *channelTreeImpl) GetChildrenIDs(id uuid.UUID) []uuid.UUID {
 	ct.mu.RLock()
 	defer ct.mu.RUnlock()
 	return ct.getChildrenIDs(id)
 }
 
-func (ct *ChannelTree) getChildrenIDs(id uuid.UUID) []uuid.UUID {
+func (ct *channelTreeImpl) getChildrenIDs(id uuid.UUID) []uuid.UUID {
 	if id == uuid.Nil {
 		var res []uuid.UUID
 		for cid := range ct.roots {
@@ -225,13 +236,13 @@ func (ct *ChannelTree) getChildrenIDs(id uuid.UUID) []uuid.UUID {
 }
 
 // GetDescendantIDs 子孫チャンネルのIDの配列を取得する
-func (ct *ChannelTree) GetDescendantIDs(id uuid.UUID) []uuid.UUID {
+func (ct *channelTreeImpl) GetDescendantIDs(id uuid.UUID) []uuid.UUID {
 	ct.mu.RLock()
 	defer ct.mu.RUnlock()
 	return ct.getDescendantIDs(id)
 }
 
-func (ct *ChannelTree) getDescendantIDs(id uuid.UUID) []uuid.UUID {
+func (ct *channelTreeImpl) getDescendantIDs(id uuid.UUID) []uuid.UUID {
 	if id == uuid.Nil {
 		var res []uuid.UUID
 		for cid, c := range ct.roots {
@@ -247,13 +258,13 @@ func (ct *ChannelTree) getDescendantIDs(id uuid.UUID) []uuid.UUID {
 }
 
 // GetAscendantIDs 祖先チャンネルのIDの配列を取得する
-func (ct *ChannelTree) GetAscendantIDs(id uuid.UUID) []uuid.UUID {
+func (ct *channelTreeImpl) GetAscendantIDs(id uuid.UUID) []uuid.UUID {
 	ct.mu.RLock()
 	defer ct.mu.RUnlock()
 	return ct.getAscendantIDs(id)
 }
 
-func (ct *ChannelTree) getAscendantIDs(id uuid.UUID) []uuid.UUID {
+func (ct *channelTreeImpl) getAscendantIDs(id uuid.UUID) []uuid.UUID {
 	if n, ok := ct.nodes[id]; ok {
 		return n.getAscendantIDs()
 	}
@@ -261,13 +272,13 @@ func (ct *ChannelTree) getAscendantIDs(id uuid.UUID) []uuid.UUID {
 }
 
 // GetChannelDepth 指定したチャンネル木の深さを取得する。自分自身は深さに含まれません。
-func (ct *ChannelTree) GetChannelDepth(id uuid.UUID) int {
+func (ct *channelTreeImpl) GetChannelDepth(id uuid.UUID) int {
 	ct.mu.RLock()
 	defer ct.mu.RUnlock()
 	return ct.getChannelDepth(id)
 }
 
-func (ct *ChannelTree) getChannelDepth(id uuid.UUID) int {
+func (ct *channelTreeImpl) getChannelDepth(id uuid.UUID) int {
 	if n, ok := ct.nodes[id]; ok {
 		return n.getChannelDepth()
 	}
@@ -275,13 +286,13 @@ func (ct *ChannelTree) getChannelDepth(id uuid.UUID) int {
 }
 
 // IsChildPresent 指定したnameのチャンネルが指定したチャンネルの子に存在するか
-func (ct *ChannelTree) IsChildPresent(name string, parent uuid.UUID) bool {
+func (ct *channelTreeImpl) IsChildPresent(name string, parent uuid.UUID) bool {
 	ct.mu.RLock()
 	defer ct.mu.RUnlock()
 	return ct.isChildPresent(name, parent)
 }
 
-func (ct *ChannelTree) isChildPresent(name string, parent uuid.UUID) bool {
+func (ct *channelTreeImpl) isChildPresent(name string, parent uuid.UUID) bool {
 	if parent == uuid.Nil {
 		for _, n := range ct.roots {
 			if n.name == name {
@@ -300,36 +311,36 @@ func (ct *ChannelTree) isChildPresent(name string, parent uuid.UUID) bool {
 }
 
 // GetChannelPath 指定したチャンネルのパスを取得する
-func (ct *ChannelTree) GetChannelPath(id uuid.UUID) string {
+func (ct *channelTreeImpl) GetChannelPath(id uuid.UUID) string {
 	ct.mu.RLock()
 	defer ct.mu.RUnlock()
 	return ct.getChannelPath(id)
 }
 
-func (ct *ChannelTree) getChannelPath(id uuid.UUID) string {
+func (ct *channelTreeImpl) getChannelPath(id uuid.UUID) string {
 	return ct.paths[id]
 }
 
 // IsChannelPresent 指定したIDのチャンネルが存在するかどうかを取得する
-func (ct *ChannelTree) IsChannelPresent(id uuid.UUID) bool {
+func (ct *channelTreeImpl) IsChannelPresent(id uuid.UUID) bool {
 	ct.mu.RLock()
 	defer ct.mu.RUnlock()
 	return ct.isChannelPresent(id)
 }
 
-func (ct *ChannelTree) isChannelPresent(id uuid.UUID) bool {
+func (ct *channelTreeImpl) isChannelPresent(id uuid.UUID) bool {
 	_, ok := ct.nodes[id]
 	return ok
 }
 
 // GetChannelIDFromPath チャンネルパスからチャンネルIDを取得する
-func (ct *ChannelTree) GetChannelIDFromPath(path string) uuid.UUID {
+func (ct *channelTreeImpl) GetChannelIDFromPath(path string) uuid.UUID {
 	ct.mu.RLock()
 	defer ct.mu.RUnlock()
 	return ct.getChannelIDFromPath(path)
 }
 
-func (ct *ChannelTree) getChannelIDFromPath(path string) uuid.UUID {
+func (ct *channelTreeImpl) getChannelIDFromPath(path string) uuid.UUID {
 	var (
 		id       = uuid.Nil
 		children = ct.roots
