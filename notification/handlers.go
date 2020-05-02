@@ -106,11 +106,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		fcmPayload.Path = "/users/" + mUser.GetName()
 		fcmPayload.SetBodyWithEllipsis(parsed.OneLine())
 	} else {
-		path, err := ns.repo.GetChannelPath(m.ChannelID)
-		if err != nil {
-			logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("channelId", m.ChannelID))
-			return
-		}
+		path := ns.repo.GetChannelTree().GetChannelPath(m.ChannelID)
 		fcmPayload.Title = "#" + path
 		fcmPayload.Path = "/channels/" + path
 		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + parsed.OneLine())

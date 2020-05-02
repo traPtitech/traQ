@@ -78,13 +78,7 @@ func (h *Handlers) CreateChannels(c echo.Context) error {
 // GetChannel GET /channels/:channelID
 func (h *Handlers) GetChannel(c echo.Context) error {
 	ch := getParamChannel(c)
-
-	childrenID, err := h.Repo.GetChildrenChannelIDs(ch.ID)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.JSON(http.StatusOK, formatChannel(ch, childrenID))
+	return c.JSON(http.StatusOK, formatChannel(ch, h.Repo.GetChannelTree().GetChildrenIDs(ch.ID)))
 }
 
 // PatchChannelRequest PATCH /channels/:channelID リクエストボディ
@@ -172,8 +166,7 @@ func (h *Handlers) EditChannelTopic(c echo.Context) error {
 	ch := getParamChannel(c)
 
 	if ch.IsArchived() {
-		path, _ := h.Repo.GetChannelPath(ch.ID)
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetChannelTree().GetChannelPath(ch.ID)))
 	}
 
 	var req PutChannelTopicRequest

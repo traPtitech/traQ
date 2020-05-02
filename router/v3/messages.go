@@ -64,8 +64,7 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 	if ch.IsArchived() {
-		path, _ := h.Repo.GetChannelPath(ch.ID)
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetChannelTree().GetChannelPath(ch.ID)))
 	}
 
 	var req PostMessageRequest
@@ -142,8 +141,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 	if ch.IsArchived() {
-		path, _ := h.Repo.GetChannelPath(ch.ID)
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetChannelTree().GetChannelPath(ch.ID)))
 	}
 
 	if err := h.Repo.DeleteMessage(m.ID); err != nil {
@@ -273,8 +271,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 	ch := getParamChannel(c)
 
 	if ch.IsArchived() {
-		path, _ := h.Repo.GetChannelPath(ch.ID)
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetChannelTree().GetChannelPath(ch.ID)))
 	}
 
 	var req PostMessageRequest

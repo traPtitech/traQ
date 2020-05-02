@@ -418,15 +418,6 @@ func (repo *GormRepository) GetChildrenChannelIDs(channelID uuid.UUID) (children
 	return repo.chTree.GetChildrenIDs(channelID), nil
 }
 
-// GetChannelPath implements ChannelRepository interface.
-func (repo *GormRepository) GetChannelPath(id uuid.UUID) (string, error) {
-	path := repo.chTree.GetChannelPath(id)
-	if len(path) > 0 {
-		return path, nil
-	}
-	return "", ErrNotFound
-}
-
 // GetPrivateChannelMemberIDs implements ChannelRepository interface.
 func (repo *GormRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) (users []uuid.UUID, err error) {
 	users = make([]uuid.UUID, 0)

@@ -112,61 +112,6 @@ func TestRepositoryImpl_GetChannel(t *testing.T) {
 	})
 }
 
-func TestRepositoryImpl_GetChannelPath(t *testing.T) {
-	t.Parallel()
-	repo, _, _ := setup(t, common)
-
-	ch1 := mustMakeChannelDetail(t, repo, uuid.Nil, random, uuid.Nil)
-	ch2 := mustMakeChannelDetail(t, repo, uuid.Nil, random, ch1.ID)
-	ch3 := mustMakeChannelDetail(t, repo, uuid.Nil, random, ch2.ID)
-
-	t.Run("ch1", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		path, err := repo.GetChannelPath(ch1.ID)
-		if assert.NoError(err) {
-			assert.Equal(ch1.Name, path)
-		}
-	})
-
-	t.Run("ch2", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		path, err := repo.GetChannelPath(ch2.ID)
-		if assert.NoError(err) {
-			assert.Equal(fmt.Sprintf("%s/%s", ch1.Name, ch2.Name), path)
-		}
-	})
-
-	t.Run("ch3", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		path, err := repo.GetChannelPath(ch3.ID)
-		if assert.NoError(err) {
-			assert.Equal(fmt.Sprintf("%s/%s/%s", ch1.Name, ch2.Name, ch3.Name), path)
-		}
-	})
-
-	t.Run("NotExists1", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		_, err := repo.GetChannelPath(uuid.Nil)
-		assert.Error(err)
-	})
-
-	t.Run("NotExists2", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		_, err := repo.GetChannelPath(uuid.Must(uuid.NewV4()))
-		assert.Error(err)
-	})
-}
-
 func TestRepositoryImpl_ChangeChannelName(t *testing.T) {
 	t.Parallel()
 	repo, _, _, parent := setupWithChannel(t, common)
@@ -232,38 +177,6 @@ func TestRepositoryImpl_ChangeChannelParent(t *testing.T) {
 			assert.Equal(t, uuid.Nil, c.ParentID)
 		}
 	})
-}
-
-func TestRepositoryImpl_GetChildrenChannelIDs(t *testing.T) {
-	t.Parallel()
-	repo, _, _, c1 := setupWithChannel(t, common)
-
-	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c1.ID)
-	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
-	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
-
-	cases := []struct {
-		name   string
-		ch     uuid.UUID
-		expect []uuid.UUID
-	}{
-		{"c1", c1.ID, []uuid.UUID{c2.ID}},
-		{"c2", c2.ID, []uuid.UUID{c3.ID, c4.ID}},
-		{"c3", c3.ID, []uuid.UUID{}},
-		{"c4", c4.ID, []uuid.UUID{}},
-	}
-
-	for _, v := range cases {
-		v := v
-		t.Run(v.name, func(t *testing.T) {
-			t.Parallel()
-
-			ids, err := repo.GetChildrenChannelIDs(v.ch)
-			if assert.NoError(t, err) {
-				assert.ElementsMatch(t, ids, v.expect)
-			}
-		})
-	}
 }
 
 func TestGormRepository_ChangeChannelSubscription(t *testing.T) {

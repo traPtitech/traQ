@@ -253,8 +253,7 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 	ch := getChannelFromContext(c)
 
 	if ch.IsArchived() {
-		path, _ := h.Repo.GetChannelPath(ch.ID)
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+		return herror.BadRequest(fmt.Sprintf("channel has been archived"))
 	}
 
 	var req struct {

@@ -134,12 +134,6 @@ type ChannelRepository interface {
 	// 存在しないチャンネルを指定した場合は空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetChildrenChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error)
-	// GetChannelPath 指定したチャンネルのパス文字列を取得する
-	//
-	// 成功した場合、パス文字列とnilを返します。
-	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
-	// DBによるエラーを返すことがあります。
-	GetChannelPath(id uuid.UUID) (string, error)
 	// GetPrivateChannelMemberIDs 指定したプライベートチャンネルのメンバーのUUIDを全て取得する
 	//
 	// 成功した場合、UUIDの配列とnilを返します。

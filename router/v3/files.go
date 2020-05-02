@@ -104,8 +104,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	}
 
 	if ch.IsArchived() {
-		path, _ := h.Repo.GetChannelPath(ch.ID)
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetChannelTree().GetChannelPath(ch.ID)))
 	}
 
 	args := repository.SaveFileArgs{

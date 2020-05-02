@@ -133,11 +133,6 @@ func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
 		p.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("id", channelID))
 		return
 	}
-	path, err := p.repo.GetChannelPath(channelID)
-	if err != nil {
-		p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", channelID))
-		return
-	}
 	user, err := p.repo.GetUser(ch.CreatorID, false)
 	if err != nil && err != repository.ErrNotFound {
 		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", ch.CreatorID))
@@ -146,7 +141,7 @@ func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
 
 	payload := joinAndLeftPayload{
 		basePayload: makeBasePayload(),
-		Channel:     makeChannelPayload(ch, path, user),
+		Channel:     makeChannelPayload(ch, p.repo.GetChannelTree().GetChannelPath(channelID), user),
 	}
 
 	buf, release, err := p.makePayloadJSON(&payload)
@@ -193,11 +188,6 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			return
 		}
 
-		path, err := p.repo.GetChannelPath(ch.ID)
-		if err != nil {
-			p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", ch.ID))
-			return
-		}
 		user, err := p.repo.GetUser(ch.CreatorID, false)
 		if err != nil {
 			p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", ch.CreatorID))
@@ -206,7 +196,7 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 		multicast(p, model.BotEventChannelCreated, &channelCreatedPayload{
 			basePayload: makeBasePayload(),
-			Channel:     makeChannelPayload(ch, path, user),
+			Channel:     makeChannelPayload(ch, p.repo.GetChannelTree().GetChannelPath(ch.ID), user),
 		}, bots)
 	}
 }
@@ -231,12 +221,6 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	path, err := p.repo.GetChannelPath(ch.ID)
-	if err != nil {
-		p.logger.Error("failed to GetChannelPath", zap.Error(err), zap.Stringer("id", ch.ID))
-		return
-	}
-
 	chCreator, err := p.repo.GetUser(ch.CreatorID, false)
 	if err != nil && err != repository.ErrNotFound {
 		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", ch.CreatorID))
@@ -251,7 +235,7 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 	multicast(p, model.BotEventChannelTopicChanged, &channelTopicChangedPayload{
 		basePayload: makeBasePayload(),
-		Channel:     makeChannelPayload(ch, path, chCreator),
+		Channel:     makeChannelPayload(ch, p.repo.GetChannelTree().GetChannelPath(ch.ID), chCreator),
 		Topic:       topic,
 		Updater:     makeUserPayload(user),
 	}, bots)
