@@ -61,7 +61,7 @@ func (n *channelNode) getDescendantIDs() []uuid.UUID {
 	var descendants []uuid.UUID
 	descendants = append(descendants, n.getChildrenIDs()...)
 	for _, c := range n.children {
-		descendants = append(descendants, c.getChildrenIDs()...)
+		descendants = append(descendants, c.getDescendantIDs()...)
 	}
 	return descendants
 }
@@ -113,7 +113,6 @@ func constructChannelNode(chMap map[uuid.UUID]*model.Channel, tree *channelTreeI
 
 func makeChannelTree(channels []*model.Channel) (*channelTreeImpl, error) {
 	var (
-		roots []uuid.UUID
 		chMap = map[uuid.UUID]*model.Channel{}
 		ct    = &channelTreeImpl{
 			nodes: map[uuid.UUID]*channelNode{},
@@ -123,16 +122,15 @@ func makeChannelTree(channels []*model.Channel) (*channelTreeImpl, error) {
 	)
 	for _, ch := range channels {
 		chMap[ch.ID] = ch
-		if ch.ParentID == uuid.Nil {
-			roots = append(roots, ch.ID)
-		}
 	}
-	for _, cid := range roots {
+	for cid := range chMap {
 		n, err := constructChannelNode(chMap, ct, cid)
 		if err != nil {
 			return nil, err
 		}
-		ct.roots[cid] = n
+		if n.parent == nil {
+			ct.roots[cid] = n
+		}
 	}
 	return ct, nil
 }
@@ -148,6 +146,7 @@ func (ct *channelTreeImpl) add(ch *model.Channel) {
 	}
 	if ch.ParentID == uuid.Nil {
 		// ルート
+		ct.roots[n.id] = n
 		ct.paths[n.id] = n.name
 	} else {
 		p, ok := ct.nodes[ch.ParentID]
@@ -174,12 +173,17 @@ func (ct *channelTreeImpl) move(id uuid.UUID, newParent uuid.NullUUID, newName n
 		if n.parent != nil {
 			delete(n.parent.children, n.id)
 		}
-		p, ok := ct.nodes[newParent.UUID]
-		if !ok {
-			panic("assert !ok = false")
+		if newParent.UUID == uuid.Nil {
+			n.parent = nil
+			ct.roots[n.id] = n
+		} else {
+			p, ok := ct.nodes[newParent.UUID]
+			if !ok {
+				panic("assert !ok = false")
+			}
+			n.parent = p
+			p.children[n.id] = n
 		}
-		n.parent = p
-		p.children[n.id] = n
 	}
 	ct.recalculatePath(n)
 }
@@ -271,7 +275,7 @@ func (ct *channelTreeImpl) getAscendantIDs(id uuid.UUID) []uuid.UUID {
 	return []uuid.UUID{}
 }
 
-// GetChannelDepth 指定したチャンネル木の深さを取得する。自分自身は深さに含まれません。
+// GetChannelDepth 指定したチャンネル木の深さを取得する
 func (ct *channelTreeImpl) GetChannelDepth(id uuid.UUID) int {
 	ct.mu.RLock()
 	defer ct.mu.RUnlock()
@@ -293,16 +297,18 @@ func (ct *channelTreeImpl) IsChildPresent(name string, parent uuid.UUID) bool {
 }
 
 func (ct *channelTreeImpl) isChildPresent(name string, parent uuid.UUID) bool {
+	name = strings.ToLower(name)
 	if parent == uuid.Nil {
 		for _, n := range ct.roots {
-			if n.name == name {
+			if strings.ToLower(n.name) == name {
 				return true
 			}
 		}
+		return false
 	}
 	if n, ok := ct.nodes[parent]; ok {
 		for _, n := range n.children {
-			if n.name == name {
+			if strings.ToLower(n.name) == name {
 				return true
 			}
 		}
@@ -345,14 +351,16 @@ func (ct *channelTreeImpl) getChannelIDFromPath(path string) uuid.UUID {
 		id       = uuid.Nil
 		children = ct.roots
 	)
-	for _, name := range strings.Split(path, "/") {
+LevelFor:
+	for _, name := range strings.Split(strings.ToLower(path), "/") {
 		for cid, n := range children {
-			if n.name == name {
+			if strings.ToLower(n.name) == name {
 				id = cid
 				children = n.children
-				break
+				continue LevelFor
 			}
 		}
+		return uuid.Nil
 	}
 	return id
 }

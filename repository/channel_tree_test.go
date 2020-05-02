@@ -115,9 +115,9 @@ func TestChannelTreeImpl_GetChannelDepth(t *testing.T) {
 	tree := makeTestChannelTree(t)
 
 	assert.EqualValues(t, 0, tree.GetChannelDepth(uuid.Nil))
-	assert.EqualValues(t, 3, tree.GetChannelDepth(c_a))
-	assert.EqualValues(t, 2, tree.GetChannelDepth(c_ab))
-	assert.EqualValues(t, 0, tree.GetChannelDepth(c_abcd))
+	assert.EqualValues(t, 4, tree.GetChannelDepth(c_a))
+	assert.EqualValues(t, 3, tree.GetChannelDepth(c_ab))
+	assert.EqualValues(t, 1, tree.GetChannelDepth(c_abcd))
 	assert.EqualValues(t, 0, tree.GetChannelDepth(c_notfound))
 }
 
