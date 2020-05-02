@@ -97,7 +97,7 @@ type channelTree struct {
 	nodes map[uuid.UUID]*channelNode
 	roots map[uuid.UUID]*channelNode
 	paths map[uuid.UUID]string
-	sync.RWMutex
+	mu    sync.RWMutex
 }
 
 func makeChannelTree(channels []*model.Channel) (*channelTree, error) {
@@ -205,8 +205,8 @@ func (ct *channelTree) recalculatePath(n *channelNode) {
 
 // GetChildrenIDs 子チャンネルのIDの配列を取得する
 func (ct *channelTree) GetChildrenIDs(id uuid.UUID) []uuid.UUID {
-	ct.RLock()
-	defer ct.RUnlock()
+	ct.mu.RLock()
+	defer ct.mu.RUnlock()
 	return ct.getChildrenIDs(id)
 }
 
@@ -226,8 +226,8 @@ func (ct *channelTree) getChildrenIDs(id uuid.UUID) []uuid.UUID {
 
 // GetDescendantIDs 子孫チャンネルのIDの配列を取得する
 func (ct *channelTree) GetDescendantIDs(id uuid.UUID) []uuid.UUID {
-	ct.RLock()
-	defer ct.RUnlock()
+	ct.mu.RLock()
+	defer ct.mu.RUnlock()
 	return ct.getDescendantIDs(id)
 }
 
@@ -248,8 +248,8 @@ func (ct *channelTree) getDescendantIDs(id uuid.UUID) []uuid.UUID {
 
 // GetAscendantIDs 祖先チャンネルのIDの配列を取得する
 func (ct *channelTree) GetAscendantIDs(id uuid.UUID) []uuid.UUID {
-	ct.RLock()
-	defer ct.RUnlock()
+	ct.mu.RLock()
+	defer ct.mu.RUnlock()
 	return ct.getAscendantIDs(id)
 }
 
@@ -262,8 +262,8 @@ func (ct *channelTree) getAscendantIDs(id uuid.UUID) []uuid.UUID {
 
 // GetChannelDepth 指定したチャンネル木の深さを取得する。自分自身は深さに含まれません。
 func (ct *channelTree) GetChannelDepth(id uuid.UUID) int {
-	ct.RLock()
-	defer ct.RUnlock()
+	ct.mu.RLock()
+	defer ct.mu.RUnlock()
 	return ct.getChannelDepth(id)
 }
 
@@ -276,8 +276,8 @@ func (ct *channelTree) getChannelDepth(id uuid.UUID) int {
 
 // IsChildPresent 指定したnameのチャンネルが指定したチャンネルの子に存在するか
 func (ct *channelTree) IsChildPresent(name string, parent uuid.UUID) bool {
-	ct.RLock()
-	defer ct.RUnlock()
+	ct.mu.RLock()
+	defer ct.mu.RUnlock()
 	return ct.isChildPresent(name, parent)
 }
 
@@ -301,8 +301,8 @@ func (ct *channelTree) isChildPresent(name string, parent uuid.UUID) bool {
 
 // GetChannelPath 指定したチャンネルのパスを取得する
 func (ct *channelTree) GetChannelPath(id uuid.UUID) string {
-	ct.RLock()
-	defer ct.RUnlock()
+	ct.mu.RLock()
+	defer ct.mu.RUnlock()
 	return ct.getChannelPath(id)
 }
 
@@ -312,8 +312,8 @@ func (ct *channelTree) getChannelPath(id uuid.UUID) string {
 
 // IsChannelPresent 指定したIDのチャンネルが存在するかどうかを取得する
 func (ct *channelTree) IsChannelPresent(id uuid.UUID) bool {
-	ct.RLock()
-	defer ct.RUnlock()
+	ct.mu.RLock()
+	defer ct.mu.RUnlock()
 	return ct.isChannelPresent(id)
 }
 
@@ -324,8 +324,8 @@ func (ct *channelTree) isChannelPresent(id uuid.UUID) bool {
 
 // GetChannelIDFromPath チャンネルパスからチャンネルIDを取得する
 func (ct *channelTree) GetChannelIDFromPath(path string) uuid.UUID {
-	ct.RLock()
-	defer ct.RUnlock()
+	ct.mu.RLock()
+	defer ct.mu.RUnlock()
 	return ct.getChannelIDFromPath(path)
 }
 

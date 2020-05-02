@@ -26,8 +26,8 @@ func (repo *GormRepository) CreatePublicChannel(name string, parent, creatorID u
 		return nil, ArgError("name", "invalid name")
 	}
 
-	repo.chTree.Lock()
-	defer repo.chTree.Unlock()
+	repo.chTree.mu.Lock()
+	defer repo.chTree.mu.Unlock()
 
 	if repo.chTree.isChildPresent(name, parent) {
 		return nil, ErrAlreadyExists
@@ -90,8 +90,8 @@ func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChanne
 		return ErrNilID
 	}
 
-	repo.chTree.Lock()
-	defer repo.chTree.Unlock()
+	repo.chTree.mu.Lock()
+	defer repo.chTree.mu.Unlock()
 
 	var (
 		ch                model.Channel
