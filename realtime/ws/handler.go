@@ -48,13 +48,21 @@ Command:
 
 	case "rtcstate":
 		// rtcstate:{チャンネルID}:({状態}:{セッションID})*
-		if len(args) < 3 {
+		if len(args) < 2 {
 			// 引数が不正
 			s.sendErrorMessage(fmt.Sprintf("invalid args: %s", cmd))
 			break
 		}
 
-		// {チャンネルID}
+		// {チャンネルID} or null
+		if str := strings.ToLower(args[1]); str == "null" || str == "" {
+			// リセット
+			if s.streamer.realtime.WebRTCv3.ResetState(s.Key(), s.UserID()) != nil {
+				// 別のコネクションでロック中
+				s.sendErrorMessage("your webrtc state is locked by another ws connection")
+			}
+			break
+		}
 		cid, err := uuid.FromString(args[1])
 		if err != nil {
 			// チャンネルIDが不正
@@ -63,6 +71,11 @@ Command:
 		}
 
 		// ({状態}:{セッションID})*
+		if len(args) < 3 {
+			// 引数が不正
+			s.sendErrorMessage(fmt.Sprintf("invalid args: %s", cmd))
+			break
+		}
 		if str := strings.ToLower(args[2]); str == "null" || str == "" {
 			// リセット
 			if s.streamer.realtime.WebRTCv3.ResetState(s.Key(), s.UserID()) != nil {

@@ -226,9 +226,9 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiWebhooksWID.GET("", h.GetWebhook, requires(permission.GetWebhook))
 				apiWebhooksWID.PATCH("", h.EditWebhook, requires(permission.EditWebhook))
 				apiWebhooksWID.DELETE("", h.DeleteWebhook, requires(permission.DeleteWebhook))
-				apiWebhooksWID.GET("/icon", h.GetWebhookIcon, requires(permission.GetWebhook, permission.DownloadFile))
+				apiWebhooksWID.GET("/icon", h.GetWebhookIcon, requires(permission.GetWebhook))
 				apiWebhooksWID.PUT("/icon", h.ChangeWebhookIcon, requires(permission.EditWebhook))
-				apiWebhooksWID.GET("/messages", h.GetWebhookMessages, requires(permission.GetWebhook, permission.GetMessage))
+				apiWebhooksWID.GET("/messages", h.GetWebhookMessages, requires(permission.GetWebhook))
 			}
 		}
 		apiGroups := api.Group("/groups")
@@ -286,7 +286,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiBotsBID.GET("", h.GetBot, requires(permission.GetBot))
 				apiBotsBID.PATCH("", h.EditBot, requiresBotAccessPerm, requires(permission.EditBot))
 				apiBotsBID.DELETE("", h.DeleteBot, requiresBotAccessPerm, requires(permission.DeleteBot))
-				apiBotsBID.GET("/icon", h.GetBotIcon, requires(permission.GetBot, permission.DownloadFile))
+				apiBotsBID.GET("/icon", h.GetBotIcon, requires(permission.GetBot))
 				apiBotsBID.PUT("/icon", h.ChangeBotIcon, requiresBotAccessPerm, requires(permission.EditBot))
 				apiBotsBID.GET("/logs", h.GetBotLogs, requiresBotAccessPerm, requires(permission.GetBot))
 				apiBotsBIDActions := apiBotsBID.Group("/actions", requiresBotAccessPerm)
