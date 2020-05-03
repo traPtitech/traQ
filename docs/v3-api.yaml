@@ -3560,6 +3560,21 @@ paths:
       operationId: getMessageClips
       description: 対象のメッセージの自分のクリップの一覧を返します。
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: r_session
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: /api/v3/oauth2/authorize
+          tokenUrl: /api/v3/oauth2/token
+          scopes:
+            read: 読み取りスコープ
+            write: 書き込みスコープ
+            manage_bot: bot関連読み書きスコープ
   schemas:
     Message:
       title: Message
@@ -6289,3 +6304,5 @@ tags:
     description: WebRTC API
   - name: clip
     description: クリップAPI
+security:
+  - OAuth2: []
