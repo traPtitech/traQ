@@ -1,24 +1,19 @@
+{
+    admin off
+}
+
 :80
 
-log stdout
-errors stderr
+log
+root * /usr/share/caddy
 
-root /srv
-gzip {
-    level 1
-    not /api /img
+handle /api/* {
+    reverse_proxy backend:3000
 }
 
-header /service-worker.js Cache-Control "max-age=0"
-header /sw.js Cache-Control "max-age=0"
+handle {
+    file_server
+    try_files {path} /index.html
 
-rewrite {
-    regexp .*
-    if {path} not_starts_with /api
-    to {path} /
-}
-
-proxy /api backend:3000 {
-    transparent
-    websocket
+    header /sw.js Cache-Control "max-age=0"
 }
