@@ -121,6 +121,7 @@ func (r PatchWebhookRequest) ValidateWithContext(ctx context.Context) error {
 		vd.Field(&r.Description, vd.RuneLength(1, 1000)),
 		vd.Field(&r.ChannelID, validator.NotNilUUID, utils.IsPublicChannelID),
 		vd.Field(&r.Secret, vd.RuneLength(0, 50)),
+		vd.Field(&r.OwnerID, validator.NotNilUUID, utils.IsActiveHumanUserID),
 	)
 }
 

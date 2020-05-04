@@ -115,7 +115,7 @@ func (h *Handlers) GetStampPalette(c echo.Context) error {
 	return c.JSON(http.StatusOK, getParamStampPalette(c))
 }
 
-// DeleteStampPalette DELETE /stamps/:stampID
+// DeleteStampPalette DELETE /stamp-palette/:paletteID
 func (h *Handlers) DeleteStampPalette(c echo.Context) error {
 	user := getRequestUser(c)
 	stampPalette := getParamStampPalette(c)

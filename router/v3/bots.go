@@ -120,12 +120,12 @@ type PatchBotRequest struct {
 	SubscribeEvents model.BotEvents `json:"subscribeEvents"`
 }
 
-func (r PatchBotRequest) Validate() error {
-	return vd.ValidateStruct(&r,
+func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
+	return vd.ValidateStructWithContext(ctx, &r,
 		vd.Field(&r.DisplayName, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.RuneLength(0, 1000)),
 		vd.Field(&r.Endpoint, is.URL, validator.NotInternalURL),
-		vd.Field(&r.DeveloperID, validator.NotNilUUID),
+		vd.Field(&r.DeveloperID, validator.NotNilUUID, utils.IsActiveHumanUserID),
 		vd.Field(&r.SubscribeEvents),
 	)
 }
