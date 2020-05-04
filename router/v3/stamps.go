@@ -61,7 +61,7 @@ func (h *Handlers) GetStamp(c echo.Context) error {
 	return c.JSON(http.StatusOK, getParamStamp(c))
 }
 
-// PatchStampRequest PATCH /users/me リクエストボディ
+// PatchStampRequest PATCH /stamps/:stampID リクエストボディ
 type PatchStampRequest struct {
 	Name      null.String `json:"name"`
 	CreatorID uuid.UUID   `json:"creatorId"`

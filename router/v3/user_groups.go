@@ -218,12 +218,7 @@ func (h *Handlers) RemoveUserGroupMember(c echo.Context) error {
 
 // GetUserGroupAdmins GET /groups/:groupID/admins
 func (h *Handlers) GetUserGroupAdmins(c echo.Context) error {
-	g := getParamGroup(c)
-	result := make([]uuid.UUID, 0)
-	for _, admin := range g.Admins {
-		result = append(result, admin.UserID)
-	}
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, getParamGroup(c).AdminIDArray())
 }
 
 // PostUserGroupAdminRequest POST /groups/:groupID/admins リクエストボディ
