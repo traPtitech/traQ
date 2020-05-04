@@ -1322,7 +1322,7 @@ paths:
         - schema:
             type: integer
             default: '0'
-          in: header
+          in: query
           name: embed
           description: メンション・チャンネルリンクを自動埋め込みする場合に1を指定する
       requestBody:
