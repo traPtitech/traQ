@@ -11,6 +11,7 @@ import (
 	"sync"
 )
 
+// ChannelTree 公開チャンネルのチャンネル階層木
 type ChannelTree interface {
 	// GetChildrenIDs 子チャンネルのIDの配列を取得する
 	GetChildrenIDs(id uuid.UUID) []uuid.UUID

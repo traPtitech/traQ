@@ -5,7 +5,10 @@ import (
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/router/utils"
 )
 
 // CtxKey context.Context用のキータイプ
@@ -41,9 +44,12 @@ func json(c echo.Context, code int, i interface{}, cfg jsoniter.API) error {
 }
 
 // Wrap カスタムコンテキストラッパー
-func Wrap() echo.MiddlewareFunc {
+func Wrap(repo repository.Repository) echo.MiddlewareFunc {
 	return func(n echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error { return n(&Context{Context: c}) }
+		return func(c echo.Context) error {
+			c.Set(consts.KeyRepo, repo)
+			return n(&Context{Context: c})
+		}
 	}
 }
 
@@ -57,7 +63,7 @@ func BindAndValidate(c echo.Context, i interface{}) error {
 	if err := c.Bind(i); err != nil {
 		return err
 	}
-	if err := vd.Validate(i); err != nil {
+	if err := vd.ValidateWithContext(utils.NewRequestValidateContext(c), i); err != nil {
 		if e, ok := err.(vd.InternalError); ok {
 			return herror.InternalServerError(e.InternalError())
 		}
