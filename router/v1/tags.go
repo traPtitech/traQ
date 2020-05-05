@@ -4,6 +4,7 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -35,7 +36,10 @@ func (r PostUserTagRequest) Validate() error {
 
 // PostUserTag POST /users/:userID/tags
 func (h *Handlers) PostUserTag(c echo.Context) error {
-	userID := getRequestParamAsUUID(c, consts.ParamUserID)
+	user := getUserFromContext(c)
+	if user.GetUserType() == model.UserTypeWebhook {
+		return herror.Forbidden("tags cannot be added to webhook user")
+	}
 
 	// リクエスト検証
 	var req PostUserTagRequest
@@ -50,7 +54,7 @@ func (h *Handlers) PostUserTag(c echo.Context) error {
 	}
 
 	// ユーザーにタグを付与
-	if err := h.Repo.AddUserTag(userID, t.ID); err != nil {
+	if err := h.Repo.AddUserTag(user.GetID(), t.ID); err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
 			return c.NoContent(http.StatusNoContent)
