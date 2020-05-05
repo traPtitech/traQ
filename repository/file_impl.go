@@ -303,7 +303,7 @@ func (repo *GormRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 	return result.Allow > 0 && result.Deny == 0, nil
 }
 
-var generateThumbnailS = semaphore.NewWeighted(5) // サムネイル生成並列数
+var generateThumbnailS = semaphore.NewWeighted(1) // サムネイル生成並列数
 
 // generateThumbnail サムネイル画像を生成します
 func (repo *GormRepository) generateThumbnail(ctx context.Context, f *model.File, src io.Reader) (image.Rectangle, error) {
