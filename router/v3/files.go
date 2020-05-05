@@ -18,14 +18,14 @@ import (
 
 // GetFilesRequest GET /files 用リクエストクエリ
 type GetFilesRequest struct {
-	Limit     int           `query:"limit"`
-	Offset    int           `query:"offset"`
-	Since     null.Time     `query:"since"`
-	Until     null.Time     `query:"until"`
-	Inclusive bool          `query:"inclusive"`
-	Order     string        `query:"order"`
-	ChannelID uuid.NullUUID `query:"channelId"`
-	Mine      bool          `query:"mine"`
+	Limit     int       `query:"limit"`
+	Offset    int       `query:"offset"`
+	Since     null.Time `query:"since"`
+	Until     null.Time `query:"until"`
+	Inclusive bool      `query:"inclusive"`
+	Order     string    `query:"order"`
+	ChannelID uuid.UUID `query:"channelId"`
+	Mine      bool      `query:"mine"`
 }
 
 func (q *GetFilesRequest) Validate() error {
@@ -35,7 +35,7 @@ func (q *GetFilesRequest) Validate() error {
 	return vd.ValidateStruct(q,
 		vd.Field(&q.Limit, vd.Min(1), vd.Max(200)),
 		vd.Field(&q.Offset, vd.Min(0)),
-		vd.Field(&q.Mine, vd.When(!q.ChannelID.Valid || q.ChannelID.UUID == uuid.Nil, vd.Required)),
+		vd.Field(&q.Mine, vd.When(q.ChannelID == uuid.Nil, vd.Required)),
 	)
 }
 
@@ -59,14 +59,14 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 	if req.Mine {
 		q.UploaderID = uuid.NullUUID{Valid: true, UUID: getRequestUserID(c)}
 	}
-	if req.ChannelID.Valid {
+	if req.ChannelID != uuid.Nil {
 		// チャンネルアクセス権確認
-		if ok, err := h.Repo.IsChannelAccessibleToUser(getRequestUserID(c), req.ChannelID.UUID); err != nil {
+		if ok, err := h.Repo.IsChannelAccessibleToUser(getRequestUserID(c), req.ChannelID); err != nil {
 			return herror.InternalServerError(err)
 		} else if !ok {
 			return herror.BadRequest("invalid channelId")
 		}
-		q.ChannelID = req.ChannelID
+		q.ChannelID = uuid.NullUUID{Valid: true, UUID: req.ChannelID}
 	}
 
 	files, more, err := h.Repo.GetFiles(q)
