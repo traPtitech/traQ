@@ -9,7 +9,6 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
-	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"net/http"
 )
@@ -113,11 +112,16 @@ func CheckWebhookAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Mid
 func CheckFileAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			file := c.Get(consts.KeyParamFile).(model.FileMeta)
 			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
-			fileID := extension.GetRequestParamAsUUID(c, consts.ParamFileID)
+
+			if t := file.GetFileType(); t == model.FileTypeIcon || t == model.FileTypeStamp {
+				// スタンプ・アイコン画像の場合はスキップ
+				return next(c)
+			}
 
 			// アクセス権確認
-			if ok, err := repo.IsFileAccessible(fileID, userID); err != nil {
+			if ok, err := repo.IsFileAccessible(file.GetID(), userID); err != nil {
 				switch err {
 				case repository.ErrNilID, repository.ErrNotFound:
 					return herror.NotFound()
