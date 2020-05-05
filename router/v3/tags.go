@@ -5,6 +5,7 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -43,6 +44,9 @@ func (r PostUserTagRequest) Validate() error {
 
 // AddUserTag POST /users/:userID/tags
 func (h *Handlers) AddUserTag(c echo.Context) error {
+	if getParamUser(c).GetUserType() == model.UserTypeWebhook {
+		return herror.Forbidden("tags cannot be added to webhook user")
+	}
 	return addUserTags(c, h.Repo, getParamAsUUID(c, consts.ParamUserID))
 }
 

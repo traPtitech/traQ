@@ -1759,6 +1759,8 @@ paths:
                 $ref: '#/components/schemas/UserTag'
         '400':
           description: Bad Request
+        '403':
+          description: Forbidden
         '404':
           description: |-
             Not Found
@@ -1777,7 +1779,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PostUserTagRequest'
         description: ''
-      description: 指定したユーザーに指定したタグを追加します。
+      description: |-
+        指定したユーザーに指定したタグを追加します。
+        Webhookユーザーにタグを追加することは出来ません。
   '/users/{userId}/tags/{tagId}':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
