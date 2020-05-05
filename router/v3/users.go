@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"github.com/dgrijalva/jwt-go"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
@@ -83,8 +84,8 @@ type PatchMeRequest struct {
 	HomeChannel uuid.NullUUID `json:"homeChannel"`
 }
 
-func (r PatchMeRequest) Validate() error {
-	return vd.ValidateStruct(&r,
+func (r PatchMeRequest) ValidateWithContext(ctx context.Context) error {
+	return vd.ValidateStructWithContext(ctx, &r,
 		vd.Field(&r.DisplayName, vd.RuneLength(0, 64)),
 		vd.Field(&r.TwitterID, validator.TwitterIDRule...),
 		vd.Field(&r.Bio, vd.RuneLength(0, 1000)),
@@ -102,10 +103,8 @@ func (h *Handlers) EditMe(c echo.Context) error {
 
 	if req.HomeChannel.Valid {
 		if req.HomeChannel.UUID != uuid.Nil {
-			// チャンネルアクセス権確認
-			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, req.HomeChannel.UUID); err != nil {
-				return herror.InternalServerError(err)
-			} else if !ok {
+			// チャンネル存在確認
+			if !h.Repo.GetChannelTree().IsChannelPresent(req.HomeChannel.UUID) {
 				return herror.BadRequest("invalid homeChannel")
 			}
 		}

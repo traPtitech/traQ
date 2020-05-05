@@ -11,14 +11,23 @@ import (
 	"sync"
 )
 
+// ChannelTree 公開チャンネルのチャンネル階層木
 type ChannelTree interface {
+	// GetChildrenIDs 子チャンネルのIDの配列を取得する
 	GetChildrenIDs(id uuid.UUID) []uuid.UUID
+	// GetDescendantIDs 子孫チャンネルのIDの配列を取得する
 	GetDescendantIDs(id uuid.UUID) []uuid.UUID
+	// GetAscendantIDs 祖先チャンネルのIDの配列を取得する
 	GetAscendantIDs(id uuid.UUID) []uuid.UUID
+	// GetChannelDepth 指定したチャンネル木の深さを取得する
 	GetChannelDepth(id uuid.UUID) int
+	// IsChildPresent 指定したnameのチャンネルが指定したチャンネルの子に存在するか
 	IsChildPresent(name string, parent uuid.UUID) bool
+	// GetChannelPath 指定したチャンネルのパスを取得する
 	GetChannelPath(id uuid.UUID) string
+	// IsChannelPresent 指定したIDのチャンネルが存在するかどうかを取得する
 	IsChannelPresent(id uuid.UUID) bool
+	// GetChannelIDFromPath チャンネルパスからチャンネルIDを取得する
 	GetChannelIDFromPath(path string) uuid.UUID
 	json.Marshaler
 }

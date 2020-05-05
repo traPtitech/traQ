@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
@@ -61,15 +62,16 @@ func (h *Handlers) GetStamp(c echo.Context) error {
 	return c.JSON(http.StatusOK, getParamStamp(c))
 }
 
-// PatchStampRequest PATCH /users/me リクエストボディ
+// PatchStampRequest PATCH /stamps/:stampID リクエストボディ
 type PatchStampRequest struct {
-	Name      null.String `json:"name"`
-	CreatorID uuid.UUID   `json:"creatorId"`
+	Name      null.String   `json:"name"`
+	CreatorID uuid.NullUUID `json:"creatorId"`
 }
 
-func (r PatchStampRequest) Validate() error {
-	return vd.ValidateStruct(&r,
+func (r PatchStampRequest) ValidateWithContext(ctx context.Context) error {
+	return vd.ValidateStructWithContext(ctx, &r,
 		vd.Field(&r.Name, validator.StampNameRule...),
+		vd.Field(&r.CreatorID, validator.NotNilUUID, utils.IsActiveHumanUserID),
 	)
 }
 
@@ -89,20 +91,8 @@ func (h *Handlers) EditStamp(c echo.Context) error {
 	}
 
 	args := repository.UpdateStampArgs{
-		Name: req.Name,
-	}
-
-	// 作成者変更
-	if req.CreatorID != uuid.Nil {
-		ok, err := h.Repo.UserExists(req.CreatorID)
-		if err != nil {
-			return herror.InternalServerError(err)
-		}
-		if !ok {
-			return herror.BadRequest("invalid creatorId")
-		}
-
-		args.CreatorID = uuid.NullUUID{Valid: true, UUID: req.CreatorID}
+		Name:      req.Name,
+		CreatorID: req.CreatorID,
 	}
 
 	// 更新

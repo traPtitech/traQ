@@ -1209,23 +1209,6 @@ func (repo *TestRepository) IsChannelAccessibleToUser(userID, channelID uuid.UUI
 	return repo.IsUserPrivateChannelMember(channelID, userID)
 }
 
-func (repo *TestRepository) GetParentChannel(channelID uuid.UUID) (*model.Channel, error) {
-	repo.ChannelsLock.RLock()
-	defer repo.ChannelsLock.RUnlock()
-	ch, ok := repo.Channels[channelID]
-	if !ok {
-		return nil, repository.ErrNotFound
-	}
-	if ch.ParentID == uuid.Nil {
-		return nil, nil
-	}
-	pCh, ok := repo.Channels[ch.ParentID]
-	if !ok {
-		return nil, repository.ErrNotFound
-	}
-	return &pCh, nil
-}
-
 func (repo *TestRepository) GetChildrenChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
 	result := make([]uuid.UUID, 0)
 	repo.ChannelsLock.RLock()
@@ -1236,47 +1219,6 @@ func (repo *TestRepository) GetChildrenChannelIDs(channelID uuid.UUID) ([]uuid.U
 	}
 	repo.ChannelsLock.RUnlock()
 	return result, nil
-}
-
-func (repo *TestRepository) GetDescendantChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
-	var descendants []uuid.UUID
-	children, err := repo.GetChildrenChannelIDs(channelID)
-	if err != nil {
-		return nil, err
-	}
-	descendants = append(descendants, children...)
-	for _, v := range children {
-		sub, err := repo.GetDescendantChannelIDs(v)
-		if err != nil {
-			return nil, err
-		}
-		descendants = append(descendants, sub...)
-	}
-	return descendants, nil
-}
-
-func (repo *TestRepository) GetAscendantChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
-	var ascendants []uuid.UUID
-	parent, err := repo.GetParentChannel(channelID)
-	if err != nil {
-		if err == repository.ErrNotFound {
-			return nil, nil
-		}
-		return nil, err
-	} else if parent == nil {
-		return []uuid.UUID{}, nil
-	}
-	ascendants = append(ascendants, parent.ID)
-	sub, err := repo.GetAscendantChannelIDs(parent.ID)
-	if err != nil {
-		return nil, err
-	}
-	ascendants = append(ascendants, sub...)
-	return ascendants, nil
-}
-
-func (repo *TestRepository) GetChannelPath(id uuid.UUID) (string, error) {
-	panic("implement me")
 }
 
 func (repo *TestRepository) getChannelDepthWithoutLock(id uuid.UUID) int {

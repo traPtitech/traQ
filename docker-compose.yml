@@ -19,7 +19,7 @@ services:
       - mysql
 
   frontend:
-    image: abiosoft/caddy:1.0.3-no-stats
+    image: caddy:latest
     restart: always
     expose:
       - "80"
@@ -28,8 +28,8 @@ services:
     depends_on:
       - backend
     volumes:
-      - ./dev/Caddyfile:/etc/Caddyfile:ro
-      - ./dev/frontend:/srv:ro
+      - ./dev/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./dev/frontend:/usr/share/caddy:ro
 
   mysql:
     image: mariadb:10.0.19

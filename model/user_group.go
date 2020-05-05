@@ -41,6 +41,14 @@ func (ug *UserGroup) IsMember(uid uuid.UUID) bool {
 	return false
 }
 
+func (ug *UserGroup) AdminIDArray() []uuid.UUID {
+	result := make([]uuid.UUID, len(ug.Admins))
+	for i, admin := range ug.Admins {
+		result[i] = admin.UserID
+	}
+	return result
+}
+
 // UserGroupMember ユーザーグループメンバー構造体
 type UserGroupMember struct {
 	GroupID uuid.UUID `gorm:"type:char(36);not null;primary_key"`

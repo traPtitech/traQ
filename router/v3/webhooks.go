@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/message"
+	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
 	"net/http"
@@ -67,10 +69,11 @@ type PostWebhooksRequest struct {
 	Secret      string    `json:"secret"`
 }
 
-func (r PostWebhooksRequest) Validate() error {
-	return vd.ValidateStruct(&r,
+func (r PostWebhooksRequest) ValidateWithContext(ctx context.Context) error {
+	return vd.ValidateStructWithContext(ctx, &r,
 		vd.Field(&r.Name, vd.Required, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.Required, vd.RuneLength(1, 1000)),
+		vd.Field(&r.ChannelID, vd.Required, validator.NotNilUUID, utils.IsPublicChannelID),
 		vd.Field(&r.Secret, vd.RuneLength(0, 50)),
 	)
 }
@@ -112,11 +115,13 @@ type PatchWebhookRequest struct {
 	OwnerID     uuid.NullUUID `json:"ownerId"`
 }
 
-func (r PatchWebhookRequest) Validate() error {
-	return vd.ValidateStruct(&r,
+func (r PatchWebhookRequest) ValidateWithContext(ctx context.Context) error {
+	return vd.ValidateStructWithContext(ctx, &r,
 		vd.Field(&r.Name, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.RuneLength(1, 1000)),
+		vd.Field(&r.ChannelID, validator.NotNilUUID, utils.IsPublicChannelID),
 		vd.Field(&r.Secret, vd.RuneLength(0, 50)),
+		vd.Field(&r.OwnerID, validator.NotNilUUID, utils.IsActiveHumanUserID),
 	)
 }
 
@@ -202,8 +207,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 		return herror.BadRequest("invalid channel")
 	}
 	if ch.IsArchived() {
-		path, _ := h.Repo.GetChannelPath(ch.ID)
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetChannelTree().GetChannelPath(ch.ID)))
 	}
 
 	// 埋め込み変換

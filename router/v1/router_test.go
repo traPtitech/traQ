@@ -61,13 +61,14 @@ func TestMain(m *testing.M) {
 		s4,
 	}
 	for _, key := range repos {
+		repo := NewTestRepository()
+
 		e := echo.New()
 		e.HideBanner = true
 		e.HidePort = true
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
-		e.Use(extension.Wrap())
+		e.Use(extension.Wrap(repo))
 
-		repo := NewTestRepository()
 		r, err := rbac.New(repo)
 		if err != nil {
 			panic(err)

@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
@@ -119,12 +120,12 @@ type PatchBotRequest struct {
 	SubscribeEvents model.BotEvents `json:"subscribeEvents"`
 }
 
-func (r PatchBotRequest) Validate() error {
-	return vd.ValidateStruct(&r,
+func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
+	return vd.ValidateStructWithContext(ctx, &r,
 		vd.Field(&r.DisplayName, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.RuneLength(0, 1000)),
 		vd.Field(&r.Endpoint, is.URL, validator.NotInternalURL),
-		vd.Field(&r.DeveloperID, validator.NotNilUUID),
+		vd.Field(&r.DeveloperID, validator.NotNilUUID, utils.IsActiveHumanUserID),
 		vd.Field(&r.SubscribeEvents),
 	)
 }
@@ -293,9 +294,9 @@ type PostBotActionJoinRequest struct {
 	ChannelID uuid.UUID `json:"channelId"`
 }
 
-func (r PostBotActionJoinRequest) Validate() error {
-	return vd.ValidateStruct(&r,
-		vd.Field(&r.ChannelID, vd.Required, validator.NotNilUUID),
+func (r PostBotActionJoinRequest) ValidateWithContext(ctx context.Context) error {
+	return vd.ValidateStructWithContext(ctx, &r,
+		vd.Field(&r.ChannelID, vd.Required, validator.NotNilUUID, utils.IsPublicChannelID), // 公開チャンネルのみ許可
 	)
 }
 
@@ -308,20 +309,8 @@ func (h *Handlers) LetBotJoinChannel(c echo.Context) error {
 
 	b := getParamBot(c)
 
-	// チャンネル検証
-	ch, err := h.Repo.GetChannel(req.ChannelID)
-	if err != nil {
-		if err == repository.ErrNotFound {
-			return herror.BadRequest("invalid channel")
-		}
-		return herror.InternalServerError(err)
-	}
-	if !ch.IsPublic {
-		return herror.BadRequest("invalid channel") // 公開チャンネルのみ許可
-	}
-
 	// 参加
-	if err := h.Repo.AddBotToChannel(b.ID, ch.ID); err != nil {
+	if err := h.Repo.AddBotToChannel(b.ID, req.ChannelID); err != nil {
 		return herror.InternalServerError(err)
 	}
 

@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"context"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
@@ -8,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
@@ -141,9 +143,9 @@ type PostUserGroupMemberRequest struct {
 	Role string    `json:"role"`
 }
 
-func (r PostUserGroupMemberRequest) Validate() error {
-	return vd.ValidateStruct(&r,
-		vd.Field(&r.ID, vd.Required, validator.NotNilUUID),
+func (r PostUserGroupMemberRequest) ValidateWithContext(ctx context.Context) error {
+	return vd.ValidateStructWithContext(ctx, &r,
+		vd.Field(&r.ID, vd.Required, validator.NotNilUUID, utils.IsUserID),
 		vd.Field(&r.Role, vd.RuneLength(0, 100)),
 	)
 }
@@ -155,13 +157,6 @@ func (h *Handlers) AddUserGroupMember(c echo.Context) error {
 	var req PostUserGroupMemberRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
-	}
-
-	// ユーザーが存在するか
-	if ok, err := h.Repo.UserExists(req.ID); err != nil {
-		return herror.InternalServerError(err)
-	} else if !ok {
-		return herror.BadRequest("this user doesn't exist")
 	}
 
 	if err := h.Repo.AddUserToGroup(req.ID, g.ID, req.Role); err != nil {
@@ -218,12 +213,7 @@ func (h *Handlers) RemoveUserGroupMember(c echo.Context) error {
 
 // GetUserGroupAdmins GET /groups/:groupID/admins
 func (h *Handlers) GetUserGroupAdmins(c echo.Context) error {
-	g := getParamGroup(c)
-	result := make([]uuid.UUID, 0)
-	for _, admin := range g.Admins {
-		result = append(result, admin.UserID)
-	}
-	return c.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, getParamGroup(c).AdminIDArray())
 }
 
 // PostUserGroupAdminRequest POST /groups/:groupID/admins リクエストボディ
@@ -231,9 +221,9 @@ type PostUserGroupAdminRequest struct {
 	ID uuid.UUID `json:"id"`
 }
 
-func (r PostUserGroupAdminRequest) Validate() error {
-	return vd.ValidateStruct(&r,
-		vd.Field(&r.ID, vd.Required, validator.NotNilUUID),
+func (r PostUserGroupAdminRequest) ValidateWithContext(ctx context.Context) error {
+	return vd.ValidateStructWithContext(ctx, &r,
+		vd.Field(&r.ID, vd.Required, validator.NotNilUUID, utils.IsUserID),
 	)
 }
 
@@ -244,13 +234,6 @@ func (h *Handlers) AddUserGroupAdmin(c echo.Context) error {
 	var req PostUserGroupAdminRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
-	}
-
-	// ユーザーが存在するか
-	if ok, err := h.Repo.UserExists(req.ID); err != nil {
-		return herror.InternalServerError(err)
-	} else if !ok {
-		return herror.BadRequest("this user doesn't exist")
 	}
 
 	if err := h.Repo.AddUserToGroupAdmin(req.ID, g.ID); err != nil {

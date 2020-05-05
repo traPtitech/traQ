@@ -192,8 +192,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 		return herror.BadRequest("invalid channel")
 	}
 	if ch.IsArchived() {
-		path, _ := h.Repo.GetChannelPath(ch.ID)
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", path))
+		return herror.BadRequest(fmt.Sprintf("channel has been archived"))
 	}
 
 	if c.QueryParam("embed") == "1" {

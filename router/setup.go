@@ -31,7 +31,7 @@ func Setup(config *Config) *echo.Echo {
 	if config.Gzipped {
 		e.Use(middlewares.Gzip())
 	}
-	e.Use(extension.Wrap())
+	e.Use(extension.Wrap(config.Repository))
 	e.Use(middlewares.RequestCounter())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		ExposeHeaders: []string{consts.HeaderVersion, consts.HeaderCacheFile, consts.HeaderFileMetaType, consts.HeaderMore, echo.HeaderXRequestID},

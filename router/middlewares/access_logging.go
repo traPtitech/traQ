@@ -6,7 +6,6 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"go.uber.org/zap"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -30,10 +29,6 @@ func AccessLogging(logger *zap.Logger, dev bool) echo.MiddlewareFunc {
 	}
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			if strings.HasPrefix(c.Path(), "/api/1.0/heartbeat") {
-				return next(c)
-			}
-
 			start := time.Now()
 			if err := next(c); err != nil {
 				c.Error(err)
