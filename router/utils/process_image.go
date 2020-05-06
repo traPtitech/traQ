@@ -97,6 +97,8 @@ func saveUploadImage(p imaging.Processor, c echo.Context, repo repository.Reposi
 		args.Src = b
 		args.FileSize = b.Size()
 		args.MimeType = consts.MimeImageGIF
+
+		_, _ = b.Seek(0, 0)
 		args.Thumbnail, err = p.Thumbnail(b)
 		if err != nil {
 			return uuid.Nil, herror.InternalServerError(err)
