@@ -35,7 +35,7 @@ type Config struct {
 
 	// Imaging 画像処理設定
 	Imaging struct {
-		// MaxPixels 処理可能な最大画素数 (default: 3840*2160)
+		// MaxPixels 処理可能な最大画素数 (default: 2560*1600)
 		MaxPixels int `mapstructure:"maxPixels" yaml:"maxPixels"`
 		// Concurrency 処理並列数 (default: 1)
 		Concurrency int `mapstructure:"concurrency" yaml:"concurrency"`
@@ -200,7 +200,7 @@ func init() {
 	viper.SetDefault("gzip", true)
 	viper.SetDefault("accessLog.enabled", true)
 	viper.SetDefault("imagemagick", "")
-	viper.SetDefault("imaging.maxPixels", 3840*2160)
+	viper.SetDefault("imaging.maxPixels", 2560*1600)
 	viper.SetDefault("imaging.concurrency", 1)
 	viper.SetDefault("mariadb.host", "127.0.0.1")
 	viper.SetDefault("mariadb.port", 3306)
