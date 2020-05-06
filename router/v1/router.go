@@ -22,6 +22,7 @@ import (
 	"golang.org/x/sync/singleflight"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
+	"net/http"
 	"strings"
 	"sync"
 	"text/template"
@@ -79,6 +80,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC, h.Repo)
 	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.Repo)
 	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.Repo)
+
+	gone := func(c echo.Context) error { return herror.HTTPError(http.StatusGone, "this api has been deleted") }
 
 	api := e.Group("/1.0", middlewares.UserAuthenticate(h.Repo))
 	{
@@ -224,7 +227,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiFiles := api.Group("/files")
 		{
-			apiFiles.POST("", h.PostFile, bodyLimit(30<<10), requires(permission.UploadFile), blockBot)
+			apiFiles.POST("", gone)
 			apiFilesFid := apiFiles.Group("/:fileID", retrieve.FileID(), requiresFileAccessPerm)
 			{
 				apiFilesFid.GET("", h.GetFileByID, requires(permission.DownloadFile))
