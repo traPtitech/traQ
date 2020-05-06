@@ -17,7 +17,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 	repo, server, _, require, session, adminSession := setup(t, s1)
 
 	for i := 0; i < 5; i++ {
-		c := mustMakeChannel(t, repo, random)
+		c := mustMakeChannel(t, repo, rand)
 		_, err := repo.CreatePublicChannel(random2.AlphaNumeric(20), c.ID, uuid.Nil)
 		require.NoError(err)
 	}
@@ -129,7 +129,7 @@ func TestHandlers_PostChannelChildren(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _ := setup(t, common1)
 
-	pubCh := mustMakeChannel(t, repo, random)
+	pubCh := mustMakeChannel(t, repo, rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -181,7 +181,7 @@ func TestHandlers_GetChannelByChannelID(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _ := setup(t, common1)
 
-	pubCh := mustMakeChannel(t, repo, random)
+	pubCh := mustMakeChannel(t, repo, rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -225,7 +225,7 @@ func TestHandlers_PatchChannelByChannelID(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, adminSession := setup(t, common1)
 
-	pubCh := mustMakeChannel(t, repo, random)
+	pubCh := mustMakeChannel(t, repo, rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -283,8 +283,8 @@ func TestHandlers_PutChannelParent(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, adminSession := setup(t, common1)
 
-	pCh := mustMakeChannel(t, repo, random)
-	cCh := mustMakeChannel(t, repo, random)
+	pCh := mustMakeChannel(t, repo, rand)
+	cCh := mustMakeChannel(t, repo, rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -324,7 +324,7 @@ func TestHandlers_GetTopic(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common1)
 
-	pubCh := mustMakeChannel(t, repo, random)
+	pubCh := mustMakeChannel(t, repo, rand)
 	topicText := "Topic test"
 	require.NoError(t, repo.UpdateChannel(pubCh.ID, repository.UpdateChannelArgs{
 		UpdaterID: testUser.GetID(),
@@ -358,7 +358,7 @@ func TestHandlers_PutTopic(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common1)
 
-	pubCh := mustMakeChannel(t, repo, random)
+	pubCh := mustMakeChannel(t, repo, rand)
 	topicText := "Topic test"
 	require.NoError(t, repo.UpdateChannel(pubCh.ID, repository.UpdateChannelArgs{
 		UpdaterID: testUser.GetID(),

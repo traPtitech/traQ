@@ -14,7 +14,7 @@ func TestHandlers_PostPin(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-	channel := mustMakeChannel(t, repo, random)
+	channel := mustMakeChannel(t, repo, rand)
 	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestHandlers_GetPin(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-	channel := mustMakeChannel(t, repo, random)
+	channel := mustMakeChannel(t, repo, rand)
 	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
 	pin := mustMakePin(t, repo, message.ID, testUser.GetID())
 
@@ -105,7 +105,7 @@ func TestHandlers_DeletePin(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-	channel := mustMakeChannel(t, repo, random)
+	channel := mustMakeChannel(t, repo, rand)
 	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
 	pin := mustMakePin(t, repo, message.ID, testUser.GetID())
 
@@ -134,7 +134,7 @@ func TestHandlers_GetChannelPin(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-	channel := mustMakeChannel(t, repo, random)
+	channel := mustMakeChannel(t, repo, rand)
 	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
 	mustMakePin(t, repo, message.ID, testUser.GetID())
 

@@ -11,7 +11,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils/imaging"
-	random2 "github.com/traPtitech/traQ/utils/random"
+	"github.com/traPtitech/traQ/utils/random"
 	"go.uber.org/zap"
 	"image"
 	"net/http"
@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	random  = "random"
+	rand    = "random"
 	common1 = "common1"
 	common2 = "common2"
 	common3 = "common3"
@@ -111,7 +111,7 @@ func setup(t *testing.T, server string) (repository.Repository, *httptest.Server
 	}
 	assert, require := assertAndRequire(t)
 	repo := repositories[server]
-	testUser := mustMakeUser(t, repo, random)
+	testUser := mustMakeUser(t, repo, rand)
 	adminUser, err := repo.GetUserByName("traq", true)
 	require.NoError(err)
 	return repo, s, assert, require, generateSession(t, testUser.GetID()), generateSession(t, adminUser.GetID())
@@ -125,7 +125,7 @@ func setupWithUsers(t *testing.T, server string) (repository.Repository, *httpte
 	}
 	assert, require := assertAndRequire(t)
 	repo := repositories[server]
-	testUser := mustMakeUser(t, repo, random)
+	testUser := mustMakeUser(t, repo, rand)
 	adminUser, err := repo.GetUserByName("traq", true)
 	require.NoError(err)
 	return repo, s, assert, require, generateSession(t, testUser.GetID()), generateSession(t, adminUser.GetID()), testUser, adminUser
@@ -178,8 +178,8 @@ func parseCookies(value string) map[string]*http.Cookie {
 
 func mustMakeChannel(t *testing.T, repo repository.Repository, name string) *model.Channel {
 	t.Helper()
-	if name == random {
-		name = random2.AlphaNumeric(20)
+	if name == rand {
+		name = random.AlphaNumeric(20)
 	}
 	ch, err := repo.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
 	require.NoError(t, err)
@@ -200,8 +200,8 @@ func mustMakeMessageUnread(t *testing.T, repo repository.Repository, userID, mes
 
 func mustMakeUser(t *testing.T, repo repository.Repository, userName string) model.UserInfo {
 	t.Helper()
-	if userName == random {
-		userName = random2.AlphaNumeric(32)
+	if userName == rand {
+		userName = random.AlphaNumeric(32)
 	}
 	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Password: "test", Role: role.User})
 	require.NoError(t, err)
@@ -230,8 +230,8 @@ func mustMakePin(t *testing.T, repo repository.Repository, messageID, userID uui
 
 func mustMakeTag(t *testing.T, repo repository.Repository, userID uuid.UUID, tagText string) uuid.UUID {
 	t.Helper()
-	if tagText == random {
-		tagText = random2.AlphaNumeric(20)
+	if tagText == rand {
+		tagText = random.AlphaNumeric(20)
 	}
 	tag, err := repo.GetOrCreateTagByName(tagText)
 	require.NoError(t, err)
@@ -246,8 +246,8 @@ func mustStarChannel(t *testing.T, repo repository.Repository, userID, channelID
 
 func mustMakeUserGroup(t *testing.T, repo repository.Repository, name string, adminID uuid.UUID) *model.UserGroup {
 	t.Helper()
-	if name == random {
-		name = random2.AlphaNumeric(20)
+	if name == rand {
+		name = random.AlphaNumeric(20)
 	}
 	g, err := repo.CreateUserGroup(name, "", "", adminID)
 	require.NoError(t, err)
@@ -261,8 +261,8 @@ func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupI
 
 func mustMakeWebhook(t *testing.T, repo repository.Repository, name string, channelID, creatorID uuid.UUID, secret string) model.Webhook {
 	t.Helper()
-	if name == random {
-		name = random2.AlphaNumeric(20)
+	if name == rand {
+		name = random.AlphaNumeric(20)
 	}
 	w, err := repo.CreateWebhook(name, "", channelID, creatorID, secret)
 	require.NoError(t, err)
@@ -271,8 +271,8 @@ func mustMakeWebhook(t *testing.T, repo repository.Repository, name string, chan
 
 func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID uuid.UUID) *model.Stamp {
 	t.Helper()
-	if name == random {
-		name = random2.AlphaNumeric(20)
+	if name == rand {
+		name = random.AlphaNumeric(20)
 	}
 	fileID, err := repository.GenerateIconFile(repo, name)
 	require.NoError(t, err)

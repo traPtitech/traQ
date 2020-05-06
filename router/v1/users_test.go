@@ -123,7 +123,7 @@ func TestHandlers_PatchMe(t *testing.T) {
 
 	t.Run("Successful2", func(t *testing.T) {
 		t.Parallel()
-		user := mustMakeUser(t, repo, random)
+		user := mustMakeUser(t, repo, rand)
 		require.NoError(t, repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{DisplayName: optional.StringFrom("test")}))
 
 		e := makeExp(t, server)
@@ -203,7 +203,7 @@ func TestHandlers_PutPassword(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		user := mustMakeUser(t, repo, random)
+		user := mustMakeUser(t, repo, rand)
 
 		e := makeExp(t, server)
 		newPassword := strings.Repeat("a", 20)
@@ -283,7 +283,7 @@ func TestHandlers_PutUserPassword(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		user := mustMakeUser(t, repo, random)
+		user := mustMakeUser(t, repo, rand)
 
 		e := makeExp(t, server)
 		newPass := strings.Repeat("a", 20)

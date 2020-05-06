@@ -12,7 +12,7 @@ func TestHandlers_GetStars(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-	channel := mustMakeChannel(t, repo, random)
+	channel := mustMakeChannel(t, repo, rand)
 	mustStarChannel(t, repo, testUser.GetID(), channel.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -40,7 +40,7 @@ func TestHandlers_PutStars(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-	channel := mustMakeChannel(t, repo, random)
+	channel := mustMakeChannel(t, repo, rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -69,7 +69,7 @@ func TestHandlers_DeleteStars(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
 
-	channel := mustMakeChannel(t, repo, random)
+	channel := mustMakeChannel(t, repo, rand)
 	mustStarChannel(t, repo, testUser.GetID(), channel.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {

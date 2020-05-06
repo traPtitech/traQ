@@ -20,7 +20,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	repo, server, _, require, session, _ := setup(t, common1)
 
 	file := mustMakeFile(t, repo)
-	grantedUser := mustMakeUser(t, repo, random)
+	grantedUser := mustMakeUser(t, repo, rand)
 	secureContent := "secure"
 	secureFile, err := repo.SaveFile(repository.SaveFileArgs{
 		FileName:  "secure",
@@ -151,7 +151,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 	repo, server, _, require, session, _ := setup(t, common1)
 
 	file := mustMakeFile(t, repo)
-	grantedUser := mustMakeUser(t, repo, random)
+	grantedUser := mustMakeUser(t, repo, rand)
 	secureContent := "secure"
 	secureFile, err := repo.SaveFile(repository.SaveFileArgs{
 		FileName:  "secure",

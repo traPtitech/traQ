@@ -14,9 +14,9 @@ func TestHandlers_GetUserGroups(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, _, adminUser := setupWithUsers(t, s1)
 
-	mustMakeUserGroup(t, repo, random, adminUser.GetID())
-	mustMakeUserGroup(t, repo, random, adminUser.GetID())
-	mustMakeUserGroup(t, repo, random, adminUser.GetID())
+	mustMakeUserGroup(t, repo, rand, adminUser.GetID())
+	mustMakeUserGroup(t, repo, rand, adminUser.GetID())
+	mustMakeUserGroup(t, repo, rand, adminUser.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -100,7 +100,7 @@ func TestHandlers_GetUserGroup(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, adminUser := setupWithUsers(t, common5)
 
-	g := mustMakeUserGroup(t, repo, random, adminUser.GetID())
+	g := mustMakeUserGroup(t, repo, rand, adminUser.GetID())
 	mustAddUserToGroup(t, repo, user.GetID(), g.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -142,8 +142,8 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, adminUser := setupWithUsers(t, common5)
 
-	user2 := mustMakeUser(t, repo, random)
-	g := mustMakeUserGroup(t, repo, random, user.GetID())
+	user2 := mustMakeUser(t, repo, rand)
+	g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -198,7 +198,7 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		g := mustMakeUserGroup(t, repo, random, user.GetID())
+		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 		name := random2.AlphaNumeric(20)
 		e.PATCH("/api/1.0/groups/{groupID}", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
@@ -219,7 +219,7 @@ func TestHandlers_DeleteUserGroup(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common5)
 
-	g := mustMakeUserGroup(t, repo, random, user.GetID())
+	g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -240,7 +240,7 @@ func TestHandlers_DeleteUserGroup(t *testing.T) {
 
 	t.Run("forbidden", func(t *testing.T) {
 		t.Parallel()
-		user2 := mustMakeUser(t, repo, random)
+		user2 := mustMakeUser(t, repo, rand)
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/groups/{groupID}", g.ID.String()).
 			WithCookie(sessions.CookieName, generateSession(t, user2.GetID())).
@@ -250,7 +250,7 @@ func TestHandlers_DeleteUserGroup(t *testing.T) {
 
 	t.Run("ok", func(t *testing.T) {
 		t.Parallel()
-		g := mustMakeUserGroup(t, repo, random, user.GetID())
+		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/groups/{groupID}", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
@@ -266,7 +266,7 @@ func TestHandlers_GetUserGroupMembers(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, adminUser := setupWithUsers(t, common5)
 
-	g := mustMakeUserGroup(t, repo, random, adminUser.GetID())
+	g := mustMakeUserGroup(t, repo, rand, adminUser.GetID())
 	mustAddUserToGroup(t, repo, user.GetID(), g.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -302,8 +302,8 @@ func TestHandlers_GetUserGroupMembers(t *testing.T) {
 func TestHandlers_PostUserGroupMembers(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common5)
-	g := mustMakeUserGroup(t, repo, random, user.GetID())
-	user2 := mustMakeUser(t, repo, random)
+	g := mustMakeUserGroup(t, repo, rand, user.GetID())
+	user2 := mustMakeUser(t, repo, rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -373,9 +373,9 @@ func TestHandlers_PostUserGroupMembers(t *testing.T) {
 func TestHandlers_DeleteUserGroupMembers(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common5)
-	g := mustMakeUserGroup(t, repo, random, user.GetID())
+	g := mustMakeUserGroup(t, repo, rand, user.GetID())
 	mustAddUserToGroup(t, repo, user.GetID(), g.ID)
-	user2 := mustMakeUser(t, repo, random)
+	user2 := mustMakeUser(t, repo, rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -431,8 +431,8 @@ func TestHandlers_GetMyBelongingGroup(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, adminUser := setupWithUsers(t, common5)
 
-	g1 := mustMakeUserGroup(t, repo, random, adminUser.GetID())
-	g2 := mustMakeUserGroup(t, repo, random, adminUser.GetID())
+	g1 := mustMakeUserGroup(t, repo, rand, adminUser.GetID())
+	g2 := mustMakeUserGroup(t, repo, rand, adminUser.GetID())
 	mustAddUserToGroup(t, repo, user.GetID(), g1.ID)
 	mustAddUserToGroup(t, repo, user.GetID(), g2.ID)
 
@@ -461,9 +461,9 @@ func TestHandlers_GetUserBelongingGroup(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, _, adminUser := setupWithUsers(t, common5)
 
-	user := mustMakeUser(t, repo, random)
-	g1 := mustMakeUserGroup(t, repo, random, adminUser.GetID())
-	g2 := mustMakeUserGroup(t, repo, random, adminUser.GetID())
+	user := mustMakeUser(t, repo, rand)
+	g1 := mustMakeUserGroup(t, repo, rand, adminUser.GetID())
+	g2 := mustMakeUserGroup(t, repo, rand, adminUser.GetID())
 	mustAddUserToGroup(t, repo, user.GetID(), g1.ID)
 	mustAddUserToGroup(t, repo, user.GetID(), g2.ID)
 

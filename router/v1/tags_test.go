@@ -44,7 +44,7 @@ func TestHandlers_GetUserTags(t *testing.T) {
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common3)
 
 	for i := 0; i < 5; i++ {
-		mustMakeTag(t, repo, user.GetID(), random)
+		mustMakeTag(t, repo, user.GetID(), rand)
 	}
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -73,8 +73,8 @@ func TestHandlers_PatchUserTag(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common3)
 
-	other := mustMakeUser(t, repo, random)
-	tag := mustMakeTag(t, repo, user.GetID(), random)
+	other := mustMakeUser(t, repo, rand)
+	tag := mustMakeTag(t, repo, user.GetID(), rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -114,7 +114,7 @@ func TestHandlers_DeleteUserTag(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common3)
 
-	tag := mustMakeTag(t, repo, user.GetID(), random)
+	tag := mustMakeTag(t, repo, user.GetID(), rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
