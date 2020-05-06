@@ -16,7 +16,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/sessions"
-	random2 "github.com/traPtitech/traQ/utils/random"
+	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"net/http"
@@ -30,7 +30,7 @@ const (
 	dbPrefix = "traq-test-router-oauth2-"
 	db1      = "db1"
 	db2      = "db2"
-	random   = "random"
+	rand     = "random"
 )
 
 var (
@@ -161,8 +161,8 @@ func R(t *testing.T, server *httptest.Server) *httpexpect.Expect {
 // CreateUser ユーザーを必ず作成します
 func CreateUser(t *testing.T, repo repository.Repository, userName string) model.UserInfo {
 	t.Helper()
-	if userName == random {
-		userName = random2.AlphaNumeric(32)
+	if userName == rand {
+		userName = random.AlphaNumeric(32)
 	}
 	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Password: "testtesttesttest", Role: role.User})
 	require.NoError(t, err)
@@ -181,7 +181,7 @@ func MakeAuthorizeData(t *testing.T, repo repository.Repository, clientID string
 	scopes := model.AccessScopes{}
 	scopes.Add("read")
 	authorize := &model.OAuth2Authorize{
-		Code:           random2.AlphaNumeric(36),
+		Code:           random.AlphaNumeric(36),
 		ClientID:       clientID,
 		UserID:         userID,
 		CreatedAt:      time.Now(),

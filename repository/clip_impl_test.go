@@ -44,7 +44,7 @@ func TestRepositoryImpl_UpdateClipFolder(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common3)
 
-	clipFolder := mustMakeClipFolder(t, repo, user.GetID(), random, random)
+	clipFolder := mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -105,7 +105,7 @@ func TestRepositoryImpl_DeleteClipFolder(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		clipFolder := mustMakeClipFolder(t, repo, user.GetID(), random, random)
+		clipFolder := mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 
 		if assert.NoError(repo.DeleteClipFolder(clipFolder.ID)) {
 			_, err := repo.GetClipFolder(clipFolder.ID)
@@ -137,7 +137,7 @@ func TestRepositoryImpl_DeleteClipFolderMessage(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		clipFolder := mustMakeClipFolder(t, repo, user.GetID(), random, random)
+		clipFolder := mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 		message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		clipFolderMessage := mustMakeClipFolderMessage(t, repo, clipFolder.ID, message.ID)
 
@@ -170,7 +170,7 @@ func TestRepositoryImpl_AddClipFolderMessage(t *testing.T) {
 	t.Run("already exist", func(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
-		clipFolder := mustMakeClipFolder(t, repo, user.GetID(), random, random)
+		clipFolder := mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 		message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		clipFolderMessage := mustMakeClipFolderMessage(t, repo, clipFolder.ID, message.ID)
 
@@ -182,7 +182,7 @@ func TestRepositoryImpl_AddClipFolderMessage(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		clipFolder := mustMakeClipFolder(t, repo, user.GetID(), random, random)
+		clipFolder := mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 		message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 
 		cfm, err := repo.AddClipFolderMessage(clipFolder.ID, message.ID)
@@ -211,13 +211,13 @@ func TestRepositoryImpl_GetClipFoldersByUserID(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		otherUser := mustMakeUser(t, repo, random)
+		otherUser := mustMakeUser(t, repo, rand)
 
 		n := 10
 		for i := 0; i < 10; i++ {
-			mustMakeClipFolder(t, repo, user.GetID(), random, random)
+			mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 		}
-		mustMakeClipFolder(t, repo, otherUser.GetID(), random, random)
+		mustMakeClipFolder(t, repo, otherUser.GetID(), rand, rand)
 
 		clipFolders, err := repo.GetClipFoldersByUserID(user.GetID())
 
@@ -253,7 +253,7 @@ func TestRepositoryImpl_GetClipFolder(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		createdClipFolder := mustMakeClipFolder(t, repo, user.GetID(), random, random)
+		createdClipFolder := mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 		clipFolder, err := repo.GetClipFolder(createdClipFolder.ID)
 
 		if assert.NoError(err) {
@@ -287,7 +287,7 @@ func TestRepositoryImpl_GetClipFolderMessages(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		createdClipFolder := mustMakeClipFolder(t, repo, user.GetID(), random, random)
+		createdClipFolder := mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 		createdClipFolderMessages := make([]*model.ClipFolderMessage, 10)
 		createdMessages := make([]*model.Message, 10)
 
@@ -297,7 +297,7 @@ func TestRepositoryImpl_GetClipFolderMessages(t *testing.T) {
 			createdClipFolderMessages[i] = mustMakeClipFolderMessage(t, repo, createdClipFolder.ID, createdMessages[i].ID)
 		}
 
-		otherCreatedClipFolder := mustMakeClipFolder(t, repo, user.GetID(), random, random)
+		otherCreatedClipFolder := mustMakeClipFolder(t, repo, user.GetID(), rand, rand)
 		otherCreatedMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		mustMakeClipFolderMessage(t, repo, otherCreatedClipFolder.ID, otherCreatedMessage.ID)
 

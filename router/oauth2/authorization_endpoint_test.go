@@ -40,7 +40,7 @@ func TestResponseType_valid(t *testing.T) {
 func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Parallel()
 	repo, server := Setup(t, db2)
-	defaultUser := CreateUser(t, repo, random)
+	defaultUser := CreateUser(t, repo, rand)
 	session := S(t, defaultUser.GetID())
 
 	scopesRead := model.AccessScopes{}
@@ -60,7 +60,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Success (prompt=none)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := CreateUser(t, repo, random)
+		user := CreateUser(t, repo, rand)
 		IssueToken(t, repo, client, user.GetID(), false)
 		e := R(t, server)
 		res := e.POST("/oauth2/authorize").
@@ -364,7 +364,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Found (prompt=none with broader scope)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := CreateUser(t, repo, random)
+		user := CreateUser(t, repo, rand)
 		_, err := repo.IssueToken(client, user.GetID(), client.RedirectURI, scopesRead, 1000, false)
 		require.NoError(t, err)
 		e := R(t, server)
@@ -412,7 +412,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	t.Parallel()
 	repo, server := Setup(t, db2)
-	user := CreateUser(t, repo, random)
+	user := CreateUser(t, repo, rand)
 	session := S(t, user.GetID())
 
 	scopesRead := model.AccessScopes{}

@@ -157,7 +157,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 		t.Run("denied user", func(t *testing.T) {
 			t.Parallel()
 
-			user := mustMakeUser(t, repo, random)
+			user := mustMakeUser(t, repo, rand)
 			ok, err := repo.IsFileAccessible(f.GetID(), user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
@@ -168,7 +168,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 	t.Run("Allow two", func(t *testing.T) {
 		t.Parallel()
 
-		user2 := mustMakeUser(t, repo, random)
+		user2 := mustMakeUser(t, repo, rand)
 		buf := bytes.NewBufferString("test message")
 		args := SaveFileArgs{
 			FileName:  "test.txt",
@@ -211,7 +211,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 		t.Run("denied user", func(t *testing.T) {
 			t.Parallel()
 
-			user := mustMakeUser(t, repo, random)
+			user := mustMakeUser(t, repo, rand)
 			ok, err := repo.IsFileAccessible(f.GetID(), user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
@@ -222,7 +222,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 	t.Run("Deny rule", func(t *testing.T) {
 		t.Parallel()
 
-		deniedUser := mustMakeUser(t, repo, random)
+		deniedUser := mustMakeUser(t, repo, rand)
 		buf := bytes.NewBufferString("test message")
 		args := SaveFileArgs{
 			FileName: "test.txt",

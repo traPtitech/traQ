@@ -51,7 +51,7 @@ func TestGormRepository_UpdateChannel(t *testing.T) {
 		i := i
 		t.Run(fmt.Sprintf("Case%d", i), func(t *testing.T) {
 			t.Parallel()
-			ch := mustMakeChannel(t, repo, random)
+			ch := mustMakeChannel(t, repo, rand)
 			if assert.NoError(t, repo.UpdateChannel(ch.ID, v)) {
 				ch, err := repo.GetChannel(ch.ID)
 				require.NoError(t, err)
@@ -159,7 +159,7 @@ func TestRepositoryImpl_ChangeChannelParent(t *testing.T) {
 
 	chName := random2.AlphaNumeric(20)
 	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, chName, uuid.Nil)
-	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
+	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, rand, c2.ID)
 	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, chName, c3.ID)
 
 	t.Run("fail", func(t *testing.T) {
@@ -193,9 +193,9 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
-		ch := mustMakeChannel(t, repo, random)
-		user1 := mustMakeUser(t, repo, random)
-		user2 := mustMakeUser(t, repo, random)
+		ch := mustMakeChannel(t, repo, rand)
+		user1 := mustMakeUser(t, repo, rand)
+		user2 := mustMakeUser(t, repo, rand)
 
 		args := ChangeChannelSubscriptionArgs{
 			UpdaterID: uuid.Nil,

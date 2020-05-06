@@ -13,8 +13,8 @@ func TestRepositoryImpl_RegisterDevice(t *testing.T) {
 	t.Parallel()
 	repo, assert, _ := setup(t, common)
 
-	id1 := mustMakeUser(t, repo, random).GetID()
-	id2 := mustMakeUser(t, repo, random).GetID()
+	id1 := mustMakeUser(t, repo, rand).GetID()
+	id2 := mustMakeUser(t, repo, rand).GetID()
 	token1 := random2.AlphaNumeric(20)
 	token2 := random2.AlphaNumeric(20)
 
@@ -47,8 +47,8 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	t.Parallel()
 	repo, assert, require := setup(t, common)
 
-	id1 := mustMakeUser(t, repo, random).GetID()
-	id2 := mustMakeUser(t, repo, random).GetID()
+	id1 := mustMakeUser(t, repo, rand).GetID()
+	id2 := mustMakeUser(t, repo, rand).GetID()
 	token1 := random2.AlphaNumeric(20)
 	token2 := random2.AlphaNumeric(20)
 	token3 := random2.AlphaNumeric(20)
@@ -82,8 +82,8 @@ func TestRepositoryImpl_GetDevicesByUserID(t *testing.T) {
 	t.Parallel()
 	repo, _, require := setup(t, common)
 
-	id1 := mustMakeUser(t, repo, random).GetID()
-	id2 := mustMakeUser(t, repo, random).GetID()
+	id1 := mustMakeUser(t, repo, rand).GetID()
+	id2 := mustMakeUser(t, repo, rand).GetID()
 	token1 := random2.AlphaNumeric(20)
 	token2 := random2.AlphaNumeric(20)
 	token3 := random2.AlphaNumeric(20)
@@ -121,8 +121,8 @@ func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 	t.Parallel()
 	repo, _, require := setup(t, common)
 
-	id1 := mustMakeUser(t, repo, random).GetID()
-	id2 := mustMakeUser(t, repo, random).GetID()
+	id1 := mustMakeUser(t, repo, rand).GetID()
+	id2 := mustMakeUser(t, repo, rand).GetID()
 	token1 := random2.AlphaNumeric(20)
 	token2 := random2.AlphaNumeric(20)
 	token3 := random2.AlphaNumeric(20)
@@ -162,8 +162,8 @@ func TestRepositoryImpl_GetAllDevices(t *testing.T) {
 	t.Parallel()
 	repo, _, require := setup(t, ex1)
 
-	id1 := mustMakeUser(t, repo, random).GetID()
-	id2 := mustMakeUser(t, repo, random).GetID()
+	id1 := mustMakeUser(t, repo, rand).GetID()
+	id2 := mustMakeUser(t, repo, rand).GetID()
 	token1 := random2.AlphaNumeric(20)
 	token2 := random2.AlphaNumeric(20)
 	token3 := random2.AlphaNumeric(20)

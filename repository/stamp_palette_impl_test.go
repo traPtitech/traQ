@@ -28,7 +28,7 @@ func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 		stamps := make([]uuid.UUID, 0)
 		n := 100
 		for i := 0; i < n; i++ {
-			s := mustMakeStamp(t, repo, random, user.GetID())
+			s := mustMakeStamp(t, repo, rand, user.GetID())
 			stamps = append(stamps, s.ID)
 		}
 		sp, err := repo.CreateStampPalette(name, description, stamps, user.GetID())
@@ -48,7 +48,7 @@ func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common2)
 
-	stampPalette := mustMakeStampPalette(t, repo, random, random, make([]uuid.UUID, 0), user.GetID())
+	stampPalette := mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), user.GetID())
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -75,7 +75,7 @@ func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 		t.Parallel()
 		assert, require := assertAndRequire(t)
 
-		stampPalette := mustMakeStampPalette(t, repo, random, random, make([]uuid.UUID, 0), user.GetID())
+		stampPalette := mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), user.GetID())
 		newName := random2.AlphaNumeric(20)
 		newDescription := random2.AlphaNumeric(100)
 
@@ -115,7 +115,7 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
-		createdStampPalette := mustMakeStampPalette(t, repo, random, random, make([]uuid.UUID, 0), user.GetID())
+		createdStampPalette := mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), user.GetID())
 
 		stampPalette, err := repo.GetStampPalette(createdStampPalette.ID)
 		if assert.NoError(err) {
@@ -149,7 +149,7 @@ func TestRepositoryImpl_DeleteStampPalette(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		stampPalette := mustMakeStampPalette(t, repo, random, random, make([]uuid.UUID, 0), user.GetID())
+		stampPalette := mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), user.GetID())
 		if assert.NoError(repo.DeleteStampPalette(stampPalette.ID)) {
 			_, err := repo.GetStampPalette(stampPalette.ID)
 			assert.EqualError(err, ErrNotFound.Error())
@@ -160,13 +160,13 @@ func TestRepositoryImpl_DeleteStampPalette(t *testing.T) {
 func TestRepositoryImpl_GetStampPalettes(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user := setupWithUser(t, common2)
-	otherUser := mustMakeUser(t, repo, random)
+	otherUser := mustMakeUser(t, repo, rand)
 
 	n := 10
 	for i := 0; i < 10; i++ {
-		mustMakeStampPalette(t, repo, random, random, make([]uuid.UUID, 0), user.GetID())
+		mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), user.GetID())
 	}
-	mustMakeStampPalette(t, repo, random, random, make([]uuid.UUID, 0), otherUser.GetID())
+	mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), otherUser.GetID())
 
 	arr, err := repo.GetStampPalettes(user.GetID())
 	if assert.NoError(err) {

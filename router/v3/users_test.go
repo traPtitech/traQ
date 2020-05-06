@@ -14,7 +14,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 	t.Parallel()
 	path := "/api/v3/users/me/password"
 	repo, server := Setup(t, common)
-	commonSession := S(t, CreateUser(t, repo, random).GetID())
+	commonSession := S(t, CreateUser(t, repo, rand).GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -76,7 +76,7 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		user := CreateUser(t, repo, random)
+		user := CreateUser(t, repo, rand)
 
 		e := R(t, server)
 		new := strings.Repeat("a", 20)

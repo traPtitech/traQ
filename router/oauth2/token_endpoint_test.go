@@ -229,7 +229,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 	t.Parallel()
 	repo, server := Setup(t, db2)
-	user := CreateUser(t, repo, random)
+	user := CreateUser(t, repo, rand)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
@@ -483,7 +483,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 	t.Parallel()
 	repo, server := Setup(t, db2)
-	user := CreateUser(t, repo, random)
+	user := CreateUser(t, repo, rand)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
@@ -723,7 +723,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 	t.Parallel()
 	repo, server := Setup(t, db2)
-	user := CreateUser(t, repo, random)
+	user := CreateUser(t, repo, rand)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")

@@ -38,7 +38,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 
 	t.Run("duplicate name", func(t *testing.T) {
 		t.Parallel()
-		s := mustMakeStamp(t, repo, random, uuid.Nil)
+		s := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 		_, err := repo.CreateStamp(CreateStampArgs{Name: s.Name, FileID: fid, CreatorID: user.GetID()})
 		assert.Error(t, err)
@@ -66,7 +66,7 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common2)
 
-	s := mustMakeStamp(t, repo, random, uuid.Nil)
+	s := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -114,7 +114,7 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 		t.Parallel()
 		assert, require := assertAndRequire(t)
 
-		s := mustMakeStamp(t, repo, random, uuid.Nil)
+		s := mustMakeStamp(t, repo, rand, uuid.Nil)
 		newFile, err := GenerateIconFile(repo, "stamp")
 		require.NoError(err)
 		newName := random2.AlphaNumeric(20)
@@ -153,7 +153,7 @@ func TestRepositoryImpl_GetStamp(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
-		a := mustMakeStamp(t, repo, random, uuid.Nil)
+		a := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 		s, err := repo.GetStamp(a.ID)
 		if assert.NoError(err) {
@@ -185,7 +185,7 @@ func TestRepositoryImpl_DeleteStamp(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		s := mustMakeStamp(t, repo, random, uuid.Nil)
+		s := mustMakeStamp(t, repo, rand, uuid.Nil)
 		if assert.NoError(repo.DeleteStamp(s.ID)) {
 			_, err := repo.GetStamp(s.ID)
 			assert.EqualError(err, ErrNotFound.Error())
@@ -199,7 +199,7 @@ func TestRepositoryImpl_GetAllStamps(t *testing.T) {
 
 	n := 10
 	for i := 0; i < 10; i++ {
-		mustMakeStamp(t, repo, random, uuid.Nil)
+		mustMakeStamp(t, repo, rand, uuid.Nil)
 	}
 
 	arr, err := repo.GetAllStamps(false)
@@ -212,7 +212,7 @@ func TestRepositoryImpl_StampExists(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common2)
 
-	s := mustMakeStamp(t, repo, random, uuid.Nil)
+	s := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -249,7 +249,7 @@ func TestRepositoryImpl_ExistStamps(t *testing.T) {
 	stampIDs := make([]uuid.UUID, 0, 10)
 
 	for i := 0; i < 10; i++ {
-		s := mustMakeStamp(t, repo, random, uuid.Nil)
+		s := mustMakeStamp(t, repo, rand, uuid.Nil)
 		stampIDs = append(stampIDs, s.ID)
 	}
 
@@ -277,7 +277,7 @@ func TestRepositoryImpl_StampNameExists(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common2)
 
-	s := mustMakeStamp(t, repo, random, uuid.Nil)
+	s := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 	t.Run("empty", func(t *testing.T) {
 		t.Parallel()
@@ -312,9 +312,9 @@ func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common2)
 
 	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
-	stamp1 := mustMakeStamp(t, repo, random, uuid.Nil)
-	stamp2 := mustMakeStamp(t, repo, random, uuid.Nil)
-	stamp3 := mustMakeStamp(t, repo, random, uuid.Nil)
+	stamp1 := mustMakeStamp(t, repo, rand, uuid.Nil)
+	stamp2 := mustMakeStamp(t, repo, rand, uuid.Nil)
+	stamp3 := mustMakeStamp(t, repo, rand, uuid.Nil)
 	mustAddMessageStamp(t, repo, message.ID, stamp1.ID, user.GetID())
 	mustAddMessageStamp(t, repo, message.ID, stamp3.ID, user.GetID())
 	mustAddMessageStamp(t, repo, message.ID, stamp2.ID, user.GetID())

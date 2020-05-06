@@ -20,7 +20,7 @@ func TestGormRepository_Group(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common)
 
-	g1 := mustMakeUserGroup(t, repo, random, user.GetID())
+	g1 := mustMakeUserGroup(t, repo, rand, user.GetID())
 
 	t.Run("Found", func(t *testing.T) {
 		t.Parallel()
@@ -40,11 +40,11 @@ func TestGormRepository_Channel(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common)
 
-	c1 := mustMakeChannel(t, repo, random)
-	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c1.ID)
-	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
-	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c3.ID)
-	c5 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c4.ID)
+	c1 := mustMakeChannel(t, repo, rand)
+	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, rand, c1.ID)
+	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, rand, c2.ID)
+	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, rand, c3.ID)
+	c5 := mustMakeChannelDetail(t, repo, uuid.Nil, rand, c4.ID)
 
 	t.Run("Found1", func(t *testing.T) {
 		t.Parallel()
@@ -95,7 +95,7 @@ func TestGormRepository_User(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common)
 
-	u1 := mustMakeUser(t, repo, random)
+	u1 := mustMakeUser(t, repo, rand)
 
 	t.Run("Found1", func(t *testing.T) {
 		t.Parallel()

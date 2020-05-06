@@ -12,7 +12,7 @@ import (
 func TestHandlers_RevokeTokenEndpointHandler(t *testing.T) {
 	t.Parallel()
 	repo, server := Setup(t, db1)
-	user := CreateUser(t, repo, random)
+	user := CreateUser(t, repo, rand)
 
 	t.Run("NoToken", func(t *testing.T) {
 		t.Parallel()

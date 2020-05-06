@@ -12,7 +12,7 @@ func TestRepositoryImpl_AddUserTag(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user := setupWithUser(t, common2)
 
-	tag := mustMakeTag(t, repo, random)
+	tag := mustMakeTag(t, repo, rand)
 	assert.NoError(repo.AddUserTag(user.GetID(), tag.ID))
 	assert.Error(repo.AddUserTag(user.GetID(), tag.ID))
 	assert.Error(repo.AddUserTag(user.GetID(), uuid.Nil))
@@ -22,7 +22,7 @@ func TestRepositoryImpl_ChangeUserTagLock(t *testing.T) {
 	t.Parallel()
 	repo, assert, require, user := setupWithUser(t, common2)
 
-	tag := mustMakeTag(t, repo, random)
+	tag := mustMakeTag(t, repo, rand)
 	mustAddTagToUser(t, repo, user.GetID(), tag.ID)
 
 	if assert.NoError(repo.ChangeUserTagLock(user.GetID(), tag.ID, true)) {
@@ -44,9 +44,9 @@ func TestRepositoryImpl_DeleteUserTag(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common2)
 
-	tag := mustMakeTag(t, repo, random)
+	tag := mustMakeTag(t, repo, rand)
 	mustAddTagToUser(t, repo, user.GetID(), tag.ID)
-	tag2 := mustMakeTag(t, repo, random)
+	tag2 := mustMakeTag(t, repo, rand)
 	mustAddTagToUser(t, repo, user.GetID(), tag2.ID)
 
 	t.Run("Success", func(t *testing.T) {
@@ -75,7 +75,7 @@ func TestRepositoryImpl_GetUserTagsByUserID(t *testing.T) {
 
 	var createdTags []string
 	for i := 0; i < 10; i++ {
-		tag := mustMakeTag(t, repo, random)
+		tag := mustMakeTag(t, repo, rand)
 		mustAddTagToUser(t, repo, user.GetID(), tag.ID)
 		createdTags = append(createdTags, tag.Name)
 	}
@@ -109,7 +109,7 @@ func TestRepositoryImpl_GetUserTag(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common2)
 
-	tag := mustMakeTag(t, repo, random)
+	tag := mustMakeTag(t, repo, rand)
 	mustAddTagToUser(t, repo, user.GetID(), tag.ID)
 
 	t.Run("found", func(t *testing.T) {
@@ -148,7 +148,7 @@ func TestRepositoryImpl_GetUserIDsByTag(t *testing.T) {
 	s := random2.AlphaNumeric(20)
 	tag := mustMakeTag(t, repo, s)
 	for i := 0; i < 10; i++ {
-		mustAddTagToUser(t, repo, mustMakeUser(t, repo, random).GetID(), tag.ID)
+		mustAddTagToUser(t, repo, mustMakeUser(t, repo, rand).GetID(), tag.ID)
 	}
 
 	t.Run("found", func(t *testing.T) {
@@ -186,9 +186,9 @@ func TestRepositoryImpl_GetUserIDsByTagID(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common2)
 
-	tag := mustMakeTag(t, repo, random)
+	tag := mustMakeTag(t, repo, rand)
 	for i := 0; i < 10; i++ {
-		mustAddTagToUser(t, repo, mustMakeUser(t, repo, random).GetID(), tag.ID)
+		mustAddTagToUser(t, repo, mustMakeUser(t, repo, rand).GetID(), tag.ID)
 	}
 
 	t.Run("found", func(t *testing.T) {
@@ -253,7 +253,7 @@ func TestRepositoryImpl_GetTagByID(t *testing.T) {
 	t.Parallel()
 	repo, assert, _ := setup(t, common2)
 
-	tag := mustMakeTag(t, repo, random)
+	tag := mustMakeTag(t, repo, rand)
 
 	r, err := repo.GetTagByID(tag.ID)
 	if assert.NoError(err) {

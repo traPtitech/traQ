@@ -16,7 +16,7 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 
 	u0, err := repo.GetUserByName("traq", false)
 	require.NoError(err)
-	g1 := mustMakeUserGroup(t, repo, random, u0.GetID())
+	g1 := mustMakeUserGroup(t, repo, rand, u0.GetID())
 	us := make([]uuid.UUID, 0)
 
 	type u struct {
@@ -35,7 +35,7 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 		{true, true, false},
 	}
 	for _, v := range ut {
-		u := mustMakeUser(t, repo, random)
+		u := mustMakeUser(t, repo, rand)
 		us = append(us, u.GetID())
 
 		if v.Bot {
@@ -170,7 +170,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 	t.Run("DisplayName", func(t *testing.T) {
 		t.Parallel()
 
-		user := mustMakeUser(t, repo, random)
+		user := mustMakeUser(t, repo, rand)
 
 		t.Run("Failed", func(t *testing.T) {
 			assert, _ := assertAndRequire(t)
@@ -196,7 +196,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 	t.Run("TwitterID", func(t *testing.T) {
 		t.Parallel()
 
-		user := mustMakeUser(t, repo, random)
+		user := mustMakeUser(t, repo, rand)
 
 		t.Run("Failed", func(t *testing.T) {
 			assert, _ := assertAndRequire(t)
@@ -233,7 +233,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 	t.Run("Role", func(t *testing.T) {
 		t.Parallel()
 
-		user := mustMakeUser(t, repo, random)
+		user := mustMakeUser(t, repo, rand)
 
 		t.Run("Success", func(t *testing.T) {
 			assert, require := assertAndRequire(t)
