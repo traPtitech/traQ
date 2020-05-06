@@ -15,8 +15,8 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"gopkg.in/guregu/null.v3"
 	"net/http"
 )
 
@@ -112,11 +112,11 @@ func (h *Handlers) GetBot(c echo.Context) error {
 
 // PatchBotRequest PATCH /bots/:botID リクエストボディ
 type PatchBotRequest struct {
-	DisplayName     null.String     `json:"displayName"`
-	Description     null.String     `json:"description"`
-	Endpoint        null.String     `json:"endpoint"`
-	Privileged      null.Bool       `json:"privileged"`
-	DeveloperID     uuid.NullUUID   `json:"developerId"`
+	DisplayName     optional.String `json:"displayName"`
+	Description     optional.String `json:"description"`
+	Endpoint        optional.String `json:"endpoint"`
+	Privileged      optional.Bool   `json:"privileged"`
+	DeveloperID     optional.UUID   `json:"developerId"`
 	SubscribeEvents model.BotEvents `json:"subscribeEvents"`
 }
 

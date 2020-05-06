@@ -10,9 +10,9 @@ import (
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
-	"gopkg.in/guregu/null.v3"
 	"time"
 )
 
@@ -134,7 +134,7 @@ func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub, logger
 		for ev := range sub.Receiver {
 			userID := ev.Fields["user_id"].(uuid.UUID)
 			datetime := ev.Fields["datetime"].(time.Time)
-			_ = repo.UpdateUser(userID, UpdateUserArgs{LastOnline: null.TimeFrom(datetime)})
+			_ = repo.UpdateUser(userID, UpdateUserArgs{LastOnline: optional.TimeFrom(datetime)})
 		}
 	}()
 	return repo, nil

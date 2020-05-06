@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"time"
 )
 
@@ -23,18 +23,18 @@ type ChangeChannelSubscriptionArgs struct {
 // UpdateChannelArgs チャンネル情報更新引数
 type UpdateChannelArgs struct {
 	UpdaterID          uuid.UUID
-	Name               null.String
-	Topic              null.String
-	Visibility         null.Bool
-	ForcedNotification null.Bool
-	Parent             uuid.NullUUID
+	Name               optional.String
+	Topic              optional.String
+	Visibility         optional.Bool
+	ForcedNotification optional.Bool
+	Parent             optional.UUID
 }
 
 // ChannelEventsQuery GetChannelEvents用クエリ
 type ChannelEventsQuery struct {
 	Channel   uuid.UUID
-	Since     null.Time
-	Until     null.Time
+	Since     optional.Time
+	Until     optional.Time
 	Inclusive bool
 	Limit     int
 	Offset    int
@@ -43,18 +43,18 @@ type ChannelEventsQuery struct {
 
 // ChannelSubscriptionQuery GetChannelSubscriptions用クエリ
 type ChannelSubscriptionQuery struct {
-	UserID    uuid.NullUUID
-	ChannelID uuid.NullUUID
+	UserID    optional.UUID
+	ChannelID optional.UUID
 	Level     model.ChannelSubscribeLevel
 }
 
 func (q ChannelSubscriptionQuery) SetUser(id uuid.UUID) ChannelSubscriptionQuery {
-	q.UserID = uuid.NullUUID{Valid: true, UUID: id}
+	q.UserID = optional.UUIDFrom(id)
 	return q
 }
 
 func (q ChannelSubscriptionQuery) SetChannel(id uuid.UUID) ChannelSubscriptionQuery {
-	q.ChannelID = uuid.NullUUID{Valid: true, UUID: id}
+	q.ChannelID = optional.UUIDFrom(id)
 	return q
 }
 

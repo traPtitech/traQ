@@ -7,10 +7,10 @@ import (
 	"github.com/coreos/go-oidc"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/utils/optional"
 	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"
 	"golang.org/x/oauth2"
-	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -154,9 +154,9 @@ func (p *OIDCProvider) FetchUserInfo(t *oauth2.Token) (UserInfo, error) {
 
 	// Extract custom claims
 	var claims struct {
-		Sub     string      `json:"sub"`
-		Name    string      `json:"name"`
-		Picture null.String `json:"picture"`
+		Sub     string          `json:"sub"`
+		Name    string          `json:"name"`
+		Picture optional.String `json:"picture"`
 	}
 	if err := idToken.Claims(&claims); err != nil {
 		return nil, fmt.Errorf(oidcAPIRequestErrorFormat, errors.New("malformed id_token"))

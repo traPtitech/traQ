@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/gormzap"
+	"github.com/traPtitech/traQ/utils/optional"
 	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
@@ -194,7 +195,7 @@ func installEmojis(repo repository.Repository, logger *zap.Logger, update bool) 
 			}
 
 			if err := repo.UpdateStamp(s.ID, repository.UpdateStampArgs{
-				FileID: uuid.NullUUID{UUID: meta.GetID(), Valid: true},
+				FileID: optional.UUIDFrom(meta.GetID()),
 			}); err != nil {
 				return err
 			}

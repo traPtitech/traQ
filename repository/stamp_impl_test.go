@@ -4,7 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/utils"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"testing"
 )
 
@@ -89,25 +89,25 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 	t.Run("invalid name", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{Name: null.StringFrom("あ")}))
+		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{Name: optional.StringFrom("あ")}))
 	})
 
 	t.Run("duplicate name", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{Name: null.StringFrom(s.Name)}))
+		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{Name: optional.StringFrom(s.Name)}))
 	})
 
 	t.Run("nil file id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{FileID: uuid.NullUUID{Valid: true}}))
+		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{FileID: optional.UUIDFrom(uuid.Nil)}))
 	})
 
 	t.Run("file not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{FileID: uuid.NullUUID{Valid: true, UUID: uuid.Must(uuid.NewV4())}}))
+		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{FileID: optional.UUIDFrom(uuid.Must(uuid.NewV4()))}))
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -120,9 +120,9 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 		newName := utils.RandAlphabetAndNumberString(20)
 
 		if assert.NoError(repo.UpdateStamp(s.ID, UpdateStampArgs{
-			Name:      null.StringFrom(newName),
-			FileID:    uuid.NullUUID{Valid: true, UUID: newFile},
-			CreatorID: uuid.NullUUID{Valid: true},
+			Name:      optional.StringFrom(newName),
+			FileID:    optional.UUIDFrom(newFile),
+			CreatorID: optional.UUIDFrom(uuid.Nil),
 		})) {
 			a, err := repo.GetStamp(s.ID)
 			require.NoError(err)

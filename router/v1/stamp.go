@@ -2,14 +2,13 @@ package v1
 
 import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 )
 
@@ -75,7 +74,7 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 	// 名前変更
 	name := c.FormValue("name")
 	if len(name) > 0 {
-		args.Name = null.StringFrom(name)
+		args.Name = optional.StringFrom(name)
 	}
 
 	// 画像変更
@@ -86,7 +85,7 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		args.FileID = uuid.NullUUID{Valid: true, UUID: fileID}
+		args.FileID = optional.UUIDFrom(fileID)
 	} else if err != http.ErrMissingFile {
 		return herror.BadRequest(err)
 	}

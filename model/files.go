@@ -1,12 +1,11 @@
 package model
 
 import (
-	"database/sql"
 	"database/sql/driver"
 	"errors"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/utils/ioext"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"strings"
 	"time"
 )
@@ -82,13 +81,13 @@ type FileMeta interface {
 	GetMIMEType() string
 	GetFileSize() int64
 	GetFileType() FileType
-	GetCreatorID() uuid.NullUUID
+	GetCreatorID() optional.UUID
 	GetMD5Hash() string
 	HasThumbnail() bool
 	GetThumbnailMIMEType() string
 	GetThumbnailWidth() int
 	GetThumbnailHeight() int
-	GetUploadChannelID() uuid.NullUUID
+	GetUploadChannelID() optional.UUID
 	GetCreatedAt() time.Time
 
 	Open() (ioext.ReadSeekCloser, error)
@@ -98,20 +97,20 @@ type FileMeta interface {
 
 // File DBに格納するファイルの構造体
 type File struct {
-	ID              uuid.UUID     `gorm:"type:char(36);not null;primary_key"`
-	Name            string        `gorm:"type:text;not null"`
-	Mime            string        `gorm:"type:text;not null"`
-	Size            int64         `gorm:"type:bigint;not null"`
-	CreatorID       uuid.NullUUID `gorm:"type:char(36)"`
-	Hash            string        `gorm:"type:char(32);not null"`
-	Type            FileType      `gorm:"type:varchar(30);not null;default:''"`
-	HasThumbnail    bool          `gorm:"type:boolean;not null;default:false"`
-	ThumbnailMime   null.String   `gorm:"type:text"`
-	ThumbnailWidth  int           `gorm:"type:int;not null;default:0"`
-	ThumbnailHeight int           `gorm:"type:int;not null;default:0"`
-	ChannelID       uuid.NullUUID `gorm:"type:char(36)"`
-	CreatedAt       time.Time     `gorm:"precision:6"`
-	DeletedAt       *time.Time    `gorm:"precision:6"`
+	ID              uuid.UUID       `gorm:"type:char(36);not null;primary_key"`
+	Name            string          `gorm:"type:text;not null"`
+	Mime            string          `gorm:"type:text;not null"`
+	Size            int64           `gorm:"type:bigint;not null"`
+	CreatorID       optional.UUID   `gorm:"type:char(36)"`
+	Hash            string          `gorm:"type:char(32);not null"`
+	Type            FileType        `gorm:"type:varchar(30);not null;default:''"`
+	HasThumbnail    bool            `gorm:"type:boolean;not null;default:false"`
+	ThumbnailMime   optional.String `gorm:"type:text"`
+	ThumbnailWidth  int             `gorm:"type:int;not null;default:0"`
+	ThumbnailHeight int             `gorm:"type:int;not null;default:0"`
+	ChannelID       optional.UUID   `gorm:"type:char(36)"`
+	CreatedAt       time.Time       `gorm:"precision:6"`
+	DeletedAt       *time.Time      `gorm:"precision:6"`
 }
 
 // TableName dbのtableの名前を返します
@@ -122,8 +121,8 @@ func (f File) TableName() string {
 // FileACLEntry ファイルアクセスコントロールリストエントリー構造体
 type FileACLEntry struct {
 	FileID uuid.UUID     `gorm:"type:char(36);primary_key;not null"`
-	UserID uuid.NullUUID `gorm:"type:char(36);primary_key;not null"`
-	Allow  sql.NullBool  `gorm:"not null"`
+	UserID optional.UUID `gorm:"type:char(36);primary_key;not null"`
+	Allow  optional.Bool `gorm:"not null"`
 }
 
 // TableName FileACLEntry構造体のテーブル名

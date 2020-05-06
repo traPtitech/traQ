@@ -6,7 +6,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/utils"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"strings"
 	"testing"
 )
@@ -70,7 +70,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		t.Parallel()
 		wb := mustMakeWebhook(t, repo, random, channel.ID, user.GetID(), "test")
 		err := repo.UpdateWebhook(wb.GetID(), UpdateWebhookArgs{
-			Name: null.StringFrom(strings.Repeat("a", 40)),
+			Name: optional.StringFrom(strings.Repeat("a", 40)),
 		})
 		assert.Error(t, err)
 	})
@@ -79,10 +79,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		t.Parallel()
 		wb := mustMakeWebhook(t, repo, random, channel.ID, user.GetID(), "test")
 		err := repo.UpdateWebhook(wb.GetID(), UpdateWebhookArgs{
-			ChannelID: uuid.NullUUID{
-				UUID:  uuid.Must(uuid.NewV4()),
-				Valid: true,
-			},
+			ChannelID: optional.UUIDFrom(uuid.Must(uuid.NewV4())),
 		})
 		assert.Error(t, err)
 	})
@@ -91,10 +88,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		t.Parallel()
 		wb := mustMakeWebhook(t, repo, random, channel.ID, user.GetID(), "test")
 		err := repo.UpdateWebhook(wb.GetID(), UpdateWebhookArgs{
-			CreatorID: uuid.NullUUID{
-				UUID:  uuid.Must(uuid.NewV4()),
-				Valid: true,
-			},
+			CreatorID: optional.UUIDFrom(uuid.Must(uuid.NewV4())),
 		})
 		assert.Error(t, err)
 	})
@@ -103,10 +97,7 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		t.Parallel()
 		wb := mustMakeWebhook(t, repo, random, channel.ID, user.GetID(), "test")
 		err := repo.UpdateWebhook(wb.GetID(), UpdateWebhookArgs{
-			CreatorID: uuid.NullUUID{
-				UUID:  wb.GetBotUserID(),
-				Valid: true,
-			},
+			CreatorID: optional.UUIDFrom(wb.GetBotUserID()),
 		})
 		assert.Error(t, err)
 	})
@@ -125,17 +116,11 @@ func TestRepositoryImpl_UpdateWebhook(t *testing.T) {
 		assert, require := assertAndRequire(t)
 
 		err := repo.UpdateWebhook(wb.GetID(), UpdateWebhookArgs{
-			Description: null.StringFrom("new description"),
-			Name:        null.StringFrom("new name"),
-			Secret:      null.StringFrom("new secret"),
-			ChannelID: uuid.NullUUID{
-				Valid: true,
-				UUID:  ch.ID,
-			},
-			CreatorID: uuid.NullUUID{
-				UUID:  user.GetID(),
-				Valid: true,
-			},
+			Description: optional.StringFrom("new description"),
+			Name:        optional.StringFrom("new name"),
+			Secret:      optional.StringFrom("new secret"),
+			ChannelID:   optional.UUIDFrom(ch.ID),
+			CreatorID:   optional.UUIDFrom(user.GetID()),
 		})
 		if assert.NoError(err) {
 			wb, err := repo.GetWebhook(wb.GetID())

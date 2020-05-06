@@ -10,7 +10,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils/imaging"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strconv"
 )
@@ -23,7 +23,7 @@ func ChangeUserIcon(p imaging.Processor, c echo.Context, repo repository.Reposit
 	}
 
 	// アイコン変更
-	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{IconFileID: uuid.NullUUID{UUID: iconID, Valid: true}}); err != nil {
+	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{IconFileID: optional.UUIDFrom(iconID)}); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -56,7 +56,7 @@ func ServeUserIcon(c echo.Context, repo repository.Repository, user model.UserIn
 
 // ChangeUserPassword userIDのユーザーのパスワードを変更する
 func ChangeUserPassword(c echo.Context, repo repository.Repository, userID uuid.UUID, newPassword string) error {
-	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{Password: null.StringFrom(newPassword)}); err != nil {
+	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{Password: optional.StringFrom(newPassword)}); err != nil {
 		return herror.InternalServerError(err)
 	}
 

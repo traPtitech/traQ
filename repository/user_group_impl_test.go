@@ -4,7 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/utils"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"strings"
 	"testing"
 )
@@ -58,9 +58,9 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 
 		a := utils.RandAlphabetAndNumberString(20)
 		if assert.NoError(repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{
-			Name:        null.StringFrom(a),
-			Description: null.StringFrom(a),
-			Type:        null.StringFrom(a),
+			Name:        optional.StringFrom(a),
+			Description: optional.StringFrom(a),
+			Type:        optional.StringFrom(a),
 		})) {
 			g, err := repo.GetUserGroup(g.ID)
 			require.NoError(err)
@@ -89,21 +89,21 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 		mustMakeUserGroup(t, repo, a, user.GetID())
 		g := mustMakeUserGroup(t, repo, random, user.GetID())
 
-		assert.EqualError(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Name: null.StringFrom(a)}), ErrAlreadyExists.Error())
+		assert.EqualError(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Name: optional.StringFrom(a)}), ErrAlreadyExists.Error())
 	})
 
 	t.Run("too long name", func(t *testing.T) {
 		t.Parallel()
 		g := mustMakeUserGroup(t, repo, random, user.GetID())
 
-		assert.Error(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Name: null.StringFrom(strings.Repeat("a", 31))}))
+		assert.Error(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Name: optional.StringFrom(strings.Repeat("a", 31))}))
 	})
 
 	t.Run("invalid type", func(t *testing.T) {
 		t.Parallel()
 		g := mustMakeUserGroup(t, repo, random, user.GetID())
 
-		assert.Error(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Type: null.StringFrom(strings.Repeat("a", 31))}))
+		assert.Error(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Type: optional.StringFrom(strings.Repeat("a", 31))}))
 	})
 }
 

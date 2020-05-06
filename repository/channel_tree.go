@@ -6,7 +6,7 @@ import (
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/traPtitech/traQ/model"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"strings"
 	"sync"
 )
@@ -195,7 +195,7 @@ func (ct *channelTreeImpl) add(ch *model.Channel) {
 	ct.regenerateJson()
 }
 
-func (ct *channelTreeImpl) move(id uuid.UUID, newParent uuid.NullUUID, newName null.String) {
+func (ct *channelTreeImpl) move(id uuid.UUID, newParent optional.UUID, newName optional.String) {
 	n, ok := ct.nodes[id]
 	if !ok {
 		panic("assert !ok = false")
@@ -224,7 +224,7 @@ func (ct *channelTreeImpl) move(id uuid.UUID, newParent uuid.NullUUID, newName n
 	ct.regenerateJson()
 }
 
-func (ct *channelTreeImpl) update(id uuid.UUID, topic null.String, archived null.Bool, force null.Bool) {
+func (ct *channelTreeImpl) update(id uuid.UUID, topic optional.String, archived optional.Bool, force optional.Bool) {
 	n, ok := ct.nodes[id]
 	if !ok {
 		panic("assert !ok = false")

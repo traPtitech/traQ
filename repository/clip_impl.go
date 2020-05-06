@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/traPtitech/traQ/utils/optional"
 	"log"
 
 	"github.com/gofrs/uuid"
@@ -8,7 +9,6 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"gopkg.in/guregu/null.v3"
 )
 
 // CreateClipFolder implements ClipRepository interface.
@@ -40,7 +40,7 @@ func (repo *GormRepository) CreateClipFolder(userID uuid.UUID, name string, desc
 }
 
 // UpdateClipFolder implements ClipRepository interface.
-func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name null.String, description null.String) error {
+func (repo *GormRepository) UpdateClipFolder(folderID uuid.UUID, name optional.String, description optional.String) error {
 	if folderID == uuid.Nil {
 		return ErrNilID
 	}

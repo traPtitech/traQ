@@ -10,7 +10,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"time"
 )
@@ -186,9 +186,9 @@ func (h *Handlers) GetClient(c echo.Context) error {
 
 // PatchClientRequest PATCH /clients/:clientID リクエストボディ
 type PatchClientRequest struct {
-	Name        null.String `json:"name"`
-	Description null.String `json:"description"`
-	RedirectURI null.String `json:"redirectUri"`
+	Name        optional.String `json:"name"`
+	Description optional.String `json:"description"`
+	RedirectURI optional.String `json:"redirectUri"`
 }
 
 func (r PatchClientRequest) Validate() error {

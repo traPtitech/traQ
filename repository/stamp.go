@@ -3,7 +3,7 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"time"
 )
 
@@ -17,9 +17,9 @@ type CreateStampArgs struct {
 
 // UpdateStampArgs スタンプ情報更新引数
 type UpdateStampArgs struct {
-	Name      null.String
-	FileID    uuid.NullUUID
-	CreatorID uuid.NullUUID
+	Name      optional.String
+	FileID    optional.UUID
+	CreatorID optional.UUID
 }
 
 // UserStampHistory スタンプ履歴構造体

@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sessions"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"strings"
 	"testing"
 
@@ -124,7 +124,7 @@ func TestHandlers_PatchMe(t *testing.T) {
 	t.Run("Successful2", func(t *testing.T) {
 		t.Parallel()
 		user := mustMakeUser(t, repo, random)
-		require.NoError(t, repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{DisplayName: null.StringFrom("test")}))
+		require.NoError(t, repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{DisplayName: optional.StringFrom("test")}))
 
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/users/me").

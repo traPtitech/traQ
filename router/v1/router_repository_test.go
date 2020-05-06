@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
+	"github.com/traPtitech/traQ/utils/optional"
 	"image"
 	"io"
 	"math"
@@ -26,7 +27,6 @@ import (
 	"github.com/traPtitech/traQ/utils/storage"
 	"github.com/traPtitech/traQ/utils/validator"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/guregu/null.v3"
 )
 
 var (
@@ -2046,7 +2046,7 @@ func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (model.FileMe
 		size, _ := repo.generateThumbnail(ctx, f, thumbSrc)
 		if !size.Empty() {
 			f.HasThumbnail = true
-			f.ThumbnailMime = null.StringFrom("image/png")
+			f.ThumbnailMime = optional.StringFrom("image/png")
 			f.ThumbnailWidth = size.Size().X
 			f.ThumbnailHeight = size.Size().Y
 		}
@@ -2607,7 +2607,7 @@ func (repo *TestRepository) CreateClipFolder(userID uuid.UUID, name, description
 	panic("implement me")
 }
 
-func (repo *TestRepository) UpdateClipFolder(folderID uuid.UUID, name, description null.String) error {
+func (repo *TestRepository) UpdateClipFolder(folderID uuid.UUID, name, description optional.String) error {
 	panic("implement me")
 }
 
@@ -2664,7 +2664,7 @@ func (f *fileMetaImpl) GetFileType() model.FileType {
 	return f.meta.Type
 }
 
-func (f *fileMetaImpl) GetCreatorID() uuid.NullUUID {
+func (f *fileMetaImpl) GetCreatorID() optional.UUID {
 	return f.meta.CreatorID
 }
 
@@ -2688,7 +2688,7 @@ func (f *fileMetaImpl) GetThumbnailHeight() int {
 	return f.meta.ThumbnailHeight
 }
 
-func (f *fileMetaImpl) GetUploadChannelID() uuid.NullUUID {
+func (f *fileMetaImpl) GetUploadChannelID() optional.UUID {
 	return f.meta.ChannelID
 }
 

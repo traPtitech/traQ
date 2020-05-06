@@ -9,8 +9,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"net/url"
 	"strings"
@@ -73,8 +73,8 @@ type UserInfo interface {
 
 	GetTwitterID() string
 	GetBio() string
-	GetLastOnline() null.Time
-	GetHomeChannel() uuid.NullUUID
+	GetLastOnline() optional.Time
+	GetHomeChannel() optional.UUID
 
 	// IsActive ユーザーが有効かどうか
 	IsActive() bool
@@ -122,8 +122,8 @@ type UserProfile struct {
 	UserID      uuid.UUID     `gorm:"type:char(36);not null;primary_key"`
 	Bio         string        `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
 	TwitterID   string        `gorm:"type:varchar(15);not null;default:''"`
-	LastOnline  null.Time     `gorm:"precision:6"`
-	HomeChannel uuid.NullUUID `gorm:"type:char(36)"`
+	LastOnline  optional.Time `gorm:"precision:6"`
+	HomeChannel optional.UUID `gorm:"type:char(36)"`
 	UpdatedAt   time.Time     `gorm:"precision:6"`
 }
 
@@ -232,7 +232,7 @@ func (user *User) GetBio() string {
 }
 
 // GetLastOnline implements UserInfo interface
-func (user *User) GetLastOnline() null.Time {
+func (user *User) GetLastOnline() optional.Time {
 	if user.Profile == nil {
 		panic("unexpected control flow")
 	}
@@ -240,7 +240,7 @@ func (user *User) GetLastOnline() null.Time {
 }
 
 // GetHomeChannel implements UserInfo interface
-func (user *User) GetHomeChannel() uuid.NullUUID {
+func (user *User) GetHomeChannel() optional.UUID {
 	if user.Profile == nil {
 		panic("unexpected control flow")
 	}

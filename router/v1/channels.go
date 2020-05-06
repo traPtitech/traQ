@@ -9,8 +9,8 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"strconv"
 	"strings"
@@ -146,9 +146,9 @@ func (h *Handlers) PatchChannelByChannelID(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, consts.ParamChannelID)
 
 	var req struct {
-		Name       null.String `json:"name"`
-		Visibility null.Bool   `json:"visibility"`
-		Force      null.Bool   `json:"force"`
+		Name       optional.String `json:"name"`
+		Visibility optional.Bool   `json:"visibility"`
+		Force      optional.Bool   `json:"force"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
@@ -222,7 +222,7 @@ func (h *Handlers) PutChannelParent(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.UpdateChannel(channelID, repository.UpdateChannelArgs{Parent: uuid.NullUUID{Valid: true, UUID: req.Parent}, UpdaterID: getRequestUserID(c)}); err != nil {
+	if err := h.Repo.UpdateChannel(channelID, repository.UpdateChannelArgs{Parent: optional.UUIDFrom(req.Parent), UpdaterID: getRequestUserID(c)}); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)
@@ -265,7 +265,7 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 
 	if err := h.Repo.UpdateChannel(ch.ID, repository.UpdateChannelArgs{
 		UpdaterID: getRequestUserID(c),
-		Topic:     null.StringFrom(req.Text),
+		Topic:     optional.StringFrom(req.Text),
 	}); err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -274,12 +274,12 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 }
 
 type channelEventsQuery struct {
-	Limit     int       `query:"limit"`
-	Offset    int       `query:"offset"`
-	Since     null.Time `query:"since"`
-	Until     null.Time `query:"until"`
-	Inclusive bool      `query:"inclusive"`
-	Order     string    `query:"order"`
+	Limit     int           `query:"limit"`
+	Offset    int           `query:"offset"`
+	Since     optional.Time `query:"since"`
+	Until     optional.Time `query:"until"`
+	Inclusive bool          `query:"inclusive"`
+	Order     string        `query:"order"`
 }
 
 func (q *channelEventsQuery) bind(c echo.Context) error {

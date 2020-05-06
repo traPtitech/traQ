@@ -1,12 +1,12 @@
 package repository
 
 import (
+	"github.com/traPtitech/traQ/utils/optional"
 	"testing"
 
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
-	"gopkg.in/guregu/null.v3"
 )
 
 func TestRepositoryImpl_CreateClipFolder(t *testing.T) {
@@ -50,21 +50,21 @@ func TestRepositoryImpl_UpdateClipFolder(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		assert.EqualError(repo.UpdateClipFolder(uuid.Nil, null.String{}, null.String{}), ErrNilID.Error())
+		assert.EqualError(repo.UpdateClipFolder(uuid.Nil, optional.String{}, optional.String{}), ErrNilID.Error())
 	})
 
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		assert.EqualError(repo.UpdateClipFolder(uuid.Must(uuid.NewV4()), null.String{}, null.String{}), ErrNotFound.Error())
+		assert.EqualError(repo.UpdateClipFolder(uuid.Must(uuid.NewV4()), optional.String{}, optional.String{}), ErrNotFound.Error())
 	})
 
 	t.Run("no change", func(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		assert.NoError(repo.UpdateClipFolder(clipFolder.ID, null.String{}, null.String{}))
+		assert.NoError(repo.UpdateClipFolder(clipFolder.ID, optional.String{}, optional.String{}))
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -74,7 +74,7 @@ func TestRepositoryImpl_UpdateClipFolder(t *testing.T) {
 		newName := utils.RandAlphabetAndNumberString(20)
 		newDescription := utils.RandAlphabetAndNumberString(100)
 
-		if assert.NoError(repo.UpdateClipFolder(clipFolder.ID, null.StringFrom(newName), null.StringFrom(newDescription))) {
+		if assert.NoError(repo.UpdateClipFolder(clipFolder.ID, optional.StringFrom(newName), optional.StringFrom(newDescription))) {
 			newClipFolder, err := repo.GetClipFolder(clipFolder.ID)
 			require.NoError(err)
 			assert.Equal(newDescription, newClipFolder.Description)

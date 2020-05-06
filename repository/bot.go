@@ -3,55 +3,49 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // UpdateBotArgs Bot情報更新引数
 type UpdateBotArgs struct {
-	DisplayName     null.String
-	Description     null.String
-	WebhookURL      null.String
-	Privileged      null.Bool
-	CreatorID       uuid.NullUUID
+	DisplayName     optional.String
+	Description     optional.String
+	WebhookURL      optional.String
+	Privileged      optional.Bool
+	CreatorID       optional.UUID
 	SubscribeEvents model.BotEvents
 }
 
 // BotsQuery Bot情報取得用クエリ
 type BotsQuery struct {
-	IsPrivileged    null.Bool
-	IsActive        null.Bool
-	IsCMemberOf     uuid.NullUUID
+	IsPrivileged    optional.Bool
+	IsActive        optional.Bool
+	IsCMemberOf     optional.UUID
 	SubscribeEvents model.BotEvents
-	Creator         uuid.NullUUID
+	Creator         optional.UUID
 }
 
 // Privileged 特権Botである
 func (q BotsQuery) Privileged() BotsQuery {
-	q.IsPrivileged = null.BoolFrom(true)
+	q.IsPrivileged = optional.BoolFrom(true)
 	return q
 }
 
 // Active 有効である
 func (q BotsQuery) Active() BotsQuery {
-	q.IsActive = null.BoolFrom(true)
+	q.IsActive = optional.BoolFrom(true)
 	return q
 }
 
 // CreatedBy userIDによって作成された
 func (q BotsQuery) CreatedBy(userID uuid.UUID) BotsQuery {
-	q.Creator = uuid.NullUUID{
-		UUID:  userID,
-		Valid: true,
-	}
+	q.Creator = optional.UUIDFrom(userID)
 	return q
 }
 
 // CMemberOf channelIDに入っている
 func (q BotsQuery) CMemberOf(channelID uuid.UUID) BotsQuery {
-	q.IsCMemberOf = uuid.NullUUID{
-		UUID:  channelID,
-		Valid: true,
-	}
+	q.IsCMemberOf = optional.UUIDFrom(channelID)
 	return q
 }
 

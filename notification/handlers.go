@@ -2,7 +2,7 @@ package notification
 
 import (
 	"fmt"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"strings"
 	"time"
 
@@ -114,7 +114,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	if len(parsed.Attachments) > 0 {
 		if f, _ := ns.repo.GetFileMeta(parsed.Attachments[0]); f != nil && f.HasThumbnail() {
-			fcmPayload.Image = null.StringFrom(fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, f.GetID()))
+			fcmPayload.Image = optional.StringFrom(fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, f.GetID()))
 		}
 	}
 

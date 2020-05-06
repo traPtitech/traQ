@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
@@ -9,7 +10,6 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils/validator"
-	"gopkg.in/guregu/null.v3"
 )
 
 // GetStampPalettes GET /stamp-palettes
@@ -64,9 +64,9 @@ func (h *Handlers) CreateStampPalette(c echo.Context) error {
 
 // PatchStampPaletteRequest PATCH /stamp-palettes/:paletteID リクエストボディ
 type PatchStampPaletteRequest struct {
-	Name        null.String `json:"name"`
-	Description null.String `json:"description"`
-	Stamps      model.UUIDs `json:"stamps"`
+	Name        optional.String `json:"name"`
+	Description optional.String `json:"description"`
+	Stamps      model.UUIDs     `json:"stamps"`
 }
 
 func (r PatchStampPaletteRequest) Validate() error {

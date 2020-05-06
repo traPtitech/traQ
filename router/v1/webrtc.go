@@ -4,12 +4,12 @@ import (
 	"encoding/base64"
 	"fmt"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/realtime/webrtc"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils/hmac"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/set"
 	"net/http"
 	"time"
@@ -61,7 +61,7 @@ func (h *Handlers) GetChannelWebRTCState(c echo.Context) error {
 
 // PutWebRTCStateRequest PUT /webrtc/state リクエストボディ
 type PutWebRTCStateRequest struct {
-	ChannelID uuid.NullUUID `json:"channelId"`
+	ChannelID optional.UUID `json:"channelId"`
 	State     []string      `json:"state"`
 }
 

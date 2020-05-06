@@ -3,7 +3,7 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // CreateUserArgs ユーザー作成引数
@@ -11,25 +11,25 @@ type CreateUserArgs struct {
 	Name          string
 	DisplayName   string
 	Role          string
-	IconFileID    uuid.NullUUID
+	IconFileID    optional.UUID
 	Password      string
 	ExternalLogin *model.ExternalProviderUser
 }
 
 // UpdateUserArgs User情報更新引数
 type UpdateUserArgs struct {
-	DisplayName null.String
-	TwitterID   null.String
-	Role        null.String
+	DisplayName optional.String
+	TwitterID   optional.String
+	Role        optional.String
 	UserState   struct {
 		Valid bool
 		State model.UserAccountStatus
 	}
-	Bio         null.String
-	IconFileID  uuid.NullUUID
-	LastOnline  null.Time
-	HomeChannel uuid.NullUUID
-	Password    null.String
+	Bio         optional.String
+	IconFileID  optional.UUID
+	LastOnline  optional.Time
+	HomeChannel optional.UUID
+	Password    optional.String
 }
 
 // LinkExternalUserAccountArgs 外部アカウント関連付け引数
@@ -41,60 +41,48 @@ type LinkExternalUserAccountArgs struct {
 
 // UsersQuery GetUsers用クエリ
 type UsersQuery struct {
-	IsBot                       null.Bool
-	IsActive                    null.Bool
-	IsCMemberOf                 uuid.NullUUID
-	IsGMemberOf                 uuid.NullUUID
-	IsSubscriberAtMarkLevelOf   uuid.NullUUID
-	IsSubscriberAtNotifyLevelOf uuid.NullUUID
+	IsBot                       optional.Bool
+	IsActive                    optional.Bool
+	IsCMemberOf                 optional.UUID
+	IsGMemberOf                 optional.UUID
+	IsSubscriberAtMarkLevelOf   optional.UUID
+	IsSubscriberAtNotifyLevelOf optional.UUID
 	EnableProfileLoading        bool
 }
 
 // NotBot Botでない
 func (q UsersQuery) NotBot() UsersQuery {
-	q.IsBot = null.BoolFrom(false)
+	q.IsBot = optional.BoolFrom(false)
 	return q
 }
 
 // Active アカウントが有効である
 func (q UsersQuery) Active() UsersQuery {
-	q.IsActive = null.BoolFrom(true)
+	q.IsActive = optional.BoolFrom(true)
 	return q
 }
 
 // CMemberOf channelIDプライベートチャンネルのメンバーである
 func (q UsersQuery) CMemberOf(channelID uuid.UUID) UsersQuery {
-	q.IsCMemberOf = uuid.NullUUID{
-		UUID:  channelID,
-		Valid: true,
-	}
+	q.IsCMemberOf = optional.UUIDFrom(channelID)
 	return q
 }
 
 // GMemberOf groupIDグループのメンバーである
 func (q UsersQuery) GMemberOf(groupID uuid.UUID) UsersQuery {
-	q.IsGMemberOf = uuid.NullUUID{
-		UUID:  groupID,
-		Valid: true,
-	}
+	q.IsGMemberOf = optional.UUIDFrom(groupID)
 	return q
 }
 
 // SubscriberAtMarkLevelOf channelIDチャンネルの未読管理レベル購読ユーザーである
 func (q UsersQuery) SubscriberAtMarkLevelOf(channelID uuid.UUID) UsersQuery {
-	q.IsSubscriberAtMarkLevelOf = uuid.NullUUID{
-		UUID:  channelID,
-		Valid: true,
-	}
+	q.IsSubscriberAtMarkLevelOf = optional.UUIDFrom(channelID)
 	return q
 }
 
 // SubscriberAtNotifyLevelOf channelIDチャンネルの通知レベル購読ユーザーである
 func (q UsersQuery) SubscriberAtNotifyLevelOf(channelID uuid.UUID) UsersQuery {
-	q.IsSubscriberAtNotifyLevelOf = uuid.NullUUID{
-		UUID:  channelID,
-		Valid: true,
-	}
+	q.IsSubscriberAtNotifyLevelOf = optional.UUIDFrom(channelID)
 	return q
 }
 

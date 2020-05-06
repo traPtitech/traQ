@@ -3,15 +3,14 @@ package v3
 import (
 	"context"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"strconv"
 )
@@ -63,8 +62,8 @@ func (h *Handlers) GetStamp(c echo.Context) error {
 
 // PatchStampRequest PATCH /stamps/:stampID リクエストボディ
 type PatchStampRequest struct {
-	Name      null.String   `json:"name"`
-	CreatorID uuid.NullUUID `json:"creatorId"`
+	Name      optional.String `json:"name"`
+	CreatorID optional.UUID   `json:"creatorId"`
 }
 
 func (r PatchStampRequest) ValidateWithContext(ctx context.Context) error {
@@ -158,7 +157,7 @@ func (h *Handlers) ChangeStampImage(c echo.Context) error {
 		return err
 	}
 
-	args := repository.UpdateStampArgs{FileID: uuid.NullUUID{Valid: true, UUID: fileID}}
+	args := repository.UpdateStampArgs{FileID: optional.UUIDFrom(fileID)}
 	// 更新
 	if err := h.Repo.UpdateStamp(stamp.ID, args); err != nil {
 		switch {

@@ -3,8 +3,8 @@ package migration
 import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
+	"github.com/traPtitech/traQ/utils/optional"
 	"gopkg.in/gormigrate.v1"
-	"gopkg.in/guregu/null.v3"
 	"time"
 )
 
@@ -59,19 +59,19 @@ func v9() *gormigrate.Migration {
 }
 
 type v9OldUser struct {
-	ID          uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	Name        string    `gorm:"type:varchar(32);not null;unique"`
-	DisplayName string    `gorm:"type:varchar(64);not null;default:''"`
-	Password    string    `gorm:"type:char(128);not null;default:''"`
-	Salt        string    `gorm:"type:char(128);not null;default:''"`
-	Icon        uuid.UUID `gorm:"type:char(36);not null"`
-	Status      int       `gorm:"type:tinyint;not null;default:0"`
-	Bot         bool      `gorm:"type:boolean;not null;default:false"`
-	Role        string    `gorm:"type:varchar(30);not null;default:'user'"`
-	TwitterID   string    `gorm:"type:varchar(15);not null;default:''"`
-	LastOnline  null.Time `gorm:"precision:6"`
-	CreatedAt   time.Time `gorm:"precision:6"`
-	UpdatedAt   time.Time `gorm:"precision:6"`
+	ID          uuid.UUID     `gorm:"type:char(36);not null;primary_key"`
+	Name        string        `gorm:"type:varchar(32);not null;unique"`
+	DisplayName string        `gorm:"type:varchar(64);not null;default:''"`
+	Password    string        `gorm:"type:char(128);not null;default:''"`
+	Salt        string        `gorm:"type:char(128);not null;default:''"`
+	Icon        uuid.UUID     `gorm:"type:char(36);not null"`
+	Status      int           `gorm:"type:tinyint;not null;default:0"`
+	Bot         bool          `gorm:"type:boolean;not null;default:false"`
+	Role        string        `gorm:"type:varchar(30);not null;default:'user'"`
+	TwitterID   string        `gorm:"type:varchar(15);not null;default:''"`
+	LastOnline  optional.Time `gorm:"precision:6"`
+	CreatedAt   time.Time     `gorm:"precision:6"`
+	UpdatedAt   time.Time     `gorm:"precision:6"`
 }
 
 func (v9OldUser) TableName() string {
@@ -79,11 +79,11 @@ func (v9OldUser) TableName() string {
 }
 
 type v9UserProfile struct {
-	UserID     uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	Bio        string    `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
-	TwitterID  string    `gorm:"type:varchar(15);not null;default:''"`
-	LastOnline null.Time `gorm:"precision:6"`
-	UpdatedAt  time.Time `gorm:"precision:6"`
+	UserID     uuid.UUID     `gorm:"type:char(36);not null;primary_key"`
+	Bio        string        `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
+	TwitterID  string        `gorm:"type:varchar(15);not null;default:''"`
+	LastOnline optional.Time `gorm:"precision:6"`
+	UpdatedAt  time.Time     `gorm:"precision:6"`
 }
 
 func (v9UserProfile) TableName() string {

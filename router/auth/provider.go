@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/optional"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"image/png"
@@ -193,7 +194,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				if b, err := tu.GetProfileImage(); err == nil && b != nil {
 					fid, err := processProfileIcon(repo, b)
 					if err == nil {
-						args.IconFileID = uuid.NullUUID{Valid: true, UUID: fid}
+						args.IconFileID = optional.UUIDFrom(fid)
 					}
 				}
 

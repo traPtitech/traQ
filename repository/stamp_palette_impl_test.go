@@ -3,7 +3,7 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/utils"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"testing"
 )
 
@@ -80,8 +80,8 @@ func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 		newDescription := utils.RandAlphabetAndNumberString(100)
 
 		if assert.NoError(repo.UpdateStampPalette(stampPalette.ID, UpdateStampPaletteArgs{
-			Name:        null.StringFrom(newName),
-			Description: null.StringFrom(newDescription),
+			Name:        optional.StringFrom(newName),
+			Description: optional.StringFrom(newDescription),
 			Stamps:      make([]uuid.UUID, 0),
 		})) {
 			newStampPalette, err := repo.GetStampPalette(stampPalette.ID)

@@ -7,7 +7,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/realtime/viewer"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"time"
 )
 
@@ -18,7 +18,7 @@ type meResponse struct {
 	IconID      uuid.UUID         `json:"iconFileId"`
 	Bot         bool              `json:"bot"`
 	TwitterID   string            `json:"twitterId"`
-	LastOnline  *time.Time        `json:"lastOnline"`
+	LastOnline  optional.Time     `json:"lastOnline"`
 	IsOnline    bool              `json:"isOnline"`
 	Suspended   bool              `json:"suspended"`
 	Status      int               `json:"accountStatus"`
@@ -46,24 +46,24 @@ func (h *Handlers) formatMe(user model.UserInfo) *meResponse {
 	}
 
 	if res.IsOnline {
-		res.LastOnline = null.TimeFrom(time.Now()).Ptr()
+		res.LastOnline = optional.TimeFrom(time.Now())
 	} else {
-		res.LastOnline = user.GetLastOnline().Ptr()
+		res.LastOnline = user.GetLastOnline()
 	}
 	return res
 }
 
 type userResponse struct {
-	UserID      uuid.UUID  `json:"userId"`
-	Name        string     `json:"name"`
-	DisplayName string     `json:"displayName"`
-	IconID      uuid.UUID  `json:"iconFileId"`
-	Bot         bool       `json:"bot"`
-	TwitterID   string     `json:"twitterId"`
-	LastOnline  *time.Time `json:"lastOnline"`
-	IsOnline    bool       `json:"isOnline"`
-	Suspended   bool       `json:"suspended"`
-	Status      int        `json:"accountStatus"`
+	UserID      uuid.UUID     `json:"userId"`
+	Name        string        `json:"name"`
+	DisplayName string        `json:"displayName"`
+	IconID      uuid.UUID     `json:"iconFileId"`
+	Bot         bool          `json:"bot"`
+	TwitterID   string        `json:"twitterId"`
+	LastOnline  optional.Time `json:"lastOnline"`
+	IsOnline    bool          `json:"isOnline"`
+	Suspended   bool          `json:"suspended"`
+	Status      int           `json:"accountStatus"`
 }
 
 func (h *Handlers) formatUser(user model.UserInfo) *userResponse {
@@ -80,9 +80,9 @@ func (h *Handlers) formatUser(user model.UserInfo) *userResponse {
 	}
 
 	if res.IsOnline {
-		res.LastOnline = null.TimeFrom(time.Now()).Ptr()
+		res.LastOnline = optional.TimeFrom(time.Now())
 	} else {
-		res.LastOnline = user.GetLastOnline().Ptr()
+		res.LastOnline = user.GetLastOnline()
 	}
 	return res
 }
@@ -102,7 +102,7 @@ type userDetailResponse struct {
 	IconID      uuid.UUID      `json:"iconFileId"`
 	Bot         bool           `json:"bot"`
 	TwitterID   string         `json:"twitterId"`
-	LastOnline  *time.Time     `json:"lastOnline"`
+	LastOnline  optional.Time  `json:"lastOnline"`
 	IsOnline    bool           `json:"isOnline"`
 	Suspended   bool           `json:"suspended"`
 	Status      int            `json:"accountStatus"`
@@ -124,9 +124,9 @@ func (h *Handlers) formatUserDetail(user model.UserInfo, tagList []*model.UsersT
 	}
 
 	if res.IsOnline {
-		res.LastOnline = null.TimeFrom(time.Now()).Ptr()
+		res.LastOnline = optional.TimeFrom(time.Now())
 	} else {
-		res.LastOnline = user.GetLastOnline().Ptr()
+		res.LastOnline = user.GetLastOnline()
 	}
 	return res, nil
 }

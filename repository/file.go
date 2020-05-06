@@ -8,8 +8,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"gopkg.in/guregu/null.v3"
 	"image"
 	"image/png"
 	"io"
@@ -22,8 +22,8 @@ type SaveFileArgs struct {
 	FileSize  int64
 	MimeType  string
 	FileType  model.FileType
-	CreatorID uuid.NullUUID
-	ChannelID uuid.NullUUID
+	CreatorID optional.UUID
+	ChannelID optional.UUID
 	ACL       ACL
 	Src       io.Reader
 	Thumbnail image.Image
@@ -53,14 +53,6 @@ func (args *SaveFileArgs) Validate() error {
 	)
 }
 
-func (args *SaveFileArgs) SetChannel(id uuid.UUID) {
-	args.ChannelID = uuid.NullUUID{Valid: true, UUID: id}
-}
-
-func (args *SaveFileArgs) SetCreator(id uuid.UUID) {
-	args.CreatorID = uuid.NullUUID{Valid: true, UUID: id}
-}
-
 func (args *SaveFileArgs) ACLAllow(userID uuid.UUID) {
 	if args.ACL == nil {
 		args.ACL = ACL{}
@@ -70,10 +62,10 @@ func (args *SaveFileArgs) ACLAllow(userID uuid.UUID) {
 
 // FilesQuery GetFiles用クエリ
 type FilesQuery struct {
-	UploaderID uuid.NullUUID
-	ChannelID  uuid.NullUUID
-	Since      null.Time
-	Until      null.Time
+	UploaderID optional.UUID
+	ChannelID  optional.UUID
+	Since      optional.Time
+	Until      optional.Time
 	Inclusive  bool
 	Limit      int
 	Offset     int

@@ -5,7 +5,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"strings"
 	"testing"
 )
@@ -86,20 +86,17 @@ func TestRepositoryImpl_GetUsers(t *testing.T) {
 
 			q := UsersQuery{}
 			if v.bot == 0 {
-				q.IsBot = null.BoolFrom(false)
+				q.IsBot = optional.BoolFrom(false)
 			} else if v.bot == 1 {
-				q.IsBot = null.BoolFrom(true)
+				q.IsBot = optional.BoolFrom(true)
 			}
 			if v.active == 0 {
-				q.IsActive = null.BoolFrom(false)
+				q.IsActive = optional.BoolFrom(false)
 			} else if v.active == 1 {
-				q.IsActive = null.BoolFrom(true)
+				q.IsActive = optional.BoolFrom(true)
 			}
 			if v.g1 == 1 {
-				q.IsGMemberOf = uuid.NullUUID{
-					UUID:  g1.ID,
-					Valid: true,
-				}
+				q.IsGMemberOf = optional.UUIDFrom(g1.ID)
 			}
 
 			uids, err := repo.GetUserIDs(q)
@@ -178,7 +175,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		t.Run("Failed", func(t *testing.T) {
 			assert, _ := assertAndRequire(t)
 
-			err := repo.UpdateUser(user.GetID(), UpdateUserArgs{DisplayName: null.StringFrom(strings.Repeat("a", 65))})
+			err := repo.UpdateUser(user.GetID(), UpdateUserArgs{DisplayName: optional.StringFrom(strings.Repeat("a", 65))})
 			if assert.IsType(&ArgumentError{}, err) {
 				assert.Equal("args.DisplayName", err.(*ArgumentError).FieldName)
 			}
@@ -188,7 +185,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			assert, require := assertAndRequire(t)
 			newDN := utils.RandAlphabetAndNumberString(30)
 
-			if assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{DisplayName: null.StringFrom(newDN)})) {
+			if assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{DisplayName: optional.StringFrom(newDN)})) {
 				u, err := repo.GetUser(user.GetID(), true)
 				require.NoError(err)
 				assert.Equal(newDN, u.GetDisplayName())
@@ -204,7 +201,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		t.Run("Failed", func(t *testing.T) {
 			assert, _ := assertAndRequire(t)
 
-			err := repo.UpdateUser(user.GetID(), UpdateUserArgs{TwitterID: null.StringFrom("ああああ")})
+			err := repo.UpdateUser(user.GetID(), UpdateUserArgs{TwitterID: optional.StringFrom("ああああ")})
 			if assert.IsType(&ArgumentError{}, err) {
 				assert.Equal("args.TwitterID", err.(*ArgumentError).FieldName)
 			}
@@ -214,7 +211,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			assert, require := assertAndRequire(t)
 			newTwitter := "aiueo"
 
-			if assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{TwitterID: null.StringFrom(newTwitter)})) {
+			if assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{TwitterID: optional.StringFrom(newTwitter)})) {
 				u, err := repo.GetUser(user.GetID(), true)
 				require.NoError(err)
 				assert.Equal(newTwitter, u.GetTwitterID())
@@ -225,7 +222,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			assert, require := assertAndRequire(t)
 			newTwitter := ""
 
-			if assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{TwitterID: null.StringFrom(newTwitter)})) {
+			if assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{TwitterID: optional.StringFrom(newTwitter)})) {
 				u, err := repo.GetUser(user.GetID(), true)
 				require.NoError(err)
 				assert.Equal(newTwitter, u.GetTwitterID())
@@ -241,7 +238,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		t.Run("Success", func(t *testing.T) {
 			assert, require := assertAndRequire(t)
 
-			if assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{Role: null.StringFrom("admin")})) {
+			if assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{Role: optional.StringFrom("admin")})) {
 				u, err := repo.GetUser(user.GetID(), false)
 				require.NoError(err)
 				assert.Equal("admin", u.GetRole())

@@ -10,7 +10,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strconv"
 	"strings"
@@ -18,14 +18,14 @@ import (
 
 // GetFilesRequest GET /files 用リクエストクエリ
 type GetFilesRequest struct {
-	Limit     int       `query:"limit"`
-	Offset    int       `query:"offset"`
-	Since     null.Time `query:"since"`
-	Until     null.Time `query:"until"`
-	Inclusive bool      `query:"inclusive"`
-	Order     string    `query:"order"`
-	ChannelID uuid.UUID `query:"channelId"`
-	Mine      bool      `query:"mine"`
+	Limit     int           `query:"limit"`
+	Offset    int           `query:"offset"`
+	Since     optional.Time `query:"since"`
+	Until     optional.Time `query:"until"`
+	Inclusive bool          `query:"inclusive"`
+	Order     string        `query:"order"`
+	ChannelID uuid.UUID     `query:"channelId"`
+	Mine      bool          `query:"mine"`
 }
 
 func (q *GetFilesRequest) Validate() error {
@@ -57,7 +57,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 	}
 
 	if req.Mine {
-		q.UploaderID = uuid.NullUUID{Valid: true, UUID: getRequestUserID(c)}
+		q.UploaderID = optional.UUIDFrom(getRequestUserID(c))
 	}
 	if req.ChannelID != uuid.Nil {
 		// チャンネルアクセス権確認
@@ -66,7 +66,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 		} else if !ok {
 			return herror.BadRequest("invalid channelId")
 		}
-		q.ChannelID = uuid.NullUUID{Valid: true, UUID: req.ChannelID}
+		q.ChannelID = optional.UUIDFrom(req.ChannelID)
 	}
 
 	files, more, err := h.Repo.GetFiles(q)
@@ -92,13 +92,13 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	}
 
 	args := repository.SaveFileArgs{
-		FileName: uploadedFile.Filename,
-		FileSize: uploadedFile.Size,
-		MimeType: uploadedFile.Header.Get(echo.HeaderContentType),
-		FileType: model.FileTypeUserFile,
-		Src:      src,
+		FileName:  uploadedFile.Filename,
+		FileSize:  uploadedFile.Size,
+		MimeType:  uploadedFile.Header.Get(echo.HeaderContentType),
+		FileType:  model.FileTypeUserFile,
+		CreatorID: optional.UUIDFrom(userID),
+		Src:       src,
 	}
-	args.SetCreator(userID)
 
 	// チャンネルアクセス権確認
 	channelId := uuid.FromStringOrNil(c.FormValue("channelId"))
@@ -124,7 +124,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 			args.ACLAllow(v)
 		}
 	}
-	args.SetChannel(channelId)
+	args.ChannelID = optional.UUIDFrom(channelId)
 
 	// サムネイル生成
 	switch args.MimeType {

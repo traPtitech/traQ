@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
 	"unicode/utf8"
 )
@@ -237,7 +238,7 @@ func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 		}
 		if args.HomeChannel.Valid {
 			if args.HomeChannel.UUID == uuid.Nil {
-				changes["home_channel"] = uuid.NullUUID{}
+				changes["home_channel"] = optional.UUID{}
 			} else {
 				changes["home_channel"] = args.HomeChannel.UUID
 			}
