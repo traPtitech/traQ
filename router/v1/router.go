@@ -18,6 +18,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/middlewares"
+	"github.com/traPtitech/traQ/utils/imaging"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 	_ "image/jpeg" // image.Decode用
@@ -46,6 +47,7 @@ type Handlers struct {
 	Hub      *hub.Hub
 	Logger   *zap.Logger
 	Realtime *realtime.Service
+	Imaging  imaging.Processor
 
 	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
 	SkyWaySecretKey string

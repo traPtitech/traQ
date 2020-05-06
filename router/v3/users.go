@@ -191,7 +191,7 @@ func (h *Handlers) GetUserIcon(c echo.Context) error {
 
 // ChangeUserIcon PUT /users/:userID/icon
 func (h *Handlers) ChangeUserIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(c, h.Repo, getParamAsUUID(c, consts.ParamUserID))
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getParamAsUUID(c, consts.ParamUserID))
 }
 
 // GetMyIcon GET /users/me/icon
@@ -201,7 +201,7 @@ func (h *Handlers) GetMyIcon(c echo.Context) error {
 
 // ChangeMyIcon PUT /users/me/icon
 func (h *Handlers) ChangeMyIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(c, h.Repo, getRequestUserID(c))
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getRequestUserID(c))
 }
 
 // GetMyStampHistory GET /users/me/stamp-history リクエストクエリ

@@ -91,6 +91,15 @@ func (h *Handlers) PostFile(c echo.Context) error {
 		return herror.BadRequest("non-empty file is required")
 	}
 
+	args := repository.SaveFileArgs{
+		FileName: uploadedFile.Filename,
+		FileSize: uploadedFile.Size,
+		MimeType: uploadedFile.Header.Get(echo.HeaderContentType),
+		FileType: model.FileTypeUserFile,
+		Src:      src,
+	}
+	args.SetCreator(userID)
+
 	// チャンネルアクセス権確認
 	channelId := uuid.FromStringOrNil(c.FormValue("channelId"))
 	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelId); err != nil {
@@ -102,21 +111,11 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-
 	if ch.IsArchived() {
 		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetChannelTree().GetChannelPath(ch.ID)))
 	}
-
-	args := repository.SaveFileArgs{
-		FileName: uploadedFile.Filename,
-		FileSize: uploadedFile.Size,
-		MimeType: uploadedFile.Header.Get(echo.HeaderContentType),
-		FileType: model.FileTypeUserFile,
-		Src:      src,
-	}
-	args.SetCreator(userID)
-	args.SetChannel(channelId)
 	if !ch.IsPublic {
+		// アクセスコントロール設定
 		members, err := h.Repo.GetPrivateChannelMemberIDs(ch.ID)
 		if err != nil {
 			return herror.InternalServerError(err)
@@ -125,7 +124,18 @@ func (h *Handlers) PostFile(c echo.Context) error {
 			args.ACLAllow(v)
 		}
 	}
+	args.SetChannel(channelId)
 
+	// サムネイル生成
+	switch args.MimeType {
+	case consts.MimeImageJPEG, consts.MimeImagePNG, consts.MimeImageGIF:
+		args.Thumbnail, _ = h.Imaging.Thumbnail(src)
+	}
+
+	// 保存
+	if _, err := src.Seek(0, 0); err != nil {
+		return herror.InternalServerError(err)
+	}
 	file, err := h.Repo.SaveFile(args)
 	if err != nil {
 		return herror.InternalServerError(err)

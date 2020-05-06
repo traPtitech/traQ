@@ -58,7 +58,7 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 
 // ChangeWebhookIcon PUT /webhooks/:webhookID/icon
 func (h *Handlers) ChangeWebhookIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(c, h.Repo, getParamWebhook(c).GetBotUserID())
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getParamWebhook(c).GetBotUserID())
 }
 
 // PostWebhooksRequest POST /webhooks リクエストボディ

@@ -179,7 +179,6 @@ func serveCommand() *cobra.Command {
 				Revision:         Revision,
 				AccessLogging:    c.AccessLog.Enabled,
 				Gzipped:          c.Gzip,
-				ImageMagickPath:  c.ImageMagick,
 				AccessTokenExp:   c.OAuth2.AccessTokenExpire,
 				IsRefreshEnabled: c.OAuth2.IsRefreshEnabled,
 				SkyWaySecretKey:  c.SkyWay.SecretKey,
@@ -190,6 +189,7 @@ func serveCommand() *cobra.Command {
 				SSE:              sses,
 				Realtime:         rt,
 				RootLogger:       logger,
+				Imaging:          c.getImageProcessor(),
 				ExternalAuth: router.ExternalAuthConfig{
 					GitHub: auth.GithubProviderConfig{
 						ClientID:               c.ExternalAuth.GitHub.ClientID,

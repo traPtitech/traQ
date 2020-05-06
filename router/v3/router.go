@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
+	"github.com/traPtitech/traQ/utils/imaging"
 	"go.uber.org/zap"
 )
 
@@ -20,6 +21,7 @@ type Handlers struct {
 	Hub      *hub.Hub
 	Logger   *zap.Logger
 	Realtime *realtime.Service
+	Imaging  imaging.Processor
 
 	Version  string
 	Revision string

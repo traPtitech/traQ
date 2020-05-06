@@ -3,7 +3,6 @@ package repository
 import (
 	"bytes"
 	"fmt"
-	"github.com/disintegration/imaging"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
@@ -11,6 +10,8 @@ import (
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/validator"
 	"gopkg.in/guregu/null.v3"
+	"image"
+	"image/png"
 	"io"
 	"mime"
 	"path/filepath"
@@ -25,6 +26,7 @@ type SaveFileArgs struct {
 	ChannelID uuid.NullUUID
 	ACL       ACL
 	Src       io.Reader
+	Thumbnail image.Image
 }
 
 func (args *SaveFileArgs) Validate() error {
@@ -128,13 +130,19 @@ type ACL map[uuid.UUID]bool
 // DB, ファイルシステムによるエラーを返すことがあります。
 func GenerateIconFile(repo FileRepository, salt string) (uuid.UUID, error) {
 	var img bytes.Buffer
-	_ = imaging.Encode(&img, utils.GenerateIcon(salt), imaging.PNG)
+	icon := utils.GenerateIcon(salt)
+
+	if err := png.Encode(&img, icon); err != nil {
+		return uuid.Nil, err
+	}
+
 	file, err := repo.SaveFile(SaveFileArgs{
-		FileName: fmt.Sprintf("%s.png", salt),
-		FileSize: int64(img.Len()),
-		MimeType: "image/png",
-		FileType: model.FileTypeIcon,
-		Src:      &img,
+		FileName:  fmt.Sprintf("%s.png", salt),
+		FileSize:  int64(img.Len()),
+		MimeType:  "image/png",
+		FileType:  model.FileTypeIcon,
+		Src:       &img,
+		Thumbnail: icon,
 	})
 	if err != nil {
 		return uuid.Nil, err

@@ -221,7 +221,7 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 
 // PutWebhookIcon PUT /webhooks/:webhookID/icon
 func (h *Handlers) PutWebhookIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(c, h.Repo, getWebhookFromContext(c).GetBotUserID())
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getWebhookFromContext(c).GetBotUserID())
 }
 
 // PostWebhookByGithub POST /webhooks/:webhookID/github

@@ -4,7 +4,6 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -34,7 +33,7 @@ func (h *Handlers) PostStamp(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	// スタンプ画像保存
-	fileID, err := utils.SaveUploadImage(c, h.Repo, "file", model.FileTypeStamp, 1<<20, 128)
+	fileID, err := utils.SaveUploadStampImage(h.Imaging, c, h.Repo, "file")
 	if err != nil {
 		return err
 	}
@@ -83,7 +82,7 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 	f, _, err := c.Request().FormFile("file")
 	if err == nil {
 		f.Close()
-		fileID, err := utils.SaveUploadImage(c, h.Repo, "file", model.FileTypeStamp, 1<<20, 128)
+		fileID, err := utils.SaveUploadStampImage(h.Imaging, c, h.Repo, "file")
 		if err != nil {
 			return err
 		}

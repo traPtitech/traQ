@@ -9,7 +9,6 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/router/oauth2"
-	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/router/v1"
 	v3 "github.com/traPtitech/traQ/router/v3"
 	"net/http"
@@ -53,6 +52,7 @@ func Setup(config *Config) *echo.Echo {
 		Logger:          config.RootLogger.Named("api_handler"),
 		Realtime:        config.Realtime,
 		SkyWaySecretKey: config.SkyWaySecretKey,
+		Imaging:         config.Imaging,
 	}
 	v1.Setup(api)
 
@@ -68,6 +68,7 @@ func Setup(config *Config) *echo.Echo {
 		Revision:                        config.Revision,
 		SkyWaySecretKey:                 config.SkyWaySecretKey,
 		EnabledExternalAccountProviders: config.ExternalAuth.ValidProviders(),
+		Imaging:                         config.Imaging,
 	}
 	v3.Setup(api)
 
@@ -109,6 +110,5 @@ func Setup(config *Config) *echo.Echo {
 		extAuth.GET("/oidc/callback", p.CallbackHandler)
 	}
 
-	utils.ImageMagickPath = config.ImageMagickPath
 	return e
 }
