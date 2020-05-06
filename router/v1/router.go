@@ -12,7 +12,6 @@ import (
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/realtime"
 	"github.com/traPtitech/traQ/realtime/sse"
-	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
@@ -43,14 +42,10 @@ type Handlers struct {
 	RBAC     rbac.RBAC
 	Repo     repository.Repository
 	SSE      *sse.Streamer
-	WS       *ws.Streamer
 	Hub      *hub.Hub
 	Logger   *zap.Logger
 	Realtime *realtime.Service
 	Imaging  imaging.Processor
-
-	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
-	SkyWaySecretKey string
 
 	webhookDefTmpls *template.Template
 
@@ -192,9 +187,9 @@ func (h *Handlers) Setup(e *echo.Group) {
 					apiChannelsCidBots.POST("", h.PostChannelBots, requires(permission.BotActionJoinChannel))
 					apiChannelsCidBots.DELETE("/:botID", h.DeleteChannelBot, requires(permission.BotActionLeaveChannel), retrieve.BotID())
 				}
-				apiChannelsCidWebRTC := apiChannelsCid.Group("/webrtc", blockBot)
+				apiChannelsCidWebRTC := apiChannelsCid.Group("/webrtc")
 				{
-					apiChannelsCidWebRTC.GET("/state", h.GetChannelWebRTCState, requires(permission.GetChannel))
+					apiChannelsCidWebRTC.GET("/state", gone)
 				}
 			}
 		}
@@ -339,16 +334,13 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiAuthority.GET("/reload", h.GetAuthorityReload)
 			apiAuthority.POST("/reload", h.PostAuthorityReload)
 		}
-		apiWebRTC := api.Group("/webrtc", blockBot)
+		apiWebRTC := api.Group("/webrtc")
 		{
-			apiWebRTC.GET("/state", h.GetWebRTCState)
-			apiWebRTC.PUT("/state", h.PutWebRTCState)
+			apiWebRTC.GET("/state", gone)
+			apiWebRTC.PUT("/state", gone)
 		}
-		api.GET("/ws", echo.WrapHandler(h.WS), requires(permission.ConnectNotificationStream), blockBot)
 
-		if len(h.SkyWaySecretKey) > 0 {
-			api.POST("/skyway/authenticate", h.PostSkyWayAuthenticate, blockBot)
-		}
+		api.POST("/skyway/authenticate", gone)
 	}
 
 	apiNoAuth := e.Group("/1.0")

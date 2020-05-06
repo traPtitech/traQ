@@ -5,7 +5,6 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/realtime/viewer"
-	"github.com/traPtitech/traQ/realtime/webrtc"
 	"github.com/traPtitech/traQ/realtime/webrtcv3"
 )
 
@@ -14,7 +13,6 @@ type Service struct {
 	OnlineCounter *OnlineCounter
 	ViewerManager *viewer.Manager
 	HeartBeats    *HeartBeats
-	WebRTC        *webrtc.Manager
 	WebRTCv3      *webrtcv3.Manager
 }
 
@@ -23,7 +21,6 @@ func NewService(hub *hub.Hub) *Service {
 	oc := newOnlineCounter(hub)
 	vm := viewer.NewManager(hub)
 	hb := newHeartBeats(vm)
-	wr := webrtc.NewManager(hub)
 	wrv3 := webrtcv3.NewManager(hub)
 
 	go func() {
@@ -41,7 +38,6 @@ func NewService(hub *hub.Hub) *Service {
 		OnlineCounter: oc,
 		ViewerManager: vm,
 		HeartBeats:    hb,
-		WebRTC:        wr,
 		WebRTCv3:      wrv3,
 	}
 }

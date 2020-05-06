@@ -233,13 +233,6 @@ const (
 	// 		channel_id: uuid.UUID
 	BotLeft = "bot.left"
 
-	// UserWebRTCStateChanged ユーザーのWebRTCの状態が変化した
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		channel_id: uuid.UUID
-	// 		state: string
-	UserWebRTCStateChanged = "user.webrtc.state_changed"
-
 	// UserWebRTCv3StateChanged ユーザーのWebRTCの状態が変化した
 	// 	Fields:
 	// 		user_id: uuid.UUID

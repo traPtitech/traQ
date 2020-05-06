@@ -44,15 +44,13 @@ func Setup(config *Config) *echo.Echo {
 
 	// v1 APIハンドラ
 	v1 := v1.Handlers{
-		RBAC:            config.RBAC,
-		Repo:            config.Repository,
-		SSE:             config.SSE,
-		WS:              config.WS,
-		Hub:             config.Hub,
-		Logger:          config.RootLogger.Named("api_handler"),
-		Realtime:        config.Realtime,
-		SkyWaySecretKey: config.SkyWaySecretKey,
-		Imaging:         config.Imaging,
+		RBAC:     config.RBAC,
+		Repo:     config.Repository,
+		SSE:      config.SSE,
+		Hub:      config.Hub,
+		Logger:   config.RootLogger.Named("api_handler"),
+		Realtime: config.Realtime,
+		Imaging:  config.Imaging,
 	}
 	v1.Setup(api)
 
