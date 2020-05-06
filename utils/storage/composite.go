@@ -27,7 +27,7 @@ func NewCompositeFileStorage(localDir, container, userName, apiKey, tenant, tena
 }
 
 // SaveByKey srcをkeyのファイルとして保存する
-func (fs *CompositeFileStorage) SaveByKey(src io.Reader, key, name, contentType, fileType string) error {
+func (fs *CompositeFileStorage) SaveByKey(src io.Reader, key, name, contentType string, fileType model.FileType) error {
 	switch fileType {
 	case model.FileTypeIcon, model.FileTypeStamp, model.FileTypeThumbnail:
 		return fs.local.SaveByKey(src, key, name, contentType, fileType)
@@ -37,7 +37,7 @@ func (fs *CompositeFileStorage) SaveByKey(src io.Reader, key, name, contentType,
 }
 
 // OpenFileByKey keyで指定されたファイルを読み込む
-func (fs *CompositeFileStorage) OpenFileByKey(key string, fileType string) (ioext.ReadSeekCloser, error) {
+func (fs *CompositeFileStorage) OpenFileByKey(key string, fileType model.FileType) (ioext.ReadSeekCloser, error) {
 	if _, err := os.Stat(fs.local.getFilePath(key)); os.IsNotExist(err) {
 		return fs.swift.OpenFileByKey(key, fileType)
 	}
@@ -45,7 +45,7 @@ func (fs *CompositeFileStorage) OpenFileByKey(key string, fileType string) (ioex
 }
 
 // DeleteByKey keyで指定されたファイルを削除する
-func (fs *CompositeFileStorage) DeleteByKey(key string, fileType string) error {
+func (fs *CompositeFileStorage) DeleteByKey(key string, fileType model.FileType) error {
 	if _, err := os.Stat(fs.local.getFilePath(key)); os.IsNotExist(err) {
 		return fs.swift.DeleteByKey(key, fileType)
 	}
@@ -53,7 +53,7 @@ func (fs *CompositeFileStorage) DeleteByKey(key string, fileType string) error {
 }
 
 // GenerateAccessURL keyで指定されたファイルの直接アクセスURLを発行する。発行機能がない場合は空文字列を返します(エラーはありません)。
-func (fs *CompositeFileStorage) GenerateAccessURL(key string, fileType string) (string, error) {
+func (fs *CompositeFileStorage) GenerateAccessURL(key string, fileType model.FileType) (string, error) {
 	if _, err := os.Stat(fs.local.getFilePath(key)); os.IsNotExist(err) {
 		return fs.swift.GenerateAccessURL(key, fileType)
 	}

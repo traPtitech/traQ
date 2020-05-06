@@ -2,21 +2,78 @@ package model
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"errors"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/utils/ioext"
 	"gopkg.in/guregu/null.v3"
+	"strings"
 	"time"
 )
 
+type FileType int
+
+// Value database/sql/driver.Valuer 実装
+func (f FileType) Value() (driver.Value, error) {
+	v := f.String()
+	if v == "null" {
+		return nil, errors.New("unknown FileType")
+	}
+	return v, nil
+}
+
+// Scan database/sql.Scanner 実装
+func (f *FileType) Scan(src interface{}) (err error) {
+	switch s := src.(type) {
+	case string:
+		*f, err = FileTypeFromString(s)
+	case []byte:
+		*f, err = FileTypeFromString(string(s))
+	default:
+		err = errors.New("failed to scan FileType")
+	}
+	return
+}
+
+func (f FileType) String() string {
+	switch f {
+	case FileTypeUserFile:
+		return ""
+	case FileTypeIcon:
+		return "icon"
+	case FileTypeStamp:
+		return "stamp"
+	case FileTypeThumbnail:
+		return "thumbnail"
+	default:
+		return "null"
+	}
+}
+
+func FileTypeFromString(s string) (FileType, error) {
+	switch strings.ToLower(s) {
+	case "":
+		return FileTypeUserFile, nil
+	case "icon":
+		return FileTypeIcon, nil
+	case "stamp":
+		return FileTypeStamp, nil
+	case "thumbnail":
+		return FileTypeThumbnail, nil
+	default:
+		return 0, errors.New("unknown FileType")
+	}
+}
+
 const (
 	// FileTypeUserFile ユーザーアップロードファイルタイプ
-	FileTypeUserFile = ""
+	FileTypeUserFile FileType = iota
 	// FileTypeIcon ユーザーアイコンファイルタイプ
-	FileTypeIcon = "icon"
+	FileTypeIcon
 	// FileTypeStamp スタンプファイルタイプ
-	FileTypeStamp = "stamp"
+	FileTypeStamp
 	// FileTypeThumbnail サムネイルファイルタイプ
-	FileTypeThumbnail = "thumbnail"
+	FileTypeThumbnail
 )
 
 type FileMeta interface {
@@ -24,7 +81,7 @@ type FileMeta interface {
 	GetFileName() string
 	GetMIMEType() string
 	GetFileSize() int64
-	GetFileType() string
+	GetFileType() FileType
 	GetCreatorID() uuid.NullUUID
 	GetMD5Hash() string
 	HasThumbnail() bool
@@ -47,7 +104,7 @@ type File struct {
 	Size            int64         `gorm:"type:bigint;not null"`
 	CreatorID       uuid.NullUUID `gorm:"type:char(36)"`
 	Hash            string        `gorm:"type:char(32);not null"`
-	Type            string        `gorm:"type:varchar(30);not null;default:''"`
+	Type            FileType      `gorm:"type:varchar(30);not null;default:''"`
 	HasThumbnail    bool          `gorm:"type:boolean;not null;default:false"`
 	ThumbnailMime   null.String   `gorm:"type:text"`
 	ThumbnailWidth  int           `gorm:"type:int;not null;default:0"`

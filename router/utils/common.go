@@ -77,7 +77,7 @@ func ServeFileThumbnail(c echo.Context, meta model.FileMeta) error {
 	}
 	defer file.Close()
 
-	c.Response().Header().Set(consts.HeaderFileMetaType, meta.GetFileType())
+	c.Response().Header().Set(consts.HeaderFileMetaType, meta.GetFileType().String())
 	c.Response().Header().Set(consts.HeaderCacheFile, "true")
 	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=31536000") // 1年間キャッシュ
 	return c.Stream(http.StatusOK, meta.GetThumbnailMIMEType(), file)
@@ -102,7 +102,7 @@ func ServeFile(c echo.Context, meta model.FileMeta) error {
 	if v, _ := strconv.ParseBool(c.QueryParam("dl")); v {
 		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", meta.GetFileName()))
 	}
-	c.Response().Header().Set(consts.HeaderFileMetaType, meta.GetFileType())
+	c.Response().Header().Set(consts.HeaderFileMetaType, meta.GetFileType().String())
 	switch meta.GetFileType() {
 	case model.FileTypeStamp, model.FileTypeIcon:
 		c.Response().Header().Set(consts.HeaderCacheFile, "true")

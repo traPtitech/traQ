@@ -54,7 +54,7 @@ func NewSwiftFileStorage(container, userName, apiKey, tenant, tenantID, authURL,
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *SwiftFileStorage) OpenFileByKey(key, fileType string) (reader ioext.ReadSeekCloser, err error) {
+func (fs *SwiftFileStorage) OpenFileByKey(key string, fileType model.FileType) (reader ioext.ReadSeekCloser, err error) {
 	cacheName := fs.getCacheFilePath(key)
 
 	if !fs.cacheable(fileType) {
@@ -105,7 +105,7 @@ func (fs *SwiftFileStorage) OpenFileByKey(key, fileType string) (reader ioext.Re
 }
 
 // SaveByKey srcの内容をkeyで指定されたファイルに書き込みます
-func (fs *SwiftFileStorage) SaveByKey(src io.Reader, key, name, contentType, fileType string) (err error) {
+func (fs *SwiftFileStorage) SaveByKey(src io.Reader, key, name, contentType string, fileType model.FileType) (err error) {
 	if fs.cacheable(fileType) {
 		cacheName := fs.getCacheFilePath(key)
 
@@ -128,7 +128,7 @@ func (fs *SwiftFileStorage) SaveByKey(src io.Reader, key, name, contentType, fil
 }
 
 // DeleteByKey ファイルを削除します
-func (fs *SwiftFileStorage) DeleteByKey(key, fileType string) (err error) {
+func (fs *SwiftFileStorage) DeleteByKey(key string, fileType model.FileType) (err error) {
 	err = fs.connection.ObjectDelete(fs.container, key)
 	if err != nil {
 		if err == swift.ObjectNotFound {
@@ -146,7 +146,7 @@ func (fs *SwiftFileStorage) DeleteByKey(key, fileType string) (err error) {
 }
 
 // GenerateAccessURL keyで指定されたファイルの直接アクセスURLを発行する。
-func (fs *SwiftFileStorage) GenerateAccessURL(key, fileType string) (string, error) {
+func (fs *SwiftFileStorage) GenerateAccessURL(key string, fileType model.FileType) (string, error) {
 	if !fs.cacheable(fileType) && len(fs.tempURLKey) > 0 {
 		if _, err := os.Stat(fs.getCacheFilePath(key)); os.IsNotExist(err) {
 			return fs.connection.ObjectTempUrl(fs.container, key, fs.tempURLKey, "GET", time.Now().Add(5*time.Minute)), nil
@@ -159,6 +159,6 @@ func (fs *SwiftFileStorage) getCacheFilePath(key string) string {
 	return fs.cacheDir + "/" + key
 }
 
-func (fs *SwiftFileStorage) cacheable(fileType string) bool {
+func (fs *SwiftFileStorage) cacheable(fileType model.FileType) bool {
 	return fileType == model.FileTypeIcon || fileType == model.FileTypeStamp || fileType == model.FileTypeThumbnail
 }

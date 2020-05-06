@@ -2660,7 +2660,7 @@ func (f *fileMetaImpl) GetFileSize() int64 {
 	return f.meta.Size
 }
 
-func (f *fileMetaImpl) GetFileType() string {
+func (f *fileMetaImpl) GetFileType() model.FileType {
 	return f.meta.Type
 }
 

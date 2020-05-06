@@ -40,7 +40,7 @@ func (f *fileMetaImpl) GetFileSize() int64 {
 	return f.meta.Size
 }
 
-func (f *fileMetaImpl) GetFileType() string {
+func (f *fileMetaImpl) GetFileType() model.FileType {
 	return f.meta.Type
 }
 
@@ -95,7 +95,7 @@ func (f *fileMetaImpl) GetAlternativeURL() string {
 // GetFiles implements FileRepository interface.
 func (repo *GormRepository) GetFiles(q FilesQuery) (result []model.FileMeta, more bool, err error) {
 	files := make([]*model.File, 0)
-	tx := repo.db
+	tx := repo.db.Where("files.type = ?", q.Type.String())
 
 	if q.ChannelID.Valid {
 		if q.ChannelID.UUID == uuid.Nil {
@@ -110,9 +110,6 @@ func (repo *GormRepository) GetFiles(q FilesQuery) (result []model.FileMeta, mor
 		} else {
 			tx = tx.Where("files.creator_id = ?", q.UploaderID.UUID)
 		}
-	}
-	if q.Type.Valid {
-		tx = tx.Where("files.type = ?", q.Type.String)
 	}
 
 	if q.Inclusive {

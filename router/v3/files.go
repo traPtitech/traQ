@@ -53,7 +53,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 		Limit:     req.Limit,
 		Offset:    req.Offset,
 		Asc:       strings.ToLower(req.Order) == "asc",
-		Type:      null.StringFrom(model.FileTypeUserFile),
+		Type:      model.FileTypeUserFile,
 	}
 
 	if req.Mine {

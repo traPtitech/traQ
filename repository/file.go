@@ -21,7 +21,7 @@ type SaveFileArgs struct {
 	FileName  string
 	FileSize  int64
 	MimeType  string
-	FileType  string
+	FileType  model.FileType
 	CreatorID uuid.NullUUID
 	ChannelID uuid.NullUUID
 	ACL       ACL
@@ -78,7 +78,7 @@ type FilesQuery struct {
 	Limit      int
 	Offset     int
 	Asc        bool
-	Type       null.String
+	Type       model.FileType
 }
 
 // FileRepository ファイルリポジトリ
