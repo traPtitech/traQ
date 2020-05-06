@@ -1,11 +1,11 @@
 package repository
 
 import (
+	"github.com/traPtitech/traQ/utils/optional"
 	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"gopkg.in/guregu/null.v3"
 )
 
 // MessagesQuery GetMessages用クエリ
@@ -14,8 +14,8 @@ type MessagesQuery struct {
 	Channel uuid.UUID
 	// ChannelsSubscribedByUser 指定したユーザーが購読しているチャンネルのメッセージを指定
 	ChannelsSubscribedByUser uuid.UUID
-	Since                    null.Time
-	Until                    null.Time
+	Since                    optional.Time
+	Until                    optional.Time
 	Inclusive                bool
 	Limit                    int
 	Offset                   int

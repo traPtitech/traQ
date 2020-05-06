@@ -7,10 +7,10 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
 	"go.uber.org/zap"
-	"gopkg.in/guregu/null.v3"
 	"time"
 )
 
@@ -213,7 +213,7 @@ func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChanne
 				"private":    !ch.IsPublic,
 			},
 		})
-		archived := null.NewBool(!args.Visibility.Bool, args.Visibility.Valid)
+		archived := optional.NewBool(!args.Visibility.Bool, args.Visibility.Valid)
 		repo.chTree.update(channelID, args.Topic, archived, args.ForcedNotification)
 		if topicChanged {
 			repo.hub.Publish(hub.Message{
@@ -337,7 +337,7 @@ func (repo *GormRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*mo
 	// 存在しなかったので作成
 	channel = model.Channel{
 		ID:        uuid.Must(uuid.NewV4()),
-		Name:      "dm_" + utils.RandAlphabetAndNumberString(17),
+		Name:      "dm_" + random.AlphaNumeric(17),
 		ParentID:  dmChannelRootUUID,
 		IsPublic:  false,
 		IsVisible: true,

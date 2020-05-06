@@ -2,7 +2,7 @@ package notification
 
 import (
 	"fmt"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"strings"
 	"time"
 
@@ -55,7 +55,6 @@ var handlerMap = map[string]eventHandler{
 	event.StampPaletteCreated:      stampPaletteCreatedHandler,
 	event.StampPaletteUpdated:      stampPaletteUpdatedHandler,
 	event.StampPaletteDeleted:      stampPaletteDeletedHandler,
-	event.UserWebRTCStateChanged:   userWebRTCStateChangedHandler,
 	event.UserWebRTCv3StateChanged: userWebRTCv3StateChangedHandler,
 	event.ClipFolderCreated:        clipFolderCreatedHandler,
 	event.ClipFolderUpdated:        clipFolderUpdatedHandler,
@@ -114,7 +113,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	if len(parsed.Attachments) > 0 {
 		if f, _ := ns.repo.GetFileMeta(parsed.Attachments[0]); f != nil && f.HasThumbnail() {
-			fcmPayload.Image = null.StringFrom(fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, f.GetID()))
+			fcmPayload.Image = optional.StringFrom(fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, f.GetID()))
 		}
 	}
 
@@ -477,17 +476,6 @@ func stampPaletteDeletedHandler(ns *Service, ev hub.Message) {
 		EventType: "STAMP_PALETTE_DELETED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["stamp_palette_id"].(uuid.UUID),
-		},
-	})
-}
-
-func userWebRTCStateChangedHandler(ns *Service, ev hub.Message) {
-	broadcast(ns, &sse.EventData{
-		EventType: "USER_WEBRTC_STATE_CHANGED",
-		Payload: map[string]interface{}{
-			"user_id":    ev.Fields["user_id"].(uuid.UUID),
-			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
-			"state":      ev.Fields["state"].(set.StringSet),
 		},
 	})
 }

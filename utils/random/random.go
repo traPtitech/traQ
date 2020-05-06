@@ -1,4 +1,4 @@
-package utils
+package random
 
 import (
 	crand "crypto/rand"
@@ -14,9 +14,9 @@ const (
 	rs6LetterIdxMax  = 63 / rs6LetterIdxBits
 )
 
-// RandAlphabetAndNumberString 指定した文字数のランダム英数字文字列を生成します
+// AlphaNumeric 指定した文字数のランダム英数字文字列を生成します
 // この関数はmath/randが生成する擬似乱数を使用します
-func RandAlphabetAndNumberString(n int) string {
+func AlphaNumeric(n int) string {
 	b := make([]byte, n)
 	cache, remain := rand.Int63(), rs6LetterIdxMax
 	for i := n - 1; i >= 0; {
@@ -34,9 +34,9 @@ func RandAlphabetAndNumberString(n int) string {
 	return *(*string)(unsafe.Pointer(&b))
 }
 
-// SecureRandAlphabetAndNumberString 指定した文字数のランダム英数字文字列を生成します
-// // この関数はcrypto/randが生成する暗号学的に安全な乱数を使用します
-func SecureRandAlphabetAndNumberString(n int) string {
+// SecureAlphaNumeric 指定した文字数のランダム英数字文字列を生成します
+// この関数はcrypto/randが生成する暗号学的に安全な乱数を使用します
+func SecureAlphaNumeric(n int) string {
 	b := make([]byte, n)
 	if _, err := crand.Read(b); err != nil {
 		panic(err)
@@ -55,8 +55,8 @@ func SecureRandAlphabetAndNumberString(n int) string {
 	return *(*string)(unsafe.Pointer(&b))
 }
 
-// GenerateSalt 64bytesソルトを生成します
-func GenerateSalt() []byte {
+// Salt 64bytesソルトを生成します
+func Salt() []byte {
 	salt := make([]byte, 64)
 	_, _ = io.ReadFull(crand.Reader, salt)
 	return salt

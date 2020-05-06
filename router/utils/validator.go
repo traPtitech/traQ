@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 type ctxKey int
@@ -37,7 +38,7 @@ var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface
 		if !repo.GetChannelTree().IsChannelPresent(v) {
 			return errors.New(errMessage)
 		}
-	case uuid.NullUUID:
+	case optional.UUID:
 		if v.Valid && !repo.GetChannelTree().IsChannelPresent(v.UUID) {
 			return errors.New(errMessage)
 		}
@@ -73,7 +74,7 @@ var IsActiveHumanUserID = vd.WithContext(func(ctx context.Context, value interfa
 		return nil
 	case uuid.UUID:
 		u, err = repo.GetUser(v, false)
-	case uuid.NullUUID:
+	case optional.UUID:
 		if !v.Valid {
 			return nil
 		}
@@ -116,7 +117,7 @@ var IsUserID = vd.WithContext(func(ctx context.Context, value interface{}) error
 		return nil
 	case uuid.UUID:
 		ok, err = repo.UserExists(v)
-	case uuid.NullUUID:
+	case optional.UUID:
 		if !v.Valid {
 			return nil
 		}

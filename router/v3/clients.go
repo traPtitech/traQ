@@ -3,15 +3,14 @@ package v3
 import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
-	"gopkg.in/guregu/null.v3"
 	"net/http"
 )
 
@@ -57,13 +56,13 @@ func (h *Handlers) CreateClient(c echo.Context) error {
 	}
 
 	client := &model.OAuth2Client{
-		ID:           utils.SecureRandAlphabetAndNumberString(36),
+		ID:           random.SecureAlphaNumeric(36),
 		Name:         req.Name,
 		Description:  req.Description,
 		Confidential: false,
 		CreatorID:    userID,
 		RedirectURI:  req.CallbackURL,
-		Secret:       utils.SecureRandAlphabetAndNumberString(36),
+		Secret:       random.SecureAlphaNumeric(36),
 		Scopes:       req.Scopes,
 	}
 	if err := h.Repo.SaveClient(client); err != nil {
@@ -90,10 +89,10 @@ func (h *Handlers) GetClient(c echo.Context) error {
 
 // PatchClientRequest PATCH /clients/:clientID リクエストボディ
 type PatchClientRequest struct {
-	Name        null.String   `json:"name"`
-	Description null.String   `json:"description"`
-	CallbackURL null.String   `json:"callbackUrl"`
-	DeveloperID uuid.NullUUID `json:"developerId"`
+	Name        optional.String `json:"name"`
+	Description optional.String `json:"description"`
+	CallbackURL optional.String `json:"callbackUrl"`
+	DeveloperID optional.UUID   `json:"developerId"`
 }
 
 func (r PatchClientRequest) Validate() error {

@@ -3,13 +3,13 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // UpdateStampPaletteArgs スタンプパレット情報更新引数
 type UpdateStampPaletteArgs struct {
-	Name        null.String
-	Description null.String
+	Name        optional.String
+	Description optional.String
 	Stamps      model.UUIDs
 }
 

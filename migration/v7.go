@@ -3,8 +3,8 @@ package migration
 import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
+	"github.com/traPtitech/traQ/utils/optional"
 	"gopkg.in/gormigrate.v1"
-	"gopkg.in/guregu/null.v3"
 	"time"
 )
 
@@ -59,20 +59,20 @@ func v7() *gormigrate.Migration {
 }
 
 type v7File struct {
-	ID              uuid.UUID     `gorm:"type:char(36);not null;primary_key"`
-	Name            string        `gorm:"type:text;not null"`
-	Mime            string        `gorm:"type:text;not null"`
-	Size            int64         `gorm:"type:bigint;not null"`
-	CreatorID       uuid.NullUUID `gorm:"type:char(36)"` // nullable化
-	Hash            string        `gorm:"type:char(32);not null"`
-	Type            string        `gorm:"type:varchar(30);not null;default:''"`
-	HasThumbnail    bool          `gorm:"type:boolean;not null;default:false"`
-	ThumbnailMime   null.String   `gorm:"type:text"` // 追加
-	ThumbnailWidth  int           `gorm:"type:int;not null;default:0"`
-	ThumbnailHeight int           `gorm:"type:int;not null;default:0"`
-	ChannelID       uuid.NullUUID `gorm:"type:char(36)"` // 追加
-	CreatedAt       time.Time     `gorm:"precision:6"`
-	DeletedAt       *time.Time    `gorm:"precision:6"`
+	ID              uuid.UUID       `gorm:"type:char(36);not null;primary_key"`
+	Name            string          `gorm:"type:text;not null"`
+	Mime            string          `gorm:"type:text;not null"`
+	Size            int64           `gorm:"type:bigint;not null"`
+	CreatorID       optional.UUID   `gorm:"type:char(36)"` // nullable化
+	Hash            string          `gorm:"type:char(32);not null"`
+	Type            string          `gorm:"type:varchar(30);not null;default:''"`
+	HasThumbnail    bool            `gorm:"type:boolean;not null;default:false"`
+	ThumbnailMime   optional.String `gorm:"type:text"` // 追加
+	ThumbnailWidth  int             `gorm:"type:int;not null;default:0"`
+	ThumbnailHeight int             `gorm:"type:int;not null;default:0"`
+	ChannelID       optional.UUID   `gorm:"type:char(36)"` // 追加
+	CreatedAt       time.Time       `gorm:"precision:6"`
+	DeletedAt       *time.Time      `gorm:"precision:6"`
 }
 
 func (v7File) TableName() string {

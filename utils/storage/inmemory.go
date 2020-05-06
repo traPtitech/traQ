@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/ioext"
 	"io"
 	"io/ioutil"
@@ -22,7 +23,7 @@ func NewInMemoryFileStorage() *InMemoryFileStorage {
 }
 
 // SaveByKey srcの内容をkeyで指定されたファイルに書き込みます
-func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, name, contentType, fileType string) error {
+func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, name, contentType string, fileType model.FileType) error {
 	b, err := ioutil.ReadAll(src)
 	if err != nil {
 		return err
@@ -34,7 +35,7 @@ func (fs *InMemoryFileStorage) SaveByKey(src io.Reader, key, name, contentType, 
 }
 
 // OpenFileByKey ファイルを取得します
-func (fs *InMemoryFileStorage) OpenFileByKey(key, fileType string) (ioext.ReadSeekCloser, error) {
+func (fs *InMemoryFileStorage) OpenFileByKey(key string, fileType model.FileType) (ioext.ReadSeekCloser, error) {
 	fs.RLock()
 	f, ok := fs.fileMap[key]
 	fs.RUnlock()
@@ -45,7 +46,7 @@ func (fs *InMemoryFileStorage) OpenFileByKey(key, fileType string) (ioext.ReadSe
 }
 
 // DeleteByKey ファイルを削除します
-func (fs *InMemoryFileStorage) DeleteByKey(key, fileType string) error {
+func (fs *InMemoryFileStorage) DeleteByKey(key string, fileType model.FileType) error {
 	fs.Lock()
 	delete(fs.fileMap, key)
 	fs.Unlock()
@@ -53,7 +54,7 @@ func (fs *InMemoryFileStorage) DeleteByKey(key, fileType string) error {
 }
 
 // GenerateAccessURL "",nilを返します
-func (fs *InMemoryFileStorage) GenerateAccessURL(key, fileType string) (string, error) {
+func (fs *InMemoryFileStorage) GenerateAccessURL(key string, fileType model.FileType) (string, error) {
 	return "", nil
 }
 

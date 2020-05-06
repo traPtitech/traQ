@@ -64,7 +64,7 @@ func TestHandlers_GetPublicEmojiJSON(t *testing.T) {
 
 	var stamps []interface{}
 	for i := 0; i < 10; i++ {
-		s := mustMakeStamp(t, repo, random, uuid.Nil)
+		s := mustMakeStamp(t, repo, rand, uuid.Nil)
 		stamps = append(stamps, s.Name)
 	}
 
@@ -105,7 +105,7 @@ func TestHandlers_GetPublicEmojiCSS(t *testing.T) {
 	repo, server, _, _, _, _ := setup(t, s4)
 
 	for i := 0; i < 10; i++ {
-		mustMakeStamp(t, repo, random, uuid.Nil)
+		mustMakeStamp(t, repo, rand, uuid.Nil)
 	}
 
 	e := makeExp(t, server)
@@ -138,7 +138,7 @@ func TestHandlers_GetPublicEmojiImage(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, _, _ := setup(t, common5)
 
-	s := mustMakeStamp(t, repo, random, uuid.Nil)
+	s := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 	t.Run("Not Found", func(t *testing.T) {
 		t.Parallel()

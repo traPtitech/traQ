@@ -4,8 +4,8 @@ import (
 	"firebase.google.com/go/messaging"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/traPtitech/traQ/utils/optional"
 	"golang.org/x/exp/utf8string"
-	"gopkg.in/guregu/null.v3"
 	"strconv"
 	"time"
 )
@@ -43,7 +43,7 @@ type Payload struct {
 	Icon  string
 	Path  string
 	Tag   string
-	Image null.String
+	Image optional.String
 }
 
 // SetBodyWithEllipsis 100文字を超える場合は...で省略

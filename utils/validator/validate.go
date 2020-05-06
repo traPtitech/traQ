@@ -5,6 +5,7 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/optional"
 	"net/url"
 	"regexp"
 )
@@ -40,7 +41,7 @@ var NotNilUUID = vd.By(func(value interface{}) error {
 		if u == uuid.Nil {
 			return errors.New("invalid uuid")
 		}
-	case uuid.NullUUID:
+	case optional.UUID:
 		if u.Valid && u.UUID == uuid.Nil {
 			return errors.New("invalid uuid")
 		}

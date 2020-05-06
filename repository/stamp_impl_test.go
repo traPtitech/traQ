@@ -3,8 +3,8 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/traQ/utils"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"testing"
 )
 
@@ -18,7 +18,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 	t.Run("nil file id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateStamp(CreateStampArgs{Name: utils.RandAlphabetAndNumberString(20), FileID: uuid.Nil, CreatorID: user.GetID()})
+		_, err := repo.CreateStamp(CreateStampArgs{Name: random2.AlphaNumeric(20), FileID: uuid.Nil, CreatorID: user.GetID()})
 		assert.Error(t, err)
 	})
 
@@ -32,13 +32,13 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 	t.Run("file not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateStamp(CreateStampArgs{Name: utils.RandAlphabetAndNumberString(20), FileID: uuid.Must(uuid.NewV4()), CreatorID: user.GetID()})
+		_, err := repo.CreateStamp(CreateStampArgs{Name: random2.AlphaNumeric(20), FileID: uuid.Must(uuid.NewV4()), CreatorID: user.GetID()})
 		assert.Error(t, err)
 	})
 
 	t.Run("duplicate name", func(t *testing.T) {
 		t.Parallel()
-		s := mustMakeStamp(t, repo, random, uuid.Nil)
+		s := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 		_, err := repo.CreateStamp(CreateStampArgs{Name: s.Name, FileID: fid, CreatorID: user.GetID()})
 		assert.Error(t, err)
@@ -48,7 +48,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		name := utils.RandAlphabetAndNumberString(20)
+		name := random2.AlphaNumeric(20)
 		s, err := repo.CreateStamp(CreateStampArgs{Name: name, FileID: fid, CreatorID: user.GetID()})
 		if assert.NoError(err) {
 			assert.NotEmpty(s.ID)
@@ -66,7 +66,7 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common2)
 
-	s := mustMakeStamp(t, repo, random, uuid.Nil)
+	s := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -89,40 +89,40 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 	t.Run("invalid name", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{Name: null.StringFrom("あ")}))
+		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{Name: optional.StringFrom("あ")}))
 	})
 
 	t.Run("duplicate name", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{Name: null.StringFrom(s.Name)}))
+		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{Name: optional.StringFrom(s.Name)}))
 	})
 
 	t.Run("nil file id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{FileID: uuid.NullUUID{Valid: true}}))
+		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{FileID: optional.UUIDFrom(uuid.Nil)}))
 	})
 
 	t.Run("file not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{FileID: uuid.NullUUID{Valid: true, UUID: uuid.Must(uuid.NewV4())}}))
+		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{FileID: optional.UUIDFrom(uuid.Must(uuid.NewV4()))}))
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		assert, require := assertAndRequire(t)
 
-		s := mustMakeStamp(t, repo, random, uuid.Nil)
+		s := mustMakeStamp(t, repo, rand, uuid.Nil)
 		newFile, err := GenerateIconFile(repo, "stamp")
 		require.NoError(err)
-		newName := utils.RandAlphabetAndNumberString(20)
+		newName := random2.AlphaNumeric(20)
 
 		if assert.NoError(repo.UpdateStamp(s.ID, UpdateStampArgs{
-			Name:      null.StringFrom(newName),
-			FileID:    uuid.NullUUID{Valid: true, UUID: newFile},
-			CreatorID: uuid.NullUUID{Valid: true},
+			Name:      optional.StringFrom(newName),
+			FileID:    optional.UUIDFrom(newFile),
+			CreatorID: optional.UUIDFrom(uuid.Nil),
 		})) {
 			a, err := repo.GetStamp(s.ID)
 			require.NoError(err)
@@ -153,7 +153,7 @@ func TestRepositoryImpl_GetStamp(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
-		a := mustMakeStamp(t, repo, random, uuid.Nil)
+		a := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 		s, err := repo.GetStamp(a.ID)
 		if assert.NoError(err) {
@@ -185,7 +185,7 @@ func TestRepositoryImpl_DeleteStamp(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		s := mustMakeStamp(t, repo, random, uuid.Nil)
+		s := mustMakeStamp(t, repo, rand, uuid.Nil)
 		if assert.NoError(repo.DeleteStamp(s.ID)) {
 			_, err := repo.GetStamp(s.ID)
 			assert.EqualError(err, ErrNotFound.Error())
@@ -199,7 +199,7 @@ func TestRepositoryImpl_GetAllStamps(t *testing.T) {
 
 	n := 10
 	for i := 0; i < 10; i++ {
-		mustMakeStamp(t, repo, random, uuid.Nil)
+		mustMakeStamp(t, repo, rand, uuid.Nil)
 	}
 
 	arr, err := repo.GetAllStamps(false)
@@ -212,7 +212,7 @@ func TestRepositoryImpl_StampExists(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common2)
 
-	s := mustMakeStamp(t, repo, random, uuid.Nil)
+	s := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -249,7 +249,7 @@ func TestRepositoryImpl_ExistStamps(t *testing.T) {
 	stampIDs := make([]uuid.UUID, 0, 10)
 
 	for i := 0; i < 10; i++ {
-		s := mustMakeStamp(t, repo, random, uuid.Nil)
+		s := mustMakeStamp(t, repo, rand, uuid.Nil)
 		stampIDs = append(stampIDs, s.ID)
 	}
 
@@ -277,7 +277,7 @@ func TestRepositoryImpl_StampNameExists(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common2)
 
-	s := mustMakeStamp(t, repo, random, uuid.Nil)
+	s := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 	t.Run("empty", func(t *testing.T) {
 		t.Parallel()
@@ -291,7 +291,7 @@ func TestRepositoryImpl_StampNameExists(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		ok, err := repo.StampNameExists(utils.RandAlphabetAndNumberString(20))
+		ok, err := repo.StampNameExists(random2.AlphaNumeric(20))
 		if assert.NoError(t, err) {
 			assert.False(t, ok)
 		}
@@ -312,9 +312,9 @@ func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common2)
 
 	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
-	stamp1 := mustMakeStamp(t, repo, random, uuid.Nil)
-	stamp2 := mustMakeStamp(t, repo, random, uuid.Nil)
-	stamp3 := mustMakeStamp(t, repo, random, uuid.Nil)
+	stamp1 := mustMakeStamp(t, repo, rand, uuid.Nil)
+	stamp2 := mustMakeStamp(t, repo, rand, uuid.Nil)
+	stamp3 := mustMakeStamp(t, repo, rand, uuid.Nil)
 	mustAddMessageStamp(t, repo, message.ID, stamp1.ID, user.GetID())
 	mustAddMessageStamp(t, repo, message.ID, stamp3.ID, user.GetID())
 	mustAddMessageStamp(t, repo, message.ID, stamp2.ID, user.GetID())

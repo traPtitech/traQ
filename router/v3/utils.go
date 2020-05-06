@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,7 +14,6 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"gopkg.in/guregu/null.v3"
 )
 
 // NotImplemented 未実装API. 501 NotImplementedを返す
@@ -103,12 +103,12 @@ func getParamClipFolder(c echo.Context) *model.ClipFolder {
 }
 
 type MessagesQuery struct {
-	Limit     int       `query:"limit"`
-	Offset    int       `query:"offset"`
-	Since     null.Time `query:"since"`
-	Until     null.Time `query:"until"`
-	Inclusive bool      `query:"inclusive"`
-	Order     string    `query:"order"`
+	Limit     int           `query:"limit"`
+	Offset    int           `query:"offset"`
+	Since     optional.Time `query:"since"`
+	Until     optional.Time `query:"until"`
+	Inclusive bool          `query:"inclusive"`
+	Order     string        `query:"order"`
 }
 
 func (q *MessagesQuery) bind(c echo.Context) error {

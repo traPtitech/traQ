@@ -154,8 +154,8 @@ func TestRepositoryImpl_DeleteUnreadsByChannelID(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common3)
 
-	creator := mustMakeUser(t, repo, random)
-	channel2 := mustMakeChannel(t, repo, random)
+	creator := mustMakeUser(t, repo, rand)
+	channel2 := mustMakeChannel(t, repo, rand)
 	testMessage := mustMakeMessage(t, repo, creator.GetID(), channel.ID)
 	testMessage2 := mustMakeMessage(t, repo, creator.GetID(), channel2.ID)
 	mustMakeMessageUnread(t, repo, user.GetID(), testMessage.ID)
@@ -183,7 +183,7 @@ func TestRepositoryImpl_GetChannelLatestMessagesByUserID(t *testing.T) {
 
 	var latests []uuid.UUID
 	for j := 0; j < 10; j++ {
-		ch := mustMakeChannel(t, repo, random)
+		ch := mustMakeChannel(t, repo, rand)
 		if j < 5 {
 			mustChangeChannelSubscription(t, repo, ch.ID, user.GetID())
 		}
@@ -283,7 +283,7 @@ func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common3)
 
 	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
-	stamp := mustMakeStamp(t, repo, random, uuid.Nil)
+	stamp := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()
@@ -336,7 +336,7 @@ func TestRepositoryImpl_RemoveStampFromMessage(t *testing.T) {
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common3)
 
 	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
-	stamp := mustMakeStamp(t, repo, random, uuid.Nil)
+	stamp := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()

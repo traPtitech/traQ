@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/optional"
 	"testing"
 )
 
@@ -125,13 +126,13 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 
 		buf := bytes.NewBufferString("test message")
 		args := SaveFileArgs{
-			FileName: "test.txt",
-			FileSize: int64(buf.Len()),
-			FileType: model.FileTypeUserFile,
-			Src:      buf,
-			ACL:      ACL{},
+			FileName:  "test.txt",
+			FileSize:  int64(buf.Len()),
+			FileType:  model.FileTypeUserFile,
+			CreatorID: optional.UUIDFrom(user.GetID()),
+			Src:       buf,
+			ACL:       ACL{},
 		}
-		args.SetCreator(user.GetID())
 		f, err := repo.SaveFile(args)
 		require.NoError(t, err)
 
@@ -156,7 +157,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 		t.Run("denied user", func(t *testing.T) {
 			t.Parallel()
 
-			user := mustMakeUser(t, repo, random)
+			user := mustMakeUser(t, repo, rand)
 			ok, err := repo.IsFileAccessible(f.GetID(), user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
@@ -167,16 +168,16 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 	t.Run("Allow two", func(t *testing.T) {
 		t.Parallel()
 
-		user2 := mustMakeUser(t, repo, random)
+		user2 := mustMakeUser(t, repo, rand)
 		buf := bytes.NewBufferString("test message")
 		args := SaveFileArgs{
-			FileName: "test.txt",
-			FileSize: int64(buf.Len()),
-			FileType: model.FileTypeUserFile,
-			Src:      buf,
-			ACL:      ACL{user2.GetID(): true},
+			FileName:  "test.txt",
+			FileSize:  int64(buf.Len()),
+			FileType:  model.FileTypeUserFile,
+			CreatorID: optional.UUIDFrom(user.GetID()),
+			Src:       buf,
+			ACL:       ACL{user2.GetID(): true},
 		}
-		args.SetCreator(user.GetID())
 		f, err := repo.SaveFile(args)
 		require.NoError(t, err)
 
@@ -210,7 +211,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 		t.Run("denied user", func(t *testing.T) {
 			t.Parallel()
 
-			user := mustMakeUser(t, repo, random)
+			user := mustMakeUser(t, repo, rand)
 			ok, err := repo.IsFileAccessible(f.GetID(), user.GetID())
 			if assert.NoError(t, err) {
 				assert.False(t, ok)
@@ -221,7 +222,7 @@ func TestRepositoryImpl_IsFileAccessible(t *testing.T) {
 	t.Run("Deny rule", func(t *testing.T) {
 		t.Parallel()
 
-		deniedUser := mustMakeUser(t, repo, random)
+		deniedUser := mustMakeUser(t, repo, rand)
 		buf := bytes.NewBufferString("test message")
 		args := SaveFileArgs{
 			FileName: "test.txt",

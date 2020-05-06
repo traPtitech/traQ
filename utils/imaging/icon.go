@@ -1,4 +1,4 @@
-package utils
+package imaging
 
 import (
 	"github.com/jakobvarmose/go-qidenticon"

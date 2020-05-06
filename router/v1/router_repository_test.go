@@ -5,6 +5,8 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
+	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"image"
 	"io"
 	"math"
@@ -26,7 +28,6 @@ import (
 	"github.com/traPtitech/traQ/utils/storage"
 	"github.com/traPtitech/traQ/utils/validator"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/guregu/null.v3"
 )
 
 var (
@@ -269,7 +270,7 @@ func (repo *TestRepository) CreateUser(args repository.CreateUserArgs) (model.Us
 	}
 
 	if len(args.Password) > 0 {
-		salt := utils.GenerateSalt()
+		salt := random2.Salt()
 		user.Password = hex.EncodeToString(utils.HashPassword(args.Password, salt))
 		user.Salt = hex.EncodeToString(salt)
 	}
@@ -436,7 +437,7 @@ func (repo *TestRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserA
 		u.UpdatedAt = time.Now()
 	}
 	if args.Password.Valid {
-		salt := utils.GenerateSalt()
+		salt := random2.Salt()
 		hashed := utils.HashPassword(args.Password.String, salt)
 		u.Salt = hex.EncodeToString(salt)
 		u.Password = hex.EncodeToString(hashed)
@@ -2046,7 +2047,7 @@ func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (model.FileMe
 		size, _ := repo.generateThumbnail(ctx, f, thumbSrc)
 		if !size.Empty() {
 			f.HasThumbnail = true
-			f.ThumbnailMime = null.StringFrom("image/png")
+			f.ThumbnailMime = optional.StringFrom("image/png")
 			f.ThumbnailWidth = size.Size().X
 			f.ThumbnailHeight = size.Size().Y
 		}
@@ -2416,8 +2417,8 @@ func (repo *TestRepository) IssueToken(client *model.OAuth2Client, userID uuid.U
 		ID:             uuid.Must(uuid.NewV4()),
 		UserID:         userID,
 		RedirectURI:    redirectURI,
-		AccessToken:    utils.RandAlphabetAndNumberString(36),
-		RefreshToken:   utils.RandAlphabetAndNumberString(36),
+		AccessToken:    random2.AlphaNumeric(36),
+		RefreshToken:   random2.AlphaNumeric(36),
 		RefreshEnabled: refresh,
 		CreatedAt:      time.Now(),
 		ExpiresIn:      expire,
@@ -2607,7 +2608,7 @@ func (repo *TestRepository) CreateClipFolder(userID uuid.UUID, name, description
 	panic("implement me")
 }
 
-func (repo *TestRepository) UpdateClipFolder(folderID uuid.UUID, name, description null.String) error {
+func (repo *TestRepository) UpdateClipFolder(folderID uuid.UUID, name, description optional.String) error {
 	panic("implement me")
 }
 
@@ -2660,11 +2661,11 @@ func (f *fileMetaImpl) GetFileSize() int64 {
 	return f.meta.Size
 }
 
-func (f *fileMetaImpl) GetFileType() string {
+func (f *fileMetaImpl) GetFileType() model.FileType {
 	return f.meta.Type
 }
 
-func (f *fileMetaImpl) GetCreatorID() uuid.NullUUID {
+func (f *fileMetaImpl) GetCreatorID() optional.UUID {
 	return f.meta.CreatorID
 }
 
@@ -2688,7 +2689,7 @@ func (f *fileMetaImpl) GetThumbnailHeight() int {
 	return f.meta.ThumbnailHeight
 }
 
-func (f *fileMetaImpl) GetUploadChannelID() uuid.NullUUID {
+func (f *fileMetaImpl) GetUploadChannelID() optional.UUID {
 	return f.meta.ChannelID
 }
 

@@ -2,14 +2,13 @@ package repository
 
 import (
 	"crypto/md5"
-	"database/sql"
 	"encoding/hex"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/ioext"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
-	"gopkg.in/guregu/null.v3"
 	"image/png"
 	"io"
 	"time"
@@ -40,11 +39,11 @@ func (f *fileMetaImpl) GetFileSize() int64 {
 	return f.meta.Size
 }
 
-func (f *fileMetaImpl) GetFileType() string {
+func (f *fileMetaImpl) GetFileType() model.FileType {
 	return f.meta.Type
 }
 
-func (f *fileMetaImpl) GetCreatorID() uuid.NullUUID {
+func (f *fileMetaImpl) GetCreatorID() optional.UUID {
 	return f.meta.CreatorID
 }
 
@@ -68,7 +67,7 @@ func (f *fileMetaImpl) GetThumbnailHeight() int {
 	return f.meta.ThumbnailHeight
 }
 
-func (f *fileMetaImpl) GetUploadChannelID() uuid.NullUUID {
+func (f *fileMetaImpl) GetUploadChannelID() optional.UUID {
 	return f.meta.ChannelID
 }
 
@@ -95,7 +94,7 @@ func (f *fileMetaImpl) GetAlternativeURL() string {
 // GetFiles implements FileRepository interface.
 func (repo *GormRepository) GetFiles(q FilesQuery) (result []model.FileMeta, more bool, err error) {
 	files := make([]*model.File, 0)
-	tx := repo.db
+	tx := repo.db.Where("files.type = ?", q.Type.String())
 
 	if q.ChannelID.Valid {
 		if q.ChannelID.UUID == uuid.Nil {
@@ -110,9 +109,6 @@ func (repo *GormRepository) GetFiles(q FilesQuery) (result []model.FileMeta, mor
 		} else {
 			tx = tx.Where("files.creator_id = ?", q.UploaderID.UUID)
 		}
-	}
-	if q.Type.Valid {
-		tx = tx.Where("files.type = ?", q.Type.String)
 	}
 
 	if q.Inclusive {
@@ -170,7 +166,7 @@ func (repo *GormRepository) SaveFile(args SaveFileArgs) (model.FileMeta, error) 
 
 	if args.Thumbnail != nil {
 		f.HasThumbnail = true
-		f.ThumbnailMime = null.StringFrom("image/png")
+		f.ThumbnailMime = optional.StringFrom("image/png")
 		f.ThumbnailWidth = args.Thumbnail.Bounds().Size().X
 		f.ThumbnailHeight = args.Thumbnail.Bounds().Size().Y
 
@@ -200,8 +196,8 @@ func (repo *GormRepository) SaveFile(args SaveFileArgs) (model.FileMeta, error) 
 		for uid, allow := range args.ACL {
 			if err := tx.Create(&model.FileACLEntry{
 				FileID: f.ID,
-				UserID: uuid.NullUUID{UUID: uid, Valid: true},
-				Allow:  sql.NullBool{Bool: allow, Valid: true},
+				UserID: optional.UUIDFrom(uid),
+				Allow:  optional.BoolFrom(allow),
 			}).Error; err != nil {
 				return err
 			}

@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"github.com/traPtitech/traQ/utils/optional"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -10,7 +11,7 @@ import (
 type Channel struct {
 	ID       uuid.UUID     `json:"id"`
 	Name     string        `json:"name"`
-	ParentID uuid.NullUUID `json:"parentId"`
+	ParentID optional.UUID `json:"parentId"`
 	Topic    string        `json:"topic"`
 	Children []uuid.UUID   `json:"children"`
 	Archived bool          `json:"archived"`
@@ -21,7 +22,7 @@ func formatChannel(channel *model.Channel, childrenID []uuid.UUID) *Channel {
 	return &Channel{
 		ID:       channel.ID,
 		Name:     channel.Name,
-		ParentID: uuid.NullUUID{UUID: channel.ParentID, Valid: channel.ParentID != uuid.Nil},
+		ParentID: optional.NewUUID(channel.ParentID, channel.ParentID != uuid.Nil),
 		Topic:    channel.Topic,
 		Children: childrenID,
 		Archived: channel.IsArchived(),
@@ -98,12 +99,12 @@ type UserDetail struct {
 	DisplayName string        `json:"displayName"`
 	Name        string        `json:"name"`
 	TwitterID   string        `json:"twitterId"`
-	LastOnline  *time.Time    `json:"lastOnline"`
+	LastOnline  optional.Time `json:"lastOnline"`
 	UpdatedAt   time.Time     `json:"updatedAt"`
 	Tags        []UserTag     `json:"tags"`
 	Groups      []uuid.UUID   `json:"groups"`
 	Bio         string        `json:"bio"`
-	HomeChannel uuid.NullUUID `json:"homeChannel"`
+	HomeChannel optional.UUID `json:"homeChannel"`
 }
 
 func formatUserDetail(user model.UserInfo, uts []*model.UsersTag, g []uuid.UUID) *UserDetail {
@@ -115,7 +116,7 @@ func formatUserDetail(user model.UserInfo, uts []*model.UsersTag, g []uuid.UUID)
 		DisplayName: user.GetResponseDisplayName(),
 		Name:        user.GetName(),
 		TwitterID:   user.GetTwitterID(),
-		LastOnline:  user.GetLastOnline().Ptr(),
+		LastOnline:  user.GetLastOnline(),
 		UpdatedAt:   user.GetUpdatedAt(),
 		Tags:        formatUserTags(uts),
 		Groups:      g,
@@ -239,7 +240,7 @@ type Message struct {
 	UpdatedAt time.Time            `json:"updatedAt"`
 	Pinned    bool                 `json:"pinned"`
 	Stamps    []model.MessageStamp `json:"stamps"`
-	ThreadID  uuid.NullUUID        `json:"threadId"` // TODO
+	ThreadID  optional.UUID        `json:"threadId"` // TODO
 }
 
 func formatMessage(m *model.Message) *Message {
@@ -389,8 +390,8 @@ type FileInfo struct {
 	MD5        string             `json:"md5"`
 	CreatedAt  time.Time          `json:"createdAt"`
 	Thumbnail  *FileInfoThumbnail `json:"thumbnail"`
-	ChannelID  uuid.NullUUID      `json:"channelId"`
-	UploaderID uuid.NullUUID      `json:"uploaderId"`
+	ChannelID  optional.UUID      `json:"channelId"`
+	UploaderID optional.UUID      `json:"uploaderId"`
 }
 
 func formatFileInfo(meta model.FileMeta) *FileInfo {

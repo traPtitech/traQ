@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strings"
 	"testing"
@@ -19,15 +20,15 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	repo, server, _, require, session, _ := setup(t, common1)
 
 	file := mustMakeFile(t, repo)
-	grantedUser := mustMakeUser(t, repo, random)
+	grantedUser := mustMakeUser(t, repo, rand)
 	secureContent := "secure"
 	secureFile, err := repo.SaveFile(repository.SaveFileArgs{
 		FileName:  "secure",
 		FileSize:  int64(len(secureContent)),
 		MimeType:  "text/plain",
 		FileType:  model.FileTypeUserFile,
-		CreatorID: uuid.NullUUID{Valid: true, UUID: grantedUser.GetID()},
-		ChannelID: uuid.NullUUID{},
+		CreatorID: optional.UUIDFrom(grantedUser.GetID()),
+		ChannelID: optional.UUID{},
 		ACL:       repository.ACL{},
 		Src:       strings.NewReader(secureContent),
 	})
@@ -150,15 +151,15 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 	repo, server, _, require, session, _ := setup(t, common1)
 
 	file := mustMakeFile(t, repo)
-	grantedUser := mustMakeUser(t, repo, random)
+	grantedUser := mustMakeUser(t, repo, rand)
 	secureContent := "secure"
 	secureFile, err := repo.SaveFile(repository.SaveFileArgs{
 		FileName:  "secure",
 		FileSize:  int64(len(secureContent)),
 		MimeType:  "text/plain",
 		FileType:  model.FileTypeUserFile,
-		CreatorID: uuid.NullUUID{Valid: true, UUID: grantedUser.GetID()},
-		ChannelID: uuid.NullUUID{},
+		CreatorID: optional.UUIDFrom(grantedUser.GetID()),
+		ChannelID: optional.UUID{},
 		ACL:       repository.ACL{},
 		Src:       strings.NewReader(secureContent),
 	})

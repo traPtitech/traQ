@@ -7,8 +7,8 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/hmac"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"strings"
 	"testing"
@@ -17,9 +17,9 @@ import (
 func TestHandlers_GetWebhooks(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, random)
+	ch := mustMakeChannel(t, repo, rand)
 	for i := 0; i < 10; i++ {
-		mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "")
+		mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "")
 	}
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -45,7 +45,7 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 
 	t.Run("Other user", func(t *testing.T) {
 		t.Parallel()
-		u := mustMakeUser(t, repo, random)
+		u := mustMakeUser(t, repo, rand)
 		e := makeExp(t, server)
 		e.GET("/api/1.0/webhooks").
 			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
@@ -60,7 +60,7 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 func TestHandlers_PostWebhooks(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _ := setup(t, common6)
-	ch := mustMakeChannel(t, repo, random)
+	ch := mustMakeChannel(t, repo, rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -84,7 +84,7 @@ func TestHandlers_PostWebhooks(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		name := utils.RandAlphabetAndNumberString(20)
+		name := random2.AlphaNumeric(20)
 		e := makeExp(t, server)
 		id := e.POST("/api/1.0/webhooks").
 			WithJSON(map[string]string{"name": name, "description": "test", "channelId": ch.ID.String()}).
@@ -110,8 +110,8 @@ func TestHandlers_PostWebhooks(t *testing.T) {
 func TestHandlers_GetWebhook(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, random)
-	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "")
+	ch := mustMakeChannel(t, repo, rand)
+	wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "")
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -132,7 +132,7 @@ func TestHandlers_GetWebhook(t *testing.T) {
 
 	t.Run("Other user", func(t *testing.T) {
 		t.Parallel()
-		u := mustMakeUser(t, repo, random)
+		u := mustMakeUser(t, repo, rand)
 		e := makeExp(t, server)
 		e.GET("/api/1.0/webhooks/{webhookID}", wb.GetID()).
 			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
@@ -161,8 +161,8 @@ func TestHandlers_GetWebhook(t *testing.T) {
 func TestHandlers_PatchWebhook(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, random)
-	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "secret")
+	ch := mustMakeChannel(t, repo, rand)
+	wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "secret")
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -184,7 +184,7 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 
 	t.Run("Other user", func(t *testing.T) {
 		t.Parallel()
-		u := mustMakeUser(t, repo, random)
+		u := mustMakeUser(t, repo, rand)
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/webhooks/{webhookID}", wb.GetID()).
 			WithJSON(map[string]string{"name": strings.Repeat("a", 30)}).
@@ -216,10 +216,10 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 		assert, require := assertAndRequire(t)
-		name := utils.RandAlphabetAndNumberString(20)
-		desc := utils.RandAlphabetAndNumberString(20)
-		secret := utils.RandAlphabetAndNumberString(20)
-		ch := mustMakeChannel(t, repo, random)
+		name := random2.AlphaNumeric(20)
+		desc := random2.AlphaNumeric(20)
+		secret := random2.AlphaNumeric(20)
+		ch := mustMakeChannel(t, repo, rand)
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithJSON(map[string]string{"name": name, "description": desc, "channelId": ch.ID.String(), "secret": secret}).
@@ -239,8 +239,8 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 func TestHandlers_DeleteWebhook(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, random)
-	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "secret")
+	ch := mustMakeChannel(t, repo, rand)
+	wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "secret")
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -261,7 +261,7 @@ func TestHandlers_DeleteWebhook(t *testing.T) {
 
 	t.Run("Other user", func(t *testing.T) {
 		t.Parallel()
-		u := mustMakeUser(t, repo, random)
+		u := mustMakeUser(t, repo, rand)
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/webhooks/{webhookID}", wb.GetID()).
 			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
@@ -271,7 +271,7 @@ func TestHandlers_DeleteWebhook(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "secret")
+		wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "secret")
 		e := makeExp(t, server)
 		e.DELETE("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithCookie(sessions.CookieName, session).
@@ -286,8 +286,8 @@ func TestHandlers_DeleteWebhook(t *testing.T) {
 func TestHandlers_PutWebhookIcon(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, random)
-	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "secret")
+	ch := mustMakeChannel(t, repo, rand)
+	wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "secret")
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -308,7 +308,7 @@ func TestHandlers_PutWebhookIcon(t *testing.T) {
 
 	t.Run("Other user", func(t *testing.T) {
 		t.Parallel()
-		u := mustMakeUser(t, repo, random)
+		u := mustMakeUser(t, repo, rand)
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/webhooks/{webhookID}/icon", wb.GetID()).
 			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
@@ -351,8 +351,8 @@ func TestHandlers_PutWebhookIcon(t *testing.T) {
 func TestHandlers_PostWebhook(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, _, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, random)
-	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "secret")
+	ch := mustMakeChannel(t, repo, rand)
+	wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "secret")
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
@@ -446,7 +446,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 		t.Parallel()
 		assert, require := assertAndRequire(t)
 		body := "test"
-		ch := mustMakeChannel(t, repo, random)
+		ch := mustMakeChannel(t, repo, rand)
 		e := makeExp(t, server)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText(body).
@@ -467,8 +467,8 @@ func TestHandlers_PostWebhook(t *testing.T) {
 func TestHandlers_GetWebhookMessages(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, random)
-	wb := mustMakeWebhook(t, repo, random, ch.ID, testUser.GetID(), "")
+	ch := mustMakeChannel(t, repo, rand)
+	wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "")
 
 	for i := 0; i < 60; i++ {
 		mustMakeMessage(t, repo, wb.GetBotUserID(), ch.ID)

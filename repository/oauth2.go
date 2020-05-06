@@ -3,25 +3,25 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 type UpdateClientArgs struct {
-	Name         null.String
-	Description  null.String
-	Confidential null.Bool
-	DeveloperID  uuid.NullUUID
-	Secret       null.String
-	CallbackURL  null.String
+	Name         optional.String
+	Description  optional.String
+	Confidential optional.Bool
+	DeveloperID  optional.UUID
+	Secret       optional.String
+	CallbackURL  optional.String
 	Scopes       model.AccessScopes
 }
 
 type GetClientsQuery struct {
-	DeveloperID uuid.NullUUID
+	DeveloperID optional.UUID
 }
 
 func (q GetClientsQuery) IsDevelopedBy(userID uuid.UUID) GetClientsQuery {
-	q.DeveloperID = uuid.NullUUID{Valid: true, UUID: userID}
+	q.DeveloperID = optional.UUIDFrom(userID)
 	return q
 }
 

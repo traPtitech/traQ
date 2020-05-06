@@ -3,8 +3,8 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/traQ/utils"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"strings"
 	"testing"
 )
@@ -14,7 +14,7 @@ func TestRepositoryImpl_CreateUserGroup(t *testing.T) {
 	repo, _, _, user := setupWithUser(t, common3)
 
 	// Success
-	a := utils.RandAlphabetAndNumberString(20)
+	a := random2.AlphaNumeric(20)
 	if g, err := repo.CreateUserGroup(a, "", "", user.GetID()); assert.NoError(t, err) {
 		assert.NotNil(t, g)
 	}
@@ -36,7 +36,7 @@ func TestRepositoryImpl_CreateUserGroup(t *testing.T) {
 	t.Run("invalid type", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateUserGroup(utils.RandAlphabetAndNumberString(20), "", strings.Repeat("a", 31), user.GetID())
+		_, err := repo.CreateUserGroup(random2.AlphaNumeric(20), "", strings.Repeat("a", 31), user.GetID())
 		assert.Error(t, err)
 	})
 }
@@ -54,13 +54,13 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		assert, require := assertAndRequire(t)
-		g := mustMakeUserGroup(t, repo, random, user.GetID())
+		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
-		a := utils.RandAlphabetAndNumberString(20)
+		a := random2.AlphaNumeric(20)
 		if assert.NoError(repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{
-			Name:        null.StringFrom(a),
-			Description: null.StringFrom(a),
-			Type:        null.StringFrom(a),
+			Name:        optional.StringFrom(a),
+			Description: optional.StringFrom(a),
+			Type:        optional.StringFrom(a),
 		})) {
 			g, err := repo.GetUserGroup(g.ID)
 			require.NoError(err)
@@ -72,7 +72,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 
 	t.Run("no change", func(t *testing.T) {
 		t.Parallel()
-		g := mustMakeUserGroup(t, repo, random, user.GetID())
+		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
 		assert.NoError(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{}))
 	})
@@ -85,25 +85,25 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 
 	t.Run("duplicate", func(t *testing.T) {
 		t.Parallel()
-		a := utils.RandAlphabetAndNumberString(20)
+		a := random2.AlphaNumeric(20)
 		mustMakeUserGroup(t, repo, a, user.GetID())
-		g := mustMakeUserGroup(t, repo, random, user.GetID())
+		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
-		assert.EqualError(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Name: null.StringFrom(a)}), ErrAlreadyExists.Error())
+		assert.EqualError(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Name: optional.StringFrom(a)}), ErrAlreadyExists.Error())
 	})
 
 	t.Run("too long name", func(t *testing.T) {
 		t.Parallel()
-		g := mustMakeUserGroup(t, repo, random, user.GetID())
+		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
-		assert.Error(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Name: null.StringFrom(strings.Repeat("a", 31))}))
+		assert.Error(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Name: optional.StringFrom(strings.Repeat("a", 31))}))
 	})
 
 	t.Run("invalid type", func(t *testing.T) {
 		t.Parallel()
-		g := mustMakeUserGroup(t, repo, random, user.GetID())
+		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
-		assert.Error(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Type: null.StringFrom(strings.Repeat("a", 31))}))
+		assert.Error(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Type: optional.StringFrom(strings.Repeat("a", 31))}))
 	})
 }
 
@@ -125,7 +125,7 @@ func TestRepositoryImpl_DeleteUserGroup(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		g := mustMakeUserGroup(t, repo, random, user.GetID())
+		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
 		assert.NoError(t, repo.DeleteUserGroup(g.ID))
 	})
@@ -152,7 +152,7 @@ func TestRepositoryImpl_GetUserGroup(t *testing.T) {
 	t.Run("found", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		g := mustMakeUserGroup(t, repo, random, user.GetID())
+		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
 		a, err := repo.GetUserGroup(g.ID)
 		if assert.NoError(err) {
@@ -177,14 +177,14 @@ func TestRepositoryImpl_GetUserGroupByName(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserGroupByName(utils.RandAlphabetAndNumberString(20))
+		_, err := repo.GetUserGroupByName(random2.AlphaNumeric(20))
 		assert.EqualError(t, err, ErrNotFound.Error())
 	})
 
 	t.Run("found", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		g := mustMakeUserGroup(t, repo, random, user.GetID())
+		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
 		a, err := repo.GetUserGroupByName(g.Name)
 		if assert.NoError(err) {
@@ -199,10 +199,10 @@ func TestRepositoryImpl_GetUserBelongingGroups(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common3)
 
-	user2 := mustMakeUser(t, repo, random)
-	g1 := mustMakeUserGroup(t, repo, random, user.GetID())
-	g2 := mustMakeUserGroup(t, repo, random, user.GetID())
-	mustMakeUserGroup(t, repo, random, user.GetID())
+	user2 := mustMakeUser(t, repo, rand)
+	g1 := mustMakeUserGroup(t, repo, rand, user.GetID())
+	g2 := mustMakeUserGroup(t, repo, rand, user.GetID())
+	mustMakeUserGroup(t, repo, rand, user.GetID())
 
 	mustAddUserToGroup(t, repo, user.GetID(), g1.ID)
 	mustAddUserToGroup(t, repo, user.GetID(), g2.ID)
@@ -240,9 +240,9 @@ func TestRepositoryImpl_GetAllUserGroups(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user := setupWithUser(t, ex1)
 
-	mustMakeUserGroup(t, repo, random, user.GetID())
-	mustMakeUserGroup(t, repo, random, user.GetID())
-	mustMakeUserGroup(t, repo, random, user.GetID())
+	mustMakeUserGroup(t, repo, rand, user.GetID())
+	mustMakeUserGroup(t, repo, rand, user.GetID())
+	mustMakeUserGroup(t, repo, rand, user.GetID())
 
 	gs, err := repo.GetAllUserGroups()
 	if assert.NoError(err) {
@@ -254,7 +254,7 @@ func TestRepositoryImpl_AddUserToGroup(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common3)
 
-	g := mustMakeUserGroup(t, repo, random, user.GetID())
+	g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -274,7 +274,7 @@ func TestRepositoryImpl_RemoveUserFromGroup(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common3)
 
-	g := mustMakeUserGroup(t, repo, random, user.GetID())
+	g := mustMakeUserGroup(t, repo, rand, user.GetID())
 	mustAddUserToGroup(t, repo, user.GetID(), g.ID)
 
 	t.Run("nil id", func(t *testing.T) {

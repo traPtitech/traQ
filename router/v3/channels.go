@@ -10,9 +10,9 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/set"
 	"github.com/traPtitech/traQ/utils/validator"
-	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"strconv"
 	"strings"
@@ -38,7 +38,7 @@ func (h *Handlers) GetChannels(c echo.Context) error {
 // PostChannelRequest POST /channels リクエストボディ
 type PostChannelRequest struct {
 	Name   string        `json:"name"`
-	Parent uuid.NullUUID `json:"parent"`
+	Parent optional.UUID `json:"parent"`
 }
 
 func (r PostChannelRequest) Validate() error {
@@ -83,10 +83,10 @@ func (h *Handlers) GetChannel(c echo.Context) error {
 
 // PatchChannelRequest PATCH /channels/:channelID リクエストボディ
 type PatchChannelRequest struct {
-	Name     null.String   `json:"name"`
-	Archived null.Bool     `json:"archived"`
-	Force    null.Bool     `json:"force"`
-	Parent   uuid.NullUUID `json:"parent"`
+	Name     optional.String `json:"name"`
+	Archived optional.Bool   `json:"archived"`
+	Force    optional.Bool   `json:"force"`
+	Parent   optional.UUID   `json:"parent"`
 }
 
 func (r PatchChannelRequest) Validate() error {
@@ -107,7 +107,7 @@ func (h *Handlers) EditChannel(c echo.Context) error {
 	args := repository.UpdateChannelArgs{
 		UpdaterID:          getRequestUserID(c),
 		Name:               req.Name,
-		Visibility:         null.NewBool(!req.Archived.Bool, req.Archived.Valid),
+		Visibility:         optional.NewBool(!req.Archived.Bool, req.Archived.Valid),
 		ForcedNotification: req.Force,
 		Parent:             req.Parent,
 	}
@@ -176,7 +176,7 @@ func (h *Handlers) EditChannelTopic(c echo.Context) error {
 
 	if err := h.Repo.UpdateChannel(ch.ID, repository.UpdateChannelArgs{
 		UpdaterID: getRequestUserID(c),
-		Topic:     null.StringFrom(req.Topic),
+		Topic:     optional.StringFrom(req.Topic),
 	}); err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -197,12 +197,12 @@ func (h *Handlers) GetChannelPins(c echo.Context) error {
 }
 
 type channelEventsQuery struct {
-	Limit     int       `query:"limit"`
-	Offset    int       `query:"offset"`
-	Since     null.Time `query:"since"`
-	Until     null.Time `query:"until"`
-	Inclusive bool      `query:"inclusive"`
-	Order     string    `query:"order"`
+	Limit     int           `query:"limit"`
+	Offset    int           `query:"offset"`
+	Since     optional.Time `query:"since"`
+	Until     optional.Time `query:"until"`
+	Inclusive bool          `query:"inclusive"`
+	Order     string        `query:"order"`
 }
 
 func (q *channelEventsQuery) bind(c echo.Context) error {

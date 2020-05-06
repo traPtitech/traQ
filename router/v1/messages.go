@@ -9,11 +9,10 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils/message"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // GetMessageByID GET /messages/:messageID
@@ -289,12 +288,12 @@ func (h *Handlers) GetUnreadChannels(c echo.Context) error {
 }
 
 type messagesQuery struct {
-	Limit     int        `query:"limit"`
-	Offset    int        `query:"offset"`
-	Since     *time.Time `query:"since"`
-	Until     *time.Time `query:"until"`
-	Inclusive bool       `query:"inclusive"`
-	Order     string     `query:"order"`
+	Limit     int           `query:"limit"`
+	Offset    int           `query:"offset"`
+	Since     optional.Time `query:"since"`
+	Until     optional.Time `query:"until"`
+	Inclusive bool          `query:"inclusive"`
+	Order     string        `query:"order"`
 }
 
 func (q *messagesQuery) bind(c echo.Context) error {
@@ -303,8 +302,8 @@ func (q *messagesQuery) bind(c echo.Context) error {
 
 func (q *messagesQuery) convert() repository.MessagesQuery {
 	return repository.MessagesQuery{
-		Since:     null.TimeFromPtr(q.Since),
-		Until:     null.TimeFromPtr(q.Until),
+		Since:     q.Since,
+		Until:     q.Until,
 		Inclusive: q.Inclusive,
 		Limit:     q.Limit,
 		Offset:    q.Offset,

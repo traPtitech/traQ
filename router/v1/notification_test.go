@@ -15,12 +15,12 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _ := setup(t, common2)
 
-	user := mustMakeUser(t, repo, random)
+	user := mustMakeUser(t, repo, rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannel(t, repo, random)
+		channel := mustMakeChannel(t, repo, rand)
 
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
@@ -31,7 +31,7 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannel(t, repo, random)
+		channel := mustMakeChannel(t, repo, rand)
 
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
@@ -53,7 +53,7 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 	t.Run("Successful2", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannel(t, repo, random)
+		channel := mustMakeChannel(t, repo, rand)
 
 		e := makeExp(t, server)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
@@ -75,7 +75,7 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 	t.Run("Successful3", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannel(t, repo, random)
+		channel := mustMakeChannel(t, repo, rand)
 		mustChangeChannelSubscription(t, repo, channel.ID, user.GetID())
 
 		e := makeExp(t, server)
@@ -95,8 +95,8 @@ func TestHandlers_GetNotificationStatus(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _ := setup(t, common2)
 
-	channel := mustMakeChannel(t, repo, random)
-	user := mustMakeUser(t, repo, random)
+	channel := mustMakeChannel(t, repo, rand)
+	user := mustMakeUser(t, repo, rand)
 
 	mustChangeChannelSubscription(t, repo, channel.ID, user.GetID())
 
@@ -126,9 +126,9 @@ func TestHandlers_GetNotificationChannels(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _ := setup(t, common2)
 
-	user := mustMakeUser(t, repo, random)
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.GetID())
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.GetID())
+	user := mustMakeUser(t, repo, rand)
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, rand).ID, user.GetID())
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, rand).ID, user.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -156,8 +156,8 @@ func TestHandlers_GetMyNotificationChannels(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common2)
 
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.GetID())
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, random).ID, user.GetID())
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, rand).ID, user.GetID())
+	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, rand).ID, user.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()

@@ -46,7 +46,6 @@ require (
 	google.golang.org/api v0.23.0
 	gopkg.in/go-playground/webhooks.v5 v5.13.0
 	gopkg.in/gormigrate.v1 v1.6.0
-	gopkg.in/guregu/null.v3 v3.5.0
 	gopkg.in/ini.v1 v1.51.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.4.1 // indirect
 	gopkg.in/yaml.v2 v2.2.8

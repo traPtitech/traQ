@@ -3,14 +3,14 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // UpdateUserGroupNameArgs ユーザーグループ更新引数
 type UpdateUserGroupNameArgs struct {
-	Name        null.String
-	Description null.String
-	Type        null.String
+	Name        optional.String
+	Description optional.String
+	Type        optional.String
 }
 
 // UserGroupRepository ユーザーグループリポジトリ

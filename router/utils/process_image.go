@@ -29,7 +29,7 @@ func SaveUploadStampImage(p imaging.Processor, c echo.Context, repo repository.R
 	return saveUploadImage(p, c, repo, name, model.FileTypeStamp, stampMaxFileSize, stampMaxImageSize)
 }
 
-func saveUploadImage(p imaging.Processor, c echo.Context, repo repository.Repository, name string, fType string, maxFileSize int64, maxImageSize int) (uuid.UUID, error) {
+func saveUploadImage(p imaging.Processor, c echo.Context, repo repository.Repository, name string, fType model.FileType, maxFileSize int64, maxImageSize int) (uuid.UUID, error) {
 	const (
 		tooLargeImage = "too large image"
 		badImage      = "bad image"

@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"testing"
 )
 
@@ -18,31 +18,31 @@ func TestGormRepository_UpdateChannel(t *testing.T) {
 	cases := []UpdateChannelArgs{
 		{
 			UpdaterID: user.GetID(),
-			Topic:     null.StringFrom("test"),
+			Topic:     optional.StringFrom("test"),
 		},
 		{
 			UpdaterID: user.GetID(),
-			Topic:     null.StringFrom(""),
+			Topic:     optional.StringFrom(""),
 		},
 		{
 			UpdaterID:          user.GetID(),
-			Visibility:         null.BoolFrom(true),
-			ForcedNotification: null.BoolFrom(true),
+			Visibility:         optional.BoolFrom(true),
+			ForcedNotification: optional.BoolFrom(true),
 		},
 		{
 			UpdaterID:          user.GetID(),
-			Visibility:         null.BoolFrom(true),
-			ForcedNotification: null.BoolFrom(false),
+			Visibility:         optional.BoolFrom(true),
+			ForcedNotification: optional.BoolFrom(false),
 		},
 		{
 			UpdaterID:          user.GetID(),
-			Visibility:         null.BoolFrom(false),
-			ForcedNotification: null.BoolFrom(true),
+			Visibility:         optional.BoolFrom(false),
+			ForcedNotification: optional.BoolFrom(true),
 		},
 		{
 			UpdaterID:          user.GetID(),
-			Visibility:         null.BoolFrom(false),
-			ForcedNotification: null.BoolFrom(false),
+			Visibility:         optional.BoolFrom(false),
+			ForcedNotification: optional.BoolFrom(false),
 		},
 	}
 
@@ -51,7 +51,7 @@ func TestGormRepository_UpdateChannel(t *testing.T) {
 		i := i
 		t.Run(fmt.Sprintf("Case%d", i), func(t *testing.T) {
 			t.Parallel()
-			ch := mustMakeChannel(t, repo, random)
+			ch := mustMakeChannel(t, repo, rand)
 			if assert.NoError(t, repo.UpdateChannel(ch.ID, v)) {
 				ch, err := repo.GetChannel(ch.ID)
 				require.NoError(t, err)
@@ -124,16 +124,16 @@ func TestRepositoryImpl_ChangeChannelName(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.Error(repo.UpdateChannel(parent.ID, UpdateChannelArgs{Name: null.StringFrom("")}))
-		assert.Error(repo.UpdateChannel(parent.ID, UpdateChannelArgs{Name: null.StringFrom("あああ")}))
-		assert.Error(repo.UpdateChannel(parent.ID, UpdateChannelArgs{Name: null.StringFrom("test2???")}))
+		assert.Error(repo.UpdateChannel(parent.ID, UpdateChannelArgs{Name: optional.StringFrom("")}))
+		assert.Error(repo.UpdateChannel(parent.ID, UpdateChannelArgs{Name: optional.StringFrom("あああ")}))
+		assert.Error(repo.UpdateChannel(parent.ID, UpdateChannelArgs{Name: optional.StringFrom("test2???")}))
 	})
 
 	t.Run("c2", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		if assert.NoError(repo.UpdateChannel(c2.ID, UpdateChannelArgs{Name: null.StringFrom("aiueo")})) {
+		if assert.NoError(repo.UpdateChannel(c2.ID, UpdateChannelArgs{Name: optional.StringFrom("aiueo")})) {
 			c, err := repo.GetChannel(c2.ID)
 			require.NoError(t, err)
 			assert.Equal("aiueo", c.Name)
@@ -144,8 +144,8 @@ func TestRepositoryImpl_ChangeChannelName(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		assert.Error(repo.UpdateChannel(c3.ID, UpdateChannelArgs{Name: null.StringFrom("test4")}))
-		if assert.NoError(repo.UpdateChannel(c3.ID, UpdateChannelArgs{Name: null.StringFrom("test2")})) {
+		assert.Error(repo.UpdateChannel(c3.ID, UpdateChannelArgs{Name: optional.StringFrom("test4")}))
+		if assert.NoError(repo.UpdateChannel(c3.ID, UpdateChannelArgs{Name: optional.StringFrom("test2")})) {
 			c, err := repo.GetChannel(c3.ID)
 			require.NoError(t, err)
 			assert.Equal("test2", c.Name)
@@ -157,21 +157,21 @@ func TestRepositoryImpl_ChangeChannelParent(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common)
 
-	chName := utils.RandAlphabetAndNumberString(20)
+	chName := random2.AlphaNumeric(20)
 	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, chName, uuid.Nil)
-	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
+	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, rand, c2.ID)
 	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, chName, c3.ID)
 
 	t.Run("fail", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Error(t, repo.UpdateChannel(c4.ID, UpdateChannelArgs{Parent: uuid.NullUUID{Valid: true, UUID: uuid.Nil}}))
+		assert.Error(t, repo.UpdateChannel(c4.ID, UpdateChannelArgs{Parent: optional.UUIDFrom(uuid.Nil)}))
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		if assert.NoError(t, repo.UpdateChannel(c3.ID, UpdateChannelArgs{Parent: uuid.NullUUID{Valid: true, UUID: uuid.Nil}})) {
+		if assert.NoError(t, repo.UpdateChannel(c3.ID, UpdateChannelArgs{Parent: optional.UUIDFrom(uuid.Nil)})) {
 			c, err := repo.GetChannel(c3.ID)
 			require.NoError(t, err)
 			assert.Equal(t, uuid.Nil, c.ParentID)
@@ -193,9 +193,9 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
-		ch := mustMakeChannel(t, repo, random)
-		user1 := mustMakeUser(t, repo, random)
-		user2 := mustMakeUser(t, repo, random)
+		ch := mustMakeChannel(t, repo, rand)
+		user1 := mustMakeUser(t, repo, rand)
+		user2 := mustMakeUser(t, repo, rand)
 
 		args := ChangeChannelSubscriptionArgs{
 			UpdaterID: uuid.Nil,
@@ -227,7 +227,7 @@ func TestRepositoryImpl_CreatePublicChannel(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user := setupWithUser(t, common)
 
-	name := utils.RandAlphabetAndNumberString(20)
+	name := random2.AlphaNumeric(20)
 	c, err := repo.CreatePublicChannel(name, uuid.Nil, user.GetID())
 	if assert.NoError(err) {
 		assert.NotEmpty(c.ID)

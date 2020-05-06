@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"testing"
 )
@@ -25,7 +25,7 @@ func TestHandlers_PostUserTag(t *testing.T) {
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		tag := utils.RandAlphabetAndNumberString(20)
+		tag := random2.AlphaNumeric(20)
 		e.POST("/api/1.0/users/{userID}/tags", user.GetID().String()).
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]string{"tag": tag}).
@@ -44,7 +44,7 @@ func TestHandlers_GetUserTags(t *testing.T) {
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common3)
 
 	for i := 0; i < 5; i++ {
-		mustMakeTag(t, repo, user.GetID(), random)
+		mustMakeTag(t, repo, user.GetID(), rand)
 	}
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -73,8 +73,8 @@ func TestHandlers_PatchUserTag(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common3)
 
-	other := mustMakeUser(t, repo, random)
-	tag := mustMakeTag(t, repo, user.GetID(), random)
+	other := mustMakeUser(t, repo, rand)
+	tag := mustMakeTag(t, repo, user.GetID(), rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -114,7 +114,7 @@ func TestHandlers_DeleteUserTag(t *testing.T) {
 	t.Parallel()
 	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common3)
 
-	tag := mustMakeTag(t, repo, user.GetID(), random)
+	tag := mustMakeTag(t, repo, user.GetID(), rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()

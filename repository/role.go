@@ -2,14 +2,14 @@ package repository
 
 import (
 	"github.com/traPtitech/traQ/model"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // UpdateRoleArgs ユーザーロール更新引数
 type UpdateRoleArgs struct {
 	Permissions  []string
 	Inheritances []string
-	OAuth2Scope  null.Bool
+	OAuth2Scope  optional.Bool
 }
 
 // UserRoleRepository ユーザーロールリポジトリ

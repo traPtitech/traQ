@@ -176,8 +176,7 @@ type ChannelEventDetail map[string]interface{}
 
 // Value database/sql/driver.Valuer 実装
 func (ced ChannelEventDetail) Value() (driver.Value, error) {
-	b, err := json.Marshal(ced)
-	return string(b), err
+	return json.MarshalToString(ced)
 }
 
 // Scan database/sql.Scanner 実装

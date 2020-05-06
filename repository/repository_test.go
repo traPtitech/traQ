@@ -11,7 +11,7 @@ import (
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"os"
@@ -28,7 +28,7 @@ const (
 	ex1      = "ex1"
 	ex2      = "ex2"
 	ex3      = "ex3"
-	random   = "random"
+	rand     = "random"
 )
 
 var (
@@ -96,19 +96,19 @@ func setup(t *testing.T, repo string) (Repository, *assert.Assertions, *require.
 func setupWithUserAndChannel(t *testing.T, repo string) (Repository, *assert.Assertions, *require.Assertions, model.UserInfo, *model.Channel) {
 	t.Helper()
 	r, assert, require := setup(t, repo)
-	return r, assert, require, mustMakeUser(t, r, random), mustMakeChannel(t, r, random)
+	return r, assert, require, mustMakeUser(t, r, rand), mustMakeChannel(t, r, rand)
 }
 
 func setupWithChannel(t *testing.T, repo string) (Repository, *assert.Assertions, *require.Assertions, *model.Channel) {
 	t.Helper()
 	r, assert, require := setup(t, repo)
-	return r, assert, require, mustMakeChannel(t, r, random)
+	return r, assert, require, mustMakeChannel(t, r, rand)
 }
 
 func setupWithUser(t *testing.T, repo string) (Repository, *assert.Assertions, *require.Assertions, model.UserInfo) {
 	t.Helper()
 	r, assert, require := setup(t, repo)
-	return r, assert, require, mustMakeUser(t, r, random)
+	return r, assert, require, mustMakeUser(t, r, rand)
 }
 
 func getEnvOrDefault(env string, def string) string {
@@ -129,8 +129,8 @@ func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {
 
 func mustMakeChannel(t *testing.T, repo Repository, name string) *model.Channel {
 	t.Helper()
-	if name == random {
-		name = utils.RandAlphabetAndNumberString(20)
+	if name == rand {
+		name = random.AlphaNumeric(20)
 	}
 	ch, err := repo.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
 	require.NoError(t, err)
@@ -139,8 +139,8 @@ func mustMakeChannel(t *testing.T, repo Repository, name string) *model.Channel 
 
 func mustMakeChannelDetail(t *testing.T, repo Repository, userID uuid.UUID, name string, parentID uuid.UUID) *model.Channel {
 	t.Helper()
-	if name == random {
-		name = utils.RandAlphabetAndNumberString(20)
+	if name == rand {
+		name = random.AlphaNumeric(20)
 	}
 	ch, err := repo.CreatePublicChannel(name, parentID, userID)
 	require.NoError(t, err)
@@ -161,8 +161,8 @@ func mustMakeMessageUnread(t *testing.T, repo Repository, userID, messageID uuid
 
 func mustMakeUser(t *testing.T, repo Repository, userName string) model.UserInfo {
 	t.Helper()
-	if userName == random {
-		userName = utils.RandAlphabetAndNumberString(32)
+	if userName == rand {
+		userName = random.AlphaNumeric(32)
 	}
 	u, err := repo.CreateUser(CreateUserArgs{Name: userName, Password: "test", Role: role.User})
 	require.NoError(t, err)
@@ -184,8 +184,8 @@ func mustMakeFile(t *testing.T, repo Repository) model.FileMeta {
 
 func mustMakeTag(t *testing.T, repo Repository, name string) *model.Tag {
 	t.Helper()
-	if name == random {
-		name = utils.RandAlphabetAndNumberString(20)
+	if name == rand {
+		name = random.AlphaNumeric(20)
 	}
 	tag, err := repo.CreateTag(name)
 	require.NoError(t, err)
@@ -206,8 +206,8 @@ func mustMakePin(t *testing.T, repo Repository, messageID, userID uuid.UUID) uui
 
 func mustMakeUserGroup(t *testing.T, repo Repository, name string, adminID uuid.UUID) *model.UserGroup {
 	t.Helper()
-	if name == random {
-		name = utils.RandAlphabetAndNumberString(20)
+	if name == rand {
+		name = random.AlphaNumeric(20)
 	}
 	g, err := repo.CreateUserGroup(name, "", "", adminID)
 	require.NoError(t, err)
@@ -221,8 +221,8 @@ func mustAddUserToGroup(t *testing.T, repo Repository, userID, groupID uuid.UUID
 
 func mustMakeStamp(t *testing.T, repo Repository, name string, userID uuid.UUID) *model.Stamp {
 	t.Helper()
-	if name == random {
-		name = utils.RandAlphabetAndNumberString(20)
+	if name == rand {
+		name = random.AlphaNumeric(20)
 	}
 	fid, err := GenerateIconFile(repo, name)
 	require.NoError(t, err)
@@ -239,11 +239,11 @@ func mustAddMessageStamp(t *testing.T, repo Repository, messageID, stampID, user
 
 func mustMakeStampPalette(t *testing.T, repo Repository, name, description string, stamps []uuid.UUID, userID uuid.UUID) *model.StampPalette {
 	t.Helper()
-	if name == random {
-		name = utils.RandAlphabetAndNumberString(20)
+	if name == rand {
+		name = random.AlphaNumeric(20)
 	}
-	if description == random {
-		description = utils.RandAlphabetAndNumberString(100)
+	if description == rand {
+		description = random.AlphaNumeric(100)
 	}
 	sp, err := repo.CreateStampPalette(name, description, stamps, userID)
 	require.NoError(t, err)
@@ -252,8 +252,8 @@ func mustMakeStampPalette(t *testing.T, repo Repository, name, description strin
 
 func mustMakeWebhook(t *testing.T, repo Repository, name string, channelID, creatorID uuid.UUID, secret string) model.Webhook {
 	t.Helper()
-	if name == random {
-		name = utils.RandAlphabetAndNumberString(20)
+	if name == rand {
+		name = random.AlphaNumeric(20)
 	}
 	w, err := repo.CreateWebhook(name, "", channelID, creatorID, secret)
 	require.NoError(t, err)
@@ -267,11 +267,11 @@ func mustChangeChannelSubscription(t *testing.T, repo Repository, channelID, use
 
 func mustMakeClipFolder(t *testing.T, repo Repository, userID uuid.UUID, name, description string) *model.ClipFolder {
 	t.Helper()
-	if name == random {
-		name = utils.RandAlphabetAndNumberString(20)
+	if name == rand {
+		name = random.AlphaNumeric(20)
 	}
-	if description == random {
-		description = utils.RandAlphabetAndNumberString(100)
+	if description == rand {
+		description = random.AlphaNumeric(100)
 	}
 	cf, err := repo.CreateClipFolder(userID, name, description)
 	require.NoError(t, err)

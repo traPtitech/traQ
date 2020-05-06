@@ -5,6 +5,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/random"
 	"net"
 	"net/http"
 	"strings"
@@ -122,7 +123,7 @@ func Get(rw http.ResponseWriter, req *http.Request, createIfNotExists bool) (*Se
 // IssueNewSession 新しいセッションを生成します
 func IssueNewSession(ip string, userAgent string) (s *Session, err error) {
 	session := &Session{
-		token:         utils.SecureRandAlphabetAndNumberString(50),
+		token:         random.SecureAlphaNumeric(50),
 		referenceID:   uuid.Must(uuid.NewV4()),
 		userID:        uuid.Nil,
 		created:       time.Now(),

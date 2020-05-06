@@ -10,8 +10,8 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"gopkg.in/guregu/null.v3"
 	"net/http"
 )
 
@@ -75,9 +75,9 @@ func (h *Handlers) GetUserGroup(c echo.Context) error {
 
 // PatchUserGroupRequest PATCH /groups/:groupID リクエストボディ
 type PatchUserGroupRequest struct {
-	Name        null.String `json:"name"`
-	Description null.String `json:"description"`
-	Type        null.String `json:"type"`
+	Name        optional.String `json:"name"`
+	Description optional.String `json:"description"`
+	Type        optional.String `json:"type"`
 }
 
 func (r PatchUserGroupRequest) Validate() error {

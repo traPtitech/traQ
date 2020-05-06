@@ -16,8 +16,8 @@ import (
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/message"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -108,11 +108,11 @@ func (h *Handlers) GetWebhook(c echo.Context) error {
 
 // PatchWebhookRequest PATCH /webhooks/:webhookID リクエストボディ
 type PatchWebhookRequest struct {
-	Name        null.String   `json:"name"`
-	Description null.String   `json:"description"`
-	ChannelID   uuid.NullUUID `json:"channelId"`
-	Secret      null.String   `json:"secret"`
-	OwnerID     uuid.NullUUID `json:"ownerId"`
+	Name        optional.String `json:"name"`
+	Description optional.String `json:"description"`
+	ChannelID   optional.UUID   `json:"channelId"`
+	Secret      optional.String `json:"secret"`
+	OwnerID     optional.UUID   `json:"ownerId"`
 }
 
 func (r PatchWebhookRequest) ValidateWithContext(ctx context.Context) error {

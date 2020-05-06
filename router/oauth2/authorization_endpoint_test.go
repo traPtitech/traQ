@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -40,18 +40,18 @@ func TestResponseType_valid(t *testing.T) {
 func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Parallel()
 	repo, server := Setup(t, db2)
-	defaultUser := CreateUser(t, repo, random)
+	defaultUser := CreateUser(t, repo, rand)
 	session := S(t, defaultUser.GetID())
 
 	scopesRead := model.AccessScopes{}
 	scopesRead.Add("read")
 
 	client := &model.OAuth2Client{
-		ID:           utils.RandAlphabetAndNumberString(36),
+		ID:           random2.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: false,
 		CreatorID:    uuid.Must(uuid.NewV4()),
-		Secret:       utils.RandAlphabetAndNumberString(36),
+		Secret:       random2.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesRead,
 	}
@@ -60,7 +60,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Success (prompt=none)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := CreateUser(t, repo, random)
+		user := CreateUser(t, repo, rand)
 		IssueToken(t, repo, client, user.GetID(), false)
 		e := R(t, server)
 		res := e.POST("/oauth2/authorize").
@@ -364,7 +364,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Found (prompt=none with broader scope)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := CreateUser(t, repo, random)
+		user := CreateUser(t, repo, rand)
 		_, err := repo.IssueToken(client, user.GetID(), client.RedirectURI, scopesRead, 1000, false)
 		require.NoError(t, err)
 		e := R(t, server)
@@ -390,11 +390,11 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 		scopes := model.AccessScopes{}
 		scopes.Add("read", "write")
 		client := &model.OAuth2Client{
-			ID:           utils.RandAlphabetAndNumberString(36),
+			ID:           random2.AlphaNumeric(36),
 			Name:         "test client",
 			Confidential: false,
 			CreatorID:    uuid.Must(uuid.NewV4()),
-			Secret:       utils.RandAlphabetAndNumberString(36),
+			Secret:       random2.AlphaNumeric(36),
 			Scopes:       scopes,
 		}
 		require.NoError(t, repo.SaveClient(client))
@@ -412,7 +412,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	t.Parallel()
 	repo, server := Setup(t, db2)
-	user := CreateUser(t, repo, random)
+	user := CreateUser(t, repo, rand)
 	session := S(t, user.GetID())
 
 	scopesRead := model.AccessScopes{}
@@ -421,11 +421,11 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	scopesReadWrite.Add("read", "write")
 
 	client := &model.OAuth2Client{
-		ID:           utils.RandAlphabetAndNumberString(36),
+		ID:           random2.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: true,
 		CreatorID:    uuid.Must(uuid.NewV4()),
-		Secret:       utils.RandAlphabetAndNumberString(36),
+		Secret:       random2.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesRead,
 	}
@@ -517,11 +517,11 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	t.Run("Forbidden (client without redirect uri", func(t *testing.T) {
 		t.Parallel()
 		client := &model.OAuth2Client{
-			ID:           utils.RandAlphabetAndNumberString(36),
+			ID:           random2.AlphaNumeric(36),
 			Name:         "test client",
 			Confidential: true,
 			CreatorID:    uuid.Must(uuid.NewV4()),
-			Secret:       utils.RandAlphabetAndNumberString(36),
+			Secret:       random2.AlphaNumeric(36),
 			Scopes:       scopesRead,
 		}
 		require.NoError(t, repo.SaveClient(client))

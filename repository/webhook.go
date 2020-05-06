@@ -3,16 +3,16 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // UpdateWebhookArgs Webhook情報更新引数
 type UpdateWebhookArgs struct {
-	Name        null.String
-	Description null.String
-	ChannelID   uuid.NullUUID
-	Secret      null.String
-	CreatorID   uuid.NullUUID
+	Name        optional.String
+	Description optional.String
+	ChannelID   optional.UUID
+	Secret      optional.String
+	CreatorID   optional.UUID
 }
 
 // WebhookRepository Webhookボットリポジトリ

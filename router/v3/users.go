@@ -16,8 +16,8 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
 	jwt2 "github.com/traPtitech/traQ/utils/jwt"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"time"
 )
@@ -64,7 +64,7 @@ func (h *Handlers) GetMe(c echo.Context) error {
 		"groups":      groups,
 		"tags":        formatUserTags(tags),
 		"updatedAt":   me.GetUpdatedAt(),
-		"lastOnline":  me.GetLastOnline().Ptr(),
+		"lastOnline":  me.GetLastOnline(),
 		"twitterId":   me.GetTwitterID(),
 		"name":        me.GetName(),
 		"displayName": me.GetResponseDisplayName(),
@@ -78,10 +78,10 @@ func (h *Handlers) GetMe(c echo.Context) error {
 
 // PatchMeRequest PATCH /users/me リクエストボディ
 type PatchMeRequest struct {
-	DisplayName null.String   `json:"displayName"`
-	TwitterID   null.String   `json:"twitterId"`
-	Bio         null.String   `json:"bio"`
-	HomeChannel uuid.NullUUID `json:"homeChannel"`
+	DisplayName optional.String `json:"displayName"`
+	TwitterID   optional.String `json:"twitterId"`
+	Bio         optional.String `json:"bio"`
+	HomeChannel optional.UUID   `json:"homeChannel"`
 }
 
 func (r PatchMeRequest) ValidateWithContext(ctx context.Context) error {
@@ -304,10 +304,10 @@ func (h *Handlers) GetUser(c echo.Context) error {
 
 // PatchUserRequest PATCH /users/:userID リクエストボディ
 type PatchUserRequest struct {
-	DisplayName null.String `json:"displayName"`
-	TwitterID   null.String `json:"twitterId"`
-	Role        null.String `json:"role"`
-	State       null.Int    `json:"state"`
+	DisplayName optional.String `json:"displayName"`
+	TwitterID   optional.String `json:"twitterId"`
+	Role        optional.String `json:"role"`
+	State       optional.Int    `json:"state"`
 }
 
 func (r PatchUserRequest) Validate() error {
@@ -366,7 +366,7 @@ func (h *Handlers) GetMyChannelSubscriptions(c echo.Context) error {
 
 // PutChannelSubscribeLevelRequest PUT /users/me/subscriptions/:channelID リクエストボディ
 type PutChannelSubscribeLevelRequest struct {
-	Level null.Int `json:"level"`
+	Level optional.Int `json:"level"`
 }
 
 func (r PutChannelSubscribeLevelRequest) Validate() error {

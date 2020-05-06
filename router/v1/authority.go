@@ -7,7 +7,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 )
 
@@ -60,9 +60,9 @@ func (h *Handlers) GetRole(c echo.Context) error {
 // PatchRole PATCH /authority/roles/:role
 func (h *Handlers) PatchRole(c echo.Context) error {
 	var req struct {
-		Permissions  []string  `json:"permissions"`
-		Inheritances []string  `json:"inheritances"`
-		OAuth2Scope  null.Bool `json:"oauth2Scope"`
+		Permissions  []string      `json:"permissions"`
+		Inheritances []string      `json:"inheritances"`
+		OAuth2Scope  optional.Bool `json:"oauth2Scope"`
 	}
 	if err := bindAndValidate(c, &req); err != nil {
 		return err

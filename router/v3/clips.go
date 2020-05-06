@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,7 +14,6 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils/validator"
-	"gopkg.in/guregu/null.v3"
 )
 
 type PostClipFolderRequest struct {
@@ -29,8 +29,8 @@ func (r PostClipFolderRequest) Validate() error {
 }
 
 type UpdateClipFolderRequest struct {
-	Name        null.String `json:"name"`
-	Description null.String `json:"description"`
+	Name        optional.String `json:"name"`
+	Description optional.String `json:"description"`
 }
 
 func (r UpdateClipFolderRequest) Validate() error {

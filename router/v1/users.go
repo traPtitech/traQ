@@ -5,6 +5,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
 	jwt2 "github.com/traPtitech/traQ/utils/jwt"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
 	"go.uber.org/zap"
 	"net/http"
@@ -19,7 +20,6 @@ import (
 	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sessions"
-	"gopkg.in/guregu/null.v3"
 )
 
 // PostLogin POST /login
@@ -130,9 +130,9 @@ func (h *Handlers) GetUserByID(c echo.Context) error {
 
 // PatchUserByIDRequest PATCH /users/:userID リクエストボディ
 type PatchUserByIDRequest struct {
-	DisplayName null.String `json:"displayName"`
-	TwitterID   null.String `json:"twitterId"`
-	Role        null.String `json:"role"`
+	DisplayName optional.String `json:"displayName"`
+	TwitterID   optional.String `json:"twitterId"`
+	Role        optional.String `json:"role"`
 }
 
 func (r PatchUserByIDRequest) Validate() error {
@@ -227,8 +227,8 @@ func (h *Handlers) PutMyIcon(c echo.Context) error {
 
 // PatchMeRequest PATCH /users/me リクエストボディ
 type PatchMeRequest struct {
-	DisplayName null.String `json:"displayName"`
-	TwitterID   null.String `json:"twitterId"`
+	DisplayName optional.String `json:"displayName"`
+	TwitterID   optional.String `json:"twitterId"`
 }
 
 func (r PatchMeRequest) Validate() error {

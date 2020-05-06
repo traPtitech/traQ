@@ -10,7 +10,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils/imaging"
-	"gopkg.in/guregu/null.v3"
+	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strconv"
 )
@@ -23,7 +23,7 @@ func ChangeUserIcon(p imaging.Processor, c echo.Context, repo repository.Reposit
 	}
 
 	// アイコン変更
-	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{IconFileID: uuid.NullUUID{UUID: iconID, Valid: true}}); err != nil {
+	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{IconFileID: optional.UUIDFrom(iconID)}); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -56,7 +56,7 @@ func ServeUserIcon(c echo.Context, repo repository.Repository, user model.UserIn
 
 // ChangeUserPassword userIDのユーザーのパスワードを変更する
 func ChangeUserPassword(c echo.Context, repo repository.Repository, userID uuid.UUID, newPassword string) error {
-	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{Password: null.StringFrom(newPassword)}); err != nil {
+	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{Password: optional.StringFrom(newPassword)}); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -77,7 +77,7 @@ func ServeFileThumbnail(c echo.Context, meta model.FileMeta) error {
 	}
 	defer file.Close()
 
-	c.Response().Header().Set(consts.HeaderFileMetaType, meta.GetFileType())
+	c.Response().Header().Set(consts.HeaderFileMetaType, meta.GetFileType().String())
 	c.Response().Header().Set(consts.HeaderCacheFile, "true")
 	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=31536000") // 1年間キャッシュ
 	return c.Stream(http.StatusOK, meta.GetThumbnailMIMEType(), file)
@@ -102,7 +102,7 @@ func ServeFile(c echo.Context, meta model.FileMeta) error {
 	if v, _ := strconv.ParseBool(c.QueryParam("dl")); v {
 		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", meta.GetFileName()))
 	}
-	c.Response().Header().Set(consts.HeaderFileMetaType, meta.GetFileType())
+	c.Response().Header().Set(consts.HeaderFileMetaType, meta.GetFileType().String())
 	switch meta.GetFileType() {
 	case model.FileTypeStamp, model.FileTypeIcon:
 		c.Response().Header().Set(consts.HeaderCacheFile, "true")
