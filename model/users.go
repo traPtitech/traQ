@@ -2,7 +2,6 @@ package model
 
 import (
 	"crypto/subtle"
-	"database/sql/driver"
 	"encoding/hex"
 	"errors"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
@@ -129,27 +128,6 @@ type UserProfile struct {
 
 func (UserProfile) TableName() string {
 	return "user_profiles"
-}
-
-type JSON map[string]interface{}
-
-// Value database/sql/driver.Valuer 実装
-func (v JSON) Value() (driver.Value, error) {
-	return json.MarshalToString(v)
-}
-
-// Scan database/sql.Scanner 実装
-func (v *JSON) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case nil:
-		return nil
-	case string:
-		return json.Unmarshal([]byte(s), v)
-	case []byte:
-		return json.Unmarshal(s, v)
-	default:
-		return errors.New("failed to scan JSON")
-	}
 }
 
 type ExternalProviderUser struct {
