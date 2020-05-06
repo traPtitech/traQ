@@ -3,8 +3,8 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"testing"
 )
 
@@ -18,7 +18,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 	t.Run("nil file id", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateStamp(CreateStampArgs{Name: utils.RandAlphabetAndNumberString(20), FileID: uuid.Nil, CreatorID: user.GetID()})
+		_, err := repo.CreateStamp(CreateStampArgs{Name: random2.AlphaNumeric(20), FileID: uuid.Nil, CreatorID: user.GetID()})
 		assert.Error(t, err)
 	})
 
@@ -32,7 +32,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 	t.Run("file not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateStamp(CreateStampArgs{Name: utils.RandAlphabetAndNumberString(20), FileID: uuid.Must(uuid.NewV4()), CreatorID: user.GetID()})
+		_, err := repo.CreateStamp(CreateStampArgs{Name: random2.AlphaNumeric(20), FileID: uuid.Must(uuid.NewV4()), CreatorID: user.GetID()})
 		assert.Error(t, err)
 	})
 
@@ -48,7 +48,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		name := utils.RandAlphabetAndNumberString(20)
+		name := random2.AlphaNumeric(20)
 		s, err := repo.CreateStamp(CreateStampArgs{Name: name, FileID: fid, CreatorID: user.GetID()})
 		if assert.NoError(err) {
 			assert.NotEmpty(s.ID)
@@ -117,7 +117,7 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 		s := mustMakeStamp(t, repo, random, uuid.Nil)
 		newFile, err := GenerateIconFile(repo, "stamp")
 		require.NoError(err)
-		newName := utils.RandAlphabetAndNumberString(20)
+		newName := random2.AlphaNumeric(20)
 
 		if assert.NoError(repo.UpdateStamp(s.ID, UpdateStampArgs{
 			Name:      optional.StringFrom(newName),
@@ -291,7 +291,7 @@ func TestRepositoryImpl_StampNameExists(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		ok, err := repo.StampNameExists(utils.RandAlphabetAndNumberString(20))
+		ok, err := repo.StampNameExists(random2.AlphaNumeric(20))
 		if assert.NoError(t, err) {
 			assert.False(t, ok)
 		}

@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"testing"
 )
@@ -25,7 +25,7 @@ func TestHandlers_PostUserTag(t *testing.T) {
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		tag := utils.RandAlphabetAndNumberString(20)
+		tag := random2.AlphaNumeric(20)
 		e.POST("/api/1.0/users/{userID}/tags", user.GetID().String()).
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]string{"tag": tag}).

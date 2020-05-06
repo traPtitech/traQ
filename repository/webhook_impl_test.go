@@ -5,8 +5,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"strings"
 	"testing"
 )
@@ -26,7 +26,7 @@ func TestRepositoryImpl_CreateWebhook(t *testing.T) {
 	t.Run("channel not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateWebhook(utils.RandAlphabetAndNumberString(20), "aaa", uuid.Must(uuid.NewV4()), user.GetID(), "test")
+		_, err := repo.CreateWebhook(random2.AlphaNumeric(20), "aaa", uuid.Must(uuid.NewV4()), user.GetID(), "test")
 		assert.Error(t, err)
 	})
 

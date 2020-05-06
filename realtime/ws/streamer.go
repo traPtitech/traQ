@@ -10,7 +10,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/realtime"
 	"github.com/traPtitech/traQ/router/extension"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/random"
 	"go.uber.org/zap"
 	"net/http"
 	"sync"
@@ -126,7 +126,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	session := &session{
-		key:      utils.RandAlphabetAndNumberString(20),
+		key:      random.AlphaNumeric(20),
 		req:      r,
 		conn:     conn,
 		open:     true,

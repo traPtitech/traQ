@@ -4,7 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/random"
 	"time"
 )
 
@@ -139,8 +139,8 @@ func (repo *GormRepository) IssueToken(client *model.OAuth2Client, userID uuid.U
 		ID:             uuid.Must(uuid.NewV4()),
 		UserID:         userID,
 		RedirectURI:    redirectURI,
-		AccessToken:    utils.SecureRandAlphabetAndNumberString(36),
-		RefreshToken:   utils.SecureRandAlphabetAndNumberString(36),
+		AccessToken:    random.SecureAlphaNumeric(36),
+		RefreshToken:   random.SecureAlphaNumeric(36),
 		RefreshEnabled: refresh,
 		CreatedAt:      time.Now(),
 		ExpiresIn:      expire,

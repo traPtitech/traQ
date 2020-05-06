@@ -7,8 +7,8 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/hmac"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"strings"
 	"testing"
@@ -84,7 +84,7 @@ func TestHandlers_PostWebhooks(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		name := utils.RandAlphabetAndNumberString(20)
+		name := random2.AlphaNumeric(20)
 		e := makeExp(t, server)
 		id := e.POST("/api/1.0/webhooks").
 			WithJSON(map[string]string{"name": name, "description": "test", "channelId": ch.ID.String()}).
@@ -216,9 +216,9 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 		assert, require := assertAndRequire(t)
-		name := utils.RandAlphabetAndNumberString(20)
-		desc := utils.RandAlphabetAndNumberString(20)
-		secret := utils.RandAlphabetAndNumberString(20)
+		name := random2.AlphaNumeric(20)
+		desc := random2.AlphaNumeric(20)
+		secret := random2.AlphaNumeric(20)
 		ch := mustMakeChannel(t, repo, random)
 		e := makeExp(t, server)
 		e.PATCH("/api/1.0/webhooks/{webhookId}", wb.GetID()).

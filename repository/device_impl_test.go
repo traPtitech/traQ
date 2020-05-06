@@ -4,7 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/set"
 	"testing"
 )
@@ -15,8 +15,8 @@ func TestRepositoryImpl_RegisterDevice(t *testing.T) {
 
 	id1 := mustMakeUser(t, repo, random).GetID()
 	id2 := mustMakeUser(t, repo, random).GetID()
-	token1 := utils.RandAlphabetAndNumberString(20)
-	token2 := utils.RandAlphabetAndNumberString(20)
+	token1 := random2.AlphaNumeric(20)
+	token2 := random2.AlphaNumeric(20)
 
 	cases := []struct {
 		user  uuid.UUID
@@ -49,10 +49,10 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 
 	id1 := mustMakeUser(t, repo, random).GetID()
 	id2 := mustMakeUser(t, repo, random).GetID()
-	token1 := utils.RandAlphabetAndNumberString(20)
-	token2 := utils.RandAlphabetAndNumberString(20)
-	token3 := utils.RandAlphabetAndNumberString(20)
-	token4 := utils.RandAlphabetAndNumberString(20)
+	token1 := random2.AlphaNumeric(20)
+	token2 := random2.AlphaNumeric(20)
+	token3 := random2.AlphaNumeric(20)
+	token4 := random2.AlphaNumeric(20)
 
 	_, err := repo.RegisterDevice(id1, token1)
 	require.NoError(err)
@@ -84,9 +84,9 @@ func TestRepositoryImpl_GetDevicesByUserID(t *testing.T) {
 
 	id1 := mustMakeUser(t, repo, random).GetID()
 	id2 := mustMakeUser(t, repo, random).GetID()
-	token1 := utils.RandAlphabetAndNumberString(20)
-	token2 := utils.RandAlphabetAndNumberString(20)
-	token3 := utils.RandAlphabetAndNumberString(20)
+	token1 := random2.AlphaNumeric(20)
+	token2 := random2.AlphaNumeric(20)
+	token3 := random2.AlphaNumeric(20)
 
 	_, err := repo.RegisterDevice(id1, token1)
 	require.NoError(err)
@@ -123,9 +123,9 @@ func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 
 	id1 := mustMakeUser(t, repo, random).GetID()
 	id2 := mustMakeUser(t, repo, random).GetID()
-	token1 := utils.RandAlphabetAndNumberString(20)
-	token2 := utils.RandAlphabetAndNumberString(20)
-	token3 := utils.RandAlphabetAndNumberString(20)
+	token1 := random2.AlphaNumeric(20)
+	token2 := random2.AlphaNumeric(20)
+	token3 := random2.AlphaNumeric(20)
 
 	_, err := repo.RegisterDevice(id1, token1)
 	require.NoError(err)
@@ -164,9 +164,9 @@ func TestRepositoryImpl_GetAllDevices(t *testing.T) {
 
 	id1 := mustMakeUser(t, repo, random).GetID()
 	id2 := mustMakeUser(t, repo, random).GetID()
-	token1 := utils.RandAlphabetAndNumberString(20)
-	token2 := utils.RandAlphabetAndNumberString(20)
-	token3 := utils.RandAlphabetAndNumberString(20)
+	token1 := random2.AlphaNumeric(20)
+	token2 := random2.AlphaNumeric(20)
+	token3 := random2.AlphaNumeric(20)
 
 	_, err := repo.RegisterDevice(id1, token1)
 	require.NoError(err)

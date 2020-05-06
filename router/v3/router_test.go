@@ -15,8 +15,8 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/imaging"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"image"
@@ -172,7 +172,7 @@ func R(t *testing.T, server *httptest.Server) *httpexpect.Expect {
 func CreateUser(t *testing.T, repo repository.Repository, userName string) model.UserInfo {
 	t.Helper()
 	if userName == random {
-		userName = utils.RandAlphabetAndNumberString(32)
+		userName = random2.AlphaNumeric(32)
 	}
 	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Password: "testtesttesttest", Role: role.User})
 	require.NoError(t, err)

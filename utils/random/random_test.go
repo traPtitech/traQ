@@ -1,4 +1,4 @@
-package utils
+package random
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -10,7 +10,7 @@ func TestRandAlphabetAndNumberString(t *testing.T) {
 
 	set := make(map[string]bool, 1000)
 	for i := 0; i < 1000; i++ {
-		s := RandAlphabetAndNumberString(10)
+		s := AlphaNumeric(10)
 		if set[s] {
 			t.FailNow()
 		}
@@ -23,7 +23,7 @@ func TestSecureRandAlphabetAndNumberString(t *testing.T) {
 
 	set := make(map[string]bool, 1000)
 	for i := 0; i < 1000; i++ {
-		s := SecureRandAlphabetAndNumberString(10)
+		s := SecureAlphaNumeric(10)
 		if set[s] {
 			t.FailNow()
 		}
@@ -34,7 +34,7 @@ func TestSecureRandAlphabetAndNumberString(t *testing.T) {
 func TestGenerateSalt(t *testing.T) {
 	t.Parallel()
 
-	salt := GenerateSalt()
+	salt := Salt()
 	assert.Len(t, salt, 64)
-	assert.NotEqual(t, salt, GenerateSalt())
+	assert.NotEqual(t, salt, Salt())
 }

@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"testing"
 )
@@ -18,7 +18,7 @@ func TestHandlers_GetChannels(t *testing.T) {
 
 	for i := 0; i < 5; i++ {
 		c := mustMakeChannel(t, repo, random)
-		_, err := repo.CreatePublicChannel(utils.RandAlphabetAndNumberString(20), c.ID, uuid.Nil)
+		_, err := repo.CreatePublicChannel(random2.AlphaNumeric(20), c.ID, uuid.Nil)
 		require.NoError(err)
 	}
 
@@ -81,7 +81,7 @@ func TestHandlers_PostChannels(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 
-		cname1 := utils.RandAlphabetAndNumberString(20)
+		cname1 := random2.AlphaNumeric(20)
 		obj := e.POST("/api/1.0/channels").
 			WithCookie(sessions.CookieName, session).
 			WithJSON(&PostChannelRequest{Name: cname1, Parent: uuid.Nil}).
@@ -102,7 +102,7 @@ func TestHandlers_PostChannels(t *testing.T) {
 		c1, err := uuid.FromString(obj.Value("channelId").String().Raw())
 		require.NoError(t, err)
 
-		cname2 := utils.RandAlphabetAndNumberString(20)
+		cname2 := random2.AlphaNumeric(20)
 		obj = e.POST("/api/1.0/channels").
 			WithCookie(sessions.CookieName, session).
 			WithJSON(&PostChannelRequest{Name: cname2, Parent: c1}).
@@ -154,7 +154,7 @@ func TestHandlers_PostChannelChildren(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 
-		cname1 := utils.RandAlphabetAndNumberString(20)
+		cname1 := random2.AlphaNumeric(20)
 		obj := e.POST("/api/1.0/channels/{channelID}/children", pubCh.ID.String()).
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]string{"name": cname1}).
@@ -251,7 +251,7 @@ func TestHandlers_PatchChannelByChannelID(t *testing.T) {
 		e := makeExp(t, server)
 		assert, require := assertAndRequire(t)
 
-		newName := utils.RandAlphabetAndNumberString(20)
+		newName := random2.AlphaNumeric(20)
 		e.PATCH("/api/1.0/channels/{channelID}", pubCh.ID.String()).
 			WithCookie(sessions.CookieName, adminSession).
 			WithJSON(map[string]interface{}{"name": newName, "visibility": false, "force": true}).
@@ -270,7 +270,7 @@ func TestHandlers_PatchChannelByChannelID(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 
-		newName := utils.RandAlphabetAndNumberString(20)
+		newName := random2.AlphaNumeric(20)
 		e.PATCH("/api/1.0/channels/{channelID}", pubCh.ID.String()).
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]interface{}{"name": newName, "visibility": false, "force": true}).

@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"testing"
 )
 
@@ -157,7 +157,7 @@ func TestRepositoryImpl_ChangeChannelParent(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common)
 
-	chName := utils.RandAlphabetAndNumberString(20)
+	chName := random2.AlphaNumeric(20)
 	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, chName, uuid.Nil)
 	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, random, c2.ID)
 	c4 := mustMakeChannelDetail(t, repo, uuid.Nil, chName, c3.ID)
@@ -227,7 +227,7 @@ func TestRepositoryImpl_CreatePublicChannel(t *testing.T) {
 	t.Parallel()
 	repo, assert, _, user := setupWithUser(t, common)
 
-	name := utils.RandAlphabetAndNumberString(20)
+	name := random2.AlphaNumeric(20)
 	c, err := repo.CreatePublicChannel(name, uuid.Nil, user.GetID())
 	if assert.NoError(err) {
 		assert.NotEmpty(c.ID)

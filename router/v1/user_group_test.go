@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"testing"
 )
@@ -47,7 +47,7 @@ func TestHandlers_PostUserGroups(t *testing.T) {
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		name := utils.RandAlphabetAndNumberString(20)
+		name := random2.AlphaNumeric(20)
 		e.POST("/api/1.0/groups").
 			WithJSON(map[string]interface{}{"name": name, "description": name}).
 			Expect().
@@ -67,7 +67,7 @@ func TestHandlers_PostUserGroups(t *testing.T) {
 	t.Run("conflict", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		name := utils.RandAlphabetAndNumberString(20)
+		name := random2.AlphaNumeric(20)
 		mustMakeUserGroup(t, repo, name, adminUser.GetID())
 		e.POST("/api/1.0/groups").
 			WithCookie(sessions.CookieName, session).
@@ -79,7 +79,7 @@ func TestHandlers_PostUserGroups(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		name := utils.RandAlphabetAndNumberString(20)
+		name := random2.AlphaNumeric(20)
 		obj := e.POST("/api/1.0/groups").
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]interface{}{"name": name, "description": name}).
@@ -176,7 +176,7 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 	t.Run("conflict", func(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
-		name := utils.RandAlphabetAndNumberString(20)
+		name := random2.AlphaNumeric(20)
 		mustMakeUserGroup(t, repo, name, adminUser.GetID())
 		e.PATCH("/api/1.0/groups/{groupID}", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
@@ -199,7 +199,7 @@ func TestHandlers_PatchUserGroup(t *testing.T) {
 		t.Parallel()
 		e := makeExp(t, server)
 		g := mustMakeUserGroup(t, repo, random, user.GetID())
-		name := utils.RandAlphabetAndNumberString(20)
+		name := random2.AlphaNumeric(20)
 		e.PATCH("/api/1.0/groups/{groupID}", g.ID.String()).
 			WithCookie(sessions.CookieName, session).
 			WithJSON(map[string]interface{}{"name": name, "description": "aaa"}).

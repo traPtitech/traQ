@@ -8,8 +8,8 @@ import (
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
 )
@@ -56,13 +56,13 @@ func (h *Handlers) CreateClient(c echo.Context) error {
 	}
 
 	client := &model.OAuth2Client{
-		ID:           utils.SecureRandAlphabetAndNumberString(36),
+		ID:           random.SecureAlphaNumeric(36),
 		Name:         req.Name,
 		Description:  req.Description,
 		Confidential: false,
 		CreatorID:    userID,
 		RedirectURI:  req.CallbackURL,
-		Secret:       utils.SecureRandAlphabetAndNumberString(36),
+		Secret:       random.SecureAlphaNumeric(36),
 		Scopes:       req.Scopes,
 	}
 	if err := h.Repo.SaveClient(client); err != nil {

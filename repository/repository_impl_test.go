@@ -3,7 +3,7 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/traQ/utils"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
 	"strings"
 	"testing"
@@ -31,7 +31,7 @@ func TestGormRepository_Group(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		t.Parallel()
-		_, ok := repo.Group(utils.RandAlphabetAndNumberString(32))
+		_, ok := repo.Group(random2.AlphaNumeric(32))
 		assert.False(t, ok)
 	})
 }
@@ -113,7 +113,7 @@ func TestGormRepository_User(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		t.Parallel()
-		_, ok := repo.User(utils.RandAlphabetAndNumberString(20))
+		_, ok := repo.User(random2.AlphaNumeric(20))
 		assert.False(t, ok)
 	})
 }

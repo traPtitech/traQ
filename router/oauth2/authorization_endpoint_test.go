@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -47,11 +47,11 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	scopesRead.Add("read")
 
 	client := &model.OAuth2Client{
-		ID:           utils.RandAlphabetAndNumberString(36),
+		ID:           random2.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: false,
 		CreatorID:    uuid.Must(uuid.NewV4()),
-		Secret:       utils.RandAlphabetAndNumberString(36),
+		Secret:       random2.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesRead,
 	}
@@ -390,11 +390,11 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 		scopes := model.AccessScopes{}
 		scopes.Add("read", "write")
 		client := &model.OAuth2Client{
-			ID:           utils.RandAlphabetAndNumberString(36),
+			ID:           random2.AlphaNumeric(36),
 			Name:         "test client",
 			Confidential: false,
 			CreatorID:    uuid.Must(uuid.NewV4()),
-			Secret:       utils.RandAlphabetAndNumberString(36),
+			Secret:       random2.AlphaNumeric(36),
 			Scopes:       scopes,
 		}
 		require.NoError(t, repo.SaveClient(client))
@@ -421,11 +421,11 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	scopesReadWrite.Add("read", "write")
 
 	client := &model.OAuth2Client{
-		ID:           utils.RandAlphabetAndNumberString(36),
+		ID:           random2.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: true,
 		CreatorID:    uuid.Must(uuid.NewV4()),
-		Secret:       utils.RandAlphabetAndNumberString(36),
+		Secret:       random2.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesRead,
 	}
@@ -517,11 +517,11 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	t.Run("Forbidden (client without redirect uri", func(t *testing.T) {
 		t.Parallel()
 		client := &model.OAuth2Client{
-			ID:           utils.RandAlphabetAndNumberString(36),
+			ID:           random2.AlphaNumeric(36),
 			Name:         "test client",
 			Confidential: true,
 			CreatorID:    uuid.Must(uuid.NewV4()),
-			Secret:       utils.RandAlphabetAndNumberString(36),
+			Secret:       random2.AlphaNumeric(36),
 			Scopes:       scopesRead,
 		}
 		require.NoError(t, repo.SaveClient(client))

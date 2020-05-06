@@ -2,11 +2,11 @@ package repository
 
 import (
 	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"testing"
 
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils"
 )
 
 func TestRepositoryImpl_CreateClipFolder(t *testing.T) {
@@ -16,7 +16,7 @@ func TestRepositoryImpl_CreateClipFolder(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		_, err := repo.CreateClipFolder(uuid.Nil, utils.RandAlphabetAndNumberString(20), utils.RandAlphabetAndNumberString(100))
+		_, err := repo.CreateClipFolder(uuid.Nil, random2.AlphaNumeric(20), random2.AlphaNumeric(100))
 
 		assert.Error(err)
 	})
@@ -25,8 +25,8 @@ func TestRepositoryImpl_CreateClipFolder(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		name := utils.RandAlphabetAndNumberString(20)
-		description := utils.RandAlphabetAndNumberString(100)
+		name := random2.AlphaNumeric(20)
+		description := random2.AlphaNumeric(100)
 		cf, err := repo.CreateClipFolder(user.GetID(), name, description)
 
 		if assert.NoError(err) {
@@ -71,8 +71,8 @@ func TestRepositoryImpl_UpdateClipFolder(t *testing.T) {
 		t.Parallel()
 		assert, require := assertAndRequire(t)
 
-		newName := utils.RandAlphabetAndNumberString(20)
-		newDescription := utils.RandAlphabetAndNumberString(100)
+		newName := random2.AlphaNumeric(20)
+		newDescription := random2.AlphaNumeric(100)
 
 		if assert.NoError(repo.UpdateClipFolder(clipFolder.ID, optional.StringFrom(newName), optional.StringFrom(newDescription))) {
 			newClipFolder, err := repo.GetClipFolder(clipFolder.ID)

@@ -3,8 +3,8 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"strings"
 	"testing"
 )
@@ -14,7 +14,7 @@ func TestRepositoryImpl_CreateUserGroup(t *testing.T) {
 	repo, _, _, user := setupWithUser(t, common3)
 
 	// Success
-	a := utils.RandAlphabetAndNumberString(20)
+	a := random2.AlphaNumeric(20)
 	if g, err := repo.CreateUserGroup(a, "", "", user.GetID()); assert.NoError(t, err) {
 		assert.NotNil(t, g)
 	}
@@ -36,7 +36,7 @@ func TestRepositoryImpl_CreateUserGroup(t *testing.T) {
 	t.Run("invalid type", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateUserGroup(utils.RandAlphabetAndNumberString(20), "", strings.Repeat("a", 31), user.GetID())
+		_, err := repo.CreateUserGroup(random2.AlphaNumeric(20), "", strings.Repeat("a", 31), user.GetID())
 		assert.Error(t, err)
 	})
 }
@@ -56,7 +56,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 		assert, require := assertAndRequire(t)
 		g := mustMakeUserGroup(t, repo, random, user.GetID())
 
-		a := utils.RandAlphabetAndNumberString(20)
+		a := random2.AlphaNumeric(20)
 		if assert.NoError(repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{
 			Name:        optional.StringFrom(a),
 			Description: optional.StringFrom(a),
@@ -85,7 +85,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 
 	t.Run("duplicate", func(t *testing.T) {
 		t.Parallel()
-		a := utils.RandAlphabetAndNumberString(20)
+		a := random2.AlphaNumeric(20)
 		mustMakeUserGroup(t, repo, a, user.GetID())
 		g := mustMakeUserGroup(t, repo, random, user.GetID())
 
@@ -177,7 +177,7 @@ func TestRepositoryImpl_GetUserGroupByName(t *testing.T) {
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.GetUserGroupByName(utils.RandAlphabetAndNumberString(20))
+		_, err := repo.GetUserGroupByName(random2.AlphaNumeric(20))
 		assert.EqualError(t, err, ErrNotFound.Error())
 	})
 

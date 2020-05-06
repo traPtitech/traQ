@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"image"
 	"io"
 	"math"
@@ -269,7 +270,7 @@ func (repo *TestRepository) CreateUser(args repository.CreateUserArgs) (model.Us
 	}
 
 	if len(args.Password) > 0 {
-		salt := utils.GenerateSalt()
+		salt := random2.Salt()
 		user.Password = hex.EncodeToString(utils.HashPassword(args.Password, salt))
 		user.Salt = hex.EncodeToString(salt)
 	}
@@ -436,7 +437,7 @@ func (repo *TestRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserA
 		u.UpdatedAt = time.Now()
 	}
 	if args.Password.Valid {
-		salt := utils.GenerateSalt()
+		salt := random2.Salt()
 		hashed := utils.HashPassword(args.Password.String, salt)
 		u.Salt = hex.EncodeToString(salt)
 		u.Password = hex.EncodeToString(hashed)
@@ -2416,8 +2417,8 @@ func (repo *TestRepository) IssueToken(client *model.OAuth2Client, userID uuid.U
 		ID:             uuid.Must(uuid.NewV4()),
 		UserID:         userID,
 		RedirectURI:    redirectURI,
-		AccessToken:    utils.RandAlphabetAndNumberString(36),
-		RefreshToken:   utils.RandAlphabetAndNumberString(36),
+		AccessToken:    random2.AlphaNumeric(36),
+		RefreshToken:   random2.AlphaNumeric(36),
 		RefreshEnabled: refresh,
 		CreatedAt:      time.Now(),
 		ExpiresIn:      expire,

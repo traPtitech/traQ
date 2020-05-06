@@ -9,7 +9,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
 	"math"
 	"strings"
@@ -59,13 +59,13 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 		ID:                bid,
 		BotUserID:         uid,
 		Description:       description,
-		VerificationToken: utils.SecureRandAlphabetAndNumberString(30),
+		VerificationToken: random.SecureAlphaNumeric(30),
 		PostURL:           webhookURL,
 		AccessTokenID:     tid,
 		SubscribeEvents:   model.BotEvents{},
 		Privileged:        false,
 		State:             model.BotInactive,
-		BotCode:           utils.RandAlphabetAndNumberString(30),
+		BotCode:           random.AlphaNumeric(30),
 		CreatorID:         creatorID,
 	}
 	scopes := model.AccessScopes{}
@@ -73,8 +73,8 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 	t := &model.OAuth2Token{
 		ID:             tid,
 		UserID:         uid,
-		AccessToken:    utils.SecureRandAlphabetAndNumberString(36),
-		RefreshToken:   utils.SecureRandAlphabetAndNumberString(36),
+		AccessToken:    random.SecureAlphaNumeric(36),
+		RefreshToken:   random.SecureAlphaNumeric(36),
 		RefreshEnabled: false,
 		CreatedAt:      time.Now(),
 		ExpiresIn:      math.MaxInt32,
@@ -318,8 +318,8 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 		}
 
 		bot.State = model.BotPaused
-		bot.BotCode = utils.RandAlphabetAndNumberString(30)
-		bot.VerificationToken = utils.SecureRandAlphabetAndNumberString(30)
+		bot.BotCode = random.AlphaNumeric(30)
+		bot.VerificationToken = random.SecureAlphaNumeric(30)
 
 		if err := tx.Delete(&model.OAuth2Token{ID: bot.AccessTokenID}).Error; err != nil {
 			return err
@@ -331,8 +331,8 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 		t := &model.OAuth2Token{
 			ID:             tid,
 			UserID:         bot.BotUserID,
-			AccessToken:    utils.SecureRandAlphabetAndNumberString(36),
-			RefreshToken:   utils.SecureRandAlphabetAndNumberString(36),
+			AccessToken:    random.SecureAlphaNumeric(36),
+			RefreshToken:   random.SecureAlphaNumeric(36),
 			RefreshEnabled: false,
 			CreatedAt:      time.Now(),
 			ExpiresIn:      math.MaxInt32,

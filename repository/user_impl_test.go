@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"strings"
 	"testing"
 )
@@ -183,7 +183,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 
 		t.Run("Success", func(t *testing.T) {
 			assert, require := assertAndRequire(t)
-			newDN := utils.RandAlphabetAndNumberString(30)
+			newDN := random2.AlphaNumeric(30)
 
 			if assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{DisplayName: optional.StringFrom(newDN)})) {
 				u, err := repo.GetUser(user.GetID(), true)

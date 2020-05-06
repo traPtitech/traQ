@@ -4,7 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"testing"
 )
 
@@ -145,7 +145,7 @@ func TestRepositoryImpl_GetUserIDsByTag(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common2)
 
-	s := utils.RandAlphabetAndNumberString(20)
+	s := random2.AlphaNumeric(20)
 	tag := mustMakeTag(t, repo, s)
 	for i := 0; i < 10; i++ {
 		mustAddTagToUser(t, repo, mustMakeUser(t, repo, random).GetID(), tag.ID)
@@ -165,7 +165,7 @@ func TestRepositoryImpl_GetUserIDsByTag(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		ids, err := repo.GetUserIDsByTag(utils.RandAlphabetAndNumberString(20))
+		ids, err := repo.GetUserIDsByTag(random2.AlphaNumeric(20))
 		if assert.NoError(err) {
 			assert.Len(ids, 0)
 		}
@@ -221,8 +221,8 @@ func TestRepositoryImpl_CreateTag(t *testing.T) {
 		restricted bool
 		tagType    string
 	}{
-		{"tagA_" + utils.RandAlphabetAndNumberString(20), false, ""},
-		{"tagB_" + utils.RandAlphabetAndNumberString(20), true, "aaaa"},
+		{"tagA_" + random2.AlphaNumeric(20), false, ""},
+		{"tagB_" + random2.AlphaNumeric(20), true, "aaaa"},
 	}
 
 	for _, v := range cases {
@@ -245,7 +245,7 @@ func TestRepositoryImpl_CreateTag(t *testing.T) {
 	_, err := repo.CreateTag("")
 	assert.Error(t, err)
 
-	_, err = repo.CreateTag(utils.RandAlphabetAndNumberString(31))
+	_, err = repo.CreateTag(random2.AlphaNumeric(31))
 	assert.Error(t, err)
 }
 
@@ -271,7 +271,7 @@ func TestRepositoryImpl_GetTagByName(t *testing.T) {
 	t.Parallel()
 	repo, assert, _ := setup(t, common2)
 
-	s := utils.RandAlphabetAndNumberString(20)
+	s := random2.AlphaNumeric(20)
 	tag := mustMakeTag(t, repo, s)
 
 	r, err := repo.GetTagByName(s)
@@ -279,7 +279,7 @@ func TestRepositoryImpl_GetTagByName(t *testing.T) {
 		assert.Equal(tag.ID, r.ID)
 	}
 
-	_, err = repo.GetTagByName(utils.RandAlphabetAndNumberString(20))
+	_, err = repo.GetTagByName(random2.AlphaNumeric(20))
 	assert.Error(err)
 
 	_, err = repo.GetTagByName("")
@@ -290,7 +290,7 @@ func TestRepositoryImpl_GetOrCreateTagByName(t *testing.T) {
 	t.Parallel()
 	repo, assert, _ := setup(t, common2)
 
-	s := utils.RandAlphabetAndNumberString(20)
+	s := random2.AlphaNumeric(20)
 	tag := mustMakeTag(t, repo, s)
 
 	r, err := repo.GetOrCreateTagByName(s)
@@ -298,7 +298,7 @@ func TestRepositoryImpl_GetOrCreateTagByName(t *testing.T) {
 		assert.Equal(tag.ID, r.ID)
 	}
 
-	b := utils.RandAlphabetAndNumberString(20)
+	b := random2.AlphaNumeric(20)
 	r, err = repo.GetOrCreateTagByName(b)
 	if assert.NoError(err) {
 		assert.NotZero(r.ID)
@@ -310,6 +310,6 @@ func TestRepositoryImpl_GetOrCreateTagByName(t *testing.T) {
 	_, err = repo.GetOrCreateTagByName("")
 	assert.Error(err)
 
-	_, err = repo.GetOrCreateTagByName(utils.RandAlphabetAndNumberString(31))
+	_, err = repo.GetOrCreateTagByName(random2.AlphaNumeric(31))
 	assert.Error(err)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
 	"unicode/utf8"
 )
@@ -27,7 +28,7 @@ func (repo *GormRepository) CreateUser(args CreateUserArgs) (model.UserInfo, err
 	}
 
 	if len(args.Password) > 0 {
-		salt := utils.GenerateSalt()
+		salt := random.Salt()
 		user.Password = hex.EncodeToString(utils.HashPassword(args.Password, salt))
 		user.Salt = hex.EncodeToString(salt)
 	}
@@ -211,7 +212,7 @@ func (repo *GormRepository) UpdateUser(id uuid.UUID, args UpdateUserArgs) error 
 			changes["icon"] = args.IconFileID.UUID
 		}
 		if args.Password.Valid {
-			salt := utils.GenerateSalt()
+			salt := random.Salt()
 			changes["salt"] = hex.EncodeToString(salt)
 			changes["password"] = hex.EncodeToString(utils.HashPassword(args.Password.String, salt))
 		}

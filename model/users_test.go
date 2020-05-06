@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/random"
 	"testing"
 	"testing/quick"
 
@@ -38,7 +39,7 @@ func TestAuthenticateUser(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 		tester := func(pass string) bool {
-			salt := utils.GenerateSalt()
+			salt := random.Salt()
 			hashed := utils.HashPassword(pass, salt)
 			u := &User{Password: hex.EncodeToString(hashed), Salt: hex.EncodeToString(salt)}
 			return u.Authenticate(pass) == nil

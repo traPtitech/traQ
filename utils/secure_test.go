@@ -2,6 +2,7 @@ package utils
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/traQ/utils/random"
 	"testing"
 )
 
@@ -10,8 +11,8 @@ func TestHashPassword(t *testing.T) {
 
 	password1 := "test"
 	password2 := "testtest"
-	salt1 := GenerateSalt()
-	salt2 := GenerateSalt()
+	salt1 := random.Salt()
+	salt2 := random.Salt()
 
 	assert.EqualValues(t, HashPassword(password1, salt1), HashPassword(password1, salt1))
 	assert.NotEqual(t, HashPassword(password1, salt1), HashPassword(password1, salt2))

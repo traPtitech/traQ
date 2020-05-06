@@ -2,8 +2,8 @@ package repository
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/utils"
 	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 	"testing"
 )
 
@@ -15,7 +15,7 @@ func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		_, err := repo.CreateStampPalette(utils.RandAlphabetAndNumberString(20), utils.RandAlphabetAndNumberString(100), make([]uuid.UUID, 0), uuid.Nil)
+		_, err := repo.CreateStampPalette(random2.AlphaNumeric(20), random2.AlphaNumeric(100), make([]uuid.UUID, 0), uuid.Nil)
 		assert.Error(err)
 	})
 
@@ -23,8 +23,8 @@ func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 		t.Parallel()
 		assert, _ := assertAndRequire(t)
 
-		name := utils.RandAlphabetAndNumberString(20)
-		description := utils.RandAlphabetAndNumberString(100)
+		name := random2.AlphaNumeric(20)
+		description := random2.AlphaNumeric(100)
 		stamps := make([]uuid.UUID, 0)
 		n := 100
 		for i := 0; i < n; i++ {
@@ -76,8 +76,8 @@ func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 		assert, require := assertAndRequire(t)
 
 		stampPalette := mustMakeStampPalette(t, repo, random, random, make([]uuid.UUID, 0), user.GetID())
-		newName := utils.RandAlphabetAndNumberString(20)
-		newDescription := utils.RandAlphabetAndNumberString(100)
+		newName := random2.AlphaNumeric(20)
+		newDescription := random2.AlphaNumeric(100)
 
 		if assert.NoError(repo.UpdateStampPalette(stampPalette.ID, UpdateStampPaletteArgs{
 			Name:        optional.StringFrom(newName),
