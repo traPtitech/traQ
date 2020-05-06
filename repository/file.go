@@ -7,7 +7,7 @@ import (
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/imaging"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
 	"image"
@@ -122,7 +122,7 @@ type ACL map[uuid.UUID]bool
 // DB, ファイルシステムによるエラーを返すことがあります。
 func GenerateIconFile(repo FileRepository, salt string) (uuid.UUID, error) {
 	var img bytes.Buffer
-	icon := utils.GenerateIcon(salt)
+	icon := imaging.GenerateIcon(salt)
 
 	if err := png.Encode(&img, icon); err != nil {
 		return uuid.Nil, err
