@@ -1581,8 +1581,6 @@ paths:
         - file
       operationId: uploadFile
       description: このAPIは削除されました。
-      requestBody:
-        required: true
       responses:
         '410':
           description: このAPIは廃止されました。
