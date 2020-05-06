@@ -15,6 +15,7 @@ import (
 	"github.com/traPtitech/traQ/utils"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
+	"image/png"
 	"net/http"
 	"strconv"
 	"time"
@@ -247,15 +248,16 @@ func processProfileIcon(repo repository.Repository, src []byte) (uuid.UUID, erro
 
 	// PNGに戻す
 	b := &bytes.Buffer{}
-	_ = imaging.Encode(b, img, imaging.PNG)
+	_ = png.Encode(b, img)
 
 	// ファイル保存
 	f, err := repo.SaveFile(repository.SaveFileArgs{
-		FileName: "icon",
-		FileSize: int64(b.Len()),
-		MimeType: consts.MimeImagePNG,
-		FileType: model.FileTypeIcon,
-		Src:      b,
+		FileName:  "icon",
+		FileSize:  int64(b.Len()),
+		MimeType:  consts.MimeImagePNG,
+		FileType:  model.FileTypeIcon,
+		Src:       b,
+		Thumbnail: img,
 	})
 	if err != nil {
 		return uuid.Nil, err

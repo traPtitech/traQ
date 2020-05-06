@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/spf13/viper"
+	"github.com/traPtitech/traQ/utils/imaging"
 	"github.com/traPtitech/traQ/utils/storage"
+	"image"
 	"time"
 )
 
@@ -30,6 +32,14 @@ type Config struct {
 
 	// ImageMagick ImageMagick実行ファイルパス
 	ImageMagick string `mapstructure:"imagemagick" yaml:"imagemagick"`
+
+	// Imaging 画像処理設定
+	Imaging struct {
+		// MaxPixels 処理可能な最大画素数 (default: 2560*1600)
+		MaxPixels int `mapstructure:"maxPixels" yaml:"maxPixels"`
+		// Concurrency 処理並列数 (default: 1)
+		Concurrency int `mapstructure:"concurrency" yaml:"concurrency"`
+	} `mapstructure:"imaging" yaml:"imaging"`
 
 	// MariaDB データベース接続設定
 	MariaDB struct {
@@ -190,6 +200,8 @@ func init() {
 	viper.SetDefault("gzip", true)
 	viper.SetDefault("accessLog.enabled", true)
 	viper.SetDefault("imagemagick", "")
+	viper.SetDefault("imaging.maxPixels", 2560*1600)
+	viper.SetDefault("imaging.concurrency", 1)
 	viper.SetDefault("mariadb.host", "127.0.0.1")
 	viper.SetDefault("mariadb.port", 3306)
 	viper.SetDefault("mariadb.username", "root")
@@ -287,4 +299,13 @@ func (c Config) getDatabase() (*gorm.DB, error) {
 	engine.DB().SetConnMaxLifetime(time.Duration(c.MariaDB.Connection.LifeTime) * time.Second)
 	engine.LogMode(c.DevMode)
 	return engine.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"), nil
+}
+
+func (c Config) getImageProcessor() imaging.Processor {
+	return imaging.NewProcessor(imaging.Config{
+		MaxPixels:        c.Imaging.MaxPixels,
+		Concurrency:      c.Imaging.Concurrency,
+		ThumbnailMaxSize: image.Pt(360, 480),
+		ImageMagickPath:  c.ImageMagick,
+	})
 }

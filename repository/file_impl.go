@@ -1,20 +1,16 @@
 package repository
 
 import (
-	"context"
 	"crypto/md5"
 	"database/sql"
 	"encoding/hex"
-	"github.com/disintegration/imaging"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/ioext"
 	"github.com/traPtitech/traQ/utils/storage"
-	"golang.org/x/sync/errgroup"
-	"golang.org/x/sync/semaphore"
 	"gopkg.in/guregu/null.v3"
-	"image"
+	"image/png"
 	"io"
 	"time"
 )
@@ -172,43 +168,28 @@ func (repo *GormRepository) SaveFile(args SaveFileArgs) (model.FileMeta, error) 
 		ChannelID: args.ChannelID,
 	}
 
-	eg, ctx := errgroup.WithContext(context.Background())
+	if args.Thumbnail != nil {
+		f.HasThumbnail = true
+		f.ThumbnailMime = null.StringFrom("image/png")
+		f.ThumbnailWidth = args.Thumbnail.Bounds().Size().X
+		f.ThumbnailHeight = args.Thumbnail.Bounds().Size().Y
 
-	fileSrc, fileWriter := io.Pipe()
-	thumbSrc, thumbWriter := io.Pipe()
-	hash := md5.New()
+		r, w := io.Pipe()
+		go func() {
+			defer w.Close()
+			_ = png.Encode(w, args.Thumbnail)
+		}()
 
-	go func() {
-		defer fileWriter.Close()
-		defer thumbWriter.Close()
-		_, _ = io.Copy(ioext.MultiWriter(fileWriter, hash, thumbWriter), args.Src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
-	}()
-
-	// fileの保存
-	eg.Go(func() error {
-		defer fileSrc.Close()
-		return repo.FS.SaveByKey(fileSrc, f.ID.String(), f.Name, f.Mime, f.Type)
-	})
-
-	// サムネイルの生成
-	eg.Go(func() error {
-		// アップロードされたファイルの拡張子が間違えてたり、変なの送ってきた場合
-		// サムネイルを生成しないだけで全体のエラーにはしない
-		defer thumbSrc.Close()
-		size, _ := repo.generateThumbnail(ctx, f, thumbSrc)
-		if !size.Empty() {
-			f.HasThumbnail = true
-			f.ThumbnailMime = null.StringFrom("image/png")
-			f.ThumbnailWidth = size.Size().X
-			f.ThumbnailHeight = size.Size().Y
+		key := f.ID.String() + "-thumb"
+		if err := repo.FS.SaveByKey(r, key, key+".png", "image/png", model.FileTypeThumbnail); err != nil {
+			return nil, err
 		}
-		return nil
-	})
-
-	if err := eg.Wait(); err != nil {
-		return nil, err
 	}
 
+	hash := md5.New()
+	if err := repo.FS.SaveByKey(io.TeeReader(args.Src, hash), f.ID.String(), f.Name, f.Mime, f.Type); err != nil {
+		return nil, err
+	}
 	f.Hash = hex.EncodeToString(hash.Sum(nil))
 
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
@@ -229,6 +210,10 @@ func (repo *GormRepository) SaveFile(args SaveFileArgs) (model.FileMeta, error) 
 		return nil
 	})
 	if err != nil {
+		_ = repo.FS.DeleteByKey(f.ID.String(), f.Type)
+		if f.HasThumbnail {
+			_ = repo.FS.DeleteByKey(f.ID.String()+"-thumb", model.FileTypeThumbnail)
+		}
 		return nil, err
 	}
 	return repo.makeFileMeta(f), nil
@@ -301,35 +286,6 @@ func (repo *GormRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 		return false, err
 	}
 	return result.Allow > 0 && result.Deny == 0, nil
-}
-
-var generateThumbnailS = semaphore.NewWeighted(1) // サムネイル生成並列数
-
-// generateThumbnail サムネイル画像を生成します
-func (repo *GormRepository) generateThumbnail(ctx context.Context, f *model.File, src io.Reader) (image.Rectangle, error) {
-	if err := generateThumbnailS.Acquire(ctx, 1); err != nil {
-		return image.Rectangle{}, err
-	}
-	defer generateThumbnailS.Release(1)
-
-	orig, err := imaging.Decode(src, imaging.AutoOrientation(true))
-	if err != nil {
-		return image.Rectangle{}, err
-	}
-
-	img := imaging.Fit(orig, 360, 480, imaging.Linear)
-
-	r, w := io.Pipe()
-	go func() {
-		_ = imaging.Encode(w, img, imaging.PNG)
-		_ = w.Close()
-	}()
-
-	key := f.ID.String() + "-thumb"
-	if err := repo.FS.SaveByKey(r, key, key+".png", "image/png", model.FileTypeThumbnail); err != nil {
-		return image.Rectangle{}, err
-	}
-	return img.Bounds(), nil
 }
 
 func (repo *GormRepository) makeFileMeta(f *model.File) model.FileMeta {

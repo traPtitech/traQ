@@ -1,4 +1,4 @@
-package imagemagick
+package imaging
 
 import (
 	"bytes"
@@ -10,16 +10,13 @@ import (
 	"time"
 )
 
-// ErrUnsupportedType 未サポートのファイルタイプです
-var ErrUnsupportedType = errors.New("unsupported file type")
-
-// ErrUnavailable ImageMagickが使用できません
-var ErrUnavailable = errors.New("imagemagick is unavailable")
+// ErrImageMagickUnavailable ImageMagickが使用できません
+var ErrImageMagickUnavailable = errors.New("imagemagick is unavailable")
 
 // ConvertToPNG srcをimagemagickでPNGに変換します。5秒以内に変換できなかった場合はエラーとなります
-func ConvertToPNG(ctx context.Context, execPath string, src io.Reader, maxWidth, maxHeight int) (*bytes.Buffer, error) {
+func ConvertToPNG(ctx context.Context, execPath string, src io.Reader, maxWidth, maxHeight int) (*bytes.Reader, error) {
 	if len(execPath) == 0 {
-		return nil, ErrUnavailable
+		return nil, ErrImageMagickUnavailable
 	}
 
 	if maxHeight <= 0 || maxWidth <= 0 {
@@ -34,20 +31,20 @@ func ConvertToPNG(ctx context.Context, execPath string, src io.Reader, maxWidth,
 	if err != nil {
 		switch err.(type) {
 		case *exec.ExitError:
-			return nil, ErrUnsupportedType
+			return nil, ErrInvalidImageSrc
 		default:
 			return nil, err
 		}
 	}
 
-	return b, nil
+	return bytes.NewReader(b), nil
 }
 
 // ResizeAnimationGIF Animation GIF画像をimagemagickでリサイズします
 // expandがfalseの場合、縮小は行いますが拡大は行いません
-func ResizeAnimationGIF(ctx context.Context, execPath string, src io.Reader, maxWidth, maxHeight int, expand bool) (*bytes.Buffer, error) {
+func ResizeAnimationGIF(ctx context.Context, execPath string, src io.Reader, maxWidth, maxHeight int, expand bool) (*bytes.Reader, error) {
 	if len(execPath) == 0 {
-		return nil, ErrUnavailable
+		return nil, ErrImageMagickUnavailable
 	}
 
 	if maxHeight <= 0 || maxWidth <= 0 {
@@ -64,16 +61,16 @@ func ResizeAnimationGIF(ctx context.Context, execPath string, src io.Reader, max
 	if err != nil {
 		switch err.(type) {
 		case *exec.ExitError:
-			return nil, ErrUnsupportedType
+			return nil, ErrInvalidImageSrc
 		default:
 			return nil, err
 		}
 	}
 
-	return b, nil
+	return bytes.NewReader(b), nil
 }
 
-func cmdPipe(cmd *exec.Cmd, input io.Reader) (output *bytes.Buffer, err error) {
+func cmdPipe(cmd *exec.Cmd, input io.Reader) (output []byte, err error) {
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, err
@@ -95,5 +92,5 @@ func cmdPipe(cmd *exec.Cmd, input io.Reader) (output *bytes.Buffer, err error) {
 	b := &bytes.Buffer{}
 	_, _ = io.Copy(b, stdout)
 
-	return b, cmd.Wait()
+	return b.Bytes(), cmd.Wait()
 }

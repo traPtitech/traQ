@@ -190,7 +190,7 @@ func (h *Handlers) GetBotIcon(c echo.Context) error {
 
 // ChangeBotIcon PUT /bots/:botID/icon
 func (h *Handlers) ChangeBotIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(c, h.Repo, getParamBot(c).BotUserID)
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getParamBot(c).BotUserID)
 }
 
 // GetBotLogsRequest GET /bots/:botID/logs リクエストクエリ

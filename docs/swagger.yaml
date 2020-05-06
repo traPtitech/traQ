@@ -1,5 +1,4 @@
 openapi: 3.0.0
-
 info:
   title: traQ API
   description: traQ v2 API
@@ -10,13 +9,11 @@ info:
   contact:
     name: traP
     url: 'https://github.com/traPtitech/traQ'
-
 servers:
-  - url: https://q.trap.jp/api/1.0
+  - url: 'https://q.trap.jp/api/1.0'
     description: production environment
-  - url: https://traq-dev.tokyotech.org/api/1.0
+  - url: 'https://traq-dev.tokyotech.org/api/1.0'
     description: staging environment
-
 paths:
   /login:
     post:
@@ -36,19 +33,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserLogin"
+              $ref: '#/components/schemas/UserLogin'
       responses:
-        "204":
+        '204':
           description: 正常にログインできました。
-        "302":
+        '302':
           description: 正常にログインできました。リダイレクトします。
-        "400":
+        '400':
           description: ログインできませんでした。リクエスト内容が不正です
-        "401":
+        '401':
           description: ログインできませんでした。認証情報が間違っています
-        "403":
+        '403':
           description: ログインできませんでした。アカウントに問題があります
-
   /logout:
     post:
       tags:
@@ -63,12 +59,11 @@ paths:
           description: リダイレクト先
       security: []
       responses:
-        "204":
+        '204':
           description: 正常にログアウトできました。
-        "302":
+        '302':
           description: 正常にログアウトできました。リダイレクトします。
-
-  /public/icon/{username}:
+  '/public/icon/{username}':
     get:
       tags:
         - public
@@ -83,7 +78,7 @@ paths:
             type: string
       security: []
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             image/jpeg:
@@ -98,15 +93,8 @@ paths:
               schema:
                 type: string
                 format: binary
-        "404":
+        '404':
           description: 取得できませんでした。指定したユーザーは存在しません。
-
-  # /public/emoji.json
-
-  # /public/emoji.css
-
-  # /public/emoji/{stampID}
-
   /oauth2/authorize:
     get:
       tags:
@@ -117,7 +105,7 @@ paths:
         - name: response_type
           in: query
           schema:
-            $ref: "#/components/schemas/OAuth2ResponseType"
+            $ref: '#/components/schemas/OAuth2ResponseType'
         - name: client_id
           in: query
           required: true
@@ -150,14 +138,14 @@ paths:
         - name: prompt
           in: query
           schema:
-            $ref: "#/components/schemas/OAuth2Prompt"
+            $ref: '#/components/schemas/OAuth2Prompt'
       security: []
       responses:
-        "302":
+        '302':
           description: 結果に応じてリダイレクトします。
-        "400":
+        '400':
           description: リクエストが不正です。
-        "403":
+        '403':
           description: リクエストが許可されていません。
     post:
       tags:
@@ -170,15 +158,14 @@ paths:
         content:
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/OAuth2Authorization"
+              $ref: '#/components/schemas/OAuth2Authorization'
       responses:
-        "302":
+        '302':
           description: 結果に応じてリダイレクトします。
-        "400":
+        '400':
           description: リクエストが不正です。
-        "403":
+        '403':
           description: リクエストが許可されていません。
-
   /oauth2/authorize/decide:
     post:
       tags:
@@ -190,15 +177,14 @@ paths:
         content:
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/OAuth2Decide"
+              $ref: '#/components/schemas/OAuth2Decide'
       responses:
-        "302":
+        '302':
           description: RedirectURIに結果をリダイレクトします。
-        "400":
+        '400':
           description: リクエストが不正です。
-        "403":
+        '403':
           description: リクエストが許可されていません。
-
   /oauth2/token:
     post:
       tags:
@@ -211,23 +197,18 @@ paths:
         content:
           application/x-www-form-urlencoded:
             schema:
-              $ref: "#/components/schemas/PostOAuth2Token"
+              $ref: '#/components/schemas/PostOAuth2Token'
       responses:
-        "200":
+        '200':
           description: トークンが正常に発行されました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OAuth2Token"
-        "400":
+                $ref: '#/components/schemas/OAuth2Token'
+        '400':
           description: トークン発行に失敗しました。
-        "403":
+        '403':
           description: トークン発行に失敗しました。
-
-  # /oauth2/revoke
-
-  # /metrics
-
   /users:
     get:
       tags:
@@ -239,14 +220,14 @@ paths:
             - read
             - manage_bot
       responses:
-        "200":
-          description: |+
+        '200':
+          description: |-
             正常に取得できました。
             ユーザーリストを返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserList"
+                $ref: '#/components/schemas/UserList'
     post:
       tags:
         - user
@@ -257,15 +238,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserRegister"
+              $ref: '#/components/schemas/UserRegister'
       responses:
-        "201":
+        '201':
           description: 正常に登録できました。
-        "400":
+        '400':
           description: 登録できませんでした。リクエスト内容が不正です。
-        "403":
+        '403':
           description: 登録できませんでした。権限がありません。
-
   /users/me:
     get:
       tags:
@@ -277,12 +257,12 @@ paths:
             - read
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Me"
+                $ref: '#/components/schemas/Me'
     patch:
       tags:
         - user
@@ -296,13 +276,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserData"
+              $ref: '#/components/schemas/UserData'
       responses:
-        "204":
+        '204':
           description: 正常に変更できました。
-        "400":
+        '400':
           description: 正常に変更できませんでした。リクエスト内容が不正です。
-
   /users/me/password:
     put:
       tags:
@@ -314,15 +293,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ChangePassword"
+              $ref: '#/components/schemas/ChangePassword'
       responses:
-        "204":
+        '204':
           description: 正常に変更できました。
-        "400":
+        '400':
           description: 正常に変更できませんでした。リクエスト内容が不正です
-        "401":
+        '401':
           description: 正常に変更できませんでした。現在のパスワードが違います。
-
   /users/me/qr-code:
     get:
       tags:
@@ -330,14 +308,13 @@ paths:
       operationId: getQrCode
       description: 自分のQRコードを取得します。
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             image/png:
               schema:
                 type: string
                 format: binary
-
   /users/me/icon:
     get:
       tags:
@@ -348,7 +325,7 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             image/jpeg:
@@ -380,16 +357,15 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: 1MBまでのpng, jpeg, gif
+                  description: '1MBまでのpng, jpeg, gif'
             encoding:
               file:
-                contentType: image/png, image/jpeg, image/gif
+                contentType: 'image/png, image/jpeg, image/gif'
       responses:
-        "200":
+        '200':
           description: 正常に更新できました。
-        "400":
+        '400':
           description: 正常に更新できませんでした。不正なファイルです。
-
   /users/me/stamp-history:
     get:
       tags:
@@ -400,15 +376,14 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/StampHistory"
-
+                  $ref: '#/components/schemas/StampHistory'
   /users/me/groups:
     get:
       tags:
@@ -419,13 +394,12 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UUIDs"
-
+                $ref: '#/components/schemas/UUIDs'
   /users/me/notification:
     get:
       tags:
@@ -436,13 +410,12 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。チャンネルIDの配列を返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UUIDs"
-
+                $ref: '#/components/schemas/UUIDs'
   /users/me/tokens:
     get:
       tags:
@@ -450,33 +423,31 @@ paths:
       operationId: getTokens
       description: 自分が許可しているクライアントの一覧とトークン情報を取得します。
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/AllowedClientInfo"
-        "403":
+                  $ref: '#/components/schemas/AllowedClientInfo'
+        '403':
           description: 取得できませんでした。権限がありません。
-
-  /users/me/tokens/{oauth2TokenID}:
+  '/users/me/tokens/{oauth2TokenID}':
     parameters:
-      - $ref: "#/components/parameters/oauth2TokenIdInPath"
+      - $ref: '#/components/parameters/oauth2TokenIdInPath'
     delete:
       tags:
         - client
       operationId: deleteToken
       description: 指定したトークンの認可を取り消します。
       responses:
-        "204":
+        '204':
           description: 正常に取り消すことができました。
-        "403":
+        '403':
           description: 失敗しました。権限がありません。
-        "404":
+        '404':
           description: 失敗しました。指定したトークンは存在しません。
-
   /users/me/sessions:
     get:
       tags:
@@ -484,15 +455,15 @@ paths:
       operationId: getSessions
       description: 自分のログインセッションリストを取得します。
       responses:
-        "200":
+        '200':
           description: セッションリストを返します。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Session"
-        "403":
+                  $ref: '#/components/schemas/Session'
+        '403':
           description: 権限がありません。
     delete:
       tags:
@@ -500,12 +471,11 @@ paths:
       operationId: deleteSessions
       description: 自分のログインセッションを全てログアウトします。
       responses:
-        "204":
+        '204':
           description: 成功しました。
-        "403":
+        '403':
           description: 権限がありません。
-
-  /users/me/sessions/{referenceID}:
+  '/users/me/sessions/{referenceID}':
     parameters:
       - name: referenceID
         description: 操作の対象となるセッションの参照ID
@@ -519,13 +489,12 @@ paths:
       operationId: deleteSession
       description: 対象のセッションをログアウトします。
       responses:
-        "204":
+        '204':
           description: 成功しました。
-        "403":
+        '403':
           description: 権限がありません。
-        "404":
+        '404':
           description: 対象のセッションは存在しません。
-
   /users/me/stars:
     get:
       tags:
@@ -536,16 +505,15 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。お気に入りチャンネルのIDの配列を返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UUIDs"
-
-  /users/me/stars/{channelID}:
+                $ref: '#/components/schemas/UUIDs'
+  '/users/me/stars/{channelID}':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     put:
       tags:
         - star
@@ -555,26 +523,23 @@ paths:
         - traqOAuth2:
             - write
       responses:
-        "204":
+        '204':
           description: 正常に追加できました。
-        "404":
+        '404':
           description: 正常に追加できませんでした。対象のチャンネルが存在しません。
     delete:
       tags:
         - star
       operationId: unstarChannel
-      description: +|
-        お気に入りチャンネルリストから削除します。
-        既にお気に入りチャンネルリストに無いチャンネルを指定した場合は無視されます(204)。
+      description: '+| お気に入りチャンネルリストから削除します。 既にお気に入りチャンネルリストに無いチャンネルを指定した場合は無視されます(204)。'
       security:
         - traqOAuth2:
             - write
       responses:
-        "204":
+        '204':
           description: 正常に削除されました。
-        "404":
+        '404':
           description: 削除に失敗しました。指定されたチャンネルは存在しません。
-
   /users/me/unread/channels:
     get:
       tags:
@@ -585,18 +550,17 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/UnreadChannel"
-
-  /users/me/unread/channels/{channelID}:
+                  $ref: '#/components/schemas/UnreadChannel'
+  '/users/me/unread/channels/{channelID}':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     delete:
       tags:
         - unread
@@ -606,12 +570,11 @@ paths:
         - traqOAuth2:
             - write
       responses:
-        "204":
+        '204':
           description: 正常にメッセージを既読にできました。
-
-  /users/{userID}:
+  '/users/{userID}':
     parameters:
-      - $ref: "#/components/parameters/userIdInPath"
+      - $ref: '#/components/parameters/userIdInPath'
     get:
       tags:
         - user
@@ -622,28 +585,19 @@ paths:
             - read
             - manage_bot
       responses:
-        "200":
-          description: |+
+        '200':
+          description: |-
             正常に取得できました。
             ユーザー情報を返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserDetail"
-        "404":
-          description: +|
-            正常に取得できませんでした。
-            指定したユーザーは存在しません。
-
-  # PATCH /users/{userID}
-
-  # /users/{userID}/status
-
-  # /users/{userID}/password
-
-  /users/{userID}/messages:
+                $ref: '#/components/schemas/UserDetail'
+        '404':
+          description: '+| 正常に取得できませんでした。 指定したユーザーは存在しません。'
+  '/users/{userID}/messages':
     parameters:
-      - $ref: "#/components/parameters/userIdInPath"
+      - $ref: '#/components/parameters/userIdInPath'
     get:
       tags:
         - message
@@ -653,30 +607,30 @@ paths:
         - traqOAuth2:
             - read
       parameters:
-        - $ref: "#/components/parameters/limitInQuery"
-        - $ref: "#/components/parameters/offsetInQuery"
-        - $ref: "#/components/parameters/sinceInQuery"
-        - $ref: "#/components/parameters/untilInQuery"
-        - $ref: "#/components/parameters/inclusiveInQuery"
-        - $ref: "#/components/parameters/orderInQuery"
+        - $ref: '#/components/parameters/limitInQuery'
+        - $ref: '#/components/parameters/offsetInQuery'
+        - $ref: '#/components/parameters/sinceInQuery'
+        - $ref: '#/components/parameters/untilInQuery'
+        - $ref: '#/components/parameters/inclusiveInQuery'
+        - $ref: '#/components/parameters/orderInQuery'
       responses:
-        "200":
-          description: |+
+        '200':
+          description: |-
             正常に取得ができました。
             メッセージの配列を返します。
           headers:
             X-TRAQ-MORE:
-              $ref: "#/components/headers/X-TRAQ-MORE"
+              $ref: '#/components/headers/X-TRAQ-MORE'
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MessageList"
-        "400":
-          description: |+
+                $ref: '#/components/schemas/MessageList'
+        '400':
+          description: |-
             変更に失敗しました
             不正なリクエストです
-        "404":
-          description: |+
+        '404':
+          description: |-
             取得に失敗しました。
             指定したユーザーは存在しません。
     post:
@@ -699,24 +653,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SendMessage"
+              $ref: '#/components/schemas/SendMessage'
       responses:
-        "201":
-          description: |+
+        '201':
+          description: |-
             投稿に成功しました。
             投稿されたメッセージが返されます。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Message"
-        "404":
-          description: +|
-            投稿に失敗しました。
-            指定したユーザーは存在しません。
-
-  /users/{userID}/icon:
+                $ref: '#/components/schemas/Message'
+        '404':
+          description: '+| 投稿に失敗しました。 指定したユーザーは存在しません。'
+  '/users/{userID}/icon':
     parameters:
-      - $ref: "#/components/parameters/userIdInPath"
+      - $ref: '#/components/parameters/userIdInPath'
     get:
       tags:
         - user
@@ -726,7 +677,7 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             image/jpeg:
@@ -741,14 +692,11 @@ paths:
               schema:
                 type: string
                 format: binary
-        "404":
+        '404':
           description: 正常に取得できませんでした。指定したユーザーは存在しません。
-
-  # PUT /users/{userID}/icon
-
-  /users/{userID}/notification:
+  '/users/{userID}/notification':
     parameters:
-      - $ref: "#/components/parameters/userIdInPath"
+      - $ref: '#/components/parameters/userIdInPath'
     get:
       tags:
         - notification
@@ -758,18 +706,17 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。チャンネルIDの配列を返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UUIDs"
-        "404":
+                $ref: '#/components/schemas/UUIDs'
+        '404':
           description: 取得に失敗しました。指定したユーザーは存在しません。
-
-  /users/{userID}/groups:
+  '/users/{userID}/groups':
     parameters:
-      - $ref: "#/components/parameters/userIdInPath"
+      - $ref: '#/components/parameters/userIdInPath'
     get:
       tags:
         - user group
@@ -779,18 +726,17 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UUIDs"
-        "404":
+                $ref: '#/components/schemas/UUIDs'
+        '404':
           description: 正常に取得できませんでした。指定したユーザーは存在しません。
-
-  /users/{userID}/tags:
+  '/users/{userID}/tags':
     parameters:
-      - $ref: "#/components/parameters/userIdInPath"
+      - $ref: '#/components/parameters/userIdInPath'
     get:
       tags:
         - userTag
@@ -800,16 +746,16 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
-          description: |+
+        '200':
+          description: |-
             正常に取得できました。
             タグのリストを返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TagList"
-        "404":
-          description: |+
+                $ref: '#/components/schemas/TagList'
+        '404':
+          description: |-
             正常に取得できませんでした。
             指定したユーザーは存在しません。
     post:
@@ -825,28 +771,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SetTag"
+              $ref: '#/components/schemas/SetTag'
       responses:
-        "201":
-          description: |+
-            正常に追加できました。
-        "400":
-          description: |+
+        '201':
+          description: 正常に追加できました。
+        '400':
+          description: |-
             正常に追加できませんでした。
             パラメータの形式が不正です。
-        "403":
-          description: |+
+        '403':
+          description: |-
             正常に追加できませんでした。
             権限がありません。
-        "404":
-          description: +|
-            正常に追加できませんでした。
-            指定したユーザーは存在しません。
-
-  /users/{userID}/tags/{tagID}:
+        '404':
+          description: '+| 正常に追加できませんでした。 指定したユーザーは存在しません。'
+  '/users/{userID}/tags/{tagID}':
     parameters:
-      - $ref: "#/components/parameters/userIdInPath"
-      - $ref: "#/components/parameters/tagIdInPath"
+      - $ref: '#/components/parameters/userIdInPath'
+      - $ref: '#/components/parameters/tagIdInPath'
     patch:
       tags:
         - userTag
@@ -860,21 +802,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SetTagLock"
+              $ref: '#/components/schemas/SetTagLock'
       responses:
-        "204":
-          description: |+
-            正常に変更できました。
-        "400":
-          description: |+
+        '204':
+          description: 正常に変更できました。
+        '400':
+          description: |-
             正常に変更できませんでした。
             パラメータの形式が不正です。
-        "403":
-          description: |+
+        '403':
+          description: |-
             正常に変更できませんでした。
             権限がありません。
-        "404":
-          description: |+
+        '404':
+          description: |-
             正常に変更できませんでした。
             指定したユーザー、もしくはタグは存在しません。
     delete:
@@ -886,18 +827,14 @@ paths:
         - traqOAuth2:
             - write
       responses:
-        "204":
-          description: |+
-            正常に削除できました。
-        "403":
-          description: |+
+        '204':
+          description: 正常に削除できました。
+        '403':
+          description: |-
             正常に削除できませんでした。
             権限がありません。
-        "404":
-          description: +|
-            正常に削除できませんでした。
-            指定したユーザーは存在しません。
-
+        '404':
+          description: '+| 正常に削除できませんでした。 指定したユーザーは存在しません。'
   /heartbeat:
     get:
       deprecated: true
@@ -917,13 +854,12 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
-          description: |+
-            正常に取得できました。
+        '200':
+          description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HeartbeatRes"
+                $ref: '#/components/schemas/HeartbeatRes'
     post:
       deprecated: true
       tags:
@@ -938,31 +874,29 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Heartbeat"
+              $ref: '#/components/schemas/Heartbeat'
       responses:
-        "200":
+        '200':
           description: 正常に送信できました。
-
   /channels:
     get:
       tags:
         - channel
       operationId: getChannels
-      description: |+
-        (すべての)チャンネルのリストを取得します。
+      description: (すべての)チャンネルのリストを取得します。
       security:
         - traqOAuth2:
             - read
             - manage_bot
       responses:
-        "200":
-          description: |+
+        '200':
+          description: |-
             正常に取得できました。
             チャンネルの配列を返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChannelList"
+                $ref: '#/components/schemas/ChannelList'
     post:
       tags:
         - channel
@@ -976,24 +910,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateChannel"
+              $ref: '#/components/schemas/CreateChannel'
       responses:
-        "201":
-          description: |+
+        '201':
+          description: |-
             正常にチャンネルが作成できました。
             作成されたチャンネルを返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Channel"
-        "400":
-          description: +|
-            正常にチャンネルが作成できませんでした。
-            親チャンネルが存在しない又は指定されたタイプに対して適切なプロパティが存在しません。
-
-  /channels/{channelID}:
+                $ref: '#/components/schemas/Channel'
+        '400':
+          description: '+| 正常にチャンネルが作成できませんでした。 親チャンネルが存在しない又は指定されたタイプに対して適切なプロパティが存在しません。'
+  '/channels/{channelID}':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     get:
       tags:
         - channel
@@ -1003,16 +934,16 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
-          description: |+
+        '200':
+          description: |-
             正常に取得ができました。
             チャンネルを返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Channel"
-        "404":
-          description: |+
+                $ref: '#/components/schemas/Channel'
+        '404':
+          description: |-
             取得に失敗しました。
             指定したチャンネルは存在しません。
     patch:
@@ -1025,22 +956,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchChannel"
+              $ref: '#/components/schemas/PatchChannel'
       responses:
-        "204":
+        '204':
           description: 正常に変更ができました。
-        "400":
+        '400':
           description: 失敗しました。リクエスト内容が不正です。
-        "403":
+        '403':
           description: 失敗しました。権限がありません。
-        "404":
-          description: |+
+        '404':
+          description: |
             変更に失敗しました。
             指定したチャンネルは存在しません。
-
-  /channels/{channelID}/parent:
+  '/channels/{channelID}/parent':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     put:
       tags:
         - channel
@@ -1051,22 +981,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PutParentChannel"
+              $ref: '#/components/schemas/PutParentChannel'
       responses:
-        "204":
+        '204':
           description: 変更に成功しました。
-        "400":
+        '400':
           description: 変更に失敗しました。リクエスト内容が不正です。
-        "403":
+        '403':
           description: 変更に失敗しました。権限がありません。
-        "404":
+        '404':
           description: 変更に失敗しました。指定されたチャンネルは存在しません。
-        "409":
+        '409':
           description: 変更に失敗しました。チャンネル名が競合しています。
-
-  /channels/{channelID}/children:
+  '/channels/{channelID}/children':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     post:
       tags:
         - channel
@@ -1080,26 +1009,25 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateChannelChild"
+              $ref: '#/components/schemas/CreateChannelChild'
       responses:
-        "201":
+        '201':
           description: 正常にチャンネルが作成できました。作成されたチャンネルを返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Channel"
-        "400":
+                $ref: '#/components/schemas/Channel'
+        '400':
           description: チャンネルが作成できませんでした。リクエスト内容が不正です。
-        "403":
+        '403':
           description: チャンネルが作成できませんでした。権限がありません。
-        "404":
+        '404':
           description: チャンネルが作成できませんでした。指定したチャンネルは存在しません。
-        "409":
+        '409':
           description: チャンネルが作成できませんでした。指定したチャンネル名のチャンネルは既に存在します。
-
-  /channels/{channelID}/pins:
+  '/channels/{channelID}/pins':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     get:
       deprecated: true
       tags:
@@ -1110,17 +1038,15 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
-          description: |+
-            正常に取得できました。
+        '200':
+          description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PinList"
-
-  /channels/{channelID}/topic:
+                $ref: '#/components/schemas/PinList'
+  '/channels/{channelID}/topic':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     get:
       tags:
         - channel
@@ -1130,18 +1056,14 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
-          description: +|
-            正常に取得ができました。
-            チャンネルトピックを返します。
+        '200':
+          description: '+| 正常に取得ができました。 チャンネルトピックを返します。'
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChannelTopic"
-        "404":
-          description: +|
-            取得に失敗しました。
-            指定したチャンネルは存在しません。
+                $ref: '#/components/schemas/ChannelTopic'
+        '404':
+          description: '+| 取得に失敗しました。 指定したチャンネルは存在しません。'
     put:
       tags:
         - channel
@@ -1155,18 +1077,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SetChannelTopic"
+              $ref: '#/components/schemas/SetChannelTopic'
       responses:
-        "204":
+        '204':
           description: 正常に更新できました。
-        "404":
-          description: +|
-            更新に失敗しました。
-            指定したチャンネルは存在しません。
-
-  /channels/{channelID}/stats:
+        '404':
+          description: '+| 更新に失敗しました。 指定したチャンネルは存在しません。'
+  '/channels/{channelID}/stats':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     get:
       tags:
         - channel
@@ -1176,20 +1095,17 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得ができました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChannelStats"
-        "404":
-          description: +|
-            取得に失敗しました。
-            指定したチャンネルは存在しません。
-
-  /channels/{channelID}/viewers:
+                $ref: '#/components/schemas/ChannelStats'
+        '404':
+          description: '+| 取得に失敗しました。 指定したチャンネルは存在しません。'
+  '/channels/{channelID}/viewers':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     get:
       tags:
         - channel
@@ -1199,20 +1115,17 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得ができました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChannelViewers"
-        "404":
-          description: +|
-            取得に失敗しました。
-            指定したチャンネルは存在しません。
-
-  /channels/{channelID}/messages:
+                $ref: '#/components/schemas/ChannelViewers'
+        '404':
+          description: '+| 取得に失敗しました。 指定したチャンネルは存在しません。'
+  '/channels/{channelID}/messages':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     get:
       tags:
         - message
@@ -1222,30 +1135,30 @@ paths:
         - traqOAuth2:
             - read
       parameters:
-        - $ref: "#/components/parameters/limitInQuery"
-        - $ref: "#/components/parameters/offsetInQuery"
-        - $ref: "#/components/parameters/sinceInQuery"
-        - $ref: "#/components/parameters/untilInQuery"
-        - $ref: "#/components/parameters/inclusiveInQuery"
-        - $ref: "#/components/parameters/orderInQuery"
+        - $ref: '#/components/parameters/limitInQuery'
+        - $ref: '#/components/parameters/offsetInQuery'
+        - $ref: '#/components/parameters/sinceInQuery'
+        - $ref: '#/components/parameters/untilInQuery'
+        - $ref: '#/components/parameters/inclusiveInQuery'
+        - $ref: '#/components/parameters/orderInQuery'
       responses:
-        "200":
-          description: |+
+        '200':
+          description: |-
             正常に取得ができました。
             メッセージの配列を返します。
           headers:
             X-TRAQ-MORE:
-              $ref: "#/components/headers/X-TRAQ-MORE"
+              $ref: '#/components/headers/X-TRAQ-MORE'
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MessageList"
-        "400":
-          description: |+
+                $ref: '#/components/schemas/MessageList'
+        '400':
+          description: |-
             変更に失敗しました
             不正なリクエストです
-        "404":
-          description: |+
+        '404':
+          description: |-
             取得に失敗しました。
             指定したチャンネルは存在しません。
     post:
@@ -1268,24 +1181,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SendMessage"
+              $ref: '#/components/schemas/SendMessage'
       responses:
-        "201":
-          description: |+
+        '201':
+          description: |-
             投稿に成功しました。
             投稿されたメッセージが返されます。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Message"
-        "404":
-          description: +|
-            投稿に失敗しました。
-            指定したチャンネルは存在しません。
-
-  /channels/{channelID}/events:
+                $ref: '#/components/schemas/Message'
+        '404':
+          description: '+| 投稿に失敗しました。 指定したチャンネルは存在しません。'
+  '/channels/{channelID}/events':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     get:
       tags:
         - channel
@@ -1295,36 +1205,33 @@ paths:
         - traqOAuth2:
             - read
       parameters:
-        - $ref: "#/components/parameters/limitInQuery"
-        - $ref: "#/components/parameters/offsetInQuery"
-        - $ref: "#/components/parameters/sinceInQuery"
-        - $ref: "#/components/parameters/untilInQuery"
-        - $ref: "#/components/parameters/inclusiveInQuery"
-        - $ref: "#/components/parameters/orderInQuery"
+        - $ref: '#/components/parameters/limitInQuery'
+        - $ref: '#/components/parameters/offsetInQuery'
+        - $ref: '#/components/parameters/sinceInQuery'
+        - $ref: '#/components/parameters/untilInQuery'
+        - $ref: '#/components/parameters/inclusiveInQuery'
+        - $ref: '#/components/parameters/orderInQuery'
       responses:
-        "200":
+        '200':
           description: 正常に取得ができました。イベントの配列を返します。
           headers:
             X-TRAQ-MORE:
-              $ref: "#/components/headers/X-TRAQ-MORE"
+              $ref: '#/components/headers/X-TRAQ-MORE'
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ChannelEvent"
-        "400":
-          description: |+
+                  $ref: '#/components/schemas/ChannelEvent'
+        '400':
+          description: |-
             変更に失敗しました
             不正なリクエストです
-        "404":
-          description: +|
-            取得に失敗しました。
-            指定したチャンネルは存在しません。
-
-  /channels/{channelID}/notification:
+        '404':
+          description: '+| 取得に失敗しました。 指定したチャンネルは存在しません。'
+  '/channels/{channelID}/notification':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     get:
       tags:
         - notification
@@ -1334,19 +1241,19 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UUIDs"
-        "404":
+                $ref: '#/components/schemas/UUIDs'
+        '404':
           description: 取得に失敗しました。指定したチャンネルは存在しません。
     put:
       tags:
         - notification
       operationId: changeSubscribers
-      description: |+
+      description: |-
         チャンネルの通知状況を変更します。
         リクエストに含めなかったユーザーIDのユーザーの通知状況は変更しません。
         また、存在しないユーザーのIDを指定した場合は無視されます。
@@ -1358,18 +1265,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NotificationUsers"
+              $ref: '#/components/schemas/NotificationUsers'
       responses:
-        "204":
+        '204':
           description: 正常に更新できました。
-        "404":
-          description: +|
-            変更に失敗しました。
-            指定したチャンネルは存在しません。
-
-  /channels/{channelID}/bots:
+        '404':
+          description: '+| 変更に失敗しました。 指定したチャンネルは存在しません。'
+  '/channels/{channelID}/bots':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     get:
       tags:
         - bot
@@ -1380,15 +1284,15 @@ paths:
             - read
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ChannelBot"
-        "404":
+                  $ref: '#/components/schemas/ChannelBot'
+        '404':
           description: 取得できませんでした。指定したチャンネルは存在しません。
     post:
       deprecated: true
@@ -1405,23 +1309,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PostBotChannel"
+              $ref: '#/components/schemas/PostBotChannel'
       responses:
-        "200":
+        '200':
           description: 正常にBotが参加しました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BotIdObject"
-        "400":
+                $ref: '#/components/schemas/BotIdObject'
+        '400':
           description: 参加させることができませんでした。リクエスト内容が不正です。
-        "404":
+        '404':
           description: 参加させることができませんでした。指定したチャンネルは存在しません。
-
-  /channels/{channelID}/bots/{botID}:
+  '/channels/{channelID}/bots/{botID}':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
-      - $ref: "#/components/parameters/botIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
+      - $ref: '#/components/parameters/botIdInPath'
     delete:
       deprecated: true
       tags:
@@ -1433,14 +1336,13 @@ paths:
             - write
             - manage_bot
       responses:
-        "204":
+        '204':
           description: 正常に退出させることができました。
-        "404":
+        '404':
           description: 退出させることができませんでした。指定したチャンネル、またはBotは存在しません。
-
-  /channels/{channelID}/webrtc/state:
+  '/channels/{channelID}/webrtc/state':
     parameters:
-      - $ref: "#/components/parameters/channelIdInPath"
+      - $ref: '#/components/parameters/channelIdInPath'
     get:
       deprecated: true
       tags:
@@ -1451,15 +1353,14 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebRTCChannelState"
-        "404":
+                $ref: '#/components/schemas/WebRTCChannelState'
+        '404':
           description: 取得できませんでした。指定したチャンネルは存在しません。
-
   /notification:
     get:
       deprecated: true
@@ -1471,9 +1372,8 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 接続が完了しました。
-
   /notification/device:
     post:
       tags:
@@ -1488,11 +1388,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/FCMToken"
+              $ref: '#/components/schemas/FCMToken'
       responses:
-        "201":
+        '201':
           description: 正常に登録できました。
-
   /messages/reports:
     get:
       tags:
@@ -1506,20 +1405,19 @@ paths:
           schema:
             type: integer
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Report"
-        "403":
+                  $ref: '#/components/schemas/Report'
+        '403':
           description: 取得できませんでした。権限がありません。
-
-  /messages/{messageID}:
+  '/messages/{messageID}':
     parameters:
-      - $ref: "#/components/parameters/messageIdInPath"
+      - $ref: '#/components/parameters/messageIdInPath'
     get:
       tags:
         - message
@@ -1529,13 +1427,13 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Message"
-        "404":
+                $ref: '#/components/schemas/Message'
+        '404':
           description: 取得できませんでした。指定されたメッセージは存在しません。
     put:
       tags:
@@ -1550,13 +1448,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SendMessage"
+              $ref: '#/components/schemas/SendMessage'
       responses:
-        "204":
+        '204':
           description: 正常に編集できました。
-        "403":
+        '403':
           description: 編集できませんでした。指定されたメッセージを編集する権限がありません。
-        "404":
+        '404':
           description: 編集できませんでした。指定されたメッセージは存在しません。
     delete:
       tags:
@@ -1567,16 +1465,15 @@ paths:
         - traqOAuth2:
             - write
       responses:
-        "204":
+        '204':
           description: 正常に削除できました。
-        "403":
+        '403':
           description: 削除できませんでした。指定されたメッセージを削除する権限がありません。
-        "404":
+        '404':
           description: 削除できませんでした。指定されたメッセージは存在しません。
-
-  /messages/{messageID}/report:
+  '/messages/{messageID}/report':
     parameters:
-      - $ref: "#/components/parameters/messageIdInPath"
+      - $ref: '#/components/parameters/messageIdInPath'
     post:
       tags:
         - message
@@ -1590,18 +1487,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ReportMessage"
+              $ref: '#/components/schemas/ReportMessage'
       responses:
-        "204":
+        '204':
           description: 通報を受理しました。
-        "400":
+        '400':
           description: 通報を受理できませんでした。リクエスト内容が不正です。
-        "404":
+        '404':
           description: 通報を受理できませんでした。指定されたメッセージは存在しません。
-
-  /messages/{messageID}/stamps:
+  '/messages/{messageID}/stamps':
     parameters:
-      - $ref: "#/components/parameters/messageIdInPath"
+      - $ref: '#/components/parameters/messageIdInPath'
     get:
       tags:
         - stamp
@@ -1611,21 +1507,20 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/MessageStamp"
-        "404":
+                  $ref: '#/components/schemas/MessageStamp'
+        '404':
           description: 取得できませんでした。指定したメッセージは存在しません。
-
-  /messages/{messageID}/stamps/{stampID}:
+  '/messages/{messageID}/stamps/{stampID}':
     parameters:
-      - $ref: "#/components/parameters/messageIdInPath"
-      - $ref: "#/components/parameters/stampIdInPath"
+      - $ref: '#/components/parameters/messageIdInPath'
+      - $ref: '#/components/parameters/stampIdInPath'
     post:
       tags:
         - stamp
@@ -1638,13 +1533,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MessageStampPost"
+              $ref: '#/components/schemas/MessageStampPost'
       responses:
-        "204":
+        '204':
           description: 正常にスタンプを押すことができました。
-        "400":
+        '400':
           description: スタンプを押すことができませんでした。リクエスト内容が不正です。
-        "404":
+        '404':
           description: スタンプを押すことができませんでした。指定されたスタンプまたはメッセージは存在しません。
     delete:
       tags:
@@ -1655,14 +1550,13 @@ paths:
         - traqOAuth2:
             - write
       responses:
-        "204":
+        '204':
           description: 正常にスタンプを外すことができました。
-        "404":
+        '404':
           description: スタンプを外すことができませんでした。指定されたスタンプまたはメッセージは存在しません。
-
-  /tags/{tagID}:
+  '/tags/{tagID}':
     parameters:
-      - $ref: "#/components/parameters/tagIdInPath"
+      - $ref: '#/components/parameters/tagIdInPath'
     get:
       tags:
         - userTag
@@ -1672,58 +1566,27 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TagUsers"
-        "404":
+                $ref: '#/components/schemas/TagUsers'
+        '404':
           description: 正常に取得できませんでした。指定されたタグIDは存在しません
-
   /files:
     post:
       deprecated: true
       tags:
         - file
       operationId: uploadFile
-      description: ファイルをアップロードします
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              required:
-                - file
-              properties:
-                file:
-                  type: string
-                  description: ファイル本体
-                  format: binary
-                acl_readable:
-                  type: string
-                  default: all
-                  description: ファイルにアクセスすることが可能なユーザーのUUIDの文字列表現をカンマ区切りで連結した文字列、または'all'(デフォルト)
+      description: このAPIは削除されました。
       responses:
-        "201":
-          description: 正常にファイルがアップロードされました。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FileInfo"
-        "403":
-          description: ファイルがアップロード出来ませんでした。リクエスト内容が不正です。
-        "411":
-          description: ファイルがアップロード出来ませんでした。Content-Lengthヘッダーを送信してください。
-        "413":
-          description: ファイルがアップロード出来ませんでした。ファイルサイズが大きすぎます。
-
-  /files/{fileID}:
+        '410':
+          description: このAPIは廃止されました。
+  '/files/{fileID}':
     parameters:
-      - $ref: "#/components/parameters/fileIdInPath"
+      - $ref: '#/components/parameters/fileIdInPath'
     get:
       tags:
         - file
@@ -1740,8 +1603,8 @@ paths:
           schema:
             type: integer
       responses:
-        "200":
-          description: |+
+        '200':
+          description: |-
             正常に取得できました。
             fileのbinaryを返します。
             application/octet-streamで返すことになっていますが、ファイルの形式によっては変わります。
@@ -1750,14 +1613,13 @@ paths:
               schema:
                 type: string
                 format: binary
-        "403":
+        '403':
           description: 取得できませんでした。指定されたファイルにアクセスする権限がありません。
-        "404":
+        '404':
           description: 取得できませんでした。指定されたファイルは存在しません。
-
-  /files/{fileID}/meta:
+  '/files/{fileID}/meta':
     parameters:
-      - $ref: "#/components/parameters/fileIdInPath"
+      - $ref: '#/components/parameters/fileIdInPath'
     get:
       tags:
         - file
@@ -1767,20 +1629,19 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FileInfo"
-        "403":
+                $ref: '#/components/schemas/FileInfo'
+        '403':
           description: 取得できませんでした。指定されたファイルにアクセスする権限がありません。
-        "404":
+        '404':
           description: 取得できませんでした。指定されたファイルは存在しません。
-
-  /files/{fileID}/thumbnail:
+  '/files/{fileID}/thumbnail':
     parameters:
-      - $ref: "#/components/parameters/fileIdInPath"
+      - $ref: '#/components/parameters/fileIdInPath'
     get:
       tags:
         - file
@@ -1790,18 +1651,17 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             image/png:
               schema:
                 type: string
                 format: binary
-        "403":
+        '403':
           description: 取得できませんでした。指定されたファイルのサムネイルにアクセスする権限がありません。
-        "404":
+        '404':
           description: 取得できませんでした。指定されたファイルのサムネイルは存在しません。
-
   /pins:
     post:
       deprecated: true
@@ -1817,18 +1677,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MessageIDObject"
+              $ref: '#/components/schemas/MessageIDObject'
       responses:
-        "201":
+        '201':
           description: 正常にピン留めできました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PinIDObject"
-
-  /pins/{pinID}:
+                $ref: '#/components/schemas/PinIDObject'
+  '/pins/{pinID}':
     parameters:
-      - $ref: "#/components/parameters/pinIdInPath"
+      - $ref: '#/components/parameters/pinIdInPath'
     get:
       deprecated: true
       tags:
@@ -1839,13 +1698,12 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
-          description: |+
-            正常に取得できました。
+        '200':
+          description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pin"
+                $ref: '#/components/schemas/Pin'
     delete:
       deprecated: true
       tags:
@@ -1856,13 +1714,10 @@ paths:
         - traqOAuth2:
             - write
       responses:
-        "204":
-          description: |+
-            正常に外せました。
-        "404":
-          description: +|
-            指定したIDのピンは存在しません。
-
+        '204':
+          description: 正常に外せました。
+        '404':
+          description: '+| 指定したIDのピンは存在しません。'
   /stamps:
     get:
       tags:
@@ -1873,14 +1728,14 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Stamp"
+                  $ref: '#/components/schemas/Stamp'
     post:
       tags:
         - stamp
@@ -1904,23 +1759,22 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: 1MBまでのpng, jpeg, gif
+                  description: '1MBまでのpng, jpeg, gif'
             encoding:
               file:
-                contentType: image/png, image/jpeg, image/gif
+                contentType: 'image/png, image/jpeg, image/gif'
       responses:
-        "201":
+        '201':
           description: 正常にスタンプが作成されました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Stamp"
-        "400":
+                $ref: '#/components/schemas/Stamp'
+        '400':
           description: 正常にスタンプが作成できませんでした。
-
-  /stamps/{stampID}:
+  '/stamps/{stampID}':
     parameters:
-      - $ref: "#/components/parameters/stampIdInPath"
+      - $ref: '#/components/parameters/stampIdInPath'
     get:
       tags:
         - stamp
@@ -1930,13 +1784,13 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Stamp"
-        "404":
+                $ref: '#/components/schemas/Stamp'
+        '404':
           description: 取得できませんでした。指定されたスタンプは存在しません。
     patch:
       tags:
@@ -1958,16 +1812,16 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: 1MBまでのpng, jpeg, gif
+                  description: '1MBまでのpng, jpeg, gif'
             encoding:
               file:
-                contentType: image/png, image/jpeg, image/gif
+                contentType: 'image/png, image/jpeg, image/gif'
       responses:
-        "204":
+        '204':
           description: 正常に修正できました。
-        "403":
+        '403':
           description: 修正できませんでした。指定されたスタンプを修正する権限がありません。
-        "404":
+        '404':
           description: 修正できませんでした。指定されたスタンプは存在しません。
     delete:
       tags:
@@ -1975,13 +1829,12 @@ paths:
       operationId: deleteStamp
       description: スタンプを削除します。
       responses:
-        "204":
+        '204':
           description: 正常に削除できました。
-        "403":
+        '403':
           description: 削除できませんでした。指定されたスタンプを削除する権限がありません。
-        "404":
+        '404':
           description: 削除できませんでした。指定されたスタンプは存在しません。
-
   /webhooks:
     get:
       tags:
@@ -1993,14 +1846,14 @@ paths:
             - read
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Webhook"
+                  $ref: '#/components/schemas/Webhook'
     post:
       tags:
         - webhook
@@ -2014,22 +1867,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PostWebhook"
+              $ref: '#/components/schemas/PostWebhook'
       responses:
-        "201":
+        '201':
           description: 正常に作成できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Webhook"
-        "400":
+                $ref: '#/components/schemas/Webhook'
+        '400':
           description: 作成できませんでした。リクエスト内容が不正です。
-        "403":
+        '403':
           description: 作成できませんでした。権限がありません。
-
-  /webhooks/{webhookID}:
+  '/webhooks/{webhookID}':
     parameters:
-      - $ref: "#/components/parameters/webhookIdInPath"
+      - $ref: '#/components/parameters/webhookIdInPath'
     get:
       tags:
         - webhook
@@ -2040,15 +1892,15 @@ paths:
             - read
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Webhook"
-        "403":
+                $ref: '#/components/schemas/Webhook'
+        '403':
           description: 取得できませんでした。権限がありません。
-        "404":
+        '404':
           description: 取得できませんでした。指定したwebhookは存在しません。
     patch:
       tags:
@@ -2063,15 +1915,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchWebhook"
+              $ref: '#/components/schemas/PatchWebhook'
       responses:
-        "204":
+        '204':
           description: 正常に修正できました。
-        "400":
+        '400':
           description: 修正できませんでした。リクエスト内容が不正です。
-        "403":
+        '403':
           description: 削除できませんでした。権限がありません。
-        "404":
+        '404':
           description: 修正できませんでした。指定したwebhookは存在しません。
     delete:
       tags:
@@ -2082,11 +1934,11 @@ paths:
         - traqOAuth2:
             - manage_bot
       responses:
-        "204":
+        '204':
           description: 正常に削除できました。
-        "403":
+        '403':
           description: 削除できませんでした。権限がありません。
-        "404":
+        '404':
           description: 削除できませんでした。指定したwebhookは存在しません。
     post:
       tags:
@@ -2120,16 +1972,15 @@ paths:
               type: string
               description: メッセージ文字列
       responses:
-        "204":
+        '204':
           description: 正常に送信できました。
-        "400":
+        '400':
           description: 正常に送信できませんでした。リクエスト内容が不正です。
-        "404":
+        '404':
           description: 正常に送信できませんでした。指定されたwebhookは存在しません。
-
-  /webhooks/{webhookID}/icon:
+  '/webhooks/{webhookID}/icon':
     parameters:
-      - $ref: "#/components/parameters/webhookIdInPath"
+      - $ref: '#/components/parameters/webhookIdInPath'
     get:
       tags:
         - webhook
@@ -2140,7 +1991,7 @@ paths:
             - read
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             image/jpeg:
@@ -2155,7 +2006,7 @@ paths:
               schema:
                 type: string
                 format: binary
-        "404":
+        '404':
           description: 取得できませんでした。指定したWebhookは存在しません。
     put:
       tags:
@@ -2174,25 +2025,22 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: webhookユーザーのアイコン(1MBまでのpng, jpeg, gif)
+                  description: 'webhookユーザーのアイコン(1MBまでのpng, jpeg, gif)'
             encoding:
               file:
-                contentType: image/png, image/jpeg, image/gif
+                contentType: 'image/png, image/jpeg, image/gif'
       responses:
-        "204":
+        '204':
           description: 正常に変更できました。
-        "400":
+        '400':
           description: 変更できませんでした。リクエスト内容が不正です。
-        "403":
+        '403':
           description: 変更できませんでした。権限がありません。
-        "404":
+        '404':
           description: 修正できませんでした。指定したwebhookは存在しません。
-
-  # /webhooks/{webhookID}/messages
-
-  /webhooks/{webhookID}/github:
+  '/webhooks/{webhookID}/github':
     parameters:
-      - $ref: "#/components/parameters/webhookIdInPath"
+      - $ref: '#/components/parameters/webhookIdInPath'
     post:
       deprecated: true
       tags:
@@ -2207,13 +2055,12 @@ paths:
             schema:
               type: object
       responses:
-        "204":
+        '204':
           description: 正常に送信できました。
-        "400":
+        '400':
           description: 正常に送信できませんでした。リクエスト内容が不正です。
-        "404":
+        '404':
           description: 正常に送信できませんでした。指定されたwebhookは存在しません。
-
   /groups:
     get:
       deprecated: true
@@ -2225,14 +2072,14 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/UserGroup"
+                  $ref: '#/components/schemas/UserGroup'
     post:
       deprecated: true
       tags:
@@ -2247,22 +2094,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PostUserGroup"
+              $ref: '#/components/schemas/PostUserGroup'
       responses:
-        "201":
+        '201':
           description: 正常に作成できました
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserGroup"
-        "400":
+                $ref: '#/components/schemas/UserGroup'
+        '400':
           description: 正常に作成できませんでした。リクエスト内容が不正です
-        "409":
+        '409':
           description: 正常に作成できませんでした。既に存在するグループ名です
-
-  /groups/{groupID}:
+  '/groups/{groupID}':
     parameters:
-      - $ref: "#/components/parameters/groupIdInPath"
+      - $ref: '#/components/parameters/groupIdInPath'
     get:
       deprecated: true
       tags:
@@ -2273,13 +2119,13 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserGroup"
-        "404":
+                $ref: '#/components/schemas/UserGroup'
+        '404':
           description: 正常に取得できませんでした。指定したグループは存在しません。
     patch:
       deprecated: true
@@ -2295,17 +2141,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchUserGroup"
+              $ref: '#/components/schemas/PatchUserGroup'
       responses:
-        "204":
+        '204':
           description: 正常に変更できました
-        "400":
+        '400':
           description: 正常に変更できませんでした。リクエスト内容が不正です
-        "403":
+        '403':
           description: 正常に変更できませんでした。権限がありません。
-        "404":
+        '404':
           description: 正常に変更できませんでした。指定したグループは存在しません。
-        "409":
+        '409':
           description: 正常に変更できませんでした。既に存在するグループ名です
     delete:
       deprecated: true
@@ -2317,16 +2163,15 @@ paths:
         - traqOAuth2:
             - write
       responses:
-        "204":
+        '204':
           description: 正常に削除できました
-        "403":
+        '403':
           description: 正常に削除できませんでした。権限がありません。
-        "404":
+        '404':
           description: 正常に削除できませんでした。指定したグループは存在しません。
-
-  /groups/{groupID}/members:
+  '/groups/{groupID}/members':
     parameters:
-      - $ref: "#/components/parameters/groupIdInPath"
+      - $ref: '#/components/parameters/groupIdInPath'
     get:
       deprecated: true
       tags:
@@ -2337,13 +2182,13 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UUIDs"
-        "404":
+                $ref: '#/components/schemas/UUIDs'
+        '404':
           description: 正常に取得できませんでした。指定したグループは存在しません。
     post:
       deprecated: true
@@ -2359,21 +2204,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddUserGroup"
+              $ref: '#/components/schemas/AddUserGroup'
       responses:
-        "204":
+        '204':
           description: 正常に追加できました
-        "400":
+        '400':
           description: 正常に追加できませんでした。リクエスト内容が不正です
-        "403":
+        '403':
           description: 正常に追加できませんでした。権限がありません。
-        "404":
+        '404':
           description: 正常に追加できませんでした。指定したグループは存在しません。
-
-  /groups/{groupID}/members/{userID}:
+  '/groups/{groupID}/members/{userID}':
     parameters:
-      - $ref: "#/components/parameters/groupIdInPath"
-      - $ref: "#/components/parameters/userIdInPath"
+      - $ref: '#/components/parameters/groupIdInPath'
+      - $ref: '#/components/parameters/userIdInPath'
     delete:
       deprecated: true
       tags:
@@ -2384,15 +2228,14 @@ paths:
         - traqOAuth2:
             - write
       responses:
-        "204":
+        '204':
           description: 正常に削除できました
-        "400":
+        '400':
           description: 正常に追加できませんでした。リクエスト内容が不正です
-        "403":
+        '403':
           description: 正常に削除できませんでした。権限がありません。
-        "404":
+        '404':
           description: 正常に削除できませんでした。指定したグループは存在しません。
-
   /clients:
     get:
       tags:
@@ -2403,15 +2246,15 @@ paths:
         - traqOAuth2:
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/OwnedClientInfo"
-        "403":
+                  $ref: '#/components/schemas/OwnedClientInfo'
+        '403':
           description: 取得できませんでした。権限がありません。
     post:
       tags:
@@ -2426,22 +2269,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PostClient"
+              $ref: '#/components/schemas/PostClient'
       responses:
-        "200":
+        '200':
           description: 正常に登録できました。クライアント情報を返します。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OwnedClientInfo"
-        "400":
+                $ref: '#/components/schemas/OwnedClientInfo'
+        '400':
           description: 登録できませんでした。リクエスト内容が不正です。
-        "403":
+        '403':
           description: 登録できませんでした。権限がありません。
-
-  /clients/{clientID}:
+  '/clients/{clientID}':
     parameters:
-      - $ref: "#/components/parameters/clientIdInPath"
+      - $ref: '#/components/parameters/clientIdInPath'
     get:
       tags:
         - client
@@ -2451,13 +2293,13 @@ paths:
         - traqOAuth2:
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ClientInfo"
-        "404":
+                $ref: '#/components/schemas/ClientInfo'
+        '404':
           description: 取得できませんでした。指定されたクライアントは存在しません。
     patch:
       tags:
@@ -2472,35 +2314,34 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchClient"
+              $ref: '#/components/schemas/PatchClient'
       responses:
-        "204":
+        '204':
           description: 正常に変更できました。
-        "403":
+        '403':
           description: 変更できませんでした。権限がありません。
-        "404":
+        '404':
           description: 変更できませんでした。指定されたクライアントは存在しません。
     delete:
       tags:
         - client
       operationId: deleteClient
-      description: |+
+      description: |-
         指定したクライアントIDのクライアントを削除します。
         正常に削除された場合、このクライアントを通じての認可は全て取り消されます。
       security:
         - traqOAuth2:
             - manage_bot
       responses:
-        "204":
+        '204':
           description: 正常に削除できました。
-        "403":
+        '403':
           description: 削除できませんでした。権限がありません。
-        "404":
+        '404':
           description: 削除できませんでした。指定されたクライアントは存在しません。
-
-  /clients/{clientID}/detail:
+  '/clients/{clientID}/detail':
     parameters:
-      - $ref: "#/components/parameters/clientIdInPath"
+      - $ref: '#/components/parameters/clientIdInPath'
     get:
       tags:
         - client
@@ -2510,15 +2351,14 @@ paths:
         - traqOAuth2:
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OwnedClientInfo"
-        "403":
+                $ref: '#/components/schemas/OwnedClientInfo'
+        '403':
           description: 取得できませんでした。権限がありません。
-
   /bots:
     get:
       tags:
@@ -2530,14 +2370,14 @@ paths:
             - read
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Bot"
+                  $ref: '#/components/schemas/Bot'
     post:
       tags:
         - bot
@@ -2551,24 +2391,23 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PostBot"
+              $ref: '#/components/schemas/PostBot'
       responses:
-        "201":
+        '201':
           description: 正常に作成できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BotDetail"
-        "400":
+                $ref: '#/components/schemas/BotDetail'
+        '400':
           description: 作成できませんでした。リクエスト内容が不正です。
-        "409":
-          description: 作成できませんでした。既に名前が使われています。
-        "403":
+        '403':
           description: 作成できませんでした。権限がありません。
-
-  /bots/{botID}:
+        '409':
+          description: 作成できませんでした。既に名前が使われています。
+  '/bots/{botID}':
     parameters:
-      - $ref: "#/components/parameters/botIdInPath"
+      - $ref: '#/components/parameters/botIdInPath'
     get:
       tags:
         - bot
@@ -2579,13 +2418,13 @@ paths:
             - read
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Bot"
-        "404":
+                $ref: '#/components/schemas/Bot'
+        '404':
           description: 取得できませんでした。指定したBotは存在しません。
     patch:
       tags:
@@ -2600,15 +2439,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchBot"
+              $ref: '#/components/schemas/PatchBot'
       responses:
-        "204":
+        '204':
           description: 正常に変更できました。
-        "400":
+        '400':
           description: 変更できませんでした。リクエスト内容が不正です。
-        "403":
+        '403':
           description: 変更できませんでした。権限がありません。
-        "404":
+        '404':
           description: 削除できませんでした。指定したBotは存在しません。
     delete:
       tags:
@@ -2619,16 +2458,15 @@ paths:
         - traqOAuth2:
             - manage_bot
       responses:
-        "204":
+        '204':
           description: 正常に削除できました。
-        "403":
+        '403':
           description: 削除できませんでした。権限がありません。
-        "404":
+        '404':
           description: 削除できませんでした。指定したBotは存在しません。
-
-  /bots/{botID}/detail:
+  '/bots/{botID}/detail':
     parameters:
-      - $ref: "#/components/parameters/botIdInPath"
+      - $ref: '#/components/parameters/botIdInPath'
     get:
       tags:
         - bot
@@ -2639,20 +2477,19 @@ paths:
             - read
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BotDetail"
-        "403":
+                $ref: '#/components/schemas/BotDetail'
+        '403':
           description: 取得できませんでした。権限がありません。
-        "404":
+        '404':
           description: 取得できませんでした。指定したBotは存在しません。
-
-  /bots/{botID}/events:
+  '/bots/{botID}/events':
     parameters:
-      - $ref: "#/components/parameters/botIdInPath"
+      - $ref: '#/components/parameters/botIdInPath'
     put:
       tags:
         - bot
@@ -2666,22 +2503,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PutBotEvents"
+              $ref: '#/components/schemas/PutBotEvents'
       responses:
-        "204":
+        '204':
           description: 変更できました。
-        "400":
+        '400':
           description: リクエスト内容が不正です。
-        "403":
+        '403':
           description: 権限がありません。
-        "404":
+        '404':
           description: 指定したBotは存在しません。
-
-  # /bots/{botID}/events/logs
-
-  /bots/{botID}/icon:
+  '/bots/{botID}/icon':
     parameters:
-      - $ref: "#/components/parameters/botIdInPath"
+      - $ref: '#/components/parameters/botIdInPath'
     get:
       tags:
         - bot
@@ -2692,7 +2526,7 @@ paths:
             - read
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             image/jpeg:
@@ -2707,7 +2541,7 @@ paths:
               schema:
                 type: string
                 format: binary
-        "404":
+        '404':
           description: 取得できませんでした。指定したBotは存在しません。
     put:
       tags:
@@ -2726,23 +2560,22 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: Botユーザーのアイコン(1MBまでのpng, jpeg, gif)
+                  description: 'Botユーザーのアイコン(1MBまでのpng, jpeg, gif)'
             encoding:
               file:
-                contentType: image/png, image/jpeg, image/gif
+                contentType: 'image/png, image/jpeg, image/gif'
       responses:
-        "204":
+        '204':
           description: 正常に変更できました。
-        "400":
+        '400':
           description: 変更できませんでした。リクエスト内容が不正です。
-        "403":
+        '403':
           description: 変更できませんでした。権限がありません。
-        "404":
+        '404':
           description: 修正できませんでした。指定したBotは存在しません。
-
-  /bots/{botID}/state:
+  '/bots/{botID}/state':
     parameters:
-      - $ref: "#/components/parameters/botIdInPath"
+      - $ref: '#/components/parameters/botIdInPath'
     put:
       deprecated: true
       tags:
@@ -2757,22 +2590,21 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PutBotState"
+              $ref: '#/components/schemas/PutBotState'
       responses:
-        "204":
-          description: 変更できました。
-        "202":
+        '202':
           description: Botのアクティベーションを受理しました。PINGリクエストが通り次第有効になります。
-        "400":
+        '204':
+          description: 変更できました。
+        '400':
           description: リクエスト内容が不正です。
-        "403":
+        '403':
           description: 権限がありません。
-        "404":
+        '404':
           description: 指定したBotは存在しません。
-
-  /bots/{botID}/reissue:
+  '/bots/{botID}/reissue':
     parameters:
-      - $ref: "#/components/parameters/botIdInPath"
+      - $ref: '#/components/parameters/botIdInPath'
     post:
       deprecated: true
       tags:
@@ -2783,20 +2615,19 @@ paths:
         - traqOAuth2:
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 再発行しました
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BotTokens"
-        "403":
+                $ref: '#/components/schemas/BotTokens'
+        '403':
           description: 権限がありません。
-        "404":
+        '404':
           description: 指定したBotは存在しません。
-
-  /bots/{botID}/channels:
+  '/bots/{botID}/channels':
     parameters:
-      - $ref: "#/components/parameters/botIdInPath"
+      - $ref: '#/components/parameters/botIdInPath'
     get:
       tags:
         - bot
@@ -2807,17 +2638,16 @@ paths:
             - read
             - manage_bot
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UUIDs"
-        "403":
+                $ref: '#/components/schemas/UUIDs'
+        '403':
           description: 権限がありません。
-        "404":
+        '404':
           description: 指定したBotは存在しません。
-
   /activity/latest-messages:
     get:
       tags:
@@ -2843,17 +2673,14 @@ paths:
           description: 購読チャンネルのみを取得する
           example: false
       responses:
-        "200":
+        '200':
           description: 正常に取得ができました
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MessageList"
-        "400":
+                $ref: '#/components/schemas/MessageList'
+        '400':
           description: リクエスト内容が不正です
-
-  # /skyway/authenticate
-
   /webrtc/state:
     get:
       deprecated: true
@@ -2865,12 +2692,12 @@ paths:
         - traqOAuth2:
             - read
       responses:
-        "200":
+        '200':
           description: 正常に取得できました。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebRTCUserState"
+                $ref: '#/components/schemas/WebRTCUserState'
     put:
       deprecated: true
       tags:
@@ -2885,11 +2712,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PutWebRTCState"
+              $ref: '#/components/schemas/PutWebRTCState'
       responses:
-        "204":
+        '204':
           description: 正常に変更できました。
-
 components:
   securitySchemes:
     cookieAuth:
@@ -2906,7 +2732,6 @@ components:
             read: 読み取りスコープ
             write: 書き込みスコープ
             manage_bot: bot関連読み書きスコープ
-
   parameters:
     channelIdInPath:
       name: channelID
@@ -3024,9 +2849,9 @@ components:
       schema:
         type: string
         format: date-time
-        default: "0000-01-01T00:00:00.000000Z"
+        default: '0000-01-01T00:00:00.000000Z'
       description: 取得する時間範囲の開始日時
-      example: "2016-10-12T11:00:00.000000Z"
+      example: '2016-10-12T11:00:00.000000Z'
     untilInQuery:
       in: query
       name: until
@@ -3034,7 +2859,7 @@ components:
         type: string
         format: date-time
       description: 取得する時間範囲の終了日時
-      example: "2016-10-12T11:00:00.0000000Z"
+      example: '2016-10-12T11:00:00.0000000Z'
     inclusiveInQuery:
       in: query
       name: inclusive
@@ -3052,13 +2877,11 @@ components:
           - desc
         default: desc
       description: 昇順か降順か
-
   headers:
     X-TRAQ-MORE:
       schema:
         type: boolean
       description: 指定した範囲に要素がさらに存在するかどうか
-
   schemas:
     UUIDs:
       type: array
@@ -3082,7 +2905,7 @@ components:
         - client_id
       properties:
         response_type:
-          $ref: "#/components/schemas/OAuth2ResponseType"
+          $ref: '#/components/schemas/OAuth2ResponseType'
         client_id:
           type: string
         redirect_uri:
@@ -3098,7 +2921,7 @@ components:
         nonce:
           type: string
         prompt:
-          $ref: "#/components/schemas/OAuth2Prompt"
+          $ref: '#/components/schemas/OAuth2Prompt'
     OAuth2Token:
       type: object
       required:
@@ -3150,7 +2973,7 @@ components:
       properties:
         submit:
           type: string
-          description: 承諾する場合は"approve"
+          description: '承諾する場合は"approve"'
     UserLogin:
       type: object
       required:
@@ -3180,7 +3003,7 @@ components:
       properties:
         displayName:
           type: string
-          description: 新しい表示名(0-32文字)。変更しない場合は""
+          description: '新しい表示名(0-32文字)。変更しない場合は""'
         twitterId:
           type: string
           description: TwitterID
@@ -3226,7 +3049,7 @@ components:
           description: チャンネル名
           example: yamada
         member:
-          $ref: "#/components/schemas/UUIDs"
+          $ref: '#/components/schemas/UUIDs'
         parent:
           type: string
           format: uuid
@@ -3236,7 +3059,7 @@ components:
           description: チャンネルトピック
           example: yamadaチャンネルです！
         children:
-          $ref: "#/components/schemas/UUIDs"
+          $ref: '#/components/schemas/UUIDs'
         visibility:
           type: boolean
           description: チャンネルの可視状態
@@ -3252,7 +3075,7 @@ components:
     ChannelList:
       type: array
       items:
-        $ref: "#/components/schemas/Channel"
+        $ref: '#/components/schemas/Channel'
     UnreadChannel:
       type: object
       properties:
@@ -3334,14 +3157,14 @@ components:
         text:
           type: string
           description: チャンネルの説明
-          example: なんでも良いチャンネルです!!
+          example: 'なんでも良いチャンネルです!!'
     UserStatus:
       type: integer
       enum:
         - 0
         - 1
         - 2
-      description: アカウントの状態 (0:停止,1:有効,2:一時停止)
+      description: 'アカウントの状態 (0:停止,1:有効,2:一時停止)'
     User:
       type: object
       properties:
@@ -3376,7 +3199,7 @@ components:
           type: boolean
           description: アカウントが停止中かどうか
         accountStatus:
-          $ref: "#/components/schemas/UserStatus"
+          $ref: '#/components/schemas/UserStatus'
     Me:
       type: object
       properties:
@@ -3411,7 +3234,7 @@ components:
           type: boolean
           description: アカウントが停止中かどうか
         accountStatus:
-          $ref: "#/components/schemas/UserStatus"
+          $ref: '#/components/schemas/UserStatus'
         role:
           type: string
           description: ユーザーロール
@@ -3423,7 +3246,7 @@ components:
     UserList:
       type: array
       items:
-        $ref: "#/components/schemas/User"
+        $ref: '#/components/schemas/User'
     UserDetail:
       type: object
       properties:
@@ -3458,9 +3281,9 @@ components:
           type: boolean
           description: アカウントが停止中かどうか
         accountStatus:
-          $ref: "#/components/schemas/UserStatus"
+          $ref: '#/components/schemas/UserStatus'
         tagList:
-          $ref: "#/components/schemas/TagList"
+          $ref: '#/components/schemas/TagList'
     UserGroup:
       type: object
       properties:
@@ -3482,7 +3305,7 @@ components:
           format: uuid
           description: グループ管理者UUID
         members:
-          $ref: "#/components/schemas/UUIDs"
+          $ref: '#/components/schemas/UUIDs'
         createdAt:
           type: string
           format: date-time
@@ -3550,7 +3373,7 @@ components:
     TagList:
       type: array
       items:
-        $ref: "#/components/schemas/Tag"
+        $ref: '#/components/schemas/Tag'
     SetTag:
       type: object
       required:
@@ -3568,7 +3391,7 @@ components:
       properties:
         isLocked:
           type: boolean
-          description: lockするときはtrue,解除するときはfalse
+          description: 'lockするときはtrue,解除するときはfalse'
           example: true
     TagUsers:
       type: object
@@ -3579,7 +3402,7 @@ components:
         tag:
           type: string
         users:
-          $ref: "#/components/schemas/UUIDs"
+          $ref: '#/components/schemas/UUIDs'
     Message:
       type: object
       properties:
@@ -3615,11 +3438,11 @@ components:
           type: array
           description: メッセージスタンプ配列
           items:
-            $ref: "#/components/schemas/MessageStamp"
+            $ref: '#/components/schemas/MessageStamp'
     MessageList:
       type: array
       items:
-        $ref: "#/components/schemas/Message"
+        $ref: '#/components/schemas/Message'
     SendMessage:
       type: object
       required:
@@ -3691,11 +3514,11 @@ components:
           format: date-time
           description: ピン留めした日時
         message:
-          $ref: "#/components/schemas/Message"
+          $ref: '#/components/schemas/Message'
     PinList:
       type: array
       items:
-        $ref: "#/components/schemas/Pin"
+        $ref: '#/components/schemas/Pin'
     PinIDObject:
       type: object
       properties:
@@ -3706,10 +3529,10 @@ components:
     NotificationUsers:
       type: object
       properties:
-        on:
-          $ref: "#/components/schemas/UUIDs"
-        off:
-          $ref: "#/components/schemas/UUIDs"
+        'on':
+          $ref: '#/components/schemas/UUIDs'
+        'off':
+          $ref: '#/components/schemas/UUIDs'
     FCMToken:
       type: object
       required:
@@ -3718,7 +3541,7 @@ components:
         token:
           type: string
           description: FCMのデバイストークン
-          example: bk3RNwTe3H0:CI2k_HHwgIpoDKCIZvvDMExUdFQ3P1
+          example: 'bk3RNwTe3H0:CI2k_HHwgIpoDKCIZvvDMExUdFQ3P1'
     Webhook:
       type: object
       properties:
@@ -3868,7 +3691,7 @@ components:
         name:
           type: string
           maxLength: 16
-          description: botユーザーID。自動的に先頭に"BOT_"が付与されます
+          description: 'botユーザーID。自動的に先頭に"BOT_"が付与されます'
         displayName:
           type: string
           maxLength: 32
@@ -3966,7 +3789,7 @@ components:
           type: string
           format: uri
           description: BOTサーバーエンドポイント
-          example: https://example.com/bot
+          example: 'https://example.com/bot'
         privileged:
           type: boolean
           description: 権限昇格されているかどうか
@@ -4059,7 +3882,7 @@ components:
         - none
         - monitoring
         - editing
-      description: editing,monitoring,noneのユーザーの状態
+      description: 'editing,monitoring,noneのユーザーの状態'
       example: monitoring
     Heartbeat:
       type: object
@@ -4068,7 +3891,7 @@ components:
         - channelId
       properties:
         status:
-          $ref: "#/components/schemas/HeartbeatStatus"
+          $ref: '#/components/schemas/HeartbeatStatus'
         channelId:
           type: string
           format: uuid
@@ -4086,7 +3909,7 @@ components:
                 format: uuid
                 description: ユーザーUUID
               status:
-                $ref: "#/components/schemas/HeartbeatStatus"
+                $ref: '#/components/schemas/HeartbeatStatus'
         channelId:
           type: string
           format: uuid
@@ -4163,7 +3986,7 @@ components:
         scopes:
           type: array
           items:
-            $ref: "#/components/schemas/ClientScope"
+            $ref: '#/components/schemas/ClientScope'
           description: 要求スコープの配列
         redirectUri:
           type: string
@@ -4195,7 +4018,7 @@ components:
         scopes:
           type: array
           items:
-            $ref: "#/components/schemas/ClientScope"
+            $ref: '#/components/schemas/ClientScope'
           description: 要求スコープの配列
         approvedAt:
           type: string
@@ -4226,7 +4049,7 @@ components:
           minItems: 1
           description: 要求するスコープ
           items:
-            $ref: "#/components/schemas/ClientScope"
+            $ref: '#/components/schemas/ClientScope'
     PatchClient:
       type: object
       properties:
@@ -4260,15 +4083,15 @@ components:
             - ChildCreated
         detail:
           oneOf:
-            - $ref: "#/components/schemas/TopicChangedEvent"
-            - $ref: "#/components/schemas/SubscribersChangedEvent"
-            - $ref: "#/components/schemas/PinAddedEvent"
-            - $ref: "#/components/schemas/PinRemovedEvent"
-            - $ref: "#/components/schemas/NameChangedEvent"
-            - $ref: "#/components/schemas/ParentChangedEvent"
-            - $ref: "#/components/schemas/VisibilityChangedEvent"
-            - $ref: "#/components/schemas/ForcedNotificationChangedEvent"
-            - $ref: "#/components/schemas/ChildCreatedEvent"
+            - $ref: '#/components/schemas/TopicChangedEvent'
+            - $ref: '#/components/schemas/SubscribersChangedEvent'
+            - $ref: '#/components/schemas/PinAddedEvent'
+            - $ref: '#/components/schemas/PinRemovedEvent'
+            - $ref: '#/components/schemas/NameChangedEvent'
+            - $ref: '#/components/schemas/ParentChangedEvent'
+            - $ref: '#/components/schemas/VisibilityChangedEvent'
+            - $ref: '#/components/schemas/ForcedNotificationChangedEvent'
+            - $ref: '#/components/schemas/ChildCreatedEvent'
           description: イベント詳細
         date_time:
           type: string
@@ -4295,10 +4118,10 @@ components:
           type: string
           format: uuid
           description: 変更者UUID
-        on:
-          $ref: "#/components/schemas/UUIDs"
-        off:
-          $ref: "#/components/schemas/UUIDs"
+        'on':
+          $ref: '#/components/schemas/UUIDs'
+        'off':
+          $ref: '#/components/schemas/UUIDs'
       description: SubscribersChanged
     PinAddedEvent:
       type: object
@@ -4410,7 +4233,7 @@ components:
         users:
           type: array
           items:
-            $ref: "#/components/schemas/WebRTCUserState"
+            $ref: '#/components/schemas/WebRTCUserState'
           description: 接続ユーザーの状態の配列
     PutWebRTCState:
       type: object
@@ -4453,7 +4276,6 @@ components:
     ChannelViewers:
       type: array
       items:
-        $ref: "#/components/schemas/ChannelViewer"
-
+        $ref: '#/components/schemas/ChannelViewer'
 security:
   - cookieAuth: []

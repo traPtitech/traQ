@@ -207,7 +207,7 @@ func (h *Handlers) GetBotIcon(c echo.Context) error {
 
 // PutBotIcon PUT /bots/:botID/icon
 func (h *Handlers) PutBotIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(c, h.Repo, getBotFromContext(c).BotUserID)
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getBotFromContext(c).BotUserID)
 }
 
 // PutBotState PUT /bots/:botID/state

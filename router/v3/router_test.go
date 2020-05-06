@@ -16,8 +16,10 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/imaging"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
+	"image"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -97,6 +99,12 @@ func TestMain(m *testing.M) {
 			Realtime: nil,
 			Version:  "version",
 			Revision: "revision",
+			Imaging: imaging.NewProcessor(imaging.Config{
+				MaxPixels:        1000 * 1000,
+				Concurrency:      1,
+				ThumbnailMaxSize: image.Pt(360, 480),
+				ImageMagickPath:  "",
+			}),
 		}
 		handlers.Setup(e.Group("/api"))
 		servers[key] = httptest.NewServer(e)

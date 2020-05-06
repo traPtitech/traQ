@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/auth"
+	"github.com/traPtitech/traQ/utils/imaging"
 	"go.uber.org/zap"
 )
 
@@ -23,8 +24,6 @@ type Config struct {
 	AccessLogging bool
 	// Gzipped レスポンスをGzip圧縮するかどうか
 	Gzipped bool
-	// ImageMagickPath ImageMagickの実行パス
-	ImageMagickPath string
 	// AccessTokenExp アクセストークンの有効時間(秒)
 	AccessTokenExp int
 	// IsRefreshEnabled リフレッシュトークンを発行するかどうか
@@ -47,6 +46,8 @@ type Config struct {
 	Realtime *realtime.Service
 	// RootLogger ルートロガー
 	RootLogger *zap.Logger
+	// Imaging 画像処理機
+	Imaging imaging.Processor
 }
 
 // ExternalAuth 外部認証設定

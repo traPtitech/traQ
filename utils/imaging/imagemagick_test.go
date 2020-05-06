@@ -1,4 +1,4 @@
-package imagemagick
+package imaging
 
 import (
 	"bytes"

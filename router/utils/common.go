@@ -9,14 +9,15 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/utils/imaging"
 	"gopkg.in/guregu/null.v3"
 	"net/http"
 	"strconv"
 )
 
 // ChangeUserIcon userIDのユーザーのアイコン画像を変更する
-func ChangeUserIcon(c echo.Context, repo repository.Repository, userID uuid.UUID) error {
-	iconID, err := SaveUploadImage(c, repo, "file", model.FileTypeIcon, 2<<20, 256)
+func ChangeUserIcon(p imaging.Processor, c echo.Context, repo repository.Repository, userID uuid.UUID) error {
+	iconID, err := SaveUploadIconImage(p, c, repo, "file")
 	if err != nil {
 		return err
 	}

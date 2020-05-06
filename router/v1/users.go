@@ -217,12 +217,12 @@ func (h *Handlers) GetMyIcon(c echo.Context) error {
 
 // PutUserIcon PUT /users/:userID/icon
 func (h *Handlers) PutUserIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(c, h.Repo, getRequestParamAsUUID(c, consts.ParamUserID))
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getRequestParamAsUUID(c, consts.ParamUserID))
 }
 
 // PutMyIcon PUT /users/me/icon
 func (h *Handlers) PutMyIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(c, h.Repo, getRequestUserID(c))
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getRequestUserID(c))
 }
 
 // PatchMeRequest PATCH /users/me リクエストボディ
