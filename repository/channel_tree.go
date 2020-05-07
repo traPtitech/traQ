@@ -165,7 +165,7 @@ func makeChannelTree(channels []*model.Channel) (*channelTreeImpl, error) {
 			ct.roots[cid] = n
 		}
 	}
-	ct.regenerateJson()
+	ct.regenerateJSON()
 	return ct, nil
 }
 
@@ -192,7 +192,7 @@ func (ct *channelTreeImpl) add(ch *model.Channel) {
 		ct.paths[n.id] = ct.paths[p.id] + "/" + n.name
 	}
 	ct.nodes[n.id] = n
-	ct.regenerateJson()
+	ct.regenerateJSON()
 }
 
 func (ct *channelTreeImpl) move(id uuid.UUID, newParent optional.UUID, newName optional.String) {
@@ -221,7 +221,7 @@ func (ct *channelTreeImpl) move(id uuid.UUID, newParent optional.UUID, newName o
 		}
 	}
 	ct.recalculatePath(n)
-	ct.regenerateJson()
+	ct.regenerateJSON()
 }
 
 func (ct *channelTreeImpl) update(id uuid.UUID, topic optional.String, archived optional.Bool, force optional.Bool) {
@@ -241,7 +241,7 @@ func (ct *channelTreeImpl) update(id uuid.UUID, topic optional.String, archived 
 		n.force = force.Bool
 	}
 	n.Unlock()
-	ct.regenerateJson()
+	ct.regenerateJSON()
 }
 
 func (ct *channelTreeImpl) recalculatePath(n *channelNode) {
@@ -255,7 +255,7 @@ func (ct *channelTreeImpl) recalculatePath(n *channelNode) {
 	}
 }
 
-func (ct *channelTreeImpl) regenerateJson() {
+func (ct *channelTreeImpl) regenerateJSON() {
 	arr := make([]*channelNode, 0, len(ct.nodes))
 	for _, node := range ct.nodes {
 		arr = append(arr, node)

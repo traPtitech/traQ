@@ -88,16 +88,15 @@ func Execute() error {
 func getLogger() (logger *zap.Logger) {
 	if c.DevMode {
 		return getCLILogger()
-	} else {
-		cfg := zap.Config{
-			Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
-			Encoding:         "json",
-			EncoderConfig:    zapdriver.NewProductionEncoderConfig(),
-			OutputPaths:      []string{"stdout"},
-			ErrorOutputPaths: []string{"stderr"},
-		}
-		logger, _ = cfg.Build(zapdriver.WrapCore(zapdriver.ServiceName("traq", fmt.Sprintf("%s.%s", Version, Revision))))
 	}
+	cfg := zap.Config{
+		Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
+		Encoding:         "json",
+		EncoderConfig:    zapdriver.NewProductionEncoderConfig(),
+		OutputPaths:      []string{"stdout"},
+		ErrorOutputPaths: []string{"stderr"},
+	}
+	logger, _ = cfg.Build(zapdriver.WrapCore(zapdriver.ServiceName("traq", fmt.Sprintf("%s.%s", Version, Revision))))
 	return
 }
 

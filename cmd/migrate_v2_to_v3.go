@@ -160,7 +160,7 @@ func convertMessages(db *gorm.DB, logger *zap.Logger, dryRun bool, startMessageP
 				converted += strings.Join(links, "\n")
 
 				if !dryRun {
-					s.Acquire(context.Background(), 1)
+					_ = s.Acquire(context.Background(), 1)
 					defer s.Release(1)
 
 					err := db.Transaction(func(tx *gorm.DB) error {
@@ -238,7 +238,7 @@ func linkFileToChannel(db *gorm.DB, logger *zap.Logger, dryRun bool, startFilePa
 			}
 
 			wg.Add(1)
-			s.Acquire(context.Background(), 1)
+			_ = s.Acquire(context.Background(), 1)
 			go func(file *model.File) {
 				defer wg.Done()
 				defer s.Release(1)

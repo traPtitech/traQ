@@ -102,7 +102,7 @@ Command:
 			sessions[session] = state
 		}
 
-		s.streamer.realtime.WebRTCv3.SetState(s.Key(), s.UserID(), cid, sessions)
+		_ = s.streamer.realtime.WebRTCv3.SetState(s.Key(), s.UserID(), cid, sessions)
 
 	case "timeline_streaming":
 		// timeline_streaming:(on|off|true|false)

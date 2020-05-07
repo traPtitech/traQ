@@ -27,7 +27,7 @@ func (p *defaultProcessor) Thumbnail(src io.ReadSeeker) (image.Image, error) {
 }
 
 func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Image, error) {
-	p.sp.Acquire(context.Background(), 1)
+	_ = p.sp.Acquire(context.Background(), 1)
 	defer p.sp.Release(1)
 
 	imgCfg, _, err := image.DecodeConfig(src)

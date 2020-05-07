@@ -65,7 +65,7 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 	if id == uuid.Nil {
 		return ErrNilID
 	}
-	var user_id uuid.UUID
+	var userID uuid.UUID
 	changes := map[string]interface{}{}
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var sp model.StampPalette
@@ -99,7 +99,7 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 		if len(changes) > 0 {
 			return tx.Model(&sp).Updates(changes).Error
 		}
-		user_id = sp.CreatorID
+		userID = sp.CreatorID
 		return nil
 	})
 	if err != nil {
@@ -109,7 +109,7 @@ func (repo *GormRepository) UpdateStampPalette(id uuid.UUID, args UpdateStampPal
 		repo.hub.Publish(hub.Message{
 			Name: event.StampPaletteUpdated,
 			Fields: hub.Fields{
-				"user_id":          user_id,
+				"user_id":          userID,
 				"stamp_palette_id": id,
 			},
 		})

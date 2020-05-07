@@ -101,13 +101,13 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	}
 
 	// チャンネルアクセス権確認
-	channelId := uuid.FromStringOrNil(c.FormValue("channelId"))
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelId); err != nil {
+	channelID := uuid.FromStringOrNil(c.FormValue("channelId"))
+	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
 		return herror.InternalServerError(err)
 	} else if !ok {
 		return herror.BadRequest("invalid channelId")
 	}
-	ch, err := h.Repo.GetChannel(channelId)
+	ch, err := h.Repo.GetChannel(channelID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -124,7 +124,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 			args.ACLAllow(v)
 		}
 	}
-	args.ChannelID = optional.UUIDFrom(channelId)
+	args.ChannelID = optional.UUIDFrom(channelID)
 
 	// サムネイル生成
 	switch args.MimeType {

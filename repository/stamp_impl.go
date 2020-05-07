@@ -17,7 +17,7 @@ import (
 type stampRepository struct {
 	stamps        map[uuid.UUID]*model.Stamp
 	nameStampsMap map[string]*model.Stamp
-	allJson       []byte
+	allJSON       []byte
 	json          []byte
 	updatedAt     time.Time
 	sync.RWMutex
@@ -34,7 +34,7 @@ func makeStampRepository(stamps []*model.Stamp) *stampRepository {
 		r.nameStampsMap[strings.ToLower(s.Name)] = s
 	}
 
-	r.regenerateJson()
+	r.regenerateJSON()
 	return r
 }
 
@@ -42,7 +42,7 @@ func (r *stampRepository) add(s *model.Stamp) {
 	r.stamps[s.ID] = s
 	r.nameStampsMap[strings.ToLower(s.Name)] = s
 	r.updatedAt = time.Now()
-	r.regenerateJson()
+	r.regenerateJSON()
 }
 
 func (r *stampRepository) update(s *model.Stamp) {
@@ -55,7 +55,7 @@ func (r *stampRepository) update(s *model.Stamp) {
 	r.stamps[s.ID] = s
 	r.nameStampsMap[strings.ToLower(s.Name)] = s
 	r.updatedAt = time.Now()
-	r.regenerateJson()
+	r.regenerateJSON()
 }
 
 func (r *stampRepository) delete(id uuid.UUID) {
@@ -67,10 +67,10 @@ func (r *stampRepository) delete(id uuid.UUID) {
 	delete(r.stamps, id)
 	delete(r.nameStampsMap, strings.ToLower(s.Name))
 	r.updatedAt = time.Now()
-	r.regenerateJson()
+	r.regenerateJSON()
 }
 
-func (r *stampRepository) regenerateJson() {
+func (r *stampRepository) regenerateJSON() {
 	arr := make([]*model.Stamp, 0, len(r.stamps))
 	arrAll := make([]*model.Stamp, 0, len(r.stamps))
 	for _, stamp := range r.stamps {
@@ -90,7 +90,7 @@ func (r *stampRepository) regenerateJson() {
 	if err != nil {
 		panic(err)
 	}
-	r.allJson = b
+	r.allJSON = b
 }
 
 func (r *stampRepository) GetStamp(id uuid.UUID) (s *model.Stamp, ok bool) {
@@ -324,7 +324,7 @@ func (repo *GormRepository) GetStampsJSON(excludeUnicode bool) ([]byte, time.Tim
 		if excludeUnicode {
 			return repo.stamps.json, repo.stamps.updatedAt, nil
 		}
-		return repo.stamps.allJson, repo.stamps.updatedAt, nil
+		return repo.stamps.allJSON, repo.stamps.updatedAt, nil
 	}
 
 	stamps, err := repo.GetAllStamps(excludeUnicode)

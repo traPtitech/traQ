@@ -61,7 +61,9 @@ func defaultLoginHandler(oac *oauth2.Config) echo.HandlerFunc {
 			if sess == nil || sess.GetUserID() == uuid.Nil {
 				return herror.Unauthorized("You are not logged in. Please login.")
 			}
-			sess.Set(accountLinkingFlag, true)
+			if err := sess.Set(accountLinkingFlag, true); err != nil {
+				return herror.InternalServerError(err)
+			}
 		} else {
 			// ログインモード
 			if sess != nil {
