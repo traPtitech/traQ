@@ -56,9 +56,7 @@ type Handlers struct {
 	emojiCSSTime       time.Time
 	emojiCSSCacheLock  sync.RWMutex
 
-	messagesResponseCacheGroup  singleflight.Group
-	getStampsResponseCacheGroup singleflight.Group
-	getUsersResponseCacheGroup  singleflight.Group
+	getUsersResponseCacheGroup singleflight.Group
 }
 
 // Setup APIルーティングを行います

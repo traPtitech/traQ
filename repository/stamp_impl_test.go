@@ -273,40 +273,6 @@ func TestRepositoryImpl_ExistStamps(t *testing.T) {
 	})
 }
 
-func TestRepositoryImpl_StampNameExists(t *testing.T) {
-	t.Parallel()
-	repo, _, _ := setup(t, common2)
-
-	s := mustMakeStamp(t, repo, rand, uuid.Nil)
-
-	t.Run("empty", func(t *testing.T) {
-		t.Parallel()
-
-		ok, err := repo.StampNameExists("")
-		if assert.NoError(t, err) {
-			assert.False(t, ok)
-		}
-	})
-
-	t.Run("not found", func(t *testing.T) {
-		t.Parallel()
-
-		ok, err := repo.StampNameExists(random2.AlphaNumeric(20))
-		if assert.NoError(t, err) {
-			assert.False(t, ok)
-		}
-	})
-
-	t.Run("found", func(t *testing.T) {
-		t.Parallel()
-
-		ok, err := repo.StampNameExists(s.Name)
-		if assert.NoError(t, err) {
-			assert.True(t, ok)
-		}
-	})
-}
-
 func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common2)

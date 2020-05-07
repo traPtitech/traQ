@@ -70,16 +70,16 @@ type StampRepository interface {
 	// 成功した場合、スタンプの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetAllStamps(excludeUnicode bool) (stamps []*model.Stamp, err error)
+	// GetStampsJSON スタンプ一覧のJSON文字列を取得します
+	//
+	// 成功した場合、JSONの[]byte表現とnilを返します。
+	// DBによるエラーを返すことがあります。
+	GetStampsJSON(excludeUnicode bool) ([]byte, time.Time, error)
 	// StampExists 指定したIDのスタンプが存在するかどうかを返します
 	//
 	// 存在する場合、trueとnilを返します。
 	// DBによるエラーを返すことがあります。
 	StampExists(id uuid.UUID) (bool, error)
-	// StampNameExists 指定した名前のスタンプが存在するかどうかを返します
-	//
-	// 存在する場合、trueとnilを返します。
-	// DBによるエラーを返すことがあります。
-	StampNameExists(name string) (bool, error)
 	// GetUserStampHistory 指定したユーザーのスタンプ履歴を最大limit件取得します
 	//
 	// 0を指定した場合、全て取得します。

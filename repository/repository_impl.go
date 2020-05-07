@@ -34,6 +34,7 @@ type GormRepository struct {
 	hub    *hub.Hub
 	logger *zap.Logger
 	chTree *channelTreeImpl
+	stamps *stampRepository
 	fileImpl
 }
 
@@ -76,6 +77,13 @@ func (repo *GormRepository) Sync() (init bool, err error) {
 	if err != nil {
 		return false, err
 	}
+
+	// スタンプをキャッシュ
+	var stamps []*model.Stamp
+	if err := repo.db.Find(&stamps).Error; err != nil {
+		return false, err
+	}
+	repo.stamps = makeStampRepository(stamps)
 
 	// メトリクス用データ取得
 	if !initialized {
