@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -22,12 +23,16 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 		u = "1"
 	}
 
-	stamps, err := h.Repo.GetAllStamps(!isTrue(u))
+	b, updatedAt, err := h.Repo.GetStampsJSON(!isTrue(u))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, stamps)
+	extension.SetLastModified(c, updatedAt)
+	if done, err := extension.CheckPreconditions(c, updatedAt); done {
+		return err
+	}
+	return c.JSONBlob(http.StatusOK, b)
 }
 
 // CreateStamp POST /stamps

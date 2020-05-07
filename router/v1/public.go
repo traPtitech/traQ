@@ -139,10 +139,10 @@ func generateEmojiCSS(repo repository.StampRepository, buf *bytes.Buffer) error 
 	}
 
 	buf.Reset()
-	buf.WriteString(".emoji {display: inline-block; text-indent: 999%; white-space: nowrap; overflow: hidden; color: rgba(0, 0, 0, 0); background-size: contain}")
-	buf.WriteString(".s16{width: 16px; height: 16px}")
-	buf.WriteString(".s24{width: 24px; height: 24px}")
-	buf.WriteString(".s32{width: 32px; height: 32px}")
+	buf.WriteString(".emoji{display:inline-block;text-indent:999%;white-space:nowrap;overflow:hidden;color:rgba(0,0,0,0);background-size:contain}")
+	buf.WriteString(".s16{width:16px;height:16px}")
+	buf.WriteString(".s24{width:24px;height:24px}")
+	buf.WriteString(".s32{width:32px;height:32px}")
 	for _, stamp := range stamps {
 		buf.WriteString(fmt.Sprintf(".emoji.e_%s{background-image:url(/api/1.0/public/emoji/%s)}", stamp.Name, stamp.ID))
 	}

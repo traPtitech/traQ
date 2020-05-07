@@ -324,39 +324,15 @@ func (q *messagesQuery) convertU(uid uuid.UUID) repository.MessagesQuery {
 }
 
 func (h *Handlers) getMessages(c echo.Context, query repository.MessagesQuery, filterByReport bool) error {
-	var (
-		res  []*messageResponse
-		more bool
-	)
-
 	if query.Limit > 200 || query.Limit == 0 {
 		query.Limit = 200 // １度に取れるのは200メッセージまで
 	}
 
-	// TODO singleflightを使うべき所を精査する
-	if query.Until.Valid || query.Since.Valid || query.User != uuid.Nil {
-		messages, _more, err := h.Repo.GetMessages(query)
-		if err != nil {
-			return herror.InternalServerError(err)
-		}
-		res = formatMessages(messages)
-		more = _more
-	} else {
-		type sRes struct {
-			Messages []*messageResponse
-			More     bool
-		}
-
-		resI, err, _ := h.messagesResponseCacheGroup.Do(fmt.Sprintf("%s/%d/%d", query.Channel, query.Limit, query.Offset), func() (interface{}, error) {
-			messages, more, err := h.Repo.GetMessages(query)
-			return sRes{Messages: formatMessages(messages), More: more}, err
-		})
-		if err != nil {
-			return herror.InternalServerError(err)
-		}
-		res = resI.(sRes).Messages
-		more = resI.(sRes).More
+	messages, more, err := h.Repo.GetMessages(query)
+	if err != nil {
+		return herror.InternalServerError(err)
 	}
+	res := formatMessages(messages)
 
 	if filterByReport {
 		userID := getRequestUserID(c)

@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/traPtitech/traQ/utils/optional"
 	random2 "github.com/traPtitech/traQ/utils/random"
 	"image"
@@ -1823,6 +1824,15 @@ func (repo *TestRepository) GetAllStamps(excludeUnicode bool) (stamps []*model.S
 	return
 }
 
+func (repo *TestRepository) GetStampsJSON(excludeUnicode bool) ([]byte, time.Time, error) {
+	stamps, err := repo.GetAllStamps(excludeUnicode)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+	b, err := jsoniter.ConfigFastest.Marshal(stamps)
+	return b, time.Now(), err
+}
+
 func (repo *TestRepository) StampExists(id uuid.UUID) (bool, error) {
 	if id == uuid.Nil {
 		return false, nil
@@ -1831,20 +1841,6 @@ func (repo *TestRepository) StampExists(id uuid.UUID) (bool, error) {
 	_, ok := repo.Stamps[id]
 	repo.StampsLock.RUnlock()
 	return ok, nil
-}
-
-func (repo *TestRepository) StampNameExists(name string) (bool, error) {
-	if len(name) == 0 {
-		return false, nil
-	}
-	repo.StampsLock.RUnlock()
-	defer repo.StampsLock.RUnlock()
-	for _, v := range repo.Stamps {
-		if v.Name == name {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 func (repo *TestRepository) AddStar(userID, channelID uuid.UUID) error {
