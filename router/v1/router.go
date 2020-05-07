@@ -19,7 +19,6 @@ import (
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/utils/imaging"
 	"go.uber.org/zap"
-	"golang.org/x/sync/singleflight"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
 	"net/http"
@@ -55,8 +54,6 @@ type Handlers struct {
 	emojiCSSCache      bytes.Buffer
 	emojiCSSTime       time.Time
 	emojiCSSCacheLock  sync.RWMutex
-
-	getUsersResponseCacheGroup singleflight.Group
 }
 
 // Setup APIルーティングを行います
