@@ -334,7 +334,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiWebRTC.GET("/state", gone)
 			apiWebRTC.PUT("/state", gone)
 		}
-
 		api.POST("/skyway/authenticate", gone)
 	}
 
