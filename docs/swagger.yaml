@@ -2037,21 +2037,10 @@ paths:
       tags:
         - webhook
       operationId: postGitHubWebhook
-      description: Github-Compatibleなwebhookを送信します。
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に送信できました。
-        '400':
-          description: 正常に送信できませんでした。リクエスト内容が不正です。
-        '404':
-          description: 正常に送信できませんでした。指定されたwebhookは存在しません。
+        '410':
+          description: このAPIは削除されました
   /groups:
     get:
       deprecated: true
