@@ -149,7 +149,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	session.readLoop()
 
 	s.realtime.ViewerManager.RemoveViewer(session)
-	s.realtime.WebRTCv3.ResetState(session.Key(), session.UserID())
+	_ = s.realtime.WebRTCv3.ResetState(session.Key(), session.UserID())
 	s.hub.Publish(hub.Message{
 		Name: event.WSDisconnected,
 		Fields: hub.Fields{

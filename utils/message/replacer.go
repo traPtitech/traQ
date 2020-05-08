@@ -136,9 +136,9 @@ func (re *Replacer) replaceChannel(m string) string {
 
 func indexOf(slice []rune, target rune) int {
 	for k, v := range slice {
-			if v == target {
-					return k
-			}
+		if v == target {
+			return k
+		}
 	}
 	return -1
 }

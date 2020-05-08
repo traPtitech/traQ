@@ -16,7 +16,6 @@ import (
 	"github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
-	"gopkg.in/go-playground/webhooks.v5/github"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -222,73 +221,6 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 // PutWebhookIcon PUT /webhooks/:webhookID/icon
 func (h *Handlers) PutWebhookIcon(c echo.Context) error {
 	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getWebhookFromContext(c).GetBotUserID())
-}
-
-// PostWebhookByGithub POST /webhooks/:webhookID/github
-func (h *Handlers) PostWebhookByGithub(c echo.Context) error {
-	w := getWebhookFromContext(c)
-
-	switch c.Request().Header.Get(echo.HeaderContentType) {
-	case echo.MIMEApplicationJSON, echo.MIMEApplicationJSONCharsetUTF8:
-		break
-	default:
-		return echo.NewHTTPError(http.StatusUnsupportedMediaType)
-	}
-
-	ev := c.Request().Header.Get("X-GitHub-Event")
-	if len(ev) == 0 {
-		return herror.BadRequest("missing X-GitHub-Event header")
-	}
-
-	body, err := ioutil.ReadAll(c.Request().Body)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	if len(w.GetSecret()) > 0 {
-		sig, _ := hex.DecodeString(strings.TrimPrefix(c.Request().Header.Get("X-Hub-Signature"), "sha1="))
-		if len(sig) == 0 {
-			return herror.BadRequest("missing X-TRAQ-Signature header")
-		}
-		if subtle.ConstantTimeCompare(hmac.SHA1(body, w.GetSecret()), sig) != 1 {
-			return herror.Unauthorized()
-		}
-	}
-
-	tmpl := h.webhookDefTmpls.Lookup(fmt.Sprintf("github_%s.tmpl", github.Event(ev)))
-	if tmpl == nil {
-		return c.NoContent(http.StatusNoContent)
-	}
-
-	var payload interface{}
-	switch github.Event(ev) {
-	case github.IssuesEvent:
-		payload = &github.IssuesPayload{}
-	case github.PullRequestEvent:
-		payload = &github.PullRequestPayload{}
-	case github.PushEvent:
-		payload = &github.PushPayload{}
-	default:
-		return c.NoContent(http.StatusNoContent)
-	}
-
-	if err := json.Unmarshal(body, payload); err != nil {
-		return herror.BadRequest(err)
-	}
-
-	messageBuf := &strings.Builder{}
-	if err := tmpl.Execute(messageBuf, payload); err != nil {
-		messageBuf.WriteString("Webhook Template Execution Failed\n")
-		messageBuf.WriteString(err.Error())
-	}
-	if messageBuf.Len() > 0 {
-		_, err := h.Repo.CreateMessage(w.GetBotUserID(), w.GetChannelID(), messageBuf.String())
-		if err != nil {
-			return herror.InternalServerError(err)
-		}
-	}
-
-	return c.NoContent(http.StatusNoContent)
 }
 
 // GetWebhookMessages GET /webhooks/:webhookID/messages

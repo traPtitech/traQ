@@ -91,17 +91,11 @@ func (h *Handlers) PostLogout(c echo.Context) error {
 
 // GetUsers GET /users
 func (h *Handlers) GetUsers(c echo.Context) error {
-	res, err, _ := h.getUsersResponseCacheGroup.Do("", func() (interface{}, error) {
-		users, err := h.Repo.GetUsers(repository.UsersQuery{}.LoadProfile())
-		if err != nil {
-			return nil, err
-		}
-		return json.Marshal(h.formatUsers(users))
-	})
+	users, err := h.Repo.GetUsers(repository.UsersQuery{}.LoadProfile())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	return c.JSONBlob(http.StatusOK, res.([]byte))
+	return c.JSON(http.StatusOK, h.formatUsers(users))
 }
 
 // GetMe GET /users/me

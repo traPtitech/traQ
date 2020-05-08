@@ -132,5 +132,8 @@ var IsUserID = vd.WithContext(func(ctx context.Context, value interface{}) error
 	if err != nil {
 		return vd.NewInternalError(err)
 	}
+	if !ok {
+		return errors.New(errMessage)
+	}
 	return nil
 })

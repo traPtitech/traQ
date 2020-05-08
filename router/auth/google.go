@@ -10,6 +10,7 @@ import (
 	"golang.org/x/oauth2"
 	googleOAuth2 "golang.org/x/oauth2/google"
 	google "google.golang.org/api/oauth2/v2"
+	"google.golang.org/api/option"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -124,7 +125,7 @@ func (p *GoogleProvider) FetchUserInfo(t *oauth2.Token) (UserInfo, error) {
 	ui.t = t
 
 	c := p.oa2.Client(context.Background(), t)
-	googleService, err := google.New(c)
+	googleService, err := google.NewService(context.Background(), option.WithHTTPClient(c))
 	if err != nil {
 		return nil, fmt.Errorf(googleAPIRequestErrorFormat, err)
 	}

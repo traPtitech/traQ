@@ -483,11 +483,11 @@ func stampPaletteDeletedHandler(ns *Service, ev hub.Message) {
 func userWebRTCv3StateChangedHandler(ns *Service, ev hub.Message) {
 	type StateSession struct {
 		State     string `json:"state"`
-		SessionId string `json:"sessionId"`
+		SessionID string `json:"sessionId"`
 	}
 	sessions := make([]StateSession, 0)
 	for session, state := range ev.Fields["sessions"].(map[string]string) {
-		sessions = append(sessions, StateSession{State: state, SessionId: session})
+		sessions = append(sessions, StateSession{State: state, SessionID: session})
 	}
 
 	go ns.ws.WriteMessage("USER_WEBRTC_STATE_CHANGED", map[string]interface{}{

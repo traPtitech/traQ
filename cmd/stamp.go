@@ -24,9 +24,9 @@ const (
 		twemoji Copyright 2019 Twitter, Inc and other contributors
 		Graphics licensed under CC-BY 4.0: https://creativecommons.org/licenses/by/4.0/
 	*/
-	emojiZipUrl  = "https://github.com/twitter/twemoji/archive/v12.1.5.zip"
+	emojiZipURL  = "https://github.com/twitter/twemoji/archive/v12.1.5.zip"
 	emojiDir     = "twemoji-12.1.5/assets/svg/"
-	emojiMetaUrl = "https://raw.githubusercontent.com/emojione/emojione/master/emoji.json"
+	emojiMetaURL = "https://raw.githubusercontent.com/emojione/emojione/master/emoji.json"
 )
 
 type emojiMeta struct {
@@ -102,7 +102,7 @@ func stampInstallEmojisCommand() *cobra.Command {
 
 func installEmojis(repo repository.Repository, logger *zap.Logger, update bool) error {
 	// 絵文字メタデータをダウンロード
-	logger.Info("downloading meta data...: " + emojiMetaUrl)
+	logger.Info("downloading meta data...: " + emojiMetaURL)
 	emojis, err := downloadEmojiMeta()
 	if err != nil {
 		return err
@@ -110,7 +110,7 @@ func installEmojis(repo repository.Repository, logger *zap.Logger, update bool) 
 	logger.Info("finished downloading meta data")
 
 	// 絵文字画像データをダウンロード
-	logger.Info("downloading twemoji...: " + emojiZipUrl)
+	logger.Info("downloading twemoji...: " + emojiZipURL)
 	twemojiZip, err := downloadEmojiZip()
 	if err != nil {
 		return err
@@ -209,7 +209,7 @@ func installEmojis(repo repository.Repository, logger *zap.Logger, update bool) 
 }
 
 func downloadEmojiZip() (*bytes.Reader, error) {
-	res, err := http.Get(emojiZipUrl)
+	res, err := http.Get(emojiZipURL)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +220,7 @@ func downloadEmojiZip() (*bytes.Reader, error) {
 }
 
 func downloadEmojiMeta() (map[string]*emojiMeta, error) {
-	res, err := http.Get(emojiMetaUrl)
+	res, err := http.Get(emojiMetaURL)
 	if err != nil {
 		return nil, err
 	}

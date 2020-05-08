@@ -1033,17 +1033,10 @@ paths:
       tags:
         - pin
       operationId: getPinnedMessages
-      description: チャンネルのピン留め一覧を取得します。
-      security:
-        - traqOAuth2:
-            - read
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PinList'
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/topic':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -1659,23 +1652,10 @@ paths:
       tags:
         - pin
       operationId: pinMessage
-      description: チャンネルにメッセージをピン留めします。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MessageIDObject'
+      description: このAPIは削除されました
       responses:
-        '201':
-          description: 正常にピン留めできました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PinIDObject'
+        '410':
+          description: このAPIは削除されました
   '/pins/{pinID}':
     parameters:
       - $ref: '#/components/parameters/pinIdInPath'
@@ -1684,31 +1664,19 @@ paths:
       tags:
         - pin
       operationId: getPinnedMessage
-      description: ピン留めを取得します。
-      security:
-        - traqOAuth2:
-            - read
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pin'
+        '410':
+          description: このAPIは削除されました
     delete:
       deprecated: true
       tags:
         - pin
       operationId: unpinMessage
-      description: ピン留めを外します。
-      security:
-        - traqOAuth2:
-            - write
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に外せました。
-        '404':
-          description: '+| 指定したIDのピンは存在しません。'
+        '410':
+          description: このAPIは削除されました
   /stamps:
     get:
       tags:
@@ -2037,21 +2005,10 @@ paths:
       tags:
         - webhook
       operationId: postGitHubWebhook
-      description: Github-Compatibleなwebhookを送信します。
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に送信できました。
-        '400':
-          description: 正常に送信できませんでした。リクエスト内容が不正です。
-        '404':
-          description: 正常に送信できませんでした。指定されたwebhookは存在しません。
+        '410':
+          description: このAPIは削除されました
   /groups:
     get:
       deprecated: true
@@ -3427,15 +3384,6 @@ components:
           type: string
           description: Markdown形式のメッセージ本文
           example: Raskって誰？
-    MessageIDObject:
-      type: object
-      required:
-        - messageId
-      properties:
-        messageId:
-          type: string
-          format: uuid
-          description: ピン留めするメッセージID
     MessageStamp:
       type: object
       properties:
@@ -3469,38 +3417,6 @@ components:
           minimum: 1
           default: 1
           example: 1
-    Pin:
-      type: object
-      properties:
-        pinId:
-          type: string
-          format: uuid
-          description: ピンUUID
-        channelId:
-          type: string
-          format: uuid
-          description: チャンネルUUID
-        userId:
-          type: string
-          format: uuid
-          description: ピン留めしたユーザーのUUID
-        dateTime:
-          type: string
-          format: date-time
-          description: ピン留めした日時
-        message:
-          $ref: '#/components/schemas/Message'
-    PinList:
-      type: array
-      items:
-        $ref: '#/components/schemas/Pin'
-    PinIDObject:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: ピンID
     NotificationUsers:
       type: object
       properties:
@@ -4186,43 +4102,6 @@ components:
           format: uuid
           description: チャンネルUUID
       description: ChildCreated
-    WebRTCUserState:
-      type: object
-      properties:
-        userId:
-          type: string
-          format: uuid
-          description: ユーザーUUID
-        channelId:
-          type: string
-          format: uuid
-          description: ユーザーの接続先チャンネルUUID(未接続の場合は00000000-0000-0000-0000-000000000000)
-        state:
-          type: array
-          items:
-            type: string
-          description: ユーザーの状態の配列(未接続の場合は空配列)
-    WebRTCChannelState:
-      type: object
-      properties:
-        users:
-          type: array
-          items:
-            $ref: '#/components/schemas/WebRTCUserState'
-          description: 接続ユーザーの状態の配列
-    PutWebRTCState:
-      type: object
-      properties:
-        channelId:
-          type: string
-          format: uuid
-          nullable: true
-          description: ユーザーの接続先チャンネルUUID(切断はnullを指定)
-        state:
-          type: array
-          items:
-            type: string
-          description: ユーザーの状態の配列(切断は空配列を指定)
     ChannelStats:
       type: object
       properties:

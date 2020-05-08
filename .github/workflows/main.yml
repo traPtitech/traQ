@@ -18,8 +18,6 @@ jobs:
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-gomod-
       - run: go mod download
   build:
     name: Build
@@ -148,7 +146,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Spectral checks
-        uses: stoplightio/spectral-action@v0.5.5
+        uses: stoplightio/spectral-action@v0.6.1
         with:
-          file_glob: docs/*.yaml
+          file_glob: docs/v3-api.yaml
           repo_token: ${{ secrets.GITHUB_TOKEN }}

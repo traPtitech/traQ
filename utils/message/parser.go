@@ -7,16 +7,16 @@ import (
 	"strings"
 )
 
-const embUrlRegexFragment = `/(files|messages)/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}`
+const embURLRegexFragment = `/(files|messages)/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}`
 
 var (
-	embJsonRegex = regexp.MustCompile(`(?m)!({(?:[ \t\n]*"(?:[^"]|\\.)*"[ \t\n]*:[ \t\n]*"(?:[^"]|\\.)*",)*(?:[ \t\n]*"(?:[^"]|\\.)*"[ \t\n]*:[ \t\n]*"(?:[^"]|\\.)*")})`)
-	embUrlRegex  = regexp.MustCompile("http://localhost:3000" + embUrlRegexFragment)
+	embJSONRegex = regexp.MustCompile(`(?m)!({(?:[ \t\n]*"(?:[^"]|\\.)*"[ \t\n]*:[ \t\n]*"(?:[^"]|\\.)*",)*(?:[ \t\n]*"(?:[^"]|\\.)*"[ \t\n]*:[ \t\n]*"(?:[^"]|\\.)*")})`)
+	embURLRegex  = regexp.MustCompile("http://localhost:3000" + embURLRegexFragment)
 )
 
 // SetOrigin URL型埋め込みのURLのオリジンを設定します
 func SetOrigin(origin string) {
-	embUrlRegex = regexp.MustCompile(strings.ReplaceAll(origin, ".", `\.`) + embUrlRegexFragment)
+	embURLRegex = regexp.MustCompile(strings.ReplaceAll(origin, ".", `\.`) + embURLRegexFragment)
 }
 
 // ParseResult メッセージパースリザルト
@@ -39,7 +39,7 @@ func Parse(m string) *ParseResult {
 	var r ParseResult
 
 	// json型埋め込み
-	tmp := embJsonRegex.ReplaceAllStringFunc(m, func(s string) string {
+	tmp := embJSONRegex.ReplaceAllStringFunc(m, func(s string) string {
 		var info struct {
 			Raw  string    `json:"raw"`
 			Type string    `json:"type"`
@@ -72,7 +72,7 @@ func Parse(m string) *ParseResult {
 	})
 
 	// url型埋め込み
-	tmp = embUrlRegex.ReplaceAllStringFunc(tmp, func(s string) string {
+	tmp = embURLRegex.ReplaceAllStringFunc(tmp, func(s string) string {
 		switch {
 		case strings.Contains(s, "/files/"):
 			r.Attachments = append(r.Attachments, uuid.FromStringOrNil(s[len(s)-36:]))
