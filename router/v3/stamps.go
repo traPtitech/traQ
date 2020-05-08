@@ -28,6 +28,7 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
+	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=0") // 鮮度を0にして毎回キャッシュ検証させる
 	extension.SetLastModified(c, updatedAt)
 	if done, err := extension.CheckPreconditions(c, updatedAt); done {
 		return err
