@@ -187,7 +187,7 @@ func mustMakeTag(t *testing.T, repo Repository, name string) *model.Tag {
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	tag, err := repo.CreateTag(name)
+	tag, err := repo.GetOrCreateTag(name)
 	require.NoError(t, err)
 	return tag
 }

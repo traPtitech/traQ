@@ -7,31 +7,19 @@ import (
 
 // TagRepository ユーザータグリポジトリ
 type TagRepository interface {
-	// CreateTag タグを作成します
-	//
-	// 成功した場合、タグとnilを返します。
-	// 引数に問題がある場合、ArgumentErrorを返します。
-	// DBによるエラーを返すことがあります。
-	CreateTag(name string) (*model.Tag, error)
 	// GetTagByID 指定したIDのタグを取得します
 	//
 	// 成功した場合、タグとnilを返します。
 	// 存在しないタグの場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetTagByID(id uuid.UUID) (*model.Tag, error)
-	// GetTagByName 指定した名前のタグを取得します
-	//
-	// 成功した場合、タグとnilを返します。
-	// 存在しないタグの場合、ErrNotFoundを返します。
-	// DBによるエラーを返すことがあります。
-	GetTagByName(name string) (*model.Tag, error)
-	// GetOrCreateTagByName 指定したタグを取得するか、生成したものを返します
+	// GetOrCreateTag 指定したタグを取得するか、生成したものを返します
 	//
 	// 成功した場合、タグとnilを返します。
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// 空文字を指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetOrCreateTagByName(name string) (*model.Tag, error)
+	GetOrCreateTag(name string) (*model.Tag, error)
 	// AddUserTag 指定したユーザーに指定したタグを付与します
 	//
 	// 成功した場合、nilを返します。

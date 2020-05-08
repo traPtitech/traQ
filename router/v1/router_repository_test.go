@@ -751,28 +751,6 @@ func (repo *TestRepository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) 
 	return nil
 }
 
-func (repo *TestRepository) CreateTag(name string) (*model.Tag, error) {
-	repo.TagsLock.Lock()
-	defer repo.TagsLock.Unlock()
-	// 名前チェック
-	if len(name) == 0 || utf8.RuneCountInString(name) > 30 {
-		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 31 characters")
-	}
-	for _, t := range repo.Tags {
-		if t.Name == name {
-			return nil, repository.ErrAlreadyExists
-		}
-	}
-	t := model.Tag{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      name,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	repo.Tags[t.ID] = t
-	return &t, nil
-}
-
 func (repo *TestRepository) GetTagByID(id uuid.UUID) (*model.Tag, error) {
 	repo.TagsLock.RLock()
 	t, ok := repo.Tags[id]
@@ -783,18 +761,7 @@ func (repo *TestRepository) GetTagByID(id uuid.UUID) (*model.Tag, error) {
 	return &t, nil
 }
 
-func (repo *TestRepository) GetTagByName(name string) (*model.Tag, error) {
-	repo.TagsLock.RLock()
-	defer repo.TagsLock.RUnlock()
-	for _, t := range repo.Tags {
-		if t.Name == name {
-			return &t, nil
-		}
-	}
-	return nil, repository.ErrNotFound
-}
-
-func (repo *TestRepository) GetOrCreateTagByName(name string) (*model.Tag, error) {
+func (repo *TestRepository) GetOrCreateTag(name string) (*model.Tag, error) {
 	if len(name) == 0 {
 		return nil, repository.ErrNotFound
 	}

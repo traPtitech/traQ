@@ -48,7 +48,7 @@ func (h *Handlers) PostUserTag(c echo.Context) error {
 	}
 
 	// タグの確認
-	t, err := h.Repo.GetOrCreateTagByName(req.Tag)
+	t, err := h.Repo.GetOrCreateTag(req.Tag)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

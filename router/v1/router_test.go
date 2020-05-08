@@ -233,7 +233,7 @@ func mustMakeTag(t *testing.T, repo repository.Repository, userID uuid.UUID, tag
 	if tagText == rand {
 		tagText = random.AlphaNumeric(20)
 	}
-	tag, err := repo.GetOrCreateTagByName(tagText)
+	tag, err := repo.GetOrCreateTag(tagText)
 	require.NoError(t, err)
 	require.NoError(t, repo.AddUserTag(userID, tag.ID))
 	return tag.ID

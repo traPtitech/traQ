@@ -63,7 +63,7 @@ func addUserTags(c echo.Context, repo repository.Repository, userID uuid.UUID) e
 	}
 
 	// タグの確認
-	t, err := repo.GetOrCreateTagByName(req.Tag)
+	t, err := repo.GetOrCreateTag(req.Tag)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

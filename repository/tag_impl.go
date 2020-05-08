@@ -8,21 +8,6 @@ import (
 	"unicode/utf8"
 )
 
-// CreateTag implements TagRepository interface.
-func (repo *GormRepository) CreateTag(name string) (*model.Tag, error) {
-	// 名前チェック
-	if len(name) == 0 || utf8.RuneCountInString(name) > 30 {
-		return nil, ArgError("name", "Name must be non-empty and shorter than 31 characters")
-	}
-	// TODO タグの存在確認
-
-	t := &model.Tag{
-		ID:   uuid.Must(uuid.NewV4()),
-		Name: name,
-	}
-	return t, repo.db.Create(t).Error
-}
-
 // GetTagByID implements TagRepository interface.
 func (repo *GormRepository) GetTagByID(id uuid.UUID) (*model.Tag, error) {
 	if id == uuid.Nil {
@@ -35,20 +20,8 @@ func (repo *GormRepository) GetTagByID(id uuid.UUID) (*model.Tag, error) {
 	return tag, nil
 }
 
-// GetTagByName implements TagRepository interface.
-func (repo *GormRepository) GetTagByName(name string) (*model.Tag, error) {
-	if len(name) == 0 {
-		return nil, ErrNotFound
-	}
-	tag := &model.Tag{}
-	if err := repo.db.Take(tag, &model.Tag{Name: name}).Error; err != nil {
-		return nil, convertError(err)
-	}
-	return tag, nil
-}
-
-// GetOrCreateTagByName implements TagRepository interface.
-func (repo *GormRepository) GetOrCreateTagByName(name string) (*model.Tag, error) {
+// GetOrCreateTag implements TagRepository interface.
+func (repo *GormRepository) GetOrCreateTag(name string) (*model.Tag, error) {
 	if len(name) == 0 {
 		return nil, ErrNotFound
 	}
