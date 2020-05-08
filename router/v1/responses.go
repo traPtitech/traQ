@@ -164,34 +164,6 @@ func formatMessages(ms []*model.Message) []*messageResponse {
 	return res
 }
 
-type pinResponse struct {
-	PinID     uuid.UUID        `json:"pinId"`
-	ChannelID uuid.UUID        `json:"channelId"`
-	UserID    uuid.UUID        `json:"userId"`
-	DateTime  time.Time        `json:"dateTime"`
-	Message   *messageResponse `json:"message"`
-}
-
-func formatPin(pin *model.Pin) *pinResponse {
-	res := &pinResponse{
-		PinID:     pin.ID,
-		ChannelID: pin.Message.ChannelID,
-		UserID:    pin.UserID,
-		DateTime:  pin.CreatedAt,
-		Message:   formatMessage(&pin.Message),
-	}
-	res.Message.Pin = true
-	return res
-}
-
-func formatPins(pins []*model.Pin) []*pinResponse {
-	res := make([]*pinResponse, len(pins))
-	for i, p := range pins {
-		res[i] = formatPin(p)
-	}
-	return res
-}
-
 type webhookResponse struct {
 	WebhookID   string    `json:"webhookId"`
 	BotUserID   string    `json:"botUserId"`

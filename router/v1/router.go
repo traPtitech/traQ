@@ -153,7 +153,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiChannelsCid.PATCH("", h.PatchChannelByChannelID, requires(permission.EditChannel))
 				apiChannelsCid.PUT("/parent", h.PutChannelParent, requires(permission.ChangeParentChannel))
 				apiChannelsCid.POST("/children", h.PostChannelChildren, requires(permission.CreateChannel))
-				apiChannelsCid.GET("/pins", h.GetChannelPin, requires(permission.GetMessage))
+				apiChannelsCid.GET("/pins", gone)
 				apiChannelsCid.GET("/events", h.GetChannelEvents, requires(permission.GetChannel))
 				apiChannelsCid.GET("/stats", h.GetChannelStats, requires(permission.GetChannel))
 				apiChannelsCid.GET("/viewers", h.GetChannelViewers, requires(permission.GetChannel))
@@ -225,11 +225,11 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiPins := api.Group("/pins")
 		{
-			apiPins.POST("", h.PostPin, requires(permission.CreateMessagePin))
-			apiPinsPid := apiPins.Group("/:pinID", h.ValidatePinID())
+			apiPins.POST("", gone)
+			apiPinsPid := apiPins.Group("/:pinID")
 			{
-				apiPinsPid.GET("", h.GetPin, requires(permission.GetMessage))
-				apiPinsPid.DELETE("", h.DeletePin, requires(permission.DeleteMessagePin))
+				apiPinsPid.GET("", gone)
+				apiPinsPid.DELETE("", gone)
 			}
 		}
 		apiStamps := api.Group("/stamps")
@@ -391,10 +391,6 @@ func getMessageFromContext(c echo.Context) *model.Message {
 	return c.Get(consts.KeyParamMessage).(*model.Message)
 }
 
-func getPinFromContext(c echo.Context) *model.Pin {
-	return c.Get("paramPin").(*model.Pin)
-}
-
 func getChannelFromContext(c echo.Context) *model.Channel {
 	return c.Get(consts.KeyParamChannel).(*model.Channel)
 }
@@ -422,37 +418,4 @@ func getClientFromContext(c echo.Context) *model.OAuth2Client {
 // L ロガーを返します
 func (h *Handlers) L(c echo.Context) *zap.Logger {
 	return h.Logger.With(zap.String("requestId", extension.GetRequestID(c)))
-}
-
-// ValidatePinID 'pinID'パラメータのピンを検証するミドルウェア
-func (h *Handlers) ValidatePinID() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			userID := getRequestUserID(c)
-			pinID := getRequestParamAsUUID(c, consts.ParamPinID)
-
-			pin, err := h.Repo.GetPin(pinID)
-			if err != nil {
-				switch err {
-				case repository.ErrNotFound:
-					return herror.NotFound()
-				default:
-					return herror.InternalServerError(err)
-				}
-			}
-
-			if pin.Message.ID == uuid.Nil {
-				return herror.NotFound()
-			}
-
-			if ok, err := h.Repo.IsChannelAccessibleToUser(userID, pin.Message.ChannelID); err != nil {
-				return herror.InternalServerError(err)
-			} else if !ok {
-				return herror.NotFound()
-			}
-
-			c.Set("paramPin", pin)
-			return next(c)
-		}
-	}
 }
