@@ -192,7 +192,7 @@ func (repo *GormRepository) UpdateStamp(id uuid.UUID, args UpdateStampArgs) erro
 			return convertError(err)
 		}
 
-		if args.Name.Valid {
+		if args.Name.Valid && s.Name != args.Name.String {
 			if err := vd.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
 				return ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 			}
