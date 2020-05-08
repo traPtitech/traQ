@@ -94,8 +94,9 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 
 	t.Run("duplicate name", func(t *testing.T) {
 		t.Parallel()
+		s2 := mustMakeStamp(t, repo, rand, uuid.Nil)
 
-		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{Name: optional.StringFrom(s.Name)}))
+		assert.Error(t, repo.UpdateStamp(s.ID, UpdateStampArgs{Name: optional.StringFrom(s2.Name)}))
 	})
 
 	t.Run("nil file id", func(t *testing.T) {
