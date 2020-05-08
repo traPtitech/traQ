@@ -22,9 +22,7 @@ import (
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
 	"net/http"
-	"strings"
 	"sync"
-	"text/template"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -45,8 +43,6 @@ type Handlers struct {
 	Logger   *zap.Logger
 	Realtime *realtime.Service
 	Imaging  imaging.Processor
-
-	webhookDefTmpls *template.Template
 
 	emojiJSONCache     bytes.Buffer
 	emojiJSONTime      time.Time
@@ -349,57 +345,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiPublic.GET("/emoji/:stampID", h.GetPublicEmojiImage, retrieve.StampID(false))
 		}
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, retrieve.WebhookID())
-		apiNoAuth.POST("/webhooks/:webhookID/github", h.PostWebhookByGithub, retrieve.WebhookID())
+		apiNoAuth.POST("/webhooks/:webhookID/github", gone)
 	}
-
-	t := template.New("").Funcs(template.FuncMap{
-		"replace": strings.Replace,
-	})
-	template.Must(t.New("github_issues.tmpl").Parse(strings.TrimSpace(`
-{{- if eq .Action "opened" -}}
-## Issue Opened
-[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .Issue.Title }}]({{ .Issue.HTMLURL }})
-Comment:
-{{ .Issue.Body }}
-{{- else if eq .Action "closed" -}}
-## Issue Closed
-[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .Issue.Title }}]({{ .Issue.HTMLURL }})
-{{- else if eq .Action "reopened" -}}
-## Issue Reopened
-[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .Issue.Title }}]({{ .Issue.HTMLURL }})
-{{- else -}}
-{{- end -}}
-`)))
-	template.Must(t.New("github_pull_request.tmpl").Parse(strings.TrimSpace(`
-{{- if eq .Action "opened" -}}
-## PullRequest Opened
-[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .PullRequest.Title }}]({{ .PullRequest.HTMLURL }})
-Comment:
-{{ .PullRequest.Body }}
-{{- else if eq .Action "closed" -}}
-{{- if .PullRequest.Merged -}}
-## PullRequest Merged
-[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .PullRequest.Title }}]({{ .PullRequest.HTMLURL }})
-{{- else -}}
-## PullRequest Closed
-[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .PullRequest.Title }}]({{ .PullRequest.HTMLURL }})
-{{- end -}}
-{{- else if eq .Action "reopened" -}}
-## PullRequest Reopened
-[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}) - [{{ .PullRequest.Title }}]({{ .PullRequest.HTMLURL }})
-{{- else -}}
-{{- end -}}
-`)))
-	template.Must(t.New("github_push.tmpl").Parse(strings.ReplaceAll(strings.TrimSpace(`
-{{- if gt (len .Commits) 0 -}}
-## {{ len .Commits }} Commit(s) Pushed by {{ .Pusher.Name }}
-[{{ .Repository.FullName }}]({{ .Repository.HTMLURL }}), refs: $${{ .Ref }}$$
-{{ range .Commits -}}
-+ [$${{ .ID }}$$]({{ .URL }}) - $${{ replace .Message "\n" " " -1 }}$$
-{{ end -}}
-{{- end -}}
-`), "$$", "`")))
-	h.webhookDefTmpls = t
 
 	go h.stampEventSubscriber(h.Hub.Subscribe(10, event.StampCreated, event.StampUpdated, event.StampDeleted))
 }
