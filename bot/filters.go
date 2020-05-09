@@ -2,6 +2,7 @@ package bot
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/bot/event"
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -32,7 +33,7 @@ func stateFilter(state model.BotState) filterFunc {
 	}
 }
 
-func eventFilter(event model.BotEvent) filterFunc {
+func eventFilter(event event.Type) filterFunc {
 	return func(p *Processor, bot *model.Bot) bool {
 		return bot.SubscribeEvents.Contains(event)
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
+	bevent "github.com/traPtitech/traQ/bot/event"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/permission"
@@ -167,7 +168,7 @@ func (h *Handlers) GetBotDetail(c echo.Context) error {
 
 // PutBotEventsRequest PUT /bots/:botID/events リクエストボディ
 type PutBotEventsRequest struct {
-	Events model.BotEvents `json:"events"`
+	Events bevent.Types `json:"events"`
 }
 
 func (r PutBotEventsRequest) Validate() error {
