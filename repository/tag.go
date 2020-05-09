@@ -50,7 +50,7 @@ type TagRepository interface {
 	// 成功した場合、ユーザータグの配列とnilを返します。
 	// 存在しないユーザーを指定した場合は空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetUserTagsByUserID(userID uuid.UUID) ([]*model.UsersTag, error)
+	GetUserTagsByUserID(userID uuid.UUID) ([]model.UserTag, error)
 	// GetUserIDsByTag 指定したタグを持った全ユーザーのUUIDを取得します
 	//
 	// 成功した場合、UUIDの配列とnilを返します。

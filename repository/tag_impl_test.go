@@ -87,7 +87,7 @@ func TestRepositoryImpl_GetUserTagsByUserID(t *testing.T) {
 		if assert.NoError(err) {
 			temp := make([]string, len(tags))
 			for i, v := range tags {
-				temp[i] = v.Tag.Name
+				temp[i] = v.GetTag()
 			}
 			assert.ElementsMatch(temp, createdTags)
 		}

@@ -119,12 +119,21 @@ func (repo *GormRepository) GetUserTag(userID, tagID uuid.UUID) (model.UserTag, 
 }
 
 // GetUserTagsByUserID implements TagRepository interface.
-func (repo *GormRepository) GetUserTagsByUserID(userID uuid.UUID) (tags []*model.UsersTag, err error) {
-	tags = make([]*model.UsersTag, 0)
+func (repo *GormRepository) GetUserTagsByUserID(userID uuid.UUID) (tags []model.UserTag, err error) {
+	var tmp []*model.UsersTag
 	if userID == uuid.Nil {
 		return tags, nil
 	}
-	err = repo.db.Preload("Tag").Where(&model.UsersTag{UserID: userID}).Order("created_at").Find(&tags).Error
+	err = repo.db.
+		Preload("Tag").
+		Where(&model.UsersTag{UserID: userID}).
+		Order("created_at").
+		Find(&tmp).
+		Error
+	tags = make([]model.UserTag, len(tmp))
+	for i, tag := range tmp {
+		tags[i] = tag
+	}
 	return tags, err
 }
 

@@ -856,8 +856,8 @@ func (repo *TestRepository) GetUserTag(userID, tagID uuid.UUID) (model.UserTag, 
 	return &ut, nil
 }
 
-func (repo *TestRepository) GetUserTagsByUserID(userID uuid.UUID) ([]*model.UsersTag, error) {
-	tags := make([]*model.UsersTag, 0)
+func (repo *TestRepository) GetUserTagsByUserID(userID uuid.UUID) ([]model.UserTag, error) {
+	tags := make([]model.UserTag, 0)
 	repo.UserTagsLock.RLock()
 	for tid, ut := range repo.UserTags[userID] {
 		ut := ut

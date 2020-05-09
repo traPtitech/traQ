@@ -109,7 +109,7 @@ type userDetailResponse struct {
 	TagList     []*tagResponse `json:"tagList"`
 }
 
-func (h *Handlers) formatUserDetail(user model.UserInfo, tagList []*model.UsersTag) (*userDetailResponse, error) {
+func (h *Handlers) formatUserDetail(user model.UserInfo, tagList []model.UserTag) (*userDetailResponse, error) {
 	res := &userDetailResponse{
 		UserID:      user.GetID(),
 		Name:        user.GetName(),
@@ -314,17 +314,17 @@ type tagResponse struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-func formatTag(ut *model.UsersTag) *tagResponse {
+func formatTag(ut model.UserTag) *tagResponse {
 	return &tagResponse{
-		ID:        ut.Tag.ID,
-		Tag:       ut.Tag.Name,
-		IsLocked:  ut.IsLocked,
-		CreatedAt: ut.CreatedAt,
-		UpdatedAt: ut.UpdatedAt,
+		ID:        ut.GetTagID(),
+		Tag:       ut.GetTag(),
+		IsLocked:  ut.GetIsLocked(),
+		CreatedAt: ut.GetCreatedAt(),
+		UpdatedAt: ut.GetUpdatedAt(),
 	}
 }
 
-func formatTags(uts []*model.UsersTag) []*tagResponse {
+func formatTags(uts []model.UserTag) []*tagResponse {
 	res := make([]*tagResponse, len(uts))
 	for i, ut := range uts {
 		res[i] = formatTag(ut)
