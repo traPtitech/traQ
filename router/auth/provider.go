@@ -164,74 +164,74 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				zap.String("externalName", tu.GetRawName()))
 
 			return c.Redirect(http.StatusFound, "/") // TODO リダイレクト先を設定画面に
-		} else {
-			// ログインモード
+		}
 
-			// ログインしていないことを確認
-			if sess.GetUserID() != uuid.Nil {
-				return herror.BadRequest("You have already logged in. Please logout once.")
-			}
+		// ログインモード
 
-			user, err := repo.GetUserByExternalID(tu.GetProviderName(), tu.GetID(), false)
-			if err != nil {
-				if err != repository.ErrNotFound {
-					return herror.InternalServerError(err)
-				}
+		// ログインしていないことを確認
+		if sess.GetUserID() != uuid.Nil {
+			return herror.BadRequest("You have already logged in. Please logout once.")
+		}
 
-				if !allowSignUp {
-					return herror.Unauthorized("You are not a member of traQ")
-				}
-
-				args := repository.CreateUserArgs{
-					Name:        tu.GetName(),
-					DisplayName: tu.GetDisplayName(),
-					Role:        role.User,
-					ExternalLogin: &model.ExternalProviderUser{
-						ProviderName: tu.GetProviderName(),
-						ExternalID:   tu.GetID(),
-						Extra:        model.JSON{"externalName": tu.GetRawName()},
-					},
-				}
-
-				if b, err := tu.GetProfileImage(); err == nil && b != nil {
-					fid, err := processProfileIcon(repo, b)
-					if err == nil {
-						args.IconFileID = optional.UUIDFrom(fid)
-					}
-				}
-
-				user, err = repo.CreateUser(args)
-				if err != nil {
-					if err == repository.ErrAlreadyExists {
-						return herror.Conflict("name conflicts") // TODO 名前被りをどうするか
-					}
-					return herror.InternalServerError(err)
-				}
-				p.L().Info("New user was created by external auth",
-					zap.Stringer("id", user.GetID()),
-					zap.String("name", user.GetName()),
-					zap.String("providerName", tu.GetProviderName()),
-					zap.String("externalId", tu.GetID()),
-					zap.String("externalName", tu.GetRawName()))
-			}
-
-			// ユーザーのアカウント状態の確認
-			if !user.IsActive() {
-				return herror.Forbidden("this account is currently suspended")
-			}
-
-			if err := sess.SetUser(user.GetID()); err != nil {
+		user, err := repo.GetUserByExternalID(tu.GetProviderName(), tu.GetID(), false)
+		if err != nil {
+			if err != repository.ErrNotFound {
 				return herror.InternalServerError(err)
 			}
-			p.L().Info("User was logged in by external auth",
+
+			if !allowSignUp {
+				return herror.Unauthorized("You are not a member of traQ")
+			}
+
+			args := repository.CreateUserArgs{
+				Name:        tu.GetName(),
+				DisplayName: tu.GetDisplayName(),
+				Role:        role.User,
+				ExternalLogin: &model.ExternalProviderUser{
+					ProviderName: tu.GetProviderName(),
+					ExternalID:   tu.GetID(),
+					Extra:        model.JSON{"externalName": tu.GetRawName()},
+				},
+			}
+
+			if b, err := tu.GetProfileImage(); err == nil && b != nil {
+				fid, err := processProfileIcon(repo, b)
+				if err == nil {
+					args.IconFileID = optional.UUIDFrom(fid)
+				}
+			}
+
+			user, err = repo.CreateUser(args)
+			if err != nil {
+				if err == repository.ErrAlreadyExists {
+					return herror.Conflict("name conflicts") // TODO 名前被りをどうするか
+				}
+				return herror.InternalServerError(err)
+			}
+			p.L().Info("New user was created by external auth",
 				zap.Stringer("id", user.GetID()),
 				zap.String("name", user.GetName()),
 				zap.String("providerName", tu.GetProviderName()),
 				zap.String("externalId", tu.GetID()),
 				zap.String("externalName", tu.GetRawName()))
-
-			return c.Redirect(http.StatusFound, "/")
 		}
+
+		// ユーザーのアカウント状態の確認
+		if !user.IsActive() {
+			return herror.Forbidden("this account is currently suspended")
+		}
+
+		if err := sess.SetUser(user.GetID()); err != nil {
+			return herror.InternalServerError(err)
+		}
+		p.L().Info("User was logged in by external auth",
+			zap.Stringer("id", user.GetID()),
+			zap.String("name", user.GetName()),
+			zap.String("providerName", tu.GetProviderName()),
+			zap.String("externalId", tu.GetID()),
+			zap.String("externalName", tu.GetRawName()))
+
+		return c.Redirect(http.StatusFound, "/")
 	}
 }
 

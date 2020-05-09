@@ -288,13 +288,13 @@ func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
 }
 
 func userTagAddedHandler(p *Processor, _ string, fields hub.Fields) {
-	userId := fields["user_id"].(uuid.UUID)
-	tagId := fields["tag_id"].(uuid.UUID)
+	userID := fields["user_id"].(uuid.UUID)
+	tagID := fields["tag_id"].(uuid.UUID)
 
-	bot, err := p.repo.GetBotByBotUserID(userId)
+	bot, err := p.repo.GetBotByBotUserID(userID)
 	if err != nil {
 		if err != repository.ErrNotFound {
-			p.logger.Error("failed to GetBotByBotUserID", zap.Error(err), zap.Stringer("id", userId))
+			p.logger.Error("failed to GetBotByBotUserID", zap.Error(err), zap.Stringer("id", userID))
 		}
 		return
 	}
@@ -302,9 +302,9 @@ func userTagAddedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	t, err := p.repo.GetTagByID(tagId)
+	t, err := p.repo.GetTagByID(tagID)
 	if err != nil {
-		p.logger.Error("failed to GetTagByID", zap.Error(err), zap.Stringer("id", tagId))
+		p.logger.Error("failed to GetTagByID", zap.Error(err), zap.Stringer("id", tagID))
 		return
 	}
 
@@ -316,13 +316,13 @@ func userTagAddedHandler(p *Processor, _ string, fields hub.Fields) {
 }
 
 func userTagRemovedHandler(p *Processor, _ string, fields hub.Fields) {
-	userId := fields["user_id"].(uuid.UUID)
-	tagId := fields["tag_id"].(uuid.UUID)
+	userID := fields["user_id"].(uuid.UUID)
+	tagID := fields["tag_id"].(uuid.UUID)
 
-	bot, err := p.repo.GetBotByBotUserID(userId)
+	bot, err := p.repo.GetBotByBotUserID(userID)
 	if err != nil {
 		if err != repository.ErrNotFound {
-			p.logger.Error("failed to GetBotByBotUserID", zap.Error(err), zap.Stringer("id", userId))
+			p.logger.Error("failed to GetBotByBotUserID", zap.Error(err), zap.Stringer("id", userID))
 		}
 		return
 	}
@@ -330,9 +330,9 @@ func userTagRemovedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	t, err := p.repo.GetTagByID(tagId)
+	t, err := p.repo.GetTagByID(tagID)
 	if err != nil {
-		p.logger.Error("failed to GetTagByID", zap.Error(err), zap.Stringer("id", tagId))
+		p.logger.Error("failed to GetTagByID", zap.Error(err), zap.Stringer("id", tagID))
 		return
 	}
 
