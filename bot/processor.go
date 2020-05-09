@@ -14,6 +14,7 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -125,4 +126,31 @@ func (p *Processor) makePayloadJSON(payload interface{}) (b []byte, releaseFunc 
 		return nil, nil, err
 	}
 	return stream.Buffer(), releaseFunc, nil
+}
+
+func (p *Processor) multicast(ev event.Type, payload interface{}, targets []*model.Bot) {
+	if len(targets) == 0 {
+		return
+	}
+	buf, release, err := p.makePayloadJSON(&payload)
+	if err != nil {
+		p.logger.Error("unexpected json encode error", zap.Error(err))
+		return
+	}
+	defer release()
+
+	var wg sync.WaitGroup
+	done := make(map[uuid.UUID]bool, len(targets))
+	for _, bot := range targets {
+		if !done[bot.ID] {
+			done[bot.ID] = true
+			bot := bot
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				p.sendEvent(bot, ev, buf)
+			}()
+		}
+	}
+	wg.Wait()
 }

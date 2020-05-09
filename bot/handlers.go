@@ -1,11 +1,10 @@
 package bot
 
 import (
-	"github.com/traPtitech/traQ/bot/event"
-	"sync"
-
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/traPtitech/traQ/bot/event"
+	"github.com/traPtitech/traQ/bot/payload"
 	intevent "github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -16,8 +15,8 @@ import (
 type eventHandler func(p *Processor, event string, fields hub.Fields)
 
 var eventHandlerSet = map[string]eventHandler{
-	intevent.BotJoined:           botJoinedAndLeftHandler,
-	intevent.BotLeft:             botJoinedAndLeftHandler,
+	intevent.BotJoined:           botJoinedOrLeftHandler,
+	intevent.BotLeft:             botJoinedOrLeftHandler,
 	intevent.BotPingRequest:      botPingRequestHandler,
 	intevent.MessageCreated:      messageCreatedHandler,
 	intevent.UserCreated:         userCreatedHandler,
@@ -69,12 +68,11 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			return
 		}
 
-		payload := directMessageCreatedPayload{
-			basePayload: makeBasePayload(),
-			Message:     makeMessagePayload(m, user, embedded, parsed.PlainText),
-		}
-
-		multicast(p, event.DirectMessageCreated, &payload, []*model.Bot{bot})
+		p.multicast(
+			event.DirectMessageCreated,
+			payload.MakeDirectMessageCreated(m, user, embedded, parsed),
+			[]*model.Bot{bot},
+		)
 	} else {
 		// 購読BOT
 		query := repository.BotsQuery{}
@@ -107,16 +105,15 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			return
 		}
 
-		payload := messageCreatedPayload{
-			basePayload: makeBasePayload(),
-			Message:     makeMessagePayload(m, user, embedded, parsed.PlainText),
-		}
-
-		multicast(p, event.MessageCreated, &payload, bots)
+		p.multicast(
+			event.MessageCreated,
+			payload.MakeMessageCreated(m, user, embedded, parsed),
+			bots,
+		)
 	}
 }
 
-func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
+func botJoinedOrLeftHandler(p *Processor, ev string, fields hub.Fields) {
 	botID := fields["bot_id"].(uuid.UUID)
 	channelID := fields["channel_id"].(uuid.UUID)
 
@@ -140,12 +137,7 @@ func botJoinedAndLeftHandler(p *Processor, ev string, fields hub.Fields) {
 		return
 	}
 
-	payload := joinAndLeftPayload{
-		basePayload: makeBasePayload(),
-		Channel:     makeChannelPayload(ch, p.repo.GetChannelTree().GetChannelPath(channelID), user),
-	}
-
-	buf, release, err := p.makePayloadJSON(&payload)
+	buf, release, err := p.makePayloadJSON(payload.MakeJoinedOrLeft(ch, p.repo.GetChannelTree().GetChannelPath(channelID), user))
 	if err != nil {
 		p.logger.Error("unexpected json encode error", zap.Error(err))
 		return
@@ -169,17 +161,16 @@ func userCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	multicast(p, event.UserCreated, &userCreatedPayload{
-		basePayload: makeBasePayload(),
-		User:        makeUserPayload(user),
-	}, bots)
+	p.multicast(
+		event.UserCreated,
+		payload.MakeUserCreated(user),
+		bots,
+	)
 }
 
 func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	ch := fields["channel"].(*model.Channel)
-	private := fields["private"].(bool)
-
-	if !private {
+	if ch.IsPublic {
 		bots, err := p.repo.GetBots(repository.BotsQuery{}.Privileged().Active().Subscribe(event.ChannelCreated))
 		if err != nil {
 			p.logger.Error("failed to GetBots", zap.Error(err))
@@ -195,10 +186,11 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			return
 		}
 
-		multicast(p, event.ChannelCreated, &channelCreatedPayload{
-			basePayload: makeBasePayload(),
-			Channel:     makeChannelPayload(ch, p.repo.GetChannelTree().GetChannelPath(ch.ID), user),
-		}, bots)
+		p.multicast(
+			event.ChannelCreated,
+			payload.MakeChannelCreated(ch, p.repo.GetChannelTree().GetChannelPath(ch.ID), user),
+			bots,
+		)
 	}
 }
 
@@ -234,12 +226,11 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	multicast(p, event.ChannelTopicChanged, &channelTopicChangedPayload{
-		basePayload: makeBasePayload(),
-		Channel:     makeChannelPayload(ch, p.repo.GetChannelTree().GetChannelPath(ch.ID), chCreator),
-		Topic:       topic,
-		Updater:     makeUserPayload(user),
-	}, bots)
+	p.multicast(
+		event.ChannelTopicChanged,
+		payload.MakeChannelTopicChanged(ch, p.repo.GetChannelTree().GetChannelPath(ch.ID), chCreator, topic, user),
+		bots,
+	)
 }
 
 func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
@@ -263,19 +254,17 @@ func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		}
 	}
 
-	multicast(p, event.StampCreated, &stampCreatedPayload{
-		basePayload: makeBasePayload(),
-		ID:          stamp.ID,
-		Name:        stamp.Name,
-		FileID:      stamp.FileID,
-		Creator:     makeUserPayload(user),
-	}, bots)
+	p.multicast(
+		event.StampCreated,
+		payload.MakeStampCreated(stamp, user),
+		bots,
+	)
 }
 
 func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
 	bot := fields["bot"].(*model.Bot)
 
-	buf, release, err := p.makePayloadJSON(&pingPayload{basePayload: makeBasePayload()})
+	buf, release, err := p.makePayloadJSON(payload.MakePing())
 	if err != nil {
 		p.logger.Error("unexpected json encode error", zap.Error(err))
 		return
@@ -293,31 +282,4 @@ func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
 			p.logger.Error("failed to ChangeBotState", zap.Error(err))
 		}
 	}
-}
-
-func multicast(p *Processor, ev event.Type, payload interface{}, targets []*model.Bot) {
-	if len(targets) == 0 {
-		return
-	}
-	buf, release, err := p.makePayloadJSON(&payload)
-	if err != nil {
-		p.logger.Error("unexpected json encode error", zap.Error(err))
-		return
-	}
-	defer release()
-
-	var wg sync.WaitGroup
-	done := make(map[uuid.UUID]bool, len(targets))
-	for _, bot := range targets {
-		if !done[bot.ID] {
-			done[bot.ID] = true
-			bot := bot
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				p.sendEvent(bot, ev, buf)
-			}()
-		}
-	}
-	wg.Wait()
 }
