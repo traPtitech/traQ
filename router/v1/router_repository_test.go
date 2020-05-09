@@ -870,29 +870,6 @@ func (repo *TestRepository) GetUserTagsByUserID(userID uuid.UUID) ([]model.UserT
 	return tags, nil
 }
 
-func (repo *TestRepository) GetUserIDsByTag(tag string) ([]uuid.UUID, error) {
-	users := make([]uuid.UUID, 0)
-	repo.TagsLock.RLock()
-	tid := uuid.Nil
-	for _, t := range repo.Tags {
-		if t.Name == tag {
-			tid = t.ID
-		}
-	}
-	repo.TagsLock.RUnlock()
-	if tid == uuid.Nil {
-		return users, nil
-	}
-	repo.UserTagsLock.RLock()
-	for uid, tags := range repo.UserTags {
-		if _, ok := tags[tid]; ok {
-			users = append(users, uid)
-		}
-	}
-	repo.UserTagsLock.RUnlock()
-	return users, nil
-}
-
 func (repo *TestRepository) GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, error) {
 	users := make([]uuid.UUID, 0)
 	repo.UserTagsLock.RLock()

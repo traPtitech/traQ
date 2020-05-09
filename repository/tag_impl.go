@@ -138,24 +138,6 @@ func (repo *GormRepository) GetUserTagsByUserID(userID uuid.UUID) (tags []model.
 	return tags, err
 }
 
-// GetUserIDsByTag implements TagRepository interface.
-func (repo *GormRepository) GetUserIDsByTag(tag string) (arr []uuid.UUID, err error) {
-	arr = make([]uuid.UUID, 0)
-	if len(tag) == 0 {
-		return arr, nil
-	}
-	err = repo.db.
-		Model(&model.UsersTag{}).
-		Where("tag_id = ?", repo.db.
-			Model(&model.Tag{}).
-			Select("id").
-			Where(&model.Tag{Name: tag}).
-			SubQuery()).
-		Pluck("user_id", &arr).
-		Error
-	return arr, err
-}
-
 // GetUserIDsByTagID implements TagRepository interface.
 func (repo *GormRepository) GetUserIDsByTagID(tagID uuid.UUID) (arr []uuid.UUID, err error) {
 	arr = make([]uuid.UUID, 0)
