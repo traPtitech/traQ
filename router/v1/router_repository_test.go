@@ -169,6 +169,10 @@ func (repo *TestRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*reposito
 	panic("implement me")
 }
 
+func (repo *TestRepository) GetUserUnreadMessagesCount(userID uuid.UUID) (int, error) {
+	panic("implement me")
+}
+
 func (repo *TestRepository) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) {
 	panic("implement me")
 }
