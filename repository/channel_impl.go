@@ -514,6 +514,12 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 
 	// ロギング
 	if len(on) > 0 || len(off) > 0 {
+		repo.hub.Publish(hub.Message{
+			Name: event.ChannelSubscribersChanged,
+			Fields: hub.Fields{
+				"channel_id": channelID,
+			},
+		})
 		go repo.recordChannelEvent(channelID, model.ChannelEventSubscribersChanged, model.ChannelEventDetail{
 			"userId": args.UpdaterID,
 			"on":     on,

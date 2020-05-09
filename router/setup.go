@@ -27,6 +27,7 @@ func Setup(config *Config) *echo.Echo {
 	if config.AccessLogging {
 		e.Use(middlewares.AccessLogging(config.RootLogger.Named("access_log"), config.Development))
 	}
+	e.Use(middlewares.Recovery(config.RootLogger.Named("api_handler")))
 	if config.Gzipped {
 		e.Use(middlewares.Gzip())
 	}

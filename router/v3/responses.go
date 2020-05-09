@@ -51,15 +51,15 @@ type UserTag struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-func formatUserTags(uts []*model.UsersTag) []UserTag {
+func formatUserTags(uts []model.UserTag) []UserTag {
 	res := make([]UserTag, len(uts))
 	for i, ut := range uts {
 		res[i] = UserTag{
-			ID:        ut.Tag.ID,
-			Tag:       ut.Tag.Name,
-			IsLocked:  ut.IsLocked,
-			CreatedAt: ut.CreatedAt,
-			UpdatedAt: ut.UpdatedAt,
+			ID:        ut.GetTagID(),
+			Tag:       ut.GetTag(),
+			IsLocked:  ut.GetIsLocked(),
+			CreatedAt: ut.GetCreatedAt(),
+			UpdatedAt: ut.GetUpdatedAt(),
 		}
 	}
 	return res
@@ -107,7 +107,7 @@ type UserDetail struct {
 	HomeChannel optional.UUID `json:"homeChannel"`
 }
 
-func formatUserDetail(user model.UserInfo, uts []*model.UsersTag, g []uuid.UUID) *UserDetail {
+func formatUserDetail(user model.UserInfo, uts []model.UserTag, g []uuid.UUID) *UserDetail {
 	return &UserDetail{
 		ID:          user.GetID(),
 		State:       user.GetState().Int(),

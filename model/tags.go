@@ -32,3 +32,36 @@ type UsersTag struct {
 func (*UsersTag) TableName() string {
 	return "users_tags"
 }
+
+func (t *UsersTag) GetUserID() uuid.UUID {
+	return t.UserID
+}
+
+func (t *UsersTag) GetTagID() uuid.UUID {
+	return t.TagID
+}
+
+func (t *UsersTag) GetTag() string {
+	return t.Tag.Name
+}
+
+func (t *UsersTag) GetIsLocked() bool {
+	return t.IsLocked
+}
+
+func (t *UsersTag) GetCreatedAt() time.Time {
+	return t.CreatedAt
+}
+
+func (t *UsersTag) GetUpdatedAt() time.Time {
+	return t.UpdatedAt
+}
+
+type UserTag interface {
+	GetUserID() uuid.UUID
+	GetTagID() uuid.UUID
+	GetTag() string
+	GetIsLocked() bool
+	GetCreatedAt() time.Time
+	GetUpdatedAt() time.Time
+}

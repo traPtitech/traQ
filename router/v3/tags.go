@@ -63,7 +63,7 @@ func addUserTags(c echo.Context, repo repository.Repository, userID uuid.UUID) e
 	}
 
 	// タグの確認
-	t, err := repo.GetOrCreateTagByName(req.Tag)
+	t, err := repo.GetOrCreateTag(req.Tag)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -102,20 +102,15 @@ func (h *Handlers) EditUserTag(c echo.Context) error {
 	}
 
 	tagID := getParamAsUUID(c, consts.ParamTagID)
-	// タグがつけられているかを見る
-	ut, err := h.Repo.GetUserTag(userID, tagID)
-	if err != nil {
+
+	// 更新
+	if err := h.Repo.ChangeUserTagLock(userID, tagID, req.IsLocked); err != nil {
 		switch err {
 		case repository.ErrNotFound:
 			return herror.NotFound()
 		default:
 			return herror.InternalServerError(err)
 		}
-	}
-
-	// 更新
-	if err := h.Repo.ChangeUserTagLock(userID, ut.Tag.ID, req.IsLocked); err != nil {
-		return herror.InternalServerError(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -131,20 +126,14 @@ func (h *Handlers) EditMyUserTag(c echo.Context) error {
 	userID := getRequestUserID(c)
 	tagID := getParamAsUUID(c, consts.ParamTagID)
 
-	// タグがつけられているかを見る
-	ut, err := h.Repo.GetUserTag(userID, tagID)
-	if err != nil {
+	// 更新
+	if err := h.Repo.ChangeUserTagLock(userID, tagID, req.IsLocked); err != nil {
 		switch err {
 		case repository.ErrNotFound:
 			return herror.NotFound()
 		default:
 			return herror.InternalServerError(err)
 		}
-	}
-
-	// 更新
-	if err := h.Repo.ChangeUserTagLock(userID, ut.Tag.ID, req.IsLocked); err != nil {
-		return herror.InternalServerError(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -175,12 +164,12 @@ func removeUserTag(c echo.Context, repo repository.Repository, userID uuid.UUID)
 		}
 	}
 
-	if ut.IsLocked {
+	if ut.GetIsLocked() {
 		return herror.Forbidden("this tag is locked")
 	}
 
 	// 削除
-	if err := repo.DeleteUserTag(userID, ut.Tag.ID); err != nil {
+	if err := repo.DeleteUserTag(userID, ut.GetTagID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 

@@ -32,10 +32,9 @@ func TestHandlers_PostUserTag(t *testing.T) {
 			Expect().
 			Status(http.StatusCreated)
 
-		a, err := repo.GetUserIDsByTag(tag)
+		a, err := repo.GetUserTagsByUserID(user.GetID())
 		require.NoError(t, err)
 		assert.Len(t, a, 1)
-		assert.Contains(t, a, user.GetID())
 	})
 }
 
@@ -96,7 +95,7 @@ func TestHandlers_PatchUserTag(t *testing.T) {
 
 		ut, err := repo.GetUserTag(user.GetID(), tag)
 		require.NoError(t, err)
-		assert.True(t, ut.IsLocked)
+		assert.True(t, ut.GetIsLocked())
 	})
 
 	t.Run("Failure1", func(t *testing.T) {

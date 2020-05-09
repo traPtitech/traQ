@@ -3,69 +3,69 @@ package event
 const (
 	// UserCreated ユーザーが追加された
 	// 	Fields:
-	//      user_id: uuid.UUID
-	// 		user: *model.User
+	//		user_id: uuid.UUID
+	//		user: *model.User
 	UserCreated = "user.created"
 	// UserUpdated ユーザーが更新された
 	// 	Fields:
-	//      user_id: uuid.UUID
+	//		user_id: uuid.UUID
 	UserUpdated = "user.updated"
 	// UserIconUpdated ユーザーのアイコンが更新された
 	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		file_id: uuid.UUID
+	//		user_id: uuid.UUID
+	//		file_id: uuid.UUID
 	UserIconUpdated = "user.icon_updated"
 	// UserOnline ユーザーがオンラインになった
 	// 	Fields:
-	//      user_id: uuid.UUID
+	//		user_id: uuid.UUID
 	UserOnline = "user.online"
 	// UserOffline ユーザーがオフラインになった
 	// 	Fields:
-	//      user_id: uuid.UUID
-	// 		datetime: time.Time
+	//		user_id: uuid.UUID
+	//		datetime: time.Time
 	UserOffline = "user.offline"
 
 	// UserTagAdded ユーザーにタグが追加された
 	// 	Fields:
-	//      user_id: uuid.UUID
-	// 		tag_id: uuid.UUID
+	//		user_id: uuid.UUID
+	//		tag_id: uuid.UUID
 	UserTagAdded = "user_tag.added"
 	// UserTagUpdated ユーザーのタグが更新された
 	// 	Fields:
-	//      user_id: uuid.UUID
-	// 		tag_id: uuid.UUID
+	//		user_id: uuid.UUID
+	//		tag_id: uuid.UUID
 	UserTagUpdated = "user_tag.updated"
 	// UserTagRemoved ユーザーからタグが削除された
 	// 	Fields:
-	//      user_id: uuid.UUID
-	// 		tag_id: uuid.UUID
+	//		user_id: uuid.UUID
+	//		tag_id: uuid.UUID
 	UserTagRemoved = "user_tag.deleted"
 
 	// UserGroupCreated ユーザーグループが作成された
 	// 	Fields:
-	// 		group_id: uuid.UUID
-	// 		group: *model.UserGroup
+	//		group_id: uuid.UUID
+	//		group: *model.UserGroup
 	UserGroupCreated = "user_group.created"
 	// UserGroupDeleted ユーザーグループが削除された
 	// 	Fields:
-	// 		group_id: uuid.UUID
+	//		group_id: uuid.UUID
 	UserGroupDeleted = "user_group.deleted"
 	// UserGroupMemberAdded ユーザーがグループに追加された
 	// 	Fields:
-	// 		group_id: uuid.UUID
-	// 		user_id: uuid.UUID
+	//		group_id: uuid.UUID
+	//		user_id: uuid.UUID
 	UserGroupMemberAdded = "user_group.member.added"
 	// UserGroupMemberRemoved ユーザーがグループから削除された
 	// 	Fields:
-	// 		group_id: uuid.UUID
-	// 		user_id: uuid.UUID
+	//		group_id: uuid.UUID
+	//		user_id: uuid.UUID
 	UserGroupMemberRemoved = "user_group.member.removed"
 
 	// MessageCreated メッセージが作成された
 	// 	Fields:
-	// 		message_id: uuid.UUID
-	//  	message: *model.Message
-	// 		parse_result: *message.ParseResult
+	//		message_id: uuid.UUID
+	//		message: *model.Message
+	//		parse_result: *message.ParseResult
 	MessageCreated = "message.created"
 	// MessageUpdated メッセージが更新された
 	// 	Fields:
@@ -153,6 +153,10 @@ const (
 	// 		channel_id: uuid.UUID
 	// 		viewers: map[uuid.UUID]realtime.ViewState
 	ChannelViewersChanged = "channel.viewers_changed"
+	// ChannelSubscribersChanged チャンネルの購読者が変化した
+	// 	Fields:
+	//		channel_id: uuid.UUID
+	ChannelSubscribersChanged = "channel.subscribers_changed"
 
 	// StampCreated スタンプが作成された
 	// 	Fields:
