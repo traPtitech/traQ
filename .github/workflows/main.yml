@@ -70,9 +70,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gomod-
       - name: golangci-lint
-        run: golangci-lint run --out-format=line-number | reviewdog -f=golangci-lint -name=golangci-lint -reporter=github-pr-check
+        run: golangci-lint run --out-format=line-number | reviewdog -f=golangci-lint -name=golangci-lint -reporter=github-check
         env:
-          REVIEWDOG_TOKEN: ${{ secrets.REVIEWDOG_TOKEN }}
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   test:
     name: Test
     runs-on: ubuntu-latest
