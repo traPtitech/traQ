@@ -44,7 +44,7 @@ type TagRepository interface {
 	// 成功した場合、ユーザータグとnilを返します。
 	// 存在しないユーザータグの場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetUserTag(userID, tagID uuid.UUID) (*model.UsersTag, error)
+	GetUserTag(userID, tagID uuid.UUID) (model.UserTag, error)
 	// GetUserTagsByUserID 指定したユーザーに付与されているタグを全て取得します
 	//
 	// 成功した場合、ユーザータグの配列とnilを返します。

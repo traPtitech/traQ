@@ -839,7 +839,7 @@ func (repo *TestRepository) DeleteUserTag(userID, tagID uuid.UUID) error {
 	return nil
 }
 
-func (repo *TestRepository) GetUserTag(userID, tagID uuid.UUID) (*model.UsersTag, error) {
+func (repo *TestRepository) GetUserTag(userID, tagID uuid.UUID) (model.UserTag, error) {
 	repo.UserTagsLock.RLock()
 	defer repo.UserTagsLock.RUnlock()
 	tags, ok := repo.UserTags[userID]

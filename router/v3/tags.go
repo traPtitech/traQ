@@ -114,7 +114,7 @@ func (h *Handlers) EditUserTag(c echo.Context) error {
 	}
 
 	// 更新
-	if err := h.Repo.ChangeUserTagLock(userID, ut.Tag.ID, req.IsLocked); err != nil {
+	if err := h.Repo.ChangeUserTagLock(userID, ut.GetTagID(), req.IsLocked); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -143,7 +143,7 @@ func (h *Handlers) EditMyUserTag(c echo.Context) error {
 	}
 
 	// 更新
-	if err := h.Repo.ChangeUserTagLock(userID, ut.Tag.ID, req.IsLocked); err != nil {
+	if err := h.Repo.ChangeUserTagLock(userID, ut.GetTagID(), req.IsLocked); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -175,12 +175,12 @@ func removeUserTag(c echo.Context, repo repository.Repository, userID uuid.UUID)
 		}
 	}
 
-	if ut.IsLocked {
+	if ut.GetIsLocked() {
 		return herror.Forbidden("this tag is locked")
 	}
 
 	// 削除
-	if err := repo.DeleteUserTag(userID, ut.Tag.ID); err != nil {
+	if err := repo.DeleteUserTag(userID, ut.GetTagID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 

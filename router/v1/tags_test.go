@@ -95,7 +95,7 @@ func TestHandlers_PatchUserTag(t *testing.T) {
 
 		ut, err := repo.GetUserTag(user.GetID(), tag)
 		require.NoError(t, err)
-		assert.True(t, ut.IsLocked)
+		assert.True(t, ut.GetIsLocked())
 	})
 
 	t.Run("Failure1", func(t *testing.T) {

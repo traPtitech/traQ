@@ -100,7 +100,7 @@ func (h *Handlers) PatchUserTag(c echo.Context) error {
 	}
 
 	// 更新
-	if err := h.Repo.ChangeUserTagLock(userID, ut.Tag.ID, req.IsLocked); err != nil {
+	if err := h.Repo.ChangeUserTagLock(userID, ut.GetTagID(), req.IsLocked); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -124,7 +124,7 @@ func (h *Handlers) DeleteUserTag(c echo.Context) error {
 	}
 
 	// 削除
-	if err := h.Repo.DeleteUserTag(userID, ut.Tag.ID); err != nil {
+	if err := h.Repo.DeleteUserTag(userID, ut.GetTagID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 

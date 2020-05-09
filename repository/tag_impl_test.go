@@ -27,13 +27,13 @@ func TestRepositoryImpl_ChangeUserTagLock(t *testing.T) {
 	if assert.NoError(repo.ChangeUserTagLock(user.GetID(), tag.ID, true)) {
 		tag, err := repo.GetUserTag(user.GetID(), tag.ID)
 		require.NoError(err)
-		assert.True(tag.IsLocked)
+		assert.True(tag.GetIsLocked())
 	}
 
 	if assert.NoError(repo.ChangeUserTagLock(user.GetID(), tag.ID, false)) {
 		tag, err := repo.GetUserTag(user.GetID(), tag.ID)
 		require.NoError(err)
-		assert.False(tag.IsLocked)
+		assert.False(tag.GetIsLocked())
 	}
 
 	assert.Error(repo.ChangeUserTagLock(uuid.Nil, tag.ID, true))
@@ -117,17 +117,12 @@ func TestRepositoryImpl_GetUserTag(t *testing.T) {
 
 		ut, err := repo.GetUserTag(user.GetID(), tag.ID)
 		if assert.NoError(err) {
-			assert.Equal(user.GetID(), ut.UserID)
-			assert.Equal(tag.ID, ut.TagID)
-			assert.False(ut.IsLocked)
-			assert.NotZero(ut.CreatedAt)
-			assert.NotZero(ut.UpdatedAt)
-			if assert.NotZero(ut.Tag) {
-				assert.Equal(tag.Name, ut.Tag.Name)
-				assert.Equal(tag.ID, ut.Tag.ID)
-				assert.NotZero(ut.Tag.CreatedAt)
-				assert.NotZero(ut.Tag.UpdatedAt)
-			}
+			assert.Equal(user.GetID(), ut.GetUserID())
+			assert.Equal(tag.ID, ut.GetTagID())
+			assert.False(ut.GetIsLocked())
+			assert.NotZero(ut.GetCreatedAt())
+			assert.NotZero(ut.GetUpdatedAt())
+			assert.NotZero(ut.GetTag())
 		}
 	})
 

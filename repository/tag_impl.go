@@ -107,7 +107,7 @@ func (repo *GormRepository) DeleteUserTag(userID, tagID uuid.UUID) error {
 }
 
 // GetUserTag implements TagRepository interface.
-func (repo *GormRepository) GetUserTag(userID, tagID uuid.UUID) (*model.UsersTag, error) {
+func (repo *GormRepository) GetUserTag(userID, tagID uuid.UUID) (model.UserTag, error) {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return nil, ErrNotFound
 	}
