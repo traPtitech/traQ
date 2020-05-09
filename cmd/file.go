@@ -96,7 +96,8 @@ func filePruneCommand() *cobra.Command {
 
 			// 未使用ユーザーアップロードファイル
 			if userFile {
-				// TODO
+				// TODO 実装
+				logger.Warn("include-user-file flag is not implemented currently")
 			}
 
 			logger.Sugar().Infof("%d unused-files was detected", len(files))

@@ -21,7 +21,7 @@ func (h *Handlers) GetStampPalettes(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, palettes)
+	return c.JSON(http.StatusOK, formatStampPalettes(palettes))
 }
 
 // CreateStampPaletteRequest POST /stamp-palettes リクエストボディ
@@ -59,7 +59,7 @@ func (h *Handlers) CreateStampPalette(c echo.Context) error {
 			return herror.InternalServerError(err)
 		}
 	}
-	return c.JSON(http.StatusCreated, sp)
+	return c.JSON(http.StatusCreated, formatStampPalette(sp))
 }
 
 // PatchStampPaletteRequest PATCH /stamp-palettes/:paletteID リクエストボディ
@@ -112,7 +112,7 @@ func (h *Handlers) EditStampPalette(c echo.Context) error {
 
 // GetStampPalette GET /stamp-palette/:paletteID
 func (h *Handlers) GetStampPalette(c echo.Context) error {
-	return c.JSON(http.StatusOK, getParamStampPalette(c))
+	return c.JSON(http.StatusOK, formatStampPalette(getParamStampPalette(c)))
 }
 
 // DeleteStampPalette DELETE /stamp-palette/:paletteID
