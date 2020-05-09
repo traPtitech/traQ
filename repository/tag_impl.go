@@ -68,20 +68,21 @@ func (repo *GormRepository) ChangeUserTagLock(userID, tagID uuid.UUID, locked bo
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return ErrNilID
 	}
-	// TODO タグの存在確認
+
 	result := repo.db.Model(&model.UsersTag{UserID: userID, TagID: tagID}).Update("is_locked", locked)
 	if result.Error != nil {
 		return result.Error
 	}
-	if result.RowsAffected > 0 {
-		repo.hub.Publish(hub.Message{
-			Name: event.UserTagUpdated,
-			Fields: hub.Fields{
-				"user_id": userID,
-				"tag_id":  tagID,
-			},
-		})
+	if result.RowsAffected == 0 {
+		return ErrNotFound
 	}
+	repo.hub.Publish(hub.Message{
+		Name: event.UserTagUpdated,
+		Fields: hub.Fields{
+			"user_id": userID,
+			"tag_id":  tagID,
+		},
+	})
 	return nil
 }
 

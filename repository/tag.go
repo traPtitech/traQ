@@ -30,6 +30,7 @@ type TagRepository interface {
 	// ChangeUserTagLock 指定したユーザーの指定したタグのロック状態を変更します
 	//
 	// 成功した場合、nilを返します。
+	// 存在しないユーザータグの場合、ErrNotFoundを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	ChangeUserTagLock(userID, tagID uuid.UUID, locked bool) error

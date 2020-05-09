@@ -83,25 +83,19 @@ func (h *Handlers) PatchUserTag(c echo.Context) error {
 		return err
 	}
 
-	// タグがつけられているかを見る
-	ut, err := h.Repo.GetUserTag(userID, tagID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return herror.NotFound()
-		default:
-			return herror.InternalServerError(err)
-		}
-	}
-
 	// 他人のロックは変更不可
 	if me != userID {
 		return herror.Forbidden("this is not your tag")
 	}
 
 	// 更新
-	if err := h.Repo.ChangeUserTagLock(userID, ut.GetTagID(), req.IsLocked); err != nil {
-		return herror.InternalServerError(err)
+	if err := h.Repo.ChangeUserTagLock(userID, tagID, req.IsLocked); err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return herror.NotFound()
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)

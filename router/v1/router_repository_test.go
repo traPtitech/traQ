@@ -823,7 +823,7 @@ func (repo *TestRepository) ChangeUserTagLock(userID, tagID uuid.UUID, locked bo
 			return nil
 		}
 	}
-	return nil
+	return repository.ErrNotFound
 }
 
 func (repo *TestRepository) DeleteUserTag(userID, tagID uuid.UUID) error {
