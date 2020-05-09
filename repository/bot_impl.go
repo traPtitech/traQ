@@ -6,6 +6,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
+	bevent "github.com/traPtitech/traQ/bot/event"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/role"
@@ -62,7 +63,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 		VerificationToken: random.SecureAlphaNumeric(30),
 		PostURL:           webhookURL,
 		AccessTokenID:     tid,
-		SubscribeEvents:   model.BotEvents{},
+		SubscribeEvents:   bevent.Types{},
 		Privileged:        false,
 		State:             model.BotInactive,
 		BotCode:           random.AlphaNumeric(30),

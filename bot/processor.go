@@ -8,6 +8,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/traPtitech/traQ/bot/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
@@ -65,7 +66,7 @@ func NewProcessor(repo repository.Repository, hub *hub.Hub, logger *zap.Logger) 
 	return p
 }
 
-func (p *Processor) sendEvent(b *model.Bot, event model.BotEvent, body []byte) (ok bool) {
+func (p *Processor) sendEvent(b *model.Bot, event event.Type, body []byte) (ok bool) {
 	reqID := uuid.Must(uuid.NewV4())
 
 	req, _ := http.NewRequest(http.MethodPost, b.PostURL, bytes.NewReader(body))

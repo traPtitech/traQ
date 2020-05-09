@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/bot/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
@@ -241,14 +242,14 @@ func (h *Handlers) formatChannel(channel *model.Channel) (response *channelRespo
 }
 
 type botResponse struct {
-	BotID           uuid.UUID       `json:"botId"`
-	BotUserID       uuid.UUID       `json:"botUserId"`
-	Description     string          `json:"description"`
-	SubscribeEvents model.BotEvents `json:"subscribeEvents"`
-	State           model.BotState  `json:"state"`
-	CreatorID       uuid.UUID       `json:"creatorId"`
-	CreatedAt       time.Time       `json:"createdAt"`
-	UpdatedAt       time.Time       `json:"updatedAt"`
+	BotID           uuid.UUID      `json:"botId"`
+	BotUserID       uuid.UUID      `json:"botUserId"`
+	Description     string         `json:"description"`
+	SubscribeEvents event.Types    `json:"subscribeEvents"`
+	State           model.BotState `json:"state"`
+	CreatorID       uuid.UUID      `json:"creatorId"`
+	CreatedAt       time.Time      `json:"createdAt"`
+	UpdatedAt       time.Time      `json:"updatedAt"`
 }
 
 func formatBot(b *model.Bot) *botResponse {
@@ -273,19 +274,19 @@ func formatBots(bs []*model.Bot) []*botResponse {
 }
 
 type botDetailResponse struct {
-	BotID            uuid.UUID       `json:"botId"`
-	BotUserID        uuid.UUID       `json:"botUserId"`
-	Description      string          `json:"description"`
-	SubscribeEvents  model.BotEvents `json:"subscribeEvents"`
-	State            model.BotState  `json:"state"`
-	CreatorID        uuid.UUID       `json:"creatorId"`
-	CreatedAt        time.Time       `json:"createdAt"`
-	UpdatedAt        time.Time       `json:"updatedAt"`
-	VerificationCode string          `json:"verificationCode"`
-	AccessToken      string          `json:"accessToken"`
-	PostURL          string          `json:"postUrl"`
-	Privileged       bool            `json:"privileged"`
-	BotCode          string          `json:"botCode"`
+	BotID            uuid.UUID      `json:"botId"`
+	BotUserID        uuid.UUID      `json:"botUserId"`
+	Description      string         `json:"description"`
+	SubscribeEvents  event.Types    `json:"subscribeEvents"`
+	State            model.BotState `json:"state"`
+	CreatorID        uuid.UUID      `json:"creatorId"`
+	CreatedAt        time.Time      `json:"createdAt"`
+	UpdatedAt        time.Time      `json:"updatedAt"`
+	VerificationCode string         `json:"verificationCode"`
+	AccessToken      string         `json:"accessToken"`
+	PostURL          string         `json:"postUrl"`
+	Privileged       bool           `json:"privileged"`
+	BotCode          string         `json:"botCode"`
 }
 
 func formatBotDetail(b *model.Bot, t *model.OAuth2Token) *botDetailResponse {

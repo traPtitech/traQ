@@ -7,6 +7,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
+	bevent "github.com/traPtitech/traQ/bot/event"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac/permission"
@@ -117,7 +118,7 @@ type PatchBotRequest struct {
 	Endpoint        optional.String `json:"endpoint"`
 	Privileged      optional.Bool   `json:"privileged"`
 	DeveloperID     optional.UUID   `json:"developerId"`
-	SubscribeEvents model.BotEvents `json:"subscribeEvents"`
+	SubscribeEvents bevent.Types    `json:"subscribeEvents"`
 }
 
 func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
