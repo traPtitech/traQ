@@ -128,6 +128,17 @@ func (p *Processor) makePayloadJSON(payload interface{}) (b []byte, releaseFunc 
 	return stream.Buffer(), releaseFunc, nil
 }
 
+func (p *Processor) unicast(ev event.Type, payload interface{}, target *model.Bot) {
+	buf, release, err := p.makePayloadJSON(&payload)
+	if err != nil {
+		p.logger.Error("unexpected json encode error", zap.Error(err))
+		return
+	}
+	defer release()
+
+	p.sendEvent(target, ev, buf)
+}
+
 func (p *Processor) multicast(ev event.Type, payload interface{}, targets []*model.Bot) {
 	if len(targets) == 0 {
 		return

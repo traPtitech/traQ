@@ -21,6 +21,10 @@ const (
 	UserCreated Type = "USER_CREATED"
 	// StampCreated スタンプ作成イベント
 	StampCreated Type = "STAMP_CREATED"
+	// TagAdded タグ追加イベント
+	TagAdded Type = "TAG_ADDED"
+	// TagRemoved タグ削除イベント
+	TagRemoved Type = "TAG_REMOVED"
 )
 
 var allTypes Types
@@ -38,6 +42,8 @@ func init() {
 		ChannelTopicChanged,
 		UserCreated,
 		StampCreated,
+		TagAdded,
+		TagRemoved,
 	} {
 		allTypes[t] = struct{}{}
 	}

@@ -107,3 +107,17 @@ func MakeStampCreated(stamp *model.Stamp, user model.UserInfo) *StampCreated {
 		Creator: MakeUser(user),
 	}
 }
+
+type TagAddedOrRemoved struct {
+	Base
+	TagID uuid.UUID `json:"tagId"`
+	Tag   string    `json:"tag"`
+}
+
+func MakeTagAddedOrRemoved(tag *model.Tag) *TagAddedOrRemoved {
+	return &TagAddedOrRemoved{
+		Base:  MakeBase(),
+		TagID: tag.ID,
+		Tag:   tag.Name,
+	}
+}
