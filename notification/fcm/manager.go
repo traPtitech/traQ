@@ -200,13 +200,13 @@ func (c *Client) worker() {
 	}
 }
 
-func (c *Client) sendMessages(messages []*messaging.Message) error {
+func (c *Client) sendMessages(messages []*messaging.Message) {
 	var invalidTokens []string
 	for _, v := range chunkMessages(messages, batchSize) { // 1度に送信できるのは500メッセージまで
 		ng, err := c.sendOneChunk(v)
 		if err != nil {
 			c.logger.Error("an error occurred in sending fcm", zap.Error(err))
-			return err
+			return
 		}
 		if len(ng) > 0 {
 			invalidTokens = append(invalidTokens, ng...)
@@ -216,10 +216,9 @@ func (c *Client) sendMessages(messages []*messaging.Message) error {
 		err := c.repo.DeleteDeviceTokens(invalidTokens)
 		if err != nil {
 			c.logger.Error("failed to DeleteDeviceTokens", zap.Error(err), zap.Strings("invalid_tokens", invalidTokens))
-			return err
+			return
 		}
 	}
-	return nil
 }
 
 func (c *Client) sendOneChunk(messages []*messaging.Message) (invalidTokens []string, err error) {
