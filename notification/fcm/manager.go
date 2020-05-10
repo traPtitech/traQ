@@ -236,8 +236,8 @@ func (c *Client) sendOneChunk(messages []*messaging.Message) (invalidTokens []st
 			switch {
 			case messaging.IsRegistrationTokenNotRegistered(v.Error):
 				invalidTokens = append(invalidTokens, messages[i].Token)
-			case messaging.IsMessageRateExceeded(v.Error):
-				// TODO
+			default:
+				c.logger.Warn("fcm: "+v.Error.Error(), zap.String("token", messages[i].Token))
 			}
 		}
 	}
