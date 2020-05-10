@@ -5,6 +5,7 @@ import (
 	"errors"
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
+	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/set"
 	"go.uber.org/zap"
@@ -42,6 +43,18 @@ func NewClient(repo repository.Repository, logger *zap.Logger, options ...option
 		close:  make(chan struct{}),
 	}
 	go c.worker()
+	go func() {
+		t := time.NewTicker(1 * time.Minute)
+		defer t.Stop()
+		for {
+			select {
+			case <-c.close:
+				return
+			case <-t.C:
+				_ = c.updateBadges()
+			}
+		}
+	}()
 
 	return c, nil
 }
@@ -93,7 +106,7 @@ func (c *Client) send(targetUserIDs set.UUIDSet, p *Payload, withUnreadCount boo
 	)
 	if withUnreadCount {
 		for uid, tokens := range tokensMap {
-			unread, _ := c.repo.GetUserUnreadMessagesCount(uid)
+			unread := c.repo.UnreadMessageCounter().Get(uid)
 			data := map[string]string{
 				"type":   p.Type,
 				"title":  p.Title,
@@ -161,6 +174,67 @@ func (c *Client) send(targetUserIDs set.UUIDSet, p *Payload, withUnreadCount boo
 					Token:   token,
 				})
 			}
+		}
+	}
+
+	if c.IsClosed() {
+		return errors.New("fcm client has already been closed")
+	}
+	c.queue <- messages
+	return nil
+}
+
+func (c *Client) updateBadges() error {
+	if c.IsClosed() {
+		return errors.New("fcm client has already been closed")
+	}
+
+	counts := c.repo.UnreadMessageCounter().GetChanges(true)
+	if len(counts) == 0 {
+		return nil
+	}
+
+	userIds := make([]uuid.UUID, 0, len(counts))
+	for id := range counts {
+		userIds = append(userIds, id)
+	}
+
+	tokensMap, err := c.repo.GetDeviceTokens(set.UUIDSetFromArray(userIds))
+	if err != nil {
+		c.logger.Error("failed to GetDeviceTokens", zap.Error(err))
+		return err
+	}
+	if len(tokensMap) == 0 {
+		return nil
+	}
+
+	var (
+		messages    []*messaging.Message
+		apnsHeaders = map[string]string{"apns-expiration": strconv.FormatInt(time.Now().Add(messageTTL).Unix(), 10)}
+	)
+	for uid, tokens := range tokensMap {
+		count := counts[uid]
+		data := map[string]string{
+			"type":   "update_badge",
+			"unread": strconv.Itoa(count),
+		}
+		apns := &messaging.APNSConfig{
+			Headers: apnsHeaders,
+			Payload: &messaging.APNSPayload{
+				Aps: &messaging.Aps{
+					Badge: &count,
+				},
+			},
+		}
+
+		for _, token := range tokens {
+			messages = append(messages, &messaging.Message{
+				Data:    data,
+				Android: defaultAndroidConfig,
+				Webpush: defaultWebpushConfig,
+				APNS:    apns,
+				Token:   token,
+			})
 		}
 	}
 
