@@ -37,7 +37,7 @@ golangci-lint:
 
 .PHONY: swagger-lint
 swagger-lint:
-	spectral lint -q docs/*.yaml
+	@cd dev/bin && ./swagger-lint.sh
 
 .PHONY: db-gen-docs
 db-gen-docs:
