@@ -214,10 +214,6 @@ func (c *Client) updateBadges() error {
 	)
 	for uid, tokens := range tokensMap {
 		count := counts[uid]
-		data := map[string]string{
-			"type":   "update_badge",
-			"unread": strconv.Itoa(count),
-		}
 		apns := &messaging.APNSConfig{
 			Headers: apnsHeaders,
 			Payload: &messaging.APNSPayload{
@@ -229,11 +225,8 @@ func (c *Client) updateBadges() error {
 
 		for _, token := range tokens {
 			messages = append(messages, &messaging.Message{
-				Data:    data,
-				Android: defaultAndroidConfig,
-				Webpush: defaultWebpushConfig,
-				APNS:    apns,
-				Token:   token,
+				APNS:  apns,
+				Token: token,
 			})
 		}
 	}
