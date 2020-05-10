@@ -82,6 +82,12 @@ type MessageRepository interface {
 	// 存在しないユーザーを指定した場合、空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetUserUnreadChannels(userID uuid.UUID) ([]*UserUnreadChannel, error)
+	// GetUserUnreadMessagesCount 指定したユーザーの未読メッセージ数を取得します
+	//
+	// 成功した場合、未読メッセージ数とnilを返します。
+	// 存在しないユーザーを指定した場合、0とnilを返します。
+	// DBによるエラーを返すことがあります。
+	GetUserUnreadMessagesCount(userID uuid.UUID) (int, error)
 	// GetChannelLatestMessagesByUserID 指定したユーザーが閲覧可能な全てのパブリックチャンネルの最新のメッセージの一覧を取得します
 	//
 	// 成功した場合、メッセージの配列とnilを返します。負のlimitは無視されます。

@@ -213,7 +213,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	if ns.fcm != nil {
 		targets := notifiedUsers.Clone()
 		targets.Remove(m.UserID)
-		ns.fcm.Send(targets, fcmPayload)
+		ns.fcm.Send(targets, fcmPayload, true)
 	}
 }
 

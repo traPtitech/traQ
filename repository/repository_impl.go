@@ -30,11 +30,12 @@ var (
 
 // GormRepository リポジトリ実装
 type GormRepository struct {
-	db     *gorm.DB
-	hub    *hub.Hub
-	logger *zap.Logger
-	chTree *channelTreeImpl
-	stamps *stampRepository
+	db             *gorm.DB
+	hub            *hub.Hub
+	logger         *zap.Logger
+	chTree         *channelTreeImpl
+	stamps         *stampRepository
+	unreadCounters *unreadMessageCounters
 	fileImpl
 }
 
@@ -84,6 +85,12 @@ func (repo *GormRepository) Sync() (init bool, err error) {
 		return false, err
 	}
 	repo.stamps = makeStampRepository(stamps)
+
+	// 未読カウンター初期化
+	repo.unreadCounters, err = makeUnreadMessageCounters(repo.db)
+	if err != nil {
+		return false, err
+	}
 
 	// メトリクス用データ取得
 	if !initialized {

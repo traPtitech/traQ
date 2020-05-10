@@ -78,45 +78,6 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	}
 }
 
-func TestRepositoryImpl_GetDevicesByUserID(t *testing.T) {
-	t.Parallel()
-	repo, _, require := setup(t, common)
-
-	id1 := mustMakeUser(t, repo, rand).GetID()
-	id2 := mustMakeUser(t, repo, rand).GetID()
-	token1 := random2.AlphaNumeric(20)
-	token2 := random2.AlphaNumeric(20)
-	token3 := random2.AlphaNumeric(20)
-
-	_, err := repo.RegisterDevice(id1, token1)
-	require.NoError(err)
-	_, err = repo.RegisterDevice(id2, token2)
-	require.NoError(err)
-	_, err = repo.RegisterDevice(id1, token3)
-	require.NoError(err)
-
-	cases := []struct {
-		name   string
-		user   uuid.UUID
-		expect int
-	}{
-		{"id1", id1, 2},
-		{"id2", id2, 1},
-		{"nil id", uuid.Nil, 0},
-	}
-
-	for _, v := range cases {
-		v := v
-		t.Run(v.name, func(t *testing.T) {
-			t.Parallel()
-			devs, err := repo.GetDevicesByUserID(v.user)
-			if assert.NoError(t, err) {
-				assert.Len(t, devs, v.expect)
-			}
-		})
-	}
-}
-
 func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 	t.Parallel()
 	repo, _, require := setup(t, common)
@@ -152,48 +113,12 @@ func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 			assert := assert.New(t)
 			devs, err := repo.GetDeviceTokens(set.UUIDSetFromArray(v.users))
 			if assert.NoError(err) {
-				assert.Len(devs, v.expect)
+				n := 0
+				for _, arr := range devs {
+					n += len(arr)
+				}
+				assert.EqualValues(v.expect, n)
 			}
 		})
 	}
-}
-
-func TestRepositoryImpl_GetAllDevices(t *testing.T) {
-	t.Parallel()
-	repo, _, require := setup(t, ex1)
-
-	id1 := mustMakeUser(t, repo, rand).GetID()
-	id2 := mustMakeUser(t, repo, rand).GetID()
-	token1 := random2.AlphaNumeric(20)
-	token2 := random2.AlphaNumeric(20)
-	token3 := random2.AlphaNumeric(20)
-
-	_, err := repo.RegisterDevice(id1, token1)
-	require.NoError(err)
-	_, err = repo.RegisterDevice(id2, token2)
-	require.NoError(err)
-	_, err = repo.RegisterDevice(id1, token3)
-	require.NoError(err)
-
-	// GetAllDevices
-	t.Run("TestGetAllDevices", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		devs, err := repo.GetAllDevices()
-		if assert.NoError(err) {
-			assert.Len(devs, 3)
-		}
-	})
-
-	// GetAllDeviceTokens
-	t.Run("GetAllDeviceTokens", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		devs, err := repo.GetAllDeviceTokens()
-		if assert.NoError(err) {
-			assert.Len(devs, 3)
-		}
-	})
 }

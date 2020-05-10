@@ -169,6 +169,10 @@ func (repo *TestRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*reposito
 	panic("implement me")
 }
 
+func (repo *TestRepository) GetUserUnreadMessagesCount(userID uuid.UUID) (int, error) {
+	panic("implement me")
+}
+
 func (repo *TestRepository) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) {
 	panic("implement me")
 }
@@ -1899,19 +1903,7 @@ func (repo *TestRepository) DeleteDeviceTokens(tokens []string) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetDevicesByUserID(user uuid.UUID) (result []*model.Device, err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetDeviceTokens(users set.UUIDSet) (tokens []string, err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetAllDevices() (result []*model.Device, err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetAllDeviceTokens() (result []string, err error) {
+func (repo *TestRepository) GetDeviceTokens(users set.UUIDSet) (tokens map[uuid.UUID][]string, err error) {
 	panic("implement me")
 }
 

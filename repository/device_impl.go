@@ -39,31 +39,18 @@ func (repo *GormRepository) RegisterDevice(userID uuid.UUID, token string) (*mod
 	return &d, nil
 }
 
-// GetDevicesByUserID implements DeviceRepository interface.
-func (repo *GormRepository) GetDevicesByUserID(userID uuid.UUID) (result []*model.Device, err error) {
-	result = make([]*model.Device, 0)
-	if userID == uuid.Nil {
-		return result, nil
-	}
-	return result, repo.db.Where(&model.Device{UserID: userID}).Find(&result).Error
-}
-
-// GetAllDevices implements DeviceRepository interface.
-func (repo *GormRepository) GetAllDevices() (result []*model.Device, err error) {
-	result = make([]*model.Device, 0)
-	return result, repo.db.Find(&result).Error
-}
-
-// GetAllDeviceIDs implements DeviceRepository interface.
-func (repo *GormRepository) GetAllDeviceTokens() (result []string, err error) {
-	result = make([]string, 0)
-	return result, repo.db.Model(&model.Device{}).Pluck("token", &result).Error
-}
-
 // GetDeviceTokens implements DeviceRepository interface.
-func (repo *GormRepository) GetDeviceTokens(userIDs set.UUIDSet) (tokens []string, err error) {
-	tokens = make([]string, 0)
-	return tokens, repo.db.Model(&model.Device{}).Where("user_id IN (?)", userIDs.StringArray()).Pluck("token", &tokens).Error
+func (repo *GormRepository) GetDeviceTokens(userIDs set.UUIDSet) (tokens map[uuid.UUID][]string, err error) {
+	var tmp []*model.Device
+	if err := repo.db.Where("user_id IN (?)", userIDs.StringArray()).Find(&tmp).Error; err != nil {
+		return nil, err
+	}
+
+	tokens = make(map[uuid.UUID][]string, len(userIDs))
+	for _, device := range tmp {
+		tokens[device.UserID] = append(tokens[device.UserID], device.Token)
+	}
+	return tokens, nil
 }
 
 // DeleteDeviceTokens implements DeviceRepository interface.
