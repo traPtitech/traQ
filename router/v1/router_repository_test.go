@@ -169,7 +169,7 @@ func (repo *TestRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*reposito
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetUserUnreadMessagesCount(userID uuid.UUID) (int, error) {
+func (repo *TestRepository) UnreadMessageCounter() repository.UnreadMessageCounter {
 	panic("implement me")
 }
 

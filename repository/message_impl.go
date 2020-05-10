@@ -15,6 +15,7 @@ import (
 
 type unreadMessageCounters struct {
 	counters map[uuid.UUID]int
+	changed  map[uuid.UUID]struct{}
 	mu       sync.RWMutex
 }
 
@@ -28,22 +29,38 @@ func makeUnreadMessageCounters(db *gorm.DB) (*unreadMessageCounters, error) {
 		return nil, err
 	}
 	counters := make(map[uuid.UUID]int, len(counts))
+	changed := make(map[uuid.UUID]struct{}, len(counts))
 	for _, c := range counts {
 		counters[c.UserID] = c.Count
+		changed[c.UserID] = struct{}{}
 	}
-	return &unreadMessageCounters{counters: counters}, nil
+	return &unreadMessageCounters{counters: counters, changed: changed}, nil
 }
 
 func (c *unreadMessageCounters) Inc(userID uuid.UUID, n int) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.counters[userID] += n
+	c.changed[userID] = struct{}{}
 }
 
 func (c *unreadMessageCounters) Get(userID uuid.UUID) int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	return c.counters[userID]
+}
+
+func (c *unreadMessageCounters) GetChanges(reset bool) map[uuid.UUID]int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	changes := make(map[uuid.UUID]int, len(c.changed))
+	for id := range c.changed {
+		changes[id] = c.counters[id]
+	}
+	if reset {
+		c.changed = make(map[uuid.UUID]struct{}, len(c.counters))
+	}
+	return changes
 }
 
 func (c *unreadMessageCounters) Dec(userID uuid.UUID, n int) {
@@ -61,6 +78,7 @@ func (c *unreadMessageCounters) DecMultiple(userIDs []uuid.UUID, n int) {
 }
 
 func (c *unreadMessageCounters) dec(userID uuid.UUID, n int) {
+	c.changed[userID] = struct{}{}
 	result := c.counters[userID] - n
 	if result <= 0 {
 		delete(c.counters, userID)
@@ -374,9 +392,9 @@ func (repo *GormRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*UserUnre
 	return res, repo.db.Raw(`SELECT m.channel_id AS channel_id, COUNT(m.id) AS count, MAX(u.noticeable) AS noticeable, MIN(m.created_at) AS since, MAX(m.created_at) AS updated_at FROM unreads u JOIN messages m on u.message_id = m.id WHERE u.user_id = ? GROUP BY m.channel_id`, userID).Scan(&res).Error
 }
 
-// GetUserUnreadMessagesCount implements MessageRepository interface.
-func (repo *GormRepository) GetUserUnreadMessagesCount(userID uuid.UUID) (int, error) {
-	return repo.unreadCounters.Get(userID), nil
+// UnreadMessageCounter implements MessageRepository interface.
+func (repo *GormRepository) UnreadMessageCounter() UnreadMessageCounter {
+	return repo.unreadCounters
 }
 
 // DeleteUnreadsByChannelID implements MessageRepository interface.
