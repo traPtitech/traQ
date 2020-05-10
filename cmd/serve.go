@@ -238,6 +238,9 @@ func serveCommand() *cobra.Command {
 			if err := e.Shutdown(ctx); err != nil {
 				logger.Warn("abnormal shutdown", zap.Error(err))
 			}
+			if fcmClient != nil {
+				fcmClient.Close()
+			}
 			sessions.PurgeCache()
 			logger.Info("traQ shutdown")
 		},
