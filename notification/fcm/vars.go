@@ -21,6 +21,10 @@ var (
 		Namespace: "firebase",
 		Name:      "fcm_send_count_total",
 	}, []string{"result"})
+	fcmBatchRequestCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "firebase",
+		Name:      "fcm_batch_request_count_total",
+	}, []string{"result"})
 	messageTTL       = messageTTLSeconds * time.Second
 	messageTTLString = strconv.Itoa(messageTTLSeconds)
 

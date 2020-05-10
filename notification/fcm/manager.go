@@ -85,8 +85,10 @@ func (c *Client) sendOneChunk(tokens []string, payload *Payload) (invalidTokens 
 		APNS:         m.APNS,
 	})
 	if err != nil {
+		fcmBatchRequestCounter.WithLabelValues("error").Inc()
 		return nil, err
 	}
+	fcmBatchRequestCounter.WithLabelValues("ok").Inc()
 	fcmSendCounter.WithLabelValues("error").Add(float64(res.FailureCount))
 	fcmSendCounter.WithLabelValues("ok").Add(float64(res.SuccessCount))
 	if res.FailureCount > 0 {
