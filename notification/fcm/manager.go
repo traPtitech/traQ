@@ -233,6 +233,9 @@ func (c *Client) sendOneChunk(messages []*messaging.Message) (invalidTokens []st
 	fcmSendCounter.WithLabelValues("ok").Add(float64(res.SuccessCount))
 	if res.FailureCount > 0 {
 		for i, v := range res.Responses {
+			if v.Error == nil {
+				continue
+			}
 			switch {
 			case messaging.IsRegistrationTokenNotRegistered(v.Error):
 				invalidTokens = append(invalidTokens, messages[i].Token)
