@@ -1833,66 +1833,16 @@ func (repo *TestRepository) GetStaredChannels(userID uuid.UUID) ([]uuid.UUID, er
 	return result, nil
 }
 
-func (repo *TestRepository) CreatePin(messageID, userID uuid.UUID) (*model.Pin, error) {
-	if messageID == uuid.Nil || userID == uuid.Nil {
-		return nil, repository.ErrNilID
-	}
-	repo.PinsLock.Lock()
-	defer repo.PinsLock.Unlock()
-	for _, pin := range repo.Pins {
-		pin := pin
-		if pin.MessageID == messageID {
-			return &pin, nil
-		}
-	}
-	p := model.Pin{
-		ID:        uuid.Must(uuid.NewV4()),
-		MessageID: messageID,
-		UserID:    userID,
-		CreatedAt: time.Now(),
-	}
-	repo.Pins[p.ID] = p
-	return &p, nil
+func (repo *TestRepository) PinMessage(messageID, userID uuid.UUID) (*model.Pin, error) {
+	panic("implement me")
 }
 
-func (repo *TestRepository) GetPin(id uuid.UUID) (*model.Pin, error) {
-	repo.PinsLock.RLock()
-	pin, ok := repo.Pins[id]
-	repo.PinsLock.RUnlock()
-	if !ok {
-		return nil, repository.ErrNotFound
-	}
-	repo.MessagesLock.RLock()
-	pin.Message = repo.Messages[pin.MessageID]
-	repo.MessagesLock.RUnlock()
-	return &pin, nil
+func (repo *TestRepository) UnpinMessage(id uuid.UUID, userID uuid.UUID) error {
+	panic("implement me")
 }
 
-func (repo *TestRepository) DeletePin(id uuid.UUID, userID uuid.UUID) error {
-	if id == uuid.Nil {
-		return repository.ErrNilID
-	}
-	repo.PinsLock.Lock()
-	delete(repo.Pins, id)
-	repo.PinsLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) GetPinsByChannelID(channelID uuid.UUID) ([]*model.Pin, error) {
-	result := make([]*model.Pin, 0)
-	repo.PinsLock.RLock()
-	repo.MessagesLock.RLock()
-	for _, p := range repo.Pins {
-		m, ok := repo.Messages[p.MessageID]
-		if ok && m.ChannelID == channelID {
-			p := p
-			p.Message = m
-			result = append(result, &p)
-		}
-	}
-	repo.MessagesLock.RUnlock()
-	repo.PinsLock.RUnlock()
-	return result, nil
+func (repo *TestRepository) GetPinnedMessageByChannelID(channelID uuid.UUID) ([]*model.Pin, error) {
+	panic("implement me")
 }
 
 func (repo *TestRepository) RegisterDevice(userID uuid.UUID, token string) error {

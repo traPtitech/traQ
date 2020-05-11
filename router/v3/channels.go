@@ -188,7 +188,7 @@ func (h *Handlers) EditChannelTopic(c echo.Context) error {
 func (h *Handlers) GetChannelPins(c echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
 
-	pins, err := h.Repo.GetPinsByChannelID(channelID)
+	pins, err := h.Repo.GetPinnedMessageByChannelID(channelID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

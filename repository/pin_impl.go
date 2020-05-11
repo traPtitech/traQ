@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-// CreatePin implements PinRepository interface.
-func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (*model.Pin, error) {
+// PinMessage implements PinRepository interface.
+func (repo *GormRepository) PinMessage(messageID, userID uuid.UUID) (*model.Pin, error) {
 	if messageID == uuid.Nil || userID == uuid.Nil {
 		return nil, ErrNilID
 	}
@@ -44,7 +44,6 @@ func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (*model.Pin, 
 			Fields: hub.Fields{
 				"message_id": messageID,
 				"channel_id": m.ChannelID,
-				"pin_id":     p.ID,
 			},
 		})
 
@@ -58,22 +57,9 @@ func (repo *GormRepository) CreatePin(messageID, userID uuid.UUID) (*model.Pin, 
 	return &p, err
 }
 
-// GetPin implements PinRepository interface.
-func (repo *GormRepository) GetPin(id uuid.UUID) (p *model.Pin, err error) {
-	if id == uuid.Nil {
-		return nil, ErrNotFound
-	}
-	p = &model.Pin{}
-	err = repo.db.Scopes(pinPreloads).Where(&model.Pin{ID: id}).Take(p).Error
-	if err != nil {
-		return nil, convertError(err)
-	}
-	return p, nil
-}
-
-// DeletePin implements PinRepository interface.
-func (repo *GormRepository) DeletePin(pinID, userID uuid.UUID) error {
-	if pinID == uuid.Nil {
+// UnpinMessage implements PinRepository interface.
+func (repo *GormRepository) UnpinMessage(messageID, userID uuid.UUID) error {
+	if messageID == uuid.Nil {
 		return ErrNilID
 	}
 	var (
@@ -81,14 +67,14 @@ func (repo *GormRepository) DeletePin(pinID, userID uuid.UUID) error {
 		ok  bool
 	)
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Preload("Message").Where(&model.Pin{ID: pinID}).First(&pin).Error; err != nil {
+		if err := tx.Preload("Message").Where(&model.Pin{MessageID: messageID}).First(&pin).Error; err != nil {
 			if gorm.IsRecordNotFoundError(err) {
 				return nil
 			}
 			return err
 		}
 		ok = true
-		return tx.Delete(&model.Pin{ID: pinID}).Error
+		return tx.Delete(&model.Pin{MessageID: messageID}).Error
 	})
 	if err != nil {
 		return err
@@ -97,23 +83,22 @@ func (repo *GormRepository) DeletePin(pinID, userID uuid.UUID) error {
 		repo.hub.Publish(hub.Message{
 			Name: event.MessageUnpinned,
 			Fields: hub.Fields{
-				"pin_id":     pinID,
 				"channel_id": pin.Message.ChannelID,
-				"message_id": pin.MessageID,
+				"message_id": messageID,
 			},
 		})
 
 		// ロギング
 		go repo.recordChannelEvent(pin.Message.ChannelID, model.ChannelEventPinRemoved, model.ChannelEventDetail{
 			"userId":    userID,
-			"messageId": pin.MessageID,
+			"messageId": messageID,
 		}, time.Now())
 	}
 	return nil
 }
 
-// GetPinsByChannelID implements PinRepository interface.
-func (repo *GormRepository) GetPinsByChannelID(channelID uuid.UUID) (pins []*model.Pin, err error) {
+// GetPinnedMessageByChannelID implements PinRepository interface.
+func (repo *GormRepository) GetPinnedMessageByChannelID(channelID uuid.UUID) (pins []*model.Pin, err error) {
 	pins = make([]*model.Pin, 0)
 	if channelID == uuid.Nil {
 		return pins, nil

@@ -197,11 +197,10 @@ func mustAddTagToUser(t *testing.T, repo Repository, userID, tagID uuid.UUID) {
 	require.NoError(t, repo.AddUserTag(userID, tagID))
 }
 
-func mustMakePin(t *testing.T, repo Repository, messageID, userID uuid.UUID) uuid.UUID {
+func mustMakePin(t *testing.T, repo Repository, messageID, userID uuid.UUID) {
 	t.Helper()
-	p, err := repo.CreatePin(messageID, userID)
+	_, err := repo.PinMessage(messageID, userID)
 	require.NoError(t, err)
-	return p.ID
 }
 
 func mustMakeUserGroup(t *testing.T, repo Repository, name string, adminID uuid.UUID) *model.UserGroup {
