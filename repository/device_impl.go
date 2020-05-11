@@ -8,12 +8,12 @@ import (
 )
 
 // RegisterDevice implements DeviceRepository interface.
-func (repo *GormRepository) RegisterDevice(userID uuid.UUID, token string) (*model.Device, error) {
+func (repo *GormRepository) RegisterDevice(userID uuid.UUID, token string) error {
 	if userID == uuid.Nil {
-		return nil, ErrNilID
+		return ErrNilID
 	}
 	if len(token) == 0 {
-		return nil, ArgError("Token", "token is empty")
+		return ArgError("Token", "token is empty")
 	}
 
 	var d model.Device
@@ -34,9 +34,9 @@ func (repo *GormRepository) RegisterDevice(userID uuid.UUID, token string) (*mod
 		return tx.Create(&d).Error
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &d, nil
+	return nil
 }
 
 // GetDeviceTokens implements DeviceRepository interface.

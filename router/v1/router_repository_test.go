@@ -1895,7 +1895,7 @@ func (repo *TestRepository) GetPinsByChannelID(channelID uuid.UUID) ([]*model.Pi
 	return result, nil
 }
 
-func (repo *TestRepository) RegisterDevice(userID uuid.UUID, token string) (*model.Device, error) {
+func (repo *TestRepository) RegisterDevice(userID uuid.UUID, token string) error {
 	panic("implement me")
 }
 

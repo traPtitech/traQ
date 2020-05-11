@@ -32,7 +32,7 @@ func TestRepositoryImpl_RegisterDevice(t *testing.T) {
 	}
 
 	for _, v := range cases {
-		_, err := repo.RegisterDevice(v.user, v.token)
+		err := repo.RegisterDevice(v.user, v.token)
 		if v.error {
 			assert.Error(err)
 		} else {
@@ -54,13 +54,13 @@ func TestRepositoryImpl_DeleteDeviceTokens(t *testing.T) {
 	token3 := random2.AlphaNumeric(20)
 	token4 := random2.AlphaNumeric(20)
 
-	_, err := repo.RegisterDevice(id1, token1)
+	err := repo.RegisterDevice(id1, token1)
 	require.NoError(err)
-	_, err = repo.RegisterDevice(id2, token2)
+	err = repo.RegisterDevice(id2, token2)
 	require.NoError(err)
-	_, err = repo.RegisterDevice(id1, token3)
+	err = repo.RegisterDevice(id1, token3)
 	require.NoError(err)
-	_, err = repo.RegisterDevice(id1, token4)
+	err = repo.RegisterDevice(id1, token4)
 	require.NoError(err)
 
 	cases := []struct {
@@ -88,11 +88,11 @@ func TestRepositoryImpl_GetDeviceTokens(t *testing.T) {
 	token2 := random2.AlphaNumeric(20)
 	token3 := random2.AlphaNumeric(20)
 
-	_, err := repo.RegisterDevice(id1, token1)
+	err := repo.RegisterDevice(id1, token1)
 	require.NoError(err)
-	_, err = repo.RegisterDevice(id2, token2)
+	err = repo.RegisterDevice(id2, token2)
 	require.NoError(err)
-	_, err = repo.RegisterDevice(id1, token3)
+	err = repo.RegisterDevice(id1, token3)
 	require.NoError(err)
 
 	cases := []struct {

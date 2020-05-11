@@ -98,7 +98,7 @@ func (h *Handlers) PostDeviceToken(c echo.Context) error {
 		return err
 	}
 
-	if _, err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
+	if err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)
