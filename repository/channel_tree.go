@@ -29,6 +29,8 @@ type ChannelTree interface {
 	IsChannelPresent(id uuid.UUID) bool
 	// GetChannelIDFromPath チャンネルパスからチャンネルIDを取得する
 	GetChannelIDFromPath(path string) uuid.UUID
+	// IsForceChannel 指定したチャンネルが強制通知チャンネルかどうか
+	IsForceChannel(id uuid.UUID) bool
 	json.Marshaler
 }
 
@@ -412,6 +414,23 @@ LevelFor:
 		return uuid.Nil
 	}
 	return id
+}
+
+// IsForceChannel 指定したチャンネルが強制通知チャンネルかどうか
+func (ct *channelTreeImpl) IsForceChannel(id uuid.UUID) bool {
+	ct.mu.RLock()
+	defer ct.mu.RUnlock()
+	return ct.isChannelPresent(id)
+}
+
+func (ct *channelTreeImpl) isForceChannel(id uuid.UUID) bool {
+	n, ok := ct.nodes[id]
+	if !ok {
+		return false
+	}
+	n.RLock()
+	defer n.RUnlock()
+	return n.force
 }
 
 // MarshalJSON implements json.Marshaler interface

@@ -69,12 +69,10 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	parsed := ev.Fields["parse_result"].(*message.ParseResult)
 	logger := ns.logger.With(zap.Stringer("messageId", m.ID))
 
-	// チャンネル情報を取得
-	ch, err := ns.repo.GetChannel(m.ChannelID)
-	if err != nil {
-		logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
-		return
-	}
+	chTree := ns.repo.GetPublicChannelTree()
+	chID := m.ChannelID
+	isDM := !chTree.IsChannelPresent(chID)
+	forceNotify := chTree.IsForceChannel(chID)
 
 	// 投稿ユーザー情報を取得
 	mUser, err := ns.repo.GetUser(m.UserID, false)
@@ -101,15 +99,17 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	noticeable := set.UUIDSet{}    // noticeableな未読追加対象のユーザー
 
 	// メッセージボディ作成
-	if ch.IsDMChannel() {
-		fcmPayload.Title = "@" + mUser.GetResponseDisplayName()
-		fcmPayload.Path = "/users/" + mUser.GetName()
-		fcmPayload.SetBodyWithEllipsis(parsed.OneLine())
-	} else {
-		path := ns.repo.GetPublicChannelTree().GetChannelPath(m.ChannelID)
+	if isDM {
+		// 公開チャンネル
+		path := chTree.GetChannelPath(chID)
 		fcmPayload.Title = "#" + path
 		fcmPayload.Path = "/channels/" + path
 		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + parsed.OneLine())
+	} else {
+		// DM
+		fcmPayload.Title = "@" + mUser.GetResponseDisplayName()
+		fcmPayload.Path = "/users/" + mUser.GetName()
+		fcmPayload.SetBodyWithEllipsis(parsed.OneLine())
 	}
 
 	if len(parsed.Attachments) > 0 {
@@ -121,7 +121,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	// 対象者計算
 	q := repository.UsersQuery{}.Active().NotBot()
 	switch {
-	case ch.IsForced: // 強制通知チャンネル
+	case forceNotify: // 強制通知チャンネル
 		users, err := ns.repo.GetUserIDs(q)
 		if err != nil {
 			logger.Error("failed to GetUsers", zap.Error(err)) // 失敗
@@ -131,8 +131,8 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		markedUsers.Add(users...)
 		noticeable.Add(users...)
 
-	case !ch.IsPublic: // プライベートチャンネル
-		users, err := ns.repo.GetUserIDs(q.CMemberOf(ch.ID))
+	case isDM: // DM
+		users, err := ns.repo.GetUserIDs(q.CMemberOf(chID))
 		if err != nil {
 			logger.Error("failed to GetPrivateChannelMemberIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
@@ -142,7 +142,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	default: // 通常チャンネルメッセージ
 		// チャンネル通知購読者取得
-		notify, err := ns.repo.GetUserIDs(q.SubscriberAtNotifyLevelOf(ch.ID))
+		notify, err := ns.repo.GetUserIDs(q.SubscriberAtNotifyLevelOf(chID))
 		if err != nil {
 			logger.Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
@@ -150,7 +150,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		notifiedUsers.Add(notify...)
 
 		// チャンネル未読管理購読者取得
-		mark, err := ns.repo.GetUserIDs(q.SubscriberAtMarkLevelOf(ch.ID))
+		mark, err := ns.repo.GetUserIDs(q.SubscriberAtMarkLevelOf(chID))
 		if err != nil {
 			logger.Error("failed to GetUserIDs", zap.Error(err), zap.Stringer("channelId", m.ChannelID)) // 失敗
 			return
@@ -194,19 +194,21 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		}
 	}
 
+	// WS送信
+	var targetFunc ws.TargetFunc
+	if isDM {
+		targetFunc = ws.TargetUserSets(notifiedUsers)
+	} else {
+		targetFunc = ws.Or(
+			ws.TargetUserSets(notifiedUsers, viewers),
+			ws.TargetTimelineStreamingEnabled(),
+		)
+	}
+	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, targetFunc)
+
 	// SSE送信
 	for id := range set.UnionUUIDSets(notifiedUsers, viewers) {
 		go ns.sse.Multicast(id, ssePayload)
-	}
-
-	// WS送信
-	if ch.IsPublic {
-		go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.Or(
-			ws.TargetUserSets(notifiedUsers, viewers),
-			ws.TargetTimelineStreamingEnabled(),
-		))
-	} else {
-		go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetUserSets(notifiedUsers))
 	}
 
 	// FCM送信
