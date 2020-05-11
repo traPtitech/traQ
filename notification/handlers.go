@@ -93,10 +93,10 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		},
 	}
 
-	viewers := set.UUIDSet{}       // バックグラウンドを含む対象チャンネル閲覧中のユーザー
-	notifiedUsers := set.UUIDSet{} // チャンネル通知購読ユーザー
-	markedUsers := set.UUIDSet{}   // チャンネル未読管理ユーザー
-	noticeable := set.UUIDSet{}    // noticeableな未読追加対象のユーザー
+	viewers := set.UUID{}       // バックグラウンドを含む対象チャンネル閲覧中のユーザー
+	notifiedUsers := set.UUID{} // チャンネル通知購読ユーザー
+	markedUsers := set.UUID{}   // チャンネル未読管理ユーザー
+	noticeable := set.UUID{}    // noticeableな未読追加対象のユーザー
 
 	// メッセージボディ作成
 	if isDM {

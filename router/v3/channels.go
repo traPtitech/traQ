@@ -271,7 +271,7 @@ func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
 
 // PutChannelSubscribersRequest PUT /channels/:channelID/subscribers リクエストボディ
 type PutChannelSubscribersRequest struct {
-	On set.UUIDSet `json:"on"`
+	On set.UUID `json:"on"`
 }
 
 // SetChannelSubscribers PUT /channels/:channelID/subscribers
@@ -314,8 +314,8 @@ func (h *Handlers) SetChannelSubscribers(c echo.Context) error {
 
 // PatchChannelSubscribersRequest PATCH /channels/:channelID/subscribers リクエストボディ
 type PatchChannelSubscribersRequest struct {
-	On  set.UUIDSet `json:"on"`
-	Off set.UUIDSet `json:"off"`
+	On  set.UUID `json:"on"`
+	Off set.UUID `json:"off"`
 }
 
 // EditChannelSubscribers PATCH /channels/:channelID/subscribers

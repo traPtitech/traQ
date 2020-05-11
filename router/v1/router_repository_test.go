@@ -1903,7 +1903,7 @@ func (repo *TestRepository) DeleteDeviceTokens(tokens []string) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetDeviceTokens(users set.UUIDSet) (tokens map[uuid.UUID][]string, err error) {
+func (repo *TestRepository) GetDeviceTokens(users set.UUID) (tokens map[uuid.UUID][]string, err error) {
 	panic("implement me")
 }
 

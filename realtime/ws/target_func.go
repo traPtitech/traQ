@@ -28,7 +28,7 @@ func TargetUsers(userID ...uuid.UUID) TargetFunc {
 }
 
 // TargetUserSets 指定したユーザーを対象に送信します
-func TargetUserSets(sets ...set.UUIDSet) TargetFunc {
+func TargetUserSets(sets ...set.UUID) TargetFunc {
 	return func(s Session) bool {
 		for _, set := range sets {
 			if set.Contains(s.UserID()) {

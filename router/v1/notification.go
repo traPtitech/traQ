@@ -36,8 +36,8 @@ func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
 
 // PutChannelSubscribersRequest PUT /channels/:channelID/notification リクエストボディ
 type PutChannelSubscribersRequest struct {
-	On  set.UUIDSet `json:"on"`
-	Off set.UUIDSet `json:"off"`
+	On  set.UUID `json:"on"`
+	Off set.UUID `json:"off"`
 }
 
 // PutChannelSubscribers PUT /channels/:channelID/notification

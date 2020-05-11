@@ -19,7 +19,7 @@ type DeviceRepository interface {
 	//
 	// 成功した場合、デバイストークンの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetDeviceTokens(userIDs set.UUIDSet) (map[uuid.UUID][]string, error)
+	GetDeviceTokens(userIDs set.UUID) (map[uuid.UUID][]string, error)
 	// DeleteDeviceTokens FCMデバイスの登録を解除します
 	//
 	// 成功した、或いは既に登録解除されていた場合にnilを返します。

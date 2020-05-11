@@ -40,7 +40,7 @@ func (repo *GormRepository) RegisterDevice(userID uuid.UUID, token string) error
 }
 
 // GetDeviceTokens implements DeviceRepository interface.
-func (repo *GormRepository) GetDeviceTokens(userIDs set.UUIDSet) (tokens map[uuid.UUID][]string, err error) {
+func (repo *GormRepository) GetDeviceTokens(userIDs set.UUID) (tokens map[uuid.UUID][]string, err error) {
 	var tmp []*model.Device
 	if err := repo.db.Where("user_id IN (?)", userIDs.StringArray()).Find(&tmp).Error; err != nil {
 		return nil, err

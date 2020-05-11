@@ -63,11 +63,11 @@ func (c *Client) IsClosed() bool {
 }
 
 // Send targetユーザーにpayloadを送信します
-func (c *Client) Send(targetUserIDs set.UUIDSet, payload *Payload, withUnreadCount bool) {
+func (c *Client) Send(targetUserIDs set.UUID, payload *Payload, withUnreadCount bool) {
 	_ = c.send(targetUserIDs, payload, withUnreadCount)
 }
 
-func (c *Client) send(targetUserIDs set.UUIDSet, p *Payload, withUnreadCount bool) error {
+func (c *Client) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bool) error {
 	if c.IsClosed() {
 		return errors.New("fcm client has already been closed")
 	}
