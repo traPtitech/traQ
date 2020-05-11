@@ -143,13 +143,13 @@ func botJoinedOrLeftHandler(p *Processor, ev string, fields hub.Fields) {
 	case intevent.BotJoined:
 		p.unicast(
 			event.Joined,
-			payload.MakeJoinedOrLeft(ch, p.repo.GetChannelTree().GetChannelPath(channelID), user),
+			payload.MakeJoinedOrLeft(ch, p.repo.GetPublicChannelTree().GetChannelPath(channelID), user),
 			bot,
 		)
 	case intevent.BotLeft:
 		p.unicast(
 			event.Left,
-			payload.MakeJoinedOrLeft(ch, p.repo.GetChannelTree().GetChannelPath(channelID), user),
+			payload.MakeJoinedOrLeft(ch, p.repo.GetPublicChannelTree().GetChannelPath(channelID), user),
 			bot,
 		)
 	}
@@ -191,7 +191,7 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 		p.multicast(
 			event.ChannelCreated,
-			payload.MakeChannelCreated(ch, p.repo.GetChannelTree().GetChannelPath(ch.ID), user),
+			payload.MakeChannelCreated(ch, p.repo.GetPublicChannelTree().GetChannelPath(ch.ID), user),
 			bots,
 		)
 	}
@@ -231,7 +231,7 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 	p.multicast(
 		event.ChannelTopicChanged,
-		payload.MakeChannelTopicChanged(ch, p.repo.GetChannelTree().GetChannelPath(ch.ID), chCreator, topic, user),
+		payload.MakeChannelTopicChanged(ch, p.repo.GetPublicChannelTree().GetChannelPath(ch.ID), chCreator, topic, user),
 		bots,
 	)
 }

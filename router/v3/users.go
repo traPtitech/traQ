@@ -104,7 +104,7 @@ func (h *Handlers) EditMe(c echo.Context) error {
 	if req.HomeChannel.Valid {
 		if req.HomeChannel.UUID != uuid.Nil {
 			// チャンネル存在確認
-			if !h.Repo.GetChannelTree().IsChannelPresent(req.HomeChannel.UUID) {
+			if !h.Repo.GetPublicChannelTree().IsChannelPresent(req.HomeChannel.UUID) {
 				return herror.BadRequest("invalid homeChannel")
 			}
 		}

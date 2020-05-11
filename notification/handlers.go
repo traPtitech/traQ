@@ -106,7 +106,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		fcmPayload.Path = "/users/" + mUser.GetName()
 		fcmPayload.SetBodyWithEllipsis(parsed.OneLine())
 	} else {
-		path := ns.repo.GetChannelTree().GetChannelPath(m.ChannelID)
+		path := ns.repo.GetPublicChannelTree().GetChannelPath(m.ChannelID)
 		fcmPayload.Title = "#" + path
 		fcmPayload.Path = "/channels/" + path
 		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + parsed.OneLine())
@@ -218,21 +218,57 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 }
 
 func messageUpdatedHandler(ns *Service, ev hub.Message) {
-	channelViewerMulticast(ns, ev.Fields["message"].(*model.Message).ChannelID, &sse.EventData{
+	cid := ev.Fields["message"].(*model.Message).ChannelID
+	ssePayload := &sse.EventData{
 		EventType: "MESSAGE_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["message_id"].(uuid.UUID),
 		},
-	})
+	}
+
+	var targetFunc ws.TargetFunc
+	if ns.repo.GetPublicChannelTree().IsChannelPresent(cid) {
+		// 公開チャンネル
+		targetFunc = ws.Or(
+			ws.TargetChannelViewers(cid),
+			ws.TargetTimelineStreamingEnabled(),
+		)
+	} else {
+		// DM
+		targetFunc = ws.TargetChannelViewers(cid)
+	}
+
+	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, targetFunc)
+	for uid := range ns.realtime.ViewerManager.GetChannelViewers(cid) {
+		go ns.sse.Multicast(uid, ssePayload)
+	}
 }
 
 func messageDeletedHandler(ns *Service, ev hub.Message) {
-	channelViewerMulticast(ns, ev.Fields["message"].(*model.Message).ChannelID, &sse.EventData{
+	cid := ev.Fields["message"].(*model.Message).ChannelID
+	ssePayload := &sse.EventData{
 		EventType: "MESSAGE_DELETED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["message_id"].(uuid.UUID),
 		},
-	})
+	}
+
+	var targetFunc ws.TargetFunc
+	if ns.repo.GetPublicChannelTree().IsChannelPresent(cid) {
+		// 公開チャンネル
+		targetFunc = ws.Or(
+			ws.TargetChannelViewers(cid),
+			ws.TargetTimelineStreamingEnabled(),
+		)
+	} else {
+		// DM
+		targetFunc = ws.TargetChannelViewers(cid)
+	}
+
+	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, targetFunc)
+	for uid := range ns.realtime.ViewerManager.GetChannelViewers(cid) {
+		go ns.sse.Multicast(uid, ssePayload)
+	}
 }
 
 func messagePinnedHandler(ns *Service, ev hub.Message) {
