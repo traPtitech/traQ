@@ -35,19 +35,19 @@ var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface
 	case nil:
 		return nil
 	case uuid.UUID:
-		if !repo.GetChannelTree().IsChannelPresent(v) {
+		if !repo.GetPublicChannelTree().IsChannelPresent(v) {
 			return errors.New(errMessage)
 		}
 	case optional.UUID:
-		if v.Valid && !repo.GetChannelTree().IsChannelPresent(v.UUID) {
+		if v.Valid && !repo.GetPublicChannelTree().IsChannelPresent(v.UUID) {
 			return errors.New(errMessage)
 		}
 	case string:
-		if !repo.GetChannelTree().IsChannelPresent(uuid.FromStringOrNil(v)) {
+		if !repo.GetPublicChannelTree().IsChannelPresent(uuid.FromStringOrNil(v)) {
 			return errors.New(errMessage)
 		}
 	case []byte:
-		if !repo.GetChannelTree().IsChannelPresent(uuid.FromBytesOrNil(v)) {
+		if !repo.GetPublicChannelTree().IsChannelPresent(uuid.FromBytesOrNil(v)) {
 			return errors.New(errMessage)
 		}
 	default:

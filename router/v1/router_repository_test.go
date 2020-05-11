@@ -1311,7 +1311,7 @@ func (repo *TestRepository) GetChannelSubscriptions(query repository.ChannelSubs
 	return result, nil
 }
 
-func (repo *TestRepository) GetChannelTree() repository.ChannelTree {
+func (repo *TestRepository) GetPublicChannelTree() repository.ChannelTree {
 	panic("implement me")
 }
 

@@ -106,7 +106,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		fcmPayload.Path = "/users/" + mUser.GetName()
 		fcmPayload.SetBodyWithEllipsis(parsed.OneLine())
 	} else {
-		path := ns.repo.GetChannelTree().GetChannelPath(m.ChannelID)
+		path := ns.repo.GetPublicChannelTree().GetChannelPath(m.ChannelID)
 		fcmPayload.Title = "#" + path
 		fcmPayload.Path = "/channels/" + path
 		fcmPayload.SetBodyWithEllipsis(mUser.GetResponseDisplayName() + ": " + parsed.OneLine())
@@ -227,7 +227,7 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	var targetFunc ws.TargetFunc
-	if ns.repo.GetChannelTree().IsChannelPresent(cid) {
+	if ns.repo.GetPublicChannelTree().IsChannelPresent(cid) {
 		// 公開チャンネル
 		targetFunc = ws.Or(
 			ws.TargetChannelViewers(cid),
@@ -254,7 +254,7 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 	}
 
 	var targetFunc ws.TargetFunc
-	if ns.repo.GetChannelTree().IsChannelPresent(cid) {
+	if ns.repo.GetPublicChannelTree().IsChannelPresent(cid) {
 		// 公開チャンネル
 		targetFunc = ws.Or(
 			ws.TargetChannelViewers(cid),

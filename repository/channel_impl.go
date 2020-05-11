@@ -627,8 +627,8 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 	return &stats, repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error
 }
 
-// GetChannelTree implements ChannelRepository interface.
-func (repo *GormRepository) GetChannelTree() ChannelTree {
+// GetPublicChannelTree implements ChannelRepository interface.
+func (repo *GormRepository) GetPublicChannelTree() ChannelTree {
 	return repo.chTree
 }
 
