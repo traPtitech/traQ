@@ -16,9 +16,9 @@ func (repo *GormRepository) RegisterDevice(userID uuid.UUID, token string) error
 		return ArgError("Token", "token is empty")
 	}
 
-	var d model.Device
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Take(&d, &model.Device{Token: token}).Error; err == nil {
+		var d model.Device
+		if err := tx.First(&d, &model.Device{Token: token}).Error; err == nil {
 			if d.UserID != userID {
 				return ArgError("Token", "the Token has already been associated with other user")
 			}
@@ -27,11 +27,10 @@ func (repo *GormRepository) RegisterDevice(userID uuid.UUID, token string) error
 			return err
 		}
 
-		d = model.Device{
+		return tx.Create(&model.Device{
 			Token:  token,
 			UserID: userID,
-		}
-		return tx.Create(&d).Error
+		}).Error
 	})
 	if err != nil {
 		return err
