@@ -1,15 +1,9 @@
 package router
 
 import (
-	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/auth"
-	"github.com/traPtitech/traQ/service"
-	imaging2 "github.com/traPtitech/traQ/service/imaging"
-	"github.com/traPtitech/traQ/service/sse"
-	"github.com/traPtitech/traQ/service/ws"
-	"go.uber.org/zap"
+	"github.com/traPtitech/traQ/router/oauth2"
+	v3 "github.com/traPtitech/traQ/router/v3"
 )
 
 // Config APIサーバー設定
@@ -32,22 +26,6 @@ type Config struct {
 	SkyWaySecretKey string
 	// ExternalAuth 外部認証設定
 	ExternalAuth ExternalAuthConfig
-	// Hub イベントハブ
-	Hub *hub.Hub
-	// Repository リポジトリ
-	Repository repository.Repository
-	// RBAC アクセスコントローラー
-	RBAC rbac.RBAC
-	// WS WebSocketストリーマー
-	WS *ws.Streamer
-	// SSE SSEストリーマー
-	SSE *sse.Streamer
-	// Realtime リアルタイムサービス
-	Realtime *service.Services
-	// RootLogger ルートロガー
-	RootLogger *zap.Logger
-	// Imaging 画像処理機
-	Imaging imaging2.Processor
 }
 
 // ExternalAuth 外部認証設定
@@ -77,4 +55,20 @@ func (c ExternalAuthConfig) ValidProviders() map[string]bool {
 		res[auth.OIDCProviderName] = true
 	}
 	return res
+}
+
+func provideOAuth2Config(c *Config) oauth2.Config {
+	return oauth2.Config{
+		AccessTokenExp:   c.AccessTokenExp,
+		IsRefreshEnabled: c.IsRefreshEnabled,
+	}
+}
+
+func provideV3Config(c *Config) v3.Config {
+	return v3.Config{
+		Version:                         c.Version,
+		Revision:                        c.Revision,
+		SkyWaySecretKey:                 c.SkyWaySecretKey,
+		EnabledExternalAccountProviders: c.ExternalAuth.ValidProviders(),
+	}
 }

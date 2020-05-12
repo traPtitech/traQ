@@ -7,7 +7,7 @@ import (
 )
 
 // RevokeTokenEndpointHandler トークン無効化エンドポイントのハンドラ
-func (h *Config) RevokeTokenEndpointHandler(c echo.Context) error {
+func (h *Handler) RevokeTokenEndpointHandler(c echo.Context) error {
 	var req struct {
 		Token string `form:"token"`
 	}

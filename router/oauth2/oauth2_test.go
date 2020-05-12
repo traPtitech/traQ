@@ -89,12 +89,14 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			panic(err)
 		}
-		config := &Config{
-			RBAC:             r,
-			Repo:             repo,
-			Logger:           zap.NewNop(),
-			AccessTokenExp:   1000,
-			IsRefreshEnabled: true,
+		config := &Handler{
+			RBAC:   r,
+			Repo:   repo,
+			Logger: zap.NewNop(),
+			Config: Config{
+				AccessTokenExp:   1000,
+				IsRefreshEnabled: true,
+			},
 		}
 		config.Setup(e.Group("/oauth2"))
 		servers[key] = httptest.NewServer(e)

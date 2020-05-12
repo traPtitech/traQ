@@ -48,12 +48,12 @@ type Handlers struct {
 	HeartBeats *heartbeat.Manager
 	Imaging    imaging2.Processor
 
-	emojiJSONCache     bytes.Buffer
-	emojiJSONTime      time.Time
-	emojiJSONCacheLock sync.RWMutex
-	emojiCSSCache      bytes.Buffer
-	emojiCSSTime       time.Time
-	emojiCSSCacheLock  sync.RWMutex
+	emojiJSONCache     bytes.Buffer `wire:"-"`
+	emojiJSONTime      time.Time    `wire:"-"`
+	emojiJSONCacheLock sync.RWMutex `wire:"-"`
+	emojiCSSCache      bytes.Buffer `wire:"-"`
+	emojiCSSTime       time.Time    `wire:"-"`
+	emojiCSSCacheLock  sync.RWMutex `wire:"-"`
 }
 
 // Setup APIルーティングを行います

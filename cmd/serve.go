@@ -162,7 +162,7 @@ func serveCommand() *cobra.Command {
 			ss := service.NewServices(hub, repo, fcmClient, logger, variable.ServerOriginString(c.Origin), c.getImageProcessorConfig())
 
 			// HTTP Router
-			e := router.Setup(&router.Config{
+			e := router.Setup(hub, repo, ss, r, logger, &router.Config{
 				Development:      c.DevMode,
 				Version:          Version,
 				Revision:         Revision,
@@ -171,14 +171,6 @@ func serveCommand() *cobra.Command {
 				AccessTokenExp:   c.OAuth2.AccessTokenExpire,
 				IsRefreshEnabled: c.OAuth2.IsRefreshEnabled,
 				SkyWaySecretKey:  c.SkyWay.SecretKey,
-				Hub:              hub,
-				Repository:       repo,
-				RBAC:             r,
-				WS:               ss.WS,
-				SSE:              ss.SSE,
-				Realtime:         ss,
-				RootLogger:       logger,
-				Imaging:          ss.Imaging,
 				ExternalAuth: router.ExternalAuthConfig{
 					GitHub: auth.GithubProviderConfig{
 						ClientID:               c.ExternalAuth.GitHub.ClientID,

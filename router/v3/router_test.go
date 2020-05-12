@@ -91,19 +91,21 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 		handlers := &Handlers{
-			RBAC:     r,
-			Repo:     repo,
-			WS:       nil,
-			Hub:      hub,
-			Logger:   zap.NewNop(),
-			Version:  "version",
-			Revision: "revision",
+			RBAC:   r,
+			Repo:   repo,
+			WS:     nil,
+			Hub:    hub,
+			Logger: zap.NewNop(),
 			Imaging: imaging2.NewProcessor(imaging2.Config{
 				MaxPixels:        1000 * 1000,
 				Concurrency:      1,
 				ThumbnailMaxSize: image.Pt(360, 480),
 				ImageMagickPath:  "",
 			}),
+			Config: Config{
+				Version:  "version",
+				Revision: "revision",
+			},
 		}
 		handlers.Setup(e.Group("/api"))
 		servers[key] = httptest.NewServer(e)

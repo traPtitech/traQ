@@ -6,6 +6,7 @@
 package service
 
 import (
+	"github.com/google/wire"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/bot"
@@ -48,3 +49,18 @@ func newServices(hub2 *hub.Hub, repo repository.Repository, fcm2 *fcm.Client, lo
 	}
 	return services
 }
+
+// services_wire.go:
+
+var ProviderSet = wire.NewSet(wire.FieldsOf(new(*Services),
+	"BOT",
+	"OnlineCounter",
+	"FCM",
+	"HeartBeats",
+	"Imaging",
+	"SSE",
+	"ViewerManager",
+	"WebRTCv3",
+	"WS",
+	"Notification",
+))

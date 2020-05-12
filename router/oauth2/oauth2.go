@@ -35,18 +35,21 @@ const (
 	authorizationCodeExp = 60 * 5
 )
 
-type Config struct {
+type Handler struct {
 	RBAC   rbac.RBAC
 	Repo   repository.Repository
 	Logger *zap.Logger
+	Config
+}
 
+type Config struct {
 	// AccessTokenExp アクセストークンの有効時間(秒)
 	AccessTokenExp int
 	// IsRefreshEnabled リフレッシュトークンを発行するかどうか
 	IsRefreshEnabled bool
 }
 
-func (h *Config) Setup(e *echo.Group) {
+func (h *Handler) Setup(e *echo.Group) {
 	e.GET("/authorize", h.AuthorizationEndpointHandler)
 	e.POST("/authorize/decide", h.AuthorizationDecideHandler, middlewares.UserAuthenticate(h.Repo), middlewares.BlockBot(h.Repo))
 	e.POST("/authorize", h.AuthorizationEndpointHandler)
@@ -55,7 +58,7 @@ func (h *Config) Setup(e *echo.Group) {
 }
 
 // splitAndValidateScope スペース区切りのスコープ文字列を分解し、検証します
-func (h *Config) splitAndValidateScope(str string) (model.AccessScopes, error) {
+func (h *Handler) splitAndValidateScope(str string) (model.AccessScopes, error) {
 	scopes := model.AccessScopes{}
 	scopes.FromString(str)
 	if err := scopes.Validate(); err != nil {
@@ -65,6 +68,6 @@ func (h *Config) splitAndValidateScope(str string) (model.AccessScopes, error) {
 }
 
 // L ロガーを返します
-func (h *Config) L(c echo.Context) *zap.Logger {
+func (h *Handler) L(c echo.Context) *zap.Logger {
 	return h.Logger.With(zap.String("requestId", extension.GetRequestID(c)))
 }

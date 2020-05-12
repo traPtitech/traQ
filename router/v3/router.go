@@ -26,7 +26,10 @@ type Handlers struct {
 	VM      *viewer.Manager
 	WebRTC  *webrtcv3.Manager
 	Imaging imaging.Processor
+	Config
+}
 
+type Config struct {
 	Version  string
 	Revision string
 
