@@ -3,12 +3,12 @@ package router
 import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/realtime"
-	"github.com/traPtitech/traQ/realtime/sse"
-	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/auth"
-	"github.com/traPtitech/traQ/utils/imaging"
+	"github.com/traPtitech/traQ/service"
+	imaging2 "github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/sse"
+	"github.com/traPtitech/traQ/service/ws"
 	"go.uber.org/zap"
 )
 
@@ -43,11 +43,11 @@ type Config struct {
 	// SSE SSEストリーマー
 	SSE *sse.Streamer
 	// Realtime リアルタイムサービス
-	Realtime *realtime.Service
+	Realtime *service.Services
 	// RootLogger ルートロガー
 	RootLogger *zap.Logger
 	// Imaging 画像処理機
-	Imaging imaging.Processor
+	Imaging imaging2.Processor
 }
 
 // ExternalAuth 外部認証設定

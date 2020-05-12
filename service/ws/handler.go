@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/traPtitech/traQ/realtime/viewer"
+	"github.com/traPtitech/traQ/service/viewer"
 	"strings"
 )
 
@@ -24,7 +24,7 @@ Command:
 		if str := strings.ToLower(args[1]); str == "null" || str == "" {
 			// viewstate:null
 			s.setViewState(uuid.Nil, 0)
-			s.streamer.realtime.ViewerManager.RemoveViewer(s)
+			s.streamer.vm.RemoveViewer(s)
 			break
 		}
 
@@ -44,7 +44,7 @@ Command:
 		// TODO channelのアクセスチェック
 
 		s.setViewState(cid, viewer.StateFromString(args[2]))
-		s.streamer.realtime.ViewerManager.SetViewer(s, s.userID, s.viewState.channelID, s.viewState.state)
+		s.streamer.vm.SetViewer(s, s.userID, s.viewState.channelID, s.viewState.state)
 
 	case "rtcstate":
 		// rtcstate:{チャンネルID}:({状態}:{セッションID})*
@@ -57,7 +57,7 @@ Command:
 		// {チャンネルID} or null
 		if str := strings.ToLower(args[1]); str == "null" || str == "" {
 			// リセット
-			if s.streamer.realtime.WebRTCv3.ResetState(s.Key(), s.UserID()) != nil {
+			if s.streamer.webrtc.ResetState(s.Key(), s.UserID()) != nil {
 				// 別のコネクションでロック中
 				s.sendErrorMessage("your webrtc state is locked by another ws connection")
 			}
@@ -78,7 +78,7 @@ Command:
 		}
 		if str := strings.ToLower(args[2]); str == "null" || str == "" {
 			// リセット
-			if s.streamer.realtime.WebRTCv3.ResetState(s.Key(), s.UserID()) != nil {
+			if s.streamer.webrtc.ResetState(s.Key(), s.UserID()) != nil {
 				// 別のコネクションでロック中
 				s.sendErrorMessage("your webrtc state is locked by another ws connection")
 			}
@@ -102,7 +102,7 @@ Command:
 			sessions[session] = state
 		}
 
-		_ = s.streamer.realtime.WebRTCv3.SetState(s.Key(), s.UserID(), cid, sessions)
+		_ = s.streamer.webrtc.SetState(s.Key(), s.UserID(), cid, sessions)
 
 	case "timeline_streaming":
 		// timeline_streaming:(on|off|true|false)

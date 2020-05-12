@@ -8,8 +8,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/event"
-	"github.com/traPtitech/traQ/realtime"
 	"github.com/traPtitech/traQ/router/extension"
+	"github.com/traPtitech/traQ/service/viewer"
+	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/utils/random"
 	"go.uber.org/zap"
 	"net/http"
@@ -31,7 +32,8 @@ var (
 // Streamer WebSocketストリーマー
 type Streamer struct {
 	hub        *hub.Hub
-	realtime   *realtime.Service
+	vm         *viewer.Manager
+	webrtc     *webrtcv3.Manager
 	logger     *zap.Logger
 	sessions   map[*session]struct{}
 	register   chan *session
@@ -42,11 +44,12 @@ type Streamer struct {
 }
 
 // NewStreamer WebSocketストリーマーを生成し起動します
-func NewStreamer(hub *hub.Hub, realtime *realtime.Service, logger *zap.Logger) *Streamer {
+func NewStreamer(hub *hub.Hub, vm *viewer.Manager, webrtc *webrtcv3.Manager, logger *zap.Logger) *Streamer {
 	h := &Streamer{
 		hub:        hub,
-		realtime:   realtime,
-		logger:     logger,
+		vm:         vm,
+		webrtc:     webrtc,
+		logger:     logger.Named("ws"),
 		sessions:   make(map[*session]struct{}),
 		register:   make(chan *session),
 		unregister: make(chan *session),
@@ -148,8 +151,8 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	go session.writeLoop()
 	session.readLoop()
 
-	s.realtime.ViewerManager.RemoveViewer(session)
-	_ = s.realtime.WebRTCv3.ResetState(session.Key(), session.UserID())
+	s.vm.RemoveViewer(session)
+	_ = s.webrtc.ResetState(session.Key(), session.UserID())
 	s.hub.Publish(hub.Message{
 		Name: event.WSDisconnected,
 		Fields: hub.Fields{

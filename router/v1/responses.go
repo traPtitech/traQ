@@ -2,12 +2,12 @@ package v1
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/bot/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/rbac/role"
-	"github.com/traPtitech/traQ/realtime/viewer"
+	"github.com/traPtitech/traQ/service/bot/event"
+	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/optional"
 	"time"
 )
@@ -35,7 +35,7 @@ func (h *Handlers) formatMe(user model.UserInfo) *meResponse {
 		IconID:      user.GetIconFileID(),
 		Bot:         user.IsBot(),
 		TwitterID:   user.GetTwitterID(),
-		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.GetID()),
+		IsOnline:    h.OC.IsOnline(user.GetID()),
 		Suspended:   user.GetState() != model.UserAccountStatusActive,
 		Status:      user.GetState().Int(),
 		Role:        user.GetRole(),
@@ -75,7 +75,7 @@ func (h *Handlers) formatUser(user model.UserInfo) *userResponse {
 		IconID:      user.GetIconFileID(),
 		Bot:         user.IsBot(),
 		TwitterID:   user.GetTwitterID(),
-		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.GetID()),
+		IsOnline:    h.OC.IsOnline(user.GetID()),
 		Suspended:   user.GetState() != model.UserAccountStatusActive,
 		Status:      user.GetState().Int(),
 	}
@@ -118,7 +118,7 @@ func (h *Handlers) formatUserDetail(user model.UserInfo, tagList []model.UserTag
 		IconID:      user.GetIconFileID(),
 		Bot:         user.IsBot(),
 		TwitterID:   user.GetTwitterID(),
-		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.GetID()),
+		IsOnline:    h.OC.IsOnline(user.GetID()),
 		Suspended:   user.GetState() != model.UserAccountStatusActive,
 		Status:      user.GetState().Int(),
 		TagList:     formatTags(tagList),

@@ -10,14 +10,16 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/rbac/permission"
-	"github.com/traPtitech/traQ/realtime"
-	"github.com/traPtitech/traQ/realtime/sse"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/middlewares"
-	"github.com/traPtitech/traQ/utils/imaging"
+	"github.com/traPtitech/traQ/service/counter"
+	"github.com/traPtitech/traQ/service/heartbeat"
+	imaging2 "github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/sse"
+	"github.com/traPtitech/traQ/service/viewer"
 	"go.uber.org/zap"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
@@ -36,13 +38,15 @@ func init() {
 
 // Handlers ハンドラ
 type Handlers struct {
-	RBAC     rbac.RBAC
-	Repo     repository.Repository
-	SSE      *sse.Streamer
-	Hub      *hub.Hub
-	Logger   *zap.Logger
-	Realtime *realtime.Service
-	Imaging  imaging.Processor
+	RBAC       rbac.RBAC
+	Repo       repository.Repository
+	SSE        *sse.Streamer
+	Hub        *hub.Hub
+	Logger     *zap.Logger
+	OC         *counter.OnlineCounter
+	VM         *viewer.Manager
+	HeartBeats *heartbeat.Manager
+	Imaging    imaging2.Processor
 
 	emojiJSONCache     bytes.Buffer
 	emojiJSONTime      time.Time

@@ -12,17 +12,14 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
-	"github.com/traPtitech/traQ/bot"
-	"github.com/traPtitech/traQ/notification"
-	"github.com/traPtitech/traQ/notification/fcm"
 	rbac "github.com/traPtitech/traQ/rbac/impl"
-	"github.com/traPtitech/traQ/realtime"
-	"github.com/traPtitech/traQ/realtime/sse"
-	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/router/auth"
 	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/service"
+	"github.com/traPtitech/traQ/service/fcm"
+	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/jwt"
 	"go.uber.org/zap"
@@ -141,9 +138,6 @@ func serveCommand() *cobra.Command {
 				}
 			}
 
-			// Bot Processor
-			bot.NewProcessor(repo, hub, logger.Named("bot_processor"))
-
 			// JWT for QRCode
 			if priv := c.JWT.Keys.Private; priv != "" {
 				privRaw, err := ioutil.ReadFile(priv)
@@ -164,13 +158,8 @@ func serveCommand() *cobra.Command {
 				logger.Warn("a temporary key for QRCode JWT was generated. This key is valid only during this running.", zap.String("public_key", string(pubRaw)))
 			}
 
-			// Realtime Service
-			rt := realtime.NewService(hub)
-			wss := ws.NewStreamer(hub, rt, logger.Named("ws"))
-			sses := sse.NewStreamer(hub)
-
-			// Notification Service
-			notification.StartService(repo, hub, logger.Named("notification"), fcmClient, sses, wss, rt, c.Origin)
+			// Services
+			ss := service.NewServices(hub, repo, fcmClient, logger, variable.ServerOriginString(c.Origin), c.getImageProcessorConfig())
 
 			// HTTP Router
 			e := router.Setup(&router.Config{
@@ -185,11 +174,11 @@ func serveCommand() *cobra.Command {
 				Hub:              hub,
 				Repository:       repo,
 				RBAC:             r,
-				WS:               wss,
-				SSE:              sses,
-				Realtime:         rt,
+				WS:               ss.WS,
+				SSE:              ss.SSE,
+				Realtime:         ss,
 				RootLogger:       logger,
-				Imaging:          c.getImageProcessor(),
+				Imaging:          ss.Imaging,
 				ExternalAuth: router.ExternalAuthConfig{
 					GitHub: auth.GithubProviderConfig{
 						ClientID:               c.ExternalAuth.GitHub.ClientID,
@@ -233,13 +222,9 @@ func serveCommand() *cobra.Command {
 			<-quit
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			sses.Dispose()
-			wss.Close()
+			ss.Dispose()
 			if err := e.Shutdown(ctx); err != nil {
 				logger.Warn("abnormal shutdown", zap.Error(err))
-			}
-			if fcmClient != nil {
-				fcmClient.Close()
 			}
 			sessions.PurgeCache()
 			logger.Info("traQ shutdown")

@@ -10,11 +10,11 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/notification/fcm"
-	"github.com/traPtitech/traQ/realtime/sse"
-	"github.com/traPtitech/traQ/realtime/viewer"
-	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/fcm"
+	"github.com/traPtitech/traQ/service/sse"
+	"github.com/traPtitech/traQ/service/viewer"
+	"github.com/traPtitech/traQ/service/ws"
 	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/set"
 	"go.uber.org/zap"
@@ -178,7 +178,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	// チャンネル閲覧者取得
-	for uid, swt := range ns.realtime.ViewerManager.GetChannelViewers(m.ChannelID) {
+	for uid, swt := range ns.vm.GetChannelViewers(m.ChannelID) {
 		viewers.Add(uid)
 		if swt.State > viewer.StateNone {
 			markedUsers.Remove(uid) // 閲覧中ユーザーは未読管理から外す
@@ -241,7 +241,7 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, targetFunc)
-	for uid := range ns.realtime.ViewerManager.GetChannelViewers(cid) {
+	for uid := range ns.vm.GetChannelViewers(cid) {
 		go ns.sse.Multicast(uid, ssePayload)
 	}
 }
@@ -268,7 +268,7 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 	}
 
 	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, targetFunc)
-	for uid := range ns.realtime.ViewerManager.GetChannelViewers(cid) {
+	for uid := range ns.vm.GetChannelViewers(cid) {
 		go ns.sse.Multicast(uid, ssePayload)
 	}
 }
@@ -611,7 +611,7 @@ func channelHandler(ns *Service, ev hub.Message, ssePayload *sse.EventData) {
 }
 
 func channelViewerMulticast(ns *Service, cid uuid.UUID, ssePayload *sse.EventData) {
-	for uid := range ns.realtime.ViewerManager.GetChannelViewers(cid) {
+	for uid := range ns.vm.GetChannelViewers(cid) {
 		go ns.sse.Multicast(uid, ssePayload)
 	}
 	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetChannelViewers(cid))

@@ -15,7 +15,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils/imaging"
+	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
@@ -96,10 +96,9 @@ func TestMain(m *testing.M) {
 			WS:       nil,
 			Hub:      hub,
 			Logger:   zap.NewNop(),
-			Realtime: nil,
 			Version:  "version",
 			Revision: "revision",
-			Imaging: imaging.NewProcessor(imaging.Config{
+			Imaging: imaging2.NewProcessor(imaging2.Config{
 				MaxPixels:        1000 * 1000,
 				Concurrency:      1,
 				ThumbnailMaxSize: image.Pt(360, 480),

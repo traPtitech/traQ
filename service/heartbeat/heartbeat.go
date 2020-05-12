@@ -1,8 +1,8 @@
-package realtime
+package heartbeat
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/realtime/viewer"
+	"github.com/traPtitech/traQ/service/viewer"
 	"sync"
 	"time"
 )
@@ -12,8 +12,8 @@ const (
 	tickTime        = 500 * time.Millisecond
 )
 
-// HeartBeats ハートビートマネージャー
-type HeartBeats struct {
+// Manager ハートビートマネージャー
+type Manager struct {
 	vm           *viewer.Manager
 	channelBeats map[uuid.UUID][]*beat
 	mu           sync.RWMutex
@@ -24,8 +24,9 @@ type beat struct {
 	lastTime time.Time
 }
 
-func newHeartBeats(vm *viewer.Manager) *HeartBeats {
-	h := &HeartBeats{
+// NewManager ハートビートマネージャーを生成します
+func NewManager(vm *viewer.Manager) *Manager {
+	h := &Manager{
 		vm:           vm,
 		channelBeats: make(map[uuid.UUID][]*beat),
 	}
@@ -38,7 +39,7 @@ func newHeartBeats(vm *viewer.Manager) *HeartBeats {
 	return h
 }
 
-func (h *HeartBeats) onTick() {
+func (h *Manager) onTick() {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	timeout := time.Now().Add(-1 * timeoutDuration)
@@ -61,7 +62,7 @@ func (h *HeartBeats) onTick() {
 }
 
 // Beat ハートビートを打ちます
-func (h *HeartBeats) Beat(userID, channelID uuid.UUID, status string) {
+func (h *Manager) Beat(userID, channelID uuid.UUID, status string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	beats, ok := h.channelBeats[channelID]

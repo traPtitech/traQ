@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"github.com/disintegration/imaging"
+	imaging2 "github.com/traPtitech/traQ/utils/imaging"
 	"golang.org/x/sync/semaphore"
 	"image"
 	"io"
@@ -64,11 +65,13 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // 10秒以内に終わらないファイルは無効
 	defer cancel()
 
-	b, err := ResizeAnimationGIF(ctx, p.c.ImageMagickPath, src, width, height, false)
+	b, err := imaging2.ResizeAnimationGIF(ctx, p.c.ImageMagickPath, src, width, height, false)
 	if err != nil {
 		switch err {
 		case context.DeadlineExceeded:
 			return nil, ErrTimeout
+		case imaging2.ErrInvalidImageSrc:
+			return nil, ErrInvalidImageSrc
 		default:
 			return nil, err
 		}

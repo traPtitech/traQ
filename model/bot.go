@@ -2,7 +2,7 @@ package model
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/bot/event"
+	"github.com/traPtitech/traQ/service/bot/event"
 	"time"
 )
 

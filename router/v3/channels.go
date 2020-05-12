@@ -6,10 +6,10 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/realtime/viewer"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/set"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -131,7 +131,7 @@ func (h *Handlers) EditChannel(c echo.Context) error {
 // GetChannelViewers GET /channels/:channelID/viewers
 func (h *Handlers) GetChannelViewers(c echo.Context) error {
 	channelID := getParamAsUUID(c, consts.ParamChannelID)
-	cv := h.Realtime.ViewerManager.GetChannelViewers(channelID)
+	cv := h.VM.GetChannelViewers(channelID)
 	return c.JSON(http.StatusOK, viewer.ConvertToArray(cv))
 }
 

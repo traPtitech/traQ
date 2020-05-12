@@ -8,9 +8,9 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/traPtitech/traQ/bot/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/bot/event"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
@@ -43,7 +43,7 @@ type Processor struct {
 func NewProcessor(repo repository.Repository, hub *hub.Hub, logger *zap.Logger) *Processor {
 	p := &Processor{
 		repo:   repo,
-		logger: logger,
+		logger: logger.Named("bot"),
 		hub:    hub,
 		client: http.Client{
 			Timeout:       10 * time.Second,

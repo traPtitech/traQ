@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/spf13/viper"
-	"github.com/traPtitech/traQ/utils/imaging"
+	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/storage"
 	"image"
 	"time"
@@ -301,11 +301,11 @@ func (c Config) getDatabase() (*gorm.DB, error) {
 	return engine.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"), nil
 }
 
-func (c Config) getImageProcessor() imaging.Processor {
-	return imaging.NewProcessor(imaging.Config{
+func (c Config) getImageProcessorConfig() imaging.Config {
+	return imaging.Config{
 		MaxPixels:        c.Imaging.MaxPixels,
 		Concurrency:      c.Imaging.Concurrency,
 		ThumbnailMaxSize: image.Pt(360, 480),
 		ImageMagickPath:  c.ImageMagick,
-	})
+	}
 }

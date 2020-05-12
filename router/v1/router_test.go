@@ -6,11 +6,12 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	rbac "github.com/traPtitech/traQ/rbac/impl"
-	"github.com/traPtitech/traQ/realtime"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils/imaging"
+	"github.com/traPtitech/traQ/service/counter"
+	imaging2 "github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/random"
 	"go.uber.org/zap"
 	"image"
@@ -77,12 +78,14 @@ func TestMain(m *testing.M) {
 		}
 		h := hub.New()
 		handlers := &Handlers{
-			RBAC:     r,
-			Repo:     repo,
-			Hub:      h,
-			Logger:   zap.NewNop(),
-			Realtime: realtime.NewService(h),
-			Imaging: imaging.NewProcessor(imaging.Config{
+			RBAC:       r,
+			Repo:       repo,
+			Hub:        h,
+			Logger:     zap.NewNop(),
+			OC:         counter.NewOnlineCounter(h),
+			VM:         viewer.NewManager(h),
+			HeartBeats: nil,
+			Imaging: imaging2.NewProcessor(imaging2.Config{
 				MaxPixels:        1000 * 1000,
 				Concurrency:      1,
 				ThumbnailMaxSize: image.Pt(360, 480),

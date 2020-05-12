@@ -19,7 +19,7 @@ func Setup(config *Config) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
-	e.HTTPErrorHandler = extension.ErrorHandler(config.RootLogger.Named("api_handler"))
+	e.HTTPErrorHandler = extension.ErrorHandler(config.RootLogger.Named("router"))
 
 	// ミドルウェア設定
 	e.Use(middlewares.ServerVersion(config.Version))
@@ -27,7 +27,7 @@ func Setup(config *Config) *echo.Echo {
 	if config.AccessLogging {
 		e.Use(middlewares.AccessLogging(config.RootLogger.Named("access_log"), config.Development))
 	}
-	e.Use(middlewares.Recovery(config.RootLogger.Named("api_handler")))
+	e.Use(middlewares.Recovery(config.RootLogger.Named("router")))
 	if config.Gzipped {
 		e.Use(middlewares.Gzip())
 	}
@@ -45,13 +45,15 @@ func Setup(config *Config) *echo.Echo {
 
 	// v1 APIハンドラ
 	v1 := v1.Handlers{
-		RBAC:     config.RBAC,
-		Repo:     config.Repository,
-		SSE:      config.SSE,
-		Hub:      config.Hub,
-		Logger:   config.RootLogger.Named("api_handler"),
-		Realtime: config.Realtime,
-		Imaging:  config.Imaging,
+		RBAC:       config.RBAC,
+		Repo:       config.Repository,
+		SSE:        config.SSE,
+		Hub:        config.Hub,
+		Logger:     config.RootLogger.Named("router"),
+		OC:         config.Realtime.OnlineCounter,
+		VM:         config.Realtime.ViewerManager,
+		HeartBeats: config.Realtime.HeartBeats,
+		Imaging:    config.Imaging,
 	}
 	v1.Setup(api)
 
@@ -61,8 +63,10 @@ func Setup(config *Config) *echo.Echo {
 		Repo:                            config.Repository,
 		WS:                              config.WS,
 		Hub:                             config.Hub,
-		Logger:                          config.RootLogger.Named("api_handler"),
-		Realtime:                        config.Realtime,
+		Logger:                          config.RootLogger.Named("router"),
+		OC:                              config.Realtime.OnlineCounter,
+		VM:                              config.Realtime.ViewerManager,
+		WebRTC:                          config.Realtime.WebRTCv3,
 		Version:                         config.Version,
 		Revision:                        config.Revision,
 		SkyWaySecretKey:                 config.SkyWaySecretKey,
@@ -75,7 +79,7 @@ func Setup(config *Config) *echo.Echo {
 	oa2 := &oauth2.Config{
 		RBAC:             config.RBAC,
 		Repo:             config.Repository,
-		Logger:           config.RootLogger.Named("oauth2_api_handler"),
+		Logger:           config.RootLogger.Named("router"),
 		AccessTokenExp:   config.AccessTokenExp,
 		IsRefreshEnabled: config.IsRefreshEnabled,
 	}

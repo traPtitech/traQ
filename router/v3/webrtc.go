@@ -6,7 +6,7 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/realtime/webrtcv3"
+	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/utils/hmac"
 	"net/http"
 	"time"
@@ -58,7 +58,7 @@ func (h *Handlers) GetWebRTCState(c echo.Context) error {
 	}
 
 	var res []WebRTCUserState
-	h.Realtime.WebRTCv3.IterateStates(func(state webrtcv3.ChannelState) {
+	h.WebRTC.IterateStates(func(state webrtcv3.ChannelState) {
 		for _, userState := range state.Users() {
 			var sessions []StateSession
 			for sessionID, state := range userState.Sessions() {

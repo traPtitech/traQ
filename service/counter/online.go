@@ -1,4 +1,4 @@
-package realtime
+package counter
 
 import (
 	"github.com/gofrs/uuid"
@@ -22,11 +22,22 @@ type OnlineCounter struct {
 	countersLock sync.Mutex
 }
 
-func newOnlineCounter(hub *hub.Hub) *OnlineCounter {
+// NewOnlineCounter オンラインユーザーカウンターを生成します
+func NewOnlineCounter(hub *hub.Hub) *OnlineCounter {
 	oc := &OnlineCounter{
 		hub:      hub,
 		counters: map[uuid.UUID]*counter{},
 	}
+	go func() {
+		for e := range hub.Subscribe(8, event.SSEConnected, event.SSEDisconnected, event.WSConnected, event.WSDisconnected).Receiver {
+			switch e.Topic() {
+			case event.SSEConnected, event.WSConnected:
+				oc.Inc(e.Fields["user_id"].(uuid.UUID))
+			case event.SSEDisconnected, event.WSDisconnected:
+				oc.Dec(e.Fields["user_id"].(uuid.UUID))
+			}
+		}
+	}()
 	return oc
 }
 

@@ -2,8 +2,8 @@ package bot
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/bot/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/service/bot/event"
 )
 
 type filterFunc func(p *Processor, bot *model.Bot) bool
