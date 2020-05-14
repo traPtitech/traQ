@@ -3,64 +3,68 @@
 //go:generate wire
 //+build !wireinject
 
-package service
+package cmd
 
 import (
-	"github.com/google/wire"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router"
+	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/bot"
 	"github.com/traPtitech/traQ/service/counter"
-	"github.com/traPtitech/traQ/service/fcm"
 	"github.com/traPtitech/traQ/service/heartbeat"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/notification"
 	"github.com/traPtitech/traQ/service/sse"
-	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/service/ws"
 	"go.uber.org/zap"
 )
 
-// Injectors from services_wire.go:
+import (
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	_ "net/http/pprof"
+)
 
-func newServices(hub2 *hub.Hub, repo repository.Repository, fcm2 *fcm.Client, logger *zap.Logger, origin variable.ServerOriginString, imgConfig imaging.Config) *Services {
+// Injectors from serve_wire.go:
+
+func newServer(hub2 *hub.Hub, repo repository.Repository, logger *zap.Logger, r rbac.RBAC, c2 *Config) (*Server, error) {
 	processor := bot.NewProcessor(repo, hub2, logger)
 	onlineCounter := counter.NewOnlineCounter(hub2)
+	firebaseCredentialsFilePathString := provideFirebaseCredentialsFilePathString(c2)
+	client, err := newFCMClientIfAvailable(repo, logger, firebaseCredentialsFilePathString)
+	if err != nil {
+		return nil, err
+	}
 	manager := viewer.NewManager(hub2)
 	heartbeatManager := heartbeat.NewManager(manager)
-	imagingProcessor := imaging.NewProcessor(imgConfig)
+	config := provideImageProcessorConfig(c2)
+	imagingProcessor := imaging.NewProcessor(config)
 	streamer := sse.NewStreamer(hub2)
 	webrtcv3Manager := webrtcv3.NewManager(hub2)
 	wsStreamer := ws.NewStreamer(hub2, manager, webrtcv3Manager, logger)
-	service := notification.NewService(repo, hub2, logger, fcm2, streamer, wsStreamer, manager, origin)
-	services := &Services{
+	serverOriginString := provideServerOriginString(c2)
+	notificationService := notification.NewService(repo, hub2, logger, client, streamer, wsStreamer, manager, serverOriginString)
+	services := &service.Services{
 		BOT:           processor,
 		OnlineCounter: onlineCounter,
-		FCM:           fcm2,
+		FCM:           client,
 		HeartBeats:    heartbeatManager,
 		Imaging:       imagingProcessor,
+		Notification:  notificationService,
 		SSE:           streamer,
 		ViewerManager: manager,
 		WebRTCv3:      webrtcv3Manager,
 		WS:            wsStreamer,
-		Notification:  service,
 	}
-	return services
+	routerConfig := providerRouterConfig(c2)
+	echo := router.Setup(hub2, repo, services, r, logger, routerConfig)
+	server := &Server{
+		L:      logger,
+		SS:     services,
+		Router: echo,
+	}
+	return server, nil
 }
-
-// services_wire.go:
-
-var ProviderSet = wire.NewSet(wire.FieldsOf(new(*Services),
-	"BOT",
-	"OnlineCounter",
-	"FCM",
-	"HeartBeats",
-	"Imaging",
-	"SSE",
-	"ViewerManager",
-	"WebRTCv3",
-	"WS",
-	"Notification",
-))

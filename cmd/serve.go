@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"cloud.google.com/go/profiler"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -10,24 +9,17 @@ import (
 	"encoding/pem"
 	"fmt"
 	"github.com/gofrs/uuid"
+	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
 	rbac "github.com/traPtitech/traQ/rbac/impl"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router"
-	"github.com/traPtitech/traQ/router/auth"
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/service"
-	"github.com/traPtitech/traQ/service/fcm"
-	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/jwt"
 	"go.uber.org/zap"
-	"google.golang.org/api/option"
 	"io/ioutil"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 )
 
@@ -47,12 +39,7 @@ func serveCommand() *cobra.Command {
 
 			// Stackdriver Profiler
 			if c.GCP.Stackdriver.Profiler.Enabled {
-				err := profiler.Start(profiler.Config{
-					Service:        "traq",
-					ServiceVersion: fmt.Sprintf("%s.%s", Version, Revision),
-					ProjectID:      c.GCP.ServiceAccount.ProjectID,
-				}, option.WithCredentialsFile(c.GCP.ServiceAccount.File))
-				if err != nil {
+				if err := initStackdriverProfiler(c); err != nil {
 					logger.Fatal("failed to setup Stackdriver Profiler", zap.Error(err))
 				}
 				logger.Info("stackdriver profiler started")
@@ -129,15 +116,6 @@ func serveCommand() *cobra.Command {
 				logger.Fatal("failed to init rbac", zap.Error(err))
 			}
 
-			// Firebase
-			var fcmClient *fcm.Client
-			if f := c.Firebase.ServiceAccount.File; len(f) > 0 {
-				fcmClient, err = fcm.NewClient(repo, logger.Named("fcm"), option.WithCredentialsFile(f))
-				if err != nil {
-					logger.Fatal("failed to setup firebase", zap.Error(err))
-				}
-			}
-
 			// JWT for QRCode
 			if priv := c.JWT.Keys.Private; priv != "" {
 				privRaw, err := ioutil.ReadFile(priv)
@@ -158,64 +136,24 @@ func serveCommand() *cobra.Command {
 				logger.Warn("a temporary key for QRCode JWT was generated. This key is valid only during this running.", zap.String("public_key", string(pubRaw)))
 			}
 
-			// Services
-			ss := service.NewServices(hub, repo, fcmClient, logger, variable.ServerOriginString(c.Origin), c.getImageProcessorConfig())
-
-			// HTTP Router
-			e := router.Setup(hub, repo, ss, r, logger, &router.Config{
-				Development:      c.DevMode,
-				Version:          Version,
-				Revision:         Revision,
-				AccessLogging:    c.AccessLog.Enabled,
-				Gzipped:          c.Gzip,
-				AccessTokenExp:   c.OAuth2.AccessTokenExpire,
-				IsRefreshEnabled: c.OAuth2.IsRefreshEnabled,
-				SkyWaySecretKey:  c.SkyWay.SecretKey,
-				ExternalAuth: router.ExternalAuthConfig{
-					GitHub: auth.GithubProviderConfig{
-						ClientID:               c.ExternalAuth.GitHub.ClientID,
-						ClientSecret:           c.ExternalAuth.GitHub.ClientSecret,
-						RegisterUserIfNotFound: c.ExternalAuth.GitHub.AllowSignUp,
-					},
-					Google: auth.GoogleProviderConfig{
-						ClientID:               c.ExternalAuth.Google.ClientID,
-						ClientSecret:           c.ExternalAuth.Google.ClientSecret,
-						CallbackURL:            c.Origin + "/api/auth/google/callback",
-						RegisterUserIfNotFound: c.ExternalAuth.Google.AllowSignUp,
-					},
-					TraQ: auth.TraQProviderConfig{
-						Origin:                 c.ExternalAuth.TraQ.Origin,
-						ClientID:               c.ExternalAuth.TraQ.ClientID,
-						ClientSecret:           c.ExternalAuth.TraQ.ClientSecret,
-						CallbackURL:            c.Origin + "/api/auth/traq/callback",
-						RegisterUserIfNotFound: c.ExternalAuth.TraQ.AllowSignUp,
-					},
-					OIDC: auth.OIDCProviderConfig{
-						Issuer:                 c.ExternalAuth.OIDC.Issuer,
-						ClientID:               c.ExternalAuth.OIDC.ClientID,
-						ClientSecret:           c.ExternalAuth.OIDC.ClientSecret,
-						Scopes:                 c.ExternalAuth.OIDC.Scopes,
-						CallbackURL:            c.Origin + "/api/auth/oidc/callback",
-						RegisterUserIfNotFound: c.ExternalAuth.OIDC.AllowSignUp,
-					},
-				},
-			})
+			// サーバー作成
+			server, err := newServer(hub, repo, logger, r, c)
+			if err != nil {
+				logger.Fatal("failed to create server", zap.Error(err))
+			}
 
 			go func() {
-				if err := e.Start(fmt.Sprintf(":%d", c.Port)); err != nil {
+				if err := server.Start(fmt.Sprintf(":%d", c.Port)); err != nil {
 					logger.Info("shutting down the server")
 				}
 			}()
 
 			logger.Info("traQ started")
+			waitSIGINT()
 
-			quit := make(chan os.Signal, 1)
-			signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-			<-quit
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
-			ss.Dispose()
-			if err := e.Shutdown(ctx); err != nil {
+			if err := server.Shutdown(ctx); err != nil {
 				logger.Warn("abnormal shutdown", zap.Error(err))
 			}
 			sessions.PurgeCache()
@@ -227,4 +165,23 @@ func serveCommand() *cobra.Command {
 	flags.BoolVar(&skipInitEmojis, "skip-init-emojis", false, "skip initializing Unicode Emoji stamps")
 
 	return &cmd
+}
+
+type Server struct {
+	L      *zap.Logger
+	SS     *service.Services
+	Router *echo.Echo
+}
+
+func (s *Server) Start(address string) error {
+	return s.Router.Start(address)
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	s.SS.SSE.Dispose()
+	_ = s.SS.WS.Close()
+	if s.SS.FCM != nil {
+		s.SS.FCM.Close()
+	}
+	return s.Router.Shutdown(ctx)
 }

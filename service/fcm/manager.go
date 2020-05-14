@@ -6,6 +6,7 @@ import (
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/utils/set"
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
@@ -20,6 +21,11 @@ type Client struct {
 	logger *zap.Logger
 	queue  chan []*messaging.Message
 	close  chan struct{}
+}
+
+// NewClientWithCredentialsFile Firebase Cloud Messaging Clientを生成します
+func NewClientWithCredentialsFile(repo repository.Repository, logger *zap.Logger, file variable.FirebaseCredentialsFilePathString) (*Client, error) {
+	return NewClient(repo, logger, option.WithCredentialsFile(string(file)))
 }
 
 // NewClient Firebase Cloud Messaging Clientを生成します
@@ -37,7 +43,7 @@ func NewClient(repo repository.Repository, logger *zap.Logger, options ...option
 	c := &Client{
 		c:      mc,
 		repo:   repo,
-		logger: logger,
+		logger: logger.Named("fcm"),
 		queue:  make(chan []*messaging.Message),
 		close:  make(chan struct{}),
 	}

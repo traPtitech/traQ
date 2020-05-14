@@ -13,7 +13,10 @@ import (
 	"log"
 	"net/http"
 	_ "net/http/pprof" // pprof init
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 )
 
 var (
@@ -25,7 +28,7 @@ var (
 	// configFile 設定ファイルyamlのパス
 	configFile string
 	// c 設定
-	c Config
+	c *Config
 )
 
 // rootコマンドはダミー。コマンドとしては使用しない
@@ -136,4 +139,14 @@ func bindPFlag(flags *pflag.FlagSet, key string, flag ...string) {
 	if err := viper.BindPFlag(key, flags.Lookup(flag[0])); err != nil {
 		panic(err)
 	}
+}
+
+func waitSIGINT() {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	signal.Stop(quit)
+	for range quit {
+	}
+	close(quit)
 }
