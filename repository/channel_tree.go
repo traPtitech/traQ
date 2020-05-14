@@ -422,7 +422,7 @@ LevelFor:
 func (ct *channelTreeImpl) IsForceChannel(id uuid.UUID) bool {
 	ct.mu.RLock()
 	defer ct.mu.RUnlock()
-	return ct.isChannelPresent(id)
+	return ct.isForceChannel(id)
 }
 
 func (ct *channelTreeImpl) isForceChannel(id uuid.UUID) bool {

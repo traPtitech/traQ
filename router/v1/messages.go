@@ -43,7 +43,7 @@ func (h *Handlers) PutMessageByID(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel has been archived"))
+		return herror.BadRequest("channel has been archived")
 	}
 
 	var req PutMessageByIDRequest
@@ -100,7 +100,7 @@ func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel has been archived"))
+		return herror.BadRequest("channel has been archived")
 	}
 
 	if err := h.Repo.DeleteMessage(m.ID); err != nil {
