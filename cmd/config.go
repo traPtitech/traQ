@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/router/auth"
+	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/fcm"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/variable"
@@ -317,9 +318,9 @@ func initStackdriverProfiler(c *Config) error {
 	}, option.WithCredentialsFile(c.GCP.ServiceAccount.File))
 }
 
-func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, file variable.FirebaseCredentialsFilePathString) (*fcm.Client, error) {
+func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unreadCounter counter.UnreadMessageCounter, file variable.FirebaseCredentialsFilePathString) (*fcm.Client, error) {
 	if len(file) > 0 {
-		return fcm.NewClientWithCredentialsFile(repo, logger, file)
+		return fcm.NewClientWithCredentialsFile(repo, logger, unreadCounter, file)
 	}
 	return nil, nil
 }

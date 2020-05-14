@@ -2,90 +2,14 @@ package repository
 
 import (
 	"fmt"
-	"github.com/traPtitech/traQ/utils/message"
-	"strings"
-	"sync"
-
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/message"
+	"strings"
 )
-
-type unreadMessageCounters struct {
-	counters map[uuid.UUID]int
-	changed  map[uuid.UUID]struct{}
-	mu       sync.RWMutex
-}
-
-func makeUnreadMessageCounters(db *gorm.DB) (*unreadMessageCounters, error) {
-	type count struct {
-		UserID uuid.UUID
-		Count  int
-	}
-	var counts []*count
-	if err := db.Raw(`SELECT user_id, COUNT(user_id) AS count FROM unreads GROUP BY user_id`).Scan(&counts).Error; err != nil {
-		return nil, err
-	}
-	counters := make(map[uuid.UUID]int, len(counts))
-	changed := make(map[uuid.UUID]struct{}, len(counts))
-	for _, c := range counts {
-		counters[c.UserID] = c.Count
-		changed[c.UserID] = struct{}{}
-	}
-	return &unreadMessageCounters{counters: counters, changed: changed}, nil
-}
-
-func (c *unreadMessageCounters) Inc(userID uuid.UUID, n int) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.counters[userID] += n
-	c.changed[userID] = struct{}{}
-}
-
-func (c *unreadMessageCounters) Get(userID uuid.UUID) int {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.counters[userID]
-}
-
-func (c *unreadMessageCounters) GetChanges(reset bool) map[uuid.UUID]int {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	changes := make(map[uuid.UUID]int, len(c.changed))
-	for id := range c.changed {
-		changes[id] = c.counters[id]
-	}
-	if reset {
-		c.changed = make(map[uuid.UUID]struct{}, len(c.counters))
-	}
-	return changes
-}
-
-func (c *unreadMessageCounters) Dec(userID uuid.UUID, n int) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.dec(userID, n)
-}
-
-func (c *unreadMessageCounters) DecMultiple(userIDs []uuid.UUID, n int) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	for _, userID := range userIDs {
-		c.dec(userID, n)
-	}
-}
-
-func (c *unreadMessageCounters) dec(userID uuid.UUID, n int) {
-	c.changed[userID] = struct{}{}
-	result := c.counters[userID] - n
-	if result <= 0 {
-		delete(c.counters, userID)
-		return
-	}
-	c.counters[userID] = result
-}
 
 // CreateMessage implements MessageRepository interface.
 func (repo *GormRepository) CreateMessage(userID, channelID uuid.UUID, text string) (*model.Message, error) {
@@ -204,22 +128,17 @@ func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 	}
 
 	var (
-		m             model.Message
-		unreadUserIDs []uuid.UUID
-		ok            bool
+		m       model.Message
+		unreads []*model.Unread
+		ok      bool
 	)
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.Message{ID: messageID}).First(&m).Error; err != nil {
 			return convertError(err)
 		}
 
-		var unreads []*model.Unread
 		if err := tx.Find(&unreads, &model.Unread{MessageID: messageID}).Error; err != nil {
 			return err
-		}
-		unreadUserIDs = make([]uuid.UUID, len(unreads))
-		for i, unread := range unreads {
-			unreadUserIDs[i] = unread.UserID
 		}
 
 		errs := tx.
@@ -238,14 +157,12 @@ func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 		return err
 	}
 	if ok {
-		if len(unreadUserIDs) > 0 {
-			repo.unreadCounters.DecMultiple(unreadUserIDs, 1)
-		}
 		repo.hub.Publish(hub.Message{
 			Name: event.MessageDeleted,
 			Fields: hub.Fields{
-				"message_id": messageID,
-				"message":    &m,
+				"message_id":      messageID,
+				"message":         &m,
+				"deleted_unreads": unreads,
 			},
 		})
 	}
@@ -364,7 +281,14 @@ func (repo *GormRepository) SetMessageUnread(userID, messageID uuid.UUID, notice
 		return err
 	}
 	if !update {
-		repo.unreadCounters.Inc(userID, 1)
+		repo.hub.Publish(hub.Message{
+			Name: event.MessageUnread,
+			Fields: hub.Fields{
+				"message_id": messageID,
+				"user_id":    userID,
+				"noticeable": noticeable,
+			},
+		})
 	}
 	return nil
 }
@@ -392,11 +316,6 @@ func (repo *GormRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*UserUnre
 	return res, repo.db.Raw(`SELECT m.channel_id AS channel_id, COUNT(m.id) AS count, MAX(u.noticeable) AS noticeable, MIN(m.created_at) AS since, MAX(m.created_at) AS updated_at FROM unreads u JOIN messages m on u.message_id = m.id WHERE u.user_id = ? GROUP BY m.channel_id`, userID).Scan(&res).Error
 }
 
-// UnreadMessageCounter implements MessageRepository interface.
-func (repo *GormRepository) UnreadMessageCounter() UnreadMessageCounter {
-	return repo.unreadCounters
-}
-
 // DeleteUnreadsByChannelID implements MessageRepository interface.
 func (repo *GormRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error {
 	if channelID == uuid.Nil || userID == uuid.Nil {
@@ -407,12 +326,12 @@ func (repo *GormRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID
 		return result.Error
 	}
 	if result.RowsAffected > 0 {
-		repo.unreadCounters.Dec(userID, int(result.RowsAffected))
 		repo.hub.Publish(hub.Message{
 			Name: event.ChannelRead,
 			Fields: hub.Fields{
-				"channel_id": channelID,
-				"user_id":    userID,
+				"channel_id":        channelID,
+				"user_id":           userID,
+				"read_messages_num": int(result.RowsAffected),
 			},
 		})
 	}

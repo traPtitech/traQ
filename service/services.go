@@ -14,14 +14,15 @@ import (
 )
 
 type Services struct {
-	BOT           *bot.Processor
-	OnlineCounter *counter.OnlineCounter
-	FCM           *fcm.Client
-	HeartBeats    *heartbeat.Manager
-	Imaging       imaging.Processor
-	Notification  *notification.Service
-	SSE           *sse.Streamer
-	ViewerManager *viewer.Manager
-	WebRTCv3      *webrtcv3.Manager
-	WS            *ws.Streamer
+	BOT                  *bot.Processor
+	OnlineCounter        *counter.OnlineCounter
+	UnreadMessageCounter counter.UnreadMessageCounter
+	FCM                  *fcm.Client
+	HeartBeats           *heartbeat.Manager
+	Imaging              imaging.Processor
+	Notification         *notification.Service
+	SSE                  *sse.Streamer
+	ViewerManager        *viewer.Manager
+	WebRTCv3             *webrtcv3.Manager
+	WS                   *ws.Streamer
 }

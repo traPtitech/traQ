@@ -137,7 +137,7 @@ func serveCommand() *cobra.Command {
 			}
 
 			// サーバー作成
-			server, err := newServer(hub, repo, logger, r, c)
+			server, err := newServer(hub, engine, repo, logger, r, c)
 			if err != nil {
 				logger.Fatal("failed to create server", zap.Error(err))
 			}

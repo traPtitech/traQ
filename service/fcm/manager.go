@@ -6,6 +6,7 @@ import (
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/utils/set"
 	"go.uber.org/zap"
@@ -16,20 +17,21 @@ import (
 
 // Client Firebase Cloud Messaging Client
 type Client struct {
-	c      *messaging.Client
-	repo   repository.Repository
-	logger *zap.Logger
-	queue  chan []*messaging.Message
-	close  chan struct{}
+	c             *messaging.Client
+	repo          repository.Repository
+	logger        *zap.Logger
+	unreadCounter counter.UnreadMessageCounter
+	queue         chan []*messaging.Message
+	close         chan struct{}
 }
 
 // NewClientWithCredentialsFile Firebase Cloud Messaging Clientを生成します
-func NewClientWithCredentialsFile(repo repository.Repository, logger *zap.Logger, file variable.FirebaseCredentialsFilePathString) (*Client, error) {
-	return NewClient(repo, logger, option.WithCredentialsFile(string(file)))
+func NewClientWithCredentialsFile(repo repository.Repository, logger *zap.Logger, unreadCounter counter.UnreadMessageCounter, file variable.FirebaseCredentialsFilePathString) (*Client, error) {
+	return NewClient(repo, logger, unreadCounter, option.WithCredentialsFile(string(file)))
 }
 
 // NewClient Firebase Cloud Messaging Clientを生成します
-func NewClient(repo repository.Repository, logger *zap.Logger, options ...option.ClientOption) (*Client, error) {
+func NewClient(repo repository.Repository, logger *zap.Logger, unreadCounter counter.UnreadMessageCounter, options ...option.ClientOption) (*Client, error) {
 	app, err := firebase.NewApp(context.Background(), nil, options...)
 	if err != nil {
 		return nil, err
@@ -41,11 +43,12 @@ func NewClient(repo repository.Repository, logger *zap.Logger, options ...option
 	}
 
 	c := &Client{
-		c:      mc,
-		repo:   repo,
-		logger: logger.Named("fcm"),
-		queue:  make(chan []*messaging.Message),
-		close:  make(chan struct{}),
+		c:             mc,
+		repo:          repo,
+		logger:        logger.Named("fcm"),
+		unreadCounter: unreadCounter,
+		queue:         make(chan []*messaging.Message),
+		close:         make(chan struct{}),
 	}
 	go c.worker()
 
@@ -99,7 +102,7 @@ func (c *Client) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bool) 
 	)
 	if withUnreadCount {
 		for uid, tokens := range tokensMap {
-			unread := c.repo.UnreadMessageCounter().Get(uid)
+			unread := c.unreadCounter.Get(uid)
 			data := map[string]string{
 				"type":   p.Type,
 				"title":  p.Title,

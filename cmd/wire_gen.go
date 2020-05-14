@@ -6,6 +6,7 @@
 package cmd
 
 import (
+	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
@@ -30,11 +31,15 @@ import (
 
 // Injectors from serve_wire.go:
 
-func newServer(hub2 *hub.Hub, repo repository.Repository, logger *zap.Logger, r rbac.RBAC, c2 *Config) (*Server, error) {
+func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *zap.Logger, r rbac.RBAC, c2 *Config) (*Server, error) {
 	processor := bot.NewProcessor(repo, hub2, logger)
 	onlineCounter := counter.NewOnlineCounter(hub2)
+	unreadMessageCounter, err := counter.NewUnreadMessageCounter(db, hub2)
+	if err != nil {
+		return nil, err
+	}
 	firebaseCredentialsFilePathString := provideFirebaseCredentialsFilePathString(c2)
-	client, err := newFCMClientIfAvailable(repo, logger, firebaseCredentialsFilePathString)
+	client, err := newFCMClientIfAvailable(repo, logger, unreadMessageCounter, firebaseCredentialsFilePathString)
 	if err != nil {
 		return nil, err
 	}
@@ -48,16 +53,17 @@ func newServer(hub2 *hub.Hub, repo repository.Repository, logger *zap.Logger, r 
 	serverOriginString := provideServerOriginString(c2)
 	notificationService := notification.NewService(repo, hub2, logger, client, streamer, wsStreamer, manager, serverOriginString)
 	services := &service.Services{
-		BOT:           processor,
-		OnlineCounter: onlineCounter,
-		FCM:           client,
-		HeartBeats:    heartbeatManager,
-		Imaging:       imagingProcessor,
-		Notification:  notificationService,
-		SSE:           streamer,
-		ViewerManager: manager,
-		WebRTCv3:      webrtcv3Manager,
-		WS:            wsStreamer,
+		BOT:                  processor,
+		OnlineCounter:        onlineCounter,
+		UnreadMessageCounter: unreadMessageCounter,
+		FCM:                  client,
+		HeartBeats:           heartbeatManager,
+		Imaging:              imagingProcessor,
+		Notification:         notificationService,
+		SSE:                  streamer,
+		ViewerManager:        manager,
+		WebRTCv3:             webrtcv3Manager,
+		WS:                   wsStreamer,
 	}
 	routerConfig := providerRouterConfig(c2)
 	echo := router.Setup(hub2, repo, services, r, logger, routerConfig)

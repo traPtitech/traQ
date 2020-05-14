@@ -82,8 +82,6 @@ type MessageRepository interface {
 	// 存在しないユーザーを指定した場合、空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetUserUnreadChannels(userID uuid.UUID) ([]*UserUnreadChannel, error)
-	// UnreadMessageCounter 未読メッセージカウンタを返します
-	UnreadMessageCounter() UnreadMessageCounter
 	// GetChannelLatestMessagesByUserID 指定したユーザーが閲覧可能な全てのパブリックチャンネルの最新のメッセージの一覧を取得します
 	//
 	// 成功した場合、メッセージの配列とnilを返します。負のlimitは無視されます。
@@ -116,9 +114,4 @@ type UserUnreadChannel struct {
 	Noticeable bool      `json:"noticeable"`
 	Since      time.Time `json:"since"`
 	UpdatedAt  time.Time `json:"updatedAt"`
-}
-
-type UnreadMessageCounter interface {
-	Get(userID uuid.UUID) int
-	GetChanges(reset bool) map[uuid.UUID]int
 }

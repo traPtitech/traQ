@@ -4,6 +4,7 @@ package cmd
 
 import (
 	"github.com/google/wire"
+	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
@@ -21,10 +22,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func newServer(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, r rbac.RBAC, c *Config) (*Server, error) {
+func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, logger *zap.Logger, r rbac.RBAC, c *Config) (*Server, error) {
 	wire.Build(
 		bot.NewProcessor,
 		counter.NewOnlineCounter,
+		counter.NewUnreadMessageCounter,
 		heartbeat.NewManager,
 		imaging.NewProcessor,
 		notification.NewService,
