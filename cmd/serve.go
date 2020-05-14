@@ -68,7 +68,7 @@ func serveCommand() *cobra.Command {
 
 			// Repository
 			logger.Info("setting up repository...")
-			repo, err := repository.NewGormRepository(engine, fs, hub, logger.Named("repository"))
+			repo, err := repository.NewGormRepository(engine, fs, hub, logger)
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}

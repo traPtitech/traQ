@@ -21,7 +21,7 @@ type GormRepository struct {
 	logger *zap.Logger
 	chTree *channelTreeImpl
 	stamps *stampRepository
-	fileImpl
+	fs     storage.FileStorage
 }
 
 // Channel implements ReplaceMapper interface.
@@ -91,20 +91,13 @@ func (repo *GormRepository) Sync() (init bool, err error) {
 	return false, nil
 }
 
-// GetFS implements Repository interface.
-func (repo *GormRepository) GetFS() storage.FileStorage {
-	return repo.FS
-}
-
 // NewGormRepository リポジトリ実装を初期化して生成します
 func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub, logger *zap.Logger) (Repository, error) {
 	repo := &GormRepository{
 		db:     db,
 		hub:    hub,
-		logger: logger,
-		fileImpl: fileImpl{
-			FS: fs,
-		},
+		logger: logger.Named("repository"),
+		fs:     fs,
 	}
 	go func() {
 		sub := hub.Subscribe(10, event.UserOffline)

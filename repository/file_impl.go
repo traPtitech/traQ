@@ -14,10 +14,6 @@ import (
 	"time"
 )
 
-type fileImpl struct {
-	FS storage.FileStorage
-}
-
 type fileMetaImpl struct {
 	meta *model.File
 	fs   storage.FileStorage
@@ -177,13 +173,13 @@ func (repo *GormRepository) SaveFile(args SaveFileArgs) (model.FileMeta, error) 
 		}()
 
 		key := f.ID.String() + "-thumb"
-		if err := repo.FS.SaveByKey(r, key, key+".png", "image/png", model.FileTypeThumbnail); err != nil {
+		if err := repo.fs.SaveByKey(r, key, key+".png", "image/png", model.FileTypeThumbnail); err != nil {
 			return nil, err
 		}
 	}
 
 	hash := md5.New()
-	if err := repo.FS.SaveByKey(io.TeeReader(args.Src, hash), f.ID.String(), f.Name, f.Mime, f.Type); err != nil {
+	if err := repo.fs.SaveByKey(io.TeeReader(args.Src, hash), f.ID.String(), f.Name, f.Mime, f.Type); err != nil {
 		return nil, err
 	}
 	f.Hash = hex.EncodeToString(hash.Sum(nil))
@@ -206,9 +202,9 @@ func (repo *GormRepository) SaveFile(args SaveFileArgs) (model.FileMeta, error) 
 		return nil
 	})
 	if err != nil {
-		_ = repo.FS.DeleteByKey(f.ID.String(), f.Type)
+		_ = repo.fs.DeleteByKey(f.ID.String(), f.Type)
 		if f.HasThumbnail {
-			_ = repo.FS.DeleteByKey(f.ID.String()+"-thumb", model.FileTypeThumbnail)
+			_ = repo.fs.DeleteByKey(f.ID.String()+"-thumb", model.FileTypeThumbnail)
 		}
 		return nil, err
 	}
@@ -243,7 +239,7 @@ func (repo *GormRepository) DeleteFile(fileID uuid.UUID) error {
 			return err
 		}
 
-		return repo.FS.DeleteByKey(f.ID.String(), f.Type)
+		return repo.fs.DeleteByKey(f.ID.String(), f.Type)
 	})
 	if err != nil {
 		return err
@@ -251,7 +247,7 @@ func (repo *GormRepository) DeleteFile(fileID uuid.UUID) error {
 
 	if f.HasThumbnail {
 		// エラーを無視
-		_ = repo.FS.DeleteByKey(f.ID.String()+"-thumb", model.FileTypeThumbnail)
+		_ = repo.fs.DeleteByKey(f.ID.String()+"-thumb", model.FileTypeThumbnail)
 	}
 	return nil
 }
@@ -285,7 +281,7 @@ func (repo *GormRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 }
 
 func (repo *GormRepository) makeFileMeta(f *model.File) model.FileMeta {
-	return &fileMetaImpl{meta: f, fs: repo.FS}
+	return &fileMetaImpl{meta: f, fs: repo.fs}
 }
 
 func (repo *GormRepository) makeFileMetas(fs []*model.File) []model.FileMeta {

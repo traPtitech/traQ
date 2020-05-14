@@ -65,7 +65,7 @@ func filePruneCommand() *cobra.Command {
 			}
 
 			// Repository チャンネルツリーを作らないので注意
-			repo, err := repository.NewGormRepository(db, fs, hub.New(), logger.Named("repository"))
+			repo, err := repository.NewGormRepository(db, fs, hub.New(), logger)
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}

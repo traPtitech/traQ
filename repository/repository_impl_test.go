@@ -4,17 +4,9 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	random2 "github.com/traPtitech/traQ/utils/random"
-	"github.com/traPtitech/traQ/utils/storage"
 	"strings"
 	"testing"
 )
-
-func TestRepositoryImpl_GetFS(t *testing.T) {
-	t.Parallel()
-	fs := storage.NewInMemoryFileStorage()
-	repo := &GormRepository{fileImpl: fileImpl{FS: fs}}
-	assert.Equal(t, fs, repo.GetFS())
-}
 
 func TestGormRepository_Group(t *testing.T) {
 	t.Parallel()

@@ -246,10 +246,6 @@ func (repo *TestRepository) Sync() (bool, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetFS() storage.FileStorage {
-	return repo.FS
-}
-
 func (repo *TestRepository) CreateUser(args repository.CreateUserArgs) (model.UserInfo, error) {
 	repo.UsersLock.Lock()
 	defer repo.UsersLock.Unlock()
