@@ -63,8 +63,6 @@ func (repo *GormRepository) CreatePublicChannel(name string, parent, creatorID u
 		return nil, err
 	}
 	repo.chTree.add(ch)
-
-	channelsCounter.Inc()
 	repo.hub.Publish(hub.Message{
 		Name: event.ChannelCreated,
 		Fields: hub.Fields{

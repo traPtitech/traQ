@@ -4,8 +4,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
@@ -14,18 +12,6 @@ import (
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"time"
-)
-
-var (
-	initialized     = false
-	messagesCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Namespace: "traq",
-		Name:      "messages_count_total",
-	})
-	channelsCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Namespace: "traq",
-		Name:      "channels_count_total",
-	})
 )
 
 // GormRepository リポジトリ実装
@@ -84,23 +70,6 @@ func (repo *GormRepository) Sync() (init bool, err error) {
 		return false, err
 	}
 	repo.stamps = makeStampRepository(stamps)
-
-	// メトリクス用データ取得
-	if !initialized {
-		initialized = true
-
-		messageNum := 0
-		if err := repo.db.Unscoped().Model(&model.Message{}).Count(&messageNum).Error; err != nil {
-			return false, err
-		}
-		messagesCounter.Add(float64(messageNum))
-
-		channelNum := 0
-		if err := repo.db.Unscoped().Model(&model.Channel{}).Where(&model.Channel{IsPublic: true}).Count(&channelNum).Error; err != nil {
-			return false, err
-		}
-		channelsCounter.Add(float64(channelNum))
-	}
 
 	// 管理者ユーザーの確認
 	c := 0

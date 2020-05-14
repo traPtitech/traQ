@@ -27,6 +27,8 @@ func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, logger *za
 		bot.NewProcessor,
 		counter.NewOnlineCounter,
 		counter.NewUnreadMessageCounter,
+		counter.NewMessageCounter,
+		counter.NewChannelCounter,
 		heartbeat.NewManager,
 		imaging.NewProcessor,
 		notification.NewService,

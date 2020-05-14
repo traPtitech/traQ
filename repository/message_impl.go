@@ -66,7 +66,6 @@ func (repo *GormRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 			},
 		})
 	}
-	messagesCounter.Inc()
 	return m, nil
 }
 

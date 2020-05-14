@@ -17,6 +17,8 @@ type Services struct {
 	BOT                  *bot.Processor
 	OnlineCounter        *counter.OnlineCounter
 	UnreadMessageCounter counter.UnreadMessageCounter
+	MessageCounter       counter.MessageCounter
+	ChannelCounter       counter.ChannelCounter
 	FCM                  *fcm.Client
 	HeartBeats           *heartbeat.Manager
 	Imaging              imaging.Processor

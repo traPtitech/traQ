@@ -38,6 +38,14 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 	if err != nil {
 		return nil, err
 	}
+	messageCounter, err := counter.NewMessageCounter(db, hub2)
+	if err != nil {
+		return nil, err
+	}
+	channelCounter, err := counter.NewChannelCounter(db, hub2)
+	if err != nil {
+		return nil, err
+	}
 	firebaseCredentialsFilePathString := provideFirebaseCredentialsFilePathString(c2)
 	client, err := newFCMClientIfAvailable(repo, logger, unreadMessageCounter, firebaseCredentialsFilePathString)
 	if err != nil {
@@ -56,6 +64,8 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 		BOT:                  processor,
 		OnlineCounter:        onlineCounter,
 		UnreadMessageCounter: unreadMessageCounter,
+		MessageCounter:       messageCounter,
+		ChannelCounter:       channelCounter,
 		FCM:                  client,
 		HeartBeats:           heartbeatManager,
 		Imaging:              imagingProcessor,
