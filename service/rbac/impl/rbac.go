@@ -1,6 +1,7 @@
 package impl
 
 import (
+	"fmt"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/rbac"
@@ -23,7 +24,7 @@ func New(repo repository.Repository) (rbac.RBAC, error) {
 		repo:  repo,
 	}
 	if err := rbac.Reload(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to init rbac: %w", err)
 	}
 	return rbac, nil
 }

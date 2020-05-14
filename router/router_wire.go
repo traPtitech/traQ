@@ -10,11 +10,10 @@ import (
 	v1 "github.com/traPtitech/traQ/router/v1"
 	v3 "github.com/traPtitech/traQ/router/v3"
 	"github.com/traPtitech/traQ/service"
-	"github.com/traPtitech/traQ/service/rbac"
 	"go.uber.org/zap"
 )
 
-func newRouter(hub *hub.Hub, repo repository.Repository, ss *service.Services, rbac rbac.RBAC, logger *zap.Logger, config *Config) *Router {
+func newRouter(hub *hub.Hub, repo repository.Repository, ss *service.Services, logger *zap.Logger, config *Config) *Router {
 	wire.Build(
 		service.ProviderSet,
 		newEcho,

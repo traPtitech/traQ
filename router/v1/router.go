@@ -61,7 +61,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
-	adminOnly := middlewares.AdminOnly
 	retrieve := middlewares.NewParamRetriever(h.Repo)
 	blockBot := middlewares.BlockBot(h.Repo)
 	nologin := middlewares.NoLogin()
@@ -312,22 +311,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiActivity := api.Group("/activity")
 		{
 			apiActivity.GET("/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
-		}
-		apiAuthority := api.Group("/authority", adminOnly)
-		{
-			apiAuthorityRoles := apiAuthority.Group("/roles")
-			{
-				apiAuthorityRoles.GET("", h.GetRoles)
-				apiAuthorityRoles.POST("", h.PostRoles)
-				apiAuthorityRolesRid := apiAuthorityRoles.Group("/:role")
-				{
-					apiAuthorityRolesRid.GET("", h.GetRole)
-					apiAuthorityRolesRid.PATCH("", h.PatchRole)
-				}
-			}
-			apiAuthority.GET("/permissions", h.GetPermissions)
-			apiAuthority.GET("/reload", h.GetAuthorityReload)
-			apiAuthority.POST("/reload", h.PostAuthorityReload)
 		}
 		apiWebRTC := api.Group("/webrtc")
 		{

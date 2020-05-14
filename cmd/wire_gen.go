@@ -16,7 +16,7 @@ import (
 	"github.com/traPtitech/traQ/service/heartbeat"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/notification"
-	"github.com/traPtitech/traQ/service/rbac"
+	"github.com/traPtitech/traQ/service/rbac/impl"
 	"github.com/traPtitech/traQ/service/sse"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
@@ -31,7 +31,7 @@ import (
 
 // Injectors from serve_wire.go:
 
-func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *zap.Logger, r rbac.RBAC, c2 *Config) (*Server, error) {
+func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *zap.Logger, c2 *Config) (*Server, error) {
 	processor := bot.NewProcessor(repo, hub2, logger)
 	onlineCounter := counter.NewOnlineCounter(hub2)
 	unreadMessageCounter, err := counter.NewUnreadMessageCounter(db, hub2)
@@ -60,6 +60,10 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 	wsStreamer := ws.NewStreamer(hub2, manager, webrtcv3Manager, logger)
 	serverOriginString := provideServerOriginString(c2)
 	notificationService := notification.NewService(repo, hub2, logger, client, streamer, wsStreamer, manager, serverOriginString)
+	rbac, err := impl.New(repo)
+	if err != nil {
+		return nil, err
+	}
 	services := &service.Services{
 		BOT:                  processor,
 		OnlineCounter:        onlineCounter,
@@ -70,13 +74,14 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 		HeartBeats:           heartbeatManager,
 		Imaging:              imagingProcessor,
 		Notification:         notificationService,
+		RBAC:                 rbac,
 		SSE:                  streamer,
 		ViewerManager:        manager,
 		WebRTCv3:             webrtcv3Manager,
 		WS:                   wsStreamer,
 	}
 	routerConfig := providerRouterConfig(c2)
-	echo := router.Setup(hub2, repo, services, r, logger, routerConfig)
+	echo := router.Setup(hub2, repo, services, logger, routerConfig)
 	server := &Server{
 		L:      logger,
 		SS:     services,

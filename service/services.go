@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/service/heartbeat"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/notification"
+	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/sse"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
@@ -23,6 +24,7 @@ type Services struct {
 	HeartBeats           *heartbeat.Manager
 	Imaging              imaging.Processor
 	Notification         *notification.Service
+	RBAC                 rbac.RBAC
 	SSE                  *sse.Streamer
 	ViewerManager        *viewer.Manager
 	WebRTCv3             *webrtcv3.Manager

@@ -10,7 +10,6 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/service"
-	rbac "github.com/traPtitech/traQ/service/rbac/impl"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/random"
@@ -106,12 +105,6 @@ func serveCommand() *cobra.Command {
 			}
 			sessions.SetStore(sessionStore)
 
-			// Role-Based Access Controller
-			r, err := rbac.New(repo)
-			if err != nil {
-				logger.Fatal("failed to init rbac", zap.Error(err))
-			}
-
 			// JWT for QRCode
 			if priv := c.JWT.Keys.Private; priv != "" {
 				privRaw, err := ioutil.ReadFile(priv)
@@ -129,7 +122,7 @@ func serveCommand() *cobra.Command {
 			}
 
 			// サーバー作成
-			server, err := newServer(hub, engine, repo, logger, r, c)
+			server, err := newServer(hub, engine, repo, logger, c)
 			if err != nil {
 				logger.Fatal("failed to create server", zap.Error(err))
 			}

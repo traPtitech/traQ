@@ -14,7 +14,6 @@ import (
 	"github.com/traPtitech/traQ/router/v1"
 	"github.com/traPtitech/traQ/router/v3"
 	"github.com/traPtitech/traQ/service"
-	"github.com/traPtitech/traQ/service/rbac"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -26,8 +25,8 @@ type Router struct {
 	oauth2 *oauth2.Handler
 }
 
-func Setup(hub *hub.Hub, repo repository.Repository, ss *service.Services, rbac rbac.RBAC, logger *zap.Logger, config *Config) *echo.Echo {
-	r := newRouter(hub, repo, ss, rbac, logger.Named("router"), config)
+func Setup(hub *hub.Hub, repo repository.Repository, ss *service.Services, logger *zap.Logger, config *Config) *echo.Echo {
+	r := newRouter(hub, repo, ss, logger.Named("router"), config)
 
 	api := r.e.Group("/api")
 	api.GET("/metrics", echo.WrapHandler(promhttp.Handler()))

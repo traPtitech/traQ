@@ -12,21 +12,21 @@ import (
 	"github.com/traPtitech/traQ/router/v1"
 	"github.com/traPtitech/traQ/router/v3"
 	"github.com/traPtitech/traQ/service"
-	"github.com/traPtitech/traQ/service/rbac"
 	"go.uber.org/zap"
 )
 
 // Injectors from router_wire.go:
 
-func newRouter(hub2 *hub.Hub, repo repository.Repository, ss *service.Services, rbac2 rbac.RBAC, logger *zap.Logger, config *Config) *Router {
+func newRouter(hub2 *hub.Hub, repo repository.Repository, ss *service.Services, logger *zap.Logger, config *Config) *Router {
 	echo := newEcho(logger, config, repo)
+	rbac := ss.RBAC
 	streamer := ss.SSE
 	onlineCounter := ss.OnlineCounter
 	manager := ss.ViewerManager
 	heartbeatManager := ss.HeartBeats
 	processor := ss.Imaging
 	handlers := &v1.Handlers{
-		RBAC:       rbac2,
+		RBAC:       rbac,
 		Repo:       repo,
 		SSE:        streamer,
 		Hub:        hub2,
@@ -40,7 +40,7 @@ func newRouter(hub2 *hub.Hub, repo repository.Repository, ss *service.Services, 
 	webrtcv3Manager := ss.WebRTCv3
 	v3Config := provideV3Config(config)
 	v3Handlers := &v3.Handlers{
-		RBAC:    rbac2,
+		RBAC:    rbac,
 		Repo:    repo,
 		WS:      wsStreamer,
 		Hub:     hub2,
@@ -53,7 +53,7 @@ func newRouter(hub2 *hub.Hub, repo repository.Repository, ss *service.Services, 
 	}
 	oauth2Config := provideOAuth2Config(config)
 	handler := &oauth2.Handler{
-		RBAC:   rbac2,
+		RBAC:   rbac,
 		Repo:   repo,
 		Logger: logger,
 		Config: oauth2Config,
