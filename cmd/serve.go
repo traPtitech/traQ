@@ -2,11 +2,6 @@ package cmd
 
 import (
 	"context"
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
@@ -18,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/jwt"
+	"github.com/traPtitech/traQ/utils/random"
 	"go.uber.org/zap"
 	"io/ioutil"
 	"time"
@@ -127,11 +123,7 @@ func serveCommand() *cobra.Command {
 				}
 			} else {
 				// 一時鍵を発行
-				priv, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-				ecder, _ := x509.MarshalECPrivateKey(priv)
-				ecderpub, _ := x509.MarshalPKIXPublicKey(&priv.PublicKey)
-				privRaw := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: ecder})
-				pubRaw := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: ecderpub})
+				privRaw, pubRaw := random.GenerateECDSAKey()
 				_ = jwt.SetupSigner(privRaw)
 				logger.Warn("a temporary key for QRCode JWT was generated. This key is valid only during this running.", zap.String("public_key", string(pubRaw)))
 			}
