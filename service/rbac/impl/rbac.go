@@ -2,9 +2,9 @@ package impl
 
 import (
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac"
-	systemRole "github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/rbac"
+	systemRole "github.com/traPtitech/traQ/service/rbac/role"
 	"sync"
 	"time"
 )

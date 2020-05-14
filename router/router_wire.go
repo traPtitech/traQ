@@ -5,12 +5,12 @@ package router
 import (
 	"github.com/google/wire"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/oauth2"
 	v1 "github.com/traPtitech/traQ/router/v1"
 	v3 "github.com/traPtitech/traQ/router/v3"
 	"github.com/traPtitech/traQ/service"
+	"github.com/traPtitech/traQ/service/rbac"
 	"go.uber.org/zap"
 )
 

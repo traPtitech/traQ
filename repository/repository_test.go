@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"

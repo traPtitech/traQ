@@ -1,6 +1,6 @@
 package permission
 
-import "github.com/traPtitech/traQ/rbac"
+import "github.com/traPtitech/traQ/service/rbac"
 
 var List = rbac.Permissions{}
 

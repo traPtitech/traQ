@@ -5,12 +5,12 @@ import (
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
-	rbac "github.com/traPtitech/traQ/rbac/impl"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/service/counter"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
+	rbac "github.com/traPtitech/traQ/service/rbac/impl"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/random"
 	"go.uber.org/zap"
@@ -27,7 +27,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/service/rbac/role"
 )
 
 const (

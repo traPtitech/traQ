@@ -7,7 +7,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"unicode/utf8"
 )
 

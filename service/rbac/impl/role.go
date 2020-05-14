@@ -1,6 +1,6 @@
 package impl
 
-import "github.com/traPtitech/traQ/rbac"
+import "github.com/traPtitech/traQ/service/rbac"
 
 type role struct {
 	name         string

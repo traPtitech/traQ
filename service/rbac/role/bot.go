@@ -1,8 +1,8 @@
 package role
 
 import (
-	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/rbac/permission"
+	"github.com/traPtitech/traQ/service/rbac"
+	"github.com/traPtitech/traQ/service/rbac/permission"
 )
 
 // Bot Botユーザーロール

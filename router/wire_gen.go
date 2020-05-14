@@ -7,12 +7,12 @@ package router
 
 import (
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/oauth2"
 	"github.com/traPtitech/traQ/router/v1"
 	"github.com/traPtitech/traQ/router/v3"
 	"github.com/traPtitech/traQ/service"
+	"github.com/traPtitech/traQ/service/rbac"
 	"go.uber.org/zap"
 )
 

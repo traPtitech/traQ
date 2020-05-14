@@ -3,7 +3,7 @@ package migration
 import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
-	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"gopkg.in/gormigrate.v1"
 	"time"
 )

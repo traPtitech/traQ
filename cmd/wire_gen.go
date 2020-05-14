@@ -8,7 +8,6 @@ package cmd
 import (
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/rbac"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/service"
@@ -17,6 +16,7 @@ import (
 	"github.com/traPtitech/traQ/service/heartbeat"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/notification"
+	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/sse"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"

@@ -3,10 +3,10 @@ package v1
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/rbac/permission"
-	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/service/bot/event"
+	"github.com/traPtitech/traQ/service/rbac"
+	"github.com/traPtitech/traQ/service/rbac/permission"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/optional"
 	"time"

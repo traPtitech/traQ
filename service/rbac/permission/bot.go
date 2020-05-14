@@ -1,7 +1,7 @@
 package permission
 
 import (
-	"github.com/traPtitech/traQ/rbac"
+	"github.com/traPtitech/traQ/service/rbac"
 )
 
 const (

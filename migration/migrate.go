@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"gopkg.in/gormigrate.v1"
 )
 
