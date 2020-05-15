@@ -32,17 +32,17 @@ func NewOnlineCounter(hub *hub.Hub) *OnlineCounter {
 		for e := range hub.Subscribe(8, event.SSEConnected, event.SSEDisconnected, event.WSConnected, event.WSDisconnected).Receiver {
 			switch e.Topic() {
 			case event.SSEConnected, event.WSConnected:
-				oc.Inc(e.Fields["user_id"].(uuid.UUID))
+				oc.inc(e.Fields["user_id"].(uuid.UUID))
 			case event.SSEDisconnected, event.WSDisconnected:
-				oc.Dec(e.Fields["user_id"].(uuid.UUID))
+				oc.dec(e.Fields["user_id"].(uuid.UUID))
 			}
 		}
 	}()
 	return oc
 }
 
-// Inc 指定したユーザーのカウンタをインクリメントします
-func (oc *OnlineCounter) Inc(userID uuid.UUID) (toOnline bool) {
+// inc 指定したユーザーのカウンタをインクリメントします
+func (oc *OnlineCounter) inc(userID uuid.UUID) (toOnline bool) {
 	oc.countersLock.Lock()
 	c, ok := oc.counters[userID]
 	if !ok {
@@ -67,8 +67,8 @@ func (oc *OnlineCounter) Inc(userID uuid.UUID) (toOnline bool) {
 	return
 }
 
-// Dec 指定したユーザーのカウンタをデクリメントします
-func (oc *OnlineCounter) Dec(userID uuid.UUID) (toOffline bool) {
+// dec 指定したユーザーのカウンタをデクリメントします
+func (oc *OnlineCounter) dec(userID uuid.UUID) (toOffline bool) {
 	oc.countersLock.Lock()
 	c, ok := oc.counters[userID]
 	if !ok {
