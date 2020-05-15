@@ -363,40 +363,6 @@ func (h *Handlers) formatUserGroups(gs []*model.UserGroup) ([]*userGroupResponse
 	return arr, nil
 }
 
-type roleResponse struct {
-	Name          string   `json:"name"`
-	Permissions   []string `json:"permissions"`
-	Inheritances  []string `json:"inheritances"`
-	IsOAuth2Scope bool     `json:"isOAuth2Scope"`
-	System        bool     `json:"system"`
-}
-
-func formatRole(role *model.UserRole) *roleResponse {
-	perms := make([]string, len(role.Permissions))
-	for k, v := range role.Permissions {
-		perms[k] = v.Permission
-	}
-	inhrs := make([]string, len(role.Inheritances))
-	for k, v := range role.Inheritances {
-		inhrs[k] = v.SubRole
-	}
-	return &roleResponse{
-		Name:          role.Name,
-		Permissions:   perms,
-		Inheritances:  inhrs,
-		IsOAuth2Scope: role.Oauth2Scope,
-		System:        role.System,
-	}
-}
-
-func formatRoles(roles []*model.UserRole) []*roleResponse {
-	arr := make([]*roleResponse, 0, len(roles))
-	for _, v := range roles {
-		arr = append(arr, formatRole(v))
-	}
-	return arr
-}
-
 type heartbeatResponse struct {
 	UserStatuses []*heartbeatUserResponse `json:"userStatuses"`
 	ChannelID    uuid.UUID                `json:"channelId"`
