@@ -14,8 +14,8 @@ import (
 )
 
 // AccessControlMiddlewareGenerator アクセスコントロールミドルウェアのジェネレーターを返します
-func AccessControlMiddlewareGenerator(r rbac.RBAC) func(p ...rbac.Permission) echo.MiddlewareFunc {
-	return func(p ...rbac.Permission) echo.MiddlewareFunc {
+func AccessControlMiddlewareGenerator(r rbac.RBAC) func(p ...permission.Permission) echo.MiddlewareFunc {
+	return func(p ...permission.Permission) echo.MiddlewareFunc {
 		return func(next echo.HandlerFunc) echo.HandlerFunc {
 			return func(c echo.Context) error {
 				// OAuth2スコープ権限検証

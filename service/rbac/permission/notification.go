@@ -1,14 +1,12 @@
 package permission
 
-import "github.com/traPtitech/traQ/service/rbac"
-
 const (
 	// GetChannelSubscription チャンネル購読状況取得権限
-	GetChannelSubscription = rbac.Permission("get_channel_subscription")
+	GetChannelSubscription = Permission("get_channel_subscription")
 	// EditChannelSubscription チャンネル購読変更権限
-	EditChannelSubscription = rbac.Permission("edit_channel_subscription")
+	EditChannelSubscription = Permission("edit_channel_subscription")
 	// ConnectNotificationStream 通知ストリームへの接続権限
-	ConnectNotificationStream = rbac.Permission("connect_notification_stream")
+	ConnectNotificationStream = Permission("connect_notification_stream")
 	// RegisterFCMDevice FCMデバイスの登録権限
-	RegisterFCMDevice = rbac.Permission("register_fcm_device")
+	RegisterFCMDevice = Permission("register_fcm_device")
 )

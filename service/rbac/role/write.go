@@ -1,14 +1,13 @@
 package role
 
 import (
-	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 )
 
 // Write 書き込み専用ユーザーロール
 const Write = "write"
 
-var writePerms = []rbac.Permission{
+var writePerms = []permission.Permission{
 	permission.CreateChannel,
 	permission.EditChannelTopic,
 	permission.PostMessage,

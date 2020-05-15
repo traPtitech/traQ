@@ -1,114 +1,149 @@
 package permission
 
-import "github.com/traPtitech/traQ/service/rbac"
+// Permission パーミッション
+type Permission string
 
-var List = rbac.Permissions{}
+// Name パーミッション名
+func (p Permission) Name() string {
+	return string(p)
+}
 
-func init() {
-	l := []rbac.Permission{
-		GetWebhook,
-		CreateWebhook,
-		EditWebhook,
-		DeleteWebhook,
-		AccessOthersWebhook,
+// Permissions パーミッションセット
+type Permissions map[Permission]struct{}
 
-		GetBot,
-		CreateBot,
-		EditBot,
-		DeleteBot,
-		AccessOthersBot,
+// Add セットに権限を追加します
+func (set Permissions) Add(p Permission) {
+	set[p] = struct{}{}
+}
 
-		BotActionJoinChannel,
-		BotActionLeaveChannel,
+// Remove セットから権限を削除します
+func (set Permissions) Remove(p Permission) {
+	delete(set, p)
+}
 
-		CreateChannel,
-		GetChannel,
-		EditChannel,
-		DeleteChannel,
-		ChangeParentChannel,
-		EditChannelTopic,
+// Contains セットに指定した権限が含まれているかどうか
+func (set Permissions) Contains(p Permission) bool {
+	_, ok := set[p]
+	return ok
+}
 
-		GetMyTokens,
-		RevokeMyToken,
-		GetClients,
-		CreateClient,
-		EditMyClient,
-		DeleteMyClient,
-		ManageOthersClient,
-
-		UploadFile,
-		DownloadFile,
-		DeleteFile,
-
-		GetHeartbeat,
-		PostHeartbeat,
-
-		GetMessage,
-		PostMessage,
-		EditMessage,
-		DeleteMessage,
-		ReportMessage,
-		GetMessageReports,
-
-		GetChannelSubscription,
-		EditChannelSubscription,
-		ConnectNotificationStream,
-		RegisterFCMDevice,
-
-		CreateMessagePin,
-		DeleteMessagePin,
-
-		GetMySessions,
-		DeleteMySessions,
-
-		GetMyExternalAccount,
-		EditMyExternalAccount,
-
-		GetStamp,
-		CreateStamp,
-		EditStamp,
-		EditStampCreatedByOthers,
-		DeleteStamp,
-		AddMessageStamp,
-		RemoveMessageStamp,
-		GetMyStampHistory,
-
-		GetChannelStar,
-		EditChannelStar,
-
-		GetUnread,
-		DeleteUnread,
-
-		GetUser,
-		RegisterUser,
-		GetMe,
-		EditMe,
-		ChangeMyIcon,
-		ChangeMyPassword,
-		EditOtherUsers,
-		GetUserQRCode,
-		GetUserGroup,
-		CreateUserGroup,
-		CreateSpecialUserGroup,
-		EditUserGroup,
-		DeleteUserGroup,
-
-		GetUserTag,
-		EditUserTag,
-
-		WebRTC,
-
-		GetClipFolder,
-		CreateClipFolder,
-		EditClipFolder,
-		DeleteClipFolder,
-
-		GetStampPalette,
-		CreateStampPalette,
-		EditStampPalette,
-		DeleteStampPalette,
+// Array セットの権限の配列を返します
+func (set Permissions) Array() []Permission {
+	result := make([]Permission, 0, len(set))
+	for k := range set {
+		result = append(result, k)
 	}
-	for _, p := range l {
-		List.Add(p)
+	return result
+}
+
+func PermissionsFromArray(perms []Permission) Permissions {
+	res := Permissions{}
+	for _, perm := range perms {
+		res.Add(perm)
 	}
+	return res
+}
+
+var List = []Permission{
+	GetWebhook,
+	CreateWebhook,
+	EditWebhook,
+	DeleteWebhook,
+	AccessOthersWebhook,
+
+	GetBot,
+	CreateBot,
+	EditBot,
+	DeleteBot,
+	AccessOthersBot,
+
+	BotActionJoinChannel,
+	BotActionLeaveChannel,
+
+	CreateChannel,
+	GetChannel,
+	EditChannel,
+	DeleteChannel,
+	ChangeParentChannel,
+	EditChannelTopic,
+
+	GetMyTokens,
+	RevokeMyToken,
+	GetClients,
+	CreateClient,
+	EditMyClient,
+	DeleteMyClient,
+	ManageOthersClient,
+
+	UploadFile,
+	DownloadFile,
+	DeleteFile,
+
+	GetHeartbeat,
+	PostHeartbeat,
+
+	GetMessage,
+	PostMessage,
+	EditMessage,
+	DeleteMessage,
+	ReportMessage,
+	GetMessageReports,
+
+	GetChannelSubscription,
+	EditChannelSubscription,
+	ConnectNotificationStream,
+	RegisterFCMDevice,
+
+	CreateMessagePin,
+	DeleteMessagePin,
+
+	GetMySessions,
+	DeleteMySessions,
+
+	GetMyExternalAccount,
+	EditMyExternalAccount,
+
+	GetStamp,
+	CreateStamp,
+	EditStamp,
+	EditStampCreatedByOthers,
+	DeleteStamp,
+	AddMessageStamp,
+	RemoveMessageStamp,
+	GetMyStampHistory,
+
+	GetChannelStar,
+	EditChannelStar,
+
+	GetUnread,
+	DeleteUnread,
+
+	GetUser,
+	RegisterUser,
+	GetMe,
+	EditMe,
+	ChangeMyIcon,
+	ChangeMyPassword,
+	EditOtherUsers,
+	GetUserQRCode,
+	GetUserGroup,
+	CreateUserGroup,
+	CreateSpecialUserGroup,
+	EditUserGroup,
+	DeleteUserGroup,
+
+	GetUserTag,
+	EditUserTag,
+
+	WebRTC,
+
+	GetClipFolder,
+	CreateClipFolder,
+	EditClipFolder,
+	DeleteClipFolder,
+
+	GetStampPalette,
+	CreateStampPalette,
+	EditStampPalette,
+	DeleteStampPalette,
 }

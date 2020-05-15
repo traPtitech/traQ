@@ -1,14 +1,13 @@
 package role
 
 import (
-	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 )
 
 // User 一般ユーザーロール
 const User = "user"
 
-var userPerms = []rbac.Permission{
+var userPerms = []permission.Permission{
 	// read, writeロールのパーミッションを全て含む
 	permission.ChangeMyPassword,
 	permission.GetUserQRCode,

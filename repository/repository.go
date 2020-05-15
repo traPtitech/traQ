@@ -26,7 +26,6 @@ type Repository interface {
 	WebhookRepository
 	OAuth2Repository
 	BotRepository
-	UserRoleRepository
 	message.ReplaceMapper
 	ClipRepository
 }

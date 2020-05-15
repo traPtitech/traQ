@@ -1,24 +1,20 @@
 package permission
 
-import (
-	"github.com/traPtitech/traQ/service/rbac"
-)
-
 const (
 	// CreateChannel チャンネル作成権限
-	CreateChannel = rbac.Permission("create_channel")
+	CreateChannel = Permission("create_channel")
 	// GetChannel チャンネル情報取得権限
-	GetChannel = rbac.Permission("get_channel")
+	GetChannel = Permission("get_channel")
 	// EditChannel チャンネル情報変更権限
-	EditChannel = rbac.Permission("edit_channel")
+	EditChannel = Permission("edit_channel")
 	// DeleteChannel チャンネル削除権限
-	DeleteChannel = rbac.Permission("delete_channel")
+	DeleteChannel = Permission("delete_channel")
 	// ChangeParentChannel 親チャンネル変更権限
-	ChangeParentChannel = rbac.Permission("change_parent_channel")
+	ChangeParentChannel = Permission("change_parent_channel")
 	// EditChannelTopic チャンネルトピック変更権限
-	EditChannelTopic = rbac.Permission("edit_channel_topic")
+	EditChannelTopic = Permission("edit_channel_topic")
 	// GetChannelStar チャンネルスター取得権限
-	GetChannelStar = rbac.Permission("get_channel_star")
+	GetChannelStar = Permission("get_channel_star")
 	// EditChannelStar チャンネルスター編集権限
-	EditChannelStar = rbac.Permission("edit_channel_star")
+	EditChannelStar = Permission("edit_channel_star")
 )

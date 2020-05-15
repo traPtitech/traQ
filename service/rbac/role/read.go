@@ -1,14 +1,13 @@
 package role
 
 import (
-	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 )
 
 // Read 読み取り専用ユーザーロール
 const Read = "read"
 
-var readPerms = []rbac.Permission{
+var readPerms = []permission.Permission{
 	permission.GetChannel,
 	permission.GetMessage,
 	permission.GetChannelSubscription,

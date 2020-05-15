@@ -14,7 +14,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/sessions"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
-	rbac "github.com/traPtitech/traQ/service/rbac/impl"
+	rbac2 "github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -86,7 +86,7 @@ func TestMain(m *testing.M) {
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap(repo))
 
-		r, err := rbac.New(repo)
+		r, err := rbac2.New(db)
 		if err != nil {
 			panic(err)
 		}

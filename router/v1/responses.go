@@ -4,27 +4,25 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/bot/event"
-	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
-	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/optional"
 	"time"
 )
 
 type meResponse struct {
-	UserID      uuid.UUID         `json:"userId"`
-	Name        string            `json:"name"`
-	DisplayName string            `json:"displayName"`
-	IconID      uuid.UUID         `json:"iconFileId"`
-	Bot         bool              `json:"bot"`
-	TwitterID   string            `json:"twitterId"`
-	LastOnline  optional.Time     `json:"lastOnline"`
-	IsOnline    bool              `json:"isOnline"`
-	Suspended   bool              `json:"suspended"`
-	Status      int               `json:"accountStatus"`
-	Role        string            `json:"role"`
-	Permissions []rbac.Permission `json:"permissions"`
+	UserID      uuid.UUID               `json:"userId"`
+	Name        string                  `json:"name"`
+	DisplayName string                  `json:"displayName"`
+	IconID      uuid.UUID               `json:"iconFileId"`
+	Bot         bool                    `json:"bot"`
+	TwitterID   string                  `json:"twitterId"`
+	LastOnline  optional.Time           `json:"lastOnline"`
+	IsOnline    bool                    `json:"isOnline"`
+	Suspended   bool                    `json:"suspended"`
+	Status      int                     `json:"accountStatus"`
+	Role        string                  `json:"role"`
+	Permissions []permission.Permission `json:"permissions"`
 }
 
 func (h *Handlers) formatMe(user model.UserInfo) *meResponse {
@@ -39,11 +37,7 @@ func (h *Handlers) formatMe(user model.UserInfo) *meResponse {
 		Suspended:   user.GetState() != model.UserAccountStatusActive,
 		Status:      user.GetState().Int(),
 		Role:        user.GetRole(),
-	}
-	if user.GetRole() == role.Admin {
-		res.Permissions = permission.List.Array()
-	} else {
-		res.Permissions = h.RBAC.GetGrantedPermissions(user.GetRole()).Array()
+		Permissions: h.RBAC.GetGrantedPermissions(user.GetRole()),
 	}
 
 	if res.IsOnline {

@@ -48,7 +48,7 @@ func Migrate(db *gorm.DB) error {
 		}
 
 		// 初期ユーザーロール投入
-		for _, v := range role.SystemRoles() {
+		for _, v := range role.SystemRoleModels() {
 			if err := db.Create(v).Error; err != nil {
 				return err
 			}

@@ -149,22 +149,6 @@ func (repo *TestRepository) GetChannelEvents(query repository.ChannelEventsQuery
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetRole(role string) (*model.UserRole, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) CreateRole(name string) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) UpdateRole(role string, args repository.UpdateRoleArgs) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetAllRoles() ([]*model.UserRole, error) {
-	return role.SystemRoles(), nil
-}
-
 func (repo *TestRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*repository.UserUnreadChannel, error) {
 	panic("implement me")
 }

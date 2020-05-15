@@ -12,9 +12,6 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
-	"github.com/traPtitech/traQ/service/rbac"
-	"github.com/traPtitech/traQ/service/rbac/permission"
-	"github.com/traPtitech/traQ/service/rbac/role"
 	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -51,13 +48,6 @@ func (h *Handlers) GetMe(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	var perms []rbac.Permission
-	if me.GetRole() == role.Admin {
-		perms = permission.List.Array()
-	} else {
-		perms = h.RBAC.GetGrantedPermissions(me.GetRole()).Array()
-	}
-
 	return c.JSON(http.StatusOK, echo.Map{
 		"id":          me.GetID(),
 		"bio":         me.GetBio(),
@@ -71,7 +61,7 @@ func (h *Handlers) GetMe(c echo.Context) error {
 		"iconFileId":  me.GetIconFileID(),
 		"bot":         me.IsBot(),
 		"state":       me.GetState().Int(),
-		"permissions": perms,
+		"permissions": h.RBAC.GetGrantedPermissions(me.GetRole()),
 		"homeChannel": me.GetHomeChannel(),
 	})
 }

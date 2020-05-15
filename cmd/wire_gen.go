@@ -16,7 +16,7 @@ import (
 	"github.com/traPtitech/traQ/service/heartbeat"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/notification"
-	"github.com/traPtitech/traQ/service/rbac/impl"
+	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/sse"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
@@ -60,7 +60,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 	wsStreamer := ws.NewStreamer(hub2, manager, webrtcv3Manager, logger)
 	serverOriginString := provideServerOriginString(c2)
 	notificationService := notification.NewService(repo, hub2, logger, client, streamer, wsStreamer, manager, serverOriginString)
-	rbac, err := impl.New(repo)
+	rbacRBAC, err := rbac.New(db)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 		HeartBeats:           heartbeatManager,
 		Imaging:              imagingProcessor,
 		Notification:         notificationService,
-		RBAC:                 rbac,
+		RBAC:                 rbacRBAC,
 		SSE:                  streamer,
 		ViewerManager:        manager,
 		WebRTCv3:             webrtcv3Manager,

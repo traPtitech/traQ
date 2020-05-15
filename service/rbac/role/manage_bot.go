@@ -1,14 +1,13 @@
 package role
 
 import (
-	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 )
 
 // ManageBot BotConsoleロール
 const ManageBot = "manage_bot"
 
-var manageBotPerms = []rbac.Permission{
+var manageBotPerms = []permission.Permission{
 	permission.GetChannel,
 	permission.GetUser,
 	permission.GetMe,

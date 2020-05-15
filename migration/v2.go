@@ -28,7 +28,7 @@ func v2() *gormigrate.Migration {
 				}
 			}
 
-			for _, v := range role.SystemRoles() {
+			for _, v := range role.SystemRoleModels() {
 				if err := db.Create(v).Error; err != nil {
 					return err
 				}

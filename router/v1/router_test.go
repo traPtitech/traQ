@@ -10,7 +10,8 @@ import (
 	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/service/counter"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
-	rbac "github.com/traPtitech/traQ/service/rbac/impl"
+	"github.com/traPtitech/traQ/service/rbac"
+	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/random"
 	"go.uber.org/zap"
@@ -72,13 +73,9 @@ func TestMain(m *testing.M) {
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap(repo))
 
-		r, err := rbac.New(repo)
-		if err != nil {
-			panic(err)
-		}
 		h := hub.New()
 		handlers := &Handlers{
-			RBAC:       r,
+			RBAC:       newTestRBAC(),
 			Repo:       repo,
 			Hub:        h,
 			Logger:     zap.NewNop(),
@@ -280,4 +277,48 @@ func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID
 func mustChangeChannelSubscription(t *testing.T, repo repository.Repository, channelID, userID uuid.UUID) {
 	t.Helper()
 	require.NoError(t, repo.ChangeChannelSubscription(channelID, repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}}))
+}
+
+type rbacImpl struct {
+	roles role.Roles
+}
+
+func newTestRBAC() rbac.RBAC {
+	rbac := &rbacImpl{
+		roles: role.GetSystemRoles(),
+	}
+	return rbac
+}
+
+func (rbacImpl *rbacImpl) IsGranted(r string, p permission.Permission) bool {
+	if r == role.Admin {
+		return true
+	}
+	return rbacImpl.roles.HasAndIsGranted(r, p)
+}
+
+func (rbacImpl *rbacImpl) IsAllGranted(roles []string, perm permission.Permission) bool {
+	for _, role := range roles {
+		if !rbacImpl.IsGranted(role, perm) {
+			return false
+		}
+	}
+	return true
+}
+
+func (rbacImpl *rbacImpl) IsAnyGranted(roles []string, perm permission.Permission) bool {
+	for _, role := range roles {
+		if rbacImpl.IsGranted(role, perm) {
+			return true
+		}
+	}
+	return false
+}
+
+func (rbacImpl *rbacImpl) GetGrantedPermissions(roleName string) []permission.Permission {
+	ro, ok := rbacImpl.roles[roleName]
+	if ok {
+		return ro.Permissions().Array()
+	}
+	return nil
 }
