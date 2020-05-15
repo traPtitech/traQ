@@ -4,39 +4,24 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"time"
 )
 
-var (
-	initialized     = false
-	messagesCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Namespace: "traq",
-		Name:      "messages_count_total",
-	})
-	channelsCounter = promauto.NewCounter(prometheus.CounterOpts{
-		Namespace: "traq",
-		Name:      "channels_count_total",
-	})
-)
-
 // GormRepository リポジトリ実装
 type GormRepository struct {
-	db             *gorm.DB
-	hub            *hub.Hub
-	logger         *zap.Logger
-	chTree         *channelTreeImpl
-	stamps         *stampRepository
-	unreadCounters *unreadMessageCounters
-	fileImpl
+	db     *gorm.DB
+	hub    *hub.Hub
+	logger *zap.Logger
+	chTree *channelTreeImpl
+	stamps *stampRepository
+	fs     storage.FileStorage
 }
 
 // Channel implements ReplaceMapper interface.
@@ -86,29 +71,6 @@ func (repo *GormRepository) Sync() (init bool, err error) {
 	}
 	repo.stamps = makeStampRepository(stamps)
 
-	// 未読カウンター初期化
-	repo.unreadCounters, err = makeUnreadMessageCounters(repo.db)
-	if err != nil {
-		return false, err
-	}
-
-	// メトリクス用データ取得
-	if !initialized {
-		initialized = true
-
-		messageNum := 0
-		if err := repo.db.Unscoped().Model(&model.Message{}).Count(&messageNum).Error; err != nil {
-			return false, err
-		}
-		messagesCounter.Add(float64(messageNum))
-
-		channelNum := 0
-		if err := repo.db.Unscoped().Model(&model.Channel{}).Where(&model.Channel{IsPublic: true}).Count(&channelNum).Error; err != nil {
-			return false, err
-		}
-		channelsCounter.Add(float64(channelNum))
-	}
-
 	// 管理者ユーザーの確認
 	c := 0
 	if err := repo.db.Model(&model.User{}).Where(&model.User{Role: role.Admin}).Limit(1).Count(&c).Error; err != nil {
@@ -129,20 +91,13 @@ func (repo *GormRepository) Sync() (init bool, err error) {
 	return false, nil
 }
 
-// GetFS implements Repository interface.
-func (repo *GormRepository) GetFS() storage.FileStorage {
-	return repo.FS
-}
-
 // NewGormRepository リポジトリ実装を初期化して生成します
 func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub, logger *zap.Logger) (Repository, error) {
 	repo := &GormRepository{
 		db:     db,
 		hub:    hub,
-		logger: logger,
-		fileImpl: fileImpl{
-			FS: fs,
-		},
+		logger: logger.Named("repository"),
+		fs:     fs,
 	}
 	go func() {
 		sub := hub.Subscribe(10, event.UserOffline)

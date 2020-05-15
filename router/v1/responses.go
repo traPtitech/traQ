@@ -2,29 +2,27 @@ package v1
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/bot/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/rbac/permission"
-	"github.com/traPtitech/traQ/rbac/role"
-	"github.com/traPtitech/traQ/realtime/viewer"
+	"github.com/traPtitech/traQ/service/bot/event"
+	"github.com/traPtitech/traQ/service/rbac/permission"
+	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/optional"
 	"time"
 )
 
 type meResponse struct {
-	UserID      uuid.UUID         `json:"userId"`
-	Name        string            `json:"name"`
-	DisplayName string            `json:"displayName"`
-	IconID      uuid.UUID         `json:"iconFileId"`
-	Bot         bool              `json:"bot"`
-	TwitterID   string            `json:"twitterId"`
-	LastOnline  optional.Time     `json:"lastOnline"`
-	IsOnline    bool              `json:"isOnline"`
-	Suspended   bool              `json:"suspended"`
-	Status      int               `json:"accountStatus"`
-	Role        string            `json:"role"`
-	Permissions []rbac.Permission `json:"permissions"`
+	UserID      uuid.UUID               `json:"userId"`
+	Name        string                  `json:"name"`
+	DisplayName string                  `json:"displayName"`
+	IconID      uuid.UUID               `json:"iconFileId"`
+	Bot         bool                    `json:"bot"`
+	TwitterID   string                  `json:"twitterId"`
+	LastOnline  optional.Time           `json:"lastOnline"`
+	IsOnline    bool                    `json:"isOnline"`
+	Suspended   bool                    `json:"suspended"`
+	Status      int                     `json:"accountStatus"`
+	Role        string                  `json:"role"`
+	Permissions []permission.Permission `json:"permissions"`
 }
 
 func (h *Handlers) formatMe(user model.UserInfo) *meResponse {
@@ -35,15 +33,11 @@ func (h *Handlers) formatMe(user model.UserInfo) *meResponse {
 		IconID:      user.GetIconFileID(),
 		Bot:         user.IsBot(),
 		TwitterID:   user.GetTwitterID(),
-		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.GetID()),
+		IsOnline:    h.OC.IsOnline(user.GetID()),
 		Suspended:   user.GetState() != model.UserAccountStatusActive,
 		Status:      user.GetState().Int(),
 		Role:        user.GetRole(),
-	}
-	if user.GetRole() == role.Admin {
-		res.Permissions = permission.List.Array()
-	} else {
-		res.Permissions = h.RBAC.GetGrantedPermissions(user.GetRole()).Array()
+		Permissions: h.RBAC.GetGrantedPermissions(user.GetRole()),
 	}
 
 	if res.IsOnline {
@@ -75,7 +69,7 @@ func (h *Handlers) formatUser(user model.UserInfo) *userResponse {
 		IconID:      user.GetIconFileID(),
 		Bot:         user.IsBot(),
 		TwitterID:   user.GetTwitterID(),
-		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.GetID()),
+		IsOnline:    h.OC.IsOnline(user.GetID()),
 		Suspended:   user.GetState() != model.UserAccountStatusActive,
 		Status:      user.GetState().Int(),
 	}
@@ -118,7 +112,7 @@ func (h *Handlers) formatUserDetail(user model.UserInfo, tagList []model.UserTag
 		IconID:      user.GetIconFileID(),
 		Bot:         user.IsBot(),
 		TwitterID:   user.GetTwitterID(),
-		IsOnline:    h.Realtime.OnlineCounter.IsOnline(user.GetID()),
+		IsOnline:    h.OC.IsOnline(user.GetID()),
 		Suspended:   user.GetState() != model.UserAccountStatusActive,
 		Status:      user.GetState().Int(),
 		TagList:     formatTags(tagList),
@@ -367,40 +361,6 @@ func (h *Handlers) formatUserGroups(gs []*model.UserGroup) ([]*userGroupResponse
 		arr[i] = formatUserGroup(g)
 	}
 	return arr, nil
-}
-
-type roleResponse struct {
-	Name          string   `json:"name"`
-	Permissions   []string `json:"permissions"`
-	Inheritances  []string `json:"inheritances"`
-	IsOAuth2Scope bool     `json:"isOAuth2Scope"`
-	System        bool     `json:"system"`
-}
-
-func formatRole(role *model.UserRole) *roleResponse {
-	perms := make([]string, len(role.Permissions))
-	for k, v := range role.Permissions {
-		perms[k] = v.Permission
-	}
-	inhrs := make([]string, len(role.Inheritances))
-	for k, v := range role.Inheritances {
-		inhrs[k] = v.SubRole
-	}
-	return &roleResponse{
-		Name:          role.Name,
-		Permissions:   perms,
-		Inheritances:  inhrs,
-		IsOAuth2Scope: role.Oauth2Scope,
-		System:        role.System,
-	}
-}
-
-func formatRoles(roles []*model.UserRole) []*roleResponse {
-	arr := make([]*roleResponse, 0, len(roles))
-	for _, v := range roles {
-		arr = append(arr, formatRole(v))
-	}
-	return arr
 }
 
 type heartbeatResponse struct {

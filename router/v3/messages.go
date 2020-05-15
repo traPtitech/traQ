@@ -167,7 +167,7 @@ func (h *Handlers) CreatePin(c echo.Context) error {
 		return herror.BadRequest("this message has already been pinned")
 	}
 
-	p, err := h.Repo.CreatePin(m.ID, getRequestUserID(c))
+	p, err := h.Repo.PinMessage(m.ID, getRequestUserID(c))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -181,7 +181,7 @@ func (h *Handlers) RemovePin(c echo.Context) error {
 		return herror.NotFound("this message is not pinned")
 	}
 
-	if err := h.Repo.DeletePin(m.Pin.ID, getRequestUserID(c)); err != nil {
+	if err := h.Repo.UnpinMessage(m.ID, getRequestUserID(c)); err != nil {
 		return herror.InternalServerError(err)
 	}
 

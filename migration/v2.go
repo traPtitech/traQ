@@ -3,7 +3,7 @@ package migration
 import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
-	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"gopkg.in/gormigrate.v1"
 	"time"
 )
@@ -28,7 +28,7 @@ func v2() *gormigrate.Migration {
 				}
 			}
 
-			for _, v := range role.SystemRoles() {
+			for _, v := range role.SystemRoleModels() {
 				if err := db.Create(v).Error; err != nil {
 					return err
 				}

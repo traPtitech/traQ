@@ -8,11 +8,11 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac/permission"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -191,7 +191,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 		return herror.BadRequest("invalid channel")
 	}
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel has been archived"))
+		return herror.BadRequest("channel has been archived")
 	}
 
 	if c.QueryParam("embed") == "1" {

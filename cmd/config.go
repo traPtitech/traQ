@@ -1,11 +1,20 @@
 package cmd
 
 import (
+	"cloud.google.com/go/profiler"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/spf13/viper"
-	"github.com/traPtitech/traQ/utils/imaging"
+	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router"
+	"github.com/traPtitech/traQ/router/auth"
+	"github.com/traPtitech/traQ/service/counter"
+	"github.com/traPtitech/traQ/service/fcm"
+	"github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/utils/storage"
+	"go.uber.org/zap"
+	"google.golang.org/api/option"
 	"image"
 	"time"
 )
@@ -301,11 +310,95 @@ func (c Config) getDatabase() (*gorm.DB, error) {
 	return engine.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"), nil
 }
 
-func (c Config) getImageProcessor() imaging.Processor {
-	return imaging.NewProcessor(imaging.Config{
+func initStackdriverProfiler(c *Config) error {
+	return profiler.Start(profiler.Config{
+		Service:        "traq",
+		ServiceVersion: fmt.Sprintf("%s.%s", Version, Revision),
+		ProjectID:      c.GCP.ServiceAccount.ProjectID,
+	}, option.WithCredentialsFile(c.GCP.ServiceAccount.File))
+}
+
+func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unreadCounter counter.UnreadMessageCounter, file variable.FirebaseCredentialsFilePathString) (*fcm.Client, error) {
+	if len(file) > 0 {
+		return fcm.NewClientWithCredentialsFile(repo, logger, unreadCounter, file)
+	}
+	return nil, nil
+}
+
+func provideServerOriginString(c *Config) variable.ServerOriginString {
+	return variable.ServerOriginString(c.Origin)
+}
+
+func provideFirebaseCredentialsFilePathString(c *Config) variable.FirebaseCredentialsFilePathString {
+	return variable.FirebaseCredentialsFilePathString(c.Firebase.ServiceAccount.File)
+}
+
+func provideImageProcessorConfig(c *Config) imaging.Config {
+	return imaging.Config{
 		MaxPixels:        c.Imaging.MaxPixels,
 		Concurrency:      c.Imaging.Concurrency,
 		ThumbnailMaxSize: image.Pt(360, 480),
 		ImageMagickPath:  c.ImageMagick,
-	})
+	}
+}
+
+func provideAuthGithubProviderConfig(c *Config) auth.GithubProviderConfig {
+	return auth.GithubProviderConfig{
+		ClientID:               c.ExternalAuth.GitHub.ClientID,
+		ClientSecret:           c.ExternalAuth.GitHub.ClientSecret,
+		RegisterUserIfNotFound: c.ExternalAuth.GitHub.AllowSignUp,
+	}
+}
+
+func provideAuthGoogleProviderConfig(c *Config) auth.GoogleProviderConfig {
+	return auth.GoogleProviderConfig{
+		ClientID:               c.ExternalAuth.Google.ClientID,
+		ClientSecret:           c.ExternalAuth.Google.ClientSecret,
+		CallbackURL:            c.Origin + "/api/auth/google/callback",
+		RegisterUserIfNotFound: c.ExternalAuth.Google.AllowSignUp,
+	}
+}
+
+func provideAuthOIDCProviderConfig(c *Config) auth.OIDCProviderConfig {
+	return auth.OIDCProviderConfig{
+		Issuer:                 c.ExternalAuth.OIDC.Issuer,
+		ClientID:               c.ExternalAuth.OIDC.ClientID,
+		ClientSecret:           c.ExternalAuth.OIDC.ClientSecret,
+		Scopes:                 c.ExternalAuth.OIDC.Scopes,
+		CallbackURL:            c.Origin + "/api/auth/oidc/callback",
+		RegisterUserIfNotFound: c.ExternalAuth.OIDC.AllowSignUp,
+	}
+}
+
+func provideAuthTraQProviderConfig(c *Config) auth.TraQProviderConfig {
+	return auth.TraQProviderConfig{
+		Origin:                 c.ExternalAuth.TraQ.Origin,
+		ClientID:               c.ExternalAuth.TraQ.ClientID,
+		ClientSecret:           c.ExternalAuth.TraQ.ClientSecret,
+		CallbackURL:            c.Origin + "/api/auth/traq/callback",
+		RegisterUserIfNotFound: c.ExternalAuth.TraQ.AllowSignUp,
+	}
+}
+
+func provideRouterExternalAuthConfig(c *Config) router.ExternalAuthConfig {
+	return router.ExternalAuthConfig{
+		GitHub: provideAuthGithubProviderConfig(c),
+		Google: provideAuthGoogleProviderConfig(c),
+		TraQ:   provideAuthTraQProviderConfig(c),
+		OIDC:   provideAuthOIDCProviderConfig(c),
+	}
+}
+
+func providerRouterConfig(c *Config) *router.Config {
+	return &router.Config{
+		Development:      c.DevMode,
+		Version:          Version,
+		Revision:         Revision,
+		AccessLogging:    c.AccessLog.Enabled,
+		Gzipped:          c.Gzip,
+		AccessTokenExp:   c.OAuth2.AccessTokenExpire,
+		IsRefreshEnabled: c.OAuth2.IsRefreshEnabled,
+		SkyWaySecretKey:  c.SkyWay.SecretKey,
+		ExternalAuth:     provideRouterExternalAuthConfig(c),
+	}
 }

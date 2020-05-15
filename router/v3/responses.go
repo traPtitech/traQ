@@ -1,7 +1,7 @@
 package v3
 
 import (
-	"github.com/traPtitech/traQ/bot/event"
+	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/utils/optional"
 	"time"
 

@@ -1,0 +1,67 @@
+package ws
+
+import (
+	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/utils/set"
+)
+
+// TargetFunc メッセージ送信対象関数
+type TargetFunc func(s Session) bool
+
+// TargetAll 全セッションを対象に送信します
+func TargetAll() TargetFunc {
+	return func(_ Session) bool {
+		return true
+	}
+}
+
+// TargetUsers 指定したユーザーを対象に送信します
+func TargetUsers(userID ...uuid.UUID) TargetFunc {
+	return func(s Session) bool {
+		for _, u := range userID {
+			if u == s.UserID() {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+// TargetUserSets 指定したユーザーを対象に送信します
+func TargetUserSets(sets ...set.UUID) TargetFunc {
+	return func(s Session) bool {
+		for _, set := range sets {
+			if set.Contains(s.UserID()) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+// TargetChannelViewers 指定したチャンネルの閲覧者を対象に送信します
+func TargetChannelViewers(channelID uuid.UUID) TargetFunc {
+	return func(s Session) bool {
+		c, _ := s.ViewState()
+		return c == channelID
+	}
+}
+
+// TargetTimelineStreamingEnabled タイムラインストリーミングが有効なコネクションを対象に送信します
+func TargetTimelineStreamingEnabled() TargetFunc {
+	return func(s Session) bool {
+		return s.TimelineStreaming()
+	}
+}
+
+// Or いずれかのTargetFuncの条件に該当する対象に送信します
+func Or(funcs ...TargetFunc) TargetFunc {
+	return func(s Session) bool {
+		for _, f := range funcs {
+			if f(s) {
+				return true
+			}
+		}
+		return false
+	}
+}

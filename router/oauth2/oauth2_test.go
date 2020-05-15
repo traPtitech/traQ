@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
-	rbac "github.com/traPtitech/traQ/rbac/impl"
-	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/sessions"
+	rbac2 "github.com/traPtitech/traQ/service/rbac"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
@@ -85,16 +85,18 @@ func TestMain(m *testing.M) {
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap(repo))
 
-		r, err := rbac.New(repo)
+		r, err := rbac2.New(db)
 		if err != nil {
 			panic(err)
 		}
-		config := &Config{
-			RBAC:             r,
-			Repo:             repo,
-			Logger:           zap.NewNop(),
-			AccessTokenExp:   1000,
-			IsRefreshEnabled: true,
+		config := &Handler{
+			RBAC:   r,
+			Repo:   repo,
+			Logger: zap.NewNop(),
+			Config: Config{
+				AccessTokenExp:   1000,
+				IsRefreshEnabled: true,
+			},
 		}
 		config.Setup(e.Group("/oauth2"))
 		servers[key] = httptest.NewServer(e)

@@ -74,10 +74,17 @@ const (
 	//  	old_message: *model.Message
 	MessageUpdated = "message.updated"
 	// MessageDeleted メッセージが削除された
-	// 	Fields:
-	// 		message_id: uuid.UUID
-	//  	message: *model.Message
+	//	Fields:
+	//		message_id: uuid.UUID
+	//		message: *model.Message
+	//		deleted_unreads: []*model.Unread
 	MessageDeleted = "message.deleted"
+	// MessageUnread メッセージが未読になった
+	//	Fields:
+	//		message_id: uuid.UUID
+	//		user_id: uuid.UUID
+	//		noticeable: bool
+	MessageUnread = "message.unread"
 	// MessageStamped メッセージにスタンプが押された
 	// 	Fields:
 	// 		message_id: uuid.UUID
@@ -134,9 +141,10 @@ const (
 	// 		private: bool
 	ChannelDeleted = "channel.deleted"
 	// ChannelRead チャンネルのメッセージが既読された
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		channel_id: uuid.UUID
+	//	Fields:
+	//		user_id: uuid.UUID
+	//		channel_id: uuid.UUID
+	//		read_messages_num: int
 	ChannelRead = "channel.read"
 	// ChannelStared チャンネルがスターされた
 	// 	Fields:

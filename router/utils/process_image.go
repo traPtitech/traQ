@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/imaging"
 	"image/png"
 )
@@ -20,16 +21,16 @@ const (
 )
 
 // SaveUploadIconImage MultipartFormでアップロードされたアイコン画像ファイルを保存
-func SaveUploadIconImage(p imaging.Processor, c echo.Context, repo repository.Repository, name string) (uuid.UUID, error) {
+func SaveUploadIconImage(p imaging2.Processor, c echo.Context, repo repository.Repository, name string) (uuid.UUID, error) {
 	return saveUploadImage(p, c, repo, name, model.FileTypeIcon, iconMaxFileSize, iconMaxImageSize)
 }
 
 // SaveUploadStampImage MultipartFormでアップロードされたスタンプ画像ファイルを保存
-func SaveUploadStampImage(p imaging.Processor, c echo.Context, repo repository.Repository, name string) (uuid.UUID, error) {
+func SaveUploadStampImage(p imaging2.Processor, c echo.Context, repo repository.Repository, name string) (uuid.UUID, error) {
 	return saveUploadImage(p, c, repo, name, model.FileTypeStamp, stampMaxFileSize, stampMaxImageSize)
 }
 
-func saveUploadImage(p imaging.Processor, c echo.Context, repo repository.Repository, name string, fType model.FileType, maxFileSize int64, maxImageSize int) (uuid.UUID, error) {
+func saveUploadImage(p imaging2.Processor, c echo.Context, repo repository.Repository, name string, fType model.FileType, maxFileSize int64, maxImageSize int) (uuid.UUID, error) {
 	const (
 		tooLargeImage = "too large image"
 		badImage      = "bad image"
@@ -57,9 +58,9 @@ func saveUploadImage(p imaging.Processor, c echo.Context, repo repository.Reposi
 		img, err := p.Fit(src, maxImageSize, maxImageSize)
 		if err != nil {
 			switch err {
-			case imaging.ErrInvalidImageSrc:
+			case imaging2.ErrInvalidImageSrc:
 				return uuid.Nil, herror.BadRequest(badImage)
-			case imaging.ErrPixelLimitExceeded:
+			case imaging2.ErrPixelLimitExceeded:
 				return uuid.Nil, herror.BadRequest(tooLargeImage)
 			default:
 				return uuid.Nil, herror.InternalServerError(err)
@@ -85,7 +86,7 @@ func saveUploadImage(p imaging.Processor, c echo.Context, repo repository.Reposi
 			case imaging.ErrImageMagickUnavailable:
 				// gifは一時的にサポートされていない
 				return uuid.Nil, herror.BadRequest("gif file is temporarily unsupported")
-			case imaging.ErrInvalidImageSrc, imaging.ErrTimeout:
+			case imaging2.ErrInvalidImageSrc, imaging2.ErrTimeout:
 				// 不正なgifである
 				return uuid.Nil, herror.BadRequest(badImage)
 			default:

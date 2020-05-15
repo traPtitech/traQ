@@ -8,6 +8,7 @@ traQ: $(SOURCES)
 .PHONY: init
 init:
 	go mod download
+	go install github.com/google/wire/cmd/wire
 
 .PHONY: genkey
 genkey:

@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"fmt"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
@@ -43,7 +42,7 @@ func (h *Handlers) PutMessageByID(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel has been archived"))
+		return herror.BadRequest("channel has been archived")
 	}
 
 	var req PutMessageByIDRequest
@@ -100,7 +99,7 @@ func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel has been archived"))
+		return herror.BadRequest("channel has been archived")
 	}
 
 	if err := h.Repo.DeleteMessage(m.ID); err != nil {
@@ -140,7 +139,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 	ch := getChannelFromContext(c)
 
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel has been archived"))
+		return herror.BadRequest("channel has been archived")
 	}
 
 	var req PostMessageRequest

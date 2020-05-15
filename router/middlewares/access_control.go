@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/rbac/permission"
-	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/service/rbac"
+	"github.com/traPtitech/traQ/service/rbac/permission"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"net/http"
 )
 
 // AccessControlMiddlewareGenerator アクセスコントロールミドルウェアのジェネレーターを返します
-func AccessControlMiddlewareGenerator(r rbac.RBAC) func(p ...rbac.Permission) echo.MiddlewareFunc {
-	return func(p ...rbac.Permission) echo.MiddlewareFunc {
+func AccessControlMiddlewareGenerator(r rbac.RBAC) func(p ...permission.Permission) echo.MiddlewareFunc {
+	return func(p ...permission.Permission) echo.MiddlewareFunc {
 		return func(next echo.HandlerFunc) echo.HandlerFunc {
 			return func(c echo.Context) error {
 				// OAuth2スコープ権限検証

@@ -13,7 +13,7 @@ import (
 
 // GetOnlineUsers GET /activity/onlines
 func (h *Handlers) GetOnlineUsers(c echo.Context) error {
-	return c.JSON(http.StatusOK, h.Realtime.OnlineCounter.GetOnlineUserIDs())
+	return c.JSON(http.StatusOK, h.OC.GetOnlineUserIDs())
 }
 
 // GetActivityTimelineRequest GET /activity/timeline リクエストボディ

@@ -3,26 +3,33 @@ package v3
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/rbac/permission"
-	"github.com/traPtitech/traQ/realtime"
-	"github.com/traPtitech/traQ/realtime/ws"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
-	"github.com/traPtitech/traQ/utils/imaging"
+	"github.com/traPtitech/traQ/service/counter"
+	"github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/rbac"
+	"github.com/traPtitech/traQ/service/rbac/permission"
+	"github.com/traPtitech/traQ/service/viewer"
+	"github.com/traPtitech/traQ/service/webrtcv3"
+	"github.com/traPtitech/traQ/service/ws"
 	"go.uber.org/zap"
 )
 
 type Handlers struct {
-	RBAC     rbac.RBAC
-	Repo     repository.Repository
-	WS       *ws.Streamer
-	Hub      *hub.Hub
-	Logger   *zap.Logger
-	Realtime *realtime.Service
-	Imaging  imaging.Processor
+	RBAC    rbac.RBAC
+	Repo    repository.Repository
+	WS      *ws.Streamer
+	Hub     *hub.Hub
+	Logger  *zap.Logger
+	OC      *counter.OnlineCounter
+	VM      *viewer.Manager
+	WebRTC  *webrtcv3.Manager
+	Imaging imaging.Processor
+	Config
+}
 
+type Config struct {
 	Version  string
 	Revision string
 

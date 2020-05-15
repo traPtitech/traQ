@@ -36,8 +36,8 @@ func (h *Handlers) GetChannelSubscribers(c echo.Context) error {
 
 // PutChannelSubscribersRequest PUT /channels/:channelID/notification リクエストボディ
 type PutChannelSubscribersRequest struct {
-	On  set.UUIDSet `json:"on"`
-	Off set.UUIDSet `json:"off"`
+	On  set.UUID `json:"on"`
+	Off set.UUID `json:"off"`
 }
 
 // PutChannelSubscribers PUT /channels/:channelID/notification
@@ -98,7 +98,7 @@ func (h *Handlers) PostDeviceToken(c echo.Context) error {
 		return err
 	}
 
-	if _, err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
+	if err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)

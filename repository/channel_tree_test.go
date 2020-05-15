@@ -36,10 +36,10 @@ a : 6fd36038-dd44-4ac1-bec6-a8a997be6969
 │ │ └ e : 1907a97e-bb59-4fdf-bf12-a09ef2688be3
 │ ├ f : 0105dd78-5146-4788-8bdb-045d9e4d7ab3
 │ │ └ a : ee6e2a55-1040-44e4-92c6-e8c1a8d0dd92
-│ └ b : c271de50-c0ac-4f06-898f-b1ab09891dd3
-│ 　 └ c : dbb63e83-288f-4ea0-959a-b7235bd17239
+│ └ b : c271de50-c0ac-4f06-898f-b1ab09891dd3 archived
+│ 　 └ c : dbb63e83-288f-4ea0-959a-b7235bd17239 archived
 └ d : 25b3a90d-2b75-41d8-9bea-8c1c8b2af166
-e : 6301b259-2a3e-4a30-9ec8-78737c4b539d
+e : 6301b259-2a3e-4a30-9ec8-78737c4b539d force
 ├ f : 978afa3e-0913-4f52-94d1-c0536a95bb70
 │ └ g : fe2477c0-0c44-4247-a556-ab92ac6d5395
 │ 　 ├ h : c115b6f5-36f7-428c-9432-580949529acb
@@ -57,10 +57,10 @@ func makeTestChannelTree(t *testing.T) *channelTreeImpl {
 		{ID: cABCE, Name: "e", ParentID: cABC, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
 		{ID: cABF, Name: "f", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
 		{ID: cABFA, Name: "a", ParentID: cABF, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
-		{ID: cABB, Name: "b", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
-		{ID: cABBC, Name: "c", ParentID: cABB, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
+		{ID: cABB, Name: "b", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+		{ID: cABBC, Name: "c", ParentID: cABB, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
 		{ID: cAD, Name: "d", ParentID: cA, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
-		{ID: cE, Name: "e", ParentID: uuid.Nil, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
+		{ID: cE, Name: "e", ParentID: uuid.Nil, Topic: "", IsForced: true, IsPublic: true, IsVisible: true},
 		{ID: cEF, Name: "f", ParentID: cE, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
 		{ID: cEFG, Name: "g", ParentID: cEF, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
 		{ID: cEFGH, Name: "h", ParentID: cEFG, Topic: "", IsForced: false, IsPublic: true, IsVisible: true},
@@ -166,4 +166,23 @@ func TestChannelTreeImpl_GetChannelIDFromPath(t *testing.T) {
 	assert.EqualValues(t, cABCD, tree.GetChannelIDFromPath("a/b/c/d"))
 	assert.EqualValues(t, cABFA, tree.GetChannelIDFromPath("a/b/f/a"))
 	assert.EqualValues(t, uuid.Nil, tree.GetChannelIDFromPath("aaaa"))
+}
+
+func TestChannelTreeImpl_IsForceChannel(t *testing.T) {
+	t.Parallel()
+	tree := makeTestChannelTree(t)
+
+	assert.True(t, tree.IsForceChannel(cE))
+	assert.False(t, tree.IsForceChannel(cA))
+	assert.False(t, tree.IsForceChannel(uuid.Nil))
+}
+
+func TestChannelTreeImpl_IsArchivedChannel(t *testing.T) {
+	t.Parallel()
+	tree := makeTestChannelTree(t)
+
+	assert.True(t, tree.IsArchivedChannel(cABB))
+	assert.True(t, tree.IsArchivedChannel(cABBC))
+	assert.False(t, tree.IsArchivedChannel(cA))
+	assert.False(t, tree.IsArchivedChannel(uuid.Nil))
 }

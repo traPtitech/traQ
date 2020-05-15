@@ -8,16 +8,18 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/rbac/permission"
-	"github.com/traPtitech/traQ/realtime"
-	"github.com/traPtitech/traQ/realtime/sse"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/middlewares"
-	"github.com/traPtitech/traQ/utils/imaging"
+	"github.com/traPtitech/traQ/service/counter"
+	"github.com/traPtitech/traQ/service/heartbeat"
+	imaging2 "github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/rbac"
+	"github.com/traPtitech/traQ/service/rbac/permission"
+	"github.com/traPtitech/traQ/service/sse"
+	"github.com/traPtitech/traQ/service/viewer"
 	"go.uber.org/zap"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
@@ -36,20 +38,22 @@ func init() {
 
 // Handlers ハンドラ
 type Handlers struct {
-	RBAC     rbac.RBAC
-	Repo     repository.Repository
-	SSE      *sse.Streamer
-	Hub      *hub.Hub
-	Logger   *zap.Logger
-	Realtime *realtime.Service
-	Imaging  imaging.Processor
+	RBAC       rbac.RBAC
+	Repo       repository.Repository
+	SSE        *sse.Streamer
+	Hub        *hub.Hub
+	Logger     *zap.Logger
+	OC         *counter.OnlineCounter
+	VM         *viewer.Manager
+	HeartBeats *heartbeat.Manager
+	Imaging    imaging2.Processor
 
-	emojiJSONCache     bytes.Buffer
-	emojiJSONTime      time.Time
-	emojiJSONCacheLock sync.RWMutex
-	emojiCSSCache      bytes.Buffer
-	emojiCSSTime       time.Time
-	emojiCSSCacheLock  sync.RWMutex
+	emojiJSONCache     bytes.Buffer `wire:"-"`
+	emojiJSONTime      time.Time    `wire:"-"`
+	emojiJSONCacheLock sync.RWMutex `wire:"-"`
+	emojiCSSCache      bytes.Buffer `wire:"-"`
+	emojiCSSTime       time.Time    `wire:"-"`
+	emojiCSSCacheLock  sync.RWMutex `wire:"-"`
 }
 
 // Setup APIルーティングを行います
@@ -57,7 +61,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
-	adminOnly := middlewares.AdminOnly
 	retrieve := middlewares.NewParamRetriever(h.Repo)
 	blockBot := middlewares.BlockBot(h.Repo)
 	nologin := middlewares.NoLogin()
@@ -308,22 +311,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiActivity := api.Group("/activity")
 		{
 			apiActivity.GET("/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
-		}
-		apiAuthority := api.Group("/authority", adminOnly)
-		{
-			apiAuthorityRoles := apiAuthority.Group("/roles")
-			{
-				apiAuthorityRoles.GET("", h.GetRoles)
-				apiAuthorityRoles.POST("", h.PostRoles)
-				apiAuthorityRolesRid := apiAuthorityRoles.Group("/:role")
-				{
-					apiAuthorityRolesRid.GET("", h.GetRole)
-					apiAuthorityRolesRid.PATCH("", h.PatchRole)
-				}
-			}
-			apiAuthority.GET("/permissions", h.GetPermissions)
-			apiAuthority.GET("/reload", h.GetAuthorityReload)
-			apiAuthority.POST("/reload", h.PostAuthorityReload)
 		}
 		apiWebRTC := api.Group("/webrtc")
 		{

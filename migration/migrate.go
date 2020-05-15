@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"github.com/traPtitech/traQ/rbac/role"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"gopkg.in/gormigrate.v1"
 )
 
@@ -48,7 +48,7 @@ func Migrate(db *gorm.DB) error {
 		}
 
 		// 初期ユーザーロール投入
-		for _, v := range role.SystemRoles() {
+		for _, v := range role.SystemRoleModels() {
 			if err := db.Create(v).Error; err != nil {
 				return err
 			}

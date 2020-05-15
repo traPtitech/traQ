@@ -8,9 +8,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/skip2/go-qrcode"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/rbac"
-	"github.com/traPtitech/traQ/rbac/permission"
-	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -51,13 +48,6 @@ func (h *Handlers) GetMe(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	var perms []rbac.Permission
-	if me.GetRole() == role.Admin {
-		perms = permission.List.Array()
-	} else {
-		perms = h.RBAC.GetGrantedPermissions(me.GetRole()).Array()
-	}
-
 	return c.JSON(http.StatusOK, echo.Map{
 		"id":          me.GetID(),
 		"bio":         me.GetBio(),
@@ -71,7 +61,7 @@ func (h *Handlers) GetMe(c echo.Context) error {
 		"iconFileId":  me.GetIconFileID(),
 		"bot":         me.IsBot(),
 		"state":       me.GetState().Int(),
-		"permissions": perms,
+		"permissions": h.RBAC.GetGrantedPermissions(me.GetRole()),
 		"homeChannel": me.GetHomeChannel(),
 	})
 }
@@ -253,7 +243,7 @@ func (h *Handlers) PostMyFCMDevice(c echo.Context) error {
 	}
 
 	userID := getRequestUserID(c)
-	if _, err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
+	if err := h.Repo.RegisterDevice(userID, req.Token); err != nil {
 		switch {
 		case repository.IsArgError(err):
 			return herror.BadRequest(err)

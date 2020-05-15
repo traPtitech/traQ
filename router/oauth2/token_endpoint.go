@@ -25,7 +25,7 @@ type tokenResponse struct {
 }
 
 // TokenEndpointHandler トークンエンドポイントのハンドラ
-func (h *Config) TokenEndpointHandler(c echo.Context) error {
+func (h *Handler) TokenEndpointHandler(c echo.Context) error {
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
 
@@ -57,7 +57,7 @@ func (r tokenEndpointAuthorizationCodeHandlerRequest) Validate() error {
 	)
 }
 
-func (h *Config) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
+func (h *Handler) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
 	var req tokenEndpointAuthorizationCodeHandlerRequest
 	if err := extension.BindAndValidate(c, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidRequest})
@@ -152,7 +152,7 @@ func (r tokenEndpointPasswordHandlerRequest) Validate() error {
 	)
 }
 
-func (h *Config) tokenEndpointPasswordHandler(c echo.Context) error {
+func (h *Handler) tokenEndpointPasswordHandler(c echo.Context) error {
 	var req tokenEndpointPasswordHandlerRequest
 	if err := extension.BindAndValidate(c, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidRequest})
@@ -230,7 +230,7 @@ func (h *Config) tokenEndpointPasswordHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-func (h *Config) tokenEndpointClientCredentialsHandler(c echo.Context) error {
+func (h *Handler) tokenEndpointClientCredentialsHandler(c echo.Context) error {
 	var req struct {
 		Scope        string `form:"scope"`
 		ClientID     string `form:"client_id"`
@@ -310,7 +310,7 @@ func (r tokenEndpointRefreshTokenHandlerRequest) Validate() error {
 	)
 }
 
-func (h *Config) tokenEndpointRefreshTokenHandler(c echo.Context) error {
+func (h *Handler) tokenEndpointRefreshTokenHandler(c echo.Context) error {
 	var req tokenEndpointRefreshTokenHandlerRequest
 	if err := extension.BindAndValidate(c, &req); err != nil {
 		return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidRequest})

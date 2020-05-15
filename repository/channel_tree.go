@@ -29,6 +29,10 @@ type ChannelTree interface {
 	IsChannelPresent(id uuid.UUID) bool
 	// GetChannelIDFromPath チャンネルパスからチャンネルIDを取得する
 	GetChannelIDFromPath(path string) uuid.UUID
+	// IsForceChannel 指定したチャンネルが強制通知チャンネルかどうか
+	IsForceChannel(id uuid.UUID) bool
+	// IsArchivedChannel 指定したチャンネルがアーカイブされているかどうか
+	IsArchivedChannel(id uuid.UUID) bool
 	json.Marshaler
 }
 
@@ -412,6 +416,40 @@ LevelFor:
 		return uuid.Nil
 	}
 	return id
+}
+
+// IsForceChannel 指定したチャンネルが強制通知チャンネルかどうか
+func (ct *channelTreeImpl) IsForceChannel(id uuid.UUID) bool {
+	ct.mu.RLock()
+	defer ct.mu.RUnlock()
+	return ct.isForceChannel(id)
+}
+
+func (ct *channelTreeImpl) isForceChannel(id uuid.UUID) bool {
+	n, ok := ct.nodes[id]
+	if !ok {
+		return false
+	}
+	n.RLock()
+	defer n.RUnlock()
+	return n.force
+}
+
+// IsArchivedChannel 指定したチャンネルがアーカイブされているかどうか
+func (ct *channelTreeImpl) IsArchivedChannel(id uuid.UUID) bool {
+	ct.mu.RLock()
+	defer ct.mu.RUnlock()
+	return ct.isArchivedChannel(id)
+}
+
+func (ct *channelTreeImpl) isArchivedChannel(id uuid.UUID) bool {
+	n, ok := ct.nodes[id]
+	if !ok {
+		return false
+	}
+	n.RLock()
+	defer n.RUnlock()
+	return n.archived
 }
 
 // MarshalJSON implements json.Marshaler interface

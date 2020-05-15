@@ -1,14 +1,13 @@
 package v1
 
 import (
-	"fmt"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/realtime/viewer"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
@@ -253,7 +252,7 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 	ch := getChannelFromContext(c)
 
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel has been archived"))
+		return herror.BadRequest("channel has been archived")
 	}
 
 	var req struct {
@@ -334,6 +333,6 @@ func (h *Handlers) GetChannelStats(c echo.Context) error {
 func (h *Handlers) GetChannelViewers(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, consts.ParamChannelID)
 
-	cv := h.Realtime.ViewerManager.GetChannelViewers(channelID)
+	cv := h.VM.GetChannelViewers(channelID)
 	return c.JSON(http.StatusOK, viewer.ConvertToArray(cv))
 }

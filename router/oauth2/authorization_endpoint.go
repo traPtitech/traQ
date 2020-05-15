@@ -62,7 +62,7 @@ func (t responseType) valid() bool {
 }
 
 // AuthorizationEndpointHandler 認可エンドポイントのハンドラ
-func (h *Config) AuthorizationEndpointHandler(c echo.Context) error {
+func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
 
@@ -268,7 +268,7 @@ func (r authorizationDecideHandlerRequest) Validate() error {
 }
 
 // AuthorizationDecideHandler 認可エンドポイントの確認フォームのハンドラ
-func (h *Config) AuthorizationDecideHandler(c echo.Context) error {
+func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 	c.Response().Header().Set("Cache-Control", "no-store")
 	c.Response().Header().Set("Pragma", "no-cache")
 

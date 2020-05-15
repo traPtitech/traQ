@@ -11,7 +11,10 @@ import (
 )
 
 // ErrImageMagickUnavailable ImageMagickが使用できません
-var ErrImageMagickUnavailable = errors.New("imagemagick is unavailable")
+var (
+	ErrImageMagickUnavailable = errors.New("imagemagick is unavailable")
+	ErrInvalidImageSrc        = errors.New("invalid image src")
+)
 
 // ConvertToPNG srcをimagemagickでPNGに変換します。5秒以内に変換できなかった場合はエラーとなります
 func ConvertToPNG(ctx context.Context, execPath string, src io.Reader, maxWidth, maxHeight int) (*bytes.Reader, error) {

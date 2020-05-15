@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
-	rbac "github.com/traPtitech/traQ/rbac/impl"
-	"github.com/traPtitech/traQ/rbac/role"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/sessions"
-	"github.com/traPtitech/traQ/utils/imaging"
+	imaging2 "github.com/traPtitech/traQ/service/imaging"
+	rbac2 "github.com/traPtitech/traQ/service/rbac"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
@@ -86,25 +86,26 @@ func TestMain(m *testing.M) {
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap(repo))
 
-		r, err := rbac.New(repo)
+		r, err := rbac2.New(db)
 		if err != nil {
 			panic(err)
 		}
 		handlers := &Handlers{
-			RBAC:     r,
-			Repo:     repo,
-			WS:       nil,
-			Hub:      hub,
-			Logger:   zap.NewNop(),
-			Realtime: nil,
-			Version:  "version",
-			Revision: "revision",
-			Imaging: imaging.NewProcessor(imaging.Config{
+			RBAC:   r,
+			Repo:   repo,
+			WS:     nil,
+			Hub:    hub,
+			Logger: zap.NewNop(),
+			Imaging: imaging2.NewProcessor(imaging2.Config{
 				MaxPixels:        1000 * 1000,
 				Concurrency:      1,
 				ThumbnailMaxSize: image.Pt(360, 480),
 				ImageMagickPath:  "",
 			}),
+			Config: Config{
+				Version:  "version",
+				Revision: "revision",
+			},
 		}
 		handlers.Setup(e.Group("/api"))
 		servers[key] = httptest.NewServer(e)
