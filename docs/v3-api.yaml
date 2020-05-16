@@ -4592,7 +4592,6 @@ components:
           description: パスワード
       required:
         - name
-        - password
     PostChannelRequest:
       title: PostChannelRequest
       type: object

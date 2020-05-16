@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -32,6 +33,39 @@ func (h *Handlers) GetUsers(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 	return c.JSON(http.StatusOK, formatUsers(users))
+}
+
+// PostUserRequest POST /users リクエストボディ
+type PostUserRequest struct {
+	Name     string          `json:"name"`
+	Password optional.String `json:"password"`
+}
+
+func (r PostUserRequest) Validate() error {
+	return vd.ValidateStruct(&r,
+		vd.Field(&r.Name, validator.UserNameRuleRequired...),
+		vd.Field(&r.Password, validator.PasswordRule...),
+	)
+}
+
+// CreateUser POST /users
+func (h *Handlers) CreateUser(c echo.Context) error {
+	var req PostUserRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	user, err := h.Repo.CreateUser(repository.CreateUserArgs{Name: req.Name, Password: req.Password.ValueOrZero(), Role: role.User})
+	if err != nil {
+		switch err {
+		case repository.ErrAlreadyExists:
+			return herror.Conflict("name conflicts")
+		default:
+			return herror.InternalServerError(err)
+		}
+	}
+
+	return c.JSON(http.StatusCreated, formatUserDetail(user, []model.UserTag{}, []uuid.UUID{}))
 }
 
 // GetMe GET /users/me
