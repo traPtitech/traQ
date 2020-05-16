@@ -99,7 +99,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	noticeable := set.UUID{}    // noticeableな未読追加対象のユーザー
 
 	// メッセージボディ作成
-	if isDM {
+	if !isDM {
 		// 公開チャンネル
 		path := chTree.GetChannelPath(chID)
 		fcmPayload.Title = "#" + path
