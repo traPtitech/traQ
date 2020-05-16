@@ -5451,7 +5451,7 @@ components:
         - before
         - after
     ParentChangedEvent:
-      title: NameChangedEvent
+      title: ParentChangedEvent
       type: object
       description: 親チャンネル変更イベント
       properties:
