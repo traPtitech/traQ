@@ -13,7 +13,6 @@ import (
 	"github.com/traPtitech/traQ/service/bot/event"
 	"go.uber.org/zap"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -29,7 +28,7 @@ const (
 var eventSendCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 	Namespace: "traq",
 	Name:      "bot_event_send_count_total",
-}, []string{"bot_id", "code"})
+}, []string{"bot_id", "status"})
 
 // Processor ボットプロセッサー
 type Processor struct {
@@ -82,7 +81,7 @@ func (p *Processor) sendEvent(b *model.Bot, event event.Type, body []byte) (ok b
 	stop := time.Now()
 
 	if err != nil {
-		eventSendCounter.WithLabelValues(b.ID.String(), "-1").Inc()
+		eventSendCounter.WithLabelValues(b.ID.String(), "ne").Inc()
 		if err := p.repo.WriteBotEventLog(&model.BotEventLog{
 			RequestID: reqID,
 			BotID:     b.ID,
@@ -99,7 +98,12 @@ func (p *Processor) sendEvent(b *model.Bot, event event.Type, body []byte) (ok b
 	}
 	_ = res.Body.Close()
 
-	eventSendCounter.WithLabelValues(b.ID.String(), strconv.Itoa(res.StatusCode)).Inc()
+	if res.StatusCode == http.StatusNoContent {
+		eventSendCounter.WithLabelValues(b.ID.String(), "ok").Inc()
+	} else {
+		eventSendCounter.WithLabelValues(b.ID.String(), "ng").Inc()
+	}
+
 	if err := p.repo.WriteBotEventLog(&model.BotEventLog{
 		RequestID: reqID,
 		BotID:     b.ID,
