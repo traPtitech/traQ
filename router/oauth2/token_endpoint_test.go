@@ -14,11 +14,11 @@ import (
 
 func TestHandlers_TokenEndpointHandler(t *testing.T) {
 	t.Parallel()
-	_, server := Setup(t, db2)
+	env := Setup(t, db2)
 
 	t.Run("Unsupported Grant Type", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", "ああああ").
 			Expect()
@@ -32,7 +32,7 @@ func TestHandlers_TokenEndpointHandler(t *testing.T) {
 
 func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 	t.Parallel()
-	repo, server := Setup(t, db2)
+	env := Setup(t, db2)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
@@ -45,11 +45,11 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
-	require.NoError(t, repo.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(client))
 
 	t.Run("Success with Basic Auth", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
 			WithBasicAuth(client.ID, client.Secret).
@@ -70,7 +70,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 
 	t.Run("Success with form Auth", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
 			WithFormField("client_id", client.ID).
@@ -92,7 +92,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 
 	t.Run("Success with smaller scope", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
 			WithFormField("scope", "read").
@@ -112,7 +112,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 
 	t.Run("Success with invalid scope", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
 			WithFormField("scope", "read manage_bot").
@@ -132,7 +132,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 
 	t.Run("Invalid Client (No credentials)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
 			Expect()
@@ -145,7 +145,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 
 	t.Run("Invalid Client (Wrong credentials)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
 			WithBasicAuth(client.ID, "wrong password").
@@ -159,7 +159,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 
 	t.Run("Invalid Client (Unknown client)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
 			WithBasicAuth("wrong client", "wrong password").
@@ -182,8 +182,8 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 			RedirectURI:  "http://example.com",
 			Scopes:       scopesReadWrite,
 		}
-		require.NoError(t, repo.SaveClient(client))
-		e := R(t, server)
+		require.NoError(t, env.Repository.SaveClient(client))
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
 			WithBasicAuth(client.ID, client.Secret).
@@ -197,7 +197,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 
 	t.Run("Invalid Scope (unknown scope)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
 			WithFormField("scope", "アイウエオ").
@@ -212,7 +212,7 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 
 	t.Run("Invalid Scope (no valid scope)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeClientCredentials).
 			WithFormField("scope", "manage_bot").
@@ -228,8 +228,8 @@ func TestHandlers_TokenEndpointClientCredentialsHandler(t *testing.T) {
 
 func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 	t.Parallel()
-	repo, server := Setup(t, db2)
-	user := CreateUser(t, repo, rand)
+	env := Setup(t, db2)
+	user := env.CreateUser(t, rand)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
@@ -242,11 +242,11 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
-	require.NoError(t, repo.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(client))
 
 	t.Run("Success with Basic Auth", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
@@ -269,7 +269,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 
 	t.Run("Success with form Auth", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
@@ -293,7 +293,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 
 	t.Run("Success with smaller scope", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
@@ -315,7 +315,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 
 	t.Run("Success with invalid scope", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
@@ -346,8 +346,8 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 			RedirectURI:  "http://example.com",
 			Scopes:       scopesReadWrite,
 		}
-		require.NoError(t, repo.SaveClient(client))
-		e := R(t, server)
+		require.NoError(t, env.Repository.SaveClient(client))
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
@@ -370,7 +370,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 
 	t.Run("Invalid Request (No user credentials)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithBasicAuth(client.ID, client.Secret).
@@ -384,7 +384,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 
 	t.Run("Invalid Grant (Wrong user credentials)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
@@ -400,7 +400,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 
 	t.Run("Invalid Client (No client credentials)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
@@ -415,7 +415,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 
 	t.Run("Invalid Client (Wrong client credentials)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
@@ -431,7 +431,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 
 	t.Run("Invalid Client (Unknown client)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
@@ -447,7 +447,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 
 	t.Run("Invalid Scope (unknown scope)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
@@ -464,7 +464,7 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 
 	t.Run("Invalid Scope (no valid scope)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypePassword).
 			WithFormField("username", user.GetName()).
@@ -482,8 +482,8 @@ func TestHandlers_TokenEndpointPasswordHandler(t *testing.T) {
 
 func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 	t.Parallel()
-	repo, server := Setup(t, db2)
-	user := CreateUser(t, repo, rand)
+	env := Setup(t, db2)
+	user := env.CreateUser(t, rand)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
@@ -496,7 +496,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
-	require.NoError(t, repo.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(client))
 
 	clientConf := &model.OAuth2Client{
 		ID:           random2.AlphaNumeric(36),
@@ -507,12 +507,12 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
-	require.NoError(t, repo.SaveClient(clientConf))
+	require.NoError(t, env.Repository.SaveClient(clientConf))
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		token := IssueToken(t, repo, client, user.GetID(), true)
-		e := R(t, server)
+		token := env.IssueToken(t, client, user.GetID(), true)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			WithFormField("refresh_token", token.RefreshToken).
@@ -528,14 +528,14 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := repo.GetTokenByRefresh(token.RefreshToken)
+		_, err := env.Repository.GetTokenByRefresh(token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Success with smaller scope", func(t *testing.T) {
 		t.Parallel()
-		token := IssueToken(t, repo, client, user.GetID(), true)
-		e := R(t, server)
+		token := env.IssueToken(t, client, user.GetID(), true)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			WithFormField("refresh_token", token.RefreshToken).
@@ -552,14 +552,14 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.Value("scope").String().Equal("read")
 
-		_, err := repo.GetTokenByRefresh(token.RefreshToken)
+		_, err := env.Repository.GetTokenByRefresh(token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Success with invalid scope", func(t *testing.T) {
 		t.Parallel()
-		token := IssueToken(t, repo, client, user.GetID(), true)
-		e := R(t, server)
+		token := env.IssueToken(t, client, user.GetID(), true)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			WithFormField("refresh_token", token.RefreshToken).
@@ -576,14 +576,14 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.Value("scope").String().Equal("read")
 
-		_, err := repo.GetTokenByRefresh(token.RefreshToken)
+		_, err := env.Repository.GetTokenByRefresh(token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Success with confidential client Basic Auth", func(t *testing.T) {
 		t.Parallel()
-		token := IssueToken(t, repo, clientConf, user.GetID(), true)
-		e := R(t, server)
+		token := env.IssueToken(t, clientConf, user.GetID(), true)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			WithFormField("refresh_token", token.RefreshToken).
@@ -600,14 +600,14 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := repo.GetTokenByRefresh(token.RefreshToken)
+		_, err := env.Repository.GetTokenByRefresh(token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Success with confidential client form Auth", func(t *testing.T) {
 		t.Parallel()
-		token := IssueToken(t, repo, clientConf, user.GetID(), true)
-		e := R(t, server)
+		token := env.IssueToken(t, clientConf, user.GetID(), true)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			WithFormField("refresh_token", token.RefreshToken).
@@ -625,13 +625,13 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := repo.GetTokenByRefresh(token.RefreshToken)
+		_, err := env.Repository.GetTokenByRefresh(token.RefreshToken)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Invalid Request (No refresh token)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			Expect()
@@ -644,7 +644,7 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 
 	t.Run("Invalid Grant (Unknown refresh token)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			WithFormField("refresh_token", "unknown token").
@@ -658,8 +658,8 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 
 	t.Run("Invalid Client (No client credentials)", func(t *testing.T) {
 		t.Parallel()
-		token := IssueToken(t, repo, clientConf, user.GetID(), true)
-		e := R(t, server)
+		token := env.IssueToken(t, clientConf, user.GetID(), true)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			WithFormField("refresh_token", token.RefreshToken).
@@ -673,8 +673,8 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 
 	t.Run("Invalid Client (Wrong client credentials)", func(t *testing.T) {
 		t.Parallel()
-		token := IssueToken(t, repo, clientConf, user.GetID(), true)
-		e := R(t, server)
+		token := env.IssueToken(t, clientConf, user.GetID(), true)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			WithFormField("refresh_token", token.RefreshToken).
@@ -689,8 +689,8 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 
 	t.Run("Invalid Scope (unknown scope)", func(t *testing.T) {
 		t.Parallel()
-		token := IssueToken(t, repo, client, user.GetID(), true)
-		e := R(t, server)
+		token := env.IssueToken(t, client, user.GetID(), true)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			WithFormField("refresh_token", token.RefreshToken).
@@ -705,8 +705,8 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 
 	t.Run("Invalid Scope (no valid scope)", func(t *testing.T) {
 		t.Parallel()
-		token := IssueToken(t, repo, client, user.GetID(), true)
-		e := R(t, server)
+		token := env.IssueToken(t, client, user.GetID(), true)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeRefreshToken).
 			WithFormField("refresh_token", token.RefreshToken).
@@ -722,8 +722,8 @@ func TestHandlers_TokenEndpointRefreshTokenHandler(t *testing.T) {
 
 func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 	t.Parallel()
-	repo, server := Setup(t, db2)
-	user := CreateUser(t, repo, rand)
+	env := Setup(t, db2)
+	user := env.CreateUser(t, rand)
 
 	scopesReadWrite := model.AccessScopes{}
 	scopesReadWrite.Add("read", "write")
@@ -740,7 +740,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
-	require.NoError(t, repo.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(client))
 
 	clientConf := &model.OAuth2Client{
 		ID:           random2.AlphaNumeric(36),
@@ -751,13 +751,13 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesReadWrite,
 	}
-	require.NoError(t, repo.SaveClient(clientConf))
+	require.NoError(t, env.Repository.SaveClient(clientConf))
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 
-		authorize := MakeAuthorizeData(t, repo, client.ID, user.GetID())
-		e := R(t, server)
+		authorize := env.MakeAuthorizeData(t, client.ID, user.GetID())
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -775,14 +775,14 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Success with confidential client Basic Auth", func(t *testing.T) {
 		t.Parallel()
-		authorize := MakeAuthorizeData(t, repo, clientConf.ID, user.GetID())
-		e := R(t, server)
+		authorize := env.MakeAuthorizeData(t, clientConf.ID, user.GetID())
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -800,14 +800,14 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Success with confidential client form Auth", func(t *testing.T) {
 		t.Parallel()
-		authorize := MakeAuthorizeData(t, repo, clientConf.ID, user.GetID())
-		e := R(t, server)
+		authorize := env.MakeAuthorizeData(t, clientConf.ID, user.GetID())
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -826,7 +826,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -845,8 +845,8 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			CodeChallengeMethod: "plain",
 			CodeChallenge:       "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
 		}
-		require.NoError(t, repo.SaveAuthorize(authorize))
-		e := R(t, server)
+		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -865,7 +865,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -884,8 +884,8 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			CodeChallengeMethod: "S256",
 			CodeChallenge:       "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
 		}
-		require.NoError(t, repo.SaveAuthorize(authorize))
-		e := R(t, server)
+		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -904,7 +904,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -921,8 +921,8 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			OriginalScopes: scopesRead,
 			Nonce:          "nonce",
 		}
-		require.NoError(t, repo.SaveAuthorize(authorize))
-		e := R(t, server)
+		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -940,7 +940,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		obj.Value("refresh_token").String().NotEmpty()
 		obj.NotContainsKey("scope")
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -957,8 +957,8 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			OriginalScopes: scopesReadManageBot,
 			Nonce:          "nonce",
 		}
-		require.NoError(t, repo.SaveAuthorize(authorize))
-		e := R(t, server)
+		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -978,13 +978,13 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		actual.FromString(obj.Value("scope").String().Raw())
 		assert.ElementsMatch(t, authorize.Scopes.StringArray(), actual.StringArray())
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Invalid Request (No code)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("redirect_uri", "http://example.com").
@@ -999,8 +999,8 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 
 	t.Run("Invalid Client (No client)", func(t *testing.T) {
 		t.Parallel()
-		authorize := MakeAuthorizeData(t, repo, clientConf.ID, user.GetID())
-		e := R(t, server)
+		authorize := env.MakeAuthorizeData(t, clientConf.ID, user.GetID())
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -1012,14 +1012,14 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		res.Header("Pragma").Equal("no-cache")
 		res.JSON().Object().Value("error").Equal(errInvalidClient)
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Invalid Client (Wrong client credentials)", func(t *testing.T) {
 		t.Parallel()
-		authorize := MakeAuthorizeData(t, repo, clientConf.ID, user.GetID())
-		e := R(t, server)
+		authorize := env.MakeAuthorizeData(t, clientConf.ID, user.GetID())
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -1032,14 +1032,14 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		res.Header("Pragma").Equal("no-cache")
 		res.JSON().Object().Value("error").Equal(errInvalidClient)
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Invalid Client (Other client)", func(t *testing.T) {
 		t.Parallel()
-		authorize := MakeAuthorizeData(t, repo, clientConf.ID, user.GetID())
-		e := R(t, server)
+		authorize := env.MakeAuthorizeData(t, clientConf.ID, user.GetID())
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -1052,13 +1052,13 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		res.Header("Pragma").Equal("no-cache")
 		res.JSON().Object().Value("error").Equal(errInvalidClient)
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Invalid Grant (Wrong code)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", "unknown").
@@ -1085,8 +1085,8 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			OriginalScopes: scopesReadWrite,
 			Nonce:          "nonce",
 		}
-		require.NoError(t, repo.SaveAuthorize(authorize))
-		e := R(t, server)
+		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -1099,7 +1099,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		res.Header("Pragma").Equal("no-cache")
 		res.JSON().Object().Value("error").Equal(errInvalidGrant)
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1116,8 +1116,8 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			OriginalScopes: scopesReadWrite,
 			Nonce:          "nonce",
 		}
-		require.NoError(t, repo.SaveAuthorize(authorize))
-		e := R(t, server)
+		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -1130,14 +1130,14 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		res.Header("Pragma").Equal("no-cache")
 		res.JSON().Object().Value("error").Equal(errInvalidClient)
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Invalid Grant (different redirect)", func(t *testing.T) {
 		t.Parallel()
-		authorize := MakeAuthorizeData(t, repo, clientConf.ID, user.GetID())
-		e := R(t, server)
+		authorize := env.MakeAuthorizeData(t, clientConf.ID, user.GetID())
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -1150,7 +1150,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		res.Header("Pragma").Equal("no-cache")
 		res.JSON().Object().Value("error").Equal(errInvalidGrant)
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1166,8 +1166,8 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			OriginalScopes: scopesReadWrite,
 			Nonce:          "nonce",
 		}
-		require.NoError(t, repo.SaveAuthorize(authorize))
-		e := R(t, server)
+		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -1180,7 +1180,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		res.Header("Pragma").Equal("no-cache")
 		res.JSON().Object().Value("error").Equal(errInvalidGrant)
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
@@ -1199,8 +1199,8 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 			CodeChallengeMethod: "plain",
 			CodeChallenge:       "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
 		}
-		require.NoError(t, repo.SaveAuthorize(authorize))
-		e := R(t, server)
+		require.NoError(t, env.Repository.SaveAuthorize(authorize))
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -1213,14 +1213,14 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		res.Header("Pragma").Equal("no-cache")
 		res.JSON().Object().Value("error").Equal(errInvalidRequest)
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("Invalid Request (unexpected PKCE)", func(t *testing.T) {
 		t.Parallel()
-		authorize := MakeAuthorizeData(t, repo, clientConf.ID, user.GetID())
-		e := R(t, server)
+		authorize := env.MakeAuthorizeData(t, clientConf.ID, user.GetID())
+		e := env.R(t)
 		res := e.POST("/oauth2/token").
 			WithFormField("grant_type", grantTypeAuthorizationCode).
 			WithFormField("code", authorize.Code).
@@ -1234,7 +1234,7 @@ func TestHandlers_TokenEndpointAuthorizationCodeHandler(t *testing.T) {
 		res.Header("Pragma").Equal("no-cache")
 		res.JSON().Object().Value("error").Equal(errInvalidRequest)
 
-		_, err := repo.GetAuthorize(authorize.Code)
+		_, err := env.Repository.GetAuthorize(authorize.Code)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 }

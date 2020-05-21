@@ -10,7 +10,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
@@ -45,20 +45,20 @@ type UserInfo interface {
 	IsLoginAllowedUser() bool
 }
 
-func defaultLoginHandler(oac *oauth2.Config) echo.HandlerFunc {
+func defaultLoginHandler(sessStore session.Store, oac *oauth2.Config) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if len(c.Request().Header.Get(echo.HeaderAuthorization)) > 0 {
 			return herror.BadRequest("Authorization Header must not be set.")
 		}
 
-		sess, err := sessions.Get(c.Response(), c.Request(), false)
+		sess, err := sessStore.GetSession(c, false)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
 
 		if isTrue(c.QueryParam("link")) {
 			// アカウント関連付けモード
-			if sess == nil || sess.GetUserID() == uuid.Nil {
+			if sess == nil || sess.UserID() == uuid.Nil {
 				return herror.Unauthorized("You are not logged in. Please login.")
 			}
 			if err := sess.Set(accountLinkingFlag, true); err != nil {
@@ -66,11 +66,8 @@ func defaultLoginHandler(oac *oauth2.Config) echo.HandlerFunc {
 			}
 		} else {
 			// ログインモード
-			if sess != nil {
-				if sess.GetUserID() != uuid.Nil {
-					return herror.BadRequest("You have already logged in. Please logout once.")
-				}
-				_ = sess.Destroy(c.Response(), c.Request())
+			if sess != nil && sess.UserID() != uuid.Nil {
+				return herror.BadRequest("You have already logged in. Please logout once.")
 			}
 		}
 
@@ -87,7 +84,7 @@ func defaultLoginHandler(oac *oauth2.Config) echo.HandlerFunc {
 	}
 }
 
-func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repository, allowSignUp bool) echo.HandlerFunc {
+func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repository, sessStore session.Store, allowSignUp bool) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if len(c.Request().Header.Get(echo.HeaderAuthorization)) > 0 {
 			return herror.BadRequest("Authorization Header must not be set.")
@@ -121,55 +118,59 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 			return c.String(http.StatusForbidden, "You are not permitted to access traQ")
 		}
 
-		sess, err := sessions.Get(c.Response(), c.Request(), true)
+		sess, err := sessStore.GetSession(c, false)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
-
-		if sess.Get(accountLinkingFlag) != nil {
-			// アカウント関連付けモード
-
-			_ = sess.Delete(accountLinkingFlag)
-			if sess.GetUserID() == uuid.Nil {
-				return herror.Unauthorized("You are not logged in. Please login.")
-			}
-
-			// ユーザーアカウント状態を確認
-			user, err := repo.GetUser(sess.GetUserID(), false)
-			if err != nil {
+		if sess != nil {
+			if v, err := sess.Get(accountLinkingFlag); err != nil {
 				return herror.InternalServerError(err)
-			}
-			if !user.IsActive() {
-				return herror.Forbidden("this account is currently suspended")
-			}
-
-			// アカウントにリンク
-			if err := repo.LinkExternalUserAccount(user.GetID(), repository.LinkExternalUserAccountArgs{
-				ProviderName: tu.GetProviderName(),
-				ExternalID:   tu.GetID(),
-				Extra:        model.JSON{"externalName": tu.GetRawName()},
-			}); err != nil {
-				switch err {
-				case repository.ErrAlreadyExists:
-					return herror.BadRequest("this account has already been linked")
-				default:
+			} else if v == true {
+				// アカウント関連付けモード
+				if err := sess.Delete(accountLinkingFlag); err != nil {
 					return herror.InternalServerError(err)
 				}
-			}
-			p.L().Info("an external user account has been linked to traQ user",
-				zap.Stringer("id", user.GetID()),
-				zap.String("name", user.GetName()),
-				zap.String("providerName", tu.GetProviderName()),
-				zap.String("externalId", tu.GetID()),
-				zap.String("externalName", tu.GetRawName()))
+				if sess.UserID() == uuid.Nil {
+					return herror.Unauthorized("You are not logged in. Please login.")
+				}
 
-			return c.Redirect(http.StatusFound, "/") // TODO リダイレクト先を設定画面に
+				// ユーザーアカウント状態を確認
+				user, err := repo.GetUser(sess.UserID(), false)
+				if err != nil {
+					return herror.InternalServerError(err)
+				}
+				if !user.IsActive() {
+					return herror.Forbidden("this account is currently suspended")
+				}
+
+				// アカウントにリンク
+				if err := repo.LinkExternalUserAccount(user.GetID(), repository.LinkExternalUserAccountArgs{
+					ProviderName: tu.GetProviderName(),
+					ExternalID:   tu.GetID(),
+					Extra:        model.JSON{"externalName": tu.GetRawName()},
+				}); err != nil {
+					switch err {
+					case repository.ErrAlreadyExists:
+						return herror.BadRequest("this account has already been linked")
+					default:
+						return herror.InternalServerError(err)
+					}
+				}
+				p.L().Info("an external user account has been linked to traQ user",
+					zap.Stringer("id", user.GetID()),
+					zap.String("name", user.GetName()),
+					zap.String("providerName", tu.GetProviderName()),
+					zap.String("externalId", tu.GetID()),
+					zap.String("externalName", tu.GetRawName()))
+
+				return c.Redirect(http.StatusFound, "/") // TODO リダイレクト先を設定画面に
+			}
 		}
 
 		// ログインモード
 
 		// ログインしていないことを確認
-		if sess.GetUserID() != uuid.Nil {
+		if sess != nil && sess.UserID() != uuid.Nil {
 			return herror.BadRequest("You have already logged in. Please logout once.")
 		}
 
@@ -221,7 +222,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 			return herror.Forbidden("this account is currently suspended")
 		}
 
-		if err := sess.SetUser(user.GetID()); err != nil {
+		if _, err := sessStore.RenewSession(c, user.GetID()); err != nil {
 			return herror.InternalServerError(err)
 		}
 		p.L().Info("User was logged in by external auth",

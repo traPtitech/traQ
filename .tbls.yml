@@ -301,9 +301,6 @@ comments:
       token: セッショントークン
       reference_id: 参照ID
       user_id: セッションがログインしているユーザーUUID
-      last_access: 最終アクセス日時
-      last_ip: 最終アクセスIPアドレス
-      last_user_agent: 最終アクセスUserAgent
       data: セッションデータ(gobバイナリ)
       created: 生成日時
   - table: oauth2_authorizes

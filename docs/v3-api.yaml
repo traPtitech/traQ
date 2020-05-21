@@ -4724,26 +4724,12 @@ components:
           type: string
           description: セッションUUID
           format: uuid
-        ip:
-          type: string
-          description: 最終アクセスIPアドレス
-          format: ipv4
-        ua:
-          type: string
-          description: 最終アクセスユーザーエージェント
-        lastAccess:
-          type: string
-          format: date-time
-          description: 最終アクセス日時
         issuedAt:
           type: string
           description: 発行日時
           format: date-time
       required:
         - id
-        - ip
-        - ua
-        - lastAccess
         - issuedAt
     ActiveOAuth2Token:
       title: ActiveOAuth2Token

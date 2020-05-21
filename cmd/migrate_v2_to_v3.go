@@ -63,18 +63,6 @@ func migrateV2ToV3Command() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.String("host", "", "database host")
-	bindPFlag(flags, "mariadb.host", "host")
-	flags.Int("port", 0, "database port")
-	bindPFlag(flags, "mariadb.port", "port")
-	flags.String("name", "", "database name")
-	bindPFlag(flags, "mariadb.database", "name")
-	flags.String("user", "", "database user")
-	bindPFlag(flags, "mariadb.username", "user")
-	flags.String("pass", "", "database password")
-	bindPFlag(flags, "mariadb.password", "pass")
-	flags.String("origin", "", "traQ origin")
-	bindPFlag(flags, "origin", "origin")
 	flags.BoolVar(&dryRun, "dry-run", false, "dry run")
 	flags.BoolVar(&skipConvertMessage, "skip-convert-message", false, "skip message converting")
 	flags.IntVar(&startMessagePage, "start-message-page", 0, "start message page (zero-origin)")

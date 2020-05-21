@@ -26,7 +26,7 @@
 | [oauth2_clients](oauth2_clients.md) | 11 | OAuth2クライアントテーブル | BASE TABLE |
 | [oauth2_tokens](oauth2_tokens.md) | 11 | OAuth2トークンテーブル | BASE TABLE |
 | [pins](pins.md) | 4 | ピンテーブル | BASE TABLE |
-| [r_sessions](r_sessions.md) | 8 | traQ API HTTPセッションテーブル | BASE TABLE |
+| [r_sessions](r_sessions.md) | 5 | traQ API HTTPセッションテーブル | BASE TABLE |
 | [stamp_palettes](stamp_palettes.md) | 7 | スタンプパレットテーブル | BASE TABLE |
 | [stamps](stamps.md) | 8 | スタンプテーブル | BASE TABLE |
 | [stars](stars.md) | 2 | お気に入りチャンネルテーブル | BASE TABLE |

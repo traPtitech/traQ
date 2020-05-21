@@ -8,7 +8,6 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils/validator"
 	"go.uber.org/zap"
 	"net/http"
@@ -61,12 +60,7 @@ func (h *Handlers) Login(c echo.Context) error {
 	}
 	h.L(c).Info("an api login attempt succeeded", zap.String("username", req.Name))
 
-	sess, err := sessions.Get(c.Response(), c.Request(), true)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	if err := sess.SetUser(user.GetID()); err != nil {
+	if _, err := h.SessStore.RenewSession(c, user.GetID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -78,27 +72,18 @@ func (h *Handlers) Login(c echo.Context) error {
 
 // Logout POST /logout
 func (h *Handlers) Logout(c echo.Context) error {
-	sess, err := sessions.Get(c.Response(), c.Request(), false)
+	sess, err := h.SessStore.GetSession(c, false)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	if sess != nil {
-		if isTrue(c.QueryParam("all")) {
-			uid := sess.GetUserID()
-			if uid == uuid.Nil {
-				if err := sess.Destroy(c.Response(), c.Request()); err != nil {
-					return herror.InternalServerError(err)
-				}
-			} else {
-				if err := sessions.DestroyByUserID(uid); err != nil {
-					return herror.InternalServerError(err)
-				}
-			}
-		} else {
-			if err := sess.Destroy(c.Response(), c.Request()); err != nil {
-				return herror.InternalServerError(err)
-			}
+	if sess != nil && isTrue(c.QueryParam("all")) && sess.LoggedIn() {
+		if err := h.SessStore.RevokeSessionsByUserID(sess.UserID()); err != nil {
+			return herror.InternalServerError(err)
 		}
+	}
+
+	if err := h.SessStore.RevokeSession(c); err != nil {
+		herror.InternalServerError(err)
 	}
 
 	if redirect := c.QueryParam("redirect"); len(redirect) > 0 {
@@ -111,28 +96,21 @@ func (h *Handlers) Logout(c echo.Context) error {
 func (h *Handlers) GetMySessions(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	ses, err := sessions.GetByUserID(userID)
+	ses, err := h.SessStore.GetSessionsByUserID(userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
 	type response struct {
-		ID         string    `json:"id"`
-		IP         string    `json:"ip"`
-		UA         string    `json:"ua"`
-		LastAccess time.Time `json:"lastAccess"`
-		IssuedAt   time.Time `json:"issuedAt"`
+		ID       uuid.UUID `json:"id"`
+		IssuedAt time.Time `json:"issuedAt"`
 	}
 
 	res := make([]response, len(ses))
 	for k, v := range ses {
-		referenceID, created, lastAccess, lastIP, lastUserAgent := v.GetSessionInfo()
 		res[k] = response{
-			ID:         referenceID.String(),
-			IP:         lastIP,
-			UA:         lastUserAgent,
-			LastAccess: lastAccess,
-			IssuedAt:   created,
+			ID:       v.RefID(),
+			IssuedAt: v.CreatedAt(),
 		}
 	}
 
@@ -141,11 +119,9 @@ func (h *Handlers) GetMySessions(c echo.Context) error {
 
 // RevokeMySession DELETE /users/me/sessions/:referenceID
 func (h *Handlers) RevokeMySession(c echo.Context) error {
-	userID := getRequestUserID(c)
 	referenceID := getParamAsUUID(c, consts.ParamReferenceID)
 
-	err := sessions.DestroyByReferenceID(userID, referenceID)
-	if err != nil {
+	if err := h.SessStore.RevokeSessionByRefID(referenceID); err != nil {
 		return herror.InternalServerError(err)
 	}
 

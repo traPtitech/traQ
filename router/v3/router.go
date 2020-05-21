@@ -6,6 +6,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
+	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
@@ -17,15 +18,16 @@ import (
 )
 
 type Handlers struct {
-	RBAC    rbac.RBAC
-	Repo    repository.Repository
-	WS      *ws.Streamer
-	Hub     *hub.Hub
-	Logger  *zap.Logger
-	OC      *counter.OnlineCounter
-	VM      *viewer.Manager
-	WebRTC  *webrtcv3.Manager
-	Imaging imaging.Processor
+	RBAC      rbac.RBAC
+	Repo      repository.Repository
+	WS        *ws.Streamer
+	Hub       *hub.Hub
+	Logger    *zap.Logger
+	OC        *counter.OnlineCounter
+	VM        *viewer.Manager
+	WebRTC    *webrtcv3.Manager
+	Imaging   imaging.Processor
+	SessStore session.Store
 	Config
 }
 
@@ -47,7 +49,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	bodyLimit := middlewares.RequestBodyLengthLimit
 	retrieve := middlewares.NewParamRetriever(h.Repo)
 	blockBot := middlewares.BlockBot(h.Repo)
-	nologin := middlewares.NoLogin()
+	nologin := middlewares.NoLogin(h.SessStore)
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
@@ -58,7 +60,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC, h.Repo)
 	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm(h.RBAC, h.Repo)
 
-	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo))
+	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore))
 	{
 		apiUsers := api.Group("/users")
 		{

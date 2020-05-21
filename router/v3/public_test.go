@@ -7,9 +7,9 @@ import (
 
 func TestHandlers_GetVersion(t *testing.T) {
 	t.Parallel()
-	_, server := Setup(t, common)
+	env := Setup(t, common)
 
-	e := R(t, server)
+	e := env.R(t)
 	obj := e.GET("/api/v3/version").
 		Expect().
 		Status(http.StatusOK).

@@ -6,6 +6,7 @@ import (
 	json "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/session"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"io/ioutil"
@@ -18,10 +19,11 @@ const (
 )
 
 type TraQProvider struct {
-	config TraQProviderConfig
-	repo   repository.Repository
-	logger *zap.Logger
-	oa2    oauth2.Config
+	config    TraQProviderConfig
+	repo      repository.Repository
+	logger    *zap.Logger
+	sessStore session.Store
+	oa2       oauth2.Config
 }
 
 type TraQProviderConfig struct {
@@ -85,11 +87,12 @@ func (u *traqUserInfo) IsLoginAllowedUser() bool {
 	return true // TODO
 }
 
-func NewTraQProvider(repo repository.Repository, logger *zap.Logger, config TraQProviderConfig) *TraQProvider {
+func NewTraQProvider(repo repository.Repository, logger *zap.Logger, sessStore session.Store, config TraQProviderConfig) *TraQProvider {
 	return &TraQProvider{
-		repo:   repo,
-		config: config,
-		logger: logger,
+		repo:      repo,
+		config:    config,
+		logger:    logger,
+		sessStore: sessStore,
 		oa2: oauth2.Config{
 			ClientID:     config.ClientID,
 			ClientSecret: config.ClientSecret,
@@ -104,11 +107,11 @@ func NewTraQProvider(repo repository.Repository, logger *zap.Logger, config TraQ
 }
 
 func (p *TraQProvider) LoginHandler(c echo.Context) error {
-	return defaultLoginHandler(&p.oa2)(c)
+	return defaultLoginHandler(p.sessStore, &p.oa2)(c)
 }
 
 func (p *TraQProvider) CallbackHandler(c echo.Context) error {
-	return defaultCallbackHandler(p, &p.oa2, p.repo, p.config.RegisterUserIfNotFound)(c)
+	return defaultCallbackHandler(p, &p.oa2, p.repo, p.sessStore, p.config.RegisterUserIfNotFound)(c)
 }
 
 func (p *TraQProvider) FetchUserInfo(t *oauth2.Token) (UserInfo, error) {

@@ -6,23 +6,23 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/router/session"
 	"net/http"
 	"testing"
 )
 
 func TestHandlers_PutNotificationStatus(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common2)
+	env, _, _, s, _ := setup(t, common2)
 
-	user := mustMakeUser(t, repo, rand)
+	user := env.mustMakeUser(t, rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannel(t, repo, rand)
+		channel := env.mustMakeChannel(t, rand)
 
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -31,16 +31,16 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannel(t, repo, rand)
+		channel := env.mustMakeChannel(t, rand)
 
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string][]string{"on": {user.GetID().String()}}).
 			Expect().
 			Status(http.StatusNoContent)
 
-		subscriptions, err := repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(channel.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
+		subscriptions, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(channel.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 		require.NoError(t, err)
 		users := make([]uuid.UUID, 0)
 		for _, subscription := range subscriptions {
@@ -53,16 +53,16 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 	t.Run("Successful2", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannel(t, repo, rand)
+		channel := env.mustMakeChannel(t, rand)
 
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string][]uuid.UUID{"on": {uuid.Must(uuid.NewV4()), user.GetID(), uuid.Must(uuid.NewV4())}, "off": {uuid.Must(uuid.NewV4())}}).
 			Expect().
 			Status(http.StatusNoContent)
 
-		subscriptions, err := repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(channel.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
+		subscriptions, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(channel.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 		require.NoError(t, err)
 		users := make([]uuid.UUID, 0)
 		for _, subscription := range subscriptions {
@@ -75,17 +75,17 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 	t.Run("Successful3", func(t *testing.T) {
 		t.Parallel()
 
-		channel := mustMakeChannel(t, repo, rand)
-		mustChangeChannelSubscription(t, repo, channel.ID, user.GetID())
+		channel := env.mustMakeChannel(t, rand)
+		env.mustChangeChannelSubscription(t, channel.ID, user.GetID())
 
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string][]string{"off": {user.GetID().String()}}).
 			Expect().
 			Status(http.StatusNoContent)
 
-		subscriptions, err := repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(channel.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
+		subscriptions, err := env.Repository.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(channel.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
 		require.NoError(t, err)
 		assert.Len(t, subscriptions, 0)
 	})
@@ -93,16 +93,16 @@ func TestHandlers_PutNotificationStatus(t *testing.T) {
 
 func TestHandlers_GetNotificationStatus(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common2)
+	env, _, _, s, _ := setup(t, common2)
 
-	channel := mustMakeChannel(t, repo, rand)
-	user := mustMakeUser(t, repo, rand)
+	channel := env.mustMakeChannel(t, rand)
+	user := env.mustMakeUser(t, rand)
 
-	mustChangeChannelSubscription(t, repo, channel.ID, user.GetID())
+	env.mustChangeChannelSubscription(t, channel.ID, user.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -110,9 +110,9 @@ func TestHandlers_GetNotificationStatus(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/channels/{channelID}/notification", channel.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -124,15 +124,15 @@ func TestHandlers_GetNotificationStatus(t *testing.T) {
 
 func TestHandlers_GetNotificationChannels(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common2)
+	env, _, _, s, _ := setup(t, common2)
 
-	user := mustMakeUser(t, repo, rand)
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, rand).ID, user.GetID())
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, rand).ID, user.GetID())
+	user := env.mustMakeUser(t, rand)
+	env.mustChangeChannelSubscription(t, env.mustMakeChannel(t, rand).ID, user.GetID())
+	env.mustChangeChannelSubscription(t, env.mustMakeChannel(t, rand).ID, user.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/users/{userID}/notification", user.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -140,9 +140,9 @@ func TestHandlers_GetNotificationChannels(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/users/{userID}/notification", user.GetID()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -154,14 +154,14 @@ func TestHandlers_GetNotificationChannels(t *testing.T) {
 
 func TestHandlers_GetMyNotificationChannels(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common2)
+	env, _, _, s, _, user, _ := setupWithUsers(t, common2)
 
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, rand).ID, user.GetID())
-	mustChangeChannelSubscription(t, repo, mustMakeChannel(t, repo, rand).ID, user.GetID())
+	env.mustChangeChannelSubscription(t, env.mustMakeChannel(t, rand).ID, user.GetID())
+	env.mustChangeChannelSubscription(t, env.mustMakeChannel(t, rand).ID, user.GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/users/me/notification").
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -169,9 +169,9 @@ func TestHandlers_GetMyNotificationChannels(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/users/me/notification").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().

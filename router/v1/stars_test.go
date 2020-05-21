@@ -3,21 +3,21 @@ package v1
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/router/session"
 	"net/http"
 	"testing"
 )
 
 func TestHandlers_GetStars(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common3)
 
-	channel := mustMakeChannel(t, repo, rand)
-	mustStarChannel(t, repo, testUser.GetID(), channel.ID)
+	channel := env.mustMakeChannel(t, rand)
+	env.mustStarChannel(t, testUser.GetID(), channel.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/users/me/stars").
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -25,9 +25,9 @@ func TestHandlers_GetStars(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/users/me/stars").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -38,13 +38,13 @@ func TestHandlers_GetStars(t *testing.T) {
 
 func TestHandlers_PutStars(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common3)
 
-	channel := mustMakeChannel(t, repo, rand)
+	channel := env.mustMakeChannel(t, rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -52,13 +52,13 @@ func TestHandlers_PutStars(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNoContent)
 
-		a, err := repo.GetStaredChannels(testUser.GetID())
+		a, err := env.Repository.GetStaredChannels(testUser.GetID())
 		require.NoError(t, err)
 		assert.Len(t, a, 1)
 		assert.Contains(t, a, channel.ID)
@@ -67,14 +67,14 @@ func TestHandlers_PutStars(t *testing.T) {
 
 func TestHandlers_DeleteStars(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common3)
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common3)
 
-	channel := mustMakeChannel(t, repo, rand)
-	mustStarChannel(t, repo, testUser.GetID(), channel.ID)
+	channel := env.mustMakeChannel(t, rand)
+	env.mustStarChannel(t, testUser.GetID(), channel.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.DELETE("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -82,12 +82,12 @@ func TestHandlers_DeleteStars(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.DELETE("/api/1.0/users/me/stars/{channelID}", channel.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNoContent)
-		a, err := repo.GetStaredChannels(testUser.GetID())
+		a, err := env.Repository.GetStaredChannels(testUser.GetID())
 		require.NoError(t, err)
 		assert.Empty(t, a)
 	})

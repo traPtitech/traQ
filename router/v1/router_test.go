@@ -7,9 +7,9 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
-	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/counter"
-	imaging2 "github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/viewer"
@@ -45,10 +45,7 @@ const (
 	s4      = "s4"
 )
 
-var (
-	servers      = map[string]*httptest.Server{}
-	repositories = map[string]*TestRepository{}
-)
+var envs = map[string]*Env{}
 
 func TestMain(m *testing.M) {
 	// setup server
@@ -65,24 +62,27 @@ func TestMain(m *testing.M) {
 		s4,
 	}
 	for _, key := range repos {
-		repo := NewTestRepository()
+		env := &Env{}
+		env.Repository = NewTestRepository()
+		env.Hub = hub.New()
+		env.SessStore = session.NewMemorySessionStore()
+		env.RBAC = newTestRBAC()
 
 		e := echo.New()
 		e.HideBanner = true
 		e.HidePort = true
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
-		e.Use(extension.Wrap(repo))
+		e.Use(extension.Wrap(env.Repository))
 
-		h := hub.New()
 		handlers := &Handlers{
-			RBAC:       newTestRBAC(),
-			Repo:       repo,
-			Hub:        h,
-			Logger:     zap.NewNop(),
-			OC:         counter.NewOnlineCounter(h),
-			VM:         viewer.NewManager(h),
-			HeartBeats: nil,
-			Imaging: imaging2.NewProcessor(imaging2.Config{
+			RBAC:      env.RBAC,
+			Repo:      env.Repository,
+			Hub:       env.Hub,
+			Logger:    zap.NewNop(),
+			OC:        counter.NewOnlineCounter(env.Hub),
+			VM:        viewer.NewManager(env.Hub),
+			SessStore: env.SessStore,
+			Imaging: imaging.NewProcessor(imaging.Config{
 				MaxPixels:        1000 * 1000,
 				Concurrency:      1,
 				ThumbnailMaxSize: image.Pt(360, 480),
@@ -90,69 +90,70 @@ func TestMain(m *testing.M) {
 			}),
 		}
 		handlers.Setup(e.Group("/api"))
-		servers[key] = httptest.NewServer(e)
-		repositories[key] = repo
+		env.Server = httptest.NewServer(e)
+		envs[key] = env
 	}
 
 	code := m.Run()
 
-	for _, v := range servers {
-		v.Close()
+	for _, env := range envs {
+		env.Server.Close()
+		env.Hub.Close()
 	}
-
 	os.Exit(code)
 }
 
-func setup(t *testing.T, server string) (repository.Repository, *httptest.Server, *assert.Assertions, *require.Assertions, string, string) {
-	t.Helper()
-	s, ok := servers[server]
-	if !ok {
-		t.FailNow()
-	}
-	assert, require := assertAndRequire(t)
-	repo := repositories[server]
-	testUser := mustMakeUser(t, repo, rand)
-	adminUser, err := repo.GetUserByName("traq", true)
-	require.NoError(err)
-	return repo, s, assert, require, generateSession(t, testUser.GetID()), generateSession(t, adminUser.GetID())
+type Env struct {
+	Server     *httptest.Server
+	Repository repository.Repository
+	Hub        *hub.Hub
+	SessStore  session.Store
+	RBAC       rbac.RBAC
 }
 
-func setupWithUsers(t *testing.T, server string) (repository.Repository, *httptest.Server, *assert.Assertions, *require.Assertions, string, string, model.UserInfo, model.UserInfo) {
+func setup(t *testing.T, server string) (*Env, *assert.Assertions, *require.Assertions, string, string) {
 	t.Helper()
-	s, ok := servers[server]
+	env, ok := envs[server]
 	if !ok {
 		t.FailNow()
 	}
 	assert, require := assertAndRequire(t)
-	repo := repositories[server]
-	testUser := mustMakeUser(t, repo, rand)
+	repo := env.Repository
+	testUser := env.mustMakeUser(t, rand)
 	adminUser, err := repo.GetUserByName("traq", true)
 	require.NoError(err)
-	return repo, s, assert, require, generateSession(t, testUser.GetID()), generateSession(t, adminUser.GetID()), testUser, adminUser
+	return env, assert, require, env.generateSession(t, testUser.GetID()), env.generateSession(t, adminUser.GetID())
+}
+
+func setupWithUsers(t *testing.T, server string) (*Env, *assert.Assertions, *require.Assertions, string, string, model.UserInfo, model.UserInfo) {
+	t.Helper()
+	env, ok := envs[server]
+	if !ok {
+		t.FailNow()
+	}
+	assert, require := assertAndRequire(t)
+	repo := env.Repository
+	testUser := env.mustMakeUser(t, rand)
+	adminUser, err := repo.GetUserByName("traq", true)
+	require.NoError(err)
+	return env, assert, require, env.generateSession(t, testUser.GetID()), env.generateSession(t, adminUser.GetID()), testUser, adminUser
 }
 
 func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {
 	return assert.New(t), require.New(t)
 }
 
-func generateSession(t *testing.T, userID uuid.UUID) string {
+func (env *Env) generateSession(t *testing.T, userID uuid.UUID) string {
 	t.Helper()
-	require := require.New(t)
-	req := httptest.NewRequest(echo.GET, "/", nil)
-	rec := httptest.NewRecorder()
-
-	sess, err := sessions.Get(rec, req, true)
-	require.NoError(err)
-	require.NoError(sess.SetUser(userID))
-	cookie := parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName]
-
-	return cookie.Value
+	sess, err := env.SessStore.IssueSession(userID, nil)
+	require.NoError(t, err)
+	return sess.Token()
 }
 
-func makeExp(t *testing.T, server *httptest.Server) *httpexpect.Expect {
+func (env *Env) makeExp(t *testing.T) *httpexpect.Expect {
 	t.Helper()
 	return httpexpect.WithConfig(httpexpect.Config{
-		BaseURL:  server.URL,
+		BaseURL:  env.Server.URL,
 		Reporter: httpexpect.NewAssertReporter(t),
 		Printers: []httpexpect.Printer{
 			httpexpect.NewCurlPrinter(t),
@@ -168,50 +169,42 @@ func makeExp(t *testing.T, server *httptest.Server) *httpexpect.Expect {
 	})
 }
 
-func parseCookies(value string) map[string]*http.Cookie {
-	m := map[string]*http.Cookie{}
-	for _, c := range (&http.Request{Header: http.Header{"Cookie": {value}}}).Cookies() {
-		m[c.Name] = c
-	}
-	return m
-}
-
-func mustMakeChannel(t *testing.T, repo repository.Repository, name string) *model.Channel {
+func (env *Env) mustMakeChannel(t *testing.T, name string) *model.Channel {
 	t.Helper()
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	ch, err := repo.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
+	ch, err := env.Repository.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
 	require.NoError(t, err)
 	return ch
 }
 
-func mustMakeMessage(t *testing.T, repo repository.Repository, userID, channelID uuid.UUID) *model.Message {
+func (env *Env) mustMakeMessage(t *testing.T, userID, channelID uuid.UUID) *model.Message {
 	t.Helper()
-	m, err := repo.CreateMessage(userID, channelID, "popopo")
+	m, err := env.Repository.CreateMessage(userID, channelID, "popopo")
 	require.NoError(t, err)
 	return m
 }
 
-func mustMakeMessageUnread(t *testing.T, repo repository.Repository, userID, messageID uuid.UUID) {
+func (env *Env) mustMakeMessageUnread(t *testing.T, userID, messageID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.SetMessageUnread(userID, messageID, false))
+	require.NoError(t, env.Repository.SetMessageUnread(userID, messageID, false))
 }
 
-func mustMakeUser(t *testing.T, repo repository.Repository, userName string) model.UserInfo {
+func (env *Env) mustMakeUser(t *testing.T, userName string) model.UserInfo {
 	t.Helper()
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
-	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Password: "test", Role: role.User})
+	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "test", Role: role.User})
 	require.NoError(t, err)
 	return u
 }
 
-func mustMakeFile(t *testing.T, repo repository.Repository) model.FileMeta {
+func (env *Env) mustMakeFile(t *testing.T) model.FileMeta {
 	t.Helper()
 	buf := bytes.NewBufferString("test message")
-	f, err := repo.SaveFile(repository.SaveFileArgs{
+	f, err := env.Repository.SaveFile(repository.SaveFileArgs{
 		FileName: "test.txt",
 		FileSize: int64(buf.Len()),
 		FileType: model.FileTypeUserFile,
@@ -221,62 +214,62 @@ func mustMakeFile(t *testing.T, repo repository.Repository) model.FileMeta {
 	return f
 }
 
-func mustMakeTag(t *testing.T, repo repository.Repository, userID uuid.UUID, tagText string) uuid.UUID {
+func (env *Env) mustMakeTag(t *testing.T, userID uuid.UUID, tagText string) uuid.UUID {
 	t.Helper()
 	if tagText == rand {
 		tagText = random.AlphaNumeric(20)
 	}
-	tag, err := repo.GetOrCreateTag(tagText)
+	tag, err := env.Repository.GetOrCreateTag(tagText)
 	require.NoError(t, err)
-	require.NoError(t, repo.AddUserTag(userID, tag.ID))
+	require.NoError(t, env.Repository.AddUserTag(userID, tag.ID))
 	return tag.ID
 }
 
-func mustStarChannel(t *testing.T, repo repository.Repository, userID, channelID uuid.UUID) {
+func (env *Env) mustStarChannel(t *testing.T, userID, channelID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.AddStar(userID, channelID))
+	require.NoError(t, env.Repository.AddStar(userID, channelID))
 }
 
-func mustMakeUserGroup(t *testing.T, repo repository.Repository, name string, adminID uuid.UUID) *model.UserGroup {
+func (env *Env) mustMakeUserGroup(t *testing.T, name string, adminID uuid.UUID) *model.UserGroup {
 	t.Helper()
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	g, err := repo.CreateUserGroup(name, "", "", adminID)
+	g, err := env.Repository.CreateUserGroup(name, "", "", adminID)
 	require.NoError(t, err)
 	return g
 }
 
-func mustAddUserToGroup(t *testing.T, repo repository.Repository, userID, groupID uuid.UUID) {
+func (env *Env) mustAddUserToGroup(t *testing.T, userID, groupID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.AddUserToGroup(userID, groupID, ""))
+	require.NoError(t, env.Repository.AddUserToGroup(userID, groupID, ""))
 }
 
-func mustMakeWebhook(t *testing.T, repo repository.Repository, name string, channelID, creatorID uuid.UUID, secret string) model.Webhook {
+func (env *Env) mustMakeWebhook(t *testing.T, name string, channelID, creatorID uuid.UUID, secret string) model.Webhook {
 	t.Helper()
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	w, err := repo.CreateWebhook(name, "", channelID, creatorID, secret)
+	w, err := env.Repository.CreateWebhook(name, "", channelID, creatorID, secret)
 	require.NoError(t, err)
 	return w
 }
 
-func mustMakeStamp(t *testing.T, repo repository.Repository, name string, userID uuid.UUID) *model.Stamp {
+func (env *Env) mustMakeStamp(t *testing.T, name string, userID uuid.UUID) *model.Stamp {
 	t.Helper()
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	fileID, err := repository.GenerateIconFile(repo, name)
+	fileID, err := repository.GenerateIconFile(env.Repository, name)
 	require.NoError(t, err)
-	s, err := repo.CreateStamp(repository.CreateStampArgs{Name: name, FileID: fileID, CreatorID: userID})
+	s, err := env.Repository.CreateStamp(repository.CreateStampArgs{Name: name, FileID: fileID, CreatorID: userID})
 	require.NoError(t, err)
 	return s
 }
 
-func mustChangeChannelSubscription(t *testing.T, repo repository.Repository, channelID, userID uuid.UUID) {
+func (env *Env) mustChangeChannelSubscription(t *testing.T, channelID, userID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.ChangeChannelSubscription(channelID, repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}}))
+	require.NoError(t, env.Repository.ChangeChannelSubscription(channelID, repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}}))
 }
 
 type rbacImpl struct {

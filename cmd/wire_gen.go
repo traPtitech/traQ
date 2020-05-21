@@ -81,7 +81,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 		WS:                   wsStreamer,
 	}
 	routerConfig := providerRouterConfig(c2)
-	echo := router.Setup(hub2, repo, services, logger, routerConfig)
+	echo := router.Setup(hub2, db, repo, services, logger, routerConfig)
 	server := &Server{
 		L:      logger,
 		SS:     services,

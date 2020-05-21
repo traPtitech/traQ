@@ -11,11 +11,11 @@ import (
 
 func TestHandlers_GetPublicUserIcon(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, _, _, testUser, _ := setupWithUsers(t, common5)
+	env, _, _, _, _, testUser, _ := setupWithUsers(t, common5)
 
 	t.Run("No name", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/public/icon/").
 			Expect().
 			Status(http.StatusNotFound)
@@ -23,7 +23,7 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 
 	t.Run("No user", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/public/icon/no+user").
 			Expect().
 			Status(http.StatusNotFound)
@@ -33,9 +33,9 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 		t.Parallel()
 		_, require := assertAndRequire(t)
 
-		meta, err := repo.GetFileMeta(testUser.GetIconFileID())
+		meta, err := env.Repository.GetFileMeta(testUser.GetIconFileID())
 		require.NoError(err)
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/public/icon/{username}", testUser.GetName()).
 			Expect().
 			Status(http.StatusOK).
@@ -47,10 +47,10 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 		t.Parallel()
 		_, require := assertAndRequire(t)
 
-		meta, err := repo.GetFileMeta(testUser.GetIconFileID())
+		meta, err := env.Repository.GetFileMeta(testUser.GetIconFileID())
 		require.NoError(err)
 
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/public/icon/{username}", testUser.GetName()).
 			WithHeader("If-None-Match", strconv.Quote(meta.GetMD5Hash())).
 			Expect().
@@ -60,15 +60,15 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 
 func TestHandlers_GetPublicEmojiJSON(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, _, _ := setup(t, s3)
+	env, _, _, _, _ := setup(t, s3)
 
 	var stamps []interface{}
 	for i := 0; i < 10; i++ {
-		s := mustMakeStamp(t, repo, rand, uuid.Nil)
+		s := env.mustMakeStamp(t, rand, uuid.Nil)
 		stamps = append(stamps, s.Name)
 	}
 
-	e := makeExp(t, server)
+	e := env.makeExp(t)
 	res := e.GET("/api/1.0/public/emoji.json").
 		Expect().
 		Status(http.StatusOK)
@@ -84,7 +84,7 @@ func TestHandlers_GetPublicEmojiJSON(t *testing.T) {
 
 	t.Run("304", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/public/emoji.json").
 			WithHeader(consts.HeaderIfModifiedSince, res.Header(echo.HeaderLastModified).Raw()).
 			Expect().
@@ -93,7 +93,7 @@ func TestHandlers_GetPublicEmojiJSON(t *testing.T) {
 
 	t.Run("Return cache", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/public/emoji.json").
 			Expect().
 			Status(http.StatusOK)
@@ -102,13 +102,13 @@ func TestHandlers_GetPublicEmojiJSON(t *testing.T) {
 
 func TestHandlers_GetPublicEmojiCSS(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, _, _ := setup(t, s4)
+	env, _, _, _, _ := setup(t, s4)
 
 	for i := 0; i < 10; i++ {
-		mustMakeStamp(t, repo, rand, uuid.Nil)
+		env.mustMakeStamp(t, rand, uuid.Nil)
 	}
 
-	e := makeExp(t, server)
+	e := env.makeExp(t)
 	res := e.GET("/api/1.0/public/emoji.css").
 		Expect().
 		Status(http.StatusOK)
@@ -118,7 +118,7 @@ func TestHandlers_GetPublicEmojiCSS(t *testing.T) {
 
 	t.Run("304", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/public/emoji.css").
 			WithHeader(consts.HeaderIfModifiedSince, res.Header(echo.HeaderLastModified).Raw()).
 			Expect().
@@ -127,7 +127,7 @@ func TestHandlers_GetPublicEmojiCSS(t *testing.T) {
 
 	t.Run("Return cache", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/public/emoji.css").
 			Expect().
 			Status(http.StatusOK)
@@ -136,13 +136,13 @@ func TestHandlers_GetPublicEmojiCSS(t *testing.T) {
 
 func TestHandlers_GetPublicEmojiImage(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, _, _ := setup(t, common5)
+	env, _, _, _, _ := setup(t, common5)
 
-	s := mustMakeStamp(t, repo, rand, uuid.Nil)
+	s := env.mustMakeStamp(t, rand, uuid.Nil)
 
 	t.Run("Not Found", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/public/emoji/{stampID}", uuid.Must(uuid.NewV4())).
 			Expect().
 			Status(http.StatusNotFound)
@@ -150,7 +150,7 @@ func TestHandlers_GetPublicEmojiImage(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/public/emoji/{stampID}", s.ID).
 			Expect().
 			Status(http.StatusOK)
@@ -160,10 +160,10 @@ func TestHandlers_GetPublicEmojiImage(t *testing.T) {
 		t.Parallel()
 		_, require := assertAndRequire(t)
 
-		meta, err := repo.GetFileMeta(s.FileID)
+		meta, err := env.Repository.GetFileMeta(s.FileID)
 		require.NoError(err)
 
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/public/emoji/{stampID}", s.ID).
 			WithHeader("If-None-Match", strconv.Quote(meta.GetMD5Hash())).
 			Expect().

@@ -11,12 +11,12 @@ import (
 
 func TestHandlers_RevokeTokenEndpointHandler(t *testing.T) {
 	t.Parallel()
-	repo, server := Setup(t, db1)
-	user := CreateUser(t, repo, rand)
+	env := Setup(t, db1)
+	user := env.CreateUser(t, rand)
 
 	t.Run("NoToken", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		e.POST("/oauth2/revoke").
 			WithFormField("token", "").
 			Expect().
@@ -25,31 +25,31 @@ func TestHandlers_RevokeTokenEndpointHandler(t *testing.T) {
 
 	t.Run("AccessToken", func(t *testing.T) {
 		t.Parallel()
-		token, err := repo.IssueToken(nil, user.GetID(), "", model.AccessScopes{}, 10000, false)
+		token, err := env.Repository.IssueToken(nil, user.GetID(), "", model.AccessScopes{}, 10000, false)
 		require.NoError(t, err)
 
-		e := R(t, server)
+		e := env.R(t)
 		e.POST("/oauth2/revoke").
 			WithFormField("token", token.AccessToken).
 			Expect().
 			Status(http.StatusOK)
 
-		_, err = repo.GetTokenByID(token.ID)
+		_, err = env.Repository.GetTokenByID(token.ID)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 
 	t.Run("RefreshToken", func(t *testing.T) {
 		t.Parallel()
-		token, err := repo.IssueToken(nil, user.GetID(), "", model.AccessScopes{}, 10000, true)
+		token, err := env.Repository.IssueToken(nil, user.GetID(), "", model.AccessScopes{}, 10000, true)
 		require.NoError(t, err)
 
-		e := R(t, server)
+		e := env.R(t)
 		e.POST("/oauth2/revoke").
 			WithFormField("token", token.RefreshToken).
 			Expect().
 			Status(http.StatusOK)
 
-		_, err = repo.GetTokenByID(token.ID)
+		_, err = env.Repository.GetTokenByID(token.ID)
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 }

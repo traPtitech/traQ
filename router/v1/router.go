@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/middlewares"
+	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/heartbeat"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
@@ -47,6 +48,7 @@ type Handlers struct {
 	VM         *viewer.Manager
 	HeartBeats *heartbeat.Manager
 	Imaging    imaging2.Processor
+	SessStore  session.Store
 
 	emojiJSONCache     bytes.Buffer `wire:"-"`
 	emojiJSONTime      time.Time    `wire:"-"`
@@ -63,7 +65,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	bodyLimit := middlewares.RequestBodyLengthLimit
 	retrieve := middlewares.NewParamRetriever(h.Repo)
 	blockBot := middlewares.BlockBot(h.Repo)
-	nologin := middlewares.NoLogin()
+	nologin := middlewares.NoLogin(h.SessStore)
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
@@ -74,7 +76,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 
 	gone := func(c echo.Context) error { return herror.HTTPError(http.StatusGone, "this api has been deleted") }
 
-	api := e.Group("/1.0", middlewares.UserAuthenticate(h.Repo))
+	api := e.Group("/1.0", middlewares.UserAuthenticate(h.Repo, h.SessStore))
 	{
 		apiUsers := api.Group("/users")
 		{
