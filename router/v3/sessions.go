@@ -83,7 +83,7 @@ func (h *Handlers) Logout(c echo.Context) error {
 	}
 
 	if err := h.SessStore.RevokeSession(c); err != nil {
-		herror.InternalServerError(err)
+		return herror.InternalServerError(err)
 	}
 
 	if redirect := c.QueryParam("redirect"); len(redirect) > 0 {

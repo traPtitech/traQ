@@ -204,11 +204,3 @@ func getEnvOrDefault(env string, def string) string {
 	}
 	return s
 }
-
-func parseCookies(value string) map[string]*http.Cookie {
-	m := map[string]*http.Cookie{}
-	for _, c := range (&http.Request{Header: http.Header{"Cookie": {value}}}).Cookies() {
-		m[c.Name] = c
-	}
-	return m
-}
