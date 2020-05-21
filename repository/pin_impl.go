@@ -74,7 +74,7 @@ func (repo *GormRepository) UnpinMessage(messageID, userID uuid.UUID) error {
 			return err
 		}
 		ok = true
-		return tx.Delete(&model.Pin{MessageID: messageID}).Error
+		return tx.Delete(model.Pin{}, &model.Pin{MessageID: messageID}).Error
 	})
 	if err != nil {
 		return err
