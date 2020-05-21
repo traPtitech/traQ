@@ -64,7 +64,7 @@ func TestMain(m *testing.M) {
 
 		env.DB = db
 		env.Hub = hub.New()
-		env.SessStore = session.NewGormStore(db)
+		env.SessStore = session.NewMemorySessionStore()
 
 		// テスト用リポジトリ作成
 		repo, err := repository.NewGormRepository(db, storage.NewInMemoryFileStorage(), env.Hub, zap.NewNop())
