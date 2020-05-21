@@ -8,7 +8,6 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/jwt"
@@ -98,13 +97,6 @@ func serveCommand() *cobra.Command {
 				logger.Info("data initialization finished")
 			}
 
-			// SessionStore
-			sessionStore, err := sessions.NewGORMStore(engine)
-			if err != nil {
-				logger.Fatal("failed to setup session store", zap.Error(err))
-			}
-			sessions.SetStore(sessionStore)
-
 			// JWT for QRCode
 			if priv := c.JWT.Keys.Private; priv != "" {
 				privRaw, err := ioutil.ReadFile(priv)
@@ -141,7 +133,6 @@ func serveCommand() *cobra.Command {
 			if err := server.Shutdown(ctx); err != nil {
 				logger.Warn("abnormal shutdown", zap.Error(err))
 			}
-			sessions.PurgeCache()
 			logger.Info("traQ shutdown")
 		},
 	}

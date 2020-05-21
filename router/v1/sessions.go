@@ -1,10 +1,10 @@
 package v1
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/router/sessions"
 	"net/http"
 	"time"
 )
@@ -13,28 +13,21 @@ import (
 func (h *Handlers) GetMySessions(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	ses, err := sessions.GetByUserID(userID)
+	ses, err := h.SessStore.GetSessionsByUserID(userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
 	type response struct {
-		ID            string    `json:"id"`
-		LastIP        string    `json:"lastIP"`
-		LastUserAgent string    `json:"lastUserAgent"`
-		LastAccess    time.Time `json:"lastAccess"`
-		CreatedAt     time.Time `json:"createdAt"`
+		ID        uuid.UUID `json:"id"`
+		CreatedAt time.Time `json:"createdAt"`
 	}
 
 	res := make([]response, len(ses))
 	for k, v := range ses {
-		referenceID, created, lastAccess, lastIP, lastUserAgent := v.GetSessionInfo()
 		res[k] = response{
-			ID:            referenceID.String(),
-			LastIP:        lastIP,
-			LastUserAgent: lastUserAgent,
-			LastAccess:    lastAccess,
-			CreatedAt:     created,
+			ID:        v.RefID(),
+			CreatedAt: v.CreatedAt(),
 		}
 	}
 
@@ -45,8 +38,7 @@ func (h *Handlers) GetMySessions(c echo.Context) error {
 func (h *Handlers) DeleteAllMySessions(c echo.Context) error {
 	userID := getRequestUserID(c)
 
-	err := sessions.DestroyByUserID(userID)
-	if err != nil {
+	if err := h.SessStore.RevokeSessionsByUserID(userID); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -55,11 +47,9 @@ func (h *Handlers) DeleteAllMySessions(c echo.Context) error {
 
 // DeleteMySession DELETE /users/me/sessions/:referenceID
 func (h *Handlers) DeleteMySession(c echo.Context) error {
-	userID := getRequestUserID(c)
-	referenceID := getRequestParamAsUUID(c, consts.ParamReferenceID)
+	refID := getRequestParamAsUUID(c, consts.ParamReferenceID)
 
-	err := sessions.DestroyByReferenceID(userID, referenceID)
-	if err != nil {
+	if err := h.SessStore.RevokeSessionByRefID(refID); err != nil {
 		return herror.InternalServerError(err)
 	}
 

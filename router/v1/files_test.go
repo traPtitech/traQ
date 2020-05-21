@@ -6,7 +6,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
-	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strings"
@@ -17,12 +17,12 @@ import (
 
 func TestHandlers_GetFileByID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, require, session, _ := setup(t, common1)
+	env, _, require, s, _ := setup(t, common1)
 
-	file := mustMakeFile(t, repo)
-	grantedUser := mustMakeUser(t, repo, rand)
+	file := env.mustMakeFile(t)
+	grantedUser := env.mustMakeUser(t, rand)
 	secureContent := "secure"
-	secureFile, err := repo.SaveFile(repository.SaveFileArgs{
+	secureFile, err := env.Repository.SaveFile(repository.SaveFileArgs{
 		FileName:  "secure",
 		FileSize:  int64(len(secureContent)),
 		MimeType:  "text/plain",
@@ -36,7 +36,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/files/{fileID}", file.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -44,27 +44,27 @@ func TestHandlers_GetFileByID(t *testing.T) {
 
 	t.Run("Not Found", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/files/{fileID}", uuid.Must(uuid.NewV4())).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNotFound)
 	})
 
 	t.Run("Not Accessible", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/files/{fileID}", secureFile.GetID()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusForbidden)
 	})
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/files/{fileID}", file.GetID()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			Body().
@@ -73,9 +73,9 @@ func TestHandlers_GetFileByID(t *testing.T) {
 
 	t.Run("Success with dl param", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		res := e.GET("/api/1.0/files/{fileID}", file.GetID()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithQuery("dl", 1).
 			Expect().
 			Status(http.StatusOK)
@@ -86,14 +86,14 @@ func TestHandlers_GetFileByID(t *testing.T) {
 
 	t.Run("Success with icon file", func(t *testing.T) {
 		t.Parallel()
-		iconFileID, err := repository.GenerateIconFile(repo, "test")
+		iconFileID, err := repository.GenerateIconFile(env.Repository, "test")
 		require.NoError(err)
-		iconFile, err := repo.GetFileMeta(iconFileID)
+		iconFile, err := env.Repository.GetFileMeta(iconFileID)
 		require.NoError(err)
 
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		res := e.GET("/api/1.0/files/{fileID}", iconFile.GetID()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK)
 		res.ContentType(iconFile.GetMIMEType())
@@ -103,9 +103,9 @@ func TestHandlers_GetFileByID(t *testing.T) {
 
 	t.Run("Success With secure file", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/files/{fileID}", secureFile.GetID()).
-			WithCookie(sessions.CookieName, generateSession(t, grantedUser.GetID())).
+			WithCookie(session.CookieName, env.generateSession(t, grantedUser.GetID())).
 			Expect().
 			Status(http.StatusOK).
 			Body().
@@ -115,13 +115,13 @@ func TestHandlers_GetFileByID(t *testing.T) {
 
 func TestHandlers_GetMetaDataByFileID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common1)
+	env, _, _, s, _ := setup(t, common1)
 
-	file := mustMakeFile(t, repo)
+	file := env.mustMakeFile(t)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/files/{fileID}/meta", file.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -129,9 +129,9 @@ func TestHandlers_GetMetaDataByFileID(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		obj := e.GET("/api/1.0/files/{fileID}/meta", file.GetID()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -148,12 +148,12 @@ func TestHandlers_GetMetaDataByFileID(t *testing.T) {
 
 func TestHandlers_GetThumbnailByID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, require, session, _ := setup(t, common1)
+	env, _, require, s, _ := setup(t, common1)
 
-	file := mustMakeFile(t, repo)
-	grantedUser := mustMakeUser(t, repo, rand)
+	file := env.mustMakeFile(t)
+	grantedUser := env.mustMakeUser(t, rand)
 	secureContent := "secure"
-	secureFile, err := repo.SaveFile(repository.SaveFileArgs{
+	secureFile, err := env.Repository.SaveFile(repository.SaveFileArgs{
 		FileName:  "secure",
 		FileSize:  int64(len(secureContent)),
 		MimeType:  "text/plain",
@@ -167,7 +167,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/files/{fileID}/thumbnail", file.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -175,39 +175,39 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 
 	t.Run("Not Found", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/files/{fileID}/thumbnail", uuid.Must(uuid.NewV4())).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNotFound)
 	})
 
 	t.Run("Not Accessible", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/files/{fileID}/thumbnail", secureFile.GetID()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusForbidden)
 	})
 
 	t.Run("No Thumbnail", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/files/{fileID}/thumbnail", file.GetID()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNotFound)
 	})
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		iconFileID, err := repository.GenerateIconFile(repo, "test")
+		iconFileID, err := repository.GenerateIconFile(env.Repository, "test")
 		require.NoError(err)
 
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		res := e.GET("/api/1.0/files/{fileID}/thumbnail", iconFileID).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK)
 		res.Header(consts.HeaderCacheControl).Equal("private, max-age=31536000")

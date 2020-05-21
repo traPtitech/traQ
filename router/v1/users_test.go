@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/utils/optional"
 	"strings"
 	"testing"
@@ -14,11 +14,11 @@ import (
 
 func TestHandlers_GetUsers(t *testing.T) {
 	t.Parallel()
-	_, server, _, _, session, _ := setup(t, s2)
+	env, _, _, s, _ := setup(t, s2)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/users").
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -26,9 +26,9 @@ func TestHandlers_GetUsers(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/users").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -40,11 +40,11 @@ func TestHandlers_GetUsers(t *testing.T) {
 
 func TestHandlers_GetMe(t *testing.T) {
 	t.Parallel()
-	_, server, _, _, session, _, testUser, _ := setupWithUsers(t, common4)
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common4)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/users/me").
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -52,9 +52,9 @@ func TestHandlers_GetMe(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/users/me").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -67,11 +67,11 @@ func TestHandlers_GetMe(t *testing.T) {
 
 func TestHandlers_GetUserByID(t *testing.T) {
 	t.Parallel()
-	_, server, _, _, session, _, testUser, _ := setupWithUsers(t, common4)
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common4)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/users/{userID}", testUser.GetID().String()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -79,9 +79,9 @@ func TestHandlers_GetUserByID(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/users/{userID}", testUser.GetID().String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -94,11 +94,11 @@ func TestHandlers_GetUserByID(t *testing.T) {
 
 func TestHandlers_PatchMe(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, user, _ := setupWithUsers(t, common4)
+	env, _, _, s, _, user, _ := setupWithUsers(t, common4)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PATCH("/api/1.0/users/me").
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -106,16 +106,16 @@ func TestHandlers_PatchMe(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		newDisplay := "renamed"
 		newTwitter := "test"
 		e.PATCH("/api/1.0/users/me").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string]string{"displayName": newDisplay, "twitterId": newTwitter}).
 			Expect().
 			Status(http.StatusNoContent)
 
-		u, err := repo.GetUser(user.GetID(), true)
+		u, err := env.Repository.GetUser(user.GetID(), true)
 		require.NoError(t, err)
 		assert.Equal(t, newDisplay, u.GetDisplayName())
 		assert.Equal(t, newTwitter, u.GetTwitterID())
@@ -123,17 +123,17 @@ func TestHandlers_PatchMe(t *testing.T) {
 
 	t.Run("Successful2", func(t *testing.T) {
 		t.Parallel()
-		user := mustMakeUser(t, repo, rand)
-		require.NoError(t, repo.UpdateUser(user.GetID(), repository.UpdateUserArgs{DisplayName: optional.StringFrom("test")}))
+		user := env.mustMakeUser(t, rand)
+		require.NoError(t, env.Repository.UpdateUser(user.GetID(), repository.UpdateUserArgs{DisplayName: optional.StringFrom("test")}))
 
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PATCH("/api/1.0/users/me").
-			WithCookie(sessions.CookieName, generateSession(t, user.GetID())).
+			WithCookie(session.CookieName, env.generateSession(t, user.GetID())).
 			WithJSON(map[string]string{"displayName": ""}).
 			Expect().
 			Status(http.StatusNoContent)
 
-		u, err := repo.GetUser(user.GetID(), true)
+		u, err := env.Repository.GetUser(user.GetID(), true)
 		require.NoError(t, err)
 		assert.Equal(t, "", u.GetDisplayName())
 	})
@@ -141,11 +141,11 @@ func TestHandlers_PatchMe(t *testing.T) {
 
 func TestHandlers_PutPassword(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common4)
+	env, _, _, s, _ := setup(t, common4)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/me/password").
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -153,9 +153,9 @@ func TestHandlers_PutPassword(t *testing.T) {
 
 	t.Run("invalid body", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/me/password").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string]interface{}{"password": 111, "newPassword": false}).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -163,9 +163,9 @@ func TestHandlers_PutPassword(t *testing.T) {
 
 	t.Run("invalid password1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/me/password").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string]string{"password": "test", "newPassword": "a"}).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -173,9 +173,9 @@ func TestHandlers_PutPassword(t *testing.T) {
 
 	t.Run("invalid password2", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/me/password").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string]string{"password": "test", "newPassword": "アイウエオ"}).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -183,9 +183,9 @@ func TestHandlers_PutPassword(t *testing.T) {
 
 	t.Run("invalid password3", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/me/password").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string]string{"password": "test", "newPassword": strings.Repeat("a", 33)}).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -193,9 +193,9 @@ func TestHandlers_PutPassword(t *testing.T) {
 
 	t.Run("wrong password", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/me/password").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string]string{"password": "wrong password", "newPassword": strings.Repeat("a", 20)}).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -203,17 +203,17 @@ func TestHandlers_PutPassword(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		user := mustMakeUser(t, repo, rand)
+		user := env.mustMakeUser(t, rand)
 
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		newPassword := strings.Repeat("a", 20)
 		e.PUT("/api/1.0/users/me/password").
-			WithCookie(sessions.CookieName, generateSession(t, user.GetID())).
+			WithCookie(session.CookieName, env.generateSession(t, user.GetID())).
 			WithJSON(map[string]string{"password": "test", "newPassword": newPassword}).
 			Expect().
 			Status(http.StatusNoContent)
 
-		u, err := repo.GetUser(user.GetID(), false)
+		u, err := env.Repository.GetUser(user.GetID(), false)
 		require.NoError(t, err)
 		assert.NoError(t, u.Authenticate(newPassword))
 	})
@@ -221,11 +221,11 @@ func TestHandlers_PutPassword(t *testing.T) {
 
 func TestHandlers_PutUserPassword(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, adminSession, user, _ := setupWithUsers(t, common4)
+	env, _, _, s, adminSession, user, _ := setupWithUsers(t, common4)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/{userID}/password", user.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -233,9 +233,9 @@ func TestHandlers_PutUserPassword(t *testing.T) {
 
 	t.Run("Forbidden", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/{userID}/password", user.GetID()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string]string{"newPassword": "aaaaaaaaaaaaa"}).
 			Expect().
 			Status(http.StatusForbidden)
@@ -243,9 +243,9 @@ func TestHandlers_PutUserPassword(t *testing.T) {
 
 	t.Run("invalid body", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/{userID}/password", user.GetID()).
-			WithCookie(sessions.CookieName, adminSession).
+			WithCookie(session.CookieName, adminSession).
 			WithJSON(map[string]interface{}{"newPassword": false}).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -253,9 +253,9 @@ func TestHandlers_PutUserPassword(t *testing.T) {
 
 	t.Run("invalid password1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/{userID}/password", user.GetID()).
-			WithCookie(sessions.CookieName, adminSession).
+			WithCookie(session.CookieName, adminSession).
 			WithJSON(map[string]string{"newPassword": "a"}).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -263,9 +263,9 @@ func TestHandlers_PutUserPassword(t *testing.T) {
 
 	t.Run("invalid password2", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/{userID}/password", user.GetID()).
-			WithCookie(sessions.CookieName, adminSession).
+			WithCookie(session.CookieName, adminSession).
 			WithJSON(map[string]string{"newPassword": "アイウエオ"}).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -273,9 +273,9 @@ func TestHandlers_PutUserPassword(t *testing.T) {
 
 	t.Run("invalid password3", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/users/{userID}/password", user.GetID()).
-			WithCookie(sessions.CookieName, adminSession).
+			WithCookie(session.CookieName, adminSession).
 			WithJSON(map[string]string{"newPassword": strings.Repeat("a", 33)}).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -283,17 +283,17 @@ func TestHandlers_PutUserPassword(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		user := mustMakeUser(t, repo, rand)
+		user := env.mustMakeUser(t, rand)
 
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		newPass := strings.Repeat("a", 20)
 		e.PUT("/api/1.0/users/{userID}/password", user.GetID()).
-			WithCookie(sessions.CookieName, adminSession).
+			WithCookie(session.CookieName, adminSession).
 			WithJSON(map[string]string{"newPassword": newPass}).
 			Expect().
 			Status(http.StatusNoContent)
 
-		u, err := repo.GetUser(user.GetID(), false)
+		u, err := env.Repository.GetUser(user.GetID(), false)
 		require.NoError(t, err)
 		assert.NoError(t, u.Authenticate(newPass))
 	})
@@ -301,11 +301,11 @@ func TestHandlers_PutUserPassword(t *testing.T) {
 
 func TestHandlers_PostLogin(t *testing.T) {
 	t.Parallel()
-	_, server, _, _, _, _, user, _ := setupWithUsers(t, common4)
+	env, _, _, _, _, user, _ := setupWithUsers(t, common4)
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/login").
 			WithJSON(map[string]string{"name": user.GetName(), "pass": "test"}).
 			Expect().
@@ -314,7 +314,7 @@ func TestHandlers_PostLogin(t *testing.T) {
 
 	t.Run("wrong password", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/login").
 			WithJSON(map[string]string{"name": user.GetName(), "pass": "wrong_password"}).
 			Expect().

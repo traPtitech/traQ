@@ -875,35 +875,26 @@
 <!-- r_sessions -->
 <g id="node23" class="node">
 <title>r_sessions</title>
-<polygon fill="#efefef" stroke="transparent" points="4863.5,-2485.5 4863.5,-2520.5 5060.5,-2520.5 5060.5,-2485.5 4863.5,-2485.5"/>
-<polygon fill="none" stroke="#000000" points="4863.5,-2485.5 4863.5,-2520.5 5060.5,-2520.5 5060.5,-2485.5 4863.5,-2485.5"/>
-<text text-anchor="start" x="4870.3675" y="-2498.3" font-family="Arial Bold" font-size="18.00" fill="#000000">r_sessions</text>
-<text text-anchor="start" x="4956.3787" y="-2498.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
-<text text-anchor="start" x="4960.2693" y="-2498.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
-<polygon fill="none" stroke="#000000" points="4863.5,-2455.5 4863.5,-2485.5 5060.5,-2485.5 5060.5,-2455.5 4863.5,-2455.5"/>
-<text text-anchor="start" x="4870.5" y="-2466.9" font-family="Arial" font-size="14.00" fill="#000000">token </text>
-<text text-anchor="start" x="4908.629" y="-2466.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(50)]</text>
-<polygon fill="none" stroke="#000000" points="4863.5,-2425.5 4863.5,-2455.5 5060.5,-2455.5 5060.5,-2425.5 4863.5,-2425.5"/>
-<text text-anchor="start" x="4870.5" y="-2436.9" font-family="Arial" font-size="14.00" fill="#000000">reference_id </text>
-<text text-anchor="start" x="4952.1872" y="-2436.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
-<polygon fill="none" stroke="#000000" points="4863.5,-2395.5 4863.5,-2425.5 5060.5,-2425.5 5060.5,-2395.5 4863.5,-2395.5"/>
-<text text-anchor="start" x="4870.5" y="-2406.9" font-family="Arial" font-size="14.00" fill="#000000">user_id </text>
-<text text-anchor="start" x="4920.2882" y="-2406.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
-<polygon fill="none" stroke="#000000" points="4863.5,-2365.5 4863.5,-2395.5 5060.5,-2395.5 5060.5,-2365.5 4863.5,-2365.5"/>
-<text text-anchor="start" x="4870.5" y="-2376.9" font-family="Arial" font-size="14.00" fill="#000000">last_access </text>
-<text text-anchor="start" x="4947.5182" y="-2376.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
-<polygon fill="none" stroke="#000000" points="4863.5,-2335.5 4863.5,-2365.5 5060.5,-2365.5 5060.5,-2335.5 4863.5,-2335.5"/>
-<text text-anchor="start" x="4870.5" y="-2346.9" font-family="Arial" font-size="14.00" fill="#000000">last_ip </text>
-<text text-anchor="start" x="4914.8422" y="-2346.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
-<polygon fill="none" stroke="#000000" points="4863.5,-2305.5 4863.5,-2335.5 5060.5,-2335.5 5060.5,-2305.5 4863.5,-2305.5"/>
-<text text-anchor="start" x="4870.5" y="-2316.9" font-family="Arial" font-size="14.00" fill="#000000">last_user_agent </text>
-<text text-anchor="start" x="4973.9824" y="-2316.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
-<polygon fill="none" stroke="#000000" points="4863.5,-2275.5 4863.5,-2305.5 5060.5,-2305.5 5060.5,-2275.5 4863.5,-2275.5"/>
-<text text-anchor="start" x="4870.5" y="-2286.9" font-family="Arial" font-size="14.00" fill="#000000">data </text>
-<text text-anchor="start" x="4901.629" y="-2286.9" font-family="Arial" font-size="14.00" fill="#666666">[longblob]</text>
-<polygon fill="none" stroke="#000000" points="4863.5,-2245.5 4863.5,-2275.5 5060.5,-2275.5 5060.5,-2245.5 4863.5,-2245.5"/>
-<text text-anchor="start" x="4870.5" y="-2256.9" font-family="Arial" font-size="14.00" fill="#000000">created </text>
-<text text-anchor="start" x="4921.0722" y="-2256.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
+<polygon fill="#efefef" stroke="transparent" points="4863.5,-2440.5 4863.5,-2475.5 5060.5,-2475.5 5060.5,-2440.5 4863.5,-2440.5"/>
+<polygon fill="none" stroke="#000000" points="4863.5,-2440.5 4863.5,-2475.5 5060.5,-2475.5 5060.5,-2440.5 4863.5,-2440.5"/>
+<text text-anchor="start" x="4870.3675" y="-2453.3" font-family="Arial Bold" font-size="18.00" fill="#000000">r_sessions</text>
+<text text-anchor="start" x="4956.3787" y="-2453.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
+<text text-anchor="start" x="4960.2693" y="-2453.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="#000000" points="4863.5,-2410.5 4863.5,-2440.5 5060.5,-2440.5 5060.5,-2410.5 4863.5,-2410.5"/>
+<text text-anchor="start" x="4870.5" y="-2421.9" font-family="Arial" font-size="14.00" fill="#000000">token </text>
+<text text-anchor="start" x="4908.629" y="-2421.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(50)]</text>
+<polygon fill="none" stroke="#000000" points="4863.5,-2380.5 4863.5,-2410.5 5060.5,-2410.5 5060.5,-2380.5 4863.5,-2380.5"/>
+<text text-anchor="start" x="4870.5" y="-2391.9" font-family="Arial" font-size="14.00" fill="#000000">reference_id </text>
+<text text-anchor="start" x="4952.1872" y="-2391.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="none" stroke="#000000" points="4863.5,-2350.5 4863.5,-2380.5 5060.5,-2380.5 5060.5,-2350.5 4863.5,-2350.5"/>
+<text text-anchor="start" x="4870.5" y="-2361.9" font-family="Arial" font-size="14.00" fill="#000000">user_id </text>
+<text text-anchor="start" x="4920.2882" y="-2361.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(36)]</text>
+<polygon fill="none" stroke="#000000" points="4863.5,-2320.5 4863.5,-2350.5 5060.5,-2350.5 5060.5,-2320.5 4863.5,-2320.5"/>
+<text text-anchor="start" x="4870.5" y="-2331.9" font-family="Arial" font-size="14.00" fill="#000000">data </text>
+<text text-anchor="start" x="4901.629" y="-2331.9" font-family="Arial" font-size="14.00" fill="#666666">[longblob]</text>
+<polygon fill="none" stroke="#000000" points="4863.5,-2290.5 4863.5,-2320.5 5060.5,-2320.5 5060.5,-2290.5 4863.5,-2290.5"/>
+<text text-anchor="start" x="4870.5" y="-2301.9" font-family="Arial" font-size="14.00" fill="#000000">created </text>
+<text text-anchor="start" x="4921.0722" y="-2301.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
 </g>
 <!-- stamp_palettes -->
 <g id="node24" class="node">

@@ -2,14 +2,12 @@ package oauth2
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/router/sessions"
-	random2 "github.com/traPtitech/traQ/utils/random"
+	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/utils/random"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 )
@@ -39,30 +37,30 @@ func TestResponseType_valid(t *testing.T) {
 
 func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Parallel()
-	repo, server := Setup(t, db2)
-	defaultUser := CreateUser(t, repo, rand)
-	session := S(t, defaultUser.GetID())
+	env := Setup(t, db2)
+	defaultUser := env.CreateUser(t, rand)
+	s := env.S(t, defaultUser.GetID())
 
 	scopesRead := model.AccessScopes{}
 	scopesRead.Add("read")
 
 	client := &model.OAuth2Client{
-		ID:           random2.AlphaNumeric(36),
+		ID:           random.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: false,
 		CreatorID:    uuid.Must(uuid.NewV4()),
-		Secret:       random2.AlphaNumeric(36),
+		Secret:       random.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesRead,
 	}
-	require.NoError(t, repo.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(client))
 
 	t.Run("Success (prompt=none)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := CreateUser(t, repo, rand)
-		IssueToken(t, repo, client, user.GetID(), false)
-		e := R(t, server)
+		user := env.CreateUser(t, rand)
+		env.IssueToken(t, client, user.GetID(), false)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			WithFormField("response_type", "code").
@@ -70,7 +68,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			WithFormField("prompt", "none").
 			WithFormField("scope", "read").
 			WithFormField("nonce", "nonce").
-			WithCookie(sessions.CookieName, S(t, user.GetID())).
+			WithCookie(session.CookieName, env.S(t, user.GetID())).
 			Expect()
 
 		res.Status(http.StatusFound)
@@ -82,7 +80,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			assert.NotEmpty(loc.Query().Get("code"))
 		}
 
-		a, err := repo.GetAuthorize(loc.Query().Get("code"))
+		a, err := env.Repository.GetAuthorize(loc.Query().Get("code"))
 		if assert.NoError(err) {
 			assert.Equal("nonce", a.Nonce)
 		}
@@ -91,7 +89,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Success (code)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			WithFormField("response_type", "code").
@@ -110,16 +108,18 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			assert.Equal("read", loc.Query().Get("scopes"))
 		}
 
-		s, err := sessions.GetByToken(res.Cookie(sessions.CookieName).Value().Raw())
+		s, err := env.SessStore.GetSessionByToken(res.Cookie(session.CookieName).Value().Raw())
 		if assert.NoError(err) {
-			assert.Equal("state", s.Get(oauth2ContextSession).(authorizeRequest).State)
+			v, err := s.Get(oauth2ContextSession)
+			assert.NoError(err)
+			assert.Equal("state", v.(authorizeRequest).State)
 		}
 	})
 
 	t.Run("Success (GET)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.GET("/oauth2/authorize").
 			WithQuery("client_id", client.ID).
 			WithQuery("response_type", "code").
@@ -138,16 +138,18 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			assert.Equal("read", loc.Query().Get("scopes"))
 		}
 
-		s, err := sessions.GetByToken(res.Cookie(sessions.CookieName).Value().Raw())
+		s, err := env.SessStore.GetSessionByToken(res.Cookie(session.CookieName).Value().Raw())
 		if assert.NoError(err) {
-			assert.Equal("state", s.Get(oauth2ContextSession).(authorizeRequest).State)
+			v, err := s.Get(oauth2ContextSession)
+			assert.NoError(err)
+			assert.Equal("state", v.(authorizeRequest).State)
 		}
 	})
 
 	t.Run("Success With PKCE", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			WithFormField("response_type", "code").
@@ -168,16 +170,18 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 			assert.Equal("read", loc.Query().Get("scopes"))
 		}
 
-		s, err := sessions.GetByToken(res.Cookie(sessions.CookieName).Value().Raw())
+		s, err := env.SessStore.GetSessionByToken(res.Cookie(session.CookieName).Value().Raw())
 		if assert.NoError(err) {
-			assert.Equal("state", s.Get(oauth2ContextSession).(authorizeRequest).State)
-			assert.Equal("E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", s.Get(oauth2ContextSession).(authorizeRequest).CodeChallenge)
+			v, err := s.Get(oauth2ContextSession)
+			assert.NoError(err)
+			assert.Equal("state", v.(authorizeRequest).State)
+			assert.Equal("E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", v.(authorizeRequest).CodeChallenge)
 		}
 	})
 
 	t.Run("Bad Request", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			Expect()
 		res.Status(http.StatusBadRequest)
@@ -187,7 +191,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 
 	t.Run("Bad Request (no client)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", "").
 			Expect()
@@ -198,7 +202,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 
 	t.Run("Bad Request (unknown client)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", "unknown").
 			Expect()
@@ -209,7 +213,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 
 	t.Run("Bad Request (different redirect uri)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			WithFormField("redirect_uri", "http://example2.com").
@@ -222,7 +226,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Found (invalid pkce method)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			WithFormField("code_challenge_method", "S256").
@@ -240,7 +244,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Found (invalid scope)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			WithFormField("scope", "あいうえお").
@@ -257,7 +261,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Found (no valid scope)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			WithFormField("scope", "write").
@@ -274,7 +278,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Found (unknown response_type)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			WithFormField("response_type", "aiueo").
@@ -291,7 +295,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Found (invalid response_type)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			WithFormField("response_type", "code token none").
@@ -308,7 +312,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Found (prompt=none with no session)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			WithFormField("response_type", "code").
@@ -326,12 +330,12 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Found (prompt=none without consent)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			WithFormField("response_type", "code").
 			WithFormField("prompt", "none").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusFound)
 		res.Header("Cache-Control").Equal("no-store")
@@ -345,12 +349,12 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Found (invalid prompt)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			WithFormField("response_type", "code").
 			WithFormField("prompt", "ああああ").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect()
 		res.Status(http.StatusFound)
 		res.Header("Cache-Control").Equal("no-store")
@@ -364,16 +368,16 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 	t.Run("Found (prompt=none with broader scope)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		user := CreateUser(t, repo, rand)
-		_, err := repo.IssueToken(client, user.GetID(), client.RedirectURI, scopesRead, 1000, false)
+		user := env.CreateUser(t, rand)
+		_, err := env.Repository.IssueToken(client, user.GetID(), client.RedirectURI, scopesRead, 1000, false)
 		require.NoError(t, err)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			WithFormField("response_type", "code").
 			WithFormField("prompt", "none").
 			WithFormField("scope", "read write").
-			WithCookie(sessions.CookieName, S(t, user.GetID())).
+			WithCookie(session.CookieName, env.S(t, user.GetID())).
 			Expect()
 		res.Status(http.StatusFound)
 		res.Header("Cache-Control").Equal("no-store")
@@ -390,16 +394,16 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 		scopes := model.AccessScopes{}
 		scopes.Add("read", "write")
 		client := &model.OAuth2Client{
-			ID:           random2.AlphaNumeric(36),
+			ID:           random.AlphaNumeric(36),
 			Name:         "test client",
 			Confidential: false,
 			CreatorID:    uuid.Must(uuid.NewV4()),
-			Secret:       random2.AlphaNumeric(36),
+			Secret:       random.AlphaNumeric(36),
 			Scopes:       scopes,
 		}
-		require.NoError(t, repo.SaveClient(client))
+		require.NoError(t, env.Repository.SaveClient(client))
 
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
 			WithFormField("client_id", client.ID).
 			Expect()
@@ -411,9 +415,9 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 
 func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	t.Parallel()
-	repo, server := Setup(t, db2)
-	user := CreateUser(t, repo, rand)
-	session := S(t, user.GetID())
+	env := Setup(t, db2)
+	user := env.CreateUser(t, rand)
+	s := env.S(t, user.GetID())
 
 	scopesRead := model.AccessScopes{}
 	scopesRead.Add("read")
@@ -421,44 +425,42 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	scopesReadWrite.Add("read", "write")
 
 	client := &model.OAuth2Client{
-		ID:           random2.AlphaNumeric(36),
+		ID:           random.AlphaNumeric(36),
 		Name:         "test client",
 		Confidential: true,
 		CreatorID:    uuid.Must(uuid.NewV4()),
-		Secret:       random2.AlphaNumeric(36),
+		Secret:       random.AlphaNumeric(36),
 		RedirectURI:  "http://example.com",
 		Scopes:       scopesRead,
 	}
-	require.NoError(t, repo.SaveClient(client))
+	require.NoError(t, env.Repository.SaveClient(client))
 
 	MakeDecideSession := func(t *testing.T, uid uuid.UUID, client *model.OAuth2Client) string {
-		req := httptest.NewRequest(echo.GET, "/", nil)
-		rec := httptest.NewRecorder()
-		s, err := sessions.Get(rec, req, true)
+		s, err := env.SessStore.IssueSession(uid, map[string]interface{}{
+			oauth2ContextSession: authorizeRequest{
+				ResponseType: "code",
+				ClientID:     client.ID,
+				RedirectURI:  client.RedirectURI,
+				Scopes:       scopesReadWrite,
+				ValidScopes:  scopesRead,
+				State:        "state",
+				Types:        responseType{true, false, false},
+				AccessTime:   time.Now(),
+				Nonce:        "nonce",
+			},
+		})
 		require.NoError(t, err)
-		require.NoError(t, s.SetUser(uid))
-		require.NoError(t, s.Set(oauth2ContextSession, authorizeRequest{
-			ResponseType: "code",
-			ClientID:     client.ID,
-			RedirectURI:  client.RedirectURI,
-			Scopes:       scopesReadWrite,
-			ValidScopes:  scopesRead,
-			State:        "state",
-			Types:        responseType{true, false, false},
-			AccessTime:   time.Now(),
-			Nonce:        "nonce",
-		}))
 
-		return parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName].Value
+		return s.Token()
 	}
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize/decide").
 			WithFormField("submit", "approve").
-			WithCookie(sessions.CookieName, MakeDecideSession(t, user.GetID(), client)).
+			WithCookie(session.CookieName, MakeDecideSession(t, user.GetID(), client)).
 			Expect()
 
 		res.Status(http.StatusFound)
@@ -470,7 +472,7 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 			assert.NotEmpty(loc.Query().Get("code"))
 		}
 
-		a, err := repo.GetAuthorize(loc.Query().Get("code"))
+		a, err := env.Repository.GetAuthorize(loc.Query().Get("code"))
 		if assert.NoError(err) {
 			assert.Equal("nonce", a.Nonce)
 		}
@@ -478,9 +480,9 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 
 	t.Run("Bad Request (No form)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize/decide").
-			WithCookie(sessions.CookieName, MakeDecideSession(t, user.GetID(), client)).
+			WithCookie(session.CookieName, MakeDecideSession(t, user.GetID(), client)).
 			Expect()
 
 		res.Status(http.StatusBadRequest)
@@ -490,10 +492,10 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 
 	t.Run("Forbidden (No oauth2ContextSession)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize/decide").
 			WithFormField("submit", "approve").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect()
 
 		res.Status(http.StatusForbidden)
@@ -503,10 +505,10 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 
 	t.Run("Bad Request (client not found)", func(t *testing.T) {
 		t.Parallel()
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize/decide").
 			WithFormField("submit", "approve").
-			WithCookie(sessions.CookieName, MakeDecideSession(t, user.GetID(), &model.OAuth2Client{ID: "aaaa"})).
+			WithCookie(session.CookieName, MakeDecideSession(t, user.GetID(), &model.OAuth2Client{ID: "aaaa"})).
 			Expect()
 
 		res.Status(http.StatusBadRequest)
@@ -517,18 +519,18 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	t.Run("Forbidden (client without redirect uri", func(t *testing.T) {
 		t.Parallel()
 		client := &model.OAuth2Client{
-			ID:           random2.AlphaNumeric(36),
+			ID:           random.AlphaNumeric(36),
 			Name:         "test client",
 			Confidential: true,
 			CreatorID:    uuid.Must(uuid.NewV4()),
-			Secret:       random2.AlphaNumeric(36),
+			Secret:       random.AlphaNumeric(36),
 			Scopes:       scopesRead,
 		}
-		require.NoError(t, repo.SaveClient(client))
-		e := R(t, server)
+		require.NoError(t, env.Repository.SaveClient(client))
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize/decide").
 			WithFormField("submit", "approve").
-			WithCookie(sessions.CookieName, MakeDecideSession(t, user.GetID(), client)).
+			WithCookie(session.CookieName, MakeDecideSession(t, user.GetID(), client)).
 			Expect()
 
 		res.Status(http.StatusForbidden)
@@ -539,10 +541,10 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	t.Run("Found (deny)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize/decide").
 			WithFormField("submit", "deny").
-			WithCookie(sessions.CookieName, MakeDecideSession(t, user.GetID(), client)).
+			WithCookie(session.CookieName, MakeDecideSession(t, user.GetID(), client)).
 			Expect()
 
 		res.Status(http.StatusFound)
@@ -557,25 +559,23 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	t.Run("Found (unsupported response type)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		req := httptest.NewRequest(echo.GET, "/", nil)
-		rec := httptest.NewRecorder()
-		s, err := sessions.Get(rec, req, true)
+		s, err := env.SessStore.IssueSession(user.GetID(), map[string]interface{}{
+			oauth2ContextSession: authorizeRequest{
+				ResponseType: "code",
+				ClientID:     client.ID,
+				RedirectURI:  client.RedirectURI,
+				Scopes:       scopesReadWrite,
+				ValidScopes:  scopesRead,
+				State:        "state",
+				AccessTime:   time.Now(),
+			},
+		})
 		require.NoError(t, err)
-		require.NoError(t, s.SetUser(user.GetID()))
-		require.NoError(t, s.Set(oauth2ContextSession, authorizeRequest{
-			ResponseType: "code",
-			ClientID:     client.ID,
-			RedirectURI:  client.RedirectURI,
-			Scopes:       scopesReadWrite,
-			ValidScopes:  scopesRead,
-			State:        "state",
-			AccessTime:   time.Now(),
-		}))
 
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize/decide").
 			WithFormField("submit", "approve").
-			WithCookie(sessions.CookieName, parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName].Value).
+			WithCookie(session.CookieName, s.Token()).
 			Expect()
 
 		res.Status(http.StatusFound)
@@ -590,25 +590,23 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 	t.Run("Found (timeout)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
-		req := httptest.NewRequest(echo.GET, "/", nil)
-		rec := httptest.NewRecorder()
-		s, err := sessions.Get(rec, req, true)
+		s, err := env.SessStore.IssueSession(user.GetID(), map[string]interface{}{
+			oauth2ContextSession: authorizeRequest{
+				ResponseType: "code",
+				ClientID:     client.ID,
+				RedirectURI:  client.RedirectURI,
+				Scopes:       scopesReadWrite,
+				ValidScopes:  scopesRead,
+				State:        "state",
+				AccessTime:   time.Now().Add(-6 * time.Minute),
+			},
+		})
 		require.NoError(t, err)
-		require.NoError(t, s.SetUser(user.GetID()))
-		require.NoError(t, s.Set(oauth2ContextSession, authorizeRequest{
-			ResponseType: "code",
-			ClientID:     client.ID,
-			RedirectURI:  client.RedirectURI,
-			Scopes:       scopesReadWrite,
-			ValidScopes:  scopesRead,
-			State:        "state",
-			AccessTime:   time.Now().Add(-6 * time.Minute),
-		}))
 
-		e := R(t, server)
+		e := env.R(t)
 		res := e.POST("/oauth2/authorize/decide").
 			WithFormField("submit", "approve").
-			WithCookie(sessions.CookieName, parseCookies(rec.Header().Get("Set-Cookie"))[sessions.CookieName].Value).
+			WithCookie(session.CookieName, s.Token()).
 			Expect()
 
 		res.Status(http.StatusFound)

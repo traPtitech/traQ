@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
+	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/rbac"
 	"go.uber.org/zap"
 )
@@ -36,9 +37,10 @@ const (
 )
 
 type Handler struct {
-	RBAC   rbac.RBAC
-	Repo   repository.Repository
-	Logger *zap.Logger
+	RBAC      rbac.RBAC
+	Repo      repository.Repository
+	Logger    *zap.Logger
+	SessStore session.Store
 	Config
 }
 
@@ -51,7 +53,7 @@ type Config struct {
 
 func (h *Handler) Setup(e *echo.Group) {
 	e.GET("/authorize", h.AuthorizationEndpointHandler)
-	e.POST("/authorize/decide", h.AuthorizationDecideHandler, middlewares.UserAuthenticate(h.Repo), middlewares.BlockBot(h.Repo))
+	e.POST("/authorize/decide", h.AuthorizationDecideHandler, middlewares.UserAuthenticate(h.Repo, h.SessStore), middlewares.BlockBot(h.Repo))
 	e.POST("/authorize", h.AuthorizationEndpointHandler)
 	e.POST("/token", h.TokenEndpointHandler)
 	e.POST("/revoke", h.RevokeTokenEndpointHandler)

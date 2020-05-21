@@ -8,7 +8,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/router/session"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
@@ -55,13 +55,13 @@ func ServeUserIcon(c echo.Context, repo repository.Repository, user model.UserIn
 }
 
 // ChangeUserPassword userIDのユーザーのパスワードを変更する
-func ChangeUserPassword(c echo.Context, repo repository.Repository, userID uuid.UUID, newPassword string) error {
+func ChangeUserPassword(c echo.Context, repo repository.Repository, seStore session.Store, userID uuid.UUID, newPassword string) error {
 	if err := repo.UpdateUser(userID, repository.UpdateUserArgs{Password: optional.StringFrom(newPassword)}); err != nil {
 		return herror.InternalServerError(err)
 	}
 
 	// ユーザーの全セッションを破棄(強制ログアウト)
-	_ = sessions.DestroyByUserID(userID)
+	_ = seStore.RevokeSessionsByUserID(userID)
 	return c.NoContent(http.StatusNoContent)
 }
 

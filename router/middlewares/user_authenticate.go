@@ -9,14 +9,14 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/router/session"
 	"golang.org/x/sync/singleflight"
 )
 
 const authScheme = "Bearer"
 
 // UserAuthenticate リクエスト認証ミドルウェア
-func UserAuthenticate(repo repository.Repository) echo.MiddlewareFunc {
+func UserAuthenticate(repo repository.Repository, sessStore session.Store) echo.MiddlewareFunc {
 	var sfUser singleflight.Group
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -52,15 +52,15 @@ func UserAuthenticate(repo repository.Repository) echo.MiddlewareFunc {
 				uid = token.UserID
 			} else {
 				// Authorizationヘッダーがないためセッションを確認する
-				sess, err := sessions.Get(c.Response(), c.Request(), false)
+				sess, err := sessStore.GetSession(c, false)
 				if err != nil {
 					return herror.InternalServerError(err)
 				}
-				if sess == nil || sess.GetUserID() == uuid.Nil {
+				if sess == nil || !sess.LoggedIn() {
 					return herror.Unauthorized("You are not logged in")
 				}
 
-				uid = sess.GetUserID()
+				uid = sess.UserID()
 			}
 
 			// ユーザー取得

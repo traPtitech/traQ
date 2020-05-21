@@ -4,21 +4,21 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/router/session"
 	"net/http"
 	"testing"
 )
 
 func TestHandlers_GetMessageByID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common2)
 
-	channel := mustMakeChannel(t, repo, rand)
-	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
+	channel := env.mustMakeChannel(t, rand)
+	message := env.mustMakeMessage(t, testUser.GetID(), channel.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/messages/{messageID}", message.ID.String()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -26,9 +26,9 @@ func TestHandlers_GetMessageByID(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		obj := e.GET("/api/1.0/messages/{messageID}", message.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -48,13 +48,13 @@ func TestHandlers_GetMessageByID(t *testing.T) {
 
 func TestHandlers_PostMessage(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common2)
 
-	channel := mustMakeChannel(t, repo, rand)
+	channel := env.mustMakeChannel(t, rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
 			WithJSON(map[string]string{"text": "test message"}).
 			Expect().
@@ -63,11 +63,11 @@ func TestHandlers_PostMessage(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		message := "test message"
 
 		obj := e.POST("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string]string{"text": message}).
 			Expect().
 			Status(http.StatusCreated).
@@ -84,15 +84,15 @@ func TestHandlers_PostMessage(t *testing.T) {
 		obj.Value("updatedAt").String().NotEmpty()
 		obj.Value("stampList").Array().Empty()
 
-		_, err := repo.GetMessageByID(uuid.FromStringOrNil(obj.Value("messageId").String().Raw()))
+		_, err := env.Repository.GetMessageByID(uuid.FromStringOrNil(obj.Value("messageId").String().Raw()))
 		assert.NoError(t, err)
 	})
 
 	t.Run("Failure2", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string]string{"not_text_field": "not_text_field"}).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -101,17 +101,17 @@ func TestHandlers_PostMessage(t *testing.T) {
 
 func TestHandlers_GetMessagesByChannelID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common2)
 
-	channel := mustMakeChannel(t, repo, rand)
+	channel := env.mustMakeChannel(t, rand)
 
 	for i := 0; i < 5; i++ {
-		mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
+		env.mustMakeMessage(t, testUser.GetID(), channel.ID)
 	}
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -119,9 +119,9 @@ func TestHandlers_GetMessagesByChannelID(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -132,11 +132,11 @@ func TestHandlers_GetMessagesByChannelID(t *testing.T) {
 
 	t.Run("Successful2", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/channels/{channelID}/messages", channel.ID.String()).
 			WithQuery("limit", 3).
 			WithQuery("offset", 1).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -148,15 +148,15 @@ func TestHandlers_GetMessagesByChannelID(t *testing.T) {
 
 func TestHandlers_PutMessageByID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common2)
 
-	channel := mustMakeChannel(t, repo, rand)
-	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
-	postmanID := mustMakeUser(t, repo, rand).GetID()
+	channel := env.mustMakeChannel(t, rand)
+	message := env.mustMakeMessage(t, testUser.GetID(), channel.ID)
+	postmanID := env.mustMakeUser(t, rand).GetID()
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/messages/{messageID}", message.ID.String()).
 			WithJSON(map[string]string{"text": "new message"}).
 			Expect().
@@ -165,24 +165,24 @@ func TestHandlers_PutMessageByID(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		text := "new message"
 		e.PUT("/api/1.0/messages/{messageID}", message.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string]string{"text": text}).
 			Expect().
 			Status(http.StatusNoContent)
 
-		m, err := repo.GetMessageByID(message.ID)
+		m, err := env.Repository.GetMessageByID(message.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, text, m.Text)
 	})
 
 	t.Run("Failure2", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/messages/{messageID}", message.ID.String()).
-			WithCookie(sessions.CookieName, generateSession(t, postmanID)).
+			WithCookie(session.CookieName, env.generateSession(t, postmanID)).
 			WithJSON(map[string]string{"text": "new message"}).
 			Expect().
 			Status(http.StatusForbidden)
@@ -191,15 +191,15 @@ func TestHandlers_PutMessageByID(t *testing.T) {
 
 func TestHandlers_DeleteMessageByID(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common2)
 
-	channel := mustMakeChannel(t, repo, rand)
-	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
-	postmanID := mustMakeUser(t, repo, rand).GetID()
+	channel := env.mustMakeChannel(t, rand)
+	message := env.mustMakeMessage(t, testUser.GetID(), channel.ID)
+	postmanID := env.mustMakeUser(t, rand).GetID()
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -207,49 +207,49 @@ func TestHandlers_DeleteMessageByID(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := repo.GetMessageByID(message.ID)
+		_, err := env.Repository.GetMessageByID(message.ID)
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
 
 	t.Run("Webhook Message", func(t *testing.T) {
 		t.Parallel()
-		wb := mustMakeWebhook(t, repo, rand, channel.ID, testUser.GetID(), "")
-		message := mustMakeMessage(t, repo, wb.GetBotUserID(), channel.ID)
+		wb := env.mustMakeWebhook(t, rand, channel.ID, testUser.GetID(), "")
+		message := env.mustMakeMessage(t, wb.GetBotUserID(), channel.ID)
 
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := repo.GetMessageByID(message.ID)
+		_, err := env.Repository.GetMessageByID(message.ID)
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
 
 	t.Run("Forbidden (other's message)", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
-		message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
+		e := env.makeExp(t)
+		message := env.mustMakeMessage(t, testUser.GetID(), channel.ID)
 		e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
-			WithCookie(sessions.CookieName, generateSession(t, postmanID)).
+			WithCookie(session.CookieName, env.generateSession(t, postmanID)).
 			Expect().
 			Status(http.StatusForbidden)
 	})
 
 	t.Run("Forbidden (other's webhook message)", func(t *testing.T) {
 		t.Parallel()
-		wb := mustMakeWebhook(t, repo, rand, channel.ID, testUser.GetID(), "")
-		message := mustMakeMessage(t, repo, wb.GetBotUserID(), channel.ID)
+		wb := env.mustMakeWebhook(t, rand, channel.ID, testUser.GetID(), "")
+		message := env.mustMakeMessage(t, wb.GetBotUserID(), channel.ID)
 
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.DELETE("/api/1.0/messages/{messageID}", message.ID.String()).
-			WithCookie(sessions.CookieName, generateSession(t, postmanID)).
+			WithCookie(session.CookieName, env.generateSession(t, postmanID)).
 			Expect().
 			Status(http.StatusForbidden)
 	})
@@ -257,14 +257,14 @@ func TestHandlers_DeleteMessageByID(t *testing.T) {
 
 func TestHandlers_PostMessageReport(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common2)
 
-	channel := mustMakeChannel(t, repo, rand)
-	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
+	channel := env.mustMakeChannel(t, rand)
+	message := env.mustMakeMessage(t, testUser.GetID(), channel.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/messages/{messageID}/report", message.ID.String()).
 			WithJSON(map[string]string{"reason": "aaaa"}).
 			Expect().
@@ -273,23 +273,23 @@ func TestHandlers_PostMessageReport(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/messages/{messageID}/report", message.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string]string{"reason": "aaaa"}).
 			Expect().
 			Status(http.StatusNoContent)
 
-		r, err := repo.GetMessageReportsByMessageID(message.ID)
+		r, err := env.Repository.GetMessageReportsByMessageID(message.ID)
 		assert.NoError(t, err)
 		assert.Len(t, r, 1)
 	})
 
 	t.Run("Failure1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/messages/{messageID}/report", message.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			WithJSON(map[string]string{"not_reason": "aaaa"}).
 			Expect().
 			Status(http.StatusBadRequest)
@@ -298,15 +298,15 @@ func TestHandlers_PostMessageReport(t *testing.T) {
 
 func TestHandlers_DeleteUnread(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common2)
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common2)
 
-	channel := mustMakeChannel(t, repo, rand)
-	message := mustMakeMessage(t, repo, testUser.GetID(), channel.ID)
-	mustMakeMessageUnread(t, repo, testUser.GetID(), message.ID)
+	channel := env.mustMakeChannel(t, rand)
+	message := env.mustMakeMessage(t, testUser.GetID(), channel.ID)
+	env.mustMakeMessageUnread(t, testUser.GetID(), message.ID)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.DELETE("/api/1.0/users/me/unread/channels/{channelID}", channel.ID.String()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -314,9 +314,9 @@ func TestHandlers_DeleteUnread(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.DELETE("/api/1.0/users/me/unread/channels/{channelID}", channel.ID.String()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNoContent)
 	})

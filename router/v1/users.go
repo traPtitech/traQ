@@ -18,7 +18,6 @@ import (
 	"github.com/skip2/go-qrcode"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/service/rbac/role"
 )
 
@@ -56,12 +55,7 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 	}
 	h.L(c).Info("an api login attempt succeeded", zap.String("username", req.Name))
 
-	sess, err := sessions.Get(c.Response(), c.Request(), true)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	if err := sess.SetUser(user.GetID()); err != nil {
+	if _, err := h.SessStore.RenewSession(c, user.GetID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 
@@ -73,16 +67,9 @@ func (h *Handlers) PostLogin(c echo.Context) error {
 
 // PostLogout POST /logout
 func (h *Handlers) PostLogout(c echo.Context) error {
-	sess, err := sessions.Get(c.Response(), c.Request(), false)
-	if err != nil {
+	if err := h.SessStore.RevokeSession(c); err != nil {
 		return herror.InternalServerError(err)
 	}
-	if sess != nil {
-		if err := sess.Destroy(c.Response(), c.Request()); err != nil {
-			return herror.InternalServerError(err)
-		}
-	}
-
 	if redirect := c.QueryParam("redirect"); len(redirect) > 0 {
 		return c.Redirect(http.StatusFound, redirect)
 	}
@@ -196,7 +183,7 @@ func (h *Handlers) PutUserPassword(c echo.Context) error {
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
-	return utils.ChangeUserPassword(c, h.Repo, getRequestParamAsUUID(c, consts.ParamUserID), req.NewPassword)
+	return utils.ChangeUserPassword(c, h.Repo, h.SessStore, getRequestParamAsUUID(c, consts.ParamUserID), req.NewPassword)
 }
 
 // GetUserIcon GET /users/:userID/icon
@@ -274,7 +261,7 @@ func (h *Handlers) PutPassword(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "current password is wrong")
 	}
 
-	return utils.ChangeUserPassword(c, h.Repo, user.GetID(), req.NewPassword)
+	return utils.ChangeUserPassword(c, h.Repo, h.SessStore, user.GetID(), req.NewPassword)
 }
 
 // GetMyQRCode GET /users/me/qr-code

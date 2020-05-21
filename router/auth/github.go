@@ -6,6 +6,7 @@ import (
 	json "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/session"
 	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"
 	"golang.org/x/oauth2"
@@ -22,10 +23,11 @@ const (
 )
 
 type GithubProvider struct {
-	config GithubProviderConfig
-	repo   repository.Repository
-	logger *zap.Logger
-	oa2    oauth2.Config
+	config    GithubProviderConfig
+	repo      repository.Repository
+	logger    *zap.Logger
+	sessStore session.Store
+	oa2       oauth2.Config
 }
 
 type GithubProviderConfig struct {
@@ -98,11 +100,12 @@ func (u *githubUserInfo) IsLoginAllowedUser() bool {
 	return true // TODO
 }
 
-func NewGithubProvider(repo repository.Repository, logger *zap.Logger, config GithubProviderConfig) *GithubProvider {
+func NewGithubProvider(repo repository.Repository, logger *zap.Logger, sessStore session.Store, config GithubProviderConfig) *GithubProvider {
 	return &GithubProvider{
-		repo:   repo,
-		config: config,
-		logger: logger,
+		repo:      repo,
+		config:    config,
+		logger:    logger,
+		sessStore: sessStore,
 		oa2: oauth2.Config{
 			ClientID:     config.ClientID,
 			ClientSecret: config.ClientSecret,
@@ -113,11 +116,11 @@ func NewGithubProvider(repo repository.Repository, logger *zap.Logger, config Gi
 }
 
 func (p *GithubProvider) LoginHandler(c echo.Context) error {
-	return defaultLoginHandler(&p.oa2)(c)
+	return defaultLoginHandler(p.sessStore, &p.oa2)(c)
 }
 
 func (p *GithubProvider) CallbackHandler(c echo.Context) error {
-	return defaultCallbackHandler(p, &p.oa2, p.repo, p.config.RegisterUserIfNotFound)(c)
+	return defaultCallbackHandler(p, &p.oa2, p.repo, p.sessStore, p.config.RegisterUserIfNotFound)(c)
 }
 
 func (p *GithubProvider) FetchUserInfo(t *oauth2.Token) (UserInfo, error) {

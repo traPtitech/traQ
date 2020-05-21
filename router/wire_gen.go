@@ -6,9 +6,11 @@
 package router
 
 import (
+	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/oauth2"
+	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/router/v1"
 	"github.com/traPtitech/traQ/router/v3"
 	"github.com/traPtitech/traQ/service"
@@ -17,8 +19,9 @@ import (
 
 // Injectors from router_wire.go:
 
-func newRouter(hub2 *hub.Hub, repo repository.Repository, ss *service.Services, logger *zap.Logger, config *Config) *Router {
+func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Services, logger *zap.Logger, config *Config) *Router {
 	echo := newEcho(logger, config, repo)
+	sessionStore := session.NewGormStore(db)
 	rbac := ss.RBAC
 	streamer := ss.SSE
 	onlineCounter := ss.OnlineCounter
@@ -35,34 +38,38 @@ func newRouter(hub2 *hub.Hub, repo repository.Repository, ss *service.Services, 
 		VM:         manager,
 		HeartBeats: heartbeatManager,
 		Imaging:    processor,
+		SessStore:  sessionStore,
 	}
 	wsStreamer := ss.WS
 	webrtcv3Manager := ss.WebRTCv3
 	v3Config := provideV3Config(config)
 	v3Handlers := &v3.Handlers{
-		RBAC:    rbac,
-		Repo:    repo,
-		WS:      wsStreamer,
-		Hub:     hub2,
-		Logger:  logger,
-		OC:      onlineCounter,
-		VM:      manager,
-		WebRTC:  webrtcv3Manager,
-		Imaging: processor,
-		Config:  v3Config,
+		RBAC:      rbac,
+		Repo:      repo,
+		WS:        wsStreamer,
+		Hub:       hub2,
+		Logger:    logger,
+		OC:        onlineCounter,
+		VM:        manager,
+		WebRTC:    webrtcv3Manager,
+		Imaging:   processor,
+		SessStore: sessionStore,
+		Config:    v3Config,
 	}
 	oauth2Config := provideOAuth2Config(config)
 	handler := &oauth2.Handler{
-		RBAC:   rbac,
-		Repo:   repo,
-		Logger: logger,
-		Config: oauth2Config,
+		RBAC:      rbac,
+		Repo:      repo,
+		Logger:    logger,
+		SessStore: sessionStore,
+		Config:    oauth2Config,
 	}
 	router := &Router{
-		e:      echo,
-		v1:     handlers,
-		v3:     v3Handlers,
-		oauth2: handler,
+		e:         echo,
+		sessStore: sessionStore,
+		v1:        handlers,
+		v3:        v3Handlers,
+		oauth2:    handler,
 	}
 	return router
 }

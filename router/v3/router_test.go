@@ -12,9 +12,9 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
-	"github.com/traPtitech/traQ/router/sessions"
-	imaging2 "github.com/traPtitech/traQ/service/imaging"
-	rbac2 "github.com/traPtitech/traQ/service/rbac"
+	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -35,12 +35,7 @@ const (
 	rand     = "random"
 )
 
-var (
-	servers      = map[string]*httptest.Server{}
-	dbConns      = map[string]*gorm.DB{}
-	repositories = map[string]repository.Repository{}
-	hubs         = map[string]*hub.Hub{}
-)
+var envs = map[string]*Env{}
 
 func TestMain(m *testing.M) {
 	user := getEnvOrDefault("MARIADB_USERNAME", "root")
@@ -55,6 +50,8 @@ func TestMain(m *testing.M) {
 	}
 
 	for _, key := range dbs {
+		env := &Env{}
+
 		// テスト用データベース接続
 		db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("%s%s", dbPrefix, key)))
 		if err != nil {
@@ -64,20 +61,20 @@ func TestMain(m *testing.M) {
 		if err := migration.DropAll(db); err != nil {
 			panic(err)
 		}
-		dbConns[key] = db
 
-		hub := hub.New()
-		hubs[key] = hub
+		env.DB = db
+		env.Hub = hub.New()
+		env.SessStore = session.NewMemorySessionStore()
 
 		// テスト用リポジトリ作成
-		repo, err := repository.NewGormRepository(db, storage.NewInMemoryFileStorage(), hub, zap.NewNop())
+		repo, err := repository.NewGormRepository(db, storage.NewInMemoryFileStorage(), env.Hub, zap.NewNop())
 		if err != nil {
 			panic(err)
 		}
 		if _, err := repo.Sync(); err != nil {
 			panic(err)
 		}
-		repositories[key] = repo
+		env.Repository = repo
 
 		// テスト用サーバー作成
 		e := echo.New()
@@ -86,17 +83,17 @@ func TestMain(m *testing.M) {
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap(repo))
 
-		r, err := rbac2.New(db)
+		r, err := rbac.New(db)
 		if err != nil {
 			panic(err)
 		}
 		handlers := &Handlers{
-			RBAC:   r,
-			Repo:   repo,
-			WS:     nil,
-			Hub:    hub,
-			Logger: zap.NewNop(),
-			Imaging: imaging2.NewProcessor(imaging2.Config{
+			RBAC:      r,
+			Repo:      env.Repository,
+			Hub:       env.Hub,
+			SessStore: env.SessStore,
+			Logger:    zap.NewNop(),
+			Imaging: imaging.NewProcessor(imaging.Config{
 				MaxPixels:        1000 * 1000,
 				Concurrency:      1,
 				ThumbnailMaxSize: image.Pt(360, 480),
@@ -108,52 +105,54 @@ func TestMain(m *testing.M) {
 			},
 		}
 		handlers.Setup(e.Group("/api"))
-		servers[key] = httptest.NewServer(e)
+		env.Server = httptest.NewServer(e)
+
+		envs[key] = env
 	}
 
 	// テスト実行
 	code := m.Run()
 
 	// 後始末
-	for _, v := range servers {
-		v.Close()
-	}
-	for _, v := range dbConns {
-		v.Close()
-	}
-	for _, v := range hubs {
-		v.Close()
+	for _, env := range envs {
+		env.Server.Close()
+		env.DB.Close()
+		env.Hub.Close()
 	}
 	os.Exit(code)
 }
 
+type Env struct {
+	Server     *httptest.Server
+	DB         *gorm.DB
+	Repository repository.Repository
+	Hub        *hub.Hub
+	SessStore  session.Store
+}
+
 // Setup テストセットアップ
-func Setup(t *testing.T, server string) (repository.Repository, *httptest.Server) {
+func Setup(t *testing.T, server string) *Env {
 	t.Helper()
-	s, ok := servers[server]
+	env, ok := envs[server]
 	if !ok {
 		t.FailNow()
 	}
-	repo := repositories[server]
-	return repo, s
+	return env
 }
 
 // S 指定ユーザーのAPIセッショントークンを発行
-func S(t *testing.T, userID uuid.UUID) string {
+func (env *Env) S(t *testing.T, userID uuid.UUID) string {
 	t.Helper()
-	require := require.New(t)
-
-	sess, err := sessions.IssueNewSession("127.0.0.1", "test")
-	require.NoError(err)
-	require.NoError(sess.SetUser(userID))
-	return sess.GetToken()
+	s, err := env.SessStore.IssueSession(userID, nil)
+	require.NoError(t, err)
+	return s.Token()
 }
 
 // R リクエストテスターを作成
-func R(t *testing.T, server *httptest.Server) *httpexpect.Expect {
+func (env *Env) R(t *testing.T) *httpexpect.Expect {
 	t.Helper()
 	return httpexpect.WithConfig(httpexpect.Config{
-		BaseURL:  server.URL,
+		BaseURL:  env.Server.URL,
 		Reporter: httpexpect.NewAssertReporter(t),
 		Printers: []httpexpect.Printer{
 			httpexpect.NewCurlPrinter(t),
@@ -170,12 +169,12 @@ func R(t *testing.T, server *httptest.Server) *httpexpect.Expect {
 }
 
 // CreateUser ユーザーを必ず作成します
-func CreateUser(t *testing.T, repo repository.Repository, userName string) model.UserInfo {
+func (env *Env) CreateUser(t *testing.T, userName string) model.UserInfo {
 	t.Helper()
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
-	u, err := repo.CreateUser(repository.CreateUserArgs{Name: userName, Password: "testtesttesttest", Role: role.User})
+	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "testtesttesttest", Role: role.User})
 	require.NoError(t, err)
 	return u
 }

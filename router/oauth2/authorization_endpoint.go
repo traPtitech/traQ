@@ -9,7 +9,6 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/router/sessions"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
 	"go.uber.org/zap"
@@ -152,21 +151,20 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	req.Types = types
 
 	// セッション確認
-	se, err := sessions.Get(c.Response(), c.Request(), true)
+	se, err := h.SessStore.GetSession(c, true)
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		q.Set("error", errServerError)
 		redirectURI.RawQuery = q.Encode()
 		return c.Redirect(http.StatusFound, redirectURI.String())
 	}
-	userID := se.GetUserID()
 
 	switch req.Prompt {
 	case "":
 		break
 
 	case "none":
-		u, err := h.Repo.GetUser(userID, false)
+		u, err := h.Repo.GetUser(se.UserID(), false)
 		if err != nil {
 			switch err {
 			case repository.ErrNotFound:
@@ -211,7 +209,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 		data := &model.OAuth2Authorize{
 			Code:                random.SecureAlphaNumeric(36),
 			ClientID:            req.ClientID,
-			UserID:              userID,
+			UserID:              se.UserID(),
 			CreatedAt:           time.Now(),
 			ExpiresIn:           authorizationCodeExp,
 			RedirectURI:         req.RedirectURI,
@@ -278,7 +276,7 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 	}
 
 	// セッション確認
-	se, err := sessions.Get(c.Response(), c.Request(), false)
+	se, err := h.SessStore.GetSession(c, false)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -286,11 +284,14 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 		return herror.Forbidden("bad session")
 	}
 
-	reqAuth, ok := se.Get(oauth2ContextSession).(authorizeRequest)
-	if !ok {
+	_reqAuth, err := se.Get(oauth2ContextSession)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+	if _reqAuth == nil {
 		return herror.Forbidden("bad session")
 	}
-	userID := se.GetUserID()
+	reqAuth := _reqAuth.(authorizeRequest)
 	if err := se.Delete(oauth2ContextSession); err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -334,7 +335,7 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 		data := &model.OAuth2Authorize{
 			Code:                random.SecureAlphaNumeric(36),
 			ClientID:            reqAuth.ClientID,
-			UserID:              userID,
+			UserID:              se.UserID(),
 			CreatedAt:           time.Now(),
 			ExpiresIn:           authorizationCodeExp,
 			RedirectURI:         reqAuth.RedirectURI,

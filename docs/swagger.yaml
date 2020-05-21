@@ -2959,13 +2959,6 @@ components:
         id:
           type: string
           format: uuid
-        lastIP:
-          type: string
-        lastUserAgent:
-          type: string
-        lastAccess:
-          type: string
-          format: date-time
         createdAt:
           type: string
           format: date-time

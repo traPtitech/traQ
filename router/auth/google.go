@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/session"
 	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"
 	"golang.org/x/oauth2"
@@ -22,10 +23,11 @@ const (
 )
 
 type GoogleProvider struct {
-	config GoogleProviderConfig
-	repo   repository.Repository
-	logger *zap.Logger
-	oa2    oauth2.Config
+	config    GoogleProviderConfig
+	repo      repository.Repository
+	logger    *zap.Logger
+	sessStore session.Store
+	oa2       oauth2.Config
 }
 
 type GoogleProviderConfig struct {
@@ -96,11 +98,12 @@ func (u *googleUserInfo) IsLoginAllowedUser() bool {
 	return true // TODO
 }
 
-func NewGoogleProvider(repo repository.Repository, logger *zap.Logger, config GoogleProviderConfig) *GoogleProvider {
+func NewGoogleProvider(repo repository.Repository, logger *zap.Logger, sessStore session.Store, config GoogleProviderConfig) *GoogleProvider {
 	return &GoogleProvider{
-		repo:   repo,
-		config: config,
-		logger: logger,
+		repo:      repo,
+		config:    config,
+		logger:    logger,
+		sessStore: sessStore,
 		oa2: oauth2.Config{
 			ClientID:     config.ClientID,
 			ClientSecret: config.ClientSecret,
@@ -112,11 +115,11 @@ func NewGoogleProvider(repo repository.Repository, logger *zap.Logger, config Go
 }
 
 func (p *GoogleProvider) LoginHandler(c echo.Context) error {
-	return defaultLoginHandler(&p.oa2)(c)
+	return defaultLoginHandler(p.sessStore, &p.oa2)(c)
 }
 
 func (p *GoogleProvider) CallbackHandler(c echo.Context) error {
-	return defaultCallbackHandler(p, &p.oa2, p.repo, p.config.RegisterUserIfNotFound)(c)
+	return defaultCallbackHandler(p, &p.oa2, p.repo, p.sessStore, p.config.RegisterUserIfNotFound)(c)
 }
 
 func (p *GoogleProvider) FetchUserInfo(t *oauth2.Token) (UserInfo, error) {

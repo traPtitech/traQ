@@ -22,7 +22,8 @@ CREATE TABLE `channels` (
   `updated_at` datetime(6) DEFAULT NULL,
   `deleted_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name_parent` (`name`,`parent_id`)
+  UNIQUE KEY `name_parent` (`name`,`parent_id`),
+  KEY `idx_channel_channels_id_is_public_is_forced` (`id`,`is_public`,`is_forced`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -56,6 +57,7 @@ CREATE TABLE `channels` (
 
 | Name | Definition |
 | ---- | ---------- |
+| idx_channel_channels_id_is_public_is_forced | KEY idx_channel_channels_id_is_public_is_forced (id, is_public, is_forced) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 | name_parent | UNIQUE KEY name_parent (name, parent_id) USING BTREE |
 

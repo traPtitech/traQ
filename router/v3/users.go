@@ -174,7 +174,7 @@ func (h *Handlers) PutMyPassword(c echo.Context) error {
 		return herror.Unauthorized("password is wrong")
 	}
 
-	return utils.ChangeUserPassword(c, h.Repo, user.GetID(), req.NewPassword)
+	return utils.ChangeUserPassword(c, h.Repo, h.SessStore, user.GetID(), req.NewPassword)
 }
 
 // GetMyQRCode GET /users/me/qr-code
@@ -306,7 +306,7 @@ func (h *Handlers) ChangeUserPassword(c echo.Context) error {
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
-	return utils.ChangeUserPassword(c, h.Repo, getParamAsUUID(c, consts.ParamUserID), req.NewPassword)
+	return utils.ChangeUserPassword(c, h.Repo, h.SessStore, getParamAsUUID(c, consts.ParamUserID), req.NewPassword)
 }
 
 // GetUser GET /users/:userID

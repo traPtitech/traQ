@@ -2,7 +2,6 @@ package migration
 
 import (
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/router/sessions"
 	"gopkg.in/gormigrate.v1"
 )
 
@@ -29,6 +28,7 @@ func Migrations() []*gormigrate.Migration {
 		v16(), // パーミッション修正
 		v17(), // ユーザーホームチャンネル
 		v18(), // インデックス追加
+		v19(), // httpセッション管理テーブル変更
 	}
 }
 
@@ -75,7 +75,7 @@ func AllTables() []interface{} {
 		&model.Channel{},
 		&model.ClipFolder{},
 		&model.User{},
-		&sessions.SessionRecord{},
+		&model.SessionRecord{},
 	}
 }
 

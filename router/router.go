@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/leandro-lugaresi/hub"
@@ -11,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/router/oauth2"
+	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/router/v1"
 	"github.com/traPtitech/traQ/router/v3"
 	"github.com/traPtitech/traQ/service"
@@ -19,14 +21,15 @@ import (
 )
 
 type Router struct {
-	e      *echo.Echo
-	v1     *v1.Handlers
-	v3     *v3.Handlers
-	oauth2 *oauth2.Handler
+	e         *echo.Echo
+	sessStore session.Store
+	v1        *v1.Handlers
+	v3        *v3.Handlers
+	oauth2    *oauth2.Handler
 }
 
-func Setup(hub *hub.Hub, repo repository.Repository, ss *service.Services, logger *zap.Logger, config *Config) *echo.Echo {
-	r := newRouter(hub, repo, ss, logger.Named("router"), config)
+func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Services, logger *zap.Logger, config *Config) *echo.Echo {
+	r := newRouter(hub, db, repo, ss, logger.Named("router"), config)
 
 	api := r.e.Group("/api")
 	api.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
@@ -40,22 +43,22 @@ func Setup(hub *hub.Hub, repo repository.Repository, ss *service.Services, logge
 	// 外部authハンドラ
 	extAuth := api.Group("/auth")
 	if config.ExternalAuth.GitHub.Valid() {
-		p := auth.NewGithubProvider(repo, logger.Named("ext_auth"), config.ExternalAuth.GitHub)
+		p := auth.NewGithubProvider(repo, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.GitHub)
 		extAuth.GET("/github", p.LoginHandler)
 		extAuth.GET("/github/callback", p.CallbackHandler)
 	}
 	if config.ExternalAuth.Google.Valid() {
-		p := auth.NewGoogleProvider(repo, logger.Named("ext_auth"), config.ExternalAuth.Google)
+		p := auth.NewGoogleProvider(repo, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.Google)
 		extAuth.GET("/google", p.LoginHandler)
 		extAuth.GET("/google/callback", p.CallbackHandler)
 	}
 	if config.ExternalAuth.TraQ.Valid() {
-		p := auth.NewTraQProvider(repo, logger.Named("ext_auth"), config.ExternalAuth.TraQ)
+		p := auth.NewTraQProvider(repo, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.TraQ)
 		extAuth.GET("/traq", p.LoginHandler)
 		extAuth.GET("/traq/callback", p.CallbackHandler)
 	}
 	if config.ExternalAuth.OIDC.Valid() {
-		p, err := auth.NewOIDCProvider(repo, logger.Named("ext_auth"), config.ExternalAuth.OIDC)
+		p, err := auth.NewOIDCProvider(repo, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.OIDC)
 		if err != nil {
 			panic(err)
 		}

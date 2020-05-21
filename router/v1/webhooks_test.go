@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
-	"github.com/traPtitech/traQ/router/sessions"
+	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/utils/hmac"
 	random2 "github.com/traPtitech/traQ/utils/random"
 	"net/http"
@@ -16,15 +16,15 @@ import (
 
 func TestHandlers_GetWebhooks(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, rand)
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common6)
+	ch := env.mustMakeChannel(t, rand)
 	for i := 0; i < 10; i++ {
-		mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "")
+		env.mustMakeWebhook(t, rand, ch.ID, testUser.GetID(), "")
 	}
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/webhooks").
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -32,9 +32,9 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/webhooks").
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -45,10 +45,10 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 
 	t.Run("Other user", func(t *testing.T) {
 		t.Parallel()
-		u := mustMakeUser(t, repo, rand)
-		e := makeExp(t, server)
+		u := env.mustMakeUser(t, rand)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/webhooks").
-			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
+			WithCookie(session.CookieName, env.generateSession(t, u.GetID())).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -59,12 +59,12 @@ func TestHandlers_GetWebhooks(t *testing.T) {
 
 func TestHandlers_PostWebhooks(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _ := setup(t, common6)
-	ch := mustMakeChannel(t, repo, rand)
+	env, _, _, s, _ := setup(t, common6)
+	ch := env.mustMakeChannel(t, rand)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/webhooks").
 			WithJSON(map[string]string{"name": "test", "description": "test", "channelId": ch.ID.String()}).
 			Expect().
@@ -73,10 +73,10 @@ func TestHandlers_PostWebhooks(t *testing.T) {
 
 	t.Run("Bad Request (No channel)", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/webhooks").
 			WithJSON(map[string]string{"name": "test", "description": "test"}).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -85,10 +85,10 @@ func TestHandlers_PostWebhooks(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 		name := random2.AlphaNumeric(20)
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		id := e.POST("/api/1.0/webhooks").
 			WithJSON(map[string]string{"name": name, "description": "test", "channelId": ch.ID.String()}).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusCreated).
 			JSON().
@@ -97,7 +97,7 @@ func TestHandlers_PostWebhooks(t *testing.T) {
 			String().
 			Raw()
 
-		wb, err := repo.GetWebhook(uuid.FromStringOrNil(id))
+		wb, err := env.Repository.GetWebhook(uuid.FromStringOrNil(id))
 		if assert.NoError(err) {
 			assert.Equal(name, wb.GetName())
 			assert.Equal("test", wb.GetDescription())
@@ -109,13 +109,13 @@ func TestHandlers_PostWebhooks(t *testing.T) {
 
 func TestHandlers_GetWebhook(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, rand)
-	wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "")
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common6)
+	ch := env.mustMakeChannel(t, rand)
+	wb := env.mustMakeWebhook(t, rand, ch.ID, testUser.GetID(), "")
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/webhooks/{webhookID}", wb.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -123,28 +123,28 @@ func TestHandlers_GetWebhook(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/webhooks/{webhookID}", uuid.Must(uuid.NewV4())).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNotFound)
 	})
 
 	t.Run("Other user", func(t *testing.T) {
 		t.Parallel()
-		u := mustMakeUser(t, repo, rand)
-		e := makeExp(t, server)
+		u := env.mustMakeUser(t, rand)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/webhooks/{webhookID}", wb.GetID()).
-			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
+			WithCookie(session.CookieName, env.generateSession(t, u.GetID())).
 			Expect().
 			Status(http.StatusForbidden)
 	})
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		obj := e.GET("/api/1.0/webhooks/{webhookID}", wb.GetID()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -160,13 +160,13 @@ func TestHandlers_GetWebhook(t *testing.T) {
 
 func TestHandlers_PatchWebhook(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, rand)
-	wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "secret")
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common6)
+	ch := env.mustMakeChannel(t, rand)
+	wb := env.mustMakeWebhook(t, rand, ch.ID, testUser.GetID(), "secret")
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PATCH("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -174,41 +174,41 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PATCH("/api/1.0/webhooks/{webhookId}", uuid.Must(uuid.NewV4())).
 			WithJSON(map[string]string{"name": strings.Repeat("a", 30)}).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNotFound)
 	})
 
 	t.Run("Other user", func(t *testing.T) {
 		t.Parallel()
-		u := mustMakeUser(t, repo, rand)
-		e := makeExp(t, server)
+		u := env.mustMakeUser(t, rand)
+		e := env.makeExp(t)
 		e.PATCH("/api/1.0/webhooks/{webhookID}", wb.GetID()).
 			WithJSON(map[string]string{"name": strings.Repeat("a", 30)}).
-			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
+			WithCookie(session.CookieName, env.generateSession(t, u.GetID())).
 			Expect().
 			Status(http.StatusForbidden)
 	})
 
 	t.Run("Bad Request", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PATCH("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithJSON(map[string]string{"name": strings.Repeat("a", 40)}).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
 
 	t.Run("Bad Request (Channel Not found)", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PATCH("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithJSON(map[string]uuid.UUID{"channelId": uuid.Must(uuid.NewV4())}).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -219,15 +219,15 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 		name := random2.AlphaNumeric(20)
 		desc := random2.AlphaNumeric(20)
 		secret := random2.AlphaNumeric(20)
-		ch := mustMakeChannel(t, repo, rand)
-		e := makeExp(t, server)
+		ch := env.mustMakeChannel(t, rand)
+		e := env.makeExp(t)
 		e.PATCH("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithJSON(map[string]string{"name": name, "description": desc, "channelId": ch.ID.String(), "secret": secret}).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNoContent)
 
-		wb, err := repo.GetWebhook(wb.GetID())
+		wb, err := env.Repository.GetWebhook(wb.GetID())
 		require.NoError(err)
 		assert.Equal(name, wb.GetName())
 		assert.Equal(desc, wb.GetDescription())
@@ -238,13 +238,13 @@ func TestHandlers_PatchWebhook(t *testing.T) {
 
 func TestHandlers_DeleteWebhook(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, rand)
-	wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "secret")
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common6)
+	ch := env.mustMakeChannel(t, rand)
+	wb := env.mustMakeWebhook(t, rand, ch.ID, testUser.GetID(), "secret")
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.DELETE("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -252,46 +252,46 @@ func TestHandlers_DeleteWebhook(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.DELETE("/api/1.0/webhooks/{webhookId}", uuid.Must(uuid.NewV4())).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNotFound)
 	})
 
 	t.Run("Other user", func(t *testing.T) {
 		t.Parallel()
-		u := mustMakeUser(t, repo, rand)
-		e := makeExp(t, server)
+		u := env.mustMakeUser(t, rand)
+		e := env.makeExp(t)
 		e.DELETE("/api/1.0/webhooks/{webhookID}", wb.GetID()).
-			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
+			WithCookie(session.CookieName, env.generateSession(t, u.GetID())).
 			Expect().
 			Status(http.StatusForbidden)
 	})
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "secret")
-		e := makeExp(t, server)
+		wb := env.mustMakeWebhook(t, rand, ch.ID, testUser.GetID(), "secret")
+		e := env.makeExp(t)
 		e.DELETE("/api/1.0/webhooks/{webhookId}", wb.GetID()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNoContent)
 
-		_, err := repo.GetWebhook(wb.GetID())
+		_, err := env.Repository.GetWebhook(wb.GetID())
 		assert.EqualError(t, err, repository.ErrNotFound.Error())
 	})
 }
 
 func TestHandlers_PutWebhookIcon(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, rand)
-	wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "secret")
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common6)
+	ch := env.mustMakeChannel(t, rand)
+	wb := env.mustMakeWebhook(t, rand, ch.ID, testUser.GetID(), "secret")
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/webhooks/{webhookId}/icon", wb.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -299,50 +299,50 @@ func TestHandlers_PutWebhookIcon(t *testing.T) {
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/webhooks/{webhookId}/icon", uuid.Must(uuid.NewV4())).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNotFound)
 	})
 
 	t.Run("Other user", func(t *testing.T) {
 		t.Parallel()
-		u := mustMakeUser(t, repo, rand)
-		e := makeExp(t, server)
+		u := env.mustMakeUser(t, rand)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/webhooks/{webhookID}/icon", wb.GetID()).
-			WithCookie(sessions.CookieName, generateSession(t, u.GetID())).
+			WithCookie(session.CookieName, env.generateSession(t, u.GetID())).
 			Expect().
 			Status(http.StatusForbidden)
 	})
 
 	t.Run("Bad Request (No file)", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/webhooks/{webhookId}/icon", wb.GetID()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
 
 	t.Run("Bad Request (Not image)", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/webhooks/{webhookId}/icon", wb.GetID()).
 			WithMultipart().
 			WithFileBytes("file", "test.txt", []byte("text file")).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
 
 	t.Run("Bad Request (Bad image)", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.PUT("/api/1.0/webhooks/{webhookId}/icon", wb.GetID()).
 			WithMultipart().
 			WithFileBytes("file", "test.png", []byte("text file")).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -350,13 +350,13 @@ func TestHandlers_PutWebhookIcon(t *testing.T) {
 
 func TestHandlers_PostWebhook(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, _, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, rand)
-	wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "secret")
+	env, _, _, _, _, testUser, _ := setupWithUsers(t, common6)
+	ch := env.mustMakeChannel(t, rand)
+	wb := env.mustMakeWebhook(t, rand, ch.ID, testUser.GetID(), "secret")
 
 	t.Run("Not found", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/webhooks/{webhookId}", uuid.Must(uuid.NewV4())).
 			Expect().
 			Status(http.StatusNotFound)
@@ -364,7 +364,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 
 	t.Run("UnsupportedMediaType", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithJSON(map[string]string{"test": "test"}).
 			Expect().
@@ -373,7 +373,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 
 	t.Run("Bad Request (No Body)", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText("").
 			Expect().
@@ -382,7 +382,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 
 	t.Run("Bad Request (Missing Signature)", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText("test").
 			Expect().
@@ -391,7 +391,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 
 	t.Run("Unauthorized", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText("test").
 			WithHeader(consts.HeaderSignature, "abcdef").
@@ -402,7 +402,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 	t.Run("Bad Request (Nil Channel)", func(t *testing.T) {
 		t.Parallel()
 		body := "test"
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText(body).
 			WithHeader(consts.HeaderSignature, hex.EncodeToString(hmac.SHA1([]byte(body), wb.GetSecret()))).
@@ -414,7 +414,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 	t.Run("Bad Request (Channel not found)", func(t *testing.T) {
 		t.Parallel()
 		body := "test"
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText(body).
 			WithHeader(consts.HeaderSignature, hex.EncodeToString(hmac.SHA1([]byte(body), wb.GetSecret()))).
@@ -427,14 +427,14 @@ func TestHandlers_PostWebhook(t *testing.T) {
 		t.Parallel()
 		assert, require := assertAndRequire(t)
 		body := "test"
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText(body).
 			WithHeader(consts.HeaderSignature, hex.EncodeToString(hmac.SHA1([]byte(body), wb.GetSecret()))).
 			Expect().
 			Status(http.StatusNoContent)
 
-		arr, _, err := repo.GetMessages(repository.MessagesQuery{Channel: ch.ID})
+		arr, _, err := env.Repository.GetMessages(repository.MessagesQuery{Channel: ch.ID})
 		require.NoError(err)
 		if assert.Len(arr, 1) {
 			assert.Equal(wb.GetBotUserID(), arr[0].UserID)
@@ -446,8 +446,8 @@ func TestHandlers_PostWebhook(t *testing.T) {
 		t.Parallel()
 		assert, require := assertAndRequire(t)
 		body := "test"
-		ch := mustMakeChannel(t, repo, rand)
-		e := makeExp(t, server)
+		ch := env.mustMakeChannel(t, rand)
+		e := env.makeExp(t)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).
 			WithText(body).
 			WithHeader(consts.HeaderSignature, hex.EncodeToString(hmac.SHA1([]byte(body), wb.GetSecret()))).
@@ -455,7 +455,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		arr, _, err := repo.GetMessages(repository.MessagesQuery{Channel: ch.ID})
+		arr, _, err := env.Repository.GetMessages(repository.MessagesQuery{Channel: ch.ID})
 		require.NoError(err)
 		if assert.Len(arr, 1) {
 			assert.Equal(wb.GetBotUserID(), arr[0].UserID)
@@ -466,17 +466,17 @@ func TestHandlers_PostWebhook(t *testing.T) {
 
 func TestHandlers_GetWebhookMessages(t *testing.T) {
 	t.Parallel()
-	repo, server, _, _, session, _, testUser, _ := setupWithUsers(t, common6)
-	ch := mustMakeChannel(t, repo, rand)
-	wb := mustMakeWebhook(t, repo, rand, ch.ID, testUser.GetID(), "")
+	env, _, _, s, _, testUser, _ := setupWithUsers(t, common6)
+	ch := env.mustMakeChannel(t, rand)
+	wb := env.mustMakeWebhook(t, rand, ch.ID, testUser.GetID(), "")
 
 	for i := 0; i < 60; i++ {
-		mustMakeMessage(t, repo, wb.GetBotUserID(), ch.ID)
+		env.mustMakeMessage(t, wb.GetBotUserID(), ch.ID)
 	}
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/webhooks/{webhookID}/messages", wb.GetID()).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -484,9 +484,9 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/webhooks/{webhookID}/messages", wb.GetID()).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -497,11 +497,11 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 
 	t.Run("Successful2", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/webhooks/{webhookID}/messages", wb.GetID()).
 			WithQuery("limit", 3).
 			WithQuery("offset", 1).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
@@ -512,9 +512,9 @@ func TestHandlers_GetWebhookMessages(t *testing.T) {
 
 	t.Run("Not Found", func(t *testing.T) {
 		t.Parallel()
-		e := makeExp(t, server)
+		e := env.makeExp(t)
 		e.GET("/api/1.0/webhooks/{webhookID}/messages", uuid.Must(uuid.NewV4())).
-			WithCookie(sessions.CookieName, session).
+			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNotFound)
 	})

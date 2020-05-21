@@ -9,29 +9,25 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/validator"
-	"strings"
 	"sync"
 	"time"
 )
 
 type stampRepository struct {
-	stamps        map[uuid.UUID]*model.Stamp
-	nameStampsMap map[string]*model.Stamp
-	allJSON       []byte
-	json          []byte
-	updatedAt     time.Time
+	stamps    map[uuid.UUID]*model.Stamp
+	allJSON   []byte
+	json      []byte
+	updatedAt time.Time
 	sync.RWMutex
 }
 
 func makeStampRepository(stamps []*model.Stamp) *stampRepository {
 	r := &stampRepository{
-		stamps:        make(map[uuid.UUID]*model.Stamp, len(stamps)),
-		nameStampsMap: make(map[string]*model.Stamp, len(stamps)),
-		updatedAt:     time.Now(),
+		stamps:    make(map[uuid.UUID]*model.Stamp, len(stamps)),
+		updatedAt: time.Now(),
 	}
 	for _, s := range stamps {
 		r.stamps[s.ID] = s
-		r.nameStampsMap[strings.ToLower(s.Name)] = s
 	}
 
 	r.regenerateJSON()
@@ -40,32 +36,18 @@ func makeStampRepository(stamps []*model.Stamp) *stampRepository {
 
 func (r *stampRepository) add(s *model.Stamp) {
 	r.stamps[s.ID] = s
-	r.nameStampsMap[strings.ToLower(s.Name)] = s
 	r.updatedAt = time.Now()
 	r.regenerateJSON()
 }
 
 func (r *stampRepository) update(s *model.Stamp) {
-	orig, ok := r.stamps[s.ID]
-	if !ok {
-		panic("assert !ok = false")
-	}
-
-	delete(r.nameStampsMap, strings.ToLower(orig.Name))
 	r.stamps[s.ID] = s
-	r.nameStampsMap[strings.ToLower(s.Name)] = s
 	r.updatedAt = time.Now()
 	r.regenerateJSON()
 }
 
 func (r *stampRepository) delete(id uuid.UUID) {
-	s, ok := r.stamps[id]
-	if !ok {
-		panic("assert !ok = false")
-	}
-
 	delete(r.stamps, id)
-	delete(r.nameStampsMap, strings.ToLower(s.Name))
 	r.updatedAt = time.Now()
 	r.regenerateJSON()
 }
@@ -97,13 +79,6 @@ func (r *stampRepository) GetStamp(id uuid.UUID) (s *model.Stamp, ok bool) {
 	r.RLock()
 	defer r.RUnlock()
 	s, ok = r.stamps[id]
-	return
-}
-
-func (r *stampRepository) GetStampByName(name string) (s *model.Stamp, ok bool) {
-	r.RLock()
-	defer r.RUnlock()
-	s, ok = r.nameStampsMap[strings.ToLower(name)]
 	return
 }
 
