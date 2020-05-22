@@ -17,6 +17,7 @@ services:
       - "6060:6060"
     depends_on:
       - mysql
+      - es
 
   frontend:
     image: caddy:latest
@@ -43,6 +44,15 @@ services:
       - "3306"
     ports:
       - "3002:3306"
+
+  es:
+    image: elasticsearch:7.7.0
+    restart: always
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+      - "9300:9300"
 
   adminer:
     image: adminer:4.7.5
