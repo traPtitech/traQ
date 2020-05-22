@@ -7,6 +7,7 @@ services:
     environment:
       TRAQ_ORIGIN: http://localhost:3000
       TRAQ_MARIADB_HOST: mysql
+      TRAQ_ES_URL: http://es:9200
       TRAQ_PPROF: "true"
     entrypoint: dockerize -timeout 60s -wait tcp://mysql:3306
     command: ./traQ serve --dev --skip-init-emojis

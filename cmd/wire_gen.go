@@ -64,6 +64,11 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 	if err != nil {
 		return nil, err
 	}
+	esurlString := provideESURLString(c2)
+	engine, err := initSearchServiceIfAvailable(hub2, logger, esurlString)
+	if err != nil {
+		return nil, err
+	}
 	services := &service.Services{
 		BOT:                  processor,
 		OnlineCounter:        onlineCounter,
@@ -75,6 +80,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 		Imaging:              imagingProcessor,
 		Notification:         notificationService,
 		RBAC:                 rbacRBAC,
+		Search:               engine,
 		SSE:                  streamer,
 		ViewerManager:        manager,
 		WebRTCv3:             webrtcv3Manager,

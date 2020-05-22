@@ -4,6 +4,7 @@ import (
 	"cloud.google.com/go/profiler"
 	"fmt"
 	"github.com/jinzhu/gorm"
+	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
@@ -11,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/fcm"
 	"github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
@@ -72,6 +74,11 @@ type Config struct {
 			LifeTime int `mapstructure:"lifetime" yaml:"lifetime"`
 		} `mapstructure:"connection" yaml:"connection"`
 	} `mapstructure:"mariadb" yaml:"mariadb"`
+
+	// ES Elasticsearch設定
+	ES struct {
+		URL string `mapstructure:"url" yaml:"url"`
+	} `mapstructure:"es" yaml:"es"`
 
 	// Storage ファイルストレージ設定
 	Storage struct {
@@ -219,6 +226,7 @@ func init() {
 	viper.SetDefault("mariadb.connection.maxOpen", 0)
 	viper.SetDefault("mariadb.connection.maxIdle", 2)
 	viper.SetDefault("mariadb.connection.lifetime", 0)
+	viper.SetDefault("es.url", "")
 	viper.SetDefault("storage.type", "local")
 	viper.SetDefault("storage.local.dir", "./storage")
 	viper.SetDefault("storage.swift.username", "")
@@ -326,12 +334,23 @@ func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unr
 	return nil, nil
 }
 
+func initSearchServiceIfAvailable(hub *hub.Hub, logger *zap.Logger, url search.ESURLString) (search.Engine, error) {
+	if len(url) > 0 {
+		return search.NewESEngine(hub, logger, url)
+	}
+	return nil, nil
+}
+
 func provideServerOriginString(c *Config) variable.ServerOriginString {
 	return variable.ServerOriginString(c.Origin)
 }
 
 func provideFirebaseCredentialsFilePathString(c *Config) variable.FirebaseCredentialsFilePathString {
 	return variable.FirebaseCredentialsFilePathString(c.Firebase.ServiceAccount.File)
+}
+
+func provideESURLString(c *Config) search.ESURLString {
+	return search.ESURLString(c.ES.URL)
 }
 
 func provideImageProcessorConfig(c *Config) imaging.Config {
