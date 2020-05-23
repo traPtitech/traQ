@@ -390,7 +390,7 @@ func provideRouterExternalAuthConfig(c *Config) router.ExternalAuthConfig {
 	}
 }
 
-func providerRouterConfig(c *Config) *router.Config {
+func provideRouterConfig(c *Config) *router.Config {
 	return &router.Config{
 		Development:      c.DevMode,
 		Version:          Version,

@@ -80,7 +80,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 		WebRTCv3:             webrtcv3Manager,
 		WS:                   wsStreamer,
 	}
-	routerConfig := providerRouterConfig(c2)
+	routerConfig := provideRouterConfig(c2)
 	echo := router.Setup(hub2, db, repo, services, logger, routerConfig)
 	server := &Server{
 		L:      logger,
