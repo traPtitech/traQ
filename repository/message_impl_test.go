@@ -257,7 +257,7 @@ func TestRepositoryImpl_GetArchivedMessagesByID(t *testing.T) {
 
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		r, err := repo.GetArchivedMessagesByID(uuid.Nil)
 		if assert.NoError(err) {
@@ -267,7 +267,7 @@ func TestRepositoryImpl_GetArchivedMessagesByID(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		r, err := repo.GetArchivedMessagesByID(m.ID)
 		if assert.NoError(err) && assert.Len(r, 5) {
@@ -294,7 +294,7 @@ func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 		{
 			ms, err := repo.AddStampToMessage(message.ID, stamp.ID, user.GetID(), 1)
 			if assert.NoError(err) {

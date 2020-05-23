@@ -100,12 +100,6 @@ func setupWithUserAndChannel(t *testing.T, repo string) (Repository, *assert.Ass
 	return r, assert, require, mustMakeUser(t, r, rand), mustMakeChannel(t, r, rand)
 }
 
-func setupWithChannel(t *testing.T, repo string) (Repository, *assert.Assertions, *require.Assertions, *model.Channel) {
-	t.Helper()
-	r, assert, require := setup(t, repo)
-	return r, assert, require, mustMakeChannel(t, r, rand)
-}
-
 func setupWithUser(t *testing.T, repo string) (Repository, *assert.Assertions, *require.Assertions, model.UserInfo) {
 	t.Helper()
 	r, assert, require := setup(t, repo)

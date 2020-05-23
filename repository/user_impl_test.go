@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
 	random2 "github.com/traPtitech/traQ/utils/random"
@@ -150,20 +151,20 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 
 	t.Run("No Args", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		assert.NoError(repo.UpdateUser(user.GetID(), UpdateUserArgs{}))
 	})
 
 	t.Run("Nil ID", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 		assert.EqualError(repo.UpdateUser(uuid.Nil, UpdateUserArgs{}), ErrNilID.Error())
 	})
 
 	t.Run("Unknown User", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 		assert.EqualError(repo.UpdateUser(uuid.Must(uuid.NewV4()), UpdateUserArgs{}), ErrNotFound.Error())
 	})
 
@@ -173,7 +174,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		user := mustMakeUser(t, repo, rand)
 
 		t.Run("Failed", func(t *testing.T) {
-			assert, _ := assertAndRequire(t)
+			assert := assert.New(t)
 
 			err := repo.UpdateUser(user.GetID(), UpdateUserArgs{DisplayName: optional.StringFrom(strings.Repeat("a", 65))})
 			if assert.IsType(&ArgumentError{}, err) {
@@ -199,7 +200,7 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 		user := mustMakeUser(t, repo, rand)
 
 		t.Run("Failed", func(t *testing.T) {
-			assert, _ := assertAndRequire(t)
+			assert := assert.New(t)
 
 			err := repo.UpdateUser(user.GetID(), UpdateUserArgs{TwitterID: optional.StringFrom("ああああ")})
 			if assert.IsType(&ArgumentError{}, err) {

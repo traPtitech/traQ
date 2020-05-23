@@ -32,7 +32,7 @@ func TestRepositoryImpl_CreateWebhook(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		wb, err := repo.CreateWebhook("test", "aaa", channel.ID, user.GetID(), "test")
 		if assert.NoError(err) {
@@ -150,7 +150,7 @@ func TestRepositoryImpl_DeleteWebhook(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 		wb := mustMakeWebhook(t, repo, rand, channel.ID, user.GetID(), "test")
 
 		err := repo.DeleteWebhook(wb.GetID())
@@ -179,7 +179,7 @@ func TestRepositoryImpl_GetWebhook(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 		wb := mustMakeWebhook(t, repo, rand, channel.ID, user.GetID(), "test")
 
 		w, err := repo.GetWebhook(wb.GetID())
@@ -213,7 +213,7 @@ func TestRepositoryImpl_GetWebhookByBotUserId(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 		wb := mustMakeWebhook(t, repo, rand, channel.ID, user.GetID(), "test")
 
 		w, err := repo.GetWebhookByBotUserID(wb.GetBotUserID())
