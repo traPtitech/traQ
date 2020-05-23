@@ -1378,6 +1378,7 @@ paths:
           description: 正常に登録できました。
   /messages/reports:
     get:
+      deprecated: true
       tags:
         - message
       operationId: getReports
@@ -1459,6 +1460,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/messageIdInPath'
     post:
+      deprecated: true
       tags:
         - message
       operationId: reportMessage
