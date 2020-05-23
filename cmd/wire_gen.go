@@ -86,6 +86,8 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 		L:      logger,
 		SS:     services,
 		Router: echo,
+		Hub:    hub2,
+		Repo:   repo,
 	}
 	return server, nil
 }

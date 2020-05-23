@@ -4,14 +4,11 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/rbac/role"
-	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
-	"time"
 )
 
 // GormRepository リポジトリ実装
@@ -99,13 +96,5 @@ func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub, logger
 		logger: logger.Named("repository"),
 		fs:     fs,
 	}
-	go func() {
-		sub := hub.Subscribe(10, event.UserOffline)
-		for ev := range sub.Receiver {
-			userID := ev.Fields["user_id"].(uuid.UUID)
-			datetime := ev.Fields["datetime"].(time.Time)
-			_ = repo.UpdateUser(userID, UpdateUserArgs{LastOnline: optional.TimeFrom(datetime)})
-		}
-	}()
 	return repo, nil
 }
