@@ -159,8 +159,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	if s.SS.FCM != nil {
 		s.SS.FCM.Close()
 	}
-	if s.SS.Search != nil {
-		s.SS.Search.Close()
-	}
+	_ = s.SS.Search.Close()
 	return s.Router.Shutdown(ctx)
 }

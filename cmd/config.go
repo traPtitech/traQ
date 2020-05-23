@@ -338,7 +338,7 @@ func initSearchServiceIfAvailable(hub *hub.Hub, logger *zap.Logger, url search.E
 	if len(url) > 0 {
 		return search.NewESEngine(hub, logger, url)
 	}
-	return nil, nil
+	return search.NewNullEngine(), nil
 }
 
 func provideServerOriginString(c *Config) variable.ServerOriginString {
