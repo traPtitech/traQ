@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/rbac/role"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
@@ -164,7 +165,8 @@ func mustMakeUser(t *testing.T, repo Repository, userName string) model.UserInfo
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
-	u, err := repo.CreateUser(CreateUserArgs{Name: userName, Password: "test", Role: role.User})
+	// パスワード無し・アイコンファイルは実際には存在しないことに注意
+	u, err := repo.CreateUser(CreateUserArgs{Name: userName, Role: role.User, IconFileID: optional.UUIDFrom(uuid.Must(uuid.NewV4()))})
 	require.NoError(t, err)
 	return u
 }
