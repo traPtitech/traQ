@@ -2,6 +2,10 @@ package v1
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/require"
+	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/rbac/role"
+	"github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"strconv"
 	"testing"
@@ -9,7 +13,12 @@ import (
 
 func TestHandlers_GetPublicUserIcon(t *testing.T) {
 	t.Parallel()
-	env, _, _, _, _, testUser, _ := setupWithUsers(t, common5)
+	env, _, _, _, _ := setup(t, common5)
+	testUser, err := env.Repository.CreateUser(repository.CreateUserArgs{
+		Name: random.AlphaNumeric(32),
+		Role: role.User,
+	})
+	require.NoError(t, err)
 
 	t.Run("No name", func(t *testing.T) {
 		t.Parallel()

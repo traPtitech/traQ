@@ -1,11 +1,14 @@
 package v1
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/random"
 	"strings"
 	"testing"
 
@@ -203,7 +206,13 @@ func TestHandlers_PutPassword(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		user := env.mustMakeUser(t, rand)
+		user, err := env.Repository.CreateUser(repository.CreateUserArgs{
+			Name:       random.AlphaNumeric(32),
+			Password:   "test",
+			Role:       role.User,
+			IconFileID: optional.UUIDFrom(uuid.Must(uuid.NewV4())),
+		})
+		require.NoError(t, err)
 
 		e := env.makeExp(t)
 		newPassword := strings.Repeat("a", 20)
@@ -301,7 +310,15 @@ func TestHandlers_PutUserPassword(t *testing.T) {
 
 func TestHandlers_PostLogin(t *testing.T) {
 	t.Parallel()
-	env, _, _, _, _, user, _ := setupWithUsers(t, common4)
+	env, _, _, _, _ := setup(t, common4)
+
+	user, err := env.Repository.CreateUser(repository.CreateUserArgs{
+		Name:       random.AlphaNumeric(32),
+		Password:   "test",
+		Role:       role.User,
+		IconFileID: optional.UUIDFrom(uuid.Must(uuid.NewV4())),
+	})
+	require.NoError(t, err)
 
 	t.Run("Successful1", func(t *testing.T) {
 		t.Parallel()
