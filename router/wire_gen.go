@@ -21,7 +21,7 @@ import (
 
 func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Services, logger *zap.Logger, config *Config) *Router {
 	echo := newEcho(logger, config, repo)
-	sessionStore := session.NewGormStore(db)
+	store := session.NewGormStore(db)
 	rbac := ss.RBAC
 	streamer := ss.SSE
 	onlineCounter := ss.OnlineCounter
@@ -38,7 +38,7 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 		VM:         manager,
 		HeartBeats: heartbeatManager,
 		Imaging:    processor,
-		SessStore:  sessionStore,
+		SessStore:  store,
 	}
 	wsStreamer := ss.WS
 	webrtcv3Manager := ss.WebRTCv3
@@ -53,7 +53,7 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 		VM:        manager,
 		WebRTC:    webrtcv3Manager,
 		Imaging:   processor,
-		SessStore: sessionStore,
+		SessStore: store,
 		Config:    v3Config,
 	}
 	oauth2Config := provideOAuth2Config(config)
@@ -61,12 +61,12 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 		RBAC:      rbac,
 		Repo:      repo,
 		Logger:    logger,
-		SessStore: sessionStore,
+		SessStore: store,
 		Config:    oauth2Config,
 	}
 	router := &Router{
 		e:         echo,
-		sessStore: sessionStore,
+		sessStore: store,
 		v1:        handlers,
 		v3:        v3Handlers,
 		oauth2:    handler,

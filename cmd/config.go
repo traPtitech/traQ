@@ -319,11 +319,11 @@ func initStackdriverProfiler(c *Config) error {
 	}, option.WithCredentialsFile(c.GCP.ServiceAccount.File))
 }
 
-func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unreadCounter counter.UnreadMessageCounter, file variable.FirebaseCredentialsFilePathString) (*fcm.Client, error) {
+func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unreadCounter counter.UnreadMessageCounter, file variable.FirebaseCredentialsFilePathString) (fcm.Client, error) {
 	if len(file) > 0 {
 		return fcm.NewClientWithCredentialsFile(repo, logger, unreadCounter, file)
 	}
-	return nil, nil
+	return fcm.NewNullClient(), nil
 }
 
 func provideServerOriginString(c *Config) variable.ServerOriginString {

@@ -15,8 +15,7 @@ import (
 	"time"
 )
 
-// Client Firebase Cloud Messaging Client
-type Client struct {
+type clientImpl struct {
 	c             *messaging.Client
 	repo          repository.Repository
 	logger        *zap.Logger
@@ -26,12 +25,12 @@ type Client struct {
 }
 
 // NewClientWithCredentialsFile Firebase Cloud Messaging Clientを生成します
-func NewClientWithCredentialsFile(repo repository.Repository, logger *zap.Logger, unreadCounter counter.UnreadMessageCounter, file variable.FirebaseCredentialsFilePathString) (*Client, error) {
+func NewClientWithCredentialsFile(repo repository.Repository, logger *zap.Logger, unreadCounter counter.UnreadMessageCounter, file variable.FirebaseCredentialsFilePathString) (Client, error) {
 	return NewClient(repo, logger, unreadCounter, option.WithCredentialsFile(string(file)))
 }
 
 // NewClient Firebase Cloud Messaging Clientを生成します
-func NewClient(repo repository.Repository, logger *zap.Logger, unreadCounter counter.UnreadMessageCounter, options ...option.ClientOption) (*Client, error) {
+func NewClient(repo repository.Repository, logger *zap.Logger, unreadCounter counter.UnreadMessageCounter, options ...option.ClientOption) (Client, error) {
 	app, err := firebase.NewApp(context.Background(), nil, options...)
 	if err != nil {
 		return nil, err
@@ -42,7 +41,7 @@ func NewClient(repo repository.Repository, logger *zap.Logger, unreadCounter cou
 		return nil, err
 	}
 
-	c := &Client{
+	c := &clientImpl{
 		c:             mc,
 		repo:          repo,
 		logger:        logger.Named("fcm"),
@@ -55,14 +54,14 @@ func NewClient(repo repository.Repository, logger *zap.Logger, unreadCounter cou
 	return c, nil
 }
 
-func (c *Client) Close() {
-	if !c.IsClosed() {
+func (c *clientImpl) Close() {
+	if !c.isClosed() {
 		close(c.close)
 		close(c.queue)
 	}
 }
 
-func (c *Client) IsClosed() bool {
+func (c *clientImpl) isClosed() bool {
 	select {
 	case <-c.close:
 		return true
@@ -71,13 +70,12 @@ func (c *Client) IsClosed() bool {
 	}
 }
 
-// Send targetユーザーにpayloadを送信します
-func (c *Client) Send(targetUserIDs set.UUID, payload *Payload, withUnreadCount bool) {
+func (c *clientImpl) Send(targetUserIDs set.UUID, payload *Payload, withUnreadCount bool) {
 	_ = c.send(targetUserIDs, payload, withUnreadCount)
 }
 
-func (c *Client) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bool) error {
-	if c.IsClosed() {
+func (c *clientImpl) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bool) error {
+	if c.isClosed() {
 		return errors.New("fcm client has already been closed")
 	}
 
@@ -173,14 +171,14 @@ func (c *Client) send(targetUserIDs set.UUID, p *Payload, withUnreadCount bool) 
 		}
 	}
 
-	if c.IsClosed() {
+	if c.isClosed() {
 		return errors.New("fcm client has already been closed")
 	}
 	c.queue <- messages
 	return nil
 }
 
-func (c *Client) worker() {
+func (c *clientImpl) worker() {
 	ticker := time.NewTicker(250 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -209,7 +207,7 @@ func (c *Client) worker() {
 	}
 }
 
-func (c *Client) sendMessages(messages []*messaging.Message) {
+func (c *clientImpl) sendMessages(messages []*messaging.Message) {
 	var invalidTokens []string
 	for _, v := range chunkMessages(messages, batchSize) { // 1度に送信できるのは500メッセージまで
 		ng, err := c.sendOneChunk(v)
@@ -230,7 +228,7 @@ func (c *Client) sendMessages(messages []*messaging.Message) {
 	}
 }
 
-func (c *Client) sendOneChunk(messages []*messaging.Message) (invalidTokens []string, err error) {
+func (c *clientImpl) sendOneChunk(messages []*messaging.Message) (invalidTokens []string, err error) {
 	res, err := c.c.SendAll(context.Background(), messages)
 	if err != nil {
 		fcmBatchRequestCounter.WithLabelValues("error").Inc()

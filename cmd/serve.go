@@ -156,8 +156,6 @@ func (s *Server) Start(address string) error {
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.SS.SSE.Dispose()
 	_ = s.SS.WS.Close()
-	if s.SS.FCM != nil {
-		s.SS.FCM.Close()
-	}
+	s.SS.FCM.Close()
 	return s.Router.Shutdown(ctx)
 }
