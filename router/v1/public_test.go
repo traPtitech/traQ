@@ -1,9 +1,7 @@
 package v1
 
 import (
-	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/router/consts"
 	"net/http"
 	"strconv"
 	"testing"
@@ -52,119 +50,6 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 
 		e := env.makeExp(t)
 		e.GET("/api/1.0/public/icon/{username}", testUser.GetName()).
-			WithHeader("If-None-Match", strconv.Quote(meta.GetMD5Hash())).
-			Expect().
-			Status(http.StatusNotModified)
-	})
-}
-
-func TestHandlers_GetPublicEmojiJSON(t *testing.T) {
-	t.Parallel()
-	env, _, _, _, _ := setup(t, s3)
-
-	var stamps []interface{}
-	for i := 0; i < 10; i++ {
-		s := env.mustMakeStamp(t, rand, uuid.Nil)
-		stamps = append(stamps, s.Name)
-	}
-
-	e := env.makeExp(t)
-	res := e.GET("/api/1.0/public/emoji.json").
-		Expect().
-		Status(http.StatusOK)
-
-	res.JSON().
-		Object().
-		Value("all").
-		Array().
-		ContainsOnly(stamps...)
-
-	res.Header(echo.HeaderLastModified).
-		NotEmpty()
-
-	t.Run("304", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.GET("/api/1.0/public/emoji.json").
-			WithHeader(consts.HeaderIfModifiedSince, res.Header(echo.HeaderLastModified).Raw()).
-			Expect().
-			Status(http.StatusNotModified)
-	})
-
-	t.Run("Return cache", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.GET("/api/1.0/public/emoji.json").
-			Expect().
-			Status(http.StatusOK)
-	})
-}
-
-func TestHandlers_GetPublicEmojiCSS(t *testing.T) {
-	t.Parallel()
-	env, _, _, _, _ := setup(t, s4)
-
-	for i := 0; i < 10; i++ {
-		env.mustMakeStamp(t, rand, uuid.Nil)
-	}
-
-	e := env.makeExp(t)
-	res := e.GET("/api/1.0/public/emoji.css").
-		Expect().
-		Status(http.StatusOK)
-
-	res.ContentType("text/css")
-	res.Header(echo.HeaderLastModified).NotEmpty()
-
-	t.Run("304", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.GET("/api/1.0/public/emoji.css").
-			WithHeader(consts.HeaderIfModifiedSince, res.Header(echo.HeaderLastModified).Raw()).
-			Expect().
-			Status(http.StatusNotModified)
-	})
-
-	t.Run("Return cache", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.GET("/api/1.0/public/emoji.css").
-			Expect().
-			Status(http.StatusOK)
-	})
-}
-
-func TestHandlers_GetPublicEmojiImage(t *testing.T) {
-	t.Parallel()
-	env, _, _, _, _ := setup(t, common5)
-
-	s := env.mustMakeStamp(t, rand, uuid.Nil)
-
-	t.Run("Not Found", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.GET("/api/1.0/public/emoji/{stampID}", uuid.Must(uuid.NewV4())).
-			Expect().
-			Status(http.StatusNotFound)
-	})
-
-	t.Run("Success", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.GET("/api/1.0/public/emoji/{stampID}", s.ID).
-			Expect().
-			Status(http.StatusOK)
-	})
-
-	t.Run("Success With 304", func(t *testing.T) {
-		t.Parallel()
-		_, require := assertAndRequire(t)
-
-		meta, err := env.Repository.GetFileMeta(s.FileID)
-		require.NoError(err)
-
-		e := env.makeExp(t)
-		e.GET("/api/1.0/public/emoji/{stampID}", s.ID).
 			WithHeader("If-None-Match", strconv.Quote(meta.GetMD5Hash())).
 			Expect().
 			Status(http.StatusNotModified)

@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/traPtitech/traQ/utils/optional"
 	random2 "github.com/traPtitech/traQ/utils/random"
 	"image"
@@ -18,7 +17,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/disintegration/imaging"
-	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -60,39 +58,29 @@ type TestRepository struct {
 	MessagesLock              sync.RWMutex
 	MessageUnreads            map[uuid.UUID]map[uuid.UUID]bool
 	MessageUnreadsLock        sync.RWMutex
-	Pins                      map[uuid.UUID]model.Pin
-	PinsLock                  sync.RWMutex
 	Stars                     map[uuid.UUID]map[uuid.UUID]bool
 	StarsLock                 sync.RWMutex
-	Stamps                    map[uuid.UUID]model.Stamp
-	StampsLock                sync.RWMutex
 	Files                     map[uuid.UUID]model.File
 	FilesLock                 sync.RWMutex
 	FilesACL                  map[uuid.UUID]map[uuid.UUID]bool
 	FilesACLLock              sync.RWMutex
 	Webhooks                  map[uuid.UUID]model.WebhookBot
 	WebhooksLock              sync.RWMutex
-	OAuth2Clients             map[string]model.OAuth2Client
-	OAuth2ClientsLock         sync.RWMutex
-	OAuth2Authorizes          map[string]model.OAuth2Authorize
-	OAuth2AuthorizesLock      sync.RWMutex
-	OAuth2Tokens              map[uuid.UUID]model.OAuth2Token
-	OAuth2TokensLock          sync.RWMutex
 }
 
-func (repo *TestRepository) LinkExternalUserAccount(userID uuid.UUID, args repository.LinkExternalUserAccountArgs) error {
+func (repo *TestRepository) LinkExternalUserAccount(uuid.UUID, repository.LinkExternalUserAccountArgs) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetLinkedExternalUserAccounts(userID uuid.UUID) ([]*model.ExternalProviderUser, error) {
+func (repo *TestRepository) GetLinkedExternalUserAccounts(uuid.UUID) ([]*model.ExternalProviderUser, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) UnlinkExternalUserAccount(userID uuid.UUID, providerName string) error {
+func (repo *TestRepository) UnlinkExternalUserAccount(uuid.UUID, string) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetChannelStats(channelID uuid.UUID) (*repository.ChannelStats, error) {
+func (repo *TestRepository) GetChannelStats(uuid.UUID) (*repository.ChannelStats, error) {
 	panic("implement me")
 }
 
@@ -143,55 +131,55 @@ func (repo *TestRepository) User(name string) (uuid.UUID, bool) {
 	return uuid.Nil, false
 }
 
-func (repo *TestRepository) GetChannelEvents(query repository.ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error) {
+func (repo *TestRepository) GetChannelEvents(repository.ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*repository.UserUnreadChannel, error) {
+func (repo *TestRepository) GetUserUnreadChannels(uuid.UUID) ([]*repository.UserUnreadChannel, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) {
+func (repo *TestRepository) GetBotByBotUserID(uuid.UUID) (*model.Bot, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) UpdateBot(id uuid.UUID, args repository.UpdateBotArgs) error {
+func (repo *TestRepository) UpdateBot(uuid.UUID, repository.UpdateBotArgs) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetBotEventLogs(botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error) {
+func (repo *TestRepository) GetBotEventLogs(uuid.UUID, int, int) ([]*model.BotEventLog, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) WriteBotEventLog(log *model.BotEventLog) error {
+func (repo *TestRepository) WriteBotEventLog(*model.BotEventLog) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
+func (repo *TestRepository) ReissueBotTokens(uuid.UUID) (*model.Bot, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) CreateStampPalette(name, description string, stamps model.UUIDs, userID uuid.UUID) (*model.StampPalette, error) {
+func (repo *TestRepository) CreateStampPalette(string, string, model.UUIDs, uuid.UUID) (*model.StampPalette, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) UpdateStampPalette(id uuid.UUID, args repository.UpdateStampPaletteArgs) error {
+func (repo *TestRepository) UpdateStampPalette(uuid.UUID, repository.UpdateStampPaletteArgs) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetStampPalette(id uuid.UUID) (sp *model.StampPalette, err error) {
+func (repo *TestRepository) GetStampPalette(uuid.UUID) (sp *model.StampPalette, err error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) DeleteStampPalette(id uuid.UUID) (err error) {
+func (repo *TestRepository) DeleteStampPalette(uuid.UUID) (err error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetStampPalettes(userID uuid.UUID) (sps []*model.StampPalette, err error) {
+func (repo *TestRepository) GetStampPalettes(uuid.UUID) (sps []*model.StampPalette, err error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) ExistStamps(stampIDs []uuid.UUID) (err error) {
+func (repo *TestRepository) ExistStamps([]uuid.UUID) (err error) {
 	panic("implement me")
 }
 
@@ -209,15 +197,10 @@ func NewTestRepository() *TestRepository {
 		PrivateChannelMembers: map[uuid.UUID]map[uuid.UUID]bool{},
 		Messages:              map[uuid.UUID]model.Message{},
 		MessageUnreads:        map[uuid.UUID]map[uuid.UUID]bool{},
-		Pins:                  map[uuid.UUID]model.Pin{},
 		Stars:                 map[uuid.UUID]map[uuid.UUID]bool{},
-		Stamps:                map[uuid.UUID]model.Stamp{},
 		Files:                 map[uuid.UUID]model.File{},
 		FilesACL:              map[uuid.UUID]map[uuid.UUID]bool{},
 		Webhooks:              map[uuid.UUID]model.WebhookBot{},
-		OAuth2Clients:         map[string]model.OAuth2Client{},
-		OAuth2Authorizes:      map[string]model.OAuth2Authorize{},
-		OAuth2Tokens:          map[uuid.UUID]model.OAuth2Token{},
 	}
 	_, _ = r.CreateUser(repository.CreateUserArgs{Name: "traq", Password: "traq", Role: role.Admin})
 	return r
@@ -277,7 +260,7 @@ func (repo *TestRepository) CreateUser(args repository.CreateUserArgs) (model.Us
 	return &user, nil
 }
 
-func (repo *TestRepository) GetUser(id uuid.UUID, withProfile bool) (model.UserInfo, error) {
+func (repo *TestRepository) GetUser(id uuid.UUID, _ bool) (model.UserInfo, error) {
 	repo.UsersLock.RLock()
 	u, ok := repo.Users[id]
 	repo.UsersLock.RUnlock()
@@ -287,7 +270,7 @@ func (repo *TestRepository) GetUser(id uuid.UUID, withProfile bool) (model.UserI
 	return &u, nil
 }
 
-func (repo *TestRepository) GetUserByName(name string, withProfile bool) (model.UserInfo, error) {
+func (repo *TestRepository) GetUserByName(name string, _ bool) (model.UserInfo, error) {
 	repo.UsersLock.RLock()
 	defer repo.UsersLock.RUnlock()
 	for _, u := range repo.Users {
@@ -299,7 +282,7 @@ func (repo *TestRepository) GetUserByName(name string, withProfile bool) (model.
 	return nil, repository.ErrNotFound
 }
 
-func (repo *TestRepository) GetUserByExternalID(providerName, externalID string, withProfile bool) (model.UserInfo, error) {
+func (repo *TestRepository) GetUserByExternalID(string, string, bool) (model.UserInfo, error) {
 	panic("implement me")
 }
 
@@ -638,7 +621,7 @@ func (repo *TestRepository) GetAllUserGroups() ([]*model.UserGroup, error) {
 	return groups, nil
 }
 
-func (repo *TestRepository) AddUserToGroup(userID, groupID uuid.UUID, role string) error {
+func (repo *TestRepository) AddUserToGroup(userID, groupID uuid.UUID, _ string) error {
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1097,11 +1080,11 @@ func (repo *TestRepository) GetChannelsByUserID(userID uuid.UUID) ([]*model.Chan
 	return result, nil
 }
 
-func (repo *TestRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.Channel, error) {
+func (repo *TestRepository) GetDirectMessageChannel(uuid.UUID, uuid.UUID) (*model.Channel, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetDirectMessageChannelMapping(userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error) {
+func (repo *TestRepository) GetDirectMessageChannelMapping(uuid.UUID) (map[uuid.UUID]uuid.UUID, error) {
 	panic("implement me")
 }
 
@@ -1453,11 +1436,11 @@ func (repo *TestRepository) GetMessages(query repository.MessagesQuery) (message
 	return
 }
 
-func (repo *TestRepository) GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error) {
+func (repo *TestRepository) GetArchivedMessagesByID(uuid.UUID) ([]*model.ArchivedMessage, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) SetMessageUnread(userID, messageID uuid.UUID, noticeable bool) error {
+func (repo *TestRepository) SetMessageUnread(userID, messageID uuid.UUID, _ bool) error {
 	if userID == uuid.Nil || messageID == uuid.Nil {
 		return repository.ErrNilID
 	}
@@ -1523,193 +1506,68 @@ func (repo *TestRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID
 	return nil
 }
 
-func (repo *TestRepository) GetChannelLatestMessagesByUserID(userID uuid.UUID, limit int, subscribeOnly bool) ([]*model.Message, error) {
+func (repo *TestRepository) GetChannelLatestMessagesByUserID(uuid.UUID, int, bool) ([]*model.Message, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) CreateMessageReport(messageID, reporterID uuid.UUID, reason string) error {
+func (repo *TestRepository) CreateMessageReport(uuid.UUID, uuid.UUID, string) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetMessageReports(offset, limit int) ([]*model.MessageReport, error) {
+func (repo *TestRepository) GetMessageReports(int, int) ([]*model.MessageReport, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetMessageReportsByMessageID(messageID uuid.UUID) ([]*model.MessageReport, error) {
+func (repo *TestRepository) GetMessageReportsByMessageID(uuid.UUID) ([]*model.MessageReport, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetMessageReportsByReporterID(reporterID uuid.UUID) ([]*model.MessageReport, error) {
+func (repo *TestRepository) GetMessageReportsByReporterID(uuid.UUID) ([]*model.MessageReport, error) {
 	return []*model.MessageReport{}, nil
 }
 
-func (repo *TestRepository) AddStampToMessage(messageID, stampID, userID uuid.UUID, count int) (ms *model.MessageStamp, err error) {
+func (repo *TestRepository) AddStampToMessage(uuid.UUID, uuid.UUID, uuid.UUID, int) (ms *model.MessageStamp, err error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) RemoveStampFromMessage(messageID, stampID, userID uuid.UUID) (err error) {
+func (repo *TestRepository) RemoveStampFromMessage(uuid.UUID, uuid.UUID, uuid.UUID) (err error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h []*repository.UserStampHistory, err error) {
+func (repo *TestRepository) GetUserStampHistory(uuid.UUID, int) (h []*repository.UserStampHistory, err error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) CreateStamp(args repository.CreateStampArgs) (s *model.Stamp, err error) {
-	stamp := &model.Stamp{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      args.Name,
-		FileID:    args.FileID,
-		CreatorID: args.CreatorID, // uuid.Nilを許容する
-		IsUnicode: args.IsUnicode,
-	}
-
-	repo.StampsLock.Lock()
-	repo.FilesLock.RLock()
-	defer repo.StampsLock.Unlock()
-	defer repo.FilesLock.RUnlock()
-
-	// 名前チェック
-	if err := vd.Validate(stamp.Name, validator.StampNameRuleRequired...); err != nil {
-		return nil, repository.ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
-	}
-	// 名前重複チェック
-	for _, v := range repo.Stamps {
-		if v.Name == stamp.Name {
-			return nil, repository.ErrAlreadyExists
-		}
-	}
-	// ファイル存在チェック
-	if stamp.FileID == uuid.Nil {
-		return nil, repository.ArgError("fileID", "FileID's file is not found")
-	}
-	if _, ok := repo.Files[stamp.FileID]; !ok {
-		return nil, repository.ArgError("fileID", "fileID's file is not found")
-	}
-
-	repo.Stamps[stamp.ID] = *stamp
-	return stamp, nil
+func (repo *TestRepository) CreateStamp(repository.CreateStampArgs) (s *model.Stamp, err error) {
+	panic("implement me")
 }
 
-func (repo *TestRepository) UpdateStamp(id uuid.UUID, args repository.UpdateStampArgs) error {
-	if id == uuid.Nil {
-		return repository.ErrNilID
-	}
-
-	repo.StampsLock.Lock()
-	repo.FilesLock.RLock()
-	defer repo.StampsLock.Unlock()
-	defer repo.FilesLock.RUnlock()
-
-	s, ok := repo.Stamps[id]
-	if !ok {
-		return repository.ErrNotFound
-	}
-
-	if args.Name.Valid {
-		if err := vd.Validate(args.Name.String, validator.StampNameRuleRequired...); err != nil {
-			return repository.ArgError("args.Name", "Name must be 1-32 characters of a-zA-Z0-9_-")
-		}
-
-		// 重複チェック
-		for _, v := range repo.Stamps {
-			if v.Name == args.Name.String {
-				return repository.ErrAlreadyExists
-			}
-		}
-		s.Name = args.Name.String
-	}
-	if args.FileID.Valid {
-		// 存在チェック
-		if args.FileID.UUID == uuid.Nil {
-			return repository.ArgError("args.FileID", "FileID's file is not found")
-		}
-		if _, ok := repo.Files[args.FileID.UUID]; !ok {
-			return repository.ArgError("fileID", "fileID's file is not found")
-		}
-
-		s.FileID = args.FileID.UUID
-	}
-	if args.CreatorID.Valid {
-		// uuid.Nilを許容する
-		s.CreatorID = args.CreatorID.UUID
-	}
-
-	s.UpdatedAt = time.Now()
-	repo.Stamps[id] = s
-	return nil
+func (repo *TestRepository) UpdateStamp(uuid.UUID, repository.UpdateStampArgs) error {
+	panic("implement me")
 }
 
-func (repo *TestRepository) GetStamp(id uuid.UUID) (*model.Stamp, error) {
-	if id == uuid.Nil {
-		return nil, repository.ErrNotFound
-	}
-	repo.StampsLock.RLock()
-	s, ok := repo.Stamps[id]
-	repo.StampsLock.RUnlock()
-	if !ok {
-		return nil, repository.ErrNotFound
-	}
-	return &s, nil
+func (repo *TestRepository) GetStamp(uuid.UUID) (*model.Stamp, error) {
+	panic("implement me")
 }
 
-func (repo *TestRepository) GetStampByName(name string) (*model.Stamp, error) {
-	if len(name) == 0 {
-		return nil, repository.ErrNotFound
-	}
-	repo.StampsLock.RLock()
-	defer repo.StampsLock.RUnlock()
-	for _, stamp := range repo.Stamps {
-		if stamp.Name == name {
-			return &stamp, nil
-		}
-	}
-	return nil, repository.ErrNotFound
+func (repo *TestRepository) GetStampByName(string) (*model.Stamp, error) {
+	panic("implement me")
 }
 
-func (repo *TestRepository) DeleteStamp(id uuid.UUID) (err error) {
-	if id == uuid.Nil {
-		return repository.ErrNilID
-	}
-	repo.StampsLock.Lock()
-	defer repo.StampsLock.Unlock()
-	if _, ok := repo.Stamps[id]; !ok {
-		return repository.ErrNotFound
-	}
-	delete(repo.Stamps, id)
-	return nil
+func (repo *TestRepository) DeleteStamp(uuid.UUID) (err error) {
+	panic("implement me")
 }
 
-func (repo *TestRepository) GetAllStamps(excludeUnicode bool) (stamps []*model.Stamp, err error) {
-	repo.StampsLock.RLock()
-	for _, v := range repo.Stamps {
-		v := v
-		if excludeUnicode && v.IsUnicode {
-			continue
-		}
-		stamps = append(stamps, &v)
-	}
-	repo.StampsLock.RUnlock()
-	return
+func (repo *TestRepository) GetAllStamps(bool) (stamps []*model.Stamp, err error) {
+	panic("implement me")
 }
 
-func (repo *TestRepository) GetStampsJSON(excludeUnicode bool) ([]byte, time.Time, error) {
-	stamps, err := repo.GetAllStamps(excludeUnicode)
-	if err != nil {
-		return nil, time.Time{}, err
-	}
-	b, err := jsoniter.ConfigFastest.Marshal(stamps)
-	return b, time.Now(), err
+func (repo *TestRepository) GetStampsJSON(bool) ([]byte, time.Time, error) {
+	panic("implement me")
 }
 
-func (repo *TestRepository) StampExists(id uuid.UUID) (bool, error) {
-	if id == uuid.Nil {
-		return false, nil
-	}
-	repo.StampsLock.RLock()
-	_, ok := repo.Stamps[id]
-	repo.StampsLock.RUnlock()
-	return ok, nil
+func (repo *TestRepository) StampExists(uuid.UUID) (bool, error) {
+	panic("implement me")
 }
 
 func (repo *TestRepository) AddStar(userID, channelID uuid.UUID) error {
@@ -1754,27 +1612,27 @@ func (repo *TestRepository) GetStaredChannels(userID uuid.UUID) ([]uuid.UUID, er
 	return result, nil
 }
 
-func (repo *TestRepository) PinMessage(messageID, userID uuid.UUID) (*model.Pin, error) {
+func (repo *TestRepository) PinMessage(uuid.UUID, uuid.UUID) (*model.Pin, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) UnpinMessage(id uuid.UUID, userID uuid.UUID) error {
+func (repo *TestRepository) UnpinMessage(uuid.UUID, uuid.UUID) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetPinnedMessageByChannelID(channelID uuid.UUID) ([]*model.Pin, error) {
+func (repo *TestRepository) GetPinnedMessageByChannelID(uuid.UUID) ([]*model.Pin, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) RegisterDevice(userID uuid.UUID, token string) error {
+func (repo *TestRepository) RegisterDevice(uuid.UUID, string) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) DeleteDeviceTokens(tokens []string) error {
+func (repo *TestRepository) DeleteDeviceTokens([]string) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetDeviceTokens(users set.UUID) (tokens map[uuid.UUID][]string, err error) {
+func (repo *TestRepository) GetDeviceTokens(set.UUID) (tokens map[uuid.UUID][]string, err error) {
 	panic("implement me")
 }
 
@@ -1821,7 +1679,7 @@ func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (model.FileMe
 		CreatedAt: time.Now(),
 	}
 
-	eg, ctx := errgroup.WithContext(context.Background())
+	eg, _ := errgroup.WithContext(context.Background())
 
 	fileSrc, fileWriter := io.Pipe()
 	thumbSrc, thumbWriter := io.Pipe()
@@ -1847,7 +1705,7 @@ func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (model.FileMe
 		// アップロードされたファイルの拡張子が間違えてたり、変なの送ってきた場合
 		// サムネイルを生成しないだけで全体のエラーにはしない
 		defer thumbSrc.Close()
-		size, _ := repo.generateThumbnail(ctx, f, thumbSrc)
+		size, _ := repo.generateThumbnail(f, thumbSrc)
 		if !size.Empty() {
 			f.HasThumbnail = true
 			f.ThumbnailMime = optional.StringFrom("image/png")
@@ -1897,7 +1755,7 @@ func (repo *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 	return allow, nil
 }
 
-func (repo *TestRepository) generateThumbnail(ctx context.Context, f *model.File, src io.Reader) (image.Rectangle, error) {
+func (repo *TestRepository) generateThumbnail(f *model.File, src io.Reader) (image.Rectangle, error) {
 	orig, err := imaging.Decode(src, imaging.AutoOrientation(true))
 	if err != nil {
 		return image.Rectangle{}, err
@@ -2122,324 +1980,147 @@ func (repo *TestRepository) GetWebhooksByCreator(creatorID uuid.UUID) ([]model.W
 	return arr, nil
 }
 
-func (repo *TestRepository) GetClient(id string) (*model.OAuth2Client, error) {
-	if len(id) == 0 {
-		return nil, repository.ErrNotFound
-	}
-	repo.OAuth2ClientsLock.RLock()
-	c, ok := repo.OAuth2Clients[id]
-	repo.OAuth2ClientsLock.RUnlock()
-	if !ok {
-		return nil, repository.ErrNotFound
-	}
-	return &c, nil
-}
-
-func (repo *TestRepository) GetClients(query repository.GetClientsQuery) ([]*model.OAuth2Client, error) {
+func (repo *TestRepository) GetClient(string) (*model.OAuth2Client, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) SaveClient(client *model.OAuth2Client) error {
-	repo.OAuth2ClientsLock.Lock()
-	client.CreatedAt = time.Now()
-	client.UpdatedAt = time.Now()
-	repo.OAuth2Clients[client.ID] = *client
-	repo.OAuth2ClientsLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) UpdateClient(clientID string, args repository.UpdateClientArgs) error {
+func (repo *TestRepository) GetClients(repository.GetClientsQuery) ([]*model.OAuth2Client, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) DeleteClient(id string) error {
-	if len(id) == 0 {
-		return nil
-	}
-	repo.OAuth2ClientsLock.Lock()
-	repo.OAuth2AuthorizesLock.Lock()
-	repo.OAuth2TokensLock.Lock()
-	targetT := make([]uuid.UUID, 0)
-	for k, v := range repo.OAuth2Tokens {
-		if v.ClientID == id {
-			targetT = append(targetT, k)
-		}
-	}
-	for _, v := range targetT {
-		delete(repo.OAuth2Tokens, v)
-	}
-	targetA := make([]string, 0)
-	for k, v := range repo.OAuth2Authorizes {
-		if v.ClientID == id {
-			targetA = append(targetA, k)
-		}
-	}
-	for _, v := range targetA {
-		delete(repo.OAuth2Authorizes, v)
-	}
-	delete(repo.OAuth2Clients, id)
-	repo.OAuth2TokensLock.Unlock()
-	repo.OAuth2AuthorizesLock.Unlock()
-	repo.OAuth2ClientsLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) SaveAuthorize(data *model.OAuth2Authorize) error {
-	repo.OAuth2AuthorizesLock.Lock()
-	data.CreatedAt = time.Now()
-	repo.OAuth2Authorizes[data.Code] = *data
-	repo.OAuth2AuthorizesLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) GetAuthorize(code string) (*model.OAuth2Authorize, error) {
-	if len(code) == 0 {
-		return nil, repository.ErrNotFound
-	}
-	repo.OAuth2AuthorizesLock.RLock()
-	a, ok := repo.OAuth2Authorizes[code]
-	repo.OAuth2AuthorizesLock.RUnlock()
-	if !ok {
-		return nil, repository.ErrNotFound
-	}
-	return &a, nil
-}
-
-func (repo *TestRepository) DeleteAuthorize(code string) error {
-	if len(code) == 0 {
-		return nil
-	}
-	repo.OAuth2AuthorizesLock.Lock()
-	delete(repo.OAuth2Authorizes, code)
-	repo.OAuth2AuthorizesLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) IssueToken(client *model.OAuth2Client, userID uuid.UUID, redirectURI string, scope model.AccessScopes, expire int, refresh bool) (*model.OAuth2Token, error) {
-	newToken := &model.OAuth2Token{
-		ID:             uuid.Must(uuid.NewV4()),
-		UserID:         userID,
-		RedirectURI:    redirectURI,
-		AccessToken:    random2.AlphaNumeric(36),
-		RefreshToken:   random2.AlphaNumeric(36),
-		RefreshEnabled: refresh,
-		CreatedAt:      time.Now(),
-		ExpiresIn:      expire,
-		Scopes:         scope,
-	}
-
-	if client != nil {
-		newToken.ClientID = client.ID
-	}
-
-	repo.OAuth2TokensLock.Lock()
-	repo.OAuth2Tokens[newToken.ID] = *newToken
-	repo.OAuth2TokensLock.Unlock()
-	return newToken, nil
-}
-
-func (repo *TestRepository) GetTokenByID(id uuid.UUID) (*model.OAuth2Token, error) {
-	if id == uuid.Nil {
-		return nil, repository.ErrNotFound
-	}
-	repo.OAuth2TokensLock.RLock()
-	t, ok := repo.OAuth2Tokens[id]
-	repo.OAuth2TokensLock.RUnlock()
-	if !ok {
-		return nil, repository.ErrNotFound
-	}
-	return &t, nil
-}
-
-func (repo *TestRepository) DeleteTokenByID(id uuid.UUID) error {
-	if id == uuid.Nil {
-		return nil
-	}
-	repo.OAuth2TokensLock.Lock()
-	delete(repo.OAuth2Tokens, id)
-	repo.OAuth2TokensLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) GetTokenByAccess(access string) (*model.OAuth2Token, error) {
-	if len(access) == 0 {
-		return nil, repository.ErrNotFound
-	}
-	repo.OAuth2TokensLock.RLock()
-	defer repo.OAuth2TokensLock.RUnlock()
-	for _, v := range repo.OAuth2Tokens {
-		if v.AccessToken == access {
-			return &v, nil
-		}
-	}
-	return nil, repository.ErrNotFound
-}
-
-func (repo *TestRepository) DeleteTokenByAccess(access string) error {
-	if len(access) == 0 {
-		return nil
-	}
-	repo.OAuth2TokensLock.Lock()
-	defer repo.OAuth2TokensLock.Unlock()
-	for k, v := range repo.OAuth2Tokens {
-		if v.AccessToken == access {
-			delete(repo.OAuth2Tokens, k)
-			return nil
-		}
-	}
-	return nil
-}
-
-func (repo *TestRepository) GetTokenByRefresh(refresh string) (*model.OAuth2Token, error) {
-	if len(refresh) == 0 {
-		return nil, repository.ErrNotFound
-	}
-	repo.OAuth2TokensLock.RLock()
-	defer repo.OAuth2TokensLock.RUnlock()
-	for _, v := range repo.OAuth2Tokens {
-		if v.RefreshEnabled && v.RefreshToken == refresh {
-			return &v, nil
-		}
-	}
-	return nil, repository.ErrNotFound
-}
-
-func (repo *TestRepository) DeleteTokenByRefresh(refresh string) error {
-	if len(refresh) == 0 {
-		return nil
-	}
-	repo.OAuth2TokensLock.Lock()
-	defer repo.OAuth2TokensLock.Unlock()
-	for k, v := range repo.OAuth2Tokens {
-		if v.RefreshEnabled && v.RefreshToken == refresh {
-			delete(repo.OAuth2Tokens, k)
-			return nil
-		}
-	}
-	return nil
-}
-
-func (repo *TestRepository) GetTokensByUser(userID uuid.UUID) ([]*model.OAuth2Token, error) {
-	ts := make([]*model.OAuth2Token, 0)
-	if userID == uuid.Nil {
-		return ts, nil
-	}
-	repo.OAuth2TokensLock.RLock()
-	for _, v := range repo.OAuth2Tokens {
-		v := v
-		if v.UserID == userID {
-			ts = append(ts, &v)
-		}
-	}
-	repo.OAuth2TokensLock.RUnlock()
-	return ts, nil
-}
-
-func (repo *TestRepository) DeleteTokenByUser(userID uuid.UUID) error {
-	if userID == uuid.Nil {
-		return nil
-	}
-	repo.OAuth2TokensLock.Lock()
-	target := make([]uuid.UUID, 0)
-	for k, v := range repo.OAuth2Tokens {
-		if v.UserID == userID {
-			target = append(target, k)
-		}
-	}
-	for _, v := range target {
-		delete(repo.OAuth2Tokens, v)
-	}
-	repo.OAuth2TokensLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) DeleteTokenByClient(clientID string) error {
-	if len(clientID) == 0 {
-		return nil
-	}
-	repo.OAuth2TokensLock.Lock()
-	target := make([]uuid.UUID, 0)
-	for k, v := range repo.OAuth2Tokens {
-		if v.ClientID == clientID {
-			target = append(target, k)
-		}
-	}
-	for _, v := range target {
-		delete(repo.OAuth2Tokens, v)
-	}
-	repo.OAuth2TokensLock.Unlock()
-	return nil
-}
-
-func (repo *TestRepository) CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
+func (repo *TestRepository) SaveClient(*model.OAuth2Client) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetBotByID(id uuid.UUID) (*model.Bot, error) {
+func (repo *TestRepository) UpdateClient(string, repository.UpdateClientArgs) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetBotByCode(code string) (*model.Bot, error) {
+func (repo *TestRepository) DeleteClient(string) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetBots(query repository.BotsQuery) ([]*model.Bot, error) {
+func (repo *TestRepository) SaveAuthorize(*model.OAuth2Authorize) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) ChangeBotState(id uuid.UUID, state model.BotState) error {
+func (repo *TestRepository) GetAuthorize(string) (*model.OAuth2Authorize, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) DeleteBot(id uuid.UUID) error {
+func (repo *TestRepository) DeleteAuthorize(string) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) AddBotToChannel(botID, channelID uuid.UUID) error {
+func (repo *TestRepository) IssueToken(*model.OAuth2Client, uuid.UUID, string, model.AccessScopes, int, bool) (*model.OAuth2Token, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) RemoveBotFromChannel(botID, channelID uuid.UUID) error {
+func (repo *TestRepository) GetTokenByID(uuid.UUID) (*model.OAuth2Token, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid.UUID, error) {
+func (repo *TestRepository) DeleteTokenByID(uuid.UUID) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) CreateClipFolder(userID uuid.UUID, name, description string) (*model.ClipFolder, error) {
+func (repo *TestRepository) GetTokenByAccess(string) (*model.OAuth2Token, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) UpdateClipFolder(folderID uuid.UUID, name, description optional.String) error {
+func (repo *TestRepository) DeleteTokenByAccess(string) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) DeleteClipFolder(folderID uuid.UUID) error {
+func (repo *TestRepository) GetTokenByRefresh(string) (*model.OAuth2Token, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUID) error {
+func (repo *TestRepository) DeleteTokenByRefresh(string) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) (*model.ClipFolderMessage, error) {
+func (repo *TestRepository) GetTokensByUser(uuid.UUID) ([]*model.OAuth2Token, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetClipFoldersByUserID(userID uuid.UUID) ([]*model.ClipFolder, error) {
+func (repo *TestRepository) DeleteTokenByUser(uuid.UUID) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetClipFolder(folderID uuid.UUID) (*model.ClipFolder, error) {
+func (repo *TestRepository) DeleteTokenByClient(string) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetClipFolderMessages(folderID uuid.UUID, query repository.ClipFolderMessageQuery) (messages []*model.ClipFolderMessage, more bool, err error) {
+func (repo *TestRepository) CreateBot(string, string, string, uuid.UUID, string) (*model.Bot, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetMessageClips(userID, messageID uuid.UUID) ([]*model.ClipFolderMessage, error) {
+func (repo *TestRepository) GetBotByID(uuid.UUID) (*model.Bot, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetBotByCode(string) (*model.Bot, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetBots(repository.BotsQuery) ([]*model.Bot, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) ChangeBotState(uuid.UUID, model.BotState) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) DeleteBot(uuid.UUID) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) AddBotToChannel(uuid.UUID, uuid.UUID) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) RemoveBotFromChannel(uuid.UUID, uuid.UUID) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetParticipatingChannelIDsByBot(uuid.UUID) ([]uuid.UUID, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) CreateClipFolder(uuid.UUID, string, string) (*model.ClipFolder, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) UpdateClipFolder(uuid.UUID, optional.String, optional.String) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) DeleteClipFolder(uuid.UUID) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) DeleteClipFolderMessage(uuid.UUID, uuid.UUID) error {
+	panic("implement me")
+}
+
+func (repo *TestRepository) AddClipFolderMessage(uuid.UUID, uuid.UUID) (*model.ClipFolderMessage, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetClipFoldersByUserID(uuid.UUID) ([]*model.ClipFolder, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetClipFolder(uuid.UUID) (*model.ClipFolder, error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetClipFolderMessages(uuid.UUID, repository.ClipFolderMessageQuery) (messages []*model.ClipFolderMessage, more bool, err error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) GetMessageClips(uuid.UUID, uuid.UUID) ([]*model.ClipFolderMessage, error) {
 	panic("implement me")
 }
 
@@ -2516,6 +2197,6 @@ func (f *fileMetaImpl) GetAlternativeURL() string {
 	return url
 }
 
-func (repo *TestRepository) GetFiles(q repository.FilesQuery) (result []model.FileMeta, more bool, err error) {
+func (repo *TestRepository) GetFiles(repository.FilesQuery) (result []model.FileMeta, more bool, err error) {
 	panic("implement me")
 }
