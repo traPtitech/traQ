@@ -14,9 +14,7 @@ func NewNullClient() Client {
 }
 
 func (n *nullClient) Send(set.UUID, *Payload, bool) {
-	return
 }
 
 func (n *nullClient) Close() {
-	return
 }
