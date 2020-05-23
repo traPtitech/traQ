@@ -6,6 +6,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/ioext"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -258,7 +259,7 @@ func (repo *GormRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 		return false, ErrNilID
 	}
 
-	if ok, err := dbExists(repo.db, &model.File{ID: fileID}); err != nil {
+	if ok, err := gormutil.RecordExists(repo.db, &model.File{ID: fileID}); err != nil {
 		return false, err
 	} else if !ok {
 		return false, ErrNotFound

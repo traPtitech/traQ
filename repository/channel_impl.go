@@ -7,6 +7,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -400,15 +401,11 @@ func (repo *GormRepository) IsChannelAccessibleToUser(userID, channelID uuid.UUI
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return false, nil
 	}
-	c := 0
-	err := repo.db.
+
+	return gormutil.Exists(repo.db.
 		Model(&model.Channel{}).
 		Joins("LEFT JOIN users_private_channels ON users_private_channels.channel_id = channels.id").
-		Where("(channels.is_public = true OR users_private_channels.user_id = ?) AND channels.id = ? AND channels.deleted_at IS NULL", userID, channelID).
-		Limit(1).
-		Count(&c).
-		Error
-	return c > 0, err
+		Where("(channels.is_public = true OR users_private_channels.user_id = ?) AND channels.id = ? AND channels.deleted_at IS NULL", userID, channelID))
 }
 
 // GetChildrenChannelIDs implements ChannelRepository interface.
@@ -480,7 +477,7 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 					}
 				} else {
 					if err := tx.Create(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID, Mark: true, Notify: false}).Error; err != nil {
-						if isMySQLForeignKeyConstraintFailsError(err) {
+						if gormutil.IsMySQLForeignKeyConstraintFailsError(err) {
 							continue // 存在しないユーザーは無視
 						}
 						return err
@@ -494,7 +491,7 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 					}
 				} else {
 					if err := tx.Create(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID, Mark: true, Notify: true}).Error; err != nil {
-						if isMySQLForeignKeyConstraintFailsError(err) {
+						if gormutil.IsMySQLForeignKeyConstraintFailsError(err) {
 							continue // 存在しないユーザーは無視
 						}
 						return err
@@ -614,7 +611,7 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 		return nil, ErrNotFound
 	}
 
-	if ok, err := dbExists(repo.db, &model.Channel{ID: channelID}); err != nil {
+	if ok, err := gormutil.RecordExists(repo.db, &model.Channel{ID: channelID}); err != nil {
 		return nil, err
 	} else if !ok {
 		return nil, ErrNotFound

@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -48,7 +49,7 @@ func (repo *GormRepository) CreateUser(args CreateUserArgs) (model.UserInfo, err
 	}
 
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		if exist, err := dbExists(tx, &model.User{Name: user.Name}); err != nil {
+		if exist, err := gormutil.RecordExists(tx, &model.User{Name: user.Name}); err != nil {
 			return err
 		} else if exist {
 			return ErrAlreadyExists
@@ -177,7 +178,7 @@ func (repo *GormRepository) UserExists(id uuid.UUID) (bool, error) {
 	if id == uuid.Nil {
 		return false, nil
 	}
-	return dbExists(repo.db, &model.User{ID: id})
+	return gormutil.RecordExists(repo.db, &model.User{ID: id})
 }
 
 // UpdateUser implements UserRepository interface.
@@ -297,19 +298,19 @@ func (repo *GormRepository) LinkExternalUserAccount(userID uuid.UUID, args LinkE
 	}
 
 	return repo.db.Transaction(func(tx *gorm.DB) error {
-		if exist, err := dbExists(tx, &model.User{ID: userID}); err != nil {
+		if exist, err := gormutil.RecordExists(tx, &model.User{ID: userID}); err != nil {
 			return err
 		} else if !exist {
 			return ErrNotFound
 		}
 
-		if exist, err := dbExists(tx, &model.ExternalProviderUser{UserID: userID, ProviderName: args.ProviderName}); err != nil {
+		if exist, err := gormutil.RecordExists(tx, &model.ExternalProviderUser{UserID: userID, ProviderName: args.ProviderName}); err != nil {
 			return err
 		} else if exist {
 			return ErrAlreadyExists
 		}
 
-		if exist, err := dbExists(tx, &model.ExternalProviderUser{ProviderName: args.ProviderName, ExternalID: args.ExternalID}); err != nil {
+		if exist, err := gormutil.RecordExists(tx, &model.ExternalProviderUser{ProviderName: args.ProviderName, ExternalID: args.ExternalID}); err != nil {
 			return err
 		} else if exist {
 			return ErrAlreadyExists

@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/rbac/role"
+	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 )
@@ -69,11 +70,9 @@ func (repo *GormRepository) Sync() (init bool, err error) {
 	repo.stamps = makeStampRepository(stamps)
 
 	// 管理者ユーザーの確認
-	c := 0
-	if err := repo.db.Model(&model.User{}).Where(&model.User{Role: role.Admin}).Limit(1).Count(&c).Error; err != nil {
+	if exists, err := gormutil.RecordExists(repo.db, &model.User{Role: role.Admin}); err != nil {
 		return false, err
-	}
-	if c == 0 {
+	} else if !exists {
 		_, err := repo.CreateUser(CreateUserArgs{
 			Name:     "traq",
 			Password: "traq",
@@ -84,7 +83,6 @@ func (repo *GormRepository) Sync() (init bool, err error) {
 		}
 		return true, err
 	}
-
 	return false, nil
 }
 

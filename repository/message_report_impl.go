@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/gormutil"
 )
 
 // CreateMessageReport implements MessageReportRepository interface.
@@ -20,7 +21,7 @@ func (repo *GormRepository) CreateMessageReport(messageID, reporterID uuid.UUID,
 		Reason:    reason,
 	}
 	if err := repo.db.Create(r).Error; err != nil {
-		if isMySQLDuplicatedRecordErr(err) {
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
 			return ErrAlreadyExists
 		}
 		return err
@@ -31,7 +32,7 @@ func (repo *GormRepository) CreateMessageReport(messageID, reporterID uuid.UUID,
 // GetMessageReports implements MessageReportRepository interface.
 func (repo *GormRepository) GetMessageReports(offset, limit int) (arr []*model.MessageReport, err error) {
 	arr = make([]*model.MessageReport, 0)
-	err = repo.db.Scopes(limitAndOffset(limit, offset)).Order("created_at").Find(&arr).Error
+	err = repo.db.Scopes(gormutil.LimitAndOffset(limit, offset)).Order("created_at").Find(&arr).Error
 	return arr, err
 }
 
