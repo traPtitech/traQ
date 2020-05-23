@@ -60,8 +60,6 @@ type TestRepository struct {
 	MessagesLock              sync.RWMutex
 	MessageUnreads            map[uuid.UUID]map[uuid.UUID]bool
 	MessageUnreadsLock        sync.RWMutex
-	MessageReports            []model.MessageReport
-	MessageReportsLock        sync.RWMutex
 	Pins                      map[uuid.UUID]model.Pin
 	PinsLock                  sync.RWMutex
 	Stars                     map[uuid.UUID]map[uuid.UUID]bool
@@ -211,7 +209,6 @@ func NewTestRepository() *TestRepository {
 		PrivateChannelMembers: map[uuid.UUID]map[uuid.UUID]bool{},
 		Messages:              map[uuid.UUID]model.Message{},
 		MessageUnreads:        map[uuid.UUID]map[uuid.UUID]bool{},
-		MessageReports:        []model.MessageReport{},
 		Pins:                  map[uuid.UUID]model.Pin{},
 		Stars:                 map[uuid.UUID]map[uuid.UUID]bool{},
 		Stamps:                map[uuid.UUID]model.Stamp{},
@@ -1531,71 +1528,19 @@ func (repo *TestRepository) GetChannelLatestMessagesByUserID(userID uuid.UUID, l
 }
 
 func (repo *TestRepository) CreateMessageReport(messageID, reporterID uuid.UUID, reason string) error {
-	if messageID == uuid.Nil || reporterID == uuid.Nil {
-		return repository.ErrNilID
-	}
-
-	// make report
-	report := model.MessageReport{
-		ID:        uuid.Must(uuid.NewV4()),
-		MessageID: messageID,
-		Reporter:  reporterID,
-		Reason:    reason,
-		CreatedAt: time.Now(),
-	}
-	repo.MessageReportsLock.Lock()
-	defer repo.MessageReportsLock.Unlock()
-	for _, v := range repo.MessageReports {
-		if v.MessageID == messageID && v.Reporter == reporterID {
-			return repository.ErrAlreadyExists
-		}
-	}
-	repo.MessageReports = append(repo.MessageReports, report)
-	return nil
+	panic("implement me")
 }
 
 func (repo *TestRepository) GetMessageReports(offset, limit int) ([]*model.MessageReport, error) {
-	repo.MessageReportsLock.RLock()
-	l := len(repo.MessageReports)
-	if offset < 0 {
-		offset = 0
-	}
-	if limit <= 0 {
-		limit = math.MaxInt32
-	}
-	result := make([]*model.MessageReport, 0)
-	for i := offset; i < l && i < offset+limit; i++ {
-		re := repo.MessageReports[i]
-		result = append(result, &re)
-	}
-	repo.MessageReportsLock.RUnlock()
-	return result, nil
+	panic("implement me")
 }
 
 func (repo *TestRepository) GetMessageReportsByMessageID(messageID uuid.UUID) ([]*model.MessageReport, error) {
-	repo.MessageReportsLock.RLock()
-	result := make([]*model.MessageReport, 0)
-	for _, v := range repo.MessageReports {
-		if v.MessageID == messageID {
-			v := v
-			result = append(result, &v)
-		}
-	}
-	repo.MessageReportsLock.RUnlock()
-	return result, nil
+	panic("implement me")
 }
 
 func (repo *TestRepository) GetMessageReportsByReporterID(reporterID uuid.UUID) ([]*model.MessageReport, error) {
-	repo.MessageReportsLock.RLock()
-	result := make([]*model.MessageReport, 0)
-	for _, v := range repo.MessageReports {
-		if v.Reporter == reporterID {
-			v := v
-			result = append(result, &v)
-		}
-	}
-	repo.MessageReportsLock.RUnlock()
-	return result, nil
+	return []*model.MessageReport{}, nil
 }
 
 func (repo *TestRepository) AddStampToMessage(messageID, stampID, userID uuid.UUID, count int) (ms *model.MessageStamp, err error) {
