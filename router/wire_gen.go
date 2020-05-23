@@ -42,19 +42,21 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 	}
 	wsStreamer := ss.WS
 	webrtcv3Manager := ss.WebRTCv3
+	engine := ss.Search
 	v3Config := provideV3Config(config)
 	v3Handlers := &v3.Handlers{
-		RBAC:      rbac,
-		Repo:      repo,
-		WS:        wsStreamer,
-		Hub:       hub2,
-		Logger:    logger,
-		OC:        onlineCounter,
-		VM:        manager,
-		WebRTC:    webrtcv3Manager,
-		Imaging:   processor,
-		SessStore: store,
-		Config:    v3Config,
+		RBAC:         rbac,
+		Repo:         repo,
+		WS:           wsStreamer,
+		Hub:          hub2,
+		Logger:       logger,
+		OC:           onlineCounter,
+		VM:           manager,
+		WebRTC:       webrtcv3Manager,
+		Imaging:      processor,
+		SessStore:    store,
+		SearchEngine: engine,
+		Config:       v3Config,
 	}
 	oauth2Config := provideOAuth2Config(config)
 	handler := &oauth2.Handler{

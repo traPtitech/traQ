@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
+	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/service/ws"
@@ -18,16 +19,17 @@ import (
 )
 
 type Handlers struct {
-	RBAC      rbac.RBAC
-	Repo      repository.Repository
-	WS        *ws.Streamer
-	Hub       *hub.Hub
-	Logger    *zap.Logger
-	OC        *counter.OnlineCounter
-	VM        *viewer.Manager
-	WebRTC    *webrtcv3.Manager
-	Imaging   imaging.Processor
-	SessStore session.Store
+	RBAC         rbac.RBAC
+	Repo         repository.Repository
+	WS           *ws.Streamer
+	Hub          *hub.Hub
+	Logger       *zap.Logger
+	OC           *counter.OnlineCounter
+	VM           *viewer.Manager
+	WebRTC       *webrtcv3.Manager
+	Imaging      imaging.Processor
+	SessStore    session.Store
+	SearchEngine search.Engine
 	Config
 }
 
@@ -165,6 +167,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiMessages := api.Group("/messages")
 		{
+			apiMessages.GET("", h.SearchMessages, requires(permission.GetMessage))
 			apiMessagesMID := apiMessages.Group("/:messageID", retrieve.MessageID(), requiresMessageAccessPerm)
 			{
 				apiMessagesMID.GET("", h.GetMessage, requires(permission.GetMessage))

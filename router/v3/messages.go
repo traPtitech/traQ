@@ -36,6 +36,17 @@ func (h *Handlers) ReadChannel(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
+// SearchMessages GET /messages
+func (h *Handlers) SearchMessages(c echo.Context) error {
+	if !h.SearchEngine.Available() {
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "search service is currently unavailable")
+	}
+
+	// TODO SearchEngineで検索処理
+
+	return c.NoContent(http.StatusNotImplemented)
+}
+
 // GetMessage GET /messages/:messageID
 func (h *Handlers) GetMessage(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatMessage(getParamMessage(c)))
