@@ -64,8 +64,8 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 	if err != nil {
 		return nil, err
 	}
-	esurlString := provideESURLString(c2)
-	engine, err := initSearchServiceIfAvailable(hub2, logger, esurlString)
+	esEngineConfig := provideESEngineConfig(c2)
+	engine, err := initSearchServiceIfAvailable(hub2, logger, esEngineConfig)
 	if err != nil {
 		return nil, err
 	}

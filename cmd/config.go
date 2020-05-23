@@ -334,9 +334,9 @@ func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unr
 	return nil, nil
 }
 
-func initSearchServiceIfAvailable(hub *hub.Hub, logger *zap.Logger, url search.ESURLString) (search.Engine, error) {
-	if len(url) > 0 {
-		return search.NewESEngine(hub, logger, url)
+func initSearchServiceIfAvailable(hub *hub.Hub, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
+	if len(config.URL) > 0 {
+		return search.NewESEngine(hub, logger, config)
 	}
 	return search.NewNullEngine(), nil
 }
@@ -349,8 +349,10 @@ func provideFirebaseCredentialsFilePathString(c *Config) variable.FirebaseCreden
 	return variable.FirebaseCredentialsFilePathString(c.Firebase.ServiceAccount.File)
 }
 
-func provideESURLString(c *Config) search.ESURLString {
-	return search.ESURLString(c.ES.URL)
+func provideESEngineConfig(c *Config) search.ESEngineConfig {
+	return search.ESEngineConfig{
+		URL: c.ES.URL,
+	}
 }
 
 func provideImageProcessorConfig(c *Config) imaging.Config {

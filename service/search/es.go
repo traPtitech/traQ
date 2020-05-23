@@ -19,7 +19,11 @@ const (
 
 type m map[string]interface{}
 
-type ESURLString string
+// ESEngineConfig Elasticsearch検索エンジン設定
+type ESEngineConfig struct {
+	// URL ESのURL
+	URL string
+}
 
 type esEngine struct {
 	client *elastic.Client
@@ -27,15 +31,16 @@ type esEngine struct {
 	l      *zap.Logger
 }
 
-func NewESEngine(hub *hub.Hub, logger *zap.Logger, url ESURLString) (Engine, error) {
+// NewESEngine Elasticsearch検索エンジンを生成します
+func NewESEngine(hub *hub.Hub, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
 	// es接続
-	client, err := elastic.NewClient(elastic.SetURL(string(url)))
+	client, err := elastic.NewClient(elastic.SetURL(config.URL))
 	if err != nil {
 		return nil, fmt.Errorf("failed to init search engine: %w", err)
 	}
 
 	// esバージョン確認
-	version, err := client.ElasticsearchVersion(string(url))
+	version, err := client.ElasticsearchVersion(config.URL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch es version: %w", err)
 	}
@@ -56,6 +61,7 @@ func NewESEngine(hub *hub.Hub, logger *zap.Logger, url ESURLString) (Engine, err
 			return nil, fmt.Errorf("failed to init search engine: index not acknowledged")
 		}
 
+		// mapping作成
 		r2, err := client.PutMapping().Index(getIndexName(esMessageIndex)).BodyJson(m{
 			"properties": m{
 				"userId": m{
@@ -97,6 +103,7 @@ func NewESEngine(hub *hub.Hub, logger *zap.Logger, url ESURLString) (Engine, err
 	return engine, nil
 }
 
+// onEvent 内部イベントを処理する
 func (e *esEngine) onEvent(ev hub.Message) {
 	switch ev.Topic() {
 	case event.MessageCreated:
@@ -120,6 +127,7 @@ func (e *esEngine) onEvent(ev hub.Message) {
 	}
 }
 
+// addMessageToIndex 新規メッセージをesに入れる
 func (e *esEngine) addMessageToIndex(m *model.Message) error {
 	_, err := e.client.Index().
 		Index(getIndexName(esMessageIndex)).
@@ -137,6 +145,7 @@ func (e *esEngine) addMessageToIndex(m *model.Message) error {
 	return nil
 }
 
+// updateMessageOnIndex 既存メッセージの編集をesに反映させる
 func (e *esEngine) updateMessageOnIndex(m *model.Message) error {
 	_, err := e.client.Update().
 		Index(getIndexName(esMessageIndex)).
@@ -148,12 +157,17 @@ func (e *esEngine) updateMessageOnIndex(m *model.Message) error {
 	return err
 }
 
+// deleteMessageFromIndex メッセージの削除をesに反映させる
 func (e *esEngine) deleteMessageFromIndex(id uuid.UUID) error {
 	_, err := e.client.Delete().
 		Index(getIndexName(esMessageIndex)).
 		Id(id.String()).
 		Do(context.Background())
 	return err
+}
+
+func (e *esEngine) Do(q *Query) (Result, error) {
+	panic("implement me") // TODO
 }
 
 func (e *esEngine) Available() bool {
