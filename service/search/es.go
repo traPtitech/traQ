@@ -100,13 +100,22 @@ func NewESEngine(hub *hub.Hub, logger *zap.Logger, url ESURLString) (Engine, err
 func (e *esEngine) onEvent(ev hub.Message) {
 	switch ev.Topic() {
 	case event.MessageCreated:
-		e.addMessageToIndex(ev.Fields["message"].(*model.Message))
+		err := e.addMessageToIndex(ev.Fields["message"].(*model.Message))
+		if err != nil {
+			e.l.Error(err.Error(), zap.Error(err))
+		}
 
 	case event.MessageUpdated:
-		e.updateMessageOnIndex(ev.Fields["message"].(*model.Message))
+		err := e.updateMessageOnIndex(ev.Fields["message"].(*model.Message))
+		if err != nil {
+			e.l.Error(err.Error(), zap.Error(err))
+		}
 
 	case event.MessageDeleted:
-		e.deleteMessageFromIndex(ev.Fields["message_id"].(uuid.UUID))
+		err := e.deleteMessageFromIndex(ev.Fields["message_id"].(uuid.UUID))
+		if err != nil {
+			e.l.Error(err.Error(), zap.Error(err))
+		}
 
 	}
 }
