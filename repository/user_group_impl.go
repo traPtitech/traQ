@@ -6,6 +6,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/gormutil"
 	"time"
 	"unicode/utf8"
 )
@@ -30,7 +31,7 @@ func (repo *GormRepository) CreateUserGroup(name, description, gType string, adm
 		}
 
 		err := tx.Create(g).Error
-		if isMySQLDuplicatedRecordErr(err) {
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
 			return ErrAlreadyExists
 		}
 
@@ -69,7 +70,7 @@ func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNa
 			}
 
 			// 重複チェック
-			if exists, err := dbExists(tx, &model.UserGroup{Name: args.Name.String}); err != nil {
+			if exists, err := gormutil.RecordExists(tx, &model.UserGroup{Name: args.Name.String}); err != nil {
 				return err
 			} else if exists {
 				return ErrAlreadyExists
@@ -260,7 +261,7 @@ func (repo *GormRepository) AddUserToGroupAdmin(userID, groupID uuid.UUID) error
 		}
 
 		if err := tx.Create(&model.UserGroupAdmin{UserID: userID, GroupID: groupID}).Error; err != nil {
-			if isMySQLDuplicatedRecordErr(err) {
+			if gormutil.IsMySQLDuplicatedRecordErr(err) {
 				return nil
 			}
 			return err

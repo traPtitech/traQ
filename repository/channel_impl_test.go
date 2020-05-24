@@ -94,7 +94,8 @@ func TestRepositoryImpl_GetChannelByMessageID(t *testing.T) {
 
 func TestRepositoryImpl_GetChannel(t *testing.T) {
 	t.Parallel()
-	repo, _, _, channel := setupWithChannel(t, common)
+	repo, _, _ := setup(t, common)
+	channel := mustMakeChannel(t, repo, rand)
 
 	t.Run("Exists", func(t *testing.T) {
 		t.Parallel()
@@ -114,7 +115,8 @@ func TestRepositoryImpl_GetChannel(t *testing.T) {
 
 func TestRepositoryImpl_ChangeChannelName(t *testing.T) {
 	t.Parallel()
-	repo, _, _, parent := setupWithChannel(t, common)
+	repo, _, _ := setup(t, common)
+	parent := mustMakeChannel(t, repo, rand)
 
 	c2 := mustMakeChannelDetail(t, repo, uuid.Nil, "test2", parent.ID)
 	c3 := mustMakeChannelDetail(t, repo, uuid.Nil, "test3", c2.ID)
@@ -185,14 +187,14 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 
 	t.Run("Nil ID", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		assert.EqualError(repo.ChangeChannelSubscription(uuid.Nil, ChangeChannelSubscriptionArgs{}), ErrNilID.Error())
 	})
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 		ch := mustMakeChannel(t, repo, rand)
 		user1 := mustMakeUser(t, repo, rand)
 		user2 := mustMakeUser(t, repo, rand)

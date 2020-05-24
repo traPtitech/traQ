@@ -5,6 +5,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/gormutil"
 	"unicode/utf8"
 )
 
@@ -48,7 +49,7 @@ func (repo *GormRepository) AddUserTag(userID, tagID uuid.UUID) error {
 	}
 	// TODO タグの存在確認
 	if err := repo.db.Create(ut).Error; err != nil {
-		if isMySQLDuplicatedRecordErr(err) {
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
 			return ErrAlreadyExists
 		}
 		return err

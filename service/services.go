@@ -21,7 +21,7 @@ type Services struct {
 	UnreadMessageCounter counter.UnreadMessageCounter
 	MessageCounter       counter.MessageCounter
 	ChannelCounter       counter.ChannelCounter
-	FCM                  *fcm.Client
+	FCM                  fcm.Client
 	HeartBeats           *heartbeat.Manager
 	Imaging              imaging.Processor
 	Notification         *notification.Service

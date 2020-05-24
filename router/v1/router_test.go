@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/viewer"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"go.uber.org/zap"
 	"image"
@@ -196,7 +197,8 @@ func (env *Env) mustMakeUser(t *testing.T, userName string) model.UserInfo {
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "test", Role: role.User})
+	// パスワード無し・アイコンファイルは実際には存在しないことに注意
+	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: optional.UUIDFrom(uuid.Must(uuid.NewV4()))})
 	require.NoError(t, err)
 	return u
 }
@@ -253,18 +255,6 @@ func (env *Env) mustMakeWebhook(t *testing.T, name string, channelID, creatorID 
 	w, err := env.Repository.CreateWebhook(name, "", channelID, creatorID, secret)
 	require.NoError(t, err)
 	return w
-}
-
-func (env *Env) mustMakeStamp(t *testing.T, name string, userID uuid.UUID) *model.Stamp {
-	t.Helper()
-	if name == rand {
-		name = random.AlphaNumeric(20)
-	}
-	fileID, err := repository.GenerateIconFile(env.Repository, name)
-	require.NoError(t, err)
-	s, err := env.Repository.CreateStamp(repository.CreateStampArgs{Name: name, FileID: fileID, CreatorID: userID})
-	require.NoError(t, err)
-	return s
 }
 
 func (env *Env) mustChangeChannelSubscription(t *testing.T, channelID, userID uuid.UUID) {

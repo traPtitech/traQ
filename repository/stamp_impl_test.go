@@ -46,7 +46,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		name := random2.AlphaNumeric(20)
 		s, err := repo.CreateStamp(CreateStampArgs{Name: name, FileID: fid, CreatorID: user.GetID()})
@@ -153,7 +153,7 @@ func TestRepositoryImpl_GetStamp(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 		a := mustMakeStamp(t, repo, rand, uuid.Nil)
 
 		s, err := repo.GetStamp(a.ID)
@@ -184,7 +184,7 @@ func TestRepositoryImpl_DeleteStamp(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		s := mustMakeStamp(t, repo, rand, uuid.Nil)
 		if assert.NoError(repo.DeleteStamp(s.ID)) {
@@ -256,7 +256,7 @@ func TestRepositoryImpl_ExistStamps(t *testing.T) {
 
 	t.Run("argument err", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		stampIDsCopy := make([]uuid.UUID, len(stampIDs), cap(stampIDs))
 		_ = copy(stampIDsCopy, stampIDs)
@@ -268,7 +268,7 @@ func TestRepositoryImpl_ExistStamps(t *testing.T) {
 
 	t.Run("sucess", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		assert.NoError(repo.ExistStamps(stampIDs))
 	})

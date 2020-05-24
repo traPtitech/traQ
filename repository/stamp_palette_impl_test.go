@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/utils/optional"
 	random2 "github.com/traPtitech/traQ/utils/random"
 	"testing"
@@ -13,7 +14,7 @@ func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 
 	t.Run("nil user id", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		_, err := repo.CreateStampPalette(random2.AlphaNumeric(20), random2.AlphaNumeric(100), make([]uuid.UUID, 0), uuid.Nil)
 		assert.Error(err)
@@ -21,7 +22,7 @@ func TestRepositoryImpl_CreateStampPalette(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		name := random2.AlphaNumeric(20)
 		description := random2.AlphaNumeric(100)
@@ -52,21 +53,21 @@ func TestRepositoryImpl_UpdateStampPalette(t *testing.T) {
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		assert.EqualError(repo.UpdateStampPalette(uuid.Nil, UpdateStampPaletteArgs{}), ErrNilID.Error())
 	})
 
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		assert.EqualError(repo.UpdateStampPalette(uuid.Must(uuid.NewV4()), UpdateStampPaletteArgs{}), ErrNotFound.Error())
 	})
 
 	t.Run("no change", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		assert.NoError(repo.UpdateStampPalette(stampPalette.ID, UpdateStampPaletteArgs{}))
 	})
@@ -98,7 +99,7 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		_, err := repo.GetStampPalette(uuid.Nil)
 		assert.EqualError(err, ErrNotFound.Error())
@@ -106,7 +107,7 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		_, err := repo.GetStampPalette(uuid.Must(uuid.NewV4()))
 		assert.EqualError(err, ErrNotFound.Error())
@@ -114,7 +115,7 @@ func TestRepositoryImpl_GetStampPalette(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 		createdStampPalette := mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), user.GetID())
 
 		stampPalette, err := repo.GetStampPalette(createdStampPalette.ID)
@@ -133,21 +134,21 @@ func TestRepositoryImpl_DeleteStampPalette(t *testing.T) {
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		assert.EqualError(repo.DeleteStampPalette(uuid.Nil), ErrNilID.Error())
 	})
 
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		assert.EqualError(repo.DeleteStampPalette(uuid.Must(uuid.NewV4())), ErrNotFound.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		assert, _ := assertAndRequire(t)
+		assert := assert.New(t)
 
 		stampPalette := mustMakeStampPalette(t, repo, rand, rand, make([]uuid.UUID, 0), user.GetID())
 		if assert.NoError(repo.DeleteStampPalette(stampPalette.ID)) {

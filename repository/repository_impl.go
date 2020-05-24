@@ -4,14 +4,12 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/rbac/role"
-	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
-	"time"
 )
 
 // GormRepository リポジトリ実装
@@ -72,11 +70,9 @@ func (repo *GormRepository) Sync() (init bool, err error) {
 	repo.stamps = makeStampRepository(stamps)
 
 	// 管理者ユーザーの確認
-	c := 0
-	if err := repo.db.Model(&model.User{}).Where(&model.User{Role: role.Admin}).Limit(1).Count(&c).Error; err != nil {
+	if exists, err := gormutil.RecordExists(repo.db, &model.User{Role: role.Admin}); err != nil {
 		return false, err
-	}
-	if c == 0 {
+	} else if !exists {
 		_, err := repo.CreateUser(CreateUserArgs{
 			Name:     "traq",
 			Password: "traq",
@@ -87,7 +83,6 @@ func (repo *GormRepository) Sync() (init bool, err error) {
 		}
 		return true, err
 	}
-
 	return false, nil
 }
 
@@ -99,13 +94,5 @@ func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub, logger
 		logger: logger.Named("repository"),
 		fs:     fs,
 	}
-	go func() {
-		sub := hub.Subscribe(10, event.UserOffline)
-		for ev := range sub.Receiver {
-			userID := ev.Fields["user_id"].(uuid.UUID)
-			datetime := ev.Fields["datetime"].(time.Time)
-			_ = repo.UpdateUser(userID, UpdateUserArgs{LastOnline: optional.TimeFrom(datetime)})
-		}
-	}()
 	return repo, nil
 }
