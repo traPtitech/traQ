@@ -1,6 +1,9 @@
 package repository
 
-import "errors"
+import (
+	"errors"
+	"github.com/jinzhu/gorm"
+)
 
 var (
 	// ErrNilID 汎用エラー 引数のIDがNilです
@@ -36,4 +39,13 @@ func IsArgError(err error) bool {
 	}
 	_, ok := err.(*ArgumentError)
 	return ok
+}
+
+func convertError(err error) error {
+	switch {
+	case gorm.IsRecordNotFoundError(err):
+		return ErrNotFound
+	default:
+		return err
+	}
 }

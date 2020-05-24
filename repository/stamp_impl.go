@@ -8,6 +8,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/validator"
 	"sync"
 	"time"
@@ -114,7 +115,7 @@ func (repo *GormRepository) CreateStamp(args CreateStampArgs) (s *model.Stamp, e
 			return ArgError("name", "Name must be 1-32 characters of a-zA-Z0-9_-")
 		}
 		// 名前重複チェック
-		if exists, err := dbExists(tx, &model.Stamp{Name: stamp.Name}); err != nil {
+		if exists, err := gormutil.RecordExists(tx, &model.Stamp{Name: stamp.Name}); err != nil {
 			return err
 		} else if exists {
 			return ErrAlreadyExists
@@ -123,7 +124,7 @@ func (repo *GormRepository) CreateStamp(args CreateStampArgs) (s *model.Stamp, e
 		if stamp.FileID == uuid.Nil {
 			return ArgError("fileID", "FileID's file is not found")
 		}
-		if exists, err := dbExists(tx, &model.File{ID: stamp.FileID}); err != nil {
+		if exists, err := gormutil.RecordExists(tx, &model.File{ID: stamp.FileID}); err != nil {
 			return err
 		} else if !exists {
 			return ArgError("fileID", "fileID's file is not found")
@@ -173,7 +174,7 @@ func (repo *GormRepository) UpdateStamp(id uuid.UUID, args UpdateStampArgs) erro
 			}
 
 			// 重複チェック
-			if exists, err := dbExists(tx, &model.Stamp{Name: args.Name.String}); err != nil {
+			if exists, err := gormutil.RecordExists(tx, &model.Stamp{Name: args.Name.String}); err != nil {
 				return err
 			} else if exists {
 				return ErrAlreadyExists
@@ -185,7 +186,7 @@ func (repo *GormRepository) UpdateStamp(id uuid.UUID, args UpdateStampArgs) erro
 			if args.FileID.UUID == uuid.Nil {
 				return ArgError("args.FileID", "FileID's file is not found")
 			}
-			if exists, err := dbExists(tx, &model.File{ID: args.FileID.UUID}); err != nil {
+			if exists, err := gormutil.RecordExists(tx, &model.File{ID: args.FileID.UUID}); err != nil {
 				return err
 			} else if !exists {
 				return ArgError("args.FileID", "FileID's file is not found")
@@ -320,7 +321,7 @@ func (repo *GormRepository) StampExists(id uuid.UUID) (bool, error) {
 		_, ok := repo.stamps.GetStamp(id)
 		return ok, nil
 	}
-	return dbExists(repo.db, &model.Stamp{ID: id})
+	return gormutil.RecordExists(repo.db, &model.Stamp{ID: id})
 }
 
 // ExistStamps implements StampPaletteRepository interface.
@@ -332,12 +333,9 @@ func (repo *GormRepository) ExistStamps(stampIDs []uuid.UUID) (err error) {
 		return ArgError("stamp", "stamp is not found")
 	}
 
-	var num int
-	err = repo.db.
+	num, err := gormutil.Count(repo.db.
 		Table("stamps").
-		Where("id IN (?)", stampIDs).
-		Count(&num).
-		Error
+		Where("id IN (?)", stampIDs))
 	if err != nil {
 		return err
 	}
@@ -359,7 +357,7 @@ func (repo *GormRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h 
 		Group("stamp_id").
 		Select("stamp_id, max(updated_at) AS datetime").
 		Order("datetime DESC").
-		Scopes(limitAndOffset(limit, 0)).
+		Scopes(gormutil.LimitAndOffset(limit, 0)).
 		Scan(&h).
 		Error
 	return

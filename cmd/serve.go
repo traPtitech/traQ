@@ -7,10 +7,12 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
+	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/jwt"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"go.uber.org/zap"
 	"io/ioutil"
@@ -147,17 +149,26 @@ type Server struct {
 	L      *zap.Logger
 	SS     *service.Services
 	Router *echo.Echo
+	Hub    *hub.Hub
+	Repo   repository.Repository
 }
 
 func (s *Server) Start(address string) error {
+	go func() {
+		// TODO 適切なパッケージに移動させる
+		sub := s.Hub.Subscribe(10, event.UserOffline)
+		for ev := range sub.Receiver {
+			userID := ev.Fields["user_id"].(uuid.UUID)
+			datetime := ev.Fields["datetime"].(time.Time)
+			_ = s.Repo.UpdateUser(userID, repository.UpdateUserArgs{LastOnline: optional.TimeFrom(datetime)})
+		}
+	}()
 	return s.Router.Start(address)
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.SS.SSE.Dispose()
 	_ = s.SS.WS.Close()
-	if s.SS.FCM != nil {
-		s.SS.FCM.Close()
-	}
+	s.SS.FCM.Close()
 	return s.Router.Shutdown(ctx)
 }

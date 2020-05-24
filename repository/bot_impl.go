@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	bevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/rbac/role"
+	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
 	"math"
@@ -459,7 +460,7 @@ func (repo *GormRepository) GetBotEventLogs(botID uuid.UUID, limit, offset int) 
 	}
 	return logs, repo.db.Where(&model.BotEventLog{BotID: botID}).
 		Order("date_time DESC").
-		Scopes(limitAndOffset(limit, offset)).
+		Scopes(gormutil.LimitAndOffset(limit, offset)).
 		Find(&logs).
 		Error
 }

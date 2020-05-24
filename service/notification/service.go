@@ -16,7 +16,7 @@ type Service struct {
 	repo   repository.Repository
 	hub    *hub.Hub
 	logger *zap.Logger
-	fcm    *fcm.Client
+	fcm    fcm.Client
 	sse    *sse.Streamer
 	ws     *ws.Streamer
 	vm     *viewer.Manager
@@ -24,7 +24,7 @@ type Service struct {
 }
 
 // NewService 通知サービスを作成して起動します
-func NewService(repo repository.Repository, hub *hub.Hub, logger *zap.Logger, fcm *fcm.Client, sse *sse.Streamer, ws *ws.Streamer, vm *viewer.Manager, origin variable.ServerOriginString) *Service {
+func NewService(repo repository.Repository, hub *hub.Hub, logger *zap.Logger, fcm fcm.Client, sse *sse.Streamer, ws *ws.Streamer, vm *viewer.Manager, origin variable.ServerOriginString) *Service {
 	service := &Service{
 		repo:   repo,
 		hub:    hub,

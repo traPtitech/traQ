@@ -42,7 +42,7 @@ func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, logger *za
 		provideServerOriginString,
 		provideFirebaseCredentialsFilePathString,
 		provideImageProcessorConfig,
-		providerRouterConfig,
+		provideRouterConfig,
 		wire.Struct(new(service.Services), "*"),
 		wire.Struct(new(Server), "*"),
 	)

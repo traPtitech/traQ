@@ -255,47 +255,6 @@ func TestHandlers_DeleteMessageByID(t *testing.T) {
 	})
 }
 
-func TestHandlers_PostMessageReport(t *testing.T) {
-	t.Parallel()
-	env, _, _, s, _, testUser, _ := setupWithUsers(t, common2)
-
-	channel := env.mustMakeChannel(t, rand)
-	message := env.mustMakeMessage(t, testUser.GetID(), channel.ID)
-
-	t.Run("NotLoggedIn", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.POST("/api/1.0/messages/{messageID}/report", message.ID.String()).
-			WithJSON(map[string]string{"reason": "aaaa"}).
-			Expect().
-			Status(http.StatusUnauthorized)
-	})
-
-	t.Run("Successful1", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.POST("/api/1.0/messages/{messageID}/report", message.ID.String()).
-			WithCookie(session.CookieName, s).
-			WithJSON(map[string]string{"reason": "aaaa"}).
-			Expect().
-			Status(http.StatusNoContent)
-
-		r, err := env.Repository.GetMessageReportsByMessageID(message.ID)
-		assert.NoError(t, err)
-		assert.Len(t, r, 1)
-	})
-
-	t.Run("Failure1", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.POST("/api/1.0/messages/{messageID}/report", message.ID.String()).
-			WithCookie(session.CookieName, s).
-			WithJSON(map[string]string{"not_reason": "aaaa"}).
-			Expect().
-			Status(http.StatusBadRequest)
-	})
-}
-
 func TestHandlers_DeleteUnread(t *testing.T) {
 	t.Parallel()
 	env, _, _, s, _, testUser, _ := setupWithUsers(t, common2)
