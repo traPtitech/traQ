@@ -9,6 +9,7 @@ import (
 	"github.com/olivere/elastic/v7"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"go.uber.org/zap"
 	"time"
 )
@@ -30,6 +31,7 @@ type ESEngineConfig struct {
 type esEngine struct {
 	client *elastic.Client
 	hub    *hub.Hub
+	repo   repository.Repository
 	l      *zap.Logger
 }
 
@@ -55,7 +57,7 @@ func (e *esResult) Get() map[uuid.UUID]string {
 }
 
 // NewESEngine Elasticsearch検索エンジンを生成します
-func NewESEngine(hub *hub.Hub, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
+func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
 	// es接続
 	client, err := elastic.NewClient(elastic.SetURL(config.URL))
 	if err != nil {
@@ -115,6 +117,7 @@ func NewESEngine(hub *hub.Hub, logger *zap.Logger, config ESEngineConfig) (Engin
 	engine := &esEngine{
 		client: client,
 		hub:    hub,
+		repo:   repo,
 		l:      logger.Named("search"),
 	}
 

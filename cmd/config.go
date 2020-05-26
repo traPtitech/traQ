@@ -334,9 +334,9 @@ func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unr
 	return fcm.NewNullClient(), nil
 }
 
-func initSearchServiceIfAvailable(hub *hub.Hub, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
+func initSearchServiceIfAvailable(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
 	if len(config.URL) > 0 {
-		return search.NewESEngine(hub, logger, config)
+		return search.NewESEngine(hub, repo, logger, config)
 	}
 	return search.NewNullEngine(), nil
 }
