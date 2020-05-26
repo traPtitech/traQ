@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/message"
 	"strings"
+	"time"
 )
 
 // CreateMessage implements MessageRepository interface.
@@ -34,14 +35,11 @@ func (repo *GormRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 			MessageID: m.ID,
 			DateTime:  m.CreatedAt,
 		}
-		r := tx.Model(&model.ChannelLatestMessage{ChannelID: channelID}).Updates(clm)
-		if r.Error != nil {
-			return r.Error
-		}
-		if r.RowsAffected == 0 {
-			return tx.Create(clm).Error
-		}
-		return nil
+
+		return tx.
+			Set("gorm:insert_option", fmt.Sprintf("ON DUPLICATE KEY UPDATE message_id = '%s', date_time = '%s'", clm.MessageID, clm.DateTime.In(time.UTC).Format("2006-01-02 15:04:05.999999"))).
+			Create(clm).
+			Error
 	})
 	if err != nil {
 		return nil, err
