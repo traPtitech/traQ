@@ -1,6 +1,9 @@
 package search
 
-import "errors"
+import (
+	"errors"
+	"github.com/gofrs/uuid"
+)
 
 // ErrServiceUnavailable エラー 現在検索サービスが利用できません
 var ErrServiceUnavailable = errors.New("search service is unavailable")
@@ -15,10 +18,15 @@ type Engine interface {
 	Close() error
 }
 
-// Query 検索クエリ
+// Query 検索クエリ TODO
 type Query struct {
+	// Word 検索ワード (仮置き)
+	Word string
 }
 
-// Result 検索結果インターフェイス
+// Result 検索結果インターフェイス TODO
 type Result interface {
+	// Get 仮置き
+	Get() map[uuid.UUID]string
+	// GetMessages() (ms []*model.Message, more bool)
 }

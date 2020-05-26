@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/utils/message"
 	"net/http"
 )
@@ -44,7 +45,13 @@ func (h *Handlers) SearchMessages(c echo.Context) error {
 
 	// TODO SearchEngineで検索処理
 
-	return c.NoContent(http.StatusNotImplemented)
+	// 仮置き
+	r, err := h.SearchEngine.Do(&search.Query{Word: c.QueryParam("q")})
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusOK, r.Get())
 }
 
 // GetMessage GET /messages/:messageID

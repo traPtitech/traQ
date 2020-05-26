@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/gofrs/uuid"
+	json "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/olivere/elastic/v7"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"go.uber.org/zap"
+	"time"
 )
 
 const (
@@ -29,6 +31,27 @@ type esEngine struct {
 	client *elastic.Client
 	hub    *hub.Hub
 	l      *zap.Logger
+}
+
+type esMessageDoc struct {
+	ID        uuid.UUID `json:"-"`
+	UserID    uuid.UUID `json:"userId"`
+	ChannelID uuid.UUID `json:"channelId"`
+	Text      string    `json:"text"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type esResult struct {
+	docs []*esMessageDoc
+}
+
+func (e *esResult) Get() map[uuid.UUID]string {
+	r := make(map[uuid.UUID]string, len(e.docs))
+	for _, doc := range e.docs {
+		r[doc.ID] = doc.Text
+	}
+	return r
 }
 
 // NewESEngine Elasticsearch検索エンジンを生成します
@@ -167,7 +190,30 @@ func (e *esEngine) deleteMessageFromIndex(id uuid.UUID) error {
 }
 
 func (e *esEngine) Do(q *Query) (Result, error) {
-	panic("implement me") // TODO
+	// TODO 実装
+	e.l.Debug("do search", zap.Reflect("q", q))
+
+	// 以下仮実装
+	sr, err := e.client.Search().
+		Index(getIndexName(esMessageIndex)).
+		Query(elastic.NewMatchPhraseQuery("text", q.Word)).
+		Sort("createdAt", false).
+		Do(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	r := &esResult{}
+	for _, hit := range sr.Hits.Hits {
+		var m esMessageDoc
+		if err := json.Unmarshal(hit.Source, &m); err != nil {
+			return nil, err
+		}
+		m.ID = uuid.Must(uuid.FromString(hit.Id))
+		r.docs = append(r.docs, &m)
+	}
+
+	return r, nil
 }
 
 func (e *esEngine) Available() bool {
