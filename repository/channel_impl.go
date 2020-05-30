@@ -272,27 +272,6 @@ func (repo *GormRepository) GetChannel(channelID uuid.UUID) (*model.Channel, err
 	return &ch, nil
 }
 
-// GetChannelByMessageID implements ChannelRepository interface.
-func (repo *GormRepository) GetChannelByMessageID(messageID uuid.UUID) (*model.Channel, error) {
-	if messageID == uuid.Nil {
-		return nil, ErrNotFound
-	}
-
-	channel := &model.Channel{}
-	err := repo.db.
-		Where("id = ?", repo.db.
-			Model(&model.Message{}).
-			Select("messages.channel_id").
-			Where(&model.Message{ID: messageID}).
-			SubQuery()).
-		Take(channel).
-		Error
-	if err != nil {
-		return nil, convertError(err)
-	}
-	return channel, nil
-}
-
 // GetChannelsByUserID implements ChannelRepository interface.
 func (repo *GormRepository) GetChannelsByUserID(userID uuid.UUID) (channels []*model.Channel, err error) {
 	channels = make([]*model.Channel, 0)

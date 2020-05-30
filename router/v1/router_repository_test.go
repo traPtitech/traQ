@@ -1046,22 +1046,6 @@ func (repo *TestRepository) GetChannel(channelID uuid.UUID) (*model.Channel, err
 	return &ch, nil
 }
 
-func (repo *TestRepository) GetChannelByMessageID(messageID uuid.UUID) (*model.Channel, error) {
-	repo.MessagesLock.RLock()
-	m, ok := repo.Messages[messageID]
-	repo.MessagesLock.RUnlock()
-	if !ok {
-		return nil, repository.ErrNotFound
-	}
-	repo.ChannelsLock.RLock()
-	ch, ok := repo.Channels[m.ChannelID]
-	repo.ChannelsLock.RUnlock()
-	if !ok {
-		return nil, repository.ErrNotFound
-	}
-	return &ch, nil
-}
-
 func (repo *TestRepository) GetChannelsByUserID(userID uuid.UUID) ([]*model.Channel, error) {
 	result := make([]*model.Channel, 0)
 	repo.ChannelsLock.RLock()

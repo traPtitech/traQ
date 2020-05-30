@@ -70,28 +70,6 @@ func TestGormRepository_UpdateChannel(t *testing.T) {
 	}
 }
 
-func TestRepositoryImpl_GetChannelByMessageID(t *testing.T) {
-	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
-
-	t.Run("Exists", func(t *testing.T) {
-		t.Parallel()
-
-		message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
-		ch, err := repo.GetChannelByMessageID(message.ID)
-		if assert.NoError(t, err) {
-			assert.Equal(t, channel.ID, ch.ID)
-		}
-	})
-
-	t.Run("NotExists", func(t *testing.T) {
-		t.Parallel()
-
-		_, err := repo.GetChannelByMessageID(uuid.Nil)
-		assert.Error(t, err)
-	})
-}
-
 func TestRepositoryImpl_GetChannel(t *testing.T) {
 	t.Parallel()
 	repo, _, _ := setup(t, common)

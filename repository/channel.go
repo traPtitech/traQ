@@ -99,12 +99,6 @@ type ChannelRepository interface {
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	GetChannel(channelID uuid.UUID) (*model.Channel, error)
-	// GetChannelByMessageID 指定したメッセージの投稿先チャンネルを取得します
-	//
-	// 成功した場合、チャンネルとnilを返します。
-	// 存在しないメッセージを指定した場合、ErrNotFoundを返します。
-	// DBによるエラーを返すことがあります。
-	GetChannelByMessageID(messageID uuid.UUID) (*model.Channel, error)
 	// GetChannelsByUserID 指定したユーザーがアクセス可能なチャンネルを全て取得します
 	//
 	// 成功した場合、チャンネルの配列とnilを返します。
