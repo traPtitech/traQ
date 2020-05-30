@@ -882,6 +882,7 @@ paths:
     get:
       tags:
         - channel
+      deprecated: true
       operationId: getChannels
       description: (すべての)チャンネルのリストを取得します。
       security:
