@@ -122,12 +122,6 @@ type ChannelRepository interface {
 	// 存在しないチャンネル・ユーザーを指定した場合、falseとnilを返します。
 	// DBによるエラーを返すことがあります。
 	IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error)
-	// GetChildrenChannelIDs 指定したチャンネルの子チャンネルのUUIDを全て取得する
-	//
-	// 成功した場合、UUIDの配列とnilを返します。
-	// 存在しないチャンネルを指定した場合は空配列とnilを返します。
-	// DBによるエラーを返すことがあります。
-	GetChildrenChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error)
 	// GetPrivateChannelMemberIDs 指定したプライベートチャンネルのメンバーのUUIDを全て取得する
 	//
 	// 成功した場合、UUIDの配列とnilを返します。

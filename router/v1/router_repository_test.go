@@ -1099,18 +1099,6 @@ func (repo *TestRepository) IsChannelAccessibleToUser(userID, channelID uuid.UUI
 	return repo.IsUserPrivateChannelMember(channelID, userID)
 }
 
-func (repo *TestRepository) GetChildrenChannelIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
-	result := make([]uuid.UUID, 0)
-	repo.ChannelsLock.RLock()
-	for cid, ch := range repo.Channels {
-		if ch.ParentID == channelID {
-			result = append(result, cid)
-		}
-	}
-	repo.ChannelsLock.RUnlock()
-	return result, nil
-}
-
 func (repo *TestRepository) getChannelDepthWithoutLock(id uuid.UUID) int {
 	children := make([]uuid.UUID, 0)
 	for cid, ch := range repo.Channels {

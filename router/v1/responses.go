@@ -211,6 +211,7 @@ func (h *Handlers) formatChannel(channel *model.Channel) (response *channelRespo
 		ChannelID:  channel.ID.String(),
 		Name:       channel.Name,
 		Topic:      channel.Topic,
+		Children:   h.Repo.GetPublicChannelTree().GetChildrenIDs(channel.ID),
 		Visibility: channel.IsVisible,
 		Force:      channel.IsForced,
 		Private:    !channel.IsPublic,
@@ -219,10 +220,6 @@ func (h *Handlers) formatChannel(channel *model.Channel) (response *channelRespo
 	}
 	if channel.ParentID != uuid.Nil {
 		response.Parent = channel.ParentID.String()
-	}
-	response.Children, err = h.Repo.GetChildrenChannelIDs(channel.ID)
-	if err != nil {
-		return nil, err
 	}
 
 	if response.Private {

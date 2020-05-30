@@ -387,11 +387,6 @@ func (repo *GormRepository) IsChannelAccessibleToUser(userID, channelID uuid.UUI
 		Where("(channels.is_public = true OR users_private_channels.user_id = ?) AND channels.id = ? AND channels.deleted_at IS NULL", userID, channelID))
 }
 
-// GetChildrenChannelIDs implements ChannelRepository interface.
-func (repo *GormRepository) GetChildrenChannelIDs(channelID uuid.UUID) (children []uuid.UUID, err error) {
-	return repo.chTree.GetChildrenIDs(channelID), nil
-}
-
 // GetPrivateChannelMemberIDs implements ChannelRepository interface.
 func (repo *GormRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) (users []uuid.UUID, err error) {
 	users = make([]uuid.UUID, 0)
