@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/migration"
@@ -17,48 +16,13 @@ type GormRepository struct {
 	db     *gorm.DB
 	hub    *hub.Hub
 	logger *zap.Logger
-	chTree *channelTreeImpl
 	stamps *stampRepository
 	fs     storage.FileStorage
-}
-
-// Channel implements ReplaceMapper interface.
-func (repo *GormRepository) Channel(path string) (uuid.UUID, bool) {
-	id := repo.chTree.GetChannelIDFromPath(path)
-	return id, id != uuid.Nil
-}
-
-// Group implements ReplaceMapper interface.
-func (repo *GormRepository) Group(name string) (uuid.UUID, bool) {
-	g, err := repo.GetUserGroupByName(name)
-	if err != nil {
-		return uuid.Nil, false
-	}
-	return g.ID, true
-}
-
-// User implements ReplaceMapper interface.
-func (repo *GormRepository) User(name string) (uuid.UUID, bool) {
-	u, err := repo.GetUserByName(name, false)
-	if err != nil {
-		return uuid.Nil, false
-	}
-	return u.GetID(), true
 }
 
 // Sync implements Repository interface.
 func (repo *GormRepository) Sync() (init bool, err error) {
 	if err := migration.Migrate(repo.db); err != nil {
-		return false, err
-	}
-
-	// チャンネルツリー構築
-	var channels []*model.Channel
-	if err := repo.db.Where(&model.Channel{IsPublic: true}).Find(&channels).Error; err != nil {
-		return false, err
-	}
-	repo.chTree, err = makeChannelTree(channels)
-	if err != nil {
 		return false, err
 	}
 

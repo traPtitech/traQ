@@ -81,3 +81,7 @@ up:
 .PHONY: down
 down:
 	@docker-compose down -v
+
+.PHONY: mockgen
+mockgen:
+	mockgen -source repository/channel.go -destination repository/mock_repository/mock_channel.go

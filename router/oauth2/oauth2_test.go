@@ -80,7 +80,7 @@ func TestMain(m *testing.M) {
 		e.HideBanner = true
 		e.HidePort = true
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
-		e.Use(extension.Wrap(repo))
+		e.Use(extension.Wrap(repo, nil))
 
 		r, err := rbac.New(db)
 		if err != nil {

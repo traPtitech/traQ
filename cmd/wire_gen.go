@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/bot"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/heartbeat"
 	"github.com/traPtitech/traQ/service/imaging"
@@ -32,7 +33,11 @@ import (
 // Injectors from serve_wire.go:
 
 func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *zap.Logger, c2 *Config) (*Server, error) {
-	processor := bot.NewProcessor(repo, hub2, logger)
+	manager, err := channel.InitChannelManager(repo, logger)
+	if err != nil {
+		return nil, err
+	}
+	processor := bot.NewProcessor(repo, manager, hub2, logger)
 	onlineCounter := counter.NewOnlineCounter(hub2)
 	unreadMessageCounter, err := counter.NewUnreadMessageCounter(db, hub2)
 	if err != nil {
@@ -51,21 +56,22 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 	if err != nil {
 		return nil, err
 	}
-	manager := viewer.NewManager(hub2)
-	heartbeatManager := heartbeat.NewManager(manager)
+	viewerManager := viewer.NewManager(hub2)
+	heartbeatManager := heartbeat.NewManager(viewerManager)
 	config := provideImageProcessorConfig(c2)
 	imagingProcessor := imaging.NewProcessor(config)
 	streamer := sse.NewStreamer(hub2)
 	webrtcv3Manager := webrtcv3.NewManager(hub2)
-	wsStreamer := ws.NewStreamer(hub2, manager, webrtcv3Manager, logger)
+	wsStreamer := ws.NewStreamer(hub2, viewerManager, webrtcv3Manager, logger)
 	serverOriginString := provideServerOriginString(c2)
-	notificationService := notification.NewService(repo, hub2, logger, client, streamer, wsStreamer, manager, serverOriginString)
+	notificationService := notification.NewService(repo, manager, hub2, logger, client, streamer, wsStreamer, viewerManager, serverOriginString)
 	rbacRBAC, err := rbac.New(db)
 	if err != nil {
 		return nil, err
 	}
 	services := &service.Services{
 		BOT:                  processor,
+		ChannelManager:       manager,
 		OnlineCounter:        onlineCounter,
 		UnreadMessageCounter: unreadMessageCounter,
 		MessageCounter:       messageCounter,
@@ -76,7 +82,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 		Notification:         notificationService,
 		RBAC:                 rbacRBAC,
 		SSE:                  streamer,
-		ViewerManager:        manager,
+		ViewerManager:        viewerManager,
 		WebRTCv3:             webrtcv3Manager,
 		WS:                   wsStreamer,
 	}

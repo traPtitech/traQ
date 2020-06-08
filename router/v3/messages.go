@@ -8,7 +8,6 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/utils/message"
 	"net/http"
 )
 
@@ -59,12 +58,12 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 	m := getParamMessage(c)
 
 	// 投稿先チャンネル確認
-	ch, err := h.Repo.GetChannel(m.ChannelID)
+	ch, err := h.ChannelManager.GetChannel(m.ChannelID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetPublicChannelTree().GetChannelPath(ch.ID)))
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree().GetChannelPath(ch.ID)))
 	}
 
 	var req PostMessageRequest
@@ -78,7 +77,7 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 	}
 
 	if req.Embed {
-		req.Content = message.NewReplacer(h.Repo).Replace(req.Content)
+		req.Content = h.Replacer.Replace(req.Content)
 	}
 
 	if err := h.Repo.UpdateMessage(m.ID, req.Content); err != nil {
@@ -136,12 +135,12 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 	}
 
 	// 投稿先チャンネル確認
-	ch, err := h.Repo.GetChannel(m.ChannelID)
+	ch, err := h.ChannelManager.GetChannel(m.ChannelID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetPublicChannelTree().GetChannelPath(ch.ID)))
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree().GetChannelPath(ch.ID)))
 	}
 
 	if err := h.Repo.DeleteMessage(m.ID); err != nil {
@@ -271,7 +270,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 	ch := getParamChannel(c)
 
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetPublicChannelTree().GetChannelPath(ch.ID)))
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree().GetChannelPath(ch.ID)))
 	}
 
 	var req PostMessageRequest
@@ -280,7 +279,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 	}
 
 	if req.Embed {
-		req.Content = message.NewReplacer(h.Repo).Replace(req.Content)
+		req.Content = h.Replacer.Replace(req.Content)
 	}
 
 	m, err := h.Repo.CreateMessage(userID, ch.ID, req.Content)
@@ -302,7 +301,7 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 	}
 
 	// DMチャンネルを取得
-	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
+	ch, err := h.ChannelManager.GetDMChannel(myID, targetID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -321,13 +320,13 @@ func (h *Handlers) PostDirectMessage(c echo.Context) error {
 	}
 
 	// DMチャンネルを取得
-	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
+	ch, err := h.ChannelManager.GetDMChannel(myID, targetID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
 	if req.Embed {
-		req.Content = message.NewReplacer(h.Repo).Replace(req.Content)
+		req.Content = h.Replacer.Replace(req.Content)
 	}
 
 	m, err := h.Repo.CreateMessage(myID, ch.ID, req.Content)

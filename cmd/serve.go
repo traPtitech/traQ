@@ -8,6 +8,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
 	"github.com/traPtitech/traQ/event"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/utils/gormzap"
@@ -83,7 +84,11 @@ func serveCommand() *cobra.Command {
 				logger.Info("data initializing...")
 
 				// generalチャンネル作成
-				if ch, err := repo.CreatePublicChannel("general", uuid.Nil, uuid.Nil); err == nil {
+				if ch, err := repo.CreateChannel(model.Channel{
+					Name:      "general",
+					IsForced:  false,
+					IsVisible: true,
+				}, nil, false); err == nil {
 					logger.Info("#general was created", zap.Stringer("cid", ch.ID))
 				} else {
 					logger.Error("failed to init general channel", zap.Error(err))

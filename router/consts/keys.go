@@ -16,4 +16,5 @@ const (
 	KeyParamFile          = "paramFile"
 	KeyParamClipFolder    = "paramClipFolder"
 	KeyRepo               = "_repo"
+	KeyChannelManager     = "_cm"
 )

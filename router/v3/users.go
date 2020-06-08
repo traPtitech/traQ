@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -128,7 +129,7 @@ func (h *Handlers) EditMe(c echo.Context) error {
 	if req.HomeChannel.Valid {
 		if req.HomeChannel.UUID != uuid.Nil {
 			// チャンネル存在確認
-			if !h.Repo.GetPublicChannelTree().IsChannelPresent(req.HomeChannel.UUID) {
+			if !h.ChannelManager.PublicChannelTree().IsChannelPresent(req.HomeChannel.UUID) {
 				return herror.BadRequest("invalid homeChannel")
 			}
 		}
@@ -408,7 +409,7 @@ func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
 		return err
 	}
 
-	ch, err := h.Repo.GetChannel(channelID)
+	ch, err := h.ChannelManager.GetChannel(channelID)
 	if err != nil {
 		if err == repository.ErrNotFound {
 			return herror.NotFound()
@@ -416,16 +417,15 @@ func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	if ch.IsForced || !ch.IsPublic {
-		return herror.Forbidden()
-	}
-
-	args := repository.ChangeChannelSubscriptionArgs{
-		UpdaterID:    getRequestUserID(c),
-		Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{getRequestUserID(c): model.ChannelSubscribeLevel(req.Level.Int64)},
-	}
-	if err := h.Repo.ChangeChannelSubscription(ch.ID, args); err != nil {
-		return herror.InternalServerError(err)
+	if err := h.ChannelManager.ChangeChannelSubscriptions(ch.ID, map[uuid.UUID]model.ChannelSubscribeLevel{getRequestUserID(c): model.ChannelSubscribeLevel(req.Level.Int64)}, false, getRequestUserID(c)); err != nil {
+		switch err {
+		case channel.ErrInvalidChannel:
+			return herror.Forbidden("the channel's subscriptions is not configurable")
+		case channel.ErrForcedNotification:
+			return herror.Forbidden("the channel's subscriptions is not configurable")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
 	return c.NoContent(http.StatusNoContent)
 }

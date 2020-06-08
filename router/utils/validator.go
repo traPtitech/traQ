@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -16,38 +17,39 @@ type ctxKey int
 
 const (
 	repoCtxKey ctxKey = iota
+	cmCtxKey
 )
 
 func NewRequestValidateContext(c echo.Context) context.Context {
-	return context.WithValue(context.Background(), repoCtxKey, c.Get(consts.KeyRepo))
+	return context.WithValue(context.WithValue(context.Background(), repoCtxKey, c.Get(consts.KeyRepo)), cmCtxKey, c.Get(consts.KeyChannelManager))
 }
 
 // IsPublicChannelID 公開チャンネルのUUIDである
 var IsPublicChannelID = vd.WithContext(func(ctx context.Context, value interface{}) error {
 	const errMessage = "invalid channel id"
 
-	repo, ok := ctx.Value(repoCtxKey).(repository.Repository)
+	cm, ok := ctx.Value(cmCtxKey).(channel.Manager)
 	if !ok {
-		return vd.NewInternalError(errors.New("this context didn't have repository"))
+		return vd.NewInternalError(errors.New("this context didn't have ChannelManager"))
 	}
 
 	switch v := value.(type) {
 	case nil:
 		return nil
 	case uuid.UUID:
-		if !repo.GetPublicChannelTree().IsChannelPresent(v) {
+		if !cm.IsPublicChannel(v) {
 			return errors.New(errMessage)
 		}
 	case optional.UUID:
-		if v.Valid && !repo.GetPublicChannelTree().IsChannelPresent(v.UUID) {
+		if v.Valid && !cm.IsPublicChannel(v.UUID) {
 			return errors.New(errMessage)
 		}
 	case string:
-		if !repo.GetPublicChannelTree().IsChannelPresent(uuid.FromStringOrNil(v)) {
+		if !cm.IsPublicChannel(uuid.FromStringOrNil(v)) {
 			return errors.New(errMessage)
 		}
 	case []byte:
-		if !repo.GetPublicChannelTree().IsChannelPresent(uuid.FromBytesOrNil(v)) {
+		if !cm.IsPublicChannel(uuid.FromBytesOrNil(v)) {
 			return errors.New(errMessage)
 		}
 	default:

@@ -61,7 +61,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 	}
 	if req.ChannelID != uuid.Nil {
 		// チャンネルアクセス権確認
-		if ok, err := h.Repo.IsChannelAccessibleToUser(getRequestUserID(c), req.ChannelID); err != nil {
+		if ok, err := h.ChannelManager.IsChannelAccessibleToUser(getRequestUserID(c), req.ChannelID); err != nil {
 			return herror.InternalServerError(err)
 		} else if !ok {
 			return herror.BadRequest("invalid channelId")
@@ -102,21 +102,21 @@ func (h *Handlers) PostFile(c echo.Context) error {
 
 	// チャンネルアクセス権確認
 	channelID := uuid.FromStringOrNil(c.FormValue("channelId"))
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
+	if ok, err := h.ChannelManager.IsChannelAccessibleToUser(userID, channelID); err != nil {
 		return herror.InternalServerError(err)
 	} else if !ok {
 		return herror.BadRequest("invalid channelId")
 	}
-	ch, err := h.Repo.GetChannel(channelID)
+	ch, err := h.ChannelManager.GetChannel(channelID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetPublicChannelTree().GetChannelPath(ch.ID)))
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree().GetChannelPath(ch.ID)))
 	}
 	if !ch.IsPublic {
 		// アクセスコントロール設定
-		members, err := h.Repo.GetPrivateChannelMemberIDs(ch.ID)
+		members, err := h.ChannelManager.GetDMChannelMembers(ch.ID)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}

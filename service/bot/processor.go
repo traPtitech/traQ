@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/bot/event"
+	"github.com/traPtitech/traQ/service/channel"
 	"go.uber.org/zap"
 	"net/http"
 	"sync"
@@ -33,15 +34,17 @@ var eventSendCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 // Processor ボットプロセッサー
 type Processor struct {
 	repo   repository.Repository
+	cm     channel.Manager
 	logger *zap.Logger
 	hub    *hub.Hub
 	client http.Client
 }
 
 // NewProcessor ボットプロセッサーを生成し、起動します
-func NewProcessor(repo repository.Repository, hub *hub.Hub, logger *zap.Logger) *Processor {
+func NewProcessor(repo repository.Repository, cm channel.Manager, hub *hub.Hub, logger *zap.Logger) *Processor {
 	p := &Processor{
 		repo:   repo,
+		cm:     cm,
 		logger: logger.Named("bot"),
 		hub:    hub,
 		client: http.Client{

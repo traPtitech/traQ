@@ -8,11 +8,13 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/viewer"
+	"github.com/traPtitech/traQ/testutils"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"go.uber.org/zap"
@@ -64,25 +66,27 @@ func TestMain(m *testing.M) {
 	}
 	for _, key := range repos {
 		env := &Env{}
-		env.Repository = NewTestRepository()
+		env.Repository = testutils.NewTestRepository()
 		env.Hub = hub.New()
 		env.SessStore = session.NewMemorySessionStore()
 		env.RBAC = newTestRBAC()
+		env.ChannelManager, _ = channel.InitChannelManager(env.Repository, zap.NewNop())
 
 		e := echo.New()
 		e.HideBanner = true
 		e.HidePort = true
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
-		e.Use(extension.Wrap(env.Repository))
+		e.Use(extension.Wrap(env.Repository, env.ChannelManager))
 
 		handlers := &Handlers{
-			RBAC:      env.RBAC,
-			Repo:      env.Repository,
-			Hub:       env.Hub,
-			Logger:    zap.NewNop(),
-			OC:        counter.NewOnlineCounter(env.Hub),
-			VM:        viewer.NewManager(env.Hub),
-			SessStore: env.SessStore,
+			RBAC:           env.RBAC,
+			Repo:           env.Repository,
+			Hub:            env.Hub,
+			Logger:         zap.NewNop(),
+			OC:             counter.NewOnlineCounter(env.Hub),
+			VM:             viewer.NewManager(env.Hub),
+			ChannelManager: env.ChannelManager,
+			SessStore:      env.SessStore,
 			Imaging: imaging.NewProcessor(imaging.Config{
 				MaxPixels:        1000 * 1000,
 				Concurrency:      1,
@@ -105,11 +109,12 @@ func TestMain(m *testing.M) {
 }
 
 type Env struct {
-	Server     *httptest.Server
-	Repository repository.Repository
-	Hub        *hub.Hub
-	SessStore  session.Store
-	RBAC       rbac.RBAC
+	Server         *httptest.Server
+	Repository     repository.Repository
+	Hub            *hub.Hub
+	SessStore      session.Store
+	RBAC           rbac.RBAC
+	ChannelManager channel.Manager
 }
 
 func setup(t *testing.T, server string) (*Env, *assert.Assertions, *require.Assertions, string, string) {
@@ -162,7 +167,7 @@ func (env *Env) makeExp(t *testing.T) *httpexpect.Expect {
 		},
 		Client: &http.Client{
 			Jar:     nil, // クッキーは保持しない
-			Timeout: time.Second * 30,
+			Timeout: time.Second,
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse // リダイレクトを自動処理しない
 			},
@@ -175,7 +180,7 @@ func (env *Env) mustMakeChannel(t *testing.T, name string) *model.Channel {
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	ch, err := env.Repository.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
+	ch, err := env.ChannelManager.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
 	require.NoError(t, err)
 	return ch
 }
@@ -259,7 +264,7 @@ func (env *Env) mustMakeWebhook(t *testing.T, name string, channelID, creatorID 
 
 func (env *Env) mustChangeChannelSubscription(t *testing.T, channelID, userID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, env.Repository.ChangeChannelSubscription(channelID, repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}}))
+	require.NoError(t, env.ChannelManager.ChangeChannelSubscriptions(channelID, map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}, false, uuid.Nil))
 }
 
 type rbacImpl struct {

@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/bot"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/heartbeat"
 	"github.com/traPtitech/traQ/service/imaging"
@@ -25,6 +26,7 @@ import (
 func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, logger *zap.Logger, c *Config) (*Server, error) {
 	wire.Build(
 		bot.NewProcessor,
+		channel.InitChannelManager,
 		counter.NewOnlineCounter,
 		counter.NewUnreadMessageCounter,
 		counter.NewMessageCounter,
@@ -45,6 +47,7 @@ func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, logger *za
 		provideRouterConfig,
 		wire.Struct(new(service.Services), "*"),
 		wire.Struct(new(Server), "*"),
+		wire.Bind(new(repository.ChannelRepository), new(repository.Repository)),
 	)
 	return nil, nil
 }

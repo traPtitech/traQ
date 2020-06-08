@@ -3,6 +3,7 @@ package notification
 import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/fcm"
 	"github.com/traPtitech/traQ/service/sse"
 	"github.com/traPtitech/traQ/service/variable"
@@ -14,6 +15,7 @@ import (
 // Service 通知サービス
 type Service struct {
 	repo   repository.Repository
+	cm     channel.Manager
 	hub    *hub.Hub
 	logger *zap.Logger
 	fcm    fcm.Client
@@ -24,9 +26,10 @@ type Service struct {
 }
 
 // NewService 通知サービスを作成して起動します
-func NewService(repo repository.Repository, hub *hub.Hub, logger *zap.Logger, fcm fcm.Client, sse *sse.Streamer, ws *ws.Streamer, vm *viewer.Manager, origin variable.ServerOriginString) *Service {
+func NewService(repo repository.Repository, cm channel.Manager, hub *hub.Hub, logger *zap.Logger, fcm fcm.Client, sse *sse.Streamer, ws *ws.Streamer, vm *viewer.Manager, origin variable.ServerOriginString) *Service {
 	service := &Service{
 		repo:   repo,
+		cm:     cm,
 		hub:    hub,
 		logger: logger.Named("notification"),
 		fcm:    fcm,

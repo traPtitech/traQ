@@ -927,73 +927,35 @@ paths:
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
+      deprecated: true
       tags:
         - channel
       operationId: getChannel
-      description: チャンネルの情報を返します。
-      security:
-        - traqOAuth2:
-            - read
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: |-
-            正常に取得ができました。
-            チャンネルを返します。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Channel'
-        '404':
-          description: |-
-            取得に失敗しました。
-            指定したチャンネルは存在しません。
+        '410':
+          description: このAPIは削除されました
     patch:
+      deprecated: true
       tags:
         - channel
       operationId: editChannel
-      description: チャンネルの情報を変更します。
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchChannel'
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に変更ができました。
-        '400':
-          description: 失敗しました。リクエスト内容が不正です。
-        '403':
-          description: 失敗しました。権限がありません。
-        '404':
-          description: |
-            変更に失敗しました。
-            指定したチャンネルは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/parent':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     put:
+      deprecated: true
       tags:
         - channel
       operationId: changeChannelParent
-      description: チャンネルの親チャンネルを変更します。
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutParentChannel'
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 変更に成功しました。
-        '400':
-          description: 変更に失敗しました。リクエスト内容が不正です。
-        '403':
-          description: 変更に失敗しました。権限がありません。
-        '404':
-          description: 変更に失敗しました。指定されたチャンネルは存在しません。
-        '409':
-          description: 変更に失敗しました。チャンネル名が競合しています。
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/children':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'

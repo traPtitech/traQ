@@ -7,7 +7,6 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strconv"
@@ -37,7 +36,7 @@ func (h *Handlers) PutMessageByID(c echo.Context) error {
 	m := getMessageFromContext(c)
 
 	// 投稿先チャンネル確認
-	ch, err := h.Repo.GetChannel(m.ChannelID)
+	ch, err := h.ChannelManager.GetChannel(m.ChannelID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -94,7 +93,7 @@ func (h *Handlers) DeleteMessageByID(c echo.Context) error {
 	}
 
 	// 投稿先チャンネル確認
-	ch, err := h.Repo.GetChannel(m.ChannelID)
+	ch, err := h.ChannelManager.GetChannel(m.ChannelID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -148,7 +147,7 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 	}
 
 	if req.Embed {
-		req.Text = message.NewReplacer(h.Repo).Replace(req.Text)
+		req.Text = h.Replacer.Replace(req.Text)
 	}
 
 	m, err := h.Repo.CreateMessage(userID, ch.ID, req.Text)
@@ -170,7 +169,7 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 	}
 
 	// DMチャンネルを取得
-	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
+	ch, err := h.ChannelManager.GetDMChannel(myID, targetID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -201,13 +200,13 @@ func (h *Handlers) PostDirectMessage(c echo.Context) error {
 	}
 
 	// DMチャンネルを取得
-	ch, err := h.Repo.GetDirectMessageChannel(myID, targetID)
+	ch, err := h.ChannelManager.GetDMChannel(myID, targetID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
 	if req.Embed {
-		req.Text = message.NewReplacer(h.Repo).Replace(req.Text)
+		req.Text = h.Replacer.Replace(req.Text)
 	}
 
 	m, err := h.Repo.CreateMessage(myID, ch.ID, req.Text)

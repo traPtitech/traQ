@@ -30,6 +30,8 @@ type Channel struct {
 	CreatedAt time.Time  `gorm:"precision:6"`
 	UpdatedAt time.Time  `gorm:"precision:6"`
 	DeletedAt *time.Time `gorm:"precision:6"`
+
+	ChildrenID []uuid.UUID `gorm:"-"`
 }
 
 // TableName テーブル名を指定するメソッド

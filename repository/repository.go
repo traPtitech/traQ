@@ -1,9 +1,5 @@
 package repository
 
-import (
-	"github.com/traPtitech/traQ/utils/message"
-)
-
 // Repository データリポジトリ
 type Repository interface {
 	// Sync DBなどとデータを同期します
@@ -26,6 +22,5 @@ type Repository interface {
 	WebhookRepository
 	OAuth2Repository
 	BotRepository
-	message.ReplaceMapper
 	ClipRepository
 }

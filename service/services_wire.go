@@ -8,6 +8,7 @@ import (
 
 var ProviderSet = wire.NewSet(wire.FieldsOf(new(*Services),
 	"BOT",
+	"ChannelManager",
 	"OnlineCounter",
 	"UnreadMessageCounter",
 	"MessageCounter",

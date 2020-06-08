@@ -1,4 +1,4 @@
-package v1
+package testutils
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 	"io"
 	"math"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 	"unicode/utf8"
@@ -68,6 +67,23 @@ type TestRepository struct {
 	WebhooksLock              sync.RWMutex
 }
 
+func (repo *TestRepository) GetPublicChannels() ([]*model.Channel, error) {
+	repo.ChannelsLock.RLock()
+	defer repo.ChannelsLock.RUnlock()
+	result := make([]*model.Channel, 0)
+	for _, c := range repo.Channels {
+		if c.IsPublic {
+			c := c
+			result = append(result, &c)
+		}
+	}
+	return result, nil
+}
+
+func (repo *TestRepository) RecordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error {
+	return nil
+}
+
 func (repo *TestRepository) LinkExternalUserAccount(uuid.UUID, repository.LinkExternalUserAccountArgs) error {
 	panic("implement me")
 }
@@ -82,53 +98,6 @@ func (repo *TestRepository) UnlinkExternalUserAccount(uuid.UUID, string) error {
 
 func (repo *TestRepository) GetChannelStats(uuid.UUID) (*repository.ChannelStats, error) {
 	panic("implement me")
-}
-
-func (repo *TestRepository) Channel(path string) (uuid.UUID, bool) {
-	levels := strings.Split(path, "/")
-	if len(levels) == 0 {
-		return uuid.Nil, false
-	}
-
-	repo.ChannelsLock.RLock()
-	defer repo.ChannelsLock.RUnlock()
-	var c model.Channel
-	for _, name := range levels {
-		ok := false
-		for _, v := range repo.Channels {
-			if v.ParentID == c.ID && strings.ToLower(v.Name) == name {
-				c = v
-				ok = true
-				break
-			}
-		}
-		if !ok {
-			return uuid.Nil, false
-		}
-	}
-	return c.ID, true
-}
-
-func (repo *TestRepository) Group(name string) (uuid.UUID, bool) {
-	repo.UserGroupsLock.RLock()
-	defer repo.UserGroupsLock.RUnlock()
-	for _, v := range repo.UserGroups {
-		if v.Name == name {
-			return v.ID, true
-		}
-	}
-	return uuid.Nil, false
-}
-
-func (repo *TestRepository) User(name string) (uuid.UUID, bool) {
-	repo.UsersLock.RLock()
-	defer repo.UsersLock.RUnlock()
-	for _, u := range repo.Users {
-		if strings.ToLower(u.Name) == name {
-			return u.ID, true
-		}
-	}
-	return uuid.Nil, false
 }
 
 func (repo *TestRepository) GetChannelEvents(repository.ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error) {
@@ -842,87 +811,28 @@ func (repo *TestRepository) GetUserIDsByTagID(tagID uuid.UUID) ([]uuid.UUID, err
 	return users, nil
 }
 
-func (repo *TestRepository) CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
-	// チャンネル名検証
-	if !validator.ChannelRegex.MatchString(name) {
-		return nil, repository.ArgError("name", "invalid name")
-	}
-	if has, err := repo.IsChannelPresent(name, parent); err != nil {
-		return nil, err
-	} else if has {
-		return nil, repository.ErrAlreadyExists
-	}
-
-	switch parent {
-	case pubChannelRootUUID: // ルート
-		break
-	case dmChannelRootUUID: // DMルート
-		return nil, repository.ErrForbidden
-	default: // ルート以外
-		pCh, err := repo.GetChannel(parent)
-		if err != nil {
-			return nil, err
-		}
-
-		// DMチャンネルの子チャンネルには出来ない
-		if pCh.IsDMChannel() {
-			return nil, repository.ErrForbidden
-		}
-
-		// 親と公開状況が一致しているか
-		if !pCh.IsPublic {
-			return nil, repository.ErrForbidden
-		}
-
-		// 深さを検証
-		for parent, depth := pCh, 2; ; { // 祖先
-			if parent.ParentID == uuid.Nil {
-				// ルート
-				break
-			}
-
-			parent, err = repo.GetChannel(parent.ParentID)
-			if err != nil {
-				if err == repository.ErrNotFound {
-					break
-				}
-				return nil, err
-			}
-			depth++
-			if depth > model.MaxChannelDepth {
-				return nil, repository.ErrChannelDepthLimitation
-			}
-		}
-	}
-
-	ch := model.Channel{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      name,
-		ParentID:  parent,
-		CreatorID: creatorID,
-		UpdaterID: creatorID,
-		IsPublic:  true,
-		IsForced:  false,
-		IsVisible: true,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
+func (repo *TestRepository) CreateChannel(ch model.Channel, privateMembers set.UUID, dm bool) (*model.Channel, error) {
+	ch.ID = uuid.Must(uuid.NewV4())
+	ch.IsPublic = true
+	ch.CreatedAt = time.Now()
+	ch.UpdatedAt = time.Now()
+	ch.DeletedAt = nil
 	repo.ChannelsLock.Lock()
 	repo.Channels[ch.ID] = ch
 	repo.ChannelsLock.Unlock()
 	return &ch, nil
 }
 
-func (repo *TestRepository) UpdateChannel(channelID uuid.UUID, args repository.UpdateChannelArgs) error {
+func (repo *TestRepository) UpdateChannel(channelID uuid.UUID, args repository.UpdateChannelArgs) (*model.Channel, error) {
 	if channelID == uuid.Nil {
-		return repository.ErrNilID
+		return nil, repository.ErrNilID
 	}
 
 	repo.ChannelsLock.Lock()
 	defer repo.ChannelsLock.Unlock()
 	ch, ok := repo.Channels[channelID]
 	if !ok {
-		return repository.ErrNotFound
+		return nil, repository.ErrNotFound
 	}
 
 	if args.Topic.Valid {
@@ -934,106 +844,17 @@ func (repo *TestRepository) UpdateChannel(channelID uuid.UUID, args repository.U
 	if args.ForcedNotification.Valid {
 		ch.IsForced = args.ForcedNotification.Bool
 	}
-	if args.Name.Valid || args.Parent.Valid {
-		// ダイレクトメッセージチャンネルの名前・親は変更不可能
-		if ch.IsDMChannel() {
-			return repository.ErrForbidden
-		}
-
-		// チャンネル名重複を確認
-		{
-			var (
-				n string
-				p uuid.UUID
-			)
-
-			if args.Name.Valid {
-				n = args.Name.String
-			} else {
-				n = ch.Name
-			}
-			if args.Parent.Valid {
-				p = args.Parent.UUID
-			} else {
-				p = ch.ParentID
-			}
-
-			// チャンネル名重複を確認
-			for _, c := range repo.Channels {
-				if c.Name == n && c.ParentID == p {
-					return repository.ErrAlreadyExists
-				}
-			}
-		}
-
-		if args.Name.Valid {
-			// チャンネル名検証
-			if !validator.ChannelRegex.MatchString(args.Name.String) {
-				return repository.ArgError("args.Name", "invalid name")
-			}
-
-			ch.Name = args.Name.String
-		}
-		if args.Parent.Valid {
-			// チャンネル階層検証
-			switch args.Parent.UUID {
-			case uuid.Nil:
-				// ルートチャンネル
-				break
-			case dmChannelRootUUID:
-				// DMチャンネルには出来ない
-				return repository.ErrForbidden
-			default:
-				pCh, ok := repo.Channels[args.Parent.UUID]
-				if !ok {
-					return repository.ArgError("args.Name", "invalid name")
-				}
-
-				// DMチャンネルの子チャンネルには出来ない
-				if pCh.IsDMChannel() {
-					return repository.ArgError("args.Name", "invalid name")
-				}
-
-				// 親と公開状況が一致しているか
-				if ch.IsPublic != pCh.IsPublic {
-					return repository.ArgError("args.Name", "invalid name")
-				}
-
-				// 深さを検証
-				depth := 1 // ↑で見た親
-				for {      // 祖先
-					if pCh.ParentID == uuid.Nil {
-						// ルート
-						break
-					}
-					if ch.ID == pCh.ID {
-						// ループ検出
-						return repository.ErrChannelDepthLimitation
-					}
-
-					pCh, ok = repo.Channels[pCh.ParentID]
-					if !ok {
-						break
-					}
-					depth++
-					if depth >= model.MaxChannelDepth {
-						return repository.ErrChannelDepthLimitation
-					}
-				}
-				depth += repo.getChannelDepthWithoutLock(ch.ID) // 子孫 (自分を含む)
-				if depth > model.MaxChannelDepth {
-					return repository.ErrChannelDepthLimitation
-				}
-			}
-
-			ch.ParentID = args.Parent.UUID
-		}
+	if args.Name.Valid {
+		ch.Name = args.Name.String
+	}
+	if args.Parent.Valid {
+		ch.ParentID = args.Parent.UUID
 	}
 
 	ch.UpdatedAt = time.Now()
 	ch.UpdaterID = args.UpdaterID
 	repo.Channels[channelID] = ch
-	return nil
+	return &ch, nil
 }
 
 func (repo *TestRepository) GetChannel(channelID uuid.UUID) (*model.Channel, error) {
@@ -1046,74 +867,12 @@ func (repo *TestRepository) GetChannel(channelID uuid.UUID) (*model.Channel, err
 	return &ch, nil
 }
 
-func (repo *TestRepository) GetChannelsByUserID(userID uuid.UUID) ([]*model.Channel, error) {
-	result := make([]*model.Channel, 0)
-	repo.ChannelsLock.RLock()
-	for _, ch := range repo.Channels {
-		ch := ch
-		if ch.IsPublic {
-			result = append(result, &ch)
-		} else if userID != uuid.Nil {
-			ok, _ := repo.IsUserPrivateChannelMember(ch.ID, userID)
-			if ok {
-				result = append(result, &ch)
-			}
-		}
-	}
-	repo.ChannelsLock.RUnlock()
-	return result, nil
-}
-
 func (repo *TestRepository) GetDirectMessageChannel(uuid.UUID, uuid.UUID) (*model.Channel, error) {
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetDirectMessageChannelMapping(uuid.UUID) (map[uuid.UUID]uuid.UUID, error) {
+func (repo *TestRepository) GetDirectMessageChannelMapping(uuid.UUID) ([]*model.DMChannelMapping, error) {
 	panic("implement me")
-}
-
-func (repo *TestRepository) IsChannelPresent(name string, parent uuid.UUID) (bool, error) {
-	repo.ChannelsLock.RLock()
-	defer repo.ChannelsLock.RUnlock()
-	for _, ch := range repo.Channels {
-		if ch.Name == name && ch.ParentID == parent {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-func (repo *TestRepository) IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error) {
-	if userID == uuid.Nil || channelID == uuid.Nil {
-		return false, nil
-	}
-	repo.ChannelsLock.RLock()
-	ch, ok := repo.Channels[channelID]
-	repo.ChannelsLock.RUnlock()
-	if !ok {
-		return false, nil
-	}
-	if ch.IsPublic {
-		return true, nil
-	}
-	return repo.IsUserPrivateChannelMember(channelID, userID)
-}
-
-func (repo *TestRepository) getChannelDepthWithoutLock(id uuid.UUID) int {
-	children := make([]uuid.UUID, 0)
-	for cid, ch := range repo.Channels {
-		if ch.ParentID == id {
-			children = append(children, cid)
-		}
-	}
-	max := 0
-	for _, v := range children {
-		d := repo.getChannelDepthWithoutLock(v)
-		if max < d {
-			max = d
-		}
-	}
-	return max + 1
 }
 
 func (repo *TestRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
@@ -1126,24 +885,9 @@ func (repo *TestRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]u
 	return result, nil
 }
 
-func (repo *TestRepository) IsUserPrivateChannelMember(channelID, userID uuid.UUID) (bool, error) {
-	repo.PrivateChannelMembersLock.RLock()
-	defer repo.PrivateChannelMembersLock.RUnlock()
-	uids, ok := repo.PrivateChannelMembers[channelID]
-	if !ok {
-		return false, nil
-	}
-	for uid := range uids {
-		if userID == uid {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-func (repo *TestRepository) ChangeChannelSubscription(channelID uuid.UUID, args repository.ChangeChannelSubscriptionArgs) error {
+func (repo *TestRepository) ChangeChannelSubscription(channelID uuid.UUID, args repository.ChangeChannelSubscriptionArgs) (on []uuid.UUID, off []uuid.UUID, err error) {
 	if channelID == uuid.Nil {
-		return repository.ErrNilID
+		return nil, nil, repository.ErrNilID
 	}
 	repo.ChannelSubscribesLock.Lock()
 	current, ok := repo.ChannelSubscribes[channelID]
@@ -1152,6 +896,8 @@ func (repo *TestRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 		repo.ChannelSubscribes[channelID] = current
 	}
 
+	on = make([]uuid.UUID, 0)
+	off = make([]uuid.UUID, 0)
 	for uid, level := range args.Subscription {
 		if cl := current[uid]; cl == level {
 			continue // 既に同じ設定がされているのでスキップ
@@ -1170,6 +916,9 @@ func (repo *TestRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 			}
 
 			delete(current, uid)
+			if current[uid] == model.ChannelSubscribeLevelMarkAndNotify {
+				off = append(off, uid)
+			}
 
 		case model.ChannelSubscribeLevelMark:
 			repo.UsersLock.RLock()
@@ -1190,12 +939,13 @@ func (repo *TestRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 			}
 
 			current[uid] = model.ChannelSubscribeLevelMarkAndNotify
+			on = append(on, uid)
 
 		}
 	}
 
 	repo.ChannelSubscribesLock.Unlock()
-	return nil
+	return on, off, nil
 }
 
 func (repo *TestRepository) GetChannelSubscriptions(query repository.ChannelSubscriptionQuery) ([]*model.UserSubscribeChannel, error) {
@@ -1237,10 +987,6 @@ func (repo *TestRepository) GetChannelSubscriptions(query repository.ChannelSubs
 
 	repo.ChannelSubscribesLock.Unlock()
 	return result, nil
-}
-
-func (repo *TestRepository) GetPublicChannelTree() repository.ChannelTree {
-	panic("implement me")
 }
 
 func (repo *TestRepository) CreateMessage(userID, channelID uuid.UUID, text string) (*model.Message, error) {

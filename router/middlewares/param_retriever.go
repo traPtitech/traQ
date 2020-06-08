@@ -6,19 +6,20 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/service/channel"
 	"golang.org/x/sync/singleflight"
 )
 
 // ParamRetriever リクエストパスパラメータで指定された各種エンティティをrepositoryから取得するミドルウェア
 type ParamRetriever struct {
 	repo         repository.Repository
+	cm           channel.Manager
 	messageCache singleflight.Group
-	channelCache singleflight.Group
 }
 
 // NewParamRetriever ParamRetrieverを生成
-func NewParamRetriever(repo repository.Repository) *ParamRetriever {
-	return &ParamRetriever{repo: repo}
+func NewParamRetriever(repo repository.Repository, cm channel.Manager) *ParamRetriever {
+	return &ParamRetriever{repo: repo, cm: cm}
 }
 
 func (pr *ParamRetriever) byString(param string, key string, f func(c echo.Context, v string) (interface{}, error)) echo.MiddlewareFunc {
@@ -75,6 +76,8 @@ func (pr *ParamRetriever) error(err error) error {
 	default:
 		if err == repository.ErrNotFound {
 			return herror.NotFound()
+		} else if err == channel.ErrChannelNotFound {
+			return herror.NotFound()
 		}
 		return herror.InternalServerError(err)
 	}
@@ -112,8 +115,7 @@ func (pr *ParamRetriever) BotID() echo.MiddlewareFunc {
 // ChannelID リクエストURLの`channelID`パラメータからChannelを取り出す
 func (pr *ParamRetriever) ChannelID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamChannelID, consts.KeyParamChannel, func(c echo.Context, v uuid.UUID) (interface{}, error) {
-		cI, err, _ := pr.channelCache.Do(v.String(), func() (interface{}, error) { return pr.repo.GetChannel(v) })
-		return cI, err
+		return pr.cm.GetChannel(v)
 	})
 }
 

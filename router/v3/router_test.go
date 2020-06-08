@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
@@ -75,24 +76,26 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 		env.Repository = repo
+		env.CM, _ = channel.InitChannelManager(repo, zap.NewNop())
 
 		// テスト用サーバー作成
 		e := echo.New()
 		e.HideBanner = true
 		e.HidePort = true
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
-		e.Use(extension.Wrap(repo))
+		e.Use(extension.Wrap(repo, env.CM))
 
 		r, err := rbac.New(db)
 		if err != nil {
 			panic(err)
 		}
 		handlers := &Handlers{
-			RBAC:      r,
-			Repo:      env.Repository,
-			Hub:       env.Hub,
-			SessStore: env.SessStore,
-			Logger:    zap.NewNop(),
+			RBAC:           r,
+			Repo:           env.Repository,
+			Hub:            env.Hub,
+			SessStore:      env.SessStore,
+			ChannelManager: env.CM,
+			Logger:         zap.NewNop(),
 			Imaging: imaging.NewProcessor(imaging.Config{
 				MaxPixels:        1000 * 1000,
 				Concurrency:      1,
@@ -126,6 +129,7 @@ type Env struct {
 	Server     *httptest.Server
 	DB         *gorm.DB
 	Repository repository.Repository
+	CM         channel.Manager
 	Hub        *hub.Hub
 	SessStore  session.Store
 }

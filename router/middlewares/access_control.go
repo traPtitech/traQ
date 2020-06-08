@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/rbac/role"
@@ -155,14 +156,14 @@ func CheckClientAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Midd
 }
 
 // CheckMessageAccessPerm Messageアクセス権限を確認するミドルウェア
-func CheckMessageAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
+func CheckMessageAccessPerm(rbac rbac.RBAC, cm channel.Manager) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
 			m := c.Get(consts.KeyParamMessage).(*model.Message)
 
 			// アクセス権確認
-			if ok, err := repo.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
+			if ok, err := cm.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
 				return herror.InternalServerError(err)
 			} else if !ok {
 				return herror.NotFound()
@@ -174,14 +175,14 @@ func CheckMessageAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Mid
 }
 
 // CheckChannelAccessPerm Channelアクセス権限を確認するミドルウェア
-func CheckChannelAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
+func CheckChannelAccessPerm(rbac rbac.RBAC, cm channel.Manager) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
 			ch := c.Get(consts.KeyParamChannel).(*model.Channel)
 
 			// アクセス権確認
-			if ok, err := repo.IsChannelAccessibleToUser(userID, ch.ID); err != nil {
+			if ok, err := cm.IsChannelAccessibleToUser(userID, ch.ID); err != nil {
 				return herror.InternalServerError(err)
 			} else if !ok {
 				return herror.NotFound()

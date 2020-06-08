@@ -15,7 +15,6 @@ import (
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/hmac"
-	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
 	"io/ioutil"
@@ -194,29 +193,20 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	// 投稿先チャンネル確認
-	ch, err := h.Repo.GetChannel(channelID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return herror.BadRequest("invalid channel")
-		default:
-			return herror.InternalServerError(err)
-		}
-	}
-	if !ch.IsPublic {
+	if !h.ChannelManager.PublicChannelTree().IsChannelPresent(channelID) {
 		return herror.BadRequest("invalid channel")
 	}
-	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetPublicChannelTree().GetChannelPath(ch.ID)))
+	if h.ChannelManager.PublicChannelTree().IsArchivedChannel(channelID) {
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree().GetChannelPath(channelID)))
 	}
 
 	// 埋め込み変換
 	if isTrue(c.QueryParam("embed")) {
-		body = []byte(message.NewReplacer(h.Repo).Replace(string(body)))
+		body = []byte(h.Replacer.Replace(string(body)))
 	}
 
 	// メッセージ投稿
-	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), ch.ID, string(body)); err != nil {
+	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), channelID, string(body)); err != nil {
 		return herror.InternalServerError(err)
 	}
 

@@ -135,7 +135,7 @@ func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 	}
 
 	// ユーザーがアクセスできるか
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
+	if ok, err := h.ChannelManager.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
 		return herror.InternalServerError(err)
 	} else if !ok {
 		return herror.BadRequest("invalid messageId")

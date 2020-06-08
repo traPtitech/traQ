@@ -12,9 +12,9 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/hmac"
-	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
 	"io/ioutil"
 	"net/http"
@@ -178,10 +178,10 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	// 投稿先チャンネル確認
-	ch, err := h.Repo.GetChannel(channelID)
+	ch, err := h.ChannelManager.GetChannel(channelID)
 	if err != nil {
 		switch err {
-		case repository.ErrNotFound:
+		case channel.ErrChannelNotFound:
 			return herror.BadRequest("invalid channel")
 		default:
 			return herror.InternalServerError(err)
@@ -195,7 +195,7 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	if c.QueryParam("embed") == "1" {
-		body = []byte(message.NewReplacer(h.Repo).Replace(string(body)))
+		body = []byte(h.Replacer.Replace(string(body)))
 	}
 
 	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), ch.ID, string(body)); err != nil {

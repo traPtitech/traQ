@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/traPtitech/traQ/service/bot"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/fcm"
 	"github.com/traPtitech/traQ/service/heartbeat"
@@ -16,6 +17,7 @@ import (
 
 type Services struct {
 	BOT                  *bot.Processor
+	ChannelManager       channel.Manager
 	OnlineCounter        *counter.OnlineCounter
 	UnreadMessageCounter counter.UnreadMessageCounter
 	MessageCounter       counter.MessageCounter

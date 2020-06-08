@@ -127,17 +127,11 @@ func mustMakeChannel(t *testing.T, repo Repository, name string) *model.Channel 
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	ch, err := repo.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
-	require.NoError(t, err)
-	return ch
-}
-
-func mustMakeChannelDetail(t *testing.T, repo Repository, userID uuid.UUID, name string, parentID uuid.UUID) *model.Channel {
-	t.Helper()
-	if name == rand {
-		name = random.AlphaNumeric(20)
-	}
-	ch, err := repo.CreatePublicChannel(name, parentID, userID)
+	ch, err := repo.CreateChannel(model.Channel{
+		Name:      name,
+		IsForced:  false,
+		IsVisible: true,
+	}, nil, false)
 	require.NoError(t, err)
 	return ch
 }
@@ -257,7 +251,8 @@ func mustMakeWebhook(t *testing.T, repo Repository, name string, channelID, crea
 
 func mustChangeChannelSubscription(t *testing.T, repo Repository, channelID, userID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.ChangeChannelSubscription(channelID, ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}}))
+	_, _, err := repo.ChangeChannelSubscription(channelID, ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}})
+	require.NoError(t, err)
 }
 
 func mustMakeClipFolder(t *testing.T, repo Repository, userID uuid.UUID, name, description string) *model.ClipFolder {

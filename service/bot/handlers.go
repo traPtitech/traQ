@@ -31,7 +31,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	m := fields["message"].(*model.Message)
 	parsed := fields["parse_result"].(*message.ParseResult)
 
-	ch, err := p.repo.GetChannel(m.ChannelID)
+	ch, err := p.cm.GetChannel(m.ChannelID)
 	if err != nil {
 		p.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("id", m.ChannelID))
 		return
@@ -45,9 +45,9 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 	embedded, _ := message.ExtractEmbedding(m.Text)
 	if ch.IsDMChannel() {
-		ids, err := p.repo.GetPrivateChannelMemberIDs(ch.ID)
+		ids, err := p.cm.GetDMChannelMembers(ch.ID)
 		if err != nil {
-			p.logger.Error("failed to GetPrivateChannelMemberIDs", zap.Error(err), zap.Stringer("id", ch.ID))
+			p.logger.Error("failed to GetDMChannelMembers", zap.Error(err), zap.Stringer("id", ch.ID))
 			return
 		}
 
@@ -128,7 +128,7 @@ func botJoinedOrLeftHandler(p *Processor, ev string, fields hub.Fields) {
 		return
 	}
 
-	ch, err := p.repo.GetChannel(channelID)
+	ch, err := p.cm.GetChannel(channelID)
 	if err != nil {
 		p.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("id", channelID))
 		return
@@ -143,13 +143,13 @@ func botJoinedOrLeftHandler(p *Processor, ev string, fields hub.Fields) {
 	case intevent.BotJoined:
 		p.unicast(
 			event.Joined,
-			payload.MakeJoinedOrLeft(ch, p.repo.GetPublicChannelTree().GetChannelPath(channelID), user),
+			payload.MakeJoinedOrLeft(ch, p.cm.PublicChannelTree().GetChannelPath(channelID), user),
 			bot,
 		)
 	case intevent.BotLeft:
 		p.unicast(
 			event.Left,
-			payload.MakeJoinedOrLeft(ch, p.repo.GetPublicChannelTree().GetChannelPath(channelID), user),
+			payload.MakeJoinedOrLeft(ch, p.cm.PublicChannelTree().GetChannelPath(channelID), user),
 			bot,
 		)
 	}
@@ -191,7 +191,7 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 		p.multicast(
 			event.ChannelCreated,
-			payload.MakeChannelCreated(ch, p.repo.GetPublicChannelTree().GetChannelPath(ch.ID), user),
+			payload.MakeChannelCreated(ch, p.cm.PublicChannelTree().GetChannelPath(ch.ID), user),
 			bots,
 		)
 	}
@@ -211,7 +211,7 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	ch, err := p.repo.GetChannel(chID)
+	ch, err := p.cm.GetChannel(chID)
 	if err != nil {
 		p.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("id", chID))
 		return
@@ -231,7 +231,7 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 
 	p.multicast(
 		event.ChannelTopicChanged,
-		payload.MakeChannelTopicChanged(ch, p.repo.GetPublicChannelTree().GetChannelPath(ch.ID), chCreator, topic, user),
+		payload.MakeChannelTopicChanged(ch, p.cm.PublicChannelTree().GetChannelPath(ch.ID), chCreator, topic, user),
 		bots,
 	)
 }
