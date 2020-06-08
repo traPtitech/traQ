@@ -13,10 +13,9 @@ import (
 	"time"
 )
 
-var (
-	dmChannelRootUUID = uuid.Must(uuid.FromString(model.DirectMessageChannelRootID))
-)
+var dmChannelRootUUID = uuid.Must(uuid.FromString(model.DirectMessageChannelRootID))
 
+// CreateChannel implements ChannelRepository interface.
 func (repo *GormRepository) CreateChannel(ch model.Channel, privateMembers set.UUID, dm bool) (*model.Channel, error) {
 	arr := []interface{}{&ch}
 
@@ -161,6 +160,7 @@ func (repo *GormRepository) GetChannel(channelID uuid.UUID) (*model.Channel, err
 	return &ch, nil
 }
 
+// GetPublicChannels implements ChannelRepository interface.
 func (repo *GormRepository) GetPublicChannels() (channels []*model.Channel, err error) {
 	channels = make([]*model.Channel, 0)
 	return channels, repo.db.

@@ -32,4 +32,6 @@ type Manager interface {
 
 	IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error)
 	IsPublicChannel(id uuid.UUID) bool
+
+	Shutdown()
 }

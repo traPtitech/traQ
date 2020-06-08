@@ -112,6 +112,7 @@ func (m *managerImpl) CreatePublicChannel(name string, parent, creatorID uuid.UU
 			"channelId": ch.ID,
 		}, ch.CreatedAt)
 	}
+	m.L.Info(fmt.Sprintf("channel #%s was created", m.T.getChannelPath(ch.ID)), zap.Stringer("cid", ch.ID))
 	return ch, nil
 }
 
@@ -324,6 +325,10 @@ func (m *managerImpl) IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bo
 
 func (m *managerImpl) IsPublicChannel(id uuid.UUID) bool {
 	return m.T.IsChannelPresent(id)
+}
+
+func (m *managerImpl) Shutdown() {
+	m.P.Wait()
 }
 
 func (m *managerImpl) recordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) {
