@@ -167,7 +167,7 @@ func (env *Env) makeExp(t *testing.T) *httpexpect.Expect {
 		},
 		Client: &http.Client{
 			Jar:     nil, // クッキーは保持しない
-			Timeout: time.Second,
+			Timeout: 10 * time.Second,
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse // リダイレクトを自動処理しない
 			},

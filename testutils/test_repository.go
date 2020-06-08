@@ -28,11 +28,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var (
-	dmChannelRootUUID  = uuid.Must(uuid.FromString(model.DirectMessageChannelRootID))
-	pubChannelRootUUID = uuid.Nil
-)
-
 type TestRepository struct {
 	FS                        storage.FileStorage
 	Users                     map[uuid.UUID]model.User
