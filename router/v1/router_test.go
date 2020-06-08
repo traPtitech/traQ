@@ -12,7 +12,6 @@ import (
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
-	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/testutils"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -69,7 +68,7 @@ func TestMain(m *testing.M) {
 		env.Repository = testutils.NewTestRepository()
 		env.Hub = hub.New()
 		env.SessStore = session.NewMemorySessionStore()
-		env.RBAC = newTestRBAC()
+		env.RBAC = testutils.NewTestRBAC()
 		env.ChannelManager, _ = channel.InitChannelManager(env.Repository, zap.NewNop())
 
 		e := echo.New()
@@ -265,48 +264,4 @@ func (env *Env) mustMakeWebhook(t *testing.T, name string, channelID, creatorID 
 func (env *Env) mustChangeChannelSubscription(t *testing.T, channelID, userID uuid.UUID) {
 	t.Helper()
 	require.NoError(t, env.ChannelManager.ChangeChannelSubscriptions(channelID, map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}, false, uuid.Nil))
-}
-
-type rbacImpl struct {
-	roles role.Roles
-}
-
-func newTestRBAC() rbac.RBAC {
-	rbac := &rbacImpl{
-		roles: role.GetSystemRoles(),
-	}
-	return rbac
-}
-
-func (rbacImpl *rbacImpl) IsGranted(r string, p permission.Permission) bool {
-	if r == role.Admin {
-		return true
-	}
-	return rbacImpl.roles.HasAndIsGranted(r, p)
-}
-
-func (rbacImpl *rbacImpl) IsAllGranted(roles []string, perm permission.Permission) bool {
-	for _, role := range roles {
-		if !rbacImpl.IsGranted(role, perm) {
-			return false
-		}
-	}
-	return true
-}
-
-func (rbacImpl *rbacImpl) IsAnyGranted(roles []string, perm permission.Permission) bool {
-	for _, role := range roles {
-		if rbacImpl.IsGranted(role, perm) {
-			return true
-		}
-	}
-	return false
-}
-
-func (rbacImpl *rbacImpl) GetGrantedPermissions(roleName string) []permission.Permission {
-	ro, ok := rbacImpl.roles[roleName]
-	if ok {
-		return ro.Permissions().Array()
-	}
-	return nil
 }

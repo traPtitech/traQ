@@ -14,8 +14,8 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/session"
-	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
+	"github.com/traPtitech/traQ/testutils"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
@@ -82,12 +82,8 @@ func TestMain(m *testing.M) {
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap(repo, nil))
 
-		r, err := rbac.New(db)
-		if err != nil {
-			panic(err)
-		}
 		config := &Handler{
-			RBAC:      r,
+			RBAC:      testutils.NewTestRBAC(),
 			Repo:      env.Repository,
 			SessStore: env.SessStore,
 			Logger:    zap.NewNop(),
