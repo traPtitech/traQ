@@ -33,5 +33,6 @@ type Manager interface {
 	IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error)
 	IsPublicChannel(id uuid.UUID) bool
 
-	Shutdown()
+	// Wait マネージャーの処理の完了を待ちます
+	Wait()
 }

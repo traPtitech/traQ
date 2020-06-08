@@ -327,7 +327,7 @@ func (m *managerImpl) IsPublicChannel(id uuid.UUID) bool {
 	return m.T.IsChannelPresent(id)
 }
 
-func (m *managerImpl) Shutdown() {
+func (m *managerImpl) Wait() {
 	m.P.Wait()
 }
 

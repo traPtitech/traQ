@@ -175,6 +175,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	s.SS.SSE.Dispose()
 	_ = s.SS.WS.Close()
 	s.SS.FCM.Close()
-	s.SS.ChannelManager.Shutdown()
+	s.SS.ChannelManager.Wait()
 	return s.Router.Shutdown(ctx)
 }
