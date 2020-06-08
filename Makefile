@@ -9,6 +9,7 @@ traQ: $(SOURCES)
 init:
 	go mod download
 	go install github.com/google/wire/cmd/wire
+	go install github.com/golang/mock/mockgen
 
 .PHONY: genkey
 genkey:
@@ -82,6 +83,6 @@ up:
 down:
 	@docker-compose down -v
 
-.PHONY: mockgen
-mockgen:
-	mockgen -source repository/channel.go -destination repository/mock_repository/mock_channel.go
+.PHONY: gogen
+gogen:
+	go generate ./...
