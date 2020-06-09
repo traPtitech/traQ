@@ -274,7 +274,7 @@ func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 	defer release()
 
-	if p.sendEvent(bot, event.Ping, buf) {
+	if p.dispatcher.Send(bot, event.Ping, buf) {
 		// OK
 		if err := p.repo.ChangeBotState(bot.ID, model.BotActive); err != nil {
 			p.logger.Error("failed to ChangeBotState", zap.Error(err))
@@ -298,7 +298,7 @@ func userTagAddedHandler(p *Processor, _ string, fields hub.Fields) {
 		}
 		return
 	}
-	if bot.State != model.BotActive || !bot.SubscribeEvents.Contains(event.TagAdded) {
+	if !filterBot(p, bot, stateFilter(model.BotActive), eventFilter(event.TagAdded)) {
 		return
 	}
 
@@ -326,7 +326,7 @@ func userTagRemovedHandler(p *Processor, _ string, fields hub.Fields) {
 		}
 		return
 	}
-	if bot.State != model.BotActive || !bot.SubscribeEvents.Contains(event.TagRemoved) {
+	if !filterBot(p, bot, stateFilter(model.BotActive), eventFilter(event.TagRemoved)) {
 		return
 	}
 

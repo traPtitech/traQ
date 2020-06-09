@@ -1,10 +1,8 @@
 package bot
 
 import (
-	"bytes"
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -13,17 +11,7 @@ import (
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/channel"
 	"go.uber.org/zap"
-	"net/http"
 	"sync"
-	"time"
-)
-
-const (
-	headerTRAQBotEvent             = "X-TRAQ-BOT-EVENT"
-	headerTRAQBotRequestID         = "X-TRAQ-BOT-REQUEST-ID"
-	headerTRAQBotVerificationToken = "X-TRAQ-BOT-TOKEN"
-	headerUserAgent                = "User-Agent"
-	ua                             = "traQ_Bot_Processor/1.0"
 )
 
 var eventSendCounter = promauto.NewCounterVec(prometheus.CounterOpts{
@@ -33,24 +21,21 @@ var eventSendCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 
 // Processor ボットプロセッサー
 type Processor struct {
-	repo   repository.Repository
-	cm     channel.Manager
-	logger *zap.Logger
-	hub    *hub.Hub
-	client http.Client
+	repo       repository.Repository
+	cm         channel.Manager
+	logger     *zap.Logger
+	hub        *hub.Hub
+	dispatcher Dispatcher
 }
 
 // NewProcessor ボットプロセッサーを生成し、起動します
 func NewProcessor(repo repository.Repository, cm channel.Manager, hub *hub.Hub, logger *zap.Logger) *Processor {
 	p := &Processor{
-		repo:   repo,
-		cm:     cm,
-		logger: logger.Named("bot"),
-		hub:    hub,
-		client: http.Client{
-			Timeout:       10 * time.Second,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
-		},
+		repo:       repo,
+		cm:         cm,
+		logger:     logger.Named("bot"),
+		hub:        hub,
+		dispatcher: initDispatcher(logger, repo),
 	}
 	go func() {
 		events := make([]string, 0, len(eventHandlerSet))
@@ -67,59 +52,6 @@ func NewProcessor(repo repository.Repository, cm channel.Manager, hub *hub.Hub, 
 		}
 	}()
 	return p
-}
-
-func (p *Processor) sendEvent(b *model.Bot, event event.Type, body []byte) (ok bool) {
-	reqID := uuid.Must(uuid.NewV4())
-
-	req, _ := http.NewRequest(http.MethodPost, b.PostURL, bytes.NewReader(body))
-	req.Header.Set(headerUserAgent, ua)
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSONCharsetUTF8)
-	req.Header.Set(headerTRAQBotEvent, event.String())
-	req.Header.Set(headerTRAQBotRequestID, reqID.String())
-	req.Header.Set(headerTRAQBotVerificationToken, b.VerificationToken)
-
-	start := time.Now()
-	res, err := p.client.Do(req)
-	stop := time.Now()
-
-	if err != nil {
-		eventSendCounter.WithLabelValues(b.ID.String(), "ne").Inc()
-		if err := p.repo.WriteBotEventLog(&model.BotEventLog{
-			RequestID: reqID,
-			BotID:     b.ID,
-			Event:     event,
-			Body:      string(body),
-			Error:     err.Error(),
-			Code:      -1,
-			Latency:   stop.Sub(start).Nanoseconds(),
-			DateTime:  time.Now(),
-		}); err != nil {
-			p.logger.Error("failed to WriteBotEventLog", zap.Error(err), zap.Stringer("requestId", reqID))
-		}
-		return false
-	}
-	_ = res.Body.Close()
-
-	if res.StatusCode == http.StatusNoContent {
-		eventSendCounter.WithLabelValues(b.ID.String(), "ok").Inc()
-	} else {
-		eventSendCounter.WithLabelValues(b.ID.String(), "ng").Inc()
-	}
-
-	if err := p.repo.WriteBotEventLog(&model.BotEventLog{
-		RequestID: reqID,
-		BotID:     b.ID,
-		Event:     event,
-		Body:      string(body),
-		Code:      res.StatusCode,
-		Latency:   stop.Sub(start).Nanoseconds(),
-		DateTime:  time.Now(),
-	}); err != nil {
-		p.logger.Error("failed to WriteBotEventLog", zap.Error(err), zap.Stringer("requestId", reqID))
-	}
-
-	return res.StatusCode == http.StatusNoContent
 }
 
 func (p *Processor) makePayloadJSON(payload interface{}) (b []byte, releaseFunc func(), err error) {
@@ -143,7 +75,7 @@ func (p *Processor) unicast(ev event.Type, payload interface{}, target *model.Bo
 	}
 	defer release()
 
-	p.sendEvent(target, ev, buf)
+	p.dispatcher.Send(target, ev, buf)
 }
 
 func (p *Processor) multicast(ev event.Type, payload interface{}, targets []*model.Bot) {
@@ -166,7 +98,7 @@ func (p *Processor) multicast(ev event.Type, payload interface{}, targets []*mod
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				p.sendEvent(bot, ev, buf)
+				p.dispatcher.Send(bot, ev, buf)
 			}()
 		}
 	}
