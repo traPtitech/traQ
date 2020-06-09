@@ -70,11 +70,14 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			return
 		}
 
-		p.unicast(
+		if err := Unicast(
+			p.dispatcher,
 			event.DirectMessageCreated,
 			payload.MakeDirectMessageCreated(m, user, embedded, parsed),
 			bot,
-		)
+		); err != nil {
+			p.logger.Error("failed to unicast", zap.Error(err))
+		}
 	} else {
 		// 購読BOT
 		query := repository.BotsQuery{}
@@ -107,11 +110,14 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			return
 		}
 
-		p.multicast(
+		if err := Multicast(
+			p.dispatcher,
 			event.MessageCreated,
 			payload.MakeMessageCreated(m, user, embedded, parsed),
 			bots,
-		)
+		); err != nil {
+			p.logger.Error("failed to multicast", zap.Error(err))
+		}
 	}
 }
 
@@ -141,17 +147,22 @@ func botJoinedOrLeftHandler(p *Processor, ev string, fields hub.Fields) {
 
 	switch ev {
 	case intevent.BotJoined:
-		p.unicast(
+		err = Unicast(
+			p.dispatcher,
 			event.Joined,
 			payload.MakeJoinedOrLeft(ch, p.cm.PublicChannelTree().GetChannelPath(channelID), user),
 			bot,
 		)
 	case intevent.BotLeft:
-		p.unicast(
+		err = Unicast(
+			p.dispatcher,
 			event.Left,
 			payload.MakeJoinedOrLeft(ch, p.cm.PublicChannelTree().GetChannelPath(channelID), user),
 			bot,
 		)
+	}
+	if err != nil {
+		p.logger.Error("failed to unicast", zap.Error(err))
 	}
 }
 
@@ -164,11 +175,14 @@ func userCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	p.multicast(
+	if err := Multicast(
+		p.dispatcher,
 		event.UserCreated,
 		payload.MakeUserCreated(user),
 		bots,
-	)
+	); err != nil {
+		p.logger.Error("failed to multicast", zap.Error(err))
+	}
 }
 
 func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
@@ -189,11 +203,14 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 			return
 		}
 
-		p.multicast(
+		if err := Multicast(
+			p.dispatcher,
 			event.ChannelCreated,
 			payload.MakeChannelCreated(ch, p.cm.PublicChannelTree().GetChannelPath(ch.ID), user),
 			bots,
-		)
+		); err != nil {
+			p.logger.Error("failed to multicast", zap.Error(err))
+		}
 	}
 }
 
@@ -229,11 +246,14 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	p.multicast(
+	if err := Multicast(
+		p.dispatcher,
 		event.ChannelTopicChanged,
 		payload.MakeChannelTopicChanged(ch, p.cm.PublicChannelTree().GetChannelPath(ch.ID), chCreator, topic, user),
 		bots,
-	)
+	); err != nil {
+		p.logger.Error("failed to multicast", zap.Error(err))
+	}
 }
 
 func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
@@ -257,17 +277,20 @@ func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 		}
 	}
 
-	p.multicast(
+	if err := Multicast(
+		p.dispatcher,
 		event.StampCreated,
 		payload.MakeStampCreated(stamp, user),
 		bots,
-	)
+	); err != nil {
+		p.logger.Error("failed to multicast", zap.Error(err))
+	}
 }
 
 func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
 	bot := fields["bot"].(*model.Bot)
 
-	buf, release, err := p.makePayloadJSON(payload.MakePing())
+	buf, release, err := makePayloadJSON(payload.MakePing())
 	if err != nil {
 		p.logger.Error("unexpected json encode error", zap.Error(err))
 		return
@@ -308,11 +331,14 @@ func userTagAddedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	p.unicast(
+	if err := Unicast(
+		p.dispatcher,
 		event.TagAdded,
 		payload.MakeTagAddedOrRemoved(t),
 		bot,
-	)
+	); err != nil {
+		p.logger.Error("failed to unicast", zap.Error(err))
+	}
 }
 
 func userTagRemovedHandler(p *Processor, _ string, fields hub.Fields) {
@@ -336,9 +362,12 @@ func userTagRemovedHandler(p *Processor, _ string, fields hub.Fields) {
 		return
 	}
 
-	p.unicast(
+	if err := Unicast(
+		p.dispatcher,
 		event.TagRemoved,
 		payload.MakeTagAddedOrRemoved(t),
 		bot,
-	)
+	); err != nil {
+		p.logger.Error("failed to unicast", zap.Error(err))
+	}
 }

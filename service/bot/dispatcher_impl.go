@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/bot/event"
@@ -20,6 +22,11 @@ const (
 	headerUserAgent                = "User-Agent"
 	ua                             = "traQ_Bot_Processor/1.0"
 )
+
+var eventSendCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+	Namespace: "traq",
+	Name:      "bot_event_send_count_total",
+}, []string{"bot_id", "status"})
 
 type dispatcherImpl struct {
 	client http.Client
@@ -99,6 +106,6 @@ func (d *dispatcherImpl) Wait() {
 
 func (d *dispatcherImpl) writeLog(log *model.BotEventLog) {
 	if err := d.repo.WriteBotEventLog(log); err != nil {
-		d.l.Warn("failed to WriteBotEventLog", zap.Error(err), zap.Any("log", log))
+		d.l.Warn("failed to write log", zap.Error(err), zap.Any("eventLog", log))
 	}
 }
