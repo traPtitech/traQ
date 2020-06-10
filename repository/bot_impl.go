@@ -219,6 +219,12 @@ func (repo *GormRepository) GetBots(query BotsQuery) ([]*model.Bot, error) {
 	if query.Creator.Valid {
 		tx = tx.Where("bots.creator_id = ?", query.Creator.UUID)
 	}
+	if query.ID.Valid {
+		tx = tx.Where("bots.id = ?", query.ID.UUID)
+	}
+	if query.UserID.Valid {
+		tx = tx.Where("bots.bot_user_id = ?", query.UserID.UUID)
+	}
 	if query.IsCMemberOf.Valid {
 		tx = tx.Joins("INNER JOIN bot_join_channels ON bot_join_channels.bot_id = bots.id AND bot_join_channels.channel_id = ?", query.IsCMemberOf.UUID)
 	}

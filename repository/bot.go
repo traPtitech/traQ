@@ -24,6 +24,8 @@ type BotsQuery struct {
 	IsCMemberOf     optional.UUID
 	SubscribeEvents event.Types
 	Creator         optional.UUID
+	ID              optional.UUID
+	UserID          optional.UUID
 }
 
 // Privileged 特権Botである
@@ -60,6 +62,18 @@ func (q BotsQuery) Subscribe(events ...event.Type) BotsQuery {
 	for _, event := range events {
 		q.SubscribeEvents[event] = struct{}{}
 	}
+	return q
+}
+
+// BotID 指定したIDのBotである
+func (q BotsQuery) BotID(id uuid.UUID) BotsQuery {
+	q.ID = optional.UUIDFrom(id)
+	return q
+}
+
+// BotUserID 指定したユーザーIDのBotである
+func (q BotsQuery) BotUserID(id uuid.UUID) BotsQuery {
+	q.ID = optional.UUIDFrom(id)
 	return q
 }
 
