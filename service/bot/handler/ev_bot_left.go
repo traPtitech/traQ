@@ -33,8 +33,7 @@ func BotLeft(ctx Context, _ string, fields hub.Fields) {
 		return
 	}
 
-	err = event.Unicast(
-		ctx.D(),
+	err = ctx.Unicast(
 		event.Left,
 		payload.MakeLeft(ch, ctx.CM().PublicChannelTree().GetChannelPath(channelID), user),
 		bot,

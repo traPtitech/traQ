@@ -33,8 +33,7 @@ func BotJoined(ctx Context, _ string, fields hub.Fields) {
 		return
 	}
 
-	err = event.Unicast(
-		ctx.D(),
+	err = ctx.Unicast(
 		event.Joined,
 		payload.MakeJoined(ch, ctx.CM().PublicChannelTree().GetChannelPath(channelID), user),
 		bot,

@@ -94,6 +94,34 @@ func (mr *MockContextMockRecorder) D() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "D", reflect.TypeOf((*MockContext)(nil).D))
 }
 
+// Unicast mocks base method
+func (m *MockContext) Unicast(ev model.BotEventType, payload interface{}, target *model.Bot) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Unicast", ev, payload, target)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Unicast indicates an expected call of Unicast
+func (mr *MockContextMockRecorder) Unicast(ev, payload, target interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unicast", reflect.TypeOf((*MockContext)(nil).Unicast), ev, payload, target)
+}
+
+// Multicast mocks base method
+func (m *MockContext) Multicast(ev model.BotEventType, payload interface{}, targets []*model.Bot) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Multicast", ev, payload, targets)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Multicast indicates an expected call of Multicast
+func (mr *MockContextMockRecorder) Multicast(ev, payload, targets interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Multicast", reflect.TypeOf((*MockContext)(nil).Multicast), ev, payload, targets)
+}
+
 // GetBot mocks base method
 func (m *MockContext) GetBot(id uuid.UUID) (*model.Bot, error) {
 	m.ctrl.T.Helper()

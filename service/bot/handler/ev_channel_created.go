@@ -26,8 +26,7 @@ func ChannelCreated(ctx Context, _ string, fields hub.Fields) {
 			return
 		}
 
-		if err := event.Multicast(
-			ctx.D(),
+		if err := ctx.Multicast(
 			event.ChannelCreated,
 			payload.MakeChannelCreated(ch, ctx.CM().PublicChannelTree().GetChannelPath(ch.ID), user),
 			bots,

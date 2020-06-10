@@ -29,8 +29,7 @@ func StampCreated(ctx Context, _ string, fields hub.Fields) {
 		}
 	}
 
-	if err := event.Multicast(
-		ctx.D(),
+	if err := ctx.Multicast(
 		event.StampCreated,
 		payload.MakeStampCreated(stamp, user),
 		bots,

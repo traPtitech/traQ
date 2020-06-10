@@ -26,7 +26,6 @@ func MessageCreated(ctx Context, _ string, fields hub.Fields) {
 		return
 	}
 
-	embedded, _ := message.ExtractEmbedding(m.Text)
 	if ch.IsDMChannel() {
 		ids, err := ctx.CM().GetDMChannelMembers(ch.ID)
 		if err != nil {
@@ -51,10 +50,9 @@ func MessageCreated(ctx Context, _ string, fields hub.Fields) {
 			return
 		}
 
-		if err := event.Unicast(
-			ctx.D(),
+		if err := ctx.Unicast(
 			event.DirectMessageCreated,
-			payload.MakeDirectMessageCreated(m, user, embedded, parsed),
+			payload.MakeDirectMessageCreated(m, user, parsed),
 			bot,
 		); err != nil {
 			ctx.L().Error("failed to unicast", zap.Error(err))
@@ -91,10 +89,9 @@ func MessageCreated(ctx Context, _ string, fields hub.Fields) {
 			return
 		}
 
-		if err := event.Multicast(
-			ctx.D(),
+		if err := ctx.Multicast(
 			event.MessageCreated,
-			payload.MakeMessageCreated(m, user, embedded, parsed),
+			payload.MakeMessageCreated(m, user, parsed),
 			bots,
 		); err != nil {
 			ctx.L().Error("failed to multicast", zap.Error(err))

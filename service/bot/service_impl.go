@@ -89,6 +89,14 @@ func (p *serviceImpl) D() event.Dispatcher {
 	return p.dispatcher
 }
 
+func (p *serviceImpl) Unicast(ev model.BotEventType, payload interface{}, target *model.Bot) error {
+	return event.Unicast(p.dispatcher, ev, payload, target)
+}
+
+func (p *serviceImpl) Multicast(ev model.BotEventType, payload interface{}, targets []*model.Bot) error {
+	return event.Multicast(p.dispatcher, ev, payload, targets)
+}
+
 func (p *serviceImpl) GetBot(id uuid.UUID) (*model.Bot, error) {
 	bots, err := p.repo.GetBots(repository.BotsQuery{}.Active().BotID(id))
 	if err != nil {

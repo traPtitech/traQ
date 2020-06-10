@@ -27,8 +27,7 @@ func UserTagAdded(ctx Context, _ string, fields hub.Fields) {
 		return
 	}
 
-	if err := event.Unicast(
-		ctx.D(),
+	if err := ctx.Unicast(
 		event.TagAdded,
 		payload.MakeTagAdded(t),
 		bot,

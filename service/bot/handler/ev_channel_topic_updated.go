@@ -41,8 +41,7 @@ func ChannelTopicUpdated(ctx Context, _ string, fields hub.Fields) {
 		return
 	}
 
-	if err := event.Multicast(
-		ctx.D(),
+	if err := ctx.Multicast(
 		event.ChannelTopicChanged,
 		payload.MakeChannelTopicChanged(ch, ctx.CM().PublicChannelTree().GetChannelPath(ch.ID), chCreator, topic, user),
 		bots,

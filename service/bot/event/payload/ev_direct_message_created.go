@@ -11,7 +11,8 @@ type DirectMessageCreated struct {
 	Message Message `json:"message"`
 }
 
-func MakeDirectMessageCreated(m *model.Message, user model.UserInfo, embedded []*message.EmbeddedInfo, parsed *message.ParseResult) *DirectMessageCreated {
+func MakeDirectMessageCreated(m *model.Message, user model.UserInfo, parsed *message.ParseResult) *DirectMessageCreated {
+	embedded, _ := message.ExtractEmbedding(m.Text)
 	return &DirectMessageCreated{
 		Base:    MakeBase(),
 		Message: MakeMessage(m, user, embedded, parsed.PlainText),

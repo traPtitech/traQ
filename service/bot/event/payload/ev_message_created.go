@@ -11,7 +11,8 @@ type MessageCreated struct {
 	Message Message `json:"message"`
 }
 
-func MakeMessageCreated(m *model.Message, user model.UserInfo, embedded []*message.EmbeddedInfo, parsed *message.ParseResult) *MessageCreated {
+func MakeMessageCreated(m *model.Message, user model.UserInfo, parsed *message.ParseResult) *MessageCreated {
+	embedded, _ := message.ExtractEmbedding(m.Text)
 	return &MessageCreated{
 		Base:    MakeBase(),
 		Message: MakeMessage(m, user, embedded, parsed.PlainText),
