@@ -1,4 +1,4 @@
-package bot
+package event
 
 import (
 	"bytes"
@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/service/bot/event"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
@@ -33,7 +32,7 @@ type dispatcherImpl struct {
 	repo   repository.BotRepository
 }
 
-func initDispatcher(logger *zap.Logger, repo repository.BotRepository) Dispatcher {
+func NewDispatcher(logger *zap.Logger, repo repository.BotRepository) Dispatcher {
 	return &dispatcherImpl{
 		client: http.Client{
 			Jar:     nil,
@@ -47,7 +46,7 @@ func initDispatcher(logger *zap.Logger, repo repository.BotRepository) Dispatche
 	}
 }
 
-func (d *dispatcherImpl) Send(b *model.Bot, event event.Type, body []byte) (ok bool) {
+func (d *dispatcherImpl) Send(b *model.Bot, event model.BotEventType, body []byte) (ok bool) {
 	reqID := uuid.Must(uuid.NewV4())
 
 	req, _ := http.NewRequest(http.MethodPost, b.PostURL, bytes.NewReader(body))

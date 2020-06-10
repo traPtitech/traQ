@@ -3,7 +3,6 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -14,7 +13,7 @@ type UpdateBotArgs struct {
 	WebhookURL      optional.String
 	Privileged      optional.Bool
 	CreatorID       optional.UUID
-	SubscribeEvents event.Types
+	SubscribeEvents model.BotEventTypes
 }
 
 // BotsQuery Bot情報取得用クエリ
@@ -22,7 +21,7 @@ type BotsQuery struct {
 	IsPrivileged    optional.Bool
 	IsActive        optional.Bool
 	IsCMemberOf     optional.UUID
-	SubscribeEvents event.Types
+	SubscribeEvents model.BotEventTypes
 	Creator         optional.UUID
 	ID              optional.UUID
 	UserID          optional.UUID
@@ -53,9 +52,9 @@ func (q BotsQuery) CMemberOf(channelID uuid.UUID) BotsQuery {
 }
 
 // Subscribe eventsを購読している
-func (q BotsQuery) Subscribe(events ...event.Type) BotsQuery {
+func (q BotsQuery) Subscribe(events ...model.BotEventType) BotsQuery {
 	if q.SubscribeEvents == nil {
-		q.SubscribeEvents = event.Types{}
+		q.SubscribeEvents = model.BotEventTypes{}
 	} else {
 		q.SubscribeEvents = q.SubscribeEvents.Clone()
 	}

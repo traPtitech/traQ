@@ -8,7 +8,6 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	bevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/random"
@@ -64,7 +63,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 		VerificationToken: random.SecureAlphaNumeric(30),
 		PostURL:           webhookURL,
 		AccessTokenID:     tid,
-		SubscribeEvents:   bevent.Types{},
+		SubscribeEvents:   model.BotEventTypes{},
 		Privileged:        false,
 		State:             model.BotInactive,
 		BotCode:           random.AlphaNumeric(30),

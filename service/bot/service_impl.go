@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/channel"
 	"go.uber.org/zap"
 	"sync"
@@ -13,12 +14,24 @@ type serviceImpl struct {
 	repo       repository.Repository
 	cm         channel.Manager
 	logger     *zap.Logger
-	dispatcher Dispatcher
+	dispatcher event.Dispatcher
 	hub        *hub.Hub
 
 	sub     hub.Subscription
 	wg      sync.WaitGroup
 	started bool
+}
+
+// NewService ボットサービスを生成します
+func NewService(repo repository.Repository, cm channel.Manager, hub *hub.Hub, logger *zap.Logger) Service {
+	p := &serviceImpl{
+		repo:       repo,
+		cm:         cm,
+		logger:     logger.Named("bot"),
+		hub:        hub,
+		dispatcher: event.NewDispatcher(logger, repo),
+	}
+	return p
 }
 
 func (p *serviceImpl) Start() {
@@ -45,6 +58,7 @@ func (p *serviceImpl) Start() {
 			}(ev)
 		}
 	}()
+	p.logger.Info("bot service started")
 }
 
 func (p *serviceImpl) Shutdown(ctx context.Context) error {
@@ -53,17 +67,22 @@ func (p *serviceImpl) Shutdown(ctx context.Context) error {
 	}
 	p.hub.Unsubscribe(p.sub)
 	p.wg.Wait()
+	p.logger.Info("bot service shutdown")
 	return nil
 }
 
-// NewService ボットサービスを生成します
-func NewService(repo repository.Repository, cm channel.Manager, hub *hub.Hub, logger *zap.Logger) Service {
-	p := &serviceImpl{
-		repo:       repo,
-		cm:         cm,
-		logger:     logger.Named("bot"),
-		hub:        hub,
-		dispatcher: initDispatcher(logger, repo),
-	}
-	return p
+func (p *serviceImpl) CM() channel.Manager {
+	return p.cm
+}
+
+func (p *serviceImpl) R() repository.Repository {
+	return p.repo
+}
+
+func (p *serviceImpl) L() *zap.Logger {
+	return p.logger
+}
+
+func (p *serviceImpl) D() event.Dispatcher {
+	return p.dispatcher
 }

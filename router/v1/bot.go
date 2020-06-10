@@ -12,7 +12,6 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
-	bevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -168,12 +167,12 @@ func (h *Handlers) GetBotDetail(c echo.Context) error {
 
 // PutBotEventsRequest PUT /bots/:botID/events リクエストボディ
 type PutBotEventsRequest struct {
-	Events bevent.Types `json:"events"`
+	Events model.BotEventTypes `json:"events"`
 }
 
 func (r PutBotEventsRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Events, vd.Required),
+		vd.Field(&r.Events, vd.Required, utils.IsValidBotEvents),
 	)
 }
 

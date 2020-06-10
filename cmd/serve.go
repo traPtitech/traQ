@@ -135,6 +135,7 @@ func serveCommand() *cobra.Command {
 
 			logger.Info("traQ started")
 			waitSIGINT()
+			logger.Info("process stop signal received")
 
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
@@ -174,7 +175,7 @@ func (s *Server) Start(address string) error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	var eg errgroup.Group
+	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error { return s.Router.Shutdown(ctx) })
 	eg.Go(func() error { return s.SS.WS.Close() })
 	eg.Go(func() error { return s.SS.BOT.Shutdown(ctx) })

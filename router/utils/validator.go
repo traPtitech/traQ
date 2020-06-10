@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/utils/optional"
 )
@@ -136,6 +137,20 @@ var IsUserID = vd.WithContext(func(ctx context.Context, value interface{}) error
 	}
 	if !ok {
 		return errors.New(errMessage)
+	}
+	return nil
+})
+
+// IsValidBotEvents 有効なBOTイベントのセットである
+var IsValidBotEvents = vd.By(func(value interface{}) error {
+	s, ok := value.(model.BotEventTypes)
+	if !ok || s == nil {
+		return nil
+	}
+	for v := range s {
+		if !event.Types.Contains(v) {
+			return errors.New("must be valid bot event type")
+		}
 	}
 	return nil
 })

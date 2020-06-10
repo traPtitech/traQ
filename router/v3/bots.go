@@ -13,7 +13,6 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
-	bevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -113,12 +112,12 @@ func (h *Handlers) GetBot(c echo.Context) error {
 
 // PatchBotRequest PATCH /bots/:botID リクエストボディ
 type PatchBotRequest struct {
-	DisplayName     optional.String `json:"displayName"`
-	Description     optional.String `json:"description"`
-	Endpoint        optional.String `json:"endpoint"`
-	Privileged      optional.Bool   `json:"privileged"`
-	DeveloperID     optional.UUID   `json:"developerId"`
-	SubscribeEvents bevent.Types    `json:"subscribeEvents"`
+	DisplayName     optional.String     `json:"displayName"`
+	Description     optional.String     `json:"description"`
+	Endpoint        optional.String     `json:"endpoint"`
+	Privileged      optional.Bool       `json:"privileged"`
+	DeveloperID     optional.UUID       `json:"developerId"`
+	SubscribeEvents model.BotEventTypes `json:"subscribeEvents"`
 }
 
 func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
@@ -127,7 +126,7 @@ func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
 		vd.Field(&r.Description, vd.RuneLength(0, 1000)),
 		vd.Field(&r.Endpoint, is.URL, validator.NotInternalURL),
 		vd.Field(&r.DeveloperID, validator.NotNilUUID, utils.IsActiveHumanUserID),
-		vd.Field(&r.SubscribeEvents),
+		vd.Field(&r.SubscribeEvents, utils.IsValidBotEvents),
 	)
 }
 
