@@ -7,12 +7,13 @@ import (
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"go.uber.org/zap"
+	"time"
 )
 
-func BotPingRequest(ctx Context, _ string, fields hub.Fields) {
+func BotPingRequest(ctx Context, datetime time.Time, _ string, fields hub.Fields) {
 	bot := fields["bot"].(*model.Bot)
 
-	buf, err := jsoniter.ConfigFastest.Marshal(payload.MakePing())
+	buf, err := jsoniter.ConfigFastest.Marshal(payload.MakePing(datetime))
 	if err != nil {
 		ctx.L().Error("unexpected json encode error", zap.Error(err))
 		return

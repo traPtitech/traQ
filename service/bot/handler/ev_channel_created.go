@@ -6,9 +6,10 @@ import (
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"go.uber.org/zap"
+	"time"
 )
 
-func ChannelCreated(ctx Context, _ string, fields hub.Fields) {
+func ChannelCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) {
 	ch := fields["channel"].(*model.Channel)
 	if ch.IsPublic {
 		bots, err := ctx.GetBots(event.ChannelCreated)
@@ -28,7 +29,7 @@ func ChannelCreated(ctx Context, _ string, fields hub.Fields) {
 
 		if err := ctx.Multicast(
 			event.ChannelCreated,
-			payload.MakeChannelCreated(ch, ctx.CM().PublicChannelTree().GetChannelPath(ch.ID), user),
+			payload.MakeChannelCreated(datetime, ch, ctx.CM().PublicChannelTree().GetChannelPath(ch.ID), user),
 			bots,
 		); err != nil {
 			ctx.L().Error("failed to multicast", zap.Error(err))

@@ -6,9 +6,10 @@ import (
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"go.uber.org/zap"
+	"time"
 )
 
-func StampCreated(ctx Context, _ string, fields hub.Fields) {
+func StampCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) {
 	stamp := fields["stamp"].(*model.Stamp)
 
 	bots, err := ctx.GetBots(event.StampCreated)
@@ -31,7 +32,7 @@ func StampCreated(ctx Context, _ string, fields hub.Fields) {
 
 	if err := ctx.Multicast(
 		event.StampCreated,
-		payload.MakeStampCreated(stamp, user),
+		payload.MakeStampCreated(datetime, stamp, user),
 		bots,
 	); err != nil {
 		ctx.L().Error("failed to multicast", zap.Error(err))

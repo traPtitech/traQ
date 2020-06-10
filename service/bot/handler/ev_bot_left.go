@@ -7,9 +7,10 @@ import (
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"go.uber.org/zap"
+	"time"
 )
 
-func BotLeft(ctx Context, _ string, fields hub.Fields) {
+func BotLeft(ctx Context, datetime time.Time, _ string, fields hub.Fields) {
 	botID := fields["bot_id"].(uuid.UUID)
 	channelID := fields["channel_id"].(uuid.UUID)
 
@@ -35,7 +36,7 @@ func BotLeft(ctx Context, _ string, fields hub.Fields) {
 
 	err = ctx.Unicast(
 		event.Left,
-		payload.MakeLeft(ch, ctx.CM().PublicChannelTree().GetChannelPath(channelID), user),
+		payload.MakeLeft(datetime, ch, ctx.CM().PublicChannelTree().GetChannelPath(channelID), user),
 		bot,
 	)
 	if err != nil {

@@ -4,9 +4,10 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	intevent "github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/service/bot/handler"
+	"time"
 )
 
-type eventHandler func(ctx handler.Context, event string, fields hub.Fields)
+type eventHandler func(ctx handler.Context, datetime time.Time, event string, fields hub.Fields)
 
 var eventHandlerSet = map[string]eventHandler{
 	intevent.BotJoined:           handler.BotJoined,

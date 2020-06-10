@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/service/channel"
 	"go.uber.org/zap"
 	"sync"
+	"time"
 )
 
 type serviceImpl struct {
@@ -55,7 +56,7 @@ func (p *serviceImpl) Start() {
 				defer p.wg.Done()
 				h, ok := eventHandlerSet[ev.Name]
 				if ok {
-					h(p, ev.Name, ev.Fields)
+					h(p, time.Now(), ev.Name, ev.Fields)
 				}
 			}(ev)
 		}

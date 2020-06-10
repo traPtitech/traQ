@@ -6,9 +6,10 @@ import (
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"go.uber.org/zap"
+	"time"
 )
 
-func UserCreated(ctx Context, _ string, fields hub.Fields) {
+func UserCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) {
 	user := fields["user"].(model.UserInfo)
 
 	bots, err := ctx.GetBots(event.UserCreated)
@@ -19,7 +20,7 @@ func UserCreated(ctx Context, _ string, fields hub.Fields) {
 
 	if err := ctx.Multicast(
 		event.UserCreated,
-		payload.MakeUserCreated(user),
+		payload.MakeUserCreated(datetime, user),
 		bots,
 	); err != nil {
 		ctx.L().Error("failed to multicast", zap.Error(err))

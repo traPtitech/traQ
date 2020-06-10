@@ -2,6 +2,7 @@ package payload
 
 import (
 	"github.com/traPtitech/traQ/model"
+	"time"
 )
 
 // Left LEFTイベントペイロード
@@ -10,9 +11,9 @@ type Left struct {
 	Channel Channel `json:"channel"`
 }
 
-func MakeLeft(ch *model.Channel, chPath string, user model.UserInfo) *Left {
+func MakeLeft(et time.Time, ch *model.Channel, chPath string, user model.UserInfo) *Left {
 	return &Left{
-		Base:    MakeBase(),
+		Base:    MakeBase(et),
 		Channel: MakeChannel(ch, chPath, user),
 	}
 }

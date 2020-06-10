@@ -6,9 +6,10 @@ import (
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"go.uber.org/zap"
+	"time"
 )
 
-func UserTagAdded(ctx Context, _ string, fields hub.Fields) {
+func UserTagAdded(ctx Context, datetime time.Time, _ string, fields hub.Fields) {
 	userID := fields["user_id"].(uuid.UUID)
 	tagID := fields["tag_id"].(uuid.UUID)
 
@@ -29,7 +30,7 @@ func UserTagAdded(ctx Context, _ string, fields hub.Fields) {
 
 	if err := ctx.Unicast(
 		event.TagAdded,
-		payload.MakeTagAdded(t),
+		payload.MakeTagAdded(datetime, t),
 		bot,
 	); err != nil {
 		ctx.L().Error("failed to unicast", zap.Error(err))

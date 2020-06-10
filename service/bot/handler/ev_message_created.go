@@ -8,9 +8,10 @@ import (
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
+	"time"
 )
 
-func MessageCreated(ctx Context, _ string, fields hub.Fields) {
+func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) {
 	m := fields["message"].(*model.Message)
 	parsed := fields["parse_result"].(*message.ParseResult)
 
@@ -52,7 +53,7 @@ func MessageCreated(ctx Context, _ string, fields hub.Fields) {
 
 		if err := ctx.Unicast(
 			event.DirectMessageCreated,
-			payload.MakeDirectMessageCreated(m, user, parsed),
+			payload.MakeDirectMessageCreated(datetime, m, user, parsed),
 			bot,
 		); err != nil {
 			ctx.L().Error("failed to unicast", zap.Error(err))
@@ -91,7 +92,7 @@ func MessageCreated(ctx Context, _ string, fields hub.Fields) {
 
 		if err := ctx.Multicast(
 			event.MessageCreated,
-			payload.MakeMessageCreated(m, user, parsed),
+			payload.MakeMessageCreated(datetime, m, user, parsed),
 			bots,
 		); err != nil {
 			ctx.L().Error("failed to multicast", zap.Error(err))

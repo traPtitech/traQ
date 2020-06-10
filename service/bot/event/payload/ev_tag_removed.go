@@ -3,6 +3,7 @@ package payload
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"time"
 )
 
 // TagRemoved TAG_REMOVEDイベントペイロード
@@ -12,9 +13,9 @@ type TagRemoved struct {
 	Tag   string    `json:"tag"`
 }
 
-func MakeTagRemoved(tag *model.Tag) *TagRemoved {
+func MakeTagRemoved(et time.Time, tag *model.Tag) *TagRemoved {
 	return &TagRemoved{
-		Base:  MakeBase(),
+		Base:  MakeBase(et),
 		TagID: tag.ID,
 		Tag:   tag.Name,
 	}

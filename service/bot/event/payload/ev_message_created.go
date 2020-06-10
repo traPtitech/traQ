@@ -3,6 +3,7 @@ package payload
 import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/message"
+	"time"
 )
 
 // MessageCreated MESSAGE_CREATEDイベントペイロード
@@ -11,10 +12,10 @@ type MessageCreated struct {
 	Message Message `json:"message"`
 }
 
-func MakeMessageCreated(m *model.Message, user model.UserInfo, parsed *message.ParseResult) *MessageCreated {
+func MakeMessageCreated(et time.Time, m *model.Message, user model.UserInfo, parsed *message.ParseResult) *MessageCreated {
 	embedded, _ := message.ExtractEmbedding(m.Text)
 	return &MessageCreated{
-		Base:    MakeBase(),
+		Base:    MakeBase(et),
 		Message: MakeMessage(m, user, embedded, parsed.PlainText),
 	}
 }

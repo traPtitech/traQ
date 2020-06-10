@@ -7,9 +7,10 @@ import (
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"go.uber.org/zap"
+	"time"
 )
 
-func ChannelTopicUpdated(ctx Context, _ string, fields hub.Fields) {
+func ChannelTopicUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields) {
 	chID := fields["channel_id"].(uuid.UUID)
 	topic := fields["topic"].(string)
 	updaterID := fields["updater_id"].(uuid.UUID)
@@ -43,7 +44,7 @@ func ChannelTopicUpdated(ctx Context, _ string, fields hub.Fields) {
 
 	if err := ctx.Multicast(
 		event.ChannelTopicChanged,
-		payload.MakeChannelTopicChanged(ch, ctx.CM().PublicChannelTree().GetChannelPath(ch.ID), chCreator, topic, user),
+		payload.MakeChannelTopicChanged(datetime, ch, ctx.CM().PublicChannelTree().GetChannelPath(ch.ID), chCreator, topic, user),
 		bots,
 	); err != nil {
 		ctx.L().Error("failed to multicast", zap.Error(err))
