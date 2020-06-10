@@ -13,12 +13,12 @@ func BotLeft(ctx Context, _ string, fields hub.Fields) {
 	botID := fields["bot_id"].(uuid.UUID)
 	channelID := fields["channel_id"].(uuid.UUID)
 
-	bots, err := ctx.R().GetBots(repository.BotsQuery{}.Active().BotID(botID))
+	bot, err := ctx.GetBot(botID)
 	if err != nil {
-		ctx.L().Error("failed to GetBots", zap.Error(err))
+		ctx.L().Error("failed to GetBot", zap.Error(err))
 		return
 	}
-	if len(bots) == 0 {
+	if bot == nil {
 		return
 	}
 
@@ -37,7 +37,7 @@ func BotLeft(ctx Context, _ string, fields hub.Fields) {
 		ctx.D(),
 		event.Left,
 		payload.MakeLeft(ch, ctx.CM().PublicChannelTree().GetChannelPath(channelID), user),
-		bots[0],
+		bot,
 	)
 	if err != nil {
 		ctx.L().Error("failed to unicast", zap.Error(err))

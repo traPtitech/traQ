@@ -3,6 +3,7 @@ package event
 import (
 	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/bot/event/mock_event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
@@ -17,7 +18,7 @@ func TestUnicast(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		d := mock_event.NewMockDispatcher(ctrl)
 
-		Unicast(d, Ping, payload.MakePing(), nil)
+		assert.NoError(t, Unicast(d, Ping, payload.MakePing(), nil))
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -35,7 +36,7 @@ func TestUnicast(t *testing.T) {
 			Return(true).
 			Times(1)
 
-		Unicast(d, Ping, p, b1)
+		assert.NoError(t, Unicast(d, Ping, p, b1))
 	})
 
 }
@@ -48,7 +49,7 @@ func TestMulticast(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		d := mock_event.NewMockDispatcher(ctrl)
 
-		Multicast(d, Ping, payload.MakePing(), []*model.Bot{})
+		assert.NoError(t, Multicast(d, Ping, payload.MakePing(), []*model.Bot{}))
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -77,6 +78,6 @@ func TestMulticast(t *testing.T) {
 			Return(true).
 			Times(1)
 
-		Multicast(d, Ping, p, bots)
+		assert.NoError(t, Multicast(d, Ping, p, bots))
 	})
 }

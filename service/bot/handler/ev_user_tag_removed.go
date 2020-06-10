@@ -3,7 +3,6 @@ package handler
 import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"go.uber.org/zap"
@@ -13,12 +12,12 @@ func UserTagRemoved(ctx Context, _ string, fields hub.Fields) {
 	userID := fields["user_id"].(uuid.UUID)
 	tagID := fields["tag_id"].(uuid.UUID)
 
-	bots, err := ctx.R().GetBots(repository.BotsQuery{}.Active().Subscribe(event.TagRemoved).BotUserID(userID))
+	bot, err := ctx.GetBotByBotUserID(userID)
 	if err != nil {
-		ctx.L().Error("failed to GetBots", zap.Error(err))
+		ctx.L().Error("failed to GetBotByBotUserID", zap.Error(err))
 		return
 	}
-	if len(bots) == 0 {
+	if bot == nil || !bot.SubscribeEvents.Contains(event.TagRemoved) {
 		return
 	}
 
@@ -32,7 +31,7 @@ func UserTagRemoved(ctx Context, _ string, fields hub.Fields) {
 		ctx.D(),
 		event.TagRemoved,
 		payload.MakeTagRemoved(t),
-		bots[0],
+		bot,
 	); err != nil {
 		ctx.L().Error("failed to unicast", zap.Error(err))
 	}

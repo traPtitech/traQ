@@ -3,7 +3,6 @@ package handler
 import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"go.uber.org/zap"
@@ -12,7 +11,7 @@ import (
 func StampCreated(ctx Context, _ string, fields hub.Fields) {
 	stamp := fields["stamp"].(*model.Stamp)
 
-	bots, err := ctx.R().GetBots(repository.BotsQuery{}.Active().Subscribe(event.StampCreated))
+	bots, err := ctx.GetBots(event.StampCreated)
 	if err != nil {
 		ctx.L().Error("failed to GetBots", zap.Error(err))
 		return

@@ -14,9 +14,9 @@ func ChannelTopicUpdated(ctx Context, _ string, fields hub.Fields) {
 	topic := fields["topic"].(string)
 	updaterID := fields["updater_id"].(uuid.UUID)
 
-	bots, err := ctx.R().GetBots(repository.BotsQuery{}.CMemberOf(chID).Active().Subscribe(event.ChannelTopicChanged))
+	bots, err := ctx.GetChannelBots(chID, event.ChannelTopicChanged)
 	if err != nil {
-		ctx.L().Error("failed to GetBots", zap.Error(err))
+		ctx.L().Error("failed to GetChannelBots", zap.Error(err))
 		return
 	}
 	if len(bots) == 0 {

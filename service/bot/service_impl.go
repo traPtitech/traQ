@@ -2,7 +2,9 @@ package bot
 
 import (
 	"context"
+	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/channel"
@@ -85,4 +87,34 @@ func (p *serviceImpl) L() *zap.Logger {
 
 func (p *serviceImpl) D() event.Dispatcher {
 	return p.dispatcher
+}
+
+func (p *serviceImpl) GetBot(id uuid.UUID) (*model.Bot, error) {
+	bots, err := p.repo.GetBots(repository.BotsQuery{}.Active().BotID(id))
+	if err != nil {
+		return nil, err
+	}
+	if len(bots) == 0 {
+		return nil, nil
+	}
+	return bots[0], nil
+}
+
+func (p *serviceImpl) GetBotByBotUserID(uid uuid.UUID) (*model.Bot, error) {
+	bots, err := p.repo.GetBots(repository.BotsQuery{}.Active().BotUserID(uid))
+	if err != nil {
+		return nil, err
+	}
+	if len(bots) == 0 {
+		return nil, nil
+	}
+	return bots[0], nil
+}
+
+func (p *serviceImpl) GetBots(event model.BotEventType) ([]*model.Bot, error) {
+	return p.repo.GetBots(repository.BotsQuery{}.Active().Subscribe(event))
+}
+
+func (p *serviceImpl) GetChannelBots(cid uuid.UUID, event model.BotEventType) ([]*model.Bot, error) {
+	return p.repo.GetBots(repository.BotsQuery{}.Active().Subscribe(event).CMemberOf(cid))
 }
