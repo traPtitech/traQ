@@ -148,7 +148,7 @@ func botJoinedHandler(p *Processor, _ string, fields hub.Fields) {
 	err = Unicast(
 		p.dispatcher,
 		event.Joined,
-		payload.MakeJoinedOrLeft(ch, p.cm.PublicChannelTree().GetChannelPath(channelID), user),
+		payload.MakeJoined(ch, p.cm.PublicChannelTree().GetChannelPath(channelID), user),
 		bots[0],
 	)
 	if err != nil {
@@ -183,7 +183,7 @@ func botLeftHandler(p *Processor, _ string, fields hub.Fields) {
 	err = Unicast(
 		p.dispatcher,
 		event.Left,
-		payload.MakeJoinedOrLeft(ch, p.cm.PublicChannelTree().GetChannelPath(channelID), user),
+		payload.MakeLeft(ch, p.cm.PublicChannelTree().GetChannelPath(channelID), user),
 		bots[0],
 	)
 	if err != nil {
@@ -357,7 +357,7 @@ func userTagAddedHandler(p *Processor, _ string, fields hub.Fields) {
 	if err := Unicast(
 		p.dispatcher,
 		event.TagAdded,
-		payload.MakeTagAddedOrRemoved(t),
+		payload.MakeTagAdded(t),
 		bots[0],
 	); err != nil {
 		p.logger.Error("failed to unicast", zap.Error(err))
@@ -386,7 +386,7 @@ func userTagRemovedHandler(p *Processor, _ string, fields hub.Fields) {
 	if err := Unicast(
 		p.dispatcher,
 		event.TagRemoved,
-		payload.MakeTagAddedOrRemoved(t),
+		payload.MakeTagRemoved(t),
 		bots[0],
 	); err != nil {
 		p.logger.Error("failed to unicast", zap.Error(err))
