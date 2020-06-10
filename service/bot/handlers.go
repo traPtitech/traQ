@@ -15,8 +15,8 @@ import (
 type eventHandler func(p *Processor, event string, fields hub.Fields)
 
 var eventHandlerSet = map[string]eventHandler{
-	intevent.BotJoined:           botJoinedOrLeftHandler,
-	intevent.BotLeft:             botJoinedOrLeftHandler,
+	intevent.BotJoined:           botJoinedHandler,
+	intevent.BotLeft:             botLeftHandler,
 	intevent.BotPingRequest:      botPingRequestHandler,
 	intevent.MessageCreated:      messageCreatedHandler,
 	intevent.UserCreated:         userCreatedHandler,
@@ -121,16 +121,16 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 }
 
-func botJoinedOrLeftHandler(p *Processor, ev string, fields hub.Fields) {
+func botJoinedHandler(p *Processor, _ string, fields hub.Fields) {
 	botID := fields["bot_id"].(uuid.UUID)
 	channelID := fields["channel_id"].(uuid.UUID)
 
-	bot, err := p.repo.GetBotByID(botID)
+	bots, err := p.repo.GetBots(repository.BotsQuery{}.Active().BotID(botID))
 	if err != nil {
-		p.logger.Error("failed to GetBotByID", zap.Error(err), zap.Stringer("id", botID))
+		p.logger.Error("failed to GetBots", zap.Error(err))
 		return
 	}
-	if bot.State != model.BotActive {
+	if len(bots) == 0 {
 		return
 	}
 
@@ -145,22 +145,47 @@ func botJoinedOrLeftHandler(p *Processor, ev string, fields hub.Fields) {
 		return
 	}
 
-	switch ev {
-	case intevent.BotJoined:
-		err = Unicast(
-			p.dispatcher,
-			event.Joined,
-			payload.MakeJoinedOrLeft(ch, p.cm.PublicChannelTree().GetChannelPath(channelID), user),
-			bot,
-		)
-	case intevent.BotLeft:
-		err = Unicast(
-			p.dispatcher,
-			event.Left,
-			payload.MakeJoinedOrLeft(ch, p.cm.PublicChannelTree().GetChannelPath(channelID), user),
-			bot,
-		)
+	err = Unicast(
+		p.dispatcher,
+		event.Joined,
+		payload.MakeJoinedOrLeft(ch, p.cm.PublicChannelTree().GetChannelPath(channelID), user),
+		bots[0],
+	)
+	if err != nil {
+		p.logger.Error("failed to unicast", zap.Error(err))
 	}
+}
+
+func botLeftHandler(p *Processor, _ string, fields hub.Fields) {
+	botID := fields["bot_id"].(uuid.UUID)
+	channelID := fields["channel_id"].(uuid.UUID)
+
+	bots, err := p.repo.GetBots(repository.BotsQuery{}.Active().BotID(botID))
+	if err != nil {
+		p.logger.Error("failed to GetBots", zap.Error(err))
+		return
+	}
+	if len(bots) == 0 {
+		return
+	}
+
+	ch, err := p.cm.GetChannel(channelID)
+	if err != nil {
+		p.logger.Error("failed to GetChannel", zap.Error(err), zap.Stringer("id", channelID))
+		return
+	}
+	user, err := p.repo.GetUser(ch.CreatorID, false)
+	if err != nil && err != repository.ErrNotFound {
+		p.logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("id", ch.CreatorID))
+		return
+	}
+
+	err = Unicast(
+		p.dispatcher,
+		event.Left,
+		payload.MakeJoinedOrLeft(ch, p.cm.PublicChannelTree().GetChannelPath(channelID), user),
+		bots[0],
+	)
 	if err != nil {
 		p.logger.Error("failed to unicast", zap.Error(err))
 	}
@@ -314,14 +339,12 @@ func userTagAddedHandler(p *Processor, _ string, fields hub.Fields) {
 	userID := fields["user_id"].(uuid.UUID)
 	tagID := fields["tag_id"].(uuid.UUID)
 
-	bot, err := p.repo.GetBotByBotUserID(userID)
+	bots, err := p.repo.GetBots(repository.BotsQuery{}.Active().Subscribe(event.TagAdded).BotUserID(userID))
 	if err != nil {
-		if err != repository.ErrNotFound {
-			p.logger.Error("failed to GetBotByBotUserID", zap.Error(err), zap.Stringer("id", userID))
-		}
+		p.logger.Error("failed to GetBots", zap.Error(err))
 		return
 	}
-	if !filterBot(p, bot, stateFilter(model.BotActive), eventFilter(event.TagAdded)) {
+	if len(bots) == 0 {
 		return
 	}
 
@@ -335,7 +358,7 @@ func userTagAddedHandler(p *Processor, _ string, fields hub.Fields) {
 		p.dispatcher,
 		event.TagAdded,
 		payload.MakeTagAddedOrRemoved(t),
-		bot,
+		bots[0],
 	); err != nil {
 		p.logger.Error("failed to unicast", zap.Error(err))
 	}
@@ -345,14 +368,12 @@ func userTagRemovedHandler(p *Processor, _ string, fields hub.Fields) {
 	userID := fields["user_id"].(uuid.UUID)
 	tagID := fields["tag_id"].(uuid.UUID)
 
-	bot, err := p.repo.GetBotByBotUserID(userID)
+	bots, err := p.repo.GetBots(repository.BotsQuery{}.Active().Subscribe(event.TagRemoved).BotUserID(userID))
 	if err != nil {
-		if err != repository.ErrNotFound {
-			p.logger.Error("failed to GetBotByBotUserID", zap.Error(err), zap.Stringer("id", userID))
-		}
+		p.logger.Error("failed to GetBots", zap.Error(err))
 		return
 	}
-	if !filterBot(p, bot, stateFilter(model.BotActive), eventFilter(event.TagRemoved)) {
+	if len(bots) == 0 {
 		return
 	}
 
@@ -366,7 +387,7 @@ func userTagRemovedHandler(p *Processor, _ string, fields hub.Fields) {
 		p.dispatcher,
 		event.TagRemoved,
 		payload.MakeTagAddedOrRemoved(t),
-		bot,
+		bots[0],
 	); err != nil {
 		p.logger.Error("failed to unicast", zap.Error(err))
 	}

@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/bot/event"
@@ -28,7 +27,7 @@ func Multicast(d Dispatcher, ev event.Type, payload interface{}, targets []*mode
 	}
 	buf, release, err := makePayloadJSON(&payload)
 	if err != nil {
-		return fmt.Errorf("unexpected json encode error: %w", err)
+		return err
 	}
 	defer release()
 
