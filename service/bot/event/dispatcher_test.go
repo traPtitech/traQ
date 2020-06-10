@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/service/bot/event/mock_event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"testing"
+	"time"
 )
 
 func TestUnicast(t *testing.T) {
@@ -18,7 +19,7 @@ func TestUnicast(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		d := mock_event.NewMockDispatcher(ctrl)
 
-		assert.NoError(t, Unicast(d, Ping, payload.MakePing(), nil))
+		assert.NoError(t, Unicast(d, Ping, payload.MakePing(time.Now()), nil))
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -27,7 +28,7 @@ func TestUnicast(t *testing.T) {
 		d := mock_event.NewMockDispatcher(ctrl)
 
 		b1 := &model.Bot{ID: uuid.NewV3(uuid.Nil, "b1")}
-		p := payload.MakePing()
+		p := payload.MakePing(time.Now())
 		body, release, _ := makePayloadJSON(p)
 		defer release()
 
@@ -49,7 +50,7 @@ func TestMulticast(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		d := mock_event.NewMockDispatcher(ctrl)
 
-		assert.NoError(t, Multicast(d, Ping, payload.MakePing(), []*model.Bot{}))
+		assert.NoError(t, Multicast(d, Ping, payload.MakePing(time.Now()), []*model.Bot{}))
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -61,7 +62,7 @@ func TestMulticast(t *testing.T) {
 		b2 := &model.Bot{ID: uuid.NewV3(uuid.Nil, "b2")}
 		b3 := &model.Bot{ID: uuid.NewV3(uuid.Nil, "b3")}
 		bots := []*model.Bot{b1, b2, b1, b3}
-		p := payload.MakePing()
+		p := payload.MakePing(time.Now())
 		body, release, _ := makePayloadJSON(p)
 		defer release()
 
