@@ -9,7 +9,6 @@ import (
 
 type Dispatcher interface {
 	Send(b *model.Bot, event event.Type, body []byte) (ok bool)
-	Wait()
 }
 
 // Unicast 単一のBOTにイベントを送信

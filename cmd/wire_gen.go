@@ -37,7 +37,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 	if err != nil {
 		return nil, err
 	}
-	processor := bot.NewProcessor(repo, manager, hub2, logger)
+	botService := bot.NewService(repo, manager, hub2, logger)
 	onlineCounter := counter.NewOnlineCounter(hub2)
 	unreadMessageCounter, err := counter.NewUnreadMessageCounter(db, hub2)
 	if err != nil {
@@ -59,7 +59,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 	viewerManager := viewer.NewManager(hub2)
 	heartbeatManager := heartbeat.NewManager(viewerManager)
 	config := provideImageProcessorConfig(c2)
-	imagingProcessor := imaging.NewProcessor(config)
+	processor := imaging.NewProcessor(config)
 	streamer := sse.NewStreamer(hub2)
 	webrtcv3Manager := webrtcv3.NewManager(hub2)
 	wsStreamer := ws.NewStreamer(hub2, viewerManager, webrtcv3Manager, logger)
@@ -70,7 +70,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 		return nil, err
 	}
 	services := &service.Services{
-		BOT:                  processor,
+		BOT:                  botService,
 		ChannelManager:       manager,
 		OnlineCounter:        onlineCounter,
 		UnreadMessageCounter: unreadMessageCounter,
@@ -78,7 +78,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 		ChannelCounter:       channelCounter,
 		FCM:                  client,
 		HeartBeats:           heartbeatManager,
-		Imaging:              imagingProcessor,
+		Imaging:              processor,
 		Notification:         notificationService,
 		RBAC:                 rbacRBAC,
 		SSE:                  streamer,

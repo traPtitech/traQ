@@ -16,6 +16,7 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 	"io/ioutil"
 	"time"
 )
@@ -168,13 +169,26 @@ func (s *Server) Start(address string) error {
 			_ = s.Repo.UpdateUser(userID, repository.UpdateUserArgs{LastOnline: optional.TimeFrom(datetime)})
 		}
 	}()
+	s.SS.BOT.Start()
 	return s.Router.Start(address)
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	s.SS.SSE.Dispose()
-	_ = s.SS.WS.Close()
-	s.SS.FCM.Close()
-	s.SS.ChannelManager.Wait()
-	return s.Router.Shutdown(ctx)
+	var eg errgroup.Group
+	eg.Go(func() error { return s.Router.Shutdown(ctx) })
+	eg.Go(func() error { return s.SS.WS.Close() })
+	eg.Go(func() error { return s.SS.BOT.Shutdown(ctx) })
+	eg.Go(func() error {
+		s.SS.SSE.Dispose()
+		return nil
+	})
+	eg.Go(func() error {
+		s.SS.FCM.Close()
+		return nil
+	})
+	eg.Go(func() error {
+		s.SS.ChannelManager.Wait()
+		return nil
+	})
+	return eg.Wait()
 }

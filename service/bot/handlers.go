@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type eventHandler func(p *Processor, event string, fields hub.Fields)
+type eventHandler func(p *serviceImpl, event string, fields hub.Fields)
 
 var eventHandlerSet = map[string]eventHandler{
 	intevent.BotJoined:           botJoinedHandler,
@@ -27,7 +27,7 @@ var eventHandlerSet = map[string]eventHandler{
 	intevent.UserTagRemoved:      userTagRemovedHandler,
 }
 
-func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
+func messageCreatedHandler(p *serviceImpl, _ string, fields hub.Fields) {
 	m := fields["message"].(*model.Message)
 	parsed := fields["parse_result"].(*message.ParseResult)
 
@@ -121,7 +121,7 @@ func messageCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 }
 
-func botJoinedHandler(p *Processor, _ string, fields hub.Fields) {
+func botJoinedHandler(p *serviceImpl, _ string, fields hub.Fields) {
 	botID := fields["bot_id"].(uuid.UUID)
 	channelID := fields["channel_id"].(uuid.UUID)
 
@@ -156,7 +156,7 @@ func botJoinedHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 }
 
-func botLeftHandler(p *Processor, _ string, fields hub.Fields) {
+func botLeftHandler(p *serviceImpl, _ string, fields hub.Fields) {
 	botID := fields["bot_id"].(uuid.UUID)
 	channelID := fields["channel_id"].(uuid.UUID)
 
@@ -191,7 +191,7 @@ func botLeftHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 }
 
-func userCreatedHandler(p *Processor, _ string, fields hub.Fields) {
+func userCreatedHandler(p *serviceImpl, _ string, fields hub.Fields) {
 	user := fields["user"].(model.UserInfo)
 
 	bots, err := p.repo.GetBots(repository.BotsQuery{}.Privileged().Active().Subscribe(event.UserCreated))
@@ -210,7 +210,7 @@ func userCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 }
 
-func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
+func channelCreatedHandler(p *serviceImpl, _ string, fields hub.Fields) {
 	ch := fields["channel"].(*model.Channel)
 	if ch.IsPublic {
 		bots, err := p.repo.GetBots(repository.BotsQuery{}.Privileged().Active().Subscribe(event.ChannelCreated))
@@ -239,7 +239,7 @@ func channelCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 }
 
-func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
+func channelTopicUpdatedHandler(p *serviceImpl, _ string, fields hub.Fields) {
 	chID := fields["channel_id"].(uuid.UUID)
 	topic := fields["topic"].(string)
 	updaterID := fields["updater_id"].(uuid.UUID)
@@ -281,7 +281,7 @@ func channelTopicUpdatedHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 }
 
-func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
+func stampCreatedHandler(p *serviceImpl, _ string, fields hub.Fields) {
 	stamp := fields["stamp"].(*model.Stamp)
 
 	bots, err := p.repo.GetBots(repository.BotsQuery{}.Active().Subscribe(event.StampCreated))
@@ -312,7 +312,7 @@ func stampCreatedHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 }
 
-func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
+func botPingRequestHandler(p *serviceImpl, _ string, fields hub.Fields) {
 	bot := fields["bot"].(*model.Bot)
 
 	buf, release, err := makePayloadJSON(payload.MakePing())
@@ -335,7 +335,7 @@ func botPingRequestHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 }
 
-func userTagAddedHandler(p *Processor, _ string, fields hub.Fields) {
+func userTagAddedHandler(p *serviceImpl, _ string, fields hub.Fields) {
 	userID := fields["user_id"].(uuid.UUID)
 	tagID := fields["tag_id"].(uuid.UUID)
 
@@ -364,7 +364,7 @@ func userTagAddedHandler(p *Processor, _ string, fields hub.Fields) {
 	}
 }
 
-func userTagRemovedHandler(p *Processor, _ string, fields hub.Fields) {
+func userTagRemovedHandler(p *serviceImpl, _ string, fields hub.Fields) {
 	userID := fields["user_id"].(uuid.UUID)
 	tagID := fields["tag_id"].(uuid.UUID)
 

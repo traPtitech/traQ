@@ -25,7 +25,7 @@ import (
 
 func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, logger *zap.Logger, c *Config) (*Server, error) {
 	wire.Build(
-		bot.NewProcessor,
+		bot.NewService,
 		channel.InitChannelManager,
 		counter.NewOnlineCounter,
 		counter.NewUnreadMessageCounter,

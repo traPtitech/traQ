@@ -11,7 +11,6 @@ import (
 	"github.com/traPtitech/traQ/service/bot/event"
 	"go.uber.org/zap"
 	"net/http"
-	"sync"
 	"time"
 )
 
@@ -32,7 +31,6 @@ type dispatcherImpl struct {
 	client http.Client
 	l      *zap.Logger
 	repo   repository.BotRepository
-	wg     sync.WaitGroup
 }
 
 func initDispatcher(logger *zap.Logger, repo repository.BotRepository) Dispatcher {
@@ -50,9 +48,6 @@ func initDispatcher(logger *zap.Logger, repo repository.BotRepository) Dispatche
 }
 
 func (d *dispatcherImpl) Send(b *model.Bot, event event.Type, body []byte) (ok bool) {
-	d.wg.Add(1)
-	defer d.wg.Done()
-
 	reqID := uuid.Must(uuid.NewV4())
 
 	req, _ := http.NewRequest(http.MethodPost, b.PostURL, bytes.NewReader(body))
@@ -98,10 +93,6 @@ func (d *dispatcherImpl) Send(b *model.Bot, event event.Type, body []byte) (ok b
 		DateTime:  time.Now(),
 	})
 	return res.StatusCode == http.StatusNoContent
-}
-
-func (d *dispatcherImpl) Wait() {
-	d.wg.Wait()
 }
 
 func (d *dispatcherImpl) writeLog(log *model.BotEventLog) {

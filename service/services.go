@@ -16,7 +16,7 @@ import (
 )
 
 type Services struct {
-	BOT                  *bot.Processor
+	BOT                  bot.Service
 	ChannelManager       channel.Manager
 	OnlineCounter        *counter.OnlineCounter
 	UnreadMessageCounter counter.UnreadMessageCounter
