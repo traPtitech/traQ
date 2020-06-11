@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type eventHandler func(ctx handler.Context, datetime time.Time, event string, fields hub.Fields)
+type eventHandler func(ctx handler.Context, datetime time.Time, event string, fields hub.Fields) error
 
 var eventHandlerSet = map[string]eventHandler{
 	intevent.BotJoined:           handler.BotJoined,

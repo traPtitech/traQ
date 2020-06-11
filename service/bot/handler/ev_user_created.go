@@ -1,24 +1,23 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
-	"go.uber.org/zap"
 	"time"
 )
 
-func UserCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) {
+func UserCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
 	user := fields["user"].(model.UserInfo)
 
 	bots, err := ctx.GetBots(event.UserCreated)
 	if err != nil {
-		ctx.L().Error("failed to GetBots", zap.Error(err))
-		return
+		return fmt.Errorf("failed to GetBots: %w", err)
 	}
 	if len(bots) == 0 {
-		return
+		return nil
 	}
 
 	if err := ctx.Multicast(
@@ -26,6 +25,7 @@ func UserCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) {
 		payload.MakeUserCreated(datetime, user),
 		bots,
 	); err != nil {
-		ctx.L().Error("failed to multicast", zap.Error(err))
+		return fmt.Errorf("failed to multicast: %w", err)
 	}
+	return nil
 }
