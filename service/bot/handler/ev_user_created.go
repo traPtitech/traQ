@@ -17,6 +17,9 @@ func UserCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) {
 		ctx.L().Error("failed to GetBots", zap.Error(err))
 		return
 	}
+	if len(bots) == 0 {
+		return
+	}
 
 	if err := ctx.Multicast(
 		event.UserCreated,
