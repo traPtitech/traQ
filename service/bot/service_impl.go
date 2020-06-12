@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/service/channel"
 	"go.uber.org/zap"
 	"sync"
+	"time"
 )
 
 type serviceImpl struct {
@@ -55,7 +56,10 @@ func (p *serviceImpl) Start() {
 				defer p.wg.Done()
 				h, ok := eventHandlerSet[ev.Name]
 				if ok {
-					h(p, ev.Name, ev.Fields)
+					err := h(p, time.Now(), ev.Name, ev.Fields)
+					if err != nil {
+						p.logger.Error("an error occurred while processing event", zap.Error(err), zap.String("event", ev.Name))
+					}
 				}
 			}(ev)
 		}
@@ -87,6 +91,14 @@ func (p *serviceImpl) L() *zap.Logger {
 
 func (p *serviceImpl) D() event.Dispatcher {
 	return p.dispatcher
+}
+
+func (p *serviceImpl) Unicast(ev model.BotEventType, payload interface{}, target *model.Bot) error {
+	return event.Unicast(p.dispatcher, ev, payload, target)
+}
+
+func (p *serviceImpl) Multicast(ev model.BotEventType, payload interface{}, targets []*model.Bot) error {
+	return event.Multicast(p.dispatcher, ev, payload, targets)
 }
 
 func (p *serviceImpl) GetBot(id uuid.UUID) (*model.Bot, error) {

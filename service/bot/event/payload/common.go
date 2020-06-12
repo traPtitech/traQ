@@ -12,9 +12,9 @@ type Base struct {
 	EventTime time.Time `json:"eventTime"`
 }
 
-func MakeBase() Base {
+func MakeBase(et time.Time) Base {
 	return Base{
-		EventTime: time.Now(),
+		EventTime: et,
 	}
 }
 
