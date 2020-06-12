@@ -24,10 +24,22 @@ const testHtmlWithoutOgp =`
 	<head>
 		<meta property="og:type" content="article" />
 		<meta content="DESCRIPTION" name="description">
+		<meta href="https://example.com" name="canonical">
 		<meta content="/image.png" itemprop="image">
 		<title>TITLE</title>
 	</head>
 	<body></body>
+</html>
+`
+
+const testHtmlOgpTagInBody =`
+<html>
+	<head>
+		<title>TITLE</title>
+	</head>
+	<body>
+		<meta property="og:type" content="article" />
+	</body>
 </html>
 `
 
@@ -49,6 +61,14 @@ func TestParseDoc(t *testing.T) {
 		assert.Equal(t, "TITLE", meta.Title)
 		assert.Equal(t, "DESCRIPTION", meta.Description)
 		assert.Equal(t, "/image.png", meta.Image)
+		assert.Equal(t, "https://example.com", meta.Url)
+	})
+	t.Run("OGP tag in body", func (t *testing.T) {
+		doc, _ := html.Parse(strings.NewReader(testHtmlOgpTagInBody))
+		og, meta := ParseDoc(doc)
+
+		assert.Equal(t, "article", og.Type)
+		assert.Equal(t, "TITLE", meta.Title)
 	})
 }
 

@@ -14,6 +14,8 @@ func (m *DefaultPageMeta) processMeta(metaAttrs map[string]string) {
 	switch metaAttrs["name"] {
 	case "description":
 		m.Description = metaAttrs["content"]
+	case "canonical":
+		m.Url = metaAttrs["href"]
 	}
 	switch metaAttrs["itemprop"] {
 	case "image":
@@ -33,17 +35,18 @@ func ParseDoc(doc *html.Node) (*opengraph.OpenGraph, *DefaultPageMeta) {
 func parseNode(og *opengraph.OpenGraph, meta *DefaultPageMeta, node *html.Node) {
 	for c := node.FirstChild; c != nil; c = c.NextSibling {
 		if c.Type == html.ElementNode && c.Data == "head" {
-			parseHead(og, meta, c)
+			parseMetaTags(og, meta, c)
 			continue
 		} else if c.Type == html.ElementNode && c.Data == "body" {
+			parseMetaTags(og, meta, c)  // YouTubeなどへの対応
 			break
 		}
 		parseNode(og, meta, c)
 	}
 }
 
-// parseHead headタグをパース
-func parseHead(og *opengraph.OpenGraph, meta *DefaultPageMeta, node *html.Node)  {
+// parseMetaTags metaタグを直下の子に持つタグをパース
+func parseMetaTags(og *opengraph.OpenGraph, meta *DefaultPageMeta, node *html.Node)  {
 	for c := node.FirstChild; c != nil; c = c.NextSibling {
 		if c.Type == html.ElementNode && c.Data == "meta" {
 			m := make(map[string]string)
