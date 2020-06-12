@@ -1,5 +1,7 @@
 package message
 
+import "strings"
+
 type spoilerToken struct {
 	tType string
 	body  string
@@ -53,7 +55,62 @@ func tokenizeSpoiler(msg string) []spoilerToken {
 }
 
 func parseSpoiler(tokens []spoilerToken) []spoilerToken {
-	return []spoilerToken{{tType: "a", body: "aa"}}
+	cont := true
+	for cont {
+		state := 0
+		contents := []spoilerToken{}
+		start := -1
+	L:
+		for i := range tokens {
+			switch state {
+			case 0:
+				if tokens[i].tType != "C" {
+					start = i
+					state = 1
+				}
+				break
+			case 1:
+				if tokens[i].tType == "C" {
+					state = 2
+					contents = append(contents, tokens[i])
+				} else {
+					start = i
+					state = 1
+				}
+				break
+			case 2:
+				if tokens[i].tType == "C" {
+					contents = append(contents, tokens[i])
+				} else if tokens[i].tType == "S" {
+					contents = []spoilerToken{}
+					start = i
+					state = 1
+				} else {
+					// start から start + len(contents) + 1 までを入れ替える
+					clength := 0
+					for _, t := range tokens {
+						clength += len(t.body)
+					}
+
+					new := make([]spoilerToken, len(tokens))
+					copy(new, tokens)
+					new = append(new[:start], spoilerToken{tType: "C", body: strings.Repeat("*", clength)})
+					new = append(new, tokens[start+len(contents)+1:]...)
+					tokens = new
+
+					contents = []spoilerToken{}
+					state = 0
+					start = -1
+					cont = true
+					break L
+				}
+			}
+			cont = false
+		}
+
+	}
+
+	return tokens
 }
 
 // FillSpoiler メッセージのSpoilerをパースし、塗りつぶします
