@@ -27,6 +27,7 @@ func TestFillSpoiler(t *testing.T) {
 	}
 
 	for _, v := range cases {
+		v := v
 		t.Run(v.Filled, func(t *testing.T) {
 			t.Parallel()
 			filled := FillSpoiler(v.Message)
