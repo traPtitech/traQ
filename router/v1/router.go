@@ -16,7 +16,6 @@ import (
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
-	"github.com/traPtitech/traQ/service/heartbeat"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
@@ -48,7 +47,6 @@ type Handlers struct {
 	Logger         *zap.Logger
 	OC             *counter.OnlineCounter
 	VM             *viewer.Manager
-	HeartBeats     *heartbeat.Manager
 	Imaging        imaging2.Processor
 	SessStore      session.Store
 	ChannelManager channel.Manager
@@ -147,10 +145,10 @@ func (h *Handlers) Setup(e *echo.Group) {
 				}
 			}
 		}
-		apiHeartBeat := api.Group("/heartbeat", blockBot)
+		apiHeartBeat := api.Group("/heartbeat")
 		{
-			apiHeartBeat.GET("", h.GetHeartbeat, requires(permission.GetHeartbeat)) // Deprecated
-			apiHeartBeat.POST("", h.PostHeartbeat, requires(permission.PostHeartbeat))
+			apiHeartBeat.GET("", gone)
+			apiHeartBeat.POST("", gone)
 		}
 		apiChannels := api.Group("/channels")
 		{

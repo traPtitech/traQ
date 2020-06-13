@@ -4,7 +4,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/rbac/permission"
-	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/optional"
 	"time"
 )
@@ -357,27 +356,6 @@ func (h *Handlers) formatUserGroups(gs []*model.UserGroup) ([]*userGroupResponse
 		arr[i] = formatUserGroup(g)
 	}
 	return arr, nil
-}
-
-type heartbeatResponse struct {
-	UserStatuses []*heartbeatUserResponse `json:"userStatuses"`
-	ChannelID    uuid.UUID                `json:"channelId"`
-}
-
-type heartbeatUserResponse struct {
-	UserID uuid.UUID    `json:"userId"`
-	Status viewer.State `json:"status"`
-}
-
-func formatHeartbeat(cid uuid.UUID, vs viewer.UserStates) *heartbeatResponse {
-	result := &heartbeatResponse{
-		UserStatuses: make([]*heartbeatUserResponse, len(vs)),
-		ChannelID:    cid,
-	}
-	for i, s := range vs {
-		result.UserStatuses[i] = &heartbeatUserResponse{UserID: s.UserID, Status: s.State}
-	}
-	return result
 }
 
 type fileResponse struct {

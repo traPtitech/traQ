@@ -12,7 +12,6 @@ import (
 	"github.com/traPtitech/traQ/service/bot"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
-	"github.com/traPtitech/traQ/service/heartbeat"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/notification"
 	rbac2 "github.com/traPtitech/traQ/service/rbac"
@@ -31,7 +30,6 @@ func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, logger *za
 		counter.NewUnreadMessageCounter,
 		counter.NewMessageCounter,
 		counter.NewChannelCounter,
-		heartbeat.NewManager,
 		imaging.NewProcessor,
 		notification.NewService,
 		rbac2.New,

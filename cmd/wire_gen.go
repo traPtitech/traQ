@@ -14,7 +14,6 @@ import (
 	"github.com/traPtitech/traQ/service/bot"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
-	"github.com/traPtitech/traQ/service/heartbeat"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/notification"
 	"github.com/traPtitech/traQ/service/rbac"
@@ -56,11 +55,10 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 	if err != nil {
 		return nil, err
 	}
-	viewerManager := viewer.NewManager(hub2)
-	heartbeatManager := heartbeat.NewManager(viewerManager)
 	config := provideImageProcessorConfig(c2)
 	processor := imaging.NewProcessor(config)
 	streamer := sse.NewStreamer(hub2)
+	viewerManager := viewer.NewManager(hub2)
 	webrtcv3Manager := webrtcv3.NewManager(hub2)
 	wsStreamer := ws.NewStreamer(hub2, viewerManager, webrtcv3Manager, logger)
 	serverOriginString := provideServerOriginString(c2)
@@ -77,7 +75,6 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 		MessageCounter:       messageCounter,
 		ChannelCounter:       channelCounter,
 		FCM:                  client,
-		HeartBeats:           heartbeatManager,
 		Imaging:              processor,
 		Notification:         notificationService,
 		RBAC:                 rbacRBAC,
