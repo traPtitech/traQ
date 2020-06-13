@@ -19,7 +19,6 @@ import (
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
-	"github.com/traPtitech/traQ/service/sse"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
@@ -42,7 +41,6 @@ func init() {
 type Handlers struct {
 	RBAC           rbac.RBAC
 	Repo           repository.Repository
-	SSE            *sse.Streamer
 	Hub            *hub.Hub
 	Logger         *zap.Logger
 	OC             *counter.OnlineCounter
@@ -193,7 +191,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiNotification := api.Group("/notification", blockBot)
 		{
-			apiNotification.GET("", echo.WrapHandler(h.SSE), requires(permission.ConnectNotificationStream))
+			apiNotification.GET("", gone)
 			apiNotification.POST("/device", h.PostDeviceToken, requires(permission.RegisterFCMDevice))
 		}
 		apiMessages := api.Group("/messages")

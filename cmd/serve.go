@@ -180,10 +180,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	eg.Go(func() error { return s.SS.WS.Close() })
 	eg.Go(func() error { return s.SS.BOT.Shutdown(ctx) })
 	eg.Go(func() error {
-		s.SS.SSE.Dispose()
-		return nil
-	})
-	eg.Go(func() error {
 		s.SS.FCM.Close()
 		return nil
 	})

@@ -26,7 +26,6 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 	echo := newEcho(logger, config, repo, manager)
 	store := session.NewGormStore(db)
 	rbac := ss.RBAC
-	streamer := ss.SSE
 	onlineCounter := ss.OnlineCounter
 	viewerManager := ss.ViewerManager
 	processor := ss.Imaging
@@ -35,7 +34,6 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 	handlers := &v1.Handlers{
 		RBAC:           rbac,
 		Repo:           repo,
-		SSE:            streamer,
 		Hub:            hub2,
 		Logger:         logger,
 		OC:             onlineCounter,
@@ -45,13 +43,13 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 		ChannelManager: manager,
 		Replacer:       replacer,
 	}
-	wsStreamer := ss.WS
+	streamer := ss.WS
 	webrtcv3Manager := ss.WebRTCv3
 	v3Config := provideV3Config(config)
 	v3Handlers := &v3.Handlers{
 		RBAC:           rbac,
 		Repo:           repo,
-		WS:             wsStreamer,
+		WS:             streamer,
 		Hub:            hub2,
 		Logger:         logger,
 		OC:             onlineCounter,
