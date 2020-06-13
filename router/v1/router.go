@@ -16,11 +16,9 @@ import (
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
-	"github.com/traPtitech/traQ/service/heartbeat"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
-	"github.com/traPtitech/traQ/service/sse"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
@@ -43,12 +41,10 @@ func init() {
 type Handlers struct {
 	RBAC           rbac.RBAC
 	Repo           repository.Repository
-	SSE            *sse.Streamer
 	Hub            *hub.Hub
 	Logger         *zap.Logger
 	OC             *counter.OnlineCounter
 	VM             *viewer.Manager
-	HeartBeats     *heartbeat.Manager
 	Imaging        imaging2.Processor
 	SessStore      session.Store
 	ChannelManager channel.Manager
@@ -147,10 +143,10 @@ func (h *Handlers) Setup(e *echo.Group) {
 				}
 			}
 		}
-		apiHeartBeat := api.Group("/heartbeat", blockBot)
+		apiHeartBeat := api.Group("/heartbeat")
 		{
-			apiHeartBeat.GET("", h.GetHeartbeat, requires(permission.GetHeartbeat)) // Deprecated
-			apiHeartBeat.POST("", h.PostHeartbeat, requires(permission.PostHeartbeat))
+			apiHeartBeat.GET("", gone)
+			apiHeartBeat.POST("", gone)
 		}
 		apiChannels := api.Group("/channels")
 		{
@@ -195,7 +191,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiNotification := api.Group("/notification", blockBot)
 		{
-			apiNotification.GET("", echo.WrapHandler(h.SSE), requires(permission.ConnectNotificationStream))
+			apiNotification.GET("", gone)
 			apiNotification.POST("/device", h.PostDeviceToken, requires(permission.RegisterFCMDevice))
 		}
 		apiMessages := api.Group("/messages")

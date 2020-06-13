@@ -79,9 +79,6 @@ var List = []Permission{
 	DownloadFile,
 	DeleteFile,
 
-	GetHeartbeat,
-	PostHeartbeat,
-
 	GetMessage,
 	PostMessage,
 	EditMessage,
