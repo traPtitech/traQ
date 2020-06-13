@@ -546,20 +546,3 @@ func formatStampPalettes(cfs []*model.StampPalette) []*StampPalette {
 	}
 	return res
 }
-
-type OgpMedia struct {
-	URL       string          `json:"url"`
-	SecureURL optional.String `json:"secureUrl"`
-	Type      optional.String `json:"type"`
-	Width     optional.Int    `json:"width"`
-	Height    optional.Int    `json:"height"`
-}
-
-type Ogp struct {
-	Type        string     `json:"type"`
-	Title       string     `json:"title"`
-	URL         string     `json:"url"`
-	Images      []OgpMedia `json:"image"`
-	Description string     `json:"description"`
-	Videos      []OgpMedia `json:"video"`
-}

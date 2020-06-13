@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-const testHtml =`
+const testHtml = `
 <html>
 	<head>
 		<meta property="og:type" content="article" />
@@ -19,7 +19,7 @@ const testHtml =`
 </html>
 `
 
-const testHtmlWithoutOgp =`
+const testHtmlWithoutOgp = `
 <html>
 	<head>
 		<meta property="og:type" content="article" />
@@ -32,7 +32,7 @@ const testHtmlWithoutOgp =`
 </html>
 `
 
-const testHtmlOgpTagInBody =`
+const testHtmlOgpTagInBody = `
 <html>
 	<head>
 		<title>TITLE</title>
@@ -44,17 +44,17 @@ const testHtmlOgpTagInBody =`
 `
 
 func TestParseDoc(t *testing.T) {
-	t.Run("correct OGP", func (t *testing.T) {
+	t.Run("correct OGP", func(t *testing.T) {
 		doc, _ := html.Parse(strings.NewReader(testHtml))
-		og, _ := ParseDoc(doc)
+		og, _ := parseDoc(doc)
 
 		assert.Equal(t, "TITLE", og.Title)
 		assert.Equal(t, "https://example.com", og.URL)
 		assert.Equal(t, "/image.png", og.Images[0].URL)
 	})
-	t.Run("incorrect OGP", func (t *testing.T) {
+	t.Run("incorrect OGP", func(t *testing.T) {
 		doc, _ := html.Parse(strings.NewReader(testHtmlWithoutOgp))
-		og, meta := ParseDoc(doc)
+		og, meta := parseDoc(doc)
 
 		assert.Equal(t, "", og.Title)
 		assert.Equal(t, "", og.URL)
@@ -63,9 +63,9 @@ func TestParseDoc(t *testing.T) {
 		assert.Equal(t, "/image.png", meta.Image)
 		assert.Equal(t, "https://example.com", meta.Url)
 	})
-	t.Run("OGP tag in body", func (t *testing.T) {
+	t.Run("OGP tag in body", func(t *testing.T) {
 		doc, _ := html.Parse(strings.NewReader(testHtmlOgpTagInBody))
-		og, meta := ParseDoc(doc)
+		og, meta := parseDoc(doc)
 
 		assert.Equal(t, "article", og.Type)
 		assert.Equal(t, "TITLE", meta.Title)
@@ -73,21 +73,21 @@ func TestParseDoc(t *testing.T) {
 }
 
 func TestExtractTitleFromNode(t *testing.T) {
-	t.Run("Correct title node", func (t *testing.T) {
+	t.Run("Correct title node", func(t *testing.T) {
 		const h = "<title>TITLE</title>"
 		n, _ := html.Parse(strings.NewReader(h))
 		result := extractTitleFromNode(n.FirstChild.FirstChild.FirstChild)
 
 		assert.Equal(t, "TITLE", result)
 	})
-	t.Run("Incorrect title node (no content)", func (t *testing.T) {
+	t.Run("Incorrect title node (no content)", func(t *testing.T) {
 		const h = "<title></title>"
 		n, _ := html.Parse(strings.NewReader(h))
 		result := extractTitleFromNode(n.FirstChild.FirstChild.FirstChild)
 
 		assert.Equal(t, "", result)
 	})
-	t.Run("Not a title node", func (t *testing.T) {
+	t.Run("Not a title node", func(t *testing.T) {
 		const h = `<meta content="DESCRIPTION" name="description">`
 		n, _ := html.Parse(strings.NewReader(h))
 		result := extractTitleFromNode(n.FirstChild.FirstChild.FirstChild)

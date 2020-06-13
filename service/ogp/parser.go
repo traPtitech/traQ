@@ -3,10 +3,51 @@ package ogp
 import (
 	"github.com/dyatlov/go-opengraph/opengraph"
 	"golang.org/x/net/html"
+	"net/http"
+	"net/url"
 )
 
 type DefaultPageMeta struct {
 	Title, Description, Url, Image string
+}
+
+// ParseMetaForUrl 指定したURLのメタタグをパースした結果を返します。
+func ParseMetaForUrl(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, error) {
+	resp, err := http.Get(url.String())
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	doc, err := html.Parse(resp.Body)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	og, meta := parseDoc(doc)
+	return og, meta, nil
+}
+
+// parseDoc html全体をパース
+func parseDoc(doc *html.Node) (*opengraph.OpenGraph, *DefaultPageMeta) {
+	og := opengraph.NewOpenGraph()
+	meta := DefaultPageMeta{}
+	parseNode(og, &meta, doc)
+	return og, &meta
+}
+
+// parseNode ノードを深さ優先でパース
+func parseNode(og *opengraph.OpenGraph, meta *DefaultPageMeta, node *html.Node) {
+	for c := node.FirstChild; c != nil; c = c.NextSibling {
+		if c.Type == html.ElementNode && c.Data == "head" {
+			parseMetaTags(og, meta, c)
+			continue
+		} else if c.Type == html.ElementNode && c.Data == "body" {
+			parseMetaTags(og, meta, c) // YouTubeなどへの対応
+			break
+		}
+		parseNode(og, meta, c)
+	}
 }
 
 // processMeta メタタグ内の情報をパースする
@@ -23,30 +64,8 @@ func (m *DefaultPageMeta) processMeta(metaAttrs map[string]string) {
 	}
 }
 
-// ParseDoc html全体をパース
-func ParseDoc(doc *html.Node) (*opengraph.OpenGraph, *DefaultPageMeta) {
-	og := opengraph.NewOpenGraph()
-	meta := DefaultPageMeta{}
-	parseNode(og, &meta, doc)
-	return og, &meta
-}
-
-// parseNode ノードを深さ優先でパース
-func parseNode(og *opengraph.OpenGraph, meta *DefaultPageMeta, node *html.Node) {
-	for c := node.FirstChild; c != nil; c = c.NextSibling {
-		if c.Type == html.ElementNode && c.Data == "head" {
-			parseMetaTags(og, meta, c)
-			continue
-		} else if c.Type == html.ElementNode && c.Data == "body" {
-			parseMetaTags(og, meta, c)  // YouTubeなどへの対応
-			break
-		}
-		parseNode(og, meta, c)
-	}
-}
-
 // parseMetaTags metaタグを直下の子に持つタグをパース
-func parseMetaTags(og *opengraph.OpenGraph, meta *DefaultPageMeta, node *html.Node)  {
+func parseMetaTags(og *opengraph.OpenGraph, meta *DefaultPageMeta, node *html.Node) {
 	for c := node.FirstChild; c != nil; c = c.NextSibling {
 		if c.Type == html.ElementNode && c.Data == "meta" {
 			m := make(map[string]string)
@@ -70,4 +89,3 @@ func extractTitleFromNode(node *html.Node) string {
 	}
 	return ""
 }
-
