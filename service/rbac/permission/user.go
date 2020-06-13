@@ -31,10 +31,6 @@ const (
 	EditUserGroup = Permission("edit_user_group")
 	// DeleteUserGroup ユーザーグループ削除権限
 	DeleteUserGroup = Permission("delete_user_group")
-	// GetHeartbeat ハートビート取得権限
-	GetHeartbeat = Permission("get_heartbeat")
-	// PostHeartbeat ハートビート送信権限
-	PostHeartbeat = Permission("post_heartbeat")
 	// WebRTC WebRTC利用権限
 	WebRTC = Permission("web_rtc")
 	// GetMySessions セッションリスト取得権限
