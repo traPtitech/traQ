@@ -1,9 +1,11 @@
 SOURCES ?= $(shell find . -path "./vendor" -prune -o -type f -name "*.go" -print)
 
 TEST_DB_PORT := 3100
+TBLS_VERSION := 1.38.3
+SPECTRAL_VERSION := 5.4.0
 
 traQ: $(SOURCES)
-	CGO_ENABLED=0 go build
+	CGO_ENABLED=0 go build -o traQ -ldflags "-s -w -X main.version=Dev -X main.revision=Local"
 
 .PHONY: init
 init:
@@ -35,11 +37,11 @@ lint:
 
 .PHONY: golangci-lint
 golangci-lint:
-	golangci-lint run
+	@golangci-lint run
 
 .PHONY: swagger-lint
 swagger-lint:
-	@cd dev/bin && ./swagger-lint.sh
+	@docker run --rm -it -v $$PWD:/tmp stoplight/spectral:$(SPECTRAL_VERSION) lint -r /tmp/.spectral.yml -q /tmp/docs/v3-api.yaml
 
 .PHONY: db-gen-docs
 db-gen-docs:
@@ -47,17 +49,17 @@ db-gen-docs:
 		rm -r ./docs/dbschema; \
 	fi
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
-	TBLS_DSN="mysql://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" tbls doc
+	docker run --rm --net=host -e TBLS_DSN="mysql://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work k1low/tbls:$(TBLS_VERSION) doc
 
 .PHONY: db-diff-docs
 db-diff-docs:
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
-	TBLS_DSN="mysql://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" tbls diff
+	docker run --rm --net=host -e TBLS_DSN="mysql://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work k1low/tbls:$(TBLS_VERSION) diff
 
 .PHONY: db-lint
 db-lint:
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
-	TBLS_DSN="mysql://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" tbls lint
+	docker run --rm --net=host -e TBLS_DSN="mysql://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work k1low/tbls:$(TBLS_VERSION) lint
 
 .PHONY: goreleaser-snapshot
 goreleaser-snapshot:
