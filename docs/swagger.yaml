@@ -1280,13 +1280,10 @@ paths:
       tags:
         - notification
       operationId: connectNotification
-      description: 通知ストリーム(Server Sent Events)に接続します。
-      security:
-        - traqOAuth2:
-            - read
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 接続が完了しました。
+        '410':
+          description: このAPIは削除されました
   /notification/device:
     post:
       tags:
