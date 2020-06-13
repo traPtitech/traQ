@@ -86,16 +86,15 @@ func parseSpoiler(tokens []spoilerToken) []spoilerToken {
 					start = i
 					state = 1
 				} else {
-					// start から start + len(contents) + 1 までを入れ替える
 					clength := 0
-					for _, t := range tokens {
+					for _, t := range contents {
 						clength += len(t.body)
 					}
 
 					new := make([]spoilerToken, len(tokens))
 					copy(new, tokens)
 					new = append(new[:start], spoilerToken{tType: "C", body: strings.Repeat("*", clength)})
-					new = append(new, tokens[start+len(contents)+1:]...)
+					new = append(new, tokens[start+len(contents)+2:]...)
 					tokens = new
 
 					contents = []spoilerToken{}
@@ -113,7 +112,15 @@ func parseSpoiler(tokens []spoilerToken) []spoilerToken {
 	return tokens
 }
 
+func tokensToString(tokens []spoilerToken) string {
+	result := ""
+	for _, v := range tokens {
+		result += v.body
+	}
+	return result
+}
+
 // FillSpoiler メッセージのSpoilerをパースし、塗りつぶします
 func FillSpoiler(m string) string {
-	return "todo"
+	return tokensToString(parseSpoiler(tokenizeSpoiler(m)))
 }
