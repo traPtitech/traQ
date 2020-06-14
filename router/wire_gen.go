@@ -29,6 +29,7 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 	onlineCounter := ss.OnlineCounter
 	viewerManager := ss.ViewerManager
 	processor := ss.Imaging
+	fileManager := ss.FileManager
 	replaceMapper := utils.NewReplaceMapper(repo, manager)
 	replacer := message.NewReplacer(replaceMapper)
 	handlers := &v1.Handlers{
@@ -41,6 +42,7 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 		Imaging:        processor,
 		SessStore:      store,
 		ChannelManager: manager,
+		FileManager:    fileManager,
 		Replacer:       replacer,
 	}
 	streamer := ss.WS
@@ -58,6 +60,7 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 		Imaging:        processor,
 		SessStore:      store,
 		ChannelManager: manager,
+		FileManager:    fileManager,
 		Replacer:       replacer,
 		Config:         v3Config,
 	}

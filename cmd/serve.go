@@ -8,7 +8,6 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
 	"github.com/traPtitech/traQ/event"
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/utils/gormzap"
@@ -66,7 +65,7 @@ func serveCommand() *cobra.Command {
 
 			// Repository
 			logger.Info("setting up repository...")
-			repo, err := repository.NewGormRepository(engine, fs, hub, logger)
+			repo, err := repository.NewGormRepository(engine, hub, logger)
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}
@@ -79,31 +78,6 @@ func serveCommand() *cobra.Command {
 				logger.Fatal("failed to sync repository", zap.Error(err))
 			}
 			logger.Info("repository was synced")
-
-			// 初期化
-			if init {
-				logger.Info("data initializing...")
-
-				// generalチャンネル作成
-				if ch, err := repo.CreateChannel(model.Channel{
-					Name:      "general",
-					IsForced:  false,
-					IsVisible: true,
-				}, nil, false); err == nil {
-					logger.Info("#general was created", zap.Stringer("cid", ch.ID))
-				} else {
-					logger.Error("failed to init general channel", zap.Error(err))
-				}
-
-				// unicodeスタンプインストール
-				if !skipInitEmojis {
-					if err := installEmojis(repo, logger, false); err != nil {
-						logger.Error("failed to install unicode emojis", zap.Error(err))
-					}
-				}
-
-				logger.Info("data initialization finished")
-			}
 
 			// JWT for QRCode
 			if priv := c.JWT.Keys.Private; priv != "" {
@@ -122,9 +96,30 @@ func serveCommand() *cobra.Command {
 			}
 
 			// サーバー作成
-			server, err := newServer(hub, engine, repo, logger, c)
+			server, err := newServer(hub, engine, repo, fs, logger, c)
 			if err != nil {
 				logger.Fatal("failed to create server", zap.Error(err))
+			}
+
+			// 初期化
+			if init {
+				logger.Info("data initializing...")
+
+				// generalチャンネル作成
+				if ch, err := server.SS.ChannelManager.CreatePublicChannel("general", uuid.Nil, uuid.Nil); err == nil {
+					logger.Info("#general was created", zap.Stringer("cid", ch.ID))
+				} else {
+					logger.Error("failed to init general channel", zap.Error(err))
+				}
+
+				// unicodeスタンプインストール
+				if !skipInitEmojis {
+					if err := installEmojis(repo, server.SS.FileManager, logger, false); err != nil {
+						logger.Error("failed to install unicode emojis", zap.Error(err))
+					}
+				}
+
+				logger.Info("data initialization finished")
 			}
 
 			go func() {

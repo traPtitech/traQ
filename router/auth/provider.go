@@ -11,8 +11,8 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/role"
-	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
@@ -84,7 +84,7 @@ func defaultLoginHandler(sessStore session.Store, oac *oauth2.Config) echo.Handl
 	}
 }
 
-func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repository, sessStore session.Store, allowSignUp bool) echo.HandlerFunc {
+func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repository, fm file.Manager, sessStore session.Store, allowSignUp bool) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		if len(c.Request().Header.Get(echo.HeaderAuthorization)) > 0 {
 			return herror.BadRequest("Authorization Header must not be set.")
@@ -196,10 +196,17 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 			}
 
 			if b, err := tu.GetProfileImage(); err == nil && b != nil {
-				fid, err := processProfileIcon(repo, b)
+				fid, err := processProfileIcon(fm, b)
 				if err == nil {
-					args.IconFileID = optional.UUIDFrom(fid)
+					args.IconFileID = fid
 				}
+			}
+			if args.IconFileID == uuid.Nil {
+				fid, err := file.GenerateIconFile(fm, tu.GetName())
+				if err != nil {
+					return herror.InternalServerError(err)
+				}
+				args.IconFileID = fid
 			}
 
 			user, err = repo.CreateUser(args)
@@ -236,7 +243,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 	}
 }
 
-func processProfileIcon(repo repository.Repository, src []byte) (uuid.UUID, error) {
+func processProfileIcon(m file.Manager, src []byte) (uuid.UUID, error) {
 	const maxImageSize = 256
 
 	// デコード
@@ -255,7 +262,7 @@ func processProfileIcon(repo repository.Repository, src []byte) (uuid.UUID, erro
 	_ = png.Encode(b, img)
 
 	// ファイル保存
-	f, err := repo.SaveFile(repository.SaveFileArgs{
+	f, err := m.Save(file.SaveArgs{
 		FileName:  "icon",
 		FileSize:  int64(b.Len()),
 		MimeType:  consts.MimeImagePNG,

@@ -1,21 +1,16 @@
 package testutils
 
 import (
-	"context"
-	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
 	"github.com/traPtitech/traQ/utils/optional"
 	random2 "github.com/traPtitech/traQ/utils/random"
-	"image"
-	"io"
 	"math"
 	"sort"
 	"sync"
 	"time"
 	"unicode/utf8"
 
-	"github.com/disintegration/imaging"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -25,11 +20,9 @@ import (
 	"github.com/traPtitech/traQ/utils/set"
 	"github.com/traPtitech/traQ/utils/storage"
 	"github.com/traPtitech/traQ/utils/validator"
-	"golang.org/x/sync/errgroup"
 )
 
 type TestRepository struct {
-	FS                        storage.FileStorage
 	Users                     map[uuid.UUID]model.User
 	UsersLock                 sync.RWMutex
 	UserGroups                map[uuid.UUID]model.UserGroup
@@ -149,7 +142,6 @@ func (repo *TestRepository) ExistStamps([]uuid.UUID) (err error) {
 
 func NewTestRepository() *TestRepository {
 	r := &TestRepository{
-		FS:                    storage.NewInMemoryFileStorage(),
 		Users:                 map[uuid.UUID]model.User{},
 		UserGroups:            map[uuid.UUID]model.UserGroup{},
 		UserGroupMembers:      map[uuid.UUID]map[uuid.UUID]bool{},
@@ -183,6 +175,7 @@ func (repo *TestRepository) CreateUser(args repository.CreateUserArgs) (model.Us
 		ID:          uid,
 		Name:        args.Name,
 		DisplayName: args.DisplayName,
+		Icon:        args.IconFileID,
 		Status:      model.UserAccountStatusActive,
 		Bot:         false,
 		Role:        args.Role,
@@ -198,16 +191,6 @@ func (repo *TestRepository) CreateUser(args repository.CreateUserArgs) (model.Us
 		salt := random2.Salt()
 		user.Password = hex.EncodeToString(utils.HashPassword(args.Password, salt))
 		user.Salt = hex.EncodeToString(salt)
-	}
-
-	if args.IconFileID.Valid {
-		user.Icon = args.IconFileID.UUID
-	} else {
-		iconID, err := repository.GenerateIconFile(repo, user.Name)
-		if err != nil {
-			return nil, err
-		}
-		user.Icon = iconID
 	}
 
 	if args.ExternalLogin != nil {
@@ -1349,7 +1332,7 @@ func (repo *TestRepository) GetDeviceTokens(set.UUID) (tokens map[uuid.UUID][]st
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (model.File, error) {
+func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (*model.FileMeta, error) {
 	if fileID == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
@@ -1359,100 +1342,38 @@ func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (model.File, error) {
 	if !ok {
 		return nil, repository.ErrNotFound
 	}
-	return &fileMetaImpl{meta: &meta, fs: repo.FS}, nil
+	return &meta, nil
 }
 
-func (repo *TestRepository) DeleteFile(fileID uuid.UUID) error {
+func (repo *TestRepository) DeleteFileMeta(fileID uuid.UUID) error {
 	if fileID == uuid.Nil {
 		return repository.ErrNilID
 	}
 	repo.FilesLock.Lock()
 	defer repo.FilesLock.Unlock()
-	meta, ok := repo.Files[fileID]
-	if !ok {
-		return repository.ErrNotFound
-	}
 	delete(repo.Files, fileID)
-	return repo.FS.DeleteByKey(meta.ID.String(), meta.Type)
+	return nil
 }
 
-func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (model.File, error) {
-	if err := args.Validate(); err != nil {
-		return nil, err
-	}
-
-	f := &model.FileMeta{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      args.FileName,
-		Size:      args.FileSize,
-		Mime:      args.MimeType,
-		Type:      args.FileType,
-		CreatorID: args.CreatorID,
-		ChannelID: args.ChannelID,
-		CreatedAt: time.Now(),
-	}
-
-	eg, _ := errgroup.WithContext(context.Background())
-
-	fileSrc, fileWriter := io.Pipe()
-	thumbSrc, thumbWriter := io.Pipe()
-	hash := md5.New()
-
-	go func() {
-		defer fileWriter.Close()
-		defer thumbWriter.Close()
-		_, _ = io.Copy(ioext.MultiWriter(fileWriter, hash, thumbWriter), args.Src) // 並列化してるけど、pipeじゃなくてbuffer使わないとpipeがブロックしてて意味無い疑惑
-	}()
-
-	// fileの保存
-	eg.Go(func() error {
-		defer fileSrc.Close()
-		if err := repo.FS.SaveByKey(fileSrc, f.ID.String(), f.Name, f.Mime, f.Type); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	// サムネイルの生成
-	eg.Go(func() error {
-		// アップロードされたファイルの拡張子が間違えてたり、変なの送ってきた場合
-		// サムネイルを生成しないだけで全体のエラーにはしない
-		defer thumbSrc.Close()
-		size, _ := repo.generateThumbnail(f, thumbSrc)
-		if !size.Empty() {
-			f.HasThumbnail = true
-			f.ThumbnailMime = optional.StringFrom("image/png")
-			f.ThumbnailWidth = size.Size().X
-			f.ThumbnailHeight = size.Size().Y
-		}
-		return nil
-	})
-
-	if err := eg.Wait(); err != nil {
-		return nil, err
-	}
-
-	f.Hash = hex.EncodeToString(hash.Sum(nil))
+func (repo *TestRepository) SaveFileMeta(meta *model.FileMeta, acl []*model.FileACLEntry) error {
 	repo.FilesLock.Lock()
 	repo.FilesACLLock.Lock()
-	repo.Files[f.ID] = *f
-	repo.FilesACL[f.ID] = args.ACL
+	meta.CreatedAt = time.Now()
+	repo.Files[meta.ID] = *meta
+	acls := repo.FilesACL[meta.ID]
+	if acls == nil {
+		acls = map[uuid.UUID]bool{}
+		repo.FilesACL[meta.ID] = acls
+	}
+	for _, entry := range acl {
+		acls[entry.UserID.UUID] = entry.Allow.Bool
+	}
 	repo.FilesACLLock.Unlock()
 	repo.FilesLock.Unlock()
-	return &fileMetaImpl{meta: f, fs: repo.FS}, nil
+	return nil
 }
 
 func (repo *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, error) {
-	if fileID == uuid.Nil {
-		return false, repository.ErrNilID
-	}
-	repo.FilesLock.RLock()
-	_, ok := repo.Files[fileID]
-	repo.FilesLock.RUnlock()
-	if !ok {
-		return false, repository.ErrNotFound
-	}
-
 	var allow bool
 	repo.FilesACLLock.RLock()
 	defer repo.FilesACLLock.RUnlock()
@@ -1468,43 +1389,17 @@ func (repo *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 	return allow, nil
 }
 
-func (repo *TestRepository) generateThumbnail(f *model.FileMeta, src io.Reader) (image.Rectangle, error) {
-	orig, err := imaging.Decode(src, imaging.AutoOrientation(true))
-	if err != nil {
-		return image.Rectangle{}, err
-	}
-
-	img := imaging.Fit(orig, 360, 480, imaging.Linear)
-
-	r, w := io.Pipe()
-	go func() {
-		_ = imaging.Encode(w, img, imaging.PNG)
-		_ = w.Close()
-	}()
-
-	key := f.ID.String() + "-thumb"
-	if err := repo.FS.SaveByKey(r, key, key+".png", "image/png", model.FileTypeThumbnail); err != nil {
-		return image.Rectangle{}, err
-	}
-	return img.Bounds(), nil
-}
-
-func (repo *TestRepository) CreateWebhook(name, description string, channelID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
+func (repo *TestRepository) CreateWebhook(name, description string, channelID, iconFileID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
 		return nil, repository.ArgError("name", "Name must be non-empty and shorter than 33 characters")
 	}
 	uid := uuid.Must(uuid.NewV4())
 	bid := uuid.Must(uuid.NewV4())
-	iconID, err := repository.GenerateIconFile(repo, name)
-	if err != nil {
-		return nil, err
-	}
-
 	u := model.User{
 		ID:          uid,
 		Name:        "Webhook#" + base64.RawStdEncoding.EncodeToString(uid.Bytes()),
 		DisplayName: name,
-		Icon:        iconID,
+		Icon:        iconFileID,
 		Bot:         true,
 		Status:      model.UserAccountStatusActive,
 		Role:        role.Bot,
@@ -1765,7 +1660,7 @@ func (repo *TestRepository) DeleteTokenByClient(string) error {
 	panic("implement me")
 }
 
-func (repo *TestRepository) CreateBot(string, string, string, uuid.UUID, string) (*model.Bot, error) {
+func (repo *TestRepository) CreateBot(string, string, string, uuid.UUID, uuid.UUID, string) (*model.Bot, error) {
 	panic("implement me")
 }
 
@@ -1910,6 +1805,6 @@ func (f *fileMetaImpl) GetAlternativeURL() string {
 	return url
 }
 
-func (repo *TestRepository) GetFiles(repository.FilesQuery) (result []model.File, more bool, err error) {
+func (repo *TestRepository) GetFileMetas(repository.FilesQuery) (result []*model.FileMeta, more bool, err error) {
 	panic("implement me")
 }

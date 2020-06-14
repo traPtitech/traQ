@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strconv"
@@ -69,7 +70,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 		q.ChannelID = optional.UUIDFrom(req.ChannelID)
 	}
 
-	files, more, err := h.Repo.GetFiles(q)
+	files, more, err := h.FileManager.List(q)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -91,7 +92,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 		return herror.BadRequest("non-empty file is required")
 	}
 
-	args := repository.SaveFileArgs{
+	args := file.SaveArgs{
 		FileName:  uploadedFile.Filename,
 		FileSize:  uploadedFile.Size,
 		MimeType:  uploadedFile.Header.Get(echo.HeaderContentType),
@@ -136,7 +137,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	if _, err := src.Seek(0, 0); err != nil {
 		return herror.InternalServerError(err)
 	}
-	file, err := h.Repo.SaveFile(args)
+	file, err := h.FileManager.Save(args)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -161,18 +162,17 @@ func (h *Handlers) GetFile(c echo.Context) error {
 
 // DeleteFile DELETE /files/:fileID
 func (h *Handlers) DeleteFile(c echo.Context) error {
-	userID := getRequestUserID(c)
 	f := getParamFile(c)
 
 	if !f.GetCreatorID().Valid || f.GetFileType() != model.FileTypeUserFile {
 		return herror.Forbidden()
 	}
 
-	if f.GetCreatorID().UUID != userID { // TODO 管理者権限
+	if f.GetCreatorID().UUID != getRequestUserID(c) { // TODO 管理者権限
 		return herror.Forbidden()
 	}
 
-	if err := h.Repo.DeleteFile(f.GetID()); err != nil {
+	if err := h.FileManager.Delete(f.GetID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 

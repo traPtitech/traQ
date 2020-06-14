@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/file"
 	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"
 	"golang.org/x/oauth2"
@@ -25,6 +26,7 @@ const (
 type GithubProvider struct {
 	config    GithubProviderConfig
 	repo      repository.Repository
+	fm        file.Manager
 	logger    *zap.Logger
 	sessStore session.Store
 	oa2       oauth2.Config
@@ -100,9 +102,10 @@ func (u *githubUserInfo) IsLoginAllowedUser() bool {
 	return true // TODO
 }
 
-func NewGithubProvider(repo repository.Repository, logger *zap.Logger, sessStore session.Store, config GithubProviderConfig) *GithubProvider {
+func NewGithubProvider(repo repository.Repository, fm file.Manager, logger *zap.Logger, sessStore session.Store, config GithubProviderConfig) *GithubProvider {
 	return &GithubProvider{
 		repo:      repo,
+		fm:        fm,
 		config:    config,
 		logger:    logger,
 		sessStore: sessStore,
@@ -120,7 +123,7 @@ func (p *GithubProvider) LoginHandler(c echo.Context) error {
 }
 
 func (p *GithubProvider) CallbackHandler(c echo.Context) error {
-	return defaultCallbackHandler(p, &p.oa2, p.repo, p.sessStore, p.config.RegisterUserIfNotFound)(c)
+	return defaultCallbackHandler(p, &p.oa2, p.repo, p.fm, p.sessStore, p.config.RegisterUserIfNotFound)(c)
 }
 
 func (p *GithubProvider) FetchUserInfo(t *oauth2.Token) (UserInfo, error) {

@@ -44,22 +44,22 @@ func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Se
 	// 外部authハンドラ
 	extAuth := api.Group("/auth")
 	if config.ExternalAuth.GitHub.Valid() {
-		p := auth.NewGithubProvider(repo, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.GitHub)
+		p := auth.NewGithubProvider(repo, ss.FileManager, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.GitHub)
 		extAuth.GET("/github", p.LoginHandler)
 		extAuth.GET("/github/callback", p.CallbackHandler)
 	}
 	if config.ExternalAuth.Google.Valid() {
-		p := auth.NewGoogleProvider(repo, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.Google)
+		p := auth.NewGoogleProvider(repo, ss.FileManager, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.Google)
 		extAuth.GET("/google", p.LoginHandler)
 		extAuth.GET("/google/callback", p.CallbackHandler)
 	}
 	if config.ExternalAuth.TraQ.Valid() {
-		p := auth.NewTraQProvider(repo, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.TraQ)
+		p := auth.NewTraQProvider(repo, ss.FileManager, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.TraQ)
 		extAuth.GET("/traq", p.LoginHandler)
 		extAuth.GET("/traq/callback", p.CallbackHandler)
 	}
 	if config.ExternalAuth.OIDC.Valid() {
-		p, err := auth.NewOIDCProvider(repo, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.OIDC)
+		p, err := auth.NewOIDCProvider(repo, ss.FileManager, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.OIDC)
 		if err != nil {
 			panic(err)
 		}

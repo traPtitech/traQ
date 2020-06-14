@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/channel"
+	"github.com/traPtitech/traQ/service/file"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -14,12 +15,13 @@ import (
 type ParamRetriever struct {
 	repo         repository.Repository
 	cm           channel.Manager
+	fm           file.Manager
 	messageCache singleflight.Group
 }
 
 // NewParamRetriever ParamRetrieverを生成
-func NewParamRetriever(repo repository.Repository, cm channel.Manager) *ParamRetriever {
-	return &ParamRetriever{repo: repo, cm: cm}
+func NewParamRetriever(repo repository.Repository, cm channel.Manager, fm file.Manager) *ParamRetriever {
+	return &ParamRetriever{repo: repo, cm: cm, fm: fm}
 }
 
 func (pr *ParamRetriever) byString(param string, key string, f func(c echo.Context, v string) (interface{}, error)) echo.MiddlewareFunc {
@@ -78,6 +80,8 @@ func (pr *ParamRetriever) error(err error) error {
 			return herror.NotFound()
 		} else if err == channel.ErrChannelNotFound {
 			return herror.NotFound()
+		} else if err == file.ErrNotFound {
+			return herror.NotFound()
 		}
 		return herror.InternalServerError(err)
 	}
@@ -122,7 +126,7 @@ func (pr *ParamRetriever) ChannelID() echo.MiddlewareFunc {
 // FileID リクエストURLの`fileID`パラメータからFileを取り出す
 func (pr *ParamRetriever) FileID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamFileID, consts.KeyParamFile, func(c echo.Context, v uuid.UUID) (interface{}, error) {
-		return pr.repo.GetFileMeta(v)
+		return pr.fm.Get(v)
 	})
 }
 

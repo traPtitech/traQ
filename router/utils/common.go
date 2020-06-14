@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/file"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
@@ -16,8 +17,8 @@ import (
 )
 
 // ChangeUserIcon userIDのユーザーのアイコン画像を変更する
-func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Repository, userID uuid.UUID) error {
-	iconID, err := SaveUploadIconImage(p, c, repo, "file")
+func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Repository, m file.Manager, userID uuid.UUID) error {
+	iconID, err := SaveUploadIconImage(p, c, m, "file")
 	if err != nil {
 		return err
 	}
@@ -31,9 +32,9 @@ func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Reposi
 }
 
 // ServeUserIcon userのアイコン画像ファイルをレスポンスとして返す
-func ServeUserIcon(c echo.Context, repo repository.Repository, user model.UserInfo) error {
+func ServeUserIcon(c echo.Context, fm file.Manager, user model.UserInfo) error {
 	// ファイルメタ取得
-	meta, err := repo.GetFileMeta(user.GetIconFileID())
+	meta, err := fm.Get(user.GetIconFileID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
