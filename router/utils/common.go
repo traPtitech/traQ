@@ -66,7 +66,7 @@ func ChangeUserPassword(c echo.Context, repo repository.Repository, seStore sess
 }
 
 // ServeFileThumbnail metaのファイルのサムネイルをレスポンスとして返す
-func ServeFileThumbnail(c echo.Context, meta model.FileMeta) error {
+func ServeFileThumbnail(c echo.Context, meta model.File) error {
 	if !meta.HasThumbnail() {
 		return herror.NotFound()
 	}
@@ -84,7 +84,7 @@ func ServeFileThumbnail(c echo.Context, meta model.FileMeta) error {
 }
 
 // ServeFile metaのファイル本体をレスポンスとして返す
-func ServeFile(c echo.Context, meta model.FileMeta) error {
+func ServeFile(c echo.Context, meta model.File) error {
 	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
 	if url := meta.GetAlternativeURL(); len(url) > 0 {
 		return c.Redirect(http.StatusFound, url)

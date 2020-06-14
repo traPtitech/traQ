@@ -207,7 +207,7 @@ func (env *Env) mustMakeUser(t *testing.T, userName string) model.UserInfo {
 	return u
 }
 
-func (env *Env) mustMakeFile(t *testing.T) model.FileMeta {
+func (env *Env) mustMakeFile(t *testing.T) model.File {
 	t.Helper()
 	buf := bytes.NewBufferString("test message")
 	f, err := env.Repository.SaveFile(repository.SaveFileArgs{

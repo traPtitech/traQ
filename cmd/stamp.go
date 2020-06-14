@@ -123,7 +123,7 @@ func installEmojis(repo repository.Repository, logger *zap.Logger, update bool) 
 		return err
 	}
 
-	saveEmojiFile := func(file *zip.File) (model.FileMeta, error) {
+	saveEmojiFile := func(file *zip.File) (model.File, error) {
 		_, filename := path.Split(file.Name)
 		r, err := file.Open()
 		if err != nil {

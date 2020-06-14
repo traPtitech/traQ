@@ -54,7 +54,7 @@ type TestRepository struct {
 	MessageUnreadsLock        sync.RWMutex
 	Stars                     map[uuid.UUID]map[uuid.UUID]bool
 	StarsLock                 sync.RWMutex
-	Files                     map[uuid.UUID]model.File
+	Files                     map[uuid.UUID]model.FileMeta
 	FilesLock                 sync.RWMutex
 	FilesACL                  map[uuid.UUID]map[uuid.UUID]bool
 	FilesACLLock              sync.RWMutex
@@ -162,7 +162,7 @@ func NewTestRepository() *TestRepository {
 		Messages:              map[uuid.UUID]model.Message{},
 		MessageUnreads:        map[uuid.UUID]map[uuid.UUID]bool{},
 		Stars:                 map[uuid.UUID]map[uuid.UUID]bool{},
-		Files:                 map[uuid.UUID]model.File{},
+		Files:                 map[uuid.UUID]model.FileMeta{},
 		FilesACL:              map[uuid.UUID]map[uuid.UUID]bool{},
 		Webhooks:              map[uuid.UUID]model.WebhookBot{},
 	}
@@ -1349,7 +1349,7 @@ func (repo *TestRepository) GetDeviceTokens(set.UUID) (tokens map[uuid.UUID][]st
 	panic("implement me")
 }
 
-func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (model.FileMeta, error) {
+func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (model.File, error) {
 	if fileID == uuid.Nil {
 		return nil, repository.ErrNotFound
 	}
@@ -1376,12 +1376,12 @@ func (repo *TestRepository) DeleteFile(fileID uuid.UUID) error {
 	return repo.FS.DeleteByKey(meta.ID.String(), meta.Type)
 }
 
-func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (model.FileMeta, error) {
+func (repo *TestRepository) SaveFile(args repository.SaveFileArgs) (model.File, error) {
 	if err := args.Validate(); err != nil {
 		return nil, err
 	}
 
-	f := &model.File{
+	f := &model.FileMeta{
 		ID:        uuid.Must(uuid.NewV4()),
 		Name:      args.FileName,
 		Size:      args.FileSize,
@@ -1468,7 +1468,7 @@ func (repo *TestRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 	return allow, nil
 }
 
-func (repo *TestRepository) generateThumbnail(f *model.File, src io.Reader) (image.Rectangle, error) {
+func (repo *TestRepository) generateThumbnail(f *model.FileMeta, src io.Reader) (image.Rectangle, error) {
 	orig, err := imaging.Decode(src, imaging.AutoOrientation(true))
 	if err != nil {
 		return image.Rectangle{}, err
@@ -1838,7 +1838,7 @@ func (repo *TestRepository) GetMessageClips(uuid.UUID, uuid.UUID) ([]*model.Clip
 }
 
 type fileMetaImpl struct {
-	meta *model.File
+	meta *model.FileMeta
 	fs   storage.FileStorage
 }
 
@@ -1910,6 +1910,6 @@ func (f *fileMetaImpl) GetAlternativeURL() string {
 	return url
 }
 
-func (repo *TestRepository) GetFiles(repository.FilesQuery) (result []model.FileMeta, more bool, err error) {
+func (repo *TestRepository) GetFiles(repository.FilesQuery) (result []model.File, more bool, err error) {
 	panic("implement me")
 }

@@ -60,12 +60,12 @@ func filePruneCommand() *cobra.Command {
 
 			// 未使用アイコン・スタンプ画像ファイル列挙
 			var (
-				files []*model.File
-				tmp   []*model.File
+				files []*model.FileMeta
+				tmp   []*model.FileMeta
 			)
 			if err := db.
 				Where("id NOT IN ?", db.Table("users").Select("icon").SubQuery()).
-				Where(model.File{Type: model.FileTypeIcon}).
+				Where(model.FileMeta{Type: model.FileTypeIcon}).
 				Find(&tmp).
 				Error; err != nil {
 				logger.Fatal(err.Error())
@@ -74,7 +74,7 @@ func filePruneCommand() *cobra.Command {
 			tmp = nil
 			if err := db.
 				Where("id NOT IN ?", db.Table("stamps").Select("file_id").SubQuery()).
-				Where(model.File{Type: model.FileTypeStamp}).
+				Where(model.FileMeta{Type: model.FileTypeStamp}).
 				Find(&tmp).
 				Error; err != nil {
 				logger.Fatal(err.Error())

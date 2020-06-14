@@ -202,7 +202,7 @@ func linkFileToChannel(db *gorm.DB, logger *zap.Logger, dryRun bool, startFilePa
 	for page := startFilePage; ; page++ {
 		logger.Info(fmt.Sprintf("files_page: %d", page))
 
-		var files []*model.File
+		var files []*model.FileMeta
 		if err := db.
 			Where("type = ''").
 			Limit(1000).
@@ -227,7 +227,7 @@ func linkFileToChannel(db *gorm.DB, logger *zap.Logger, dryRun bool, startFilePa
 
 			wg.Add(1)
 			_ = s.Acquire(context.Background(), 1)
-			go func(file *model.File) {
+			go func(file *model.FileMeta) {
 				defer wg.Done()
 				defer s.Release(1)
 

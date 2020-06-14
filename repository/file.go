@@ -80,19 +80,19 @@ type FileRepository interface {
 	// 成功した場合、ファイルメタの配列を返します。負のoffset, limitは無視されます。
 	// 指定した範囲内にlimitを超えてファイルメタが存在していた場合、trueを返します。
 	// DBによるエラーを返すことがあります。
-	GetFiles(q FilesQuery) (result []model.FileMeta, more bool, err error)
+	GetFiles(q FilesQuery) (result []model.File, more bool, err error)
 	// GetFileMeta 指定したファイルのメタデータを取得します
 	//
 	// 成功した場合、メタデータとnilを返します。
 	// 存在しないファイルを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
-	GetFileMeta(fileID uuid.UUID) (model.FileMeta, error)
+	GetFileMeta(fileID uuid.UUID) (model.File, error)
 	// SaveFile ファイルを保存します
 	//
 	// mimeが指定されていない場合はnameの拡張子によって決まります。
 	// 成功した場合、メタデータとnilを返します。
 	// DB, ファイルシステムによるエラーを返すことがあります。
-	SaveFile(args SaveFileArgs) (model.FileMeta, error)
+	SaveFile(args SaveFileArgs) (model.File, error)
 	// DeleteFile 指定したファイルを削除します
 	//
 	// 成功した場合、nilを返します。ファイルデータは完全に削除されます。

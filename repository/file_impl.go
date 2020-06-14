@@ -16,7 +16,7 @@ import (
 )
 
 type fileMetaImpl struct {
-	meta *model.File
+	meta *model.FileMeta
 	fs   storage.FileStorage
 }
 
@@ -89,8 +89,8 @@ func (f *fileMetaImpl) GetAlternativeURL() string {
 }
 
 // GetFiles implements FileRepository interface.
-func (repo *GormRepository) GetFiles(q FilesQuery) (result []model.FileMeta, more bool, err error) {
-	files := make([]*model.File, 0)
+func (repo *GormRepository) GetFiles(q FilesQuery) (result []model.File, more bool, err error) {
+	files := make([]*model.FileMeta, 0)
 	tx := repo.db.Where("files.type = ?", q.Type.String())
 
 	if q.ChannelID.Valid {
@@ -146,12 +146,12 @@ func (repo *GormRepository) GetFiles(q FilesQuery) (result []model.FileMeta, mor
 }
 
 // SaveFile implements FileRepository interface.
-func (repo *GormRepository) SaveFile(args SaveFileArgs) (model.FileMeta, error) {
+func (repo *GormRepository) SaveFile(args SaveFileArgs) (model.File, error) {
 	if err := args.Validate(); err != nil {
 		return nil, err
 	}
 
-	f := &model.File{
+	f := &model.FileMeta{
 		ID:        uuid.Must(uuid.NewV4()),
 		Name:      args.FileName,
 		Size:      args.FileSize,
@@ -213,12 +213,12 @@ func (repo *GormRepository) SaveFile(args SaveFileArgs) (model.FileMeta, error) 
 }
 
 // GetFileMeta implements FileRepository interface.
-func (repo *GormRepository) GetFileMeta(fileID uuid.UUID) (model.FileMeta, error) {
+func (repo *GormRepository) GetFileMeta(fileID uuid.UUID) (model.File, error) {
 	if fileID == uuid.Nil {
 		return nil, ErrNotFound
 	}
-	f := &model.File{}
-	if err := repo.db.Take(f, &model.File{ID: fileID}).Error; err != nil {
+	f := &model.FileMeta{}
+	if err := repo.db.Take(f, &model.FileMeta{ID: fileID}).Error; err != nil {
 		return nil, convertError(err)
 	}
 	return repo.makeFileMeta(f), nil
@@ -230,9 +230,9 @@ func (repo *GormRepository) DeleteFile(fileID uuid.UUID) error {
 		return ErrNilID
 	}
 
-	var f model.File
+	var f model.FileMeta
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Take(&f, &model.File{ID: fileID}).Error; err != nil {
+		if err := tx.Take(&f, &model.FileMeta{ID: fileID}).Error; err != nil {
 			return convertError(err)
 		}
 
@@ -259,7 +259,7 @@ func (repo *GormRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 		return false, ErrNilID
 	}
 
-	if ok, err := gormutil.RecordExists(repo.db, &model.File{ID: fileID}); err != nil {
+	if ok, err := gormutil.RecordExists(repo.db, &model.FileMeta{ID: fileID}); err != nil {
 		return false, err
 	} else if !ok {
 		return false, ErrNotFound
@@ -281,12 +281,12 @@ func (repo *GormRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 	return result.Allow > 0 && result.Deny == 0, nil
 }
 
-func (repo *GormRepository) makeFileMeta(f *model.File) model.FileMeta {
+func (repo *GormRepository) makeFileMeta(f *model.FileMeta) model.File {
 	return &fileMetaImpl{meta: f, fs: repo.fs}
 }
 
-func (repo *GormRepository) makeFileMetas(fs []*model.File) []model.FileMeta {
-	result := make([]model.FileMeta, len(fs))
+func (repo *GormRepository) makeFileMetas(fs []*model.FileMeta) []model.File {
+	result := make([]model.File, len(fs))
 	for i, f := range fs {
 		result[i] = repo.makeFileMeta(f)
 	}

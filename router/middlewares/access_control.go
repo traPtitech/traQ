@@ -113,7 +113,7 @@ func CheckWebhookAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Mid
 func CheckFileAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			file := c.Get(consts.KeyParamFile).(model.FileMeta)
+			file := c.Get(consts.KeyParamFile).(model.File)
 			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
 
 			if t := file.GetFileType(); t == model.FileTypeIcon || t == model.FileTypeStamp {

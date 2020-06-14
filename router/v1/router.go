@@ -396,8 +396,8 @@ func getBotFromContext(c echo.Context) *model.Bot {
 	return c.Get(consts.KeyParamBot).(*model.Bot)
 }
 
-func getFileFromContext(c echo.Context) model.FileMeta {
-	return c.Get(consts.KeyParamFile).(model.FileMeta)
+func getFileFromContext(c echo.Context) model.File {
+	return c.Get(consts.KeyParamFile).(model.File)
 }
 
 func getClientFromContext(c echo.Context) *model.OAuth2Client {

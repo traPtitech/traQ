@@ -394,7 +394,7 @@ type FileInfo struct {
 	UploaderID optional.UUID      `json:"uploaderId"`
 }
 
-func formatFileInfo(meta model.FileMeta) *FileInfo {
+func formatFileInfo(meta model.File) *FileInfo {
 	fi := &FileInfo{
 		ID:         meta.GetID(),
 		Name:       meta.GetFileName(),
@@ -415,7 +415,7 @@ func formatFileInfo(meta model.FileMeta) *FileInfo {
 	return fi
 }
 
-func formatFileInfos(metas []model.FileMeta) []*FileInfo {
+func formatFileInfos(metas []model.File) []*FileInfo {
 	result := make([]*FileInfo, len(metas))
 	for i, meta := range metas {
 		result[i] = formatFileInfo(meta)
