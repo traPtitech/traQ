@@ -1,6 +1,7 @@
 package ogp
 
 import (
+	"fmt"
 	"github.com/dyatlov/go-opengraph/opengraph"
 	"golang.org/x/net/html"
 	"net/http"
@@ -14,17 +15,23 @@ type DefaultPageMeta struct {
 // ParseMetaForUrl 指定したURLのメタタグをパースした結果を返します。
 func ParseMetaForUrl(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, error) {
 	resp, err := http.Get(url.String())
-	defer resp.Body.Close()
 	if err != nil {
 		return nil, nil, err
 	}
+	if resp.StatusCode >= 400 {
+		return nil, nil, fmt.Errorf("failed to fetch content")
+	}
 
+	defer resp.Body.Close()
 	doc, err := html.Parse(resp.Body)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	og, meta := parseDoc(doc)
+	if len(meta.Url) == 0 {
+		meta.Url = url.String()
+	}
 	return og, meta, nil
 }
 

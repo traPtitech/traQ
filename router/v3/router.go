@@ -337,7 +337,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			}
 		}
 		api.GET("/ws", echo.WrapHandler(h.WS), requires(permission.ConnectNotificationStream), blockBot)
-		api.GET("/ogp", h.GetOgp)
+		api.GET("/ogp", h.GetOgp, blockBot)
 	}
 
 	apiNoAuth := e.Group("/v3")

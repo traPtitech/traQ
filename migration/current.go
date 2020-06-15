@@ -29,6 +29,7 @@ func Migrations() []*gormigrate.Migration {
 		v17(), // ユーザーホームチャンネル
 		v18(), // インデックス追加
 		v19(), // httpセッション管理テーブル変更
+		v20(), // OGPキャッシュ追加
 	}
 }
 
@@ -76,6 +77,7 @@ func AllTables() []interface{} {
 		&model.ClipFolder{},
 		&model.User{},
 		&model.SessionRecord{},
+		&model.OgpCache{},
 	}
 }
 
