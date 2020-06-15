@@ -15,18 +15,19 @@ func TestRepositoryImpl_CreateWebhook(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
 
+	fid := mustMakeDummyFile(t, repo).ID
 	t.Run("Invalid name", func(t *testing.T) {
 		t.Parallel()
-		_, err := repo.CreateWebhook("", "", channel.ID, user.GetID(), "")
+		_, err := repo.CreateWebhook("", "", channel.ID, fid, user.GetID(), "")
 		assert.Error(t, err)
-		_, err = repo.CreateWebhook(strings.Repeat("a", 40), "", channel.ID, user.GetID(), "")
+		_, err = repo.CreateWebhook(strings.Repeat("a", 40), "", channel.ID, fid, user.GetID(), "")
 		assert.Error(t, err)
 	})
 
 	t.Run("channel not found", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateWebhook(random2.AlphaNumeric(20), "aaa", uuid.Must(uuid.NewV4()), user.GetID(), "test")
+		_, err := repo.CreateWebhook(random2.AlphaNumeric(20), "aaa", uuid.Must(uuid.NewV4()), fid, user.GetID(), "test")
 		assert.Error(t, err)
 	})
 
@@ -34,7 +35,7 @@ func TestRepositoryImpl_CreateWebhook(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		wb, err := repo.CreateWebhook("test", "aaa", channel.ID, user.GetID(), "test")
+		wb, err := repo.CreateWebhook("test", "aaa", channel.ID, fid, user.GetID(), "test")
 		if assert.NoError(err) {
 			assert.Equal("test", wb.GetName())
 			assert.Equal("aaa", wb.GetDescription())

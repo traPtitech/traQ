@@ -22,7 +22,7 @@ type WebhookRepository interface {
 	// 成功した場合、Webhookとnilを返します。
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
-	CreateWebhook(name, description string, channelID, creatorID uuid.UUID, secret string) (model.Webhook, error)
+	CreateWebhook(name, description string, channelID, iconFileID, creatorID uuid.UUID, secret string) (model.Webhook, error)
 	// UpdateWebhook Webhookを更新します
 	//
 	// 成功した場合、nilを返します。

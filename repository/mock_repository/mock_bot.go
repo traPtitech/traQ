@@ -36,18 +36,18 @@ func (m *MockBotRepository) EXPECT() *MockBotRepositoryMockRecorder {
 }
 
 // CreateBot mocks base method
-func (m *MockBotRepository) CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
+func (m *MockBotRepository) CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateBot", name, displayName, description, creatorID, webhookURL)
+	ret := m.ctrl.Call(m, "CreateBot", name, displayName, description, iconFileID, creatorID, webhookURL)
 	ret0, _ := ret[0].(*model.Bot)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateBot indicates an expected call of CreateBot
-func (mr *MockBotRepositoryMockRecorder) CreateBot(name, displayName, description, creatorID, webhookURL interface{}) *gomock.Call {
+func (mr *MockBotRepositoryMockRecorder) CreateBot(name, displayName, description, iconFileID, creatorID, webhookURL interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBot", reflect.TypeOf((*MockBotRepository)(nil).CreateBot), name, displayName, description, creatorID, webhookURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBot", reflect.TypeOf((*MockBotRepository)(nil).CreateBot), name, displayName, description, iconFileID, creatorID, webhookURL)
 }
 
 // UpdateBot mocks base method

@@ -19,7 +19,7 @@ import (
 )
 
 // CreateBot implements BotRepository interface.
-func (repo *GormRepository) CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
+func (repo *GormRepository) CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
 	if err := vd.Validate(name, validator.BotUserNameRuleRequired...); err != nil {
 		return nil, ArgError("name", "invalid name")
 	}
@@ -41,16 +41,11 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 	uid := uuid.Must(uuid.NewV4())
 	bid := uuid.Must(uuid.NewV4())
 	tid := uuid.Must(uuid.NewV4())
-	iconID, err := GenerateIconFile(repo, name)
-	if err != nil {
-		return nil, err
-	}
-
 	u := &model.User{
 		ID:          uid,
 		Name:        "BOT_" + name,
 		DisplayName: displayName,
-		Icon:        iconID,
+		Icon:        iconFileID,
 		Bot:         true,
 		Status:      model.UserAccountStatusActive,
 		Role:        role.Bot,
@@ -82,7 +77,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 		Scopes:         scopes,
 	}
 
-	err = repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		errs := tx.Create(u).Create(u.Profile).Create(t).Create(b).GetErrors()
 		if len(errs) > 0 {
 			return errs[0]

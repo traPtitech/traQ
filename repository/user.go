@@ -12,7 +12,7 @@ type CreateUserArgs struct {
 	Name          string
 	DisplayName   string
 	Role          string
-	IconFileID    optional.UUID
+	IconFileID    uuid.UUID
 	Password      string
 	ExternalLogin *model.ExternalProviderUser
 }

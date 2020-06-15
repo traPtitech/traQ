@@ -26,7 +26,7 @@ func (h *Handlers) PostStamp(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	// スタンプ画像保存
-	fileID, err := utils.SaveUploadStampImage(h.Imaging, c, h.Repo, "file")
+	fileID, err := utils.SaveUploadStampImage(h.Imaging, c, h.FileManager, "file")
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func (h *Handlers) PatchStamp(c echo.Context) error {
 	f, _, err := c.Request().FormFile("file")
 	if err == nil {
 		f.Close()
-		fileID, err := utils.SaveUploadStampImage(h.Imaging, c, h.Repo, "file")
+		fileID, err := utils.SaveUploadStampImage(h.Imaging, c, h.FileManager, "file")
 		if err != nil {
 			return err
 		}

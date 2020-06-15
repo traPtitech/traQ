@@ -60,7 +60,7 @@ func AllTables() []interface{} {
 		&model.Device{},
 		&model.Pin{},
 		&model.FileACLEntry{},
-		&model.File{},
+		&model.FileMeta{},
 		&model.UsersPrivateChannel{},
 		&model.UserSubscribeChannel{},
 		&model.Tag{},

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/session"
+	file2 "github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strings"
@@ -22,14 +22,14 @@ func TestHandlers_GetFileByID(t *testing.T) {
 	file := env.mustMakeFile(t)
 	grantedUser := env.mustMakeUser(t, rand)
 	secureContent := "secure"
-	secureFile, err := env.Repository.SaveFile(repository.SaveFileArgs{
+	secureFile, err := env.FileManager.Save(file2.SaveArgs{
 		FileName:  "secure",
 		FileSize:  int64(len(secureContent)),
 		MimeType:  "text/plain",
 		FileType:  model.FileTypeUserFile,
 		CreatorID: optional.UUIDFrom(grantedUser.GetID()),
 		ChannelID: optional.UUID{},
-		ACL:       repository.ACL{},
+		ACL:       file2.ACL{},
 		Src:       strings.NewReader(secureContent),
 	})
 	require.NoError(err)
@@ -86,9 +86,9 @@ func TestHandlers_GetFileByID(t *testing.T) {
 
 	t.Run("Success with icon file", func(t *testing.T) {
 		t.Parallel()
-		iconFileID, err := repository.GenerateIconFile(env.Repository, "test")
+		iconFileID, err := file2.GenerateIconFile(env.FileManager, "test")
 		require.NoError(err)
-		iconFile, err := env.Repository.GetFileMeta(iconFileID)
+		iconFile, err := env.FileManager.Get(iconFileID)
 		require.NoError(err)
 
 		e := env.makeExp(t)
@@ -153,14 +153,14 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 	file := env.mustMakeFile(t)
 	grantedUser := env.mustMakeUser(t, rand)
 	secureContent := "secure"
-	secureFile, err := env.Repository.SaveFile(repository.SaveFileArgs{
+	secureFile, err := env.FileManager.Save(file2.SaveArgs{
 		FileName:  "secure",
 		FileSize:  int64(len(secureContent)),
 		MimeType:  "text/plain",
 		FileType:  model.FileTypeUserFile,
 		CreatorID: optional.UUIDFrom(grantedUser.GetID()),
 		ChannelID: optional.UUID{},
-		ACL:       repository.ACL{},
+		ACL:       file2.ACL{},
 		Src:       strings.NewReader(secureContent),
 	})
 	require.NoError(err)
@@ -202,7 +202,7 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		iconFileID, err := repository.GenerateIconFile(env.Repository, "test")
+		iconFileID, err := file2.GenerateIconFile(env.FileManager, "test")
 		require.NoError(err)
 
 		e := env.makeExp(t)

@@ -370,7 +370,7 @@ type fileResponse struct {
 	Datetime    time.Time `json:"datetime"`
 }
 
-func formatFile(f model.FileMeta) *fileResponse {
+func formatFile(f model.File) *fileResponse {
 	return &fileResponse{
 		FileID:      f.GetID(),
 		Name:        f.GetFileName(),

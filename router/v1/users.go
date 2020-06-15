@@ -4,6 +4,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/service/file"
 	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -188,22 +189,22 @@ func (h *Handlers) PutUserPassword(c echo.Context) error {
 
 // GetUserIcon GET /users/:userID/icon
 func (h *Handlers) GetUserIcon(c echo.Context) error {
-	return utils.ServeUserIcon(c, h.Repo, getUserFromContext(c))
+	return utils.ServeUserIcon(c, h.FileManager, getUserFromContext(c))
 }
 
 // GetMyIcon GET /users/me/icon
 func (h *Handlers) GetMyIcon(c echo.Context) error {
-	return utils.ServeUserIcon(c, h.Repo, getRequestUser(c))
+	return utils.ServeUserIcon(c, h.FileManager, getRequestUser(c))
 }
 
 // PutUserIcon PUT /users/:userID/icon
 func (h *Handlers) PutUserIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getRequestParamAsUUID(c, consts.ParamUserID))
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getRequestParamAsUUID(c, consts.ParamUserID))
 }
 
 // PutMyIcon PUT /users/me/icon
 func (h *Handlers) PutMyIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getRequestUserID(c))
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getRequestUserID(c))
 }
 
 // PatchMeRequest PATCH /users/me リクエストボディ
@@ -327,7 +328,12 @@ func (h *Handlers) PostUsers(c echo.Context) error {
 		return herror.Conflict("the name's user has already existed")
 	}
 
-	user, err := h.Repo.CreateUser(repository.CreateUserArgs{Name: req.Name, Password: req.Password, Role: role.User})
+	iconFileID, err := file.GenerateIconFile(h.FileManager, req.Name)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	user, err := h.Repo.CreateUser(repository.CreateUserArgs{Name: req.Name, Password: req.Password, Role: role.User, IconFileID: iconFileID})
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

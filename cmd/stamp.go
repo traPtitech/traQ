@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/optional"
 	"go.uber.org/zap"
@@ -81,12 +83,16 @@ func stampInstallEmojisCommand() *cobra.Command {
 			}
 
 			// Repository チャンネルツリー作ってないので注意
-			repo, err := repository.NewGormRepository(db, fs, hub.New(), logger)
+			repo, err := repository.NewGormRepository(db, hub.New(), logger)
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}
+			fm, err := file.InitFileManager(repo, fs, imaging.NewProcessor(provideImageProcessorConfig(c)), logger)
+			if err != nil {
+				logger.Fatal("failed to initialize file manager", zap.Error(err))
+			}
 
-			if err := installEmojis(repo, logger, update); err != nil {
+			if err := installEmojis(repo, fm, logger, update); err != nil {
 				logger.Fatal(err.Error())
 			}
 
@@ -100,7 +106,7 @@ func stampInstallEmojisCommand() *cobra.Command {
 	return &cmd
 }
 
-func installEmojis(repo repository.Repository, logger *zap.Logger, update bool) error {
+func installEmojis(repo repository.Repository, fm file.Manager, logger *zap.Logger, update bool) error {
 	// 絵文字メタデータをダウンロード
 	logger.Info("downloading meta data...: " + emojiMetaURL)
 	emojis, err := downloadEmojiMeta()
@@ -123,17 +129,17 @@ func installEmojis(repo repository.Repository, logger *zap.Logger, update bool) 
 		return err
 	}
 
-	saveEmojiFile := func(file *zip.File) (model.FileMeta, error) {
-		_, filename := path.Split(file.Name)
-		r, err := file.Open()
+	saveEmojiFile := func(f *zip.File) (model.File, error) {
+		_, filename := path.Split(f.Name)
+		r, err := f.Open()
 		if err != nil {
 			return nil, err
 		}
 		defer r.Close()
 
-		return repo.SaveFile(repository.SaveFileArgs{
+		return fm.Save(file.SaveArgs{
 			FileName: filename,
-			FileSize: file.FileInfo().Size(),
+			FileSize: f.FileInfo().Size(),
 			FileType: model.FileTypeStamp,
 			Src:      r,
 		})
