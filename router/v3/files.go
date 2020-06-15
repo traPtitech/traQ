@@ -128,9 +128,6 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	args.ChannelID = optional.UUIDFrom(channelID)
 
 	// 保存
-	if _, err := src.Seek(0, 0); err != nil {
-		return herror.InternalServerError(err)
-	}
 	file, err := h.FileManager.Save(args)
 	if err != nil {
 		return herror.InternalServerError(err)
