@@ -20,15 +20,16 @@ var (
 )
 
 type SaveArgs struct {
-	FileName  string
-	FileSize  int64
-	MimeType  string
-	FileType  model.FileType
-	CreatorID optional.UUID
-	ChannelID optional.UUID
-	ACL       ACL
-	Src       io.Reader
-	Thumbnail image.Image
+	FileName                string
+	FileSize                int64
+	MimeType                string
+	FileType                model.FileType
+	CreatorID               optional.UUID
+	ChannelID               optional.UUID
+	ACL                     ACL
+	Src                     io.Reader
+	Thumbnail               image.Image
+	SkipThumbnailGeneration bool
 }
 
 // ACL アクセスコントロールリスト

@@ -1,29 +1,34 @@
 package file
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"image/png"
 	"io"
+	"io/ioutil"
 )
 
 type managerImpl struct {
 	repo repository.FileRepository
 	fs   storage.FileStorage
+	ip   imaging.Processor
 	l    *zap.Logger
 }
 
-func InitFileManager(repo repository.FileRepository, fs storage.FileStorage, l *zap.Logger) (Manager, error) {
+func InitFileManager(repo repository.FileRepository, fs storage.FileStorage, ip imaging.Processor, l *zap.Logger) (Manager, error) {
 	return &managerImpl{
 		repo: repo,
 		fs:   fs,
+		ip:   ip,
 		l:    l.Named("file_manager"),
 	}, nil
 }
@@ -41,6 +46,35 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 		CreatorID: args.CreatorID,
 		Type:      args.FileType,
 		ChannelID: args.ChannelID,
+	}
+
+	if args.Thumbnail == nil && !args.SkipThumbnailGeneration {
+		// サムネイル画像生成
+		switch args.MimeType {
+		case "image/jpeg", "image/png", "image/gif":
+			src, ok := args.Src.(io.ReadSeeker)
+			if !ok {
+				// Seek出来ないと困るので全読み込み
+				b, err := ioutil.ReadAll(args.Src)
+				if err != nil {
+					return nil, fmt.Errorf("failed to read whole src stream: %w", err)
+				}
+				src = bytes.NewReader(b)
+				args.Src = src
+			}
+
+			thumb, err := m.ip.Thumbnail(src)
+			if err == nil {
+				args.Thumbnail = thumb
+			} else {
+				m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
+			}
+
+			// ストリームを先頭に戻す
+			if _, err := src.Seek(0, 0); err != nil {
+				return nil, fmt.Errorf("failed to seek src stream: %w", err)
+			}
+		}
 	}
 
 	if args.Thumbnail != nil {

@@ -127,12 +127,6 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	}
 	args.ChannelID = optional.UUIDFrom(channelID)
 
-	// サムネイル生成
-	switch args.MimeType {
-	case consts.MimeImageJPEG, consts.MimeImagePNG, consts.MimeImageGIF:
-		args.Thumbnail, _ = h.Imaging.Thumbnail(src)
-	}
-
 	// 保存
 	if _, err := src.Seek(0, 0); err != nil {
 		return herror.InternalServerError(err)

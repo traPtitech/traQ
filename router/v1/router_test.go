@@ -71,7 +71,13 @@ func TestMain(m *testing.M) {
 		env.SessStore = session.NewMemorySessionStore()
 		env.RBAC = testutils.NewTestRBAC()
 		env.ChannelManager, _ = channel.InitChannelManager(env.Repository, zap.NewNop())
-		env.FileManager, _ = file.InitFileManager(env.Repository, storage.NewInMemoryFileStorage(), zap.NewNop())
+		env.ImageProcessor = imaging.NewProcessor(imaging.Config{
+			MaxPixels:        1000 * 1000,
+			Concurrency:      1,
+			ThumbnailMaxSize: image.Pt(360, 480),
+			ImageMagickPath:  "",
+		})
+		env.FileManager, _ = file.InitFileManager(env.Repository, storage.NewInMemoryFileStorage(), env.ImageProcessor, zap.NewNop())
 
 		e := echo.New()
 		e.HideBanner = true
@@ -89,12 +95,7 @@ func TestMain(m *testing.M) {
 			ChannelManager: env.ChannelManager,
 			FileManager:    env.FileManager,
 			SessStore:      env.SessStore,
-			Imaging: imaging.NewProcessor(imaging.Config{
-				MaxPixels:        1000 * 1000,
-				Concurrency:      1,
-				ThumbnailMaxSize: image.Pt(360, 480),
-				ImageMagickPath:  "",
-			}),
+			Imaging:        env.ImageProcessor,
 		}
 		handlers.Setup(e.Group("/api"))
 		env.Server = httptest.NewServer(e)
@@ -118,6 +119,7 @@ type Env struct {
 	RBAC           rbac.RBAC
 	ChannelManager channel.Manager
 	FileManager    file.Manager
+	ImageProcessor imaging.Processor
 }
 
 func setup(t *testing.T, server string) (*Env, *assert.Assertions, *require.Assertions, string, string) {

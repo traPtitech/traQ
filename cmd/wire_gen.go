@@ -56,12 +56,12 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 	if err != nil {
 		return nil, err
 	}
-	fileManager, err := file.InitFileManager(repo, fs, logger)
+	config := provideImageProcessorConfig(c2)
+	processor := imaging.NewProcessor(config)
+	fileManager, err := file.InitFileManager(repo, fs, processor, logger)
 	if err != nil {
 		return nil, err
 	}
-	config := provideImageProcessorConfig(c2)
-	processor := imaging.NewProcessor(config)
 	viewerManager := viewer.NewManager(hub2)
 	webrtcv3Manager := webrtcv3.NewManager(hub2)
 	streamer := ws.NewStreamer(hub2, viewerManager, webrtcv3Manager, logger)

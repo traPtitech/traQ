@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/optional"
 	"go.uber.org/zap"
@@ -86,7 +87,7 @@ func stampInstallEmojisCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}
-			fm, err := file.InitFileManager(repo, fs, logger)
+			fm, err := file.InitFileManager(repo, fs, imaging.NewProcessor(provideImageProcessorConfig(c)), logger)
 			if err != nil {
 				logger.Fatal("failed to initialize file manager", zap.Error(err))
 			}
