@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-var mockErr = errors.New("mock error")
+var errMock = errors.New("mock error")
 
 func initFM(t *testing.T, repo repository.FileRepository, fs storage.FileStorage, ip imaging.Processor) *managerImpl {
 	return &managerImpl{
@@ -83,12 +83,12 @@ func TestManagerImpl_Get(t *testing.T) {
 
 		repo.EXPECT().
 			GetFileMeta(uuid.Nil).
-			Return(nil, mockErr).
+			Return(nil, errMock).
 			Times(1)
 
 		_, err := fm.Get(uuid.Nil)
 		if assert.Error(t, err) {
-			assert.Equal(t, mockErr, errors.Unwrap(err))
+			assert.Equal(t, errMock, errors.Unwrap(err))
 		}
 	})
 }
@@ -133,14 +133,14 @@ func TestManagerImpl_List(t *testing.T) {
 
 		repo.EXPECT().
 			GetFileMetas(gomock.Any()).
-			Return(nil, false, mockErr).
+			Return(nil, false, errMock).
 			Times(1)
 
 		arr, more, err := fm.List(repository.FilesQuery{})
 		if assert.Error(t, err) {
 			assert.Nil(t, arr)
 			assert.False(t, more)
-			assert.Equal(t, mockErr, errors.Unwrap(err))
+			assert.Equal(t, errMock, errors.Unwrap(err))
 		}
 	})
 }
@@ -242,12 +242,12 @@ func TestManagerImpl_Delete(t *testing.T) {
 
 		repo.EXPECT().
 			GetFileMeta(uuid.Nil).
-			Return(nil, mockErr).
+			Return(nil, errMock).
 			Times(1)
 
 		err := fm.Delete(uuid.Nil)
 		if assert.Error(t, err) {
-			assert.Equal(t, mockErr, errors.Unwrap(err))
+			assert.Equal(t, errMock, errors.Unwrap(err))
 		}
 	})
 
@@ -274,12 +274,12 @@ func TestManagerImpl_Delete(t *testing.T) {
 			Times(1)
 		repo.EXPECT().
 			DeleteFileMeta(meta.ID).
-			Return(mockErr).
+			Return(errMock).
 			Times(1)
 
 		err := fm.Delete(meta.ID)
 		if assert.Error(t, err) {
-			assert.Equal(t, mockErr, errors.Unwrap(err))
+			assert.Equal(t, errMock, errors.Unwrap(err))
 		}
 	})
 }
@@ -295,12 +295,12 @@ func TestManagerImpl_Accessible(t *testing.T) {
 
 		fid := uuid.NewV3(uuid.Nil, "f1")
 		uid := uuid.NewV3(uuid.Nil, "u1")
-		repo.EXPECT().IsFileAccessible(fid, uid).Return(false, mockErr).Times(1)
+		repo.EXPECT().IsFileAccessible(fid, uid).Return(false, errMock).Times(1)
 
 		ok, err := fm.Accessible(fid, uid)
 		if assert.Error(t, err) {
 			assert.False(t, ok)
-			assert.Equal(t, mockErr, errors.Unwrap(err))
+			assert.Equal(t, errMock, errors.Unwrap(err))
 		}
 	})
 
