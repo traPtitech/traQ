@@ -79,6 +79,10 @@ func TestReplacer_Replace(t *testing.T) {
 			"`$okあok$`",
 			"`$okあok$`",
 		},
+		{
+			"````\n```\n@takashi_trap\n```\n````\n\n```\n@takashi_trap\n```",
+			"````\n```\n@takashi_trap\n```\n````\n\n```\n@takashi_trap\n```",
+		},
 	}
 	for _, v := range tt {
 		assert.Equal(t, v[1], re.Replace(v[0]))
