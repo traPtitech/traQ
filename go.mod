@@ -22,7 +22,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
-	github.com/jinzhu/gorm v1.9.12
+	github.com/jinzhu/gorm v1.9.13
 	github.com/json-iterator/go v1.1.10
 	github.com/labstack/echo/v4 v4.1.14
 	github.com/leandro-lugaresi/hub v1.1.0
