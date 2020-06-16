@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const cacheHours = 7 * 60
+const cacheHours = 7 * 24
 
 func getCacheExpireDate() time.Time {
 	return time.Now().Add(time.Duration(cacheHours) * time.Hour)
@@ -44,7 +44,7 @@ func (repo *GormRepository)UpdateOgpCache(url string, content model.Ogp) error {
 			changes["content"] = content
 		}
 		if len(changes) > 0 {
-			c.ExpiresAt = getCacheExpireDate()
+			changes["expires_at"] = getCacheExpireDate()
 			return tx.Model(&c).Updates(changes).Error
 		}
 		return nil

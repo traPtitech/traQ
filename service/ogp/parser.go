@@ -1,7 +1,6 @@
 package ogp
 
 import (
-	"fmt"
 	"github.com/dyatlov/go-opengraph/opengraph"
 	"golang.org/x/net/html"
 	"net/http"
@@ -18,8 +17,12 @@ func ParseMetaForUrl(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 	if err != nil {
 		return nil, nil, err
 	}
-	if resp.StatusCode >= 400 {
-		return nil, nil, fmt.Errorf("failed to fetch content")
+	if resp.StatusCode == 404 {
+		return nil, nil, ErrNotFound
+	} else if resp.StatusCode >= 500 {
+		return nil, nil, ErrServer
+	} else if resp.StatusCode >= 400 {
+		return nil, nil, ErrClient
 	}
 
 	defer resp.Body.Close()
