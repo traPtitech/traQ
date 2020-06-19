@@ -46,7 +46,7 @@ func (h *Handlers) SearchMessages(c echo.Context) error {
 	// TODO SearchEngineで検索処理
 
 	// 仮置き
-	r, err := h.SearchEngine.Do(&search.Query{Word: c.QueryParam("q")})
+	r, err := h.SearchEngine.Do(search.GetSearchQuery(c))
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

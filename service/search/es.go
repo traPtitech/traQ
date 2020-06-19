@@ -196,11 +196,24 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	// TODO 実装
 	e.l.Debug("do search", zap.Reflect("q", q))
 
-	// 以下仮実装
-	sr, err := e.client.Search().
+	sq := e.client.Search().
 		Index(getIndexName(esMessageIndex)).
-		Query(elastic.NewMatchPhraseQuery("text", q.Word)).
+		Query(elastic.NewMatchPhraseQuery("text", q.Words)).
+		Query(elastic.NewBoolQuery())
+
+	switch {
+	case !q.After.IsZero() && !q.Before.IsZero() :
+		sq.Query(elastic.NewRangeQuery("date").Gte(q.After).Lte(q.Before))
+	case !q.After.IsZero() && q.Before.IsZero() :
+		sq.Query(elastic.NewRangeQuery("date").Gte(q.After))
+	case q.After.IsZero() && !q.Before.IsZero() :
+		sq.Query(elastic.NewRangeQuery("date").Lte(q.Before))
+	}
+
+	sr, err := sq.
 		Sort("createdAt", false).
+		From(0).
+		Size(20).
 		Do(context.Background())
 	if err != nil {
 		return nil, err
