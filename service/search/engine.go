@@ -2,6 +2,7 @@ package search
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"time"
@@ -55,6 +56,7 @@ func GetSearchQuery(c echo.Context) *Query {
 
 	layout := "2006/1/2 15:04:05"
 	query.After, _ = time.Parse(layout, c.QueryParam("after"))
+	fmt.Println(time.Parse(layout, c.QueryParam("after")))
 	query.Before, _ = time.Parse(layout, c.QueryParam("before"))
 
 	query.To = uuid.FromStringOrNil(c.QueryParam("to"))
