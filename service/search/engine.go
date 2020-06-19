@@ -2,7 +2,6 @@ package search
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"time"
@@ -24,12 +23,12 @@ type Engine interface {
 // Query 検索クエリ TODO
 type Query struct {
 	// Word 検索ワード (仮置き)
-	Words       string    // 検索ワード TODO 空白区切り(複数) OR NOT (現状1単語)
+	Word        string    // 検索ワード 空白区切り(複数)をうまく扱ってくれる
 	After       time.Time // 以降(投稿日時)
 	Before      time.Time // 以前(投稿日時)
 	To          uuid.UUID // メンション先
 	From        uuid.UUID // 投稿者
-	Cite        uuid.UUID // 引用しているメッセージ TODO 空白区切り(複数)
+	Cite        uuid.UUID // 引用しているメッセージ
 	IsEdited    bool
 	IsCited     bool
 	IsPinned    bool
@@ -51,12 +50,11 @@ type Result interface {
 func GetSearchQuery(c echo.Context) *Query {
 	query := &Query{}
 
-	// words := strings.Split(c.QueryParam("word"), " ")
-	query.Words = c.QueryParam("words")
+	query.Word = c.QueryParam("word")
 
 	layout := "2006/1/2 15:04:05"
+	// Parseできないときは"0001-01-01 00:00:00 +0000 UTC"が入る IsZero=true
 	query.After, _ = time.Parse(layout, c.QueryParam("after"))
-	fmt.Println(time.Parse(layout, c.QueryParam("after")))
 	query.Before, _ = time.Parse(layout, c.QueryParam("before"))
 
 	query.To = uuid.FromStringOrNil(c.QueryParam("to"))

@@ -196,22 +196,43 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	// TODO 実装
 	e.l.Debug("do search", zap.Reflect("q", q))
 
-	boolQuery := elastic.NewBoolQuery()
-
-	boolQuery.Must(elastic.NewMatchPhraseQuery("text", q.Words))
+	// TODO "should" "must not"をどういれるか
+	musts := []elastic.Query{elastic.NewMatchPhraseQuery("text", q.Word)} // TODO MatchPhraseQuery(語順が需要な場合)との出し分け
 
 	switch {
-	case !q.After.IsZero() && !q.Before.IsZero() :
-		elastic.NewRangeQuery("date").Gte(q.After).Lte(q.Before)
-	case !q.After.IsZero() && q.Before.IsZero() :
-		elastic.NewRangeQuery("date").Gte(q.After)
-	case q.After.IsZero() && !q.Before.IsZero() :
-		elastic.NewRangeQuery("date").Lte(q.Before)
+	case !q.After.IsZero() && !q.Before.IsZero():
+		musts = append(musts, elastic.NewRangeQuery("date").Gte(q.After).Lte(q.Before))
+	case !q.After.IsZero() && q.Before.IsZero():
+		musts = append(musts, elastic.NewRangeQuery("date").Gte(q.After))
+	case q.After.IsZero() && !q.Before.IsZero():
+		musts = append(musts, elastic.NewRangeQuery("date").Lte(q.Before))
 	}
+
+	// TODO To(複数) 空白区切りの文字列のまま渡せばいい？
+	switch {
+	case !(q.To == uuid.Nil):
+		musts = append(musts, elastic.NewMatchQuery("text", q.To)) // keywordでindexに追加するほうがいいかもしれない(投稿時しかつかないし)
+	case !(q.From == uuid.Nil):
+		musts = append(musts, elastic.NewMatchQuery("userId", q.From))
+	}
+
+	if q.Cite != uuid.Nil {
+		musts = append(musts, elastic.NewMatchQuery("text", q.Cite))
+	}
+
+	// TODO
+	//IsEdited
+	//IsCited
+	//IsPinned
+	//HasURL
+	//HasEmbedded
+	//HasImage
+	//HasMovie
+	//HasAudio
 
 	sr, err := e.client.Search().
 		Index(getIndexName(esMessageIndex)).
-		Query(boolQuery).
+		Query(elastic.NewBoolQuery().Must(musts...)).
 		Sort("createdAt", false).
 		Size(20).
 		Do(context.Background())
