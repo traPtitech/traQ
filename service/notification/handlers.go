@@ -162,6 +162,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 			user, err := ns.repo.GetUser(uid, false)
 			if err != nil {
 				logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", uid)) // 失敗
+				continue
 			}
 			// 凍結ユーザーの除外
 			if !user.IsActive() {
