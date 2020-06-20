@@ -159,8 +159,15 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 		// ユーザーグループ・メンションユーザー取得
 		for _, uid := range parsed.Mentions {
-			// TODO 凍結ユーザーの除外
-			// MEMO 凍結ユーザーはクライアント側で置換されないのでこのままでも問題はない
+			user, err := ns.repo.GetUser(uid, false)
+			if err != nil {
+				logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", uid)) // 失敗
+				continue
+			}
+			// 凍結ユーザーの除外
+			if !user.IsActive() {
+				continue
+			}
 			notifiedUsers.Add(uid)
 			markedUsers.Add(uid)
 			noticeable.Add(uid)
