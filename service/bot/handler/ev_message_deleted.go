@@ -18,7 +18,7 @@ func MessageDeleted(ctx Context, datetime time.Time, _ string, fields hub.Fields
 	}
 
 	if ch.IsDMChannel() {
-		// わからず
+		
 	} else {
 		bots, err := ctx.GetChannelBots(m.ChannelID, event.MessageCreated)
 		if err != nil {
