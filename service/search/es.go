@@ -99,11 +99,15 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 					"type": "text",
 				},
 				"createdAt": m{
-					"type": "date",
+					"type":   "date",
+					"format": "yyyy-MM-ddTHH:mm:ssZ",
 				},
 				"updatedAt": m{
-					"type": "date",
+					"type":   "date",
+					"format": "yyyy-MM-ddTHH:mm:ssZ",
 				},
+				// TODO To(複数)をメッセージ投稿時に、Cite(複数)をメッセージ投稿・更新時にindexに追加
+				// TODO textをパースしてTo, Cite, Is*, Has*の判定
 			},
 		}).Do(context.Background())
 		if err != nil {
@@ -150,6 +154,7 @@ func (e *esEngine) onEvent(ev hub.Message) {
 			e.l.Error(err.Error(), zap.Error(err))
 		}
 
+		// スタンプの追加・削除は優先度低め
 	}
 }
 
@@ -196,27 +201,29 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	// TODO 実装
 	e.l.Debug("do search", zap.Reflect("q", q))
 
+	fmt.Println(q.Word)
+	fmt.Println(q.After)
+
 	// TODO "should" "must not"をどういれるか
-	musts := []elastic.Query{elastic.NewMatchPhraseQuery("text", q.Word)} // TODO MatchPhraseQuery(語順が需要な場合)との出し分け
+	musts := []elastic.Query{elastic.NewMatchPhraseQuery("text", q.Word)} // TODO MatchPhraseQuery(語順が重要な場合)との出し分け
 
 	switch {
-	case !q.After.IsZero() && !q.Before.IsZero():
-		musts = append(musts, elastic.NewRangeQuery("date").Gte(q.After).Lte(q.Before))
-	case !q.After.IsZero() && q.Before.IsZero():
-		musts = append(musts, elastic.NewRangeQuery("date").Gte(q.After))
-	case q.After.IsZero() && !q.Before.IsZero():
-		musts = append(musts, elastic.NewRangeQuery("date").Lte(q.Before))
+	case q.After.Valid && q.Before.Valid:
+		musts = append(musts, elastic.NewRangeQuery("date").Gte(q.After).Lte(q.Before).Format("yyyy-MM-ddTHH:mm:ssZ"))
+	case q.After.Valid && !q.Before.Valid:
+		musts = append(musts, elastic.NewRangeQuery("date").Gte(q.After).Format("yyyy-MM-ddTHH:mm:ssZ"))
+	case !q.After.Valid && q.Before.Valid:
+		musts = append(musts, elastic.NewRangeQuery("date").Lte(q.Before).Format("yyyy-MM-ddTHH:mm:ssZ"))
 	}
 
-	// TODO To(複数) 空白区切りの文字列のまま渡せばいい？
 	switch {
-	case !(q.To == uuid.Nil):
-		musts = append(musts, elastic.NewMatchQuery("text", q.To)) // keywordでindexに追加するほうがいいかもしれない(投稿時しかつかないし)
-	case !(q.From == uuid.Nil):
+	case q.To.Valid:
+		musts = append(musts, elastic.NewMatchQuery("text", q.To))
+	case q.From.Valid:
 		musts = append(musts, elastic.NewMatchQuery("userId", q.From))
 	}
 
-	if q.Cite != uuid.Nil {
+	if q.Cite.Valid {
 		musts = append(musts, elastic.NewMatchQuery("text", q.Cite))
 	}
 

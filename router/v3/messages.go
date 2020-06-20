@@ -44,9 +44,13 @@ func (h *Handlers) SearchMessages(c echo.Context) error {
 	}
 
 	// TODO SearchEngineで検索処理
+	var q search.Query
+	if err := bindAndValidate(c, &q); err != nil {
+		return err
+	}
 
 	// 仮置き
-	r, err := h.SearchEngine.Do(search.GetSearchQuery(c))
+	r, err := h.SearchEngine.Do(&q)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

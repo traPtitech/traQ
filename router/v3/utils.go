@@ -1,11 +1,6 @@
 package v3
 
 import (
-	"github.com/traPtitech/traQ/utils/optional"
-	"net/http"
-	"strconv"
-	"strings"
-
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
@@ -14,6 +9,10 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/utils/optional"
+	"net/http"
+	"strconv"
+	"strings"
 )
 
 // NotImplemented 未実装API. 501 NotImplementedを返す
