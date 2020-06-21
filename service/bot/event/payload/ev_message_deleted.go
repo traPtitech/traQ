@@ -17,7 +17,7 @@ type MessageDeleted struct {
 
 func MakeMessageDeleted(et time.Time, m *model.Message) *MessageDeleted {
 	return &MessageDeleted{
-		Base:    MakeBase(et),
+		Base: MakeBase(et),
 		Message: struct {
 			ID        uuid.UUID `json:"id"`
 			ChannelID uuid.UUID `json:"channelId"`

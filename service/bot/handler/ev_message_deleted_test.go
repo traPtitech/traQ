@@ -1,4 +1,4 @@
-package handler
+﻿package handler
 
 import (
 	"github.com/gofrs/uuid"
@@ -9,7 +9,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
-	"github.com/traPtitech/traQ/utils/message"
 	"testing"
 	"time"
 )
@@ -32,7 +31,7 @@ func TestMessageDeleted(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
-		handlerCtx, cm, repo := setup(t, ctrl)
+		handlerCtx, cm, _ := setup(t, ctrl)
 		registerBot(t, handlerCtx, b)
 
 		m := &model.Message{
@@ -43,26 +42,13 @@ func TestMessageDeleted(t *testing.T) {
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		parsed := message.Parse(m.Text)
-		mu := &model.User{
-			ID:   m.UserID,
-			Name: "testman",
-		}
-		registerUser(repo, mu)
 		registerChannel(cm, ch)
 		et := time.Now()
 
 		handlerCtx.EXPECT().
-			GetChannelBots(m.ChannelID, event.MessageCreated).
+			GetChannelBots(m.ChannelID, event.MessageDeleted).
 			Return([]*model.Bot{b}, nil).
 			AnyTimes()
-
-		expectMulticast(handlerCtx, event.MessageCreated, payload.MakeMessageCreated(et, m, mu, parsed), []*model.Bot{b})
-		MessageCreated(handlerCtx, et, intevent.MessageCreated, hub.Fields{
-			"message_id":   m.ID,
-			"message":      m,
-			"parse_result": parsed,
-		})
 
 		expectMulticast(handlerCtx, event.MessageDeleted, payload.MakeMessageDeleted(et, m), []*model.Bot{b})
 		assert.NoError(t, MessageDeleted(handlerCtx, et, intevent.MessageDeleted, hub.Fields{
