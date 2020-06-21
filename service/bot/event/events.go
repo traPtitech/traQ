@@ -11,6 +11,8 @@ const (
 	Left model.BotEventType = "LEFT"
 	// MessageCreated メッセージ作成イベント
 	MessageCreated model.BotEventType = "MESSAGE_CREATED"
+	// MessageDeleted メッセージ削除イベント
+	MessageDeleted model.BotEventType = "MESSAGE_DELETED"
 	// MentionMessageCreated メンションメッセージ作成イベント
 	MentionMessageCreated model.BotEventType = "MENTION_MESSAGE_CREATED"
 	// DirectMessageCreated ダイレクトメッセージ作成イベント
@@ -38,6 +40,7 @@ func init() {
 		Joined,
 		Left,
 		MessageCreated,
+		MessageDeleted,
 		MentionMessageCreated,
 		DirectMessageCreated,
 		ChannelCreated,
