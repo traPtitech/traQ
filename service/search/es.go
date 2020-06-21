@@ -106,6 +106,9 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 					"type":   "date",
 					"format": "yyyy-MM-ddTHH:mm:ssZ",
 				},
+				"To": m{
+					"type": "keyword",
+				},
 				// TODO To(複数)をメッセージ投稿時に、Cite(複数)をメッセージ投稿・更新時にindexに追加
 				// TODO textをパースしてTo, Cite, Is*, Has*の判定
 			},
@@ -167,8 +170,8 @@ func (e *esEngine) addMessageToIndex(m *model.Message) error {
 			"userId":    m.UserID,
 			"channelId": m.ChannelID,
 			"text":      m.Text,
-			"createdAt": m.CreatedAt,
-			"updatedAt": m.UpdatedAt,
+			"createdAt": m.CreatedAt.Truncate(time.Second),
+			"updatedAt": m.UpdatedAt.Truncate(time.Second),
 		}).Do(context.Background())
 	if err != nil {
 		return err
@@ -178,12 +181,13 @@ func (e *esEngine) addMessageToIndex(m *model.Message) error {
 
 // updateMessageOnIndex 既存メッセージの編集をesに反映させる
 func (e *esEngine) updateMessageOnIndex(m *model.Message) error {
+
 	_, err := e.client.Update().
 		Index(getIndexName(esMessageIndex)).
 		Id(m.ID.String()).
 		Doc(map[string]interface{}{
 			"text":      m.Text,
-			"updatedAt": m.UpdatedAt,
+			"updatedAt": m.UpdatedAt.Truncate(time.Second),
 		}).Do(context.Background())
 	return err
 }
@@ -205,16 +209,23 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	fmt.Println(q.After)
 
 	// TODO "should" "must not"をどういれるか
-	musts := []elastic.Query{elastic.NewMatchPhraseQuery("text", q.Word)} // TODO MatchPhraseQuery(語順が重要な場合)との出し分け
+	var musts []elastic.Query
+
+	// TODO MatchQuery, MatchPhraseQuery(語順が重要な場合)との出し分け
+	if q.Word.Valid {
+		musts = append(musts, elastic.NewMatchPhraseQuery("text", q.Word))
+	}
 
 	switch {
 	case q.After.Valid && q.Before.Valid:
-		musts = append(musts, elastic.NewRangeQuery("date").Gte(q.After).Lte(q.Before).Format("yyyy-MM-ddTHH:mm:ssZ"))
+		musts = append(musts, elastic.NewRangeQuery("createdAt").Gte(q.After).Lte(q.Before).Format("yyyy-MM-dd HH:mm:ss Z"))
 	case q.After.Valid && !q.Before.Valid:
-		musts = append(musts, elastic.NewRangeQuery("date").Gte(q.After).Format("yyyy-MM-ddTHH:mm:ssZ"))
+		musts = append(musts, elastic.NewRangeQuery("date").Gte(q.After).Format("yyyy-MM-dd HH:mm:ss Z"))
 	case !q.After.Valid && q.Before.Valid:
-		musts = append(musts, elastic.NewRangeQuery("date").Lte(q.Before).Format("yyyy-MM-ddTHH:mm:ssZ"))
+		musts = append(musts, elastic.NewRangeQuery("createdAt").Lte(q.Before).Format("yyyy-MM-dd HH:mm:ss Z"))
 	}
+
+	fmt.Println(elastic.NewRangeQuery("createdAt").Gte(q.After).Format("yyyy-MM-dd HH:mm:ss Z"))
 
 	switch {
 	case q.To.Valid:

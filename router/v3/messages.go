@@ -49,6 +49,9 @@ func (h *Handlers) SearchMessages(c echo.Context) error {
 		return err
 	}
 
+	fmt.Println(q.Word)
+	fmt.Println(q.After)
+
 	// 仮置き
 	r, err := h.SearchEngine.Do(&q)
 	if err != nil {
