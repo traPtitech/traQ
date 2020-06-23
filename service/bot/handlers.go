@@ -15,7 +15,7 @@ var eventHandlerSet = map[string]eventHandler{
 	intevent.BotPingRequest:      handler.BotPingRequest,
 	intevent.MessageCreated:      handler.MessageCreated,
 	intevent.MessageDeleted:      handler.MessageDeleted,
-	intevent.MessageUpdated:	  handler.TestMessageUpdated,
+	intevent.MessageUpdated:	  handler.MessageUpdated,
 	intevent.UserCreated:         handler.UserCreated,
 	intevent.ChannelCreated:      handler.ChannelCreated,
 	intevent.ChannelTopicUpdated: handler.ChannelTopicUpdated,
