@@ -75,7 +75,7 @@ const (
 	FileTypeThumbnail
 )
 
-type FileMeta interface {
+type File interface {
 	GetID() uuid.UUID
 	GetFileName() string
 	GetMIMEType() string
@@ -95,8 +95,8 @@ type FileMeta interface {
 	GetAlternativeURL() string
 }
 
-// File DBに格納するファイルの構造体
-type File struct {
+// FileMeta DBに格納するファイルの構造体
+type FileMeta struct {
 	ID              uuid.UUID       `gorm:"type:char(36);not null;primary_key"`
 	Name            string          `gorm:"type:text;not null"`
 	Mime            string          `gorm:"type:text;not null"`
@@ -114,7 +114,7 @@ type File struct {
 }
 
 // TableName dbのtableの名前を返します
-func (f File) TableName() string {
+func (f FileMeta) TableName() string {
 	return "files"
 }
 

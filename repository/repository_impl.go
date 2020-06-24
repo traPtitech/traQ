@@ -7,7 +7,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/gormutil"
-	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 )
 
@@ -17,7 +16,6 @@ type GormRepository struct {
 	hub    *hub.Hub
 	logger *zap.Logger
 	stamps *stampRepository
-	fs     storage.FileStorage
 }
 
 // Sync implements Repository interface.
@@ -51,12 +49,11 @@ func (repo *GormRepository) Sync() (init bool, err error) {
 }
 
 // NewGormRepository リポジトリ実装を初期化して生成します
-func NewGormRepository(db *gorm.DB, fs storage.FileStorage, hub *hub.Hub, logger *zap.Logger) (Repository, error) {
+func NewGormRepository(db *gorm.DB, hub *hub.Hub, logger *zap.Logger) (Repository, error) {
 	repo := &GormRepository{
 		db:     db,
 		hub:    hub,
 		logger: logger.Named("repository"),
-		fs:     fs,
 	}
 	return repo, nil
 }

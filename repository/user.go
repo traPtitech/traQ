@@ -1,3 +1,4 @@
+//go:generate mockgen -source=$GOFILE -destination=mock_$GOPACKAGE/mock_$GOFILE
 package repository
 
 import (
@@ -11,7 +12,7 @@ type CreateUserArgs struct {
 	Name          string
 	DisplayName   string
 	Role          string
-	IconFileID    optional.UUID
+	IconFileID    uuid.UUID
 	Password      string
 	ExternalLogin *model.ExternalProviderUser
 }

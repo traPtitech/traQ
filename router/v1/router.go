@@ -16,11 +16,10 @@ import (
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
-	"github.com/traPtitech/traQ/service/heartbeat"
+	"github.com/traPtitech/traQ/service/file"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
-	"github.com/traPtitech/traQ/service/sse"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
@@ -43,15 +42,14 @@ func init() {
 type Handlers struct {
 	RBAC           rbac.RBAC
 	Repo           repository.Repository
-	SSE            *sse.Streamer
 	Hub            *hub.Hub
 	Logger         *zap.Logger
 	OC             *counter.OnlineCounter
 	VM             *viewer.Manager
-	HeartBeats     *heartbeat.Manager
 	Imaging        imaging2.Processor
 	SessStore      session.Store
 	ChannelManager channel.Manager
+	FileManager    file.Manager
 	Replacer       *message.Replacer
 
 	emojiJSONCache     bytes.Buffer `wire:"-"`
@@ -67,13 +65,13 @@ func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
-	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager)
+	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager)
 	blockBot := middlewares.BlockBot(h.Repo)
 	nologin := middlewares.NoLogin(h.SessStore)
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
-	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.Repo)
+	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.FileManager)
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC, h.Repo)
 	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.ChannelManager)
 	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.ChannelManager)
@@ -147,10 +145,10 @@ func (h *Handlers) Setup(e *echo.Group) {
 				}
 			}
 		}
-		apiHeartBeat := api.Group("/heartbeat", blockBot)
+		apiHeartBeat := api.Group("/heartbeat")
 		{
-			apiHeartBeat.GET("", h.GetHeartbeat, requires(permission.GetHeartbeat)) // Deprecated
-			apiHeartBeat.POST("", h.PostHeartbeat, requires(permission.PostHeartbeat))
+			apiHeartBeat.GET("", gone)
+			apiHeartBeat.POST("", gone)
 		}
 		apiChannels := api.Group("/channels")
 		{
@@ -195,7 +193,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiNotification := api.Group("/notification", blockBot)
 		{
-			apiNotification.GET("", echo.WrapHandler(h.SSE), requires(permission.ConnectNotificationStream))
+			apiNotification.GET("", gone)
 			apiNotification.POST("/device", h.PostDeviceToken, requires(permission.RegisterFCMDevice))
 		}
 		apiMessages := api.Group("/messages")
@@ -400,8 +398,8 @@ func getBotFromContext(c echo.Context) *model.Bot {
 	return c.Get(consts.KeyParamBot).(*model.Bot)
 }
 
-func getFileFromContext(c echo.Context) model.FileMeta {
-	return c.Get(consts.KeyParamFile).(model.FileMeta)
+func getFileFromContext(c echo.Context) model.File {
+	return c.Get(consts.KeyParamFile).(model.File)
 }
 
 func getClientFromContext(c echo.Context) *model.OAuth2Client {

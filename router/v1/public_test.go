@@ -2,8 +2,8 @@ package v1
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/require"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/random"
 	"net/http"
@@ -13,12 +13,17 @@ import (
 
 func TestHandlers_GetPublicUserIcon(t *testing.T) {
 	t.Parallel()
-	env, _, _, _, _ := setup(t, common5)
+	env, _, require, _, _ := setup(t, common5)
+
+	fid, err := file.GenerateIconFile(env.FileManager, "test")
+	require.NoError(err)
+
 	testUser, err := env.Repository.CreateUser(repository.CreateUserArgs{
-		Name: random.AlphaNumeric(32),
-		Role: role.User,
+		Name:       random.AlphaNumeric(32),
+		Role:       role.User,
+		IconFileID: fid,
 	})
-	require.NoError(t, err)
+	require.NoError(err)
 
 	t.Run("No name", func(t *testing.T) {
 		t.Parallel()
@@ -40,7 +45,7 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 		t.Parallel()
 		_, require := assertAndRequire(t)
 
-		meta, err := env.Repository.GetFileMeta(testUser.GetIconFileID())
+		meta, err := env.FileManager.Get(testUser.GetIconFileID())
 		require.NoError(err)
 		e := env.makeExp(t)
 		e.GET("/api/1.0/public/icon/{username}", testUser.GetName()).
@@ -54,7 +59,7 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 		t.Parallel()
 		_, require := assertAndRequire(t)
 
-		meta, err := env.Repository.GetFileMeta(testUser.GetIconFileID())
+		meta, err := env.FileManager.Get(testUser.GetIconFileID())
 		require.NoError(err)
 
 		e := env.makeExp(t)

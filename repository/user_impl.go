@@ -22,6 +22,7 @@ func (repo *GormRepository) CreateUser(args CreateUserArgs) (model.UserInfo, err
 		ID:          uid,
 		Name:        args.Name,
 		DisplayName: args.DisplayName,
+		Icon:        args.IconFileID,
 		Status:      model.UserAccountStatusActive,
 		Bot:         false,
 		Role:        args.Role,
@@ -32,16 +33,6 @@ func (repo *GormRepository) CreateUser(args CreateUserArgs) (model.UserInfo, err
 		salt := random.Salt()
 		user.Password = hex.EncodeToString(utils.HashPassword(args.Password, salt))
 		user.Salt = hex.EncodeToString(salt)
-	}
-
-	if args.IconFileID.Valid {
-		user.Icon = args.IconFileID.UUID
-	} else {
-		iconID, err := GenerateIconFile(repo, user.Name)
-		if err != nil {
-			return nil, err
-		}
-		user.Icon = iconID
 	}
 
 	if args.ExternalLogin != nil {

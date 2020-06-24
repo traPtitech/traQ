@@ -16,6 +16,9 @@ type Context interface {
 	L() *zap.Logger
 	D() event.Dispatcher
 
+	Unicast(ev model.BotEventType, payload interface{}, target *model.Bot) error
+	Multicast(ev model.BotEventType, payload interface{}, targets []*model.Bot) error
+
 	GetBot(id uuid.UUID) (*model.Bot, error)
 	GetBotByBotUserID(uid uuid.UUID) (*model.Bot, error)
 	GetBots(event model.BotEventType) ([]*model.Bot, error)

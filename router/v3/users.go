@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/service/channel"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -56,7 +57,12 @@ func (h *Handlers) CreateUser(c echo.Context) error {
 		return err
 	}
 
-	user, err := h.Repo.CreateUser(repository.CreateUserArgs{Name: req.Name, Password: req.Password.ValueOrZero(), Role: role.User})
+	iconFileID, err := file.GenerateIconFile(h.FileManager, req.Name)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	user, err := h.Repo.CreateUser(repository.CreateUserArgs{Name: req.Name, Password: req.Password.ValueOrZero(), Role: role.User, IconFileID: iconFileID})
 	if err != nil {
 		switch err {
 		case repository.ErrAlreadyExists:
@@ -211,22 +217,22 @@ func (h *Handlers) GetMyQRCode(c echo.Context) error {
 
 // GetUserIcon GET /users/:userID/icon
 func (h *Handlers) GetUserIcon(c echo.Context) error {
-	return utils.ServeUserIcon(c, h.Repo, getParamUser(c))
+	return utils.ServeUserIcon(c, h.FileManager, getParamUser(c))
 }
 
 // ChangeUserIcon PUT /users/:userID/icon
 func (h *Handlers) ChangeUserIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getParamAsUUID(c, consts.ParamUserID))
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getParamAsUUID(c, consts.ParamUserID))
 }
 
 // GetMyIcon GET /users/me/icon
 func (h *Handlers) GetMyIcon(c echo.Context) error {
-	return utils.ServeUserIcon(c, h.Repo, getRequestUser(c))
+	return utils.ServeUserIcon(c, h.FileManager, getRequestUser(c))
 }
 
 // ChangeMyIcon PUT /users/me/icon
 func (h *Handlers) ChangeMyIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getRequestUserID(c))
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getRequestUserID(c))
 }
 
 // GetMyStampHistory GET /users/me/stamp-history リクエストクエリ

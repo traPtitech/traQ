@@ -210,7 +210,7 @@ func TestHandlers_PutPassword(t *testing.T) {
 			Name:       random.AlphaNumeric(32),
 			Password:   "test",
 			Role:       role.User,
-			IconFileID: optional.UUIDFrom(uuid.Must(uuid.NewV4())),
+			IconFileID: uuid.Must(uuid.NewV4()),
 		})
 		require.NoError(t, err)
 
@@ -316,7 +316,7 @@ func TestHandlers_PostLogin(t *testing.T) {
 		Name:       random.AlphaNumeric(32),
 		Password:   "test",
 		Role:       role.User,
-		IconFileID: optional.UUIDFrom(uuid.Must(uuid.NewV4())),
+		IconFileID: uuid.Must(uuid.NewV4()),
 	})
 	require.NoError(t, err)
 

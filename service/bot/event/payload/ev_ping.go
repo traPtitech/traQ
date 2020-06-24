@@ -1,12 +1,14 @@
 package payload
 
+import "time"
+
 // Ping PINGイベントペイロード
 type Ping struct {
 	Base
 }
 
-func MakePing() *Ping {
+func MakePing(et time.Time) *Ping {
 	return &Ping{
-		Base: MakeBase(),
+		Base: MakeBase(et),
 	}
 }

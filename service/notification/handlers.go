@@ -113,7 +113,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	if len(parsed.Attachments) > 0 {
-		if f, _ := ns.repo.GetFileMeta(parsed.Attachments[0]); f != nil && f.HasThumbnail() {
+		if f, _ := ns.fm.Get(parsed.Attachments[0]); f != nil && f.HasThumbnail() {
 			fcmPayload.Image = optional.StringFrom(fmt.Sprintf("%s/api/v3/files/%s/thumbnail", ns.origin, f.GetID()))
 		}
 	}
@@ -159,8 +159,15 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 		// ユーザーグループ・メンションユーザー取得
 		for _, uid := range parsed.Mentions {
-			// TODO 凍結ユーザーの除外
-			// MEMO 凍結ユーザーはクライアント側で置換されないのでこのままでも問題はない
+			user, err := ns.repo.GetUser(uid, false)
+			if err != nil {
+				logger.Error("failed to GetUser", zap.Error(err), zap.Stringer("userId", uid)) // 失敗
+				continue
+			}
+			// 凍結ユーザーの除外
+			if !user.IsActive() {
+				continue
+			}
 			notifiedUsers.Add(uid)
 			markedUsers.Add(uid)
 			noticeable.Add(uid)
@@ -206,11 +213,6 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	}
 	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, targetFunc)
 
-	// SSE送信
-	for id := range set.UnionUUIDSets(notifiedUsers, viewers) {
-		go ns.sse.Multicast(id, ssePayload)
-	}
-
 	// FCM送信
 	targets := notifiedUsers.Clone()
 	targets.Remove(m.UserID)
@@ -239,9 +241,6 @@ func messageUpdatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, targetFunc)
-	for uid := range ns.vm.GetChannelViewers(cid) {
-		go ns.sse.Multicast(uid, ssePayload)
-	}
 }
 
 func messageDeletedHandler(ns *Service, ev hub.Message) {
@@ -266,9 +265,6 @@ func messageDeletedHandler(ns *Service, ev hub.Message) {
 	}
 
 	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, targetFunc)
-	for uid := range ns.vm.GetChannelViewers(cid) {
-		go ns.sse.Multicast(uid, ssePayload)
-	}
 }
 
 func messagePinnedHandler(ns *Service, ev hub.Message) {
@@ -598,20 +594,13 @@ func channelHandler(ns *Service, ev hub.Message, ssePayload *sse.EventData) {
 			ns.logger.Error("failed to GetDMChannelMembers", zap.Error(err), zap.Stringer("channelId", cid))
 			return
 		}
-		for _, uid := range members {
-			go ns.sse.Multicast(uid, ssePayload)
-		}
 		go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetUsers(members...))
 	} else {
-		go ns.sse.Broadcast(ssePayload)
 		go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetAll())
 	}
 }
 
 func channelViewerMulticast(ns *Service, cid uuid.UUID, ssePayload *sse.EventData) {
-	for uid := range ns.vm.GetChannelViewers(cid) {
-		go ns.sse.Multicast(uid, ssePayload)
-	}
 	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetChannelViewers(cid))
 }
 
@@ -625,11 +614,9 @@ func messageViewerMulticast(ns *Service, mid uuid.UUID, ssePayload *sse.EventDat
 }
 
 func broadcast(ns *Service, ssePayload *sse.EventData) {
-	go ns.sse.Broadcast(ssePayload)
 	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetAll())
 }
 
 func userMulticast(ns *Service, userID uuid.UUID, ssePayload *sse.EventData) {
-	go ns.sse.Multicast(userID, ssePayload)
 	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetUsers(userID))
 }

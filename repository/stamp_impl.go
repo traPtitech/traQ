@@ -124,7 +124,7 @@ func (repo *GormRepository) CreateStamp(args CreateStampArgs) (s *model.Stamp, e
 		if stamp.FileID == uuid.Nil {
 			return ArgError("fileID", "FileID's file is not found")
 		}
-		if exists, err := gormutil.RecordExists(tx, &model.File{ID: stamp.FileID}); err != nil {
+		if exists, err := gormutil.RecordExists(tx, &model.FileMeta{ID: stamp.FileID}); err != nil {
 			return err
 		} else if !exists {
 			return ArgError("fileID", "fileID's file is not found")
@@ -186,7 +186,7 @@ func (repo *GormRepository) UpdateStamp(id uuid.UUID, args UpdateStampArgs) erro
 			if args.FileID.UUID == uuid.Nil {
 				return ArgError("args.FileID", "FileID's file is not found")
 			}
-			if exists, err := gormutil.RecordExists(tx, &model.File{ID: args.FileID.UUID}); err != nil {
+			if exists, err := gormutil.RecordExists(tx, &model.FileMeta{ID: args.FileID.UUID}); err != nil {
 				return err
 			} else if !exists {
 				return ArgError("args.FileID", "FileID's file is not found")

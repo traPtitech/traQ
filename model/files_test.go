@@ -8,7 +8,7 @@ import (
 
 func TestFile_TableName(t *testing.T) {
 	t.Parallel()
-	assert.Equal(t, "files", (&File{}).TableName())
+	assert.Equal(t, "files", (&FileMeta{}).TableName())
 }
 
 func TestFileACLEntry_TableName(t *testing.T) {

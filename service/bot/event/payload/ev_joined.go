@@ -1,6 +1,9 @@
 package payload
 
-import "github.com/traPtitech/traQ/model"
+import (
+	"github.com/traPtitech/traQ/model"
+	"time"
+)
 
 // Joined JOINEDイベントペイロード
 type Joined struct {
@@ -8,9 +11,9 @@ type Joined struct {
 	Channel Channel `json:"channel"`
 }
 
-func MakeJoined(ch *model.Channel, chPath string, user model.UserInfo) *Joined {
+func MakeJoined(et time.Time, ch *model.Channel, chPath string, user model.UserInfo) *Joined {
 	return &Joined{
-		Base:    MakeBase(),
+		Base:    MakeBase(et),
 		Channel: MakeChannel(ch, chPath, user),
 	}
 }

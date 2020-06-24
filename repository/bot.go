@@ -1,3 +1,4 @@
+//go:generate mockgen -source=$GOFILE -destination=mock_$GOPACKAGE/mock_$GOFILE
 package repository
 
 import (
@@ -84,7 +85,7 @@ type BotRepository interface {
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// nameが既に使われている場合、ErrAlreadyExistsを返します。
 	// DBによるエラーを返すことがあります。
-	CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error)
+	CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, webhookURL string) (*model.Bot, error)
 	// UpdateBot 指定したBotの情報を更新します
 	//
 	// 成功した場合、nilを返します。

@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -59,7 +60,12 @@ func (h *Handlers) CreateBot(c echo.Context) error {
 		return err
 	}
 
-	b, err := h.Repo.CreateBot(req.Name, req.DisplayName, req.Description, getRequestUserID(c), req.Endpoint)
+	iconFileID, err := file.GenerateIconFile(h.FileManager, req.Name)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	b, err := h.Repo.CreateBot(req.Name, req.DisplayName, req.Description, iconFileID, getRequestUserID(c), req.Endpoint)
 	if err != nil {
 		switch {
 		case err == repository.ErrAlreadyExists:
@@ -185,12 +191,12 @@ func (h *Handlers) GetBotIcon(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return utils.ServeUserIcon(c, h.Repo, user)
+	return utils.ServeUserIcon(c, h.FileManager, user)
 }
 
 // ChangeBotIcon PUT /bots/:botID/icon
 func (h *Handlers) ChangeBotIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getParamBot(c).BotUserID)
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getParamBot(c).BotUserID)
 }
 
 // GetBotLogsRequest GET /bots/:botID/logs リクエストクエリ

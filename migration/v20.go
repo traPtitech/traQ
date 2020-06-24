@@ -2,32 +2,33 @@ package migration
 
 import (
 	"github.com/jinzhu/gorm"
-	"github.com/traPtitech/traQ/model"
 	"gopkg.in/gormigrate.v1"
-	"time"
 )
 
-// v20 OGPキャッシュ追加
+// v20 パーミッション周りの調整
 func v20() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "20",
 		Migrate: func(db *gorm.DB) error {
-			if err := db.AutoMigrate(&v20OgpCache{}).Error; err != nil {
-				return err
+			deletedPermissions := []string{
+				"get_heartbeat",
+				"post_heartbeat",
+			}
+			for _, v := range deletedPermissions {
+				if err := db.Delete(v20RolePermission{}, v20RolePermission{Permission: v}).Error; err != nil {
+					return err
+				}
 			}
 			return nil
 		},
 	}
 }
 
-type v20OgpCache struct {
-	Id 		  int 		`gorm:"auto_increment;not null;primary_key"`
-	URL       string    `gorm:"type:text;not null"`
-	URLHash   string    `gorm:"type:char(40);not null;index"`
-	Content   model.Ogp	`gorm:"type:text"`
-	ExpiresAt time.Time `gorm:"precision:6"`
+type v20RolePermission struct {
+	Role       string `gorm:"type:varchar(30);not null;primary_key"`
+	Permission string `gorm:"type:varchar(30);not null;primary_key"`
 }
 
-func (ogp v20OgpCache) TableName() string {
-	return "ogp_cache"
+func (*v20RolePermission) TableName() string {
+	return "user_role_permissions"
 }

@@ -41,7 +41,7 @@ func (h *Handlers) CreateStamp(c echo.Context) error {
 	userID := getRequestUserID(c)
 
 	// スタンプ画像保存
-	fileID, err := utils.SaveUploadStampImage(h.Imaging, c, h.Repo, "file")
+	fileID, err := utils.SaveUploadStampImage(h.Imaging, c, h.FileManager, "file")
 	if err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func (h *Handlers) GetStampImage(c echo.Context) error {
 	stamp := getParamStamp(c)
 
 	// ファイルメタ取得
-	meta, err := h.Repo.GetFileMeta(stamp.FileID)
+	meta, err := h.FileManager.Get(stamp.FileID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -158,7 +158,7 @@ func (h *Handlers) ChangeStampImage(c echo.Context) error {
 	}
 
 	// スタンプ画像保存
-	fileID, err := utils.SaveUploadStampImage(h.Imaging, c, h.Repo, "file")
+	fileID, err := utils.SaveUploadStampImage(h.Imaging, c, h.FileManager, "file")
 	if err != nil {
 		return err
 	}

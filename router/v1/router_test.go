@@ -10,12 +10,13 @@ import (
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/testutils"
-	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
+	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"image"
 	"net/http"
@@ -70,6 +71,13 @@ func TestMain(m *testing.M) {
 		env.SessStore = session.NewMemorySessionStore()
 		env.RBAC = testutils.NewTestRBAC()
 		env.ChannelManager, _ = channel.InitChannelManager(env.Repository, zap.NewNop())
+		env.ImageProcessor = imaging.NewProcessor(imaging.Config{
+			MaxPixels:        1000 * 1000,
+			Concurrency:      1,
+			ThumbnailMaxSize: image.Pt(360, 480),
+			ImageMagickPath:  "",
+		})
+		env.FileManager, _ = file.InitFileManager(env.Repository, storage.NewInMemoryFileStorage(), env.ImageProcessor, zap.NewNop())
 
 		e := echo.New()
 		e.HideBanner = true
@@ -85,13 +93,9 @@ func TestMain(m *testing.M) {
 			OC:             counter.NewOnlineCounter(env.Hub),
 			VM:             viewer.NewManager(env.Hub),
 			ChannelManager: env.ChannelManager,
+			FileManager:    env.FileManager,
 			SessStore:      env.SessStore,
-			Imaging: imaging.NewProcessor(imaging.Config{
-				MaxPixels:        1000 * 1000,
-				Concurrency:      1,
-				ThumbnailMaxSize: image.Pt(360, 480),
-				ImageMagickPath:  "",
-			}),
+			Imaging:        env.ImageProcessor,
 		}
 		handlers.Setup(e.Group("/api"))
 		env.Server = httptest.NewServer(e)
@@ -114,6 +118,8 @@ type Env struct {
 	SessStore      session.Store
 	RBAC           rbac.RBAC
 	ChannelManager channel.Manager
+	FileManager    file.Manager
+	ImageProcessor imaging.Processor
 }
 
 func setup(t *testing.T, server string) (*Env, *assert.Assertions, *require.Assertions, string, string) {
@@ -202,15 +208,15 @@ func (env *Env) mustMakeUser(t *testing.T, userName string) model.UserInfo {
 		userName = random.AlphaNumeric(32)
 	}
 	// パスワード無し・アイコンファイルは実際には存在しないことに注意
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: optional.UUIDFrom(uuid.Must(uuid.NewV4()))})
+	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: uuid.Must(uuid.NewV4())})
 	require.NoError(t, err)
 	return u
 }
 
-func (env *Env) mustMakeFile(t *testing.T) model.FileMeta {
+func (env *Env) mustMakeFile(t *testing.T) model.File {
 	t.Helper()
 	buf := bytes.NewBufferString("test message")
-	f, err := env.Repository.SaveFile(repository.SaveFileArgs{
+	f, err := env.FileManager.Save(file.SaveArgs{
 		FileName: "test.txt",
 		FileSize: int64(buf.Len()),
 		FileType: model.FileTypeUserFile,
@@ -256,7 +262,9 @@ func (env *Env) mustMakeWebhook(t *testing.T, name string, channelID, creatorID 
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	w, err := env.Repository.CreateWebhook(name, "", channelID, creatorID, secret)
+	iconFileID, err := file.GenerateIconFile(env.FileManager, name)
+	require.NoError(t, err)
+	w, err := env.Repository.CreateWebhook(name, "", channelID, iconFileID, creatorID, secret)
 	require.NoError(t, err)
 	return w
 }

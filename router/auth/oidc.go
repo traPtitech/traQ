@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/utils/optional"
 	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"
@@ -26,6 +27,7 @@ const (
 type OIDCProvider struct {
 	config    OIDCProviderConfig
 	repo      repository.Repository
+	fm        file.Manager
 	logger    *zap.Logger
 	oa2       oauth2.Config
 	sessStore session.Store
@@ -107,7 +109,7 @@ func (u *oidcUserInfo) IsLoginAllowedUser() bool {
 	return true // TODO
 }
 
-func NewOIDCProvider(repo repository.Repository, logger *zap.Logger, sessStore session.Store, config OIDCProviderConfig) (*OIDCProvider, error) {
+func NewOIDCProvider(repo repository.Repository, fm file.Manager, logger *zap.Logger, sessStore session.Store, config OIDCProviderConfig) (*OIDCProvider, error) {
 	p, err := oidc.NewProvider(context.Background(), config.Issuer)
 	if err != nil {
 		return nil, err
@@ -115,6 +117,7 @@ func NewOIDCProvider(repo repository.Repository, logger *zap.Logger, sessStore s
 
 	return &OIDCProvider{
 		repo:      repo,
+		fm:        fm,
 		config:    config,
 		logger:    logger,
 		sessStore: sessStore,
@@ -134,7 +137,7 @@ func (p *OIDCProvider) LoginHandler(c echo.Context) error {
 }
 
 func (p *OIDCProvider) CallbackHandler(c echo.Context) error {
-	return defaultCallbackHandler(p, &p.oa2, p.repo, p.sessStore, p.config.RegisterUserIfNotFound)(c)
+	return defaultCallbackHandler(p, &p.oa2, p.repo, p.fm, p.sessStore, p.config.RegisterUserIfNotFound)(c)
 }
 
 func (p *OIDCProvider) FetchUserInfo(t *oauth2.Token) (UserInfo, error) {

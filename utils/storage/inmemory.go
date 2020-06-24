@@ -48,8 +48,11 @@ func (fs *InMemoryFileStorage) OpenFileByKey(key string, fileType model.FileType
 // DeleteByKey ファイルを削除します
 func (fs *InMemoryFileStorage) DeleteByKey(key string, fileType model.FileType) error {
 	fs.Lock()
+	defer fs.Unlock()
+	if _, ok := fs.fileMap[key]; !ok {
+		return ErrFileNotFound
+	}
 	delete(fs.fileMap, key)
-	fs.Unlock()
 	return nil
 }
 

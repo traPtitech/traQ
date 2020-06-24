@@ -14,8 +14,9 @@ var (
 )
 
 const (
-	backQuoteRune = rune('`')
-	dollarRune    = rune('$')
+	backQuoteRune          = rune('`')
+	dollarRune             = rune('$')
+	defaultCodeTokenLength = 3
 )
 
 // ReplaceMapper メッセージ埋め込み置換マッピング
@@ -42,9 +43,18 @@ func NewReplacer(mapper ReplaceMapper) *Replacer {
 func (re *Replacer) Replace(m string) string {
 	inCodeBlock := false
 	inLatexBlock := false
+	codeTokenLength := defaultCodeTokenLength
+
 	lines := strings.Split(m, "\n")
 	for i, line := range lines {
-		if !inLatexBlock && strings.HasPrefix(line, "```") {
+		if !inLatexBlock && strings.HasPrefix(line, strings.Repeat("`", codeTokenLength)) {
+			// `の数が一致するものと組み合うようにする
+			if !inCodeBlock {
+				codeTokenLength = countPrefix(line, backQuoteRune)
+			} else {
+				codeTokenLength = defaultCodeTokenLength
+			}
+
 			inCodeBlock = !inCodeBlock
 		}
 		if !inCodeBlock && strings.HasPrefix(line, "$$") {
@@ -141,4 +151,15 @@ func indexOf(slice []rune, target rune) int {
 		}
 	}
 	return -1
+}
+
+func countPrefix(line string, letter rune) int {
+	count := 0
+	for _, ch := range line {
+		if ch != letter {
+			break
+		}
+		count++
+	}
+	return count
 }

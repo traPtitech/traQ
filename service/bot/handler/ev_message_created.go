@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/model"
@@ -8,30 +9,27 @@ import (
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
+	"time"
 )
 
-func MessageCreated(ctx Context, _ string, fields hub.Fields) {
+func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
 	m := fields["message"].(*model.Message)
 	parsed := fields["parse_result"].(*message.ParseResult)
 
 	ch, err := ctx.CM().GetChannel(m.ChannelID)
 	if err != nil {
-		ctx.L().Error("failed to GetChannel", zap.Error(err), zap.Stringer("id", m.ChannelID))
-		return
+		return fmt.Errorf("failed to GetChannel: %w", err)
 	}
 
 	user, err := ctx.R().GetUser(m.UserID, false)
 	if err != nil {
-		ctx.L().Error("failed to GetUser", zap.Error(err), zap.Stringer("id", m.UserID))
-		return
+		return fmt.Errorf("failed to GetUser: %w", err)
 	}
 
-	embedded, _ := message.ExtractEmbedding(m.Text)
 	if ch.IsDMChannel() {
 		ids, err := ctx.CM().GetDMChannelMembers(ch.ID)
 		if err != nil {
-			ctx.L().Error("failed to GetDMChannelMembers", zap.Error(err), zap.Stringer("id", ch.ID))
-			return
+			return fmt.Errorf("failed to GetDMChannelMembers: %w", err)
 		}
 
 		var id uuid.UUID
@@ -44,27 +42,24 @@ func MessageCreated(ctx Context, _ string, fields hub.Fields) {
 
 		bot, err := ctx.GetBotByBotUserID(id)
 		if err != nil {
-			ctx.L().Error("failed to GetBotByBotUserID", zap.Error(err))
-			return
+			return fmt.Errorf("failed to GetBotByBotUserID: %w", err)
 		}
 		if bot == nil || !bot.SubscribeEvents.Contains(event.DirectMessageCreated) {
-			return
+			return nil
 		}
 
-		if err := event.Unicast(
-			ctx.D(),
+		if err := ctx.Unicast(
 			event.DirectMessageCreated,
-			payload.MakeDirectMessageCreated(m, user, embedded, parsed),
+			payload.MakeDirectMessageCreated(datetime, m, user, parsed),
 			bot,
 		); err != nil {
-			ctx.L().Error("failed to unicast", zap.Error(err))
+			return fmt.Errorf("failed to unicast: %w", err)
 		}
 	} else {
 		// 購読BOT
 		bots, err := ctx.GetChannelBots(m.ChannelID, event.MessageCreated)
 		if err != nil {
-			ctx.L().Error("failed to GetChannelBots", zap.Error(err))
-			return
+			return fmt.Errorf("failed to GetChannelBots: %w", err)
 		}
 
 		// メンションBOT
@@ -88,18 +83,18 @@ func MessageCreated(ctx Context, _ string, fields hub.Fields) {
 
 		bots = filterBotUserIDNotEquals(bots, m.UserID)
 		if len(bots) == 0 {
-			return
+			return nil
 		}
 
-		if err := event.Multicast(
-			ctx.D(),
+		if err := ctx.Multicast(
 			event.MessageCreated,
-			payload.MakeMessageCreated(m, user, embedded, parsed),
+			payload.MakeMessageCreated(datetime, m, user, parsed),
 			bots,
 		); err != nil {
-			ctx.L().Error("failed to multicast", zap.Error(err))
+			return fmt.Errorf("failed to multicast: %w", err)
 		}
 	}
+	return nil
 }
 
 func filterBotUserIDNotEquals(bots []*model.Bot, id uuid.UUID) []*model.Bot {

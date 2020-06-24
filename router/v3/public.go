@@ -5,6 +5,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/service/file"
 	"net/http"
 	"strconv"
 )
@@ -40,10 +41,10 @@ func (h *Handlers) GetPublicUserIcon(c echo.Context) error {
 	}
 
 	// ファイルメタ取得
-	meta, err := h.Repo.GetFileMeta(user.GetIconFileID())
+	meta, err := h.FileManager.Get(user.GetIconFileID())
 	if err != nil {
 		switch err {
-		case repository.ErrNotFound:
+		case file.ErrNotFound:
 			return herror.NotFound()
 		default:
 			return herror.InternalServerError(err)
