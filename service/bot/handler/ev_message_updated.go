@@ -12,7 +12,7 @@ import (
 
 func MessageUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
 	m := fields["message"].(*model.Message)
-	parsed := fields["parse_result"].(*message.ParseResult)
+	parsed := message.Parse(m.Text)
 
 	ch, err := ctx.CM().GetChannel(m.ChannelID)
 	if err != nil {

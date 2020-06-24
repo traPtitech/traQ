@@ -59,9 +59,8 @@ func TestMessageUpdated(t *testing.T) {
 
 		expectMulticast(handlerCtx, event.MessageUpdated, payload.MakeMessageUpdated(et, m, mu, parsed), []*model.Bot{b})
 		assert.NoError(t, MessageUpdated(handlerCtx, et, intevent.MessageUpdated, hub.Fields{
-			"message_id":   m.ID,
-			"message":      m,
-			"parse_result": parsed,
+			"message_id": m.ID,
+			"message":    m,
 		}))
 	})
 
@@ -92,9 +91,8 @@ func TestMessageUpdated(t *testing.T) {
 			AnyTimes()
 
 		assert.NoError(t, MessageUpdated(handlerCtx, time.Now(), intevent.MessageUpdated, hub.Fields{
-			"message_id":   m.ID,
-			"message":      m,
-			"parse_result": message.Parse(m.Text),
+			"message_id": m.ID,
+			"message":    m,
 		}))
 	})
 }
