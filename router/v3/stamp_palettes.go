@@ -32,12 +32,15 @@ type CreateStampPaletteRequest struct {
 }
 
 func (r CreateStampPaletteRequest) Validate() error {
-	uuids := r.Stamps.ToUUIDSlice()
-	return vd.ValidateStruct(&r,
+	err := vd.ValidateStruct(&r,
 		vd.Field(&r.Name, validator.StampPaletteNameRuleRequired...),
 		vd.Field(&r.Description, validator.StampPaletteDescriptionRule...),
-		vd.Field(&uuids, validator.StampPaletteStampsRule...),
 	)
+	// model.UUIDsがsql.Valuerを実装しているので別でvalidateしている
+	if err != nil {
+		return err
+	}
+	return vd.Validate(r.Stamps.ToUUIDSlice(), validator.StampPaletteStampsRule...)
 }
 
 // CreateStampPalette POST /stamp-palettes
@@ -70,12 +73,15 @@ type PatchStampPaletteRequest struct {
 }
 
 func (r PatchStampPaletteRequest) Validate() error {
-	uuids := r.Stamps.ToUUIDSlice()
-	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, validator.StampPaletteNameRule...),
+	err := vd.ValidateStruct(&r,
+		vd.Field(&r.Name, validator.StampPaletteNameRuleRequired...),
 		vd.Field(&r.Description, validator.StampPaletteDescriptionRule...),
-		vd.Field(&uuids, validator.StampPaletteStampsRule...),
 	)
+	// model.UUIDsがsql.Valuerを実装しているので別でvalidateしている
+	if err != nil {
+		return err
+	}
+	return vd.Validate(r.Stamps.ToUUIDSlice(), validator.StampPaletteStampsRule...)
 }
 
 // EditStampPalette PATCH /stamp-palettes/:paletteID
