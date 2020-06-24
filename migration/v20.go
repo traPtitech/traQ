@@ -23,6 +23,7 @@ func v20() *gormigrate.Migration {
 type v20OgpCache struct {
 	Id 		  int 		`gorm:"auto_increment;not null;primary_key"`
 	URL       string    `gorm:"type:text;not null"`
+	URLHash   string    `gorm:"type:char(40);not null;index"`
 	Content   model.Ogp	`gorm:"type:text"`
 	ExpiresAt time.Time `gorm:"precision:6"`
 }
