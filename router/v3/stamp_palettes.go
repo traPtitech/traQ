@@ -40,7 +40,7 @@ func (r CreateStampPaletteRequest) Validate() error {
 	if err != nil {
 		return err
 	}
-	return vd.Validate(r.Stamps.ToUUIDSlice(), validator.StampPaletteStampsRule...)
+	return vd.Validate(r.Stamps.ToUUIDSlice(), validator.StampPaletteStampsRuleNotNil...)
 }
 
 // CreateStampPalette POST /stamp-palettes
@@ -74,7 +74,7 @@ type PatchStampPaletteRequest struct {
 
 func (r PatchStampPaletteRequest) Validate() error {
 	err := vd.ValidateStruct(&r,
-		vd.Field(&r.Name, validator.StampPaletteNameRuleRequired...),
+		vd.Field(&r.Name, validator.StampPaletteNameRule...),
 		vd.Field(&r.Description, validator.StampPaletteDescriptionRule...),
 	)
 	// model.UUIDsがsql.Valuerを実装しているので別でvalidateしている
