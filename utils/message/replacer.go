@@ -9,8 +9,10 @@ import (
 )
 
 var (
-	mentionRegex = regexp.MustCompile(`[@＠]([\S]+)`)
-	channelRegex = regexp.MustCompile(`[#＃]([a-zA-Z0-9_/-]+)`)
+	// ユーザーとグループのnameの和集合
+	mentionRegex    = regexp.MustCompile(`[@＠](\S{1,32})`)
+	userStartsRegex = regexp.MustCompile(`^[@＠]([a-zA-Z0-9_-]{1,32})`)
+	channelRegex    = regexp.MustCompile(`[#＃]([a-zA-Z0-9_/-]+)`)
 )
 
 const (
@@ -123,14 +125,23 @@ func (re *Replacer) replaceAll(m string) string {
 
 func (re *Replacer) replaceMention(m string) string {
 	return mentionRegex.ReplaceAllStringFunc(m, func(s string) string {
-		t := strings.ToLower(strings.TrimLeft(s, "@＠"))
-		if uid, ok := re.mapper.User(t); ok {
+		name := strings.ToLower(strings.TrimLeft(s, "@＠"))
+
+		if uid, ok := re.mapper.User(name); ok {
 			return fmt.Sprintf(`!{"type":"user","raw":"%s","id":"%s"}`, s, uid)
 		}
-		if gid, ok := re.mapper.Group(t); ok {
+		if gid, ok := re.mapper.Group(name); ok {
 			return fmt.Sprintf(`!{"type":"group","raw":"%s","id":"%s"}`, s, gid)
 		}
-		return s
+
+		return userStartsRegex.ReplaceAllStringFunc(s, func(s string) string {
+			name := strings.ToLower(strings.TrimLeft(s, "@＠"))
+
+			if uid, ok := re.mapper.User(name); ok {
+				return fmt.Sprintf(`!{"type":"user","raw":"%s","id":"%s"}`, s, uid)
+			}
+			return s
+		})
 	})
 }
 
