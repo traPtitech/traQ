@@ -19,6 +19,8 @@ const (
 	MentionMessageCreated model.BotEventType = "MENTION_MESSAGE_CREATED"
 	// DirectMessageCreated ダイレクトメッセージ作成イベント
 	DirectMessageCreated model.BotEventType = "DIRECT_MESSAGE_CREATED"
+	// DirectMessageCreated ダイレクトメッセージ編集イベント
+	DirectMessageUpdated model.BotEventType = "DIRECT_MESSAGE_UPDATED"
 	// ChannelCreated チャンネル作成イベント
 	ChannelCreated model.BotEventType = "CHANNEL_CREATED"
 	// ChannelTopicChanged チャンネルトピック変更イベント
@@ -38,6 +40,7 @@ var Types model.BotEventTypes
 func init() {
 	Types = model.BotEventTypes{}
 	for _, t := range []model.BotEventType{
+		// ここに全てのBOTイベントを入れてください
 		Ping,
 		Joined,
 		Left,
@@ -46,6 +49,7 @@ func init() {
 		MessageUpdated,
 		MentionMessageCreated,
 		DirectMessageCreated,
+		DirectMessageUpdated,
 		ChannelCreated,
 		ChannelTopicChanged,
 		UserCreated,
