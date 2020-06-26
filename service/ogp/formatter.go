@@ -7,8 +7,8 @@ import (
 )
 
 // MergeDefaultPageMetaAndOpenGraph OGPの結果とページのメタデータを合わせ、レスポンスの型に揃えます
-func MergeDefaultPageMetaAndOpenGraph(og *opengraph.OpenGraph, meta *DefaultPageMeta) model.Ogp {
-	result := model.Ogp{
+func MergeDefaultPageMetaAndOpenGraph(og *opengraph.OpenGraph, meta *DefaultPageMeta) *model.Ogp {
+	result := &model.Ogp{
 		Type:        "website",
 		Title:       meta.Title,
 		URL:         meta.Url,

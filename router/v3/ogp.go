@@ -36,12 +36,12 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 	content := ogp.MergeDefaultPageMetaAndOpenGraph(og, meta)
 
 	if shouldUpdateCache {
-		err = h.Repo.UpdateOgpCache(cacheUrl, content)
+		err = h.Repo.UpdateOgpCache(cacheUrl, *content)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
 	} else if shouldCreateCache {
-		_, err = h.Repo.CreateOgpCache(cacheUrl, content)
+		_, err = h.Repo.CreateOgpCache(cacheUrl, *content)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
