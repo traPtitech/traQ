@@ -73,12 +73,13 @@ Powered by:
 + [spectral](https://github.com/stoplightio/spectral) for swagger specs
 
 #### Generate And Lint DB Schema Docs
-`make db-gen-docs`
-`make db-lint`
+If your code changes alter database schema, you should regenerate db docs.
+
+1. Write new schema descriptions in `.tbls.yml`.
+2. Make sure that Test MySQL Container are running (Do `make up-test-db`).
+3. `make db-gen-docs`
 
 [tbls](https://github.com/k1LoW/tbls) is used for generating schema docs.
-
-Test mysql container need to be running by `make up-test-db`.
 
 ## License
 Code licensed under [the MIT License](https://github.com/traPtitech/traQ/blob/master/LICENSE).

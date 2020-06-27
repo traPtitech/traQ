@@ -63,7 +63,7 @@ db-lint:
 
 .PHONY: goreleaser-snapshot
 goreleaser-snapshot:
-	goreleaser --snapshot --skip-publish --rm-dist
+	@docker run --rm -it -v $$PWD:/src -w /src goreleaser/goreleaser --snapshot --skip-publish --rm-dist
 
 .PHONY: update-frontend
 update-frontend:
