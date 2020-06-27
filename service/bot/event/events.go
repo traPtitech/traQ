@@ -21,6 +21,8 @@ const (
 	DirectMessageCreated model.BotEventType = "DIRECT_MESSAGE_CREATED"
 	// DirectMessageCreated ダイレクトメッセージ編集イベント
 	DirectMessageUpdated model.BotEventType = "DIRECT_MESSAGE_UPDATED"
+	// DirectMessageDeleted ダイレクトメッセージ削除イベント
+	DirectMessageDeleted model.BotEventType = "DIRECT_MESSAGE_DELETED"
 	// ChannelCreated チャンネル作成イベント
 	ChannelCreated model.BotEventType = "CHANNEL_CREATED"
 	// ChannelTopicChanged チャンネルトピック変更イベント
@@ -50,6 +52,7 @@ func init() {
 		MentionMessageCreated,
 		DirectMessageCreated,
 		DirectMessageUpdated,
+		DirectMessageDeleted,
 		ChannelCreated,
 		ChannelTopicChanged,
 		UserCreated,
