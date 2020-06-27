@@ -2,6 +2,8 @@
 
 ## Description
 
+OGPキャッシュテーブル
+
 <details>
 <summary><strong>Table Definition</strong></summary>
 
@@ -9,9 +11,12 @@
 CREATE TABLE `ogp_cache` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `url` text NOT NULL,
+  `url_hash` char(40) NOT NULL,
+  `valid` tinyint(1) DEFAULT NULL,
   `content` text,
   `expires_at` datetime(6) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_ogp_cache_url_hash` (`url_hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -22,9 +27,11 @@ CREATE TABLE `ogp_cache` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | int(11) |  | false |  |  |  |
-| url | text |  | false |  |  |  |
-| content | text |  | true |  |  |  |
-| expires_at | datetime(6) |  | true |  |  |  |
+| url | text |  | false |  |  | 対象ページのURL |
+| url_hash | char(40) |  | false |  |  | `url`のSHA-1ハッシュ |
+| valid | tinyint(1) |  | true |  |  | ネガティブキャッシュでないか |
+| content | text |  | true |  |  | キャッシュ内容 |
+| expires_at | datetime(6) |  | true |  |  | 有効期限 |
 
 ## Constraints
 
@@ -36,6 +43,7 @@ CREATE TABLE `ogp_cache` (
 
 | Name | Definition |
 | ---- | ---------- |
+| idx_ogp_cache_url_hash | KEY idx_ogp_cache_url_hash (url_hash) USING BTREE |
 | PRIMARY | PRIMARY KEY (id) USING BTREE |
 
 ## Relations

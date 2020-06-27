@@ -840,23 +840,29 @@
 <!-- ogp_cache -->
 <g id="node22" class="node">
 <title>ogp_cache</title>
-<polygon fill="#efefef" stroke="transparent" points="4863.5,-2425.5 4863.5,-2460.5 5062.5,-2460.5 5062.5,-2425.5 4863.5,-2425.5"/>
-<polygon fill="none" stroke="#000000" points="4863.5,-2425.5 4863.5,-2460.5 5062.5,-2460.5 5062.5,-2425.5 4863.5,-2425.5"/>
-<text text-anchor="start" x="4870.3514" y="-2438.3" font-family="Arial Bold" font-size="18.00" fill="#000000">ogp_cache</text>
-<text text-anchor="start" x="4958.3948" y="-2438.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
-<text text-anchor="start" x="4962.2854" y="-2438.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="#efefef" stroke="transparent" points="4863.5,-2455.5 4863.5,-2490.5 5062.5,-2490.5 5062.5,-2455.5 4863.5,-2455.5"/>
+<polygon fill="none" stroke="#000000" points="4863.5,-2455.5 4863.5,-2490.5 5062.5,-2490.5 5062.5,-2455.5 4863.5,-2455.5"/>
+<text text-anchor="start" x="4870.3514" y="-2468.3" font-family="Arial Bold" font-size="18.00" fill="#000000">ogp_cache</text>
+<text text-anchor="start" x="4958.3948" y="-2468.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
+<text text-anchor="start" x="4962.2854" y="-2468.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="#000000" points="4863.5,-2425.5 4863.5,-2455.5 5062.5,-2455.5 5062.5,-2425.5 4863.5,-2425.5"/>
+<text text-anchor="start" x="4870.5" y="-2436.9" font-family="Arial" font-size="14.00" fill="#000000">id </text>
+<text text-anchor="start" x="4885.2798" y="-2436.9" font-family="Arial" font-size="14.00" fill="#666666">[int(11)]</text>
 <polygon fill="none" stroke="#000000" points="4863.5,-2395.5 4863.5,-2425.5 5062.5,-2425.5 5062.5,-2395.5 4863.5,-2395.5"/>
-<text text-anchor="start" x="4870.5" y="-2406.9" font-family="Arial" font-size="14.00" fill="#000000">id </text>
-<text text-anchor="start" x="4885.2798" y="-2406.9" font-family="Arial" font-size="14.00" fill="#666666">[int(11)]</text>
+<text text-anchor="start" x="4870.5" y="-2406.9" font-family="Arial" font-size="14.00" fill="#000000">url </text>
+<text text-anchor="start" x="4889.9404" y="-2406.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
 <polygon fill="none" stroke="#000000" points="4863.5,-2365.5 4863.5,-2395.5 5062.5,-2395.5 5062.5,-2365.5 4863.5,-2365.5"/>
-<text text-anchor="start" x="4870.5" y="-2376.9" font-family="Arial" font-size="14.00" fill="#000000">url </text>
-<text text-anchor="start" x="4889.9404" y="-2376.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
+<text text-anchor="start" x="4870.5" y="-2376.9" font-family="Arial" font-size="14.00" fill="#000000">url_hash </text>
+<text text-anchor="start" x="4928.0708" y="-2376.9" font-family="Arial" font-size="14.00" fill="#666666">[char(40)]</text>
 <polygon fill="none" stroke="#000000" points="4863.5,-2335.5 4863.5,-2365.5 5062.5,-2365.5 5062.5,-2335.5 4863.5,-2335.5"/>
-<text text-anchor="start" x="4870.5" y="-2346.9" font-family="Arial" font-size="14.00" fill="#000000">content </text>
-<text text-anchor="start" x="4920.3022" y="-2346.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
+<text text-anchor="start" x="4870.5" y="-2346.9" font-family="Arial" font-size="14.00" fill="#000000">valid </text>
+<text text-anchor="start" x="4903.169" y="-2346.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(1)]</text>
 <polygon fill="none" stroke="#000000" points="4863.5,-2305.5 4863.5,-2335.5 5062.5,-2335.5 5062.5,-2305.5 4863.5,-2305.5"/>
-<text text-anchor="start" x="4870.5" y="-2316.9" font-family="Arial" font-size="14.00" fill="#000000">expires_at </text>
-<text text-anchor="start" x="4938.9614" y="-2316.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
+<text text-anchor="start" x="4870.5" y="-2316.9" font-family="Arial" font-size="14.00" fill="#000000">content </text>
+<text text-anchor="start" x="4920.3022" y="-2316.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
+<polygon fill="none" stroke="#000000" points="4863.5,-2275.5 4863.5,-2305.5 5062.5,-2305.5 5062.5,-2275.5 4863.5,-2275.5"/>
+<text text-anchor="start" x="4870.5" y="-2286.9" font-family="Arial" font-size="14.00" fill="#000000">expires_at </text>
+<text text-anchor="start" x="4938.9614" y="-2286.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
 </g>
 <!-- pins -->
 <g id="node23" class="node">
