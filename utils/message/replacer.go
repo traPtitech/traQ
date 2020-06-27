@@ -134,7 +134,7 @@ func (re *Replacer) replaceMention(m string) string {
 			return fmt.Sprintf(`!{"type":"group","raw":"%s","id":"%s"}`, s, gid)
 		}
 
-		if strings.HasSuffix(name, ":") {
+		if strings.Contains(name, ":") {
 			return s
 		}
 		return userStartsRegex.ReplaceAllStringFunc(s, func(s string) string {
