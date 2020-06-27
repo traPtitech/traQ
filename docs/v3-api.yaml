@@ -5909,8 +5909,6 @@ components:
         - create_special_user_group
         - edit_user_group
         - delete_user_group
-        - get_heartbeat
-        - post_heartbeat
         - web_rtc
         - get_my_sessions
         - delete_my_sessions
@@ -5992,8 +5990,6 @@ components:
         - CreateSpecialUserGroup
         - EditUserGroup
         - DeleteUserGroup
-        - GetHeartbeat
-        - PostHeartbeat
         - WebRTC
         - GetMySessions
         - DeleteMySessions

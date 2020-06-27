@@ -4,6 +4,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/optional"
 	"testing"
 )
 
@@ -75,6 +76,31 @@ func makeTestChannelTree(t *testing.T) *treeImpl {
 func TestMakeChannelTree(t *testing.T) {
 	t.Parallel()
 	makeTestChannelTree(t)
+}
+
+func TestTreeImpl_move(t *testing.T) {
+	t.Parallel()
+	original := makeTestChannelTree(t)
+	tree := makeTestChannelTree(t)
+
+	// (root)/e/kを(root)/kに移動
+	tree.move(cEK, optional.UUIDFrom(uuid.Nil), optional.String{})
+	assert.Len(t, tree.roots, len(original.roots)+1)
+	assert.False(t, tree.isChildPresent("k", cE))
+	assert.True(t, tree.isChildPresent("k", uuid.Nil))
+
+	// (root)/kを(root)/e/f/g/kに移動
+	tree.move(cEK, optional.UUIDFrom(cEFG), optional.String{})
+	assert.Len(t, tree.roots, len(original.roots))
+	assert.True(t, tree.isChildPresent("k", cEFG))
+	assert.False(t, tree.isChildPresent("k", uuid.Nil))
+
+	// (root)/e/f/g/kを(root)/kに移動
+	tree.move(cEK, optional.UUIDFrom(uuid.Nil), optional.String{})
+	assert.Len(t, tree.roots, len(original.roots)+1)
+	assert.False(t, tree.isChildPresent("k", cEFG))
+	assert.True(t, tree.isChildPresent("k", uuid.Nil))
+
 }
 
 func TestChannelTreeImpl_GetChildrenIDs(t *testing.T) {

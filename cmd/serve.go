@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
+	"github.com/traPtitech/traQ/utils/twemoji"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"io/ioutil"
@@ -114,7 +115,7 @@ func serveCommand() *cobra.Command {
 
 				// unicodeスタンプインストール
 				if !skipInitEmojis {
-					if err := installEmojis(repo, server.SS.FileManager, logger, false); err != nil {
+					if err := twemoji.Install(repo, server.SS.FileManager, logger, false); err != nil {
 						logger.Error("failed to install unicode emojis", zap.Error(err))
 					}
 				}

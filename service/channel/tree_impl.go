@@ -222,6 +222,8 @@ func (ct *treeImpl) move(id uuid.UUID, newParent optional.UUID, newName optional
 	if newParent.Valid {
 		if n.parent != nil {
 			delete(n.parent.children, n.id)
+		} else {
+			delete(ct.roots, n.id)
 		}
 		if newParent.UUID == uuid.Nil {
 			n.parent = nil
