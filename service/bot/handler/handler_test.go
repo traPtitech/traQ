@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository/mock_repository"
 	"github.com/traPtitech/traQ/service/bot/handler/mock_handler"
 	"github.com/traPtitech/traQ/service/channel/mock_channel"
 	"github.com/traPtitech/traQ/testutils"
+	"github.com/traPtitech/traQ/utils/random"
 	"go.uber.org/zap"
 	"testing"
 )
@@ -91,4 +93,34 @@ func expectUnicast(handlerCtx *mock_handler.MockContext, ev model.BotEventType, 
 	handlerCtx.EXPECT().
 		Unicast(ev, payload, target).
 		Times(1)
+}
+
+func createDMChannel(handlerCtx *mock_handler.MockContext, cm *mock_channel.MockManager, repo *Repo, bot *model.Bot) (dmc *model.Channel, u *model.User) {
+	dmc = &model.Channel{
+		ID:        uuid.NewV3(uuid.Nil, "dm"),
+		Name:      "dm_" + random.AlphaNumeric(17),
+		IsVisible: true,
+		IsPublic:  false,
+		ParentID:  uuid.FromStringOrNil("aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa"),
+	}
+	u = &model.User{
+		ID:     uuid.NewV3(uuid.Nil, "dmu"),
+		Name:   "dm_member",
+		Status: model.UserAccountStatusActive,
+	}
+
+	cm.EXPECT().
+		GetChannel(dmc.ID).
+		Return(dmc, nil).
+		AnyTimes()
+	cm.EXPECT().
+		GetDMChannelMembers(dmc.ID).
+		Return([]uuid.UUID{bot.BotUserID, u.GetID()}, nil).
+		AnyTimes()
+	handlerCtx.EXPECT().
+		GetBotByBotUserID(u.ID).
+		Return(nil, nil).
+		AnyTimes()
+	registerUser(repo, u)
+	return dmc, u
 }
