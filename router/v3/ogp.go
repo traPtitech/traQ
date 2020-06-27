@@ -25,11 +25,32 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 	shouldCreateCache := err != nil
 
 	if !shouldUpdateCache && !shouldCreateCache && err == nil {
-		return c.JSON(http.StatusOK, cache.Content)
+		if cache.Valid {
+			// キャッシュがヒットした
+			return c.JSON(http.StatusOK, cache.Content)
+		} else {
+			// キャッシュがヒットしたがネガティブキャッシュだった
+			return herror.BadRequest(err)
+		}
 	}
 
 	og, meta, err := ogp.ParseMetaForUrl(u)
-	if err != nil {
+	println(err)
+	if err == ogp.ErrClient {
+		// 4xxエラーの場合はネガティブキャッシュを作成
+		if shouldUpdateCache {
+			updateErr := h.Repo.UpdateOgpCacheNegative(cacheUrl)
+			if updateErr != nil {
+				return herror.InternalServerError(updateErr)
+			}
+		} else if shouldCreateCache {
+			_, createErr := h.Repo.CreateOgpCacheNegative(cacheUrl)
+			if createErr != nil {
+				return herror.InternalServerError(createErr)
+			}
+		}
+		return herror.BadRequest(err)
+	} else if err != nil {
 		return herror.BadRequest(err)
 	}
 
@@ -48,3 +69,4 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, content)
 }
+

@@ -20,9 +20,7 @@ func ParseMetaForUrl(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode == 404 {
-		return nil, nil, ErrNotFound
-	} else if resp.StatusCode >= 500 {
+    if resp.StatusCode >= 500 {
 		return nil, nil, ErrServer
 	} else if resp.StatusCode >= 400 {
 		return nil, nil, ErrClient

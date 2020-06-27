@@ -34,7 +34,32 @@ func (repo *GormRepository)CreateOgpCache(url string, content model.Ogp) (c *mod
 	ogpCache := &model.OgpCache{
 		URL:          url,
 		URLHash:      urlHash,
+		Valid:        true,
 		Content:      content,
+		ExpiresAt:    getCacheExpireDate(),
+	}
+
+	err = repo.db.Transaction(func(tx *gorm.DB) error {
+		return tx.Create(ogpCache).Error
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ogpCache, nil
+}
+
+// CreateOgpCacheNegative implements OgpRepository interface.
+func (repo *GormRepository)CreateOgpCacheNegative(url string) (c *model.OgpCache, err error) {
+	urlHash, err := getURLHash(url)
+	if err != nil {
+		return nil, err
+	}
+
+	ogpCache := &model.OgpCache{
+		URL:          url,
+		URLHash:      urlHash,
+		Valid:        false,
+		Content:      model.Ogp{},
 		ExpiresAt:    getCacheExpireDate(),
 	}
 
@@ -62,9 +87,32 @@ func (repo *GormRepository)UpdateOgpCache(url string, content model.Ogp) error {
 		}
 
 		if !reflect.DeepEqual(c.Content, content) {
+			changes["valid"] = true
 			changes["content"] = content
+			changes["expires_at"] = getCacheExpireDate()
+			return tx.Model(&c).Updates(changes).Error
 		}
-		if len(changes) > 0 {
+		return nil
+	})
+}
+
+// UpdateOgpCacheNegative implements OgpRepository interface.
+func (repo *GormRepository)UpdateOgpCacheNegative(url string) error {
+	urlHash, err := getURLHash(url)
+	if err != nil {
+		return err
+	}
+
+	changes := map[string]interface{}{}
+	return repo.db.Transaction(func(tx *gorm.DB) error {
+		var c model.OgpCache
+		if err := tx.First(&c, &model.OgpCache{ URL: url, URLHash: urlHash }).Error; err != nil {
+			return convertError(err)
+		}
+
+		if c.Valid == true {
+			changes["valid"] = false
+			changes["content"] = model.Ogp{}
 			changes["expires_at"] = getCacheExpireDate()
 			return tx.Model(&c).Updates(changes).Error
 		}
