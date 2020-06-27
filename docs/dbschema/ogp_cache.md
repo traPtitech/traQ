@@ -2,7 +2,7 @@
 
 ## Description
 
-OGPキャッシュテーブル
+OGPキャッシュテーブルr
 
 <details>
 <summary><strong>Table Definition</strong></summary>
@@ -28,7 +28,7 @@ CREATE TABLE `ogp_cache` (
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | int(11) |  | false |  |  |  |
 | url | text |  | false |  |  | 対象ページのURL |
-| url_hash | char(40) |  | false |  |  | `url`のSHA-1ハッシュ |
+| url_hash | char(40) |  | false |  |  | URLのSHA-1ハッシュ |
 | valid | tinyint(1) |  | true |  |  | ネガティブキャッシュでないか |
 | content | text |  | true |  |  | キャッシュ内容 |
 | expires_at | datetime(6) |  | true |  |  | 有効期限 |

@@ -358,3 +358,11 @@ comments:
       provider_name: 認証プロバイダ名
       external_id: 認証プロバイダ上でのID
       extra: 追加データ
+  - table: ogp_cache
+    tableComment: OGPキャッシュテーブルr
+    columnComments:
+      url: 対象ページのURL
+      url_hash: URLのSHA-1ハッシュ
+      valid: ネガティブキャッシュでないか
+      content: キャッシュ内容
+      expires_at: 有効期限
