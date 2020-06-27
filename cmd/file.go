@@ -54,7 +54,7 @@ func filePruneCommand() *cobra.Command {
 				logger.Fatal("failed to setup file storage", zap.Error(err))
 			}
 
-			// Repository チャンネルツリーを作らないので注意
+			// Repository
 			repo, err := repository.NewGormRepository(db, hub.New(), logger)
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))

@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"cloud.google.com/go/profiler"
+	"database/sql"
+	"database/sql/driver"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/repository"
@@ -292,20 +295,21 @@ func (c Config) getFileStorage() (storage.FileStorage, error) {
 }
 
 func (c Config) getDatabase() (*gorm.DB, error) {
-	engine, err := gorm.Open("mysql", fmt.Sprintf(
-		"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=true",
-		c.MariaDB.Username,
-		c.MariaDB.Password,
-		c.MariaDB.Host,
-		c.MariaDB.Port,
-		c.MariaDB.Database,
-	))
+	connector, err := provideMySQLConnector(&c)
 	if err != nil {
 		return nil, err
 	}
-	engine.DB().SetMaxOpenConns(c.MariaDB.Connection.MaxOpen)
-	engine.DB().SetMaxIdleConns(c.MariaDB.Connection.MaxIdle)
-	engine.DB().SetConnMaxLifetime(time.Duration(c.MariaDB.Connection.LifeTime) * time.Second)
+
+	db := sql.OpenDB(connector)
+	db.SetMaxOpenConns(c.MariaDB.Connection.MaxOpen)
+	db.SetMaxIdleConns(c.MariaDB.Connection.MaxIdle)
+	db.SetConnMaxLifetime(time.Duration(c.MariaDB.Connection.LifeTime) * time.Second)
+
+	engine, err := gorm.Open("mysql", db)
+	if err != nil {
+		_ = db.Close()
+		return nil, err
+	}
 	engine.BlockGlobalUpdate(true)
 	engine.LogMode(c.DevMode)
 	return engine.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"), nil
@@ -324,6 +328,22 @@ func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unr
 		return fcm.NewClientWithCredentialsFile(repo, logger, unreadCounter, file)
 	}
 	return fcm.NewNullClient(), nil
+}
+
+func provideMySQLConnector(c *Config) (driver.Connector, error) {
+	conf := mysql.NewConfig()
+	conf.Net = "tcp"
+	conf.Addr = fmt.Sprintf("%s:%d", c.MariaDB.Host, c.MariaDB.Port)
+	conf.DBName = c.MariaDB.Database
+	conf.User = c.MariaDB.Username
+	conf.Passwd = c.MariaDB.Password
+	conf.Params = map[string]string{
+		"charset": "utf8mb4",
+	}
+	conf.Collation = "utf8mb4_general_ci"
+	conf.ParseTime = true
+
+	return mysql.NewConnector(conf)
 }
 
 func provideServerOriginString(c *Config) variable.ServerOriginString {
