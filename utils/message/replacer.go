@@ -134,6 +134,7 @@ func (re *Replacer) replaceMention(m string) string {
 			return fmt.Sprintf(`!{"type":"group","raw":"%s","id":"%s"}`, s, gid)
 		}
 
+		if strings.HasSuffix(name, ":") return s
 		return userStartsRegex.ReplaceAllStringFunc(s, func(s string) string {
 			name := strings.ToLower(strings.TrimLeft(s, "@＠"))
 
