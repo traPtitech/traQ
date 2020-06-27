@@ -44,7 +44,9 @@ const testHtmlOgpTagInBody = `
 `
 
 func TestParseDoc(t *testing.T) {
+	t.Parallel()
 	t.Run("correct OGP", func(t *testing.T) {
+		t.Parallel()
 		doc, _ := html.Parse(strings.NewReader(testHtml))
 		og, _ := parseDoc(doc)
 
@@ -53,6 +55,7 @@ func TestParseDoc(t *testing.T) {
 		assert.Equal(t, "/image.png", og.Images[0].URL)
 	})
 	t.Run("incorrect OGP", func(t *testing.T) {
+		t.Parallel()
 		doc, _ := html.Parse(strings.NewReader(testHtmlWithoutOgp))
 		og, meta := parseDoc(doc)
 
@@ -64,6 +67,7 @@ func TestParseDoc(t *testing.T) {
 		assert.Equal(t, "https://example.com", meta.Url)
 	})
 	t.Run("OGP tag in body", func(t *testing.T) {
+		t.Parallel()
 		doc, _ := html.Parse(strings.NewReader(testHtmlOgpTagInBody))
 		og, meta := parseDoc(doc)
 
@@ -73,7 +77,9 @@ func TestParseDoc(t *testing.T) {
 }
 
 func TestExtractTitleFromNode(t *testing.T) {
+	t.Parallel()
 	t.Run("Correct title node", func(t *testing.T) {
+		t.Parallel()
 		const h = "<title>TITLE</title>"
 		n, _ := html.Parse(strings.NewReader(h))
 		result := extractTitleFromNode(n.FirstChild.FirstChild.FirstChild)
@@ -81,6 +87,7 @@ func TestExtractTitleFromNode(t *testing.T) {
 		assert.Equal(t, "TITLE", result)
 	})
 	t.Run("Incorrect title node (no content)", func(t *testing.T) {
+		t.Parallel()
 		const h = "<title></title>"
 		n, _ := html.Parse(strings.NewReader(h))
 		result := extractTitleFromNode(n.FirstChild.FirstChild.FirstChild)
@@ -88,6 +95,7 @@ func TestExtractTitleFromNode(t *testing.T) {
 		assert.Equal(t, "", result)
 	})
 	t.Run("Not a title node", func(t *testing.T) {
+		t.Parallel()
 		const h = `<meta content="DESCRIPTION" name="description">`
 		n, _ := html.Parse(strings.NewReader(h))
 		result := extractTitleFromNode(n.FirstChild.FirstChild.FirstChild)
