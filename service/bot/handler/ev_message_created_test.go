@@ -18,10 +18,19 @@ func TestMessageCreated(t *testing.T) {
 	t.Parallel()
 
 	b := &model.Bot{
-		ID:              uuid.NewV3(uuid.Nil, "b"),
-		BotUserID:       uuid.NewV3(uuid.Nil, "bu"),
-		SubscribeEvents: model.BotEventTypesFromArray([]string{event.MessageCreated.String()}),
-		State:           model.BotActive,
+		ID:        uuid.NewV3(uuid.Nil, "b"),
+		BotUserID: uuid.NewV3(uuid.Nil, "bu"),
+		SubscribeEvents: model.BotEventTypesFromArray([]string{
+			event.MessageCreated.String(),
+			event.DirectMessageCreated.String(),
+		}),
+		State: model.BotActive,
+	}
+	bu := &model.User{
+		ID:     b.BotUserID,
+		Name:   "bot",
+		Status: model.UserAccountStatusActive,
+		Bot:    true,
 	}
 	ch := &model.Channel{
 		ID:       uuid.NewV3(uuid.Nil, "c"),
@@ -95,6 +104,58 @@ func TestMessageCreated(t *testing.T) {
 			"message_id":   m.ID,
 			"message":      m,
 			"parse_result": message.Parse(m.Text),
+		}))
+	})
+
+	t.Run("success (dm)", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		handlerCtx, cm, repo := setup(t, ctrl)
+		registerBot(t, handlerCtx, b)
+		dmc, u := createDMChannel(handlerCtx, cm, repo, b)
+
+		m := &model.Message{
+			ID:        uuid.NewV3(uuid.Nil, "m"),
+			UserID:    u.GetID(),
+			ChannelID: dmc.ID,
+			Text:      "test message",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		parsed := message.Parse(m.Text)
+		et := time.Now()
+
+		expectUnicast(handlerCtx, event.DirectMessageCreated, payload.MakeDirectMessageCreated(et, m, u, parsed), b)
+		assert.NoError(t, MessageCreated(handlerCtx, et, intevent.MessageCreated, hub.Fields{
+			"message_id":   m.ID,
+			"message":      m,
+			"parse_result": parsed,
+		}))
+	})
+
+	t.Run("success (dm, no sent)", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		handlerCtx, cm, repo := setup(t, ctrl)
+		registerBot(t, handlerCtx, b)
+		registerUser(repo, bu)
+		dmc, _ := createDMChannel(handlerCtx, cm, repo, b)
+
+		m := &model.Message{
+			ID:        uuid.NewV3(uuid.Nil, "m"),
+			UserID:    b.BotUserID,
+			ChannelID: dmc.ID,
+			Text:      "test message",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		parsed := message.Parse(m.Text)
+		et := time.Now()
+
+		assert.NoError(t, MessageCreated(handlerCtx, et, intevent.MessageCreated, hub.Fields{
+			"message_id":   m.ID,
+			"message":      m,
+			"parse_result": parsed,
 		}))
 	})
 }

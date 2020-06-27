@@ -18,10 +18,19 @@ func TestMessageUpdated(t *testing.T) {
 	t.Parallel()
 
 	b := &model.Bot{
-		ID:              uuid.NewV3(uuid.Nil, "b"),
-		BotUserID:       uuid.NewV3(uuid.Nil, "bu"),
-		SubscribeEvents: model.BotEventTypesFromArray([]string{event.MessageUpdated.String()}),
-		State:           model.BotActive,
+		ID:        uuid.NewV3(uuid.Nil, "b"),
+		BotUserID: uuid.NewV3(uuid.Nil, "bu"),
+		SubscribeEvents: model.BotEventTypesFromArray([]string{
+			event.MessageUpdated.String(),
+			event.DirectMessageUpdated.String(),
+		}),
+		State: model.BotActive,
+	}
+	bu := &model.User{
+		ID:     b.BotUserID,
+		Name:   "bot",
+		Status: model.UserAccountStatusActive,
+		Bot:    true,
 	}
 	ch := &model.Channel{
 		ID:       uuid.NewV3(uuid.Nil, "c"),
@@ -91,6 +100,55 @@ func TestMessageUpdated(t *testing.T) {
 			AnyTimes()
 
 		assert.NoError(t, MessageUpdated(handlerCtx, time.Now(), intevent.MessageUpdated, hub.Fields{
+			"message_id": m.ID,
+			"message":    m,
+		}))
+	})
+
+	t.Run("success (dm)", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		handlerCtx, cm, repo := setup(t, ctrl)
+		registerBot(t, handlerCtx, b)
+		dmc, u := createDMChannel(handlerCtx, cm, repo, b)
+
+		m := &model.Message{
+			ID:        uuid.NewV3(uuid.Nil, "m"),
+			UserID:    u.GetID(),
+			ChannelID: dmc.ID,
+			Text:      "test message",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		parsed := message.Parse(m.Text)
+		et := time.Now()
+
+		expectUnicast(handlerCtx, event.DirectMessageUpdated, payload.MakeDirectMessageUpdated(et, m, u, parsed), b)
+		assert.NoError(t, MessageUpdated(handlerCtx, et, intevent.MessageUpdated, hub.Fields{
+			"message_id": m.ID,
+			"message":    m,
+		}))
+	})
+
+	t.Run("success (dm, no sent)", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		handlerCtx, cm, repo := setup(t, ctrl)
+		registerBot(t, handlerCtx, b)
+		registerUser(repo, bu)
+		dmc, _ := createDMChannel(handlerCtx, cm, repo, b)
+
+		m := &model.Message{
+			ID:        uuid.NewV3(uuid.Nil, "m"),
+			UserID:    b.BotUserID,
+			ChannelID: dmc.ID,
+			Text:      "test message",
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		et := time.Now()
+
+		assert.NoError(t, MessageUpdated(handlerCtx, et, intevent.MessageUpdated, hub.Fields{
 			"message_id": m.ID,
 			"message":    m,
 		}))

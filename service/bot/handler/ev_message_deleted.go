@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/bot/event"
@@ -18,11 +19,43 @@ func MessageDeleted(ctx Context, datetime time.Time, _ string, fields hub.Fields
 	}
 
 	if ch.IsDMChannel() {
+		ids, err := ctx.CM().GetDMChannelMembers(ch.ID)
+		if err != nil {
+			return fmt.Errorf("failed to GetDMChannelMembers: %w", err)
+		}
 
+		var id uuid.UUID
+		for _, v := range ids {
+			if v != m.UserID {
+				id = v
+				break
+			}
+		}
+
+		bot, err := ctx.GetBotByBotUserID(id)
+		if err != nil {
+			return fmt.Errorf("failed to GetBotByBotUserID: %w", err)
+		}
+		if bot == nil || !bot.SubscribeEvents.Contains(event.DirectMessageDeleted) {
+			return nil
+		}
+
+		if err := ctx.Unicast(
+			event.DirectMessageDeleted,
+			payload.MakeDirectMessageDeleted(datetime, m),
+			bot,
+		); err != nil {
+			return fmt.Errorf("failed to unicast: %w", err)
+		}
 	} else {
 		bots, err := ctx.GetChannelBots(m.ChannelID, event.MessageDeleted)
 		if err != nil {
 			return fmt.Errorf("failed to GetChannelBots: %w", err)
+		}
+
+		bots = filterBotUserIDNotEquals(bots, m.UserID)
+		if len(bots) == 0 {
+			return nil
 		}
 
 		if err := ctx.Multicast(
