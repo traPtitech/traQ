@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-const testHtml = `
+const testHTML = `
 <html>
 	<head>
 		<meta property="og:type" content="article" />
@@ -19,7 +19,7 @@ const testHtml = `
 </html>
 `
 
-const testHtmlWithoutOgp = `
+const testHTMLWithoutOgp = `
 <html>
 	<head>
 		<meta property="og:type" content="article" />
@@ -32,7 +32,7 @@ const testHtmlWithoutOgp = `
 </html>
 `
 
-const testHtmlOgpTagInBody = `
+const testHTMLOgpTagInBody = `
 <html>
 	<head>
 		<title>TITLE</title>
@@ -47,7 +47,7 @@ func TestParseDoc(t *testing.T) {
 	t.Parallel()
 	t.Run("correct OGP", func(t *testing.T) {
 		t.Parallel()
-		doc, _ := html.Parse(strings.NewReader(testHtml))
+		doc, _ := html.Parse(strings.NewReader(testHTML))
 		og, _ := parseDoc(doc)
 
 		assert.Equal(t, "TITLE", og.Title)
@@ -56,7 +56,7 @@ func TestParseDoc(t *testing.T) {
 	})
 	t.Run("incorrect OGP", func(t *testing.T) {
 		t.Parallel()
-		doc, _ := html.Parse(strings.NewReader(testHtmlWithoutOgp))
+		doc, _ := html.Parse(strings.NewReader(testHTMLWithoutOgp))
 		og, meta := parseDoc(doc)
 
 		assert.Equal(t, "", og.Title)
@@ -64,11 +64,11 @@ func TestParseDoc(t *testing.T) {
 		assert.Equal(t, "TITLE", meta.Title)
 		assert.Equal(t, "DESCRIPTION", meta.Description)
 		assert.Equal(t, "/image.png", meta.Image)
-		assert.Equal(t, "https://example.com", meta.Url)
+		assert.Equal(t, "https://example.com", meta.URL)
 	})
 	t.Run("OGP tag in body", func(t *testing.T) {
 		t.Parallel()
-		doc, _ := html.Parse(strings.NewReader(testHtmlOgpTagInBody))
+		doc, _ := html.Parse(strings.NewReader(testHTMLOgpTagInBody))
 		og, meta := parseDoc(doc)
 
 		assert.Equal(t, "article", og.Type)

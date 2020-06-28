@@ -8,11 +8,11 @@ import (
 )
 
 type DefaultPageMeta struct {
-	Title, Description, Url, Image string
+	Title, Description, URL, Image string
 }
 
-// ParseMetaForUrl 指定したURLのメタタグをパースした結果を返します。
-func ParseMetaForUrl(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, error) {
+// ParseMetaForURL 指定したURLのメタタグをパースした結果を返します。
+func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, error) {
 	resp, err := http.Get(url.String())
 	if err != nil {
 		return nil, nil, err
@@ -20,7 +20,7 @@ func ParseMetaForUrl(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 
 	defer resp.Body.Close()
 
-    if resp.StatusCode >= 500 {
+	if resp.StatusCode >= 500 {
 		return nil, nil, ErrServer
 	} else if resp.StatusCode >= 400 {
 		return nil, nil, ErrClient
@@ -32,8 +32,8 @@ func ParseMetaForUrl(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 	}
 
 	og, meta := parseDoc(doc)
-	if len(meta.Url) == 0 {
-		meta.Url = url.String()
+	if len(meta.URL) == 0 {
+		meta.URL = url.String()
 	}
 	return og, meta, nil
 }
@@ -66,7 +66,7 @@ func (m *DefaultPageMeta) processMeta(metaAttrs map[string]string) {
 	case "description":
 		m.Description = metaAttrs["content"]
 	case "canonical":
-		m.Url = metaAttrs["href"]
+		m.URL = metaAttrs["href"]
 	}
 	switch metaAttrs["itemprop"] {
 	case "image":

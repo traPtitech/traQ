@@ -42,4 +42,3 @@ type OgpCacheRepository interface {
 	// DBによるエラーを返すことがあります。
 	DeleteOgpCache(url string) error
 }
-

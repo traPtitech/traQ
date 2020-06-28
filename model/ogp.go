@@ -28,11 +28,11 @@ type Ogp struct {
 
 // OgpCache Ogpのキャッシュ情報
 type OgpCache struct {
-	Id 		  int 		`gorm:"auto_increment;not null;primary_key"`
+	ID        int       `gorm:"auto_increment;not null;primary_key"`
 	URL       string    `gorm:"type:text;not null"`
 	URLHash   string    `gorm:"type:char(40);not null;index"`
-	Valid	  bool      `gorm:"type:boolean"`
-	Content   Ogp    	`gorm:"type:text"`
+	Valid     bool      `gorm:"type:boolean"`
+	Content   Ogp       `gorm:"type:text"`
 	ExpiresAt time.Time `gorm:"precision:6"`
 }
 
@@ -60,4 +60,3 @@ func (o *Ogp) Scan(src interface{}) error {
 		return errors.New("failed to scan Ogp")
 	}
 }
-

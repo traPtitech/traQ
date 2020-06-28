@@ -11,7 +11,7 @@ func MergeDefaultPageMetaAndOpenGraph(og *opengraph.OpenGraph, meta *DefaultPage
 	result := &model.Ogp{
 		Type:        "website",
 		Title:       meta.Title,
-		URL:         meta.Url,
+		URL:         meta.URL,
 		Images:      nil,
 		Description: meta.Description,
 		Videos:      nil,

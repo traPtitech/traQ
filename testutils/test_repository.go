@@ -1755,4 +1755,3 @@ func (repo *TestRepository) DeleteOgpCache(string) error {
 func (repo *TestRepository) UpdateOgpCacheNegative(url string) error {
 	panic("implement me")
 }
-
