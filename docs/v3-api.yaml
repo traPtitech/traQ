@@ -3576,10 +3576,9 @@ paths:
                 $ref: '#/components/schemas/Ogp'
               examples: {}
         '400':
-          description: 指定したURLが不正か、指定されたURLに対するOGP情報が存在しませんでした。
-          content:
-            application/json:
-              schema: {}
+          description: 指定したURLが不正です。
+        '404':
+          description: 指定したURLに対するOGP情報が見つかりませんでした。
       operationId: getOgp
       description: OGP情報を取得します。
       parameters:

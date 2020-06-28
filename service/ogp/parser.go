@@ -5,6 +5,7 @@ import (
 	"golang.org/x/net/html"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type DefaultPageMeta struct {
@@ -13,7 +14,10 @@ type DefaultPageMeta struct {
 
 // ParseMetaForURL 指定したURLのメタタグをパースした結果を返します。
 func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, error) {
-	resp, err := http.Get(url.String())
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Get(url.String())
 	if err != nil {
 		return nil, nil, err
 	}

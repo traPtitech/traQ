@@ -1737,21 +1737,15 @@ func (repo *TestRepository) GetFileMetas(repository.FilesQuery) (result []*model
 	panic("implement me")
 }
 
-func (repo *TestRepository) CreateOgpCache(string, model.Ogp) (*model.OgpCache, error) {
+func (repo *TestRepository) CreateOgpCache(string, *model.Ogp) (*model.OgpCache, error) {
 	panic("implement me")
 }
-func (repo *TestRepository) CreateOgpCacheNegative(url string) (c *model.OgpCache, err error) {
-	panic("implement me")
-}
-func (repo *TestRepository) UpdateOgpCache(string, model.Ogp) error {
+func (repo *TestRepository) UpdateOgpCache(string, *model.Ogp) error {
 	panic("implement me")
 }
 func (repo *TestRepository) GetOgpCache(string) (*model.OgpCache, error) {
 	panic("implement me")
 }
 func (repo *TestRepository) DeleteOgpCache(string) error {
-	panic("implement me")
-}
-func (repo *TestRepository) UpdateOgpCacheNegative(url string) error {
 	panic("implement me")
 }

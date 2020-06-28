@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -25,46 +26,54 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 	shouldCreateCache := err != nil
 
 	if !shouldUpdateCache && !shouldCreateCache && err == nil {
+		// キャッシュがヒットしたので残りの有効時間までクライアント側にキャッシュ
+		cacheDuration := int(cache.ExpiresAt.Sub(time.Now()).Seconds())
+		c.Response().Header().Set(consts.HeaderCacheControl, fmt.Sprintf("public, max-age=%d", cacheDuration))
+
 		if cache.Valid {
-			// キャッシュがヒットした
 			return c.JSON(http.StatusOK, cache.Content)
 		}
 		// キャッシュがヒットしたがネガティブキャッシュだった
-		return herror.BadRequest(err)
+		return herror.NotFound(err)
 	}
 
 	og, meta, err := ogp.ParseMetaForURL(u)
-	println(err)
 	if err == ogp.ErrClient {
 		// 4xxエラーの場合はネガティブキャッシュを作成
 		if shouldUpdateCache {
-			updateErr := h.Repo.UpdateOgpCacheNegative(cacheURL)
+			updateErr := h.Repo.UpdateOgpCache(cacheURL, nil)
 			if updateErr != nil {
 				return herror.InternalServerError(updateErr)
 			}
 		} else if shouldCreateCache {
-			_, createErr := h.Repo.CreateOgpCacheNegative(cacheURL)
+			_, createErr := h.Repo.CreateOgpCache(cacheURL, nil)
 			if createErr != nil {
 				return herror.InternalServerError(createErr)
 			}
 		}
-		return herror.BadRequest(err)
+		// キャッシュヒットしなかったので1週間キャッシュ
+		c.Response().Header().Set(consts.HeaderCacheControl, "public, max-age=604800")
+		return herror.NotFound(err)
 	} else if err != nil {
-		return herror.BadRequest(err)
+		// このパスは5xxエラーなのでクライアント側キャッシュつけない
+		return herror.NotFound(err)
 	}
 
 	content := ogp.MergeDefaultPageMetaAndOpenGraph(og, meta)
 
 	if shouldUpdateCache {
-		err = h.Repo.UpdateOgpCache(cacheURL, *content)
+		err = h.Repo.UpdateOgpCache(cacheURL, content)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
 	} else if shouldCreateCache {
-		_, err = h.Repo.CreateOgpCache(cacheURL, *content)
+		_, err = h.Repo.CreateOgpCache(cacheURL, content)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
 	}
+
+	// キャッシュヒットしなかったので1週間キャッシュ
+	c.Response().Header().Set(consts.HeaderCacheControl, "public, max-age=604800")
 	return c.JSON(http.StatusOK, content)
 }
