@@ -36,9 +36,12 @@ func TestReplacer_Replace(t *testing.T) {
 		},
 		UserMap: map[string]uuid.UUID{
 			"takashi_trap": uuid.Must(uuid.FromString("dfdff0c9-5de0-46ee-9721-2525e8bb3d45")),
+			"takashi_trape": uuid.Must(uuid.FromString("dfdff0c9-5de0-46ee-9721-2525e8bb3d46")),
+			"very_long_long_long_long_lo_name": uuid.Must(uuid.FromString("dfdff0c9-5de0-46ee-9721-2525e8bb3d47")),
 		},
 		GroupMap: map[string]uuid.UUID{
 			"okあok": uuid.Must(uuid.FromString("dfabf0c9-5de0-46ee-9721-2525e8bb3d45")),
+			"takashi_trapo": uuid.Must(uuid.FromString("dfabf0c9-5de0-46ee-9721-2525e8bb3d46")),
 		},
 	})
 
@@ -56,8 +59,8 @@ func TestReplacer_Replace(t *testing.T) {
 			"$$\n```\n@takashi_trap\n```\n$$",
 		},
 		{
-			"`$@takashi_trap$` @takashi_trap",
-			"`$@takashi_trap$` !{\"type\":\"user\",\"raw\":\"@takashi_trap\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d45\"}",
+			"`$@takashi_trap$` @takashi_trap @very_long_long_long_long_lo_name",
+			"`$@takashi_trap$` !{\"type\":\"user\",\"raw\":\"@takashi_trap\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d45\"} !{\"type\":\"user\",\"raw\":\"@very_long_long_long_long_lo_name\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d47\"}",
 		},
 		{
 			"`@takashi_trap` $@takashi_trap$ $$ $ `$@takashi_trap$$@takashi_trap$`$@takashi_trap$`$`",
@@ -86,6 +89,22 @@ func TestReplacer_Replace(t *testing.T) {
 		{
 			"@takashi_trapああ a@takashi_trap",
 			"!{\"type\":\"user\",\"raw\":\"@takashi_trap\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d45\"}ああ a!{\"type\":\"user\",\"raw\":\"@takashi_trap\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d45\"}",
+		},
+		{
+			":@takashi_trap:ああ a@takashi_trap",
+			":@takashi_trap:ああ a!{\"type\":\"user\",\"raw\":\"@takashi_trap\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d45\"}",
+		},
+		{
+			"@takashi_trapああ:",
+			"!{\"type\":\"user\",\"raw\":\"@takashi_trap\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d45\"}ああ:",
+		},
+		{
+			"@takashi_trap:@takashi_trap: :@takashi_trap: :takashi_trap",
+			"!{\"type\":\"user\",\"raw\":\"@takashi_trap\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d45\"}:@takashi_trap: :@takashi_trap: :takashi_trap",
+		},
+		{
+			"@takashi_trapo @takashi_trape",
+			"!{\"type\":\"group\",\"raw\":\"@takashi_trapo\",\"id\":\"dfabf0c9-5de0-46ee-9721-2525e8bb3d46\"} !{\"type\":\"user\",\"raw\":\"@takashi_trape\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d46\"}",
 		},
 	}
 	for _, v := range tt {
