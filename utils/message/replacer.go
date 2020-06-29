@@ -10,7 +10,7 @@ import (
 
 var (
 	// ユーザーとグループのnameの和集合
-	mentionRegex    = regexp.MustCompile(`[@＠](\S{1,32})`)
+	mentionRegex    = regexp.MustCompile(`[@＠:](\S{1,32})`)
 	userStartsRegex = regexp.MustCompile(`^[@＠]([a-zA-Z0-9_-]{1,32})`)
 	channelRegex    = regexp.MustCompile(`[#＃]([a-zA-Z0-9_/-]+)`)
 )
@@ -125,6 +125,10 @@ func (re *Replacer) replaceAll(m string) string {
 
 func (re *Replacer) replaceMention(m string) string {
 	return mentionRegex.ReplaceAllStringFunc(m, func(s string) string {
+		if strings.HasPrefix(s, ":") {
+			return s
+		}
+
 		name := strings.ToLower(strings.TrimLeft(s, "@＠"))
 
 		if uid, ok := re.mapper.User(name); ok {
@@ -132,10 +136,6 @@ func (re *Replacer) replaceMention(m string) string {
 		}
 		if gid, ok := re.mapper.Group(name); ok {
 			return fmt.Sprintf(`!{"type":"group","raw":"%s","id":"%s"}`, s, gid)
-		}
-
-		if strings.Contains(name, ":") {
-			return s
 		}
 		return userStartsRegex.ReplaceAllStringFunc(s, func(s string) string {
 			name := strings.ToLower(strings.TrimLeft(s, "@＠"))
