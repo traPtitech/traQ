@@ -137,6 +137,7 @@ func (re *Replacer) replaceMention(m string) string {
 		if gid, ok := re.mapper.Group(name); ok {
 			return fmt.Sprintf(`!{"type":"group","raw":"%s","id":"%s"}`, s, gid)
 		}
+
 		return userStartsRegex.ReplaceAllStringFunc(s, func(s string) string {
 			name := strings.ToLower(strings.TrimLeft(s, "@＠"))
 
