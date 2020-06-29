@@ -125,6 +125,7 @@ func (re *Replacer) replaceAll(m string) string {
 
 func (re *Replacer) replaceMention(m string) string {
 	return mentionRegex.ReplaceAllStringFunc(m, func(s string) string {
+		// 始まりが:なものを除外
 		if strings.HasPrefix(s, ":") {
 			return s
 		}
