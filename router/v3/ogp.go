@@ -42,8 +42,8 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 		}
 
 		og, meta, err := ogp.ParseMetaForURL(u)
-		if err == ogp.ErrClient {
-			// 4xxエラーの場合はネガティブキャッシュを作成
+		if err == ogp.ErrClient || err == ogp.ErrParse || err == ogp.ErrNetwork {
+			// 4xxエラー、パースエラー、名前解決などのネットワークエラーの場合はネガティブキャッシュを作成
 			if shouldUpdateCache {
 				updateErr := h.Repo.UpdateOgpCache(cacheURL, nil)
 				if updateErr != nil {

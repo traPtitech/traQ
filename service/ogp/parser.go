@@ -19,7 +19,7 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 	}
 	resp, err := client.Get(url.String())
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, ErrNetwork
 	}
 
 	defer resp.Body.Close()
@@ -32,7 +32,7 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 
 	doc, err := html.Parse(resp.Body)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, ErrParse
 	}
 
 	og, meta := parseDoc(doc)
