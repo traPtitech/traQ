@@ -27,7 +27,7 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 
 	if !shouldUpdateCache && !shouldCreateCache && err == nil {
 		// キャッシュがヒットしたので残りの有効時間までクライアント側にキャッシュ
-		cacheDuration := int(cache.ExpiresAt.Sub(time.Now()).Seconds())
+		cacheDuration := int(time.Until(cache.ExpiresAt).Seconds())
 		c.Response().Header().Set(consts.HeaderCacheControl, fmt.Sprintf("public, max-age=%d", cacheDuration))
 
 		if cache.Valid {
