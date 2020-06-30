@@ -42,7 +42,7 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 		}
 
 		og, meta, err := ogp.ParseMetaForURL(u)
-		if err == ogp.ErrClient || err == ogp.ErrParse || err == ogp.ErrNetwork {
+		if err == ogp.ErrClient || err == ogp.ErrParse || err == ogp.ErrNetwork || err == ogp.ErrContentTypeNotSupported {
 			// 4xxエラー、パースエラー、名前解決などのネットワークエラーの場合はネガティブキャッシュを作成
 			if shouldUpdateCache {
 				updateErr := h.Repo.UpdateOgpCache(cacheURL, nil)
@@ -60,7 +60,7 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 			return nil, herror.NotFound(err)
 		} else if err != nil {
 			// このパスは5xxエラーなのでクライアント側キャッシュつけない
-			return nil,herror.NotFound(err)
+			return nil, herror.NotFound(err)
 		}
 
 		content := ogp.MergeDefaultPageMetaAndOpenGraph(og, meta)

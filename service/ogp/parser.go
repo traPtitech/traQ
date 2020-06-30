@@ -5,6 +5,7 @@ import (
 	"golang.org/x/net/html"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -28,6 +29,10 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 		return nil, nil, ErrServer
 	} else if resp.StatusCode >= 400 {
 		return nil, nil, ErrClient
+	}
+
+	if !strings.HasPrefix(resp.Header.Get("Content-Type"), "text/html") {
+		return nil, nil, ErrContentTypeNotSupported
 	}
 
 	doc, err := html.Parse(resp.Body)
