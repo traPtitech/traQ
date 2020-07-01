@@ -12,15 +12,16 @@ import (
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/bot"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
-	"github.com/traPtitech/traQ/service/heartbeat"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/notification"
 	"github.com/traPtitech/traQ/service/rbac"
-	"github.com/traPtitech/traQ/service/sse"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/service/ws"
+	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 )
 
@@ -31,8 +32,12 @@ import (
 
 // Injectors from serve_wire.go:
 
-func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *zap.Logger, c2 *Config) (*Server, error) {
-	processor := bot.NewProcessor(repo, hub2, logger)
+func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage.FileStorage, logger *zap.Logger, c2 *Config) (*Server, error) {
+	manager, err := channel.InitChannelManager(repo, logger)
+	if err != nil {
+		return nil, err
+	}
+	botService := bot.NewService(repo, manager, hub2, logger)
 	onlineCounter := counter.NewOnlineCounter(hub2)
 	unreadMessageCounter, err := counter.NewUnreadMessageCounter(db, hub2)
 	if err != nil {
@@ -51,15 +56,17 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 	if err != nil {
 		return nil, err
 	}
-	manager := viewer.NewManager(hub2)
-	heartbeatManager := heartbeat.NewManager(manager)
 	config := provideImageProcessorConfig(c2)
-	imagingProcessor := imaging.NewProcessor(config)
-	streamer := sse.NewStreamer(hub2)
+	processor := imaging.NewProcessor(config)
+	fileManager, err := file.InitFileManager(repo, fs, processor, logger)
+	if err != nil {
+		return nil, err
+	}
+	viewerManager := viewer.NewManager(hub2)
 	webrtcv3Manager := webrtcv3.NewManager(hub2)
-	wsStreamer := ws.NewStreamer(hub2, manager, webrtcv3Manager, logger)
+	streamer := ws.NewStreamer(hub2, viewerManager, webrtcv3Manager, logger)
 	serverOriginString := provideServerOriginString(c2)
-	notificationService := notification.NewService(repo, hub2, logger, client, streamer, wsStreamer, manager, serverOriginString)
+	notificationService := notification.NewService(repo, manager, fileManager, hub2, logger, client, streamer, viewerManager, serverOriginString)
 	rbacRBAC, err := rbac.New(db)
 	if err != nil {
 		return nil, err
@@ -70,21 +77,22 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, logger *z
 		return nil, err
 	}
 	services := &service.Services{
-		BOT:                  processor,
+		BOT:                  botService,
+		ChannelManager:       manager,
 		OnlineCounter:        onlineCounter,
 		UnreadMessageCounter: unreadMessageCounter,
 		MessageCounter:       messageCounter,
 		ChannelCounter:       channelCounter,
 		FCM:                  client,
-		HeartBeats:           heartbeatManager,
-		Imaging:              imagingProcessor,
+		FileManager:          fileManager,
+		Imaging:              processor,
 		Notification:         notificationService,
 		RBAC:                 rbacRBAC,
+		ViewerManager:        viewerManager,
 		Search:               engine,
-		SSE:                  streamer,
 		ViewerManager:        manager,
 		WebRTCv3:             webrtcv3Manager,
-		WS:                   wsStreamer,
+		WS:                   streamer,
 	}
 	routerConfig := provideRouterConfig(c2)
 	echo := router.Setup(hub2, db, repo, services, logger, routerConfig)

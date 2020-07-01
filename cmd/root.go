@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"github.com/blendle/zapdriver"
-	_ "github.com/jinzhu/gorm/dialects/mysql" // mysql driver
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"

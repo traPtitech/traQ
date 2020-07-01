@@ -3,9 +3,7 @@ package v1
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/rbac/permission"
-	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/optional"
 	"time"
 )
@@ -211,6 +209,7 @@ func (h *Handlers) formatChannel(channel *model.Channel) (response *channelRespo
 		ChannelID:  channel.ID.String(),
 		Name:       channel.Name,
 		Topic:      channel.Topic,
+		Children:   channel.ChildrenID,
 		Visibility: channel.IsVisible,
 		Force:      channel.IsForced,
 		Private:    !channel.IsPublic,
@@ -220,13 +219,9 @@ func (h *Handlers) formatChannel(channel *model.Channel) (response *channelRespo
 	if channel.ParentID != uuid.Nil {
 		response.Parent = channel.ParentID.String()
 	}
-	response.Children, err = h.Repo.GetChildrenChannelIDs(channel.ID)
-	if err != nil {
-		return nil, err
-	}
 
 	if response.Private {
-		response.Member, err = h.Repo.GetPrivateChannelMemberIDs(channel.ID)
+		response.Member, err = h.ChannelManager.GetDMChannelMembers(channel.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -236,14 +231,14 @@ func (h *Handlers) formatChannel(channel *model.Channel) (response *channelRespo
 }
 
 type botResponse struct {
-	BotID           uuid.UUID      `json:"botId"`
-	BotUserID       uuid.UUID      `json:"botUserId"`
-	Description     string         `json:"description"`
-	SubscribeEvents event.Types    `json:"subscribeEvents"`
-	State           model.BotState `json:"state"`
-	CreatorID       uuid.UUID      `json:"creatorId"`
-	CreatedAt       time.Time      `json:"createdAt"`
-	UpdatedAt       time.Time      `json:"updatedAt"`
+	BotID           uuid.UUID           `json:"botId"`
+	BotUserID       uuid.UUID           `json:"botUserId"`
+	Description     string              `json:"description"`
+	SubscribeEvents model.BotEventTypes `json:"subscribeEvents"`
+	State           model.BotState      `json:"state"`
+	CreatorID       uuid.UUID           `json:"creatorId"`
+	CreatedAt       time.Time           `json:"createdAt"`
+	UpdatedAt       time.Time           `json:"updatedAt"`
 }
 
 func formatBot(b *model.Bot) *botResponse {
@@ -268,19 +263,19 @@ func formatBots(bs []*model.Bot) []*botResponse {
 }
 
 type botDetailResponse struct {
-	BotID            uuid.UUID      `json:"botId"`
-	BotUserID        uuid.UUID      `json:"botUserId"`
-	Description      string         `json:"description"`
-	SubscribeEvents  event.Types    `json:"subscribeEvents"`
-	State            model.BotState `json:"state"`
-	CreatorID        uuid.UUID      `json:"creatorId"`
-	CreatedAt        time.Time      `json:"createdAt"`
-	UpdatedAt        time.Time      `json:"updatedAt"`
-	VerificationCode string         `json:"verificationCode"`
-	AccessToken      string         `json:"accessToken"`
-	PostURL          string         `json:"postUrl"`
-	Privileged       bool           `json:"privileged"`
-	BotCode          string         `json:"botCode"`
+	BotID            uuid.UUID           `json:"botId"`
+	BotUserID        uuid.UUID           `json:"botUserId"`
+	Description      string              `json:"description"`
+	SubscribeEvents  model.BotEventTypes `json:"subscribeEvents"`
+	State            model.BotState      `json:"state"`
+	CreatorID        uuid.UUID           `json:"creatorId"`
+	CreatedAt        time.Time           `json:"createdAt"`
+	UpdatedAt        time.Time           `json:"updatedAt"`
+	VerificationCode string              `json:"verificationCode"`
+	AccessToken      string              `json:"accessToken"`
+	PostURL          string              `json:"postUrl"`
+	Privileged       bool                `json:"privileged"`
+	BotCode          string              `json:"botCode"`
 }
 
 func formatBotDetail(b *model.Bot, t *model.OAuth2Token) *botDetailResponse {
@@ -363,27 +358,6 @@ func (h *Handlers) formatUserGroups(gs []*model.UserGroup) ([]*userGroupResponse
 	return arr, nil
 }
 
-type heartbeatResponse struct {
-	UserStatuses []*heartbeatUserResponse `json:"userStatuses"`
-	ChannelID    uuid.UUID                `json:"channelId"`
-}
-
-type heartbeatUserResponse struct {
-	UserID uuid.UUID    `json:"userId"`
-	Status viewer.State `json:"status"`
-}
-
-func formatHeartbeat(cid uuid.UUID, vs viewer.UserStates) *heartbeatResponse {
-	result := &heartbeatResponse{
-		UserStatuses: make([]*heartbeatUserResponse, len(vs)),
-		ChannelID:    cid,
-	}
-	for i, s := range vs {
-		result.UserStatuses[i] = &heartbeatUserResponse{UserID: s.UserID, Status: s.State}
-	}
-	return result
-}
-
 type fileResponse struct {
 	FileID      uuid.UUID `json:"fileId"`
 	Name        string    `json:"name"`
@@ -396,7 +370,7 @@ type fileResponse struct {
 	Datetime    time.Time `json:"datetime"`
 }
 
-func formatFile(f model.FileMeta) *fileResponse {
+func formatFile(f model.File) *fileResponse {
 	return &fileResponse{
 		FileID:      f.GetID(),
 		Name:        f.GetFileName(),

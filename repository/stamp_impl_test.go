@@ -10,10 +10,9 @@ import (
 
 func TestRepositoryImpl_CreateStamp(t *testing.T) {
 	t.Parallel()
-	repo, _, require, user := setupWithUser(t, common2)
+	repo, _, _, user := setupWithUser(t, common2)
 
-	fid, err := GenerateIconFile(repo, "stamp")
-	require.NoError(err)
+	fid := mustMakeDummyFile(t, repo).ID
 
 	t.Run("nil file id", func(t *testing.T) {
 		t.Parallel()
@@ -116,8 +115,7 @@ func TestRepositoryImpl_UpdateStamp(t *testing.T) {
 		assert, require := assertAndRequire(t)
 
 		s := mustMakeStamp(t, repo, rand, uuid.Nil)
-		newFile, err := GenerateIconFile(repo, "stamp")
-		require.NoError(err)
+		newFile := mustMakeDummyFile(t, repo).ID
 		newName := random2.AlphaNumeric(20)
 
 		if assert.NoError(repo.UpdateStamp(s.ID, UpdateStampArgs{

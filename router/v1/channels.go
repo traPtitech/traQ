@@ -7,6 +7,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -14,67 +15,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-// GetChannels GET /channels
-func (h *Handlers) GetChannels(c echo.Context) error {
-	userID := getRequestUserID(c)
-
-	channelList, err := h.Repo.GetChannelsByUserID(userID)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	chMap := make(map[string]*channelResponse, len(channelList))
-	for _, ch := range channelList {
-		entry, ok := chMap[ch.ID.String()]
-		if !ok {
-			entry = &channelResponse{}
-			chMap[ch.ID.String()] = entry
-		}
-
-		entry.ChannelID = ch.ID.String()
-		entry.Name = ch.Name
-		entry.Visibility = ch.IsVisible
-		entry.Topic = ch.Topic
-		entry.Force = ch.IsForced
-		entry.Private = !ch.IsPublic
-		entry.DM = ch.IsDMChannel()
-
-		if !ch.IsPublic {
-			// プライベートチャンネルのメンバー取得
-			member, err := h.Repo.GetPrivateChannelMemberIDs(ch.ID)
-			if err != nil {
-				return herror.InternalServerError(err)
-			}
-			entry.Member = member
-		}
-
-		if ch.ParentID != uuid.Nil {
-			entry.Parent = ch.ParentID.String()
-			parent, ok := chMap[ch.ParentID.String()]
-			if !ok {
-				parent = &channelResponse{
-					ChannelID: ch.ParentID.String(),
-				}
-				chMap[ch.ParentID.String()] = parent
-			}
-			parent.Children = append(parent.Children, ch.ID)
-		} else {
-			parent, ok := chMap[""]
-			if !ok {
-				parent = &channelResponse{}
-				chMap[""] = parent
-			}
-			parent.Children = append(parent.Children, ch.ID)
-		}
-	}
-
-	res := make([]*channelResponse, 0, len(chMap))
-	for _, v := range chMap {
-		res = append(res, v)
-	}
-	return c.JSON(http.StatusOK, res)
-}
 
 // PostChannelRequest POST /channels リクエストボディ
 type PostChannelRequest struct {
@@ -97,26 +37,19 @@ func (h *Handlers) PostChannels(c echo.Context) error {
 		return err
 	}
 
-	// 親チャンネルがユーザーから見えないと作成できない
-	if req.Parent != uuid.Nil {
-		if ok, err := h.Repo.IsChannelAccessibleToUser(userID, req.Parent); err != nil {
-			return herror.InternalServerError(err)
-		} else if !ok {
-			return herror.BadRequest("the parent channel doesn't exist")
-		}
-	}
-
-	ch, err := h.Repo.CreatePublicChannel(req.Name, req.Parent, userID)
+	ch, err := h.ChannelManager.CreatePublicChannel(req.Name, req.Parent, userID)
 	if err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		case err == repository.ErrAlreadyExists:
-			return herror.Conflict("channel name conflicts")
-		case err == repository.ErrChannelDepthLimitation:
+		switch err {
+		case channel.ErrChannelArchived:
+			return herror.BadRequest("parent channel has been archived")
+		case channel.ErrInvalidChannelName:
+			return herror.BadRequest("invalid channel name")
+		case channel.ErrInvalidParentChannel:
+			return herror.BadRequest("invalid parent channel")
+		case channel.ErrTooDeepChannel:
 			return herror.BadRequest("channel depth limit exceeded")
-		case err == repository.ErrForbidden:
-			return herror.Forbidden("invalid parent channel")
+		case channel.ErrChannelNameConflicts:
+			return herror.Conflict("channel name conflicts")
 		default:
 			return herror.InternalServerError(err)
 		}
@@ -140,40 +73,6 @@ func (h *Handlers) GetChannelByChannelID(c echo.Context) error {
 	return c.JSON(http.StatusOK, formatted)
 }
 
-// PatchChannelByChannelID PATCH /channels/:channelID
-func (h *Handlers) PatchChannelByChannelID(c echo.Context) error {
-	channelID := getRequestParamAsUUID(c, consts.ParamChannelID)
-
-	var req struct {
-		Name       optional.String `json:"name"`
-		Visibility optional.Bool   `json:"visibility"`
-		Force      optional.Bool   `json:"force"`
-	}
-	if err := bindAndValidate(c, &req); err != nil {
-		return err
-	}
-
-	args := repository.UpdateChannelArgs{
-		UpdaterID:          getRequestUserID(c),
-		Name:               req.Name,
-		Visibility:         req.Visibility,
-		ForcedNotification: req.Force,
-	}
-	if err := h.Repo.UpdateChannel(channelID, args); err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		case err == repository.ErrAlreadyExists:
-			return herror.Conflict("channel name conflicts")
-		case err == repository.ErrForbidden:
-			return herror.Forbidden("the channel's name cannot be changed")
-		default:
-			return herror.InternalServerError(err)
-		}
-	}
-	return c.NoContent(http.StatusNoContent)
-}
-
 // PostChannelChildren POST /channels/:channelID/children
 func (h *Handlers) PostChannelChildren(c echo.Context) error {
 	userID := getRequestUserID(c)
@@ -187,17 +86,19 @@ func (h *Handlers) PostChannelChildren(c echo.Context) error {
 	}
 
 	// 子チャンネル作成
-	ch, err := h.Repo.CreatePublicChannel(req.Name, parentCh.ID, userID)
+	ch, err := h.ChannelManager.CreatePublicChannel(req.Name, parentCh.ID, userID)
 	if err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		case err == repository.ErrAlreadyExists:
-			return herror.Conflict("channel name conflicts")
-		case err == repository.ErrChannelDepthLimitation:
+		switch err {
+		case channel.ErrChannelArchived:
+			return herror.BadRequest("parent channel has been archived")
+		case channel.ErrInvalidChannelName:
+			return herror.BadRequest("invalid channel name")
+		case channel.ErrInvalidParentChannel:
+			return herror.BadRequest("invalid parent channel")
+		case channel.ErrTooDeepChannel:
 			return herror.BadRequest("channel depth limit exceeded")
-		case err == repository.ErrForbidden:
-			return herror.Forbidden("invalid parent channel")
+		case channel.ErrChannelNameConflicts:
+			return herror.Conflict("channel name conflicts")
 		default:
 			return herror.InternalServerError(err)
 		}
@@ -208,35 +109,6 @@ func (h *Handlers) PostChannelChildren(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 	return c.JSON(http.StatusCreated, formatted)
-}
-
-// PutChannelParent PUT /channels/:channelID/parent
-func (h *Handlers) PutChannelParent(c echo.Context) error {
-	channelID := getRequestParamAsUUID(c, consts.ParamChannelID)
-
-	var req struct {
-		Parent uuid.UUID `json:"parent"`
-	}
-	if err := bindAndValidate(c, &req); err != nil {
-		return err
-	}
-
-	if err := h.Repo.UpdateChannel(channelID, repository.UpdateChannelArgs{Parent: optional.UUIDFrom(req.Parent), UpdaterID: getRequestUserID(c)}); err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		case err == repository.ErrAlreadyExists:
-			return herror.Conflict("channel name conflicts")
-		case err == repository.ErrChannelDepthLimitation:
-			return herror.BadRequest("channel depth limit exceeded")
-		case err == repository.ErrForbidden:
-			return herror.Forbidden()
-		default:
-			return herror.InternalServerError(err)
-		}
-	}
-
-	return c.NoContent(http.StatusNoContent)
 }
 
 // GetTopic GET /channels/:channelID/topic
@@ -251,10 +123,6 @@ func (h *Handlers) GetTopic(c echo.Context) error {
 func (h *Handlers) PutTopic(c echo.Context) error {
 	ch := getChannelFromContext(c)
 
-	if ch.IsArchived() {
-		return herror.BadRequest("channel has been archived")
-	}
-
 	var req struct {
 		Text string `json:"text"`
 	}
@@ -262,11 +130,16 @@ func (h *Handlers) PutTopic(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.UpdateChannel(ch.ID, repository.UpdateChannelArgs{
+	if err := h.ChannelManager.UpdateChannel(ch.ID, repository.UpdateChannelArgs{
 		UpdaterID: getRequestUserID(c),
 		Topic:     optional.StringFrom(req.Text),
 	}); err != nil {
-		return herror.InternalServerError(err)
+		switch err {
+		case channel.ErrChannelArchived:
+			return herror.BadRequest("channel has been archived")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)

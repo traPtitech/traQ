@@ -12,23 +12,18 @@ import (
 )
 
 // CreateWebhook implements WebhookRepository interface.
-func (repo *GormRepository) CreateWebhook(name, description string, channelID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
+func (repo *GormRepository) CreateWebhook(name, description string, channelID, iconFileID, creatorID uuid.UUID, secret string) (model.Webhook, error) {
 	if len(name) == 0 || utf8.RuneCountInString(name) > 32 {
 		return nil, ArgError("name", "Name must be non-empty and shorter than 33 characters")
 	}
 
 	uid := uuid.Must(uuid.NewV4())
 	bid := uuid.Must(uuid.NewV4())
-	iconID, err := GenerateIconFile(repo, name)
-	if err != nil {
-		return nil, err
-	}
-
 	u := &model.User{
 		ID:          uid,
 		Name:        "Webhook#" + base64.RawURLEncoding.EncodeToString(uid.Bytes()),
 		DisplayName: name,
-		Icon:        iconID,
+		Icon:        iconFileID,
 		Bot:         true,
 		Status:      model.UserAccountStatusActive,
 		Role:        role.Bot,
@@ -43,7 +38,7 @@ func (repo *GormRepository) CreateWebhook(name, description string, channelID, c
 		CreatorID:   creatorID,
 	}
 
-	err = repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		// チャンネル検証
 		var ch model.Channel
 		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {

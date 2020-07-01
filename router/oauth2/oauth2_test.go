@@ -14,10 +14,9 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/session"
-	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
+	"github.com/traPtitech/traQ/testutils"
 	"github.com/traPtitech/traQ/utils/random"
-	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
@@ -66,7 +65,7 @@ func TestMain(m *testing.M) {
 		env.SessStore = session.NewMemorySessionStore()
 
 		// テスト用リポジトリ作成
-		repo, err := repository.NewGormRepository(db, storage.NewInMemoryFileStorage(), env.Hub, zap.NewNop())
+		repo, err := repository.NewGormRepository(db, env.Hub, zap.NewNop())
 		if err != nil {
 			panic(err)
 		}
@@ -80,14 +79,10 @@ func TestMain(m *testing.M) {
 		e.HideBanner = true
 		e.HidePort = true
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
-		e.Use(extension.Wrap(repo))
+		e.Use(extension.Wrap(repo, nil))
 
-		r, err := rbac.New(db)
-		if err != nil {
-			panic(err)
-		}
 		config := &Handler{
-			RBAC:      r,
+			RBAC:      testutils.NewTestRBAC(),
 			Repo:      env.Repository,
 			SessStore: env.SessStore,
 			Logger:    zap.NewNop(),
@@ -166,7 +161,7 @@ func (env *Env) CreateUser(t *testing.T, userName string) model.UserInfo {
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "testtesttesttest", Role: role.User})
+	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "testtesttesttest", Role: role.User, IconFileID: uuid.Must(uuid.NewV4())})
 	require.NoError(t, err)
 	return u
 }

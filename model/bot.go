@@ -1,8 +1,11 @@
 package model
 
 import (
+	"database/sql/driver"
+	"errors"
 	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/service/bot/event"
+	"github.com/json-iterator/go"
+	"strings"
 	"time"
 )
 
@@ -20,20 +23,20 @@ const (
 
 // Bot Bot構造体
 type Bot struct {
-	ID                uuid.UUID   `gorm:"type:char(36);not null;primary_key"`
-	BotUserID         uuid.UUID   `gorm:"type:char(36);not null;unique"`
-	Description       string      `gorm:"type:text;not null"`
-	VerificationToken string      `gorm:"type:varchar(30);not null"`
-	AccessTokenID     uuid.UUID   `gorm:"type:char(36);not null"`
-	PostURL           string      `gorm:"type:text;not null"`
-	SubscribeEvents   event.Types `gorm:"type:text;not null"`
-	Privileged        bool        `gorm:"type:boolean;not null;default:false"`
-	State             BotState    `gorm:"type:tinyint;not null;default:0"`
-	BotCode           string      `gorm:"type:varchar(30);not null;unique"`
-	CreatorID         uuid.UUID   `gorm:"type:char(36);not null"`
-	CreatedAt         time.Time   `gorm:"precision:6"`
-	UpdatedAt         time.Time   `gorm:"precision:6"`
-	DeletedAt         *time.Time  `gorm:"precision:6"`
+	ID                uuid.UUID     `gorm:"type:char(36);not null;primary_key"`
+	BotUserID         uuid.UUID     `gorm:"type:char(36);not null;unique"`
+	Description       string        `gorm:"type:text;not null"`
+	VerificationToken string        `gorm:"type:varchar(30);not null"`
+	AccessTokenID     uuid.UUID     `gorm:"type:char(36);not null"`
+	PostURL           string        `gorm:"type:text;not null"`
+	SubscribeEvents   BotEventTypes `gorm:"type:text;not null"`
+	Privileged        bool          `gorm:"type:boolean;not null;default:false"`
+	State             BotState      `gorm:"type:tinyint;not null;default:0"`
+	BotCode           string        `gorm:"type:varchar(30);not null;unique"`
+	CreatorID         uuid.UUID     `gorm:"type:char(36);not null"`
+	CreatedAt         time.Time     `gorm:"precision:6"`
+	UpdatedAt         time.Time     `gorm:"precision:6"`
+	DeletedAt         *time.Time    `gorm:"precision:6"`
 }
 
 // TableName Botのテーブル名
@@ -54,17 +57,106 @@ func (*BotJoinChannel) TableName() string {
 
 // BotEventLog Botイベントログ
 type BotEventLog struct {
-	RequestID uuid.UUID  `gorm:"type:char(36);not null;primary_key"                json:"requestId"`
-	BotID     uuid.UUID  `gorm:"type:char(36);not null;index:bot_id_date_time_idx" json:"botId"`
-	Event     event.Type `gorm:"type:varchar(30);not null"                         json:"event"`
-	Body      string     `gorm:"type:text"                                         json:"-"`
-	Error     string     `gorm:"type:text"                                         json:"-"`
-	Code      int        `gorm:"not null;default:0"                                json:"code"`
-	Latency   int64      `gorm:"not null;default:0"                                json:"-"`
-	DateTime  time.Time  `gorm:"precision:6;index:bot_id_date_time_idx"            json:"dateTime"`
+	RequestID uuid.UUID    `gorm:"type:char(36);not null;primary_key"                json:"requestId"`
+	BotID     uuid.UUID    `gorm:"type:char(36);not null;index:bot_id_date_time_idx" json:"botId"`
+	Event     BotEventType `gorm:"type:varchar(30);not null"                         json:"event"`
+	Body      string       `gorm:"type:text"                                         json:"-"`
+	Error     string       `gorm:"type:text"                                         json:"-"`
+	Code      int          `gorm:"not null;default:0"                                json:"code"`
+	Latency   int64        `gorm:"not null;default:0"                                json:"-"`
+	DateTime  time.Time    `gorm:"precision:6;index:bot_id_date_time_idx"            json:"dateTime"`
 }
 
 // TableName BotEventLogのテーブル名
 func (*BotEventLog) TableName() string {
 	return "bot_event_logs"
+}
+
+// BotEventType Botイベントタイプ
+type BotEventType string
+
+func (t BotEventType) String() string {
+	return string(t)
+}
+
+// BotEventTypes BotイベントタイプのSet
+type BotEventTypes map[BotEventType]struct{}
+
+func BotEventTypesFromArray(arr []string) BotEventTypes {
+	res := BotEventTypes{}
+	for _, v := range arr {
+		if len(v) > 0 {
+			res[BotEventType(v)] = struct{}{}
+		}
+	}
+	return res
+}
+
+// String event.Typesをスペース区切りで文字列に出力します
+func (set BotEventTypes) String() string {
+	sa := make([]string, 0, len(set))
+	for k := range set {
+		sa = append(sa, string(k))
+	}
+	return strings.Join(sa, " ")
+}
+
+// Contains 指定したevent.Typeが含まれているかどうか
+func (set BotEventTypes) Contains(ev BotEventType) bool {
+	_, ok := set[ev]
+	return ok
+}
+
+// Array event.Typesをstringの配列に変換します
+func (set BotEventTypes) Array() (r []string) {
+	r = make([]string, 0, len(set))
+	for s := range set {
+		r = append(r, s.String())
+	}
+	return r
+}
+
+// Clone event.Typesを複製します
+func (set BotEventTypes) Clone() BotEventTypes {
+	dst := make(BotEventTypes, len(set))
+	for k, v := range set {
+		dst[k] = v
+	}
+	return dst
+}
+
+// MarshalJSON encoding/json.Marshaler 実装
+func (set BotEventTypes) MarshalJSON() ([]byte, error) {
+	return jsoniter.ConfigFastest.Marshal(set.Array())
+}
+
+// UnmarshalJSON encoding/json.Unmarshaler 実装
+func (set *BotEventTypes) UnmarshalJSON(data []byte) error {
+	var arr []string
+	err := jsoniter.ConfigFastest.Unmarshal(data, &arr)
+	if err != nil {
+		return err
+	}
+	*set = BotEventTypesFromArray(arr)
+	return nil
+}
+
+// Value database/sql/driver.Valuer 実装
+func (set BotEventTypes) Value() (driver.Value, error) {
+	return set.String(), nil
+}
+
+// Scan database/sql.Scanner 実装
+func (set *BotEventTypes) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case nil:
+		*set = BotEventTypes{}
+	case string:
+		*set = BotEventTypesFromArray(strings.Split(s, " "))
+	case []byte:
+		*set = BotEventTypesFromArray(strings.Split(string(s), " "))
+	default:
+		return errors.New("failed to scan BotEvents")
+	}
+	return nil
 }

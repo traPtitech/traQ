@@ -5,9 +5,9 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/service/file"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/imaging"
 	"image/png"
@@ -21,39 +21,39 @@ const (
 )
 
 // SaveUploadIconImage MultipartFormでアップロードされたアイコン画像ファイルを保存
-func SaveUploadIconImage(p imaging2.Processor, c echo.Context, repo repository.Repository, name string) (uuid.UUID, error) {
-	return saveUploadImage(p, c, repo, name, model.FileTypeIcon, iconMaxFileSize, iconMaxImageSize)
+func SaveUploadIconImage(p imaging2.Processor, c echo.Context, m file.Manager, name string) (uuid.UUID, error) {
+	return saveUploadImage(p, c, m, name, model.FileTypeIcon, iconMaxFileSize, iconMaxImageSize)
 }
 
 // SaveUploadStampImage MultipartFormでアップロードされたスタンプ画像ファイルを保存
-func SaveUploadStampImage(p imaging2.Processor, c echo.Context, repo repository.Repository, name string) (uuid.UUID, error) {
-	return saveUploadImage(p, c, repo, name, model.FileTypeStamp, stampMaxFileSize, stampMaxImageSize)
+func SaveUploadStampImage(p imaging2.Processor, c echo.Context, m file.Manager, name string) (uuid.UUID, error) {
+	return saveUploadImage(p, c, m, name, model.FileTypeStamp, stampMaxFileSize, stampMaxImageSize)
 }
 
-func saveUploadImage(p imaging2.Processor, c echo.Context, repo repository.Repository, name string, fType model.FileType, maxFileSize int64, maxImageSize int) (uuid.UUID, error) {
+func saveUploadImage(p imaging2.Processor, c echo.Context, m file.Manager, name string, fType model.FileType, maxFileSize int64, maxImageSize int) (uuid.UUID, error) {
 	const (
 		tooLargeImage = "too large image"
 		badImage      = "bad image"
 	)
 
 	// ファイルオープン
-	src, file, err := c.Request().FormFile(name)
+	src, fh, err := c.Request().FormFile(name)
 	if err != nil {
 		return uuid.Nil, herror.BadRequest(err)
 	}
 	defer src.Close()
 
 	// ファイルサイズ制限
-	if file.Size > maxFileSize {
+	if fh.Size > maxFileSize {
 		return uuid.Nil, herror.BadRequest(tooLargeImage)
 	}
 
-	args := repository.SaveFileArgs{
-		FileName: file.Filename,
+	args := file.SaveArgs{
+		FileName: fh.Filename,
 		FileType: fType,
 	}
 
-	switch file.Header.Get(echo.HeaderContentType) {
+	switch fh.Header.Get(echo.HeaderContentType) {
 	case consts.MimeImagePNG, consts.MimeImageJPEG:
 		img, err := p.Fit(src, maxImageSize, maxImageSize)
 		if err != nil {
@@ -110,7 +110,7 @@ func saveUploadImage(p imaging2.Processor, c echo.Context, repo repository.Repos
 	}
 
 	// ファイル保存
-	f, err := repo.SaveFile(args)
+	f, err := m.Save(args)
 	if err != nil {
 		return uuid.Nil, herror.InternalServerError(err)
 	}

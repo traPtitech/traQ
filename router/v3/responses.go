@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/utils/optional"
 	"time"
 
@@ -161,14 +160,14 @@ func formatWebhooks(ws []model.Webhook) []*Webhook {
 }
 
 type Bot struct {
-	ID              uuid.UUID      `json:"id"`
-	BotUserID       uuid.UUID      `json:"botUserId"`
-	Description     string         `json:"description"`
-	DeveloperID     uuid.UUID      `json:"developerId"`
-	SubscribeEvents event.Types    `json:"subscribeEvents"`
-	State           model.BotState `json:"state"`
-	CreatedAt       time.Time      `json:"createdAt"`
-	UpdatedAt       time.Time      `json:"updatedAt"`
+	ID              uuid.UUID           `json:"id"`
+	BotUserID       uuid.UUID           `json:"botUserId"`
+	Description     string              `json:"description"`
+	DeveloperID     uuid.UUID           `json:"developerId"`
+	SubscribeEvents model.BotEventTypes `json:"subscribeEvents"`
+	State           model.BotState      `json:"state"`
+	CreatedAt       time.Time           `json:"createdAt"`
+	UpdatedAt       time.Time           `json:"updatedAt"`
 }
 
 func formatBot(b *model.Bot) *Bot {
@@ -198,18 +197,18 @@ type BotTokens struct {
 }
 
 type BotDetail struct {
-	ID              uuid.UUID      `json:"id"`
-	BotUserID       uuid.UUID      `json:"botUserId"`
-	Description     string         `json:"description"`
-	DeveloperID     uuid.UUID      `json:"developerId"`
-	SubscribeEvents event.Types    `json:"subscribeEvents"`
-	State           model.BotState `json:"state"`
-	CreatedAt       time.Time      `json:"createdAt"`
-	UpdatedAt       time.Time      `json:"updatedAt"`
-	Tokens          BotTokens      `json:"tokens"`
-	Endpoint        string         `json:"endpoint"`
-	Privileged      bool           `json:"privileged"`
-	Channels        []uuid.UUID    `json:"channels"`
+	ID              uuid.UUID           `json:"id"`
+	BotUserID       uuid.UUID           `json:"botUserId"`
+	Description     string              `json:"description"`
+	DeveloperID     uuid.UUID           `json:"developerId"`
+	SubscribeEvents model.BotEventTypes `json:"subscribeEvents"`
+	State           model.BotState      `json:"state"`
+	CreatedAt       time.Time           `json:"createdAt"`
+	UpdatedAt       time.Time           `json:"updatedAt"`
+	Tokens          BotTokens           `json:"tokens"`
+	Endpoint        string              `json:"endpoint"`
+	Privileged      bool                `json:"privileged"`
+	Channels        []uuid.UUID         `json:"channels"`
 }
 
 func formatBotDetail(b *model.Bot, t *model.OAuth2Token, channels []uuid.UUID) *BotDetail {
@@ -395,7 +394,7 @@ type FileInfo struct {
 	UploaderID optional.UUID      `json:"uploaderId"`
 }
 
-func formatFileInfo(meta model.FileMeta) *FileInfo {
+func formatFileInfo(meta model.File) *FileInfo {
 	fi := &FileInfo{
 		ID:         meta.GetID(),
 		Name:       meta.GetFileName(),
@@ -416,7 +415,7 @@ func formatFileInfo(meta model.FileMeta) *FileInfo {
 	return fi
 }
 
-func formatFileInfos(metas []model.FileMeta) []*FileInfo {
+func formatFileInfos(metas []model.File) []*FileInfo {
 	result := make([]*FileInfo, len(metas))
 	for i, meta := range metas {
 		result[i] = formatFileInfo(meta)

@@ -8,13 +8,15 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
-	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/viewer"
-	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/testutils"
 	"github.com/traPtitech/traQ/utils/random"
+	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"image"
 	"net/http"
@@ -64,31 +66,36 @@ func TestMain(m *testing.M) {
 	}
 	for _, key := range repos {
 		env := &Env{}
-		env.Repository = NewTestRepository()
+		env.Repository = testutils.NewTestRepository()
 		env.Hub = hub.New()
 		env.SessStore = session.NewMemorySessionStore()
-		env.RBAC = newTestRBAC()
+		env.RBAC = testutils.NewTestRBAC()
+		env.ChannelManager, _ = channel.InitChannelManager(env.Repository, zap.NewNop())
+		env.ImageProcessor = imaging.NewProcessor(imaging.Config{
+			MaxPixels:        1000 * 1000,
+			Concurrency:      1,
+			ThumbnailMaxSize: image.Pt(360, 480),
+			ImageMagickPath:  "",
+		})
+		env.FileManager, _ = file.InitFileManager(env.Repository, storage.NewInMemoryFileStorage(), env.ImageProcessor, zap.NewNop())
 
 		e := echo.New()
 		e.HideBanner = true
 		e.HidePort = true
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
-		e.Use(extension.Wrap(env.Repository))
+		e.Use(extension.Wrap(env.Repository, env.ChannelManager))
 
 		handlers := &Handlers{
-			RBAC:      env.RBAC,
-			Repo:      env.Repository,
-			Hub:       env.Hub,
-			Logger:    zap.NewNop(),
-			OC:        counter.NewOnlineCounter(env.Hub),
-			VM:        viewer.NewManager(env.Hub),
-			SessStore: env.SessStore,
-			Imaging: imaging.NewProcessor(imaging.Config{
-				MaxPixels:        1000 * 1000,
-				Concurrency:      1,
-				ThumbnailMaxSize: image.Pt(360, 480),
-				ImageMagickPath:  "",
-			}),
+			RBAC:           env.RBAC,
+			Repo:           env.Repository,
+			Hub:            env.Hub,
+			Logger:         zap.NewNop(),
+			OC:             counter.NewOnlineCounter(env.Hub),
+			VM:             viewer.NewManager(env.Hub),
+			ChannelManager: env.ChannelManager,
+			FileManager:    env.FileManager,
+			SessStore:      env.SessStore,
+			Imaging:        env.ImageProcessor,
 		}
 		handlers.Setup(e.Group("/api"))
 		env.Server = httptest.NewServer(e)
@@ -105,11 +112,14 @@ func TestMain(m *testing.M) {
 }
 
 type Env struct {
-	Server     *httptest.Server
-	Repository repository.Repository
-	Hub        *hub.Hub
-	SessStore  session.Store
-	RBAC       rbac.RBAC
+	Server         *httptest.Server
+	Repository     repository.Repository
+	Hub            *hub.Hub
+	SessStore      session.Store
+	RBAC           rbac.RBAC
+	ChannelManager channel.Manager
+	FileManager    file.Manager
+	ImageProcessor imaging.Processor
 }
 
 func setup(t *testing.T, server string) (*Env, *assert.Assertions, *require.Assertions, string, string) {
@@ -162,7 +172,7 @@ func (env *Env) makeExp(t *testing.T) *httpexpect.Expect {
 		},
 		Client: &http.Client{
 			Jar:     nil, // クッキーは保持しない
-			Timeout: time.Second * 30,
+			Timeout: 10 * time.Second,
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse // リダイレクトを自動処理しない
 			},
@@ -175,7 +185,7 @@ func (env *Env) mustMakeChannel(t *testing.T, name string) *model.Channel {
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	ch, err := env.Repository.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
+	ch, err := env.ChannelManager.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
 	require.NoError(t, err)
 	return ch
 }
@@ -198,15 +208,15 @@ func (env *Env) mustMakeUser(t *testing.T, userName string) model.UserInfo {
 		userName = random.AlphaNumeric(32)
 	}
 	// パスワード無し・アイコンファイルは実際には存在しないことに注意
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: optional.UUIDFrom(uuid.Must(uuid.NewV4()))})
+	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Role: role.User, IconFileID: uuid.Must(uuid.NewV4())})
 	require.NoError(t, err)
 	return u
 }
 
-func (env *Env) mustMakeFile(t *testing.T) model.FileMeta {
+func (env *Env) mustMakeFile(t *testing.T) model.File {
 	t.Helper()
 	buf := bytes.NewBufferString("test message")
-	f, err := env.Repository.SaveFile(repository.SaveFileArgs{
+	f, err := env.FileManager.Save(file.SaveArgs{
 		FileName: "test.txt",
 		FileSize: int64(buf.Len()),
 		FileType: model.FileTypeUserFile,
@@ -252,56 +262,14 @@ func (env *Env) mustMakeWebhook(t *testing.T, name string, channelID, creatorID 
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	w, err := env.Repository.CreateWebhook(name, "", channelID, creatorID, secret)
+	iconFileID, err := file.GenerateIconFile(env.FileManager, name)
+	require.NoError(t, err)
+	w, err := env.Repository.CreateWebhook(name, "", channelID, iconFileID, creatorID, secret)
 	require.NoError(t, err)
 	return w
 }
 
 func (env *Env) mustChangeChannelSubscription(t *testing.T, channelID, userID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, env.Repository.ChangeChannelSubscription(channelID, repository.ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}}))
-}
-
-type rbacImpl struct {
-	roles role.Roles
-}
-
-func newTestRBAC() rbac.RBAC {
-	rbac := &rbacImpl{
-		roles: role.GetSystemRoles(),
-	}
-	return rbac
-}
-
-func (rbacImpl *rbacImpl) IsGranted(r string, p permission.Permission) bool {
-	if r == role.Admin {
-		return true
-	}
-	return rbacImpl.roles.HasAndIsGranted(r, p)
-}
-
-func (rbacImpl *rbacImpl) IsAllGranted(roles []string, perm permission.Permission) bool {
-	for _, role := range roles {
-		if !rbacImpl.IsGranted(role, perm) {
-			return false
-		}
-	}
-	return true
-}
-
-func (rbacImpl *rbacImpl) IsAnyGranted(roles []string, perm permission.Permission) bool {
-	for _, role := range roles {
-		if rbacImpl.IsGranted(role, perm) {
-			return true
-		}
-	}
-	return false
-}
-
-func (rbacImpl *rbacImpl) GetGrantedPermissions(roleName string) []permission.Permission {
-	ro, ok := rbacImpl.roles[roleName]
-	if ok {
-		return ro.Permissions().Array()
-	}
-	return nil
+	require.NoError(t, env.ChannelManager.ChangeChannelSubscriptions(channelID, map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}, false, uuid.Nil))
 }

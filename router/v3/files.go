@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strconv"
@@ -61,7 +62,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 	}
 	if req.ChannelID != uuid.Nil {
 		// チャンネルアクセス権確認
-		if ok, err := h.Repo.IsChannelAccessibleToUser(getRequestUserID(c), req.ChannelID); err != nil {
+		if ok, err := h.ChannelManager.IsChannelAccessibleToUser(getRequestUserID(c), req.ChannelID); err != nil {
 			return herror.InternalServerError(err)
 		} else if !ok {
 			return herror.BadRequest("invalid channelId")
@@ -69,7 +70,7 @@ func (h *Handlers) GetFiles(c echo.Context) error {
 		q.ChannelID = optional.UUIDFrom(req.ChannelID)
 	}
 
-	files, more, err := h.Repo.GetFiles(q)
+	files, more, err := h.FileManager.List(q)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -91,7 +92,7 @@ func (h *Handlers) PostFile(c echo.Context) error {
 		return herror.BadRequest("non-empty file is required")
 	}
 
-	args := repository.SaveFileArgs{
+	args := file.SaveArgs{
 		FileName:  uploadedFile.Filename,
 		FileSize:  uploadedFile.Size,
 		MimeType:  uploadedFile.Header.Get(echo.HeaderContentType),
@@ -102,21 +103,21 @@ func (h *Handlers) PostFile(c echo.Context) error {
 
 	// チャンネルアクセス権確認
 	channelID := uuid.FromStringOrNil(c.FormValue("channelId"))
-	if ok, err := h.Repo.IsChannelAccessibleToUser(userID, channelID); err != nil {
+	if ok, err := h.ChannelManager.IsChannelAccessibleToUser(userID, channelID); err != nil {
 		return herror.InternalServerError(err)
 	} else if !ok {
 		return herror.BadRequest("invalid channelId")
 	}
-	ch, err := h.Repo.GetChannel(channelID)
+	ch, err := h.ChannelManager.GetChannel(channelID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetPublicChannelTree().GetChannelPath(ch.ID)))
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree().GetChannelPath(ch.ID)))
 	}
 	if !ch.IsPublic {
 		// アクセスコントロール設定
-		members, err := h.Repo.GetPrivateChannelMemberIDs(ch.ID)
+		members, err := h.ChannelManager.GetDMChannelMembers(ch.ID)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -126,17 +127,8 @@ func (h *Handlers) PostFile(c echo.Context) error {
 	}
 	args.ChannelID = optional.UUIDFrom(channelID)
 
-	// サムネイル生成
-	switch args.MimeType {
-	case consts.MimeImageJPEG, consts.MimeImagePNG, consts.MimeImageGIF:
-		args.Thumbnail, _ = h.Imaging.Thumbnail(src)
-	}
-
 	// 保存
-	if _, err := src.Seek(0, 0); err != nil {
-		return herror.InternalServerError(err)
-	}
-	file, err := h.Repo.SaveFile(args)
+	file, err := h.FileManager.Save(args)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -161,18 +153,17 @@ func (h *Handlers) GetFile(c echo.Context) error {
 
 // DeleteFile DELETE /files/:fileID
 func (h *Handlers) DeleteFile(c echo.Context) error {
-	userID := getRequestUserID(c)
 	f := getParamFile(c)
 
 	if !f.GetCreatorID().Valid || f.GetFileType() != model.FileTypeUserFile {
 		return herror.Forbidden()
 	}
 
-	if f.GetCreatorID().UUID != userID { // TODO 管理者権限
+	if f.GetCreatorID().UUID != getRequestUserID(c) { // TODO 管理者権限
 		return herror.Forbidden()
 	}
 
-	if err := h.Repo.DeleteFile(f.GetID()); err != nil {
+	if err := h.FileManager.Delete(f.GetID()); err != nil {
 		return herror.InternalServerError(err)
 	}
 

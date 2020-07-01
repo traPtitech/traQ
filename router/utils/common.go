@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/file"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
@@ -16,8 +17,8 @@ import (
 )
 
 // ChangeUserIcon userIDのユーザーのアイコン画像を変更する
-func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Repository, userID uuid.UUID) error {
-	iconID, err := SaveUploadIconImage(p, c, repo, "file")
+func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Repository, m file.Manager, userID uuid.UUID) error {
+	iconID, err := SaveUploadIconImage(p, c, m, "file")
 	if err != nil {
 		return err
 	}
@@ -31,9 +32,9 @@ func ChangeUserIcon(p imaging2.Processor, c echo.Context, repo repository.Reposi
 }
 
 // ServeUserIcon userのアイコン画像ファイルをレスポンスとして返す
-func ServeUserIcon(c echo.Context, repo repository.Repository, user model.UserInfo) error {
+func ServeUserIcon(c echo.Context, fm file.Manager, user model.UserInfo) error {
 	// ファイルメタ取得
-	meta, err := repo.GetFileMeta(user.GetIconFileID())
+	meta, err := fm.Get(user.GetIconFileID())
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -66,7 +67,7 @@ func ChangeUserPassword(c echo.Context, repo repository.Repository, seStore sess
 }
 
 // ServeFileThumbnail metaのファイルのサムネイルをレスポンスとして返す
-func ServeFileThumbnail(c echo.Context, meta model.FileMeta) error {
+func ServeFileThumbnail(c echo.Context, meta model.File) error {
 	if !meta.HasThumbnail() {
 		return herror.NotFound()
 	}
@@ -84,7 +85,7 @@ func ServeFileThumbnail(c echo.Context, meta model.FileMeta) error {
 }
 
 // ServeFile metaのファイル本体をレスポンスとして返す
-func ServeFile(c echo.Context, meta model.FileMeta) error {
+func ServeFile(c echo.Context, meta model.File) error {
 	// 直接アクセスURLが発行できる場合は、そっちにリダイレクト
 	if url := meta.GetAlternativeURL(); len(url) > 0 {
 		return c.Redirect(http.StatusFound, url)

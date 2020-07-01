@@ -13,9 +13,9 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/hmac"
-	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
 	"io/ioutil"
@@ -53,12 +53,12 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return utils.ServeUserIcon(c, h.Repo, user)
+	return utils.ServeUserIcon(c, h.FileManager, user)
 }
 
 // ChangeWebhookIcon PUT /webhooks/:webhookID/icon
 func (h *Handlers) ChangeWebhookIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, getParamWebhook(c).GetBotUserID())
+	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getParamWebhook(c).GetBotUserID())
 }
 
 // PostWebhooksRequest POST /webhooks リクエストボディ
@@ -87,7 +87,12 @@ func (h *Handlers) CreateWebhook(c echo.Context) error {
 		return err
 	}
 
-	w, err := h.Repo.CreateWebhook(req.Name, req.Description, req.ChannelID, userID, req.Secret)
+	iconFileID, err := file.GenerateIconFile(h.FileManager, req.Name)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	w, err := h.Repo.CreateWebhook(req.Name, req.Description, req.ChannelID, iconFileID, userID, req.Secret)
 	if err != nil {
 		switch {
 		case repository.IsArgError(err):
@@ -194,29 +199,20 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	// 投稿先チャンネル確認
-	ch, err := h.Repo.GetChannel(channelID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return herror.BadRequest("invalid channel")
-		default:
-			return herror.InternalServerError(err)
-		}
-	}
-	if !ch.IsPublic {
+	if !h.ChannelManager.PublicChannelTree().IsChannelPresent(channelID) {
 		return herror.BadRequest("invalid channel")
 	}
-	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetPublicChannelTree().GetChannelPath(ch.ID)))
+	if h.ChannelManager.PublicChannelTree().IsArchivedChannel(channelID) {
+		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree().GetChannelPath(channelID)))
 	}
 
 	// 埋め込み変換
 	if isTrue(c.QueryParam("embed")) {
-		body = []byte(message.NewReplacer(h.Repo).Replace(string(body)))
+		body = []byte(h.Replacer.Replace(string(body)))
 	}
 
 	// メッセージ投稿
-	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), ch.ID, string(body)); err != nil {
+	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), channelID, string(body)); err != nil {
 		return herror.InternalServerError(err)
 	}
 

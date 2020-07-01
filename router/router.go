@@ -16,6 +16,7 @@ import (
 	"github.com/traPtitech/traQ/router/v1"
 	"github.com/traPtitech/traQ/router/v3"
 	"github.com/traPtitech/traQ/service"
+	"github.com/traPtitech/traQ/service/channel"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -43,22 +44,22 @@ func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Se
 	// 外部authハンドラ
 	extAuth := api.Group("/auth")
 	if config.ExternalAuth.GitHub.Valid() {
-		p := auth.NewGithubProvider(repo, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.GitHub)
+		p := auth.NewGithubProvider(repo, ss.FileManager, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.GitHub)
 		extAuth.GET("/github", p.LoginHandler)
 		extAuth.GET("/github/callback", p.CallbackHandler)
 	}
 	if config.ExternalAuth.Google.Valid() {
-		p := auth.NewGoogleProvider(repo, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.Google)
+		p := auth.NewGoogleProvider(repo, ss.FileManager, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.Google)
 		extAuth.GET("/google", p.LoginHandler)
 		extAuth.GET("/google/callback", p.CallbackHandler)
 	}
 	if config.ExternalAuth.TraQ.Valid() {
-		p := auth.NewTraQProvider(repo, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.TraQ)
+		p := auth.NewTraQProvider(repo, ss.FileManager, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.TraQ)
 		extAuth.GET("/traq", p.LoginHandler)
 		extAuth.GET("/traq/callback", p.CallbackHandler)
 	}
 	if config.ExternalAuth.OIDC.Valid() {
-		p, err := auth.NewOIDCProvider(repo, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.OIDC)
+		p, err := auth.NewOIDCProvider(repo, ss.FileManager, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.OIDC)
 		if err != nil {
 			panic(err)
 		}
@@ -69,7 +70,7 @@ func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Se
 	return r.e
 }
 
-func newEcho(logger *zap.Logger, config *Config, repo repository.Repository) *echo.Echo {
+func newEcho(logger *zap.Logger, config *Config, repo repository.Repository, cm channel.Manager) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
@@ -85,7 +86,7 @@ func newEcho(logger *zap.Logger, config *Config, repo repository.Repository) *ec
 	if config.Gzipped {
 		e.Use(middlewares.Gzip())
 	}
-	e.Use(extension.Wrap(repo))
+	e.Use(extension.Wrap(repo, cm))
 	e.Use(middlewares.RequestCounter())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		ExposeHeaders: []string{consts.HeaderVersion, consts.HeaderCacheFile, consts.HeaderFileMetaType, consts.HeaderMore, echo.HeaderXRequestID},

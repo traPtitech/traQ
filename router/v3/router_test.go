@@ -13,11 +13,11 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/random"
-	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"image"
 	"net/http"
@@ -67,7 +67,7 @@ func TestMain(m *testing.M) {
 		env.SessStore = session.NewMemorySessionStore()
 
 		// テスト用リポジトリ作成
-		repo, err := repository.NewGormRepository(db, storage.NewInMemoryFileStorage(), env.Hub, zap.NewNop())
+		repo, err := repository.NewGormRepository(db, env.Hub, zap.NewNop())
 		if err != nil {
 			panic(err)
 		}
@@ -75,24 +75,26 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 		env.Repository = repo
+		env.CM, _ = channel.InitChannelManager(repo, zap.NewNop())
 
 		// テスト用サーバー作成
 		e := echo.New()
 		e.HideBanner = true
 		e.HidePort = true
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
-		e.Use(extension.Wrap(repo))
+		e.Use(extension.Wrap(repo, env.CM))
 
 		r, err := rbac.New(db)
 		if err != nil {
 			panic(err)
 		}
 		handlers := &Handlers{
-			RBAC:      r,
-			Repo:      env.Repository,
-			Hub:       env.Hub,
-			SessStore: env.SessStore,
-			Logger:    zap.NewNop(),
+			RBAC:           r,
+			Repo:           env.Repository,
+			Hub:            env.Hub,
+			SessStore:      env.SessStore,
+			ChannelManager: env.CM,
+			Logger:         zap.NewNop(),
 			Imaging: imaging.NewProcessor(imaging.Config{
 				MaxPixels:        1000 * 1000,
 				Concurrency:      1,
@@ -126,6 +128,7 @@ type Env struct {
 	Server     *httptest.Server
 	DB         *gorm.DB
 	Repository repository.Repository
+	CM         channel.Manager
 	Hub        *hub.Hub
 	SessStore  session.Store
 }
@@ -174,7 +177,7 @@ func (env *Env) CreateUser(t *testing.T, userName string) model.UserInfo {
 	if userName == rand {
 		userName = random.AlphaNumeric(32)
 	}
-	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "testtesttesttest", Role: role.User})
+	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "testtesttesttest", Role: role.User, IconFileID: uuid.Must(uuid.NewV4())})
 	require.NoError(t, err)
 	return u
 }

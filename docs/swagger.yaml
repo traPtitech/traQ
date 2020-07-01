@@ -841,62 +841,29 @@ paths:
       tags:
         - heartbeat
       operationId: getHeartbeat
-      description: チャンネルを現在見ている人・編集している人を取得します。
-      security:
-        - traqOAuth2:
-            - read
-      parameters:
-        - name: channelId
-          in: query
-          description: 現在いるチャンネルId
-          required: true
-          schema:
-            type: string
-            format: uuid
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HeartbeatRes'
+        '410':
+          description: このAPIは削除されました
     post:
       deprecated: true
       tags:
         - heartbeat
       operationId: postHeartbeat
-      description: どのチャンネルを見ているか・編集しているかを送信します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Heartbeat'
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に送信できました。
+        '410':
+          description: このAPIは削除されました
   /channels:
     get:
       tags:
         - channel
+      deprecated: true
       operationId: getChannels
-      description: (すべての)チャンネルのリストを取得します。
-      security:
-        - traqOAuth2:
-            - read
-            - manage_bot
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: |-
-            正常に取得できました。
-            チャンネルの配列を返します。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChannelList'
+        '410':
+          description: このAPIは削除されました
     post:
       tags:
         - channel
@@ -926,73 +893,35 @@ paths:
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
+      deprecated: true
       tags:
         - channel
       operationId: getChannel
-      description: チャンネルの情報を返します。
-      security:
-        - traqOAuth2:
-            - read
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: |-
-            正常に取得ができました。
-            チャンネルを返します。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Channel'
-        '404':
-          description: |-
-            取得に失敗しました。
-            指定したチャンネルは存在しません。
+        '410':
+          description: このAPIは削除されました
     patch:
+      deprecated: true
       tags:
         - channel
       operationId: editChannel
-      description: チャンネルの情報を変更します。
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchChannel'
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に変更ができました。
-        '400':
-          description: 失敗しました。リクエスト内容が不正です。
-        '403':
-          description: 失敗しました。権限がありません。
-        '404':
-          description: |
-            変更に失敗しました。
-            指定したチャンネルは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/parent':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     put:
+      deprecated: true
       tags:
         - channel
       operationId: changeChannelParent
-      description: チャンネルの親チャンネルを変更します。
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutParentChannel'
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 変更に成功しました。
-        '400':
-          description: 変更に失敗しました。リクエスト内容が不正です。
-        '403':
-          description: 変更に失敗しました。権限がありません。
-        '404':
-          description: 変更に失敗しました。指定されたチャンネルは存在しません。
-        '409':
-          description: 変更に失敗しました。チャンネル名が競合しています。
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/children':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -1351,13 +1280,10 @@ paths:
       tags:
         - notification
       operationId: connectNotification
-      description: 通知ストリーム(Server Sent Events)に接続します。
-      security:
-        - traqOAuth2:
-            - read
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 接続が完了しました。
+        '410':
+          description: このAPIは削除されました
   /notification/device:
     post:
       tags:

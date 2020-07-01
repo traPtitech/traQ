@@ -29,6 +29,7 @@ func Migrations() []*gormigrate.Migration {
 		v17(), // ユーザーホームチャンネル
 		v18(), // インデックス追加
 		v19(), // httpセッション管理テーブル変更
+		v20(), // パーミッション周りの調整
 	}
 }
 
@@ -59,7 +60,7 @@ func AllTables() []interface{} {
 		&model.Device{},
 		&model.Pin{},
 		&model.FileACLEntry{},
-		&model.File{},
+		&model.FileMeta{},
 		&model.UsersPrivateChannel{},
 		&model.UserSubscribeChannel{},
 		&model.Tag{},

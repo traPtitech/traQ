@@ -9,13 +9,16 @@ import (
 )
 
 var (
-	mentionRegex = regexp.MustCompile(`[@＠]([\S]+)`)
-	channelRegex = regexp.MustCompile(`[#＃]([a-zA-Z0-9_/-]+)`)
+	// ユーザーとグループのnameの和集合
+	mentionRegex    = regexp.MustCompile(`:?[@＠](\S{1,32})`)
+	userStartsRegex = regexp.MustCompile(`^[@＠]([a-zA-Z0-9_-]{1,32})`)
+	channelRegex    = regexp.MustCompile(`[#＃]([a-zA-Z0-9_/-]+)`)
 )
 
 const (
-	backQuoteRune = rune('`')
-	dollarRune    = rune('$')
+	backQuoteRune          = rune('`')
+	dollarRune             = rune('$')
+	defaultCodeTokenLength = 3
 )
 
 // ReplaceMapper メッセージ埋め込み置換マッピング
@@ -42,9 +45,18 @@ func NewReplacer(mapper ReplaceMapper) *Replacer {
 func (re *Replacer) Replace(m string) string {
 	inCodeBlock := false
 	inLatexBlock := false
+	codeTokenLength := defaultCodeTokenLength
+
 	lines := strings.Split(m, "\n")
 	for i, line := range lines {
-		if !inLatexBlock && strings.HasPrefix(line, "```") {
+		if !inLatexBlock && strings.HasPrefix(line, strings.Repeat("`", codeTokenLength)) {
+			// `の数が一致するものと組み合うようにする
+			if !inCodeBlock {
+				codeTokenLength = countPrefix(line, backQuoteRune)
+			} else {
+				codeTokenLength = defaultCodeTokenLength
+			}
+
 			inCodeBlock = !inCodeBlock
 		}
 		if !inCodeBlock && strings.HasPrefix(line, "$$") {
@@ -113,14 +125,28 @@ func (re *Replacer) replaceAll(m string) string {
 
 func (re *Replacer) replaceMention(m string) string {
 	return mentionRegex.ReplaceAllStringFunc(m, func(s string) string {
-		t := strings.ToLower(strings.TrimLeft(s, "@＠"))
-		if uid, ok := re.mapper.User(t); ok {
+		// 始まりが:なものを除外
+		if strings.HasPrefix(s, ":") {
+			return s
+		}
+
+		name := strings.ToLower(strings.TrimLeft(s, "@＠"))
+
+		if uid, ok := re.mapper.User(name); ok {
 			return fmt.Sprintf(`!{"type":"user","raw":"%s","id":"%s"}`, s, uid)
 		}
-		if gid, ok := re.mapper.Group(t); ok {
+		if gid, ok := re.mapper.Group(name); ok {
 			return fmt.Sprintf(`!{"type":"group","raw":"%s","id":"%s"}`, s, gid)
 		}
-		return s
+
+		return userStartsRegex.ReplaceAllStringFunc(s, func(s string) string {
+			name := strings.ToLower(strings.TrimLeft(s, "@＠"))
+
+			if uid, ok := re.mapper.User(name); ok {
+				return fmt.Sprintf(`!{"type":"user","raw":"%s","id":"%s"}`, s, uid)
+			}
+			return s
+		})
 	})
 }
 
@@ -141,4 +167,15 @@ func indexOf(slice []rune, target rune) int {
 		}
 	}
 	return -1
+}
+
+func countPrefix(line string, letter rune) int {
+	count := 0
+	for _, ch := range line {
+		if ch != letter {
+			break
+		}
+		count++
+	}
+	return count
 }

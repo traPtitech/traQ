@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"bytes"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
@@ -13,12 +13,9 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
-	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"os"
 	"testing"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
@@ -63,7 +60,7 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 
-		repo, err := NewGormRepository(db, storage.NewInMemoryFileStorage(), hub.New(), zap.NewNop())
+		repo, err := NewGormRepository(db, hub.New(), zap.NewNop())
 		if err != nil {
 			panic(err)
 		}
@@ -127,17 +124,11 @@ func mustMakeChannel(t *testing.T, repo Repository, name string) *model.Channel 
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	ch, err := repo.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
-	require.NoError(t, err)
-	return ch
-}
-
-func mustMakeChannelDetail(t *testing.T, repo Repository, userID uuid.UUID, name string, parentID uuid.UUID) *model.Channel {
-	t.Helper()
-	if name == rand {
-		name = random.AlphaNumeric(20)
-	}
-	ch, err := repo.CreatePublicChannel(name, parentID, userID)
+	ch, err := repo.CreateChannel(model.Channel{
+		Name:      name,
+		IsForced:  false,
+		IsVisible: true,
+	}, nil, false)
 	require.NoError(t, err)
 	return ch
 }
@@ -160,22 +151,9 @@ func mustMakeUser(t *testing.T, repo Repository, userName string) model.UserInfo
 		userName = random.AlphaNumeric(32)
 	}
 	// パスワード無し・アイコンファイルは実際には存在しないことに注意
-	u, err := repo.CreateUser(CreateUserArgs{Name: userName, Role: role.User, IconFileID: optional.UUIDFrom(uuid.Must(uuid.NewV4()))})
+	u, err := repo.CreateUser(CreateUserArgs{Name: userName, Role: role.User, IconFileID: uuid.Must(uuid.NewV4())})
 	require.NoError(t, err)
 	return u
-}
-
-func mustMakeFile(t *testing.T, repo Repository) model.FileMeta {
-	t.Helper()
-	buf := bytes.NewBufferString("test message")
-	f, err := repo.SaveFile(SaveFileArgs{
-		FileName: "test.txt",
-		FileSize: int64(buf.Len()),
-		FileType: model.FileTypeUserFile,
-		Src:      buf,
-	})
-	require.NoError(t, err)
-	return f
 }
 
 func mustMakeTag(t *testing.T, repo Repository, name string) *model.Tag {
@@ -214,13 +192,28 @@ func mustAddUserToGroup(t *testing.T, repo Repository, userID, groupID uuid.UUID
 	require.NoError(t, repo.AddUserToGroup(userID, groupID, ""))
 }
 
+func mustMakeDummyFile(t *testing.T, repo Repository) *model.FileMeta {
+	t.Helper()
+	meta := &model.FileMeta{
+		ID:   uuid.Must(uuid.NewV4()),
+		Name: "dummy",
+		Mime: "application/octet-stream",
+		Size: 10,
+		Hash: "d41d8cd98f00b204e9800998ecf8427e",
+	}
+	err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
+		{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)},
+	})
+	require.NoError(t, err)
+	return meta
+}
+
 func mustMakeStamp(t *testing.T, repo Repository, name string, userID uuid.UUID) *model.Stamp {
 	t.Helper()
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	fid, err := GenerateIconFile(repo, name)
-	require.NoError(t, err)
+	fid := mustMakeDummyFile(t, repo).ID
 	s, err := repo.CreateStamp(CreateStampArgs{Name: name, FileID: fid, CreatorID: userID})
 	require.NoError(t, err)
 	return s
@@ -250,14 +243,15 @@ func mustMakeWebhook(t *testing.T, repo Repository, name string, channelID, crea
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	w, err := repo.CreateWebhook(name, "", channelID, creatorID, secret)
+	w, err := repo.CreateWebhook(name, "", channelID, mustMakeDummyFile(t, repo).ID, creatorID, secret)
 	require.NoError(t, err)
 	return w
 }
 
 func mustChangeChannelSubscription(t *testing.T, repo Repository, channelID, userID uuid.UUID) {
 	t.Helper()
-	require.NoError(t, repo.ChangeChannelSubscription(channelID, ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}}))
+	_, _, err := repo.ChangeChannelSubscription(channelID, ChangeChannelSubscriptionArgs{Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}})
+	require.NoError(t, err)
 }
 
 func mustMakeClipFolder(t *testing.T, repo Repository, userID uuid.UUID, name, description string) *model.ClipFolder {

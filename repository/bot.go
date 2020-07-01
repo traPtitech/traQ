@@ -1,9 +1,9 @@
+//go:generate mockgen -source=$GOFILE -destination=mock_$GOPACKAGE/mock_$GOFILE
 package repository
 
 import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -14,7 +14,7 @@ type UpdateBotArgs struct {
 	WebhookURL      optional.String
 	Privileged      optional.Bool
 	CreatorID       optional.UUID
-	SubscribeEvents event.Types
+	SubscribeEvents model.BotEventTypes
 }
 
 // BotsQuery Bot情報取得用クエリ
@@ -22,8 +22,10 @@ type BotsQuery struct {
 	IsPrivileged    optional.Bool
 	IsActive        optional.Bool
 	IsCMemberOf     optional.UUID
-	SubscribeEvents event.Types
+	SubscribeEvents model.BotEventTypes
 	Creator         optional.UUID
+	ID              optional.UUID
+	UserID          optional.UUID
 }
 
 // Privileged 特権Botである
@@ -51,15 +53,27 @@ func (q BotsQuery) CMemberOf(channelID uuid.UUID) BotsQuery {
 }
 
 // Subscribe eventsを購読している
-func (q BotsQuery) Subscribe(events ...event.Type) BotsQuery {
+func (q BotsQuery) Subscribe(events ...model.BotEventType) BotsQuery {
 	if q.SubscribeEvents == nil {
-		q.SubscribeEvents = event.Types{}
+		q.SubscribeEvents = model.BotEventTypes{}
 	} else {
 		q.SubscribeEvents = q.SubscribeEvents.Clone()
 	}
 	for _, event := range events {
 		q.SubscribeEvents[event] = struct{}{}
 	}
+	return q
+}
+
+// BotID 指定したIDのBotである
+func (q BotsQuery) BotID(id uuid.UUID) BotsQuery {
+	q.ID = optional.UUIDFrom(id)
+	return q
+}
+
+// BotUserID 指定したユーザーIDのBotである
+func (q BotsQuery) BotUserID(id uuid.UUID) BotsQuery {
+	q.ID = optional.UUIDFrom(id)
 	return q
 }
 
@@ -71,7 +85,7 @@ type BotRepository interface {
 	// 引数に問題がある場合、ArgumentErrorを返します。
 	// nameが既に使われている場合、ErrAlreadyExistsを返します。
 	// DBによるエラーを返すことがあります。
-	CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error)
+	CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, webhookURL string) (*model.Bot, error)
 	// UpdateBot 指定したBotの情報を更新します
 	//
 	// 成功した場合、nilを返します。

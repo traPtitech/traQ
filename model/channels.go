@@ -10,8 +10,6 @@ import (
 const (
 	// DirectMessageChannelRootID ダイレクトメッセージチャンネルの親チャンネルID
 	DirectMessageChannelRootID = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa"
-	// MaxChannelDepth チャンネルの深さの最大
-	MaxChannelDepth = 5
 )
 
 var dmChannelRootUUID = uuid.Must(uuid.FromString(DirectMessageChannelRootID))
@@ -30,6 +28,8 @@ type Channel struct {
 	CreatedAt time.Time  `gorm:"precision:6"`
 	UpdatedAt time.Time  `gorm:"precision:6"`
 	DeletedAt *time.Time `gorm:"precision:6"`
+
+	ChildrenID []uuid.UUID `gorm:"-"`
 }
 
 // TableName テーブル名を指定するメソッド

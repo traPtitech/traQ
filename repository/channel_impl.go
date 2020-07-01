@@ -8,256 +8,144 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/gormutil"
-	"github.com/traPtitech/traQ/utils/optional"
-	"github.com/traPtitech/traQ/utils/random"
-	"github.com/traPtitech/traQ/utils/validator"
+	"github.com/traPtitech/traQ/utils/set"
 	"go.uber.org/zap"
 	"time"
 )
 
-var (
-	dmChannelRootUUID  = uuid.Must(uuid.FromString(model.DirectMessageChannelRootID))
-	pubChannelRootUUID = uuid.Nil
-)
+var dmChannelRootUUID = uuid.Must(uuid.FromString(model.DirectMessageChannelRootID))
 
-// CreatePublicChannel implements ChannelRepository interface.
-func (repo *GormRepository) CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
-	// チャンネル名検証
-	if !validator.ChannelRegex.MatchString(name) {
-		return nil, ArgError("name", "invalid name")
-	}
+// CreateChannel implements ChannelRepository interface.
+func (repo *GormRepository) CreateChannel(ch model.Channel, privateMembers set.UUID, dm bool) (*model.Channel, error) {
+	arr := []interface{}{&ch}
 
-	repo.chTree.mu.Lock()
-	defer repo.chTree.mu.Unlock()
+	ch.ID = uuid.Must(uuid.NewV4())
+	ch.IsPublic = true
+	ch.DeletedAt = nil
 
-	if repo.chTree.isChildPresent(name, parent) {
-		return nil, ErrAlreadyExists
-	}
-
-	switch parent {
-	case pubChannelRootUUID: // ルート
-		break
-	case dmChannelRootUUID: // DMルート
-		return nil, ErrForbidden
-	default: // ルート以外
-		// 親チャンネル検証
-		if !repo.chTree.isChannelPresent(parent) {
-			return nil, ErrNotFound
-		}
-		// 深さを検証
-		if len(repo.chTree.getAscendantIDs(parent))+2 > model.MaxChannelDepth {
-			return nil, ErrChannelDepthLimitation
+	if len(privateMembers) > 0 {
+		ch.IsPublic = false
+		ch.IsForced = false
+		for uid := range privateMembers {
+			arr = append(arr, &model.UsersPrivateChannel{
+				UserID:    uid,
+				ChannelID: ch.ID,
+			})
 		}
 	}
 
-	ch := &model.Channel{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      name,
-		ParentID:  parent,
-		CreatorID: creatorID,
-		UpdaterID: creatorID,
-		IsPublic:  true,
-		IsForced:  false,
-		IsVisible: true,
+	if dm {
+		ch.ParentID = dmChannelRootUUID
+		ch.IsPublic = false
+		ch.IsForced = false
+
+		m := &model.DMChannelMapping{
+			ChannelID: ch.ID,
+			User1:     uuid.UUID{},
+			User2:     uuid.UUID{},
+		}
+		if l := len(privateMembers); l == 1 {
+			users := privateMembers.Array()
+			m.User1 = users[0]
+			m.User2 = users[0]
+		} else if l == 2 {
+			users := privateMembers.Array()
+			// user1 <= user2 になるように入れかえ
+			if bytes.Compare(users[0].Bytes(), users[1].Bytes()) == 1 {
+				t := users[0]
+				users[0] = users[1]
+				users[1] = t
+			}
+
+			m.User1 = users[0]
+			m.User2 = users[1]
+		} else {
+			return nil, ArgError("privateMembers", "length must be 1 or 2")
+		}
+		arr = append(arr, m)
 	}
-	if err := repo.db.Create(ch).Error; err != nil {
+
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		for _, v := range arr {
+			if err := tx.Create(v).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
-	repo.chTree.add(ch)
 	repo.hub.Publish(hub.Message{
 		Name: event.ChannelCreated,
 		Fields: hub.Fields{
 			"channel_id": ch.ID,
-			"channel":    ch,
-			"private":    false,
+			"channel":    &ch,
+			"private":    !ch.IsPublic,
 		},
 	})
-
-	if ch.ParentID != uuid.Nil {
-		// ロギング
-		go repo.recordChannelEvent(ch.ParentID, model.ChannelEventChildCreated, model.ChannelEventDetail{
-			"userId":    ch.CreatorID,
-			"channelId": ch.ID,
-		}, ch.UpdatedAt)
-	}
-	return ch, nil
+	return &ch, nil
 }
 
 // UpdateChannel implements ChannelRepository interface.
-func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChannelArgs) error {
+func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChannelArgs) (*model.Channel, error) {
 	if channelID == uuid.Nil {
-		return ErrNilID
+		return nil, ErrNilID
 	}
 
-	repo.chTree.mu.Lock()
-	defer repo.chTree.mu.Unlock()
-
-	var (
-		ch                model.Channel
-		nameChanged       bool
-		topicChanged      bool
-		visibilityChanged bool
-		forcedChanged     bool
-		parentChanged     bool
-		nameBefore        string
-		parentBefore      uuid.UUID
-		topicBefore       string
-	)
+	var ch model.Channel
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
 			return convertError(err)
 		}
 
 		data := map[string]interface{}{"updater_id": args.UpdaterID}
-		if args.Topic.Valid && ch.Topic != args.Topic.String {
-			topicBefore = ch.Topic
-			topicChanged = true
+		if args.Topic.Valid {
 			data["topic"] = args.Topic.String
 		}
-		if args.Visibility.Valid && ch.IsVisible != args.Visibility.Bool {
-			visibilityChanged = true
+		if args.Visibility.Valid {
 			data["is_visible"] = args.Visibility.Bool
 		}
-		if args.ForcedNotification.Valid && ch.IsForced != args.ForcedNotification.Bool {
-			forcedChanged = true
+		if args.ForcedNotification.Valid {
 			data["is_forced"] = args.ForcedNotification.Bool
 		}
-		if args.Name.Valid || args.Parent.Valid {
-			// ダイレクトメッセージチャンネルの名前・親は変更不可能
-			if ch.IsDMChannel() {
-				return ErrForbidden
-			}
-
-			// チャンネル名重複を確認
-			{
-				var (
-					n string
-					p uuid.UUID
-				)
-
-				if args.Name.Valid {
-					n = args.Name.String
-				} else {
-					n = ch.Name
-				}
-				if args.Parent.Valid {
-					p = args.Parent.UUID
-				} else {
-					p = ch.ParentID
-				}
-
-				if repo.chTree.isChildPresent(n, p) {
-					return ErrAlreadyExists
-				}
-			}
-
-			if args.Name.Valid {
-				// チャンネル名検証
-				if !validator.ChannelRegex.MatchString(args.Name.String) {
-					return ArgError("args.Name", "invalid name")
-				}
-
-				nameBefore = ch.Name
-				nameChanged = true
-				data["name"] = args.Name.String
-			}
-			if args.Parent.Valid {
-				// チャンネル階層検証
-				switch args.Parent.UUID {
-				case pubChannelRootUUID:
-					// ルートチャンネル
-					break
-				case dmChannelRootUUID:
-					// DMチャンネルには出来ない
-					return ArgError("args.Parent", "invalid parent channel")
-				default:
-					// 親チャンネル検証
-					if !repo.chTree.isChannelPresent(args.Parent.UUID) {
-						return ArgError("args.Parent", "invalid parent channel")
-					}
-
-					// 深さを検証
-					ascs := append(repo.chTree.getAscendantIDs(args.Parent.UUID), args.Parent.UUID)
-					for _, id := range ascs {
-						if id == ch.ID {
-							return ErrChannelDepthLimitation // ループ検出
-						}
-					}
-					if len(ascs)+1+repo.chTree.getChannelDepth(ch.ID) > model.MaxChannelDepth {
-						return ErrChannelDepthLimitation
-					}
-				}
-
-				parentBefore = ch.ParentID
-				parentChanged = true
-				data["parent_id"] = args.Parent.UUID
-			}
+		if args.Name.Valid {
+			data["name"] = args.Name.String
+		}
+		if args.Parent.Valid {
+			data["parent_id"] = args.Parent.UUID
 		}
 
-		return tx.Model(&ch).Updates(data).Error
+		if err := tx.Model(&ch).Updates(data).Error; err != nil {
+			return err
+		}
+		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
+			return err
+		}
+		return nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if nameChanged || parentChanged {
-		repo.chTree.move(channelID, args.Parent, args.Name) // ツリー更新
-	}
-
-	if forcedChanged || visibilityChanged || topicChanged || nameChanged || parentChanged {
+	repo.hub.Publish(hub.Message{
+		Name: event.ChannelUpdated,
+		Fields: hub.Fields{
+			"channel_id": channelID,
+			"private":    !ch.IsPublic,
+		},
+	})
+	if args.Topic.Valid {
 		repo.hub.Publish(hub.Message{
-			Name: event.ChannelUpdated,
+			Name: event.ChannelTopicUpdated,
 			Fields: hub.Fields{
 				"channel_id": channelID,
-				"private":    !ch.IsPublic,
+				"topic":      args.Topic.String,
+				"updater_id": args.UpdaterID,
 			},
 		})
-		archived := optional.NewBool(!args.Visibility.Bool, args.Visibility.Valid)
-		repo.chTree.update(channelID, args.Topic, archived, args.ForcedNotification)
-		if topicChanged {
-			repo.hub.Publish(hub.Message{
-				Name: event.ChannelTopicUpdated,
-				Fields: hub.Fields{
-					"channel_id": channelID,
-					"topic":      args.Topic.String,
-					"updater_id": args.UpdaterID,
-				},
-			})
-
-			go repo.recordChannelEvent(channelID, model.ChannelEventTopicChanged, model.ChannelEventDetail{
-				"userId": args.UpdaterID,
-				"before": topicBefore,
-				"after":  args.Topic.String,
-			}, ch.UpdatedAt)
-		}
-		if forcedChanged {
-			go repo.recordChannelEvent(channelID, model.ChannelEventForcedNotificationChanged, model.ChannelEventDetail{
-				"userId": args.UpdaterID,
-				"force":  args.ForcedNotification.Bool,
-			}, ch.UpdatedAt)
-		}
-		if visibilityChanged {
-			go repo.recordChannelEvent(channelID, model.ChannelEventVisibilityChanged, model.ChannelEventDetail{
-				"userId":     args.UpdaterID,
-				"visibility": args.Visibility.Bool,
-			}, ch.UpdatedAt)
-		}
-		if nameChanged {
-			go repo.recordChannelEvent(channelID, model.ChannelEventNameChanged, model.ChannelEventDetail{
-				"userId": args.UpdaterID,
-				"before": nameBefore,
-				"after":  args.Name.String,
-			}, ch.UpdatedAt)
-		}
-		if parentChanged {
-			go repo.recordChannelEvent(channelID, model.ChannelEventParentChanged, model.ChannelEventDetail{
-				"userId": args.UpdaterID,
-				"before": parentBefore,
-				"after":  args.Parent.UUID,
-			}, ch.UpdatedAt)
-		}
 	}
-	return nil
+	return &ch, nil
 }
 
 // GetChannel implements ChannelRepository interface.
@@ -272,48 +160,17 @@ func (repo *GormRepository) GetChannel(channelID uuid.UUID) (*model.Channel, err
 	return &ch, nil
 }
 
-// GetChannelByMessageID implements ChannelRepository interface.
-func (repo *GormRepository) GetChannelByMessageID(messageID uuid.UUID) (*model.Channel, error) {
-	if messageID == uuid.Nil {
-		return nil, ErrNotFound
-	}
-
-	channel := &model.Channel{}
-	err := repo.db.
-		Where("id = ?", repo.db.
-			Model(&model.Message{}).
-			Select("messages.channel_id").
-			Where(&model.Message{ID: messageID}).
-			SubQuery()).
-		Take(channel).
-		Error
-	if err != nil {
-		return nil, convertError(err)
-	}
-	return channel, nil
-}
-
-// GetChannelsByUserID implements ChannelRepository interface.
-func (repo *GormRepository) GetChannelsByUserID(userID uuid.UUID) (channels []*model.Channel, err error) {
+// GetPublicChannels implements ChannelRepository interface.
+func (repo *GormRepository) GetPublicChannels() (channels []*model.Channel, err error) {
 	channels = make([]*model.Channel, 0)
-	if userID == uuid.Nil {
-		err = repo.db.Where(&model.Channel{IsPublic: true}).Find(&channels).Error
-		return channels, err
-	}
-	err = repo.db.
-		Joins("LEFT JOIN users_private_channels ON users_private_channels.channel_id = channels.id").
-		Where("channels.is_public = true OR users_private_channels.user_id = ?", userID).
+	return channels, repo.db.
+		Where(&model.Channel{IsPublic: true}).
 		Find(&channels).
 		Error
-	return channels, err
 }
 
 // GetDirectMessageChannel implements ChannelRepository interface.
 func (repo *GormRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*model.Channel, error) {
-	if user1 == uuid.Nil || user2 == uuid.Nil {
-		return nil, ErrNilID
-	}
-
 	// user1 <= user2 になるように入れかえ
 	if bytes.Compare(user1.Bytes(), user2.Bytes()) == 1 {
 		t := user1
@@ -322,95 +179,27 @@ func (repo *GormRepository) GetDirectMessageChannel(user1, user2 uuid.UUID) (*mo
 	}
 
 	// チャンネル存在確認
-	var channel model.Channel
+	var ch model.Channel
 	err := repo.db.
 		Where("id = (SELECT channel_id FROM dm_channel_mappings WHERE user1 = ? AND user2 = ?)", user1, user2).
-		First(&channel).
+		First(&ch).
 		Error
-	if err == nil {
-		return &channel, nil
-	} else if !gorm.IsRecordNotFoundError(err) {
-		return nil, err
-	}
-
-	// 存在しなかったので作成
-	channel = model.Channel{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      "dm_" + random.AlphaNumeric(17),
-		ParentID:  dmChannelRootUUID,
-		IsPublic:  false,
-		IsVisible: true,
-		IsForced:  false,
-	}
-
-	arr := []interface{}{
-		&channel,
-		&model.DMChannelMapping{ChannelID: channel.ID, User1: user1, User2: user2},
-		&model.UsersPrivateChannel{UserID: user1, ChannelID: channel.ID},
-	}
-	if user1 != user2 {
-		arr = append(arr, &model.UsersPrivateChannel{UserID: user2, ChannelID: channel.ID})
-	}
-
-	err = repo.db.Transaction(func(tx *gorm.DB) error {
-		for _, v := range arr {
-			if err := tx.Create(v).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
 	if err != nil {
-		return nil, err
+		return nil, convertError(err)
 	}
-	repo.hub.Publish(hub.Message{
-		Name: event.ChannelCreated,
-		Fields: hub.Fields{
-			"channel_id": channel.ID,
-			"channel":    &channel,
-			"private":    true,
-		},
-	})
-	return &channel, nil
+	return &ch, nil
 }
 
 // GetDirectMessageChannelMapping implements ChannelRepository interface.
-func (repo *GormRepository) GetDirectMessageChannelMapping(userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error) {
+func (repo *GormRepository) GetDirectMessageChannelMapping(userID uuid.UUID) (mappings []*model.DMChannelMapping, err error) {
+	mappings = make([]*model.DMChannelMapping, 0)
 	if userID == uuid.Nil {
-		return map[uuid.UUID]uuid.UUID{}, nil
+		return
 	}
-
-	var mappings []model.DMChannelMapping
-	if err := repo.db.Where("user1 = ? OR user2 = ?", userID, userID).Find(&mappings).Error; err != nil {
-		return nil, err
-	}
-
-	result := map[uuid.UUID]uuid.UUID{}
-	for _, ch := range mappings {
-		if ch.User1 != userID {
-			result[ch.ChannelID] = ch.User1
-		} else {
-			result[ch.ChannelID] = ch.User2
-		}
-	}
-	return result, nil
-}
-
-// IsChannelAccessibleToUser implements ChannelRepository interface.
-func (repo *GormRepository) IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error) {
-	if userID == uuid.Nil || channelID == uuid.Nil {
-		return false, nil
-	}
-
-	return gormutil.Exists(repo.db.
-		Model(&model.Channel{}).
-		Joins("LEFT JOIN users_private_channels ON users_private_channels.channel_id = channels.id").
-		Where("(channels.is_public = true OR users_private_channels.user_id = ?) AND channels.id = ? AND channels.deleted_at IS NULL", userID, channelID))
-}
-
-// GetChildrenChannelIDs implements ChannelRepository interface.
-func (repo *GormRepository) GetChildrenChannelIDs(channelID uuid.UUID) (children []uuid.UUID, err error) {
-	return repo.chTree.GetChildrenIDs(channelID), nil
+	return mappings, repo.db.
+		Where("user1 = ? OR user2 = ?", userID, userID).
+		Find(&mappings).
+		Error
 }
 
 // GetPrivateChannelMemberIDs implements ChannelRepository interface.
@@ -419,25 +208,22 @@ func (repo *GormRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) (use
 	if channelID == uuid.Nil {
 		return users, nil
 	}
-	err = repo.db.
+	return users, repo.db.
 		Model(&model.UsersPrivateChannel{}).
 		Where(&model.UsersPrivateChannel{ChannelID: channelID}).
 		Pluck("user_id", &users).
 		Error
-	return users, err
 }
 
 // ChangeChannelSubscription implements ChannelRepository interface.
-func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args ChangeChannelSubscriptionArgs) error {
+func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args ChangeChannelSubscriptionArgs) (on []uuid.UUID, off []uuid.UUID, err error) {
 	if channelID == uuid.Nil {
-		return ErrNilID
+		return nil, nil, ErrNilID
 	}
+	on = make([]uuid.UUID, 0)
+	off = make([]uuid.UUID, 0)
 
-	var (
-		on  = make([]uuid.UUID, 0)
-		off = make([]uuid.UUID, 0)
-	)
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err = repo.db.Transaction(func(tx *gorm.DB) error {
 		// 現在のチャンネルの購読設定を全取得
 		var _current []*model.UserSubscribeChannel
 		if err := tx.Where(&model.UserSubscribeChannel{ChannelID: channelID}).Find(&_current).Error; err != nil {
@@ -468,7 +254,9 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 				if err := tx.Delete(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID}).Error; err != nil {
 					return err
 				}
-				off = append(off, uid)
+				if current[uid] == model.ChannelSubscribeLevelMarkAndNotify {
+					off = append(off, uid)
+				}
 
 			case model.ChannelSubscribeLevelMark:
 				if _, ok := current[uid]; ok {
@@ -498,16 +286,14 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 					}
 				}
 				on = append(on, uid)
-
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	// ロギング
 	if len(on) > 0 || len(off) > 0 {
 		repo.hub.Publish(hub.Message{
 			Name: event.ChannelSubscribersChanged,
@@ -515,13 +301,8 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 				"channel_id": channelID,
 			},
 		})
-		go repo.recordChannelEvent(channelID, model.ChannelEventSubscribersChanged, model.ChannelEventDetail{
-			"userId": args.UpdaterID,
-			"on":     on,
-			"off":    off,
-		}, time.Now())
 	}
-	return nil
+	return on, off, nil
 }
 
 // GetChannelSubscriptions implements ChannelRepository interface.
@@ -620,11 +401,6 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 	var stats ChannelStats
 	stats.DateTime = time.Now()
 	return &stats, repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error
-}
-
-// GetPublicChannelTree implements ChannelRepository interface.
-func (repo *GormRepository) GetPublicChannelTree() ChannelTree {
-	return repo.chTree
 }
 
 func (repo *GormRepository) recordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) {

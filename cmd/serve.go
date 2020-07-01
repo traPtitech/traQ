@@ -14,7 +14,9 @@ import (
 	"github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
+	"github.com/traPtitech/traQ/utils/twemoji"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 	"io/ioutil"
 	"time"
 )
@@ -64,7 +66,7 @@ func serveCommand() *cobra.Command {
 
 			// Repository
 			logger.Info("setting up repository...")
-			repo, err := repository.NewGormRepository(engine, fs, hub, logger)
+			repo, err := repository.NewGormRepository(engine, hub, logger)
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}
@@ -77,27 +79,6 @@ func serveCommand() *cobra.Command {
 				logger.Fatal("failed to sync repository", zap.Error(err))
 			}
 			logger.Info("repository was synced")
-
-			// 初期化
-			if init {
-				logger.Info("data initializing...")
-
-				// generalチャンネル作成
-				if ch, err := repo.CreatePublicChannel("general", uuid.Nil, uuid.Nil); err == nil {
-					logger.Info("#general was created", zap.Stringer("cid", ch.ID))
-				} else {
-					logger.Error("failed to init general channel", zap.Error(err))
-				}
-
-				// unicodeスタンプインストール
-				if !skipInitEmojis {
-					if err := installEmojis(repo, logger, false); err != nil {
-						logger.Error("failed to install unicode emojis", zap.Error(err))
-					}
-				}
-
-				logger.Info("data initialization finished")
-			}
 
 			// JWT for QRCode
 			if priv := c.JWT.Keys.Private; priv != "" {
@@ -116,9 +97,30 @@ func serveCommand() *cobra.Command {
 			}
 
 			// サーバー作成
-			server, err := newServer(hub, engine, repo, logger, c)
+			server, err := newServer(hub, engine, repo, fs, logger, c)
 			if err != nil {
 				logger.Fatal("failed to create server", zap.Error(err))
+			}
+
+			// 初期化
+			if init {
+				logger.Info("data initializing...")
+
+				// generalチャンネル作成
+				if ch, err := server.SS.ChannelManager.CreatePublicChannel("general", uuid.Nil, uuid.Nil); err == nil {
+					logger.Info("#general was created", zap.Stringer("cid", ch.ID))
+				} else {
+					logger.Error("failed to init general channel", zap.Error(err))
+				}
+
+				// unicodeスタンプインストール
+				if !skipInitEmojis {
+					if err := twemoji.Install(repo, server.SS.FileManager, logger, false); err != nil {
+						logger.Error("failed to install unicode emojis", zap.Error(err))
+					}
+				}
+
+				logger.Info("data initialization finished")
 			}
 
 			go func() {
@@ -163,13 +165,22 @@ func (s *Server) Start(address string) error {
 			_ = s.Repo.UpdateUser(userID, repository.UpdateUserArgs{LastOnline: optional.TimeFrom(datetime)})
 		}
 	}()
+	s.SS.BOT.Start()
 	return s.Router.Start(address)
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	s.SS.SSE.Dispose()
-	_ = s.SS.WS.Close()
-	s.SS.FCM.Close()
-	_ = s.SS.Search.Close()
-	return s.Router.Shutdown(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
+	eg.Go(func() error { return s.Router.Shutdown(ctx) })
+	eg.Go(func() error { return s.SS.WS.Close() })
+	eg.Go(func() error { return s.SS.BOT.Shutdown(ctx) })
+	eg.Go(func() error {
+		s.SS.FCM.Close()
+		return nil
+	})
+	eg.Go(func() error {
+		s.SS.ChannelManager.Wait()
+		return nil
+	})
+	return eg.Wait()
 }

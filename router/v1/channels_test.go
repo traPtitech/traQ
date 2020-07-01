@@ -12,49 +12,6 @@ import (
 	"testing"
 )
 
-func TestHandlers_GetChannels(t *testing.T) {
-	t.Parallel()
-	env, _, require, s, adminSession := setup(t, s1)
-
-	for i := 0; i < 5; i++ {
-		c := env.mustMakeChannel(t, rand)
-		_, err := env.Repository.CreatePublicChannel(random.AlphaNumeric(20), c.ID, uuid.Nil)
-		require.NoError(err)
-	}
-
-	t.Run("NotLoggedIn", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.GET("/api/1.0/channels").
-			Expect().
-			Status(http.StatusUnauthorized)
-	})
-
-	t.Run("Successful1", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		arr := e.GET("/api/1.0/channels").
-			WithCookie(session.CookieName, s).
-			Expect().
-			Status(http.StatusOK).
-			JSON().
-			Array()
-		arr.Length().Equal(10 + 1)
-	})
-
-	t.Run("Successful2", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		arr := e.GET("/api/1.0/channels").
-			WithCookie(session.CookieName, adminSession).
-			Expect().
-			Status(http.StatusOK).
-			JSON().
-			Array()
-		arr.Length().Equal(10 + 1)
-	})
-}
-
 func TestHandlers_PostChannels(t *testing.T) {
 	t.Parallel()
 	env, _, _, s, _ := setup(t, common1)
@@ -120,7 +77,7 @@ func TestHandlers_PostChannels(t *testing.T) {
 		obj.Value("dm").Boolean().False()
 		obj.Value("member").Array().Empty()
 
-		_, err = env.Repository.GetChannel(uuid.FromStringOrNil(obj.Value("channelId").String().Raw()))
+		_, err = env.ChannelManager.GetChannel(uuid.FromStringOrNil(obj.Value("channelId").String().Raw()))
 		require.NoError(t, err)
 	})
 }
@@ -172,7 +129,7 @@ func TestHandlers_PostChannelChildren(t *testing.T) {
 		obj.Value("dm").Boolean().False()
 		obj.Value("member").Array().Empty()
 
-		_, err := env.Repository.GetChannel(uuid.FromStringOrNil(obj.Value("channelId").String().Raw()))
+		_, err := env.ChannelManager.GetChannel(uuid.FromStringOrNil(obj.Value("channelId").String().Raw()))
 		require.NoError(t, err)
 	})
 }
@@ -221,112 +178,13 @@ func TestHandlers_GetChannelByChannelID(t *testing.T) {
 	})
 }
 
-func TestHandlers_PatchChannelByChannelID(t *testing.T) {
-	t.Parallel()
-	env, _, _, s, adminSession := setup(t, common1)
-
-	pubCh := env.mustMakeChannel(t, rand)
-
-	t.Run("NotLoggedIn", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.PATCH("/api/1.0/channels/{channelID}", pubCh.ID.String()).
-			WithJSON(map[string]interface{}{"name": "renamed", "visibility": true}).
-			Expect().
-			Status(http.StatusUnauthorized)
-	})
-
-	t.Run("bad request", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.PATCH("/api/1.0/channels/{channelID}", pubCh.ID.String()).
-			WithCookie(session.CookieName, adminSession).
-			WithJSON(map[string]interface{}{"name": true, "visibility": false, "force": true}).
-			Expect().
-			Status(http.StatusBadRequest)
-	})
-
-	t.Run("Successful1", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		assert, require := assertAndRequire(t)
-
-		newName := random.AlphaNumeric(20)
-		e.PATCH("/api/1.0/channels/{channelID}", pubCh.ID.String()).
-			WithCookie(session.CookieName, adminSession).
-			WithJSON(map[string]interface{}{"name": newName, "visibility": false, "force": true}).
-			Expect().
-			Status(http.StatusNoContent)
-
-		ch, err := env.Repository.GetChannel(pubCh.ID)
-		require.NoError(err)
-		assert.Equal(newName, ch.Name)
-		assert.False(ch.IsVisible)
-		assert.True(ch.IsForced)
-	})
-
-	// 権限がない
-	t.Run("Failure1", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-
-		newName := random.AlphaNumeric(20)
-		e.PATCH("/api/1.0/channels/{channelID}", pubCh.ID.String()).
-			WithCookie(session.CookieName, s).
-			WithJSON(map[string]interface{}{"name": newName, "visibility": false, "force": true}).
-			Expect().
-			Status(http.StatusForbidden)
-	})
-}
-
-func TestHandlers_PutChannelParent(t *testing.T) {
-	t.Parallel()
-	env, _, _, s, adminSession := setup(t, common1)
-
-	pCh := env.mustMakeChannel(t, rand)
-	cCh := env.mustMakeChannel(t, rand)
-
-	t.Run("NotLoggedIn", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.PUT("/api/1.0/channels/{channelID}/parent", cCh.ID.String()).
-			Expect().
-			Status(http.StatusUnauthorized)
-	})
-
-	t.Run("Successful1", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.PUT("/api/1.0/channels/{channelID}/parent", cCh.ID.String()).
-			WithCookie(session.CookieName, adminSession).
-			WithJSON(map[string]string{"parent": pCh.ID.String()}).
-			Expect().
-			Status(http.StatusNoContent)
-
-		ch, err := env.Repository.GetChannel(cCh.ID)
-		require.NoError(t, err)
-		assert.Equal(t, ch.ParentID, pCh.ID)
-	})
-
-	// 権限がない
-	t.Run("Failure1", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.PUT("/api/1.0/channels/{channelID}/parent", cCh.ID.String()).
-			WithCookie(session.CookieName, s).
-			WithJSON(map[string]string{"parent": pCh.ID.String()}).
-			Expect().
-			Status(http.StatusForbidden)
-	})
-}
-
 func TestHandlers_GetTopic(t *testing.T) {
 	t.Parallel()
 	env, _, _, s, _, testUser, _ := setupWithUsers(t, common1)
 
 	pubCh := env.mustMakeChannel(t, rand)
 	topicText := "Topic test"
-	require.NoError(t, env.Repository.UpdateChannel(pubCh.ID, repository.UpdateChannelArgs{
+	require.NoError(t, env.ChannelManager.UpdateChannel(pubCh.ID, repository.UpdateChannelArgs{
 		UpdaterID: testUser.GetID(),
 		Topic:     optional.StringFrom(topicText),
 	}))
@@ -360,7 +218,7 @@ func TestHandlers_PutTopic(t *testing.T) {
 
 	pubCh := env.mustMakeChannel(t, rand)
 	topicText := "Topic test"
-	require.NoError(t, env.Repository.UpdateChannel(pubCh.ID, repository.UpdateChannelArgs{
+	require.NoError(t, env.ChannelManager.UpdateChannel(pubCh.ID, repository.UpdateChannelArgs{
 		UpdaterID: testUser.GetID(),
 		Topic:     optional.StringFrom(topicText),
 	}))
@@ -394,7 +252,7 @@ func TestHandlers_PutTopic(t *testing.T) {
 			Expect().
 			Status(http.StatusNoContent)
 
-		ch, err := env.Repository.GetChannel(pubCh.ID)
+		ch, err := env.ChannelManager.GetChannel(pubCh.ID)
 		require.NoError(t, err)
 		assert.Equal(t, newTopic, ch.Topic)
 	})

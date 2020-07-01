@@ -7,7 +7,9 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
@@ -15,21 +17,25 @@ import (
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/service/ws"
+	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
 )
 
 type Handlers struct {
-	RBAC         rbac.RBAC
-	Repo         repository.Repository
-	WS           *ws.Streamer
-	Hub          *hub.Hub
-	Logger       *zap.Logger
-	OC           *counter.OnlineCounter
-	VM           *viewer.Manager
-	WebRTC       *webrtcv3.Manager
-	Imaging      imaging.Processor
-	SessStore    session.Store
+	RBAC           rbac.RBAC
+	Repo           repository.Repository
+	WS             *ws.Streamer
+	Hub            *hub.Hub
+	Logger         *zap.Logger
+	OC             *counter.OnlineCounter
+	VM             *viewer.Manager
+	WebRTC         *webrtcv3.Manager
+	Imaging        imaging.Processor
+	SessStore      session.Store
 	SearchEngine search.Engine
+	ChannelManager channel.Manager
+	FileManager    file.Manager
+	Replacer       *message.Replacer
 	Config
 }
 
@@ -49,16 +55,16 @@ func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
-	retrieve := middlewares.NewParamRetriever(h.Repo)
+	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager)
 	blockBot := middlewares.BlockBot(h.Repo)
 	nologin := middlewares.NoLogin(h.SessStore)
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
-	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.Repo)
+	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.FileManager)
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC, h.Repo)
-	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.Repo)
-	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.Repo)
+	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.ChannelManager)
+	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.ChannelManager)
 	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC, h.Repo)
 	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm(h.RBAC, h.Repo)
 

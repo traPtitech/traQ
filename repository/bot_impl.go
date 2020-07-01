@@ -8,7 +8,6 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	bevent "github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/random"
@@ -20,7 +19,7 @@ import (
 )
 
 // CreateBot implements BotRepository interface.
-func (repo *GormRepository) CreateBot(name, displayName, description string, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
+func (repo *GormRepository) CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
 	if err := vd.Validate(name, validator.BotUserNameRuleRequired...); err != nil {
 		return nil, ArgError("name", "invalid name")
 	}
@@ -42,16 +41,11 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 	uid := uuid.Must(uuid.NewV4())
 	bid := uuid.Must(uuid.NewV4())
 	tid := uuid.Must(uuid.NewV4())
-	iconID, err := GenerateIconFile(repo, name)
-	if err != nil {
-		return nil, err
-	}
-
 	u := &model.User{
 		ID:          uid,
 		Name:        "BOT_" + name,
 		DisplayName: displayName,
-		Icon:        iconID,
+		Icon:        iconFileID,
 		Bot:         true,
 		Status:      model.UserAccountStatusActive,
 		Role:        role.Bot,
@@ -64,7 +58,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 		VerificationToken: random.SecureAlphaNumeric(30),
 		PostURL:           webhookURL,
 		AccessTokenID:     tid,
-		SubscribeEvents:   bevent.Types{},
+		SubscribeEvents:   model.BotEventTypes{},
 		Privileged:        false,
 		State:             model.BotInactive,
 		BotCode:           random.AlphaNumeric(30),
@@ -83,7 +77,7 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, cre
 		Scopes:         scopes,
 	}
 
-	err = repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		errs := tx.Create(u).Create(u.Profile).Create(t).Create(b).GetErrors()
 		if len(errs) > 0 {
 			return errs[0]
@@ -218,6 +212,12 @@ func (repo *GormRepository) GetBots(query BotsQuery) ([]*model.Bot, error) {
 	}
 	if query.Creator.Valid {
 		tx = tx.Where("bots.creator_id = ?", query.Creator.UUID)
+	}
+	if query.ID.Valid {
+		tx = tx.Where("bots.id = ?", query.ID.UUID)
+	}
+	if query.UserID.Valid {
+		tx = tx.Where("bots.bot_user_id = ?", query.UserID.UUID)
 	}
 	if query.IsCMemberOf.Valid {
 		tx = tx.Joins("INNER JOIN bot_join_channels ON bot_join_channels.bot_id = bots.id AND bot_join_channels.channel_id = ?", query.IsCMemberOf.UUID)

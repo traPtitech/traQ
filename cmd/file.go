@@ -5,6 +5,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"go.uber.org/zap"
 )
@@ -52,20 +54,25 @@ func filePruneCommand() *cobra.Command {
 				logger.Fatal("failed to setup file storage", zap.Error(err))
 			}
 
-			// Repository チャンネルツリーを作らないので注意
-			repo, err := repository.NewGormRepository(db, fs, hub.New(), logger)
+			// Repository
+			repo, err := repository.NewGormRepository(db, hub.New(), logger)
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}
 
+			fm, err := file.InitFileManager(repo, fs, imaging.NewProcessor(provideImageProcessorConfig(c)), logger)
+			if err != nil {
+				logger.Fatal("failed to initialize file manager", zap.Error(err))
+			}
+
 			// 未使用アイコン・スタンプ画像ファイル列挙
 			var (
-				files []*model.File
-				tmp   []*model.File
+				files []*model.FileMeta
+				tmp   []*model.FileMeta
 			)
 			if err := db.
 				Where("id NOT IN ?", db.Table("users").Select("icon").SubQuery()).
-				Where(model.File{Type: model.FileTypeIcon}).
+				Where(model.FileMeta{Type: model.FileTypeIcon}).
 				Find(&tmp).
 				Error; err != nil {
 				logger.Fatal(err.Error())
@@ -74,7 +81,7 @@ func filePruneCommand() *cobra.Command {
 			tmp = nil
 			if err := db.
 				Where("id NOT IN ?", db.Table("stamps").Select("file_id").SubQuery()).
-				Where(model.File{Type: model.FileTypeStamp}).
+				Where(model.FileMeta{Type: model.FileTypeStamp}).
 				Find(&tmp).
 				Error; err != nil {
 				logger.Fatal(err.Error())
@@ -92,7 +99,7 @@ func filePruneCommand() *cobra.Command {
 			for _, file := range files {
 				logger.Sugar().Infof("%s - %s", file.ID, file.CreatedAt)
 				if !dryRun {
-					if err := repo.DeleteFile(file.ID); err != nil {
+					if err := fm.Delete(file.ID); err != nil {
 						logger.Fatal(err.Error())
 					}
 				}

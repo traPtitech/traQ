@@ -14,13 +14,14 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
-	"github.com/traPtitech/traQ/service/heartbeat"
+	"github.com/traPtitech/traQ/service/file"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
-	"github.com/traPtitech/traQ/service/sse"
 	"github.com/traPtitech/traQ/service/viewer"
+	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
@@ -39,16 +40,17 @@ func init() {
 
 // Handlers ハンドラ
 type Handlers struct {
-	RBAC       rbac.RBAC
-	Repo       repository.Repository
-	SSE        *sse.Streamer
-	Hub        *hub.Hub
-	Logger     *zap.Logger
-	OC         *counter.OnlineCounter
-	VM         *viewer.Manager
-	HeartBeats *heartbeat.Manager
-	Imaging    imaging2.Processor
-	SessStore  session.Store
+	RBAC           rbac.RBAC
+	Repo           repository.Repository
+	Hub            *hub.Hub
+	Logger         *zap.Logger
+	OC             *counter.OnlineCounter
+	VM             *viewer.Manager
+	Imaging        imaging2.Processor
+	SessStore      session.Store
+	ChannelManager channel.Manager
+	FileManager    file.Manager
+	Replacer       *message.Replacer
 
 	emojiJSONCache     bytes.Buffer `wire:"-"`
 	emojiJSONTime      time.Time    `wire:"-"`
@@ -63,16 +65,16 @@ func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
-	retrieve := middlewares.NewParamRetriever(h.Repo)
+	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager)
 	blockBot := middlewares.BlockBot(h.Repo)
 	nologin := middlewares.NoLogin(h.SessStore)
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
-	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.Repo)
+	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.FileManager)
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC, h.Repo)
-	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.Repo)
-	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.Repo)
+	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.ChannelManager)
+	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.ChannelManager)
 
 	gone := func(c echo.Context) error { return herror.HTTPError(http.StatusGone, "this api has been deleted") }
 
@@ -143,20 +145,20 @@ func (h *Handlers) Setup(e *echo.Group) {
 				}
 			}
 		}
-		apiHeartBeat := api.Group("/heartbeat", blockBot)
+		apiHeartBeat := api.Group("/heartbeat")
 		{
-			apiHeartBeat.GET("", h.GetHeartbeat, requires(permission.GetHeartbeat)) // Deprecated
-			apiHeartBeat.POST("", h.PostHeartbeat, requires(permission.PostHeartbeat))
+			apiHeartBeat.GET("", gone)
+			apiHeartBeat.POST("", gone)
 		}
 		apiChannels := api.Group("/channels")
 		{
-			apiChannels.GET("", h.GetChannels, requires(permission.GetChannel))
+			apiChannels.GET("", gone)
 			apiChannels.POST("", h.PostChannels, requires(permission.CreateChannel))
 			apiChannelsCid := apiChannels.Group("/:channelID", retrieve.ChannelID(), requiresChannelAccessPerm)
 			{
 				apiChannelsCid.GET("", h.GetChannelByChannelID, requires(permission.GetChannel))
-				apiChannelsCid.PATCH("", h.PatchChannelByChannelID, requires(permission.EditChannel))
-				apiChannelsCid.PUT("/parent", h.PutChannelParent, requires(permission.ChangeParentChannel))
+				apiChannelsCid.PATCH("", gone)
+				apiChannelsCid.PUT("/parent", gone)
 				apiChannelsCid.POST("/children", h.PostChannelChildren, requires(permission.CreateChannel))
 				apiChannelsCid.GET("/pins", gone)
 				apiChannelsCid.GET("/events", h.GetChannelEvents, requires(permission.GetChannel))
@@ -191,7 +193,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiNotification := api.Group("/notification", blockBot)
 		{
-			apiNotification.GET("", echo.WrapHandler(h.SSE), requires(permission.ConnectNotificationStream))
+			apiNotification.GET("", gone)
 			apiNotification.POST("/device", h.PostDeviceToken, requires(permission.RegisterFCMDevice))
 		}
 		apiMessages := api.Group("/messages")
@@ -396,8 +398,8 @@ func getBotFromContext(c echo.Context) *model.Bot {
 	return c.Get(consts.KeyParamBot).(*model.Bot)
 }
 
-func getFileFromContext(c echo.Context) model.FileMeta {
-	return c.Get(consts.KeyParamFile).(model.FileMeta)
+func getFileFromContext(c echo.Context) model.File {
+	return c.Get(consts.KeyParamFile).(model.File)
 }
 
 func getClientFromContext(c echo.Context) *model.OAuth2Client {

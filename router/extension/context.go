@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	"github.com/traPtitech/traQ/service/channel"
 )
 
 // CtxKey context.Context用のキータイプ
@@ -44,10 +45,11 @@ func json(c echo.Context, code int, i interface{}, cfg jsoniter.API) error {
 }
 
 // Wrap カスタムコンテキストラッパー
-func Wrap(repo repository.Repository) echo.MiddlewareFunc {
+func Wrap(repo repository.Repository, cm channel.Manager) echo.MiddlewareFunc {
 	return func(n echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			c.Set(consts.KeyRepo, repo)
+			c.Set(consts.KeyChannelManager, cm)
 			return n(&Context{Context: c})
 		}
 	}

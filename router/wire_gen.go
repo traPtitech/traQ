@@ -11,52 +11,60 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/oauth2"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/router/v1"
 	"github.com/traPtitech/traQ/router/v3"
 	"github.com/traPtitech/traQ/service"
+	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
 )
 
 // Injectors from router_wire.go:
 
 func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Services, logger *zap.Logger, config *Config) *Router {
-	echo := newEcho(logger, config, repo)
+	manager := ss.ChannelManager
+	echo := newEcho(logger, config, repo, manager)
 	store := session.NewGormStore(db)
 	rbac := ss.RBAC
-	streamer := ss.SSE
 	onlineCounter := ss.OnlineCounter
-	manager := ss.ViewerManager
-	heartbeatManager := ss.HeartBeats
+	viewerManager := ss.ViewerManager
 	processor := ss.Imaging
+	fileManager := ss.FileManager
+	replaceMapper := utils.NewReplaceMapper(repo, manager)
+	replacer := message.NewReplacer(replaceMapper)
 	handlers := &v1.Handlers{
-		RBAC:       rbac,
-		Repo:       repo,
-		SSE:        streamer,
-		Hub:        hub2,
-		Logger:     logger,
-		OC:         onlineCounter,
-		VM:         manager,
-		HeartBeats: heartbeatManager,
-		Imaging:    processor,
-		SessStore:  store,
+		RBAC:           rbac,
+		Repo:           repo,
+		Hub:            hub2,
+		Logger:         logger,
+		OC:             onlineCounter,
+		VM:             viewerManager,
+		Imaging:        processor,
+		SessStore:      store,
+		ChannelManager: manager,
+		FileManager:    fileManager,
+		Replacer:       replacer,
 	}
-	wsStreamer := ss.WS
+	streamer := ss.WS
 	webrtcv3Manager := ss.WebRTCv3
 	engine := ss.Search
 	v3Config := provideV3Config(config)
 	v3Handlers := &v3.Handlers{
-		RBAC:         rbac,
-		Repo:         repo,
-		WS:           wsStreamer,
-		Hub:          hub2,
-		Logger:       logger,
-		OC:           onlineCounter,
-		VM:           manager,
-		WebRTC:       webrtcv3Manager,
-		Imaging:      processor,
-		SessStore:    store,
+		RBAC:           rbac,
+		Repo:           repo,
+		WS:             streamer,
+		Hub:            hub2,
+		Logger:         logger,
+		OC:             onlineCounter,
+		VM:             viewerManager,
+		WebRTC:         webrtcv3Manager,
+		Imaging:        processor,
+		SessStore:      store,
 		SearchEngine: engine,
-		Config:       v3Config,
+		ChannelManager: manager,
+		FileManager:    fileManager,
+		Replacer:       replacer,
+		Config:         v3Config,
 	}
 	oauth2Config := provideOAuth2Config(config)
 	handler := &oauth2.Handler{

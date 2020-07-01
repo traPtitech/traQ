@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"fmt"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
@@ -9,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/set"
@@ -21,11 +21,11 @@ import (
 // GetChannels GET /channels
 func (h *Handlers) GetChannels(c echo.Context) error {
 	res := echo.Map{
-		"public": h.Repo.GetPublicChannelTree(),
+		"public": h.ChannelManager.PublicChannelTree(),
 	}
 
 	if isTrue(c.QueryParam("include-dm")) {
-		mapping, err := h.Repo.GetDirectMessageChannelMapping(getRequestUserID(c))
+		mapping, err := h.ChannelManager.GetDMChannelMapping(getRequestUserID(c))
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -56,17 +56,19 @@ func (h *Handlers) CreateChannels(c echo.Context) error {
 		return err
 	}
 
-	ch, err := h.Repo.CreatePublicChannel(req.Name, req.Parent.UUID, userID)
+	ch, err := h.ChannelManager.CreatePublicChannel(req.Name, req.Parent.UUID, userID)
 	if err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		case err == repository.ErrAlreadyExists:
-			return herror.Conflict("channel name conflicts")
-		case err == repository.ErrChannelDepthLimitation:
+		switch err {
+		case channel.ErrChannelArchived:
+			return herror.BadRequest("parent channel has been archived")
+		case channel.ErrInvalidChannelName:
+			return herror.BadRequest("invalid channel name")
+		case channel.ErrInvalidParentChannel:
+			return herror.BadRequest("invalid parent channel")
+		case channel.ErrTooDeepChannel:
 			return herror.BadRequest("channel depth limit exceeded")
-		case err == repository.ErrForbidden:
-			return herror.Forbidden("invalid parent channel")
+		case channel.ErrChannelNameConflicts:
+			return herror.Conflict("channel name conflicts")
 		default:
 			return herror.InternalServerError(err)
 		}
@@ -78,7 +80,7 @@ func (h *Handlers) CreateChannels(c echo.Context) error {
 // GetChannel GET /channels/:channelID
 func (h *Handlers) GetChannel(c echo.Context) error {
 	ch := getParamChannel(c)
-	return c.JSON(http.StatusOK, formatChannel(ch, h.Repo.GetPublicChannelTree().GetChildrenIDs(ch.ID)))
+	return c.JSON(http.StatusOK, formatChannel(ch, h.ChannelManager.PublicChannelTree().GetChildrenIDs(ch.ID)))
 }
 
 // PatchChannelRequest PATCH /channels/:channelID リクエストボディ
@@ -111,16 +113,16 @@ func (h *Handlers) EditChannel(c echo.Context) error {
 		ForcedNotification: req.Force,
 		Parent:             req.Parent,
 	}
-	if err := h.Repo.UpdateChannel(channelID, args); err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		case err == repository.ErrAlreadyExists:
-			return herror.Conflict("channel name conflicts")
-		case err == repository.ErrForbidden:
-			return herror.Forbidden()
-		case err == repository.ErrChannelDepthLimitation:
+	if err := h.ChannelManager.UpdateChannel(channelID, args); err != nil {
+		switch err {
+		case channel.ErrInvalidChannelName:
+			return herror.BadRequest("invalid channel name")
+		case channel.ErrInvalidParentChannel:
+			return herror.BadRequest("invalid parent channel")
+		case channel.ErrTooDeepChannel:
 			return herror.BadRequest("channel depth limit exceeded")
+		case channel.ErrChannelNameConflicts:
+			return herror.Conflict("channel name conflicts")
 		default:
 			return herror.InternalServerError(err)
 		}
@@ -165,20 +167,21 @@ func (r PutChannelTopicRequest) Validate() error {
 func (h *Handlers) EditChannelTopic(c echo.Context) error {
 	ch := getParamChannel(c)
 
-	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.Repo.GetPublicChannelTree().GetChannelPath(ch.ID)))
-	}
-
 	var req PutChannelTopicRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	if err := h.Repo.UpdateChannel(ch.ID, repository.UpdateChannelArgs{
+	if err := h.ChannelManager.UpdateChannel(ch.ID, repository.UpdateChannelArgs{
 		UpdaterID: getRequestUserID(c),
 		Topic:     optional.StringFrom(req.Topic),
 	}); err != nil {
-		return herror.InternalServerError(err)
+		switch err {
+		case channel.ErrChannelArchived:
+			return herror.BadRequest("channel has been archived")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -278,20 +281,9 @@ type PutChannelSubscribersRequest struct {
 func (h *Handlers) SetChannelSubscribers(c echo.Context) error {
 	ch := getParamChannel(c)
 
-	// プライベートチャンネル・強制通知チャンネルの設定は取得できない。
-	if !ch.IsPublic || ch.IsForced {
-		return herror.Forbidden()
-	}
-
 	var req PutChannelSubscribersRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
-	}
-
-	args := repository.ChangeChannelSubscriptionArgs{
-		UpdaterID:    getRequestUserID(c),
-		Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{},
-		KeepOffLevel: true,
 	}
 
 	subscriptions, err := h.Repo.GetChannelSubscriptions(repository.ChannelSubscriptionQuery{}.SetChannel(ch.ID).SetLevel(model.ChannelSubscribeLevelMarkAndNotify))
@@ -299,15 +291,23 @@ func (h *Handlers) SetChannelSubscribers(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
+	subs := map[uuid.UUID]model.ChannelSubscribeLevel{}
 	for _, subscription := range subscriptions {
-		args.Subscription[subscription.UserID] = model.ChannelSubscribeLevelNone
+		subs[subscription.UserID] = model.ChannelSubscribeLevelNone
 	}
 	for _, id := range req.On.Array() {
-		args.Subscription[id] = model.ChannelSubscribeLevelMarkAndNotify
+		subs[id] = model.ChannelSubscribeLevelMarkAndNotify
 	}
 
-	if err := h.Repo.ChangeChannelSubscription(ch.ID, args); err != nil {
-		return herror.InternalServerError(err)
+	if err := h.ChannelManager.ChangeChannelSubscriptions(ch.ID, subs, true, getRequestUserID(c)); err != nil {
+		switch err {
+		case channel.ErrInvalidChannel:
+			return herror.Forbidden("the channel's subscriptions is not configurable")
+		case channel.ErrForcedNotification:
+			return herror.Forbidden("the channel's subscriptions is not configurable")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -322,36 +322,33 @@ type PatchChannelSubscribersRequest struct {
 func (h *Handlers) EditChannelSubscribers(c echo.Context) error {
 	ch := getParamChannel(c)
 
-	// プライベートチャンネル・強制通知チャンネルの設定は取得できない。
-	if !ch.IsPublic || ch.IsForced {
-		return herror.Forbidden()
-	}
-
 	var req PatchChannelSubscribersRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	args := repository.ChangeChannelSubscriptionArgs{
-		UpdaterID:    getRequestUserID(c),
-		Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{},
-		KeepOffLevel: true,
-	}
-
+	subscriptions := map[uuid.UUID]model.ChannelSubscribeLevel{}
 	for _, id := range req.On.Array() {
-		args.Subscription[id] = model.ChannelSubscribeLevelMarkAndNotify
+		subscriptions[id] = model.ChannelSubscribeLevelMarkAndNotify
 	}
 	for _, id := range req.Off.Array() {
-		if _, ok := args.Subscription[id]; ok {
+		if _, ok := subscriptions[id]; ok {
 			// On, Offどっちにもあるものは相殺
-			delete(args.Subscription, id)
+			delete(subscriptions, id)
 		} else {
-			args.Subscription[id] = model.ChannelSubscribeLevelNone
+			subscriptions[id] = model.ChannelSubscribeLevelNone
 		}
 	}
 
-	if err := h.Repo.ChangeChannelSubscription(ch.ID, args); err != nil {
-		return herror.InternalServerError(err)
+	if err := h.ChannelManager.ChangeChannelSubscriptions(ch.ID, subscriptions, true, getRequestUserID(c)); err != nil {
+		switch err {
+		case channel.ErrInvalidChannel:
+			return herror.Forbidden("the channel's subscriptions is not configurable")
+		case channel.ErrForcedNotification:
+			return herror.Forbidden("the channel's subscriptions is not configurable")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -362,7 +359,7 @@ func (h *Handlers) GetUserDMChannel(c echo.Context) error {
 	myID := getRequestUserID(c)
 
 	// DMチャンネルを取得
-	ch, err := h.Repo.GetDirectMessageChannel(myID, userID)
+	ch, err := h.ChannelManager.GetDMChannel(myID, userID)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

@@ -32,7 +32,6 @@ var writePerms = []permission.Permission{
 	permission.EditStamp,
 	permission.UploadFile,
 	permission.DeleteFile,
-	permission.PostHeartbeat,
 	permission.CreateClipFolder,
 	permission.EditClipFolder,
 	permission.DeleteClipFolder,
