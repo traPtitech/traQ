@@ -19,7 +19,7 @@ type Engine interface {
 	Close() error
 }
 
-// Query 検索クエリ TODO
+// Query 検索クエリ
 type Query struct {
 	// Word 検索ワード (仮置き)
 	Word        optional.String `query:"word"`   // 検索ワード 空白区切り(複数)をうまく扱ってくれる

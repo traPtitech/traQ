@@ -48,6 +48,19 @@ type esResult struct {
 	docs []*esMessageDoc
 }
 
+type attributes struct {
+	To          []uuid.UUID
+	Cites       []string
+	IsEdited    bool
+	IsCited     bool
+	IsPinned    bool
+	HasURL      bool
+	HasEmbedded bool
+	HasImage    bool
+	HasMovie    bool
+	HasAudio    bool
+}
+
 func (e *esResult) Get() map[uuid.UUID]string {
 	r := make(map[uuid.UUID]string, len(e.docs))
 	for _, doc := range e.docs {
@@ -106,8 +119,35 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 					"type":   "date",
 					"format": "yyyy-MM-ddTHH:mm:ssZ",
 				},
-				"To": m{
-					"type": "keyword",
+				"to": m{
+					"type": "arrays",
+				},
+				//"cite": m{
+				//	"type": "arrays",
+				//},
+				"isEdited": m{
+					"type": "boolean",
+				},
+				"isCited": m{
+					"type": "boolean",
+				},
+				"isPinned": m{
+					"type": "boolean",
+				},
+				"hasURL": m{
+					"type": "boolean",
+				},
+				"hasEmbedded": m{
+					"type": "boolean",
+				},
+				"hasImage": m{
+					"type": "boolean",
+				},
+				"hasMovie": m{
+					"type": "boolean",
+				},
+				"hasAudio": m{
+					"type": "boolean",
 				},
 				// TODO To(複数)をメッセージ投稿時に、Cite(複数)をメッセージ投稿・更新時にindexに追加
 				// TODO textをパースしてTo, Cite, Is*, Has*の判定
@@ -163,6 +203,7 @@ func (e *esEngine) onEvent(ev hub.Message) {
 
 // addMessageToIndex 新規メッセージをesに入れる
 func (e *esEngine) addMessageToIndex(m *model.Message) error {
+	attr := getAttribute(m)
 	_, err := e.client.Index().
 		Index(getIndexName(esMessageIndex)).
 		Id(m.ID.String()).
@@ -172,6 +213,7 @@ func (e *esEngine) addMessageToIndex(m *model.Message) error {
 			"text":      m.Text,
 			"createdAt": m.CreatedAt.Truncate(time.Second),
 			"updatedAt": m.UpdatedAt.Truncate(time.Second),
+			"isEdited":  attr.IsEdited,
 		}).Do(context.Background())
 	if err != nil {
 		return err
@@ -238,6 +280,9 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		musts = append(musts, elastic.NewMatchQuery("text", q.Cite))
 	}
 
+	if q.IsEdited.Valid {
+		musts = append(musts, elastic.NewTermQuery("isEdited", true))
+	}
 	// TODO
 	//IsEdited
 	//IsCited
@@ -282,4 +327,19 @@ func (e *esEngine) Close() error {
 
 func getIndexName(index string) string {
 	return esIndexPrefix + index
+}
+
+func getAttribute(m *model.Message) *attributes {
+	attr := &attributes{}
+
+	attr.IsEdited = m.CreatedAt != m.UpdatedAt
+	//attr.IsCited
+	//attr.IsPinned
+	//attr.HasURL
+	//attr.HasEmbedded
+	//attr.HasImage
+	//attr.HasMovie
+	//attr.HasAudio
+
+	return attr
 }
