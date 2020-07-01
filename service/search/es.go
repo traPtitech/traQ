@@ -51,9 +51,8 @@ type esResult struct {
 type attributes struct {
 	To          []uuid.UUID
 	Cites       []string
-	IsEdited    bool
-	IsCited     bool
-	IsPinned    bool
+	//IsCited     bool
+	//IsPinned    bool
 	HasURL      bool
 	HasEmbedded bool
 	HasImage    bool
@@ -122,9 +121,9 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 				"to": m{
 					"type": "arrays",
 				},
-				//"cite": m{
-				//	"type": "arrays",
-				//},
+				"cite": m{
+					"type": "arrays",
+				},
 				"isEdited": m{
 					"type": "boolean",
 				},
@@ -203,7 +202,7 @@ func (e *esEngine) onEvent(ev hub.Message) {
 
 // addMessageToIndex 新規メッセージをesに入れる
 func (e *esEngine) addMessageToIndex(m *model.Message) error {
-	attr := getAttribute(m)
+	//attr := getAttributes(m)
 	_, err := e.client.Index().
 		Index(getIndexName(esMessageIndex)).
 		Id(m.ID.String()).
@@ -213,7 +212,6 @@ func (e *esEngine) addMessageToIndex(m *model.Message) error {
 			"text":      m.Text,
 			"createdAt": m.CreatedAt.Truncate(time.Second),
 			"updatedAt": m.UpdatedAt.Truncate(time.Second),
-			"isEdited":  attr.IsEdited,
 		}).Do(context.Background())
 	if err != nil {
 		return err
@@ -223,13 +221,13 @@ func (e *esEngine) addMessageToIndex(m *model.Message) error {
 
 // updateMessageOnIndex 既存メッセージの編集をesに反映させる
 func (e *esEngine) updateMessageOnIndex(m *model.Message) error {
-
 	_, err := e.client.Update().
 		Index(getIndexName(esMessageIndex)).
 		Id(m.ID.String()).
 		Doc(map[string]interface{}{
 			"text":      m.Text,
 			"updatedAt": m.UpdatedAt.Truncate(time.Second),
+			"isEdited": true,
 		}).Do(context.Background())
 	return err
 }
@@ -284,7 +282,6 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		musts = append(musts, elastic.NewTermQuery("isEdited", q.IsEdited))
 	}
 	// TODO
-	//IsEdited
 	//IsCited
 	//IsPinned
 	//HasURL
@@ -329,10 +326,9 @@ func getIndexName(index string) string {
 	return esIndexPrefix + index
 }
 
-func getAttribute(m *model.Message) *attributes {
+func getAttributes(m *model.Message) *attributes {
 	attr := &attributes{}
 
-	attr.IsEdited = m.CreatedAt != m.UpdatedAt
 	//attr.IsCited
 	//attr.IsPinned
 	//attr.HasURL
