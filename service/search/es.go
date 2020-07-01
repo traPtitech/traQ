@@ -281,7 +281,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	}
 
 	if q.IsEdited.Valid {
-		musts = append(musts, elastic.NewTermQuery("isEdited", true))
+		musts = append(musts, elastic.NewTermQuery("isEdited", q.IsEdited))
 	}
 	// TODO
 	//IsEdited
