@@ -6126,26 +6126,23 @@ components:
       type: object
       x-tags:
         - ogp
+      description: OGPに含まれる画像の情報
       properties:
         url:
           type: string
         secureUrl:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
         type:
-          type:
-            - string
-            - 'null'
+          type: string
+          nullable: true
         width:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
         height:
-          type:
-            - integer
-            - 'null'
-      description: OGPに含まれる画像の情報
+          type: integer
+          nullable: true
+      x-examples: {}
   headers:
     X-TRAQ-MORE:
       schema:
