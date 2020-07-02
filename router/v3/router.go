@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"github.com/golang/groupcache/singleflight"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/repository"
@@ -34,6 +35,7 @@ type Handlers struct {
 	ChannelManager channel.Manager
 	FileManager    file.Manager
 	Replacer       *message.Replacer
+	SFGroup        singleflight.Group
 	Config
 }
 

@@ -1,27 +1,42 @@
 package v3
 
 import (
+	"errors"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/ogp"
-	"golang.org/x/sync/singleflight"
 	"net/http"
 	"net/url"
 	"time"
 )
 
+type CacheHitState int
+
+const (
+	positiveCacheHit = iota
+	negativeCacheHit
+	positiveCacheCreated
+	negativeCacheCreated
+)
+
+
+type cacheResult struct {
+	CacheHit  CacheHitState
+	Content   *model.Ogp
+	ExpiresAt time.Time
+}
+
 // GetOgp GET /ogp?url={url}
 func (h *Handlers) GetOgp(c echo.Context) error {
-	var group singleflight.Group
-
 	u, parseErr := url.Parse(c.QueryParam(consts.ParamURL))
 	if parseErr != nil || len(u.Scheme) == 0 || len(u.Host) == 0 {
 		return herror.BadRequest("invalid url")
 	}
 
-	result, herr, _ := group.Do(u.String(), func() (interface{}, error) {
+	result, herr := h.SFGroup.Do(u.String(), func() (interface{}, error) {
 		cacheURL := u.String()
 		cache, err := h.Repo.GetOgpCache(cacheURL)
 
@@ -30,15 +45,19 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 		shouldCreateCache := err != nil
 
 		if !shouldUpdateCache && !shouldCreateCache && err == nil {
-			// キャッシュがヒットしたので残りの有効時間までクライアント側にキャッシュ
-			cacheDuration := int(time.Until(cache.ExpiresAt).Seconds())
-			c.Response().Header().Set(consts.HeaderCacheControl, fmt.Sprintf("public, max-age=%d", cacheDuration))
-
 			if cache.Valid {
-				return cache.Content, nil
+				return cacheResult{
+					CacheHit:  positiveCacheHit,
+					Content:   &cache.Content,
+					ExpiresAt: cache.ExpiresAt,
+				}, nil
 			}
 			// キャッシュがヒットしたがネガティブキャッシュだった
-			return nil, herror.NotFound(err)
+			return cacheResult{
+				CacheHit: negativeCacheHit,
+				Content:  nil,
+				ExpiresAt: cache.ExpiresAt,
+			}, nil
 		}
 
 		og, meta, err := ogp.ParseMetaForURL(u)
@@ -55,9 +74,11 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 					return nil, herror.InternalServerError(createErr)
 				}
 			}
-			// キャッシュヒットしなかったので1週間キャッシュ
-			c.Response().Header().Set(consts.HeaderCacheControl, "public, max-age=604800")
-			return nil, herror.NotFound(err)
+			return cacheResult{
+				CacheHit:  negativeCacheCreated,
+				Content:   nil,
+				ExpiresAt: ogp.GetCacheExpireDate(),
+			}, nil
 		} else if err != nil {
 			// このパスは5xxエラーなのでクライアント側キャッシュつけない
 			return nil, herror.NotFound(err)
@@ -76,13 +97,27 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 				return nil, herror.InternalServerError(err)
 			}
 		}
-
-		// キャッシュヒットしなかったので1週間キャッシュ
-		c.Response().Header().Set(consts.HeaderCacheControl, "public, max-age=604800")
-		return content, nil
+		return cacheResult{
+			CacheHit:  positiveCacheCreated,
+			Content:   content,
+			ExpiresAt: ogp.GetCacheExpireDate(),
+		}, nil
 	})
 	if herr != nil {
 		return herr
 	}
-	return c.JSON(http.StatusOK, result)
+
+	cr, ok := result.(cacheResult)
+	if !ok {
+		return herror.InternalServerError(errors.New("assertion failed"))
+	}
+
+	cacheDuration := int(time.Until(cr.ExpiresAt).Seconds())
+	c.Response().Header().Set(consts.HeaderCacheControl, fmt.Sprintf("public, max-age=%d", cacheDuration))
+
+	if cr.CacheHit == positiveCacheCreated || cr.CacheHit == positiveCacheHit {
+		return c.JSON(http.StatusOK, cr.Content)
+	} else {
+		return herror.NotFound()
+	}
 }

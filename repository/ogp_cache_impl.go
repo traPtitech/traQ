@@ -5,15 +5,9 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/service/ogp"
 	"reflect"
-	"time"
 )
-
-const cacheHours = 7 * 24
-
-func getCacheExpireDate() time.Time {
-	return time.Now().Add(time.Duration(cacheHours) * time.Hour)
-}
 
 func getURLHash(url string) (string, error) {
 	hash := sha1.New()
@@ -33,7 +27,7 @@ func (repo *GormRepository) CreateOgpCache(url string, content *model.Ogp) (c *m
 		URLHash:   urlHash,
 		Content:   model.Ogp{},
 		Valid:     content != nil,
-		ExpiresAt: getCacheExpireDate(),
+		ExpiresAt: ogp.GetCacheExpireDate(),
 	}
 
 	if content != nil {
@@ -66,13 +60,13 @@ func (repo *GormRepository) UpdateOgpCache(url string, content *model.Ogp) error
 		if content == nil {
 			changes["valid"] = false
 			changes["content"] = model.Ogp{}
-			changes["expires_at"] = getCacheExpireDate()
+			changes["expires_at"] = ogp.GetCacheExpireDate()
 			return tx.Model(&c).Updates(changes).Error
 		}
 		if !reflect.DeepEqual(c.Content, content) {
 			changes["valid"] = true
 			changes["content"] = content
-			changes["expires_at"] = getCacheExpireDate()
+			changes["expires_at"] = ogp.GetCacheExpireDate()
 			return tx.Model(&c).Updates(changes).Error
 		}
 		return nil
