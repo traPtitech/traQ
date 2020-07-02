@@ -73,7 +73,7 @@ func (q BotsQuery) BotID(id uuid.UUID) BotsQuery {
 
 // BotUserID 指定したユーザーIDのBotである
 func (q BotsQuery) BotUserID(id uuid.UUID) BotsQuery {
-	q.ID = optional.UUIDFrom(id)
+	q.UserID = optional.UUIDFrom(id)
 	return q
 }
 
