@@ -22,7 +22,6 @@ const (
 	negativeCacheCreated
 )
 
-
 type cacheResult struct {
 	CacheHit  CacheHitState
 	Content   *model.Ogp
@@ -54,8 +53,8 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 			}
 			// キャッシュがヒットしたがネガティブキャッシュだった
 			return cacheResult{
-				CacheHit: negativeCacheHit,
-				Content:  nil,
+				CacheHit:  negativeCacheHit,
+				Content:   nil,
 				ExpiresAt: cache.ExpiresAt,
 			}, nil
 		}
@@ -115,9 +114,8 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 	cacheDuration := int(time.Until(cr.ExpiresAt).Seconds())
 	c.Response().Header().Set(consts.HeaderCacheControl, fmt.Sprintf("public, max-age=%d", cacheDuration))
 
-	if cr.CacheHit == positiveCacheCreated || cr.CacheHit == positiveCacheHit {
-		return c.JSON(http.StatusOK, cr.Content)
-	} else {
+	if cr.CacheHit == negativeCacheCreated || cr.CacheHit == negativeCacheHit {
 		return herror.NotFound()
 	}
+	return c.JSON(http.StatusOK, cr.Content)
 }
