@@ -6111,7 +6111,7 @@ components:
           type: string
         url:
           type: string
-        imags:
+        images:
           type: array
           items:
             $ref: '#/components/schemas/OgpMedia'
