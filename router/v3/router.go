@@ -1,7 +1,6 @@
 package v3
 
 import (
-	"github.com/golang/groupcache/singleflight"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/repository"
@@ -19,6 +18,7 @@ import (
 	"github.com/traPtitech/traQ/service/ws"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 )
 
 type Handlers struct {

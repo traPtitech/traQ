@@ -35,7 +35,7 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 		return herror.BadRequest("invalid url")
 	}
 
-	result, herr := h.SFGroup.Do(u.String(), func() (interface{}, error) {
+	result, herr, _ := h.SFGroup.Do(u.String(), func() (interface{}, error) {
 		cacheURL := u.String()
 		cache, err := h.Repo.GetOgpCache(cacheURL)
 
