@@ -18,6 +18,7 @@ import (
 	"github.com/traPtitech/traQ/service/ws"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 )
 
 type Handlers struct {
@@ -34,6 +35,7 @@ type Handlers struct {
 	ChannelManager channel.Manager
 	FileManager    file.Manager
 	Replacer       *message.Replacer
+	SFGroup        singleflight.Group
 	Config
 }
 
@@ -339,6 +341,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			}
 		}
 		api.GET("/ws", echo.WrapHandler(h.WS), requires(permission.ConnectNotificationStream), blockBot)
+		api.GET("/ogp", h.GetOgp, blockBot)
 	}
 
 	apiNoAuth := e.Group("/v3")

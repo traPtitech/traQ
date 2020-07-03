@@ -51,6 +51,8 @@ type TestRepository struct {
 	FilesACLLock              sync.RWMutex
 	Webhooks                  map[uuid.UUID]model.WebhookBot
 	WebhooksLock              sync.RWMutex
+	OgpCache                  map[int]model.OgpCache
+	OgpCacheLock              sync.RWMutex
 }
 
 func (repo *TestRepository) GetPublicChannels() ([]*model.Channel, error) {
@@ -155,6 +157,7 @@ func NewTestRepository() *TestRepository {
 		Files:                 map[uuid.UUID]model.FileMeta{},
 		FilesACL:              map[uuid.UUID]map[uuid.UUID]bool{},
 		Webhooks:              map[uuid.UUID]model.WebhookBot{},
+		OgpCache:              map[int]model.OgpCache{},
 	}
 	_, _ = r.CreateUser(repository.CreateUserArgs{Name: "traq", Password: "traq", Role: role.Admin})
 	return r
@@ -1731,5 +1734,18 @@ func (repo *TestRepository) GetMessageClips(uuid.UUID, uuid.UUID) ([]*model.Clip
 }
 
 func (repo *TestRepository) GetFileMetas(repository.FilesQuery) (result []*model.FileMeta, more bool, err error) {
+	panic("implement me")
+}
+
+func (repo *TestRepository) CreateOgpCache(string, *model.Ogp) (*model.OgpCache, error) {
+	panic("implement me")
+}
+func (repo *TestRepository) UpdateOgpCache(string, *model.Ogp) error {
+	panic("implement me")
+}
+func (repo *TestRepository) GetOgpCache(string) (*model.OgpCache, error) {
+	panic("implement me")
+}
+func (repo *TestRepository) DeleteOgpCache(string) error {
 	panic("implement me")
 }

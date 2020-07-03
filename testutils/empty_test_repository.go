@@ -21,6 +21,7 @@ type EmptyTestRepository struct {
 	repository.OAuth2Repository
 	repository.BotRepository
 	repository.ClipRepository
+	repository.OgpCacheRepository
 }
 
 func (*EmptyTestRepository) Sync() (init bool, err error) {
