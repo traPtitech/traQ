@@ -64,7 +64,6 @@ type Handlers struct {
 func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
-	bodyLimit := middlewares.RequestBodyLengthLimit
 	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager)
 	blockBot := middlewares.BlockBot(h.Repo)
 	nologin := middlewares.NoLogin(h.SessStore)
@@ -73,7 +72,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
 	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.FileManager)
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC, h.Repo)
-	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.ChannelManager)
 	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.ChannelManager)
 
 	gone := func(c echo.Context) error { return herror.HTTPError(http.StatusGone, "this api has been deleted") }
@@ -127,8 +125,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersUID.PATCH("", h.PatchUserByID, requires(permission.EditOtherUsers))
 				apiUsersUID.PUT("/status", h.PutUserStatus, requires(permission.EditOtherUsers))
 				apiUsersUID.PUT("/password", h.PutUserPassword, requires(permission.EditOtherUsers))
-				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage))
-				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
+				apiUsersUID.GET("/messages", gone)
+				apiUsersUID.POST("/messages", gone)
 				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
 				apiUsersUID.PUT("/icon", h.PutUserIcon, requires(permission.EditOtherUsers))
 				apiUsersUID.GET("/notification", h.GetNotificationChannels, requires(permission.GetChannelSubscription))
@@ -171,8 +169,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 				}
 				apiChannelsCidMessages := apiChannelsCid.Group("/messages")
 				{
-					apiChannelsCidMessages.GET("", h.GetMessagesByChannelID, requires(permission.GetMessage))
-					apiChannelsCidMessages.POST("", h.PostMessage, bodyLimit(100), requires(permission.PostMessage))
+					apiChannelsCidMessages.GET("", gone)
+					apiChannelsCidMessages.POST("", gone)
 				}
 				apiChannelsCidNotification := apiChannelsCid.Group("/notification")
 				{
@@ -198,18 +196,18 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiMessages := api.Group("/messages")
 		{
-			apiMessages.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports), blockBot)
-			apiMessagesMid := apiMessages.Group("/:messageID", retrieve.MessageID(), requiresMessageAccessPerm)
+			apiMessages.GET("/reports", gone)
+			apiMessagesMid := apiMessages.Group("/:messageID")
 			{
-				apiMessagesMid.GET("", h.GetMessageByID, requires(permission.GetMessage))
-				apiMessagesMid.PUT("", h.PutMessageByID, bodyLimit(100), requires(permission.EditMessage))
-				apiMessagesMid.DELETE("", h.DeleteMessageByID, requires(permission.DeleteMessage))
-				apiMessagesMid.POST("/report", h.PostMessageReport, requires(permission.ReportMessage), blockBot)
-				apiMessagesMid.GET("/stamps", h.GetMessageStamps, requires(permission.GetMessage))
-				apiMessagesMidStampsSid := apiMessagesMid.Group("/stamps/:stampID", retrieve.StampID(true))
+				apiMessagesMid.GET("", gone)
+				apiMessagesMid.PUT("", gone)
+				apiMessagesMid.DELETE("", gone)
+				apiMessagesMid.POST("/report", gone)
+				apiMessagesMid.GET("/stamps", gone)
+				apiMessagesMidStampsSid := apiMessagesMid.Group("/stamps/:stampID")
 				{
-					apiMessagesMidStampsSid.POST("", h.PostMessageStamp, requires(permission.AddMessageStamp))
-					apiMessagesMidStampsSid.DELETE("", h.DeleteMessageStamp, requires(permission.RemoveMessageStamp))
+					apiMessagesMidStampsSid.POST("", gone)
+					apiMessagesMidStampsSid.DELETE("", gone)
 				}
 			}
 		}
@@ -261,7 +259,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiWebhooksWid.DELETE("", h.DeleteWebhook, requires(permission.DeleteWebhook))
 				apiWebhooksWid.GET("/icon", h.GetWebhookIcon, requires(permission.GetWebhook))
 				apiWebhooksWid.PUT("/icon", h.PutWebhookIcon, requires(permission.EditWebhook))
-				apiWebhooksWid.GET("/messages", h.GetWebhookMessages, requires(permission.GetWebhook))
+				apiWebhooksWid.GET("/messages", gone)
 			}
 		}
 		apiGroups := api.Group("/groups")

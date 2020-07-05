@@ -228,15 +228,3 @@ func (h *Handlers) GetWebhookIcon(c echo.Context) error {
 func (h *Handlers) PutWebhookIcon(c echo.Context) error {
 	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getWebhookFromContext(c).GetBotUserID())
 }
-
-// GetWebhookMessages GET /webhooks/:webhookID/messages
-func (h *Handlers) GetWebhookMessages(c echo.Context) error {
-	w := getWebhookFromContext(c)
-
-	var req messagesQuery
-	if err := req.bind(c); err != nil {
-		return err
-	}
-
-	return h.getMessages(c, req.convertU(w.GetBotUserID()), false)
-}
