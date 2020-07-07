@@ -114,12 +114,12 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 					"type":   "date",
 					"format": "strict_date_time_no_millis",
 				},
-				//"to": m{
-				//	"type": "arrays",
-				//},
-				//"citation": m{
-				//	"type": "arrays",
-				//},
+				"to": m{
+					"type": "keyword",
+				},
+				"citation": m{
+					"type": "keyword",
+				},
 				"isEdited": m{
 					"type": "boolean",
 				},
