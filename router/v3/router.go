@@ -32,7 +32,7 @@ type Handlers struct {
 	WebRTC         *webrtcv3.Manager
 	Imaging        imaging.Processor
 	SessStore      session.Store
-	SearchEngine search.Engine
+	SearchEngine   search.Engine
 	ChannelManager channel.Manager
 	FileManager    file.Manager
 	Replacer       *message.Replacer
