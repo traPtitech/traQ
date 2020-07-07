@@ -108,18 +108,18 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 				},
 				"createdAt": m{
 					"type":   "date",
-					"format": "yyyy-MM-ddTHH:mm:ssZ",
+					"format": "strict_date_time_no_millis",
 				},
 				"updatedAt": m{
 					"type":   "date",
-					"format": "yyyy-MM-ddTHH:mm:ssZ",
+					"format": "strict_date_time_no_millis",
 				},
-				"to": m{
-					"type": "arrays",
-				},
-				"citation": m{
-					"type": "arrays",
-				},
+				//"to": m{
+				//	"type": "arrays",
+				//},
+				//"citation": m{
+				//	"type": "arrays",
+				//},
 				"isEdited": m{
 					"type": "boolean",
 				},
