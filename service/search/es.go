@@ -114,12 +114,12 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 					"type":   "date",
 					"format": "strict_date_time_no_millis",
 				},
-				//"to": m{
-				//	"type": "arrays",
-				//},
-				//"citation": m{
-				//	"type": "arrays",
-				//},
+				"to": m{
+					"type": "keyword",
+				},
+				"citation": m{
+					"type": "keyword",
+				},
 				"isEdited": m{
 					"type": "boolean",
 				},
@@ -212,13 +212,17 @@ func (e *esEngine) addMessageToIndex(m *model.Message) error {
 
 // updateMessageOnIndex 既存メッセージの編集をesに反映させる
 func (e *esEngine) updateMessageOnIndex(m *model.Message) error {
+	attr := getAttributes(m)
 	_, err := e.client.Update().
 		Index(getIndexName(esMessageIndex)).
 		Id(m.ID.String()).
 		Doc(map[string]interface{}{
-			"text":      m.Text,
-			"updatedAt": m.UpdatedAt.Truncate(time.Second),
-			"isEdited":  true,
+			"text":           m.Text,
+			"updatedAt":      m.UpdatedAt.Truncate(time.Second),
+			"isEdited":       true,
+			"citation":       attr.Citation,
+			"hasURL":         attr.HasURL,
+			"hasAttachments": attr.HasAttachments,
 		}).Do(context.Background())
 	return err
 }
