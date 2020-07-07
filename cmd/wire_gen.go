@@ -90,7 +90,6 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 		RBAC:                 rbacRBAC,
 		ViewerManager:        viewerManager,
 		Search:               engine,
-		ViewerManager:        manager,
 		WebRTCv3:             webrtcv3Manager,
 		WS:                   streamer,
 	}

@@ -229,6 +229,7 @@ func init() {
 	viper.SetDefault("mariadb.connection.maxOpen", 0)
 	viper.SetDefault("mariadb.connection.maxIdle", 2)
 	viper.SetDefault("mariadb.connection.lifetime", 0)
+	viper.SetDefault("es.url", "")
 	viper.SetDefault("storage.type", "local")
 	viper.SetDefault("storage.local.dir", "./storage")
 	viper.SetDefault("storage.swift.username", "")

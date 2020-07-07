@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
 	"time"
 )
@@ -49,15 +50,10 @@ type esResult struct {
 }
 
 type attributes struct {
-	To          []uuid.UUID
-	Cites       []string
-	//IsCited     bool
-	//IsPinned    bool
-	HasURL      bool
-	HasEmbedded bool
-	HasImage    bool
-	HasMovie    bool
-	HasAudio    bool
+	To             []uuid.UUID
+	Citation       []uuid.UUID
+	HasURL         bool
+	HasAttachments bool
 }
 
 func (e *esResult) Get() map[uuid.UUID]string {
@@ -121,7 +117,7 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 				"to": m{
 					"type": "arrays",
 				},
-				"cite": m{
+				"citation": m{
 					"type": "arrays",
 				},
 				"isEdited": m{
@@ -136,16 +132,7 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 				"hasURL": m{
 					"type": "boolean",
 				},
-				"hasEmbedded": m{
-					"type": "boolean",
-				},
-				"hasImage": m{
-					"type": "boolean",
-				},
-				"hasMovie": m{
-					"type": "boolean",
-				},
-				"hasAudio": m{
+				"hasAttachments": m{
 					"type": "boolean",
 				},
 				// TODO To(複数)をメッセージ投稿時に、Cite(複数)をメッセージ投稿・更新時にindexに追加
@@ -202,16 +189,20 @@ func (e *esEngine) onEvent(ev hub.Message) {
 
 // addMessageToIndex 新規メッセージをesに入れる
 func (e *esEngine) addMessageToIndex(m *model.Message) error {
-	//attr := getAttributes(m)
+	attr := getAttributes(m)
 	_, err := e.client.Index().
 		Index(getIndexName(esMessageIndex)).
 		Id(m.ID.String()).
 		BodyJson(map[string]interface{}{
-			"userId":    m.UserID,
-			"channelId": m.ChannelID,
-			"text":      m.Text,
-			"createdAt": m.CreatedAt.Truncate(time.Second),
-			"updatedAt": m.UpdatedAt.Truncate(time.Second),
+			"userId":         m.UserID,
+			"channelId":      m.ChannelID,
+			"text":           m.Text,
+			"createdAt":      m.CreatedAt.Truncate(time.Second),
+			"updatedAt":      m.UpdatedAt.Truncate(time.Second),
+			"to":             attr.To,
+			"citation":       attr.Citation,
+			"hasURL":         attr.HasURL,
+			"hasAttachments": attr.HasAttachments,
 		}).Do(context.Background())
 	if err != nil {
 		return err
@@ -227,7 +218,7 @@ func (e *esEngine) updateMessageOnIndex(m *model.Message) error {
 		Doc(map[string]interface{}{
 			"text":      m.Text,
 			"updatedAt": m.UpdatedAt.Truncate(time.Second),
-			"isEdited": true,
+			"isEdited":  true,
 		}).Do(context.Background())
 	return err
 }
@@ -269,26 +260,26 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 
 	switch {
 	case q.To.Valid:
-		musts = append(musts, elastic.NewMatchQuery("text", q.To))
+		musts = append(musts, elastic.NewTermQuery("to", q.To))
 	case q.From.Valid:
-		musts = append(musts, elastic.NewMatchQuery("userId", q.From))
+		musts = append(musts, elastic.NewTermQuery("userId", q.From))
 	}
 
-	if q.Cite.Valid {
-		musts = append(musts, elastic.NewMatchQuery("text", q.Cite))
+	if q.Citation.Valid {
+		musts = append(musts, elastic.NewTermQuery("citation", q.Citation))
 	}
 
 	if q.IsEdited.Valid {
 		musts = append(musts, elastic.NewTermQuery("isEdited", q.IsEdited))
 	}
+
+	if q.HasAttachments.Valid {
+		musts = append(musts, elastic.NewTermQuery("hasAttachments", q.HasAttachments))
+	}
 	// TODO
 	//IsCited
 	//IsPinned
 	//HasURL
-	//HasEmbedded
-	//HasImage
-	//HasMovie
-	//HasAudio
 
 	sr, err := e.client.Search().
 		Index(getIndexName(esMessageIndex)).
@@ -329,13 +320,11 @@ func getIndexName(index string) string {
 func getAttributes(m *model.Message) *attributes {
 	attr := &attributes{}
 
-	//attr.IsCited
-	//attr.IsPinned
-	//attr.HasURL
-	//attr.HasEmbedded
-	//attr.HasImage
-	//attr.HasMovie
-	//attr.HasAudio
+	result := message.Parse(m.Text)
+	attr.To = append(result.Mentions, result.GroupMentions...)
+	attr.Citation = result.Citation
+	//attr.HasURL = result.PlainText
+	attr.HasAttachments = len(result.Attachments) != 0
 
 	return attr
 }
