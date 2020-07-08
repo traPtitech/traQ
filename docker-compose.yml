@@ -47,7 +47,7 @@ services:
       - "3002:3306"
 
   es:
-    image: elasticsearch:7.7.0
+    image: elasticsearch:7.8.0
     restart: always
     environment:
       - discovery.type=single-node

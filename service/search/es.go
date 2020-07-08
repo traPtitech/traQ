@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	esRequiredVersion = "7.7.0"
+	esRequiredVersion = "7.8.0"
 	esIndexPrefix     = "traq_"
 	esMessageIndex    = "message"
 )
@@ -108,7 +108,7 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 				},
 				"createdAt": m{
 					"type":   "date",
-					"format": "strict_date_time_no_millis", // 2006-01-02T15:04:05Z
+					"format": "strict_date_optional_time_nanos", // 2006-01-02T15:04:05.7891011Z
 				},
 				"updatedAt": m{
 					"type":   "date",
@@ -197,8 +197,8 @@ func (e *esEngine) addMessageToIndex(m *model.Message) error {
 			"userId":         m.UserID,
 			"channelId":      m.ChannelID,
 			"text":           m.Text,
-			"createdAt":      m.CreatedAt.Truncate(time.Second),
-			"updatedAt":      m.UpdatedAt.Truncate(time.Second),
+			"createdAt":      m.CreatedAt,
+			"updatedAt":      m.UpdatedAt,
 			"to":             attr.To,
 			"citation":       attr.Citation,
 			"hasURL":         attr.HasURL,
@@ -218,7 +218,7 @@ func (e *esEngine) updateMessageOnIndex(m *model.Message) error {
 		Id(m.ID.String()).
 		Doc(map[string]interface{}{
 			"text":           m.Text,
-			"updatedAt":      m.UpdatedAt.Truncate(time.Second),
+			"updatedAt":      m.UpdatedAt,
 			"isEdited":       true,
 			"citation":       attr.Citation,
 			"hasURL":         attr.HasURL,
