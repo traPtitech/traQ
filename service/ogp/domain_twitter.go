@@ -15,7 +15,7 @@ type TwitterSyndicationAPIResponse struct {
 	Text string `json:"text"`
 	User struct {
 		Name            string `json:"name"`
-		ProfileImageUrl string `json:"profile_image_url"`
+		ProfileImageURL string `json:"profile_image_url"`
 		ScreenName      string `json:"screen_name"`
 	} `json:"user"`
 	Photos []struct {
@@ -33,8 +33,8 @@ func FetchTwitterInfo(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, err
 	if len(splitPath) < 4 || splitPath[2] != "status" {
 		return nil, nil, ErrDomainRequest
 	}
-	statusId := splitPath[3]
-	apiResponse, err := fetchTwitterSyndicationAPI(statusId)
+	statusID := splitPath[3]
+	apiResponse, err := fetchTwitterSyndicationAPI(statusID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -46,13 +46,13 @@ func FetchTwitterInfo(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, err
 	result := DefaultPageMeta{}
 	if len(apiResponse.Photos) > 0 {
 		image := apiResponse.Photos[0]
-		og.Images = []*opengraph.Image {{
-			URL: image.URL,
-			Width: uint64(image.Width),
+		og.Images = []*opengraph.Image{{
+			URL:    image.URL,
+			Width:  uint64(image.Width),
 			Height: uint64(image.Height),
 		}}
 	} else if apiResponse.Video.Poster != "" {
-		og.Images = []*opengraph.Image {{
+		og.Images = []*opengraph.Image{{
 			URL: apiResponse.Video.Poster,
 		}}
 	}
