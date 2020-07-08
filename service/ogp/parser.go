@@ -1,13 +1,19 @@
 package ogp
 
 import (
+	"context"
 	"github.com/dyatlov/go-opengraph/opengraph"
 	"golang.org/x/net/html"
+	"golang.org/x/sync/semaphore"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 )
+
+const concurrentRequestLimit = 10
+
+var requestLimiter = semaphore.NewWeighted(concurrentRequestLimit)
 
 type DefaultPageMeta struct {
 	Title, Description, URL, Image string
@@ -15,6 +21,9 @@ type DefaultPageMeta struct {
 
 // ParseMetaForURL 指定したURLのメタタグをパースした結果を返します。
 func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, error) {
+	_ = requestLimiter.Acquire(context.Background(), 1)
+	defer requestLimiter.Release(1)
+
 	og, meta, isSpecialDomain, err := FetchSpecialDomainInfo(url)
 	if isSpecialDomain && (err == nil) {
 		return og, meta, nil
