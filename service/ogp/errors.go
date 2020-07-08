@@ -13,4 +13,6 @@ var (
 	ErrClient = errors.New("network error (client)")
 	// ErrServer 対象URLにアクセスした際に5xxエラーが発生しました
 	ErrServer = errors.New("network error (server)")
+	// ErrDomainRequest 特殊処理を行うドメインのURLが期待した形式ではありませんでした
+	ErrDomainRequest = errors.New("bad request for special domain ")
 )
