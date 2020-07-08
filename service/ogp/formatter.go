@@ -22,6 +22,8 @@ func MergeDefaultPageMetaAndOpenGraph(og *opengraph.OpenGraph, meta *DefaultPage
 	}
 	if len(og.Title) > 0 {
 		result.Title = og.Title
+	} else if len(og.SiteName) > 0 {
+		result.Title = og.SiteName
 	}
 	if len(og.URL) > 0 {
 		result.URL = og.URL

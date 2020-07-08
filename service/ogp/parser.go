@@ -15,6 +15,11 @@ type DefaultPageMeta struct {
 
 // ParseMetaForURL 指定したURLのメタタグをパースした結果を返します。
 func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, error) {
+	og, meta, isSpecialDomain, err := FetchSpecialDomainInfo(url)
+	if isSpecialDomain && (err == nil) {
+		return og, meta, nil
+	}
+
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
@@ -40,7 +45,7 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 		return nil, nil, ErrParse
 	}
 
-	og, meta := parseDoc(doc)
+	og, meta = parseDoc(doc)
 	if len(meta.URL) == 0 {
 		meta.URL = url.String()
 	}
