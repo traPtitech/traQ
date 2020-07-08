@@ -23,7 +23,7 @@ type TwitterSyndicationAPIResponse struct {
 		Width  int    `json:"width"`
 		Height int    `json:"height"`
 	} `json:"photos"`
-	Video []struct {
+	Video struct {
 		Poster string `json:"poster"`
 	} `json:"video"`
 }
@@ -50,6 +50,10 @@ func FetchTwitterInfo(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, err
 			URL: image.URL,
 			Width: uint64(image.Width),
 			Height: uint64(image.Height),
+		}}
+	} else if apiResponse.Video.Poster != "" {
+		og.Images = []*opengraph.Image {{
+			URL: apiResponse.Video.Poster,
 		}}
 	}
 	return &og, &result, nil
