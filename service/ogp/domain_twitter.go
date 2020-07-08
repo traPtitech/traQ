@@ -1,10 +1,9 @@
 package ogp
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/dyatlov/go-opengraph/opengraph"
-	"io/ioutil"
+	jsoniter "github.com/json-iterator/go"
 	"net/http"
 	"net/url"
 	"strings"
@@ -76,13 +75,8 @@ func fetchTwitterSyndicationAPI(statusID string) (*TwitterSyndicationAPIResponse
 		return nil, ErrClient
 	}
 
-	byteArray, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	data := new(TwitterSyndicationAPIResponse)
-
-	if err = json.Unmarshal(byteArray, data); err != nil {
+	var data *TwitterSyndicationAPIResponse
+	if err = jsoniter.ConfigFastest.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return nil, err
 	}
 	return data, nil
