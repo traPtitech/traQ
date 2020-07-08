@@ -318,9 +318,6 @@ func (c Config) getDatabase() (*gorm.DB, error) {
 		_ = db.Close()
 		return nil, err
 	}
-	engine.DB().SetMaxOpenConns(c.MariaDB.Connection.MaxOpen)
-	engine.DB().SetMaxIdleConns(c.MariaDB.Connection.MaxIdle)
-	engine.DB().SetConnMaxLifetime(time.Duration(c.MariaDB.Connection.LifeTime) * time.Second)
 	engine.BlockGlobalUpdate(true)
 	engine.LogMode(c.DevMode)
 	return engine.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"), nil
