@@ -21,7 +21,7 @@ type DefaultPageMeta struct {
 
 // ParseMetaForURL 指定したURLのメタタグをパースした結果を返します。
 func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, error) {
-	requestLimiter.Acquire(context.Background(), 1)
+	_ = requestLimiter.Acquire(context.Background(), 1)
 	defer requestLimiter.Release(1)
 
 	og, meta, isSpecialDomain, err := FetchSpecialDomainInfo(url)
