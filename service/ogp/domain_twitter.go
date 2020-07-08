@@ -59,12 +59,12 @@ func FetchTwitterInfo(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, err
 	return &og, &result, nil
 }
 
-func fetchTwitterSyndicationAPI(statusId string) (*TwitterSyndicationAPIResponse, error) {
+func fetchTwitterSyndicationAPI(statusID string) (*TwitterSyndicationAPIResponse, error) {
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
-	requestUrl := fmt.Sprintf("https://syndication.twitter.com/tweet?id=%s", statusId)
-	resp, err := client.Get(requestUrl)
+	requestURL := fmt.Sprintf("https://syndication.twitter.com/tweet?id=%s", statusID)
+	resp, err := client.Get(requestURL)
 	if err != nil {
 		return nil, ErrNetwork
 	}
