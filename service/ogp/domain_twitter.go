@@ -75,9 +75,9 @@ func fetchTwitterSyndicationAPI(statusID string) (*TwitterSyndicationAPIResponse
 		return nil, ErrClient
 	}
 
-	var data *TwitterSyndicationAPIResponse
+	data := TwitterSyndicationAPIResponse{}
 	if err = jsoniter.ConfigFastest.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return nil, err
 	}
-	return data, nil
+	return &data, nil
 }
