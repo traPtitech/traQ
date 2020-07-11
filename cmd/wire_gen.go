@@ -16,6 +16,7 @@ import (
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/notification"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/viewer"
@@ -26,7 +27,6 @@ import (
 )
 
 import (
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "net/http/pprof"
 )
 
@@ -62,11 +62,15 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 	if err != nil {
 		return nil, err
 	}
+	messageManager, err := message.NewMessageManager(repo, manager, logger)
+	if err != nil {
+		return nil, err
+	}
 	viewerManager := viewer.NewManager(hub2)
 	webrtcv3Manager := webrtcv3.NewManager(hub2)
 	streamer := ws.NewStreamer(hub2, viewerManager, webrtcv3Manager, logger)
 	serverOriginString := provideServerOriginString(c2)
-	notificationService := notification.NewService(repo, manager, fileManager, hub2, logger, client, streamer, viewerManager, serverOriginString)
+	notificationService := notification.NewService(repo, manager, messageManager, fileManager, hub2, logger, client, streamer, viewerManager, serverOriginString)
 	rbacRBAC, err := rbac.New(db)
 	if err != nil {
 		return nil, err
@@ -81,6 +85,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 		FCM:                  client,
 		FileManager:          fileManager,
 		Imaging:              processor,
+		MessageManager:       messageManager,
 		Notification:         notificationService,
 		RBAC:                 rbacRBAC,
 		ViewerManager:        viewerManager,

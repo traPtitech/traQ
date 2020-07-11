@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strconv"
@@ -124,10 +125,10 @@ func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 		return err
 	}
 
-	m, err := h.Repo.GetMessageByID(req.MessageID)
+	m, err := h.MessageManager.Get(req.MessageID)
 	if err != nil {
 		switch {
-		case err == repository.ErrNotFound:
+		case err == message.ErrNotFound:
 			return herror.BadRequest("invalid messageId")
 		default:
 			return herror.InternalServerError(err)
@@ -135,7 +136,7 @@ func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 	}
 
 	// ユーザーがアクセスできるか
-	if ok, err := h.ChannelManager.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
+	if ok, err := h.ChannelManager.IsChannelAccessibleToUser(userID, m.GetChannelID()); err != nil {
 		return herror.InternalServerError(err)
 	} else if !ok {
 		return herror.BadRequest("invalid messageId")
@@ -153,7 +154,6 @@ func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 			return herror.InternalServerError(err)
 		}
 	}
-	cfm.Message = *m
 
 	return c.JSON(http.StatusOK, formatClipFolderMessage(cfm))
 }

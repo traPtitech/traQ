@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strconv"
@@ -10,7 +11,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -83,8 +83,8 @@ func getParamChannel(c echo.Context) *model.Channel {
 }
 
 // getParamMessage URLの:messageIDに対応するMessageを取得
-func getParamMessage(c echo.Context) *model.Message {
-	return c.Get(consts.KeyParamMessage).(*model.Message)
+func getParamMessage(c echo.Context) message.Message {
+	return c.Get(consts.KeyParamMessage).(message.Message)
 }
 
 // getParamGroup URLの:groupIDに対応するUserGroupを取得
@@ -125,8 +125,8 @@ func (q *MessagesQuery) Validate() error {
 	)
 }
 
-func (q *MessagesQuery) convert() repository.MessagesQuery {
-	return repository.MessagesQuery{
+func (q *MessagesQuery) convert() message.TimelineQuery {
+	return message.TimelineQuery{
 		Since:     q.Since,
 		Until:     q.Until,
 		Inclusive: q.Inclusive,
@@ -136,23 +136,23 @@ func (q *MessagesQuery) convert() repository.MessagesQuery {
 	}
 }
 
-func (q *MessagesQuery) convertC(cid uuid.UUID) repository.MessagesQuery {
+func (q *MessagesQuery) convertC(cid uuid.UUID) message.TimelineQuery {
 	r := q.convert()
 	r.Channel = cid
 	return r
 }
 
-func (q *MessagesQuery) convertU(uid uuid.UUID) repository.MessagesQuery {
+func (q *MessagesQuery) convertU(uid uuid.UUID) message.TimelineQuery {
 	r := q.convert()
 	r.User = uid
 	return r
 }
 
-func serveMessages(c echo.Context, repo repository.Repository, query repository.MessagesQuery) error {
-	messages, more, err := repo.GetMessages(query)
+func serveMessages(c echo.Context, mm message.Manager, query message.TimelineQuery) error {
+	timeline, err := mm.GetTimeline(query)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	c.Response().Header().Set(consts.HeaderMore, strconv.FormatBool(more))
-	return c.JSON(http.StatusOK, formatMessages(messages))
+	c.Response().Header().Set(consts.HeaderMore, strconv.FormatBool(timeline.HasMore()))
+	return c.JSON(http.StatusOK, timeline.Records())
 }

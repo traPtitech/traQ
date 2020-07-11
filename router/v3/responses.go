@@ -256,14 +256,6 @@ func formatMessage(m *model.Message) *Message {
 	}
 }
 
-func formatMessages(ms []*model.Message) []*Message {
-	res := make([]*Message, len(ms))
-	for i, m := range ms {
-		res[i] = formatMessage(m)
-	}
-	return res
-}
-
 type Pin struct {
 	UserID   uuid.UUID `json:"userId"`
 	PinnedAt time.Time `json:"pinnedAt"`

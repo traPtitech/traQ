@@ -8,20 +8,20 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/file"
-	"golang.org/x/sync/singleflight"
+	"github.com/traPtitech/traQ/service/message"
 )
 
 // ParamRetriever リクエストパスパラメータで指定された各種エンティティをrepositoryから取得するミドルウェア
 type ParamRetriever struct {
-	repo         repository.Repository
-	cm           channel.Manager
-	fm           file.Manager
-	messageCache singleflight.Group
+	repo repository.Repository
+	cm   channel.Manager
+	mm   message.Manager
+	fm   file.Manager
 }
 
 // NewParamRetriever ParamRetrieverを生成
-func NewParamRetriever(repo repository.Repository, cm channel.Manager, fm file.Manager) *ParamRetriever {
-	return &ParamRetriever{repo: repo, cm: cm, fm: fm}
+func NewParamRetriever(repo repository.Repository, cm channel.Manager, fm file.Manager, mm message.Manager) *ParamRetriever {
+	return &ParamRetriever{repo: repo, cm: cm, fm: fm, mm: mm}
 }
 
 func (pr *ParamRetriever) byString(param string, key string, f func(c echo.Context, v string) (interface{}, error)) echo.MiddlewareFunc {
@@ -82,6 +82,8 @@ func (pr *ParamRetriever) error(err error) error {
 			return herror.NotFound()
 		} else if err == file.ErrNotFound {
 			return herror.NotFound()
+		} else if err == message.ErrNotFound {
+			return herror.NotFound()
 		}
 		return herror.InternalServerError(err)
 	}
@@ -97,8 +99,7 @@ func (pr *ParamRetriever) GroupID() echo.MiddlewareFunc {
 // MessageID リクエストURLの`messageID`パラメータからMessageを取り出す
 func (pr *ParamRetriever) MessageID() echo.MiddlewareFunc {
 	return pr.byUUID(consts.ParamMessageID, consts.KeyParamMessage, func(c echo.Context, v uuid.UUID) (interface{}, error) {
-		mI, err, _ := pr.messageCache.Do(v.String(), func() (interface{}, error) { return pr.repo.GetMessageByID(v) })
-		return mI, err
+		return pr.mm.Get(v)
 	})
 }
 

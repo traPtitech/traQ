@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -196,16 +197,18 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	if !ch.IsPublic {
 		return herror.BadRequest("invalid channel")
 	}
-	if ch.IsArchived() {
-		return herror.BadRequest("channel has been archived")
-	}
 
 	if c.QueryParam("embed") == "1" {
 		body = []byte(h.Replacer.Replace(string(body)))
 	}
 
-	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), ch.ID, string(body)); err != nil {
-		return herror.InternalServerError(err)
+	if _, err := h.MessageManager.Create(ch.ID, w.GetBotUserID(), string(body)); err != nil {
+		switch err {
+		case message.ErrChannelArchived:
+			return herror.BadRequest("the channel has been archived")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)

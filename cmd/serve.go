@@ -183,5 +183,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		s.SS.ChannelManager.Wait()
 		return nil
 	})
+	eg.Go(func() error { return s.SS.MessageManager.Wait(ctx) })
 	return eg.Wait()
 }

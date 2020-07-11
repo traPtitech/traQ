@@ -11,12 +11,13 @@ import (
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/service/ws"
-	"github.com/traPtitech/traQ/utils/message"
+	mutil "github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 )
@@ -33,10 +34,12 @@ type Handlers struct {
 	Imaging        imaging.Processor
 	SessStore      session.Store
 	ChannelManager channel.Manager
+	MessageManager message.Manager
 	FileManager    file.Manager
-	Replacer       *message.Replacer
-	SFGroup        singleflight.Group
+	Replacer       *mutil.Replacer
 	Config
+
+	SFGroup singleflight.Group `wire:"-"`
 }
 
 type Config struct {
@@ -55,7 +58,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
-	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager)
+	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager, h.MessageManager)
 	blockBot := middlewares.BlockBot(h.Repo)
 	nologin := middlewares.NoLogin(h.SessStore)
 

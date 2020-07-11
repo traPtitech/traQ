@@ -9,7 +9,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/set"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -401,11 +400,4 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 	var stats ChannelStats
 	stats.DateTime = time.Now()
 	return &stats, repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error
-}
-
-func (repo *GormRepository) recordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) {
-	err := repo.RecordChannelEvent(channelID, eventType, detail, datetime)
-	if err != nil {
-		repo.logger.Warn("Recording channel event failed", zap.Error(err), zap.Stringer("channelID", channelID), zap.Stringer("type", eventType), zap.Any("detail", detail), zap.Time("datetime", datetime))
-	}
 }

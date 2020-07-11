@@ -1,13 +1,13 @@
 package v3
 
 import (
-	"fmt"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/service/message"
 	"net/http"
 )
 
@@ -37,7 +37,7 @@ func (h *Handlers) ReadChannel(c echo.Context) error {
 
 // GetMessage GET /messages/:messageID
 func (h *Handlers) GetMessage(c echo.Context) error {
-	return c.JSON(http.StatusOK, formatMessage(getParamMessage(c)))
+	return c.JSON(http.StatusOK, getParamMessage(c))
 }
 
 // PostMessageRequest POST /channels/:channelID/messages等リクエストボディ
@@ -57,22 +57,13 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 	userID := getRequestUserID(c)
 	m := getParamMessage(c)
 
-	// 投稿先チャンネル確認
-	ch, err := h.ChannelManager.GetChannel(m.ChannelID)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree().GetChannelPath(ch.ID)))
-	}
-
 	var req PostMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
 	// 他人のテキストは編集できない
-	if userID != m.UserID {
+	if userID != m.GetUserID() {
 		return herror.Forbidden("This is not your message")
 	}
 
@@ -80,10 +71,14 @@ func (h *Handlers) EditMessage(c echo.Context) error {
 		req.Content = h.Replacer.Replace(req.Content)
 	}
 
-	if err := h.Repo.UpdateMessage(m.ID, req.Content); err != nil {
-		return herror.InternalServerError(err)
+	if err := h.MessageManager.Edit(m.GetID(), req.Content); err != nil {
+		switch err {
+		case message.ErrChannelArchived:
+			return herror.BadRequest("the channel of this message has been archived")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
-
 	return c.NoContent(http.StatusNoContent)
 }
 
@@ -92,8 +87,8 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 	userID := getRequestUserID(c)
 	m := getParamMessage(c)
 
-	if m.UserID != userID {
-		mUser, err := h.Repo.GetUser(m.UserID, false)
+	if muid := m.GetUserID(); muid != userID {
+		mUser, err := h.Repo.GetUser(muid, false)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -134,41 +129,39 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 		}
 	}
 
-	// 投稿先チャンネル確認
-	ch, err := h.ChannelManager.GetChannel(m.ChannelID)
-	if err != nil {
-		return herror.InternalServerError(err)
+	if err := h.MessageManager.Delete(m.GetID()); err != nil {
+		switch err {
+		case message.ErrChannelArchived:
+			return herror.BadRequest("the channel of this message has been archived")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
-	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree().GetChannelPath(ch.ID)))
-	}
-
-	if err := h.Repo.DeleteMessage(m.ID); err != nil {
-		return herror.InternalServerError(err)
-	}
-
 	return c.NoContent(http.StatusNoContent)
 }
 
 // GetPin GET /messages/:messageID/pin
 func (h *Handlers) GetPin(c echo.Context) error {
 	m := getParamMessage(c)
-	if m.Pin == nil {
+	if m.GetPin() == nil {
 		return herror.NotFound("this message is not pinned")
 	}
-	return c.JSON(http.StatusOK, formatMessagePin(m.Pin))
+	return c.JSON(http.StatusOK, formatMessagePin(m.GetPin()))
 }
 
 // CreatePin POST /messages/:messageID/pin
 func (h *Handlers) CreatePin(c echo.Context) error {
 	m := getParamMessage(c)
-	if m.Pin != nil {
-		return herror.BadRequest("this message has already been pinned")
-	}
-
-	p, err := h.Repo.PinMessage(m.ID, getRequestUserID(c))
+	p, err := h.MessageManager.Pin(m.GetID(), getRequestUserID(c))
 	if err != nil {
-		return herror.InternalServerError(err)
+		switch err {
+		case message.ErrAlreadyExists:
+			return herror.BadRequest("this message has already been pinned")
+		case message.ErrChannelArchived:
+			return herror.BadRequest("the channel of this message has been archived")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
 	return c.JSON(http.StatusCreated, formatMessagePin(p))
 }
@@ -176,20 +169,22 @@ func (h *Handlers) CreatePin(c echo.Context) error {
 // RemovePin DELETE /messages/:messageID/pin
 func (h *Handlers) RemovePin(c echo.Context) error {
 	m := getParamMessage(c)
-	if m.Pin == nil {
-		return herror.NotFound("this message is not pinned")
+	if err := h.MessageManager.Unpin(m.GetID(), getRequestUserID(c)); err != nil {
+		switch err {
+		case message.ErrNotFound:
+			return herror.NotFound("pin was not found")
+		case message.ErrChannelArchived:
+			return herror.BadRequest("the channel of this message has been archived")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
-
-	if err := h.Repo.UnpinMessage(m.ID, getRequestUserID(c)); err != nil {
-		return herror.InternalServerError(err)
-	}
-
 	return c.NoContent(http.StatusNoContent)
 }
 
 // GetMessageStamps GET /messages/:messageID/stamps
 func (h *Handlers) GetMessageStamps(c echo.Context) error {
-	return c.JSON(http.StatusOK, getParamMessage(c).Stamps)
+	return c.JSON(http.StatusOK, getParamMessage(c).GetStamps())
 }
 
 // PostMessageStampRequest POST /messages/:messageID/stamps/:stampID リクエストボディ
@@ -218,8 +213,13 @@ func (h *Handlers) AddMessageStamp(c echo.Context) error {
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 
 	// スタンプをメッセージに押す
-	if _, err := h.Repo.AddStampToMessage(messageID, stampID, userID, req.Count); err != nil {
-		return herror.InternalServerError(err)
+	if _, err := h.MessageManager.AddStamps(messageID, stampID, userID, req.Count); err != nil {
+		switch err {
+		case message.ErrChannelArchived:
+			return herror.BadRequest("the channel of this message has been archived")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -232,8 +232,13 @@ func (h *Handlers) RemoveMessageStamp(c echo.Context) error {
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 
 	// スタンプをメッセージから削除
-	if err := h.Repo.RemoveStampFromMessage(messageID, stampID, userID); err != nil {
-		return herror.InternalServerError(err)
+	if err := h.MessageManager.RemoveStamps(messageID, stampID, userID); err != nil {
+		switch err {
+		case message.ErrChannelArchived:
+			return herror.BadRequest("the channel of this message has been archived")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -261,17 +266,13 @@ func (h *Handlers) GetMessages(c echo.Context) error {
 		return err
 	}
 
-	return serveMessages(c, h.Repo, req.convertC(channelID))
+	return serveMessages(c, h.MessageManager, req.convertC(channelID))
 }
 
 // PostMessage POST /channels/:channelID/messages
 func (h *Handlers) PostMessage(c echo.Context) error {
 	userID := getRequestUserID(c)
 	ch := getParamChannel(c)
-
-	if ch.IsArchived() {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree().GetChannelPath(ch.ID)))
-	}
 
 	var req PostMessageRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -282,12 +283,16 @@ func (h *Handlers) PostMessage(c echo.Context) error {
 		req.Content = h.Replacer.Replace(req.Content)
 	}
 
-	m, err := h.Repo.CreateMessage(userID, ch.ID, req.Content)
+	m, err := h.MessageManager.Create(ch.ID, userID, req.Content)
 	if err != nil {
-		return herror.InternalServerError(err)
+		switch err {
+		case message.ErrChannelArchived:
+			return herror.BadRequest("this channel has been archived")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
-
-	return c.JSON(http.StatusCreated, formatMessage(m))
+	return c.JSON(http.StatusCreated, m)
 }
 
 // GetDirectMessages GET /users/:userId/messages
@@ -306,7 +311,7 @@ func (h *Handlers) GetDirectMessages(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return serveMessages(c, h.Repo, req.convertC(ch.ID))
+	return serveMessages(c, h.MessageManager, req.convertC(ch.ID))
 }
 
 // PostDirectMessage POST /users/:userId/messages
@@ -319,20 +324,13 @@ func (h *Handlers) PostDirectMessage(c echo.Context) error {
 		return err
 	}
 
-	// DMチャンネルを取得
-	ch, err := h.ChannelManager.GetDMChannel(myID, targetID)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
 	if req.Embed {
 		req.Content = h.Replacer.Replace(req.Content)
 	}
 
-	m, err := h.Repo.CreateMessage(myID, ch.ID, req.Content)
+	m, err := h.MessageManager.CreateDM(myID, targetID, req.Content)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-
-	return c.JSON(http.StatusCreated, formatMessage(m))
+	return c.JSON(http.StatusCreated, m)
 }

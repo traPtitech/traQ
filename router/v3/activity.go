@@ -4,9 +4,8 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/service/message"
 	"net/http"
 	"time"
 )
@@ -41,15 +40,8 @@ func (h *Handlers) GetActivityTimeline(c echo.Context) error {
 		return err
 	}
 
-	var (
-		messages []*model.Message
-		err      error
-	)
-
-	if req.PerChannel {
-		messages, err = h.Repo.GetChannelLatestMessagesByUserID(userID, req.Limit, !req.All)
-	} else {
-		query := repository.MessagesQuery{
+	if !req.PerChannel {
+		query := message.TimelineQuery{
 			Limit:          req.Limit,
 			ExcludeDMs:     true,
 			DisablePreload: true,
@@ -57,8 +49,15 @@ func (h *Handlers) GetActivityTimeline(c echo.Context) error {
 		if !req.All {
 			query.ChannelsSubscribedByUser = userID
 		}
-		messages, _, err = h.Repo.GetMessages(query)
+
+		timeline, err := h.MessageManager.GetTimeline(query)
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+		return c.JSON(http.StatusOK, timeline.Records())
 	}
+
+	messages, err := h.Repo.GetChannelLatestMessagesByUserID(userID, req.Limit, !req.All)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}

@@ -18,10 +18,11 @@ import (
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/file"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/viewer"
-	"github.com/traPtitech/traQ/utils/message"
+	mutil "github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
@@ -49,8 +50,9 @@ type Handlers struct {
 	Imaging        imaging2.Processor
 	SessStore      session.Store
 	ChannelManager channel.Manager
+	MessageManager message.Manager
 	FileManager    file.Manager
-	Replacer       *message.Replacer
+	Replacer       *mutil.Replacer
 
 	emojiJSONCache     bytes.Buffer `wire:"-"`
 	emojiJSONTime      time.Time    `wire:"-"`
@@ -64,7 +66,7 @@ type Handlers struct {
 func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
-	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager)
+	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager, h.MessageManager)
 	blockBot := middlewares.BlockBot(h.Repo)
 	nologin := middlewares.NoLogin(h.SessStore)
 
@@ -374,10 +376,6 @@ func getGroupFromContext(c echo.Context) *model.UserGroup {
 
 func getStampFromContext(c echo.Context) *model.Stamp {
 	return c.Get(consts.KeyParamStamp).(*model.Stamp)
-}
-
-func getMessageFromContext(c echo.Context) *model.Message {
-	return c.Get(consts.KeyParamMessage).(*model.Message)
 }
 
 func getChannelFromContext(c echo.Context) *model.Channel {
