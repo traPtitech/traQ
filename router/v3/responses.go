@@ -293,8 +293,8 @@ type MessagePin struct {
 	PinnedAt time.Time `json:"pinnedAt"`
 }
 
-func formatMessagePin(pin *model.Pin) *Pin {
-	return &Pin{
+func formatMessagePin(pin *model.Pin) *MessagePin {
+	return &MessagePin{
 		UserID:   pin.UserID,
 		PinnedAt: pin.CreatedAt,
 	}
