@@ -76,7 +76,6 @@ func (repo *GormRepository) UpdateMessage(messageID uuid.UUID, text string) erro
 	var (
 		old model.Message
 		new model.Message
-		ok  bool
 	)
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&old, &model.Message{ID: messageID}).Error; err != nil {
@@ -99,22 +98,19 @@ func (repo *GormRepository) UpdateMessage(messageID uuid.UUID, text string) erro
 			return err
 		}
 
-		ok = true
 		return tx.Where(&model.Message{ID: messageID}).First(&new).Error
 	})
 	if err != nil {
 		return err
 	}
-	if ok {
-		repo.hub.Publish(hub.Message{
-			Name: event.MessageUpdated,
-			Fields: hub.Fields{
-				"message_id":  messageID,
-				"old_message": &old,
-				"message":     &new,
-			},
-		})
-	}
+	repo.hub.Publish(hub.Message{
+		Name: event.MessageUpdated,
+		Fields: hub.Fields{
+			"message_id":  messageID,
+			"old_message": &old,
+			"message":     &new,
+		},
+	})
 	return nil
 }
 
@@ -127,7 +123,6 @@ func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 	var (
 		m       model.Message
 		unreads []*model.Unread
-		ok      bool
 	)
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where(&model.Message{ID: messageID}).First(&m).Error; err != nil {
@@ -147,22 +142,19 @@ func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 		if len(errs) > 0 {
 			return errs[0]
 		}
-		ok = true
 		return nil
 	})
 	if err != nil {
 		return err
 	}
-	if ok {
-		repo.hub.Publish(hub.Message{
-			Name: event.MessageDeleted,
-			Fields: hub.Fields{
-				"message_id":      messageID,
-				"message":         &m,
-				"deleted_unreads": unreads,
-			},
-		})
-	}
+	repo.hub.Publish(hub.Message{
+		Name: event.MessageDeleted,
+		Fields: hub.Fields{
+			"message_id":      messageID,
+			"message":         &m,
+			"deleted_unreads": unreads,
+		},
+	})
 	return nil
 }
 
