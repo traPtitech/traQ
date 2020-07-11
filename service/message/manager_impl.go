@@ -31,7 +31,7 @@ func NewMessageManager(repo repository.Repository, cm channel.Manager, logger *z
 		R:  repo,
 		L:  logger.Named("message_manager"),
 		cache: gcache.
-			New(100).
+			New(200).
 			ARC().
 			LoaderExpireFunc(func(key interface{}) (interface{}, *time.Duration, error) {
 				m, err := repo.GetMessageByID(key.(uuid.UUID))
