@@ -2,42 +2,84 @@ package repository
 
 import (
 	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestRepositoryImpl_PinMessage(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common2)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common2)
 
-	testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
+	t.Run("nil id (message)", func(t *testing.T) {
+		t.Parallel()
 
-	_, err := repo.PinMessage(uuid.Nil, user.GetID())
-	assert.Error(err)
+		_, err := repo.PinMessage(uuid.Nil, user.GetID())
+		assert.Error(t, err)
+	})
 
-	_, err = repo.PinMessage(testMessage.ID, uuid.Nil)
-	assert.Error(err)
+	t.Run("nil id (user)", func(t *testing.T) {
+		t.Parallel()
 
-	p, err := repo.PinMessage(testMessage.ID, user.GetID())
-	if assert.NoError(err) {
-		assert.NotEmpty(p.ID)
-	}
+		_, err := repo.PinMessage(uuid.Must(uuid.NewV4()), uuid.Nil)
+		assert.Error(t, err)
+	})
 
-	p2, err := repo.PinMessage(testMessage.ID, user.GetID())
-	if assert.NoError(err) {
-		assert.EqualValues(p.ID, p2.ID)
-	}
+	t.Run("message not found", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.PinMessage(uuid.Must(uuid.NewV4()), user.GetID())
+		assert.EqualError(t, err, ErrNotFound.Error())
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
+
+		p, err := repo.PinMessage(testMessage.ID, user.GetID())
+		if assert.NoError(t, err) {
+			assert.EqualValues(t, testMessage.ID, p.MessageID)
+		}
+	})
+
+	t.Run("duplicate", func(t *testing.T) {
+		t.Parallel()
+		testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
+		mustMakePin(t, repo, testMessage.ID, user.GetID())
+
+		_, err := repo.PinMessage(testMessage.ID, user.GetID())
+		assert.EqualError(t, err, ErrAlreadyExists.Error())
+	})
 }
 
 func TestRepositoryImpl_UnpinMessage(t *testing.T) {
 	t.Parallel()
-	repo, assert, _, user, channel := setupWithUserAndChannel(t, common2)
+	repo, _, _, user, channel := setupWithUserAndChannel(t, common2)
 
-	testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
-	mustMakePin(t, repo, testMessage.ID, user.GetID())
+	t.Run("nil id", func(t *testing.T) {
+		t.Parallel()
 
-	assert.Error(repo.UnpinMessage(uuid.Nil, user.GetID()))
-	assert.NoError(repo.UnpinMessage(testMessage.ID, user.GetID()))
-	assert.NoError(repo.UnpinMessage(uuid.Must(uuid.NewV4()), user.GetID()))
+		_, err := repo.UnpinMessage(uuid.Nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("pin not found", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.PinMessage(uuid.Must(uuid.NewV4()), user.GetID())
+		assert.EqualError(t, err, ErrNotFound.Error())
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		testMessage := mustMakeMessage(t, repo, user.GetID(), channel.ID)
+		mustMakePin(t, repo, testMessage.ID, user.GetID())
+
+		pin, err := repo.UnpinMessage(testMessage.ID)
+		if assert.NoError(t, err) {
+			assert.EqualValues(t, user.GetID(), pin.UserID)
+			assert.EqualValues(t, testMessage.ID, pin.MessageID)
+		}
+	})
 }
 
 func TestRepositoryImpl_GetPinnedMessageByChannelID(t *testing.T) {

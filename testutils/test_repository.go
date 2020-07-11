@@ -1408,3 +1408,7 @@ func (repo *TestRepository) GetWebhooksByCreator(creatorID uuid.UUID) ([]model.W
 	repo.WebhooksLock.RUnlock()
 	return arr, nil
 }
+
+func (repo *TestRepository) RecordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error {
+	return nil
+}
