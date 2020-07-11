@@ -424,8 +424,6 @@ func (repo *GormRepository) RemoveStampFromMessage(messageID, stampID, userID uu
 
 func messagePreloads(db *gorm.DB) *gorm.DB {
 	return db.
-		Preload("Stamps", func(db *gorm.DB) *gorm.DB {
-			return db.Order("updated_at")
-		}).
+		Preload("Stamps").
 		Preload("Pin")
 }

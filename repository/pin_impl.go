@@ -114,7 +114,5 @@ func (repo *GormRepository) GetPinnedMessageByChannelID(channelID uuid.UUID) (pi
 func pinPreloads(db *gorm.DB) *gorm.DB {
 	return db.
 		Preload("Message").
-		Preload("Message.Stamps", func(db *gorm.DB) *gorm.DB {
-			return db.Order("updated_at")
-		})
+		Preload("Message.Stamps")
 }
