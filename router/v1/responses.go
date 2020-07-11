@@ -124,39 +124,6 @@ func (h *Handlers) formatUserDetail(user model.UserInfo, tagList []model.UserTag
 	return res, nil
 }
 
-type messageResponse struct {
-	MessageID       uuid.UUID            `json:"messageId"`
-	UserID          uuid.UUID            `json:"userId"`
-	ParentChannelID uuid.UUID            `json:"parentChannelId"`
-	Content         string               `json:"content"`
-	CreatedAt       time.Time            `json:"createdAt"`
-	UpdatedAt       time.Time            `json:"updatedAt"`
-	Pin             bool                 `json:"pin"`
-	Reported        bool                 `json:"reported"`
-	StampList       []model.MessageStamp `json:"stampList"`
-}
-
-func formatMessage(m *model.Message) *messageResponse {
-	return &messageResponse{
-		MessageID:       m.ID,
-		UserID:          m.UserID,
-		ParentChannelID: m.ChannelID,
-		Pin:             m.Pin != nil,
-		Content:         m.Text,
-		CreatedAt:       m.CreatedAt,
-		UpdatedAt:       m.UpdatedAt,
-		StampList:       m.Stamps,
-	}
-}
-
-func formatMessages(ms []*model.Message) []*messageResponse {
-	res := make([]*messageResponse, len(ms))
-	for i, m := range ms {
-		res[i] = formatMessage(m)
-	}
-	return res
-}
-
 type webhookResponse struct {
 	WebhookID   string    `json:"webhookId"`
 	BotUserID   string    `json:"botUserId"`

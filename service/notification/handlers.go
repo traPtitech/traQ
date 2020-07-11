@@ -605,12 +605,12 @@ func channelViewerMulticast(ns *Service, cid uuid.UUID, ssePayload *sse.EventDat
 }
 
 func messageViewerMulticast(ns *Service, mid uuid.UUID, ssePayload *sse.EventData) {
-	m, err := ns.repo.GetMessageByID(mid)
+	m, err := ns.mm.Get(mid)
 	if err != nil {
 		ns.logger.Error("failed to GetMessageByID", zap.Error(err), zap.Stringer("messageId", mid)) // 失敗
 		return
 	}
-	channelViewerMulticast(ns, m.ChannelID, ssePayload)
+	channelViewerMulticast(ns, m.GetChannelID(), ssePayload)
 }
 
 func broadcast(ns *Service, ssePayload *sse.EventData) {

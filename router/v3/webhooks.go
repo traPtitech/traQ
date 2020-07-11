@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -202,9 +203,6 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	if !h.ChannelManager.PublicChannelTree().IsChannelPresent(channelID) {
 		return herror.BadRequest("invalid channel")
 	}
-	if h.ChannelManager.PublicChannelTree().IsArchivedChannel(channelID) {
-		return herror.BadRequest(fmt.Sprintf("channel #%s has been archived", h.ChannelManager.PublicChannelTree().GetChannelPath(channelID)))
-	}
 
 	// 埋め込み変換
 	if isTrue(c.QueryParam("embed")) {
@@ -212,8 +210,13 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	// メッセージ投稿
-	if _, err := h.Repo.CreateMessage(w.GetBotUserID(), channelID, string(body)); err != nil {
-		return herror.InternalServerError(err)
+	if _, err := h.MessageManager.Create(channelID, w.GetBotUserID(), string(body)); err != nil {
+		switch err {
+		case message.ErrChannelArchived:
+			return herror.BadRequest("the channel has been archived")
+		default:
+			return herror.InternalServerError(err)
+		}
 	}
 
 	return c.NoContent(http.StatusNoContent)
@@ -239,5 +242,5 @@ func (h *Handlers) GetWebhookMessages(c echo.Context) error {
 		return err
 	}
 
-	return serveMessages(c, h.Repo, req.convertU(w.GetBotUserID()))
+	return serveMessages(c, h.MessageManager, req.convertU(w.GetBotUserID()))
 }
