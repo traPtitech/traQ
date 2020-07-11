@@ -25,8 +25,7 @@ type manager struct {
 }
 
 func NewMessageManager(repo repository.Repository, cm channel.Manager, logger *zap.Logger) (Manager, error) {
-	var man Manager
-	man = &manager{
+	return &manager{
 		CM: cm,
 		R:  repo,
 		L:  logger.Named("message_manager"),
@@ -44,8 +43,7 @@ func NewMessageManager(repo repository.Repository, cm channel.Manager, logger *z
 				return &message{Model: m}, &cacheTTL, nil
 			}).
 			Build(),
-	}
-	return man, nil
+	}, nil
 }
 
 func (m *manager) Get(id uuid.UUID) (Message, error) {
@@ -122,7 +120,7 @@ func (m *manager) create(channelID, userID uuid.UUID, content string) (Message, 
 
 	// メモリにキャッシュ
 	wrapped := &message{Model: msg}
-	m.cache.SetWithExpire(msg.ID, wrapped, cacheTTL)
+	_ = m.cache.SetWithExpire(msg.ID, wrapped, cacheTTL)
 	return wrapped, nil
 }
 
