@@ -180,7 +180,12 @@ func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) 
 		} else if exists {
 			return ErrAlreadyExists
 		}
-		return tx.Create(cfm).Error
+
+		if err := tx.Create(cfm).Error; err != nil {
+			return err
+		}
+
+		return tx.Scopes(messagePreloads).First(&cfm.Message, model.Message{ID: cfm.MessageID}).Error
 	})
 	if err != nil {
 		return cfm, err
