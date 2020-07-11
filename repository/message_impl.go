@@ -354,20 +354,6 @@ func (repo *GormRepository) GetChannelLatestMessagesByUserID(userID uuid.UUID, l
 	return result, repo.db.Raw(query).Scan(&result).Error
 }
 
-// GetArchivedMessagesByID implements MessageRepository interface.
-func (repo *GormRepository) GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error) {
-	r := make([]*model.ArchivedMessage, 0)
-	if messageID == uuid.Nil {
-		return r, nil
-	}
-	err := repo.db.
-		Where(&model.ArchivedMessage{MessageID: messageID}).
-		Order("date_time").
-		Find(&r).
-		Error
-	return r, err
-}
-
 // AddStampToMessage implements MessageRepository interface.
 func (repo *GormRepository) AddStampToMessage(messageID, stampID, userID uuid.UUID, count int) (ms *model.MessageStamp, err error) {
 	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {

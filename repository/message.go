@@ -87,12 +87,6 @@ type MessageRepository interface {
 	// 成功した場合、メッセージの配列とnilを返します。負のlimitは無視されます。
 	// DBによるエラーを返すことがあります。
 	GetChannelLatestMessagesByUserID(userID uuid.UUID, limit int, subscribeOnly bool) ([]*model.Message, error)
-	// GetArchivedMessagesByID 指定したメッセージのアーカイブメッセージを取得します
-	//
-	// 成功した場合、アーカイブメッセージの配列とnilを返します。
-	// 存在しないメッセージを指定した場合、空配列とnilを返します。
-	// DBによるエラーを返すことがあります。
-	GetArchivedMessagesByID(messageID uuid.UUID) ([]*model.ArchivedMessage, error)
 	// AddStampToMessage 指定したメッセージに指定したユーザーの指定したスタンプを追加します
 	//
 	// 成功した場合、そのメッセージスタンプとnilを返します。

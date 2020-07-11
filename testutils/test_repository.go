@@ -1133,10 +1133,6 @@ func (repo *TestRepository) GetMessages(query repository.MessagesQuery) (message
 	return
 }
 
-func (repo *TestRepository) GetArchivedMessagesByID(uuid.UUID) ([]*model.ArchivedMessage, error) {
-	panic("implement me")
-}
-
 func (repo *TestRepository) SetMessageUnread(userID, messageID uuid.UUID, _ bool) error {
 	if userID == uuid.Nil || messageID == uuid.Nil {
 		return repository.ErrNilID
@@ -1313,7 +1309,7 @@ func (repo *TestRepository) PinMessage(uuid.UUID, uuid.UUID) (*model.Pin, error)
 	panic("implement me")
 }
 
-func (repo *TestRepository) UnpinMessage(uuid.UUID, uuid.UUID) error {
+func (repo *TestRepository) UnpinMessage(uuid.UUID) (*model.Pin, error) {
 	panic("implement me")
 }
 

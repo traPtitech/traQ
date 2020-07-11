@@ -236,48 +236,6 @@ func TestRepositoryImpl_GetChannelLatestMessagesByUserID(t *testing.T) {
 	})
 }
 
-func TestRepositoryImpl_GetArchivedMessagesByID(t *testing.T) {
-	t.Parallel()
-	repo, _, require, user, channel := setupWithUserAndChannel(t, common3)
-
-	cases := []string{
-		"v0",
-		"v1",
-		"v2",
-		"v3",
-		"v4",
-		"v5",
-	}
-
-	m, err := repo.CreateMessage(user.GetID(), channel.ID, cases[0])
-	require.NoError(err)
-	for i := 1; i < len(cases); i++ {
-		require.NoError(repo.UpdateMessage(m.ID, cases[i]))
-	}
-
-	t.Run("Nil id", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		r, err := repo.GetArchivedMessagesByID(uuid.Nil)
-		if assert.NoError(err) {
-			assert.Len(r, 0)
-		}
-	})
-
-	t.Run("Success", func(t *testing.T) {
-		t.Parallel()
-		assert := assert.New(t)
-
-		r, err := repo.GetArchivedMessagesByID(m.ID)
-		if assert.NoError(err) && assert.Len(r, 5) {
-			for i, v := range r {
-				assert.Equal(cases[i], v.Text)
-			}
-		}
-	})
-}
-
 func TestRepositoryImpl_AddStampToMessage(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common3)
