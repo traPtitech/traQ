@@ -312,7 +312,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiActivity := api.Group("/activity")
 		{
-			apiActivity.GET("/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
+			apiActivity.GET("/latest-messages", gone)
 		}
 		apiWebRTC := api.Group("/webrtc")
 		{
