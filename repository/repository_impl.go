@@ -8,7 +8,15 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/gormutil"
 	"go.uber.org/zap"
+	"time"
 )
+
+func init() {
+	// DBにはnanosecondを保存できないため、microsecondまでprecisionを予め落とす
+	gorm.NowFunc = func() time.Time {
+		return time.Now().Truncate(time.Microsecond)
+	}
+}
 
 // GormRepository リポジトリ実装
 type GormRepository struct {
