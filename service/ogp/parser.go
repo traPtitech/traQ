@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/dyatlov/go-opengraph/opengraph"
 	"golang.org/x/net/html"
+	"golang.org/x/net/html/charset"
 	"golang.org/x/sync/semaphore"
 	"net/http"
 	"net/url"
@@ -49,7 +50,12 @@ func ParseMetaForURL(url *url.URL) (*opengraph.OpenGraph, *DefaultPageMeta, erro
 		return nil, nil, ErrContentTypeNotSupported
 	}
 
-	doc, err := html.Parse(resp.Body)
+	// Decode charset to UTF-8
+	decodedReader, err := charset.NewReader(resp.Body, resp.Header.Get("Content-Type"))
+	if err != nil {
+		return nil, nil, ErrParse
+	}
+	doc, err := html.Parse(decodedReader)
 	if err != nil {
 		return nil, nil, ErrParse
 	}
