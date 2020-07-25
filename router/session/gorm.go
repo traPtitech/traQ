@@ -284,7 +284,7 @@ func (ss *sessionStore) RevokeSessionsByUserID(userID uuid.UUID) error {
 	if err := ss.db.Find(&rs, &model.SessionRecord{UserID: userID}).Error; err != nil {
 		return err
 	}
-	if err := ss.db.Delete(&model.SessionRecord{UserID: userID}).Error; err != nil {
+	if err := ss.db.Delete(&model.SessionRecord{}, "user_id = ?", userID).Error; err != nil {
 		return err
 	}
 
