@@ -27,7 +27,7 @@ require (
 	github.com/jinzhu/gorm v1.9.15
 	github.com/json-iterator/go v1.1.10
 	github.com/labstack/echo/v4 v4.1.14
-	github.com/leandro-lugaresi/hub v1.1.0
+	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/ncw/swift v1.0.52
