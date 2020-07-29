@@ -458,6 +458,13 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 				},
 			},
 			{
+				ID: cABCE,
+				Args: repository.UpdateChannelArgs{
+					UpdaterID: uuid.Must(uuid.NewV4()),
+					Parent:    optional.UUIDFrom(cABCD),
+				},
+			},
+			{
 				ID: cEFGHI,
 				Args: repository.UpdateChannelArgs{
 					UpdaterID:          uuid.Must(uuid.NewV4()),
@@ -469,7 +476,8 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 				},
 			},
 		}
-		for i, c := range cases {
+		for i, cc := range cases {
+			c := cc
 			t.Run(strconv.Itoa(i), func(t *testing.T) {
 				t.Parallel()
 				ctrl := gomock.NewController(t)
