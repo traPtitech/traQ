@@ -13,7 +13,9 @@ import (
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/set"
 	"go.uber.org/zap"
+	"sort"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
@@ -458,6 +460,13 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 				},
 			},
 			{
+				ID: cABCE,
+				Args: repository.UpdateChannelArgs{
+					UpdaterID: uuid.Must(uuid.NewV4()),
+					Parent:    optional.UUIDFrom(cABCD),
+				},
+			},
+			{
 				ID: cEFGHI,
 				Args: repository.UpdateChannelArgs{
 					UpdaterID:          uuid.Must(uuid.NewV4()),
@@ -470,6 +479,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 			},
 		}
 		for i, c := range cases {
+			c := c
 			t.Run(strconv.Itoa(i), func(t *testing.T) {
 				t.Parallel()
 				ctrl := gomock.NewController(t)
@@ -547,6 +557,12 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 				if assert.NoError(t, err) {
 					v, err := cm.GetChannel(c.ID)
 					require.NoError(t, err)
+					sort.Slice(v.ChildrenID, func(i, j int) bool {
+						return strings.Compare(v.ChildrenID[i].String(), v.ChildrenID[j].String()) > 0
+					})
+					sort.Slice(new.ChildrenID, func(i, j int) bool {
+						return strings.Compare(new.ChildrenID[i].String(), new.ChildrenID[j].String()) > 0
+					})
 					assert.EqualValues(t, &new, v)
 				}
 			})

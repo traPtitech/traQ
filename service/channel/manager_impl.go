@@ -194,7 +194,8 @@ func (m *managerImpl) UpdateChannel(id uuid.UUID, args repository.UpdateChannelA
 						return ErrTooDeepChannel // ループ検出
 					}
 				}
-				if len(ascs)+1+m.T.getChannelDepth(ch.ID) > m.MaxChannelDepth {
+				// 親チャンネル + 自分を含めた子チャンネルの深さ
+				if len(ascs)+m.T.getChannelDepth(ch.ID) > m.MaxChannelDepth {
 					return ErrTooDeepChannel
 				}
 			}
