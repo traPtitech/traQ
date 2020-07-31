@@ -76,6 +76,8 @@ type ChannelRepository interface {
 	//
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
 	UpdateChannel(channelID uuid.UUID, args UpdateChannelArgs) (*model.Channel, error)
+	// ArchiveChannels 指定したチャンネルをアーカイブします
+	ArchiveChannels(ids []uuid.UUID) error
 	// GetChannel 指定したチャンネルを取得します
 	//
 	// 存在しないチャンネルを指定した場合、ErrNotFoundを返します。
