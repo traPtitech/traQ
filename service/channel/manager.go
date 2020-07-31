@@ -27,6 +27,9 @@ type Manager interface {
 
 	ChangeChannelSubscriptions(channelID uuid.UUID, subscriptions map[uuid.UUID]model.ChannelSubscribeLevel, keepOffLevel bool, updaterID uuid.UUID) error
 
+	ArchiveChannel(id uuid.UUID, updaterID uuid.UUID) error
+	UnarchiveChannel(id uuid.UUID, updaterID uuid.UUID) error
+
 	GetDMChannel(user1, user2 uuid.UUID) (*model.Channel, error)
 	GetDMChannelMembers(id uuid.UUID) ([]uuid.UUID, error)
 	GetDMChannelMapping(userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error)

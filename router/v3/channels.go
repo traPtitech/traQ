@@ -106,10 +106,31 @@ func (h *Handlers) EditChannel(c echo.Context) error {
 		return err
 	}
 
+	if req.Archived.Valid {
+		if req.Archived.Bool {
+			if err := h.ChannelManager.ArchiveChannel(channelID, getRequestUserID(c)); err != nil {
+				switch err {
+				case channel.ErrInvalidChannel:
+					return herror.BadRequest("invalid channel id")
+				default:
+					return herror.InternalServerError(err)
+				}
+			}
+		} else {
+			if err := h.ChannelManager.UnarchiveChannel(channelID, getRequestUserID(c)); err != nil {
+				switch err {
+				case channel.ErrInvalidParentChannel:
+					return herror.BadRequest("the parent channel has been archived")
+				default:
+					return herror.InternalServerError(err)
+				}
+			}
+		}
+	}
+
 	args := repository.UpdateChannelArgs{
 		UpdaterID:          getRequestUserID(c),
 		Name:               req.Name,
-		Visibility:         optional.NewBool(!req.Archived.Bool, req.Archived.Valid),
 		ForcedNotification: req.Force,
 		Parent:             req.Parent,
 	}
