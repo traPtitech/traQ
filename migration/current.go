@@ -31,6 +31,7 @@ func Migrations() []*gormigrate.Migration {
 		v19(), // httpセッション管理テーブル変更
 		v20(), // パーミッション周りの調整
 		v21(), // OGPキャッシュ追加
+		v22(), // BOTへのWebRTCパーミッションの付与
 	}
 }
 
