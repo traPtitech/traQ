@@ -83,11 +83,12 @@ func (mr *MockChannelRepositoryMockRecorder) UpdateChannel(channelID, args inter
 }
 
 // ArchiveChannels mocks base method
-func (m *MockChannelRepository) ArchiveChannels(ids []uuid.UUID) error {
+func (m *MockChannelRepository) ArchiveChannels(ids []uuid.UUID) ([]*model.Channel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ArchiveChannels", ids)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].([]*model.Channel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // ArchiveChannels indicates an expected call of ArchiveChannels

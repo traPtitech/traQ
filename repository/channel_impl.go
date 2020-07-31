@@ -148,8 +148,8 @@ func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChanne
 }
 
 // ArchiveChannels implements ChannelRepository interface.
-func (repo *GormRepository) ArchiveChannels(ids []uuid.UUID) error {
-	var changed []uuid.UUID
+func (repo *GormRepository) ArchiveChannels(ids []uuid.UUID) ([]*model.Channel, error) {
+	var changed []*model.Channel
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		for _, id := range ids {
 			if id != uuid.Nil {
@@ -157,30 +157,33 @@ func (repo *GormRepository) ArchiveChannels(ids []uuid.UUID) error {
 				if err := tx.First(&ch, &model.Channel{ID: id}).Error; err != nil {
 					return err
 				}
-				if !ch.IsPublic || !ch.IsVisible {
+				if !ch.IsVisible {
 					continue
 				}
 				if err := tx.Model(&ch).Updates(map[string]interface{}{"is_visible": false}).Error; err != nil {
 					return err
 				}
-				changed = append(changed, id)
+				if err := tx.First(&ch, &model.Channel{ID: id}).Error; err != nil {
+					return err
+				}
+				changed = append(changed, &ch)
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	for _, id := range changed {
+	for _, ch := range changed {
 		repo.hub.Publish(hub.Message{
 			Name: event.ChannelUpdated,
 			Fields: hub.Fields{
-				"channel_id": id,
-				"private":    false,
+				"channel_id": ch.ID,
+				"private":    !ch.IsPublic,
 			},
 		})
 	}
-	return nil
+	return changed, nil
 }
 
 // GetChannel implements ChannelRepository interface.
