@@ -392,7 +392,7 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 		repo := mock_repository.NewMockChannelRepository(ctrl)
 		cm := initCM(t, repo)
 
-		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Parent: optional.UUIDFrom(cABBC)})
+		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Parent: optional.UUIDFrom(cABCE)})
 		assert.EqualError(t, err, ErrTooDeepChannel.Error())
 	})
 
