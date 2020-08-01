@@ -321,7 +321,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				}
 			}
 		}
-		apiWebRTC := api.Group("/webrtc", requires(permission.WebRTC), blockBot)
+		apiWebRTC := api.Group("/webrtc", requires(permission.WebRTC))
 		{
 			apiWebRTC.GET("/state", h.GetWebRTCState)
 			apiWebRTC.POST("/authenticate", h.PostWebRTCAuthenticate)

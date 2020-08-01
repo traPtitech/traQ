@@ -37,4 +37,5 @@ var botPerms = []permission.Permission{
 	permission.DeleteFile,
 	permission.BotActionJoinChannel,
 	permission.BotActionLeaveChannel,
+	permission.WebRTC,
 }
