@@ -224,7 +224,7 @@ func (m *managerImpl) UpdateChannel(id uuid.UUID, args repository.UpdateChannelA
 	if args.Name.Valid || args.Parent.Valid {
 		m.T.move(id, args.Parent, args.Name)
 	}
-	m.T.update(id, ch)
+	m.T.updateSingle(id, ch)
 
 	updated := time.Now()
 	for eventType, detail := range eventRecords {
@@ -303,7 +303,7 @@ func (m *managerImpl) UnarchiveChannel(id uuid.UUID, updaterID uuid.UUID) error 
 		return fmt.Errorf("failed to UpdateChannel: %w", err)
 	}
 
-	m.T.update(id, ch)
+	m.T.updateSingle(id, ch)
 
 	m.recordChannelEvent(ch.ID, model.ChannelEventVisibilityChanged, model.ChannelEventDetail{
 		"userId":     updaterID,

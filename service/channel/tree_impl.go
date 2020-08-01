@@ -241,6 +241,18 @@ func (ct *treeImpl) move(id uuid.UUID, newParent optional.UUID, newName optional
 	ct.regenerateJSON()
 }
 
+func (ct *treeImpl) updateSingle(id uuid.UUID, ch *model.Channel) {
+	ct.update(id, ch)
+	ct.regenerateJSON()
+}
+
+func (ct *treeImpl) updateMultiple(chs []*model.Channel) {
+	for _, ch := range chs {
+		ct.update(ch.ID, ch)
+	}
+	ct.regenerateJSON()
+}
+
 func (ct *treeImpl) update(id uuid.UUID, ch *model.Channel) {
 	n, ok := ct.nodes[id]
 	if !ok {
@@ -254,25 +266,6 @@ func (ct *treeImpl) update(id uuid.UUID, ch *model.Channel) {
 	n.updaterID = ch.UpdaterID
 	n.updatedAt = ch.UpdatedAt
 	n.Unlock()
-	ct.regenerateJSON()
-}
-
-func (ct *treeImpl) updateMultiple(chs []*model.Channel) {
-	for _, ch := range chs {
-		n, ok := ct.nodes[ch.ID]
-		if !ok {
-			panic("assert !ok = false")
-		}
-
-		n.Lock()
-		n.topic = ch.Topic
-		n.archived = !ch.IsVisible
-		n.force = ch.IsForced
-		n.updaterID = ch.UpdaterID
-		n.updatedAt = ch.UpdatedAt
-		n.Unlock()
-	}
-	ct.regenerateJSON()
 }
 
 func (ct *treeImpl) recalculatePath(n *channelNode) {
