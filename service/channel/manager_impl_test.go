@@ -386,6 +386,16 @@ func TestManagerImpl_UpdateChannel(t *testing.T) {
 		assert.EqualError(t, err, ErrInvalidParentChannel.Error())
 	})
 
+	t.Run("ErrInvalidParentChannel (archived)", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		err := cm.UpdateChannel(cA, repository.UpdateChannelArgs{Parent: optional.UUIDFrom(cABBC)})
+		assert.EqualError(t, err, ErrInvalidParentChannel.Error())
+	})
+
 	t.Run("ErrTooDeepChannel (loop)", func(t *testing.T) {
 		t.Parallel()
 		ctrl := gomock.NewController(t)
@@ -657,6 +667,156 @@ func TestManagerImpl_ChangeChannelSubscriptions(t *testing.T) {
 				cm.P.Wait()
 				assert.NoError(t, err)
 			})
+		}
+	})
+}
+
+func TestManagerImpl_ArchiveChannel(t *testing.T) {
+	t.Parallel()
+
+	t.Run("ErrChannelNotFound", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		repo.EXPECT().
+			GetChannel(gomock.Any()).
+			Return(nil, repository.ErrNotFound).
+			AnyTimes()
+
+		err := cm.ArchiveChannel(cNotFound, uuid.Nil)
+		assert.EqualError(t, err, ErrChannelNotFound.Error())
+	})
+
+	t.Run("ErrInvalidChannel", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		dm1 := &model.Channel{
+			ID:        uuid.NewV3(uuid.Nil, "c 1-1"),
+			Name:      "a",
+			ParentID:  dmChannelRootUUID,
+			IsForced:  false,
+			IsPublic:  false,
+			IsVisible: true,
+		}
+
+		repo.EXPECT().
+			GetChannel(dm1.ID).
+			Return(dm1, nil).
+			AnyTimes()
+
+		err := cm.ArchiveChannel(dm1.ID, uuid.Nil)
+		assert.EqualError(t, err, ErrInvalidChannel.Error())
+	})
+
+	t.Run("noop (already archived)", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		err := cm.ArchiveChannel(cABBC, uuid.Nil)
+		assert.NoError(t, err)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		expects := []*model.Channel{
+			{ID: cA, Name: "a", ParentID: uuid.Nil, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cAB, Name: "b", ParentID: cA, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cABC, Name: "c", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cABCD, Name: "d", ParentID: cABC, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cABCE, Name: "e", ParentID: cABC, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cABF, Name: "f", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cABFA, Name: "a", ParentID: cABF, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+			{ID: cAD, Name: "d", ParentID: cA, Topic: "", IsForced: false, IsPublic: true, IsVisible: false},
+		}
+		repo.EXPECT().
+			ArchiveChannels(gomock.Len(len(expects))).
+			Return(expects, nil).
+			Times(1)
+		repo.EXPECT().
+			RecordChannelEvent(gomock.Any(), model.ChannelEventVisibilityChanged, gomock.Any(), gomock.Any()).
+			Return(nil).
+			Times(len(expects))
+
+		err := cm.ArchiveChannel(cA, uuid.Nil)
+		cm.P.Wait()
+		if assert.NoError(t, err) {
+			for _, expect := range expects {
+				assert.True(t, cm.PublicChannelTree().IsArchivedChannel(expect.ID))
+			}
+			assert.False(t, cm.PublicChannelTree().IsArchivedChannel(cE))
+		}
+	})
+}
+
+func TestManagerImpl_UnarchiveChannel(t *testing.T) {
+	t.Parallel()
+
+	t.Run("ErrChannelNotFound", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		repo.EXPECT().
+			GetChannel(gomock.Any()).
+			Return(nil, repository.ErrNotFound).
+			AnyTimes()
+
+		err := cm.UnarchiveChannel(cNotFound, uuid.Nil)
+		assert.EqualError(t, err, ErrChannelNotFound.Error())
+	})
+
+	t.Run("noop (already not archived)", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		err := cm.UnarchiveChannel(cA, uuid.Nil)
+		assert.NoError(t, err)
+	})
+
+	t.Run("ErrInvalidParentChannel", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		err := cm.UnarchiveChannel(cABBC, uuid.Nil)
+		assert.EqualError(t, err, ErrInvalidParentChannel.Error())
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockChannelRepository(ctrl)
+		cm := initCM(t, repo)
+
+		repo.EXPECT().
+			UpdateChannel(cABB, repository.UpdateChannelArgs{Visibility: optional.BoolFrom(true)}).
+			Return(&model.Channel{ID: cABB, Name: "b", ParentID: cAB, Topic: "", IsForced: false, IsPublic: true, IsVisible: true}, nil).
+			Times(1)
+		repo.EXPECT().
+			RecordChannelEvent(gomock.Any(), model.ChannelEventVisibilityChanged, gomock.Any(), gomock.Any()).
+			Return(nil).
+			Times(1)
+
+		err := cm.UnarchiveChannel(cABB, uuid.Nil)
+		cm.P.Wait()
+		if assert.NoError(t, err) {
+			assert.False(t, cm.PublicChannelTree().IsArchivedChannel(cABB))
+			assert.True(t, cm.PublicChannelTree().IsArchivedChannel(cABBC))
 		}
 	})
 }
