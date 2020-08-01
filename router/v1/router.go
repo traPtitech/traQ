@@ -166,8 +166,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiChannelsCid.GET("/viewers", h.GetChannelViewers, requires(permission.GetChannel))
 				apiChannelsCidTopic := apiChannelsCid.Group("/topic")
 				{
-					apiChannelsCidTopic.GET("", h.GetTopic, requires(permission.GetChannel))
-					apiChannelsCidTopic.PUT("", h.PutTopic, requires(permission.EditChannelTopic))
+					apiChannelsCidTopic.GET("", gone)
+					apiChannelsCidTopic.PUT("", gone)
 				}
 				apiChannelsCidMessages := apiChannelsCid.Group("/messages")
 				{

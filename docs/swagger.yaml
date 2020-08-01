@@ -919,41 +919,21 @@ paths:
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
+      deprecated: true
       tags:
         - channel
-      operationId: getChannelTopic
-      description: チャンネルの説明を取得します。
-      security:
-        - traqOAuth2:
-            - read
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: '+| 正常に取得ができました。 チャンネルトピックを返します。'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChannelTopic'
-        '404':
-          description: '+| 取得に失敗しました。 指定したチャンネルは存在しません。'
+        '410':
+          description: このAPIは削除されました
     put:
+      deprecated: true
       tags:
         - channel
-      operationId: changeChannelTopic
-      description: チャンネルの説明を変更します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SetChannelTopic'
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に更新できました。
-        '404':
-          description: '+| 更新に失敗しました。 指定したチャンネルは存在しません。'
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/stats':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'

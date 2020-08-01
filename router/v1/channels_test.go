@@ -2,11 +2,8 @@ package v1
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
-	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"testing"
@@ -175,85 +172,5 @@ func TestHandlers_GetChannelByChannelID(t *testing.T) {
 		obj.Value("private").Boolean().Equal(!pubCh.IsPublic)
 		obj.Value("dm").Boolean().Equal(pubCh.IsDMChannel())
 		obj.Value("member").Array().Empty()
-	})
-}
-
-func TestHandlers_GetTopic(t *testing.T) {
-	t.Parallel()
-	env, _, _, s, _, testUser, _ := setupWithUsers(t, common1)
-
-	pubCh := env.mustMakeChannel(t, rand)
-	topicText := "Topic test"
-	require.NoError(t, env.ChannelManager.UpdateChannel(pubCh.ID, repository.UpdateChannelArgs{
-		UpdaterID: testUser.GetID(),
-		Topic:     optional.StringFrom(topicText),
-	}))
-
-	t.Run("NotLoggedIn", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.GET("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
-			Expect().
-			Status(http.StatusUnauthorized)
-	})
-
-	t.Run("Successful1", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.GET("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
-			WithCookie(session.CookieName, s).
-			Expect().
-			Status(http.StatusOK).
-			JSON().
-			Object().
-			Value("text").
-			String().
-			Equal(topicText)
-	})
-}
-
-func TestHandlers_PutTopic(t *testing.T) {
-	t.Parallel()
-	env, _, _, s, _, testUser, _ := setupWithUsers(t, common1)
-
-	pubCh := env.mustMakeChannel(t, rand)
-	topicText := "Topic test"
-	require.NoError(t, env.ChannelManager.UpdateChannel(pubCh.ID, repository.UpdateChannelArgs{
-		UpdaterID: testUser.GetID(),
-		Topic:     optional.StringFrom(topicText),
-	}))
-	newTopic := "new Topic"
-
-	t.Run("NotLoggedIn", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.PUT("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
-			WithJSON(map[string]string{"text": newTopic}).
-			Expect().
-			Status(http.StatusUnauthorized)
-	})
-
-	t.Run("bad request", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.PUT("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
-			WithCookie(session.CookieName, s).
-			WithJSON(map[string]interface{}{"text": true}).
-			Expect().
-			Status(http.StatusBadRequest)
-	})
-
-	t.Run("Successful1", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.PUT("/api/1.0/channels/{channelID}/topic", pubCh.ID.String()).
-			WithCookie(session.CookieName, s).
-			WithJSON(map[string]string{"text": newTopic}).
-			Expect().
-			Status(http.StatusNoContent)
-
-		ch, err := env.ChannelManager.GetChannel(pubCh.ID)
-		require.NoError(t, err)
-		assert.Equal(t, newTopic, ch.Topic)
 	})
 }
