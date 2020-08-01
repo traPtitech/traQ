@@ -54,6 +54,9 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
+    volumes:
+      - ./dev/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./dev/log4j2.properties:/usr/share/elasticsearch/config/log4j2.properties
 
   adminer:
     image: adminer:4.7.5
