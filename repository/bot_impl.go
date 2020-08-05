@@ -373,9 +373,9 @@ func (repo *GormRepository) DeleteBot(id uuid.UUID) error {
 		}
 
 		errs := tx.Model(&model.User{ID: b.BotUserID}).Update("status", model.UserAccountStatusDeactivated).New().
-			Delete(&model.BotJoinChannel{BotID: id}).
-			Delete(&model.OAuth2Token{ID: b.AccessTokenID}).
-			Delete(&model.Bot{ID: id}).
+			Delete(&model.BotJoinChannel{}, &model.BotJoinChannel{BotID: id}).
+			Delete(&model.OAuth2Token{}, &model.OAuth2Token{ID: b.AccessTokenID}).
+			Delete(&model.Bot{}, &model.Bot{ID: id}).
 			GetErrors()
 		if len(errs) > 0 {
 			return errs[0]
