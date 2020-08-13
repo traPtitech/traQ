@@ -127,8 +127,8 @@ var List = []Permission{
 	CreateUserGroup,
 	CreateSpecialUserGroup,
 	EditUserGroup,
-	EditAllUserGroups,
 	DeleteUserGroup,
+	AllUserGroupsAdmin,
 
 	GetUserTag,
 	EditUserTag,

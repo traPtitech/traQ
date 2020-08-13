@@ -197,7 +197,7 @@ func CheckUserGroupAdminPerm(rbac rbac.RBAC, repo repository.Repository) echo.Mi
 			user := c.Get(consts.KeyUser).(model.UserInfo)
 			g := c.Get(consts.KeyParamGroup).(*model.UserGroup)
 
-			if !g.IsAdmin(user.GetID()) && !rbac.IsGranted(user.GetRole(), permission.EditAllUserGroups) {
+			if !g.IsAdmin(user.GetID()) && !rbac.IsGranted(user.GetRole(), permission.AllUserGroupsAdmin) {
 				return herror.Forbidden()
 			}
 
