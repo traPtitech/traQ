@@ -194,10 +194,10 @@ func CheckChannelAccessPerm(rbac rbac.RBAC, cm channel.Manager) echo.MiddlewareF
 func CheckUserGroupAdminPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
+			user := c.Get(consts.KeyUser).(model.UserInfo)
 			g := c.Get(consts.KeyParamGroup).(*model.UserGroup)
 
-			if !g.IsAdmin(userID) {
+			if !g.IsAdmin(user.GetID()) && !rbac.IsGranted(user.GetRole(), permission.EditAllUserGroups) {
 				return herror.Forbidden()
 			}
 
