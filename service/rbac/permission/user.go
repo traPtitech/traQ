@@ -31,6 +31,8 @@ const (
 	EditUserGroup = Permission("edit_user_group")
 	// DeleteUserGroup ユーザーグループ削除権限
 	DeleteUserGroup = Permission("delete_user_group")
+	// AllUserGroupsAdmin すべてのユーザーグループの編集/削除権限
+	AllUserGroupsAdmin = Permission("edit_others_user_group")
 	// WebRTC WebRTC利用権限
 	WebRTC = Permission("web_rtc")
 	// GetMySessions セッションリスト取得権限
