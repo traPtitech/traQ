@@ -38,7 +38,7 @@ func MergeDefaultPageMetaAndOpenGraph(og *opengraph.OpenGraph, meta *DefaultPage
 		result.Description = og.Description
 	}
 	if len(og.Videos) > 0 {
-		result.Videos = make([]model.OgpMedia, len(og.Images))
+		result.Videos = make([]model.OgpMedia, len(og.Videos))
 		for i, video := range og.Videos {
 			// Videoは仕様上Imageと同じ構造を持つ
 			result.Videos[i] = toOgpMedia((*opengraph.Image)(video))
