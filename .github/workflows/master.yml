@@ -30,6 +30,8 @@ jobs:
     runs-on: ubuntu-18.04
     needs: [image]
     steps:
+      - name: Login GitHub Registry
+        run: docker login docker.pkg.github.com -u traPtitech -p ${{ secrets.GITHUB_TOKEN }}
       - name: Pull docker image
         run: docker pull docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG}
       - uses: homoluctus/gitrivy@v1.0.0
