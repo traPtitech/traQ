@@ -37,7 +37,7 @@ jobs:
       - uses: homoluctus/gitrivy@v1.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          image: ${{ env.IMAGE_NAME }}
+          image: docker.pkg.github.com/traptitech/traq/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
   deploy-staging:
     name: Deploy staging
     runs-on: ubuntu-latest
