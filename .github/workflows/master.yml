@@ -25,6 +25,17 @@ jobs:
         run: docker build --build-arg TRAQ_VERSION=${TRAQ_VERSION} --build-arg TRAQ_REVISION=${TRAQ_REVISION} -t docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG} .
       - name: Push image to GitHub Registry
         run: docker push docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG}
+  scan:
+    name: Scan Image Vulnerability
+    runs-on: ubuntu-18.04
+    needs: [image]
+    steps:
+      - name: Pull docker image
+        run: docker pull docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG}
+      - uses: homoluctus/gitrivy@v1.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image: ${IMAGE_NAME}
   deploy-staging:
     name: Deploy staging
     runs-on: ubuntu-latest
