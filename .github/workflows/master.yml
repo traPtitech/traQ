@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - "actions/image-scan"
 
 env:
   IMAGE_NAME: traq
@@ -47,7 +48,6 @@ jobs:
         uses: shimataro/ssh-key-action@v1
         with:
           private-key: ${{ secrets.STAGING_SSH_KEY }}
-          public-key: ${{ secrets.STAGING_SSH_KEY_PUBLIC }}
           known-hosts: ${{ secrets.STAGING_KNOWN_HOSTS }}
       - name: Deploy
         run: ssh -o LogLevel=QUIET -t ${{ secrets.STAGING_DEPLOY_USER }}@${{ secrets.STAGING_DEPLOY_HOST }} "~/deploy.sh traq-backend"
