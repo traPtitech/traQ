@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - "actions/image-scan"
 
 env:
   IMAGE_NAME: traq
@@ -17,9 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set TRAQ_VERSION env
-        run: echo ::set-env name=TRAQ_VERSION::master-SNAPSHOT
+        run: echo "TRAQ_VERSION=master-SNAPSHOT" >> $GITHUB_ENV
       - name: Set TRAQ_REVISION env
-        run: echo ::set-env name=TRAQ_REVISION::$(git rev-parse --short HEAD)
+        run: echo "TRAQ_REVISION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: Login GitHub Registry
         run: docker login docker.pkg.github.com -u traPtitech -p ${{ secrets.GITHUB_TOKEN }}
       - name: Build Image
