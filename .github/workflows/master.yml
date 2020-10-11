@@ -16,9 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set TRAQ_VERSION env
-        run: echo ::set-env name=TRAQ_VERSION::master-SNAPSHOT
+        run: echo "TRAQ_VERSION=master-SNAPSHOT" >> $GITHUB_ENV
       - name: Set TRAQ_REVISION env
-        run: echo ::set-env name=TRAQ_REVISION::$(git rev-parse --short HEAD)
+        run: echo "TRAQ_REVISION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: Login GitHub Registry
         run: docker login docker.pkg.github.com -u traPtitech -p ${{ secrets.GITHUB_TOKEN }}
       - name: Build Image
@@ -37,7 +37,7 @@ jobs:
       - uses: homoluctus/gitrivy@v1.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          image: ${{ env.IMAGE_NAME }}
+          image: docker.pkg.github.com/traptitech/traq/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
   deploy-staging:
     name: Deploy staging
     runs-on: ubuntu-latest
@@ -47,7 +47,6 @@ jobs:
         uses: shimataro/ssh-key-action@v1
         with:
           private-key: ${{ secrets.STAGING_SSH_KEY }}
-          public-key: ${{ secrets.STAGING_SSH_KEY_PUBLIC }}
           known-hosts: ${{ secrets.STAGING_KNOWN_HOSTS }}
       - name: Deploy
         run: ssh -o LogLevel=QUIET -t ${{ secrets.STAGING_DEPLOY_USER }}@${{ secrets.STAGING_DEPLOY_HOST }} "~/deploy.sh traq-backend"
