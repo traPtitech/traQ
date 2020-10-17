@@ -309,5 +309,6 @@ const (
 	// MessageStampsUpdated メッセージに押されているスタンプが変化した。このイベントはスロットリングされています
 	// 	Fields:
 	// 		message_id: uuid.UUID
+	// 		message: message.Message
 	MessageStampsUpdated = "message.stamps.updated"
 )
