@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/service/bot"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
+	"github.com/traPtitech/traQ/service/exevent"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/message"
@@ -34,6 +35,7 @@ func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage
 		counter.NewUnreadMessageCounter,
 		counter.NewMessageCounter,
 		counter.NewChannelCounter,
+		exevent.NewStampThrottler,
 		imaging.NewProcessor,
 		notification.NewService,
 		rbac2.New,

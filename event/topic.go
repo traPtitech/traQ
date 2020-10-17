@@ -305,4 +305,9 @@ const (
 	//		clip_folder_message_id: uuid.UUID
 	//		clip_folder_message: *model.ClipFolderMessage
 	ClipFolderMessageAdded = "clip_folder_message.added"
+
+	// MessageStampsUpdated メッセージに押されているスタンプが変化した。このイベントはスロットリングされています
+	// 	Fields:
+	// 		message_id: uuid.UUID
+	MessageStampsUpdated = "message.stamps.updated"
 )
