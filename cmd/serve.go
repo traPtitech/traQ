@@ -167,6 +167,7 @@ func (s *Server) Start(address string) error {
 		}
 	}()
 	s.SS.BOT.Start()
+	s.SS.StampThrottler.Start()
 	return s.Router.Start(address)
 }
 

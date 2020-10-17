@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/service/bot"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
+	"github.com/traPtitech/traQ/service/exevent"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/message"
@@ -51,6 +52,11 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 	if err != nil {
 		return nil, err
 	}
+	messageManager, err := message.NewMessageManager(repo, manager, logger)
+	if err != nil {
+		return nil, err
+	}
+	stampThrottler := exevent.NewStampThrottler(hub2, messageManager)
 	firebaseCredentialsFilePathString := provideFirebaseCredentialsFilePathString(c2)
 	client, err := newFCMClientIfAvailable(repo, logger, unreadMessageCounter, firebaseCredentialsFilePathString)
 	if err != nil {
@@ -59,10 +65,6 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 	config := provideImageProcessorConfig(c2)
 	processor := imaging.NewProcessor(config)
 	fileManager, err := file.InitFileManager(repo, fs, processor, logger)
-	if err != nil {
-		return nil, err
-	}
-	messageManager, err := message.NewMessageManager(repo, manager, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +84,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 		UnreadMessageCounter: unreadMessageCounter,
 		MessageCounter:       messageCounter,
 		ChannelCounter:       channelCounter,
+		StampThrottler:       stampThrottler,
 		FCM:                  client,
 		FileManager:          fileManager,
 		Imaging:              processor,
