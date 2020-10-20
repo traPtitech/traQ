@@ -15,7 +15,7 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fogleman/gg v1.1.0 // indirect
 	github.com/gavv/httpexpect/v2 v2.1.0
-	github.com/go-ozzo/ozzo-validation/v4 v4.2.2
+	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gofrs/uuid v3.3.0+incompatible
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
