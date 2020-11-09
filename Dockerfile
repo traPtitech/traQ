@@ -1,4 +1,4 @@
-FROM golang:1.15.3-alpine AS build
+FROM golang:1.15.4-alpine AS build
 RUN apk add --update --no-cache git
 WORKDIR /go/src/github.com/traPtitech/traQ
 COPY ./go.* ./
