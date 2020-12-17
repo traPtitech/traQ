@@ -6,6 +6,7 @@ import (
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/fcm"
 	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/ws"
@@ -16,6 +17,7 @@ import (
 type Service struct {
 	repo   repository.Repository
 	cm     channel.Manager
+	mm     message.Manager
 	fm     file.Manager
 	hub    *hub.Hub
 	logger *zap.Logger
@@ -26,10 +28,11 @@ type Service struct {
 }
 
 // NewService 通知サービスを作成して起動します
-func NewService(repo repository.Repository, cm channel.Manager, fm file.Manager, hub *hub.Hub, logger *zap.Logger, fcm fcm.Client, ws *ws.Streamer, vm *viewer.Manager, origin variable.ServerOriginString) *Service {
+func NewService(repo repository.Repository, cm channel.Manager, mm message.Manager, fm file.Manager, hub *hub.Hub, logger *zap.Logger, fcm fcm.Client, ws *ws.Streamer, vm *viewer.Manager, origin variable.ServerOriginString) *Service {
 	service := &Service{
 		repo:   repo,
 		cm:     cm,
+		mm:     mm,
 		fm:     fm,
 		hub:    hub,
 		logger: logger.Named("notification"),

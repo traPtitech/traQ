@@ -16,4 +16,5 @@ const (
 	ParamBotID          = "botID"
 	ParamClientID       = "clientID"
 	ParamClipFolderID   = "folderID"
+	ParamURL            = "url"
 )

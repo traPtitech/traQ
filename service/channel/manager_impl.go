@@ -5,6 +5,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/set"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -127,6 +128,9 @@ func (m *managerImpl) UpdateChannel(id uuid.UUID, args repository.UpdateChannelA
 
 	eventRecords := map[model.ChannelEventType]model.ChannelEventDetail{}
 	if args.Topic.Valid && ch.Topic != args.Topic.String {
+		if ch.IsArchived() {
+			return ErrChannelArchived
+		}
 		eventRecords[model.ChannelEventTopicChanged] = model.ChannelEventDetail{
 			"userId": args.UpdaterID,
 			"before": ch.Topic,
@@ -187,6 +191,11 @@ func (m *managerImpl) UpdateChannel(id uuid.UUID, args repository.UpdateChannelA
 					return ErrInvalidParentChannel
 				}
 
+				// archiveされていないチャンネルを、アーカイブされているチャンネルの傘下に移動はできない
+				if !ch.IsArchived() && m.T.isArchivedChannel(args.Parent.UUID) {
+					return ErrInvalidParentChannel
+				}
+
 				// 深さを検証
 				ascs := append(m.T.getAscendantIDs(args.Parent.UUID), args.Parent.UUID)
 				for _, id := range ascs {
@@ -194,7 +203,8 @@ func (m *managerImpl) UpdateChannel(id uuid.UUID, args repository.UpdateChannelA
 						return ErrTooDeepChannel // ループ検出
 					}
 				}
-				if len(ascs)+1+m.T.getChannelDepth(ch.ID) > m.MaxChannelDepth {
+				// 親チャンネル + 自分を含めた子チャンネルの深さ
+				if len(ascs)+m.T.getChannelDepth(ch.ID) > m.MaxChannelDepth {
 					return ErrTooDeepChannel
 				}
 			}
@@ -214,12 +224,91 @@ func (m *managerImpl) UpdateChannel(id uuid.UUID, args repository.UpdateChannelA
 	if args.Name.Valid || args.Parent.Valid {
 		m.T.move(id, args.Parent, args.Name)
 	}
-	m.T.update(id, ch)
+	m.T.updateSingle(id, ch)
 
 	updated := time.Now()
 	for eventType, detail := range eventRecords {
 		m.recordChannelEvent(id, eventType, detail, updated)
 	}
+	return nil
+}
+
+func (m *managerImpl) ArchiveChannel(id uuid.UUID, updaterID uuid.UUID) error {
+	ch, err := m.GetChannel(id)
+	if err != nil {
+		return ErrChannelNotFound
+	}
+
+	if ch.IsArchived() {
+		return nil // 既にアーカイブされている
+	}
+	if ch.IsDMChannel() {
+		return ErrInvalidChannel // DMチャンネルはアーカイブ不可
+	}
+
+	m.T.Lock()
+	defer m.T.Unlock()
+
+	var (
+		targets = []uuid.UUID{id}
+		queue   = m.T.getChildrenIDs(id)
+	)
+	for len(queue) > 0 {
+		id := queue[0]
+		queue = queue[1:]
+
+		if m.T.isArchivedChannel(id) {
+			continue
+		}
+
+		targets = append(targets, id)
+		queue = append(queue, m.T.getChildrenIDs(id)...)
+	}
+
+	chs, err := m.R.ArchiveChannels(targets)
+	if err != nil {
+		return fmt.Errorf("failed to ArchiveChannels: %w", err)
+	}
+
+	m.T.updateMultiple(chs)
+
+	updated := time.Now()
+	for _, ch := range chs {
+		m.recordChannelEvent(ch.ID, model.ChannelEventVisibilityChanged, model.ChannelEventDetail{
+			"userId":     updaterID,
+			"visibility": ch.IsVisible,
+		}, updated)
+	}
+	return nil
+}
+
+func (m *managerImpl) UnarchiveChannel(id uuid.UUID, updaterID uuid.UUID) error {
+	ch, err := m.GetChannel(id)
+	if err != nil {
+		return ErrChannelNotFound
+	}
+	if !ch.IsArchived() {
+		return nil // アーカイブされていない
+	}
+
+	m.T.Lock()
+	defer m.T.Unlock()
+
+	if m.T.isArchivedChannel(ch.ParentID) {
+		return ErrInvalidParentChannel // 親チャンネルがアーカイブされている
+	}
+
+	ch, err = m.R.UpdateChannel(id, repository.UpdateChannelArgs{Visibility: optional.BoolFrom(true)})
+	if err != nil {
+		return fmt.Errorf("failed to UpdateChannel: %w", err)
+	}
+
+	m.T.updateSingle(id, ch)
+
+	m.recordChannelEvent(ch.ID, model.ChannelEventVisibilityChanged, model.ChannelEventDetail{
+		"userId":     updaterID,
+		"visibility": ch.IsVisible,
+	}, ch.UpdatedAt)
 	return nil
 }
 

@@ -1,7 +1,6 @@
 package v1
 
 import (
-	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -103,58 +102,6 @@ func (h *Handlers) DeleteStamp(c echo.Context) error {
 	stampID := getRequestParamAsUUID(c, consts.ParamStampID)
 
 	if err := h.Repo.DeleteStamp(stampID); err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.NoContent(http.StatusNoContent)
-}
-
-// GetMessageStamps GET /messages/:messageID/stamps
-func (h *Handlers) GetMessageStamps(c echo.Context) error {
-	return c.JSON(http.StatusOK, getMessageFromContext(c).Stamps)
-}
-
-// PostMessageStampRequest POST /messages/:messageID/stamps/:stampID リクエストボディ
-type PostMessageStampRequest struct {
-	Count int `json:"count"`
-}
-
-func (r *PostMessageStampRequest) Validate() error {
-	if r.Count == 0 {
-		r.Count = 1
-	}
-	return vd.ValidateStruct(r,
-		vd.Field(&r.Count, vd.Min(1), vd.Max(100)),
-	)
-}
-
-// PostMessageStamp POST /messages/:messageID/stamps/:stampID
-func (h *Handlers) PostMessageStamp(c echo.Context) error {
-	userID := getRequestUserID(c)
-	messageID := getRequestParamAsUUID(c, consts.ParamMessageID)
-	stampID := getRequestParamAsUUID(c, consts.ParamStampID)
-
-	var req PostMessageStampRequest
-	if err := bindAndValidate(c, &req); err != nil {
-		return err
-	}
-
-	// スタンプをメッセージに押す
-	if _, err := h.Repo.AddStampToMessage(messageID, stampID, userID, req.Count); err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.NoContent(http.StatusNoContent)
-}
-
-// DeleteMessageStamp DELETE /messages/:messageID/stamps/:stampID
-func (h *Handlers) DeleteMessageStamp(c echo.Context) error {
-	userID := getRequestUserID(c)
-	messageID := getRequestParamAsUUID(c, consts.ParamMessageID)
-	stampID := getRequestParamAsUUID(c, consts.ParamStampID)
-
-	// スタンプをメッセージから削除
-	if err := h.Repo.RemoveStampFromMessage(messageID, stampID, userID); err != nil {
 		return herror.InternalServerError(err)
 	}
 

@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/testutils"
@@ -71,6 +72,7 @@ func TestMain(m *testing.M) {
 		env.SessStore = session.NewMemorySessionStore()
 		env.RBAC = testutils.NewTestRBAC()
 		env.ChannelManager, _ = channel.InitChannelManager(env.Repository, zap.NewNop())
+		env.MessageManager, _ = message.NewMessageManager(env.Repository, env.ChannelManager, zap.NewNop())
 		env.ImageProcessor = imaging.NewProcessor(imaging.Config{
 			MaxPixels:        1000 * 1000,
 			Concurrency:      1,
@@ -93,6 +95,7 @@ func TestMain(m *testing.M) {
 			OC:             counter.NewOnlineCounter(env.Hub),
 			VM:             viewer.NewManager(env.Hub),
 			ChannelManager: env.ChannelManager,
+			MessageManager: env.MessageManager,
 			FileManager:    env.FileManager,
 			SessStore:      env.SessStore,
 			Imaging:        env.ImageProcessor,
@@ -118,6 +121,7 @@ type Env struct {
 	SessStore      session.Store
 	RBAC           rbac.RBAC
 	ChannelManager channel.Manager
+	MessageManager message.Manager
 	FileManager    file.Manager
 	ImageProcessor imaging.Processor
 }

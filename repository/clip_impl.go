@@ -104,7 +104,10 @@ func (repo *GormRepository) DeleteClipFolder(folderID uuid.UUID) error {
 		if err := tx.First(&cf, &model.ClipFolder{ID: folderID}).Error; err != nil {
 			return convertError(err)
 		}
-		return tx.Delete(&model.ClipFolderMessage{FolderID: folderID}).Delete(&model.ClipFolder{ID: folderID}).Error
+		return tx.
+			Delete(&model.ClipFolderMessage{}, &model.ClipFolderMessage{FolderID: folderID}).
+			Delete(&model.ClipFolder{ID: folderID}).
+			Error
 	})
 	if err != nil {
 		return err
@@ -180,7 +183,12 @@ func (repo *GormRepository) AddClipFolderMessage(folderID, messageID uuid.UUID) 
 		} else if exists {
 			return ErrAlreadyExists
 		}
-		return tx.Create(cfm).Error
+
+		if err := tx.Create(cfm).Error; err != nil {
+			return err
+		}
+
+		return tx.Scopes(messagePreloads).First(&cfm.Message, model.Message{ID: cfm.MessageID}).Error
 	})
 	if err != nil {
 		return cfm, err
@@ -282,7 +290,5 @@ func (repo *GormRepository) GetMessageClips(userID, messageID uuid.UUID) ([]*mod
 }
 
 func clipPreloads(db *gorm.DB) *gorm.DB {
-	return db.Preload("Message").Preload("Message.Stamps", func(db *gorm.DB) *gorm.DB {
-		return db.Order("updated_at")
-	}).Preload("Message.Pin")
+	return db.Preload("Message").Preload("Message.Stamps").Preload("Message.Pin")
 }

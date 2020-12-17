@@ -3,7 +3,6 @@ package testutils
 import (
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/traPtitech/traQ/utils/optional"
 	random2 "github.com/traPtitech/traQ/utils/random"
 	"math"
 	"sort"
@@ -21,6 +20,7 @@ import (
 )
 
 type TestRepository struct {
+	EmptyTestRepository
 	Users                     map[uuid.UUID]model.User
 	UsersLock                 sync.RWMutex
 	UserGroups                map[uuid.UUID]model.UserGroup
@@ -51,6 +51,8 @@ type TestRepository struct {
 	FilesACLLock              sync.RWMutex
 	Webhooks                  map[uuid.UUID]model.WebhookBot
 	WebhooksLock              sync.RWMutex
+	OgpCache                  map[int]model.OgpCache
+	OgpCacheLock              sync.RWMutex
 }
 
 func (repo *TestRepository) GetPublicChannels() ([]*model.Channel, error) {
@@ -64,78 +66,6 @@ func (repo *TestRepository) GetPublicChannels() ([]*model.Channel, error) {
 		}
 	}
 	return result, nil
-}
-
-func (repo *TestRepository) RecordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error {
-	return nil
-}
-
-func (repo *TestRepository) LinkExternalUserAccount(uuid.UUID, repository.LinkExternalUserAccountArgs) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetLinkedExternalUserAccounts(uuid.UUID) ([]*model.ExternalProviderUser, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) UnlinkExternalUserAccount(uuid.UUID, string) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetChannelStats(uuid.UUID) (*repository.ChannelStats, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetChannelEvents(repository.ChannelEventsQuery) (events []*model.ChannelEvent, more bool, err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetUserUnreadChannels(uuid.UUID) ([]*repository.UserUnreadChannel, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetBotByBotUserID(uuid.UUID) (*model.Bot, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) UpdateBot(uuid.UUID, repository.UpdateBotArgs) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetBotEventLogs(uuid.UUID, int, int) ([]*model.BotEventLog, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) WriteBotEventLog(*model.BotEventLog) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) ReissueBotTokens(uuid.UUID) (*model.Bot, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) CreateStampPalette(string, string, model.UUIDs, uuid.UUID) (*model.StampPalette, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) UpdateStampPalette(uuid.UUID, repository.UpdateStampPaletteArgs) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetStampPalette(uuid.UUID) (sp *model.StampPalette, err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteStampPalette(uuid.UUID) (err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetStampPalettes(uuid.UUID) (sps []*model.StampPalette, err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) ExistStamps([]uuid.UUID) (err error) {
-	panic("implement me")
 }
 
 func NewTestRepository() *TestRepository {
@@ -155,13 +85,10 @@ func NewTestRepository() *TestRepository {
 		Files:                 map[uuid.UUID]model.FileMeta{},
 		FilesACL:              map[uuid.UUID]map[uuid.UUID]bool{},
 		Webhooks:              map[uuid.UUID]model.WebhookBot{},
+		OgpCache:              map[int]model.OgpCache{},
 	}
 	_, _ = r.CreateUser(repository.CreateUserArgs{Name: "traq", Password: "traq", Role: role.Admin})
 	return r
-}
-
-func (repo *TestRepository) Sync() (bool, error) {
-	panic("implement me")
 }
 
 func (repo *TestRepository) CreateUser(args repository.CreateUserArgs) (model.UserInfo, error) {
@@ -225,10 +152,6 @@ func (repo *TestRepository) GetUserByName(name string, _ bool) (model.UserInfo, 
 		}
 	}
 	return nil, repository.ErrNotFound
-}
-
-func (repo *TestRepository) GetUserByExternalID(string, string, bool) (model.UserInfo, error) {
-	panic("implement me")
 }
 
 func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]model.UserInfo, error) {
@@ -843,14 +766,6 @@ func (repo *TestRepository) GetChannel(channelID uuid.UUID) (*model.Channel, err
 	return &ch, nil
 }
 
-func (repo *TestRepository) GetDirectMessageChannel(uuid.UUID, uuid.UUID) (*model.Channel, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetDirectMessageChannelMapping(uuid.UUID) ([]*model.DMChannelMapping, error) {
-	panic("implement me")
-}
-
 func (repo *TestRepository) GetPrivateChannelMemberIDs(channelID uuid.UUID) ([]uuid.UUID, error) {
 	result := make([]uuid.UUID, 0)
 	repo.PrivateChannelMembersLock.RLock()
@@ -1130,10 +1045,6 @@ func (repo *TestRepository) GetMessages(query repository.MessagesQuery) (message
 	return
 }
 
-func (repo *TestRepository) GetArchivedMessagesByID(uuid.UUID) ([]*model.ArchivedMessage, error) {
-	panic("implement me")
-}
-
 func (repo *TestRepository) SetMessageUnread(userID, messageID uuid.UUID, _ bool) error {
 	if userID == uuid.Nil || messageID == uuid.Nil {
 		return repository.ErrNilID
@@ -1200,70 +1111,6 @@ func (repo *TestRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID
 	return nil
 }
 
-func (repo *TestRepository) GetChannelLatestMessagesByUserID(uuid.UUID, int, bool) ([]*model.Message, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) CreateMessageReport(uuid.UUID, uuid.UUID, string) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetMessageReports(int, int) ([]*model.MessageReport, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetMessageReportsByMessageID(uuid.UUID) ([]*model.MessageReport, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetMessageReportsByReporterID(uuid.UUID) ([]*model.MessageReport, error) {
-	return []*model.MessageReport{}, nil
-}
-
-func (repo *TestRepository) AddStampToMessage(uuid.UUID, uuid.UUID, uuid.UUID, int) (ms *model.MessageStamp, err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) RemoveStampFromMessage(uuid.UUID, uuid.UUID, uuid.UUID) (err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetUserStampHistory(uuid.UUID, int) (h []*repository.UserStampHistory, err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) CreateStamp(repository.CreateStampArgs) (s *model.Stamp, err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) UpdateStamp(uuid.UUID, repository.UpdateStampArgs) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetStamp(uuid.UUID) (*model.Stamp, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetStampByName(string) (*model.Stamp, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteStamp(uuid.UUID) (err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetAllStamps(bool) (stamps []*model.Stamp, err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetStampsJSON(bool) ([]byte, time.Time, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) StampExists(uuid.UUID) (bool, error) {
-	panic("implement me")
-}
-
 func (repo *TestRepository) AddStar(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return repository.ErrNilID
@@ -1304,30 +1151,6 @@ func (repo *TestRepository) GetStaredChannels(userID uuid.UUID) ([]uuid.UUID, er
 	}
 	repo.StarsLock.RUnlock()
 	return result, nil
-}
-
-func (repo *TestRepository) PinMessage(uuid.UUID, uuid.UUID) (*model.Pin, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) UnpinMessage(uuid.UUID, uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetPinnedMessageByChannelID(uuid.UUID) ([]*model.Pin, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) RegisterDevice(uuid.UUID, string) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteDeviceTokens([]string) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetDeviceTokens(set.UUID) (tokens map[uuid.UUID][]string, err error) {
-	panic("implement me")
 }
 
 func (repo *TestRepository) GetFileMeta(fileID uuid.UUID) (*model.FileMeta, error) {
@@ -1586,150 +1409,6 @@ func (repo *TestRepository) GetWebhooksByCreator(creatorID uuid.UUID) ([]model.W
 	return arr, nil
 }
 
-func (repo *TestRepository) GetClient(string) (*model.OAuth2Client, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetClients(repository.GetClientsQuery) ([]*model.OAuth2Client, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) SaveClient(*model.OAuth2Client) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) UpdateClient(string, repository.UpdateClientArgs) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteClient(string) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) SaveAuthorize(*model.OAuth2Authorize) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetAuthorize(string) (*model.OAuth2Authorize, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteAuthorize(string) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) IssueToken(*model.OAuth2Client, uuid.UUID, string, model.AccessScopes, int, bool) (*model.OAuth2Token, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetTokenByID(uuid.UUID) (*model.OAuth2Token, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteTokenByID(uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetTokenByAccess(string) (*model.OAuth2Token, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteTokenByAccess(string) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetTokenByRefresh(string) (*model.OAuth2Token, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteTokenByRefresh(string) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetTokensByUser(uuid.UUID) ([]*model.OAuth2Token, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteTokenByUser(uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteTokenByClient(string) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) CreateBot(string, string, string, uuid.UUID, uuid.UUID, string) (*model.Bot, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetBotByID(uuid.UUID) (*model.Bot, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetBotByCode(string) (*model.Bot, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetBots(repository.BotsQuery) ([]*model.Bot, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) ChangeBotState(uuid.UUID, model.BotState) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteBot(uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) AddBotToChannel(uuid.UUID, uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) RemoveBotFromChannel(uuid.UUID, uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetParticipatingChannelIDsByBot(uuid.UUID) ([]uuid.UUID, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) CreateClipFolder(uuid.UUID, string, string) (*model.ClipFolder, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) UpdateClipFolder(uuid.UUID, optional.String, optional.String) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteClipFolder(uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) DeleteClipFolderMessage(uuid.UUID, uuid.UUID) error {
-	panic("implement me")
-}
-
-func (repo *TestRepository) AddClipFolderMessage(uuid.UUID, uuid.UUID) (*model.ClipFolderMessage, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetClipFoldersByUserID(uuid.UUID) ([]*model.ClipFolder, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetClipFolder(uuid.UUID) (*model.ClipFolder, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetClipFolderMessages(uuid.UUID, repository.ClipFolderMessageQuery) (messages []*model.ClipFolderMessage, more bool, err error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetMessageClips(uuid.UUID, uuid.UUID) ([]*model.ClipFolderMessage, error) {
-	panic("implement me")
-}
-
-func (repo *TestRepository) GetFileMetas(repository.FilesQuery) (result []*model.FileMeta, more bool, err error) {
-	panic("implement me")
+func (repo *TestRepository) RecordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) error {
+	return nil
 }

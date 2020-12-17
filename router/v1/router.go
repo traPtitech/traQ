@@ -18,10 +18,11 @@ import (
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/file"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/viewer"
-	"github.com/traPtitech/traQ/utils/message"
+	mutil "github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
@@ -49,8 +50,9 @@ type Handlers struct {
 	Imaging        imaging2.Processor
 	SessStore      session.Store
 	ChannelManager channel.Manager
+	MessageManager message.Manager
 	FileManager    file.Manager
-	Replacer       *message.Replacer
+	Replacer       *mutil.Replacer
 
 	emojiJSONCache     bytes.Buffer `wire:"-"`
 	emojiJSONTime      time.Time    `wire:"-"`
@@ -64,8 +66,7 @@ type Handlers struct {
 func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
-	bodyLimit := middlewares.RequestBodyLengthLimit
-	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager)
+	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager, h.MessageManager)
 	blockBot := middlewares.BlockBot(h.Repo)
 	nologin := middlewares.NoLogin(h.SessStore)
 
@@ -73,7 +74,6 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
 	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.FileManager)
 	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC, h.Repo)
-	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.ChannelManager)
 	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.ChannelManager)
 
 	gone := func(c echo.Context) error { return herror.HTTPError(http.StatusGone, "this api has been deleted") }
@@ -127,8 +127,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersUID.PATCH("", h.PatchUserByID, requires(permission.EditOtherUsers))
 				apiUsersUID.PUT("/status", h.PutUserStatus, requires(permission.EditOtherUsers))
 				apiUsersUID.PUT("/password", h.PutUserPassword, requires(permission.EditOtherUsers))
-				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage))
-				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
+				apiUsersUID.GET("/messages", gone)
+				apiUsersUID.POST("/messages", gone)
 				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
 				apiUsersUID.PUT("/icon", h.PutUserIcon, requires(permission.EditOtherUsers))
 				apiUsersUID.GET("/notification", h.GetNotificationChannels, requires(permission.GetChannelSubscription))
@@ -166,13 +166,13 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiChannelsCid.GET("/viewers", h.GetChannelViewers, requires(permission.GetChannel))
 				apiChannelsCidTopic := apiChannelsCid.Group("/topic")
 				{
-					apiChannelsCidTopic.GET("", h.GetTopic, requires(permission.GetChannel))
-					apiChannelsCidTopic.PUT("", h.PutTopic, requires(permission.EditChannelTopic))
+					apiChannelsCidTopic.GET("", gone)
+					apiChannelsCidTopic.PUT("", gone)
 				}
 				apiChannelsCidMessages := apiChannelsCid.Group("/messages")
 				{
-					apiChannelsCidMessages.GET("", h.GetMessagesByChannelID, requires(permission.GetMessage))
-					apiChannelsCidMessages.POST("", h.PostMessage, bodyLimit(100), requires(permission.PostMessage))
+					apiChannelsCidMessages.GET("", gone)
+					apiChannelsCidMessages.POST("", gone)
 				}
 				apiChannelsCidNotification := apiChannelsCid.Group("/notification")
 				{
@@ -198,18 +198,18 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiMessages := api.Group("/messages")
 		{
-			apiMessages.GET("/reports", h.GetMessageReports, requires(permission.GetMessageReports), blockBot)
-			apiMessagesMid := apiMessages.Group("/:messageID", retrieve.MessageID(), requiresMessageAccessPerm)
+			apiMessages.GET("/reports", gone)
+			apiMessagesMid := apiMessages.Group("/:messageID")
 			{
-				apiMessagesMid.GET("", h.GetMessageByID, requires(permission.GetMessage))
-				apiMessagesMid.PUT("", h.PutMessageByID, bodyLimit(100), requires(permission.EditMessage))
-				apiMessagesMid.DELETE("", h.DeleteMessageByID, requires(permission.DeleteMessage))
-				apiMessagesMid.POST("/report", h.PostMessageReport, requires(permission.ReportMessage), blockBot)
-				apiMessagesMid.GET("/stamps", h.GetMessageStamps, requires(permission.GetMessage))
-				apiMessagesMidStampsSid := apiMessagesMid.Group("/stamps/:stampID", retrieve.StampID(true))
+				apiMessagesMid.GET("", gone)
+				apiMessagesMid.PUT("", gone)
+				apiMessagesMid.DELETE("", gone)
+				apiMessagesMid.POST("/report", gone)
+				apiMessagesMid.GET("/stamps", gone)
+				apiMessagesMidStampsSid := apiMessagesMid.Group("/stamps/:stampID")
 				{
-					apiMessagesMidStampsSid.POST("", h.PostMessageStamp, requires(permission.AddMessageStamp))
-					apiMessagesMidStampsSid.DELETE("", h.DeleteMessageStamp, requires(permission.RemoveMessageStamp))
+					apiMessagesMidStampsSid.POST("", gone)
+					apiMessagesMidStampsSid.DELETE("", gone)
 				}
 			}
 		}
@@ -261,7 +261,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiWebhooksWid.DELETE("", h.DeleteWebhook, requires(permission.DeleteWebhook))
 				apiWebhooksWid.GET("/icon", h.GetWebhookIcon, requires(permission.GetWebhook))
 				apiWebhooksWid.PUT("/icon", h.PutWebhookIcon, requires(permission.EditWebhook))
-				apiWebhooksWid.GET("/messages", h.GetWebhookMessages, requires(permission.GetWebhook))
+				apiWebhooksWid.GET("/messages", gone)
 			}
 		}
 		apiGroups := api.Group("/groups")
@@ -314,7 +314,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiActivity := api.Group("/activity")
 		{
-			apiActivity.GET("/latest-messages", h.GetActivityLatestMessages, requires(permission.GetMessage))
+			apiActivity.GET("/latest-messages", gone)
 		}
 		apiWebRTC := api.Group("/webrtc")
 		{
@@ -376,10 +376,6 @@ func getGroupFromContext(c echo.Context) *model.UserGroup {
 
 func getStampFromContext(c echo.Context) *model.Stamp {
 	return c.Get(consts.KeyParamStamp).(*model.Stamp)
-}
-
-func getMessageFromContext(c echo.Context) *model.Message {
-	return c.Get(consts.KeyParamMessage).(*model.Message)
 }
 
 func getChannelFromContext(c echo.Context) *model.Channel {

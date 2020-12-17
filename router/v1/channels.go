@@ -111,40 +111,6 @@ func (h *Handlers) PostChannelChildren(c echo.Context) error {
 	return c.JSON(http.StatusCreated, formatted)
 }
 
-// GetTopic GET /channels/:channelID/topic
-func (h *Handlers) GetTopic(c echo.Context) error {
-	ch := getChannelFromContext(c)
-	return c.JSON(http.StatusOK, map[string]string{
-		"text": ch.Topic,
-	})
-}
-
-// PutTopic PUT /channels/:channelID/topic
-func (h *Handlers) PutTopic(c echo.Context) error {
-	ch := getChannelFromContext(c)
-
-	var req struct {
-		Text string `json:"text"`
-	}
-	if err := bindAndValidate(c, &req); err != nil {
-		return err
-	}
-
-	if err := h.ChannelManager.UpdateChannel(ch.ID, repository.UpdateChannelArgs{
-		UpdaterID: getRequestUserID(c),
-		Topic:     optional.StringFrom(req.Text),
-	}); err != nil {
-		switch err {
-		case channel.ErrChannelArchived:
-			return herror.BadRequest("channel has been archived")
-		default:
-			return herror.InternalServerError(err)
-		}
-	}
-
-	return c.NoContent(http.StatusNoContent)
-}
-
 type channelEventsQuery struct {
 	Limit     int           `query:"limit"`
 	Offset    int           `query:"offset"`

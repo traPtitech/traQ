@@ -15,6 +15,8 @@ const (
 	MessageDeleted model.BotEventType = "MESSAGE_DELETED"
 	// MessageUpdated メッセージ編集イベント
 	MessageUpdated model.BotEventType = "MESSAGE_UPDATED"
+	// BotMessageStampsUpdated BOTメッセージスタンプ更新イベント
+	BotMessageStampsUpdated model.BotEventType = "BOT_MESSAGE_STAMPS_UPDATED"
 	// MentionMessageCreated メンションメッセージ作成イベント
 	MentionMessageCreated model.BotEventType = "MENTION_MESSAGE_CREATED"
 	// DirectMessageCreated ダイレクトメッセージ作成イベント
@@ -49,6 +51,7 @@ func init() {
 		MessageCreated,
 		MessageDeleted,
 		MessageUpdated,
+		BotMessageStampsUpdated,
 		MentionMessageCreated,
 		DirectMessageCreated,
 		DirectMessageUpdated,

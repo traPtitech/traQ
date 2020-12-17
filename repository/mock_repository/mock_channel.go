@@ -82,6 +82,21 @@ func (mr *MockChannelRepositoryMockRecorder) UpdateChannel(channelID, args inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateChannel", reflect.TypeOf((*MockChannelRepository)(nil).UpdateChannel), channelID, args)
 }
 
+// ArchiveChannels mocks base method
+func (m *MockChannelRepository) ArchiveChannels(ids []uuid.UUID) ([]*model.Channel, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ArchiveChannels", ids)
+	ret0, _ := ret[0].([]*model.Channel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ArchiveChannels indicates an expected call of ArchiveChannels
+func (mr *MockChannelRepositoryMockRecorder) ArchiveChannels(ids interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveChannels", reflect.TypeOf((*MockChannelRepository)(nil).ArchiveChannels), ids)
+}
+
 // GetChannel mocks base method
 func (m *MockChannelRepository) GetChannel(channelID uuid.UUID) (*model.Channel, error) {
 	m.ctrl.T.Helper()

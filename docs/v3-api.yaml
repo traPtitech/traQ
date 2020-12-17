@@ -3563,6 +3563,30 @@ paths:
             Not Found
       operationId: getMessageClips
       description: 対象のメッセージの自分のクリップの一覧を返します。
+  /ogp:
+    get:
+      summary: OGP情報を取得
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ogp'
+              examples: {}
+        '400':
+          description: 指定したURLが不正です。
+        '404':
+          description: 指定したURLに対するOGP情報が見つかりませんでした。
+      operationId: getOgp
+      description: OGP情報を取得します。
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: url
+          description: OGPを取得したいURL
 components:
   securitySchemes:
     cookieAuth:
@@ -6074,6 +6098,51 @@ components:
         - folderId
         - clippedAt
       description: メッセージクリップ
+    Ogp:
+      title: Ogp
+      type: object
+      x-tags:
+        - ogp
+      description: OGPの情報
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/OgpMedia'
+        description:
+          type: string
+        videos:
+          type: array
+          items:
+            $ref: '#/components/schemas/OgpMedia'
+    OgpMedia:
+      title: OgpMedia
+      type: object
+      x-tags:
+        - ogp
+      description: OGPに含まれる画像の情報
+      properties:
+        url:
+          type: string
+        secureUrl:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        width:
+          type: integer
+          nullable: true
+        height:
+          type: integer
+          nullable: true
+      x-examples: {}
   headers:
     X-TRAQ-MORE:
       schema:

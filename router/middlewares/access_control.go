@@ -9,6 +9,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/rbac/role"
@@ -156,10 +157,10 @@ func CheckMessageAccessPerm(rbac rbac.RBAC, cm channel.Manager) echo.MiddlewareF
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
-			m := c.Get(consts.KeyParamMessage).(*model.Message)
+			channelID := c.Get(consts.KeyParamMessage).(message.Message).GetChannelID()
 
 			// アクセス権確認
-			if ok, err := cm.IsChannelAccessibleToUser(userID, m.ChannelID); err != nil {
+			if ok, err := cm.IsChannelAccessibleToUser(userID, channelID); err != nil {
 				return herror.InternalServerError(err)
 			} else if !ok {
 				return herror.NotFound()
@@ -193,10 +194,10 @@ func CheckChannelAccessPerm(rbac rbac.RBAC, cm channel.Manager) echo.MiddlewareF
 func CheckUserGroupAdminPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
+			user := c.Get(consts.KeyUser).(model.UserInfo)
 			g := c.Get(consts.KeyParamGroup).(*model.UserGroup)
 
-			if !g.IsAdmin(userID) {
+			if !g.IsAdmin(user.GetID()) && !rbac.IsGranted(user.GetRole(), permission.AllUserGroupsAdmin) {
 				return herror.Forbidden()
 			}
 

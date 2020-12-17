@@ -9,7 +9,6 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/set"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -146,6 +145,45 @@ func (repo *GormRepository) UpdateChannel(channelID uuid.UUID, args UpdateChanne
 		})
 	}
 	return &ch, nil
+}
+
+// ArchiveChannels implements ChannelRepository interface.
+func (repo *GormRepository) ArchiveChannels(ids []uuid.UUID) ([]*model.Channel, error) {
+	var changed []*model.Channel
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		for _, id := range ids {
+			if id != uuid.Nil {
+				var ch model.Channel
+				if err := tx.First(&ch, &model.Channel{ID: id}).Error; err != nil {
+					return err
+				}
+				if !ch.IsVisible {
+					continue
+				}
+				if err := tx.Model(&ch).Updates(map[string]interface{}{"is_visible": false}).Error; err != nil {
+					return err
+				}
+				if err := tx.First(&ch, &model.Channel{ID: id}).Error; err != nil {
+					return err
+				}
+				changed = append(changed, &ch)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, ch := range changed {
+		repo.hub.Publish(hub.Message{
+			Name: event.ChannelUpdated,
+			Fields: hub.Fields{
+				"channel_id": ch.ID,
+				"private":    !ch.IsPublic,
+			},
+		})
+	}
+	return changed, nil
 }
 
 // GetChannel implements ChannelRepository interface.
@@ -401,11 +439,4 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 	var stats ChannelStats
 	stats.DateTime = time.Now()
 	return &stats, repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error
-}
-
-func (repo *GormRepository) recordChannelEvent(channelID uuid.UUID, eventType model.ChannelEventType, detail model.ChannelEventDetail, datetime time.Time) {
-	err := repo.RecordChannelEvent(channelID, eventType, detail, datetime)
-	if err != nil {
-		repo.logger.Warn("Recording channel event failed", zap.Error(err), zap.Stringer("channelID", channelID), zap.Stringer("type", eventType), zap.Any("detail", detail), zap.Time("datetime", datetime))
-	}
 }

@@ -599,72 +599,21 @@ paths:
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
     get:
+      deprecated: true
       tags:
         - message
-      operationId: getDirectMessages
-      description: DMチャンネルに存在するメッセージを取得します。
-      security:
-        - traqOAuth2:
-            - read
-      parameters:
-        - $ref: '#/components/parameters/limitInQuery'
-        - $ref: '#/components/parameters/offsetInQuery'
-        - $ref: '#/components/parameters/sinceInQuery'
-        - $ref: '#/components/parameters/untilInQuery'
-        - $ref: '#/components/parameters/inclusiveInQuery'
-        - $ref: '#/components/parameters/orderInQuery'
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: |-
-            正常に取得ができました。
-            メッセージの配列を返します。
-          headers:
-            X-TRAQ-MORE:
-              $ref: '#/components/headers/X-TRAQ-MORE'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MessageList'
-        '400':
-          description: |-
-            変更に失敗しました
-            不正なリクエストです
-        '404':
-          description: |-
-            取得に失敗しました。
-            指定したユーザーは存在しません。
+        '410':
+          description: このAPIは削除されました
     post:
+      deprecated: true
       tags:
         - message
-      operationId: postDirectMessage
-      description: DMチャンネルにメッセージを投稿します。
-      parameters:
-        - name: embed
-          description: メンション・チャンネルリンクを自動埋め込みする場合に1を指定する
-          in: query
-          required: false
-          schema:
-            type: integer
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SendMessage'
+      description: このAPIは削除されました
       responses:
-        '201':
-          description: |-
-            投稿に成功しました。
-            投稿されたメッセージが返されます。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Message'
-        '404':
-          description: '+| 投稿に失敗しました。 指定したユーザーは存在しません。'
+        '410':
+          description: このAPIは削除されました
   '/users/{userID}/icon':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -970,41 +919,21 @@ paths:
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
+      deprecated: true
       tags:
         - channel
-      operationId: getChannelTopic
-      description: チャンネルの説明を取得します。
-      security:
-        - traqOAuth2:
-            - read
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: '+| 正常に取得ができました。 チャンネルトピックを返します。'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChannelTopic'
-        '404':
-          description: '+| 取得に失敗しました。 指定したチャンネルは存在しません。'
+        '410':
+          description: このAPIは削除されました
     put:
+      deprecated: true
       tags:
         - channel
-      operationId: changeChannelTopic
-      description: チャンネルの説明を変更します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SetChannelTopic'
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に更新できました。
-        '404':
-          description: '+| 更新に失敗しました。 指定したチャンネルは存在しません。'
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/stats':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -1049,72 +978,21 @@ paths:
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
+      deprecated: true
       tags:
         - message
-      operationId: getMessages
-      description: チャンネルに存在するメッセージを取得します。
-      security:
-        - traqOAuth2:
-            - read
-      parameters:
-        - $ref: '#/components/parameters/limitInQuery'
-        - $ref: '#/components/parameters/offsetInQuery'
-        - $ref: '#/components/parameters/sinceInQuery'
-        - $ref: '#/components/parameters/untilInQuery'
-        - $ref: '#/components/parameters/inclusiveInQuery'
-        - $ref: '#/components/parameters/orderInQuery'
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: |-
-            正常に取得ができました。
-            メッセージの配列を返します。
-          headers:
-            X-TRAQ-MORE:
-              $ref: '#/components/headers/X-TRAQ-MORE'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MessageList'
-        '400':
-          description: |-
-            変更に失敗しました
-            不正なリクエストです
-        '404':
-          description: |-
-            取得に失敗しました。
-            指定したチャンネルは存在しません。
+        '410':
+          description: このAPIは削除されました
     post:
+      deprecated: true
       tags:
         - message
-      operationId: postMessage
-      description: チャンネルにメッセージを投稿します。
-      parameters:
-        - name: embed
-          description: メンション・チャンネルリンクを自動埋め込みする場合に1を指定する
-          in: query
-          required: false
-          schema:
-            type: integer
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SendMessage'
+      description: このAPIは削除されました
       responses:
-        '201':
-          description: |-
-            投稿に成功しました。
-            投稿されたメッセージが返されます。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Message'
-        '404':
-          description: '+| 投稿に失敗しました。 指定したチャンネルは存在しません。'
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/events':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -1307,81 +1185,37 @@ paths:
       deprecated: true
       tags:
         - message
-      operationId: getReports
-      description: メッセージ通報を最大50件取得します。
-      parameters:
-        - name: p
-          in: query
-          description: ページ番号(ゼロオリジン)
-          schema:
-            type: integer
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Report'
-        '403':
-          description: 取得できませんでした。権限がありません。
+        '410':
+          description: このAPIは削除されました
   '/messages/{messageID}':
     parameters:
       - $ref: '#/components/parameters/messageIdInPath'
     get:
+      deprecated: true
       tags:
         - message
-      operationId: getMessage
-      description: 指定したメッセージを取得します。
-      security:
-        - traqOAuth2:
-            - read
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Message'
-        '404':
-          description: 取得できませんでした。指定されたメッセージは存在しません。
+        '410':
+          description: このAPIは削除されました
     put:
+      deprecated: true
       tags:
         - message
-      operationId: editMessage
-      description: 指定したメッセージを編集します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SendMessage'
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に編集できました。
-        '403':
-          description: 編集できませんでした。指定されたメッセージを編集する権限がありません。
-        '404':
-          description: 編集できませんでした。指定されたメッセージは存在しません。
+        '410':
+          description: このAPIは削除されました
     delete:
+      deprecated: true
       tags:
         - message
-      operationId: deleteMessage
-      description: 指定したメッセージを削除します。
-      security:
-        - traqOAuth2:
-            - write
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に削除できました。
-        '403':
-          description: 削除できませんでした。指定されたメッセージを削除する権限がありません。
-        '404':
-          description: 削除できませんでした。指定されたメッセージは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/messages/{messageID}/report':
     parameters:
       - $ref: '#/components/parameters/messageIdInPath'
@@ -1389,83 +1223,41 @@ paths:
       deprecated: true
       tags:
         - message
-      operationId: reportMessage
-      description: 指定したメッセージを通報します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ReportMessage'
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 通報を受理しました。
-        '400':
-          description: 通報を受理できませんでした。リクエスト内容が不正です。
-        '404':
-          description: 通報を受理できませんでした。指定されたメッセージは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/messages/{messageID}/stamps':
     parameters:
       - $ref: '#/components/parameters/messageIdInPath'
     get:
+      deprecated: true
       tags:
         - stamp
-      operationId: getMessageStamps
-      description: 指定したメッセージに押されているスタンプを全て取得します。
-      security:
-        - traqOAuth2:
-            - read
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/MessageStamp'
-        '404':
-          description: 取得できませんでした。指定したメッセージは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/messages/{messageID}/stamps/{stampID}':
     parameters:
       - $ref: '#/components/parameters/messageIdInPath'
       - $ref: '#/components/parameters/stampIdInPath'
     post:
+      deprecated: true
       tags:
         - stamp
-      operationId: stampMessage
-      description: 指定したメッセージに指定したスタンプを押します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MessageStampPost'
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常にスタンプを押すことができました。
-        '400':
-          description: スタンプを押すことができませんでした。リクエスト内容が不正です。
-        '404':
-          description: スタンプを押すことができませんでした。指定されたスタンプまたはメッセージは存在しません。
+        '410':
+          description: このAPIは削除されました
     delete:
+      deprecated: true
       tags:
         - stamp
-      operationId: unstampMessage
-      description: 指定したメッセージから指定したスタンプを外します。
-      security:
-        - traqOAuth2:
-            - write
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常にスタンプを外すことができました。
-        '404':
-          description: スタンプを外すことができませんでした。指定されたスタンプまたはメッセージは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/tags/{tagID}':
     parameters:
       - $ref: '#/components/parameters/tagIdInPath'
