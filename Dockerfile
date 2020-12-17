@@ -9,7 +9,7 @@ ARG TRAQ_VERSION=dev
 ARG TRAQ_REVISION=local
 RUN CGO_ENABLED=0 go build -o /traQ -ldflags "-s -w -X main.version=$TRAQ_VERSION -X main.revision=$TRAQ_REVISION"
 
-FROM alpine:3.12.2
+FROM alpine:3.12.3
 WORKDIR /app
 
 RUN apk add --update ca-certificates imagemagick && \
