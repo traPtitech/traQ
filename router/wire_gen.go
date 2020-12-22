@@ -62,7 +62,7 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 		WebRTC:         webrtcv3Manager,
 		Imaging:        processor,
 		SessStore:      store,
-		SearchEngine: engine,
+		SearchEngine:   engine,
 		ChannelManager: manager,
 		MessageManager: messageManager,
 		FileManager:    fileManager,

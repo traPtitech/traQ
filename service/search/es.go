@@ -21,8 +21,6 @@ const (
 	esMessageIndex    = "message"
 )
 
-type m map[string]interface{}
-
 // ESEngineConfig Elasticsearch検索エンジン設定
 type ESEngineConfig struct {
 	// URL ESのURL
@@ -39,12 +37,78 @@ type esEngine struct {
 
 // esMessageDoc Elasticsearchに入るメッセージの情報
 type esMessageDoc struct {
-	ID        uuid.UUID `json:"-"`
-	UserID    uuid.UUID `json:"userId"`
-	ChannelID uuid.UUID `json:"channelId"`
-	Text      string    `json:"text"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID             uuid.UUID   `json:"-"`
+	UserID         uuid.UUID   `json:"userId"`
+	ChannelID      uuid.UUID   `json:"channelId"`
+	Text           string      `json:"text"`
+	CreatedAt      time.Time   `json:"createdAt"`
+	UpdatedAt      time.Time   `json:"updatedAt"`
+	To             []uuid.UUID `json:"to"`
+	Citation       []uuid.UUID `json:"citation"`
+	IsEdited       bool        `json:"isEdited"`
+	IsCited        bool        `json:"isCited"`
+	IsPinned       bool        `json:"isPinned"`
+	HasURL         bool        `json:"hasURL"`
+	HasAttachments bool        `json:"hasAttachments"`
+}
+
+// esMessageDocUpdate Update用 Elasticsearchに入るメッセージの部分的な情報
+type esMessageDocUpdate struct {
+	Text           string      `json:"text"`
+	UpdatedAt      time.Time   `json:"updatedAt"`
+	Citation       []uuid.UUID `json:"citation"`
+	IsEdited       bool        `json:"isEdited"`
+	IsCited        bool        `json:"isCited"`
+	IsPinned       bool        `json:"isPinned"`
+	HasURL         bool        `json:"hasURL"`
+	HasAttachments bool        `json:"hasAttachments"`
+}
+
+type m map[string]interface{}
+
+// esMapping Elasticsearchに入るメッセージの情報
+// esMessageDoc と同じにする
+var esMapping = m{
+	"properties": m{
+		"userId": m{
+			"type": "keyword",
+		},
+		"channelId": m{
+			"type": "keyword",
+		},
+		"text": m{
+			"type": "text",
+		},
+		"createdAt": m{
+			"type":   "date",
+			"format": "strict_date_optional_time_nanos", // 2006-01-02T15:04:05.7891011Z
+		},
+		"updatedAt": m{
+			"type":   "date",
+			"format": "strict_date_optional_time_nanos",
+		},
+		"to": m{
+			"type": "keyword",
+		},
+		"citation": m{
+			"type": "keyword",
+		},
+		"isEdited": m{
+			"type": "boolean",
+		},
+		"isCited": m{
+			"type": "boolean",
+		},
+		"isPinned": m{
+			"type": "boolean",
+		},
+		"hasURL": m{
+			"type": "boolean",
+		},
+		"hasAttachments": m{
+			"type": "boolean",
+		},
+	},
 }
 
 // esResult search.Result 実装
@@ -98,50 +162,7 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 		}
 
 		// mapping作成
-		r2, err := client.PutMapping().Index(getIndexName(esMessageIndex)).BodyJson(m{
-			"properties": m{
-				"userId": m{
-					"type": "keyword",
-				},
-				"channelId": m{
-					"type": "keyword",
-				},
-				"text": m{
-					"type": "text",
-				},
-				"createdAt": m{
-					"type":   "date",
-					"format": "strict_date_optional_time_nanos", // 2006-01-02T15:04:05.7891011Z
-				},
-				"updatedAt": m{
-					"type":   "date",
-					"format": "strict_date_optional_time_nanos",
-				},
-				"to": m{
-					"type": "keyword",
-				},
-				"citation": m{
-					"type": "keyword",
-				},
-				"isEdited": m{
-					"type": "boolean",
-				},
-				"isCited": m{
-					"type": "boolean",
-				},
-				"isPinned": m{
-					"type": "boolean",
-				},
-				"hasURL": m{
-					"type": "boolean",
-				},
-				"hasAttachments": m{
-					"type": "boolean",
-				},
-				// TODO To(複数)をメッセージ投稿時に、Cite(複数)をメッセージ投稿・更新時にindexに追加
-				// TODO textをパースしてTo, Cite, Is*, Has*の判定
-			},
-		}).Do(context.Background())
+		r2, err := client.PutMapping().Index(getIndexName(esMessageIndex)).BodyJson(esMapping).Do(context.Background())
 		if err != nil {
 			return nil, fmt.Errorf("failed to init search engine: %w", err)
 		}
@@ -192,21 +213,27 @@ func (e *esEngine) onEvent(ev hub.Message) {
 
 // addMessageToIndex 新規メッセージをesに入れる
 func (e *esEngine) addMessageToIndex(m *model.Message) error {
+	// TODO textをパースしてTo, Cite, Is*, Has*の判定
 	attr := getAttributes(m)
+	doc := esMessageDoc{
+		UserID:         m.UserID,
+		ChannelID:      m.ChannelID,
+		Text:           m.Text,
+		CreatedAt:      m.CreatedAt,
+		UpdatedAt:      m.UpdatedAt,
+		To:             attr.To,
+		Citation:       attr.Citation,
+		IsEdited:       false,
+		IsCited:        false,
+		IsPinned:       false,
+		HasURL:         attr.HasURL,
+		HasAttachments: attr.HasAttachments,
+	}
 	_, err := e.client.Index().
 		Index(getIndexName(esMessageIndex)).
 		Id(m.ID.String()).
-		BodyJson(map[string]interface{}{
-			"userId":         m.UserID,
-			"channelId":      m.ChannelID,
-			"text":           m.Text,
-			"createdAt":      m.CreatedAt,
-			"updatedAt":      m.UpdatedAt,
-			"to":             attr.To,
-			"citation":       attr.Citation,
-			"hasURL":         attr.HasURL,
-			"hasAttachments": attr.HasAttachments,
-		}).Do(context.Background())
+		BodyJson(doc).
+		Do(context.Background())
 	if err != nil {
 		return err
 	}
@@ -216,17 +243,22 @@ func (e *esEngine) addMessageToIndex(m *model.Message) error {
 // updateMessageOnIndex 既存メッセージの編集をesに反映させる
 func (e *esEngine) updateMessageOnIndex(m *model.Message) error {
 	attr := getAttributes(m)
+	// Updateする項目のみ
+	doc := esMessageDocUpdate{
+		Text:           m.Text,
+		UpdatedAt:      m.UpdatedAt,
+		Citation:       attr.Citation,
+		IsEdited:       true,
+		IsCited:        false,
+		IsPinned:       false,
+		HasURL:         attr.HasURL,
+		HasAttachments: attr.HasAttachments,
+	}
 	_, err := e.client.Update().
 		Index(getIndexName(esMessageIndex)).
 		Id(m.ID.String()).
-		Doc(map[string]interface{}{
-			"text":           m.Text,
-			"updatedAt":      m.UpdatedAt,
-			"isEdited":       true,
-			"citation":       attr.Citation,
-			"hasURL":         attr.HasURL,
-			"hasAttachments": attr.HasAttachments,
-		}).Do(context.Background())
+		Doc(doc).
+		Do(context.Background())
 	return err
 }
 
