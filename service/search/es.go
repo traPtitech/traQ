@@ -29,6 +29,7 @@ type ESEngineConfig struct {
 	URL string
 }
 
+// esEngine search.Engine 実装
 type esEngine struct {
 	client *elastic.Client
 	hub    *hub.Hub
@@ -36,6 +37,7 @@ type esEngine struct {
 	l      *zap.Logger
 }
 
+// esMessageDoc Elasticsearchに入るメッセージの情報
 type esMessageDoc struct {
 	ID        uuid.UUID `json:"-"`
 	UserID    uuid.UUID `json:"userId"`
@@ -45,6 +47,7 @@ type esMessageDoc struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+// esResult search.Result 実装
 type esResult struct {
 	docs []*esMessageDoc
 }
@@ -112,7 +115,7 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 				},
 				"updatedAt": m{
 					"type":   "date",
-					"format": "strict_date_time_no_millis",
+					"format": "strict_date_optional_time_nanos",
 				},
 				"to": m{
 					"type": "keyword",
@@ -239,9 +242,6 @@ func (e *esEngine) deleteMessageFromIndex(id uuid.UUID) error {
 func (e *esEngine) Do(q *Query) (Result, error) {
 	// TODO 実装
 	e.l.Debug("do search", zap.Reflect("q", q))
-
-	fmt.Println(q.Word)
-	fmt.Println(q.After)
 
 	// TODO "should" "must not"をどういれるか
 	var musts []elastic.Query
