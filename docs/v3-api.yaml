@@ -3842,7 +3842,10 @@ components:
           description: ファイル本体
         channelId:
           type: string
-          format: uuid
+          # node-traqの生成のためにコメントアウト
+          # https://github.com/OpenAPITools/openapi-generator/pull/7816/files#diff-6e0e0bb93eae60d6a4681a4ba7f616454e067c6c87ccf86f6390d8d35466c7faR175
+          # https://github.com/OpenAPITools/openapi-generator/blob/ed9133e77f24389c7a75d525c6647cecefbdc99a/modules/openapi-generator/src/main/java/org/openapitools/codegen/DefaultCodegen.java#L5366
+          # format: uuid
           description: アップロード先チャンネルUUID
       required:
         - file
