@@ -33,7 +33,7 @@ type PostUserGroupRequest struct {
 
 func (r PostUserGroupRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, vd.Required, vd.RuneLength(1, 30)),
+		vd.Field(&r.Name, validator.UserGroupNameRuleRequired...),
 		vd.Field(&r.Description, vd.RuneLength(0, 100)),
 		vd.Field(&r.Type, vd.RuneLength(0, 30)),
 	)
@@ -82,7 +82,7 @@ type PatchUserGroupRequest struct {
 
 func (r PatchUserGroupRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, vd.RuneLength(1, 30)),
+		vd.Field(&r.Name, validator.UserGroupNameRuleRequired...),
 		vd.Field(&r.Description, vd.RuneLength(0, 100)),
 		vd.Field(&r.Type, vd.RuneLength(0, 30)),
 	)
