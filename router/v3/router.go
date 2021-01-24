@@ -60,7 +60,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 	bodyLimit := middlewares.RequestBodyLengthLimit
 	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager, h.MessageManager)
 	blockBot := middlewares.BlockBot(h.Repo)
-	nologin := middlewares.NoLogin(h.SessStore)
+	nologin := middlewares.NoLogin(h.SessStore, h.Repo)
 
 	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
 	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
