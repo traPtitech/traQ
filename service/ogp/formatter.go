@@ -32,7 +32,7 @@ func MergeDefaultPageMetaAndOpenGraph(og *opengraph.OpenGraph, meta *DefaultPage
 		if strings.HasPrefix(og.URL, "/") {
 			if metaURL, err := url.Parse(meta.URL); err == nil {
 				// 絶対パスではあったがホストなどが含まれていないときに付与する
-				result.URL = metaURL.Scheme + ":" + metaURL.Host + og.URL
+				result.URL = metaURL.Scheme + "://" + metaURL.Host + og.URL
 			} else {
 				result.URL = og.URL
 			}
