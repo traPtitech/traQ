@@ -1,6 +1,9 @@
 package ogp
 
 import (
+	"net/url"
+	"strings"
+
 	"github.com/dyatlov/go-opengraph/opengraph"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -26,7 +29,16 @@ func MergeDefaultPageMetaAndOpenGraph(og *opengraph.OpenGraph, meta *DefaultPage
 		result.Title = og.SiteName
 	}
 	if len(og.URL) > 0 {
-		result.URL = og.URL
+		if strings.HasPrefix(og.URL, "/") {
+			if metaURL, err := url.Parse(meta.URL); err == nil {
+				// 絶対パスではあったがホストなどが含まれていないときに付与する
+				result.URL = metaURL.Scheme + ":" + metaURL.Host + og.URL
+			} else {
+				result.URL = og.URL
+			}
+		} else {
+			result.URL = og.URL
+		}
 	}
 	if len(og.Images) > 0 {
 		result.Images = make([]model.OgpMedia, len(og.Images))
