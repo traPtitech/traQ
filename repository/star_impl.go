@@ -5,6 +5,7 @@ import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/gormutil"
 )
 
 // AddStar implements StarRepository interface.
@@ -15,7 +16,9 @@ func (repo *GormRepository) AddStar(userID, channelID uuid.UUID) error {
 	var s model.Star
 	result := repo.db.FirstOrCreate(&s, &model.Star{UserID: userID, ChannelID: channelID})
 	if result.Error != nil {
-		return result.Error
+		if !gormutil.IsMySQLDuplicatedRecordErr(result.Error) {
+			return result.Error
+		}
 	}
 	repo.hub.Publish(hub.Message{
 		Name: event.ChannelStared,

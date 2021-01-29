@@ -27,7 +27,7 @@ func (h *Handlers) PutStars(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, consts.ParamChannelID)
 
 	if err := h.Repo.AddStar(userID, channelID); err != nil {
-		return herror.BadRequest(err)
+		return herror.InternalServerError(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)

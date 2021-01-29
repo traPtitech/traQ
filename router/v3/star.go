@@ -44,7 +44,7 @@ func (h *Handlers) PostStar(c echo.Context) error {
 	}
 
 	if err := h.Repo.AddStar(getRequestUserID(c), req.ChannelID); err != nil {
-		return herror.BadRequest(err)
+		return herror.InternalServerError(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
