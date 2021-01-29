@@ -1,9 +1,10 @@
 package v1
 
 import (
+	"net/http"
+
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
@@ -26,7 +27,7 @@ func (h *Handlers) PutStars(c echo.Context) error {
 	channelID := getRequestParamAsUUID(c, consts.ParamChannelID)
 
 	if err := h.Repo.AddStar(userID, channelID); err != nil {
-		return herror.InternalServerError(err)
+		return herror.BadRequest(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
