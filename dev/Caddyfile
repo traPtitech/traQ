@@ -11,6 +11,13 @@ handle /api/* {
     reverse_proxy backend:3000
 }
 
+handle /.well-known/* {
+    respond 404
+}
+handle /.well-known/change-password {
+    redir * /settings/session
+}
+
 handle {
     file_server
     try_files {path} /index.html
