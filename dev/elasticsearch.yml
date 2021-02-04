@@ -1,3 +1,2 @@
 cluster.name: "docker-cluster"
 network.host: 0.0.0.0
-path.logs: /usr/share/elasticsearch/logs
