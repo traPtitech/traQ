@@ -57,7 +57,7 @@ func (h *Handlers) GetWebRTCState(c echo.Context) error {
 		Sessions  []StateSession `json:"sessions"`
 	}
 
-	var res []WebRTCUserState
+	res := make([]WebRTCUserState, 0)
 	h.WebRTC.IterateStates(func(state webrtcv3.ChannelState) {
 		for _, userState := range state.Users() {
 			var sessions []StateSession

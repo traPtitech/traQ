@@ -35,6 +35,7 @@ func TestReplacer_Replace(t *testing.T) {
 			"a": uuid.Must(uuid.FromString("ea452867-553b-4808-a14f-a47ee0009ee6")),
 		},
 		UserMap: map[string]uuid.UUID{
+			"a":                                uuid.Must(uuid.FromString("dfdff0c9-5de0-46ee-9721-2525e8bb3d44")),
 			"takashi_trap":                     uuid.Must(uuid.FromString("dfdff0c9-5de0-46ee-9721-2525e8bb3d45")),
 			"takashi_trape":                    uuid.Must(uuid.FromString("dfdff0c9-5de0-46ee-9721-2525e8bb3d46")),
 			"very_long_long_long_long_lo_name": uuid.Must(uuid.FromString("dfdff0c9-5de0-46ee-9721-2525e8bb3d47")),
@@ -105,6 +106,14 @@ func TestReplacer_Replace(t *testing.T) {
 		{
 			"@takashi_trapo @takashi_trape",
 			"!{\"type\":\"group\",\"raw\":\"@takashi_trapo\",\"id\":\"dfabf0c9-5de0-46ee-9721-2525e8bb3d46\"} !{\"type\":\"user\",\"raw\":\"@takashi_trape\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d46\"}",
+		},
+		{
+			"@)、(@takashi_trap @takashi_trap)",
+			"@)、(!{\"type\":\"user\",\"raw\":\"@takashi_trap\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d45\"} !{\"type\":\"user\",\"raw\":\"@takashi_trap\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d45\"})",
+		},
+		{
+			"@a",
+			"!{\"type\":\"user\",\"raw\":\"@a\",\"id\":\"dfdff0c9-5de0-46ee-9721-2525e8bb3d44\"}",
 		},
 	}
 	for _, v := range tt {

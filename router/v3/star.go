@@ -2,6 +2,8 @@ package v3
 
 import (
 	"context"
+	"net/http"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
@@ -9,7 +11,6 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/utils/validator"
-	"net/http"
 )
 
 // GetMyStars GET /users/me/stars

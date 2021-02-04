@@ -1,4 +1,4 @@
-FROM golang:1.15.6-alpine AS build
+FROM golang:1.15.7-alpine AS build
 RUN apk add --update --no-cache git
 WORKDIR /go/src/github.com/traPtitech/traQ
 COPY ./go.* ./
@@ -9,7 +9,7 @@ ARG TRAQ_VERSION=dev
 ARG TRAQ_REVISION=local
 RUN CGO_ENABLED=0 go build -o /traQ -ldflags "-s -w -X main.version=$TRAQ_VERSION -X main.revision=$TRAQ_REVISION"
 
-FROM alpine:3.12.3
+FROM alpine:3.13.1
 WORKDIR /app
 
 RUN apk add --update ca-certificates imagemagick && \

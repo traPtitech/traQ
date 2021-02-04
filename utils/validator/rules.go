@@ -40,6 +40,17 @@ var BotUserNameRuleRequired = append([]vd.Rule{
 	vd.Required,
 }, BotUserNameRule...)
 
+// UserGroupNameRule ユーザーグループ名バリデーションルール
+var UserGroupNameRule = []vd.Rule{
+	vd.Match(regexp.MustCompile(`^[^@＠#＃]*[^@＠#＃:]$`)).Error("must not contain [@＠#＃] and the last charactor must not be :"),
+	vd.RuneLength(1, 30),
+}
+
+// UserGroupNameRuleRequired ユーザーグループ名バリデーションルール with Required
+var UserGroupNameRuleRequired = append([]vd.Rule{
+	vd.Required,
+}, UserGroupNameRule...)
+
 // ChannelNameRule チャンネル名バリデーションルール
 var ChannelNameRule = []vd.Rule{
 	vd.Match(regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)).Error("must contain [a-zA-Z0-9_-] only"),

@@ -10,7 +10,7 @@ import (
 
 var (
 	// ユーザーとグループのnameの和集合
-	mentionRegex    = regexp.MustCompile(`:?[@＠](\S{1,32})`)
+	mentionRegex    = regexp.MustCompile(`:?[@＠]([^\s@＠]{0,31}[^\s@＠:])`)
 	userStartsRegex = regexp.MustCompile(`^[@＠]([a-zA-Z0-9_-]{1,32})`)
 	channelRegex    = regexp.MustCompile(`[#＃]([a-zA-Z0-9_/-]+)`)
 )

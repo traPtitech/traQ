@@ -3826,6 +3826,10 @@ components:
         - none
         - monitoring
         - editing
+      x-enum-descriptions:
+        - バックグランド表示中
+        - メッセージ表示中
+        - メッセージ入力中
       description: 閲覧状態
     PostFileRequest:
       title: PostFileRequest
@@ -3838,7 +3842,10 @@ components:
           description: ファイル本体
         channelId:
           type: string
-          format: uuid
+          # node-traqの生成のためにコメントアウト
+          # https://github.com/OpenAPITools/openapi-generator/pull/7816/files#diff-6e0e0bb93eae60d6a4681a4ba7f616454e067c6c87ccf86f6390d8d35466c7faR175
+          # https://github.com/OpenAPITools/openapi-generator/blob/ed9133e77f24389c7a75d525c6647cecefbdc99a/modules/openapi-generator/src/main/java/org/openapitools/codegen/DefaultCodegen.java#L5366
+          # format: uuid
           description: アップロード先チャンネルUUID
       required:
         - file
@@ -4150,6 +4157,10 @@ components:
         - deactivated
         - active
         - suspended
+      x-enum-descriptions:
+        - 停止
+        - 有効
+        - 一時停止
       format: int32
     UserGroup:
       title: UserGroup
@@ -4399,6 +4410,10 @@ components:
         - none
         - subscribed
         - notified
+      x-enum-descriptions:
+        - 無し
+        - 未読管理
+        - 未読管理+通知
     PutChannelSubscribeLevelRequest:
       title: PutChannelSubscribeLevelRequest
       type: object
@@ -4928,6 +4943,10 @@ components:
         - deactivated
         - active
         - suspended
+      x-enum-descriptions:
+        - 停止
+        - 有効
+        - 一時停止
       format: int32
     Bot:
       title: Bot
