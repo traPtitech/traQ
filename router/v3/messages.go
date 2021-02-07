@@ -42,7 +42,6 @@ func (h *Handlers) SearchMessages(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusServiceUnavailable, "search service is currently unavailable")
 	}
 
-	// TODO SearchEngineで検索処理
 	var q search.Query
 	if err := bindAndValidate(c, &q); err != nil {
 		return err

@@ -28,9 +28,6 @@ type Query struct {
 	To             optional.UUID   `query:"to"`       // メンション先
 	From           optional.UUID   `query:"from"`     // 投稿者
 	Citation       optional.UUID   `query:"citation"` // 引用しているメッセージ
-	IsEdited       optional.Bool   `query:"isEdited"`
-	IsCited        optional.Bool   `query:"isCited"`
-	IsPinned       optional.Bool   `query:"isPinned"`
 	HasURL         optional.Bool   `query:"hasURL"`
 	HasAttachments optional.Bool   `query:"hasAttachments"`
 }

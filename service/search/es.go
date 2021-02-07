@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
+	"strings"
 	"time"
 )
 
@@ -45,9 +46,6 @@ type esMessageDoc struct {
 	UpdatedAt      time.Time   `json:"updatedAt"`
 	To             []uuid.UUID `json:"to"`
 	Citation       []uuid.UUID `json:"citation"`
-	IsEdited       bool        `json:"isEdited"`
-	IsCited        bool        `json:"isCited"`
-	IsPinned       bool        `json:"isPinned"`
 	HasURL         bool        `json:"hasURL"`
 	HasAttachments bool        `json:"hasAttachments"`
 }
@@ -57,9 +55,6 @@ type esMessageDocUpdate struct {
 	Text           string      `json:"text"`
 	UpdatedAt      time.Time   `json:"updatedAt"`
 	Citation       []uuid.UUID `json:"citation"`
-	IsEdited       bool        `json:"isEdited"`
-	IsCited        bool        `json:"isCited"`
-	IsPinned       bool        `json:"isPinned"`
 	HasURL         bool        `json:"hasURL"`
 	HasAttachments bool        `json:"hasAttachments"`
 }
@@ -92,15 +87,6 @@ var esMapping = m{
 		},
 		"citation": m{
 			"type": "keyword",
-		},
-		"isEdited": m{
-			"type": "boolean",
-		},
-		"isCited": m{
-			"type": "boolean",
-		},
-		"isPinned": m{
-			"type": "boolean",
 		},
 		"hasURL": m{
 			"type": "boolean",
@@ -190,13 +176,17 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 func (e *esEngine) onEvent(ev hub.Message) {
 	switch ev.Topic() {
 	case event.MessageCreated:
-		err := e.addMessageToIndex(ev.Fields["message"].(*model.Message))
+		err := e.addMessageToIndex(
+			ev.Fields["message"].(*model.Message),
+			ev.Fields["parse_result"].(*message.ParseResult),
+		)
 		if err != nil {
 			e.l.Error(err.Error(), zap.Error(err))
 		}
 
 	case event.MessageUpdated:
-		err := e.updateMessageOnIndex(ev.Fields["message"].(*model.Message))
+		m := ev.Fields["message"].(*model.Message)
+		err := e.updateMessageOnIndex(m, message.Parse(m.Text))
 		if err != nil {
 			e.l.Error(err.Error(), zap.Error(err))
 		}
@@ -212,9 +202,8 @@ func (e *esEngine) onEvent(ev hub.Message) {
 }
 
 // addMessageToIndex 新規メッセージをesに入れる
-func (e *esEngine) addMessageToIndex(m *model.Message) error {
-	// TODO textをパースしてTo, Cite, Is*, Has*の判定
-	attr := getAttributes(m)
+func (e *esEngine) addMessageToIndex(m *model.Message, parseResult *message.ParseResult) error {
+	attr := e.getAttributes(m, parseResult)
 	doc := esMessageDoc{
 		UserID:         m.UserID,
 		ChannelID:      m.ChannelID,
@@ -223,9 +212,6 @@ func (e *esEngine) addMessageToIndex(m *model.Message) error {
 		UpdatedAt:      m.UpdatedAt,
 		To:             attr.To,
 		Citation:       attr.Citation,
-		IsEdited:       false,
-		IsCited:        false,
-		IsPinned:       false,
 		HasURL:         attr.HasURL,
 		HasAttachments: attr.HasAttachments,
 	}
@@ -241,16 +227,13 @@ func (e *esEngine) addMessageToIndex(m *model.Message) error {
 }
 
 // updateMessageOnIndex 既存メッセージの編集をesに反映させる
-func (e *esEngine) updateMessageOnIndex(m *model.Message) error {
-	attr := getAttributes(m)
+func (e *esEngine) updateMessageOnIndex(m *model.Message, parseResult *message.ParseResult) error {
+	attr := e.getAttributes(m, parseResult)
 	// Updateする項目のみ
 	doc := esMessageDocUpdate{
 		Text:           m.Text,
 		UpdatedAt:      m.UpdatedAt,
 		Citation:       attr.Citation,
-		IsEdited:       true,
-		IsCited:        false,
-		IsPinned:       false,
 		HasURL:         attr.HasURL,
 		HasAttachments: attr.HasAttachments,
 	}
@@ -304,18 +287,13 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		musts = append(musts, elastic.NewTermQuery("citation", q.Citation))
 	}
 
-	if q.IsEdited.Valid {
-		musts = append(musts, elastic.NewTermQuery("isEdited", q.IsEdited))
+	if q.HasURL.Valid {
+		musts = append(musts, elastic.NewTermQuery("hasURL", q.HasURL))
 	}
 
 	if q.HasAttachments.Valid {
 		musts = append(musts, elastic.NewTermQuery("hasAttachments", q.HasAttachments))
 	}
-
-	// TODO
-	//IsCited
-	//IsPinned
-	//HasURL
 
 	sr, err := e.client.Search().
 		Index(getIndexName(esMessageIndex)).
@@ -328,6 +306,7 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 	}
 
 	r := &esResult{}
+	e.l.Debug("search result", zap.Reflect("hits", sr.Hits))
 	for _, hit := range sr.Hits.Hits {
 		var m esMessageDoc
 		if err := json.Unmarshal(hit.Source, &m); err != nil {
@@ -349,18 +328,18 @@ func (e *esEngine) Close() error {
 	return nil
 }
 
-func getIndexName(index string) string {
-	return esIndexPrefix + index
-}
-
-func getAttributes(m *model.Message) *attributes {
+func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseResult) *attributes {
 	attr := &attributes{}
 
-	result := message.Parse(m.Text)
-	attr.To = append(result.Mentions, result.GroupMentions...)
-	attr.Citation = result.Citation
-	//attr.HasURL = result.PlainText
-	attr.HasAttachments = len(result.Attachments) != 0
+	attr.To = append(parseResult.Mentions, parseResult.GroupMentions...)
+	attr.Citation = parseResult.Citation
+	attr.HasURL = strings.Contains(m.Text, "http://") || strings.Contains(m.Text, "https://")
+	// TODO 添付ファイルの種類（画像、動画、音声）を取得
+	attr.HasAttachments = len(parseResult.Attachments) != 0
 
 	return attr
+}
+
+func getIndexName(index string) string {
+	return esIndexPrefix + index
 }
