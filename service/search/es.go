@@ -48,6 +48,9 @@ type esMessageDoc struct {
 	Citation       []uuid.UUID `json:"citation"`
 	HasURL         bool        `json:"hasURL"`
 	HasAttachments bool        `json:"hasAttachments"`
+	HasImage       bool        `json:"hasImage"`
+	HasVideo       bool        `json:"hasVideo"`
+	HasAudio       bool        `json:"hasAudio"`
 }
 
 // esMessageDocUpdate Update用 Elasticsearchに入るメッセージの部分的な情報
@@ -57,6 +60,9 @@ type esMessageDocUpdate struct {
 	Citation       []uuid.UUID `json:"citation"`
 	HasURL         bool        `json:"hasURL"`
 	HasAttachments bool        `json:"hasAttachments"`
+	HasImage       bool        `json:"hasImage"`
+	HasVideo       bool        `json:"hasVideo"`
+	HasAudio       bool        `json:"hasAudio"`
 }
 
 type m map[string]interface{}
@@ -94,6 +100,15 @@ var esMapping = m{
 		"hasAttachments": m{
 			"type": "boolean",
 		},
+		"hasImage": m{
+			"type": "boolean",
+		},
+		"hasVideo": m{
+			"type": "boolean",
+		},
+		"hasAudio": m{
+			"type": "boolean",
+		},
 	},
 }
 
@@ -107,6 +122,9 @@ type attributes struct {
 	Citation       []uuid.UUID
 	HasURL         bool
 	HasAttachments bool
+	HasImage       bool
+	HasVideo       bool
+	HasAudio       bool
 }
 
 func (e *esResult) Get() map[uuid.UUID]string {
@@ -214,6 +232,9 @@ func (e *esEngine) addMessageToIndex(m *model.Message, parseResult *message.Pars
 		Citation:       attr.Citation,
 		HasURL:         attr.HasURL,
 		HasAttachments: attr.HasAttachments,
+		HasImage:       attr.HasImage,
+		HasVideo:       attr.HasVideo,
+		HasAudio:       attr.HasAudio,
 	}
 	_, err := e.client.Index().
 		Index(getIndexName(esMessageIndex)).
@@ -236,6 +257,9 @@ func (e *esEngine) updateMessageOnIndex(m *model.Message, parseResult *message.P
 		Citation:       attr.Citation,
 		HasURL:         attr.HasURL,
 		HasAttachments: attr.HasAttachments,
+		HasImage:       attr.HasImage,
+		HasVideo:       attr.HasVideo,
+		HasAudio:       attr.HasAudio,
 	}
 	_, err := e.client.Update().
 		Index(getIndexName(esMessageIndex)).
@@ -295,6 +319,16 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		musts = append(musts, elastic.NewTermQuery("hasAttachments", q.HasAttachments))
 	}
 
+	if q.HasImage.Valid {
+		musts = append(musts, elastic.NewTermQuery("hasImage", q.HasImage))
+	}
+	if q.HasVideo.Valid {
+		musts = append(musts, elastic.NewTermQuery("hasVideo", q.HasVideo))
+	}
+	if q.HasAudio.Valid {
+		musts = append(musts, elastic.NewTermQuery("hasAudio", q.HasAudio))
+	}
+
 	sr, err := e.client.Search().
 		Index(getIndexName(esMessageIndex)).
 		Query(elastic.NewBoolQuery().Must(musts...)).
@@ -334,8 +368,22 @@ func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseRes
 	attr.To = append(parseResult.Mentions, parseResult.GroupMentions...)
 	attr.Citation = parseResult.Citation
 	attr.HasURL = strings.Contains(m.Text, "http://") || strings.Contains(m.Text, "https://")
-	// TODO 添付ファイルの種類（画像、動画、音声）を取得
 	attr.HasAttachments = len(parseResult.Attachments) != 0
+
+	for _, attachmentID := range parseResult.Attachments {
+		meta, err := e.repo.GetFileMeta(attachmentID)
+		if err != nil {
+			e.l.Error(err.Error(), zap.Error(err))
+			continue
+		}
+		if strings.HasPrefix(meta.Mime, "image/") {
+			attr.HasImage = true
+		} else if strings.HasPrefix(meta.Mime, "video/") {
+			attr.HasVideo = true
+		} else if strings.HasPrefix(meta.Mime, "audio/") {
+			attr.HasAudio = true
+		}
+	}
 
 	return attr
 }

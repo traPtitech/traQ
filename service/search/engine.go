@@ -30,6 +30,9 @@ type Query struct {
 	Citation       optional.UUID   `query:"citation"` // 引用しているメッセージ
 	HasURL         optional.Bool   `query:"hasURL"`
 	HasAttachments optional.Bool   `query:"hasAttachments"`
+	HasImage       optional.Bool   `query:"hasImage"`
+	HasVideo       optional.Bool   `query:"hasVideo"`
+	HasAudio       optional.Bool   `query:"hasAudio"`
 }
 
 func (q Query) Validate() error {
