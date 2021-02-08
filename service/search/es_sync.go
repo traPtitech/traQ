@@ -16,12 +16,19 @@ const (
 	syncMessageBulk = 100
 )
 
-func (e *esEngine) syncLoop() {
+func (e *esEngine) syncLoop(done <-chan struct{}) {
 	t := time.NewTicker(syncInterval)
-	for range t.C {
-		err := e.sync()
-		if err != nil {
-			e.l.Error(err.Error(), zap.Error(err))
+	defer t.Stop()
+loop:
+	for {
+		select {
+		case <-t.C:
+			err := e.sync()
+			if err != nil {
+				e.l.Error(err.Error(), zap.Error(err))
+			}
+		case <-done:
+			break loop
 		}
 	}
 }

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
-	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/viper"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
@@ -338,9 +337,9 @@ func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unr
 	return fcm.NewNullClient(), nil
 }
 
-func initSearchServiceIfAvailable(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
+func initSearchServiceIfAvailable(repo repository.Repository, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
 	if len(config.URL) > 0 {
-		return search.NewESEngine(hub, repo, logger, config)
+		return search.NewESEngine(repo, logger, config)
 	}
 	return search.NewNullEngine(), nil
 }

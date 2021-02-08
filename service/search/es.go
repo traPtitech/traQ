@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gofrs/uuid"
 	json "github.com/json-iterator/go"
-	"github.com/leandro-lugaresi/hub"
 	"github.com/olivere/elastic/v7"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -30,9 +29,9 @@ type ESEngineConfig struct {
 // esEngine search.Engine 実装
 type esEngine struct {
 	client *elastic.Client
-	hub    *hub.Hub
 	repo   repository.Repository
 	l      *zap.Logger
+	done   chan<- struct{}
 }
 
 // esMessageDoc Elasticsearchに入るメッセージの情報
@@ -135,7 +134,7 @@ func (e *esResult) Get() map[uuid.UUID]string {
 }
 
 // NewESEngine Elasticsearch検索エンジンを生成します
-func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
+func NewESEngine(repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
 	// es接続
 	client, err := elastic.NewClient(elastic.SetURL(config.URL))
 	if err != nil {
@@ -174,14 +173,15 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 		}
 	}
 
+	done := make(chan struct{})
 	engine := &esEngine{
 		client: client,
-		hub:    hub,
 		repo:   repo,
 		l:      logger.Named("search"),
+		done:   done,
 	}
 
-	go engine.syncLoop()
+	go engine.syncLoop(done)
 
 	return engine, nil
 }
@@ -302,6 +302,7 @@ func (e *esEngine) Available() bool {
 
 func (e *esEngine) Close() error {
 	e.client.Stop()
+	e.done <- struct{}{}
 	return nil
 }
 
