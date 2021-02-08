@@ -1067,9 +1067,7 @@ func (repo *TestRepository) GetUpdatedMessagesAfter(after time.Time, limit int) 
 	}
 
 	messages = make([]*model.Message, 0, len(tmp))
-	for _, v := range tmp {
-		messages = append(messages, v)
-	}
+	messages = append(messages, tmp...)
 	return
 }
 
@@ -1095,9 +1093,7 @@ func (repo *TestRepository) GetDeletedMessagesAfter(after time.Time, limit int) 
 	}
 
 	messages = make([]*model.Message, 0, len(tmp))
-	for _, v := range tmp {
-		messages = append(messages, v)
-	}
+	messages = append(messages, tmp...)
 	return
 }
 

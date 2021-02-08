@@ -18,13 +18,10 @@ const (
 
 func (e *esEngine) syncLoop() {
 	t := time.NewTicker(syncInterval)
-	for {
-		select {
-		case <-t.C:
-			err := e.sync()
-			if err != nil {
-				e.l.Error(err.Error(), zap.Error(err))
-			}
+	for range t.C {
+		err := e.sync()
+		if err != nil {
+			e.l.Error(err.Error(), zap.Error(err))
 		}
 	}
 }
@@ -59,7 +56,7 @@ func (e *esEngine) sync() error {
 			} else {
 				bulkReq = elastic.NewBulkUpdateRequest().
 					Id(v.ID.String()).
-					Doc(e.convertMessageCreated(v, message.Parse(v.Text)))
+					Doc(e.convertMessageUpdated(v, message.Parse(v.Text)))
 			}
 			bulk.Add(bulkReq)
 		}
