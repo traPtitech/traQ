@@ -53,7 +53,15 @@ func (h *Handlers) SearchMessages(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, r.Get())
+	type res struct {
+		TotalHits int64             `json:"totalHits"`
+		Hits      []message.Message `json:"hits"`
+	}
+	response := res{
+		TotalHits: r.TotalHits(),
+		Hits:      r.Hits(),
+	}
+	return c.JSON(http.StatusOK, response)
 }
 
 // GetMessage GET /messages/:messageID

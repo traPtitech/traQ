@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/gofrs/uuid"
 	json "github.com/json-iterator/go"
 	"github.com/olivere/elastic/v7"
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
+	"strings"
 	"time"
 )
 
@@ -15,6 +18,77 @@ const (
 	syncInterval    = 1 * time.Minute
 	syncMessageBulk = 100
 )
+
+type attributes struct {
+	To             []uuid.UUID
+	Citation       []uuid.UUID
+	HasURL         bool
+	HasAttachments bool
+	HasImage       bool
+	HasVideo       bool
+	HasAudio       bool
+}
+
+// convertMessageCreated 新規メッセージをesへ入れる型に変換する
+func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.ParseResult) *esMessageDoc {
+	attr := e.getAttributes(m, parseResult)
+	return &esMessageDoc{
+		UserID:         m.UserID,
+		ChannelID:      m.ChannelID,
+		Text:           m.Text,
+		CreatedAt:      m.CreatedAt,
+		UpdatedAt:      m.UpdatedAt,
+		To:             attr.To,
+		Citation:       attr.Citation,
+		HasURL:         attr.HasURL,
+		HasAttachments: attr.HasAttachments,
+		HasImage:       attr.HasImage,
+		HasVideo:       attr.HasVideo,
+		HasAudio:       attr.HasAudio,
+	}
+}
+
+// convertMessageUpdated 既存メッセージの更新情報をesへ入れる型に変換する
+func (e *esEngine) convertMessageUpdated(m *model.Message, parseResult *message.ParseResult) *esMessageDocUpdate {
+	attr := e.getAttributes(m, parseResult)
+	// Updateする項目のみ
+	return &esMessageDocUpdate{
+		Text:           m.Text,
+		UpdatedAt:      m.UpdatedAt,
+		Citation:       attr.Citation,
+		HasURL:         attr.HasURL,
+		HasAttachments: attr.HasAttachments,
+		HasImage:       attr.HasImage,
+		HasVideo:       attr.HasVideo,
+		HasAudio:       attr.HasAudio,
+	}
+}
+
+func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseResult) *attributes {
+	attr := &attributes{}
+
+	attr.To = append(parseResult.Mentions, parseResult.GroupMentions...)
+	attr.Citation = parseResult.Citation
+	attr.HasURL = strings.Contains(m.Text, "http://") || strings.Contains(m.Text, "https://")
+	attr.HasAttachments = len(parseResult.Attachments) != 0
+
+	for _, attachmentID := range parseResult.Attachments {
+		meta, err := e.repo.GetFileMeta(attachmentID)
+		if err != nil {
+			e.l.Error(err.Error(), zap.Error(err))
+			continue
+		}
+		if strings.HasPrefix(meta.Mime, "image/") {
+			attr.HasImage = true
+		} else if strings.HasPrefix(meta.Mime, "video/") {
+			attr.HasVideo = true
+		} else if strings.HasPrefix(meta.Mime, "audio/") {
+			attr.HasAudio = true
+		}
+	}
+
+	return attr
+}
 
 func (e *esEngine) syncLoop(done <-chan struct{}) {
 	t := time.NewTicker(syncInterval)

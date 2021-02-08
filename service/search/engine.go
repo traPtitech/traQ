@@ -3,7 +3,7 @@ package search
 import (
 	"errors"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/gofrs/uuid"
+	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
@@ -51,7 +51,8 @@ func (q Query) Validate() error {
 
 // Result 検索結果インターフェイス TODO
 type Result interface {
-	// Get 仮置き
-	Get() map[uuid.UUID]string
-	// GetMessages() (ms []*model.Message, more bool)
+	// TotalHits 総ヒット件数
+	TotalHits() int64
+	// Hits createdAtで降順にソートされた、ヒットしたメッセージ
+	Hits() []message.Message
 }
