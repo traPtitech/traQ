@@ -10,6 +10,7 @@ import (
 	model "github.com/traPtitech/traQ/model"
 	repository "github.com/traPtitech/traQ/repository"
 	reflect "reflect"
+	time "time"
 )
 
 // MockMessageRepository is a mock of MessageRepository interface
@@ -107,6 +108,38 @@ func (m *MockMessageRepository) GetMessages(query repository.MessagesQuery) ([]*
 func (mr *MockMessageRepositoryMockRecorder) GetMessages(query interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessages", reflect.TypeOf((*MockMessageRepository)(nil).GetMessages), query)
+}
+
+// GetUpdatedMessagesAfter mocks base method
+func (m *MockMessageRepository) GetUpdatedMessagesAfter(after time.Time, limit int) ([]*model.Message, bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUpdatedMessagesAfter", after, limit)
+	ret0, _ := ret[0].([]*model.Message)
+	ret1, _ := ret[1].(bool)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetUpdatedMessagesAfter indicates an expected call of GetUpdatedMessagesAfter
+func (mr *MockMessageRepositoryMockRecorder) GetUpdatedMessagesAfter(after, limit interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUpdatedMessagesAfter", reflect.TypeOf((*MockMessageRepository)(nil).GetUpdatedMessagesAfter), after, limit)
+}
+
+// GetDeletedMessagesAfter mocks base method
+func (m *MockMessageRepository) GetDeletedMessagesAfter(after time.Time, limit int) ([]*model.Message, bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDeletedMessagesAfter", after, limit)
+	ret0, _ := ret[0].([]*model.Message)
+	ret1, _ := ret[1].(bool)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetDeletedMessagesAfter indicates an expected call of GetDeletedMessagesAfter
+func (mr *MockMessageRepositoryMockRecorder) GetDeletedMessagesAfter(after, limit interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeletedMessagesAfter", reflect.TypeOf((*MockMessageRepository)(nil).GetDeletedMessagesAfter), after, limit)
 }
 
 // SetMessageUnread mocks base method

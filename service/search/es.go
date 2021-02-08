@@ -7,7 +7,6 @@ import (
 	json "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/olivere/elastic/v7"
-	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
@@ -182,47 +181,15 @@ func NewESEngine(hub *hub.Hub, repo repository.Repository, logger *zap.Logger, c
 		l:      logger.Named("search"),
 	}
 
-	go func() {
-		for ev := range hub.Subscribe(10, event.MessageCreated, event.MessageUpdated, event.MessageDeleted).Receiver {
-			engine.onEvent(ev)
-		}
-	}()
+	go engine.syncLoop()
+
 	return engine, nil
 }
 
-// onEvent 内部イベントを処理する
-func (e *esEngine) onEvent(ev hub.Message) {
-	switch ev.Topic() {
-	case event.MessageCreated:
-		err := e.addMessageToIndex(
-			ev.Fields["message"].(*model.Message),
-			ev.Fields["parse_result"].(*message.ParseResult),
-		)
-		if err != nil {
-			e.l.Error(err.Error(), zap.Error(err))
-		}
-
-	case event.MessageUpdated:
-		m := ev.Fields["message"].(*model.Message)
-		err := e.updateMessageOnIndex(m, message.Parse(m.Text))
-		if err != nil {
-			e.l.Error(err.Error(), zap.Error(err))
-		}
-
-	case event.MessageDeleted:
-		err := e.deleteMessageFromIndex(ev.Fields["message_id"].(uuid.UUID))
-		if err != nil {
-			e.l.Error(err.Error(), zap.Error(err))
-		}
-
-		// スタンプの追加・削除は優先度低め
-	}
-}
-
-// addMessageToIndex 新規メッセージをesに入れる
-func (e *esEngine) addMessageToIndex(m *model.Message, parseResult *message.ParseResult) error {
+// convertMessageCreated 新規メッセージをesへ入れる型に変換する
+func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.ParseResult) *esMessageDoc {
 	attr := e.getAttributes(m, parseResult)
-	doc := esMessageDoc{
+	return &esMessageDoc{
 		UserID:         m.UserID,
 		ChannelID:      m.ChannelID,
 		Text:           m.Text,
@@ -236,22 +203,13 @@ func (e *esEngine) addMessageToIndex(m *model.Message, parseResult *message.Pars
 		HasVideo:       attr.HasVideo,
 		HasAudio:       attr.HasAudio,
 	}
-	_, err := e.client.Index().
-		Index(getIndexName(esMessageIndex)).
-		Id(m.ID.String()).
-		BodyJson(doc).
-		Do(context.Background())
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
-// updateMessageOnIndex 既存メッセージの編集をesに反映させる
-func (e *esEngine) updateMessageOnIndex(m *model.Message, parseResult *message.ParseResult) error {
+// convertMessageUpdated 既存メッセージの更新情報をesへ入れる型に変換する
+func (e *esEngine) convertMessageUpdated(m *model.Message, parseResult *message.ParseResult) *esMessageDocUpdate {
 	attr := e.getAttributes(m, parseResult)
 	// Updateする項目のみ
-	doc := esMessageDocUpdate{
+	return &esMessageDocUpdate{
 		Text:           m.Text,
 		UpdatedAt:      m.UpdatedAt,
 		Citation:       attr.Citation,
@@ -261,21 +219,6 @@ func (e *esEngine) updateMessageOnIndex(m *model.Message, parseResult *message.P
 		HasVideo:       attr.HasVideo,
 		HasAudio:       attr.HasAudio,
 	}
-	_, err := e.client.Update().
-		Index(getIndexName(esMessageIndex)).
-		Id(m.ID.String()).
-		Doc(doc).
-		Do(context.Background())
-	return err
-}
-
-// deleteMessageFromIndex メッセージの削除をesに反映させる
-func (e *esEngine) deleteMessageFromIndex(id uuid.UUID) error {
-	_, err := e.client.Delete().
-		Index(getIndexName(esMessageIndex)).
-		Id(id.String()).
-		Do(context.Background())
-	return err
 }
 
 func (e *esEngine) Do(q *Query) (Result, error) {

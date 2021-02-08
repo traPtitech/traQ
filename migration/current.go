@@ -32,6 +32,7 @@ func Migrations() []*gormigrate.Migration {
 		v20(), // パーミッション周りの調整
 		v21(), // OGPキャッシュ追加
 		v22(), // BOTへのWebRTCパーミッションの付与
+		v23(), // 複合インデックス追加
 	}
 }
 
@@ -147,6 +148,7 @@ func AllCompositeIndexes() [][]string {
 		{"idx_messages_stamps_user_id_stamp_id_updated_at", "messages_stamps", "user_id", "stamp_id", "updated_at"},
 		{"idx_channel_channels_id_is_public_is_forced", "channels", "id", "is_public", "is_forced"},
 		{"idx_messages_deleted_at_created_at", "messages", "deleted_at", "created_at"},
+		{"idx_messages_deleted_at_updated_at", "messages", "deleted_at", "updated_at"},
 	}
 }
 

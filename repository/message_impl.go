@@ -248,6 +248,39 @@ func (repo *GormRepository) GetMessages(query MessagesQuery) (messages []*model.
 	return messages, false, err
 }
 
+// GetUpdatedMessagesAfter implements MessageRepository interface.
+func (repo *GormRepository) GetUpdatedMessagesAfter(after time.Time, limit int) (messages []*model.Message, more bool, err error) {
+	err = repo.db.
+		Where("messages.updated_at > ?", after).
+		Order("messages.updated_at").
+		Limit(limit + 1).
+		Find(&messages).
+		Error
+
+	if len(messages) > limit {
+		more = true
+		messages = messages[:limit]
+	}
+	return
+}
+
+// GetDeletedMessagesAfter implements MessageRepository interface.
+func (repo *GormRepository) GetDeletedMessagesAfter(after time.Time, limit int) (messages []*model.Message, more bool, err error) {
+	err = repo.db.
+		Unscoped().
+		Where("messages.deleted_at > ?", after).
+		Order("messages.deleted_at").
+		Limit(limit + 1).
+		Find(&messages).
+		Error
+
+	if len(messages) > limit {
+		more = true
+		messages = messages[:limit]
+	}
+	return
+}
+
 // SetMessageUnread implements MessageRepository interface.
 func (repo *GormRepository) SetMessageUnread(userID, messageID uuid.UUID, noticeable bool) error {
 	if userID == uuid.Nil || messageID == uuid.Nil {
