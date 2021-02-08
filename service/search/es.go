@@ -20,6 +20,8 @@ const (
 	esMessageIndex    = "message"
 )
 
+const esDateFormat = "2006-01-02T15:04:05Z"
+
 // ESEngineConfig Elasticsearch検索エンジン設定
 type ESEngineConfig struct {
 	// URL ESのURL
@@ -235,12 +237,15 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 
 	switch {
 	case q.After.Valid && q.Before.Valid:
-		musts = append(musts, elastic.NewRangeQuery("createdAt").Gte(q.After.ValueOrZero().Format("2006-01-02T15:04:05Z")).Lte(q.Before.ValueOrZero().Format("2006-01-02T15:04:05Z")))
+		musts = append(musts, elastic.NewRangeQuery("createdAt").
+			Gt(q.After.ValueOrZero().Format(esDateFormat)).
+			Lt(q.Before.ValueOrZero().Format(esDateFormat)))
 	case q.After.Valid && !q.Before.Valid:
-		musts = append(musts, elastic.NewRangeQuery("date").Gte(q.After.ValueOrZero().Format("2006-01-02 15:04:05Z")))
-		fmt.Println(elastic.NewRangeQuery("date").Gte(q.After.ValueOrZero().Format("2006-01-02T15:04:05Z")).Format("strict_date_time_no_millis"))
+		musts = append(musts, elastic.NewRangeQuery("createdAt").
+			Gt(q.After.ValueOrZero().Format(esDateFormat)))
 	case !q.After.Valid && q.Before.Valid:
-		musts = append(musts, elastic.NewRangeQuery("createdAt").Lte(q.Before.ValueOrZero().Format("2006-01-02T15:04:05Z")))
+		musts = append(musts, elastic.NewRangeQuery("createdAt").
+			Lt(q.Before.ValueOrZero().Format(esDateFormat)))
 	}
 
 	switch {
