@@ -6,6 +6,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/olivere/elastic/v7"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/message"
 	"go.uber.org/zap"
 	"time"
@@ -15,9 +16,8 @@ const (
 	esRequiredVersion = "7.8.0"
 	esIndexPrefix     = "traq_"
 	esMessageIndex    = "message"
+	esDateFormat      = "2006-01-02T15:04:05Z"
 )
-
-const esDateFormat = "2006-01-02T15:04:05Z"
 
 func getIndexName(index string) string {
 	return esIndexPrefix + index
@@ -33,6 +33,7 @@ type ESEngineConfig struct {
 type esEngine struct {
 	client *elastic.Client
 	mm     message.Manager
+	cm     channel.Manager
 	repo   repository.Repository
 	l      *zap.Logger
 	done   chan<- struct{}
@@ -43,6 +44,7 @@ type esMessageDoc struct {
 	ID             uuid.UUID   `json:"-"`
 	UserID         uuid.UUID   `json:"userId"`
 	ChannelID      uuid.UUID   `json:"channelId"`
+	IsPublic       bool        `json:"isPublic"`
 	Text           string      `json:"text"`
 	CreatedAt      time.Time   `json:"createdAt"`
 	UpdatedAt      time.Time   `json:"updatedAt"`
@@ -78,6 +80,9 @@ var esMapping = m{
 		},
 		"channelId": m{
 			"type": "keyword",
+		},
+		"isPublic": m{
+			"type": "boolean",
 		},
 		"text": m{
 			"type": "text",
@@ -115,7 +120,7 @@ var esMapping = m{
 }
 
 // NewESEngine Elasticsearch検索エンジンを生成します
-func NewESEngine(mm message.Manager, repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
+func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
 	// es接続
 	client, err := elastic.NewClient(elastic.SetURL(config.URL))
 	if err != nil {
@@ -158,6 +163,7 @@ func NewESEngine(mm message.Manager, repo repository.Repository, logger *zap.Log
 	engine := &esEngine{
 		client: client,
 		mm:     mm,
+		cm:     cm,
 		repo:   repo,
 		l:      logger.Named("search"),
 		done:   done,
@@ -169,7 +175,6 @@ func NewESEngine(mm message.Manager, repo repository.Repository, logger *zap.Log
 }
 
 func (e *esEngine) Do(q *Query) (Result, error) {
-	// TODO 実装
 	e.l.Debug("do search", zap.Reflect("q", q))
 
 	// TODO "should" "must not"をどういれるか
@@ -193,10 +198,19 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 			Lt(q.Before.ValueOrZero().Format(esDateFormat)))
 	}
 
-	switch {
-	case q.To.Valid:
+	// チャンネル指定があるときはそのチャンネルを検索
+	// そうでないときはPublicチャンネルを検索
+	if q.In.Valid {
+		musts = append(musts, elastic.NewTermQuery("channelId", q.In))
+	} else {
+		musts = append(musts, elastic.NewTermQuery("isPublic", true))
+	}
+
+	if q.To.Valid {
 		musts = append(musts, elastic.NewTermQuery("to", q.To))
-	case q.From.Valid:
+	}
+
+	if q.From.Valid {
 		musts = append(musts, elastic.NewTermQuery("userId", q.From))
 	}
 

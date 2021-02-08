@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/router/auth"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/fcm"
 	"github.com/traPtitech/traQ/service/imaging"
@@ -338,9 +339,9 @@ func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unr
 	return fcm.NewNullClient(), nil
 }
 
-func initSearchServiceIfAvailable(mm message.Manager, repo repository.Repository, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
+func initSearchServiceIfAvailable(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
 	if len(config.URL) > 0 {
-		return search.NewESEngine(mm, repo, logger, config)
+		return search.NewESEngine(mm, cm, repo, logger, config)
 	}
 	return search.NewNullEngine(), nil
 }
