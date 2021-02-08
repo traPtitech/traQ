@@ -272,11 +272,20 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		musts = append(musts, elastic.NewTermQuery("hasAudio", q.HasAudio))
 	}
 
+	limit, offset := 20, 0
+	if q.Limit.Valid {
+		limit = int(q.Limit.Int64)
+	}
+	if q.Offset.Valid {
+		offset = int(q.Offset.Int64)
+	}
+
 	sr, err := e.client.Search().
 		Index(getIndexName(esMessageIndex)).
 		Query(elastic.NewBoolQuery().Must(musts...)).
 		Sort("createdAt", false).
-		Size(20).
+		Size(limit).
+		From(offset).
 		Do(context.Background())
 	if err != nil {
 		return nil, err

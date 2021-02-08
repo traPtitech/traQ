@@ -2,6 +2,7 @@ package search
 
 import (
 	"errors"
+	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/utils/optional"
 )
@@ -33,12 +34,19 @@ type Query struct {
 	HasImage       optional.Bool   `query:"hasImage"`
 	HasVideo       optional.Bool   `query:"hasVideo"`
 	HasAudio       optional.Bool   `query:"hasAudio"`
+	Limit          optional.Int    `query:"limit"`
+	Offset         optional.Int    `query:"offset"`
 }
 
 func (q Query) Validate() error {
-	//return vd.ValidateStruct(&q,
-	//	vd.Field(&q.Word, validator.SearchWordRule...),
-	return nil
+	return vd.ValidateStruct(&q,
+		// TODO word validation
+		//vd.Field(&q.Word, validator.SearchWordRule...),
+		vd.Field(&q.Limit, vd.Min(1), vd.Max(100)),
+		// Cannot page through more than 10k hits with From and Size
+		// https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html
+		vd.Field(&q.Offset, vd.Min(0), vd.Max(9900)),
+	)
 }
 
 // Result 検索結果インターフェイス TODO
