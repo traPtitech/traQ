@@ -100,16 +100,18 @@ paths:
           example: '"phrase match" +(foo | bar) -baz'
         - schema:
             type: string
-            format: date
+            format: date-time
           in: query
           name: after
           description: 投稿日時が指定日時より後
+          example: 2006-01-02T15:04:05Z
         - schema:
             type: string
-            format: date
+            format: date-time
           in: query
           name: before
           description: 投稿日時が指定日時より前
+          example: 2006-01-02T15:04:05Z
         - schema:
             type: string
             format: uuid
