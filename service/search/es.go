@@ -177,12 +177,12 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 func (e *esEngine) Do(q *Query) (Result, error) {
 	e.l.Debug("do search", zap.Reflect("q", q))
 
-	// TODO "should" "must not"をどういれるか
 	var musts []elastic.Query
 
-	// TODO MatchQuery, MatchPhraseQuery(語順が重要な場合)との出し分け
 	if q.Word.Valid {
-		musts = append(musts, elastic.NewMatchPhraseQuery("text", q.Word))
+		musts = append(musts, elastic.NewSimpleQueryStringQuery(q.Word.String).
+			Field("text").
+			DefaultOperator("AND"))
 	}
 
 	switch {

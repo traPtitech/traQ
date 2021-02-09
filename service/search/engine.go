@@ -23,7 +23,7 @@ type Engine interface {
 // Query 検索クエリ
 type Query struct {
 	// Word 検索ワード (仮置き)
-	Word           optional.String `query:"word"`     // 検索ワード 空白区切り(複数)をうまく扱ってくれる
+	Word           optional.String `query:"word"`     // 検索ワード Simple-Query-String-Syntax
 	After          optional.Time   `query:"after"`    // 以降(投稿日時) 2020-06-20T00:00:00Z
 	Before         optional.Time   `query:"before"`   // 以前(投稿日時)
 	In             optional.UUID   `query:"in"`       // 投稿チャンネル
@@ -41,8 +41,6 @@ type Query struct {
 
 func (q Query) Validate() error {
 	return vd.ValidateStruct(&q,
-		// TODO word validation
-		//vd.Field(&q.Word, validator.SearchWordRule...),
 		vd.Field(&q.Limit, vd.Min(1), vd.Max(100)),
 		// Cannot page through more than 10k hits with From and Size
 		// https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html
@@ -50,7 +48,7 @@ func (q Query) Validate() error {
 	)
 }
 
-// Result 検索結果インターフェイス TODO
+// Result 検索結果インターフェイス
 type Result interface {
 	// TotalHits 総ヒット件数
 	TotalHits() int64
