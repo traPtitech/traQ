@@ -56,6 +56,7 @@ services:
       - "9300:9300"
     volumes:
       - ./dev/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+      - ./dev/es_jvm.options:/usr/share/elasticsearch/config/jvm.options.d/es_jvm.options
 
   adminer:
     image: adminer:4.7.5

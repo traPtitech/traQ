@@ -16,7 +16,7 @@ import (
 
 const (
 	syncInterval    = 1 * time.Minute
-	syncMessageBulk = 100
+	syncMessageBulk = 1000
 )
 
 type attributes struct {
@@ -76,7 +76,7 @@ func (e *esEngine) getAttributes(m *model.Message, parseResult *message.ParseRes
 	for _, attachmentID := range parseResult.Attachments {
 		meta, err := e.repo.GetFileMeta(attachmentID)
 		if err != nil {
-			e.l.Error(err.Error(), zap.Error(err))
+			e.l.Warn(err.Error(), zap.Error(err))
 			continue
 		}
 		if strings.HasPrefix(meta.Mime, "image/") {
@@ -147,7 +147,7 @@ func (e *esEngine) sync() error {
 			return err
 		}
 
-		e.l.Debug(fmt.Sprintf("indexed %v, updated %v message(s)", len(res.Indexed()), len(res.Updated())))
+		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index", len(res.Indexed()), len(res.Updated())))
 
 		if !more {
 			break
@@ -192,7 +192,7 @@ func (e *esEngine) sync() error {
 			return err
 		}
 
-		e.l.Debug(fmt.Sprintf("deleted %v message(s)", len(res.Deleted())))
+		e.l.Info(fmt.Sprintf("deleted %v message(s) from index", len(res.Deleted())))
 
 		if !more {
 			break
