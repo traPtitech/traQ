@@ -23,20 +23,21 @@ type Engine interface {
 // Query 検索クエリ
 type Query struct {
 	// Word 検索ワード (仮置き)
-	Word           optional.String `query:"word"`     // 検索ワード Simple-Query-String-Syntax
-	After          optional.Time   `query:"after"`    // 以降(投稿日時) 2020-06-20T00:00:00Z
-	Before         optional.Time   `query:"before"`   // 以前(投稿日時)
-	In             optional.UUID   `query:"in"`       // 投稿チャンネル
-	To             optional.UUID   `query:"to"`       // メンション先
-	From           optional.UUID   `query:"from"`     // 投稿者
-	Citation       optional.UUID   `query:"citation"` // 引用しているメッセージ
-	HasURL         optional.Bool   `query:"hasURL"`
-	HasAttachments optional.Bool   `query:"hasAttachments"`
-	HasImage       optional.Bool   `query:"hasImage"`
-	HasVideo       optional.Bool   `query:"hasVideo"`
-	HasAudio       optional.Bool   `query:"hasAudio"`
-	Limit          optional.Int    `query:"limit"`
-	Offset         optional.Int    `query:"offset"`
+	Word           optional.String `query:"word"`           // 検索ワード Simple-Query-String-Syntax
+	After          optional.Time   `query:"after"`          // 以降(投稿日時) 2020-06-20T00:00:00Z
+	Before         optional.Time   `query:"before"`         // 以前(投稿日時)
+	In             optional.UUID   `query:"in"`             // 投稿チャンネル
+	To             optional.UUID   `query:"to"`             // メンション先
+	From           optional.UUID   `query:"from"`           // 投稿者
+	Citation       optional.UUID   `query:"citation"`       // 引用しているメッセージ
+	Bot            optional.Bool   `query:"bot"`            // 投稿者がBotか
+	HasURL         optional.Bool   `query:"hasURL"`         // URLの存在
+	HasAttachments optional.Bool   `query:"hasAttachments"` // 添付ファイル
+	HasImage       optional.Bool   `query:"hasImage"`       // 添付ファイル（画像）
+	HasVideo       optional.Bool   `query:"hasVideo"`       // 添付ファイル（動画）
+	HasAudio       optional.Bool   `query:"hasAudio"`       // 添付ファイル（音声ファイル）
+	Limit          optional.Int    `query:"limit"`          // 取得件数
+	Offset         optional.Int    `query:"offset"`         // 取得Offset
 }
 
 func (q Query) Validate() error {

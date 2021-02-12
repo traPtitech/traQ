@@ -45,6 +45,7 @@ type esMessageDoc struct {
 	UserID         uuid.UUID   `json:"userId"`
 	ChannelID      uuid.UUID   `json:"channelId"`
 	IsPublic       bool        `json:"isPublic"`
+	Bot            bool        `json:"bot"`
 	Text           string      `json:"text"`
 	CreatedAt      time.Time   `json:"createdAt"`
 	UpdatedAt      time.Time   `json:"updatedAt"`
@@ -82,6 +83,9 @@ var esMapping = m{
 			"type": "keyword",
 		},
 		"isPublic": m{
+			"type": "boolean",
+		},
+		"bot": m{
 			"type": "boolean",
 		},
 		"text": m{
@@ -216,6 +220,10 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 
 	if q.Citation.Valid {
 		musts = append(musts, elastic.NewTermQuery("citation", q.Citation))
+	}
+
+	if q.Bot.Valid {
+		musts = append(musts, elastic.NewTermQuery("bot", q.Bot))
 	}
 
 	if q.HasURL.Valid {

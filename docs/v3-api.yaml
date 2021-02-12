@@ -139,6 +139,11 @@ paths:
         - schema:
             type: boolean
           in: query
+          name: bot
+          description: メッセージを投稿したユーザーがBotかどうか
+        - schema:
+            type: boolean
+          in: query
           name: hasURL
           description: メッセージがURLを含むか
         - schema:

@@ -8,6 +8,7 @@ import (
 	json "github.com/json-iterator/go"
 	"github.com/olivere/elastic/v7"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
 	"strings"
@@ -15,8 +16,9 @@ import (
 )
 
 const (
-	syncInterval    = 1 * time.Minute
-	syncMessageBulk = 1000
+	syncInterval      = 1 * time.Minute
+	syncMessageBulk   = 1000
+	useUserCacheLimit = 24 * time.Hour
 )
 
 type attributes struct {
@@ -29,13 +31,29 @@ type attributes struct {
 	HasAudio       bool
 }
 
+type userCache struct {
+	isBot map[uuid.UUID]bool
+}
+
 // convertMessageCreated 新規メッセージをesへ入れる型に変換する
-func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.ParseResult) *esMessageDoc {
+func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.ParseResult, userCache userCache) (*esMessageDoc, error) {
+	var isBot, ok bool
+	if isBot, ok = userCache.isBot[m.UserID]; !ok {
+		// 新規ユーザー or キャッシュが存在しない
+		user, err := e.repo.GetUser(m.UserID, false)
+		if err != nil {
+			return nil, err
+		}
+		isBot = user.IsBot()
+	}
+
 	attr := e.getAttributes(m, parseResult)
+
 	return &esMessageDoc{
 		UserID:         m.UserID,
 		ChannelID:      m.ChannelID,
 		IsPublic:       e.cm.IsPublicChannel(m.ChannelID),
+		Bot:            isBot,
 		Text:           m.Text,
 		CreatedAt:      m.CreatedAt,
 		UpdatedAt:      m.UpdatedAt,
@@ -46,7 +64,7 @@ func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.
 		HasImage:       attr.HasImage,
 		HasVideo:       attr.HasVideo,
 		HasAudio:       attr.HasAudio,
-	}
+	}, nil
 }
 
 // convertMessageUpdated 既存メッセージの更新情報をesへ入れる型に変換する
@@ -108,6 +126,22 @@ loop:
 	}
 }
 
+func (e *esEngine) newUserCache() (userCache, error) {
+	users, err := e.repo.GetUsers(repository.UsersQuery{})
+	if err != nil {
+		return userCache{}, err
+	}
+	e.l.Debug("making user cache of size", zap.Int("size", len(users)))
+
+	cache := userCache{
+		isBot: make(map[uuid.UUID]bool, len(users)),
+	}
+	for _, u := range users {
+		cache.isBot[u.GetID()] = u.IsBot()
+	}
+	return cache, nil
+}
+
 // sync メッセージを repository.MessageRepository から読み取り、esへindexします
 func (e *esEngine) sync() error {
 	e.l.Debug("syncing messages with es")
@@ -115,6 +149,17 @@ func (e *esEngine) sync() error {
 	lastSynced, err := e.lastInsertedUpdated()
 	if err != nil {
 		return err
+	}
+
+	// NOTE: index時にBotかどうかを確認するN+1問題へのworkaround
+	// ユーザーキャッシュサービスができたら書き換えても良い
+	var userCache userCache
+	if lastSynced.Add(useUserCacheLimit).Before(time.Now()) {
+		// 新規メッセージが多く存在すると思われる時のみデータが入ったキャッシュを作成
+		userCache, err = e.newUserCache()
+		if err != nil {
+			return err
+		}
 	}
 
 	lastInsert := lastSynced
@@ -132,9 +177,13 @@ func (e *esEngine) sync() error {
 		for _, v := range messages {
 			var bulkReq elastic.BulkableRequest
 			if v.CreatedAt.After(lastSynced) {
+				doc, err := e.convertMessageCreated(v, message.Parse(v.Text), userCache)
+				if err != nil {
+					return err
+				}
 				bulkReq = elastic.NewBulkIndexRequest().
 					Id(v.ID.String()).
-					Doc(e.convertMessageCreated(v, message.Parse(v.Text)))
+					Doc(doc)
 			} else {
 				bulkReq = elastic.NewBulkUpdateRequest().
 					Id(v.ID.String()).
@@ -147,7 +196,7 @@ func (e *esEngine) sync() error {
 			return err
 		}
 
-		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index", len(res.Indexed()), len(res.Updated())))
+		e.l.Info(fmt.Sprintf("indexed %v message(s) to index, updated %v message(s) on index, last insert %v", len(res.Indexed()), len(res.Updated()), lastInsert))
 
 		if !more {
 			break
@@ -192,7 +241,7 @@ func (e *esEngine) sync() error {
 			return err
 		}
 
-		e.l.Info(fmt.Sprintf("deleted %v message(s) from index", len(res.Deleted())))
+		e.l.Info(fmt.Sprintf("deleted %v message(s) from index, last delete %v", len(res.Deleted()), lastDelete))
 
 		if !more {
 			break
