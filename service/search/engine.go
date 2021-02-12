@@ -22,7 +22,6 @@ type Engine interface {
 
 // Query 検索クエリ
 type Query struct {
-	// Word 検索ワード (仮置き)
 	Word           optional.String `query:"word"`           // 検索ワード Simple-Query-String-Syntax
 	After          optional.Time   `query:"after"`          // 以降(投稿日時) 2020-06-20T00:00:00Z
 	Before         optional.Time   `query:"before"`         // 以前(投稿日時)
