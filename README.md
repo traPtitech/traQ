@@ -15,7 +15,7 @@ Frontend: [traQ_S-UI](https://github.com/traPtitech/traQ_S-UI)
 
 ### Requirements
 
-- go 1.14
+- go 1.15
 - git
 - bash
 - make

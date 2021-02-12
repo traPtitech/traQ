@@ -1,8 +1,6 @@
 package v3
 
 import (
-	"github.com/traPtitech/traQ/service/message"
-	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,6 +12,8 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // NotImplemented 未実装API. 501 NotImplementedを返す

@@ -8,6 +8,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/service/search"
 	"net/http"
 )
 
@@ -33,6 +34,45 @@ func (h *Handlers) ReadChannel(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+// SearchMessages GET /messages
+func (h *Handlers) SearchMessages(c echo.Context) error {
+	if !h.SearchEngine.Available() {
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "search service is currently unavailable")
+	}
+
+	var q search.Query
+	if err := bindAndValidate(c, &q); err != nil {
+		return err
+	}
+
+	if q.In.Valid {
+		// ユーザーが該当チャンネルへのアクセス権限があるかを確認
+		ok, err := h.ChannelManager.IsChannelAccessibleToUser(getRequestUserID(c), q.In.UUID)
+		if err != nil {
+			return herror.InternalServerError(err)
+		}
+		if !ok {
+			return herror.Forbidden("invalid channelId")
+		}
+	}
+
+	// 仮置き
+	r, err := h.SearchEngine.Do(&q)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	type res struct {
+		TotalHits int64             `json:"totalHits"`
+		Hits      []message.Message `json:"hits"`
+	}
+	response := res{
+		TotalHits: r.TotalHits(),
+		Hits:      r.Hits(),
+	}
+	return c.JSON(http.StatusOK, response)
 }
 
 // GetMessage GET /messages/:messageID

@@ -82,6 +82,127 @@ paths:
           description: |-
             Not Found
             チャンネルが見つかりません。
+  '/messages':
+    get:
+      summary: メッセージを検索
+      description: メッセージを検索します。
+      operationId: searchMessages
+      tags:
+        - message
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: word
+          description: |
+            検索ワード
+            Simple-Query-String-Syntaxをパースして検索します
+          example: '"phrase match" +(foo | bar) -baz'
+        - schema:
+            type: string
+            format: date-time
+          in: query
+          name: after
+          description: 投稿日時が指定日時より後
+          example: 2006-01-02T15:04:05Z
+        - schema:
+            type: string
+            format: date-time
+          in: query
+          name: before
+          description: 投稿日時が指定日時より前
+          example: 2006-01-02T15:04:05Z
+        - schema:
+            type: string
+            format: uuid
+          in: query
+          name: in
+          description: メッセージが投稿されたチャンネル
+        - schema:
+            type: string
+            format: uuid
+          in: query
+          name: to
+          description: メンションされたユーザー
+        - schema:
+            type: string
+            format: uuid
+          in: query
+          name: from
+          description: メッセージを投稿したユーザー
+        - schema:
+            type: string
+            format: uuid
+          in: query
+          name: citation
+          description: 引用しているメッセージ
+        - schema:
+            type: boolean
+          in: query
+          name: bot
+          description: メッセージを投稿したユーザーがBotかどうか
+        - schema:
+            type: boolean
+          in: query
+          name: hasURL
+          description: メッセージがURLを含むか
+        - schema:
+            type: boolean
+          in: query
+          name: hasAttachments
+          description: メッセージが添付ファイルを含むか
+        - schema:
+            type: boolean
+          in: query
+          name: hasImage
+          description: メッセージが画像を含むか
+        - schema:
+            type: boolean
+          in: query
+          name: hasVideo
+          description: メッセージが動画を含むか
+        - schema:
+            type: boolean
+          in: query
+          name: hasAudio
+          description: メッセージが音声ファイルを含むか
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          in: query
+          name: limit
+          description: 検索結果から取得するメッセージの最大件数
+        - schema:
+            type: integer
+            minimum: 0
+            maximum: 9900
+          in: query
+          name: offset
+          description: 検索結果から取得するメッセージのオフセット
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                title: MessageSearchResult
+                type: object
+                description: メッセージ検索結果
+                properties:
+                  totalHits:
+                    type: integer
+                    format: int64
+                    description: 検索にヒットしたメッセージ件数
+                  hits:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                    description: 検索にヒットしたメッセージの配列
+        '400':
+          description: Bad Request
+        '503':
+          description: search service is currently unavailable
   '/messages/{messageId}':
     parameters:
       - $ref: '#/components/parameters/messageIdInPath'

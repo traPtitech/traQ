@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
+	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/service/ws"
@@ -33,6 +34,7 @@ type Handlers struct {
 	WebRTC         *webrtcv3.Manager
 	Imaging        imaging.Processor
 	SessStore      session.Store
+	SearchEngine   search.Engine
 	ChannelManager channel.Manager
 	MessageManager message.Manager
 	FileManager    file.Manager
@@ -176,6 +178,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiMessages := api.Group("/messages")
 		{
+			apiMessages.GET("", h.SearchMessages, requires(permission.GetMessage))
 			apiMessagesMID := apiMessages.Group("/:messageID", retrieve.MessageID(), requiresMessageAccessPerm)
 			{
 				apiMessagesMID.GET("", h.GetMessage, requires(permission.GetMessage))

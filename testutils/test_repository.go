@@ -1045,6 +1045,58 @@ func (repo *TestRepository) GetMessages(query repository.MessagesQuery) (message
 	return
 }
 
+func (repo *TestRepository) GetUpdatedMessagesAfter(after time.Time, limit int) (messages []*model.Message, more bool, err error) {
+	tmp := make([]*model.Message, 0)
+
+	repo.MessagesLock.RLock()
+	for _, v := range repo.Messages {
+		v := v
+		if v.UpdatedAt.After(after) && v.DeletedAt == nil {
+			tmp = append(tmp, &v)
+		}
+	}
+	repo.MessagesLock.RUnlock()
+
+	sort.Slice(tmp, func(i, j int) bool {
+		return tmp[i].UpdatedAt.Before(tmp[j].UpdatedAt)
+	})
+
+	if len(tmp) > limit {
+		more = true
+		tmp = tmp[:limit]
+	}
+
+	messages = make([]*model.Message, 0, len(tmp))
+	messages = append(messages, tmp...)
+	return
+}
+
+func (repo *TestRepository) GetDeletedMessagesAfter(after time.Time, limit int) (messages []*model.Message, more bool, err error) {
+	tmp := make([]*model.Message, 0)
+
+	repo.MessagesLock.RLock()
+	for _, v := range repo.Messages {
+		v := v
+		if v.DeletedAt != nil && v.DeletedAt.After(after) {
+			tmp = append(tmp, &v)
+		}
+	}
+	repo.MessagesLock.RUnlock()
+
+	sort.Slice(tmp, func(i, j int) bool {
+		return tmp[i].DeletedAt.Before(*tmp[j].DeletedAt)
+	})
+
+	if len(tmp) > limit {
+		more = true
+		tmp = tmp[:limit]
+	}
+
+	messages = make([]*model.Message, 0, len(tmp))
+	messages = append(messages, tmp...)
+	return
+}
+
 func (repo *TestRepository) SetMessageUnread(userID, messageID uuid.UUID, _ bool) error {
 	if userID == uuid.Nil || messageID == uuid.Nil {
 		return repository.ErrNilID

@@ -131,7 +131,6 @@ func serveCommand() *cobra.Command {
 
 			logger.Info("traQ started")
 			waitSIGINT()
-			logger.Info("process stop signal received")
 
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()

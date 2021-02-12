@@ -32,6 +32,7 @@ require (
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/ncw/swift v1.0.53
+	github.com/olivere/elastic/v7 v7.0.15
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/prometheus/client_golang v1.9.0
@@ -58,4 +59,4 @@ require (
 
 replace github.com/blendle/zapdriver v1.3.1 => github.com/wtks/zapdriver v1.3.1-patch.0
 
-go 1.14
+go 1.15

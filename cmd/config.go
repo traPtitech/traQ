@@ -11,9 +11,12 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/router/auth"
+	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/fcm"
 	"github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
@@ -75,6 +78,11 @@ type Config struct {
 			LifeTime int `mapstructure:"lifetime" yaml:"lifetime"`
 		} `mapstructure:"connection" yaml:"connection"`
 	} `mapstructure:"mariadb" yaml:"mariadb"`
+
+	// ES Elasticsearch設定
+	ES struct {
+		URL string `mapstructure:"url" yaml:"url"`
+	} `mapstructure:"es" yaml:"es"`
 
 	// Storage ファイルストレージ設定
 	Storage struct {
@@ -222,6 +230,7 @@ func init() {
 	viper.SetDefault("mariadb.connection.maxOpen", 0)
 	viper.SetDefault("mariadb.connection.maxIdle", 2)
 	viper.SetDefault("mariadb.connection.lifetime", 0)
+	viper.SetDefault("es.url", "")
 	viper.SetDefault("storage.type", "local")
 	viper.SetDefault("storage.local.dir", "./storage")
 	viper.SetDefault("storage.swift.username", "")
@@ -330,6 +339,13 @@ func newFCMClientIfAvailable(repo repository.Repository, logger *zap.Logger, unr
 	return fcm.NewNullClient(), nil
 }
 
+func initSearchServiceIfAvailable(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config search.ESEngineConfig) (search.Engine, error) {
+	if len(config.URL) > 0 {
+		return search.NewESEngine(mm, cm, repo, logger, config)
+	}
+	return search.NewNullEngine(), nil
+}
+
 func provideMySQLConnector(c *Config) (driver.Connector, error) {
 	conf := mysql.NewConfig()
 	conf.Net = "tcp"
@@ -352,6 +368,12 @@ func provideServerOriginString(c *Config) variable.ServerOriginString {
 
 func provideFirebaseCredentialsFilePathString(c *Config) variable.FirebaseCredentialsFilePathString {
 	return variable.FirebaseCredentialsFilePathString(c.Firebase.ServiceAccount.File)
+}
+
+func provideESEngineConfig(c *Config) search.ESEngineConfig {
+	return search.ESEngineConfig{
+		URL: c.ES.URL,
+	}
 }
 
 func provideImageProcessorConfig(c *Config) imaging.Config {

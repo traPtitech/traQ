@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/notification"
 	"github.com/traPtitech/traQ/service/rbac"
+	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/service/ws"
@@ -30,6 +31,7 @@ type Services struct {
 	MessageManager       message.Manager
 	Notification         *notification.Service
 	RBAC                 rbac.RBAC
+	Search               search.Engine
 	ViewerManager        *viewer.Manager
 	WebRTCv3             *webrtcv3.Manager
 	WS                   *ws.Streamer
