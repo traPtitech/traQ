@@ -16,9 +16,8 @@ import (
 )
 
 const (
-	syncInterval      = 1 * time.Minute
-	syncMessageBulk   = 1000
-	useUserCacheLimit = 24 * time.Hour
+	syncInterval    = 1 * time.Minute
+	syncMessageBulk = 1000
 )
 
 type attributes struct {
@@ -31,14 +30,13 @@ type attributes struct {
 	HasAudio       bool
 }
 
-type userCache struct {
-	isBot map[uuid.UUID]bool
-}
+// ユーザーがbotかどうかのcache
+type userCache map[uuid.UUID]bool
 
 // convertMessageCreated 新規メッセージをesへ入れる型に変換する
 func (e *esEngine) convertMessageCreated(m *model.Message, parseResult *message.ParseResult, userCache userCache) (*esMessageDoc, error) {
 	var isBot, ok bool
-	if isBot, ok = userCache.isBot[m.UserID]; !ok {
+	if isBot, ok = userCache[m.UserID]; !ok {
 		// 新規ユーザー or キャッシュが存在しない
 		user, err := e.repo.GetUser(m.UserID, false)
 		if err != nil {
@@ -129,15 +127,13 @@ loop:
 func (e *esEngine) newUserCache() (userCache, error) {
 	users, err := e.repo.GetUsers(repository.UsersQuery{})
 	if err != nil {
-		return userCache{}, err
+		return nil, err
 	}
 	e.l.Debug("making user cache of size", zap.Int("size", len(users)))
 
-	cache := userCache{
-		isBot: make(map[uuid.UUID]bool, len(users)),
-	}
+	cache := make(map[uuid.UUID]bool, len(users))
 	for _, u := range users {
-		cache.isBot[u.GetID()] = u.IsBot()
+		cache[u.GetID()] = u.IsBot()
 	}
 	return cache, nil
 }
@@ -151,17 +147,7 @@ func (e *esEngine) sync() error {
 		return err
 	}
 
-	// NOTE: index時にBotかどうかを確認するN+1問題へのworkaround
-	// ユーザーキャッシュサービスができたら書き換えても良い
 	var userCache userCache
-	if lastSynced.Add(useUserCacheLimit).Before(time.Now()) {
-		// 新規メッセージが多く存在すると思われる時のみデータが入ったキャッシュを作成
-		userCache, err = e.newUserCache()
-		if err != nil {
-			return err
-		}
-	}
-
 	lastInsert := lastSynced
 	for {
 		messages, more, err := e.repo.GetUpdatedMessagesAfter(lastInsert, syncMessageBulk)
@@ -172,6 +158,16 @@ func (e *esEngine) sync() error {
 			break
 		}
 		lastInsert = messages[len(messages)-1].UpdatedAt
+
+		// NOTE: index時にBotかどうかを確認するN+1問題へのworkaround
+		// ユーザーキャッシュサービスができたら書き換えても良い
+		if userCache == nil && more {
+			// 新規メッセージが2ページ以上の時のみデータが入ったキャッシュを作成
+			userCache, err = e.newUserCache()
+			if err != nil {
+				return err
+			}
+		}
 
 		bulk := e.client.Bulk().Index(getIndexName(esMessageIndex))
 		for _, v := range messages {
