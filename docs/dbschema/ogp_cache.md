@@ -24,14 +24,14 @@ CREATE TABLE `ogp_cache` (
 
 ## Columns
 
-| Name | Type | Default | Nullable | Children | Parents | Comment |
-| ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | int(11) |  | false |  |  |  |
-| url | text |  | false |  |  | 対象ページのURL |
-| url_hash | char(40) |  | false |  |  | URLのSHA-1ハッシュ |
-| valid | tinyint(1) |  | true |  |  | ネガティブキャッシュでないか |
-| content | text |  | true |  |  | キャッシュ内容 |
-| expires_at | datetime(6) |  | true |  |  | 有効期限 |
+| Name | Type | Default | Nullable | Extra Definition | Children | Parents | Comment |
+| ---- | ---- | ------- | -------- | --------------- | -------- | ------- | ------- |
+| id | int(11) |  | false | auto_increment |  |  |  |
+| url | text |  | false |  |  |  | 対象ページのURL |
+| url_hash | char(40) |  | false |  |  |  | URLのSHA-1ハッシュ |
+| valid | tinyint(1) |  | true |  |  |  | ネガティブキャッシュでないか |
+| content | text |  | true |  |  |  | キャッシュ内容 |
+| expires_at | datetime(6) |  | true |  |  |  | 有効期限 |
 
 ## Constraints
 

@@ -284,89 +284,89 @@
 <polygon fill="#000000" stroke="#000000" points="1432.8127,-1222.5049 1428.0022,-1232.3593 1432.6564,-1227.5024 1432.5,-1232.5 1432.5,-1232.5 1432.5,-1232.5 1432.6564,-1227.5024 1436.9978,-1232.6407 1432.8127,-1222.5049 1432.8127,-1222.5049"/>
 <text text-anchor="start" x="1304.378" y="-1216.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (channel_id) REFERENCES channels (id)</text>
 </g>
-<!-- user_profiles -->
-<g id="node7" class="node">
-<title>user_profiles</title>
-<polygon fill="#efefef" stroke="transparent" points="1611.5,-1352.5 1611.5,-1387.5 1825.5,-1387.5 1825.5,-1352.5 1611.5,-1352.5"/>
-<polygon fill="none" stroke="#000000" points="1611.5,-1352.5 1611.5,-1387.5 1825.5,-1387.5 1825.5,-1352.5 1611.5,-1352.5"/>
-<text text-anchor="start" x="1618.367" y="-1365.3" font-family="Arial Bold" font-size="18.00" fill="#000000">user_profiles</text>
-<text text-anchor="start" x="1721.3792" y="-1365.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
-<text text-anchor="start" x="1725.2698" y="-1365.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
-<polygon fill="none" stroke="#000000" points="1611.5,-1322.5 1611.5,-1352.5 1825.5,-1352.5 1825.5,-1322.5 1611.5,-1322.5"/>
-<text text-anchor="start" x="1618.5" y="-1333.9" font-family="Arial" font-size="14.00" fill="#000000">user_id </text>
-<text text-anchor="start" x="1668.2882" y="-1333.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
-<polygon fill="none" stroke="#000000" points="1611.5,-1292.5 1611.5,-1322.5 1825.5,-1322.5 1825.5,-1292.5 1611.5,-1292.5"/>
-<text text-anchor="start" x="1618.5" y="-1303.9" font-family="Arial" font-size="14.00" fill="#000000">bio </text>
-<text text-anchor="start" x="1641.0624" y="-1303.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
-<polygon fill="none" stroke="#000000" points="1611.5,-1262.5 1611.5,-1292.5 1825.5,-1292.5 1825.5,-1262.5 1611.5,-1262.5"/>
-<text text-anchor="start" x="1618.5" y="-1273.9" font-family="Arial" font-size="14.00" fill="#000000">twitter_id </text>
-<text text-anchor="start" x="1678.3906" y="-1273.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(15)]</text>
-<polygon fill="none" stroke="#000000" points="1611.5,-1232.5 1611.5,-1262.5 1825.5,-1262.5 1825.5,-1232.5 1611.5,-1232.5"/>
-<text text-anchor="start" x="1618.5" y="-1243.9" font-family="Arial" font-size="14.00" fill="#000000">last_online </text>
-<text text-anchor="start" x="1689.2966" y="-1243.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
-<polygon fill="none" stroke="#000000" points="1611.5,-1202.5 1611.5,-1232.5 1825.5,-1232.5 1825.5,-1202.5 1611.5,-1202.5"/>
-<text text-anchor="start" x="1618.5" y="-1213.9" font-family="Arial" font-size="14.00" fill="#000000">home_channel </text>
-<text text-anchor="start" x="1714.2012" y="-1213.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
-<polygon fill="none" stroke="#000000" points="1611.5,-1172.5 1611.5,-1202.5 1825.5,-1202.5 1825.5,-1172.5 1611.5,-1172.5"/>
-<text text-anchor="start" x="1618.5" y="-1183.9" font-family="Arial" font-size="14.00" fill="#000000">updated_at </text>
-<text text-anchor="start" x="1692.4326" y="-1183.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
-</g>
-<!-- user_profiles&#45;&gt;channels -->
-<g id="edge6" class="edge">
-<title>user_profiles:home_channel&#45;&gt;channels:id</title>
-<path fill="none" stroke="#000000" d="M1601.4581,-1215.3288C1539.5171,-1186.3721 1597.8869,-877.5 1523.5,-877.5"/>
-<polygon fill="#000000" stroke="#000000" points="1601.7258,-1215.3866 1610.549,-1221.8984 1606.6129,-1216.4433 1611.5,-1217.5 1611.5,-1217.5 1611.5,-1217.5 1606.6129,-1216.4433 1612.451,-1213.1016 1601.7258,-1215.3866 1601.7258,-1215.3866"/>
-<text text-anchor="start" x="1618.264" y="-1227.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (home_channel) REFERENCES channels (id)</text>
-</g>
 <!-- users_private_channels -->
-<g id="node8" class="node">
+<g id="node7" class="node">
 <title>users_private_channels</title>
-<polygon fill="#efefef" stroke="transparent" points="1930.5,-1292.5 1930.5,-1327.5 2231.5,-1327.5 2231.5,-1292.5 1930.5,-1292.5"/>
-<polygon fill="none" stroke="#000000" points="1930.5,-1292.5 1930.5,-1327.5 2231.5,-1327.5 2231.5,-1292.5 1930.5,-1292.5"/>
-<text text-anchor="start" x="1937.3484" y="-1305.3" font-family="Arial Bold" font-size="18.00" fill="#000000">users_private_channels</text>
-<text text-anchor="start" x="2127.3978" y="-1305.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
-<text text-anchor="start" x="2131.2884" y="-1305.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
-<polygon fill="none" stroke="#000000" points="1930.5,-1262.5 1930.5,-1292.5 2231.5,-1292.5 2231.5,-1262.5 1930.5,-1262.5"/>
-<text text-anchor="start" x="1937.5" y="-1273.9" font-family="Arial" font-size="14.00" fill="#000000">user_id </text>
-<text text-anchor="start" x="1987.2882" y="-1273.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
-<polygon fill="none" stroke="#000000" points="1930.5,-1232.5 1930.5,-1262.5 2231.5,-1262.5 2231.5,-1232.5 1930.5,-1232.5"/>
-<text text-anchor="start" x="1937.5" y="-1243.9" font-family="Arial" font-size="14.00" fill="#000000">channel_id </text>
-<text text-anchor="start" x="2009.082" y="-1243.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="#efefef" stroke="transparent" points="1612.5,-1292.5 1612.5,-1327.5 1913.5,-1327.5 1913.5,-1292.5 1612.5,-1292.5"/>
+<polygon fill="none" stroke="#000000" points="1612.5,-1292.5 1612.5,-1327.5 1913.5,-1327.5 1913.5,-1292.5 1612.5,-1292.5"/>
+<text text-anchor="start" x="1619.3484" y="-1305.3" font-family="Arial Bold" font-size="18.00" fill="#000000">users_private_channels</text>
+<text text-anchor="start" x="1809.3978" y="-1305.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
+<text text-anchor="start" x="1813.2884" y="-1305.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="#000000" points="1612.5,-1262.5 1612.5,-1292.5 1913.5,-1292.5 1913.5,-1262.5 1612.5,-1262.5"/>
+<text text-anchor="start" x="1619.5" y="-1273.9" font-family="Arial" font-size="14.00" fill="#000000">user_id </text>
+<text text-anchor="start" x="1669.2882" y="-1273.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="none" stroke="#000000" points="1612.5,-1232.5 1612.5,-1262.5 1913.5,-1262.5 1913.5,-1232.5 1612.5,-1232.5"/>
+<text text-anchor="start" x="1619.5" y="-1243.9" font-family="Arial" font-size="14.00" fill="#000000">channel_id </text>
+<text text-anchor="start" x="1691.082" y="-1243.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
 </g>
 <!-- users_private_channels&#45;&gt;channels -->
-<g id="edge7" class="edge">
+<g id="edge6" class="edge">
 <title>users_private_channels:channel_id&#45;&gt;channels:id</title>
-<path fill="none" stroke="#000000" d="M1920.4862,-1246.9928C1830.5078,-1237.2283 1946.139,-1088.8776 1877.5,-1010 1767.221,-883.2711 1691.4931,-877.5 1523.5,-877.5"/>
-<polygon fill="#000000" stroke="#000000" points="1920.5128,-1246.994 1930.2723,-1251.9942 1925.5064,-1247.247 1930.5,-1247.5 1930.5,-1247.5 1930.5,-1247.5 1925.5064,-1247.247 1930.7277,-1243.0058 1920.5128,-1246.994 1920.5128,-1246.994"/>
-<text text-anchor="start" x="1666.878" y="-1257.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (channel_id) REFERENCES channels (id)</text>
+<path fill="none" stroke="#000000" d="M1602.4849,-1245.5093C1534.515,-1216.3863 1604.4337,-877.5 1523.5,-877.5"/>
+<polygon fill="#000000" stroke="#000000" points="1602.6919,-1245.5504 1611.6227,-1251.9137 1607.5959,-1246.5252 1612.5,-1247.5 1612.5,-1247.5 1612.5,-1247.5 1607.5959,-1246.5252 1613.3773,-1243.0863 1602.6919,-1245.5504 1602.6919,-1245.5504"/>
+<text text-anchor="start" x="1619.878" y="-1257.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (channel_id) REFERENCES channels (id)</text>
 </g>
 <!-- users_subscribe_channels -->
-<g id="node9" class="node">
+<g id="node8" class="node">
 <title>users_subscribe_channels</title>
-<polygon fill="#efefef" stroke="transparent" points="2335.5,-1322.5 2335.5,-1357.5 2659.5,-1357.5 2659.5,-1322.5 2335.5,-1322.5"/>
-<polygon fill="none" stroke="#000000" points="2335.5,-1322.5 2335.5,-1357.5 2659.5,-1357.5 2659.5,-1322.5 2335.5,-1322.5"/>
-<text text-anchor="start" x="2342.3464" y="-1335.3" font-family="Arial Bold" font-size="18.00" fill="#000000">users_subscribe_channels</text>
-<text text-anchor="start" x="2555.3998" y="-1335.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
-<text text-anchor="start" x="2559.2904" y="-1335.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
-<polygon fill="none" stroke="#000000" points="2335.5,-1292.5 2335.5,-1322.5 2659.5,-1322.5 2659.5,-1292.5 2335.5,-1292.5"/>
-<text text-anchor="start" x="2342.5" y="-1303.9" font-family="Arial" font-size="14.00" fill="#000000">user_id </text>
-<text text-anchor="start" x="2392.2882" y="-1303.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
-<polygon fill="none" stroke="#000000" points="2335.5,-1262.5 2335.5,-1292.5 2659.5,-1292.5 2659.5,-1262.5 2335.5,-1262.5"/>
-<text text-anchor="start" x="2342.5" y="-1273.9" font-family="Arial" font-size="14.00" fill="#000000">channel_id </text>
-<text text-anchor="start" x="2414.082" y="-1273.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
-<polygon fill="none" stroke="#000000" points="2335.5,-1232.5 2335.5,-1262.5 2659.5,-1262.5 2659.5,-1232.5 2335.5,-1232.5"/>
-<text text-anchor="start" x="2342.5" y="-1243.9" font-family="Arial" font-size="14.00" fill="#000000">mark </text>
-<text text-anchor="start" x="2377.4944" y="-1243.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(1)]</text>
-<polygon fill="none" stroke="#000000" points="2335.5,-1202.5 2335.5,-1232.5 2659.5,-1232.5 2659.5,-1202.5 2335.5,-1202.5"/>
-<text text-anchor="start" x="2342.5" y="-1213.9" font-family="Arial" font-size="14.00" fill="#000000">notify </text>
-<text text-anchor="start" x="2379.8436" y="-1213.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(1)]</text>
+<polygon fill="#efefef" stroke="transparent" points="2017.5,-1322.5 2017.5,-1357.5 2341.5,-1357.5 2341.5,-1322.5 2017.5,-1322.5"/>
+<polygon fill="none" stroke="#000000" points="2017.5,-1322.5 2017.5,-1357.5 2341.5,-1357.5 2341.5,-1322.5 2017.5,-1322.5"/>
+<text text-anchor="start" x="2024.3464" y="-1335.3" font-family="Arial Bold" font-size="18.00" fill="#000000">users_subscribe_channels</text>
+<text text-anchor="start" x="2237.3998" y="-1335.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
+<text text-anchor="start" x="2241.2904" y="-1335.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="#000000" points="2017.5,-1292.5 2017.5,-1322.5 2341.5,-1322.5 2341.5,-1292.5 2017.5,-1292.5"/>
+<text text-anchor="start" x="2024.5" y="-1303.9" font-family="Arial" font-size="14.00" fill="#000000">user_id </text>
+<text text-anchor="start" x="2074.2882" y="-1303.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="none" stroke="#000000" points="2017.5,-1262.5 2017.5,-1292.5 2341.5,-1292.5 2341.5,-1262.5 2017.5,-1262.5"/>
+<text text-anchor="start" x="2024.5" y="-1273.9" font-family="Arial" font-size="14.00" fill="#000000">channel_id </text>
+<text text-anchor="start" x="2096.082" y="-1273.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="none" stroke="#000000" points="2017.5,-1232.5 2017.5,-1262.5 2341.5,-1262.5 2341.5,-1232.5 2017.5,-1232.5"/>
+<text text-anchor="start" x="2024.5" y="-1243.9" font-family="Arial" font-size="14.00" fill="#000000">mark </text>
+<text text-anchor="start" x="2059.4944" y="-1243.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(1)]</text>
+<polygon fill="none" stroke="#000000" points="2017.5,-1202.5 2017.5,-1232.5 2341.5,-1232.5 2341.5,-1202.5 2017.5,-1202.5"/>
+<text text-anchor="start" x="2024.5" y="-1213.9" font-family="Arial" font-size="14.00" fill="#000000">notify </text>
+<text text-anchor="start" x="2061.8436" y="-1213.9" font-family="Arial" font-size="14.00" fill="#666666">[tinyint(1)]</text>
 </g>
 <!-- users_subscribe_channels&#45;&gt;channels -->
-<g id="edge8" class="edge">
+<g id="edge7" class="edge">
 <title>users_subscribe_channels:channel_id&#45;&gt;channels:id</title>
-<path fill="none" stroke="#000000" d="M2325.2467,-1277.0055C2223.5838,-1266.5282 2367.3494,-1092.2391 2283.5,-1010 2161.1066,-889.9572 1694.9364,-877.5 1523.5,-877.5"/>
-<polygon fill="#000000" stroke="#000000" points="2325.5116,-1277.0182 2335.2832,-1281.9948 2330.5058,-1277.2591 2335.5,-1277.5 2335.5,-1277.5 2335.5,-1277.5 2330.5058,-1277.2591 2335.7168,-1273.0052 2325.5116,-1277.0182 2325.5116,-1277.0182"/>
-<text text-anchor="start" x="2071.878" y="-1287.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (channel_id) REFERENCES channels (id)</text>
+<path fill="none" stroke="#000000" d="M2007.2329,-1277.0187C1905.2796,-1266.8204 2044.3263,-1097.0655 1965.5,-1010 1896.6788,-933.9854 1626.0406,-877.5 1523.5,-877.5"/>
+<polygon fill="#000000" stroke="#000000" points="2007.511,-1277.0317 2017.2893,-1281.9951 2012.5055,-1277.2658 2017.5,-1277.5 2017.5,-1277.5 2017.5,-1277.5 2012.5055,-1277.2658 2017.7107,-1273.0049 2007.511,-1277.0317 2007.511,-1277.0317"/>
+<text text-anchor="start" x="1753.878" y="-1287.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (channel_id) REFERENCES channels (id)</text>
+</g>
+<!-- user_profiles -->
+<g id="node9" class="node">
+<title>user_profiles</title>
+<polygon fill="#efefef" stroke="transparent" points="2445.5,-1352.5 2445.5,-1387.5 2659.5,-1387.5 2659.5,-1352.5 2445.5,-1352.5"/>
+<polygon fill="none" stroke="#000000" points="2445.5,-1352.5 2445.5,-1387.5 2659.5,-1387.5 2659.5,-1352.5 2445.5,-1352.5"/>
+<text text-anchor="start" x="2452.367" y="-1365.3" font-family="Arial Bold" font-size="18.00" fill="#000000">user_profiles</text>
+<text text-anchor="start" x="2555.3792" y="-1365.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
+<text text-anchor="start" x="2559.2698" y="-1365.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="#000000" points="2445.5,-1322.5 2445.5,-1352.5 2659.5,-1352.5 2659.5,-1322.5 2445.5,-1322.5"/>
+<text text-anchor="start" x="2452.5" y="-1333.9" font-family="Arial" font-size="14.00" fill="#000000">user_id </text>
+<text text-anchor="start" x="2502.2882" y="-1333.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="none" stroke="#000000" points="2445.5,-1292.5 2445.5,-1322.5 2659.5,-1322.5 2659.5,-1292.5 2445.5,-1292.5"/>
+<text text-anchor="start" x="2452.5" y="-1303.9" font-family="Arial" font-size="14.00" fill="#000000">bio </text>
+<text text-anchor="start" x="2475.0624" y="-1303.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
+<polygon fill="none" stroke="#000000" points="2445.5,-1262.5 2445.5,-1292.5 2659.5,-1292.5 2659.5,-1262.5 2445.5,-1262.5"/>
+<text text-anchor="start" x="2452.5" y="-1273.9" font-family="Arial" font-size="14.00" fill="#000000">twitter_id </text>
+<text text-anchor="start" x="2512.3906" y="-1273.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(15)]</text>
+<polygon fill="none" stroke="#000000" points="2445.5,-1232.5 2445.5,-1262.5 2659.5,-1262.5 2659.5,-1232.5 2445.5,-1232.5"/>
+<text text-anchor="start" x="2452.5" y="-1243.9" font-family="Arial" font-size="14.00" fill="#000000">last_online </text>
+<text text-anchor="start" x="2523.2966" y="-1243.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
+<polygon fill="none" stroke="#000000" points="2445.5,-1202.5 2445.5,-1232.5 2659.5,-1232.5 2659.5,-1202.5 2445.5,-1202.5"/>
+<text text-anchor="start" x="2452.5" y="-1213.9" font-family="Arial" font-size="14.00" fill="#000000">home_channel </text>
+<text text-anchor="start" x="2548.2012" y="-1213.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="none" stroke="#000000" points="2445.5,-1172.5 2445.5,-1202.5 2659.5,-1202.5 2659.5,-1172.5 2445.5,-1172.5"/>
+<text text-anchor="start" x="2452.5" y="-1183.9" font-family="Arial" font-size="14.00" fill="#000000">updated_at </text>
+<text text-anchor="start" x="2526.4326" y="-1183.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
+</g>
+<!-- user_profiles&#45;&gt;channels -->
+<g id="edge8" class="edge">
+<title>user_profiles:home_channel&#45;&gt;channels:id</title>
+<path fill="none" stroke="#000000" d="M2435.2895,-1216.8563C2359.005,-1206.4089 2461.0777,-1071.4811 2393.5,-1010 2248.8452,-878.3955 1719.0627,-877.5 1523.5,-877.5"/>
+<polygon fill="#000000" stroke="#000000" points="2435.5198,-1216.8707 2445.2168,-1221.9911 2440.5099,-1217.1854 2445.5,-1217.5 2445.5,-1217.5 2445.5,-1217.5 2440.5099,-1217.1854 2445.7832,-1213.0089 2435.5198,-1216.8707 2435.5198,-1216.8707"/>
+<text text-anchor="start" x="2164.264" y="-1227.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (home_channel) REFERENCES channels (id)</text>
 </g>
 <!-- webhook_bots -->
 <g id="node10" class="node">
