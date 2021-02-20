@@ -114,8 +114,6 @@ jobs:
   tbls:
     name: TBLS
     runs-on: ubuntu-latest
-    env:
-      TBLS_VERSION: v1.46.0
     needs: [build]
     services:
       mysql:
@@ -138,7 +136,7 @@ jobs:
           ./traQ/traQ migrate --reset
           tbls lint
         env:
-          TBLS_DSN: "mysql://root:password@127.0.0.1:3306/traq"
+          TBLS_DSN: "mariadb://root:password@127.0.0.1:3306/traq"
   spectral:
     name: Spectral
     runs-on: ubuntu-latest
