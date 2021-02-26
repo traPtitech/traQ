@@ -252,10 +252,13 @@ func (e *esEngine) Do(q *Query) (Result, error) {
 		offset = int(q.Offset.Int64)
 	}
 
+	// NOTE: 現状`sort.Key`はそのままesのソートキーとして使える前提
+	sort := q.GetSortKey()
+
 	sr, err := e.client.Search().
 		Index(getIndexName(esMessageIndex)).
 		Query(elastic.NewBoolQuery().Must(musts...)).
-		Sort("createdAt", false).
+		Sort(sort.Key, !sort.Desc).
 		Size(limit).
 		From(offset).
 		Do(context.Background())
