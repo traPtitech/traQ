@@ -180,6 +180,17 @@ paths:
           in: query
           name: offset
           description: 検索結果から取得するメッセージのオフセット
+        - in: query
+          name: sort
+          schema:
+            type: string
+            default: '-createdAt'
+            enum:
+              - createdAt
+              - '-createdAt'
+              - updatedAt
+              - '-updatedAt'
+          description: 'ソート順 (作成日時が新しい `createdAt`, 作成日時が古い `-createdAt`, 更新日時が新しい `updatedAt`, 更新日時が古い `-updatedAt`)'
       responses:
         '200':
           description: OK
