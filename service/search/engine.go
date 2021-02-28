@@ -69,9 +69,8 @@ func (q Query) GetSortKey() Sort {
 	}
 	if match[1] == "-" {
 		return Sort{Key: match[2], Desc: !shouldUseDescendingAsDefault(match[2])}
-	} else {
-		return Sort{Key: match[2], Desc: shouldUseDescendingAsDefault(match[2])}
 	}
+	return Sort{Key: match[2], Desc: shouldUseDescendingAsDefault(match[2])}
 }
 
 // Result 検索結果インターフェイス
@@ -82,8 +81,8 @@ type Result interface {
 	Hits() []message.Message
 }
 
-const createdAtSortKey = "createdAt"  // 作成日時の新しい順
-const updatedAtSortKey = "updatedAt"  // 更新日時の新しい順
+const createdAtSortKey = "createdAt" // 作成日時の新しい順
+const updatedAtSortKey = "updatedAt" // 更新日時の新しい順
 
 var allowedSortKeys = []string{createdAtSortKey, updatedAtSortKey}
 var allowedSortKeysRegExp = regexp.MustCompile("([+-]?)(" + strings.Join(allowedSortKeys, "|") + ")")
