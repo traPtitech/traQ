@@ -2,9 +2,10 @@ package notification
 
 import (
 	"fmt"
-	"github.com/traPtitech/traQ/utils/optional"
 	"strings"
 	"time"
+
+	"github.com/traPtitech/traQ/utils/optional"
 
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
@@ -30,6 +31,7 @@ var handlerMap = map[string]eventHandler{
 	event.MessageUnpinned:           messageUnpinnedHandler,
 	event.MessageStamped:            messageStampedHandler,
 	event.MessageUnstamped:          messageUnstampedHandler,
+	event.MessageCited:              messageCitedHandler,
 	event.ChannelCreated:            channelCreatedHandler,
 	event.ChannelUpdated:            channelUpdatedHandler,
 	event.ChannelDeleted:            channelDeletedHandler,
@@ -307,6 +309,17 @@ func messageUnstampedHandler(ns *Service, ev hub.Message) {
 			"message_id": ev.Fields["message_id"].(uuid.UUID),
 			"user_id":    ev.Fields["user_id"].(uuid.UUID),
 			"stamp_id":   ev.Fields["stamp_id"].(uuid.UUID),
+		},
+	})
+}
+
+func messageCitedHandler(ns *Service, ev hub.Message) {
+	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
+		EventType: "MESSAGE_CITED",
+		Payload: map[string]interface{}{
+			"message_id": ev.Fields["message_id"].(uuid.UUID),
+			"message":    ev.Fields["message"].(*model.Message),
+			"cited_ids":  ev.Fields["cited_ids"].([]uuid.UUID),
 		},
 	})
 }
