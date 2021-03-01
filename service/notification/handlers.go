@@ -184,6 +184,18 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 			markedUsers.Add(gs...)
 			noticeable.Add(gs...)
 		}
+		//メッセージを引用されたユーザーへの通知
+		for _, mid := range parsed.Citation {
+			m, err := ns.repo.GetMessageByID(mid)
+			if err != nil {
+				logger.Error("failed to GetMessageByID", zap.Error(err), zap.Stringer("citedMessageId", mid)) // 失敗
+				return
+			}
+			uid := m.UserID
+			notifiedUsers.Add(uid)
+			markedUsers.Add(uid)
+			noticeable.Add(uid)
+		}
 	}
 
 	// チャンネル閲覧者取得
