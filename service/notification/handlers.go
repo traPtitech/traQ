@@ -337,8 +337,8 @@ func messageCitedHandler(ns *Service, ev hub.Message) {
 			EventType: "MESSAGE_CITED",
 			Payload: map[string]interface{}{
 				"message_id": ev.Fields["message_id"].(uuid.UUID),
-				"channel_id": ev.Fields["channel_id"].(*model.Message).ChannelID,
-				"user_id":    ev.Fields["user_id"].(*model.Message).UserID,
+				"channel_id": ev.Fields["message"].(*model.Message).ChannelID,
+				"user_id":    ev.Fields["message"].(*model.Message).UserID,
 			},
 		})
 	}
