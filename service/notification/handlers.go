@@ -189,7 +189,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 			m, err := ns.repo.GetMessageByID(mid)
 			if err != nil {
 				logger.Error("failed to GetMessageByID", zap.Error(err), zap.Stringer("citedMessageId", mid)) // 失敗
-				return
+				continue
 			}
 			uid := m.UserID
 			notifiedUsers.Add(uid)
@@ -326,12 +326,12 @@ func messageUnstampedHandler(ns *Service, ev hub.Message) {
 }
 
 func messageCitedHandler(ns *Service, ev hub.Message) {
-	messageViewerMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
+	userMulticast(ns, ev.Fields["message_id"].(uuid.UUID), &sse.EventData{
 		EventType: "MESSAGE_CITED",
 		Payload: map[string]interface{}{
 			"message_id": ev.Fields["message_id"].(uuid.UUID),
-			"message":    ev.Fields["message"].(*model.Message),
-			"cited_ids":  ev.Fields["cited_ids"].([]uuid.UUID),
+			"channel_id": ev.Fields["channel_id"].(uuid.UUID),
+			"user_id":ev.Fields.["user_id"].(uuid.UUID),
 		},
 	})
 }
