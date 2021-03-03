@@ -2,9 +2,10 @@ package notification
 
 import (
 	"fmt"
-	"github.com/traPtitech/traQ/utils/optional"
 	"strings"
 	"time"
+
+	"github.com/traPtitech/traQ/utils/optional"
 
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
@@ -30,6 +31,7 @@ var handlerMap = map[string]eventHandler{
 	event.MessageUnpinned:           messageUnpinnedHandler,
 	event.MessageStamped:            messageStampedHandler,
 	event.MessageUnstamped:          messageUnstampedHandler,
+	event.MessageCited:              messageCitedHandler,
 	event.ChannelCreated:            channelCreatedHandler,
 	event.ChannelUpdated:            channelUpdatedHandler,
 	event.ChannelDeleted:            channelDeletedHandler,
@@ -182,6 +184,18 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 			markedUsers.Add(gs...)
 			noticeable.Add(gs...)
 		}
+		//メッセージを引用されたユーザーへの通知
+		for _, mid := range parsed.Citation {
+			m, err := ns.repo.GetMessageByID(mid)
+			if err != nil {
+				logger.Error("failed to GetMessageByID", zap.Error(err), zap.Stringer("citedMessageId", mid)) // 失敗
+				continue
+			}
+			uid := m.UserID
+			notifiedUsers.Add(uid)
+			markedUsers.Add(uid)
+			noticeable.Add(uid)
+		}
 	}
 
 	// チャンネル閲覧者取得
@@ -309,6 +323,26 @@ func messageUnstampedHandler(ns *Service, ev hub.Message) {
 			"stamp_id":   ev.Fields["stamp_id"].(uuid.UUID),
 		},
 	})
+}
+
+func messageCitedHandler(ns *Service, ev hub.Message) {
+	logger := ns.logger.With(zap.Stringer("messageId", ev.Fields["message_id"].(uuid.UUID)))
+	for _, mid := range ev.Fields["cited_ids"].([]uuid.UUID) {
+		m, err := ns.repo.GetMessageByID(mid)
+		if err != nil {
+			logger.Error("failed to GetMessageByID", zap.Error(err), zap.Stringer("citedMessageId", mid)) // 失敗
+			continue
+		}
+		userMulticast(ns, m.UserID, &sse.EventData{
+			EventType: "MESSAGE_CITED",
+			Payload: map[string]interface{}{
+				"message_id": ev.Fields["message_id"].(uuid.UUID),
+				"channel_id": ev.Fields["message"].(*model.Message).ChannelID,
+				"user_id":    ev.Fields["message"].(*model.Message).UserID,
+			},
+		})
+	}
+
 }
 
 func channelCreatedHandler(ns *Service, ev hub.Message) {
