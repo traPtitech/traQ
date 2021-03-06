@@ -25,6 +25,6 @@ type v24UserSetting struct {
 	NotifyCitation bool      `gorm:"type:boolean"`
 }
 
-func (v17UserProfile) TableName() string {
+func (v24UserSetting) TableName() string {
 	return "user_settings"
 }

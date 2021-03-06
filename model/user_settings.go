@@ -4,7 +4,7 @@ import "github.com/gofrs/uuid"
 
 // UserSettings ユーザー設定の構造体
 type UserSettings struct {
-	UserID         uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	ID             uuid.UUID `gorm:"type:char(36);not null;primary_key"`
 	NotifyCitation bool      `gorm:"type:boolean"`
 }
 

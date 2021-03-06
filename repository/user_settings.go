@@ -4,12 +4,12 @@ import "github.com/gofrs/uuid"
 
 // UserSettingsRepository ユーザセッティングレポジトリ
 type UserSettingsRepository interface {
-	// SetNotifyCitation メッセージ引用通知を設定します
+	// UpdateNotifyCitation メッセージ引用通知を設定します
 	//
 	// isEnableがtrueの場合、メッセージ引用通知を有効にします
 	// isEnableがfalseの場合、メッセージ引用通知を無効にします
 	// DBによるエラーを返すことがあります
-	SetNotifyCitation(userID uuid.UUID, isEnable bool) error
+	UpdateNotifyCitation(userID uuid.UUID, isEnable bool) error
 	// GetNotifyCitation メッセージ引用通知の情報を取得します
 	//
 	// 返り値がtrueの場合、メッセージ引用通知が有効です
