@@ -1,0 +1,19 @@
+package repository
+
+import "github.com/gofrs/uuid"
+
+// UserSettingsRepository ユーザセッティングレポジトリ
+type UserSettingsRepository interface {
+	// SetNotifyCitation メッセージ引用通知を設定します
+	//
+	// isEnableがtrueの場合、メッセージ引用通知を有効にします
+	// isEnableがfalseの場合、メッセージ引用通知を無効にします
+	// DBによるエラーを返すことがあります
+	SetNotifyCitation(userID uuid.UUID, isEnable bool) error
+	// GetNotifyCitation メッセージ引用通知の情報を取得します
+	//
+	// 返り値がtrueの場合、メッセージ引用通知が有効です
+	// 返り値がfalseの場合、メッセージ引用通知を無効です
+	// DBによるエラーを返すことがあります
+	GetNotifyCitation(userID uuid.UUID) (bool, error)
+}
