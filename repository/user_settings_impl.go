@@ -19,7 +19,7 @@ func (repo *GormRepository) UpdateNotifyCitation(userID uuid.UUID, isEnable bool
 	}
 
 	if err := repo.db.Model(&settings).Updates(changes).Error; err != nil {
-		return err
+		return convertError(err)
 	}
 
 	return nil
