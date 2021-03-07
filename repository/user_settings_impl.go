@@ -26,7 +26,22 @@ func (repo *GormRepository) UpdateNotifyCitation(userID uuid.UUID, isEnable bool
 }
 
 // GetNotifyCitation implements UserSettingRepository interface
-func (repo *GormRepository) GetNotifyCitation(userID uuid.UUID) (*model.UserSettings, error) {
+func (repo *GormRepository) GetNotifyCitation(userID uuid.UUID) (bool, error) {
+	if userID == uuid.Nil {
+		return false, ErrNilID
+	}
+
+	var settings = &model.UserSettings{}
+
+	if err := repo.db.Find(&settings, "user_id=?", userID).Error; err != nil {
+		return false, err
+	}
+
+	return settings.IsNotifyCitationEnabled(), nil
+}
+
+// GetUserSettings implements UserSettingRepository interface
+func (repo *GormRepository) GetUserSettings(userID uuid.UUID) (*model.UserSettings, error) {
 	if userID == uuid.Nil {
 		return nil, ErrNilID
 	}

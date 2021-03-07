@@ -16,7 +16,10 @@ type UserSettingsRepository interface {
 	// GetNotifyCitation メッセージ引用通知の情報を取得します
 	//
 	// 返り値がtrueの場合、メッセージ引用通知が有効です
-	// 返り値がfalseの場合、メッセージ引用通知を無効です
+	// 返り値がfalseの場合、メッセージ引用通知が無効がエラーが発生しています
 	// DBによるエラーを返すことがあります
-	GetNotifyCitation(userID uuid.UUID) (*model.UserSettings, error)
+	GetNotifyCitation(userID uuid.UUID) (bool, error)
+	// GetUserSettings ユーザー設定を返します
+	// DBによるエラーを返すkとがあります
+	GetUserSettings(userID uuid.UUID) (*model.UserSettings, error)
 }
