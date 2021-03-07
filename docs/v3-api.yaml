@@ -3719,6 +3719,25 @@ paths:
           in: query
           name: url
           description: OGPを取得したいURL
+  /users/me/setting:
+    get:
+      summary: ユーザー設定を取得
+      tags: 
+        - me
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ogp'
+                # TODO：スキーマを追加&エラーハンドリング
+              examples: {}
+        '400':
+          description: 指定したURLが不正です
+        '404':
+          description: 指定したURLに対するユーザー設定情報が見つかりませんでした。
+
 components:
   securitySchemes:
     cookieAuth:
