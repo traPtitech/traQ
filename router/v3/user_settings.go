@@ -6,6 +6,20 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// PutUserNotifyCitation PUT /user/:userID/settings/notify-citation
+func (h *Handlers) PutUserNotifyCitation(c echo.Context) error {
+	id := getRequestUserID(c)
+	us := getParamUserSettings(c)
+	err := h.Repo.UpdateNotifyCitation(id, us.NotifyCitation)
+
+	if err != nil {
+		return err
+	}
+
+	return c.NoContent(http.StatusNoContent)
+
+}
+
 // GetUserSettings GET /user/:userID/settings
 func (h *Handlers) GetUserSettings(c echo.Context) error {
 	id := getRequestUserID(c)
