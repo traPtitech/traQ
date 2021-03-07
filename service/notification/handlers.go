@@ -197,7 +197,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 				logger.Error("failed to GetNotifyCitation", zap.Error(err), zap.Stringer("userId", uid)) // 失敗
 				continue
 			}
-			if us.NotifyCitation {
+			if us {
 				notifiedUsers.Add(uid)
 				markedUsers.Add(uid)
 				noticeable.Add(uid)
