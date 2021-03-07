@@ -20,6 +20,6 @@ type UserSettingsRepository interface {
 	// DBによるエラーを返すことがあります
 	GetNotifyCitation(userID uuid.UUID) (bool, error)
 	// GetUserSettings ユーザー設定を返します
-	// DBによるエラーを返すkとがあります
+	// DBによるエラーを返すことがあります
 	GetUserSettings(userID uuid.UUID) (*model.UserSettings, error)
 }
