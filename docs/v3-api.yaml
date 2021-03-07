@@ -3731,12 +3731,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Ogp'
-                # TODO：スキーマを追加&エラーハンドリング
+                # TODO：スキーマを追加
               examples: {}
         '400':
           description: 指定したURLが不正です
         '404':
           description: 指定したURLに対するユーザー設定情報が見つかりませんでした。
+  /users/me/setting/notify-citation:
+    get:
+      summary: メッセージ引用通知の設定情報を取得
+      tags: 
+        - me
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ogp'
+                # TODO：スキーマを追加
+              examples: {}
+        '400':
+          description: 指定したURLが不正です
+        '404':
+          description: 指定したURLに対するユーザー設定情報が見つかりませんでした。
+    put:
+      summary: メッセージ引用通知の設定情報を変更
+      responses:
+        '204':
+          description: 変更できました。
+        '400':
+          description: 指定したURLが不正です
+        '404':
+          description: 指定したURLに対するユーザー設定情報が見つかりませんでした。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutUserPasswordRequest'
+              # TODO：スキーマを追加
+        description: ''
+      tags:
+        - me
+      operationId: changeUserPassword
+      description: メッセージ引用通知の設定情報を変更します
 
 components:
   securitySchemes:
