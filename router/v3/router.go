@@ -152,6 +152,12 @@ func (h *Handlers) Setup(e *echo.Group) {
 					apiUsersMeExAccounts.POST("/link", h.LinkExternalAccount, requires(permission.EditMyExternalAccount))
 					apiUsersMeExAccounts.POST("/unlink", h.UnlinkExternalAccount, requires(permission.EditMyExternalAccount))
 				}
+				apiUsersMeSettings := apiUsersMe.Group("/settings", blockBot)
+				{
+					apiUsersMeSettings.GET("", h.GetMySettings, requires(permission.GetMe))
+					apiUsersMeSettings.GET("/notify-citation", h.GetMyNotifyCitation, requires(permission.GetMe))
+					apiUsersMeSettings.PUT("/notify-citation", h.PutMyNotifyCitation, requires(permission.EditMe))
+				}
 			}
 		}
 		apiChannels := api.Group("/channels")

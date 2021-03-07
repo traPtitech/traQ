@@ -6,8 +6,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// PutUserNotifyCitation PUT /user/:userID/settings/notify-citation
-func (h *Handlers) PutUserNotifyCitation(c echo.Context) error {
+// PutMyNotifyCitation PUT /user/me/settings/notify-citation
+func (h *Handlers) PutMyNotifyCitation(c echo.Context) error {
 	id := getRequestUserID(c)
 	us := getParamUserSettings(c)
 	err := h.Repo.UpdateNotifyCitation(id, us.NotifyCitation)
@@ -20,8 +20,8 @@ func (h *Handlers) PutUserNotifyCitation(c echo.Context) error {
 
 }
 
-// GetUserSettings GET /user/:userID/settings
-func (h *Handlers) GetUserSettings(c echo.Context) error {
+// GetMySettings GET /user/me/settings
+func (h *Handlers) GetMySettings(c echo.Context) error {
 	id := getRequestUserID(c)
 	us, err := h.Repo.GetUserSettings(id)
 	if err != nil {
@@ -30,8 +30,8 @@ func (h *Handlers) GetUserSettings(c echo.Context) error {
 	return c.JSON(http.StatusOK, us)
 }
 
-// GetUserNotifyCitation GET /user/:userID/settings/notify-citation
-func (h *Handlers) GetUserNotifyCitation(c echo.Context) error {
+// GetMyNotifyCitation GET /user/me/settings/notify-citation
+func (h *Handlers) GetMyNotifyCitation(c echo.Context) error {
 	id := getRequestUserID(c)
 	nc, err := h.Repo.GetNotifyCitation(id)
 	if err != nil {
