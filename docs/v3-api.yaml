@@ -3730,7 +3730,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Ogp'
+                $ref: '#/components/schemas/UserSettings'
                 # TODO：スキーマを追加
               examples: {}
         '400':
@@ -3748,7 +3748,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Ogp'
+                $ref: '#/components/schemas/GetNotifyCitation'
                 # TODO：スキーマを追加
               examples: {}
         '400':
@@ -3768,12 +3768,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutUserPasswordRequest'
+              $ref: '#/components/schemas/PutNotifyCitationRequest'
               # TODO：スキーマを追加
         description: ''
       tags:
         - me
-      operationId: changeUserPassword
+      operationId: changeMyNotifyCitation
       description: メッセージ引用通知の設定情報を変更します
 
 components:
@@ -6351,6 +6351,37 @@ components:
           type: integer
           nullable: true
       x-examples: {}
+    GetNotifyCitation:
+      title: GetNotifyCitation
+      type: object
+      description: メッセージ引用通知の設定情報
+      properties:
+        notifyCitation:
+          type: boolean
+          nullable: false
+    UserSettings:
+      title: UserSettings
+      type: object
+      description: ユーザー設定の情報
+      properties:
+        id:
+          type: string
+          description: ユーザーUUID
+          format: uuid
+          nullable: false
+        notifyCitation:
+          type: boolean
+          description: メッセージ引用通知の設定情報
+          nullable: false
+    PutNotifyCitationRequest:
+      title: PutNotifyCitationRequest
+      type: object
+      description: メッセージ引用通知設定リクエスト
+      properties:
+        notifyCitation:
+          type: boolean
+          description: メッセージ引用通知の設定情報
+          nullable: false
   headers:
     X-TRAQ-MORE:
       schema:
