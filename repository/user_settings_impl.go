@@ -5,6 +5,8 @@ import (
 	"github.com/traPtitech/traQ/model"
 )
 
+const defaultNotifyCitation = false
+
 // UpdateNotifyCitation implements UserSettingRepository interface
 func (repo *GormRepository) UpdateNotifyCitation(userID uuid.UUID, isEnable bool) error {
 	if userID == uuid.Nil {
@@ -28,13 +30,17 @@ func (repo *GormRepository) UpdateNotifyCitation(userID uuid.UUID, isEnable bool
 // GetNotifyCitation implements UserSettingRepository interface
 func (repo *GormRepository) GetNotifyCitation(userID uuid.UUID) (bool, error) {
 	if userID == uuid.Nil {
-		return false, ErrNilID
+		return defaultNotifyCitation, ErrNilID
 	}
 
 	var settings = &model.UserSettings{}
 
 	if err := repo.db.First(&settings, "user_id=?", userID).Error; err != nil {
-		return false, convertError(err)
+		err = convertError(err)
+		if err == ErrNotFound {
+			return defaultNotifyCitation, nil
+		}
+		return defaultNotifyCitation, err
 	}
 
 	return settings.IsNotifyCitationEnabled(), nil
@@ -45,11 +51,18 @@ func (repo *GormRepository) GetUserSettings(userID uuid.UUID) (*model.UserSettin
 	if userID == uuid.Nil {
 		return nil, ErrNilID
 	}
-
 	var settings = &model.UserSettings{}
 
 	if err := repo.db.First(&settings, "user_id=?", userID).Error; err != nil {
-		return nil, convertError(err)
+		err = convertError(err)
+		dus := &model.UserSettings{
+			ID:             userID,
+			NotifyCitation: defaultNotifyCitation,
+		}
+		if err == ErrNotFound {
+			return dus, nil
+		}
+		return dus, err
 	}
 
 	return settings, nil
