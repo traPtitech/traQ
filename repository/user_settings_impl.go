@@ -33,7 +33,7 @@ func (repo *GormRepository) GetNotifyCitation(userID uuid.UUID) (bool, error) {
 
 	var settings = &model.UserSettings{}
 
-	if err := repo.db.Find(&settings, "user_id=?", userID).Error; err != nil {
+	if err := repo.db.First(&settings, "user_id=?", userID).Error; err != nil {
 		return false, convertError(err)
 	}
 
@@ -48,7 +48,7 @@ func (repo *GormRepository) GetUserSettings(userID uuid.UUID) (*model.UserSettin
 
 	var settings = &model.UserSettings{}
 
-	if err := repo.db.Find(&settings, "user_id=?", userID).Error; err != nil {
+	if err := repo.db.First(&settings, "user_id=?", userID).Error; err != nil {
 		return nil, convertError(err)
 	}
 
