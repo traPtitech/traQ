@@ -15,6 +15,14 @@ func v24() *gormigrate.Migration {
 			if err := db.AutoMigrate(&v24UserSetting{}).Error; err != nil {
 				return err
 			}
+			foreignKeys := [][5]string{
+				{"user_settings", "user_id", "users(id)", "CASCADE", "CASCADE"},
+			}
+			for _, c := range foreignKeys {
+				if err := db.Table(c[0]).AddForeignKey(c[1], c[2], c[3], c[4]).Error; err != nil {
+					return err
+				}
+			}
 			return nil
 		},
 	}
