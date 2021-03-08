@@ -15,11 +15,21 @@ func (repo *GormRepository) UpdateNotifyCitation(userID uuid.UUID, isEnable bool
 
 	var settings model.UserSettings
 
-	changes := map[string]interface{}{
-		"user_id":        userID,
-		"NotifyCitation": isEnable,
+	changes := &model.UserSettings{
+		ID:             userID,
+		NotifyCitation: isEnable,
 	}
 
+	if err := repo.db.First(&settings, "user_id=?", userID).Error; err != nil {
+		err = convertError(err)
+		if err == ErrNotFound {
+			if err = repo.db.Create(changes).Error; err != nil {
+				return err
+			}
+			return nil
+		}
+		return err
+	}
 	if err := repo.db.Model(&settings).Updates(changes).Error; err != nil {
 		return convertError(err)
 	}
