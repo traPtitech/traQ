@@ -33,6 +33,7 @@ func Migrations() []*gormigrate.Migration {
 		v21(), // OGPキャッシュ追加
 		v22(), // BOTへのWebRTCパーミッションの付与
 		v23(), // 複合インデックス追加
+		v24(), // ユーザー設定追加
 	}
 }
 
@@ -81,6 +82,7 @@ func AllTables() []interface{} {
 		&model.User{},
 		&model.SessionRecord{},
 		&model.OgpCache{},
+		&model.UserSettings{},
 	}
 }
 
@@ -131,6 +133,7 @@ func AllForeignKeys() [][5]string {
 		{"stamp_palettes", "creator_id", "users(id)", "CASCADE", "CASCADE"},
 		{"external_provider_users", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"user_profiles", "home_channel", "channels(id)", "CASCADE", "CASCADE"},
+		{"user_settings", "user_id", "users(id)", "CASCADE", "CASCADE"},
 	}
 }
 
