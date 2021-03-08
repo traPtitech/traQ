@@ -3722,6 +3722,8 @@ paths:
   /users/me/setting:
     get:
       summary: ユーザー設定を取得
+      description: ユーザー設定を取得します。
+      operationId: getUserSetting
       tags: 
         - me
       responses:
@@ -3740,6 +3742,8 @@ paths:
   /users/me/setting/notify-citation:
     get:
       summary: メッセージ引用通知の設定情報を取得
+      description: メッセージ引用通知の設定情報を変更します。
+      operationId: getMyNotifyCitation
       tags: 
         - me
       responses:
