@@ -12,7 +12,7 @@ func v24() *gormigrate.Migration {
 		ID: "24",
 		Migrate: func(db *gorm.DB) error {
 			// ユーザー設定追加
-			if err := db.AutoMigrate(&v24UserSetting{}).Error; err != nil {
+			if err := db.AutoMigrate(&v24UserSettings{}).Error; err != nil {
 				return err
 			}
 			foreignKeys := [][5]string{
@@ -28,11 +28,11 @@ func v24() *gormigrate.Migration {
 	}
 }
 
-type v24UserSetting struct {
+type v24UserSettings struct {
 	UserID         uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	NotifyCitation bool      `gorm:"type:boolean"`
+	NotifyCitation bool      `gorm:"type:boolean;not null;default:false"`
 }
 
-func (v24UserSetting) TableName() string {
+func (*v24UserSettings) TableName() string {
 	return "user_settings"
 }

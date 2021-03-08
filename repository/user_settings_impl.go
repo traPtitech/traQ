@@ -7,7 +7,7 @@ import (
 
 const defaultNotifyCitation = false
 
-// UpdateNotifyCitation implements UserSettingRepository interface
+// UpdateNotifyCitation implements UserSettingsRepository interface
 func (repo *GormRepository) UpdateNotifyCitation(userID uuid.UUID, isEnable bool) error {
 	if userID == uuid.Nil {
 		return ErrNilID
@@ -37,7 +37,7 @@ func (repo *GormRepository) UpdateNotifyCitation(userID uuid.UUID, isEnable bool
 	return nil
 }
 
-// GetNotifyCitation implements UserSettingRepository interface
+// GetNotifyCitation implements UserSettingsRepository interface
 func (repo *GormRepository) GetNotifyCitation(userID uuid.UUID) (bool, error) {
 	if userID == uuid.Nil {
 		return defaultNotifyCitation, ErrNilID
@@ -56,7 +56,7 @@ func (repo *GormRepository) GetNotifyCitation(userID uuid.UUID) (bool, error) {
 	return settings.IsNotifyCitationEnabled(), nil
 }
 
-// GetUserSettings implements UserSettingRepository interface
+// GetUserSettings implements UserSettingsRepository interface
 func (repo *GormRepository) GetUserSettings(userID uuid.UUID) (*model.UserSettings, error) {
 	if userID == uuid.Nil {
 		return nil, ErrNilID

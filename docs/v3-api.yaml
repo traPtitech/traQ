@@ -3723,7 +3723,7 @@ paths:
     get:
       summary: ユーザー設定を取得
       description: ユーザー設定を取得します。
-      operationId: getUserSetting
+      operationId: getUserSettings
       tags: 
         - me
       responses:
