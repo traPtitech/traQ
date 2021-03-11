@@ -104,7 +104,7 @@ func getParamClipFolder(c echo.Context) *model.ClipFolder {
 
 // getParamUserSetting userIDに対応するUserSettingsを取得
 func getParamUserSettings(c echo.Context) *model.UserSettings {
-	return c.Get(consts.KeyParamUserSettings).(*model.UserSettings)
+	return c.Get(consts.KeyUserSettings).(*model.UserSettings)
 }
 
 type MessagesQuery struct {
