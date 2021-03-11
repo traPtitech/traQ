@@ -8,10 +8,18 @@ import (
 	"github.com/traPtitech/traQ/router/extension/herror"
 )
 
+// PutUserSettingsRequest PUT /user/me/settings/notify-citation リクエストボディ
+type PutUserSettingsRequest struct {
+	NotifyCitation bool `json:"user_settings"`
+}
+
 // PutMyNotifyCitation PUT /user/me/settings/notify-citation
 func (h *Handlers) PutMyNotifyCitation(c echo.Context) error {
 	id := getRequestUserID(c)
-	us := getParamUserSettings(c)
+	var us PutUserSettingsRequest
+	if err := bindAndValidate(c, &us); err != nil {
+		return err
+	}
 	err := h.Repo.UpdateNotifyCitation(id, us.NotifyCitation)
 
 	if err != nil {
