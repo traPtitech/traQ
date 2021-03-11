@@ -44,7 +44,6 @@
 | [user_roles](user_roles.md) | 3 | ユーザーロールテーブル | BASE TABLE |
 | [user_role_inheritances](user_role_inheritances.md) | 2 | ユーザーロール継承テーブル | BASE TABLE |
 | [user_role_permissions](user_role_permissions.md) | 2 | ユーザーロールパーミッションテーブル | BASE TABLE |
-| [user_settings](user_settings.md) | 2 | ユーザー設定 | BASE TABLE |
 | [webhook_bots](webhook_bots.md) | 9 | traQ Webhookテーブル | BASE TABLE |
 
 ## Relations
