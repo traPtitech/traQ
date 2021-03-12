@@ -39,12 +39,6 @@ relations:
     parentTable: users
     parentColumns:
       - id
-  - table: user_settings
-    columns:
-      - user_id
-    parentTable: users
-    parentColumns:
-      - id
 
 comments:
   - table: users
