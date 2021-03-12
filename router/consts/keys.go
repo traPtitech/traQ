@@ -3,7 +3,6 @@ package consts
 const (
 	KeyUserID             = "userID"
 	KeyUser               = "user"
-	KeyUserSettings       = "userSettings"
 	KeyOAuth2AccessScopes = "scopes"
 	KeyParamStamp         = "paramStamp"
 	KeyParamStampPalette  = "paramStampPalette"
