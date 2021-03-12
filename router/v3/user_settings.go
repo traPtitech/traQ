@@ -10,7 +10,7 @@ import (
 
 // PutUserSettingsRequest PUT /user/me/settings/notify-citation リクエストボディ
 type PutUserSettingsRequest struct {
-	NotifyCitation bool `json:"user_settings"`
+	NotifyCitation bool `json:"notifyCitation"`
 }
 
 // PutMyNotifyCitation PUT /user/me/settings/notify-citation
