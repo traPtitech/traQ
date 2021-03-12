@@ -3733,12 +3733,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserSettings'
-                # TODO：スキーマを追加
               examples: {}
-        '400':
-          description: 指定したURLが不正です
-        '404':
-          description: 指定したURLに対するユーザー設定情報が見つかりませんでした。
   /users/me/setting/notify-citation:
     get:
       summary: メッセージ引用通知の設定情報を取得
@@ -3753,14 +3748,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetNotifyCitation'
-                # TODO：スキーマを追加
               examples: {}
-        '400':
-          description: 指定したURLが不正です
-        '404':
-          description: 指定したURLに対するユーザー設定情報が見つかりませんでした。
     put:
       summary: メッセージ引用通知の設定情報を変更
+      parameters:
+      - schema:
+          type: boolean
+        in: query
+        name: notifyCitation
+        required: true
       responses:
         '204':
           description: 変更できました。
@@ -3773,7 +3769,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PutNotifyCitationRequest'
-              # TODO：スキーマを追加
         description: ''
       tags:
         - me
@@ -6362,7 +6357,6 @@ components:
       properties:
         notifyCitation:
           type: boolean
-          nullable: false
     UserSettings:
       title: UserSettings
       type: object
@@ -6372,11 +6366,9 @@ components:
           type: string
           description: ユーザーUUID
           format: uuid
-          nullable: false
         notifyCitation:
           type: boolean
           description: メッセージ引用通知の設定情報
-          nullable: false
     PutNotifyCitationRequest:
       title: PutNotifyCitationRequest
       type: object
@@ -6385,7 +6377,6 @@ components:
         notifyCitation:
           type: boolean
           description: メッセージ引用通知の設定情報
-          nullable: false
   headers:
     X-TRAQ-MORE:
       schema:
