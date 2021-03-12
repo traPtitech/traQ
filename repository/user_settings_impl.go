@@ -13,7 +13,7 @@ func (repo *GormRepository) UpdateNotifyCitation(userID uuid.UUID, isEnable bool
 		return ErrNilID
 	}
 
-	var settings model.UserSettings
+	var settings = model.UserSettings{}
 
 	changes := &model.UserSettings{
 		UserID:         userID,
@@ -23,14 +23,14 @@ func (repo *GormRepository) UpdateNotifyCitation(userID uuid.UUID, isEnable bool
 	if err := repo.db.First(&settings, "user_id=?", userID).Error; err != nil {
 		err = convertError(err)
 		if err == ErrNotFound {
-			if err = repo.db.Create(changes).Error; err != nil {
+			if err = repo.db.Create(*changes).Error; err != nil {
 				return err
 			}
 			return nil
 		}
 		return err
 	}
-	if err := repo.db.Model(&settings).Updates(changes).Error; err != nil {
+	if err := repo.db.Model(&settings).Updates(*changes).Error; err != nil {
 		return convertError(err)
 	}
 
