@@ -13,6 +13,10 @@ type PutUserSettingsRequest struct {
 	NotifyCitation bool `json:"notifyCitation"`
 }
 
+type getNotifyCitationResponce struct {
+	NotifyCitation bool `json:"notifyCitation"`
+}
+
 // PutMyNotifyCitation PUT /user/me/settings/notify-citation
 func (h *Handlers) PutMyNotifyCitation(c echo.Context) error {
 	id := getRequestUserID(c)
@@ -68,5 +72,5 @@ func (h *Handlers) GetMyNotifyCitation(c echo.Context) error {
 			return herror.InternalServerError(err)
 		}
 	}
-	return c.JSON(http.StatusOK, nc)
+	return c.JSON(http.StatusOK, &getNotifyCitationResponce{NotifyCitation: nc})
 }
