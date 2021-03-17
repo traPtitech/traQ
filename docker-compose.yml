@@ -47,7 +47,7 @@ services:
       - "3002:3306"
 
   es:
-    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
+    image: docker.pkg.github.com/traptitech/es-builder/es-with-sudachi:7.10.1-2.1.0
     restart: always
     environment:
       - discovery.type=single-node

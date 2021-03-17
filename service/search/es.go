@@ -3,17 +3,18 @@ package search
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/olivere/elastic/v7"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/message"
 	"go.uber.org/zap"
-	"time"
 )
 
 const (
-	esRequiredVersion = "7.10.2"
+	esRequiredVersion = "7.10.1"
 	esIndexPrefix     = "traq_"
 	esMessageIndex    = "message"
 	esDateFormat      = "2006-01-02T15:04:05Z"
