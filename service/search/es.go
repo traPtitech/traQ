@@ -90,7 +90,10 @@ var esMapping = m{
 			"type": "boolean",
 		},
 		"text": m{
-			"type": "text",
+			"type":                  "text",
+			"analyzer":              "sudachi_analyzer",
+			"search_analyzer":       "sudachi_analyzer",
+			"search_quote_analyzer": "sudachi_analyzer",
 		},
 		"createdAt": m{
 			"type":   "date",
@@ -124,6 +127,25 @@ var esMapping = m{
 	},
 }
 
+// esSetting Indexに追加するsetting情報
+var esSetting = m{
+	"index": m{
+		"analysis": m{
+			"tokenizer": m{
+				"sudachi_tokenizer": m{
+					"type": "sudachi_tokenizer",
+				},
+			},
+			"analyzer": m{
+				"sudachi_analyzer": m{
+					"tokenizer": "sudachi_tokenizer",
+					"type":      "custom",
+				},
+			},
+		},
+	},
+}
+
 // NewESEngine Elasticsearch検索エンジンを生成します
 func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Repository, logger *zap.Logger, config ESEngineConfig) (Engine, error) {
 	// es接続
@@ -146,21 +168,15 @@ func NewESEngine(mm message.Manager, cm channel.Manager, repo repository.Reposit
 		return nil, fmt.Errorf("failed to init search engine: %w", err)
 	} else if !exists {
 		// index作成
-		r1, err := client.CreateIndex(getIndexName(esMessageIndex)).Do(context.Background())
+		r1, err := client.CreateIndex(getIndexName(esMessageIndex)).BodyJson(m{
+			"mappings": esMapping,
+			"settings": esSetting,
+		}).Do(context.Background())
 		if err != nil {
 			return nil, fmt.Errorf("failed to init search engine: %w", err)
 		}
 		if !r1.Acknowledged {
 			return nil, fmt.Errorf("failed to init search engine: index not acknowledged")
-		}
-
-		// mapping作成
-		r2, err := client.PutMapping().Index(getIndexName(esMessageIndex)).BodyJson(esMapping).Do(context.Background())
-		if err != nil {
-			return nil, fmt.Errorf("failed to init search engine: %w", err)
-		}
-		if !r2.Acknowledged {
-			return nil, fmt.Errorf("failed to init search engine: mapping not acknowledged")
 		}
 	}
 
