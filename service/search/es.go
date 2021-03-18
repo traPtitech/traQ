@@ -92,7 +92,7 @@ var esMapping = m{
 		"text": m{
 			"type":                  "text",
 			"analyzer":              "sudachi_analyzer",
-			"search_analyzer":       "sudachi_analyzer",
+			"search_analyzer":       "sudachi_stop_analyzer",
 			"search_quote_analyzer": "sudachi_analyzer",
 		},
 		"createdAt": m{
@@ -138,8 +138,23 @@ var esSetting = m{
 			},
 			"analyzer": m{
 				"sudachi_analyzer": m{
+					"tokenizer":      "sudachi_tokenizer",
+					"type":           "custom",
+					"resources_path": "/usr/share/elasticsearch/plugins/analysis-sudachi/",
+					"settings_path":  "/usr/share/elasticsearch/plugins/analysis-sudachi/sudachi.json",
+				},
+				"sudachi_stop_analyzer": m{
 					"tokenizer": "sudachi_tokenizer",
 					"type":      "custom",
+					"filter": []string{
+						"sudachi_part_of_speech",
+						"sudachi_ja_stop",
+						"sudachi_baseform",
+						"sudachi_normalizedform",
+					},
+					"discard_punctuation": true,
+					"resources_path":      "/usr/share/elasticsearch/plugins/analysis-sudachi/",
+					"settings_path":       "/usr/share/elasticsearch/plugins/analysis-sudachi/sudachi.json",
 				},
 			},
 		},
