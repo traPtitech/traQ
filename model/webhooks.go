@@ -1,8 +1,9 @@
 package model
 
 import (
-	"github.com/gofrs/uuid"
 	"time"
+
+	"github.com/gofrs/uuid"
 )
 
 // Webhook Webhook

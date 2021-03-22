@@ -1,9 +1,10 @@
 package repository
 
 import (
+	"log"
+
 	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/optional"
-	"log"
 
 	"github.com/gofrs/uuid"
 	"github.com/jinzhu/gorm"

@@ -366,3 +366,8 @@ comments:
       valid: ネガティブキャッシュでないか
       content: キャッシュ内容
       expires_at: 有効期限
+  - table: user_settings
+    tableComment: ユーザー設定
+    columnComments: 
+      user_id: ユーザーUUID
+      notify_citation: メッセージ引用通知

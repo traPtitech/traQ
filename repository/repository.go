@@ -9,6 +9,7 @@ type Repository interface {
 	Sync() (bool, error)
 	UserRepository
 	UserGroupRepository
+	UserSettingsRepository
 	TagRepository
 	ChannelRepository
 	MessageRepository
