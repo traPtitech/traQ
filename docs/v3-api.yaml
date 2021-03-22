@@ -6347,6 +6347,8 @@ components:
       properties:
         notifyCitation:
           type: boolean
+      required: 
+        - notifyCitation
     UserSettings:
       title: UserSettings
       type: object
@@ -6359,6 +6361,9 @@ components:
         notifyCitation:
           type: boolean
           description: メッセージ引用通知の設定情報
+      required: 
+        - id
+        - notifyCitation
     PutNotifyCitationRequest:
       title: PutNotifyCitationRequest
       type: object
