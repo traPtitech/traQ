@@ -3717,7 +3717,7 @@ paths:
           in: query
           name: url
           description: OGPを取得したいURL
-  /users/me/setting:
+  /users/me/settings:
     get:
       summary: ユーザー設定を取得
       description: ユーザー設定を取得します。
@@ -3731,7 +3731,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserSettings'
-  /users/me/setting/notify-citation:
+  /users/me/settings/notify-citation:
     get:
       summary: メッセージ引用通知の設定情報を取得
       description: メッセージ引用通知の設定情報を変更します。
