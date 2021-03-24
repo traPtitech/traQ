@@ -88,10 +88,18 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		Icon: fmt.Sprintf("%s/api/v3/public/icon/%s", ns.origin, strings.ReplaceAll(mUser.GetName(), "#", "%23")),
 		Tag:  "c:" + m.ChannelID.String(),
 	}
-	ssePayload := &sse.EventData{
+	ssePayloadNotCited := &sse.EventData{
 		EventType: "MESSAGE_CREATED",
 		Payload: map[string]interface{}{
-			"id": m.ID,
+			"id":        m.ID,
+			"is_citing": false,
+		},
+	}
+	ssePayloadCited := &sse.EventData{
+		EventType: "MESSAGE_CREATED",
+		Payload: map[string]interface{}{
+			"id":        m.ID,
+			"is_citing": true,
 		},
 	}
 
@@ -199,7 +207,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 				continue
 			}
 			if us {
-				notifiedUsers.Add(uid)
+				notifiedUsers.Remove(uid)
 				markedUsers.Add(uid)
 				noticeable.Add(uid)
 				citedUsers.Add(uid)
@@ -226,15 +234,20 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 
 	// WS送信
 	var targetFunc ws.TargetFunc
+	var citedTargetFunc ws.TargetFunc
 	if isDM {
 		targetFunc = ws.TargetUserSets(notifiedUsers)
 	} else {
+		citedTargetFunc = ws.Or(
+			ws.TargetUserSets(citedUsers),
+		)
 		targetFunc = ws.Or(
 			ws.TargetUserSets(notifiedUsers, viewers),
 			ws.TargetTimelineStreamingEnabled(),
 		)
 	}
-	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, targetFunc)
+	go ns.ws.WriteMessage(ssePayloadCited.EventType, ssePayloadCited.Payload, citedTargetFunc)
+	go ns.ws.WriteMessage(ssePayloadNotCited.EventType, ssePayloadNotCited.Payload, targetFunc)
 
 	// FCM送信
 	targets := notifiedUsers.Clone()
