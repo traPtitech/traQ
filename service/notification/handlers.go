@@ -232,21 +232,21 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	// WS送信
-	var targetFunc ws.TargetFunc
-	var citedTargetFunc ws.TargetFunc
+	var targetFuncNotCited ws.TargetFunc
+	var targetFuncCited ws.TargetFunc
 	if isDM {
-		targetFunc = ws.TargetUserSets(notifiedUsers)
+		targetFuncNotCited = ws.TargetUserSets(notifiedUsers)
 	} else {
-		citedTargetFunc = ws.Or(
+		targetFuncCited = ws.Or(
 			ws.TargetUserSets(citedUsers),
 		)
-		targetFunc = ws.Or(
+		targetFuncNotCited = ws.Or(
 			ws.TargetUserSets(notifiedUsers, viewers),
 			ws.TargetTimelineStreamingEnabled(),
 		)
 	}
-	go ns.ws.WriteMessage(ssePayloadCited.EventType, ssePayloadCited.Payload, citedTargetFunc)
-	go ns.ws.WriteMessage(ssePayloadNotCited.EventType, ssePayloadNotCited.Payload, targetFunc)
+	go ns.ws.WriteMessage(ssePayloadCited.EventType, ssePayloadCited.Payload, targetFuncCited)
+	go ns.ws.WriteMessage(ssePayloadNotCited.EventType, ssePayloadNotCited.Payload, targetFuncNotCited)
 
 	// FCM送信
 	targets := notifiedUsers.Clone()
