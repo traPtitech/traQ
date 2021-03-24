@@ -99,6 +99,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	notifiedUsers := set.UUID{} // チャンネル通知購読ユーザー
 	markedUsers := set.UUID{}   // チャンネル未読管理ユーザー
 	noticeable := set.UUID{}    // noticeableな未読追加対象のユーザー
+	citedUsers := set.UUID{}    // メッセージで引用されたメッセージを投稿したユーザー
 
 	// メッセージボディ作成
 	if !isDM {
@@ -201,6 +202,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 				notifiedUsers.Add(uid)
 				markedUsers.Add(uid)
 				noticeable.Add(uid)
+				citedUsers.Add(uid)
 			}
 		}
 	}
