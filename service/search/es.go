@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	esRequiredVersion = "7.10.1"
+	esRequiredVersion = "7.10.2"
 	esIndexPrefix     = "traq_"
 	esMessageIndex    = "message"
 	esDateFormat      = "2006-01-02T15:04:05Z"
