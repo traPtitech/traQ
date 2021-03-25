@@ -17,7 +17,7 @@ import (
 
 const (
 	syncInterval    = 1 * time.Minute
-	syncMessageBulk = 1000
+	syncMessageBulk = 250
 )
 
 type attributes struct {
@@ -112,12 +112,13 @@ func (e *esEngine) syncLoop(done <-chan struct{}) {
 	defer t.Stop()
 loop:
 	for {
+		err := e.sync()
+		if err != nil {
+			e.l.Error(err.Error(), zap.Error(err))
+		}
+
 		select {
 		case <-t.C:
-			err := e.sync()
-			if err != nil {
-				e.l.Error(err.Error(), zap.Error(err))
-			}
 		case <-done:
 			break loop
 		}
