@@ -65,3 +65,20 @@ func Or(funcs ...TargetFunc) TargetFunc {
 		return false
 	}
 }
+
+func And(funcs ...TargetFunc) TargetFunc {
+	return func(s Session) bool {
+		for _, f := range funcs {
+			if !f(s) {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func Not(f TargetFunc) TargetFunc {
+	return func(s Session) bool {
+		return !f(s)
+	}
+}

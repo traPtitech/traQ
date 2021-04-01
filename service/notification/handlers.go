@@ -237,12 +237,11 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	if isDM {
 		targetFuncNotCited = ws.TargetUserSets(notifiedUsers)
 	} else {
-		targetFuncCited = ws.Or(
-			ws.TargetUserSets(citedUsers),
-		)
-		targetFuncNotCited = ws.Or(
-			ws.TargetUserSets(notifiedUsers, viewers),
-			ws.TargetTimelineStreamingEnabled(),
+		targetFuncCited = ws.TargetUserSets(citedUsers)
+		targetFuncNotCited = ws.And(
+			ws.Or(ws.TargetUserSets(notifiedUsers, viewers),
+				ws.TargetTimelineStreamingEnabled()),
+			ws.Not(ws.TargetUserSets(citedUsers)),
 		)
 	}
 	go ns.ws.WriteMessage(ssePayloadCited.EventType, ssePayloadCited.Payload, targetFuncCited)
