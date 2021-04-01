@@ -91,7 +91,7 @@ var esMapping = m{
 		},
 		"text": m{
 			"type":     "text",
-			"analyzer": "sudachi_stop_analyzer",
+			"analyzer": "sudachi_analyzer",
 		},
 		"createdAt": m{
 			"type":   "date",
@@ -134,11 +134,18 @@ var esSetting = m{
 					"type": "sudachi_tokenizer",
 				},
 			},
+			"filter": m{
+				"sudachi_split_filter": m{
+					"type": "sudachi_split",
+					"mode": "search",
+				},
+			},
 			"analyzer": m{
-				"sudachi_stop_analyzer": m{
+				"sudachi_analyzer": m{
 					"tokenizer": "sudachi_tokenizer",
 					"type":      "custom",
 					"filter": []string{
+						"sudachi_split_filter",
 						"sudachi_normalizedform",
 					},
 					"discard_punctuation": true,
