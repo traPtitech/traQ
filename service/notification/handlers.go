@@ -206,7 +206,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 				continue
 			}
 			if us {
-				notifiedUsers.Remove(uid)
+				notifiedUsers.Add(uid)
 				markedUsers.Add(uid)
 				noticeable.Add(uid)
 				citedUsers.Add(uid)
