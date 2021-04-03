@@ -31,7 +31,6 @@ var handlerMap = map[string]eventHandler{
 	event.MessageUnpinned:           messageUnpinnedHandler,
 	event.MessageStamped:            messageStampedHandler,
 	event.MessageUnstamped:          messageUnstampedHandler,
-	event.MessageCited:              messageCitedHandler,
 	event.ChannelCreated:            channelCreatedHandler,
 	event.ChannelUpdated:            channelUpdatedHandler,
 	event.ChannelDeleted:            channelDeletedHandler,
@@ -88,10 +87,18 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		Icon: fmt.Sprintf("%s/api/v3/public/icon/%s", ns.origin, strings.ReplaceAll(mUser.GetName(), "#", "%23")),
 		Tag:  "c:" + m.ChannelID.String(),
 	}
-	ssePayload := &sse.EventData{
+	ssePayloadNotCited := &sse.EventData{
 		EventType: "MESSAGE_CREATED",
 		Payload: map[string]interface{}{
-			"id": m.ID,
+			"id":        m.ID,
+			"is_citing": false,
+		},
+	}
+	ssePayloadCited := &sse.EventData{
+		EventType: "MESSAGE_CREATED",
+		Payload: map[string]interface{}{
+			"id":        m.ID,
+			"is_citing": true,
 		},
 	}
 
@@ -99,6 +106,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	notifiedUsers := set.UUID{} // チャンネル通知購読ユーザー
 	markedUsers := set.UUID{}   // チャンネル未読管理ユーザー
 	noticeable := set.UUID{}    // noticeableな未読追加対象のユーザー
+	citedUsers := set.UUID{}    // メッセージで引用されたメッセージを投稿したユーザー
 
 	// メッセージボディ作成
 	if !isDM {
@@ -201,6 +209,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 				notifiedUsers.Add(uid)
 				markedUsers.Add(uid)
 				noticeable.Add(uid)
+				citedUsers.Add(uid)
 			}
 		}
 	}
@@ -223,16 +232,21 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	}
 
 	// WS送信
-	var targetFunc ws.TargetFunc
+	var targetFuncNotCited ws.TargetFunc
+	var targetFuncCited ws.TargetFunc
 	if isDM {
-		targetFunc = ws.TargetUserSets(notifiedUsers)
+		targetFuncNotCited = ws.TargetUserSets(notifiedUsers)
+		targetFuncCited = ws.TargetNone()
 	} else {
-		targetFunc = ws.Or(
-			ws.TargetUserSets(notifiedUsers, viewers),
-			ws.TargetTimelineStreamingEnabled(),
+		targetFuncCited = ws.TargetUserSets(citedUsers)
+		targetFuncNotCited = ws.And(
+			ws.Or(ws.TargetUserSets(notifiedUsers, viewers),
+				ws.TargetTimelineStreamingEnabled()),
+			ws.Not(ws.TargetUserSets(citedUsers)),
 		)
 	}
-	go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, targetFunc)
+	go ns.ws.WriteMessage(ssePayloadCited.EventType, ssePayloadCited.Payload, targetFuncCited)
+	go ns.ws.WriteMessage(ssePayloadNotCited.EventType, ssePayloadNotCited.Payload, targetFuncNotCited)
 
 	// FCM送信
 	targets := notifiedUsers.Clone()
@@ -330,26 +344,6 @@ func messageUnstampedHandler(ns *Service, ev hub.Message) {
 			"stamp_id":   ev.Fields["stamp_id"].(uuid.UUID),
 		},
 	})
-}
-
-func messageCitedHandler(ns *Service, ev hub.Message) {
-	logger := ns.logger.With(zap.Stringer("messageId", ev.Fields["message_id"].(uuid.UUID)))
-	for _, mid := range ev.Fields["cited_ids"].([]uuid.UUID) {
-		m, err := ns.repo.GetMessageByID(mid)
-		if err != nil {
-			logger.Error("failed to GetMessageByID", zap.Error(err), zap.Stringer("citedMessageId", mid)) // 失敗
-			continue
-		}
-		userMulticast(ns, m.UserID, &sse.EventData{
-			EventType: "MESSAGE_CITED",
-			Payload: map[string]interface{}{
-				"message_id": ev.Fields["message_id"].(uuid.UUID),
-				"channel_id": ev.Fields["message"].(*model.Message).ChannelID,
-				"user_id":    ev.Fields["message"].(*model.Message).UserID,
-			},
-		})
-	}
-
 }
 
 func channelCreatedHandler(ns *Service, ev hub.Message) {
