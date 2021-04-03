@@ -30,7 +30,6 @@ require (
 	github.com/labstack/echo/v4 v4.2.1
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lib/pq v1.2.0 // indirect
-	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/ncw/swift v1.0.53
 	github.com/olivere/elastic/v7 v7.0.23
 	github.com/pelletier/go-toml v1.6.0 // indirect
