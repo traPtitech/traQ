@@ -25,14 +25,6 @@ func TestHandlers_GetPublicUserIcon(t *testing.T) {
 	})
 	require.NoError(err)
 
-	t.Run("No name", func(t *testing.T) {
-		t.Parallel()
-		e := env.makeExp(t)
-		e.GET("/api/1.0/public/icon/").
-			Expect().
-			Status(http.StatusNotFound)
-	})
-
 	t.Run("No user", func(t *testing.T) {
 		t.Parallel()
 		e := env.makeExp(t)
