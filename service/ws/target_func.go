@@ -54,6 +54,12 @@ func TargetTimelineStreamingEnabled() TargetFunc {
 	}
 }
 
+func TargetNone() TargetFunc {
+	return func(s Session) bool {
+		return false
+	}
+}
+
 // Or いずれかのTargetFuncの条件に該当する対象に送信します
 func Or(funcs ...TargetFunc) TargetFunc {
 	return func(s Session) bool {

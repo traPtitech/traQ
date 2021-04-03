@@ -236,6 +236,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	var targetFuncCited ws.TargetFunc
 	if isDM {
 		targetFuncNotCited = ws.TargetUserSets(notifiedUsers)
+		targetFuncCited = ws.TargetNone()
 	} else {
 		targetFuncCited = ws.TargetUserSets(citedUsers)
 		targetFuncNotCited = ws.And(
