@@ -4050,6 +4050,9 @@ components:
         md5:
           type: string
           description: MD5ハッシュ
+        isAnimatedImage:
+          type: boolean
+          description: アニメーション画像かどうか
         createdAt:
           type: string
           format: date-time
@@ -4088,6 +4091,7 @@ components:
         - mime
         - size
         - md5
+        - isAnimatedImage
         - createdAt
         - thumbnail
         - channelId

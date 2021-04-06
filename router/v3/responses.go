@@ -375,27 +375,29 @@ type FileInfoThumbnail struct {
 }
 
 type FileInfo struct {
-	ID         uuid.UUID          `json:"id"`
-	Name       string             `json:"name"`
-	Mime       string             `json:"mime"`
-	Size       int64              `json:"size"`
-	MD5        string             `json:"md5"`
-	CreatedAt  time.Time          `json:"createdAt"`
-	Thumbnail  *FileInfoThumbnail `json:"thumbnail"`
-	ChannelID  optional.UUID      `json:"channelId"`
-	UploaderID optional.UUID      `json:"uploaderId"`
+	ID              uuid.UUID          `json:"id"`
+	Name            string             `json:"name"`
+	Mime            string             `json:"mime"`
+	Size            int64              `json:"size"`
+	MD5             string             `json:"md5"`
+	IsAnimatedImage bool               `json:"isAnimatedImage"`
+	CreatedAt       time.Time          `json:"createdAt"`
+	Thumbnail       *FileInfoThumbnail `json:"thumbnail"`
+	ChannelID       optional.UUID      `json:"channelId"`
+	UploaderID      optional.UUID      `json:"uploaderId"`
 }
 
 func formatFileInfo(meta model.File) *FileInfo {
 	fi := &FileInfo{
-		ID:         meta.GetID(),
-		Name:       meta.GetFileName(),
-		Mime:       meta.GetMIMEType(),
-		Size:       meta.GetFileSize(),
-		MD5:        meta.GetMD5Hash(),
-		CreatedAt:  meta.GetCreatedAt(),
-		ChannelID:  meta.GetUploadChannelID(),
-		UploaderID: meta.GetCreatorID(),
+		ID:              meta.GetID(),
+		Name:            meta.GetFileName(),
+		Mime:            meta.GetMIMEType(),
+		Size:            meta.GetFileSize(),
+		MD5:             meta.GetMD5Hash(),
+		IsAnimatedImage: meta.GetIsAnimatedImage(),
+		CreatedAt:       meta.GetCreatedAt(),
+		ChannelID:       meta.GetUploadChannelID(),
+		UploaderID:      meta.GetCreatorID(),
 	}
 	if meta.HasThumbnail() {
 		fi.Thumbnail = &FileInfoThumbnail{
