@@ -236,6 +236,7 @@ comments:
       thumbnail_mime: サムネイル画像MIMEタイプ
       thumbnail_width: サムネイル画像幅
       thumbnail_height: サムネイル画像高さ
+      is_animated_image: アニメーション画像かどうか
       channel_id: 所属チャンネルUUID
   - table: files_acl
     tableComment: ファイルアクセスコントロールリストテーブル
@@ -368,6 +369,6 @@ comments:
       expires_at: 有効期限
   - table: user_settings
     tableComment: ユーザー設定
-    columnComments: 
+    columnComments:
       user_id: ユーザーUUID
       notify_citation: メッセージ引用通知
