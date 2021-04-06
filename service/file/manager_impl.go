@@ -24,6 +24,19 @@ type managerImpl struct {
 	l    *zap.Logger
 }
 
+func makeSureSeekable(r io.Reader) (io.ReadSeeker, error) {
+	src, ok := r.(io.ReadSeeker)
+	if ok {
+		return src, nil
+	}
+	// Seek出来ないと困るので全読み込み
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read whole src stream: %w", err)
+	}
+	return bytes.NewReader(b), nil
+}
+
 func InitFileManager(repo repository.FileRepository, fs storage.FileStorage, ip imaging.Processor, l *zap.Logger) (Manager, error) {
 	return &managerImpl{
 		repo: repo,
@@ -49,20 +62,34 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 		IsAnimatedImage: false,
 	}
 
+	// アニメーション画像判定
+	switch args.MimeType {
+	case "image/jpeg", "image/png", "image/gif", "image/webp":
+		src, err := makeSureSeekable(args.Src)
+		if err != nil {
+			return nil, err
+		}
+		args.Src = src
+
+		if isAnimated, err := isAnimatedImage(src); isAnimated && err == nil {
+			f.IsAnimatedImage = true
+		}
+
+		// ストリームを先頭に戻す
+		if _, err := src.Seek(0, io.SeekStart); err != nil {
+			return nil, fmt.Errorf("failed to seek src stream: %w", err)
+		}
+	}
+
 	if args.Thumbnail == nil && !args.SkipThumbnailGeneration {
 		// サムネイル画像生成
 		switch args.MimeType {
 		case "image/jpeg", "image/png", "image/gif":
-			src, ok := args.Src.(io.ReadSeeker)
-			if !ok {
-				// Seek出来ないと困るので全読み込み
-				b, err := ioutil.ReadAll(args.Src)
-				if err != nil {
-					return nil, fmt.Errorf("failed to read whole src stream: %w", err)
-				}
-				src = bytes.NewReader(b)
-				args.Src = src
+			src, err := makeSureSeekable(args.Src)
+			if err != nil {
+				return nil, err
 			}
+			args.Src = src
 
 			thumb, err := m.ip.Thumbnail(src)
 			if err == nil {
@@ -72,16 +99,7 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 			}
 
 			// ストリームを先頭に戻す
-			if _, err := src.Seek(0, 0); err != nil {
-				return nil, fmt.Errorf("failed to seek src stream: %w", err)
-			}
-
-			if isAnimated, err := isAnimatedImage(src); isAnimated && err == nil {
-				f.IsAnimatedImage = true
-			}
-
-			// ストリームを先頭に戻す
-			if _, err := src.Seek(0, 0); err != nil {
+			if _, err := src.Seek(0, io.SeekStart); err != nil {
 				return nil, fmt.Errorf("failed to seek src stream: %w", err)
 			}
 		}

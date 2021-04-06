@@ -11,6 +11,7 @@ import (
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/imaging"
 	"image/png"
+	"io"
 )
 
 const (
@@ -73,7 +74,7 @@ func saveUploadImage(p imaging2.Processor, c echo.Context, m file.Manager, name 
 			return uuid.Nil, herror.InternalServerError(err)
 		}
 
-		args.Src = &b
+		args.Src = bytes.NewReader(b.Bytes())
 		args.FileSize = int64(b.Len())
 		args.MimeType = consts.MimeImagePNG
 		args.Thumbnail = img // サムネイル画像より小さいという前提
@@ -103,7 +104,7 @@ func saveUploadImage(p imaging2.Processor, c echo.Context, m file.Manager, name 
 		if err != nil {
 			return uuid.Nil, herror.InternalServerError(err)
 		}
-		_, _ = b.Seek(0, 0)
+		_, _ = b.Seek(0, io.SeekStart)
 
 	default:
 		return uuid.Nil, herror.BadRequest(badImage)

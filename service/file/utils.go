@@ -25,7 +25,7 @@ func GenerateIconFile(m Manager, salt string) (uuid.UUID, error) {
 		FileSize:  int64(img.Len()),
 		MimeType:  "image/png",
 		FileType:  model.FileTypeIcon,
-		Src:       &img,
+		Src:       bytes.NewReader(img.Bytes()),
 		Thumbnail: icon,
 	})
 	if err != nil {

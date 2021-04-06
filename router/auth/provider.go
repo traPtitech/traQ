@@ -267,7 +267,7 @@ func processProfileIcon(m file.Manager, src []byte) (uuid.UUID, error) {
 		FileSize:  int64(b.Len()),
 		MimeType:  consts.MimeImagePNG,
 		FileType:  model.FileTypeIcon,
-		Src:       b,
+		Src:       bytes.NewReader(b.Bytes()),
 		Thumbnail: img,
 	})
 	if err != nil {
