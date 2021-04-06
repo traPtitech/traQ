@@ -39,13 +39,14 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 	}
 
 	f := &model.FileMeta{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      args.FileName,
-		Mime:      args.MimeType,
-		Size:      args.FileSize,
-		CreatorID: args.CreatorID,
-		Type:      args.FileType,
-		ChannelID: args.ChannelID,
+		ID:              uuid.Must(uuid.NewV4()),
+		Name:            args.FileName,
+		Mime:            args.MimeType,
+		Size:            args.FileSize,
+		CreatorID:       args.CreatorID,
+		Type:            args.FileType,
+		ChannelID:       args.ChannelID,
+		IsAnimatedImage: false,
 	}
 
 	if args.Thumbnail == nil && !args.SkipThumbnailGeneration {

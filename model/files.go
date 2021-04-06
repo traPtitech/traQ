@@ -108,6 +108,7 @@ type FileMeta struct {
 	ThumbnailMime   optional.String `gorm:"type:text"`
 	ThumbnailWidth  int             `gorm:"type:int;not null;default:0"`
 	ThumbnailHeight int             `gorm:"type:int;not null;default:0"`
+	IsAnimatedImage bool            `gorm:"type:boolean;not null;default:false"`
 	ChannelID       optional.UUID   `gorm:"type:char(36)"`
 	CreatedAt       time.Time       `gorm:"precision:6"`
 	DeletedAt       *time.Time      `gorm:"precision:6"`

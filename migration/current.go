@@ -34,6 +34,7 @@ func Migrations() []*gormigrate.Migration {
 		v22(), // BOTへのWebRTCパーミッションの付与
 		v23(), // 複合インデックス追加
 		v24(), // ユーザー設定追加
+		v25(), // FileMetaにIsAnimatedImageを追加
 	}
 }
 
