@@ -20,6 +20,7 @@ CREATE TABLE `files` (
   `thumbnail_mime` text,
   `thumbnail_width` int(11) NOT NULL DEFAULT '0',
   `thumbnail_height` int(11) NOT NULL DEFAULT '0',
+  `is_animated_image` tinyint(1) NOT NULL DEFAULT '0',
   `channel_id` char(36) DEFAULT NULL,
   `created_at` datetime(6) DEFAULT NULL,
   `deleted_at` datetime(6) DEFAULT NULL,
@@ -48,6 +49,7 @@ CREATE TABLE `files` (
 | thumbnail_mime | text |  | true |  |  | サムネイル画像MIMEタイプ |
 | thumbnail_width | int(11) | 0 | false |  |  | サムネイル画像幅 |
 | thumbnail_height | int(11) | 0 | false |  |  | サムネイル画像高さ |
+| is_animated_image | tinyint(1) | 0 | false |  |  | アニメーション画像かどうか |
 | channel_id | char(36) |  | true |  | [channels](channels.md) | 所属チャンネルUUID |
 | created_at | datetime(6) |  | true |  |  |  |
 | deleted_at | datetime(6) |  | true |  |  |  |

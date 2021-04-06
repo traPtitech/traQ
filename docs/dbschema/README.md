@@ -16,7 +16,7 @@
 | [devices](devices.md) | 3 | FCMデバイステーブル | BASE TABLE |
 | [dm_channel_mappings](dm_channel_mappings.md) | 3 | DMチャンネルマッピングテーブル | BASE TABLE |
 | [external_provider_users](external_provider_users.md) | 6 | 外部認証ユーザーテーブル | BASE TABLE |
-| [files](files.md) | 14 | ファイルテーブル | BASE TABLE |
+| [files](files.md) | 15 | ファイルテーブル | BASE TABLE |
 | [files_acl](files_acl.md) | 3 | ファイルアクセスコントロールリストテーブル | BASE TABLE |
 | [messages](messages.md) | 7 | メッセージテーブル | BASE TABLE |
 | [messages_stamps](messages_stamps.md) | 6 | メッセージスタンプテーブル | BASE TABLE |
@@ -44,6 +44,7 @@
 | [user_roles](user_roles.md) | 3 | ユーザーロールテーブル | BASE TABLE |
 | [user_role_inheritances](user_role_inheritances.md) | 2 | ユーザーロール継承テーブル | BASE TABLE |
 | [user_role_permissions](user_role_permissions.md) | 2 | ユーザーロールパーミッションテーブル | BASE TABLE |
+| [user_settings](user_settings.md) | 2 | ユーザー設定 | BASE TABLE |
 | [webhook_bots](webhook_bots.md) | 9 | traQ Webhookテーブル | BASE TABLE |
 
 ## Relations

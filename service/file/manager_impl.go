@@ -39,13 +39,14 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 	}
 
 	f := &model.FileMeta{
-		ID:        uuid.Must(uuid.NewV4()),
-		Name:      args.FileName,
-		Mime:      args.MimeType,
-		Size:      args.FileSize,
-		CreatorID: args.CreatorID,
-		Type:      args.FileType,
-		ChannelID: args.ChannelID,
+		ID:              uuid.Must(uuid.NewV4()),
+		Name:            args.FileName,
+		Mime:            args.MimeType,
+		Size:            args.FileSize,
+		CreatorID:       args.CreatorID,
+		Type:            args.FileType,
+		ChannelID:       args.ChannelID,
+		IsAnimatedImage: false,
 	}
 
 	if args.Thumbnail == nil && !args.SkipThumbnailGeneration {
@@ -68,6 +69,15 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 				args.Thumbnail = thumb
 			} else {
 				m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
+			}
+
+			// ストリームを先頭に戻す
+			if _, err := src.Seek(0, 0); err != nil {
+				return nil, fmt.Errorf("failed to seek src stream: %w", err)
+			}
+
+			if isAnimated, err := isAnimatedImage(src); isAnimated && err == nil {
+				f.IsAnimatedImage = true
 			}
 
 			// ストリームを先頭に戻す

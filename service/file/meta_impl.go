@@ -59,6 +59,10 @@ func (f *fileMetaImpl) GetThumbnailHeight() int {
 	return f.meta.ThumbnailHeight
 }
 
+func (f *fileMetaImpl) IsAnimatedImage() bool {
+	return f.meta.IsAnimatedImage
+}
+
 func (f *fileMetaImpl) GetUploadChannelID() optional.UUID {
 	return f.meta.ChannelID
 }
