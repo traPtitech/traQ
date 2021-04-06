@@ -205,11 +205,13 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 				logger.Error("failed to GetNotifyCitation", zap.Error(err), zap.Stringer("userId", uid)) // 失敗
 				continue
 			}
+
+			markedUsers.Add(uid)
+			noticeable.Add(uid)
+			citedUsers.Add(uid)
+			// 引用通知が有効の場合
 			if us {
 				notifiedUsers.Add(uid)
-				markedUsers.Add(uid)
-				noticeable.Add(uid)
-				citedUsers.Add(uid)
 			}
 		}
 	}
@@ -238,15 +240,15 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		targetFuncNotCited = ws.TargetUserSets(notifiedUsers)
 		targetFuncCited = ws.TargetNone()
 	} else {
-		targetFuncCited = ws.TargetUserSets(citedUsers)
 		targetFuncNotCited = ws.And(
 			ws.Or(ws.TargetUserSets(notifiedUsers, viewers),
 				ws.TargetTimelineStreamingEnabled()),
 			ws.Not(ws.TargetUserSets(citedUsers)),
 		)
+		targetFuncCited = ws.TargetUserSets(citedUsers)
 	}
-	go ns.ws.WriteMessage(ssePayloadCited.EventType, ssePayloadCited.Payload, targetFuncCited)
 	go ns.ws.WriteMessage(ssePayloadNotCited.EventType, ssePayloadNotCited.Payload, targetFuncNotCited)
+	go ns.ws.WriteMessage(ssePayloadCited.EventType, ssePayloadCited.Payload, targetFuncCited)
 
 	// FCM送信
 	targets := notifiedUsers.Clone()
