@@ -75,6 +75,15 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 			if _, err := src.Seek(0, 0); err != nil {
 				return nil, fmt.Errorf("failed to seek src stream: %w", err)
 			}
+
+			if isAnimated, err := isAnimatedImage(src); isAnimated && err == nil {
+				f.IsAnimatedImage = true
+			}
+
+			// ストリームを先頭に戻す
+			if _, err := src.Seek(0, 0); err != nil {
+				return nil, fmt.Errorf("failed to seek src stream: %w", err)
+			}
 		}
 	}
 
