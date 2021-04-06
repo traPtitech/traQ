@@ -59,7 +59,7 @@ func (f *fileMetaImpl) GetThumbnailHeight() int {
 	return f.meta.ThumbnailHeight
 }
 
-func (f *fileMetaImpl) GetIsAnimatedImage() bool {
+func (f *fileMetaImpl) IsAnimatedImage() bool {
 	return f.meta.IsAnimatedImage
 }
 

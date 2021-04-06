@@ -394,7 +394,7 @@ func formatFileInfo(meta model.File) *FileInfo {
 		Mime:            meta.GetMIMEType(),
 		Size:            meta.GetFileSize(),
 		MD5:             meta.GetMD5Hash(),
-		IsAnimatedImage: meta.GetIsAnimatedImage(),
+		IsAnimatedImage: meta.IsAnimatedImage(),
 		CreatedAt:       meta.GetCreatedAt(),
 		ChannelID:       meta.GetUploadChannelID(),
 		UploaderID:      meta.GetCreatorID(),

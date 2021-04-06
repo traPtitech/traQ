@@ -87,7 +87,7 @@ type File interface {
 	GetThumbnailMIMEType() string
 	GetThumbnailWidth() int
 	GetThumbnailHeight() int
-	GetIsAnimatedImage() bool
+	IsAnimatedImage() bool
 	GetUploadChannelID() optional.UUID
 	GetCreatedAt() time.Time
 
