@@ -48,9 +48,9 @@ require (
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6
 	golang.org/x/net v0.0.0-20210316092652-d523dce5a7f4
-	golang.org/x/oauth2 v0.0.0-20210313182246-cd4f82c27b84
+	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/api v0.43.0
+	google.golang.org/api v0.44.0
 	gopkg.in/gormigrate.v1 v1.6.0
 	gopkg.in/ini.v1 v1.51.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.4.1 // indirect
