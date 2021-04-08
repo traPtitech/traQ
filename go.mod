@@ -27,7 +27,7 @@ require (
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
 	github.com/jinzhu/gorm v1.9.16
 	github.com/json-iterator/go v1.1.10
-	github.com/labstack/echo/v4 v4.2.1
+	github.com/labstack/echo/v4 v4.2.2
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/ncw/swift v1.0.53
