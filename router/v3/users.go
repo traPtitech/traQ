@@ -26,7 +26,13 @@ import (
 func (h *Handlers) GetUsers(c echo.Context) error {
 	q := repository.UsersQuery{}
 
-	if !isTrue(c.QueryParam("include-suspended")) {
+	if isTrue(c.QueryParam("include-suspended")) && len(c.QueryParam("name")) > 0 {
+		return herror.BadRequest("include-suspended and name cannot be specified at the same time")
+	}
+
+	if len(c.QueryParam("name")) > 0 {
+		q = q.NameOf(c.QueryParam("name"))
+	} else if !isTrue(c.QueryParam("include-suspended")) {
 		q = q.Active()
 	}
 
