@@ -4,6 +4,7 @@ const (
 	ParamChannelID      = "channelID"
 	ParamPinID          = "pinID"
 	ParamUserID         = "userID"
+	ParamUsername       = "username"
 	ParamGroupID        = "groupID"
 	ParamTagID          = "tagID"
 	ParamStampID        = "stampID"

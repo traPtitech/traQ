@@ -29,6 +29,9 @@ func (h *Handlers) GetUsers(c echo.Context) error {
 	if !isTrue(c.QueryParam("include-suspended")) {
 		q = q.Active()
 	}
+	if len(c.QueryParam("name")) > 0 {
+		q = q.NameOf(c.QueryParam("name"))
+	}
 
 	users, err := h.Repo.GetUsers(q)
 	if err != nil {

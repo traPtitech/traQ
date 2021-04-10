@@ -160,6 +160,11 @@ func (repo *TestRepository) GetUsers(query repository.UsersQuery) ([]model.UserI
 	repo.PrivateChannelMembersLock.RLock()
 	repo.UserGroupMembersLock.RLock()
 	for _, u := range repo.Users {
+		if query.Name.Valid {
+			if u.Name != query.Name.String {
+				continue
+			}
+		}
 		if query.IsBot.Valid {
 			if u.Bot != query.IsBot.Bool {
 				continue
@@ -203,6 +208,11 @@ func (repo *TestRepository) GetUserIDs(query repository.UsersQuery) ([]uuid.UUID
 	repo.PrivateChannelMembersLock.RLock()
 	repo.UserGroupMembersLock.RLock()
 	for _, v := range repo.Users {
+		if query.Name.Valid {
+			if v.Name != query.Name.String {
+				continue
+			}
+		}
 		if query.IsBot.Valid {
 			if v.Bot != query.IsBot.Bool {
 				continue

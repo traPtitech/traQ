@@ -42,6 +42,7 @@ type LinkExternalUserAccountArgs struct {
 
 // UsersQuery GetUsers用クエリ
 type UsersQuery struct {
+	Name                        optional.String
 	IsBot                       optional.Bool
 	IsActive                    optional.Bool
 	IsCMemberOf                 optional.UUID
@@ -54,6 +55,12 @@ type UsersQuery struct {
 // NotBot Botでない
 func (q UsersQuery) NotBot() UsersQuery {
 	q.IsBot = optional.BoolFrom(false)
+	return q
+}
+
+// NameOf nameの名前のユーザーである
+func (q UsersQuery) NameOf(name string) UsersQuery {
+	q.Name = optional.StringFrom(name)
 	return q
 }
 

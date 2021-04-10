@@ -135,6 +135,9 @@ func (repo *GormRepository) GetUserIDs(query UsersQuery) (ids []uuid.UUID, err e
 func (repo *GormRepository) makeGetUsersTx(query UsersQuery) *gorm.DB {
 	tx := repo.db.Table("users")
 
+	if query.Name.Valid {
+		tx = tx.Where("users.name = ?", query.Name.String)
+	}
 	if query.IsActive.Valid {
 		if query.IsActive.Bool {
 			tx = tx.Where("users.status = ?", model.UserAccountStatusActive)
