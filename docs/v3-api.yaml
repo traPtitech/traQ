@@ -1793,6 +1793,8 @@ paths:
                 description: ユーザー情報の配列
                 items:
                   $ref: '#/components/schemas/User'
+        '400':
+          description: Bad Request
       operationId: getUsers
       tags:
         - user
@@ -1811,6 +1813,7 @@ paths:
       description: |-
         ユーザーのリストを取得します。
         `include-suspended`を指定しない場合、レスポンスに非アクティブユーザーは含まれません。
+        `include-suspended`と`name`を同時に指定することはできません。
   /channels:
     post:
       summary: チャンネルを作成
