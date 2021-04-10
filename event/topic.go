@@ -24,6 +24,11 @@ const (
 	//		user_id: uuid.UUID
 	//		datetime: time.Time
 	UserOffline = "user.offline"
+	// UserViewStateChanged ユーザーの閲覧状態が変化した
+	//  Fields:
+	//      user_id: uuid.UUID
+	//      view_states: map[string]viewer.StateWithChannel
+	UserViewStateChanged = "user.viewstate.changed"
 
 	// UserTagAdded ユーザーにタグが追加された
 	// 	Fields:
@@ -157,7 +162,7 @@ const (
 	// ChannelViewersChanged チャンネルの閲覧者が変化した
 	// 	Fields:
 	// 		channel_id: uuid.UUID
-	// 		viewers: map[uuid.UUID]realtime.ViewState
+	// 		viewers: map[uuid.UUID]viewer.StateWithTime
 	ChannelViewersChanged = "channel.viewers_changed"
 	// ChannelSubscribersChanged チャンネルの購読者が変化した
 	// 	Fields:

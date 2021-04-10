@@ -44,6 +44,7 @@ var handlerMap = map[string]eventHandler{
 	event.UserIconUpdated:           userIconUpdatedHandler,
 	event.UserOnline:                userOnlineHandler,
 	event.UserOffline:               userOfflineHandler,
+	event.UserViewStateChanged:      userViewStateChangedHandler,
 	event.UserTagAdded:              userTagUpdatedHandler,
 	event.UserTagRemoved:            userTagUpdatedHandler,
 	event.UserTagUpdated:            userTagUpdatedHandler,
@@ -464,6 +465,30 @@ func userOfflineHandler(ns *Service, ev hub.Message) {
 		EventType: "USER_OFFLINE",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["user_id"].(uuid.UUID),
+		},
+	})
+}
+
+func userViewStateChangedHandler(ns *Service, ev hub.Message) {
+	type ViewState struct {
+		Key       string    `json:"key"`
+		ChannelID uuid.UUID `json:"channelId"`
+		State     string    `json:"state"`
+	}
+	viewStates := make([]ViewState, 0)
+	for connKey, state := range ev.Fields["view_states"].(map[string]viewer.StateWithChannel) {
+		viewStates = append(viewStates, ViewState{
+			Key:       connKey,
+			ChannelID: state.ChannelID,
+			State:     state.State.String(),
+		})
+	}
+
+	uid := ev.Fields["user_id"].(uuid.UUID)
+	userMulticast(ns, uid, &sse.EventData{
+		EventType: "USER_VIEWSTATE_CHANGED",
+		Payload: map[string]interface{}{
+			"view_states": viewStates,
 		},
 	})
 }

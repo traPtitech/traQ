@@ -94,6 +94,15 @@ func (s *Streamer) run() {
 	}
 }
 
+// IterateSessions 全セッションをイテレートします
+func (s *Streamer) IterateSessions(f func(session Session)) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	for session := range s.sessions {
+		f(session)
+	}
+}
+
 // WriteMessage 指定したセッションにメッセージを書き込みます
 func (s *Streamer) WriteMessage(t string, body interface{}, targetFunc TargetFunc) {
 	m := &rawMessage{

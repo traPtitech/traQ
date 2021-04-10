@@ -14,7 +14,7 @@ type Session interface {
 	Key() string
 	// UserID このセッションのUserID
 	UserID() uuid.UUID
-	// State このセッションのチャンネル閲覧状態
+	// ViewState このセッションのチャンネル閲覧状態
 	ViewState() (channelID uuid.UUID, state viewer.State)
 	// TimelineStreaming このセッションのタイムラインストリーミングが有効かどうか
 	TimelineStreaming() bool
