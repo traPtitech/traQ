@@ -160,7 +160,7 @@ func (vm *Manager) RemoveViewer(key interface{}) {
 	})
 }
 
-// 5分に１回呼び出される。チャンネルマップとユーザーマップのお掃除
+// 5分に1回呼び出される。チャンネルマップとユーザーマップのお掃除
 func (vm *Manager) gc() {
 	for cid, cv := range vm.channels {
 		if len(cv) == 0 {
