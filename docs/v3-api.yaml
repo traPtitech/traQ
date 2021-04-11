@@ -1763,7 +1763,7 @@ paths:
                 type: array
                 description: チャンネル閲覧状態
                 items:
-                  $ref: '#/components/schemas/OwnChannelViewState'
+                  $ref: '#/components/schemas/MyChannelViewState'
       operationId: getMyViewStates
       tags:
         - me
@@ -4340,8 +4340,8 @@ components:
         - userId
         - state
         - updatedAt
-    OwnChannelViewState:
-      title: OwnChannelViewState
+    MyChannelViewState:
+      title: MyChannelViewState
       type: object
       description: 自身のチャンネル閲覧状態
       properties:
