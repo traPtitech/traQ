@@ -173,7 +173,7 @@ func (r PutMyPasswordRequest) Validate() error {
 	)
 }
 
-// ChangeMyPassword PUT /users/me/password
+// PutMyPassword PUT /users/me/password
 func (h *Handlers) PutMyPassword(c echo.Context) error {
 	var req PutMyPasswordRequest
 	if err := bindAndValidate(c, &req); err != nil {
@@ -241,7 +241,7 @@ func (h *Handlers) ChangeMyIcon(c echo.Context) error {
 	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getRequestUserID(c))
 }
 
-// GetMyStampHistory GET /users/me/stamp-history リクエストクエリ
+// GetMyStampHistoryRequest GET /users/me/stamp-history リクエストクエリ
 type GetMyStampHistoryRequest struct {
 	Limit int `query:"limit"`
 }

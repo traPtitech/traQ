@@ -44,7 +44,7 @@ Command:
 		// TODO channelのアクセスチェック
 
 		s.setViewState(cid, viewer.StateFromString(args[2]))
-		s.streamer.vm.SetViewer(s, s.userID, s.viewState.channelID, s.viewState.state)
+		s.streamer.vm.SetViewer(s, s.key, s.userID, s.viewState.channelID, s.viewState.state)
 
 	case "rtcstate":
 		// rtcstate:{チャンネルID}:({状態}:{セッションID})*
