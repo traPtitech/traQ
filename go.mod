@@ -31,7 +31,7 @@ require (
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lib/pq v1.2.0 // indirect
 	github.com/ncw/swift v1.0.53
-	github.com/olivere/elastic/v7 v7.0.23
+	github.com/olivere/elastic/v7 v7.0.24
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/prometheus/client_golang v1.10.0
