@@ -27,17 +27,18 @@ jobs:
         run: docker push docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG}
   scan:
     name: Scan Image Vulnerability
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     needs: [image]
     steps:
       - name: Login GitHub Registry
         run: docker login docker.pkg.github.com -u traPtitech -p ${{ secrets.GITHUB_TOKEN }}
       - name: Pull docker image
         run: docker pull docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG}
-      - uses: homoluctus/gitrivy@v1.0.0
+      - name: Container image scan
+        uses: Azure/container-scan@v0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          image: docker.pkg.github.com/traptitech/traq/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          image-name: docker.pkg.github.com/traptitech/traq/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
   deploy-staging:
     name: Deploy staging
     runs-on: ubuntu-latest
