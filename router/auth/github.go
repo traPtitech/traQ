@@ -20,21 +20,25 @@ import (
 const (
 	GithubProviderName          = "github"
 	githubProfileURL            = "https://api.github.com/user"
+	githubUserOrgsURL           = "https://api.github.com/user/orgs"
+	githubScopeReadOrg          = "read:org"
 	githubAPIRequestErrorFormat = "github api request error: %w"
 )
 
 type GithubProvider struct {
-	config    GithubProviderConfig
-	repo      repository.Repository
-	fm        file.Manager
-	logger    *zap.Logger
-	sessStore session.Store
-	oa2       oauth2.Config
+	config               GithubProviderConfig
+	repo                 repository.Repository
+	fm                   file.Manager
+	logger               *zap.Logger
+	sessStore            session.Store
+	oa2                  oauth2.Config
+	allowedOrganizations []string
 }
 
 type GithubProviderConfig struct {
 	ClientID               string
 	ClientSecret           string
+	AllowedOrganizations   []string
 	RegisterUserIfNotFound bool
 }
 
@@ -49,6 +53,7 @@ type githubUserInfo struct {
 	displayName     string
 	name            string
 	profileImageURL string
+	organizations   []string
 }
 
 func (u *githubUserInfo) GetProviderName() string {
@@ -99,10 +104,77 @@ func (u *githubUserInfo) GetProfileImage() ([]byte, error) {
 }
 
 func (u *githubUserInfo) IsLoginAllowedUser() bool {
-	return true // TODO
+	if len(u.p.allowedOrganizations) > 0 {
+		for _, allowedOrg := range u.p.allowedOrganizations {
+			for _, org := range u.organizations {
+				if org == allowedOrg {
+					return true
+				}
+			}
+		}
+
+		return false
+	}
+
+	return true
+}
+
+func (u *githubUserInfo) fetchUserInfo() error {
+	c := u.p.oa2.Client(context.Background(), u.t)
+	resp, err := c.Get(githubProfileURL)
+	if err != nil {
+		return fmt.Errorf(githubAPIRequestErrorFormat, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf(githubAPIRequestErrorFormat, fmt.Errorf("invalid status code: %d", resp.StatusCode))
+	}
+
+	var user struct {
+		ID      int    `json:"id"`
+		Name    string `json:"name"`
+		Login   string `json:"login"`
+		Picture string `json:"avatar_url"`
+	}
+	if err := json.ConfigFastest.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return fmt.Errorf(githubAPIRequestErrorFormat, err)
+	}
+	u.id = user.ID
+	u.name = user.Login
+	u.displayName = user.Name
+	u.profileImageURL = user.Picture
+	return nil
+}
+
+func (u *githubUserInfo) fetchOrganizations() error {
+	c := u.p.oa2.Client(context.Background(), u.t)
+	resp, err := c.Get(githubUserOrgsURL)
+	if err != nil {
+		return fmt.Errorf(githubAPIRequestErrorFormat, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf(githubAPIRequestErrorFormat, fmt.Errorf("invalid status code: %d", resp.StatusCode))
+	}
+
+	var orgs []struct {
+		Login string `json:"login"`
+	}
+	if err := json.ConfigFastest.NewDecoder(resp.Body).Decode(&orgs); err != nil {
+		return fmt.Errorf(githubAPIRequestErrorFormat, err)
+	}
+	u.organizations = make([]string, len(orgs))
+	for i, org := range orgs {
+		u.organizations[i] = org.Login
+	}
+	return nil
 }
 
 func NewGithubProvider(repo repository.Repository, fm file.Manager, logger *zap.Logger, sessStore session.Store, config GithubProviderConfig) *GithubProvider {
+	scopes := make([]string, 0)
+	if len(config.AllowedOrganizations) > 0 {
+		scopes = append(scopes, githubScopeReadOrg)
+	}
 	return &GithubProvider{
 		repo:      repo,
 		fm:        fm,
@@ -113,8 +185,9 @@ func NewGithubProvider(repo repository.Repository, fm file.Manager, logger *zap.
 			ClientID:     config.ClientID,
 			ClientSecret: config.ClientSecret,
 			Endpoint:     github.Endpoint,
-			Scopes:       []string{},
+			Scopes:       scopes,
 		},
+		allowedOrganizations: config.AllowedOrganizations,
 	}
 }
 
@@ -131,30 +204,16 @@ func (p *GithubProvider) FetchUserInfo(t *oauth2.Token) (UserInfo, error) {
 	ui.p = p
 	ui.t = t
 
-	c := p.oa2.Client(context.Background(), t)
-
-	resp, err := c.Get(githubProfileURL)
+	err := ui.fetchUserInfo()
 	if err != nil {
-		return nil, fmt.Errorf(githubAPIRequestErrorFormat, err)
+		return nil, err
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf(githubAPIRequestErrorFormat, fmt.Errorf("invalid status code: %d", resp.StatusCode))
+	if len(p.allowedOrganizations) > 0 {
+		err = ui.fetchOrganizations()
+		if err != nil {
+			return nil, err
+		}
 	}
-
-	var u struct {
-		ID      int    `json:"id"`
-		Name    string `json:"name"`
-		Login   string `json:"login"`
-		Picture string `json:"avatar_url"`
-	}
-	if err := json.ConfigFastest.NewDecoder(resp.Body).Decode(&u); err != nil {
-		return nil, fmt.Errorf(githubAPIRequestErrorFormat, err)
-	}
-	ui.id = u.ID
-	ui.name = u.Login
-	ui.displayName = u.Name
-	ui.profileImageURL = u.Picture
 
 	return &ui, nil
 }

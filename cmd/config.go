@@ -186,9 +186,10 @@ type Config struct {
 	// ExternalAuth 外部認証設定
 	ExternalAuth struct {
 		GitHub struct {
-			ClientID     string `mapstructure:"clientId" yaml:"clientId"`
-			ClientSecret string `mapstructure:"clientSecret" yaml:"clientSecret"`
-			AllowSignUp  bool   `mapstructure:"allowSignUp" yaml:"allowSignUp"`
+			ClientID             string   `mapstructure:"clientId" yaml:"clientId"`
+			ClientSecret         string   `mapstructure:"clientSecret" yaml:"clientSecret"`
+			AllowSignUp          bool     `mapstructure:"allowSignUp" yaml:"allowSignUp"`
+			AllowedOrganizations []string `mapstructure:"allowedOrganizations" yaml:"allowedOrganizations"`
 		} `mapstructure:"github" yaml:"github"`
 		Google struct {
 			ClientID     string `mapstructure:"clientId" yaml:"clientId"`
@@ -255,6 +256,7 @@ func init() {
 	viper.SetDefault("externalAuth.github.clientId", "")
 	viper.SetDefault("externalAuth.github.clientSecret", "")
 	viper.SetDefault("externalAuth.github.allowSignUp", false)
+	viper.SetDefault("externalAuth.github.allowedOrganizations", []string{})
 	viper.SetDefault("externalAuth.google.clientId", "")
 	viper.SetDefault("externalAuth.google.clientSecret", "")
 	viper.SetDefault("externalAuth.google.allowSignUp", false)
@@ -390,6 +392,7 @@ func provideAuthGithubProviderConfig(c *Config) auth.GithubProviderConfig {
 		ClientID:               c.ExternalAuth.GitHub.ClientID,
 		ClientSecret:           c.ExternalAuth.GitHub.ClientSecret,
 		RegisterUserIfNotFound: c.ExternalAuth.GitHub.AllowSignUp,
+		AllowedOrganizations:   c.ExternalAuth.GitHub.AllowedOrganizations,
 	}
 }
 
