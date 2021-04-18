@@ -25,7 +25,7 @@ Here are some tips for configuring traQ:
     - Otherwise, an admin or external app have to manually set accounts up via `POST /api/v3/users`.
 - For the maximum user experience, try to configure Elasticsearch, FCM, and Skyway to enable message search, notification, and Qall feature, respectively.
 
-The followings are example and minimal configurations.
+The followings are example configurations.
 
 <details>
 
@@ -150,7 +150,10 @@ jwt:
     private: /keys/jwt.pem
 
 # External authentication settings.
-# Set one or more of the following OAuth2 providers to allow signup and/or login via external accounts.
+# Configure one or more of the following OAuth2 providers to allow signup and/or login via external accounts.
+#
+# Set http(s)://{{ origin }}/api/auth/{{ extAuthName }}/callback to callback URL.
+# e.g. https://example.com/api/auth/github/callback for GitHub OAuth2 app.
 externalAuth:
   github:
     clientId: clientId
@@ -179,7 +182,7 @@ externalAuth:
 
 </details>
 
-Minimal configuration
+Minimal configuration (with ES, no FCM and Skyway)
 
 ```yaml
 origin: example.com
@@ -200,13 +203,6 @@ storage:
   type: local
   local:
     dir: /app/storage
-
-firebase:
-  serviceAccount:
-    file: /keys/firebase-service-account.json
-
-skyway:
-  secretKey: secretKey
 ```
 
 ## Building traQ_S-UI (optional)
@@ -223,7 +219,7 @@ If you have configured at least one of FCM and Skyway, you will need to build th
 
 Configure the rest of required components.
 
-The following is an example `docker-compose.yaml` file.
+The following is an example `docker-compose.yaml` file, configured for the above minimal `config.yml` file.
 
 ```yaml
 version: '3'
