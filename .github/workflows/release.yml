@@ -28,7 +28,7 @@ jobs:
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          username: traptitech
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         uses: docker/build-push-action@v2
@@ -39,8 +39,8 @@ jobs:
             TRAQ_VERSION=${{ env.TRAQ_VERSION }}
             TRAQ_REVISION=${{ env.TRAQ_REVISION }}
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
-            ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ghcr.io/traptitech/${{ env.IMAGE_NAME }}:latest
+            ghcr.io/traptitech/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
   goreleaser:
     runs-on: ubuntu-latest
     steps:
