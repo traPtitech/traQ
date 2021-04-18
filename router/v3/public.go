@@ -21,6 +21,7 @@ func (h *Handlers) GetVersion(c echo.Context) error {
 		"revision": h.Revision,
 		"flags": echo.Map{
 			"externalLogin": extLogins,
+			"signUpAllowed": h.Config.AllowSignUp,
 		},
 	})
 }

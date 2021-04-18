@@ -18,6 +18,8 @@ type Config struct {
 	AccessLogging bool
 	// Gzipped レスポンスをGzip圧縮するかどうか
 	Gzipped bool
+	// AllowSignUp ユーザーが自分自身で登録できるかどうか
+	AllowSignUp bool
 	// AccessTokenExp アクセストークンの有効時間(秒)
 	AccessTokenExp int
 	// IsRefreshEnabled リフレッシュトークンを発行するかどうか
@@ -28,7 +30,7 @@ type Config struct {
 	ExternalAuth ExternalAuthConfig
 }
 
-// ExternalAuth 外部認証設定
+// ExternalAuthConfig 外部認証設定
 type ExternalAuthConfig struct {
 	// GitHub GitHub OAuth2
 	GitHub auth.GithubProviderConfig
@@ -69,6 +71,7 @@ func provideV3Config(c *Config) v3.Config {
 		Version:                         c.Version,
 		Revision:                        c.Revision,
 		SkyWaySecretKey:                 c.SkyWaySecretKey,
+		AllowSignUp:                     c.AllowSignUp,
 		EnabledExternalAccountProviders: c.ExternalAuth.ValidProviders(),
 	}
 }

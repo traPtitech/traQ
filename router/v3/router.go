@@ -51,6 +51,9 @@ type Config struct {
 	// SkyWaySecretKey SkyWayクレデンシャル用シークレットキー
 	SkyWaySecretKey string
 
+	// AllowSignUp ユーザーが自分自身で登録できるかどうか
+	AllowSignUp bool
+
 	// EnabledExternalAccountLink リンク可能な外部認証アカウントのプロバイダ
 	EnabledExternalAccountProviders map[string]bool
 }
@@ -78,7 +81,9 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiUsers := api.Group("/users")
 		{
 			apiUsers.GET("", h.GetUsers, requires(permission.GetUser))
-			apiUsers.POST("", h.CreateUser, requires(permission.RegisterUser))
+			if !h.Config.AllowSignUp {
+				apiUsers.POST("", h.CreateUser, requires(permission.RegisterUser))
+			}
 			apiUsersUID := apiUsers.Group("/:userID", retrieve.UserID(false))
 			{
 				apiUsersUID.GET("", h.GetUser, requires(permission.GetUser))
@@ -360,6 +365,9 @@ func (h *Handlers) Setup(e *echo.Group) {
 	apiNoAuth := e.Group("/v3")
 	{
 		apiNoAuth.GET("/version", h.GetVersion)
+		if h.Config.AllowSignUp {
+			apiNoAuth.POST("/users", h.CreateUser, nologin)
+		}
 		apiNoAuth.POST("/login", h.Login, nologin)
 		apiNoAuth.POST("/logout", h.Logout)
 		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, retrieve.WebhookID())

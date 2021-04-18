@@ -39,6 +39,9 @@ type Config struct {
 	// Gzip レスポンスのGZIP圧縮を有効にするかどうか (default: true)
 	Gzip bool `mapstructure:"gzip" yaml:"gzip"`
 
+	// AllowSignUp ユーザーが自分自身で登録できるかどうか（default: false）
+	AllowSignUp bool `mapstructure:"allowSignUp" yaml:"allowSignUp"`
+
 	// AccessLog HTTPアクセスログ設定
 	AccessLog struct {
 		// Enabled 有効かどうか (default: true)
@@ -219,6 +222,7 @@ func init() {
 	viper.SetDefault("origin", "http://localhost:3000")
 	viper.SetDefault("port", 3000)
 	viper.SetDefault("gzip", true)
+	viper.SetDefault("allowSignUp", false)
 	viper.SetDefault("accessLog.enabled", true)
 	viper.SetDefault("imagemagick", "")
 	viper.SetDefault("imaging.maxPixels", 2560*1600)
@@ -442,6 +446,7 @@ func provideRouterConfig(c *Config) *router.Config {
 		Revision:         Revision,
 		AccessLogging:    c.AccessLog.Enabled,
 		Gzipped:          c.Gzip,
+		AllowSignUp:      c.AllowSignUp,
 		AccessTokenExp:   c.OAuth2.AccessTokenExpire,
 		IsRefreshEnabled: c.OAuth2.IsRefreshEnabled,
 		SkyWaySecretKey:  c.SkyWay.SecretKey,
