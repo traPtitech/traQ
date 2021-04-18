@@ -6602,12 +6602,16 @@ components:
           type: object
           required:
             - externalLogin
+            - signUpAllowed
           properties:
             externalLogin:
               type: array
               description: 有効な外部ログインプロバイダ
               items:
                 type: string
+            signUpAllowed:
+              type: boolean
+              description: ユーザーが自身で新規登録(POST /api/v3/users)可能か
       required:
         - revision
         - version
