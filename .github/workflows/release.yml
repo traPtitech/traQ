@@ -22,16 +22,16 @@ jobs:
         run: echo "TRAQ_VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
       - name: Set TRAQ_REVISION env
         run: echo "TRAQ_REVISION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-      - name: Login GitHub Registry
-        run: docker login docker.pkg.github.com -u traPtitech -p ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u traPtitech --password-stdin
       - name: Build Image
-        run: docker build --build-arg TRAQ_VERSION=${TRAQ_VERSION} --build-arg TRAQ_REVISION=${TRAQ_REVISION} -t docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG} .
+        run: docker build --build-arg TRAQ_VERSION=${TRAQ_VERSION} --build-arg TRAQ_REVISION=${TRAQ_REVISION} -t ghcr.io/traptitech/${IMAGE_NAME}:${IMAGE_TAG} .
       - name: Push image to GitHub Registry
-        run: docker push docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:${IMAGE_TAG}
+        run: docker push ghcr.io/traptitech/${IMAGE_NAME}:${IMAGE_TAG}
       - name: Push image to GitHub Registry (latest)
         run: |
-          docker tag docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:$IMAGE_TAG docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:latest
-          docker push docker.pkg.github.com/traptitech/traq/${IMAGE_NAME}:latest
+          docker tag ghcr.io/traptitech/${IMAGE_NAME}:$IMAGE_TAG ghcr.io/traptitech/${IMAGE_NAME}:latest
+          docker push ghcr.io/traptitech/${IMAGE_NAME}:latest
   goreleaser:
     runs-on: ubuntu-latest
     steps:
