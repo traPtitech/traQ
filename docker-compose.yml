@@ -51,7 +51,7 @@ services:
       - ./dev/data/mysql:/var/lib/mysql
 
   es:
-    image: docker.pkg.github.com/traptitech/es-builder/es-with-sudachi:7.10.2-2.1.1-SNAPSHOT
+    image: ghcr.io/traptitech/es-with-sudachi:7.10.2-2.1.1-SNAPSHOT
     restart: always
     environment:
       - discovery.type=single-node
