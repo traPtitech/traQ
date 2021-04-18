@@ -22,8 +22,8 @@ Here are some tips for configuring traQ:
     - Setting up some external OAuth2 providers (`externalAuth`) may help users signup using existing accounts.
 - If you want a private instance, set `allowSignUp` to `false`.
     - You can use `externalAuth.github.allowedOrganizations` to only allow signup of your GitHub organization members.
-    - Otherwise, an admin or external app have to manually set accounts up via `POST /api/v3/users`.
-- For the maximum user experience, try to configure Elasticsearch, FCM, and Skyway to enable message search, notification, and Qall feature, respectively.
+    - Otherwise, an admin or external app has to manually set accounts up via `POST /api/v3/users`.
+- For the maximum user experience, try to configure Elasticsearch, FCM, and Skyway to enable message search, notification, and Qall features, respectively.
 
 The followings are example configurations.
 
@@ -182,7 +182,7 @@ externalAuth:
 
 </details>
 
-Minimal configuration (with ES, no FCM and Skyway)
+Minimal configuration (with ES, no FCM, and no Skyway)
 
 ```yaml
 origin: example.com
@@ -207,9 +207,9 @@ storage:
 
 ## Building traQ_S-UI (optional)
 
-Once you have configured the traQ itself, build the [traQ_S-UI](https://github.com/traPtitech/traQ_S-UI) according to your needs.
+Once you have configured traQ, build [traQ_S-UI](https://github.com/traPtitech/traQ_S-UI) according to your needs.
 
-If you have configured at least one of FCM and Skyway, you will need to build the UI image yourself:
+If you have configured at least one of FCM and Skyway, you will need to build traQ_S-UI image:
 
 1. Clone [traQ_S-UI](https://github.com/traPtitech/traQ_S-UI).
 2. Edit [src/config.ts](https://github.com/traPtitech/traQ_S-UI/blob/master/src/config.ts).
@@ -217,7 +217,7 @@ If you have configured at least one of FCM and Skyway, you will need to build th
 
 ## Server settings
 
-Configure the rest of required components.
+Configure the rest of the required components.
 
 The following is an example `docker-compose.yaml` file, configured for the above minimal `config.yml` file.
 
