@@ -216,9 +216,8 @@ Once you have configured the traQ itself, build the [traQ_S-UI](https://github.c
 If you have configured at least one of FCM and Skyway, you will need to build the UI image yourself:
 
 1. Clone [traQ_S-UI](https://github.com/traPtitech/traQ_S-UI).
-2. Set up node (v14.16.1), and run `npm ci`.
-3. Edit [src/config.ts](https://github.com/traPtitech/traQ_S-UI/blob/master/src/config.ts).
-4. Build the image: `docker build -t ghcr.io/traptitech/traq-ui:latest .`
+2. Edit [src/config.ts](https://github.com/traPtitech/traQ_S-UI/blob/master/src/config.ts).
+3. Build the image: `docker build -t ghcr.io/traptitech/traq-ui:latest .`
 
 ## Server settings
 
