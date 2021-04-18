@@ -2,6 +2,7 @@
 .envrc
 /.idea/
 /vendor/
+/dev/data/
 /dist/
 
 traQ
