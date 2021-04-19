@@ -36,8 +36,7 @@ jobs:
             TRAQ_VERSION=${{ env.TRAQ_VERSION }}
             TRAQ_REVISION=${{ env.TRAQ_REVISION }}
           tags: |
-            ghcr.io/traptitech/${{ env.IMAGE_NAME }}:latest
-            ghcr.io/traptitech/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ghcr.io/traptitech/${{ env.IMAGE_NAME }}:master
   scan:
     name: Scan Image Vulnerability
     runs-on: ubuntu-latest
