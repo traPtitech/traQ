@@ -246,7 +246,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	} else {
 		targetFuncNotCited = ws.And(
 			ws.Or(
-				ws.TargetUserSets(notifiedUsers, viewers),
+				ws.TargetUserSets(markedUsers, viewers),
 				ws.TargetTimelineStreamingEnabled(),
 			),
 			ws.Not(ws.TargetUserSets(citedUsers)),
