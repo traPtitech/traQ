@@ -94,7 +94,6 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           file: ./coverage.txt
-          yml: ./codecov.yml
   tbls:
     name: TBLS
     runs-on: ubuntu-latest
