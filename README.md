@@ -4,7 +4,6 @@
 ![CI](https://github.com/traPtitech/traQ/workflows/CI/badge.svg)
 ![release](https://github.com/traPtitech/traQ/workflows/release/badge.svg)
 [![codecov](https://codecov.io/gh/traPtitech/traQ/branch/master/graph/badge.svg)](https://codecov.io/gh/traPtitech/traQ)
-[![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=traPtitech/traQ)](https://dependabot.com)
 [![swagger](https://img.shields.io/badge/swagger-docs-brightgreen)](https://apis.trap.jp/)
 
 - Backend: this repository
