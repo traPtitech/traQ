@@ -108,6 +108,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	markedUsers := set.UUID{}   // チャンネル未読管理ユーザー
 	noticeable := set.UUID{}    // noticeableな未読追加対象のユーザー
 	citedUsers := set.UUID{}    // メッセージで引用されたメッセージを投稿したユーザー
+	dmMembers := set.UUID{}     // isDMの場合 DMのメンバー
 
 	// メッセージボディ作成
 	if !isDM {
@@ -150,6 +151,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 		}
 		notifiedUsers.Add(users...)
 		markedUsers.Add(users...)
+		dmMembers.Add(users...)
 
 	default: // 通常チャンネルメッセージ
 		// チャンネル通知購読者取得
@@ -221,7 +223,8 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	for uid, swt := range ns.vm.GetChannelViewers(m.ChannelID) {
 		viewers.Add(uid)
 		if swt.State > viewer.StateNone {
-			markedUsers.Remove(uid) // 閲覧中ユーザーは未読管理から外す
+			markedUsers.Remove(uid)   // 閲覧中ユーザーは未読管理から外す
+			notifiedUsers.Remove(uid) // 閲覧中ユーザーは通知から外す
 		}
 	}
 
@@ -238,12 +241,14 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 	var targetFuncNotCited ws.TargetFunc
 	var targetFuncCited ws.TargetFunc
 	if isDM {
-		targetFuncNotCited = ws.TargetUserSets(notifiedUsers)
+		targetFuncNotCited = ws.TargetUserSets(dmMembers)
 		targetFuncCited = ws.TargetNone()
 	} else {
 		targetFuncNotCited = ws.And(
-			ws.Or(ws.TargetUserSets(notifiedUsers, viewers),
-				ws.TargetTimelineStreamingEnabled()),
+			ws.Or(
+				ws.TargetUserSets(markedUsers, viewers),
+				ws.TargetTimelineStreamingEnabled(),
+			),
 			ws.Not(ws.TargetUserSets(citedUsers)),
 		)
 		targetFuncCited = ws.TargetUserSets(citedUsers)

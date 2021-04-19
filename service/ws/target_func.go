@@ -54,6 +54,7 @@ func TargetTimelineStreamingEnabled() TargetFunc {
 	}
 }
 
+// TargetNone いずれのセッションにも送信しません
 func TargetNone() TargetFunc {
 	return func(s Session) bool {
 		return false
@@ -72,6 +73,7 @@ func Or(funcs ...TargetFunc) TargetFunc {
 	}
 }
 
+// And すべてのTargetFuncの条件に該当する対象に送信します
 func And(funcs ...TargetFunc) TargetFunc {
 	return func(s Session) bool {
 		for _, f := range funcs {
@@ -83,6 +85,7 @@ func And(funcs ...TargetFunc) TargetFunc {
 	}
 }
 
+// Not TargetFuncの条件に該当しない対象に送信します
 func Not(f TargetFunc) TargetFunc {
 	return func(s Session) bool {
 		return !f(s)
