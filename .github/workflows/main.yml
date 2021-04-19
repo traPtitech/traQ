@@ -55,10 +55,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: golangci-lint
-        uses: reviewdog/action-golangci-lint@v1
+        uses: golangci/golangci-lint-action@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          golangci_lint_flags: "--timeout 3m0s"
+          version: latest
+          args: "--timeout 3m0s"
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -94,7 +94,6 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           file: ./coverage.txt
-          yml: ./codecov.yml
   tbls:
     name: TBLS
     runs-on: ubuntu-latest
