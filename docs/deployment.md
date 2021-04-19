@@ -25,7 +25,7 @@ Here are some tips for configuring traQ:
     - Otherwise, an admin or external app has to manually set accounts up via `POST /api/v3/users`.
 - For the maximum user experience, try to configure Elasticsearch, FCM, and Skyway to enable message search, notification, and Qall features, respectively.
 
-The followings are example configurations.
+The following are example configurations.
 
 <details>
 
@@ -50,9 +50,9 @@ accessLog:
   # (optional) HTTP access logs in stdout. Default: true
   enabled: true
 
-# (optional) Imaging settings
+# (optional) Image resizing settings.
 imaging:
-  # (optional) Maximum number of pixels traQ is allowed to handle.
+  # (optional) Maximum number of pixels before resizing.
   # Higher number means more memory requirement.
   maxPixels: 4096000 # 2560x1600
   # (optional) Maximum imaging concurrency.
@@ -61,7 +61,7 @@ imaging:
 
 # MariaDB settings.
 # traQ is designed to work with ConoHa's managed DB service.
-# Use MariaDB 10.0.14 for maximum compatibility.
+# Use MariaDB 10.0.19 for maximum compatibility.
 mariadb:
   # The usual DB connection settings.
   host: db
@@ -215,11 +215,18 @@ If you have configured at least one of FCM and Skyway, you will need to build tr
 2. Edit [src/config.ts](https://github.com/traPtitech/traQ_S-UI/blob/master/src/config.ts).
 3. Build the image: `docker build -t ghcr.io/traptitech/traq-ui:latest .`
 
-## Server settings
+## Connecting the Components
 
-Configure the rest of the required components.
+Configure the rest of the required components, and connect them in `docker-compose`.
 
-The following is an example `docker-compose.yaml` file, configured for the above minimal `config.yml` file.
+- [Reverse proxy (Caddy)](https://hub.docker.com/_/caddy) which will accept HTTP(S) requests
+- traQ backend
+- [traQ frontend](https://github.com/traPtitech/traQ_S-UI)
+- [traQ Widget](https://github.com/traPtitech/traQ-Widget)
+- [MariaDB](https://hub.docker.com/_/mariadb)
+- (optional) [Elasticsearch with Sudachi plugin](https://github.com/orgs/traPtitech/packages/container/package/es-with-sudachi) (Sudachi is a Japanese analyzer)
+
+Below is an example `docker-compose.yaml` file, configured to work with the above "Minimal configuration" `config.yml`, plus `Caddyfile` and `es_jvm.options` below.
 
 ```yaml
 version: '3'
@@ -329,3 +336,5 @@ example.com {
 ```
 
 Run `docker-compose up -d`, and you're ready to go!
+
+<!-- TODO: For more on actually operating the service, refer to [wiki](https://github.com/traPtitech/traQ/wiki). -->
