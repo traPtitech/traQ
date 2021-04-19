@@ -33,7 +33,7 @@ The followings are example configurations.
 
 ```yaml
 # Server origin.
-origin: example.com
+origin: https://example.com
 # Server port.
 port: 3000
 
@@ -185,7 +185,7 @@ externalAuth:
 Minimal configuration (with ES, no FCM, and no Skyway)
 
 ```yaml
-origin: example.com
+origin: https://example.com
 port: 3000
 allowSignUp: true
 
@@ -231,18 +231,21 @@ services:
     restart: always
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - backend
       - frontend
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
 
   backend:
     image: ghcr.io/traptitech/traq:latest
     container_name: traq-backend
     restart: always
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     depends_on:
       - db
       - es
@@ -254,15 +257,15 @@ services:
     image: ghcr.io/traptitech/traq-ui:latest
     container_name: traq-frontend
     restart: always
-    ports:
-      - "8000:80"
+    expose:
+      - "80"
 
   widget:
     image: ghcr.io/traptitech/traq-widget:latest
     container_name: traq-widget
     restart: always
-    ports:
-      - "8001:80"
+    expose:
+      - "80"
 
   db:
     image: mariadb:10.0.19
@@ -271,6 +274,7 @@ services:
     environment:
       MYSQL_USER: traq
       MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: traq
     command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
     expose:
@@ -280,16 +284,19 @@ services:
 
   es:
     image: ghcr.io/traptitech/es-with-sudachi:7.10.2-2.1.1-SNAPSHOT
+    container_name: traq-es
     restart: always
     environment:
       - discovery.type=single-node
-    ports:
-      - "9200:9200"
+    expose:
+      - "9200"
     volumes:
       - ./es_jvm.options:/usr/share/elasticsearch/config/jvm.options.d/es_jvm.options
       - es:/usr/share/elasticsearch/data
 
 volumes:
+  caddy-data:
+  caddy-config:
   app-storage:
   db:
   es:
@@ -299,18 +306,18 @@ volumes:
 ```
 example.com {
     handle /api/* {
-        reverse_proxy localhost:3000
+        reverse_proxy backend:3000
     }
     handle /widget {
         uri strip_prefix /widget
-        reverse_proxy localhost:8001
+        reverse_proxy widget:80
     }
     handle /widget/* {
         uri strip_prefix /widget
-        reverse_proxy localhost:8001
+        reverse_proxy widget:80
     }
     handle {
-        reverse_proxy localhost:8000
+        reverse_proxy frontend:80
     }
 }
 ```
