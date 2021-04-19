@@ -1,5 +1,4 @@
 FROM golang:1.16-alpine AS build
-RUN apk add --update --no-cache git
 WORKDIR /go/src/github.com/traPtitech/traQ
 COPY ./go.* ./
 RUN go mod download
@@ -12,9 +11,8 @@ RUN CGO_ENABLED=0 go build -o /traQ -ldflags "-s -w -X main.version=$TRAQ_VERSIO
 FROM alpine:3.13.5
 WORKDIR /app
 
-RUN apk add --update ca-certificates imagemagick && \
-    update-ca-certificates && \
-    rm -rf /var/cache/apk/*
+RUN apk add --no-cache --update ca-certificates imagemagick && \
+    update-ca-certificates
 ENV DOCKERIZE_VERSION v0.6.1
 RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
     && tar -C /usr/local/bin -xzvf dockerize-alpine-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
@@ -26,4 +24,5 @@ ENV TRAQ_IMAGEMAGICK=/usr/bin/convert
 
 COPY --from=build /traQ ./
 
+HEALTHCHECK CMD ./traQ healthcheck || exit 1
 ENTRYPOINT ./traQ serve

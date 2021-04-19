@@ -221,7 +221,7 @@ func (r PostLinkExternalAccount) Validate() error {
 	)
 }
 
-// UnlinkExternalAccount POST /users/me/ex-accounts/link
+// LinkExternalAccount POST /users/me/ex-accounts/link
 func (h *Handlers) LinkExternalAccount(c echo.Context) error {
 	var req PostLinkExternalAccount
 	if err := bindAndValidate(c, &req); err != nil {

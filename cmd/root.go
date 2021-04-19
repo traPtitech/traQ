@@ -72,6 +72,7 @@ func init() {
 		fileCommand(),
 		stampCommand(),
 		versionCommand(),
+		healthcheckCommand(),
 	)
 
 	flags := rootCommand.PersistentFlags()
