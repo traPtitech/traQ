@@ -1,9 +1,10 @@
 # Deployment
 
 If you want to deploy your own instance of traQ, then follow this section.
-Docker is highly recommended for production usage.
 
 ## Requirements
+
+Docker is highly recommended for production usage.
 
 - Docker
 - docker-compose
