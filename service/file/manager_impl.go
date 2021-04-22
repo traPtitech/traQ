@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
+	"image"
 	"image/png"
 	"io"
 	"io/ioutil"
@@ -44,6 +45,46 @@ func InitFileManager(repo repository.FileRepository, fs storage.FileStorage, ip 
 		ip:   ip,
 		l:    l.Named("file_manager"),
 	}, nil
+}
+
+func (m *managerImpl) generateThumbnail(args *SaveArgs, fid uuid.UUID) error {
+	var thumbFunc func(src io.ReadSeeker) (image.Image, error)
+	switch args.MimeType {
+	case "image/jpeg", "image/png", "image/gif":
+		thumbFunc = m.ip.Thumbnail
+	case "audio/mpeg", "audio/mp3":
+		thumbFunc = m.ip.WaveformMp3
+	case "audio/wav", "audio/x-wav":
+		thumbFunc = m.ip.WaveformWav
+	default:
+		return nil
+	}
+
+	// 画像と波形生成のパスをまとめているが、分離する必要性が出てくるかもしれない
+	src, err := makeSureSeekable(args.Src)
+	if err != nil {
+		return err
+	}
+	args.Src = src
+
+	defer func() {
+		if err := recover(); err != nil {
+			m.l.Error("failed to generate thumbnail", zap.Any("error", err), zap.Stringer("fid", fid))
+		}
+	}()
+
+	thumb, err := thumbFunc(src)
+	if err == nil {
+		args.Thumbnail = thumb
+	} else {
+		m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", fid))
+	}
+
+	// ストリームを先頭に戻す
+	if _, err := src.Seek(0, io.SeekStart); err != nil {
+		return fmt.Errorf("failed to seek src stream: %w", err)
+	}
+	return nil
 }
 
 func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
@@ -82,26 +123,9 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 	}
 
 	if args.Thumbnail == nil && !args.SkipThumbnailGeneration {
-		// サムネイル画像生成
-		switch args.MimeType {
-		case "image/jpeg", "image/png", "image/gif":
-			src, err := makeSureSeekable(args.Src)
-			if err != nil {
-				return nil, err
-			}
-			args.Src = src
-
-			thumb, err := m.ip.Thumbnail(src)
-			if err == nil {
-				args.Thumbnail = thumb
-			} else {
-				m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
-			}
-
-			// ストリームを先頭に戻す
-			if _, err := src.Seek(0, io.SeekStart); err != nil {
-				return nil, fmt.Errorf("failed to seek src stream: %w", err)
-			}
+		err := m.generateThumbnail(&args, f.ID)
+		if err != nil {
+			return nil, err
 		}
 	}
 

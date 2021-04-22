@@ -13,15 +13,15 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/dyatlov/go-opengraph v0.0.0-20180429202543-816b6608b3c8
 	github.com/fatih/structs v1.1.0 // indirect
-	github.com/fogleman/gg v1.1.0 // indirect
 	github.com/gavv/httpexpect/v2 v2.2.0
+	github.com/go-audio/wav v1.0.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gofrs/uuid v3.4.0+incompatible
-	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/mock v1.5.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.4.2
+	github.com/hajimehoshi/go-mp3 v0.3.2
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
@@ -30,6 +30,7 @@ require (
 	github.com/labstack/echo/v4 v4.2.2
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lib/pq v1.2.0 // indirect
+	github.com/motoki317/go-waveform v0.0.0-20210422093623-cb692c9c9e5c
 	github.com/ncw/swift v1.0.53
 	github.com/olivere/elastic/v7 v7.0.24
 	github.com/pelletier/go-toml v1.6.0 // indirect

@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"github.com/disintegration/imaging"
+	"github.com/go-audio/wav"
+	"github.com/hajimehoshi/go-mp3"
+	"github.com/motoki317/go-waveform"
 	imaging2 "github.com/traPtitech/traQ/utils/imaging"
 	"golang.org/x/sync/semaphore"
 	"image"
@@ -77,4 +80,23 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 		}
 	}
 	return b, nil
+}
+
+func (p *defaultProcessor) WaveformMp3(src io.ReadSeeker) (image.Image, error) {
+	d, err := mp3.NewDecoder(src)
+	if err != nil {
+		return nil, err
+	}
+	return waveform.OutputWaveformImageMp3(d, &waveform.Option{
+		FileType:   "png",
+		Resolution: 256,
+	})
+}
+
+func (p *defaultProcessor) WaveformWav(src io.ReadSeeker) (image.Image, error) {
+	d := wav.NewDecoder(src)
+	return waveform.OutputWaveformImageWav(d, &waveform.Option{
+		FileType:   "png",
+		Resolution: 256,
+	})
 }

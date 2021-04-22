@@ -79,3 +79,33 @@ func (mr *MockProcessorMockRecorder) FitAnimationGIF(src, width, height interfac
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FitAnimationGIF", reflect.TypeOf((*MockProcessor)(nil).FitAnimationGIF), src, width, height)
 }
+
+// WaveformMp3 mocks base method
+func (m *MockProcessor) WaveformMp3(src io.ReadSeeker) (image.Image, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaveformMp3", src)
+	ret0, _ := ret[0].(image.Image)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WaveformMp3 indicates an expected call of WaveformMp3
+func (mr *MockProcessorMockRecorder) WaveformMp3(src interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaveformMp3", reflect.TypeOf((*MockProcessor)(nil).WaveformMp3), src)
+}
+
+// WaveformWav mocks base method
+func (m *MockProcessor) WaveformWav(src io.ReadSeeker) (image.Image, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaveformWav", src)
+	ret0, _ := ret[0].(image.Image)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WaveformWav indicates an expected call of WaveformWav
+func (mr *MockProcessorMockRecorder) WaveformWav(src interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaveformWav", reflect.TypeOf((*MockProcessor)(nil).WaveformWav), src)
+}
