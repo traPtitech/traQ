@@ -4436,6 +4436,8 @@ components:
               type: integer
               description: サムネイル高さ
               format: int32
+          required:
+            - mime
         channelId:
           type: string
           description: 属しているチャンネルUUID

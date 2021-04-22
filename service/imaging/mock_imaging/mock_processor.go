@@ -81,10 +81,10 @@ func (mr *MockProcessorMockRecorder) FitAnimationGIF(src, width, height interfac
 }
 
 // WaveformMp3 mocks base method
-func (m *MockProcessor) WaveformMp3(src io.ReadSeeker) (image.Image, error) {
+func (m *MockProcessor) WaveformMp3(src io.ReadSeeker) (io.Reader, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WaveformMp3", src)
-	ret0, _ := ret[0].(image.Image)
+	ret0, _ := ret[0].(io.Reader)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -96,10 +96,10 @@ func (mr *MockProcessorMockRecorder) WaveformMp3(src interface{}) *gomock.Call {
 }
 
 // WaveformWav mocks base method
-func (m *MockProcessor) WaveformWav(src io.ReadSeeker) (image.Image, error) {
+func (m *MockProcessor) WaveformWav(src io.ReadSeeker) (io.Reader, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WaveformWav", src)
-	ret0, _ := ret[0].(image.Image)
+	ret0, _ := ret[0].(io.Reader)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

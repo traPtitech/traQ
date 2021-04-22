@@ -439,8 +439,8 @@ github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd/go.mod h1:6dJ
 github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
 github.com/modern-go/reflect2 v1.0.1 h1:9f412s+6RmYXLWZSEzVVgPGK7C2PphHj5RJrvfx9AWI=
 github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
-github.com/motoki317/go-waveform v0.0.0-20210422093623-cb692c9c9e5c h1:gUIsyOd0eB3tnupLl5/bNtwbkvcWwtpoSRrVCAvg+88=
-github.com/motoki317/go-waveform v0.0.0-20210422093623-cb692c9c9e5c/go.mod h1:MNivLbQc3RclkkcYxnuOjSJTe0dWmPYn0tdQWzbABvo=
+github.com/motoki317/go-waveform v0.0.0-20210422132100-48966cc71596 h1:ouRh3Muyn3iKIrI8WprpCVgr1aKIqNKntSIDyDobkfo=
+github.com/motoki317/go-waveform v0.0.0-20210422132100-48966cc71596/go.mod h1:MNivLbQc3RclkkcYxnuOjSJTe0dWmPYn0tdQWzbABvo=
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/nats-io/jwt v0.3.0/go.mod h1:fRYCDE99xlTsqUzISS1Bi75UBJ6ljOJQOAAu5VglpSg=

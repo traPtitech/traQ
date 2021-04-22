@@ -12,7 +12,6 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
-	"image"
 	"image/png"
 	"io"
 	"io/ioutil"
@@ -47,44 +46,15 @@ func InitFileManager(repo repository.FileRepository, fs storage.FileStorage, ip 
 	}, nil
 }
 
-func (m *managerImpl) generateThumbnail(args *SaveArgs, fid uuid.UUID) error {
-	var thumbFunc func(src io.ReadSeeker) (image.Image, error)
-	switch args.MimeType {
+func (m *managerImpl) canGenerateThumbnail(mimeType string) bool {
+	switch mimeType {
 	case "image/jpeg", "image/png", "image/gif":
-		thumbFunc = m.ip.Thumbnail
-	case "audio/mpeg", "audio/mp3":
-		thumbFunc = m.ip.WaveformMp3
-	case "audio/wav", "audio/x-wav":
-		thumbFunc = m.ip.WaveformWav
+		return true
+	case "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav":
+		return true
 	default:
-		return nil
+		return false
 	}
-
-	// 画像と波形生成のパスをまとめているが、分離する必要性が出てくるかもしれない
-	src, err := makeSureSeekable(args.Src)
-	if err != nil {
-		return err
-	}
-	args.Src = src
-
-	defer func() {
-		if err := recover(); err != nil {
-			m.l.Error("failed to generate thumbnail", zap.Any("error", err), zap.Stringer("fid", fid))
-		}
-	}()
-
-	thumb, err := thumbFunc(src)
-	if err == nil {
-		args.Thumbnail = thumb
-	} else {
-		m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", fid))
-	}
-
-	// ストリームを先頭に戻す
-	if _, err := src.Seek(0, io.SeekStart); err != nil {
-		return fmt.Errorf("failed to seek src stream: %w", err)
-	}
-	return nil
 }
 
 func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
@@ -122,10 +92,48 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 		}
 	}
 
-	if args.Thumbnail == nil && !args.SkipThumbnailGeneration {
-		err := m.generateThumbnail(&args, f.ID)
+	// サムネイル画像生成
+	if args.Thumbnail == nil && !args.SkipThumbnailGeneration && m.canGenerateThumbnail(args.MimeType) {
+		src, err := makeSureSeekable(args.Src)
 		if err != nil {
 			return nil, err
+		}
+		args.Src = src
+
+		var r io.Reader
+		switch args.MimeType {
+		case "image/jpeg", "image/png", "image/gif":
+			thumb, err := m.ip.Thumbnail(src)
+			if err != nil {
+				m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
+			} else {
+				args.Thumbnail = thumb
+			}
+		case "audio/mpeg", "audio/mp3":
+			r, err = m.ip.WaveformMp3(src)
+			if err != nil {
+				m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
+			}
+		case "audio/wav", "audio/x-wav":
+			r, err = m.ip.WaveformWav(src)
+			if err != nil {
+				m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
+			}
+		}
+
+		if r != nil {
+			f.HasThumbnail = true
+			f.ThumbnailMime = optional.StringFrom("image/svg+xml")
+
+			key := f.ID.String() + "-thumb"
+			if err := m.fs.SaveByKey(r, key, key+".svg", "image/svg+xml", model.FileTypeThumbnail); err != nil {
+				return nil, fmt.Errorf("failed to save thumbnail to storage: %w", err)
+			}
+		}
+
+		// ストリームを先頭に戻す
+		if _, err := src.Seek(0, io.SeekStart); err != nil {
+			return nil, fmt.Errorf("failed to seek src stream: %w", err)
 		}
 	}
 
