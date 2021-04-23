@@ -82,21 +82,25 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 	return b, nil
 }
 
-func (p *defaultProcessor) WaveformMp3(src io.ReadSeeker) (io.Reader, error) {
+func (p *defaultProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (io.Reader, error) {
 	d, err := mp3.NewDecoder(src)
 	if err != nil {
 		return nil, err
 	}
 	return waveform.OutputWaveformImageMp3(d, &waveform.Option{
 		FileType:   "svg",
-		Resolution: 256,
+		Resolution: width / 5,
+		Width:      width,
+		Height:     height,
 	})
 }
 
-func (p *defaultProcessor) WaveformWav(src io.ReadSeeker) (io.Reader, error) {
+func (p *defaultProcessor) WaveformWav(src io.ReadSeeker, width, height int) (io.Reader, error) {
 	d := wav.NewDecoder(src)
 	return waveform.OutputWaveformImageWav(d, &waveform.Option{
 		FileType:   "svg",
-		Resolution: 256,
+		Resolution: width / 5,
+		Width:      width,
+		Height:     height,
 	})
 }

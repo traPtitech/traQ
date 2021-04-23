@@ -100,6 +100,11 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 		}
 		args.Src = src
 
+		const (
+			waveformWidth  = 1280
+			waveformHeight = 540
+		)
+
 		var r io.Reader
 		switch args.MimeType {
 		case "image/jpeg", "image/png", "image/gif":
@@ -110,12 +115,12 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 				args.Thumbnail = thumb
 			}
 		case "audio/mpeg", "audio/mp3":
-			r, err = m.ip.WaveformMp3(src)
+			r, err = m.ip.WaveformMp3(src, waveformWidth, waveformHeight)
 			if err != nil {
 				m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
 			}
 		case "audio/wav", "audio/x-wav":
-			r, err = m.ip.WaveformWav(src)
+			r, err = m.ip.WaveformWav(src, waveformWidth, waveformHeight)
 			if err != nil {
 				m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
 			}
@@ -124,6 +129,8 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 		if r != nil {
 			f.HasThumbnail = true
 			f.ThumbnailMime = optional.StringFrom("image/svg+xml")
+			f.ThumbnailWidth = waveformWidth
+			f.ThumbnailHeight = waveformHeight
 
 			key := f.ID.String() + "-thumb"
 			if err := m.fs.SaveByKey(r, key, key+".svg", "image/svg+xml", model.FileTypeThumbnail); err != nil {

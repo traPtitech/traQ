@@ -30,7 +30,7 @@ require (
 	github.com/labstack/echo/v4 v4.2.2
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lib/pq v1.2.0 // indirect
-	github.com/motoki317/go-waveform v0.0.0-20210422132100-48966cc71596
+	github.com/motoki317/go-waveform v0.0.0-20210423004352-3f861bba05bd
 	github.com/ncw/swift v1.0.53
 	github.com/olivere/elastic/v7 v7.0.24
 	github.com/pelletier/go-toml v1.6.0 // indirect
