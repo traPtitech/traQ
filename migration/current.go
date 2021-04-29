@@ -35,6 +35,7 @@ func Migrations() []*gormigrate.Migration {
 		v23(), // 複合インデックス追加
 		v24(), // ユーザー設定追加
 		v25(), // FileMetaにIsAnimatedImageを追加
+		v26(), // FileMetaからThumbnail情報を分離
 	}
 }
 
@@ -65,6 +66,7 @@ func AllTables() []interface{} {
 		&model.Device{},
 		&model.Pin{},
 		&model.FileACLEntry{},
+		&model.FileThumbnail{},
 		&model.FileMeta{},
 		&model.UsersPrivateChannel{},
 		&model.UserSubscribeChannel{},
@@ -80,10 +82,10 @@ func AllTables() []interface{} {
 		&model.UserProfile{},
 		&model.Channel{},
 		&model.ClipFolder{},
+		&model.UserSettings{},
 		&model.User{},
 		&model.SessionRecord{},
 		&model.OgpCache{},
-		&model.UserSettings{},
 	}
 }
 
@@ -135,6 +137,7 @@ func AllForeignKeys() [][5]string {
 		{"external_provider_users", "user_id", "users(id)", "CASCADE", "CASCADE"},
 		{"user_profiles", "home_channel", "channels(id)", "CASCADE", "CASCADE"},
 		{"user_settings", "user_id", "users(id)", "CASCADE", "CASCADE"},
+		{"files_thumbnails", "file_id", "files(id)", "CASCADE", "CASCADE"},
 	}
 }
 

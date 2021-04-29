@@ -82,7 +82,8 @@ func TestManagerImpl_Save(t *testing.T) {
 			assert.EqualValues(t, hash, result.GetMD5Hash())
 			assert.EqualValues(t, false, result.IsAnimatedImage())
 			assert.NotEmpty(t, result.GetCreatedAt())
-			assert.False(t, result.HasThumbnail())
+			hasThumb, _ := result.GetThumbnail(model.ThumbnailTypeImage)
+			assert.False(t, hasThumb)
 		}
 	})
 
@@ -140,10 +141,11 @@ func TestManagerImpl_Save(t *testing.T) {
 			assert.EqualValues(t, hash, result.GetMD5Hash())
 			assert.EqualValues(t, false, result.IsAnimatedImage())
 			assert.NotEmpty(t, result.GetCreatedAt())
-			assert.True(t, result.HasThumbnail())
-			assert.EqualValues(t, "image/png", result.GetThumbnailMIMEType())
-			assert.EqualValues(t, thumb.Bounds().Size().X, result.GetThumbnailWidth())
-			assert.EqualValues(t, thumb.Bounds().Size().Y, result.GetThumbnailHeight())
+			hasThumb, resultThumb := result.GetThumbnail(model.ThumbnailTypeImage)
+			assert.True(t, hasThumb)
+			assert.EqualValues(t, "image/png", resultThumb.Mime)
+			assert.EqualValues(t, thumb.Bounds().Size().X, resultThumb.Width)
+			assert.EqualValues(t, thumb.Bounds().Size().Y, resultThumb.Height)
 		}
 	})
 
@@ -204,10 +206,11 @@ func TestManagerImpl_Save(t *testing.T) {
 			assert.EqualValues(t, hash, result.GetMD5Hash())
 			assert.EqualValues(t, false, result.IsAnimatedImage())
 			assert.NotEmpty(t, result.GetCreatedAt())
-			assert.True(t, result.HasThumbnail())
-			assert.EqualValues(t, "image/png", result.GetThumbnailMIMEType())
-			assert.EqualValues(t, thumb.Bounds().Size().X, result.GetThumbnailWidth())
-			assert.EqualValues(t, thumb.Bounds().Size().Y, result.GetThumbnailHeight())
+			hasThumb, resultThumb := result.GetThumbnail(model.ThumbnailTypeImage)
+			assert.True(t, hasThumb)
+			assert.EqualValues(t, "image/png", resultThumb.Mime)
+			assert.EqualValues(t, thumb.Bounds().Size().X, resultThumb.Width)
+			assert.EqualValues(t, thumb.Bounds().Size().Y, resultThumb.Height)
 		}
 	})
 
@@ -268,10 +271,11 @@ func TestManagerImpl_Save(t *testing.T) {
 			assert.EqualValues(t, hash, result.GetMD5Hash())
 			assert.EqualValues(t, false, result.IsAnimatedImage())
 			assert.NotEmpty(t, result.GetCreatedAt())
-			assert.True(t, result.HasThumbnail())
-			assert.EqualValues(t, "image/png", result.GetThumbnailMIMEType())
-			assert.EqualValues(t, thumb.Bounds().Size().X, result.GetThumbnailWidth())
-			assert.EqualValues(t, thumb.Bounds().Size().Y, result.GetThumbnailHeight())
+			hasThumb, resultThumb := result.GetThumbnail(model.ThumbnailTypeImage)
+			assert.True(t, hasThumb)
+			assert.EqualValues(t, "image/png", resultThumb.Mime)
+			assert.EqualValues(t, thumb.Bounds().Size().X, resultThumb.Width)
+			assert.EqualValues(t, thumb.Bounds().Size().Y, resultThumb.Height)
 		}
 	})
 }
@@ -286,15 +290,18 @@ func TestManagerImpl_Get(t *testing.T) {
 		fm := initFM(t, repo, nil, nil)
 
 		meta := &model.FileMeta{
-			ID:           uuid.NewV3(uuid.Nil, "f1"),
-			Name:         "file",
-			Mime:         "text/plain",
-			Size:         10,
-			Hash:         "d41d8cd98f00b204e9800998ecf8427e",
-			Type:         model.FileTypeUserFile,
-			HasThumbnail: true,
-			CreatedAt:    time.Now(),
+			ID:        uuid.NewV3(uuid.Nil, "f1"),
+			Name:      "file",
+			Mime:      "text/plain",
+			Size:      10,
+			Hash:      "d41d8cd98f00b204e9800998ecf8427e",
+			Type:      model.FileTypeUserFile,
+			CreatedAt: time.Now(),
 		}
+		meta.Thumbnails = []model.FileThumbnail{{
+			FileID: meta.ID,
+			Type:   model.ThumbnailTypeImage,
+		}}
 
 		repo.EXPECT().
 			GetFileMeta(meta.ID).
@@ -352,15 +359,18 @@ func TestManagerImpl_List(t *testing.T) {
 		fm := initFM(t, repo, nil, nil)
 
 		meta := &model.FileMeta{
-			ID:           uuid.NewV3(uuid.Nil, "f1"),
-			Name:         "file",
-			Mime:         "text/plain",
-			Size:         10,
-			Hash:         "d41d8cd98f00b204e9800998ecf8427e",
-			Type:         model.FileTypeUserFile,
-			HasThumbnail: true,
-			CreatedAt:    time.Now(),
+			ID:        uuid.NewV3(uuid.Nil, "f1"),
+			Name:      "file",
+			Mime:      "text/plain",
+			Size:      10,
+			Hash:      "d41d8cd98f00b204e9800998ecf8427e",
+			Type:      model.FileTypeUserFile,
+			CreatedAt: time.Now(),
 		}
+		meta.Thumbnails = []model.FileThumbnail{{
+			FileID: meta.ID,
+			Type:   model.ThumbnailTypeImage,
+		}}
 
 		repo.EXPECT().
 			GetFileMetas(gomock.Any()).
@@ -405,16 +415,18 @@ func TestManagerImpl_Delete(t *testing.T) {
 		fm := initFM(t, repo, fs, nil)
 
 		meta := &model.FileMeta{
-			ID:           uuid.NewV3(uuid.Nil, "f1"),
-			Name:         "file",
-			Mime:         "text/plain",
-			Size:         10,
-			Hash:         "d41d8cd98f00b204e9800998ecf8427e",
-			Type:         model.FileTypeUserFile,
-			HasThumbnail: true,
-			CreatedAt:    time.Now(),
+			ID:        uuid.NewV3(uuid.Nil, "f1"),
+			Name:      "file",
+			Mime:      "text/plain",
+			Size:      10,
+			Hash:      "d41d8cd98f00b204e9800998ecf8427e",
+			Type:      model.FileTypeUserFile,
+			CreatedAt: time.Now(),
 		}
-
+		meta.Thumbnails = []model.FileThumbnail{{
+			FileID: meta.ID,
+			Type:   model.ThumbnailTypeImage,
+		}}
 		repo.EXPECT().
 			GetFileMeta(meta.ID).
 			Return(meta, nil).
@@ -428,7 +440,7 @@ func TestManagerImpl_Delete(t *testing.T) {
 			Return(nil).
 			Times(1)
 		fs.EXPECT().
-			DeleteByKey(meta.ID.String()+"-thumb", model.FileTypeThumbnail).
+			DeleteByKey(meta.ID.String()+"-"+model.ThumbnailTypeImage.Suffix(), model.FileTypeThumbnail).
 			Return(nil).
 			Times(1)
 
@@ -443,14 +455,13 @@ func TestManagerImpl_Delete(t *testing.T) {
 		fm := initFM(t, repo, fs, nil)
 
 		meta := &model.FileMeta{
-			ID:           uuid.NewV3(uuid.Nil, "f1"),
-			Name:         "file",
-			Mime:         "text/plain",
-			Size:         10,
-			Hash:         "d41d8cd98f00b204e9800998ecf8427e",
-			Type:         model.FileTypeUserFile,
-			HasThumbnail: false,
-			CreatedAt:    time.Now(),
+			ID:        uuid.NewV3(uuid.Nil, "f1"),
+			Name:      "file",
+			Mime:      "text/plain",
+			Size:      10,
+			Hash:      "d41d8cd98f00b204e9800998ecf8427e",
+			Type:      model.FileTypeUserFile,
+			CreatedAt: time.Now(),
 		}
 
 		repo.EXPECT().
@@ -507,14 +518,13 @@ func TestManagerImpl_Delete(t *testing.T) {
 		fm := initFM(t, repo, nil, nil)
 
 		meta := &model.FileMeta{
-			ID:           uuid.NewV3(uuid.Nil, "f1"),
-			Name:         "file",
-			Mime:         "text/plain",
-			Size:         10,
-			Hash:         "d41d8cd98f00b204e9800998ecf8427e",
-			Type:         model.FileTypeUserFile,
-			HasThumbnail: false,
-			CreatedAt:    time.Now(),
+			ID:        uuid.NewV3(uuid.Nil, "f1"),
+			Name:      "file",
+			Mime:      "text/plain",
+			Size:      10,
+			Hash:      "d41d8cd98f00b204e9800998ecf8427e",
+			Type:      model.FileTypeUserFile,
+			CreatedAt: time.Now(),
 		}
 
 		repo.EXPECT().

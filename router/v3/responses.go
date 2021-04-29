@@ -399,11 +399,11 @@ func formatFileInfo(meta model.File) *FileInfo {
 		ChannelID:       meta.GetUploadChannelID(),
 		UploaderID:      meta.GetCreatorID(),
 	}
-	if meta.HasThumbnail() {
+	if ok, t := meta.GetThumbnail(model.ThumbnailTypeImage); ok {
 		fi.Thumbnail = &FileInfoThumbnail{
-			Mime:   meta.GetThumbnailMIMEType(),
-			Width:  meta.GetThumbnailWidth(),
-			Height: meta.GetThumbnailHeight(),
+			Mime:   t.Mime,
+			Width:  t.Width,
+			Height: t.Height,
 		}
 	}
 	return fi

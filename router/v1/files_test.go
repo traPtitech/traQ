@@ -142,7 +142,8 @@ func TestHandlers_GetMetaDataByFileID(t *testing.T) {
 		obj.Value("mime").String().Equal(file.GetMIMEType())
 		obj.Value("size").Number().Equal(file.GetFileSize())
 		obj.Value("md5").String().Equal(file.GetMD5Hash())
-		obj.Value("hasThumb").Boolean().Equal(file.HasThumbnail())
+		hasThumb, _ := file.GetThumbnail(model.ThumbnailTypeImage)
+		obj.Value("hasThumb").Boolean().Equal(hasThumb)
 	})
 }
 

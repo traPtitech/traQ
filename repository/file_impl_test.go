@@ -66,6 +66,8 @@ func TestGormRepository_GetFileMeta(t *testing.T) {
 		meta, err := repo.GetFileMeta(f.ID)
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, f.ID, meta.ID)
+			assert.EqualValues(t, 1, len(meta.Thumbnails))
+			assert.EqualValues(t, f.ID, meta.Thumbnails[0].FileID)
 		}
 	})
 }

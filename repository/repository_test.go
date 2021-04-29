@@ -200,6 +200,14 @@ func mustMakeDummyFile(t *testing.T, repo Repository) *model.FileMeta {
 		Mime: "application/octet-stream",
 		Size: 10,
 		Hash: "d41d8cd98f00b204e9800998ecf8427e",
+		Thumbnails: []model.FileThumbnail{
+			{
+				Type:   model.ThumbnailTypeImage,
+				Mime:   "image/png",
+				Width:  100,
+				Height: 100,
+			},
+		},
 	}
 	err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
 		{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)},
