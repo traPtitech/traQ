@@ -66,7 +66,7 @@ func FileTypeFromString(s string) (FileType, error) {
 
 const (
 	// FileTypeUserFile ユーザーアップロードファイルタイプ
-	FileTypeUserFile FileType = iota
+	FileTypeUserFile FileType = iota + 1 // NOTE: 0にするとgormにゼロ値扱いされてinsertされない
 	// FileTypeIcon ユーザーアイコンファイルタイプ
 	FileTypeIcon
 	// FileTypeStamp スタンプファイルタイプ
@@ -135,7 +135,7 @@ func ThumbnailTypeFromString(s string) (ThumbnailType, error) {
 
 const (
 	// ThumbnailTypeImage 通常サムネイル画像
-	ThumbnailTypeImage ThumbnailType = iota + 1
+	ThumbnailTypeImage ThumbnailType = iota + 1 // NOTE: 0にするとgormにゼロ値扱いされてinsertされない
 	// ThumbnailTypeWaveform 波形画像
 	ThumbnailTypeWaveform
 )
