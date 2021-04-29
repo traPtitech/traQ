@@ -16,10 +16,6 @@ CREATE TABLE `files` (
   `creator_id` char(36) DEFAULT NULL,
   `hash` char(32) NOT NULL,
   `type` varchar(30) NOT NULL DEFAULT '',
-  `has_thumbnail` tinyint(1) NOT NULL DEFAULT '0',
-  `thumbnail_mime` text,
-  `thumbnail_width` int(11) NOT NULL DEFAULT '0',
-  `thumbnail_height` int(11) NOT NULL DEFAULT '0',
   `is_animated_image` tinyint(1) NOT NULL DEFAULT '0',
   `channel_id` char(36) DEFAULT NULL,
   `created_at` datetime(6) DEFAULT NULL,
@@ -38,17 +34,13 @@ CREATE TABLE `files` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [files_acl](files_acl.md) [stamps](stamps.md) [users](users.md) |  |  |
+| id | char(36) |  | false | [files_acl](files_acl.md) [files_thumbnails](files_thumbnails.md) [stamps](stamps.md) [users](users.md) |  |  |
 | name | text |  | false |  |  | ファイル名 |
 | mime | text |  | false |  |  | ファイルMIMEタイプ |
 | size | bigint(20) |  | false |  |  | ファイルサイズ(byte) |
 | creator_id | char(36) |  | true |  | [users](users.md) | ファイル作成者UUID |
 | hash | char(32) |  | false |  |  | MD5ハッシュ |
 | type | varchar(30) |  | false |  |  | ファイルタイプ |
-| has_thumbnail | tinyint(1) | 0 | false |  |  | サムネイル画像を持っているか |
-| thumbnail_mime | text |  | true |  |  | サムネイル画像MIMEタイプ |
-| thumbnail_width | int(11) | 0 | false |  |  | サムネイル画像幅 |
-| thumbnail_height | int(11) | 0 | false |  |  | サムネイル画像高さ |
 | is_animated_image | tinyint(1) | 0 | false |  |  | アニメーション画像かどうか |
 | channel_id | char(36) |  | true |  | [channels](channels.md) | 所属チャンネルUUID |
 | created_at | datetime(6) |  | true |  |  |  |
