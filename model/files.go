@@ -151,6 +151,7 @@ type File interface {
 	IsAnimatedImage() bool
 	GetUploadChannelID() optional.UUID
 	GetCreatedAt() time.Time
+	GetThumbnails() []FileThumbnail
 	GetThumbnail(thumbnailType ThumbnailType) (bool, FileThumbnail)
 
 	Open() (ioext.ReadSeekCloser, error)

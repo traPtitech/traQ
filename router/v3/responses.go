@@ -368,23 +368,32 @@ func formatUserGroups(gs []*model.UserGroup) []*UserGroup {
 	return arr
 }
 
+// FileInfoOldThumbnail deprecated
+type FileInfoOldThumbnail struct {
+	Mime   string `json:"mime"`
+	Width  int    `json:"width,omitempty"`
+	Height int    `json:"height,omitempty"`
+}
+
 type FileInfoThumbnail struct {
+	Type   string `json:"type"`
 	Mime   string `json:"mime"`
 	Width  int    `json:"width,omitempty"`
 	Height int    `json:"height,omitempty"`
 }
 
 type FileInfo struct {
-	ID              uuid.UUID          `json:"id"`
-	Name            string             `json:"name"`
-	Mime            string             `json:"mime"`
-	Size            int64              `json:"size"`
-	MD5             string             `json:"md5"`
-	IsAnimatedImage bool               `json:"isAnimatedImage"`
-	CreatedAt       time.Time          `json:"createdAt"`
-	Thumbnail       *FileInfoThumbnail `json:"thumbnail"`
-	ChannelID       optional.UUID      `json:"channelId"`
-	UploaderID      optional.UUID      `json:"uploaderId"`
+	ID              uuid.UUID             `json:"id"`
+	Name            string                `json:"name"`
+	Mime            string                `json:"mime"`
+	Size            int64                 `json:"size"`
+	MD5             string                `json:"md5"`
+	IsAnimatedImage bool                  `json:"isAnimatedImage"`
+	CreatedAt       time.Time             `json:"createdAt"`
+	Thumbnail       *FileInfoOldThumbnail `json:"thumbnail"` // deprecated
+	ChannelID       optional.UUID         `json:"channelId"`
+	UploaderID      optional.UUID         `json:"uploaderId"`
+	Thumbnails      []FileInfoThumbnail   `json:"thumbnails"`
 }
 
 func formatFileInfo(meta model.File) *FileInfo {
@@ -400,7 +409,17 @@ func formatFileInfo(meta model.File) *FileInfo {
 		UploaderID:      meta.GetCreatorID(),
 	}
 	if ok, t := meta.GetThumbnail(model.ThumbnailTypeImage); ok {
-		fi.Thumbnail = &FileInfoThumbnail{
+		fi.Thumbnail = &FileInfoOldThumbnail{
+			Mime:   t.Mime,
+			Width:  t.Width,
+			Height: t.Height,
+		}
+	}
+	ts := meta.GetThumbnails()
+	fi.Thumbnails = make([]FileInfoThumbnail, len(ts))
+	for i, t := range ts {
+		fi.Thumbnails[i] = FileInfoThumbnail{
+			Type:   t.Type.String(),
 			Mime:   t.Mime,
 			Width:  t.Width,
 			Height: t.Height,

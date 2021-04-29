@@ -523,6 +523,11 @@ paths:
   '/files/{fileId}/thumbnail':
     parameters:
       - $ref: '#/components/parameters/fileIdInPath'
+      - schema:
+          $ref: '#/components/schemas/ThumbnailType'
+        in: query
+        name: type
+        description: 取得するサムネイルのタイプ
     get:
       summary: サムネイル画像を取得
       tags:
@@ -4389,6 +4394,17 @@ components:
       required:
         - file
         - channelId
+    ThumbnailType:
+      title: ThumbnailType
+      type: string
+      default: image
+      description: |
+        サムネイル画像のタイプ
+        image: アップロード画像に対して生成される通常のサムネイル
+        waveform: アップロード音声ファイルに対して生成される波形画像
+      enum:
+        - image
+        - waveform
     FileInfo:
       title: FileInfo
       type: object
@@ -4418,21 +4434,47 @@ components:
           type: string
           format: date-time
           description: アップロード日時
+        thumbnails:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                $ref: '#/components/schemas/ThumbnailType'
+              mime:
+                type: string
+                description: MIMEタイプ
+              width:
+                type: integer
+                format: int32
+                description: サムネイル幅
+              height:
+                type: integer
+                format: int32
+                description: サムネイル高さ
+            required:
+              - type
+              - mime
         thumbnail:
+          deprecated: true
           type: object
           description: |-
             サムネイル情報
             サムネイルが存在しない場合はnullになります
+            Deprecated: thumbnailsを参照してください
           nullable: true
           properties:
             mime:
+              deprecated: true
               type: string
               description: MIMEタイプ
             width:
+              deprecated: true
               type: integer
               format: int32
               description: サムネイル幅
             height:
+              deprecated: true
               type: integer
               description: サムネイル高さ
               format: int32
@@ -4459,6 +4501,7 @@ components:
         - thumbnail
         - channelId
         - uploaderId
+        - thumbnails
     PostMessageStampRequest:
       title: PostMessageStampRequest
       type: object

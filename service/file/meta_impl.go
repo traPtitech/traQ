@@ -55,6 +55,10 @@ func (f *fileMetaImpl) GetCreatedAt() time.Time {
 	return f.meta.CreatedAt
 }
 
+func (f *fileMetaImpl) GetThumbnails() []model.FileThumbnail {
+	return f.meta.Thumbnails
+}
+
 func (f *fileMetaImpl) GetThumbnail(thumbnailType model.ThumbnailType) (bool, model.FileThumbnail) {
 	for _, t := range f.meta.Thumbnails {
 		if t.Type == thumbnailType {
