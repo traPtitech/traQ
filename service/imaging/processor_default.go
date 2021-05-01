@@ -88,7 +88,6 @@ func (p *defaultProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (io
 		return nil, err
 	}
 	return waveform.OutputWaveformImageMp3(d, &waveform.Option{
-		FileType:   "svg",
 		Resolution: width / 5,
 		Width:      width,
 		Height:     height,
@@ -98,7 +97,6 @@ func (p *defaultProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (io
 func (p *defaultProcessor) WaveformWav(src io.ReadSeeker, width, height int) (io.Reader, error) {
 	d := wav.NewDecoder(src)
 	return waveform.OutputWaveformImageWav(d, &waveform.Option{
-		FileType:   "svg",
 		Resolution: width / 5,
 		Width:      width,
 		Height:     height,
