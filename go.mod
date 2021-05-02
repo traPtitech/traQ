@@ -15,6 +15,7 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fogleman/gg v1.3.0 // indirect
 	github.com/gavv/httpexpect/v2 v2.2.0
+	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.0.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.6.0
@@ -35,6 +36,7 @@ require (
 	github.com/motoki317/go-waveform v0.0.0-20210502092521-26e42e93bdb6
 	github.com/ncw/swift v1.0.53
 	github.com/olivere/elastic/v7 v7.0.24
+	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/prometheus/client_golang v1.10.0
