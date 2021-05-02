@@ -338,15 +338,16 @@ type fileResponse struct {
 }
 
 func formatFile(f model.File) *fileResponse {
+	hasThumb, t := f.GetThumbnail(model.ThumbnailTypeImage)
 	return &fileResponse{
 		FileID:      f.GetID(),
 		Name:        f.GetFileName(),
 		Mime:        f.GetMIMEType(),
 		Size:        f.GetFileSize(),
 		MD5:         f.GetMD5Hash(),
-		HasThumb:    f.HasThumbnail(),
-		ThumbWidth:  f.GetThumbnailWidth(),
-		ThumbHeight: f.GetThumbnailHeight(),
+		HasThumb:    hasThumb,
+		ThumbWidth:  t.Width,
+		ThumbHeight: t.Height,
 		Datetime:    f.GetCreatedAt(),
 	}
 }

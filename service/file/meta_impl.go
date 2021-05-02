@@ -43,22 +43,6 @@ func (f *fileMetaImpl) GetMD5Hash() string {
 	return f.meta.Hash
 }
 
-func (f *fileMetaImpl) HasThumbnail() bool {
-	return f.meta.HasThumbnail
-}
-
-func (f *fileMetaImpl) GetThumbnailMIMEType() string {
-	return f.meta.ThumbnailMime.String
-}
-
-func (f *fileMetaImpl) GetThumbnailWidth() int {
-	return f.meta.ThumbnailWidth
-}
-
-func (f *fileMetaImpl) GetThumbnailHeight() int {
-	return f.meta.ThumbnailHeight
-}
-
 func (f *fileMetaImpl) IsAnimatedImage() bool {
 	return f.meta.IsAnimatedImage
 }
@@ -71,15 +55,28 @@ func (f *fileMetaImpl) GetCreatedAt() time.Time {
 	return f.meta.CreatedAt
 }
 
+func (f *fileMetaImpl) GetThumbnails() []model.FileThumbnail {
+	return f.meta.Thumbnails
+}
+
+func (f *fileMetaImpl) GetThumbnail(thumbnailType model.ThumbnailType) (bool, model.FileThumbnail) {
+	for _, t := range f.meta.Thumbnails {
+		if t.Type == thumbnailType {
+			return true, t
+		}
+	}
+	return false, model.FileThumbnail{}
+}
+
 func (f *fileMetaImpl) Open() (ioext.ReadSeekCloser, error) {
 	return f.fs.OpenFileByKey(f.GetID().String(), f.GetFileType())
 }
 
-func (f *fileMetaImpl) OpenThumbnail() (ioext.ReadSeekCloser, error) {
-	if !f.HasThumbnail() {
+func (f *fileMetaImpl) OpenThumbnail(thumbnailType model.ThumbnailType) (ioext.ReadSeekCloser, error) {
+	if ok, _ := f.GetThumbnail(thumbnailType); !ok {
 		return nil, fmt.Errorf("no thumbnail image")
 	}
-	return f.fs.OpenFileByKey(f.GetID().String()+"-thumb", model.FileTypeThumbnail)
+	return f.fs.OpenFileByKey(f.GetID().String()+"-"+thumbnailType.Suffix(), model.FileTypeThumbnail)
 }
 
 func (f *fileMetaImpl) GetAlternativeURL() string {

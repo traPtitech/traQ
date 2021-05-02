@@ -1,6 +1,7 @@
 package v3
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofrs/uuid"
@@ -14,10 +15,12 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/channel"
+	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/random"
+	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"image"
 	"net/http"
@@ -75,7 +78,15 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 		env.Repository = repo
+
 		env.CM, _ = channel.InitChannelManager(repo, zap.NewNop())
+		env.IP = imaging.NewProcessor(imaging.Config{
+			MaxPixels:        1000 * 1000,
+			Concurrency:      1,
+			ThumbnailMaxSize: image.Pt(360, 480),
+			ImageMagickPath:  "",
+		})
+		env.FM, _ = file.InitFileManager(repo, storage.NewInMemoryFileStorage(), env.IP, zap.NewNop())
 
 		// テスト用サーバー作成
 		e := echo.New()
@@ -94,13 +105,9 @@ func TestMain(m *testing.M) {
 			Hub:            env.Hub,
 			SessStore:      env.SessStore,
 			ChannelManager: env.CM,
+			FileManager:    env.FM,
 			Logger:         zap.NewNop(),
-			Imaging: imaging.NewProcessor(imaging.Config{
-				MaxPixels:        1000 * 1000,
-				Concurrency:      1,
-				ThumbnailMaxSize: image.Pt(360, 480),
-				ImageMagickPath:  "",
-			}),
+			Imaging:        env.IP,
 			Config: Config{
 				Version:  "version",
 				Revision: "revision",
@@ -129,6 +136,8 @@ type Env struct {
 	DB         *gorm.DB
 	Repository repository.Repository
 	CM         channel.Manager
+	FM         file.Manager
+	IP         imaging.Processor
 	Hub        *hub.Hub
 	SessStore  session.Store
 }
@@ -180,6 +189,20 @@ func (env *Env) CreateUser(t *testing.T, userName string) model.UserInfo {
 	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "testtesttesttest", Role: role.User, IconFileID: uuid.Must(uuid.NewV4())})
 	require.NoError(t, err)
 	return u
+}
+
+// MakeFile ファイルを必ず作成します
+func (env *Env) MakeFile(t *testing.T) model.File {
+	t.Helper()
+	buf := bytes.NewBufferString("test message")
+	f, err := env.FM.Save(file.SaveArgs{
+		FileName: "test.txt",
+		FileSize: int64(buf.Len()),
+		FileType: model.FileTypeUserFile,
+		Src:      buf,
+	})
+	require.NoError(t, err)
+	return f
 }
 
 func getEnvOrDefault(env string, def string) string {

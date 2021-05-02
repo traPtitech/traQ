@@ -82,7 +82,7 @@ func TestManagerImpl_Save(t *testing.T) {
 			assert.EqualValues(t, hash, result.GetMD5Hash())
 			assert.EqualValues(t, false, result.IsAnimatedImage())
 			assert.NotEmpty(t, result.GetCreatedAt())
-			assert.False(t, result.HasThumbnail())
+			assert.EqualValues(t, 0, len(result.GetThumbnails()))
 		}
 	})
 
@@ -140,10 +140,12 @@ func TestManagerImpl_Save(t *testing.T) {
 			assert.EqualValues(t, hash, result.GetMD5Hash())
 			assert.EqualValues(t, false, result.IsAnimatedImage())
 			assert.NotEmpty(t, result.GetCreatedAt())
-			assert.True(t, result.HasThumbnail())
-			assert.EqualValues(t, "image/png", result.GetThumbnailMIMEType())
-			assert.EqualValues(t, thumb.Bounds().Size().X, result.GetThumbnailWidth())
-			assert.EqualValues(t, thumb.Bounds().Size().Y, result.GetThumbnailHeight())
+			thumbs := result.GetThumbnails()
+			assert.EqualValues(t, 1, len(thumbs))
+			assert.EqualValues(t, model.ThumbnailTypeImage, thumbs[0].Type)
+			assert.EqualValues(t, "image/png", thumbs[0].Mime)
+			assert.EqualValues(t, thumb.Bounds().Size().X, thumbs[0].Width)
+			assert.EqualValues(t, thumb.Bounds().Size().Y, thumbs[0].Height)
 		}
 	})
 
@@ -204,10 +206,12 @@ func TestManagerImpl_Save(t *testing.T) {
 			assert.EqualValues(t, hash, result.GetMD5Hash())
 			assert.EqualValues(t, false, result.IsAnimatedImage())
 			assert.NotEmpty(t, result.GetCreatedAt())
-			assert.True(t, result.HasThumbnail())
-			assert.EqualValues(t, "image/png", result.GetThumbnailMIMEType())
-			assert.EqualValues(t, thumb.Bounds().Size().X, result.GetThumbnailWidth())
-			assert.EqualValues(t, thumb.Bounds().Size().Y, result.GetThumbnailHeight())
+			thumbs := result.GetThumbnails()
+			assert.EqualValues(t, 1, len(thumbs))
+			assert.EqualValues(t, model.ThumbnailTypeImage, thumbs[0].Type)
+			assert.EqualValues(t, "image/png", thumbs[0].Mime)
+			assert.EqualValues(t, thumb.Bounds().Size().X, thumbs[0].Width)
+			assert.EqualValues(t, thumb.Bounds().Size().Y, thumbs[0].Height)
 		}
 	})
 
@@ -268,10 +272,140 @@ func TestManagerImpl_Save(t *testing.T) {
 			assert.EqualValues(t, hash, result.GetMD5Hash())
 			assert.EqualValues(t, false, result.IsAnimatedImage())
 			assert.NotEmpty(t, result.GetCreatedAt())
-			assert.True(t, result.HasThumbnail())
-			assert.EqualValues(t, "image/png", result.GetThumbnailMIMEType())
-			assert.EqualValues(t, thumb.Bounds().Size().X, result.GetThumbnailWidth())
-			assert.EqualValues(t, thumb.Bounds().Size().Y, result.GetThumbnailHeight())
+			thumbs := result.GetThumbnails()
+			assert.EqualValues(t, 1, len(thumbs))
+			assert.EqualValues(t, model.ThumbnailTypeImage, thumbs[0].Type)
+			assert.EqualValues(t, "image/png", thumbs[0].Mime)
+			assert.EqualValues(t, thumb.Bounds().Size().X, thumbs[0].Width)
+			assert.EqualValues(t, thumb.Bounds().Size().Y, thumbs[0].Height)
+		}
+	})
+
+	t.Run("audio with generating waveform (mp3, io.ReadSeeker)", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockFileRepository(ctrl)
+		fs := mock_storage.NewMockFileStorage(ctrl)
+		ip := mock_imaging.NewMockProcessor(ctrl)
+		fm := initFM(t, repo, fs, ip)
+
+		data := []byte("test text file")
+		hash := "7e6d5d7ae4965bfecc6d818f76eb832b"
+		args := SaveArgs{
+			FileName:  "dummy.mp3",
+			FileSize:  int64(len(data)),
+			MimeType:  "audio/mp3",
+			FileType:  model.FileTypeUserFile,
+			ChannelID: optional.UUIDFrom(uuid.NewV3(uuid.Nil, "c")),
+			Src:       bytes.NewReader(data),
+		}
+		waveform := bytes.NewBufferString("dummy svg file")
+
+		fs.EXPECT().
+			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
+			Do(func(src io.Reader, key, name, contentType string, fileType model.FileType) {
+				_, _ = io.Copy(ioutil.Discard, src)
+			}).
+			Return(nil).
+			Times(1)
+		fs.EXPECT().
+			SaveByKey(gomock.Any(), gomock.Any(), gomock.Any(), "image/svg+xml", model.FileTypeThumbnail).
+			DoAndReturn(func(src io.Reader, key, name, contentType string, fileType model.FileType) error {
+				_, _ = io.Copy(ioutil.Discard, src)
+				return nil
+			}).
+			Times(1)
+		repo.EXPECT().
+			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)}}).
+			Do(func(meta *model.FileMeta, acl []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
+			Return(nil).
+			Times(1)
+		ip.EXPECT().
+			WaveformMp3(gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(src io.ReadSeeker, width, height int) { _, _ = io.Copy(ioutil.Discard, src) }).
+			Return(waveform, nil).
+			Times(1)
+
+		result, err := fm.Save(args)
+		if assert.NoError(t, err) {
+			assert.NotEmpty(t, result.GetID())
+			assert.EqualValues(t, args.FileName, result.GetFileName())
+			assert.EqualValues(t, args.FileSize, result.GetFileSize())
+			assert.EqualValues(t, args.MimeType, result.GetMIMEType())
+			assert.EqualValues(t, args.FileType, result.GetFileType())
+			assert.EqualValues(t, args.ChannelID, result.GetUploadChannelID())
+			assert.EqualValues(t, args.CreatorID, result.GetCreatorID())
+			assert.EqualValues(t, hash, result.GetMD5Hash())
+			assert.EqualValues(t, false, result.IsAnimatedImage())
+			assert.NotEmpty(t, result.GetCreatedAt())
+			thumbs := result.GetThumbnails()
+			assert.EqualValues(t, 1, len(thumbs))
+			assert.EqualValues(t, model.ThumbnailTypeWaveform, thumbs[0].Type)
+			assert.EqualValues(t, "image/svg+xml", thumbs[0].Mime)
+		}
+	})
+
+	t.Run("audio with generating waveform (wav, io.ReadSeeker)", func(t *testing.T) {
+		t.Parallel()
+		ctrl := gomock.NewController(t)
+		repo := mock_repository.NewMockFileRepository(ctrl)
+		fs := mock_storage.NewMockFileStorage(ctrl)
+		ip := mock_imaging.NewMockProcessor(ctrl)
+		fm := initFM(t, repo, fs, ip)
+
+		data := []byte("test text file")
+		hash := "7e6d5d7ae4965bfecc6d818f76eb832b"
+		args := SaveArgs{
+			FileName:  "dummy.wav",
+			FileSize:  int64(len(data)),
+			MimeType:  "audio/wav",
+			FileType:  model.FileTypeUserFile,
+			ChannelID: optional.UUIDFrom(uuid.NewV3(uuid.Nil, "c")),
+			Src:       bytes.NewReader(data),
+		}
+		waveform := bytes.NewBufferString("dummy svg file")
+
+		fs.EXPECT().
+			SaveByKey(gomock.Any(), gomock.Any(), args.FileName, args.MimeType, args.FileType).
+			Do(func(src io.Reader, key, name, contentType string, fileType model.FileType) {
+				_, _ = io.Copy(ioutil.Discard, src)
+			}).
+			Return(nil).
+			Times(1)
+		fs.EXPECT().
+			SaveByKey(gomock.Any(), gomock.Any(), gomock.Any(), "image/svg+xml", model.FileTypeThumbnail).
+			DoAndReturn(func(src io.Reader, key, name, contentType string, fileType model.FileType) error {
+				_, _ = io.Copy(ioutil.Discard, src)
+				return nil
+			}).
+			Times(1)
+		repo.EXPECT().
+			SaveFileMeta(gomock.Any(), []*model.FileACLEntry{{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)}}).
+			Do(func(meta *model.FileMeta, acl []*model.FileACLEntry) { meta.CreatedAt = time.Now() }).
+			Return(nil).
+			Times(1)
+		ip.EXPECT().
+			WaveformWav(gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(src io.ReadSeeker, width, height int) { _, _ = io.Copy(ioutil.Discard, src) }).
+			Return(waveform, nil).
+			Times(1)
+
+		result, err := fm.Save(args)
+		if assert.NoError(t, err) {
+			assert.NotEmpty(t, result.GetID())
+			assert.EqualValues(t, args.FileName, result.GetFileName())
+			assert.EqualValues(t, args.FileSize, result.GetFileSize())
+			assert.EqualValues(t, args.MimeType, result.GetMIMEType())
+			assert.EqualValues(t, args.FileType, result.GetFileType())
+			assert.EqualValues(t, args.ChannelID, result.GetUploadChannelID())
+			assert.EqualValues(t, args.CreatorID, result.GetCreatorID())
+			assert.EqualValues(t, hash, result.GetMD5Hash())
+			assert.EqualValues(t, false, result.IsAnimatedImage())
+			assert.NotEmpty(t, result.GetCreatedAt())
+			thumbs := result.GetThumbnails()
+			assert.EqualValues(t, 1, len(thumbs))
+			assert.EqualValues(t, model.ThumbnailTypeWaveform, thumbs[0].Type)
+			assert.EqualValues(t, "image/svg+xml", thumbs[0].Mime)
 		}
 	})
 }
@@ -286,15 +420,18 @@ func TestManagerImpl_Get(t *testing.T) {
 		fm := initFM(t, repo, nil, nil)
 
 		meta := &model.FileMeta{
-			ID:           uuid.NewV3(uuid.Nil, "f1"),
-			Name:         "file",
-			Mime:         "text/plain",
-			Size:         10,
-			Hash:         "d41d8cd98f00b204e9800998ecf8427e",
-			Type:         model.FileTypeUserFile,
-			HasThumbnail: true,
-			CreatedAt:    time.Now(),
+			ID:        uuid.NewV3(uuid.Nil, "f1"),
+			Name:      "file",
+			Mime:      "text/plain",
+			Size:      10,
+			Hash:      "d41d8cd98f00b204e9800998ecf8427e",
+			Type:      model.FileTypeUserFile,
+			CreatedAt: time.Now(),
 		}
+		meta.Thumbnails = []model.FileThumbnail{{
+			FileID: meta.ID,
+			Type:   model.ThumbnailTypeImage,
+		}}
 
 		repo.EXPECT().
 			GetFileMeta(meta.ID).
@@ -352,15 +489,18 @@ func TestManagerImpl_List(t *testing.T) {
 		fm := initFM(t, repo, nil, nil)
 
 		meta := &model.FileMeta{
-			ID:           uuid.NewV3(uuid.Nil, "f1"),
-			Name:         "file",
-			Mime:         "text/plain",
-			Size:         10,
-			Hash:         "d41d8cd98f00b204e9800998ecf8427e",
-			Type:         model.FileTypeUserFile,
-			HasThumbnail: true,
-			CreatedAt:    time.Now(),
+			ID:        uuid.NewV3(uuid.Nil, "f1"),
+			Name:      "file",
+			Mime:      "text/plain",
+			Size:      10,
+			Hash:      "d41d8cd98f00b204e9800998ecf8427e",
+			Type:      model.FileTypeUserFile,
+			CreatedAt: time.Now(),
 		}
+		meta.Thumbnails = []model.FileThumbnail{{
+			FileID: meta.ID,
+			Type:   model.ThumbnailTypeImage,
+		}}
 
 		repo.EXPECT().
 			GetFileMetas(gomock.Any()).
@@ -405,16 +545,24 @@ func TestManagerImpl_Delete(t *testing.T) {
 		fm := initFM(t, repo, fs, nil)
 
 		meta := &model.FileMeta{
-			ID:           uuid.NewV3(uuid.Nil, "f1"),
-			Name:         "file",
-			Mime:         "text/plain",
-			Size:         10,
-			Hash:         "d41d8cd98f00b204e9800998ecf8427e",
-			Type:         model.FileTypeUserFile,
-			HasThumbnail: true,
-			CreatedAt:    time.Now(),
+			ID:        uuid.NewV3(uuid.Nil, "f1"),
+			Name:      "file",
+			Mime:      "text/plain",
+			Size:      10,
+			Hash:      "d41d8cd98f00b204e9800998ecf8427e",
+			Type:      model.FileTypeUserFile,
+			CreatedAt: time.Now(),
 		}
-
+		meta.Thumbnails = []model.FileThumbnail{
+			{
+				FileID: meta.ID,
+				Type:   model.ThumbnailTypeImage,
+			},
+			{
+				FileID: meta.ID,
+				Type:   model.ThumbnailTypeWaveform,
+			},
+		}
 		repo.EXPECT().
 			GetFileMeta(meta.ID).
 			Return(meta, nil).
@@ -428,7 +576,11 @@ func TestManagerImpl_Delete(t *testing.T) {
 			Return(nil).
 			Times(1)
 		fs.EXPECT().
-			DeleteByKey(meta.ID.String()+"-thumb", model.FileTypeThumbnail).
+			DeleteByKey(meta.ID.String()+"-"+model.ThumbnailTypeImage.Suffix(), model.FileTypeThumbnail).
+			Return(nil).
+			Times(1)
+		fs.EXPECT().
+			DeleteByKey(meta.ID.String()+"-"+model.ThumbnailTypeWaveform.Suffix(), model.FileTypeThumbnail).
 			Return(nil).
 			Times(1)
 
@@ -443,14 +595,13 @@ func TestManagerImpl_Delete(t *testing.T) {
 		fm := initFM(t, repo, fs, nil)
 
 		meta := &model.FileMeta{
-			ID:           uuid.NewV3(uuid.Nil, "f1"),
-			Name:         "file",
-			Mime:         "text/plain",
-			Size:         10,
-			Hash:         "d41d8cd98f00b204e9800998ecf8427e",
-			Type:         model.FileTypeUserFile,
-			HasThumbnail: false,
-			CreatedAt:    time.Now(),
+			ID:        uuid.NewV3(uuid.Nil, "f1"),
+			Name:      "file",
+			Mime:      "text/plain",
+			Size:      10,
+			Hash:      "d41d8cd98f00b204e9800998ecf8427e",
+			Type:      model.FileTypeUserFile,
+			CreatedAt: time.Now(),
 		}
 
 		repo.EXPECT().
@@ -507,14 +658,13 @@ func TestManagerImpl_Delete(t *testing.T) {
 		fm := initFM(t, repo, nil, nil)
 
 		meta := &model.FileMeta{
-			ID:           uuid.NewV3(uuid.Nil, "f1"),
-			Name:         "file",
-			Mime:         "text/plain",
-			Size:         10,
-			Hash:         "d41d8cd98f00b204e9800998ecf8427e",
-			Type:         model.FileTypeUserFile,
-			HasThumbnail: false,
-			CreatedAt:    time.Now(),
+			ID:        uuid.NewV3(uuid.Nil, "f1"),
+			Name:      "file",
+			Mime:      "text/plain",
+			Size:      10,
+			Hash:      "d41d8cd98f00b204e9800998ecf8427e",
+			Type:      model.FileTypeUserFile,
+			CreatedAt: time.Now(),
 		}
 
 		repo.EXPECT().

@@ -16,8 +16,9 @@
 | [devices](devices.md) | 3 | FCMデバイステーブル | BASE TABLE |
 | [dm_channel_mappings](dm_channel_mappings.md) | 3 | DMチャンネルマッピングテーブル | BASE TABLE |
 | [external_provider_users](external_provider_users.md) | 6 | 外部認証ユーザーテーブル | BASE TABLE |
-| [files](files.md) | 15 | ファイルテーブル | BASE TABLE |
+| [files](files.md) | 11 | ファイルテーブル | BASE TABLE |
 | [files_acl](files_acl.md) | 3 | ファイルアクセスコントロールリストテーブル | BASE TABLE |
+| [files_thumbnails](files_thumbnails.md) | 5 | ファイルサムネイルテーブル | BASE TABLE |
 | [messages](messages.md) | 7 | メッセージテーブル | BASE TABLE |
 | [messages_stamps](messages_stamps.md) | 6 | メッセージスタンプテーブル | BASE TABLE |
 | [message_reports](message_reports.md) | 6 | メッセージ通報テーブル | BASE TABLE |

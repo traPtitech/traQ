@@ -46,6 +46,24 @@ func InitFileManager(repo repository.FileRepository, fs storage.FileStorage, ip 
 	}, nil
 }
 
+func (m *managerImpl) canGenerateThumbnail(mimeType string) bool {
+	switch mimeType {
+	case "image/jpeg", "image/png", "image/gif":
+		return true
+	default:
+		return false
+	}
+}
+
+func (m *managerImpl) canGenerateWaveform(mimeType string) bool {
+	switch mimeType {
+	case "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav":
+		return true
+	default:
+		return false
+	}
+}
+
 func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 	if err := args.Validate(); err != nil {
 		return nil, err
@@ -81,35 +99,83 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 		}
 	}
 
-	if args.Thumbnail == nil && !args.SkipThumbnailGeneration {
-		// サムネイル画像生成
-		switch args.MimeType {
-		case "image/jpeg", "image/png", "image/gif":
-			src, err := makeSureSeekable(args.Src)
-			if err != nil {
-				return nil, err
-			}
-			args.Src = src
+	// サムネイル画像生成
+	if args.Thumbnail == nil && !args.SkipThumbnailGeneration && m.canGenerateThumbnail(args.MimeType) {
+		src, err := makeSureSeekable(args.Src)
+		if err != nil {
+			return nil, err
+		}
+		args.Src = src
 
-			thumb, err := m.ip.Thumbnail(src)
-			if err == nil {
-				args.Thumbnail = thumb
-			} else {
+		thumb, err := m.ip.Thumbnail(src)
+		if err != nil {
+			m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
+		} else {
+			args.Thumbnail = thumb
+		}
+
+		// ストリームを先頭に戻す
+		if _, err := src.Seek(0, io.SeekStart); err != nil {
+			return nil, fmt.Errorf("failed to seek src stream: %w", err)
+		}
+	}
+
+	// 波形画像生成
+	if m.canGenerateWaveform(args.MimeType) {
+		src, err := makeSureSeekable(args.Src)
+		if err != nil {
+			return nil, err
+		}
+		args.Src = src
+
+		const (
+			waveformWidth  = 1280
+			waveformHeight = 540
+		)
+
+		var r io.Reader
+		switch args.MimeType {
+		case "audio/mpeg", "audio/mp3":
+			r, err = m.ip.WaveformMp3(src, waveformWidth, waveformHeight)
+			if err != nil {
 				m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
 			}
-
-			// ストリームを先頭に戻す
-			if _, err := src.Seek(0, io.SeekStart); err != nil {
-				return nil, fmt.Errorf("failed to seek src stream: %w", err)
+		case "audio/wav", "audio/x-wav":
+			r, err = m.ip.WaveformWav(src, waveformWidth, waveformHeight)
+			if err != nil {
+				m.l.Warn("failed to generate thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
 			}
+		}
+
+		if r != nil {
+			thumbnail := model.FileThumbnail{
+				Type:   model.ThumbnailTypeWaveform,
+				Mime:   "image/svg+xml",
+				Width:  waveformWidth,
+				Height: waveformHeight,
+			}
+			f.Thumbnails = append(f.Thumbnails, thumbnail)
+
+			key := f.ID.String() + "-" + model.ThumbnailTypeWaveform.Suffix()
+			if err := m.fs.SaveByKey(r, key, key+".svg", "image/svg+xml", model.FileTypeThumbnail); err != nil {
+				return nil, fmt.Errorf("failed to save thumbnail to storage: %w", err)
+			}
+		}
+
+		// ストリームを先頭に戻す
+		if _, err := src.Seek(0, io.SeekStart); err != nil {
+			return nil, fmt.Errorf("failed to seek src stream: %w", err)
 		}
 	}
 
 	if args.Thumbnail != nil {
-		f.HasThumbnail = true
-		f.ThumbnailMime = optional.StringFrom("image/png")
-		f.ThumbnailWidth = args.Thumbnail.Bounds().Size().X
-		f.ThumbnailHeight = args.Thumbnail.Bounds().Size().Y
+		thumbnail := model.FileThumbnail{
+			Type:   model.ThumbnailTypeImage,
+			Mime:   "image/png",
+			Width:  args.Thumbnail.Bounds().Size().X,
+			Height: args.Thumbnail.Bounds().Size().Y,
+		}
+		f.Thumbnails = append(f.Thumbnails, thumbnail)
 
 		r, w := io.Pipe()
 		go func() {
@@ -117,7 +183,7 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 			_ = png.Encode(w, args.Thumbnail)
 		}()
 
-		key := f.ID.String() + "-thumb"
+		key := f.ID.String() + "-" + model.ThumbnailTypeImage.Suffix()
 		if err := m.fs.SaveByKey(r, key, key+".png", "image/png", model.FileTypeThumbnail); err != nil {
 			return nil, fmt.Errorf("failed to save thumbnail to storage: %w", err)
 		}
@@ -142,8 +208,8 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 		if err := m.fs.DeleteByKey(f.ID.String(), f.Type); err != nil {
 			m.l.Warn("failed to delete file from storage during rollback", zap.Error(err), zap.Stringer("fid", f.ID))
 		}
-		if f.HasThumbnail {
-			if err := m.fs.DeleteByKey(f.ID.String()+"-thumb", model.FileTypeThumbnail); err != nil {
+		for _, t := range f.Thumbnails {
+			if err := m.fs.DeleteByKey(f.ID.String()+"-"+t.Type.Suffix(), model.FileTypeThumbnail); err != nil {
 				m.l.Warn("failed to delete thumbnail from storage during rollback", zap.Error(err), zap.Stringer("fid", f.ID))
 			}
 		}
@@ -186,8 +252,8 @@ func (m *managerImpl) Delete(id uuid.UUID) error {
 	if err := m.fs.DeleteByKey(meta.ID.String(), meta.Type); err != nil {
 		m.l.Warn("failed to delete file from storage", zap.Error(err), zap.Stringer("fid", meta.ID))
 	}
-	if meta.HasThumbnail {
-		if err := m.fs.DeleteByKey(meta.ID.String()+"-thumb", model.FileTypeThumbnail); err != nil {
+	for _, t := range meta.Thumbnails {
+		if err := m.fs.DeleteByKey(meta.ID.String()+"-"+t.Type.Suffix(), model.FileTypeThumbnail); err != nil {
 			m.l.Warn("failed to delete thumbnail from storage", zap.Error(err), zap.Stringer("fid", meta.ID))
 		}
 	}

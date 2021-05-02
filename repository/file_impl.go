@@ -9,7 +9,9 @@ import (
 // GetFileMetas implements FileRepository interface.
 func (repo *GormRepository) GetFileMetas(q FilesQuery) (result []*model.FileMeta, more bool, err error) {
 	files := make([]*model.FileMeta, 0)
-	tx := repo.db.Where("files.type = ?", q.Type.String())
+	tx := repo.db.
+		Where("files.type = ?", q.Type.String()).
+		Scopes(filePreloads)
 
 	if q.ChannelID.Valid {
 		if q.ChannelID.UUID == uuid.Nil {
@@ -71,6 +73,12 @@ func (repo *GormRepository) SaveFileMeta(meta *model.FileMeta, acl []*model.File
 		if err := tx.Create(meta).Error; err != nil {
 			return err
 		}
+		for _, entry := range meta.Thumbnails {
+			entry.FileID = meta.ID
+			if err := tx.Create(&entry).Error; err != nil {
+				return err
+			}
+		}
 		for _, entry := range acl {
 			entry.FileID = meta.ID
 			if err := tx.Create(entry).Error; err != nil {
@@ -87,7 +95,10 @@ func (repo *GormRepository) GetFileMeta(fileID uuid.UUID) (*model.FileMeta, erro
 		return nil, ErrNotFound
 	}
 	f := &model.FileMeta{}
-	if err := repo.db.First(f, &model.FileMeta{ID: fileID}).Error; err != nil {
+	if err := repo.db.
+		Scopes(filePreloads).
+		First(f, &model.FileMeta{ID: fileID}).
+		Error; err != nil {
 		return nil, convertError(err)
 	}
 	return f, nil
@@ -98,7 +109,10 @@ func (repo *GormRepository) DeleteFileMeta(fileID uuid.UUID) error {
 	if fileID == uuid.Nil {
 		return ErrNilID
 	}
-	return repo.db.Delete(&model.FileMeta{ID: fileID}).Error
+	return repo.db.
+		Delete(&model.FileMeta{ID: fileID}).
+		Delete(&model.FileThumbnail{}, &model.FileThumbnail{FileID: fileID}).
+		Error
 }
 
 // IsFileAccessible implements FileRepository interface.
@@ -117,4 +131,8 @@ func (repo *GormRepository) IsFileAccessible(fileID, userID uuid.UUID) (bool, er
 		return false, err
 	}
 	return result.Allow > 0 && result.Deny == 0, nil
+}
+
+func filePreloads(db *gorm.DB) *gorm.DB {
+	return db.Preload("Thumbnails")
 }

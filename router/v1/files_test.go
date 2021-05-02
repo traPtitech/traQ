@@ -142,7 +142,8 @@ func TestHandlers_GetMetaDataByFileID(t *testing.T) {
 		obj.Value("mime").String().Equal(file.GetMIMEType())
 		obj.Value("size").Number().Equal(file.GetFileSize())
 		obj.Value("md5").String().Equal(file.GetMD5Hash())
-		obj.Value("hasThumb").Boolean().Equal(file.HasThumbnail())
+		hasThumb, _ := file.GetThumbnail(model.ThumbnailTypeImage)
+		obj.Value("hasThumb").Boolean().Equal(hasThumb)
 	})
 }
 
@@ -163,6 +164,8 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 		ACL:       file2.ACL{},
 		Src:       strings.NewReader(secureContent),
 	})
+	require.NoError(err)
+	iconFileID, err := file2.GenerateIconFile(env.FileManager, "test")
 	require.NoError(err)
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -200,10 +203,41 @@ func TestHandlers_GetThumbnailByID(t *testing.T) {
 			Status(http.StatusNotFound)
 	})
 
+	t.Run("Bad Thumbnail Type", func(t *testing.T) {
+		t.Parallel()
+		e := env.makeExp(t)
+		e.GET("/api/1.0/files/{fileID}/thumbnail", iconFileID).
+			WithQuery("type", "bad").
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("Thumbnail Type Not Found", func(t *testing.T) {
+		t.Parallel()
+		e := env.makeExp(t)
+		e.GET("/api/1.0/files/{fileID}/thumbnail", iconFileID).
+			WithQuery("type", "waveform").
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("Success (type=image)", func(t *testing.T) {
+		t.Parallel()
+
+		e := env.makeExp(t)
+		res := e.GET("/api/1.0/files/{fileID}/thumbnail", iconFileID).
+			WithQuery("type", "image").
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusOK)
+		res.Header(consts.HeaderCacheControl).Equal("private, max-age=31536000")
+		res.ContentType(consts.MimeImagePNG)
+	})
+
 	t.Run("Success", func(t *testing.T) {
 		t.Parallel()
-		iconFileID, err := file2.GenerateIconFile(env.FileManager, "test")
-		require.NoError(err)
 
 		e := env.makeExp(t)
 		res := e.GET("/api/1.0/files/{fileID}/thumbnail", iconFileID).

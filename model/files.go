@@ -66,13 +66,78 @@ func FileTypeFromString(s string) (FileType, error) {
 
 const (
 	// FileTypeUserFile ユーザーアップロードファイルタイプ
-	FileTypeUserFile FileType = iota
+	FileTypeUserFile FileType = iota + 1 // NOTE: 0にするとgormにゼロ値扱いされてinsertされない
 	// FileTypeIcon ユーザーアイコンファイルタイプ
 	FileTypeIcon
 	// FileTypeStamp スタンプファイルタイプ
 	FileTypeStamp
 	// FileTypeThumbnail サムネイルファイルタイプ
 	FileTypeThumbnail
+)
+
+type ThumbnailType int
+
+// Value database/sql/driver.Valuer 実装
+func (t ThumbnailType) Value() (driver.Value, error) {
+	v := t.String()
+	if v == "null" {
+		return nil, errors.New("unknown ThumbnailType")
+	}
+	return v, nil
+}
+
+// Scan database/sql.Scanner 実装
+func (t *ThumbnailType) Scan(src interface{}) (err error) {
+	switch s := src.(type) {
+	case string:
+		*t, err = ThumbnailTypeFromString(s)
+	case []byte:
+		*t, err = ThumbnailTypeFromString(string(s))
+	default:
+		err = errors.New("failed to scan ThumbnailType")
+	}
+	return
+}
+
+func (t ThumbnailType) String() string {
+	switch t {
+	case ThumbnailTypeImage:
+		return "image"
+	case ThumbnailTypeWaveform:
+		return "waveform"
+	default:
+		return "null"
+	}
+}
+
+// Suffix storageに収納する際のkey suffix
+func (t ThumbnailType) Suffix() string {
+	switch t {
+	case ThumbnailTypeImage:
+		return "thumb"
+	case ThumbnailTypeWaveform:
+		return "waveform"
+	default:
+		return "null"
+	}
+}
+
+func ThumbnailTypeFromString(s string) (ThumbnailType, error) {
+	switch strings.ToLower(s) {
+	case "image":
+		return ThumbnailTypeImage, nil
+	case "waveform":
+		return ThumbnailTypeWaveform, nil
+	default:
+		return 0, errors.New("unknown ThumbnailType")
+	}
+}
+
+const (
+	// ThumbnailTypeImage 通常サムネイル画像
+	ThumbnailTypeImage ThumbnailType = iota + 1 // NOTE: 0にするとgormにゼロ値扱いされてinsertされない
+	// ThumbnailTypeWaveform 波形画像
+	ThumbnailTypeWaveform
 )
 
 type File interface {
@@ -83,16 +148,14 @@ type File interface {
 	GetFileType() FileType
 	GetCreatorID() optional.UUID
 	GetMD5Hash() string
-	HasThumbnail() bool
-	GetThumbnailMIMEType() string
-	GetThumbnailWidth() int
-	GetThumbnailHeight() int
 	IsAnimatedImage() bool
 	GetUploadChannelID() optional.UUID
 	GetCreatedAt() time.Time
+	GetThumbnails() []FileThumbnail
+	GetThumbnail(thumbnailType ThumbnailType) (bool, FileThumbnail)
 
 	Open() (ioext.ReadSeekCloser, error)
-	OpenThumbnail() (ioext.ReadSeekCloser, error)
+	OpenThumbnail(thumbnailType ThumbnailType) (ioext.ReadSeekCloser, error)
 	GetAlternativeURL() string
 }
 
@@ -105,19 +168,29 @@ type FileMeta struct {
 	CreatorID       optional.UUID   `gorm:"type:char(36)"`
 	Hash            string          `gorm:"type:char(32);not null"`
 	Type            FileType        `gorm:"type:varchar(30);not null;default:''"`
-	HasThumbnail    bool            `gorm:"type:boolean;not null;default:false"`
-	ThumbnailMime   optional.String `gorm:"type:text"`
-	ThumbnailWidth  int             `gorm:"type:int;not null;default:0"`
-	ThumbnailHeight int             `gorm:"type:int;not null;default:0"`
 	IsAnimatedImage bool            `gorm:"type:boolean;not null;default:false"`
 	ChannelID       optional.UUID   `gorm:"type:char(36)"`
 	CreatedAt       time.Time       `gorm:"precision:6"`
 	DeletedAt       *time.Time      `gorm:"precision:6"`
+	Thumbnails      []FileThumbnail `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;foreignKey:FileID"`
 }
 
 // TableName dbのtableの名前を返します
 func (f FileMeta) TableName() string {
 	return "files"
+}
+
+// FileThumbnail ファイルのサムネイル情報の構造体
+type FileThumbnail struct {
+	FileID uuid.UUID     `gorm:"type:char(36);not null;primary_key"`
+	Type   ThumbnailType `gorm:"type:varchar(30);not null;primary_key"`
+	Mime   string        `gorm:"type:text;not null"`
+	Width  int           `gorm:"type:int;not null;default:0"`
+	Height int           `gorm:"type:int;not null;default:0"`
+}
+
+func (f FileThumbnail) TableName() string {
+	return "files_thumbnails"
 }
 
 // FileACLEntry ファイルアクセスコントロールリストエントリー構造体

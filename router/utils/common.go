@@ -68,11 +68,21 @@ func ChangeUserPassword(c echo.Context, repo repository.Repository, seStore sess
 
 // ServeFileThumbnail metaのファイルのサムネイルをレスポンスとして返す
 func ServeFileThumbnail(c echo.Context, meta model.File) error {
-	if !meta.HasThumbnail() {
+	typeStr := c.QueryParam("type")
+	if len(typeStr) == 0 {
+		typeStr = "image"
+	}
+	thumbnailType, err := model.ThumbnailTypeFromString(typeStr)
+	if err != nil {
+		return herror.BadRequest(err)
+	}
+
+	hasThumb, thumb := meta.GetThumbnail(thumbnailType)
+	if !hasThumb {
 		return herror.NotFound()
 	}
 
-	file, err := meta.OpenThumbnail()
+	file, err := meta.OpenThumbnail(thumbnailType)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
@@ -81,7 +91,7 @@ func ServeFileThumbnail(c echo.Context, meta model.File) error {
 	c.Response().Header().Set(consts.HeaderFileMetaType, meta.GetFileType().String())
 	c.Response().Header().Set(consts.HeaderCacheFile, "true")
 	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=31536000") // 1年間キャッシュ
-	return c.Stream(http.StatusOK, meta.GetThumbnailMIMEType(), file)
+	return c.Stream(http.StatusOK, thumb.Mime, file)
 }
 
 // ServeFile metaのファイル本体をレスポンスとして返す
