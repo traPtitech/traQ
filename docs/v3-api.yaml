@@ -4400,11 +4400,31 @@ components:
       default: image
       description: |
         サムネイル画像のタイプ
-        image: アップロード画像に対して生成される通常のサムネイル
-        waveform: アップロード音声ファイルに対して生成される波形画像
       enum:
         - image
         - waveform
+      x-enum-descriptions:
+        - アップロード画像に対して生成される通常のサムネイル
+        - アップロード音声ファイルに対して生成される波形画像
+    ThumbnailInfo:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ThumbnailType'
+        mime:
+          type: string
+          description: MIMEタイプ
+        width:
+          type: integer
+          format: int32
+          description: サムネイル幅
+        height:
+          type: integer
+          format: int32
+          description: サムネイル高さ
+      required:
+        - type
+        - mime
     FileInfo:
       title: FileInfo
       type: object
@@ -4437,24 +4457,7 @@ components:
         thumbnails:
           type: array
           items:
-            type: object
-            properties:
-              type:
-                $ref: '#/components/schemas/ThumbnailType'
-              mime:
-                type: string
-                description: MIMEタイプ
-              width:
-                type: integer
-                format: int32
-                description: サムネイル幅
-              height:
-                type: integer
-                format: int32
-                description: サムネイル高さ
-            required:
-              - type
-              - mime
+            $ref: '#/components/schemas/ThumbnailInfo'
         thumbnail:
           deprecated: true
           type: object
