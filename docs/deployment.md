@@ -9,9 +9,9 @@ Docker is highly recommended for production usage.
 - Docker
 - docker-compose
 
-## Configuration
+## Backend Configuration
 
-traQ uses `/app/config.yml` (by default) for configuring the application.
+traQ uses `/app/config.yml` (by default) for configuring the backend application.
 
 Config value precedence:
 1. Values in `config.yml`
@@ -183,7 +183,7 @@ externalAuth:
 
 </details>
 
-Minimal configuration (with ES, no FCM, and no Skyway)
+Minimal configuration (with no ES, no FCM, and no Skyway)
 
 ```yaml
 origin: https://example.com
@@ -206,15 +206,91 @@ storage:
     dir: /app/storage
 ```
 
-## Building traQ_S-UI (optional)
+## Frontend Configuration
 
-Once you have configured traQ, build [traQ_S-UI](https://github.com/traPtitech/traQ_S-UI) according to your needs.
+Once you have configured the backend, next you need to configure the frontend.
 
-If you have configured at least one of FCM and Skyway, you will need to build traQ_S-UI image:
+traQ uses `config.js` for configuring the frontend application.
 
-1. Clone [traQ_S-UI](https://github.com/traPtitech/traQ_S-UI).
-2. Edit [src/config.ts](https://github.com/traPtitech/traQ_S-UI/blob/master/src/config.ts).
-3. Build the image: `docker build -t ghcr.io/traptitech/traq-ui:latest .`
+<details>
+
+<summary>Example configuration</summary>
+
+```js
+;(() => {
+  const config = {
+    // Firebase Cloud Messaging (FCM) settings.
+    firebase: {
+      apiKey: '',
+      appId: '',
+      projectId: '',
+      messagingSenderId: ''
+    },
+    // (optional) Skyway settings.
+    skyway: {
+      apiKey: '55fd6e68-6e1b-492b-b57d-df0273c6e217'
+    },
+    // (optional) Application links.
+    services: [
+      {
+        label: 'Wiki',
+        iconPath: 'wiki.svg',
+        appLink: 'https://wiki.example.com'
+      }
+    ],
+    // (optional) OGP of any pages of these hosts will not be shown.
+    ogpIgnoreHostNames: [
+      'wiki.example.com'
+    ],
+    // (optional) Link to User page of wiki.
+    wikiPageOrigin: 'https://wiki.example.com',
+    // Show root channel create button.
+    isRootChannelSelectableAsParentChannel: true,
+    // (optional) Message shown when a large file was tried to post.
+    tooLargeFileMessage: '大きい%sの共有にはGoogleDriveを使用してください',
+    // (optional) Show copy widget link button.
+    showWidgetCopyButton: true
+  }
+
+  self.traQConfig = config
+})()
+```
+
+</details>
+
+Minimal configuration (with no FCM, and no Skyway)
+
+```js
+;(() => {
+  const config = {
+    // Show root channel create button.
+    isRootChannelSelectableAsParentChannel: true
+  }
+
+  self.traQConfig = config
+})()
+```
+
+For more information, see [the type definition](https://github.com/traPtitech/traQ_S-UI/blob/master/src/types/config/index.d.ts).
+
+Also you can override these files.
+- [`/img/icons`](https://github.com/traPtitech/traQ_S-UI/tree/master/public/img/icons): favicon, PWA icons etc...
+- [`/img/services`](https://github.com/traPtitech/traQ_S-UI/tree/master/public/img/services): Icons used for application links.
+
+<details>
+
+<summary>Tips for creating application link icons</summary>
+
+- Use svg files.
+  - Images other than svg are supported but not recommended.
+- When using svg
+  - You should use `fill: currentColor`. The theme color will be applied then.
+  - Avoid `height` and `width` attributes set on the root element (`<svg>`).
+- Set background transparent.
+
+</details>
+
+If you want, you can change the default theme with `defaultTheme.js`. ([Default file](https://github.com/traPtitech/traQ_S-UI/blob/master/public/defaultTheme.js))
 
 ## Connecting the Components
 
@@ -227,7 +303,7 @@ Configure the rest of the required components, and connect them in `docker-compo
 - [MariaDB](https://hub.docker.com/_/mariadb)
 - (optional) [Elasticsearch with Sudachi plugin](https://github.com/orgs/traPtitech/packages/container/package/es-with-sudachi) (Sudachi is a Japanese analyzer)
 
-Below is an example `docker-compose.yaml` file, configured to work with the above "Minimal configuration" `config.yml`, plus `Caddyfile` and `es_jvm.options` below.
+Below is an example `docker-compose.yaml` file, configured to work with the above "Minimal configuration" `config.yml` and "Minimal configuration" `config.js` (placed inside `override` directory), plus `Caddyfile` and `es_jvm.options` below.
 
 ```yaml
 version: '3'
@@ -267,6 +343,8 @@ services:
     restart: always
     expose:
       - "80"
+    volumes:
+      - ./override/:/app/override
 
   widget:
     image: ghcr.io/traptitech/traq-widget:latest
