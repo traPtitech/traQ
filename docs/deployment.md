@@ -291,6 +291,7 @@ Also you can override these files.
 </details>
 
 If you want, you can change the default theme with `defaultTheme.js`. ([Default file](https://github.com/traPtitech/traQ_S-UI/blob/master/public/defaultTheme.js))
+By using `THEME_COLOR` env, you can set `<meta name="theme-color">` and `<meta name="msapplication-TileColor">` value.
 
 ## Connecting the Components
 
@@ -343,6 +344,8 @@ services:
     restart: always
     expose:
       - "80"
+    environment:
+      THEME_COLOR: '#0D67EA' # this is the default value
     volumes:
       - ./override/:/app/override
 
