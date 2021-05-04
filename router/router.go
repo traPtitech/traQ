@@ -66,6 +66,11 @@ func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Se
 		extAuth.GET("/oidc", p.LoginHandler)
 		extAuth.GET("/oidc/callback", p.CallbackHandler)
 	}
+	if config.ExternalAuth.Slack.Valid() {
+		p := auth.NewSlackProvider(repo, ss.FileManager, logger.Named("ext_auth"), r.sessStore,config.ExternalAuth.Slack)
+		extAuth.GET("/slack", p.LoginHandler)
+		extAuth.GET("/slack/callback", p.CallbackHandler)
+	}
 
 	return r.e
 }

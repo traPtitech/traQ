@@ -40,6 +40,8 @@ type ExternalAuthConfig struct {
 	TraQ auth.TraQProviderConfig
 	// OIDC OpenID Connect
 	OIDC auth.OIDCProviderConfig
+	// Slack Slack OAuth2
+	Slack auth.SlackProviderConfig
 }
 
 func (c ExternalAuthConfig) ValidProviders() map[string]bool {
@@ -55,6 +57,9 @@ func (c ExternalAuthConfig) ValidProviders() map[string]bool {
 	}
 	if c.OIDC.Valid() {
 		res[auth.OIDCProviderName] = true
+	}
+	if c.Slack.Valid() {
+		res[auth.SlackProviderName] = true
 	}
 	return res
 }

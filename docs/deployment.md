@@ -179,6 +179,10 @@ externalAuth:
     allowSignUp: true
     scopes:
       - scope
+  slack:
+    clientId: clientId
+    clientSecret: clientSecret
+    allowSignUp: true
 ```
 
 </details>
