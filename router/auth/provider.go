@@ -198,7 +198,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 				},
 			}
 			if err := vd.Validate(args.Name, validator.UserNameRuleRequired...); err != nil {
-				return herror.BadRequest("Your Slack display name doesn't match with traQ ID format")
+				return herror.BadRequest("Your name doesn't match with traQ ID format")
 			}
 
 			if b, err := tu.GetProfileImage(); err == nil && b != nil {
