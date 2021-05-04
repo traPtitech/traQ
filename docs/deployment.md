@@ -221,14 +221,14 @@ traQ uses `config.js` for configuring the frontend application.
   const config = {
     // Firebase Cloud Messaging (FCM) settings.
     firebase: {
-      apiKey: '',
-      appId: '',
-      projectId: '',
-      messagingSenderId: ''
+      apiKey: 'apiKey',
+      appId: 'appId',
+      projectId: 'projectId',
+      messagingSenderId: 'messagingSenderId'
     },
     // (optional) Skyway settings.
     skyway: {
-      apiKey: '55fd6e68-6e1b-492b-b57d-df0273c6e217'
+      apiKey: 'apiKey'
     },
     // (optional) Application links.
     services: [
