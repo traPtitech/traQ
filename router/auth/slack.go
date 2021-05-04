@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	SlackProviderName             = "slack"
-	slackAPIRequestErrorFormat    = "slack api request error: %w"
-	slackAPIUsersInfoEndpoint     = "https://slack.com/api/users.info"
+	SlackProviderName          = "slack"
+	slackAPIRequestErrorFormat = "slack api request error: %w"
+	slackAPIUsersInfoEndpoint  = "https://slack.com/api/users.info"
 )
 
 type SlackProvider struct {

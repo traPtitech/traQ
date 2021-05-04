@@ -1,6 +1,8 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -18,7 +20,6 @@ import (
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/channel"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type Router struct {
@@ -67,7 +68,7 @@ func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Se
 		extAuth.GET("/oidc/callback", p.CallbackHandler)
 	}
 	if config.ExternalAuth.Slack.Valid() {
-		p := auth.NewSlackProvider(repo, ss.FileManager, logger.Named("ext_auth"), r.sessStore,config.ExternalAuth.Slack)
+		p := auth.NewSlackProvider(repo, ss.FileManager, logger.Named("ext_auth"), r.sessStore, config.ExternalAuth.Slack)
 		extAuth.GET("/slack", p.LoginHandler)
 		extAuth.GET("/slack/callback", p.CallbackHandler)
 	}
