@@ -183,6 +183,7 @@ externalAuth:
     clientId: clientId
     clientSecret: clientSecret
     allowSignUp: true
+    allowedTeamId: teamId
 ```
 
 </details>
