@@ -37,10 +37,11 @@ type SlackProviderConfig struct {
 	ClientSecret           string
 	CallbackURL            string
 	RegisterUserIfNotFound bool
+	AllowedTeamID          string
 }
 
 func (c SlackProviderConfig) Valid() bool {
-	return len(c.ClientSecret) > 0 && len(c.ClientID) > 0 && len(c.CallbackURL) > 0
+	return len(c.ClientSecret) > 0 && len(c.ClientID) > 0 && len(c.CallbackURL) > 0 && len(c.AllowedTeamID) > 0
 }
 
 type slackUserInfo struct {
@@ -94,7 +95,7 @@ func (u *slackUserInfo) GetProfileImage() ([]byte, error) {
 }
 
 func (u *slackUserInfo) IsLoginAllowedUser() bool {
-	return true
+	return u.teamID == u.p.config.AllowedTeamID
 }
 
 func NewSlackProvider(repo repository.Repository, fm file.Manager, logger *zap.Logger, sessStore session.Store, config SlackProviderConfig) *SlackProvider {
