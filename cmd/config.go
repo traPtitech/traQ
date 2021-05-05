@@ -283,6 +283,7 @@ func init() {
 	viper.SetDefault("externalAuth.slack.clientId", "")
 	viper.SetDefault("externalAuth.slack.clientSecret", "")
 	viper.SetDefault("externalAuth.slack.allowSignUp", false)
+	viper.SetDefault("externalAuth.slack.allowedTeamId", "")
 	viper.SetDefault("skyway.secretKey", "")
 	viper.SetDefault("jwt.keys.private", "")
 }
