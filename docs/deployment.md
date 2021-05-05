@@ -183,7 +183,7 @@ externalAuth:
 
 </details>
 
-Minimal configuration (with no ES, no FCM, and no Skyway)
+Minimal configuration (with ES, no FCM, and no Skyway)
 
 ```yaml
 origin: https://example.com
@@ -230,6 +230,8 @@ traQ uses `config.js` for configuring the frontend application.
     skyway: {
       apiKey: 'apiKey'
     },
+    // (optional) Enable search feature.
+    enableSearch: true,
     // (optional) Application links.
     services: [
       {
@@ -258,12 +260,12 @@ traQ uses `config.js` for configuring the frontend application.
 
 </details>
 
-Minimal configuration (with no FCM, and no Skyway)
+Minimal configuration (with ES, no FCM, and no Skyway)
 
 ```js
 ;(() => {
   const config = {
-    // Show root channel create button.
+    enableSearch: true,
     isRootChannelSelectableAsParentChannel: true
   }
 
