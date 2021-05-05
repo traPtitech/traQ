@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 
 	json "github.com/json-iterator/go"
@@ -152,7 +151,6 @@ func (p *SlackProvider) FetchUserInfo(t *oauth2.Token) (UserInfo, error) {
 	if err := json.ConfigFastest.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return nil, fmt.Errorf(slackAPIRequestErrorFormat, err)
 	}
-	log.Println(data)
 	ui.displayName = data.User.Profile.DisplayName
 	ui.profileImageURL = data.User.Profile.Image512
 	ui.teamID = data.User.TeamID
