@@ -3,7 +3,13 @@ package auth
 import (
 	"bytes"
 	"context"
+	"image/png"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/disintegration/imaging"
+	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/model"
@@ -14,12 +20,9 @@ import (
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/random"
+	"github.com/traPtitech/traQ/utils/validator"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
-	"image/png"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 const (
@@ -193,6 +196,9 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 					ExternalID:   tu.GetID(),
 					Extra:        model.JSON{"externalName": tu.GetRawName()},
 				},
+			}
+			if err := vd.Validate(args.Name, validator.UserNameRuleRequired...); err != nil {
+				return herror.BadRequest("Your name doesn't match with traQ ID format")
 			}
 
 			if b, err := tu.GetProfileImage(); err == nil && b != nil {

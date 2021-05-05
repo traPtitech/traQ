@@ -1,10 +1,13 @@
 package cmd
 
 import (
-	"cloud.google.com/go/profiler"
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"image"
+	"time"
+
+	"cloud.google.com/go/profiler"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/spf13/viper"
@@ -21,8 +24,6 @@ import (
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
 	"google.golang.org/api/option"
-	"image"
-	"time"
 )
 
 // Config 設定
@@ -212,6 +213,12 @@ type Config struct {
 			AllowSignUp  bool     `mapstructure:"allowSignUp" yaml:"allowSignUp"`
 			Scopes       []string `mapstructure:"scopes" yaml:"scopes"`
 		} `mapstructure:"oidc" yaml:"oidc"`
+		Slack struct {
+			ClientID      string `mapstructure:"clientId" yaml:"clientId"`
+			ClientSecret  string `mapstructure:"clientSecret" yaml:"clientSecret"`
+			AllowSignUp   bool   `mapstructure:"allowSignUp" yaml:"allowSignUp"`
+			AllowedTeamID string `mapstructure:"allowedTeamId" yaml:"allowedTeamId"`
+		} `mapstructure:"slack" yaml:"slack"`
 	} `mapstructure:"externalAuth" yaml:"externalAuth"`
 }
 
@@ -273,6 +280,10 @@ func init() {
 	viper.SetDefault("externalAuth.oidc.clientSecret", "")
 	viper.SetDefault("externalAuth.oidc.scopes", []string{})
 	viper.SetDefault("externalAuth.oidc.allowSignUp", false)
+	viper.SetDefault("externalAuth.slack.clientId", "")
+	viper.SetDefault("externalAuth.slack.clientSecret", "")
+	viper.SetDefault("externalAuth.slack.allowSignUp", false)
+	viper.SetDefault("externalAuth.slack.allowedTeamId", "")
 	viper.SetDefault("skyway.secretKey", "")
 	viper.SetDefault("jwt.keys.private", "")
 }
@@ -430,12 +441,23 @@ func provideAuthTraQProviderConfig(c *Config) auth.TraQProviderConfig {
 	}
 }
 
+func provideAuthSlackProviderConfig(c *Config) auth.SlackProviderConfig {
+	return auth.SlackProviderConfig{
+		ClientID:               c.ExternalAuth.Slack.ClientID,
+		ClientSecret:           c.ExternalAuth.Slack.ClientSecret,
+		CallbackURL:            c.Origin + "/api/auth/slack/callback",
+		RegisterUserIfNotFound: c.ExternalAuth.Slack.AllowSignUp,
+		AllowedTeamID:          c.ExternalAuth.Slack.AllowedTeamID,
+	}
+}
+
 func provideRouterExternalAuthConfig(c *Config) router.ExternalAuthConfig {
 	return router.ExternalAuthConfig{
 		GitHub: provideAuthGithubProviderConfig(c),
 		Google: provideAuthGoogleProviderConfig(c),
 		TraQ:   provideAuthTraQProviderConfig(c),
 		OIDC:   provideAuthOIDCProviderConfig(c),
+		Slack:  provideAuthSlackProviderConfig(c),
 	}
 }
 
