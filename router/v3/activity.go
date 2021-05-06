@@ -6,8 +6,14 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"time"
+)
+
+const (
+	// timelineRange activityは直近7日間のメッセージのみを表示
+	timelineRange = 7 * 24 * time.Hour
 )
 
 // GetOnlineUsers GET /activity/onlines
@@ -42,6 +48,7 @@ func (h *Handlers) GetActivityTimeline(c echo.Context) error {
 
 	if !req.PerChannel {
 		query := message.TimelineQuery{
+			Since:          optional.TimeFrom(time.Now().Add(-timelineRange)),
 			Limit:          req.Limit,
 			ExcludeDMs:     true,
 			DisablePreload: true,

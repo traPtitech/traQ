@@ -36,6 +36,10 @@ type Manager interface {
 	// 存在しないメッセージを指定した場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	Get(id uuid.UUID) (Message, error)
+	// GetTimeline タイムラインを取得します
+	//
+	// 成功した場合、タイムラインとnilを返します。
+	// DBによるエラーを返すことがあります。
 	GetTimeline(query TimelineQuery) (Timeline, error)
 	// Create メッセージを作成します
 	//
