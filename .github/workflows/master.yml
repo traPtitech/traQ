@@ -42,6 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [image]
     steps:
+      - uses: actions/checkout@v2
       - name: Pull docker image
         run: docker pull ghcr.io/traptitech/${IMAGE_NAME}:${IMAGE_TAG}
       - name: Container image scan
