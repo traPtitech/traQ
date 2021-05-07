@@ -1,0 +1,3 @@
+general:
+  vulnerabilities:
+    - CVE-2020-26160 # https://github.com/traPtitech/traQ/issues/1159
