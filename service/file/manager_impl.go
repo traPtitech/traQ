@@ -100,7 +100,7 @@ func (m *managerImpl) Save(args SaveArgs) (model.File, error) {
 	}
 
 	// サムネイル画像生成
-	if args.Thumbnail == nil && !args.SkipThumbnailGeneration && m.canGenerateThumbnail(args.MimeType) {
+	if args.Thumbnail == nil && m.canGenerateThumbnail(args.MimeType) {
 		src, err := makeSureSeekable(args.Src)
 		if err != nil {
 			return nil, err

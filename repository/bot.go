@@ -94,7 +94,7 @@ type BotRepository interface {
 	// idにuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	UpdateBot(id uuid.UUID, args UpdateBotArgs) error
-	// GetAllBots 全てのBotを取得します
+	// GetBots 指定した条件を満たすBotを取得します
 	//
 	// 成功した場合、Botの配列とnilを返します。
 	// DBによるエラーを返すことがあります。

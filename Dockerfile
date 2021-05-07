@@ -25,4 +25,5 @@ ENV TRAQ_IMAGEMAGICK=/usr/bin/convert
 COPY --from=build /traQ ./
 
 HEALTHCHECK CMD ./traQ healthcheck || exit 1
-ENTRYPOINT ./traQ serve
+ENTRYPOINT ["./traQ"]
+CMD ["serve"]
