@@ -260,6 +260,7 @@ func genWaveform() *cobra.Command {
 				if !more {
 					break
 				}
+				offset += batch
 
 				logger.Info(fmt.Sprintf("generating waveform images: %d succeeded out of %d total attempts", success, total))
 			}
