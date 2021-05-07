@@ -20,16 +20,15 @@ var (
 )
 
 type SaveArgs struct {
-	FileName                string
-	FileSize                int64
-	MimeType                string
-	FileType                model.FileType
-	CreatorID               optional.UUID
-	ChannelID               optional.UUID
-	ACL                     ACL
-	Src                     io.Reader
-	Thumbnail               image.Image
-	SkipThumbnailGeneration bool
+	FileName  string
+	FileSize  int64
+	MimeType  string
+	FileType  model.FileType
+	CreatorID optional.UUID
+	ChannelID optional.UUID
+	ACL       ACL
+	Src       io.Reader
+	Thumbnail image.Image
 }
 
 // ACL アクセスコントロールリスト
@@ -70,9 +69,27 @@ func (args *SaveArgs) ACLAllow(userID uuid.UUID) {
 }
 
 type Manager interface {
+	// Save ファイルを保存します
+	// サムネイルが生成可能な場合はサムネイルを生成し同時に保存します
+	//
+	// 成功した場合、ファイルとnilを返します。
 	Save(args SaveArgs) (model.File, error)
+	// Get ファイルを取得します
+	//
+	// 成功した場合、ファイルとnilを返します。
 	Get(id uuid.UUID) (model.File, error)
+	// List ファイルの一覧を取得します
+	//
+	// 成功した場合、ファイルの一覧を返します。負のoffset, limitは無視されます。
+	// 指定した範囲内にlimitを超えてメッセージが存在していた場合、trueを返します。
 	List(q repository.FilesQuery) ([]model.File, bool, error)
+	// Delete ファイルを削除します
+	//
+	// 成功した場合、nilを返します。
 	Delete(id uuid.UUID) error
+	// Accessible ユーザーがファイルへのアクセス権限を持っているかを確認します
+	//
+	// ユーザーがアクセス権限を持っている場合、trueを返します。
+	// ファイルもしくはユーザーが存在しない場合は、falseを返します。
 	Accessible(fileID, userID uuid.UUID) (bool, error)
 }

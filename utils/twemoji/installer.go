@@ -72,11 +72,10 @@ func Install(repo repository.Repository, fm file.Manager, logger *zap.Logger, up
 		defer r.Close()
 
 		return fm.Save(file.SaveArgs{
-			FileName:                filename,
-			FileSize:                f.FileInfo().Size(),
-			FileType:                model.FileTypeStamp,
-			Src:                     r,
-			SkipThumbnailGeneration: true,
+			FileName: filename,
+			FileSize: f.FileInfo().Size(),
+			FileType: model.FileTypeStamp,
+			Src:      r,
 		})
 	}
 
