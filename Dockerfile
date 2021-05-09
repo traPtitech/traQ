@@ -1,12 +1,13 @@
 FROM golang:1.16-alpine AS build
 WORKDIR /go/src/github.com/traPtitech/traQ
 COPY ./go.* ./
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY . .
 
+ENV GOCACHE=/tmp/go/cache
 ARG TRAQ_VERSION=dev
 ARG TRAQ_REVISION=local
-RUN CGO_ENABLED=0 go build -o /traQ -ldflags "-s -w -X main.version=$TRAQ_VERSION -X main.revision=$TRAQ_REVISION"
+RUN --mount=type=cache,target=/tmp/go/cache CGO_ENABLED=0 go build -o /traQ -ldflags "-s -w -X main.version=$TRAQ_VERSION -X main.revision=$TRAQ_REVISION"
 
 FROM alpine:3.13.5
 WORKDIR /app
