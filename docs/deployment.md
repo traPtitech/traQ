@@ -224,7 +224,10 @@ traQ uses `config.js` for configuring the frontend application.
 ```js
 ;(() => {
   const config = {
-    // Firebase Cloud Messaging (FCM) settings.
+    // (optional) Application name
+    // You must set the same value to APP_NAME env.
+    name: 'traQ'
+    // (optional) Firebase Cloud Messaging (FCM) settings.
     firebase: {
       apiKey: 'apiKey',
       appId: 'appId',
@@ -256,7 +259,9 @@ traQ uses `config.js` for configuring the frontend application.
     // (optional) Message shown when a large file was tried to post.
     tooLargeFileMessage: '大きい%sの共有にはGoogleDriveを使用してください',
     // (optional) Show copy widget link button.
-    showWidgetCopyButton: true
+    showWidgetCopyButton: true,
+    // (optional) Disable inline reply feature when the message is from these channels.
+    inlineReplyDisableChannels: ['#general']
   }
 
   self.traQConfig = config
