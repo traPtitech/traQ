@@ -185,7 +185,7 @@
 <text text-anchor="start" x="489.2882" y="-1033.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
 <polygon fill="none" stroke="#000000" points="432.5,-992.5 432.5,-1022.5 693.5,-1022.5 693.5,-992.5 432.5,-992.5"/>
 <text text-anchor="start" x="439.5" y="-1003.9" font-family="Arial" font-size="14.00" fill="#000000">count </text>
-<text text-anchor="start" x="477.629" y="-1003.9" font-family="Arial" font-size="14.00" fill="#666666">[int(11)]</text>
+<text text-anchor="start" x="477.629" y="-1003.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
 <polygon fill="none" stroke="#000000" points="432.5,-962.5 432.5,-992.5 693.5,-992.5 693.5,-962.5 432.5,-962.5"/>
 <text text-anchor="start" x="439.5" y="-973.9" font-family="Arial" font-size="14.00" fill="#000000">created_at </text>
 <text text-anchor="start" x="509.528" y="-973.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>

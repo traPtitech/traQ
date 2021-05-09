@@ -6,7 +6,6 @@
 package cmd
 
 import (
-	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
@@ -25,6 +24,7 @@ import (
 	"github.com/traPtitech/traQ/service/ws"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 import (

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"gorm.io/gorm"
 )
 
 // Webhook Webhook
@@ -21,16 +22,19 @@ type Webhook interface {
 
 // WebhookBot DB用WebhookBot構造体
 type WebhookBot struct {
-	ID          uuid.UUID  `gorm:"type:char(36);not null;primary_key"`
-	BotUserID   uuid.UUID  `gorm:"type:char(36);not null;unique"`
-	BotUser     User       `gorm:"foreignkey:BotUserID"`
-	Description string     `gorm:"type:text;not null"`
-	Secret      string     `gorm:"type:text;not null"`
-	ChannelID   uuid.UUID  `gorm:"type:char(36);not null"`
-	CreatorID   uuid.UUID  `gorm:"type:char(36);not null"`
-	CreatedAt   time.Time  `gorm:"precision:6"`
-	UpdatedAt   time.Time  `gorm:"precision:6"`
-	DeletedAt   *time.Time `gorm:"precision:6"`
+	ID          uuid.UUID      `gorm:"type:char(36);not null;primaryKey"`
+	BotUserID   uuid.UUID      `gorm:"type:char(36);not null;unique"`
+	Description string         `gorm:"type:text;not null"`
+	Secret      string         `gorm:"type:text;not null"`
+	ChannelID   uuid.UUID      `gorm:"type:char(36);not null"`
+	CreatorID   uuid.UUID      `gorm:"type:char(36);not null"`
+	CreatedAt   time.Time      `gorm:"precision:6"`
+	UpdatedAt   time.Time      `gorm:"precision:6"`
+	DeletedAt   gorm.DeletedAt `gorm:"precision:6"`
+
+	BotUser User     `gorm:"constraint:webhook_bots_bot_user_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignkey:BotUserID"`
+	Creator *User    `gorm:"constraint:webhook_bots_creator_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:CreatorID"`
+	Channel *Channel `gorm:"constraint:webhook_bots_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // TableName Webhookのテーブル名

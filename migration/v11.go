@@ -1,11 +1,12 @@
 package migration
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"gorm.io/gorm"
 )
 
 // v11 クリップ機能追加
@@ -13,22 +14,23 @@ func v11() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "11",
 		Migrate: func(db *gorm.DB) error {
-			if err := db.AutoMigrate(&v11ClipFolder{}).Error; err != nil {
+			if err := db.AutoMigrate(&v11ClipFolder{}); err != nil {
 				return err
 			}
 
-			if err := db.AutoMigrate(&v11ClipFolderMessage{}).Error; err != nil {
+			if err := db.AutoMigrate(&v11ClipFolderMessage{}); err != nil {
 				return err
 			}
 
-			foreignKeys := [][5]string{
-				{"clip_folders", "owner_id", "users(id)", "CASCADE", "CASCADE"},
-				{"clip_folder_messages", "folder_id", "clip_folders(id)", "CASCADE", "CASCADE"},
-				{"clip_folder_messages", "message_id", "messages(id)", "CASCADE", "CASCADE"},
+			foreignKeys := [][6]string{
+				// table name, constraint name, field name, references, on delete, on update
+				{"clip_folders", "clip_folders_owner_id_users_id_foreign", "owner_id", "users(id)", "CASCADE", "CASCADE"},
+				{"clip_folder_messages", "clip_folder_messages_folder_id_clip_folders_id_foreign", "folder_id", "clip_folders(id)", "CASCADE", "CASCADE"},
+				{"clip_folder_messages", "clip_folder_messages_message_id_messages_id_foreign", "message_id", "messages(id)", "CASCADE", "CASCADE"},
 			}
 
 			for _, c := range foreignKeys {
-				if err := db.Table(c[0]).AddForeignKey(c[1], c[2], c[3], c[4]).Error; err != nil {
+				if err := db.Exec(fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s ON DELETE %s ON UPDATE %s", c[0], c[1], c[2], c[3], c[4], c[5])).Error; err != nil {
 					return err
 				}
 			}
@@ -39,7 +41,7 @@ func v11() *gormigrate.Migration {
 }
 
 type v11ClipFolder struct {
-	ID          uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	ID          uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	Name        string    `gorm:"type:varchar(30);not null"`
 	Description string    `gorm:"type:text;not null"`
 	OwnerID     uuid.UUID `gorm:"type:char(36);not null;index"`
@@ -51,8 +53,8 @@ func (*v11ClipFolder) TableName() string {
 }
 
 type v11ClipFolderMessage struct {
-	FolderID  uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	MessageID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	FolderID  uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	MessageID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	CreatedAt time.Time `gorm:"precision:6"`
 }
 

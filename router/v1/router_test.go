@@ -2,9 +2,18 @@ package v1
 
 import (
 	"bytes"
+	"image"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/session"
@@ -18,19 +27,12 @@ import (
 	"github.com/traPtitech/traQ/testutils"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
-	"go.uber.org/zap"
-	"image"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/rbac/role"
 )

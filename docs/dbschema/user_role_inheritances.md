@@ -12,9 +12,9 @@ CREATE TABLE `user_role_inheritances` (
   `role` varchar(30) NOT NULL,
   `sub_role` varchar(30) NOT NULL,
   PRIMARY KEY (`role`,`sub_role`),
-  KEY `user_role_inheritances_sub_role_user_roles_name_foreign` (`sub_role`),
-  CONSTRAINT `user_role_inheritances_role_user_roles_name_foreign` FOREIGN KEY (`role`) REFERENCES `user_roles` (`name`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `user_role_inheritances_sub_role_user_roles_name_foreign` FOREIGN KEY (`sub_role`) REFERENCES `user_roles` (`name`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `fk_user_role_inheritances_inheritances` (`sub_role`),
+  CONSTRAINT `fk_user_role_inheritances_inheritances` FOREIGN KEY (`sub_role`) REFERENCES `user_roles` (`name`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_user_role_inheritances_user_role` FOREIGN KEY (`role`) REFERENCES `user_roles` (`name`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -31,15 +31,15 @@ CREATE TABLE `user_role_inheritances` (
 
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
+| fk_user_role_inheritances_inheritances | FOREIGN KEY | FOREIGN KEY (sub_role) REFERENCES user_roles (name) |
+| fk_user_role_inheritances_user_role | FOREIGN KEY | FOREIGN KEY (role) REFERENCES user_roles (name) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (role, sub_role) |
-| user_role_inheritances_role_user_roles_name_foreign | FOREIGN KEY | FOREIGN KEY (role) REFERENCES user_roles (name) |
-| user_role_inheritances_sub_role_user_roles_name_foreign | FOREIGN KEY | FOREIGN KEY (sub_role) REFERENCES user_roles (name) |
 
 ## Indexes
 
 | Name | Definition |
 | ---- | ---------- |
-| user_role_inheritances_sub_role_user_roles_name_foreign | KEY user_role_inheritances_sub_role_user_roles_name_foreign (sub_role) USING BTREE |
+| fk_user_role_inheritances_inheritances | KEY fk_user_role_inheritances_inheritances (sub_role) USING BTREE |
 | PRIMARY | PRIMARY KEY (role, sub_role) USING BTREE |
 
 ## Relations

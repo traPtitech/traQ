@@ -6,11 +6,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	vd "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/utils/validator"
 	"strings"
 	"time"
+
+	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/gofrs/uuid"
+	"gorm.io/gorm"
+
+	"github.com/traPtitech/traQ/utils/validator"
 )
 
 // AccessScope クライアントのスコープ
@@ -114,7 +117,7 @@ func (arr AccessScopes) Validate() error {
 
 // OAuth2Authorize OAuth2 認可データの構造体
 type OAuth2Authorize struct {
-	Code                string    `gorm:"type:varchar(36);primary_key"`
+	Code                string    `gorm:"type:varchar(36);primaryKey"`
 	ClientID            string    `gorm:"type:char(36)"`
 	UserID              uuid.UUID `gorm:"type:char(36)"`
 	ExpiresIn           int
@@ -163,17 +166,17 @@ func (data *OAuth2Authorize) ValidatePKCE(verifier string) (bool, error) {
 
 // OAuth2Client OAuth2 クライアント構造体
 type OAuth2Client struct {
-	ID           string `gorm:"type:char(36);primary_key"`
+	ID           string `gorm:"type:char(36);primaryKey"`
 	Name         string `gorm:"type:varchar(32)"`
 	Description  string `gorm:"type:text"`
 	Confidential bool
-	CreatorID    uuid.UUID    `gorm:"type:char(36)"`
-	Secret       string       `gorm:"type:varchar(36)"`
-	RedirectURI  string       `gorm:"type:text"`
-	Scopes       AccessScopes `gorm:"type:text"`
-	CreatedAt    time.Time    `gorm:"precision:6"`
-	UpdatedAt    time.Time    `gorm:"precision:6"`
-	DeletedAt    *time.Time   `gorm:"precision:6"`
+	CreatorID    uuid.UUID      `gorm:"type:char(36)"`
+	Secret       string         `gorm:"type:varchar(36)"`
+	RedirectURI  string         `gorm:"type:text"`
+	Scopes       AccessScopes   `gorm:"type:text"`
+	CreatedAt    time.Time      `gorm:"precision:6"`
+	UpdatedAt    time.Time      `gorm:"precision:6"`
+	DeletedAt    gorm.DeletedAt `gorm:"precision:6"`
 }
 
 // TableName OAuth2Clientのテーブル名
@@ -194,7 +197,7 @@ func (c *OAuth2Client) GetAvailableScopes(request AccessScopes) (result AccessSc
 
 // OAuth2Token OAuth2 トークンの構造体
 type OAuth2Token struct {
-	ID             uuid.UUID    `gorm:"type:char(36);primary_key"`
+	ID             uuid.UUID    `gorm:"type:char(36);primaryKey"`
 	ClientID       string       `gorm:"type:char(36)"`
 	UserID         uuid.UUID    `gorm:"type:char(36)"`
 	RedirectURI    string       `gorm:"type:text"`
@@ -203,8 +206,8 @@ type OAuth2Token struct {
 	RefreshEnabled bool         `gorm:"type:boolean;default:false"`
 	Scopes         AccessScopes `gorm:"type:text"`
 	ExpiresIn      int
-	CreatedAt      time.Time  `gorm:"precision:6"`
-	DeletedAt      *time.Time `gorm:"precision:6"`
+	CreatedAt      time.Time      `gorm:"precision:6"`
+	DeletedAt      gorm.DeletedAt `gorm:"precision:6"`
 }
 
 // TableName OAuth2Tokenのテーブル名

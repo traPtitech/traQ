@@ -17,6 +17,7 @@ require (
 	github.com/gavv/httpexpect/v2 v2.2.0
 	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.0.0
+	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gofrs/uuid v3.4.0+incompatible
@@ -28,11 +29,9 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
-	github.com/jinzhu/gorm v1.9.16
 	github.com/json-iterator/go v1.1.11
 	github.com/labstack/echo/v4 v4.2.2
 	github.com/leandro-lugaresi/hub v1.1.1
-	github.com/lib/pq v1.2.0 // indirect
 	github.com/motoki317/go-waveform v0.0.2
 	github.com/ncw/swift v1.0.53
 	github.com/olivere/elastic/v7 v7.0.24
@@ -57,10 +56,11 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/api v0.46.0
-	gopkg.in/gormigrate.v1 v1.6.0
 	gopkg.in/ini.v1 v1.51.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.4.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0
+	gorm.io/driver/mysql v1.0.6
+	gorm.io/gorm v1.21.9
 )
 
 replace github.com/blendle/zapdriver v1.3.1 => github.com/wtks/zapdriver v1.3.1-patch.0

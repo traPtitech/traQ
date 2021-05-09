@@ -12,7 +12,7 @@ CREATE TABLE `oauth2_authorizes` (
   `code` varchar(36) NOT NULL DEFAULT '',
   `client_id` char(36) DEFAULT NULL,
   `user_id` char(36) DEFAULT NULL,
-  `expires_in` int(11) DEFAULT NULL,
+  `expires_in` bigint(20) DEFAULT NULL,
   `redirect_uri` text,
   `scopes` text,
   `original_scopes` text,
@@ -33,7 +33,7 @@ CREATE TABLE `oauth2_authorizes` (
 | code | varchar(36) |  | false |  |  | 認可コード |
 | client_id | char(36) |  | true |  |  | クライアントID |
 | user_id | char(36) |  | true |  |  | リクエストユーザーUUID |
-| expires_in | int(11) |  | true |  |  | 有効秒 |
+| expires_in | bigint(20) |  | true |  |  | 有効秒 |
 | redirect_uri | text |  | true |  |  | リダイレクトURI |
 | scopes | text |  | true |  |  | 認可対象スコープ |
 | original_scopes | text |  | true |  |  | 元の要求スコープ |

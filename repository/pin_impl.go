@@ -2,8 +2,9 @@ package repository
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/gormutil"

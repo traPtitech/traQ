@@ -1,10 +1,11 @@
 package migration
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
 	"time"
+
+	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/gofrs/uuid"
+	"gorm.io/gorm"
 )
 
 // v19 httpセッション管理テーブル変更
@@ -12,13 +13,13 @@ func v19() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "19",
 		Migrate: func(db *gorm.DB) error {
-			if err := db.Table(v19OldSessionRecord{}.TableName()).DropColumn("last_access").Error; err != nil {
+			if err := db.Migrator().DropColumn(v19OldSessionRecord{}, "last_access"); err != nil {
 				return err
 			}
-			if err := db.Table(v19OldSessionRecord{}.TableName()).DropColumn("last_ip").Error; err != nil {
+			if err := db.Migrator().DropColumn(v19OldSessionRecord{}, "last_ip"); err != nil {
 				return err
 			}
-			if err := db.Table(v19OldSessionRecord{}.TableName()).DropColumn("last_user_agent").Error; err != nil {
+			if err := db.Migrator().DropColumn(v19OldSessionRecord{}, "last_user_agent"); err != nil {
 				return err
 			}
 			return nil
@@ -27,7 +28,7 @@ func v19() *gormigrate.Migration {
 }
 
 type v19OldSessionRecord struct {
-	Token         string    `gorm:"type:varchar(50);primary_key"`
+	Token         string    `gorm:"type:varchar(50);primaryKey"`
 	ReferenceID   uuid.UUID `gorm:"type:char(36);unique"`
 	UserID        uuid.UUID `gorm:"type:varchar(36);index"`
 	LastAccess    time.Time `gorm:"precision:6"`

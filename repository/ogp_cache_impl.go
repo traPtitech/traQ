@@ -3,10 +3,12 @@ package repository
 import (
 	"crypto/sha1"
 	"fmt"
-	"github.com/jinzhu/gorm"
+	"reflect"
+
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/ogp"
-	"reflect"
 )
 
 func getURLHash(url string) (string, error) {

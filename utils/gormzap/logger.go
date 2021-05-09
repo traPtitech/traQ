@@ -1,18 +1,16 @@
 package gormzap
 
 import (
-	"database/sql/driver"
+	"context"
+	"errors"
 	"fmt"
-	"go.uber.org/zap"
-	"reflect"
-	"regexp"
 	"time"
-	"unicode"
-)
 
-var (
-	sqlRegexp                = regexp.MustCompile(`\?`)
-	numericPlaceHolderRegexp = regexp.MustCompile(`\$\d+`)
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+	"gorm.io/gorm/utils"
 )
 
 type L struct {
@@ -23,80 +21,51 @@ func New(logger *zap.Logger) *L {
 	return &L{l: logger}
 }
 
-func (gl *L) Print(values ...interface{}) {
-	if len(values) > 1 {
-		var (
-			level  = values[0]
-			source = fmt.Sprint(values[1])
-		)
-
-		if level == "sql" {
-			var formattedValues []string
-
-			for _, value := range values[4].([]interface{}) {
-				indirectValue := reflect.Indirect(reflect.ValueOf(value))
-				if indirectValue.IsValid() {
-					value = indirectValue.Interface()
-					if t, ok := value.(time.Time); ok {
-						if t.IsZero() {
-							formattedValues = append(formattedValues, fmt.Sprintf("'%v'", "0000-00-00 00:00:00"))
-						} else {
-							formattedValues = append(formattedValues, fmt.Sprintf("'%v'", t.Format("2006-01-02 15:04:05.999999")))
-						}
-					} else if b, ok := value.([]byte); ok {
-						if str := string(b); isPrintable(str) {
-							formattedValues = append(formattedValues, fmt.Sprintf("'%v'", str))
-						} else {
-							formattedValues = append(formattedValues, "'<binary>'")
-						}
-					} else if r, ok := value.(driver.Valuer); ok {
-						if value, err := r.Value(); err == nil && value != nil {
-							formattedValues = append(formattedValues, fmt.Sprintf("'%v'", value))
-						} else {
-							formattedValues = append(formattedValues, "NULL")
-						}
-					} else {
-						switch value.(type) {
-						case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64, bool:
-							formattedValues = append(formattedValues, fmt.Sprintf("%v", value))
-						default:
-							formattedValues = append(formattedValues, fmt.Sprintf("'%v'", value))
-						}
-					}
-				} else {
-					formattedValues = append(formattedValues, "NULL")
-				}
-			}
-
-			var sql string
-			if numericPlaceHolderRegexp.MatchString(values[3].(string)) {
-				sql = values[3].(string)
-				for index, value := range formattedValues {
-					placeholder := fmt.Sprintf(`\$%d([^\d]|$)`, index+1)
-					sql = regexp.MustCompile(placeholder).ReplaceAllString(sql, value+"$1")
-				}
-			} else {
-				formattedValuesLength := len(formattedValues)
-				for index, value := range sqlRegexp.Split(values[3].(string), -1) {
-					sql += value
-					if index < formattedValuesLength {
-						sql += formattedValues[index]
-					}
-				}
-			}
-
-			gl.l.Debug(sql, zap.String("source", source), zap.Duration("duration", values[2].(time.Duration)), zap.Int64("rows", values[5].(int64)))
-		} else {
-			gl.l.Debug(fmt.Sprint(values[2:]), zap.String("source", source))
-		}
+func (gl *L) LogMode(level logger.LogLevel) logger.Interface {
+	var zapLevel zapcore.LevelEnabler
+	switch level {
+	case logger.Silent:
+		zapLevel = zap.DPanicLevel
+	case logger.Error:
+		zapLevel = zap.ErrorLevel
+	case logger.Warn:
+		zapLevel = zap.WarnLevel
+	case logger.Info:
+		zapLevel = zap.InfoLevel
+	default:
+		return gl
 	}
+	return New(gl.l.WithOptions(zap.IncreaseLevel(zapLevel)))
 }
 
-func isPrintable(s string) bool {
-	for _, r := range s {
-		if !unicode.IsPrint(r) {
-			return false
+func (gl *L) Info(_ context.Context, s string, i ...interface{}) {
+	gl.l.Info(fmt.Sprintf(s, i...))
+}
+
+func (gl *L) Warn(_ context.Context, s string, i ...interface{}) {
+	gl.l.Warn(fmt.Sprintf(s, i...))
+}
+
+func (gl *L) Error(_ context.Context, s string, i ...interface{}) {
+	gl.l.Error(fmt.Sprintf(s, i...))
+}
+
+func (gl *L) Trace(_ context.Context, begin time.Time, fc func() (string, int64), err error) {
+	elapsed := time.Since(begin)
+	switch {
+	case err != nil && !errors.Is(err, gorm.ErrRecordNotFound):
+		sql, rows := fc()
+		if rows == -1 {
+			gl.l.Error(sql, zap.String("file", utils.FileWithLineNum()), zap.Error(err), zap.Float64("latency(ms)", float64(elapsed.Nanoseconds())/1e6))
+		} else {
+			gl.l.Error(sql, zap.String("file", utils.FileWithLineNum()), zap.Error(err), zap.Float64("latency(ms)", float64(elapsed.Nanoseconds())/1e6), zap.Int64("rows", rows))
+		}
+	default:
+		sql, rows := fc()
+		if rows == -1 {
+			gl.l.Debug(sql, zap.String("file", utils.FileWithLineNum()), zap.Float64("latency(ms)", float64(elapsed.Nanoseconds())/1e6))
+		} else {
+			gl.l.Debug(sql, zap.String("file", utils.FileWithLineNum()), zap.Float64("latency(ms)", float64(elapsed.Nanoseconds())/1e6), zap.Int64("rows", rows))
 		}
 	}
-	return true
 }

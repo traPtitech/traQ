@@ -112,7 +112,7 @@ func (roles Roles) IsGranted(p permission.Permission) bool {
 	return false
 }
 
-// HasAndIsGranted
+// HasAndIsGranted セットが指定したロールを持ち、そのロールに指定した権限が許可されているかどうか
 func (roles Roles) HasAndIsGranted(r string, p permission.Permission) bool {
 	set, ok := roles[r]
 	if !ok {

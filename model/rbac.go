@@ -2,33 +2,23 @@ package model
 
 // UserRole ユーザーロール構造体
 type UserRole struct {
-	Name         string            `gorm:"type:varchar(30);not null;primary_key"`
-	Oauth2Scope  bool              `gorm:"type:boolean;not null;default:false"`
-	Inheritances []RoleInheritance `gorm:"association_autoupdate:false;association_autocreate:false;foreignkey:Role"`
-	Permissions  []RolePermission  `gorm:"association_autoupdate:false;association_autocreate:false;foreignkey:Role"`
-	System       bool              `gorm:"type:boolean;not null;default:false"`
+	Name        string `gorm:"type:varchar(30);not null;primaryKey"`
+	Oauth2Scope bool   `gorm:"type:boolean;not null;default:false"`
+	System      bool   `gorm:"type:boolean;not null;default:false"`
+
+	Inheritances []*UserRole      `gorm:"many2many:user_role_inheritances;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:Name;references:Name;joinForeignKey:Role;joinReferences:SubRole"`
+	Permissions  []RolePermission `gorm:"constraint:user_role_permissions_role_user_roles_name_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:Role;references:Name"`
 }
 
-// TableName UserDefinedRole構造体のテーブル名
+// TableName UserRole構造体のテーブル名
 func (*UserRole) TableName() string {
 	return "user_roles"
 }
 
-// RoleInheritance ロール継承関係構造体
-type RoleInheritance struct {
-	Role    string `gorm:"type:varchar(30);not null;primary_key"`
-	SubRole string `gorm:"type:varchar(30);not null;primary_key"`
-}
-
-// TableName RoleInheritance構造体のテーブル名
-func (*RoleInheritance) TableName() string {
-	return "user_role_inheritances"
-}
-
 // RolePermission ロール権限構造体
 type RolePermission struct {
-	Role       string `gorm:"type:varchar(30);not null;primary_key"`
-	Permission string `gorm:"type:varchar(30);not null;primary_key"`
+	Role       string `gorm:"type:varchar(30);not null;primaryKey"`
+	Permission string `gorm:"type:varchar(30);not null;primaryKey"`
 }
 
 // TableName RolePermission構造体のテーブル名

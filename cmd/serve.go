@@ -3,10 +3,16 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service"
@@ -15,10 +21,6 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/twemoji"
-	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
-	"io/ioutil"
-	"time"
 )
 
 // serveCommand サーバー起動コマンド
@@ -52,8 +54,12 @@ func serveCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			engine.SetLogger(gormzap.New(logger.Named("gorm")))
-			defer engine.Close()
+			engine.Logger = gormzap.New(logger.Named("gorm"))
+			db, err := engine.DB()
+			if err != nil {
+				logger.Fatal("failed to get *sql.DB", zap.Error(err))
+			}
+			defer db.Close()
 			logger.Info("database connection was established")
 
 			// FileStorage

@@ -28,10 +28,10 @@
 <text text-anchor="start" x="91.101" y="-603.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
 <polygon fill="none" stroke="#000000" points="46,-562.5 46,-592.5 286,-592.5 286,-562.5 46,-562.5"/>
 <text text-anchor="start" x="53" y="-573.9" font-family="Arial" font-size="14.00" fill="#000000">width </text>
-<text text-anchor="start" x="89.5596" y="-573.9" font-family="Arial" font-size="14.00" fill="#666666">[int(11)]</text>
+<text text-anchor="start" x="89.5596" y="-573.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
 <polygon fill="none" stroke="#000000" points="46,-532.5 46,-562.5 286,-562.5 286,-532.5 46,-532.5"/>
 <text text-anchor="start" x="53" y="-543.9" font-family="Arial" font-size="14.00" fill="#000000">height </text>
-<text text-anchor="start" x="95.0182" y="-543.9" font-family="Arial" font-size="14.00" fill="#666666">[int(11)]</text>
+<text text-anchor="start" x="95.0182" y="-543.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
 <polygon fill="none" stroke="#000000" stroke-width="3" points="44.5,-531.5 44.5,-719.5 287.5,-719.5 287.5,-531.5 44.5,-531.5"/>
 </g>
 <!-- files -->

@@ -2,13 +2,23 @@ package oauth2
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/gavv/httpexpect/v2"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -17,12 +27,6 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/testutils"
 	"github.com/traPtitech/traQ/utils/random"
-	"go.uber.org/zap"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"testing"
-	"time"
 )
 
 const (
@@ -51,21 +55,33 @@ func TestMain(m *testing.M) {
 		env := &Env{}
 
 		// テスト用データベース接続
-		db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("%s%s", dbPrefix, key)))
+		engine, err := gorm.Open(mysql.New(mysql.Config{
+			DSN: fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("%s%s", dbPrefix, key)),
+		}))
 		if err != nil {
 			panic(err)
 		}
-		db.DB().SetMaxOpenConns(20)
-		if err := migration.DropAll(db); err != nil {
+		db, err := engine.DB()
+		if err != nil {
+			panic(err)
+		}
+		db.SetMaxOpenConns(20)
+		engine.Logger = logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger.Config{
+			SlowThreshold:             200 * time.Millisecond,
+			LogLevel:                  logger.Warn,
+			Colorful:                  true,
+			IgnoreRecordNotFoundError: true,
+		})
+		if err := migration.DropAll(engine); err != nil {
 			panic(err)
 		}
 
-		env.DB = db
+		env.DB = engine
 		env.Hub = hub.New()
 		env.SessStore = session.NewMemorySessionStore()
 
 		// テスト用リポジトリ作成
-		repo, err := repository.NewGormRepository(db, env.Hub, zap.NewNop())
+		repo, err := repository.NewGormRepository(engine, env.Hub, zap.NewNop())
 		if err != nil {
 			panic(err)
 		}
@@ -103,7 +119,8 @@ func TestMain(m *testing.M) {
 	// 後始末
 	for _, env := range envs {
 		env.Server.Close()
-		env.DB.Close()
+		db, _ := env.DB.DB()
+		_ = db.Close()
 		env.Hub.Close()
 	}
 	os.Exit(code)

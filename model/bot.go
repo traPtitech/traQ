@@ -3,10 +3,12 @@ package model
 import (
 	"database/sql/driver"
 	"errors"
-	"github.com/gofrs/uuid"
-	"github.com/json-iterator/go"
 	"strings"
 	"time"
+
+	"github.com/gofrs/uuid"
+	"github.com/json-iterator/go"
+	"gorm.io/gorm"
 )
 
 // BotState Bot状態
@@ -23,20 +25,23 @@ const (
 
 // Bot Bot構造体
 type Bot struct {
-	ID                uuid.UUID     `gorm:"type:char(36);not null;primary_key"`
-	BotUserID         uuid.UUID     `gorm:"type:char(36);not null;unique"`
-	Description       string        `gorm:"type:text;not null"`
-	VerificationToken string        `gorm:"type:varchar(30);not null"`
-	AccessTokenID     uuid.UUID     `gorm:"type:char(36);not null"`
-	PostURL           string        `gorm:"type:text;not null"`
-	SubscribeEvents   BotEventTypes `gorm:"type:text;not null"`
-	Privileged        bool          `gorm:"type:boolean;not null;default:false"`
-	State             BotState      `gorm:"type:tinyint;not null;default:0"`
-	BotCode           string        `gorm:"type:varchar(30);not null;unique"`
-	CreatorID         uuid.UUID     `gorm:"type:char(36);not null"`
-	CreatedAt         time.Time     `gorm:"precision:6"`
-	UpdatedAt         time.Time     `gorm:"precision:6"`
-	DeletedAt         *time.Time    `gorm:"precision:6"`
+	ID                uuid.UUID      `gorm:"type:char(36);not null;primaryKey"`
+	BotUserID         uuid.UUID      `gorm:"type:char(36);not null;unique"`
+	Description       string         `gorm:"type:text;not null"`
+	VerificationToken string         `gorm:"type:varchar(30);not null"`
+	AccessTokenID     uuid.UUID      `gorm:"type:char(36);not null"`
+	PostURL           string         `gorm:"type:text;not null"`
+	SubscribeEvents   BotEventTypes  `gorm:"type:text;not null"`
+	Privileged        bool           `gorm:"type:boolean;not null;default:false"`
+	State             BotState       `gorm:"type:tinyint;not null;default:0"`
+	BotCode           string         `gorm:"type:varchar(30);not null;unique"`
+	CreatorID         uuid.UUID      `gorm:"type:char(36);not null"`
+	CreatedAt         time.Time      `gorm:"precision:6"`
+	UpdatedAt         time.Time      `gorm:"precision:6"`
+	DeletedAt         gorm.DeletedAt `gorm:"precision:6"`
+
+	BotUser *User `gorm:"constraint:bots_bot_user_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:BotUserID"`
+	Creator *User `gorm:"constraint:bots_creator_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:CreatorID"`
 }
 
 // TableName Botのテーブル名
@@ -46,8 +51,8 @@ func (*Bot) TableName() string {
 
 // BotJoinChannel Bot参加チャンネル構造体
 type BotJoinChannel struct {
-	ChannelID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	BotID     uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	BotID     uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 }
 
 // TableName BotJoinChannelのテーブル名
@@ -57,7 +62,7 @@ func (*BotJoinChannel) TableName() string {
 
 // BotEventLog Botイベントログ
 type BotEventLog struct {
-	RequestID uuid.UUID    `gorm:"type:char(36);not null;primary_key"                json:"requestId"`
+	RequestID uuid.UUID    `gorm:"type:char(36);not null;primaryKey"                json:"requestId"`
 	BotID     uuid.UUID    `gorm:"type:char(36);not null;index:bot_id_date_time_idx" json:"botId"`
 	Event     BotEventType `gorm:"type:varchar(30);not null"                         json:"event"`
 	Body      string       `gorm:"type:text"                                         json:"-"`

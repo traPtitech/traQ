@@ -3,12 +3,13 @@ package cmd
 import (
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/twemoji"
-	"go.uber.org/zap"
 )
 
 // stampCommand traQスタンプ操作コマンド
@@ -38,12 +39,17 @@ func stampInstallEmojisCommand() *cobra.Command {
 			defer logger.Sync()
 
 			// Database
+			logger.Info("connecting database...")
 			db, err := c.getDatabase()
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.SetLogger(gormzap.New(logger.Named("gorm")))
-			defer db.Close()
+			db.Logger = gormzap.New(logger.Named("gorm"))
+			sqlDB, err := db.DB()
+			if err != nil {
+				logger.Fatal("failed to get *sql.DB", zap.Error(err))
+			}
+			defer sqlDB.Close()
 
 			// FileStorage
 			fs, err := c.getFileStorage()

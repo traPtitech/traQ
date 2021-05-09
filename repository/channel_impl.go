@@ -2,14 +2,16 @@ package repository
 
 import (
 	"bytes"
+	"time"
+
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/set"
-	"time"
 )
 
 var dmChannelRootUUID = uuid.Must(uuid.FromString(model.DirectMessageChannelRootID))
@@ -20,7 +22,7 @@ func (repo *GormRepository) CreateChannel(ch model.Channel, privateMembers set.U
 
 	ch.ID = uuid.Must(uuid.NewV4())
 	ch.IsPublic = true
-	ch.DeletedAt = nil
+	ch.DeletedAt = gorm.DeletedAt{}
 
 	if len(privateMembers) > 0 {
 		ch.IsPublic = false

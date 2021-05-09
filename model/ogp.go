@@ -3,8 +3,9 @@ package model
 import (
 	"database/sql/driver"
 	"errors"
-	"github.com/traPtitech/traQ/utils/optional"
 	"time"
+
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // OgpMedia OGPの画像・映像に関する情報の構造体
@@ -28,7 +29,7 @@ type Ogp struct {
 
 // OgpCache Ogpのキャッシュ情報
 type OgpCache struct {
-	ID        int       `gorm:"auto_increment;not null;primary_key"`
+	ID        int       `gorm:"auto_increment;not null;primaryKey"`
 	URL       string    `gorm:"type:text;not null"`
 	URLHash   string    `gorm:"type:char(40);not null;index"`
 	Valid     bool      `gorm:"type:boolean"`

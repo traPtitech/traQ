@@ -1,16 +1,18 @@
 package cmd
 
 import (
-	"database/sql"
-	"database/sql/driver"
 	"fmt"
 	"image"
 	"time"
 
 	"cloud.google.com/go/profiler"
-	"github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"google.golang.org/api/option"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
 	"github.com/traPtitech/traQ/router/auth"
@@ -22,8 +24,6 @@ import (
 	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/utils/storage"
-	"go.uber.org/zap"
-	"google.golang.org/api/option"
 )
 
 // Config 設定
@@ -321,24 +321,37 @@ func (c Config) getFileStorage() (storage.FileStorage, error) {
 }
 
 func (c Config) getDatabase() (*gorm.DB, error) {
-	connector, err := provideMySQLConnector(&c)
+	engine, err := gorm.Open(mysql.New(mysql.Config{
+		DSN: fmt.Sprintf(
+			"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&collation=utf8mb4_general_ci&parseTime=true",
+			c.MariaDB.Username,
+			c.MariaDB.Password,
+			c.MariaDB.Host,
+			c.MariaDB.Port,
+			c.MariaDB.Database,
+		),
+	}), &gorm.Config{
+		// MariaDBにはnanosecondを保存できないため、microsecondまでprecisionを予め落とす
+		NowFunc: func() time.Time {
+			return time.Now().Truncate(time.Microsecond)
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	db := sql.OpenDB(connector)
+	db, err := engine.DB()
+	if err != nil {
+		return nil, err
+	}
+
 	db.SetMaxOpenConns(c.MariaDB.Connection.MaxOpen)
 	db.SetMaxIdleConns(c.MariaDB.Connection.MaxIdle)
 	db.SetConnMaxLifetime(time.Duration(c.MariaDB.Connection.LifeTime) * time.Second)
-
-	engine, err := gorm.Open("mysql", db)
-	if err != nil {
-		_ = db.Close()
-		return nil, err
+	if c.DevMode {
+		engine.Logger.LogMode(logger.Info)
 	}
-	engine.BlockGlobalUpdate(true)
-	engine.LogMode(c.DevMode)
-	return engine.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"), nil
+	return engine.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4").Session(&gorm.Session{}), nil
 }
 
 func initStackdriverProfiler(c *Config) error {
@@ -361,22 +374,6 @@ func initSearchServiceIfAvailable(mm message.Manager, cm channel.Manager, repo r
 		return search.NewESEngine(mm, cm, repo, logger, config)
 	}
 	return search.NewNullEngine(), nil
-}
-
-func provideMySQLConnector(c *Config) (driver.Connector, error) {
-	conf := mysql.NewConfig()
-	conf.Net = "tcp"
-	conf.Addr = fmt.Sprintf("%s:%d", c.MariaDB.Host, c.MariaDB.Port)
-	conf.DBName = c.MariaDB.Database
-	conf.User = c.MariaDB.Username
-	conf.Passwd = c.MariaDB.Password
-	conf.Params = map[string]string{
-		"charset": "utf8mb4",
-	}
-	conf.Collation = "utf8mb4_general_ci"
-	conf.ParseTime = true
-
-	return mysql.NewConnector(conf)
 }
 
 func provideServerOriginString(c *Config) variable.ServerOriginString {

@@ -9,7 +9,7 @@ OGPキャッシュテーブルr
 
 ```sql
 CREATE TABLE `ogp_cache` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `url` text NOT NULL,
   `url_hash` char(40) NOT NULL,
   `valid` tinyint(1) DEFAULT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE `ogp_cache` (
 
 | Name | Type | Default | Nullable | Extra Definition | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | --------------- | -------- | ------- | ------- |
-| id | int(11) |  | false | auto_increment |  |  |  |
+| id | bigint(20) |  | false | auto_increment |  |  |  |
 | url | text |  | false |  |  |  | 対象ページのURL |
 | url_hash | char(40) |  | false |  |  |  | URLのSHA-1ハッシュ |
 | valid | tinyint(1) |  | true |  |  |  | ネガティブキャッシュでないか |

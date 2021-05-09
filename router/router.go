@@ -3,7 +3,6 @@ package router
 import (
 	"net/http"
 
-	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/leandro-lugaresi/hub"
@@ -20,6 +19,7 @@ import (
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/channel"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 type Router struct {

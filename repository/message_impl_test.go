@@ -1,10 +1,12 @@
 package repository
 
 import (
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/traPtitech/traQ/model"
-	"testing"
 )
 
 func TestRepositoryImpl_CreateMessage(t *testing.T) {
@@ -37,7 +39,7 @@ func TestRepositoryImpl_CreateMessage(t *testing.T) {
 			assert.Equal("test", m.Text)
 			assert.NotZero(m.CreatedAt)
 			assert.NotZero(m.UpdatedAt)
-			assert.Nil(m.DeletedAt)
+			assert.False(m.DeletedAt.Valid)
 		}
 
 		m, err = repo.CreateMessage(user.GetID(), channel.ID, "")
@@ -48,7 +50,7 @@ func TestRepositoryImpl_CreateMessage(t *testing.T) {
 			assert.Equal("", m.Text)
 			assert.NotZero(m.CreatedAt)
 			assert.NotZero(m.UpdatedAt)
-			assert.Nil(m.DeletedAt)
+			assert.False(m.DeletedAt.Valid)
 		}
 	})
 
@@ -64,7 +66,7 @@ func TestRepositoryImpl_CreateMessage(t *testing.T) {
 			assert.Equal("", m.Text)
 			assert.NotZero(m.CreatedAt)
 			assert.NotZero(m.UpdatedAt)
-			assert.Nil(m.DeletedAt)
+			assert.False(m.DeletedAt.Valid)
 		}
 	})
 }

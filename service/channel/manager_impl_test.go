@@ -2,22 +2,25 @@ package channel
 
 import (
 	"errors"
+	"sort"
+	"strconv"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/repository/mock_repository"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/set"
-	"go.uber.org/zap"
-	"sort"
-	"strconv"
-	"strings"
-	"testing"
-	"time"
 )
 
 func initCM(t *testing.T, repo repository.ChannelRepository) *managerImpl {
@@ -308,7 +311,7 @@ func TestManagerImpl_CreatePublicChannel(t *testing.T) {
 					IsVisible:  true,
 					CreatedAt:  createdAt,
 					UpdatedAt:  createdAt,
-					DeletedAt:  nil,
+					DeletedAt:  gorm.DeletedAt{},
 					ChildrenID: make([]uuid.UUID, 0),
 				}
 

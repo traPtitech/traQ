@@ -4,15 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/gofrs/uuid"
 	json "github.com/json-iterator/go"
 	"github.com/olivere/elastic/v7"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/message"
-	"go.uber.org/zap"
-	"strings"
-	"time"
 )
 
 const (
@@ -209,10 +211,10 @@ func (e *esEngine) sync() error {
 		if len(messages) == 0 {
 			break
 		}
-		if messages[len(messages)-1].DeletedAt == nil {
+		if !messages[len(messages)-1].DeletedAt.Valid {
 			return errors.New("expected DeletedAt to exist, but found nil")
 		}
-		lastDelete = *messages[len(messages)-1].DeletedAt
+		lastDelete = messages[len(messages)-1].DeletedAt.Time
 
 		bulk := e.client.Bulk().Index(getIndexName(esMessageIndex))
 		count := 0

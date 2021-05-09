@@ -28,7 +28,7 @@
 <text text-anchor="start" x="103.2882" y="-296.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
 <polygon fill="none" stroke="#000000" points="46.5,-255.5 46.5,-285.5 305.5,-285.5 305.5,-255.5 46.5,-255.5"/>
 <text text-anchor="start" x="53.5" y="-266.9" font-family="Arial" font-size="14.00" fill="#000000">expires_in </text>
-<text text-anchor="start" x="121.1774" y="-266.9" font-family="Arial" font-size="14.00" fill="#666666">[int(11)]</text>
+<text text-anchor="start" x="121.1774" y="-266.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
 <polygon fill="none" stroke="#000000" points="46.5,-225.5 46.5,-255.5 305.5,-255.5 305.5,-225.5 46.5,-225.5"/>
 <text text-anchor="start" x="53.5" y="-236.9" font-family="Arial" font-size="14.00" fill="#000000">redirect_uri </text>
 <text text-anchor="start" x="127.3892" y="-236.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>

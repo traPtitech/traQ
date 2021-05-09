@@ -197,10 +197,10 @@
 <text text-anchor="start" x="368.101" y="-1168.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
 <polygon fill="none" stroke="#000000" points="323,-1127.5 323,-1157.5 563,-1157.5 563,-1127.5 323,-1127.5"/>
 <text text-anchor="start" x="330" y="-1138.9" font-family="Arial" font-size="14.00" fill="#000000">width </text>
-<text text-anchor="start" x="366.5596" y="-1138.9" font-family="Arial" font-size="14.00" fill="#666666">[int(11)]</text>
+<text text-anchor="start" x="366.5596" y="-1138.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
 <polygon fill="none" stroke="#000000" points="323,-1097.5 323,-1127.5 563,-1127.5 563,-1097.5 323,-1097.5"/>
 <text text-anchor="start" x="330" y="-1108.9" font-family="Arial" font-size="14.00" fill="#000000">height </text>
-<text text-anchor="start" x="372.0182" y="-1108.9" font-family="Arial" font-size="14.00" fill="#666666">[int(11)]</text>
+<text text-anchor="start" x="372.0182" y="-1108.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
 </g>
 <!-- files_thumbnails&#45;&gt;files -->
 <g id="edge2" class="edge">

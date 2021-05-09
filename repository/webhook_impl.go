@@ -2,13 +2,15 @@ package repository
 
 import (
 	"encoding/base64"
+	"unicode/utf8"
+
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/rbac/role"
-	"unicode/utf8"
 )
 
 // CreateWebhook implements WebhookRepository interface.
@@ -42,7 +44,7 @@ func (repo *GormRepository) CreateWebhook(name, description string, channelID, i
 		// チャンネル検証
 		var ch model.Channel
 		if err := tx.First(&ch, &model.Channel{ID: channelID}).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
+			if err == gorm.ErrRecordNotFound {
 				return ArgError("channelID", "the Channel is not found")
 			}
 			return err
@@ -51,12 +53,11 @@ func (repo *GormRepository) CreateWebhook(name, description string, channelID, i
 			return ArgError("channelID", "private channels are not allowed")
 		}
 
+		// Create user, user_profile
 		if err := tx.Create(u).Error; err != nil {
 			return err
 		}
-		if err := tx.Create(u.Profile).Error; err != nil {
-			return err
-		}
+		// Create webhook_bot
 		return tx.Create(wb).Error
 	})
 	if err != nil {
@@ -103,7 +104,7 @@ func (repo *GormRepository) UpdateWebhook(id uuid.UUID, args UpdateWebhookArgs) 
 			// チャンネル検証
 			var ch model.Channel
 			if err := tx.First(&ch, &model.Channel{ID: args.ChannelID.UUID}).Error; err != nil {
-				if gorm.IsRecordNotFoundError(err) {
+				if err == gorm.ErrRecordNotFound {
 					return ArgError("args.ChannelID", "the Channel is not found")
 				}
 				return err
