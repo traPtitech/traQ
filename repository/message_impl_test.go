@@ -137,8 +137,11 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 	})
 	require.NoError(err)
 
-	m1 := mustMakeMessage(t, repo, user.GetID(), ch1.ID)
-	m2 := mustMakeMessage(t, repo, user.GetID(), ch2.ID)
+	for i := 0; i < 5; i++ {
+		mustMakeMessage(t, repo, user.GetID(), ch1.ID)
+	}
+	m6 := mustMakeMessage(t, repo, user.GetID(), ch1.ID)
+	m7 := mustMakeMessage(t, repo, user.GetID(), ch2.ID)
 
 	messageEquals := func(t *testing.T, expected, actual *model.Message) {
 		t.Helper()
@@ -163,9 +166,27 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 
 		if assert.NoError(t, err) {
 			assert.False(t, more)
-			assert.EqualValues(t, 2, len(messages))
-			messageEquals(t, m2, messages[0])
-			messageEquals(t, m1, messages[1])
+			assert.EqualValues(t, 7, len(messages))
+			messageEquals(t, m7, messages[0])
+			messageEquals(t, m6, messages[1])
+		}
+	})
+
+	t.Run("activity all with limit", func(t *testing.T) {
+		t.Parallel()
+
+		messages, more, err := repo.GetMessages(MessagesQuery{
+			Since:          optional.TimeFrom(time.Now().Add(-7 * 24 * time.Hour)),
+			Limit:          5,
+			ExcludeDMs:     true,
+			DisablePreload: true,
+		})
+
+		if assert.NoError(t, err) {
+			assert.True(t, more)
+			assert.EqualValues(t, 5, len(messages))
+			messageEquals(t, m7, messages[0])
+			messageEquals(t, m6, messages[1])
 		}
 	})
 
@@ -182,8 +203,8 @@ func TestRepositoryImpl_GetMessages(t *testing.T) {
 
 		if assert.NoError(t, err) {
 			assert.False(t, more)
-			assert.EqualValues(t, 1, len(messages))
-			messageEquals(t, m1, messages[0])
+			assert.EqualValues(t, 6, len(messages))
+			messageEquals(t, m6, messages[0])
 		}
 	})
 }
