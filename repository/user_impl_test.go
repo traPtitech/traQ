@@ -2,18 +2,21 @@ package repository
 
 import (
 	"fmt"
+	"strings"
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
 	random2 "github.com/traPtitech/traQ/utils/random"
-	"strings"
-	"testing"
 )
 
 func TestRepositoryImpl_GetUsers(t *testing.T) {
 	t.Parallel()
 	repo, assert, require := setup(t, ex2)
+	mustMakeUser(t, repo, "traq")
 
 	u0, err := repo.GetUserByName("traq", false)
 	require.NoError(err)

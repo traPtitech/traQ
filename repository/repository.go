@@ -4,7 +4,7 @@ package repository
 type Repository interface {
 	// Sync DBなどとデータを同期します
 	//
-	// 返り値がtrueの場合、traqユーザーが作成されました。
+	// スキーマが初期化された場合、trueを返します。
 	// DBによるエラーを返すことがあります。
 	Sync() (bool, error)
 	UserRepository

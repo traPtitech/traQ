@@ -16,6 +16,8 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service"
+	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -111,6 +113,23 @@ func serveCommand() *cobra.Command {
 			// 初期化
 			if init {
 				logger.Info("data initializing...")
+
+				// 管理者ユーザーの作成
+				fid, err := file.GenerateIconFile(server.SS.FileManager, "traq")
+				if err != nil {
+					logger.Fatal("failed to generate icon file", zap.Error(err))
+				}
+				u, err := repo.CreateUser(repository.CreateUserArgs{
+					Name:       "traq",
+					Password:   "traq",
+					Role:       role.Admin,
+					IconFileID: fid,
+				})
+				if err == nil {
+					logger.Info("traq user was created", zap.Stringer("uid", u.GetID()))
+				} else {
+					logger.Fatal("failed to init admin user", zap.Error(err))
+				}
 
 				// generalチャンネル作成
 				if ch, err := server.SS.ChannelManager.CreatePublicChannel("general", uuid.Nil, uuid.Nil); err == nil {

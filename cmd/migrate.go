@@ -28,7 +28,8 @@ func migrateCommand() *cobra.Command {
 					return err
 				}
 			}
-			return migration.Migrate(engine)
+			_, err = migration.Migrate(engine)
+			return err
 		},
 	}
 

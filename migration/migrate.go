@@ -11,7 +11,8 @@ import (
 )
 
 // Migrate データベースマイグレーションを実行します
-func Migrate(db *gorm.DB) error {
+// 初回実行でスキーマが初期化された場合、initでtrueを返します
+func Migrate(db *gorm.DB) (init bool, err error) {
 	m := gormigrate.New(db, &gormigrate.Options{
 		TableName:                 "migrations",
 		IDColumnName:              "id",
@@ -22,6 +23,7 @@ func Migrate(db *gorm.DB) error {
 	m.InitSchema(func(db *gorm.DB) error {
 		// 初回のみに呼ばれる
 		// 全ての最新のデータベース定義を書く事
+		init = true
 
 		// テーブル
 		if err := db.AutoMigrate(AllTables()...); err != nil {
@@ -32,7 +34,8 @@ func Migrate(db *gorm.DB) error {
 		// (user_role, user_role_permissions, user_role_inheritances 作成)
 		return db.Create(role.SystemRoleModels()).Error
 	})
-	return m.Migrate()
+	err = m.Migrate()
+	return
 }
 
 // DropAll データベースの全テーブルを削除します
