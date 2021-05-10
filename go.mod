@@ -30,7 +30,7 @@ require (
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
 	github.com/json-iterator/go v1.1.11
-	github.com/labstack/echo/v4 v4.2.2
+	github.com/labstack/echo/v4 v4.3.0
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/motoki317/go-waveform v0.0.2
 	github.com/ncw/swift v1.0.53
@@ -49,7 +49,7 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.16.0
-	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
+	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6
 	golang.org/x/image v0.0.0-20200618115811-c13761719519 // indirect
 	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
