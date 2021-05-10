@@ -245,8 +245,7 @@ func (repo *GormRepository) GetMessages(query MessagesQuery) (messages []*model.
 // GetUpdatedMessagesAfter implements MessageRepository interface.
 func (repo *GormRepository) GetUpdatedMessagesAfter(after time.Time, limit int) (messages []*model.Message, more bool, err error) {
 	err = repo.db.
-		Limit(limit+1).
-		Raw("SELECT * FROM `messages` USE INDEX (idx_messages_deleted_at_updated_at) WHERE `messages`.`deleted_at` IS NULL AND `messages`.`updated_at` > ? ORDER BY `messages`.`updated_at`", after).
+		Raw("SELECT * FROM `messages` USE INDEX (idx_messages_deleted_at_updated_at) WHERE `messages`.`deleted_at` IS NULL AND `messages`.`updated_at` > ? ORDER BY `messages`.`updated_at` LIMIT ?", after, limit+1).
 		Scan(&messages).
 		Error
 
@@ -260,8 +259,7 @@ func (repo *GormRepository) GetUpdatedMessagesAfter(after time.Time, limit int) 
 // GetDeletedMessagesAfter implements MessageRepository interface.
 func (repo *GormRepository) GetDeletedMessagesAfter(after time.Time, limit int) (messages []*model.Message, more bool, err error) {
 	err = repo.db.
-		Limit(limit+1).
-		Raw("SELECT * FROM `messages` USE INDEX (idx_messages_deleted_at_updated_at) WHERE `messages`.`deleted_at` > ? ORDER BY `messages`.`deleted_at`", after).
+		Raw("SELECT * FROM `messages` USE INDEX (idx_messages_deleted_at_updated_at) WHERE `messages`.`deleted_at` > ? ORDER BY `messages`.`deleted_at` LIMIT ?", after, limit+1).
 		Scan(&messages).
 		Error
 
