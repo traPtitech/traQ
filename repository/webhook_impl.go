@@ -188,7 +188,10 @@ func (repo *GormRepository) DeleteWebhook(id uuid.UUID) error {
 		if err := tx.Delete(&model.WebhookBot{ID: id}).Error; err != nil {
 			return err
 		}
-		return tx.Model(&model.User{}).Where(&model.User{ID: b.BotUserID}).Update("status", model.UserAccountStatusDeactivated).Error
+		if err := tx.Model(&model.User{}).Where(&model.User{ID: b.BotUserID}).Update("status", model.UserAccountStatusDeactivated).Error; err != nil {
+			return err
+		}
+		return nil
 	})
 	if err != nil {
 		return err

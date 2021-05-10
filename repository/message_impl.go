@@ -145,7 +145,10 @@ func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 		if err := tx.Delete(model.Pin{}, &model.Pin{MessageID: messageID}).Error; err != nil {
 			return err
 		}
-		return tx.Delete(model.ClipFolderMessage{}, &model.ClipFolderMessage{MessageID: messageID}).Error
+		if err := tx.Delete(model.ClipFolderMessage{}, &model.ClipFolderMessage{MessageID: messageID}).Error; err != nil {
+			return err
+		}
+		return nil
 	})
 	if err != nil {
 		return err

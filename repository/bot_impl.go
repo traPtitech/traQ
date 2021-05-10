@@ -86,7 +86,10 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, ico
 		if err := tx.Create(t).Error; err != nil {
 			return err
 		}
-		return tx.Create(b).Error
+		if err := tx.Create(b).Error; err != nil {
+			return err
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -349,7 +352,10 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 		if err := tx.Create(t).Error; err != nil {
 			return err
 		}
-		return tx.Save(&bot).Error
+		if err := tx.Save(&bot).Error; err != nil {
+			return err
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -388,7 +394,10 @@ func (repo *GormRepository) DeleteBot(id uuid.UUID) error {
 		if err := tx.Delete(&model.OAuth2Token{}, &model.OAuth2Token{ID: b.AccessTokenID}).Error; err != nil {
 			return err
 		}
-		return tx.Delete(&model.Bot{}, &model.Bot{ID: id}).Error
+		if err := tx.Delete(&model.Bot{}, &model.Bot{ID: id}).Error; err != nil {
+			return err
+		}
+		return nil
 	})
 	if err != nil {
 		return err

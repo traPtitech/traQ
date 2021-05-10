@@ -106,7 +106,10 @@ func (repo *GormRepository) DeleteFileMeta(fileID uuid.UUID) error {
 	if err := repo.db.Delete(&model.FileMeta{ID: fileID}).Error; err != nil {
 		return err
 	}
-	return repo.db.Delete(&model.FileThumbnail{}, &model.FileThumbnail{FileID: fileID}).Error
+	if err := repo.db.Delete(&model.FileThumbnail{}, &model.FileThumbnail{FileID: fileID}).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 // IsFileAccessible implements FileRepository interface.
