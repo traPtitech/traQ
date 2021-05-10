@@ -197,6 +197,7 @@ func (repo *GormRepository) GetMessages(query MessagesQuery) (messages []*model.
 
 	if query.ChannelsSubscribedByUser != uuid.Nil || query.ExcludeDMs {
 		// JOIN時にidx_messages_channel_id_deleted_at_created_atが使われてしまい、JOIN、WHERE後のレコード数が多い場合はfile sortで重くなる
+		// NOTE: gorm.io/hints はJOINと同時に使うと順番が壊れる
 		tx = tx.Joins("USE INDEX (`idx_messages_deleted_at_created_at`) INNER JOIN channels ON messages.channel_id = channels.id")
 	}
 

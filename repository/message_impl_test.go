@@ -2,11 +2,13 @@ package repository
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 func TestRepositoryImpl_CreateMessage(t *testing.T) {
@@ -120,6 +122,70 @@ func TestRepositoryImpl_GetMessageByID(t *testing.T) {
 
 	_, err = repo.GetMessageByID(uuid.Must(uuid.NewV4()))
 	assert.Error(err)
+}
+
+func TestRepositoryImpl_GetMessages(t *testing.T) {
+	t.Parallel()
+	repo, _, require, user := setupWithUser(t, ex3)
+	ch1 := mustMakeChannel(t, repo, rand)
+	ch2 := mustMakeChannel(t, repo, rand)
+
+	_, _, err := repo.ChangeChannelSubscription(ch1.ID, ChangeChannelSubscriptionArgs{
+		Subscription: map[uuid.UUID]model.ChannelSubscribeLevel{
+			user.GetID(): model.ChannelSubscribeLevelMarkAndNotify,
+		},
+	})
+	require.NoError(err)
+
+	m1 := mustMakeMessage(t, repo, user.GetID(), ch1.ID)
+	m2 := mustMakeMessage(t, repo, user.GetID(), ch2.ID)
+
+	messageEquals := func(t *testing.T, expected, actual *model.Message) {
+		t.Helper()
+
+		assert.EqualValues(t, expected.ID, actual.ID)
+		assert.EqualValues(t, expected.Text, actual.Text)
+		assert.EqualValues(t, expected.UserID, actual.UserID)
+		assert.EqualValues(t, expected.ChannelID, actual.ChannelID)
+		assert.NotEmpty(t, actual.CreatedAt)
+		assert.NotEmpty(t, actual.UpdatedAt)
+	}
+
+	t.Run("activity all", func(t *testing.T) {
+		t.Parallel()
+
+		messages, more, err := repo.GetMessages(MessagesQuery{
+			Since:          optional.TimeFrom(time.Now().Add(-7 * 24 * time.Hour)),
+			Limit:          50,
+			ExcludeDMs:     true,
+			DisablePreload: true,
+		})
+
+		if assert.NoError(t, err) {
+			assert.False(t, more)
+			assert.EqualValues(t, 2, len(messages))
+			messageEquals(t, m2, messages[0])
+			messageEquals(t, m1, messages[1])
+		}
+	})
+
+	t.Run("activity subscription", func(t *testing.T) {
+		t.Parallel()
+
+		messages, more, err := repo.GetMessages(MessagesQuery{
+			Since:                    optional.TimeFrom(time.Now().Add(-7 * 24 * time.Hour)),
+			Limit:                    50,
+			ExcludeDMs:               true,
+			DisablePreload:           true,
+			ChannelsSubscribedByUser: user.GetID(),
+		})
+
+		if assert.NoError(t, err) {
+			assert.False(t, more)
+			assert.EqualValues(t, 1, len(messages))
+			messageEquals(t, m1, messages[0])
+		}
+	})
 }
 
 func TestRepositoryImpl_SetMessageUnread(t *testing.T) {
