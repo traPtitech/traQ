@@ -7,8 +7,6 @@ import (
 
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/service/rbac/role"
-	"github.com/traPtitech/traQ/utils/gormutil"
 )
 
 // GormRepository リポジトリ実装
@@ -21,7 +19,7 @@ type GormRepository struct {
 
 // Sync implements Repository interface.
 func (repo *GormRepository) Sync() (init bool, err error) {
-	if err := migration.Migrate(repo.db); err != nil {
+	if init, err = migration.Migrate(repo.db); err != nil {
 		return false, err
 	}
 
@@ -32,21 +30,7 @@ func (repo *GormRepository) Sync() (init bool, err error) {
 	}
 	repo.stamps = makeStampRepository(stamps)
 
-	// 管理者ユーザーの確認
-	if exists, err := gormutil.RecordExists(repo.db, &model.User{Role: role.Admin}); err != nil {
-		return false, err
-	} else if !exists {
-		_, err := repo.CreateUser(CreateUserArgs{
-			Name:     "traq",
-			Password: "traq",
-			Role:     role.Admin,
-		})
-		if err != nil {
-			return false, err
-		}
-		return true, err
-	}
-	return false, nil
+	return
 }
 
 // NewGormRepository リポジトリ実装を初期化して生成します
