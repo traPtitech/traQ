@@ -51,17 +51,30 @@ func v27() *gormigrate.Migration {
 				}
 			}
 
+			alterColumns := []struct {
+				dst   interface{}
+				field string
+			}{
+				// table, column name
+				{&v27BotEventLog{}, "code"},
+				{&v27FileMeta{}, "type"},
+				{&v27FileThumbnail{}, "width"},
+				{&v27FileThumbnail{}, "height"},
+				{&v27MessageStamp{}, "count"},
+				{&v27OAuth2Authorize{}, "expires_in"},
+				{&v27OAuth2Token{}, "expires_in"},
+				{&v27OgpCache{}, "id"},
+			}
+			for _, c := range alterColumns {
+				if err := db.Migrator().AlterColumn(c.dst, c.field); err != nil {
+					return err
+				}
+			}
+
 			return db.AutoMigrate(
 				&v27UserGroup{},
 				&v27UserGroupAdmin{},
 				&v27UserGroupMember{},
-				&v27BotEventLog{},
-				&v27FileMeta{},
-				&v27FileThumbnail{},
-				&v27MessageStamp{},
-				&v27OAuth2Authorize{},
-				&v27OAuth2Token{},
-				&v27OgpCache{},
 			)
 		},
 		Rollback: nil,

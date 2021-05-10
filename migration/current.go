@@ -37,7 +37,7 @@ func Migrations() []*gormigrate.Migration {
 		v24(), // ユーザー設定追加
 		v25(), // FileMetaにIsAnimatedImageを追加
 		v26(), // FileMetaからThumbnail情報を分離
-		v27(), // FKの追加、FKのリネーム、idx_messages_channel_idの削除
+		v27(), // Gorm v2移行: FKの追加、FKのリネーム、一部フィールドのデータ型変更、idx_messages_channel_idの削除
 	}
 }
 
@@ -59,7 +59,6 @@ func AllTables() []interface{} {
 		&model.OAuth2Token{},
 		&model.MessageReport{},
 		&model.WebhookBot{},
-		&model.MessageStamp{},
 		&model.Stamp{},
 		&model.UsersTag{},
 		&model.Unread{},
@@ -85,6 +84,7 @@ func AllTables() []interface{} {
 		&model.ClipFolder{},
 		&model.UserSettings{},
 		&model.User{},
+		&model.MessageStamp{},
 		&model.SessionRecord{},
 		&model.OgpCache{},
 	}
