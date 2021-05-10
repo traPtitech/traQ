@@ -3,13 +3,14 @@ package model
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/gofrs/uuid"
 	"time"
+
+	"github.com/gofrs/uuid"
 )
 
 // SessionRecord GORM用Session構造体
 type SessionRecord struct {
-	Token       string    `gorm:"type:varchar(50);primary_key"`
+	Token       string    `gorm:"type:varchar(50);primaryKey"`
 	ReferenceID uuid.UUID `gorm:"type:char(36);unique"`
 	UserID      uuid.UUID `gorm:"type:varchar(36);index"`
 	Data        []byte    `gorm:"type:longblob"`

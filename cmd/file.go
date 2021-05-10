@@ -2,15 +2,17 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/gormzap"
-	"go.uber.org/zap"
-	"io"
 )
 
 // fileCommand traQ管理ファイル操作コマンド
@@ -48,8 +50,12 @@ func filePruneCommand() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.SetLogger(gormzap.New(logger.Named("gorm")))
-			defer db.Close()
+			db.Logger = gormzap.New(logger.Named("gorm"))
+			sqlDB, err := db.DB()
+			if err != nil {
+				logger.Fatal("failed to get *sql.DB", zap.Error(err))
+			}
+			defer sqlDB.Close()
 
 			// FileStorage
 			fs, err := c.getFileStorage()
@@ -75,7 +81,7 @@ func filePruneCommand() *cobra.Command {
 				tmp   []*model.FileMeta
 			)
 			if err := db.
-				Where("id NOT IN ?", db.Table("users").Select("icon").SubQuery()).
+				Where("id NOT IN ?", db.Table("users").Select("icon")).
 				Where(model.FileMeta{Type: model.FileTypeIcon}).
 				Find(&tmp).
 				Error; err != nil {
@@ -84,7 +90,7 @@ func filePruneCommand() *cobra.Command {
 			files = append(files, tmp...)
 			tmp = nil
 			if err := db.
-				Where("id NOT IN ?", db.Table("stamps").Select("file_id").SubQuery()).
+				Where("id NOT IN ?", db.Table("stamps").Select("file_id")).
 				Where(model.FileMeta{Type: model.FileTypeStamp}).
 				Find(&tmp).
 				Error; err != nil {
@@ -142,8 +148,12 @@ func genWaveform() *cobra.Command {
 			if err != nil {
 				logger.Fatal("failed to connect database", zap.Error(err))
 			}
-			db.SetLogger(gormzap.New(logger.Named("gorm")))
-			defer db.Close()
+			db.Logger = gormzap.New(logger.Named("gorm"))
+			sqlDB, err := db.DB()
+			if err != nil {
+				logger.Fatal("failed to get *sql.DB", zap.Error(err))
+			}
+			defer sqlDB.Close()
 
 			// FileStorage
 			fs, err := c.getFileStorage()

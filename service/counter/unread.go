@@ -3,10 +3,10 @@ package counter
 import (
 	"fmt"
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
+	"gorm.io/gorm"
 	"sync"
 )
 

@@ -2,20 +2,25 @@ package repository
 
 import (
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
+	"log"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
-	"go.uber.org/zap"
-	"os"
-	"testing"
 )
 
 const (
@@ -51,16 +56,28 @@ func TestMain(m *testing.M) {
 	}
 
 	for _, key := range dbs {
-		db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("%s%s", dbPrefix, key)))
+		engine, err := gorm.Open(mysql.New(mysql.Config{
+			DSN: fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true", user, pass, host, port, fmt.Sprintf("%s%s", dbPrefix, key)),
+		}))
 		if err != nil {
 			panic(err)
 		}
-		db.DB().SetMaxOpenConns(20)
-		if err := migration.DropAll(db); err != nil {
+		db, err := engine.DB()
+		if err != nil {
+			panic(err)
+		}
+		db.SetMaxOpenConns(20)
+		engine.Logger = logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger.Config{
+			SlowThreshold:             200 * time.Millisecond,
+			LogLevel:                  logger.Warn,
+			Colorful:                  true,
+			IgnoreRecordNotFoundError: true,
+		})
+		if err := migration.DropAll(engine); err != nil {
 			panic(err)
 		}
 
-		repo, err := NewGormRepository(db, hub.New(), zap.NewNop())
+		repo, err := NewGormRepository(engine, hub.New(), zap.NewNop())
 		if err != nil {
 			panic(err)
 		}
@@ -75,7 +92,8 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	for _, v := range repositories {
-		_ = v.db.Close()
+		db, _ := v.db.DB()
+		_ = db.Close()
 		v.hub.Close()
 	}
 	os.Exit(code)
@@ -200,6 +218,7 @@ func mustMakeDummyFile(t *testing.T, repo Repository) *model.FileMeta {
 		Mime: "application/octet-stream",
 		Size: 10,
 		Hash: "d41d8cd98f00b204e9800998ecf8427e",
+		Type: model.FileTypeUserFile,
 		Thumbnails: []model.FileThumbnail{
 			{
 				Type:   model.ThumbnailTypeImage,
@@ -284,7 +303,7 @@ func mustMakeClipFolderMessage(t *testing.T, repo Repository, folderID, messageI
 
 func count(t *testing.T, where *gorm.DB) int {
 	t.Helper()
-	c := 0
+	var c int64
 	require.NoError(t, where.Count(&c).Error)
-	return c
+	return int(c)
 }

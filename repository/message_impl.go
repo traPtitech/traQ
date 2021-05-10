@@ -2,14 +2,17 @@ package repository
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/message"
-	"strings"
-	"time"
 )
 
 // CreateMessage implements MessageRepository interface.
@@ -37,7 +40,7 @@ func (repo *GormRepository) CreateMessage(userID, channelID uuid.UUID, text stri
 		}
 
 		return tx.
-			Set("gorm:insert_option", fmt.Sprintf("ON DUPLICATE KEY UPDATE message_id = '%s', date_time = '%s'", clm.MessageID, clm.DateTime.In(time.UTC).Format("2006-01-02 15:04:05.999999"))).
+			Clauses(clause.OnConflict{UpdateAll: true}).
 			Create(clm).
 			Error
 	})
@@ -133,14 +136,17 @@ func (repo *GormRepository) DeleteMessage(messageID uuid.UUID) error {
 			return err
 		}
 
-		errs := tx.
-			Delete(&m).
-			Delete(model.Unread{}, &model.Unread{MessageID: messageID}).
-			Delete(model.Pin{}, &model.Pin{MessageID: messageID}).
-			Delete(model.ClipFolderMessage{}, &model.ClipFolderMessage{MessageID: messageID}).
-			GetErrors()
-		if len(errs) > 0 {
-			return errs[0]
+		if err := tx.Delete(&m).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(model.Unread{}, &model.Unread{MessageID: messageID}).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(model.Pin{}, &model.Pin{MessageID: messageID}).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(model.ClipFolderMessage{}, &model.ClipFolderMessage{MessageID: messageID}).Error; err != nil {
+			return err
 		}
 		return nil
 	})
@@ -288,7 +294,7 @@ func (repo *GormRepository) SetMessageUnread(userID, messageID uuid.UUID, notice
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var u model.Unread
 		if err := tx.First(&u, &model.Unread{UserID: userID, MessageID: messageID}).Error; err != nil {
-			if gorm.IsRecordNotFoundError(err) {
+			if err == gorm.ErrRecordNotFound {
 				return tx.Create(&model.Unread{UserID: userID, MessageID: messageID, Noticeable: noticeable}).Error
 			}
 			return err
@@ -383,7 +389,12 @@ func (repo *GormRepository) AddStampToMessage(messageID, stampID, userID uuid.UU
 	}
 
 	err = repo.db.
-		Set("gorm:insert_option", fmt.Sprintf("ON DUPLICATE KEY UPDATE count = count + %d, updated_at = now()", count)).
+		Clauses(clause.OnConflict{
+			DoUpdates: clause.Assignments(map[string]interface{}{
+				"count":      gorm.Expr(fmt.Sprintf("count + %d", count)),
+				"updated_at": gorm.Expr("now()"),
+			}),
+		}).
 		Create(&model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID, Count: count}).
 		Error
 	if err != nil {

@@ -2,11 +2,13 @@ package rbac
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
+	"sync"
+
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/rbac/role"
-	"sync"
 )
 
 type rbacImpl struct {
@@ -89,7 +91,7 @@ func (r *rbacImpl) reload() error {
 	for _, v := range roleMap {
 		p := roles[v.Name]
 		for _, i := range v.Inheritances {
-			p.inheritances.Add(roles[i.SubRole])
+			p.inheritances.Add(roles[i.Name])
 		}
 	}
 

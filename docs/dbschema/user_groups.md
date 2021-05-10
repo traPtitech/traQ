@@ -26,7 +26,7 @@ CREATE TABLE `user_groups` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false |  |  |  |
+| id | char(36) |  | false | [user_group_admins](user_group_admins.md) [user_group_members](user_group_members.md) |  |  |
 | name | varchar(30) |  | false |  |  | グループ名 |
 | description | text |  | false |  |  | グループ説明 |
 | type | varchar(30) |  | false |  |  | グループタイプ |

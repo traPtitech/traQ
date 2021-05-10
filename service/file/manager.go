@@ -2,17 +2,19 @@ package file
 
 import (
 	"errors"
-	vd "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/utils/optional"
-	"github.com/traPtitech/traQ/utils/validator"
 	"image"
 	"io"
 	"mime"
 	"path/filepath"
+
+	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
+	"github.com/gofrs/uuid"
+
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/validator"
 )
 
 var (

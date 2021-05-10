@@ -4,7 +4,6 @@ package cmd
 
 import (
 	"github.com/google/wire"
-	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router"
@@ -23,6 +22,7 @@ import (
 	"github.com/traPtitech/traQ/service/ws"
 	"github.com/traPtitech/traQ/utils/storage"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 func newServer(hub *hub.Hub, db *gorm.DB, repo repository.Repository, fs storage.FileStorage, logger *zap.Logger, c *Config) (*Server, error) {

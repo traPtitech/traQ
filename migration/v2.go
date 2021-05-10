@@ -1,11 +1,14 @@
 package migration
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
-	"github.com/traPtitech/traQ/service/rbac/role"
-	"gopkg.in/gormigrate.v1"
+	"fmt"
 	"time"
+
+	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/gofrs/uuid"
+	"gorm.io/gorm"
+
+	"github.com/traPtitech/traQ/service/rbac/role"
 )
 
 // v2 RBAC周りのリフォーム
@@ -13,17 +16,18 @@ func v2() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "2",
 		Migrate: func(db *gorm.DB) error {
-			if err := db.AutoMigrate(&v2UserRole{}, &v2RoleInheritance{}, &v2RolePermission{}).Error; err != nil {
+			if err := db.AutoMigrate(&v2UserRole{}, &v2RoleInheritance{}, &v2RolePermission{}); err != nil {
 				return err
 			}
 
-			foreignKeys := [][5]string{
-				{"user_role_inheritances", "role", "user_roles(name)", "CASCADE", "CASCADE"},
-				{"user_role_inheritances", "sub_role", "user_roles(name)", "CASCADE", "CASCADE"},
-				{"user_role_permissions", "role", "user_roles(name)", "CASCADE", "CASCADE"},
+			foreignKeys := [][6]string{
+				// table name, constraint name, field name, references, on delete, on update
+				{"user_role_inheritances", "user_role_inheritances_role_user_roles_name_foreign", "role", "user_roles(name)", "CASCADE", "CASCADE"},
+				{"user_role_inheritances", "user_role_inheritances_sub_role_user_roles_name_foreign", "sub_role", "user_roles(name)", "CASCADE", "CASCADE"},
+				{"user_role_permissions", "user_role_permissions_role_user_roles_name_foreign", "role", "user_roles(name)", "CASCADE", "CASCADE"},
 			}
 			for _, c := range foreignKeys {
-				if err := db.Table(c[0]).AddForeignKey(c[1], c[2], c[3], c[4]).Error; err != nil {
+				if err := db.Exec(fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s ON DELETE %s ON UPDATE %s", c[0], c[1], c[2], c[3], c[4], c[5])).Error; err != nil {
 					return err
 				}
 			}
@@ -39,13 +43,13 @@ func v2() *gormigrate.Migration {
 				}
 			}
 
-			return db.DropTableIfExists(&v2Override{}).Error
+			return db.Migrator().DropTable(&v2Override{})
 		},
 	}
 }
 
 type v2UserRole struct {
-	Name        string `gorm:"type:varchar(30);not null;primary_key"`
+	Name        string `gorm:"type:varchar(30);not null;primaryKey"`
 	Oauth2Scope bool   `gorm:"type:boolean;not null;default:false"`
 	System      bool   `gorm:"type:boolean;not null;default:false"`
 }
@@ -55,8 +59,8 @@ func (*v2UserRole) TableName() string {
 }
 
 type v2RoleInheritance struct {
-	Role    string `gorm:"type:varchar(30);not null;primary_key"`
-	SubRole string `gorm:"type:varchar(30);not null;primary_key"`
+	Role    string `gorm:"type:varchar(30);not null;primaryKey"`
+	SubRole string `gorm:"type:varchar(30);not null;primaryKey"`
 }
 
 func (*v2RoleInheritance) TableName() string {
@@ -64,8 +68,8 @@ func (*v2RoleInheritance) TableName() string {
 }
 
 type v2RolePermission struct {
-	Role       string `gorm:"type:varchar(30);not null;primary_key"`
-	Permission string `gorm:"type:varchar(30);not null;primary_key"`
+	Role       string `gorm:"type:varchar(30);not null;primaryKey"`
+	Permission string `gorm:"type:varchar(30);not null;primaryKey"`
 }
 
 func (*v2RolePermission) TableName() string {
@@ -73,8 +77,8 @@ func (*v2RolePermission) TableName() string {
 }
 
 type v2Override struct {
-	UserID     uuid.UUID `gorm:"type:char(36);primary_key"`
-	Permission string    `gorm:"type:varchar(50);primary_key"`
+	UserID     uuid.UUID `gorm:"type:char(36);primaryKey"`
+	Permission string    `gorm:"type:varchar(50);primaryKey"`
 	Validity   bool
 	CreatedAt  time.Time `gorm:"precision:6"`
 	UpdatedAt  time.Time `gorm:"precision:6"`

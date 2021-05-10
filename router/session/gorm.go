@@ -3,15 +3,17 @@ package session
 import (
 	"bytes"
 	"encoding/gob"
-	"github.com/gofrs/uuid"
-	lru "github.com/hashicorp/golang-lru"
-	"github.com/jinzhu/gorm"
-	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gofrs/uuid"
+	lru "github.com/hashicorp/golang-lru"
+	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
+
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/random"
 )
 
 func init() {
@@ -207,7 +209,7 @@ func (ss *sessionStore) GetSessionByToken(token string) (Session, error) {
 		return newSession(ss.db, r.Token, r.ReferenceID, r.UserID, r.Created, data), nil
 	}
 
-	if gorm.IsRecordNotFoundError(err) {
+	if gorm.ErrRecordNotFound == err {
 		return nil, ErrSessionNotFound
 	}
 	return nil, err
@@ -262,7 +264,7 @@ func (ss *sessionStore) RevokeSessionByRefID(refID uuid.UUID) error {
 
 	var r model.SessionRecord
 	if err := ss.db.First(&r, &model.SessionRecord{ReferenceID: refID}).Error; err != nil {
-		if gorm.IsRecordNotFoundError(err) {
+		if gorm.ErrRecordNotFound == err {
 			return nil
 		}
 		return err

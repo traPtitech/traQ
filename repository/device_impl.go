@@ -2,7 +2,8 @@ package repository
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/set"
 )
@@ -23,7 +24,7 @@ func (repo *GormRepository) RegisterDevice(userID uuid.UUID, token string) error
 				return ArgError("Token", "the Token has already been associated with other user")
 			}
 			return nil
-		} else if !gorm.IsRecordNotFoundError(err) {
+		} else if err != gorm.ErrRecordNotFound {
 			return err
 		}
 

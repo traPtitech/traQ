@@ -1,12 +1,14 @@
 package repository
 
 import (
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
-	"testing"
 )
 
 func TestGormRepository_SaveFileMeta(t *testing.T) {
@@ -27,6 +29,7 @@ func TestGormRepository_SaveFileMeta(t *testing.T) {
 			Mime: "application/octet-stream",
 			Size: 10,
 			Hash: "d41d8cd98f00b204e9800998ecf8427e",
+			Type: model.FileTypeUserFile,
 		}
 		acl := []*model.FileACLEntry{
 			{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)},
@@ -35,7 +38,7 @@ func TestGormRepository_SaveFileMeta(t *testing.T) {
 		err := repo.SaveFileMeta(meta, acl)
 		if assert.NoError(t, err) {
 			assert.NotEmpty(t, meta.CreatedAt)
-			assert.Nil(t, meta.DeletedAt)
+			assert.False(t, meta.DeletedAt.Valid)
 		}
 	})
 }
@@ -89,7 +92,7 @@ func TestGormRepository_DeleteFileMeta(t *testing.T) {
 
 		err := repo.DeleteFileMeta(f.ID)
 		if assert.NoError(t, err) {
-			assert.Equal(t, 0, count(t, getDB(repo).Model(&model.FileMeta{ID: f.ID})))
+			assert.Equal(t, 0, count(t, getDB(repo).Model(&model.FileMeta{}).Where(&model.FileMeta{ID: f.ID})))
 		}
 	})
 
@@ -155,6 +158,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			Mime: "application/octet-stream",
 			Size: 10,
 			Hash: "d41d8cd98f00b204e9800998ecf8427e",
+			Type: model.FileTypeUserFile,
 		}
 		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
 			{UserID: optional.UUIDFrom(user.GetID()), Allow: optional.BoolFrom(true)},
@@ -200,6 +204,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			Mime: "application/octet-stream",
 			Size: 10,
 			Hash: "d41d8cd98f00b204e9800998ecf8427e",
+			Type: model.FileTypeUserFile,
 		}
 		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
 			{UserID: optional.UUIDFrom(user.GetID()), Allow: optional.BoolFrom(true)},
@@ -255,6 +260,7 @@ func TestGormRepository_IsFileAccessible(t *testing.T) {
 			Mime: "application/octet-stream",
 			Size: 10,
 			Hash: "d41d8cd98f00b204e9800998ecf8427e",
+			Type: model.FileTypeUserFile,
 		}
 		err := repo.SaveFileMeta(meta, []*model.FileACLEntry{
 			{UserID: optional.UUIDFrom(uuid.Nil), Allow: optional.BoolFrom(true)},

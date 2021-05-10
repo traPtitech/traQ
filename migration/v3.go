@@ -1,10 +1,12 @@
 package migration
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"fmt"
 	"time"
+
+	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/gofrs/uuid"
+	"gorm.io/gorm"
 )
 
 // v3 チャンネルイベント履歴
@@ -12,25 +14,27 @@ func v3() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "3",
 		Migrate: func(db *gorm.DB) error {
-			if err := db.AutoMigrate(&v3ChannelEvent{}).Error; err != nil {
+			if err := db.AutoMigrate(&v3ChannelEvent{}); err != nil {
 				return err
 			}
 
-			foreignKeys := [][5]string{
-				{"channel_events", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
+			foreignKeys := [][6]string{
+				// table name, constraint name, field name, references, on delete, on update
+				{"channel_events", "channel_events_channel_id_channels_id_foreign", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
 			}
 			for _, c := range foreignKeys {
-				if err := db.Table(c[0]).AddForeignKey(c[1], c[2], c[3], c[4]).Error; err != nil {
+				if err := db.Exec(fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s ON DELETE %s ON UPDATE %s", c[0], c[1], c[2], c[3], c[4], c[5])).Error; err != nil {
 					return err
 				}
 			}
 
-			indexes := [][]string{
-				{"idx_channel_events_channel_id_date_time", "channel_events", "channel_id", "date_time"},
-				{"idx_channel_events_channel_id_event_type_date_time", "channel_events", "channel_id", "event_type", "date_time"},
+			indexes := [][3]string{
+				// table name, index name, field names
+				{"channel_events", "idx_channel_events_channel_id_date_time", "(channel_id, date_time)"},
+				{"channel_events", "idx_channel_events_channel_id_event_type_date_time", "(channel_id, event_type, date_time)"},
 			}
 			for _, c := range indexes {
-				if err := db.Table(c[1]).AddIndex(c[0], c[2:]...).Error; err != nil {
+				if err := db.Exec(fmt.Sprintf("ALTER TABLE %s ADD KEY %s %s", c[0], c[1], c[2])).Error; err != nil {
 					return err
 				}
 			}
@@ -41,10 +45,10 @@ func v3() *gormigrate.Migration {
 }
 
 type v3ChannelEvent struct {
-	EventID   uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	EventID   uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	ChannelID uuid.UUID `gorm:"type:char(36);not null"`
 	EventType string    `gorm:"type:varchar(30);not null;"`
-	Detail    string    `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
+	Detail    string    `gorm:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
 	DateTime  time.Time `gorm:"precision:6"`
 }
 

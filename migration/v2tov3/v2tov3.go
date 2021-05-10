@@ -3,21 +3,23 @@ package v2tov3
 import (
 	"context"
 	"fmt"
-	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/gormutil"
-	"go.uber.org/zap"
-	"golang.org/x/sync/semaphore"
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/gofrs/uuid"
+	jsoniter "github.com/json-iterator/go"
+	"go.uber.org/zap"
+	"golang.org/x/sync/semaphore"
+	"gorm.io/gorm"
+
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/gormutil"
 )
 
 func Run(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool, startMessagePage int, startFilePage int, skipConvertMessage bool) error {
 	// バックアップ・作業テーブル作成
-	if err := db.AutoMigrate(&V2MessageBackup{}, &V2MessageFileMapping{}).Error; err != nil {
+	if err := db.AutoMigrate(&V2MessageBackup{}, &V2MessageFileMapping{}); err != nil {
 		return err
 	}
 
@@ -36,14 +38,14 @@ func Run(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool, startMessa
 }
 
 type V2MessageBackup struct {
-	MessageID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	MessageID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	OldText   string    `gorm:"type:text;not null"`
 	NewText   string    `gorm:"type:text;not null"`
 }
 
 type V2MessageFileMapping struct {
-	FileID         uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	MessageID      uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	FileID         uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	MessageID      uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	ChannelID      uuid.UUID `gorm:"type:char(36);not null"`
 	MessageDeleted bool      `gorm:"type:boolean;not null"`
 }
@@ -92,7 +94,7 @@ func convertMessages(db *gorm.DB, logger *zap.Logger, origin string, dryRun bool
 							FileID:         info.ID,
 							MessageID:      m.ID,
 							ChannelID:      m.ChannelID,
-							MessageDeleted: m.DeletedAt != nil,
+							MessageDeleted: m.DeletedAt.Valid,
 						})
 						links = append(links, origin+"/files/"+info.ID.String())
 						return ""

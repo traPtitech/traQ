@@ -1,8 +1,9 @@
 package migration
 
 import (
+	"github.com/go-gormigrate/gormigrate/v2"
+
 	"github.com/traPtitech/traQ/model"
-	"gopkg.in/gormigrate.v1"
 )
 
 // Migrations 全てのデータベースマイグレーション
@@ -36,6 +37,7 @@ func Migrations() []*gormigrate.Migration {
 		v24(), // ユーザー設定追加
 		v25(), // FileMetaにIsAnimatedImageを追加
 		v26(), // FileMetaからThumbnail情報を分離
+		v27(), // Gorm v2移行: FKの追加、FKのリネーム、一部フィールドのデータ型変更、idx_messages_channel_idの削除
 	}
 }
 
@@ -45,9 +47,8 @@ func Migrations() []*gormigrate.Migration {
 func AllTables() []interface{} {
 	return []interface{}{
 		&model.ChannelEvent{},
-		&model.RolePermission{},
-		&model.RoleInheritance{},
 		&model.UserRole{},
+		&model.RolePermission{},
 		&model.DMChannelMapping{},
 		&model.ChannelLatestMessage{},
 		&model.BotEventLog{},
@@ -58,7 +59,6 @@ func AllTables() []interface{} {
 		&model.OAuth2Token{},
 		&model.MessageReport{},
 		&model.WebhookBot{},
-		&model.MessageStamp{},
 		&model.Stamp{},
 		&model.UsersTag{},
 		&model.Unread{},
@@ -75,96 +75,17 @@ func AllTables() []interface{} {
 		&model.ClipFolderMessage{},
 		&model.Message{},
 		&model.StampPalette{},
+		&model.UserGroup{},
 		&model.UserGroupAdmin{},
 		&model.UserGroupMember{},
-		&model.UserGroup{},
 		&model.ExternalProviderUser{},
 		&model.UserProfile{},
 		&model.Channel{},
 		&model.ClipFolder{},
 		&model.UserSettings{},
 		&model.User{},
+		&model.MessageStamp{},
 		&model.SessionRecord{},
 		&model.OgpCache{},
-	}
-}
-
-// AllForeignKeys 最新のスキーマの全外部キー制約
-//
-// 最新のスキーマの全外部キー制約を記述すること
-func AllForeignKeys() [][5]string {
-	return [][5]string{
-		// Table, Key, Reference, OnDelete, OnUpdate
-		{"user_role_inheritances", "role", "user_roles(name)", "CASCADE", "CASCADE"},
-		{"user_role_inheritances", "sub_role", "user_roles(name)", "CASCADE", "CASCADE"},
-		{"user_role_permissions", "role", "user_roles(name)", "CASCADE", "CASCADE"},
-		{"users_private_channels", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"users_private_channels", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
-		{"dm_channel_mappings", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
-		{"dm_channel_mappings", "user1", "users(id)", "CASCADE", "CASCADE"},
-		{"dm_channel_mappings", "user2", "users(id)", "CASCADE", "CASCADE"},
-		{"messages", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"messages", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
-		{"users_tags", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"users_tags", "tag_id", "tags(id)", "CASCADE", "CASCADE"},
-		{"unreads", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"unreads", "message_id", "messages(id)", "CASCADE", "CASCADE"},
-		{"devices", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"stars", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"stars", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
-		{"users_subscribe_channels", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"users_subscribe_channels", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
-		{"pins", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"pins", "message_id", "messages(id)", "CASCADE", "CASCADE"},
-		{"messages_stamps", "message_id", "messages(id)", "CASCADE", "CASCADE"},
-		{"messages_stamps", "stamp_id", "stamps(id)", "CASCADE", "CASCADE"},
-		{"messages_stamps", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"stamps", "file_id", "files(id)", "NO ACTION", "CASCADE"},
-		{"webhook_bots", "bot_user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"webhook_bots", "creator_id", "users(id)", "CASCADE", "CASCADE"},
-		{"webhook_bots", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
-		{"bots", "creator_id", "users(id)", "CASCADE", "CASCADE"},
-		{"bots", "bot_user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"channel_events", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
-		{"files", "channel_id", "channels(id)", "SET NULL", "CASCADE"},
-		{"files", "creator_id", "users(id)", "RESTRICT", "CASCADE"},
-		{"files_acl", "file_id", "files(id)", "CASCADE", "CASCADE"},
-		{"user_profiles", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"clip_folders", "owner_id", "users(id)", "CASCADE", "CASCADE"},
-		{"clip_folder_messages", "folder_id", "clip_folders(id)", "CASCADE", "CASCADE"},
-		{"clip_folder_messages", "message_id", "messages(id)", "CASCADE", "CASCADE"},
-		{"stamp_palettes", "creator_id", "users(id)", "CASCADE", "CASCADE"},
-		{"external_provider_users", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"user_profiles", "home_channel", "channels(id)", "CASCADE", "CASCADE"},
-		{"user_settings", "user_id", "users(id)", "CASCADE", "CASCADE"},
-		{"files_thumbnails", "file_id", "files(id)", "CASCADE", "CASCADE"},
-	}
-}
-
-// AllCompositeIndexes 最新のスキーマの全複合インデックス
-//
-// 最新のスキーマの全複合インデックスを記述すること。
-func AllCompositeIndexes() [][]string {
-	return [][]string{
-		// Name,  Table, Columns...
-		{"idx_messages_channel_id_deleted_at_created_at", "messages", "channel_id", "deleted_at", "created_at"},
-		{"idx_channel_events_channel_id_date_time", "channel_events", "channel_id", "date_time"},
-		{"idx_channel_events_channel_id_event_type_date_time", "channel_events", "channel_id", "event_type", "date_time"},
-		{"idx_files_channel_id_created_at", "files", "channel_id", "created_at"},
-		{"idx_files_creator_id_created_at", "files", "creator_id", "created_at"},
-		{"idx_messages_stamps_user_id_stamp_id_updated_at", "messages_stamps", "user_id", "stamp_id", "updated_at"},
-		{"idx_channel_channels_id_is_public_is_forced", "channels", "id", "is_public", "is_forced"},
-		{"idx_messages_deleted_at_created_at", "messages", "deleted_at", "created_at"},
-		{"idx_messages_deleted_at_updated_at", "messages", "deleted_at", "updated_at"},
-	}
-}
-
-// AllCompositeUniqueIndexes 最新のスキーマの全複合ユニークインデックス
-//
-// 最新のスキーマの全複合ユニークインデックスを記述すること。
-func AllCompositeUniqueIndexes() [][]string {
-	return [][]string{
-		// Name,  Table, Columns...
-		{"idx_external_provider_users_provider_name_external_id", "external_provider_users", "provider_name", "external_id"},
 	}
 }

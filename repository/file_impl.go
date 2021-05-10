@@ -2,7 +2,8 @@ package repository
 
 import (
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -70,22 +71,14 @@ func (repo *GormRepository) SaveFileMeta(meta *model.FileMeta, acl []*model.File
 		return ErrNilID
 	}
 	return repo.db.Transaction(func(tx *gorm.DB) error {
+		// Create files, files_thumbnails
 		if err := tx.Create(meta).Error; err != nil {
 			return err
 		}
-		for _, entry := range meta.Thumbnails {
-			entry.FileID = meta.ID
-			if err := tx.Create(&entry).Error; err != nil {
-				return err
-			}
-		}
 		for _, entry := range acl {
 			entry.FileID = meta.ID
-			if err := tx.Create(entry).Error; err != nil {
-				return err
-			}
 		}
-		return nil
+		return tx.Create(acl).Error
 	})
 }
 
@@ -109,10 +102,14 @@ func (repo *GormRepository) DeleteFileMeta(fileID uuid.UUID) error {
 	if fileID == uuid.Nil {
 		return ErrNilID
 	}
-	return repo.db.
-		Delete(&model.FileMeta{ID: fileID}).
-		Delete(&model.FileThumbnail{}, &model.FileThumbnail{FileID: fileID}).
-		Error
+
+	if err := repo.db.Delete(&model.FileMeta{ID: fileID}).Error; err != nil {
+		return err
+	}
+	if err := repo.db.Delete(&model.FileThumbnail{}, &model.FileThumbnail{FileID: fileID}).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 // IsFileAccessible implements FileRepository interface.

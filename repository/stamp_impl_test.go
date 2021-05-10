@@ -1,11 +1,13 @@
 package repository
 
 import (
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/traPtitech/traQ/utils/optional"
 	random2 "github.com/traPtitech/traQ/utils/random"
-	"testing"
 )
 
 func TestRepositoryImpl_CreateStamp(t *testing.T) {
@@ -56,7 +58,7 @@ func TestRepositoryImpl_CreateStamp(t *testing.T) {
 			assert.Equal(user.GetID(), s.CreatorID)
 			assert.NotEmpty(s.CreatedAt)
 			assert.NotEmpty(s.UpdatedAt)
-			assert.Nil(s.DeletedAt)
+			assert.False(s.DeletedAt.Valid)
 		}
 	})
 }

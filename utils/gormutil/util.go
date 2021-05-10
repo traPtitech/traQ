@@ -1,6 +1,6 @@
 package gormutil
 
-import "github.com/jinzhu/gorm"
+import "gorm.io/gorm"
 
 // RecordExists 指定した条件のレコードが1行以上存在するかどうか
 func RecordExists(db *gorm.DB, where interface{}, tableName ...string) (exists bool, err error) {
@@ -19,7 +19,7 @@ func Exists(db *gorm.DB) (exists bool, err error) {
 }
 
 // Count 行数を数えます
-func Count(db *gorm.DB) (n int, err error) {
+func Count(db *gorm.DB) (n int64, err error) {
 	return n, db.Count(&n).Error
 }
 

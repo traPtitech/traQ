@@ -12,14 +12,14 @@ CREATE TABLE `messages_stamps` (
   `message_id` char(36) NOT NULL,
   `stamp_id` char(36) NOT NULL,
   `user_id` char(36) NOT NULL,
-  `count` int(11) NOT NULL,
+  `count` bigint(20) NOT NULL,
   `created_at` datetime(6) DEFAULT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`message_id`,`stamp_id`,`user_id`),
   KEY `idx_messages_stamps_message_id` (`message_id`),
+  KEY `idx_messages_stamps_user_id_stamp_id_updated_at` (`user_id`,`stamp_id`,`updated_at`),
   KEY `idx_messages_stamps_updated_at` (`updated_at`),
   KEY `messages_stamps_stamp_id_stamps_id_foreign` (`stamp_id`),
-  KEY `idx_messages_stamps_user_id_stamp_id_updated_at` (`user_id`,`stamp_id`,`updated_at`),
   CONSTRAINT `messages_stamps_message_id_messages_id_foreign` FOREIGN KEY (`message_id`) REFERENCES `messages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `messages_stamps_stamp_id_stamps_id_foreign` FOREIGN KEY (`stamp_id`) REFERENCES `stamps` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `messages_stamps_user_id_users_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -35,7 +35,7 @@ CREATE TABLE `messages_stamps` (
 | message_id | char(36) |  | false |  | [messages](messages.md) | メッセージUUID |
 | stamp_id | char(36) |  | false |  | [stamps](stamps.md) | スタンプUUID |
 | user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
-| count | int(11) |  | false |  |  | スタンプ数 |
+| count | bigint(20) |  | false |  |  | スタンプ数 |
 | created_at | datetime(6) |  | true |  |  | 作成日時 |
 | updated_at | datetime(6) |  | true |  |  | 更新日時 |
 

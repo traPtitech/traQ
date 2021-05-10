@@ -1,10 +1,12 @@
 package migration
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"fmt"
 	"time"
+
+	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/gofrs/uuid"
+	"gorm.io/gorm"
 )
 
 // v5 Mute, 旧Clip削除, stampsにカラム追加
@@ -12,16 +14,17 @@ func v5() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "5",
 		Migrate: func(db *gorm.DB) error {
-			deleteForeignKeys := [][5]string{
-				{"mutes", "user_id", "users(id)", "CASCADE", "CASCADE"},
-				{"mutes", "channel_id", "channels(id)", "CASCADE", "CASCADE"},
-				{"clips", "folder_id", "clip_folders(id)", "CASCADE", "CASCADE"},
-				{"clips", "message_id", "messages(id)", "CASCADE", "CASCADE"},
-				{"clips", "user_id", "users(id)", "CASCADE", "CASCADE"},
-				{"clip_folders", "user_id", "users(id)", "CASCADE", "CASCADE"},
+			deleteForeignKeys := [][2]string{
+				// table name, constraint name
+				{"mutes", "mutes_user_id_users_id_foreign"},
+				{"mutes", "mutes_channel_id_channels_id_foreign"},
+				{"clips", "clips_folder_id_clip_folders_id_foreign"},
+				{"clips", "clips_message_id_messages_id_foreign"},
+				{"clips", "clips_user_id_users_id_foreign"},
+				{"clip_folders", "clip_folders_user_id_users_id_foreign"},
 			}
 			for _, c := range deleteForeignKeys {
-				if err := db.Table(c[0]).RemoveForeignKey(c[1], c[2]).Error; err != nil {
+				if err := db.Exec(fmt.Sprintf("ALTER TABLE %s DROP CONSTRAINT %s", c[0], c[1])).Error; err != nil {
 					return err
 				}
 			}
@@ -43,24 +46,24 @@ func v5() *gormigrate.Migration {
 				}
 			}
 
-			if err := db.AutoMigrate(&v5Stamp{}).Error; err != nil {
+			if err := db.AutoMigrate(&v5Stamp{}); err != nil {
 				return err
 			}
 
-			return db.DropTableIfExists("mutes", "clips", "clip_folders").Error
+			return db.Migrator().DropTable("mutes", "clips", "clip_folders")
 		},
 	}
 }
 
 type v5Stamp struct {
-	ID        uuid.UUID  `gorm:"type:char(36);not null;primary_key"`
-	Name      string     `gorm:"type:varchar(32);not null;unique"`
-	CreatorID uuid.UUID  `gorm:"type:char(36);not null"`
-	FileID    uuid.UUID  `gorm:"type:char(36);not null"`
-	IsUnicode bool       `gorm:"type:boolean;not null;default:false;index"`
-	CreatedAt time.Time  `gorm:"precision:6"`
-	UpdatedAt time.Time  `gorm:"precision:6"`
-	DeletedAt *time.Time `gorm:"precision:6"`
+	ID        uuid.UUID      `gorm:"type:char(36);not null;primaryKey"`
+	Name      string         `gorm:"type:varchar(32);not null;unique"`
+	CreatorID uuid.UUID      `gorm:"type:char(36);not null"`
+	FileID    uuid.UUID      `gorm:"type:char(36);not null"`
+	IsUnicode bool           `gorm:"type:boolean;not null;default:false;index"`
+	CreatedAt time.Time      `gorm:"precision:6"`
+	UpdatedAt time.Time      `gorm:"precision:6"`
+	DeletedAt gorm.DeletedAt `gorm:"precision:6"`
 }
 
 func (*v5Stamp) TableName() string {

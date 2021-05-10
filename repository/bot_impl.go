@@ -1,21 +1,23 @@
 package repository
 
 import (
+	"math"
+	"strings"
+	"time"
+	"unicode/utf8"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
-	"math"
-	"strings"
-	"time"
-	"unicode/utf8"
 )
 
 // CreateBot implements BotRepository interface.
@@ -78,9 +80,14 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, ico
 	}
 
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		errs := tx.Create(u).Create(u.Profile).Create(t).Create(b).GetErrors()
-		if len(errs) > 0 {
-			return errs[0]
+		if err := tx.Create(u).Error; err != nil {
+			return err
+		}
+		if err := tx.Create(t).Error; err != nil {
+			return err
+		}
+		if err := tx.Create(b).Error; err != nil {
+			return err
 		}
 		return nil
 	})
@@ -342,9 +349,11 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 		}
 		bot.AccessTokenID = tid
 
-		errs := tx.Create(t).Save(&bot).GetErrors()
-		if len(errs) > 0 {
-			return errs[0]
+		if err := tx.Create(t).Error; err != nil {
+			return err
+		}
+		if err := tx.Save(&bot).Error; err != nil {
+			return err
 		}
 		return nil
 	})
@@ -372,13 +381,21 @@ func (repo *GormRepository) DeleteBot(id uuid.UUID) error {
 			return convertError(err)
 		}
 
-		errs := tx.Model(&model.User{ID: b.BotUserID}).Update("status", model.UserAccountStatusDeactivated).New().
-			Delete(&model.BotJoinChannel{}, &model.BotJoinChannel{BotID: id}).
-			Delete(&model.OAuth2Token{}, &model.OAuth2Token{ID: b.AccessTokenID}).
-			Delete(&model.Bot{}, &model.Bot{ID: id}).
-			GetErrors()
-		if len(errs) > 0 {
-			return errs[0]
+		if err := tx.
+			Model(&model.User{ID: b.BotUserID}).
+			Update("status", model.UserAccountStatusDeactivated).
+			Error; err != nil {
+			return err
+		}
+
+		if err := tx.Delete(&model.BotJoinChannel{}, &model.BotJoinChannel{BotID: id}).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&model.OAuth2Token{}, &model.OAuth2Token{ID: b.AccessTokenID}).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&model.Bot{}, &model.Bot{ID: id}).Error; err != nil {
+			return err
 		}
 		return nil
 	})

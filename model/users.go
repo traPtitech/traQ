@@ -4,16 +4,18 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"errors"
-	vd "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/gofrs/uuid"
-	"github.com/spf13/viper"
-	"github.com/traPtitech/traQ/utils"
-	"github.com/traPtitech/traQ/utils/optional"
-	"github.com/traPtitech/traQ/utils/validator"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/gofrs/uuid"
+	"github.com/spf13/viper"
+
+	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/validator"
 )
 
 var (
@@ -86,7 +88,7 @@ type UserInfo interface {
 
 // User userの構造体
 type User struct {
-	ID          uuid.UUID         `gorm:"type:char(36);not null;primary_key"`
+	ID          uuid.UUID         `gorm:"type:char(36);not null;primaryKey"`
 	Name        string            `gorm:"type:varchar(32);not null;unique"`
 	DisplayName string            `gorm:"type:varchar(64);not null;default:''"`
 	Password    string            `gorm:"type:char(128);not null;default:''"`
@@ -98,7 +100,7 @@ type User struct {
 	CreatedAt   time.Time         `gorm:"precision:6"`
 	UpdatedAt   time.Time         `gorm:"precision:6"`
 
-	Profile *UserProfile `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;"`
+	Profile *UserProfile `gorm:"constraint:user_profiles_user_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // TableName dbの名前を指定する
@@ -118,12 +120,14 @@ func (user User) Validate() error {
 }
 
 type UserProfile struct {
-	UserID      uuid.UUID     `gorm:"type:char(36);not null;primary_key"`
-	Bio         string        `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
+	UserID      uuid.UUID     `gorm:"type:char(36);not null;primaryKey"`
+	Bio         string        `gorm:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
 	TwitterID   string        `gorm:"type:varchar(15);not null;default:''"`
 	LastOnline  optional.Time `gorm:"precision:6"`
 	HomeChannel optional.UUID `gorm:"type:char(36)"`
 	UpdatedAt   time.Time     `gorm:"precision:6"`
+
+	HomeChan *Channel `gorm:"constraint:user_profiles_home_channel_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:HomeChannel"`
 }
 
 func (UserProfile) TableName() string {
@@ -131,12 +135,14 @@ func (UserProfile) TableName() string {
 }
 
 type ExternalProviderUser struct {
-	UserID       uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	ProviderName string    `gorm:"type:varchar(30);not null;primary_key"`
-	ExternalID   string    `gorm:"type:varchar(100);not null"`
+	UserID       uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	ProviderName string    `gorm:"type:varchar(30);not null;primaryKey;uniqueIndex:idx_external_provider_users_provider_name_external_id,priority:1"`
+	ExternalID   string    `gorm:"type:varchar(100);not null;uniqueIndex:idx_external_provider_users_provider_name_external_id,priority:2"`
 	Extra        JSON      `gorm:"type:text;not null"`
 	CreatedAt    time.Time `gorm:"precision:6"`
 	UpdatedAt    time.Time `gorm:"precision:6"`
+
+	User *User `gorm:"constraint:external_provider_users_user_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 func (ExternalProviderUser) TableName() string {

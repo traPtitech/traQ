@@ -1,8 +1,8 @@
 package migration
 
 import (
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
 )
 
 // v10 パーミッション周りの調整
@@ -67,8 +67,8 @@ func v10() *gormigrate.Migration {
 }
 
 type v10RolePermission struct {
-	Role       string `gorm:"type:varchar(30);not null;primary_key"`
-	Permission string `gorm:"type:varchar(30);not null;primary_key"`
+	Role       string `gorm:"type:varchar(30);not null;primaryKey"`
+	Permission string `gorm:"type:varchar(30);not null;primaryKey"`
 }
 
 func (*v10RolePermission) TableName() string {

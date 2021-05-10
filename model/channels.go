@@ -3,8 +3,10 @@ package model
 import (
 	"database/sql/driver"
 	"errors"
-	"github.com/gofrs/uuid"
 	"time"
+
+	"github.com/gofrs/uuid"
+	"gorm.io/gorm"
 )
 
 const (
@@ -16,18 +18,18 @@ var dmChannelRootUUID = uuid.Must(uuid.FromString(DirectMessageChannelRootID))
 
 // Channel チャンネルの構造体
 type Channel struct {
-	ID        uuid.UUID  `gorm:"type:char(36);not null;primary_key"`
-	Name      string     `gorm:"type:varchar(20);not null;unique_index:name_parent"`
-	ParentID  uuid.UUID  `gorm:"type:char(36);not null;unique_index:name_parent"`
-	Topic     string     `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
-	IsForced  bool       `gorm:"type:boolean;not null;default:false"`
-	IsPublic  bool       `gorm:"type:boolean;not null;default:false"`
-	IsVisible bool       `gorm:"type:boolean;not null;default:false"`
-	CreatorID uuid.UUID  `gorm:"type:char(36);not null"`
-	UpdaterID uuid.UUID  `gorm:"type:char(36);not null"`
-	CreatedAt time.Time  `gorm:"precision:6"`
-	UpdatedAt time.Time  `gorm:"precision:6"`
-	DeletedAt *time.Time `gorm:"precision:6"`
+	ID        uuid.UUID      `gorm:"type:char(36);not null;primaryKey;index:idx_channel_channels_id_is_public_is_forced,priority:1"`
+	Name      string         `gorm:"type:varchar(20);not null;uniqueIndex:name_parent"`
+	ParentID  uuid.UUID      `gorm:"type:char(36);not null;uniqueIndex:name_parent"`
+	Topic     string         `gorm:"type:TEXT COLLATE utf8mb4_bin NOT NULL"`
+	IsForced  bool           `gorm:"type:boolean;not null;default:false;index:idx_channel_channels_id_is_public_is_forced,priority:3"`
+	IsPublic  bool           `gorm:"type:boolean;not null;default:false;index:idx_channel_channels_id_is_public_is_forced,priority:2"`
+	IsVisible bool           `gorm:"type:boolean;not null;default:false"`
+	CreatorID uuid.UUID      `gorm:"type:char(36);not null"`
+	UpdaterID uuid.UUID      `gorm:"type:char(36);not null"`
+	CreatedAt time.Time      `gorm:"precision:6"`
+	UpdatedAt time.Time      `gorm:"precision:6"`
+	DeletedAt gorm.DeletedAt `gorm:"precision:6"`
 
 	ChildrenID []uuid.UUID `gorm:"-"`
 }
@@ -49,8 +51,11 @@ func (ch *Channel) IsArchived() bool {
 
 // UsersPrivateChannel UsersPrivateChannelsの構造体
 type UsersPrivateChannel struct {
-	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	ChannelID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	UserID    uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+
+	User    User    `gorm:"constraint:users_private_channels_user_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Channel Channel `gorm:"constraint:users_private_channels_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // TableName テーブル名を指定するメソッド
@@ -76,10 +81,13 @@ func (v ChannelSubscribeLevel) Int() int {
 
 // UserSubscribeChannel ユーザー・通知チャンネル対構造体
 type UserSubscribeChannel struct {
-	UserID    uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	ChannelID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	UserID    uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	Mark      bool      `gorm:"type:boolean;not null;default:false"`
 	Notify    bool      `gorm:"type:boolean;not null;default:false"`
+
+	User    User    `gorm:"constraint:users_subscribe_channels_user_id_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Channel Channel `gorm:"constraint:users_subscribe_channels_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // TableName UserNotifiedChannel構造体のテーブル名
@@ -101,9 +109,13 @@ func (usc *UserSubscribeChannel) GetLevel() ChannelSubscribeLevel {
 
 // DMChannelMapping ダイレクトメッセージチャンネルとユーザーのマッピング
 type DMChannelMapping struct {
-	ChannelID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	User1     uuid.UUID `gorm:"type:char(36);not null;unique_index:user1_user2"`
-	User2     uuid.UUID `gorm:"type:char(36);not null;unique_index:user1_user2"`
+	ChannelID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	User1     uuid.UUID `gorm:"type:char(36);not null;uniqueIndex:user1_user2"`
+	User2     uuid.UUID `gorm:"type:char(36);not null;uniqueIndex:user1_user2"`
+
+	Channel *Channel `gorm:"constraint:dm_channel_mappings_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE"`
+	U1      *User    `gorm:"constraint:dm_channel_mappings_user_one_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:User1"` // NOTE: constraint nameに数字が入るとgormにinvalid name扱いされてしまう
+	U2      *User    `gorm:"constraint:dm_channel_mappings_user_two_users_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:User2"`
 }
 
 // TableName DMChannelMapping構造体のテーブル名
@@ -196,11 +208,13 @@ func (ced *ChannelEventDetail) Scan(src interface{}) error {
 
 // ChannelEvent チャンネルイベント
 type ChannelEvent struct {
-	EventID   uuid.UUID          `gorm:"type:char(36);not null;primary_key"    json:"-"`
-	ChannelID uuid.UUID          `gorm:"type:char(36);not null"                json:"-"`
-	EventType ChannelEventType   `gorm:"type:varchar(30);not null;"            json:"type"`
-	Detail    ChannelEventDetail `sql:"type:TEXT COLLATE utf8mb4_bin NOT NULL" json:"detail"`
-	DateTime  time.Time          `gorm:"precision:6"                           json:"dateTime"`
+	EventID   uuid.UUID          `gorm:"type:char(36);not null;primaryKey" json:"-"`
+	ChannelID uuid.UUID          `gorm:"type:char(36);not null;index:idx_channel_events_channel_id_date_time,priority:1;index:idx_channel_events_channel_id_event_type_date_time,priority:1" json:"-"`
+	EventType ChannelEventType   `gorm:"type:varchar(30);not null;index:idx_channel_events_channel_id_event_type_date_time,priority:2" json:"type"`
+	Detail    ChannelEventDetail `gorm:"type:TEXT COLLATE utf8mb4_bin NOT NULL" json:"detail"`
+	DateTime  time.Time          `gorm:"precision:6;index:idx_channel_events_channel_id_date_time,priority:2;index:idx_channel_events_channel_id_event_type_date_time,priority:3" json:"dateTime"`
+
+	Channel *Channel `gorm:"constraint:channel_events_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 }
 
 // TableName テーブル名

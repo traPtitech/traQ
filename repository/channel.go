@@ -2,11 +2,13 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/set"
-	"time"
 )
 
 // ChangeChannelSubscriptionArgs チャンネル購読変更引数
@@ -60,7 +62,7 @@ func (q ChannelSubscriptionQuery) SetLevel(level model.ChannelSubscribeLevel) Ch
 
 // ChannelStats チャンネル統計情報
 type ChannelStats struct {
-	TotalMessageCount int       `json:"totalMessageCount"`
+	TotalMessageCount int64     `json:"totalMessageCount"`
 	DateTime          time.Time `json:"datetime"`
 }
 

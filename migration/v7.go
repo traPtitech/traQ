@@ -1,11 +1,14 @@
 package migration
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
-	"github.com/traPtitech/traQ/utils/optional"
-	"gopkg.in/gormigrate.v1"
+	"fmt"
 	"time"
+
+	"github.com/go-gormigrate/gormigrate/v2"
+	"github.com/gofrs/uuid"
+	"gorm.io/gorm"
+
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // v7 ファイルメタ拡張
@@ -13,11 +16,7 @@ func v7() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "7",
 		Migrate: func(db *gorm.DB) error {
-			if err := db.Table(v7File{}.TableName()).ModifyColumn("creator_id", "char(36)").Error; err != nil {
-				return err
-			}
-
-			if err := db.AutoMigrate(&v7File{}).Error; err != nil {
+			if err := db.AutoMigrate(&v7File{}); err != nil {
 				return err
 			}
 
@@ -32,23 +31,25 @@ func v7() *gormigrate.Migration {
 			}
 
 			// 複合インデックス
-			indexes := [][]string{
-				{"idx_files_channel_id_created_at", "files", "channel_id", "created_at"},
+			indexes := [][3]string{
+				// table name, index name, field names
+				{"files", "idx_files_channel_id_created_at", "(channel_id, created_at)"},
 			}
 			for _, c := range indexes {
-				if err := db.Table(c[1]).AddIndex(c[0], c[2:]...).Error; err != nil {
+				if err := db.Exec(fmt.Sprintf("ALTER TABLE %s ADD KEY %s %s", c[0], c[1], c[2])).Error; err != nil {
 					return err
 				}
 			}
 
 			// 外部キー制約
-			foreignKeys := [][5]string{
-				{"files", "channel_id", "channels(id)", "SET NULL", "CASCADE"},
-				{"files", "creator_id", "users(id)", "RESTRICT", "CASCADE"},
-				{"files_acl", "file_id", "files(id)", "CASCADE", "CASCADE"},
+			foreignKeys := [][6]string{
+				// table name, constraint name, field name, references, on delete, on update
+				{"files", "files_channel_id_channels_id_foreign", "channel_id", "channels(id)", "SET NULL", "CASCADE"},
+				{"files", "files_creator_id_users_id_foreign", "creator_id", "users(id)", "RESTRICT", "CASCADE"},
+				{"files_acl", "files_acl_file_id_files_id_foreign", "file_id", "files(id)", "CASCADE", "CASCADE"},
 			}
 			for _, c := range foreignKeys {
-				if err := db.Table(c[0]).AddForeignKey(c[1], c[2], c[3], c[4]).Error; err != nil {
+				if err := db.Exec(fmt.Sprintf("ALTER TABLE %s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s ON DELETE %s ON UPDATE %s", c[0], c[1], c[2], c[3], c[4], c[5])).Error; err != nil {
 					return err
 				}
 			}
@@ -59,7 +60,7 @@ func v7() *gormigrate.Migration {
 }
 
 type v7File struct {
-	ID              uuid.UUID       `gorm:"type:char(36);not null;primary_key"`
+	ID              uuid.UUID       `gorm:"type:char(36);not null;primaryKey"`
 	Name            string          `gorm:"type:text;not null"`
 	Mime            string          `gorm:"type:text;not null"`
 	Size            int64           `gorm:"type:bigint;not null"`
@@ -72,7 +73,7 @@ type v7File struct {
 	ThumbnailHeight int             `gorm:"type:int;not null;default:0"`
 	ChannelID       optional.UUID   `gorm:"type:char(36)"` // 追加
 	CreatedAt       time.Time       `gorm:"precision:6"`
-	DeletedAt       *time.Time      `gorm:"precision:6"`
+	DeletedAt       gorm.DeletedAt  `gorm:"precision:6"`
 }
 
 func (v7File) TableName() string {

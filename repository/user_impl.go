@@ -2,9 +2,12 @@ package repository
 
 import (
 	"encoding/hex"
+	"unicode/utf8"
+
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils"
@@ -12,7 +15,6 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
-	"unicode/utf8"
 )
 
 // CreateUser implements UserRepository interface.
@@ -46,10 +48,8 @@ func (repo *GormRepository) CreateUser(args CreateUserArgs) (model.UserInfo, err
 			return ErrAlreadyExists
 		}
 
+		// Create user, user_profile
 		if err := tx.Create(user).Error; err != nil {
-			return err
-		}
-		if err := tx.Create(user.Profile).Error; err != nil {
 			return err
 		}
 		if args.ExternalLogin != nil {

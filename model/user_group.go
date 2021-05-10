@@ -1,21 +1,22 @@
 package model
 
 import (
-	"github.com/gofrs/uuid"
 	"time"
+
+	"github.com/gofrs/uuid"
 )
 
 // UserGroup ユーザーグループ構造体
 type UserGroup struct {
-	ID          uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	ID          uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	Name        string    `gorm:"type:varchar(30);not null;unique"`
 	Description string    `gorm:"type:text;not null"`
 	Type        string    `gorm:"type:varchar(30);not null;default:''"`
 	CreatedAt   time.Time `gorm:"precision:6"`
 	UpdatedAt   time.Time `gorm:"precision:6"`
 
-	Admins  []*UserGroupAdmin  `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;foreignkey:GroupID"`
-	Members []*UserGroupMember `gorm:"association_autoupdate:false;association_autocreate:false;preload:false;foreignkey:GroupID"`
+	Admins  []*UserGroupAdmin  `gorm:"constraint:user_group_admins_group_id_user_groups_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:GroupID"`
+	Members []*UserGroupMember `gorm:"constraint:user_group_members_group_id_user_groups_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignkey:GroupID"`
 }
 
 // TableName UserGroup構造体のテーブル名
@@ -33,8 +34,8 @@ func (ug *UserGroup) IsAdmin(uid uuid.UUID) bool {
 }
 
 func (ug *UserGroup) IsMember(uid uuid.UUID) bool {
-	for _, admin := range ug.Members {
-		if admin.UserID == uid {
+	for _, member := range ug.Members {
+		if member.UserID == uid {
 			return true
 		}
 	}
@@ -51,8 +52,8 @@ func (ug *UserGroup) AdminIDArray() []uuid.UUID {
 
 // UserGroupMember ユーザーグループメンバー構造体
 type UserGroupMember struct {
-	GroupID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	UserID  uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	GroupID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	UserID  uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 	Role    string    `gorm:"type:varchar(100);not null;default:''"`
 }
 
@@ -63,8 +64,8 @@ func (*UserGroupMember) TableName() string {
 
 // UserGroupAdmin ユーザーグループ管理者構造体
 type UserGroupAdmin struct {
-	GroupID uuid.UUID `gorm:"type:char(36);not null;primary_key"`
-	UserID  uuid.UUID `gorm:"type:char(36);not null;primary_key"`
+	GroupID uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
+	UserID  uuid.UUID `gorm:"type:char(36);not null;primaryKey"`
 }
 
 // TableName UserGroupAdmin構造体のテーブル名

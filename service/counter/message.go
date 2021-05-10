@@ -2,13 +2,15 @@ package counter
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
+	"sync"
+
 	"github.com/leandro-lugaresi/hub"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"sync"
 )
 
 var messagesCounter = promauto.NewCounter(prometheus.CounterOpts{
@@ -21,11 +23,11 @@ type MessageCounter interface {
 	// Get 全メッセージ数を返します
 	//
 	// この数値は削除されたメッセージを含んでいます
-	Get() int
+	Get() int64
 }
 
 type messageCounterImpl struct {
-	count int
+	count int64
 	sync.RWMutex
 }
 
@@ -44,7 +46,7 @@ func NewMessageCounter(db *gorm.DB, hub *hub.Hub) (MessageCounter, error) {
 	return counter, nil
 }
 
-func (c *messageCounterImpl) Get() int {
+func (c *messageCounterImpl) Get() int64 {
 	c.RLock()
 	defer c.RUnlock()
 	return c.count

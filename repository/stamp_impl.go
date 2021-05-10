@@ -1,17 +1,19 @@
 package repository
 
 import (
+	"sync"
+	"time"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/validator"
-	"sync"
-	"time"
 )
 
 type stampRepository struct {
@@ -339,7 +341,7 @@ func (repo *GormRepository) ExistStamps(stampIDs []uuid.UUID) (err error) {
 	if err != nil {
 		return err
 	}
-	if len(stampIDs) != num {
+	if len(stampIDs) != int(num) {
 		err = ArgError("stamp", "stamp is not found")
 	}
 	return

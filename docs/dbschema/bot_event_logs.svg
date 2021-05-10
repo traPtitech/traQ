@@ -34,7 +34,7 @@
 <text text-anchor="start" x="86.9376" y="-146.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
 <polygon fill="none" stroke="#000000" points="46.5,-105.5 46.5,-135.5 279.5,-135.5 279.5,-105.5 46.5,-105.5"/>
 <text text-anchor="start" x="53.5" y="-116.9" font-family="Arial" font-size="14.00" fill="#000000">code </text>
-<text text-anchor="start" x="87.7384" y="-116.9" font-family="Arial" font-size="14.00" fill="#666666">[int(11)]</text>
+<text text-anchor="start" x="87.7384" y="-116.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
 <polygon fill="none" stroke="#000000" points="46.5,-75.5 46.5,-105.5 279.5,-105.5 279.5,-75.5 46.5,-75.5"/>
 <text text-anchor="start" x="53.5" y="-86.9" font-family="Arial" font-size="14.00" fill="#000000">latency </text>
 <text text-anchor="start" x="101.7356" y="-86.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>

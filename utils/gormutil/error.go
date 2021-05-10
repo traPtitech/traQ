@@ -1,6 +1,8 @@
 package gormutil
 
-import "github.com/go-sql-driver/mysql"
+import (
+	"github.com/go-sql-driver/mysql"
+)
 
 const (
 	errMySQLDuplicatedRecord          uint16 = 1062

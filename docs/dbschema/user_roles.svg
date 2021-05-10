@@ -45,17 +45,17 @@
 </g>
 <!-- user_role_inheritances&#45;&gt;user_roles -->
 <g id="edge1" class="edge">
-<title>user_role_inheritances:role&#45;&gt;user_roles:name</title>
-<path fill="none" stroke="#000000" d="M252.9837,-339.7034C166.3349,-325.3032 215.3481,-120.5 312,-120.5"/>
-<polygon fill="#000000" stroke="#000000" points="253.0315,-339.7071 262.6432,-344.9858 258.0157,-340.1035 263,-340.5 263,-340.5 263,-340.5 258.0157,-340.1035 263.3568,-336.0142 253.0315,-339.7071 253.0315,-339.7071"/>
-<text text-anchor="start" x="7.2775" y="-350.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (role) REFERENCES user_roles (name)</text>
-</g>
-<!-- user_role_inheritances&#45;&gt;user_roles -->
-<g id="edge2" class="edge">
 <title>user_role_inheritances:sub_role&#45;&gt;user_roles:name</title>
 <path fill="none" stroke="#000000" d="M409.0593,-285.4387C400.4121,-243.0175 334.5546,-263.9651 312,-217 293.433,-178.3383 269.1111,-120.5 312,-120.5"/>
 <polygon fill="#000000" stroke="#000000" points="409.069,-285.5434 405.5195,-295.9189 409.5345,-290.5217 410,-295.5 410,-295.5 410,-295.5 409.5345,-290.5217 414.4805,-295.0811 409.069,-285.5434 409.069,-285.5434"/>
 <text text-anchor="start" x="132.439" y="-305.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (sub_role) REFERENCES user_roles (name)</text>
+</g>
+<!-- user_role_inheritances&#45;&gt;user_roles -->
+<g id="edge2" class="edge">
+<title>user_role_inheritances:role&#45;&gt;user_roles:name</title>
+<path fill="none" stroke="#000000" d="M252.9837,-339.7034C166.3349,-325.3032 215.3481,-120.5 312,-120.5"/>
+<polygon fill="#000000" stroke="#000000" points="253.0315,-339.7071 262.6432,-344.9858 258.0157,-340.1035 263,-340.5 263,-340.5 263,-340.5 258.0157,-340.1035 263.3568,-336.0142 253.0315,-339.7071 253.0315,-339.7071"/>
+<text text-anchor="start" x="7.2775" y="-350.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (role) REFERENCES user_roles (name)</text>
 </g>
 <!-- user_role_permissions -->
 <g id="node3" class="node">

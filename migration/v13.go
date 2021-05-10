@@ -1,8 +1,10 @@
 package migration
 
 import (
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"fmt"
+
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
 )
 
 // v13 パーミッション調整・インデックス付与
@@ -26,12 +28,13 @@ func v13() *gormigrate.Migration {
 				}
 			}
 
-			indexes := [][]string{
-				{"idx_files_creator_id_created_at", "files", "creator_id", "created_at"},
-				{"idx_messages_stamps_user_id_stamp_id_updated_at", "messages_stamps", "user_id", "stamp_id", "updated_at"},
+			indexes := [][3]string{
+				// table name, index name, field names
+				{"files", "idx_files_creator_id_created_at", "(creator_id, created_at)"},
+				{"messages_stamps", "idx_messages_stamps_user_id_stamp_id_updated_at", "(user_id, stamp_id, updated_at)"},
 			}
-			for _, v := range indexes {
-				if err := db.Table(v[1]).AddIndex(v[0], v[2:]...).Error; err != nil {
+			for _, c := range indexes {
+				if err := db.Exec(fmt.Sprintf("ALTER TABLE %s ADD KEY %s %s", c[0], c[1], c[2])).Error; err != nil {
 					return err
 				}
 			}
@@ -41,8 +44,8 @@ func v13() *gormigrate.Migration {
 }
 
 type v13RolePermission struct {
-	Role       string `gorm:"type:varchar(30);not null;primary_key"`
-	Permission string `gorm:"type:varchar(30);not null;primary_key"`
+	Role       string `gorm:"type:varchar(30);not null;primaryKey"`
+	Permission string `gorm:"type:varchar(30);not null;primaryKey"`
 }
 
 func (*v13RolePermission) TableName() string {

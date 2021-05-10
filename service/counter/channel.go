@@ -2,13 +2,15 @@ package counter
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
+	"sync"
+
 	"github.com/leandro-lugaresi/hub"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"sync"
 )
 
 var channelsCounter = promauto.NewCounter(prometheus.CounterOpts{
@@ -19,11 +21,11 @@ var channelsCounter = promauto.NewCounter(prometheus.CounterOpts{
 // ChannelCounter 公開チャンネル数カウンタ
 type ChannelCounter interface {
 	// Get 公開チャンネル数を返します
-	Get() int
+	Get() int64
 }
 
 type channelCounterImpl struct {
-	count int
+	count int64
 	sync.RWMutex
 }
 
@@ -44,7 +46,7 @@ func NewChannelCounter(db *gorm.DB, hub *hub.Hub) (ChannelCounter, error) {
 	return counter, nil
 }
 
-func (c *channelCounterImpl) Get() int {
+func (c *channelCounterImpl) Get() int64 {
 	c.RLock()
 	defer c.RUnlock()
 	return c.count

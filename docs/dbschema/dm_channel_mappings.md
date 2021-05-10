@@ -14,10 +14,10 @@ CREATE TABLE `dm_channel_mappings` (
   `user2` char(36) NOT NULL,
   PRIMARY KEY (`channel_id`),
   UNIQUE KEY `user1_user2` (`user1`,`user2`),
-  KEY `dm_channel_mappings_user2_users_id_foreign` (`user2`),
+  KEY `dm_channel_mappings_user_two_users_id_foreign` (`user2`),
   CONSTRAINT `dm_channel_mappings_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `dm_channel_mappings_user1_users_id_foreign` FOREIGN KEY (`user1`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `dm_channel_mappings_user2_users_id_foreign` FOREIGN KEY (`user2`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+  CONSTRAINT `dm_channel_mappings_user_one_users_id_foreign` FOREIGN KEY (`user1`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `dm_channel_mappings_user_two_users_id_foreign` FOREIGN KEY (`user2`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```
 
@@ -36,8 +36,8 @@ CREATE TABLE `dm_channel_mappings` (
 | Name | Type | Definition |
 | ---- | ---- | ---------- |
 | dm_channel_mappings_channel_id_channels_id_foreign | FOREIGN KEY | FOREIGN KEY (channel_id) REFERENCES channels (id) |
-| dm_channel_mappings_user1_users_id_foreign | FOREIGN KEY | FOREIGN KEY (user1) REFERENCES users (id) |
-| dm_channel_mappings_user2_users_id_foreign | FOREIGN KEY | FOREIGN KEY (user2) REFERENCES users (id) |
+| dm_channel_mappings_user_one_users_id_foreign | FOREIGN KEY | FOREIGN KEY (user1) REFERENCES users (id) |
+| dm_channel_mappings_user_two_users_id_foreign | FOREIGN KEY | FOREIGN KEY (user2) REFERENCES users (id) |
 | PRIMARY | PRIMARY KEY | PRIMARY KEY (channel_id) |
 | user1_user2 | UNIQUE | UNIQUE KEY user1_user2 (user1, user2) |
 
@@ -45,7 +45,7 @@ CREATE TABLE `dm_channel_mappings` (
 
 | Name | Definition |
 | ---- | ---------- |
-| dm_channel_mappings_user2_users_id_foreign | KEY dm_channel_mappings_user2_users_id_foreign (user2) USING BTREE |
+| dm_channel_mappings_user_two_users_id_foreign | KEY dm_channel_mappings_user_two_users_id_foreign (user2) USING BTREE |
 | PRIMARY | PRIMARY KEY (channel_id) USING BTREE |
 | user1_user2 | UNIQUE KEY user1_user2 (user1, user2) USING BTREE |
 

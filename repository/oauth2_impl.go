@@ -1,11 +1,13 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/random"
-	"time"
 )
 
 // GetClient implements OAuth2Repository interface.
@@ -96,12 +98,14 @@ func (repo *GormRepository) DeleteClient(id string) error {
 		return nil
 	}
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		errs := tx.Delete(&model.OAuth2Client{ID: id}).
-			Delete(&model.OAuth2Authorize{}, &model.OAuth2Authorize{ClientID: id}).
-			Delete(&model.OAuth2Token{}, &model.OAuth2Token{ClientID: id}).
-			GetErrors()
-		if len(errs) > 0 {
-			return errs[0]
+		if err := tx.Delete(&model.OAuth2Client{ID: id}).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&model.OAuth2Authorize{}, &model.OAuth2Authorize{ClientID: id}).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&model.OAuth2Token{}, &model.OAuth2Token{ClientID: id}).Error; err != nil {
+			return err
 		}
 		return nil
 	})

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+
 	"github.com/traPtitech/traQ/migration"
 )
 
@@ -17,7 +18,11 @@ func migrateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			defer engine.Close()
+			db, err := engine.DB()
+			if err != nil {
+				return err
+			}
+			defer db.Close()
 			if dropDB {
 				if err := migration.DropAll(engine); err != nil {
 					return err

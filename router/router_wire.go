@@ -4,7 +4,6 @@ package router
 
 import (
 	"github.com/google/wire"
-	"github.com/jinzhu/gorm"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/oauth2"
@@ -15,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 func newRouter(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Services, logger *zap.Logger, config *Config) *Router {

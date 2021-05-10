@@ -3,14 +3,18 @@ package testutils
 import (
 	"encoding/base64"
 	"encoding/hex"
-	random2 "github.com/traPtitech/traQ/utils/random"
 	"math"
 	"sort"
 	"sync"
 	"time"
 	"unicode/utf8"
 
+	"gorm.io/gorm"
+
+	random2 "github.com/traPtitech/traQ/utils/random"
+
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/rbac/role"
@@ -725,7 +729,7 @@ func (repo *TestRepository) CreateChannel(ch model.Channel, privateMembers set.U
 	ch.IsPublic = true
 	ch.CreatedAt = time.Now()
 	ch.UpdatedAt = time.Now()
-	ch.DeletedAt = nil
+	ch.DeletedAt = gorm.DeletedAt{}
 	repo.ChannelsLock.Lock()
 	repo.Channels[ch.ID] = ch
 	repo.ChannelsLock.Unlock()
@@ -1061,7 +1065,7 @@ func (repo *TestRepository) GetUpdatedMessagesAfter(after time.Time, limit int) 
 	repo.MessagesLock.RLock()
 	for _, v := range repo.Messages {
 		v := v
-		if v.UpdatedAt.After(after) && v.DeletedAt == nil {
+		if v.UpdatedAt.After(after) && !v.DeletedAt.Valid {
 			tmp = append(tmp, &v)
 		}
 	}
@@ -1087,14 +1091,14 @@ func (repo *TestRepository) GetDeletedMessagesAfter(after time.Time, limit int) 
 	repo.MessagesLock.RLock()
 	for _, v := range repo.Messages {
 		v := v
-		if v.DeletedAt != nil && v.DeletedAt.After(after) {
+		if v.DeletedAt.Valid && v.DeletedAt.Time.After(after) {
 			tmp = append(tmp, &v)
 		}
 	}
 	repo.MessagesLock.RUnlock()
 
 	sort.Slice(tmp, func(i, j int) bool {
-		return tmp[i].DeletedAt.Before(*tmp[j].DeletedAt)
+		return tmp[i].DeletedAt.Time.Before(tmp[j].DeletedAt.Time)
 	})
 
 	if len(tmp) > limit {
