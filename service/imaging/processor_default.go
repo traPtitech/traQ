@@ -3,15 +3,18 @@ package imaging
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"image"
+	"io"
+	"time"
+
 	"github.com/disintegration/imaging"
 	"github.com/go-audio/wav"
 	"github.com/hajimehoshi/go-mp3"
 	"github.com/motoki317/go-waveform"
-	imaging2 "github.com/traPtitech/traQ/utils/imaging"
 	"golang.org/x/sync/semaphore"
-	"image"
-	"io"
-	"time"
+
+	imaging2 "github.com/traPtitech/traQ/utils/imaging"
 )
 
 type defaultProcessor struct {
@@ -82,7 +85,17 @@ func (p *defaultProcessor) FitAnimationGIF(src io.Reader, width, height int) (*b
 	return b, nil
 }
 
-func (p *defaultProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (io.Reader, error) {
+func (p *defaultProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (r io.Reader, err error) {
+	defer func() {
+		// workaround fix https://github.com/traPtitech/traQ/issues/1178
+		if p := recover(); p != nil {
+			if perr, ok := p.(error); ok {
+				err = perr
+			} else {
+				err = fmt.Errorf("recovered: %v", p)
+			}
+		}
+	}()
 	d, err := mp3.NewDecoder(src)
 	if err != nil {
 		return nil, err
