@@ -3,15 +3,17 @@ package auth
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	json "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+	"golang.org/x/oauth2"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/file"
-	"go.uber.org/zap"
-	"golang.org/x/oauth2"
-	"io/ioutil"
-	"net/http"
 )
 
 const (
@@ -101,8 +103,8 @@ func NewTraQProvider(repo repository.Repository, fm file.Manager, logger *zap.Lo
 			ClientSecret: config.ClientSecret,
 			RedirectURL:  config.CallbackURL,
 			Endpoint: oauth2.Endpoint{
-				AuthURL:  config.Origin + "/api/1.0/oauth2/authorize",
-				TokenURL: config.Origin + "/api/1.0/oauth2/token",
+				AuthURL:  config.Origin + "/api/v3/oauth2/authorize",
+				TokenURL: config.Origin + "/api/v3/oauth2/token",
 			},
 			Scopes: []string{"read"},
 		},
