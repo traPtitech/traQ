@@ -48,7 +48,7 @@ func InitFileManager(repo repository.FileRepository, fs storage.FileStorage, ip 
 
 func (m *managerImpl) canGenerateThumbnail(mimeType string) bool {
 	switch mimeType {
-	case "image/jpeg", "image/png", "image/gif":
+	case "image/jpeg", "image/png", "image/gif", "image/webp":
 		return true
 	default:
 		return false

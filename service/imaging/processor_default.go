@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	_ "golang.org/x/image/webp" // image.Decode用
 	"image"
+	_ "image/jpeg" // image.Decode用
+	_ "image/png"  // image.Decode用
 	"io"
 	"time"
 
