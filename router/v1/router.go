@@ -24,8 +24,6 @@ import (
 	"github.com/traPtitech/traQ/service/viewer"
 	mutil "github.com/traPtitech/traQ/utils/message"
 	"go.uber.org/zap"
-	_ "image/jpeg" // image.Decode用
-	_ "image/png"  // image.Decode用
 	"net/http"
 	"sync"
 	"time"
