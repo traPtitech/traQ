@@ -20,7 +20,7 @@ services:
       - mysql
       - es
     volumes:
-      - ./dev/data/app:/app/storage
+      - app:/app/storage
 
   frontend:
     image: caddy:latest
@@ -48,7 +48,7 @@ services:
     ports:
       - "3002:3306"
     volumes:
-      - ./dev/data/mysql:/var/lib/mysql
+      - mysql:/var/lib/mysql
 
   es:
     image: ghcr.io/traptitech/es-with-sudachi:7.10.2-2.1.1-SNAPSHOT
@@ -61,7 +61,7 @@ services:
     volumes:
       - ./dev/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
       - ./dev/es_jvm.options:/usr/share/elasticsearch/config/jvm.options.d/es_jvm.options
-      - ./dev/data/es:/usr/share/elasticsearch/data
+      - es:/usr/share/elasticsearch/data
 
   adminer:
     image: adminer:4.7.5
@@ -80,3 +80,8 @@ services:
     volumes:
       - ./dev/bin:/app
     command: go run /app/bot_debugger.go -p 80
+
+volumes:
+  app:
+  mysql:
+  es:
