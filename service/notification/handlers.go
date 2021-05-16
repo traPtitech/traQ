@@ -505,6 +505,7 @@ func userTagUpdatedHandler(ns *Service, ev hub.Message) {
 		EventType: "USER_TAGS_UPDATED",
 		Payload: map[string]interface{}{
 			"id": ev.Fields["user_id"].(uuid.UUID),
+			"tag_id": ev.Fields["tag_id"].(uuid.UUID),
 		},
 	})
 }
