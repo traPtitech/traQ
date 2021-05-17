@@ -440,9 +440,11 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 
 	var stats ChannelStats
 	var messagelst []model.Message 
+	
 	if err := repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Find(&messagelst).Error; err!=nil{
 		return nil,err
 	}
+	stats.TotalMessageCount=int64(len(messagelst))
 	for _, message := range messagelst {
 		stats.UserMessageCount[message.UserID]++
 		for _, stamp := range message.Stamps{
@@ -450,5 +452,6 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 		}
 	}
 	stats.DateTime = time.Now()
-	return &stats, repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error
+	return &stats,nil
+	//return &stats, repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error
 }
