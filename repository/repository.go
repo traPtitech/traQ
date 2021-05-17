@@ -10,6 +10,7 @@ type Repository interface {
 	UserRepository
 	UserGroupRepository
 	UserSettingsRepository
+	UserRoleRepository
 	TagRepository
 	ChannelRepository
 	MessageRepository

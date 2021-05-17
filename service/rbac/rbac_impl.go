@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"gorm.io/gorm"
-
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/rbac/role"
 )
@@ -14,14 +13,14 @@ import (
 type rbacImpl struct {
 	roles      role.Roles
 	rolesMutex sync.RWMutex
-	db         *gorm.DB
+	repo       repository.Repository
 }
 
 // New RBACを初期化
-func New(db *gorm.DB) (RBAC, error) {
+func New(repo repository.Repository) (RBAC, error) {
 	rbac := &rbacImpl{
 		roles: role.Roles{},
-		db:    db,
+		repo:  repo,
 	}
 	if err := rbac.reload(); err != nil {
 		return nil, fmt.Errorf("failed to init rbac: %w", err)
@@ -65,8 +64,8 @@ func (r *rbacImpl) IsAnyGranted(roles []string, perm permission.Permission) bool
 }
 
 func (r *rbacImpl) reload() error {
-	rs := make([]*model.UserRole, 0)
-	if err := r.db.Preload("Inheritances").Preload("Permissions").Find(&rs).Error; err != nil {
+	rs, err := r.repo.GetAllUserRoles()
+	if err != nil {
 		return err
 	}
 

@@ -7,6 +7,8 @@ import (
 type EmptyTestRepository struct {
 	repository.UserRepository
 	repository.UserGroupRepository
+	repository.UserSettingsRepository
+	repository.UserRoleRepository
 	repository.TagRepository
 	repository.ChannelRepository
 	repository.MessageRepository
@@ -22,7 +24,6 @@ type EmptyTestRepository struct {
 	repository.BotRepository
 	repository.ClipRepository
 	repository.OgpCacheRepository
-	repository.UserSettingsRepository
 }
 
 func (*EmptyTestRepository) Sync() (init bool, err error) {

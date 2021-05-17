@@ -6,8 +6,6 @@ import (
 
 	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
-
-	"github.com/traPtitech/traQ/service/rbac/role"
 )
 
 // Migrate データベースマイグレーションを実行します
@@ -26,13 +24,7 @@ func Migrate(db *gorm.DB) (init bool, err error) {
 		init = true
 
 		// テーブル
-		if err := db.AutoMigrate(AllTables()...); err != nil {
-			return err
-		}
-
-		// 初期ユーザーロール投入
-		// (user_role, user_role_permissions, user_role_inheritances 作成)
-		return db.Create(role.SystemRoleModels()).Error
+		return db.AutoMigrate(AllTables()...)
 	})
 	err = m.Migrate()
 	return

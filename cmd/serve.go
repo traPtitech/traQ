@@ -114,6 +114,11 @@ func serveCommand() *cobra.Command {
 			if init {
 				logger.Info("data initializing...")
 
+				// システムユーザーロール投入
+				if err := repo.CreateUserRoles(role.SystemRoleModels()...); err != nil {
+					logger.Fatal("failed to init system user roles", zap.Error(err))
+				}
+
 				// 管理者ユーザーの作成
 				fid, err := file.GenerateIconFile(server.SS.FileManager, "traq")
 				if err != nil {
