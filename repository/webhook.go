@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
 )
@@ -38,7 +39,7 @@ type WebhookRepository interface {
 	// idにuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	DeleteWebhook(id uuid.UUID) error
-	// GetWebhookByBotUserID 指定したWebhookを取得します
+	// GetWebhook 指定したWebhookを取得します
 	//
 	// 成功した場合、Webhookとnilを返します。
 	// 存在しなかった場合、ErrNotFoundを返します。

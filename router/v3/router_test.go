@@ -89,8 +89,13 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			panic(err)
 		}
-		if _, err := repo.Sync(); err != nil {
+		if init, err := repo.Sync(); err != nil {
 			panic(err)
+		} else if init {
+			// システムユーザーロール投入
+			if err := repo.CreateUserRoles(role.SystemRoleModels()...); err != nil {
+				panic(err)
+			}
 		}
 		env.Repository = repo
 
