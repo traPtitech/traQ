@@ -59,7 +59,7 @@ require (
 	gopkg.in/ini.v1 v1.51.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.4.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0
-	gorm.io/driver/mysql v1.0.6
+	gorm.io/driver/mysql v1.1.0
 	gorm.io/gorm v1.21.9
 )
 
