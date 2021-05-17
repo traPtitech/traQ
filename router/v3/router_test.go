@@ -115,7 +115,7 @@ func TestMain(m *testing.M) {
 		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
 		e.Use(extension.Wrap(repo, env.CM))
 
-		r, err := rbac.New(engine)
+		r, err := rbac.New(repo)
 		if err != nil {
 			panic(err)
 		}

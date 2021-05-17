@@ -73,7 +73,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 	streamer := ws.NewStreamer(hub2, viewerManager, webrtcv3Manager, logger)
 	serverOriginString := provideServerOriginString(c2)
 	notificationService := notification.NewService(repo, manager, messageManager, fileManager, hub2, logger, client, streamer, viewerManager, serverOriginString)
-	rbacRBAC, err := rbac.New(db)
+	rbacRBAC, err := rbac.New(repo)
 	if err != nil {
 		return nil, err
 	}

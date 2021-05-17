@@ -8,6 +8,8 @@ import (
 )
 
 func TestGormRepository_CreateUserRoles(t *testing.T) {
+	t.Parallel()
+
 	repo, assert, _ := setup(t, common)
 
 	r1 := &model.UserRole{Name: "r1", Permissions: []model.RolePermission{{Permission: "p1"}}}
@@ -23,6 +25,8 @@ func TestGormRepository_CreateUserRoles(t *testing.T) {
 }
 
 func TestGormRepository_GetAllUserRoles(t *testing.T) {
+	t.Parallel()
+
 	repo, assert, require := setup(t, common2)
 
 	r1 := &model.UserRole{Name: "r1", Permissions: []model.RolePermission{{Permission: "p1"}}}
