@@ -439,19 +439,38 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 	}
 
 	var stats ChannelStats
-	var messagelst []model.Message 
-	
-	if err := repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Find(&messagelst).Error; err!=nil{
-		return nil,err
+	if err := repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error; err != nil {
+		return nil, err
 	}
-	stats.TotalMessageCount=int64(len(messagelst))
-	for _, message := range messagelst {
-		stats.UserMessageCount[message.UserID]++
-		for _, stamp := range message.Stamps{
-			stats.StampCount[stamp.StampID]+=int64(stamp.Count)
-		}
+	var all_stamp_count []struct {
+		stamp_id    uuid.UUID
+		count       int64
+		total_count int64
+	}
+
+	if err := repo.db.Unscoped().Model(&model.Message{}).Select("stamp_id,COUNT(stamp_id),SUM(count)").Joins("messages join messages_stamps on messages.id==messages_stamps.message_id").Where(&model.Message{ChannelID: channelID}).Group("stamp_id").Scan(&all_stamp_count).Error; err != nil {
+		return nil, err
+	}
+	stats.StampCount = make(map[uuid.UUID]int64)
+	stats.TotalCount = make(map[uuid.UUID]int64)
+
+	for _, stamp_count := range all_stamp_count {
+		stats.StampCount[stamp_count.stamp_id] = stamp_count.count
+		stats.TotalCount[stamp_count.stamp_id] = stamp_count.total_count
+	}
+	var all_user_message_count []struct {
+		use_id uuid.UUID
+		count  int64
+	}
+	if err := repo.db.Unscoped().Model(&model.Message{}).Select("user_id,COUNT(user_id)").Where(&model.Message{ChannelID: channelID}).Group("user_id").Scan(&all_user_message_count).Error; err != nil {
+		return nil, err
+	}
+
+	stats.UserMessageCount = make(map[uuid.UUID]int64)
+	for _, user_count := range all_user_message_count {
+		stats.UserMessageCount[user_count.use_id] = user_count.count
 	}
 	stats.DateTime = time.Now()
-	return &stats,nil
+	return &stats, nil
 	//return &stats, repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error
 }
