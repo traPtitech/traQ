@@ -180,6 +180,10 @@ type UserRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	UnlinkExternalUserAccount(userID uuid.UUID, providerName string) error
-
+	//
+	//	成功した場合、(統計情報、nil)を返します。
+	//　既に関連付けがない場合、(nil,ErrNotFound)を返します。
+	//　引数にuuid.Nilを指定した場合、(nil,ErrNilID)を返します。
+	//  DBによるエラーを返すことがあります。
 	GetUserStats(userID uuid.UUID) (*UserStats, error)
 }
