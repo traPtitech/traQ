@@ -443,7 +443,6 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 		Model(&model.Message{}).
 		Select("COUNT(channel_id)").
 		Where(&model.Message{ChannelID: channelID}).
-		Group("channel_id").
 		Scan(&stats.TotalMessageCount).Error; err != nil {
 
 		return nil, err
