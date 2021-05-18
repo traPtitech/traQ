@@ -2,6 +2,8 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -100,6 +102,14 @@ func (q UsersQuery) LoadProfile() UsersQuery {
 	return q
 }
 
+// UserStats ユーザー統計情報
+type UserStats struct {
+	TotalMessageCount int64               `json:"totalMessageCount"`
+	StampCount        map[uuid.UUID]int64 `json:"stampCount"`
+	TotalStampCount   map[uuid.UUID]int64 `json:"stampTotalCount"`
+	DateTime          time.Time           `json:"datetime"`
+}
+
 // UserRepository ユーザーリポジトリ
 type UserRepository interface {
 	// CreateUser ユーザーを作成します
@@ -170,4 +180,6 @@ type UserRepository interface {
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	UnlinkExternalUserAccount(userID uuid.UUID, providerName string) error
+
+	GetUserStats(userID uuid.UUID) (*UserStats, error)
 }

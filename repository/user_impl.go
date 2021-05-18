@@ -2,6 +2,7 @@ package repository
 
 import (
 	"encoding/hex"
+	"time"
 	"unicode/utf8"
 
 	"github.com/gofrs/uuid"
@@ -342,4 +343,39 @@ func (repo *GormRepository) UnlinkExternalUserAccount(userID uuid.UUID, provider
 		return ErrNotFound
 	}
 	return nil
+}
+
+// GetUserStats implements UserRepository interface
+func (repo *GormRepository) GetUserStats(userID uuid.UUID) (*UserStats, error) {
+	if userID == uuid.Nil {
+		return nil, ErrNotFound
+	}
+	if ok, err := gormutil.RecordExists(repo.db, &model.User{ID: userID}); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, ErrNotFound
+	}
+	var stats UserStats
+	if err := repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{UserID: userID}).Count(&stats.TotalMessageCount).Error; err != nil {
+		return nil, err
+	}
+	var all_stamp_count []struct {
+		stamp_id    uuid.UUID
+		count       int64
+		total_count int64
+	}
+
+	if err := repo.db.Unscoped().Model(&model.MessageStamp{}).Select("stamp_id,COUNT(stamp_id),SUM(count)").Where(&model.MessageStamp{UserID: userID}).Scan(&all_stamp_count).Error; err != nil {
+		return nil, err
+	}
+	stats.StampCount = make(map[uuid.UUID]int64)
+	stats.TotalStampCount = make(map[uuid.UUID]int64)
+
+	for _, stamp_count := range all_stamp_count {
+		stats.StampCount[stamp_count.stamp_id] = stamp_count.count
+		stats.StampCount[stamp_count.stamp_id] = stamp_count.total_count
+	}
+
+	stats.DateTime = time.Now()
+	return &stats, nil
 }
