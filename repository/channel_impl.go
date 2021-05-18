@@ -448,7 +448,7 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 		total_count int64
 	}
 
-	if err := repo.db.Unscoped().Model(&model.Message{}).Select("stamp_id,COUNT(stamp_id),SUM(count)").Joins("messages join messages_stamps on messages.id==messages_stamps.message_id").Where(&model.Message{ChannelID: channelID}).Group("stamp_id").Scan(&all_stamp_count).Error; err != nil {
+	if err := repo.db.Unscoped().Model(&model.Message{}).Select("stamp_id,COUNT(stamp_id),SUM(count)").Joins("messages join messages_stamps on messages.id=messages_stamps.message_id").Where(&model.Message{ChannelID: channelID}).Group("stamp_id").Scan(&all_stamp_count).Error; err != nil {
 		return nil, err
 	}
 	stats.StampCount = make(map[uuid.UUID]int64)
