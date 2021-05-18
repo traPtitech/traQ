@@ -448,9 +448,9 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 		return nil, err
 	}
 	var allStampCount []struct {
-		stamp_id    uuid.UUID
-		count       int64
-		total_count int64
+		StampId    uuid.UUID
+		Count       int64
+		TotalCount int64
 	}
 
 	if err := repo.db.
@@ -468,12 +468,12 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 	stats.TotalCount = make(map[uuid.UUID]int64)
 
 	for _, stampCount := range allStampCount {
-		stats.StampCount[stampCount.stamp_id] = stampCount.count
-		stats.TotalCount[stampCount.stamp_id] = stampCount.total_count
+		stats.StampCount[stampCount.StampId] = stampCount.Count
+		stats.TotalCount[stampCount.StampId] = stampCount.TotalCount
 	}
 	var allUserMessageCount []struct {
-		user_id uuid.UUID
-		count  int64
+		UserId uuid.UUID
+		Count  int64
 	}
 	if err := repo.db.Unscoped().
 	Model(&model.Message{}).
@@ -486,7 +486,7 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 
 	stats.UserMessageCount = make(map[uuid.UUID]int64)
 	for _, userCount := range allUserMessageCount {
-		stats.UserMessageCount[userCount.user_id] = userCount.count
+		stats.UserMessageCount[userCount.UserId] = userCount.Count
 	}
 	stats.DateTime = time.Now()
 	return &stats, nil
