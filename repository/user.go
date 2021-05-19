@@ -181,7 +181,7 @@ type UserRepository interface {
 	// DBによるエラーを返すことがあります。
 	UnlinkExternalUserAccount(userID uuid.UUID, providerName string) error
 	// 成功した場合、(統計情報, nil)を返します。
-	// 
+	//
 	// ユーザーが存在しない場合、(nil, ErrNotFound)を返します。
 	// 引数にuuid.Nilを指定した場合、(nil, ErrNilID)を返します。
 	// DBによるエラーを返すことがあります。
