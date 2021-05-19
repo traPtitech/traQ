@@ -100,9 +100,9 @@ type StampRepository interface {
 	// DBによるエラーを返すことがあります。
 	ExistStamps(stampIDs []uuid.UUID) (err error)
 	//
-	// 成功した場合、(統計情報、nil)を返します。
-	// //　既に関連付けがない場合、(nil,ErrNotFound)を返します。
-	// stampIDにNILを渡した場合 (nil,ErrNilID)を返します。
+	// 成功した場合、(統計情報, nil)を返します。
+	// スタンプがない場合、(nil, ErrNotFound)を返します。
+	// stampIDにNILを渡した場合、(nil, ErrNilID)を返します。
 	// DBによるエラーを返すことがあります。
 	GetStampStats(stampID uuid.UUID) (*StampStats, error)
 }
