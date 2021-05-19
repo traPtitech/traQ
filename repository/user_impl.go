@@ -361,8 +361,8 @@ func (repo *GormRepository) GetUserStats(userID uuid.UUID) (*UserStats, error) {
 		Unscoped().
 		Model(&model.Message{}).
 		Where(&model.Message{UserID: userID}).
-		Count(&stats.TotalMessageCount).Error; err != nil {
-
+		Count(&stats.TotalMessageCount).
+		Error; err != nil {
 		return nil, err
 	}
 	var allStampCount []struct {
@@ -376,8 +376,8 @@ func (repo *GormRepository) GetUserStats(userID uuid.UUID) (*UserStats, error) {
 		Model(&model.MessageStamp{}).
 		Select("stamp_id AS stamp_id", "COUNT(stamp_id) AS count", "SUM(count) AS total_count").
 		Where(&model.MessageStamp{UserID: userID}).
-		Scan(&allStampCount).Error; err != nil {
-
+		Scan(&allStampCount).
+		Error; err != nil {
 		return nil, err
 	}
 	stats.StampCount = make(map[uuid.UUID]int64)

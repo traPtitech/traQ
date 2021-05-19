@@ -443,7 +443,8 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 		Model(&model.Message{}).
 		Select("COUNT(channel_id) As total_message_count").
 		Where(&model.Message{ChannelID: channelID}).
-		Find(&stats.TotalMessageCount).Error; err != nil {
+		Find(&stats.TotalMessageCount).
+		Error; err != nil {
 		return nil, err
 	}
 	var allStampCount []struct {
@@ -459,8 +460,8 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 		Joins("messages join messages_stamps on messages.id=messages_stamps.message_id").
 		Where(&model.Message{ChannelID: channelID}).
 		Group("stamp_id").
-		Find(&allStampCount).Error; err != nil {
-
+		Find(&allStampCount).
+		Error; err != nil {
 		return nil, err
 	}
 	stats.StampCount = make(map[uuid.UUID]int64)
@@ -480,7 +481,8 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 		Select("user_id AS user_id", "COUNT(user_id) AS message_count").
 		Where(&model.Message{ChannelID: channelID}).
 		Group("user_id").
-		Find(&allUserMessageCount).Error; err != nil {
+		Find(&allUserMessageCount).
+		Error; err != nil {
 		return nil, err
 	}
 
