@@ -1,12 +1,15 @@
 package repository
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/traQ/utils/optional"
-	random2 "github.com/traPtitech/traQ/utils/random"
 	"strings"
 	"testing"
+
+	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
 )
 
 func TestRepositoryImpl_CreateUserGroup(t *testing.T) {
@@ -266,6 +269,11 @@ func TestRepositoryImpl_AddUserToGroup(t *testing.T) {
 		t.Parallel()
 
 		assert.NoError(t, repo.AddUserToGroup(user.GetID(), g.ID, ""))
+
+		g, err := repo.GetUserGroup(g.ID)
+		require.NoError(t, err)
+		assert.True(t, g.IsMember(user.GetID()))
+
 		assert.NoError(t, repo.AddUserToGroup(user.GetID(), g.ID, ""))
 	})
 }
@@ -287,6 +295,85 @@ func TestRepositoryImpl_RemoveUserFromGroup(t *testing.T) {
 		t.Parallel()
 
 		assert.NoError(t, repo.RemoveUserFromGroup(user.GetID(), g.ID))
+
+		g, err := repo.GetUserGroup(g.ID)
+		require.NoError(t, err)
+		assert.False(t, g.IsMember(user.GetID()))
+
 		assert.NoError(t, repo.RemoveUserFromGroup(user.GetID(), g.ID))
+	})
+}
+
+func TestRepositoryImpl_AddUserToGroupAdmin(t *testing.T) {
+	t.Parallel()
+	repo, _, _, user := setupWithUser(t, common3)
+	user2 := mustMakeUser(t, repo, rand)
+
+	g := mustMakeUserGroup(t, repo, rand, user.GetID())
+
+	t.Run("nil id", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.AddUserToGroupAdmin(uuid.Nil, g.ID), ErrNilID.Error())
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.AddUserToGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV4())), ErrNotFound.Error())
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		assert.NoError(t, repo.AddUserToGroupAdmin(user2.GetID(), g.ID))
+
+		g, err := repo.GetUserGroup(g.ID)
+		require.NoError(t, err)
+		assert.True(t, g.IsAdmin(user.GetID()))
+		assert.True(t, g.IsAdmin(user2.GetID()))
+
+		assert.NoError(t, repo.AddUserToGroupAdmin(user2.GetID(), g.ID))
+	})
+}
+
+func TestRepositoryImpl_RemoveUserFromGroupAdmin(t *testing.T) {
+	t.Parallel()
+	repo, _, _, user := setupWithUser(t, common3)
+	user2 := mustMakeUser(t, repo, rand)
+
+	g := mustMakeUserGroup(t, repo, rand, user.GetID())
+	require.NoError(t, repo.AddUserToGroupAdmin(user2.GetID(), g.ID))
+
+	t.Run("nil id", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(uuid.Nil, g.ID), ErrNilID.Error())
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+
+		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(user2.GetID(), uuid.Must(uuid.NewV4())), ErrNotFound.Error())
+	})
+
+	t.Run("cannot remove last admin", func(t *testing.T) {
+		t.Parallel()
+		g2 := mustMakeUserGroup(t, repo, rand, user.GetID())
+
+		assert.EqualError(t, repo.RemoveUserFromGroupAdmin(user.GetID(), g2.ID), ErrForbidden.Error())
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		assert.NoError(t, repo.RemoveUserFromGroupAdmin(user2.GetID(), g.ID))
+
+		g, err := repo.GetUserGroup(g.ID)
+		require.NoError(t, err)
+		assert.True(t, g.IsAdmin(user.GetID()))
+		assert.False(t, g.IsAdmin(user2.GetID()))
+
+		assert.NoError(t, repo.RemoveUserFromGroupAdmin(user2.GetID(), g.ID))
 	})
 }
