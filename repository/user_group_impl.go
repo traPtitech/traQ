@@ -109,7 +109,7 @@ func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNa
 			},
 		})
 	}
-	return err
+	return nil
 }
 
 // DeleteUserGroup implements UserGroupRepository interface.
