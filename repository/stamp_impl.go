@@ -378,7 +378,8 @@ func (repo *GormRepository) GetStampStats(stampID uuid.UUID) (*StampStats, error
 		return nil, ErrNotFound
 	}
 	var stats StampStats
-	if err := repo.db.Unscoped().
+	if err := repo.db.
+		Unscoped().
 		Model(&model.MessageStamp{}).
 		Select("COUNT(stamp_id) AS count", "SUM(count) AS total_count").
 		Where(&model.MessageStamp{StampID: stampID}).
