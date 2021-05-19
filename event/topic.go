@@ -69,6 +69,16 @@ const (
 	//		group_id: uuid.UUID
 	//		user_id: uuid.UUID
 	UserGroupMemberRemoved = "user_group.member.removed"
+	// UserGroupAdminAdded ユーザーがグループの管理者に追加された
+	// 	Fields:
+	//		group_id: uuid.UUID
+	//		user_id: uuid.UUID
+	UserGroupAdminAdded = "user_group.admin.added"
+	// UserGroupAdminRemoved ユーザーがグループの管理者から削除された
+	// 	Fields:
+	//		group_id: uuid.UUID
+	//		user_id: uuid.UUID
+	UserGroupAdminRemoved = "user_group.admin.removed"
 
 	// MessageCreated メッセージが作成された
 	// 	Fields:

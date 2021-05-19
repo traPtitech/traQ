@@ -54,6 +54,8 @@ var handlerMap = map[string]eventHandler{
 	event.UserGroupDeleted:          userGroupDeletedHandler,
 	event.UserGroupMemberAdded:      userGroupUpdatedHandler,
 	event.UserGroupMemberRemoved:    userGroupUpdatedHandler,
+	event.UserGroupAdminAdded:       userGroupUpdatedHandler,
+	event.UserGroupAdminRemoved:     userGroupUpdatedHandler,
 	event.StampCreated:              stampCreatedHandler,
 	event.StampUpdated:              stampUpdatedHandler,
 	event.StampDeleted:              stampDeletedHandler,
