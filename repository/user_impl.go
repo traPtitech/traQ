@@ -366,7 +366,7 @@ func (repo *GormRepository) GetUserStats(userID uuid.UUID) (*UserStats, error) {
 		return nil, err
 	}
 	var allStampCount []struct {
-		StampId    uuid.UUID
+		StampID    uuid.UUID
 		Count      int64
 		TotalCount int64
 	}
@@ -383,9 +383,9 @@ func (repo *GormRepository) GetUserStats(userID uuid.UUID) (*UserStats, error) {
 	stats.StampCount = make(map[uuid.UUID]int64)
 	stats.TotalStampCount = make(map[uuid.UUID]int64)
 
-	for _, stamp_count := range allStampCount {
-		stats.StampCount[stamp_count.StampId] = stamp_count.Count
-		stats.StampCount[stamp_count.StampId] = stamp_count.TotalCount
+	for _, stampCount := range allStampCount {
+		stats.StampCount[stampCount.StampID] = stampCount.Count
+		stats.StampCount[stampCount.StampID] = stampCount.TotalCount
 	}
 
 	stats.DateTime = time.Now()

@@ -442,7 +442,7 @@ func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// GetUserStats
+// GetUserStats GET /users/me/userID/stats
 func (h *Handlers) GetUserStats(c echo.Context) error {
 	userID := getParamAsUUID(c, consts.ParamUserID)
 	stats, err := h.Repo.GetUserStats(userID)

@@ -441,7 +441,7 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 	var stats ChannelStats
 	if err := repo.db.Unscoped().
 		Model(&model.Message{}).
-		Select("COUNT(channel_id) As total_message_count").
+		Select("COUNT(channel_id) AS total_message_count").
 		Where(&model.Message{ChannelID: channelID}).
 		Find(&stats.TotalMessageCount).
 		Error; err != nil {
@@ -456,8 +456,8 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 	if err := repo.db.
 		Unscoped().
 		Model(&model.Message{}).
-		Select("stamp_id As stamp_id", "COUNT(stamp_id) As stamp_count", "SUM(count) As total_count").
-		Joins("messages join messages_stamps on messages.id=messages_stamps.message_id").
+		Select("stamp_id AS stamp_id", "COUNT(stamp_id) AS stamp_count", "SUM(count) As total_count").
+		Joins("JOIN messages_stamps ON id = messages_stamps.message_id").
 		Where(&model.Message{ChannelID: channelID}).
 		Group("stamp_id").
 		Find(&allStampCount).

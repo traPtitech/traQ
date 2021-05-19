@@ -176,7 +176,7 @@ func (h *Handlers) ChangeStampImage(c echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-// GetStampStats
+// GetStampStats GET /stamps/:stampID/stats
 func (h *Handlers) GetStampStats(c echo.Context) error {
 	stampID := getParamAsUUID(c, consts.ParamStampID)
 	stats, err := h.Repo.GetStampStats(stampID)
