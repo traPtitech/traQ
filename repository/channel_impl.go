@@ -441,26 +441,26 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 	var stats ChannelStats
 	if err := repo.db.Unscoped().
 		Model(&model.Message{}).
-		Select("COUNT(channel_id)").
+		Select("COUNT(channel_id) As totalMessageCount").
 		Where(&model.Message{ChannelID: channelID}).
-		Scan(&stats.TotalMessageCount).Error; err != nil {
+		Find(&stats.TotalMessageCount).Error; err != nil {
 
 		return nil, err
 	}
 	var allStampCount []struct {
-		StampId    uuid.UUID
-		Count       int64
+		StampID    uuid.UUID
+		StampCount int64
 		TotalCount int64
 	}
 
 	if err := repo.db.
 		Unscoped().
 		Model(&model.Message{}).
-		Select("stamp_id","COUNT(stamp_id)","SUM(count)").
+		Select("stamp_id As stampID", "COUNT(stamp_id) As stampCount", "SUM(count) As totalCount").
 		Joins("messages join messages_stamps on messages.id=messages_stamps.message_id").
 		Where(&model.Message{ChannelID: channelID}).
 		Group("stamp_id").
-		Scan(&allStampCount).Error; err != nil {
+		Find(&allStampCount).Error; err != nil {
 
 		return nil, err
 	}
@@ -468,25 +468,25 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 	stats.TotalCount = make(map[uuid.UUID]int64)
 
 	for _, stampCount := range allStampCount {
-		stats.StampCount[stampCount.StampId] = stampCount.Count
-		stats.TotalCount[stampCount.StampId] = stampCount.TotalCount
+		stats.StampCount[stampCount.StampID] = stampCount.StampCount
+		stats.TotalCount[stampCount.StampID] = stampCount.TotalCount
 	}
 	var allUserMessageCount []struct {
-		UserId uuid.UUID
-		Count  int64
+		UserID       uuid.UUID
+		MessageCount int64
 	}
 	if err := repo.db.Unscoped().
-	Model(&model.Message{}).
-	Select("user_id","COUNT(user_id)").
-	Where(&model.Message{ChannelID: channelID}).
-	Group("user_id").
-	Scan(&allUserMessageCount).Error; err != nil {
+		Model(&model.Message{}).
+		Select("user_id As UserID", "COUNT(user_id) As messageCount").
+		Where(&model.Message{ChannelID: channelID}).
+		Group("user_id").
+		Find(&allUserMessageCount).Error; err != nil {
 		return nil, err
 	}
 
 	stats.UserMessageCount = make(map[uuid.UUID]int64)
 	for _, userCount := range allUserMessageCount {
-		stats.UserMessageCount[userCount.UserId] = userCount.Count
+		stats.UserMessageCount[userCount.UserID] = userCount.MessageCount
 	}
 	stats.DateTime = time.Now()
 	return &stats, nil

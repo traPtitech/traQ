@@ -367,13 +367,13 @@ func (repo *GormRepository) GetUserStats(userID uuid.UUID) (*UserStats, error) {
 	}
 	var allStampCount []struct {
 		StampId    uuid.UUID
-		Count       int64
+		Count      int64
 		TotalCount int64
 	}
 
 	if err := repo.db.Unscoped().
 		Model(&model.MessageStamp{}).
-		Select("stamp_id","COUNT(stamp_id),SUM(count)").
+		Select("stamp_id", "COUNT(stamp_id),SUM(count)").
 		Where(&model.MessageStamp{UserID: userID}).
 		Scan(&allStampCount).Error; err != nil {
 
