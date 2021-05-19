@@ -271,6 +271,8 @@ func (repo *GormRepository) AddUserToGroupAdmin(userID, groupID uuid.UUID) error
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return ErrNilID
 	}
+
+	var added bool
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var g model.UserGroup
 		if err := tx.First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
@@ -283,9 +285,23 @@ func (repo *GormRepository) AddUserToGroupAdmin(userID, groupID uuid.UUID) error
 			}
 			return err
 		}
+		added = true
 		return tx.Model(&g).UpdateColumn("updated_at", time.Now()).Error
 	})
-	return err
+	if err != nil {
+		return err
+	}
+
+	if added {
+		repo.hub.Publish(hub.Message{
+			Name: event.UserGroupAdminAdded,
+			Fields: hub.Fields{
+				"group_id": groupID,
+				"user_id":  userID,
+			},
+		})
+	}
+	return nil
 }
 
 // RemoveUserFromGroupAdmin implements UserGroupRepository interface.
@@ -293,6 +309,8 @@ func (repo *GormRepository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) 
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return ErrNilID
 	}
+
+	var removed bool
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var g model.UserGroup
 		if err := tx.Scopes(userGroupPreloads).First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
@@ -310,9 +328,23 @@ func (repo *GormRepository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) 
 		if err := tx.Delete(&model.UserGroupAdmin{UserID: userID, GroupID: groupID}).Error; err != nil {
 			return err
 		}
+		removed = true
 		return tx.Model(&model.UserGroup{ID: groupID}).UpdateColumn("updated_at", time.Now()).Error
 	})
-	return err
+	if err != nil {
+		return err
+	}
+
+	if removed {
+		repo.hub.Publish(hub.Message{
+			Name: event.UserGroupAdminRemoved,
+			Fields: hub.Fields{
+				"group_id": groupID,
+				"user_id":  userID,
+			},
+		})
+	}
+	return nil
 }
 
 func userGroupPreloads(db *gorm.DB) *gorm.DB {
