@@ -90,6 +90,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 				apiUsersUID.PATCH("", h.EditUser, requires(permission.EditOtherUsers))
 				apiUsersUID.GET("/dm-channel", h.GetUserDMChannel, requires(permission.GetChannel))
 				apiUsersUID.GET("/messages", h.GetDirectMessages, requires(permission.GetMessage))
+				apiUsersUID.GET("/stats", h.GetUserStats, requires(permission.GetUser))
 				apiUsersUID.POST("/messages", h.PostDirectMessage, bodyLimit(100), requires(permission.PostMessage))
 				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
 				apiUsersUID.PUT("/icon", h.ChangeUserIcon, requires(permission.EditOtherUsers))
@@ -237,6 +238,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiStampsSID := apiStamps.Group("/:stampID", retrieve.StampID(false))
 			{
 				apiStampsSID.GET("", h.GetStamp, requires(permission.GetStamp))
+				apiStampsSID.GET("/stats", h.GetStampStats, requires(permission.GetStamp))
 				apiStampsSID.PATCH("", h.EditStamp, requires(permission.EditStamp))
 				apiStampsSID.DELETE("", h.DeleteStamp, requires(permission.DeleteStamp))
 				apiStampsSID.GET("/image", h.GetStampImage, requires(permission.GetStamp, permission.DownloadFile))
