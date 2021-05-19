@@ -51,6 +51,10 @@ const (
 	//		group_id: uuid.UUID
 	//		group: *model.UserGroup
 	UserGroupCreated = "user_group.created"
+	// UserGroupUpdated ユーザーグループが更新された
+	// 	Fields:
+	//		group_id: uuid.UUID
+	UserGroupUpdated = "user_group.updated"
 	// UserGroupDeleted ユーザーグループが削除された
 	// 	Fields:
 	//		group_id: uuid.UUID

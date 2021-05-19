@@ -2,9 +2,12 @@ package v3
 
 import (
 	"context"
+	"net/http"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -12,7 +15,6 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"net/http"
 )
 
 // GetUserGroups GET /groups
@@ -82,7 +84,7 @@ type PatchUserGroupRequest struct {
 
 func (r PatchUserGroupRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, validator.UserGroupNameRuleRequired...),
+		vd.Field(&r.Name, validator.UserGroupNameRule...),
 		vd.Field(&r.Description, vd.RuneLength(0, 100)),
 		vd.Field(&r.Type, vd.RuneLength(0, 30)),
 	)

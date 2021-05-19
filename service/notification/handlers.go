@@ -9,6 +9,8 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -18,7 +20,6 @@ import (
 	"github.com/traPtitech/traQ/service/ws"
 	"github.com/traPtitech/traQ/utils/message"
 	"github.com/traPtitech/traQ/utils/set"
-	"go.uber.org/zap"
 )
 
 type eventHandler func(ns *Service, ev hub.Message)
@@ -49,6 +50,7 @@ var handlerMap = map[string]eventHandler{
 	event.UserTagRemoved:            userTagUpdatedHandler,
 	event.UserTagUpdated:            userTagUpdatedHandler,
 	event.UserGroupCreated:          userGroupCreatedHandler,
+	event.UserGroupUpdated:          userGroupUpdatedHandler,
 	event.UserGroupDeleted:          userGroupDeletedHandler,
 	event.UserGroupMemberAdded:      userGroupUpdatedHandler,
 	event.UserGroupMemberRemoved:    userGroupUpdatedHandler,

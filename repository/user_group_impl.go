@@ -59,6 +59,8 @@ func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNa
 	if id == uuid.Nil {
 		return ErrNilID
 	}
+
+	var updated bool
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var g model.UserGroup
 		if err := tx.First(&g, &model.UserGroup{ID: id}).Error; err != nil {
@@ -90,11 +92,24 @@ func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNa
 		}
 
 		if len(changes) > 0 {
+			updated = true
 			return tx.Model(&g).Updates(changes).Error
 		}
 		return nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+
+	if updated {
+		repo.hub.Publish(hub.Message{
+			Name: event.UserGroupUpdated,
+			Fields: hub.Fields{
+				"group_id": id,
+			},
+		})
+	}
+	return nil
 }
 
 // DeleteUserGroup implements UserGroupRepository interface.
@@ -232,7 +247,7 @@ func (repo *GormRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 		}
 		if result.RowsAffected > 0 {
 			changed = true
-			return tx.Model(&g).UpdateColumn("updated_at", time.Now()).Error
+			return tx.Model(&model.UserGroup{ID: groupID}).UpdateColumn("updated_at", time.Now()).Error
 		}
 		return nil
 	})
@@ -284,7 +299,7 @@ func (repo *GormRepository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) 
 			return convertError(err)
 		}
 
-		if !g.IsAdmin(groupID) {
+		if !g.IsAdmin(userID) {
 			return nil
 		}
 		if len(g.Admins) <= 1 {
@@ -295,7 +310,7 @@ func (repo *GormRepository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) 
 		if err := tx.Delete(&model.UserGroupAdmin{UserID: userID, GroupID: groupID}).Error; err != nil {
 			return err
 		}
-		return tx.Model(&g).UpdateColumn("updated_at", time.Now()).Error
+		return tx.Model(&model.UserGroup{ID: groupID}).UpdateColumn("updated_at", time.Now()).Error
 	})
 	return err
 }
