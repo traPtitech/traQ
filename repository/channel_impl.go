@@ -474,7 +474,8 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 		UserID       uuid.UUID
 		MessageCount int64
 	}
-	if err := repo.db.Unscoped().
+	if err := repo.db.
+		Unscoped().
 		Model(&model.Message{}).
 		Select("user_id AS user_id", "COUNT(user_id) AS message_count").
 		Where(&model.Message{ChannelID: channelID}).
