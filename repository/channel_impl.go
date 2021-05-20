@@ -447,49 +447,32 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 		Error; err != nil {
 		return nil, err
 	}
-	var allStampCount []struct {
-		StampID    uuid.UUID
-		StampCount int64
-		TotalCount int64
-	}
 
 	if err := repo.db.
 		Unscoped().
 		Model(&model.Message{}).
-		Select("stamp_id AS stamp_id", "COUNT(stamp_id) AS stamp_count", "SUM(count) As total_count").
+		Select("stamp_id AS id", "COUNT(stamp_id) AS count", "SUM(count) As total").
 		Joins("JOIN messages_stamps ON id = messages_stamps.message_id").
 		Where(&model.Message{ChannelID: channelID}).
 		Group("stamp_id").
-		Find(&allStampCount).
+		Order("count DESC").
+		Find(&stats.Stamps).
 		Error; err != nil {
 		return nil, err
 	}
-	stats.StampCount = make(map[uuid.UUID]int64)
-	stats.TotalCount = make(map[uuid.UUID]int64)
 
-	for _, stampCount := range allStampCount {
-		stats.StampCount[stampCount.StampID] = stampCount.StampCount
-		stats.TotalCount[stampCount.StampID] = stampCount.TotalCount
-	}
-	var allUserMessageCount []struct {
-		UserID       uuid.UUID
-		MessageCount int64
-	}
 	if err := repo.db.
 		Unscoped().
 		Model(&model.Message{}).
-		Select("user_id AS user_id", "COUNT(user_id) AS message_count").
+		Select("user_id AS id", "COUNT(user_id) AS message_count").
 		Where(&model.Message{ChannelID: channelID}).
 		Group("user_id").
-		Find(&allUserMessageCount).
+		Order("message_count DESC").
+		Find(&stats.Users).
 		Error; err != nil {
 		return nil, err
 	}
 
-	stats.UserMessageCount = make(map[uuid.UUID]int64)
-	for _, userCount := range allUserMessageCount {
-		stats.UserMessageCount[userCount.UserID] = userCount.MessageCount
-	}
 	stats.DateTime = time.Now()
 	return &stats, nil
 }
