@@ -238,9 +238,9 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiStampsSID := apiStamps.Group("/:stampID", retrieve.StampID(false))
 			{
 				apiStampsSID.GET("", h.GetStamp, requires(permission.GetStamp))
-				apiStampsSID.GET("/stats", h.GetStampStats, requires(permission.GetStamp))
 				apiStampsSID.PATCH("", h.EditStamp, requires(permission.EditStamp))
 				apiStampsSID.DELETE("", h.DeleteStamp, requires(permission.DeleteStamp))
+				apiStampsSID.GET("/stats", h.GetStampStats, requires(permission.GetStamp))
 				apiStampsSID.GET("/image", h.GetStampImage, requires(permission.GetStamp, permission.DownloadFile))
 				apiStampsSID.PUT("/image", h.ChangeStampImage, requires(permission.EditStamp))
 			}

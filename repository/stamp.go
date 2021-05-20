@@ -99,7 +99,7 @@ type StampRepository interface {
 	// 存在しないスタンプがあった場合、ArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
 	ExistStamps(stampIDs []uuid.UUID) (err error)
-	// 成功した場合、(統計情報, nil)を返します。
+	// GetStampStats 成功した場合、(統計情報, nil)を返します。
 	//
 	// スタンプがない場合、(nil, ErrNotFound)を返します。
 	// stampIDにNILを渡した場合、(nil, ErrNilID)を返します。
