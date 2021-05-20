@@ -376,6 +376,7 @@ func (repo *GormRepository) GetUserStats(userID uuid.UUID) (*UserStats, error) {
 		Model(&model.MessageStamp{}).
 		Select("stamp_id AS stamp_id", "COUNT(stamp_id) AS count", "SUM(count) AS total_count").
 		Where(&model.MessageStamp{UserID: userID}).
+		Group("stamp_id").
 		Find(&allStampCount).
 		Error; err != nil {
 		return nil, err
@@ -385,7 +386,7 @@ func (repo *GormRepository) GetUserStats(userID uuid.UUID) (*UserStats, error) {
 
 	for _, stampCount := range allStampCount {
 		stats.StampCount[stampCount.StampID] = stampCount.Count
-		stats.StampCount[stampCount.StampID] = stampCount.TotalCount
+		stats.TotalStampCount[stampCount.StampID] = stampCount.TotalCount
 	}
 
 	stats.DateTime = time.Now()
