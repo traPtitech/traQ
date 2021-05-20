@@ -1,15 +1,18 @@
 package v1
 
 import (
+	"net/http"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+
+	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/optional"
-	"net/http"
 )
 
 // GetUserGroups GET /groups
@@ -184,10 +187,20 @@ func (h *Handlers) PostUserGroupMembers(c echo.Context) error {
 	}
 
 	// ユーザーが存在するか
-	if ok, err := h.Repo.UserExists(req.UserID); err != nil {
-		return herror.InternalServerError(err)
-	} else if !ok {
+	var (
+		user model.UserInfo
+		err  error
+	)
+	if user, err = h.Repo.GetUser(req.UserID, false); err != nil {
+		if err != repository.ErrNotFound {
+			return herror.InternalServerError(err)
+		}
 		return herror.BadRequest("this user doesn't exist")
+	}
+
+	// Webhookは追加できない
+	if user.GetUserType() == model.UserTypeWebhook {
+		return herror.BadRequest("invalid user id")
 	}
 
 	if err := h.Repo.AddUserToGroup(req.UserID, groupID, ""); err != nil {

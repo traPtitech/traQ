@@ -3,9 +3,11 @@ package utils
 import (
 	"context"
 	"errors"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -138,6 +140,50 @@ var IsUserID = vd.WithContext(func(ctx context.Context, value interface{}) error
 	if !ok {
 		return errors.New(errMessage)
 	}
+	return nil
+})
+
+// IsNotWebhookUserID WebhookのユーザーIDではない
+var IsNotWebhookUserID = vd.WithContext(func(ctx context.Context, value interface{}) error {
+	const errMessage = "invalid user id"
+
+	repo, ok := ctx.Value(repoCtxKey).(repository.Repository)
+	if !ok {
+		return vd.NewInternalError(errors.New("this context didn't have repository"))
+	}
+
+	var (
+		user model.UserInfo
+		err  error
+	)
+	switch v := value.(type) {
+	case nil:
+		return nil
+	case uuid.UUID:
+		user, err = repo.GetUser(v, false)
+	case optional.UUID:
+		if !v.Valid {
+			return nil
+		}
+		user, err = repo.GetUser(v.UUID, false)
+	case string:
+		user, err = repo.GetUser(uuid.FromStringOrNil(v), false)
+	case []byte:
+		user, err = repo.GetUser(uuid.FromBytesOrNil(v), false)
+	default:
+		return errors.New(errMessage)
+	}
+	if err != nil {
+		if err == repository.ErrNotFound {
+			return nil
+		}
+		return vd.NewInternalError(err)
+	}
+
+	if user.GetUserType() == model.UserTypeWebhook {
+		return errors.New(errMessage)
+	}
+
 	return nil
 })
 
