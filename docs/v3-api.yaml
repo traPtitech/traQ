@@ -357,7 +357,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChannelStats'
         '404':
-          description: Not Found
+          description: |-
+            Not Found
+            チャンネルが見つかりません。
       operationId: getChannelStats
       description: 指定したチャンネルの統計情報を取得します。
   '/channels/{channelId}/topic':
@@ -4296,8 +4298,40 @@ components:
       properties:
         totalMessageCount:
           type: integer
-          format: int32
+          format: int64
           description: チャンネルの総投稿メッセージ数(削除されたものも含む)
+        stamps:
+          type: array
+          description: チャンネル上のスタンプ統計情報
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: スタンプID
+              count:
+                type: integer
+                format: int64
+                description: スタンプ数(同一メッセージ上のものは複数カウントしない)
+              total:
+                type: integer
+                format: int64
+                description: スタンプ数(同一メッセージ上のものも複数カウントする)
+        users:
+          type: array
+          description: チャンネル上のユーザー統計情報
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                decription: ユーザーID
+              messageCount:
+                type: integer
+                format: int64
+                description: メッセージ数
         datetime:
           type: string
           format: date-time
