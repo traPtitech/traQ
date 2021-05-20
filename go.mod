@@ -1,7 +1,7 @@
 module github.com/traPtitech/traQ
 
 require (
-	cloud.google.com/go v0.81.0
+	cloud.google.com/go v0.82.0
 	cloud.google.com/go/firestore v1.1.1 // indirect
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
@@ -53,7 +53,7 @@ require (
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6
 	golang.org/x/image v0.0.0-20210504121937-7319ad40d33e
 	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
-	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c
+	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/api v0.46.0
 	gopkg.in/ini.v1 v1.51.1 // indirect
