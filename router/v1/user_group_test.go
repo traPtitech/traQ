@@ -1,13 +1,15 @@
 package v1
 
 import (
+	"net/http"
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
 	random2 "github.com/traPtitech/traQ/utils/random"
-	"net/http"
-	"testing"
 )
 
 func TestHandlers_GetUserGroups(t *testing.T) {
@@ -304,6 +306,8 @@ func TestHandlers_PostUserGroupMembers(t *testing.T) {
 	env, _, _, s, _, user, _ := setupWithUsers(t, common5)
 	g := env.mustMakeUserGroup(t, rand, user.GetID())
 	user2 := env.mustMakeUser(t, rand)
+	channel := env.mustMakeChannel(t, rand)
+	webhook := env.mustMakeWebhook(t, rand, channel.ID, user.GetID(), "secret")
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
 		t.Parallel()
@@ -350,6 +354,16 @@ func TestHandlers_PostUserGroupMembers(t *testing.T) {
 		e.POST("/api/1.0/groups/{groupID}/members", g.ID.String()).
 			WithCookie(session.CookieName, s).
 			WithJSON(map[string]uuid.UUID{"userId": uuid.Must(uuid.NewV4())}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("cannot add webhook", func(t *testing.T) {
+		t.Parallel()
+		e := env.makeExp(t)
+		e.POST("/api/1.0/groups/{groupID}/members", g.ID.String()).
+			WithCookie(session.CookieName, s).
+			WithJSON(map[string]uuid.UUID{"userId": webhook.GetBotUserID()}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})

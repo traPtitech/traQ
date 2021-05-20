@@ -147,7 +147,7 @@ type PostUserGroupMemberRequest struct {
 
 func (r PostUserGroupMemberRequest) ValidateWithContext(ctx context.Context) error {
 	return vd.ValidateStructWithContext(ctx, &r,
-		vd.Field(&r.ID, vd.Required, validator.NotNilUUID, utils.IsUserID),
+		vd.Field(&r.ID, vd.Required, validator.NotNilUUID, utils.IsUserID, utils.IsNotWebhookUserID),
 		vd.Field(&r.Role, vd.RuneLength(0, 100)),
 	)
 }
@@ -225,7 +225,7 @@ type PostUserGroupAdminRequest struct {
 
 func (r PostUserGroupAdminRequest) ValidateWithContext(ctx context.Context) error {
 	return vd.ValidateStructWithContext(ctx, &r,
-		vd.Field(&r.ID, vd.Required, validator.NotNilUUID, utils.IsUserID),
+		vd.Field(&r.ID, vd.Required, validator.NotNilUUID, utils.IsUserID, utils.IsNotWebhookUserID),
 	)
 }
 
