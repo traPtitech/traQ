@@ -291,7 +291,7 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 					}
 				}
 
-				if err := tx.Delete(&model.UserSubscribeChannel{UserID: uid, ChannelID: channelID}).Error; err != nil {
+				if err := tx.Delete(&model.UserSubscribeChannel{}, &model.UserSubscribeChannel{UserID: uid, ChannelID: channelID}).Error; err != nil {
 					return err
 				}
 				if current[uid] == model.ChannelSubscribeLevelMarkAndNotify {

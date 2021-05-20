@@ -1,12 +1,14 @@
 package repository
 
 import (
+	"unicode/utf8"
+
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/gormutil"
-	"unicode/utf8"
 )
 
 // GetTagByID implements TagRepository interface.
@@ -92,7 +94,7 @@ func (repo *GormRepository) DeleteUserTag(userID, tagID uuid.UUID) error {
 	if userID == uuid.Nil || tagID == uuid.Nil {
 		return ErrNilID
 	}
-	result := repo.db.Delete(&model.UsersTag{UserID: userID, TagID: tagID})
+	result := repo.db.Delete(&model.UsersTag{}, &model.UsersTag{UserID: userID, TagID: tagID})
 	if result.Error != nil {
 		return result.Error
 	}

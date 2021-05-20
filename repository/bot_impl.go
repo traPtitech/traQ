@@ -435,7 +435,7 @@ func (repo *GormRepository) RemoveBotFromChannel(botID, channelID uuid.UUID) err
 	if botID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
 	}
-	result := repo.db.Delete(&model.BotJoinChannel{BotID: botID, ChannelID: channelID})
+	result := repo.db.Delete(&model.BotJoinChannel{}, &model.BotJoinChannel{BotID: botID, ChannelID: channelID})
 	if result.RowsAffected > 0 {
 		repo.hub.Publish(hub.Message{
 			Name: event.BotLeft,
