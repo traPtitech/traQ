@@ -2,7 +2,6 @@ package repository
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -349,23 +348,32 @@ func (repo *GormRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID
 	return nil
 }
 
-// GetChannelLatestMessagesByUserID implements MessageRepository interface.
-func (repo *GormRepository) GetChannelLatestMessagesByUserID(userID uuid.UUID, limit int, subscribeOnly bool) ([]*model.Message, error) {
-	var query string
-	switch {
-	case subscribeOnly:
-		query = `SELECT m.id, m.user_id, m.channel_id, m.text, m.created_at, m.updated_at, m.deleted_at FROM channel_latest_messages clm INNER JOIN messages m ON clm.message_id = m.id INNER JOIN channels c ON clm.channel_id = c.id WHERE c.deleted_at IS NULL AND c.is_public = TRUE AND m.deleted_at IS NULL AND (c.is_forced = TRUE OR c.id IN (SELECT s.channel_id FROM users_subscribe_channels s WHERE s.user_id = 'USER_ID')) ORDER BY clm.date_time DESC`
-		query = strings.Replace(query, "USER_ID", userID.String(), -1)
-	default:
-		query = `SELECT m.id, m.user_id, m.channel_id, m.text, m.created_at, m.updated_at, m.deleted_at FROM channel_latest_messages clm INNER JOIN messages m ON clm.message_id = m.id INNER JOIN channels c ON clm.channel_id = c.id WHERE c.deleted_at IS NULL AND c.is_public = TRUE AND m.deleted_at IS NULL ORDER BY clm.date_time DESC`
+// GetChannelLatestMessages implements MessageRepository interface.
+func (repo *GormRepository) GetChannelLatestMessages(query ChannelLatestMessagesQuery) ([]*model.Message, error) {
+	var messages []*model.Message
+
+	tx := repo.db.
+		Unscoped().
+		Select("m.id, m.user_id, m.channel_id, m.text, m.created_at, m.updated_at, m.deleted_at").
+		Table("channel_latest_messages clm").
+		Joins("INNER JOIN messages m ON clm.message_id = m.id").
+		Joins("INNER JOIN channels c ON clm.channel_id = c.id").
+		Where("c.deleted_at IS NULL AND c.is_public = TRUE AND m.deleted_at IS NULL").
+		Order("clm.date_time DESC")
+
+	if query.SubscribedByUser.Valid {
+		tx = tx.Where("c.is_forced = TRUE OR c.id IN (?)", repo.db.Table("users_subscribe_channels").Select("channel_id").Where("user_id", query.SubscribedByUser.UUID))
 	}
 
-	if limit > 0 {
-		query += fmt.Sprintf(" LIMIT %d", limit)
+	if query.Limit > 0 {
+		tx = tx.Limit(query.Limit)
 	}
 
-	result := make([]*model.Message, 0)
-	return result, repo.db.Raw(query).Scan(&result).Error
+	if query.Since.Valid {
+		tx = tx.Where("clm.date_time >= ?", query.Since.Time)
+	}
+
+	return messages, tx.Find(&messages).Error
 }
 
 // AddStampToMessage implements MessageRepository interface.
