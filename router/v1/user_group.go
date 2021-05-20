@@ -187,15 +187,20 @@ func (h *Handlers) PostUserGroupMembers(c echo.Context) error {
 	}
 
 	// ユーザーが存在するか
-	if user, err := h.Repo.GetUser(req.UserID, false); err != nil {
+	var (
+		user model.UserInfo
+		err  error
+	)
+	if user, err = h.Repo.GetUser(req.UserID, false); err != nil {
 		if err != repository.ErrNotFound {
 			return herror.InternalServerError(err)
 		}
 		return herror.BadRequest("this user doesn't exist")
-	} else {
-		if user.GetUserType() == model.UserTypeWebhook {
-			return herror.BadRequest("invalid user id")
-		}
+	}
+
+	// Webhookは追加できない
+	if user.GetUserType() == model.UserTypeWebhook {
+		return herror.BadRequest("invalid user id")
 	}
 
 	if err := h.Repo.AddUserToGroup(req.UserID, groupID, ""); err != nil {
