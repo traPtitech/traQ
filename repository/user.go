@@ -104,10 +104,13 @@ func (q UsersQuery) LoadProfile() UsersQuery {
 
 // UserStats ユーザー統計情報
 type UserStats struct {
-	TotalMessageCount int64               `json:"totalMessageCount"`
-	StampCount        map[uuid.UUID]int64 `json:"stampCount"`
-	TotalStampCount   map[uuid.UUID]int64 `json:"stampTotalCount"`
-	DateTime          time.Time           `json:"datetime"`
+	TotalMessageCount int64 `json:"totalMessageCount"`
+	Stamps            []struct {
+		ID    uuid.UUID `json:"id"`
+		Count int64     `json:"count"`
+		Total int64     `json:"total"`
+	} `json:"stamps"`
+	DateTime time.Time `json:"datetime"`
 }
 
 // UserRepository ユーザーリポジトリ

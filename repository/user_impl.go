@@ -365,28 +365,17 @@ func (repo *GormRepository) GetUserStats(userID uuid.UUID) (*UserStats, error) {
 		Error; err != nil {
 		return nil, err
 	}
-	var allStampCount []struct {
-		StampID    uuid.UUID
-		Count      int64
-		TotalCount int64
-	}
 
 	if err := repo.db.
 		Unscoped().
 		Model(&model.MessageStamp{}).
-		Select("stamp_id AS stamp_id", "COUNT(stamp_id) AS count", "SUM(count) AS total_count").
+		Select("stamp_id AS id", "COUNT(stamp_id) AS count", "SUM(count) AS total").
 		Where(&model.MessageStamp{UserID: userID}).
 		Group("stamp_id").
-		Find(&allStampCount).
+		Order("count DESC").
+		Find(&stats.Stamps).
 		Error; err != nil {
 		return nil, err
-	}
-	stats.StampCount = make(map[uuid.UUID]int64)
-	stats.TotalStampCount = make(map[uuid.UUID]int64)
-
-	for _, stampCount := range allStampCount {
-		stats.StampCount[stampCount.StampID] = stampCount.Count
-		stats.TotalStampCount[stampCount.StampID] = stampCount.TotalCount
 	}
 
 	stats.DateTime = time.Now()
