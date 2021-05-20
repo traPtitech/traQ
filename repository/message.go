@@ -2,10 +2,12 @@
 package repository
 
 import (
-	"github.com/traPtitech/traQ/utils/optional"
 	"time"
 
+	"github.com/traPtitech/traQ/utils/optional"
+
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -23,6 +25,14 @@ type MessagesQuery struct {
 	Asc                      bool
 	ExcludeDMs               bool
 	DisablePreload           bool
+}
+
+// ChannelLatestMessagesQuery GetChannelLatestMessages用クエリ
+type ChannelLatestMessagesQuery struct {
+	// SubscribedByUser 指定したユーザーが購読しているチャンネル
+	SubscribedByUser optional.UUID
+	Limit            int
+	Since            optional.Time
 }
 
 // MessageRepository メッセージリポジトリ
@@ -95,11 +105,11 @@ type MessageRepository interface {
 	// 存在しないユーザーを指定した場合、空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetUserUnreadChannels(userID uuid.UUID) ([]*UserUnreadChannel, error)
-	// GetChannelLatestMessagesByUserID 指定したユーザーが閲覧可能な全てのパブリックチャンネルの最新のメッセージの一覧を取得します
+	// GetChannelLatestMessages 全てのパブリックチャンネルの最新のメッセージの一覧を取得します
 	//
-	// 成功した場合、メッセージの配列とnilを返します。負のlimitは無視されます。
+	// 成功した場合、メッセージの配列とnilを返します。非正のlimitは無視されます。
 	// DBによるエラーを返すことがあります。
-	GetChannelLatestMessagesByUserID(userID uuid.UUID, limit int, subscribeOnly bool) ([]*model.Message, error)
+	GetChannelLatestMessages(query ChannelLatestMessagesQuery) ([]*model.Message, error)
 	// AddStampToMessage 指定したメッセージに指定したユーザーの指定したスタンプを追加します
 	//
 	// 成功した場合、そのメッセージスタンプとnilを返します。

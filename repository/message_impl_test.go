@@ -266,7 +266,7 @@ func TestRepositoryImpl_DeleteUnreadsByChannelID(t *testing.T) {
 	})
 }
 
-func TestRepositoryImpl_GetChannelLatestMessagesByUserID(t *testing.T) {
+func TestRepositoryImpl_GetChannelLatestMessages(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, ex1)
 
@@ -286,7 +286,7 @@ func TestRepositoryImpl_GetChannelLatestMessagesByUserID(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		arr, err := repo.GetChannelLatestMessagesByUserID(user.GetID(), -1, false)
+		arr, err := repo.GetChannelLatestMessages(ChannelLatestMessagesQuery{})
 		derefs := make([]uuid.UUID, len(arr))
 		for i := range arr {
 			derefs[i] = arr[i].ID
@@ -300,7 +300,7 @@ func TestRepositoryImpl_GetChannelLatestMessagesByUserID(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		arr, err := repo.GetChannelLatestMessagesByUserID(user.GetID(), -1, true)
+		arr, err := repo.GetChannelLatestMessages(ChannelLatestMessagesQuery{SubscribedByUser: optional.UUIDFrom(user.GetID())})
 		derefs := make([]uuid.UUID, len(arr))
 		for i := range arr {
 			derefs[i] = arr[i].ID
@@ -314,7 +314,7 @@ func TestRepositoryImpl_GetChannelLatestMessagesByUserID(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
-		arr, err := repo.GetChannelLatestMessagesByUserID(user.GetID(), 5, false)
+		arr, err := repo.GetChannelLatestMessages(ChannelLatestMessagesQuery{Limit: 5})
 		derefs := make([]uuid.UUID, len(arr))
 		for i := range arr {
 			derefs[i] = arr[i].ID

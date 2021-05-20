@@ -200,19 +200,19 @@ func (mr *MockMessageRepositoryMockRecorder) GetUserUnreadChannels(userID interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserUnreadChannels", reflect.TypeOf((*MockMessageRepository)(nil).GetUserUnreadChannels), userID)
 }
 
-// GetChannelLatestMessagesByUserID mocks base method
-func (m *MockMessageRepository) GetChannelLatestMessagesByUserID(userID uuid.UUID, limit int, subscribeOnly bool) ([]*model.Message, error) {
+// GetChannelLatestMessages mocks base method
+func (m *MockMessageRepository) GetChannelLatestMessages(query repository.ChannelLatestMessagesQuery) ([]*model.Message, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetChannelLatestMessagesByUserID", userID, limit, subscribeOnly)
+	ret := m.ctrl.Call(m, "GetChannelLatestMessages", query)
 	ret0, _ := ret[0].([]*model.Message)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetChannelLatestMessagesByUserID indicates an expected call of GetChannelLatestMessagesByUserID
-func (mr *MockMessageRepositoryMockRecorder) GetChannelLatestMessagesByUserID(userID, limit, subscribeOnly interface{}) *gomock.Call {
+// GetChannelLatestMessages indicates an expected call of GetChannelLatestMessages
+func (mr *MockMessageRepositoryMockRecorder) GetChannelLatestMessages(query interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelLatestMessagesByUserID", reflect.TypeOf((*MockMessageRepository)(nil).GetChannelLatestMessagesByUserID), userID, limit, subscribeOnly)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelLatestMessages", reflect.TypeOf((*MockMessageRepository)(nil).GetChannelLatestMessages), query)
 }
 
 // AddStampToMessage mocks base method

@@ -1,14 +1,17 @@
 package v3
 
 import (
+	"net/http"
+	"time"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+
+	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/utils/optional"
-	"net/http"
-	"time"
 )
 
 const (
@@ -64,7 +67,14 @@ func (h *Handlers) GetActivityTimeline(c echo.Context) error {
 		return c.JSON(http.StatusOK, timeline.Records())
 	}
 
-	messages, err := h.Repo.GetChannelLatestMessagesByUserID(userID, req.Limit, !req.All)
+	query := repository.ChannelLatestMessagesQuery{
+		Limit: req.Limit,
+		Since: optional.TimeFrom(time.Now().Add(-timelineRange)),
+	}
+	if !req.All {
+		query.SubscribedByUser = optional.UUIDFrom(userID)
+	}
+	messages, err := h.Repo.GetChannelLatestMessages(query)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
