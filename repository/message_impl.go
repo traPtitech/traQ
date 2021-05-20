@@ -418,7 +418,7 @@ func (repo *GormRepository) RemoveStampFromMessage(messageID, stampID, userID uu
 	if messageID == uuid.Nil || stampID == uuid.Nil || userID == uuid.Nil {
 		return ErrNilID
 	}
-	result := repo.db.Delete(&model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID})
+	result := repo.db.Delete(&model.MessageStamp{}, &model.MessageStamp{MessageID: messageID, StampID: stampID, UserID: userID})
 	if result.Error != nil {
 		return result.Error
 	}

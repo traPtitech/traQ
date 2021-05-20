@@ -241,7 +241,7 @@ func (repo *GormRepository) RemoveUserFromGroup(userID, groupID uuid.UUID) error
 			return convertError(err)
 		}
 
-		result := tx.Delete(&model.UserGroupMember{UserID: userID, GroupID: groupID})
+		result := tx.Delete(&model.UserGroupMember{}, &model.UserGroupMember{UserID: userID, GroupID: groupID})
 		if result.Error != nil {
 			return result.Error
 		}
@@ -325,7 +325,7 @@ func (repo *GormRepository) RemoveUserFromGroupAdmin(userID, groupID uuid.UUID) 
 			return ErrForbidden
 		}
 
-		if err := tx.Delete(&model.UserGroupAdmin{UserID: userID, GroupID: groupID}).Error; err != nil {
+		if err := tx.Delete(&model.UserGroupAdmin{}, &model.UserGroupAdmin{UserID: userID, GroupID: groupID}).Error; err != nil {
 			return err
 		}
 		removed = true

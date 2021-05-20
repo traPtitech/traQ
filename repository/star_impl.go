@@ -3,6 +3,7 @@ package repository
 import (
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/gormutil"
@@ -35,7 +36,7 @@ func (repo *GormRepository) RemoveStar(userID, channelID uuid.UUID) error {
 	if userID == uuid.Nil || channelID == uuid.Nil {
 		return ErrNilID
 	}
-	result := repo.db.Delete(&model.Star{UserID: userID, ChannelID: channelID})
+	result := repo.db.Delete(&model.Star{}, &model.Star{UserID: userID, ChannelID: channelID})
 	if result.Error != nil {
 		return result.Error
 	}

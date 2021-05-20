@@ -145,7 +145,7 @@ func (repo *GormRepository) DeleteClipFolderMessage(folderID, messageID uuid.UUI
 		if err := tx.First(&cfm, &model.ClipFolderMessage{MessageID: messageID, FolderID: folderID}).Error; err != nil && err != gorm.ErrRecordNotFound {
 			return err
 		}
-		if err := tx.Delete(&model.ClipFolderMessage{MessageID: messageID, FolderID: folderID}).Error; err != nil {
+		if err := tx.Delete(&model.ClipFolderMessage{}, &model.ClipFolderMessage{MessageID: messageID, FolderID: folderID}).Error; err != nil {
 			return err
 		}
 		return nil
