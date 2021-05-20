@@ -94,13 +94,13 @@ type StampRepository interface {
 	// DBによるエラーを返すことがあります。
 	GetUserStampHistory(userID uuid.UUID, limit int) (h []*UserStampHistory, err error)
 	// ExistStamps stampIDの配列から指定したスタンプが全て存在するか判定します
-	// 成功した場合、nilを返します。
 	//
+	// 成功した場合、nilを返します。
 	// 存在しないスタンプがあった場合、ArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
 	ExistStamps(stampIDs []uuid.UUID) (err error)
-	//
 	// 成功した場合、(統計情報, nil)を返します。
+	//
 	// スタンプがない場合、(nil, ErrNotFound)を返します。
 	// stampIDにNILを渡した場合、(nil, ErrNilID)を返します。
 	// DBによるエラーを返すことがあります。
