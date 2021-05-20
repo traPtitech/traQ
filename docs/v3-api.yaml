@@ -4318,6 +4318,10 @@ components:
                 type: integer
                 format: int64
                 description: スタンプ数(同一メッセージ上のものも複数カウントする)
+          required:
+            - id
+            - count
+            - total
         users:
           type: array
           description: チャンネル上のユーザー統計情報
@@ -4332,6 +4336,9 @@ components:
                 type: integer
                 format: int64
                 description: メッセージ数
+          required:
+            - id
+            - messageCount
         datetime:
           type: string
           format: date-time
