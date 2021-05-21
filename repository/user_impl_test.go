@@ -303,12 +303,14 @@ func TestGormRepository_GetUserStats(t *testing.T) {
 
 			assert.EqualValues(t, 15, stats.TotalMessageCount)
 
-			assert.EqualValues(t, stamp2.ID, stats.Stamps[0].ID)
-			assert.EqualValues(t, 12, stats.Stamps[0].Count)
-			assert.EqualValues(t, 12, stats.Stamps[0].Total)
-			assert.EqualValues(t, stamp1.ID, stats.Stamps[1].ID)
-			assert.EqualValues(t, 5, stats.Stamps[1].Count)
-			assert.EqualValues(t, 15, stats.Stamps[1].Total)
+			if assert.Len(t, stats.Stamps, 2) {
+				assert.EqualValues(t, stamp2.ID, stats.Stamps[0].ID)
+				assert.EqualValues(t, 12, stats.Stamps[0].Count)
+				assert.EqualValues(t, 12, stats.Stamps[0].Total)
+				assert.EqualValues(t, stamp1.ID, stats.Stamps[1].ID)
+				assert.EqualValues(t, 5, stats.Stamps[1].Count)
+				assert.EqualValues(t, 15, stats.Stamps[1].Total)
+			}
 		}
 	})
 
