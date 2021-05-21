@@ -69,8 +69,8 @@ type ChannelStats struct {
 		Total int64     `json:"total"`
 	} `json:"stamps"`
 	Users []struct {
-		ID           uuid.UUID `json:"user_id"`
-		MessageCount int64     `json:"message_count"`
+		ID           uuid.UUID `json:"id"`
+		MessageCount int64     `json:"messageCount"`
 	} `json:"users"`
 	DateTime time.Time `json:"datetime"`
 }

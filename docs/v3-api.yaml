@@ -4263,13 +4263,13 @@ components:
           type: integer
           format: int64
           description: スタンプ使用総数(同じユーザによって同じメッセージに貼られたものは複数カウントしない)
-        totalcount:
+        totalCount:
           type: integer
           format: int64
           description: スタンプ使用総数(全てカウント)
       required:
         - count
-        - totalcount
+        - totalCount
     Pin:
       title: Pin
       type: object
