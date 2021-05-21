@@ -7,6 +7,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -249,4 +250,66 @@ func TestRepositoryImpl_UpdateUser(t *testing.T) {
 			}
 		})
 	})
+}
+
+func TestGormRepository_GetUserStats(t *testing.T) {
+	t.Parallel()
+	repo, _, _ := setup(t, common)
+
+	t.Run("nil id", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.GetUserStats(uuid.Nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.GetUserStats(uuid.Must(uuid.NewV4()))
+		assert.Error(t, err)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		channel := mustMakeChannel(t, repo, rand)
+		user := mustMakeUser(t, repo, rand)
+		stamp1 := mustMakeStamp(t, repo, rand, user.GetID())
+		stamp2 := mustMakeStamp(t, repo, rand, user.GetID())
+
+		var Message []*model.Message
+		Message = make([]*model.Message, 15)
+
+		for i := 0; i < 15; i++ {
+			Message[i] = mustMakeMessage(t, repo, user.GetID(), channel.ID)
+		}
+		require.NoError(t, repo.DeleteMessage(Message[14].ID))
+		require.NoError(t, repo.DeleteMessage(Message[13].ID))
+
+		for i := 0; i < 5; i++ {
+			for j := 0; j < 3; j++ {
+				mustAddMessageStamp(t, repo, Message[i].ID, stamp1.ID, user.GetID())
+			}
+		}
+
+		for i := 0; i < 12; i++ {
+			mustAddMessageStamp(t, repo, Message[i].ID, stamp2.ID, user.GetID())
+		}
+
+		stats, err := repo.GetUserStats(user.GetID())
+		if assert.NoError(t, err) {
+			assert.NotEmpty(t, stats.DateTime)
+
+			assert.EqualValues(t, 15, stats.TotalMessageCount)
+
+			assert.EqualValues(t, stamp2.ID, stats.Stamps[0].ID)
+			assert.EqualValues(t, 12, stats.Stamps[0].Count)
+			assert.EqualValues(t, 12, stats.Stamps[0].Total)
+			assert.EqualValues(t, stamp1.ID, stats.Stamps[1].ID)
+			assert.EqualValues(t, 5, stats.Stamps[1].Count)
+			assert.EqualValues(t, 15, stats.Stamps[1].Total)
+		}
+	})
+
 }
