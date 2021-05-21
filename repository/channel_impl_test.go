@@ -129,10 +129,7 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 
 func TestGormRepository_GetChannelStats(t *testing.T) {
 	t.Parallel()
-	//repo, _, _, user, channel := setupWithUserAndChannel(t, common)
-	
-	repo, _, _ := setup(t,common)
-
+	repo, _, _ := setup(t, common)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -154,16 +151,17 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		channel := mustMakeChannel(t, repo, rand)
 		user1 := mustMakeUser(t, repo, rand)
 		user2 := mustMakeUser(t, repo, rand)
-		u1Stamp1 := mustMakeStamp(t, repo, rand, user1.GetID())
-		u2Stamp1 := mustMakeStamp(t, repo, u1Stamp1.Name, user2.GetID())
-		u1Stamp2 := mustMakeStamp(t, repo, rand, user1.GetID())
-		
+		stamp1 := mustMakeStamp(t, repo, rand, user1.GetID())
+		stamp2 := mustMakeStamp(t, repo, rand, user1.GetID())
+
 		var u1Message, u2Message []*model.Message
-		
+		u1Message = make([]*model.Message, 13)
+		u2Message = make([]*model.Message, 14)
+
 		for i := 0; i < 13; i++ {
 			u1Message[i] = mustMakeMessage(t, repo, user1.GetID(), channel.ID)
 		}
-		
+
 		for i := 0; i < 14; i++ {
 			u2Message[i] = mustMakeMessage(t, repo, user2.GetID(), channel.ID)
 		}
@@ -171,44 +169,33 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		require.NoError(t, repo.DeleteMessage(u2Message[13].ID))
 
 		for i := 0; i < 7; i++ {
-			mustAddMessageStamp(t, repo, u1Message[i].ID, u1Stamp1.ID, user1.GetID())
-			mustAddMessageStamp(t, repo, u1Message[i].ID, u2Stamp1.ID, user2.GetID())
+			mustAddMessageStamp(t, repo, u1Message[i].ID, stamp1.ID, user1.GetID())
+			mustAddMessageStamp(t, repo, u1Message[i].ID, stamp1.ID, user2.GetID())
 		}
 
 		for i := 0; i < 12; i++ {
-			mustAddMessageStamp(t, repo, u2Message[i].ID, u1Stamp2.ID, user1.GetID())
-			mustAddMessageStamp(t, repo, u2Message[i].ID, u1Stamp2.ID, user1.GetID())
+			mustAddMessageStamp(t, repo, u2Message[i].ID, stamp2.ID, user1.GetID())
+			mustAddMessageStamp(t, repo, u2Message[i].ID, stamp2.ID, user1.GetID())
 		}
-
-		/*for i := 0; i < 14; i++ {
-			mustMakeMessage(t, repo, user.GetID(), channel.ID)
-		}
-		require.NoError(t, repo.DeleteMessage(mustMakeMessage(t, repo, user.GetID(), channel.ID).ID))
 
 		stats, err := repo.GetChannelStats(channel.ID)
 		if assert.NoError(t, err) {
 			assert.NotEmpty(t, stats.DateTime)
-			assert.EqualValues(t, 15, stats.TotalMessageCount)
-		}
-		*/
-		stats, err := repo.GetChannelStats(channel.ID)
-		if assert.NoError(t,err) {
-			assert.NotEmpty(t, stats.DateTime)
-			
+
 			assert.EqualValues(t, 27, stats.TotalMessageCount)
-			
+
 			assert.EqualValues(t, user2.GetID(), stats.Users[0].ID)
 			assert.EqualValues(t, 14, stats.Users[0].MessageCount)
 			assert.EqualValues(t, user1.GetID(), stats.Users[1].ID)
 			assert.EqualValues(t, 13, stats.Users[1].MessageCount)
 
-			assert.EqualValues(t, u1Stamp1.ID, stats.Stamps[0].ID)
+			assert.EqualValues(t, stamp1.ID, stats.Stamps[0].ID)
 			assert.EqualValues(t, 14, stats.Stamps[0].Count)
 			assert.EqualValues(t, 14, stats.Stamps[0].Total)
-			assert.EqualValues(t, u1Stamp2.ID, stats.Stamps[1].ID)
+			assert.EqualValues(t, stamp2.ID, stats.Stamps[1].ID)
 			assert.EqualValues(t, 12, stats.Stamps[1].Count)
 			assert.EqualValues(t, 24, stats.Stamps[1].Total)
 		}
 	})
-	
+
 }
