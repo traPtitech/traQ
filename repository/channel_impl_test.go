@@ -154,28 +154,27 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 		stamp1 := mustMakeStamp(t, repo, rand, user1.GetID())
 		stamp2 := mustMakeStamp(t, repo, rand, user1.GetID())
 
-		var u1Message, u2Message []*model.Message
-		u1Message = make([]*model.Message, 13)
-		u2Message = make([]*model.Message, 14)
+		u1Messages := make([]*model.Message, 13)
+		u2Messages := make([]*model.Message, 14)
 
 		for i := 0; i < 13; i++ {
-			u1Message[i] = mustMakeMessage(t, repo, user1.GetID(), channel.ID)
+			u1Messages[i] = mustMakeMessage(t, repo, user1.GetID(), channel.ID)
 		}
 
 		for i := 0; i < 14; i++ {
-			u2Message[i] = mustMakeMessage(t, repo, user2.GetID(), channel.ID)
+			u2Messages[i] = mustMakeMessage(t, repo, user2.GetID(), channel.ID)
 		}
-		require.NoError(t, repo.DeleteMessage(u2Message[12].ID))
-		require.NoError(t, repo.DeleteMessage(u2Message[13].ID))
+		require.NoError(t, repo.DeleteMessage(u2Messages[12].ID))
+		require.NoError(t, repo.DeleteMessage(u2Messages[13].ID))
 
 		for i := 0; i < 7; i++ {
-			mustAddMessageStamp(t, repo, u1Message[i].ID, stamp1.ID, user1.GetID())
-			mustAddMessageStamp(t, repo, u1Message[i].ID, stamp1.ID, user2.GetID())
+			mustAddMessageStamp(t, repo, u1Messages[i].ID, stamp1.ID, user1.GetID())
+			mustAddMessageStamp(t, repo, u1Messages[i].ID, stamp1.ID, user2.GetID())
 		}
 
 		for i := 0; i < 12; i++ {
-			mustAddMessageStamp(t, repo, u2Message[i].ID, stamp2.ID, user1.GetID())
-			mustAddMessageStamp(t, repo, u2Message[i].ID, stamp2.ID, user1.GetID())
+			mustAddMessageStamp(t, repo, u2Messages[i].ID, stamp2.ID, user1.GetID())
+			mustAddMessageStamp(t, repo, u2Messages[i].ID, stamp2.ID, user1.GetID())
 		}
 
 		stats, err := repo.GetChannelStats(channel.ID)

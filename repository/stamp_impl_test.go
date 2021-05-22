@@ -331,16 +331,15 @@ func TestGormRepository_GetStampStats(t *testing.T) {
 		user := mustMakeUser(t, repo, rand)
 		stamp := mustMakeStamp(t, repo, rand, user.GetID())
 
-		var message []*model.Message
-		message = make([]*model.Message, 15)
+		messages := make([]*model.Message, 15)
 
 		for i := 0; i < 15; i++ {
-			message[i] = mustMakeMessage(t, repo, user.GetID(), channel.ID)
+			messages[i] = mustMakeMessage(t, repo, user.GetID(), channel.ID)
 		}
 
 		for i := 0; i < 15; i++ {
 			for j := 0; j < 3; j++ {
-				mustAddMessageStamp(t, repo, message[i].ID, stamp.ID, user.GetID())
+				mustAddMessageStamp(t, repo, messages[i].ID, stamp.ID, user.GetID())
 			}
 		}
 
