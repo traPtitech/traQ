@@ -383,7 +383,6 @@ func (repo *GormRepository) GetStampStats(stampID uuid.UUID) (*StampStats, error
 		Model(&model.MessageStamp{}).
 		Select("COUNT(stamp_id) AS count", "SUM(count) AS total_count").
 		Where(&model.MessageStamp{StampID: stampID}).
-		Group("stamp_id").
 		Find(&stats).
 		Error; err != nil {
 		return nil, err
