@@ -28,6 +28,12 @@ type UserStampHistory struct {
 	Datetime time.Time `json:"datetime"`
 }
 
+//StampStats スタンプ統計情報
+type StampStats struct {
+	Count      int64 `json:"count"`
+	TotalCount int64 `json:"totalCount"`
+}
+
 // StampRepository スタンプリポジトリ
 type StampRepository interface {
 	// CreateStamp スタンプを作成します
@@ -93,4 +99,10 @@ type StampRepository interface {
 	// 存在しないスタンプがあった場合、ArgumentErrorを返します。
 	// DBによるエラーを返すことがあります。
 	ExistStamps(stampIDs []uuid.UUID) (err error)
+	// GetStampStats 成功した場合、(統計情報, nil)を返します。
+	//
+	// スタンプがない場合、(nil, ErrNotFound)を返します。
+	// stampIDにNILを渡した場合、(nil, ErrNilID)を返します。
+	// DBによるエラーを返すことがあります。
+	GetStampStats(stampID uuid.UUID) (*StampStats, error)
 }

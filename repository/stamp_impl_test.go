@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/traPtitech/traQ/model"
 
 	"github.com/traPtitech/traQ/utils/optional"
 	random2 "github.com/traPtitech/traQ/utils/random"
@@ -303,4 +304,50 @@ func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 			assert.Equal(t, ms[2].StampID, stamp1.ID)
 		}
 	})
+}
+
+func TestGormRepository_GetStampStats(t *testing.T) {
+	t.Parallel()
+	repo, _, _ := setup(t, common)
+
+	t.Run("nil id", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.GetStampStats(uuid.Nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := repo.GetStampStats(uuid.Must(uuid.NewV4()))
+		assert.Error(t, err)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
+		channel := mustMakeChannel(t, repo, rand)
+		user := mustMakeUser(t, repo, rand)
+		stamp := mustMakeStamp(t, repo, rand, user.GetID())
+
+		messages := make([]*model.Message, 15)
+
+		for i := 0; i < 15; i++ {
+			messages[i] = mustMakeMessage(t, repo, user.GetID(), channel.ID)
+		}
+
+		for i := 0; i < 15; i++ {
+			for j := 0; j < 3; j++ {
+				mustAddMessageStamp(t, repo, messages[i].ID, stamp.ID, user.GetID())
+			}
+		}
+
+		stats, err := repo.GetStampStats(stamp.ID)
+		if assert.NoError(t, err) {
+			assert.EqualValues(t, 15, stats.Count)
+			assert.EqualValues(t, 45, stats.TotalCount)
+		}
+	})
+
 }

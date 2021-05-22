@@ -62,8 +62,17 @@ func (q ChannelSubscriptionQuery) SetLevel(level model.ChannelSubscribeLevel) Ch
 
 // ChannelStats チャンネル統計情報
 type ChannelStats struct {
-	TotalMessageCount int64     `json:"totalMessageCount"`
-	DateTime          time.Time `json:"datetime"`
+	TotalMessageCount int64 `json:"totalMessageCount"`
+	Stamps            []struct {
+		ID    uuid.UUID `json:"id"`
+		Count int64     `json:"count"`
+		Total int64     `json:"total"`
+	} `json:"stamps"`
+	Users []struct {
+		ID           uuid.UUID `json:"id"`
+		MessageCount int64     `json:"messageCount"`
+	} `json:"users"`
+	DateTime time.Time `json:"datetime"`
 }
 
 // ChannelRepository チャンネルリポジトリ

@@ -357,7 +357,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ChannelStats'
         '404':
-          description: Not Found
+          description: |-
+            Not Found
+            チャンネルが見つかりません。
       operationId: getChannelStats
       description: 指定したチャンネルの統計情報を取得します。
   '/channels/{channelId}/topic':
@@ -865,6 +867,26 @@ paths:
           in: query
           name: token
           description: 画像でなくトークン文字列で返すかどうか
+  '/stamps/{stampId}/stats':
+    parameters:
+      - $ref: '#/components/parameters/stampIdInPath'
+    get:
+      summary: スタンプ統計情報を取得
+      tags:
+        - stamp
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StampStats'
+        '404':
+          description: |-
+            Not Found
+            スタンプが見つかりません。
+      operationId: getStampStats
+      description: 指定したスタンプの統計情報を取得します。
   '/users/{userId}':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -1227,6 +1249,26 @@ paths:
         - $ref: '#/components/parameters/inclusiveInQuery'
         - $ref: '#/components/parameters/orderInQuery'
       description: 指定したユーザーとのダイレクトメッセージのリストを取得します。
+  '/users/{userId}/stats':
+    parameters:
+      - $ref: '#/components/parameters/userIdInPath'
+    get:
+      summary: ユーザー統計情報を取得
+      tags:
+        - user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserStats'
+        '404':
+          description: |-
+            Not Found
+            ユーザーが見つかりません。
+      operationId: getUserStats
+      description: 指定したユーザーの統計情報を取得します。
   '/channels/{channelId}/subscribers':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -4213,6 +4255,22 @@ components:
         - count
         - createdAt
         - updatedAt
+    StampStats:
+      title: StampStats
+      type: object
+      description: スタンプ統計情報
+      properties:
+        count:
+          type: integer
+          format: int64
+          description: スタンプ使用総数(同じユーザによって同じメッセージに貼られたものは複数カウントしない)
+        totalCount:
+          type: integer
+          format: int64
+          description: スタンプ使用総数(全てカウント)
+      required:
+        - count
+        - totalCount
     Pin:
       title: Pin
       type: object
@@ -4297,15 +4355,64 @@ components:
       properties:
         totalMessageCount:
           type: integer
-          format: int32
+          format: int64
           description: チャンネルの総投稿メッセージ数(削除されたものも含む)
+        stamps:
+          type: array
+          description: チャンネル上のスタンプ統計情報
+          items:
+            $ref: '#/components/schemas/ChannelStatsStamp'
+        users:
+          type: array
+          description: チャンネル上のユーザー統計情報
+          items:
+            $ref: '#/components/schemas/ChannelStatsUser'
         datetime:
           type: string
           format: date-time
           description: 統計情報日時
       required:
         - totalMessageCount
+        - stamps
+        - users
         - datetime
+    ChannelStatsStamp:
+      title: ChannelStatsStamp
+      type: object
+      description: チャンネル上の特定スタンプ統計情報
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: スタンプID
+        count:
+          type: integer
+          format: int64
+          description: スタンプ数(同一メッセージ上のものは複数カウントしない)
+        total:
+          type: integer
+          format: int64
+          description: スタンプ数(同一メッセージ上のものも複数カウントする)
+      required:
+        - id
+        - count
+        - total
+    ChannelStatsUser:
+      title: ChannelStatsUser
+      type: object
+      description: チャンネル上の特定ユーザー統計情報
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ユーザーID
+        messageCount:
+          type: integer
+          format: int64
+          description: メッセージ数
+      required:
+        - id
+        - messageCount
     ChannelTopic:
       title: ChannelTopic
       type: object
@@ -4816,6 +4923,49 @@ components:
       required:
         - id
         - role
+    UserStats:
+      title: UserStats
+      type: object
+      description: ユーザー統計情報
+      properties:
+        totalMessageCount:
+          type: integer
+          format: int64
+          description: ユーザーの総投稿メッセージ数(削除されたものも含む)
+        stamps:
+          type: array
+          description: ユーザーのスタンプ統計情報
+          items:
+            $ref: '#/components/schemas/UserStatsStamp'
+        datetime:
+          type: string
+          format: date-time
+          description: 統計情報日時
+      required:
+        - totalMessageCount
+        - stamps
+        - datetime
+    UserStatsStamp:
+      title: UserStatsStamp
+      type: object
+      description: ユーザーの特定スタンプ統計情報
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: スタンプID
+        count:
+          type: integer
+          format: int64
+          description: スタンプ数(同一メッセージ上のものは複数カウントしない)
+        total:
+          type: integer
+          format: int64
+          description: スタンプ数(同一メッセージ上のものも複数カウントする)
+      required:
+        - id
+        - count
+        - total
     PatchGroupMemberRequest:
       title: PatchGroupMemberRequest
       type: object

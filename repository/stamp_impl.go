@@ -364,3 +364,28 @@ func (repo *GormRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h 
 		Error
 	return
 }
+
+// GetStampStats implements StampRepository interface
+func (repo *GormRepository) GetStampStats(stampID uuid.UUID) (*StampStats, error) {
+	if stampID == uuid.Nil {
+		return nil, ErrNilID
+	}
+
+	if ok, err := gormutil.
+		RecordExists(repo.db, &model.MessageStamp{StampID: stampID}); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, ErrNotFound
+	}
+	var stats StampStats
+	if err := repo.db.
+		Unscoped().
+		Model(&model.MessageStamp{}).
+		Select("COUNT(stamp_id) AS count", "SUM(count) AS total_count").
+		Where(&model.MessageStamp{StampID: stampID}).
+		Find(&stats).
+		Error; err != nil {
+		return nil, err
+	}
+	return &stats, nil
+}

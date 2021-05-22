@@ -129,7 +129,7 @@ func TestGormRepository_ChangeChannelSubscription(t *testing.T) {
 
 func TestGormRepository_GetChannelStats(t *testing.T) {
 	t.Parallel()
-	repo, _, _, user, channel := setupWithUserAndChannel(t, common)
+	repo, _, _ := setup(t, common)
 
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
@@ -148,15 +148,57 @@ func TestGormRepository_GetChannelStats(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		for i := 0; i < 14; i++ {
-			mustMakeMessage(t, repo, user.GetID(), channel.ID)
+		channel := mustMakeChannel(t, repo, rand)
+		user1 := mustMakeUser(t, repo, rand)
+		user2 := mustMakeUser(t, repo, rand)
+		stamp1 := mustMakeStamp(t, repo, rand, user1.GetID())
+		stamp2 := mustMakeStamp(t, repo, rand, user1.GetID())
+
+		u1Messages := make([]*model.Message, 13)
+		u2Messages := make([]*model.Message, 14)
+
+		for i := 0; i < 13; i++ {
+			u1Messages[i] = mustMakeMessage(t, repo, user1.GetID(), channel.ID)
 		}
-		require.NoError(t, repo.DeleteMessage(mustMakeMessage(t, repo, user.GetID(), channel.ID).ID))
+
+		for i := 0; i < 14; i++ {
+			u2Messages[i] = mustMakeMessage(t, repo, user2.GetID(), channel.ID)
+		}
+		require.NoError(t, repo.DeleteMessage(u2Messages[12].ID))
+		require.NoError(t, repo.DeleteMessage(u2Messages[13].ID))
+
+		for i := 0; i < 7; i++ {
+			mustAddMessageStamp(t, repo, u1Messages[i].ID, stamp1.ID, user1.GetID())
+			mustAddMessageStamp(t, repo, u1Messages[i].ID, stamp1.ID, user2.GetID())
+		}
+
+		for i := 0; i < 12; i++ {
+			mustAddMessageStamp(t, repo, u2Messages[i].ID, stamp2.ID, user1.GetID())
+			mustAddMessageStamp(t, repo, u2Messages[i].ID, stamp2.ID, user1.GetID())
+		}
 
 		stats, err := repo.GetChannelStats(channel.ID)
 		if assert.NoError(t, err) {
 			assert.NotEmpty(t, stats.DateTime)
-			assert.EqualValues(t, 15, stats.TotalMessageCount)
+
+			assert.EqualValues(t, 27, stats.TotalMessageCount)
+
+			if assert.Len(t, stats.Users, 2) {
+				assert.EqualValues(t, user2.GetID(), stats.Users[0].ID)
+				assert.EqualValues(t, 14, stats.Users[0].MessageCount)
+				assert.EqualValues(t, user1.GetID(), stats.Users[1].ID)
+				assert.EqualValues(t, 13, stats.Users[1].MessageCount)
+			}
+
+			if assert.Len(t, stats.Stamps, 2) {
+				assert.EqualValues(t, stamp1.ID, stats.Stamps[0].ID)
+				assert.EqualValues(t, 14, stats.Stamps[0].Count)
+				assert.EqualValues(t, 14, stats.Stamps[0].Total)
+				assert.EqualValues(t, stamp2.ID, stats.Stamps[1].ID)
+				assert.EqualValues(t, 12, stats.Stamps[1].Count)
+				assert.EqualValues(t, 24, stats.Stamps[1].Total)
+			}
 		}
 	})
+
 }

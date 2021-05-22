@@ -435,7 +435,7 @@ func (repo *GormRepository) RecordChannelEvent(channelID uuid.UUID, eventType mo
 // GetChannelStats implements ChannelRepository interface.
 func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats, error) {
 	if channelID == uuid.Nil {
-		return nil, ErrNotFound
+		return nil, ErrNilID
 	}
 
 	if ok, err := gormutil.RecordExists(repo.db, &model.Channel{ID: channelID}); err != nil {
@@ -445,6 +445,40 @@ func (repo *GormRepository) GetChannelStats(channelID uuid.UUID) (*ChannelStats,
 	}
 
 	var stats ChannelStats
+	if err := repo.db.Unscoped().
+		Model(&model.Message{}).
+		Select("COUNT(channel_id) AS total_message_count").
+		Where(&model.Message{ChannelID: channelID}).
+		Find(&stats.TotalMessageCount).
+		Error; err != nil {
+		return nil, err
+	}
+
+	if err := repo.db.
+		Unscoped().
+		Model(&model.Message{}).
+		Select("stamp_id AS id", "COUNT(stamp_id) AS count", "SUM(count) As total").
+		Joins("JOIN messages_stamps ON id = messages_stamps.message_id").
+		Where(&model.Message{ChannelID: channelID}).
+		Group("stamp_id").
+		Order("count DESC").
+		Find(&stats.Stamps).
+		Error; err != nil {
+		return nil, err
+	}
+
+	if err := repo.db.
+		Unscoped().
+		Model(&model.Message{}).
+		Select("user_id AS id", "COUNT(user_id) AS message_count").
+		Where(&model.Message{ChannelID: channelID}).
+		Group("user_id").
+		Order("message_count DESC").
+		Find(&stats.Users).
+		Error; err != nil {
+		return nil, err
+	}
+
 	stats.DateTime = time.Now()
-	return &stats, repo.db.Unscoped().Model(&model.Message{}).Where(&model.Message{ChannelID: channelID}).Count(&stats.TotalMessageCount).Error
+	return &stats, nil
 }
