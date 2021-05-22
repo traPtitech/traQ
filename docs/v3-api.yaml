@@ -4376,7 +4376,9 @@ components:
         - users
         - datetime
     ChannelStatsStamp:
+      title: ChannelStatsStamp
       type: object
+      description: チャンネル上の特定スタンプ統計情報
       properties:
         id:
           type: string
@@ -4395,7 +4397,9 @@ components:
         - count
         - total
     ChannelStatsUser:
+      title: ChannelStatsUser
       type: object
+      description: チャンネル上の特定ユーザー統計情報
       properties:
         id:
           type: string
@@ -4929,7 +4933,7 @@ components:
           description: ユーザーの総投稿メッセージ数(削除されたものも含む)
         stamps:
           type: array
-          description: ユーザのスタンプ統計情報
+          description: ユーザーのスタンプ統計情報
           items:
             $ref: '#/components/schemas/UserStatsStamp'
         datetime:
@@ -4941,7 +4945,9 @@ components:
         - stamps
         - datetime
     UserStatsStamp:
+      title: UserStatsStamp
       type: object
+      description: ユーザーの特定スタンプ統計情報
       properties:
         id:
           type: string
