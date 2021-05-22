@@ -4360,41 +4360,12 @@ components:
           type: array
           description: チャンネル上のスタンプ統計情報
           items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: スタンプID
-              count:
-                type: integer
-                format: int64
-                description: スタンプ数(同一メッセージ上のものは複数カウントしない)
-              total:
-                type: integer
-                format: int64
-                description: スタンプ数(同一メッセージ上のものも複数カウントする)
-            required:
-              - id
-              - count
-              - total
+            $ref: '#/components/schemas/ChannelStatsStamp'
         users:
           type: array
           description: チャンネル上のユーザー統計情報
           items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: ユーザーID
-              messageCount:
-                type: integer
-                format: int64
-                description: メッセージ数
-            required:
-              - id
-              - messageCount
+            $ref: '#/components/schemas/ChannelStatsUser'
         datetime:
           type: string
           format: date-time
@@ -4404,6 +4375,39 @@ components:
         - stamps
         - users
         - datetime
+    ChannelStatsStamp:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: スタンプID
+        count:
+          type: integer
+          format: int64
+          description: スタンプ数(同一メッセージ上のものは複数カウントしない)
+        total:
+          type: integer
+          format: int64
+          description: スタンプ数(同一メッセージ上のものも複数カウントする)
+      required:
+        - id
+        - count
+        - total
+    ChannelStatsUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ユーザーID
+        messageCount:
+          type: integer
+          format: int64
+          description: メッセージ数
+      required:
+        - id
+        - messageCount
     ChannelTopic:
       title: ChannelTopic
       type: object
@@ -4927,24 +4931,7 @@ components:
           type: array
           description: ユーザのスタンプ統計情報
           items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: スタンプID
-              count:
-                type: integer
-                format: int64
-                description: スタンプ数(同一メッセージ上のものは複数カウントしない)
-              total:
-                type: integer
-                format: int64
-                description: スタンプ数(同一メッセージ上のものも複数カウントする)
-            required:
-              - id
-              - count
-              - total
+            $ref: '#/components/schemas/UserStatsStamp'
         datetime:
           type: string
           format: date-time
@@ -4953,6 +4940,25 @@ components:
         - totalMessageCount
         - stamps
         - datetime
+    UserStatsStamp:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: スタンプID
+        count:
+          type: integer
+          format: int64
+          description: スタンプ数(同一メッセージ上のものは複数カウントしない)
+        total:
+          type: integer
+          format: int64
+          description: スタンプ数(同一メッセージ上のものも複数カウントする)
+      required:
+        - id
+        - count
+        - total
     PatchGroupMemberRequest:
       title: PatchGroupMemberRequest
       type: object
