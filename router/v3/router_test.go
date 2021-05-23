@@ -29,6 +29,7 @@ import (
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
+	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/random"
@@ -37,7 +38,8 @@ import (
 
 const (
 	dbPrefix = "traq-test-router-v3-"
-	common   = "common"
+	common1  = "common1"
+	s1       = "s1"
 	rand     = "random"
 )
 
@@ -49,7 +51,8 @@ func TestMain(m *testing.M) {
 	host := getEnvOrDefault("MARIADB_HOSTNAME", "127.0.0.1")
 	port := getEnvOrDefault("MARIADB_PORT", "3306")
 	dbs := []string{
-		common,
+		common1,
+		s1,
 	}
 	if err := migration.CreateDatabasesIfNotExists("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=true", user, pass, host, port), dbPrefix, dbs...); err != nil {
 		panic(err)
@@ -100,6 +103,7 @@ func TestMain(m *testing.M) {
 		env.Repository = repo
 
 		env.CM, _ = channel.InitChannelManager(repo, zap.NewNop())
+		env.MM, _ = message.NewMessageManager(repo, env.CM, zap.NewNop())
 		env.IP = imaging.NewProcessor(imaging.Config{
 			MaxPixels:        1000 * 1000,
 			Concurrency:      1,
@@ -125,6 +129,7 @@ func TestMain(m *testing.M) {
 			Hub:            env.Hub,
 			SessStore:      env.SessStore,
 			ChannelManager: env.CM,
+			MessageManager: env.MM,
 			FileManager:    env.FM,
 			Logger:         zap.NewNop(),
 			Imaging:        env.IP,
@@ -157,6 +162,7 @@ type Env struct {
 	DB         *gorm.DB
 	Repository repository.Repository
 	CM         channel.Manager
+	MM         message.Manager
 	FM         file.Manager
 	IP         imaging.Processor
 	Hub        *hub.Hub
@@ -212,6 +218,28 @@ func (env *Env) CreateUser(t *testing.T, userName string) model.UserInfo {
 	return u
 }
 
+// CreateChannel チャンネルを必ず作成します
+func (env *Env) CreateChannel(t *testing.T, name string) *model.Channel {
+	t.Helper()
+	if name == rand {
+		name = random.AlphaNumeric(20)
+	}
+	ch, err := env.CM.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
+	require.NoError(t, err)
+	return ch
+}
+
+// CreateMessage メッセージを必ず作成します
+func (env *Env) CreateMessage(t *testing.T, userID, channelID uuid.UUID, text string) *model.Message {
+	t.Helper()
+	if text == rand {
+		text = random.AlphaNumeric(20)
+	}
+	m, err := env.Repository.CreateMessage(userID, channelID, text)
+	require.NoError(t, err)
+	return m
+}
+
 // MakeFile ファイルを必ず作成します
 func (env *Env) MakeFile(t *testing.T) model.File {
 	t.Helper()
@@ -224,6 +252,16 @@ func (env *Env) MakeFile(t *testing.T) model.File {
 	})
 	require.NoError(t, err)
 	return f
+}
+
+func (env *Env) CreateBot(t *testing.T, name string, creatorID uuid.UUID) *model.Bot {
+	t.Helper()
+	if name == rand {
+		name = random.AlphaNumeric(20)
+	}
+	m, err := env.Repository.CreateBot(name, "po", "totall a desc", uuid.Nil, creatorID, "https://example.com")
+	require.NoError(t, err)
+	return m
 }
 
 func getEnvOrDefault(env string, def string) string {

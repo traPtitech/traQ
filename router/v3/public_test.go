@@ -7,7 +7,7 @@ import (
 
 func TestHandlers_GetVersion(t *testing.T) {
 	t.Parallel()
-	env := Setup(t, common)
+	env := Setup(t, common1)
 
 	e := env.R(t)
 	obj := e.GET("/api/v3/version").

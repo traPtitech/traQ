@@ -17,7 +17,7 @@ import (
 func TestHandlers_GetFileMeta(t *testing.T) {
 	t.Parallel()
 	path := "/api/v3/files/{fileID}/meta"
-	env := Setup(t, common)
+	env := Setup(t, common1)
 	s := env.S(t, env.CreateUser(t, rand).GetID())
 	file := env.MakeFile(t)
 

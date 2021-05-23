@@ -1,19 +1,21 @@
 package v3
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/traPtitech/traQ/router/session"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/traPtitech/traQ/router/session"
 )
 
 func TestHandlers_PutMyPassword(t *testing.T) {
 	t.Parallel()
 	path := "/api/v3/users/me/password"
-	env := Setup(t, common)
+	env := Setup(t, common1)
 	commonSession := env.S(t, env.CreateUser(t, rand).GetID())
 
 	t.Run("NotLoggedIn", func(t *testing.T) {
@@ -79,15 +81,15 @@ func TestHandlers_PutMyPassword(t *testing.T) {
 		user := env.CreateUser(t, rand)
 
 		e := env.R(t)
-		new := strings.Repeat("a", 20)
+		newPass := strings.Repeat("a", 20)
 		e.PUT(path).
 			WithCookie(session.CookieName, env.S(t, user.GetID())).
-			WithJSON(echo.Map{"password": "testtesttesttest", "newPassword": new}).
+			WithJSON(echo.Map{"password": "testtesttesttest", "newPassword": newPass}).
 			Expect().
 			Status(http.StatusNoContent)
 
 		u, err := env.Repository.GetUser(user.GetID(), false)
 		require.NoError(t, err)
-		assert.NoError(t, u.Authenticate(new))
+		assert.NoError(t, u.Authenticate(newPass))
 	})
 }
