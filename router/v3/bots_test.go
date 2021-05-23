@@ -635,3 +635,48 @@ func TestHandlers_GetBotLogs(t *testing.T) {
 		first.Value("datetime").String().NotEmpty()
 	})
 }
+
+func TestHandlers_GetChannelBots(t *testing.T) {
+	t.Parallel()
+	path := "/api/v3/channels/{channelId}/bots"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	channel := env.CreateChannel(t, rand)
+	commonSession := env.S(t, user.GetID())
+	bot := env.CreateBot(t, rand, user.GetID())
+	require.NoError(t, env.Repository.AddBotToChannel(bot.ID, channel.ID))
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, channel.ID.String()).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, uuid.Must(uuid.NewV4())).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path, channel.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array()
+
+		obj.Length().Equal(1)
+
+		first := obj.Element(0).Object()
+		first.Value("id").String().Equal(bot.ID.String())
+		first.Value("botUserId").String().Equal(bot.BotUserID.String())
+	})
+}
