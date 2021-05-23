@@ -680,3 +680,143 @@ func TestHandlers_GetChannelBots(t *testing.T) {
 		first.Value("botUserId").String().Equal(bot.BotUserID.String())
 	})
 }
+
+func TestHandlers_ActivateBot(t *testing.T) {
+	path := "/api/v3/bots/{botId}/actions/activate"
+	env := Setup(t, common1)
+	user1 := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	commonSession := env.S(t, user1.GetID())
+	bot1 := env.CreateBot(t, rand, user1.GetID())
+	bot2 := env.CreateBot(t, rand, user2.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot1.ID.String()).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot2.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusAccepted)
+	})
+}
+
+func TestHandlers_InactivateBot(t *testing.T) {
+	path := "/api/v3/bots/{botId}/actions/inactivate"
+	env := Setup(t, common1)
+	user1 := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	commonSession := env.S(t, user1.GetID())
+	bot1 := env.CreateBot(t, rand, user1.GetID())
+	bot2 := env.CreateBot(t, rand, user2.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot1.ID.String()).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot2.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNoContent)
+	})
+}
+
+func TestHandlers_ReissueBot(t *testing.T) {
+	path := "/api/v3/bots/{botId}/actions/reissue"
+	env := Setup(t, common1)
+	user1 := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	commonSession := env.S(t, user1.GetID())
+	bot1 := env.CreateBot(t, rand, user1.GetID())
+	bot2 := env.CreateBot(t, rand, user2.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot1.ID.String()).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot2.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.POST(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		obj.Value("verificationToken").String().NotEmpty()
+		obj.Value("accessToken").String().NotEmpty()
+	})
+}
