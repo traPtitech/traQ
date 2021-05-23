@@ -599,6 +599,16 @@ func TestHandlers_GetBotLogs(t *testing.T) {
 			Status(http.StatusUnauthorized)
 	})
 
+	t.Run("bad request (negative limit)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithQuery("limit", -1).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
 	t.Run("forbidden", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
@@ -854,21 +864,21 @@ func TestHandlers_LetBotJoinChannel(t *testing.T) {
 	t.Run("bad request (nil id)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.POST(path, bot2.ID.String()).
+		e.POST(path, bot1.ID.String()).
 			WithCookie(session.CookieName, commonSession).
 			WithJSON(&PostBotActionJoinRequest{ChannelID: uuid.Nil}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusBadRequest)
 	})
 
 	t.Run("bad request (dm)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.POST(path, bot2.ID.String()).
+		e.POST(path, bot1.ID.String()).
 			WithCookie(session.CookieName, commonSession).
 			WithJSON(&PostBotActionJoinRequest{ChannelID: dm.ID}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusBadRequest)
 	})
 
 	t.Run("forbidden", func(t *testing.T) {
@@ -903,7 +913,7 @@ func TestHandlers_LetBotJoinChannel(t *testing.T) {
 }
 
 func TestHandlers_LetBotLeaveChannel(t *testing.T) {
-	path := "/api/v3/bots/{botId}/actions/join"
+	path := "/api/v3/bots/{botId}/actions/leave"
 	env := Setup(t, common1)
 	user1 := env.CreateUser(t, rand)
 	user2 := env.CreateUser(t, rand)
@@ -926,11 +936,11 @@ func TestHandlers_LetBotLeaveChannel(t *testing.T) {
 	t.Run("bad request (nil id)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.POST(path, bot2.ID.String()).
+		e.POST(path, bot1.ID.String()).
 			WithCookie(session.CookieName, commonSession).
 			WithJSON(&PostBotActionJoinRequest{ChannelID: uuid.Nil}).
 			Expect().
-			Status(http.StatusForbidden)
+			Status(http.StatusBadRequest)
 	})
 
 	t.Run("forbidden", func(t *testing.T) {
