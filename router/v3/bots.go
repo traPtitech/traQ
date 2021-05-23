@@ -2,11 +2,14 @@ package v3
 
 import (
 	"context"
+	"net/http"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -18,7 +21,6 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"net/http"
 )
 
 // GetBots GET /bots
@@ -244,7 +246,7 @@ func (h *Handlers) GetChannelBots(c echo.Context) error {
 	res := make([]echo.Map, len(bots))
 	for i, v := range bots {
 		res[i] = echo.Map{
-			"botId":     v.ID,
+			"id":        v.ID,
 			"botUserId": v.BotUserID,
 		}
 	}
