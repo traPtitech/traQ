@@ -14,6 +14,8 @@ import (
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/random"
+	"github.com/traPtitech/traQ/utils/set"
 )
 
 func botEquals(t *testing.T, expect *model.Bot, actual *httpexpect.Object) {
@@ -818,5 +820,156 @@ func TestHandlers_ReissueBot(t *testing.T) {
 
 		obj.Value("verificationToken").String().NotEmpty()
 		obj.Value("accessToken").String().NotEmpty()
+	})
+}
+
+func TestHandlers_LetBotJoinChannel(t *testing.T) {
+	path := "/api/v3/bots/{botId}/actions/join"
+	env := Setup(t, common1)
+	user1 := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	commonSession := env.S(t, user1.GetID())
+	bot1 := env.CreateBot(t, rand, user1.GetID())
+	bot2 := env.CreateBot(t, rand, user2.GetID())
+	channel := env.CreateChannel(t, rand)
+	dm, err := env.Repository.CreateChannel(
+		model.Channel{
+			Name:      "dm_" + random.AlphaNumeric(17),
+			IsVisible: true,
+		},
+		set.UUIDSetFromArray([]uuid.UUID{user1.GetID(), user2.GetID()}),
+		true,
+	)
+	require.NoError(t, err)
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot1.ID.String()).
+			WithJSON(&PostBotActionJoinRequest{ChannelID: channel.ID}).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("bad request (nil id)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot2.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostBotActionJoinRequest{ChannelID: uuid.Nil}).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("bad request (dm)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot2.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostBotActionJoinRequest{ChannelID: dm.ID}).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot2.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostBotActionJoinRequest{ChannelID: channel.ID}).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostBotActionJoinRequest{ChannelID: channel.ID}).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostBotActionJoinRequest{ChannelID: channel.ID}).
+			Expect().
+			Status(http.StatusNoContent)
+	})
+}
+
+func TestHandlers_LetBotLeaveChannel(t *testing.T) {
+	path := "/api/v3/bots/{botId}/actions/join"
+	env := Setup(t, common1)
+	user1 := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	commonSession := env.S(t, user1.GetID())
+	bot1 := env.CreateBot(t, rand, user1.GetID())
+	bot2 := env.CreateBot(t, rand, user2.GetID())
+	channel1 := env.CreateChannel(t, rand)
+	channel2 := env.CreateChannel(t, rand)
+	require.NoError(t, env.Repository.AddBotToChannel(bot1.ID, channel1.ID))
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot1.ID.String()).
+			WithJSON(&PostBotActionJoinRequest{ChannelID: channel1.ID}).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("bad request (nil id)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot2.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostBotActionJoinRequest{ChannelID: uuid.Nil}).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot2.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostBotActionJoinRequest{ChannelID: channel1.ID}).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostBotActionJoinRequest{ChannelID: channel1.ID}).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success (nop)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostBotActionJoinRequest{ChannelID: channel2.ID}).
+			Expect().
+			Status(http.StatusNoContent)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostBotActionJoinRequest{ChannelID: channel1.ID}).
+			Expect().
+			Status(http.StatusNoContent)
 	})
 }
