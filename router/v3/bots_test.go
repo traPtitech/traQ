@@ -4,12 +4,29 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gavv/httpexpect/v2"
+	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/require"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/bot/event"
+	"github.com/traPtitech/traQ/utils/optional"
 )
+
+func botEquals(t *testing.T, expect *model.Bot, actual *httpexpect.Object) {
+	t.Helper()
+	actual.Value("id").String().Equal(expect.ID.String())
+	actual.Value("botUserId").String().Equal(expect.BotUserID.String())
+	actual.Value("description").String().Equal(expect.Description)
+	actual.Value("developerId").String().Equal(expect.CreatorID.String())
+	actual.Value("subscribeEvents").Array().Length().Equal(len(expect.SubscribeEvents.Array()))
+	actual.Value("state").Number().Equal(expect.State)
+	actual.Value("createdAt").String().NotEmpty()
+	actual.Value("updatedAt").String().NotEmpty()
+}
 
 func TestHandlers_GetBots(t *testing.T) {
 	t.Parallel()
@@ -21,18 +38,7 @@ func TestHandlers_GetBots(t *testing.T) {
 	bot1 := env.CreateBot(t, rand, user1.GetID())
 	env.CreateBot(t, rand, user2.GetID())
 
-	botEquals := func(expect *model.Bot, actual *httpexpect.Object) {
-		actual.Value("id").String().Equal(expect.ID.String())
-		actual.Value("botUserId").String().Equal(expect.BotUserID.String())
-		actual.Value("description").String().Equal(expect.Description)
-		actual.Value("developerId").String().Equal(expect.CreatorID.String())
-		actual.Value("subscribeEvents").Array().Length().Equal(len(expect.SubscribeEvents.Array()))
-		actual.Value("state").Number().Equal(expect.State)
-		actual.Value("createdAt").String().NotEmpty()
-		actual.Value("updatedAt").String().NotEmpty()
-	}
-
-	t.Run("NotLoggedIn", func(t *testing.T) {
+	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.GET(path).
@@ -53,7 +59,7 @@ func TestHandlers_GetBots(t *testing.T) {
 
 		obj.Length().Equal(1)
 
-		botEquals(bot1, obj.Element(0).Object())
+		botEquals(t, bot1, obj.Element(0).Object())
 	})
 
 	t.Run("success (all=true)", func(t *testing.T) {
@@ -72,6 +78,8 @@ func TestHandlers_GetBots(t *testing.T) {
 }
 
 func TestPostBotRequest_Validate(t *testing.T) {
+	t.Parallel()
+
 	type fields struct {
 		Name        string
 		DisplayName string
@@ -152,7 +160,7 @@ func TestHandlers_CreateBot(t *testing.T) {
 	commonSession := env.S(t, user.GetID())
 	env.CreateBot(t, "575", user.GetID())
 
-	t.Run("NotLoggedIn", func(t *testing.T) {
+	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path).
@@ -204,5 +212,425 @@ func TestHandlers_CreateBot(t *testing.T) {
 		obj.Value("endpoint").String().Equal("https://example.com")
 		obj.Value("privileged").Boolean().False()
 		obj.Value("channels").Array().Length().Equal(0)
+	})
+}
+
+func TestHandlers_GetBot(t *testing.T) {
+	t.Parallel()
+	path := "/api/v3/bots/{botId}"
+	env := Setup(t, common1)
+	user1 := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	commonSession := env.S(t, user1.GetID())
+	bot1 := env.CreateBot(t, rand, user1.GetID())
+	bot2 := env.CreateBot(t, rand, user2.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, bot1.ID.String()).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success 1 (detail=false)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		botEquals(t, bot1, obj)
+	})
+
+	t.Run("success 2 (detail=false)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path, bot2.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		botEquals(t, bot2, obj)
+	})
+
+	t.Run("detail forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, bot2.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithQuery("detail", true).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("success (detail=true)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithQuery("detail", true).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		botEquals(t, bot1, obj)
+		obj.Value("tokens").Object().Value("verificationToken").String().NotEmpty()
+		obj.Value("tokens").Object().Value("accessToken").String().NotEmpty()
+		obj.Value("endpoint").String().Equal("https://example.com")
+		obj.Value("privileged").Boolean().False()
+		obj.Value("channels").Array().Length().Equal(0)
+	})
+}
+
+func TestHandlers_EditBot(t *testing.T) {
+	t.Parallel()
+	path := "/api/v3/bots/{botId}"
+	env := Setup(t, common1)
+	user1 := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	commonSession := env.S(t, user1.GetID())
+	bot1 := env.CreateBot(t, rand, user1.GetID())
+	bot2 := env.CreateBot(t, rand, user2.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, bot1.ID.String()).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("bad request (display name)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{DisplayName: optional.StringFrom(strings.Repeat("a", 100))}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (endpoint, not a url)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{Endpoint: optional.StringFrom("po")}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (endpoint, internal url)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{Endpoint: optional.StringFrom("http://localhost:3000")}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (developer id, nil id)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{DeveloperID: optional.UUIDFrom(uuid.Nil)}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (developer id, bad id)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{DeveloperID: optional.UUIDFrom(bot1.ID)}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (developer id, non existent id)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{DeveloperID: optional.UUIDFrom(uuid.Must(uuid.NewV4()))}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("subscribe events (event type)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{SubscribeEvents: map[model.BotEventType]struct{}{
+				"NON_EXISTENT_EVENT": {},
+			}}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("forbidden (cannot patch others' bot)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, bot2.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{DisplayName: optional.StringFrom("po")}).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("forbidden (privileged)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{Privileged: optional.BoolFrom(true)}).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{Privileged: optional.BoolFrom(true)}).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{
+				DisplayName: optional.StringFrom("po"),
+				Description: optional.StringFrom("desc"),
+				Endpoint:    optional.StringFrom("https://example.com"),
+				DeveloperID: optional.UUIDFrom(user2.GetID()),
+				SubscribeEvents: map[model.BotEventType]struct{}{
+					event.Ping: {},
+				},
+			}).
+			Expect().
+			Status(http.StatusNoContent)
+	})
+}
+
+func TestHandlers_DeleteBot(t *testing.T) {
+	t.Parallel()
+	path := "/api/v3/bots/{botId}"
+	env := Setup(t, common1)
+	user1 := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	commonSession := env.S(t, user1.GetID())
+	bot1 := env.CreateBot(t, rand, user1.GetID())
+	bot2 := env.CreateBot(t, rand, user2.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, bot1.ID.String()).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, bot2.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.DELETE(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNoContent)
+	})
+}
+
+func TestHandlers_GetBotIcon(t *testing.T) {
+	t.Parallel()
+	path := "/api/v3/bots/{botId}/icon"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	commonSession := env.S(t, user.GetID())
+	bot := env.CreateBot(t, rand, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, bot.ID.String()).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, bot.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK)
+	})
+}
+
+func TestGetBotLogsRequest_Validate(t *testing.T) {
+	t.Parallel()
+
+	type fields struct {
+		Limit  int
+		Offset int
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			"zero limit",
+			fields{Limit: 0},
+			false,
+		},
+		{
+			"negative limit",
+			fields{Limit: -1},
+			true,
+		},
+		{
+			"large limit",
+			fields{Limit: 500},
+			true,
+		},
+		{
+			"negative offset",
+			fields{Offset: -1},
+			true,
+		},
+		{
+			"success",
+			fields{Limit: 50, Offset: 50},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &GetBotLogsRequest{
+				Limit:  tt.fields.Limit,
+				Offset: tt.fields.Offset,
+			}
+			if err := r.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestHandlers_GetBotLogs(t *testing.T) {
+	t.Parallel()
+	path := "/api/v3/bots/{botId}/logs"
+	env := Setup(t, common1)
+	user1 := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	commonSession := env.S(t, user1.GetID())
+	bot1 := env.CreateBot(t, rand, user1.GetID())
+	bot2 := env.CreateBot(t, rand, user2.GetID())
+
+	log := &model.BotEventLog{
+		RequestID: uuid.Must(uuid.NewV4()),
+		BotID:     bot1.ID,
+		Event:     event.Ping,
+		Code:      400,
+		DateTime:  time.Now(),
+	}
+	require.NoError(t, env.Repository.WriteBotEventLog(log))
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, bot1.ID.String()).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, bot2.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array()
+
+		obj.Length().Equal(1)
+
+		first := obj.First().Object()
+		first.Value("botId").String().Equal(log.BotID.String())
+		first.Value("requestId").String().Equal(log.RequestID.String())
+		first.Value("event").String().Equal(log.Event.String())
+		first.Value("code").Number().Equal(log.Code)
+		first.Value("datetime").String().NotEmpty()
 	})
 }

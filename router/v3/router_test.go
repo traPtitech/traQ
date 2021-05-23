@@ -259,7 +259,8 @@ func (env *Env) CreateBot(t *testing.T, name string, creatorID uuid.UUID) *model
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	m, err := env.Repository.CreateBot(name, "po", "totall a desc", uuid.Nil, creatorID, "https://example.com")
+	f := env.MakeFile(t)
+	m, err := env.Repository.CreateBot(name, "po", "totally a desc", f.GetID(), creatorID, "https://example.com")
 	require.NoError(t, err)
 	return m
 }
