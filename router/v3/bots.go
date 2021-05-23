@@ -292,8 +292,8 @@ func (h *Handlers) ReissueBot(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"verificationCode": b.VerificationToken,
-		"accessToken":      t.AccessToken,
+		"verificationToken": b.VerificationToken,
+		"accessToken":       t.AccessToken,
 	})
 }
 
