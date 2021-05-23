@@ -1869,7 +1869,7 @@ paths:
             default: 'false'
           in: query
           name: include-suspended
-          description: アカウントがアクティブでないユーザーを含めるかどうか
+          description: アカウントがアクティブでないユーザーを含め、全てのユーザーを取得するかどうか
         - schema:
             type: string
           in: query
@@ -1877,7 +1877,7 @@ paths:
           description: 名前が一致するアカウントのみを取得する
       description: |-
         ユーザーのリストを取得します。
-        `include-suspended`を指定しない場合、レスポンスに非アクティブユーザーは含まれません。
+        `include-suspended`を指定しない場合、レスポンスにはユーザーアカウント状態が"1: 有効"であるユーザーのみが含まれます。
         `include-suspended`と`name`を同時に指定することはできません。
   /channels:
     post:
