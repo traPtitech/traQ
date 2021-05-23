@@ -212,7 +212,7 @@ type ChannelEvent struct {
 	ChannelID uuid.UUID          `gorm:"type:char(36);not null;index:idx_channel_events_channel_id_date_time,priority:1;index:idx_channel_events_channel_id_event_type_date_time,priority:1" json:"-"`
 	EventType ChannelEventType   `gorm:"type:varchar(30);not null;index:idx_channel_events_channel_id_event_type_date_time,priority:2" json:"type"`
 	Detail    ChannelEventDetail `gorm:"type:TEXT COLLATE utf8mb4_bin NOT NULL" json:"detail"`
-	DateTime  time.Time          `gorm:"precision:6;index:idx_channel_events_channel_id_date_time,priority:2;index:idx_channel_events_channel_id_event_type_date_time,priority:3" json:"dateTime"`
+	DateTime  time.Time          `gorm:"precision:6;index:idx_channel_events_channel_id_date_time,priority:2;index:idx_channel_events_channel_id_event_type_date_time,priority:3" json:"datetime"`
 
 	Channel *Channel `gorm:"constraint:channel_events_channel_id_channels_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE" json:"-"`
 }
