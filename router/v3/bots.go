@@ -229,7 +229,7 @@ func (h *Handlers) GetBotLogs(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, logs)
+	return c.JSON(http.StatusOK, formatBotEventLogs(logs))
 }
 
 // GetChannelBots GET /channels/:channelID/bots

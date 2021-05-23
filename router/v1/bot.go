@@ -1,11 +1,14 @@
 package v1
 
 import (
+	"net/http"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -17,7 +20,6 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"net/http"
 )
 
 // GetBots GET /bots
@@ -301,7 +303,7 @@ func (h *Handlers) GetBotEventLogs(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, logs)
+	return c.JSON(http.StatusOK, formatBotEventLogs(logs))
 }
 
 // GetChannelBots GET /channels/:channelID/bots
