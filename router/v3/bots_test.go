@@ -306,7 +306,8 @@ func TestHandlers_EditBot(t *testing.T) {
 	user2 := env.CreateUser(t, rand)
 	commonSession := env.S(t, user1.GetID())
 	bot1 := env.CreateBot(t, rand, user1.GetID())
-	bot2 := env.CreateBot(t, rand, user2.GetID())
+	bot2 := env.CreateBot(t, rand, user1.GetID())
+	bot3 := env.CreateBot(t, rand, user2.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
@@ -376,7 +377,7 @@ func TestHandlers_EditBot(t *testing.T) {
 			Status(http.StatusBadRequest)
 	})
 
-	t.Run("subscribe events (event type)", func(t *testing.T) {
+	t.Run("bad request (subscribe events)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PATCH(path, bot1.ID.String()).
@@ -391,7 +392,7 @@ func TestHandlers_EditBot(t *testing.T) {
 	t.Run("forbidden (cannot patch others' bot)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.PATCH(path, bot2.ID.String()).
+		e.PATCH(path, bot3.ID.String()).
 			WithCookie(session.CookieName, commonSession).
 			WithJSON(&PatchBotRequest{DisplayName: optional.StringFrom("po")}).
 			Expect().
@@ -421,7 +422,7 @@ func TestHandlers_EditBot(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.PATCH(path, bot1.ID.String()).
+		e.PATCH(path, bot2.ID.String()).
 			WithCookie(session.CookieName, commonSession).
 			WithJSON(&PatchBotRequest{
 				DisplayName: optional.StringFrom("po"),
