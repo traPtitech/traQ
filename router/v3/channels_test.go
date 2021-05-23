@@ -1,0 +1,537 @@
+package v3
+
+import (
+	"net/http"
+	"strings"
+	"testing"
+
+	"github.com/gavv/httpexpect/v2"
+	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/random"
+)
+
+func channelEquals(t *testing.T, expect *model.Channel, actual *httpexpect.Object) {
+	t.Helper()
+	actual.Value("id").String().Equal(expect.ID.String())
+	if expect.ParentID == uuid.Nil {
+		actual.Value("parentId").Null()
+	} else {
+		actual.Value("parentId").String().Equal(expect.ParentID.String())
+	}
+	actual.Value("archived").Boolean().Equal(expect.IsArchived())
+	actual.Value("force").Boolean().Equal(expect.IsForced)
+	actual.Value("topic").String().Equal(expect.Topic)
+	actual.Value("name").String().Equal(expect.Name)
+	childIDs := make([]interface{}, 0, len(expect.ChildrenID))
+	for _, childID := range expect.ChildrenID {
+		childIDs = append(childIDs, childID)
+	}
+	actual.Value("children").Array().ContainsOnly(childIDs...)
+}
+
+func TestHandlers_GetChannels(t *testing.T) {
+	path := "/api/v3/channels"
+	env := Setup(t, s2)
+	user1 := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
+	user3 := env.CreateUser(t, rand)
+	channel := env.CreateChannel(t, rand)
+	dm := env.CreateDMChannel(t, user1.GetID(), user2.GetID())
+	user1Session := env.S(t, user1.GetID())
+	user2Session := env.S(t, user2.GetID())
+	user3Session := env.S(t, user3.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("success (include-dms=false)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithCookie(session.CookieName, user1Session).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		public := obj.Value("public").Array()
+		public.Length().Equal(1)
+
+		channelEquals(t, channel, public.First().Object())
+	})
+
+	t.Run("success (include-dm=true, user1)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithCookie(session.CookieName, user1Session).
+			WithQuery("include-dm", true).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		public := obj.Value("public").Array()
+		public.Length().Equal(1)
+		channelEquals(t, channel, public.First().Object())
+
+		dms := obj.Value("dm").Array()
+		dms.Length().Equal(1)
+		firstDM := dms.First().Object()
+		firstDM.Value("id").String().Equal(dm.ID.String())
+		firstDM.Value("userId").String().Equal(user2.GetID().String())
+	})
+
+	t.Run("success (include-dm=true, user2)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithCookie(session.CookieName, user2Session).
+			WithQuery("include-dm", true).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		public := obj.Value("public").Array()
+		public.Length().Equal(1)
+		channelEquals(t, channel, public.First().Object())
+
+		dms := obj.Value("dm").Array()
+		dms.Length().Equal(1)
+		firstDM := dms.First().Object()
+		firstDM.Value("id").String().Equal(dm.ID.String())
+		firstDM.Value("userId").String().Equal(user1.GetID().String())
+	})
+
+	t.Run("success (include-dm=true, user3)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithCookie(session.CookieName, user3Session).
+			WithQuery("include-dm", true).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		public := obj.Value("public").Array()
+		public.Length().Equal(1)
+		channelEquals(t, channel, public.First().Object())
+
+		dms := obj.Value("dm").Array()
+		dms.Length().Equal(0)
+	})
+}
+
+func TestPostChannelRequest_Validate(t *testing.T) {
+	type fields struct {
+		Name   string
+		Parent optional.UUID
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			"empty name",
+			fields{},
+			true,
+		},
+		{
+			"invalid name",
+			fields{Name: "チャンネル"},
+			true,
+		},
+		{
+			"too long name",
+			fields{Name: strings.Repeat("a", 50)},
+			true,
+		},
+		{
+			"success",
+			fields{Name: "po"},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := PostChannelRequest{
+				Name:   tt.fields.Name,
+				Parent: tt.fields.Parent,
+			}
+			if err := r.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestHandlers_CreateChannels(t *testing.T) {
+	path := "/api/v3/channels"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	commonSession := env.S(t, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path).
+			WithJSON(&PostChannelRequest{Name: "po"}).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("bad request (invalid name)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostChannelRequest{Name: "チャンネル"}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		cname1 := random.AlphaNumeric(20)
+		obj := e.POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostChannelRequest{Name: cname1}).
+			Expect().
+			Status(http.StatusCreated).
+			JSON().
+			Object()
+
+		obj.Value("id").String().NotEmpty()
+		obj.Value("parentId").Null()
+		obj.Value("archived").Boolean().False()
+		obj.Value("force").Boolean().False()
+		obj.Value("topic").String().Empty()
+		obj.Value("name").String().Equal(cname1)
+		obj.Value("children").Array().Length().Equal(0)
+
+		c1, err := uuid.FromString(obj.Value("id").String().Raw())
+		require.NoError(t, err)
+
+		cname2 := random.AlphaNumeric(20)
+		obj = e.POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostChannelRequest{Name: cname2, Parent: optional.UUIDFrom(c1)}).
+			Expect().
+			Status(http.StatusCreated).
+			JSON().
+			Object()
+
+		obj.Value("id").String().NotEmpty()
+		obj.Value("parentId").String().Equal(c1.String())
+		obj.Value("archived").Boolean().False()
+		obj.Value("force").Boolean().False()
+		obj.Value("topic").String().Empty()
+		obj.Value("name").String().Equal(cname2)
+		obj.Value("children").Array().Length().Equal(0)
+
+		ch, err := env.CM.GetChannel(c1)
+		require.NoError(t, err)
+		if assert.Len(t, ch.ChildrenID, 1) {
+			assert.EqualValues(t, ch.ChildrenID[0].String(), obj.Value("id").String().Raw())
+		}
+	})
+}
+
+func TestHandlers_GetChannel(t *testing.T) {
+	path := "/api/v3/channels/{channelId}"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	channel := env.CreateChannel(t, rand)
+	commonSession := env.S(t, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, channel.ID).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path, channel.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		channelEquals(t, channel, obj)
+	})
+}
+
+func TestPatchChannelRequest_Validate(t *testing.T) {
+	type fields struct {
+		Name     optional.String
+		Archived optional.Bool
+		Force    optional.Bool
+		Parent   optional.UUID
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			"empty",
+			fields{},
+			false,
+		},
+		{
+			"invalid name",
+			fields{Name: optional.StringFrom("チャンネル")},
+			true,
+		},
+		{
+			"too long name",
+			fields{Name: optional.StringFrom(strings.Repeat("a", 50))},
+			true,
+		},
+		{
+			"success",
+			fields{
+				Name:     optional.StringFrom("po"),
+				Archived: optional.BoolFrom(true),
+				Force:    optional.BoolFrom(true),
+				Parent:   optional.UUIDFrom(uuid.Must(uuid.NewV4())),
+			},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := PatchChannelRequest{
+				Name:     tt.fields.Name,
+				Archived: tt.fields.Archived,
+				Force:    tt.fields.Force,
+				Parent:   tt.fields.Parent,
+			}
+			if err := r.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestHandlers_EditChannel(t *testing.T) {
+	path := "/api/v3/channels/{channelId}"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	admin := env.CreateAdmin(t, rand)
+	userSession := env.S(t, user.GetID())
+	adminSession := env.S(t, admin.GetID())
+
+	channel := env.CreateChannel(t, rand)
+	parent := env.CreateChannel(t, rand)
+	unarchived := env.CreateChannel(t, rand)
+	archived := env.CreateChannel(t, rand)
+	require.NoError(t, env.CM.ArchiveChannel(archived.ID, admin.GetID()))
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, channel.ID).
+			WithJSON(&PatchChannelRequest{Name: optional.StringFrom("po")}).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("forbidden", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, channel.ID).
+			WithCookie(session.CookieName, userSession).
+			WithJSON(&PatchChannelRequest{Name: optional.StringFrom("po")}).
+			Expect().
+			Status(http.StatusForbidden)
+	})
+
+	t.Run("bad request (invalid name)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, channel.ID).
+			WithCookie(session.CookieName, adminSession).
+			WithJSON(&PatchChannelRequest{Name: optional.StringFrom("チャンネル")}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, adminSession).
+			WithJSON(&PatchChannelRequest{Name: optional.StringFrom("チャンネル")}).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success (archive)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, unarchived.ID).
+			WithCookie(session.CookieName, adminSession).
+			WithJSON(&PatchChannelRequest{Archived: optional.BoolFrom(true)}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		ch, err := env.CM.GetChannel(unarchived.ID)
+		require.NoError(t, err)
+		assert.True(t, ch.IsArchived())
+	})
+
+	t.Run("success (unarchive)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, archived.ID).
+			WithCookie(session.CookieName, adminSession).
+			WithJSON(&PatchChannelRequest{Archived: optional.BoolFrom(false)}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		ch, err := env.CM.GetChannel(archived.ID)
+		require.NoError(t, err)
+		assert.False(t, ch.IsArchived())
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		newName := random.AlphaNumeric(20)
+		e.PATCH(path, channel.ID).
+			WithCookie(session.CookieName, adminSession).
+			WithJSON(&PatchChannelRequest{Name: optional.StringFrom(newName), Force: optional.BoolFrom(true), Parent: optional.UUIDFrom(parent.ID)}).
+			Expect().
+			Status(http.StatusNoContent)
+
+		ch, err := env.CM.GetChannel(channel.ID)
+		require.NoError(t, err)
+		assert.True(t, ch.IsForced)
+		assert.EqualValues(t, newName, ch.Name)
+		assert.EqualValues(t, parent.ID, ch.ParentID)
+	})
+}
+
+func TestHandlers_GetChannelStats(t *testing.T) {
+	path := "/api/v3/channels/{channelId}/stats"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	channel := env.CreateChannel(t, rand)
+	message := env.CreateMessage(t, user.GetID(), channel.ID, rand)
+	stamp := env.CreateStamp(t, user.GetID(), rand)
+	env.AddStampToMessage(t, message.GetID(), stamp.ID, user.GetID())
+	commonSession := env.S(t, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, channel.ID).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path, channel.ID).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		obj.Value("totalMessageCount").Number().Equal(1)
+
+		stamps := obj.Value("stamps").Array()
+		stamps.Length().Equal(1)
+		firstStamp := stamps.First().Object()
+		firstStamp.Value("id").String().Equal(stamp.ID.String())
+		firstStamp.Value("count").Number().Equal(1)
+		firstStamp.Value("total").Number().Equal(1)
+
+		users := obj.Value("users").Array()
+		users.Length().Equal(1)
+		firstUser := users.First().Object()
+		firstUser.Value("id").String().Equal(user.GetID().String())
+		firstUser.Value("messageCount").Number().Equal(1)
+	})
+}
+
+func TestHandlers_GetChannelTopic(t *testing.T) {
+	path := "/api/v3/channels/{channelId}/topic"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	channel := env.CreateChannel(t, rand)
+	require.NoError(t, env.CM.UpdateChannel(channel.ID, repository.UpdateChannelArgs{Topic: optional.StringFrom("this is channel topic")}))
+	commonSession := env.S(t, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, channel.ID).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, uuid.Must(uuid.NewV4()).String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, channel.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object().
+			Value("topic").
+			Equal("this is channel topic")
+	})
+}

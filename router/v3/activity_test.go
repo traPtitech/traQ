@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/message"
 )
 
 func TestGetActivityTimelineRequest_Validate(t *testing.T) {
@@ -49,8 +50,6 @@ func TestGetActivityTimelineRequest_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			r := &GetActivityTimelineRequest{
 				Limit:      tt.fields.Limit,
 				All:        tt.fields.All,
@@ -83,12 +82,12 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 	m2 := env.CreateMessage(t, user.GetID(), ch1.ID, "m2")
 	m3 := env.CreateMessage(t, user.GetID(), ch2.ID, "m3")
 
-	msgEquals := func(t *testing.T, expect *model.Message, actual *httpexpect.Object) {
+	msgEquals := func(t *testing.T, expect message.Message, actual *httpexpect.Object) {
 		t.Helper()
-		actual.Value("id").String().Equal(expect.ID.String())
-		actual.Value("userId").String().Equal(expect.UserID.String())
-		actual.Value("channelId").String().Equal(expect.ChannelID.String())
-		actual.Value("content").String().Equal(expect.Text)
+		actual.Value("id").String().Equal(expect.GetID().String())
+		actual.Value("userId").String().Equal(expect.GetUserID().String())
+		actual.Value("channelId").String().Equal(expect.GetChannelID().String())
+		actual.Value("content").String().Equal(expect.GetText())
 		actual.Value("createdAt").String().NotEmpty()
 		actual.Value("updatedAt").String().NotEmpty()
 	}

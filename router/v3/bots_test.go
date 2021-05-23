@@ -14,8 +14,6 @@ import (
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/utils/optional"
-	"github.com/traPtitech/traQ/utils/random"
-	"github.com/traPtitech/traQ/utils/set"
 )
 
 func botEquals(t *testing.T, expect *model.Bot, actual *httpexpect.Object) {
@@ -842,15 +840,7 @@ func TestHandlers_LetBotJoinChannel(t *testing.T) {
 	bot1 := env.CreateBot(t, rand, user1.GetID())
 	bot2 := env.CreateBot(t, rand, user2.GetID())
 	channel := env.CreateChannel(t, rand)
-	dm, err := env.Repository.CreateChannel(
-		model.Channel{
-			Name:      "dm_" + random.AlphaNumeric(17),
-			IsVisible: true,
-		},
-		set.UUIDSetFromArray([]uuid.UUID{user1.GetID(), user2.GetID()}),
-		true,
-	)
-	require.NoError(t, err)
+	dm := env.CreateDMChannel(t, user1.GetID(), user2.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()

@@ -40,6 +40,7 @@ const (
 	dbPrefix = "traq-test-router-v3-"
 	common1  = "common1"
 	s1       = "s1"
+	s2       = "s2"
 	rand     = "random"
 )
 
@@ -53,6 +54,7 @@ func TestMain(m *testing.M) {
 	dbs := []string{
 		common1,
 		s1,
+		s2,
 	}
 	if err := migration.CreateDatabasesIfNotExists("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=true", user, pass, host, port), dbPrefix, dbs...); err != nil {
 		panic(err)
@@ -218,6 +220,16 @@ func (env *Env) CreateUser(t *testing.T, userName string) model.UserInfo {
 	return u
 }
 
+func (env *Env) CreateAdmin(t *testing.T, userName string) model.UserInfo {
+	t.Helper()
+	if userName == rand {
+		userName = random.AlphaNumeric(32)
+	}
+	u, err := env.Repository.CreateUser(repository.CreateUserArgs{Name: userName, Password: "testtesttesttest", Role: role.Admin, IconFileID: uuid.Must(uuid.NewV4())})
+	require.NoError(t, err)
+	return u
+}
+
 // CreateChannel チャンネルを必ず作成します
 func (env *Env) CreateChannel(t *testing.T, name string) *model.Channel {
 	t.Helper()
@@ -229,15 +241,45 @@ func (env *Env) CreateChannel(t *testing.T, name string) *model.Channel {
 	return ch
 }
 
+// CreateDMChannel DMチャンネルを必ず作成します
+func (env *Env) CreateDMChannel(t *testing.T, user1, user2 uuid.UUID) *model.Channel {
+	dm, err := env.CM.GetDMChannel(user1, user2)
+	require.NoError(t, err)
+	return dm
+}
+
 // CreateMessage メッセージを必ず作成します
-func (env *Env) CreateMessage(t *testing.T, userID, channelID uuid.UUID, text string) *model.Message {
+func (env *Env) CreateMessage(t *testing.T, userID, channelID uuid.UUID, text string) message.Message {
 	t.Helper()
 	if text == rand {
 		text = random.AlphaNumeric(20)
 	}
-	m, err := env.Repository.CreateMessage(userID, channelID, text)
+	m, err := env.MM.Create(channelID, userID, text)
 	require.NoError(t, err)
 	return m
+}
+
+// CreateStamp スタンプを必ず作成します
+func (env *Env) CreateStamp(t *testing.T, creator uuid.UUID, name string) *model.Stamp {
+	t.Helper()
+	if name == rand {
+		name = random.AlphaNumeric(20)
+	}
+	f := env.MakeFile(t)
+	s, err := env.Repository.CreateStamp(repository.CreateStampArgs{
+		Name:      name,
+		FileID:    f.GetID(),
+		CreatorID: creator,
+	})
+	require.NoError(t, err)
+	return s
+}
+
+// AddStampToMessage メッセージにスタンプを必ず押します
+func (env *Env) AddStampToMessage(t *testing.T, messageID, stampID, userID uuid.UUID) {
+	t.Helper()
+	_, err := env.MM.AddStamps(messageID, stampID, userID, 1)
+	require.NoError(t, err)
 }
 
 // MakeFile ファイルを必ず作成します
