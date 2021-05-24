@@ -215,5 +215,5 @@ func ServeJSONWithETag(c echo.Context, i interface{}) error {
 	if done, err := CheckPreconditions(c, time.Time{}); done {
 		return err
 	}
-	return c.JSONBlob(200, b)
+	return c.JSONBlob(http.StatusOK, b)
 }
