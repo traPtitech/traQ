@@ -1,12 +1,16 @@
 package extension
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/router/consts"
+	"crypto/md5"
+	"encoding/hex"
 	"net/http"
 	"net/textproto"
 	"strings"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
+	"github.com/labstack/echo/v4"
+	"github.com/traPtitech/traQ/router/consts"
 )
 
 func scanETag(s string) (etag string, remain string) {
@@ -181,4 +185,35 @@ func CheckPreconditions(c echo.Context, modtime time.Time) (done bool, err error
 	}
 
 	return false, nil
+}
+
+// ServeJSONWithETag Etagを付与してJSONを返します、304を返せるときは304を返します
+func ServeJSONWithETag(c echo.Context, i interface{}) error {
+	j := jsoniter.Config{
+		EscapeHTML:                    false,
+		MarshalFloatWith6Digits:       true,
+		ObjectFieldMustBeSimpleString: true,
+		// ここより上はjsoniter.ConfigFastestと同様
+		SortMapKeys: true, // 順番が一致しないとEtagが一致しないのでソートを有効にする
+	}.Froze()
+
+	var b []byte
+	var err error
+	if _, pretty := c.QueryParams()["pretty"]; pretty {
+		b, err = j.MarshalIndent(i, "", "  ")
+	} else {
+		b, err = j.Marshal(i)
+	}
+	if err != nil {
+		return err
+	}
+
+	md5Res := md5.Sum(b)
+	etag := hex.EncodeToString(md5Res[:])
+	c.Response().Header().Set(consts.HeaderETag, "\""+etag+"\"")
+
+	if done, err := CheckPreconditions(c, time.Time{}); done {
+		return err
+	}
+	return c.JSONBlob(http.StatusOK, b)
 }
