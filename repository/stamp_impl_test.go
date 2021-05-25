@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/traPtitech/traQ/model"
 
 	"github.com/traPtitech/traQ/utils/optional"
@@ -278,6 +279,7 @@ func TestRepositoryImpl_ExistStamps(t *testing.T) {
 func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user, channel := setupWithUserAndChannel(t, common2)
+	user1 := mustMakeUser(t, repo, rand)
 
 	message := mustMakeMessage(t, repo, user.GetID(), channel.ID)
 	stamp1 := mustMakeStamp(t, repo, rand, uuid.Nil)
@@ -286,6 +288,8 @@ func TestRepositoryImpl_GetUserStampHistory(t *testing.T) {
 	mustAddMessageStamp(t, repo, message.ID, stamp1.ID, user.GetID())
 	mustAddMessageStamp(t, repo, message.ID, stamp3.ID, user.GetID())
 	mustAddMessageStamp(t, repo, message.ID, stamp2.ID, user.GetID())
+	mustAddMessageStamp(t, repo, message.ID, stamp2.ID, user1.GetID())
+	mustAddMessageStamp(t, repo, message.ID, stamp3.ID, user1.GetID())
 
 	t.Run("Nil id", func(t *testing.T) {
 		t.Parallel()

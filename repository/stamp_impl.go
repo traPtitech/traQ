@@ -353,13 +353,14 @@ func (repo *GormRepository) GetUserStampHistory(userID uuid.UUID, limit int) (h 
 	if userID == uuid.Nil {
 		return
 	}
+
 	err = repo.db.
-		Table("messages_stamps").
-		Where("user_id = ?", userID).
-		Group("stamp_id").
-		Select("stamp_id, max(updated_at) AS datetime").
+		Table("messages_stamps ms1").
+		Select("ms1.stamp_id, ms1.updated_at AS datetime").
+		Joins("LEFT JOIN messages_stamps ms2 ON (ms1.updated_at < ms2.updated_at AND ms1.stamp_id = ms2.stamp_id AND ms1.user_id = ms2.user_id)").
+		Where("ms2.stamp_id IS NULL AND ms1.user_id = ?", userID).
 		Order("datetime DESC").
-		Scopes(gormutil.LimitAndOffset(limit, 0)).
+		Limit(limit).
 		Scan(&h).
 		Error
 	return
