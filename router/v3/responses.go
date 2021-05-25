@@ -1,11 +1,12 @@
 package v3
 
 import (
-	"github.com/traPtitech/traQ/utils/optional"
+	"sort"
 	"time"
 
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 type Channel struct {
@@ -35,11 +36,20 @@ type DMChannel struct {
 	UserID uuid.UUID `json:"userId"`
 }
 
+// formatDMChannels ソートされたものを返す
 func formatDMChannels(dmcs map[uuid.UUID]uuid.UUID) []*DMChannel {
 	res := make([]*DMChannel, 0, len(dmcs))
 	for cid, uid := range dmcs {
 		res = append(res, &DMChannel{ID: cid, UserID: uid})
 	}
+
+	sort.Slice(res, func(i, j int) bool {
+		if res[i].ID.String() == res[j].ID.String() {
+			return res[i].UserID.String() > res[j].UserID.String()
+		}
+		return res[i].ID.String() > res[j].ID.String()
+	})
+
 	return res
 }
 
