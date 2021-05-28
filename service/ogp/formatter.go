@@ -40,21 +40,17 @@ func MergeDefaultPageMetaAndOpenGraph(og *opengraph.OpenGraph, meta *DefaultPage
 			result.URL = og.URL
 		}
 	}
-	if len(og.Images) > 0 {
-		result.Images = make([]model.OgpMedia, len(og.Images))
-		for i, image := range og.Images {
-			result.Images[i] = toOgpMedia(image)
-		}
+	result.Images = make([]model.OgpMedia, len(og.Images))
+	for i, image := range og.Images {
+		result.Images[i] = toOgpMedia(image)
 	}
 	if len(og.Description) > 0 {
 		result.Description = og.Description
 	}
-	if len(og.Videos) > 0 {
-		result.Videos = make([]model.OgpMedia, len(og.Videos))
-		for i, video := range og.Videos {
-			// Videoは仕様上Imageと同じ構造を持つ
-			result.Videos[i] = toOgpMedia((*opengraph.Image)(video))
-		}
+	result.Videos = make([]model.OgpMedia, len(og.Videos))
+	for i, video := range og.Videos {
+		// Videoは仕様上Imageと同じ構造を持つ
+		result.Videos[i] = toOgpMedia((*opengraph.Image)(video))
 	}
 
 	return result

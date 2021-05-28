@@ -4088,7 +4088,8 @@ paths:
   /ogp:
     get:
       summary: OGP情報を取得
-      tags: []
+      tags:
+        - ogp
       responses:
         '200':
           description: OK
@@ -4106,6 +4107,7 @@ paths:
         - schema:
             type: string
           in: query
+          required: true
           name: url
           description: OGPを取得したいURL
   /users/me/settings:
@@ -6888,6 +6890,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/OgpMedia'
+      required:
+        - type
+        - title
+        - url
+        - images
+        - description
+        - videos
     OgpMedia:
       title: OgpMedia
       type: object
@@ -6909,6 +6918,12 @@ components:
         height:
           type: integer
           nullable: true
+      required:
+        - url
+        - secureUrl
+        - type
+        - width
+        - height
       x-examples: {}
     GetNotifyCitation:
       title: GetNotifyCitation
@@ -7159,5 +7174,7 @@ tags:
     description: WebRTC API
   - name: clip
     description: クリップAPI
+  - name: ogp
+    description: OGP API
 security:
   - OAuth2: []
