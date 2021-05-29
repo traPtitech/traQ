@@ -692,6 +692,7 @@ func TestHandlers_GetChannelBots(t *testing.T) {
 }
 
 func TestHandlers_ActivateBot(t *testing.T) {
+	t.Parallel()
 	path := "/api/v3/bots/{botId}/actions/activate"
 	env := Setup(t, common1)
 	user1 := env.CreateUser(t, rand)
@@ -737,6 +738,7 @@ func TestHandlers_ActivateBot(t *testing.T) {
 }
 
 func TestHandlers_InactivateBot(t *testing.T) {
+	t.Parallel()
 	path := "/api/v3/bots/{botId}/actions/inactivate"
 	env := Setup(t, common1)
 	user1 := env.CreateUser(t, rand)
@@ -782,6 +784,7 @@ func TestHandlers_InactivateBot(t *testing.T) {
 }
 
 func TestHandlers_ReissueBot(t *testing.T) {
+	t.Parallel()
 	path := "/api/v3/bots/{botId}/actions/reissue"
 	env := Setup(t, common1)
 	user1 := env.CreateUser(t, rand)
@@ -832,6 +835,7 @@ func TestHandlers_ReissueBot(t *testing.T) {
 }
 
 func TestHandlers_LetBotJoinChannel(t *testing.T) {
+	t.Parallel()
 	path := "/api/v3/bots/{botId}/actions/join"
 	env := Setup(t, common1)
 	user1 := env.CreateUser(t, rand)
@@ -903,6 +907,7 @@ func TestHandlers_LetBotJoinChannel(t *testing.T) {
 }
 
 func TestHandlers_LetBotLeaveChannel(t *testing.T) {
+	t.Parallel()
 	path := "/api/v3/bots/{botId}/actions/leave"
 	env := Setup(t, common1)
 	user1 := env.CreateUser(t, rand)

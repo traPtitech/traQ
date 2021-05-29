@@ -82,7 +82,7 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 	m2 := env.CreateMessage(t, user.GetID(), ch1.ID, "m2")
 	m3 := env.CreateMessage(t, user.GetID(), ch2.ID, "m3")
 
-	msgEquals := func(t *testing.T, expect message.Message, actual *httpexpect.Object) {
+	timelineMessageEquals := func(t *testing.T, expect message.Message, actual *httpexpect.Object) {
 		t.Helper()
 		actual.Value("id").String().Equal(expect.GetID().String())
 		actual.Value("userId").String().Equal(expect.GetUserID().String())
@@ -134,8 +134,8 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 
 		obj.Length().Equal(2)
 
-		msgEquals(t, m3, obj.Element(0).Object())
-		msgEquals(t, m2, obj.Element(1).Object())
+		timelineMessageEquals(t, m3, obj.Element(0).Object())
+		timelineMessageEquals(t, m2, obj.Element(1).Object())
 	})
 
 	t.Run("success (all=true, per_channel=false)", func(t *testing.T) {
@@ -152,9 +152,9 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 
 		obj.Length().Equal(3)
 
-		msgEquals(t, m3, obj.Element(0).Object())
-		msgEquals(t, m2, obj.Element(1).Object())
-		msgEquals(t, m1, obj.Element(2).Object())
+		timelineMessageEquals(t, m3, obj.Element(0).Object())
+		timelineMessageEquals(t, m2, obj.Element(1).Object())
+		timelineMessageEquals(t, m1, obj.Element(2).Object())
 	})
 
 	t.Run("success (all=false, per_channel=true)", func(t *testing.T) {
@@ -171,7 +171,7 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 
 		obj.Length().Equal(1)
 
-		msgEquals(t, m2, obj.Element(0).Object())
+		timelineMessageEquals(t, m2, obj.Element(0).Object())
 	})
 
 	t.Run("success (all=false, per_channel=false)", func(t *testing.T) {
@@ -188,7 +188,7 @@ func TestHandlers_GetActivityTimeline(t *testing.T) {
 
 		obj.Length().Equal(2)
 
-		msgEquals(t, m2, obj.Element(0).Object())
-		msgEquals(t, m1, obj.Element(1).Object())
+		timelineMessageEquals(t, m2, obj.Element(0).Object())
+		timelineMessageEquals(t, m1, obj.Element(1).Object())
 	})
 }
