@@ -220,6 +220,7 @@ func (env *Env) CreateUser(t *testing.T, userName string) model.UserInfo {
 	return u
 }
 
+// CreateAdmin Adminユーザーを必ず作成します
 func (env *Env) CreateAdmin(t *testing.T, userName string) model.UserInfo {
 	t.Helper()
 	if userName == rand {
@@ -296,6 +297,7 @@ func (env *Env) MakeFile(t *testing.T) model.File {
 	return f
 }
 
+// CreateBot BOTを必ず作成します
 func (env *Env) CreateBot(t *testing.T, name string, creatorID uuid.UUID) *model.Bot {
 	t.Helper()
 	if name == rand {
@@ -305,6 +307,25 @@ func (env *Env) CreateBot(t *testing.T, name string, creatorID uuid.UUID) *model
 	m, err := env.Repository.CreateBot(name, "po", "totally a desc", f.GetID(), creatorID, "https://example.com")
 	require.NoError(t, err)
 	return m
+}
+
+func (env *Env) CreateOAuth2Client(t *testing.T, name string, creatorID uuid.UUID) *model.OAuth2Client {
+	t.Helper()
+	if name == rand {
+		name = random.AlphaNumeric(20)
+	}
+	client := &model.OAuth2Client{
+		ID:           random.SecureAlphaNumeric(36),
+		Name:         name,
+		Description:  "desc",
+		Confidential: false,
+		CreatorID:    creatorID,
+		RedirectURI:  "https://example.com",
+		Secret:       random.SecureAlphaNumeric(36),
+		Scopes:       model.AccessScopes{"read": {}},
+	}
+	require.NoError(t, env.Repository.SaveClient(client))
+	return client
 }
 
 func getEnvOrDefault(env string, def string) string {
