@@ -309,6 +309,7 @@ func (env *Env) CreateBot(t *testing.T, name string, creatorID uuid.UUID) *model
 	return m
 }
 
+// CreateOAuth2Client OAuth2クライアントを必ず作成します
 func (env *Env) CreateOAuth2Client(t *testing.T, name string, creatorID uuid.UUID) *model.OAuth2Client {
 	t.Helper()
 	if name == rand {
@@ -326,6 +327,20 @@ func (env *Env) CreateOAuth2Client(t *testing.T, name string, creatorID uuid.UUI
 	}
 	require.NoError(t, env.Repository.SaveClient(client))
 	return client
+}
+
+// CreateClipFolder クリップフォルダを必ず作成します
+func (env *Env) CreateClipFolder(t *testing.T, name, desc string, creatorID uuid.UUID) *model.ClipFolder {
+	t.Helper()
+	if name == rand {
+		name = random.AlphaNumeric(20)
+	}
+	if desc == rand {
+		desc = random.AlphaNumeric(20)
+	}
+	cf, err := env.Repository.CreateClipFolder(creatorID, name, desc)
+	require.NoError(t, err)
+	return cf
 }
 
 func getEnvOrDefault(env string, def string) string {

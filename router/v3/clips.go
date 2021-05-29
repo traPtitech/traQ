@@ -1,15 +1,17 @@
 package v3
 
 import (
-	"github.com/traPtitech/traQ/service/message"
-	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/utils/optional"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -81,12 +83,7 @@ func (h *Handlers) DeleteClipFolder(c echo.Context) error {
 	folderID := getParamAsUUID(c, consts.ParamClipFolderID)
 
 	if err := h.Repo.DeleteClipFolder(folderID); err != nil {
-		switch {
-		case err == repository.ErrNotFound:
-			return herror.NotFound("clip folder not found")
-		default:
-			return herror.InternalServerError(err)
-		}
+		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -101,12 +98,7 @@ func (h *Handlers) EditClipFolder(c echo.Context) error {
 	}
 
 	if err := h.Repo.UpdateClipFolder(cf.ID, req.Name, req.Description); err != nil {
-		switch {
-		case err == repository.ErrNotFound:
-			return herror.NotFound("clip folder not found")
-		default:
-			return herror.InternalServerError(err)
-		}
+		return herror.InternalServerError(err)
 	}
 	return c.NoContent(http.StatusNoContent)
 }
@@ -148,8 +140,6 @@ func (h *Handlers) PostClipFolderMessage(c echo.Context) error {
 		switch {
 		case err == repository.ErrAlreadyExists:
 			return herror.Conflict("clip folder message conflicts")
-		case err == repository.ErrNotFound:
-			return herror.NotFound("clip folder not found")
 		default:
 			return herror.InternalServerError(err)
 		}
@@ -207,10 +197,6 @@ func (h *Handlers) DeleteClipFolderMessages(c echo.Context) error {
 
 	cf := getParamClipFolder(c)
 	if err := h.Repo.DeleteClipFolderMessage(cf.ID, messageID); err != nil {
-		switch {
-		case err == repository.ErrNotFound:
-			return herror.NotFound("clip folder not found")
-		}
 		return herror.InternalServerError(err)
 	}
 
