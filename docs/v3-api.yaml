@@ -329,6 +329,8 @@ paths:
           description: |-
             No Content
             指定したメッセージのピン留めが外されました。
+        '400':
+          description: Bad Request
         '404':
           description: |-
             Not Found
