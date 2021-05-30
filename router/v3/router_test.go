@@ -32,6 +32,7 @@ import (
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
+	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -168,6 +169,7 @@ type Env struct {
 	MM         message.Manager
 	FM         file.Manager
 	IP         imaging.Processor
+	SE         search.Engine
 	Hub        *hub.Hub
 	SessStore  session.Store
 }

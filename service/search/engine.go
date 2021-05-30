@@ -2,11 +2,13 @@ package search
 
 import (
 	"errors"
-	vd "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/traPtitech/traQ/service/message"
-	"github.com/traPtitech/traQ/utils/optional"
 	"regexp"
 	"strings"
+
+	vd "github.com/go-ozzo/ozzo-validation/v4"
+
+	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // ErrServiceUnavailable エラー 現在検索サービスが利用できません
