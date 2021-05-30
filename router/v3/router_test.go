@@ -326,9 +326,21 @@ func (env *Env) CreateBot(t *testing.T, name string, creatorID uuid.UUID) *model
 		name = random.AlphaNumeric(20)
 	}
 	f := env.MakeFile(t, creatorID, uuid.Nil)
-	m, err := env.Repository.CreateBot(name, "po", "totally a desc", f.GetID(), creatorID, "https://example.com")
+	b, err := env.Repository.CreateBot(name, "po", "totally a desc", f.GetID(), creatorID, "https://example.com")
 	require.NoError(t, err)
-	return m
+	return b
+}
+
+// CreateWebhook Webhookを必ず作成します
+func (env *Env) CreateWebhook(t *testing.T, name string, creatorID, channelID uuid.UUID) model.Webhook {
+	t.Helper()
+	if name == rand {
+		name = random.AlphaNumeric(20)
+	}
+	f := env.MakeFile(t, creatorID, uuid.Nil)
+	w, err := env.Repository.CreateWebhook(name, "po", channelID, f.GetID(), creatorID, random.SecureAlphaNumeric(20))
+	require.NoError(t, err)
+	return w
 }
 
 // CreateOAuth2Client OAuth2クライアントを必ず作成します
