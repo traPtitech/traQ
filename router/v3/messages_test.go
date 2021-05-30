@@ -602,6 +602,7 @@ func TestHandlers_RemovePin(t *testing.T) {
 	require.NoError(t, err)
 	archivedM := env.CreateMessage(t, user.GetID(), archived.ID, rand)
 	_, err = env.MM.Pin(archivedM.GetID(), user.GetID())
+	require.NoError(t, err)
 	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
 	s := env.S(t, user.GetID())
 
