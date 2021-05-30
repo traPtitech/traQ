@@ -235,12 +235,10 @@ paths:
     put:
       summary: メッセージを編集
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Message'
+        '204':
+          description: |-
+            No Content
+            メッセージを編集できました。
         '400':
           description: Bad Request
         '403':
@@ -251,7 +249,7 @@ paths:
           description: Not Found
       description: |-
         指定したメッセージを編集します。
-        自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ編集することができます。
+        自身が投稿したメッセージのみ編集することができます。
         アーカイブされているチャンネルのメッセージを編集することは出来ません。
       requestBody:
         content:
