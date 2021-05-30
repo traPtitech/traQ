@@ -32,6 +32,7 @@ import (
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
+	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
 )
@@ -266,7 +267,7 @@ func (env *Env) CreateStamp(t *testing.T, creator uuid.UUID, name string) *model
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	f := env.MakeFile(t)
+	f := env.MakeFile(t, creator, uuid.Nil)
 	s, err := env.Repository.CreateStamp(repository.CreateStampArgs{
 		Name:      name,
 		FileID:    f.GetID(),
@@ -284,15 +285,34 @@ func (env *Env) AddStampToMessage(t *testing.T, messageID, stampID, userID uuid.
 }
 
 // MakeFile ファイルを必ず作成します
-func (env *Env) MakeFile(t *testing.T) model.File {
+func (env *Env) MakeFile(t *testing.T, creatorID, channelID uuid.UUID) model.File {
 	t.Helper()
+
+	var cr, ch optional.UUID
+	if creatorID != uuid.Nil {
+		cr = optional.UUIDFrom(creatorID)
+	}
+	if channelID != uuid.Nil {
+		ch = optional.UUIDFrom(channelID)
+	}
+
 	buf := bytes.NewBufferString("test message")
-	f, err := env.FM.Save(file.SaveArgs{
-		FileName: "test.txt",
-		FileSize: int64(buf.Len()),
-		FileType: model.FileTypeUserFile,
-		Src:      buf,
-	})
+	args := file.SaveArgs{
+		FileName:  "test.txt",
+		FileSize:  int64(buf.Len()),
+		FileType:  model.FileTypeUserFile,
+		CreatorID: cr,
+		ChannelID: ch,
+		Src:       buf,
+	}
+
+	members, err := env.CM.GetDMChannelMembers(channelID)
+	require.NoError(t, err)
+	for _, member := range members {
+		args.ACLAllow(member)
+	}
+
+	f, err := env.FM.Save(args)
 	require.NoError(t, err)
 	return f
 }
@@ -303,7 +323,7 @@ func (env *Env) CreateBot(t *testing.T, name string, creatorID uuid.UUID) *model
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	f := env.MakeFile(t)
+	f := env.MakeFile(t, creatorID, uuid.Nil)
 	m, err := env.Repository.CreateBot(name, "po", "totally a desc", f.GetID(), creatorID, "https://example.com")
 	require.NoError(t, err)
 	return m
