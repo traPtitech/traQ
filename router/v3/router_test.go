@@ -263,13 +263,19 @@ func (env *Env) CreateMessage(t *testing.T, userID, channelID uuid.UUID, text st
 	return m
 }
 
+// MakeMessageUnread 指定したメッセージを未読にします
+func (env *Env) MakeMessageUnread(t *testing.T, userID, messageID uuid.UUID) {
+	t.Helper()
+	require.NoError(t, env.Repository.SetMessageUnread(userID, messageID, false))
+}
+
 // CreateStamp スタンプを必ず作成します
 func (env *Env) CreateStamp(t *testing.T, creator uuid.UUID, name string) *model.Stamp {
 	t.Helper()
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	f := env.MakeFile(t, creator, uuid.Nil)
+	f := env.CreateFile(t, creator, uuid.Nil)
 	s, err := env.Repository.CreateStamp(repository.CreateStampArgs{
 		Name:      name,
 		FileID:    f.GetID(),
@@ -286,8 +292,8 @@ func (env *Env) AddStampToMessage(t *testing.T, messageID, stampID, userID uuid.
 	require.NoError(t, err)
 }
 
-// MakeFile ファイルを必ず作成します
-func (env *Env) MakeFile(t *testing.T, creatorID, channelID uuid.UUID) model.File {
+// CreateFile ファイルを必ず作成します
+func (env *Env) CreateFile(t *testing.T, creatorID, channelID uuid.UUID) model.File {
 	t.Helper()
 
 	var cr, ch optional.UUID
@@ -325,7 +331,7 @@ func (env *Env) CreateBot(t *testing.T, name string, creatorID uuid.UUID) *model
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	f := env.MakeFile(t, creatorID, uuid.Nil)
+	f := env.CreateFile(t, creatorID, uuid.Nil)
 	b, err := env.Repository.CreateBot(name, "po", "totally a desc", f.GetID(), creatorID, "https://example.com")
 	require.NoError(t, err)
 	return b
@@ -337,7 +343,7 @@ func (env *Env) CreateWebhook(t *testing.T, name string, creatorID, channelID uu
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	f := env.MakeFile(t, creatorID, uuid.Nil)
+	f := env.CreateFile(t, creatorID, uuid.Nil)
 	w, err := env.Repository.CreateWebhook(name, "po", channelID, f.GetID(), creatorID, random.SecureAlphaNumeric(20))
 	require.NoError(t, err)
 	return w

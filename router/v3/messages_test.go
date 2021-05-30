@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/traPtitech/traQ/router/session"
@@ -18,6 +19,9 @@ func TestHandlers_GetMyUnreadChannels(t *testing.T) {
 	path := "/api/v3/users/me/unread"
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
+	ch := env.CreateChannel(t, rand)
+	m := env.CreateMessage(t, user.GetID(), ch.ID, rand)
+	env.MakeMessageUnread(t, user.GetID(), m.GetID())
 	s := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -31,12 +35,21 @@ func TestHandlers_GetMyUnreadChannels(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.GET(path).
+		obj := e.GET(path).
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
 			JSON().
-			Array() // unreadは非同期アップデートなのでここでは200だけチェック
+			Array()
+
+		obj.Length().Equal(1)
+
+		first := obj.First().Object()
+		first.Value("channelId").String().Equal(ch.ID.String())
+		first.Value("count").Number().Equal(1)
+		first.Value("noticeable").Boolean().False()
+		first.Value("since").String().NotEmpty()
+		first.Value("updatedAt").String().NotEmpty()
 	})
 }
 
@@ -47,6 +60,8 @@ func TestHandlers_ReadChannel(t *testing.T) {
 	env := Setup(t, common1)
 	user := env.CreateUser(t, rand)
 	ch := env.CreateChannel(t, rand)
+	m := env.CreateMessage(t, user.GetID(), ch.ID, rand)
+	env.MakeMessageUnread(t, user.GetID(), m.GetID())
 	s := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -64,6 +79,10 @@ func TestHandlers_ReadChannel(t *testing.T) {
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusNoContent)
+
+		chs, err := env.Repository.GetUserUnreadChannels(user.GetID())
+		require.NoError(t, err)
+		assert.Len(t, chs, 0)
 	})
 }
 
@@ -447,4 +466,124 @@ func TestHandlers_DeleteMessage(t *testing.T) {
 				Status(tt.expect)
 		})
 	}
+}
+
+func TestHandlers_GetPin(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/messages/{messageId}/pin"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	ch := env.CreateChannel(t, rand)
+	m := env.CreateMessage(t, user.GetID(), ch.ID, rand)
+	m2 := env.CreateMessage(t, user.GetID(), ch.ID, rand)
+	_, err := env.MM.Pin(m.GetID(), user.GetID())
+	require.NoError(t, err)
+	s := env.S(t, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, m.GetID()).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, uuid.Must(uuid.NewV4())).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("ping not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, m2.GetID()).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path, m.GetID()).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Object()
+
+		obj.Value("userId").String().Equal(user.GetID().String())
+		obj.Value("pinnedAt").String().NotEmpty()
+	})
+}
+
+func TestHandlers_CreatePin(t *testing.T) {
+	t.Parallel()
+
+	path := "/api/v3/messages/{messageId}/pin"
+	env := Setup(t, common1)
+	user := env.CreateUser(t, rand)
+	ch := env.CreateChannel(t, rand)
+	archived := env.CreateChannel(t, rand)
+	m := env.CreateMessage(t, user.GetID(), ch.ID, rand)
+	m2 := env.CreateMessage(t, user.GetID(), ch.ID, rand)
+	archivedM := env.CreateMessage(t, user.GetID(), archived.ID, rand)
+	require.NoError(t, env.CM.ArchiveChannel(archived.ID, user.GetID()))
+	_, err := env.MM.Pin(m2.GetID(), user.GetID())
+	require.NoError(t, err)
+	s := env.S(t, user.GetID())
+
+	t.Run("not logged in", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, m.GetID()).
+			Expect().
+			Status(http.StatusUnauthorized)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, uuid.Must(uuid.NewV4())).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNotFound)
+	})
+
+	t.Run("already pinned", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, m2.GetID()).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("archived", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.POST(path, archivedM.GetID()).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.POST(path, m.GetID()).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusCreated).
+			JSON().
+			Object()
+
+		obj.Value("userId").String().Equal(user.GetID().String())
+		obj.Value("pinnedAt").String().NotEmpty()
+	})
 }

@@ -140,9 +140,9 @@ func TestHandlers_GetFiles(t *testing.T) {
 	user3 := env.CreateUser(t, rand)
 	ch := env.CreateChannel(t, rand)
 	dm := env.CreateDMChannel(t, user2.GetID(), user3.GetID())
-	f1 := env.MakeFile(t, user.GetID(), uuid.Nil)
-	f2 := env.MakeFile(t, uuid.Nil, ch.ID)
-	env.MakeFile(t, uuid.Nil, dm.ID)
+	f1 := env.CreateFile(t, user.GetID(), uuid.Nil)
+	f2 := env.CreateFile(t, uuid.Nil, ch.ID)
+	env.CreateFile(t, uuid.Nil, dm.ID)
 	s := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -338,8 +338,8 @@ func TestHandlers_GetFileMeta(t *testing.T) {
 	user3 := env.CreateUser(t, rand)
 	dm := env.CreateDMChannel(t, user2.GetID(), user3.GetID())
 	s := env.S(t, user.GetID())
-	file := env.MakeFile(t, user.GetID(), uuid.Nil)
-	secretFile := env.MakeFile(t, user2.GetID(), dm.ID)
+	file := env.CreateFile(t, user.GetID(), uuid.Nil)
+	secretFile := env.CreateFile(t, user2.GetID(), dm.ID)
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
@@ -444,7 +444,7 @@ func TestHandlers_GetThumbnailImage(t *testing.T) {
 	user := env.CreateUser(t, rand)
 	user2 := env.CreateUser(t, rand)
 	user3 := env.CreateUser(t, rand)
-	f := env.MakeFile(t, user.GetID(), uuid.Nil)
+	f := env.CreateFile(t, user.GetID(), uuid.Nil)
 	require.Len(t, f.GetThumbnails(), 0)
 
 	dm := env.CreateDMChannel(t, user2.GetID(), user3.GetID())
@@ -463,7 +463,7 @@ func TestHandlers_GetThumbnailImage(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	secretFile := env.MakeFile(t, user2.GetID(), dm.ID)
+	secretFile := env.CreateFile(t, user2.GetID(), dm.ID)
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
@@ -530,9 +530,9 @@ func TestHandlers_GetFile(t *testing.T) {
 	user := env.CreateUser(t, rand)
 	user2 := env.CreateUser(t, rand)
 	user3 := env.CreateUser(t, rand)
-	f := env.MakeFile(t, user.GetID(), uuid.Nil)
+	f := env.CreateFile(t, user.GetID(), uuid.Nil)
 	dm := env.CreateDMChannel(t, user2.GetID(), user3.GetID())
-	secretFile := env.MakeFile(t, user2.GetID(), dm.ID)
+	secretFile := env.CreateFile(t, user2.GetID(), dm.ID)
 	s := env.S(t, user.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
@@ -581,10 +581,10 @@ func TestHandlers_DeleteFile(t *testing.T) {
 	user := env.CreateUser(t, rand)
 	user2 := env.CreateUser(t, rand)
 	user3 := env.CreateUser(t, rand)
-	f := env.MakeFile(t, user.GetID(), uuid.Nil)
-	f2 := env.MakeFile(t, user2.GetID(), uuid.Nil)
+	f := env.CreateFile(t, user.GetID(), uuid.Nil)
+	f2 := env.CreateFile(t, user2.GetID(), uuid.Nil)
 	dm := env.CreateDMChannel(t, user2.GetID(), user3.GetID())
-	secretFile := env.MakeFile(t, user2.GetID(), dm.ID)
+	secretFile := env.CreateFile(t, user2.GetID(), dm.ID)
 	s := env.S(t, user.GetID())
 
 	iconFile, err := file2.GenerateIconFile(env.FM, "test")
