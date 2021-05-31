@@ -1162,7 +1162,7 @@ func TestHandlers_PostDirectMessage(t *testing.T) {
 	s := env.S(t, user.GetID())
 
 	req := &PostMessageRequest{
-		Content: "aya_se goal",
+		Content: "Hello, traP",
 		Embed:   true,
 	}
 
@@ -1209,7 +1209,7 @@ func TestHandlers_PostDirectMessage(t *testing.T) {
 		obj.Value("id").String().NotEmpty()
 		obj.Value("userId").String().Equal(user.GetID().String())
 		obj.Value("channelId").String().Equal(dm.ID.String())
-		obj.Value("content").String().Equal("aya_se goal")
+		obj.Value("content").String().Equal("Hello, traP")
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
 		obj.Value("pinned").Boolean().False()
@@ -1237,7 +1237,7 @@ func TestHandlers_PostDirectMessage(t *testing.T) {
 		obj.Value("id").String().NotEmpty()
 		obj.Value("userId").String().Equal(user.GetID().String())
 		obj.Value("channelId").String().NotEmpty()
-		obj.Value("content").String().Equal("aya_se goal")
+		obj.Value("content").String().Equal("Hello, traP")
 		obj.Value("createdAt").String().NotEmpty()
 		obj.Value("updatedAt").String().NotEmpty()
 		obj.Value("pinned").Boolean().False()

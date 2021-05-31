@@ -138,8 +138,12 @@ func TestMain(m *testing.M) {
 			Logger:         zap.NewNop(),
 			Imaging:        env.IP,
 			Config: Config{
-				Version:  "version",
-				Revision: "revision",
+				Version:     "version",
+				Revision:    "revision",
+				AllowSignUp: false,
+				EnabledExternalAccountProviders: map[string]bool{
+					"traq": true,
+				},
 			},
 		}
 		handlers.Setup(e.Group("/api"))
@@ -367,6 +371,14 @@ func (env *Env) CreateOAuth2Client(t *testing.T, name string, creatorID uuid.UUI
 	}
 	require.NoError(t, env.Repository.SaveClient(client))
 	return client
+}
+
+// IssueToken OAuth2トークンを必ず発行します
+func (env *Env) IssueToken(t *testing.T, client *model.OAuth2Client, userID uuid.UUID) *model.OAuth2Token {
+	t.Helper()
+	tok, err := env.Repository.IssueToken(client, userID, "https://example.com", model.AccessScopes{"read": {}}, 86400, false)
+	require.NoError(t, err)
+	return tok
 }
 
 // CreateClipFolder クリップフォルダを必ず作成します

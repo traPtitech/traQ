@@ -24,8 +24,17 @@ func TestHandlers_GetVersion(t *testing.T) {
 		Status(http.StatusOK).
 		JSON().
 		Object()
+
 	obj.Value("version").String().Equal("version")
 	obj.Value("revision").String().Equal("revision")
+
+	flags := obj.Value("flags").Object()
+
+	flags.Value("signUpAllowed").Boolean().False()
+
+	ext := flags.Value("externalLogin").Array()
+	ext.Length().Equal(1)
+	ext.First().String().Equal("traq")
 }
 
 func TestHandlers_GetPublicUserIcon(t *testing.T) {
