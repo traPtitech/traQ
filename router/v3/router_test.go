@@ -289,6 +289,17 @@ func (env *Env) CreateStamp(t *testing.T, creator uuid.UUID, name string) *model
 	return s
 }
 
+// CreateStampPalette スタンプパレットを必ず作成します
+func (env *Env) CreateStampPalette(t *testing.T, creator uuid.UUID, name string, stamps model.UUIDs) *model.StampPalette {
+	t.Helper()
+	if name == rand {
+		name = random.AlphaNumeric(20)
+	}
+	sp, err := env.Repository.CreateStampPalette(name, "desc", stamps, creator)
+	require.NoError(t, err)
+	return sp
+}
+
 // AddStampToMessage メッセージにスタンプを必ず押します
 func (env *Env) AddStampToMessage(t *testing.T, messageID, stampID, userID uuid.UUID) {
 	t.Helper()
