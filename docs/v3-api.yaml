@@ -4136,9 +4136,7 @@ paths:
         '204':
           description: 変更できました。
         '400':
-          description: 指定したURLが不正です
-        '404':
-          description: 指定したURLに対するユーザー設定情報が見つかりませんでした。
+          description: Bad Request
       requestBody:
         content:
           application/json:
