@@ -120,7 +120,27 @@ func TestHandlers_EditStamp(t *testing.T) {
 			Status(http.StatusUnauthorized)
 	})
 
-	t.Run("bad request", func(t *testing.T) {
+	t.Run("bad request (empty name)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, stamp3.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PatchStampRequest{Name: optional.StringFrom("")}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (nil creator id)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, stamp3.ID).
+			WithCookie(session.CookieName, s).
+			WithJSON(&PatchStampRequest{CreatorID: optional.UUIDFrom(uuid.Nil)}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (invalid creator id)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PATCH(path, stamp3.ID).

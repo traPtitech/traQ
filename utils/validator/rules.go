@@ -7,6 +7,16 @@ import (
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
+// RequiredIfValid utils/optional系の値がvalid時に空の値を弾く
+//
+// 仕組み:
+// utils/optional系の値は sql.Valuer を実装している
+// Valid: false の場合、nilがvalidationされるので通る
+// Valid: true かつ空の値の場合、空の値がvalidationされるので通らない
+//
+// 分かりやすいように & このコメントを書くため名前を付けている
+var RequiredIfValid = vd.NilOrNotEmpty
+
 // PasswordRule パスワードバリデーションルール
 var PasswordRule = []vd.Rule{
 	is.PrintableASCII,
@@ -87,11 +97,6 @@ var StampPaletteNameRuleRequired = append([]vd.Rule{
 var StampPaletteDescriptionRule = []vd.Rule{
 	vd.RuneLength(0, 1000),
 }
-
-// StampPaletteDescriptionRuleRequired スタンプパレット説明バリデーションルール with Required
-var StampPaletteDescriptionRuleRequired = append([]vd.Rule{
-	vd.Required,
-}, StampPaletteDescriptionRule...)
 
 // StampPaletteStampsRule スタンプパレット内スタンプバリデーションルール
 var StampPaletteStampsRule = []vd.Rule{

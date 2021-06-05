@@ -2,8 +2,12 @@ package v3
 
 import (
 	"context"
+	"net/http"
+	"strconv"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
@@ -12,8 +16,6 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"net/http"
-	"strconv"
 )
 
 // GetStamps GET /stamps
@@ -74,7 +76,7 @@ type PatchStampRequest struct {
 
 func (r PatchStampRequest) ValidateWithContext(ctx context.Context) error {
 	return vd.ValidateStructWithContext(ctx, &r,
-		vd.Field(&r.Name, validator.StampNameRule...),
+		vd.Field(&r.Name, append(validator.StampNameRule, validator.RequiredIfValid)...),
 		vd.Field(&r.CreatorID, validator.NotNilUUID, utils.IsActiveHumanUserID),
 	)
 }

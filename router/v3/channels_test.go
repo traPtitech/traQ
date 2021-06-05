@@ -342,6 +342,11 @@ func TestPatchChannelRequest_Validate(t *testing.T) {
 			false,
 		},
 		{
+			"empty name",
+			fields{Name: optional.StringFrom("")},
+			true,
+		},
+		{
 			"invalid name",
 			fields{Name: optional.StringFrom("チャンネル")},
 			true,

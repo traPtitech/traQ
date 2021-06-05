@@ -359,8 +359,28 @@ func TestPatchClientRequest_Validate(t *testing.T) {
 			false,
 		},
 		{
+			"empty name",
+			fields{Name: optional.StringFrom("")},
+			true,
+		},
+		{
 			"too long name",
 			fields{Name: optional.StringFrom(strings.Repeat("a", 100))},
+			true,
+		},
+		{
+			"empty description",
+			fields{Description: optional.StringFrom("")},
+			true,
+		},
+		{
+			"empty callback url",
+			fields{CallbackURL: optional.StringFrom("")},
+			true,
+		},
+		{
+			"nil developer id",
+			fields{DeveloperID: optional.UUIDFrom(uuid.Nil)},
 			true,
 		},
 		{

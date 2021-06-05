@@ -25,11 +25,12 @@ func stampPaletteEquals(t *testing.T, expect *model.StampPalette, actual *httpex
 	actual.Value("createdAt").String().NotEmpty()
 	actual.Value("updatedAt").String().NotEmpty()
 
-	stamps := actual.Value("stamps").Array()
-	stamps.Length().Equal(len(expect.Stamps))
-	for i, s := range expect.Stamps {
-		stamps.Element(i).String().Equal(s.String())
+	stamps := make([]interface{}, len(expect.Stamps))
+	for i, stamp := range expect.Stamps {
+		stamps[i] = stamp.String()
 	}
+	// Order DOES matter here
+	actual.Value("stamps").Array().Elements(stamps...)
 }
 
 func TestHandlers_GetStampPalettes(t *testing.T) {
@@ -186,6 +187,11 @@ func TestPatchStampPaletteRequest_Validate(t *testing.T) {
 			"empty",
 			fields{},
 			false,
+		},
+		{
+			"empty name",
+			fields{Name: optional.StringFrom("")},
+			true,
 		},
 		{
 			"too long name",

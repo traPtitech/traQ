@@ -5,9 +5,14 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -19,9 +24,6 @@ import (
 	"github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"io/ioutil"
-	"net/http"
-	"strings"
 )
 
 // GetWebhooks GET /webhooks
@@ -123,8 +125,8 @@ type PatchWebhookRequest struct {
 
 func (r PatchWebhookRequest) ValidateWithContext(ctx context.Context) error {
 	return vd.ValidateStructWithContext(ctx, &r,
-		vd.Field(&r.Name, vd.RuneLength(1, 32)),
-		vd.Field(&r.Description, vd.RuneLength(1, 1000)),
+		vd.Field(&r.Name, validator.RequiredIfValid, vd.RuneLength(1, 32)),
+		vd.Field(&r.Description, validator.RequiredIfValid, vd.RuneLength(1, 1000)),
 		vd.Field(&r.ChannelID, validator.NotNilUUID, utils.IsPublicChannelID),
 		vd.Field(&r.Secret, vd.RuneLength(0, 50)),
 		vd.Field(&r.OwnerID, validator.NotNilUUID, utils.IsActiveHumanUserID),

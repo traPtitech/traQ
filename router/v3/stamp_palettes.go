@@ -76,7 +76,7 @@ type PatchStampPaletteRequest struct {
 
 func (r PatchStampPaletteRequest) Validate() error {
 	err := vd.ValidateStruct(&r,
-		vd.Field(&r.Name, validator.StampPaletteNameRule...),
+		vd.Field(&r.Name, append(validator.StampPaletteNameRule, validator.RequiredIfValid)...),
 		vd.Field(&r.Description, validator.StampPaletteDescriptionRule...),
 	)
 	// model.UUIDsがsql.Valuerを実装しているので別でvalidateしている

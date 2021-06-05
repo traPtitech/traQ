@@ -99,9 +99,9 @@ type PatchClientRequest struct {
 
 func (r PatchClientRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, vd.RuneLength(1, 32)),
-		vd.Field(&r.Description, vd.RuneLength(1, 1000)),
-		vd.Field(&r.CallbackURL, is.URL),
+		vd.Field(&r.Name, validator.RequiredIfValid, vd.RuneLength(1, 32)),
+		vd.Field(&r.Description, validator.RequiredIfValid, vd.RuneLength(1, 1000)),
+		vd.Field(&r.CallbackURL, validator.RequiredIfValid, is.URL),
 		vd.Field(&r.DeveloperID, validator.NotNilUUID),
 	)
 }

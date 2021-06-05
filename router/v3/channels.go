@@ -96,7 +96,7 @@ type PatchChannelRequest struct {
 
 func (r PatchChannelRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, validator.ChannelNameRule...),
+		vd.Field(&r.Name, append(validator.ChannelNameRule, validator.RequiredIfValid)...),
 	)
 }
 

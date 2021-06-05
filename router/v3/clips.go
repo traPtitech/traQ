@@ -38,7 +38,7 @@ type UpdateClipFolderRequest struct {
 
 func (r UpdateClipFolderRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, validator.ClipFolderNameRule...),
+		vd.Field(&r.Name, append(validator.ClipFolderNameRule, validator.RequiredIfValid)...),
 		vd.Field(&r.Description, validator.ClipFolderDescriptionRule...),
 	)
 }

@@ -317,12 +317,32 @@ func TestHandlers_EditBot(t *testing.T) {
 			Status(http.StatusUnauthorized)
 	})
 
-	t.Run("bad request (display name)", func(t *testing.T) {
+	t.Run("bad request (empty display name)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{DisplayName: optional.StringFrom("")}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (too long display name)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.PATCH(path, bot1.ID.String()).
 			WithCookie(session.CookieName, commonSession).
 			WithJSON(&PatchBotRequest{DisplayName: optional.StringFrom(strings.Repeat("a", 100))}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (empty endpoint)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, bot1.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{Endpoint: optional.StringFrom("")}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})

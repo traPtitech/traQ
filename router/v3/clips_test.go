@@ -84,6 +84,11 @@ func TestUpdateClipFolderRequest_Validate(t *testing.T) {
 			false,
 		},
 		{
+			"empty name",
+			fields{Name: optional.StringFrom("")},
+			true,
+		},
+		{
 			"too long name",
 			fields{Name: optional.StringFrom(strings.Repeat("a", 100))},
 			true,
