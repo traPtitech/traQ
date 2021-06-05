@@ -62,16 +62,20 @@ type UserTag struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+func formatUserTag(ut model.UserTag) UserTag {
+	return UserTag{
+		ID:        ut.GetTagID(),
+		Tag:       ut.GetTag(),
+		IsLocked:  ut.GetIsLocked(),
+		CreatedAt: ut.GetCreatedAt(),
+		UpdatedAt: ut.GetUpdatedAt(),
+	}
+}
+
 func formatUserTags(uts []model.UserTag) []UserTag {
 	res := make([]UserTag, len(uts))
 	for i, ut := range uts {
-		res[i] = UserTag{
-			ID:        ut.GetTagID(),
-			Tag:       ut.GetTag(),
-			IsLocked:  ut.GetIsLocked(),
-			CreatedAt: ut.GetCreatedAt(),
-			UpdatedAt: ut.GetUpdatedAt(),
-		}
+		res[i] = formatUserTag(ut)
 	}
 	return res
 }

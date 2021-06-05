@@ -2,14 +2,16 @@ package v3
 
 import (
 	"fmt"
+	"net/http"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"net/http"
 )
 
 // GetUserTags GET /users/:userID/tags
@@ -78,7 +80,12 @@ func addUserTags(c echo.Context, repo repository.Repository, userID uuid.UUID) e
 		}
 	}
 
-	return c.NoContent(http.StatusCreated)
+	ut, err := repo.GetUserTag(userID, t.ID)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	return c.JSON(http.StatusCreated, formatUserTag(ut))
 }
 
 // PatchUserTagRequest PATCH /users/:userID/tags/:tagID リクエストボディ
