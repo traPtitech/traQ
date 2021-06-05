@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"fmt"
+
 	"github.com/dgrijalva/jwt-go"
 )
 

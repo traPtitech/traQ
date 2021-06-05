@@ -425,7 +425,7 @@ func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
 
 	ch, err := h.ChannelManager.GetChannel(channelID)
 	if err != nil {
-		if err == repository.ErrNotFound {
+		if err == channel.ErrChannelNotFound {
 			return herror.NotFound()
 		}
 		return herror.InternalServerError(err)
