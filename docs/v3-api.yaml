@@ -1532,12 +1532,10 @@ paths:
     patch:
       summary: Webhook情報を変更
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Webhook'
+        '204':
+          description: |-
+            No Content
+            編集できました。
         '400':
           description: Bad Request
         '404':
