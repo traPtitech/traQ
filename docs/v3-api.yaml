@@ -235,12 +235,10 @@ paths:
     put:
       summary: メッセージを編集
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Message'
+        '204':
+          description: |-
+            No Content
+            メッセージを編集できました。
         '400':
           description: Bad Request
         '403':
@@ -251,7 +249,7 @@ paths:
           description: Not Found
       description: |-
         指定したメッセージを編集します。
-        自身が投稿したメッセージと自身が管理権限を持つWebhookとBOTが投稿したメッセージのみ編集することができます。
+        自身が投稿したメッセージのみ編集することができます。
         アーカイブされているチャンネルのメッセージを編集することは出来ません。
       requestBody:
         content:
@@ -314,9 +312,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/MessagePin'
         '400':
-          description: |-
-            Forbidden
-            これ以上このメッセージのチャンネルにピン留めすることはできません。
+          description: Bad Request
         '404':
           description: |-
             Not Found
@@ -333,6 +329,8 @@ paths:
           description: |-
             No Content
             指定したメッセージのピン留めが外されました。
+        '400':
+          description: Bad Request
         '404':
           description: |-
             Not Found
@@ -1054,16 +1052,14 @@ paths:
       - $ref: '#/components/parameters/groupIdInPath'
       - $ref: '#/components/parameters/userIdInPath'
     delete:
-      summary: ユーザーグループから削除
+      summary: |-
+        指定したグループからユーザーを削除します。
+        既にグループから削除されているメンバーを指定した場合は204を返します。
       responses:
         '204':
           description: |-
             No Content
             指定したユーザーがユーザーグループから削除されました。
-        '400':
-          description: |-
-            Bad Request
-            ユーザーがグループに存在しません。
         '403':
           description: |-
             Forbidden
@@ -1536,12 +1532,10 @@ paths:
     patch:
       summary: Webhook情報を変更
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Webhook'
+        '204':
+          description: |-
+            No Content
+            編集できました。
         '400':
           description: Bad Request
         '404':
@@ -1999,10 +1993,6 @@ paths:
             変更されました。
         '400':
           description: Bad Request
-        '403':
-          description: |-
-            Forbidden
-            タグがロックされています。
         '404':
           description: |-
             Not Found
@@ -4144,9 +4134,7 @@ paths:
         '204':
           description: 変更できました。
         '400':
-          description: 指定したURLが不正です
-        '404':
-          description: 指定したURLに対するユーザー設定情報が見つかりませんでした。
+          description: Bad Request
       requestBody:
         content:
           application/json:

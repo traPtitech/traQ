@@ -1,11 +1,13 @@
 package v1
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/optional"
-	"time"
 )
 
 type meResponse struct {
@@ -261,6 +263,32 @@ func formatBotDetail(b *model.Bot, t *model.OAuth2Token) *botDetailResponse {
 		Privileged:       b.Privileged,
 		BotCode:          b.BotCode,
 	}
+}
+
+type botEventLogResponse struct {
+	RequestID uuid.UUID          `json:"requestId"`
+	BotID     uuid.UUID          `json:"botId"`
+	Event     model.BotEventType `json:"event"`
+	Code      int                `json:"code"`
+	DateTime  time.Time          `json:"datetime"`
+}
+
+func formatBotEventLog(log *model.BotEventLog) *botEventLogResponse {
+	return &botEventLogResponse{
+		RequestID: log.RequestID,
+		BotID:     log.BotID,
+		Event:     log.Event,
+		Code:      log.Code,
+		DateTime:  log.DateTime,
+	}
+}
+
+func formatBotEventLogs(logs []*model.BotEventLog) []*botEventLogResponse {
+	res := make([]*botEventLogResponse, len(logs))
+	for i, log := range logs {
+		res[i] = formatBotEventLog(log)
+	}
+	return res
 }
 
 type tagResponse struct {

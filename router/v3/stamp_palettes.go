@@ -1,11 +1,13 @@
 package v3
 
 import (
-	"github.com/traPtitech/traQ/utils/optional"
 	"net/http"
+
+	"github.com/traPtitech/traQ/utils/optional"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -74,7 +76,7 @@ type PatchStampPaletteRequest struct {
 
 func (r PatchStampPaletteRequest) Validate() error {
 	err := vd.ValidateStruct(&r,
-		vd.Field(&r.Name, validator.StampPaletteNameRule...),
+		vd.Field(&r.Name, append(validator.StampPaletteNameRule, validator.RequiredIfValid)...),
 		vd.Field(&r.Description, validator.StampPaletteDescriptionRule...),
 	)
 	// model.UUIDsがsql.Valuerを実装しているので別でvalidateしている

@@ -1,9 +1,12 @@
 package v3
 
 import (
+	"net/http"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -11,7 +14,6 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
-	"net/http"
 )
 
 // GetClients GET /clients
@@ -97,9 +99,9 @@ type PatchClientRequest struct {
 
 func (r PatchClientRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, vd.RuneLength(1, 32)),
-		vd.Field(&r.Description, vd.RuneLength(1, 1000)),
-		vd.Field(&r.CallbackURL, is.URL),
+		vd.Field(&r.Name, validator.RequiredIfValid, vd.RuneLength(1, 32)),
+		vd.Field(&r.Description, validator.RequiredIfValid, vd.RuneLength(1, 1000)),
+		vd.Field(&r.CallbackURL, validator.RequiredIfValid, is.URL),
 		vd.Field(&r.DeveloperID, validator.NotNilUUID),
 	)
 }

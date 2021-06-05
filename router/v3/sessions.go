@@ -1,17 +1,19 @@
 package v3
 
 import (
+	"net/http"
+	"time"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils/validator"
-	"go.uber.org/zap"
-	"net/http"
-	"time"
 )
 
 // PostLoginRequest POST /login リクエストボディ

@@ -84,7 +84,7 @@ type PatchUserGroupRequest struct {
 
 func (r PatchUserGroupRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, validator.UserGroupNameRule...),
+		vd.Field(&r.Name, append(validator.UserGroupNameRule, validator.RequiredIfValid)...),
 		vd.Field(&r.Description, vd.RuneLength(0, 100)),
 		vd.Field(&r.Type, vd.RuneLength(0, 30)),
 	)

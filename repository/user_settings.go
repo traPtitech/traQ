@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 )
 
@@ -16,7 +17,7 @@ type UserSettingsRepository interface {
 	// GetNotifyCitation メッセージ引用通知の情報を取得します
 	//
 	// 返り値がtrueの場合、メッセージ引用通知が有効です
-	// 返り値がfalseの場合、メッセージ引用通知が無効がエラーが発生しています
+	// 返り値がfalseの場合、メッセージ引用通知が無効です
 	// DBによるエラーを返すことがあります
 	GetNotifyCitation(userID uuid.UUID) (bool, error)
 	// GetUserSettings ユーザー設定を返します

@@ -2,11 +2,14 @@ package v3
 
 import (
 	"context"
+	"net/http"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -18,7 +21,6 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"net/http"
 )
 
 // GetBots GET /bots
@@ -128,9 +130,9 @@ type PatchBotRequest struct {
 
 func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
 	return vd.ValidateStructWithContext(ctx, &r,
-		vd.Field(&r.DisplayName, vd.RuneLength(1, 32)),
+		vd.Field(&r.DisplayName, validator.RequiredIfValid, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.RuneLength(0, 1000)),
-		vd.Field(&r.Endpoint, is.URL, validator.NotInternalURL),
+		vd.Field(&r.Endpoint, validator.RequiredIfValid, is.URL, validator.NotInternalURL),
 		vd.Field(&r.DeveloperID, validator.NotNilUUID, utils.IsActiveHumanUserID),
 		vd.Field(&r.SubscribeEvents, utils.IsValidBotEvents),
 	)
@@ -229,7 +231,7 @@ func (h *Handlers) GetBotLogs(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, logs)
+	return c.JSON(http.StatusOK, formatBotEventLogs(logs))
 }
 
 // GetChannelBots GET /channels/:channelID/bots
@@ -244,7 +246,7 @@ func (h *Handlers) GetChannelBots(c echo.Context) error {
 	res := make([]echo.Map, len(bots))
 	for i, v := range bots {
 		res[i] = echo.Map{
-			"botId":     v.ID,
+			"id":        v.ID,
 			"botUserId": v.BotUserID,
 		}
 	}
@@ -290,8 +292,8 @@ func (h *Handlers) ReissueBot(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"verificationCode": b.VerificationToken,
-		"accessToken":      t.AccessToken,
+		"verificationToken": b.VerificationToken,
+		"accessToken":       t.AccessToken,
 	})
 }
 

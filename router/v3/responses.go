@@ -4,9 +4,10 @@ import (
 	"sort"
 	"time"
 
-	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
+
+	"github.com/gofrs/uuid"
 )
 
 type Channel struct {
@@ -61,16 +62,20 @@ type UserTag struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+func formatUserTag(ut model.UserTag) UserTag {
+	return UserTag{
+		ID:        ut.GetTagID(),
+		Tag:       ut.GetTag(),
+		IsLocked:  ut.GetIsLocked(),
+		CreatedAt: ut.GetCreatedAt(),
+		UpdatedAt: ut.GetUpdatedAt(),
+	}
+}
+
 func formatUserTags(uts []model.UserTag) []UserTag {
 	res := make([]UserTag, len(uts))
 	for i, ut := range uts {
-		res[i] = UserTag{
-			ID:        ut.GetTagID(),
-			Tag:       ut.GetTag(),
-			IsLocked:  ut.GetIsLocked(),
-			CreatedAt: ut.GetCreatedAt(),
-			UpdatedAt: ut.GetUpdatedAt(),
-		}
+		res[i] = formatUserTag(ut)
 	}
 	return res
 }
@@ -239,6 +244,32 @@ func formatBotDetail(b *model.Bot, t *model.OAuth2Token, channels []uuid.UUID) *
 		Privileged: b.Privileged,
 		Channels:   channels,
 	}
+}
+
+type botEventLogResponse struct {
+	RequestID uuid.UUID          `json:"requestId"`
+	BotID     uuid.UUID          `json:"botId"`
+	Event     model.BotEventType `json:"event"`
+	Code      int                `json:"code"`
+	DateTime  time.Time          `json:"datetime"`
+}
+
+func formatBotEventLog(log *model.BotEventLog) *botEventLogResponse {
+	return &botEventLogResponse{
+		RequestID: log.RequestID,
+		BotID:     log.BotID,
+		Event:     log.Event,
+		Code:      log.Code,
+		DateTime:  log.DateTime,
+	}
+}
+
+func formatBotEventLogs(logs []*model.BotEventLog) []*botEventLogResponse {
+	res := make([]*botEventLogResponse, len(logs))
+	for i, log := range logs {
+		res[i] = formatBotEventLog(log)
+	}
+	return res
 }
 
 type Message struct {

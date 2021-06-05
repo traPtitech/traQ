@@ -1,15 +1,17 @@
 package v3
 
 import (
+	"net/http"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/search"
-	"net/http"
 )
 
 // GetMyUnreadChannels GET /users/me/unread
@@ -141,7 +143,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 			wh, err := h.Repo.GetBotByBotUserID(mUser.GetID())
 			if err != nil {
 				switch err {
-				case repository.ErrNotFound:
+				case repository.ErrNotFound: // deleted bot
 					return herror.Forbidden("you are not allowed to delete this message")
 				default:
 					return herror.InternalServerError(err)
@@ -156,7 +158,7 @@ func (h *Handlers) DeleteMessage(c echo.Context) error {
 			wh, err := h.Repo.GetWebhookByBotUserID(mUser.GetID())
 			if err != nil {
 				switch err {
-				case repository.ErrNotFound:
+				case repository.ErrNotFound: // deleted webhook
 					return herror.Forbidden("you are not allowed to delete this message")
 				default:
 					return herror.InternalServerError(err)

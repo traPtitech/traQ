@@ -2,11 +2,15 @@ package v3
 
 import (
 	"context"
+	"net/http"
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/skip2/go-qrcode"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -18,8 +22,6 @@ import (
 	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"net/http"
-	"time"
 )
 
 // GetUsers GET /users
@@ -52,7 +54,7 @@ type PostUserRequest struct {
 func (r PostUserRequest) Validate() error {
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, validator.UserNameRuleRequired...),
-		vd.Field(&r.Password, validator.PasswordRule...),
+		vd.Field(&r.Password, append(validator.PasswordRule, validator.RequiredIfValid)...),
 	)
 }
 
@@ -423,7 +425,7 @@ func (h *Handlers) SetChannelSubscribeLevel(c echo.Context) error {
 
 	ch, err := h.ChannelManager.GetChannel(channelID)
 	if err != nil {
-		if err == repository.ErrNotFound {
+		if err == channel.ErrChannelNotFound {
 			return herror.NotFound()
 		}
 		return herror.InternalServerError(err)
