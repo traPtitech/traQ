@@ -84,7 +84,8 @@ type PatchUserGroupRequest struct {
 
 func (r PatchUserGroupRequest) Validate() error {
 	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, validator.UserGroupNameRule...),
+		// optionalのvalidationで、valid時に空の値を弾きたいときは vd.NilOrNotEmpty を使う
+		vd.Field(&r.Name, append(validator.UserGroupNameRule, vd.NilOrNotEmpty)...),
 		vd.Field(&r.Description, vd.RuneLength(0, 100)),
 		vd.Field(&r.Type, vd.RuneLength(0, 30)),
 	)

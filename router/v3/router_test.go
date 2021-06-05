@@ -255,6 +255,23 @@ func (env *Env) AddTag(t *testing.T, name string, userID uuid.UUID) model.UserTa
 	return ut
 }
 
+// CreateUserGroup ユーザーグループを必ず作成します
+func (env *Env) CreateUserGroup(t *testing.T, name, description, groupType string, adminID uuid.UUID) *model.UserGroup {
+	t.Helper()
+	if name == rand {
+		name = random.AlphaNumeric(20)
+	}
+	ug, err := env.Repository.CreateUserGroup(name, description, groupType, adminID)
+	require.NoError(t, err)
+	return ug
+}
+
+// AddUserToUserGroup ユーザーをユーザーグループに必ず追加します
+func (env *Env) AddUserToUserGroup(t *testing.T, userID, groupID uuid.UUID, role string) {
+	t.Helper()
+	require.NoError(t, env.Repository.AddUserToGroup(userID, groupID, role))
+}
+
 // CreateChannel チャンネルを必ず作成します
 func (env *Env) CreateChannel(t *testing.T, name string) *model.Channel {
 	t.Helper()
