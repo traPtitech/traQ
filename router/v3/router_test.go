@@ -238,6 +238,23 @@ func (env *Env) CreateAdmin(t *testing.T, userName string) model.UserInfo {
 	return u
 }
 
+// AddTag ユーザーに必ずタグを追加します
+func (env *Env) AddTag(t *testing.T, name string, userID uuid.UUID) model.UserTag {
+	t.Helper()
+	if name == rand {
+		name = random.AlphaNumeric(20)
+	}
+
+	tag, err := env.Repository.GetOrCreateTag(name)
+	require.NoError(t, err)
+
+	require.NoError(t, env.Repository.AddUserTag(userID, tag.ID))
+
+	ut, err := env.Repository.GetUserTag(userID, tag.ID)
+	require.NoError(t, err)
+	return ut
+}
+
 // CreateChannel チャンネルを必ず作成します
 func (env *Env) CreateChannel(t *testing.T, name string) *model.Channel {
 	t.Helper()
