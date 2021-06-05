@@ -136,9 +136,10 @@ func TestMain(m *testing.M) {
 			Logger:         l,
 			Imaging:        env.IP,
 			Config: Config{
-				Version:     "version",
-				Revision:    "revision",
-				AllowSignUp: false,
+				Version:         "version",
+				Revision:        "revision",
+				SkyWaySecretKey: "dummy.secret.key",
+				AllowSignUp:     false,
 				EnabledExternalAccountProviders: map[string]bool{
 					"traq": true,
 				},
