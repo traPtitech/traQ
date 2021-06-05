@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -19,7 +18,6 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
@@ -33,6 +31,7 @@ import (
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/service/search"
+	"github.com/traPtitech/traQ/utils/gormzap"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -43,6 +42,7 @@ const (
 	common1  = "common1"
 	s1       = "s1"
 	s2       = "s2"
+	s3       = "s3"
 	rand     = "random"
 )
 
@@ -57,6 +57,7 @@ func TestMain(m *testing.M) {
 		common1,
 		s1,
 		s2,
+		s3,
 	}
 	if err := migration.CreateDatabasesIfNotExists("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=true", user, pass, host, port), dbPrefix, dbs...); err != nil {
 		panic(err)
@@ -64,6 +65,8 @@ func TestMain(m *testing.M) {
 
 	for _, key := range dbs {
 		env := &Env{}
+
+		l := zap.NewNop()
 
 		// テスト用データベース接続
 		engine, err := gorm.Open(mysql.New(mysql.Config{
@@ -77,12 +80,7 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 		db.SetMaxOpenConns(20)
-		engine.Logger = logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger.Config{
-			SlowThreshold:             200 * time.Millisecond,
-			LogLevel:                  logger.Warn,
-			Colorful:                  true,
-			IgnoreRecordNotFoundError: true,
-		})
+		engine.Logger = gormzap.New(l)
 		if err := migration.DropAll(engine); err != nil {
 			panic(err)
 		}
@@ -92,7 +90,7 @@ func TestMain(m *testing.M) {
 		env.SessStore = session.NewMemorySessionStore()
 
 		// テスト用リポジトリ作成
-		repo, err := repository.NewGormRepository(engine, env.Hub, zap.NewNop())
+		repo, err := repository.NewGormRepository(engine, env.Hub, l.Named("repository"))
 		if err != nil {
 			panic(err)
 		}
@@ -106,21 +104,21 @@ func TestMain(m *testing.M) {
 		}
 		env.Repository = repo
 
-		env.CM, _ = channel.InitChannelManager(repo, zap.NewNop())
-		env.MM, _ = message.NewMessageManager(repo, env.CM, zap.NewNop())
+		env.CM, _ = channel.InitChannelManager(repo, l.Named("CM"))
+		env.MM, _ = message.NewMessageManager(repo, env.CM, l.Named("MM"))
 		env.IP = imaging.NewProcessor(imaging.Config{
 			MaxPixels:        1000 * 1000,
 			Concurrency:      1,
 			ThumbnailMaxSize: image.Pt(360, 480),
 			ImageMagickPath:  "",
 		})
-		env.FM, _ = file.InitFileManager(repo, storage.NewInMemoryFileStorage(), env.IP, zap.NewNop())
+		env.FM, _ = file.InitFileManager(repo, storage.NewInMemoryFileStorage(), env.IP, l.Named("FM"))
 
 		// テスト用サーバー作成
 		e := echo.New()
 		e.HideBanner = true
 		e.HidePort = true
-		e.HTTPErrorHandler = extension.ErrorHandler(zap.NewNop())
+		e.HTTPErrorHandler = extension.ErrorHandler(l)
 		e.Use(extension.Wrap(repo, env.CM))
 
 		r, err := rbac.New(repo)
@@ -135,7 +133,7 @@ func TestMain(m *testing.M) {
 			ChannelManager: env.CM,
 			MessageManager: env.MM,
 			FileManager:    env.FM,
-			Logger:         zap.NewNop(),
+			Logger:         l,
 			Imaging:        env.IP,
 			Config: Config{
 				Version:     "version",
