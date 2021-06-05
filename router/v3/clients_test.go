@@ -27,7 +27,7 @@ func oAuth2ClientEquals(t *testing.T, expect *model.OAuth2Client, actual *httpex
 	for _, scope := range expect.Scopes.StringArray() {
 		scopes = append(scopes, scope)
 	}
-	actual.Value("scopes").Array().Elements(scopes...)
+	actual.Value("scopes").Array().ContainsOnly(scopes...)
 }
 
 func TestHandlers_GetClients(t *testing.T) {

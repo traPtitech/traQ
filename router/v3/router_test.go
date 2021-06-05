@@ -249,6 +249,12 @@ func (env *Env) CreateChannel(t *testing.T, name string) *model.Channel {
 	return ch
 }
 
+// AddStar 指定したチャンネルをスターします
+func (env *Env) AddStar(t *testing.T, userID, channelID uuid.UUID) {
+	t.Helper()
+	require.NoError(t, env.Repository.AddStar(userID, channelID))
+}
+
 // CreateDMChannel DMチャンネルを必ず作成します
 func (env *Env) CreateDMChannel(t *testing.T, user1, user2 uuid.UUID) *model.Channel {
 	dm, err := env.CM.GetDMChannel(user1, user2)
