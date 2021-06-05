@@ -1997,10 +1997,6 @@ paths:
             変更されました。
         '400':
           description: Bad Request
-        '403':
-          description: |-
-            Forbidden
-            タグがロックされています。
         '404':
           description: |-
             Not Found
