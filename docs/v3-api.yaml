@@ -1052,16 +1052,14 @@ paths:
       - $ref: '#/components/parameters/groupIdInPath'
       - $ref: '#/components/parameters/userIdInPath'
     delete:
-      summary: ユーザーグループから削除
+      summary: |-
+        指定したグループからユーザーを削除します。
+        既にグループから削除されているメンバーを指定した場合は204を返します。
       responses:
         '204':
           description: |-
             No Content
             指定したユーザーがユーザーグループから削除されました。
-        '400':
-          description: |-
-            Bad Request
-            ユーザーがグループに存在しません。
         '403':
           description: |-
             Forbidden
