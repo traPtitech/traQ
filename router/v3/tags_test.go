@@ -456,6 +456,12 @@ func TestHandlers_RemoveUserTag(t *testing.T) {
 
 		_, err := env.Repository.GetUserTag(user2.GetID(), ut.GetTagID())
 		assert.ErrorIs(t, err, repository.ErrNotFound)
+
+		// already removed
+		e.DELETE(path, user2.GetID(), ut.GetTagID()).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNoContent)
 	})
 }
 
@@ -500,6 +506,12 @@ func TestHandlers_RemoveMyUserTag(t *testing.T) {
 
 		_, err := env.Repository.GetUserTag(user.GetID(), ut.GetTagID())
 		assert.ErrorIs(t, err, repository.ErrNotFound)
+
+		// already removed
+		e.DELETE(path, ut.GetTagID()).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusNoContent)
 	})
 }
 
