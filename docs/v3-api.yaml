@@ -1052,9 +1052,7 @@ paths:
       - $ref: '#/components/parameters/groupIdInPath'
       - $ref: '#/components/parameters/userIdInPath'
     delete:
-      summary: |-
-        指定したグループからユーザーを削除します。
-        既にグループから削除されているメンバーを指定した場合は204を返します。
+      summary: グループメンバーを削除
       responses:
         '204':
           description: |-
@@ -1073,9 +1071,10 @@ paths:
       operationId: removeUserGroupMember
       description: |-
         指定したユーザーグループから指定したユーザーを削除します。
+        既にグループから削除されているメンバーを指定した場合は204を返します。
         対象のユーザーグループの管理者権限が必要です。
     patch:
-      summary: ユーザーグループメンバーを編集
+      summary: グループメンバーを編集
       responses:
         '204':
           description: |-
