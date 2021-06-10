@@ -1,7 +1,7 @@
 module github.com/traPtitech/traQ
 
 require (
-	cloud.google.com/go v0.83.0
+	cloud.google.com/go v0.84.0
 	cloud.google.com/go/firestore v1.1.1 // indirect
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
@@ -18,7 +18,6 @@ require (
 	github.com/go-audio/audio v1.0.0
 	github.com/go-audio/wav v1.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
-	github.com/go-kit/kit v0.10.0 // indirect
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gofrs/uuid v3.4.0+incompatible
