@@ -4,6 +4,9 @@ import "github.com/traPtitech/traQ/service/rbac/permission"
 
 // RBAC Role-based Access Controllerインターフェース
 type RBAC interface {
+	// Reload 全権限を読み込み直します
+	Reload() error
+
 	// IsGranted 指定したロールで指定した権限が許可されているかどうか
 	IsGranted(role string, perm permission.Permission) bool
 	// IsAllGranted 指定したロール全てで指定した権限が許可されているかどうか
