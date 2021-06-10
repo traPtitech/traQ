@@ -63,6 +63,10 @@ func (r *rbacImpl) IsAnyGranted(roles []string, perm permission.Permission) bool
 	return false
 }
 
+func (r *rbacImpl) Reload() error {
+	return r.reload()
+}
+
 func (r *rbacImpl) reload() error {
 	rs, err := r.repo.GetAllUserRoles()
 	if err != nil {

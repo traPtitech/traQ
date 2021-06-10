@@ -11,10 +11,13 @@ type rbacImpl struct {
 }
 
 func NewTestRBAC() rbac.RBAC {
-	rbac := &rbacImpl{
+	return &rbacImpl{
 		roles: role.GetSystemRoles(),
 	}
-	return rbac
+}
+
+func (rbac *rbacImpl) Reload() error {
+	return nil
 }
 
 func (rbac *rbacImpl) IsGranted(r string, p permission.Permission) bool {
