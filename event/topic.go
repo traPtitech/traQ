@@ -64,6 +64,11 @@ const (
 	//		group_id: uuid.UUID
 	//		user_id: uuid.UUID
 	UserGroupMemberAdded = "user_group.member.added"
+	// UserGroupMemberUpdated ユーザーグループメンバーが更新された
+	//  Fields:
+	//  	group_id: uuid.UUID
+	//  	user_id: uuid.UUID
+	UserGroupMemberUpdated = "user_group.member.updated"
 	// UserGroupMemberRemoved ユーザーがグループから削除された
 	// 	Fields:
 	//		group_id: uuid.UUID

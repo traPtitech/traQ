@@ -195,7 +195,10 @@ func (repo *GormRepository) AddUserToGroup(userID, groupID uuid.UUID, role strin
 	if userID == uuid.Nil || groupID == uuid.Nil {
 		return ErrNilID
 	}
-	var added bool
+	var (
+		added   bool
+		updated bool
+	)
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
 		var g model.UserGroup
 		if err := tx.Preload("Members").First(&g, &model.UserGroup{ID: groupID}).Error; err != nil {
@@ -206,6 +209,7 @@ func (repo *GormRepository) AddUserToGroup(userID, groupID uuid.UUID, role strin
 			if err := tx.Model(&model.UserGroupMember{UserID: userID, GroupID: groupID}).Update("role", role).Error; err != nil {
 				return err
 			}
+			updated = true
 		} else {
 			if err := tx.Create(&model.UserGroupMember{UserID: userID, GroupID: groupID, Role: role}).Error; err != nil {
 				return err
@@ -220,6 +224,15 @@ func (repo *GormRepository) AddUserToGroup(userID, groupID uuid.UUID, role strin
 	if added {
 		repo.hub.Publish(hub.Message{
 			Name: event.UserGroupMemberAdded,
+			Fields: hub.Fields{
+				"group_id": groupID,
+				"user_id":  userID,
+			},
+		})
+	}
+	if updated {
+		repo.hub.Publish(hub.Message{
+			Name: event.UserGroupMemberUpdated,
 			Fields: hub.Fields{
 				"group_id": groupID,
 				"user_id":  userID,
