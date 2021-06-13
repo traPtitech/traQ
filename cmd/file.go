@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/gormzap"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 // fileCommand traQ管理ファイル操作コマンド
@@ -25,6 +26,7 @@ func fileCommand() *cobra.Command {
 	cmd.AddCommand(
 		filePruneCommand(),
 		genWaveform(),
+		genGroupImages(),
 	)
 
 	return &cmd
@@ -277,6 +279,71 @@ func genWaveform() *cobra.Command {
 			}
 
 			logger.Info(fmt.Sprintf("finished generating waveform images: %d succeeded out of %d total attempts", success, total))
+		},
+	}
+}
+
+// genGroupImages 波形画像生成コマンド
+func genGroupImages() *cobra.Command {
+	return &cobra.Command{
+		Use:   "gen-group-images",
+		Short: "Generate default images for user groups that does not have it",
+		Run: func(cmd *cobra.Command, args []string) {
+			// Logger
+			logger := getCLILogger()
+			defer logger.Sync()
+
+			// Database
+			db, err := c.getDatabase()
+			if err != nil {
+				logger.Fatal("failed to connect database", zap.Error(err))
+			}
+			db.Logger = gormzap.New(logger.Named("gorm"))
+			sqlDB, err := db.DB()
+			if err != nil {
+				logger.Fatal("failed to get *sql.DB", zap.Error(err))
+			}
+			defer sqlDB.Close()
+
+			// FileStorage
+			fs, err := c.getFileStorage()
+			if err != nil {
+				logger.Fatal("failed to setup file storage", zap.Error(err))
+			}
+
+			// Repository
+			repo, err := repository.NewGormRepository(db, hub.New(), logger)
+			if err != nil {
+				logger.Fatal("failed to initialize repository", zap.Error(err))
+			}
+
+			// ImageProcessor
+			ip := imaging.NewProcessor(provideImageProcessorConfig(c))
+
+			// FileManager
+			fm, err := file.InitFileManager(repo, fs, ip, logger)
+			if err != nil {
+				logger.Fatal("failed to initialize file manager", zap.Error(err))
+			}
+
+			var groups []*model.UserGroup
+			if err := db.Model(&model.UserGroup{}).Where("icon IS NULL").Scan(&groups).Error; err != nil {
+				logger.Fatal("failed to get groups", zap.Error(err))
+			}
+
+			logger.Info(fmt.Sprintf("Generating default images for %v group(s)", len(groups)))
+
+			for _, group := range groups {
+				iconFileID, err := file.GenerateIconFile(fm, group.Name)
+				if err != nil {
+					logger.Fatal("failed to generate image", zap.Stringer("gid", group.ID), zap.String("group", group.Name), zap.Error(err))
+				}
+				if err := repo.UpdateUserGroup(group.ID, repository.UpdateUserGroupArgs{Icon: optional.UUIDFrom(iconFileID)}); err != nil {
+					logger.Fatal("failed to update user group", zap.Stringer("gid", group.ID), zap.String("group", group.Name), zap.Error(err))
+				}
+			}
+
+			logger.Info(fmt.Sprintf("Successfully generated images for %v group(s)", len(groups)))
 		},
 	}
 }
