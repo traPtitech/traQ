@@ -284,6 +284,7 @@ comments:
       name: グループ名
       description: グループ説明
       type: グループタイプ
+      icon: アイコンファイルUUID
   - table: user_roles
     tableComment: ユーザーロールテーブル
     columnComments:

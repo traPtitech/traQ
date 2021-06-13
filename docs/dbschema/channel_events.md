@@ -15,8 +15,8 @@ CREATE TABLE `channel_events` (
   `detail` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `date_time` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`event_id`),
-  KEY `idx_channel_events_channel_id_event_type_date_time` (`channel_id`,`event_type`,`date_time`),
   KEY `idx_channel_events_channel_id_date_time` (`channel_id`,`date_time`),
+  KEY `idx_channel_events_channel_id_event_type_date_time` (`channel_id`,`event_type`,`date_time`),
   CONSTRAINT `channel_events_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```

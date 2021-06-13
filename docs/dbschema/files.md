@@ -34,7 +34,7 @@ CREATE TABLE `files` (
 
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
-| id | char(36) |  | false | [files_acl](files_acl.md) [files_thumbnails](files_thumbnails.md) [stamps](stamps.md) [users](users.md) |  |  |
+| id | char(36) |  | false | [files_acl](files_acl.md) [files_thumbnails](files_thumbnails.md) [stamps](stamps.md) [user_groups](user_groups.md) [users](users.md) |  |  |
 | name | text |  | false |  |  | ファイル名 |
 | mime | text |  | false |  |  | ファイルMIMEタイプ |
 | size | bigint(20) |  | false |  |  | ファイルサイズ(byte) |
