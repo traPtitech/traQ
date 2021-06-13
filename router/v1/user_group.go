@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	file2 "github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/optional"
 )
@@ -59,13 +60,16 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 		return herror.Forbidden("you are not permitted to create groups of this type")
 	}
 
-	g, err := h.Repo.CreateUserGroup(req.Name, req.Description, req.Type, reqUserID)
+	iconFileID, err := file2.GenerateIconFile(h.FileManager, req.Name)
+	if err != nil {
+		return herror.InternalServerError(err)
+	}
+
+	g, err := h.Repo.CreateUserGroup(req.Name, req.Description, req.Type, reqUserID, iconFileID)
 	if err != nil {
 		switch {
 		case err == repository.ErrAlreadyExists:
 			return herror.Conflict("the name's group has already existed")
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
 		default:
 			return herror.InternalServerError(err)
 		}
@@ -116,7 +120,7 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 		return herror.Forbidden("you are not permitted to create groups of this type")
 	}
 
-	args := repository.UpdateUserGroupNameArgs{
+	args := repository.UpdateUserGroupArgs{
 		Name:        req.Name,
 		Description: req.Description,
 		Type:        req.Type,
@@ -125,8 +129,6 @@ func (h *Handlers) PatchUserGroup(c echo.Context) error {
 		switch {
 		case err == repository.ErrAlreadyExists:
 			return herror.Conflict("the name's group has already existed")
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
 		default:
 			return herror.InternalServerError(err)
 		}

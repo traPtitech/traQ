@@ -253,7 +253,8 @@ func (env *Env) mustMakeUserGroup(t *testing.T, name string, adminID uuid.UUID) 
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	g, err := env.Repository.CreateUserGroup(name, "", "", adminID)
+	icon := env.mustMakeFile(t)
+	g, err := env.Repository.CreateUserGroup(name, "", "", adminID, icon.GetID())
 	require.NoError(t, err)
 	return g
 }

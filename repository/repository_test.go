@@ -200,7 +200,8 @@ func mustMakeUserGroup(t *testing.T, repo Repository, name string, adminID uuid.
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	g, err := repo.CreateUserGroup(name, "", "", adminID)
+	icon := mustMakeDummyFile(t, repo)
+	g, err := repo.CreateUserGroup(name, "", "", adminID, icon.ID)
 	require.NoError(t, err)
 	return g
 }

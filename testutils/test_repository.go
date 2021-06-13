@@ -310,11 +310,12 @@ func (repo *TestRepository) UpdateUser(id uuid.UUID, args repository.UpdateUserA
 	return nil
 }
 
-func (repo *TestRepository) CreateUserGroup(name, description, gType string, adminID uuid.UUID) (*model.UserGroup, error) {
+func (repo *TestRepository) CreateUserGroup(name, description, gType string, adminID, iconFileID uuid.UUID) (*model.UserGroup, error) {
 	g := model.UserGroup{
 		ID:          uuid.Must(uuid.NewV4()),
 		Name:        name,
 		Description: description,
+		Icon:        iconFileID,
 		Type:        gType,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
@@ -347,7 +348,7 @@ func (repo *TestRepository) CreateUserGroup(name, description, gType string, adm
 	return &g, nil
 }
 
-func (repo *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.UpdateUserGroupNameArgs) error {
+func (repo *TestRepository) UpdateUserGroup(id uuid.UUID, args repository.UpdateUserGroupArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
 	}

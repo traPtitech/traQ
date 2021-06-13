@@ -12,11 +12,13 @@ type UserGroup struct {
 	Name        string    `gorm:"type:varchar(30);not null;unique"`
 	Description string    `gorm:"type:text;not null"`
 	Type        string    `gorm:"type:varchar(30);not null;default:''"`
+	Icon        uuid.UUID `gorm:"type:char(36)"`
 	CreatedAt   time.Time `gorm:"precision:6"`
 	UpdatedAt   time.Time `gorm:"precision:6"`
 
-	Admins  []*UserGroupAdmin  `gorm:"constraint:user_group_admins_group_id_user_groups_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:GroupID"`
-	Members []*UserGroupMember `gorm:"constraint:user_group_members_group_id_user_groups_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignkey:GroupID"`
+	Admins   []*UserGroupAdmin  `gorm:"constraint:user_group_admins_group_id_user_groups_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:GroupID"`
+	Members  []*UserGroupMember `gorm:"constraint:user_group_members_group_id_user_groups_id_foreign,OnUpdate:CASCADE,OnDelete:CASCADE;foreignKey:GroupID"`
+	IconFile *FileMeta          `gorm:"constraint:user_group_icon_files_id_foreign,OnUpdate:CASCADE,OnDelete:SET NULL;foreignKey:Icon"`
 }
 
 // TableName UserGroup構造体のテーブル名

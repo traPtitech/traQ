@@ -382,6 +382,7 @@ type UserGroup struct {
 	Name        string            `json:"name"`
 	Description string            `json:"description"`
 	Type        string            `json:"type"`
+	Icon        uuid.UUID         `json:"icon"`
 	Members     []UserGroupMember `json:"members"`
 	Admins      []uuid.UUID       `json:"admins"`
 	CreatedAt   time.Time         `json:"createdAt"`
@@ -389,16 +390,18 @@ type UserGroup struct {
 }
 
 func formatUserGroup(g *model.UserGroup) *UserGroup {
-	return &UserGroup{
+	ug := &UserGroup{
 		ID:          g.ID,
 		Name:        g.Name,
 		Description: g.Description,
 		Type:        g.Type,
+		Icon:        g.Icon,
 		Members:     formatUserGroupMembers(g.Members),
 		Admins:      formatUserGroupAdmins(g.Admins),
 		CreatedAt:   g.CreatedAt,
 		UpdatedAt:   g.UpdatedAt,
 	}
+	return ug
 }
 
 func formatUserGroups(gs []*model.UserGroup) []*UserGroup {
