@@ -65,9 +65,8 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 	if err != nil {
 		if err == repository.ErrAlreadyExists {
 			return herror.Conflict("group with the name already exists")
-		} else {
-			return herror.InternalServerError(err)
 		}
+		return herror.InternalServerError(err)
 	}
 
 	return c.JSON(http.StatusCreated, formatUserGroup(g))
@@ -115,9 +114,8 @@ func (h *Handlers) EditUserGroup(c echo.Context) error {
 	if err := h.Repo.UpdateUserGroup(g.ID, args); err != nil {
 		if err == repository.ErrAlreadyExists {
 			return herror.Conflict("group with the name already exists")
-		} else {
-			return herror.InternalServerError(err)
 		}
+		return herror.InternalServerError(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)
