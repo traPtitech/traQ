@@ -81,7 +81,8 @@ func filePruneCommand() *cobra.Command {
 				tmp   []*model.FileMeta
 			)
 			if err := db.
-				Where("id NOT IN ?", db.Table("users").Select("icon")).
+				Where("id NOT IN (?)", db.Table("users").Select("icon")).
+				Where("id NOT IN (?)", db.Table("user_groups").Select("icon")).
 				Where(model.FileMeta{Type: model.FileTypeIcon}).
 				Find(&tmp).
 				Error; err != nil {
@@ -90,7 +91,7 @@ func filePruneCommand() *cobra.Command {
 			files = append(files, tmp...)
 			tmp = nil
 			if err := db.
-				Where("id NOT IN ?", db.Table("stamps").Select("file_id")).
+				Where("id NOT IN (?)", db.Table("stamps").Select("file_id")).
 				Where(model.FileMeta{Type: model.FileTypeStamp}).
 				Find(&tmp).
 				Error; err != nil {
