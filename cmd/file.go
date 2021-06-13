@@ -283,11 +283,11 @@ func genWaveform() *cobra.Command {
 	}
 }
 
-// genGroupImages 波形画像生成コマンド
+// genGroupImages ユーザーグループアイコン生成コマンド
 func genGroupImages() *cobra.Command {
 	return &cobra.Command{
 		Use:   "gen-group-images",
-		Short: "Generate default images for user groups that does not have it",
+		Short: "Generate missing icons for user groups",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Logger
 			logger := getCLILogger()
