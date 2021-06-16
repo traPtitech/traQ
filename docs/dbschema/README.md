@@ -38,7 +38,7 @@
 | [users_private_channels](users_private_channels.md) | 2 | プライベートチャンネル参加者テーブル | BASE TABLE |
 | [users_subscribe_channels](users_subscribe_channels.md) | 4 | チャンネル購読者テーブル | BASE TABLE |
 | [users_tags](users_tags.md) | 5 | ユーザータグテーブル | BASE TABLE |
-| [user_groups](user_groups.md) | 6 | ユーザーグループテーブル | BASE TABLE |
+| [user_groups](user_groups.md) | 7 | ユーザーグループテーブル | BASE TABLE |
 | [user_group_admins](user_group_admins.md) | 2 | ユーザーグループ管理者テーブル | BASE TABLE |
 | [user_group_members](user_group_members.md) | 3 | ユーザーグループメンバーテーブル | BASE TABLE |
 | [user_profiles](user_profiles.md) | 6 | ユーザープロフィールテーブル | BASE TABLE |

@@ -38,6 +38,7 @@ func Migrations() []*gormigrate.Migration {
 		v25(), // FileMetaにIsAnimatedImageを追加
 		v26(), // FileMetaからThumbnail情報を分離
 		v27(), // Gorm v2移行: FKの追加、FKのリネーム、一部フィールドのデータ型変更、idx_messages_channel_idの削除
+		v28(), // v28 ユーザーグループにアイコンを追加
 	}
 }
 

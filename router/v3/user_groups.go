@@ -12,6 +12,7 @@ import (
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
+	file2 "github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
@@ -55,16 +56,17 @@ func (h *Handlers) PostUserGroups(c echo.Context) error {
 		return herror.Forbidden("you are not permitted to create groups of this type")
 	}
 
-	g, err := h.Repo.CreateUserGroup(req.Name, req.Description, req.Type, reqUserID)
+	iconFileID, err := file2.GenerateIconFile(h.FileManager, req.Name)
 	if err != nil {
-		switch {
-		case err == repository.ErrAlreadyExists:
-			return herror.Conflict("the name's group has already existed")
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		default:
-			return herror.InternalServerError(err)
+		return herror.InternalServerError(err)
+	}
+
+	g, err := h.Repo.CreateUserGroup(req.Name, req.Description, req.Type, reqUserID, iconFileID)
+	if err != nil {
+		if err == repository.ErrAlreadyExists {
+			return herror.Conflict("group with the name already exists")
 		}
+		return herror.InternalServerError(err)
 	}
 
 	return c.JSON(http.StatusCreated, formatUserGroup(g))
@@ -104,20 +106,32 @@ func (h *Handlers) EditUserGroup(c echo.Context) error {
 		return herror.Forbidden("you are not permitted to create groups of this type")
 	}
 
-	args := repository.UpdateUserGroupNameArgs{
+	args := repository.UpdateUserGroupArgs{
 		Name:        req.Name,
 		Description: req.Description,
 		Type:        req.Type,
 	}
 	if err := h.Repo.UpdateUserGroup(g.ID, args); err != nil {
-		switch {
-		case err == repository.ErrAlreadyExists:
-			return herror.Conflict("the name's group has already existed")
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		default:
-			return herror.InternalServerError(err)
+		if err == repository.ErrAlreadyExists {
+			return herror.Conflict("group with the name already exists")
 		}
+		return herror.InternalServerError(err)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+// PutUserGroupIcon PUT /groups/:groupID/icon
+func (h *Handlers) PutUserGroupIcon(c echo.Context) error {
+	g := getParamGroup(c)
+
+	fileID, err := utils.SaveUploadIconImage(h.Imaging, c, h.FileManager, "file")
+	if err != nil {
+		return err
+	}
+
+	if err := h.Repo.UpdateUserGroup(g.ID, repository.UpdateUserGroupArgs{Icon: optional.UUIDFrom(fileID)}); err != nil {
+		return herror.InternalServerError(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)

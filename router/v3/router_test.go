@@ -260,7 +260,8 @@ func (env *Env) CreateUserGroup(t *testing.T, name, description, groupType strin
 	if name == rand {
 		name = random.AlphaNumeric(20)
 	}
-	ug, err := env.Repository.CreateUserGroup(name, description, groupType, adminID)
+	icon := env.CreateFile(t, uuid.Nil, uuid.Nil)
+	ug, err := env.Repository.CreateUserGroup(name, description, groupType, adminID, icon.GetID())
 	require.NoError(t, err)
 	return ug
 }

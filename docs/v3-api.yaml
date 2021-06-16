@@ -995,6 +995,39 @@ paths:
       description: |-
         指定したユーザーグループの情報を編集します。
         対象のユーザーグループの管理者権限が必要です。
+  '/groups/{groupId}/icon':
+    parameters:
+      - $ref: '#/components/parameters/groupIdInPath'
+    put:
+      summary: ユーザーグループのアイコンを変更
+      responses:
+        '204':
+          description: |-
+            No Content
+            変更されました。
+        '400':
+          description: Bad Request
+        '404':
+          description: |-
+            Not Found
+            ユーザーグループが見つかりません。
+        '413':
+          description: Request Entity Too Large
+      operationId: changeUserGroupIcon
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PutUserIconRequest'
+            encoding:
+              file:
+                contentType: 'image/png, image/jpeg, image/gif'
+        description: ''
+      tags:
+        - group
+      description: |-
+        ユーザーグループのアイコンを変更します。
+        対象のユーザーグループの管理者権限が必要です。
   '/groups/{groupId}/members':
     parameters:
       - $ref: '#/components/parameters/groupIdInPath'
@@ -4868,6 +4901,10 @@ components:
         type:
           type: string
           description: グループタイプ
+        icon:
+          type: string
+          format: uuid
+          description: グループアイコンUUID
         members:
           type: array
           description: グループメンバーの配列
@@ -4892,6 +4929,7 @@ components:
         - name
         - description
         - type
+        - icon
         - members
         - createdAt
         - updatedAt

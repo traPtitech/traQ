@@ -2,15 +2,17 @@ package repository
 
 import (
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
 )
 
-// UpdateUserGroupNameArgs ユーザーグループ更新引数
-type UpdateUserGroupNameArgs struct {
+// UpdateUserGroupArgs ユーザーグループ更新引数
+type UpdateUserGroupArgs struct {
 	Name        optional.String
 	Description optional.String
 	Type        optional.String
+	Icon        optional.UUID
 }
 
 // UserGroupRepository ユーザーグループリポジトリ
@@ -18,19 +20,17 @@ type UserGroupRepository interface {
 	// CreateUserGroup ユーザーグループを作成します
 	//
 	// 成功した場合、ユーザーグループとnilを返します。
-	// 引数に問題がある場合、ArgumentErrorを返します。
 	// 既にNameが使われている場合、ErrAlreadyExistsを返します。
 	// DBによるエラーを返すことがあります。
-	CreateUserGroup(name, description, gType string, adminID uuid.UUID) (*model.UserGroup, error)
+	CreateUserGroup(name, description, gType string, adminID, iconFileID uuid.UUID) (*model.UserGroup, error)
 	// UpdateUserGroup 指定したユーザーグループを更新します
 	//
 	// 成功した場合、nilを返します。
 	// 存在しないグループの場合、ErrNotFoundを返します。
-	// 引数に問題がある場合、ArgumentErrorを返します。
 	// 引数にuuid.Nilを指定した場合、ErrNilIDを返します。
 	// 既にNameが使われている場合、ErrAlreadyExistsを返します。
 	// DBによるエラーを返すことがあります。
-	UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNameArgs) error
+	UpdateUserGroup(id uuid.UUID, args UpdateUserGroupArgs) error
 	// DeleteUserGroup 指定したユーザーグループを削除します
 	//
 	// 成功した場合、nilを返します。

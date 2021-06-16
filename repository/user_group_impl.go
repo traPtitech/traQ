@@ -2,7 +2,6 @@ package repository
 
 import (
 	"time"
-	"unicode/utf8"
 
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
@@ -14,24 +13,15 @@ import (
 )
 
 // CreateUserGroup implements UserGroupRepository interface.
-func (repo *GormRepository) CreateUserGroup(name, description, gType string, adminID uuid.UUID) (*model.UserGroup, error) {
+func (repo *GormRepository) CreateUserGroup(name, description, gType string, adminID, iconFileID uuid.UUID) (*model.UserGroup, error) {
 	g := &model.UserGroup{
 		ID:          uuid.Must(uuid.NewV4()),
 		Name:        name,
 		Description: description,
+		Icon:        iconFileID,
 		Type:        gType,
 	}
 	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		// 名前チェック
-		if len(g.Name) == 0 || utf8.RuneCountInString(g.Name) > 30 {
-			return ArgError("name", "Name must be non-empty and shorter than 31 characters")
-		}
-
-		// タイプチェック
-		if utf8.RuneCountInString(g.Type) > 30 {
-			return ArgError("Type", "Type must be shorter than 31 characters")
-		}
-
 		err := tx.Create(g).Error
 		if gormutil.IsMySQLDuplicatedRecordErr(err) {
 			return ErrAlreadyExists
@@ -55,7 +45,7 @@ func (repo *GormRepository) CreateUserGroup(name, description, gType string, adm
 }
 
 // UpdateUserGroup implements UserGroupRepository interface.
-func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNameArgs) error {
+func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupArgs) error {
 	if id == uuid.Nil {
 		return ErrNilID
 	}
@@ -69,33 +59,28 @@ func (repo *GormRepository) UpdateUserGroup(id uuid.UUID, args UpdateUserGroupNa
 
 		changes := map[string]interface{}{}
 		if args.Name.Valid {
-			if len(args.Name.String) == 0 || utf8.RuneCountInString(args.Name.String) > 30 {
-				return ArgError("args.Name", "Name must be non-empty and shorter than 31 characters")
-			}
-
-			// 重複チェック
-			if exists, err := gormutil.RecordExists(tx, &model.UserGroup{Name: args.Name.String}); err != nil {
-				return err
-			} else if exists {
-				return ErrAlreadyExists
-			}
 			changes["name"] = args.Name.String
 		}
 		if args.Description.Valid {
 			changes["description"] = args.Description.String
 		}
 		if args.Type.Valid {
-			if utf8.RuneCountInString(args.Type.String) > 30 {
-				return ArgError("args.Type", "Type must be shorter than 31 characters")
-			}
 			changes["type"] = args.Type.String
 		}
-
-		if len(changes) > 0 {
-			updated = true
-			return tx.Model(&g).Updates(changes).Error
+		if args.Icon.Valid {
+			changes["icon"] = args.Icon.UUID
 		}
-		return nil
+
+		if len(changes) == 0 {
+			return nil
+		}
+
+		updated = true
+		err := tx.Model(&g).Updates(changes).Error
+		if gormutil.IsMySQLDuplicatedRecordErr(err) {
+			return ErrAlreadyExists
+		}
+		return err
 	})
 	if err != nil {
 		return err

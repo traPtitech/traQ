@@ -23,6 +23,7 @@ func userGroupEquals(t *testing.T, expect *model.UserGroup, actual *httpexpect.O
 	actual.Value("name").String().Equal(expect.Name)
 	actual.Value("description").String().Equal(expect.Description)
 	actual.Value("type").String().Equal(expect.Type)
+	actual.Value("icon").String().Equal(expect.Icon.String())
 	members := make([]interface{}, len(expect.Members))
 	for i, member := range expect.Members {
 		members[i] = map[string]interface{}{

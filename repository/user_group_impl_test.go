@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/gofrs/uuid"
@@ -15,32 +14,19 @@ import (
 func TestRepositoryImpl_CreateUserGroup(t *testing.T) {
 	t.Parallel()
 	repo, _, _, user := setupWithUser(t, common3)
+	file := mustMakeDummyFile(t, repo)
 
 	// Success
 	a := random2.AlphaNumeric(20)
-	if g, err := repo.CreateUserGroup(a, "", "", user.GetID()); assert.NoError(t, err) {
+	if g, err := repo.CreateUserGroup(a, "", "", user.GetID(), file.ID); assert.NoError(t, err) {
 		assert.NotNil(t, g)
 	}
 
 	t.Run("duplicate", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := repo.CreateUserGroup(a, "", "", user.GetID())
+		_, err := repo.CreateUserGroup(a, "", "", user.GetID(), file.ID)
 		assert.EqualError(t, err, ErrAlreadyExists.Error())
-	})
-
-	t.Run("invalid name", func(t *testing.T) {
-		t.Parallel()
-
-		_, err := repo.CreateUserGroup(strings.Repeat("a", 31), "", "", uuid.Nil)
-		assert.Error(t, err)
-	})
-
-	t.Run("invalid type", func(t *testing.T) {
-		t.Parallel()
-
-		_, err := repo.CreateUserGroup(random2.AlphaNumeric(20), "", strings.Repeat("a", 31), user.GetID())
-		assert.Error(t, err)
 	})
 }
 
@@ -51,7 +37,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 	t.Run("nil id", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.UpdateUserGroup(uuid.Nil, UpdateUserGroupNameArgs{}), ErrNilID.Error())
+		assert.EqualError(t, repo.UpdateUserGroup(uuid.Nil, UpdateUserGroupArgs{}), ErrNilID.Error())
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -60,7 +46,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
 		a := random2.AlphaNumeric(20)
-		if assert.NoError(repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{
+		if assert.NoError(repo.UpdateUserGroup(g.ID, UpdateUserGroupArgs{
 			Name:        optional.StringFrom(a),
 			Description: optional.StringFrom(a),
 			Type:        optional.StringFrom(a),
@@ -77,13 +63,13 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 		t.Parallel()
 		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
-		assert.NoError(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{}))
+		assert.NoError(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupArgs{}))
 	})
 
 	t.Run("not found", func(t *testing.T) {
 		t.Parallel()
 
-		assert.EqualError(t, repo.UpdateUserGroup(uuid.Must(uuid.NewV4()), UpdateUserGroupNameArgs{}), ErrNotFound.Error())
+		assert.EqualError(t, repo.UpdateUserGroup(uuid.Must(uuid.NewV4()), UpdateUserGroupArgs{}), ErrNotFound.Error())
 	})
 
 	t.Run("duplicate", func(t *testing.T) {
@@ -92,21 +78,7 @@ func TestRepositoryImpl_UpdateUserGroup(t *testing.T) {
 		mustMakeUserGroup(t, repo, a, user.GetID())
 		g := mustMakeUserGroup(t, repo, rand, user.GetID())
 
-		assert.EqualError(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Name: optional.StringFrom(a)}), ErrAlreadyExists.Error())
-	})
-
-	t.Run("too long name", func(t *testing.T) {
-		t.Parallel()
-		g := mustMakeUserGroup(t, repo, rand, user.GetID())
-
-		assert.Error(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Name: optional.StringFrom(strings.Repeat("a", 31))}))
-	})
-
-	t.Run("invalid type", func(t *testing.T) {
-		t.Parallel()
-		g := mustMakeUserGroup(t, repo, rand, user.GetID())
-
-		assert.Error(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupNameArgs{Type: optional.StringFrom(strings.Repeat("a", 31))}))
+		assert.EqualError(t, repo.UpdateUserGroup(g.ID, UpdateUserGroupArgs{Name: optional.StringFrom(a)}), ErrAlreadyExists.Error())
 	})
 }
 
