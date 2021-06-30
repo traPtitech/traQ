@@ -1,12 +1,14 @@
 package v1
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/stretchr/testify/require"
-	"github.com/traPtitech/traQ/router/session"
-	"github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"testing"
+
+	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/require"
+
+	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/utils/random"
 )
 
 func TestHandlers_PostChannels(t *testing.T) {
@@ -27,6 +29,7 @@ func TestHandlers_PostChannels(t *testing.T) {
 		e := env.makeExp(t)
 		e.POST("/api/1.0/channels").
 			WithCookie(session.CookieName, s).
+			WithJSON(map[string]interface{}{}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
