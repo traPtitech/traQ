@@ -14,5 +14,6 @@ builds:
       - -X main.revision={{.ShortCommit}}
     goarch:
       - amd64
+      - arm64
 archives:
   - wrap_in_directory: true
