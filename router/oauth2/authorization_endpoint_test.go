@@ -1,15 +1,17 @@
 package oauth2
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/router/session"
-	"github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/utils/random"
 )
 
 func TestResponseType_valid(t *testing.T) {
@@ -183,6 +185,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		res := e.POST("/oauth2/authorize").
+			WithForm(map[string]interface{}{}).
 			Expect()
 		res.Status(http.StatusBadRequest)
 		res.Header("Cache-Control").Equal("no-store")
@@ -482,6 +485,7 @@ func TestHandlers_AuthorizationDecideHandler(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		res := e.POST("/oauth2/authorize/decide").
+			WithForm(map[string]interface{}{}).
 			WithCookie(session.CookieName, MakeDecideSession(t, user.GetID(), client)).
 			Expect()
 

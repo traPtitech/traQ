@@ -768,6 +768,7 @@ func TestHandlers_AddMessageStamp(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.POST(path, m.GetID(), stamp.ID).
+			WithJSON(map[string]interface{}{}).
 			Expect().
 			Status(http.StatusUnauthorized)
 	})
@@ -777,6 +778,7 @@ func TestHandlers_AddMessageStamp(t *testing.T) {
 		e := env.R(t)
 		e.POST(path, uuid.Must(uuid.NewV4()), stamp.ID).
 			WithCookie(session.CookieName, s).
+			WithJSON(map[string]interface{}{}).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -786,6 +788,7 @@ func TestHandlers_AddMessageStamp(t *testing.T) {
 		e := env.R(t)
 		e.POST(path, m.GetID(), uuid.Must(uuid.NewV4())).
 			WithCookie(session.CookieName, s).
+			WithJSON(map[string]interface{}{}).
 			Expect().
 			Status(http.StatusNotFound)
 	})
@@ -805,6 +808,7 @@ func TestHandlers_AddMessageStamp(t *testing.T) {
 		e := env.R(t)
 		e.POST(path, archivedM.GetID(), stamp.ID).
 			WithCookie(session.CookieName, s).
+			WithJSON(map[string]interface{}{}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -814,6 +818,7 @@ func TestHandlers_AddMessageStamp(t *testing.T) {
 		e := env.R(t)
 		e.POST(path, m.GetID(), stamp.ID).
 			WithCookie(session.CookieName, s).
+			WithJSON(map[string]interface{}{}).
 			Expect().
 			Status(http.StatusNoContent)
 
