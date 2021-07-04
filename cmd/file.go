@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/png"
 	"io"
+	"time"
 
 	"github.com/leandro-lugaresi/hub"
 	"github.com/spf13/cobra"
@@ -272,7 +273,8 @@ func genMissingThumbnails() *cobra.Command {
 			const batch = 100
 			// counter variables
 			var (
-				offset            = 0
+				lastCreatedAt     = time.Time{}
+				total             = 0
 				imageThumbTotal   = 0
 				imageThumbSuccess = 0
 				waveformTotal     = 0
@@ -281,25 +283,28 @@ func genMissingThumbnails() *cobra.Command {
 			// run
 			for {
 				var files []*model.FileMeta
-				err := db.Raw("SELECT f.* FROM files f "+
+				err = db.Raw("SELECT f.* FROM files f "+
 					"LEFT JOIN files_thumbnails ft on f.id = ft.file_id "+
-					"WHERE f.type = '' AND f.deleted_at IS NULL "+
+					"WHERE f.type = '' AND f.deleted_at IS NULL AND f.created_at > ? "+
 					"AND f.mime IN ("+
 					// サムネイル生成が可能なmimeが変わったらここを変える
 					"'image/jpeg', 'image/png', 'image/gif', 'image/webp', "+
 					"'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav'"+
 					") "+
-					"GROUP BY f.id "+
+					"GROUP BY f.id, f.created_at "+
 					"HAVING COUNT(ft.file_id) = 0 "+
-					"LIMIT ? OFFSET ?", batch, offset).
+					"ORDER BY f.created_at "+
+					"LIMIT ?", lastCreatedAt, batch).
 					Scan(&files).Error
 				if err != nil {
 					logger.Fatal("failed to list files", zap.Error(err))
 				}
 
-				logger.Info(fmt.Sprintf("listing files from %d to %d", offset, offset+len(files)-1))
+				logger.Info(fmt.Sprintf("listing files from %d to %d", total, total+len(files)-1))
 
 				for _, f := range files {
+					lastCreatedAt = f.CreatedAt
+
 					// generate image thumbnail
 					if canGenerateImageThumb(f.Mime) {
 						imageThumbTotal++
@@ -323,7 +328,7 @@ func genMissingThumbnails() *cobra.Command {
 				if len(files) < batch {
 					break
 				}
-				offset += batch
+				total += batch
 
 				logger.Info(fmt.Sprintf("generating missing thumbnails: images success / total (%d / %d), waveform success / total (%d / %d)", imageThumbSuccess, imageThumbTotal, waveformSuccess, waveformTotal))
 			}
