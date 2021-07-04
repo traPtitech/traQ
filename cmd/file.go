@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"image/png"
 	"io"
 
 	"github.com/leandro-lugaresi/hub"
@@ -25,7 +26,7 @@ func fileCommand() *cobra.Command {
 
 	cmd.AddCommand(
 		filePruneCommand(),
-		genWaveform(),
+		genMissingThumbnails(),
 		genGroupImages(),
 	)
 
@@ -127,8 +128,16 @@ func filePruneCommand() *cobra.Command {
 	return &cmd
 }
 
-// genWaveform 波形画像生成コマンド
-func genWaveform() *cobra.Command {
+// genMissingThumbnails 不足サムネイル生成コマンド
+func genMissingThumbnails() *cobra.Command {
+	canGenerateImageThumb := func(mimeType string) bool {
+		switch mimeType {
+		case "image/jpeg", "image/png", "image/gif", "image/webp":
+			return true
+		default:
+			return false
+		}
+	}
 	canGenerateWaveform := func(mimeType string) bool {
 		switch mimeType {
 		case "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav":
@@ -139,8 +148,8 @@ func genWaveform() *cobra.Command {
 	}
 
 	return &cobra.Command{
-		Use:   "gen-waveform",
-		Short: "Generate waveform thumbnail for old uploads",
+		Use:   "gen-missing-thumbs",
+		Short: "Generate missing thumbnails",
 		Run: func(cmd *cobra.Command, args []string) {
 			// Logger
 			logger := getCLILogger()
@@ -164,25 +173,54 @@ func genWaveform() *cobra.Command {
 				logger.Fatal("failed to setup file storage", zap.Error(err))
 			}
 
-			// Repository
-			repo, err := repository.NewGormRepository(db, hub.New(), logger)
-			if err != nil {
-				logger.Fatal("failed to initialize repository", zap.Error(err))
-			}
-
 			// ImageProcessor
 			ip := imaging.NewProcessor(provideImageProcessorConfig(c))
 
-			// FileManager
-			fm, err := file.InitFileManager(repo, fs, ip, logger)
-			if err != nil {
-				logger.Fatal("failed to initialize file manager", zap.Error(err))
+			generateImageThumb := func(file *model.FileMeta) error {
+				fid := file.ID
+
+				src, err := fs.OpenFileByKey(file.ID.String(), file.Type)
+				if err != nil {
+					return fmt.Errorf("failed to open file: %w", err)
+				}
+				defer src.Close()
+
+				thumb, err := ip.Thumbnail(src)
+				if err != nil {
+					return fmt.Errorf("failed to generate thumbnail: %w", err)
+				}
+
+				thumbnail := model.FileThumbnail{
+					FileID: fid,
+					Type:   model.ThumbnailTypeImage,
+					Mime:   "image/png",
+					Width:  thumb.Bounds().Size().X,
+					Height: thumb.Bounds().Size().Y,
+				}
+				if err := db.Create(thumbnail).Error; err != nil {
+					return fmt.Errorf("failed to save file thumbnail to db: %w", err)
+				}
+
+				r, w := io.Pipe()
+				go func() {
+					defer w.Close()
+					_ = png.Encode(w, thumb)
+				}()
+
+				key := file.ID.String() + "-" + model.ThumbnailTypeImage.Suffix()
+				if err := fs.SaveByKey(r, key, key+".png", "image/png", model.FileTypeThumbnail); err != nil {
+					if err := db.Delete(thumbnail).Error; err != nil {
+						logger.Error("failed to rollback file thumbnail info on db", zap.Error(err), zap.Stringer("fid", fid))
+					}
+					return fmt.Errorf("failed to save thumbnail to storage: %w", err)
+				}
+
+				return nil
 			}
+			generateWaveform := func(file *model.FileMeta) error {
+				fid := file.ID
 
-			generateWaveform := func(file model.File) error {
-				fid := file.GetID()
-
-				src, err := file.Open()
+				src, err := fs.OpenFileByKey(file.ID.String(), file.Type)
 				if err != nil {
 					return fmt.Errorf("failed to open file: %w", err)
 				}
@@ -194,7 +232,7 @@ func genWaveform() *cobra.Command {
 				)
 
 				var r io.Reader
-				switch file.GetMIMEType() {
+				switch file.Mime {
 				case "audio/mpeg", "audio/mp3":
 					r, err = ip.WaveformMp3(src, waveformWidth, waveformHeight)
 					if err != nil {
@@ -234,18 +272,27 @@ func genWaveform() *cobra.Command {
 			const batch = 100
 			// counter variables
 			var (
-				offset  = 0
-				total   = 0
-				success = 0
+				offset            = 0
+				imageThumbTotal   = 0
+				imageThumbSuccess = 0
+				waveformTotal     = 0
+				waveformSuccess   = 0
 			)
 			// run
 			for {
-				files, more, err := fm.List(repository.FilesQuery{
-					Limit:  batch,
-					Offset: offset,
-					Asc:    false,
-					Type:   model.FileTypeUserFile,
-				})
+				var files []*model.FileMeta
+				err := db.Raw("SELECT f.* FROM files f "+
+					"LEFT JOIN files_thumbnails ft on f.id = ft.file_id "+
+					"WHERE f.type = '' AND f.deleted_at IS NULL "+
+					"AND f.mime IN ("+
+					// サムネイル生成が可能なmimeが変わったらここを変える
+					"'image/jpeg', 'image/png', 'image/gif', 'image/webp', "+
+					"'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav'"+
+					") "+
+					"GROUP BY f.id "+
+					"HAVING COUNT(ft.file_id) = 0 "+
+					"LIMIT ? OFFSET ?", batch, offset).
+					Scan(&files).Error
 				if err != nil {
 					logger.Fatal("failed to list files", zap.Error(err))
 				}
@@ -253,32 +300,35 @@ func genWaveform() *cobra.Command {
 				logger.Info(fmt.Sprintf("listing files from %d to %d", offset, offset+len(files)-1))
 
 				for _, f := range files {
-					if !canGenerateWaveform(f.GetMIMEType()) {
-						continue
+					// generate image thumbnail
+					if canGenerateImageThumb(f.Mime) {
+						imageThumbTotal++
+						if err := generateImageThumb(f); err != nil {
+							logger.Error("failed to generate image thumbnail", zap.Error(err), zap.Stringer("fid", f.ID))
+						} else {
+							imageThumbSuccess++
+						}
 					}
-					if ok, _ := f.GetThumbnail(model.ThumbnailTypeWaveform); ok {
-						// already has waveform thumbnail
-						continue
-					}
-
 					// generate waveform
-					total++
-					if err := generateWaveform(f); err != nil {
-						logger.Error("failed to generate waveform", zap.Error(err), zap.Stringer("fid", f.GetID()))
-						continue
+					if canGenerateWaveform(f.Mime) {
+						waveformTotal++
+						if err := generateWaveform(f); err != nil {
+							logger.Error("failed to generate waveform", zap.Error(err), zap.Stringer("fid", f.ID))
+						} else {
+							waveformSuccess++
+						}
 					}
-					success++
 				}
 
-				if !more {
+				if len(files) < batch {
 					break
 				}
 				offset += batch
 
-				logger.Info(fmt.Sprintf("generating waveform images: %d succeeded out of %d total attempts", success, total))
+				logger.Info(fmt.Sprintf("generating missing thumbnails: images success / total (%d / %d), waveform success / total (%d / %d)", imageThumbSuccess, imageThumbTotal, waveformSuccess, waveformTotal))
 			}
 
-			logger.Info(fmt.Sprintf("finished generating waveform images: %d succeeded out of %d total attempts", success, total))
+			logger.Info(fmt.Sprintf("finished generating missing thumbnails: images success / total (%d / %d), waveform success / total (%d / %d)", imageThumbSuccess, imageThumbTotal, waveformSuccess, waveformTotal))
 		},
 	}
 }
