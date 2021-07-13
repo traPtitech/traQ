@@ -30,7 +30,7 @@ require (
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
 	github.com/json-iterator/go v1.1.11
-	github.com/labstack/echo/v4 v4.3.0
+	github.com/labstack/echo/v4 v4.4.0
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/motoki317/go-waveform v0.0.2
 	github.com/ncw/swift v1.0.53
