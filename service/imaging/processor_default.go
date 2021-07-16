@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	_ "golang.org/x/image/webp" // image.Decode用
 	"image"
 	_ "image/jpeg" // image.Decode用
 	_ "image/png"  // image.Decode用
 	"io"
 	"time"
+
+	_ "golang.org/x/image/webp" // image.Decode用
 
 	"github.com/disintegration/imaging"
 	"github.com/go-audio/wav"
@@ -65,7 +66,7 @@ func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Imag
 	}
 
 	if imgCfg.Width > width || imgCfg.Height > height {
-		return imaging.Fit(orig, width, height, imaging.Linear), nil
+		return imaging.Fit(orig, width, height, imaging.CatmullRom), nil
 	}
 	return orig, nil
 }

@@ -5,16 +5,18 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"image/png"
+	"io"
+	"io/ioutil"
+
 	"github.com/gofrs/uuid"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
-	"go.uber.org/zap"
-	"image/png"
-	"io"
-	"io/ioutil"
 )
 
 type managerImpl struct {
