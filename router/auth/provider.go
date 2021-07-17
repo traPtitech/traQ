@@ -12,6 +12,9 @@ import (
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+	"golang.org/x/oauth2"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -21,8 +24,6 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
-	"go.uber.org/zap"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -260,7 +261,7 @@ func processProfileIcon(m file.Manager, src []byte) (uuid.UUID, error) {
 
 	// リサイズ
 	if size := img.Bounds().Size(); size.X > maxImageSize || size.Y > maxImageSize {
-		img = imaging.Fit(img, maxImageSize, maxImageSize, imaging.Linear)
+		img = imaging.Fit(img, maxImageSize, maxImageSize, imaging.CatmullRom)
 	}
 
 	// PNGに戻す
