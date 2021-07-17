@@ -3,6 +3,7 @@ package message
 import (
 	"context"
 	"errors"
+
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
@@ -72,6 +73,7 @@ type Manager interface {
 	// 既にピンされている場合は、ErrAlreadyExistsを返します。
 	// アーカイブされているチャンネルを指定すると、ErrChannelArchivedを返します。
 	// 存在しないメッセージを指定した場合は、ErrNotFoundを返します。
+	// チャンネルに既に100個以上のメッセージがピン留めされていた場合、"pin limit reached"エラーを返します。
 	// DBによるエラーを返すことがあります。
 	Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error)
 	// Unpin 指定したユーザーによって指定したメッセージのピン留めを外します

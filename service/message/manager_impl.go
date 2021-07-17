@@ -3,14 +3,15 @@ package message
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/bluele/gcache"
 	"github.com/gofrs/uuid"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
 	"go.uber.org/zap"
-	"sync"
-	"time"
 )
 
 var cacheTTL = time.Minute
@@ -191,6 +192,16 @@ func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 	// チャンネルがアーカイブされているかどうか確認
 	if m.CM.IsPublicChannel(msg.GetChannelID()) && m.CM.PublicChannelTree().IsArchivedChannel(msg.GetChannelID()) {
 		return nil, ErrChannelArchived
+	}
+
+	// チャンネルに100個以上のメッセージがピン留めされていないか確認
+	pinLimit := 100 // ピン留めの上限数
+	pins, err := m.R.(*repository.GormRepository).GetPinnedMessageByChannelID(msg.GetChannelID())
+	if err != nil {
+		return nil, err
+	}
+	if len(pins) >= pinLimit {
+		return nil, fmt.Errorf("failed to PinMessage: pin limit reached")
 	}
 
 	// ピン
