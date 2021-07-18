@@ -202,7 +202,7 @@ func messageCreatedHandler(ns *Service, ev hub.Message) {
 			markedUsers.Add(gs...)
 			noticeable.Add(gs...)
 		}
-		//メッセージを引用されたユーザーへの通知
+		// メッセージを引用されたユーザーへの通知
 		for _, mid := range parsed.Citation {
 			m, err := ns.repo.GetMessageByID(mid)
 			if err != nil {
@@ -362,30 +362,15 @@ func messageUnstampedHandler(ns *Service, ev hub.Message) {
 }
 
 func channelCreatedHandler(ns *Service, ev hub.Message) {
-	channelHandler(ns, ev, &sse.EventData{
-		EventType: "CHANNEL_CREATED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["channel_id"].(uuid.UUID),
-		},
-	})
+	channelHandler(ns, ev, "CHANNEL_CREATED")
 }
 
 func channelUpdatedHandler(ns *Service, ev hub.Message) {
-	channelHandler(ns, ev, &sse.EventData{
-		EventType: "CHANNEL_UPDATED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["channel_id"].(uuid.UUID),
-		},
-	})
+	channelHandler(ns, ev, "CHANNEL_UPDATED")
 }
 
 func channelDeletedHandler(ns *Service, ev hub.Message) {
-	channelHandler(ns, ev, &sse.EventData{
-		EventType: "CHANNEL_DELETED",
-		Payload: map[string]interface{}{
-			"id": ev.Fields["channel_id"].(uuid.UUID),
-		},
-	})
+	channelHandler(ns, ev, "CHANNEL_DELETED")
 }
 
 func channelStaredHandler(ns *Service, ev hub.Message) {
@@ -660,18 +645,23 @@ func clipFolderMessageAddedHandler(ns *Service, ev hub.Message) {
 	})
 }
 
-func channelHandler(ns *Service, ev hub.Message, ssePayload *sse.EventData) {
+func channelHandler(ns *Service, ev hub.Message, eventType string) {
+	cid := ev.Fields["channel_id"].(uuid.UUID)
 	private := ev.Fields["private"].(bool)
 	if private {
-		cid := ev.Fields["channel_id"].(uuid.UUID)
 		members, err := ns.cm.GetDMChannelMembers(cid)
 		if err != nil {
 			ns.logger.Error("failed to GetDMChannelMembers", zap.Error(err), zap.Stringer("channelId", cid))
 			return
 		}
-		go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetUsers(members...))
+		go ns.ws.WriteMessage(eventType, map[string]interface{}{
+			"id":              cid,
+			"private_members": members,
+		}, ws.TargetUsers(members...))
 	} else {
-		go ns.ws.WriteMessage(ssePayload.EventType, ssePayload.Payload, ws.TargetAll())
+		go ns.ws.WriteMessage(eventType, map[string]interface{}{
+			"id": cid,
+		}, ws.TargetAll())
 	}
 }
 
