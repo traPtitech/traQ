@@ -195,8 +195,8 @@ func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 	}
 
 	// チャンネルに上限数以上のメッセージがピン留めされていないか確認
-	pinLimit := 100 // ピン留めの上限数
-	pins, err := m.R.(*repository.GormRepository).GetPinnedMessageByChannelID(msg.GetChannelID())
+	const pinLimit = 100 // ピン留めの上限数
+	pins, err := m.R.GetPinnedMessageByChannelID(msg.GetChannelID())
 	if err != nil {
 		return nil, err
 	}
