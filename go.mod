@@ -32,7 +32,7 @@ require (
 	github.com/json-iterator/go v1.1.11
 	github.com/labstack/echo/v4 v4.4.0
 	github.com/leandro-lugaresi/hub v1.1.1
-	github.com/motoki317/go-waveform v0.0.2
+	github.com/motoki317/go-waveform v0.0.3
 	github.com/ncw/swift v1.0.53
 	github.com/olivere/elastic/v7 v7.0.26
 	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e
