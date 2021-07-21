@@ -16,6 +16,8 @@ import (
 
 var cacheTTL = time.Minute
 
+const PinLimit = 100 // ピン留めの上限数
+
 type manager struct {
 	CM channel.Manager
 	R  repository.Repository
@@ -195,13 +197,12 @@ func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 	}
 
 	// チャンネルに上限数以上のメッセージがピン留めされていないか確認
-	const pinLimit = 100 // ピン留めの上限数
 	pins, err := m.R.GetPinnedMessageByChannelID(msg.GetChannelID())
 	if err != nil {
 		return nil, err
 	}
-	if len(pins) >= pinLimit {
-		return nil, fmt.Errorf("failed to PinMessage: pin limit reached")
+	if len(pins) >= PinLimit {
+		return nil, ErrPinLimitExeeded
 	}
 
 	// ピン

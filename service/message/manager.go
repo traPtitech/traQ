@@ -13,6 +13,7 @@ var (
 	ErrNotFound        = errors.New("not found")
 	ErrAlreadyExists   = errors.New("already exists")
 	ErrChannelArchived = errors.New("channel archived")
+	ErrPinLimitExeeded = errors.New("the pin limit exceeded")
 )
 
 type TimelineQuery struct {
@@ -73,7 +74,7 @@ type Manager interface {
 	// 既にピンされている場合は、ErrAlreadyExistsを返します。
 	// アーカイブされているチャンネルを指定すると、ErrChannelArchivedを返します。
 	// 存在しないメッセージを指定した場合は、ErrNotFoundを返します。
-	// チャンネルに既に上限数以上のメッセージがピン留めされていた場合、"pin limit reached"エラーを返します。
+	// チャンネルに既に上限数以上のメッセージがピン留めされていた場合、ErrPinLimitExeededを返します。
 	// DBによるエラーを返すことがあります。
 	Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error)
 	// Unpin 指定したユーザーによって指定したメッセージのピン留めを外します
