@@ -321,7 +321,7 @@ paths:
         - message
         - pin
       operationId: createPin
-      description: 指定したメッセージをピン留めします。
+      description: 指定したメッセージをピン留めします。チャンネル当たりの上限(100件)を超えてピン留めしようとするとBad Requestを返します。
     delete:
       summary: ピン留めを外す
       responses:
