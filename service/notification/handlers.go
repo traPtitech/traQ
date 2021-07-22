@@ -654,10 +654,25 @@ func channelHandler(ns *Service, ev hub.Message, eventType string) {
 			ns.logger.Error("failed to GetDMChannelMembers", zap.Error(err), zap.Stringer("channelId", cid))
 			return
 		}
-		go ns.ws.WriteMessage(eventType, map[string]interface{}{
-			"id":              cid,
-			"private_members": members,
-		}, ws.TargetUsers(members...))
+
+		switch len(members) {
+		case 1:
+			go ns.ws.WriteMessage(eventType, map[string]interface{}{
+				"id":         cid,
+				"dm_user_id": members[0],
+			}, ws.TargetUsers(members[0]))
+		case 2:
+			go ns.ws.WriteMessage(eventType, map[string]interface{}{
+				"id":         cid,
+				"dm_user_id": members[0],
+			}, ws.TargetUsers(members[1]))
+			go ns.ws.WriteMessage(eventType, map[string]interface{}{
+				"id":         cid,
+				"dm_user_id": members[1],
+			}, ws.TargetUsers(members[0]))
+		default:
+			ns.logger.Error("private channel event not defined", zap.Stringer("cid", cid))
+		}
 	} else {
 		go ns.ws.WriteMessage(eventType, map[string]interface{}{
 			"id": cid,
