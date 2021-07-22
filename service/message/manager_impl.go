@@ -202,7 +202,7 @@ func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 		return nil, err
 	}
 	if len(pins) >= PinLimit {
-		return nil, ErrPinLimitExeeded
+		return nil, ErrPinLimitExceeded
 	}
 
 	// ピン

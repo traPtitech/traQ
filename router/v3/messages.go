@@ -202,7 +202,7 @@ func (h *Handlers) CreatePin(c echo.Context) error {
 			return herror.BadRequest("this message has already been pinned")
 		case message.ErrChannelArchived:
 			return herror.BadRequest("the channel of this message has been archived")
-		case message.ErrPinLimitExeeded:
+		case message.ErrPinLimitExceeded:
 			return herror.BadRequest(fmt.Sprintf("cannot pin more than %d messages", message.PinLimit))
 		default:
 			return herror.InternalServerError(err)
