@@ -1,13 +1,15 @@
 package v1
 
 import (
+	"net/http"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
 	random2 "github.com/traPtitech/traQ/utils/random"
-	"net/http"
-	"testing"
 )
 
 func TestHandlers_PostUserTag(t *testing.T) {

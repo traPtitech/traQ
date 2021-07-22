@@ -3,7 +3,9 @@ package channel
 
 import (
 	"encoding/json"
+
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 )
 

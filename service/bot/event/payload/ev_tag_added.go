@@ -1,9 +1,11 @@
 package payload
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/model"
 	"time"
+
+	"github.com/gofrs/uuid"
+
+	"github.com/traPtitech/traQ/model"
 )
 
 // TagAdded TAG_ADDEDイベントペイロード

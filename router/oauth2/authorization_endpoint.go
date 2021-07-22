@@ -3,19 +3,21 @@ package oauth2
 import (
 	"encoding/gob"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
-	"go.uber.org/zap"
-	"net/http"
-	"net/url"
-	"strings"
-	"time"
 )
 
 func init() {

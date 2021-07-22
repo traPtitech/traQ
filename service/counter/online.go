@@ -1,13 +1,15 @@
 package counter
 
 import (
+	"sync"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
 	"github.com/traPtitech/traQ/event"
-	"sync"
-	"time"
 )
 
 var onlineUsersCounter = promauto.NewGauge(prometheus.GaugeOpts{

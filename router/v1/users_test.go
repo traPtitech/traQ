@@ -1,18 +1,19 @@
 package v1
 
 import (
+	"net/http"
+	"strings"
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
-	"strings"
-	"testing"
-
-	"net/http"
 )
 
 func TestHandlers_GetUsers(t *testing.T) {

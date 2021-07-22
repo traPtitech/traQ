@@ -1,8 +1,9 @@
 package sse
 
 import (
-	jsoniter "github.com/json-iterator/go"
 	"net/http"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 // EventData SSEイベントデータ

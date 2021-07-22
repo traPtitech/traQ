@@ -2,10 +2,11 @@ package herror
 
 import (
 	"fmt"
-	"github.com/blendle/zapdriver"
-	"go.uber.org/zap"
 	"runtime"
 	"runtime/debug"
+
+	"github.com/blendle/zapdriver"
+	"go.uber.org/zap"
 )
 
 // InternalError 内部エラー

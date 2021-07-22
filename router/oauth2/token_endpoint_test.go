@@ -1,15 +1,17 @@
 package oauth2
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/repository"
-	random2 "github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
+	random2 "github.com/traPtitech/traQ/utils/random"
 )
 
 func TestHandlers_TokenEndpointHandler(t *testing.T) {

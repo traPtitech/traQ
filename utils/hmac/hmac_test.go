@@ -2,9 +2,10 @@ package hmac
 
 import (
 	"encoding/hex"
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCalcSHA1Signature(t *testing.T) {

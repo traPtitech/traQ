@@ -1,17 +1,19 @@
 package handler
 
 import (
+	"testing"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
+
 	intevent "github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/service/bot/handler/mock_handler"
-	"testing"
-	"time"
 )
 
 func TestUserTagAdded(t *testing.T) {

@@ -1,12 +1,14 @@
 package session
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/utils/random"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gofrs/uuid"
+	"github.com/labstack/echo/v4"
+
+	"github.com/traPtitech/traQ/utils/random"
 )
 
 type memorySession struct {

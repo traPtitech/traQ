@@ -1,12 +1,14 @@
 package v1
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/router/consts"
-	"github.com/traPtitech/traQ/router/extension/herror"
 	"net/http"
 	"time"
+
+	"github.com/gofrs/uuid"
+	"github.com/labstack/echo/v4"
+
+	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/router/extension/herror"
 )
 
 // GetMySessions GET /users/me/sessions

@@ -1,8 +1,9 @@
 package message
 
 import (
-	jsoniter "github.com/json-iterator/go"
 	"strings"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 // EmbeddedInfo メッセージの埋め込み情報

@@ -2,14 +2,16 @@ package oauth2
 
 import (
 	"errors"
+
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/rbac"
-	"go.uber.org/zap"
 )
 
 const (

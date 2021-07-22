@@ -1,14 +1,16 @@
 package v1
 
 import (
+	"net/http"
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/session"
-	"net/http"
-	"testing"
 )
 
 func TestHandlers_PutNotificationStatus(t *testing.T) {

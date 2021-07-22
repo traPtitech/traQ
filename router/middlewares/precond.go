@@ -1,9 +1,11 @@
 package middlewares
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/router/extension"
 	"time"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/traPtitech/traQ/router/extension"
 )
 
 // CheckModTimePrecondition 事前条件検査ミドルウェア

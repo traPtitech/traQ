@@ -1,9 +1,11 @@
 package herror
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/repository"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/traPtitech/traQ/repository"
 )
 
 func NotFound(err ...interface{}) error {

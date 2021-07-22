@@ -1,14 +1,16 @@
 package v1
 
 import (
+	"net/http"
+	"strconv"
+	"testing"
+
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/random"
-	"net/http"
-	"strconv"
-	"testing"
 )
 
 func TestHandlers_GetPublicUserIcon(t *testing.T) {

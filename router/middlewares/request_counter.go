@@ -1,10 +1,11 @@
 package middlewares
 
 import (
+	"strconv"
+
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"strconv"
 )
 
 var requestCounter = promauto.NewCounterVec(prometheus.CounterOpts{

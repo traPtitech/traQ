@@ -3,9 +3,17 @@ package file
 import (
 	"bytes"
 	"errors"
+	"image/png"
+	"io"
+	"io/ioutil"
+	"testing"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/repository/mock_repository"
@@ -15,12 +23,6 @@ import (
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
 	"github.com/traPtitech/traQ/utils/storage/mock_storage"
-	"go.uber.org/zap"
-	"image/png"
-	"io"
-	"io/ioutil"
-	"testing"
-	"time"
 )
 
 var errMock = errors.New("mock error")

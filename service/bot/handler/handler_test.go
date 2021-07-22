@@ -1,16 +1,18 @@
 package handler
 
 import (
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository/mock_repository"
 	"github.com/traPtitech/traQ/service/bot/handler/mock_handler"
 	"github.com/traPtitech/traQ/service/channel/mock_channel"
 	"github.com/traPtitech/traQ/testutils"
 	"github.com/traPtitech/traQ/utils/random"
-	"go.uber.org/zap"
-	"testing"
 )
 
 type Repo struct {

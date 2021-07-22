@@ -7,6 +7,9 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/auth"
 	"github.com/traPtitech/traQ/router/consts"
@@ -18,8 +21,6 @@ import (
 	"github.com/traPtitech/traQ/router/v3"
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/channel"
-	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 type Router struct {

@@ -3,6 +3,7 @@ package search
 import (
 	"github.com/gofrs/uuid"
 	"github.com/olivere/elastic/v7"
+
 	"github.com/traPtitech/traQ/service/message"
 )
 

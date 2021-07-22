@@ -1,9 +1,10 @@
 package repository
 
 import (
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestRepositoryImpl_PinMessage(t *testing.T) {

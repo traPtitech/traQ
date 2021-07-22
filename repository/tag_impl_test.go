@@ -1,10 +1,12 @@
 package repository
 
 import (
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+
 	random2 "github.com/traPtitech/traQ/utils/random"
-	"testing"
 )
 
 func TestRepositoryImpl_AddUserTag(t *testing.T) {

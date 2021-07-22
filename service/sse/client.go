@@ -1,8 +1,9 @@
 package sse
 
 import (
-	"github.com/gofrs/uuid"
 	"sync"
+
+	"github.com/gofrs/uuid"
 )
 
 type sseClientMap struct {

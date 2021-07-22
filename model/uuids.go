@@ -3,8 +3,9 @@ package model
 import (
 	"database/sql/driver"
 	"errors"
-	"github.com/gofrs/uuid"
 	"strings"
+
+	"github.com/gofrs/uuid"
 )
 
 type UUIDs []uuid.UUID

@@ -1,9 +1,11 @@
 package repository
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/model"
 	"testing"
+
+	"github.com/gofrs/uuid"
+
+	"github.com/traPtitech/traQ/model"
 )
 
 func TestRepositoryImpl_AddStar(t *testing.T) {

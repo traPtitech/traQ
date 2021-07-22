@@ -2,13 +2,15 @@ package channel
 
 import (
 	"fmt"
-	"github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/optional"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gofrs/uuid"
+	jsoniter "github.com/json-iterator/go"
+
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 type treeImpl struct {

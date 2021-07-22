@@ -1,9 +1,10 @@
 package v1
 
 import (
-	"github.com/traPtitech/traQ/router/session"
 	"net/http"
 	"testing"
+
+	"github.com/traPtitech/traQ/router/session"
 )
 
 func TestHandlers_DeleteUnread(t *testing.T) {

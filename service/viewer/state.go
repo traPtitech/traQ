@@ -1,8 +1,9 @@
 package viewer
 
 import (
-	jsoniter "github.com/json-iterator/go"
 	"strings"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 // State 閲覧状態

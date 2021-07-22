@@ -1,12 +1,14 @@
 package repository
 
 import (
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/traPtitech/traQ/model"
 	random2 "github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/set"
-	"testing"
 )
 
 func TestRepositoryImpl_RegisterDevice(t *testing.T) {

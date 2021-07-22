@@ -3,13 +3,15 @@ package v3
 import (
 	"encoding/base64"
 	"fmt"
+	"net/http"
+	"time"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/utils/hmac"
-	"net/http"
-	"time"
 )
 
 // PostWebRTCAuthenticateRequest POST /webrtc/authenticate リクエストボディ

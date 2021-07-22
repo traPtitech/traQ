@@ -2,13 +2,15 @@ package storage
 
 import (
 	"fmt"
-	"github.com/ncw/swift"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils"
-	"github.com/traPtitech/traQ/utils/ioext"
 	"io"
 	"os"
 	"time"
+
+	"github.com/ncw/swift"
+
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/ioext"
 )
 
 // SwiftFileStorage OpenStack Swiftストレージ

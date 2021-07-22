@@ -3,6 +3,7 @@ package optional
 import (
 	"bytes"
 	"database/sql"
+
 	jsoniter "github.com/json-iterator/go"
 )
 

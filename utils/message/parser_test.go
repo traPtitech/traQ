@@ -1,9 +1,10 @@
 package message
 
 import (
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestParse(t *testing.T) {

@@ -1,11 +1,13 @@
 package message
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
-	"time"
 )
 
 type timeline struct {

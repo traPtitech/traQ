@@ -2,10 +2,12 @@
 package event
 
 import (
+	"sync"
+
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
+
 	"github.com/traPtitech/traQ/model"
-	"sync"
 )
 
 // Dispatcher Botイベント配送機

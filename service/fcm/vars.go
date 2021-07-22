@@ -1,13 +1,15 @@
 package fcm
 
 import (
+	"strconv"
+	"time"
+
 	"firebase.google.com/go/messaging"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/traPtitech/traQ/utils/optional"
 	"golang.org/x/exp/utf8string"
-	"strconv"
-	"time"
+
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 const (

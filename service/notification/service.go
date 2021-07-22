@@ -2,6 +2,8 @@ package notification
 
 import (
 	"github.com/leandro-lugaresi/hub"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/fcm"
@@ -10,7 +12,6 @@ import (
 	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/ws"
-	"go.uber.org/zap"
 )
 
 // Service 通知サービス

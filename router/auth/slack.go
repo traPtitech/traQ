@@ -8,12 +8,13 @@ import (
 
 	json "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/session"
-	"github.com/traPtitech/traQ/service/file"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	slackOAuth2 "golang.org/x/oauth2/slack"
+
+	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/file"
 )
 
 const (

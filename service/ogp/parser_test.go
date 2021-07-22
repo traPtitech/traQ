@@ -1,10 +1,11 @@
 package ogp
 
 import (
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/net/html"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/html"
 )
 
 const testHTML = `

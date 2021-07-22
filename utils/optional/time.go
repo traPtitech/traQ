@@ -3,8 +3,9 @@ package optional
 import (
 	"bytes"
 	"database/sql"
-	jsoniter "github.com/json-iterator/go"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 type Time struct {

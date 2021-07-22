@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/traPtitech/traQ/cmd"
 	"log"
+
+	"github.com/traPtitech/traQ/cmd"
 )
 
 var (

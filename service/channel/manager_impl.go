@@ -2,16 +2,18 @@ package channel
 
 import (
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/gofrs/uuid"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/set"
 	"github.com/traPtitech/traQ/utils/validator"
-	"go.uber.org/zap"
-	"sync"
-	"time"
 )
 
 var (

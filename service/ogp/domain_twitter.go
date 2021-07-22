@@ -2,12 +2,13 @@ package ogp
 
 import (
 	"fmt"
-	"github.com/dyatlov/go-opengraph/opengraph"
-	jsoniter "github.com/json-iterator/go"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/dyatlov/go-opengraph/opengraph"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type TwitterSyndicationAPIResponse struct {

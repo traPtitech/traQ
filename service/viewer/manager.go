@@ -1,11 +1,13 @@
 package viewer
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/leandro-lugaresi/hub"
-	"github.com/traPtitech/traQ/event"
 	"sync"
 	"time"
+
+	"github.com/gofrs/uuid"
+	"github.com/leandro-lugaresi/hub"
+
+	"github.com/traPtitech/traQ/event"
 )
 
 // Manager チャンネル閲覧者マネージャ

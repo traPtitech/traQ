@@ -1,9 +1,10 @@
 package viewer
 
 import (
-	"github.com/gofrs/uuid"
 	"sort"
 	"time"
+
+	"github.com/gofrs/uuid"
 )
 
 // UserState ユーザー閲覧状態

@@ -1,15 +1,17 @@
 package message
 
 import (
+	"testing"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel/mock_channel"
-	"go.uber.org/zap"
-	"testing"
-	"time"
 )
 
 func setupM(ctrl *gomock.Controller) (Manager, *mock_channel.MockManager, *Repo, *mock_channel.MockTree) {

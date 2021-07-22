@@ -2,8 +2,12 @@ package utils
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -12,8 +16,6 @@ import (
 	"github.com/traPtitech/traQ/service/file"
 	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/optional"
-	"net/http"
-	"strconv"
 )
 
 // ChangeUserIcon userIDのユーザーのアイコン画像を変更する

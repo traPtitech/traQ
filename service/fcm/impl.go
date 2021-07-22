@@ -3,16 +3,18 @@ package fcm
 import (
 	"context"
 	"errors"
+	"strconv"
+	"time"
+
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
+	"go.uber.org/zap"
+	"google.golang.org/api/option"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/variable"
 	"github.com/traPtitech/traQ/utils/set"
-	"go.uber.org/zap"
-	"google.golang.org/api/option"
-	"strconv"
-	"time"
 )
 
 type clientImpl struct {

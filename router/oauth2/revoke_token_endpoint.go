@@ -1,9 +1,11 @@
 package oauth2
 
 import (
-	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/router/extension/herror"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
+
+	"github.com/traPtitech/traQ/router/extension/herror"
 )
 
 // RevokeTokenEndpointHandler トークン無効化エンドポイントのハンドラ

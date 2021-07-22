@@ -3,15 +3,17 @@ package v1
 import (
 	"bytes"
 	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/file"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 // GetPublicUserIcon GET /public/icon/{username}

@@ -4,9 +4,14 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -18,9 +23,6 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/hmac"
 	"github.com/traPtitech/traQ/utils/optional"
-	"io/ioutil"
-	"net/http"
-	"strings"
 )
 
 // GetWebhooks GET /webhooks

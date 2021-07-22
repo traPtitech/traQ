@@ -1,10 +1,12 @@
 package bot
 
 import (
+	"time"
+
 	"github.com/leandro-lugaresi/hub"
+
 	intevent "github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/service/bot/handler"
-	"time"
 )
 
 type eventHandler func(ctx handler.Context, datetime time.Time, event string, fields hub.Fields) error

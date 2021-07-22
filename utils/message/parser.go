@@ -1,10 +1,11 @@
 package message
 
 import (
-	"github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
 	"regexp"
 	"strings"
+
+	"github.com/gofrs/uuid"
+	jsoniter "github.com/json-iterator/go"
 )
 
 const embURLRegexFragment = `/(files|messages)/[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}`

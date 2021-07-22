@@ -1,10 +1,12 @@
 package v3
 
 import (
+	"net/http"
+
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/service/ws"
-	"net/http"
 )
 
 func (h *Handlers) GetMyViewStates(c echo.Context) error {

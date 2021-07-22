@@ -1,8 +1,9 @@
 package ogp
 
 import (
-	"github.com/dyatlov/go-opengraph/opengraph"
 	"net/url"
+
+	"github.com/dyatlov/go-opengraph/opengraph"
 )
 
 func FetchSpecialDomainInfo(url *url.URL) (og *opengraph.OpenGraph, meta *DefaultPageMeta, isSpecialDomain bool, err error) {

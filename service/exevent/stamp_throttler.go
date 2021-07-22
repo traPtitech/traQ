@@ -1,13 +1,15 @@
 package exevent
 
 import (
+	"sync"
+	"time"
+
 	"github.com/boz/go-throttle"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/service/message"
-	"sync"
-	"time"
 )
 
 func NewStampThrottler(bus *hub.Hub, mm message.Manager) *StampThrottler {

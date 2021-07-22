@@ -2,12 +2,14 @@ package repository
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
-	"testing"
 )
 
 func TestGormRepository_UpdateChannel(t *testing.T) {

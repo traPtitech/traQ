@@ -2,9 +2,10 @@ package session
 
 import (
 	"errors"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
-	"time"
 )
 
 const (

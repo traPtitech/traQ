@@ -2,12 +2,14 @@ package file
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/ioext"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/storage"
-	"time"
 )
 
 type fileMetaImpl struct {

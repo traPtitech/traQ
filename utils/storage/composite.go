@@ -1,10 +1,11 @@
 package storage
 
 import (
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/ioext"
 	"io"
 	"os"
+
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/ioext"
 )
 
 // CompositeFileStorage 複合型ファイルストレージ

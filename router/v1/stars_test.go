@@ -1,11 +1,13 @@
 package v1
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/traPtitech/traQ/router/session"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/traPtitech/traQ/router/session"
 )
 
 func TestHandlers_GetStars(t *testing.T) {

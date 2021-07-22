@@ -1,8 +1,9 @@
 package set
 
 import (
-	"github.com/gofrs/uuid"
 	"strings"
+
+	"github.com/gofrs/uuid"
 )
 
 // UUID uuid.UUIDの集合

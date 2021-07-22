@@ -1,11 +1,13 @@
 package extension
 
 import (
+	"net/http"
+
 	jsoniter "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/router/extension/herror"
 	"go.uber.org/zap"
-	"net/http"
+
+	"github.com/traPtitech/traQ/router/extension/herror"
 )
 
 // ErrorHandler カスタムエラーハンドラ

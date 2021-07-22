@@ -1,14 +1,16 @@
 package event
 
 import (
+	"testing"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/bot/event/mock_event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
-	"testing"
-	"time"
 )
 
 func TestUnicast(t *testing.T) {

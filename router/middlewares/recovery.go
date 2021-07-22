@@ -2,13 +2,15 @@ package middlewares
 
 import (
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/router/extension"
-	"github.com/traPtitech/traQ/router/extension/herror"
-	"go.uber.org/zap"
 	"net"
 	"os"
 	"strings"
+
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+
+	"github.com/traPtitech/traQ/router/extension"
+	"github.com/traPtitech/traQ/router/extension/herror"
 )
 
 // Recovery Recoveryミドルウェア

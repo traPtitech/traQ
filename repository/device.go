@@ -2,6 +2,7 @@ package repository
 
 import (
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/utils/set"
 )
 

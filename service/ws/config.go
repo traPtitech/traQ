@@ -1,10 +1,11 @@
 package ws
 
 import (
-	"github.com/gorilla/websocket"
-	jsoniter "github.com/json-iterator/go"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/websocket"
+	jsoniter "github.com/json-iterator/go"
 )
 
 const (

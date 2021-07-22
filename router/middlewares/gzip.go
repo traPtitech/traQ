@@ -2,9 +2,10 @@ package middlewares
 
 import (
 	"compress/gzip"
+	"net/http"
+
 	"github.com/NYTimes/gziphandler"
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 // Gzip Gzipミドルウェア

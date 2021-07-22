@@ -1,14 +1,16 @@
 package sse
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/router/extension"
-	"net/http"
-	"time"
 )
 
 var sseConnectionsCounter = promauto.NewGauge(prometheus.GaugeOpts{

@@ -1,13 +1,15 @@
 package v3
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/file"
-	"net/http"
-	"strconv"
 )
 
 // GetVersion GET /version

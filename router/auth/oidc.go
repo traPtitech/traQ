@@ -4,19 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/coreos/go-oidc"
-	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/session"
-	"github.com/traPtitech/traQ/service/file"
-	"github.com/traPtitech/traQ/utils/optional"
-	"go.uber.org/zap"
-	"golang.org/x/exp/utf8string"
-	"golang.org/x/oauth2"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/coreos/go-oidc"
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+	"golang.org/x/exp/utf8string"
+	"golang.org/x/oauth2"
+
+	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 const (

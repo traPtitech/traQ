@@ -2,12 +2,14 @@ package handler
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
-	"time"
 )
 
 func MessageDeleted(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {

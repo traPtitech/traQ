@@ -1,19 +1,21 @@
 package handler
 
 import (
+	"testing"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/golang/mock/gomock"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	intevent "github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/mock_event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
-	"testing"
-	"time"
 )
 
 func TestBotPingRequest(t *testing.T) {

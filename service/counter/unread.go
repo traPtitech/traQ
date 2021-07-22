@@ -2,12 +2,14 @@ package counter
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
-	"gorm.io/gorm"
-	"sync"
 )
 
 // UnreadMessageCounter 未読メッセージ数カウンタ

@@ -1,10 +1,12 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
-	"time"
 )
 
 // CreateStampArgs スタンプ作成引数

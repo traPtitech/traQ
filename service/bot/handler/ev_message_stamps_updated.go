@@ -2,11 +2,13 @@ package handler
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/leandro-lugaresi/hub"
+
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/service/message"
-	"time"
 )
 
 func MessageStampsUpdated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {

@@ -4,17 +4,19 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
-	"github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/service/file"
-	"github.com/traPtitech/traQ/utils/optional"
-	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	"path"
 	"strings"
+
+	"github.com/gofrs/uuid"
+	jsoniter "github.com/json-iterator/go"
+	"go.uber.org/zap"
+
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/service/file"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 const (

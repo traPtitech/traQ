@@ -2,15 +2,17 @@ package event
 
 import (
 	"bytes"
+	"net/http"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"go.uber.org/zap"
-	"net/http"
-	"time"
 )
 
 const (

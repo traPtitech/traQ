@@ -2,19 +2,21 @@ package ws
 
 import (
 	"errors"
+	"net/http"
+	"sync"
+
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/leandro-lugaresi/hub"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/utils/random"
-	"go.uber.org/zap"
-	"net/http"
-	"sync"
 )
 
 var (

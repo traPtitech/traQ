@@ -2,11 +2,13 @@ package model
 
 import (
 	"encoding/hex"
-	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/utils"
-	"github.com/traPtitech/traQ/utils/random"
 	"testing"
 	"testing/quick"
+
+	"github.com/gofrs/uuid"
+
+	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/random"
 
 	"github.com/stretchr/testify/assert"
 )

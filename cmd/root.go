@@ -2,13 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/blendle/zapdriver"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
-	"github.com/traPtitech/traQ/utils/message"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"log"
 	"net/http"
 	_ "net/http/pprof" // pprof init
@@ -16,6 +9,15 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/blendle/zapdriver"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+
+	"github.com/traPtitech/traQ/utils/message"
 )
 
 var (

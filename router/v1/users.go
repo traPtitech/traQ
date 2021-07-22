@@ -1,6 +1,11 @@
 package v1
 
 import (
+	"net/http"
+	"time"
+
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
@@ -8,15 +13,13 @@ import (
 	jwt2 "github.com/traPtitech/traQ/utils/jwt"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"go.uber.org/zap"
-	"net/http"
-	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/skip2/go-qrcode"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/rbac/role"

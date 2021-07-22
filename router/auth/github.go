@@ -3,18 +3,20 @@ package auth
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+
 	json "github.com/json-iterator/go"
 	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/router/session"
-	"github.com/traPtitech/traQ/service/file"
 	"go.uber.org/zap"
 	"golang.org/x/exp/utf8string"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
-	"io/ioutil"
-	"net/http"
-	"strconv"
+
+	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/router/session"
+	"github.com/traPtitech/traQ/service/file"
 )
 
 const (

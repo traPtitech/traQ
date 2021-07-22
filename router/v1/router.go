@@ -3,9 +3,15 @@ package v1
 import (
 	"bytes"
 	"encoding/gob"
+	"net/http"
+	"sync"
+	"time"
+
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
@@ -23,10 +29,6 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/viewer"
 	mutil "github.com/traPtitech/traQ/utils/message"
-	"go.uber.org/zap"
-	"net/http"
-	"sync"
-	"time"
 
 	"github.com/labstack/echo/v4"
 )

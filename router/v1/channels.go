@@ -1,9 +1,14 @@
 package v1
 
 import (
+	"net/http"
+	"strconv"
+	"strings"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
@@ -11,9 +16,6 @@ import (
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/utils/optional"
 	"github.com/traPtitech/traQ/utils/validator"
-	"net/http"
-	"strconv"
-	"strings"
 )
 
 // PostChannelRequest POST /channels リクエストボディ

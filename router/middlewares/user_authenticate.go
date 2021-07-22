@@ -2,15 +2,17 @@ package middlewares
 
 import (
 	"context"
+
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/sync/singleflight"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/session"
-	"golang.org/x/sync/singleflight"
 )
 
 const authScheme = "Bearer"

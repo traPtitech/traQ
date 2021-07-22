@@ -1,9 +1,10 @@
 package model
 
 import (
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestChannel_TableName(t *testing.T) {

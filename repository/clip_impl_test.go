@@ -1,12 +1,15 @@
 package repository
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/traQ/utils/optional"
-	random2 "github.com/traPtitech/traQ/utils/random"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/traPtitech/traQ/utils/optional"
+	random2 "github.com/traPtitech/traQ/utils/random"
+
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 )
 

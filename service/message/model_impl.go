@@ -1,12 +1,14 @@
 package message
 
 import (
-	"github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/optional"
 	"sync"
 	"time"
+
+	"github.com/gofrs/uuid"
+	jsoniter "github.com/json-iterator/go"
+
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 type message struct {

@@ -2,9 +2,11 @@ package message
 
 import (
 	"encoding/json"
-	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/model"
 	"time"
+
+	"github.com/gofrs/uuid"
+
+	"github.com/traPtitech/traQ/model"
 )
 
 type Message interface {

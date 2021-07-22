@@ -2,9 +2,14 @@ package v3
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
@@ -12,9 +17,6 @@ import (
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/utils/optional"
-	"net/http"
-	"strconv"
-	"strings"
 )
 
 // GetFilesRequest GET /files 用リクエストクエリ

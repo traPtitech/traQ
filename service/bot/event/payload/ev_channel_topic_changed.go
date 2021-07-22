@@ -1,8 +1,9 @@
 package payload
 
 import (
-	"github.com/traPtitech/traQ/model"
 	"time"
+
+	"github.com/traPtitech/traQ/model"
 )
 
 // ChannelTopicChanged CHANNEL_TOPIC_CHANGEDイベントペイロード

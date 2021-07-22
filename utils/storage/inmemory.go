@@ -2,11 +2,12 @@ package storage
 
 import (
 	"bytes"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/utils/ioext"
 	"io"
 	"io/ioutil"
 	"sync"
+
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/utils/ioext"
 )
 
 // InMemoryFileStorage インメモリファイルストレージ

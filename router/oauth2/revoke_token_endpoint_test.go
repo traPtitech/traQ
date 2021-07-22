@@ -1,12 +1,14 @@
 package oauth2
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/repository"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/traPtitech/traQ/model"
+	"github.com/traPtitech/traQ/repository"
 )
 
 func TestHandlers_RevokeTokenEndpointHandler(t *testing.T) {

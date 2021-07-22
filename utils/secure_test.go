@@ -1,9 +1,11 @@
 package utils
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/traPtitech/traQ/utils/random"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/traPtitech/traQ/utils/random"
 )
 
 func TestHashPassword(t *testing.T) {

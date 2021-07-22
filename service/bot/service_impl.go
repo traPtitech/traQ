@@ -2,15 +2,17 @@ package bot
 
 import (
 	"context"
+	"sync"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/channel"
-	"go.uber.org/zap"
-	"sync"
-	"time"
 )
 
 type serviceImpl struct {

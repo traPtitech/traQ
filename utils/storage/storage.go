@@ -3,9 +3,10 @@ package storage
 
 import (
 	"errors"
+	"io"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/ioext"
-	"io"
 )
 
 var (

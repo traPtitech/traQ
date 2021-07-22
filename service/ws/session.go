@@ -1,12 +1,14 @@
 package ws
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/gorilla/websocket"
-	"github.com/traPtitech/traQ/service/viewer"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gofrs/uuid"
+	"github.com/gorilla/websocket"
+
+	"github.com/traPtitech/traQ/service/viewer"
 )
 
 // Session WebSocketセッション

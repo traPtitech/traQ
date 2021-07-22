@@ -2,10 +2,12 @@ package ws
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
+
 	"github.com/traPtitech/traQ/service/viewer"
-	"strings"
 )
 
 func (s *session) commandHandler(cmd string) {

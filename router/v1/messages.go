@@ -1,10 +1,12 @@
 package v1
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"net/http"
 )
 
 // DeleteUnread DELETE /users/me/unread/channels/:channelID

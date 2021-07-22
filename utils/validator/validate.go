@@ -2,12 +2,14 @@ package validator
 
 import (
 	"errors"
-	vd "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/gofrs/uuid"
-	"github.com/traPtitech/traQ/utils"
-	"github.com/traPtitech/traQ/utils/optional"
 	"net/url"
 	"regexp"
+
+	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/gofrs/uuid"
+
+	"github.com/traPtitech/traQ/utils"
+	"github.com/traPtitech/traQ/utils/optional"
 )
 
 var (

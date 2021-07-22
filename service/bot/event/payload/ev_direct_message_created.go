@@ -1,9 +1,10 @@
 package payload
 
 import (
+	"time"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/message"
-	"time"
 )
 
 // DirectMessageCreated DIRECT_MESSAGE_CREATEDイベントペイロード

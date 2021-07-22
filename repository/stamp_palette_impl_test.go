@@ -1,11 +1,13 @@
 package repository
 
 import (
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/traPtitech/traQ/utils/optional"
 	random2 "github.com/traPtitech/traQ/utils/random"
-	"testing"
 )
 
 func TestRepositoryImpl_CreateStampPalette(t *testing.T) {

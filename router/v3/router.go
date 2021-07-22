@@ -3,6 +3,9 @@ package v3
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
+	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
@@ -19,8 +22,6 @@ import (
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/service/ws"
 	mutil "github.com/traPtitech/traQ/utils/message"
-	"go.uber.org/zap"
-	"golang.org/x/sync/singleflight"
 )
 
 type Handlers struct {

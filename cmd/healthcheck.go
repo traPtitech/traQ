@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 // healthcheckCommand ヘルスチェックコマンド

@@ -7,10 +7,11 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/olivere/elastic/v7"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/message"
-	"go.uber.org/zap"
 )
 
 const (

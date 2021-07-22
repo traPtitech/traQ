@@ -3,7 +3,9 @@ package channel
 
 import (
 	"errors"
+
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 )

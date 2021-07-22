@@ -1,10 +1,12 @@
 package validator
 
 import (
+	"testing"
+
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/traPtitech/traQ/utils/optional"
-	"testing"
 )
 
 func TestNotNilUUID(t *testing.T) {

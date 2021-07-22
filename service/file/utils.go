@@ -3,10 +3,12 @@ package file
 import (
 	"bytes"
 	"fmt"
+	"image/png"
+
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/imaging"
-	"image/png"
 )
 
 // GenerateIconFile アイコンファイルを生成します

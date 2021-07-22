@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
-	"log"
 )
 
 // confCommand 設定確認・ベース設定プリントコマンド

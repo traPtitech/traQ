@@ -2,6 +2,7 @@ package message
 
 import (
 	"github.com/golang/mock/gomock"
+
 	"github.com/traPtitech/traQ/repository/mock_repository"
 	"github.com/traPtitech/traQ/testutils"
 )

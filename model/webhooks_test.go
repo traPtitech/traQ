@@ -1,10 +1,11 @@
 package model
 
 import (
-	"github.com/gofrs/uuid"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/gofrs/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestWebhookBot_TableName(t *testing.T) {

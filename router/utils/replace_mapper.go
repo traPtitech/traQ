@@ -2,6 +2,7 @@ package utils
 
 import (
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/utils/message"

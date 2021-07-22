@@ -8,10 +8,11 @@ import (
 
 	"github.com/bluele/gcache"
 	"github.com/gofrs/uuid"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/channel"
-	"go.uber.org/zap"
 )
 
 var cacheTTL = time.Minute

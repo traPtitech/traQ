@@ -2,14 +2,15 @@ package ogp
 
 import (
 	"context"
-	"github.com/dyatlov/go-opengraph/opengraph"
-	"golang.org/x/net/html"
-	"golang.org/x/net/html/charset"
-	"golang.org/x/sync/semaphore"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/dyatlov/go-opengraph/opengraph"
+	"golang.org/x/net/html"
+	"golang.org/x/net/html/charset"
+	"golang.org/x/sync/semaphore"
 )
 
 const concurrentRequestLimit = 10

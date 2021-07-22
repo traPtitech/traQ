@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/dyatlov/go-opengraph/opengraph"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/optional"
 )

@@ -2,6 +2,7 @@ package extension
 
 import (
 	"github.com/labstack/echo/v4"
+
 	"github.com/traPtitech/traQ/utils/random"
 )
 

@@ -1,10 +1,12 @@
 package payload
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/utils/message"
-	"time"
 )
 
 // Base 全イベントに埋め込まれるペイロード

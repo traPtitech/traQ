@@ -1,12 +1,14 @@
 package middlewares
 
 import (
-	"github.com/blendle/zapdriver"
-	"github.com/labstack/echo/v4"
-	"github.com/traPtitech/traQ/router/extension"
-	"go.uber.org/zap"
 	"strconv"
 	"time"
+
+	"github.com/blendle/zapdriver"
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
+
+	"github.com/traPtitech/traQ/router/extension"
 )
 
 // AccessLogging アクセスログミドルウェア

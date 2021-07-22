@@ -2,14 +2,16 @@ package handler
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"go.uber.org/zap"
+
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/bot/event/payload"
 	"github.com/traPtitech/traQ/utils/message"
-	"go.uber.org/zap"
-	"time"
 )
 
 func MessageCreated(ctx Context, datetime time.Time, _ string, fields hub.Fields) error {
