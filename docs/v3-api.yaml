@@ -321,7 +321,9 @@ paths:
         - message
         - pin
       operationId: createPin
-      description: 指定したメッセージをピン留めします。
+      description: |-
+        指定したメッセージをピン留めします。
+        アーカイブされているチャンネルのメッセージ・存在しないメッセージ・チャンネル当たりの上限数を超えたメッセージのピン留めはできません。
     delete:
       summary: ピン留めを外す
       responses:
