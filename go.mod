@@ -1,7 +1,7 @@
 module github.com/traPtitech/traQ
 
 require (
-	cloud.google.com/go v0.88.0
+	cloud.google.com/go v0.89.0
 	cloud.google.com/go/firestore v1.5.0 // indirect
 	cloud.google.com/go/storage v1.16.0 // indirect
 	firebase.google.com/go v3.13.0+incompatible
@@ -26,7 +26,6 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0
-	github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1 // indirect
 	github.com/google/subcommands v1.2.0 // indirect
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.4.2
