@@ -40,7 +40,7 @@ require (
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/motoki317/go-waveform v0.0.3
 	github.com/ncw/swift v1.0.53
-	github.com/olivere/elastic/v7 v7.0.26
+	github.com/olivere/elastic/v7 v7.0.27
 	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e
 	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/prometheus/client_golang v1.11.0
