@@ -11,7 +11,6 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/boz/go-throttle v0.0.0-20160922054636-fdc4eab740c1
 	github.com/coreos/go-oidc v2.2.1+incompatible
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/disintegration/imaging v1.6.2
 	github.com/dyatlov/go-opengraph v0.0.0-20210112100619-dae8665a5b09
 	github.com/fatih/structs v1.1.0 // indirect
@@ -23,6 +22,7 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gofrs/uuid v4.0.0+incompatible
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0
@@ -35,7 +35,7 @@ require (
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
 	github.com/json-iterator/go v1.1.11
-	github.com/labstack/echo/v4 v4.4.0
+	github.com/labstack/echo/v4 v4.5.0
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/motoki317/go-waveform v0.0.3
@@ -58,7 +58,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
 	golang.org/x/exp v0.0.0-20210715201039-d37aa40e8013
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
-	golang.org/x/net v0.0.0-20210716203947-853a461950ff
+	golang.org/x/net v0.0.0-20210726213435-c6fcb2dbf985
 	golang.org/x/oauth2 v0.0.0-20210628180205-a41e5a781914
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect

@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
+	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/skip2/go-qrcode"
 
