@@ -65,17 +65,17 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	bodyLimit := middlewares.RequestBodyLengthLimit
 	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager, h.MessageManager)
-	blockBot := middlewares.BlockBot(h.Repo)
+	blockBot := middlewares.BlockBot()
 	nologin := middlewares.NoLogin(h.SessStore, h.Repo)
 
-	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
-	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
-	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.FileManager)
-	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC, h.Repo)
-	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.RBAC, h.ChannelManager)
-	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.ChannelManager)
-	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC, h.Repo)
-	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm(h.RBAC, h.Repo)
+	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC)
+	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC)
+	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.FileManager)
+	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC)
+	requiresMessageAccessPerm := middlewares.CheckMessageAccessPerm(h.ChannelManager)
+	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.ChannelManager)
+	requiresGroupAdminPerm := middlewares.CheckUserGroupAdminPerm(h.RBAC)
+	requiresClipFolderAccessPerm := middlewares.CheckClipFolderAccessPerm()
 
 	api := e.Group("/v3", middlewares.UserAuthenticate(h.Repo, h.SessStore))
 	{

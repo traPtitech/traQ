@@ -40,7 +40,6 @@ func Setup(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Se
 	r.v1.Setup(api)
 	r.v3.Setup(api)
 	r.oauth2.Setup(api.Group("/oauth2"))
-	r.oauth2.Setup(api.Group("/1.0/oauth2"))
 	r.oauth2.Setup(api.Group("/v3/oauth2"))
 
 	// 外部authハンドラ

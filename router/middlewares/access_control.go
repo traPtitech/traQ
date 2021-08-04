@@ -7,7 +7,6 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/service/channel"
@@ -15,7 +14,6 @@ import (
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
-	"github.com/traPtitech/traQ/service/rbac/role"
 )
 
 // AccessControlMiddlewareGenerator アクセスコントロールミドルウェアのジェネレーターを返します
@@ -48,20 +46,8 @@ func AccessControlMiddlewareGenerator(r rbac.RBAC) func(p ...permission.Permissi
 	}
 }
 
-// AdminOnly 管理者ユーザーのみを通すミドルウェア
-func AdminOnly(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		// ユーザーロール検証
-		user := c.Get(consts.KeyUser).(model.UserInfo)
-		if user.GetRole() != role.Admin {
-			return echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("you are not permitted to request to '%s'", c.Request().URL.Path))
-		}
-		return next(c) // OK
-	}
-}
-
 // BlockBot Botのリクエストを制限するミドルウェア
-func BlockBot(repo repository.Repository) echo.MiddlewareFunc {
+func BlockBot() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			user := c.Get(consts.KeyUser).(model.UserInfo)
@@ -74,7 +60,7 @@ func BlockBot(repo repository.Repository) echo.MiddlewareFunc {
 }
 
 // CheckBotAccessPerm BOTアクセス権限を確認するミドルウェア
-func CheckBotAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
+func CheckBotAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			user := c.Get(consts.KeyUser).(model.UserInfo)
@@ -97,7 +83,7 @@ func CheckBotAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Middlew
 }
 
 // CheckWebhookAccessPerm Webhookアクセス権限を確認するミドルウェア
-func CheckWebhookAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
+func CheckWebhookAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			user := c.Get(consts.KeyUser).(model.UserInfo)
@@ -114,19 +100,19 @@ func CheckWebhookAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Mid
 }
 
 // CheckFileAccessPerm Fileアクセス権限を確認するミドルウェア
-func CheckFileAccessPerm(rbac rbac.RBAC, fm file.Manager) echo.MiddlewareFunc {
+func CheckFileAccessPerm(fm file.Manager) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			file := c.Get(consts.KeyParamFile).(model.File)
+			f := c.Get(consts.KeyParamFile).(model.File)
 			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
 
-			if t := file.GetFileType(); t == model.FileTypeIcon || t == model.FileTypeStamp {
+			if t := f.GetFileType(); t == model.FileTypeIcon || t == model.FileTypeStamp {
 				// スタンプ・アイコン画像の場合はスキップ
 				return next(c)
 			}
 
 			// アクセス権確認
-			if ok, err := fm.Accessible(file.GetID(), userID); err != nil {
+			if ok, err := fm.Accessible(f.GetID(), userID); err != nil {
 				return herror.InternalServerError(err)
 			} else if !ok {
 				return herror.Forbidden()
@@ -138,7 +124,7 @@ func CheckFileAccessPerm(rbac rbac.RBAC, fm file.Manager) echo.MiddlewareFunc {
 }
 
 // CheckClientAccessPerm Clientアクセス権限を確認するミドルウェア
-func CheckClientAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
+func CheckClientAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			user := c.Get(consts.KeyUser).(model.UserInfo)
@@ -155,7 +141,7 @@ func CheckClientAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.Midd
 }
 
 // CheckMessageAccessPerm Messageアクセス権限を確認するミドルウェア
-func CheckMessageAccessPerm(rbac rbac.RBAC, cm channel.Manager) echo.MiddlewareFunc {
+func CheckMessageAccessPerm(cm channel.Manager) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
@@ -174,7 +160,7 @@ func CheckMessageAccessPerm(rbac rbac.RBAC, cm channel.Manager) echo.MiddlewareF
 }
 
 // CheckChannelAccessPerm Channelアクセス権限を確認するミドルウェア
-func CheckChannelAccessPerm(rbac rbac.RBAC, cm channel.Manager) echo.MiddlewareFunc {
+func CheckChannelAccessPerm(cm channel.Manager) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			userID := c.Get(consts.KeyUser).(model.UserInfo).GetID()
@@ -193,7 +179,7 @@ func CheckChannelAccessPerm(rbac rbac.RBAC, cm channel.Manager) echo.MiddlewareF
 }
 
 // CheckUserGroupAdminPerm UserGroup管理者権限を確認するミドルウェア
-func CheckUserGroupAdminPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
+func CheckUserGroupAdminPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			user := c.Get(consts.KeyUser).(model.UserInfo)
@@ -209,7 +195,7 @@ func CheckUserGroupAdminPerm(rbac rbac.RBAC, repo repository.Repository) echo.Mi
 }
 
 // CheckClipFolderAccessPerm ClipFolderアクセス権限を確認するミドルウェア
-func CheckClipFolderAccessPerm(rbac rbac.RBAC, repo repository.Repository) echo.MiddlewareFunc {
+func CheckClipFolderAccessPerm() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			user := c.Get(consts.KeyUser).(model.UserInfo)

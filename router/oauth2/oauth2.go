@@ -55,7 +55,7 @@ type Config struct {
 
 func (h *Handler) Setup(e *echo.Group) {
 	e.GET("/authorize", h.AuthorizationEndpointHandler)
-	e.POST("/authorize/decide", h.AuthorizationDecideHandler, middlewares.UserAuthenticate(h.Repo, h.SessStore), middlewares.BlockBot(h.Repo))
+	e.POST("/authorize/decide", h.AuthorizationDecideHandler, middlewares.UserAuthenticate(h.Repo, h.SessStore), middlewares.BlockBot())
 	e.POST("/authorize", h.AuthorizationEndpointHandler)
 	e.POST("/token", h.TokenEndpointHandler)
 	e.POST("/revoke", h.RevokeTokenEndpointHandler)

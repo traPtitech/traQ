@@ -97,7 +97,7 @@ func (h *Handler) tokenEndpointAuthorizationCodeHandler(c echo.Context) error {
 		}
 	}
 	id, pw, ok := c.Request().BasicAuth()
-	if !ok { // Request Body
+	if !ok { // Request Payload
 		if len(req.ClientID) == 0 {
 			return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidClient})
 		}
@@ -161,7 +161,7 @@ func (h *Handler) tokenEndpointPasswordHandler(c echo.Context) error {
 	}
 
 	cid, cpw, ok := c.Request().BasicAuth()
-	if !ok { // Request Body
+	if !ok { // Request Payload
 		if len(req.ClientID) == 0 {
 			return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidClient})
 		}
@@ -243,7 +243,7 @@ func (h *Handler) tokenEndpointClientCredentialsHandler(c echo.Context) error {
 	}
 
 	id, pw, ok := c.Request().BasicAuth()
-	if !ok { // Request Body
+	if !ok { // Request Payload
 		if len(req.ClientID) == 0 {
 			return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidClient})
 		}
@@ -343,7 +343,7 @@ func (h *Handler) tokenEndpointRefreshTokenHandler(c echo.Context) error {
 	}
 	if client.Confidential { // need to authenticate client
 		id, pw, ok := c.Request().BasicAuth()
-		if !ok { // Request Body
+		if !ok { // Request Payload
 			if len(req.ClientID) == 0 {
 				return c.JSON(http.StatusBadRequest, oauth2ErrorResponse{ErrorType: errInvalidClient})
 			}

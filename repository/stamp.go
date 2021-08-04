@@ -30,7 +30,7 @@ type UserStampHistory struct {
 	Datetime time.Time `json:"datetime"`
 }
 
-//StampStats スタンプ統計情報
+// StampStats スタンプ統計情報
 type StampStats struct {
 	Count      int64 `json:"count"`
 	TotalCount int64 `json:"totalCount"`
