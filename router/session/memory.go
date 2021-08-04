@@ -156,6 +156,9 @@ func (ms *memoryStore) RevokeSession(c echo.Context) error {
 	if err != nil {
 		return nil
 	}
+	if len(cookie.Value) == 0 {
+		return nil
+	}
 
 	ms.Lock()
 	delete(ms.sessions, cookie.Value)
