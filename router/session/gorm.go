@@ -244,6 +244,9 @@ func (ss *sessionStore) RevokeSession(c echo.Context) error {
 	if err != nil {
 		return nil
 	}
+	if len(cookie.Value) == 0 {
+		return nil
+	}
 
 	if err := ss.db.Delete(&model.SessionRecord{Token: cookie.Value}).Error; err != nil {
 		return err
