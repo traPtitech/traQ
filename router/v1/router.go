@@ -324,7 +324,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 			apiPublic.GET("/emoji.css", h.GetPublicEmojiCSS)
 			apiPublic.GET("/emoji/:stampID", h.GetPublicEmojiImage, retrieve.StampID(false))
 		}
-		apiNoAuth.POST("/webhooks/:webhookID", h.PostWebhook, retrieve.WebhookID())
+		apiNoAuth.POST("/webhooks/:webhookID", gone)
 		apiNoAuth.POST("/webhooks/:webhookID/github", gone)
 	}
 
@@ -345,10 +345,6 @@ func (h *Handlers) stampEventSubscriber(sub hub.Subscription) {
 
 func getStampFromContext(c echo.Context) *model.Stamp {
 	return c.Get(consts.KeyParamStamp).(*model.Stamp)
-}
-
-func getWebhookFromContext(c echo.Context) model.Webhook {
-	return c.Get(consts.KeyParamWebhook).(model.Webhook)
 }
 
 func getFileFromContext(c echo.Context) model.File {

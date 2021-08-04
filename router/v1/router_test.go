@@ -121,20 +121,6 @@ func setup(t *testing.T, server string) (*Env, *assert.Assertions, *require.Asse
 	return env, assert, require, env.generateSession(t, testUser.GetID()), env.generateSession(t, adminUser.GetID())
 }
 
-func setupWithUsers(t *testing.T, server string) (*Env, *assert.Assertions, *require.Assertions, string, string, model.UserInfo, model.UserInfo) {
-	t.Helper()
-	env, ok := envs[server]
-	if !ok {
-		t.FailNow()
-	}
-	assert, require := assertAndRequire(t)
-	repo := env.Repository
-	testUser := env.mustMakeUser(t, rand)
-	adminUser, err := repo.GetUserByName("traq", true)
-	require.NoError(err)
-	return env, assert, require, env.generateSession(t, testUser.GetID()), env.generateSession(t, adminUser.GetID()), testUser, adminUser
-}
-
 func assertAndRequire(t *testing.T) (*assert.Assertions, *require.Assertions) {
 	return assert.New(t), require.New(t)
 }
@@ -165,16 +151,6 @@ func (env *Env) makeExp(t *testing.T) *httpexpect.Expect {
 	})
 }
 
-func (env *Env) mustMakeChannel(t *testing.T, name string) *model.Channel {
-	t.Helper()
-	if name == rand {
-		name = random.AlphaNumeric(20)
-	}
-	ch, err := env.ChannelManager.CreatePublicChannel(name, uuid.Nil, uuid.Nil)
-	require.NoError(t, err)
-	return ch
-}
-
 func (env *Env) mustMakeUser(t *testing.T, userName string) model.UserInfo {
 	t.Helper()
 	if userName == rand {
@@ -197,16 +173,4 @@ func (env *Env) mustMakeFile(t *testing.T) model.File {
 	})
 	require.NoError(t, err)
 	return f
-}
-
-func (env *Env) mustMakeWebhook(t *testing.T, name string, channelID, creatorID uuid.UUID, secret string) model.Webhook {
-	t.Helper()
-	if name == rand {
-		name = random.AlphaNumeric(20)
-	}
-	iconFileID, err := file.GenerateIconFile(env.FileManager, name)
-	require.NoError(t, err)
-	w, err := env.Repository.CreateWebhook(name, "", channelID, iconFileID, creatorID, secret)
-	require.NoError(t, err)
-	return w
 }
