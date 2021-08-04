@@ -21,13 +21,10 @@ import (
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/channel"
-	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/file"
-	imaging2 "github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
-	"github.com/traPtitech/traQ/service/viewer"
 	mutil "github.com/traPtitech/traQ/utils/message"
 
 	"github.com/labstack/echo/v4"
@@ -45,9 +42,6 @@ type Handlers struct {
 	Repo           repository.Repository
 	Hub            *hub.Hub
 	Logger         *zap.Logger
-	OC             *counter.OnlineCounter
-	VM             *viewer.Manager
-	Imaging        imaging2.Processor
 	SessStore      session.Store
 	ChannelManager channel.Manager
 	MessageManager message.Manager
@@ -68,13 +62,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager, h.MessageManager)
 	blockBot := middlewares.BlockBot(h.Repo)
-	nologin := middlewares.NoLogin(h.SessStore, h.Repo)
 
-	requiresBotAccessPerm := middlewares.CheckBotAccessPerm(h.RBAC, h.Repo)
-	requiresWebhookAccessPerm := middlewares.CheckWebhookAccessPerm(h.RBAC, h.Repo)
 	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.FileManager)
-	requiresClientAccessPerm := middlewares.CheckClientAccessPerm(h.RBAC, h.Repo)
-	requiresChannelAccessPerm := middlewares.CheckChannelAccessPerm(h.RBAC, h.ChannelManager)
 
 	gone := func(c echo.Context) error { return herror.HTTPError(http.StatusGone, "this api has been deleted") }
 
@@ -82,65 +71,65 @@ func (h *Handlers) Setup(e *echo.Group) {
 	{
 		apiUsers := api.Group("/users")
 		{
-			apiUsers.GET("", h.GetUsers, requires(permission.GetUser))
-			apiUsers.POST("", h.PostUsers, requires(permission.RegisterUser))
+			apiUsers.GET("", gone)
+			apiUsers.POST("", gone)
 			apiUsersMe := apiUsers.Group("/me")
 			{
-				apiUsersMe.GET("", h.GetMe, requires(permission.GetMe))
-				apiUsersMe.PATCH("", h.PatchMe, requires(permission.EditMe))
-				apiUsersMe.PUT("/password", h.PutPassword, requires(permission.ChangeMyPassword), blockBot)
-				apiUsersMe.GET("/qr-code", h.GetMyQRCode, requires(permission.GetUserQRCode), blockBot)
-				apiUsersMe.GET("/icon", h.GetMyIcon, requires(permission.DownloadFile))
-				apiUsersMe.PUT("/icon", h.PutMyIcon, requires(permission.ChangeMyIcon))
-				apiUsersMe.GET("/stamp-history", h.GetMyStampHistory, requires(permission.GetMyStampHistory))
-				apiUsersMe.GET("/groups", h.GetMyBelongingGroup, requires(permission.GetUserGroup))
-				apiUsersMe.GET("/notification", h.GetMyNotificationChannels, requires(permission.GetChannelSubscription), blockBot)
-				apiUsersMeSessions := apiUsersMe.Group("/sessions", blockBot)
+				apiUsersMe.GET("", gone)
+				apiUsersMe.PATCH("", gone)
+				apiUsersMe.PUT("/password", gone)
+				apiUsersMe.GET("/qr-code", gone)
+				apiUsersMe.GET("/icon", gone)
+				apiUsersMe.PUT("/icon", gone)
+				apiUsersMe.GET("/stamp-history", gone)
+				apiUsersMe.GET("/groups", gone)
+				apiUsersMe.GET("/notification", gone)
+				apiUsersMeSessions := apiUsersMe.Group("/sessions")
 				{
-					apiUsersMeSessions.GET("", h.GetMySessions, requires(permission.GetMySessions))
-					apiUsersMeSessions.DELETE("", h.DeleteAllMySessions, requires(permission.DeleteMySessions))
-					apiUsersMeSessions.DELETE("/:referenceID", h.DeleteMySession, requires(permission.DeleteMySessions))
+					apiUsersMeSessions.GET("", gone)
+					apiUsersMeSessions.DELETE("", gone)
+					apiUsersMeSessions.DELETE("/:referenceID", gone)
 				}
-				apiUsersMeStars := apiUsersMe.Group("/stars", blockBot)
+				apiUsersMeStars := apiUsersMe.Group("/stars")
 				{
-					apiUsersMeStars.GET("", h.GetStars, requires(permission.GetChannelStar))
-					apiUsersMeStarsCid := apiUsersMeStars.Group("/:channelID", retrieve.ChannelID(), requiresChannelAccessPerm)
+					apiUsersMeStars.GET("", gone)
+					apiUsersMeStarsCid := apiUsersMeStars.Group("/:channelID")
 					{
-						apiUsersMeStarsCid.PUT("", h.PutStars, requires(permission.EditChannelStar))
-						apiUsersMeStarsCid.DELETE("", h.DeleteStars, requires(permission.EditChannelStar))
+						apiUsersMeStarsCid.PUT("", gone)
+						apiUsersMeStarsCid.DELETE("", gone)
 					}
 				}
-				apiUsersMeUnread := apiUsersMe.Group("/unread", blockBot)
+				apiUsersMeUnread := apiUsersMe.Group("/unread")
 				{
-					apiUsersMeUnread.GET("/channels", h.GetUnreadChannels, requires(permission.GetUnread))
-					apiUsersMeUnread.DELETE("/channels/:channelID", h.DeleteUnread, requires(permission.DeleteUnread))
+					apiUsersMeUnread.GET("/channels", gone)
+					apiUsersMeUnread.DELETE("/channels/:channelID", gone)
 				}
-				apiUsersMeTokens := apiUsersMe.Group("/tokens", blockBot)
+				apiUsersMeTokens := apiUsersMe.Group("/tokens")
 				{
-					apiUsersMeTokens.GET("", h.GetMyTokens, requires(permission.GetMyTokens))
-					apiUsersMeTokens.DELETE("/:tokenID", h.DeleteMyToken, requires(permission.RevokeMyToken))
+					apiUsersMeTokens.GET("", gone)
+					apiUsersMeTokens.DELETE("/:tokenID", gone)
 				}
 			}
-			apiUsersUID := apiUsers.Group("/:userID", retrieve.UserID(false))
+			apiUsersUID := apiUsers.Group("/:userID")
 			{
-				apiUsersUID.GET("", h.GetUserByID, requires(permission.GetUser))
-				apiUsersUID.PATCH("", h.PatchUserByID, requires(permission.EditOtherUsers))
-				apiUsersUID.PUT("/status", h.PutUserStatus, requires(permission.EditOtherUsers))
-				apiUsersUID.PUT("/password", h.PutUserPassword, requires(permission.EditOtherUsers))
+				apiUsersUID.GET("", gone)
+				apiUsersUID.PATCH("", gone)
+				apiUsersUID.PUT("/status", gone)
+				apiUsersUID.PUT("/password", gone)
 				apiUsersUID.GET("/messages", gone)
 				apiUsersUID.POST("/messages", gone)
-				apiUsersUID.GET("/icon", h.GetUserIcon, requires(permission.DownloadFile))
-				apiUsersUID.PUT("/icon", h.PutUserIcon, requires(permission.EditOtherUsers))
-				apiUsersUID.GET("/notification", h.GetNotificationChannels, requires(permission.GetChannelSubscription))
-				apiUsersUID.GET("/groups", h.GetUserBelongingGroup, requires(permission.GetUserGroup))
+				apiUsersUID.GET("/icon", gone)
+				apiUsersUID.PUT("/icon", gone)
+				apiUsersUID.GET("/notification", gone)
+				apiUsersUID.GET("/groups", gone)
 				apiUsersUIDTags := apiUsersUID.Group("/tags")
 				{
-					apiUsersUIDTags.GET("", h.GetUserTags, requires(permission.GetUserTag))
-					apiUsersUIDTags.POST("", h.PostUserTag, requires(permission.EditUserTag))
+					apiUsersUIDTags.GET("", gone)
+					apiUsersUIDTags.POST("", gone)
 					apiUsersUIDTagsTid := apiUsersUIDTags.Group("/:tagID")
 					{
-						apiUsersUIDTagsTid.PATCH("", h.PatchUserTag, requires(permission.EditUserTag))
-						apiUsersUIDTagsTid.DELETE("", h.DeleteUserTag, requires(permission.EditUserTag))
+						apiUsersUIDTagsTid.PATCH("", gone)
+						apiUsersUIDTagsTid.DELETE("", gone)
 					}
 				}
 			}
@@ -153,17 +142,17 @@ func (h *Handlers) Setup(e *echo.Group) {
 		apiChannels := api.Group("/channels")
 		{
 			apiChannels.GET("", gone)
-			apiChannels.POST("", h.PostChannels, requires(permission.CreateChannel))
-			apiChannelsCid := apiChannels.Group("/:channelID", retrieve.ChannelID(), requiresChannelAccessPerm)
+			apiChannels.POST("", gone)
+			apiChannelsCid := apiChannels.Group("/:channelID")
 			{
-				apiChannelsCid.GET("", h.GetChannelByChannelID, requires(permission.GetChannel))
+				apiChannelsCid.GET("", gone)
 				apiChannelsCid.PATCH("", gone)
 				apiChannelsCid.PUT("/parent", gone)
-				apiChannelsCid.POST("/children", h.PostChannelChildren, requires(permission.CreateChannel))
+				apiChannelsCid.POST("/children", gone)
 				apiChannelsCid.GET("/pins", gone)
-				apiChannelsCid.GET("/events", h.GetChannelEvents, requires(permission.GetChannel))
-				apiChannelsCid.GET("/stats", h.GetChannelStats, requires(permission.GetChannel))
-				apiChannelsCid.GET("/viewers", h.GetChannelViewers, requires(permission.GetChannel))
+				apiChannelsCid.GET("/events", gone)
+				apiChannelsCid.GET("/stats", gone)
+				apiChannelsCid.GET("/viewers", gone)
 				apiChannelsCidTopic := apiChannelsCid.Group("/topic")
 				{
 					apiChannelsCidTopic.GET("", gone)
@@ -176,14 +165,14 @@ func (h *Handlers) Setup(e *echo.Group) {
 				}
 				apiChannelsCidNotification := apiChannelsCid.Group("/notification")
 				{
-					apiChannelsCidNotification.GET("", h.GetChannelSubscribers, requires(permission.GetChannelSubscription))
-					apiChannelsCidNotification.PUT("", h.PutChannelSubscribers, requires(permission.EditChannelSubscription))
+					apiChannelsCidNotification.GET("", gone)
+					apiChannelsCidNotification.PUT("", gone)
 				}
-				apiChannelsCidBots := apiChannelsCid.Group("/bots", blockBot)
+				apiChannelsCidBots := apiChannelsCid.Group("/bots")
 				{
-					apiChannelsCidBots.GET("", h.GetChannelBots, requires(permission.GetBot))
-					apiChannelsCidBots.POST("", h.PostChannelBots, requires(permission.BotActionJoinChannel))
-					apiChannelsCidBots.DELETE("/:botID", h.DeleteChannelBot, requires(permission.BotActionLeaveChannel), retrieve.BotID())
+					apiChannelsCidBots.GET("", gone)
+					apiChannelsCidBots.POST("", gone)
+					apiChannelsCidBots.DELETE("/:botID", gone)
 				}
 				apiChannelsCidWebRTC := apiChannelsCid.Group("/webrtc")
 				{
@@ -191,10 +180,10 @@ func (h *Handlers) Setup(e *echo.Group) {
 				}
 			}
 		}
-		apiNotification := api.Group("/notification", blockBot)
+		apiNotification := api.Group("/notification")
 		{
 			apiNotification.GET("", gone)
-			apiNotification.POST("/device", h.PostDeviceToken, requires(permission.RegisterFCMDevice))
+			apiNotification.POST("/device", gone)
 		}
 		apiMessages := api.Group("/messages")
 		{
@@ -217,7 +206,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiTagsTid := apiTags.Group("/:tagID")
 			{
-				apiTagsTid.GET("", h.GetUsersByTagID, requires(permission.GetUserTag))
+				apiTagsTid.GET("", gone)
 			}
 		}
 		apiFiles := api.Group("/files")
@@ -241,75 +230,75 @@ func (h *Handlers) Setup(e *echo.Group) {
 		}
 		apiStamps := api.Group("/stamps")
 		{
-			apiStamps.GET("", h.GetStamps, requires(permission.GetStamp))
-			apiStamps.POST("", h.PostStamp, requires(permission.CreateStamp))
-			apiStampsSid := apiStamps.Group("/:stampID", retrieve.StampID(false))
+			apiStamps.GET("", gone)
+			apiStamps.POST("", gone)
+			apiStampsSid := apiStamps.Group("/:stampID")
 			{
-				apiStampsSid.GET("", h.GetStamp, requires(permission.GetStamp))
-				apiStampsSid.PATCH("", h.PatchStamp, requires(permission.EditStamp))
-				apiStampsSid.DELETE("", h.DeleteStamp, requires(permission.DeleteStamp))
+				apiStampsSid.GET("", gone)
+				apiStampsSid.PATCH("", gone)
+				apiStampsSid.DELETE("", gone)
 			}
 		}
 		apiWebhooks := api.Group("/webhooks", blockBot)
 		{
-			apiWebhooks.GET("", h.GetWebhooks, requires(permission.GetWebhook))
-			apiWebhooks.POST("", h.PostWebhooks, requires(permission.CreateWebhook))
-			apiWebhooksWid := apiWebhooks.Group("/:webhookID", retrieve.WebhookID(), requiresWebhookAccessPerm)
+			apiWebhooks.GET("", gone)
+			apiWebhooks.POST("", gone)
+			apiWebhooksWid := apiWebhooks.Group("/:webhookID")
 			{
-				apiWebhooksWid.GET("", h.GetWebhook, requires(permission.GetWebhook))
-				apiWebhooksWid.PATCH("", h.PatchWebhook, requires(permission.EditWebhook))
-				apiWebhooksWid.DELETE("", h.DeleteWebhook, requires(permission.DeleteWebhook))
-				apiWebhooksWid.GET("/icon", h.GetWebhookIcon, requires(permission.GetWebhook))
-				apiWebhooksWid.PUT("/icon", h.PutWebhookIcon, requires(permission.EditWebhook))
+				apiWebhooksWid.GET("", gone)
+				apiWebhooksWid.PATCH("", gone)
+				apiWebhooksWid.DELETE("", gone)
+				apiWebhooksWid.GET("/icon", gone)
+				apiWebhooksWid.PUT("/icon", gone)
 				apiWebhooksWid.GET("/messages", gone)
 			}
 		}
 		apiGroups := api.Group("/groups")
 		{
-			apiGroups.GET("", h.GetUserGroups, requires(permission.GetUserGroup))
-			apiGroups.POST("", h.PostUserGroups, requires(permission.CreateUserGroup))
-			apiGroupsGid := apiGroups.Group("/:groupID", retrieve.GroupID())
+			apiGroups.GET("", gone)
+			apiGroups.POST("", gone)
+			apiGroupsGid := apiGroups.Group("/:groupID")
 			{
-				apiGroupsGid.GET("", h.GetUserGroup, requires(permission.GetUserGroup))
-				apiGroupsGid.PATCH("", h.PatchUserGroup, requires(permission.EditUserGroup))
-				apiGroupsGid.DELETE("", h.DeleteUserGroup, requires(permission.DeleteUserGroup))
+				apiGroupsGid.GET("", gone)
+				apiGroupsGid.PATCH("", gone)
+				apiGroupsGid.DELETE("", gone)
 				apiGroupsGidMembers := apiGroupsGid.Group("/members")
 				{
-					apiGroupsGidMembers.GET("", h.GetUserGroupMembers, requires(permission.GetUserGroup))
-					apiGroupsGidMembers.POST("", h.PostUserGroupMembers, requires(permission.EditUserGroup))
-					apiGroupsGidMembers.DELETE("/:userID", h.DeleteUserGroupMembers, requires(permission.EditUserGroup))
+					apiGroupsGidMembers.GET("", gone)
+					apiGroupsGidMembers.POST("", gone)
+					apiGroupsGidMembers.DELETE("/:userID", gone)
 				}
 			}
 		}
-		apiClients := api.Group("/clients", blockBot)
+		apiClients := api.Group("/clients")
 		{
-			apiClients.GET("", h.GetClients, requires(permission.GetClients))
-			apiClients.POST("", h.PostClients, requires(permission.CreateClient))
-			apiClientCid := apiClients.Group("/:clientID", retrieve.ClientID())
+			apiClients.GET("", gone)
+			apiClients.POST("", gone)
+			apiClientCid := apiClients.Group("/:clientID")
 			{
-				apiClientCid.GET("", h.GetClient, requires(permission.GetClients))
-				apiClientCid.PATCH("", h.PatchClient, requires(permission.EditMyClient), requiresClientAccessPerm)
-				apiClientCid.DELETE("", h.DeleteClient, requires(permission.DeleteMyClient), requiresClientAccessPerm)
-				apiClientCid.GET("/detail", h.GetClientDetail, requires(permission.GetClients), requiresClientAccessPerm)
+				apiClientCid.GET("", gone)
+				apiClientCid.PATCH("", gone)
+				apiClientCid.DELETE("", gone)
+				apiClientCid.GET("/detail", gone)
 			}
 		}
-		apiBots := api.Group("/bots", blockBot)
+		apiBots := api.Group("/bots")
 		{
-			apiBots.GET("", h.GetBots, requires(permission.GetBot))
-			apiBots.POST("", h.PostBots, requires(permission.CreateBot))
-			apiBotsBid := apiBots.Group("/:botID", retrieve.BotID())
+			apiBots.GET("", gone)
+			apiBots.POST("", gone)
+			apiBotsBid := apiBots.Group("/:botID")
 			{
-				apiBotsBid.GET("", h.GetBot, requires(permission.GetBot))
-				apiBotsBid.PATCH("", h.PatchBot, requires(permission.EditBot), requiresBotAccessPerm)
-				apiBotsBid.DELETE("", h.DeleteBot, requires(permission.DeleteBot), requiresBotAccessPerm)
-				apiBotsBid.GET("/detail", h.GetBotDetail, requires(permission.GetBot), requiresBotAccessPerm)
-				apiBotsBid.PUT("/events", h.PutBotEvents, requires(permission.EditBot), requiresBotAccessPerm)
-				apiBotsBid.GET(`/events/logs`, h.GetBotEventLogs, requires(permission.GetBot), requiresBotAccessPerm)
-				apiBotsBid.GET("/icon", h.GetBotIcon, requires(permission.GetBot))
-				apiBotsBid.PUT("/icon", h.PutBotIcon, requires(permission.EditBot), requiresBotAccessPerm)
-				apiBotsBid.PUT("/state", h.PutBotState, requires(permission.EditBot), requiresBotAccessPerm)
-				apiBotsBid.POST("/reissue", h.PostBotReissueTokens, requires(permission.EditBot), requiresBotAccessPerm)
-				apiBotsBid.GET("/channels", h.GetBotJoinChannels, requires(permission.GetBot), requiresBotAccessPerm)
+				apiBotsBid.GET("", gone)
+				apiBotsBid.PATCH("", gone)
+				apiBotsBid.DELETE("", gone)
+				apiBotsBid.GET("/detail", gone)
+				apiBotsBid.PUT("/events", gone)
+				apiBotsBid.GET(`/events/logs`, gone)
+				apiBotsBid.GET("/icon", gone)
+				apiBotsBid.PUT("/icon", gone)
+				apiBotsBid.PUT("/state", gone)
+				apiBotsBid.POST("/reissue", gone)
+				apiBotsBid.GET("/channels", gone)
 			}
 		}
 		apiActivity := api.Group("/activity")
@@ -326,8 +315,8 @@ func (h *Handlers) Setup(e *echo.Group) {
 
 	apiNoAuth := e.Group("/1.0")
 	{
-		apiNoAuth.POST("/login", h.PostLogin, nologin)
-		apiNoAuth.POST("/logout", h.PostLogout)
+		apiNoAuth.POST("/login", gone)
+		apiNoAuth.POST("/logout", gone)
 		apiPublic := apiNoAuth.Group("/public")
 		{
 			apiPublic.GET("/icon/:username", h.GetPublicUserIcon)
@@ -354,52 +343,16 @@ func (h *Handlers) stampEventSubscriber(sub hub.Subscription) {
 	}
 }
 
-func bindAndValidate(c echo.Context, i interface{}) error {
-	return extension.BindAndValidate(c, i)
-}
-
-func getRequestUser(c echo.Context) model.UserInfo {
-	return c.Get(consts.KeyUser).(model.UserInfo)
-}
-
-func getRequestUserID(c echo.Context) uuid.UUID {
-	return getRequestUser(c).GetID()
-}
-
-func getRequestParamAsUUID(c echo.Context, name string) uuid.UUID {
-	return extension.GetRequestParamAsUUID(c, name)
-}
-
-func getGroupFromContext(c echo.Context) *model.UserGroup {
-	return c.Get(consts.KeyParamGroup).(*model.UserGroup)
-}
-
 func getStampFromContext(c echo.Context) *model.Stamp {
 	return c.Get(consts.KeyParamStamp).(*model.Stamp)
-}
-
-func getChannelFromContext(c echo.Context) *model.Channel {
-	return c.Get(consts.KeyParamChannel).(*model.Channel)
-}
-
-func getUserFromContext(c echo.Context) model.UserInfo {
-	return c.Get(consts.KeyParamUser).(model.UserInfo)
 }
 
 func getWebhookFromContext(c echo.Context) model.Webhook {
 	return c.Get(consts.KeyParamWebhook).(model.Webhook)
 }
 
-func getBotFromContext(c echo.Context) *model.Bot {
-	return c.Get(consts.KeyParamBot).(*model.Bot)
-}
-
 func getFileFromContext(c echo.Context) model.File {
 	return c.Get(consts.KeyParamFile).(model.File)
-}
-
-func getClientFromContext(c echo.Context) *model.OAuth2Client {
-	return c.Get(consts.KeyParamClient).(*model.OAuth2Client)
 }
 
 // L ロガーを返します

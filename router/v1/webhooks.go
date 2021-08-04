@@ -8,144 +8,15 @@ import (
 	"net/http"
 	"strings"
 
-	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
 	"github.com/labstack/echo/v4"
 
-	"github.com/traPtitech/traQ/model"
-	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
 	"github.com/traPtitech/traQ/router/extension/herror"
-	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/service/channel"
-	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/message"
-	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/utils/hmac"
-	"github.com/traPtitech/traQ/utils/optional"
 )
-
-// GetWebhooks GET /webhooks
-func (h *Handlers) GetWebhooks(c echo.Context) error {
-	user := getRequestUser(c)
-
-	var (
-		list []model.Webhook
-		err  error
-	)
-	if c.QueryParam("all") == "1" && h.RBAC.IsGranted(user.GetRole(), permission.AccessOthersWebhook) {
-		list, err = h.Repo.GetAllWebhooks()
-	} else {
-		list, err = h.Repo.GetWebhooksByCreator(user.GetID())
-	}
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.JSON(http.StatusOK, formatWebhooks(list))
-}
-
-// PostWebhooksRequest POST /webhooks リクエストボディ
-type PostWebhooksRequest struct {
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	ChannelID   uuid.UUID `json:"channelId"`
-	Secret      string    `json:"secret"`
-}
-
-func (r PostWebhooksRequest) Validate() error {
-	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, vd.Required, vd.RuneLength(1, 32)),
-		vd.Field(&r.Description, vd.Required, vd.RuneLength(1, 1000)),
-	)
-}
-
-// PostWebhooks POST /webhooks
-func (h *Handlers) PostWebhooks(c echo.Context) error {
-	userID := getRequestUserID(c)
-
-	var req PostWebhooksRequest
-	if err := bindAndValidate(c, &req); err != nil {
-		return err
-	}
-
-	iconFileID, err := file.GenerateIconFile(h.FileManager, req.Name)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	w, err := h.Repo.CreateWebhook(req.Name, req.Description, req.ChannelID, iconFileID, userID, req.Secret)
-	if err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		default:
-			return herror.InternalServerError(err)
-		}
-	}
-
-	return c.JSON(http.StatusCreated, formatWebhook(w))
-}
-
-// GetWebhook GET /webhooks/:webhookID
-func (h *Handlers) GetWebhook(c echo.Context) error {
-	w := getWebhookFromContext(c)
-	return c.JSON(http.StatusOK, formatWebhook(w))
-}
-
-// PatchWebhookRequest PATCH /webhooks/:webhookID リクエストボディ
-type PatchWebhookRequest struct {
-	Name        optional.String `json:"name"`
-	Description optional.String `json:"description"`
-	ChannelID   optional.UUID   `json:"channelId"`
-	Secret      optional.String `json:"secret"`
-	CreatorID   optional.UUID   `json:"creatorId"`
-}
-
-func (r PatchWebhookRequest) Validate() error {
-	return vd.ValidateStruct(&r,
-		vd.Field(&r.Name, vd.RuneLength(1, 32)),
-		vd.Field(&r.Description, vd.RuneLength(1, 1000)),
-	)
-}
-
-// PatchWebhook PATCH /webhooks/:webhookID
-func (h *Handlers) PatchWebhook(c echo.Context) error {
-	w := getWebhookFromContext(c)
-
-	var req PatchWebhookRequest
-	if err := bindAndValidate(c, &req); err != nil {
-		return err
-	}
-
-	args := repository.UpdateWebhookArgs{
-		Name:        req.Name,
-		Description: req.Description,
-		ChannelID:   req.ChannelID,
-		Secret:      req.Secret,
-		CreatorID:   req.CreatorID,
-	}
-	if err := h.Repo.UpdateWebhook(w.GetID(), args); err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		default:
-			return herror.InternalServerError(err)
-		}
-	}
-	return c.NoContent(http.StatusNoContent)
-}
-
-// DeleteWebhook DELETE /webhooks/:webhookID
-func (h *Handlers) DeleteWebhook(c echo.Context) error {
-	w := getWebhookFromContext(c)
-
-	if err := h.Repo.DeleteWebhook(w.GetID()); err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return c.NoContent(http.StatusNoContent)
-}
 
 // PostWebhook POST /webhooks/:webhookID
 func (h *Handlers) PostWebhook(c echo.Context) error {
@@ -214,22 +85,4 @@ func (h *Handlers) PostWebhook(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
-}
-
-// GetWebhookIcon GET /webhooks/:webhookID/icon
-func (h *Handlers) GetWebhookIcon(c echo.Context) error {
-	w := getWebhookFromContext(c)
-
-	// ユーザー取得
-	user, err := h.Repo.GetUser(w.GetBotUserID(), false)
-	if err != nil {
-		return herror.InternalServerError(err)
-	}
-
-	return utils.ServeUserIcon(c, h.FileManager, user)
-}
-
-// PutWebhookIcon PUT /webhooks/:webhookID/icon
-func (h *Handlers) PutWebhookIcon(c echo.Context) error {
-	return utils.ChangeUserIcon(h.Imaging, c, h.Repo, h.FileManager, getWebhookFromContext(c).GetBotUserID())
 }

@@ -18,12 +18,10 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/channel"
-	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/rbac"
-	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/testutils"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/storage"
@@ -94,13 +92,10 @@ func TestMain(m *testing.M) {
 			Repo:           env.Repository,
 			Hub:            env.Hub,
 			Logger:         zap.NewNop(),
-			OC:             counter.NewOnlineCounter(env.Hub),
-			VM:             viewer.NewManager(env.Hub),
 			ChannelManager: env.ChannelManager,
 			MessageManager: env.MessageManager,
 			FileManager:    env.FileManager,
 			SessStore:      env.SessStore,
-			Imaging:        env.ImageProcessor,
 		}
 		handlers.Setup(e.Group("/api"))
 		env.Server = httptest.NewServer(e)

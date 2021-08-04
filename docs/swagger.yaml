@@ -20,49 +20,21 @@ paths:
       tags:
         - authentication
       operationId: login
-      description: ログインを行います。リダイレクトパラメーターが存在する場合はログイン後にリダイレクトします
-      parameters:
-        - in: query
-          name: redirect
-          schema:
-            type: string
-          description: リダイレクト先
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserLogin'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常にログインできました。
-        '302':
-          description: 正常にログインできました。リダイレクトします。
-        '400':
-          description: ログインできませんでした。リクエスト内容が不正です
-        '401':
-          description: ログインできませんでした。認証情報が間違っています
-        '403':
-          description: ログインできませんでした。アカウントに問題があります
+        '410':
+          description: このAPIは削除されました
   /logout:
     post:
       tags:
         - authentication
       operationId: logout
-      description: ログアウトを行います。リダイレクトパラメーターが存在する場合はログアウト後にリダイレクトします
-      parameters:
-        - in: query
-          name: redirect
-          schema:
-            type: string
-          description: リダイレクト先
-      security: []
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常にログアウトできました。
-        '302':
-          description: 正常にログアウトできました。リダイレクトします。
+        '410':
+          description: このAPIは削除されました
   '/public/icon/{username}':
     get:
       tags:
@@ -100,339 +72,157 @@ paths:
       tags:
         - authorization
       operationId: getOauth2Authorize
-      description: OAuth2 認可エンドポイント
-      parameters:
-        - name: response_type
-          in: query
-          schema:
-            $ref: '#/components/schemas/OAuth2ResponseType'
-        - name: client_id
-          in: query
-          required: true
-          schema:
-            type: string
-        - name: redirect_uri
-          in: query
-          schema:
-            type: string
-        - name: scope
-          in: query
-          schema:
-            type: string
-        - name: state
-          in: query
-          schema:
-            type: string
-        - name: code_challenge
-          in: query
-          schema:
-            type: string
-        - name: code_challenge_method
-          in: query
-          schema:
-            type: string
-        - name: nonce
-          in: query
-          schema:
-            type: string
-        - name: prompt
-          in: query
-          schema:
-            $ref: '#/components/schemas/OAuth2Prompt'
-      security: []
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '302':
-          description: 結果に応じてリダイレクトします。
-        '400':
-          description: リクエストが不正です。
-        '403':
-          description: リクエストが許可されていません。
+        '410':
+          description: このAPIは削除されました
     post:
       tags:
         - authorization
       operationId: postOauth2Authorize
-      description: OAuth2 認可エンドポイント
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/OAuth2Authorization'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '302':
-          description: 結果に応じてリダイレクトします。
-        '400':
-          description: リクエストが不正です。
-        '403':
-          description: リクエストが許可されていません。
+        '410':
+          description: このAPIは削除されました
   /oauth2/authorize/decide:
     post:
       tags:
         - authorization
       operationId: postOauth2AuthorizeDecide
-      description: OAuth2 認可承諾
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/OAuth2Decide'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '302':
-          description: RedirectURIに結果をリダイレクトします。
-        '400':
-          description: リクエストが不正です。
-        '403':
-          description: リクエストが許可されていません。
+        '410':
+          description: このAPIは削除されました
   /oauth2/token:
     post:
       tags:
         - authorization
       operationId: postOauth2Token
-      description: OAuth2 トークンエンドポイント
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PostOAuth2Token'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: トークンが正常に発行されました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OAuth2Token'
-        '400':
-          description: トークン発行に失敗しました。
-        '403':
-          description: トークン発行に失敗しました。
+        '410':
+          description: このAPIは削除されました
   /users:
     get:
       tags:
         - user
       operationId: getUsers
-      description: 全ユーザーのリストを取得します。
-      security:
-        - traqOAuth2:
-            - read
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: |-
-            正常に取得できました。
-            ユーザーリストを返します。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserList'
+        '410':
+          description: このAPIは削除されました
     post:
       tags:
         - user
       operationId: registerUser
-      description: ユーザー登録します
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserRegister'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '201':
-          description: 正常に登録できました。
-        '400':
-          description: 登録できませんでした。リクエスト内容が不正です。
-        '403':
-          description: 登録できませんでした。権限がありません。
+        '410':
+          description: このAPIは削除されました。
   /users/me:
     get:
       tags:
         - user
       operationId: getMe
-      description: 自分のユーザー情報を取得します。
-      security:
-        - traqOAuth2:
-            - read
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Me'
+        '410':
+          description: このAPIは削除されました
     patch:
       tags:
         - user
       operationId: changeMe
-      description: 自分のユーザー情報を変更します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserData'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に変更できました。
-        '400':
-          description: 正常に変更できませんでした。リクエスト内容が不正です。
+        '410':
+          description: このAPIは削除されました
   /users/me/password:
     put:
       tags:
         - user
       operationId: changePassword
-      description: 自分のパスワードを変更します。
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChangePassword'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に変更できました。
-        '400':
-          description: 正常に変更できませんでした。リクエスト内容が不正です
-        '401':
-          description: 正常に変更できませんでした。現在のパスワードが違います。
+        '410':
+          description: このAPIは削除されました
   /users/me/qr-code:
     get:
       tags:
         - user
       operationId: getQrCode
-      description: 自分のQRコードを取得します。
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            image/png:
-              schema:
-                type: string
-                format: binary
+        '410':
+          description: このAPIは削除されました
   /users/me/icon:
     get:
       tags:
         - user
       operationId: getMyIcon
-      description: 自分のアイコン画像を取得します。
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            image/jpeg:
-              schema:
-                type: string
-                format: binary
-            image/png:
-              schema:
-                type: string
-                format: binary
-            image/gif:
-              schema:
-                type: string
-                format: binary
+        '410':
+          description: このAPIは削除されました
     put:
       tags:
         - user
       operationId: changeMyIcon
-      description: 自分のアイコンを更新します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: '1MBまでのpng, jpeg, gif'
-            encoding:
-              file:
-                contentType: 'image/png, image/jpeg, image/gif'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に更新できました。
-        '400':
-          description: 正常に更新できませんでした。不正なファイルです。
+        '410':
+          description: このAPIは削除されました
   /users/me/stamp-history:
     get:
       tags:
         - stamp
       operationId: getStampHistory
-      description: 自分のスタンプ履歴を最大50件取得します。結果は降順で返されます。
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/StampHistory'
+        '410':
+          description: このAPIは削除されました
   /users/me/groups:
     get:
       tags:
         - user group
       operationId: getMyGroups
-      description: 所属するユーザーグループのIDを取得します
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UUIDs'
+        '410':
+          description: このAPIは削除されました
   /users/me/notification:
     get:
       tags:
         - notification
       operationId: getMySubscribeChannels
-      description: 自分が通知を入れているチャンネルのリストを取得します
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。チャンネルIDの配列を返します。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UUIDs'
+        '410':
+          description: このAPIは削除されました
   /users/me/tokens:
     get:
       tags:
         - client
       operationId: getTokens
-      description: 自分が許可しているクライアントの一覧とトークン情報を取得します。
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AllowedClientInfo'
-        '403':
-          description: 取得できませんでした。権限がありません。
+        '410':
+          description: このAPIは削除されました
   '/users/me/tokens/{oauth2TokenID}':
     parameters:
       - $ref: '#/components/parameters/oauth2TokenIdInPath'
@@ -440,41 +230,30 @@ paths:
       tags:
         - client
       operationId: deleteToken
-      description: 指定したトークンの認可を取り消します。
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に取り消すことができました。
-        '403':
-          description: 失敗しました。権限がありません。
-        '404':
-          description: 失敗しました。指定したトークンは存在しません。
+        '410':
+          description: このAPIは削除されました
   /users/me/sessions:
     get:
       tags:
         - sessions
       operationId: getSessions
-      description: 自分のログインセッションリストを取得します。
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: セッションリストを返します。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Session'
-        '403':
-          description: 権限がありません。
+        '410':
+          description: このAPIは削除されました
     delete:
       tags:
         - sessions
       operationId: deleteSessions
-      description: 自分のログインセッションを全てログアウトします。
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 成功しました。
-        '403':
-          description: 権限がありません。
+        '410':
+          description: このAPIは削除されました
   '/users/me/sessions/{referenceID}':
     parameters:
       - name: referenceID
@@ -487,30 +266,21 @@ paths:
       tags:
         - sessions
       operationId: deleteSession
-      description: 対象のセッションをログアウトします。
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 成功しました。
-        '403':
-          description: 権限がありません。
-        '404':
-          description: 対象のセッションは存在しません。
+        '410':
+          description: このAPIは削除されました
   /users/me/stars:
     get:
       tags:
         - star
       operationId: getStaredChannels
-      description: お気に入りチャンネルリストを取得します。
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。お気に入りチャンネルのIDの配列を返します。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UUIDs'
+        '410':
+          description: このAPIは削除されました
   '/users/me/stars/{channelID}':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -518,46 +288,30 @@ paths:
       tags:
         - star
       operationId: starChannel
-      description: お気に入りチャンネルリストにチャンネルを追加します。
-      security:
-        - traqOAuth2:
-            - write
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に追加できました。
-        '404':
-          description: 正常に追加できませんでした。対象のチャンネルが存在しません。
+        '410':
+          description: このAPIは削除されました
     delete:
       tags:
         - star
       operationId: unstarChannel
-      description: '+| お気に入りチャンネルリストから削除します。 既にお気に入りチャンネルリストに無いチャンネルを指定した場合は無視されます(204)。'
-      security:
-        - traqOAuth2:
-            - write
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に削除されました。
-        '404':
-          description: 削除に失敗しました。指定されたチャンネルは存在しません。
+        '410':
+          description: このAPIは削除されました
   /users/me/unread/channels:
     get:
       tags:
         - unread
       operationId: getUnreadChannels
-      description: 未読チャンネル情報のリストを取得します。
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/UnreadChannel'
+        '410':
+          description: このAPIは削除されました
   '/users/me/unread/channels/{channelID}':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -565,13 +319,11 @@ paths:
       tags:
         - unread
       operationId: readMessages
-      description: 指定されたチャンネルの未読メッセージを既読にします。存在しないチャンネルIDを指定した場合は、無視されます。
-      security:
-        - traqOAuth2:
-            - write
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常にメッセージを既読にできました。
+        '410':
+          description: このAPIは削除されました
   '/users/{userID}':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -579,22 +331,11 @@ paths:
       tags:
         - user
       operationId: getUser
-      description: ユーザーの詳細を取得します。
-      security:
-        - traqOAuth2:
-            - read
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: |-
-            正常に取得できました。
-            ユーザー情報を返します。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserDetail'
-        '404':
-          description: '+| 正常に取得できませんでした。 指定したユーザーは存在しません。'
+        '410':
+          description: このAPIは削除されました
   '/users/{userID}/messages':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -621,28 +362,11 @@ paths:
       tags:
         - user
       operationId: getUserIcon
-      description: ユーザーのアイコン画像を取得します。
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            image/jpeg:
-              schema:
-                type: string
-                format: binary
-            image/png:
-              schema:
-                type: string
-                format: binary
-            image/gif:
-              schema:
-                type: string
-                format: binary
-        '404':
-          description: 正常に取得できませんでした。指定したユーザーは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/users/{userID}/notification':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -650,19 +374,11 @@ paths:
       tags:
         - notification
       operationId: getUserSubscribeChannels
-      description: ユーザーが通知を入れているチャンネルのリストを取得します
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。チャンネルIDの配列を返します。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UUIDs'
-        '404':
-          description: 取得に失敗しました。指定したユーザーは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/users/{userID}/groups':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -670,19 +386,11 @@ paths:
       tags:
         - user group
       operationId: getUserGroups
-      description: 所属するユーザーグループのIDを取得します
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UUIDs'
-        '404':
-          description: 正常に取得できませんでした。指定したユーザーは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/users/{userID}/tags':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -690,50 +398,20 @@ paths:
       tags:
         - userTag
       operationId: getUserTags
-      description: ユーザーのタグのリストを取得します。
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: |-
-            正常に取得できました。
-            タグのリストを返します。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TagList'
-        '404':
-          description: |-
-            正常に取得できませんでした。
-            指定したユーザーは存在しません。
+        '410':
+          description: このAPIは削除されました
     post:
       tags:
         - userTag
       operationId: addUserTag
-      description: ユーザーにタグを追加します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SetTag'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '201':
-          description: 正常に追加できました。
-        '400':
-          description: |-
-            正常に追加できませんでした。
-            パラメータの形式が不正です。
-        '403':
-          description: |-
-            正常に追加できませんでした。
-            権限がありません。
-        '404':
-          description: '+| 正常に追加できませんでした。 指定したユーザーは存在しません。'
+        '410':
+          description: このAPIは削除されました
   '/users/{userID}/tags/{tagID}':
     parameters:
       - $ref: '#/components/parameters/userIdInPath'
@@ -742,48 +420,20 @@ paths:
       tags:
         - userTag
       operationId: changeLockUserTag
-      description: タグのロック、アンロックを変更します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SetTagLock'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に変更できました。
-        '400':
-          description: |-
-            正常に変更できませんでした。
-            パラメータの形式が不正です。
-        '403':
-          description: |-
-            正常に変更できませんでした。
-            権限がありません。
-        '404':
-          description: |-
-            正常に変更できませんでした。
-            指定したユーザー、もしくはタグは存在しません。
+        '410':
+          description: このAPIは削除されました
     delete:
       tags:
         - userTag
       operationId: deleteUserTag
-      description: ユーザーから指定したタグを削除します。既に存在しないタグを削除しようとした場合は無視されます(204)。
-      security:
-        - traqOAuth2:
-            - write
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に削除できました。
-        '403':
-          description: |-
-            正常に削除できませんでした。
-            権限がありません。
-        '404':
-          description: '+| 正常に削除できませんでした。 指定したユーザーは存在しません。'
+        '410':
+          description: このAPIは削除されました
   /heartbeat:
     get:
       deprecated: true
@@ -817,27 +467,11 @@ paths:
       tags:
         - channel
       operationId: createChannel
-      description: チャンネルを作成します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateChannel'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '201':
-          description: |-
-            正常にチャンネルが作成できました。
-            作成されたチャンネルを返します。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Channel'
-        '400':
-          description: '+| 正常にチャンネルが作成できませんでした。 親チャンネルが存在しない又は指定されたタイプに対して適切なプロパティが存在しません。'
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -878,31 +512,11 @@ paths:
       tags:
         - channel
       operationId: createChannelChild
-      description: 子チャンネルを作成します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateChannelChild'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '201':
-          description: 正常にチャンネルが作成できました。作成されたチャンネルを返します。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Channel'
-        '400':
-          description: チャンネルが作成できませんでした。リクエスト内容が不正です。
-        '403':
-          description: チャンネルが作成できませんでした。権限がありません。
-        '404':
-          description: チャンネルが作成できませんでした。指定したチャンネルは存在しません。
-        '409':
-          description: チャンネルが作成できませんでした。指定したチャンネル名のチャンネルは既に存在します。
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/pins':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -941,19 +555,11 @@ paths:
       tags:
         - channel
       operationId: getChannelStats
-      description: チャンネルの統計情報を取得します。
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得ができました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChannelStats'
-        '404':
-          description: '+| 取得に失敗しました。 指定したチャンネルは存在しません。'
+        '410':
+          description: このAPIは削除されました'
   '/channels/{channelID}/viewers':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -961,19 +567,11 @@ paths:
       tags:
         - channel
       operationId: getChannelViewers
-      description: 現在のチャンネル閲覧者のリストを取得します。
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得ができました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChannelViewers'
-        '404':
-          description: '+| 取得に失敗しました。 指定したチャンネルは存在しません。'
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/messages':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -1000,35 +598,11 @@ paths:
       tags:
         - channel
       operationId: getChannelEvents
-      description: チャンネルイベントのリストを取得します。
-      security:
-        - traqOAuth2:
-            - read
-      parameters:
-        - $ref: '#/components/parameters/limitInQuery'
-        - $ref: '#/components/parameters/offsetInQuery'
-        - $ref: '#/components/parameters/sinceInQuery'
-        - $ref: '#/components/parameters/untilInQuery'
-        - $ref: '#/components/parameters/inclusiveInQuery'
-        - $ref: '#/components/parameters/orderInQuery'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得ができました。イベントの配列を返します。
-          headers:
-            X-TRAQ-MORE:
-              $ref: '#/components/headers/X-TRAQ-MORE'
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ChannelEvent'
-        '400':
-          description: |-
-            変更に失敗しました
-            不正なリクエストです
-        '404':
-          description: '+| 取得に失敗しました。 指定したチャンネルは存在しません。'
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/notification':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -1036,41 +610,20 @@ paths:
       tags:
         - notification
       operationId: getSubscribers
-      description: 通知を点けているユーザーのIDの配列を取得します。
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UUIDs'
-        '404':
-          description: 取得に失敗しました。指定したチャンネルは存在しません。
+        '410':
+          description: このAPIは削除されました
     put:
       tags:
         - notification
       operationId: changeSubscribers
-      description: |-
-        チャンネルの通知状況を変更します。
-        リクエストに含めなかったユーザーIDのユーザーの通知状況は変更しません。
-        また、存在しないユーザーのIDを指定した場合は無視されます。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/NotificationUsers'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に更新できました。
-        '404':
-          description: '+| 変更に失敗しました。 指定したチャンネルは存在しません。'
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/bots':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
@@ -1078,76 +631,41 @@ paths:
       tags:
         - bot
       operationId: getChannelBots
-      description: チャンネルに参加しているBot一覧を取得します。
-      security:
-        - traqOAuth2:
-            - read
-            - manage_bot
-      responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ChannelBot'
-        '404':
-          description: 取得できませんでした。指定したチャンネルは存在しません。
-    post:
       deprecated: true
+      description: このAPIは削除されました
+      responses:
+        '410':
+          description: このAPIは削除されました
+    post:
       tags:
         - bot
       operationId: addChannelBot
-      description: チャンネルにBotを参加させます。
-      security:
-        - traqOAuth2:
-            - write
-            - manage_bot
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostBotChannel'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常にBotが参加しました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BotIdObject'
-        '400':
-          description: 参加させることができませんでした。リクエスト内容が不正です。
-        '404':
-          description: 参加させることができませんでした。指定したチャンネルは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/bots/{botID}':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
       - $ref: '#/components/parameters/botIdInPath'
     delete:
-      deprecated: true
       tags:
         - bot
       operationId: removeChannelBot
-      description: Botをチャンネルから退出させます。
-      security:
-        - traqOAuth2:
-            - write
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に退出させることができました。
-        '404':
-          description: 退出させることができませんでした。指定したチャンネル、またはBotは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/channels/{channelID}/webrtc/state':
     parameters:
       - $ref: '#/components/parameters/channelIdInPath'
     get:
-      deprecated: true
       tags:
         - webrtc
       operationId: getChannelWebRTCState
+      deprecated: true
       description: このAPIは削除されました
       responses:
         '410':
@@ -1167,19 +685,11 @@ paths:
       tags:
         - notification
       operationId: registerNotificationDevice
-      description: FCMデバイスを登録します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FCMToken'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '201':
-          description: 正常に登録できました。
+        '410':
+          description: このAPIは削除されました
   /messages/reports:
     get:
       deprecated: true
@@ -1265,19 +775,11 @@ paths:
       tags:
         - userTag
       operationId: getTag
-      description: 指定されたタグの情報を取得します。
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TagUsers'
-        '404':
-          description: 正常に取得できませんでした。指定されたタグIDは存在しません
+        '410':
+          description: このAPIは削除されました
   /files:
     post:
       deprecated: true
@@ -1402,55 +904,20 @@ paths:
       tags:
         - stamp
       operationId: getStamps
-      description: 全スタンプのリストを取得します。
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Stamp'
+        '410':
+          description: このAPIは削除されました
     post:
       tags:
         - stamp
       operationId: createStamp
-      description: スタンプを新規作成します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              required:
-                - name
-                - file
-              properties:
-                name:
-                  type: string
-                  description: スタンプ名(半角英数字と-+_のみを含む32文字以内の文字列)
-                file:
-                  type: string
-                  format: binary
-                  description: '1MBまでのpng, jpeg, gif'
-            encoding:
-              file:
-                contentType: 'image/png, image/jpeg, image/gif'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '201':
-          description: 正常にスタンプが作成されました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Stamp'
-        '400':
-          description: 正常にスタンプが作成できませんでした。
+        '410':
+          description: このAPIは削除されました
   '/stamps/{stampID}':
     parameters:
       - $ref: '#/components/parameters/stampIdInPath'
@@ -1458,106 +925,48 @@ paths:
       tags:
         - stamp
       operationId: getStamp
-      description: スタンプの情報を取得します。
-      security:
-        - traqOAuth2:
-            - read
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Stamp'
-        '404':
-          description: 取得できませんでした。指定されたスタンプは存在しません。
+        '410':
+          description: このAPIは削除されました
     patch:
       tags:
         - stamp
       operationId: editStamp
-      description: スタンプを修正します。
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              properties:
-                name:
-                  type: string
-                  description: スタンプ名(半角英数字と-+_のみを含む32文字以内の文字列)
-                file:
-                  type: string
-                  format: binary
-                  description: '1MBまでのpng, jpeg, gif'
-            encoding:
-              file:
-                contentType: 'image/png, image/jpeg, image/gif'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に修正できました。
-        '403':
-          description: 修正できませんでした。指定されたスタンプを修正する権限がありません。
-        '404':
-          description: 修正できませんでした。指定されたスタンプは存在しません。
+        '410':
+          description: このAPIは削除されました
     delete:
       tags:
         - stamp
       operationId: deleteStamp
-      description: スタンプを削除します。
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に削除できました。
-        '403':
-          description: 削除できませんでした。指定されたスタンプを削除する権限がありません。
-        '404':
-          description: 削除できませんでした。指定されたスタンプは存在しません。
+        '410':
+          description: このAPIは削除されました
   /webhooks:
     get:
       tags:
         - webhook
       operationId: getWebhooks
-      description: 自分が作成したwebhookの一覧を取得します。
-      security:
-        - traqOAuth2:
-            - read
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Webhook'
+        '410':
+          description: このAPIは削除されました
     post:
       tags:
         - webhook
       operationId: createWebhooks
-      description: webhookを作成します。
-      security:
-        - traqOAuth2:
-            - manage_bot
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostWebhook'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '201':
-          description: 正常に作成できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Webhook'
-        '400':
-          description: 作成できませんでした。リクエスト内容が不正です。
-        '403':
-          description: 作成できませんでした。権限がありません。
+        '410':
+          description: このAPIは削除されました
   '/webhooks/{webhookID}':
     parameters:
       - $ref: '#/components/parameters/webhookIdInPath'
@@ -1565,60 +974,29 @@ paths:
       tags:
         - webhook
       operationId: getWebhook
-      description: webhookの詳細を取得します。
-      security:
-        - traqOAuth2:
-            - read
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Webhook'
-        '403':
-          description: 取得できませんでした。権限がありません。
-        '404':
-          description: 取得できませんでした。指定したwebhookは存在しません。
+        '410':
+          description: このAPIは削除されました
     patch:
       tags:
         - webhook
       operationId: editWebhook
-      description: webhookを修正します。
-      security:
-        - traqOAuth2:
-            - manage_bot
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchWebhook'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に修正できました。
-        '400':
-          description: 修正できませんでした。リクエスト内容が不正です。
-        '403':
-          description: 削除できませんでした。権限がありません。
-        '404':
-          description: 修正できませんでした。指定したwebhookは存在しません。
+        '410':
+          description: このAPIは削除されました
     delete:
       tags:
         - webhook
       operationId: deleteWebhook
-      description: webhookを削除します。
-      security:
-        - traqOAuth2:
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に削除できました。
-        '403':
-          description: 削除できませんでした。権限がありません。
-        '404':
-          description: 削除できませんでした。指定したwebhookは存在しません。
+        '410':
+          description: このAPIは削除されました
     post:
       tags:
         - webhook
@@ -1664,59 +1042,20 @@ paths:
       tags:
         - webhook
       operationId: getWebhookIcon
-      description: 指定したWebhookのアイコンを取得します。
-      security:
-        - traqOAuth2:
-            - read
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            image/jpeg:
-              schema:
-                type: string
-                format: binary
-            image/png:
-              schema:
-                type: string
-                format: binary
-            image/gif:
-              schema:
-                type: string
-                format: binary
-        '404':
-          description: 取得できませんでした。指定したWebhookは存在しません。
+        '410':
+          description: このAPIは削除されました
     put:
       tags:
         - webhook
       operationId: changeWebhookIcon
-      description: 指定したwebhookのアイコンを変更します。
-      security:
-        - traqOAuth2:
-            - manage_bot
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: 'webhookユーザーのアイコン(1MBまでのpng, jpeg, gif)'
-            encoding:
-              file:
-                contentType: 'image/png, image/jpeg, image/gif'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に変更できました。
-        '400':
-          description: 変更できませんでした。リクエスト内容が不正です。
-        '403':
-          description: 変更できませんでした。権限がありません。
-        '404':
-          description: 修正できませんでした。指定したwebhookは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/webhooks/{webhookID}/github':
     parameters:
       - $ref: '#/components/parameters/webhookIdInPath'
@@ -1731,224 +1070,106 @@ paths:
           description: このAPIは削除されました
   /groups:
     get:
-      deprecated: true
       tags:
         - user group
       operationId: getGroups
-      description: 全てのユーザーグループを取得します
-      security:
-        - traqOAuth2:
-            - read
-      responses:
-        '200':
-          description: 正常に取得できました
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/UserGroup'
-    post:
       deprecated: true
+      description: このAPIは削除されました
+      responses:
+        '410':
+          description: このAPIは削除されました
+    post:
       tags:
         - user group
       operationId: createGroup
-      description: ユーザーグループを作成します
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostUserGroup'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '201':
-          description: 正常に作成できました
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroup'
-        '400':
-          description: 正常に作成できませんでした。リクエスト内容が不正です
-        '409':
-          description: 正常に作成できませんでした。既に存在するグループ名です
+        '410':
+          description: このAPIは削除されました
   '/groups/{groupID}':
     parameters:
       - $ref: '#/components/parameters/groupIdInPath'
     get:
-      deprecated: true
       tags:
         - user group
       operationId: getGroup
-      description: ユーザーグループを取得します
-      security:
-        - traqOAuth2:
-            - read
-      responses:
-        '200':
-          description: 正常に取得できました
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroup'
-        '404':
-          description: 正常に取得できませんでした。指定したグループは存在しません。
-    patch:
       deprecated: true
+      description: このAPIは削除されました
+      responses:
+        '410':
+          description: このAPIは削除されました
+    patch:
       tags:
         - user group
       operationId: editGroup
-      description: ユーザーグループの情報を変更します
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchUserGroup'
-      responses:
-        '204':
-          description: 正常に変更できました
-        '400':
-          description: 正常に変更できませんでした。リクエスト内容が不正です
-        '403':
-          description: 正常に変更できませんでした。権限がありません。
-        '404':
-          description: 正常に変更できませんでした。指定したグループは存在しません。
-        '409':
-          description: 正常に変更できませんでした。既に存在するグループ名です
-    delete:
       deprecated: true
+      description: このAPIは削除されました
+      responses:
+        '410':
+          description: このAPIは削除されました
+    delete:
       tags:
         - user group
       operationId: deleteGroup
-      description: ユーザーグループを削除します
-      security:
-        - traqOAuth2:
-            - write
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に削除できました
-        '403':
-          description: 正常に削除できませんでした。権限がありません。
-        '404':
-          description: 正常に削除できませんでした。指定したグループは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/groups/{groupID}/members':
     parameters:
       - $ref: '#/components/parameters/groupIdInPath'
     get:
-      deprecated: true
       tags:
         - user group
       operationId: getGroupMembers
-      description: ユーザーグループのメンバーのIDを取得します
-      security:
-        - traqOAuth2:
-            - read
-      responses:
-        '200':
-          description: 正常に取得できました
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UUIDs'
-        '404':
-          description: 正常に取得できませんでした。指定したグループは存在しません。
-    post:
       deprecated: true
+      description: このAPIは削除されました
+      responses:
+        '410':
+          description: このAPIは削除されました
+    post:
       tags:
         - user group
       operationId: addGroupMember
-      description: ユーザーグループにメンバーを追加します
-      security:
-        - traqOAuth2:
-            - write
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AddUserGroup'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に追加できました
-        '400':
-          description: 正常に追加できませんでした。リクエスト内容が不正です
-        '403':
-          description: 正常に追加できませんでした。権限がありません。
-        '404':
-          description: 正常に追加できませんでした。指定したグループは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/groups/{groupID}/members/{userID}':
     parameters:
       - $ref: '#/components/parameters/groupIdInPath'
       - $ref: '#/components/parameters/userIdInPath'
     delete:
-      deprecated: true
       tags:
         - user group
       operationId: deleteGroupMember
-      description: ユーザーグループからメンバーを削除します
-      security:
-        - traqOAuth2:
-            - write
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に削除できました
-        '400':
-          description: 正常に追加できませんでした。リクエスト内容が不正です
-        '403':
-          description: 正常に削除できませんでした。権限がありません。
-        '404':
-          description: 正常に削除できませんでした。指定したグループは存在しません。
+        '410':
+          description: このAPIは削除されました
   /clients:
     get:
       tags:
         - client
       operationId: getClients
-      description: 自分が登録しているクライアントの一覧を取得します。
-      security:
-        - traqOAuth2:
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/OwnedClientInfo'
-        '403':
-          description: 取得できませんでした。権限がありません。
+        '410':
+          description: このAPIは削除されました
     post:
       tags:
         - client
       operationId: createClient
-      description: クライアントを登録します。
-      security:
-        - traqOAuth2:
-            - manage_bot
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostClient'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に登録できました。クライアント情報を返します。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OwnedClientInfo'
-        '400':
-          description: 登録できませんでした。リクエスト内容が不正です。
-        '403':
-          description: 登録できませんでした。権限がありません。
+        '410':
+          description: このAPIは削除されました
   '/clients/{clientID}':
     parameters:
       - $ref: '#/components/parameters/clientIdInPath'
@@ -1956,57 +1177,29 @@ paths:
       tags:
         - client
       operationId: getClient
-      description: 指定したクライアントIDのクライアントの情報を取得します。
-      security:
-        - traqOAuth2:
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ClientInfo'
-        '404':
-          description: 取得できませんでした。指定されたクライアントは存在しません。
+        '410':
+          description: このAPIは削除されました
     patch:
       tags:
         - client
       operationId: patchClient
-      description: 指定したクライアントIDのクライアントの情報を変更します。
-      security:
-        - traqOAuth2:
-            - manage_bot
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchClient'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に変更できました。
-        '403':
-          description: 変更できませんでした。権限がありません。
-        '404':
-          description: 変更できませんでした。指定されたクライアントは存在しません。
+        '410':
+          description: このAPIは削除されました
     delete:
       tags:
         - client
       operationId: deleteClient
-      description: |-
-        指定したクライアントIDのクライアントを削除します。
-        正常に削除された場合、このクライアントを通じての認可は全て取り消されます。
-      security:
-        - traqOAuth2:
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に削除できました。
-        '403':
-          description: 削除できませんでした。権限がありません。
-        '404':
-          description: 削除できませんでした。指定されたクライアントは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/clients/{clientID}/detail':
     parameters:
       - $ref: '#/components/parameters/clientIdInPath'
@@ -2014,65 +1207,30 @@ paths:
       tags:
         - client
       operationId: getClientDetail
-      description: クライアントの詳細を取得します。
-      security:
-        - traqOAuth2:
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OwnedClientInfo'
-        '403':
-          description: 取得できませんでした。権限がありません。
+        '410':
+          description: このAPIは削除されました
   /bots:
     get:
       tags:
         - bot
       operationId: getBots
-      description: 自分が作成したBotの一覧を取得します。
-      security:
-        - traqOAuth2:
-            - read
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Bot'
+        '410':
+          description: このAPIは削除されました
     post:
       tags:
         - bot
       operationId: createBots
-      description: Botを作成します。
-      security:
-        - traqOAuth2:
-            - manage_bot
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostBot'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '201':
-          description: 正常に作成できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BotDetail'
-        '400':
-          description: 作成できませんでした。リクエスト内容が不正です。
-        '403':
-          description: 作成できませんでした。権限がありません。
-        '409':
-          description: 作成できませんでした。既に名前が使われています。
+        '410':
+          description: このAPIは削除されました
   '/bots/{botID}':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
@@ -2080,58 +1238,29 @@ paths:
       tags:
         - bot
       operationId: getBot
-      description: Botを取得します。
-      security:
-        - traqOAuth2:
-            - read
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Bot'
-        '404':
-          description: 取得できませんでした。指定したBotは存在しません。
+        '410':
+          description: このAPIは削除されました
     patch:
       tags:
         - bot
       operationId: editBot
-      description: Bot情報を変更します。
-      security:
-        - traqOAuth2:
-            - manage_bot
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchBot'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に変更できました。
-        '400':
-          description: 変更できませんでした。リクエスト内容が不正です。
-        '403':
-          description: 変更できませんでした。権限がありません。
-        '404':
-          description: 削除できませんでした。指定したBotは存在しません。
+        '410':
+          description: このAPIは削除されました
     delete:
       tags:
         - bot
       operationId: deleteBot
-      description: Botを削除します。
-      security:
-        - traqOAuth2:
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に削除できました。
-        '403':
-          description: 削除できませんでした。権限がありません。
-        '404':
-          description: 削除できませんでした。指定したBotは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/bots/{botID}/detail':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
@@ -2139,22 +1268,11 @@ paths:
       tags:
         - bot
       operationId: getBotDetail
-      description: Botの詳細を取得します。
-      security:
-        - traqOAuth2:
-            - read
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BotDetail'
-        '403':
-          description: 取得できませんでした。権限がありません。
-        '404':
-          description: 取得できませんでした。指定したBotは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/bots/{botID}/events':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
@@ -2162,25 +1280,11 @@ paths:
       tags:
         - bot
       operationId: changeBotEvents
-      description: Botの購読イベントを変更します。
-      security:
-        - traqOAuth2:
-            - manage_bot
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutBotEvents'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 変更できました。
-        '400':
-          description: リクエスト内容が不正です。
-        '403':
-          description: 権限がありません。
-        '404':
-          description: 指定したBotは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/bots/{botID}/icon':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
@@ -2188,111 +1292,44 @@ paths:
       tags:
         - bot
       operationId: getBotIcon
-      description: 指定したBotのアイコンを取得します。
-      security:
-        - traqOAuth2:
-            - read
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            image/jpeg:
-              schema:
-                type: string
-                format: binary
-            image/png:
-              schema:
-                type: string
-                format: binary
-            image/gif:
-              schema:
-                type: string
-                format: binary
-        '404':
-          description: 取得できませんでした。指定したBotは存在しません。
+        '410':
+          description: このAPIは削除されました
     put:
       tags:
         - bot
       operationId: changeBotIcon
-      description: 指定したBotのアイコンを変更します。
-      security:
-        - traqOAuth2:
-            - manage_bot
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: 'Botユーザーのアイコン(1MBまでのpng, jpeg, gif)'
-            encoding:
-              file:
-                contentType: 'image/png, image/jpeg, image/gif'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に変更できました。
-        '400':
-          description: 変更できませんでした。リクエスト内容が不正です。
-        '403':
-          description: 変更できませんでした。権限がありません。
-        '404':
-          description: 修正できませんでした。指定したBotは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/bots/{botID}/state':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
     put:
-      deprecated: true
       tags:
         - bot
       operationId: changeBotState
-      description: Botの状態を変更します。
-      security:
-        - traqOAuth2:
-            - manage_bot
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutBotState'
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '202':
-          description: Botのアクティベーションを受理しました。PINGリクエストが通り次第有効になります。
-        '204':
-          description: 変更できました。
-        '400':
-          description: リクエスト内容が不正です。
-        '403':
-          description: 権限がありません。
-        '404':
-          description: 指定したBotは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/bots/{botID}/reissue':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
     post:
-      deprecated: true
       tags:
         - bot
       operationId: reissueBotTokens
-      description: Botの各種トークンを再発行します。
-      security:
-        - traqOAuth2:
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 再発行しました
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BotTokens'
-        '403':
-          description: 権限がありません。
-        '404':
-          description: 指定したBotは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/bots/{botID}/channels':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
@@ -2300,55 +1337,21 @@ paths:
       tags:
         - bot
       operationId: getBotChannels
-      description: Botが参加しているチャンネルのUUIDの配列を取得します。
-      security:
-        - traqOAuth2:
-            - read
-            - manage_bot
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得できました。
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UUIDs'
-        '403':
-          description: 権限がありません。
-        '404':
-          description: 指定したBotは存在しません。
+        '410':
+          description: このAPIは削除されました
   /activity/latest-messages:
     get:
       tags:
         - activity
       operationId: getActivities
-      description: 各チャンネルの最新のメッセージ１件をメッセージ作成日時の降順で取得します。
-      security:
-        - traqOAuth2:
-            - read
-      parameters:
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            default: 50
-          description: 取得する件数 1-50
-          example: 50
-        - in: query
-          name: subscribe
-          schema:
-            type: boolean
-            default: true
-          description: 購読チャンネルのみを取得する
-          example: false
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '200':
-          description: 正常に取得ができました
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MessageList'
-        '400':
-          description: リクエスト内容が不正です
+        '410':
+          description: このAPIは削除されました
   /webrtc/state:
     get:
       deprecated: true
