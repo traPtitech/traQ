@@ -61,9 +61,9 @@ func (h *Handlers) Setup(e *echo.Group) {
 	// middleware preparation
 	requires := middlewares.AccessControlMiddlewareGenerator(h.RBAC)
 	retrieve := middlewares.NewParamRetriever(h.Repo, h.ChannelManager, h.FileManager, h.MessageManager)
-	blockBot := middlewares.BlockBot(h.Repo)
+	blockBot := middlewares.BlockBot()
 
-	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.RBAC, h.FileManager)
+	requiresFileAccessPerm := middlewares.CheckFileAccessPerm(h.FileManager)
 
 	gone := func(c echo.Context) error { return herror.HTTPError(http.StatusGone, "this api has been deleted") }
 

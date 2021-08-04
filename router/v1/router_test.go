@@ -39,14 +39,6 @@ const (
 	rand    = "random"
 	common1 = "common1"
 	common2 = "common2"
-	common3 = "common3"
-	common4 = "common4"
-	common5 = "common5"
-	common6 = "common6"
-	s1      = "s1"
-	s2      = "s2"
-	s3      = "s3"
-	s4      = "s4"
 )
 
 var envs = map[string]*Env{}
@@ -56,14 +48,6 @@ func TestMain(m *testing.M) {
 	repos := []string{
 		common1,
 		common2,
-		common3,
-		common4,
-		common5,
-		common6,
-		s1,
-		s2,
-		s3,
-		s4,
 	}
 	for _, key := range repos {
 		env := &Env{}
@@ -191,18 +175,6 @@ func (env *Env) mustMakeChannel(t *testing.T, name string) *model.Channel {
 	return ch
 }
 
-func (env *Env) mustMakeMessage(t *testing.T, userID, channelID uuid.UUID) *model.Message {
-	t.Helper()
-	m, err := env.Repository.CreateMessage(userID, channelID, "popopo")
-	require.NoError(t, err)
-	return m
-}
-
-func (env *Env) mustMakeMessageUnread(t *testing.T, userID, messageID uuid.UUID) {
-	t.Helper()
-	require.NoError(t, env.Repository.SetMessageUnread(userID, messageID, false))
-}
-
 func (env *Env) mustMakeUser(t *testing.T, userName string) model.UserInfo {
 	t.Helper()
 	if userName == rand {
@@ -227,38 +199,6 @@ func (env *Env) mustMakeFile(t *testing.T) model.File {
 	return f
 }
 
-func (env *Env) mustMakeTag(t *testing.T, userID uuid.UUID, tagText string) uuid.UUID {
-	t.Helper()
-	if tagText == rand {
-		tagText = random.AlphaNumeric(20)
-	}
-	tag, err := env.Repository.GetOrCreateTag(tagText)
-	require.NoError(t, err)
-	require.NoError(t, env.Repository.AddUserTag(userID, tag.ID))
-	return tag.ID
-}
-
-func (env *Env) mustStarChannel(t *testing.T, userID, channelID uuid.UUID) {
-	t.Helper()
-	require.NoError(t, env.Repository.AddStar(userID, channelID))
-}
-
-func (env *Env) mustMakeUserGroup(t *testing.T, name string, adminID uuid.UUID) *model.UserGroup {
-	t.Helper()
-	if name == rand {
-		name = random.AlphaNumeric(20)
-	}
-	icon := env.mustMakeFile(t)
-	g, err := env.Repository.CreateUserGroup(name, "", "", adminID, icon.GetID())
-	require.NoError(t, err)
-	return g
-}
-
-func (env *Env) mustAddUserToGroup(t *testing.T, userID, groupID uuid.UUID) {
-	t.Helper()
-	require.NoError(t, env.Repository.AddUserToGroup(userID, groupID, ""))
-}
-
 func (env *Env) mustMakeWebhook(t *testing.T, name string, channelID, creatorID uuid.UUID, secret string) model.Webhook {
 	t.Helper()
 	if name == rand {
@@ -269,9 +209,4 @@ func (env *Env) mustMakeWebhook(t *testing.T, name string, channelID, creatorID 
 	w, err := env.Repository.CreateWebhook(name, "", channelID, iconFileID, creatorID, secret)
 	require.NoError(t, err)
 	return w
-}
-
-func (env *Env) mustChangeChannelSubscription(t *testing.T, channelID, userID uuid.UUID) {
-	t.Helper()
-	require.NoError(t, env.ChannelManager.ChangeChannelSubscriptions(channelID, map[uuid.UUID]model.ChannelSubscribeLevel{userID: model.ChannelSubscribeLevelMarkAndNotify}, false, uuid.Nil))
 }

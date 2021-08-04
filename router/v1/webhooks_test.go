@@ -35,7 +35,7 @@ func TestHandlers_PostWebhook(t *testing.T) {
 			Status(http.StatusUnsupportedMediaType)
 	})
 
-	t.Run("Bad Request (No Body)", func(t *testing.T) {
+	t.Run("Bad Request (No Payload)", func(t *testing.T) {
 		t.Parallel()
 		e := env.makeExp(t)
 		e.POST("/api/1.0/webhooks/{webhookId}", wb.GetID()).

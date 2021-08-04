@@ -15,7 +15,7 @@ import (
 
 func TestHandlers_GetPublicUserIcon(t *testing.T) {
 	t.Parallel()
-	env, _, require, _, _ := setup(t, common5)
+	env, _, require, _, _ := setup(t, common2)
 
 	fid, err := file.GenerateIconFile(env.FileManager, "test")
 	require.NoError(err)

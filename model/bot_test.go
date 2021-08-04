@@ -27,7 +27,7 @@ func TestBotEventType_String(t *testing.T) {
 	assert.Equal(t, "event", BotEventType("event").String())
 }
 
-func TestBotEventTypees_Value(t *testing.T) {
+func TestBotEventTypes_Value(t *testing.T) {
 	t.Parallel()
 	es := BotEventTypes{"PING": struct{}{}, "PONG": struct{}{}}
 	v, err := es.Value()
