@@ -226,7 +226,7 @@ traQ uses `config.js` for configuring the frontend application.
   const config = {
     // (optional) Application name
     // You must set the same value to APP_NAME env.
-    name: 'traQ'
+    name: 'traQ',
     // (optional) Firebase Cloud Messaging (FCM) settings.
     firebase: {
       apiKey: 'apiKey',
