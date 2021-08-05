@@ -1001,40 +1001,11 @@ paths:
       tags:
         - webhook
       operationId: postWebhook
-      description: webhookを送信します。
-      parameters:
-        - in: header
-          name: X-TRAQ-Channel-Id
-          schema:
-            type: string
-            format: uuid
-          description: 投稿先のチャンネルID(変更する場合)
-        - in: header
-          name: X-TRAQ-Signature
-          schema:
-            type: string
-          description: リクエストボディシグネチャ。Secretが設定されている場合は必須
-        - name: embed
-          description: メンション・チャンネルリンクを自動埋め込みする場合に1を指定する
-          in: query
-          required: false
-          schema:
-            type: integer
-      security: []
-      requestBody:
-        required: true
-        content:
-          text/plain:
-            schema:
-              type: string
-              description: メッセージ文字列
+      deprecated: true
+      description: このAPIは削除されました
       responses:
-        '204':
-          description: 正常に送信できました。
-        '400':
-          description: 正常に送信できませんでした。リクエスト内容が不正です。
-        '404':
-          description: 正常に送信できませんでした。指定されたwebhookは存在しません。
+        '410':
+          description: このAPIは削除されました
   '/webhooks/{webhookID}/icon':
     parameters:
       - $ref: '#/components/parameters/webhookIdInPath'
