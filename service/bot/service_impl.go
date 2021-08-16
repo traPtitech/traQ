@@ -7,12 +7,17 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/lthibault/jitterbug"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/service/channel"
+)
+
+const (
+	botEventLogPurgeBefore = time.Hour * 24 * 365 // BOTイベントログを1年間保持
 )
 
 type serviceImpl struct {
@@ -22,9 +27,10 @@ type serviceImpl struct {
 	dispatcher event.Dispatcher
 	hub        *hub.Hub
 
-	sub     hub.Subscription
-	wg      sync.WaitGroup
-	started bool
+	sub       hub.Subscription
+	wg        sync.WaitGroup
+	logPurger *jitterbug.Ticker
+	started   bool
 }
 
 // NewService ボットサービスを生成します
@@ -45,6 +51,7 @@ func (p *serviceImpl) Start() {
 	}
 	p.started = true
 
+	// イベントの発送を開始
 	events := make([]string, 0, len(eventHandlerSet))
 	for k := range eventHandlerSet {
 		events = append(events, k)
@@ -66,6 +73,21 @@ func (p *serviceImpl) Start() {
 			}(ev)
 		}
 	}()
+
+	// BOTイベントログの定期的消去
+	p.logPurger = jitterbug.New(time.Hour*24, &jitterbug.Uniform{
+		Min: time.Hour * 23,
+	})
+	go func() {
+		for range p.logPurger.C {
+			p.wg.Add(1)
+			if err := p.repo.PurgeBotEventLogs(time.Now().Add(-botEventLogPurgeBefore)); err != nil {
+				p.logger.Error("an error occurred while puring old bot event logs", zap.Error(err))
+			}
+			p.wg.Done()
+		}
+	}()
+
 	p.logger.Info("bot service started")
 }
 
@@ -74,6 +96,7 @@ func (p *serviceImpl) Shutdown(ctx context.Context) error {
 		return nil
 	}
 	p.hub.Unsubscribe(p.sub)
+	p.logPurger.Stop()
 	p.wg.Wait()
 	p.logger.Info("bot service shutdown")
 	return nil
