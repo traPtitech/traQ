@@ -2,6 +2,8 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/gofrs/uuid"
 
 	"github.com/traPtitech/traQ/model"
@@ -168,4 +170,9 @@ type BotRepository interface {
 	// 存在しないBotを指定した場合、空配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetBotEventLogs(botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error)
+	// PurgeBotEventLogs 指定した時間以前のBotイベントログを全て消去します
+	//
+	// 成功した場合、nilを返します。
+	// DBによるエラーを返すことがあります。
+	PurgeBotEventLogs(before time.Time) error
 }

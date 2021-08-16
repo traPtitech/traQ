@@ -481,3 +481,8 @@ func (repo *GormRepository) GetBotEventLogs(botID uuid.UUID, limit, offset int) 
 		Find(&logs).
 		Error
 }
+
+// PurgeBotEventLogs implements BotRepository interface.
+func (repo *GormRepository) PurgeBotEventLogs(before time.Time) error {
+	return repo.db.Delete(&model.BotEventLog{}, "date_time < ?", before).Error
+}
