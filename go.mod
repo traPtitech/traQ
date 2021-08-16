@@ -36,7 +36,7 @@ require (
 	github.com/json-iterator/go v1.1.11
 	github.com/labstack/echo/v4 v4.5.0
 	github.com/leandro-lugaresi/hub v1.1.1
-	github.com/lthibault/jitterbug v2.0.0+incompatible
+	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/motoki317/go-waveform v0.0.3
 	github.com/ncw/swift v1.0.53

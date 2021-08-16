@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/lthibault/jitterbug"
+	"github.com/lthibault/jitterbug/v2"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
