@@ -1,7 +1,7 @@
 module github.com/traPtitech/traQ
 
 require (
-	cloud.google.com/go v0.91.1
+	cloud.google.com/go v0.92.1
 	cloud.google.com/go/firestore v1.5.0 // indirect
 	cloud.google.com/go/storage v1.16.0 // indirect
 	firebase.google.com/go v3.13.0+incompatible
@@ -62,7 +62,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210805134026-6f1e6394065a
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/time v0.0.0-20210611083556-38a9dc6acbc6 // indirect
-	google.golang.org/api v0.53.0
+	google.golang.org/api v0.54.0
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.1.2
