@@ -1,8 +1,9 @@
 module github.com/traPtitech/traQ
 
 require (
-	cloud.google.com/go v0.92.1
+	cloud.google.com/go v0.92.3 // indirect
 	cloud.google.com/go/firestore v1.5.0 // indirect
+	cloud.google.com/go/profiler v0.1.0
 	cloud.google.com/go/storage v1.16.0 // indirect
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
