@@ -87,7 +87,7 @@ jobs:
       - name: Run tests
         run: |
           export TRAQ_IMAGEMAGICK=`which convert`
-          go test ./... -coverprofile=coverage.txt -race -vet=off
+          go test ./... -coverprofile=coverage.txt -race -shuffle=on -vet=off
         env:
           MARIADB_PASSWORD: root
       - name: Upload coverage data
