@@ -26,7 +26,7 @@ genkey: ## Generate dev keys
 
 .PHONY: test
 test: ## Run test
-	MARIADB_PORT=$(TEST_DB_PORT) go test ./... -race
+	MARIADB_PORT=$(TEST_DB_PORT) go test ./... -race -shuffle=on
 
 .PHONY: up-test-db
 up-test-db: ## Make sure the test db container is running
