@@ -36,7 +36,7 @@ services:
       - ./dev/frontend:/usr/share/caddy:ro
 
   mysql:
-    image: mariadb:10.0.19
+    image: mariadb:10.6.4
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password

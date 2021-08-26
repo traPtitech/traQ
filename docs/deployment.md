@@ -61,8 +61,7 @@ imaging:
   concurrency: 1
 
 # MariaDB settings.
-# traQ is designed to work with ConoHa's managed DB service.
-# Use MariaDB 10.0.19 for maximum compatibility.
+# Use MariaDB 10.6.4 for maximum compatibility.
 mariadb:
   # The usual DB connection settings.
   host: db
@@ -369,7 +368,7 @@ services:
       - "80"
 
   db:
-    image: mariadb:10.0.19
+    image: mariadb:10.6.4
     container_name: traq-db
     restart: always
     environment:
