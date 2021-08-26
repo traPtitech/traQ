@@ -14,7 +14,7 @@ if docker ps --all | grep ${containername} > /dev/null; then
     docker restart ${containername}
 else
     echo "create ${containername} docker container"
-    docker run --name ${containername} -p ${port}:3306 -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=traq -d mariadb:10.0.19 \
+    docker run --name ${containername} -p ${port}:3306 -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=traq -d mariadb:10.6.4 \
            mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
 fi
 
