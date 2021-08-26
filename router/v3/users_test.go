@@ -719,15 +719,16 @@ func TestHandlers_ChangeUserPassword(t *testing.T) {
 
 	path := "/api/v3/users/{userId}/password"
 	env := Setup(t, common1)
-	user := env.CreateUser(t, rand)
+	user1 := env.CreateUser(t, rand)
+	user2 := env.CreateUser(t, rand)
 	admin := env.CreateAdmin(t, rand)
-	userSession := env.S(t, user.GetID())
+	user2Session := env.S(t, user2.GetID())
 	adminSession := env.S(t, admin.GetID())
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.PUT(path, user.GetID()).
+		e.PUT(path, user1.GetID()).
 			WithJSON(&PutUserPasswordRequest{NewPassword: "newPassword"}).
 			Expect().
 			Status(http.StatusUnauthorized)
@@ -736,7 +737,7 @@ func TestHandlers_ChangeUserPassword(t *testing.T) {
 	t.Run("bad request (empty password)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.PUT(path, user.GetID()).
+		e.PUT(path, user1.GetID()).
 			WithCookie(session.CookieName, adminSession).
 			WithJSON(&PutUserPasswordRequest{NewPassword: ""}).
 			Expect().
@@ -746,8 +747,8 @@ func TestHandlers_ChangeUserPassword(t *testing.T) {
 	t.Run("forbidden", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.PUT(path, user.GetID()).
-			WithCookie(session.CookieName, userSession).
+		e.PUT(path, user1.GetID()).
+			WithCookie(session.CookieName, user2Session).
 			WithJSON(&PutUserPasswordRequest{NewPassword: "newPassword"}).
 			Expect().
 			Status(http.StatusForbidden)
@@ -766,7 +767,7 @@ func TestHandlers_ChangeUserPassword(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
-		e.PUT(path, user.GetID()).
+		e.PUT(path, user1.GetID()).
 			WithCookie(session.CookieName, adminSession).
 			WithJSON(&PutUserPasswordRequest{NewPassword: "newPassword"}).
 			Expect().
