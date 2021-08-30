@@ -63,10 +63,17 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     needs: [build]
+    services:
+      mysql:
+        image: mariadb:10.6.4
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
+        env:
+          MYSQL_ROOT_PASSWORD: password
+        ports:
+          - 3306:3306
     env:
       GOCACHE: "/tmp/go/cache"
     steps:
-      - run: sudo /etc/init.d/mysql start
       - uses: actions/setup-go@v2
         with:
           go-version: 1.17.0
@@ -89,7 +96,10 @@ jobs:
           export TRAQ_IMAGEMAGICK=`which convert`
           go test ./... -coverprofile=coverage.txt -race -shuffle=on -vet=off
         env:
-          MARIADB_PASSWORD: root
+          MARIADB_HOSTNAME: 127.0.0.1
+          MARIADB_PORT: 3306
+          MARIADB_USERNAME: root
+          MARIADB_PASSWORD: password
       - name: Upload coverage data
         uses: codecov/codecov-action@v1
         with:
@@ -119,6 +129,11 @@ jobs:
           ./traQ/traQ migrate --reset
           tbls lint
         env:
+          TRAQ_MARIADB_HOST: 127.0.0.1
+          TRAQ_MARIADB_PORT: 3306
+          TRAQ_MARIADB_USERNAME: root
+          TRAQ_MARIADB_PASSWORD: password
+          TRAQ_MARIADB_DATABASE: traq
           TBLS_DSN: "mariadb://root:password@127.0.0.1:3306/traq"
   spectral:
     name: Spectral
