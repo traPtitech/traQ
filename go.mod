@@ -30,7 +30,7 @@ require (
 	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/motoki317/go-waveform v0.0.3
 	github.com/ncw/swift v1.0.53
-	github.com/olivere/elastic/v7 v7.0.27
+	github.com/olivere/elastic/v7 v7.0.28
 	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e
 	github.com/prometheus/client_golang v1.11.0
 	github.com/sapphi-red/midec v0.5.2
