@@ -24,7 +24,7 @@ require (
 	github.com/hajimehoshi/go-mp3 v0.3.2
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
-	github.com/json-iterator/go v1.1.11
+	github.com/json-iterator/go v1.1.12
 	github.com/labstack/echo/v4 v4.5.0
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lthibault/jitterbug/v2 v2.2.2
@@ -91,7 +91,7 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml v1.9.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
