@@ -578,6 +578,7 @@ func TestHandlers_GetFile(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		e.GET(path, f2.GetID()).
+			WithQuery("dl", "1").
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
