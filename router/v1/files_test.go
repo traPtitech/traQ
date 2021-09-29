@@ -3,6 +3,7 @@ package v1
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -81,7 +82,7 @@ func TestHandlers_GetFileByID(t *testing.T) {
 			WithQuery("dl", 1).
 			Expect().
 			Status(http.StatusOK)
-		res.Header(echo.HeaderContentDisposition).Equal(fmt.Sprintf("attachment; filename=%s", file.GetFileName()))
+		res.Header(echo.HeaderContentDisposition).Equal(fmt.Sprintf("attachment; filename=%s", url.PathEscape(file.GetFileName())))
 		res.Header(consts.HeaderCacheControl).Equal("private, max-age=31536000")
 		res.Body().Equal("test message")
 	})

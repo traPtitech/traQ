@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/gofrs/uuid"
@@ -113,7 +114,7 @@ func ServeFile(c echo.Context, meta model.File) error {
 	c.Response().Header().Set(consts.HeaderETag, strconv.Quote(meta.GetMD5Hash()))
 	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=31536000") // 1年間キャッシュ
 	if v, _ := strconv.ParseBool(c.QueryParam("dl")); v {
-		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename=%s", meta.GetFileName()))
+		c.Response().Header().Set(echo.HeaderContentDisposition, fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(meta.GetFileName())))
 	}
 	c.Response().Header().Set(consts.HeaderFileMetaType, meta.GetFileType().String())
 	switch meta.GetFileType() {
