@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"time"
 
@@ -124,7 +125,7 @@ func (fs *SwiftFileStorage) SaveByKey(src io.Reader, key, name, contentType stri
 	}
 
 	_, err = fs.connection.ObjectPut(fs.container, key, src, true, "", contentType, swift.Headers{
-		"Content-Disposition": fmt.Sprintf("attachment; filename=%s", name),
+		"Content-Disposition": fmt.Sprintf("attachment; filename*=UTF-8''%s", url.PathEscape(name)),
 	})
 	return
 }

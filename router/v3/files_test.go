@@ -12,6 +12,7 @@ import (
 	"github.com/go-audio/audio"
 	"github.com/go-audio/wav"
 	"github.com/gofrs/uuid"
+	"github.com/labstack/echo/v4"
 	"github.com/orcaman/writerseeker"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -531,6 +532,7 @@ func TestHandlers_GetFile(t *testing.T) {
 	user2 := env.CreateUser(t, rand)
 	user3 := env.CreateUser(t, rand)
 	f := env.CreateFile(t, user.GetID(), uuid.Nil)
+	f2 := env.CreateFileWithName(t, user.GetID(), uuid.Nil, "テス,ト")
 	dm := env.CreateDMChannel(t, user2.GetID(), user3.GetID())
 	secretFile := env.CreateFile(t, user2.GetID(), dm.ID)
 	s := env.S(t, user.GetID())
@@ -570,6 +572,18 @@ func TestHandlers_GetFile(t *testing.T) {
 			Status(http.StatusOK).
 			Body().
 			Equal("test message")
+	})
+
+	t.Run("success Content-Dispotion escape", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path, f2.GetID()).
+			WithQuery("dl", "1").
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusOK).
+			Header(echo.HeaderContentDisposition).
+			Equal("attachment; filename*=UTF-8''%E3%83%86%E3%82%B9%2C%E3%83%88")
 	})
 }
 

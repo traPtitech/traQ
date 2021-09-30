@@ -349,6 +349,11 @@ func (env *Env) AddStampToMessage(t *testing.T, messageID, stampID, userID uuid.
 
 // CreateFile ファイルを必ず作成します
 func (env *Env) CreateFile(t *testing.T, creatorID, channelID uuid.UUID) model.File {
+	return env.CreateFileWithName(t, creatorID, channelID, "test.txt")
+}
+
+// CreateFileWithName ファイルを必ず作成します
+func (env *Env) CreateFileWithName(t *testing.T, creatorID, channelID uuid.UUID, filename string) model.File {
 	t.Helper()
 
 	var cr, ch optional.UUID
@@ -361,7 +366,7 @@ func (env *Env) CreateFile(t *testing.T, creatorID, channelID uuid.UUID) model.F
 
 	buf := bytes.NewBufferString("test message")
 	args := file.SaveArgs{
-		FileName:  "test.txt",
+		FileName:  filename,
 		FileSize:  int64(buf.Len()),
 		FileType:  model.FileTypeUserFile,
 		CreatorID: cr,
