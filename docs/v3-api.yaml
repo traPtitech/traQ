@@ -3997,10 +3997,11 @@ paths:
       tags:
         - oauth2
       requestBody:
+        required: true
         content:
-          application/json:
+          application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PostOAuth2Revoke'
+              $ref: '#/components/schemas/OAuth2Revoke'
   /users/me/ex-accounts:
     get:
       summary: 外部ログインアカウント一覧を取得
@@ -6604,16 +6605,16 @@ components:
         - code
         - token
         - none
-    PostOAuth2Revoke:
-      title: PostOAuth2Revoke
+    OAuth2Revoke:
+      title: OAuth2Revoke
       type: object
+      required:
+        - token
       description: POST /oauth2/revoke 用リクエストボディ
       properties:
         token:
           type: string
           description: 無効化するOAuth2トークンまたはOAuth2リフレッシュトークン
-      required:
-        - token
     ExternalProviderUser:
       title: ExternalProviderUser
       type: object
