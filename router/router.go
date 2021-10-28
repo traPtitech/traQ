@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 
+	"github.com/labstack/echo-contrib/prometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/leandro-lugaresi/hub"
@@ -99,6 +100,8 @@ func newEcho(logger *zap.Logger, config *Config, repo repository.Repository, cm 
 		AllowHeaders:  []string{echo.HeaderContentType, echo.HeaderAuthorization, consts.HeaderSignature, consts.HeaderChannelID},
 		MaxAge:        3600,
 	}))
+	p := prometheus.NewPrometheus("echo", nil)
+	p.Use(e)
 
 	return e
 }
