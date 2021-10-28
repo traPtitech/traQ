@@ -25,6 +25,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
 	github.com/json-iterator/go v1.1.12
+	github.com/labstack/echo-contrib v0.11.0
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lthibault/jitterbug/v2 v2.2.2
