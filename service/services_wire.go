@@ -1,3 +1,4 @@
+//go:build wireinject
 // +build wireinject
 
 package service
@@ -24,4 +25,5 @@ var ProviderSet = wire.NewSet(wire.FieldsOf(new(*Services),
 	"ViewerManager",
 	"WebRTCv3",
 	"WS",
+	"BotWS",
 ))

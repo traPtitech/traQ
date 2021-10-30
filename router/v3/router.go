@@ -10,6 +10,7 @@ import (
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/middlewares"
 	"github.com/traPtitech/traQ/router/session"
+	botWS "github.com/traPtitech/traQ/service/bot/ws"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/file"
@@ -28,6 +29,7 @@ type Handlers struct {
 	RBAC           rbac.RBAC
 	Repo           repository.Repository
 	WS             *ws.Streamer
+	BotWS          *botWS.Streamer
 	Hub            *hub.Hub
 	Logger         *zap.Logger
 	OC             *counter.OnlineCounter
@@ -321,6 +323,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 		{
 			apiBots.GET("", h.GetBots, requires(permission.GetBot))
 			apiBots.POST("", h.CreateBot, requires(permission.CreateBot))
+			apiBots.GET("/ws", echo.WrapHandler(h.BotWS))
 			apiBotsBID := apiBots.Group("/:botID", retrieve.BotID())
 			{
 				apiBotsBID.GET("", h.GetBot, requires(permission.GetBot))
