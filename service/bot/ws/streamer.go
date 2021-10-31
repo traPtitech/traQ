@@ -157,7 +157,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	s.register <- session
 	wsConnectionCounter.Inc()
 	s.hub.Publish(hub.Message{
-		Name: event.WSConnected,
+		Name: event.BotWSConnected,
 		Fields: hub.Fields{
 			"user_id": session.userID,
 			"req":     r,
@@ -169,7 +169,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	_ = s.webrtc.ResetState(session.key, session.userID)
 	s.hub.Publish(hub.Message{
-		Name: event.WSDisconnected,
+		Name: event.BotWSDisconnected,
 		Fields: hub.Fields{
 			"user_id": session.userID,
 			"req":     r,

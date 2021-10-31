@@ -2,12 +2,8 @@ package repository
 
 import (
 	"math"
-	"strings"
 	"time"
-	"unicode/utf8"
 
-	vd "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/gofrs/uuid"
 	"github.com/leandro-lugaresi/hub"
 	"gorm.io/gorm"
@@ -17,29 +13,10 @@ import (
 	"github.com/traPtitech/traQ/service/rbac/role"
 	"github.com/traPtitech/traQ/utils/gormutil"
 	"github.com/traPtitech/traQ/utils/random"
-	"github.com/traPtitech/traQ/utils/validator"
 )
 
 // CreateBot implements BotRepository interface.
-func (repo *GormRepository) CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
-	if err := vd.Validate(name, validator.BotUserNameRuleRequired...); err != nil {
-		return nil, ArgError("name", "invalid name")
-	}
-	if len(displayName) == 0 || utf8.RuneCountInString(displayName) > 32 {
-		return nil, ArgError("displayName", "DisplayName must be non-empty and shorter than 33 characters")
-	}
-	if err := vd.Validate(webhookURL, vd.Required, is.URL, validator.NotInternalURL); err != nil || !strings.HasPrefix(webhookURL, "http") {
-		return nil, ArgError("webhookURL", "invalid webhookURL")
-	}
-	if creatorID == uuid.Nil {
-		return nil, ArgError("creatorID", "CreatorID is required")
-	}
-	if _, err := repo.GetUserByName("BOT_"+name, false); err == nil {
-		return nil, ErrAlreadyExists
-	} else if err != ErrNotFound {
-		return nil, err
-	}
-
+func (repo *GormRepository) CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, mode model.BotMode, state model.BotState, webhookURL string) (*model.Bot, error) {
 	uid := uuid.Must(uuid.NewV4())
 	bid := uuid.Must(uuid.NewV4())
 	tid := uuid.Must(uuid.NewV4())
@@ -62,7 +39,8 @@ func (repo *GormRepository) CreateBot(name, displayName, description string, ico
 		AccessTokenID:     tid,
 		SubscribeEvents:   model.BotEventTypes{},
 		Privileged:        false,
-		State:             model.BotInactive,
+		Mode:              mode,
+		State:             state,
 		BotCode:           random.AlphaNumeric(30),
 		CreatorID:         creatorID,
 	}
@@ -133,27 +111,15 @@ func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 		if args.Privileged.Valid {
 			changes["privileged"] = args.Privileged.Bool
 		}
+		if args.Mode.Valid {
+			changes["mode"] = args.Mode.String
+		}
 		if args.WebhookURL.Valid {
 			w := args.WebhookURL.String
-			if err := vd.Validate(w, vd.Required, is.URL, validator.NotInternalURL); err != nil || !strings.HasPrefix(w, "http") {
-				return ArgError("args.WebhookURL", "invalid webhookURL")
-			}
 			changes["post_url"] = w
 			changes["state"] = model.BotPaused
 		}
 		if args.CreatorID.Valid {
-			// 作成者検証
-			user, err := getUser(tx, false, "id = ?", args.CreatorID.UUID)
-			if err != nil {
-				if err == ErrNotFound {
-					return ArgError("args.CreatorID", "the Creator is not found")
-				}
-				return err
-			}
-			if !user.IsActive() || user.IsBot() {
-				return ArgError("args.CreatorID", "invalid User")
-			}
-
 			changes["creator_id"] = args.CreatorID.UUID
 		}
 		if args.SubscribeEvents != nil {
@@ -168,10 +134,6 @@ func (repo *GormRepository) UpdateBot(id uuid.UUID, args UpdateBotArgs) error {
 		}
 
 		if args.DisplayName.Valid {
-			if len(args.DisplayName.String) == 0 || utf8.RuneCountInString(args.DisplayName.String) > 32 {
-				return ArgError("args.DisplayName", "DisplayName must be non-empty and shorter than 33 characters")
-			}
-
 			if err := tx.Model(&model.User{ID: b.BotUserID}).Update("display_name", args.DisplayName.String).Error; err != nil {
 				return err
 			}

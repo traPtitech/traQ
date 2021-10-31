@@ -2930,7 +2930,8 @@ paths:
       operationId: createBot
       description: |-
         BOTを作成します。
-        作成後にアクティベーション・購読イベントの設定を行う必要があります。
+        作成後に購読イベントの設定を行う必要があります。
+        さらにHTTP Modeの場合はアクティベーションを行う必要があります。
       tags:
         - bot
       requestBody:
@@ -2963,6 +2964,49 @@ paths:
       description: |-
         BOT情報のリストを取得します。
         allを指定しない場合、自分が開発者のBOTのみを返します。
+  /bots/ws:
+    get:
+      tags:
+        - bot
+      responses:
+        '101':
+          description: Switching Protocols
+      operationId: connectBotWS
+      summary: WebSocket Mode BOT用通知ストリームに接続します
+      description: |-
+        # BOT WebSocketプロトコル
+
+        ## 送信
+
+        `コマンド:引数1:引数2:...` のような形式のTextMessageをサーバーに送信することで、このWebSocketセッションに対する設定が実行できます。
+
+        ### `rtcstate`コマンド
+        自分のWebRTC状態を変更します。
+        他のコネクションが既に状態を保持している場合、変更することができません。
+
+        `rtcstate:{チャンネルID}:({状態}:{セッションID})*`
+
+        チャンネルIDにnullもしくは空文字を指定するか、状態にnullもしくは空文字を指定した場合、WebRTC状態はリセットされます。
+
+        `rtcstate:null`, `rtcstate:`, `rtcstate:channelId:null`, `rtcstate:channelId:`
+
+        コネクションが切断された場合、自分のWebRTC状態はリセットされます。
+
+        ## 受信
+
+        TextMessageとして各種イベントが`type`、`reqId`、`body`を持つJSONとして非同期に送られます。
+        `body`の内容はHTTP Modeの場合のRequest Bodyと同様です。
+        例外として`ERROR`イベントは`reqId`を持ちません。
+
+        例: PINGイベント
+        `{"type":"PING","reqId":"requestId","body":{"eventTime":"2019-05-07T04:50:48.582586882Z"}}`
+
+        ### `ERROR`
+
+        コマンドの引数が不正などの理由でコマンドが受理されなかった。
+
+        `{"type":"ERROR","body":"message"}`
+
   '/bots/{botId}/icon':
     parameters:
       - $ref: '#/components/parameters/botIdInPath'
@@ -5702,6 +5746,23 @@ components:
         - callbackUrl
         - scopes
         - description
+    BotMode:
+      type: string
+      title: BotMode
+      description: |-
+        BOT動作モード
+
+        HTTP: HTTP Mode
+        WebSocket: WebSocket Mode
+      enum:
+        - HTTP
+        - WebSocket
+      x-enum-varnames:
+        - HTTP
+        - WebSocket
+      x-enum-description:
+        - HTTP Mode
+        - WebSocket Mode
     BotState:
       type: integer
       title: BotState
@@ -5749,6 +5810,8 @@ components:
           description: BOTが購読しているイベントの配列
           items:
             type: string
+        mode:
+          $ref: '#/components/schemas/BotMode'
         state:
           $ref: '#/components/schemas/BotState'
         createdAt:
@@ -5765,6 +5828,7 @@ components:
         - description
         - developerId
         - subscribeEvents
+        - mode
         - state
         - createdAt
         - updatedAt
@@ -5784,6 +5848,8 @@ components:
         privileged:
           type: boolean
           description: 特権
+        mode:
+          $ref: '#/components/schemas/BotMode'
         endpoint:
           type: string
           description: BOTサーバーエンドポイント
@@ -5829,6 +5895,8 @@ components:
           type: string
           description: 作成日時
           format: date-time
+        mode:
+          $ref: '#/components/schemas/BotMode'
         state:
           $ref: '#/components/schemas/BotState'
         subscribeEvents:
@@ -5867,6 +5935,7 @@ components:
         - id
         - updatedAt
         - createdAt
+        - mode
         - state
         - subscribeEvents
         - developerId
@@ -5926,15 +5995,19 @@ components:
           type: string
           description: BOTの説明
           maxLength: 1000
+        mode:
+          $ref: '#/components/schemas/BotMode'
         endpoint:
           type: string
-          description: BOTサーバーエンドポイント
+          description: |-
+            BOTサーバーエンドポイント
+            BOT動作モードがHTTPの場合必須です
           format: uri
       required:
         - name
         - displayName
         - description
-        - endpoint
+        - mode
     PostBotActionJoinRequest:
       title: PostBotActionJoinRequest
       type: object

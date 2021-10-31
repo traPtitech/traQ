@@ -10,6 +10,7 @@ import (
 	model "github.com/traPtitech/traQ/model"
 	repository "github.com/traPtitech/traQ/repository"
 	reflect "reflect"
+	time "time"
 )
 
 // MockBotRepository is a mock of BotRepository interface
@@ -36,18 +37,18 @@ func (m *MockBotRepository) EXPECT() *MockBotRepositoryMockRecorder {
 }
 
 // CreateBot mocks base method
-func (m *MockBotRepository) CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, webhookURL string) (*model.Bot, error) {
+func (m *MockBotRepository) CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, mode model.BotMode, state model.BotState, webhookURL string) (*model.Bot, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateBot", name, displayName, description, iconFileID, creatorID, webhookURL)
+	ret := m.ctrl.Call(m, "CreateBot", name, displayName, description, iconFileID, creatorID, mode, state, webhookURL)
 	ret0, _ := ret[0].(*model.Bot)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateBot indicates an expected call of CreateBot
-func (mr *MockBotRepositoryMockRecorder) CreateBot(name, displayName, description, iconFileID, creatorID, webhookURL interface{}) *gomock.Call {
+func (mr *MockBotRepositoryMockRecorder) CreateBot(name, displayName, description, iconFileID, creatorID, mode, state, webhookURL interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBot", reflect.TypeOf((*MockBotRepository)(nil).CreateBot), name, displayName, description, iconFileID, creatorID, webhookURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBot", reflect.TypeOf((*MockBotRepository)(nil).CreateBot), name, displayName, description, iconFileID, creatorID, mode, state, webhookURL)
 }
 
 // UpdateBot mocks base method
@@ -237,4 +238,18 @@ func (m *MockBotRepository) GetBotEventLogs(botID uuid.UUID, limit, offset int) 
 func (mr *MockBotRepositoryMockRecorder) GetBotEventLogs(botID, limit, offset interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBotEventLogs", reflect.TypeOf((*MockBotRepository)(nil).GetBotEventLogs), botID, limit, offset)
+}
+
+// PurgeBotEventLogs mocks base method
+func (m *MockBotRepository) PurgeBotEventLogs(before time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PurgeBotEventLogs", before)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PurgeBotEventLogs indicates an expected call of PurgeBotEventLogs
+func (mr *MockBotRepositoryMockRecorder) PurgeBotEventLogs(before interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PurgeBotEventLogs", reflect.TypeOf((*MockBotRepository)(nil).PurgeBotEventLogs), before)
 }

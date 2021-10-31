@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/bot/event"
 	"github.com/traPtitech/traQ/utils/optional"
+	"github.com/traPtitech/traQ/utils/random"
 )
 
 func botEquals(t *testing.T, expect *model.Bot, actual *httpexpect.Object) {
@@ -23,6 +24,7 @@ func botEquals(t *testing.T, expect *model.Bot, actual *httpexpect.Object) {
 	actual.Value("description").String().Equal(expect.Description)
 	actual.Value("developerId").String().Equal(expect.CreatorID.String())
 	actual.Value("subscribeEvents").Array().Length().Equal(len(expect.SubscribeEvents.Array()))
+	actual.Value("mode").String().Equal(expect.Mode.String())
 	actual.Value("state").Number().Equal(expect.State)
 	actual.Value("createdAt").String().NotEmpty()
 	actual.Value("updatedAt").String().NotEmpty()
@@ -84,6 +86,7 @@ func TestPostBotRequest_Validate(t *testing.T) {
 		Name        string
 		DisplayName string
 		Description string
+		Mode        string
 		Endpoint    string
 	}
 	tests := []struct {
@@ -93,47 +96,67 @@ func TestPostBotRequest_Validate(t *testing.T) {
 	}{
 		{
 			"empty name",
-			fields{Name: "", DisplayName: "po", Description: "desc", Endpoint: "https://example.com"},
+			fields{Name: "", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "https://example.com"},
 			true,
 		},
 		{
 			"bad name",
-			fields{Name: "ボットくん", DisplayName: "po", Description: "desc", Endpoint: "https://example.com"},
+			fields{Name: "ボットくん", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "https://example.com"},
 			true,
 		},
 		{
 			"empty display name",
-			fields{Name: "name", DisplayName: "", Description: "desc", Endpoint: "https://example.com"},
+			fields{Name: "name", DisplayName: "", Description: "desc", Mode: "HTTP", Endpoint: "https://example.com"},
 			true,
 		},
 		{
 			"bad display name",
-			fields{Name: "name", DisplayName: strings.Repeat("a", 100), Description: "desc", Endpoint: "https://example.com"},
+			fields{Name: "name", DisplayName: strings.Repeat("a", 100), Description: "desc", Mode: "HTTP", Endpoint: "https://example.com"},
 			true,
 		},
 		{
 			"empty desc",
-			fields{Name: "name", DisplayName: "po", Description: "", Endpoint: "https://example.com"},
+			fields{Name: "name", DisplayName: "po", Description: "", Mode: "HTTP", Endpoint: "https://example.com"},
 			true,
 		},
 		{
+			"empty mode",
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "", Endpoint: "https://example.com"},
+			true,
+		},
+		{
+			"bad mode",
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "bad mode", Endpoint: "https://example.com"},
+			true,
+		},
+		{
+			"should not require endpoint in WebSocket mode",
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "WebSocket", Endpoint: ""},
+			false,
+		},
+		{
+			"endpoint is optional in WebSocket mode",
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "WebSocket", Endpoint: "https://example.com"},
+			false,
+		},
+		{
 			"empty endpoint",
-			fields{Name: "name", DisplayName: "po", Description: "desc", Endpoint: ""},
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: ""},
 			true,
 		},
 		{
 			"bad endpoint (not url)",
-			fields{Name: "name", DisplayName: "po", Description: "desc", Endpoint: "bad_url"},
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "bad_url"},
 			true,
 		},
 		{
 			"bad endpoint (internal)",
-			fields{Name: "name", DisplayName: "po", Description: "desc", Endpoint: "https://0.0.0.0:3000"},
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "https://0.0.0.0:3000"},
 			true,
 		},
 		{
 			"success",
-			fields{Name: "name", DisplayName: "po", Description: "desc", Endpoint: "https://example.com"},
+			fields{Name: "name", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "https://example.com"},
 			false,
 		},
 	}
@@ -143,6 +166,7 @@ func TestPostBotRequest_Validate(t *testing.T) {
 				Name:        tt.fields.Name,
 				DisplayName: tt.fields.DisplayName,
 				Description: tt.fields.Description,
+				Mode:        tt.fields.Mode,
 				Endpoint:    tt.fields.Endpoint,
 			}
 			if err := r.Validate(); (err != nil) != tt.wantErr {
@@ -173,7 +197,7 @@ func TestHandlers_CreateBot(t *testing.T) {
 		e := env.R(t)
 		e.POST(path).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PostBotRequest{Name: "ボットくん", DisplayName: "po", Description: "desc", Endpoint: "https://example.com"}).
+			WithJSON(&PostBotRequest{Name: "ボットくん", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "https://example.com"}).
 			Expect().
 			Status(http.StatusBadRequest)
 	})
@@ -183,7 +207,7 @@ func TestHandlers_CreateBot(t *testing.T) {
 		e := env.R(t)
 		e.POST(path).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PostBotRequest{Name: "575", DisplayName: "po", Description: "desc", Endpoint: "https://example.com"}).
+			WithJSON(&PostBotRequest{Name: "575", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "https://example.com"}).
 			Expect().
 			Status(http.StatusConflict)
 	})
@@ -193,7 +217,7 @@ func TestHandlers_CreateBot(t *testing.T) {
 		e := env.R(t)
 		obj := e.POST(path).
 			WithCookie(session.CookieName, commonSession).
-			WithJSON(&PostBotRequest{Name: "77", DisplayName: "po", Description: "desc", Endpoint: "https://example.com"}).
+			WithJSON(&PostBotRequest{Name: "77", DisplayName: "po", Description: "desc", Mode: "HTTP", Endpoint: "https://example.com"}).
 			Expect().
 			Status(http.StatusCreated).
 			JSON().
@@ -203,6 +227,7 @@ func TestHandlers_CreateBot(t *testing.T) {
 		obj.Value("botUserId").String().NotEmpty()
 		obj.Value("description").String().Equal("desc")
 		obj.Value("subscribeEvents").Array().Length().Equal(0)
+		obj.Value("mode").String().Equal("HTTP")
 		obj.Value("state").Number().Equal(model.BotInactive)
 		obj.Value("developerId").String().Equal(user.GetID().String())
 		obj.Value("createdAt").String().NotEmpty()
@@ -213,6 +238,34 @@ func TestHandlers_CreateBot(t *testing.T) {
 		obj.Value("privileged").Boolean().False()
 		obj.Value("channels").Array().Length().Equal(0)
 	})
+
+	t.Run("success with WebSocket mode", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.POST(path).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PostBotRequest{Name: "78", DisplayName: "pop", Description: "desc", Mode: "WebSocket", Endpoint: ""}).
+			Expect().
+			Status(http.StatusCreated).
+			JSON().
+			Object()
+
+		obj.Value("id").String().NotEmpty()
+		obj.Value("botUserId").String().NotEmpty()
+		obj.Value("description").String().Equal("desc")
+		obj.Value("subscribeEvents").Array().Length().Equal(0)
+		obj.Value("mode").String().Equal("WebSocket")
+		obj.Value("state").Number().Equal(model.BotActive)
+		obj.Value("developerId").String().Equal(user.GetID().String())
+		obj.Value("createdAt").String().NotEmpty()
+		obj.Value("updatedAt").String().NotEmpty()
+		obj.Value("tokens").Object().Value("verificationToken").String().NotEmpty()
+		obj.Value("tokens").Object().Value("accessToken").String().NotEmpty()
+		obj.Value("endpoint").String().Equal("")
+		obj.Value("privileged").Boolean().False()
+		obj.Value("channels").Array().Length().Equal(0)
+	})
+
 }
 
 func TestHandlers_GetBot(t *testing.T) {
@@ -308,6 +361,8 @@ func TestHandlers_EditBot(t *testing.T) {
 	bot1 := env.CreateBot(t, rand, user1.GetID())
 	bot2 := env.CreateBot(t, rand, user1.GetID())
 	bot3 := env.CreateBot(t, rand, user2.GetID())
+	wsBotWithoutEndpoint, err := env.Repository.CreateBot(random.AlphaNumeric(16), "po", "po", uuid.Nil, user1.GetID(), model.BotModeWebSocket, model.BotActive, "")
+	require.NoError(t, err)
 
 	t.Run("not logged in", func(t *testing.T) {
 		t.Parallel()
@@ -409,6 +464,16 @@ func TestHandlers_EditBot(t *testing.T) {
 			Status(http.StatusBadRequest)
 	})
 
+	t.Run("bad request (change mode to HTTP and endpoint not set)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, wsBotWithoutEndpoint.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{Mode: optional.StringFrom("HTTP")}).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
 	t.Run("forbidden (cannot patch others' bot)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
@@ -447,6 +512,7 @@ func TestHandlers_EditBot(t *testing.T) {
 			WithJSON(&PatchBotRequest{
 				DisplayName: optional.StringFrom("po"),
 				Description: optional.StringFrom("desc"),
+				Mode:        optional.StringFrom("WebSocket"),
 				Endpoint:    optional.StringFrom("https://example.com"),
 				DeveloperID: optional.UUIDFrom(user2.GetID()),
 				SubscribeEvents: map[model.BotEventType]struct{}{

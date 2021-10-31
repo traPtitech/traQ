@@ -21,6 +21,10 @@ const (
 	BotModeWebSocket BotMode = "WebSocket"
 )
 
+func (m BotMode) String() string {
+	return string(m)
+}
+
 // BotState Bot状態
 type BotState int
 

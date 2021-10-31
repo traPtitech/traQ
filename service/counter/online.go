@@ -31,11 +31,11 @@ func NewOnlineCounter(hub *hub.Hub) *OnlineCounter {
 		counters: map[uuid.UUID]*counter{},
 	}
 	go func() {
-		for e := range hub.Subscribe(8, event.SSEConnected, event.SSEDisconnected, event.WSConnected, event.WSDisconnected).Receiver {
+		for e := range hub.Subscribe(8, event.WSConnected, event.WSDisconnected, event.BotWSConnected, event.BotWSDisconnected).Receiver {
 			switch e.Topic() {
-			case event.SSEConnected, event.WSConnected:
+			case event.WSConnected, event.BotWSConnected:
 				oc.inc(e.Fields["user_id"].(uuid.UUID))
-			case event.SSEDisconnected, event.WSDisconnected:
+			case event.WSDisconnected, event.BotWSDisconnected:
 				oc.dec(e.Fields["user_id"].(uuid.UUID))
 			}
 		}
@@ -97,13 +97,9 @@ func (oc *OnlineCounter) dec(userID uuid.UUID) (toOffline bool) {
 func (oc *OnlineCounter) IsOnline(userID uuid.UUID) bool {
 	oc.countersLock.Lock()
 	c, ok := oc.counters[userID]
-	if !ok {
-		oc.countersLock.Unlock()
-		return false
-	}
 	oc.countersLock.Unlock()
 
-	return c.isOnline()
+	return ok && c.isOnline()
 }
 
 // GetOnlineUserIDs オンラインなユーザーのUUIDの配列を取得します
