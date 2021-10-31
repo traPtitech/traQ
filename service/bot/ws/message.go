@@ -7,13 +7,19 @@ type rawMessage struct {
 	data []byte
 }
 
-type eventMessage struct {
-	Type  string      `json:"type"`
-	ReqID uuid.UUID   `json:"reqId"`
-	Body  interface{} `json:"body"`
+type marshalledRaw []byte
+
+func (m marshalledRaw) MarshalJSON() ([]byte, error) {
+	return m, nil
 }
 
-func makeEventMessage(t string, reqID uuid.UUID, b interface{}) (m *eventMessage) {
+type eventMessage struct {
+	Type  string        `json:"type"`
+	ReqID uuid.UUID     `json:"reqId"`
+	Body  marshalledRaw `json:"body"`
+}
+
+func makeEventMessage(t string, reqID uuid.UUID, b []byte) (m *eventMessage) {
 	return &eventMessage{
 		Type:  t,
 		ReqID: reqID,

@@ -109,7 +109,7 @@ func filterSession(sessions []*session, target *session) []*session {
 }
 
 // WriteMessage 指定したセッションにメッセージを書き込みます
-func (s *Streamer) WriteMessage(t string, reqID uuid.UUID, body interface{}, botUserID uuid.UUID) []error {
+func (s *Streamer) WriteMessage(t string, reqID uuid.UUID, body []byte, botUserID uuid.UUID) []error {
 	m := &rawMessage{
 		t:    websocket.TextMessage,
 		data: makeEventMessage(t, reqID, body).toJSON(),
