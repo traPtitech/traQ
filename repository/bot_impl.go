@@ -288,7 +288,9 @@ func (repo *GormRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
 			return convertError(err)
 		}
 
-		bot.State = model.BotPaused
+		if bot.Mode == model.BotModeHTTP {
+			bot.State = model.BotPaused
+		}
 		bot.BotCode = random.AlphaNumeric(30)
 		bot.VerificationToken = random.SecureAlphaNumeric(30)
 
