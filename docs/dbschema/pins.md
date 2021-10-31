@@ -30,7 +30,7 @@ CREATE TABLE `pins` (
 | id | char(36) |  | false |  |  |  |
 | message_id | char(36) |  | false |  | [messages](messages.md) | メッセージUUID |
 | user_id | char(36) |  | false |  | [users](users.md) | ピンしたユーザーUUID |
-| created_at | datetime(6) |  | true |  |  |  |
+| created_at | datetime(6) | NULL | true |  |  |  |
 
 ## Constraints
 

@@ -31,8 +31,8 @@ CREATE TABLE `message_reports` (
 | message_id | char(36) |  | false |  |  | メッセージUUID |
 | reporter | char(36) |  | false |  |  | 通報者UUID |
 | reason | text |  | false |  |  | 通報理由 |
-| created_at | datetime(6) |  | true |  |  |  |
-| deleted_at | datetime(6) |  | true |  |  |  |
+| created_at | datetime(6) | NULL | true |  |  |  |
+| deleted_at | datetime(6) | NULL | true |  |  |  |
 
 ## Constraints
 

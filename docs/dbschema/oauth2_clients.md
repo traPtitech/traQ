@@ -9,14 +9,14 @@ OAuth2クライアントテーブル
 
 ```sql
 CREATE TABLE `oauth2_clients` (
-  `id` char(36) NOT NULL DEFAULT '',
+  `id` char(36) NOT NULL,
   `name` varchar(32) DEFAULT NULL,
-  `description` text,
+  `description` text DEFAULT NULL,
   `confidential` tinyint(1) DEFAULT NULL,
   `creator_id` char(36) DEFAULT NULL,
   `secret` varchar(36) DEFAULT NULL,
-  `redirect_uri` text,
-  `scopes` text,
+  `redirect_uri` text DEFAULT NULL,
+  `scopes` text DEFAULT NULL,
   `created_at` datetime(6) DEFAULT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
   `deleted_at` datetime(6) DEFAULT NULL,
@@ -31,16 +31,16 @@ CREATE TABLE `oauth2_clients` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false |  |  |  |
-| name | varchar(32) |  | true |  |  | クライアント名 |
-| description | text |  | true |  |  | 説明 |
-| confidential | tinyint(1) |  | true |  |  | コンフィデンシャルかどうか |
-| creator_id | char(36) |  | true |  |  | 作成者UUID |
-| secret | varchar(36) |  | true |  |  | クライアントシークレット |
-| redirect_uri | text |  | true |  |  | リダイレクトURI |
-| scopes | text |  | true |  |  | スコープ |
-| created_at | datetime(6) |  | true |  |  |  |
-| updated_at | datetime(6) |  | true |  |  |  |
-| deleted_at | datetime(6) |  | true |  |  |  |
+| name | varchar(32) | NULL | true |  |  | クライアント名 |
+| description | text | NULL | true |  |  | 説明 |
+| confidential | tinyint(1) | NULL | true |  |  | コンフィデンシャルかどうか |
+| creator_id | char(36) | NULL | true |  |  | 作成者UUID |
+| secret | varchar(36) | NULL | true |  |  | クライアントシークレット |
+| redirect_uri | text | NULL | true |  |  | リダイレクトURI |
+| scopes | text | NULL | true |  |  | スコープ |
+| created_at | datetime(6) | NULL | true |  |  |  |
+| updated_at | datetime(6) | NULL | true |  |  |  |
+| deleted_at | datetime(6) | NULL | true |  |  |  |
 
 ## Constraints
 

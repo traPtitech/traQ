@@ -27,7 +27,7 @@ CREATE TABLE `clip_folder_messages` (
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | folder_id | char(36) |  | false |  | [clip_folders](clip_folders.md) | クリップフォルダーID |
 | message_id | char(36) |  | false |  | [messages](messages.md) | メッセージID |
-| created_at | datetime(6) |  | true |  |  | クリップされた日時 |
+| created_at | datetime(6) | NULL | true |  |  | クリップされた日時 |
 
 ## Constraints
 

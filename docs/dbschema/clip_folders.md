@@ -30,7 +30,7 @@ CREATE TABLE `clip_folders` (
 | name | varchar(30) |  | false |  |  | クリップフォルダー名 |
 | description | text |  | false |  |  | 説明 |
 | owner_id | char(36) |  | false |  | [users](users.md) | 所有者のUUID |
-| created_at | datetime(6) |  | true |  |  | 作成日時 |
+| created_at | datetime(6) | NULL | true |  |  | 作成日時 |
 
 ## Constraints
 

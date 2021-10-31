@@ -9,10 +9,10 @@ traQ API HTTPセッションテーブル
 
 ```sql
 CREATE TABLE `r_sessions` (
-  `token` varchar(50) NOT NULL DEFAULT '',
+  `token` varchar(50) NOT NULL,
   `reference_id` char(36) DEFAULT NULL,
   `user_id` varchar(36) DEFAULT NULL,
-  `data` longblob,
+  `data` longblob DEFAULT NULL,
   `created` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`token`),
   UNIQUE KEY `reference_id` (`reference_id`),
@@ -27,10 +27,10 @@ CREATE TABLE `r_sessions` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | token | varchar(50) |  | false |  |  | セッショントークン |
-| reference_id | char(36) |  | true |  |  | 参照ID |
-| user_id | varchar(36) |  | true |  |  | セッションがログインしているユーザーUUID |
-| data | longblob |  | true |  |  | セッションデータ(gobバイナリ) |
-| created | datetime(6) |  | true |  |  | 生成日時 |
+| reference_id | char(36) | NULL | true |  |  | 参照ID |
+| user_id | varchar(36) | NULL | true |  |  | セッションがログインしているユーザーUUID |
+| data | longblob | NULL | true |  |  | セッションデータ(gobバイナリ) |
+| created | datetime(6) | NULL | true |  |  | 生成日時 |
 
 ## Constraints
 

@@ -25,7 +25,7 @@ CREATE TABLE `user_group_members` (
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | group_id | char(36) |  | false |  | [user_groups](user_groups.md) | グループUUID |
 | user_id | char(36) |  | false |  |  | ユーザーUUID |
-| role | varchar(100) |  | false |  |  | 役割 |
+| role | varchar(100) | '' | false |  |  | 役割 |
 
 ## Constraints
 

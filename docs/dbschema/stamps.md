@@ -13,7 +13,7 @@ CREATE TABLE `stamps` (
   `name` varchar(32) NOT NULL,
   `creator_id` char(36) NOT NULL,
   `file_id` char(36) NOT NULL,
-  `is_unicode` tinyint(1) NOT NULL DEFAULT '0',
+  `is_unicode` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` datetime(6) DEFAULT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
   `deleted_at` datetime(6) DEFAULT NULL,
@@ -36,9 +36,9 @@ CREATE TABLE `stamps` (
 | creator_id | char(36) |  | false |  | [users](users.md) | 作成者UUID |
 | file_id | char(36) |  | false |  | [files](files.md) | ファイルUUID |
 | is_unicode | tinyint(1) | 0 | false |  |  | Unicode絵文字かどうか |
-| created_at | datetime(6) |  | true |  |  | 作成日時 |
-| updated_at | datetime(6) |  | true |  |  | 更新日時 |
-| deleted_at | datetime(6) |  | true |  |  | 削除日時 |
+| created_at | datetime(6) | NULL | true |  |  | 作成日時 |
+| updated_at | datetime(6) | NULL | true |  |  | 更新日時 |
+| deleted_at | datetime(6) | NULL | true |  |  | 削除日時 |
 
 ## Constraints
 

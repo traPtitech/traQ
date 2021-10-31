@@ -31,7 +31,7 @@ CREATE TABLE `channel_events` (
 | channel_id | char(36) |  | false |  | [channels](channels.md) | チャンネルUUID |
 | event_type | varchar(30) |  | false |  |  | イベントタイプ |
 | detail | text |  | false |  |  | イベント詳細(jsonテキストが格納) |
-| date_time | datetime(6) |  | true |  |  | イベント発生日時 |
+| date_time | datetime(6) | NULL | true |  |  | イベント発生日時 |
 
 ## Constraints
 

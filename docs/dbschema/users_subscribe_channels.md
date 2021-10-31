@@ -11,8 +11,8 @@
 CREATE TABLE `users_subscribe_channels` (
   `user_id` char(36) NOT NULL,
   `channel_id` char(36) NOT NULL,
-  `mark` tinyint(1) NOT NULL DEFAULT '0',
-  `notify` tinyint(1) NOT NULL DEFAULT '0',
+  `mark` tinyint(1) NOT NULL DEFAULT 0,
+  `notify` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`user_id`,`channel_id`),
   KEY `users_subscribe_channels_channel_id_channels_id_foreign` (`channel_id`),
   CONSTRAINT `users_subscribe_channels_channel_id_channels_id_foreign` FOREIGN KEY (`channel_id`) REFERENCES `channels` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,

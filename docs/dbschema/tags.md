@@ -26,8 +26,8 @@ CREATE TABLE `tags` (
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false | [users_tags](users_tags.md) |  | タグUUID |
 | name | varchar(30) |  | false |  |  | タグ文字列 |
-| created_at | datetime(6) |  | true |  |  | 作成日時 |
-| updated_at | datetime(6) |  | true |  |  | 更新日時 |
+| created_at | datetime(6) | NULL | true |  |  | 作成日時 |
+| updated_at | datetime(6) | NULL | true |  |  | 更新日時 |
 
 ## Constraints
 

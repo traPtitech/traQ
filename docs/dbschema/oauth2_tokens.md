@@ -9,14 +9,14 @@ OAuth2トークンテーブル
 
 ```sql
 CREATE TABLE `oauth2_tokens` (
-  `id` char(36) NOT NULL DEFAULT '',
+  `id` char(36) NOT NULL,
   `client_id` char(36) DEFAULT NULL,
   `user_id` char(36) DEFAULT NULL,
-  `redirect_uri` text,
+  `redirect_uri` text DEFAULT NULL,
   `access_token` varchar(36) DEFAULT NULL,
   `refresh_token` varchar(36) DEFAULT NULL,
-  `refresh_enabled` tinyint(1) DEFAULT '0',
-  `scopes` text,
+  `refresh_enabled` tinyint(1) DEFAULT 0,
+  `scopes` text DEFAULT NULL,
   `expires_in` bigint(20) DEFAULT NULL,
   `created_at` datetime(6) DEFAULT NULL,
   `deleted_at` datetime(6) DEFAULT NULL,
@@ -33,16 +33,16 @@ CREATE TABLE `oauth2_tokens` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false |  |  |  |
-| client_id | char(36) |  | true |  |  | クライアントID |
-| user_id | char(36) |  | true |  |  | ユーザーUUID |
-| redirect_uri | text |  | true |  |  | リダイレクトURI |
-| access_token | varchar(36) |  | true |  |  | アクセストークン |
-| refresh_token | varchar(36) |  | true |  |  | リフレッシュトークン |
+| client_id | char(36) | NULL | true |  |  | クライアントID |
+| user_id | char(36) | NULL | true |  |  | ユーザーUUID |
+| redirect_uri | text | NULL | true |  |  | リダイレクトURI |
+| access_token | varchar(36) | NULL | true |  |  | アクセストークン |
+| refresh_token | varchar(36) | NULL | true |  |  | リフレッシュトークン |
 | refresh_enabled | tinyint(1) | 0 | true |  |  | リフレッシュトークンが有効かどうか |
-| scopes | text |  | true |  |  | スコープ |
-| expires_in | bigint(20) |  | true |  |  | 有効秒 |
-| created_at | datetime(6) |  | true |  |  |  |
-| deleted_at | datetime(6) |  | true |  |  |  |
+| scopes | text | NULL | true |  |  | スコープ |
+| expires_in | bigint(20) | NULL | true |  |  | 有効秒 |
+| created_at | datetime(6) | NULL | true |  |  |  |
+| deleted_at | datetime(6) | NULL | true |  |  |  |
 
 ## Constraints
 

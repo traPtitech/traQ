@@ -16,8 +16,9 @@ CREATE TABLE `bots` (
   `access_token_id` char(36) NOT NULL,
   `post_url` text NOT NULL,
   `subscribe_events` text NOT NULL,
-  `privileged` tinyint(1) NOT NULL DEFAULT '0',
-  `state` tinyint(4) NOT NULL DEFAULT '0',
+  `privileged` tinyint(1) NOT NULL DEFAULT 0,
+  `mode` varchar(30) NOT NULL,
+  `state` tinyint(4) NOT NULL DEFAULT 0,
   `bot_code` varchar(30) NOT NULL,
   `creator_id` char(36) NOT NULL,
   `created_at` datetime(6) DEFAULT NULL,
@@ -43,15 +44,16 @@ CREATE TABLE `bots` (
 | description | text |  | false |  |  | BOT説明 |
 | verification_token | varchar(30) |  | false |  |  | 認証トークン |
 | access_token_id | char(36) |  | false |  |  | BOTアクセストークンID |
-| post_url | text |  | false |  |  | BOTサーバーエンドポイント |
+| post_url | text |  | false |  |  | BOTサーバーエンドポイント(HTTP Mode) |
 | subscribe_events | text |  | false |  |  | BOTが購読しているイベントリスト(スペース区切り) |
 | privileged | tinyint(1) | 0 | false |  |  | 特権BOTかどうか |
+| mode | varchar(30) |  | false |  |  | BOT動作モード |
 | state | tinyint(4) | 0 | false |  |  | BOTの状態 |
 | bot_code | varchar(30) |  | false |  |  | BOTコード |
 | creator_id | char(36) |  | false |  | [users](users.md) | BOT制作者UUID |
-| created_at | datetime(6) |  | true |  |  |  |
-| updated_at | datetime(6) |  | true |  |  |  |
-| deleted_at | datetime(6) |  | true |  |  |  |
+| created_at | datetime(6) | NULL | true |  |  |  |
+| updated_at | datetime(6) | NULL | true |  |  |  |
+| deleted_at | datetime(6) | NULL | true |  |  |  |
 
 ## Constraints
 

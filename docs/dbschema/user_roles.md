@@ -10,8 +10,8 @@
 ```sql
 CREATE TABLE `user_roles` (
   `name` varchar(30) NOT NULL,
-  `oauth2_scope` tinyint(1) NOT NULL DEFAULT '0',
-  `system` tinyint(1) NOT NULL DEFAULT '0',
+  `oauth2_scope` tinyint(1) NOT NULL DEFAULT 0,
+  `system` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ```

@@ -40,9 +40,9 @@ CREATE TABLE `webhook_bots` (
 | secret | text |  | false |  |  | BOTシークレット |
 | channel_id | char(36) |  | false |  | [channels](channels.md) | デフォルト投稿先チャンネルUUID |
 | creator_id | char(36) |  | false |  | [users](users.md) | 作成者UUID |
-| created_at | datetime(6) |  | true |  |  |  |
-| updated_at | datetime(6) |  | true |  |  |  |
-| deleted_at | datetime(6) |  | true |  |  |  |
+| created_at | datetime(6) | NULL | true |  |  |  |
+| updated_at | datetime(6) | NULL | true |  |  |  |
+| deleted_at | datetime(6) | NULL | true |  |  |  |
 
 ## Constraints
 
