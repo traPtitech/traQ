@@ -12,10 +12,16 @@ import (
 	"github.com/traPtitech/traQ/event"
 )
 
-var onlineUsersCounter = promauto.NewGaugeVec(prometheus.GaugeOpts{
-	Namespace: "traq",
-	Name:      "online_users",
-}, []string{"user_type"})
+var (
+	onlineUsersCounter = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: "traq",
+		Name:      "online_users",
+	}, []string{"user_type"})
+	wsConnectionCounter = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: "traq",
+		Name:      "ws_connections",
+	}, []string{"user_type"})
+)
 
 // OnlineCounter オンラインユーザーカウンター
 type OnlineCounter struct {
@@ -35,12 +41,16 @@ func NewOnlineCounter(hub *hub.Hub) *OnlineCounter {
 			switch e.Topic() {
 			case event.WSConnected:
 				oc.inc(e.Fields["user_id"].(uuid.UUID), "user")
+				wsConnectionCounter.WithLabelValues("user").Inc()
 			case event.BotWSConnected:
 				oc.inc(e.Fields["user_id"].(uuid.UUID), "bot")
+				wsConnectionCounter.WithLabelValues("bot").Inc()
 			case event.WSDisconnected:
 				oc.dec(e.Fields["user_id"].(uuid.UUID), "user")
+				wsConnectionCounter.WithLabelValues("user").Dec()
 			case event.BotWSDisconnected:
 				oc.dec(e.Fields["user_id"].(uuid.UUID), "bot")
+				wsConnectionCounter.WithLabelValues("bot").Dec()
 			}
 		}
 	}()

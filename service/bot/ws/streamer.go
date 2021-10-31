@@ -8,8 +8,6 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/leandro-lugaresi/hub"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/event"
@@ -23,11 +21,6 @@ var (
 	ErrAlreadyClosed = errors.New("already closed")
 	// ErrBufferIsFull 送信バッファが溢れました
 	ErrBufferIsFull = errors.New("buffer is full")
-
-	wsConnectionCounter = promauto.NewGauge(prometheus.GaugeOpts{
-		Namespace: "traq",
-		Name:      "bot_ws_connections",
-	})
 )
 
 // Streamer WebSocketストリーマー
@@ -155,7 +148,6 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	s.register <- session
-	wsConnectionCounter.Inc()
 	s.hub.Publish(hub.Message{
 		Name: event.BotWSConnected,
 		Fields: hub.Fields{
@@ -175,7 +167,6 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			"req":     r,
 		},
 	})
-	wsConnectionCounter.Dec()
 	s.unregister <- session
 	session.close()
 }
