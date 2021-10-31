@@ -103,6 +103,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 		ViewerManager:        viewerManager,
 		WebRTCv3:             webrtcv3Manager,
 		WS:                   wsStreamer,
+		BotWS:                streamer,
 	}
 	routerConfig := provideRouterConfig(c2)
 	echo := router.Setup(hub2, db, repo, services, logger, routerConfig)
