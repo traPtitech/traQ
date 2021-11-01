@@ -2994,9 +2994,6 @@ paths:
 
         ## 受信
 
-        接続後、定期的にPing Frameが送られるため、Pong Frameを送信してください。
-        これが送信されない場合、正常に通信できない場合があります。
-
         TextMessageとして各種イベントが`type`、`reqId`、`body`を持つJSONとして非同期に送られます。
         `body`の内容はHTTP Modeの場合のRequest Bodyと同様です。
         例外として`ERROR`イベントは`reqId`を持ちません。
