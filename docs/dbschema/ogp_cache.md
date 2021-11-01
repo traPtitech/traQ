@@ -13,7 +13,7 @@ CREATE TABLE `ogp_cache` (
   `url` text NOT NULL,
   `url_hash` char(40) NOT NULL,
   `valid` tinyint(1) DEFAULT NULL,
-  `content` text,
+  `content` text DEFAULT NULL,
   `expires_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_ogp_cache_url_hash` (`url_hash`)
@@ -29,9 +29,9 @@ CREATE TABLE `ogp_cache` (
 | id | bigint(20) |  | false | auto_increment |  |  |  |
 | url | text |  | false |  |  |  | 対象ページのURL |
 | url_hash | char(40) |  | false |  |  |  | URLのSHA-1ハッシュ |
-| valid | tinyint(1) |  | true |  |  |  | ネガティブキャッシュでないか |
-| content | text |  | true |  |  |  | キャッシュ内容 |
-| expires_at | datetime(6) |  | true |  |  |  | 有効期限 |
+| valid | tinyint(1) | NULL | true |  |  |  | ネガティブキャッシュでないか |
+| content | text | NULL | true |  |  |  | キャッシュ内容 |
+| expires_at | datetime(6) | NULL | true |  |  |  | 有効期限 |
 
 ## Constraints
 

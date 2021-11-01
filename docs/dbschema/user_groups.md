@@ -32,10 +32,10 @@ CREATE TABLE `user_groups` (
 | id | char(36) |  | false | [user_group_admins](user_group_admins.md) [user_group_members](user_group_members.md) |  |  |
 | name | varchar(30) |  | false |  |  | グループ名 |
 | description | text |  | false |  |  | グループ説明 |
-| type | varchar(30) |  | false |  |  | グループタイプ |
-| icon | char(36) |  | true |  | [files](files.md) | アイコンファイルUUID |
-| created_at | datetime(6) |  | true |  |  |  |
-| updated_at | datetime(6) |  | true |  |  |  |
+| type | varchar(30) | '' | false |  |  | グループタイプ |
+| icon | char(36) | NULL | true |  | [files](files.md) | アイコンファイルUUID |
+| created_at | datetime(6) | NULL | true |  |  |  |
+| updated_at | datetime(6) | NULL | true |  |  |  |
 
 ## Constraints
 

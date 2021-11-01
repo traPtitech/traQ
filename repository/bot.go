@@ -14,6 +14,7 @@ import (
 type UpdateBotArgs struct {
 	DisplayName     optional.String
 	Description     optional.String
+	Mode            optional.String
 	WebhookURL      optional.String
 	Privileged      optional.Bool
 	CreatorID       optional.UUID
@@ -85,15 +86,12 @@ type BotRepository interface {
 	// CreateBot Botを作成します
 	//
 	// 成功した場合、Botとnilを返します。
-	// 引数に問題がある場合、ArgumentErrorを返します。
-	// nameが既に使われている場合、ErrAlreadyExistsを返します。
 	// DBによるエラーを返すことがあります。
-	CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, webhookURL string) (*model.Bot, error)
+	CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, mode model.BotMode, state model.BotState, webhookURL string) (*model.Bot, error)
 	// UpdateBot 指定したBotの情報を更新します
 	//
 	// 成功した場合、nilを返します。
 	// 存在しないBotを指定した場合、ErrNotFoundを返します。
-	// 更新内容に問題がある場合、ArgumentErrorを返します。
 	// idにuuid.Nilを指定した場合、ErrNilIDを返します。
 	// DBによるエラーを返すことがあります。
 	UpdateBot(id uuid.UUID, args UpdateBotArgs) error

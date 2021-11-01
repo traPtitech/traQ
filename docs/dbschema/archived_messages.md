@@ -29,7 +29,7 @@ CREATE TABLE `archived_messages` (
 | message_id | char(36) |  | false |  |  | 元のメッセージUUID |
 | user_id | char(36) |  | false |  |  | 投稿ユーザーUUID |
 | text | text |  | false |  |  | 本文 |
-| date_time | datetime(6) |  | true |  |  | 本文の投稿日時 |
+| date_time | datetime(6) | NULL | true |  |  | 本文の投稿日時 |
 
 ## Constraints
 

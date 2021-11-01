@@ -7,6 +7,32 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestBotMode_String(t *testing.T) {
+	tests := []struct {
+		name string
+		m    BotMode
+		want string
+	}{
+		{
+			"HTTP",
+			BotModeHTTP,
+			"HTTP",
+		},
+		{
+			"WebSocket",
+			BotModeWebSocket,
+			"WebSocket",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.m.String(); got != tt.want {
+				t.Errorf("String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestBot_TableName(t *testing.T) {
 	t.Parallel()
 	assert.Equal(t, "bots", (&Bot{}).TableName())

@@ -43,15 +43,23 @@ type PostBotRequest struct {
 	Name        string `json:"name"`
 	DisplayName string `json:"displayName"`
 	Description string `json:"description"`
+	Mode        string `json:"mode"`
 	Endpoint    string `json:"endpoint"`
 }
 
 func (r PostBotRequest) Validate() error {
+	var endpointRules []vd.Rule
+	if r.Mode == model.BotModeHTTP.String() {
+		endpointRules = append(endpointRules, vd.Required)
+	}
+	endpointRules = append(endpointRules, is.URL, validator.NotInternalURL)
+
 	return vd.ValidateStruct(&r,
 		vd.Field(&r.Name, validator.BotUserNameRuleRequired...),
 		vd.Field(&r.DisplayName, vd.Required, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.Required, vd.RuneLength(0, 1000)),
-		vd.Field(&r.Endpoint, vd.Required, is.URL, validator.NotInternalURL),
+		vd.Field(&r.Mode, vd.Required, vd.In(model.BotModeHTTP.String(), model.BotModeWebSocket.String())),
+		vd.Field(&r.Endpoint, endpointRules...),
 	)
 }
 
@@ -67,14 +75,23 @@ func (h *Handlers) CreateBot(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	b, err := h.Repo.CreateBot(req.Name, req.DisplayName, req.Description, iconFileID, getRequestUserID(c), req.Endpoint)
+	if _, err := h.Repo.GetUserByName("BOT_"+req.Name, false); err == nil {
+		return herror.Conflict("this name is already used")
+	} else if err != repository.ErrNotFound {
+		return herror.InternalServerError(err)
+	}
+
+	var initialState model.BotState
+	switch model.BotMode(req.Mode) {
+	case model.BotModeHTTP:
+		initialState = model.BotInactive
+	case model.BotModeWebSocket:
+		initialState = model.BotActive
+	}
+
+	b, err := h.Repo.CreateBot(req.Name, req.DisplayName, req.Description, iconFileID, getRequestUserID(c), model.BotMode(req.Mode), initialState, req.Endpoint)
 	if err != nil {
-		switch {
-		case err == repository.ErrAlreadyExists:
-			return herror.Conflict("this name has already been used")
-		default:
-			return herror.InternalServerError(err)
-		}
+		return herror.InternalServerError(err)
 	}
 
 	t, err := h.Repo.GetTokenByID(b.AccessTokenID)
@@ -122,6 +139,7 @@ func (h *Handlers) GetBot(c echo.Context) error {
 type PatchBotRequest struct {
 	DisplayName     optional.String     `json:"displayName"`
 	Description     optional.String     `json:"description"`
+	Mode            optional.String     `json:"mode"`
 	Endpoint        optional.String     `json:"endpoint"`
 	Privileged      optional.Bool       `json:"privileged"`
 	DeveloperID     optional.UUID       `json:"developerId"`
@@ -132,7 +150,8 @@ func (r PatchBotRequest) ValidateWithContext(ctx context.Context) error {
 	return vd.ValidateStructWithContext(ctx, &r,
 		vd.Field(&r.DisplayName, validator.RequiredIfValid, vd.RuneLength(1, 32)),
 		vd.Field(&r.Description, vd.RuneLength(0, 1000)),
-		vd.Field(&r.Endpoint, validator.RequiredIfValid, is.URL, validator.NotInternalURL),
+		vd.Field(&r.Mode, validator.RequiredIfValid, vd.In(model.BotModeHTTP.String(), model.BotModeWebSocket.String())),
+		vd.Field(&r.Endpoint, is.URL, validator.NotInternalURL),
 		vd.Field(&r.DeveloperID, validator.NotNilUUID, utils.IsActiveHumanUserID),
 		vd.Field(&r.SubscribeEvents, utils.IsValidBotEvents),
 	)
@@ -151,9 +170,16 @@ func (h *Handlers) EditBot(c echo.Context) error {
 		return herror.Forbidden("you are not permitted to set privileged flag to bots")
 	}
 
+	willBeHTTPMode := req.Mode.ValueOrZero() == model.BotModeHTTP.String() || !req.Mode.Valid && b.Mode == model.BotModeHTTP
+	willHaveNoEndpoint := b.PostURL == "" && !req.Endpoint.Valid || req.Endpoint.Valid && req.Endpoint.String == ""
+	if willBeHTTPMode && willHaveNoEndpoint {
+		return herror.BadRequest("endpoint is required for HTTP mode bots")
+	}
+
 	args := repository.UpdateBotArgs{
 		DisplayName:     req.DisplayName,
 		Description:     req.Description,
+		Mode:            req.Mode,
 		WebhookURL:      req.Endpoint,
 		Privileged:      req.Privileged,
 		CreatorID:       req.DeveloperID,
@@ -161,12 +187,7 @@ func (h *Handlers) EditBot(c echo.Context) error {
 	}
 
 	if err := h.Repo.UpdateBot(b.ID, args); err != nil {
-		switch {
-		case repository.IsArgError(err):
-			return herror.BadRequest(err)
-		default:
-			return herror.InternalServerError(err)
-		}
+		return herror.InternalServerError(err)
 	}
 
 	return c.NoContent(http.StatusNoContent)

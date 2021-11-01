@@ -13,9 +13,9 @@ CREATE TABLE `channels` (
   `name` varchar(20) NOT NULL,
   `parent_id` char(36) NOT NULL,
   `topic` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `is_forced` tinyint(1) NOT NULL DEFAULT '0',
-  `is_public` tinyint(1) NOT NULL DEFAULT '0',
-  `is_visible` tinyint(1) NOT NULL DEFAULT '0',
+  `is_forced` tinyint(1) NOT NULL DEFAULT 0,
+  `is_public` tinyint(1) NOT NULL DEFAULT 0,
+  `is_visible` tinyint(1) NOT NULL DEFAULT 0,
   `creator_id` char(36) NOT NULL,
   `updater_id` char(36) NOT NULL,
   `created_at` datetime(6) DEFAULT NULL,
@@ -42,9 +42,9 @@ CREATE TABLE `channels` (
 | is_visible | tinyint(1) | 0 | false |  |  | 可視チャンネルかどうか |
 | creator_id | char(36) |  | false |  | [users](users.md) | チャンネル作成者UUID |
 | updater_id | char(36) |  | false |  | [users](users.md) | チャンネル更新者UUID |
-| created_at | datetime(6) |  | true |  |  | チャンネル作成日時 |
-| updated_at | datetime(6) |  | true |  |  | チャンネル更新日時 |
-| deleted_at | datetime(6) |  | true |  |  | チャンネル削除日時 |
+| created_at | datetime(6) | NULL | true |  |  | チャンネル作成日時 |
+| updated_at | datetime(6) | NULL | true |  |  | チャンネル更新日時 |
+| deleted_at | datetime(6) | NULL | true |  |  | チャンネル削除日時 |
 
 ## Constraints
 

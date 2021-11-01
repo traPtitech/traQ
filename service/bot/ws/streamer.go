@@ -12,7 +12,6 @@ import (
 
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/router/extension/ctxkey"
-	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
 	"github.com/traPtitech/traQ/utils/random"
 )
@@ -27,10 +26,9 @@ var (
 // Streamer WebSocketストリーマー
 type Streamer struct {
 	hub        *hub.Hub
-	vm         *viewer.Manager
 	webrtc     *webrtcv3.Manager
 	logger     *zap.Logger
-	sessions   map[*session]struct{}
+	sessions   map[uuid.UUID][]*session
 	register   chan *session
 	unregister chan *session
 	stop       chan struct{}
@@ -39,13 +37,12 @@ type Streamer struct {
 }
 
 // NewStreamer WebSocketストリーマーを生成し起動します
-func NewStreamer(hub *hub.Hub, vm *viewer.Manager, webrtc *webrtcv3.Manager, logger *zap.Logger) *Streamer {
+func NewStreamer(hub *hub.Hub, webrtc *webrtcv3.Manager, logger *zap.Logger) *Streamer {
 	h := &Streamer{
 		hub:        hub,
-		vm:         vm,
 		webrtc:     webrtc,
-		logger:     logger.Named("ws"),
-		sessions:   make(map[*session]struct{}),
+		logger:     logger.Named("bot.ws"),
+		sessions:   make(map[uuid.UUID][]*session),
 		register:   make(chan *session),
 		unregister: make(chan *session),
 		stop:       make(chan struct{}),
@@ -61,13 +58,16 @@ func (s *Streamer) run() {
 		select {
 		case session := <-s.register:
 			s.mu.Lock()
-			s.sessions[session] = struct{}{}
+			s.sessions[session.userID] = append(s.sessions[session.userID], session)
 			s.mu.Unlock()
 
 		case session := <-s.unregister:
-			if _, ok := s.sessions[session]; ok {
+			if sessions, ok := s.sessions[session.userID]; ok {
 				s.mu.Lock()
-				delete(s.sessions, session)
+				s.sessions[session.userID] = filterSession(sessions, session)
+				if len(s.sessions[session.userID]) == 0 {
+					delete(s.sessions, session.userID)
+				}
 				s.mu.Unlock()
 			}
 
@@ -77,11 +77,13 @@ func (s *Streamer) run() {
 				t:    websocket.CloseMessage,
 				data: websocket.FormatCloseMessage(websocket.CloseServiceRestart, "Server is stopping..."),
 			}
-			for session := range s.sessions {
-				_ = session.writeMessage(m)
-				delete(s.sessions, session)
-				session.close()
+			for _, sessions := range s.sessions {
+				for _, session := range sessions {
+					_ = session.writeMessage(m)
+					session.close()
+				}
 			}
+			s.sessions = make(map[uuid.UUID][]*session)
 			s.open = false
 			s.mu.Unlock()
 			return
@@ -89,35 +91,38 @@ func (s *Streamer) run() {
 	}
 }
 
-// IterateSessions 全セッションをイテレートします
-func (s *Streamer) IterateSessions(f func(session Session)) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	for session := range s.sessions {
-		f(session)
+func filterSession(sessions []*session, target *session) []*session {
+	s := make([]*session, 0, len(sessions)-1)
+	for _, session := range sessions {
+		if session != target {
+			s = append(s, session)
+		}
 	}
+	return s
 }
 
 // WriteMessage 指定したセッションにメッセージを書き込みます
-func (s *Streamer) WriteMessage(t string, body interface{}, targetFunc TargetFunc) {
+func (s *Streamer) WriteMessage(t string, reqID uuid.UUID, body []byte, botUserID uuid.UUID) []error {
 	m := &rawMessage{
 		t:    websocket.TextMessage,
-		data: makeMessage(t, body).toJSON(),
+		data: makeEventMessage(t, reqID, body).toJSON(),
 	}
+	var errs []error
 	s.mu.RLock()
-	for session := range s.sessions {
-		if targetFunc(session) {
-			if err := session.writeMessage(m); err != nil {
-				if err == ErrBufferIsFull {
-					s.logger.Warn("Discard a message because the session's buffer is full.",
-						zap.String("type", t), zap.Any("body", body),
-						zap.Stringer("userID", session.userID))
-					continue
-				}
+	for _, session := range s.sessions[botUserID] {
+		if err := session.writeMessage(m); err != nil {
+			errs = append(errs, err)
+			if err == ErrBufferIsFull {
+				s.logger.Warn("Discarded a message because the session's buffer was full.",
+					zap.String("type", t),
+					zap.Stringer("reqID", reqID),
+					zap.Any("body", body),
+					zap.Stringer("userID", session.userID))
 			}
 		}
 	}
 	s.mu.RUnlock()
+	return errs
 }
 
 // ServeHTTP http.Handlerインターフェイスの実装
@@ -144,9 +149,9 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	s.register <- session
 	s.hub.Publish(hub.Message{
-		Name: event.WSConnected,
+		Name: event.BotWSConnected,
 		Fields: hub.Fields{
-			"user_id": session.UserID(),
+			"user_id": session.userID,
 			"req":     r,
 		},
 	})
@@ -154,12 +159,11 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	go session.writeLoop()
 	session.readLoop()
 
-	s.vm.RemoveViewer(session)
-	_ = s.webrtc.ResetState(session.Key(), session.UserID())
+	_ = s.webrtc.ResetState(session.key, session.userID)
 	s.hub.Publish(hub.Message{
-		Name: event.WSDisconnected,
+		Name: event.BotWSDisconnected,
 		Fields: hub.Fields{
-			"user_id": session.UserID(),
+			"user_id": session.userID,
 			"req":     r,
 		},
 	})

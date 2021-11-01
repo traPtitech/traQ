@@ -26,7 +26,7 @@ CREATE TABLE `devices` (
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | token | varchar(190) |  | false |  |  | FCMデバイストークン |
 | user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
-| created_at | datetime(6) |  | true |  |  | 作成日時 |
+| created_at | datetime(6) | NULL | true |  |  | 作成日時 |
 
 ## Constraints
 

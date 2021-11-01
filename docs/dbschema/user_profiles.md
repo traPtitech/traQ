@@ -30,10 +30,10 @@ CREATE TABLE `user_profiles` (
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
 | bio | text |  | false |  |  | bio |
-| twitter_id | varchar(15) |  | false |  |  | Twitter ID |
-| last_online | datetime(6) |  | true |  |  | 最終オンライン日時 |
-| home_channel | char(36) |  | true |  | [channels](channels.md) | ホームチャンネルUUID |
-| updated_at | datetime(6) |  | true |  |  | 更新日時 |
+| twitter_id | varchar(15) | '' | false |  |  | Twitter ID |
+| last_online | datetime(6) | NULL | true |  |  | 最終オンライン日時 |
+| home_channel | char(36) | NULL | true |  | [channels](channels.md) | ホームチャンネルUUID |
+| updated_at | datetime(6) | NULL | true |  |  | 更新日時 |
 
 ## Constraints
 

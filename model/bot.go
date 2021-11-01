@@ -11,6 +11,20 @@ import (
 	"gorm.io/gorm"
 )
 
+// BotMode Bot動作モード
+type BotMode string
+
+const (
+	// BotModeHTTP HTTP Mode
+	BotModeHTTP BotMode = "HTTP"
+	// BotModeWebSocket WebSocket Mode
+	BotModeWebSocket BotMode = "WebSocket"
+)
+
+func (m BotMode) String() string {
+	return string(m)
+}
+
 // BotState Bot状態
 type BotState int
 
@@ -33,6 +47,7 @@ type Bot struct {
 	PostURL           string         `gorm:"type:text;not null"`
 	SubscribeEvents   BotEventTypes  `gorm:"type:text;not null"`
 	Privileged        bool           `gorm:"type:boolean;not null;default:false"`
+	Mode              BotMode        `gorm:"type:varchar(30);not null"`
 	State             BotState       `gorm:"type:tinyint;not null;default:0"`
 	BotCode           string         `gorm:"type:varchar(30);not null;unique"`
 	CreatorID         uuid.UUID      `gorm:"type:char(36);not null"`

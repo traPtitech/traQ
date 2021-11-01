@@ -12,10 +12,16 @@ import (
 	"github.com/traPtitech/traQ/event"
 )
 
-var onlineUsersCounter = promauto.NewGauge(prometheus.GaugeOpts{
-	Namespace: "traq",
-	Name:      "online_users",
-})
+var (
+	onlineUsersCounter = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: "traq",
+		Name:      "online_users",
+	}, []string{"user_type"})
+	wsConnectionCounter = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: "traq",
+		Name:      "ws_connections",
+	}, []string{"user_type"})
+)
 
 // OnlineCounter オンラインユーザーカウンター
 type OnlineCounter struct {
@@ -31,12 +37,20 @@ func NewOnlineCounter(hub *hub.Hub) *OnlineCounter {
 		counters: map[uuid.UUID]*counter{},
 	}
 	go func() {
-		for e := range hub.Subscribe(8, event.SSEConnected, event.SSEDisconnected, event.WSConnected, event.WSDisconnected).Receiver {
+		for e := range hub.Subscribe(8, event.WSConnected, event.WSDisconnected, event.BotWSConnected, event.BotWSDisconnected).Receiver {
 			switch e.Topic() {
-			case event.SSEConnected, event.WSConnected:
-				oc.inc(e.Fields["user_id"].(uuid.UUID))
-			case event.SSEDisconnected, event.WSDisconnected:
-				oc.dec(e.Fields["user_id"].(uuid.UUID))
+			case event.WSConnected:
+				oc.inc(e.Fields["user_id"].(uuid.UUID), "user")
+				wsConnectionCounter.WithLabelValues("user").Inc()
+			case event.BotWSConnected:
+				oc.inc(e.Fields["user_id"].(uuid.UUID), "bot")
+				wsConnectionCounter.WithLabelValues("bot").Inc()
+			case event.WSDisconnected:
+				oc.dec(e.Fields["user_id"].(uuid.UUID), "user")
+				wsConnectionCounter.WithLabelValues("user").Dec()
+			case event.BotWSDisconnected:
+				oc.dec(e.Fields["user_id"].(uuid.UUID), "bot")
+				wsConnectionCounter.WithLabelValues("bot").Dec()
 			}
 		}
 	}()
@@ -44,7 +58,7 @@ func NewOnlineCounter(hub *hub.Hub) *OnlineCounter {
 }
 
 // inc 指定したユーザーのカウンタをインクリメントします
-func (oc *OnlineCounter) inc(userID uuid.UUID) (toOnline bool) {
+func (oc *OnlineCounter) inc(userID uuid.UUID, userType string) (toOnline bool) {
 	oc.countersLock.Lock()
 	c, ok := oc.counters[userID]
 	if !ok {
@@ -57,7 +71,7 @@ func (oc *OnlineCounter) inc(userID uuid.UUID) (toOnline bool) {
 
 	toOnline = c.inc()
 	if toOnline {
-		onlineUsersCounter.Inc()
+		onlineUsersCounter.WithLabelValues(userType).Inc()
 		oc.hub.Publish(hub.Message{
 			Name: event.UserOnline,
 			Fields: hub.Fields{
@@ -70,7 +84,7 @@ func (oc *OnlineCounter) inc(userID uuid.UUID) (toOnline bool) {
 }
 
 // dec 指定したユーザーのカウンタをデクリメントします
-func (oc *OnlineCounter) dec(userID uuid.UUID) (toOffline bool) {
+func (oc *OnlineCounter) dec(userID uuid.UUID, userType string) (toOffline bool) {
 	oc.countersLock.Lock()
 	c, ok := oc.counters[userID]
 	if !ok {
@@ -81,7 +95,7 @@ func (oc *OnlineCounter) dec(userID uuid.UUID) (toOffline bool) {
 
 	toOffline = c.dec()
 	if toOffline {
-		onlineUsersCounter.Dec()
+		onlineUsersCounter.WithLabelValues(userType).Dec()
 		oc.hub.Publish(hub.Message{
 			Name: event.UserOffline,
 			Fields: hub.Fields{
@@ -97,13 +111,9 @@ func (oc *OnlineCounter) dec(userID uuid.UUID) (toOffline bool) {
 func (oc *OnlineCounter) IsOnline(userID uuid.UUID) bool {
 	oc.countersLock.Lock()
 	c, ok := oc.counters[userID]
-	if !ok {
-		oc.countersLock.Unlock()
-		return false
-	}
 	oc.countersLock.Unlock()
 
-	return c.isOnline()
+	return ok && c.isOnline()
 }
 
 // GetOnlineUserIDs オンラインなユーザーのUUIDの配列を取得します

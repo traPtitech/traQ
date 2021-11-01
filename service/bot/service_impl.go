@@ -13,6 +13,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/bot/event"
+	botWS "github.com/traPtitech/traQ/service/bot/ws"
 	"github.com/traPtitech/traQ/service/channel"
 )
 
@@ -34,13 +35,13 @@ type serviceImpl struct {
 }
 
 // NewService ボットサービスを生成します
-func NewService(repo repository.Repository, cm channel.Manager, hub *hub.Hub, logger *zap.Logger) Service {
+func NewService(repo repository.Repository, cm channel.Manager, hub *hub.Hub, s *botWS.Streamer, logger *zap.Logger) Service {
 	p := &serviceImpl{
 		repo:       repo,
 		cm:         cm,
 		logger:     logger.Named("bot"),
 		hub:        hub,
-		dispatcher: event.NewDispatcher(logger, repo),
+		dispatcher: event.NewDispatcher(logger, repo, s),
 	}
 	return p
 }

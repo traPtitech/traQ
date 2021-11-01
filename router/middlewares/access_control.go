@@ -59,6 +59,19 @@ func BlockBot() echo.MiddlewareFunc {
 	}
 }
 
+// BlockNonBot Bot以外のリクエストを制限するミドルウェア
+func BlockNonBot() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			user := c.Get(consts.KeyUser).(model.UserInfo)
+			if !user.IsBot() {
+				return herror.Forbidden("Non-bot users are not permitted to access this API")
+			}
+			return next(c)
+		}
+	}
+}
+
 // CheckBotAccessPerm BOTアクセス権限を確認するミドルウェア
 func CheckBotAccessPerm(rbac rbac.RBAC) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

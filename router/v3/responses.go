@@ -180,6 +180,7 @@ type Bot struct {
 	Description     string              `json:"description"`
 	DeveloperID     uuid.UUID           `json:"developerId"`
 	SubscribeEvents model.BotEventTypes `json:"subscribeEvents"`
+	Mode            model.BotMode       `json:"mode"`
 	State           model.BotState      `json:"state"`
 	CreatedAt       time.Time           `json:"createdAt"`
 	UpdatedAt       time.Time           `json:"updatedAt"`
@@ -191,6 +192,7 @@ func formatBot(b *model.Bot) *Bot {
 		BotUserID:       b.BotUserID,
 		Description:     b.Description,
 		SubscribeEvents: b.SubscribeEvents,
+		Mode:            b.Mode,
 		State:           b.State,
 		DeveloperID:     b.CreatorID,
 		CreatedAt:       b.CreatedAt,
@@ -217,6 +219,7 @@ type BotDetail struct {
 	Description     string              `json:"description"`
 	DeveloperID     uuid.UUID           `json:"developerId"`
 	SubscribeEvents model.BotEventTypes `json:"subscribeEvents"`
+	Mode            model.BotMode       `json:"mode"`
 	State           model.BotState      `json:"state"`
 	CreatedAt       time.Time           `json:"createdAt"`
 	UpdatedAt       time.Time           `json:"updatedAt"`
@@ -232,6 +235,7 @@ func formatBotDetail(b *model.Bot, t *model.OAuth2Token, channels []uuid.UUID) *
 		BotUserID:       b.BotUserID,
 		Description:     b.Description,
 		SubscribeEvents: b.SubscribeEvents,
+		Mode:            b.Mode,
 		State:           b.State,
 		DeveloperID:     b.CreatorID,
 		CreatedAt:       b.CreatedAt,

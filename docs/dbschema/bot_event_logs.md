@@ -12,10 +12,10 @@ CREATE TABLE `bot_event_logs` (
   `request_id` char(36) NOT NULL,
   `bot_id` char(36) NOT NULL,
   `event` varchar(30) NOT NULL,
-  `body` text,
-  `error` text,
-  `code` bigint(20) NOT NULL DEFAULT '0',
-  `latency` bigint(20) NOT NULL DEFAULT '0',
+  `body` text DEFAULT NULL,
+  `error` text DEFAULT NULL,
+  `code` bigint(20) NOT NULL DEFAULT 0,
+  `latency` bigint(20) NOT NULL DEFAULT 0,
   `date_time` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`request_id`),
   KEY `bot_id_date_time_idx` (`bot_id`,`date_time`)
@@ -31,11 +31,11 @@ CREATE TABLE `bot_event_logs` (
 | request_id | char(36) |  | false |  |  | リクエストID |
 | bot_id | char(36) |  | false |  |  | BOT UUID |
 | event | varchar(30) |  | false |  |  | イベント名 |
-| body | text |  | true |  |  | イベント内容(jsonテキストが格納) |
-| error | text |  | true |  |  | エラー内容 |
+| body | text | NULL | true |  |  | イベント内容(jsonテキストが格納) |
+| error | text | NULL | true |  |  | エラー内容 |
 | code | bigint(20) | 0 | false |  |  | HTTPステータスコード(0はリクエスト自体失敗) |
 | latency | bigint(20) | 0 | false |  |  | リクエスト時間 |
-| date_time | datetime(6) |  | true |  |  | イベント発生日時 |
+| date_time | datetime(6) | NULL | true |  |  | イベント発生日時 |
 
 ## Constraints
 

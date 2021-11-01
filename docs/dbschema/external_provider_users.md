@@ -31,8 +31,8 @@ CREATE TABLE `external_provider_users` (
 | provider_name | varchar(30) |  | false |  |  | 認証プロバイダ名 |
 | external_id | varchar(100) |  | false |  |  | 認証プロバイダ上でのID |
 | extra | text |  | false |  |  | 追加データ |
-| created_at | datetime(6) |  | true |  |  |  |
-| updated_at | datetime(6) |  | true |  |  |  |
+| created_at | datetime(6) | NULL | true |  |  |  |
+| updated_at | datetime(6) | NULL | true |  |  |  |
 
 ## Constraints
 

@@ -12,8 +12,8 @@ CREATE TABLE `files_thumbnails` (
   `file_id` char(36) NOT NULL,
   `type` varchar(30) NOT NULL,
   `mime` text NOT NULL,
-  `width` bigint(20) NOT NULL DEFAULT '0',
-  `height` bigint(20) NOT NULL DEFAULT '0',
+  `width` bigint(20) NOT NULL DEFAULT 0,
+  `height` bigint(20) NOT NULL DEFAULT 0,
   PRIMARY KEY (`file_id`,`type`),
   CONSTRAINT `files_thumbnails_file_id_files_id_foreign` FOREIGN KEY (`file_id`) REFERENCES `files` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4

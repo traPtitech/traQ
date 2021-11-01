@@ -13,14 +13,6 @@ import (
 	"github.com/traPtitech/traQ/service/channel"
 )
 
-// CtxKey context.Context用のキータイプ
-type CtxKey int
-
-const (
-	// CtxUserIDKey ユーザーUUIDキー
-	CtxUserIDKey CtxKey = iota
-)
-
 // Context echo.Contextのカスタム
 type Context struct {
 	echo.Context

@@ -23,7 +23,7 @@ CREATE TABLE `user_settings` (
 | Name | Type | Default | Nullable | Children | Parents | Comment |
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | user_id | char(36) |  | false |  | [users](users.md) | ユーザーUUID |
-| notify_citation | tinyint(1) |  | true |  |  | メッセージ引用通知 |
+| notify_citation | tinyint(1) | NULL | true |  |  | メッセージ引用通知 |
 
 ## Constraints
 

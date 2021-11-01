@@ -203,7 +203,8 @@ comments:
       description: BOT説明
       verification_token: 認証トークン
       access_token_id: BOTアクセストークンID
-      post_url: BOTサーバーエンドポイント
+      mode: BOT動作モード
+      post_url: BOTサーバーエンドポイント(HTTP Mode)
       subscribe_events: BOTが購読しているイベントリスト(スペース区切り)
       privileged: 特権BOTかどうか
       state: BOTの状態

@@ -274,17 +274,6 @@ const (
 	// 		sessions: map[string]string
 	UserWebRTCv3StateChanged = "user.webrtc_v3.state_changed"
 
-	// SSEConnected ユーザーがSSEストリームに接続した
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		req: *http.Request
-	SSEConnected = "sse.connected"
-	// SSEDisconnected ユーザーがSSEストリームから切断した
-	// 	Fields:
-	// 		user_id: uuid.UUID
-	// 		req: *http.Request
-	SSEDisconnected = "sse.disconnected"
-
 	// WSConnected ユーザーがWSストリームに接続した
 	// 	Fields:
 	// 		user_id: uuid.UUID
@@ -295,6 +284,17 @@ const (
 	// 		user_id: uuid.UUID
 	// 		req: *http.Request
 	WSDisconnected = "ws.disconnected"
+
+	// BotWSConnected BOTユーザーがWSストリームに接続した
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	// 		req: *http.Request
+	BotWSConnected = "bot.ws.connected"
+	// BotWSDisconnected BOTユーザーがWSストリームから切断した
+	// 	Fields:
+	// 		user_id: uuid.UUID
+	// 		req: *http.Request
+	BotWSDisconnected = "bot.ws.disconnected"
 
 	// ClipFolderCreated クリップフォルダーが作成された
 	// 	Fields:

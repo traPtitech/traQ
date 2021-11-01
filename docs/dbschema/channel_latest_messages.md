@@ -25,7 +25,7 @@ CREATE TABLE `channel_latest_messages` (
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | channel_id | char(36) |  | false |  |  | チャンネルUUID |
 | message_id | char(36) |  | false |  |  | メッセージUUID |
-| date_time | datetime(6) |  | true |  |  | メッセージ作成日時 |
+| date_time | datetime(6) | NULL | true |  |  | メッセージ作成日時 |
 
 ## Constraints
 

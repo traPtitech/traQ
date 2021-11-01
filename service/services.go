@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/traPtitech/traQ/service/bot"
+	botWS "github.com/traPtitech/traQ/service/bot/ws"
 	"github.com/traPtitech/traQ/service/channel"
 	"github.com/traPtitech/traQ/service/counter"
 	"github.com/traPtitech/traQ/service/exevent"
@@ -35,4 +36,5 @@ type Services struct {
 	ViewerManager        *viewer.Manager
 	WebRTCv3             *webrtcv3.Manager
 	WS                   *ws.Streamer
+	BotWS                *botWS.Streamer
 }

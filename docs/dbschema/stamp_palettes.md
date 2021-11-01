@@ -33,8 +33,8 @@ CREATE TABLE `stamp_palettes` (
 | description | text |  | false |  |  | スタンプパレットの説明 |
 | stamps | text |  | false |  |  | スタンプUUID配列の文字列 |
 | creator_id | char(36) |  | false |  | [users](users.md) | 作成者UUID |
-| created_at | datetime(6) |  | true |  |  | 作成日時 |
-| updated_at | datetime(6) |  | true |  |  | 更新日時 |
+| created_at | datetime(6) | NULL | true |  |  | 作成日時 |
+| updated_at | datetime(6) | NULL | true |  |  | 更新日時 |
 
 ## Constraints
 

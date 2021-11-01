@@ -15,8 +15,8 @@ CREATE TABLE `users` (
   `password` char(128) NOT NULL DEFAULT '',
   `salt` char(128) NOT NULL DEFAULT '',
   `icon` char(36) NOT NULL,
-  `status` tinyint(4) NOT NULL DEFAULT '0',
-  `bot` tinyint(1) NOT NULL DEFAULT '0',
+  `status` tinyint(4) NOT NULL DEFAULT 0,
+  `bot` tinyint(1) NOT NULL DEFAULT 0,
   `role` varchar(30) NOT NULL DEFAULT 'user',
   `created_at` datetime(6) DEFAULT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
@@ -33,15 +33,15 @@ CREATE TABLE `users` (
 | ---- | ---- | ------- | -------- | -------- | ------- | ------- |
 | id | char(36) |  | false | [bots](bots.md) [clip_folders](clip_folders.md) [devices](devices.md) [dm_channel_mappings](dm_channel_mappings.md) [external_provider_users](external_provider_users.md) [files](files.md) [messages](messages.md) [messages_stamps](messages_stamps.md) [pins](pins.md) [stamp_palettes](stamp_palettes.md) [stars](stars.md) [unreads](unreads.md) [users_private_channels](users_private_channels.md) [users_subscribe_channels](users_subscribe_channels.md) [users_tags](users_tags.md) [user_profiles](user_profiles.md) [user_settings](user_settings.md) [webhook_bots](webhook_bots.md) [channels](channels.md) [stamps](stamps.md) |  | ユーザーUUID |
 | name | varchar(32) |  | false |  |  | traP ID |
-| display_name | varchar(64) |  | false |  |  | 表示名 |
-| password | char(128) |  | false |  |  | ハッシュ化されたパスワード |
-| salt | char(128) |  | false |  |  | パスワードソルト |
+| display_name | varchar(64) | '' | false |  |  | 表示名 |
+| password | char(128) | '' | false |  |  | ハッシュ化されたパスワード |
+| salt | char(128) | '' | false |  |  | パスワードソルト |
 | icon | char(36) |  | false |  | [files](files.md) | アイコンファイルUUID |
 | status | tinyint(4) | 0 | false |  |  | アカウント状態 |
 | bot | tinyint(1) | 0 | false |  |  | BOTユーザーかどうか |
-| role | varchar(30) | user | false |  |  | ユーザーロール |
-| created_at | datetime(6) |  | true |  |  | 作成日時 |
-| updated_at | datetime(6) |  | true |  |  | 更新日時 |
+| role | varchar(30) | 'user' | false |  |  | ユーザーロール |
+| created_at | datetime(6) | NULL | true |  |  | 作成日時 |
+| updated_at | datetime(6) | NULL | true |  |  | 更新日時 |
 
 ## Constraints
 
