@@ -62,14 +62,14 @@ func (s *Streamer) run() {
 			s.mu.Unlock()
 
 		case session := <-s.unregister:
+			s.mu.Lock()
 			if sessions, ok := s.sessions[session.userID]; ok {
-				s.mu.Lock()
 				s.sessions[session.userID] = filterSession(sessions, session)
 				if len(s.sessions[session.userID]) == 0 {
 					delete(s.sessions, session.userID)
 				}
-				s.mu.Unlock()
 			}
+			s.mu.Unlock()
 
 		case <-s.stop:
 			s.mu.Lock()
