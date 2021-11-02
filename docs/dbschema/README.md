@@ -6,7 +6,7 @@
 | ---- | ------- | ------- | ---- |
 | [archived_messages](archived_messages.md) | 5 | アーカイブ化されたメッセージのテーブル(編集前メッセージ) | BASE TABLE |
 | [bots](bots.md) | 15 | traQ BOTテーブル | BASE TABLE |
-| [bot_event_logs](bot_event_logs.md) | 8 | BOTイベントログテーブル | BASE TABLE |
+| [bot_event_logs](bot_event_logs.md) | 9 | BOTイベントログテーブル | BASE TABLE |
 | [bot_join_channels](bot_join_channels.md) | 2 | BOT参加チャンネルテーブル | BASE TABLE |
 | [channels](channels.md) | 12 | チャンネルテーブル | BASE TABLE |
 | [channel_events](channel_events.md) | 5 | チャンネルイベントテーブル | BASE TABLE |

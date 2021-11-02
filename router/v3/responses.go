@@ -254,6 +254,7 @@ type botEventLogResponse struct {
 	RequestID uuid.UUID          `json:"requestId"`
 	BotID     uuid.UUID          `json:"botId"`
 	Event     model.BotEventType `json:"event"`
+	Result    string             `json:"result"`
 	Code      int                `json:"code"`
 	DateTime  time.Time          `json:"datetime"`
 }
@@ -263,6 +264,7 @@ func formatBotEventLog(log *model.BotEventLog) *botEventLogResponse {
 		RequestID: log.RequestID,
 		BotID:     log.BotID,
 		Event:     log.Event,
+		Result:    log.Result,
 		Code:      log.Code,
 		DateTime:  log.DateTime,
 	}

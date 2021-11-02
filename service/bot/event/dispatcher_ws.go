@@ -28,24 +28,26 @@ func (d *wsDispatcher) send(b *model.Bot, event model.BotEventType, reqID uuid.U
 	errs := d.s.WriteMessage(event.String(), reqID, body, b.BotUserID)
 	latency := time.Since(start)
 	if len(errs) > 0 {
-		eventSendCounter.WithLabelValues(b.ID.String(), "ng").Inc()
+		eventSendCounter.WithLabelValues(b.ID.String(), resultNetworkError).Inc()
 		return false, &model.BotEventLog{
 			RequestID: reqID,
 			BotID:     b.ID,
 			Event:     event,
 			Body:      string(body),
+			Result:    resultNetworkError,
 			Error:     formatErrors(errs),
 			Code:      -1,
 			Latency:   latency.Nanoseconds(),
 			DateTime:  start,
 		}
 	}
-	eventSendCounter.WithLabelValues(b.ID.String(), "ok").Inc()
+	eventSendCounter.WithLabelValues(b.ID.String(), resultOK).Inc()
 	return true, &model.BotEventLog{
 		RequestID: reqID,
 		BotID:     b.ID,
 		Event:     event,
 		Body:      string(body),
+		Result:    resultOK,
 		Error:     "",
 		Code:      0,
 		Latency:   latency.Nanoseconds(),

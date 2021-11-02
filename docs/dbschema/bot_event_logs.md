@@ -13,6 +13,7 @@ CREATE TABLE `bot_event_logs` (
   `bot_id` char(36) NOT NULL,
   `event` varchar(30) NOT NULL,
   `body` text DEFAULT NULL,
+  `result` char(2) NOT NULL,
   `error` text DEFAULT NULL,
   `code` bigint(20) NOT NULL DEFAULT 0,
   `latency` bigint(20) NOT NULL DEFAULT 0,
@@ -32,8 +33,9 @@ CREATE TABLE `bot_event_logs` (
 | bot_id | char(36) |  | false |  |  | BOT UUID |
 | event | varchar(30) |  | false |  |  | イベント名 |
 | body | text | NULL | true |  |  | イベント内容(jsonテキストが格納) |
+| result | char(2) |  | false |  |  | イベント配送結果 |
 | error | text | NULL | true |  |  | エラー内容 |
-| code | bigint(20) | 0 | false |  |  | HTTPステータスコード(0はリクエスト自体失敗) |
+| code | bigint(20) | 0 | false |  |  | HTTP Modeの場合HTTPステータスコード |
 | latency | bigint(20) | 0 | false |  |  | リクエスト時間 |
 | date_time | datetime(6) | NULL | true |  |  | イベント発生日時 |
 

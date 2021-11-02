@@ -188,7 +188,8 @@ comments:
       event: イベント名
       body: イベント内容(jsonテキストが格納)
       error: エラー内容
-      code: HTTPステータスコード(0はリクエスト自体失敗)
+      result: イベント配送結果
+      code: HTTP Modeの場合HTTPステータスコード
       latency: リクエスト時間
       date_time: イベント発生日時
   - table: bot_join_channels

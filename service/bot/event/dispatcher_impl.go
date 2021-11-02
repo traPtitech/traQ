@@ -16,6 +16,12 @@ var eventSendCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 	Name:      "bot_event_send_count_total",
 }, []string{"bot_id", "status"})
 
+const (
+	resultOK           = "ok"
+	resultNG           = "ng"
+	resultNetworkError = "ne"
+)
+
 type dispatcherImpl struct {
 	http *httpDispatcher
 	ws   *wsDispatcher

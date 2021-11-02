@@ -5762,7 +5762,7 @@ components:
       x-enum-varnames:
         - HTTP
         - WebSocket
-      x-enum-description:
+      x-enum-descriptions:
         - HTTP Mode
         - WebSocket Mode
     BotState:
@@ -5963,6 +5963,8 @@ components:
         event:
           type: string
           description: イベントタイプ
+        result:
+          $ref: '#/components/schemas/BotEventResult'
         code:
           type: integer
           description: ステータスコード
@@ -5977,6 +5979,22 @@ components:
         - event
         - code
         - datetime
+    BotEventResult:
+      title: BotEventResult
+      type: string
+      description: イベント配送結果
+      enum:
+        - ok
+        - ng
+        - ne
+      x-enum-varnames:
+        - OK
+        - NG
+        - NetworkError
+      x-enum-descriptions:
+        - 成功
+        - 失敗(不正なレスポンス)
+        - ネットワークエラー
     PostBotRequest:
       title: PostBotRequest
       type: object
