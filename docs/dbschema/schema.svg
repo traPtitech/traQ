@@ -146,35 +146,38 @@
 <!-- bot_event_logs -->
 <g id="node3" class="node">
 <title>bot_event_logs</title>
-<polygon fill="#efefef" stroke="transparent" points="2442,-2425.5 2442,-2460.5 2675,-2460.5 2675,-2425.5 2442,-2425.5"/>
-<polygon fill="none" stroke="#000000" points="2442,-2425.5 2442,-2460.5 2675,-2460.5 2675,-2425.5 2442,-2425.5"/>
-<text text-anchor="start" x="2448.8459" y="-2438.3" font-family="Arial Bold" font-size="18.00" fill="#000000">bot_event_logs</text>
-<text text-anchor="start" x="2570.9003" y="-2438.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
-<text text-anchor="start" x="2574.7909" y="-2438.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
-<polygon fill="none" stroke="#000000" points="2442,-2395.5 2442,-2425.5 2675,-2425.5 2675,-2395.5 2442,-2395.5"/>
-<text text-anchor="start" x="2449" y="-2406.9" font-family="Arial" font-size="14.00" fill="#000000">request_id </text>
-<text text-anchor="start" x="2518.244" y="-2406.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
-<polygon fill="none" stroke="#000000" points="2442,-2365.5 2442,-2395.5 2675,-2395.5 2675,-2365.5 2442,-2365.5"/>
-<text text-anchor="start" x="2449" y="-2376.9" font-family="Arial" font-size="14.00" fill="#000000">bot_id </text>
-<text text-anchor="start" x="2491.0182" y="-2376.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
-<polygon fill="none" stroke="#000000" points="2442,-2335.5 2442,-2365.5 2675,-2365.5 2675,-2335.5 2442,-2335.5"/>
-<text text-anchor="start" x="2449" y="-2346.9" font-family="Arial" font-size="14.00" fill="#000000">event </text>
-<text text-anchor="start" x="2487.129" y="-2346.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(30)]</text>
-<polygon fill="none" stroke="#000000" points="2442,-2305.5 2442,-2335.5 2675,-2335.5 2675,-2305.5 2442,-2305.5"/>
-<text text-anchor="start" x="2449" y="-2316.9" font-family="Arial" font-size="14.00" fill="#000000">body </text>
-<text text-anchor="start" x="2483.2384" y="-2316.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
-<polygon fill="none" stroke="#000000" points="2442,-2275.5 2442,-2305.5 2675,-2305.5 2675,-2275.5 2442,-2275.5"/>
-<text text-anchor="start" x="2449" y="-2286.9" font-family="Arial" font-size="14.00" fill="#000000">error </text>
-<text text-anchor="start" x="2482.4376" y="-2286.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
-<polygon fill="none" stroke="#000000" points="2442,-2245.5 2442,-2275.5 2675,-2275.5 2675,-2245.5 2442,-2245.5"/>
-<text text-anchor="start" x="2449" y="-2256.9" font-family="Arial" font-size="14.00" fill="#000000">code </text>
-<text text-anchor="start" x="2483.2384" y="-2256.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
-<polygon fill="none" stroke="#000000" points="2442,-2215.5 2442,-2245.5 2675,-2245.5 2675,-2215.5 2442,-2215.5"/>
-<text text-anchor="start" x="2449" y="-2226.9" font-family="Arial" font-size="14.00" fill="#000000">latency </text>
-<text text-anchor="start" x="2497.2356" y="-2226.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
-<polygon fill="none" stroke="#000000" points="2442,-2185.5 2442,-2215.5 2675,-2215.5 2675,-2185.5 2442,-2185.5"/>
-<text text-anchor="start" x="2449" y="-2196.9" font-family="Arial" font-size="14.00" fill="#000000">date_time </text>
-<text text-anchor="start" x="2514.352" y="-2196.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
+<polygon fill="#efefef" stroke="transparent" points="2442,-2440.5 2442,-2475.5 2675,-2475.5 2675,-2440.5 2442,-2440.5"/>
+<polygon fill="none" stroke="#000000" points="2442,-2440.5 2442,-2475.5 2675,-2475.5 2675,-2440.5 2442,-2440.5"/>
+<text text-anchor="start" x="2448.8459" y="-2453.3" font-family="Arial Bold" font-size="18.00" fill="#000000">bot_event_logs</text>
+<text text-anchor="start" x="2570.9003" y="-2453.3" font-family="Arial" font-size="14.00" fill="#000000"> </text>
+<text text-anchor="start" x="2574.7909" y="-2453.3" font-family="Arial" font-size="14.00" fill="#666666">[BASE TABLE]</text>
+<polygon fill="none" stroke="#000000" points="2442,-2410.5 2442,-2440.5 2675,-2440.5 2675,-2410.5 2442,-2410.5"/>
+<text text-anchor="start" x="2449" y="-2421.9" font-family="Arial" font-size="14.00" fill="#000000">request_id </text>
+<text text-anchor="start" x="2518.244" y="-2421.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="none" stroke="#000000" points="2442,-2380.5 2442,-2410.5 2675,-2410.5 2675,-2380.5 2442,-2380.5"/>
+<text text-anchor="start" x="2449" y="-2391.9" font-family="Arial" font-size="14.00" fill="#000000">bot_id </text>
+<text text-anchor="start" x="2491.0182" y="-2391.9" font-family="Arial" font-size="14.00" fill="#666666">[char(36)]</text>
+<polygon fill="none" stroke="#000000" points="2442,-2350.5 2442,-2380.5 2675,-2380.5 2675,-2350.5 2442,-2350.5"/>
+<text text-anchor="start" x="2449" y="-2361.9" font-family="Arial" font-size="14.00" fill="#000000">event </text>
+<text text-anchor="start" x="2487.129" y="-2361.9" font-family="Arial" font-size="14.00" fill="#666666">[varchar(30)]</text>
+<polygon fill="none" stroke="#000000" points="2442,-2320.5 2442,-2350.5 2675,-2350.5 2675,-2320.5 2442,-2320.5"/>
+<text text-anchor="start" x="2449" y="-2331.9" font-family="Arial" font-size="14.00" fill="#000000">body </text>
+<text text-anchor="start" x="2483.2384" y="-2331.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
+<polygon fill="none" stroke="#000000" points="2442,-2290.5 2442,-2320.5 2675,-2320.5 2675,-2290.5 2442,-2290.5"/>
+<text text-anchor="start" x="2449" y="-2301.9" font-family="Arial" font-size="14.00" fill="#000000">result </text>
+<text text-anchor="start" x="2487.1136" y="-2301.9" font-family="Arial" font-size="14.00" fill="#666666">[char(2)]</text>
+<polygon fill="none" stroke="#000000" points="2442,-2260.5 2442,-2290.5 2675,-2290.5 2675,-2260.5 2442,-2260.5"/>
+<text text-anchor="start" x="2449" y="-2271.9" font-family="Arial" font-size="14.00" fill="#000000">error </text>
+<text text-anchor="start" x="2482.4376" y="-2271.9" font-family="Arial" font-size="14.00" fill="#666666">[text]</text>
+<polygon fill="none" stroke="#000000" points="2442,-2230.5 2442,-2260.5 2675,-2260.5 2675,-2230.5 2442,-2230.5"/>
+<text text-anchor="start" x="2449" y="-2241.9" font-family="Arial" font-size="14.00" fill="#000000">code </text>
+<text text-anchor="start" x="2483.2384" y="-2241.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
+<polygon fill="none" stroke="#000000" points="2442,-2200.5 2442,-2230.5 2675,-2230.5 2675,-2200.5 2442,-2200.5"/>
+<text text-anchor="start" x="2449" y="-2211.9" font-family="Arial" font-size="14.00" fill="#000000">latency </text>
+<text text-anchor="start" x="2497.2356" y="-2211.9" font-family="Arial" font-size="14.00" fill="#666666">[bigint(20)]</text>
+<polygon fill="none" stroke="#000000" points="2442,-2170.5 2442,-2200.5 2675,-2200.5 2675,-2170.5 2442,-2170.5"/>
+<text text-anchor="start" x="2449" y="-2181.9" font-family="Arial" font-size="14.00" fill="#000000">date_time </text>
+<text text-anchor="start" x="2514.352" y="-2181.9" font-family="Arial" font-size="14.00" fill="#666666">[datetime(6)]</text>
 </g>
 <!-- bot_join_channels -->
 <g id="node4" class="node">
@@ -569,7 +572,7 @@
 <title>files_acl:file_id&#45;&gt;files:id</title>
 <path fill="none" stroke="#000000" d="M2479.0347,-1240.9659C2569.0384,-1230.6881 2448.4777,-1074.7426 2526,-1004 2608.2711,-928.924 2682.0532,-1030.8547 2774,-968 2813.4341,-941.0429 2779.2326,-874.5 2827,-874.5"/>
 <polygon fill="#000000" stroke="#000000" points="2478.9859,-1240.9684 2468.7608,-1237.0064 2473.9929,-1241.2342 2469,-1241.5 2469,-1241.5 2469,-1241.5 2473.9929,-1241.2342 2469.2392,-1245.9936 2478.9859,-1240.9684 2478.9859,-1240.9684"/>
-<text text-anchor="start" x="2419.116" y="-1225.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (file_id) REFERENCES files (id)</text>
+<text text-anchor="start" x="2475.616" y="-1251.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (file_id) REFERENCES files (id)</text>
 </g>
 <!-- files_thumbnails -->
 <g id="node15" class="node">
@@ -695,7 +698,7 @@
 <title>messages_stamps:user_id&#45;&gt;users:id</title>
 <path fill="none" stroke="#000000" d="M2346.8988,-2317.0911C2420.7363,-2261.8993 2318.7854,-1554.2094 2381,-1491 2462.5646,-1408.1313 2804.6077,-1516.9593 2903,-1455 2943.4208,-1429.5463 2908.2326,-1361.5 2956,-1361.5"/>
 <polygon fill="#000000" stroke="#000000" points="2346.4551,-2317.2439 2335.5347,-2316.2452 2341.7275,-2318.8719 2337,-2320.5 2337,-2320.5 2337,-2320.5 2341.7275,-2318.8719 2338.4653,-2324.7548 2346.4551,-2317.2439 2346.4551,-2317.2439"/>
-<text text-anchor="start" x="2223.945" y="-2304.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (user_id) REFERENCES users (id)</text>
+<text text-anchor="start" x="2343.945" y="-2330.5" font-family="Arial" font-size="10.00" fill="#000000">FOREIGN KEY (user_id) REFERENCES users (id)</text>
 </g>
 <!-- message_reports -->
 <g id="node18" class="node">
