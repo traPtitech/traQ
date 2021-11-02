@@ -66,9 +66,7 @@ func (s *Streamer) run() {
 
 		case session := <-s.unregister:
 			s.mu.Lock()
-			if _, ok := s.sessions[session]; ok {
-				delete(s.sessions, session)
-			}
+			delete(s.sessions, session)
 			s.mu.Unlock()
 
 		case <-s.stop:
