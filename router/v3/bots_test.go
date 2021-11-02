@@ -670,6 +670,7 @@ func TestHandlers_GetBotLogs(t *testing.T) {
 		RequestID: uuid.Must(uuid.NewV4()),
 		BotID:     bot1.ID,
 		Event:     event.Ping,
+		Result:    "ng",
 		Code:      400,
 		DateTime:  time.Now(),
 	}
@@ -724,9 +725,13 @@ func TestHandlers_GetBotLogs(t *testing.T) {
 		obj.Length().Equal(1)
 
 		first := obj.First().Object()
+		first.Keys().ContainsOnly(
+			"botId", "requestId", "event", "result", "code", "datetime",
+		)
 		first.Value("botId").String().Equal(log.BotID.String())
 		first.Value("requestId").String().Equal(log.RequestID.String())
 		first.Value("event").String().Equal(log.Event.String())
+		first.Value("result").String().Equal(log.Result)
 		first.Value("code").Number().Equal(log.Code)
 		first.Value("datetime").String().NotEmpty()
 	})

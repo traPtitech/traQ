@@ -51,12 +51,13 @@ func (d *httpDispatcher) send(b *model.Bot, event model.BotEventType, reqID uuid
 	latency := time.Since(start)
 
 	if err != nil {
-		eventSendCounter.WithLabelValues(b.ID.String(), "ne").Inc()
+		eventSendCounter.WithLabelValues(b.ID.String(), resultNetworkError).Inc()
 		return false, &model.BotEventLog{
 			RequestID: reqID,
 			BotID:     b.ID,
 			Event:     event,
 			Body:      string(body),
+			Result:    resultNetworkError,
 			Error:     err.Error(),
 			Code:      -1,
 			Latency:   latency.Nanoseconds(),
@@ -65,17 +66,20 @@ func (d *httpDispatcher) send(b *model.Bot, event model.BotEventType, reqID uuid
 	}
 	_ = res.Body.Close()
 
+	var result string
 	if res.StatusCode == http.StatusNoContent {
-		eventSendCounter.WithLabelValues(b.ID.String(), "ok").Inc()
+		result = resultOK
 	} else {
-		eventSendCounter.WithLabelValues(b.ID.String(), "ng").Inc()
+		result = resultNG
 	}
+	eventSendCounter.WithLabelValues(b.ID.String(), result).Inc()
 
 	return res.StatusCode == http.StatusNoContent, &model.BotEventLog{
 		RequestID: reqID,
 		BotID:     b.ID,
 		Event:     event,
 		Body:      string(body),
+		Result:    result,
 		Code:      res.StatusCode,
 		Latency:   latency.Nanoseconds(),
 		DateTime:  start,

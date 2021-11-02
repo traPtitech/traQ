@@ -77,14 +77,15 @@ func (*BotJoinChannel) TableName() string {
 
 // BotEventLog Botイベントログ
 type BotEventLog struct {
-	RequestID uuid.UUID    `gorm:"type:char(36);not null;primaryKey"                json:"requestId"`
-	BotID     uuid.UUID    `gorm:"type:char(36);not null;index:bot_id_date_time_idx" json:"botId"`
-	Event     BotEventType `gorm:"type:varchar(30);not null"                         json:"event"`
-	Body      string       `gorm:"type:text"                                         json:"-"`
-	Error     string       `gorm:"type:text"                                         json:"-"`
-	Code      int          `gorm:"not null;default:0"                                json:"code"`
-	Latency   int64        `gorm:"not null;default:0"                                json:"-"`
-	DateTime  time.Time    `gorm:"precision:6;index:bot_id_date_time_idx"            json:"dateTime"`
+	RequestID uuid.UUID    `gorm:"type:char(36);not null;primaryKey"`
+	BotID     uuid.UUID    `gorm:"type:char(36);not null;index:bot_id_date_time_idx"`
+	Event     BotEventType `gorm:"type:varchar(30);not null"`
+	Body      string       `gorm:"type:text"`
+	Result    string       `gorm:"type:char(2);not null"`
+	Error     string       `gorm:"type:text"`
+	Code      int          `gorm:"not null;default:0"`
+	Latency   int64        `gorm:"not null;default:0"`
+	DateTime  time.Time    `gorm:"precision:6;index:bot_id_date_time_idx"`
 }
 
 // TableName BotEventLogのテーブル名

@@ -40,6 +40,7 @@ func Migrations() []*gormigrate.Migration {
 		v27(), // Gorm v2移行: FKの追加、FKのリネーム、一部フィールドのデータ型変更、idx_messages_channel_idの削除
 		v28(), // v28 ユーザーグループにアイコンを追加
 		v29(), // BotにModeを追加、WebSocket Modeを追加
+		v30(), // bot_event_logsにresultを追加
 	}
 }
 
