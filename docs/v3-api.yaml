@@ -491,7 +491,7 @@ paths:
         - $ref: '#/components/parameters/orderInQuery'
         - schema:
             type: boolean
-            default: 'false'
+            default: false
           in: query
           name: mine
           description: アップロード者が自分のファイルのみを取得するか
@@ -803,7 +803,7 @@ paths:
       parameters:
         - schema:
             type: boolean
-            default: 'true'
+            default: true
           in: query
           name: include-unicode
           description: Unicode絵文字を含ませるかどうか
@@ -827,7 +827,7 @@ paths:
       parameters:
         - schema:
             type: integer
-            default: '100'
+            default: 100
             maximum: 100
             minimum: 1
           in: query
@@ -863,7 +863,7 @@ paths:
       parameters:
         - schema:
             type: boolean
-            default: 'false'
+            default: false
           in: query
           name: token
           description: 画像でなくトークン文字列で返すかどうか
@@ -1457,7 +1457,7 @@ paths:
       parameters:
         - schema:
             type: boolean
-            default: 'false'
+            default: false
           in: query
           name: all
           description: 全てのWebhookを取得します。権限が必要です。
@@ -1529,7 +1529,7 @@ paths:
           description: 投稿先のチャンネルID(変更する場合)
         - schema:
             type: integer
-            default: '0'
+            default: 0
           in: query
           name: embed
           description: メンション・チャンネルリンクを自動埋め込みする場合に1を指定する
@@ -1894,7 +1894,7 @@ paths:
       parameters:
         - schema:
             type: boolean
-            default: 'false'
+            default: false
           in: query
           name: include-suspended
           description: アカウントがアクティブでないユーザーを含め、全てのユーザーを取得するかどうか
@@ -1952,7 +1952,7 @@ paths:
       parameters:
         - schema:
             type: boolean
-            default: 'false'
+            default: false
           in: query
           name: include-dm
           description: ダイレクトメッセージチャンネルをレスポンスに含めるかどうか
@@ -2306,7 +2306,7 @@ paths:
         - $ref: '#/components/parameters/redirectInQuery'
         - schema:
             type: boolean
-            default: 'false'
+            default: false
           in: query
           name: all
           description: 全てのセッションでログアウトするかどうか
@@ -2371,19 +2371,19 @@ paths:
             type: integer
             minimum: 1
             maximum: 50
-            default: '50'
+            default: 50
           in: query
           name: limit
           description: 取得する件数
         - schema:
             type: boolean
-            default: 'false'
+            default: false
           in: query
           name: all
           description: 全てのチャンネルのタイムラインを取得する
         - schema:
             type: boolean
-            default: 'false'
+            default: false
           in: query
           name: per_channel
           description: 同じチャンネルのメッセージは最新のもののみ取得するか
@@ -2811,7 +2811,7 @@ paths:
       parameters:
         - schema:
             type: boolean
-            default: 'false'
+            default: false
           in: query
           name: detail
           description: 詳細情報を含めるかどうか
@@ -2884,7 +2884,7 @@ paths:
       parameters:
         - schema:
             type: boolean
-            default: 'false'
+            default: false
           in: query
           name: all
           description: 全てのクライアントを取得するかどうか
@@ -2955,7 +2955,7 @@ paths:
       parameters:
         - schema:
             type: boolean
-            default: 'false'
+            default: false
           in: query
           name: all
           description: 全てのBOTを取得するかどうか
@@ -3093,7 +3093,7 @@ paths:
       parameters:
         - schema:
             type: boolean
-            default: 'false'
+            default: false
           in: query
           name: detail
           description: 詳細情報を含めるかどうか
@@ -7204,7 +7204,6 @@ components:
       name: limit
       schema:
         type: integer
-        default: 0
         minimum: 1
         maximum: 200
       description: 取得する件数
