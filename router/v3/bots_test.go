@@ -361,6 +361,8 @@ func TestHandlers_EditBot(t *testing.T) {
 	bot1 := env.CreateBot(t, rand, user1.GetID())
 	bot2 := env.CreateBot(t, rand, user1.GetID())
 	bot3 := env.CreateBot(t, rand, user2.GetID())
+	wsBotWithEndpoint, err := env.Repository.CreateBot(random.AlphaNumeric(16), "po", "po", uuid.Nil, user1.GetID(), model.BotModeWebSocket, model.BotActive, "https://example.com")
+	require.NoError(t, err)
 	wsBotWithoutEndpoint, err := env.Repository.CreateBot(random.AlphaNumeric(16), "po", "po", uuid.Nil, user1.GetID(), model.BotModeWebSocket, model.BotActive, "")
 	require.NoError(t, err)
 
@@ -502,6 +504,18 @@ func TestHandlers_EditBot(t *testing.T) {
 			WithJSON(&PatchBotRequest{Privileged: optional.BoolFrom(true)}).
 			Expect().
 			Status(http.StatusNotFound)
+	})
+
+	t.Run("success (should be able to remove endpoint in WebSocket mode)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.PATCH(path, wsBotWithEndpoint.ID.String()).
+			WithCookie(session.CookieName, commonSession).
+			WithJSON(&PatchBotRequest{
+				Endpoint: optional.StringFrom(""),
+			}).
+			Expect().
+			Status(http.StatusNoContent)
 	})
 
 	t.Run("success", func(t *testing.T) {
