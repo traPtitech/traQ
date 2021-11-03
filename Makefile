@@ -2,7 +2,7 @@ SOURCES ?= $(shell find . -path "./vendor" -prune -o -type f -name "*.go" -print
 
 TEST_DB_PORT := 3100
 TBLS_VERSION := 1.49.6
-SPECTRAL_VERSION := 5.4.0
+SPECTRAL_VERSION := 6.1.0
 
 .DEFAULT_GOAL := help
 

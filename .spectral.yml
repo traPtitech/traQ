@@ -1,3 +1,3 @@
 extends: spectral:oas
 rules:
-  operation-2xx-response: false
+  operation-success-response: false
