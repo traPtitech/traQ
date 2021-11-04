@@ -102,12 +102,11 @@ func filterSession(sessions []*session, target *session) []*session {
 }
 
 // WriteMessage 指定したセッションにメッセージを書き込みます
-func (s *Streamer) WriteMessage(t string, reqID uuid.UUID, body []byte, botUserID uuid.UUID) []error {
+func (s *Streamer) WriteMessage(t string, reqID uuid.UUID, body []byte, botUserID uuid.UUID) (errs []error, attempted bool) {
 	m := &rawMessage{
 		t:    websocket.TextMessage,
 		data: makeEventMessage(t, reqID, body).toJSON(),
 	}
-	var errs []error
 	s.mu.RLock()
 	for _, session := range s.sessions[botUserID] {
 		if err := session.writeMessage(m); err != nil {
@@ -120,9 +119,10 @@ func (s *Streamer) WriteMessage(t string, reqID uuid.UUID, body []byte, botUserI
 					zap.Stringer("userID", session.userID))
 			}
 		}
+		attempted = true
 	}
 	s.mu.RUnlock()
-	return errs
+	return
 }
 
 // ServeHTTP http.Handlerインターフェイスの実装

@@ -20,6 +20,7 @@ const (
 	resultOK           = "ok"
 	resultNG           = "ng"
 	resultNetworkError = "ne"
+	resultDropped      = "dp"
 )
 
 type dispatcherImpl struct {
