@@ -50,38 +50,30 @@ func (d *httpDispatcher) send(b *model.Bot, event model.BotEventType, reqID uuid
 	res, err := d.client.Do(req)
 	latency := time.Since(start)
 
-	if err != nil {
-		eventSendCounter.WithLabelValues(b.ID.String(), resultNetworkError).Inc()
-		return false, &model.BotEventLog{
-			RequestID: reqID,
-			BotID:     b.ID,
-			Event:     event,
-			Body:      string(body),
-			Result:    resultNetworkError,
-			Error:     err.Error(),
-			Code:      -1,
-			Latency:   latency.Nanoseconds(),
-			DateTime:  start,
-		}
-	}
-	_ = res.Body.Close()
-
-	var result string
-	if res.StatusCode == http.StatusNoContent {
-		result = resultOK
-	} else {
-		result = resultNG
-	}
-	eventSendCounter.WithLabelValues(b.ID.String(), result).Inc()
-
-	return res.StatusCode == http.StatusNoContent, &model.BotEventLog{
+	log = &model.BotEventLog{
 		RequestID: reqID,
 		BotID:     b.ID,
 		Event:     event,
 		Body:      string(body),
-		Result:    result,
-		Code:      res.StatusCode,
 		Latency:   latency.Nanoseconds(),
 		DateTime:  start,
 	}
+
+	if err != nil {
+		eventSendCounter.WithLabelValues(b.ID.String(), resultNetworkError).Inc()
+		log.Result = resultNetworkError
+		log.Error = err.Error()
+		log.Code = -1
+		return false, log
+	}
+
+	_ = res.Body.Close()
+	if res.StatusCode == http.StatusNoContent {
+		log.Result = resultOK
+	} else {
+		log.Result = resultNG
+	}
+	eventSendCounter.WithLabelValues(b.ID.String(), log.Result).Inc()
+	log.Code = res.StatusCode
+	return log.Result == resultOK, log
 }
