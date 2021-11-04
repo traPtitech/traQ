@@ -5987,14 +5987,17 @@ components:
         - ok
         - ng
         - ne
+        - dp
       x-enum-varnames:
         - OK
         - NG
         - NetworkError
+        - Dropped
       x-enum-descriptions:
         - 成功
         - 失敗(不正なレスポンス)
         - ネットワークエラー
+        - (WebSocket Modeのみ)接続しているセッションが存在しなかった
     PostBotRequest:
       title: PostBotRequest
       type: object
