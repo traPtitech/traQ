@@ -43,7 +43,7 @@ func (d *wsDispatcher) send(b *model.Bot, event model.BotEventType, reqID uuid.U
 		return false, log
 	}
 	if !attempted {
-		eventSendCounter.WithLabelValues(b.ID.String(), resultOK).Inc()
+		eventSendCounter.WithLabelValues(b.ID.String(), resultDropped).Inc()
 		log.Result = resultDropped
 		return false, log
 	}
