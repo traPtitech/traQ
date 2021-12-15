@@ -47,7 +47,7 @@ require (
 	golang.org/x/net v0.0.0-20210913180222-943fd674d43e
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/api v0.62.0
+	google.golang.org/api v0.63.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.2.1
 	gorm.io/gorm v1.22.4
@@ -123,7 +123,7 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/mod v0.5.0 // indirect
-	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
+	golang.org/x/sys v0.0.0-20211210111614-af8b64212486 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324 // indirect
 	golang.org/x/tools v0.1.5 // indirect
