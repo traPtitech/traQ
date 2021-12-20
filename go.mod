@@ -31,7 +31,7 @@ require (
 	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/motoki317/go-waveform v0.0.3
 	github.com/ncw/swift v1.0.53
-	github.com/olivere/elastic/v7 v7.0.29
+	github.com/olivere/elastic/v7 v7.0.30
 	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e
 	github.com/prometheus/client_golang v1.11.0
 	github.com/sapphi-red/midec v0.5.2
@@ -44,7 +44,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/exp v0.0.0-20210715201039-d37aa40e8013
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
-	golang.org/x/net v0.0.0-20210913180222-943fd674d43e
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	google.golang.org/api v0.63.0
