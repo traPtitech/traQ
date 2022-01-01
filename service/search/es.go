@@ -18,7 +18,7 @@ const (
 	esRequiredVersion = "7.10.2"
 	esIndexPrefix     = "traq_"
 	esMessageIndex    = "message"
-	esDateFormat      = "2006-01-02T15:04:05Z"
+	esDateFormat      = "2006-01-02T15:04:05.000000000Z"
 )
 
 func getIndexName(index string) string {
