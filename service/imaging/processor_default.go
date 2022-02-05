@@ -66,6 +66,7 @@ func (p *defaultProcessor) Fit(src io.ReadSeeker, width, height int) (image.Imag
 	}
 
 	if imgCfg.Width > width || imgCfg.Height > height {
+		// mks2013: フロントで使用している https://github.com/nodeca/pica のデフォルト
 		return imaging.Fit(orig, width, height, mks2013Filter), nil
 	}
 	return orig, nil
