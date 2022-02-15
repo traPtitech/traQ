@@ -1,7 +1,7 @@
 module github.com/traPtitech/traQ
 
 require (
-	cloud.google.com/go/profiler v0.1.2
+	cloud.google.com/go/profiler v0.2.0
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/blendle/zapdriver v1.3.1
@@ -76,7 +76,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
-	github.com/google/pprof v0.0.0-20211214055906-6f57359322fd // indirect
+	github.com/google/pprof v0.0.0-20220113144219-d25a53d42d00 // indirect
 	github.com/google/subcommands v1.0.1 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -127,7 +127,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220126215142-9970aeb2e350 // indirect
-	google.golang.org/grpc v1.43.0 // indirect
+	google.golang.org/grpc v1.44.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
