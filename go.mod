@@ -20,7 +20,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.3.0
 	github.com/golang/mock v1.6.0
 	github.com/google/wire v0.5.0
-	github.com/gorilla/websocket v1.4.2
+	github.com/gorilla/websocket v1.5.0
 	github.com/hajimehoshi/go-mp3 v0.3.2
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
