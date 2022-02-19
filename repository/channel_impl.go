@@ -314,6 +314,9 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 						return err
 					}
 				}
+				if current[uid] == model.ChannelSubscribeLevelMarkAndNotify {
+					off = append(off, uid)
+				}
 
 			case model.ChannelSubscribeLevelMarkAndNotify:
 				if _, ok := current[uid]; ok {
