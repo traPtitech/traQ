@@ -260,13 +260,23 @@ func (repo *GormRepository) ChangeChannelSubscription(channelID uuid.UUID, args 
 	if channelID == uuid.Nil {
 		return nil, nil, ErrNilID
 	}
+
 	on = make([]uuid.UUID, 0)
 	off = make([]uuid.UUID, 0)
 
+	uids := make([]uuid.UUID, 0)
+	for uid := range args.Subscription {
+		uids = append(uids, uid)
+	}
+
 	err = repo.db.Transaction(func(tx *gorm.DB) error {
-		// 現在のチャンネルの購読設定を全取得
+		// 指定された各ユーザーの現在のチャンネルの購読設定を取得
 		var _current []*model.UserSubscribeChannel
-		if err := tx.Where(&model.UserSubscribeChannel{ChannelID: channelID}).Find(&_current).Error; err != nil {
+		if err := tx.
+			Where(&model.UserSubscribeChannel{ChannelID: channelID}).
+			Where("user_id IN (?)", uids).
+			Find(&_current).
+			Error; err != nil {
 			return err
 		}
 		current := make(map[uuid.UUID]model.ChannelSubscribeLevel, len(_current))
