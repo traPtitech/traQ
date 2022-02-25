@@ -3,8 +3,11 @@ package ogp
 import (
 	"errors"
 	"net/url"
+	"sync"
 	"time"
 
+	"github.com/lthibault/jitterbug/v2"
+	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/traPtitech/traQ/model"
@@ -13,22 +16,43 @@ import (
 )
 
 type ServiceImpl struct {
-	repo    repository.Repository
-	sfGroup singleflight.Group
+	repo   repository.Repository
+	logger *zap.Logger
+
+	cachePurger *jitterbug.Ticker
+	wg          sync.WaitGroup
+	sfGroup     singleflight.Group
 }
 
-func NewServiceImpl(repo repository.Repository) (Service, error) {
+func NewServiceImpl(repo repository.Repository, logger *zap.Logger) (Service, error) {
 	return &ServiceImpl{
-		repo: repo,
+		repo:   repo,
+		logger: logger,
 	}, nil
 }
 
 func (s *ServiceImpl) Start() error {
-	// TODO: impl old cache purger
+	s.cachePurger = jitterbug.New(time.Hour*24, &jitterbug.Uniform{
+		Min: time.Hour * 23,
+	})
+	go func() {
+		for range s.cachePurger.C {
+			s.wg.Add(1)
+			if err := s.repo.DeleteStaleOgpCache(); err != nil {
+				s.logger.Error("an error occurred while deleting stale ogp caches", zap.Error(err))
+			}
+			s.wg.Done()
+		}
+	}()
+
+	s.logger.Info("OGP service started")
 	return nil
 }
 
 func (s *ServiceImpl) Shutdown() error {
+	s.cachePurger.Stop()
+	s.wg.Wait()
+	s.logger.Info("OGP service shutdown")
 	return nil
 }
 
@@ -81,7 +105,7 @@ func (s *ServiceImpl) getMeta(url *url.URL) (ogp *model.Ogp, expiresIn time.Dura
 		}
 		return nil, CacheDuration, nil
 	} else if err != nil {
-		// TODO: このパスは5xxエラーなのでクライアント側キャッシュつけない
+		// このパスは5xxエラーなのでクライアント側キャッシュつけない
 		return nil, time.Duration(0), nil
 	}
 

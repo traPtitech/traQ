@@ -77,7 +77,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 	wsStreamer := ws2.NewStreamer(hub2, viewerManager, webrtcv3Manager, logger)
 	serverOriginString := provideServerOriginString(c2)
 	notificationService := notification.NewService(repo, manager, messageManager, fileManager, hub2, logger, client, wsStreamer, viewerManager, serverOriginString)
-	ogpService, err := ogp.NewServiceImpl(repo)
+	ogpService, err := ogp.NewServiceImpl(repo, logger)
 	if err != nil {
 		return nil, err
 	}

@@ -106,3 +106,11 @@ func (repo *Repository) DeleteOgpCache(url string) error {
 	}
 	return nil
 }
+
+// DeleteStaleOgpCache implements OgpRepository interface.
+func (repo *Repository) DeleteStaleOgpCache() error {
+	return repo.db.
+		Where("expires_at < ?", time.Now()).
+		Delete(&model.OgpCache{}).
+		Error
+}
