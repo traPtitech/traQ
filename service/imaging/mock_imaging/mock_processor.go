@@ -6,51 +6,37 @@ package mock_imaging
 
 import (
 	bytes "bytes"
-	gomock "github.com/golang/mock/gomock"
 	image "image"
 	io "io"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
-// MockProcessor is a mock of Processor interface
+// MockProcessor is a mock of Processor interface.
 type MockProcessor struct {
 	ctrl     *gomock.Controller
 	recorder *MockProcessorMockRecorder
 }
 
-// MockProcessorMockRecorder is the mock recorder for MockProcessor
+// MockProcessorMockRecorder is the mock recorder for MockProcessor.
 type MockProcessorMockRecorder struct {
 	mock *MockProcessor
 }
 
-// NewMockProcessor creates a new mock instance
+// NewMockProcessor creates a new mock instance.
 func NewMockProcessor(ctrl *gomock.Controller) *MockProcessor {
 	mock := &MockProcessor{ctrl: ctrl}
 	mock.recorder = &MockProcessorMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockProcessor) EXPECT() *MockProcessorMockRecorder {
 	return m.recorder
 }
 
-// Thumbnail mocks base method
-func (m *MockProcessor) Thumbnail(src io.ReadSeeker) (image.Image, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Thumbnail", src)
-	ret0, _ := ret[0].(image.Image)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Thumbnail indicates an expected call of Thumbnail
-func (mr *MockProcessorMockRecorder) Thumbnail(src interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Thumbnail", reflect.TypeOf((*MockProcessor)(nil).Thumbnail), src)
-}
-
-// Fit mocks base method
+// Fit mocks base method.
 func (m *MockProcessor) Fit(src io.ReadSeeker, width, height int) (image.Image, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Fit", src, width, height)
@@ -59,13 +45,13 @@ func (m *MockProcessor) Fit(src io.ReadSeeker, width, height int) (image.Image, 
 	return ret0, ret1
 }
 
-// Fit indicates an expected call of Fit
+// Fit indicates an expected call of Fit.
 func (mr *MockProcessorMockRecorder) Fit(src, width, height interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Fit", reflect.TypeOf((*MockProcessor)(nil).Fit), src, width, height)
 }
 
-// FitAnimationGIF mocks base method
+// FitAnimationGIF mocks base method.
 func (m *MockProcessor) FitAnimationGIF(src io.Reader, width, height int) (*bytes.Reader, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FitAnimationGIF", src, width, height)
@@ -74,13 +60,28 @@ func (m *MockProcessor) FitAnimationGIF(src io.Reader, width, height int) (*byte
 	return ret0, ret1
 }
 
-// FitAnimationGIF indicates an expected call of FitAnimationGIF
+// FitAnimationGIF indicates an expected call of FitAnimationGIF.
 func (mr *MockProcessorMockRecorder) FitAnimationGIF(src, width, height interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FitAnimationGIF", reflect.TypeOf((*MockProcessor)(nil).FitAnimationGIF), src, width, height)
 }
 
-// WaveformMp3 mocks base method
+// Thumbnail mocks base method.
+func (m *MockProcessor) Thumbnail(src io.ReadSeeker) (image.Image, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Thumbnail", src)
+	ret0, _ := ret[0].(image.Image)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Thumbnail indicates an expected call of Thumbnail.
+func (mr *MockProcessorMockRecorder) Thumbnail(src interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Thumbnail", reflect.TypeOf((*MockProcessor)(nil).Thumbnail), src)
+}
+
+// WaveformMp3 mocks base method.
 func (m *MockProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (io.Reader, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WaveformMp3", src, width, height)
@@ -89,13 +90,13 @@ func (m *MockProcessor) WaveformMp3(src io.ReadSeeker, width, height int) (io.Re
 	return ret0, ret1
 }
 
-// WaveformMp3 indicates an expected call of WaveformMp3
+// WaveformMp3 indicates an expected call of WaveformMp3.
 func (mr *MockProcessorMockRecorder) WaveformMp3(src, width, height interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaveformMp3", reflect.TypeOf((*MockProcessor)(nil).WaveformMp3), src, width, height)
 }
 
-// WaveformWav mocks base method
+// WaveformWav mocks base method.
 func (m *MockProcessor) WaveformWav(src io.ReadSeeker, width, height int) (io.Reader, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WaveformWav", src, width, height)
@@ -104,7 +105,7 @@ func (m *MockProcessor) WaveformWav(src io.ReadSeeker, width, height int) (io.Re
 	return ret0, ret1
 }
 
-// WaveformWav indicates an expected call of WaveformWav
+// WaveformWav indicates an expected call of WaveformWav.
 func (mr *MockProcessorMockRecorder) WaveformWav(src, width, height interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaveformWav", reflect.TypeOf((*MockProcessor)(nil).WaveformWav), src, width, height)

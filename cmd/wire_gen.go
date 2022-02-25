@@ -20,6 +20,7 @@ import (
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/notification"
+	"github.com/traPtitech/traQ/service/ogp"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
@@ -76,6 +77,10 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 	wsStreamer := ws2.NewStreamer(hub2, viewerManager, webrtcv3Manager, logger)
 	serverOriginString := provideServerOriginString(c2)
 	notificationService := notification.NewService(repo, manager, messageManager, fileManager, hub2, logger, client, wsStreamer, viewerManager, serverOriginString)
+	ogpService, err := ogp.NewServiceImpl(repo, logger)
+	if err != nil {
+		return nil, err
+	}
 	rbacRBAC, err := rbac.New(repo)
 	if err != nil {
 		return nil, err
@@ -98,6 +103,7 @@ func newServer(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, fs storag
 		Imaging:              processor,
 		MessageManager:       messageManager,
 		Notification:         notificationService,
+		OGP:                  ogpService,
 		RBAC:                 rbacRBAC,
 		Search:               engine,
 		ViewerManager:        viewerManager,

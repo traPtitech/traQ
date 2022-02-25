@@ -28,4 +28,10 @@ type OgpCacheRepository interface {
 	// 成功した場合、nilを返します。
 	// DBによるエラーを返すことがあります。
 	DeleteOgpCache(url string) error
+
+	// DeleteStaleOgpCache 保存期間が経過したOGPキャッシュを削除します
+	//
+	// 成功した場合、nilを返します。
+	// DBによるエラーを返すことがあります。
+	DeleteStaleOgpCache() error
 }

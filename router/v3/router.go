@@ -4,7 +4,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/leandro-lugaresi/hub"
 	"go.uber.org/zap"
-	"golang.org/x/sync/singleflight"
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
@@ -16,6 +15,7 @@ import (
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/message"
+	"github.com/traPtitech/traQ/service/ogp"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/rbac/permission"
 	"github.com/traPtitech/traQ/service/search"
@@ -33,6 +33,7 @@ type Handlers struct {
 	Hub            *hub.Hub
 	Logger         *zap.Logger
 	OC             *counter.OnlineCounter
+	OGP            ogp.Service
 	VM             *viewer.Manager
 	WebRTC         *webrtcv3.Manager
 	Imaging        imaging.Processor
@@ -43,8 +44,6 @@ type Handlers struct {
 	FileManager    file.Manager
 	Replacer       *mutil.Replacer
 	Config
-
-	SFGroup singleflight.Group `wire:"-"`
 }
 
 type Config struct {

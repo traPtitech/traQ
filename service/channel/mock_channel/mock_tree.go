@@ -5,36 +5,121 @@
 package mock_channel
 
 import (
+	reflect "reflect"
+
 	uuid "github.com/gofrs/uuid"
 	gomock "github.com/golang/mock/gomock"
 	model "github.com/traPtitech/traQ/model"
-	reflect "reflect"
 )
 
-// MockTree is a mock of Tree interface
+// MockTree is a mock of Tree interface.
 type MockTree struct {
 	ctrl     *gomock.Controller
 	recorder *MockTreeMockRecorder
 }
 
-// MockTreeMockRecorder is the mock recorder for MockTree
+// MockTreeMockRecorder is the mock recorder for MockTree.
 type MockTreeMockRecorder struct {
 	mock *MockTree
 }
 
-// NewMockTree creates a new mock instance
+// NewMockTree creates a new mock instance.
 func NewMockTree(ctrl *gomock.Controller) *MockTree {
 	mock := &MockTree{ctrl: ctrl}
 	mock.recorder = &MockTreeMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockTree) EXPECT() *MockTreeMockRecorder {
 	return m.recorder
 }
 
-// GetModel mocks base method
+// GetAscendantIDs mocks base method.
+func (m *MockTree) GetAscendantIDs(id uuid.UUID) []uuid.UUID {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAscendantIDs", id)
+	ret0, _ := ret[0].([]uuid.UUID)
+	return ret0
+}
+
+// GetAscendantIDs indicates an expected call of GetAscendantIDs.
+func (mr *MockTreeMockRecorder) GetAscendantIDs(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAscendantIDs", reflect.TypeOf((*MockTree)(nil).GetAscendantIDs), id)
+}
+
+// GetChannelDepth mocks base method.
+func (m *MockTree) GetChannelDepth(id uuid.UUID) int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetChannelDepth", id)
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// GetChannelDepth indicates an expected call of GetChannelDepth.
+func (mr *MockTreeMockRecorder) GetChannelDepth(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelDepth", reflect.TypeOf((*MockTree)(nil).GetChannelDepth), id)
+}
+
+// GetChannelIDFromPath mocks base method.
+func (m *MockTree) GetChannelIDFromPath(path string) uuid.UUID {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetChannelIDFromPath", path)
+	ret0, _ := ret[0].(uuid.UUID)
+	return ret0
+}
+
+// GetChannelIDFromPath indicates an expected call of GetChannelIDFromPath.
+func (mr *MockTreeMockRecorder) GetChannelIDFromPath(path interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelIDFromPath", reflect.TypeOf((*MockTree)(nil).GetChannelIDFromPath), path)
+}
+
+// GetChannelPath mocks base method.
+func (m *MockTree) GetChannelPath(id uuid.UUID) string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetChannelPath", id)
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetChannelPath indicates an expected call of GetChannelPath.
+func (mr *MockTreeMockRecorder) GetChannelPath(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelPath", reflect.TypeOf((*MockTree)(nil).GetChannelPath), id)
+}
+
+// GetChildrenIDs mocks base method.
+func (m *MockTree) GetChildrenIDs(id uuid.UUID) []uuid.UUID {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetChildrenIDs", id)
+	ret0, _ := ret[0].([]uuid.UUID)
+	return ret0
+}
+
+// GetChildrenIDs indicates an expected call of GetChildrenIDs.
+func (mr *MockTreeMockRecorder) GetChildrenIDs(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChildrenIDs", reflect.TypeOf((*MockTree)(nil).GetChildrenIDs), id)
+}
+
+// GetDescendantIDs mocks base method.
+func (m *MockTree) GetDescendantIDs(id uuid.UUID) []uuid.UUID {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDescendantIDs", id)
+	ret0, _ := ret[0].([]uuid.UUID)
+	return ret0
+}
+
+// GetDescendantIDs indicates an expected call of GetDescendantIDs.
+func (mr *MockTreeMockRecorder) GetDescendantIDs(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDescendantIDs", reflect.TypeOf((*MockTree)(nil).GetDescendantIDs), id)
+}
+
+// GetModel mocks base method.
 func (m *MockTree) GetModel(id uuid.UUID) (*model.Channel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetModel", id)
@@ -43,139 +128,13 @@ func (m *MockTree) GetModel(id uuid.UUID) (*model.Channel, error) {
 	return ret0, ret1
 }
 
-// GetModel indicates an expected call of GetModel
+// GetModel indicates an expected call of GetModel.
 func (mr *MockTreeMockRecorder) GetModel(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetModel", reflect.TypeOf((*MockTree)(nil).GetModel), id)
 }
 
-// GetChildrenIDs mocks base method
-func (m *MockTree) GetChildrenIDs(id uuid.UUID) []uuid.UUID {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetChildrenIDs", id)
-	ret0, _ := ret[0].([]uuid.UUID)
-	return ret0
-}
-
-// GetChildrenIDs indicates an expected call of GetChildrenIDs
-func (mr *MockTreeMockRecorder) GetChildrenIDs(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChildrenIDs", reflect.TypeOf((*MockTree)(nil).GetChildrenIDs), id)
-}
-
-// GetDescendantIDs mocks base method
-func (m *MockTree) GetDescendantIDs(id uuid.UUID) []uuid.UUID {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDescendantIDs", id)
-	ret0, _ := ret[0].([]uuid.UUID)
-	return ret0
-}
-
-// GetDescendantIDs indicates an expected call of GetDescendantIDs
-func (mr *MockTreeMockRecorder) GetDescendantIDs(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDescendantIDs", reflect.TypeOf((*MockTree)(nil).GetDescendantIDs), id)
-}
-
-// GetAscendantIDs mocks base method
-func (m *MockTree) GetAscendantIDs(id uuid.UUID) []uuid.UUID {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAscendantIDs", id)
-	ret0, _ := ret[0].([]uuid.UUID)
-	return ret0
-}
-
-// GetAscendantIDs indicates an expected call of GetAscendantIDs
-func (mr *MockTreeMockRecorder) GetAscendantIDs(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAscendantIDs", reflect.TypeOf((*MockTree)(nil).GetAscendantIDs), id)
-}
-
-// GetChannelDepth mocks base method
-func (m *MockTree) GetChannelDepth(id uuid.UUID) int {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetChannelDepth", id)
-	ret0, _ := ret[0].(int)
-	return ret0
-}
-
-// GetChannelDepth indicates an expected call of GetChannelDepth
-func (mr *MockTreeMockRecorder) GetChannelDepth(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelDepth", reflect.TypeOf((*MockTree)(nil).GetChannelDepth), id)
-}
-
-// IsChildPresent mocks base method
-func (m *MockTree) IsChildPresent(name string, parent uuid.UUID) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsChildPresent", name, parent)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsChildPresent indicates an expected call of IsChildPresent
-func (mr *MockTreeMockRecorder) IsChildPresent(name, parent interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsChildPresent", reflect.TypeOf((*MockTree)(nil).IsChildPresent), name, parent)
-}
-
-// GetChannelPath mocks base method
-func (m *MockTree) GetChannelPath(id uuid.UUID) string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetChannelPath", id)
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// GetChannelPath indicates an expected call of GetChannelPath
-func (mr *MockTreeMockRecorder) GetChannelPath(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelPath", reflect.TypeOf((*MockTree)(nil).GetChannelPath), id)
-}
-
-// IsChannelPresent mocks base method
-func (m *MockTree) IsChannelPresent(id uuid.UUID) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsChannelPresent", id)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsChannelPresent indicates an expected call of IsChannelPresent
-func (mr *MockTreeMockRecorder) IsChannelPresent(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsChannelPresent", reflect.TypeOf((*MockTree)(nil).IsChannelPresent), id)
-}
-
-// GetChannelIDFromPath mocks base method
-func (m *MockTree) GetChannelIDFromPath(path string) uuid.UUID {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetChannelIDFromPath", path)
-	ret0, _ := ret[0].(uuid.UUID)
-	return ret0
-}
-
-// GetChannelIDFromPath indicates an expected call of GetChannelIDFromPath
-func (mr *MockTreeMockRecorder) GetChannelIDFromPath(path interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelIDFromPath", reflect.TypeOf((*MockTree)(nil).GetChannelIDFromPath), path)
-}
-
-// IsForceChannel mocks base method
-func (m *MockTree) IsForceChannel(id uuid.UUID) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsForceChannel", id)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsForceChannel indicates an expected call of IsForceChannel
-func (mr *MockTreeMockRecorder) IsForceChannel(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsForceChannel", reflect.TypeOf((*MockTree)(nil).IsForceChannel), id)
-}
-
-// IsArchivedChannel mocks base method
+// IsArchivedChannel mocks base method.
 func (m *MockTree) IsArchivedChannel(id uuid.UUID) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsArchivedChannel", id)
@@ -183,13 +142,55 @@ func (m *MockTree) IsArchivedChannel(id uuid.UUID) bool {
 	return ret0
 }
 
-// IsArchivedChannel indicates an expected call of IsArchivedChannel
+// IsArchivedChannel indicates an expected call of IsArchivedChannel.
 func (mr *MockTreeMockRecorder) IsArchivedChannel(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsArchivedChannel", reflect.TypeOf((*MockTree)(nil).IsArchivedChannel), id)
 }
 
-// MarshalJSON mocks base method
+// IsChannelPresent mocks base method.
+func (m *MockTree) IsChannelPresent(id uuid.UUID) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsChannelPresent", id)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsChannelPresent indicates an expected call of IsChannelPresent.
+func (mr *MockTreeMockRecorder) IsChannelPresent(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsChannelPresent", reflect.TypeOf((*MockTree)(nil).IsChannelPresent), id)
+}
+
+// IsChildPresent mocks base method.
+func (m *MockTree) IsChildPresent(name string, parent uuid.UUID) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsChildPresent", name, parent)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsChildPresent indicates an expected call of IsChildPresent.
+func (mr *MockTreeMockRecorder) IsChildPresent(name, parent interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsChildPresent", reflect.TypeOf((*MockTree)(nil).IsChildPresent), name, parent)
+}
+
+// IsForceChannel mocks base method.
+func (m *MockTree) IsForceChannel(id uuid.UUID) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsForceChannel", id)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsForceChannel indicates an expected call of IsForceChannel.
+func (mr *MockTreeMockRecorder) IsForceChannel(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsForceChannel", reflect.TypeOf((*MockTree)(nil).IsForceChannel), id)
+}
+
+// MarshalJSON mocks base method.
 func (m *MockTree) MarshalJSON() ([]byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MarshalJSON")
@@ -198,7 +199,7 @@ func (m *MockTree) MarshalJSON() ([]byte, error) {
 	return ret0, ret1
 }
 
-// MarshalJSON indicates an expected call of MarshalJSON
+// MarshalJSON indicates an expected call of MarshalJSON.
 func (mr *MockTreeMockRecorder) MarshalJSON() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarshalJSON", reflect.TypeOf((*MockTree)(nil).MarshalJSON))

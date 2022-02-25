@@ -22,6 +22,7 @@ import (
 	"github.com/traPtitech/traQ/migration"
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
+	gorm2 "github.com/traPtitech/traQ/repository/gorm"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/service/channel"
@@ -90,7 +91,7 @@ func TestMain(m *testing.M) {
 		env.SessStore = session.NewMemorySessionStore()
 
 		// テスト用リポジトリ作成
-		repo, err := repository.NewGormRepository(engine, env.Hub, l.Named("repository"))
+		repo, err := gorm2.NewGormRepository(engine, env.Hub, l.Named("repository"))
 		if err != nil {
 			panic(err)
 		}

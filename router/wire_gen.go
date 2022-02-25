@@ -45,6 +45,7 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 	streamer := ss.WS
 	wsStreamer := ss.BotWS
 	onlineCounter := ss.OnlineCounter
+	ogpService := ss.OGP
 	viewerManager := ss.ViewerManager
 	webrtcv3Manager := ss.WebRTCv3
 	processor := ss.Imaging
@@ -58,6 +59,7 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 		Hub:            hub2,
 		Logger:         logger,
 		OC:             onlineCounter,
+		OGP:            ogpService,
 		VM:             viewerManager,
 		WebRTC:         webrtcv3Manager,
 		Imaging:        processor,

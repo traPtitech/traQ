@@ -5,53 +5,67 @@
 package mock_channel
 
 import (
+	reflect "reflect"
+
 	uuid "github.com/gofrs/uuid"
 	gomock "github.com/golang/mock/gomock"
 	model "github.com/traPtitech/traQ/model"
 	repository "github.com/traPtitech/traQ/repository"
 	channel "github.com/traPtitech/traQ/service/channel"
-	reflect "reflect"
 )
 
-// MockManager is a mock of Manager interface
+// MockManager is a mock of Manager interface.
 type MockManager struct {
 	ctrl     *gomock.Controller
 	recorder *MockManagerMockRecorder
 }
 
-// MockManagerMockRecorder is the mock recorder for MockManager
+// MockManagerMockRecorder is the mock recorder for MockManager.
 type MockManagerMockRecorder struct {
 	mock *MockManager
 }
 
-// NewMockManager creates a new mock instance
+// NewMockManager creates a new mock instance.
 func NewMockManager(ctrl *gomock.Controller) *MockManager {
 	mock := &MockManager{ctrl: ctrl}
 	mock.recorder = &MockManagerMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockManager) EXPECT() *MockManagerMockRecorder {
 	return m.recorder
 }
 
-// GetChannel mocks base method
-func (m *MockManager) GetChannel(id uuid.UUID) (*model.Channel, error) {
+// ArchiveChannel mocks base method.
+func (m *MockManager) ArchiveChannel(id, updaterID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetChannel", id)
-	ret0, _ := ret[0].(*model.Channel)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "ArchiveChannel", id, updaterID)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// GetChannel indicates an expected call of GetChannel
-func (mr *MockManagerMockRecorder) GetChannel(id interface{}) *gomock.Call {
+// ArchiveChannel indicates an expected call of ArchiveChannel.
+func (mr *MockManagerMockRecorder) ArchiveChannel(id, updaterID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannel", reflect.TypeOf((*MockManager)(nil).GetChannel), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveChannel", reflect.TypeOf((*MockManager)(nil).ArchiveChannel), id, updaterID)
 }
 
-// CreatePublicChannel mocks base method
+// ChangeChannelSubscriptions mocks base method.
+func (m *MockManager) ChangeChannelSubscriptions(channelID uuid.UUID, subscriptions map[uuid.UUID]model.ChannelSubscribeLevel, keepOffLevel bool, updaterID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChangeChannelSubscriptions", channelID, subscriptions, keepOffLevel, updaterID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ChangeChannelSubscriptions indicates an expected call of ChangeChannelSubscriptions.
+func (mr *MockManagerMockRecorder) ChangeChannelSubscriptions(channelID, subscriptions, keepOffLevel, updaterID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeChannelSubscriptions", reflect.TypeOf((*MockManager)(nil).ChangeChannelSubscriptions), channelID, subscriptions, keepOffLevel, updaterID)
+}
+
+// CreatePublicChannel mocks base method.
 func (m *MockManager) CreatePublicChannel(name string, parent, creatorID uuid.UUID) (*model.Channel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreatePublicChannel", name, parent, creatorID)
@@ -60,83 +74,28 @@ func (m *MockManager) CreatePublicChannel(name string, parent, creatorID uuid.UU
 	return ret0, ret1
 }
 
-// CreatePublicChannel indicates an expected call of CreatePublicChannel
+// CreatePublicChannel indicates an expected call of CreatePublicChannel.
 func (mr *MockManagerMockRecorder) CreatePublicChannel(name, parent, creatorID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePublicChannel", reflect.TypeOf((*MockManager)(nil).CreatePublicChannel), name, parent, creatorID)
 }
 
-// UpdateChannel mocks base method
-func (m *MockManager) UpdateChannel(id uuid.UUID, args repository.UpdateChannelArgs) error {
+// GetChannel mocks base method.
+func (m *MockManager) GetChannel(id uuid.UUID) (*model.Channel, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateChannel", id, args)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "GetChannel", id)
+	ret0, _ := ret[0].(*model.Channel)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// UpdateChannel indicates an expected call of UpdateChannel
-func (mr *MockManagerMockRecorder) UpdateChannel(id, args interface{}) *gomock.Call {
+// GetChannel indicates an expected call of GetChannel.
+func (mr *MockManagerMockRecorder) GetChannel(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateChannel", reflect.TypeOf((*MockManager)(nil).UpdateChannel), id, args)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannel", reflect.TypeOf((*MockManager)(nil).GetChannel), id)
 }
 
-// PublicChannelTree mocks base method
-func (m *MockManager) PublicChannelTree() channel.Tree {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PublicChannelTree")
-	ret0, _ := ret[0].(channel.Tree)
-	return ret0
-}
-
-// PublicChannelTree indicates an expected call of PublicChannelTree
-func (mr *MockManagerMockRecorder) PublicChannelTree() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublicChannelTree", reflect.TypeOf((*MockManager)(nil).PublicChannelTree))
-}
-
-// ChangeChannelSubscriptions mocks base method
-func (m *MockManager) ChangeChannelSubscriptions(channelID uuid.UUID, subscriptions map[uuid.UUID]model.ChannelSubscribeLevel, keepOffLevel bool, updaterID uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ChangeChannelSubscriptions", channelID, subscriptions, keepOffLevel, updaterID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ChangeChannelSubscriptions indicates an expected call of ChangeChannelSubscriptions
-func (mr *MockManagerMockRecorder) ChangeChannelSubscriptions(channelID, subscriptions, keepOffLevel, updaterID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeChannelSubscriptions", reflect.TypeOf((*MockManager)(nil).ChangeChannelSubscriptions), channelID, subscriptions, keepOffLevel, updaterID)
-}
-
-// ArchiveChannel mocks base method
-func (m *MockManager) ArchiveChannel(id, updaterID uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ArchiveChannel", id, updaterID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ArchiveChannel indicates an expected call of ArchiveChannel
-func (mr *MockManagerMockRecorder) ArchiveChannel(id, updaterID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArchiveChannel", reflect.TypeOf((*MockManager)(nil).ArchiveChannel), id, updaterID)
-}
-
-// UnarchiveChannel mocks base method
-func (m *MockManager) UnarchiveChannel(id, updaterID uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UnarchiveChannel", id, updaterID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UnarchiveChannel indicates an expected call of UnarchiveChannel
-func (mr *MockManagerMockRecorder) UnarchiveChannel(id, updaterID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnarchiveChannel", reflect.TypeOf((*MockManager)(nil).UnarchiveChannel), id, updaterID)
-}
-
-// GetDMChannel mocks base method
+// GetDMChannel mocks base method.
 func (m *MockManager) GetDMChannel(user1, user2 uuid.UUID) (*model.Channel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDMChannel", user1, user2)
@@ -145,28 +104,13 @@ func (m *MockManager) GetDMChannel(user1, user2 uuid.UUID) (*model.Channel, erro
 	return ret0, ret1
 }
 
-// GetDMChannel indicates an expected call of GetDMChannel
+// GetDMChannel indicates an expected call of GetDMChannel.
 func (mr *MockManagerMockRecorder) GetDMChannel(user1, user2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDMChannel", reflect.TypeOf((*MockManager)(nil).GetDMChannel), user1, user2)
 }
 
-// GetDMChannelMembers mocks base method
-func (m *MockManager) GetDMChannelMembers(id uuid.UUID) ([]uuid.UUID, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDMChannelMembers", id)
-	ret0, _ := ret[0].([]uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetDMChannelMembers indicates an expected call of GetDMChannelMembers
-func (mr *MockManagerMockRecorder) GetDMChannelMembers(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDMChannelMembers", reflect.TypeOf((*MockManager)(nil).GetDMChannelMembers), id)
-}
-
-// GetDMChannelMapping mocks base method
+// GetDMChannelMapping mocks base method.
 func (m *MockManager) GetDMChannelMapping(userID uuid.UUID) (map[uuid.UUID]uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDMChannelMapping", userID)
@@ -175,13 +119,28 @@ func (m *MockManager) GetDMChannelMapping(userID uuid.UUID) (map[uuid.UUID]uuid.
 	return ret0, ret1
 }
 
-// GetDMChannelMapping indicates an expected call of GetDMChannelMapping
+// GetDMChannelMapping indicates an expected call of GetDMChannelMapping.
 func (mr *MockManagerMockRecorder) GetDMChannelMapping(userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDMChannelMapping", reflect.TypeOf((*MockManager)(nil).GetDMChannelMapping), userID)
 }
 
-// IsChannelAccessibleToUser mocks base method
+// GetDMChannelMembers mocks base method.
+func (m *MockManager) GetDMChannelMembers(id uuid.UUID) ([]uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDMChannelMembers", id)
+	ret0, _ := ret[0].([]uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDMChannelMembers indicates an expected call of GetDMChannelMembers.
+func (mr *MockManagerMockRecorder) GetDMChannelMembers(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDMChannelMembers", reflect.TypeOf((*MockManager)(nil).GetDMChannelMembers), id)
+}
+
+// IsChannelAccessibleToUser mocks base method.
 func (m *MockManager) IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsChannelAccessibleToUser", userID, channelID)
@@ -190,13 +149,13 @@ func (m *MockManager) IsChannelAccessibleToUser(userID, channelID uuid.UUID) (bo
 	return ret0, ret1
 }
 
-// IsChannelAccessibleToUser indicates an expected call of IsChannelAccessibleToUser
+// IsChannelAccessibleToUser indicates an expected call of IsChannelAccessibleToUser.
 func (mr *MockManagerMockRecorder) IsChannelAccessibleToUser(userID, channelID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsChannelAccessibleToUser", reflect.TypeOf((*MockManager)(nil).IsChannelAccessibleToUser), userID, channelID)
 }
 
-// IsPublicChannel mocks base method
+// IsPublicChannel mocks base method.
 func (m *MockManager) IsPublicChannel(id uuid.UUID) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsPublicChannel", id)
@@ -204,19 +163,61 @@ func (m *MockManager) IsPublicChannel(id uuid.UUID) bool {
 	return ret0
 }
 
-// IsPublicChannel indicates an expected call of IsPublicChannel
+// IsPublicChannel indicates an expected call of IsPublicChannel.
 func (mr *MockManagerMockRecorder) IsPublicChannel(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsPublicChannel", reflect.TypeOf((*MockManager)(nil).IsPublicChannel), id)
 }
 
-// Wait mocks base method
+// PublicChannelTree mocks base method.
+func (m *MockManager) PublicChannelTree() channel.Tree {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PublicChannelTree")
+	ret0, _ := ret[0].(channel.Tree)
+	return ret0
+}
+
+// PublicChannelTree indicates an expected call of PublicChannelTree.
+func (mr *MockManagerMockRecorder) PublicChannelTree() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublicChannelTree", reflect.TypeOf((*MockManager)(nil).PublicChannelTree))
+}
+
+// UnarchiveChannel mocks base method.
+func (m *MockManager) UnarchiveChannel(id, updaterID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnarchiveChannel", id, updaterID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UnarchiveChannel indicates an expected call of UnarchiveChannel.
+func (mr *MockManagerMockRecorder) UnarchiveChannel(id, updaterID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnarchiveChannel", reflect.TypeOf((*MockManager)(nil).UnarchiveChannel), id, updaterID)
+}
+
+// UpdateChannel mocks base method.
+func (m *MockManager) UpdateChannel(id uuid.UUID, args repository.UpdateChannelArgs) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateChannel", id, args)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateChannel indicates an expected call of UpdateChannel.
+func (mr *MockManagerMockRecorder) UpdateChannel(id, args interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateChannel", reflect.TypeOf((*MockManager)(nil).UpdateChannel), id, args)
+}
+
+// Wait mocks base method.
 func (m *MockManager) Wait() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Wait")
 }
 
-// Wait indicates an expected call of Wait
+// Wait indicates an expected call of Wait.
 func (mr *MockManagerMockRecorder) Wait() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Wait", reflect.TypeOf((*MockManager)(nil).Wait))

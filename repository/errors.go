@@ -2,8 +2,6 @@ package repository
 
 import (
 	"errors"
-
-	"gorm.io/gorm"
 )
 
 var (
@@ -40,13 +38,4 @@ func IsArgError(err error) bool {
 	}
 	_, ok := err.(*ArgumentError)
 	return ok
-}
-
-func convertError(err error) error {
-	switch {
-	case err == gorm.ErrRecordNotFound:
-		return ErrNotFound
-	default:
-		return err
-	}
 }
