@@ -15,6 +15,7 @@ import (
 
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/repository/gorm"
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/rbac/role"
@@ -74,7 +75,7 @@ func serveCommand() *cobra.Command {
 
 			// Repository
 			logger.Info("setting up repository...")
-			repo, err := repository.NewGormRepository(engine, hub, logger)
+			repo, err := gorm.NewGormRepository(engine, hub, logger)
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}

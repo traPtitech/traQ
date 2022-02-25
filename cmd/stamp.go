@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
-	"github.com/traPtitech/traQ/repository"
+	"github.com/traPtitech/traQ/repository/gorm"
 	"github.com/traPtitech/traQ/service/file"
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/utils/gormzap"
@@ -58,7 +58,7 @@ func stampInstallEmojisCommand() *cobra.Command {
 			}
 
 			// Repository
-			repo, err := repository.NewGormRepository(db, hub.New(), logger)
+			repo, err := gorm.NewGormRepository(db, hub.New(), logger)
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}
