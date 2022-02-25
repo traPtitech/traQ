@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"reflect"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -29,7 +30,7 @@ func (repo *GormRepository) CreateOgpCache(url string, content *model.Ogp) (c *m
 		URLHash:   urlHash,
 		Content:   model.Ogp{},
 		Valid:     content != nil,
-		ExpiresAt: ogp.GetCacheExpireDate(),
+		ExpiresAt: time.Now().Add(ogp.CacheDuration),
 	}
 
 	if content != nil {
@@ -62,13 +63,13 @@ func (repo *GormRepository) UpdateOgpCache(url string, content *model.Ogp) error
 		if content == nil {
 			changes["valid"] = false
 			changes["content"] = model.Ogp{}
-			changes["expires_at"] = ogp.GetCacheExpireDate()
+			changes["expires_at"] = time.Now().Add(ogp.CacheDuration)
 			return tx.Model(&c).Updates(changes).Error
 		}
 		if !reflect.DeepEqual(c.Content, content) {
 			changes["valid"] = true
 			changes["content"] = content
-			changes["expires_at"] = ogp.GetCacheExpireDate()
+			changes["expires_at"] = time.Now().Add(ogp.CacheDuration)
 			return tx.Model(&c).Updates(changes).Error
 		}
 		return nil

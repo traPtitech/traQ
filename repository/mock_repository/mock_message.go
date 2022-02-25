@@ -5,38 +5,54 @@
 package mock_repository
 
 import (
+	reflect "reflect"
+	time "time"
+
 	uuid "github.com/gofrs/uuid"
 	gomock "github.com/golang/mock/gomock"
 	model "github.com/traPtitech/traQ/model"
 	repository "github.com/traPtitech/traQ/repository"
-	reflect "reflect"
-	time "time"
 )
 
-// MockMessageRepository is a mock of MessageRepository interface
+// MockMessageRepository is a mock of MessageRepository interface.
 type MockMessageRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockMessageRepositoryMockRecorder
 }
 
-// MockMessageRepositoryMockRecorder is the mock recorder for MockMessageRepository
+// MockMessageRepositoryMockRecorder is the mock recorder for MockMessageRepository.
 type MockMessageRepositoryMockRecorder struct {
 	mock *MockMessageRepository
 }
 
-// NewMockMessageRepository creates a new mock instance
+// NewMockMessageRepository creates a new mock instance.
 func NewMockMessageRepository(ctrl *gomock.Controller) *MockMessageRepository {
 	mock := &MockMessageRepository{ctrl: ctrl}
 	mock.recorder = &MockMessageRepositoryMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockMessageRepository) EXPECT() *MockMessageRepositoryMockRecorder {
 	return m.recorder
 }
 
-// CreateMessage mocks base method
+// AddStampToMessage mocks base method.
+func (m *MockMessageRepository) AddStampToMessage(messageID, stampID, userID uuid.UUID, count int) (*model.MessageStamp, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddStampToMessage", messageID, stampID, userID, count)
+	ret0, _ := ret[0].(*model.MessageStamp)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddStampToMessage indicates an expected call of AddStampToMessage.
+func (mr *MockMessageRepositoryMockRecorder) AddStampToMessage(messageID, stampID, userID, count interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddStampToMessage", reflect.TypeOf((*MockMessageRepository)(nil).AddStampToMessage), messageID, stampID, userID, count)
+}
+
+// CreateMessage mocks base method.
 func (m *MockMessageRepository) CreateMessage(userID, channelID uuid.UUID, text string) (*model.Message, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateMessage", userID, channelID, text)
@@ -45,27 +61,13 @@ func (m *MockMessageRepository) CreateMessage(userID, channelID uuid.UUID, text 
 	return ret0, ret1
 }
 
-// CreateMessage indicates an expected call of CreateMessage
+// CreateMessage indicates an expected call of CreateMessage.
 func (mr *MockMessageRepositoryMockRecorder) CreateMessage(userID, channelID, text interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMessage", reflect.TypeOf((*MockMessageRepository)(nil).CreateMessage), userID, channelID, text)
 }
 
-// UpdateMessage mocks base method
-func (m *MockMessageRepository) UpdateMessage(messageID uuid.UUID, text string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateMessage", messageID, text)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateMessage indicates an expected call of UpdateMessage
-func (mr *MockMessageRepositoryMockRecorder) UpdateMessage(messageID, text interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMessage", reflect.TypeOf((*MockMessageRepository)(nil).UpdateMessage), messageID, text)
-}
-
-// DeleteMessage mocks base method
+// DeleteMessage mocks base method.
 func (m *MockMessageRepository) DeleteMessage(messageID uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteMessage", messageID)
@@ -73,60 +75,42 @@ func (m *MockMessageRepository) DeleteMessage(messageID uuid.UUID) error {
 	return ret0
 }
 
-// DeleteMessage indicates an expected call of DeleteMessage
+// DeleteMessage indicates an expected call of DeleteMessage.
 func (mr *MockMessageRepositoryMockRecorder) DeleteMessage(messageID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMessage", reflect.TypeOf((*MockMessageRepository)(nil).DeleteMessage), messageID)
 }
 
-// GetMessageByID mocks base method
-func (m *MockMessageRepository) GetMessageByID(messageID uuid.UUID) (*model.Message, error) {
+// DeleteUnreadsByChannelID mocks base method.
+func (m *MockMessageRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageByID", messageID)
-	ret0, _ := ret[0].(*model.Message)
+	ret := m.ctrl.Call(m, "DeleteUnreadsByChannelID", channelID, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteUnreadsByChannelID indicates an expected call of DeleteUnreadsByChannelID.
+func (mr *MockMessageRepositoryMockRecorder) DeleteUnreadsByChannelID(channelID, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUnreadsByChannelID", reflect.TypeOf((*MockMessageRepository)(nil).DeleteUnreadsByChannelID), channelID, userID)
+}
+
+// GetChannelLatestMessages mocks base method.
+func (m *MockMessageRepository) GetChannelLatestMessages(query repository.ChannelLatestMessagesQuery) ([]*model.Message, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetChannelLatestMessages", query)
+	ret0, _ := ret[0].([]*model.Message)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetMessageByID indicates an expected call of GetMessageByID
-func (mr *MockMessageRepositoryMockRecorder) GetMessageByID(messageID interface{}) *gomock.Call {
+// GetChannelLatestMessages indicates an expected call of GetChannelLatestMessages.
+func (mr *MockMessageRepositoryMockRecorder) GetChannelLatestMessages(query interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageByID", reflect.TypeOf((*MockMessageRepository)(nil).GetMessageByID), messageID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelLatestMessages", reflect.TypeOf((*MockMessageRepository)(nil).GetChannelLatestMessages), query)
 }
 
-// GetMessages mocks base method
-func (m *MockMessageRepository) GetMessages(query repository.MessagesQuery) ([]*model.Message, bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessages", query)
-	ret0, _ := ret[0].([]*model.Message)
-	ret1, _ := ret[1].(bool)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GetMessages indicates an expected call of GetMessages
-func (mr *MockMessageRepositoryMockRecorder) GetMessages(query interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessages", reflect.TypeOf((*MockMessageRepository)(nil).GetMessages), query)
-}
-
-// GetUpdatedMessagesAfter mocks base method
-func (m *MockMessageRepository) GetUpdatedMessagesAfter(after time.Time, limit int) ([]*model.Message, bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUpdatedMessagesAfter", after, limit)
-	ret0, _ := ret[0].([]*model.Message)
-	ret1, _ := ret[1].(bool)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GetUpdatedMessagesAfter indicates an expected call of GetUpdatedMessagesAfter
-func (mr *MockMessageRepositoryMockRecorder) GetUpdatedMessagesAfter(after, limit interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUpdatedMessagesAfter", reflect.TypeOf((*MockMessageRepository)(nil).GetUpdatedMessagesAfter), after, limit)
-}
-
-// GetDeletedMessagesAfter mocks base method
+// GetDeletedMessagesAfter mocks base method.
 func (m *MockMessageRepository) GetDeletedMessagesAfter(after time.Time, limit int) ([]*model.Message, bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDeletedMessagesAfter", after, limit)
@@ -136,27 +120,44 @@ func (m *MockMessageRepository) GetDeletedMessagesAfter(after time.Time, limit i
 	return ret0, ret1, ret2
 }
 
-// GetDeletedMessagesAfter indicates an expected call of GetDeletedMessagesAfter
+// GetDeletedMessagesAfter indicates an expected call of GetDeletedMessagesAfter.
 func (mr *MockMessageRepositoryMockRecorder) GetDeletedMessagesAfter(after, limit interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDeletedMessagesAfter", reflect.TypeOf((*MockMessageRepository)(nil).GetDeletedMessagesAfter), after, limit)
 }
 
-// SetMessageUnread mocks base method
-func (m *MockMessageRepository) SetMessageUnread(userID, messageID uuid.UUID, noticeable bool) error {
+// GetMessageByID mocks base method.
+func (m *MockMessageRepository) GetMessageByID(messageID uuid.UUID) (*model.Message, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetMessageUnread", userID, messageID, noticeable)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "GetMessageByID", messageID)
+	ret0, _ := ret[0].(*model.Message)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// SetMessageUnread indicates an expected call of SetMessageUnread
-func (mr *MockMessageRepositoryMockRecorder) SetMessageUnread(userID, messageID, noticeable interface{}) *gomock.Call {
+// GetMessageByID indicates an expected call of GetMessageByID.
+func (mr *MockMessageRepositoryMockRecorder) GetMessageByID(messageID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMessageUnread", reflect.TypeOf((*MockMessageRepository)(nil).SetMessageUnread), userID, messageID, noticeable)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageByID", reflect.TypeOf((*MockMessageRepository)(nil).GetMessageByID), messageID)
 }
 
-// GetUnreadMessagesByUserID mocks base method
+// GetMessages mocks base method.
+func (m *MockMessageRepository) GetMessages(query repository.MessagesQuery) ([]*model.Message, bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMessages", query)
+	ret0, _ := ret[0].([]*model.Message)
+	ret1, _ := ret[1].(bool)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetMessages indicates an expected call of GetMessages.
+func (mr *MockMessageRepositoryMockRecorder) GetMessages(query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessages", reflect.TypeOf((*MockMessageRepository)(nil).GetMessages), query)
+}
+
+// GetUnreadMessagesByUserID mocks base method.
 func (m *MockMessageRepository) GetUnreadMessagesByUserID(userID uuid.UUID) ([]*model.Message, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUnreadMessagesByUserID", userID)
@@ -165,27 +166,29 @@ func (m *MockMessageRepository) GetUnreadMessagesByUserID(userID uuid.UUID) ([]*
 	return ret0, ret1
 }
 
-// GetUnreadMessagesByUserID indicates an expected call of GetUnreadMessagesByUserID
+// GetUnreadMessagesByUserID indicates an expected call of GetUnreadMessagesByUserID.
 func (mr *MockMessageRepositoryMockRecorder) GetUnreadMessagesByUserID(userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnreadMessagesByUserID", reflect.TypeOf((*MockMessageRepository)(nil).GetUnreadMessagesByUserID), userID)
 }
 
-// DeleteUnreadsByChannelID mocks base method
-func (m *MockMessageRepository) DeleteUnreadsByChannelID(channelID, userID uuid.UUID) error {
+// GetUpdatedMessagesAfter mocks base method.
+func (m *MockMessageRepository) GetUpdatedMessagesAfter(after time.Time, limit int) ([]*model.Message, bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteUnreadsByChannelID", channelID, userID)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "GetUpdatedMessagesAfter", after, limit)
+	ret0, _ := ret[0].([]*model.Message)
+	ret1, _ := ret[1].(bool)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
-// DeleteUnreadsByChannelID indicates an expected call of DeleteUnreadsByChannelID
-func (mr *MockMessageRepositoryMockRecorder) DeleteUnreadsByChannelID(channelID, userID interface{}) *gomock.Call {
+// GetUpdatedMessagesAfter indicates an expected call of GetUpdatedMessagesAfter.
+func (mr *MockMessageRepositoryMockRecorder) GetUpdatedMessagesAfter(after, limit interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUnreadsByChannelID", reflect.TypeOf((*MockMessageRepository)(nil).DeleteUnreadsByChannelID), channelID, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUpdatedMessagesAfter", reflect.TypeOf((*MockMessageRepository)(nil).GetUpdatedMessagesAfter), after, limit)
 }
 
-// GetUserUnreadChannels mocks base method
+// GetUserUnreadChannels mocks base method.
 func (m *MockMessageRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*repository.UserUnreadChannel, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserUnreadChannels", userID)
@@ -194,43 +197,13 @@ func (m *MockMessageRepository) GetUserUnreadChannels(userID uuid.UUID) ([]*repo
 	return ret0, ret1
 }
 
-// GetUserUnreadChannels indicates an expected call of GetUserUnreadChannels
+// GetUserUnreadChannels indicates an expected call of GetUserUnreadChannels.
 func (mr *MockMessageRepositoryMockRecorder) GetUserUnreadChannels(userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserUnreadChannels", reflect.TypeOf((*MockMessageRepository)(nil).GetUserUnreadChannels), userID)
 }
 
-// GetChannelLatestMessages mocks base method
-func (m *MockMessageRepository) GetChannelLatestMessages(query repository.ChannelLatestMessagesQuery) ([]*model.Message, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetChannelLatestMessages", query)
-	ret0, _ := ret[0].([]*model.Message)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetChannelLatestMessages indicates an expected call of GetChannelLatestMessages
-func (mr *MockMessageRepositoryMockRecorder) GetChannelLatestMessages(query interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelLatestMessages", reflect.TypeOf((*MockMessageRepository)(nil).GetChannelLatestMessages), query)
-}
-
-// AddStampToMessage mocks base method
-func (m *MockMessageRepository) AddStampToMessage(messageID, stampID, userID uuid.UUID, count int) (*model.MessageStamp, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddStampToMessage", messageID, stampID, userID, count)
-	ret0, _ := ret[0].(*model.MessageStamp)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// AddStampToMessage indicates an expected call of AddStampToMessage
-func (mr *MockMessageRepositoryMockRecorder) AddStampToMessage(messageID, stampID, userID, count interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddStampToMessage", reflect.TypeOf((*MockMessageRepository)(nil).AddStampToMessage), messageID, stampID, userID, count)
-}
-
-// RemoveStampFromMessage mocks base method
+// RemoveStampFromMessage mocks base method.
 func (m *MockMessageRepository) RemoveStampFromMessage(messageID, stampID, userID uuid.UUID) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveStampFromMessage", messageID, stampID, userID)
@@ -238,8 +211,36 @@ func (m *MockMessageRepository) RemoveStampFromMessage(messageID, stampID, userI
 	return ret0
 }
 
-// RemoveStampFromMessage indicates an expected call of RemoveStampFromMessage
+// RemoveStampFromMessage indicates an expected call of RemoveStampFromMessage.
 func (mr *MockMessageRepositoryMockRecorder) RemoveStampFromMessage(messageID, stampID, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveStampFromMessage", reflect.TypeOf((*MockMessageRepository)(nil).RemoveStampFromMessage), messageID, stampID, userID)
+}
+
+// SetMessageUnread mocks base method.
+func (m *MockMessageRepository) SetMessageUnread(userID, messageID uuid.UUID, noticeable bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetMessageUnread", userID, messageID, noticeable)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetMessageUnread indicates an expected call of SetMessageUnread.
+func (mr *MockMessageRepositoryMockRecorder) SetMessageUnread(userID, messageID, noticeable interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMessageUnread", reflect.TypeOf((*MockMessageRepository)(nil).SetMessageUnread), userID, messageID, noticeable)
+}
+
+// UpdateMessage mocks base method.
+func (m *MockMessageRepository) UpdateMessage(messageID uuid.UUID, text string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateMessage", messageID, text)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateMessage indicates an expected call of UpdateMessage.
+func (mr *MockMessageRepositoryMockRecorder) UpdateMessage(messageID, text interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMessage", reflect.TypeOf((*MockMessageRepository)(nil).UpdateMessage), messageID, text)
 }

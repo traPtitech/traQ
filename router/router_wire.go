@@ -1,3 +1,4 @@
+//go:build wireinject
 // +build wireinject
 
 package router
@@ -5,6 +6,9 @@ package router
 import (
 	"github.com/google/wire"
 	"github.com/leandro-lugaresi/hub"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
+
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/oauth2"
 	"github.com/traPtitech/traQ/router/session"
@@ -13,8 +17,6 @@ import (
 	v3 "github.com/traPtitech/traQ/router/v3"
 	"github.com/traPtitech/traQ/service"
 	"github.com/traPtitech/traQ/utils/message"
-	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 func newRouter(hub *hub.Hub, db *gorm.DB, repo repository.Repository, ss *service.Services, logger *zap.Logger, config *Config) *Router {

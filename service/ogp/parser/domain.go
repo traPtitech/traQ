@@ -1,4 +1,4 @@
-package ogp
+package parser
 
 import (
 	"net/url"

@@ -11,6 +11,7 @@ import (
 	"github.com/traPtitech/traQ/service/imaging"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/service/notification"
+	"github.com/traPtitech/traQ/service/ogp"
 	"github.com/traPtitech/traQ/service/rbac"
 	"github.com/traPtitech/traQ/service/search"
 	"github.com/traPtitech/traQ/service/viewer"
@@ -31,6 +32,7 @@ type Services struct {
 	Imaging              imaging.Processor
 	MessageManager       message.Manager
 	Notification         *notification.Service
+	OGP                  ogp.Service
 	RBAC                 rbac.RBAC
 	Search               search.Engine
 	ViewerManager        *viewer.Manager

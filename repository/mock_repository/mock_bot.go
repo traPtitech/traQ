@@ -5,38 +5,67 @@
 package mock_repository
 
 import (
+	reflect "reflect"
+	time "time"
+
 	uuid "github.com/gofrs/uuid"
 	gomock "github.com/golang/mock/gomock"
 	model "github.com/traPtitech/traQ/model"
 	repository "github.com/traPtitech/traQ/repository"
-	reflect "reflect"
-	time "time"
 )
 
-// MockBotRepository is a mock of BotRepository interface
+// MockBotRepository is a mock of BotRepository interface.
 type MockBotRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockBotRepositoryMockRecorder
 }
 
-// MockBotRepositoryMockRecorder is the mock recorder for MockBotRepository
+// MockBotRepositoryMockRecorder is the mock recorder for MockBotRepository.
 type MockBotRepositoryMockRecorder struct {
 	mock *MockBotRepository
 }
 
-// NewMockBotRepository creates a new mock instance
+// NewMockBotRepository creates a new mock instance.
 func NewMockBotRepository(ctrl *gomock.Controller) *MockBotRepository {
 	mock := &MockBotRepository{ctrl: ctrl}
 	mock.recorder = &MockBotRepositoryMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockBotRepository) EXPECT() *MockBotRepositoryMockRecorder {
 	return m.recorder
 }
 
-// CreateBot mocks base method
+// AddBotToChannel mocks base method.
+func (m *MockBotRepository) AddBotToChannel(botID, channelID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddBotToChannel", botID, channelID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddBotToChannel indicates an expected call of AddBotToChannel.
+func (mr *MockBotRepositoryMockRecorder) AddBotToChannel(botID, channelID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBotToChannel", reflect.TypeOf((*MockBotRepository)(nil).AddBotToChannel), botID, channelID)
+}
+
+// ChangeBotState mocks base method.
+func (m *MockBotRepository) ChangeBotState(id uuid.UUID, state model.BotState) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChangeBotState", id, state)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ChangeBotState indicates an expected call of ChangeBotState.
+func (mr *MockBotRepositoryMockRecorder) ChangeBotState(id, state interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeBotState", reflect.TypeOf((*MockBotRepository)(nil).ChangeBotState), id, state)
+}
+
+// CreateBot mocks base method.
 func (m *MockBotRepository) CreateBot(name, displayName, description string, iconFileID, creatorID uuid.UUID, mode model.BotMode, state model.BotState, webhookURL string) (*model.Bot, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateBot", name, displayName, description, iconFileID, creatorID, mode, state, webhookURL)
@@ -45,57 +74,27 @@ func (m *MockBotRepository) CreateBot(name, displayName, description string, ico
 	return ret0, ret1
 }
 
-// CreateBot indicates an expected call of CreateBot
+// CreateBot indicates an expected call of CreateBot.
 func (mr *MockBotRepositoryMockRecorder) CreateBot(name, displayName, description, iconFileID, creatorID, mode, state, webhookURL interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBot", reflect.TypeOf((*MockBotRepository)(nil).CreateBot), name, displayName, description, iconFileID, creatorID, mode, state, webhookURL)
 }
 
-// UpdateBot mocks base method
-func (m *MockBotRepository) UpdateBot(id uuid.UUID, args repository.UpdateBotArgs) error {
+// DeleteBot mocks base method.
+func (m *MockBotRepository) DeleteBot(id uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateBot", id, args)
+	ret := m.ctrl.Call(m, "DeleteBot", id)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateBot indicates an expected call of UpdateBot
-func (mr *MockBotRepositoryMockRecorder) UpdateBot(id, args interface{}) *gomock.Call {
+// DeleteBot indicates an expected call of DeleteBot.
+func (mr *MockBotRepositoryMockRecorder) DeleteBot(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBot", reflect.TypeOf((*MockBotRepository)(nil).UpdateBot), id, args)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBot", reflect.TypeOf((*MockBotRepository)(nil).DeleteBot), id)
 }
 
-// GetBots mocks base method
-func (m *MockBotRepository) GetBots(query repository.BotsQuery) ([]*model.Bot, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBots", query)
-	ret0, _ := ret[0].([]*model.Bot)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetBots indicates an expected call of GetBots
-func (mr *MockBotRepositoryMockRecorder) GetBots(query interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBots", reflect.TypeOf((*MockBotRepository)(nil).GetBots), query)
-}
-
-// GetBotByID mocks base method
-func (m *MockBotRepository) GetBotByID(id uuid.UUID) (*model.Bot, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBotByID", id)
-	ret0, _ := ret[0].(*model.Bot)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetBotByID indicates an expected call of GetBotByID
-func (mr *MockBotRepositoryMockRecorder) GetBotByID(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBotByID", reflect.TypeOf((*MockBotRepository)(nil).GetBotByID), id)
-}
-
-// GetBotByBotUserID mocks base method
+// GetBotByBotUserID mocks base method.
 func (m *MockBotRepository) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBotByBotUserID", id)
@@ -104,13 +103,13 @@ func (m *MockBotRepository) GetBotByBotUserID(id uuid.UUID) (*model.Bot, error) 
 	return ret0, ret1
 }
 
-// GetBotByBotUserID indicates an expected call of GetBotByBotUserID
+// GetBotByBotUserID indicates an expected call of GetBotByBotUserID.
 func (mr *MockBotRepositoryMockRecorder) GetBotByBotUserID(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBotByBotUserID", reflect.TypeOf((*MockBotRepository)(nil).GetBotByBotUserID), id)
 }
 
-// GetBotByCode mocks base method
+// GetBotByCode mocks base method.
 func (m *MockBotRepository) GetBotByCode(code string) (*model.Bot, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBotByCode", code)
@@ -119,113 +118,28 @@ func (m *MockBotRepository) GetBotByCode(code string) (*model.Bot, error) {
 	return ret0, ret1
 }
 
-// GetBotByCode indicates an expected call of GetBotByCode
+// GetBotByCode indicates an expected call of GetBotByCode.
 func (mr *MockBotRepositoryMockRecorder) GetBotByCode(code interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBotByCode", reflect.TypeOf((*MockBotRepository)(nil).GetBotByCode), code)
 }
 
-// ChangeBotState mocks base method
-func (m *MockBotRepository) ChangeBotState(id uuid.UUID, state model.BotState) error {
+// GetBotByID mocks base method.
+func (m *MockBotRepository) GetBotByID(id uuid.UUID) (*model.Bot, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ChangeBotState", id, state)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ChangeBotState indicates an expected call of ChangeBotState
-func (mr *MockBotRepositoryMockRecorder) ChangeBotState(id, state interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeBotState", reflect.TypeOf((*MockBotRepository)(nil).ChangeBotState), id, state)
-}
-
-// ReissueBotTokens mocks base method
-func (m *MockBotRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReissueBotTokens", id)
+	ret := m.ctrl.Call(m, "GetBotByID", id)
 	ret0, _ := ret[0].(*model.Bot)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ReissueBotTokens indicates an expected call of ReissueBotTokens
-func (mr *MockBotRepositoryMockRecorder) ReissueBotTokens(id interface{}) *gomock.Call {
+// GetBotByID indicates an expected call of GetBotByID.
+func (mr *MockBotRepositoryMockRecorder) GetBotByID(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReissueBotTokens", reflect.TypeOf((*MockBotRepository)(nil).ReissueBotTokens), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBotByID", reflect.TypeOf((*MockBotRepository)(nil).GetBotByID), id)
 }
 
-// DeleteBot mocks base method
-func (m *MockBotRepository) DeleteBot(id uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteBot", id)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteBot indicates an expected call of DeleteBot
-func (mr *MockBotRepositoryMockRecorder) DeleteBot(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBot", reflect.TypeOf((*MockBotRepository)(nil).DeleteBot), id)
-}
-
-// AddBotToChannel mocks base method
-func (m *MockBotRepository) AddBotToChannel(botID, channelID uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddBotToChannel", botID, channelID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// AddBotToChannel indicates an expected call of AddBotToChannel
-func (mr *MockBotRepositoryMockRecorder) AddBotToChannel(botID, channelID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBotToChannel", reflect.TypeOf((*MockBotRepository)(nil).AddBotToChannel), botID, channelID)
-}
-
-// RemoveBotFromChannel mocks base method
-func (m *MockBotRepository) RemoveBotFromChannel(botID, channelID uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveBotFromChannel", botID, channelID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemoveBotFromChannel indicates an expected call of RemoveBotFromChannel
-func (mr *MockBotRepositoryMockRecorder) RemoveBotFromChannel(botID, channelID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveBotFromChannel", reflect.TypeOf((*MockBotRepository)(nil).RemoveBotFromChannel), botID, channelID)
-}
-
-// GetParticipatingChannelIDsByBot mocks base method
-func (m *MockBotRepository) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid.UUID, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetParticipatingChannelIDsByBot", botID)
-	ret0, _ := ret[0].([]uuid.UUID)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetParticipatingChannelIDsByBot indicates an expected call of GetParticipatingChannelIDsByBot
-func (mr *MockBotRepositoryMockRecorder) GetParticipatingChannelIDsByBot(botID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParticipatingChannelIDsByBot", reflect.TypeOf((*MockBotRepository)(nil).GetParticipatingChannelIDsByBot), botID)
-}
-
-// WriteBotEventLog mocks base method
-func (m *MockBotRepository) WriteBotEventLog(log *model.BotEventLog) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WriteBotEventLog", log)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WriteBotEventLog indicates an expected call of WriteBotEventLog
-func (mr *MockBotRepositoryMockRecorder) WriteBotEventLog(log interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteBotEventLog", reflect.TypeOf((*MockBotRepository)(nil).WriteBotEventLog), log)
-}
-
-// GetBotEventLogs mocks base method
+// GetBotEventLogs mocks base method.
 func (m *MockBotRepository) GetBotEventLogs(botID uuid.UUID, limit, offset int) ([]*model.BotEventLog, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBotEventLogs", botID, limit, offset)
@@ -234,13 +148,43 @@ func (m *MockBotRepository) GetBotEventLogs(botID uuid.UUID, limit, offset int) 
 	return ret0, ret1
 }
 
-// GetBotEventLogs indicates an expected call of GetBotEventLogs
+// GetBotEventLogs indicates an expected call of GetBotEventLogs.
 func (mr *MockBotRepositoryMockRecorder) GetBotEventLogs(botID, limit, offset interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBotEventLogs", reflect.TypeOf((*MockBotRepository)(nil).GetBotEventLogs), botID, limit, offset)
 }
 
-// PurgeBotEventLogs mocks base method
+// GetBots mocks base method.
+func (m *MockBotRepository) GetBots(query repository.BotsQuery) ([]*model.Bot, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBots", query)
+	ret0, _ := ret[0].([]*model.Bot)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBots indicates an expected call of GetBots.
+func (mr *MockBotRepositoryMockRecorder) GetBots(query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBots", reflect.TypeOf((*MockBotRepository)(nil).GetBots), query)
+}
+
+// GetParticipatingChannelIDsByBot mocks base method.
+func (m *MockBotRepository) GetParticipatingChannelIDsByBot(botID uuid.UUID) ([]uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetParticipatingChannelIDsByBot", botID)
+	ret0, _ := ret[0].([]uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetParticipatingChannelIDsByBot indicates an expected call of GetParticipatingChannelIDsByBot.
+func (mr *MockBotRepositoryMockRecorder) GetParticipatingChannelIDsByBot(botID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParticipatingChannelIDsByBot", reflect.TypeOf((*MockBotRepository)(nil).GetParticipatingChannelIDsByBot), botID)
+}
+
+// PurgeBotEventLogs mocks base method.
 func (m *MockBotRepository) PurgeBotEventLogs(before time.Time) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PurgeBotEventLogs", before)
@@ -248,8 +192,65 @@ func (m *MockBotRepository) PurgeBotEventLogs(before time.Time) error {
 	return ret0
 }
 
-// PurgeBotEventLogs indicates an expected call of PurgeBotEventLogs
+// PurgeBotEventLogs indicates an expected call of PurgeBotEventLogs.
 func (mr *MockBotRepositoryMockRecorder) PurgeBotEventLogs(before interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PurgeBotEventLogs", reflect.TypeOf((*MockBotRepository)(nil).PurgeBotEventLogs), before)
+}
+
+// ReissueBotTokens mocks base method.
+func (m *MockBotRepository) ReissueBotTokens(id uuid.UUID) (*model.Bot, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReissueBotTokens", id)
+	ret0, _ := ret[0].(*model.Bot)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReissueBotTokens indicates an expected call of ReissueBotTokens.
+func (mr *MockBotRepositoryMockRecorder) ReissueBotTokens(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReissueBotTokens", reflect.TypeOf((*MockBotRepository)(nil).ReissueBotTokens), id)
+}
+
+// RemoveBotFromChannel mocks base method.
+func (m *MockBotRepository) RemoveBotFromChannel(botID, channelID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveBotFromChannel", botID, channelID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveBotFromChannel indicates an expected call of RemoveBotFromChannel.
+func (mr *MockBotRepositoryMockRecorder) RemoveBotFromChannel(botID, channelID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveBotFromChannel", reflect.TypeOf((*MockBotRepository)(nil).RemoveBotFromChannel), botID, channelID)
+}
+
+// UpdateBot mocks base method.
+func (m *MockBotRepository) UpdateBot(id uuid.UUID, args repository.UpdateBotArgs) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateBot", id, args)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateBot indicates an expected call of UpdateBot.
+func (mr *MockBotRepositoryMockRecorder) UpdateBot(id, args interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBot", reflect.TypeOf((*MockBotRepository)(nil).UpdateBot), id, args)
+}
+
+// WriteBotEventLog mocks base method.
+func (m *MockBotRepository) WriteBotEventLog(log *model.BotEventLog) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WriteBotEventLog", log)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WriteBotEventLog indicates an expected call of WriteBotEventLog.
+func (mr *MockBotRepositoryMockRecorder) WriteBotEventLog(log interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteBotEventLog", reflect.TypeOf((*MockBotRepository)(nil).WriteBotEventLog), log)
 }

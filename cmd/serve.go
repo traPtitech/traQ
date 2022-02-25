@@ -200,6 +200,9 @@ func (s *Server) Start(address string) error {
 	}()
 	s.SS.BOT.Start()
 	s.SS.StampThrottler.Start()
+	if err := s.SS.OGP.Start(); err != nil {
+		return err
+	}
 	return s.Router.Start(address)
 }
 
@@ -208,6 +211,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	eg.Go(func() error { return s.Router.Shutdown(ctx) })
 	eg.Go(func() error { return s.SS.WS.Close() })
 	eg.Go(func() error { return s.SS.BOT.Shutdown(ctx) })
+	eg.Go(func() error { return s.SS.OGP.Shutdown() })
 	eg.Go(func() error {
 		s.SS.FCM.Close()
 		return nil

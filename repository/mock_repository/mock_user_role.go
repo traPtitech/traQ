@@ -5,35 +5,36 @@
 package mock_repository
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	model "github.com/traPtitech/traQ/model"
-	reflect "reflect"
 )
 
-// MockUserRoleRepository is a mock of UserRoleRepository interface
+// MockUserRoleRepository is a mock of UserRoleRepository interface.
 type MockUserRoleRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockUserRoleRepositoryMockRecorder
 }
 
-// MockUserRoleRepositoryMockRecorder is the mock recorder for MockUserRoleRepository
+// MockUserRoleRepositoryMockRecorder is the mock recorder for MockUserRoleRepository.
 type MockUserRoleRepositoryMockRecorder struct {
 	mock *MockUserRoleRepository
 }
 
-// NewMockUserRoleRepository creates a new mock instance
+// NewMockUserRoleRepository creates a new mock instance.
 func NewMockUserRoleRepository(ctrl *gomock.Controller) *MockUserRoleRepository {
 	mock := &MockUserRoleRepository{ctrl: ctrl}
 	mock.recorder = &MockUserRoleRepositoryMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockUserRoleRepository) EXPECT() *MockUserRoleRepositoryMockRecorder {
 	return m.recorder
 }
 
-// CreateUserRoles mocks base method
+// CreateUserRoles mocks base method.
 func (m *MockUserRoleRepository) CreateUserRoles(roles ...*model.UserRole) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{}
@@ -45,13 +46,13 @@ func (m *MockUserRoleRepository) CreateUserRoles(roles ...*model.UserRole) error
 	return ret0
 }
 
-// CreateUserRoles indicates an expected call of CreateUserRoles
+// CreateUserRoles indicates an expected call of CreateUserRoles.
 func (mr *MockUserRoleRepositoryMockRecorder) CreateUserRoles(roles ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUserRoles", reflect.TypeOf((*MockUserRoleRepository)(nil).CreateUserRoles), roles...)
 }
 
-// GetAllUserRoles mocks base method
+// GetAllUserRoles mocks base method.
 func (m *MockUserRoleRepository) GetAllUserRoles() ([]*model.UserRole, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllUserRoles")
@@ -60,7 +61,7 @@ func (m *MockUserRoleRepository) GetAllUserRoles() ([]*model.UserRole, error) {
 	return ret0, ret1
 }
 
-// GetAllUserRoles indicates an expected call of GetAllUserRoles
+// GetAllUserRoles indicates an expected call of GetAllUserRoles.
 func (mr *MockUserRoleRepositoryMockRecorder) GetAllUserRoles() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllUserRoles", reflect.TypeOf((*MockUserRoleRepository)(nil).GetAllUserRoles))
