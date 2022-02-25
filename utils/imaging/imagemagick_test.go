@@ -126,7 +126,7 @@ func TestConvertToPNG(t *testing.T) {
 func TestResizeAnimationGIF(t *testing.T) {
 	t.Parallel()
 
-	im := os.Getenv("TRAQ_IMAGEMAGICK_PATH")
+	im := os.Getenv("TRAQ_IMAGEMAGICK")
 	if len(im) == 0 {
 		t.SkipNow()
 	}
