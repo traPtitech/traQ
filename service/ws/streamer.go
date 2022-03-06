@@ -110,7 +110,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		key:      random.AlphaNumeric(20),
 		req:      r,
 		conn:     conn,
-		open:     true,
+		closed:   false,
 		streamer: s,
 		send:     make(chan *rawMessage, messageBufferSize),
 		userID:   r.Context().Value(ctxkey.UserID).(uuid.UUID),

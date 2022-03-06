@@ -35,7 +35,7 @@ type session struct {
 
 	req      *http.Request
 	conn     *websocket.Conn
-	open     bool
+	closed   bool
 	streamer *Streamer
 	send     chan *rawMessage
 }
@@ -92,9 +92,12 @@ func (s *session) writeLoop() {
 }
 
 func (s *session) writeMessage(msg *rawMessage) (err error) {
-	if s.closed() {
+	s.RLock()
+	if s.closed {
+		s.RUnlock()
 		return ErrAlreadyClosed
 	}
+	s.RUnlock()
 	defer func() {
 		// workaround fix https://github.com/traPtitech/traQ/issues/949
 		if perr := recover(); perr != nil {
@@ -116,20 +119,14 @@ func (s *session) write(messageType int, data []byte) error {
 }
 
 func (s *session) close() {
-	if !s.closed() {
-		s.Lock()
-		s.open = false
+	s.Lock()
+	defer s.Unlock()
+
+	if !s.closed {
+		s.closed = true
 		s.conn.Close()
 		close(s.send)
-		s.Unlock()
 	}
-}
-
-func (s *session) closed() bool {
-	s.RLock()
-	defer s.RUnlock()
-
-	return !s.open
 }
 
 // Key implements Session interface.
