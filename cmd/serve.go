@@ -211,6 +211,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	eg, ctx := errgroup.WithContext(ctx)
 	eg.Go(func() error { return s.Router.Shutdown(ctx) })
 	eg.Go(func() error { return s.SS.WS.Close() })
+	eg.Go(func() error { return s.SS.BotWS.Close() })
 	eg.Go(func() error { return s.SS.BOT.Shutdown(ctx) })
 	eg.Go(func() error { return s.SS.OGP.Shutdown() })
 	eg.Go(func() error {
