@@ -148,7 +148,7 @@ func waitSIGINT() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	signal.Stop(quit)
+	close(quit)
 	for range quit {
 	}
-	close(quit)
 }

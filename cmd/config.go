@@ -32,6 +32,8 @@ type Config struct {
 	DevMode bool `mapstructure:"dev" yaml:"dev"`
 	// Pprof pprofを有効にするかどうか (default: false)
 	Pprof bool `mapstructure:"pprof" yaml:"pprof"`
+	// ShutdownTimeout サーバーシャットダウン時のタイムアウトまでの秒数 (default: 9)
+	ShutdownTimeout int64 `mapstructure:"shutdownTimeout" yaml:"shutdownTimeout"`
 
 	// Origin サーバーオリジン (default: http://localhost:3000)
 	Origin string `mapstructure:"origin" yaml:"origin"`
@@ -226,6 +228,7 @@ type Config struct {
 func init() {
 	viper.SetDefault("dev", false)
 	viper.SetDefault("pprof", false)
+	viper.SetDefault("shutdownTimeout", 9)
 	viper.SetDefault("origin", "http://localhost:3000")
 	viper.SetDefault("port", 3000)
 	viper.SetDefault("gzip", true)

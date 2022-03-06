@@ -99,7 +99,6 @@ func (p *serviceImpl) Shutdown(ctx context.Context) error {
 	p.hub.Unsubscribe(p.sub)
 	p.logPurger.Stop()
 	p.wg.Wait()
-	p.logger.Info("bot service shutdown")
 	return nil
 }
 

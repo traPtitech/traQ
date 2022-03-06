@@ -165,8 +165,9 @@ func serveCommand() *cobra.Command {
 
 			logger.Info("traQ started")
 			waitSIGINT()
+			logger.Info("traQ shutting down...")
 
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.ShutdownTimeout)*time.Second)
 			defer cancel()
 			if err := server.Shutdown(ctx); err != nil {
 				logger.Warn("abnormal shutdown", zap.Error(err))
@@ -209,18 +210,45 @@ func (s *Server) Start(address string) error {
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	eg, ctx := errgroup.WithContext(ctx)
-	eg.Go(func() error { return s.Router.Shutdown(ctx) })
-	eg.Go(func() error { return s.SS.WS.Close() })
-	eg.Go(func() error { return s.SS.BOT.Shutdown(ctx) })
-	eg.Go(func() error { return s.SS.OGP.Shutdown() })
+	eg.Go(func() error {
+		err := s.Router.Shutdown(ctx)
+		s.L.Info("Router shutdown")
+		return err
+	})
+	eg.Go(func() error {
+		err := s.SS.WS.Close()
+		s.L.Info("WebSocket shutdown")
+		return err
+	})
+	eg.Go(func() error {
+		err := s.SS.BotWS.Close()
+		s.L.Info("Bot WebSocket shutdown")
+		return err
+	})
+	eg.Go(func() error {
+		err := s.SS.BOT.Shutdown(ctx)
+		s.L.Info("Bot shutdown")
+		return err
+	})
+	eg.Go(func() error {
+		err := s.SS.OGP.Shutdown()
+		s.L.Info("OGP shutdown")
+		return err
+	})
 	eg.Go(func() error {
 		s.SS.FCM.Close()
+		s.L.Info("FCM shutdown")
 		return nil
 	})
 	eg.Go(func() error {
 		s.SS.ChannelManager.Wait()
+		s.L.Info("Channel manager shutdown")
 		return nil
 	})
-	eg.Go(func() error { return s.SS.MessageManager.Wait(ctx) })
+	eg.Go(func() error {
+		err := s.SS.MessageManager.Wait(ctx)
+		s.L.Info("Message manager shutdown")
+		return err
+	})
 	return eg.Wait()
 }

@@ -17,7 +17,7 @@ type session struct {
 
 	req      *http.Request
 	conn     *websocket.Conn
-	open     bool
+	closed   bool
 	streamer *Streamer
 	send     chan *rawMessage
 }
@@ -76,7 +76,7 @@ func (s *session) writeLoop() {
 func (s *session) writeMessage(msg *rawMessage) (err error) {
 	s.RLock()
 	defer s.RUnlock()
-	if !s.open {
+	if s.closed {
 		return ErrAlreadyClosed
 	}
 
@@ -96,8 +96,9 @@ func (s *session) write(messageType int, data []byte) error {
 func (s *session) close() {
 	s.Lock()
 	defer s.Unlock()
-	if s.open {
-		s.open = false
+
+	if !s.closed {
+		s.closed = true
 		s.conn.Close()
 		close(s.send)
 	}
