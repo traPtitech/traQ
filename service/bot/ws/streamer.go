@@ -31,8 +31,8 @@ type Streamer struct {
 	sessions   map[uuid.UUID][]*session
 	register   chan *session
 	unregister chan *session
-	stop       chan struct{}
-	open       bool
+	closer     chan struct{}
+	closed     bool
 	mu         sync.RWMutex
 }
 
@@ -45,8 +45,8 @@ func NewStreamer(hub *hub.Hub, webrtc *webrtcv3.Manager, logger *zap.Logger) *St
 		sessions:   make(map[uuid.UUID][]*session),
 		register:   make(chan *session),
 		unregister: make(chan *session),
-		stop:       make(chan struct{}),
-		open:       true,
+		closer:     make(chan struct{}),
+		closed:     false,
 	}
 
 	go h.run()
@@ -71,21 +71,7 @@ func (s *Streamer) run() {
 			}
 			s.mu.Unlock()
 
-		case <-s.stop:
-			s.mu.Lock()
-			m := &rawMessage{
-				t:    websocket.CloseMessage,
-				data: websocket.FormatCloseMessage(websocket.CloseServiceRestart, "Server is stopping..."),
-			}
-			for _, sessions := range s.sessions {
-				for _, session := range sessions {
-					_ = session.writeMessage(m)
-					session.close()
-				}
-			}
-			s.sessions = make(map[uuid.UUID][]*session)
-			s.open = false
-			s.mu.Unlock()
+		case <-s.closer:
 			return
 		}
 	}
@@ -127,10 +113,13 @@ func (s *Streamer) WriteMessage(t string, reqID uuid.UUID, body []byte, botUserI
 
 // ServeHTTP http.Handlerインターフェイスの実装
 func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	if s.IsClosed() {
+	s.mu.RLock()
+	if s.closed {
 		http.Error(rw, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
+		s.mu.RUnlock()
 		return
 	}
+	s.mu.RUnlock()
 
 	conn, err := upgrader.Upgrade(rw, r, rw.Header())
 	if err != nil {
@@ -171,19 +160,27 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	session.close()
 }
 
-// IsClosed ストリーマーが停止しているかどうか
-func (s *Streamer) IsClosed() bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	return !s.open
-}
-
 // Close ストリーマーを停止します
 func (s *Streamer) Close() error {
-	if s.IsClosed() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.closed {
 		return ErrAlreadyClosed
 	}
-	s.stop <- struct{}{}
+	s.closed = true
+	close(s.closer)
+
+	m := &rawMessage{
+		t:    websocket.CloseMessage,
+		data: websocket.FormatCloseMessage(websocket.CloseServiceRestart, "Server is stopping..."),
+	}
+	for _, sessions := range s.sessions {
+		for _, session := range sessions {
+			_ = session.writeMessage(m)
+			session.close()
+		}
+	}
+	s.sessions = make(map[uuid.UUID][]*session)
 	return nil
 }
