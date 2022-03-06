@@ -25,54 +25,39 @@ var (
 
 // Streamer WebSocketストリーマー
 type Streamer struct {
-	hub        *hub.Hub
-	webrtc     *webrtcv3.Manager
-	logger     *zap.Logger
-	sessions   map[uuid.UUID][]*session
-	register   chan *session
-	unregister chan *session
-	closer     chan struct{}
-	closed     bool
-	mu         sync.RWMutex
+	hub      *hub.Hub
+	webrtc   *webrtcv3.Manager
+	logger   *zap.Logger
+	sessions map[uuid.UUID][]*session
+	closed   bool
+	mu       sync.RWMutex
 }
 
 // NewStreamer WebSocketストリーマーを生成し起動します
 func NewStreamer(hub *hub.Hub, webrtc *webrtcv3.Manager, logger *zap.Logger) *Streamer {
 	h := &Streamer{
-		hub:        hub,
-		webrtc:     webrtc,
-		logger:     logger.Named("bot.ws"),
-		sessions:   make(map[uuid.UUID][]*session),
-		register:   make(chan *session),
-		unregister: make(chan *session),
-		closer:     make(chan struct{}),
-		closed:     false,
+		hub:      hub,
+		webrtc:   webrtc,
+		logger:   logger.Named("bot.ws"),
+		sessions: make(map[uuid.UUID][]*session),
+		closed:   false,
 	}
-
-	go h.run()
 	return h
 }
 
-func (s *Streamer) run() {
-	for {
-		select {
-		case session := <-s.register:
-			s.mu.Lock()
-			s.sessions[session.userID] = append(s.sessions[session.userID], session)
-			s.mu.Unlock()
+func (s *Streamer) register(session *session) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.sessions[session.userID] = append(s.sessions[session.userID], session)
+}
 
-		case session := <-s.unregister:
-			s.mu.Lock()
-			if sessions, ok := s.sessions[session.userID]; ok {
-				s.sessions[session.userID] = filterSession(sessions, session)
-				if len(s.sessions[session.userID]) == 0 {
-					delete(s.sessions, session.userID)
-				}
-			}
-			s.mu.Unlock()
-
-		case <-s.closer:
-			return
+func (s *Streamer) unregister(session *session) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if sessions, ok := s.sessions[session.userID]; ok {
+		s.sessions[session.userID] = filterSession(sessions, session)
+		if len(s.sessions[session.userID]) == 0 {
+			delete(s.sessions, session.userID)
 		}
 	}
 }
@@ -136,7 +121,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		userID:   r.Context().Value(ctxkey.UserID).(uuid.UUID),
 	}
 
-	s.register <- session
+	s.register(session)
 	s.hub.Publish(hub.Message{
 		Name: event.BotWSConnected,
 		Fields: hub.Fields{
@@ -156,7 +141,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			"req":     r,
 		},
 	})
-	s.unregister <- session
+	s.unregister(session)
 	session.close()
 }
 
@@ -169,7 +154,6 @@ func (s *Streamer) Close() error {
 		return ErrAlreadyClosed
 	}
 	s.closed = true
-	close(s.closer)
 
 	m := &rawMessage{
 		t:    websocket.CloseMessage,
