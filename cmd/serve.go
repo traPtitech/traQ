@@ -167,7 +167,7 @@ func serveCommand() *cobra.Command {
 			waitSIGINT()
 			logger.Info("traQ shutting down...")
 
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 9*time.Second)
 			defer cancel()
 			if err := server.Shutdown(ctx); err != nil {
 				logger.Warn("abnormal shutdown", zap.Error(err))
