@@ -33,8 +33,8 @@ type Streamer struct {
 	sessions   map[*session]struct{}
 	register   chan *session
 	unregister chan *session
-	stop       chan struct{}
-	open       bool
+	closer     chan struct{}
+	closed     bool
 	mu         sync.RWMutex
 }
 
@@ -48,8 +48,8 @@ func NewStreamer(hub *hub.Hub, vm *viewer.Manager, webrtc *webrtcv3.Manager, log
 		sessions:   make(map[*session]struct{}),
 		register:   make(chan *session),
 		unregister: make(chan *session),
-		stop:       make(chan struct{}),
-		open:       true,
+		closer:     make(chan struct{}),
+		closed:     false,
 	}
 
 	go h.run()
@@ -69,19 +69,7 @@ func (s *Streamer) run() {
 			delete(s.sessions, session)
 			s.mu.Unlock()
 
-		case <-s.stop:
-			s.mu.Lock()
-			m := &rawMessage{
-				t:    websocket.CloseMessage,
-				data: websocket.FormatCloseMessage(websocket.CloseServiceRestart, "Server is stopping..."),
-			}
-			for session := range s.sessions {
-				_ = session.writeMessage(m)
-				delete(s.sessions, session)
-				session.close()
-			}
-			s.open = false
-			s.mu.Unlock()
+		case <-s.closer:
 			return
 		}
 	}
@@ -120,10 +108,13 @@ func (s *Streamer) WriteMessage(t string, body interface{}, targetFunc TargetFun
 
 // ServeHTTP http.Handlerインターフェイスの実装
 func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	if s.IsClosed() {
+	s.mu.RLock()
+	if s.closed {
 		http.Error(rw, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
+		s.mu.RUnlock()
 		return
 	}
+	s.mu.RUnlock()
 
 	conn, err := upgrader.Upgrade(rw, r, rw.Header())
 	if err != nil {
@@ -165,19 +156,25 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	session.close()
 }
 
-// IsClosed ストリーマーが停止しているかどうか
-func (s *Streamer) IsClosed() bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	return !s.open
-}
-
 // Close ストリーマーを停止します
 func (s *Streamer) Close() error {
-	if s.IsClosed() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.closed {
 		return ErrAlreadyClosed
 	}
-	s.stop <- struct{}{}
+	s.closed = true
+	close(s.closer)
+
+	m := &rawMessage{
+		t:    websocket.CloseMessage,
+		data: websocket.FormatCloseMessage(websocket.CloseServiceRestart, "Server is stopping..."),
+	}
+	for session := range s.sessions {
+		_ = session.writeMessage(m)
+		session.close()
+	}
+	s.sessions = make(map[*session]struct{})
 	return nil
 }
