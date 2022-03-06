@@ -52,7 +52,6 @@ func (s *ServiceImpl) Start() error {
 func (s *ServiceImpl) Shutdown() error {
 	s.cachePurger.Stop()
 	s.wg.Wait()
-	s.logger.Info("OGP service shutdown")
 	return nil
 }
 
