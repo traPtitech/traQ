@@ -26,53 +26,38 @@ var (
 
 // Streamer WebSocketストリーマー
 type Streamer struct {
-	hub        *hub.Hub
-	vm         *viewer.Manager
-	webrtc     *webrtcv3.Manager
-	logger     *zap.Logger
-	sessions   map[*session]struct{}
-	register   chan *session
-	unregister chan *session
-	closer     chan struct{}
-	closed     bool
-	mu         sync.RWMutex
+	hub      *hub.Hub
+	vm       *viewer.Manager
+	webrtc   *webrtcv3.Manager
+	logger   *zap.Logger
+	sessions map[*session]struct{}
+	closed   bool
+	mu       sync.RWMutex
 }
 
 // NewStreamer WebSocketストリーマーを生成し起動します
 func NewStreamer(hub *hub.Hub, vm *viewer.Manager, webrtc *webrtcv3.Manager, logger *zap.Logger) *Streamer {
 	h := &Streamer{
-		hub:        hub,
-		vm:         vm,
-		webrtc:     webrtc,
-		logger:     logger.Named("ws"),
-		sessions:   make(map[*session]struct{}),
-		register:   make(chan *session),
-		unregister: make(chan *session),
-		closer:     make(chan struct{}),
-		closed:     false,
+		hub:      hub,
+		vm:       vm,
+		webrtc:   webrtc,
+		logger:   logger.Named("ws"),
+		sessions: make(map[*session]struct{}),
+		closed:   false,
 	}
-
-	go h.run()
 	return h
 }
 
-func (s *Streamer) run() {
-	for {
-		select {
-		case session := <-s.register:
-			s.mu.Lock()
-			s.sessions[session] = struct{}{}
-			s.mu.Unlock()
+func (s *Streamer) register(session *session) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.sessions[session] = struct{}{}
+}
 
-		case session := <-s.unregister:
-			s.mu.Lock()
-			delete(s.sessions, session)
-			s.mu.Unlock()
-
-		case <-s.closer:
-			return
-		}
-	}
+func (s *Streamer) unregister(session *session) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.sessions, session)
 }
 
 // IterateSessions 全セッションをイテレートします
@@ -131,7 +116,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		userID:   r.Context().Value(ctxkey.UserID).(uuid.UUID),
 	}
 
-	s.register <- session
+	s.register(session)
 	s.hub.Publish(hub.Message{
 		Name: event.WSConnected,
 		Fields: hub.Fields{
@@ -152,7 +137,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			"req":     r,
 		},
 	})
-	s.unregister <- session
+	s.unregister(session)
 	session.close()
 }
 
@@ -165,7 +150,6 @@ func (s *Streamer) Close() error {
 		return ErrAlreadyClosed
 	}
 	s.closed = true
-	close(s.closer)
 
 	m := &rawMessage{
 		t:    websocket.CloseMessage,
