@@ -91,19 +91,12 @@ func (s *session) writeLoop() {
 	}
 }
 
-func (s *session) writeMessage(msg *rawMessage) (err error) {
+func (s *session) writeMessage(msg *rawMessage) error {
 	s.RLock()
+	defer s.RUnlock()
 	if s.closed {
-		s.RUnlock()
 		return ErrAlreadyClosed
 	}
-	s.RUnlock()
-	defer func() {
-		// workaround fix https://github.com/traPtitech/traQ/issues/949
-		if perr := recover(); perr != nil {
-			err = ErrAlreadyClosed
-		}
-	}()
 
 	select {
 	case s.send <- msg:
