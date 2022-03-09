@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	writeWait          = 10 * time.Second
+	writeWait          = 5 * time.Second
 	pongWait           = 60 * time.Second
 	pingPeriod         = (pongWait * 9) / 10
 	maxReadMessageSize = 1 << 9 // 512B

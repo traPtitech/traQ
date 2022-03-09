@@ -1,7 +1,6 @@
 package ws
 
 import (
-	"net/http"
 	"sync"
 	"time"
 
@@ -9,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/traPtitech/traQ/service/viewer"
+	"github.com/traPtitech/traQ/utils/random"
 )
 
 // Session WebSocketセッション
@@ -23,24 +23,41 @@ type Session interface {
 }
 
 type session struct {
-	key    string
-	userID uuid.UUID
+	key      string
+	userID   uuid.UUID
+	conn     *websocket.Conn
+	streamer *Streamer
 
 	viewState struct {
 		channelID uuid.UUID
 		state     viewer.State
 	}
 	enabledTimelineStreaming bool
-	sync.RWMutex
 
-	req      *http.Request
-	conn     *websocket.Conn
-	closed   bool
-	streamer *Streamer
-	send     chan *rawMessage
+	*sync.RWMutex
+	send      chan *rawMessage
+	closed    bool
+	closeWait *sync.Cond
 }
 
-func (s *session) readLoop() {
+func newSession(userID uuid.UUID, conn *websocket.Conn, streamer *Streamer) *session {
+	mu := sync.RWMutex{}
+	return &session{
+		key:      random.AlphaNumeric(20),
+		userID:   userID,
+		conn:     conn,
+		streamer: streamer,
+
+		RWMutex:   &mu,
+		send:      make(chan *rawMessage, messageBufferSize),
+		closed:    false,
+		closeWait: sync.NewCond(&mu),
+	}
+}
+
+func (s *session) ReadLoop() {
+	defer s.close()
+
 	s.conn.SetReadLimit(maxReadMessageSize)
 	_ = s.conn.SetReadDeadline(time.Now().Add(pongWait))
 	s.conn.SetPongHandler(func(string) error {
@@ -51,7 +68,7 @@ func (s *session) readLoop() {
 	for {
 		t, m, err := s.conn.ReadMessage()
 		if err != nil {
-			break
+			return
 		}
 
 		if t == websocket.TextMessage {
@@ -60,15 +77,16 @@ func (s *session) readLoop() {
 
 		if t == websocket.BinaryMessage {
 			// unsupported
-			_ = s.writeMessage(&rawMessage{t: websocket.CloseMessage, data: websocket.FormatCloseMessage(websocket.CloseUnsupportedData, "binary message is not supported.")})
-			break
+			_ = s.WriteMessage(&rawMessage{t: websocket.CloseMessage, data: websocket.FormatCloseMessage(websocket.CloseUnsupportedData, "binary message is not supported.")})
+			return
 		}
 	}
 }
 
-func (s *session) writeLoop() {
+func (s *session) WriteLoop() {
 	ticker := time.NewTicker(pingPeriod)
 	defer ticker.Stop()
+	defer s.close()
 
 	for {
 		select {
@@ -91,7 +109,7 @@ func (s *session) writeLoop() {
 	}
 }
 
-func (s *session) writeMessage(msg *rawMessage) error {
+func (s *session) WriteMessage(msg *rawMessage) error {
 	s.RLock()
 	defer s.RUnlock()
 	if s.closed {
@@ -100,10 +118,10 @@ func (s *session) writeMessage(msg *rawMessage) error {
 
 	select {
 	case s.send <- msg:
+		return nil
 	default:
 		return ErrBufferIsFull
 	}
-	return nil
 }
 
 func (s *session) write(messageType int, data []byte) error {
@@ -117,9 +135,18 @@ func (s *session) close() {
 
 	if !s.closed {
 		s.closed = true
-		s.conn.Close()
+		s.closeWait.Broadcast()
+		_ = s.conn.Close()
 		close(s.send)
 	}
+}
+
+func (s *session) WaitForClose() {
+	s.Lock()
+	for !s.closed {
+		s.closeWait.Wait()
+	}
+	s.Unlock()
 }
 
 // Key implements Session interface.

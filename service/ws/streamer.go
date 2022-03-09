@@ -14,7 +14,6 @@ import (
 	"github.com/traPtitech/traQ/router/extension/ctxkey"
 	"github.com/traPtitech/traQ/service/viewer"
 	"github.com/traPtitech/traQ/service/webrtcv3"
-	"github.com/traPtitech/traQ/utils/random"
 )
 
 var (
@@ -78,7 +77,7 @@ func (s *Streamer) WriteMessage(t string, body interface{}, targetFunc TargetFun
 	s.mu.RLock()
 	for session := range s.sessions {
 		if targetFunc(session) {
-			if err := session.writeMessage(m); err != nil {
+			if err := session.WriteMessage(m); err != nil {
 				if err == ErrBufferIsFull {
 					s.logger.Warn("Discard a message because the session's buffer is full.",
 						zap.String("type", t), zap.Any("body", body),
@@ -106,15 +105,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := &session{
-		key:      random.AlphaNumeric(20),
-		req:      r,
-		conn:     conn,
-		closed:   false,
-		streamer: s,
-		send:     make(chan *rawMessage, messageBufferSize),
-		userID:   r.Context().Value(ctxkey.UserID).(uuid.UUID),
-	}
+	session := newSession(r.Context().Value(ctxkey.UserID).(uuid.UUID), conn, s)
 
 	s.register(session)
 	s.hub.Publish(hub.Message{
@@ -125,8 +116,8 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		},
 	})
 
-	go session.writeLoop()
-	session.readLoop()
+	go session.WriteLoop()
+	session.ReadLoop()
 
 	s.vm.RemoveViewer(session)
 	_ = s.webrtc.ResetState(session.Key(), session.UserID())
@@ -138,7 +129,6 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		},
 	})
 	s.unregister(session)
-	session.close()
 }
 
 // Close ストリーマーを停止します
@@ -155,10 +145,20 @@ func (s *Streamer) Close() error {
 		t:    websocket.CloseMessage,
 		data: websocket.FormatCloseMessage(websocket.CloseServiceRestart, "Server is stopping..."),
 	}
-	for session := range s.sessions {
-		_ = session.writeMessage(m)
-		session.close()
+
+	var wg sync.WaitGroup
+	for sess := range s.sessions {
+		wg.Add(1)
+		go func(sess *session) {
+			defer wg.Done()
+			if err := sess.WriteMessage(m); err != nil {
+				return
+			}
+			sess.WaitForClose()
+		}(sess)
 	}
+	wg.Wait()
+
 	s.sessions = make(map[*session]struct{})
 	return nil
 }

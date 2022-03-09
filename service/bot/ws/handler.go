@@ -78,7 +78,7 @@ Command:
 }
 
 func (s *session) sendErrorMessage(error string) {
-	_ = s.writeMessage(&rawMessage{
+	_ = s.WriteMessage(&rawMessage{
 		t:    websocket.TextMessage,
 		data: makeErrorMessage(error).toJSON(),
 	})
