@@ -13,7 +13,6 @@ import (
 	"github.com/traPtitech/traQ/event"
 	"github.com/traPtitech/traQ/router/extension/ctxkey"
 	"github.com/traPtitech/traQ/service/webrtcv3"
-	"github.com/traPtitech/traQ/utils/random"
 )
 
 var (
@@ -80,7 +79,7 @@ func (s *Streamer) WriteMessage(t string, reqID uuid.UUID, body []byte, botUserI
 	}
 	s.mu.RLock()
 	for _, session := range s.sessions[botUserID] {
-		if err := session.writeMessage(m); err != nil {
+		if err := session.WriteMessage(m); err != nil {
 			errs = append(errs, err)
 			if err == ErrBufferIsFull {
 				s.logger.Warn("Discarded a message because the session's buffer was full.",
@@ -111,15 +110,7 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := &session{
-		key:      random.AlphaNumeric(20),
-		req:      r,
-		conn:     conn,
-		closed:   false,
-		streamer: s,
-		send:     make(chan *rawMessage, messageBufferSize),
-		userID:   r.Context().Value(ctxkey.UserID).(uuid.UUID),
-	}
+	session := newSession(r.Context().Value(ctxkey.UserID).(uuid.UUID), s, conn)
 
 	s.register(session)
 	s.hub.Publish(hub.Message{
@@ -130,8 +121,8 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		},
 	})
 
-	go session.writeLoop()
-	session.readLoop()
+	go session.WriteLoop()
+	session.ReadLoop()
 
 	_ = s.webrtc.ResetState(session.key, session.userID)
 	s.hub.Publish(hub.Message{
@@ -142,7 +133,6 @@ func (s *Streamer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		},
 	})
 	s.unregister(session)
-	session.close()
 }
 
 // Close ストリーマーを停止します
@@ -159,12 +149,22 @@ func (s *Streamer) Close() error {
 		t:    websocket.CloseMessage,
 		data: websocket.FormatCloseMessage(websocket.CloseServiceRestart, "Server is stopping..."),
 	}
+
+	var wg sync.WaitGroup
 	for _, sessions := range s.sessions {
-		for _, session := range sessions {
-			_ = session.writeMessage(m)
-			session.close()
+		for _, s := range sessions {
+			wg.Add(1)
+			go func(s *session) {
+				defer wg.Done()
+				if err := s.WriteMessage(m); err != nil {
+					return
+				}
+				s.WaitForClose()
+			}(s)
 		}
 	}
+	wg.Wait()
+
 	s.sessions = make(map[uuid.UUID][]*session)
 	return nil
 }
