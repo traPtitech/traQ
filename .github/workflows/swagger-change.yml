@@ -1,0 +1,38 @@
+name: swagger-change
+
+on:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - 'docs/v3-api.yaml'
+  pull_request:
+    paths:
+      - 'docs/v3-api.yaml'
+
+jobs:
+  spectral:
+    name: Spectral
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Spectral checks
+        uses: stoplightio/spectral-action@v0.8.1
+        with:
+          file_glob: docs/v3-api.yaml
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+  node-traq:
+    name: node-traq
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: 'traPtitech',
+              repo: 'node-traq',
+              workflow_id: 'release.yml',
+              ref: 'master'
+            })

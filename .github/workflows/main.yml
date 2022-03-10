@@ -135,13 +135,3 @@ jobs:
           TRAQ_MARIADB_PASSWORD: password
           TRAQ_MARIADB_DATABASE: traq
           TBLS_DSN: "mariadb://root:password@127.0.0.1:3306/traq"
-  spectral:
-    name: Spectral
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Spectral checks
-        uses: stoplightio/spectral-action@v0.8.1
-        with:
-          file_glob: docs/v3-api.yaml
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
