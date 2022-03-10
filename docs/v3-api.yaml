@@ -4363,7 +4363,6 @@ components:
       required:
         - userId
         - pinnedAt
-        - messageId
         - message
     Channel:
       title: Channel
