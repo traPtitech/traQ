@@ -210,6 +210,9 @@ paths:
                     items:
                       $ref: '#/components/schemas/Message'
                     description: 検索にヒットしたメッセージの配列
+                required:
+                  - totalHits
+                  - hits
         '400':
           description: Bad Request
         '503':
