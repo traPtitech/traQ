@@ -11,7 +11,7 @@ RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/tmp/go/cach
 
 FROM golang:1.18.0-alpine AS dockerize
 
-ENV DOCKERIZE_VERSION v0.6.1
+ARG DOCKERIZE_VERSION=v0.6.1
 RUN go install github.com/jwilder/dockerize@$DOCKERIZE_VERSION
 
 FROM alpine:3.15.0
