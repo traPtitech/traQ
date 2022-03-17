@@ -53,9 +53,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+      - name: Read Go version
+        run: echo "GO_VERSION=$(cat ./.go-version)" >> $GITHUB_ENV
       - uses: actions/setup-go@v2
         with:
-          go-version: 1.17.8
+          go-version: ${{ env.GO_VERSION }}
       - uses: actions/cache@v2
         with:
           path: ~/go/pkg/mod
