@@ -17,7 +17,7 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gofrs/uuid v4.2.0+incompatible
-	github.com/golang-jwt/jwt/v4 v4.3.0
+	github.com/golang-jwt/jwt/v4 v4.4.0
 	github.com/golang/mock v1.6.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
