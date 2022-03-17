@@ -1,4 +1,4 @@
-SOURCES ?= $(shell find . -path "./vendor" -prune -o -type f -name "*.go" -print)
+SOURCES ?= $(shell find . -type f \( -name "*.go" -o -name "go.mod" -o -name "go.sum" \) -print)
 
 TEST_DB_PORT := 3100
 TBLS_VERSION := 1.49.6
