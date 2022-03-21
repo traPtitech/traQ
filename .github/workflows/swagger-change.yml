@@ -48,6 +48,6 @@ jobs:
             await github.rest.actions.createWorkflowDispatch({
               owner: 'traPtitech',
               repo: 'go-traq',
-              workflow_id: 'release.yml',
+              workflow_id: 'release.yaml',
               ref: 'master'
             })
