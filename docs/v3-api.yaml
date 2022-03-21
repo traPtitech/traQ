@@ -2055,7 +2055,9 @@ paths:
             No Content
             削除されました。
         '403':
-          description: Forbidden
+          description: |-
+            Forbidden
+            タグがロックされていました。
         '404':
           description: |-
             Not Found
@@ -4758,7 +4760,7 @@ components:
     StampHistoryEntry:
       title: StampHistoryEntry
       type: object
-      description: スタンプ履歴の１項目
+      description: スタンプ履歴の1項目
       properties:
         stampId:
           type: string
