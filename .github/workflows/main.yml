@@ -136,8 +136,8 @@ jobs:
       - name: Lint
         run: |
           source <(curl -sL https://git.io/use-tbls)
-          chmod +x ./traQ/traQ
-          ./traQ/traQ migrate --reset
+          chmod +x ./traQ
+          ./traQ migrate --reset
           tbls lint
         env:
           TRAQ_MARIADB_HOST: 127.0.0.1
