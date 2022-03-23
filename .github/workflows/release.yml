@@ -53,6 +53,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          # goreleaserがchangelogを生成する用
+          fetch-depth: 0
       - name: Read Go version
         run: echo "GO_VERSION=$(cat ./.go-version)" >> $GITHUB_ENV
       - uses: actions/setup-go@v3
