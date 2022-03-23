@@ -11,13 +11,13 @@ jobs:
     name: Mod
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Read Go version
         run: echo "GO_VERSION=$(cat ./.go-version)" >> $GITHUB_ENV
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
@@ -29,19 +29,19 @@ jobs:
     env:
       GOCACHE: "/tmp/go/cache"
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Read Go version
         run: echo "GO_VERSION=$(cat ./.go-version)" >> $GITHUB_ENV
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: /tmp/go/cache
           key: ${{ runner.os }}-go-build-${{ github.ref }}-${{ github.sha }}
@@ -49,7 +49,7 @@ jobs:
             ${{ runner.os }}-go-build-${{ github.ref }}-
             ${{ runner.os }}-go-build-
       - run: make traQ
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v3
         with:
           name: traQ
           path: traQ
@@ -57,9 +57,14 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - name: Read Go version
+        run: echo "GO_VERSION=$(cat ./.go-version)" >> $GITHUB_ENV
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
         with:
           version: latest
           args: "--timeout 3m0s"
@@ -78,19 +83,19 @@ jobs:
     env:
       GOCACHE: "/tmp/go/cache"
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Read Go version
         run: echo "GO_VERSION=$(cat ./.go-version)" >> $GITHUB_ENV
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-gomod-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-gomod-
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: /tmp/go/cache
           key: ${{ runner.os }}-go-build-${{ github.ref }}-${{ github.sha }}
@@ -107,9 +112,9 @@ jobs:
           MARIADB_USERNAME: root
           MARIADB_PASSWORD: password
       - name: Upload coverage data
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
-          file: ./coverage.txt
+          files: ./coverage.txt
   tbls:
     name: TBLS
     runs-on: ubuntu-latest
@@ -124,15 +129,15 @@ jobs:
         ports:
           - 3306:3306
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v1
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
         with:
           name: traQ
       - name: Lint
         run: |
           source <(curl -sL https://git.io/use-tbls)
-          chmod +x ./traQ/traQ
-          ./traQ/traQ migrate --reset
+          chmod +x ./traQ
+          ./traQ migrate --reset
           tbls lint
         env:
           TRAQ_MARIADB_HOST: 127.0.0.1

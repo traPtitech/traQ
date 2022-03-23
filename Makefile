@@ -1,8 +1,8 @@
 SOURCES ?= $(shell find . -type f \( -name "*.go" -o -name "go.mod" -o -name "go.sum" \) -print)
 
 TEST_DB_PORT := 3100
-TBLS_VERSION := 1.49.6
-SPECTRAL_VERSION := 6.1.0
+TBLS_VERSION := v1.54.2
+SPECTRAL_VERSION := 6.2.1
 
 .DEFAULT_GOAL := help
 
@@ -51,21 +51,19 @@ swagger-lint: ## Lint swagger file
 
 .PHONY: db-gen-docs
 db-gen-docs: ## Generate db docs in docs/dbschema
-	@if [ -d "./docs/dbschema" ]; then \
-		rm -r ./docs/dbschema; \
-	fi
+	rm -rf ./docs/dbschema
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
-	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work k1low/tbls:$(TBLS_VERSION) doc
+	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) doc
 
 .PHONY: db-diff-docs
 db-diff-docs: ## List diff of db docs
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
-	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work k1low/tbls:$(TBLS_VERSION) diff
+	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) diff
 
 .PHONY: db-lint
 db-lint: ## Lint db docs according to .tbls.yml
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
-	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work k1low/tbls:$(TBLS_VERSION) lint
+	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) lint
 
 .PHONY: goreleaser-snapshot
 goreleaser-snapshot: ## Release dry-run
@@ -78,9 +76,7 @@ update-frontend: ## Update frontend files in dev/frontend
 
 .PHONY: reset-frontend
 reset-frontend: ## Completely replace frontend files in dev/frontend
-	@if [ -d "./dev/frontend" ]; then \
-		rm -r ./dev/frontend; \
-	fi
+	rm -rf ./dev/frontend
 	@make update-frontend
 
 .PHONY: up
