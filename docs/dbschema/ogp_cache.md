@@ -25,7 +25,7 @@ CREATE TABLE `ogp_cache` (
 ## Columns
 
 | Name | Type | Default | Nullable | Extra Definition | Children | Parents | Comment |
-| ---- | ---- | ------- | -------- | --------------- | -------- | ------- | ------- |
+| ---- | ---- | ------- | -------- | ---------------- | -------- | ------- | ------- |
 | id | bigint(20) |  | false | auto_increment |  |  |  |
 | url | text |  | false |  |  |  | 対象ページのURL |
 | url_hash | char(40) |  | false |  |  |  | URLのSHA-1ハッシュ |
