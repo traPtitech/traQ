@@ -51,9 +51,7 @@ swagger-lint: ## Lint swagger file
 
 .PHONY: db-gen-docs
 db-gen-docs: ## Generate db docs in docs/dbschema
-	@if [ -d "./docs/dbschema" ]; then \
-		rm -r ./docs/dbschema; \
-	fi
+	rm -rf ./docs/dbschema
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
 	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) doc
 
@@ -78,9 +76,7 @@ update-frontend: ## Update frontend files in dev/frontend
 
 .PHONY: reset-frontend
 reset-frontend: ## Completely replace frontend files in dev/frontend
-	@if [ -d "./dev/frontend" ]; then \
-		rm -r ./dev/frontend; \
-	fi
+	rm -rf ./dev/frontend
 	@make update-frontend
 
 .PHONY: up
