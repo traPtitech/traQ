@@ -2,7 +2,7 @@ SOURCES ?= $(shell find . -type f \( -name "*.go" -o -name "go.mod" -o -name "go
 
 TEST_DB_PORT := 3100
 TBLS_VERSION := 1.49.6
-SPECTRAL_VERSION := 6.1.0
+SPECTRAL_VERSION := 6.2.1
 
 .DEFAULT_GOAL := help
 
