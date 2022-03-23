@@ -1,7 +1,7 @@
 SOURCES ?= $(shell find . -type f \( -name "*.go" -o -name "go.mod" -o -name "go.sum" \) -print)
 
 TEST_DB_PORT := 3100
-TBLS_VERSION := 1.49.6
+TBLS_VERSION := v1.54.2
 SPECTRAL_VERSION := 6.2.1
 
 .DEFAULT_GOAL := help
@@ -55,17 +55,17 @@ db-gen-docs: ## Generate db docs in docs/dbschema
 		rm -r ./docs/dbschema; \
 	fi
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
-	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work k1low/tbls:$(TBLS_VERSION) doc
+	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) doc
 
 .PHONY: db-diff-docs
 db-diff-docs: ## List diff of db docs
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
-	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work k1low/tbls:$(TBLS_VERSION) diff
+	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) diff
 
 .PHONY: db-lint
 db-lint: ## Lint db docs according to .tbls.yml
 	TRAQ_MARIADB_PORT=$(TEST_DB_PORT) go run main.go migrate --reset
-	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work k1low/tbls:$(TBLS_VERSION) lint
+	docker run --rm --net=host -e TBLS_DSN="mariadb://root:password@127.0.0.1:$(TEST_DB_PORT)/traq" -v $$PWD:/work -w /work ghcr.io/k1low/tbls:$(TBLS_VERSION) lint
 
 .PHONY: goreleaser-snapshot
 goreleaser-snapshot: ## Release dry-run
