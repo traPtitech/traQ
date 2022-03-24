@@ -75,51 +75,51 @@ func (s *ServiceImpl) GetMeta(url *url.URL) (ogp *model.Ogp, expiresIn time.Dura
 func (s *ServiceImpl) getMeta(url *url.URL) (ogp *model.Ogp, expiresIn time.Duration, err error) {
 	cacheURL := url.String()
 	cache, err := s.repo.GetOgpCache(cacheURL)
-
-	shouldUpdateCache := err == nil &&
-		time.Now().After(cache.ExpiresAt)
-	shouldCreateCache := err != nil
-
-	if !shouldUpdateCache && !shouldCreateCache && err == nil {
-		if cache.Valid {
-			return &cache.Content, time.Until(cache.ExpiresAt), nil
-		}
-		// キャッシュがヒットしたがネガティブキャッシュだった
-		return nil, time.Until(cache.ExpiresAt), nil
+	if err != nil && err != repository.ErrNotFound {
+		return nil, 0, err
 	}
 
+	now := time.Now()
+	isCacheHit := err == nil && now.Before(cache.ExpiresAt)
+	isCacheExpired := err == nil && !now.Before(cache.ExpiresAt)
+	if isCacheHit {
+		if cache.Valid {
+			// 通常のキャッシュヒット
+			return &cache.Content, time.Until(cache.ExpiresAt), nil
+		} else {
+			// ネガティブキャッシュヒット
+			return nil, time.Until(cache.ExpiresAt), nil
+		}
+	}
+	if isCacheExpired {
+		if err := s.repo.DeleteOgpCache(cacheURL); err != nil && err != repository.ErrNotFound {
+			return nil, 0, err
+		}
+	}
+
+	// キャッシュが存在しなかったので、リクエストを飛ばす
 	og, meta, err := parser.ParseMetaForURL(url)
-	if err == parser.ErrClient || err == parser.ErrParse || err == parser.ErrNetwork || err == parser.ErrContentTypeNotSupported {
-		// 4xxエラー、パースエラー、名前解決などのネットワークエラーの場合はネガティブキャッシュを作成
-		if shouldUpdateCache {
-			updateErr := s.repo.UpdateOgpCache(cacheURL, nil)
-			if updateErr != nil {
-				return nil, time.Duration(0), updateErr
-			}
-		} else if shouldCreateCache {
+
+	if err != nil {
+		switch err {
+		case parser.ErrClient, parser.ErrParse, parser.ErrNetwork, parser.ErrContentTypeNotSupported:
+			// 4xxエラー、パースエラー、名前解決などのネットワークエラーの場合はネガティブキャッシュを作成
 			_, createErr := s.repo.CreateOgpCache(cacheURL, nil)
 			if createErr != nil {
-				return nil, time.Duration(0), createErr
+				return nil, 0, createErr
 			}
+			return nil, CacheDuration, nil
+		default:
+			// このパスは5xxエラーなのでクライアント側キャッシュつけない
+			return nil, 0, nil
 		}
-		return nil, CacheDuration, nil
-	} else if err != nil {
-		// このパスは5xxエラーなのでクライアント側キャッシュつけない
-		return nil, time.Duration(0), nil
 	}
 
+	// リクエストが成功した場合はキャッシュを作成
 	content := parser.MergeDefaultPageMetaAndOpenGraph(og, meta)
-
-	if shouldUpdateCache {
-		err = s.repo.UpdateOgpCache(cacheURL, content)
-		if err != nil {
-			return nil, time.Duration(0), err
-		}
-	} else if shouldCreateCache {
-		_, err = s.repo.CreateOgpCache(cacheURL, content)
-		if err != nil {
-			return nil, time.Duration(0), err
-		}
+	_, err = s.repo.CreateOgpCache(cacheURL, content)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	return content, CacheDuration, nil

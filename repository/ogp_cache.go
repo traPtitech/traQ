@@ -5,16 +5,11 @@ import "github.com/traPtitech/traQ/model"
 type OgpCacheRepository interface {
 	// CreateOgpCache OGPキャッシュを作成します
 	//
+	// contentがnilの場合、Validをfalseとしたネガティブキャッシュを作成します。
+	//
 	// 成功した場合、作成されたOGPキャッシュとnilを返します。
 	// DBによるエラーを返すことがあります。
 	CreateOgpCache(url string, content *model.Ogp) (c *model.OgpCache, err error)
-
-	// UpdateOgpCache OGPキャッシュを更新します
-	//
-	// 成功した場合、nilを返します。
-	// 存在しなかった場合、ErrNotFoundを返します。
-	// DBによるエラーを返すことがあります。
-	UpdateOgpCache(url string, content *model.Ogp) error
 
 	// GetOgpCache 指定したURLのOGPキャッシュを取得します
 	//
@@ -26,6 +21,7 @@ type OgpCacheRepository interface {
 	// DeleteOgpCache 指定したURLのOGPキャッシュを削除します
 	//
 	// 成功した場合、nilを返します。
+	// 存在しなかった場合、ErrNotFoundを返します。
 	// DBによるエラーを返すことがあります。
 	DeleteOgpCache(url string) error
 
