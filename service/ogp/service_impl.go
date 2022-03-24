@@ -101,10 +101,9 @@ func (s *ServiceImpl) getMeta(url *url.URL) (ogp *model.Ogp, expiresIn time.Dura
 		if cache.Valid {
 			// 通常のキャッシュヒット
 			return &cache.Content, time.Until(cache.ExpiresAt), nil
-		} else {
-			// ネガティブキャッシュヒット
-			return nil, time.Until(cache.ExpiresAt), nil
 		}
+		// ネガティブキャッシュヒット
+		return nil, time.Until(cache.ExpiresAt), nil
 	}
 	if isCacheExpired {
 		if err := s.repo.DeleteOgpCache(cacheURL); err != nil && err != repository.ErrNotFound {
