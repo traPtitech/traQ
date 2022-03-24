@@ -200,11 +200,7 @@ func (s *Server) Start(address string) error {
 			_ = s.Repo.UpdateUser(userID, repository.UpdateUserArgs{LastOnline: optional.TimeFrom(datetime)})
 		}
 	}()
-	s.SS.BOT.Start()
 	s.SS.StampThrottler.Start()
-	if err := s.SS.OGP.Start(); err != nil {
-		return err
-	}
 	return s.Router.Start(address)
 }
 

@@ -3,7 +3,6 @@ package gorm
 import (
 	"crypto/sha1"
 	"fmt"
-	"reflect"
 	"time"
 
 	"gorm.io/gorm"
@@ -20,7 +19,7 @@ func getURLHash(url string) (string, error) {
 }
 
 // CreateOgpCache implements OgpRepository interface.
-func (repo *Repository) CreateOgpCache(url string, content *model.Ogp) (c *model.OgpCache, err error) {
+func (repo *Repository) CreateOgpCache(url string, content *model.Ogp) (*model.OgpCache, error) {
 	urlHash, err := getURLHash(url)
 	if err != nil {
 		return nil, err
@@ -47,36 +46,6 @@ func (repo *Repository) CreateOgpCache(url string, content *model.Ogp) (c *model
 	return ogpCache, nil
 }
 
-// UpdateOgpCache implements OgpRepository interface.
-func (repo *Repository) UpdateOgpCache(url string, content *model.Ogp) error {
-	urlHash, err := getURLHash(url)
-	if err != nil {
-		return err
-	}
-
-	changes := map[string]interface{}{}
-	return repo.db.Transaction(func(tx *gorm.DB) error {
-		var c model.OgpCache
-		if err := tx.First(&c, &model.OgpCache{URL: url, URLHash: urlHash}).Error; err != nil {
-			return convertError(err)
-		}
-
-		if content == nil {
-			changes["valid"] = false
-			changes["content"] = model.Ogp{}
-			changes["expires_at"] = time.Now().Add(ogp.CacheDuration)
-			return tx.Model(&c).Updates(changes).Error
-		}
-		if !reflect.DeepEqual(c.Content, content) {
-			changes["valid"] = true
-			changes["content"] = content
-			changes["expires_at"] = time.Now().Add(ogp.CacheDuration)
-			return tx.Model(&c).Updates(changes).Error
-		}
-		return nil
-	})
-}
-
 // GetOgpCache implements OgpRepository interface.
 func (repo *Repository) GetOgpCache(url string) (c *model.OgpCache, err error) {
 	urlHash, err := getURLHash(url)
@@ -99,7 +68,7 @@ func (repo *Repository) DeleteOgpCache(url string) error {
 	}
 	result := repo.db.Delete(c)
 	if result.Error != nil {
-		return result.Error
+		return convertError(result.Error)
 	}
 	if result.RowsAffected == 0 {
 		return repository.ErrNotFound

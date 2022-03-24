@@ -3,7 +3,6 @@ package ogp
 import (
 	"errors"
 	"net/url"
-	"sync"
 	"time"
 
 	"github.com/lthibault/jitterbug/v2"
@@ -20,28 +19,43 @@ type ServiceImpl struct {
 	logger *zap.Logger
 
 	cachePurger *jitterbug.Ticker
-	wg          sync.WaitGroup
+	serviceDone chan struct{}
+	purgerDone  chan struct{}
 	sfGroup     singleflight.Group
 }
 
 func NewServiceImpl(repo repository.Repository, logger *zap.Logger) (Service, error) {
-	return &ServiceImpl{
+	s := &ServiceImpl{
 		repo:   repo,
 		logger: logger,
-	}, nil
+
+		cachePurger: jitterbug.New(time.Hour*24, &jitterbug.Uniform{
+			Min: time.Hour * 23,
+		}),
+		serviceDone: make(chan struct{}),
+		purgerDone:  make(chan struct{}),
+	}
+	if err := s.start(); err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
-func (s *ServiceImpl) Start() error {
-	s.cachePurger = jitterbug.New(time.Hour*24, &jitterbug.Uniform{
-		Min: time.Hour * 23,
-	})
+func (s *ServiceImpl) start() error {
 	go func() {
-		for range s.cachePurger.C {
-			s.wg.Add(1)
-			if err := s.repo.DeleteStaleOgpCache(); err != nil {
-				s.logger.Error("an error occurred while deleting stale ogp caches", zap.Error(err))
+		defer close(s.purgerDone)
+		for {
+			select {
+			case _, ok := <-s.cachePurger.C:
+				if !ok {
+					return
+				}
+				if err := s.repo.DeleteStaleOgpCache(); err != nil {
+					s.logger.Error("an error occurred while deleting stale ogp caches", zap.Error(err))
+				}
+			case <-s.serviceDone:
+				return
 			}
-			s.wg.Done()
 		}
 	}()
 
@@ -51,7 +65,8 @@ func (s *ServiceImpl) Start() error {
 
 func (s *ServiceImpl) Shutdown() error {
 	s.cachePurger.Stop()
-	s.wg.Wait()
+	close(s.serviceDone)
+	<-s.purgerDone
 	return nil
 }
 
@@ -75,51 +90,50 @@ func (s *ServiceImpl) GetMeta(url *url.URL) (ogp *model.Ogp, expiresIn time.Dura
 func (s *ServiceImpl) getMeta(url *url.URL) (ogp *model.Ogp, expiresIn time.Duration, err error) {
 	cacheURL := url.String()
 	cache, err := s.repo.GetOgpCache(cacheURL)
+	if err != nil && err != repository.ErrNotFound {
+		return nil, 0, err
+	}
 
-	shouldUpdateCache := err == nil &&
-		time.Now().After(cache.ExpiresAt)
-	shouldCreateCache := err != nil
-
-	if !shouldUpdateCache && !shouldCreateCache && err == nil {
+	now := time.Now()
+	isCacheHit := err == nil && now.Before(cache.ExpiresAt)
+	isCacheExpired := err == nil && !now.Before(cache.ExpiresAt)
+	if isCacheHit {
 		if cache.Valid {
+			// 通常のキャッシュヒット
 			return &cache.Content, time.Until(cache.ExpiresAt), nil
 		}
-		// キャッシュがヒットしたがネガティブキャッシュだった
+		// ネガティブキャッシュヒット
 		return nil, time.Until(cache.ExpiresAt), nil
 	}
-
-	og, meta, err := parser.ParseMetaForURL(url)
-	if err == parser.ErrClient || err == parser.ErrParse || err == parser.ErrNetwork || err == parser.ErrContentTypeNotSupported {
-		// 4xxエラー、パースエラー、名前解決などのネットワークエラーの場合はネガティブキャッシュを作成
-		if shouldUpdateCache {
-			updateErr := s.repo.UpdateOgpCache(cacheURL, nil)
-			if updateErr != nil {
-				return nil, time.Duration(0), updateErr
-			}
-		} else if shouldCreateCache {
-			_, createErr := s.repo.CreateOgpCache(cacheURL, nil)
-			if createErr != nil {
-				return nil, time.Duration(0), createErr
-			}
+	if isCacheExpired {
+		if err := s.repo.DeleteOgpCache(cacheURL); err != nil && err != repository.ErrNotFound {
+			return nil, 0, err
 		}
-		return nil, CacheDuration, nil
-	} else if err != nil {
-		// このパスは5xxエラーなのでクライアント側キャッシュつけない
-		return nil, time.Duration(0), nil
 	}
 
-	content := parser.MergeDefaultPageMetaAndOpenGraph(og, meta)
+	// キャッシュが存在しなかったので、リクエストを飛ばす
+	og, meta, err := parser.ParseMetaForURL(url)
 
-	if shouldUpdateCache {
-		err = s.repo.UpdateOgpCache(cacheURL, content)
-		if err != nil {
-			return nil, time.Duration(0), err
+	if err != nil {
+		switch err {
+		case parser.ErrClient, parser.ErrParse, parser.ErrNetwork, parser.ErrContentTypeNotSupported:
+			// 4xxエラー、パースエラー、名前解決などのネットワークエラーの場合はネガティブキャッシュを作成
+			_, createErr := s.repo.CreateOgpCache(cacheURL, nil)
+			if createErr != nil {
+				return nil, 0, createErr
+			}
+			return nil, CacheDuration, nil
+		default:
+			// このパスは5xxエラーなのでクライアント側キャッシュつけない
+			return nil, 0, nil
 		}
-	} else if shouldCreateCache {
-		_, err = s.repo.CreateOgpCache(cacheURL, content)
-		if err != nil {
-			return nil, time.Duration(0), err
-		}
+	}
+
+	// リクエストが成功した場合はキャッシュを作成
+	content := parser.MergeDefaultPageMetaAndOpenGraph(og, meta)
+	_, err = s.repo.CreateOgpCache(cacheURL, content)
+	if err != nil {
+		return nil, 0, err
 	}
 
 	return content, CacheDuration, nil
