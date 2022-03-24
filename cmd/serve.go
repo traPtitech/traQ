@@ -200,7 +200,6 @@ func (s *Server) Start(address string) error {
 			_ = s.Repo.UpdateUser(userID, repository.UpdateUserArgs{LastOnline: optional.TimeFrom(datetime)})
 		}
 	}()
-	s.SS.BOT.Start()
 	s.SS.StampThrottler.Start()
 	return s.Router.Start(address)
 }

@@ -28,10 +28,11 @@ type serviceImpl struct {
 	dispatcher event.Dispatcher
 	hub        *hub.Hub
 
-	sub       hub.Subscription
-	wg        sync.WaitGroup
-	logPurger *jitterbug.Ticker
-	started   bool
+	sub         hub.Subscription
+	logPurger   *jitterbug.Ticker
+	serviceDone chan struct{}
+	hubDone     chan struct{}
+	purgerDone  chan struct{}
 }
 
 // NewService ボットサービスを生成します
@@ -42,16 +43,16 @@ func NewService(repo repository.Repository, cm channel.Manager, hub *hub.Hub, s 
 		logger:     logger.Named("bot"),
 		hub:        hub,
 		dispatcher: event.NewDispatcher(logger, repo, s),
+
+		serviceDone: make(chan struct{}),
+		hubDone:     make(chan struct{}),
+		purgerDone:  make(chan struct{}),
 	}
+	p.start()
 	return p
 }
 
-func (p *serviceImpl) Start() {
-	if p.started {
-		return
-	}
-	p.started = true
-
+func (p *serviceImpl) start() {
 	// イベントの発送を開始
 	events := make([]string, 0, len(eventHandlerSet))
 	for k := range eventHandlerSet {
@@ -60,10 +61,12 @@ func (p *serviceImpl) Start() {
 	p.sub = p.hub.Subscribe(100, events...)
 
 	go func() {
+		defer close(p.hubDone)
+		var wg sync.WaitGroup
 		for ev := range p.sub.Receiver {
-			p.wg.Add(1)
+			wg.Add(1)
 			go func(ev hub.Message) {
-				defer p.wg.Done()
+				defer wg.Done()
 				h, ok := eventHandlerSet[ev.Name]
 				if ok {
 					err := h(p, time.Now(), ev.Name, ev.Fields)
@@ -73,6 +76,7 @@ func (p *serviceImpl) Start() {
 				}
 			}(ev)
 		}
+		wg.Wait()
 	}()
 
 	// BOTイベントログの定期的消去
@@ -80,12 +84,19 @@ func (p *serviceImpl) Start() {
 		Min: time.Hour * 23,
 	})
 	go func() {
-		for range p.logPurger.C {
-			p.wg.Add(1)
-			if err := p.repo.PurgeBotEventLogs(time.Now().Add(-botEventLogPurgeBefore)); err != nil {
-				p.logger.Error("an error occurred while puring old bot event logs", zap.Error(err))
+		defer close(p.purgerDone)
+		for {
+			select {
+			case _, ok := <-p.logPurger.C:
+				if !ok {
+					return
+				}
+				if err := p.repo.PurgeBotEventLogs(time.Now().Add(-botEventLogPurgeBefore)); err != nil {
+					p.logger.Error("an error occurred while puring old bot event logs", zap.Error(err))
+				}
+			case <-p.serviceDone:
+				return
 			}
-			p.wg.Done()
 		}
 	}()
 
@@ -93,12 +104,11 @@ func (p *serviceImpl) Start() {
 }
 
 func (p *serviceImpl) Shutdown(ctx context.Context) error {
-	if !p.started {
-		return nil
-	}
 	p.hub.Unsubscribe(p.sub)
 	p.logPurger.Stop()
-	p.wg.Wait()
+	close(p.serviceDone)
+	<-p.hubDone
+	<-p.purgerDone
 	return nil
 }
 
