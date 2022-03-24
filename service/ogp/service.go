@@ -9,8 +9,6 @@ import (
 
 // Service OGPサービス
 type Service interface {
-	// Start OGPサービスを開始します
-	Start() error
 	// Shutdown OGPサービスを停止します
 	Shutdown() error
 

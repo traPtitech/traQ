@@ -3,7 +3,6 @@ package ogp
 import (
 	"errors"
 	"net/url"
-	"sync"
 	"time"
 
 	"github.com/lthibault/jitterbug/v2"
@@ -20,28 +19,43 @@ type ServiceImpl struct {
 	logger *zap.Logger
 
 	cachePurger *jitterbug.Ticker
-	wg          sync.WaitGroup
+	serviceDone chan struct{}
+	purgerDone  chan struct{}
 	sfGroup     singleflight.Group
 }
 
 func NewServiceImpl(repo repository.Repository, logger *zap.Logger) (Service, error) {
-	return &ServiceImpl{
+	s := &ServiceImpl{
 		repo:   repo,
 		logger: logger,
-	}, nil
+
+		cachePurger: jitterbug.New(time.Hour*24, &jitterbug.Uniform{
+			Min: time.Hour * 23,
+		}),
+		serviceDone: make(chan struct{}),
+		purgerDone:  make(chan struct{}),
+	}
+	if err := s.start(); err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
-func (s *ServiceImpl) Start() error {
-	s.cachePurger = jitterbug.New(time.Hour*24, &jitterbug.Uniform{
-		Min: time.Hour * 23,
-	})
+func (s *ServiceImpl) start() error {
 	go func() {
-		for range s.cachePurger.C {
-			s.wg.Add(1)
-			if err := s.repo.DeleteStaleOgpCache(); err != nil {
-				s.logger.Error("an error occurred while deleting stale ogp caches", zap.Error(err))
+		defer close(s.purgerDone)
+		for {
+			select {
+			case _, ok := <-s.cachePurger.C:
+				if !ok {
+					return
+				}
+				if err := s.repo.DeleteStaleOgpCache(); err != nil {
+					s.logger.Error("an error occurred while deleting stale ogp caches", zap.Error(err))
+				}
+			case <-s.serviceDone:
+				return
 			}
-			s.wg.Done()
 		}
 	}()
 
@@ -51,7 +65,8 @@ func (s *ServiceImpl) Start() error {
 
 func (s *ServiceImpl) Shutdown() error {
 	s.cachePurger.Stop()
-	s.wg.Wait()
+	close(s.serviceDone)
+	<-s.purgerDone
 	return nil
 }
 
