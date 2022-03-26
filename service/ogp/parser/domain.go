@@ -7,8 +7,12 @@ import (
 )
 
 func FetchSpecialDomainInfo(url *url.URL) (og *opengraph.OpenGraph, meta *DefaultPageMeta, isSpecialDomain bool, err error) {
-	if url.Host == "twitter.com" {
+	switch url.Host {
+	case "twitter.com":
 		og, meta, err = FetchTwitterInfo(url)
+		return og, meta, true, err
+	case "vrchat.com":
+		og, meta, err = FetchVRChatInfo(url)
 		return og, meta, true, err
 	}
 	return nil, nil, false, nil
