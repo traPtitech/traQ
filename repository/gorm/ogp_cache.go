@@ -9,7 +9,6 @@ import (
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
-	"github.com/traPtitech/traQ/service/ogp"
 )
 
 func getURLHash(url string) (string, error) {
@@ -19,7 +18,7 @@ func getURLHash(url string) (string, error) {
 }
 
 // CreateOgpCache implements OgpRepository interface.
-func (repo *Repository) CreateOgpCache(url string, content *model.Ogp) (*model.OgpCache, error) {
+func (repo *Repository) CreateOgpCache(url string, content *model.Ogp, cacheFor time.Duration) (*model.OgpCache, error) {
 	urlHash, err := getURLHash(url)
 	if err != nil {
 		return nil, err
@@ -30,7 +29,7 @@ func (repo *Repository) CreateOgpCache(url string, content *model.Ogp) (*model.O
 		URLHash:   urlHash,
 		Content:   model.Ogp{},
 		Valid:     content != nil,
-		ExpiresAt: time.Now().Add(ogp.CacheDuration),
+		ExpiresAt: time.Now().Add(cacheFor),
 	}
 
 	if content != nil {

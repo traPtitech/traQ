@@ -1,6 +1,10 @@
 package repository
 
-import "github.com/traPtitech/traQ/model"
+import (
+	"time"
+
+	"github.com/traPtitech/traQ/model"
+)
 
 type OgpCacheRepository interface {
 	// CreateOgpCache OGPキャッシュを作成します
@@ -9,7 +13,7 @@ type OgpCacheRepository interface {
 	//
 	// 成功した場合、作成されたOGPキャッシュとnilを返します。
 	// DBによるエラーを返すことがあります。
-	CreateOgpCache(url string, content *model.Ogp) (c *model.OgpCache, err error)
+	CreateOgpCache(url string, content *model.Ogp, cacheFor time.Duration) (c *model.OgpCache, err error)
 
 	// GetOgpCache 指定したURLのOGPキャッシュを取得します
 	//

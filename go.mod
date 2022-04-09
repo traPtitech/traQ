@@ -30,7 +30,7 @@ require (
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/motoki317/go-waveform v0.0.3
-	github.com/motoki317/sc v1.2.1
+	github.com/motoki317/sc v1.2.3
 	github.com/ncw/swift v1.0.53
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e

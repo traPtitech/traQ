@@ -1,18 +1,28 @@
 package ogp
 
 import (
-	"errors"
+	"context"
 	"net/url"
 	"time"
 
 	"github.com/lthibault/jitterbug/v2"
+	"github.com/motoki317/sc"
 	"go.uber.org/zap"
-	"golang.org/x/sync/singleflight"
 
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/service/ogp/parser"
 )
+
+const (
+	inMemCacheSize = 1000
+	inMemCacheTime = 1 * time.Minute
+)
+
+type fetchResult struct {
+	ogp       *model.Ogp
+	expiresAt time.Time
+}
 
 type ServiceImpl struct {
 	repo   repository.Repository
@@ -21,7 +31,7 @@ type ServiceImpl struct {
 	cachePurger *jitterbug.Ticker
 	serviceDone chan struct{}
 	purgerDone  chan struct{}
-	sfGroup     singleflight.Group
+	inMemCache  *sc.Cache[string, fetchResult]
 }
 
 func NewServiceImpl(repo repository.Repository, logger *zap.Logger) (Service, error) {
@@ -35,6 +45,11 @@ func NewServiceImpl(repo repository.Repository, logger *zap.Logger) (Service, er
 		serviceDone: make(chan struct{}),
 		purgerDone:  make(chan struct{}),
 	}
+	cache, err := sc.New(s.getMetaOrCreate, inMemCacheTime, inMemCacheTime, sc.WithLRUBackend(inMemCacheSize))
+	if err != nil {
+		return nil, err
+	}
+	s.inMemCache = cache
 	if err := s.start(); err != nil {
 		return nil, err
 	}
@@ -70,71 +85,67 @@ func (s *ServiceImpl) Shutdown() error {
 	return nil
 }
 
-func (s *ServiceImpl) GetMeta(url *url.URL) (ogp *model.Ogp, expiresIn time.Duration, err error) {
-	type cacheResult struct {
-		ogp       *model.Ogp
-		expiresIn time.Duration
+func (s *ServiceImpl) GetMeta(url *url.URL) (ogp *model.Ogp, expiresAt time.Time, err error) {
+	res, err := s.inMemCache.Get(context.Background(), url.String())
+	if err != nil {
+		return nil, time.Time{}, err
 	}
-
-	crInt, err, _ := s.sfGroup.Do(url.String(), func() (interface{}, error) {
-		ogp, expiresIn, err := s.getMeta(url)
-		return cacheResult{ogp: ogp, expiresIn: expiresIn}, err
-	})
-	cr, ok := crInt.(cacheResult)
-	if !ok {
-		return nil, time.Duration(0), errors.New("assertion to cacheResult failed")
-	}
-	return cr.ogp, cr.expiresIn, err
+	return res.ogp, res.expiresAt, nil
 }
 
-func (s *ServiceImpl) getMeta(url *url.URL) (ogp *model.Ogp, expiresIn time.Duration, err error) {
-	cacheURL := url.String()
-	cache, err := s.repo.GetOgpCache(cacheURL)
+// getMetaOrCreate OGP情報をDBのキャッシュから取得し、存在しなかった場合はリクエストを飛ばし新たに作成します。
+func (s *ServiceImpl) getMetaOrCreate(_ context.Context, urlStr string) (res fetchResult, err error) {
+	cache, err := s.repo.GetOgpCache(urlStr)
 	if err != nil && err != repository.ErrNotFound {
-		return nil, 0, err
+		return fetchResult{}, err
 	}
 
-	now := time.Now()
+	// インメモリキャッシュ分厳しく判定する
+	now := time.Now().Add(inMemCacheTime)
 	isCacheHit := err == nil && now.Before(cache.ExpiresAt)
 	isCacheExpired := err == nil && !now.Before(cache.ExpiresAt)
 	if isCacheHit {
 		if cache.Valid {
 			// 通常のキャッシュヒット
-			return &cache.Content, time.Until(cache.ExpiresAt), nil
+			return fetchResult{&cache.Content, cache.ExpiresAt}, nil
 		}
 		// ネガティブキャッシュヒット
-		return nil, time.Until(cache.ExpiresAt), nil
+		return fetchResult{nil, cache.ExpiresAt}, nil
 	}
 	if isCacheExpired {
-		if err := s.repo.DeleteOgpCache(cacheURL); err != nil && err != repository.ErrNotFound {
-			return nil, 0, err
+		if err := s.repo.DeleteOgpCache(urlStr); err != nil && err != repository.ErrNotFound {
+			return fetchResult{}, err
 		}
 	}
 
-	// キャッシュが存在しなかったので、リクエストを飛ばす
-	og, meta, err := parser.ParseMetaForURL(url)
+	// キャッシュが存在しなかったか期限切れだったので、リクエストを飛ばす
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return fetchResult{}, err
+	}
+	og, meta, err := parser.ParseMetaForURL(u)
 
 	if err != nil {
 		switch err {
 		case parser.ErrClient, parser.ErrParse, parser.ErrNetwork, parser.ErrContentTypeNotSupported:
 			// 4xxエラー、パースエラー、名前解決などのネットワークエラーの場合はネガティブキャッシュを作成
-			_, createErr := s.repo.CreateOgpCache(cacheURL, nil)
+			cache, createErr := s.repo.CreateOgpCache(urlStr, nil, DefaultCacheDuration)
 			if createErr != nil {
-				return nil, 0, createErr
+				return fetchResult{}, createErr
 			}
-			return nil, CacheDuration, nil
+			return fetchResult{nil, cache.ExpiresAt}, nil
 		default:
-			// このパスは5xxエラーなのでクライアント側キャッシュつけない
-			return nil, 0, nil
+			// このパスは5xxエラーなので短い期間のインメモリキャッシュに留める
+			return fetchResult{nil, time.Now().Add(inMemCacheTime)}, nil
 		}
 	}
 
 	// リクエストが成功した場合はキャッシュを作成
 	content := parser.MergeDefaultPageMetaAndOpenGraph(og, meta)
-	_, err = s.repo.CreateOgpCache(cacheURL, content)
+	cache, err = s.repo.CreateOgpCache(urlStr, content, DefaultCacheDuration)
 	if err != nil {
-		return nil, 0, err
+		return fetchResult{}, err
 	}
 
-	return content, CacheDuration, nil
+	return fetchResult{content, cache.ExpiresAt}, nil
 }
