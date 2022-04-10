@@ -19,6 +19,7 @@ require (
 	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/golang-jwt/jwt/v4 v4.4.0
 	github.com/golang/mock v1.6.0
+	github.com/google/go-querystring v1.1.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/hajimehoshi/go-mp3 v0.3.2
@@ -75,7 +76,6 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
-	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/google/pprof v0.0.0-20220113144219-d25a53d42d00 // indirect
 	github.com/google/subcommands v1.0.1 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect

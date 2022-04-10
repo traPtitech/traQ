@@ -29,7 +29,6 @@ const (
 	errInvalidClient           = "invalid_client"
 	errInvalidGrant            = "invalid_grant"
 	errUnsupportedGrantType    = "unsupported_grant_type"
-	errLoginRequired           = "login_required"
 	errConsentRequired         = "consent_required"
 
 	oauth2ContextSession = "oauth2_context"
