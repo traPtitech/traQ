@@ -334,6 +334,36 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 		}
 	})
 
+	t.Run("Found (GET, code with no session)", func(t *testing.T) {
+		t.Parallel()
+		assert := assert.New(t)
+		e := env.R(t)
+		res := e.GET("/oauth2/authorize").
+			WithQuery("client_id", client.ID).
+			WithQuery("response_type", "code").
+			WithQuery("state", "state").
+			WithQuery("scope", "read write").
+			WithQuery("nonce", "nonce").
+			Expect()
+
+		res.Status(http.StatusFound)
+		res.Header("Cache-Control").Equal("no-store")
+		res.Header("Pragma").Equal("no-cache")
+		loc, err := res.Raw().Location()
+		if assert.NoError(err) {
+			assert.Equal("/login", loc.Path)
+			redirectURL, err := url.Parse(loc.Query().Get("redirect"))
+			if assert.NoError(err) {
+				assert.Equal("/oauth2/authorize", redirectURL.Path)
+				assert.Equal(client.ID, redirectURL.Query().Get("client_id"))
+				assert.Equal("code", redirectURL.Query().Get("response_type"))
+				assert.Equal("state", redirectURL.Query().Get("state"))
+				assert.Equal("read write", redirectURL.Query().Get("scope"))
+				assert.Equal("nonce", redirectURL.Query().Get("nonce"))
+			}
+		}
+	})
+
 	t.Run("Found (code with no session)", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
