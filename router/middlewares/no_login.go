@@ -16,7 +16,7 @@ func NoLogin(sessStore session.Store, repo repository.Repository) echo.Middlewar
 				return herror.BadRequest("Authorization Header must not be set. Please logout once.")
 			}
 
-			sess, err := sessStore.GetSession(c, false)
+			sess, err := sessStore.GetSession(c)
 			if err != nil {
 				return herror.InternalServerError(err)
 			}

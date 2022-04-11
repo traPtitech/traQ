@@ -55,7 +55,7 @@ func defaultLoginHandler(sessStore session.Store, oac *oauth2.Config) echo.Handl
 			return herror.BadRequest("Authorization Header must not be set.")
 		}
 
-		sess, err := sessStore.GetSession(c, false)
+		sess, err := sessStore.GetSession(c)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}
@@ -122,7 +122,7 @@ func defaultCallbackHandler(p Provider, oac *oauth2.Config, repo repository.Repo
 			return c.String(http.StatusForbidden, "You are not permitted to access traQ")
 		}
 
-		sess, err := sessStore.GetSession(c, false)
+		sess, err := sessStore.GetSession(c)
 		if err != nil {
 			return herror.InternalServerError(err)
 		}

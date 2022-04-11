@@ -89,7 +89,7 @@ func NewMemorySessionStore() Store {
 	}
 }
 
-func (ms *memoryStore) GetSession(c echo.Context, createIfNotExist bool) (Session, error) {
+func (ms *memoryStore) GetSession(c echo.Context) (Session, error) {
 	var token string
 	cookie, err := c.Cookie(CookieName)
 	if err == nil {
@@ -113,12 +113,7 @@ func (ms *memoryStore) GetSession(c echo.Context, createIfNotExist bool) (Sessio
 		}
 	}
 
-	if !createIfNotExist {
-		return nil, ms.RevokeSession(c)
-	}
-
-	// セッション発行
-	return ms.RenewSession(c, uuid.Nil)
+	return nil, ms.RevokeSession(c)
 }
 
 func (ms *memoryStore) GetSessionByToken(token string) (Session, error) {

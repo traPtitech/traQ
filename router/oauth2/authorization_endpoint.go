@@ -100,7 +100,7 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	}
 
 	// セッション確認
-	se, err := h.SessStore.GetSession(c, false)
+	se, err := h.SessStore.GetSession(c)
 	if err != nil {
 		h.L(c).Error(err.Error(), zap.Error(err))
 		q.Set("error", errServerError)
@@ -287,7 +287,7 @@ func (h *Handler) AuthorizationDecideHandler(c echo.Context) error {
 	}
 
 	// セッション確認
-	se, err := h.SessStore.GetSession(c, false)
+	se, err := h.SessStore.GetSession(c)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
