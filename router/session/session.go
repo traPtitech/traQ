@@ -34,7 +34,7 @@ type Session interface {
 }
 
 type Store interface {
-	GetSession(c echo.Context, createIfNotExist bool) (Session, error)
+	GetSession(c echo.Context) (Session, error)
 	GetSessionByToken(token string) (Session, error)
 	GetSessionsByUserID(userID uuid.UUID) ([]Session, error)
 	RevokeSession(c echo.Context) error

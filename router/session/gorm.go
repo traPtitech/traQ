@@ -153,7 +153,7 @@ func NewGormStore(db *gorm.DB) Store {
 	}
 }
 
-func (ss *sessionStore) GetSession(c echo.Context, createIfNotExist bool) (Session, error) {
+func (ss *sessionStore) GetSession(c echo.Context) (Session, error) {
 	var token string
 	cookie, err := c.Cookie(CookieName)
 	if err == nil {
@@ -177,12 +177,7 @@ func (ss *sessionStore) GetSession(c echo.Context, createIfNotExist bool) (Sessi
 		}
 	}
 
-	if !createIfNotExist {
-		return nil, ss.RevokeSession(c)
-	}
-
-	// セッション発行
-	return ss.RenewSession(c, uuid.Nil)
+	return nil, ss.RevokeSession(c)
 }
 
 func (ss *sessionStore) GetSessionByToken(token string) (Session, error) {
@@ -198,10 +193,6 @@ func (ss *sessionStore) GetSessionByToken(token string) (Session, error) {
 	var r model.SessionRecord
 	err := ss.db.First(&r, &model.SessionRecord{Token: token}).Error
 	if err == nil {
-		if r.UserID != uuid.Nil {
-			ss.cache.Add(r.Token, &cachedSession{t: r.Token, refID: r.ReferenceID, userID: r.UserID, createdAt: r.Created})
-		}
-
 		data, err := r.GetData()
 		if err != nil {
 			return nil, err

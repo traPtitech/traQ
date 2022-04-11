@@ -54,7 +54,7 @@ func UserAuthenticate(repo repository.Repository, sessStore session.Store) echo.
 				uid = token.UserID
 			} else {
 				// Authorizationヘッダーがないためセッションを確認する
-				sess, err := sessStore.GetSession(c, false)
+				sess, err := sessStore.GetSession(c)
 				if err != nil {
 					return herror.InternalServerError(err)
 				}
