@@ -9,6 +9,7 @@ import (
 	"time"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/google/go-querystring/query"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 
@@ -25,22 +26,22 @@ func init() {
 }
 
 type authorizeRequest struct {
-	ResponseType string `query:"response_type" form:"response_type"`
-	ClientID     string `query:"client_id"     form:"client_id"`
-	RedirectURI  string `query:"redirect_uri"  form:"redirect_uri"`
-	RawScope     string `query:"scope"         form:"scope"`
-	State        string `query:"state"         form:"state"`
+	ResponseType string `query:"response_type" form:"response_type" url:"response_type,omitempty"`
+	ClientID     string `query:"client_id"     form:"client_id"     url:"client_id"`
+	RedirectURI  string `query:"redirect_uri"  form:"redirect_uri"  url:"redirect_uri,omitempty"`
+	RawScope     string `query:"scope"         form:"scope"         url:"scope,omitempty"`
+	State        string `query:"state"         form:"state"         url:"state,omitempty"`
 
-	CodeChallenge       string `query:"code_challenge"        form:"code_challenge"`
-	CodeChallengeMethod string `query:"code_challenge_method" form:"code_challenge_method"`
+	CodeChallenge       string `query:"code_challenge"        form:"code_challenge"        url:"code_challenge,omitempty"`
+	CodeChallengeMethod string `query:"code_challenge_method" form:"code_challenge_method" url:"code_challenge_method,omitempty"`
 
-	Nonce  string `query:"nonce"  form:"nonce"`
-	Prompt string `query:"prompt" form:"prompt"`
+	Nonce  string `query:"nonce"  form:"nonce"  url:"nonce,omitempty"`
+	Prompt string `query:"prompt" form:"prompt" url:"prompt,omitempty"`
 
-	Scopes      model.AccessScopes
-	ValidScopes model.AccessScopes
-	Types       responseType
-	AccessTime  time.Time
+	Scopes      model.AccessScopes `url:"-"`
+	ValidScopes model.AccessScopes `url:"-"`
+	Types       responseType       `url:"-"`
+	AccessTime  time.Time          `url:"-"`
 }
 
 func (r authorizeRequest) Validate() error {
@@ -98,6 +99,28 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 		q.Set("state", req.State)
 	}
 
+	// セッション確認
+	se, err := h.SessStore.GetSession(c, false)
+	if err != nil {
+		h.L(c).Error(err.Error(), zap.Error(err))
+		q.Set("error", errServerError)
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
+	}
+	if se == nil {
+		// 未ログインの場合はログインしてから再度叩かせる
+		current := c.Request().URL
+		v, _ := query.Values(req)
+		current.RawQuery = v.Encode() // POSTの場合を考慮して再エンコード
+
+		var loginURL url.URL
+		loginURL.Path = "/login"
+		loginQuery := &url.Values{}
+		loginQuery.Set("redirect", current.String())
+		loginURL.RawQuery = loginQuery.Encode()
+		return c.Redirect(http.StatusFound, loginURL.String())
+	}
+
 	// PKCE確認
 	if len(req.CodeChallengeMethod) > 0 {
 		if req.CodeChallengeMethod != "plain" && req.CodeChallengeMethod != "S256" {
@@ -152,15 +175,6 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	}
 	req.Types = types
 
-	// セッション確認
-	se, err := h.SessStore.GetSession(c, true)
-	if err != nil {
-		h.L(c).Error(err.Error(), zap.Error(err))
-		q.Set("error", errServerError)
-		redirectURI.RawQuery = q.Encode()
-		return c.Redirect(http.StatusFound, redirectURI.String())
-	}
-
 	switch req.Prompt {
 	case "":
 		break
@@ -168,13 +182,8 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	case "none":
 		u, err := h.Repo.GetUser(se.UserID(), false)
 		if err != nil {
-			switch err {
-			case repository.ErrNotFound:
-				q.Set("error", errLoginRequired)
-			default:
-				h.L(c).Error(err.Error(), zap.Error(err))
-				q.Set("error", errServerError)
-			}
+			h.L(c).Error(err.Error(), zap.Error(err))
+			q.Set("error", errServerError)
 			redirectURI.RawQuery = q.Encode()
 			return c.Redirect(http.StatusFound, redirectURI.String())
 		}
