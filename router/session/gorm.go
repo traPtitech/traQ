@@ -102,7 +102,7 @@ func (s *session) save() error {
 
 type sessionStore struct {
 	db    *gorm.DB
-	cache *sc.Cache[string, *session]
+	cache *sc.Cache[string, Session]
 }
 
 func NewGormStore(db *gorm.DB) Store {
@@ -146,7 +146,7 @@ func (ss *sessionStore) GetSessionByToken(token string) (Session, error) {
 	return ss.cache.Get(context.Background(), token)
 }
 
-func (ss *sessionStore) getSessionByToken(_ context.Context, token string) (*session, error) {
+func (ss *sessionStore) getSessionByToken(_ context.Context, token string) (Session, error) {
 	var r model.SessionRecord
 	err := ss.db.First(&r, &model.SessionRecord{Token: token}).Error
 	if err != nil {
