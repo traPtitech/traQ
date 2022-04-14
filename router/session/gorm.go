@@ -27,9 +27,8 @@ type session struct {
 	userID    uuid.UUID
 	createdAt time.Time
 
-	loaded bool
-	db     *gorm.DB
-	data   map[string]interface{}
+	db   *gorm.DB
+	data map[string]interface{}
 	sync.Mutex
 }
 
@@ -39,7 +38,6 @@ func newSession(db *gorm.DB, t string, refID uuid.UUID, userID uuid.UUID, create
 		refID:     refID,
 		userID:    userID,
 		createdAt: createdAt,
-		loaded:    data != nil,
 		db:        db,
 		data:      data,
 	}
@@ -68,11 +66,6 @@ func (s *session) LoggedIn() bool {
 func (s *session) Get(key string) (interface{}, error) {
 	s.Lock()
 	defer s.Unlock()
-	if !s.loaded {
-		if err := s.load(); err != nil {
-			return nil, err
-		}
-	}
 	v := s.data[key]
 	return v, nil
 }
@@ -80,11 +73,6 @@ func (s *session) Get(key string) (interface{}, error) {
 func (s *session) Set(key string, value interface{}) error {
 	s.Lock()
 	defer s.Unlock()
-	if !s.loaded {
-		if err := s.load(); err != nil {
-			return err
-		}
-	}
 	s.data[key] = value
 	return s.save()
 }
@@ -92,11 +80,6 @@ func (s *session) Set(key string, value interface{}) error {
 func (s *session) Delete(key string) error {
 	s.Lock()
 	defer s.Unlock()
-	if !s.loaded {
-		if err := s.load(); err != nil {
-			return err
-		}
-	}
 	delete(s.data, key)
 	return s.save()
 }
@@ -107,23 +90,6 @@ func (s *session) Expired() bool {
 
 func (s *session) Refreshable() bool {
 	return time.Since(s.createdAt) <= time.Duration(sessionMaxAge+sessionKeepAge)*time.Second
-}
-
-func (s *session) load() error {
-	var r struct {
-		Data []byte `gorm:"type:longblob"`
-	}
-
-	if err := s.db.Model(&model.SessionRecord{Token: s.t}).Select("data").Scan(&r).Error; err != nil {
-		return err
-	}
-
-	if err := gob.NewDecoder(bytes.NewReader(r.Data)).Decode(&s.data); err != nil {
-		return err
-	}
-
-	s.loaded = true
-	return nil
 }
 
 func (s *session) save() error {
