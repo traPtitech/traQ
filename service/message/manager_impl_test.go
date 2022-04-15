@@ -138,8 +138,22 @@ func TestManager_Create(t *testing.T) {
 			assert.EqualValues(t, content, msg.GetText())
 		}
 
-		// キャッシュからもう一度
+		// キャッシュに取得
+		repo.MockMessageRepository.
+			EXPECT().
+			GetMessageByID(msg.GetID()).
+			Return(msg.(*message).Model, nil).
+			Times(1)
 		result, err := m.Get(msg.GetID())
+		if assert.NoError(t, err) {
+			assert.EqualValues(t, msg.GetID(), result.GetID())
+			assert.EqualValues(t, cid, result.GetChannelID())
+			assert.EqualValues(t, uid, result.GetUserID())
+			assert.EqualValues(t, content, result.GetText())
+		}
+
+		// キャッシュからもう一度
+		result, err = m.Get(msg.GetID())
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, msg.GetID(), result.GetID())
 			assert.EqualValues(t, cid, result.GetChannelID())
@@ -175,8 +189,22 @@ func TestManager_CreateDM(t *testing.T) {
 			assert.EqualValues(t, content, msg.GetText())
 		}
 
-		// キャッシュからもう一度
+		// キャッシュに取得
+		repo.MockMessageRepository.
+			EXPECT().
+			GetMessageByID(msg.GetID()).
+			Return(msg.(*message).Model, nil).
+			Times(1)
 		result, err := m.Get(msg.GetID())
+		if assert.NoError(t, err) {
+			assert.EqualValues(t, msg.GetID(), result.GetID())
+			assert.EqualValues(t, cid, result.GetChannelID())
+			assert.EqualValues(t, from, result.GetUserID())
+			assert.EqualValues(t, content, result.GetText())
+		}
+
+		// キャッシュからもう一度
+		result, err = m.Get(msg.GetID())
 		if assert.NoError(t, err) {
 			assert.EqualValues(t, msg.GetID(), result.GetID())
 			assert.EqualValues(t, cid, result.GetChannelID())
