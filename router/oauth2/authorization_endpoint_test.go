@@ -408,14 +408,7 @@ func TestHandlers_AuthorizationEndpointHandler(t *testing.T) {
 		res.Header("Pragma").Equal("no-cache")
 		loc, err := res.Raw().Location()
 		if assert.NoError(err) {
-			assert.Equal("/login", loc.Path)
-			redirectURL, err := url.Parse(loc.Query().Get("redirect"))
-			if assert.NoError(err) {
-				assert.Equal("/oauth2/authorize", redirectURL.Path)
-				assert.Equal(client.ID, redirectURL.Query().Get("client_id"))
-				assert.Equal("code", redirectURL.Query().Get("response_type"))
-				assert.Equal("none", redirectURL.Query().Get("prompt"))
-			}
+			assert.Equal(errLoginRequired, loc.Query().Get("error"))
 		}
 	})
 
