@@ -17,6 +17,7 @@ import (
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
+	"github.com/traPtitech/traQ/router/session"
 	"github.com/traPtitech/traQ/utils/random"
 	"github.com/traPtitech/traQ/utils/validator"
 )
@@ -99,28 +100,6 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 		q.Set("state", req.State)
 	}
 
-	// セッション確認
-	se, err := h.SessStore.GetSession(c)
-	if err != nil {
-		h.L(c).Error(err.Error(), zap.Error(err))
-		q.Set("error", errServerError)
-		redirectURI.RawQuery = q.Encode()
-		return c.Redirect(http.StatusFound, redirectURI.String())
-	}
-	if se == nil {
-		// 未ログインの場合はログインしてから再度叩かせる
-		current := c.Request().URL
-		v, _ := query.Values(req)
-		current.RawQuery = v.Encode() // POSTの場合を考慮して再エンコード
-
-		var loginURL url.URL
-		loginURL.Path = "/login"
-		loginQuery := &url.Values{}
-		loginQuery.Set("redirect", current.String())
-		loginURL.RawQuery = loginQuery.Encode()
-		return c.Redirect(http.StatusFound, loginURL.String())
-	}
-
 	// PKCE確認
 	if len(req.CodeChallengeMethod) > 0 {
 		if req.CodeChallengeMethod != "plain" && req.CodeChallengeMethod != "S256" {
@@ -175,11 +154,25 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 	}
 	req.Types = types
 
+	// セッション確認
+	se, err := h.SessStore.GetSession(c)
+	if err != nil && err != session.ErrSessionNotFound {
+		h.L(c).Error(err.Error(), zap.Error(err))
+		q.Set("error", errServerError)
+		redirectURI.RawQuery = q.Encode()
+		return c.Redirect(http.StatusFound, redirectURI.String())
+	}
+
 	switch req.Prompt {
 	case "":
 		break
 
 	case "none":
+		if se == nil {
+			q.Set("error", errLoginRequired)
+			redirectURI.RawQuery = q.Encode()
+			return c.Redirect(http.StatusFound, redirectURI.String())
+		}
 		u, err := h.Repo.GetUser(se.UserID(), false)
 		if err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
@@ -249,6 +242,20 @@ func (h *Handler) AuthorizationEndpointHandler(c echo.Context) error {
 
 	switch {
 	case types.Code && !types.Token: // "code" 現状はcodeしかサポートしない
+		if se == nil {
+			// 未ログインの場合はログインしてから再度叩かせる
+			current := c.Request().URL
+			v, _ := query.Values(req)
+			current.RawQuery = v.Encode() // POSTの場合を考慮して再エンコード
+
+			var loginURL url.URL
+			loginURL.Path = "/login"
+			loginQuery := &url.Values{}
+			loginQuery.Set("redirect", current.String())
+			loginURL.RawQuery = loginQuery.Encode()
+			return c.Redirect(http.StatusFound, loginURL.String())
+		}
+
 		if err := se.Set(oauth2ContextSession, req); err != nil {
 			h.L(c).Error(err.Error(), zap.Error(err))
 			q.Set("error", errServerError)
