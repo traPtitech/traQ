@@ -2,14 +2,15 @@ package session
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/gofrs/uuid"
-	lru "github.com/hashicorp/golang-lru"
 	"github.com/labstack/echo/v4"
+	"github.com/motoki317/sc"
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/model"
@@ -26,9 +27,8 @@ type session struct {
 	userID    uuid.UUID
 	createdAt time.Time
 
-	loaded bool
-	db     *gorm.DB
-	data   map[string]interface{}
+	db   *gorm.DB
+	data map[string]interface{}
 	sync.Mutex
 }
 
@@ -38,7 +38,6 @@ func newSession(db *gorm.DB, t string, refID uuid.UUID, userID uuid.UUID, create
 		refID:     refID,
 		userID:    userID,
 		createdAt: createdAt,
-		loaded:    data != nil,
 		db:        db,
 		data:      data,
 	}
@@ -67,11 +66,6 @@ func (s *session) LoggedIn() bool {
 func (s *session) Get(key string) (interface{}, error) {
 	s.Lock()
 	defer s.Unlock()
-	if !s.loaded {
-		if err := s.load(); err != nil {
-			return nil, err
-		}
-	}
 	v := s.data[key]
 	return v, nil
 }
@@ -79,11 +73,6 @@ func (s *session) Get(key string) (interface{}, error) {
 func (s *session) Set(key string, value interface{}) error {
 	s.Lock()
 	defer s.Unlock()
-	if !s.loaded {
-		if err := s.load(); err != nil {
-			return err
-		}
-	}
 	s.data[key] = value
 	return s.save()
 }
@@ -91,11 +80,6 @@ func (s *session) Set(key string, value interface{}) error {
 func (s *session) Delete(key string) error {
 	s.Lock()
 	defer s.Unlock()
-	if !s.loaded {
-		if err := s.load(); err != nil {
-			return err
-		}
-	}
 	delete(s.data, key)
 	return s.save()
 }
@@ -108,23 +92,6 @@ func (s *session) Refreshable() bool {
 	return time.Since(s.createdAt) <= time.Duration(sessionMaxAge+sessionKeepAge)*time.Second
 }
 
-func (s *session) load() error {
-	var r struct {
-		Data []byte `gorm:"type:longblob"`
-	}
-
-	if err := s.db.Model(&model.SessionRecord{Token: s.t}).Select("data").Scan(&r).Error; err != nil {
-		return err
-	}
-
-	if err := gob.NewDecoder(bytes.NewReader(r.Data)).Decode(&s.data); err != nil {
-		return err
-	}
-
-	s.loaded = true
-	return nil
-}
-
 func (s *session) save() error {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(s.data); err != nil {
@@ -133,24 +100,16 @@ func (s *session) save() error {
 	return s.db.Model(&model.SessionRecord{Token: s.t}).Update("data", buf.Bytes()).Error
 }
 
-type cachedSession struct {
-	t         string
-	refID     uuid.UUID
-	userID    uuid.UUID
-	createdAt time.Time
-}
-
 type sessionStore struct {
 	db    *gorm.DB
-	cache *lru.Cache
+	cache *sc.Cache[string, Session]
 }
 
 func NewGormStore(db *gorm.DB) Store {
-	cache, _ := lru.New(cacheSize)
-	return &sessionStore{
-		db:    db,
-		cache: cache,
-	}
+	ss := &sessionStore{db: db}
+	cache, _ := sc.New(ss.getSessionByToken, 24*time.Hour, 24*time.Hour, sc.WithLRUBackend(cacheSize))
+	ss.cache = cache
+	return ss
 }
 
 func (ss *sessionStore) GetSession(c echo.Context) (Session, error) {
@@ -184,26 +143,24 @@ func (ss *sessionStore) GetSessionByToken(token string) (Session, error) {
 	if len(token) == 0 {
 		return nil, ErrSessionNotFound
 	}
+	return ss.cache.Get(context.Background(), token)
+}
 
-	if _v, ok := ss.cache.Get(token); ok {
-		v := _v.(*cachedSession)
-		return newSession(ss.db, v.t, v.refID, v.userID, v.createdAt, nil), nil
-	}
-
+func (ss *sessionStore) getSessionByToken(_ context.Context, token string) (Session, error) {
 	var r model.SessionRecord
 	err := ss.db.First(&r, &model.SessionRecord{Token: token}).Error
-	if err == nil {
-		data, err := r.GetData()
-		if err != nil {
-			return nil, err
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, ErrSessionNotFound
 		}
-		return newSession(ss.db, r.Token, r.ReferenceID, r.UserID, r.Created, data), nil
+		return nil, err
 	}
 
-	if gorm.ErrRecordNotFound == err {
-		return nil, ErrSessionNotFound
+	data, err := r.GetData()
+	if err != nil {
+		return nil, err
 	}
-	return nil, err
+	return newSession(ss.db, r.Token, r.ReferenceID, r.UserID, r.Created, data), nil
 }
 
 func (ss *sessionStore) GetSessionsByUserID(userID uuid.UUID) ([]Session, error) {
@@ -216,7 +173,7 @@ func (ss *sessionStore) GetSessionsByUserID(userID uuid.UUID) ([]Session, error)
 		return nil, err
 	}
 
-	result := make([]Session, 0)
+	result := make([]Session, 0, len(records))
 	for _, r := range records {
 		data, err := r.GetData()
 		if err != nil {
@@ -242,7 +199,7 @@ func (ss *sessionStore) RevokeSession(c echo.Context) error {
 	if err := ss.db.Delete(&model.SessionRecord{Token: cookie.Value}).Error; err != nil {
 		return err
 	}
-	ss.cache.Remove(cookie.Value)
+	ss.cache.Forget(cookie.Value)
 
 	cookie.Value = ""
 	cookie.Expires = time.Unix(0, 0)
@@ -266,7 +223,7 @@ func (ss *sessionStore) RevokeSessionByRefID(refID uuid.UUID) error {
 	if err := ss.db.Delete(&model.SessionRecord{Token: r.Token}).Error; err != nil {
 		return err
 	}
-	ss.cache.Remove(r.Token)
+	ss.cache.Forget(r.Token)
 
 	return nil
 }
@@ -285,7 +242,7 @@ func (ss *sessionStore) RevokeSessionsByUserID(userID uuid.UUID) error {
 	}
 
 	for _, r := range rs {
-		ss.cache.Remove(r.Token)
+		ss.cache.Forget(r.Token)
 	}
 	return nil
 }
@@ -296,7 +253,7 @@ func (ss *sessionStore) RenewSession(c echo.Context, userID uuid.UUID) (Session,
 		if err := ss.db.Delete(&model.SessionRecord{Token: cookie.Value}).Error; err != nil {
 			return nil, err
 		}
-		ss.cache.Remove(cookie.Value)
+		ss.cache.Forget(cookie.Value)
 	} else {
 		cookie = &http.Cookie{}
 	}
@@ -333,12 +290,5 @@ func (ss *sessionStore) IssueSession(userID uuid.UUID, data map[string]interface
 	if err := ss.db.Create(s).Error; err != nil {
 		return nil, err
 	}
-	ss.cache.Add(s.Token, &cachedSession{
-		t:         s.Token,
-		refID:     s.ReferenceID,
-		userID:    s.UserID,
-		createdAt: s.Created,
-	})
-
 	return newSession(ss.db, s.Token, s.ReferenceID, s.UserID, s.Created, data), nil
 }

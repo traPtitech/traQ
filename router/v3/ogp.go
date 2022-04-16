@@ -21,11 +21,12 @@ func (h *Handlers) GetOgp(c echo.Context) error {
 		return herror.BadRequest("invalid url")
 	}
 
-	res, expiresIn, err := h.OGP.GetMeta(u)
+	res, expiresAt, err := h.OGP.GetMeta(u)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
+	expiresIn := time.Until(expiresAt)
 	if expiresIn > 0 {
 		c.Response().Header().Set(consts.HeaderCacheControl, fmt.Sprintf("public, max-age=%d", expiresIn/time.Second))
 	}

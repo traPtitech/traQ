@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bluele/gcache"
 	"github.com/gofrs/uuid"
+	"github.com/motoki317/sc"
 	"go.uber.org/zap"
 
 	"github.com/traPtitech/traQ/model"
@@ -15,7 +15,10 @@ import (
 	"github.com/traPtitech/traQ/service/channel"
 )
 
-var cacheTTL = time.Minute
+const (
+	cacheSize = 200
+	cacheTTL  = time.Minute
+)
 
 const PinLimit = 100 // ピン留めの上限数
 
@@ -25,28 +28,28 @@ type manager struct {
 	L  *zap.Logger
 	P  sync.WaitGroup
 
-	cache gcache.Cache
+	cache *sc.Cache[uuid.UUID, *message]
 }
 
 func NewMessageManager(repo repository.Repository, cm channel.Manager, logger *zap.Logger) (Manager, error) {
+	cache, err := sc.New(func(_ context.Context, key uuid.UUID) (*message, error) {
+		m, err := repo.GetMessageByID(key)
+		if err != nil {
+			if err == repository.ErrNotFound {
+				return nil, ErrNotFound
+			}
+			return nil, fmt.Errorf("failed to GetMessageByID: %w", err)
+		}
+		return &message{Model: m}, nil
+	}, cacheTTL, cacheTTL*2, sc.With2QBackend(cacheSize))
+	if err != nil {
+		return nil, err
+	}
 	return &manager{
-		CM: cm,
-		R:  repo,
-		L:  logger.Named("message_manager"),
-		cache: gcache.
-			New(200).
-			ARC().
-			LoaderExpireFunc(func(key interface{}) (interface{}, *time.Duration, error) {
-				m, err := repo.GetMessageByID(key.(uuid.UUID))
-				if err != nil {
-					if err == repository.ErrNotFound {
-						return nil, nil, ErrNotFound
-					}
-					return nil, nil, fmt.Errorf("failed to GetMessageByID: %w", err)
-				}
-				return &message{Model: m}, &cacheTTL, nil
-			}).
-			Build(),
+		CM:    cm,
+		R:     repo,
+		L:     logger.Named("message_manager"),
+		cache: cache,
 	}, nil
 }
 
@@ -59,12 +62,8 @@ func (m *manager) get(id uuid.UUID) (*message, error) {
 		return nil, ErrNotFound
 	}
 
-	// メモリキャッシュから取得。キャッシュに無い場合はキャッシュのLoaderFuncで自動取得し、キャッシュに追加
-	mI, err := m.cache.Get(id)
-	if err != nil {
-		return nil, err
-	}
-	return mI.(*message), nil
+	// メモリキャッシュから取得。キャッシュに無い場合はキャッシュの replaceFn で自動取得し、キャッシュに追加
+	return m.cache.Get(context.Background(), id)
 }
 
 func (m *manager) GetTimeline(query TimelineQuery) (Timeline, error) {
@@ -121,11 +120,7 @@ func (m *manager) create(channelID, userID uuid.UUID, content string) (Message, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to CreateMessage: %w", err)
 	}
-
-	// メモリにキャッシュ
-	wrapped := &message{Model: msg}
-	_ = m.cache.SetWithExpire(msg.ID, wrapped, cacheTTL)
-	return wrapped, nil
+	return &message{Model: msg}, nil
 }
 
 func (m *manager) Edit(id uuid.UUID, content string) error {
@@ -149,7 +144,7 @@ func (m *manager) Edit(id uuid.UUID, content string) error {
 			return fmt.Errorf("failed to UpdateMessage: %w", err)
 		}
 	}
-	m.cache.Remove(id)
+	m.cache.Forget(id)
 
 	return nil
 }
@@ -175,7 +170,7 @@ func (m *manager) Delete(id uuid.UUID) error {
 			return fmt.Errorf("failed to DeleteMessage: %w", err)
 		}
 	}
-	m.cache.Remove(id)
+	m.cache.Forget(id)
 
 	return nil
 }
@@ -218,7 +213,7 @@ func (m *manager) Pin(id uuid.UUID, userID uuid.UUID) (*model.Pin, error) {
 			return nil, fmt.Errorf("failed to PinMessage: %w", err)
 		}
 	}
-	m.cache.Remove(id)
+	m.cache.Forget(id)
 
 	// ロギング
 	m.recordChannelEvent(pin.Message.ChannelID, model.ChannelEventPinAdded, model.ChannelEventDetail{
@@ -255,7 +250,7 @@ func (m *manager) Unpin(id uuid.UUID, userID uuid.UUID) error {
 			return fmt.Errorf("failed to UnpinMessage: %w", err)
 		}
 	}
-	m.cache.Remove(id)
+	m.cache.Forget(id)
 
 	// ロギング
 	m.recordChannelEvent(pin.Message.ChannelID, model.ChannelEventPinRemoved, model.ChannelEventDetail{
@@ -312,7 +307,7 @@ func (m *manager) RemoveStamps(id, stampID, userID uuid.UUID) error {
 	return nil
 }
 
-func (m *manager) Wait(ctx context.Context) error {
+func (m *manager) Wait(_ context.Context) error {
 	m.P.Wait()
 	return nil
 }

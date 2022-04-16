@@ -5,7 +5,6 @@ require (
 	firebase.google.com/go v3.13.0+incompatible
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/blendle/zapdriver v1.3.1
-	github.com/bluele/gcache v0.0.2
 	github.com/boz/go-throttle v0.0.0-20160922054636-fdc4eab740c1
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/disintegration/imaging v1.6.2
@@ -23,7 +22,6 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/hajimehoshi/go-mp3 v0.3.3
-	github.com/hashicorp/golang-lru v0.5.4
 	github.com/jakobvarmose/go-qidenticon v0.0.0-20170128000056-5c327fb4e74a
 	github.com/json-iterator/go v1.1.12
 	github.com/labstack/echo-contrib v0.12.0
@@ -31,6 +29,7 @@ require (
 	github.com/leandro-lugaresi/hub v1.1.1
 	github.com/lthibault/jitterbug/v2 v2.2.2
 	github.com/motoki317/go-waveform v0.0.3
+	github.com/motoki317/sc v1.2.4
 	github.com/ncw/swift v1.0.53
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/orcaman/writerseeker v0.0.0-20200621085525-1d3f536ff85e
@@ -95,6 +94,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/motoki317/lru v0.0.3 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.0-beta.8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
