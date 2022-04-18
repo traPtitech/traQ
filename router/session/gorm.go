@@ -107,8 +107,7 @@ type sessionStore struct {
 
 func NewGormStore(db *gorm.DB) Store {
 	ss := &sessionStore{db: db}
-	cache, _ := sc.New(ss.getSessionByToken, 24*time.Hour, 24*time.Hour, sc.WithLRUBackend(cacheSize))
-	ss.cache = cache
+	ss.cache = sc.NewMust(ss.getSessionByToken, 24*time.Hour, 24*time.Hour, sc.WithLRUBackend(cacheSize))
 	return ss
 }
 

@@ -45,11 +45,7 @@ func NewServiceImpl(repo repository.Repository, logger *zap.Logger) (Service, er
 		serviceDone: make(chan struct{}),
 		purgerDone:  make(chan struct{}),
 	}
-	cache, err := sc.New(s.getMetaOrCreate, inMemCacheTime, inMemCacheTime, sc.WithLRUBackend(inMemCacheSize))
-	if err != nil {
-		return nil, err
-	}
-	s.inMemCache = cache
+	s.inMemCache = sc.NewMust(s.getMetaOrCreate, inMemCacheTime, inMemCacheTime, sc.WithLRUBackend(inMemCacheSize))
 	if err := s.start(); err != nil {
 		return nil, err
 	}

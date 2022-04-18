@@ -32,24 +32,20 @@ type manager struct {
 }
 
 func NewMessageManager(repo repository.Repository, cm channel.Manager, logger *zap.Logger) (Manager, error) {
-	cache, err := sc.New(func(_ context.Context, key uuid.UUID) (*message, error) {
-		m, err := repo.GetMessageByID(key)
-		if err != nil {
-			if err == repository.ErrNotFound {
-				return nil, ErrNotFound
-			}
-			return nil, fmt.Errorf("failed to GetMessageByID: %w", err)
-		}
-		return &message{Model: m}, nil
-	}, cacheTTL, cacheTTL*2, sc.With2QBackend(cacheSize))
-	if err != nil {
-		return nil, err
-	}
 	return &manager{
-		CM:    cm,
-		R:     repo,
-		L:     logger.Named("message_manager"),
-		cache: cache,
+		CM: cm,
+		R:  repo,
+		L:  logger.Named("message_manager"),
+		cache: sc.NewMust(func(_ context.Context, key uuid.UUID) (*message, error) {
+			m, err := repo.GetMessageByID(key)
+			if err != nil {
+				if err == repository.ErrNotFound {
+					return nil, ErrNotFound
+				}
+				return nil, fmt.Errorf("failed to GetMessageByID: %w", err)
+			}
+			return &message{Model: m}, nil
+		}, cacheTTL, cacheTTL*2, sc.With2QBackend(cacheSize)),
 	}, nil
 }
 
