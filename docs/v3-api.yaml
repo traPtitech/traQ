@@ -809,7 +809,7 @@ paths:
             default: true
           in: query
           name: include-unicode
-          duplicated: true
+          deprecated: true
           description: |
             Unicode絵文字を含ませるかどうか
             Deprecated: typeクエリを指定しなければ全てのスタンプを取得できるため、そちらを利用してください
