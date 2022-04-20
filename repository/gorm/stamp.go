@@ -64,9 +64,9 @@ func (r *stampRepository) regenerateJSON() {
 	for _, stamp := range r.stamps {
 		arrAll = append(arrAll, stamp)
 		if stamp.IsUnicode {
-			arrOriginal = append(arrOriginal, stamp)
-		} else {
 			arrUnicode = append(arrUnicode, stamp)
+		} else {
+			arrOriginal = append(arrOriginal, stamp)
 		}
 	}
 
