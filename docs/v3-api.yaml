@@ -809,7 +809,13 @@ paths:
             default: true
           in: query
           name: include-unicode
-          description: Unicode絵文字を含ませるかどうか
+          description: (Duplicated) Unicode絵文字を含ませるかどうか
+        - schema:
+            type: string
+            enum: [unicode, original]
+          in: query
+          name: type
+          description: 取得するスタンプの種類
       description: スタンプのリストを取得します。
   /users/me/stamp-history:
     get:
