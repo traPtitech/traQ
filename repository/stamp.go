@@ -87,13 +87,11 @@ type StampRepository interface {
 	DeleteStamp(id uuid.UUID) (err error)
 	// GetAllStamps 全てのスタンプを取得します
 	//
-	// stampTypeが0で全てのスタンプ、1でunicodeスタンプのみ、2でoriginalスタンプのみを取得します。
 	// 成功した場合、スタンプの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetAllStamps(stampType StampType) (stamps []*model.Stamp, err error)
 	// GetStampsJSON スタンプ一覧のJSON文字列を取得します
 	//
-	// stampTypeが0で全てのスタンプ、1でunicodeスタンプのみ、2でoriginalスタンプのみを取得します。
 	// 成功した場合、JSONの[]byte表現とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetStampsJSON(stampType StampType) ([]byte, time.Time, error)
