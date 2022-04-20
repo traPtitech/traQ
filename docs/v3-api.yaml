@@ -809,7 +809,10 @@ paths:
             default: true
           in: query
           name: include-unicode
-          description: (Duplicated) Unicode絵文字を含ませるかどうか
+          duplicated: true
+          description: |
+            Unicode絵文字を含ませるかどうか
+            Deprecated: typeクエリを指定しなければ全てのスタンプを取得できるため、そちらを利用してください
         - schema:
             type: string
             enum: [unicode, original]
