@@ -26,11 +26,11 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 		u = "1"
 	}
 
-	stampType := 0
+	stampType := repository.StampTypeAll
 	if t == consts.StampTypeUnicode {
-		stampType = 1
+		stampType = repository.StampTypeUnicode
 	} else if t == consts.StampTypeOriginal || !isTrue(u) {
-		stampType = 2
+		stampType = repository.StampTypeOriginal
 	}
 
 	b, updatedAt, err := h.Repo.GetStampsJSON(stampType)

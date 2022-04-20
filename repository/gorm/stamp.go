@@ -296,27 +296,27 @@ func (repo *Repository) DeleteStamp(id uuid.UUID) (err error) {
 }
 
 // GetAllStamps implements StampRepository interface.
-func (repo *Repository) GetAllStamps(stampType int) (stamps []*model.Stamp, err error) {
+func (repo *Repository) GetAllStamps(stampType repository.StampType) (stamps []*model.Stamp, err error) {
 	stamps = make([]*model.Stamp, 0)
 	tx := repo.db
 	switch stampType {
-	case 1:
+	case repository.StampTypeUnicode:
 		tx = tx.Where("is_unicode = TRUE")
-	case 2:
+	case repository.StampTypeOriginal:
 		tx = tx.Where("is_unicode = FALSE")
 	}
 	return stamps, tx.Find(&stamps).Error
 }
 
 // GetStampsJSON implements StampRepository interface.
-func (repo *Repository) GetStampsJSON(stampType int) ([]byte, time.Time, error) {
+func (repo *Repository) GetStampsJSON(stampType repository.StampType) ([]byte, time.Time, error) {
 	if repo.stamps != nil {
 		repo.stamps.RLock()
 		defer repo.stamps.RUnlock()
 		switch stampType {
-		case 1:
+		case repository.StampTypeUnicode:
 			return repo.stamps.unicodeJSON, repo.stamps.updatedAt, nil
-		case 2:
+		case repository.StampTypeOriginal:
 			return repo.stamps.originalJSON, repo.stamps.updatedAt, nil
 		default:
 			return repo.stamps.allJSON, repo.stamps.updatedAt, nil
