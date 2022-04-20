@@ -21,11 +21,19 @@ import (
 // GetStamps GET /stamps
 func (h *Handlers) GetStamps(c echo.Context) error {
 	u := c.QueryParam("include-unicode")
-	if len(u) == 0 {
+	t := c.QueryParam("type")
+	if len(u) == 0 && len(t) == 0 {
 		u = "1"
 	}
 
-	b, updatedAt, err := h.Repo.GetStampsJSON(!isTrue(u))
+	stampType := 0
+	if t == consts.StampTypeUnicode {
+		stampType = 1
+	} else if t == consts.StampTypeOriginal || !isTrue(u) {
+		stampType = 2
+	}
+
+	b, updatedAt, err := h.Repo.GetStampsJSON(stampType)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
