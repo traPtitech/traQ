@@ -26,6 +26,9 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 		u = "1"
 	}
 
+	if len(u) > 0 && len(t) > 0 {
+		return herror.BadRequest("can't use both 'include-unicode' and 'type' query parameters")
+	}
 	stampType := repository.StampTypeAll
 	if t == consts.StampTypeUnicode {
 		stampType = repository.StampTypeUnicode
