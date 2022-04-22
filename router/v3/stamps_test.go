@@ -43,6 +43,37 @@ func TestHandlers_GetStamps(t *testing.T) {
 			Status(http.StatusUnauthorized)
 	})
 
+	t.Run("bad request (invalid include-unicode query)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path).
+			WithQuery("include-unicode", "invalid").
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (invalid type query)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path).
+			WithQuery("type", "invalid").
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
+	t.Run("bad request (both query)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		e.GET(path).
+			WithQuery("include-unicode", "true").
+			WithQuery("type", "original").
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusBadRequest)
+	})
+
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
