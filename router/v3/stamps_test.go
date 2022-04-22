@@ -74,10 +74,54 @@ func TestHandlers_GetStamps(t *testing.T) {
 			Status(http.StatusBadRequest)
 	})
 
-	t.Run("success", func(t *testing.T) {
+	t.Run("success (no query)", func(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		obj := e.GET(path).
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array()
+
+		obj.Length().Equal(1)
+		stampEquals(t, stamp, obj.First().Object())
+	})
+
+	t.Run("success (type=original)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithQuery("type", "original").
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array()
+
+		obj.Length().Equal(1)
+		stampEquals(t, stamp, obj.First().Object())
+	})
+
+	t.Run("success (type=unicode)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithQuery("type", "unicode").
+			WithCookie(session.CookieName, s).
+			Expect().
+			Status(http.StatusOK).
+			JSON().
+			Array()
+
+		obj.Length().Equal(0)
+	})
+
+	t.Run("success (include-unicode=false)", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
+		obj := e.GET(path).
+			WithQuery("include-unicode", "false").
 			WithCookie(session.CookieName, s).
 			Expect().
 			Status(http.StatusOK).
