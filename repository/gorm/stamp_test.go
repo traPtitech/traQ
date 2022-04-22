@@ -269,7 +269,7 @@ func TestRepositoryImpl_ExistStamps(t *testing.T) {
 		assert.Error(repo.ExistStamps(stampIDsCopy))
 	})
 
-	t.Run("sucess", func(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 
