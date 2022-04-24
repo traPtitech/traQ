@@ -213,17 +213,17 @@ func (repo *Repository) GetMessages(query repository.MessagesQuery) (messages []
 
 	if query.Inclusive {
 		if query.Since.Valid {
-			tx = tx.Where("messages.created_at >= ?", query.Since.Time)
+			tx = tx.Where("messages.created_at >= ?", query.Since.Time.Truncate(time.Microsecond))
 		}
 		if query.Until.Valid {
-			tx = tx.Where("messages.created_at <= ?", query.Until.Time)
+			tx = tx.Where("messages.created_at <= ?", query.Until.Time.Truncate(time.Microsecond))
 		}
 	} else {
 		if query.Since.Valid {
-			tx = tx.Where("messages.created_at > ?", query.Since.Time)
+			tx = tx.Where("messages.created_at > ?", query.Since.Time.Truncate(time.Microsecond))
 		}
 		if query.Until.Valid {
-			tx = tx.Where("messages.created_at < ?", query.Until.Time)
+			tx = tx.Where("messages.created_at < ?", query.Until.Time.Truncate(time.Microsecond))
 		}
 	}
 
