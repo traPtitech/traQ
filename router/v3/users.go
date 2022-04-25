@@ -14,6 +14,7 @@ import (
 	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
 	"github.com/traPtitech/traQ/service/channel"
@@ -42,7 +43,7 @@ func (h *Handlers) GetUsers(c echo.Context) error {
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	return c.JSON(http.StatusOK, formatUsers(users))
+	return extension.ServeJSONWithETag(c, formatUsers(users))
 }
 
 // PostUserRequest POST /users リクエストボディ

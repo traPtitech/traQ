@@ -45,12 +45,8 @@ func formatDMChannels(dmcs map[uuid.UUID]uuid.UUID) []*DMChannel {
 	}
 
 	sort.Slice(res, func(i, j int) bool {
-		if res[i].ID.String() == res[j].ID.String() {
-			return res[i].UserID.String() > res[j].UserID.String()
-		}
-		return res[i].ID.String() > res[j].ID.String()
+		return res[i].ID.String() < res[j].ID.String()
 	})
-
 	return res
 }
 
@@ -90,6 +86,7 @@ type User struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
+// formatUsers ソートされたものを返す
 func formatUsers(users []model.UserInfo) []User {
 	res := make([]User, len(users))
 	for i, user := range users {
@@ -103,6 +100,10 @@ func formatUsers(users []model.UserInfo) []User {
 			UpdatedAt:   user.GetUpdatedAt(),
 		}
 	}
+
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].ID.String() < res[j].ID.String()
+	})
 	return res
 }
 
