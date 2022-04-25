@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"sort"
 	"strconv"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
@@ -65,17 +66,15 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 		stampType = repository.StampTypeOriginal
 	}
 
-	b, updatedAt, err := h.Repo.GetStampsJSON(stampType)
+	stamps, err := h.Repo.GetAllStamps(stampType)
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
 
-	c.Response().Header().Set(consts.HeaderCacheControl, "private, max-age=0") // 鮮度を0にして毎回キャッシュ検証させる
-	extension.SetLastModified(c, updatedAt)
-	if done, err := extension.CheckPreconditions(c, updatedAt); done {
-		return err
-	}
-	return c.JSONBlob(http.StatusOK, b)
+	sort.Slice(stamps, func(i, j int) bool {
+		return stamps[i].ID.String() < stamps[j].ID.String()
+	})
+	return extension.ServeJSONWithETag(c, stamps)
 }
 
 // CreateStamp POST /stamps

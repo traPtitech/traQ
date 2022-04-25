@@ -90,11 +90,6 @@ type StampRepository interface {
 	// 成功した場合、スタンプの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
 	GetAllStamps(stampType StampType) (stamps []*model.Stamp, err error)
-	// GetStampsJSON スタンプ一覧のJSON文字列を取得します
-	//
-	// 成功した場合、JSONの[]byte表現とnilを返します。
-	// DBによるエラーを返すことがあります。
-	GetStampsJSON(stampType StampType) ([]byte, time.Time, error)
 	// StampExists 指定したIDのスタンプが存在するかどうかを返します
 	//
 	// 存在する場合、trueとnilを返します。

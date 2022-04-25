@@ -69,7 +69,7 @@ func filePruneCommand() *cobra.Command {
 			}
 
 			// Repository
-			repo, err := gorm.NewGormRepository(db, hub.New(), logger)
+			repo, _, err := gorm.NewGormRepository(db, hub.New(), logger, false)
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}
@@ -368,7 +368,7 @@ func genGroupImages() *cobra.Command {
 			}
 
 			// Repository
-			repo, err := gorm.NewGormRepository(db, hub.New(), logger)
+			repo, _, err := gorm.NewGormRepository(db, hub.New(), logger, false)
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}

@@ -91,13 +91,11 @@ func TestMain(m *testing.M) {
 		env.SessStore = session.NewMemorySessionStore()
 
 		// テスト用リポジトリ作成
-		repo, err := gorm2.NewGormRepository(engine, env.Hub, l.Named("repository"))
+		repo, init, err := gorm2.NewGormRepository(engine, env.Hub, l.Named("repository"), true)
 		if err != nil {
 			panic(err)
 		}
-		if init, err := repo.Sync(); err != nil {
-			panic(err)
-		} else if init {
+		if init {
 			// システムユーザーロール投入
 			if err := repo.CreateUserRoles(role.SystemRoleModels()...); err != nil {
 				panic(err)

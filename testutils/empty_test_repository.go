@@ -25,7 +25,3 @@ type EmptyTestRepository struct {
 	repository.ClipRepository
 	repository.OgpCacheRepository
 }
-
-func (*EmptyTestRepository) Sync() (init bool, err error) {
-	return false, nil
-}

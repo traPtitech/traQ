@@ -75,19 +75,11 @@ func serveCommand() *cobra.Command {
 
 			// Repository
 			logger.Info("setting up repository...")
-			repo, err := gorm.NewGormRepository(engine, hub, logger)
+			repo, init, err := gorm.NewGormRepository(engine, hub, logger, true)
 			if err != nil {
 				logger.Fatal("failed to initialize repository", zap.Error(err))
 			}
 			logger.Info("repository was set up")
-
-			// Repository Sync
-			logger.Info("syncing repository...")
-			init, err := repo.Sync()
-			if err != nil {
-				logger.Fatal("failed to sync repository", zap.Error(err))
-			}
-			logger.Info("repository was synced")
 
 			// JWT for QRCode
 			if priv := c.JWT.Keys.Private; priv != "" {
