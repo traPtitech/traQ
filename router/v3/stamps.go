@@ -21,8 +21,8 @@ import (
 
 // GetStampsQuery GET /stamps クエリパラメーター
 type GetStampsQuery struct {
-	U string `query:"include-unicode"`
-	T string `query:"type"`
+	IncludeUnicode string `query:"include-unicode"`
+	Type           string `query:"type"`
 }
 
 func validateIfBool(value any) error {
@@ -35,13 +35,13 @@ func validateIfBool(value any) error {
 }
 
 func (q *GetStampsQuery) ValidateWithContext(ctx context.Context) error {
-	if len(q.U) > 0 && len(q.T) > 0 {
+	if len(q.IncludeUnicode) > 0 && len(q.Type) > 0 {
 		return errors.New("can't use both 'include-unicode' and 'type' query parameters")
 	}
 
 	return vd.ValidateStructWithContext(ctx, &q,
-		vd.Field(&q.U, vd.By(validateIfBool)),
-		vd.Field(&q.T, vd.In(consts.StampTypeUnicode, consts.StampTypeOriginal)),
+		vd.Field(&q.IncludeUnicode, vd.By(validateIfBool)),
+		vd.Field(&q.Type, vd.In(consts.StampTypeUnicode, consts.StampTypeOriginal)),
 	)
 }
 
@@ -52,13 +52,13 @@ func (h *Handlers) GetStamps(c echo.Context) error {
 		return herror.BadRequest(err)
 	}
 
-	if len(q.U) == 0 && len(q.T) == 0 {
-		q.U = "1"
+	if len(q.IncludeUnicode) == 0 && len(q.Type) == 0 {
+		q.IncludeUnicode = "1"
 	}
 	stampType := repository.StampTypeAll
-	if q.T == consts.StampTypeUnicode {
+	if q.Type == consts.StampTypeUnicode {
 		stampType = repository.StampTypeUnicode
-	} else if q.T == consts.StampTypeOriginal || !isTrue(q.U) {
+	} else if q.Type == consts.StampTypeOriginal || !isTrue(q.IncludeUnicode) {
 		stampType = repository.StampTypeOriginal
 	}
 
