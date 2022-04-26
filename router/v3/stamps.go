@@ -2,6 +2,7 @@ package v3
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -18,20 +19,36 @@ import (
 	"github.com/traPtitech/traQ/utils/validator"
 )
 
+// GetStampsQuery GET /stamps クエリパラメーター
+type GetStampsQuery struct {
+	U string `query:"include-unicode"`
+	T string `query:"type"`
+}
+
+func validateIfBool(value any) error {
+	strValue, ok := value.(string)
+	if !ok {
+		return errors.New("value is not string")
+	}
+	_, err := strconv.ParseBool(strValue)
+	return err
+}
+
+func (q *GetStampsQuery) ValidateWithContext(ctx context.Context) error {
+	if len(q.U) > 0 && len(q.T) > 0 {
+		return errors.New("can't use both 'include-unicode' and 'type' query parameters")
+	}
+
+	return vd.ValidateStructWithContext(ctx, &q,
+		vd.Field(&q.U, vd.By(validateIfBool)),
+		vd.Field(&q.T, vd.In(consts.StampTypeUnicode, consts.StampTypeOriginal)),
+	)
+}
+
 // GetStamps GET /stamps
 func (h *Handlers) GetStamps(c echo.Context) error {
 	u := c.QueryParam("include-unicode")
 	t := c.QueryParam("type")
-
-	if len(u) > 0 && len(t) > 0 {
-		return herror.BadRequest("can't use both 'include-unicode' and 'type' query parameters")
-	}
-	if _, err := strconv.ParseBool(u); len(u) > 0 && err != nil {
-		return herror.BadRequest(err)
-	}
-	if len(t) > 0 && t != consts.StampTypeUnicode && t != consts.StampTypeOriginal {
-		return herror.BadRequest("invalid value for 'type' query parameter")
-	}
 
 	if len(u) == 0 && len(t) == 0 {
 		u = "1"
