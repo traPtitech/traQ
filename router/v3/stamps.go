@@ -30,11 +30,14 @@ func validateIfBool(value any) error {
 	if !ok {
 		return errors.New("value is not string")
 	}
-	_, err := strconv.ParseBool(strValue)
-	return err
+	if strValue != "" {
+		_, err := strconv.ParseBool(strValue)
+		return err
+	}
+	return nil
 }
 
-func (q *GetStampsQuery) ValidateWithContext(ctx context.Context) error {
+func (q GetStampsQuery) ValidateWithContext(ctx context.Context) error {
 	if len(q.IncludeUnicode) > 0 && len(q.Type) > 0 {
 		return errors.New("can't use both 'include-unicode' and 'type' query parameters")
 	}
