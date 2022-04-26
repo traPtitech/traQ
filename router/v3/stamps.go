@@ -47,16 +47,18 @@ func (q *GetStampsQuery) ValidateWithContext(ctx context.Context) error {
 
 // GetStamps GET /stamps
 func (h *Handlers) GetStamps(c echo.Context) error {
-	u := c.QueryParam("include-unicode")
-	t := c.QueryParam("type")
+	var q GetStampsQuery
+	if err := bindAndValidate(c, &q); err != nil {
+		return herror.BadRequest(err)
+	}
 
-	if len(u) == 0 && len(t) == 0 {
-		u = "1"
+	if len(q.U) == 0 && len(q.T) == 0 {
+		q.U = "1"
 	}
 	stampType := repository.StampTypeAll
-	if t == consts.StampTypeUnicode {
+	if q.T == consts.StampTypeUnicode {
 		stampType = repository.StampTypeUnicode
-	} else if t == consts.StampTypeOriginal || !isTrue(u) {
+	} else if q.T == consts.StampTypeOriginal || !isTrue(q.U) {
 		stampType = repository.StampTypeOriginal
 	}
 
