@@ -18,10 +18,11 @@ import (
 )
 
 type stampRepository struct {
-	stamps    map[uuid.UUID]*model.Stamp
-	allJSON   []byte
-	json      []byte
-	updatedAt time.Time
+	stamps       map[uuid.UUID]*model.Stamp
+	allJSON      []byte
+	unicodeJSON  []byte
+	originalJSON []byte
+	updatedAt    time.Time
 	sync.RWMutex
 }
 
@@ -57,20 +58,29 @@ func (r *stampRepository) delete(id uuid.UUID) {
 }
 
 func (r *stampRepository) regenerateJSON() {
-	arr := make([]*model.Stamp, 0, len(r.stamps))
+	arrOriginal := make([]*model.Stamp, 0, len(r.stamps))
+	arrUnicode := make([]*model.Stamp, 0, len(r.stamps))
 	arrAll := make([]*model.Stamp, 0, len(r.stamps))
 	for _, stamp := range r.stamps {
 		arrAll = append(arrAll, stamp)
-		if !stamp.IsUnicode {
-			arr = append(arr, stamp)
+		if stamp.IsUnicode {
+			arrUnicode = append(arrUnicode, stamp)
+		} else {
+			arrOriginal = append(arrOriginal, stamp)
 		}
 	}
 
-	b, err := jsoniter.ConfigFastest.Marshal(arr)
+	b, err := jsoniter.ConfigFastest.Marshal(arrUnicode)
 	if err != nil {
 		panic(err)
 	}
-	r.json = b
+	r.unicodeJSON = b
+
+	b, err = jsoniter.ConfigFastest.Marshal(arrOriginal)
+	if err != nil {
+		panic(err)
+	}
+	r.originalJSON = b
 
 	b, err = jsoniter.ConfigFastest.Marshal(arrAll)
 	if err != nil {
@@ -286,27 +296,34 @@ func (repo *Repository) DeleteStamp(id uuid.UUID) (err error) {
 }
 
 // GetAllStamps implements StampRepository interface.
-func (repo *Repository) GetAllStamps(excludeUnicode bool) (stamps []*model.Stamp, err error) {
+func (repo *Repository) GetAllStamps(stampType repository.StampType) (stamps []*model.Stamp, err error) {
 	stamps = make([]*model.Stamp, 0)
 	tx := repo.db
-	if excludeUnicode {
+	switch stampType {
+	case repository.StampTypeUnicode:
+		tx = tx.Where("is_unicode = TRUE")
+	case repository.StampTypeOriginal:
 		tx = tx.Where("is_unicode = FALSE")
 	}
 	return stamps, tx.Find(&stamps).Error
 }
 
 // GetStampsJSON implements StampRepository interface.
-func (repo *Repository) GetStampsJSON(excludeUnicode bool) ([]byte, time.Time, error) {
+func (repo *Repository) GetStampsJSON(stampType repository.StampType) ([]byte, time.Time, error) {
 	if repo.stamps != nil {
 		repo.stamps.RLock()
 		defer repo.stamps.RUnlock()
-		if excludeUnicode {
-			return repo.stamps.json, repo.stamps.updatedAt, nil
+		switch stampType {
+		case repository.StampTypeUnicode:
+			return repo.stamps.unicodeJSON, repo.stamps.updatedAt, nil
+		case repository.StampTypeOriginal:
+			return repo.stamps.originalJSON, repo.stamps.updatedAt, nil
+		default:
+			return repo.stamps.allJSON, repo.stamps.updatedAt, nil
 		}
-		return repo.stamps.allJSON, repo.stamps.updatedAt, nil
 	}
 
-	stamps, err := repo.GetAllStamps(excludeUnicode)
+	stamps, err := repo.GetAllStamps(stampType)
 	if err != nil {
 		return nil, time.Time{}, err
 	}

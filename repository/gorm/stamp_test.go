@@ -206,7 +206,7 @@ func TestRepositoryImpl_GetAllStamps(t *testing.T) {
 		mustMakeStamp(t, repo, rand, uuid.Nil)
 	}
 
-	arr, err := repo.GetAllStamps(false)
+	arr, err := repo.GetAllStamps(repository.StampTypeAll)
 	if assert.NoError(err) {
 		assert.Len(arr, n)
 	}
@@ -269,7 +269,7 @@ func TestRepositoryImpl_ExistStamps(t *testing.T) {
 		assert.Error(repo.ExistStamps(stampIDsCopy))
 	})
 
-	t.Run("sucess", func(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 		assert := assert.New(t)
 

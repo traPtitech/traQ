@@ -1,6 +1,7 @@
 .vagrant
 .envrc
 /.idea/
+/.vscode/
 /vendor/
 /dev/data/
 /dist/

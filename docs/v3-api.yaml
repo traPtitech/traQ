@@ -809,7 +809,16 @@ paths:
             default: true
           in: query
           name: include-unicode
-          description: Unicode絵文字を含ませるかどうか
+          deprecated: true
+          description: |
+            Unicode絵文字を含ませるかどうか
+            Deprecated: typeクエリを指定しなければ全てのスタンプを取得できるため、そちらを利用してください
+        - schema:
+            type: string
+            enum: [unicode, original]
+          in: query
+          name: type
+          description: 取得するスタンプの種類
       description: スタンプのリストを取得します。
   /users/me/stamp-history:
     get:

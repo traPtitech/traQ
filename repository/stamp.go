@@ -36,6 +36,18 @@ type StampStats struct {
 	TotalCount int64 `json:"totalCount"`
 }
 
+// StampType スタンプの種類
+type StampType string
+
+const (
+	// StampTypeUnicode Unicodeスタンプ
+	StampTypeUnicode StampType = "unicode"
+	// StampTypeOriginal オリジナルスタンプ
+	StampTypeOriginal StampType = "original"
+	// StampTypeAll 全てのスタンプ
+	StampTypeAll StampType = "all"
+)
+
 // StampRepository スタンプリポジトリ
 type StampRepository interface {
 	// CreateStamp スタンプを作成します
@@ -77,12 +89,12 @@ type StampRepository interface {
 	//
 	// 成功した場合、スタンプの配列とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetAllStamps(excludeUnicode bool) (stamps []*model.Stamp, err error)
+	GetAllStamps(stampType StampType) (stamps []*model.Stamp, err error)
 	// GetStampsJSON スタンプ一覧のJSON文字列を取得します
 	//
 	// 成功した場合、JSONの[]byte表現とnilを返します。
 	// DBによるエラーを返すことがあります。
-	GetStampsJSON(excludeUnicode bool) ([]byte, time.Time, error)
+	GetStampsJSON(stampType StampType) ([]byte, time.Time, error)
 	// StampExists 指定したIDのスタンプが存在するかどうかを返します
 	//
 	// 存在する場合、trueとnilを返します。
