@@ -81,11 +81,11 @@ reset-frontend: ## Completely replace frontend files in dev/frontend
 
 .PHONY: up
 up: ## Build and start the app containers
-	@docker-compose up -d --build
+	@docker compose up -d --build
 
 .PHONY: down
 down: ## Stop and remove app containers
-	@docker-compose down
+	@docker compose down
 
 .PHONY: gogen
 gogen: ## Generate auto-generated go files
