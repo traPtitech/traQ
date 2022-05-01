@@ -3,6 +3,7 @@ package v3
 import (
 	"context"
 	"net/http"
+	"sort"
 	"time"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
@@ -400,8 +401,9 @@ func (h *Handlers) GetMyChannelSubscriptions(c echo.Context) error {
 	for i, subscription := range subscriptions {
 		result[i] = response{ChannelID: subscription.ChannelID, Level: subscription.GetLevel().Int()}
 	}
+	sort.Slice(result, func(i, j int) bool { return result[i].ChannelID.String() < result[j].ChannelID.String() })
 
-	return c.JSON(http.StatusOK, result)
+	return extension.ServeJSONWithETag(c, result)
 }
 
 // PutChannelSubscribeLevelRequest PUT /users/me/subscriptions/:channelID リクエストボディ

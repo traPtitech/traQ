@@ -3,6 +3,7 @@ package v3
 import (
 	"net/http"
 
+	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/utils/optional"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
@@ -23,7 +24,7 @@ func (h *Handlers) GetStampPalettes(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, formatStampPalettes(palettes))
+	return extension.ServeJSONWithETag(c, formatStampPalettes(palettes))
 }
 
 // CreateStampPaletteRequest POST /stamp-palettes リクエストボディ

@@ -562,11 +562,13 @@ func formatClipFolder(cf *model.ClipFolder) *ClipFolder {
 	}
 }
 
+// formatClipFolders ソートされたものを返す
 func formatClipFolders(cfs []*model.ClipFolder) []*ClipFolder {
 	res := make([]*ClipFolder, len(cfs))
 	for i, cf := range cfs {
 		res[i] = formatClipFolder(cf)
 	}
+	sort.Slice(res, func(i, j int) bool { return res[i].ID.String() < res[j].ID.String() })
 	return res
 }
 
@@ -612,10 +614,12 @@ func formatStampPalette(cf *model.StampPalette) *StampPalette {
 	}
 }
 
+// formatStampPalettes ソートされたものを返す
 func formatStampPalettes(cfs []*model.StampPalette) []*StampPalette {
 	res := make([]*StampPalette, len(cfs))
 	for i, cf := range cfs {
 		res[i] = formatStampPalette(cf)
 	}
+	sort.Slice(res, func(i, j int) bool { return res[i].ID.String() < res[j].ID.String() })
 	return res
 }
