@@ -6,7 +6,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/migration"
-	"github.com/traPtitech/traQ/model"
 	"github.com/traPtitech/traQ/repository"
 )
 
@@ -18,28 +17,19 @@ type Repository struct {
 	stamps *stampRepository
 }
 
-// Sync implements Repository interface.
-func (repo *Repository) Sync() (init bool, err error) {
-	if init, err = migration.Migrate(repo.db); err != nil {
-		return false, err
-	}
-
-	// スタンプをキャッシュ
-	var stamps []*model.Stamp
-	if err := repo.db.Find(&stamps).Error; err != nil {
-		return false, err
-	}
-	repo.stamps = makeStampRepository(stamps)
-
-	return
-}
-
-// NewGormRepository リポジトリ実装を初期化して生成します
-func NewGormRepository(db *gorm.DB, hub *hub.Hub, logger *zap.Logger) (repository.Repository, error) {
-	repo := &Repository{
+// NewGormRepository リポジトリ実装を初期化して生成します。
+// スキーマが初期化された場合、init: true を返します。
+func NewGormRepository(db *gorm.DB, hub *hub.Hub, logger *zap.Logger, doMigration bool) (repo repository.Repository, init bool, err error) {
+	repo = &Repository{
 		db:     db,
 		hub:    hub,
 		logger: logger.Named("repository"),
+		stamps: makeStampRepository(db),
 	}
-	return repo, nil
+	if doMigration {
+		if init, err = migration.Migrate(db); err != nil {
+			return nil, false, err
+		}
+	}
+	return
 }

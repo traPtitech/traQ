@@ -82,11 +82,8 @@ func TestMain(m *testing.M) {
 		env.SessStore = session.NewMemorySessionStore()
 
 		// テスト用リポジトリ作成
-		repo, err := gorm2.NewGormRepository(engine, env.Hub, zap.NewNop())
+		repo, _, err := gorm2.NewGormRepository(engine, env.Hub, zap.NewNop(), true)
 		if err != nil {
-			panic(err)
-		}
-		if _, err := repo.Sync(); err != nil {
 			panic(err)
 		}
 		env.Repository = repo

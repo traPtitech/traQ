@@ -16,8 +16,8 @@ traQ: $(SOURCES) ## Build traQ binary
 .PHONY: init
 init: ## Download and install go mod dependencies
 	go mod download
-	go install github.com/google/wire/cmd/wire
-	go install github.com/golang/mock/mockgen
+	go install github.com/google/wire/cmd/wire@latest
+	go install github.com/golang/mock/mockgen@latest
 
 .PHONY: genkey
 genkey: ## Generate dev keys

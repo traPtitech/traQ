@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/service/message"
 	"github.com/traPtitech/traQ/utils/optional"
 
@@ -58,7 +59,6 @@ func (h *Handlers) CreateClipFolder(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, formatClipFolder(cf))
-
 }
 
 // GetClipFolders GET /clip-folders
@@ -70,7 +70,7 @@ func (h *Handlers) GetClipFolders(c echo.Context) error {
 		return herror.InternalServerError(err)
 	}
 
-	return c.JSON(http.StatusOK, formatClipFolders(cfs))
+	return extension.ServeJSONWithETag(c, formatClipFolders(cfs))
 }
 
 // GetClipFolder GET /clip-folders/:folderID

@@ -10,6 +10,7 @@ import (
 
 	"github.com/traPtitech/traQ/repository"
 	"github.com/traPtitech/traQ/router/consts"
+	"github.com/traPtitech/traQ/router/extension"
 	"github.com/traPtitech/traQ/router/extension/herror"
 	"github.com/traPtitech/traQ/router/utils"
 	file2 "github.com/traPtitech/traQ/service/file"
@@ -24,7 +25,7 @@ func (h *Handlers) GetUserGroups(c echo.Context) error {
 	if err != nil {
 		return herror.InternalServerError(err)
 	}
-	return c.JSON(http.StatusOK, formatUserGroups(gs))
+	return extension.ServeJSONWithETag(c, formatUserGroups(gs))
 }
 
 // PostUserGroupRequest POST /groups リクエストボディ

@@ -1,13 +1,15 @@
 package gorm
 
 import (
-	"sync"
+	"context"
+	"errors"
+	"sort"
 	"time"
 
 	vd "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gofrs/uuid"
-	jsoniter "github.com/json-iterator/go"
 	"github.com/leandro-lugaresi/hub"
+	"github.com/motoki317/sc"
 	"gorm.io/gorm"
 
 	"github.com/traPtitech/traQ/event"
@@ -18,93 +20,92 @@ import (
 )
 
 type stampRepository struct {
-	stamps       map[uuid.UUID]*model.Stamp
-	allJSON      []byte
-	unicodeJSON  []byte
-	originalJSON []byte
-	updatedAt    time.Time
-	sync.RWMutex
+	stamps  *sc.Cache[struct{}, map[uuid.UUID]*model.Stamp]
+	perType *sc.Cache[repository.StampType, []*model.Stamp]
 }
 
-func makeStampRepository(stamps []*model.Stamp) *stampRepository {
-	r := &stampRepository{
-		stamps:    make(map[uuid.UUID]*model.Stamp, len(stamps)),
-		updatedAt: time.Now(),
-	}
-	for _, s := range stamps {
-		r.stamps[s.ID] = s
-	}
-
-	r.regenerateJSON()
+func makeStampRepository(db *gorm.DB) *stampRepository {
+	// Lazy load
+	r := &stampRepository{}
+	r.stamps = sc.NewMust(r.loadFunc(db), 365*24*time.Hour, 365*24*time.Hour)
+	r.perType = sc.NewMust(r.filterFunc(), 365*24*time.Hour, 365*24*time.Hour)
 	return r
 }
 
-func (r *stampRepository) add(s *model.Stamp) {
-	r.stamps[s.ID] = s
-	r.updatedAt = time.Now()
-	r.regenerateJSON()
-}
-
-func (r *stampRepository) update(s *model.Stamp) {
-	r.stamps[s.ID] = s
-	r.updatedAt = time.Now()
-	r.regenerateJSON()
-}
-
-func (r *stampRepository) delete(id uuid.UUID) {
-	delete(r.stamps, id)
-	r.updatedAt = time.Now()
-	r.regenerateJSON()
-}
-
-func (r *stampRepository) regenerateJSON() {
-	arrOriginal := make([]*model.Stamp, 0, len(r.stamps))
-	arrUnicode := make([]*model.Stamp, 0, len(r.stamps))
-	arrAll := make([]*model.Stamp, 0, len(r.stamps))
-	for _, stamp := range r.stamps {
-		arrAll = append(arrAll, stamp)
-		if stamp.IsUnicode {
-			arrUnicode = append(arrUnicode, stamp)
-		} else {
-			arrOriginal = append(arrOriginal, stamp)
+func (r *stampRepository) loadFunc(db *gorm.DB) func(context.Context, struct{}) (map[uuid.UUID]*model.Stamp, error) {
+	return func(_ context.Context, _ struct{}) (map[uuid.UUID]*model.Stamp, error) {
+		var stamps []*model.Stamp
+		if err := db.Find(&stamps).Error; err != nil {
+			return nil, err
 		}
+		stampsMap := make(map[uuid.UUID]*model.Stamp, len(stamps))
+		for _, s := range stamps {
+			stampsMap[s.ID] = s
+		}
+		return stampsMap, nil
 	}
-
-	b, err := jsoniter.ConfigFastest.Marshal(arrUnicode)
-	if err != nil {
-		panic(err)
-	}
-	r.unicodeJSON = b
-
-	b, err = jsoniter.ConfigFastest.Marshal(arrOriginal)
-	if err != nil {
-		panic(err)
-	}
-	r.originalJSON = b
-
-	b, err = jsoniter.ConfigFastest.Marshal(arrAll)
-	if err != nil {
-		panic(err)
-	}
-	r.allJSON = b
 }
 
-func (r *stampRepository) GetStamp(id uuid.UUID) (s *model.Stamp, ok bool) {
-	r.RLock()
-	defer r.RUnlock()
-	s, ok = r.stamps[id]
+func (r *stampRepository) filterFunc() func(_ context.Context, stampType repository.StampType) ([]*model.Stamp, error) {
+	return func(ctx context.Context, stampType repository.StampType) ([]*model.Stamp, error) {
+		stamps, err := r.stamps.Get(ctx, struct{}{})
+		if err != nil {
+			return nil, err
+		}
+		arr := make([]*model.Stamp, 0, len(stamps))
+
+		switch stampType {
+		case repository.StampTypeAll:
+			for _, s := range stamps {
+				arr = append(arr, s)
+			}
+		case repository.StampTypeUnicode:
+			for _, s := range stamps {
+				if s.IsUnicode {
+					arr = append(arr, s)
+				}
+			}
+		case repository.StampTypeOriginal:
+			for _, s := range stamps {
+				if !s.IsUnicode {
+					arr = append(arr, s)
+				}
+			}
+		default:
+			return nil, errors.New("unknown stamp type")
+		}
+
+		sort.Slice(arr, func(i, j int) bool { return arr[i].ID.String() < arr[j].ID.String() })
+		return arr, nil
+	}
+}
+
+// Purge purges stamp cache.
+func (r *stampRepository) Purge() {
+	r.stamps.Purge()
+	r.perType.Purge()
+}
+
+func (r *stampRepository) GetStamp(id uuid.UUID) (s *model.Stamp, ok bool, err error) {
+	stamps, err := r.stamps.Get(context.Background(), struct{}{})
+	if err != nil {
+		return nil, false, err
+	}
+	s, ok = stamps[id]
 	return
 }
 
-func (r *stampRepository) CheckIDs(ids []uuid.UUID) bool {
-	r.RLock()
-	defer r.RUnlock()
+func (r *stampRepository) CheckIDs(ids []uuid.UUID) (ok bool, err error) {
+	stamps, err := r.stamps.Get(context.Background(), struct{}{})
+	if err != nil {
+		return false, err
+	}
 	for _, id := range ids {
-		if _, ok := r.stamps[id]; !ok {
-			return false
+		if _, ok := stamps[id]; !ok {
+			return false, nil
 		}
 	}
-	return true
+	return true, nil
 }
 
 // CreateStamp implements StampRepository interface.
@@ -115,11 +116,6 @@ func (repo *Repository) CreateStamp(args repository.CreateStampArgs) (s *model.S
 		FileID:    args.FileID,
 		CreatorID: args.CreatorID, // uuid.Nilを許容する
 		IsUnicode: args.IsUnicode,
-	}
-
-	if repo.stamps != nil {
-		repo.stamps.Lock()
-		defer repo.stamps.Unlock()
 	}
 
 	err = repo.db.Transaction(func(tx *gorm.DB) error {
@@ -149,9 +145,7 @@ func (repo *Repository) CreateStamp(args repository.CreateStampArgs) (s *model.S
 		return nil, err
 	}
 
-	if repo.stamps != nil {
-		repo.stamps.add(stamp)
-	}
+	repo.stamps.Purge()
 
 	repo.hub.Publish(hub.Message{
 		Name: event.StampCreated,
@@ -167,11 +161,6 @@ func (repo *Repository) CreateStamp(args repository.CreateStampArgs) (s *model.S
 func (repo *Repository) UpdateStamp(id uuid.UUID, args repository.UpdateStampArgs) error {
 	if id == uuid.Nil {
 		return repository.ErrNilID
-	}
-
-	if repo.stamps != nil {
-		repo.stamps.Lock()
-		defer repo.stamps.Unlock()
 	}
 
 	var s model.Stamp
@@ -220,9 +209,7 @@ func (repo *Repository) UpdateStamp(id uuid.UUID, args repository.UpdateStampArg
 		return err
 	}
 	if len(changes) > 0 {
-		if repo.stamps != nil {
-			repo.stamps.update(&s)
-		}
+		repo.stamps.Purge()
 		repo.hub.Publish(hub.Message{
 			Name: event.StampUpdated,
 			Fields: hub.Fields{
@@ -239,18 +226,14 @@ func (repo *Repository) GetStamp(id uuid.UUID) (s *model.Stamp, err error) {
 		return nil, repository.ErrNotFound
 	}
 
-	if repo.stamps != nil {
-		if s, ok := repo.stamps.GetStamp(id); ok {
-			return s, nil
-		}
-		return nil, repository.ErrNotFound
+	s, ok, err := repo.stamps.GetStamp(id)
+	if err != nil {
+		return nil, err
 	}
-
-	s = &model.Stamp{}
-	if err := repo.db.First(s, &model.Stamp{ID: id}).Error; err != nil {
-		return nil, convertError(err)
+	if ok {
+		return s, nil
 	}
-	return s, nil
+	return nil, repository.ErrNotFound
 }
 
 // GetStampByName implements StampRepository interface.
@@ -271,19 +254,12 @@ func (repo *Repository) DeleteStamp(id uuid.UUID) (err error) {
 		return repository.ErrNilID
 	}
 
-	if repo.stamps != nil {
-		repo.stamps.Lock()
-		defer repo.stamps.Unlock()
-	}
-
 	result := repo.db.Delete(&model.Stamp{ID: id})
 	if result.Error != nil {
 		return result.Error
 	}
 	if result.RowsAffected > 0 {
-		if repo.stamps != nil {
-			repo.stamps.delete(id)
-		}
+		repo.stamps.Purge()
 		repo.hub.Publish(hub.Message{
 			Name: event.StampDeleted,
 			Fields: hub.Fields{
@@ -297,38 +273,7 @@ func (repo *Repository) DeleteStamp(id uuid.UUID) (err error) {
 
 // GetAllStamps implements StampRepository interface.
 func (repo *Repository) GetAllStamps(stampType repository.StampType) (stamps []*model.Stamp, err error) {
-	stamps = make([]*model.Stamp, 0)
-	tx := repo.db
-	switch stampType {
-	case repository.StampTypeUnicode:
-		tx = tx.Where("is_unicode = TRUE")
-	case repository.StampTypeOriginal:
-		tx = tx.Where("is_unicode = FALSE")
-	}
-	return stamps, tx.Find(&stamps).Error
-}
-
-// GetStampsJSON implements StampRepository interface.
-func (repo *Repository) GetStampsJSON(stampType repository.StampType) ([]byte, time.Time, error) {
-	if repo.stamps != nil {
-		repo.stamps.RLock()
-		defer repo.stamps.RUnlock()
-		switch stampType {
-		case repository.StampTypeUnicode:
-			return repo.stamps.unicodeJSON, repo.stamps.updatedAt, nil
-		case repository.StampTypeOriginal:
-			return repo.stamps.originalJSON, repo.stamps.updatedAt, nil
-		default:
-			return repo.stamps.allJSON, repo.stamps.updatedAt, nil
-		}
-	}
-
-	stamps, err := repo.GetAllStamps(stampType)
-	if err != nil {
-		return nil, time.Time{}, err
-	}
-	b, err := jsoniter.ConfigFastest.Marshal(stamps)
-	return b, time.Now(), err
+	return repo.stamps.perType.Get(context.Background(), stampType)
 }
 
 // StampExists implements StampRepository interface.
@@ -337,32 +282,23 @@ func (repo *Repository) StampExists(id uuid.UUID) (bool, error) {
 		return false, nil
 	}
 
-	if repo.stamps != nil {
-		_, ok := repo.stamps.GetStamp(id)
-		return ok, nil
+	_, ok, err := repo.stamps.GetStamp(id)
+	if err != nil {
+		return false, err
 	}
-	return gormutil.RecordExists(repo.db, &model.Stamp{ID: id})
+	return ok, nil
 }
 
 // ExistStamps implements StampPaletteRepository interface.
 func (repo *Repository) ExistStamps(stampIDs []uuid.UUID) (err error) {
-	if repo.stamps != nil {
-		if repo.stamps.CheckIDs(stampIDs) {
-			return nil
-		}
-		return repository.ArgError("stamp", "stamp is not found")
-	}
-
-	num, err := gormutil.Count(repo.db.
-		Table("stamps").
-		Where("id IN (?)", stampIDs))
+	ok, err := repo.stamps.CheckIDs(stampIDs)
 	if err != nil {
 		return err
 	}
-	if len(stampIDs) != int(num) {
-		err = repository.ArgError("stamp", "stamp is not found")
+	if ok {
+		return nil
 	}
-	return
+	return repository.ArgError("stamp", "stamp is not found")
 }
 
 // GetUserStampHistory implements StampRepository interface.

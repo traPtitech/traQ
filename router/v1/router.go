@@ -1,11 +1,8 @@
 package v1
 
 import (
-	"bytes"
 	"encoding/gob"
 	"net/http"
-	"sync"
-	"time"
 
 	"github.com/gofrs/uuid"
 	jsoniter "github.com/json-iterator/go"
@@ -47,13 +44,7 @@ type Handlers struct {
 	MessageManager message.Manager
 	FileManager    file.Manager
 	Replacer       *mutil.Replacer
-
-	emojiJSONCache     bytes.Buffer `wire:"-"`
-	emojiJSONTime      time.Time    `wire:"-"`
-	emojiJSONCacheLock sync.RWMutex `wire:"-"`
-	emojiCSSCache      bytes.Buffer `wire:"-"`
-	emojiCSSTime       time.Time    `wire:"-"`
-	emojiCSSCacheLock  sync.RWMutex `wire:"-"`
+	EmojiCache     *EmojiCache
 }
 
 // Setup APIルーティングを行います
@@ -335,13 +326,7 @@ func (h *Handlers) Setup(e *echo.Group) {
 
 func (h *Handlers) stampEventSubscriber(sub hub.Subscription) {
 	for range sub.Receiver {
-		h.emojiJSONCacheLock.Lock()
-		h.emojiJSONCache.Reset()
-		h.emojiJSONCacheLock.Unlock()
-
-		h.emojiCSSCacheLock.Lock()
-		h.emojiCSSCache.Reset()
-		h.emojiCSSCacheLock.Unlock()
+		h.EmojiCache.Purge()
 	}
 }
 

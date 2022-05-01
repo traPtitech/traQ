@@ -78,11 +78,8 @@ func TestMain(m *testing.M) {
 			panic(err)
 		}
 
-		repo, err := NewGormRepository(engine, hub.New(), zap.NewNop())
+		repo, _, err := NewGormRepository(engine, hub.New(), zap.NewNop(), true)
 		if err != nil {
-			panic(err)
-		}
-		if _, err := repo.Sync(); err != nil {
 			panic(err)
 		}
 

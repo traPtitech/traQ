@@ -31,6 +31,7 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 	fileManager := ss.FileManager
 	replaceMapper := utils.NewReplaceMapper(repo, manager)
 	replacer := message.NewReplacer(replaceMapper)
+	emojiCache := v1.NewEmojiCache(repo)
 	handlers := &v1.Handlers{
 		RBAC:           rbac,
 		Repo:           repo,
@@ -41,6 +42,7 @@ func newRouter(hub2 *hub.Hub, db *gorm.DB, repo repository.Repository, ss *servi
 		MessageManager: messageManager,
 		FileManager:    fileManager,
 		Replacer:       replacer,
+		EmojiCache:     emojiCache,
 	}
 	streamer := ss.WS
 	wsStreamer := ss.BotWS
