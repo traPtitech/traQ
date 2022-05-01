@@ -365,6 +365,7 @@ type UserGroupMember struct {
 	Role string    `json:"role"`
 }
 
+// formatUserGroupMembers ソートされたものを返す
 func formatUserGroupMembers(members []*model.UserGroupMember) []UserGroupMember {
 	arr := make([]UserGroupMember, len(members))
 	for i, m := range members {
@@ -373,14 +374,19 @@ func formatUserGroupMembers(members []*model.UserGroupMember) []UserGroupMember 
 			Role: m.Role,
 		}
 	}
+
+	sort.Slice(arr, func(i, j int) bool { return arr[i].ID.String() < arr[j].ID.String() })
 	return arr
 }
 
+// formatUserGroupAdmins ソートされたものを返す
 func formatUserGroupAdmins(admins []*model.UserGroupAdmin) []uuid.UUID {
 	arr := make([]uuid.UUID, len(admins))
 	for i, m := range admins {
 		arr[i] = m.UserID
 	}
+
+	sort.Slice(arr, func(i, j int) bool { return arr[i].String() < arr[j].String() })
 	return arr
 }
 
@@ -411,11 +417,14 @@ func formatUserGroup(g *model.UserGroup) *UserGroup {
 	return ug
 }
 
+// formatUserGroups ソートされたものを返す
 func formatUserGroups(gs []*model.UserGroup) []*UserGroup {
 	arr := make([]*UserGroup, len(gs))
 	for i, g := range gs {
 		arr[i] = formatUserGroup(g)
 	}
+
+	sort.Slice(arr, func(i, j int) bool { return arr[i].ID.String() < arr[j].ID.String() })
 	return arr
 }
 
